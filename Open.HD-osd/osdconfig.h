@@ -1,0 +1,1 @@
+/tmp/osdconfig.txt
