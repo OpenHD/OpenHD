@@ -1,0 +1,13 @@
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h5-nanopi.dtsi b/arch/arm64/boot/dts/allwinner/sun50i-h5-nanopi.dtsi
+index 0584ad7..2154939 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h5-nanopi.dtsi
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h5-nanopi.dtsi
+@@ -249,7 +249,7 @@
+ 
+ &uart1 {
+     pinctrl-names = "default";
+-    pinctrl-0 = <&uart1_pins>;
++    pinctrl-0 = <&uart1_pins>, <&uart1_rts_cts_pins>;
+     status = "okay";
+ };
+ 
