@@ -1,0 +1,127 @@
+<resources>
+    <string name="app_name">OpenHD</string>
+
+
+    //ChangeSettingsWFBC
+
+    <string name="FreqSelect">Settings</string>
+
+    <string-array name="CopterArray">
+        <item>value not loaded</item>
+        <item>true</item>
+        <item>false</item>
+    </string-array>
+
+    <string-array name="ImperialArray">
+        <item>value not loaded</item>
+        <item>true</item>
+        <item>false</item>
+    </string-array>
+
+    <string-array name="RateArray">
+        <item>value not loaded</item>
+        <item>1200</item>
+        <item>2400</item>
+        <item>4800</item>
+        <item>19200</item>
+        <item>38400</item>
+        <item>57600</item>
+        <item>115200</item>
+    </string-array>
+
+
+    <string-array name="FreqArray">
+        <item>value not loaded</item>
+        <item>2412</item>
+        <item>2417</item>
+        <item>2422</item>
+        <item>2427</item>
+        <item>2432</item>
+        <item>2437</item>
+        <item>2442</item>
+
+        <item>2447</item>
+        <item>2452</item>
+        <item>2457</item>
+        <item>2462</item>
+        <item>2467</item>
+        <item>2472</item>
+        <item>2484</item>
+        //
+        <item>2312</item>
+        <item>2317</item>
+        <item>2322</item>
+        <item>2327</item>
+        <item>2332</item>
+        <item>2337</item>
+        <item>2342</item>
+        <item>2347</item>
+        <item>2352</item>
+        <item>2357</item>
+        <item>2362</item>
+        <item>2367</item>
+        <item>2372</item>
+        <item>2377</item>
+        <item>2382</item>
+        <item>2387</item>
+        <item>2392</item>
+        <item>2397</item>
+        <item>2402</item>
+        <item>2407</item>
+
+        <item>2477</item>
+        <item>2482</item>
+        <item>2487</item>
+        <item>2489</item>
+        <item>2492</item>
+        <item>2494</item>
+        <item>2497</item>
+        <item>2499</item>
+        <item>2512</item>
+        <item>2532</item>
+        <item>2572</item>
+        <item>2592</item>
+        <item>2612</item>
+        <item>2632</item>
+        <item>2652</item>
+        <item>2672</item>
+        <item>2692</item>
+        <item>2712</item>
+
+        <item>5180</item>
+        <item>5200</item>
+        <item>5220</item>
+        <item>5240</item>
+        <item>5260</item>
+        <item>5280</item>
+        <item>5300</item>
+        <item>5320</item>
+        <item>5500</item>
+        <item>5520</item>
+        <item>5540</item>
+        <item>5560</item>
+        <item>5580</item>
+        <item>5600</item>
+        <item>5620</item>
+        <item>5640</item>
+        <item>5660</item>
+        <item>5680</item>
+        <item>5700</item>
+        <item>5745</item>
+        <item>5765</item>
+        <item>5785</item>
+        <item>5805</item>
+        <item>5825</item>
+
+    </string-array>
+
+    <string-array name="EncryptionOrRangeArray">
+        <item>value not loaded</item>
+        <item>Encryption</item>
+        <item>Range</item>
+    </string-array>
+
+    <string name="SyncColors"> <font fgcolor='#0000FF'>Air only. </font> <font fgcolor='#FF0000'>Ground only. </font>  <font fgcolor='#00FF00'>Both.</font></string>
+
+
+</resources>

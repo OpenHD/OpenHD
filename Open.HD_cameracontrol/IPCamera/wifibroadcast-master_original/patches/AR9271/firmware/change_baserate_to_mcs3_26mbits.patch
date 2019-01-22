@@ -1,0 +1,33 @@
+From 24c8ae810bf7e232d55113499c6e04630239362b Mon Sep 17 00:00:00 2001
+From: befinitiv <nono@never.com>
+Date: Thu, 19 Feb 2015 19:58:15 +0100
+Subject: [PATCH] patched firmare to use MCS3 as the base rate
+
+---
+ target_firmware/wlan/ar5416_phy.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/target_firmware/wlan/ar5416_phy.c b/target_firmware/wlan/ar5416_phy.c
+index 4031066..4ad5e03 100755
+--- a/target_firmware/wlan/ar5416_phy.c
++++ b/target_firmware/wlan/ar5416_phy.c
+@@ -211,6 +211,7 @@ ar5416GetRateTable(struct ath_hal *ah, a_uint32_t mode)
+ #define	TURBO	IEEE80211_T_TURBO
+ #define	XR	ATHEROS_T_XR
+ #define HT      IEEE80211_T_HT
++	//	/*[ 0]   1 Mb */ {  AH_TRUE, CCK,     1000,    0x1b,    0x00, (0x80| 2),   0 },
+ 
+ HAL_RATE_TABLE ar5416_11ng_table = {
+ 
+@@ -219,7 +220,7 @@ HAL_RATE_TABLE ar5416_11ng_table = {
+ 	{
+ 		/*                                                 short            ctrl  */
+ 		/*                valid                rateCode Preamble  dot11Rate Rate */
+-		/*[ 0]   1 Mb */ {  AH_TRUE, CCK,     1000,    0x1b,    0x00, (0x80| 2),   0 },
++		/*[15]  26 Mb */ {  AH_TRUE, HT,  	 26000,    0x83,    0x00,         3,   8 },
+ 		/*[ 1]   2 Mb */ {  AH_TRUE, CCK,     2000,    0x1a,    0x04, (0x80| 4),   1 },
+ 		/*[ 2] 5.5 Mb */ {  AH_TRUE, CCK,     5500,    0x19,    0x04, (0x80|11),   2 },
+ 		/*[ 3]  11 Mb */ {  AH_TRUE, CCK,    11000,    0x18,    0x04, (0x80|22),   3 },
+-- 
+1.9.1
+

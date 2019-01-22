@@ -1,0 +1,80 @@
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+index d2c28944..7131032 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+@@ -1698,14 +1698,14 @@ void rt2800_config_intf(struct rt2x00_dev *rt2x00dev, struct rt2x00_intf *intf,
+ 			 */
+ 			reg = rt2800_register_read(rt2x00dev, TBTT_SYNC_CFG);
+ 			rt2x00_set_field32(&reg, TBTT_SYNC_CFG_BCN_CWMIN, 0);
+-			rt2x00_set_field32(&reg, TBTT_SYNC_CFG_BCN_AIFSN, 1);
++			rt2x00_set_field32(&reg, TBTT_SYNC_CFG_BCN_AIFSN, 0);
+ 			rt2x00_set_field32(&reg, TBTT_SYNC_CFG_BCN_EXP_WIN, 32);
+ 			rt2x00_set_field32(&reg, TBTT_SYNC_CFG_TBTT_ADJUST, 0);
+ 			rt2800_register_write(rt2x00dev, TBTT_SYNC_CFG, reg);
+ 		} else {
+ 			reg = rt2800_register_read(rt2x00dev, TBTT_SYNC_CFG);
+ 			rt2x00_set_field32(&reg, TBTT_SYNC_CFG_BCN_CWMIN, 4);
+-			rt2x00_set_field32(&reg, TBTT_SYNC_CFG_BCN_AIFSN, 2);
++			rt2x00_set_field32(&reg, TBTT_SYNC_CFG_BCN_AIFSN, 0);
+ 			rt2x00_set_field32(&reg, TBTT_SYNC_CFG_BCN_EXP_WIN, 32);
+ 			rt2x00_set_field32(&reg, TBTT_SYNC_CFG_TBTT_ADJUST, 16);
+ 			rt2800_register_write(rt2x00dev, TBTT_SYNC_CFG, reg);
+@@ -5530,10 +5530,10 @@ static int rt2800_init_registers(struct rt2x00_dev *rt2x00dev)
+ 	 * defaults as the Ralink driver: 16 for both, CCK and OFDM SIFS.
+ 	 */
+ 	reg = rt2800_register_read(rt2x00dev, XIFS_TIME_CFG);
+-	rt2x00_set_field32(&reg, XIFS_TIME_CFG_CCKM_SIFS_TIME, 16);
+-	rt2x00_set_field32(&reg, XIFS_TIME_CFG_OFDM_SIFS_TIME, 16);
+-	rt2x00_set_field32(&reg, XIFS_TIME_CFG_OFDM_XIFS_TIME, 4);
+-	rt2x00_set_field32(&reg, XIFS_TIME_CFG_EIFS, 314);
++	rt2x00_set_field32(&reg, XIFS_TIME_CFG_CCKM_SIFS_TIME, 0);
++	rt2x00_set_field32(&reg, XIFS_TIME_CFG_OFDM_SIFS_TIME, 0);
++	rt2x00_set_field32(&reg, XIFS_TIME_CFG_OFDM_XIFS_TIME, 0);
++	rt2x00_set_field32(&reg, XIFS_TIME_CFG_EIFS, 0);
+ 	rt2x00_set_field32(&reg, XIFS_TIME_CFG_BB_RXEND_ENABLE, 1);
+ 	rt2800_register_write(rt2x00dev, XIFS_TIME_CFG, reg);
+ 
+@@ -9597,7 +9597,7 @@ int rt2800_conf_tx(struct ieee80211_hw *hw,
+ 	field.bit_mask = 0xf << field.bit_offset;
+ 
+ 	reg = rt2800_register_read(rt2x00dev, WMM_AIFSN_CFG);
+-	rt2x00_set_field32(&reg, field, queue->aifs);
++	rt2x00_set_field32(&reg, field, 0);
+ 	rt2800_register_write(rt2x00dev, WMM_AIFSN_CFG, reg);
+ 
+ 	reg = rt2800_register_read(rt2x00dev, WMM_CWMIN_CFG);
+@@ -9613,7 +9613,7 @@ int rt2800_conf_tx(struct ieee80211_hw *hw,
+ 
+ 	reg = rt2800_register_read(rt2x00dev, offset);
+ 	rt2x00_set_field32(&reg, EDCA_AC0_CFG_TX_OP, queue->txop);
+-	rt2x00_set_field32(&reg, EDCA_AC0_CFG_AIFSN, queue->aifs);
++	rt2x00_set_field32(&reg, EDCA_AC0_CFG_AIFSN, 0);
+ 	rt2x00_set_field32(&reg, EDCA_AC0_CFG_CWMIN, queue->cw_min);
+ 	rt2x00_set_field32(&reg, EDCA_AC0_CFG_CWMAX, queue->cw_max);
+ 	rt2800_register_write(rt2x00dev, offset, reg);
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2x00.h b/drivers/net/wireless/ralink/rt2x00/rt2x00.h
+index 1f38c33..49bfd3e 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00.h
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00.h
+@@ -127,17 +127,15 @@
+ #define BEACON			100
+ #define PREAMBLE		144
+ #define SHORT_PREAMBLE		72
+-#define SLOT_TIME		20
+-#define SHORT_SLOT_TIME		9
++#define SLOT_TIME		1
++#define SHORT_SLOT_TIME		1
+ #define SIFS			10
+ #define PIFS			(SIFS + SLOT_TIME)
+ #define SHORT_PIFS		(SIFS + SHORT_SLOT_TIME)
+ #define DIFS			(PIFS + SLOT_TIME)
+ #define SHORT_DIFS		(SHORT_PIFS + SHORT_SLOT_TIME)
+-#define EIFS			(SIFS + DIFS + \
+-				  GET_DURATION(IEEE80211_HEADER + ACK_SIZE, 10))
+-#define SHORT_EIFS		(SIFS + SHORT_DIFS + \
+-				  GET_DURATION(IEEE80211_HEADER + ACK_SIZE, 10))
++#define EIFS			0	
++#define SHORT_EIFS		0
+ 
+ enum rt2x00_chip_intf {
+ 	RT2X00_CHIP_INTF_PCI,
