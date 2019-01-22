@@ -1,3 +1,0 @@
-#!/bin/sh
-./vgplot -pw 500 -ph 200 -pc 3 -showx=f -showy=t -font sans -area -gutter 100 \
--areacolor=rgb\(176,196,220\) -bgcolor=rgb\(245,245,245\) -connect=f -showfile  AAPL AMZN CSCO DELL GOOG MSFT RIMM T VZ
