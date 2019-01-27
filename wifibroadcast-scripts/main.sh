@@ -1,5 +1,5 @@
 ###############################################################################
-# The main entrypoint for the Wifibroadcast system.							
+# The main entrypoint for the OpendHD system.							
 # Based heavily on the EZ-Wifibroadcast .profile script.
 ###############################################################################
 
