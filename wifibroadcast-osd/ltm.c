@@ -176,7 +176,7 @@ int ltm_check(telemetry_data_t *td) {
     //LTM_X_counter 	uint8
     //Disarm Reason 	uint8
     //(unused) 		1byte
-    td->ltm_hdop = (float)((uint16_t)ltmread_u16())/10000.0f;
+    td->hdop = (float)((uint16_t)ltmread_u16())/10000.0f;
     printf("LTM X FRAME:\n");
     printf("GPS hdop:%.2f  ", td->ltm_hdop);
 
