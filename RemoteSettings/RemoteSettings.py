@@ -17,7 +17,7 @@ from os import fdopen, remove
 from time import sleep
 import threading
 
-WFBCSettingsFile = "/boot/wifibroadcast-1.txt"
+WFBCSettingsFile = "/boot/openhd-settings-1.txt"
 OSDSettingsFile = "/boot/osdconfig.txt"
 JoystickSettingsFile = "/boot/joyconfig.txt"
 IPAndroidClient = ""
