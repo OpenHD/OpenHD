@@ -26,6 +26,7 @@ void telemetry_init(telemetry_data_t *td) {
 	td->pitch = 0;
 	td->sats = 0;
 	td->fix = 0;
+	td->hdop=0;
 	td->armed = 255;
 	td->rssi = 0;
 	td->home_fix = 0;
@@ -55,7 +56,7 @@ void telemetry_init(telemetry_data_t *td) {
     td->ltm_wpnumber = 0;
     td->ltm_naverror = 0;
 // ltm X frame
-    td->ltm_hdop = 0;
+//   td->ltm_hdop = 0;
     td->ltm_hw_status = 0;
     td->ltm_x_counter = 0;
     td->ltm_disarm_reason = 0;
