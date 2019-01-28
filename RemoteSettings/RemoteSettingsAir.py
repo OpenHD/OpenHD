@@ -18,7 +18,7 @@ from os import fdopen, remove
 from time import sleep
 
 
-WFBCSettingsFile = "/boot/wifibroadcast-1.txt"
+WFBCSettingsFile = "/boot/openhd-settings-1.txt"
 OSDSettingsFile = "/boot/osdconfig.txt"
 JoystickSettingsFile = "/boot/joyconfig.txt"
 IsTerminateRemoteSettingsPath = "/tmp/IsTerminateRemoteSettingsPath.txt"
@@ -37,7 +37,6 @@ RequestPhoneConnected = bytearray(b'PhoneConnected')
 
 
 wbc_settings_blacklist = [""]
-
 def replace_OSD_config(LookFor, NewLine):
     os.system('mount -o remount,rw /boot')
 #example: #define COPTER true
