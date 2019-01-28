@@ -1,5 +1,5 @@
 ###############################################################################
-# The main entrypoint for the Wifibroadcast system.							
+# The main entrypoint for the OpendHD system.							
 # Based heavily on the EZ-Wifibroadcast .profile script.
 ###############################################################################
 
@@ -108,9 +108,9 @@ case $TTY in
 	# sleep until everything else is loaded (atheros cards and usb flakyness ...)
 	sleep 6
 	if [ "$CAM" == "0" ]; then
-	    EZHOSTNAME="wifibrdcast-rx"
+	    EZHOSTNAME="openhd-GroundPi"
 	else
-	    EZHOSTNAME="wifibrdcast-tx"
+	    EZHOSTNAME="openhd-AirPi"
 	fi
 	# only configure ethernet network interface via DHCP if ethernet hotspot is disabled
 	if [ "$ETHERNET_HOTSPOT" == "N" ]; then
@@ -167,22 +167,22 @@ case $TTY in
     /dev/tty12) # tty for local interactive login
 	echo
 	if [ "$CAM" == "0" ]; then
-	    echo -n "Welcome to EZ-Wifibroadcast 1.6 (RX) - "
+	    echo -n "Welcome to OpenHD"
 	    read -p "Press <enter> to login"
 	    killall osd
 	    rw
 	else
-	    echo -n "Welcome to EZ-Wifibroadcast 1.6 (TX) - "
+	    echo -n "Welcome to OpenHD"
 	    read -p "Press <enter> to login"
 	    rw
 	fi
     ;;
     *) # all other ttys used for interactive login
 	if [ "$CAM" == "0" ]; then
-	    echo "Welcome to EZ-Wifibroadcast 1.6 (RX) - type 'ro' to switch filesystems back to read-only"
+	    echo "Welcome to OpenHD (GroundPi) - type 'ro' to switch filesystems back to read-only"
 	    rw
 	else
-	    echo "Welcome to EZ-Wifibroadcast 1.6 (TX) - type 'ro' to switch filesystems back to read-only"
+	    echo "Welcome to OpenHD (AirPi) - type 'ro' to switch filesystems back to read-only"
 	    rw
 	fi
     ;;

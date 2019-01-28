@@ -5,11 +5,11 @@ if [ -e "/tmp/settings.sh" ]; then
     if [ "$?" == "0" ]; then
         source /tmp/settings.sh
     else
-        echo "ERROR: wifobroadcast config file contains syntax error(s)!"
+        echo "ERROR: openhd settings file contains syntax error(s)!"
         collect_errorlog
         sleep 365d
     fi else
-    echo "ERROR: wifobroadcast config file not found!"
+    echo "ERROR: openhd settings file not found!"
     collect_errorlog
     sleep 365d
 fi
