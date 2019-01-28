@@ -28,6 +28,13 @@
 #define CELL_WARNING_PCT1 (CELL_WARNING1-CELL_MIN)/(CELL_MAX-CELL_MIN)*100
 #define CELL_WARNING_PCT2 (CELL_WARNING2-CELL_MIN)/(CELL_MAX-CELL_MIN)*100
 
+long long amps_ts; 
+long long dist_ts; 
+long long time_ts;
+float total_amps; 
+float total_dist; 
+float total_time;
+
 int width, height;
 float scale_factor_font;
 bool setting_home;
@@ -98,6 +105,8 @@ void render_init() {
 
     home_counter = 0;
 //  vgSeti(VG_MATRIX_MODE, VG_MATRIX_GLYPH_USER_TO_SURFACE);
+
+    amps_ts = dist_ts = time_ts = current_ts(); //wowi
 }
 
 
@@ -111,18 +120,18 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
     #if defined(FRSKY)
     //we assume that we have a fix if we get the NS and EW values from frsky protocol
     if (((td->ew == 'E' || td->ew == 'W') && (td->ns == 'N' || td->ns == 'S')) && !home_set){
-	setting_home = true;
+    setting_home = true;
     } else { //no fix
-	setting_home = false;
-	home_counter = 0;
+    setting_home = false;
+    home_counter = 0;
     }
     if (setting_home && !home_set){
-	//if 20 packages after each other have a fix set home
-	if (++home_counter == 20){
-	    home_set = true;
-	    home_lat = (td->ns == 'N'? 1:-1) * td->latitude;
-	    home_lon = (td->ew == 'E'? 1:-1) * td->longitude;
-	}
+    //if 20 packages after each other have a fix set home
+    if (++home_counter == 20){
+        home_set = true;
+        home_lat = (td->ns == 'N'? 1:-1) * td->latitude;
+        home_lon = (td->ew == 'E'? 1:-1) * td->longitude;
+    }
     }
     #endif
 
@@ -196,9 +205,9 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
     //LTM makes it easy: If LTM O-frame reports home fix,
     //set home position and use home lat/long from LTM O-frame
     if (td->home_fix == 1){
-	home_set = true;
-	home_lat = td->ltm_home_latitude;
-	home_lon = td->ltm_home_longitude;
+    home_set = true;
+    home_lat = td->ltm_home_latitude;
+    home_lon = td->ltm_home_longitude;
     }
     #endif
 
@@ -263,34 +272,34 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 
 #ifdef ALTLADDER
     #if IMPERIAL == true
-	#if ALTLADDER_USEBAROALT == true
-	draw_alt_ladder((int)(td->baro_altitude * TO_FEET), ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
-	#else
-	draw_alt_ladder((int)(td->altitude * TO_FEET), ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
+    #if ALTLADDER_USEBAROALT == true
+    draw_alt_ladder((int)(td->baro_altitude * TO_FEET), ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
+    #else
+    draw_alt_ladder((int)(td->altitude * TO_FEET), ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
     #endif
     #else
-	#if ALTLADDER_USEBAROALT == true
-	draw_alt_ladder((int)td->baro_altitude, ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
-	#else
-	draw_alt_ladder((int)td->altitude, ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
-	#endif
+    #if ALTLADDER_USEBAROALT == true
+    draw_alt_ladder((int)td->baro_altitude, ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
+    #else
+    draw_alt_ladder((int)td->altitude, ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
+    #endif
     #endif
 #endif
 
 
 #ifdef SPEEDLADDER
     #if IMPERIAL == true
-	#if SPEEDLADDER_USEAIRSPEED == true
-	draw_speed_ladder((int)td->airspeed*TO_MPH, SPEEDLADDER_POS_X, 50, SPEEDLADDER_SCALE * GLOBAL_SCALE);
-	#else
-	draw_speed_ladder((int)td->speed*TO_MPH, SPEEDLADDER_POS_X, 50, SPEEDLADDER_SCALE * GLOBAL_SCALE);
+    #if SPEEDLADDER_USEAIRSPEED == true
+    draw_speed_ladder((int)td->airspeed*TO_MPH, SPEEDLADDER_POS_X, 50, SPEEDLADDER_SCALE * GLOBAL_SCALE);
+    #else
+    draw_speed_ladder((int)td->speed*TO_MPH, SPEEDLADDER_POS_X, 50, SPEEDLADDER_SCALE * GLOBAL_SCALE);
     #endif
     #else
-	#if SPEEDLADDER_USEAIRSPEED == true
-	draw_speed_ladder((int)td->airspeed, SPEEDLADDER_POS_X, 50, SPEEDLADDER_SCALE * GLOBAL_SCALE);
-	#else
-	draw_speed_ladder((int)td->speed, SPEEDLADDER_POS_X, 50, SPEEDLADDER_SCALE * GLOBAL_SCALE);
-	#endif
+    #if SPEEDLADDER_USEAIRSPEED == true
+    draw_speed_ladder((int)td->airspeed, SPEEDLADDER_POS_X, 50, SPEEDLADDER_SCALE * GLOBAL_SCALE);
+    #else
+    draw_speed_ladder((int)td->speed, SPEEDLADDER_POS_X, 50, SPEEDLADDER_SCALE * GLOBAL_SCALE);
+    #endif
     #endif
 #endif
 
@@ -322,6 +331,17 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
     draw_batt_status(td->voltage, td->ampere, BATT_STATUS_POS_X, BATT_STATUS_POS_Y, BATT_STATUS_SCALE * GLOBAL_SCALE);
 #endif
 
+#ifdef TOTAL_AMPS 
+    draw_TOTAL_AMPS(td->ampere, TOTAL_AMPS_POS_X, TOTAL_AMPS_POS_Y, TOTAL_AMPS_SCALE * GLOBAL_SCALE);
+#endif
+
+#ifdef TOTAL_DIST
+    draw_TOTAL_DIST((int)td->speed, TOTAL_DIST_POS_X, TOTAL_DIST_POS_Y, TOTAL_DIST_SCALE * GLOBAL_SCALE);
+ #endif
+
+#ifdef TOTAL_TIME
+    draw_TOTAL_TIME((int)td->speed, TOTAL_TIME_POS_X, TOTAL_TIME_POS_Y, TOTAL_TIME_SCALE * GLOBAL_SCALE);
+#endif
 
 #ifdef POSITION
     #if defined(FRSKY)
@@ -332,11 +352,11 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 
 
 #ifdef DISTANCE
-	#ifdef FRSKY
-	draw_home_distance((int)distance_between(home_lat, home_lon, (td->ns == 'N'? 1:-1) *td->latitude, (td->ns == 'E'? 1:-1) *td->longitude), home_set, DISTANCE_POS_X, DISTANCE_POS_Y, DISTANCE_SCALE * GLOBAL_SCALE);
-	#elif defined(LTM) || defined(MAVLINK) || defined(SMARTPORT)
+    #ifdef FRSKY
+    draw_home_distance((int)distance_between(home_lat, home_lon, (td->ns == 'N'? 1:-1) *td->latitude, (td->ns == 'E'? 1:-1) *td->longitude), home_set, DISTANCE_POS_X, DISTANCE_POS_Y, DISTANCE_SCALE * GLOBAL_SCALE);
+    #elif defined(LTM) || defined(MAVLINK) || defined(SMARTPORT)
         draw_home_distance((int)distance_between(home_lat, home_lon, td->latitude, td->longitude), home_set, DISTANCE_POS_X, DISTANCE_POS_Y, DISTANCE_SCALE * GLOBAL_SCALE);
-	#endif
+    #endif
 #endif
 
 
@@ -347,10 +367,10 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 
     no_signal=true;
     for(i=0; i<ac; ++i) { // find out which card has best signal (and if atleast one card has a signal)
-	if (td->rx_status->adapter[i].signal_good == 1) {
-    	    if (best_dbm < td->rx_status->adapter[i].current_signal_dbm) best_dbm = td->rx_status->adapter[i].current_signal_dbm;
-	}
-	if (td->rx_status->adapter[i].signal_good == 1) no_signal=false;
+    if (td->rx_status->adapter[i].signal_good == 1) {
+            if (best_dbm < td->rx_status->adapter[i].current_signal_dbm) best_dbm = td->rx_status->adapter[i].current_signal_dbm;
+    }
+    if (td->rx_status->adapter[i].signal_good == 1) no_signal=false;
     }
 
     draw_total_signal(best_dbm, td->rx_status->received_block_cnt, td->rx_status->damaged_block_cnt, td->rx_status->lost_packet_cnt, td->rx_status->received_packet_cnt, td->rx_status->lost_per_block_cnt, DOWNLINK_RSSI_POS_X, DOWNLINK_RSSI_POS_Y, DOWNLINK_RSSI_SCALE * GLOBAL_SCALE);
@@ -367,12 +387,12 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
     #if defined(FRSKY)
     //we assume that we have a fix if we get the NS and EW values from frsky protocol
     if ((td->ew == 'E' || td->ew == 'W') && (td->ns == 'N' || td->ns == 'S')){
-	draw_sat(0, 2, SAT_POS_X, SAT_POS_Y, SAT_SCALE * GLOBAL_SCALE);
+    draw_sat(0, 2, SAT_POS_X, SAT_POS_Y, SAT_SCALE * GLOBAL_SCALE);
     } else { //no fix
-	draw_sat(0, 0, SAT_POS_X, SAT_POS_Y, SAT_SCALE * GLOBAL_SCALE);
+    draw_sat(0, 0, SAT_POS_X, SAT_POS_Y, SAT_SCALE * GLOBAL_SCALE);
     }
     #elif defined(MAVLINK) || defined(SMARTPORT) || defined(LTM)
-    draw_sat(td->sats, td->fix, SAT_POS_X, SAT_POS_Y, SAT_SCALE * GLOBAL_SCALE);
+    draw_sat(td->sats, td->fix, td->hdop, SAT_POS_X, SAT_POS_Y, SAT_SCALE * GLOBAL_SCALE);
     #endif
 #endif
 
@@ -407,87 +427,87 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
     float text_scale = getWidth(2) * scale;
 
     if (armed == 1){
-	switch (mode) {
-	#if COPTER == true
-	case 0: sprintf(buffer, "STAB"); break;
-	case 1: sprintf(buffer, "ACRO"); break;
-	case 2: sprintf(buffer, "ALTHOLD"); break;
-	case 3: sprintf(buffer, "AUTO"); break;
-	case 4: sprintf(buffer, "GUIDED"); break;
-	case 5: sprintf(buffer, "LOITER"); break;
-	case 6: sprintf(buffer, "RTL"); break;
-	case 7: sprintf(buffer, "CIRCLE"); break;
-	case 9: sprintf(buffer, "LAND"); break;
-	case 11: sprintf(buffer, "DRIFT"); break;
-	case 13: sprintf(buffer, "SPORT"); break;
-	case 14: sprintf(buffer, "FLIP"); break;
-	case 15: sprintf(buffer, "AUTOTUNE"); break;
-	case 16: sprintf(buffer, "POSHOLD"); break;
-	case 17: sprintf(buffer, "BRAKE"); break;
-	case 18: sprintf(buffer, "THROW"); break;
-	case 19: sprintf(buffer, "AVOIDADSB"); break;
-	case 20: sprintf(buffer, "GUIDEDNOGPS"); break;
-	case 255: sprintf(buffer, "-----"); break;
-	#else
-	case 0: sprintf(buffer, "MAN"); break;
-	case 1: sprintf(buffer, "CIRC"); break;
-	case 2: sprintf(buffer, "STAB"); break;
-	case 3: sprintf(buffer, "TRAI"); break;
-	case 4: sprintf(buffer, "ACRO"); break;
-	case 5: sprintf(buffer, "FBWA"); break;
-	case 6: sprintf(buffer, "FBWB"); break;
-	case 7: sprintf(buffer, "CRUZ"); break;
-	case 8: sprintf(buffer, "TUNE"); break;
-	case 10: sprintf(buffer, "AUTO"); break;
-	case 11: sprintf(buffer, "RTL"); break;
-	case 12: sprintf(buffer, "LOIT"); break;
-	case 15: sprintf(buffer, "GUID"); break;
-	case 16: sprintf(buffer, "INIT"); break;
-	case 255: sprintf(buffer, "-----"); break;
-	#endif
-	default: sprintf(buffer, "-----"); break; // TODO: find out why strange numbers when using zs6bujs telemetry logs, default to something more sensible like "unknown mode"
-	}
+    switch (mode) {
+    #if COPTER == true
+    case 0: sprintf(buffer, "STAB"); break;
+    case 1: sprintf(buffer, "ACRO"); break;
+    case 2: sprintf(buffer, "ALTHOLD"); break;
+    case 3: sprintf(buffer, "AUTO"); break;
+    case 4: sprintf(buffer, "GUIDED"); break;
+    case 5: sprintf(buffer, "LOITER"); break;
+    case 6: sprintf(buffer, "RTL"); break;
+    case 7: sprintf(buffer, "CIRCLE"); break;
+    case 9: sprintf(buffer, "LAND"); break;
+    case 11: sprintf(buffer, "DRIFT"); break;
+    case 13: sprintf(buffer, "SPORT"); break;
+    case 14: sprintf(buffer, "FLIP"); break;
+    case 15: sprintf(buffer, "AUTOTUNE"); break;
+    case 16: sprintf(buffer, "POSHOLD"); break;
+    case 17: sprintf(buffer, "BRAKE"); break;
+    case 18: sprintf(buffer, "THROW"); break;
+    case 19: sprintf(buffer, "AVOIDADSB"); break;
+    case 20: sprintf(buffer, "GUIDEDNOGPS"); break;
+    case 255: sprintf(buffer, "-----"); break;
+    #else
+    case 0: sprintf(buffer, "MAN"); break;
+    case 1: sprintf(buffer, "CIRC"); break;
+    case 2: sprintf(buffer, "STAB"); break;
+    case 3: sprintf(buffer, "TRAI"); break;
+    case 4: sprintf(buffer, "ACRO"); break;
+    case 5: sprintf(buffer, "FBWA"); break;
+    case 6: sprintf(buffer, "FBWB"); break;
+    case 7: sprintf(buffer, "CRUZ"); break;
+    case 8: sprintf(buffer, "TUNE"); break;
+    case 10: sprintf(buffer, "AUTO"); break;
+    case 11: sprintf(buffer, "RTL"); break;
+    case 12: sprintf(buffer, "LOIT"); break;
+    case 15: sprintf(buffer, "GUID"); break;
+    case 16: sprintf(buffer, "INIT"); break;
+    case 255: sprintf(buffer, "-----"); break;
+    #endif
+    default: sprintf(buffer, "-----"); break; // TODO: find out why strange numbers when using zs6bujs telemetry logs, default to something more sensible like "unknown mode"
+    }
     } else {
-	switch (mode) {
-	#if COPTER == true
-	case 0: sprintf(buffer, "[STAB]"); break;
-	case 1: sprintf(buffer, "[ACRO]"); break;
-	case 2: sprintf(buffer, "[ALTHOLD]"); break;
-	case 3: sprintf(buffer, "[AUTO]"); break;
-	case 4: sprintf(buffer, "[GUID]"); break;
-	case 5: sprintf(buffer, "[LOIT]"); break;
-	case 6: sprintf(buffer, "[RTL]"); break;
-	case 7: sprintf(buffer, "[CIRCLE]"); break;
-	case 9: sprintf(buffer, "[LAND]"); break;
-	case 11: sprintf(buffer, "[DRIFT]"); break;
-	case 13: sprintf(buffer, "[SPORT]"); break;
-	case 14: sprintf(buffer, "[FLIP]"); break;
-	case 15: sprintf(buffer, "[AUTOTUNE]"); break;
-	case 16: sprintf(buffer, "[POSHOLD]"); break;
-	case 17: sprintf(buffer, "[BRAKE]"); break;
-	case 18: sprintf(buffer, "[THROW]"); break;
-	case 19: sprintf(buffer, "[AVOIDADSB]"); break;
-	case 20: sprintf(buffer, "[GUIDEDNOGPS]"); break;
-	case 255: sprintf(buffer, "[-----]"); break;
-	#else
-	case 0: sprintf(buffer, "[MAN]"); break;
-	case 1: sprintf(buffer, "[CIRC]"); break;
-	case 2: sprintf(buffer, "[STAB]"); break;
-	case 3: sprintf(buffer, "[TRAI]"); break;
-	case 4: sprintf(buffer, "[ACRO]"); break;
-	case 5: sprintf(buffer, "[FBWA]"); break;
-	case 6: sprintf(buffer, "[FBWB]"); break;
-	case 7: sprintf(buffer, "[CRUZ]"); break;
-	case 8: sprintf(buffer, "[TUNE]"); break;
-	case 10: sprintf(buffer, "[AUTO]"); break;
-	case 11: sprintf(buffer, "[RTL]"); break;
-	case 12: sprintf(buffer, "[LOIT]"); break;
-	case 15: sprintf(buffer, "[GUID]"); break;
-	case 16: sprintf(buffer, "[INIT]"); break;
-	case 255: sprintf(buffer, "[-----]"); break;
-	#endif
-	default: sprintf(buffer, "[-----]"); break; // TODO: find out why strange numbers when using zs6bujs telemetry logs, default to something more sensible like "unknown mode"
-	}
+    switch (mode) {
+    #if COPTER == true
+    case 0: sprintf(buffer, "[STAB]"); break;
+    case 1: sprintf(buffer, "[ACRO]"); break;
+    case 2: sprintf(buffer, "[ALTHOLD]"); break;
+    case 3: sprintf(buffer, "[AUTO]"); break;
+    case 4: sprintf(buffer, "[GUID]"); break;
+    case 5: sprintf(buffer, "[LOIT]"); break;
+    case 6: sprintf(buffer, "[RTL]"); break;
+    case 7: sprintf(buffer, "[CIRCLE]"); break;
+    case 9: sprintf(buffer, "[LAND]"); break;
+    case 11: sprintf(buffer, "[DRIFT]"); break;
+    case 13: sprintf(buffer, "[SPORT]"); break;
+    case 14: sprintf(buffer, "[FLIP]"); break;
+    case 15: sprintf(buffer, "[AUTOTUNE]"); break;
+    case 16: sprintf(buffer, "[POSHOLD]"); break;
+    case 17: sprintf(buffer, "[BRAKE]"); break;
+    case 18: sprintf(buffer, "[THROW]"); break;
+    case 19: sprintf(buffer, "[AVOIDADSB]"); break;
+    case 20: sprintf(buffer, "[GUIDEDNOGPS]"); break;
+    case 255: sprintf(buffer, "[-----]"); break;
+    #else
+    case 0: sprintf(buffer, "[MAN]"); break;
+    case 1: sprintf(buffer, "[CIRC]"); break;
+    case 2: sprintf(buffer, "[STAB]"); break;
+    case 3: sprintf(buffer, "[TRAI]"); break;
+    case 4: sprintf(buffer, "[ACRO]"); break;
+    case 5: sprintf(buffer, "[FBWA]"); break;
+    case 6: sprintf(buffer, "[FBWB]"); break;
+    case 7: sprintf(buffer, "[CRUZ]"); break;
+    case 8: sprintf(buffer, "[TUNE]"); break;
+    case 10: sprintf(buffer, "[AUTO]"); break;
+    case 11: sprintf(buffer, "[RTL]"); break;
+    case 12: sprintf(buffer, "[LOIT]"); break;
+    case 15: sprintf(buffer, "[GUID]"); break;
+    case 16: sprintf(buffer, "[INIT]"); break;
+    case 255: sprintf(buffer, "[-----]"); break;
+    #endif
+    default: sprintf(buffer, "[-----]"); break; // TODO: find out why strange numbers when using zs6bujs telemetry logs, default to something more sensible like "unknown mode"
+    }
     }
     TextMid(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
 }
@@ -525,9 +545,9 @@ void draw_climb(float climb, float pos_x, float pos_y, float scale){
 
     TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y), "", osdicons, text_scale*0.6);
     if (climb > 0.0f) {
-	sprintf(buffer, "+%.1f", climb);
+    sprintf(buffer, "+%.1f", climb);
     } else {
-	sprintf(buffer, "%.1f", climb);
+    sprintf(buffer, "%.1f", climb);
     }
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
     Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "m/s", myfont, text_scale*0.6);
@@ -638,17 +658,17 @@ void draw_uplink_signal(int8_t uplink_signal, int uplink_lostpackets, int8_t rc_
     StrokeWidth(OUTLINEWIDTH);
 
     if ((uplink_signal < -125) && (rc_signal < -125)) { // both no signal, display red dashes
-	Fill(255,20,20,getOpacity(COLOR)); // red
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
-	sprintf(buffer, "-- ");
+    Fill(255,20,20,getOpacity(COLOR)); // red
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    sprintf(buffer, "-- ");
     } else if (rc_signal < -125) { // only r/c no signal, so display uplink signal
-	Fill(COLOR);
-	Stroke(OUTLINECOLOR);
-	sprintf(buffer, "%02d", uplink_signal);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
+    sprintf(buffer, "%02d", uplink_signal);
     } else { // if both have signal, display r/c signal
-	Fill(COLOR);
-	Stroke(OUTLINECOLOR);
-	sprintf(buffer, "%02d", rc_signal);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
+    sprintf(buffer, "%02d", rc_signal);
     }
 
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
@@ -679,18 +699,18 @@ void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_
     float ms = (float)injection_time / 1000;
 
     if (cts == 0) {
-	sprintf(buffer, "%.1f (%.1f)", mbit_tx, mbit_measured);
+    sprintf(buffer, "%.1f (%.1f)", mbit_tx, mbit_measured);
     } else {
-	sprintf(buffer, "%.1f (%.1f) CTS", mbit_tx, mbit_measured);
+    sprintf(buffer, "%.1f (%.1f) CTS", mbit_tx, mbit_measured);
     }
     Text(getWidth(pos_x)-width_value-width_symbol, getHeight(pos_y)-height_text_small, buffer, myfont, text_scale*0.6);
 
     if (fecs_skipped > fecs_skipped_last) {
         Fill(255,20,20,getOpacity(COLOR)); // red
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
     } else {
-	Fill(COLOR);
-	Stroke(OUTLINECOLOR);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
     }
     fecs_skipped_last = fecs_skipped;
 
@@ -698,13 +718,13 @@ void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_
 
     if (mbit > mbit_measured*0.98) {
         Fill(255,20,20,getOpacity(COLOR)); // red
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
     } else if (mbit > mbit_measured*0.90) {
         Fill(229,255,20,getOpacity(COLOR)); // yellow
-	Stroke(229,255,20,getOpacity(OUTLINECOLOR));
+    Stroke(229,255,20,getOpacity(OUTLINECOLOR));
     } else {
-	Fill(COLOR);
-	Stroke(OUTLINECOLOR);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
     }
     sprintf(buffer, "%.1f", mbit);
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
@@ -738,13 +758,13 @@ void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_
 
     if (cpuload_air > 95) {
         Fill(255,20,20,getOpacity(COLOR)); // red
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
     } else if (cpuload_air > 85) {
         Fill(229,255,20,getOpacity(COLOR)); // yellow
-	Stroke(229,255,20,getOpacity(OUTLINECOLOR));
+    Stroke(229,255,20,getOpacity(OUTLINECOLOR));
     } else {
-	Fill(COLOR);
-	Stroke(OUTLINECOLOR);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
     }
     sprintf(buffer, "%d", cpuload_air);
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
@@ -754,13 +774,13 @@ void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_
 
     if (temp_air > 79) {
         Fill(255,20,20,getOpacity(COLOR)); // red
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
     } else if (temp_air > 74) {
         Fill(229,255,20,getOpacity(COLOR)); // yellow
-	Stroke(229,255,20,getOpacity(OUTLINECOLOR));
+    Stroke(229,255,20,getOpacity(OUTLINECOLOR));
     } else {
-	Fill(COLOR);
-	Stroke(OUTLINECOLOR);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
     }
     sprintf(buffer, "%d°", temp_air);
     TextEnd(getWidth(pos_x)+width_value+width_label+getWidth(0.7), getHeight(pos_y), buffer, myfont, text_scale);
@@ -773,13 +793,13 @@ void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_
 
     if (cpuload_gnd > 95) {
         Fill(255,20,20,getOpacity(COLOR)); // red
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
     } else if (cpuload_gnd > 85) {
         Fill(229,255,20,getOpacity(COLOR)); // yellow
-	Stroke(229,255,20,getOpacity(OUTLINECOLOR));
+    Stroke(229,255,20,getOpacity(OUTLINECOLOR));
     } else {
-	Fill(COLOR);
-	Stroke(OUTLINECOLOR);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
     }
     sprintf(buffer, "%d", cpuload_gnd);
     TextEnd(getWidth(pos_x), getHeight(pos_y)-height_text, buffer, myfont, text_scale);
@@ -788,13 +808,13 @@ void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_
 
     if (temp_gnd > 79) {
         Fill(255,20,20,getOpacity(COLOR)); // red
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
     } else if (temp_gnd > 74) {
         Fill(229,255,20,getOpacity(COLOR)); // yellow
-	Stroke(229,255,20,getOpacity(OUTLINECOLOR));
+    Stroke(229,255,20,getOpacity(OUTLINECOLOR));
     } else {
-	Fill(COLOR);
-	Stroke(OUTLINECOLOR);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
     }
     sprintf(buffer, "%d°", temp_gnd);
     TextEnd(getWidth(pos_x)+width_value+width_label+getWidth(0.7), getHeight(pos_y)-height_text, buffer, myfont, text_scale);
@@ -811,18 +831,18 @@ void draw_message(int severity, char line1[30], char line2[30], char line3[30], 
     VGfloat width_text = TextWidth(line1, myfont, text_scale*0.7);
 
     if (severity == 0)  { // high severity
-	Fill(255,20,20,getOpacity(COLOR)); // red
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
-	TextEnd(getWidth(pos_x)-width_text/2 - getWidth(0.3)*scale, getHeight(pos_y), "", osdicons, text_scale*0.8);
-	Text(getWidth(pos_x)+width_text/2 + getWidth(0.3)*scale, getHeight(pos_y), "", osdicons, text_scale*0.8);
+    Fill(255,20,20,getOpacity(COLOR)); // red
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    TextEnd(getWidth(pos_x)-width_text/2 - getWidth(0.3)*scale, getHeight(pos_y), "", osdicons, text_scale*0.8);
+    Text(getWidth(pos_x)+width_text/2 + getWidth(0.3)*scale, getHeight(pos_y), "", osdicons, text_scale*0.8);
     } else if (severity == 1) { // medium
         Fill(229,255,20,getOpacity(COLOR)); // yellow
-	Stroke(229,255,20,getOpacity(OUTLINECOLOR));
-	TextEnd(getWidth(pos_x)-width_text/2 - getWidth(0.3)*scale, getHeight(pos_y), "", osdicons, text_scale*0.8);
-	Text(getWidth(pos_x)+width_text/2 + getWidth(0.3)*scale, getHeight(pos_y), "", osdicons, text_scale*0.8);
+    Stroke(229,255,20,getOpacity(OUTLINECOLOR));
+    TextEnd(getWidth(pos_x)-width_text/2 - getWidth(0.3)*scale, getHeight(pos_y), "", osdicons, text_scale*0.8);
+    Text(getWidth(pos_x)+width_text/2 + getWidth(0.3)*scale, getHeight(pos_y), "", osdicons, text_scale*0.8);
     } else { // low
-	Fill(COLOR);
-	Stroke(OUTLINECOLOR);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
     }
 
     Fill(COLOR);
@@ -874,46 +894,46 @@ void draw_compass(float heading, float home_heading, float pos_x, float pos_y, f
     char* c;
     bool draw = false;
     while (i <= heading + 90) {  //find all values from heading - 90 to heading + 90 that are % 15 == 0
-	float x = getWidth(pos_x) + (i - heading) * ratio;
-	if (i % 30 == 0) {
-	    Rect(x-width_element/2, getHeight(pos_y), width_element, height_element*2);
-	}else if (i % 15 == 0) {
-	    Rect(x-width_element/2, getHeight(pos_y), width_element, height_element);
-	}else{
-	    i++;
-	    continue;
-	}
+    float x = getWidth(pos_x) + (i - heading) * ratio;
+    if (i % 30 == 0) {
+        Rect(x-width_element/2, getHeight(pos_y), width_element, height_element*2);
+    }else if (i % 15 == 0) {
+        Rect(x-width_element/2, getHeight(pos_y), width_element, height_element);
+    }else{
+        i++;
+        continue;
+    }
 
-	int j = i;
-	if (j < 0) j += 360;
-	if (j >= 360) j -= 360;
+    int j = i;
+    if (j < 0) j += 360;
+    if (j >= 360) j -= 360;
 
-	switch (j) {
-	    case 0:
-	        draw = true;
-	        c = "N";
-	        break;
-	    case 90:
-	        draw = true;
-	        c = "E";
-	        break;
-	    case 180:
-	        draw = true;
-	        c = "S";
-	        break;
-	    case 270:
-	        draw = true;
-	        c = "W";
-	        break;
-	}
-	if (draw == true) {
-	    TextMid(x, getHeight(pos_y) + height_element*3.5, c, myfont, text_scale*1.5);
-	    draw = false;
-	}
-	if (j == home_heading) {
-	     TextMid(x, getHeight(pos_y) + height_element, "", osdicons, text_scale*1.3);
-	 }
-	i++;
+    switch (j) {
+        case 0:
+            draw = true;
+            c = "N";
+            break;
+        case 90:
+            draw = true;
+            c = "E";
+            break;
+        case 180:
+            draw = true;
+            c = "S";
+            break;
+        case 270:
+            draw = true;
+            c = "W";
+            break;
+    }
+    if (draw == true) {
+        TextMid(x, getHeight(pos_y) + height_element*3.5, c, myfont, text_scale*1.5);
+        draw = false;
+    }
+    if (j == home_heading) {
+         TextMid(x, getHeight(pos_y) + height_element, "", osdicons, text_scale*1.3);
+     }
+    i++;
     }
 
     float rel_home = home_heading-heading;
@@ -941,7 +961,52 @@ void draw_batt_status(float voltage, float current, float pos_x, float pos_y, fl
     Text(getWidth(pos_x), getHeight(pos_y)+height_text, " V", myfont, text_scale*0.6);
 }
 
-
+// display totals mAh used, distance flown (km), airborne time (mins) - wowi
+void draw_TOTAL_AMPS(float current, float pos_x, float pos_y, float scale){
+ 
+    // get time passed since last rendering
+    long time_diff = current_ts() - amps_ts;
+    amps_ts = current_ts();
+    total_amps = total_amps + current*(float)time_diff/3600;
+ 
+  
+    float text_scale = getWidth(2) * scale;
+    VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
+    sprintf(buffer, "%5.0f", total_amps);
+    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
+    Text(getWidth(pos_x), getHeight(pos_y), " mAh", myfont, text_scale*0.6);
+ 
+}
+void draw_TOTAL_DIST(int gpsspeed, float pos_x, float pos_y, float scale){
+ 
+    // get time passed since last rendering
+    long time_diff = current_ts() - dist_ts;
+    dist_ts = current_ts();
+    total_dist = total_dist + gpsspeed*(float)time_diff/3600000;
+ 
+    float text_scale = getWidth(2) * scale;
+    VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
+    sprintf(buffer, "%3.1f", total_dist);
+    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
+    Text(getWidth(pos_x), getHeight(pos_y), " km", myfont, text_scale*0.6);
+ 
+}
+void draw_TOTAL_TIME(int gpsspeed, float pos_x, float pos_y, float scale){
+ 
+    // get time passed since last rendering
+    long time_diff = current_ts() - time_ts;
+    time_ts = current_ts();
+    if(gpsspeed>0){
+        total_time = total_time + (float)time_diff/60000; // flying time in minutes
+    }
+ 
+    float text_scale = getWidth(2) * scale;
+    VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
+    sprintf(buffer, "%3.0f:%02d", total_time, (int)(total_time*60) % 60);
+    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
+    Text(getWidth(pos_x), getHeight(pos_y), " mins", myfont, text_scale*0.6);
+ 
+}
 
 void draw_position(float lat, float lon, float pos_x, float pos_y, float scale){
     float text_scale = getWidth(2) * scale;
@@ -967,10 +1032,10 @@ void draw_home_distance(int distance, bool home_fixed, float pos_x, float pos_y,
 
     if (!home_fixed){
         Fill(255,20,20,getOpacity(COLOR)); // red
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
     }else{
         Fill(COLOR);
-	Stroke(OUTLINECOLOR);
+    Stroke(OUTLINECOLOR);
     }
     TextEnd(getWidth(pos_x)-width_value-getWidth(0.2), getHeight(pos_y), "", osdicons, text_scale * 0.6);
 
@@ -1015,12 +1080,12 @@ void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale){
 
     int k;
     for (k = (int) (alt - range / 2); k <= alt + range / 2; k++) {
-	int y = getHeight(pos_y) + (k - alt) * ratio_alt;
-	if (k % 50 == 0) {
-	    Rect(px-width_element, y, width_element*2, height_element);
-	    sprintf(buffer, "%d", k);
-	    Text(pxlabel, y-offset_text_ladder, buffer, myfont, text_scale);
-	} else if (k % 5 == 0) {
+    int y = getHeight(pos_y) + (k - alt) * ratio_alt;
+    if (k % 50 == 0) {
+        Rect(px-width_element, y, width_element*2, height_element);
+        sprintf(buffer, "%d", k);
+        Text(pxlabel, y-offset_text_ladder, buffer, myfont, text_scale);
+    } else if (k % 5 == 0) {
             Rect(px-width_element, y, width_element, height_element);
         }
     }
@@ -1054,16 +1119,16 @@ void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale){
 
     int k;
     for (k = (int) (speed - range_half); k <= speed + range_half; k++) {
-	int y = getHeight(pos_y) + (k - speed) * ratio_speed;
-	if (k % 5 == 0) { // wide element plus number label every 5 'ticks' on the scale
-	    Rect(px-width_element, y, width_element*2, height_element);
- 	    if (k >= 0) {
-		sprintf(buffer, "%d", k);
-		TextEnd(pxlabel, y-offset_text_ladder, buffer, myfont, text_scale);
-	    }
-	} else if (k % 1 == 0) { // narrow element every single 'tick' on the scale
-	    Rect(px, y, width_element, height_element);
-	}
+    int y = getHeight(pos_y) + (k - speed) * ratio_speed;
+    if (k % 5 == 0) { // wide element plus number label every 5 'ticks' on the scale
+        Rect(px-width_element, y, width_element*2, height_element);
+        if (k >= 0) {
+        sprintf(buffer, "%d", k);
+        TextEnd(pxlabel, y-offset_text_ladder, buffer, myfont, text_scale);
+        }
+    } else if (k % 1 == 0) { // narrow element every single 'tick' on the scale
+        Rect(px, y, width_element, height_element);
+    }
     }
 }
 
@@ -1087,13 +1152,13 @@ void draw_card_signal(int8_t signal, int signal_good, int card, int adapter_cnt,
     TextEnd(getWidth(pos_x) - width_value - getWidth(0.3)*scale, getHeight(pos_y) - card * height_text, buffer, myfont, text_scale*0.4);
 
     if (( signal_good == 0) || (signal == -127)) {
-	Fill(255,20,20,getOpacity(COLOR)); // red
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
-	sprintf(buffer, "-- ");
+    Fill(255,20,20,getOpacity(COLOR)); // red
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    sprintf(buffer, "-- ");
     } else {
-	Fill(COLOR);
-	Stroke(OUTLINECOLOR);
-	sprintf(buffer, "%d", signal);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
+    sprintf(buffer, "%d", signal);
     }
     TextEnd(getWidth(pos_x), getHeight(pos_y) - card * height_text, buffer, myfont, text_scale);
     Fill(COLOR);
@@ -1103,17 +1168,18 @@ void draw_card_signal(int8_t signal, int signal_good, int card, int adapter_cnt,
     Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y) - card * height_text, buffer, myfont, text_scale*0.6);
 
     if (restart_count - tx_restart_count_last > 0) {
-	int y;
-	for (y=0; y<adapter_cnt; y++) {
-	    packetslost_last[y] = 0;
-	}
+    int y;
+    for (y=0; y<adapter_cnt; y++) {
+        packetslost_last[y] = 0;
+    }
     }
     tx_restart_count_last = restart_count;
 
     int lost=totalpackets-packets+totalpacketslost;
     if (lost < packetslost_last[card]) lost = packetslost_last[card];
     packetslost_last[card] = lost;
-    sprintf(buffer, "(%d)", lost);
+    int percent_lost_card=(int)((double)lost/packets*100);
+    sprintf(buffer, "%d (%d%%)", lost, percent_lost_card);
     Text(getWidth(pos_x)+width_unit+getWidth(0.65)*scale, getHeight(pos_y) - card * height_text, buffer, myfont, text_scale*0.7);
 }
 
@@ -1130,12 +1196,12 @@ void draw_total_signal(int8_t signal, int goodblocks, int badblocks, int packets
 
     if (no_signal == true) {
         Fill(255,20,20,getOpacity(COLOR)); // red
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
-	sprintf(buffer, "-- ");
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    sprintf(buffer, "-- ");
     } else {
         Fill(COLOR);
-	Stroke(OUTLINECOLOR);
-	sprintf(buffer, "%02d", signal);
+    Stroke(OUTLINECOLOR);
+    sprintf(buffer, "%02d", signal);
     }
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
 
@@ -1144,52 +1210,56 @@ void draw_total_signal(int8_t signal, int goodblocks, int badblocks, int packets
 
     Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "dBm", myfont, text_scale*0.6);
 
-    sprintf(buffer, "%d/%d", badblocks, packets_lost);
+    int percent_badblocks=(int)((double)badblocks/goodblocks*100);
+    int percent_packets_lost=(int)((double)packets_lost/packets_received*100);
+
+    sprintf(buffer, "%d (%d%%)/%d (%d%%)", badblocks, percent_badblocks, packets_lost, percent_packets_lost);
+    
     Text(getWidth(pos_x)-width_value-width_symbol, getHeight(pos_y)-height_text, buffer, myfont, text_scale*0.6);
 
     TextEnd(getWidth(pos_x)-width_value - getWidth(0.3) * scale, getHeight(pos_y), "", osdicons, text_scale * 0.7);
 
     switch (lost_per_block) {
-	case 0:
-		sprintf(buffer, "▁");
-		Fill(COLOR);
-		break;
-	case 1:
-		sprintf(buffer, "▂");
-		Fill(74,255,4,0.5); // green
-	        break;
-	case 2:
-		sprintf(buffer, "▃");
-		Fill(112,255,4,0.5); //
-	        break;
-	case 3:
-		sprintf(buffer, "▄");
-		Fill(182,255,4,0.5); //
-	        break;
-	case 4:
-		sprintf(buffer, "▅");
-		Fill(255,208,4,0.5); //
-	        break;
-	case 5:
-		sprintf(buffer, "▆");
-		Fill(255,93,4,0.5); //
-	        break;
-	case 6:
-		sprintf(buffer, "▇");
-		Fill(255,50,4,0.5); //
-	        break;
-	case 7:
-		sprintf(buffer, "█");
-		Fill(255,0,4,0.5); // red
-	        break;
-	case 8:
-		sprintf(buffer, "█");
-		Fill(255,0,4,0.5); // red
-	        break;
-	default:
-		sprintf(buffer, "█");
-		Fill(255,0,4,0.5); // red
-	}
+    case 0:
+        sprintf(buffer, "▁");
+        Fill(COLOR);
+        break;
+    case 1:
+        sprintf(buffer, "▂");
+        Fill(74,255,4,0.5); // green
+            break;
+    case 2:
+        sprintf(buffer, "▃");
+        Fill(112,255,4,0.5); //
+            break;
+    case 3:
+        sprintf(buffer, "▄");
+        Fill(182,255,4,0.5); //
+            break;
+    case 4:
+        sprintf(buffer, "▅");
+        Fill(255,208,4,0.5); //
+            break;
+    case 5:
+        sprintf(buffer, "▆");
+        Fill(255,93,4,0.5); //
+            break;
+    case 6:
+        sprintf(buffer, "▇");
+        Fill(255,50,4,0.5); //
+            break;
+    case 7:
+        sprintf(buffer, "█");
+        Fill(255,0,4,0.5); // red
+            break;
+    case 8:
+        sprintf(buffer, "█");
+        Fill(255,0,4,0.5); // red
+            break;
+    default:
+        sprintf(buffer, "█");
+        Fill(255,0,4,0.5); // red
+    }
 
     #if DOWNLINK_RSSI_FEC_BAR == true
     StrokeWidth(0);
@@ -1203,7 +1273,7 @@ void draw_total_signal(int8_t signal, int goodblocks, int badblocks, int packets
 
 
 
-void draw_sat(int sats, int fixtype, float pos_x, float pos_y, float scale){
+void draw_sat(int sats, int fixtype, int hdop, float pos_x, float pos_y, float scale){
     float text_scale = getWidth(2) * scale;
 
     Fill(COLOR);
@@ -1211,18 +1281,19 @@ void draw_sat(int sats, int fixtype, float pos_x, float pos_y, float scale){
     StrokeWidth(OUTLINEWIDTH);
     if (fixtype < 2){
         Fill(255,20,20,getOpacity(COLOR)); // red
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
         TextEnd(getWidth(pos_x), getHeight(pos_y), "", osdicons, text_scale*0.7);
     }else{
         Fill(COLOR);
-	Stroke(OUTLINECOLOR);
-	TextEnd(getWidth(pos_x), getHeight(pos_y), "", osdicons, text_scale*0.7);
+    Stroke(OUTLINECOLOR);
+    TextEnd(getWidth(pos_x), getHeight(pos_y), "", osdicons, text_scale*0.7);
     }
 
     #if defined(LTM) || defined(MAVLINK)
     Fill(COLOR);
     Stroke(OUTLINECOLOR);
-    sprintf(buffer, "%d", sats);
+    float decimal_hdop = (float) hdop/100;
+    sprintf(buffer, "%d(%.2f)", sats, decimal_hdop);
     Text(getWidth(pos_x)+getWidth(0.2), getHeight(pos_y), buffer, myfont, text_scale);
     #endif
 }
@@ -1245,14 +1316,14 @@ void draw_batt_gauge(int remaining, float pos_x, float pos_y, float scale){
     int stroke_y = cell_height * 0.1;
 
     if (remaining <= CELL_WARNING_PCT1 && remaining > CELL_WARNING_PCT2) {
-	Fill(255,165,0,getOpacity(COLOR));
-	Stroke(255,165,0,getOpacity(OUTLINECOLOR));
+    Fill(255,165,0,getOpacity(COLOR));
+    Stroke(255,165,0,getOpacity(OUTLINECOLOR));
     } else if (remaining <= CELL_WARNING_PCT2) { 
-	Fill(255,20,20,getOpacity(COLOR));
-	Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    Fill(255,20,20,getOpacity(COLOR));
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
     } else {
-	Fill(COLOR);
-	Stroke(OUTLINECOLOR);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
     }
 
     StrokeWidth(OUTLINEWIDTH);
@@ -1297,38 +1368,38 @@ void draw_ahi(float roll, float pitch, float scale){
     int k = pitch - range/2;
     int max = pitch + range/2;
     while (k <= max){
-	float y = pos_y + (k - pitch) * ratio;
-	if (k % 5 == 0 && k!= 0) {
-	    #if AHI_LADDER == true
-	    sprintf(buffer, "%d", k);
-	    TextEnd(pos_x - width_ladder / 2 - space_text, y - width / height_ladder, buffer, myfont, text_scale*0.85); // right numbers
-	    Text(pos_x + width_ladder / 2 + space_text, y - width / height_ladder, buffer, myfont, text_scale*0.85); // left numbers
-	    #endif
-	}
-	if ((k > 0) && (k % 5 == 0)) { // upper ladders
-	    #if AHI_LADDER == true
-	    float px = pos_x - width_ladder / 2;
-	    Rect(px, y, width_ladder/3, height_element);
-	    Rect(px+width_ladder*2/3, y, width_ladder/3, height_element);
-	    #endif
-	} else if ((k < 0) && (k % 5 == 0)) { // lower ladders
-	    #if AHI_LADDER == true
-	    Rect( px_l, y, width_ladder/12, height_element);
-	    Rect(px3_l, y, width_ladder/12, height_element);
-	    Rect(px5_l, y, width_ladder/12, height_element);
-	    Rect( px_r, y, width_ladder/12, height_element);
-	    Rect(px3_r, y, width_ladder/12, height_element);
-	    Rect(px5_r, y, width_ladder/12, height_element);
-	    #endif
-	} else if (k == 0) { // center line
-	    #if AHI_LADDER == true
-	    sprintf(buffer, "%d", k);
-	    TextEnd(pos_x - width_ladder / 1.25f - space_text, y - width / height_ladder, buffer, myfont, text_scale*0.85); // left number
-	    Text(pos_x + width_ladder / 1.25f + space_text, y - width / height_ladder, buffer, myfont, text_scale*0.85); // right number
-	    #endif
-	    Rect(pos_x - width_ladder / 1.25f, y, 2*(width_ladder /1.25f), height_element);
-	}
-	k++;
+    float y = pos_y + (k - pitch) * ratio;
+    if (k % 5 == 0 && k!= 0) {
+        #if AHI_LADDER == true
+        sprintf(buffer, "%d", k);
+        TextEnd(pos_x - width_ladder / 2 - space_text, y - width / height_ladder, buffer, myfont, text_scale*0.85); // right numbers
+        Text(pos_x + width_ladder / 2 + space_text, y - width / height_ladder, buffer, myfont, text_scale*0.85); // left numbers
+        #endif
+    }
+    if ((k > 0) && (k % 5 == 0)) { // upper ladders
+        #if AHI_LADDER == true
+        float px = pos_x - width_ladder / 2;
+        Rect(px, y, width_ladder/3, height_element);
+        Rect(px+width_ladder*2/3, y, width_ladder/3, height_element);
+        #endif
+    } else if ((k < 0) && (k % 5 == 0)) { // lower ladders
+        #if AHI_LADDER == true
+        Rect( px_l, y, width_ladder/12, height_element);
+        Rect(px3_l, y, width_ladder/12, height_element);
+        Rect(px5_l, y, width_ladder/12, height_element);
+        Rect( px_r, y, width_ladder/12, height_element);
+        Rect(px3_r, y, width_ladder/12, height_element);
+        Rect(px5_r, y, width_ladder/12, height_element);
+        #endif
+    } else if (k == 0) { // center line
+        #if AHI_LADDER == true
+        sprintf(buffer, "%d", k);
+        TextEnd(pos_x - width_ladder / 1.25f - space_text, y - width / height_ladder, buffer, myfont, text_scale*0.85); // left number
+        Text(pos_x + width_ladder / 1.25f + space_text, y - width / height_ladder, buffer, myfont, text_scale*0.85); // right number
+        #endif
+        Rect(pos_x - width_ladder / 1.25f, y, 2*(width_ladder /1.25f), height_element);
+    }
+    k++;
     }
 }
 
@@ -1399,10 +1470,10 @@ void rotatePoints(float *x, float *y, float angle, int points, int center_x, int
     float tmp_x = 0;
     float tmp_y = 0;
     while (i < points){
-	tmp_x = center_x + (x[i]-center_x)*cosAngle-(y[i]-center_y)*sinAngle;
-	tmp_y = center_y + (x[i]-center_x)*sinAngle + (y[i] - center_y)*cosAngle;
-	x[i] = tmp_x;
-	y[i] = tmp_y;
-	i++;
+    tmp_x = center_x + (x[i]-center_x)*cosAngle-(y[i]-center_y)*sinAngle;
+    tmp_y = center_y + (x[i]-center_x)*sinAngle + (y[i] - center_y)*cosAngle;
+    x[i] = tmp_x;
+    y[i] = tmp_y;
+    i++;
     }
 }
