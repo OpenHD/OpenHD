@@ -8,7 +8,10 @@
 ###############################################################################
 # Setup global variables
 ###############################################################################
-source global_functions.sh 
+source global_functions.sh
+
+#Remove boot text prior to splash display. Other part is in cmdline.txt fbcon=map:2 vs 10
+con2fbmap 1 0
 
 TTY=`tty`
 #TTY="/dev/tty1"
