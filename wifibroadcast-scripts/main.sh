@@ -64,6 +64,14 @@ source rssi_rx_functions.sh
 source alive_functions.sh
 source uplink_functions.sh
 
+if [ "$CAM" == "0" ]; then	  
+	source screenshot_functions.sh
+	source video_save_functions.sh
+	source tether_functions.sh
+	source hotspot_functions.sh
+fi	
+
+
 
 ###############################################################################
 # Execute the different segments of the system on different TTY consoles
@@ -81,6 +89,34 @@ case $TTY in
     /dev/tty4) # unused
 		MAIN_RSSI_RX_FUNCTION
     ;;
+    /dev/tty5) # screenshot stuff
+	if [ "$CAM" == "0" ]; then
+		MAIN_SCREENSHOT_FUNCTION
+	else
+		echo "you are Airpi. No ScreenShot"
+	fi
+    ;;
+    /dev/tty6) # Save of video after flight
+	if [ "$CAM" == "0" ]; then
+		MAIN_VIDEO_SAVE_FUNCTION
+	else
+		echo "you are Airpi. No Video Save"
+	fi
+    ;;
+    /dev/tty7) # check tether
+	if [ "$CAM" == "0" ]; then
+		MAIN_TETHER_FUNCTION
+	else
+		echo "you are Airpi. No Tether"
+	fi
+    ;;
+    /dev/tty8) # check hotspot
+	if [ "$CAM" == "0" ]; then
+		MAIN_HOTSPOT_FUNCTION
+	else
+		echo "you are Airpi. No Hotspot"
+	fi
+    ;;
     /dev/tty9) # check alive
 		MAIN_ALIVE_FUNCTION
     ;;
@@ -89,45 +125,13 @@ case $TTY in
     ;;
     /dev/tty11) # tty for dhcp and login
 	echo "================== eth0 DHCP client (tty11) ==========================="
-	
-	
-	
-if [ "$CAM" == "0" ]; then
-	OHDHOSTNAME="openhd-GroundPi"
-	
-	#Remove boot text prior to splash display. Other part is in cmdline.txt fbcon=map:2 vs 10
-	#add the below line to the airpi "if" statement as well if you wish to see console output
-	con2fbmap 1 0
-	
-	###############################################################################
-	# GROUNDPI Specific sub sources and Consoles
-	###############################################################################
-		
-	source screenshot_functions.sh
-	source video_save_functions.sh
-	source tether_functions.sh
-	source hotspot_functions.sh
-	
-	/dev/tty5) # screenshot stuff
-		MAIN_SCREENSHOT_FUNCTION
-   	 ;;
-    	/dev/tty6) # Save of video after flight
-		MAIN_VIDEO_SAVE_FUNCTION
-    	;;
-    	/dev/tty7) # check tether
-		MAIN_TETHER_FUNCTION
-    	;;
-    	/dev/tty8) # check hotspot
-		MAIN_HOTSPOT_FUNCTION
-    	;;
-	
-else
-	OHDHOSTNAME="openhd-AirPi"
-fi
-
 	# sleep until everything else is loaded (atheros cards and usb flakyness ...)
 	sleep 6
-
+	if [ "$CAM" == "0" ]; then
+	    OHDHOSTNAME="openhd-GroundPi"
+	else
+	    OHDHOSTNAME="openhd-AirPi"
+	fi
 	# only configure ethernet network interface via DHCP if ethernet hotspot is disabled
 	if [ "$ETHERNET_HOTSPOT" == "N" ]; then
 		# disabled loop, as usual, everything is flaky on the Pi, gives kernel stall messages ...
@@ -183,6 +187,10 @@ fi
     /dev/tty12) # tty for local interactive login
 	echo
 	if [ "$CAM" == "0" ]; then
+
+	#Turn text output back on for Groundpi. Other part is in cmdline.txt fbcon=map:2 vs 10
+	con2fbmap 1 0
+
 	    echo -n "Welcome to OpenHD"
 	    read -p "Press <enter> to login"
 	    killall osd
@@ -202,4 +210,6 @@ fi
 	    rw
 	fi
     ;;
+
 esac
+
