@@ -10,9 +10,6 @@
 ###############################################################################
 source global_functions.sh
 
-#Remove boot text prior to splash display. Other part is in cmdline.txt fbcon=map:2 vs 10
-con2fbmap 1 0
-
 TTY=`tty`
 #TTY="/dev/tty1"
 
@@ -64,10 +61,6 @@ source tx_rx_functions.sh
 source osd_tx_rx_functions.sh
 source rc_tx_rx_functions.sh
 source rssi_rx_functions.sh
-source screenshot_functions.sh
-source video_save_functions.sh
-source tether_functions.sh
-source hotspot_functions.sh
 source alive_functions.sh
 source uplink_functions.sh
 
@@ -88,18 +81,6 @@ case $TTY in
     /dev/tty4) # unused
 		MAIN_RSSI_RX_FUNCTION
     ;;
-    /dev/tty5) # screenshot stuff
-		MAIN_SCREENSHOT_FUNCTION
-    ;;
-    /dev/tty6) # Save of video after flight
-		MAIN_VIDEO_SAVE_FUNCTION
-    ;;
-    /dev/tty7) # check tether
-		MAIN_TETHER_FUNCTION
-    ;;
-    /dev/tty8) # check hotspot
-		MAIN_HOTSPOT_FUNCTION
-    ;;
     /dev/tty9) # check alive
 		MAIN_ALIVE_FUNCTION
     ;;
@@ -108,13 +89,45 @@ case $TTY in
     ;;
     /dev/tty11) # tty for dhcp and login
 	echo "================== eth0 DHCP client (tty11) ==========================="
+	
+	
+	
+if [ "$CAM" == "0" ]; then
+	OHDHOSTNAME="openhd-GroundPi"
+	
+	#Remove boot text prior to splash display. Other part is in cmdline.txt fbcon=map:2 vs 10
+	#add the below line to the airpi "if" statement as well if you wish to see console output
+	con2fbmap 1 0
+	
+	###############################################################################
+	# GROUNDPI Specific sub sources and Consoles
+	###############################################################################
+		
+	source screenshot_functions.sh
+	source video_save_functions.sh
+	source tether_functions.sh
+	source hotspot_functions.sh
+	
+	/dev/tty5) # screenshot stuff
+		MAIN_SCREENSHOT_FUNCTION
+   	 ;;
+    	/dev/tty6) # Save of video after flight
+		MAIN_VIDEO_SAVE_FUNCTION
+    	;;
+    	/dev/tty7) # check tether
+		MAIN_TETHER_FUNCTION
+    	;;
+    	/dev/tty8) # check hotspot
+		MAIN_HOTSPOT_FUNCTION
+    	;;
+	
+else
+	OHDHOSTNAME="openhd-AirPi"
+fi
+
 	# sleep until everything else is loaded (atheros cards and usb flakyness ...)
 	sleep 6
-	if [ "$CAM" == "0" ]; then
-	    EZHOSTNAME="openhd-GroundPi"
-	else
-	    EZHOSTNAME="openhd-AirPi"
-	fi
+
 	# only configure ethernet network interface via DHCP if ethernet hotspot is disabled
 	if [ "$ETHERNET_HOTSPOT" == "N" ]; then
 		# disabled loop, as usual, everything is flaky on the Pi, gives kernel stall messages ...
@@ -123,7 +136,7 @@ case $TTY in
 		    if cat /sys/class/net/eth0/carrier | nice grep -q 1; then
 			echo "Ethernet connection detected"
 			CARRIER=1
-			if nice pump -i eth0 --no-ntp -h $EZHOSTNAME; then
+			if nice pump -i eth0 --no-ntp -h $OHDHOSTNAME; then
 			    #ETHCLIENTIP=`ifconfig eth0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1`
 			    ETHCLIENTIP=`ip addr show eth0 | grep -Po 'inet \K[\d.]+'`
 			    # kill and pause OSD so we can safeley start wbc_status
