@@ -184,9 +184,11 @@ function rx_function {
 
 		tmessage "Starting RX ... (FEC: $VIDEO_BLOCKS/$VIDEO_FECS/$VIDEO_BLOCKLENGTH)"
 		
-				#MYADD
+	#START AUDIO AND REMOTE SETTINGS
 		if [ $IsFirstTime -eq 0 ]; then
+		    echo "FIRST TIME AUDIO AND REMOTE SETTINGS TRIGGER..."
 			if [ "$IsAudioTransferEnabled" == "1" ]; then
+			      echo "AUDIO ENABLED..."
 				amixer cset numid=3 $DefaultAudioOut
 				/home/pi/RemoteSettings/Ground/AudioPlayback.sh &
 				/home/pi/RemoteSettings/Ground/RxAudio.sh &
@@ -198,6 +200,7 @@ function rx_function {
 			/home/pi/RemoteSettings/GroundRSSI.sh &
 			
 			if [ "$IsBandSwicherEnabled" == "1" ]; then
+			    echo "BAND SWITCHER ENABLED...."
         			/home/pi/RemoteSettings/BandSwitcher.sh &
 			fi
 		fi
