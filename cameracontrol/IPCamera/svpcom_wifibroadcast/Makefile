@@ -13,7 +13,7 @@ env:
 	virtualenv env
 	./env/bin/pip install --upgrade pip setuptools stdeb
 
-all_bin: wfb_rx wfb_tx wfb_keygen
+all_bin: wfb_rx wfb_rx_rc wfb_tx wfb_keygen
 
 gs.key: wfb_keygen
 	@if ! [ -f gs.key ]; then ./wfb_keygen; fi
@@ -26,6 +26,10 @@ src/%.o: src/%.cpp src/*.hpp src/*.h
 
 wfb_rx: src/rx.o src/radiotap.o src/fec.o src/wifibroadcast.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
+
+wfb_rx_rc: src/rx_rc.o src/radiotap.o src/fec.o src/wifibroadcast.o
+	$(CXX) -o $@ $^ $(_LDFLAGS)
+
 
 wfb_tx: src/tx.o src/fec.o src/wifibroadcast.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
@@ -58,5 +62,4 @@ bdist: all_bin
 	rm -rf wifibroadcast.egg-info/
 
 clean:
-	rm -rf env wfb_rx wfb_tx wfb_keygen dist deb_dist build wifibroadcast.egg-info _trial_temp *~ src/*.o
-
+	rm -rf env wfb_rx wfb_tx wfb_rx_rc wfb_keygen dist deb_dist build wifibroadcast.egg-info _trial_temp *~ src/*.o
