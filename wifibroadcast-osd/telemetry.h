@@ -113,6 +113,7 @@ typedef struct {
 	float roll, pitch;
 	uint8_t sats;
 	uint8_t fix;
+	uint16_t hdop;
 	uint8_t armed;
 	uint8_t rssi;
 
@@ -148,7 +149,7 @@ typedef struct {
 	uint8_t ltm_wpnumber;
 	uint8_t ltm_naverror;
 // ltm X frame
-	uint16_t ltm_hdop;
+//	uint16_t ltm_hdop;
 	uint8_t ltm_hw_status;
 	uint8_t ltm_x_counter;
 	uint8_t ltm_disarm_reason;

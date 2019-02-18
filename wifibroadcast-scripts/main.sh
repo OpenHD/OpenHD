@@ -8,7 +8,7 @@
 ###############################################################################
 # Setup global variables
 ###############################################################################
-source global_functions.sh 
+source global_functions.sh
 
 TTY=`tty`
 #TTY="/dev/tty1"
@@ -61,12 +61,16 @@ source tx_rx_functions.sh
 source osd_tx_rx_functions.sh
 source rc_tx_rx_functions.sh
 source rssi_rx_functions.sh
-source screenshot_functions.sh
-source video_save_functions.sh
-source tether_functions.sh
-source hotspot_functions.sh
 source alive_functions.sh
 source uplink_functions.sh
+
+if [ "$CAM" == "0" ]; then	  
+	source screenshot_functions.sh
+	source video_save_functions.sh
+	source tether_functions.sh
+	source hotspot_functions.sh
+fi	
+
 
 
 ###############################################################################
@@ -86,16 +90,32 @@ case $TTY in
 		MAIN_RSSI_RX_FUNCTION
     ;;
     /dev/tty5) # screenshot stuff
+	if [ "$CAM" == "0" ]; then
 		MAIN_SCREENSHOT_FUNCTION
+	else
+		echo "you are Airpi. No ScreenShot"
+	fi
     ;;
     /dev/tty6) # Save of video after flight
+	if [ "$CAM" == "0" ]; then
 		MAIN_VIDEO_SAVE_FUNCTION
+	else
+		echo "you are Airpi. No Video Save"
+	fi
     ;;
     /dev/tty7) # check tether
+	if [ "$CAM" == "0" ]; then
 		MAIN_TETHER_FUNCTION
+	else
+		echo "you are Airpi. No Tether"
+	fi
     ;;
     /dev/tty8) # check hotspot
+	if [ "$CAM" == "0" ]; then
 		MAIN_HOTSPOT_FUNCTION
+	else
+		echo "you are Airpi. No Hotspot"
+	fi
     ;;
     /dev/tty9) # check alive
 		MAIN_ALIVE_FUNCTION
@@ -108,9 +128,9 @@ case $TTY in
 	# sleep until everything else is loaded (atheros cards and usb flakyness ...)
 	sleep 6
 	if [ "$CAM" == "0" ]; then
-	    EZHOSTNAME="openhd-GroundPi"
+	    OHDHOSTNAME="openhd-GroundPi"
 	else
-	    EZHOSTNAME="openhd-AirPi"
+	    OHDHOSTNAME="openhd-AirPi"
 	fi
 	# only configure ethernet network interface via DHCP if ethernet hotspot is disabled
 	if [ "$ETHERNET_HOTSPOT" == "N" ]; then
@@ -120,7 +140,7 @@ case $TTY in
 		    if cat /sys/class/net/eth0/carrier | nice grep -q 1; then
 			echo "Ethernet connection detected"
 			CARRIER=1
-			if nice pump -i eth0 --no-ntp -h $EZHOSTNAME; then
+			if nice pump -i eth0 --no-ntp -h $OHDHOSTNAME; then
 			    #ETHCLIENTIP=`ifconfig eth0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1`
 			    ETHCLIENTIP=`ip addr show eth0 | grep -Po 'inet \K[\d.]+'`
 			    # kill and pause OSD so we can safeley start wbc_status
@@ -167,6 +187,10 @@ case $TTY in
     /dev/tty12) # tty for local interactive login
 	echo
 	if [ "$CAM" == "0" ]; then
+
+	#Turn text output back on for Groundpi. Other part is in cmdline.txt fbcon=map:2 vs 10
+	con2fbmap 1 0
+
 	    echo -n "Welcome to OpenHD"
 	    read -p "Press <enter> to login"
 	    killall osd
@@ -186,4 +210,6 @@ case $TTY in
 	    rw
 	fi
     ;;
+
 esac
+
