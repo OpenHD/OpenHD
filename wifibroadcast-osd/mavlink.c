@@ -23,6 +23,7 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					fprintf(stdout, "GPS_RAW_INT: ");
 					td->fix = mavlink_msg_gps_raw_int_get_fix_type(&msg);
 					td->sats = mavlink_msg_gps_raw_int_get_satellites_visible(&msg);
+                    td->hdop = mavlink_msg_gps_raw_int_get_eph(&msg);
 					td->cog = mavlink_msg_gps_raw_int_get_cog(&msg)/100.0f;
 //					td->heading = mavlink_msg_gps_raw_int_get_cog(&msg)/100.0f;
 //                                      td->altitude = mavlink_msg_gps_raw_int_get_alt(&msg)/1000.0f;
@@ -34,6 +35,7 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 //					fprintf(stdout, "longitude:%.2f  ", td->longitude);
 					fprintf(stdout, "fix:%d  ", td->fix);
 					fprintf(stdout, "sats:%d  ", td->sats);
+                    fprintf(stdout, "hdop:%d  ", td->hdop);
 					fprintf(stdout, "cog:%d  ", td->cog);
 					break;
                                 case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:

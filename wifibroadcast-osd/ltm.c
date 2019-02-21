@@ -164,9 +164,9 @@ int ltm_check(telemetry_data_t *td) {
     td->ltm_homefix = ltmread_u8();
     td->validmsgsrx++;
     printf("LTM O FRAME: ");
-    printf("home_altitude:%.2f  ", td->ltm_home_latitude);
-    printf("home_latitude:%.2f  ", td->ltm_home_longitude);
-    printf("home_longitude:%.2f  ", td->ltm_home_altitude);
+    printf("home_altitude:%.2f  ", td->ltm_home_altitude);
+    printf("home_latitude:%.2f  ", td->ltm_home_latitude);
+    printf("home_longitude:%.2f  ", td->ltm_home_longitude);
     printf("osdon:%d  ", td->ltm_osdon);
     printf("homefix:%d  ", td->ltm_homefix);
 
@@ -176,7 +176,7 @@ int ltm_check(telemetry_data_t *td) {
     //LTM_X_counter 	uint8
     //Disarm Reason 	uint8
     //(unused) 		1byte
-    td->ltm_hdop = (float)((uint16_t)ltmread_u16())/10000.0f;
+    td->hdop = (float)((uint16_t)ltmread_u16())/10000.0f;
     printf("LTM X FRAME:\n");
     printf("GPS hdop:%.2f  ", td->ltm_hdop);
 
