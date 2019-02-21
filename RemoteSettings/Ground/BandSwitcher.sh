@@ -16,6 +16,6 @@ fi
 
 while true
 do
-	python3.5 /home/pi/RemoteSettings/BandSwitch.py -DefaultBandWidthAth9k $Bandwidth -PrimaryCardMAC $PrimaryCardMAC -SlaveCardMAC $SlaveCardMAC -Band5Below $Band5Below -Band10ValueMin $Band10ValueMin -Band10ValueMax $Band10ValueMax -Band20After $Band20After
+	python3.5 /home/pi/RemoteSettings/BandSwitch.py -PrimaryCardMAC $PrimaryCardMAC -Band5Below $Band5Below -Band10ValueMin $Band10ValueMin -Band10ValueMax $Band10ValueMax -Band20After $Band20After
         sleep 2
 done
