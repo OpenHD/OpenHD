@@ -395,7 +395,7 @@ function collect_errorlog {
 
     echo >>/boot/errorlog.txt
     echo >>/boot/errorlog.txt
-    nice cat /boot/wifibroadcast-1.txt | egrep -v "^(#|$)" >> /boot/errorlog.txt
+    nice cat /boot/openhd-settings-1.txt | egrep -v "^(#|$)" >> /boot/errorlog.txt
     echo >>/boot/errorlog.txt
     echo >>/boot/errorlog.txt
     nice cat /boot/osdconfig.txt | egrep -v "^(//|$)" >> /boot/errorlog.txt
