@@ -88,6 +88,8 @@ case $TTY in
     ;;
     /dev/tty4) # unused
 		MAIN_RSSI_RX_FUNCTION
+		
+		echo "this console is no longer used"
     ;;
     /dev/tty5) # screenshot stuff
 	if [ "$CAM" == "0" ]; then
