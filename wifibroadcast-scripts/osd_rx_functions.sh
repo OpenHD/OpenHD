@@ -1,5 +1,14 @@
 ## runs on RX (ground pi)
 function osdrx_function {
+    if [ "$MirrorDSI_To_HDMI" == "y" ]; then
+            if [ -e "/dev/fb0" ]; then
+                    echo "/dev/fb0 - found"
+                    if [ -e "/dev/fb1" ]; then
+                            echo "/dev/fb1 - found. Start framebuffer copy"
+                            /home/pi/wifibroadcast-misc/raspi2raspi &
+                    fi
+            fi
+    fi
     echo
     # Convert osdconfig from DOS format to UNIX format
     ionice -c 3 nice dos2unix -n /boot/osdconfig.txt /tmp/osdconfig.txt
