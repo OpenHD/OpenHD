@@ -129,8 +129,9 @@ function hotspot_check_function {
 			ps -ef | nice grep "osd" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 
 	        killall wbc_status > /dev/null 2>&1
+		    if [ "$QUIET" == "N" ]; then
 			nice /home/pi/wifibroadcast-status/wbc_status "Secondary display connected (Hotspot)" 7 55 0
-
+                    fi
 			# re-start osd
 			OSDRUNNING=`pidof /tmp/osd | wc -w`
 			if [ $OSDRUNNING  -ge 1 ]; then
@@ -158,7 +159,9 @@ function hotspot_check_function {
 							ps -ef | nice grep "osd" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 
 							killall wbc_status > /dev/null 2>&1
-							nice /home/pi/wifibroadcast-status/wbc_status "Secondary display disconnected (Hotspot)" 7 55 0
+							if [ "$QUIET" == "N" ]; then
+							   nice /home/pi/wifibroadcast-status/wbc_status "Secondary display disconnected (Hotspot)" 7 55 0
+							fi
 							# re-start osd
 							OSDRUNNING=`pidof /tmp/osd | wc -w`
 							if [ $OSDRUNNING  -ge 1 ]; then
