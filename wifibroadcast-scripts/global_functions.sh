@@ -136,7 +136,7 @@ function datarate_to_wifi_settings {
 function set_video_player_based_fps {
 	# mmormota's stutter-free hello_video.bin: "hello_video.bin.30-mm" (for 30fps) or "hello_video.bin.48-mm" (for 48 and 59.9fps)
 	# befinitiv's hello_video.bin: "hello_video.bin.240-befi" (for any fps, use this for higher than 59.9fps)
-
+if [ "$CAM" == "0" ]; then # if we are RX ...
 	if [ "$FPS" == "59.9" ]; then
 		DISPLAY_PROGRAM=/opt/vc/src/hello_pi/hello_video/hello_video.bin.48-mm
 	else
@@ -150,6 +150,7 @@ function set_video_player_based_fps {
 			DISPLAY_PROGRAM=/opt/vc/src/hello_pi/hello_video/hello_video.bin.240-befi
 		fi
 	fi
+fi
 }
 
 function get_telemetry_settings {
@@ -411,6 +412,7 @@ function collect_errorlog {
 }
 
 function wbclogger_function {
+if [ "$CAM" == "0" ]; then # if we are RX ...
     # Waiting until video is running ...
     VIDEORXRUNNING=0
     while [ $VIDEORXRUNNING -ne 1 ]; do
@@ -437,6 +439,7 @@ function wbclogger_function {
 		nice /home/pi/wifibroadcast-base/wifibackgroundscan $NICS >> /wbc_tmp/wifibackgroundscan.csv &
     fi
     sleep 365d
+fi
 }
 
 function pause_while {
