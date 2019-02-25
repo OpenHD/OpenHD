@@ -66,6 +66,7 @@ function osdrx_function {
 		/tmp/osd >> /wbc_tmp/telemetrydowntmp.txt &
 
 		if [ "$RELAY" == "Y" ]; then
+		        /root/wifibroadcast/sharedmem_init_tx
 			ionice -c 1 -n 4 nice -n -9 cat /root/telemetryfifo4 | nice /home/pi/wifibroadcast-base/tx_telemetry -p 1 -c $TELEMETRY_CTS -r 2 -x $TELEMETRY_TYPE -d 12 -y 0 relay0 > /dev/null 2>&1 &
 		fi
 
