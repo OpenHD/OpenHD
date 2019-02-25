@@ -66,8 +66,9 @@ function tether_check_function {
 			ps -ef | nice grep "osd" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 
 			killall wbc_status > /dev/null 2>&1
-			nice /home/pi/wifibroadcast-status/wbc_status "Secondary display connected (USB)" 7 55 0
-
+			if [ "$QUIET" == "N" ]; then
+			    nice /home/pi/wifibroadcast-status/wbc_status "Secondary display connected (USB)" 7 55 0
+                        fi
 			# re-start osd
 			killall wbc_status > /dev/null 2>&1
 			OSDRUNNING=`pidof /tmp/osd | wc -w`
@@ -89,8 +90,9 @@ function tether_check_function {
 					# kill and pause OSD so we can safeley start wbc_status
 					ps -ef | nice grep "osd" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 					killall wbc_status > /dev/null 2>&1
-					nice /home/pi/wifibroadcast-status/wbc_status "Secondary display disconnected (USB)" 7 55 0
-					
+					if [ "$QUIET" == "N" ]; then
+					    nice /home/pi/wifibroadcast-status/wbc_status "Secondary display disconnected (USB)" 7 55 0
+					fi
 					# re-start osd
 					OSDRUNNING=`pidof /tmp/osd | wc -w`
 					if [ $OSDRUNNING  -ge 1 ]; then
