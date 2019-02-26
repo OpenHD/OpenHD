@@ -32,14 +32,31 @@ function MAIN_HOTSPOT_FUNCTION {
 function hotspot_check_function {
     # Convert hostap config from DOS format to UNIX format
 	ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
-
+	
+			
 	if [ "$ETHERNET_HOTSPOT" == "Y" ]; then
 	    # setup hotspot on RPI3 internal ethernet chip
 	    nice ifconfig eth0 192.168.1.1 up
 	    nice udhcpd -I 192.168.1.1 /etc/udhcpd-eth.conf
 	fi
 
-	if [ "$WIFI_HOTSPOT" == "Y" ]; then
+	if [ "$WIFI_HOTSPOT" != "N" ]; then	
+	    # Read if hotspot config is auto
+	     if [ "$WIFI_HOTSPOT" == "auto"]; then
+	         # TODO Find capabilities of this pi
+	     
+	        # for both a and g ability choose opposite of video	     
+	       if [ "$FREQ" -gt "3000" ]; then
+	         HOTSPOT_BAND=a
+	       else
+	         HOTSPOT_BAND=g
+	       fi
+	     # NOTHING TO DO For user defined use of A (5.8ghz) OR G (2.4ghz) 
+	     fi
+		
+	    # TODO set A OR G
+		
+	    echo "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL"
 	    nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
 	    nice -n 5 hostapd -B -d /tmp/apconfig.txt
 	fi
