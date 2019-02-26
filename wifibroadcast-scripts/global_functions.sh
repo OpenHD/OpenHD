@@ -4,6 +4,10 @@ function tmessage {
     fi
 }
 
+function set_config(){
+    sudo sed -i "s/^\($1\s*=\s*\).*\$/\1$2/" $CONFIG
+}
+
 function check_exitstatus {
     STATUS=$1
     case $STATUS in
