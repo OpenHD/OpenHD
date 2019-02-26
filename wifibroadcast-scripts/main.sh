@@ -61,11 +61,11 @@ source tx_rx_functions.sh
 source osd_tx_rx_functions.sh
 source rc_tx_rx_functions.sh
 source rssi_rx_functions.sh
-source alive_functions.sh
 source uplink_functions.sh
 
 if [ "$CAM" == "0" ]; then	  
 	source screenshot_functions.sh
+	source alive_functions.sh
 	source video_save_functions.sh
 	source tether_functions.sh
 	source hotspot_functions.sh
@@ -120,7 +120,11 @@ case $TTY in
 	fi
     ;;
     /dev/tty9) # check alive
+        if [ "$CAM" == "0" ]; then
 		MAIN_ALIVE_FUNCTION
+	else
+		echo "you are Airpi. No Alive Function"
+	fi
     ;;
     /dev/tty10) # uplink
 		MAIN_UPLINK_FUNCTION
