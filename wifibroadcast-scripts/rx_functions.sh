@@ -186,7 +186,6 @@ function rx_function {
 		
 	#START AUDIO AND REMOTE SETTINGS
 		if [ $IsFirstTime -eq 0 ]; then
-		    echo "FIRST TIME AUDIO AND REMOTE SETTINGS TRIGGER..."
 			if [ "$IsAudioTransferEnabled" == "1" ]; then
 			      echo "AUDIO ENABLED..."
 				amixer cset numid=3 $DefaultAudioOut
@@ -194,10 +193,13 @@ function rx_function {
 				/home/pi/RemoteSettings/Ground/RxAudio.sh &
 			fi
 
-			/home/pi/RemoteSettings/ipchecker/iphelper.sh > /dev/null 2>&1 &
-                	/usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettings.py > /dev/null 2>&1 &
-			/home/pi/RemoteSettings/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
-			/home/pi/RemoteSettings/GroundRSSI.sh &
+			if [ "$RemoteSettingsEnabled" != "0" ]; then
+				echo "SETTINGS CHANGE MODULE ENABLED..."
+				/home/pi/RemoteSettings/ipchecker/iphelper.sh > /dev/null 2>&1 &
+				/usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettings.py > /dev/null 2>&1 &
+				/home/pi/RemoteSettings/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
+				/home/pi/RemoteSettings/GroundRSSI.sh &
+			fi
 			
 			if [ "$IsBandSwicherEnabled" == "1" ]; then
 			    echo "BAND SWITCHER ENABLED...."
