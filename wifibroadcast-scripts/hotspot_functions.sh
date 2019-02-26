@@ -30,12 +30,13 @@ function MAIN_HOTSPOT_FUNCTION {
 
 
 function hotspot_check_function {
-    # Convert hostap config from DOS format to UNIX format
-	ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
+    
 	
 			
 	if [ "$ETHERNET_HOTSPOT" == "Y" ]; then
 	    # setup hotspot on RPI3 internal ethernet chip
+	    # Convert hostap config from DOS format to UNIX format
+	    ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
 	    nice ifconfig eth0 192.168.1.1 up
 	    nice udhcpd -I 192.168.1.1 /etc/udhcpd-eth.conf
 	fi
@@ -53,8 +54,15 @@ function hotspot_check_function {
 	       fi
 	     # NOTHING TO DO For user defined use of A (5.8ghz) OR G (2.4ghz) 
 	     fi
-		
-	    # TODO set A OR G
+	     	     		
+	    # set A OR G
+	    THISCONFIG="/boot/apconfig.txt"
+	    SOURCE $THISCONFIG
+	    hw_mode=$HOTSPOT_BAND
+	    set_config hw_mode $hw_mode
+	    
+	    # Convert hostap config from DOS format to UNIX format
+	    ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
 		
 	    echo "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL"
 	    nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
