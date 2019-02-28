@@ -142,7 +142,7 @@ function hotspot_check_function {
 			fi
 	    fi
 		
-	    if [ "$WIFI_HOTSPOT" == "Y" ]; then
+	    if [ "$WIFI_HOTSPOT" != "N" ]; then
 			if nice ping -I wifihotspot0 -c 2 -W 1 -n -q 192.168.2.2 > /dev/null 2>&1; then
 				IP="192.168.2.2"
 				echo "Wifi device detected. IP: $IP"
