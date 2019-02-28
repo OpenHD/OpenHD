@@ -56,11 +56,9 @@ function hotspot_check_function {
                        '802.11bgn')
 		        ABLE_BAND=g
 			;;
-                  case "$IEEE" in
                        '802.11gn')
 		        ABLE_BAND=g
 			;;
-		  case "$IEEE" in
                        '802.11agn')
 		        ABLE_BAND=ag
 			;;
