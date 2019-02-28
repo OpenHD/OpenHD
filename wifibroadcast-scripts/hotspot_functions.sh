@@ -52,6 +52,8 @@ function hotspot_check_function {
                   # capture each parameter in a variable
                   IEEE=$(echo "$IW" | grep -oP '(?<=IEEE ).[^\s]*')
 		  
+		  echo "Found Wifi hotspot adapter with IEEE $IEEE abilty"
+		  
 		  case "$IEEE" in
                        '802.11bgn')
 		        ABLE_BAND=g
@@ -73,7 +75,7 @@ function hotspot_check_function {
 	        # for both a and g ability choose opposite of video	     
 	       if [ "$FREQ" -gt "3000" ]; then
 	       
-	         if ["ABLE_BAND" == "ag"] 
+	         if ["ABLE_BAND" == "ag"]; then
 	         HOTSPOT_BAND=a
 		 fi
 		 
@@ -81,6 +83,7 @@ function hotspot_check_function {
 	         HOTSPOT_BAND=g
 	       fi
 	     # NOTHING TO DO For user defined use of A (5.8ghz) OR G (2.4ghz) 
+	     echo "setting Wifi hotspot hardward on band $HOTSPOT_BAND"
 	     fi
 	     	     		
 	    # set A OR G
