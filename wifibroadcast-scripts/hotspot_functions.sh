@@ -97,6 +97,8 @@ function hotspot_check_function {
 	    echo "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL"
 	    nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
 	    nice -n 5 hostapd -B -d /tmp/apconfig.txt
+	  else
+	     echo "NO WIFI CAPABILTY WAS FOUND ON WLAN0"
 	  fi   
 	fi
 
