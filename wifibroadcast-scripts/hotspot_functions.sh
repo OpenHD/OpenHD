@@ -42,13 +42,43 @@ function hotspot_check_function {
 	fi
 
 	if [ "$WIFI_HOTSPOT" != "N" ]; then	
+	         # Find capabilities of this pi
+		 # IEEE 802.11bgn = 2.4hz only
+                 # IEEE 802.11gn = 2.4hz only
+                 # IEEE 802.11agn = 2.4hz + 5hz
+		  
+		  IW=$(iwconfig wlan0)
+
+                  # capture each parameter in a variable
+                  IEEE=$(echo "$IW" | grep -oP '(?<=IEEE ).[^\s]*')
+		  
+		  case "$IEEE" in
+                       '802.11bgn')
+		        ABLE_BAND=g
+			;;
+                  case "$IEEE" in
+                       '802.11gn')
+		        ABLE_BAND=g
+			;;
+		  case "$IEEE" in
+                       '802.11agn')
+		        ABLE_BAND=ag
+			;;
+	          esac
+	
+	# CONTINUE IF WE ARE ABLE_BAND IS A or G
+	if ["$ABLE_BAND" == "g" ] || ["$ABLE_BAND" == "ag" ]; then
+	
 	    # Read if hotspot config is auto
-	     if [ "$WIFI_HOTSPOT" == "auto"]; then
-	         # TODO Find capabilities of this pi
+	     if [ "$WIFI_HOTSPOT" == "auto"]; then	 
 	     
 	        # for both a and g ability choose opposite of video	     
 	       if [ "$FREQ" -gt "3000" ]; then
+	       
+	         if ["ABLE_BAND" == "ag"] 
 	         HOTSPOT_BAND=a
+		 fi
+		 
 	       else
 	         HOTSPOT_BAND=g
 	       fi
@@ -67,6 +97,7 @@ function hotspot_check_function {
 	    echo "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL"
 	    nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
 	    nice -n 5 hostapd -B -d /tmp/apconfig.txt
+	  fi   
 	fi
 
 	while true; do
