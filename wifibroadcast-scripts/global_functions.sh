@@ -536,6 +536,8 @@ function detect_nics {
 				let "NUM_CARDS--"
 			else
 				tmessage "Relay card $RELAY_NIC not found!"
+				relay0=1
+				TXMODE=single
 				sleep 0.5
 			fi
 	    fi
@@ -556,6 +558,13 @@ function detect_nics {
 			sleep 0.1
 	    done
 	else
+	if [ "$relay0" == "1" ]; then
+	      for NIC in $NICS
+		  do
+		    prepare_nic $NIC $RELAY_FREQ "$TXPOWER"
+		    sleep 0.1
+		  done
+	 else
 	    # check if auto scan is enabled, if yes, set freq to 0 to let prepare_nic know not to set channel
 	    if [ "$FREQSCAN" == "Y" ] && [ "$CAM" == "0" ]; then
 			for NIC in $NICS
@@ -607,6 +616,7 @@ function detect_nics {
 				sleep 0.1
 			done
 	    fi
+	fi
 	fi
 
 	echo $NICS > /tmp/NICS_LIST
