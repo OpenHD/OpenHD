@@ -106,24 +106,24 @@ function hotspot_check_function {
 	       			fi
 	     		# NOTHING TO DO For user defined use of A (5.8ghz) OR G (2.4ghz) 
 	     		echo "setting Wifi hotspot hardward on band $HOTSPOT_BAND"
+			
 	     		fi
 
-
+		#populate $hw_mode and channel
 		source /tmp/apconfig.txt
-
-		# echo "hwmode=$hw_mode channel=$channel"
 
 		sudo sed -i -e "s/hw_mode=$hw_mode/hw_mode=$HOTSPOT_BAND/g" /tmp/apconfig.txt
 		sudo sed -i -e "s/channel=$channel/channel=$HOTSPOT_CHANNEL/g" /tmp/apconfig.txt
 
-
 	    	echo "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL"
+		tmessage "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL..."
+		
 	    	nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
 	    	nice -n 5 hostapd -B -d /tmp/apconfig.txt
 
 	  	else
 	     	echo "NO WIFI CAPABILTY WAS FOUND"
-
+		tmessage "no hotspot hardware found..."
 	  	fi   
 	fi
 
@@ -170,8 +170,7 @@ function hotspot_check_function {
 	    fi
 		
 	    if [ "$WIFI_HOTSPOT" != "N" ]; then
-echo "TEST TEST"
-sleep 2
+
 			if nice ping -I wifihotspot0 -c 2 -W 1 -n -q 192.168.2.2 > /dev/null 2>&1; then
 				IP="192.168.2.2"
 				echo "Wifi device detected. IP: $IP"
