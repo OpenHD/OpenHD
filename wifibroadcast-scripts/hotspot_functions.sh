@@ -1,7 +1,7 @@
 function MAIN_HOTSPOT_FUNCTION {
 	echo "================== CHECK HOTSPOT (tty8) ==========================="
 	if [ "$CAM" == "0" ]; then
-	    if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" == "Y" ]; then
+	    if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" != "N" ]; then
 			echo
 			echo -n "Waiting until video is running ..."
 			HVIDEORXRUNNING=0
@@ -31,76 +31,100 @@ function MAIN_HOTSPOT_FUNCTION {
 
 function hotspot_check_function {
     
-	
+	# Convert hostap config from DOS format to UNIX format
+	ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
 			
 	if [ "$ETHERNET_HOTSPOT" == "Y" ]; then
 	    # setup hotspot on RPI3 internal ethernet chip
-	    # Convert hostap config from DOS format to UNIX format
-	    ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
 	    nice ifconfig eth0 192.168.1.1 up
 	    nice udhcpd -I 192.168.1.1 /etc/udhcpd-eth.conf
 	fi
 
-	if [ "$WIFI_HOTSPOT" != "N" ]; then	
-	         # Find capabilities of this pi
-		 # IEEE 802.11bgn = 2.4hz only
-                 # IEEE 802.11gn = 2.4hz only
-                 # IEEE 802.11agn = 2.4hz + 5hz
-		  
-		  IW=$(iwconfig wlan0)
+	if [ "$WIFI_HOTSPOT" != "N" ]; then
+			
+	         # Detect cpu revision pi
+		  HARDWARE=$(cat /proc/cpuinfo | grep 'Revision' | awk '{print $3}')
 
-                  # capture each parameter in a variable
-                  IEEE=$(echo "$IW" | grep -oP '(?<=IEEE ).[^\s]*')
+		  echo "Found hardware $HARDWARE abilty"
 		  
-		  echo "Found Wifi hotspot adapter with IEEE $IEEE abilty"
-		  
-		  case "$IEEE" in
-                       '802.11bgn')
+		  case "$HARDWARE" in
+                       '9020e0')
 		        ABLE_BAND=g
+			MODEL=3a+
 			;;
-                       '802.11gn')
+                       'a02082')
 		        ABLE_BAND=g
+			MODEL=3b
 			;;
-                       '802.11agn')
+			'a22082')
+		        ABLE_BAND=g
+			MODEL=3b
+			;;
+			'a32082')
+		        ABLE_BAND=g
+			MODEL=3b
+			;;		
+			'a52082')
+		        ABLE_BAND=g
+			MODEL=3b
+			;;	
+			'a020d3')
 		        ABLE_BAND=ag
+			MODEL=3b+
+			;;
+                       '2a020d3')
+		        ABLE_BAND=ag
+			MODEL=3b+
+			;;
+			*)
+			ABLE_BAND=unknown
+			MODEL=unknown
 			;;
 	          esac
+
+			echo "This Pi model $MODEL with Band $ABLE_BAND"
 	
-	# CONTINUE IF WE ARE ABLE_BAND IS A or G
-	if ["$ABLE_BAND" == "g" ] || ["$ABLE_BAND" == "ag" ]; then
-	
-	    # Read if hotspot config is auto
-	     if [ "$WIFI_HOTSPOT" == "auto"]; then	 
-	     
-	        # for both a and g ability choose opposite of video	     
-	       if [ "$FREQ" -gt "3000" ]; then
-	       
-	         if ["ABLE_BAND" == "ag"]; then
-	         HOTSPOT_BAND=a
-		 fi
-		 
-	       else
-	         HOTSPOT_BAND=g
-	       fi
-	     # NOTHING TO DO For user defined use of A (5.8ghz) OR G (2.4ghz) 
-	     echo "setting Wifi hotspot hardward on band $HOTSPOT_BAND"
-	     fi
-	     	     		
-	    # set A OR G
-	    THISCONFIG="/boot/apconfig.txt"
-	    SOURCE $THISCONFIG
-	    hw_mode=$HOTSPOT_BAND
-	    set_config hw_mode $hw_mode
-	    
-	    # Convert hostap config from DOS format to UNIX format
-	    ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
-		
-	    echo "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL"
-	    nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
-	    nice -n 5 hostapd -B -d /tmp/apconfig.txt
-	  else
-	     echo "NO WIFI CAPABILTY WAS FOUND ON WLAN0"
-	  fi   
+		# CONTINUE IF WE ARE ABLE_BAND IS A or G
+		if [ "$ABLE_BAND" != "unknown" ]; then
+			echo "Setting up Hotspot..."
+
+	    		# Read if hotspot config is auto
+	     		if [ "$WIFI_HOTSPOT" == "auto" ]; then	
+				echo "wifihotspot auto..."
+	        		# for both a and g ability choose opposite of video
+	   	         	
+				if [ "$ABLE_BAND" == "ag" ]; then
+					echo "Dual Band capable..."
+
+					if [ "$FREQ" -gt "3000" ]; then
+	         			HOTSPOT_BAND=g
+					HOTSPOT_CHANNEL=7
+	       				else
+	         			HOTSPOT_BAND=a
+					HOTSPOT_CHANNEL=52
+					fi
+	       			fi
+	     		# NOTHING TO DO For user defined use of A (5.8ghz) OR G (2.4ghz) 
+	     		echo "setting Wifi hotspot hardward on band $HOTSPOT_BAND"
+	     		fi
+
+
+		source /tmp/apconfig.txt
+
+		# echo "hwmode=$hw_mode channel=$channel"
+
+		sudo sed -i -e "s/hw_mode=$hw_mode/hw_mode=$HOTSPOT_BAND/g" /tmp/apconfig.txt
+		sudo sed -i -e "s/channel=$channel/channel=$HOTSPOT_CHANNEL/g" /tmp/apconfig.txt
+
+
+	    	echo "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL"
+	    	nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
+	    	nice -n 5 hostapd -B -d /tmp/apconfig.txt
+
+	  	else
+	     	echo "NO WIFI CAPABILTY WAS FOUND"
+
+	  	fi   
 	fi
 
 	while true; do
@@ -146,6 +170,8 @@ function hotspot_check_function {
 	    fi
 		
 	    if [ "$WIFI_HOTSPOT" != "N" ]; then
+echo "TEST TEST"
+sleep 2
 			if nice ping -I wifihotspot0 -c 2 -W 1 -n -q 192.168.2.2 > /dev/null 2>&1; then
 				IP="192.168.2.2"
 				echo "Wifi device detected. IP: $IP"
