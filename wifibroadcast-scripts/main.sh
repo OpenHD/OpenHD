@@ -10,8 +10,6 @@
 ###############################################################################
 source global_functions.sh
 
-# temporarily set chvt 5 so can more closely monitor new hotspot functions
-chvt 5
 
 TTY=`tty`
 #TTY="/dev/tty1"
