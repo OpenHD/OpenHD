@@ -1,7 +1,7 @@
 function MAIN_HOTSPOT_FUNCTION {
 	echo "================== CHECK HOTSPOT (tty8) ==========================="
 	if [ "$CAM" == "0" ]; then
-	    if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" == "Y" ]; then
+	    if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" != "N" ]; then
 			echo
 			echo -n "Waiting until video is running ..."
 			HVIDEORXRUNNING=0
@@ -30,18 +30,107 @@ function MAIN_HOTSPOT_FUNCTION {
 
 
 function hotspot_check_function {
-    # Convert hostap config from DOS format to UNIX format
+    
+	# Convert hostap config from DOS format to UNIX format
 	ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
-
+			
 	if [ "$ETHERNET_HOTSPOT" == "Y" ]; then
 	    # setup hotspot on RPI3 internal ethernet chip
 	    nice ifconfig eth0 192.168.1.1 up
 	    nice udhcpd -I 192.168.1.1 /etc/udhcpd-eth.conf
 	fi
 
-	if [ "$WIFI_HOTSPOT" == "Y" ]; then
-	    nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
-	    nice -n 5 hostapd -B -d /tmp/apconfig.txt
+	if [ "$WIFI_HOTSPOT" != "N" ]; then
+			
+	         # Detect cpu revision pi
+		  HARDWARE=$(cat /proc/cpuinfo | grep 'Revision' | awk '{print $3}')
+
+		  echo "Found hardware $HARDWARE abilty"
+		  
+		  case "$HARDWARE" in
+                       '29020e0')
+		        ABLE_BAND=ag
+			MODEL=3a+
+			;;
+                       '2a02082')
+		        ABLE_BAND=g
+			MODEL=3b
+			;;
+			'2a22082')
+		        ABLE_BAND=g
+			MODEL=3b
+			;;
+			'2a32082')
+		        ABLE_BAND=g
+			MODEL=3b
+			;;		
+			'2a52082')
+		        ABLE_BAND=g
+			MODEL=3b
+			;;	
+                       '2a020d3')
+		        ABLE_BAND=ag
+			MODEL=3b+
+			;;
+			*)
+			ABLE_BAND=unknown
+			MODEL=unknown
+			;;
+	          esac
+
+			echo "This Pi model $MODEL with Band $ABLE_BAND"
+	
+		# CONTINUE IF WE ARE ABLE_BAND IS A or G
+		if [ "$ABLE_BAND" != "unknown" ]; then
+			echo "Setting up Hotspot..."
+
+	    		# Read if hotspot config is auto
+	     		if [ "$WIFI_HOTSPOT" == "auto" ]; then	
+				echo "wifihotspot auto..."
+
+	        		# for both a and g ability choose opposite of video	   	         	
+				if [ "$ABLE_BAND" == "ag" ]; then
+					echo "Dual Band capable..."
+
+					if [ "$FREQ" -gt "3000" ]; then
+	         			HOTSPOT_BAND=g
+					HOTSPOT_CHANNEL=7
+	       				else
+	         			HOTSPOT_BAND=a
+					HOTSPOT_CHANNEL=52
+					fi
+	       			
+				# for g ability only choose furthest freq from video
+				else
+					echo "G Band only capable..."
+					HOTSPOT_BAND=g
+
+					if [ "$FREQ" -gt "2452" ]; then					
+					HOTSPOT_CHANNEL=1
+					else	         			
+					HOTSPOT_CHANNEL=11
+					fi
+				fi
+	     		# NOTHING TO DO For user defined use of A (5.8ghz) OR G (2.4ghz) 
+
+	     		fi
+
+		#populate $hw_mode and channel
+		source /tmp/apconfig.txt
+
+		sudo sed -i -e "s/hw_mode=$hw_mode/hw_mode=$HOTSPOT_BAND/g" /tmp/apconfig.txt
+		sudo sed -i -e "s/channel=$channel/channel=$HOTSPOT_CHANNEL/g" /tmp/apconfig.txt
+
+	    	echo "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL"
+		tmessage "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL..."
+		
+	    	nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
+	    	nice -n 5 hostapd -B -d /tmp/apconfig.txt
+
+	  	else
+	     	echo "NO HOTSPOT CAPABILTY WAS FOUND"
+		tmessage "no hotspot hardware found..."
+	  	fi   
 	fi
 
 	while true; do
@@ -86,7 +175,8 @@ function hotspot_check_function {
 			fi
 	    fi
 		
-	    if [ "$WIFI_HOTSPOT" == "Y" ]; then
+	    if [ "$WIFI_HOTSPOT" != "N" ]; then
+
 			if nice ping -I wifihotspot0 -c 2 -W 1 -n -q 192.168.2.2 > /dev/null 2>&1; then
 				IP="192.168.2.2"
 				echo "Wifi device detected. IP: $IP"
