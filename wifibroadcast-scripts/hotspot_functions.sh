@@ -43,40 +43,7 @@ function hotspot_check_function {
 	if [ "$WIFI_HOTSPOT" != "N" ]; then
 			
 	         # Detect cpu revision pi
-		  HARDWARE=$(cat /proc/cpuinfo | grep 'Revision' | awk '{print $3}')
-
-		  echo "Found hardware $HARDWARE abilty"
-		  
-		  case "$HARDWARE" in
-                       '29020e0')
-		        ABLE_BAND=ag
-			MODEL=3a+
-			;;
-                       '2a02082')
-		        ABLE_BAND=g
-			MODEL=3b
-			;;
-			'2a22082')
-		        ABLE_BAND=g
-			MODEL=3b
-			;;
-			'2a32082')
-		        ABLE_BAND=g
-			MODEL=3b
-			;;		
-			'2a52082')
-		        ABLE_BAND=g
-			MODEL=3b
-			;;	
-                       '2a020d3')
-		        ABLE_BAND=ag
-			MODEL=3b+
-			;;
-			*)
-			ABLE_BAND=unknown
-			MODEL=unknown
-			;;
-	          esac
+		  detect_hardware
 
 			echo "This Pi model $MODEL with Band $ABLE_BAND"
 	
