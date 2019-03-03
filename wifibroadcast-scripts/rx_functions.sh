@@ -176,6 +176,7 @@ function rx_function {
 		ionice -c 3 nice cat /root/videofifo3 >> $VIDEOFILE &
 
 		if [ "$RELAY" == "Y" ]; then
+		        /root/wifibroadcast/sharedmem_init_tx
 			ionice -c 1 -n 4 nice -n -10 cat /root/videofifo4 | /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $RELAY_VIDEO_BLOCKS -r $RELAY_VIDEO_FECS -f $RELAY_VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d 24 -y 0 relay0 > /dev/null 2>&1 &
 		fi
 
