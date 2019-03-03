@@ -22,31 +22,30 @@ InMsgBand5 = bytearray(b'5')
 InMsgBand10 = bytearray(b'a')
 InMsgBand20 = bytearray(b'0')
 AirBand = ""
+SlaveCardList = []
 PrimaryCardPath = "Non"
-SlaveCardPath = "Non"
 PrimaryCardMAC = "Non"
-SlaveCardMAC = "Non"
+ExitRecvThread = 0
+ExitRCThread = 0
+
 RC_Value = 0
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-PrimaryCardMAC", help="")
-parser.add_argument("-SlaveCardMAC", help="")
 parser.add_argument("-Band5Below", type=int, help="")
 parser.add_argument("-Band10ValueMin", type=int, help="")
 parser.add_argument("-Band10ValueMax", type=int, help="")
 parser.add_argument("-Band20After", type=int, help="")
-parser.add_argument("-DefaultBandWidthAth9k", type=int, help="")
 
 
 args = parser.parse_args()
 
 PrimaryCardMAC = args.PrimaryCardMAC
-SlaveCardMAC = args.SlaveCardMAC
 Band5Below = args.Band5Below
 Band10ValueMin = args.Band10ValueMin
 Band10ValueMax = args.Band10ValueMax
 Band20After = args.Band20After
-CurrentBand = args.DefaultBandWidthAth9k
+
 
 
 def SendDataToAir(MessageBuf):
@@ -56,45 +55,76 @@ def SendDataToAir(MessageBuf):
 
 def StartRCThreadIn():
     global RC_Value
+    global ExitRCThread
     UDP_IP = ""
     UDP_PORT = 1258
-    sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    sock.bind((UDP_IP, UDP_PORT))
+    RCSock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    RCSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    RCSock.settimeout(1)
+    RCSock.bind((UDP_IP, UDP_PORT))
 
     while True:
-        data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-        byteArr = bytearray([data[1], data[0]])
-        lock.acquire()
-        RC_Value = int.from_bytes( byteArr, byteorder='big')
-        lock.release()
+        try:
+            data, addr = RCSock.recvfrom(1024) # buffer size is 1024 bytes
+            byteArr = bytearray([data[1], data[0]])
+            lock.acquire()
+            RC_Value = int.from_bytes( byteArr, byteorder='big')
+            lock.release()
+        except:
+            if ExitRCThread == 1:
+                print("RC thread exiting...")
+                break
+
+    RCSock.close()
+    ExitRCThread = 2
 
 def StartRecvThread():
     global AirBand
+    global ExitRecvThread
+
     UDP_IP = ""
     UDP_PORT = 8943 #2022 - UDP DownLink from Air
-    sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    sock.bind((UDP_IP, UDP_PORT))
+    CommandSock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    CommandSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    CommandSock.settimeout(1)
+    CommandSock.bind((UDP_IP, UDP_PORT))
 
     while True:
-        data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-        print( "Data: " + str(data) )
-        if data == InMsgBand5:
-            print("InMsgBand5\n")
-            lock.acquire()
-            AirBand = "5"
-            lock.release()
+        try:
+            data, addr = CommandSock.recvfrom(1024) # buffer size is 1024 bytes
+            print( "Data: " + str(data) )
+            if data == InMsgBand5:
+                print("InMsgBand5\n")
+                lock.acquire()
+                AirBand = "5"
+                lock.release()
 
-        if data == InMsgBand10:
-            print("InMsgBand10\n")
-            lock.acquire()
-            AirBand = "a"
-            lock.release()
+            if data == InMsgBand10:
+                print("InMsgBand10\n")
+                lock.acquire()
+                AirBand = "a"
+                lock.release()
 
-        if data == InMsgBand20:
-            print("InMsgBand20\n")
-            lock.acquire()
-            AirBand = "0"
-            lock.release()
+            if data == InMsgBand20:
+                print("InMsgBand20\n")
+                lock.acquire()
+                AirBand = "0"
+                lock.release()
+
+        except socket.timeout:
+            if ExitRecvThread == 1:
+                print("Recv thread exiting...")
+                break
+
+    CommandSock.close()
+    ExitRecvThread = 2
+            
+
+def CheckIfCardExists(PathToCard):
+    fPath = Path(PathToCard)
+    if fPath.exists() == False:
+        return False
+    return True
 
 
 def SwitchLocalBandTo(PathToFile, Mode):
@@ -137,11 +167,24 @@ def SwitchRemoteLocalBandTo(band):
     AirBand = "" #Clean old value
     lock.release()
 
+    #Check if all Slave cards still exists.
+    SlaveCardCount = len(SlaveCardList)
+    SlaveCardActual = 0;
+    for i in range(SlaveCardCount):
+        if CheckIfCardExists(SlaveCardList[i]) == True:
+            SlaveCardActual += 1
 
-    #switch secondary WiFI card to requestid band
-    if SwitchLocalBandTo(SlaveCardPath, band) == False:
-        print("Failed to switch secondary card to requested band. Abort.")
+    if SlaveCardCount != SlaveCardActual:
+        print("Slave cards count changed since script started. Exit script to restart.")
         return False
+
+
+
+    #switch secondary WiFI card to requested band
+    for z in range(SlaveCardCount):
+        if SwitchLocalBandTo(SlaveCardList[z], band) == False:
+            print("Failed to switch secondary card to requested band. Abort.")
+            return False
 
     #send "band switch" request to Air
     switched = 0
@@ -174,7 +217,7 @@ def SwitchRemoteLocalBandTo(band):
 
 def FindCardPhyInitPath():
     global PrimaryCardPath
-    global SlaveCardPath
+    global SlaveCardList
 
     for root, dirs, files in os.walk("/sys/kernel/debug/ieee80211/"):
         for varname in dirs:
@@ -183,25 +226,53 @@ def FindCardPhyInitPath():
                 PrimaryCardPath = PrimaryCardPath + "/ath9k_htc/chanbw"
                 print("Primary card path: " + PrimaryCardPath);
 
-            if varname.__contains__(SlaveCardMAC) == True:
-                SlaveCardPath = root
-                SlaveCardPath = SlaveCardPath + "/ath9k_htc/chanbw"
-                print("Slave card path: " + SlaveCardPath);
-
-
     #Confirm that chanbw file exist
-    fSlave = Path(SlaveCardPath)
-    if fSlave.exists() == False:
-        print(SlaveCardPath + " Not found")
-        return False
-
     fPrimary = Path(PrimaryCardPath)
     if fPrimary.exists() == False:
-        print(PrimaryCardPath + " Not found")
-        return False;
+        print("chanbw file for card with MAC ", PrimaryCardMAC,  " Not found ")
+        return False
 
+    #Get Slave card list
+    for root, dirs, files in os.walk("/sys/kernel/debug/ieee80211/"):
+        for filename in files:
+            if filename.__contains__("chanbw") == True:
+                tmp = root
+                tmp = root + "/chanbw"
+                if tmp != PrimaryCardPath:
+                    SlaveCardList.append(tmp)
+                    
+ 
+    #Confirm that chanbw file exist
+    SlaveCardCount = len(SlaveCardList)
+    if SlaveCardCount > 0:
+        print("Number of slave cards: ", SlaveCardCount);
+        for i in range(SlaveCardCount):
+            fSlave = Path(SlaveCardList[i])
+            if fSlave.exists() == False:
+                print(SlaveCardList[i] + " Not found");
+                return False
+            else:
+                print("Slave card #: ", i, " path: ", SlaveCardList[i])
+    else:
+        print("Slave card not found. Switch BW with one card unsafe, exit")
+        return False
+    
     return True
 
+def ExitScript(ExitCode):
+    global ExitRecvThread
+    global ExitRCThread
+
+    ExitRecvThread = 1
+    ExitRCThread = 1
+
+    while ExitRCThread == 1:
+        sleep(0.2)
+
+    while ExitRecvThread == 1:
+        sleep(0.2)
+
+    exit(ExitCode)
 
 
 
@@ -213,24 +284,47 @@ if FindCardPhyInitPath() == True:
     RC_UDP_IN_thread = threading.Thread(target=StartRCThreadIn)
     RC_UDP_IN_thread.start()
 
+    CurrentBandTmp = 0
+    CurrentBand = 0
+    try:
+        hFile = open(PrimaryCardPath, "r")
+        CurrentBandTmp = hFile.readline()
+        print("CurrnetBand from chanbw: ", CurrentBandTmp)
+        hFile.close()
+    except:
+        print("Primary card chanbw file missing.")
+        ExitScript(2)
+
+    if CurrentBandTmp == "0x00000000":
+        CurrentBand = 20
+    elif CurrentBandTmp == "0x0000000a":
+        CurrentBand = 10
+    elif CurrentBandTmp == "0x00000005":
+        CurrentBand = 5
+    else:
+        CurrentBand = 20
+    print("CurrentBand: ",CurrentBand)
+
     #Add command line in code
     while True:
         if RC_Value >= Band20After and CurrentBand != 20 and RC_Value != 0:
             print("Switching to 20...")
-            SwitchRemoteLocalBandTo(20)
+            if SwitchRemoteLocalBandTo(20) == False:
+                ExitScript(2)
             CurrentBand = 20
 
         if RC_Value < Band10ValueMax and RC_Value > Band10ValueMin and CurrentBand != 10 and RC_Value != 0:
             print("Switching to 10...")
-            SwitchRemoteLocalBandTo(10)
+            if SwitchRemoteLocalBandTo(10) == False:
+                ExitScript(2)
             CurrentBand = 10
 
         if RC_Value <= Band5Below and CurrentBand != 5 and RC_Value != 0:
             print("Switching to 5...")
-            SwitchRemoteLocalBandTo(5)
+            if SwitchRemoteLocalBandTo(5) == False:
+                ExitScript(2)
             CurrentBand = 5
         sleep(0.6)
 
 else:
-    print("Flase")
-
+    print("Exit")

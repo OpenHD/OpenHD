@@ -1,6 +1,12 @@
 function tx_function {
     killall wbc_status > /dev/null 2>&1
 
+    if [ "$DEBUG" == "Y" ]; then
+	#Turn text output back on for Airpi.
+	con2fbmap 1 0
+    fi
+
+
     /home/pi/wifibroadcast-base/sharedmem_init_tx
 
     if [ "$TXMODE" == "single" ]; then
@@ -322,4 +328,3 @@ chmod +x /dev/shm/startReadCameraTransfer_10.sh
 		sleep 365d
     fi
 }
-
