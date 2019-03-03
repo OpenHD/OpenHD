@@ -4,7 +4,6 @@ function tmessage {
     fi
 }
 
-
 function check_exitstatus {
     STATUS=$1
     case $STATUS in
@@ -501,7 +500,7 @@ function detect_nics {
 
     if [ "$CAM" == "0" ]; then # only do relay/hotspot stuff if RX
 	    # get wifi hotspot card out of the way
-	    if [ "$WIFI_HOTSPOT" != "N" ]; then
+	    if [ "$WIFI_HOTSPOT" == "Y" ]; then
 			if [ "$WIFI_HOTSPOT_NIC" != "internal" ]; then
 				# only configure it if it's there
 				if ls /sys/class/net/ | grep -q $WIFI_HOTSPOT_NIC; then
