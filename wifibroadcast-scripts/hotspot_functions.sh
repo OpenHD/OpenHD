@@ -87,8 +87,8 @@ function hotspot_check_function {
 	    		# Read if hotspot config is auto
 	     		if [ "$WIFI_HOTSPOT" == "auto" ]; then	
 				echo "wifihotspot auto..."
-	        		# for both a and g ability choose opposite of video
-	   	         	
+
+	        		# for both a and g ability choose opposite of video	   	         	
 				if [ "$ABLE_BAND" == "ag" ]; then
 					echo "Dual Band capable..."
 
@@ -99,10 +99,20 @@ function hotspot_check_function {
 	         			HOTSPOT_BAND=a
 					HOTSPOT_CHANNEL=52
 					fi
-	       			fi
+	       			
+				# for g ability only choose furthest freq from video
+				else
+					echo "G Band only capable..."
+					HOTSPOT_BAND=g
+
+					if [ "$FREQ" -gt "2452" ]; then					
+					HOTSPOT_CHANNEL=1
+					else	         			
+					HOTSPOT_CHANNEL=11
+					fi
+				fi
 	     		# NOTHING TO DO For user defined use of A (5.8ghz) OR G (2.4ghz) 
-	     		echo "setting Wifi hotspot hardward on band $HOTSPOT_BAND"
-			
+
 	     		fi
 
 		#populate $hw_mode and channel
