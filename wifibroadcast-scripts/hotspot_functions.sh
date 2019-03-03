@@ -48,30 +48,26 @@ function hotspot_check_function {
 		  echo "Found hardware $HARDWARE abilty"
 		  
 		  case "$HARDWARE" in
-                       '9020e0')
-		        ABLE_BAND=g
+                       '29020e0')
+		        ABLE_BAND=ag
 			MODEL=3a+
 			;;
-                       'a02082')
+                       '2a02082')
 		        ABLE_BAND=g
 			MODEL=3b
 			;;
-			'a22082')
+			'2a22082')
 		        ABLE_BAND=g
 			MODEL=3b
 			;;
-			'a32082')
+			'2a32082')
 		        ABLE_BAND=g
 			MODEL=3b
 			;;		
-			'a52082')
+			'2a52082')
 		        ABLE_BAND=g
 			MODEL=3b
 			;;	
-			'a020d3')
-		        ABLE_BAND=ag
-			MODEL=3b+
-			;;
                        '2a020d3')
 		        ABLE_BAND=ag
 			MODEL=3b+
@@ -122,7 +118,7 @@ function hotspot_check_function {
 	    	nice -n 5 hostapd -B -d /tmp/apconfig.txt
 
 	  	else
-	     	echo "NO WIFI CAPABILTY WAS FOUND"
+	     	echo "NO HOTSPOT CAPABILTY WAS FOUND"
 		tmessage "no hotspot hardware found..."
 	  	fi   
 	fi
