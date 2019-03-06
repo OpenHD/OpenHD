@@ -64,7 +64,7 @@ function hotspot_check_function {
 					HOTSPOT_CHANNEL=7
 	       				else
 	         			HOTSPOT_BAND=a
-					HOTSPOT_CHANNEL=52
+					HOTSPOT_CHANNEL=36
 					fi
 	       			
 				# for g ability only choose furthest freq from video
