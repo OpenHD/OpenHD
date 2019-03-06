@@ -224,7 +224,7 @@ def ReturnWlanFreq():
             with open(SettingsFilePath, "r") as f:
                 lines = f.readlines()
                 for line in lines:
-                    if line.startswith("FREQ") == True:
+                    if line.startswith("FREQ=") == True:
                         SplitLines = line.split("=")
                         FilterDigits = SplitLines[1]
                         SettingsFileFREQ = re.sub("\D", "", FilterDigits)
