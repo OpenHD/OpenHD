@@ -6,6 +6,80 @@ function tmessage {
     fi
 }
 
+function detect_hardware {
+	HARDWARE=$(cat /proc/cpuinfo | grep 'Revision' | awk '{print $3}')
+
+		  echo "Found hardware $HARDWARE..."
+		  
+		  case "$HARDWARE" in
+                       '29020e0')
+		        ABLE_BAND=ag
+			MODEL=3a+
+			;;
+                       '2a02082')
+		        ABLE_BAND=g
+			MODEL=3b
+			;;
+			'2a22082')
+		        ABLE_BAND=g
+			MODEL=3b
+			;;
+			'2a32082')
+		        ABLE_BAND=g
+			MODEL=3b
+			;;		
+			'2a52082')
+		        ABLE_BAND=g
+			MODEL=3b
+			;;	
+                       '2a020d3')
+		        ABLE_BAND=ag
+			MODEL=3b+
+			;;
+			'2900092')
+		        ABLE_BAND=none
+			MODEL=Zero
+			;;
+			'2900093')
+		        ABLE_BAND=none
+			MODEL=Zero
+			;;
+			'29000c1')
+		        ABLE_BAND=ag
+			MODEL=ZeroW
+			;;
+			'2920092')
+		        ABLE_BAND=none
+			MODEL=Zero
+			;;
+			'2920093')
+		        ABLE_BAND=none
+			MODEL=Zero
+			;;
+			'2a22042')
+		        ABLE_BAND=none
+			MODEL=2b
+			;;
+			'2a21041')
+		        ABLE_BAND=none
+			MODEL=2b
+			;;
+			'2a01041')
+		        ABLE_BAND=none
+			MODEL=2b
+			;;
+			'2a01040')
+		        ABLE_BAND=none
+			MODEL=2b
+			;;
+			*)
+			ABLE_BAND=unknown
+			MODEL=unknown
+			;;
+	          esac
+		echo "This pi model is $MODEL..."
+}
+
 function datarate_to_wifi_settings {
 	case $DATARATE in
 		1)
@@ -224,28 +298,11 @@ function detect_nics {
 	    sleep 365d
 	fi
 
-	if [ "$Bandwidth" == "10" ]; then
-		echo "HardCode dirty code for tests only. Values are it Hex, to set 10MHz use 0xa (10 in dec)"
-		echo 0xa > /sys/kernel/debug/ieee80211/phy0/ath9k_htc/chanbw
-		echo 0xa > /sys/kernel/debug/ieee80211/phy1/ath9k_htc/chanbw
-		echo 0xa > /sys/kernel/debug/ieee80211/phy2/ath9k_htc/chanbw
-		echo 0xa > /sys/kernel/debug/ieee80211/phy3/ath9k_htc/chanbw
-		echo 0xa > /sys/kernel/debug/ieee80211/phy4/ath9k_htc/chanbw
-	fi
-	
-	if [ "$Bandwidth" == "5" ]; then
-	        echo "HardCode dirty code for tests only. Values are it Hex, to set 10MHz use 0xa (10 in dec)"
-		echo 5 > /sys/kernel/debug/ieee80211/phy0/ath9k_htc/chanbw
-		echo 5 > /sys/kernel/debug/ieee80211/phy1/ath9k_htc/chanbw
-		echo 5 > /sys/kernel/debug/ieee80211/phy2/ath9k_htc/chanbw
-		echo 5 > /sys/kernel/debug/ieee80211/phy3/ath9k_htc/chanbw
-		echo 5 > /sys/kernel/debug/ieee80211/phy4/ath9k_htc/chanbw
-	fi
 
 
-    if [ "$CAM" == "0" ]; then # only do relay/hotspot stuff if RX
+    
 	    # get wifi hotspot card out of the way
-	    if [ "$WIFI_HOTSPOT" == "Y" ]; then
+	    if [ "$WIFI_HOTSPOT" != "N" ]; then
 			if [ "$WIFI_HOTSPOT_NIC" != "internal" ]; then
 				# only configure it if it's there
 				if ls /sys/class/net/ | grep -q $WIFI_HOTSPOT_NIC; then
@@ -284,7 +341,6 @@ function detect_nics {
 				sleep 0.5
 			fi
 	    fi
-	fi
 
     NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
 #	echo "NICS: $NICS"
