@@ -401,6 +401,16 @@ def IsTimeToExitByTimer():
                 return True
     return False
 
+def IsTimeToExitByTimeout():
+    if LastRequestTime != 0:
+        TimeNow = datetime.now()
+        diffLastRequest = (TimeNow - LastRequestTime).total_seconds()
+        if diffLastRequest > NotBreakByTimerIfLastRequestWas:
+            SendInfoToDisplay("Timeout.")
+            return True
+    return False
+
+
 def IsTimeToExit():
     global ExitRCThread
 
@@ -431,7 +441,7 @@ def InitUDPServer():
     MessageBufFile =  bytearray()
     while True:
         try:
-            if IsTimeToExit() == True or IsTimeToExitByTimer() == True:
+            if IsTimeToExit() == True or IsTimeToExitByTimer() == True or IsTimeToExitByTimeout() == True:
                 #if IsWlanAth9k() == True:
                 #    UnloadAth9kDriver()
                 #    sleep(2)
@@ -439,6 +449,7 @@ def InitUDPServer():
                 #    sleep(4)
                 #else:
                 #    ShutDownWlan()
+                CleanAndExit()
                 break
             MessageBufFile.clear()
             data, addr = RecvSocket.recvfrom(200)
