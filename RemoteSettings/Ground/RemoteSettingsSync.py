@@ -14,6 +14,7 @@ lock = threading.Lock()
 
 UDP_PORT_OUT = 1376
 UDP_PORT_IN = 1375
+UDP_INFO_PORT_OUT=1379
 RecvSocket = 0
 SettingsFilePath = "/boot/openhd-settings-1.txt"
 IsMainScriptRunning = False
@@ -47,14 +48,25 @@ def md5(fname):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
     except Exception as e:
-       print(e)
+       SendInfoToDisplay(e)
        return False
 
+sockToAir = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 def SendData(MessageBuf):
     try:
-        sockToAir = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+        
         #sockToAir.sendto( bytes(MessageBuf,'utf-8'), ('127.0.0.1', UDP_PORT_OUT))
         sockToAir.sendto(MessageBuf, ('127.0.0.1', UDP_PORT_OUT))
+    except Exception as e:
+        SendInfoToDisplay(e)
+        return False
+
+sockToAir = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+def SendInfoToDisplay(MessageBuf):
+    try:
+        print(MessageBuf)
+        sockToAir.sendto( bytes(MessageBuf,'ascii'), ('127.0.0.1', UDP_INFO_PORT_OUT))
+        #sockToAir.sendto(MessageBuf, ('127.0.0.1', UDP_INFO_PORT_OUT))
     except Exception as e:
         print(e)
         return False
@@ -67,7 +79,7 @@ def ReadFileFrom(offset, BytesToRead):
         f.close()
         return text
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
         return False
 
 def GetPrimaryCardMAC_Config():
@@ -82,7 +94,7 @@ def GetPrimaryCardMAC_Config():
                     return result
 
     except Exception as e:
-       print(e)
+       SendInfoToDisplay(e)
        return False
     return False
 
@@ -139,7 +151,7 @@ def ReadSettingsFromConfigFile():
 
 
     except Exception as e:
-       print(e)
+       SendInfoToDisplay(e)
        return False
     return False
 
@@ -156,7 +168,7 @@ def FindWlanNameByMAC(PrimaryCardMAC):
                         return dir
 
     except Exception as e:
-       print(e)
+       SendInfoToDisplay(e)
        return False
     return False
 
@@ -167,96 +179,99 @@ def FindWlanToUseGround():
 
     PrimaryCardMAC = GetPrimaryCardMAC_Config()
     if PrimaryCardMAC == False or PrimaryCardMAC == "0":
-        print("Trying to init WLAN...")
+        SendInfoToDisplay("Trying to init WLAN...")
         try:
             for root, dirs, files in os.walk("/sys/class/net/"):
                 for dir in dirs:
                     if dir.startswith("eth") == False and  dir.startswith("lo") == False and  dir.startswith("usb") == False and  dir.startswith("intwifi") == False and  dir.startswith("relay") == False and dir.startswith("wifihotspot") == False:
-                        print("Found WLan with name: ", dir)
+                        SendInfoToDisplay("Found WLan with name: " + dir)
                         WlanName = dir
             if WlanName != "0":
-                print("Using WLAN with name: ", WlanName)
+                SendInfoToDisplay("Using WLAN with name: " + WlanName)
                 subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", "2412" ])
+                SendInfoToDisplay("Frequency set to 2412")
                 return True
             else:
                 return False
 
         except Exception as e:
-            print(e)
+            SendInfoToDisplay(e)
             return False
     else:
-        print("Try to find wlan with MAC:", PrimaryCardMAC)
+        SendInfoToDisplay("Try to find wlan with MAC:" + PrimaryCardMAC)
         result = FindWlanNameByMAC(PrimaryCardMAC)
         if result != False:
-            print("Wlan with MAC found ")
+            SendInfoToDisplay("Wlan with MAC found ")
             try:
                 WlanName = result
-                print("Using WLAN with name: ", WlanName)
+                SendInfoToDisplay("Using WLAN with name: " + WlanName)
                 subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", "2412" ])
+                SendInfoToDisplay("Frequency set to 2412")
                 return True
             except Exception as e:
-                print(e)
+                SendInfoToDisplay(e)
                 return False
         else:
-            print("Wlan with MAC" + PrimaryCardMAC +  "not found, looking any other...")
+            SendInfoToDisplay("Wlan with MAC" + PrimaryCardMAC +  "not found, looking any other...")
             try:
                 for root, dirs, files in os.walk("/sys/class/net/"):
                     for dir in dirs:
                         if dir.startswith("eth") == False and  dir.startswith("lo") == False and  dir.startswith("usb") == False and  dir.startswith("intwifi") == False and  dir.startswith("relay") == False and dir.startswith("wifihotspot") == False:
-                            print("Found WLan with name: ", dir)
+                            SendInfoToDisplay("Found WLan with name: " + dir)
                             WlanName = dir
                 if WlanName != "0":
-                    print("Using WLAN with name: ", WlanName)
+                    SendInfoToDisplay("Using WLAN with name: "  + WlanName)
                     subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", "2412" ])
+                    SendInfoToDisplay("Frequency set to 2412")
                     return True
                 else:
                     return False
 
             except Exception as e:
-                print(e)
+                SendInfoToDisplay(e)
                 return False
 
-
+#Not used. Can be used with ath9k driver reload.
 def InitWlan():
     global WlanName
     PrimaryCardMAC = GetPrimaryCardMAC_Config()
     if PrimaryCardMAC == False or PrimaryCardMAC == "0":
-        print("Trying to init wlan0...")
+        SendInfoToDisplay("Trying to init wlan0...")
         try:
             if os.path.isdir("/sys/class/net/wlan0") == True:
                 WlanName = "wlan0"
                 subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', "wlan0" ,"2412" ])
                 return True
             else:
-                print("wlan0 not found")
+                SendInfoToDisplay("wlan0 not found")
                 return False
         except Exception as e:
-            print(e)
+            SendInfoToDisplay(e)
             return False
     else:
-        print("Try to configure wlan with MAC:", PrimaryCardMAC)
+        SendInfoToDisplay("Try to configure wlan with MAC:" + PrimaryCardMAC)
         result = FindWlanNameByMAC(PrimaryCardMAC)
         if result != False:
-            print("Wlan name with MAC: ", result)
+            SendInfoToDisplay("Wlan name with MAC: " + result)
             try:
                 WlanName = result
                 subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', result ,"2412" ])
                 return True
             except Exception as e:
-                print(e)
+                SendInfoToDisplay(e)
                 return False
         else:
-            print("Wlan with MAC not found, trying wlan0...")
+            SendInfoToDisplay("Wlan with MAC not found, trying wlan0...")
             try:
                 if os.path.isdir("/sys/class/net/wlan0") == True:
                     WlanName = "wlan0"
                     subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', "wlan0" ,"2412" ])
                     return True
                 else:
-                    print("wlan0 not found")
+                    SendInfoToDisplay("wlan0 not found")
                     return False
             except Exception as e:
-                print(e)
+                SendInfoToDisplay(e)
                 return False
 
 def ShutDownWlan():
@@ -264,7 +279,7 @@ def ShutDownWlan():
         subprocess.check_call(['/bin/ip', "link" ,"set", WlanName, "down" ])
         return True
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
         return False
     return False
 
@@ -275,17 +290,17 @@ def IsWlanAth9k():
             lines = f.readlines()
             for line in lines:
                 if "ath9k_htc" in line:
-                    print("Wlan is ath9k_htc. Driver reload required")
+                    SendInfoToDisplay("Wlan is ath9k_htc. Driver reload required")
                     return True
         return False
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
         return False
     return False
 
 
 def UnloadAth9kDriver():
-    print("Unload Ath9k_htc Driver...")
+    SendInfoToDisplay("Unload Ath9k_htc Driver...")
     try:
         subprocess.check_call(['rmmod', "ath9k_htc"  ])
         subprocess.check_call(['rmmod', "ath9k_common"  ])
@@ -293,12 +308,12 @@ def UnloadAth9kDriver():
         subprocess.check_call(['rmmod', "ath"  ])
         return True
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
         return False
     return False
 
 def LoadAth9kDriver():
-    print("Load Ath9k_htc Driver...")
+    SendInfoToDisplay("Load Ath9k_htc Driver...")
     try:
         subprocess.check_call(['modprobe', "ath9k_htc"  ])
         subprocess.check_call(['modprobe', "ath9k_common"  ])
@@ -306,7 +321,7 @@ def LoadAth9kDriver():
         subprocess.check_call(['modprobe', "ath"  ])
         return True
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
         return False
     return False
 
@@ -317,7 +332,7 @@ def CreateFinishMarkFile():
         f.close()
         return True
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
         return False
     return False
 
@@ -329,7 +344,7 @@ def InitDevNull():
         RCDevNull = open(os.devnull, 'w')
         return True
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
     return False
 
 def StartSVPcomTx():                                     
@@ -339,7 +354,7 @@ def StartSVPcomTx():
                           "-u" ,str(UDP_PORT_OUT), "-p", "93", "-B", "20", "-M", "0", WlanName ])
         return True
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
         return False
     return False
 
@@ -350,23 +365,23 @@ def StartSVPcomRx():
                               "-c" ,"127.0.0.1", "-u", str(UDP_PORT_IN), "-p", "92",  WlanName ], stdout=RxDevNull)
         return True
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
         return False
     return False
 
 def StartRC_Reader(ChannelToRead):   
     try:
         if ChannelToRead > 8:
-            print("Selected RC channel greater than 8.  Forced to channel 1")
+            SendInfoToDisplay("Selected RC channel greater than 8.  Forced to channel 1")
             ChannelToRead = 1
         if ChannelToRead < 1:
-           print("Selected RC channel less than 1.  Forced to channel 1")
+           SendInfoToDisplay("Selected RC channel less than 1.  Forced to channel 1")
            ChannelToRead = 1
 
         subprocess.Popen( ['/home/pi/RemoteSettings/Ground/helper/JoystickSender', str(ChannelToRead)], stdout=RCDevNull)
         return True
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
         return False
     return False
 
@@ -379,10 +394,10 @@ def IsTimeToExitByTimer():
                 if LastRequestTime != 0:
                     diffLastRequest = (TimeNow - LastRequestTime).total_seconds()
                     if NotBreakByTimerIfLastRequestWas > diffLastRequest:
-                        print("Sync in progress.... Timer - delayed.")
+                        SendInfoToDisplay("Sync in progress.... Timer - delayed.")
                         return False
                     
-                print("Program interrupted by RC timer")
+                SendInfoToDisplay("Program interrupted by RC timer")
                 return True
     return False
 
@@ -390,13 +405,17 @@ def IsTimeToExit():
     global ExitRCThread
 
     if RC_Value >= SettingsSyncForceOffRC_Value and RC_Value != 0:
-        print("Program interrupted by RC joystick")
+        SendInfoToDisplay("Program interrupted by RC joystick")
         ExitRCThread = 1
         return True
     else:
         return False
 
 def InitUDPServer():
+    for i in range(0,10):
+        SendInfoToDisplay("SwitchToAwaiting")
+        sleep(0.02)
+
     global RecvSocket
     global IsMainScriptRunning
     global LastRequestTime
@@ -407,7 +426,7 @@ def InitUDPServer():
         RecvSocket.settimeout(0.5)
         RecvSocket.bind((UDP_IP, UDP_PORT_IN))
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
         return False
     MessageBufFile =  bytearray()
     while True:
@@ -425,15 +444,15 @@ def InitUDPServer():
             data, addr = RecvSocket.recvfrom(200)
             if data == RequestGroundChecksum:
                 #SendMessage: 32 bytes md5 + 5 bytes file size
-                print("RequestGroundChecksum")
+                SendInfoToDisplay("RequestGroundChecksum")
                 LastRequestTime = datetime.now()
                 result = md5(SettingsFilePath)
                 if result != False:
 
                     md5Bytes = result.encode('ascii')
-                    print("md5: ", md5Bytes)
+                    SendInfoToDisplay("md5: " + str(md5Bytes ) )
                     SizeInBytesInt = os.path.getsize(SettingsFilePath)
-                    print("File size in bytes:", SizeInBytesInt)
+                    SendInfoToDisplay("File size in bytes:" + str(SizeInBytesInt) )
                     if SizeInBytesInt != 0:
                         MessageBufFile.extend(md5Bytes)
                         SizeInBytesString = str(SizeInBytesInt)
@@ -442,14 +461,14 @@ def InitUDPServer():
                         SendData(MessageBufFile)
                         MessageBufFile.clear()
             if RequestSFile in data:
-                print("RequestSFile")
+                SendInfoToDisplay("SwitchToDownload")
                 LastRequestTime = datetime.now()
                 #return: 6 bytes - offset that was read + data 1024 bytes or less
                 if len(data) > 13:
                     offset = data[13:len(data)]
-                    print("Requested file from offset: ", offset)
+                    SendInfoToDisplay("Requested file from offset: " + str(offset ) )
                     offsetInt = int(offset)
-                    print("OffsetInt: ", offsetInt)
+                    SendInfoToDisplay("OffsetInt: " + str(offsetInt) )
 
                     SizeInBytes = os.path.getsize(SettingsFilePath)
                     BytesTillEndOfFile = SizeInBytes - offsetInt
@@ -458,23 +477,23 @@ def InitUDPServer():
                     header = headerStr.encode('ascii')
                     if BytesTillEndOfFile >= 1024:
                         MessageBufFile.extend(header)
-                        print("Till end of file left more than 1024")
+                        SendInfoToDisplay("Till end of file left more than 1024")
                         tmp = ReadFileFrom(offsetInt,1024)
-                        print("Bytes read From file:", len(tmp) )
+                        SendInfoToDisplay("Bytes read From file:" + str(len(tmp)) )
                         MessageBufFile.extend(tmp)
-                        print("Total MessageBuf len: ", len(MessageBufFile))
+                        SendInfoToDisplay("Total MessageBuf len: " + str( len(MessageBufFile) ))
                         SendData(MessageBufFile)
                         MessageBufFile.clear()
                     else:
                         MessageBufFile.extend(header)
-                        print("Till end of file left: ", BytesTillEndOfFile)
+                        SendInfoToDisplay("Till end of file left: " + str(BytesTillEndOfFile) )
                         MessageBufFile.extend(ReadFileFrom(offsetInt,BytesTillEndOfFile))
                         SendData(MessageBufFile)
                         MessageBufFile.clear()
 
             if data == DownloadFinished:
                 LastRequestTime = datetime.now()
-                print("DownloadFinished")
+                SendInfoToDisplay("DownloadFinished")
                 tmp = "ACK".encode('ascii')
                 for i in range(0,10):
                     SendData(tmp)
@@ -491,14 +510,14 @@ def InitUDPServer():
                 #    ShutDownWlan()
 
                 CreateFinishMarkFile()
-                print("Starting main OpenHD shell script.")
+                SendInfoToDisplay("Starting main OpenHD shell script.")
                 CleanAndExit()
                 exit()
                 
 
             if data == NoNeedInSync:
                 LastRequestTime = datetime.now()
-                print("NoNeedInSync")
+                SendInfoToDisplay("NoNeedInSync")
                 tmp = "ACK".encode('ascii')
                 for i in range(0,10):
                     SendData(tmp)
@@ -515,14 +534,14 @@ def InitUDPServer():
                 #   ShutDownWlan()
 
                 CreateFinishMarkFile()
-                print("Starting main OpenHD shell script.")
+                SendInfoToDisplay("Starting main OpenHD shell script.")
                 CleanAndExit()
                 exit()
 
 
         except Exception as e:
             pass
-            #print(e)
+            #SendInfoToDisplay(e)
 
     return False
 
@@ -545,31 +564,31 @@ def StartRCThreadIn():
             RC_Value = int.from_bytes( byteArr, byteorder='big')
             lock.release()
             if ExitRCThread == 1:
-                print("RC thread exiting...")
+                SendInfoToDisplay("RC thread exiting...")
                 break
         except:
             if ExitRCThread == 1:
-                print("RC thread exiting...")
+                SendInfoToDisplay("RC thread exiting...")
                 break
 
     RCSock.close()
-    print("RC thread terminated")
+    SendInfoToDisplay("RC thread terminated")
 
 
 def ReturnWlanFreq():
     if FreqFromConfigFile != "0" and WlanName != "0":
         try:
             subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanFreq.sh', WlanName , FreqFromConfigFile ])
-            print("Frequency for WLAN: " + WlanName + " returned back to: " + FreqFromConfigFile)
+            SendInfoToDisplay("Frequency for WLAN: " + WlanName + " returned back to: " + FreqFromConfigFile)
         except Exception as e:
-            print(e)
+            SendInfoToDisplay(e)
 
 def CleanAndExit():
     global ExitRCThread
     global RxDevNull
     global RCDevNull
 
-    print("SettingsSync done.")
+    SendInfoToDisplay("SettingsSync done.")
     ExitRCThread = 1
     ReturnWlanFreq()
     sleep(1)
@@ -577,15 +596,21 @@ def CleanAndExit():
     try:
         subprocess.check_call(['/usr/bin/killall', "JoystickSender" ]) 
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
 
     try:
         subprocess.check_call(['/usr/bin/killall', "wfb_rx" ]) 
     except Exception as e:
-        print(e)
+        SendInfoToDisplay(e)
 
     try:
         subprocess.check_call(['/usr/bin/killall', "wfb_tx" ]) 
+    except Exception as e:
+        SendInfoToDisplay(e)
+
+    
+    try:
+        subprocess.check_call(['/usr/bin/killall', "DisplayProgram" ]) 
     except Exception as e:
         print(e)
 
@@ -596,19 +621,20 @@ def CleanAndExit():
     exit()
 
 def ShowSettings():
-    print(" ")
-    print("SettingsSyncForceOffRC_Value=",SettingsSyncForceOffRC_Value)
-    print("SettingsSyncForceOnRC_Value=",SettingsSyncForceOnRC_Value)
-    print("SettingsSyncRC_Channel=",SettingsSyncRC_Channel)
-    print("SettingsSyncStartOption=",SettingsSyncStartOption)
-    print("SettingsSyncOffByTimer=",SettingsSyncOffByTimer)
-    print("NotBreakByTimerIfLastRequestWas=",NotBreakByTimerIfLastRequestWas)
+    SendInfoToDisplay(" ")
+    SendInfoToDisplay("SettingsSyncForceOffRC_Value=" + str(SettingsSyncForceOffRC_Value ) )
+    SendInfoToDisplay("SettingsSyncForceOnRC_Value=" + str(SettingsSyncForceOnRC_Value) )
+    SendInfoToDisplay("SettingsSyncRC_Channel=" + str(SettingsSyncRC_Channel) )
+    SendInfoToDisplay("SettingsSyncStartOption=" + str(SettingsSyncStartOption) )
+    SendInfoToDisplay("SettingsSyncOffByTimer=" + str(SettingsSyncOffByTimer) )
+    SendInfoToDisplay("NotBreakByTimerIfLastRequestWas=" + str(NotBreakByTimerIfLastRequestWas) )
 
 
 #################################################### start
 
+
 if os.path.isfile("/tmp/ReadyToGo") == True:
-    print("No need to run second time")
+    SendInfoToDisplay("No need to run second time")
     exit()
 
 InitDevNull()
@@ -616,12 +642,12 @@ InitDevNull()
 RC_UDP_IN_thread = threading.Thread(target=StartRCThreadIn)
 RC_UDP_IN_thread.start()
 
-print("Parse config file...")
+SendInfoToDisplay("Parse config file...")
 if ReadSettingsFromConfigFile() == True:
-    print("Completed without errors")
+    SendInfoToDisplay("Completed without errors")
     ShowSettings()
 else:
-    print("Completed with errors. Using default settings. Check ground config file.")
+    SendInfoToDisplay("Completed with errors. Using default settings. Check ground config file.")
     SettingsSyncForceOffRC_Value=1700
     SettingsSyncForceOnRC_Value=1400
     SettingsSyncRC_Channel=1
@@ -633,46 +659,47 @@ else:
 StartRC_Reader(SettingsSyncRC_Channel)
 
 if SettingsSyncStartOption != 1:
-    print("SettingsSync disabled. Starting RC reader to check force On ")
-    for i in range(0, 30):
-        #print("I is:", i, "RC value: ", RC_Value)
-        stdout.write("\r RC value: "+  str(RC_Value) + " Retry: " + str(i) + " of 30")
-        stdout.flush()
+    SendInfoToDisplay("SettingsSync disabled.Starting RC reader to check force On ")
+    for i in range(0, 10):
+        #SendInfoToDisplay("I is:", i, "RC value: ", RC_Value)
+        #stdout.write("\r RC value: "+  str(RC_Value) + " Retry: " + str(i) + " of 30")
+        #stdout.flush()
+        SendInfoToDisplay(" RC value: "+  str(RC_Value) + " Retry: " + str(i) + " of 10")
         if RC_Value <= SettingsSyncForceOnRC_Value and RC_Value != 0:
             SettingsSyncStartOption = 1
             SettingsSyncOffByTimer=0
-            print("SettingsSync forced to On via joystick")
-            print("Timer disabled")
+            SendInfoToDisplay("SettingsSync forced to On via joystick")
+            SendInfoToDisplay("Timer disabled")
             break
         if RC_Value >= SettingsSyncForceOffRC_Value and RC_Value != 0:
             SettingsSyncStartOption = 0
-            print("SettingsSync forced to Off via joystick")
+            SendInfoToDisplay("SettingsSync forced to Off via joystick")
             break
 
-        sleep(0.1)
+        sleep(0.3)
 
 
 if SettingsSyncStartOption == 1:
-    print("SettingsSync init...")
+    SendInfoToDisplay("SettingsSync init...")
     #if InitWlan() != False:
     if FindWlanToUseGround() != False:
         if StartSVPcomRx() != False:
             if StartSVPcomTx() != False:
                 if SettingsSyncOffByTimer > 5:
-                    print("Starting timer...")
+                    SendInfoToDisplay("Starting timer...")
                     StartTime = datetime.now()
                 else:
-                    print("Timer set to less than 5 seconds. Disabled.")
+                    SendInfoToDisplay("Timer set to less than 5 seconds. Disabled.")
 
                 InitUDPServer()
             else:
-                print("Can`t init radio TX")
+                SendInfoToDisplay("Can`t init radio TX")
         else:
-            print("Can`t init radio RX")
+            SendInfoToDisplay("Can`t init radio RX")
     
     else:
-        print("Can`t init Wlan. Exit.")
+        SendInfoToDisplay("Can`t init Wlan. Exit.")
 else:
-    print("SettingsSync disabled.")
+    SendInfoToDisplay("SettingsSync disabled.")
 
 CleanAndExit()

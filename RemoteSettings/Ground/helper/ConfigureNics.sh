@@ -483,8 +483,18 @@ function prepare_nic {
     fi
 }
 
-
 read_config_file
+
+
+   if [ "$MirrorDSI_To_HDMI" == "y" ]; then
+            if [ -e "/dev/fb0" ]; then
+                    echo "/dev/fb0 - found"
+                    if [ -e "/dev/fb1" ]; then
+                            echo "/dev/fb1 - found. Start framebuffer copy"
+                            /home/pi/wifibroadcast-misc/raspi2raspi &
+                    fi
+            fi
+    fi
 
 datarate_to_wifi_settings
 
