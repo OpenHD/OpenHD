@@ -352,6 +352,8 @@ def StartSVPcomTx():
         subprocess.Popen(['/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx',"-k", "1", "-n", "1",
                           "-K", "/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/tx.key",
                           "-u" ,str(UDP_PORT_OUT), "-p", "93", "-B", "20", "-M", "0", WlanName ])
+        for i in range(0,10):
+            SendData("SayHello!")
         return True
     except Exception as e:
         SendInfoToDisplay(e)
