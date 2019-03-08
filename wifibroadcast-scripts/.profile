@@ -7,6 +7,7 @@ case $TTY in
 	echo "tty1"
 	CAM=`/usr/bin/vcgencmd get_camera | nice grep -c detected=1`
 	if [ "$CAM" == "0" ]; then # if we are RX ...
+		/home/pi/RemoteSettings/Ground/helper/AirRSSI.sh &
 		/home/pi/RemoteSettings/Ground/helper/DisplayProgram/DisplayProgram &
 		/home/pi/RemoteSettings/Ground/helper/ConfigureNics.sh
 		/usr/bin/python3.5 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py
