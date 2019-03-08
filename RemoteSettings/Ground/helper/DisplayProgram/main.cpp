@@ -38,10 +38,6 @@ char Awaiting0Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Im
 char Awaiting1Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/1.jpg"};
 char Awaiting2Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/2.jpg"};
 char Awaiting3Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/3.jpg"};
-char Awaiting4Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/4.jpg"};
-char Awaiting5Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/5.jpg"};
-char Awaiting6Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/6.jpg"};
-char Awaiting7Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/7.jpg"};
 
 char Download0Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/0.jpg"};
 char Download1Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/1.jpg"};
@@ -51,7 +47,6 @@ char Download4Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Im
 char Download5Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/5.jpg"};
 char Download6Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/6.jpg"};
 char Download7Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/7.jpg"};
-char Download8Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/8.jpg"};
 
 time_t TimerLastSwitchAwaiting;
 time_t TimerLastSwitchDownloading;
@@ -160,10 +155,6 @@ void InitImages()
 	Awaiting.push_back(CreateImageFromJpeg(Awaiting1Path) );
 	Awaiting.push_back(CreateImageFromJpeg(Awaiting2Path) );
 	Awaiting.push_back(CreateImageFromJpeg(Awaiting3Path) );
-        Awaiting.push_back(CreateImageFromJpeg(Awaiting4Path) );
-        Awaiting.push_back(CreateImageFromJpeg(Awaiting5Path) );
-        Awaiting.push_back(CreateImageFromJpeg(Awaiting6Path) );
-        Awaiting.push_back(CreateImageFromJpeg(Awaiting7Path) );
 
 	AwaitingIter = Awaiting.begin();
 
@@ -175,7 +166,6 @@ void InitImages()
         Download.push_back(CreateImageFromJpeg(Download5Path) );
         Download.push_back(CreateImageFromJpeg(Download6Path) );
         Download.push_back(CreateImageFromJpeg(Download7Path) );
-	Download.push_back(CreateImageFromJpeg(Download8Path) );
 
 	DownloadIter = Download.begin();
 
