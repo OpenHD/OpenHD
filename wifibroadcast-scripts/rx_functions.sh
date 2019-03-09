@@ -185,28 +185,31 @@ function rx_function {
 		tmessage "Starting RX ... (FEC: $VIDEO_BLOCKS/$VIDEO_FECS/$VIDEO_BLOCKLENGTH)"
 		
 	#START AUDIO AND REMOTE SETTINGS
-		if [ $IsFirstTime -eq 0 ]; then
-			if [ "$IsAudioTransferEnabled" == "1" ]; then
-			      echo "AUDIO ENABLED..."
-				amixer cset numid=3 $DefaultAudioOut
-				/home/pi/RemoteSettings/Ground/AudioPlayback.sh &
-				/home/pi/RemoteSettings/Ground/RxAudio.sh &
-			fi
+		#if [ $IsFirstTime -eq 0 ]; then
+			#if [ "$IsAudioTransferEnabled" == "1" ]; then
+			#      echo "AUDIO ENABLED..."
+			#	amixer cset numid=3 $DefaultAudioOut
+			#	/home/pi/RemoteSettings/Ground/AudioPlayback.sh &
+			#	/home/pi/RemoteSettings/Ground/RxAudio.sh &
+			#fi
 
-			if [ "$RemoteSettingsEnabled" != "0" ]; then
-				echo "SETTINGS CHANGE MODULE ENABLED..."
-				/home/pi/RemoteSettings/ipchecker/iphelper.sh > /dev/null 2>&1 &
-				/usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettings.py > /dev/null 2>&1 &
-				/home/pi/RemoteSettings/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
-				/home/pi/RemoteSettings/GroundRSSI.sh &
-			fi
+			#if [ "$RemoteSettingsEnabled" != "0" ]; then
+			#	echo "SETTINGS CHANGE MODULE ENABLED..."
+			#	/home/pi/RemoteSettings/ipchecker/iphelper.sh > /dev/null 2>&1 &
+			#	/usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettings.py > /dev/null 2>&1 &
+			#	/home/pi/RemoteSettings/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
+			#	/home/pi/RemoteSettings/GroundRSSI.sh &
+			#fi
 			
-			if [ "$IsBandSwicherEnabled" == "1" ]; then
-			    echo "BAND SWITCHER ENABLED...."
-        			/home/pi/RemoteSettings/BandSwitcher.sh &
-			fi
-		fi
+			#if [ "$IsBandSwicherEnabled" == "1" ]; then
+			#    echo "BAND SWITCHER ENABLED...."
+        	#		/home/pi/RemoteSettings/BandSwitcher.sh &
+			#fi
+		#fi
 		IsFirstTime=1
+		#start remote settings 2 instead ( testing only ground station server for now)
+		/usr/bin/python3.5 /home/pi/RemoteSettings2/ServerGround.py > /dev/null 2>&1
+		
 		#MYADDEND
 		
 		
