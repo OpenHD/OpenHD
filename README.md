@@ -9,6 +9,9 @@ OpenHD is licensed under GPLv2, you can find it's contents in this link
 Raspbian, Linux Kernel, Drivers are licensed under GPLv2
 Original code (if found) is licensed as stipulated in respective source files or under the GPLv2 license 
 
+## Credits
+Befinitiv- original wifibroadcast, Rangarid- OSD, Rodizio- EZ-WifiBroadcast, SVP-COM, Dino.de, Jelle, Vitaliy, and many others
+
 ## Logotype
 OpenHD logo was is based on a contribution by Yves Chaufour (user @Yes21)
 
