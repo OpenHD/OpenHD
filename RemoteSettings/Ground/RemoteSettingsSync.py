@@ -17,6 +17,7 @@ UDP_PORT_IN = 1375
 UDP_INFO_PORT_OUT=1379
 RecvSocket = 0
 SettingsFilePath = "/boot/openhd-settings-1.txt"
+JoystickSettingsFilePath = "/boot/joyconfig.txt"
 IsMainScriptRunning = False
 DefaultCommunicateFreq = "2412"
 FreqFromConfigFile= "0"
@@ -96,6 +97,70 @@ def GetPrimaryCardMAC_Config():
     except Exception as e:
        SendInfoToDisplay(e)
        return False
+    return False
+
+
+
+def ReadJoystickConfigFile():
+    ROLL_AXIS = "0"
+    PITCH_AXIS = "1"
+    YAW_AXIS = "3"
+    THROTTLE_AXIS = "2"
+    AUX1_AXIS = "4"
+    AUX2_AXIS = "5"
+    AUX3_AXIS = "6"
+    AUX4_AXIS  = "7"
+    
+    try:
+        with open(JoystickSettingsFilePath, "r") as f:
+            lines = f.readlines()
+            for line in lines:
+                if line.startswith("#define ROLL_AXIS") == True:
+                    SplitLines = line.split()
+                    FilterDigits = SplitLines[2]
+                    ROLL_AXIS = re.sub("\D", "", FilterDigits)
+
+                if line.startswith("#define PITCH_AXIS") == True:
+                    SplitLines = line.split()
+                    FilterDigits = SplitLines[2]
+                    PITCH_AXIS = re.sub("\D", "", FilterDigits)
+
+                if line.startswith("#define YAW_AXIS") == True:
+                    SplitLines = line.split()
+                    FilterDigits = SplitLines[2]
+                    YAW_AXIS = re.sub("\D", "", FilterDigits)
+
+                if line.startswith("#define THROTTLE_AXIS") == True:
+                    SplitLines = line.split()
+                    FilterDigits = SplitLines[2]
+                    THROTTLE_AXIS = re.sub("\D", "", FilterDigits)
+
+                if line.startswith("#define AUX1_AXIS") == True:
+                    SplitLines = line.split()
+                    FilterDigits = SplitLines[2]
+                    AUX1_AXIS = re.sub("\D", "", FilterDigits)
+
+                if line.startswith("#define AUX2_AXIS") == True:
+                    SplitLines = line.split()
+                    FilterDigits = SplitLines[2]
+                    AUX2_AXIS = re.sub("\D", "", FilterDigits)
+
+                if line.startswith("#define AUX3_AXIS") == True:
+                    SplitLines = line.split()
+                    FilterDigits = SplitLines[2]
+                    AUX3_AXIS = re.sub("\D", "", FilterDigits)
+
+                if line.startswith("#define AUX4_AXIS") == True:
+                    SplitLines = line.split()
+                    FilterDigits = SplitLines[2]
+                    AUX4_AXIS = re.sub("\D", "", FilterDigits)
+
+
+        return  {'ROLL_AXIS':ROLL_AXIS, 'PITCH_AXIS':PITCH_AXIS ,'YAW_AXIS':YAW_AXIS,    'THROTTLE_AXIS':THROTTLE_AXIS, 'AUX1_AXIS':AUX1_AXIS ,'AUX2_AXIS':AUX2_AXIS,    'AUX3_AXIS':AUX3_AXIS, 'AUX4_AXIS':AUX4_AXIS }
+
+    except Exception as e:
+       SendInfoToDisplay(e)
+
     return False
 
 
@@ -352,8 +417,6 @@ def StartSVPcomTx():
         subprocess.Popen(['/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx',"-k", "1", "-n", "1",
                           "-K", "/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/tx.key",
                           "-u" ,str(UDP_PORT_OUT), "-p", "93", "-B", "20", "-M", "0", WlanName ])
-        for i in range(0,10):
-            SendData("SayHello!")
         return True
     except Exception as e:
         SendInfoToDisplay(e)
@@ -371,16 +434,39 @@ def StartSVPcomRx():
         return False
     return False
 
-def StartRC_Reader(ChannelToRead):   
+def StartRC_Reader(ChannelToRead):
+    ROLL_AXIS = "0"
+    PITCH_AXIS = "1"
+    YAW_AXIS = "3"
+    THROTTLE_AXIS = "2"
+    AUX1_AXIS = "4"
+    AUX2_AXIS = "5"
+    AUX3_AXIS = "6"
+    AUX4_AXIS  = "7"
+
+    result = ReadJoystickConfigFile()
+    if result == False:
+        SendInfoToDisplay("Can`t read joystick config file. Joystick - default.")
+    else:
+
+        ROLL_AXIS = result['ROLL_AXIS']
+        PITCH_AXIS = result['PITCH_AXIS']
+        YAW_AXIS = result['YAW_AXIS']
+        THROTTLE_AXIS = result['THROTTLE_AXIS']
+        AUX1_AXIS = result['AUX1_AXIS']
+        AUX2_AXIS = result['AUX2_AXIS']
+        AUX3_AXIS = result['AUX3_AXIS']
+        AUX4_AXIS  = result['AUX4_AXIS']
+
     try:
-        if ChannelToRead > 8:
-            SendInfoToDisplay("Selected RC channel greater than 8.  Forced to channel 1")
+        if ChannelToRead > 16:
+            SendInfoToDisplay("Selected RC channel greater than 16.  Forced to channel 1")
             ChannelToRead = 1
         if ChannelToRead < 1:
            SendInfoToDisplay("Selected RC channel less than 1.  Forced to channel 1")
            ChannelToRead = 1
 
-        subprocess.Popen( ['/home/pi/RemoteSettings/Ground/helper/JoystickSender', str(ChannelToRead)], stdout=RCDevNull)
+        subprocess.Popen( ['/home/pi/RemoteSettings/Ground/helper/JoystickSender', str(ChannelToRead), ROLL_AXIS, PITCH_AXIS,YAW_AXIS, THROTTLE_AXIS,AUX1_AXIS,AUX2_AXIS,AUX3_AXIS,AUX4_AXIS ], stdout=RCDevNull)
         return True
     except Exception as e:
         SendInfoToDisplay(e)
