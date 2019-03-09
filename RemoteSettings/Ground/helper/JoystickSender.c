@@ -19,15 +19,6 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-
-#define ROLL_AXIS      0
-#define PITCH_AXIS     1
-#define YAW_AXIS       3
-#define THROTTLE_AXIS  2
-#define AUX1_AXIS      4
-#define AUX2_AXIS      5
-#define AUX3_AXIS      6
-#define AUX4_AXIS 7
 #define UPDATE_NTH_TIME 8 
 #define AXIS_INITIAL 1500
 
@@ -44,8 +35,16 @@
 static SDL_Joystick *js;
 char *ifname = NULL;
 int flagHelp = 0;
-uint16_t rcData[8];
+uint16_t rcData[16];
 
+int ROLL_AXIS = 0;
+int PITCH_AXIS =  1;
+int YAW_AXIS = 3;
+int THROTTLE_AXIS = 2;
+int AUX1_AXIS = 4;
+int AUX2_AXIS = 5;
+int AUX3_AXIS = 6;
+int AUX4_AXIS = 7;
 
 int16_t parsetoMultiWii(Sint16 value) {
 	return (int16_t)(((((double)value)+32768.0)/65.536)+1000);
@@ -54,34 +53,29 @@ int16_t parsetoMultiWii(Sint16 value) {
 
 void readAxis(SDL_Event *event) {
 	SDL_Event myevent = (SDL_Event)*event;
-	switch(myevent.jaxis.axis) {
-		case ROLL_AXIS:
-				rcData[0]=parsetoMultiWii(myevent.jaxis.value);
-			break;
-		case PITCH_AXIS:
-				rcData[1]=parsetoMultiWii(myevent.jaxis.value);
-			break;
-		case THROTTLE_AXIS:
-				rcData[2]=parsetoMultiWii(myevent.jaxis.value);
-			break;
-		case YAW_AXIS:
-				rcData[3]=parsetoMultiWii(myevent.jaxis.value);
-			break;
-		case AUX1_AXIS:
-				rcData[4]=parsetoMultiWii(myevent.jaxis.value);
-			break;
-		case AUX2_AXIS:
-				rcData[5]=parsetoMultiWii(myevent.jaxis.value);
-			break;
-		case AUX3_AXIS:
-				rcData[6]=parsetoMultiWii(myevent.jaxis.value);
-			break;
-		case AUX4_AXIS:
-				rcData[7]=parsetoMultiWii(myevent.jaxis.value);
-			break;
-		default:
-			break; //do nothing
-	}
+	if ( myevent.jaxis.axis == ROLL_AXIS)
+		rcData[0]=parsetoMultiWii(myevent.jaxis.value);
+
+	if ( myevent.jaxis.axis == PITCH_AXIS)
+		rcData[1]=parsetoMultiWii(myevent.jaxis.value);
+
+	if ( myevent.jaxis.axis == THROTTLE_AXIS)
+		rcData[2]=parsetoMultiWii(myevent.jaxis.value);
+
+	if ( myevent.jaxis.axis == YAW_AXIS)
+		rcData[3]=parsetoMultiWii(myevent.jaxis.value);
+
+	if ( myevent.jaxis.axis ==  AUX1_AXIS)
+		rcData[4]=parsetoMultiWii(myevent.jaxis.value);
+
+	if ( myevent.jaxis.axis == AUX2_AXIS)
+		rcData[5]=parsetoMultiWii(myevent.jaxis.value);
+
+	if ( myevent.jaxis.axis == AUX3_AXIS)
+		rcData[6]=parsetoMultiWii(myevent.jaxis.value);
+
+	if ( myevent.jaxis.axis == AUX4_AXIS)
+		rcData[7]=parsetoMultiWii(myevent.jaxis.value);
 }
 
 
@@ -136,6 +130,15 @@ int main (int argc, char *argv[]) {
         rcData[7]=AXIS_INITIAL;
 
 	Channel = atoi(argv[1]);
+	ROLL_AXIS =	atoi(argv[2]);
+	PITCH_AXIS = 	atoi(argv[3]);
+	YAW_AXIS = 	atoi(argv[4]);
+	THROTTLE_AXIS = atoi(argv[5]);
+	AUX1_AXIS = 	atoi(argv[6]);
+	AUX2_AXIS = 	atoi(argv[7]);
+	AUX3_AXIS = 	atoi(argv[8]);
+	AUX4_AXIS = 	atoi(argv[9]);
+
 	//udp init
         struct sockaddr_in si_other;
         int s, slen = sizeof(si_other);
