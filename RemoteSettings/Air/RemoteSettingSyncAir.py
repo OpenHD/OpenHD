@@ -348,11 +348,12 @@ if StartConfigureWlanScript() != False:
                         print("Air and Ground config files equal. No need in sync")
                         print("Notify ground that it can boot.")
                         IsACK_RetryCounter = 0
-                        while True:
+                        for i in range(0,15):
                             IsACK = NotifyGroundWithACK("NoNeedInSync")
                             if IsACK == True:
                                 CleanAndExit()
                             sleep(0.1)
+                        CleanAndExit()
                     else:
                         print("Air and Ground config mismatch. Sync required")
                         while True:
@@ -362,38 +363,47 @@ if StartConfigureWlanScript() != False:
                             print("InFileMD5: ", InFileHash)
                             if InFileHash == MD5CheckSumGround:
                                 print("Ground and downloaded file checksum equal.")
-                                IsACK_RetryCounter = 0
-                                while True:
+                                print("ACK received. Moving tmp file to /boot...")
+                                MoveFile()
+                                for x in range(0,15):
                                     IsACK = NotifyGroundWithACK("DownloadFinished")
                                     if IsACK == True:
-                                        print("ACK received. Moving tmp file to /boot...")
-                                        MoveFile()
+                                        print("ACK received. ready to boot")
                                         CleanAndExit()
-                                    print("NotifyGroundWithACK failed. Retry...")
-                                    IsACK_RetryCounter += 1
-                                    if IsACK_RetryCounter % 2 == 0:
-                                        if SwitchToFreq == "0":
-                                            print("Reading freq from file...")
-                                            SwitchToFreq = GetFreqFromConfig()
-                                            if SwitchToFreq == False:
-                                                print("Failed to read freq from settings file")
-                                                SwitchToFreq = "0"
-                                            else:
-                                                print("Ground main frequency is: ", SwitchToFreq)
-                                                print("switching to frequency: ", SwitchToFreq )
-                                                SwitchWlanToFreq(SwitchToFreq)
+                                        break
+                                CleanAndExit()
 
-                                        else:
-                                            print("switching to frequency: ", SwitchToFreq)
-                                            SwitchWlanToFreq(SwitchToFreq)
+                                #while True:
+                                #    IsACK = NotifyGroundWithACK("DownloadFinished")
+                                #    if IsACK == True:
+                                #        print("ACK received. Moving tmp file to /boot...")
+                                #        MoveFile()
+                                #        CleanAndExit()
+                                #    print("NotifyGroundWithACK failed. Retry...")
+                                #    IsACK_RetryCounter += 1
+                                #    if IsACK_RetryCounter % 2 == 0:
+                                #        if SwitchToFreq == "0":
+                                #            print("Reading freq from file...")
+                                #            SwitchToFreq = GetFreqFromConfig()
+                                #            if SwitchToFreq == False:
+                                #                print("Failed to read freq from settings file")
+                                #                SwitchToFreq = "0"
+                                #            else:
+                                #                print("Ground main frequency is: ", SwitchToFreq)
+                                #                print("switching to frequency: ", SwitchToFreq )
+                                #                SwitchWlanToFreq(SwitchToFreq)
+                                #
+                                #        else:
+                                #            print("switching to frequency: ", SwitchToFreq)
+                                #            SwitchWlanToFreq(SwitchToFreq)
+                                #
+                                #    else:
+                                #        print("switching to default frequency: ", DefaultCommunicateFreq)
+                                #        SwitchWlanToFreq(DefaultCommunicateFreq)
 
-                                    else:
-                                        print("switching to default frequency: ", DefaultCommunicateFreq)
-                                        SwitchWlanToFreq(DefaultCommunicateFreq)
+                                #    sleep(1) #wait a bit between ACK request resend. 
 
-                                    sleep(1) #wait a bit between ACK request resend. 
-
-                                break
+                                #break
                             else:
                                 print("Downloaded file checksum not match to Ground. Retry...")
 
