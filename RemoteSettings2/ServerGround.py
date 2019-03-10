@@ -23,6 +23,7 @@ from queue import Queue
 messagesForClient=Queue()
 #messagesForClient.put("Hello from queue")
 settingsDatabase=createSettingsDatabase('G')
+lastHELLO_OKmessage=0.0
 
 #Change value on ground pi
 #forward message to air pi
@@ -53,6 +54,7 @@ def processGetMessage(key):
 
 #process messages coming from the settings app (external devices)
 def processMessageFromClient(msg):
+    print("Message from client",msg)
     global messagesForClient
     cmd,data=ParseMessage(msg)
     if(cmd=="HELLO_OK"):
@@ -107,8 +109,8 @@ while True:
         #Hello->HelloOK connection check that is required to test if the connection was forcibly closed
         #without notifying the server (e.g. the user disabled WIFI but didn't close the app first)
         connection.settimeout(0.5)
-        lastHELLO_OKmessage=time.time()
         lastHELLOmessage=time.time()
+        lastHELLO_OKmessage=time.time()
         lineBuffer = ''
         while True:
             #first,try to receive some data from the socket, and parse it into a line
@@ -143,9 +145,10 @@ while True:
             currTime=time.time()
             if((currTime-lastHELLO_OKmessage)>5.0):
                 print("No response from client in >5 seconds. CLosing connecction")
+                print(currTime-lastHELLO_OKmessage)
                 connection.close()
-            #if there was no error yet, send the 'HELLO' message to the client (every 2 seconds)
-            if((currTime-lastHELLOmessage)>=2.0):
+            #if there was no error yet, send the 'HELLO' message to the client (every 1 seconds)
+            if((currTime-lastHELLOmessage)>=1.0):
                 lastHELLOmessage=currTime
                 messagesForClient.put(BuildMessageHELLO())
     except Exception as e:
