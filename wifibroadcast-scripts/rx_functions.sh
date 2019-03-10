@@ -185,7 +185,7 @@ function rx_function {
 		tmessage "Starting RX ... (FEC: $VIDEO_BLOCKS/$VIDEO_FECS/$VIDEO_BLOCKLENGTH)"
 		
 	#START AUDIO AND REMOTE SETTINGS
-		#if [ $IsFirstTime -eq 0 ]; then
+		if [ $IsFirstTime -eq 0 ]; then
 			#if [ "$IsAudioTransferEnabled" == "1" ]; then
 			#      echo "AUDIO ENABLED..."
 			#	amixer cset numid=3 $DefaultAudioOut
@@ -205,10 +205,10 @@ function rx_function {
 			#    echo "BAND SWITCHER ENABLED...."
         	#		/home/pi/RemoteSettings/BandSwitcher.sh &
 			#fi
-		#fi
+			#start remote settings 2 instead ( testing only ground station server for now)
+			/usr/bin/python3.5 /home/pi/RemoteSettings2/ServerGround.py > /dev/null 2>&1
+		fi
 		IsFirstTime=1
-		#start remote settings 2 instead ( testing only ground station server for now)
-		/usr/bin/python3.5 /home/pi/RemoteSettings2/ServerGround.py > /dev/null 2>&1
 		
 		#MYADDEND
 		
