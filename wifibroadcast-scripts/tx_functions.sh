@@ -240,29 +240,33 @@ function tx_function {
 
 #nice -n -9 raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -y 0 $NICS
 
-if [ "$IsAudioTransferEnabled" == "1" ]; then
-        /home/pi/RemoteSettings/Air/AudioCapture.sh &
-        /home/pi/RemoteSettings/Air/AudioTX.sh &
-fi
+#if [ "$IsAudioTransferEnabled" == "1" ]; then
+#        /home/pi/RemoteSettings/Air/AudioCapture.sh &
+#        /home/pi/RemoteSettings/Air/AudioTX.sh &
+#fi
 
-if [ "$RemoteSettingsEnabled" == "1" ]; then
-        echo "\n RemoteSettings enabled \n"
-        /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
-        /home/pi/RemoteSettings/AirRSSI.sh &
-        /usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettingsAir.py &
-else
-        re='^[0-9]+$'
-        if ! [[ $RemoteSettingsEnabled =~ $re ]] ; then
-                echo "RemoteSettings - incorrect timer value \n"
-        else
-                if [ "$RemoteSettingsEnabled" -ne "0" ]; then
-                        echo "\n RemoteSettings enabled with timer \n"
-                         /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
-                        /home/pi/RemoteSettings/AirRSSI.sh &
-                        /usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettingsAir.py $RemoteSettingsEnabled &
-                fi
-        fi
-fi
+#if [ "$RemoteSettingsEnabled" == "1" ]; then
+#        echo "\n RemoteSettings enabled \n"
+#        /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
+#        /home/pi/RemoteSettings/AirRSSI.sh &
+#        /usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettingsAir.py &
+#else
+#        re='^[0-9]+$'
+#        if ! [[ $RemoteSettingsEnabled =~ $re ]] ; then
+#                echo "RemoteSettings - incorrect timer value \n"
+#        else
+#                if [ "$RemoteSettingsEnabled" -ne "0" ]; then
+#                        echo "\n RemoteSettings enabled with timer \n"
+#                         /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
+#                        /home/pi/RemoteSettings/AirRSSI.sh &
+#                        /usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettingsAir.py $RemoteSettingsEnabled &
+#                fi
+#        fi
+#fi
+
+/home/pi/RemoteSettings2/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
+/usr/bin/python3.5 /home/pi/RemoteSettings2/src_python/ServerAir.py &
+
 
 if [ "$IsBandSwicherEnabled" == "1" ]; then
         /home/pi/RemoteSettings/BandSwitcherAir.sh &

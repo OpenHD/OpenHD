@@ -20,7 +20,7 @@ def processChangeMessage(key,value):
     global settingsDatabase
     changeSetting(settingsDatabase,key,value)
     #refresh the local database
-    settingsDatabase=createSettingsDatabase('A')
+    settingsDatabase=createSettingsDatabase(None)
     return BuildMessageCHANGE_OK("A",key,value)   
 
 
