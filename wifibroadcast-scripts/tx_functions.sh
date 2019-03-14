@@ -264,7 +264,9 @@ function tx_function {
 #        fi
 #fi
 
+echo "starting remote settins 2 - scripts\n"
 /home/pi/RemoteSettings2/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
+echo "starting remote settins 2 - python\n"
 /usr/bin/python3.5 /home/pi/RemoteSettings2/src_python/ServerAir.py &
 
 
