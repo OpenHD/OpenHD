@@ -223,6 +223,10 @@ function collect_debug {
 
     nice ps ax >>$DEBUGPATH/debug.txt
     echo >>$DEBUGPATH/debug.txt
+	
+	#Consti
+	nice history >>$DEBUGPATH/debug.txt
+    echo >>$DEBUGPATH/debug.txt
 
     nice df -h >>$DEBUGPATH/debug.txt
     echo >>$DEBUGPATH/debug.txt
