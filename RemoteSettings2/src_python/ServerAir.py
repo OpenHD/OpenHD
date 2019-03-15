@@ -54,7 +54,7 @@ def sendMessageToGroundPi(message):
 #This one has to run on the Air Pi continiously for the settings app to work
 def ReplyLoop():
     global settingsDatabase
-    settingsDatabase=createSettingsDatabase('A')
+    settingsDatabase=createSettingsDatabase(None)
     receiveSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
     receiveSock.bind(('localhost',9090))
     print("started reply loop on air pi")
