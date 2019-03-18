@@ -41,12 +41,11 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					break;
                                 case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
 					fprintf(stdout, "GLOBAL_POSITION_INT: ");
-					#ifdef COMPASS_INAV 
+					#if COMPASS_INAV == true
   						td->heading = mavlink_msg_global_position_int_get_hdg(&msg);
 					#else
 						td->heading = mavlink_msg_global_position_int_get_hdg(&msg)/100.0f;
     					#endif
-					td->heading = mavlink_msg_global_position_int_get_hdg(&msg);
                                         td->altitude = mavlink_msg_global_position_int_get_relative_alt(&msg)/1000.0f;
                                         td->latitude = mavlink_msg_global_position_int_get_lat(&msg)/10000000.0f;
                                         td->longitude = mavlink_msg_global_position_int_get_lon(&msg)/10000000.0f;
