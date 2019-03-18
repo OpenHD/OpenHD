@@ -486,6 +486,7 @@ function collect_errorlog {
 }
 
 function wbclogger_function {
+  if [ "$CAM" == "0" ]; then # if we are RX ...
     # Waiting until video is running ...
     VIDEORXRUNNING=0
     while [ $VIDEORXRUNNING -ne 1 ]; do
@@ -512,6 +513,7 @@ function wbclogger_function {
 		nice /home/pi/wifibroadcast-base/wifibackgroundscan $NICS >> /wbc_tmp/wifibackgroundscan.csv &
     fi
     sleep 365d
+  fi
 }
 
 function pause_while {
