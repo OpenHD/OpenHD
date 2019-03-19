@@ -27,11 +27,11 @@ ExitRCThread = 0
 StartTime = 0
 LastRequestTime = 0
 
-SettingsSyncForceOffRC_Value=1700
-SettingsSyncForceOnRC_Value=1400
-SettingsSyncRC_Channel=1
-SettingsSyncStartOption=1
-SettingsSyncOffByTimer=20
+SmartSyncOFF_RC_Value=1700
+SmartSyncStayON_RC_Value=1300
+SmartSyncRC_Channel=3
+SmartSync_StartupMode=1
+SmartSyncGround_Countdown=45
 NotBreakByTimerIfLastRequestWas=3
 
 
@@ -165,11 +165,11 @@ def ReadJoystickConfigFile():
 
 
 def ReadSettingsFromConfigFile():
-    global SettingsSyncForceOffRC_Value
-    global SettingsSyncForceOnRC_Value
-    global SettingsSyncRC_Channel
-    global SettingsSyncStartOption
-    global SettingsSyncOffByTimer
+    global SmartSyncOFF_RC_Value
+    global SmartSyncStayON_RC_Value
+    global SmartSyncRC_Channel
+    global SmartSync_StartupMode
+    global SmartSyncGround_Countdown
     global FreqFromConfigFile
     try:
         with open(SettingsFilePath, "r") as f:
@@ -180,36 +180,30 @@ def ReadSettingsFromConfigFile():
                     FilterDigits = SplitLines[1]
                     FreqFromConfigFile = re.sub("\D", "", FilterDigits) 
 
-                if line.startswith("SettingsSyncForceOffRC_Value") == True:
+                if line.startswith("SmartSyncOFF_RC_Value") == True:
                     SplitLines = line.split("=")
                     FilterDigits = SplitLines[1]
-                    SettingsSyncForceOffRC_Value = int(re.sub("\D", "", FilterDigits) )
+                    SmartSyncOFF_RC_Value = int(re.sub("\D", "", FilterDigits) )
 
-                if line.startswith("SettingsSyncForceOnRC_Value") == True:
+                if line.startswith("SmartSyncStayON_RC_Value") == True:
                     SplitLines = line.split("=")
                     FilterDigits = SplitLines[1]
-                    SettingsSyncForceOnRC_Value = int(re.sub("\D", "", FilterDigits) )
+                    SmartSyncStayON_RC_Value = int(re.sub("\D", "", FilterDigits) )
 
-                if line.startswith("SettingsSyncRC_Channel") == True:
+                if line.startswith("SmartSyncRC_Channel") == True:
                     SplitLines = line.split("=")
                     FilterDigits = SplitLines[1]
-                    SettingsSyncRC_Channel = int(re.sub("\D", "", FilterDigits) )
+                    SmartSyncRC_Channel = int(re.sub("\D", "", FilterDigits) )
 
-                if line.startswith("SettingsSyncStartOption") == True:
+                if line.startswith("SmartSync_StartupMode") == True:
                     SplitLines = line.split("=")
                     FilterDigits = SplitLines[1]
-                    SettingsSyncStartOption = int(re.sub("\D", "", FilterDigits) )
+                    SmartSync_StartupMode = int(re.sub("\D", "", FilterDigits) )
 
-                if line.startswith("SettingsSyncOffByTimer") == True:
+                if line.startswith("SmartSyncGround_Countdown") == True:
                     SplitLines = line.split("=")
                     FilterDigits = SplitLines[1]
-                    SettingsSyncOffByTimer = int(re.sub("\D", "", FilterDigits) )
-
-                if line.startswith("NotBreakByTimerIfLastRequestWas") == True:
-                    SplitLines = line.split("=")
-                    FilterDigits = SplitLines[1]
-                    NotBreakByTimerIfLastRequestWas = int(re.sub("\D", "", FilterDigits) )
-
+                    SmartSyncGround_Countdown = int(re.sub("\D", "", FilterDigits) )
                     
 
             return True
@@ -478,7 +472,7 @@ def IsTimeToExitByTimer():
         TimeNow = datetime.now()
         diff = (TimeNow - StartTime).total_seconds()
         if diff > 5:
-            if diff > SettingsSyncOffByTimer:
+            if diff > SmartSyncGround_Countdown:
                 if LastRequestTime != 0:
                     diffLastRequest = (TimeNow - LastRequestTime).total_seconds()
                     if NotBreakByTimerIfLastRequestWas > diffLastRequest:
@@ -502,7 +496,7 @@ def IsTimeToExitByTimeout():
 def IsTimeToExit():
     global ExitRCThread
 
-    if RC_Value >= SettingsSyncForceOffRC_Value and RC_Value != 0:
+    if RC_Value >= SmartSyncOFF_RC_Value and RC_Value != 0:
         SendInfoToDisplay("Program interrupted by RC joystick")
         ExitRCThread = 1
         return True
@@ -687,7 +681,7 @@ def CleanAndExit():
     global RxDevNull
     global RCDevNull
 
-    SendInfoToDisplay("SettingsSync done.")
+    SendInfoToDisplay("SmartSync done.")
     ExitRCThread = 1
     ReturnWlanFreq()
     sleep(1)
@@ -721,11 +715,11 @@ def CleanAndExit():
 
 def ShowSettings():
     SendInfoToDisplay(" ")
-    SendInfoToDisplay("SettingsSyncForceOffRC_Value=" + str(SettingsSyncForceOffRC_Value ) )
-    SendInfoToDisplay("SettingsSyncForceOnRC_Value=" + str(SettingsSyncForceOnRC_Value) )
-    SendInfoToDisplay("SettingsSyncRC_Channel=" + str(SettingsSyncRC_Channel) )
-    SendInfoToDisplay("SettingsSyncStartOption=" + str(SettingsSyncStartOption) )
-    SendInfoToDisplay("SettingsSyncOffByTimer=" + str(SettingsSyncOffByTimer) )
+    SendInfoToDisplay("SmartSyncOFF_RC_Value=" + str(SmartSyncOFF_RC_Value) )
+    SendInfoToDisplay("SmartSyncStayON_RC_Value=" + str(SmartSyncStayON_RC_Value) )
+    SendInfoToDisplay("SmartSyncRC_Channel=" + str(SmartSyncRC_Channel) )
+    SendInfoToDisplay("SmartSync_StartupMode=" + str(SmartSync_StartupMode) )
+    SendInfoToDisplay("SmartSyncGround_Countdown=" + str(SmartSyncGround_Countdown) )
     SendInfoToDisplay("NotBreakByTimerIfLastRequestWas=" + str(NotBreakByTimerIfLastRequestWas) )
 
 
@@ -747,44 +741,44 @@ if ReadSettingsFromConfigFile() == True:
     ShowSettings()
 else:
     SendInfoToDisplay("Completed with errors. Using default settings. Check ground config file.")
-    SettingsSyncForceOffRC_Value=1700
-    SettingsSyncForceOnRC_Value=1400
-    SettingsSyncRC_Channel=1
-    SettingsSyncStartOption=1
-    SettingsSyncOffByTimer=20
+    SmartSyncOFF_RC_Value=1700
+    SmartSyncStayON_RC_Value=1400
+    SmartSyncRC_Channel=3
+    SmartSync_StartupMode=1
+    SmartSyncGround_Countdown=45
     NotBreakByTimerIfLastRequestWas=3
     ShowSettings()
 
-StartRC_Reader(SettingsSyncRC_Channel)
+StartRC_Reader(SmartSyncRC_Channel)
 
-if SettingsSyncStartOption != 1:
-    SendInfoToDisplay("SettingsSync disabled.Starting RC reader to check force On ")
+if SmartSync_StartupMode != 1:
+    SendInfoToDisplay("SmartSync disabled.Starting RC reader to check force On ")
     for i in range(0, 10):
         #SendInfoToDisplay("I is:", i, "RC value: ", RC_Value)
         #stdout.write("\r RC value: "+  str(RC_Value) + " Retry: " + str(i) + " of 30")
         #stdout.flush()
         SendInfoToDisplay(" RC value: "+  str(RC_Value) + " Retry: " + str(i) + " of 10")
-        if RC_Value <= SettingsSyncForceOnRC_Value and RC_Value != 0:
-            SettingsSyncStartOption = 1
-            SettingsSyncOffByTimer=0
-            SendInfoToDisplay("SettingsSync forced to On via joystick")
+        if RC_Value <= SmartSyncStayON_RC_Value and RC_Value != 0:
+            SmartSync_StartupMode = 1
+            SmartSyncGround_Countdown=0
+            SendInfoToDisplay("SmartSync forced to On via joystick")
             SendInfoToDisplay("Timer disabled")
             break
-        if RC_Value >= SettingsSyncForceOffRC_Value and RC_Value != 0:
-            SettingsSyncStartOption = 0
-            SendInfoToDisplay("SettingsSync forced to Off via joystick")
+        if RC_Value >= SmartSyncOFF_RC_Value and RC_Value != 0:
+            SmartSync_StartupMode = 0
+            SendInfoToDisplay("SmartSync forced to Off via joystick")
             break
 
         sleep(0.3)
 
 
-if SettingsSyncStartOption == 1:
-    SendInfoToDisplay("SettingsSync init...")
+if SmartSync_StartupMode == 1:
+    SendInfoToDisplay("SmartSync init...")
     #if InitWlan() != False:
     if FindWlanToUseGround() != False:
         if StartSVPcomRx() != False:
             if StartSVPcomTx() != False:
-                if SettingsSyncOffByTimer > 5:
+                if SmartSyncGround_Countdown > 5:
                     SendInfoToDisplay("Starting timer...")
                     StartTime = datetime.now()
                 else:
@@ -799,6 +793,6 @@ if SettingsSyncStartOption == 1:
     else:
         SendInfoToDisplay("Can`t init Wlan. Exit.")
 else:
-    SendInfoToDisplay("SettingsSync disabled.")
+    SendInfoToDisplay("SmartSync disabled.")
 
 CleanAndExit()
