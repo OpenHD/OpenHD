@@ -499,3 +499,13 @@ read_config_file
 datarate_to_wifi_settings
 
 detect_nics
+
+if [ "$SmartSyncControlVia" == "GPIO" ]; then
+        exit 2
+fi
+
+if [ "$SmartSyncControlVia" == "joystick" ]; then
+        exit 1
+fi
+
+exit 0
