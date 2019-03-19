@@ -273,7 +273,7 @@ else
         if ! [[ $RemoteSettingsEnabled =~ $re ]] ; then
                 echo "RemoteSettings - incorrect timer value \n"
         else
-                if [ "$RemoteSettingsEnabled" -ne "0" ]; then
+                if [ "$RemoteSettingsEnabled" -ne "0" ] && [ "$RemoteSettingsEnabled" -ne "2" ]; then
                         echo "\n RemoteSettings enabled with timer \n"
                          /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
                         /home/pi/RemoteSettings/AirRSSI.sh &
