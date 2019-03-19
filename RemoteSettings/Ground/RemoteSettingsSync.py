@@ -7,10 +7,30 @@ import subprocess
 import re
 from sys import stdout
 from datetime import datetime
+import argparse
+import RPi.GPIO as GPIO
 import threading
 lock = threading.Lock()
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-ControlVia", help="")
+args = parser.parse_args()
+ArgParam = args.ControlVia
 
+SelectedControl = "0"
+
+if ArgParam == "GPIO":
+    SelectedControl="GPIO"
+elif ArgParam == "joystick":
+    SelectedControl="joystick"
+else:
+    SelectedControl = "joystick"
+	
+	
+print("Selected: " + SelectedControl)
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(26, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 UDP_PORT_OUT = 1376
 UDP_PORT_IN = 1375
@@ -501,7 +521,14 @@ def IsTimeToExit():
         ExitRCThread = 1
         return True
     else:
-        return False
+        if SelectedControl == "GPIO":
+            GPIOState = GPIO.input(26)
+            if(GPIOState == True):
+                SendInfoToDisplay("Program interrupted by GPIO")
+                ExitRCThread = 1
+                return True
+
+    return False
 
 def InitUDPServer():
     for i in range(0,10):
@@ -767,6 +794,13 @@ if SmartSync_StartupMode != 1:
         if RC_Value >= SmartSyncOFF_RC_Value and RC_Value != 0:
             SmartSync_StartupMode = 0
             SendInfoToDisplay("SmartSync forced to Off via joystick")
+            break
+        GPIOState = GPIO.input(26)
+        if(GPIOState == False):
+            SmartSync_StartupMode = 1
+            SmartSyncGround_Countdown=0
+            SendInfoToDisplay("SmartSync forced to On via GPIO")
+            SendInfoToDisplay("Timer disabled")
             break
 
         sleep(0.3)
