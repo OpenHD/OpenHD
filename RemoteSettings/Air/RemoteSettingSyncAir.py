@@ -9,7 +9,7 @@ import re
 UDP_PORT_OUT = 1375
 UDP_PORT_IN = 1376
 RecvSocket = 0
-RetryCountMD5 = 10
+RetryCountMD5 = 15
 FileSizeInt = 0
 SettingsFilePath = "/boot/openhd-settings-1.txt"
 SwitchToFreq = "0"
@@ -19,7 +19,7 @@ WlanName = "0"
 SettingsFileDATARATE = "0"
 SettingsFileTXPOWER = "0"
 SettingsFileTXMODE = "0"
-SettingsSyncStartOption = "-1"
+#SmartSync_StartupMode = "-1"
 
 
 def SendData(MessageBuf):
@@ -247,7 +247,7 @@ def ReadSettingsFromConfigFile():
     global SettingsFileFREQ
     global SettingsFileTXPOWER
     global SettingsFileTXMODE
-    global SettingsSyncStartOption
+#   global SmartSync_StartupMode
 
     try:
         with open(SettingsFilePath, "r") as f:
@@ -258,10 +258,10 @@ def ReadSettingsFromConfigFile():
                     FilterDigits = SplitLines[1]
                     SettingsFileDATARATE = re.sub("\D", "", FilterDigits)
 
-                if line.startswith("SettingsSyncStartOption") == True:
-                    SplitLines = line.split("=")
-                    FilterDigits = SplitLines[1]
-                    SettingsSyncStartOption = int(re.sub("\D", "", FilterDigits) )
+#                if line.startswith("SmartSync_StartupMode") == True:
+#                    SplitLines = line.split("=")
+#                    FilterDigits = SplitLines[1]
+#                    SmartSync_StartupMode = int(re.sub("\D", "", FilterDigits) )
 
                 if line.startswith("TXPOWER") == True:
                     SplitLines = line.split("=")
@@ -301,7 +301,7 @@ def InitSettings():
         SettingsFileTXMODE = "single"
 
 def CleanAndExit():
-    print("SettingsSync done.")
+    print("SmartSync done.")
     ReturnWlanFreq()
     sleep(1)
     RecvSocket.close()
