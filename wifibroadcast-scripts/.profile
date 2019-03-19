@@ -10,7 +10,17 @@ case $TTY in
 		/home/pi/RemoteSettings/Ground/helper/AirRSSI.sh &
 		/home/pi/RemoteSettings/Ground/helper/DisplayProgram/DisplayProgram &
 		/home/pi/RemoteSettings/Ground/helper/ConfigureNics.sh
-		/usr/bin/python3.5 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py
+                retCode=$?
+                if [ $retCode == 1 ]; then
+                        # Ret Code is 1. joystick selected as control
+                        /usr/bin/python3.5 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia GPIO
+                fi
+
+                if [ $retCode == 2 ]; then
+                        # Ret code is 2  GPIO  selected as control
+                        /usr/bin/python3.5 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia joystick
+                fi
+		
 		echo "0" > /tmp/ReadyToGo
 	else # else we are TX ...
 		/usr/bin/python3.5 /home/pi/RemoteSettings/Air/RemoteSettingSyncAir.py
