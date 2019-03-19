@@ -13,12 +13,12 @@ case $TTY in
                 retCode=$?
                 if [ $retCode == 1 ]; then
                         # Ret Code is 1. joystick selected as control
-                        /usr/bin/python3.5 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia GPIO
+                        /usr/bin/python3.5 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia joystick
                 fi
 
                 if [ $retCode == 2 ]; then
                         # Ret code is 2  GPIO  selected as control
-                        /usr/bin/python3.5 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia joystick
+                        /usr/bin/python3.5 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia GPIO
                 fi
 		
 		echo "0" > /tmp/ReadyToGo
