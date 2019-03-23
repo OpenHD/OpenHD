@@ -206,8 +206,8 @@ function rx_function {
         	#		/home/pi/RemoteSettings/BandSwitcher.sh &
 			#fi
 			#start remote settings 2 instead ( testing only ground station server for now)
-			/usr/bin/python3.5 /home/pi/RemoteSettings2/src_python/ServerGround.py > /dev/null 2>&1 &
-			/home/pi/RemoteSettings2/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
+			#/usr/bin/python3.5 /home/pi/RemoteSettings2/src_python/ServerGround.py > /dev/null 2>&1 &
+			#/home/pi/RemoteSettings2/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
 		fi
 		IsFirstTime=1
 		
