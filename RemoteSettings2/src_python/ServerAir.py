@@ -47,7 +47,7 @@ def processMessageFromGroundPi(msg):
 #only call this one from the Reply loop context
 def sendMessageToGroundPi(message):
     sendSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    sendSock.sendto((message).encode(),('localhost', 9292))
+    sendSock.sendto((message).encode(),('localhost', 9091))
     print("Sent to ground pi:",message)
 
 

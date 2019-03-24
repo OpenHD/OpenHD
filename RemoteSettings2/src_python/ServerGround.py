@@ -75,7 +75,7 @@ def processMessageFromClient(msg):
 def ListenForAirPiMessages():
     while(True):
         receiveSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        receiveSock.bind(('localhost',9292))
+        receiveSock.bind(('localhost',9091))
         data=receiveSock.recv(1024)
         #if(data):
         global messagesForClient

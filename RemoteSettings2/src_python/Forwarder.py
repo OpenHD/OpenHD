@@ -44,7 +44,7 @@ def ForwardMessageToAirPi(Message):
 def ForwardMessageToAirPiAndAwaitResponse(Message):
     #first, bind the port we are going to receive the response from (if succesfull)
     receiveSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    receiveSock.bind(('localhost',9292))
+    receiveSock.bind(('localhost',9090))
     receiveSock.settimeout(2.0)
     #then, send data to the air pi on another UDP socket
     sendSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)

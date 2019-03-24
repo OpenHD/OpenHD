@@ -185,7 +185,7 @@ function rx_function {
 		tmessage "Starting RX ... (FEC: $VIDEO_BLOCKS/$VIDEO_FECS/$VIDEO_BLOCKLENGTH)"
 		
 	#START AUDIO AND REMOTE SETTINGS
-		if [ $IsFirstTime -eq 0 ]; then
+		#if [ $IsFirstTime -eq 0 ]; then
 			#if [ "$IsAudioTransferEnabled" == "1" ]; then
 			#      echo "AUDIO ENABLED..."
 			#	amixer cset numid=3 $DefaultAudioOut
@@ -208,8 +208,8 @@ function rx_function {
 			#start remote settings 2 instead ( testing only ground station server for now)
 			#/usr/bin/python3.5 /home/pi/RemoteSettings2/src_python/ServerGround.py > /dev/null 2>&1 &
 			#/home/pi/RemoteSettings2/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
-		fi
-		IsFirstTime=1
+		#fi
+		#IsFirstTime=1
 		
 		#MYADDEND
 		
