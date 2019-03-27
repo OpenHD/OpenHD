@@ -129,7 +129,7 @@ EXTRAPARAMS="-cd H264 -n -fl -ih -pf high -if both -ex sports -mm average -awb h
 # Serial port and baudrate (19200 is minimum) to use for the R/C connection between air Pi and flight control
 # Set this to "/dev/serial0" for Pi onboard serial port or  "/dev/ttyUSB0" for USB-to-serial adapter
 FC_RC_SERIALPORT=/dev/serial0
-FC_RC_BAUDRATE=2400
+FC_RC_BAUDRATE=1200
 #
 #
 # Serial port and baudrate to use for the telemetry connection between air Pi and flight control
