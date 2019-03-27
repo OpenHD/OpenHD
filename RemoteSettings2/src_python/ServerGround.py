@@ -9,7 +9,7 @@ import socket
 import sys
 from io import StringIO
 import io
-from SettingsDatabase import *
+from SettingsDatabase import createSettingsDatabase,changeSetting,getValueForKey
 import time
 import threading
 from threading import Thread
@@ -18,11 +18,12 @@ from Message import *
 from time import sleep
 from queue import Queue
 
+DEBUG_ME='G'
 
 #Thread-safe queue for messages that should be sent to the client. Read by the TCP thread, written by (e.g) the WFB receiver thread or the TCP thread itself
 messagesForClient=Queue()
 #messagesForClient.put("Hello from queue")
-settingsDatabase=createSettingsDatabase(None)
+settingsDatabase=createSettingsDatabase(DEBUG_ME)
 lastHELLO_OKmessage=0.0
 
 #Change value on ground pi
@@ -33,7 +34,7 @@ def processChangeMessage(key,value):
     #Change value from x to y on ground pi
     changeSetting(settingsDatabase,key,value)
     #refresh the local database
-    settingsDatabase=createSettingsDatabase('G')
+    settingsDatabase=createSettingsDatabase(DEBUG_ME)
     #forward message to air pi, we will receive the response in a different Thread
     ForwardMessageToAirPi(BuildMessageCHANGE(key,value))
     global messagesForClient
@@ -116,16 +117,16 @@ while True:
             #first,try to receive data from the socket, and parse it into a line
 			#receive as many messages as possible,break when we have a timeout
             try:
-				while True:
-					data = connection.recv(1024).decode()
-					#Parse bytes into lines (makeFile() caused issues I could not solve)
-					for x in data:
-						if(x=='\n'):
-							#print('Received line',lineBuffer)
-							processMessageFromClient(lineBuffer)
-							lineBuffer=''
-						else:
-							lineBuffer+=x
+                while True:
+                    data = connection.recv(1024).decode()
+                    #Parse bytes into lines (makeFile() caused issues I could not solve)
+                    for x in data:
+                        if(x=='\n'):
+                            #print('Received line',lineBuffer)
+                            processMessageFromClient(lineBuffer)
+                            lineBuffer=''
+                        else:
+                                lineBuffer+=x
             except socket.timeout as e:
                 #print("Timeout exception",e)
                 #Receiving timeout here is no problem

@@ -11,7 +11,9 @@ import io
 from Message import ParseMessage,BuildMessageCHANGE_OK,BuildMessageGET_OK
 from SettingsDatabase import changeSetting,createSettingsDatabase,getValueForKey
 
+DEBUG_ME='A'
 settingsDatabase=None
+
 
 #change value from x to y
 #send response to the Ground PI
@@ -20,7 +22,7 @@ def processChangeMessage(key,value):
     global settingsDatabase
     changeSetting(settingsDatabase,key,value)
     #refresh the local database
-    settingsDatabase=createSettingsDatabase(None)
+    settingsDatabase=createSettingsDatabase(DEBUG_ME)
     return BuildMessageCHANGE_OK("A",key,value)   
 
 
@@ -54,7 +56,7 @@ def sendMessageToGroundPi(message):
 #This one has to run on the Air Pi continiously for the settings app to work
 def ReplyLoop():
     global settingsDatabase
-    settingsDatabase=createSettingsDatabase(None)
+    settingsDatabase=createSettingsDatabase(DEBUG_ME)
     receiveSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
     receiveSock.bind(('localhost',9090))
     print("started reply loop on air pi")
@@ -63,8 +65,8 @@ def ReplyLoop():
         #here we don't parse into lines, but assume that when receiving data it is exactly one line
         #if(data):
         response=processMessageFromGroundPi(data.decode())
-		if response:
-			sendMessageToGroundPi(response)
+        if response:
+            sendMessageToGroundPi(response)
         
 
 ReplyLoop()

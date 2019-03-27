@@ -16,13 +16,13 @@ def createSettingsDatabase(me):
     #if me is either G or A we are on a test build not on the OpenHD system, but on my local machine
     #that has 2 folders to emulate ground and air pi
     if(me=='G'):
-        OSDSettingsFile = "test_ground/osdconfig.txt"
-        OpenHDSettingsFile = "test_ground/openhd-settings-1.txt"
-        JoyconfigSettingsFile = "test_ground/joyconfig.txt"
+        OSDSettingsFile = "../test_ground/osdconfig.txt"
+        OpenHDSettingsFile = "../test_ground/openhd-settings-1.txt"
+        JoyconfigSettingsFile = "../test_ground/joyconfig.txt"
     elif(me=='A'):
-        OSDSettingsFile = "test_air/osdconfig.txt"
-        OpenHDSettingsFile = "test_air/openhd-settings-1.txt"
-        JoyconfigSettingsFile = "test_air/joyconfig.txt"
+        OSDSettingsFile = "../test_air/osdconfig.txt"
+        OpenHDSettingsFile = "../test_air/openhd-settings-1.txt"
+        JoyconfigSettingsFile = "../test_air/joyconfig.txt"
     #on the openHD system everything resides in the /boot directory, no matter if we are on the air or ground pi
     else:
         OSDSettingsFile = "/boot/osdconfig.txt"
