@@ -32,6 +32,24 @@ function tx_function {
     echo
     dmesg -c >/dev/null 2>/dev/null
     detect_nics
+    if [ "$Bandwidth" == "10" ]; then
+        echo "HardCode dirty code for tests only. Values are it Hex, to set 10MHz use 0xa (10 in dec)"
+        echo 0xa > /sys/kernel/debug/ieee80211/phy0/ath9k_htc/chanbw
+        echo 0xa > /sys/kernel/debug/ieee80211/phy1/ath9k_htc/chanbw
+        echo 0xa > /sys/kernel/debug/ieee80211/phy2/ath9k_htc/chanbw
+        echo 0xa > /sys/kernel/debug/ieee80211/phy3/ath9k_htc/chanbw
+        echo 0xa > /sys/kernel/debug/ieee80211/phy4/ath9k_htc/chanbw
+    fi
+
+    if [ "$Bandwidth" == "5" ]; then
+        echo "HardCode dirty code for tests only. Values are it Hex, to set 10MHz use 0xa (10 in dec)"
+        echo 5 > /sys/kernel/debug/ieee80211/phy0/ath9k_htc/chanbw
+        echo 5 > /sys/kernel/debug/ieee80211/phy1/ath9k_htc/chanbw
+        echo 5 > /sys/kernel/debug/ieee80211/phy2/ath9k_htc/chanbw
+        echo 5 > /sys/kernel/debug/ieee80211/phy3/ath9k_htc/chanbw
+        echo 5 > /sys/kernel/debug/ieee80211/phy4/ath9k_htc/chanbw
+    fi
+    
 
     sleep 1
     echo
@@ -255,7 +273,7 @@ else
         if ! [[ $RemoteSettingsEnabled =~ $re ]] ; then
                 echo "RemoteSettings - incorrect timer value \n"
         else
-                if [ "$RemoteSettingsEnabled" -ne "0" ]; then
+                if [ "$RemoteSettingsEnabled" -ne "0" ] && [ "$RemoteSettingsEnabled" -ne "2" ]; then
                         echo "\n RemoteSettings enabled with timer \n"
                          /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
                         /home/pi/RemoteSettings/AirRSSI.sh &
