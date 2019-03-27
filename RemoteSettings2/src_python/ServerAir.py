@@ -63,7 +63,8 @@ def ReplyLoop():
         #here we don't parse into lines, but assume that when receiving data it is exactly one line
         #if(data):
         response=processMessageFromGroundPi(data.decode())
-        sendMessageToGroundPi(response)
+		if response:
+			sendMessageToGroundPi(response)
         
 
 ReplyLoop()

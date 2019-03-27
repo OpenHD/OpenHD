@@ -113,23 +113,25 @@ while True:
         lastHELLO_OKmessage=time.time()
         lineBuffer = ''
         while True:
-            #first,try to receive some data from the socket, and parse it into a line
+            #first,try to receive data from the socket, and parse it into a line
+			#receive as many messages as possible,break when we have a timeout
             try:
-                data = connection.recv(1024*1024).decode()
-                #Parse bytes into lines (makeFile() caused issues I could not solve)
-                for x in data:
-                    if(x=='\n'):
-                        #print('Received line',lineBuffer)
-                        processMessageFromClient(lineBuffer)
-                        lineBuffer=''
-                    else:
-                        lineBuffer+=x
+				while True:
+					data = connection.recv(1024).decode()
+					#Parse bytes into lines (makeFile() caused issues I could not solve)
+					for x in data:
+						if(x=='\n'):
+							#print('Received line',lineBuffer)
+							processMessageFromClient(lineBuffer)
+							lineBuffer=''
+						else:
+							lineBuffer+=x
             except socket.timeout as e:
                 #print("Timeout exception",e)
                 #Receiving timeout here is no problem
                 pass
             #second,check if there are any messages in the queue that handles communication with the
-            #air pi communication thread
+            #air pi communication thread,and process them
             try:
                 while (True):
                     message=messagesForClient.get_nowait()
