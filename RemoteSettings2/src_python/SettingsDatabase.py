@@ -4,9 +4,9 @@ from FileParser import read_bash_file,read_header_file,replace_in_bash_file,repl
 #and determine the right location (which settings file contains the key-value tuple) automatically
 
 
-OSDSettingsFile = None#"test/osdconfig.txt"
-OpenHDSettingsFile = None#"test/openhd-settings-1.txt"
-JoyconfigSettingsFile = None#"test/joyconfig.txt"
+OSDSettingsFile = None
+OpenHDSettingsFile = None
+JoyconfigSettingsFile = None
 
 
 def createSettingsDatabase(me):
@@ -16,13 +16,13 @@ def createSettingsDatabase(me):
     #if me is either G or A we are on a test build not on the OpenHD system, but on my local machine
     #that has 2 folders to emulate ground and air pi
     if(me=='G'):
-        OSDSettingsFile = "settingsGround/osdconfig.txt"
-        OpenHDSettingsFile = "settingsGround/openhd-settings-1.txt"
-        JoyconfigSettingsFile = "settingsGround/joyconfig.txt"
+        OSDSettingsFile = "test_ground/osdconfig.txt"
+        OpenHDSettingsFile = "test_ground/openhd-settings-1.txt"
+        JoyconfigSettingsFile = "test_ground/joyconfig.txt"
     elif(me=='A'):
-        OSDSettingsFile = "settingsAir/osdconfig.txt"
-        OpenHDSettingsFile = "settingsAir/openhd-settings-1.txt"
-        JoyconfigSettingsFile = "settingsAir/joyconfig.txt"
+        OSDSettingsFile = "test_air/osdconfig.txt"
+        OpenHDSettingsFile = "test_air/openhd-settings-1.txt"
+        JoyconfigSettingsFile = "test_air/joyconfig.txt"
     #on the openHD system everything resides in the /boot directory, no matter if we are on the air or ground pi
     else:
         OSDSettingsFile = "/boot/osdconfig.txt"
