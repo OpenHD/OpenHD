@@ -39,7 +39,24 @@ function rx_function {
 
     sleep 1
     detect_nics
-    echo
+    
+    if [ "$Bandwidth" == "10" ]; then
+        echo "HardCode dirty code for tests only. Values are it Hex, to set 10MHz use 0xa (10 in dec)"
+        echo 0xa > /sys/kernel/debug/ieee80211/phy0/ath9k_htc/chanbw
+        echo 0xa > /sys/kernel/debug/ieee80211/phy1/ath9k_htc/chanbw
+        echo 0xa > /sys/kernel/debug/ieee80211/phy2/ath9k_htc/chanbw
+        echo 0xa > /sys/kernel/debug/ieee80211/phy3/ath9k_htc/chanbw
+        echo 0xa > /sys/kernel/debug/ieee80211/phy4/ath9k_htc/chanbw
+    fi
+
+    if [ "$Bandwidth" == "5" ]; then
+        echo "HardCode dirty code for tests only. Values are it Hex, to set 10MHz use 0xa (10 in dec)"
+        echo 5 > /sys/kernel/debug/ieee80211/phy0/ath9k_htc/chanbw
+        echo 5 > /sys/kernel/debug/ieee80211/phy1/ath9k_htc/chanbw
+        echo 5 > /sys/kernel/debug/ieee80211/phy2/ath9k_htc/chanbw
+        echo 5 > /sys/kernel/debug/ieee80211/phy3/ath9k_htc/chanbw
+        echo 5 > /sys/kernel/debug/ieee80211/phy4/ath9k_htc/chanbw
+    fi
 
     sleep 0.5
 
@@ -176,6 +193,7 @@ function rx_function {
 		ionice -c 3 nice cat /root/videofifo3 >> $VIDEOFILE &
 
 		if [ "$RELAY" == "Y" ]; then
+		        /root/wifibroadcast/sharedmem_init_tx
 			ionice -c 1 -n 4 nice -n -10 cat /root/videofifo4 | /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $RELAY_VIDEO_BLOCKS -r $RELAY_VIDEO_FECS -f $RELAY_VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d 24 -y 0 relay0 > /dev/null 2>&1 &
 		fi
 
@@ -186,7 +204,6 @@ function rx_function {
 		
 	#START AUDIO AND REMOTE SETTINGS
 		if [ $IsFirstTime -eq 0 ]; then
-		    echo "FIRST TIME AUDIO AND REMOTE SETTINGS TRIGGER..."
 			if [ "$IsAudioTransferEnabled" == "1" ]; then
 			      echo "AUDIO ENABLED..."
 				amixer cset numid=3 $DefaultAudioOut
@@ -194,10 +211,13 @@ function rx_function {
 				/home/pi/RemoteSettings/Ground/RxAudio.sh &
 			fi
 
-			/home/pi/RemoteSettings/ipchecker/iphelper.sh > /dev/null 2>&1 &
-                	/usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettings.py > /dev/null 2>&1 &
-			/home/pi/RemoteSettings/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
-			/home/pi/RemoteSettings/GroundRSSI.sh &
+			if [ "$RemoteSettingsEnabled" != "0" ]; then
+				echo "SETTINGS CHANGE MODULE ENABLED..."
+				/home/pi/RemoteSettings/ipchecker/iphelper.sh > /dev/null 2>&1 &
+				/usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettings.py > /dev/null 2>&1 &
+				/home/pi/RemoteSettings/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
+				/home/pi/RemoteSettings/GroundRSSI.sh &
+			fi
 			
 			if [ "$IsBandSwicherEnabled" == "1" ]; then
 			    echo "BAND SWITCHER ENABLED...."
