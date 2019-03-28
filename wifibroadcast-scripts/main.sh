@@ -67,7 +67,6 @@ source uplink_functions.sh
 if [ "$CAM" == "0" ]; then
 	source rc_tx_rx_functions.sh	
 	source rssi_rx_functions.sh
-	source alive_functions.sh  
 	source screenshot_functions.sh
 	source alive_functions.sh
 	source video_save_functions.sh
