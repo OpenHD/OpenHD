@@ -361,6 +361,7 @@ function prepare_nic {
     fi
 }
 
+datarate_to_wifi_settings
 
 detect_nics
 exit
