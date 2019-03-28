@@ -11,7 +11,7 @@ import io
 from Message import ParseMessage,BuildMessageCHANGE_OK,BuildMessageGET_OK,BuildMessageHELLO_OK
 from SettingsDatabase import changeSetting,createSettingsDatabase,getValueForKey
 
-DEBUG_ME='A'
+DEBUG_ME=None
 settingsDatabase=None
 
 
