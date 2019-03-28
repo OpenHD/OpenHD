@@ -67,8 +67,8 @@ source uplink_functions.sh
 if [ "$CAM" == "0" ]; then
 	source rc_tx_rx_functions.sh	
 	source rssi_rx_functions.sh
-	source alive_functions.sh  
 	source screenshot_functions.sh
+	source alive_functions.sh
 	source video_save_functions.sh
 	source tether_functions.sh
 	source hotspot_functions.sh
@@ -94,12 +94,16 @@ case $TTY in
     /dev/tty11) # tty for dhcp and login
 	echo "================== eth0 DHCP client (tty11) ==========================="
 	# sleep until everything else is loaded (atheros cards and usb flakyness ...)
-	sleep 6
-	if [ "$CAM" == "0" ]; then
-	    OHDHOSTNAME="openhd-GroundPi"
-	else
-	    OHDHOSTNAME="openhd-AirPi"
-	fi
+	#sleep 6
+	
+      if {[ "$CAM" != "0"] && ["$DEBUG" == "Y"];} || [ "$CAM" == "0"]; then
+	
+	        if [ "$CAM" == "0" ]; then
+	            OHDHOSTNAME="openhd-GroundPi"
+	        else
+	            OHDHOSTNAME="openhd-AirPi"
+	        fi
+		
 	# only configure ethernet network interface via DHCP if ethernet hotspot is disabled
 	if [ "$ETHERNET_HOTSPOT" == "N" ]; then
 		# disabled loop, as usual, everything is flaky on the Pi, gives kernel stall messages ...
@@ -151,6 +155,7 @@ case $TTY in
 	    echo "Ethernet Hotspot enabled, doing nothing"
 	fi
 	sleep 365d
+      fi
     ;;
     /dev/tty12) # tty for local interactive login
 	echo
