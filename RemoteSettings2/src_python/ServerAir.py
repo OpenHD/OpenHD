@@ -8,7 +8,7 @@
 import socket
 import sys
 import io
-from Message import ParseMessage,BuildMessageCHANGE_OK,BuildMessageGET_OK
+from Message import ParseMessage,BuildMessageCHANGE_OK,BuildMessageGET_OK,BuildMessageHELLO_OK
 from SettingsDatabase import changeSetting,createSettingsDatabase,getValueForKey
 
 DEBUG_ME='A'
@@ -17,7 +17,7 @@ settingsDatabase=None
 
 #change value from x to y
 #send response to the Ground PI
-def processChangeMessage(key,value):
+def processChangeMessageLocally(key,value):
     print("Changing Key on air pi:",key,"Value:",value)
     global settingsDatabase
     changeSetting(settingsDatabase,key,value)
@@ -25,26 +25,32 @@ def processChangeMessage(key,value):
     settingsDatabase=createSettingsDatabase(DEBUG_ME)
     return BuildMessageCHANGE_OK("A",key,value)   
 
-
 #optain value for key
 #send response to the ground pi
-def processGetMessage(key):
+def processGetMessageLocally(key):
     print("Optaining value for Key on air pi:",key)
     value=getValueForKey(settingsDatabase,key)
     if(value==None):
         value="INVALID_SETTING"
     return BuildMessageGET_OK("A",key,value)
 
-
-#process messages coming from the ground pi transmitted by the lossy EZ-WB connection
-def processMessageFromGroundPi(msg):
-    print("message on air",msg)
-    cmd,data=ParseMessage(msg)
+def processMessageLocally(cmd,data):
+    if(cmd=="HELLO"):
+        return BuildMessageHELLO_OK("A")
     if(cmd=="CHANGE"):
         key,value=data.split("=")
-        return processChangeMessage(key,value)
+        return processChangeMessageLocally(key,value)
     elif(cmd=="GET"):
-        return processGetMessage(data)
+        return processGetMessageLocally(data)
+
+#process messages coming from the ground pi transmitted by the lossy EZ-WB connection
+def parseMessageFromGroundPi(msg):
+    print("message on air",msg)
+    dst,cmd,data=ParseMessage(msg)
+    if(dst=='A' or dst=='GA'):
+        return processMessageLocally(cmd,data)
+    else:
+        print("Wrong id at air pi:",dst)
 
 #only call this one from the Reply loop context
 def sendMessageToGroundPi(message):
@@ -63,8 +69,7 @@ def ReplyLoop():
     while True:
         data=receiveSock.recv(1024)
         #here we don't parse into lines, but assume that when receiving data it is exactly one line
-        #if(data):
-        response=processMessageFromGroundPi(data.decode())
+        response=parseMessageFromGroundPi(data.decode())
         if response:
             sendMessageToGroundPi(response)
         

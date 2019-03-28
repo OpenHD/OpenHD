@@ -1,7 +1,7 @@
 
 #Messages always have the format
-#<Command | Response> <Optional Data> \n
-
+#<ID (Destination or source) <Command> <Optional Data> \n
+#where ID is either G (Ground pi), A (Air pi) or GA (Ground and air pi)
 
 
 #All supported commands:
@@ -17,35 +17,32 @@
 
 def ParseMessage(message):
     #split the string at the first blank.
-    cmd,_,data=message.partition(' ')
-    #print("Cmd:",cmd,"blank:",blank,"data:",data)
-    return cmd,data
+    dst,_,rest=message.partition(' ')
+    #then at the second blank
+    cmd,_,data=rest.partition(' ')
+    return dst,cmd,data
+
 
 def ParseMessageData(data):
     key,value=data.split("=")
     return key,value
 
 
-def BuildMessageCHANGE(key,value):
-    return "CHANGE "+key+"="+value
+def BuildMessageCHANGE(id,key,value):
+    return id+" "+"CHANGE "+key+"="+value
 
 
 #me is either ground or air (G or A)
-def BuildMessageCHANGE_OK(me,key,value):
-    return ("CHANGE_OK_"+me+" "+key+"="+value)
+def BuildMessageCHANGE_OK(id,key,value):
+    return (id+" "+"CHANGE_OK"+" "+key+"="+value)
 
 
-#def BuildMessageCHANGE_FAILED(key,value):
-#    return ("CHANGE_FAILED "+key+"="+value)
+def BuildMessageGET(id,key):
+    return id+" "+"GET "+key
 
 
-def BuildMessageGET(key):
-    return "GET "+key
-
-
-#me is either ground or air (G or A)
-def BuildMessageGET_OK(me,key,value):
-    return ("GET_OK_"+me+" "+key+"="+value)
+def BuildMessageGET_OK(id,key,value):
+    return (id+" "+"GET_OK"+" "+key+"="+value)
 
 
 
@@ -53,5 +50,8 @@ def BuildMessageERROR():
     return "ERROR"
 
 
-def BuildMessageHELLO():
-    return "HELLO"
+def BuildMessageHELLO(id):
+    return id+" "+"HELLO"
+
+def BuildMessageHELLO_OK(id):
+    return id+" "+"HELLO_OK"

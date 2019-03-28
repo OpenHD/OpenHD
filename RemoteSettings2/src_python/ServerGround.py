@@ -27,47 +27,54 @@ settingsDatabase=createSettingsDatabase(DEBUG_ME)
 lastHELLO_OKmessage=0.0
 
 #Change value on ground pi
-#forward message to air pi
-def processChangeMessage(key,value):
+def processChangeMessageLocally(key,value):
     print("Changing Key on ground pi:",key,"Value:",value)
     global settingsDatabase
     #Change value from x to y on ground pi
     changeSetting(settingsDatabase,key,value)
     #refresh the local database
     settingsDatabase=createSettingsDatabase(DEBUG_ME)
-    #forward message to air pi, we will receive the response in a different Thread
-    ForwardMessageToAirPi(BuildMessageCHANGE(key,value))
     global messagesForClient
     messagesForClient.put(BuildMessageCHANGE_OK("G",key,value))
 
-
 #return value on ground pi
-#forward message to air pi
-def processGetMessage(key):
+def processGetMessageLocally(key):
     print("Optaining value for Key on ground pi:",key)
-    ForwardMessageToAirPi(BuildMessageGET(key))
     value=getValueForKey(settingsDatabase,key)
     if(value==None):
         value="INVALID_SETTING"
     global messagesForClient
     messagesForClient.put(BuildMessageGET_OK("G",key,value))
     
-
-#process messages coming from the settings app (external devices)
-def processMessageFromClient(msg):
-    print("Message from client",msg)
-    global messagesForClient
-    cmd,data=ParseMessage(msg)
-    if(cmd=="HELLO_OK"):
+    
+def processMessageLocally(cmd,data):
+    if(cmd=="HELLO"):
+        global messagesForClient
+        messagesForClient.put(BuildMessageHELLO_OK)
+    elif(cmd=="HELLO_OK"):
         global lastHELLO_OKmessage
         lastHELLO_OKmessage=time.time()
+    elif(cmd=="GET"):
+        processGetMessageLocally(data)
     elif(cmd=="CHANGE"):
         key,value=ParseMessageData(data)
-        processChangeMessage(key,value)
-    elif(cmd=="GET"):
-        processGetMessage(data)
+        processChangeMessageLocally(key,value)
     else:
-        print("Unknown command")
+        print("ERROR unknwon command:",cmd)
+
+#parse messages coming from the settings app (external device)
+def parsesMessageFromClient(msg):
+    print("Message from client",msg)
+    dst,cmd,data=ParseMessage(msg)
+    if(dst=='G'):
+        processMessageLocally(cmd,data)
+    elif (dst=='A'):
+        ForwardMessageToAirPi(msg)
+    elif(dst=='GA'):
+        processMessageLocally(cmd,data)
+        ForwardMessageToAirPi(msg)
+    else:
+        print("ERROR unknown destination:",dst)
 
 
 #Listen for messages coming from the air pi
@@ -78,9 +85,9 @@ def ListenForAirPiMessages():
         receiveSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         receiveSock.bind(('localhost',9091))
         data=receiveSock.recv(1024)
-        #if(data):
-        global messagesForClient
-        messagesForClient.put(data.decode())
+        if(data):
+            global messagesForClient
+            messagesForClient.put(data.decode())
 
 
 #create a new Thread which listens for incoming responses from the air pi and adds them to the queue,
@@ -117,16 +124,15 @@ while True:
             #first,try to receive data from the socket, and parse it into a line
 			#receive as many messages as possible,break when we have a timeout
             try:
-                while True:
-                    data = connection.recv(1024).decode()
-                    #Parse bytes into lines (makeFile() caused issues I could not solve)
-                    for x in data:
-                        if(x=='\n'):
-                            #print('Received line',lineBuffer)
-                            processMessageFromClient(lineBuffer)
-                            lineBuffer=''
-                        else:
-                                lineBuffer+=x
+                data = connection.recv(1024*4).decode()
+                #Parse bytes into lines (makeFile() caused issues I could not solve)
+                for x in data:
+                    if(x=='\n'):
+                        #print('Received line',lineBuffer)
+                        parsesMessageFromClient(lineBuffer)
+                        lineBuffer=''
+                    else:
+                        lineBuffer+=x
             except socket.timeout as e:
                 #print("Timeout exception",e)
                 #Receiving timeout here is no problem
@@ -153,7 +159,7 @@ while True:
             #if there was no error yet, send the 'HELLO' message to the client (every 1 seconds)
             if((currTime-lastHELLOmessage)>=1.0):
                 lastHELLOmessage=currTime
-                messagesForClient.put(BuildMessageHELLO())
+                messagesForClient.put(BuildMessageHELLO("G"))
     except Exception as e:
         print("ExceptionC",e)
         #don't forget to reset the the message queue
