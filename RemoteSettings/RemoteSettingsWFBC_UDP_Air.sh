@@ -19,7 +19,3 @@ fi
 #sleep 0.5
 /home/pi/RemoteSettings/Air/RxRemoteSettings.sh &
 
-if [ "$EncryptionOrRange" == "Encryption" ]; then
-	/home/pi/RemoteSettings/Air/RxJoystick.sh &
-	/home/pi/RemoteSettings/Air/processUDP.sh &
-fi
