@@ -93,7 +93,7 @@ function rctx_function {
 		else
 			if [ $FirstTimeRC == 0  ]; then
                             FirstTimeRC=1
-                           /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $PrimaryCardMAC &
+                           /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh 0 $PrimaryCardMAC &
                         fi
 			nice -n -5 /tmp/rctx $PrimaryCardMAC
 			sleep 1
