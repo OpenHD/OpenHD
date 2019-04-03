@@ -64,20 +64,37 @@ function rctx_function {
     echo
     echo "Starting R/C TX ..."
 	
+    FirstTimeRC=0
+
     while true; do
     
     	if [ "$PrimaryCardMAC" == "0" ]; then
 		if [ "$IsBandSwicherEnabled" == "1" ]; then
 			echo "To use BandSwitcher select dedicated WiFi card for Tx. Set PrimaryCardMAC"
 		fi
+
+                if [ $FirstTimeRC == 0  ]; then
+                    FirstTimeRC=1
+                   ./rctxUDP.sh &
+                fi
+
 		nice -n -5 /tmp/rctx $NICS
 		sleep 1
 		NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
 	else
 		if [ "$IsBandSwicherEnabled" == "1" ]; then
+			if [ $FirstTimeRC == 0  ]; then
+	                    FirstTimeRC=1
+        	           /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $PrimaryCardMAC &
+                	fi
+
 			nice -n -5 /tmp/rctx $ChannelToListen2 $PrimaryCardMAC
 			sleep 1	
 		else
+			if [ $FirstTimeRC == 0  ]; then
+                            FirstTimeRC=1
+                           /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $PrimaryCardMAC &
+                        fi
 			nice -n -5 /tmp/rctx $PrimaryCardMAC
 			sleep 1
 		fi
