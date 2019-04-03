@@ -263,6 +263,11 @@ if [ "$IsAudioTransferEnabled" == "1" ]; then
         /home/pi/RemoteSettings/Air/AudioTX.sh &
 fi
 
+if [ "$EncryptionOrRange" == "Encryption" ]; then
+	/home/pi/RemoteSettings/Air/RxJoystick.sh &
+	/home/pi/RemoteSettings/Air/processUDP.sh &
+fi
+
 if [ "$RemoteSettingsEnabled" == "1" ]; then
         echo "\n RemoteSettings enabled \n"
         /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
