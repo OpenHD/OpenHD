@@ -96,7 +96,7 @@ case $TTY in
 	# sleep until everything else is loaded (atheros cards and usb flakyness ...)
 	#sleep 6
 	
-      if {[ "$CAM" != "0"] && ["$DEBUG" == "Y"];} || [ "$CAM" == "0"]; then
+	if [ "$CAM" != "0" ] && [ "$DEBUG" == "Y" ] || [ "$CAM" == "0" ]; then
 	
 	        if [ "$CAM" == "0" ]; then
 	            OHDHOSTNAME="openhd-GroundPi"
