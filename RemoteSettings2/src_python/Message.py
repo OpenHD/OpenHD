@@ -45,7 +45,6 @@ def BuildMessageGET_OK(id,key,value):
     return (id+" "+"GET_OK"+" "+key+"="+value)
 
 
-
 def BuildMessageERROR():
     return "ERROR"
 

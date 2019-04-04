@@ -10,6 +10,7 @@ import sys
 import io
 from Message import ParseMessage,BuildMessageCHANGE_OK,BuildMessageGET_OK,BuildMessageHELLO_OK
 from SettingsDatabase import changeSetting,createSettingsDatabase,getValueForKey
+from Forwarder import SendMessageToGroundPi
 
 DEBUG_ME=None
 settingsDatabase=None
@@ -52,12 +53,6 @@ def parseMessageFromGroundPi(msg):
     else:
         print("Wrong id at air pi:",dst)
 
-#only call this one from the Reply loop context
-def sendMessageToGroundPi(message):
-    sendSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    sendSock.sendto((message).encode(),('localhost', 9091))
-    print("Sent to ground pi:",message)
-
 
 #This one has to run on the Air Pi continiously for the settings app to work
 def ReplyLoop():
@@ -71,7 +66,7 @@ def ReplyLoop():
         #here we don't parse into lines, but assume that when receiving data it is exactly one line
         response=parseMessageFromGroundPi(data.decode())
         if response:
-            sendMessageToGroundPi(response)
+            SendMessageToGroundPi(response)
         
 
 ReplyLoop()

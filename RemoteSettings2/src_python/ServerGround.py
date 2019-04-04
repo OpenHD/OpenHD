@@ -13,12 +13,12 @@ from SettingsDatabase import createSettingsDatabase,changeSetting,getValueForKey
 import time
 import threading
 from threading import Thread
-from Forwarder import ForwardMessageToAirPiAndAwaitResponse,ForwardMessageToAirPi
+from Forwarder import SendMessageToAirPi
 from Message import *
 from time import sleep
 from queue import Queue
 
-DEBUG_ME='G'
+DEBUG_ME=None
 
 #Thread-safe queue for messages that should be sent to the client. Read by the TCP thread, written by (e.g) the WFB receiver thread or the TCP thread itself
 messagesForClient=Queue()
@@ -69,10 +69,10 @@ def parsesMessageFromClient(msg):
     if(dst=='G'):
         processMessageLocally(cmd,data)
     elif (dst=='A'):
-        ForwardMessageToAirPi(msg)
+        SendMessageToAirPi(msg)
     elif(dst=='GA'):
         processMessageLocally(cmd,data)
-        ForwardMessageToAirPi(msg)
+        SendMessageToAirPi(msg)
     else:
         print("ERROR unknown destination:",dst)
 
@@ -81,9 +81,9 @@ def parsesMessageFromClient(msg):
 #add them to the message queue such that they can be forwarded to External devices
 #blocking, execute in its own threaad
 def ListenForAirPiMessages():
+    receiveSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    receiveSock.bind(('localhost',9091))
     while(True):
-        receiveSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        receiveSock.bind(('localhost',9091))
         data=receiveSock.recv(1024)
         if(data):
             global messagesForClient
