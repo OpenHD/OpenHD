@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 if [ -e "/tmp/settings.sh" ]; then
     OK=`bash -n /tmp/settings.sh`
     if [ "$?" == "0" ]; then
