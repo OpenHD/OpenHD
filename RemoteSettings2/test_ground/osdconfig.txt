@@ -20,7 +20,7 @@
 #define OUTLINECOLOR 0,0,0,0.7 // Outline color. First three numbers RGB color, last number opacity. 1.0 = fully visible, 0.0 = fully opaque
 #define OUTLINEWIDTH 0.8 // Outline width, default is 1, useable range from 1-3. Set to 0 to disable outline
 #define FONT "Archivo-Bold.ttf" // Font to use, case-sensitive!
-#define GLOBAL_SCALE 1.1 // Global scale factor, 1.2 is default, useable range is from about 0.5 to 2
+#define GLOBAL_SCALE 1.3 //#define GLOBAL_SCALE 1.1 
 
 
 /* OSD elements positions, sizes and options */
@@ -75,7 +75,7 @@
 #define BATT_GAUGE_POS_X 2
 #define BATT_GAUGE_POS_Y 8
 #define BATT_GAUGE_SCALE 1
-#define CELLS 3 // set to number of cells used
+#define CELLS 3 //#define CELLS 5 
 #define CELL_MAX 4.20 // maximum cell voltage
 #define CELL_MIN 3.20 // minimum cell voltage
 #define CELL_WARNING1 3.50 // warning level 1 -> orange, low

@@ -57,7 +57,7 @@ DATARATE=4
 #
 #
 # Choose between 30, 40, 48, 59.9
-FPS=48
+FPS=30
 #
 #
 # FEC SETTINGS
@@ -157,7 +157,7 @@ AIRODUMP_SECONDS=25
 # set this to "Y" to enable Wifi Hotspot. Default SSID is "EZ-Wifibroadcast", password is "wifibroadcast".
 # See apconfig.txt for configuration. This will forward the received video and telemetry streams to a
 # smartphone/tablet or computer connected to the RX Pi via WiFi.
-WIFI_HOTSPOT=Y
+WIFI_HOTSPOT=N
 #
 # Set to "internal" to use the interal Pi3 wifi chip or the MAC address of the USB wifi card you want to use
 WIFI_HOTSPOT_NIC=internal

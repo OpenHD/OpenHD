@@ -36,7 +36,6 @@ def replace_txpower_setting(Param, Value):
         if Param == TXPOWER_ATHEROS:
             print("replacing",Param,Value)
             subprocess.Popen(["txpower_atheros", Value])
-
         if Param == TXPOWER_RAILINK:
             print("replacing",Param,Value)
             subprocess.Popen(["txpower_ralink", Value])

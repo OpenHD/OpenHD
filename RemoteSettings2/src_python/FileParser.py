@@ -27,8 +27,8 @@ def read_header_file(file_path):
                 #print("afterDefine",afterDefine)
                 #now split whitespace
                 key,_,value=afterDefine.partition(' ')
-                key.strip()
-                value.strip()
+                key=key.strip()
+                value=value.strip()
                 #print("key:",key,"value:",value)
                 d.update({key : value})
     return d
