@@ -22,7 +22,8 @@ def read_header_file(file_path):
                 #remove all whitespaces at beginning and at the end
                 afterDefine=afterDefine.strip()
                 #remove everything coming after an '//'
-                afterDefine=afterDefine.split('//')[0]
+                afterDefine=afterDefine.split('//',1)[0]
+                afterDefine.strip()
                 #print("afterDefine",afterDefine)
                 #now split whitespace
                 key,_,value=afterDefine.partition(' ')
@@ -56,7 +57,12 @@ def replace_in_header_file(file_path,key,value):
         with open(file_path) as old_file:
             for line in old_file:
                 if  line.startswith("#define "+key):
-                    new_file.write("#define "+key+" "+value+" //modified by app\n")
+                    new_file.write("#define "+key+" "+value)
+                    if("//" in line):
+                        comment=line.split('//',1)[0]
+                        new_file.write(" //"+comment+"\n")
+                    else:
+                        new_file.write('\n')
                 else:
                     new_file.write(line)
     #Remove original file

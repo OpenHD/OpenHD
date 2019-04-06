@@ -1,4 +1,5 @@
 from FileParser import read_bash_file,read_header_file,replace_in_bash_file,replace_in_header_file
+from TxPower import read_txpower_settings,replace_txpower_setting,TXPOWER_ATHEROS,TXPOWER_RAILINK
 
 #the goal of the SettingsDatabase.py fie is to create change and get functions that only take key-value pairs
 #and determine the right location (which settings file contains the key-value tuple) automatically
@@ -7,6 +8,7 @@ from FileParser import read_bash_file,read_header_file,replace_in_bash_file,repl
 OSDSettingsFile = None
 OpenHDSettingsFile = None
 JoyconfigSettingsFile = None
+TX_POWER='TX_POWER'
 
 
 def createSettingsDatabase(me):
@@ -33,6 +35,7 @@ def createSettingsDatabase(me):
     listOfAllSettingsInDictionaries.append((OpenHDSettingsFile,read_bash_file(OpenHDSettingsFile)))
     listOfAllSettingsInDictionaries.append((OSDSettingsFile,read_header_file(OSDSettingsFile)))
     listOfAllSettingsInDictionaries.append((JoyconfigSettingsFile,read_header_file(JoyconfigSettingsFile)))
+    listOfAllSettingsInDictionaries.append((TX_POWER,read_txpower_settings()))
     return listOfAllSettingsInDictionaries
 
 
@@ -66,6 +69,10 @@ def determineSettingsLocation(database,key):
 #change the file the new key-value pair
 #dont't forget to update the database ofter modifying some settings
 def changeSetting(database,key,value):
+    #handle tx power extra
+    if(key==TXPOWER_ATHEROS or key==TXPOWER_RAILINK):
+        replace_txpower_setting(key,value)
+        return True
     place=determineSettingsLocation(database,key)
     print('changing',key,value,'in ',place)
     if(place==OpenHDSettingsFile):
