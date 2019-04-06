@@ -50,6 +50,7 @@ def read_bash_file(file_path):
 
 #replaces the line containing '#define KEY OLD_VALUE' with '#define KEY NEW_VALUE'
 def replace_in_header_file(file_path,key,value):
+    os.system('mount -o remount,rw /boot')
     fh, abs_path = mkstemp()
     with fdopen(fh,'w') as new_file:
         with open(file_path) as old_file:
@@ -62,10 +63,12 @@ def replace_in_header_file(file_path,key,value):
     remove(file_path)
     #Move new file
     move(abs_path, file_path)
+    os.system('mount -o remount,ro /boot')
 
 
 #replaces the line containing key=oldValue with key=newValue
 def replace_in_bash_file(file_path,key,value):
+    os.system('mount -o remount,rw /boot')
     print("X")
     fh, abs_path = mkstemp()
     with fdopen(fh,'w') as new_file:
@@ -80,6 +83,7 @@ def replace_in_bash_file(file_path,key,value):
     remove(file_path)
     #Move new file
     move(abs_path, file_path)
+    os.system('mount -o remount,ro /boot')
 
 
 

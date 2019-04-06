@@ -20,30 +20,18 @@ cd /home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/
 NICS_LIST=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot`
 
 
-while true
-do
-	echo "start wfb_tx -u 9090 -p 90 $NICS_LIST  (forward msg from android phone. UDP port 9090.\n"
+if [ "$EncryptionOrRange" == "Range" ]; then
+	MY_T_PARAM=2
+else
+	MY_T_PARAM=0
+fi
 
-	if [ "$PrimaryCardMAC" == "0" ]; then
-		if [ "$EncryptionOrRange" == "Range" ]; then
-			./wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 $NICS_LIST
-    		fi
-		
-		if [ "$EncryptionOrRange" == "Encryption" ]; then
-            		./wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 $NICS_LIST
-    		fi
-	else
-		if [ "$EncryptionOrRange" == "Range" ]; then
-			./wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 $PrimaryCardMAC
-    		fi
-		
-		if [ "$EncryptionOrRange" == "Encryption" ]; then
-            		./wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 $PrimaryCardMAC
-    		fi	
-	fi
+if [ "$PrimaryCardMAC" == "0" ]; then
+	MY_USED_WIFI_CARD=$NICS_LIST
+else
+	MY_USED_WIFI_CARD=$PrimaryCardMAC
+fi
 
-	echo "start wfb_tx -u 9090 -p 90 down. Restating...  $PrimaryCardMAC \n"
-	sleep 2
-	NICS_LIST=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot`
+echo "./wfb_tx -u 9090 -t $MY_T_PARAM -p 90 -B 20 -M 0 -n 2 -k 1 $MY_USED_WIFI_CARD"
 
-done
+./wfb_tx -u 9090 -t $MY_T_PARAM -p 90 -B 20 -M 0 -n 2 -k 1 $MY_USED_WIFI_CARD
