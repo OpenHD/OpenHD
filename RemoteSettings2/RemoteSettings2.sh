@@ -22,9 +22,9 @@ function air_remote_settings2(){
 	while true
 	do
 		echo "starting ServerAir.py"
-                python3 /home/pi/RemoteSettings2/src_python/ServerAir.py
-                echo "restarting ServerAir.py"
-                sleep 1
+			python3 /home/pi/RemoteSettings2/src_python/ServerAir.py
+			echo "restarting ServerAir.py"
+			sleep 1
 	done
 }
 
