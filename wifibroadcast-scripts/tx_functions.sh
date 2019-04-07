@@ -319,7 +319,15 @@ echo $VIDEO_WIFI_BITRATE > /tmp/DATARATE.txt
 chmod +x /dev/shm/startReadCameraTransfer.sh
 chmod +x /dev/shm/startReadCameraTransfer_5.sh
 chmod +x /dev/shm/startReadCameraTransfer_10.sh
-/usr/bin/python /home/pi/cameracontrol/cameracontrolUDP.py -IsCamera1Enabled $IsCamera1Enabled -IsCamera2Enabled $IsCamera2Enabled -IsCamera3Enabled $IsCamera3Enabled -IsCamera4Enabled $IsCamera4Enabled  -Camera1ValueMin $Camera1ValueMin -Camera1ValueMax $Camera1ValueMax -Camera2ValueMin $Camera2ValueMin -Camera2ValueMax $Camera2ValueMax -Camera3ValueMin $Camera3ValueMin -Camera3ValueMax $Camera3ValueMax  -Camera4ValueMin $Camera4ValueMin -Camera4ValueMax $Camera4ValueMax -DefaultCameraId $DefaultCameraId
+
+IsArduCameraV21 = "0"
+i2cdetect -y 1 | grep  "70: 70"
+grepRet=$?
+if [[ $grepRet -eq 0 ]] ; then
+	IsArduCameraV21="21"
+fi
+	
+/usr/bin/python /home/pi/cameracontrol/cameracontrolUDP.py -IsArduCameraV21 $IsArduCameraV21 -IsCamera1Enabled $IsCamera1Enabled -IsCamera2Enabled $IsCamera2Enabled -IsCamera3Enabled $IsCamera3Enabled -IsCamera4Enabled $IsCamera4Enabled  -Camera1ValueMin $Camera1ValueMin -Camera1ValueMax $Camera1ValueMax -Camera2ValueMin $Camera2ValueMin -Camera2ValueMax $Camera2ValueMax -Camera3ValueMin $Camera3ValueMin -Camera3ValueMax $Camera3ValueMax  -Camera4ValueMin $Camera4ValueMin -Camera4ValueMax $Camera4ValueMax -DefaultCameraId $DefaultCameraId
 
 
 ###########################END MOD.
