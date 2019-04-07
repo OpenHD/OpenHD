@@ -135,6 +135,9 @@ typedef struct {
 #if defined(MAVLINK)
 	uint32_t mav_flightmode;
 	float mav_climb;
+	uint32_t version;
+	uint16_t vendor;
+	uint16_t product;
 #endif
 
 #if defined(LTM)

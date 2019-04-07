@@ -40,30 +40,33 @@ void telemetry_init(telemetry_data_t *td) {
 #endif
 
 #ifdef MAVLINK
-    td->mav_flightmode = 255;
-    td->mav_climb = 0;
+    	td->mav_flightmode = 255;
+    	td->mav_climb = 0;
+	td->version=0;
+	td->vendor=0;
+	td->product=0;
 #endif
 
 #ifdef LTM
 // ltm S frame
-    td->ltm_status = 0;
-    td->ltm_failsafe = 0;
-    td->ltm_flightmode = 0;
+   	 td->ltm_status = 0;
+   	 td->ltm_failsafe = 0;
+   	 td->ltm_flightmode = 0;
 // ltm N frame
-    td->ltm_gpsmode = 0;
-    td->ltm_navmode = 0;
-    td->ltm_navaction = 0;
-    td->ltm_wpnumber = 0;
-    td->ltm_naverror = 0;
+   	 td->ltm_gpsmode = 0;
+   	 td->ltm_navmode = 0;
+   	 td->ltm_navaction = 0;
+    	td->ltm_wpnumber = 0;
+    	td->ltm_naverror = 0;
 // ltm X frame
 //   td->ltm_hdop = 0;
-    td->ltm_hw_status = 0;
-    td->ltm_x_counter = 0;
-    td->ltm_disarm_reason = 0;
+    	td->ltm_hw_status = 0;
+    	td->ltm_x_counter = 0;
+    	td->ltm_disarm_reason = 0;
 // ltm O frame
-    td->ltm_home_altitude = 0;
-    td->ltm_home_longitude = 0;
-    td->ltm_home_latitude = 0;
+   	 td->ltm_home_altitude = 0;
+    	td->ltm_home_longitude = 0;
+    	td->ltm_home_latitude = 0;
 #endif
 
 
