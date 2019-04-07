@@ -109,13 +109,14 @@ def InitGPIO():
     gp.setup(16, gp.OUT)
     gp.setup(21, gp.OUT)
     gp.setup(22, gp.OUT)
-
-    gp.output(11, True)
-    gp.output(12, True)
-    gp.output(15, True)
-    gp.output(16, True)
-    gp.output(21, True)
-    gp.output(22, True)
+    
+    if IsArduCameraV21 == 0:
+        gp.output(11, True)
+        gp.output(12, True)
+        gp.output(15, True)
+        gp.output(16, True)
+        gp.output(21, True)
+        gp.output(22, True)
 
     print("GPIO init ended.")
 
@@ -251,14 +252,12 @@ if IsCamera1Enabled == 1 or IsCamera2Enabled == 1 or IsCamera3Enabled == 1 or Is
         s.bind((HOST, PORT))
         print("Socket bind complete")
         print("Selected external camera: ", DefaultCameraId)
-        if IsArduCameraV21 == 0:
-            InitGPIO()
+        InitGPIO()
         SwitchMultiCameraTo(DefaultCameraId)
         StartCamera()
     except:
         print("Open socket exception.")
-        if IsArduCameraV21 == 0:
-            InitGPIO()
+        InitGPIO()
         SwitchMultiCameraTo(DefaultCameraId)
         print("Result: No input for switch. Action: Init GPIO for camera.  Start camera")
         StartCamera()
