@@ -5,6 +5,13 @@ TTY=`tty`
 case $TTY in
     /dev/tty1) # TX/RX
 	echo "tty1"
+	
+	i2cdetect -y 1 | grep  "70: 70"
+        grepRet=$?
+        if [[ $grepRet -eq 0 ]] ; then
+            /usr/bin/python3.5 /home/pi/cameracontrol/InitArduCamV21Ch1.py
+        fi
+	
 	CAM=`/usr/bin/vcgencmd get_camera | nice grep -c detected=1`
 	if [ "$CAM" == "0" ]; then # if we are RX ...
 		/home/pi/RemoteSettings/Ground/helper/AirRSSI.sh &
