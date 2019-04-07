@@ -16,6 +16,7 @@ import struct
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument("-IsArduCameraV21", type=int, help="")
 parser.add_argument("-IsCamera1Enabled", type=int, help="Enable or Disable Multi Camera Adapter Camera Port 1")
 parser.add_argument("-IsCamera2Enabled", type=int, help="Enable or Disable Multi Camera Adapter Camera Port 2")
 parser.add_argument("-IsCamera3Enabled", type=int, help="Enable or Disable Multi Camera Adapter Camera Port 3")
@@ -37,6 +38,7 @@ parser.add_argument("-DefaultCameraId", type=int, help="")
 args = parser.parse_args()
 
 ############################# Assigning values ...
+IsArduCameraV21 = args.IsArduCameraV21
 IsCamera1Enabled = args.IsCamera1Enabled
 IsCamera2Enabled = args.IsCamera2Enabled
 IsCamera3Enabled = args.IsCamera3Enabled
@@ -56,6 +58,7 @@ Camera3ValueMax = args.Camera3ValueMax
 Camera4ValueMin = args.Camera4ValueMin
 Camera4ValueMax = args.Camera4ValueMax
 ############################ Print values For debug.
+print("IsArduCameraV21: ", IsArduCameraV21)
 print("IsCamera1Enable: ", IsCamera1Enabled)
 print("IsCamera2Enable: ", IsCamera2Enabled)
 print("IsCamera3Enable: ", IsCamera3Enabled)
@@ -181,23 +184,35 @@ def SwitchMultiCameraTo(id):
     if ActiveCameraId != id:
         if id == 1:
             print("SW GPIO 1")
+            if IsArduCameraV21 == 21:
+                i2c = "i2cset -y 1 0x70 0x00 0x04"
+                os.system(i2c)
             gp.output(7,  False)
             gp.output(11,  False)
             gp.output(12,  True)
             ActiveCameraId = id
         if id == 2:
             print("SW GPIO 2")
+            if IsArduCameraV21 == 21:
+                i2c = "i2cset -y 1 0x70 0x00 0x05"
+                os.system(i2c)
             gp.output(7,  True)
             gp.output(11,  False)
             gp.output(12,  True)
             ActiveCameraId = id
         if id == 3:
             print("SW GPIO 3")
+            if IsArduCameraV21 == 21:
+                i2c = "i2cset -y 1 0x70 0x00 0x06"
+                os.system(i2c)
             gp.output(7,  False)
             gp.output(11,  True)
             gp.output(12,  False)
             ActiveCameraId = id
         if id == 4:
+            if IsArduCameraV21 == 21:
+                i2c = "i2cset -y 1 0x70 0x00 0x07"
+                os.system(i2c)
             gp.output(7, True)
             gp.output(11, True)
             gp.output(12, False)
@@ -236,12 +251,14 @@ if IsCamera1Enabled == 1 or IsCamera2Enabled == 1 or IsCamera3Enabled == 1 or Is
         s.bind((HOST, PORT))
         print("Socket bind complete")
         print("Selected external camera: ", DefaultCameraId)
-        InitGPIO()
+        if IsArduCameraV21 == 0:
+            InitGPIO()
         SwitchMultiCameraTo(DefaultCameraId)
         StartCamera()
     except:
         print("Open socket exception.")
-        InitGPIO();
+        if IsArduCameraV21 == 0:
+            InitGPIO()
         SwitchMultiCameraTo(DefaultCameraId)
         print("Result: No input for switch. Action: Init GPIO for camera.  Start camera")
         StartCamera()
