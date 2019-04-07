@@ -18,7 +18,7 @@ from Message import *
 from time import sleep
 from queue import Queue
 
-DEBUG_ME='G'
+DEBUG_ME=None
 
 #Thread-safe queue for messages that should be sent to the client. Read by the TCP thread, written by (e.g) the WFB receiver thread or the TCP thread itself
 messagesForClient=Queue()
