@@ -320,7 +320,7 @@ chmod +x /dev/shm/startReadCameraTransfer.sh
 chmod +x /dev/shm/startReadCameraTransfer_5.sh
 chmod +x /dev/shm/startReadCameraTransfer_10.sh
 
-IsArduCameraV21 = "0"
+IsArduCameraV21="0"
 i2cdetect -y 1 | grep  "70: 70"
 grepRet=$?
 if [[ $grepRet -eq 0 ]] ; then
