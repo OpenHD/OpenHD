@@ -1,3 +1,5 @@
+source /home/pi/RemoteSRemoteSettings2/RemoteSettings2.sh
+
 function rx_function {
     /home/pi/wifibroadcast-base/sharedmem_init_rx
 
@@ -212,6 +214,10 @@ function rx_function {
 		#IsFirstTime=1
 		
 		#MYADDEND
+		
+		#Consti10 add start
+		#ground_remote_settings2 &
+		#Consti10 add end
 		
 		
 		ionice -c 1 -n 3 /home/pi/wifibroadcast-base/rx -p 0 -d 1 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH $NICS | ionice -c 1 -n 4 nice -n -10 tee >(ionice -c 1 -n 4 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo2 > /dev/null 2>&1) >(ionice -c 1 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo4 > /dev/null 2>&1) >(ionice -c 3 nice /home/pi/wifibroadcast-misc/ftee /root/videofifo3 > /dev/null 2>&1) | ionice -c 1 -n 4 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo1 > /dev/null 2>&1

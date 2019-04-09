@@ -1,3 +1,5 @@
+source /home/pi/RemoteSRemoteSettings2/RemoteSettings2.sh
+
 function tx_function {
     killall wbc_status > /dev/null 2>&1
 
@@ -268,6 +270,11 @@ function tx_function {
 #/home/pi/RemoteSettings2/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
 #echo "starting remote settins 2 - python\n"
 #/usr/bin/python3.5 /home/pi/RemoteSettings2/src_python/ServerAir.py &
+
+
+#Consti10 add start
+#air_remote_settings2 &
+#Consti10 add end
 
 
 if [ "$IsBandSwicherEnabled" == "1" ]; then
