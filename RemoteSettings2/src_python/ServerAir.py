@@ -59,7 +59,7 @@ def ReplyLoop():
     global settingsDatabase
     settingsDatabase=createSettingsDatabase(DEBUG_ME)
     receiveSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    receiveSock.bind(('localhost',9090))
+    receiveSock.bind(('localhost',5701))
     print("started reply loop on air pi")
     while True:
         data=receiveSock.recv(1024)

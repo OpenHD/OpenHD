@@ -34,14 +34,14 @@ from threading import Thread
 def SendMessageToAirPi(message):
     #Send data to the air pi on the right UDP socket
     sendSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    sendSock.sendto(message.encode(),('localhost', 9090))
+    sendSock.sendto(message.encode(),('localhost', 5701))
     print("sent to air pi:",message)
 
 
 #call this on the air pi only, data is sent via wfb
 def SendMessageToGroundPi(message):
     sendSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    sendSock.sendto((message).encode(),('localhost', 9091))
+    sendSock.sendto((message).encode(),('localhost', 5702))
     print("Sent to ground pi:",message)
 
 

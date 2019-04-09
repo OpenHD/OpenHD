@@ -82,7 +82,7 @@ def parsesMessageFromClient(msg):
 #blocking, execute in its own threaad
 def ListenForAirPiMessages():
     receiveSock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    receiveSock.bind(('localhost',9091))
+    receiveSock.bind(('localhost',5702))
     while(True):
         data=receiveSock.recv(1024)
         if(data):
@@ -99,7 +99,7 @@ thread1.start()
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # Bind the socket to localhost
-server_address = ("0.0.0.0", 5601)
+server_address = ("0.0.0.0", 5700)
 print('starting up on %s port %s' % server_address)
 sock.bind(server_address)
 sock.listen(1)

@@ -32,6 +32,6 @@ else
 	MY_USED_WIFI_CARD=$PrimaryCardMAC
 fi
 
-echo "./wfb_tx -u 9090 -t $MY_T_PARAM -p 90 -B 20 -M 0 -n 2 -k 1 $MY_USED_WIFI_CARD"
+echo "./wfb_tx -u 5701 -t $MY_T_PARAM -p 90 -B 20 -M 0 -n 2 -k 1 $MY_USED_WIFI_CARD"
 
-./wfb_tx -u 9090 -t $MY_T_PARAM -p 90 -B 20 -M 0 -n 2 -k 1 $MY_USED_WIFI_CARD
+./wfb_tx -u 5701 -t $MY_T_PARAM -p 90 -B 20 -M 0 -n 2 -k 1 $MY_USED_WIFI_CARD
