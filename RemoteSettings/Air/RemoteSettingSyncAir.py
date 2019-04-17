@@ -15,6 +15,12 @@ SettingsFilePath = "/boot/openhd-settings-1.txt"
 SwitchToFreq = "0"
 DefaultCommunicateFreq = "2412"
 
+SettingsFilePath = "/boot/openhd-settings-1.txt"
+TxPowerConfigFilePath="/etc/modprobe.d/ath9k_hw.conf"
+TxPowerFromConfig="-1"
+TxPowerFromAth9k_hw="-1"
+
+
 WlanName = "0"
 SettingsFileDATARATE = "0"
 SettingsFileTXPOWER = "0"
@@ -300,7 +306,64 @@ def InitSettings():
     if SettingsFileTXMODE == "0":
         SettingsFileTXMODE = "single"
 
+def ReadTxPowerAth9k_hw():
+    global TxPowerFromAth9k_hw
+    try:
+        with open(TxPowerConfigFilePath, "r") as f:
+            lines = f.readlines()
+            for line in lines:
+                if line.startswith("options ath9k_hw txpower") == True:
+                    SplitLines = line.split("=")
+                    FilterDigits = SplitLines[1]
+                    TxPowerFromAth9k_hw = re.sub("\D", "", FilterDigits)
+
+            return True
+
+    except Exception as e:
+       print(e)
+       return False
+    return False
+
+
+def ReadTxPower():
+    global TxPowerFromConfig
+    try:
+        with open(SettingsFilePath, "r") as f:
+            lines = f.readlines()
+            for line in lines:
+                if line.startswith("TxPowerAir") == True:
+                    SplitLines = line.split("=")
+                    FilterDigits = SplitLines[1]
+                    TxPowerFromConfig = re.sub("\D", "", FilterDigits)
+
+            return True
+
+    except Exception as e:
+       print(e)
+       return False
+    return False
+
+
+def CheckTxPower():
+    try:
+        if ReadTxPowerAth9k_hw() != False:
+            print("TxPowerFromAth9k_hw= " + TxPowerFromAth9k_hw)
+            if ReadTxPower() != False:
+                print("TxPowerFromConfig= " + TxPowerFromConfig)
+                if TxPowerFromConfig != TxPowerFromAth9k_hw:
+                    print("TxPower not equal Check if all ok and apply")
+                    if TxPowerFromAth9k_hw != "-1" and TxPowerFromConfig != "-1":
+                        print("all ok, apply")
+                        subprocess.check_call(['/usr/local/bin/txpower_atheros', TxPowerFromConfig ] )
+                        return True
+    except Exception as e:
+        print(e)
+        return False
+    return False
+
+
 def CleanAndExit():
+    CheckTxPower()
     print("SmartSync done.")
     ReturnWlanFreq()
     sleep(1)
