@@ -176,7 +176,7 @@ void sendRSSI(int sock, telemetry_data_t *td) {
 		no_signal_rc=true;
                 for(cardcounter=0; cardcounter<number_cards_rc; ++cardcounter) {
 		    if (td->rx_status_rc->adapter[cardcounter].signal_good == 1) { printf("card[%i] rc signal good\n",cardcounter); };
-		    printf("dbm_rc[%i]: %d\n",cardcounter, td->rx_status_rc->adapter[cardcounter].current_signal_dbm);
+		    //printf("dbm_rc[%i]: %d\n",cardcounter, td->rx_status_rc->adapter[cardcounter].current_signal_dbm);
 		    if (td->rx_status_rc->adapter[cardcounter].signal_good == 1) {
                 	if (best_dbm_rc < td->rx_status_rc->adapter[cardcounter].current_signal_dbm) best_dbm_rc = td->rx_status_rc->adapter[cardcounter].current_signal_dbm;
 		    }
@@ -184,7 +184,7 @@ void sendRSSI(int sock, telemetry_data_t *td) {
                 }
 
 		if (no_signal_rc == false) { printf("rc signal good   "); };
-		printf("best_dbm_rc:%d\n",best_dbm_rc);
+		//printf("best_dbm_rc:%d\n",best_dbm_rc);
 
 		if (no_signal == false) {
 		    framedata.signal = best_dbm;
@@ -228,7 +228,7 @@ void sendRSSI(int sock, telemetry_data_t *td) {
 
 //	fprintf(stdout,"\t\t%d blocks injected, injection time per block %lldus, %d fecs skipped, %d packet injections failed.          \r", td->tx_status->injected_block_cnt,td->tx_status->injection_time_block,td->tx_status->skipped_fec_cnt,td->tx_status->injection_fail_cnt);
 
-	printf("signal_rc: %d\n", framedata.signal_rc);
+//	printf("signal_rc: %d\n", framedata.signal_rc);
 //	printf("lostpackets: %d\n", framedata.lostpackets);
 //	printf("lostpackets_rc: %d\n", framedata.lostpackets_rc);
 	// send three times with different delay in between to increase robustness against packetloss
