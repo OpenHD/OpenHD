@@ -27,26 +27,30 @@ settingsDatabase=createSettingsDatabase(DEBUG_ME)
 lastHELLO_OKmessage=0.0
 
 #Change value on ground pi
-def processChangeMessageLocally(key,value):
-    print("Changing Key on ground pi:",key,"Value:",value)
+def processChangeMessageLocally(data):
+    keyValueList=SeperateMessageDataAndSplit(data)
+    print("Changing Key(s) on ground pi:",keyValueList)
     global settingsDatabase
     #Change value from x to y on ground pi
-    changeSetting(settingsDatabase,key,value)
+    for(key,value) in keyValueList:
+        changeSetting(settingsDatabase,key,value)
     #refresh the local database
     settingsDatabase=createSettingsDatabase(DEBUG_ME)
     global messagesForClient
-    messagesForClient.put(BuildMessageCHANGE_OK("G",key,value))
+    messagesForClient.put(BuildMessageCHANGE_OK("G",keyValueList))
+
 
 #return value on ground pi
-def processGetMessageLocally(key):
-    print("Optaining value for Key on ground pi:",key)
-    value=getValueForKey(settingsDatabase,key)
-    if(value==None):
-        value="INVALID_SETTING"
+def processGetMessageLocally(data):
+    keys=SeperateMessageData(data)
+    print("Optaining value(s) for Key(s) on ground pi:",keys)
+    keyValuePairs=[]
+    for key in keys:
+        keyValuePairs.append((key,getValueForKey(settingsDatabase,key)))
     global messagesForClient
-    messagesForClient.put(BuildMessageGET_OK("G",key,value))
-    
-    
+    messagesForClient.put(BuildMessageGET_OK("G",keyValuePairs))
+
+
 def processMessageLocally(cmd,data):
     if(cmd=="HELLO"):
         global messagesForClient
@@ -57,8 +61,7 @@ def processMessageLocally(cmd,data):
     elif(cmd=="GET"):
         processGetMessageLocally(data)
     elif(cmd=="CHANGE"):
-        key,value=ParseMessageData(data)
-        processChangeMessageLocally(key,value)
+        processChangeMessageLocally(data)
     else:
         print("ERROR unknwon command:",cmd)
 

@@ -48,7 +48,7 @@ def getValueForKey(database,key):
         value=dictionary.get(key)
         if(value):
             return value
-    return None
+    return "INVALID_SETTING"
 
 
 #determine in which file this key is stored

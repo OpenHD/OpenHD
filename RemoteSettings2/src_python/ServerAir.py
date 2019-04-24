@@ -8,7 +8,7 @@
 import socket
 import sys
 import io
-from Message import ParseMessage,BuildMessageCHANGE_OK,BuildMessageGET_OK,BuildMessageHELLO_OK
+from Message import ParseMessage,BuildMessageCHANGE_OK,BuildMessageGET_OK,BuildMessageHELLO_OK,SeperateMessageData,SeperateMessageDataAndSplit
 from SettingsDatabase import changeSetting,createSettingsDatabase,getValueForKey
 from Forwarder import SendMessageToGroundPi
 
@@ -18,29 +18,31 @@ settingsDatabase=None
 
 #change value from x to y
 #send response to the Ground PI
-def processChangeMessageLocally(key,value):
-    print("Changing Key on air pi:",key,"Value:",value)
+def processChangeMessageLocally(data):
+    keyValueList=SeperateMessageDataAndSplit(data)
+    print("Changing Key(s) on air pi:",keyValueList)
     global settingsDatabase
-    changeSetting(settingsDatabase,key,value)
+    for(key,value) in keyValueList:
+        changeSetting(settingsDatabase,key,value)
     #refresh the local database
     settingsDatabase=createSettingsDatabase(DEBUG_ME)
-    return BuildMessageCHANGE_OK("A",key,value)   
+    return BuildMessageCHANGE_OK("A",keyValueList)   
 
 #optain value for key
 #send response to the ground pi
-def processGetMessageLocally(key):
-    print("Optaining value for Key on air pi:",key)
-    value=getValueForKey(settingsDatabase,key)
-    if(value==None):
-        value="INVALID_SETTING"
-    return BuildMessageGET_OK("A",key,value)
+def processGetMessageLocally(data):
+    keys=SeperateMessageData(data)
+    print("Optaining value(s) for Key(s) on air pi:",keys)
+    keyValuePairs=[]
+    for key in keys:
+        keyValuePairs.append((key,getValueForKey(settingsDatabase,key)))
+    return BuildMessageGET_OK("A",keyValuePairs)
 
 def processMessageLocally(cmd,data):
     if(cmd=="HELLO"):
         return BuildMessageHELLO_OK("A")
     if(cmd=="CHANGE"):
-        key,value=data.split("=")
-        return processChangeMessageLocally(key,value)
+        return processChangeMessageLocally(data)
     elif(cmd=="GET"):
         return processGetMessageLocally(data)
 

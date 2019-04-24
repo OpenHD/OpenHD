@@ -14,35 +14,44 @@
 # 'GET_OK' return a key-value-pair
 # 'CHANGE_OK' changed a key-value-pair
 
+SEPERATOR="?"
 
 def ParseMessage(message):
     #split the string at the first blank.
-    dst,_,rest=message.partition(' ')
+    dst,_,rest=message.partition(SEPERATOR)
     #then at the second blank
-    cmd,_,data=rest.partition(' ')
+    cmd,_,data=rest.partition(SEPERATOR)
     return dst,cmd,data
 
 
-def ParseMessageData(data):
-    key,value=data.split("=")
-    return key,value
+#return list of data chuncks
+def SeperateMessageData(data):
+    return data.split(SEPERATOR)
 
 
-def BuildMessageCHANGE(id,key,value):
-    return id+" "+"CHANGE "+key+"="+value
+#return list of key,value pairs
+def SeperateMessageDataAndSplit(data):
+    seperatedData=SeperateMessageData(data)
+    ret=[]
+    for x in seperatedData:
+        key,value=x.split("=")
+        ret.append((key,value))
+    return ret
 
 
 #me is either ground or air (G or A)
-def BuildMessageCHANGE_OK(id,key,value):
-    return (id+" "+"CHANGE_OK"+" "+key+"="+value)
+def BuildMessageCHANGE_OK(id,keyValuePairs):
+    ret=id+SEPERATOR+"CHANGE_OK"+SEPERATOR
+    for (key,value) in keyValuePairs:
+        ret+=(key+"="+value+SEPERATOR)
+    return ret[0:len(ret)-1]
 
 
-def BuildMessageGET(id,key):
-    return id+" "+"GET "+key
-
-
-def BuildMessageGET_OK(id,key,value):
-    return (id+" "+"GET_OK"+" "+key+"="+value)
+def BuildMessageGET_OK(id,keyValuePairs):
+    ret=id+SEPERATOR+"GET_OK"+SEPERATOR
+    for (key,value) in keyValuePairs:
+        ret+=(key+"="+value+SEPERATOR)
+    return ret[0:len(ret)-1]
 
 
 def BuildMessageERROR():
@@ -50,7 +59,8 @@ def BuildMessageERROR():
 
 
 def BuildMessageHELLO(id):
-    return id+" "+"HELLO"
+    return id+SEPERATOR+"HELLO"
 
 def BuildMessageHELLO_OK(id):
-    return id+" "+"HELLO_OK"
+    return id+SEPERATOR+"HELLO_OK"
+
