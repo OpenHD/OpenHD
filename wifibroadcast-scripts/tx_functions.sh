@@ -32,6 +32,24 @@ function tx_function {
     echo
     dmesg -c >/dev/null 2>/dev/null
     detect_nics
+    if [ "$Bandwidth" == "10" ]; then
+        echo "HardCode dirty code for tests only. Values are it Hex, to set 10MHz use 0xa (10 in dec)"
+        echo 0xa > /sys/kernel/debug/ieee80211/phy0/ath9k_htc/chanbw
+        echo 0xa > /sys/kernel/debug/ieee80211/phy1/ath9k_htc/chanbw
+        echo 0xa > /sys/kernel/debug/ieee80211/phy2/ath9k_htc/chanbw
+        echo 0xa > /sys/kernel/debug/ieee80211/phy3/ath9k_htc/chanbw
+        echo 0xa > /sys/kernel/debug/ieee80211/phy4/ath9k_htc/chanbw
+    fi
+
+    if [ "$Bandwidth" == "5" ]; then
+        echo "HardCode dirty code for tests only. Values are it Hex, to set 10MHz use 0xa (10 in dec)"
+        echo 5 > /sys/kernel/debug/ieee80211/phy0/ath9k_htc/chanbw
+        echo 5 > /sys/kernel/debug/ieee80211/phy1/ath9k_htc/chanbw
+        echo 5 > /sys/kernel/debug/ieee80211/phy2/ath9k_htc/chanbw
+        echo 5 > /sys/kernel/debug/ieee80211/phy3/ath9k_htc/chanbw
+        echo 5 > /sys/kernel/debug/ieee80211/phy4/ath9k_htc/chanbw
+    fi
+    
 
     sleep 1
     echo
@@ -251,6 +269,11 @@ if [ "$IsAudioTransferEnabled" == "1" ]; then
         /home/pi/RemoteSettings/Air/AudioTX.sh &
 fi
 
+if [ "$EncryptionOrRange" == "Encryption" ]; then
+	/home/pi/RemoteSettings/Air/RxJoystick.sh &
+	/home/pi/RemoteSettings/Air/processUDP.sh &
+fi
+
 if [ "$RemoteSettingsEnabled" == "1" ]; then
         echo "\n RemoteSettings enabled \n"
         /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
@@ -261,7 +284,7 @@ else
         if ! [[ $RemoteSettingsEnabled =~ $re ]] ; then
                 echo "RemoteSettings - incorrect timer value \n"
         else
-                if [ "$RemoteSettingsEnabled" -ne "0" ]; then
+                if [ "$RemoteSettingsEnabled" -ne "0" ] && [ "$RemoteSettingsEnabled" -ne "2" ]; then
                         echo "\n RemoteSettings enabled with timer \n"
                          /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
                         /home/pi/RemoteSettings/AirRSSI.sh &
@@ -302,7 +325,15 @@ echo $VIDEO_WIFI_BITRATE > /tmp/DATARATE.txt
 chmod +x /dev/shm/startReadCameraTransfer.sh
 chmod +x /dev/shm/startReadCameraTransfer_5.sh
 chmod +x /dev/shm/startReadCameraTransfer_10.sh
-/usr/bin/python /home/pi/cameracontrol/cameracontrolUDP.py -IsCamera1Enabled $IsCamera1Enabled -IsCamera2Enabled $IsCamera2Enabled -IsCamera3Enabled $IsCamera3Enabled -IsCamera4Enabled $IsCamera4Enabled  -Camera1ValueMin $Camera1ValueMin -Camera1ValueMax $Camera1ValueMax -Camera2ValueMin $Camera2ValueMin -Camera2ValueMax $Camera2ValueMax -Camera3ValueMin $Camera3ValueMin -Camera3ValueMax $Camera3ValueMax  -Camera4ValueMin $Camera4ValueMin -Camera4ValueMax $Camera4ValueMax -DefaultCameraId $DefaultCameraId
+
+IsArduCameraV21="0"
+i2cdetect -y 1 | grep  "70: 70"
+grepRet=$?
+if [[ $grepRet -eq 0 ]] ; then
+	IsArduCameraV21="21"
+fi
+	
+/usr/bin/python /home/pi/cameracontrol/cameracontrolUDP.py -IsArduCameraV21 $IsArduCameraV21 -IsCamera1Enabled $IsCamera1Enabled -IsCamera2Enabled $IsCamera2Enabled -IsCamera3Enabled $IsCamera3Enabled -IsCamera4Enabled $IsCamera4Enabled  -Camera1ValueMin $Camera1ValueMin -Camera1ValueMax $Camera1ValueMax -Camera2ValueMin $Camera2ValueMin -Camera2ValueMax $Camera2ValueMax -Camera3ValueMin $Camera3ValueMin -Camera3ValueMax $Camera3ValueMax  -Camera4ValueMin $Camera4ValueMin -Camera4ValueMax $Camera4ValueMax -DefaultCameraId $DefaultCameraId
 
 
 ###########################END MOD.

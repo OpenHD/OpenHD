@@ -319,8 +319,8 @@ int main(int argc, char *argv[])
 	rx_status_rc->wifi_adapter_cnt = 1;
     struct sockaddr_in si_me, si_other;
     int s, i, slen = sizeof(si_other) , recv_len;
-    int seqno_rc  = 0;
-    int seqnolast_rc = 0;
+    uint8_t seqno_rc  = 0;
+    uint8_t seqnolast_rc = 0;
     char buf[BUFLEN];
 
 
@@ -434,7 +434,7 @@ int main(int argc, char *argv[])
 
 	seqnolast_rc = seqno_rc;
 
-	seqno_rc = (buf[17] << 8) | buf[16];
+	seqno_rc = buf[16];
 
 	rx_status_rc->adapter[0].received_packet_cnt++;
 	rx_status_rc->last_update = time(NULL);

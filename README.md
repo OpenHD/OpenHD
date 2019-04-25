@@ -9,8 +9,6 @@ OpenHD is licensed under GPLv2, you can find it's contents in this link
 Raspbian, Linux Kernel, Drivers are licensed under GPLv2
 Original code (if found) is licensed as stipulated in respective source files or under the GPLv2 license 
 
-## Logotype
-OpenHD logo was is based on a contribution by Richard Caseres (user @richardbmx)
-
 ## Warranty/Disclamer
 This is a free software and comes with no Warranty as stated in parts 11 and 12 of GPLv2 license. The creators and contributors of the software are not resposible for how it is used.
+
