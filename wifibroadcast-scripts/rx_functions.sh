@@ -1,5 +1,3 @@
-source /home/pi/RemoteSRemoteSettings2/RemoteSettings2.sh
-
 function rx_function {
     /home/pi/wifibroadcast-base/sharedmem_init_rx
 
@@ -187,37 +185,29 @@ function rx_function {
 		tmessage "Starting RX ... (FEC: $VIDEO_BLOCKS/$VIDEO_FECS/$VIDEO_BLOCKLENGTH)"
 		
 	#START AUDIO AND REMOTE SETTINGS
-		#if [ $IsFirstTime -eq 0 ]; then
-			#if [ "$IsAudioTransferEnabled" == "1" ]; then
-			#      echo "AUDIO ENABLED..."
-			#	amixer cset numid=3 $DefaultAudioOut
-			#	/home/pi/RemoteSettings/Ground/AudioPlayback.sh &
-			#	/home/pi/RemoteSettings/Ground/RxAudio.sh &
-			#fi
+		if [ $IsFirstTime -eq 0 ]; then
+			if [ "$IsAudioTransferEnabled" == "1" ]; then
+			      echo "AUDIO ENABLED..."
+				amixer cset numid=3 $DefaultAudioOut
+				/home/pi/RemoteSettings/Ground/AudioPlayback.sh &
+				/home/pi/RemoteSettings/Ground/RxAudio.sh &
+			fi
 
-			#if [ "$RemoteSettingsEnabled" != "0" ]; then
-			#	echo "SETTINGS CHANGE MODULE ENABLED..."
-			#	/home/pi/RemoteSettings/ipchecker/iphelper.sh > /dev/null 2>&1 &
-			#	/usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettings.py > /dev/null 2>&1 &
-			#	/home/pi/RemoteSettings/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
-			#	/home/pi/RemoteSettings/GroundRSSI.sh &
-			#fi
+			if [ "$RemoteSettingsEnabled" != "0" ]; then
+				echo "SETTINGS CHANGE MODULE ENABLED..."
+				/home/pi/RemoteSettings/ipchecker/iphelper.sh > /dev/null 2>&1 &
+				/usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettings.py > /dev/null 2>&1 &
+				/home/pi/RemoteSettings/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
+				/home/pi/RemoteSettings/GroundRSSI.sh &
+			fi
 			
-			#if [ "$IsBandSwicherEnabled" == "1" ]; then
-			#    echo "BAND SWITCHER ENABLED...."
-        	#		/home/pi/RemoteSettings/BandSwitcher.sh &
-			#fi
-			#start remote settings 2 instead ( testing only ground station server for now)
-			#/usr/bin/python3.5 /home/pi/RemoteSettings2/src_python/ServerGround.py > /dev/null 2>&1 &
-			#/home/pi/RemoteSettings2/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
-		#fi
-		#IsFirstTime=1
-		
+			if [ "$IsBandSwicherEnabled" == "1" ]; then
+			    echo "BAND SWITCHER ENABLED...."
+        			/home/pi/RemoteSettings/BandSwitcher.sh &
+			fi
+		fi
+		IsFirstTime=1
 		#MYADDEND
-		
-		#Consti10 add start
-		#ground_remote_settings2 &
-		#Consti10 add end
 		
 		
 		ionice -c 1 -n 3 /home/pi/wifibroadcast-base/rx -p 0 -d 1 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH $NICS | ionice -c 1 -n 4 nice -n -10 tee >(ionice -c 1 -n 4 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo2 > /dev/null 2>&1) >(ionice -c 1 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo4 > /dev/null 2>&1) >(ionice -c 3 nice /home/pi/wifibroadcast-misc/ftee /root/videofifo3 > /dev/null 2>&1) | ionice -c 1 -n 4 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo1 > /dev/null 2>&1
