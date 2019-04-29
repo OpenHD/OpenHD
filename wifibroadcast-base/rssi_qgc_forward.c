@@ -39,6 +39,8 @@ typedef struct {
     int8_t current_signal_joystick_uplink; // signal strength in dbm at air pi (telemetry upstream and rc link)
     int8_t current_signal_telemetry_uplink;
     int8_t joystick_connected; // 0 = no joystick connected, 1 = joystick connected
+    float HomeLat;
+    float HomeLon;
     uint8_t cpuload_gnd; // CPU load Ground Pi
     uint8_t temp_gnd; // CPU temperature Ground Pi
     uint8_t cpuload_air; // CPU load Air Pi
@@ -131,6 +133,7 @@ int main(int argc, char *argv[]) {
     FILE *fp;
     FILE *fp2;
     FILE *fp3;
+    FILE *fptr;
     long double a[4], b[4];
 
 
@@ -174,6 +177,8 @@ int main(int argc, char *argv[]) {
 	wbcdata.current_signal_joystick_uplink = 0;
 	wbcdata.current_signal_telemetry_uplink = 0;
 	wbcdata.joystick_connected = 0;
+	wbcdata.HomeLon = 0;
+	wbcdata.HomeLat = 0;
 	wbcdata.cpuload_gnd = 0;
 	wbcdata.temp_gnd = 0;
 	wbcdata.cpuload_air = 0;
@@ -193,7 +198,6 @@ int main(int argc, char *argv[]) {
 	    wbcdata.lost_packet_cnt = t->lost_packet_cnt;
 	    wbcdata.skipped_packet_cnt = t_sysair->skipped_fec_cnt;
 	    wbcdata.injection_fail_cnt  = t_sysair->injection_fail_cnt;
-
 	    wbcdata.received_packet_cnt = t->received_packet_cnt;
 	    wbcdata.kbitrate = t->kbitrate;
 	    wbcdata.kbitrate_measured =  t_sysair->bitrate_measured_kbit;
@@ -206,12 +210,30 @@ int main(int argc, char *argv[]) {
 	    wbcdata.current_signal_joystick_uplink = t_rc->adapter[0].current_signal_dbm;
 	    wbcdata.current_signal_telemetry_uplink = t_uplink->adapter[0].current_signal_dbm;
 
-
 	    wbcdata.joystick_connected = 0;
 
 	delta = current_timestamp() - prev_cpu_time;
 	    if (delta > 1000) {
 		prev_cpu_time = current_timestamp();
+
+            if(wbcdata.HomeLon == 0 && wbcdata.HomeLat == 0)
+            {
+                printf("HomeLon == 0\n");
+                float lonlat[2];
+                lonlat[0] = 0.0;
+                lonlat[1] = 0.0;
+
+                fptr = fopen("/dev/shm/homepos","rb");
+                if(fptr != NULL)
+                {
+                        fread(&lonlat, sizeof(lonlat), 2, fptr);
+                        fclose(fptr);
+
+                        wbcdata.HomeLat = lonlat[1];
+                        wbcdata.HomeLon = lonlat[0];
+
+                }
+            }
 
 		fp2 = fopen("/sys/class/thermal/thermal_zone0/temp","r");
 		fscanf(fp2,"%d",&temp_gnd);
@@ -244,8 +266,7 @@ int main(int argc, char *argv[]) {
 		wbcdata.adapter[cardcounter].signal_good = t->adapter[cardcounter].signal_good;
 	    }
 
-
-	    if (sendto(s_rssi, &wbcdata, 105, 0, (struct sockaddr*)&si_other_rssi, slen_rssi)==-1) printf("ERROR: Could not send RSSI data!");
+	    if (sendto(s_rssi, &wbcdata, 113, 0, (struct sockaddr*)&si_other_rssi, slen_rssi)==-1) printf("ERROR: Could not send RSSI data!");
 	    usleep(250000);
 	}
 	return 0;
