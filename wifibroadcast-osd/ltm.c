@@ -178,7 +178,7 @@ int ltm_check(telemetry_data_t *td) {
     //(unused) 		1byte
     td->hdop = (float)((uint16_t)ltmread_u16())/10000.0f;
     printf("LTM X FRAME:\n");
-    printf("GPS hdop:%.2f  ", td->ltm_hdop);
+    printf("GPS hdop:%.2f  ", td->hdop);
 
   }else if (LTMcmd==LIGHTTELEMETRY_SFRAME)  {
     //Vbat 			uint16, mV
