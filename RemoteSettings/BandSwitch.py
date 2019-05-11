@@ -27,6 +27,7 @@ PrimaryCardPath = "Non"
 PrimaryCardMAC = "Non"
 ExitRecvThread = 0
 ExitRCThread = 0
+ExitRCThread2 = 0
 
 RC_Value = 0
 RC_Value2 = 0
