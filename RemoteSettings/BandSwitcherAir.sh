@@ -18,4 +18,4 @@ fi
 sleep 0.2
 /home/pi/RemoteSettings/Air/RxBandSwitcher.sh &
 sleep 0.2
-python3.5 /home/pi/RemoteSettings/BandSwitchAir.py -DefaultBandWidthAth9k $Bandwidth &
+python3.5 /home/pi/RemoteSettings/BandSwitchAir.py -DefaultBandWidthAth9k $Bandwidth -SecondaryCamera $1 -BitrateMeasured $2 &

@@ -34,7 +34,7 @@
 #define SERVER "127.0.0.1"
 #define BUFLEN 2  //Max length of buffer
 #define PORT2 1258 //BandSwitch py script in
-
+#define PORT3 1259 //IP or USB camera switch py script in
 
 #ifdef JSSWITCHES  // 1 or 2 byte more for channels 9 - 16/24 as switches
 
@@ -308,6 +308,7 @@ int main (int argc, char *argv[]) {
     int shmid;
     char *shared_memory;
     int Channel = 0;
+    int ChannelIPCamera = 0;
     char ShmBuf[2];
     int tmp = 0;
 
@@ -346,8 +347,11 @@ fprintf( stderr, "init ");
     }
 
     int x = optind;
-    x++;
+    x += 2;
+    
     Channel = atoi(argv[1]);
+    ChannelIPCamera = atoi(argv[2]);
+
 
     int num_interfaces = 0;
     while(x < argc && num_interfaces < 8)
@@ -380,7 +384,26 @@ fprintf( stderr, "init ");
         }
         //udp init end
 
+        //udp init IP or USB camera sender
+        struct sockaddr_in si_other3;
+        int s3, slen3 = sizeof(si_other3);
+        char message3[BUFLEN];
 
+        if ((s3 = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+        {
+                exit(1);
+        }
+
+        memset((char *) &si_other2, 0, sizeof(si_other2));
+        si_other3.sin_family = AF_INET;
+        si_other3.sin_port = htons(PORT3);
+
+        if (inet_aton(SERVER, &si_other3.sin_addr) == 0)
+        {
+                fprintf(stderr, "inet_aton() failed\n");
+                exit(1);
+        }
+        //udp init end
 
 	framedata.rt1 = 0; // <-- radiotap version
 	framedata.rt2 = 0; // <-- radiotap version
@@ -479,6 +502,22 @@ fprintf( stderr, "init ");
 			{
 				//printf("sendto() error");
 			}
+
+                    }
+
+                    if( ChannelIPCamera  >= 1 && ChannelIPCamera  <= 16 )
+                    {
+                        message3[0] = 0;
+                        message3[1] = 0;
+                        tmp = ChannelIPCamera;
+                        tmp--;
+                        message3[0] = rcData[tmp] & 0xFF;
+                        message3[1] = rcData[tmp] >> 8;
+
+                        if (sendto(s3, message3, 2, 0, (struct sockaddr *) &si_other3, slen3) == -1)
+                        {
+                                //printf("sendto() error");
+                        }
 
                     }
 		}

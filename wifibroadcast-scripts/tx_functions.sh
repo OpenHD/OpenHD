@@ -288,13 +288,30 @@ else
 fi
 
 if [ "$IsBandSwicherEnabled" == "1" ]; then
-        /home/pi/RemoteSettings/BandSwitcherAir.sh &
+        /home/pi/RemoteSettings/BandSwitcherAir.sh $SecondaryCamera  $BITRATE &
+	/home/pi/RemoteSettings/Air/TxSecondaryCamera.sh &
 fi
 
 echo "#!/bin/bash" > /dev/shm/startReadCameraTransfer.sh
 echo "echo \$\$ > /dev/shm/TXCAMPID" >> /dev/shm/startReadCameraTransfer.sh
 
 NICS="${NICS//$'\n'/ }"
+
+
+echo "#!/bin/bash" >  /dev/shm/startReadCameraTransferExteranlBitrate.sh
+echo "nice -n -9 raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
+
+
+echo "#!/bin/bash" > /dev/shm/startReadUSBCamera.sh
+echo $USBCamera >> /dev/shm/startReadUSBCamera.sh
+
+
+echo "#!/bin/bash" > /dev/shm/startReadIPCameraHiRes.sh
+echo $IPCameraHiRes >> /dev/shm/startReadIPCameraHiRes.sh
+
+echo "#!/bin/bash" > /dev/shm/startReadIPCameraLowRes.sh
+echo $IPCameraLowRes >> /dev/shm/startReadIPCameraLowRes.sh
+
 
 
 echo "BitRate_20: "
@@ -319,6 +336,13 @@ echo $VIDEO_WIFI_BITRATE > /tmp/DATARATE.txt
 chmod +x /dev/shm/startReadCameraTransfer.sh
 chmod +x /dev/shm/startReadCameraTransfer_5.sh
 chmod +x /dev/shm/startReadCameraTransfer_10.sh
+
+chmod +x /dev/shm/startReadCameraTransferExteranlBitrate.sh
+chmod +x /dev/shm/startReadIPCameraHiRes.sh
+chmod +x /dev/shm/startReadIPCameraLowRes.sh
+chmod +x /dev/shm/startReadUSBCamera.sh
+
+
 
 IsArduCameraV21="0"
 i2cdetect -y 1 | grep  "70: 70"
