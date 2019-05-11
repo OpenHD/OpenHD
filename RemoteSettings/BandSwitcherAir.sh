@@ -14,6 +14,10 @@ if [ -e "/tmp/settings.sh" ]; then
     sleep 365d
 fi
 
+#IP Camera don`t have DHCP, so, fixed IP. Must be moved to better place.
+ifconfig eth0 192.168.0.215 netmask 255.255.0.0 up
+service ssh start
+
 /home/pi/RemoteSettings/Air/TxBandSwitcher.sh &
 sleep 0.2
 /home/pi/RemoteSettings/Air/RxBandSwitcher.sh &
