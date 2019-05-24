@@ -8,6 +8,8 @@ function osdrx_function {
     ionice -c 3 nice dos2unix -n /boot/osdconfig.txt /tmp/osdconfig.txt
     echo
 	
+    if [ "$DISPLAY_OSD" == "Y" ]; then
+    
     cd /home/pi/wifibroadcast-osd
 	
     echo Building OSD:
@@ -22,6 +24,10 @@ function osdrx_function {
 		
 		sleep 5
     }
+    
+    else 
+	echo "OSD selected off..."
+    fi
 	
     echo
 
