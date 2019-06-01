@@ -296,6 +296,14 @@ while True:
 #        SendACKToGround(DataStr)
 #if no error, replace local config file
         replace_WFBC_config(WFBCSettingsFile,VariableNam,VariableNamAndData)
+        try:
+            if VariableNamAndData.startswith('TxPowerAir=') == True:
+                splitResult = VariableNamAndData.split("=")
+                filter = re.sub("\D", "", splitResult[1])
+                subprocess.check_call(['/usr/local/bin/txpower_atheros',  filter ])
+        except Exception as e:
+            print("TxPowerGround except: " + str(e) )
+
         ConfirmSave(VariableNameReport)
         complete_response = {}
         read_wbc_settings(complete_response)

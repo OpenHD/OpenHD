@@ -76,6 +76,7 @@ def replace_Joystick_config(LookFor, NewLine):
 
 
 def replace_WFBC_config(file_path, LookFor, NewLine):
+    print("LookFor: " + LookFor + " NewLine: " + NewLine )
     #Create temp file
     os.system('mount -o remount,rw /boot')
     NewLine += "\n"
@@ -268,6 +269,15 @@ while True:
         #add sync conde
         ForwardMessageToRPiAir(DataStr)
         replace_WFBC_config(WFBCSettingsFile,VariableNam,VariableNamAndData)
+        try:
+            if VariableNamAndData.startswith('TxPowerGround=') == True:
+
+                print("if in")
+                splitResult = VariableNamAndData.split("=")
+                filter = re.sub("\D", "", splitResult[1])
+                subprocess.check_call(['/usr/local/bin/txpower_atheros',  filter ])
+        except Exception as e:
+            print("TxPowerGround except: " + str(e) )
         ConfirmSave(VariableNameReport)
         complete_response = {}
         read_wbc_settings(complete_response)

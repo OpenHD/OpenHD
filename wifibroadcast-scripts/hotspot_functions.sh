@@ -112,6 +112,7 @@ function hotspot_check_function {
 				
 				nice socat -b $TELEMETRY_UDP_BLOCKSIZE GOPEN:/root/telemetryfifo2 UDP4-SENDTO:$IP:$TELEMETRY_UDP_PORT &
 				nice /home/pi/wifibroadcast-base/rssi_forward $IP 5003 &
+				nice /home/pi/wifibroadcast-base/rssi_qgc_forward $IP 5154 &
 				
 				if [ "$FORWARD_STREAM" == "rtp" ]; then
 					ionice -c 1 -n 4 nice -n -5 cat /root/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=$VIDEO_UDP_PORT host=$IP > /dev/null 2>&1 &
@@ -150,6 +151,7 @@ function hotspot_check_function {
 				
 				nice socat -b $TELEMETRY_UDP_BLOCKSIZE GOPEN:/root/telemetryfifo2 UDP4-SENDTO:$IP:$TELEMETRY_UDP_PORT &
 				nice /home/pi/wifibroadcast-base/rssi_forward $IP 5003 &
+				nice /home/pi/wifibroadcast-base/rssi_qgc_forward $IP 5154 &
 				
 				if [ "$FORWARD_STREAM" == "rtp" ]; then
 					ionice -c 1 -n 4 nice -n -5 cat /root/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=$VIDEO_UDP_PORT host=$IP > /dev/null 2>&1 &
@@ -245,6 +247,7 @@ function hotspot_check_function {
 							ps -ef | nice grep "mavlink-routerd" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 							ps -ef | nice grep "tshark" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 							ps -ef | nice grep "rssi_forward" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+							ps -ef | nice grep "rssi_qgc_forward" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 
 							# kill msp processes
 							ps -ef | nice grep "cat /root/mspfifo" | nice grep -v grep | awk '{print $2}' | xargs kill -9

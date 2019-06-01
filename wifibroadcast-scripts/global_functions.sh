@@ -335,7 +335,7 @@ function collect_debug {
 
     echo >>$DEBUGPATH/debug.txt
     echo >>$DEBUGPATH/debug.txt
-    nice cat /boot/wifibroadcast-1.txt | egrep -v "^(#|$)" >> $DEBUGPATH/debug.txt
+    nice cat /boot/openhd-settings-1.txt | egrep -v "^(#|$)" >> $DEBUGPATH/debug.txt
     echo >>$DEBUGPATH/debug.txt
     echo >>$DEBUGPATH/debug.txt
     nice cat /boot/osdconfig.txt | egrep -v "^(//|$)" >> $DEBUGPATH/debug.txt
