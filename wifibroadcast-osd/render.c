@@ -996,14 +996,11 @@ void draw_TOTAL_TIME(int gpsspeed, float pos_x, float pos_y, float scale){
     // get time passed since last rendering
     long time_diff = current_ts() - time_ts;
     time_ts = current_ts();
-#if COPTER == true
-    if ( (armed == 1) && (current > 3) )
-      totalTime += (float)time_diff/60000;
-#else
-    if ( gpsspeed>0)
-      totalTime += (float)time_diff/60000;
-#endif
- 
+    
+    time_ts = current_ts();
+    if(gpsspeed>0){	#if COPTER == true
+        total_time = total_time + (float)time_diff/60000; // flying time in minutes	    if ( (armed == 1) && (current > 3) )
+    }
     float text_scale = getWidth(2) * scale;
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
     sprintf(buffer, "%3.0f:%02d", total_time, (int)(total_time*60) % 60);
