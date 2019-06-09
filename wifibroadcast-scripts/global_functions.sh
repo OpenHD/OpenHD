@@ -119,7 +119,14 @@ function check_camera_attached {
 	if [ "$TTY" == "/dev/tty1" ]; then
 		CAM=`/usr/bin/vcgencmd get_camera | nice grep -c detected=1`
 		if [ "$CAM" == "0" ]; then # if we are RX ...
-			echo  "0" > /tmp/cam
+			i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
+        		grepRet=$?
+        		if [[ $grepRet -eq 0 ]] ; then
+				echo  "1" > /tmp/cam
+				CAM="1"
+		        else
+				echo  "0" > /tmp/cam
+			fi
 		else # else we are TX ...
 			touch /tmp/TX
 			echo  "1" > /tmp/cam
