@@ -154,7 +154,16 @@ function hotspot_check_function {
 				nice /home/pi/wifibroadcast-base/rssi_qgc_forward $IP 5154 &
 				
 				if [ "$FORWARD_STREAM" == "rtp" ]; then
-					ionice -c 1 -n 4 nice -n -5 cat /root/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=$VIDEO_UDP_PORT host=$IP > /dev/null 2>&1 &
+
+					echo "ps -ef | nice grep \"cat /root/videofifo2\" | nice grep -v grep | awk '{print $2}' | xargs kill -9" >>  /tmp/ForwardRTPMainCamera.sh
+                                        echo "ps -ef | nice grep \"gst-launch-1.0 fdsrc\" | nice grep -v grep | awk '{print $2}' | xargs kill -9" >>  /tmp/ForwardRTPMainCamera.sh
+                                        echo "ps -ef | nice grep \"wfb_rx -u 5600 -p 23 -c\" | nice grep -v grep | awk '{print $2}' | xargs kill -9" >>  /tmp/ForwardRTPMainCamera.sh
+
+					echo "ionice -c 1 -n 4 nice -n -5 cat /root/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=$VIDEO_UDP_PORT host=$IP > /dev/null 2>&1 &" > /tmp/ForwardRTPMainCamera.sh
+					chmod +x /tmp/ForwardRTPMainCamera.sh
+					if [ ! -f "/tmp/SecondaryCameraActive" ]; then
+						/tmp/ForwardRTPMainCamera.sh &
+					fi
 				else
 					ionice -c 1 -n 4 nice -n -10 socat -b $VIDEO_UDP_BLOCKSIZE GOPEN:/root/videofifo2 UDP4-SENDTO:$IP:$VIDEO_UDP_PORT &
 				fi

@@ -88,7 +88,7 @@ function rctx_function {
         	           /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $PrimaryCardMAC &
                 	fi
 
-			nice -n -5 /tmp/rctx $ChannelToListen2 $PrimaryCardMAC
+			nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $PrimaryCardMAC
 			sleep 1	
 		else
 			if [ $FirstTimeRC == 0  ]; then
