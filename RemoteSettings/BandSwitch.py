@@ -404,6 +404,8 @@ if FindCardPhyInitPath() == True:
                     print("Remove file error: " +  str(e))
 
                 try:
+                    os.system('/tmp/KillForwardRTPMainCamera.sh')
+                    os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
                     os.system('/tmp/ForwardRTPMainCamera.sh &')
                 except Exception as e:
                     print("RTP forward. It is ok. File can be missing "  + str(e))
@@ -420,6 +422,9 @@ if FindCardPhyInitPath() == True:
                 except Exception as e:
                     print("Create file error: " +  str(e))
                 try:
+                    os.system('/tmp/KillForwardRTPMainCamera.sh')
+                    os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
+                    os.system('/tmp/ForwardRTPMainCamera.sh &')
                     os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTP.sh &')
                 except Exception as e:
                     print("RTP secondary forward exception: " +  str(e))
@@ -438,7 +443,9 @@ if FindCardPhyInitPath() == True:
                     print("Create file error: " +  str(e))
 
                 try:
-                    os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTP.sh &')
+                    os.system('/tmp/KillForwardRTPMainCamera.sh')
+                    os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
+                    os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTPAndDisplayLocally.sh &')
                 except Exception as e:
                     print("RTP secondary forward exception: " +  str(e))
 
