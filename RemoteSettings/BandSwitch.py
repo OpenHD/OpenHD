@@ -31,6 +31,7 @@ ExitRCThread2 = 0
 
 RC_Value = 0
 RC_Value2 = 0
+CurrentCamera=1
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-PrimaryCardMAC", help="")
@@ -334,6 +335,88 @@ def ExitScript(ExitCode):
     exit(ExitCode)
 
 
+def CheckBandRCValues():
+    if RC_Value >= Band20After and CurrentBand != 20 and RC_Value != 0:
+        print("Switching to 20...")
+        if SwitchRemoteLocalBandTo(20) == False:
+            ExitScript(2)
+        CurrentBand = 20
+
+    if RC_Value < Band10ValueMax and RC_Value > Band10ValueMin and CurrentBand != 10 and RC_Value != 0:
+        print("Switching to 10...")
+        if SwitchRemoteLocalBandTo(10) == False:
+            ExitScript(2)
+        CurrentBand = 10
+
+    if RC_Value <= Band5Below and CurrentBand != 5 and RC_Value != 0:
+        print("Switching to 5...")
+        if SwitchRemoteLocalBandTo(5) == False:
+            ExitScript(2)
+        CurrentBand = 5
+
+def CheckSecondaryCameraRCValues():
+    global CurrentCamera
+    if RC_Value2 >= Camera1ValueMin and RC_Value2 <= Camera1ValueMax:
+        if CurrentCamera != 1:
+            CurrentCamera = 1
+            for i in range(5):
+                SendDataToAir("RPi")
+            print("Camera: RPi")
+
+            try:
+                if os.path.exists("/tmp/SecondaryCameraActive"):
+                    os.remove("/tmp/SecondaryCameraActive")
+            except Exception as e:
+                print("Remove file error: " +  str(e))
+
+            try:
+                os.system('/tmp/KillForwardRTPMainCamera.sh')
+                os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
+                os.system('/tmp/ForwardRTPMainCamera.sh &')
+            except Exception as e:
+                print("RTP forward. It is ok. File can be missing "  + str(e))
+
+    if RC_Value2 >= Camera2ValueMin and RC_Value2 <= Camera2ValueMax:
+        if CurrentCamera != 2:
+            CurrentCamera = 2
+            print("Camera: RPiAndSecondary")
+            for i in range(5):
+                SendDataToAir("RPiAndSecondary")
+            try:
+                hfile = open("/tmp/SecondaryCameraActive", 'w+')
+                hfile.close()
+            except Exception as e:
+                print("Create file error: " +  str(e))
+            try:
+                os.system('/tmp/KillForwardRTPMainCamera.sh')
+                os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
+                os.system('/tmp/ForwardRTPMainCamera.sh &')
+                os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTP.sh &')
+            except Exception as e:
+                print("RTP secondary forward exception: " +  str(e))
+
+    if RC_Value2 >= Camera3ValueMin and RC_Value2 <= Camera3ValueMax:
+        if CurrentCamera != 3:
+            CurrentCamera = 3
+            print("Camera: Secondary")
+            for i in range(5):
+                SendDataToAir("Secondary")
+
+            try:
+                hfile = open("/tmp/SecondaryCameraActive", 'w+')
+                hfile.close()
+            except Exception as e:
+                print("Create file error: " +  str(e))
+
+            try:
+                os.system('/tmp/KillForwardRTPMainCamera.sh')
+                os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
+                os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTPAndDisplayLocally.sh &')
+            except Exception as e:
+                print("RTP secondary forward exception: " +  str(e))
+
+    if RC_Value2 >= Camera4ValueMin and RC_Value2 <= Camera4ValueMax:
+        print("Camera: non")
 
 if FindCardPhyInitPath() == True:
     print("Ok")
@@ -371,87 +454,17 @@ if FindCardPhyInitPath() == True:
 
     #Add command line in code
     while True:
-        if RC_Value >= Band20After and CurrentBand != 20 and RC_Value != 0:
-            print("Switching to 20...")
-            if SwitchRemoteLocalBandTo(20) == False:
-                ExitScript(2)
-            CurrentBand = 20
+        CheckBandRCValues()
+        CheckSecondaryCameraRCValues()
 
-        if RC_Value < Band10ValueMax and RC_Value > Band10ValueMin and CurrentBand != 10 and RC_Value != 0:
-            print("Switching to 10...")
-            if SwitchRemoteLocalBandTo(10) == False:
-                ExitScript(2)
-            CurrentBand = 10
-
-        if RC_Value <= Band5Below and CurrentBand != 5 and RC_Value != 0:
-            print("Switching to 5...")
-            if SwitchRemoteLocalBandTo(5) == False:
-                ExitScript(2)
-            CurrentBand = 5
-
-
-        if RC_Value2 >= Camera1ValueMin and RC_Value2 <= Camera1ValueMax:
-            if CurrentCamera != 1:
-                CurrentCamera = 1
-                for i in range(5):
-                    SendDataToAir("RPi")
-                print("Camera: RPi")
-
-                try:
-                    if os.path.exists("/tmp/SecondaryCameraActive"):
-                        os.remove("/tmp/SecondaryCameraActive")
-                except Exception as e:
-                    print("Remove file error: " +  str(e))
-
-                try:
-                    os.system('/tmp/KillForwardRTPMainCamera.sh')
-                    os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
-                    os.system('/tmp/ForwardRTPMainCamera.sh &')
-                except Exception as e:
-                    print("RTP forward. It is ok. File can be missing "  + str(e))
-
-        if RC_Value2 >= Camera2ValueMin and RC_Value2 <= Camera2ValueMax:
-            if CurrentCamera != 2:
-                CurrentCamera = 2
-                print("Camera: RPiAndSecondary")
-                for i in range(5):
-                    SendDataToAir("RPiAndSecondary")
-                try:
-                    hfile = open("/tmp/SecondaryCameraActive", 'w+')
-                    hfile.close()
-                except Exception as e:
-                    print("Create file error: " +  str(e))
-                try:
-                    os.system('/tmp/KillForwardRTPMainCamera.sh')
-                    os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
-                    os.system('/tmp/ForwardRTPMainCamera.sh &')
-                    os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTP.sh &')
-                except Exception as e:
-                    print("RTP secondary forward exception: " +  str(e))
-
-        if RC_Value2 >= Camera3ValueMin and RC_Value2 <= Camera3ValueMax:
-            if CurrentCamera != 3:
-                CurrentCamera = 3
-                print("Camera: Secondary")
-                for i in range(5):
-                    SendDataToAir("Secondary")
-
-                try:
-                    hfile = open("/tmp/SecondaryCameraActive", 'w+')
-                    hfile.close()
-                except Exception as e:
-                    print("Create file error: " +  str(e))
-
-                try:
-                    os.system('/tmp/KillForwardRTPMainCamera.sh')
-                    os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
-                    os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTPAndDisplayLocally.sh &')
-                except Exception as e:
-                    print("RTP secondary forward exception: " +  str(e))
-
-        if RC_Value2 >= Camera4ValueMin and RC_Value2 <= Camera4ValueMax:
-            print("Camera: non")
         sleep(0.6)
 
 else:
-    print("Exit")
+    print("Ath9k card not found. Band switch disabled. USB\IP camera switch still enabled.")
+
+    RC_UDP_IN_thread2 = threading.Thread(target=StartRCThreadIn2)
+    RC_UDP_IN_thread2.start()
+
+    while True:
+        CheckSecondaryCameraRCValues()
+        sleep(0.6)

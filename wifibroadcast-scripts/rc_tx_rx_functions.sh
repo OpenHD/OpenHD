@@ -21,15 +21,15 @@ function rctx_function {
 	
     echo Building RC ...
     
-    cd /home/pi/wifibroadcast-rc
+    cd /home/pi/wifibroadcast-rc-Ath9k/
 	
-    if [ "$EncryptionOrRange" == "Range" ]; then
-          cd /home/pi/wifibroadcast-rc
-    fi
+#    if [ "$EncryptionOrRange" == "Range" ]; then
+#          cd /home/pi/wifibroadcast-rc
+#    fi
 
-    if [ "$EncryptionOrRange" == "Encryption" ]; then
-		cd /home/pi/wifibroadcast-rc-encrypted/
-    fi
+#    if [ "$EncryptionOrRange" == "Encryption" ]; then
+#		cd /home/pi/wifibroadcast-rc-encrypted/
+#    fi
     
     if [ "$PrimaryCardMAC" == "0" ]; then
     	echo "PrimaryCardMAC not selected. RC Joystick program will use WiFi card with best RSSI as tx."
@@ -37,7 +37,7 @@ function rctx_function {
     	echo "PrimaryCardMAC selected to: $PrimaryCardMAC"
     	if [ "$IsBandSwicherEnabled" == "1" ]; then
 		echo "BandSwicher Enabled"
-        	cd /home/pi/wifibroadcast-rc-Ath9k/
+#        	cd /home/pi/wifibroadcast-rc-Ath9k/
     	fi
     fi
   
@@ -75,29 +75,54 @@ function rctx_function {
 
                 if [ $FirstTimeRC == 0  ]; then
                     FirstTimeRC=1
-                   ./rctxUDP.sh &
+                   /home/pi/wifibroadcast-rc/rctxUDP.sh &
                 fi
 
 		nice -n -5 /tmp/rctx $NICS
+		IsBandSwitcherEnabled=0
+		IsIPCameraSwitcherEnabled=1
+		IsEncrypt=0
+		if [ "$EncryptionOrRange" == "Range" ]; then
+          		IsEncrypt=0
+    		fi
+
+    		if [ "$EncryptionOrRange" == "Encryption" ]; then
+			IsEncrypt=1
+    		fi
+
+		nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwitcherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $NICS
 		sleep 1
 		NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
 	else
-		if [ "$IsBandSwicherEnabled" == "1" ]; then
+		#if [ "$IsBandSwicherEnabled" == "1" ]; then
 			if [ $FirstTimeRC == 0  ]; then
 	                    FirstTimeRC=1
         	           /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $PrimaryCardMAC &
                 	fi
 
-			nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $PrimaryCardMAC
-			sleep 1	
-		else
-			if [ $FirstTimeRC == 0  ]; then
-                            FirstTimeRC=1
-                           /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh 0 $PrimaryCardMAC &
-                        fi
-			nice -n -5 /tmp/rctx $PrimaryCardMAC
-			sleep 1
-		fi
+		#	nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $PrimaryCardMAC
+		#	nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwitcherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $PrimaryCardMAC
+		#	sleep 1	
+		#else
+		#	if [ $FirstTimeRC == 0  ]; then
+                #            FirstTimeRC=1
+                #           /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh 0 $PrimaryCardMAC &
+                #        fi
+		#	nice -n -5 /tmp/rctx $PrimaryCardMAC
+		#	sleep 1
+		#fi
+		IsIPCameraSwitcherEnabled=1
+		IsEncrypt=0
+                if [ "$EncryptionOrRange" == "Range" ]; then
+                        IsEncrypt=0
+                fi
+
+                if [ "$EncryptionOrRange" == "Encryption" ]; then
+                        IsEncrypt=1
+                fi
+
+		nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwitcherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $PrimaryCardMAC
+		sleep 1
 	fi
 
     done

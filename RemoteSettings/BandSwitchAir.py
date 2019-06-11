@@ -49,6 +49,7 @@ InMsgCameraTypeRPiAndSecondary = bytearray(b'RPiAndSecondary')
 InMsgCameraTypeSecondary = bytearray(b'Secondary')
 
 PrimaryCardPath = "Non"
+IsAth9kFound = False
 
 def SendDataToGround(MessageBuf):
     UDP_PORT = 8943
@@ -187,36 +188,39 @@ def StartRecv():
     sock.bind((UDP_IP, UDP_PORT))
     while True:
         data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-        if data == InMsgBand5:
-            print("InMsgBand5\n")
-            if SwitchLocalBandTo(PrimaryCardPath,5) == True:
+	#switch band only with ath9k
+        if IsAth9kFound == True:
+            if data == InMsgBand5:
                 print("InMsgBand5\n")
-                #os.system('/home/pi/RemoteSettings/KillRaspivid.sh')
-                #os.system('/dev/shm/startReadCameraTransfer_5.sh &')
-            lock.acquire()
-            CurrentBand = "5"
-            lock.release()
-            SwitchCamera()
-        if data == InMsgBand10:
-            print("InMsgBand10\n")
-            if SwitchLocalBandTo(PrimaryCardPath,10) == True:
+                if SwitchLocalBandTo(PrimaryCardPath,5) == True:
+                    print("InMsgBand5\n")
+                    #os.system('/home/pi/RemoteSettings/KillRaspivid.sh')
+                    #os.system('/dev/shm/startReadCameraTransfer_5.sh &')
+                lock.acquire()
+                CurrentBand = "5"
+                lock.release()
+                SwitchCamera()
+            if data == InMsgBand10:
                 print("InMsgBand10\n")
-                #os.system('/home/pi/RemoteSettings/KillRaspivid.sh')
-                #os.system('/dev/shm/startReadCameraTransfer_10.sh &')
-            lock.acquire()
-            CurrentBand = "a"
-            lock.release()
-            SwitchCamera()
-        if data == InMsgBand20:
-            print("InMsgBand20\n")
-            if SwitchLocalBandTo(PrimaryCardPath,20) == True:
+                if SwitchLocalBandTo(PrimaryCardPath,10) == True:
+                    print("InMsgBand10\n")
+                    #os.system('/home/pi/RemoteSettings/KillRaspivid.sh')
+                    #os.system('/dev/shm/startReadCameraTransfer_10.sh &')
+                lock.acquire()
+                CurrentBand = "a"
+                lock.release()
+                SwitchCamera()
+            if data == InMsgBand20:
                 print("InMsgBand20\n")
-                #os.system('/home/pi/RemoteSettings/KillRaspivid.sh')
-                #os.system('/dev/shm/startReadCameraTransfer.sh &')
-            lock.acquire()
-            CurrentBand = "0"
-            lock.release()
-            SwitchCamera()
+                if SwitchLocalBandTo(PrimaryCardPath,20) == True:
+                    print("InMsgBand20\n")
+                    #os.system('/home/pi/RemoteSettings/KillRaspivid.sh')
+                    #os.system('/dev/shm/startReadCameraTransfer.sh &')
+                lock.acquire()
+                CurrentBand = "0"
+                lock.release()
+                SwitchCamera()
+	#Switch camera with any wifi card
         if data == InMsgCameraTypeRPi and CameraType != "RPi":
             CameraType = "RPi"
             SwitchCamera()
@@ -229,11 +233,10 @@ def StartRecv():
         print(".")
 
 
-if FindCardPhyInitPath() == True:
-    RSSIThread = threading.Thread(target=AirToGroundRSSI)
-    RSSIThread.start()
+IsAth9kFound =  FindCardPhyInitPath()
+if IsAth9kFound == False:
+    print("Secondary camera switch part still enabled") 
+RSSIThread = threading.Thread(target=AirToGroundRSSI)
+RSSIThread.start()
 
-    StartRecv()
-
-else:
-    print("Flase")
+StartRecv()
