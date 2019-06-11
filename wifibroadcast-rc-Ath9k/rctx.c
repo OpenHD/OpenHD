@@ -20,12 +20,24 @@
 #include <getopt.h>
 #include "lib.h"
 
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
 #include "/tmp/rctx.h"
 
 #define UPDATE_INTERVAL 2000 // read Joystick every 2 ms or 500x per second
 #define JOY_CHECK_NTH_TIME 400 // check if joystick disconnected every 400th time or 200ms or 5x per second
 #define JOYSTICK_N 0
 #define JOY_DEV "/sys/class/input/js0"
+
+#define SERVER "127.0.0.1"
+#define BUFLEN 2  //Max length of buffer
+char messageRCEncrypt[40]; //Encrypted RC Message
+
+#define PORT 5565 // Encrypted RC out via SVPCom
+#define PORT2 1258 //BandSwitch py script in
+#define PORT3 1259 //IP or USB camera switch py script in
 
 int NICCount=0;
 
@@ -109,10 +121,10 @@ void usage(void)
     printf(
         "rctx by Rodizio. Based on JS2Serial by Oliver Mueller and wbc all-in-one tx by Anemostec. GPL2\n"
         "\n"
-        "Usage: rctx <interfaces>\n"
+        "Usage: rctx rctx ChannelToListen2 ChannelIPCamera IsBandSwitcherEnabled(1\\0) IsIPCameraSwitcherEnabled(1\\0) IsEncrypt(1\\0) $PrimaryCardMAC \n"
         "\n"
         "Example:\n"
-        "  rctx wlan0\n"
+        "  rctx 2 3 1 1 0 wlan0\n"
         "\n");
     exit(1);
 }
@@ -254,7 +266,8 @@ void sendRC(unsigned char seqno, telemetry_data_t *td) {
 #endif
 //  printf ("rcdata0:%d\n",rcData[0]);
 
-    int best_adapter = 0;
+
+        int best_adapter = 0;
     	if(td->rx_status != NULL)
 	{
 		int j = 0;
@@ -284,7 +297,8 @@ void sendRC(unsigned char seqno, telemetry_data_t *td) {
 	else
 	{
 		printf ("ERROR: Could not open rx status memory!");
-    	}
+	}
+
 }
 
 
@@ -325,32 +339,88 @@ void telemetry_init(telemetry_data_t *td) {
 }
 
 
+void packMessage(int seqno)
+{
+	messageRCEncrypt[0] = rcData[0] & 0xFF;
+	messageRCEncrypt[1] = rcData[0] >> 8;
+
+        messageRCEncrypt[2] = rcData[1] & 0xFF;
+        messageRCEncrypt[3] = rcData[1] >> 8;
+
+        messageRCEncrypt[4] = rcData[2] & 0xFF;
+        messageRCEncrypt[5] = rcData[2] >> 8;
+
+        messageRCEncrypt[6] = rcData[3] & 0xFF;
+        messageRCEncrypt[7] = rcData[3] >> 8;
+
+        messageRCEncrypt[8] = rcData[4] & 0xFF;
+        messageRCEncrypt[9] = rcData[4] >> 8;
+
+        messageRCEncrypt[10] = rcData[5] & 0xFF;
+        messageRCEncrypt[11] = rcData[5] >> 8;
+
+        messageRCEncrypt[12] = rcData[6] & 0xFF;
+        messageRCEncrypt[13] = rcData[6] >> 8;
+
+        messageRCEncrypt[14] = rcData[7] & 0xFF;
+        messageRCEncrypt[15] = rcData[7] >> 8;
+ 	//int sizeinbyte = sizeof(ChannelToListen);
+        //unsigned int  under RPi2 = 2 byte
+
+        messageRCEncrypt[16] = seqno & 0xFF;
+        messageRCEncrypt[17] = seqno >> 8;
+	messageRCEncrypt[18] = 0;
+	#ifdef JSSWITCHES
+//      		framedata.switches = rcData[8]; /// channels 9 - 24 as switches
+//        		printf ("rcdata0:%x\t",rcData[8]);
+	messageRCEncrypt[18] = 1;
+	messageRCEncrypt[19] = rcData[8] & 0xFF;
+	messageRCEncrypt[20] = rcData[8] >> 8;
+	#endif
+}
+
 int main (int argc, char *argv[]) {
     int done = 1;
     int joy_connected = 0;
     int joy = 1;
     int update_nth_time = 0;
+    int shmid;
+    char *shared_memory;
+    int Channel = 0;
+    int ChannelIPCamera = 0;
+    int IsEncrypt = 0;
+    int IsIPCameraSwitcherEnabled = 0;
+    int IsBandSwitcherEnabled = 0;
+    char ShmBuf[2];
+    int tmp = 0;
 
-    while (1) {
+    while (1)
+    {
 	int nOptionIndex;
-	static const struct option optiona[] = {
+	static const struct option optiona[] =
+        {
 	    { "help", no_argument, &flagHelp, 1 },
 	    { 0, 0, 0, 0 }
 	};
-	int c = getopt_long(argc, argv, "h:",
-	    optiona, &nOptionIndex);
+
+fprintf( stderr, "init ");
+	int c = getopt_long(argc, argv, "h:",  optiona, &nOptionIndex);
+
+	fprintf( stderr, "While\n");
 
 	if (c == -1)
 	    break;
-	switch (c) {
-	case 0: // long option
-	    break;
-	case 'h': // help
-	    usage();
-	    break;
-	default:
-	    fprintf(stderr, "unknown switch %c\n", c);
-	    usage();
+
+	switch (c) 
+	{
+		case 0: // long option
+	    		break;
+		case 'h': // help
+	    		usage();
+	    		break;
+		default:
+	    		fprintf(stderr, "unknown switch %c\n", c);
+	    		usage();
 	}
     }
 
@@ -359,13 +429,91 @@ int main (int argc, char *argv[]) {
     }
 
     int x = optind;
-    int num_interfaces = 0;
-    while(x < argc && num_interfaces < 8) {
-	socks[num_interfaces] = open_sock(argv[x]);
-	++num_interfaces;
-	++x;
-	usleep(20000); // wait a bit between configuring interfaces to reduce Atheros and Pi USB flakiness
+    x += 5;
+    
+    Channel = atoi(argv[1]);
+    ChannelIPCamera = atoi(argv[2]);
+
+    IsBandSwitcherEnabled = atoi(argv[3]);
+    IsIPCameraSwitcherEnabled = atoi(argv[4]);
+    IsEncrypt =  atoi(argv[5]);
+
+    if(IsEncrypt == 0)
+    {
+        int num_interfaces = 0;
+        while(x < argc && num_interfaces < 8)
+        {
+	    socks[num_interfaces] = open_sock(argv[x]);
+	    ++num_interfaces;
+	    ++x;
+	    usleep(20000); // wait a bit between configuring interfaces to reduce Atheros and Pi USB flakiness
+        }
     }
+
+        //UDP RC Encrypted init
+        struct sockaddr_in si_otherRCEncrypt;
+        int sRCEncrypt, iRCEncrypt, slenRCEncrypt = sizeof(si_otherRCEncrypt);
+        
+
+        if ((sRCEncrypt = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+        {
+                perror(sRCEncrypt);
+                exit(1);
+        }
+
+        memset((char *) &si_otherRCEncrypt, 0, sizeof(si_otherRCEncrypt));
+        si_otherRCEncrypt.sin_family = AF_INET;
+        si_otherRCEncrypt.sin_port = htons(PORT);
+
+        if (inet_aton(SERVER, &si_otherRCEncrypt.sin_addr) == 0)
+        {
+                fprintf(stderr, "inet_aton() failed\n");
+                exit(1);
+        }
+	//udp init end
+
+
+        //udp Band switcher init
+        struct sockaddr_in si_other2;
+        int s2, slen2 = sizeof(si_other2);
+        char message2[BUFLEN];
+
+        if ((s2 = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+        {
+                exit(1);
+        }
+
+        memset((char *) &si_other2, 0, sizeof(si_other2));
+        si_other2.sin_family = AF_INET;
+        si_other2.sin_port = htons(PORT2);
+
+        if (inet_aton(SERVER, &si_other2.sin_addr) == 0)
+        {
+                fprintf(stderr, "inet_aton() failed\n");
+                exit(1);
+        }
+        //udp init end
+
+        //udp init IP or USB camera sender
+        struct sockaddr_in si_other3;
+        int s3, slen3 = sizeof(si_other3);
+        char message3[BUFLEN];
+
+        if ((s3 = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+        {
+                exit(1);
+        }
+
+        memset((char *) &si_other2, 0, sizeof(si_other2));
+        si_other3.sin_family = AF_INET;
+        si_other3.sin_port = htons(PORT3);
+
+        if (inet_aton(SERVER, &si_other3.sin_addr) == 0)
+        {
+                fprintf(stderr, "inet_aton() failed\n");
+                exit(1);
+        }
+        //udp init end
 
 	framedata.rt1 = 0; // <-- radiotap version
 	framedata.rt2 = 0; // <-- radiotap version
@@ -446,10 +594,54 @@ int main (int argc, char *argv[]) {
 		if (counter % UPDATE_NTH_TIME == 0) {
 //		    fprintf(stderr, "SendRC\n");
 		    for(k=0; k < TRANSMISSIONS; ++k) {
-			sendRC(seqno,&td);
+			if(IsEncrypt == 1)
+			{
+				packMessage(seqno);
+				if (sendto(sRCEncrypt, messageRCEncrypt, 21, 0, (struct sockaddr *) &si_otherRCEncrypt, slenRCEncrypt) == -1)
+				{
+                			fprintf(stderr, "sendto() error");
+					exit(1);
+				}
+			}
+			else
+			{
+				sendRC(seqno,&td);
+			}
 			usleep(2000); // wait 2ms between sending multiple frames to lower collision probability
 		    }
+
 		    seqno++;
+                    if( Channel >= 1 && Channel <= 8 && IsBandSwitcherEnabled == 1)
+		    {
+			message2[0] = 0;
+			message2[1] = 0;
+			tmp = Channel;
+			tmp--;
+			message2[0] = rcData[tmp] & 0xFF;
+			message2[1] = rcData[tmp] >> 8;
+
+                        if (sendto(s2, message2, 2, 0, (struct sockaddr *) &si_other2, slen2) == -1)
+			{
+				//printf("sendto() error");
+			}
+
+                    }
+
+                    if( ChannelIPCamera  >= 1 && ChannelIPCamera  <= 16 && IsIPCameraSwitcherEnabled == 1)
+                    {
+                        message3[0] = 0;
+                        message3[1] = 0;
+                        tmp = ChannelIPCamera;
+                        tmp--;
+                        message3[0] = rcData[tmp] & 0xFF;
+                        message3[1] = rcData[tmp] >> 8;
+
+                        if (sendto(s3, message3, 2, 0, (struct sockaddr *) &si_other3, slen3) == -1)
+                        {
+                                //printf("sendto() error");
+                        }
+
+                    }
 		}
 		if (counter % JOY_CHECK_NTH_TIME == 0) {
 		    joy_connected=access(JOY_DEV, F_OK);
@@ -462,5 +654,7 @@ int main (int argc, char *argv[]) {
 		counter++;
 	}
 	SDL_JoystickClose (js);
+
+	close(s2);
 	return EXIT_SUCCESS;
 }
