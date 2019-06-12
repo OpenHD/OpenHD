@@ -627,7 +627,7 @@ fprintf( stderr, "init ");
 
                     }
 
-                    if( ChannelIPCamera  >= 1 && ChannelIPCamera  <= 16 && IsIPCameraSwitcherEnabled == 1)
+                    if( ChannelIPCamera  >= 1 && ChannelIPCamera  <= 8 && IsIPCameraSwitcherEnabled == 1)
                     {
                         message3[0] = 0;
                         message3[1] = 0;
