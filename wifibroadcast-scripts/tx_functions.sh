@@ -17,6 +17,9 @@ function tx_function {
  
     fi
 
+    if [ "$LoadFlirDriver" == "Y" ]; then
+    	/home/pi/cameracontrol/LoadFlirDriver.sh &
+    fi
 
 
     /home/pi/wifibroadcast-base/sharedmem_init_tx
