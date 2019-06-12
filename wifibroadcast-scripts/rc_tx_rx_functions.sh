@@ -65,30 +65,30 @@ function rctx_function {
     echo "Starting R/C TX ..."
 	
     FirstTimeRC=0
+    IsEncrypt=0
+    IsIPCameraSwitcherEnabled=1
+
+    if [ "$EncryptionOrRange" == "Range" ]; then
+        IsEncrypt=0
+    fi
+
+    if [ "$EncryptionOrRange" == "Encryption" ]; then
+        IsEncrypt=1
+    fi
+
 
     while true; do
     
     	if [ "$PrimaryCardMAC" == "0" ]; then
 		if [ "$IsBandSwicherEnabled" == "1" ]; then
 			echo "To use BandSwitcher select dedicated WiFi card for Tx. Set PrimaryCardMAC"
+			IsBandSwitcherEnabled=0
 		fi
 
                 if [ $FirstTimeRC == 0  ]; then
                     FirstTimeRC=1
-                   /home/pi/wifibroadcast-rc/rctxUDP.sh &
+                   /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $ChannelIPCamera $IsBandSwitcherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $NICS &
                 fi
-
-		nice -n -5 /tmp/rctx $NICS
-		IsBandSwitcherEnabled=0
-		IsIPCameraSwitcherEnabled=1
-		IsEncrypt=0
-		if [ "$EncryptionOrRange" == "Range" ]; then
-          		IsEncrypt=0
-    		fi
-
-    		if [ "$EncryptionOrRange" == "Encryption" ]; then
-			IsEncrypt=1
-    		fi
 
 		nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwitcherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $NICS
 		sleep 1
@@ -97,7 +97,7 @@ function rctx_function {
 		#if [ "$IsBandSwicherEnabled" == "1" ]; then
 			if [ $FirstTimeRC == 0  ]; then
 	                    FirstTimeRC=1
-        	           /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $PrimaryCardMAC &
+        	           /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $ChannelIPCamera $IsBandSwitcherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $PrimaryCardMAC &
                 	fi
 
 		#	nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $PrimaryCardMAC
@@ -111,15 +111,6 @@ function rctx_function {
 		#	nice -n -5 /tmp/rctx $PrimaryCardMAC
 		#	sleep 1
 		#fi
-		IsIPCameraSwitcherEnabled=1
-		IsEncrypt=0
-                if [ "$EncryptionOrRange" == "Range" ]; then
-                        IsEncrypt=0
-                fi
-
-                if [ "$EncryptionOrRange" == "Encryption" ]; then
-                        IsEncrypt=1
-                fi
 
 		nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwitcherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $PrimaryCardMAC
 		sleep 1

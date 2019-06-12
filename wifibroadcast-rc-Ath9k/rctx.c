@@ -35,7 +35,7 @@
 #define BUFLEN 2  //Max length of buffer
 char messageRCEncrypt[40]; //Encrypted RC Message
 
-#define PORT 5565 // Encrypted RC out via SVPCom
+#define PORT 5566 // Encrypted RC out via SVPCom
 #define PORT2 1258 //BandSwitch py script in
 #define PORT3 1259 //IP or USB camera switch py script in
 
@@ -588,30 +588,34 @@ fprintf( stderr, "init ");
 	int counter = 0;
 	int seqno = 0;
 	int k = 0;
-	while (done) {
+	while (done)
+	{
 		done = eventloop_joystick();
 //		fprintf(stderr, "eventloop_joystick\n");
-		if (counter % UPDATE_NTH_TIME == 0) {
+		if (counter % UPDATE_NTH_TIME == 0)
+		{
 //		    fprintf(stderr, "SendRC\n");
-		    for(k=0; k < TRANSMISSIONS; ++k) {
-			if(IsEncrypt == 1)
-			{
-				packMessage(seqno);
-				if (sendto(sRCEncrypt, messageRCEncrypt, 21, 0, (struct sockaddr *) &si_otherRCEncrypt, slenRCEncrypt) == -1)
+		    for(k=0; k < TRANSMISSIONS; ++k)
+		    {
+				if(IsEncrypt == 1)
 				{
-                			fprintf(stderr, "sendto() error");
-					exit(1);
+					packMessage(seqno);
+					if (sendto(sRCEncrypt, messageRCEncrypt, 21, 0, (struct sockaddr *) &si_otherRCEncrypt, slenRCEncrypt) == -1)
+					{
+                		fprintf(stderr, "sendto() error");
+						exit(1);
+					}
 				}
-			}
-			else
-			{
-				sendRC(seqno,&td);
-			}
-			usleep(2000); // wait 2ms between sending multiple frames to lower collision probability
+				else
+				{
+					sendRC(seqno,&td);
+				}
+				usleep(2000); // wait 2ms between sending multiple frames to lower collision probability
 		    }
 
 		    seqno++;
-                    if( Channel >= 1 && Channel <= 8 && IsBandSwitcherEnabled == 1)
+			
+            if( Channel >= 1 && Channel <= 8 && IsBandSwitcherEnabled == 1)
 		    {
 			message2[0] = 0;
 			message2[1] = 0;
@@ -620,7 +624,7 @@ fprintf( stderr, "init ");
 			message2[0] = rcData[tmp] & 0xFF;
 			message2[1] = rcData[tmp] >> 8;
 
-                        if (sendto(s2, message2, 2, 0, (struct sockaddr *) &si_other2, slen2) == -1)
+            if (sendto(s2, message2, 2, 0, (struct sockaddr *) &si_other2, slen2) == -1)
 			{
 				//printf("sendto() error");
 			}
@@ -640,7 +644,6 @@ fprintf( stderr, "init ");
                         {
                                 //printf("sendto() error");
                         }
-
                     }
 		}
 		if (counter % JOY_CHECK_NTH_TIME == 0) {
