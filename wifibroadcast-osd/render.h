@@ -31,6 +31,7 @@
 
 void render_init();
 void setfillstroke();
+void loopUpdate(telemetry_data_t *td);
 void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t undervolt, int fps);
 
 void rotatePoints(float *x, float *y, float angle, int points, int center_x, int center_y); //rotate a polyline/polygon
@@ -53,7 +54,7 @@ void draw_batt_status(float voltage, float current, float pos_x, float pos_y, fl
 // totals
 void draw_TOTAL_AMPS(float current, float pos_x, float pos_y, float scale);
 void draw_TOTAL_DIST(int gpsspeed, float pos_x, float pos_y, float scale);
-void draw_TOTAL_TIME(int gpsspeed, float pos_x, float pos_y, float scale); 
+void draw_TOTAL_TIME(float fly_time, float pos_x, float pos_y, float scale); 
 
 void draw_position(float lat, float lon, float pos_x, float pos_y, float scale);
 void draw_sat(int sats, int fixtype, int hdop, float pos_x, float pos_y, float scale);
