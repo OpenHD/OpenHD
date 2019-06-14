@@ -80,7 +80,7 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					fprintf(stdout, "VFR_HUD: ");
                                         td->speed = mavlink_msg_vfr_hud_get_groundspeed(&msg)*3.6f;
                                         td->airspeed = mavlink_msg_vfr_hud_get_airspeed(&msg)*3.6f;
-//					td->baro_altitude = mavlink_msg_vfr_hud_get_alt(&msg);
+					td->baro_altitude = mavlink_msg_vfr_hud_get_alt(&msg);
 					td->mav_climb = mavlink_msg_vfr_hud_get_climb(&msg);
 					fprintf(stdout, "speed:%.2f  ", td->speed);
 					fprintf(stdout, "airspeed:%.2f  ", td->airspeed);
