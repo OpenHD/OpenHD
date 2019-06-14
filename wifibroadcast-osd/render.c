@@ -118,7 +118,7 @@ void loopUpdate(telemetry_data_t *td) {
 if ( (td->armed == 1) && (td->current > 3) )
     total_time += (float)time_diff/60000;
 #else
-if ( gpsspeed>0)
+if (td->speed>0)
    total_time += (float)time_diff/60000;
 #endif
 
