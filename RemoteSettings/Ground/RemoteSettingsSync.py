@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import fileinput
 import socket
 import hashlib
@@ -10,6 +11,7 @@ from datetime import datetime
 import argparse
 import RPi.GPIO as GPIO
 import threading
+
 lock = threading.Lock()
 
 parser = argparse.ArgumentParser()
@@ -32,11 +34,26 @@ print("Selected: " + SelectedControl)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(26, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(7, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+input_state0 = GPIO.input(23)
+input_state1 = GPIO.input(24)
+input_state2 = GPIO.input(7)
+nb = 1
+if not input_state0:
+    nb += 1
+if not input_state1:
+    nb += 2
+if not input_state2:
+    nb += 4
+SettingsFilePath = "/boot/openhd-settings-" + str(nb) + ".txt"
+
 UDP_PORT_OUT = 1376
 UDP_PORT_IN = 1375
 UDP_INFO_PORT_OUT=1379
 RecvSocket = 0
-SettingsFilePath = "/boot/openhd-settings-1.txt"
 JoystickSettingsFilePath = "/boot/joyconfig.txt"
 IsMainScriptRunning = False
 DefaultCommunicateFreq = "2412"
@@ -54,10 +71,6 @@ SmartSync_StartupMode=1
 SmartSyncGround_Countdown=45
 NotBreakByTimerIfLastRequestWas=3
 
-
-TxPowerConfigFilePath="/etc/modprobe.d/ath9k_hw.conf"
-TxPowerFromConfig="-1"
-TxPowerFromAth9k_hw="-1"
 
 RequestGroundChecksum = bytearray(b'RequestGroundChecksum')
 RequestSFile = bytearray(b'RequestSFile')
@@ -754,63 +767,7 @@ def ShowSettings():
     SendInfoToDisplay("NotBreakByTimerIfLastRequestWas=" + str(NotBreakByTimerIfLastRequestWas) )
 
 
-
-def ReadTxPowerAth9k_hw():
-    global TxPowerFromAth9k_hw
-    try:
-        with open(TxPowerConfigFilePath, "r") as f:
-            lines = f.readlines()
-            for line in lines:
-                if line.startswith("options ath9k_hw txpower") == True:
-                    SplitLines = line.split("=")
-                    FilterDigits = SplitLines[1]
-                    TxPowerFromAth9k_hw = re.sub("\D", "", FilterDigits)
-
-            return True
-
-    except Exception as e:
-       print(e)
-       return False
-    return False
-
-def ReadTxPower():
-    global TxPowerFromConfig
-    try:
-        with open(SettingsFilePath, "r") as f:
-            lines = f.readlines()
-            for line in lines:
-                if line.startswith("TxPowerGround") == True:
-                    SplitLines = line.split("=")
-                    FilterDigits = SplitLines[1]
-                    TxPowerFromConfig = re.sub("\D", "", FilterDigits)
-
-            return True
-
-    except Exception as e:
-       print(e)
-       return False
-    return False
-
-def CheckTxPower():
-    try:
-        if ReadTxPowerAth9k_hw() != False:
-            print("TxPowerFromAth9k_hw= " + TxPowerFromAth9k_hw)
-            if ReadTxPower() != False:
-                print("TxPowerFromConfig= " + TxPowerFromConfig)
-                if TxPowerFromConfig != TxPowerFromAth9k_hw:
-                    print("TxPower not equal Check if all ok and apply")
-                    if TxPowerFromAth9k_hw != "-1" and TxPowerFromConfig != "-1":
-                        print("all ok, apply")
-                        subprocess.check_call(['/usr/local/bin/txpower_atheros', TxPowerFromConfig ] )
-                        return True
-    except Exception as e:
-        print(e)
-        return False
-    return False
-
 #################################################### start
-
-CheckTxPower()
 
 
 if os.path.isfile("/tmp/ReadyToGo") == True:
@@ -823,6 +780,7 @@ RC_UDP_IN_thread = threading.Thread(target=StartRCThreadIn)
 RC_UDP_IN_thread.start()
 
 SendInfoToDisplay("Parse config file...")
+SendInfoToDisplay("Config file: " + SettingsFilePath)
 if ReadSettingsFromConfigFile() == True:
     SendInfoToDisplay("Completed without errors")
     ShowSettings()
@@ -839,12 +797,9 @@ else:
 StartRC_Reader(SmartSyncRC_Channel)
 
 if SmartSync_StartupMode != 1:
-    SendInfoToDisplay("SmartSync disabled.Starting RC reader to check force On ")
-    for i in range(0, 10):
-        #SendInfoToDisplay("I is:", i, "RC value: ", RC_Value)
-        #stdout.write("\r RC value: "+  str(RC_Value) + " Retry: " + str(i) + " of 30")
-        #stdout.flush()
-        SendInfoToDisplay(" RC value: "+  str(RC_Value) + " Retry: " + str(i) + " of 10")
+    SendInfoToDisplay("SmartSync disabled. Starting countdown to check force On ")
+    for i in range(0, 5):
+        SendInfoToDisplay(" Countdown: "+ str(5-i))
         if RC_Value <= SmartSyncStayON_RC_Value and RC_Value != 0:
             SmartSync_StartupMode = 1
             SmartSyncGround_Countdown=0
@@ -863,7 +818,7 @@ if SmartSync_StartupMode != 1:
             SendInfoToDisplay("Timer disabled")
             break
 
-        sleep(0.3)
+        sleep(0.6)
 
 
 if SmartSync_StartupMode == 1:
