@@ -1,4 +1,4 @@
-// characters osdicons.ttf
+﻿// characters osdicons.ttf
 // round  triangle   
 // satellite    
 // cpu  
@@ -109,8 +109,31 @@ void render_init() {
     amps_ts = dist_ts = time_ts = current_ts(); //wowi
 }
 
+void loopUpdate(telemetry_data_t *td) {
+    // Update fly time. Get time passed since last update
+    long time_diff = current_ts() - time_ts;
+    time_ts = current_ts();
+
+#if COPTER == true
+if ( (td->armed == 1) && (td->current > 3) )
+    total_time += (float)time_diff/60000;
+#else
+if ( gpsspeed>0)
+   total_time += (float)time_diff/60000;
+#endif
+
+
+    // Update total amps used. Get time passed since last rendering
+    time_diff = current_ts() - amps_ts;
+    amps_ts = current_ts();
+    total_amps = total_amps + current*(float)time_diff/3600;
+}
 
 void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t undervolt, int osdfps) {
+
+    // call loopUpdate to update stuff that should be updated even when particular elements are off (like total curent);
+    loopUpdate(td);
+
     Start(width,height); // render start
     setfillstroke();
 
@@ -332,7 +355,7 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 #endif
 
 #ifdef TOTAL_AMPS 
-    draw_TOTAL_AMPS(td->ampere, TOTAL_AMPS_POS_X, TOTAL_AMPS_POS_Y, TOTAL_AMPS_SCALE * GLOBAL_SCALE);
+    draw_TOTAL_AMPS(total_amps, TOTAL_AMPS_POS_X, TOTAL_AMPS_POS_Y, TOTAL_AMPS_SCALE * GLOBAL_SCALE);
 #endif
 
 #ifdef TOTAL_DIST
@@ -340,7 +363,7 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
  #endif
 
 #ifdef TOTAL_TIME
-    draw_TOTAL_TIME((int)td->speed, TOTAL_TIME_POS_X, TOTAL_TIME_POS_Y, TOTAL_TIME_SCALE * GLOBAL_SCALE);
+    draw_TOTAL_TIME((int)total_time, TOTAL_TIME_POS_X, TOTAL_TIME_POS_Y, TOTAL_TIME_SCALE * GLOBAL_SCALE);
 #endif
 
 #ifdef POSITION
@@ -962,17 +985,10 @@ void draw_batt_status(float voltage, float current, float pos_x, float pos_y, fl
 }
 
 // display totals mAh used, distance flown (km), airborne time (mins) - wowi
-void draw_TOTAL_AMPS(float current, float pos_x, float pos_y, float scale){
- 
-    // get time passed since last rendering
-    long time_diff = current_ts() - amps_ts;
-    amps_ts = current_ts();
-    total_amps = total_amps + current*(float)time_diff/3600;
- 
-  
+void draw_TOTAL_AMPS(float current, float pos_x, float pos_y, float scale){ 
     float text_scale = getWidth(2) * scale;
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
-    sprintf(buffer, "%5.0f", total_amps);
+    sprintf(buffer, "%5.0f", curent);
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
     Text(getWidth(pos_x), getHeight(pos_y), " mAh", myfont, text_scale*0.6);
  
@@ -991,18 +1007,10 @@ void draw_TOTAL_DIST(int gpsspeed, float pos_x, float pos_y, float scale){
     Text(getWidth(pos_x), getHeight(pos_y), " km", myfont, text_scale*0.6);
  
 }
-void draw_TOTAL_TIME(int gpsspeed, float pos_x, float pos_y, float scale){
- 
-    // get time passed since last rendering
-    long time_diff = current_ts() - time_ts;
-    
-    time_ts = current_ts();
-    if(gpsspeed>0){	
-        total_time = total_time + (float)time_diff/60000; // flying time in minutes	    if ( (armed == 1) && (current > 3) )
-    }
+void draw_TOTAL_TIME(float fly_time, float current, int armed, float pos_x, float pos_y, float scale){    
     float text_scale = getWidth(2) * scale;
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
-    sprintf(buffer, "%3.0f:%02d", total_time, (int)(total_time*60) % 60);
+    sprintf(buffer, "%3.0f:%02d", fly_time, (int)(fly_time*60) % 60);
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
     Text(getWidth(pos_x), getHeight(pos_y), " mins", myfont, text_scale*0.6);
  
