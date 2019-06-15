@@ -33,6 +33,9 @@ RC_Value = 0
 RC_Value2 = 0
 CurrentCamera=1
 
+CurrentBandTmp = 0
+CurrentBand = 0
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-PrimaryCardMAC", help="")
 parser.add_argument("-Band5Below", type=int, help="")
@@ -336,6 +339,7 @@ def ExitScript(ExitCode):
 
 
 def CheckBandRCValues():
+    global CurrentBand
     if RC_Value >= Band20After and CurrentBand != 20 and RC_Value != 0:
         print("Switching to 20...")
         if SwitchRemoteLocalBandTo(20) == False:
