@@ -53,7 +53,7 @@ void draw_batt_status(float voltage, float current, float pos_x, float pos_y, fl
 // totals
 void draw_TOTAL_AMPS(float current, float pos_x, float pos_y, float scale);
 void draw_TOTAL_DIST(int gpsspeed, float pos_x, float pos_y, float scale);
-void draw_TOTAL_TIME(int gpsspeed, float pos_x, float pos_y, float scale); 
+void draw_TOTAL_TIME(float fly_time, float pos_x, float pos_y, float scale); 
 
 void draw_position(float lat, float lon, float pos_x, float pos_y, float scale);
 void draw_sat(int sats, int fixtype, int hdop, float pos_x, float pos_y, float scale);
