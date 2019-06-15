@@ -115,7 +115,7 @@ void loopUpdate(telemetry_data_t *td) {
     time_ts = current_ts();
 
 #if COPTER == true
-if ( (td->armed == 1) && (td->current > 3) )
+if ( (td->armed == 1) && (td->ampere > 3) )
     total_time += (float)time_diff/60000;
 #else
 if (td->speed>0)
@@ -126,7 +126,7 @@ if (td->speed>0)
     // Update total amps used. Get time passed since last rendering
     time_diff = current_ts() - amps_ts;
     amps_ts = current_ts();
-    total_amps = total_amps + current*(float)time_diff/3600;
+    total_amps = total_amps + td->ampere*(float)time_diff/3600;
 }
 
 void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t undervolt, int osdfps) {
@@ -363,7 +363,7 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
  #endif
 
 #ifdef TOTAL_TIME
-    draw_TOTAL_TIME((int)total_time, TOTAL_TIME_POS_X, TOTAL_TIME_POS_Y, TOTAL_TIME_SCALE * GLOBAL_SCALE);
+    draw_TOTAL_TIME((float)total_time, TOTAL_TIME_POS_X, TOTAL_TIME_POS_Y, TOTAL_TIME_SCALE * GLOBAL_SCALE);
 #endif
 
 #ifdef POSITION
@@ -988,7 +988,7 @@ void draw_batt_status(float voltage, float current, float pos_x, float pos_y, fl
 void draw_TOTAL_AMPS(float current, float pos_x, float pos_y, float scale){ 
     float text_scale = getWidth(2) * scale;
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
-    sprintf(buffer, "%5.0f", curent);
+    sprintf(buffer, "%5.0f", current);
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
     Text(getWidth(pos_x), getHeight(pos_y), " mAh", myfont, text_scale*0.6);
  
@@ -1007,7 +1007,7 @@ void draw_TOTAL_DIST(int gpsspeed, float pos_x, float pos_y, float scale){
     Text(getWidth(pos_x), getHeight(pos_y), " km", myfont, text_scale*0.6);
  
 }
-void draw_TOTAL_TIME(float fly_time, float current, int armed, float pos_x, float pos_y, float scale){    
+void draw_TOTAL_TIME(float fly_time, float pos_x, float pos_y, float scale){    
     float text_scale = getWidth(2) * scale;
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
     sprintf(buffer, "%3.0f:%02d", fly_time, (int)(fly_time*60) % 60);
