@@ -100,6 +100,13 @@ function hotspot_check_function {
 	  	fi   
 	fi
 
+        echo "ps -ef | nice grep \"wfb_rx -u $VIDEO_UDP_PORT2 -p 23 -c\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >  /tmp/KillForwardRTPSecondaryCamera.sh
+	echo "ps -ef | nice grep \"hello_video.bin.240-befi\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >> /tmp/KillForwardRTPSecondaryCamera.sh
+	echo "ps -ef | nice grep \"gst-launch-1.0 udpsrc port=5600\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >>  /tmp/KillForwardRTPSecondaryCamera.sh
+	echo "ps -ef | nice grep \"wfb_rx -u 5600 -p 23 -c 127.0.0.1\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >> /tmp/KillForwardRTPSecondaryCamera.sh
+
+	chmod +x /tmp/KillForwardRTPSecondaryCamera.sh
+
 	while true; do
 	    # pause loop while saving is in progress
 	    pause_while
@@ -153,25 +160,27 @@ function hotspot_check_function {
 				nice /home/pi/wifibroadcast-base/rssi_forward $IP 5003 &
 				nice /home/pi/wifibroadcast-base/rssi_qgc_forward $IP 5154 &
 				
-				if [ "$FORWARD_STREAM" == "rtp" ]; then
 
-					echo "ps -ef | nice grep \"cat /root/videofifo2\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >  /tmp/KillForwardRTPMainCamera.sh
-                                        echo "ps -ef | nice grep \"gst-launch-1.0 fdsrc\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >>  /tmp/KillForwardRTPMainCamera.sh
-                                        echo "ps -ef | nice grep \"wfb_rx -u $VIDEO_UDP_PORT2 -p 23 -c\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >  /tmp/KillForwardRTPSecondaryCamera.sh
-					echo "ps -ef | nice grep \"hello_video.bin.240-befi\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >> /tmp/KillForwardRTPSecondaryCamera.sh
-					echo "ps -ef | nice grep \"gst-launch-1.0 udpsrc port=5600\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >>  /tmp/KillForwardRTPSecondaryCamera.sh
-					echo "ps -ef | nice grep \"wfb_rx -u 5600 -p 23 -c 127.0.0.1\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >>  /tmp/KillForwardRTPSecondaryCamera.sh
+
+				if [ "$FORWARD_STREAM" == "rtp" ]; then
 					echo "ionice -c 1 -n 4 nice -n -5 cat /root/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=$VIDEO_UDP_PORT host=$IP > /dev/null 2>&1 &" > /tmp/ForwardRTPMainCamera.sh
-					chmod +x /tmp/ForwardRTPMainCamera.sh
-					chmod +x /tmp/KillForwardRTPSecondaryCamera.sh
-					chmod +x /tmp/KillForwardRTPMainCamera.sh
-					if [ ! -f "/tmp/SecondaryCameraActive" ]; then
-						/tmp/KillForwardRTPMainCamera.sh
-						/tmp/KillForwardRTPSecondaryCamera.sh
-						/tmp/ForwardRTPMainCamera.sh &
-					fi
+					echo "ps -ef | nice grep \"cat /root/videofifo2\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >  /tmp/KillForwardRTPMainCamera.sh
+					echo "ps -ef | nice grep \"gst-launch-1.0 fdsrc\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >>  /tmp/KillForwardRTPMainCamera.sh
+
 				else
-					ionice -c 1 -n 4 nice -n -10 socat -b $VIDEO_UDP_BLOCKSIZE GOPEN:/root/videofifo2 UDP4-SENDTO:$IP:$VIDEO_UDP_PORT &
+					echo "ionice -c 1 -n 4 nice -n -10 socat -b $VIDEO_UDP_BLOCKSIZE GOPEN:/root/videofifo2 UDP4-SENDTO:$IP:$VIDEO_UDP_PORT &" > /tmp/ForwardRTPMainCamera.sh
+	
+					echo "ps -ef | nice grep \"GOPEN:/root/videofifo2 UDP4-SENDTO\" | nice grep -v grep | awk '{print \$2}' | xargs kill -9" >  /tmp/KillForwardRTPMainCamera.sh
+				fi
+
+				chmod +x /tmp/ForwardRTPMainCamera.sh
+				chmod +x /tmp/KillForwardRTPMainCamera.sh
+
+
+				if [ ! -f "/tmp/SecondaryCameraActive" ]; then
+					/tmp/KillForwardRTPMainCamera.sh
+					/tmp/KillForwardRTPSecondaryCamera.sh
+					/tmp/ForwardRTPMainCamera.sh &
 				fi
 				
 				if cat /boot/osdconfig.txt | grep -q "^#define MAVLINK"; then
