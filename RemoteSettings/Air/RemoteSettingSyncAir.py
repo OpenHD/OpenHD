@@ -48,7 +48,7 @@ if (input_state0 == True) and (input_state1 == False):
     SettingsFilePath = "/boot/openhd-settings-2.txt"
 
 if (input_state0 == True) and (input_state1 == True):
-SettingsFilePath = "/boot/openhd-settings-1.txt"
+    SettingsFilePath = "/boot/openhd-settings-1.txt"
 
 
 
