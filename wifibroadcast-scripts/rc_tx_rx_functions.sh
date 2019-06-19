@@ -82,26 +82,26 @@ function rctx_function {
     	if [ "$PrimaryCardMAC" == "0" ]; then
 		if [ "$IsBandSwicherEnabled" == "1" ]; then
 			echo "To use BandSwitcher select dedicated WiFi card for Tx. Set PrimaryCardMAC"
-			IsBandSwitcherEnabled=0
+			IsBandSwicherEnabled=0
 		fi
 
                 if [ $FirstTimeRC == 0  ]; then
                     FirstTimeRC=1
-                   /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $ChannelIPCamera $IsBandSwitcherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $NICS &
+                   /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $ChannelIPCamera $IsBandSwicherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $NICS &
                 fi
 
-		nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwitcherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $NICS
+		nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwicherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $NICS
 		sleep 1
 		NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
 	else
 		#if [ "$IsBandSwicherEnabled" == "1" ]; then
 			if [ $FirstTimeRC == 0  ]; then
 	                    FirstTimeRC=1
-        	           /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $ChannelIPCamera $IsBandSwitcherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $PrimaryCardMAC &
+        	           /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $ChannelIPCamera $IsBandSwicherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $PrimaryCardMAC &
                 	fi
 
 		#	nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $PrimaryCardMAC
-		#	nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwitcherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $PrimaryCardMAC
+		#	nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwicherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $PrimaryCardMAC
 		#	sleep 1	
 		#else
 		#	if [ $FirstTimeRC == 0  ]; then
@@ -112,7 +112,7 @@ function rctx_function {
 		#	sleep 1
 		#fi
 
-		nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwitcherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $PrimaryCardMAC
+		nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwicherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $PrimaryCardMAC
 		sleep 1
 	fi
 
