@@ -34,19 +34,25 @@ GPIO.setup(26, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 GPIO.setup(20, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(7, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 input_state0 = GPIO.input(20)
 input_state1 = GPIO.input(21)
-input_state2 = GPIO.input(7)
-nb = 1
-if not input_state0:
-    nb += 1
-if not input_state1:
-    nb += 2
-if not input_state2:
-    nb += 4
-SettingsFilePath = "/boot/openhd-settings-" + str(nb) + ".txt"
+
+SettingsFilePath = "/boot/openhd-settings-1.txt"
+
+if (input_state0 == False) and (input_state1 == False):
+    SettingsFilePath = "/boot/openhd-settings-4.txt"
+
+if (input_state0 == False) and (input_state1 == True):
+    SettingsFilePath = "/boot/openhd-settings-3.txt"
+
+if (input_state0 == True) and (input_state1 == False):
+    SettingsFilePath = "/boot/openhd-settings-2.txt"
+
+if (input_state0 == True) and (input_state1 == True):
+    SettingsFilePath = "/boot/openhd-settings-1.txt"
+
+print(SettingsFilePath)
 
 
 UDP_PORT_OUT = 1376
