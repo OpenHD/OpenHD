@@ -15,6 +15,7 @@ from tempfile import mkstemp
 from shutil import move
 from os import fdopen, remove
 from time import sleep
+import RPi.GPIO as GPIO
 import threading
 
 WFBCSettingsFile = "/boot/openhd-settings-1.txt"
@@ -31,6 +32,25 @@ RequestChangeJoystick = bytearray(b'RequestChangeJoystick')
 RequestChangeTxPower = bytearray(b'RequestChangeTxPower')
 
 wbc_settings_blacklist = [""]
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(20, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+input_state0 = GPIO.input(20)
+input_state1 = GPIO.input(21)
+
+if (input_state0 == False) and (input_state1 == False):
+    WFBCSettingsFile = "/boot/openhd-settings-4.txt"
+
+if (input_state0 == False) and (input_state1 == True):
+    WFBCSettingsFile = "/boot/openhd-settings-3.txt"
+
+if (input_state0 == True) and (input_state1 == False):
+    WFBCSettingsFile = "/boot/openhd-settings-2.txt"
+
+if (input_state0 == True) and (input_state1 == True):
+    WFBCSettingsFile = "/boot/openhd-settings-1.txt"
 
 
 def replace_OSD_config(LookFor, NewLine):
