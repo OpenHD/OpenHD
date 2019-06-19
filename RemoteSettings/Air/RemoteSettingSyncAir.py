@@ -3,6 +3,7 @@ import socket
 import hashlib
 import os
 from time import sleep
+import RPi.GPIO as GPIO
 import subprocess
 import re
 
@@ -26,6 +27,29 @@ SettingsFileDATARATE = "0"
 SettingsFileTXPOWER = "0"
 SettingsFileTXMODE = "0"
 #SmartSync_StartupMode = "-1"
+
+GPIO.setmode(GPIO.BCM)
+
+GPIO.setup(20, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+input_state0 = GPIO.input(20)
+input_state1 = GPIO.input(21)
+
+SettingsFilePath = "/boot/openhd-settings-1.txt"
+
+if (input_state0 == False) and (input_state1 == False):
+    SettingsFilePath = "/boot/openhd-settings-4.txt"
+
+if (input_state0 == False) and (input_state1 == True):
+    SettingsFilePath = "/boot/openhd-settings-3.txt"
+
+if (input_state0 == True) and (input_state1 == False):
+    SettingsFilePath = "/boot/openhd-settings-2.txt"
+
+if (input_state0 == True) and (input_state1 == True):
+SettingsFilePath = "/boot/openhd-settings-1.txt"
+
 
 
 def SendData(MessageBuf):
