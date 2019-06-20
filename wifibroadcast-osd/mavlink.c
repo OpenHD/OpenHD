@@ -29,7 +29,11 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 						td->heading = mavlink_msg_global_position_int_get_hdg(&msg)/100.0f;
     					#endif
 
-                                        td->altitude = mavlink_msg_global_position_int_get_relative_alt(&msg)/1000.0f;
+                                        #if MAVLINK_GPS_RAW_REL_ALT == false 
+                                        	td->altitude = mavlink_msg_global_position_int_get_relative_alt(&msg)/1000.0f;
+						fprintf(stdout, "altitude:%.2f  ", td->altitude);
+					#endif
+					
 					td->baro_altitude = mavlink_msg_global_position_int_get_alt(&msg)/1000.0f;
                                         td->latitude = mavlink_msg_global_position_int_get_lat(&msg)/10000000.0f;
                                         td->longitude = mavlink_msg_global_position_int_get_lon(&msg)/10000000.0f;
@@ -45,6 +49,12 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					td->sats = mavlink_msg_gps_raw_int_get_satellites_visible(&msg);
                 			td->hdop = mavlink_msg_gps_raw_int_get_eph(&msg);
 					td->cog = mavlink_msg_gps_raw_int_get_cog(&msg)/100.0f;
+					
+					#if MAVLINK_GPS_RAW_REL_ALT == true 
+ 						td->altitude = mavlink_msg_int_get_relative_alt(&msg)/1000.0f;
+						fprintf(stdout, "altitude:%.2f  ", td->altitude);
+					#endif
+					
 //					td->heading = mavlink_msg_gps_raw_int_get_cog(&msg)/100.0f;
 //                                      td->altitude = mavlink_msg_gps_raw_int_get_alt(&msg)/1000.0f;
 //                                      td->latitude = mavlink_msg_gps_raw_int_get_lat(&msg)/10000000.0f;
