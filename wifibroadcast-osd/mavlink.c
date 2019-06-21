@@ -50,8 +50,9 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
                 			td->hdop = mavlink_msg_gps_raw_int_get_eph(&msg);
 					td->cog = mavlink_msg_gps_raw_int_get_cog(&msg)/100.0f;
 					
+					//for gps/fc that show msl when it should be relative...
 					#if MAVLINK_GPS_RAW_REL_ALT == true 
- 						td->altitude = mavlink_msg_int_get_relative_alt(&msg)/1000.0f;
+ 						td->altitude = mavlink_msg_gps_raw_int_get_alt(&msg)/1000.0f;
 						fprintf(stdout, "altitude gps rel:%.2f  ", td->altitude);
 					#endif
 					
