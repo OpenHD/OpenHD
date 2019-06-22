@@ -1,4 +1,4 @@
-﻿// characters osdicons.ttf
+// characters osdicons.ttf
 // round  triangle   
 // satellite    
 // cpu  
@@ -279,34 +279,26 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 #endif
 
 
-#ifdef BAROALT
-    draw_baroalt(td->baro_altitude, BAROALT_POS_X, BAROALT_POS_Y, BAROALT_SCALE * GLOBAL_SCALE);
-#endif
-
-#ifdef GPSALT
-    draw_gpsalt(td->altitude, GPSALT_POS_X, GPSALT_POS_Y, GPSALT_SCALE * GLOBAL_SCALE);
-#endif
-
-
 #ifdef COURSE_OVER_GROUND
     draw_cog((int)td->cog, COURSE_OVER_GROUND_POS_X, COURSE_OVER_GROUND_POS_Y, COURSE_OVER_GROUND_SCALE * GLOBAL_SCALE);
 #endif
 
 
-#ifdef ALTLADDER
-    #if IMPERIAL == true
-    #if ALTLADDER_USEBAROALT == true
-    draw_alt_ladder((int)(td->baro_altitude * TO_FEET), ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
-    #else
-    draw_alt_ladder((int)(td->altitude * TO_FEET), ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
-    #endif
-    #else
-    #if ALTLADDER_USEBAROALT == true
-    draw_alt_ladder((int)td->baro_altitude, ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
-    #else
-    draw_alt_ladder((int)td->altitude, ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
-    #endif
-    #endif
+#ifdef ALTLADDER //by default in osdconfig usemslalt = false (relative alt should be shown)
+        #if REVERSE_ALTITUDES == true
+        draw_alt_ladder((int)td->msl_altitude, ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
+        #else
+        draw_alt_ladder((int)td->rel_altitude, ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
+        #endif  
+#endif
+
+
+#ifdef MSLALT 
+        #if REVERSE_ALTITUDES == true
+        draw_mslalt(td->rel_altitude, MSLALT_POS_X, MSLALT_POS_Y, MSLALT_SCALE * GLOBAL_SCALE);
+        #else
+        draw_mslalt(td->msl_altitude, MSLALT_POS_X, MSLALT_POS_Y, MSLALT_SCALE * GLOBAL_SCALE);
+        #endif
 #endif
 
 
@@ -575,53 +567,6 @@ void draw_climb(float climb, float pos_x, float pos_y, float scale){
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
     Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "m/s", myfont, text_scale*0.6);
 }
-
-
-
-void draw_baroalt(float baroalt, float pos_x, float pos_y, float scale){
-    float text_scale = getWidth(2) * scale;
-
-    #if IMPERIAL == true
-    VGfloat width_value = TextWidth("0000", myfont, text_scale);
-    sprintf(buffer, "%.0f", baroalt*TO_FEET);
-    #else
-    VGfloat width_value = TextWidth("000.0", myfont, text_scale);
-    sprintf(buffer, "%.1f", baroalt);
-    #endif
-    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
-
-    TextEnd(getWidth(pos_x)-width_value-getWidth(0.3)*scale, getHeight(pos_y), " ", osdicons, text_scale*0.7);
-
-    #if IMPERIAL == true
-    Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "ft", myfont, text_scale*0.6);
-    #else
-    Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "m", myfont, text_scale*0.6);
-    #endif
-}
-
-
-
-void draw_gpsalt(float gpsalt, float pos_x, float pos_y, float scale){
-    float text_scale = getWidth(2) * scale;
-
-    #if IMPERIAL == true
-    VGfloat width_value = TextWidth("0000", myfont, text_scale);
-    sprintf(buffer, "%.0f", gpsalt*TO_FEET);
-    #else
-    VGfloat width_value = TextWidth("000.0", myfont, text_scale);
-    sprintf(buffer, "%.1f", gpsalt);
-    #endif
-    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
-
-    TextEnd(getWidth(pos_x)-width_value-getWidth(0.3)*scale, getHeight(pos_y), " ", osdicons, text_scale*0.7);
-
-    #if IMPERIAL == true
-    Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "ft", myfont, text_scale*0.6);
-    #else
-    Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "m", myfont, text_scale*0.6);
-    #endif
-}
-
 
 
 void draw_airspeed(int airspeed, float pos_x, float pos_y, float scale){
@@ -1063,6 +1008,11 @@ void draw_home_distance(int distance, bool home_fixed, float pos_x, float pos_y,
 
 
 void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale){
+
+    #if IMPERIAL == true
+        alt=alt *TO_FEET;
+    #endif
+
     float text_scale = getHeight(1.3) * scale;
     float width_element = getWidth(0.50) * scale;
     float height_element = getWidth(0.25) * scale;
@@ -1099,6 +1049,28 @@ void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale){
     }
 }
 
+
+void draw_mslalt(float mslalt, float pos_x, float pos_y, float scale){
+
+    float text_scale = getWidth(2) * scale;
+
+    #if IMPERIAL == true
+    VGfloat width_value = TextWidth("0000", myfont, text_scale);
+    sprintf(buffer, "%.0f", mslalt*TO_FEET);
+    #else
+    VGfloat width_value = TextWidth("000.0", myfont, text_scale);
+    sprintf(buffer, "%.1f", mslalt);
+    #endif
+    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
+
+    TextEnd(getWidth(pos_x)-width_value-getWidth(0.3)*scale, getHeight(pos_y), " ", osdicons, text_scale*0.7);
+
+    #if IMPERIAL == true
+    Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "ft", myfont, text_scale*0.6);
+    #else
+    Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "m", myfont, text_scale*0.6);
+    #endif
+}
 
 
 void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale){
@@ -1309,8 +1281,6 @@ void draw_sat(int sats, int fixtype, int hdop, float pos_x, float pos_y, float s
 
 
 void draw_batt_gauge(int remaining, float pos_x, float pos_y, float scale){
-    //new stuff from fritz walter https://www.youtube.com/watch?v=EQ01b3aJ-rk
-    //prevent black empty indicator to draw left to battery
     if (remaining < 0) remaining = 0;
     else if (remaining > 100) remaining = 100;
 
