@@ -573,7 +573,7 @@ fprintf( stderr, "init ");
                 exit(1);
         }
 
-        memset((char *) &si_other2, 0, sizeof(si_other2));
+        memset((char *) &si_other3, 0, sizeof(si_other3));
         si_other3.sin_family = AF_INET;
         si_other3.sin_port = htons(PORT3);
 
