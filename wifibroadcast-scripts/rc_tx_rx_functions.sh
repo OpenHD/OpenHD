@@ -66,7 +66,16 @@ function rctx_function {
 	
     FirstTimeRC=0
     IsEncrypt=0
-    IsIPCameraSwitcherEnabled=1
+    IsIPCameraSwitcherEnabled=0
+    
+    
+    if [ "$SecondaryCamera" == "USB" ]; then
+        IsIPCameraSwitcherEnabled=1
+    fi
+    
+    if [ "$SecondaryCamera" == "IP" ]; then
+        IsIPCameraSwitcherEnabled=1
+    fi
 
     if [ "$EncryptionOrRange" == "Range" ]; then
         IsEncrypt=0
