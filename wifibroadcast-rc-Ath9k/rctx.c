@@ -41,6 +41,12 @@ char messageRCEncrypt[40]; //Encrypted RC Message
 
 int NICCount=0;
 
+int TrimChannel=0;
+int Action=0;
+int PWMCount=0;
+int ActivateChannel=0;
+int IsTrimDone[8] =  { 0 };
+
 #ifdef JSSWITCHES  // 1 or 2 byte more for channels 9 - 16/24 as switches
 
 	static uint16_t *rcData = NULL;
@@ -121,7 +127,7 @@ void usage(void)
     printf(
         "rctx by Rodizio. Based on JS2Serial by Oliver Mueller and wbc all-in-one tx by Anemostec. GPL2\n"
         "\n"
-        "Usage: rctx rctx ChannelToListen2 ChannelIPCamera IsBandSwitcherEnabled(1\\0) IsIPCameraSwitcherEnabled(1\\0) IsEncrypt(1\\0) $PrimaryCardMAC \n"
+        "Usage: rctx rctx ChannelToListen2 ChannelIPCamera IsBandSwitcherEnabled(1\\0) IsIPCameraSwitcherEnabled(1\\0) IsEncrypt(1\\0) $TrimChannel $Action $PWMCount $ActivateChannel $PrimaryCardMAC \n"
         "\n"
         "Example:\n"
         "  rctx 2 3 1 1 0 wlan0\n"
@@ -188,27 +194,35 @@ void readAxis(SDL_Event *event) {
 	switch(myevent.jaxis.axis) {
 		case ROLL_AXIS:
 				rcData[0]=parsetoMultiWii(myevent.jaxis.value);
+				IsTrimDone[0]=0;
 			break;
 		case PITCH_AXIS:
 				rcData[1]=parsetoMultiWii(myevent.jaxis.value);
+				IsTrimDone[1]=0;
 			break;
 		case THROTTLE_AXIS:
 				rcData[2]=parsetoMultiWii(myevent.jaxis.value);
+				IsTrimDone[2]=0;
 			break;
 		case YAW_AXIS:
 				rcData[3]=parsetoMultiWii(myevent.jaxis.value);
+				IsTrimDone[3]=0;
 			break;
 		case AUX1_AXIS:
 				rcData[4]=parsetoMultiWii(myevent.jaxis.value);
+				IsTrimDone[4]=0;
 			break;
 		case AUX2_AXIS:
 				rcData[5]=parsetoMultiWii(myevent.jaxis.value);
+				IsTrimDone[5]=0;
 			break;
 		case AUX3_AXIS:
 				rcData[6]=parsetoMultiWii(myevent.jaxis.value);
+				IsTrimDone[6]=0;
 			break;
 		case AUX4_AXIS:
 				rcData[7]=parsetoMultiWii(myevent.jaxis.value);
+				IsTrimDone[7]=0;
 			break;
 		default:
 			break; //do nothing
@@ -379,6 +393,49 @@ void packMessage(int seqno)
 	#endif
 }
 
+void CheckTrimChannel(int Channel)
+{
+        if(TrimChannel >= 0 && ActivateChannel >= 0)
+        {
+                if(Channel == TrimChannel  )
+                {
+                        if( rcData[ActivateChannel] >= 1850 && IsTrimDone[Channel] == 0 )
+                        {
+				IsTrimDone[Channel] = 1;
+                                if(Action == 1)
+                                {
+                                        rcData[Channel] += PWMCount;
+					if(rcData[Channel] > 1999)
+						rcData[Channel] = 1999;
+                                }
+                                if(Action == 0)
+                                {
+                                        rcData[Channel] -= PWMCount;
+					if(rcData[Channel] < 1000)
+						rcData[Channel] = 1000;
+                                }
+                        }
+			//revers is unselected
+			if( rcData[ActivateChannel] <= 1700 &&  IsTrimDone[Channel] == 1 )
+			{
+				IsTrimDone[Channel] = 0;
+				if(Action == 1)
+                                {
+                                        rcData[Channel] -= PWMCount;
+                                        if(rcData[Channel] < 1000)
+                                                rcData[Channel] = 1000;
+                                }
+                                if(Action == 0)
+                                {
+                                        rcData[Channel] += PWMCount;
+                                        if(rcData[Channel] > 1999 )
+                                                rcData[Channel] = 1999;
+                                }
+			}
+                }
+        }
+}
+
 int main (int argc, char *argv[]) {
     int done = 1;
     int joy_connected = 0;
@@ -393,6 +450,11 @@ int main (int argc, char *argv[]) {
     int IsBandSwitcherEnabled = 0;
     char ShmBuf[2];
     int tmp = 0;
+
+    TrimChannel=0;
+    Action=0;
+    PWMCount=0;
+    ActivateChannel=0;
 
     while (1)
     {
@@ -429,7 +491,7 @@ fprintf( stderr, "init ");
     }
 
     int x = optind;
-    x += 5;
+    x += 9;
     
     Channel = atoi(argv[1]);
     ChannelIPCamera = atoi(argv[2]);
@@ -437,6 +499,13 @@ fprintf( stderr, "init ");
     IsBandSwitcherEnabled = atoi(argv[3]);
     IsIPCameraSwitcherEnabled = atoi(argv[4]);
     IsEncrypt =  atoi(argv[5]);
+
+    TrimChannel=atoi(argv[6]);
+    Action=atoi(argv[7]);
+    PWMCount=atoi(argv[8]);
+    ActivateChannel=atoi(argv[9]);
+    TrimChannel--;
+    ActivateChannel--;
 
     if(IsEncrypt == 0)
     {
@@ -592,8 +661,13 @@ fprintf( stderr, "init ");
 	{
 		done = eventloop_joystick();
 //		fprintf(stderr, "eventloop_joystick\n");
+
 		if (counter % UPDATE_NTH_TIME == 0)
-		{
+                {
+			tmp = TrimChannel;
+			//fprintf(stderr, "TrimChannelPWMBefore: %d \n", rcData[tmp]);
+			CheckTrimChannel(tmp);
+		//	fprintf(stderr, "TrimChannelPWMAfter: %d \n", rcData[tmp]);
 //		    fprintf(stderr, "SendRC\n");
 		    for(k=0; k < TRANSMISSIONS; ++k)
 		    {
