@@ -72,7 +72,9 @@ function rx_function {
 			echo
 		else
 			echo
-			echo -e "n\np\n3\n3674112\n\nw" | fdisk /dev/mmcblk0 > /dev/null 2>&1
+		#	echo -e "n\np\n3\n3674112\n\nw" | fdisk /dev/mmcblk0 > /dev/null 2>&1
+		# do to image builder the sectors shifted
+			echo -e "n\np\n3\n7839744\n\nw" | fdisk /dev/sda > /dev/null 2>&1
 			partprobe > /dev/null 2>&1
 			mkfs.ext4 /dev/mmcblk0p3 -F > /dev/null 2>&1 || {
 			tmessage "ERROR: Could not format video storage on SDCARD!"
