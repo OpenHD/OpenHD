@@ -169,7 +169,7 @@ typedef struct {
 long long current_timestamp() {
     struct timeval te;
     gettimeofday(&te, NULL); // get current time
-    long long useconds = te.tv_sec*1000LL + te.tv_usec;
+    long long useconds = te.tv_sec*1000000LL + te.tv_usec;
     return useconds;
 }
 
