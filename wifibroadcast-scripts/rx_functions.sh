@@ -83,7 +83,11 @@ function rx_function {
 			}
 		fi
 		e2fsck -p /dev/mmcblk0p3 > /dev/null 2>&1
-		mount -t ext4 -o noatime /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
+		sudo mkdir -p /video_tmp > /dev/null 2>&1
+		
+		#mount -t ext4 -o noatime /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 
+		
+		sudo mount -t ext4 /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
 			tmessage "ERROR: Could not mount video storage on SDCARD!"
 			collect_errorlog
 			sleep 365d
