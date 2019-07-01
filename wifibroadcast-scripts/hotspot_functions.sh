@@ -16,8 +16,24 @@ function MAIN_HOTSPOT_FUNCTION {
 			echo "Video running, starting hotspot processes ..."
 			
 			sleep 1
-			
-			hotspot_check_function
+
+			# Configure external hotspot or internal
+			if [ "$WIFI_HOTSPOT_NIC" != "internal" ]; then
+				# only configure it if it's there
+		    		if ls /sys/class/net/ | grep -q $WIFI_HOTSPOT_NIC; then
+					tmessage -n "Setting up $WIFI_HOTSPOT_NIC for Wifi Hotspot operation.."
+					ip link set $WIFI_HOTSPOT_NIC name wifihotspot0
+					ifconfig wifihotspot0 192.168.2.1 up
+					tmessage "done!"
+					let "NUM_CARDS--"
+		    		else
+					tmessage "Wifi Hotspot card $WIFI_HOTSPOT_NIC not found!"
+					sleep 0.5
+		    		fi	
+			else
+				hotspot_check_function
+			fi
+
 	    else
 			echo "Check hotspot function not enabled in config file"
 			sleep 365d
@@ -72,10 +88,13 @@ function hotspot_check_function {
 					echo "G Band only capable..."
 					HOTSPOT_BAND=g
 
-					if [ "$FREQ" -gt "2452" ]; then					
+					if [ "$FREQ" -gt "3000" ]; then					
 					HOTSPOT_CHANNEL=1
 					else	         			
-					HOTSPOT_CHANNEL=11
+					echo "Hotspot Disabled. Not recommended to share same band as video..."
+					echo "If you still want hotspot you must manually set up..."
+					#kill the function
+					return 1
 					fi
 				fi
 	     		# NOTHING TO DO For user defined use of A (5.8ghz) OR G (2.4ghz) 
