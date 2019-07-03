@@ -17,22 +17,37 @@ function MAIN_HOTSPOT_FUNCTION {
 			
 			sleep 1
 
+			# Convert hostap config from DOS format to UNIX format
+	                ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
+			
 			# Configure external hotspot or internal
 			if [ "$WIFI_HOTSPOT_NIC" != "internal" ]; then
+
+tmessage -n "Setting up external hotspot.."
+
+
+				#might be unecessary
+				source /tmp/apconfig.txt
+				nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
+				nice -n 5 hostapd -B -d /tmp/apconfig.txt
+sleep 1
+ifconfig
+sleep 1
+ifconfig $WIFI_HOTSPOT_NIC down
+sleep 1
+
+
 				# only configure it if it's there
-	# Disabled the error check. Perhaps the path has changed with updates.
-	# This bit of code is redundant with remote settings. Remote settings has uncommented error check and thus breaks
-	
-	#	    		if ls /sys/class/net/ | grep -q $WIFI_HOTSPOT_NIC; then
+		    	#	if ls /sys/class/net/ | grep -q $WIFI_HOTSPOT_NIC; then
 					tmessage -n "Setting up $WIFI_HOTSPOT_NIC for Wifi Hotspot operation.."
-					ip link set $WIFI_HOTSPOT_NIC name wifihotspot0
-					ifconfig wifihotspot0 192.168.2.1 up
+					ip link set $WIFI_HOTSPOT_NIC name wifihotspot0 
+					ifconfig wifihotspot0 192.168.2.1 up 
 					tmessage "done!"
 					let "NUM_CARDS--"
-	#	    		else
-	#				tmessage "Wifi Hotspot card $WIFI_HOTSPOT_NIC not found!"
-	#				sleep 0.5
-	#	    		fi	
+		    	#	else
+			#		tmessage "Wifi Hotspot card $WIFI_HOTSPOT_NIC not found!"
+			#		sleep 0.5
+		    	#	fi	
 			else
 				hotspot_check_function
 			fi
@@ -50,9 +65,7 @@ function MAIN_HOTSPOT_FUNCTION {
 
 function hotspot_check_function {
     
-	# Convert hostap config from DOS format to UNIX format
-	ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
-			
+	
 	if [ "$ETHERNET_HOTSPOT" == "Y" ]; then
 	    # setup hotspot on RPI3 internal ethernet chip
 	    nice ifconfig eth0 192.168.1.1 up
