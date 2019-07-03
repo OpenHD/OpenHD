@@ -28,6 +28,8 @@ tmessage -n "Setting up external hotspot.."
 
 				#might be unecessary
 				source /tmp/apconfig.txt
+				sudo sed -i -e "s/hw_mode=$hw_mode/hw_mode=$HOTSPOT_BAND/g" /tmp/apconfig.txt
+				sudo sed -i -e "s/channel=$channel/channel=$HOTSPOT_CHANNEL/g" /tmp/apconfig.txt
 				nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
 				nice -n 5 hostapd -B -d /tmp/apconfig.txt
 sleep 1
