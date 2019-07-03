@@ -20,16 +20,19 @@ function MAIN_HOTSPOT_FUNCTION {
 			# Configure external hotspot or internal
 			if [ "$WIFI_HOTSPOT_NIC" != "internal" ]; then
 				# only configure it if it's there
-		    		if ls /sys/class/net/ | grep -q $WIFI_HOTSPOT_NIC; then
+	# Disabled the error check. Perhaps the path has changed with updates.
+	# This bit of code is redundant with remote settings. Remote settings has uncommented error check and thus breaks
+	
+	#	    		if ls /sys/class/net/ | grep -q $WIFI_HOTSPOT_NIC; then
 					tmessage -n "Setting up $WIFI_HOTSPOT_NIC for Wifi Hotspot operation.."
 					ip link set $WIFI_HOTSPOT_NIC name wifihotspot0
 					ifconfig wifihotspot0 192.168.2.1 up
 					tmessage "done!"
 					let "NUM_CARDS--"
-		    		else
-					tmessage "Wifi Hotspot card $WIFI_HOTSPOT_NIC not found!"
-					sleep 0.5
-		    		fi	
+	#	    		else
+	#				tmessage "Wifi Hotspot card $WIFI_HOTSPOT_NIC not found!"
+	#				sleep 0.5
+	#	    		fi	
 			else
 				hotspot_check_function
 			fi
