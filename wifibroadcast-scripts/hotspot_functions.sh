@@ -15,45 +15,14 @@ function MAIN_HOTSPOT_FUNCTION {
 			echo
 			echo "Video running, starting hotspot processes ..."
 			
+
 			sleep 1
 
 			# Convert hostap config from DOS format to UNIX format
 	                ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
+					
+			hotspot_check_function
 			
-			# Configure external hotspot or internal
-			if [ "$WIFI_HOTSPOT_NIC" != "internal" ]; then
-
-tmessage -n "Setting up external hotspot.."
-
-
-				#might be unecessary
-				source /tmp/apconfig.txt
-				sudo sed -i -e "s/hw_mode=$hw_mode/hw_mode=$HOTSPOT_BAND/g" /tmp/apconfig.txt
-				sudo sed -i -e "s/channel=$channel/channel=$HOTSPOT_CHANNEL/g" /tmp/apconfig.txt
-				nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
-				nice -n 5 hostapd -B -d /tmp/apconfig.txt
-sleep 1
-ifconfig
-sleep 1
-ifconfig $WIFI_HOTSPOT_NIC down
-sleep 1
-
-
-				# only configure it if it's there
-		    	#	if ls /sys/class/net/ | grep -q $WIFI_HOTSPOT_NIC; then
-					tmessage -n "Setting up $WIFI_HOTSPOT_NIC for Wifi Hotspot operation.."
-					ip link set $WIFI_HOTSPOT_NIC name wifihotspot0 
-					ifconfig wifihotspot0 192.168.2.1 up 
-					tmessage "done!"
-					let "NUM_CARDS--"
-		    	#	else
-			#		tmessage "Wifi Hotspot card $WIFI_HOTSPOT_NIC not found!"
-			#		sleep 0.5
-		    	#	fi	
-			else
-				hotspot_check_function
-			fi
-
 	    else
 			echo "Check hotspot function not enabled in config file"
 			sleep 365d
@@ -76,17 +45,17 @@ function hotspot_check_function {
 
 	if [ "$WIFI_HOTSPOT" != "N" ]; then
 			
-	         # Detect cpu revision pi
-		  detect_hardware
+		# Detect cpu revision pi
+		detect_hardware
 
-			echo "This Pi model $MODEL with Band $ABLE_BAND"
+		echo "This Pi model $MODEL with Band $ABLE_BAND"
 	
 		# CONTINUE IF WE ARE ABLE_BAND IS A or G
 		if [ "$ABLE_BAND" != "unknown" ]; then
 			echo "Setting up Hotspot..."
 
 	    		# Read if hotspot config is auto
-	     		if [ "$WIFI_HOTSPOT" == "auto" ]; then	
+	     		if [ "$WIFI_HOTSPOT" == "auto" ] && [ "$WIFI_HOTSPOT_NIC" == "internal" ]; then	
 				echo "wifihotspot auto..."
 
 	        		# for both a and g ability choose opposite of video	   	         	
@@ -119,21 +88,40 @@ function hotspot_check_function {
 
 	     		fi
 
-		#populate $hw_mode and channel
-		source /tmp/apconfig.txt
+			#populate $hw_mode and channel
+			source /tmp/apconfig.txt
 
-		sudo sed -i -e "s/hw_mode=$hw_mode/hw_mode=$HOTSPOT_BAND/g" /tmp/apconfig.txt
-		sudo sed -i -e "s/channel=$channel/channel=$HOTSPOT_CHANNEL/g" /tmp/apconfig.txt
+			sudo sed -i -e "s/hw_mode=$hw_mode/hw_mode=$HOTSPOT_BAND/g" /tmp/apconfig.txt
+			sudo sed -i -e "s/channel=$channel/channel=$HOTSPOT_CHANNEL/g" /tmp/apconfig.txt
 
-	    	echo "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL"
-		tmessage "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL..."
+	    		echo "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL"
+			tmessage "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL..."
 		
-	    	nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
-	    	nice -n 5 hostapd -B -d /tmp/apconfig.txt
+	    		nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
+	    		nice -n 5 hostapd -B -d /tmp/apconfig.txt
+
+			# Setup External Hotspot
+			if [ "$WIFI_HOTSPOT_NIC" != "internal" ]; then
+				echo "Setting up external hotspot.."
+				tmessage -n "Setting up external hotspot.."
+				sleep 1
+				ifconfig $WIFI_HOTSPOT_NIC down
+				sleep 1
+
+			#This check is disabled. Maybe the path has changed
+			#Right now this bit of code is somewhat redundant with remote settings. But it is broken there
+				# only configure it if it's there
+		    	#	if ls /sys/class/net/ | grep -q $WIFI_HOTSPOT_NIC; then
+					tmessage -n "Setting up $WIFI_HOTSPOT_NIC for Wifi Hotspot operation.."
+					ip link set $WIFI_HOTSPOT_NIC name wifihotspot0 
+					ifconfig wifihotspot0 192.168.2.1 up 
+					tmessage "done!"
+					let "NUM_CARDS--"
+			fi
 
 	  	else
-	     	echo "NO HOTSPOT CAPABILTY WAS FOUND"
-		tmessage "no hotspot hardware found..."
+	     		echo "UKNOWN PI in Hotspot..."
+			tmessage "UNKNOWN PI in Hotspot..."
 	  	fi   
 	fi
 
