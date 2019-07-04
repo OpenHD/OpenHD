@@ -68,30 +68,51 @@ function rx_function {
     if [ "$VIDEO_TMP" == "sdcard" ]; then
 		touch /tmp/pausewhile # make sure check_alive doesn't do it's stuff ...
 		tmessage "Saving to SDCARD enabled, preparing video storage ..."
-		if cat /proc/partitions | nice grep -q mmcblk0p3; then # partition has not been created yet
+		if cat /proc/partitions | nice grep -q mmcblk0p3; then 
 			echo
+			echo "SDCARD Video partion detected.."
 		else
 			echo
+			echo "SDCARD Video partion NOT detected.."
+			echo 
+
 		#	echo -e "n\np\n3\n3674112\n\nw" | fdisk /dev/mmcblk0 > /dev/null 2>&1
-		# do to image builder the sectors shifted
+		
 			echo -e "n\np\n3\n7839744\n\nw" | fdisk /dev/mmcblk0 > /dev/null 2>&1
 			partprobe > /dev/null 2>&1
-			mkfs.ext4 /dev/mmcblk0p3 -F > /dev/null 2>&1 || {
-			tmessage "ERROR: Could not format video storage on SDCARD!"
-			collect_errorlog
-			sleep 365d
-			}
+			
+			if [ "$VIDEO_FS" == "fat" ]; then
+				tmessage "Creating SDCARD FAT filesytem for Video Recording.."
+				mkfs.vfat /dev/mmcblk0p3 -n myvideo > /boot/sdcard.txt 2>&1 || {
+				tmessage "ERROR: Could not format video storage on SDCARD!"
+				collect_errorlog
+				sleep 365d 
+				}
+				mkdir -p /video_tmp > /dev/null 2>&1
+				mount -t vfat /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
+				tmessage "ERROR: Could not mount video storage on SDCARD!"
+				collect_errorlog
+				sleep 365d
+				}
+			else
+				tmessage "Creating SDCARD EXT4 filesytem for Video Recording.."
+				mkfs.ext4 /dev/mmcblk0p3 -L myvideo -F > /dev/null 2>&1 || {
+				tmessage "ERROR: Could not format video storage on SDCARD!"
+				collect_errorlog
+				sleep 365d 
+				}
+				e2fsck -p /dev/mmcblk0p3 > /dev/null 2>&1
+				mkdir -p /video_tmp > /dev/null 2>&1
+				mount -t ext4 /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
+				tmessage "ERROR: Could not mount video storage on SDCARD!"
+				collect_errorlog
+				sleep 365d
+				}
+			fi
+
 		fi
-		e2fsck -p /dev/mmcblk0p3 > /dev/null 2>&1
-		sudo mkdir -p /video_tmp > /dev/null 2>&1
+
 		
-		#mount -t ext4 -o noatime /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 
-		
-		sudo mount -t ext4 /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
-			tmessage "ERROR: Could not mount video storage on SDCARD!"
-			collect_errorlog
-			sleep 365d
-		}
 		VIDEOFILE=/video_tmp/videotmp.raw
 		echo "VIDEOFILE=/video_tmp/videotmp.raw" > /tmp/videofile
 		rm $VIDEOFILE > /dev/null 2>&1
@@ -99,6 +120,7 @@ function rx_function {
 		VIDEOFILE=/wbc_tmp/videotmp.raw
 		echo "VIDEOFILE=/wbc_tmp/videotmp.raw" > /tmp/videofile
     fi
+
 
 	# tracker disabled
     #/home/pi/wifibroadcast-base/tracker /wifibroadcast_rx_status_0 >> /wbc_tmp/tracker.txt &
