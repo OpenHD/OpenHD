@@ -1,4 +1,9 @@
 function rx_function {
+
+    if [ "$AdjustLCDBacklight" == "Y" ]; then
+        /home/pi/wifibroadcast-misc/LCD/MouseListener $AutoDimTime $AutoDimValue /dev/input/event0 & > /dev/null 2>&1
+    fi
+    
     /home/pi/wifibroadcast-base/sharedmem_init_rx
 
     # start virtual serial port for cmavnode and ser2net
