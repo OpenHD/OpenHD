@@ -104,9 +104,13 @@ function hotspot_check_function {
 			if [ "$WIFI_HOTSPOT_NIC" != "internal" ]; then
 				echo "Setting up external hotspot.."
 				tmessage -n "Setting up external hotspot.."
-				sleep 1
+				sleep .5
 				ifconfig $WIFI_HOTSPOT_NIC down
-				sleep 1
+				sleep .5
+				echo "Reducing external hotspot power"
+                                tmessage -n "Reducing external hotspot power"
+				ifconfig $WIFI_HOTSPOT_NIC txpower 1
+				sleep .5
 
 			#This check is disabled. Maybe the path has changed
 			#Right now this bit of code is somewhat redundant with remote settings. But it is broken there
