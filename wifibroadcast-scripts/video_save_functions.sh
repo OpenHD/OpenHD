@@ -63,7 +63,8 @@ function save_function {
     echo "VIDEOFILE: $VIDEOFILE"
 
     # start re-play of recorded video ....
-    nice /opt/vc/src/hello_pi/hello_video/hello_video.bin.player $VIDEOFILE $FPS &
+    # nice /opt/vc/src/hello_pi/hello_video/hello_video.bin.player $VIDEOFILE $FPS &
+    nice /rootfs/home/pi/wifibroadcast-hello_video/hello_video.bin.player $VIDEOFILE $FPS &
 
     killall wbc_status > /dev/null 2>&1
     nice /home/pi/wifibroadcast-status/wbc_status "Saving to USB. This may take some time ..." 7 55 0 &
