@@ -130,7 +130,7 @@ int ltm_check(telemetry_data_t *td) {
     td->longitude = (double)((int32_t)ltmread_u32())/10000000;
     uint8_t uav_groundspeedms = ltmread_u8();
     td->speed = (float)(uav_groundspeedms * 3.6f); // convert to kmh
-    td->altitude = (float)((int32_t)ltmread_u32())/100.0f;
+    td->rel_altitude = (float)((int32_t)ltmread_u32())/100.0f;
     uint8_t ltm_satsfix = ltmread_u8();
     td->sats = (ltm_satsfix >> 2) & 0xFF;
     td->fix = ltm_satsfix & 0b00000011;
