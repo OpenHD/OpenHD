@@ -29,15 +29,16 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 						td->heading = mavlink_msg_global_position_int_get_hdg(&msg)/100.0f;
     					#endif
 
-                                        
-                        td->rel_altitude = mavlink_msg_global_position_int_get_relative_alt(&msg)/1000.0f;
-						fprintf(stdout, "altitude global rel:%.2f  ", td->rel_altitude);
-					
-					
-					#if MAVLINK_MSL_SOURCE_VFR_HUD  == false 
-					    td->msl_altitude = mavlink_msg_global_position_int_get_alt(&msg)/1000.0f;
-					    fprintf(stdout, "msl alt global:%.2f  ", td->msl_altitude);
+
+                                        #if REL_ALT_SOURCE == 1
+                        			td->rel_altitude = mavlink_msg_global_position_int_get_relative_alt(&msg)/1000.0f;
+						fprintf(stdout, "REL altitude global rel:%.2f  ", td->rel_altitude);
 					#endif
+					
+					
+					td->msl_altitude = mavlink_msg_global_position_int_get_alt(&msg)/1000.0f;
+					fprintf(stdout, "msl alt global:%.2f  ", td->msl_altitude);
+					
 
                                         td->latitude = mavlink_msg_global_position_int_get_lat(&msg)/10000000.0f;
                                         td->longitude = mavlink_msg_global_position_int_get_lon(&msg)/10000000.0f;
@@ -61,7 +62,12 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					
 					
 //					td->heading = mavlink_msg_gps_raw_int_get_cog(&msg)/100.0f;
-//                                      td->rel_altitude = mavlink_msg_gps_raw_int_get_alt(&msg)/1000.0f;
+
+  					#if REL_ALT_SOURCE == 2
+  	                                   	td->rel_altitude = mavlink_msg_gps_raw_int_get_alt(&msg)/1000.0f;
+						fprintf(stdout, "REL altitude gps alt:%.2f  ", td->rel_altitude);
+					#endif
+
 //                                      td->latitude = mavlink_msg_gps_raw_int_get_lat(&msg)/10000000.0f;
 //                                      td->longitude = mavlink_msg_gps_raw_int_get_lon(&msg)/10000000.0f;
 //					fprintf(stdout, "GPS RAW INT heading:%.2f  ", td->heading);
@@ -95,10 +101,11 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					fprintf(stdout, "VFR_HUD: ");
                                         td->speed = mavlink_msg_vfr_hud_get_groundspeed(&msg)*3.6f;
                                         td->airspeed = mavlink_msg_vfr_hud_get_airspeed(&msg)*3.6f;
-                    #if MAVLINK_MSL_SOURCE_VFR_HUD == true 
-					     td->msl_altitude = mavlink_msg_vfr_hud_get_alt(&msg);
-                         fprintf(stdout, "msl alt vfr hud:%.2f  ", td->msl_altitude);
-                    #endif
+
+                    			#if REL_ALT_SOURCE == 3
+						td->rel_altitude = mavlink_msg_vfr_hud_get_alt(&msg);
+                         			fprintf(stdout, "REL altitude vfr hud:%.2f  ", td->rel_altitude);
+                    			#endif
 
 					td->mav_climb = mavlink_msg_vfr_hud_get_climb(&msg);
 					fprintf(stdout, "speed:%.2f  ", td->speed);
@@ -151,11 +158,18 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					fprintf(stdout, "EXTENDED_SYS_STATE: vtol_state:%d, landed_state:%d",mavlink_msg_extended_sys_state_get_vtol_state(&msg),mavlink_msg_extended_sys_state_get_landed_state(&msg));
                                         break;
 
-/*                                case MAVLINK_MSG_ID_BATTERY_STATUS:
-					fprintf(stdout, "BATTERY_STATUS ");
+
+ /*                            case MAVLINK_MSG_ID_ALTITUDE:
+					#if REL_ALT_SOURCE == 4
+						td->rel_altitude = mavlink_msg_altitude_get_altitude_relative(&msg);
+                         			fprintf(stdout, "REL altitude altitude_relative:%.2f  ", td->rel_altitude);
+                    			#endif
+
                                         break;
-                                case MAVLINK_MSG_ID_ALTITUDE:
-					fprintf(stdout, "ALTITUDE ");
+
+
+                               case MAVLINK_MSG_ID_BATTERY_STATUS:
+					fprintf(stdout, "BATTERY_STATUS ");
                                         break;
                                 case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
 					fprintf(stdout, "LOCAL_POSITION_NED ");
