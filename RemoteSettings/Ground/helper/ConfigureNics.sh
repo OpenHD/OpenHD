@@ -490,7 +490,7 @@ function prepare_nic {
 read_config_file
 
 
-   if [ "$MirrorDSI_To_HDMI" == "y" ]; then
+   if [[ "$MirrorDSI_To_HDMI" == "y" || "$MirrorDSI_To_HDMI" == "Y" ]]; then
             if [ -e "/dev/fb0" ]; then
                     echo "/dev/fb0 - found"
                     if [ -e "/dev/fb1" ]; then
