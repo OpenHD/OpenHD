@@ -45,6 +45,8 @@ function datarate_to_wifi_settings {
 
 
 function collect_errorlog {
+    con2fbmap 1 0
+    killall DisplayProgram
     sleep 3
     echo
 	
@@ -422,10 +424,11 @@ function prepare_nic {
 	if [ "$2" != "0" ]; then
 	    tmessage -n "frequency $2 MHz.. "
 	    iw dev $1 set freq $2 || {
+	        con2fbmap 1 0
 		echo
 		echo "ERROR: Setting frequency $2 MHz on $1 failed!"
-		collect_errorlog
-		sleep 365d
+		#collect_errorlog
+		#sleep 365d
 	    }
 	    tmessage "done!"
 	else
@@ -458,10 +461,11 @@ function prepare_nic {
 	if [ "$2" != "0" ]; then
 	    tmessage -n "frequency $2 MHz.. "
 	    iw dev $1 set freq $2 || {
+	        con2fbmap 1 0
 		echo
 		echo "ERROR: Setting frequency $2 MHz on $1 failed!"
-		collect_errorlog
-		sleep 365d
+		#collect_errorlog
+		#sleep 365d
 	    }
 	    tmessage "done!"
 	else
