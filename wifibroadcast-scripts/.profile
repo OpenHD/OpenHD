@@ -12,6 +12,8 @@ case $TTY in
             /usr/bin/python3.5 /home/pi/cameracontrol/InitArduCamV21Ch1.py
         fi
 	
+	CAM=`/usr/bin/vcgencmd get_camera | nice grep -c detected=1`
+	
         i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
         grepRet=$?
         if [[ $grepRet -eq 0 ]] ; then
@@ -19,7 +21,6 @@ case $TTY in
 			CAM="1"
 			echo "0" > /tmp/ReadyToGo
         else
-			CAM=`/usr/bin/vcgencmd get_camera | nice grep -c detected=1`
 			if [ "$CAM" == "0" ]; then # if we are RX ...
 				/home/pi/RemoteSettings/Ground/helper/AirRSSI.sh &
 				/home/pi/RemoteSettings/Ground/helper/DisplayProgram/DisplayProgram &
