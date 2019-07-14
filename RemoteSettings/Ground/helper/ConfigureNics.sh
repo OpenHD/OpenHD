@@ -373,8 +373,8 @@ function prepare_nic {
 		iw dev $1 set bitrates legacy-2.4 $UplinkSpeed || {
 		    echo
 		    echo "ERROR: Setting bitrate on $1 failed!"
-		    collect_errorlog
-		    sleep 365d
+		    #collect_errorlog
+		    #sleep 365d
 		}
 	    sleep 0.2
 	    #tmessage -n "done. "
