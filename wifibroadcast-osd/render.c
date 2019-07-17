@@ -966,14 +966,35 @@ void draw_position(float lat, float lon, float pos_x, float pos_y, float scale){
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
     VGfloat width_value = TextWidth("-100.000000", myfont, text_scale);
 
+    float mylat;
+    float mylon;
+
+    #if HIDE_LATLON == true
+  	mylat = lat - (int)lat;
+  	mylon = lon - (int)lon;	
+    #else
+	mylon=lon;
+        mylat=lat;
+    #endif
+
     TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y), "  ", osdicons, text_scale*0.6);
 
-    sprintf(buffer, "%.6f", lon);
+    #if HIDE_LATLON == true
+	sprintf(buffer, "0%f", mylon);
+    #else
+    	sprintf(buffer, "%.6f", mylon);
+    #endif
+
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
 
     TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y)+height_text, "  ", osdicons, text_scale*0.6);
 
-    sprintf(buffer, "%.6f", lat);
+    #if HIDE_LATLON == true
+	sprintf(buffer, "0%f", mylat);
+    #else
+    	sprintf(buffer, "%.6f", mylat);
+    #endif
+
     TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text, buffer, myfont, text_scale);
 }
 
