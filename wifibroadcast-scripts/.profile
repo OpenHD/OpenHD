@@ -6,6 +6,8 @@ case $TTY in
     /dev/tty1) # TX/RX
 	echo "tty1"
 	
+	python /root/wifibroadcast_misc/gpio-IsAir.py
+	
 	i2cdetect -y 1 | grep  "70: 70"
         grepRet=$?
         if [[ $grepRet -eq 0 ]] ; then
@@ -21,6 +23,11 @@ case $TTY in
 			CAM="1"
 			echo "0" > /tmp/ReadyToGo
         else
+			if [ -e /tmp/Air ]; then
+				echo "force boot as Air via GPIO"
+				CAM="1"
+			fi
+			
 			if [ "$CAM" == "0" ]; then # if we are RX ...
 				/home/pi/RemoteSettings/Ground/helper/AirRSSI.sh &
 				/home/pi/RemoteSettings/Ground/helper/DisplayProgram/DisplayProgram &
