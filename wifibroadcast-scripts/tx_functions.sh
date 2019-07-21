@@ -302,10 +302,6 @@ else
         fi
 fi
 
-if [ "$IsBandSwicherEnabled" == "1" ]; then
-        /home/pi/RemoteSettings/BandSwitcherAir.sh $SecondaryCamera  $BITRATE &
-	/home/pi/RemoteSettings/Air/TxSecondaryCamera.sh &
-fi
 
 echo "#!/bin/bash" > /dev/shm/startReadCameraTransfer.sh
 echo "echo \$\$ > /dev/shm/TXCAMPID" >> /dev/shm/startReadCameraTransfer.sh
@@ -379,8 +375,42 @@ grepRet=$?
 if [[ $grepRet -eq 0 ]] ; then
 	IsArduCameraV21="21"
 fi
-	
-/usr/bin/python /home/pi/cameracontrol/cameracontrolUDP.py -IsArduCameraV21 $IsArduCameraV21 -IsCamera1Enabled $IsCamera1Enabled -IsCamera2Enabled $IsCamera2Enabled -IsCamera3Enabled $IsCamera3Enabled -IsCamera4Enabled $IsCamera4Enabled  -Camera1ValueMin $Camera1ValueMin -Camera1ValueMax $Camera1ValueMax -Camera2ValueMin $Camera2ValueMin -Camera2ValueMax $Camera2ValueMax -Camera3ValueMin $Camera3ValueMin -Camera3ValueMax $Camera3ValueMax  -Camera4ValueMin $Camera4ValueMin -Camera4ValueMax $Camera4ValueMax -DefaultCameraId $DefaultCameraId
+
+CameraType="RPi"
+if [ -e /tmp/Air ]; then
+        CameraType="Secondary"
+	if [ "$IsBandSwicherEnabled" != "1" ]; then
+	#wfb_tx  -k 1 -n 1 -u 8943 -p 44 -B 20 -M 0 $NICS_LIST
+	#wfb_tx required to notify ground unit about selected camera mode. (Not RPi camera)
+	#wfb_tx is part of BandSwicher
+		/home/pi/RemoteSettings/Air/TxBandSwitcher.sh &
+	fi
+
+        if [ $SecondaryCamera == "No" ]; then
+                echo "SecondaryCamera type is not selected, but RPi forced to boot as Air unit via GPIO. Camera type set  to USB"
+                SecondaryCamera="USB"
+        fi
+fi
+
+if [ $SecondaryCamera != "No" ]; then
+	/home/pi/RemoteSettings/Air/TxSecondaryCamera.sh &
+fi
+
+if [ "$IsBandSwicherEnabled" == "1" ]; then
+        /home/pi/RemoteSettings/BandSwitcherAir.sh $SecondaryCamera  $BITRATE &
+	/usr/bin/python3.5 /home/pi/RemoteSettings/Air/MessageSorter.py &
+fi
+
+WithoutNativeRPiCamera="0"
+if [ -e /tmp/CameraNotDetected ]; then #switch to video mode 3 - only secondary camera
+	WithoutNativeRPiCamera="1"
+fi
+
+if [ -e /tmp/Air ]; then #Selected USB\IP mode - disable RPi camera even if plugged
+	WithoutNativeRPiCamera="1"
+fi
+
+/usr/bin/python /home/pi/cameracontrol/cameracontrolUDP.py -IsArduCameraV21 $IsArduCameraV21 -IsCamera1Enabled $IsCamera1Enabled -IsCamera2Enabled $IsCamera2Enabled -IsCamera3Enabled $IsCamera3Enabled -IsCamera4Enabled $IsCamera4Enabled  -Camera1ValueMin $Camera1ValueMin -Camera1ValueMax $Camera1ValueMax -Camera2ValueMin $Camera2ValueMin -Camera2ValueMax $Camera2ValueMax -Camera3ValueMin $Camera3ValueMin -Camera3ValueMax $Camera3ValueMax  -Camera4ValueMin $Camera4ValueMin -Camera4ValueMax $Camera4ValueMax -DefaultCameraId $DefaultCameraId -BitrateMeasured $BITRATE -SecondaryCamera $SecondaryCamera -CameraType $CameraType -WithoutNativeRPiCamera $WithoutNativeRPiCamera -DefaultBandWidthAth9k $Bandwidth
 
 
 ###########################END MOD.
