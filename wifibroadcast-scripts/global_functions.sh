@@ -118,6 +118,15 @@ function check_camera_attached {
 	# only do this on one tty so that we don't run vcgencmd multiple times (which may make it hang)
 	if [ "$TTY" == "/dev/tty1" ]; then
 		CAM=`/usr/bin/vcgencmd get_camera | nice grep -c detected=1`
+		if [ "$CAM" == "0" ]; then #is use by cameracontrolUDP.py to restricted video mode change
+			echo  "1" > /tmp/CameraNotDetected
+		fi
+
+		if [ -e /tmp/Air ]; then
+                	echo "force boot as Air via GPIO"
+                        CAM="1"
+                fi
+
 		if [ "$CAM" == "0" ]; then # if we are RX ...
 			i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
         		grepRet=$?
