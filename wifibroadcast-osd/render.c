@@ -478,6 +478,12 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
     case 12: sprintf(buffer, "LOIT"); break;
     case 15: sprintf(buffer, "GUID"); break;
     case 16: sprintf(buffer, "INIT"); break;
+    case 17: sprintf(buffer, "Q-STAB"); break;
+    case 18: sprintf(buffer, "Q-HOVR"); break;
+    case 19: sprintf(buffer, "Q-LOIT"); break;
+    case 20: sprintf(buffer, "Q-LAND"); break;
+    case 21: sprintf(buffer, "Q-RTL"); break;
+    case 23: sprintf(buffer, "Q-ACRO"); break;
     case 255: sprintf(buffer, "-----"); break;
     #endif
     default: sprintf(buffer, "-----"); break; // TODO: find out why strange numbers when using zs6bujs telemetry logs, default to something more sensible like "unknown mode"
@@ -519,6 +525,12 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
     case 12: sprintf(buffer, "[LOIT]"); break;
     case 15: sprintf(buffer, "[GUID]"); break;
     case 16: sprintf(buffer, "[INIT]"); break;
+    case 17: sprintf(buffer, "Q-STAB"); break;
+    case 18: sprintf(buffer, "Q-HOVR"); break;
+    case 19: sprintf(buffer, "Q-LOIT"); break;
+    case 20: sprintf(buffer, "Q-LAND"); break;
+    case 21: sprintf(buffer, "Q-RTL"); break;
+    case 23: sprintf(buffer, "Q-ACRO"); break;
     case 255: sprintf(buffer, "[-----]"); break;
     #endif
     default: sprintf(buffer, "[-----]"); break; // TODO: find out why strange numbers when using zs6bujs telemetry logs, default to something more sensible like "unknown mode"
