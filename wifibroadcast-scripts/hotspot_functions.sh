@@ -64,6 +64,9 @@ function hotspot_check_function {
         nice /home/pi/wifibroadcast-base/rssi_qgc_forward 127.0.0.1 5154 &
         /home/pi/RemoteSettings/UDPSplitter 9124 5154 5154 &
 
+	##OpenHD RemoteSettings android app
+	/home/pi/RemoteSettings/UDPSplitter 9125 5116 5115 &
+
 
 
 
