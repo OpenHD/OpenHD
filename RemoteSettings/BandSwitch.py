@@ -160,35 +160,35 @@ def StartRecvThread():
     while True:
         try:
             data, addr = CommandSock.recvfrom(1024) # buffer size is 1024 bytes
-            print( "Data: " + str(data) )
+            #print( "Data: " + str(data) )
             if data == InMsgBand5:
-                print("InMsgBand5\n")
+                #print("InMsgBand5\n")
                 lock.acquire()
                 AirBand = "5"
                 lock.release()
 
             if data == InMsgBand10:
-                print("InMsgBand10\n")
+                #print("InMsgBand10\n")
                 lock.acquire()
                 AirBand = "a"
                 lock.release()
 
             if data == InMsgBand20:
-                print("InMsgBand20\n")
+                #print("InMsgBand20\n")
                 lock.acquire()
                 AirBand = "0"
                 lock.release()
 
             if data == InMsgCameraTypeRPi:
-                print("InMsgCameraTypeRPi")
+                #print("InMsgCameraTypeRPi")
                 RemoteVideoMode=1
 
             if data == InMsgCameraTypeRPiAndSecondary:
-                print("RPiAndSecondary")
+                #print("RPiAndSecondary")
                 RemoteVideoMode=2
 
             if data == InMsgCameraTypeSecondary:
-                print("Secondary")
+                #print("Secondary")
                 RemoteVideoMode=3
 
 
@@ -287,7 +287,7 @@ def SwitchRemoteLocalBandTo(band):
     switched = 0
     while switched == 0:  #In case of error try to switch again
         if SwitchLocalBandTo(PrimaryCardPath, band) == True:
-            print("Switch local true")
+            #print("Switch local true")
             switched = 1
         else:
             sleep(0.5)
@@ -359,19 +359,19 @@ def ExitScript(ExitCode):
 def CheckBandRCValues():
     global CurrentBand
     if RC_Value >= Band20After and CurrentBand != 20 and RC_Value != 0:
-        print("Switching to 20...")
+        #print("Switching to 20...")
         if SwitchRemoteLocalBandTo(20) == False:
             ExitScript(2)
         CurrentBand = 20
 
     if RC_Value < Band10ValueMax and RC_Value > Band10ValueMin and CurrentBand != 10 and RC_Value != 0:
-        print("Switching to 10...")
+        #print("Switching to 10...")
         if SwitchRemoteLocalBandTo(10) == False:
             ExitScript(2)
         CurrentBand = 10
 
     if RC_Value <= Band5Below and CurrentBand != 5 and RC_Value != 0:
-        print("Switching to 5...")
+        #print("Switching to 5...")
         if SwitchRemoteLocalBandTo(5) == False:
             ExitScript(2)
         CurrentBand = 5
@@ -381,51 +381,40 @@ def SwitchLocalDisplayMode():
     global LocalVideoMode
     if RemoteVideoMode == 1 and LocalVideoMode != 1:
         LocalVideoMode=1
-        print("switching to 1")
-        try:
-            if os.path.exists("/tmp/SecondaryCameraActive"):
-                os.remove("/tmp/SecondaryCameraActive")
-        except Exception as e:
-            print("Remove file error: " +  str(e))
+        #print("switching to 1")
 
         try:
-            os.system('/tmp/KillForwardRTPMainCamera.sh')
-            os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
-            os.system('/tmp/ForwardRTPMainCamera.sh &')
+            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh')
         except Exception as e:
-            print("RTP forward. It is ok. File can be missing "  + str(e))
+            print("Exception. KillForwardRTPSecondaryCamera.sh: "  + str(e))
 
     if RemoteVideoMode == 2 and LocalVideoMode != 2:
         LocalVideoMode=2
-        print("switching to 2")
+        #print("switching to 2")
+
         try:
-            hfile = open("/tmp/SecondaryCameraActive", 'w+')
-            hfile.close()
+            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh')
         except Exception as e:
-            print("Create file error: " +  str(e))
+            print("Exception. KillForwardRTPSecondaryCamera.sh: " +  str(e))
+
         try:
-            os.system('/tmp/KillForwardRTPMainCamera.sh')
-            os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
-            os.system('/tmp/ForwardRTPMainCamera.sh &')
             os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTP.sh &')
         except Exception as e:
-            print("RTP secondary forward exception: " +  str(e))
+            print("RxForwardSecondaryRTP.sh forward exception: " +  str(e))
 
     if RemoteVideoMode == 3 and LocalVideoMode != 3:
         LocalVideoMode=3
-        print("switching to 3")
-        try:
-            hfile = open("/tmp/SecondaryCameraActive", 'w+')
-            hfile.close()
-        except Exception as e:
-            print("Create file error: " +  str(e))
+        #print("switching to 3")
 
         try:
-            os.system('/tmp/KillForwardRTPMainCamera.sh')
-            os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
+            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh')
+        except Exception as e:
+            print("Exception. KillForwardRTPSecondaryCamera.sh: " +  str(e))
+
+        try:
             os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTPAndDisplayLocally.sh &')
         except Exception as e:
-            print("RTP secondary forward exception: " +  str(e))
+            print("RxForwardSecondaryRTPAndDisplayLocally forward exception: " +  str(e))
 
 
 def CheckSecondaryCameraRCValues():
@@ -433,20 +422,20 @@ def CheckSecondaryCameraRCValues():
         if RemoteVideoMode != 1:
             for i in range(5):
                 SendDataToAir("RPi")
-            print("Camera: RPi")
+            #print("Camera: RPi")
 
 
 
     if RC_Value2 >= Camera2ValueMin and RC_Value2 <= Camera2ValueMax:
         if RemoteVideoMode != 2:
-            print("Camera: RPiAndSecondary")
+            #print("Camera: RPiAndSecondary")
             for i in range(5):
                 SendDataToAir("RPiAndSecondary")
 
 
     if RC_Value2 >= Camera3ValueMin and RC_Value2 <= Camera3ValueMax:
         if RemoteVideoMode != 3:
-            print("Camera: Secondary")
+            #print("Camera: Secondary")
             for i in range(5):
                 SendDataToAir("Secondary")
 
