@@ -25,6 +25,8 @@ if [[ $op == "old" || $op == "add" ]]; then
 	echo "add $IP"  > /dev/udp/127.0.0.1/9122
 	echo "add $IP"  > /dev/udp/127.0.0.1/9123
 	echo "add $IP"  > /dev/udp/127.0.0.1/9124
+	#OpenHD RemoteSettings android app
+	echo "add $IP"  > /dev/udp/127.0.0.1/9125
 	echo "add udp $IP $IP 14550 0" > /tmp/mavlink_router_pipe
 	if [ "$QUIET" == "N" ]; then
         	nice /home/pi/wifibroadcast-status/wbc_status "External device connected: $IP" 5 55 0 &
