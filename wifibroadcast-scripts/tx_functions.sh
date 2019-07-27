@@ -323,10 +323,15 @@ echo $USBCamera >> /dev/shm/startReadUSBCamera.sh
 
 
 echo "#!/bin/bash" > /dev/shm/startReadIPCameraHiRes.sh
+echo "while [ True ]; do" >> /dev/shm/startReadIPCameraHiRes.sh
 echo $IPCameraHiRes >> /dev/shm/startReadIPCameraHiRes.sh
+echo "sleep 2" >> /dev/shm/startReadIPCameraHiRes.sh
+echo "done" >> /dev/shm/startReadIPCameraHiRes.sh
 
 echo "#!/bin/bash" > /dev/shm/startReadIPCameraLowRes.sh
+echo "while [ True ]; do" >> /dev/shm/startReadIPCameraLowRes.sh
 echo $IPCameraLowRes >> /dev/shm/startReadIPCameraLowRes.sh
+echo "done" >> /dev/shm/startReadIPCameraLowRes.sh
 
 
 
