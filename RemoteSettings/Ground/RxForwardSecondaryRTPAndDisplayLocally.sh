@@ -20,4 +20,4 @@ NICS_LIST=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep 
 
 ./wfb_rx -u 5612 -p 23 -c 127.0.0.1 $NICS_LIST >/dev/null 2>/dev/null &
 
-gst-launch-1.0 udpsrc port=5612 !  tee name=t !  queue ! udpsink host=127.0.0.1 port=5621 t. ! "application/x-rtp,media=video" ! rtph264depay ! h264parse ! video/x-h264, stream-format="byte-stream" ! filesink location=/dev/stdout | /opt/vc/src/hello_pi/hello_video/hello_video.bin.240-befi
+gst-launch-1.0 udpsrc port=5612 !  tee name=t !  queue ! udpsink host=127.0.0.1 port=5621 t. ! "application/x-rtp,media=video" ! rtph264depay  ! video/x-h264, stream-format="byte-stream" ! filesink location=/dev/stdout | /opt/vc/src/hello_pi/hello_video/hello_video.bin.240-befi
