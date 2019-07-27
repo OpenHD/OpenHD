@@ -39,6 +39,8 @@ InMsgCameraTypeSecondary = bytearray(b'Secondary')
 
 CurrentBandTmp = 0
 CurrentBand = 0
+SessionID = "0"
+RestartDisplay = 0
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-PrimaryCardMAC", help="")
@@ -149,6 +151,8 @@ def StartRecvThread():
     global AirBand
     global ExitRecvThread
     global RemoteVideoMode
+    global SessionID
+    global RestartDisplay
 
     UDP_IP = ""
     UDP_PORT = 8943 #2022 - UDP DownLink from Air
@@ -162,34 +166,45 @@ def StartRecvThread():
             data, addr = CommandSock.recvfrom(1024) # buffer size is 1024 bytes
             #print( "Data: " + str(data) )
             if data == InMsgBand5:
-                #print("InMsgBand5\n")
                 lock.acquire()
                 AirBand = "5"
                 lock.release()
 
             if data == InMsgBand10:
-                #print("InMsgBand10\n")
                 lock.acquire()
                 AirBand = "a"
                 lock.release()
 
             if data == InMsgBand20:
-                #print("InMsgBand20\n")
                 lock.acquire()
                 AirBand = "0"
                 lock.release()
 
             if data == InMsgCameraTypeRPi:
-                #print("InMsgCameraTypeRPi")
                 RemoteVideoMode=1
 
             if data == InMsgCameraTypeRPiAndSecondary:
-                #print("RPiAndSecondary")
                 RemoteVideoMode=2
 
             if data == InMsgCameraTypeSecondary:
-                #print("Secondary")
                 RemoteVideoMode=3
+
+            try:
+                InDataStr = data.decode("utf-8")
+                if InDataStr.startswith("SessionID") == True:
+                    result = InDataStr[9:41]
+                    if SessionID != result:
+                        #print("new session detected")
+                        if SessionID == "0":
+                            SessionID = result
+                        else:
+                            SessionID = result
+                            #print("Restart display required")
+                            lock.acquire()
+                            RestartDisplay = 1
+                            lock.release()
+            except Exception as e:
+                print("Data decode error: E Message:  "  + str(e))
 
 
         except socket.timeout:
@@ -275,7 +290,6 @@ def SwitchRemoteLocalBandTo(band):
         sleep(0.4) #wait in msg
         lock.acquire()
         if band == 5 and AirBand == "5":
-            print("band == 5 and AirBand == 5")
             switched = 1
         if band == 10 and AirBand == "a":
             switched = 1
@@ -359,19 +373,19 @@ def ExitScript(ExitCode):
 def CheckBandRCValues():
     global CurrentBand
     if RC_Value >= Band20After and CurrentBand != 20 and RC_Value != 0:
-        #print("Switching to 20...")
+        print("Switching to 20MHz...")
         if SwitchRemoteLocalBandTo(20) == False:
             ExitScript(2)
         CurrentBand = 20
 
     if RC_Value < Band10ValueMax and RC_Value > Band10ValueMin and CurrentBand != 10 and RC_Value != 0:
-        #print("Switching to 10...")
+        print("Switching to 10MHz...")
         if SwitchRemoteLocalBandTo(10) == False:
             ExitScript(2)
         CurrentBand = 10
 
     if RC_Value <= Band5Below and CurrentBand != 5 and RC_Value != 0:
-        #print("Switching to 5...")
+        print("Switching to 5MHz...")
         if SwitchRemoteLocalBandTo(5) == False:
             ExitScript(2)
         CurrentBand = 5
@@ -379,9 +393,13 @@ def CheckBandRCValues():
 
 def SwitchLocalDisplayMode():
     global LocalVideoMode
-    if RemoteVideoMode == 1 and LocalVideoMode != 1:
+    global RestartDisplay
+    if RemoteVideoMode == 1 and LocalVideoMode != 1 or RestartDisplay == 1:
         LocalVideoMode=1
-        #print("switching to 1")
+        if RestartDisplay == 1:
+            lock.acquire()
+            RestartDisplay = 0
+            lock.release()
 
         try:
             os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh')
@@ -390,7 +408,10 @@ def SwitchLocalDisplayMode():
 
     if RemoteVideoMode == 2 and LocalVideoMode != 2:
         LocalVideoMode=2
-        #print("switching to 2")
+        if RestartDisplay == 1:
+            lock.acquire()
+            RestartDisplay = 0
+            lock.release()
 
         try:
             os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh')
@@ -404,7 +425,10 @@ def SwitchLocalDisplayMode():
 
     if RemoteVideoMode == 3 and LocalVideoMode != 3:
         LocalVideoMode=3
-        #print("switching to 3")
+        if RestartDisplay == 1:
+            lock.acquire()
+            RestartDisplay = 0
+            lock.release()
 
         try:
             os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh')
@@ -422,20 +446,17 @@ def CheckSecondaryCameraRCValues():
         if RemoteVideoMode != 1:
             for i in range(5):
                 SendDataToAir("RPi")
-            #print("Camera: RPi")
 
 
 
     if RC_Value2 >= Camera2ValueMin and RC_Value2 <= Camera2ValueMax:
         if RemoteVideoMode != 2:
-            #print("Camera: RPiAndSecondary")
             for i in range(5):
                 SendDataToAir("RPiAndSecondary")
 
 
     if RC_Value2 >= Camera3ValueMin and RC_Value2 <= Camera3ValueMax:
         if RemoteVideoMode != 3:
-            #print("Camera: Secondary")
             for i in range(5):
                 SendDataToAir("Secondary")
 
