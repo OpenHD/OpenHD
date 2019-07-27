@@ -9,7 +9,6 @@ import re
 
 from pathlib import Path
 import subprocess
-from subprocess import call
 from tempfile import mkstemp
 from shutil import move
 from os import fdopen, remove
@@ -160,6 +159,7 @@ def StartRecvThread():
     CommandSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     CommandSock.settimeout(1)
     CommandSock.bind((UDP_IP, UDP_PORT))
+    OldAirBand = ""
 
     while True:
         try:
@@ -169,16 +169,31 @@ def StartRecvThread():
                 lock.acquire()
                 AirBand = "5"
                 lock.release()
+                if OldAirBand != AirBand:
+                    OldAirBand = AirBand
+                    lock.acquire()
+                    RestartDisplay = 1
+                    lock.release()
 
             if data == InMsgBand10:
                 lock.acquire()
                 AirBand = "a"
                 lock.release()
+                if OldAirBand != AirBand:
+                    OldAirBand = AirBand
+                    lock.acquire()
+                    RestartDisplay = 1
+                    lock.release()
 
             if data == InMsgBand20:
                 lock.acquire()
                 AirBand = "0"
                 lock.release()
+                if OldAirBand != AirBand:
+                    OldAirBand = AirBand
+                    lock.acquire()
+                    RestartDisplay = 1
+                    lock.release()
 
             if data == InMsgCameraTypeRPi:
                 RemoteVideoMode=1
@@ -188,6 +203,7 @@ def StartRecvThread():
 
             if data == InMsgCameraTypeSecondary:
                 RemoteVideoMode=3
+
 
             try:
                 InDataStr = data.decode("utf-8")
@@ -402,11 +418,11 @@ def SwitchLocalDisplayMode():
             lock.release()
 
         try:
-            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh')
+            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh  > /dev/null 2>&1')
         except Exception as e:
             print("Exception. KillForwardRTPSecondaryCamera.sh: "  + str(e))
 
-    if RemoteVideoMode == 2 and LocalVideoMode != 2:
+    if RemoteVideoMode == 2 and LocalVideoMode != 2 or RestartDisplay == 1:
         LocalVideoMode=2
         if RestartDisplay == 1:
             lock.acquire()
@@ -414,16 +430,16 @@ def SwitchLocalDisplayMode():
             lock.release()
 
         try:
-            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh')
+            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh  > /dev/null 2>&1')
         except Exception as e:
             print("Exception. KillForwardRTPSecondaryCamera.sh: " +  str(e))
 
         try:
-            os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTP.sh &')
+            os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTP.sh  > /dev/null 2>&1 &')
         except Exception as e:
             print("RxForwardSecondaryRTP.sh forward exception: " +  str(e))
 
-    if RemoteVideoMode == 3 and LocalVideoMode != 3:
+    if RemoteVideoMode == 3 and LocalVideoMode != 3 or RestartDisplay == 1:
         LocalVideoMode=3
         if RestartDisplay == 1:
             lock.acquire()
@@ -431,12 +447,12 @@ def SwitchLocalDisplayMode():
             lock.release()
 
         try:
-            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh')
+            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh  > /dev/null 2>&1')
         except Exception as e:
             print("Exception. KillForwardRTPSecondaryCamera.sh: " +  str(e))
 
         try:
-            os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTPAndDisplayLocally.sh &')
+            os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTPAndDisplayLocally.sh  > /dev/null 2>&1 &')
         except Exception as e:
             print("RxForwardSecondaryRTPAndDisplayLocally forward exception: " +  str(e))
 
