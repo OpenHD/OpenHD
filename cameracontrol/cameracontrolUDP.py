@@ -274,7 +274,12 @@ def SwitchCamera(InCameraType, InBand):
             if SecondaryCamera == "IP":
                 os.system('/home/pi/RemoteSettings/KillRaspivid.sh 2>/dev/null')
                 os.system('/home/pi/RemoteSettings/KillIPCamera.sh  2>/dev/null')
-                os.system('/dev/shm/startReadIPCameraHiRes.sh &')
+                if InBand == "0":
+                    os.system('/dev/shm/startReadIPCameraHiRes.sh &')
+                if InBand == "a":
+                    os.system('/dev/shm/startReadIPCameraLowRes.sh &')
+                if InBand == "5":
+                    os.system('/dev/shm/startReadIPCameraLowRes.sh &')
             if SecondaryCamera == "USB":
                 os.system('/home/pi/RemoteSettings/KillRaspivid.sh 2>/dev/nulll')
                 os.system('/home/pi/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
