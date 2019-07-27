@@ -32,6 +32,8 @@ from tempfile import mkstemp
 from shutil import move
 from os import fdopen, remove
 
+import random
+import string
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-IsArduCameraV21", type=int, help="")
@@ -141,6 +143,9 @@ InMsgCameraTypeRPi = bytearray(b'RPi')
 InMsgCameraTypeRPiAndSecondary = bytearray(b'RPiAndSecondary')
 InMsgCameraTypeSecondary = bytearray(b'Secondary')
 
+InMsgBand5 = bytearray(b'5') #Air to 5
+InMsgBand10 = bytearray(b'a') #Air to 10
+InMsgBand20 = bytearray(b'0') #Air to 20
 
 ChannelValueCurrent=-1
 ChannelValueNew=0
@@ -401,10 +406,13 @@ def SendDataToGround(MessageBuf):
     sockToAir = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
     sockToAir.sendto(MessageBuf, ('127.0.0.1', UDP_PORT))
 
+def random_string(length):
+    pool = string.letters + string.digits
+    return ''.join(random.choice(pool) for i in xrange(length))
 
 def AirToGroundNotifyCameraModeThread():
     while True:
-
+	SendDataToGround(SessionID)
         lock.acquire()
         type = CameraType
         lock.release()
@@ -486,6 +494,10 @@ SwitchCheckThread = threading.Thread(target=SwitchThread)
 SwitchCheckThread.daemon = True
 SwitchCheckThread.start()
 
+
+
+IDTemp=random_string(32)
+SessionID="SessionID" + IDTemp
 NotifyThread = threading.Thread(target=AirToGroundNotifyCameraModeThread)
 NotifyThread.daemon = True
 NotifyThread.start()
