@@ -5,6 +5,7 @@ TTY=`tty`
 case $TTY in
     /dev/tty1) # TX/RX
 	echo "tty1"
+	service ssh start
 	
 	python /root/wifibroadcast_misc/gpio-IsAir.py
 	
