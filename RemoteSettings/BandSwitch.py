@@ -261,9 +261,27 @@ def SwitchLocalBandTo(PathToFile, Mode):
         return False
     return True
 
+def ReadLocalBand(PathToFile):
+    try:
+        hFile = open(PathToFile, 'r')
+        res=hFile.readline()
+        print(res)
+        hFile.close()
+        if  res.startswith("0x00000000") == True:
+            return 20
+        if  res.startswith("0x0000000a") == True:
+            return 10
+        if  res.startswith("0x00000005") == True:
+            return 5
+
+    except Exception as e:
+        print("Error: thrown exception while processing file \n" + PathToFile + " E Message:  "  + str(e))
+        return -1
+    return -1
 
 def SwitchRemoteLocalBandTo(band):
     global AirBand
+    SlaveCardOldBandList = []
     SendMsgBuf = ""
     if band == 5:
         SendMsgBuf = "5"
@@ -290,7 +308,12 @@ def SwitchRemoteLocalBandTo(band):
         print("Slave cards count changed since script started. Exit script to restart.")
         return False
 
-
+    for z in range(SlaveCardCount):
+        SingleOldBand = ReadLocalBand(SlaveCardList[z])
+        if SingleOldBand != -1:
+            SlaveCardOldBandList.append(SingleOldBand)
+        else:
+            return False
 
     #switch secondary WiFI card to requested band
     for z in range(SlaveCardCount):
@@ -300,27 +323,47 @@ def SwitchRemoteLocalBandTo(band):
 
     #send "band switch" request to Air
     switched = 0
-    while switched == 0: #Resend until confirmation be received
-        print("AirBand start value: " + AirBand)
+    ResendCount = 0
+    StopResend = 0
+    while StopResend != 1: #Resend until confirmation be received
+        print("Received remote band:  " + AirBand)
         SendDataToAir(SendMsgBuf)
         sleep(0.4) #wait in msg
         lock.acquire()
         if band == 5 and AirBand == "5":
             switched = 1
+            StopResend = 1
         if band == 10 and AirBand == "a":
             switched = 1
+            StopResend = 1
         if band == 20 and AirBand == "0":
             switched = 1
+            StopResend = 1
         lock.release()
 
-    #Switch confirmed. Switch primary card to requested band.
-    switched = 0
-    while switched == 0:  #In case of error try to switch again
-        if SwitchLocalBandTo(PrimaryCardPath, band) == True:
-            #print("Switch local true")
-            switched = 1
-        else:
-            sleep(0.5)
+        ResendCount += 1
+        if ResendCount >= 9:
+            StopResend = 1
+
+    if switched == 1:
+        #Switch confirmed. Switch primary card to requested band.
+        switched = 0
+        while switched == 0:  #In case of error try to switch again
+            if SwitchLocalBandTo(PrimaryCardPath, band) == True:
+                #print("Switch local true")
+                switched = 1
+            else:
+                sleep(0.5)
+    else:
+        #switch not confirmed. Roll back slave cards
+        print("Switch to requested band not confirmed. Rollback...") 
+        for z in range(SlaveCardCount):
+            print("Trying to set old band: " + str(SlaveCardOldBandList[z]) + " to card: " + SlaveCardList[z])
+            if SwitchLocalBandTo(SlaveCardList[z], SlaveCardOldBandList[z]) == False:
+                print("SwitchLocalBandTo + rollback - failed")
+            else:
+                print("Rolled back.")
+        return False
 
     print("Done. ")
     return True
@@ -390,21 +433,18 @@ def CheckBandRCValues():
     global CurrentBand
     if RC_Value >= Band20After and CurrentBand != 20 and RC_Value != 0:
         print("Switching to 20MHz...")
-        if SwitchRemoteLocalBandTo(20) == False:
-            ExitScript(2)
-        CurrentBand = 20
+        if SwitchRemoteLocalBandTo(20) != False:
+            CurrentBand = 20
 
     if RC_Value < Band10ValueMax and RC_Value > Band10ValueMin and CurrentBand != 10 and RC_Value != 0:
         print("Switching to 10MHz...")
-        if SwitchRemoteLocalBandTo(10) == False:
-            ExitScript(2)
-        CurrentBand = 10
+        if SwitchRemoteLocalBandTo(10) != False:
+            CurrentBand = 10
 
     if RC_Value <= Band5Below and CurrentBand != 5 and RC_Value != 0:
         print("Switching to 5MHz...")
-        if SwitchRemoteLocalBandTo(5) == False:
-            ExitScript(2)
-        CurrentBand = 5
+        if SwitchRemoteLocalBandTo(5) != False:
+            CurrentBand = 5
 
 
 def SwitchLocalDisplayMode():
