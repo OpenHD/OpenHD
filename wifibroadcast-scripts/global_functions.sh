@@ -239,11 +239,23 @@ function datarate_to_wifi_settings {
 		UPLINK_WIFI_BITRATE=11
 		TELEMETRY_WIFI_BITRATE=24
 		VIDEO_WIFI_BITRATE=24
+                if [ "$UseMCS" == "Y" ]; then
+                        UseMCS="1"
+                        VIDEO_WIFI_BITRATE="3"
+                else
+                        UseMCS="0"
+                fi
 		;;
 		6)
 		UPLINK_WIFI_BITRATE=12
 		TELEMETRY_WIFI_BITRATE=36
 		VIDEO_WIFI_BITRATE=36
+                if [ "$UseMCS" == "Y" ]; then
+                        UseMCS="1"
+                        VIDEO_WIFI_BITRATE="4"
+                else
+                        UseMCS="0"
+                fi
 		;;
 	esac
 

@@ -181,7 +181,7 @@ function tx_function {
 	if [ "$UNDERVOLT" == "0" ]; then
 		if [ "$VIDEO_BITRATE" == "auto" ]; then
 			echo -n "Measuring max. available bitrate .. "
-			BITRATE_MEASURED=`/home/pi/wifibroadcast-base/tx_measure -p 77 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -y 0 $NICS`
+			BITRATE_MEASURED=`/home/pi/wifibroadcast-base/tx_measure -p 77 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS`
 			BITRATE=$((BITRATE_MEASURED*$BITRATE_PERCENT/100))
 			BITRATE_KBIT=$((BITRATE/1000))
 			BITRATE_MEASURED_KBIT=$((BITRATE_MEASURED/1000))
