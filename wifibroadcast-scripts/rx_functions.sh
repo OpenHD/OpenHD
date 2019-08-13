@@ -252,10 +252,10 @@ function rx_function {
 				/home/pi/RemoteSettings/GroundRSSI.sh &
 			fi
 			
-			if [ "$IsBandSwicherEnabled" == "1" ]; then
+			#if [ "$IsBandSwicherEnabled" == "1" ]; then
 			    echo "BAND SWITCHER ENABLED...."
         			/home/pi/RemoteSettings/BandSwitcher.sh &
-			fi
+			#fi
 		fi
 		IsFirstTime=1
 		#MYADDEND

@@ -9,7 +9,6 @@ import re
 
 from pathlib import Path
 import subprocess
-from subprocess import call
 from tempfile import mkstemp
 from shutil import move
 from os import fdopen, remove
@@ -31,10 +30,16 @@ ExitRCThread2 = 0
 
 RC_Value = 0
 RC_Value2 = 0
-CurrentCamera=1
+LocalVideoMode=1
+RemoteVideoMode=1
+InMsgCameraTypeRPi = bytearray(b'RPi')
+InMsgCameraTypeRPiAndSecondary = bytearray(b'RPiAndSecondary')
+InMsgCameraTypeSecondary = bytearray(b'Secondary')
 
 CurrentBandTmp = 0
 CurrentBand = 0
+SessionID = "0"
+RestartDisplay = 0
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-PrimaryCardMAC", help="")
@@ -144,6 +149,9 @@ def StartRCThreadIn2():
 def StartRecvThread():
     global AirBand
     global ExitRecvThread
+    global RemoteVideoMode
+    global SessionID
+    global RestartDisplay
 
     UDP_IP = ""
     UDP_PORT = 8943 #2022 - UDP DownLink from Air
@@ -151,28 +159,69 @@ def StartRecvThread():
     CommandSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     CommandSock.settimeout(1)
     CommandSock.bind((UDP_IP, UDP_PORT))
+    OldAirBand = ""
 
     while True:
         try:
             data, addr = CommandSock.recvfrom(1024) # buffer size is 1024 bytes
-            print( "Data: " + str(data) )
+            #print( "Data: " + str(data) )
             if data == InMsgBand5:
-                print("InMsgBand5\n")
                 lock.acquire()
                 AirBand = "5"
                 lock.release()
+                if OldAirBand != AirBand:
+                    OldAirBand = AirBand
+                    lock.acquire()
+                    RestartDisplay = 1
+                    lock.release()
 
             if data == InMsgBand10:
-                print("InMsgBand10\n")
                 lock.acquire()
                 AirBand = "a"
                 lock.release()
+                if OldAirBand != AirBand:
+                    OldAirBand = AirBand
+                    lock.acquire()
+                    RestartDisplay = 1
+                    lock.release()
 
             if data == InMsgBand20:
-                print("InMsgBand20\n")
                 lock.acquire()
                 AirBand = "0"
                 lock.release()
+                if OldAirBand != AirBand:
+                    OldAirBand = AirBand
+                    lock.acquire()
+                    RestartDisplay = 1
+                    lock.release()
+
+            if data == InMsgCameraTypeRPi:
+                RemoteVideoMode=1
+
+            if data == InMsgCameraTypeRPiAndSecondary:
+                RemoteVideoMode=2
+
+            if data == InMsgCameraTypeSecondary:
+                RemoteVideoMode=3
+
+
+            try:
+                InDataStr = data.decode("utf-8")
+                if InDataStr.startswith("SessionID") == True:
+                    result = InDataStr[9:41]
+                    if SessionID != result:
+                        #print("new session detected")
+                        if SessionID == "0":
+                            SessionID = result
+                        else:
+                            SessionID = result
+                            #print("Restart display required")
+                            lock.acquire()
+                            RestartDisplay = 1
+                            lock.release()
+            except Exception as e:
+                print("Data decode error: E Message:  "  + str(e))
+
 
         except socket.timeout:
             if ExitRecvThread == 1:
@@ -212,9 +261,27 @@ def SwitchLocalBandTo(PathToFile, Mode):
         return False
     return True
 
+def ReadLocalBand(PathToFile):
+    try:
+        hFile = open(PathToFile, 'r')
+        res=hFile.readline()
+        print(res)
+        hFile.close()
+        if  res.startswith("0x00000000") == True:
+            return 20
+        if  res.startswith("0x0000000a") == True:
+            return 10
+        if  res.startswith("0x00000005") == True:
+            return 5
+
+    except Exception as e:
+        print("Error: thrown exception while processing file \n" + PathToFile + " E Message:  "  + str(e))
+        return -1
+    return -1
 
 def SwitchRemoteLocalBandTo(band):
     global AirBand
+    SlaveCardOldBandList = []
     SendMsgBuf = ""
     if band == 5:
         SendMsgBuf = "5"
@@ -241,7 +308,12 @@ def SwitchRemoteLocalBandTo(band):
         print("Slave cards count changed since script started. Exit script to restart.")
         return False
 
-
+    for z in range(SlaveCardCount):
+        SingleOldBand = ReadLocalBand(SlaveCardList[z])
+        if SingleOldBand != -1:
+            SlaveCardOldBandList.append(SingleOldBand)
+        else:
+            return False
 
     #switch secondary WiFI card to requested band
     for z in range(SlaveCardCount):
@@ -251,28 +323,47 @@ def SwitchRemoteLocalBandTo(band):
 
     #send "band switch" request to Air
     switched = 0
-    while switched == 0: #Resend until confirmation be received
-        print("AirBand start value: " + AirBand)
+    ResendCount = 0
+    StopResend = 0
+    while StopResend != 1: #Resend until confirmation be received
+        print("Received remote band:  " + AirBand)
         SendDataToAir(SendMsgBuf)
         sleep(0.4) #wait in msg
         lock.acquire()
         if band == 5 and AirBand == "5":
-            print("band == 5 and AirBand == 5")
             switched = 1
+            StopResend = 1
         if band == 10 and AirBand == "a":
             switched = 1
+            StopResend = 1
         if band == 20 and AirBand == "0":
             switched = 1
+            StopResend = 1
         lock.release()
 
-    #Switch confirmed. Switch primary card to requested band.
-    switched = 0
-    while switched == 0:  #In case of error try to switch again
-        if SwitchLocalBandTo(PrimaryCardPath, band) == True:
-            print("Switch local true")
-            switched = 1
-        else:
-            sleep(0.5)
+        ResendCount += 1
+        if ResendCount >= 9:
+            StopResend = 1
+
+    if switched == 1:
+        #Switch confirmed. Switch primary card to requested band.
+        switched = 0
+        while switched == 0:  #In case of error try to switch again
+            if SwitchLocalBandTo(PrimaryCardPath, band) == True:
+                #print("Switch local true")
+                switched = 1
+            else:
+                sleep(0.5)
+    else:
+        #switch not confirmed. Roll back slave cards
+        print("Switch to requested band not confirmed. Rollback...") 
+        for z in range(SlaveCardCount):
+            print("Trying to set old band: " + str(SlaveCardOldBandList[z]) + " to card: " + SlaveCardList[z])
+            if SwitchLocalBandTo(SlaveCardList[z], SlaveCardOldBandList[z]) == False:
+                print("SwitchLocalBandTo + rollback - failed")
+            else:
+                print("Rolled back.")
+        return False
 
     print("Done. ")
     return True
@@ -341,84 +432,91 @@ def ExitScript(ExitCode):
 def CheckBandRCValues():
     global CurrentBand
     if RC_Value >= Band20After and CurrentBand != 20 and RC_Value != 0:
-        print("Switching to 20...")
-        if SwitchRemoteLocalBandTo(20) == False:
-            ExitScript(2)
-        CurrentBand = 20
+        print("Switching to 20MHz...")
+        if SwitchRemoteLocalBandTo(20) != False:
+            CurrentBand = 20
 
     if RC_Value < Band10ValueMax and RC_Value > Band10ValueMin and CurrentBand != 10 and RC_Value != 0:
-        print("Switching to 10...")
-        if SwitchRemoteLocalBandTo(10) == False:
-            ExitScript(2)
-        CurrentBand = 10
+        print("Switching to 10MHz...")
+        if SwitchRemoteLocalBandTo(10) != False:
+            CurrentBand = 10
 
     if RC_Value <= Band5Below and CurrentBand != 5 and RC_Value != 0:
-        print("Switching to 5...")
-        if SwitchRemoteLocalBandTo(5) == False:
-            ExitScript(2)
-        CurrentBand = 5
+        print("Switching to 5MHz...")
+        if SwitchRemoteLocalBandTo(5) != False:
+            CurrentBand = 5
+
+
+def SwitchLocalDisplayMode():
+    global LocalVideoMode
+    global RestartDisplay
+    if RemoteVideoMode == 1 and LocalVideoMode != 1 or RestartDisplay == 1:
+        LocalVideoMode=1
+        if RestartDisplay == 1:
+            lock.acquire()
+            RestartDisplay = 0
+            lock.release()
+
+        try:
+            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh  > /dev/null 2>&1')
+        except Exception as e:
+            print("Exception. KillForwardRTPSecondaryCamera.sh: "  + str(e))
+
+    if RemoteVideoMode == 2 and LocalVideoMode != 2 or RestartDisplay == 1:
+        LocalVideoMode=2
+        if RestartDisplay == 1:
+            lock.acquire()
+            RestartDisplay = 0
+            lock.release()
+
+        try:
+            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh  > /dev/null 2>&1')
+        except Exception as e:
+            print("Exception. KillForwardRTPSecondaryCamera.sh: " +  str(e))
+
+        try:
+            os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTP.sh  > /dev/null 2>&1 &')
+        except Exception as e:
+            print("RxForwardSecondaryRTP.sh forward exception: " +  str(e))
+
+    if RemoteVideoMode == 3 and LocalVideoMode != 3 or RestartDisplay == 1:
+        LocalVideoMode=3
+        if RestartDisplay == 1:
+            lock.acquire()
+            RestartDisplay = 0
+            lock.release()
+
+        try:
+            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh  > /dev/null 2>&1')
+        except Exception as e:
+            print("Exception. KillForwardRTPSecondaryCamera.sh: " +  str(e))
+
+        try:
+            os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTPAndDisplayLocally.sh  > /dev/null 2>&1 &')
+        except Exception as e:
+            print("RxForwardSecondaryRTPAndDisplayLocally forward exception: " +  str(e))
+
 
 def CheckSecondaryCameraRCValues():
-    global CurrentCamera
     if RC_Value2 >= Camera1ValueMin and RC_Value2 <= Camera1ValueMax:
-        if CurrentCamera != 1:
-            CurrentCamera = 1
+        if RemoteVideoMode != 1:
             for i in range(5):
                 SendDataToAir("RPi")
-            print("Camera: RPi")
 
-            try:
-                if os.path.exists("/tmp/SecondaryCameraActive"):
-                    os.remove("/tmp/SecondaryCameraActive")
-            except Exception as e:
-                print("Remove file error: " +  str(e))
 
-            try:
-                os.system('/tmp/KillForwardRTPMainCamera.sh')
-                os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
-                os.system('/tmp/ForwardRTPMainCamera.sh &')
-            except Exception as e:
-                print("RTP forward. It is ok. File can be missing "  + str(e))
 
     if RC_Value2 >= Camera2ValueMin and RC_Value2 <= Camera2ValueMax:
-        if CurrentCamera != 2:
-            CurrentCamera = 2
-            print("Camera: RPiAndSecondary")
+        if RemoteVideoMode != 2:
             for i in range(5):
                 SendDataToAir("RPiAndSecondary")
-            try:
-                hfile = open("/tmp/SecondaryCameraActive", 'w+')
-                hfile.close()
-            except Exception as e:
-                print("Create file error: " +  str(e))
-            try:
-                os.system('/tmp/KillForwardRTPMainCamera.sh')
-                os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
-                os.system('/tmp/ForwardRTPMainCamera.sh &')
-                os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTP.sh &')
-            except Exception as e:
-                print("RTP secondary forward exception: " +  str(e))
+
 
     if RC_Value2 >= Camera3ValueMin and RC_Value2 <= Camera3ValueMax:
-        if CurrentCamera != 3:
-            CurrentCamera = 3
-            print("Camera: Secondary")
+        if RemoteVideoMode != 3:
             for i in range(5):
                 SendDataToAir("Secondary")
 
-            try:
-                hfile = open("/tmp/SecondaryCameraActive", 'w+')
-                hfile.close()
-            except Exception as e:
-                print("Create file error: " +  str(e))
-
-            try:
-                os.system('/tmp/KillForwardRTPMainCamera.sh')
-                os.system('/tmp/KillForwardRTPSecondaryCamera.sh')
-                os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTPAndDisplayLocally.sh &')
-            except Exception as e:
-                print("RTP secondary forward exception: " +  str(e))
-
+     
     if RC_Value2 >= Camera4ValueMin and RC_Value2 <= Camera4ValueMax:
         print("Camera: non")
 
@@ -454,21 +552,25 @@ if FindCardPhyInitPath() == True:
         CurrentBand = 20
     print("CurrentBand: ",CurrentBand)
 
-    CurrentCamera = 1
 
     #Add command line in code
     while True:
         CheckBandRCValues()
         CheckSecondaryCameraRCValues()
+        SwitchLocalDisplayMode()
 
         sleep(0.6)
 
 else:
     print("Ath9k card not found. Band switch disabled. USB\IP camera switch still enabled.")
 
+    RecvThread = threading.Thread(target=StartRecvThread)
+    RecvThread.start()
+
     RC_UDP_IN_thread2 = threading.Thread(target=StartRCThreadIn2)
     RC_UDP_IN_thread2.start()
 
     while True:
         CheckSecondaryCameraRCValues()
+        SwitchLocalDisplayMode()
         sleep(0.6)

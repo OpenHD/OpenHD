@@ -13,7 +13,27 @@ import psutil
 import argparse
 import socket
 import struct
+import threading
+lock = threading.Lock()
 
+
+import configparser
+import binascii
+from itertools import chain
+import os
+import sys
+import fileinput
+import socket
+import re
+
+import subprocess
+from subprocess import call
+from tempfile import mkstemp
+from shutil import move
+from os import fdopen, remove
+
+import random
+import string
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-IsArduCameraV21", type=int, help="")
@@ -34,7 +54,14 @@ parser.add_argument("-Camera3ValueMax", type=int, help="")
 parser.add_argument("-Camera4ValueMin", type=int, help="")
 parser.add_argument("-Camera4ValueMax", type=int, help="")
 
-parser.add_argument("-DefaultCameraId", type=int, help="")
+parser.add_argument("-DefaultCameraId", type=int, help="Arducamera board default camera id")
+
+parser.add_argument("-BitrateMeasured", type=int, help="")
+parser.add_argument("-SecondaryCamera", help="IP,USB")
+parser.add_argument("-CameraType", help="RPi,RPiAndSecondary,Secondary")
+parser.add_argument("-WithoutNativeRPiCamera", help="1,0")
+parser.add_argument("-DefaultBandWidthAth9k", type=int, help="")
+
 args = parser.parse_args()
 
 ############################# Assigning values ...
@@ -57,6 +84,23 @@ Camera3ValueMax = args.Camera3ValueMax
 
 Camera4ValueMin = args.Camera4ValueMin
 Camera4ValueMax = args.Camera4ValueMax
+
+BitrateMeasured = args.BitrateMeasured
+SecondaryCamera = args.SecondaryCamera
+CameraType = args.CameraType
+WithoutNativeRPiCamera = args.WithoutNativeRPiCamera
+
+tmp = args.DefaultBandWidthAth9k
+CurrentBand = "0"
+if tmp == 20:
+    CurrentBand="0"
+elif tmp == 10:
+    CurrentBand="a"
+elif tmp == 5:
+    CurrentBand="5"
+else:
+    CurrentBand = "0"
+
 ############################ Print values For debug.
 print("IsArduCameraV21: ", IsArduCameraV21)
 print("IsCamera1Enable: ", IsCamera1Enabled)
@@ -94,8 +138,18 @@ print("Camera4ValueMax: ",Camera4ValueMax )
 
 
 ##############################Global
+
+InMsgCameraTypeRPi = bytearray(b'RPi')
+InMsgCameraTypeRPiAndSecondary = bytearray(b'RPiAndSecondary')
+InMsgCameraTypeSecondary = bytearray(b'Secondary')
+
+InMsgBand5 = bytearray(b'5') #Air to 5
+InMsgBand10 = bytearray(b'a') #Air to 10
+InMsgBand20 = bytearray(b'0') #Air to 20
+
 ChannelValueCurrent=-1
 ChannelValueNew=0
+SwitchCameraEvent=0
 
 gp.setmode(gp.BOARD)
 
@@ -119,7 +173,6 @@ def InitGPIO():
         gp.output(22, True)
 
     print("GPIO init ended.")
-
 
 
 def ChangeTo(id):
@@ -155,6 +208,86 @@ def KillProcessTree(PID_In,timeout=3):
     except:
         print("Kill process exception.")
 
+###########################################new start
+
+def SwitchCamera(InCameraType, InBand):
+    print("CameraType: ", InCameraType)
+    print("CurrentBand: ", InBand )
+    if InCameraType == "RPi":
+        try:
+            os.system('/home/pi/RemoteSettings/KillIPCamera.sh 2>/dev/null')
+            os.system('/home/pi/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
+            os.system('/home/pi/RemoteSettings/KillRaspivid.sh 2>/dev/null')
+            if InBand == "0":
+                os.system('/dev/shm/startReadCameraTransfer.sh &')
+            if InBand == "a":
+                os.system('/dev/shm/startReadCameraTransfer_10.sh &')
+            if InBand == "5":
+                os.system('/dev/shm/startReadCameraTransfer_5.sh &')
+        except Exception as e:
+            print(e)
+
+    if InCameraType == "RPiAndSecondary":
+        try:
+            BitrateSecondaryCamera = 1000000
+            BitrateMainCamera = 1000000
+            if InBand == "0":
+                BitrateSecondaryCamera = int(BitrateMeasured / 2)
+                BitrateMainCamera = int(BitrateMeasured / 2)
+            if InBand == "a":
+                BitrateSecondaryCamera = int(BitrateMeasured / 4)
+                BitrateMainCamera = int(BitrateMeasured / 4)
+            if InBand == "5":
+                BitrateSecondaryCamera = int(BitrateMeasured / 8)
+                BitrateMainCamera = int(BitrateMeasured / 8)
+
+
+            print("BitrateMainCamera: ",  BitrateMainCamera )
+            print("BitrateUSBCamera: ", BitrateSecondaryCamera )
+            os.system('/home/pi/RemoteSettings/KillIPCamera.sh 2>/dev/null')
+            os.system('/home/pi/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
+            os.system('/home/pi/RemoteSettings/KillRaspivid.sh 2>/dev/null')
+            subprocess.Popen( ['/dev/shm/startReadCameraTransferExteranlBitrate.sh', str(BitrateMainCamera) ] )
+
+            if SecondaryCamera == "IP":
+                os.system('/home/pi/RemoteSettings/KillIPCamera.sh 2>/dev/null')
+                os.system('/dev/shm/startReadIPCameraLowRes.sh &')
+            if SecondaryCamera == "USB":
+                os.system('/home/pi/RemoteSettings/KillUSBCamera.sh 2>/dev/null')     
+                subprocess.Popen( ['/dev/shm/startReadUSBCamera.sh', str(BitrateSecondaryCamera) ] )
+        except Exception as e:
+            print(e)
+    if InCameraType == "Secondary":
+        try:
+            BitrateSecondaryCamera = 1000000
+            if InBand == "0":
+                BitrateSecondaryCamera = int(BitrateMeasured) 
+            if InBand == "a":
+                BitrateSecondaryCamera = int(BitrateMeasured / 2)
+            if InBand == "5":
+                BitrateSecondaryCamera = int(BitrateMeasured / 4)
+
+            os.system('/home/pi/RemoteSettings/KillIPCamera.sh  2>/dev/null')
+            os.system('/home/pi/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
+            os.system('/home/pi/RemoteSettings/KillRaspivid.sh  2>/dev/null')
+
+            if SecondaryCamera == "IP":
+                os.system('/home/pi/RemoteSettings/KillRaspivid.sh 2>/dev/null')
+                os.system('/home/pi/RemoteSettings/KillIPCamera.sh  2>/dev/null')
+                if InBand == "0":
+                    os.system('/dev/shm/startReadIPCameraHiRes.sh &')
+                if InBand == "a":
+                    os.system('/dev/shm/startReadIPCameraLowRes.sh &')
+                if InBand == "5":
+                    os.system('/dev/shm/startReadIPCameraLowRes.sh &')
+            if SecondaryCamera == "USB":
+                os.system('/home/pi/RemoteSettings/KillRaspivid.sh 2>/dev/nulll')
+                os.system('/home/pi/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
+                subprocess.Popen( ['/dev/shm/startReadUSBCamera.sh', str(BitrateSecondaryCamera) ] )
+        except Exception as e:
+            print(e)
+
+###########################################new end
 
 def StopCamera():
     print("stopping camera... ")
@@ -173,9 +306,10 @@ def StopCamera():
 
 def StartCamera():
     print("Starting camera...")
-    shellcommand = "/dev/shm/startReadCameraTransfer.sh &"
-    print("Shell Command to start transfer video: ", shellcommand)
-    os.system(shellcommand)
+    #shellcommand = "/dev/shm/startReadCameraTransfer.sh &"
+    #print("Shell Command to start transfer video: ", shellcommand)
+    #os.system(shellcommand)
+    SwitchCamera(CameraType, CurrentBand)
     sleep(0.1)
 
 ActiveCameraId = 0
@@ -224,19 +358,6 @@ def SwitchMultiCameraTo(id):
     print("New id == ", ActiveCameraId)
     
     
-def signal_handler(signal, frame):
-    print('Exit code...')
-    StopCamera()
-    try:
-        gp.cleanup()
-        s.close()
-        print("Cleaning process done.")
-    except:
-        print("except in signal_handler")
-        print("Completed")
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
 
      
 # Connect to the fly controller and init camera
@@ -268,7 +389,128 @@ else:
     StartCamera()
     while True:
         sleep(60)
-        
+
+def SwitchThread():
+    global SwitchCameraEvent
+    while True:
+        lock.acquire()
+        IsTime=SwitchCameraEvent
+        SwitchCameraEvent=0
+        lock.release()
+        if IsTime == 1:
+            lock.acquire()
+            Band=CurrentBand
+            Type=CameraType
+            lock.release()
+            SwitchCamera(Type, Band)
+        sleep(0.5)
+
+            
+def SendDataToGround(MessageBuf):
+    UDP_PORT = 8943
+    sockToAir = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+    sockToAir.sendto(MessageBuf, ('127.0.0.1', UDP_PORT))
+
+def random_string(length):
+    pool = string.letters + string.digits
+    return ''.join(random.choice(pool) for i in xrange(length))
+
+def AirToGroundNotifyCameraModeThread():
+    while True:
+	SendDataToGround(SessionID)
+        lock.acquire()
+        type = CameraType
+        lock.release()
+        SendDataToGround(type)
+        sleep(0.2)
+
+SocketBand=0
+def StartRecvBandMsg():
+    global CurrentBand
+    global SwitchCameraEvent
+    global SocketBand
+    UDP_IP = ""
+    UDP_PORT = 4324
+    try:
+        SocketBand = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        SocketBand.bind((UDP_IP, UDP_PORT))
+    except Exception as e:
+        print("Except: Bind to port 4324 " + str(e) ) 
+    while True:
+        data, addr = SocketBand.recvfrom(1024) # buffer size is 1024 bytes
+        if data == InMsgBand5:
+            lock.acquire()
+            CurrentBand = "5"
+            SwitchCameraEvent = 1
+            lock.release()
+        if data == InMsgBand10:
+            lock.acquire()
+            CurrentBand = "a"
+            SwitchCameraEvent = 1
+            lock.release()
+        if data == InMsgBand20:
+            lock.acquire()
+            CurrentBand = "0"
+            SwitchCameraEvent = 1
+            lock.release()
+
+
+SocketCameraType = 0
+def StartRecvCameraTypeMsg():
+    global CameraType
+    global SwitchCameraEvent
+    global SocketCameraType
+    UDP_IP = ""
+    UDP_PORT = 4323
+    try:
+        SocketCameraType = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        SocketCameraType.bind((UDP_IP, UDP_PORT))
+    except Exception as e:
+        print("Except: Bind to port 4323: " + str(e) ) 
+    while True:
+        data, addr = SocketCameraType.recvfrom(1024) # buffer size is 1024 bytes
+        if data == InMsgCameraTypeRPi and CameraType != "RPi" and WithoutNativeRPiCamera != "1" :
+            lock.acquire()
+            CameraType = "RPi"
+            SwitchCameraEvent = 1
+            lock.release()
+        if data == InMsgCameraTypeRPiAndSecondary and CameraType != "RPiAndSecondary" and WithoutNativeRPiCamera != "1" :
+            lock.acquire()
+            CameraType = "RPiAndSecondary"
+            SwitchCameraEvent = 1
+            lock.release()
+        if data == InMsgCameraTypeSecondary and CameraType != "Secondary":
+   
+            lock.acquire()
+            CameraType = "Secondary"
+            SwitchCameraEvent = 1
+            lock.release()
+
+
+InBandThread = threading.Thread(target=StartRecvBandMsg)
+InBandThread.daemon = True
+InBandThread.start()
+
+InCameraTypeThread = threading.Thread(target=StartRecvCameraTypeMsg)
+InCameraTypeThread.daemon = True
+InCameraTypeThread.start()
+
+SwitchCheckThread = threading.Thread(target=SwitchThread)
+SwitchCheckThread.daemon = True
+SwitchCheckThread.start()
+
+
+
+IDTemp=random_string(32)
+SessionID="SessionID" + IDTemp
+NotifyThread = threading.Thread(target=AirToGroundNotifyCameraModeThread)
+NotifyThread.daemon = True
+NotifyThread.start()
+
+
+
+
+#Arducamera Board:       
 while True:
 
     d = s.recvfrom(2)
@@ -299,3 +541,29 @@ while True:
     
     ChannelValueCurrent = ChannelValueNew
 
+
+def signal_handler(signal, frame):
+    print('Exit code...')
+    StopCamera()
+    try:
+        gp.cleanup()
+        
+        InBandThread._stop()
+        InCameraTypeThread._stop()
+        SwitchCheckThread._stop()
+        NotifyThread._stop()
+        shutdown(s, SHUT_RDWR)
+        shutdown(SocketCameraType, SHUT_RDWR)
+        shutdown(SocketBand, SHUT_RDWR)
+        s.close()
+        SocketCameraType.close()
+        SocketBand.close()
+
+
+        print("Cleaning process done.")
+    except:
+        print("except in signal_handler")
+        print("Completed")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
