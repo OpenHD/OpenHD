@@ -38,22 +38,19 @@ char Awaiting0Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Im
 char Awaiting1Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/1.jpg"};
 char Awaiting2Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/2.jpg"};
 char Awaiting3Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/3.jpg"};
+char Awaiting3Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/4.jpg"};
 
 char Download0Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/0.jpg"};
 char Download1Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/1.jpg"};
 char Download2Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/2.jpg"};
-char Download3Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/3.jpg"};
-char Download4Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/4.jpg"};
-char Download5Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/5.jpg"};
-char Download6Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/6.jpg"};
-char Download7Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/7.jpg"};
+
 
 time_t TimerLastSwitchAwaiting;
 time_t TimerLastSwitchDownloading;
 
 void SwitchImageByTimer()
 {
-	double SwitchAfterAwaiting = 0.5;
+	double SwitchAfterAwaiting = 0.2;
 	double SwitchAfterDownload = 0.2;
 	time_t now;
 	time(&now);
