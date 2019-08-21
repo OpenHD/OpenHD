@@ -20,11 +20,15 @@ case $TTY in
         i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
         grepRet=$?
         if [[ $grepRet -eq 0 ]] ; then
+			killall omxplayer  > /dev/null 2>/dev/null
+			killall omxplayer.bin  > /dev/null 2>/dev/null
 			/usr/bin/python3.5 /home/pi/RemoteSettings/Air/RemoteSettingSyncAir.py
 			CAM="1"
 			echo "0" > /tmp/ReadyToGo
         else
 			if [ -e /tmp/Air ]; then
+				killall omxplayer  > /dev/null 2>/dev/null
+				killall omxplayer.bin  > /dev/null 2>/dev/null
 				echo "force boot as Air via GPIO"
 				CAM="1"
 			fi
@@ -43,6 +47,9 @@ case $TTY in
 					# Ret code is 2  GPIO  selected as control
 					/usr/bin/python3.5 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia GPIO
 				fi
+				killall omxplayer  > /dev/null 2>/dev/null
+				killall omxplayer.bin  > /dev/null 2>/dev/null
+				/usr/bin/omxplayer --loop /home/pi/RemoteSettings/Ground/helper/DisplayProgram/video/AfterSSync.mp4 > /dev/null 2>/dev/null &
 	
 				echo "0" > /tmp/ReadyToGo
 			else # else we are TX ...
