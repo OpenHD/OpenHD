@@ -221,6 +221,11 @@ function rx_function {
     IsFirstTime=0;
     while true; do
         pause_while
+	
+		if [ $IsFirstTime -eq 0 ]; then
+                        killall omxplayer  > /dev/null 2>/dev/null
+                        killall omxplayer.bin  > /dev/null 2>/dev/null
+                fi
 
 		ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 $DISPLAY_PROGRAM > /dev/null 2>&1 &
 		ionice -c 3 nice cat /root/videofifo3 >> $VIDEOFILE &
