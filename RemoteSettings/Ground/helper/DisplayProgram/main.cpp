@@ -19,93 +19,17 @@
 #include <string.h>
 
 std::deque<std::string> ScreenBuf;
-VGImage Joystick = 0;
 
-std::vector<VGImage> Awaiting;
-std::vector<VGImage>::iterator AwaitingIter;
-
-std::vector<VGImage> Download;
-std::vector<VGImage>::iterator DownloadIter;
-
-//VGImage *Current = 0;
 
 //0 - Joystick, 1 - Awaiting, 2 - Downloading
-int SelectedImage = 0;
 
-char JoystickPath[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Joystick/0.jpg"};
+char InitPath[] = {"/usr/bin/omxplayer --loop /home/pi/RemoteSettings/Ground/helper/DisplayProgram/video/InitVideo.mp4 > /dev/null 2>/dev/null &"};
 
-char Awaiting0Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/0.jpg"};
-char Awaiting1Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/1.jpg"};
-char Awaiting2Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/2.jpg"};
-char Awaiting3Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/3.jpg"};
-char Awaiting3Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Awaiting/4.jpg"};
+char AwaitingPath[] = {"/usr/bin/omxplayer --loop /home/pi/RemoteSettings/Ground/helper/DisplayProgram/video/AwaitingVideo.mp4 > /dev/null 2>/dev/null &"};
 
-char Download0Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/0.jpg"};
-char Download1Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/1.jpg"};
-char Download2Path[] = {"/home/pi/RemoteSettings/Ground/helper/DisplayProgram/Images/Download/2.jpg"};
+char DownloadPath[] = {"/usr/bin/omxplayer --loop /home/pi/RemoteSettings/Ground/helper/DisplayProgram/video/DownloadVideo.mp4 > /dev/null 2>/dev/null &"};
 
-
-time_t TimerLastSwitchAwaiting;
-time_t TimerLastSwitchDownloading;
-
-void SwitchImageByTimer()
-{
-	double SwitchAfterAwaiting = 0.2;
-	double SwitchAfterDownload = 0.2;
-	time_t now;
-	time(&now);
-
-
-	double diffAwaiting = difftime(now, TimerLastSwitchAwaiting);
-	if(  diffAwaiting  > SwitchAfterAwaiting)
-	{
-		time(&TimerLastSwitchAwaiting);
-		if(AwaitingIter == Awaiting.end()-1 )
-			AwaitingIter = Awaiting.begin();
-		else
-			++AwaitingIter;
-	}
-
-        double diffDownload = difftime(now, TimerLastSwitchDownloading);
-        if(  diffDownload  > SwitchAfterDownload)
-        {
-                time(&TimerLastSwitchDownloading);
-                if(DownloadIter == Download.end()-1 )
-                        DownloadIter = Download.begin();
-                else
-                        ++DownloadIter;
-        }
-}
-
-
-void DrawImage(int width, int height)
-{
-	SwitchImageByTimer();
-
-	int offsetx = width - ( width/2);
-	int offsety =  height - (height/2);
-	switch(SelectedImage)
-	{
-		case 0:
-			DrawImageAtFit(offsetx, offsety  , width/2, height/2, Joystick);
-		break;
-		case 1:
-			DrawImageAtFit(offsetx, offsety  , width/2, height/2, *AwaitingIter);
-		break;
-
-                case 2:
-                        DrawImageAtFit(offsetx, offsety  , width/2, height/2, *DownloadIter);
-                break;
-
-		default:
-			DrawImageAtFit(offsetx, offsety  , width/2, height/2, Joystick);
-
-
-
-	}
-       
-	// DrawImageAtFit(offsetx, offsety  , width/2, height/2, *Current);                                    // Draw stretched across entire screen
-}
+int CurrentMode = 0;
 
 void DrawText(int width, int height, int fontscale)
 {
@@ -137,42 +61,48 @@ void RenderScren(int width, int height)
 {
 	//Start(width/2, height/2);
         Start(width, height);
-	Background(5, 5, 5);
-	DrawImage(width, height);
+//	Background(5, 5, 5);
+//	DrawImage(width, height);
 	DrawText(width, height, 65);
 
 	End();
 }
 
-void InitImages()
+int KillDisplayProgram()
 {
-	SelectedImage = 0;
-	//Awaiting0
-	Awaiting.push_back(CreateImageFromJpeg(Awaiting0Path) );
-	Awaiting.push_back(CreateImageFromJpeg(Awaiting1Path) );
-	Awaiting.push_back(CreateImageFromJpeg(Awaiting2Path) );
-	Awaiting.push_back(CreateImageFromJpeg(Awaiting3Path) );
+	system("killall omxplayer  > /dev/null 2>/dev/null");
+	system("killall omxplayer.bin  > /dev/null 2>/dev/null");
+	return 0;
+}
 
-	AwaitingIter = Awaiting.begin();
+void StartVideo(int VideoID)
+{
+	//0 - Joystick, 1 - Awaiting, 2 - Downloading
 
-        Download.push_back(CreateImageFromJpeg(Download0Path) );
-        Download.push_back(CreateImageFromJpeg(Download1Path) );
-        Download.push_back(CreateImageFromJpeg(Download2Path) );
-        Download.push_back(CreateImageFromJpeg(Download3Path) );
-        Download.push_back(CreateImageFromJpeg(Download4Path) );
-        Download.push_back(CreateImageFromJpeg(Download5Path) );
-        Download.push_back(CreateImageFromJpeg(Download6Path) );
-        Download.push_back(CreateImageFromJpeg(Download7Path) );
+	if( CurrentMode != VideoID)
+	{
+		KillDisplayProgram();
+		switch(VideoID)
+		{
+			case 0:
+			system(InitPath);
+			CurrentMode = 0;
+			break;
 
-	DownloadIter = Download.begin();
+                	case 1:
+              		system(AwaitingPath);
+			CurrentMode = 1;
+                	break;
 
+                	case 2:
+                	system(DownloadPath);
+			CurrentMode = 2;
+                	break;
 
-	Joystick = CreateImageFromJpeg(JoystickPath);
-
-
-
-	time(&TimerLastSwitchAwaiting);
-	time(&TimerLastSwitchDownloading);
+			default:
+			break; 
+		}
+	}
 }
 
 void *UDPThread(void *arg)
@@ -220,17 +150,17 @@ void *UDPThread(void *arg)
 			{
 				if( strncmp(&InBuffer[0],&InMsgAwaiting[0],16) ==0 )
 				{
-					SelectedImage  = 1;
+                                        StartVideo(1);
 				}
 
 				if( strncmp(&InBuffer[0],&InMsgJoystick[0],16) ==0 )
                                 {
-                                        SelectedImage  = 0;
+					StartVideo(0);
                                 }
 
 				if( strncmp(&InBuffer[0],&InMsgDownload[0],16) ==0 )
                                 {
-                                        SelectedImage  = 2;
+                                        StartVideo(2);
                                 }
 			}
 
@@ -245,12 +175,19 @@ void *UDPThread(void *arg)
 pthread_t hUDPThread=0;
 
 int main(int argc, char *argv[]) {
+
+	KillDisplayProgram();
+	system(InitPath);
+	CurrentMode = 0;
+
 	int width, height;
 	ScreenBuf.push_back("SSync screen started");
 
-	init(&width, &height);
-	InitImages();
 
+
+	init(&width, &height);
+	width = width;
+	height = height;
 
 	int result = pthread_create(&(hUDPThread), NULL, &UDPThread, NULL);
         if (result != 0)
