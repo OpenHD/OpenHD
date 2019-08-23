@@ -132,6 +132,7 @@ function check_camera_attached {
         		grepRet=$?
         		if [[ $grepRet -eq 0 ]] ; then
 				echo  "1" > /tmp/cam
+				rm /tmp/CameraNotDetected
 				CAM="1"
 		        else
 				echo  "0" > /tmp/cam
