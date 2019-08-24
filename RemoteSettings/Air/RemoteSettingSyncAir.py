@@ -283,7 +283,7 @@ def ReadSettingsFromConfigFile():
         with open(SettingsFilePath, "r") as f:
             lines = f.readlines()
             for line in lines:
-                if line.startswith("DATARATE") == True:
+                if line.startswith("DATARATE=") == True:
                     SplitLines = line.split("=")
                     FilterDigits = SplitLines[1]
                     SettingsFileDATARATE = re.sub("\D", "", FilterDigits)
