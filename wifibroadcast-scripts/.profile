@@ -19,8 +19,8 @@ case $TTY in
 	
         i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
         grepRet=$?
-	killall omxplayer  > /dev/null 2>/dev/null
-	killall omxplayer.bin  > /dev/null 2>/dev/null
+	#killall omxplayer  > /dev/null 2>/dev/null
+	#killall omxplayer.bin  > /dev/null 2>/dev/null
         if [[ $grepRet -eq 0 ]] ; then
 			/usr/bin/python3.5 /home/pi/RemoteSettings/Air/RemoteSettingSyncAir.py
 			CAM="1"
