@@ -138,7 +138,16 @@ function hotspot_check_function {
 	  	else
 	     	echo "NO HOTSPOT CAPABILTY WAS FOUND"
 		tmessage "no hotspot hardware found..."
-	  	fi   
+	  	fi 
+		
+		if [ "$HOTSPOT_TIMEOUT" != "0" ]; then
+    			sleep $HOTSPOT_TIMEOUT
+			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shutting Down in 10s" 7 55 0
+    			sleep 10
+   			killall hostapd
+			ps -ef | nice grep "wifihotspot" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shut Down" 7 55 0
+		fi
 	fi
 
 
