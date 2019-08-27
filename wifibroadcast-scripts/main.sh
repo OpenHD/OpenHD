@@ -23,6 +23,10 @@ check_camera_attached
 # Read the config file
 read_config_file
 
+echo "-------------------------------------"
+echo "SETTINGS FILE: $CONFIGFILE"
+echo "-------------------------------------"
+
 # Set the wifi parameters based on the selected datarate
 datarate_to_wifi_settings
 
