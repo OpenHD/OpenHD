@@ -134,6 +134,9 @@ function hotspot_check_function {
 
 		/usr/sbin/dnsmasq --conf-file=/etc/dnsmasqWifi.conf
 	    	nice -n 5 hostapd -B -d /tmp/apconfig.txt
+		
+		#set wifihotspot to low power
+		iwconfig wifihotspot0 txpower 1mW
 
 	  	else
 	     	echo "NO HOTSPOT CAPABILTY WAS FOUND"
@@ -141,6 +144,7 @@ function hotspot_check_function {
 	  	fi 
 		
 		if [ "$HOTSPOT_TIMEOUT" != "0" ]; then
+			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shutting Down in $HOTSPOT_TIMEOUT seconds" 7 55 0
     			sleep $HOTSPOT_TIMEOUT
 			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shutting Down in 10s" 7 55 0
     			sleep 10
