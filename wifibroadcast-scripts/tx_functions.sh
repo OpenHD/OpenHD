@@ -92,8 +92,12 @@ function tx_function {
 
 		if [ "$DRIVER" != "ath9k_htc" ]; then # in single mode and ralink cards always, use frametype 1 (data)
 			VIDEO_FRAMETYPE=0
-		        if [ "$DRIVER" == "rtl88xxau" ]; then
-		        	VIDEO_FRAMETYPE=1
+		    if [ "$DRIVER" == "rtl88xxau" ]; then
+		        	if [ "$CTS_PROTECTION" == "Y" ]; then
+				 	VIDEO_FRAMETYPE=1
+	              else
+				    VIDEO_FRAMETYPE=2
+	              fi
 			fi
 			RALINK=1
 		fi
@@ -135,7 +139,7 @@ function tx_function {
 			echo "CTS Protection disabled in config"
 			CTS=N
 		else
-			if [ "$DRIVER" == "ath9k_htc" ]; then
+			if [ "$DRIVER" == "ath9k_htc" ] || [ "$DRIVER" == "rtl88xxau" ]; then
 				echo "CTS Protection enabled in config"
 				CTS=Y
 			else
