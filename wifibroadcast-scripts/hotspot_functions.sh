@@ -113,7 +113,7 @@ function hotspot_check_function {
 					echo "G Band only capable..."
 					HOTSPOT_BAND=g
 
-					if [ "$FREQ" -gt "2452" ]; then					
+					if [ "$FREQ" -gt "3000" ]; then					
 					HOTSPOT_CHANNEL=1
 					else	         							   			
 					echo "Hotspot Disabled. Not recommended to share same band as video..."	
