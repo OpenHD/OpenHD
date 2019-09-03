@@ -93,7 +93,7 @@ function hotspot_check_function {
 			echo "Setting up Hotspot..."
 
 	    		# Read if hotspot config is auto
-	     		if [ "$WIFI_HOTSPOT" == "auto" ]; then	
+	     		if [ "$WIFI_HOTSPOT" == "auto" ]&&[ "$WIFI_HOTSPOT_NIC" == "internal" ]; then	
 				echo "wifihotspot auto..."
 
 	        		# for both a and g ability choose opposite of video	   	         	
@@ -115,8 +115,11 @@ function hotspot_check_function {
 
 					if [ "$FREQ" -gt "2452" ]; then					
 					HOTSPOT_CHANNEL=1
-					else	         			
-					HOTSPOT_CHANNEL=11
+					else	         							   			
+					echo "Hotspot Disabled. Not recommended to share same band as video..."	
+					echo "If you still want hotspot you must manually set up..."
+					#kill the function	
+					return 1
 					fi
 				fi
 	     		# NOTHING TO DO For user defined use of A (5.8ghz) OR G (2.4ghz) 
