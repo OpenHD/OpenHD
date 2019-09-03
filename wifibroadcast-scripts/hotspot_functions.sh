@@ -1,27 +1,21 @@
 function MAIN_HOTSPOT_FUNCTION {
 	echo "================== CHECK HOTSPOT (tty8) ==========================="
 	if [ "$CAM" == "0" ]; then
-	    if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" != "N" ]; then
-			echo
-			echo -n "Waiting until video is running ..."
-			HVIDEORXRUNNING=0
+		echo -n "Waiting until video is running ..."
+		HVIDEORXRUNNING=0
+	
+		while [ $HVIDEORXRUNNING -ne 1 ]; do
+			sleep 0.5
+			HVIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
+			echo -n "."
+		done
 		
-			while [ $HVIDEORXRUNNING -ne 1 ]; do
-				sleep 0.5
-				HVIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
-				echo -n "."
-			done
-			
-			echo
-			echo "Video running, starting hotspot processes ..."
-			
-			sleep 1
-			
-			hotspot_check_function
-	    else
-			echo "Check hotspot function not enabled in config file"
-			sleep 365d
-	    fi
+		echo
+		echo "Video running, starting hotspot processes ..."
+		
+		sleep 1
+		
+		hotspot_check_function
 	else
 	    echo "Check hotspot function not enabled - we are TX (Air Pi)"
 	    sleep 365d
@@ -41,8 +35,8 @@ function hotspot_check_function {
         #we still can have USB phone connected anytime. So, start programs anyway
         #Maybe add code inside USB tethering file to check  HOTSPOT is off and phone connected - start....
         #if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" != "N" ]; then
-                /home/pi/RemoteSettings/UDPSplitter 9121 5621 5601 &  #Secondary video stream
-                /home/pi/RemoteSettings/UDPSplitter 9120 5620 5600 &  #Main video stream
+                /home/pi/RemoteSettings/UDPSplitter 9121 5621 $VIDEO_UDP_PORT2 &  #Secondary video stream
+                /home/pi/RemoteSettings/UDPSplitter 9120 5620 $VIDEO_UPD_PORT &  #Main video stream
 
                 if [ "$FORWARD_STREAM" == "rtp" ]; then
                         echo "ionice -c 1 -n 4 nice -n -5 cat /root/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=5620 host=127.0.0.1 > /dev/null 2>&1 &" > /tmp/ForwardRTPMainCamera.sh
