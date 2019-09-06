@@ -35,8 +35,8 @@ function hotspot_check_function {
         #we still can have USB phone connected anytime. So, start programs anyway
         #Maybe add code inside USB tethering file to check  HOTSPOT is off and phone connected - start....
         #if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" != "N" ]; then
-                /home/pi/RemoteSettings/UDPSplitter 9121 5621 $VIDEO_UDP_PORT2 &  #Secondary video stream
-                /home/pi/RemoteSettings/UDPSplitter 9120 5620 $VIDEO_UDP_PORT &  #Main video stream
+                /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9121 5621 $VIDEO_UDP_PORT2 &  #Secondary video stream
+                /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9120 5620 $VIDEO_UDP_PORT &  #Main video stream
 
                 if [ "$FORWARD_STREAM" == "rtp" ]; then
                         echo "ionice -c 1 -n 4 nice -n -5 cat /root/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=5620 host=127.0.0.1 > /dev/null 2>&1 &" > /tmp/ForwardRTPMainCamera.sh
@@ -49,17 +49,17 @@ function hotspot_check_function {
 
         #redirect telemetry to UDP splitter
         nice socat -b $TELEMETRY_UDP_BLOCKSIZE GOPEN:/root/telemetryfifo2 UDP4-SENDTO:127.0.0.1:6610 &
-        /home/pi/RemoteSettings/UDPSplitter 9122 6610 $TELEMETRY_UDP_PORT &
+        /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9122 6610 $TELEMETRY_UDP_PORT &
 
 
         nice /home/pi/wifibroadcast-base/rssi_forward 127.0.0.1 5003 &
-        /home/pi/RemoteSettings/UDPSplitter 9123 5003 5003 &
+        /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9123 5003 5003 &
 
         nice /home/pi/wifibroadcast-base/rssi_qgc_forward 127.0.0.1 5154 &
-        /home/pi/RemoteSettings/UDPSplitter 9124 5154 5154 &
+        /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9124 5154 5154 &
 
 	##OpenHD RemoteSettings android app
-	/home/pi/RemoteSettings/UDPSplitter 9125 5116 5115 &
+	/home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9125 5116 5115 &
 
 
 
