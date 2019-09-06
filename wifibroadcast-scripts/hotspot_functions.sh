@@ -36,7 +36,7 @@ function hotspot_check_function {
         #Maybe add code inside USB tethering file to check  HOTSPOT is off and phone connected - start....
         #if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" != "N" ]; then
                 /home/pi/RemoteSettings/UDPSplitter 9121 5621 $VIDEO_UDP_PORT2 &  #Secondary video stream
-                /home/pi/RemoteSettings/UDPSplitter 9120 5620 $VIDEO_UPD_PORT &  #Main video stream
+                /home/pi/RemoteSettings/UDPSplitter 9120 5620 $VIDEO_UDP_PORT &  #Main video stream
 
                 if [ "$FORWARD_STREAM" == "rtp" ]; then
                         echo "ionice -c 1 -n 4 nice -n -5 cat /root/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=5620 host=127.0.0.1 > /dev/null 2>&1 &" > /tmp/ForwardRTPMainCamera.sh
