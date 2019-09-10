@@ -93,10 +93,10 @@ function tx_function {
 		if [ "$DRIVER" != "ath9k_htc" ]; then # in single mode and ralink cards always, use frametype 1 (data)
 			VIDEO_FRAMETYPE=0
 		    if [ "$DRIVER" == "rtl88xxau" ]; then
-		        	if [ "$CTS_PROTECTION" == "Y" ]; then
-				 	VIDEO_FRAMETYPE=1
+		        	if [ "$CTS_PROTECTION" != "Y" ] && [ "$UseMCS" == "Y" ]; then
+				 	VIDEO_FRAMETYPE=2
 	              else
-				    VIDEO_FRAMETYPE=2
+				    VIDEO_FRAMETYPE=1
 	              fi
 			fi
 			RALINK=1
