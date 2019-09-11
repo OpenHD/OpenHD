@@ -78,6 +78,7 @@ char *ifname = NULL;
 int flagHelp = 0;
 int sock = 0;
 int socks[5];
+int type[5];
 
 struct framedata_s {
     // 88 bits of data (11 bits per channel * 8 channels) = 11 bytes
@@ -115,7 +116,46 @@ struct framedata_s {
 
 } __attribute__ ((__packed__));
 
-struct framedata_s framedata;
+struct framedata_s framedatas;
+
+struct framedata_n {
+    // 88 bits of data (11 bits per channel * 8 channels) = 11 bytes
+    uint8_t rt1;
+    uint8_t rt2;
+    uint8_t rt3;
+    uint8_t rt4;
+    uint8_t rt5;
+    uint8_t rt6;
+    uint8_t rt7;
+    uint8_t rt8;
+
+    uint8_t rt9;
+    uint8_t rt10;
+    uint8_t rt11;
+    uint8_t rt12;
+	uint8_t rt13;
+
+    uint8_t fc1;
+    uint8_t fc2;
+    uint8_t dur1;
+    uint8_t dur2;
+
+    uint8_t seqnumber;
+
+    unsigned int chan1 : 11;
+    unsigned int chan2 : 11;
+    unsigned int chan3 : 11;
+    unsigned int chan4 : 11;
+    unsigned int chan5 : 11;
+    unsigned int chan6 : 11;
+    unsigned int chan7 : 11;
+    unsigned int chan8 : 11;
+#ifdef JSSWITCHES
+    unsigned int switches : JSSWITCHES; // 8 or 16 bits for rc channels 9 - 16/24  as switches
+#endif
+} __attribute__ ((__packed__));
+
+struct framedata_n framedatan;
 
 
 void usage(void)
@@ -182,18 +222,7 @@ void sendRC(telemetry_data_t *td)
 {
     uint8_t i;
     uint8_t z;
- 
-   // framedata.seqnumber = seqno;
-   // framedata.chan1 = rcData[0];
-  //  framedata.chan2 = rcData[1];
-  //  framedata.chan3 = rcData[2];
-  //  framedata.chan4 = rcData[3];
- //   framedata.chan5 = rcData[4];
- //   framedata.chan6 = rcData[5];
- //   framedata.chan7 = rcData[6];
- //   framedata.chan8 = rcData[7];
-//  printf ("rcdata0:%d\n",rcData[0]);
- 
+  
     int best_adapter = 0;
         if(td->rx_status != NULL)
     {
@@ -204,7 +233,7 @@ void sendRC(telemetry_data_t *td)
     // find out which card has best signal and ignore ralink (type=1) ones
         for(j=0; j<ac; ++j)
         {
-            if ((best_dbm < td->rx_status->adapter[j].current_signal_dbm)&&(td->rx_status->adapter[j].type == 0))
+            if ((best_dbm < td->rx_status->adapter[j].current_signal_dbm)&&(type[j] != 0))
             {
                 best_dbm = td->rx_status->adapter[j].current_signal_dbm;
                 best_adapter = j;
@@ -214,12 +243,21 @@ void sendRC(telemetry_data_t *td)
 //  printf ("bestadapter: %d (%d dbm)\n",best_adapter, best_dbm);
         if(NICCount == 1)
         {
- 
-             if (write(socks[0], &framedata, sizeof(framedata)) < 0 ) { fprintf(stderr, "!"); exit(1); }
+             if (type[best_adapter] == 2) {
+//	printf ("bestadapter: %d (%d dbm)\n",best_adapter, best_dbm);
+	            if (write(socks[0], &framedatan, sizeof(framedatan)) < 0 ) fprintf(stderr, "!");	/// framedata_s = 28 or 29 bytes
+	        } else {
+	            if (write(socks[0], &framedatas, sizeof(framedatas)) < 0 ) fprintf(stderr, "!");	/// framedata_s = 28 or 29 bytes
+	        }
         }
         else
         {
-            if (write(socks[best_adapter], &framedata, sizeof(framedata)) < 0 ) { fprintf(stderr, "!"); exit(1); } /// framedata_s = 28 or 29 bytes
+            if (type[best_adapter] == 2) {
+//	printf ("bestadapter: %d (%d dbm)\n",best_adapter, best_dbm);
+	            if (write(socks[best_adapter], &framedatan, sizeof(framedatan)) < 0 ) fprintf(stderr, "!");	/// framedata_s = 28 or 29 bytes
+	        } else {
+	            if (write(socks[best_adapter], &framedatas, sizeof(framedatas)) < 0 ) fprintf(stderr, "!");	/// framedata_s = 28 or 29 bytes
+	        }
         }
     }
     else
@@ -272,6 +310,9 @@ int main (int argc, char *argv[]) {
 
 	struct sockaddr_in si_me, si_other;
 	int s, i, slen = sizeof(si_other) , recv_len;
+	
+	char line[100], path[100];
+    FILE* procfile;
 
     while (1) {
 	int nOptionIndex;
@@ -313,36 +354,81 @@ int main (int argc, char *argv[]) {
 
 	if (IsEncrypt == 0)
 	{
-		while (x < argc && num_interfaces < 8)
-		{
-			socks[num_interfaces] = open_sock(argv[x]);
-			++num_interfaces;
-			++x;
-			usleep(20000);  // wait a bit between configuring interfaces to reduce Atheros and Pi USB flakiness
+    while(x < argc && num_interfaces < 8) {
+    	snprintf(path, 45, "/sys/class/net/%s/device/uevent", argv[x]);
+        procfile = fopen(path, "r");
+        if(!procfile) {fprintf(stderr,"ERROR: opening %s failed!\n", path); return 0;}
+        fgets(line, 100, procfile); // read the first line
+        fgets(line, 100, procfile); // read the 2nd line
+	if (strncmp(line, "DRIVER=ath9k_htc", 16) == 0 || 
+        (
+         strncmp(line, "DRIVER=8812au",    13) == 0 || 
+         strncmp(line, "DRIVER=8814au",    13) == 0 || 
+         strncmp(line, "DRIVER=rtl8812au", 16) == 0 || 
+         strncmp(line, "DRIVER=rtl8814au", 16) == 0 || 
+         strncmp(line, "DRIVER=rtl88xxau", 16) == 0
+        )) {   
+		if (strncmp(line, "DRIVER=ath9k_htc", 16) == 0) {
+			  fprintf(stderr, "rctx: Atheros card detected\n");
+	          type[num_interfaces] = 1;
+		} else {
+			  fprintf(stderr, "rctx: Realtek card detected\n");
+			  type[num_interfaces] = 2;
 		}
+    } else { // ralink or mediatek
+              fprintf(stderr, "rctx: Ralink card detected\n");
+	          type[num_interfaces] = 0;
+    }
+	socks[num_interfaces] = open_sock(argv[x]);
+        ++num_interfaces;
+	++x;
+        fclose(procfile);
+    usleep(20000); // wait a bit between configuring interfaces to reduce Atheros and Pi USB flakiness
+    }
 	}
 
-	framedata.rt1 = 0; // <-- radiotap version
-	framedata.rt2 = 0; // <-- radiotap version
+	framedatas.rt1 = 0; // <-- radiotap version
+	framedatas.rt2 = 0; // <-- radiotap version
 
-	framedata.rt3 = 12; // <- radiotap header length
-	framedata.rt4 = 0; // <- radiotap header length
+	framedatas.rt3 = 12; // <- radiotap header length
+	framedatas.rt4 = 0; // <- radiotap header length
 
-	framedata.rt5 = 4; // <-- radiotap present flags
-	framedata.rt6 = 128; // <-- radiotap present flags
-	framedata.rt7 = 0; // <-- radiotap present flags
-	framedata.rt8 = 0; // <-- radiotap present flags
+	framedatas.rt5 = 4; // <-- radiotap present flags
+	framedatas.rt6 = 128; // <-- radiotap present flags
+	framedatas.rt7 = 0; // <-- radiotap present flags
+	framedatas.rt8 = 0; // <-- radiotap present flags
 
-	framedata.rt9 = 24; // <-- radiotap rate
-	framedata.rt10 = 0; // <-- radiotap stuff
-	framedata.rt11 = 0; // <-- radiotap stuff
-	framedata.rt12 = 0; // <-- radiotap stuff
+	framedatas.rt9 = 24; // <-- radiotap rate
+	framedatas.rt10 = 0; // <-- radiotap stuff
+	framedatas.rt11 = 0; // <-- radiotap stuff
+	framedatas.rt12 = 0; // <-- radiotap stuff
 
-	framedata.fc1 = 180; // <-- frame control field (0xb4)
-	framedata.fc2 = 191; // <-- frame control field (0xbf)
-	framedata.dur1 = 0; // <-- duration
-	framedata.dur2 = 0; // <-- duration
+	framedatas.fc1 = 180; // <-- frame control field (0xb4)
+	framedatas.fc2 = 191; // <-- frame control field (0xbf)
+	framedatas.dur1 = 0; // <-- duration
+	framedatas.dur2 = 0; // <-- duration
 
+	framedatan.rt1 = 0; // <-- radiotap version      (0x00)
+	framedatan.rt2 = 0; // <-- radiotap version      (0x00)
+
+	framedatan.rt3 = 13; // <- radiotap header length(0x0d)
+	framedatan.rt4 = 0; // <- radiotap header length (0x00)
+
+	framedatan.rt5 = 0; // <-- radiotap present flags(0x00)
+	framedatan.rt6 = 128; // <-- RADIOTAP_TX_FLAGS + (0x80)
+	framedatan.rt7 = 8; // <--  RADIOTAP_MCS         (0x08)
+	framedatan.rt8 = 0; //                           (0x00)
+
+	framedatan.rt9 = 8; // <-- RADIOTAP_F_TX_NOACK   (0x08)
+	framedatan.rt10 = 0; //                          (0x00)
+	framedatan.rt11 = 55; // <-- bitmap              (0x37)
+	framedatan.rt12 = 48; // <-- flags               (0x30)
+	framedatan.rt13 = 0; // <-- mcs_index            (0x00)
+
+	framedatan.fc1 = 180; // <-- frame control field (0xb4)
+	framedatan.fc2 = 191; // <-- frame control field (0xbf)
+	framedatan.dur1 = 0; // <-- duration
+	framedatan.dur2 = 0; // <-- duration
 
 
 	// we need to prefill channels since we have no values for them as
@@ -456,16 +542,30 @@ int main (int argc, char *argv[]) {
             return 1;
 		}
 
-		framedata.seqnumber = buf[16];
-		framedata.chan1 = (buf[1] << 8) | buf[0];
-        framedata.chan2 = (buf[3] << 8) | buf[2];
-        framedata.chan3 = (buf[5] << 8) | buf[4];
-        framedata.chan4 = (buf[7] << 8) | buf[6];
-        framedata.chan5 = (buf[9] << 8) | buf[8];
-        framedata.chan6 = (buf[11] << 8) | buf[10];
-        framedata.chan7 = (buf[13] << 8) | buf[12];
-        framedata.chan8 = (buf[15] << 8) | buf[14];
+		framedatas.seqnumber = buf[16];
+		framedatas.chan1 = (buf[1] << 8) | buf[0];
+        framedatas.chan2 = (buf[3] << 8) | buf[2];
+        framedatas.chan3 = (buf[5] << 8) | buf[4];
+        framedatas.chan4 = (buf[7] << 8) | buf[6];
+        framedatas.chan5 = (buf[9] << 8) | buf[8];
+        framedatas.chan6 = (buf[11] << 8) | buf[10];
+        framedatas.chan7 = (buf[13] << 8) | buf[12];
+        framedatas.chan8 = (buf[15] << 8) | buf[14];
 
+		framedatas.switches = (buf[20] << 8) | buf[19];
+		
+		framedatan.seqnumber = buf[16];
+		framedatan.chan1 = (buf[1] << 8) | buf[0];
+        framedatan.chan2 = (buf[3] << 8) | buf[2];
+        framedatan.chan3 = (buf[5] << 8) | buf[4];
+        framedatan.chan4 = (buf[7] << 8) | buf[6];
+        framedatan.chan5 = (buf[9] << 8) | buf[8];
+        framedatan.chan6 = (buf[11] << 8) | buf[10];
+        framedatan.chan7 = (buf[13] << 8) | buf[12];
+        framedatan.chan8 = (buf[15] << 8) | buf[14];
+
+		framedatan.switches = (buf[20] << 8) | buf[19];
+		
 		rcData[0] = (buf[1] << 8) | buf[0];
         rcData[1] = (buf[3] << 8) | buf[2];
         rcData[2] = (buf[5] << 8) | buf[4];
@@ -474,9 +574,6 @@ int main (int argc, char *argv[]) {
         rcData[5] = (buf[11] << 8) | buf[10];
         rcData[6] = (buf[13] << 8) | buf[12];
         rcData[7] = (buf[15] << 8) | buf[14];
-
-		//framedata.Is16 = buf[18];
-		framedata.switches = (buf[20] << 8) | buf[19];
 
 		if( Channel >= 1 && Channel <= 8 && IsBandSwitcherEnabled == 1)
 		{
