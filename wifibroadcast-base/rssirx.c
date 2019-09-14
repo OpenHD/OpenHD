@@ -71,8 +71,8 @@ void open_and_configure_interface(const char *name, monitor_interface_t *interfa
 	int nLinkEncap = pcap_datalink(interface->ppcap);
 
 	if (nLinkEncap == DLT_IEEE802_11_RADIO) {
-		interface->n80211HeaderLength = 0x18; // 24 bytes
-		sprintf(szProgram, "ether[0x00:2] == 0x0802 && ether[0x04:1] == 0xff"); // match on frametype, 1st byte of mac (ff) and portnumber (255 = 127 for rssi)
+	   //sprintf(szProgram, "ether[0x00:2] == 0x0802 && ether[0x04:1] == 0xff"); // match on frametype, 1st byte of mac (ff) and portnumber (255 = 127 for rssi)
+		sprintf(szProgram, "(ether[0x00:2] == 0x0801 || ether[0x00:2] == 0x0802 || ether[0x00:4] == 0xb4010000) && ether[0x04:1] == 0xff");	
 	} else {
 		fprintf(stderr, "ERROR: unknown encapsulation on %s! check if monitor mode is supported and enabled\n", name);
 		exit(1);
@@ -140,6 +140,22 @@ uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
 	// fetch radiotap header length from radiotap header (seems to be 36 for Atheros and 18 for Ralink)
 	u16HeaderLen = (pu8Payload[2] + (pu8Payload[3] << 8));
 //	fprintf(stderr, "u16headerlen: %d\n", u16HeaderLen);
+
+    pu8Payload += u16HeaderLen;
+    switch (pu8Payload[1]) {
+    case 0x01: // data short, rts (telemetry)
+//	fprintf(stderr, "data short or rts telemetry frame\n");
+        interface->n80211HeaderLength = 0x05;
+        break;
+    case 0x02: // data (telemetry)
+//	fprintf(stderr, "data telemetry frame\n");
+        interface->n80211HeaderLength = 0x18;
+        break;
+    default:
+        break;
+    }
+    pu8Payload -= u16HeaderLen;
+
 //	fprintf(stderr, "ppcapPacketHeader->len: %d\n", ppcapPacketHeader->len);
 	if (ppcapPacketHeader->len < (u16HeaderLen + interface->n80211HeaderLength)) exit(1);
 
