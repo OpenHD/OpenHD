@@ -43,11 +43,15 @@ mavlink_message_t msg;
 
 uint8_t headers_atheros[40]; // header buffer for atheros
 uint8_t headers_ralink[40]; // header buffer for ralink
+uint8_t headers_Realtek[40]; // header buffer for Realtek
+
 int headers_atheros_len = 0;
 int headers_ralink_len = 0;
+int headers_Realtek_len = 0;
 
 uint8_t packet_buffer_ath[402]; // wifi packet to be sent (263 + len and seq + radiotap and ieee headers)
 uint8_t packet_buffer_ral[402]; // wifi packet to be sent (263 + len and seq + radiotap and ieee headers)
+uint8_t packet_buffer_rea[402]; // wifi packet to be sent (263 + len and seq + radiotap and ieee headers)
 
 // telemetry frame header consisting of seqnr and payload length
 struct header_s {
@@ -109,6 +113,16 @@ static u8 u8aRadiotapHeader[] = {
         0x00, // datarate (will be overwritten later)
         0x00,
         0x00, 0x00
+};
+
+static u8 u8aRadiotapHeader80211n[] = {
+	    0x00, 0x00, // <-- radiotap version
+	    0x0d, 0x00, // <- radiotap header length
+	    0x00, 0x80, 0x08, 0x00, // <-- radiotap present flags (tx flags, mcs)
+	    0x08, 0x00, 	// tx-flag
+	    0x37, 			// mcs have: bw, gi, stbc ,fec
+	    0x30,			// mcs: 20MHz bw, long guard interval, stbc, ldpc 
+	    0x00,			// mcs index 0 (speed level, will be overwritten later)
 };
 
 static u8 u8aIeeeHeader_data[] = {
@@ -190,67 +204,79 @@ void sendpacket(uint32_t seqno, uint16_t len, telemetry_data_t *td, int transmis
 		}
 	    }
 //	    printf ("bestadapter: %d (%d dbm)\n",best_adapter, best_dbm);
-	    if (type[best_adapter] == 0) { // Atheros
-		// telemetry header (seqno and len)
-		memcpy(packet_buffer_ath + headers_atheros_len, &header, 6);
-		// telemetry data
-		memcpy(packet_buffer_ath + headers_atheros_len + 6, data, len);
-		if (len < 5) { // if telemetry payload is too short, pad to minimum length
-		    padlen = 5 - len;
-//		    fprintf(stderr, "padlen: %d ",padlen);
-		    memcpy(packet_buffer_ath + headers_atheros_len + 6 + len, dummydata, padlen);
-		}
-	        if (write(socks[best_adapter], &packet_buffer_ath, headers_atheros_len + 6 + len + padlen) < 0 ) { fprintf(stderr, "."); exit(1); }
-	    } else { // Ralink
-		// telemetry header (seqno and len)
-		memcpy(packet_buffer_ral + headers_ralink_len, &header, 6);
-		// telemetry data
-		memcpy(packet_buffer_ral + headers_ralink_len + 6, data, len);
-		if (len < 18) { // if telemetry payload is too short, pad to minimum length
-		    padlen = 18 - len;
-//		    fprintf(stderr, "padlen: %d ",padlen);
-		    memcpy(packet_buffer_ral + headers_ralink_len + 6 + len, dummydata, padlen);
-		}
-		if (write(socks[best_adapter], &packet_buffer_ral, headers_ralink_len + 6 + len + padlen) < 0 ) { fprintf(stderr, "."); exit(1); }
-	    }
-	} else { // transmit on all interfaces
-	    int i;
-	    for(i=0; i<num_int; ++i) {
-		if (type[i] == 0) { // Atheros
-//		    fprintf(stderr,"type: Atheros");
-		    // telemetry header (seqno and len)
-		    memcpy(packet_buffer_ath + headers_atheros_len, &header, 6);
-		    // telemetry data
-		    memcpy(packet_buffer_ath + headers_atheros_len + 6, data, len);
-//		    fprintf(stderr," lendata:%d ",len);
-		    if (len < 5) { // if telemetry payload is too short, pad to minimum length
-			padlen = 5 - len;
-//			fprintf(stderr, "padlen: %d ",padlen);
-			memcpy(packet_buffer_ath + headers_atheros_len + 6 + len, dummydata, padlen);
-		    }
-//		    int x = 0;
-//		    int dumplen = 100;
-//		    fprintf(stderr,"buf:");
-//		    for (x=12;x < dumplen; x++) {
-//			fprintf(stderr,"0x%02x ", packet_buffer[x]);
-//		    }
-//		    fprintf(stderr,"\n");
-//		    fprintf(stderr," headers_atheros_len:%d ",headers_atheros_len);
-//		    fprintf(stderr," writelen:%d ",headers_atheros_len + 4 + len);
-		    if (write(socks[i], &packet_buffer_ath, headers_atheros_len + 6 + len + padlen) < 0 ) { fprintf(stderr, "."); exit(1); }
-		} else { // Ralink
-//		    fprintf(stderr,"type: Ralink");
+		switch (type[best_adapter]) {
+	    case 0: // type: Ralink
 		    // telemetry header (seqno and len)
 		    memcpy(packet_buffer_ral + headers_ralink_len, &header, 6);
-		    // telemetry data
 		    memcpy(packet_buffer_ral + headers_ralink_len + 6, data, len);
 		    if (len < 18) { // pad to minimum length
 			padlen = 18 - len;
-//			fprintf(stderr, "padlen: %d ",padlen);
+			memcpy(packet_buffer_ral + headers_ralink_len + 6 + len, dummydata, padlen);
+		    }
+		    if (write(socks[best_adapter], &packet_buffer_ral, headers_ralink_len + 6 + len + padlen) < 0 ) { fprintf(stderr, "."); exit(1); }
+		break;
+	    case 1: // type: atheros
+		    memcpy(packet_buffer_ath + headers_atheros_len, &header, 6);
+		    // telemetry data
+		    memcpy(packet_buffer_ath + headers_atheros_len + 6, data, len);
+		    if (len < 5) {
+			padlen = 5 - len;
+			memcpy(packet_buffer_ath + headers_atheros_len + 6 + len, dummydata, padlen);
+		    }
+		    if (write(socks[best_adapter], &packet_buffer_ath, headers_atheros_len + 6 + len + padlen) < 0 ) { fprintf(stderr, "."); exit(1); }
+		break;
+	    case 2: // type: Realtek
+		    memcpy(packet_buffer_rea + headers_Realtek_len, &header, 6);
+		    memcpy(packet_buffer_rea + headers_Realtek_len + 6, data, len);
+		    if (len < 5) { // if telemetry payload is too short, pad to minimum length
+			padlen = 5 - len;
+			memcpy(packet_buffer_rea + headers_Realtek_len + 6 + len, dummydata, padlen);
+		    }
+		    if (write(socks[best_adapter], &packet_buffer_rea, headers_Realtek_len + 6 + len + padlen) < 0 ) { fprintf(stderr, "."); exit(1); }	
+		break;
+	    default:
+		fprintf(stderr, "ERROR: Wrong or no frame type specified (see -t parameter)\n");
+		exit(1);
+		break;
+	    }
+	} else { // transmit on all interfaces
+	    int i;
+	    for(i=0; i<num_int; ++i) {		
+		switch (type[i]) {
+	    case 0: // type: Ralink
+		    // telemetry header (seqno and len)
+		    memcpy(packet_buffer_ral + headers_ralink_len, &header, 6);
+		    memcpy(packet_buffer_ral + headers_ralink_len + 6, data, len);
+		    if (len < 18) { // pad to minimum length
+			padlen = 18 - len;
 			memcpy(packet_buffer_ral + headers_ralink_len + 6 + len, dummydata, padlen);
 		    }
 		    if (write(socks[i], &packet_buffer_ral, headers_ralink_len + 6 + len + padlen) < 0 ) { fprintf(stderr, "."); exit(1); }
-		}
+		break;
+	    case 1: // type: atheros
+		    memcpy(packet_buffer_ath + headers_atheros_len, &header, 6);
+		    // telemetry data
+		    memcpy(packet_buffer_ath + headers_atheros_len + 6, data, len);
+		    if (len < 5) {
+			padlen = 5 - len;
+			memcpy(packet_buffer_ath + headers_atheros_len + 6 + len, dummydata, padlen);
+		    }
+		    if (write(socks[i], &packet_buffer_ath, headers_atheros_len + 6 + len + padlen) < 0 ) { fprintf(stderr, "."); exit(1); }
+		break;
+	    case 2: // type: Realtek
+		    memcpy(packet_buffer_rea + headers_Realtek_len, &header, 6);
+		    memcpy(packet_buffer_rea + headers_Realtek_len + 6, data, len);
+		    if (len < 5) { // if telemetry payload is too short, pad to minimum length
+			padlen = 5 - len;
+			memcpy(packet_buffer_rea + headers_Realtek_len + 6 + len, dummydata, padlen);
+		    }
+		    if (write(socks[i], &packet_buffer_rea, headers_Realtek_len + 6 + len + padlen) < 0 ) { fprintf(stderr, "."); exit(1); }	
+		break;
+	    default:
+		fprintf(stderr, "ERROR: Wrong or no frame type specified (see -t parameter)\n");
+		exit(1);
+		break;
+	    }
 	    }
 	}
 }
@@ -339,21 +365,25 @@ int main(int argc, char *argv[]) {
         if(!procfile) {fprintf(stderr,"ERROR: opening %s failed!\n", path); return 0;}
         fgets(line, 100, procfile); // read the first line
         fgets(line, 100, procfile); // read the 2nd line
-	if(strncmp(line, "DRIVER=ath9k_htc", 16) == 0 || 
-            (
-             strncmp(line, "DRIVER=8812au",    13) == 0 || 
-             strncmp(line, "DRIVER=8814au",    13) == 0 || 
-             strncmp(line, "DRIVER=rtl8812au", 16) == 0 || 
-             strncmp(line, "DRIVER=rtl8814au", 16) == 0 || 
-             strncmp(line, "DRIVER=rtl88xxau", 16) == 0
-            )
-          ) { // it's an atheros or realtek card 
-            fprintf(stderr, "tx_telemetry: Atheros or Realtek card detected\n");
-	    type[num_interfaces] = 0;
-        } else { // ralink or mediatek
-            fprintf(stderr, "tx_telemetry: Ralink card detected\n");
-	    type[num_interfaces] = 1;
-        }
+	if (strncmp(line, "DRIVER=ath9k_htc", 16) == 0 || 
+        (
+         strncmp(line, "DRIVER=8812au",    13) == 0 || 
+         strncmp(line, "DRIVER=8814au",    13) == 0 || 
+         strncmp(line, "DRIVER=rtl8812au", 16) == 0 || 
+         strncmp(line, "DRIVER=rtl8814au", 16) == 0 || 
+         strncmp(line, "DRIVER=rtl88xxau", 16) == 0
+        )) {   
+		if (strncmp(line, "DRIVER=ath9k_htc", 16) == 0) {
+			  fprintf(stderr, "tx_telemetry: Atheros card detected\n");
+	          type[num_interfaces] = 1;
+		} else {
+			  fprintf(stderr, "tx_telemetry: Realtek card detected\n");
+			  type[num_interfaces] = 2;
+		}
+    } else { // ralink or mediatek
+              fprintf(stderr, "tx_telemetry: Ralink card detected\n");
+	          type[num_interfaces] = 0;
+    }
 	socks[num_interfaces] = open_sock(argv[x]);
         ++num_interfaces;
 	++x;
@@ -424,10 +454,16 @@ int main(int argc, char *argv[]) {
     memcpy(headers_ralink, u8aRadiotapHeader, sizeof(u8aRadiotapHeader));// radiotap header
     memcpy(headers_ralink + sizeof(u8aRadiotapHeader), u8aIeeeHeader_data_short, sizeof(u8aIeeeHeader_data_short));// ieee header
     headers_ralink_len = sizeof(u8aRadiotapHeader) + sizeof(u8aIeeeHeader_data_short);
+	
+	// for Realtek use rts frames
+	memcpy(headers_Realtek, u8aRadiotapHeader80211n, sizeof(u8aRadiotapHeader80211n)); // radiotap header
+	memcpy(headers_Realtek + sizeof(u8aRadiotapHeader80211n), u8aIeeeHeader_rts, sizeof(u8aIeeeHeader_rts)); // ieee header
+	headers_Realtek_len = sizeof(u8aRadiotapHeader80211n) + sizeof(u8aIeeeHeader_rts);
 
     // radiotap and ieee headers
     memcpy(packet_buffer_ath, headers_atheros, headers_atheros_len);
     memcpy(packet_buffer_ral, headers_ralink, headers_ralink_len);
+	memcpy(packet_buffer_rea, headers_Realtek, headers_Realtek_len);
 
     long long prev_time = current_timestamp();
     long long prev_time_read = current_timestamp();
