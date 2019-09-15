@@ -157,14 +157,14 @@ function tx_function {
 		if [ "$TEMP_C" -lt 75 ]; then # it must be under-voltage
 			echo
 			echo "  ---------------------------------------------------------------------------------------------------"
-			echo "  | ERROR: Under-Voltage detected on the TX Pi. Your Pi is not supplied with stable 5 Volts.        |"
+			echo "  | ERROR: Under-Voltage detected on the AIRPi. Your Pi is not supplied with stable 5 Volts.        |"
 			echo "  | Either your power-supply or wiring is not sufficent, check the wiring instructions in the Wiki. |"
 			echo "  | Video Bitrate will be reduced to 1000kbit to reduce current consumption!                        |"
 			echo "  ---------------------------------------------------------------------------------------------------"
 			echo
 			mount -o remount,rw /boot
 			echo "  ---------------------------------------------------------------------------------------------------" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
-			echo "  | ERROR: Under-Voltage detected on the TX Pi. Your Pi is not supplied with stable 5 Volts.        |" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
+			echo "  | ERROR: Under-Voltage detected on the AIRPi. Your Pi is not supplied with stable 5 Volts.        |" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
 			echo "  | Either your power-supply or wiring is not sufficent, check the wiring instructions in the Wiki. |" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
 			echo "  | Video Bitrate will be reduced to 1000kbit to reduce current consumption!                        |" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
 			echo "  | When you have fixed wiring/power-supply, delete this file and make sure it doesn't re-appear!   |" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
@@ -210,14 +210,14 @@ function tx_function {
 			if [ "$TEMP_C" -lt 75 ]; then # it must be under-voltage
 				echo
 				echo "  ---------------------------------------------------------------------------------------------------"
-				echo "  | ERROR: Under-Voltage detected on the TX Pi. Your Pi is not supplied with stable 5 Volts.        |"
+				echo "  | ERROR: Under-Voltage detected on the AIRPi. Your Pi is not supplied with stable 5 Volts.        |"
 				echo "  | Either your power-supply or wiring is not sufficent, check the wiring instructions in the Wiki. |"
 				echo "  | Video Bitrate will be reduced to 1000kbit to reduce current consumption!                        |"
 				echo "  ---------------------------------------------------------------------------------------------------"
 				echo
 				mount -o remount,rw /boot
 				echo "  ---------------------------------------------------------------------------------------------------" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
-				echo "  | ERROR: Under-Voltage detected on the TX Pi. Your Pi is not supplied with stable 5 Volts.        |" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
+				echo "  | ERROR: Under-Voltage detected on the AIRPi. Your Pi is not supplied with stable 5 Volts.        |" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
 				echo "  | Either your power-supply or wiring is not sufficent, check the wiring instructions in the Wiki. |" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
 				echo "  | Video Bitrate will be reduced to 1000kbit to reduce current consumption!                        |" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
 				echo "  | When you have fixed wiring/power-supply, delete this file and make sure it doesn't re-appear!   |" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
