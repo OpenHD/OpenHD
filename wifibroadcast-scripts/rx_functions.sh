@@ -201,7 +201,7 @@ function rx_function {
 		TEMP_C=$(($TEMP/1000))
 		if [ "$TEMP_C" -lt 75 ]; then
 			echo "  ---------------------------------------------------------------------------------------------------"
-			echo "  | ERROR: Under-Voltage detected on the RX Pi. Your Pi is not supplied with stable 5 Volts.        |"
+			echo "  | ERROR: Under-Voltage detected on the GROUNDPi. Your Pi is not supplied with stable 5 Volts.        |"
 			echo "  |                                                                                                 |"
 			echo "  | Either your power-supply or wiring is not sufficent, check the wiring instructions in the Wiki! |"
 			echo "  ---------------------------------------------------------------------------------------------------"
