@@ -1,0 +1,105 @@
+// SETTINGS \\
+
+:doctype: book
+
+// -- Table of Contents
+
+:toc:
+:toclevels: 3
+// :toc-title: Table of Contents
+:toc-placement!:
+
+// -- Icons
+
+ifdef::env-github[]
+
+:caution-caption: :fire:
+:important-caption: :exclamation:
+:note-caption: :paperclip:
+:tip-caption: :bulb:
+:warning-caption: :warning:
+endif::[]
+
+ifdef::env-github[]
+:status:
+:outfilesuffix: .asciidoc
+endif::[]
+
+:sectanchors:
+:numbered:
+
+// SETTINGS END \\
+
+// Variables \\
+:telegram: link:https://t.me/OpenHD_May_2019[Telegram]
+:wiki: link:https://github.com/HD-Fpv/Open.HD/wiki[Wiki]
+:openhd: link:https://github.com/HD-Fpv/Open.HD[OpenHD]
+:imageBuilder: link:https://github.com/HD-Fpv/Open.HD_Image_Builder[Image Builder]
+:settingsApp: link:https://github.com/HD-Fpv/Open.HD_AndroidApp[Settings App]
+
+
+// === BEGIN OF CONTENT === \\
+
+image::wiki-content/Open.HD Logo Splashscreen/Plain_OpenHD_Logo.jpg[OpenHD Logo]
+
+// Table of Contents
+toc::[]
+
+== Welcome to OpenHD!
+This project uses ordinary Wi-Fi in a way that replicates the good characteristics of analog radio.
+We are transmitting and receiving HD video, telemetry, audio, and control data all in one solution.
+Our primary user group is FPV UAV users.
+As such the display/receiver side also includes a very full featured OSD.
+This is also augmented by an optional android app that connects to the system and facilitates settings changes.
+
+TIP: Look around, read the {wiki}, ask questions on {telegram} and contribute back!
+
+== Structure
+
+This repository is one of the following which form the foundation of the project:
+
+[options="header"]
+[cols="1, 5"]
+|===
+| Name | Description
+
+| {wiki}
+| The documentation of this project.
+
+| {openhd}
+| The core functionality.
+
+| {imageBuilder}
+| The Image Builder allows the creation and modification of the OpenHD image from the kernel level all the way up.
+We also offer pre-built images that you can directly download.
+
+| {settingsApp}
+| For changing settings remotely on ground and air unit.
+
+|===
+
+== Community
+Feel free to join our growing community.
+We have a public {telegram} group with more then 100 members helping each other.
+
+== Developers
+Contribution is always welcome!
+Start helping us by open up an issue or pull request.
+We recommend to get in touch with us via the {telegram} group.
+
+== License
+
+OpenHD is licensed under GPLv2, you can find it's contents in this link Raspbian, Linux Kernel, Drivers are licensed under GPLv2 Original code (if found) is licensed as stipulated in respective source files or under the GPLv2 license
+
+== Credits
+
+Befinitiv- original wifibroadcast, Rangarid- OSD, Rodizio- EZ-WifiBroadcast, SVP-COM, Dino.de, Jelle, Vitaliy, and many others
+
+== Logotype
+
+OpenHD logo was designed by link:https://kurtzgraphics.com/[KURTZ]
+
+== Warranty/Disclaimer
+
+This is a free software and comes with no Warranty as stated in parts 11 and 12 of GPLv2 license.
+The creators and contributors of the software are not responsible for how it is used.
