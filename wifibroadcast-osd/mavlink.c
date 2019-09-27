@@ -38,10 +38,19 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					
 					td->msl_altitude = mavlink_msg_global_position_int_get_alt(&msg)/1000.0f;
 					fprintf(stdout, "msl alt global:%.2f  ", td->msl_altitude);
+
+
+					td->vx = mavlink_msg_global_position_int_get_vx(&msg)/100.0f;
+    				td->vy = mavlink_msg_global_position_int_get_vy(&msg)/100.0f;
+    				td->vz = mavlink_msg_global_position_int_get_vz(&msg)/100.0f;
+					
+					fprintf(stdout, "vx:%.2f  ", td->vx);
+					fprintf(stdout, "vy:%.2f  ", td->vy);
+					fprintf(stdout, "vz:%.2f  ", td->vz);
 					
 
-                                        td->latitude = mavlink_msg_global_position_int_get_lat(&msg)/10000000.0f;
-                                        td->longitude = mavlink_msg_global_position_int_get_lon(&msg)/10000000.0f;
+                    td->latitude = mavlink_msg_global_position_int_get_lat(&msg)/10000000.0f;
+                    td->longitude = mavlink_msg_global_position_int_get_lon(&msg)/10000000.0f;
 					
 					fprintf(stdout, "heading:%.2f  ", td->heading);
 					fprintf(stdout, "latitude:%.6f  ", td->latitude);
@@ -108,10 +117,12 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
                     			#endif
 
 					td->mav_climb = mavlink_msg_vfr_hud_get_climb(&msg);
+					td->throttle = mavlink_msg_vfr_hud_get_throttle(&msg);
 					fprintf(stdout, "speed:%.2f  ", td->speed);
 					fprintf(stdout, "airspeed:%.2f  ", td->airspeed);
 //					fprintf(stdout, "heading:%.2f  ", td->heading);
 					fprintf(stdout, "climb:%f  ", td->mav_climb);
+					fprintf(stdout, "throttle:%.2f  ", td->throttle);
                                         break;
 
                                 case MAVLINK_MSG_ID_GPS_STATUS:
