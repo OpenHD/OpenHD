@@ -41,8 +41,8 @@ void draw_total_signal(int8_t signal, int goodblocks, int badblocks, int packets
 void draw_card_signal(int8_t signal, int signal_good, int card, int adapter_cnt, int restart_count, int packets, int wrongcrcs, int type, int totalpackets, int totalpacketslost, float pos_x, float pos_y, float scale);
 void draw_uplink_signal(int8_t uplink_signal, int uplink_lostpackets, int8_t rc_signal, int rc_lostpackets, float pos_x, float pos_y, float scale);
 
-void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_t kbitrate_tx, uint32_t fecs_skipped, uint32_t injection_failed, long long injection_time, float pos_x, float pos_y, float scale);
-void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_t temp_gnd, float pos_x, float pos_y, float scale);
+void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_t kbitrate_tx, uint32_t fecs_skipped, uint32_t injection_failed, long long injection_time, float pos_x, float pos_y, float scale, float mbit_warn, float mbit_caution, float declutter);
+void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_t temp_gnd, float pos_x, float pos_y, float scale, float load_warn, float load_caution, float temp_warn, float temp_caution, float declutter);
 void draw_message(int severity, char line1[30], char line2[30], char line3[30], float pos_x, float pos_y, float scale);
 
 //new stuff from fritz walter https://www.youtube.com/watch?v=EQ01b3aJ-rk
@@ -56,18 +56,20 @@ void draw_TOTAL_DIST(int gpsspeed, float pos_x, float pos_y, float scale);
 void draw_TOTAL_TIME(float fly_time, float pos_x, float pos_y, float scale); 
 
 void draw_position(float lat, float lon, float pos_x, float pos_y, float scale);
-void draw_sat(int sats, int fixtype, int hdop, float pos_x, float pos_y, float scale);
+void draw_sat(int sats, int fixtype, int hdop, float pos_x, float pos_y, float scale, float hdop_warn, float hdop_caution, float declutter);
 void draw_home_distance(int distance, bool home_fixed, float pos_x, float pos_y, float scale);
 void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale);
-void draw_rssi(int rssi, float pos_x, float pos_y, float scale);
+void draw_rssi(int rssi, float pos_x, float pos_y, float scale, float mbit_warn, float mbit_caution, float declutter);
 void draw_cog(int cog, float pos_x, float pos_y, float scale);
 void draw_climb(float climb, float pos_x, float pos_y, float scale);
 void draw_mslalt(float mslalt, float pos_x, float pos_y, float scale);
 void draw_airspeed(int airspeed, float pos_x, float pos_y, float scale);
 void draw_gpsspeed(int gpsspeed, float pos_x, float pos_y, float scale);
+void draw_throttle(uint16_t throttle, uint16_t throttle_target, float pos_x, float pos_y, float scale);
 void draw_compass(float heading, float home_heading, float pos_x, float pos_y, float scale);
-void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale);
-void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale);
+void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale, float warn, float caution, float vsi_time, float climb);
+void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale, float trend_time, float low_limit, float vx);
+void draw_yaw_display(float vy, float pos_x, float pos_y, float scale, float trend_time);
 void draw_ahi(float roll, float pitch, float scale);
 void draw_home_arrow(float abs_heading, float craft_heading, float pos_x, float pos_y, float scale);
 
