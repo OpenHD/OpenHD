@@ -110,6 +110,7 @@ typedef struct {
 	float cog; //course over ground
 	float speed;
 	float airspeed;
+	uint16_t throttle;
 	float roll, pitch;
 	uint8_t sats;
 	uint8_t fix;
@@ -118,6 +119,10 @@ typedef struct {
 	uint8_t rssi;
 
 	uint8_t home_fix;
+	float mav_climb;
+	double vx;
+	double vy;
+	double vz;
 
 //#if defined(FRSKY)
 	int16_t x, y, z; // also needed for smartport
@@ -134,10 +139,13 @@ typedef struct {
 
 #if defined(MAVLINK)
 	uint32_t mav_flightmode;
-	float mav_climb;
+//	float mav_climb;
 	uint32_t version;
 	uint16_t vendor;
 	uint16_t product;
+//	double vx;
+//	double vy;
+//	double vz;
 #endif
 
 #if defined(LTM)
@@ -164,6 +172,21 @@ typedef struct {
 	uint8_t ltm_homefix;
 #endif
 
+#if defined(VOT)
+        uint8_t flightmode;
+        float vtxvoltage;
+        float camvoltage;
+        float rxvoltage;
+        float vario;
+        int16_t rpm;
+        int16_t temp;
+        uint16_t mahconsumed;
+        uint16_t compassdegrees;
+        uint8_t lq;
+        float distance;
+        uint16_t coursedegrees;
+//        float hdop;
+#endif
 
 	wifibroadcast_rx_status_t *rx_status;
 	wifibroadcast_rx_status_t_osd *rx_status_osd;
