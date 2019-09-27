@@ -20,17 +20,19 @@ fi
 cd /home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/
 
 if [ "$PrimaryCardMAC" == "0" ]; then
-	echo "PrimaryCardMAC must be configured \n"		
+	echo "PrimaryCardMAC must be configured. Starting for IP USB camera switcher \n"
+	NICS_LIST=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot`
+	./wfb_tx -k 1 -n 1 -u 4321 -t 2 -p 42 -B 20 -M 0 $NICS_LIST
 else
 	while true
 	do
 		echo "start wfb_tx -u 4321 -t 2 -p 57 -B 20 -M 0 $PrimaryCardMAC  (BandSwitcher uplink)"
 
-    		if [ "$EncryptionOrRange" == "Range" ]; then
+#    		if [ "$EncryptionOrRange" == "Range" ]; then
 			./wfb_tx -k 1 -n 1 -u 4321 -t 2 -p 42 -B 20 -M 0 $PrimaryCardMAC
-		else
-			echo "EncryptionOrRange must be set to Range to work with BandSwitcher\n"
-    		fi
+#		else
+#			echo "EncryptionOrRange must be set to Range to work with BandSwitcher\n"
+#    		fi
 		sleep 2
 	done		
 fi

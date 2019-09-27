@@ -40,12 +40,36 @@
 #define MAX_USER_PACKET_LENGTH 2278
 #define MAX_DATA_OR_FEC_PACKETS_PER_BLOCK 32
 
+#define IEEE80211_RADIOTAP_MCS_HAVE_BW    0x01
+#define IEEE80211_RADIOTAP_MCS_HAVE_MCS   0x02
+#define IEEE80211_RADIOTAP_MCS_HAVE_GI    0x04
+#define IEEE80211_RADIOTAP_MCS_HAVE_FMT   0x08
+
+#define IEEE80211_RADIOTAP_MCS_BW_20    0
+#define IEEE80211_RADIOTAP_MCS_BW_40    1
+#define IEEE80211_RADIOTAP_MCS_BW_20L   2
+#define IEEE80211_RADIOTAP_MCS_BW_20U   3
+#define IEEE80211_RADIOTAP_MCS_SGI      0x04
+#define IEEE80211_RADIOTAP_MCS_FMT_GF   0x08
+#define IEEE80211_RADIOTAP_MCS_HAVE_FEC   0x10
+#define IEEE80211_RADIOTAP_MCS_HAVE_STBC  0x20
+
+#define IEEE80211_RADIOTAP_MCS_FEC_LDPC   0x10
+#define	IEEE80211_RADIOTAP_MCS_STBC_MASK  0x60
+#define	IEEE80211_RADIOTAP_MCS_STBC_1  1
+#define	IEEE80211_RADIOTAP_MCS_STBC_2  2
+#define	IEEE80211_RADIOTAP_MCS_STBC_3  3
+#define	IEEE80211_RADIOTAP_MCS_STBC_SHIFT 5
+
 #define MAX_FIFOS 8
 #define FILE_NAME "/dev/zero"
 
 int sock = 0;
 int socks[5];
 
+int UseMCS=0;
+int UseSTBC=0;
+int UseLDPC=0;
 
 static int open_sock (char *ifname) {
     struct sockaddr_ll ll_addr;
@@ -106,6 +130,14 @@ static u8 u8aRadiotapHeader[] = {
 	0x00, 0x00
 };
 
+static u8 u8aRadiotapHeader80211N[]  __attribute__((unused)) = {
+    0x00, 0x00, // <-- radiotap version
+    0x0d, 0x00, // <- radiotap header length
+    0x00, 0x80, 0x08, 0x00, // <-- radiotap present flags:  RADIOTAP_TX_FLAGS + RADIOTAP_MCS
+    0x08, 0x00,  // RADIOTAP_F_TX_NOACK
+    0 , 0, 0 // bitmap, flags, mcs_index
+};
+
 static u8 u8aIeeeHeader_data_short[] = {
         0x08, 0x01, 0x00, 0x00, // frame control field (2bytes), duration (2 bytes)
         0xff // 1st byte of IEEE802.11 RA (mac) must be 0xff or something odd (wifi hardware determines broadcast/multicast through odd/even check)
@@ -141,7 +173,10 @@ void usage(void) {
 	"-t <type>   Frame type to send. 0 = DATA short, 1 = DATA standard, 2 = RTS\n"
 	"-d <rate>   Data rate to send frames with. Currently only supported with Ralink cards. Choose 6,12,18,24,36 Mbit\n"
 	"-y <mode>   Transmission mode. 0 = send on all interfaces, 1 = send only on interface with best RSSI\n"
-        "\n"
+	"-M          Use 802.11N MCS modes: 0,1,2,3\n"
+	"-S          Use STBC. Only for 802.11N\n  0\1\n"
+	"-L          Use LDPC. Only for 802.11n and 8812AU 0\1\n"
+	"\n"
         "Example:\n"
         "  tx_measure -p 0 -b 8 -r 4 -f 1024 -t 1 -d 24 -y 0 wlan0\n"
         "\n", 1024, MAX_USER_PACKET_LENGTH);
@@ -156,6 +191,47 @@ typedef struct {
 	packet_buffer_t *pbl;
 } fifo_t;
 
+
+int packet_header_init80211N(uint8_t *packet_header, int type, int port) {
+	u8 *pu8 = packet_header;
+
+	int port_encoded = 0;
+
+
+	memcpy(packet_header, u8aRadiotapHeader80211N, sizeof(u8aRadiotapHeader80211N));
+	pu8 += sizeof(u8aRadiotapHeader80211N);
+
+	switch (type) {
+	    case 0: // short DATA frame
+		fprintf(stderr, "using short DATA frames\n");
+		port_encoded = (port * 2) + 1;
+		u8aIeeeHeader_data_short[4] = port_encoded; // 1st byte of RA mac is the port
+		memcpy(pu8, u8aIeeeHeader_data_short, sizeof (u8aIeeeHeader_data_short)); //copy data short header to pu8
+		pu8 += sizeof (u8aIeeeHeader_data_short);
+		break;
+	    case 1: // standard DATA frame
+		fprintf(stderr, "using standard DATA frames\n");
+		port_encoded = (port * 2) + 1;
+		u8aIeeeHeader_data[4] = port_encoded; // 1st byte of RA mac is the port
+		memcpy(pu8, u8aIeeeHeader_data, sizeof (u8aIeeeHeader_data)); //copy data header to pu8
+		pu8 += sizeof (u8aIeeeHeader_data);
+		break;
+	    case 2: // RTS frame
+		fprintf(stderr, "using RTS frames\n");
+		port_encoded = (port * 2) + 1;
+		u8aIeeeHeader_rts[4] = port_encoded; // 1st byte of RA mac is the port
+		memcpy(pu8, u8aIeeeHeader_rts, sizeof (u8aIeeeHeader_rts));
+		pu8 += sizeof (u8aIeeeHeader_rts);
+		break;
+	    default:
+		fprintf(stderr, "ERROR: Wrong or no frame type specified (see -t parameter)\n");
+		exit(1);
+		break;
+	}
+
+	//determine the length of the header
+	return pu8 - packet_header;
+}
 
 int packet_header_init(uint8_t *packet_header, int type, int rate, int port) {
 	u8 *pu8 = packet_header;
@@ -457,7 +533,7 @@ int main(int argc, char *argv[]) {
 	    { 0, 0, 0, 0 }
 	};
 
-	int c = getopt_long(argc, argv, "h:r:f:p:b:m:t:d:y:", optiona, &nOptionIndex);
+	int c = getopt_long(argc, argv, "h:r:f:p:b:m:t:d:y:M:S:L:", optiona, &nOptionIndex);
 	if (c == -1) break;
 	switch (c) {
 	    case 0: // long option
@@ -498,6 +574,15 @@ int main(int argc, char *argv[]) {
 	    case 'y': // transmission mode
 		param_transmission_mode = atoi(optarg);
 		break;
+            case 'M': //use 802.11N datarates
+		UseMCS = atoi(optarg);
+		break;
+            case 'S': //use STBC
+                UseSTBC = atoi(optarg);
+                break;
+            case 'L': //use LDPC
+                UseLDPC = atoi(optarg);
+                break;
 
 	    default:
 		fprintf(stderr, "unknown switch %c\n", c);
@@ -524,7 +609,36 @@ int main(int argc, char *argv[]) {
 	return (1);
     }
 
-    packet_header_length = packet_header_init(packet_transmit_buffer, param_packet_type, param_data_rate, param_port);
+    if(UseMCS == 1)
+    {
+	fprintf(stderr, "Using 802.11N mode\n");
+	u8 mcs_flags = 0;
+	u8 mcs_known = (IEEE80211_RADIOTAP_MCS_HAVE_MCS | IEEE80211_RADIOTAP_MCS_HAVE_BW | IEEE80211_RADIOTAP_MCS_HAVE_GI | IEEE80211_RADIOTAP_MCS_HAVE_STBC | IEEE80211_RADIOTAP_MCS_HAVE_FEC);
+
+	if(UseSTBC == 1 )
+	{
+		fprintf(stderr, "STBC enabled\n");
+		mcs_flags = mcs_flags | IEEE80211_RADIOTAP_MCS_STBC_1 << IEEE80211_RADIOTAP_MCS_STBC_SHIFT;
+	}
+
+	if(UseLDPC == 1 )
+	{
+		fprintf(stderr, "LDPC enabled\n");
+		mcs_flags = mcs_flags | IEEE80211_RADIOTAP_MCS_FEC_LDPC;
+	}
+
+	u8aRadiotapHeader80211N[10] = mcs_known;
+	u8aRadiotapHeader80211N[11] = mcs_flags;
+	u8aRadiotapHeader80211N[12] = param_data_rate;
+         packet_header_length = packet_header_init80211N(packet_transmit_buffer, param_packet_type,  param_port);
+    }
+    else
+    {
+        packet_header_length = packet_header_init(packet_transmit_buffer, param_packet_type, param_data_rate, param_port);
+    }
+
+
+
     fifo_init(fifo, param_fifo_count, param_data_packets_per_block);
     fifo_open(fifo, param_fifo_count);
     fifo_create_select_set(fifo, param_fifo_count, &fifo_set, &max_fifo_fd);

@@ -68,8 +68,8 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t *td) {
 			break;
 		case ID_ALTITUDE_BP:
 			td->validmsgsrx++;
-			td->baro_altitude = data;
-			printf("baro altitude BP:%f  ", td->baro_altitude);
+			td->rel_altitude = data;
+			printf("baro altitude BP:%f  ", td->rel_altitude);
 			break;
 		case ID_ALTITUDE_AP:
 			//td->baro_altitude += data/100;
@@ -77,8 +77,8 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t *td) {
 			break;
 		case ID_GPS_ALTITUDE_BP:
 			td->validmsgsrx++;
-			td->altitude = data;
-			printf("GPS altitude:%f  ", td->altitude);
+			td->msl_altitude = data;
+			printf("GPS altitude:%f  ", td->msl_altitude);
 			break;
 		case ID_LONGITUDE_BP:
 			td->validmsgsrx++;

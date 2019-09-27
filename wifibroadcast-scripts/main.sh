@@ -23,10 +23,17 @@ check_camera_attached
 # Read the config file
 read_config_file
 
+echo "-------------------------------------"
+echo "SETTINGS FILE: $CONFIGFILE"
+echo "-------------------------------------"
+
 # Set the wifi parameters based on the selected datarate
 datarate_to_wifi_settings
 
 if [ "$CAM" == "0" ]; then
+# For debugging viewing the different tty consoles can be useful. Set in settings
+chvt $TTY_CONSOLE
+
 # Set the approperiate display font size
 set_font_for_resolution
 

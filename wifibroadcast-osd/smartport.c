@@ -111,8 +111,8 @@ void smartport_check(telemetry_data_t *td, uint8_t *b) {
             break;
         case FR_ID_GPS_ALT:
             // uint32_t , 100=1m
-            td->altitude = (float)(tel.data.i32) / 100.0;
-            printf( "\r\nsmartport FR_ID_GPS_ALT is %f", td->altitude );
+            td->msl_altitude = (float)(tel.data.i32) / 100.0;
+            printf( "\r\nsmartport FR_ID_GPS_ALT is %f", td->msl_altitude );
             break;
         case FR_ID_SPEED:
             // uint32_t , 2000=1kmh ???
@@ -163,8 +163,8 @@ void smartport_check(telemetry_data_t *td, uint8_t *b) {
             break;
         case FR_ID_ALTITUDE:
             // uint32_t, from barometer, 100 = 1m
-            td->baro_altitude = (float)(tel.data.i32) / 100.0;
-            printf( "\r\nsmartport FR_ID_ALTITUDE is %f", td->baro_altitude );
+            td->rel_altitude = (float)(tel.data.i32) / 100.0;
+            printf( "\r\nsmartport FR_ID_ALTITUDE is %f", td->rel_altitude );
             break;
         case FR_ID_VARIO:
             // uint32_t , 100 = 1m/s

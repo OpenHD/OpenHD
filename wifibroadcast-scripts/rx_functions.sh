@@ -1,4 +1,9 @@
 function rx_function {
+
+    if [ "$AdjustLCDBacklight" == "Y" ]; then
+        /home/pi/wifibroadcast-misc/LCD/MouseListener $AutoDimTime $AutoDimValue /dev/input/event0 & > /dev/null 2>&1
+    fi
+    
     /home/pi/wifibroadcast-base/sharedmem_init_rx
 
     # start virtual serial port for cmavnode and ser2net
@@ -68,24 +73,51 @@ function rx_function {
     if [ "$VIDEO_TMP" == "sdcard" ]; then
 		touch /tmp/pausewhile # make sure check_alive doesn't do it's stuff ...
 		tmessage "Saving to SDCARD enabled, preparing video storage ..."
-		if cat /proc/partitions | nice grep -q mmcblk0p3; then # partition has not been created yet
+		if cat /proc/partitions | nice grep -q mmcblk0p3; then 
 			echo
+			echo "SDCARD Video partion detected.."
 		else
 			echo
-			echo -e "n\np\n3\n3674112\n\nw" | fdisk /dev/mmcblk0 > /dev/null 2>&1
+			echo "SDCARD Video partion NOT detected.."
+			echo 
+
+		#	echo -e "n\np\n3\n3674112\n\nw" | fdisk /dev/mmcblk0 > /dev/null 2>&1
+		
+			echo -e "n\np\n3\n7839744\n\nw" | fdisk /dev/mmcblk0 > /dev/null 2>&1
 			partprobe > /dev/null 2>&1
-			mkfs.ext4 /dev/mmcblk0p3 -F > /dev/null 2>&1 || {
-			tmessage "ERROR: Could not format video storage on SDCARD!"
-			collect_errorlog
-			sleep 365d
-			}
+			
+			if [ "$VIDEO_FS" == "fat" ]; then
+				tmessage "Creating SDCARD FAT filesytem for Video Recording.."
+				mkfs.vfat /dev/mmcblk0p3 -n myvideo > /boot/sdcard.txt 2>&1 || {
+				tmessage "ERROR: Could not format video storage on SDCARD!"
+				collect_errorlog
+				sleep 365d 
+				}
+				mkdir -p /video_tmp > /dev/null 2>&1
+				mount -t vfat /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
+				tmessage "ERROR: Could not mount video storage on SDCARD!"
+				collect_errorlog
+				sleep 365d
+				}
+			else
+				tmessage "Creating SDCARD EXT4 filesytem for Video Recording.."
+				mkfs.ext4 /dev/mmcblk0p3 -L myvideo -F > /dev/null 2>&1 || {
+				tmessage "ERROR: Could not format video storage on SDCARD!"
+				collect_errorlog
+				sleep 365d 
+				}
+				e2fsck -p /dev/mmcblk0p3 > /dev/null 2>&1
+				mkdir -p /video_tmp > /dev/null 2>&1
+				mount -t ext4 /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
+				tmessage "ERROR: Could not mount video storage on SDCARD!"
+				collect_errorlog
+				sleep 365d
+				}
+			fi
+
 		fi
-		e2fsck -p /dev/mmcblk0p3 > /dev/null 2>&1
-		mount -t ext4 -o noatime /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
-			tmessage "ERROR: Could not mount video storage on SDCARD!"
-			collect_errorlog
-			sleep 365d
-		}
+
+		
 		VIDEOFILE=/video_tmp/videotmp.raw
 		echo "VIDEOFILE=/video_tmp/videotmp.raw" > /tmp/videofile
 		rm $VIDEOFILE > /dev/null 2>&1
@@ -93,6 +125,7 @@ function rx_function {
 		VIDEOFILE=/wbc_tmp/videotmp.raw
 		echo "VIDEOFILE=/wbc_tmp/videotmp.raw" > /tmp/videofile
     fi
+
 
 	# tracker disabled
     #/home/pi/wifibroadcast-base/tracker /wifibroadcast_rx_status_0 >> /wbc_tmp/tracker.txt &
@@ -168,7 +201,7 @@ function rx_function {
 		TEMP_C=$(($TEMP/1000))
 		if [ "$TEMP_C" -lt 75 ]; then
 			echo "  ---------------------------------------------------------------------------------------------------"
-			echo "  | ERROR: Under-Voltage detected on the RX Pi. Your Pi is not supplied with stable 5 Volts.        |"
+			echo "  | ERROR: Under-Voltage detected on the GROUNDPi. Your Pi is not supplied with stable 5 Volts.        |"
 			echo "  |                                                                                                 |"
 			echo "  | Either your power-supply or wiring is not sufficent, check the wiring instructions in the Wiki! |"
 			echo "  ---------------------------------------------------------------------------------------------------"
@@ -188,6 +221,11 @@ function rx_function {
     IsFirstTime=0;
     while true; do
         pause_while
+	
+		if [ $IsFirstTime -eq 0 ]; then
+                        killall omxplayer  > /dev/null 2>/dev/null
+                        killall omxplayer.bin  > /dev/null 2>/dev/null
+                fi
 
 		ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 $DISPLAY_PROGRAM > /dev/null 2>&1 &
 		ionice -c 3 nice cat /root/videofifo3 >> $VIDEOFILE &
@@ -219,10 +257,10 @@ function rx_function {
 				/home/pi/RemoteSettings/GroundRSSI.sh &
 			fi
 			
-			if [ "$IsBandSwicherEnabled" == "1" ]; then
+			#if [ "$IsBandSwicherEnabled" == "1" ]; then
 			    echo "BAND SWITCHER ENABLED...."
         			/home/pi/RemoteSettings/BandSwitcher.sh &
-			fi
+			#fi
 		fi
 		IsFirstTime=1
 		#MYADDEND

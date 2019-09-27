@@ -20,18 +20,58 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 			fprintf(stdout, "Msg seq:%d sysid:%d, compid:%d  ", msg.seq, msg.sysid, msg.compid);
                 	switch (msg.msgid){
 				 
+				case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+					fprintf(stdout, "GLOBAL_POSITION_INT: ");
+
+					#if COMPASS_INAV == true
+  						td->heading = mavlink_msg_global_position_int_get_hdg(&msg);
+					#else
+						td->heading = mavlink_msg_global_position_int_get_hdg(&msg)/100.0f;
+    					#endif
+
+
+                                        #if REL_ALT_SOURCE == 1
+                        			td->rel_altitude = mavlink_msg_global_position_int_get_relative_alt(&msg)/1000.0f;
+						fprintf(stdout, "REL altitude global rel:%.2f  ", td->rel_altitude);
+					#endif
+					
+					
+					td->msl_altitude = mavlink_msg_global_position_int_get_alt(&msg)/1000.0f;
+					fprintf(stdout, "msl alt global:%.2f  ", td->msl_altitude);
+					
+
+                                        td->latitude = mavlink_msg_global_position_int_get_lat(&msg)/10000000.0f;
+                                        td->longitude = mavlink_msg_global_position_int_get_lon(&msg)/10000000.0f;
+					
+					fprintf(stdout, "heading:%.2f  ", td->heading);
+					fprintf(stdout, "latitude:%.6f  ", td->latitude);
+					fprintf(stdout, "longitude:%.6f  ", td->longitude);
+                                        break;
+
                         	case MAVLINK_MSG_ID_GPS_RAW_INT:
 //					fprintf(stdout, "GPS_RAW_INT: ");
 					td->fix = mavlink_msg_gps_raw_int_get_fix_type(&msg);
 					td->sats = mavlink_msg_gps_raw_int_get_satellites_visible(&msg);
                 			td->hdop = mavlink_msg_gps_raw_int_get_eph(&msg);
 					td->cog = mavlink_msg_gps_raw_int_get_cog(&msg)/100.0f;
+					
+					//for gps/fc that show msl when it should be relative...
+					
+// 						td->rel_altitude = mavlink_msg_gps_raw_int_get_alt(&msg)/1000.0f;
+//						fprintf(stdout, "altitude gps rel:%.2f  ", td->rel_altitude);
+					
+					
 //					td->heading = mavlink_msg_gps_raw_int_get_cog(&msg)/100.0f;
-//                                      td->altitude = mavlink_msg_gps_raw_int_get_alt(&msg)/1000.0f;
+
+  					#if REL_ALT_SOURCE == 2
+  	                                   	td->rel_altitude = mavlink_msg_gps_raw_int_get_alt(&msg)/1000.0f;
+						fprintf(stdout, "REL altitude gps alt:%.2f  ", td->rel_altitude);
+					#endif
+
 //                                      td->latitude = mavlink_msg_gps_raw_int_get_lat(&msg)/10000000.0f;
 //                                      td->longitude = mavlink_msg_gps_raw_int_get_lon(&msg)/10000000.0f;
-					fprintf(stdout, "GPS RAW INT heading:%.2f  ", td->heading);
-//					fprintf(stdout, "altitude:%.2f  ", td->altitude);
+//					fprintf(stdout, "GPS RAW INT heading:%.2f  ", td->heading);
+//					fprintf(stdout, "altitude:%.2f  ", td->rel_altitude);
 //					fprintf(stdout, "latitude:%.2f  ", td->latitude);
 //					fprintf(stdout, "longitude:%.2f  ", td->longitude);
 //					fprintf(stdout, "fix:%d  ", td->fix);
@@ -39,21 +79,7 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 //                    			fprintf(stdout, "hdop:%d  ", td->hdop);
 					fprintf(stdout, "cog:%d  ", td->cog);
 					break;
-                                case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
-					fprintf(stdout, "GLOBAL_POSITION_INT: ");
-					#if COMPASS_INAV == true
-  						td->heading = mavlink_msg_global_position_int_get_hdg(&msg);
-					#else
-						td->heading = mavlink_msg_global_position_int_get_hdg(&msg)/100.0f;
-    					#endif
-                                        td->altitude = mavlink_msg_global_position_int_get_relative_alt(&msg)/1000.0f;
-                                        td->latitude = mavlink_msg_global_position_int_get_lat(&msg)/10000000.0f;
-                                        td->longitude = mavlink_msg_global_position_int_get_lon(&msg)/10000000.0f;
-					fprintf(stdout, "heading:%.2f  ", td->heading);
-					fprintf(stdout, "altitude:%.2f  ", td->altitude);
-					fprintf(stdout, "latitude:%.6f  ", td->latitude);
-					fprintf(stdout, "longitude:%.6f  ", td->longitude);
-                                        break;
+                                
                                 case MAVLINK_MSG_ID_ATTITUDE:
 					fprintf(stdout, "ATTITUDE: ");
 					td->roll = mavlink_msg_attitude_get_roll(&msg)*57.2958;
@@ -62,6 +88,7 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					fprintf(stdout, "pitch:%.2f  ", td->pitch);
 					render_data = 1; // render when we got attitude data (the data that needs to be most up-to-date)
 					break;
+
                                 case MAVLINK_MSG_ID_SYS_STATUS:
 					fprintf(stdout, "SYS_STATUS: ");
 					td->voltage = mavlink_msg_sys_status_get_voltage_battery(&msg)/1000.0f;
@@ -69,20 +96,28 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					fprintf(stdout, "voltage:%.2f  ", td->voltage);
 					fprintf(stdout, "ampere:%.2f  ", td->ampere);
                                         break;
+
                                 case MAVLINK_MSG_ID_VFR_HUD:
 					fprintf(stdout, "VFR_HUD: ");
                                         td->speed = mavlink_msg_vfr_hud_get_groundspeed(&msg)*3.6f;
                                         td->airspeed = mavlink_msg_vfr_hud_get_airspeed(&msg)*3.6f;
-					td->baro_altitude = mavlink_msg_vfr_hud_get_alt(&msg);
+
+                    			#if REL_ALT_SOURCE == 3
+						td->rel_altitude = mavlink_msg_vfr_hud_get_alt(&msg);
+                         			fprintf(stdout, "REL altitude vfr hud:%.2f  ", td->rel_altitude);
+                    			#endif
+
 					td->mav_climb = mavlink_msg_vfr_hud_get_climb(&msg);
 					fprintf(stdout, "speed:%.2f  ", td->speed);
 					fprintf(stdout, "airspeed:%.2f  ", td->airspeed);
 //					fprintf(stdout, "heading:%.2f  ", td->heading);
 					fprintf(stdout, "climb:%f  ", td->mav_climb);
                                         break;
+
                                 case MAVLINK_MSG_ID_GPS_STATUS:
 					fprintf(stdout, "GPS_STATUS ");
                                         break;
+
                                 case MAVLINK_MSG_ID_HEARTBEAT:
 					fprintf(stdout, "HEARTBEAT ");
 					td->mav_flightmode = mavlink_msg_heartbeat_get_custom_mode(&msg);
@@ -94,17 +129,21 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					fprintf(stdout, "mode:%d  ", td->mav_flightmode);
 					fprintf(stdout, "armed:%d  ", td->armed);
                                         break;
+
                                 case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
 					fprintf(stdout, "RC_CHANNELS_RAW ");
 					td->rssi = mavlink_msg_rc_channels_raw_get_rssi(&msg)*100/255;
 					fprintf(stdout, "rssi:%d  ", td->rssi);
                                         break;
+
                                 case MAVLINK_MSG_ID_COMMAND_ACK:
 					fprintf(stdout, "COMMAND_ACK:%d ",mavlink_msg_command_ack_get_command(&msg));
                                         break;
+
                                 case MAVLINK_MSG_ID_COMMAND_INT:
 					fprintf(stdout, "COMMAND_INT:%d ",mavlink_msg_command_int_get_command(&msg));
                                         break;
+
 				case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
 					td->version = mavlink_msg_autopilot_version_get_os_sw_version(&msg);
 					td->vendor = mavlink_msg_autopilot_version_get_vendor_id(&msg);
@@ -113,15 +152,24 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					fprintf(stdout, "version:%d  ", td->version);
 					fprintf(stdout, "vendor:%d  ", td->vendor);
 					fprintf(stdout, "product:%d  ", td->product);
-					break;	
+					break;
+
                                 case MAVLINK_MSG_ID_EXTENDED_SYS_STATE:
 					fprintf(stdout, "EXTENDED_SYS_STATE: vtol_state:%d, landed_state:%d",mavlink_msg_extended_sys_state_get_vtol_state(&msg),mavlink_msg_extended_sys_state_get_landed_state(&msg));
                                         break;
-/*                                case MAVLINK_MSG_ID_BATTERY_STATUS:
-					fprintf(stdout, "BATTERY_STATUS ");
+
+
+ /*                            case MAVLINK_MSG_ID_ALTITUDE:
+					#if REL_ALT_SOURCE == 4
+						td->rel_altitude = mavlink_msg_altitude_get_altitude_relative(&msg);
+                         			fprintf(stdout, "REL altitude altitude_relative:%.2f  ", td->rel_altitude);
+                    			#endif
+
                                         break;
-                                case MAVLINK_MSG_ID_ALTITUDE:
-					fprintf(stdout, "ALTITUDE ");
+
+
+                               case MAVLINK_MSG_ID_BATTERY_STATUS:
+					fprintf(stdout, "BATTERY_STATUS ");
                                         break;
                                 case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
 					fprintf(stdout, "LOCAL_POSITION_NED ");
