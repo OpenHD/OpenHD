@@ -56,7 +56,7 @@ void draw_TOTAL_DIST(int gpsspeed, float pos_x, float pos_y, float scale);
 void draw_TOTAL_TIME(float fly_time, float pos_x, float pos_y, float scale); 
 
 void draw_position(float lat, float lon, float pos_x, float pos_y, float scale);
-void draw_sat(int sats, int fixtype, int hdop, float pos_x, float pos_y, float scale, float hdop_warn, float hdop_caution, float declutter);
+
 void draw_home_distance(int distance, bool home_fixed, float pos_x, float pos_y, float scale);
 void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale);
 void draw_rssi(int rssi, float pos_x, float pos_y, float scale, float mbit_warn, float mbit_caution, float declutter);
@@ -65,7 +65,7 @@ void draw_climb(float climb, float pos_x, float pos_y, float scale);
 void draw_mslalt(float mslalt, float pos_x, float pos_y, float scale);
 void draw_airspeed(int airspeed, float pos_x, float pos_y, float scale);
 void draw_gpsspeed(int gpsspeed, float pos_x, float pos_y, float scale);
-void draw_throttle(uint16_t throttle, uint16_t throttle_target, float pos_x, float pos_y, float scale);
+
 void draw_compass(float heading, float home_heading, float pos_x, float pos_y, float scale);
 void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale, float warn, float caution, float vsi_time, float climb);
 void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale, float trend_time, float low_limit, float vx);
@@ -75,4 +75,21 @@ void draw_home_arrow(float abs_heading, float craft_heading, float pos_x, float 
 
 void draw_osdinfos(int osdfos, float pos_x, float pos_y, float scale);
 
+void draw_home_radar(float abs_heading, float craft_heading, int homedst, float pos_x, float pos_y, float scale);
+void draw_osdinfos(int osdfos, float pos_x, float pos_y, float scale);
+void draw_RPA(float roll, float pitch, float pos_x, float pos_y, float scale);
+void draw_throttle(uint16_t throttle, uint16_t throttle_target, float pos_x, float pos_y, float scale);
+//void draw_Throttle(int thro, float pos_x, float pos_y, float scale);
+void draw_ltmmode(int mode, int armed, int failsafe, float pos_x, float pos_y, float scale);
+void draw_amp_status(float current, float pos_x, float pos_y, float scale);
+void draw_osdinfos(int osdfps, float pos_x, float pos_y, float scale);
+void draw_sat(int sats, int fixtype, int hdop, float pos_x, float pos_y, float scale, float hdop_warn, float hdop_caution, float declutter);
+//void draw_Hdop(float hdop, float pos_x, float pos_y, float scale);
+void draw_Mission(int Seq,float pos_x, float pos_y, float scale);
+void draw_Angle(float pos_x, float pos_y, float scale);
+void draw_Angle2(float pos_x, float pos_y, float scale);
+void draw_Alarm(int SenorsPresent, int SenorsEnabled, int SenorsHealth, float pos_x, float pos_y, float scale);
 int width,height;
+
+int width,height;
+

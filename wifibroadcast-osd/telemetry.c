@@ -54,6 +54,12 @@ void telemetry_init(telemetry_data_t *td) {
 //	td->vx=0;
 //	td->vy=0;
 //	td->vz=0;
+//	td->hdop = 0;
+	td->servo1 = 1500;
+	td->mission_current_seq = 0;
+	td->SP = 0;
+	td->SE = 0;
+	td->SH = 0;
 	
 #endif
 
@@ -182,3 +188,4 @@ wifibroadcast_rx_status_t_sysair *telemetry_wbc_status_memory_open_sysair(void) 
         if (retval == MAP_FAILED) { perror("mmap"); exit(1); }
         return (wifibroadcast_rx_status_t_sysair*)retval;
 }
+

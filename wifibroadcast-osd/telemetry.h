@@ -146,6 +146,12 @@ typedef struct {
 //	double vx;
 //	double vy;
 //	double vz;
+//	uint16_t hdop;
+	uint16_t servo1;
+	uint16_t mission_current_seq;
+	uint32_t SP;
+	uint32_t SE;
+	uint32_t SH;
 #endif
 
 #if defined(LTM)
@@ -200,3 +206,4 @@ wifibroadcast_rx_status_t_osd *telemetry_wbc_status_memory_open_osd(void);
 wifibroadcast_rx_status_t_rc *telemetry_wbc_status_memory_open_rc(void);
 wifibroadcast_rx_status_t_uplink *telemetry_wbc_status_memory_open_uplink(void);
 wifibroadcast_rx_status_t_sysair *telemetry_wbc_status_memory_open_sysair(void);
+

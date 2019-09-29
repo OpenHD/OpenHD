@@ -1900,3 +1900,4 @@ void rotatePoints(float *x, float *y, float angle, int points, int center_x, int
     i++;
     }
 }
+

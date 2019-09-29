@@ -102,8 +102,14 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					fprintf(stdout, "SYS_STATUS: ");
 					td->voltage = mavlink_msg_sys_status_get_voltage_battery(&msg)/1000.0f;
 					td->ampere = mavlink_msg_sys_status_get_current_battery(&msg)/100.0f;
+					td->SP = mavlink_msg_sys_status_get_onboard_control_sensors_present(&msg);
+					td->SE = mavlink_msg_sys_status_get_onboard_control_sensors_enabled(&msg);
+					td->SH = mavlink_msg_sys_status_get_onboard_control_sensors_health(&msg);
 					fprintf(stdout, "voltage:%.2f  ", td->voltage);
 					fprintf(stdout, "ampere:%.2f  ", td->ampere);
+					fprintf(stdout, "Status1:%d ",td->SP);
+					fprintf(stdout, "Status2:%d ",td->SE);
+					fprintf(stdout, "Status3:%d ",td->SH);
                                         break;
 
                                 case MAVLINK_MSG_ID_VFR_HUD:
@@ -168,6 +174,15 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
                                 case MAVLINK_MSG_ID_EXTENDED_SYS_STATE:
 					fprintf(stdout, "EXTENDED_SYS_STATE: vtol_state:%d, landed_state:%d",mavlink_msg_extended_sys_state_get_vtol_state(&msg),mavlink_msg_extended_sys_state_get_landed_state(&msg));
                                         break;
+                              	case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
+					td->servo1 = mavlink_msg_servo_output_raw_get_servo1_raw(&msg);
+					fprintf(stdout, "SERVO1:%d ",mavlink_msg_servo_output_raw_get_servo1_raw(&msg));
+                                        break;
+                             	case MAVLINK_MSG_ID_MISSION_CURRENT:				
+					td->mission_current_seq = mavlink_msg_mission_current_get_seq(&msg);
+					fprintf(stdout, "MISSION_CURRENT ");
+					fprintf(stdout, "MC:%d ", td->mission_current_seq);
+                                        break;
 
 
  /*                            case MAVLINK_MSG_ID_ALTITUDE:
@@ -184,11 +199,9 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
                                         break;
                                 case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
 					fprintf(stdout, "LOCAL_POSITION_NED ");
-                                        break;
-                                case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
-					fprintf(stdout, "SERVO_OUTPUT_RAW ");
-                                        break;
-                                case MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED:
+                                        break; */
+                                
+ /*                               case MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED:
 					fprintf(stdout, "POSITION_TARGET_LOCAL_NED ");
                                         break;
                                 case MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT:
@@ -310,3 +323,4 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 	return render_data;
 }
 #endif
+
