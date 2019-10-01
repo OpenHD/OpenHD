@@ -79,7 +79,7 @@ void draw_home_radar(float abs_heading, float craft_heading, int homedst, float 
 void draw_osdinfos(int osdfos, float pos_x, float pos_y, float scale);
 void draw_RPA(float roll, float pitch, float pos_x, float pos_y, float scale);
 void draw_throttle(uint16_t throttle, uint16_t throttle_target, float pos_x, float pos_y, float scale);
-//void draw_Throttle(int thro, float pos_x, float pos_y, float scale);
+void draw_throttle_V2(uint16_t throttle, float pos_x, float pos_y, float scale);
 void draw_ltmmode(int mode, int armed, int failsafe, float pos_x, float pos_y, float scale);
 void draw_amp_status(float current, float pos_x, float pos_y, float scale);
 void draw_osdinfos(int osdfps, float pos_x, float pos_y, float scale);

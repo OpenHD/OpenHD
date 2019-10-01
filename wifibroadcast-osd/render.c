@@ -263,6 +263,9 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
     #ifdef VOT
     draw_mode(td->flightmode, td->armed, FLIGHTMODE_POS_X, FLIGHTMODE_POS_Y, FLIGHTMODE_SCALE * GLOBAL_SCALE);
     #endif
+    #ifdef LTM
+    draw_ltmmode(td->ltm_flightmode, td->armed, td->ltm_failsafe, FLIGHTMODE_POS_X, FLIGHTMODE_POS_Y, FLIGHTMODE_SCALE * GLOBAL_SCALE);
+    #endif
 #endif
 
 
@@ -427,11 +430,6 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 #endif
 
 
-#ifdef THROTTLE && defined(MAVLINK)
-    draw_throttle((int)td->throttle, THROTTLE_TARGET, THROTTLE_POS_X, THROTTLE_POS_Y, THROTTLE_SCALE * GLOBAL_SCALE);
-#endif
-
-
 #ifdef AHI
 #if defined(FRSKY) || defined(SMARTPORT)
     float x_val, y_val, z_val;
@@ -448,30 +446,51 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 #endif //protocol
 #endif //AHI
 
+#ifdef HOME_RADAR 
+    #if HOME_RADAR_USECOG == true
+    draw_home_radar(course_to(home_lat, home_lon, td->latitude, td->longitude), td->cog, (int)distance_between(home_lat, home_lon, td->latitude, td->longitude), HOME_RADAR_POS_X, HOME_RADAR_POS_Y, HOME_RADAR_SCALE * GLOBAL_SCALE);
+    #else
+    draw_home_radar(course_to(home_lat, home_lon, td->latitude, td->longitude), td->heading, (int)distance_between(home_lat, home_lon, td->latitude, td->longitude), HOME_RADAR_POS_X, HOME_RADAR_POS_Y, HOME_RADAR_SCALE * GLOBAL_SCALE);  
+    #endif
+#endif
+
+#if defined(HDOP) && defined(MAVLINK)
+ //   draw_Hdop(td->hdop, HDOP_POS_X, HDOP_POS_Y, HDOP_SCALE * GLOBAL_SCALE);
+#endif
+
+#ifdef RPA  //roll and pitch angle
+    draw_RPA(RPA_INVERT_ROLL * td->roll, RPA_INVERT_PITCH * td->pitch, RPA_POS_X, RPA_POS_Y, RPA_SCALE * GLOBAL_SCALE);
+#endif
+
+#if defined(THROTTLE_V2) && defined(MAVLINK) 
+   draw_throttle_V2(td->throttle, THROTTLE_V2_POS_X, THROTTLE_V2_POS_Y, THROTTLE_V2_SCALE * GLOBAL_SCALE);
+#endif
+
+#if defined(THROTTLE) && defined(MAVLINK)
+    draw_throttle((int)td->throttle, THROTTLE_TARGET, THROTTLE_POS_X, THROTTLE_POS_Y, THROTTLE_SCALE * GLOBAL_SCALE);
+#endif
+
+#if defined(MISSION) && defined(MAVLINK) 
+  draw_Mission(td->mission_current_seq , MISSION_POS_X, MISSION_POS_Y, MISSION_SCALE * GLOBAL_SCALE);
+#endif
+
+#ifdef ANGLE
+  draw_Angle(ANGLE_POS_X, ANGLE_POS_Y, ANGLE_SCALE * GLOBAL_SCALE);
+#endif
+
+#ifdef ANGLE2
+  draw_Angle2(ANGLE2_POS_X, ANGLE2_POS_Y, ANGLE2_SCALE * GLOBAL_SCALE);
+#endif
+
+#if defined(ALARM) && defined(MAVLINK) 
+    draw_Alarm(td->SP, td->SE, td->SH, ALARM_POS_X, ALARM_POS_Y, ALARM_SCALE * GLOBAL_SCALE);
+#endif
+
     End(); // Render end (causes everything to be drawn on next vsync)
 }
 
 #ifdef VOT
-/*typedef enum {
-	VECTOR_FLIGHT_MODE_2D,
-	VECTOR_FLIGHT_MODE_2D_ALT_HOLD,
-	VECTOR_FLIGHT_MODE_2D_HEADING_HOLD,
-	VECTOR_FLIGHT_MODE_2D_ALT_HEADING_HOLD,
-	VECTOR_FLIGHT_MODE_LOITER,
-	VECTOR_FLIGHT_MODE_3D,
-	VECTOR_FLIGHT_MODE_3D_HEADING_HOLD,
-	VECTOR_FLIGHT_MODE_RTH,
-	VECTOR_FLIGHT_MODE_LAND,
-	VECTOR_FLIGHT_MODE_CARTESIAN,
-	VECTOR_FLIGHT_MODE_CARTESIAN_LOITER,
-	VECTOR_FLIGHT_MODE_POLAR,
-	VECTOR_FLIGHT_MODE_POLAR_LOITER,
-	VECTOR_FLIGHT_MODE_CENTER_STICK,
-	VECTOR_FLIGHT_MODE_OFF,
-	VECTOR_FLIGHT_MODE_WAYPOINT,
-	VECTOR_FLIGHT_MODE_MAX
-} VECTOR_FLIGHT_MODES;
-*/
+
 void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
     //flight modes Eagletree Vector
     float text_scale = getWidth(2) * scale;
@@ -499,6 +518,7 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
  TextMid(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
 }
 #else
+
 void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
     //autopilot mode, mavlink specific, could be used if mode is in telemetry data of other protocols as well
     float text_scale = getWidth(2) * scale;
@@ -512,6 +532,27 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
     if (armed == 1){
     switch (mode) {
     #if COPTER == true
+    #if CHINESE == true
+    case 0: sprintf(buffer, "自   稳"); break;
+    case 1: sprintf(buffer, "特   技"); break;
+    case 2: sprintf(buffer, "定   高"); break;
+    case 3: sprintf(buffer, "自   动"); break;
+    case 4: sprintf(buffer, "指   引"); break;
+    case 5: sprintf(buffer, "悬   停"); break;
+    case 6: sprintf(buffer, "返   航"); break;
+    case 7: sprintf(buffer, "绕   圈"); break;
+    case 9: sprintf(buffer, "降   落"); break;
+    case 11: sprintf(buffer, "漂   移"); break;
+    case 13: sprintf(buffer, "运   动"); break;
+    case 14: sprintf(buffer, "翻   滚"); break;
+    case 15: sprintf(buffer, "自 动 调 参"); break;
+    case 16: sprintf(buffer, "定   点"); break;
+    case 17: sprintf(buffer, "制   动"); break;
+    case 18: sprintf(buffer, "抛   飞"); break;
+    case 19: sprintf(buffer, "避   障"); break;
+    case 20: sprintf(buffer, "无 GPS 指 引"); break;
+    case 255: sprintf(buffer, "-----"); break;
+    #else
     case 0: sprintf(buffer, "STAB"); break;
     case 1: sprintf(buffer, "ACRO"); break;
     case 2: sprintf(buffer, "ALTHOLD"); break;
@@ -531,34 +572,78 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
     case 19: sprintf(buffer, "AVOIDADSB"); break;
     case 20: sprintf(buffer, "GUIDEDNOGPS"); break;
     case 255: sprintf(buffer, "-----"); break;
+    #endif
+    #else       
+    #if CHINESE == true
+      case 0: sprintf(buffer, "手   动"); break;
+      case 1: sprintf(buffer, "盘   旋"); break;
+      case 2: sprintf(buffer, "自   稳"); break;
+      case 3: sprintf(buffer, "教   练"); break;
+      case 4: sprintf(buffer, "特   技"); break;
+      //case 5: sprintf(buffer, "半 自 稳"); break;
+      case 5: sprintf(buffer, "自   稳"); break;
+      case 6: sprintf(buffer, "自 稳 定 高"); break;
+      case 7: sprintf(buffer, "巡   航"); break;
+      case 8: sprintf(buffer, "自 动 调 参"); break;
+      case 10: sprintf(buffer, "自   动"); break;
+      case 11: sprintf(buffer, "返   航"); break;
+      case 12: sprintf(buffer, "定   点"); break;
+      //case 15: sprintf(buffer, "抛   飞"); break;
+      case 15: sprintf(buffer, "指   引"); break;
+      //case 16: sprintf(buffer, "失 控 保 护"); break;
+      case 16: sprintf(buffer, "INIT"); break;
+      case 255: sprintf(buffer, "-----"); break;
     #else
-    case 0: sprintf(buffer, "MAN"); break;
-    case 1: sprintf(buffer, "CIRC"); break;
-    case 2: sprintf(buffer, "STAB"); break;
-    case 3: sprintf(buffer, "TRAI"); break;
-    case 4: sprintf(buffer, "ACRO"); break;
-    case 5: sprintf(buffer, "FBWA"); break;
-    case 6: sprintf(buffer, "FBWB"); break;
-    case 7: sprintf(buffer, "CRUZ"); break;
-    case 8: sprintf(buffer, "TUNE"); break;
-    case 10: sprintf(buffer, "AUTO"); break;
-    case 11: sprintf(buffer, "RTL"); break;
-    case 12: sprintf(buffer, "LOIT"); break;
-    case 15: sprintf(buffer, "GUID"); break;
-    case 16: sprintf(buffer, "INIT"); break;
-    case 17: sprintf(buffer, "Q-STAB"); break;
-    case 18: sprintf(buffer, "Q-HOVR"); break;
-    case 19: sprintf(buffer, "Q-LOIT"); break;
-    case 20: sprintf(buffer, "Q-LAND"); break;
-    case 21: sprintf(buffer, "Q-RTL"); break;
-    case 23: sprintf(buffer, "Q-ACRO"); break;
-    case 255: sprintf(buffer, "-----"); break;
+      case 0: sprintf(buffer, "MAN"); break;
+      case 1: sprintf(buffer, "CIRC"); break;
+      case 2: sprintf(buffer, "STAB"); break;
+      case 3: sprintf(buffer, "TRAI"); break;
+      case 4: sprintf(buffer, "ACRO"); break;
+      case 5: sprintf(buffer, "FBWA"); break;
+      case 6: sprintf(buffer, "FBWB"); break;
+      case 7: sprintf(buffer, "CRUZ"); break;
+      case 8: sprintf(buffer, "TUNE"); break;
+      case 10: sprintf(buffer, "AUTO"); break;
+      case 11: sprintf(buffer, "RTL"); break;
+      case 12: sprintf(buffer, "LOIT"); break;
+      case 15: sprintf(buffer, "GUID"); break;
+      case 16: sprintf(buffer, "INIT"); break;
+      case 17: sprintf(buffer, "Q-STAB"); break;
+      case 18: sprintf(buffer, "Q-HOVR"); break;
+      case 19: sprintf(buffer, "Q-LOIT"); break;
+      case 20: sprintf(buffer, "Q-LAND"); break;
+      case 21: sprintf(buffer, "Q-RTL"); break;
+      case 23: sprintf(buffer, "Q-ACRO"); break;
+      case 255: sprintf(buffer, "-----"); break;
+    #endif
+    
     #endif
     default: sprintf(buffer, "-----"); break; // TODO: find out why strange numbers when using zs6bujs telemetry logs, default to something more sensible like "unknown mode"
     }
     } else {
     switch (mode) {
     #if COPTER == true
+    #if CHINESE == true
+    case 0: sprintf(buffer, "[自   稳]"); break;
+    case 1: sprintf(buffer, "[特   技]"); break;
+    case 2: sprintf(buffer, "[定   高]"); break;
+    case 3: sprintf(buffer, "[自   动]"); break;
+    case 4: sprintf(buffer, "[指   引]"); break;
+    case 5: sprintf(buffer, "[悬   停]"); break;
+    case 6: sprintf(buffer, "[返   航]"); break;
+    case 7: sprintf(buffer, "[绕   圈]"); break;
+    case 9: sprintf(buffer, "[降   落]"); break;
+    case 11: sprintf(buffer, "[漂   移]"); break;
+    case 13: sprintf(buffer, "[运   动]"); break;
+    case 14: sprintf(buffer, "[翻   滚]"); break;
+    case 15: sprintf(buffer, "[自 动 调 参]"); break;
+    case 16: sprintf(buffer, "[定   点]"); break;
+    case 17: sprintf(buffer, "[制   动]"); break;
+    case 18: sprintf(buffer, "[抛   飞]"); break;
+    case 19: sprintf(buffer, "[避   障]"); break;
+    case 20: sprintf(buffer, "[无 GPS 指 引]"); break;
+    case 255: sprintf(buffer, "[-----]"); break;
+    #else
     case 0: sprintf(buffer, "[STAB]"); break;
     case 1: sprintf(buffer, "[ACRO]"); break;
     case 2: sprintf(buffer, "[ALTHOLD]"); break;
@@ -578,28 +663,51 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
     case 19: sprintf(buffer, "[AVOIDADSB]"); break;
     case 20: sprintf(buffer, "[GUIDEDNOGPS]"); break;
     case 255: sprintf(buffer, "[-----]"); break;
+    #endif
     #else
-    case 0: sprintf(buffer, "[MAN]"); break;
-    case 1: sprintf(buffer, "[CIRC]"); break;
-    case 2: sprintf(buffer, "[STAB]"); break;
-    case 3: sprintf(buffer, "[TRAI]"); break;
-    case 4: sprintf(buffer, "[ACRO]"); break;
-    case 5: sprintf(buffer, "[FBWA]"); break;
-    case 6: sprintf(buffer, "[FBWB]"); break;
-    case 7: sprintf(buffer, "[CRUZ]"); break;
-    case 8: sprintf(buffer, "[TUNE]"); break;
-    case 10: sprintf(buffer, "[AUTO]"); break;
-    case 11: sprintf(buffer, "[RTL]"); break;
-    case 12: sprintf(buffer, "[LOIT]"); break;
-    case 15: sprintf(buffer, "[GUID]"); break;
-    case 16: sprintf(buffer, "[INIT]"); break;
-    case 17: sprintf(buffer, "Q-STAB"); break;
-    case 18: sprintf(buffer, "Q-HOVR"); break;
-    case 19: sprintf(buffer, "Q-LOIT"); break;
-    case 20: sprintf(buffer, "Q-LAND"); break;
-    case 21: sprintf(buffer, "Q-RTL"); break;
-    case 23: sprintf(buffer, "Q-ACRO"); break;
-    case 255: sprintf(buffer, "[-----]"); break;
+    #if CHINESE == true
+      case 0: sprintf(buffer, "[手   动]"); break;
+      case 1: sprintf(buffer, "[盘   旋]"); break;
+      case 2: sprintf(buffer, "[自   稳]"); break;
+      case 3: sprintf(buffer, "[教   练]"); break;
+      case 4: sprintf(buffer, "[特   技]"); break;
+      //case 5: sprintf(buffer, "[半 自 稳]"); break;
+      case 5: sprintf(buffer, "[自   稳]"); break;
+      case 6: sprintf(buffer, "[自 稳 定 高]"); break;
+      case 7: sprintf(buffer, "[巡   航]"); break;
+      case 8: sprintf(buffer, "[自 动 调 参]"); break;
+      case 10: sprintf(buffer, "[自   动]"); break;
+      case 11: sprintf(buffer, "[返   航]"); break;
+      case 12: sprintf(buffer, "[定   点]"); break;
+      //case 15: sprintf(buffer, "[抛   飞]"); break;
+      case 15: sprintf(buffer, "[指   引]"); break;
+      //case 16: sprintf(buffer, "[失 控 保 护]"); break;
+      case 16: sprintf(buffer, "[INIT]"); break;
+      case 255: sprintf(buffer, "[-----]"); break;
+    #else
+      case 0: sprintf(buffer, "[MAN]"); break;
+      case 1: sprintf(buffer, "[CIRC]"); break;
+      case 2: sprintf(buffer, "[STAB]"); break;
+      case 3: sprintf(buffer, "[TRAI]"); break;
+      case 4: sprintf(buffer, "[ACRO]"); break;
+      case 5: sprintf(buffer, "[FBWA]"); break;
+      case 6: sprintf(buffer, "[FBWB]"); break;
+      case 7: sprintf(buffer, "[CRUZ]"); break;
+      case 8: sprintf(buffer, "[TUNE]"); break;
+      case 10: sprintf(buffer, "[AUTO]"); break;
+      case 11: sprintf(buffer, "[RTL]"); break;
+      case 12: sprintf(buffer, "[LOIT]"); break;
+      case 15: sprintf(buffer, "[GUID]"); break;
+      case 16: sprintf(buffer, "[INIT]"); break;
+      case 17: sprintf(buffer, "Q-STAB"); break;
+      case 18: sprintf(buffer, "Q-HOVR"); break;
+      case 19: sprintf(buffer, "Q-LOIT"); break;
+      case 20: sprintf(buffer, "Q-LAND"); break;
+      case 21: sprintf(buffer, "Q-RTL"); break;
+      case 23: sprintf(buffer, "Q-ACRO"); break;
+      case 255: sprintf(buffer, "[-----]"); break;
+    #endif
+    
     #endif
     default: sprintf(buffer, "[-----]"); break; // TODO: find out why strange numbers when using zs6bujs telemetry logs, default to something more sensible like "unknown mode"
     }
@@ -607,6 +715,68 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
     TextMid(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
 }
 #endif
+
+void draw_ltmmode(int mode, int armed, int failsafe, float pos_x, float pos_y, float scale){
+    float text_scale = getWidth(2) * scale;
+    
+    sprintf(buffer, "[-----]");
+    if (armed == 0){
+      switch (mode) {
+       case 0: sprintf(buffer, "[手   动]"); break;
+       case 1: sprintf(buffer, "[RATE]"); break;
+       case 2: sprintf(buffer, "[自   稳]"); break;
+       case 3: sprintf(buffer, "[半 自 稳]"); break;
+       case 4: sprintf(buffer, "[特   技]"); break;
+       case 5: sprintf(buffer, "[自 稳 1]"); break;
+       case 6: sprintf(buffer, "[自 稳 2]"); break;
+       case 7: sprintf(buffer, "[自 稳 3]"); break;  
+       case 8: sprintf(buffer, "[定   高]"); break;
+       case 9: sprintf(buffer, "[GPS 定点]"); break;
+       case 10: sprintf(buffer, "[自   动]"); break;
+       case 11: sprintf(buffer, "[无   头]"); break;
+       case 12: sprintf(buffer, "[绕   圈]"); break;
+       case 13: sprintf(buffer, "[返   航]"); break;
+       case 14: sprintf(buffer, "[跟   随]"); break;
+       case 15: sprintf(buffer, "[降   落]"); break;
+       case 16: sprintf(buffer, "[线 性 增 稳]"); break;
+       case 17: sprintf(buffer, "[增 稳 定 高]"); break;
+       case 18: sprintf(buffer, "[巡   航]"); break;
+      }
+    }
+    else  {
+      switch (mode) {
+       case 0: sprintf(buffer, "手   动"); break;
+       case 1: sprintf(buffer, "RATE"); break;
+       case 2: sprintf(buffer, "自   稳"); break;
+       case 3: sprintf(buffer, "半 自 稳"); break;
+       case 4: sprintf(buffer, "特   技"); break;
+       case 5: sprintf(buffer, "自 稳 1"); break;
+       case 6: sprintf(buffer, "自 稳 2"); break;
+       case 7: sprintf(buffer, "自 稳 3"); break;  
+       case 8: sprintf(buffer, "定   高"); break;
+       case 9: sprintf(buffer, "GPS 定点"); break;
+       case 10: sprintf(buffer, "自   动"); break;
+       case 11: sprintf(buffer, "无   头"); break;
+       case 12: sprintf(buffer, "绕   圈"); break;
+       case 13: sprintf(buffer, "返   航"); break;
+       case 14: sprintf(buffer, "跟   随"); break;
+       case 15: sprintf(buffer, "降   落"); break;
+       case 16: sprintf(buffer, "线 性 增 稳"); break;
+       case 17: sprintf(buffer, "增 稳 定 高"); break;
+       case 18: sprintf(buffer, "巡   航"); break;
+      }
+    }  
+    
+    if (failsafe == 1)  {
+       sprintf(buffer, "失 控 保 护");
+    }
+    
+    TextMid(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
+    
+} 
+
+
+
 
 void draw_rssi(int rssi, float pos_x, float pos_y, float scale, float warn, float caution, float declutter){
     float text_scale = getWidth(2) * scale;
@@ -659,7 +829,12 @@ void draw_climb(float climb, float pos_x, float pos_y, float scale){
     float text_scale = getWidth(2) * scale;
     VGfloat width_value = TextWidth("-00.0", myfont, text_scale);
 
+    #if CHINESE == true
     TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y), "", osdicons, text_scale*0.6);
+    #else
+    TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y), "ﵻ", osdicons, text_scale*0.6);
+    #endif
+
     if (climb > 0.0f) {
     sprintf(buffer, "+%.1f", climb);
     } else {
@@ -703,10 +878,15 @@ void draw_gpsspeed(int gpsspeed, float pos_x, float pos_y, float scale){
 
     float text_scale = getWidth(2) * scale;
     VGfloat width_value = TextWidth("100", myfont, text_scale);
+    #if CHINESE == true
     VGfloat width_speedo = TextWidth("", osdicons, text_scale*0.65);
-
     TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y), "", osdicons, text_scale*0.65);
     TextEnd(getWidth(pos_x)-width_value-width_speedo, getHeight(pos_y), "", osdicons, text_scale*0.7);
+    #else
+    VGfloat width_speedo = TextWidth("ﵵ", osdicons, text_scale*0.65);
+    TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y),"ﵵ", osdicons, text_scale*0.65);
+    TextEnd(getWidth(pos_x)-width_value-width_speedo, getHeight(pos_y), "ﵷ", osdicons, text_scale*0.7);
+    #endif
 
     #if IMPERIAL == true
     sprintf(buffer, "%d", gpsspeed*TO_MPH);
@@ -721,86 +901,6 @@ void draw_gpsspeed(int gpsspeed, float pos_x, float pos_y, float scale){
     Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "km/h", myfont, text_scale*0.6);
     #endif
 }
-
-
-
-
-
-void draw_throttle(uint16_t throttle, uint16_t throttle_target, float pos_x, float pos_y, float scale){
-
-    float text_scale = getHeight(2) * scale;
-    float width_element = getWidth(0.15) * scale;
-    float height_element = getWidth(3) * scale;
-    
-    Fill(COLOR);
-    Stroke(OUTLINECOLOR);
-
-    sprintf(buffer, "%d%%",  throttle);
-    Text(getWidth(pos_x)+getWidth(0.2), getHeight(pos_y), buffer, myfont, text_scale);
-
-#if THROTTLE_GAUGE == true
-//save the current matrix so it can be reset later
-VGfloat savedMatrix[9];
-vgGetMatrix(savedMatrix);
-
-//move the reference point to center of gauge (now 0,0)
-Translate(getWidth(pos_x), getHeight(pos_y+3));
-
-Stroke(COLOR);
-//Circle(getWidth(pos_x+3), getHeight(pos_y+3), width_gauge);
-CircleOutline(0, 0, height_element*2.2);
-
-// 0 tick
-Rotate(135);
-Rect(0, height_element*.85, width_element, height_element*.2);
-vgLoadMatrix(savedMatrix); //reload matrix
-
-// Throttle target tick
-Translate(getWidth(pos_x), getHeight(pos_y+3));
-Rotate(135);
-Rotate((throttle_target*2.35)*-1);
-Stroke(COLOR_GOOD); //green
-Fill(COLOR_GOOD); //green
-Rect(0, height_element*.85, width_element, height_element*.2);
-vgLoadMatrix(savedMatrix); //reload matrix
-
-// 100 tick
-Translate(getWidth(pos_x), getHeight(pos_y+3));
-Rotate(270);
-Stroke(COLOR_WARNING); //red
-Fill(COLOR_WARNING); //red
-Rect(0, height_element*.85, width_element, height_element*.2);
-vgLoadMatrix(savedMatrix);//reload matrix
-
-//set initial rotation at 135 degrees for 0 throttle
-Translate(getWidth(pos_x), getHeight(pos_y+3));
-Rotate(135);
-//2.35 so that 100 percent throttle=235 degrees
-Rotate((throttle*2.35)*-1);
-
-if (global_armed==1){
-Stroke(COLOR_WARNING); //red
-Fill(COLOR_WARNING);} //if armed needle is red
-else {
-Fill(COLOR);
-Stroke(OUTLINECOLOR);}
-
-
-if ( (throttle >throttle_target-2) && (throttle<throttle_target+2) ){
-    Stroke(COLOR_GOOD);
-    Fill(COLOR_GOOD);} //green
-   
-
-//draw needle
-Rect(0, 0, width_element, height_element*.8);
-
-//reset matrix so coordinate system is good for next draw
-vgLoadMatrix(savedMatrix);
-
-#endif
-}
-
-
 
 
 void draw_uplink_signal(int8_t uplink_signal, int uplink_lostpackets, int8_t rc_signal, int rc_lostpackets, float pos_x, float pos_y, float scale){
@@ -848,8 +948,11 @@ void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_
     float text_scale = getWidth(2) * scale;
     VGfloat height_text_small = TextHeight(myfont, text_scale*0.6)+getHeight(0.3)*scale;
     VGfloat width_value = TextWidth("10.0", myfont, text_scale);
+    #if CHINESE == true
     VGfloat width_symbol = TextWidth("", osdicons, text_scale*0.8);
-//    VGfloat width_value_ms = TextWidth("0.0", myfont, text_scale*0.6);
+    #else
+    VGfloat width_symbol = TextWidth("ﵴ", osdicons, text_scale*0.8);
+    #endif
 
     float mbit = (float)kbitrate / 1000;
     float mbit_measured = (float)kbitrate_measured_tx / 1000;
@@ -877,8 +980,11 @@ void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_
     }
     fecs_skipped_last = fecs_skipped;
 
+    #if CHINESE == true
     TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y), "", osdicons, text_scale * 0.8);
-
+    #else
+    TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y),"ﵴ", osdicons, text_scale * 0.8);
+    #endif
     if (mbit > mbit_measured*mbit_warn) {
         Stroke(COLOR_WARNING); //red
     Fill(COLOR_WARNING); 
@@ -978,7 +1084,7 @@ void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_
         Stroke(COLOR_DECLUTTER); //opaque
         Fill(COLOR_DECLUTTER);}
     }
-    TextEnd(getWidth(pos_x)-width_value-width_ag, getHeight(pos_y)-height_text, "", osdicons, text_scale*0.7);
+    TextEnd(getWidth(pos_x)-width_value-width_ag, getHeight(pos_y)-height_text, "", osdicons, text_scale*0.7);
     TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y)-height_text, "G", myfont, text_scale*0.4);
 
     sprintf(buffer, "%d", cpuload_gnd);
@@ -1002,7 +1108,7 @@ void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_
     sprintf(buffer, "%d°", temp_gnd);
     TextEnd(getWidth(pos_x)+width_value+width_label+getWidth(0.7), getHeight(pos_y)-height_text, buffer, myfont, text_scale);
 
-    TextEnd(getWidth(pos_x)-width_value-width_ag, getHeight(pos_y)-height_text, "", osdicons, text_scale*0.7);
+    TextEnd(getWidth(pos_x)-width_value-width_ag, getHeight(pos_y)-height_text, "", osdicons, text_scale*0.7);
     TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y)-height_text, "G", myfont, text_scale*0.4);
 
     Fill(COLOR);
@@ -1104,19 +1210,35 @@ void draw_compass(float heading, float home_heading, float pos_x, float pos_y, f
     switch (j) {
         case 0:
             draw = true;
+            #if CHINESE == true
+            c = "北";
+            #else
             c = "N";
+	    #endif
             break;
         case 90:
             draw = true;
+            #if CHINESE == true
+            c = "东";
+            #else
             c = "E";
+            #endif
             break;
         case 180:
             draw = true;
+            #if CHINESE == true
+            c = "南";
+            #else
             c = "S";
+            #endif
             break;
         case 270:
             draw = true;
+            #if CHINESE == true
+            c = "西";
+            #else
             c = "W";
+            #endif
             break;
     }
     if (draw == true) {
@@ -1213,7 +1335,11 @@ void draw_position(float lat, float lon, float pos_x, float pos_y, float scale){
         mylat=lat;
     #endif
 
+    #if CHINESE == true
     TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y), "  ", osdicons, text_scale*0.6);
+    #else
+    TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y), "ﵲ", osdicons, text_scale*0.6);
+    #endif
 
     #if HIDE_LATLON == true
     sprintf(buffer, "0%f", mylon);
@@ -1223,7 +1349,11 @@ void draw_position(float lat, float lon, float pos_x, float pos_y, float scale){
 
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
 
+    #if CHINESE == true
     TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y)+height_text, "  ", osdicons, text_scale*0.6);
+    #else
+    TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y)+height_text, "ﵳ", osdicons, text_scale*0.6);
+    #endif
 
     #if HIDE_LATLON == true
     sprintf(buffer, "0%f", mylat);
@@ -1322,7 +1452,7 @@ void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale, float warn,
         if (k < 0) {
         Fill(255,20,20,getOpacity(COLOR)); // red
         Stroke(255,20,20,getOpacity(OUTLINECOLOR));
-        Rect(px-width_element, y-width_element*2, width_element*2, width_element*2);
+        Rect(px-width_element, y+width_element*1.3, width_element*2, width_element*2);
         }
     } else if ((k % 5 == 0) && (k > 0)){
             Fill(COLOR); //normal
@@ -1394,7 +1524,11 @@ void draw_mslalt(float mslalt, float pos_x, float pos_y, float scale){
     #endif
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
 
+    #if CHINESE == true
     TextEnd(getWidth(pos_x)-width_value-getWidth(0.3)*scale, getHeight(pos_y), " ", osdicons, text_scale*0.7);
+    #else
+    TextEnd(getWidth(pos_x)-width_value-getWidth(0.3)*scale, getHeight(pos_y), "ﶁ", osdicons, text_scale*0.7);
+    #endif
 
     #if IMPERIAL == true
     Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "ft", myfont, text_scale*0.6);
@@ -1447,7 +1581,7 @@ void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale, float t
         if (k < low_limit) {
         Fill(255,20,20,getOpacity(COLOR)); // red
         Stroke(255,20,20,getOpacity(OUTLINECOLOR));
-        Rect(px, y-width_element*2, width_element*2, width_element*2);
+        Rect(px-width_element, y+width_element*1.9, width_element*2, width_element*2);
 
         }
     } else if ((k % 1 == 0) && (k > low_limit)){ // narrow element every single 'tick' on the scale 
@@ -1457,8 +1591,6 @@ void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale, float t
     }
 
 // Speed Trend
-    // compare speeds
-    //int vx= speed - last_speed;
 
     if (vx<0){
     Stroke(COLOR_DECLUTTER); //make outline opaque
@@ -1492,9 +1624,6 @@ Polygon(LX,LY,npt);}
 
 
 
-// reset last speed
-//last_speed=speed;
-
 }
 
 
@@ -1522,7 +1651,7 @@ if (vy>0){
     LY = &Left_Y[0];
     Polygon(LX,LY,npt);
 }
-else {
+if (vy<0) {
 VGfloat Left_X[5] = { getWidth(pos_x), getWidth(pos_x)+(vy*trend_time), getWidth(pos_x)+(vy*trend_time)-height_element/2, getWidth(pos_x)+(vy*trend_time),getWidth(pos_x)}; // so tip of arrow goes correct way
     
     VGint npt = 5;
@@ -1900,4 +2029,447 @@ void rotatePoints(float *x, float *y, float angle, int points, int center_x, int
     i++;
     }
 }
+
+void draw_RPA(float roll, float pitch, float pos_x, float pos_y, float scale){
+    float text_scale = getWidth(2) * scale;
+    VGfloat width_value = TextWidth("00000.0", myfont, text_scale)*1.1;
+    VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
+    
+    //int introll = (int)roll;
+    //int intpitch = (int)pitch;
+    
+    sprintf(buffer, "%.1f°", roll);
+    TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*1.3, buffer, myfont, text_scale);
+    
+    if (roll - 5.01 > 0) {
+        TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y)+height_text*1.3, "ᎇ", osdicons, text_scale*1.2);
+    }
+    else if (roll + 5.01 < 0)  {
+        TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y)+height_text*1.3, "ᎈ", osdicons, text_scale*1.2);
+    }
+    else  {
+        TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y)+height_text*1.3, "᎔", osdicons, text_scale*1.2);
+    }   
+    
+    sprintf(buffer, "%.1f°", pitch);
+    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
+    
+    if (pitch - 3.01 > 0) {
+        TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y), "ᎉ", osdicons, text_scale*1.2);
+    }
+    else if (pitch + 3.01 < 0) {
+        TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y), "ᎊ", osdicons, text_scale*1.2);
+    }
+   else {
+        TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y), "᎕", osdicons, text_scale*1.2);
+    }
+}
+
+void draw_Mission(int Seq,float pos_x, float pos_y, float scale){
+    
+    float text_scale = getWidth(2) * scale;
+    VGfloat width_value = TextWidth("00", myfont, text_scale);
+    VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
+    #if CHINESE == true
+    TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y)+getHeight(0.3)*scale, "航 点:", myfont, text_scale*0.9);
+    #else
+    TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y)+getHeight(0.3)*scale, "Mission:", myfont, text_scale*0.9);
+    #endif
+    sprintf(buffer, "%d", Seq);
+    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
+
+}
+
+void draw_Angle(float pos_x, float pos_y, float scale){
+    
+    float text_scale = getWidth(2) * scale;
+    VGfloat width_value = TextWidth("00", myfont, text_scale);
+    VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
+
+   TextEnd(getWidth(pos_x), getHeight(pos_y), "ᐕ", osdicons, text_scale*5);   //角度指示器1
+}
+
+void draw_Angle2(float pos_x, float pos_y, float scale){
+    
+    float text_scale = getWidth(2) * scale;
+
+    TextEnd(getWidth(pos_x), getHeight(pos_y), "ᐖ", osdicons, text_scale);   //角度指示器2
+}
+
+void draw_Alarm(int SenorsPresent, int SenorsEnabled, int SenorsHealth, float pos_x, float pos_y, float scale){
+    float text_scale = getWidth(2) * scale;
+    VGfloat width_value = TextWidth("00", myfont, text_scale);
+    VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(1)*scale;
+    
+    int row = 0;
+    
+    Fill(255,20,20,getOpacity(COLOR)); // red
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    
+    /*if (SenorsHealth & 0b00000000000000000000000001) == 0) { */
+      /*sprintf(buffer, "%d", SenorsHealth);
+      TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);  */
+    #if ALARM_1 == true
+    if (((SenorsEnabled & 0b00000000000000000000000001) == 1) && ((SenorsHealth & 0b00000000000000000000000001) == 0))  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "陀 螺 仪", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+    #if ALARM_2 == true
+    if (((SenorsEnabled & 0b00000000000000000000000010) >> 1 == 1) && ((SenorsHealth & 0b00000000000000000000000010)) >> 1 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "加 速 度 计", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+    #if ALARM_3 == true
+    if (((SenorsEnabled & 0b00000000000000000000000100) >> 2 == 1) && ((SenorsHealth & 0b00000000000000000000000100)) >> 2 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "磁 罗 盘", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_4 == true
+    if (((SenorsEnabled & 0b00000000000000000000001000) >> 3 == 1) && ((SenorsHealth & 0b00000000000000000000001000)) >> 3 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "空 速 计 静 压", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_5 == true
+    if (((SenorsEnabled & 0b00000000000000000000010000) >> 4 == 1) && ((SenorsHealth & 0b00000000000000000000010000)) >> 4 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "空 速 计 动 压", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_6 == true
+    if (((SenorsEnabled & 0b00000000000000000000100000) >> 5 == 1) && ((SenorsHealth & 0b00000000000000000000100000)) >> 5 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "全 球 定 位 系 统 GPS", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_7 == true
+    if (((SenorsEnabled & 0b00000000000000000001000000) >> 6 == 1) && ((SenorsHealth & 0b00000000000000000001000000)) >> 6 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "光 流 传 感 器", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_8 == true
+    if (((SenorsEnabled & 0b00000000000000000010000000) >> 7 == 1) && ((SenorsHealth & 0b00000000000000000010000000)) >> 7 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "视 觉 传 感 器", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_9 == true
+    if (((SenorsEnabled & 0b00000000000000000100000000) >> 8 == 1) && ((SenorsHealth & 0b00000000000000000100000000)) >> 8 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "激 光 传 感 器", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_10 == true
+    if (((SenorsEnabled & 0b00000000000000001000000000) >> 9 == 1) && ((SenorsHealth & 0b00000000000000001000000000)) >> 9 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "External Ground Truth", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+    #if ALARM_11 == true
+    if (((SenorsEnabled & 0b00000000000000010000000000) >> 10 == 1) && ((SenorsHealth & 0b00000000000000010000000000)) >> 10 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "角 速 率 控 制", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+    #if ALARM_12 == true
+    if (((SenorsEnabled & 0b00000000000000100000000000) >> 11 == 1) && ((SenorsHealth & 0b00000000000000100000000000)) >> 11 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "姿 态 稳 定", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+    #if ALARM_13 == true
+    if (((SenorsEnabled & 0b00000000000001000000000000) >> 12 == 1) && ((SenorsHealth & 0b00000000000001000000000000)) >> 12 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "偏 航 位 置", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+    #if ALARM_14 == true
+    if (((SenorsEnabled & 0b00000000000010000000000000) >> 13 == 1) && ((SenorsHealth & 0b00000000000010000000000000)) >> 13 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "Z 轴 高 度 控 制", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+    #if ALARM_15 == true
+    if (((SenorsEnabled & 0b00000000000100000000000000) >> 14 == 1) && ((SenorsHealth & 0b00000000000100000000000000)) >> 14 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "X/Y 轴 位 置 控 制", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+    #if ALARM_16 == true
+    if (((SenorsEnabled & 0b00000000001000000000000000) >> 15 == 1) && ((SenorsHealth & 0b00000000001000000000000000)) >> 15 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "电 机 输 出", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+    #if ALARM_17 == true
+    if (((SenorsEnabled & 0b00000000010000000000000000) >> 16 == 1) && ((SenorsHealth & 0b00000000010000000000000000)) >> 16 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "接 收 机", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_18 == true
+    if (((SenorsEnabled & 0b00000000100000000000000000) >> 17 == 1) && ((SenorsHealth & 0b00000000100000000000000000)) >> 17 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "2 号 陀 螺 仪", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_19 == true
+    if (((SenorsEnabled & 0b00000001000000000000000000) >> 18 == 1) && ((SenorsHealth & 0b00000001000000000000000000)) >> 18 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "2 号 加 速 度 计", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_20 == true
+    if (((SenorsEnabled & 0b00000010000000000000000000) >> 19 == 1) && ((SenorsHealth & 0b00000010000000000000000000)) >> 19 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "2 号 磁 罗 盘", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_21 == true
+    if (((SenorsEnabled & 0b00000100000000000000000000) >> 20 == 1) && ((SenorsHealth & 0b00000100000000000000000000)) >> 20 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "地 理 围 栏", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_22 == true
+    if (((SenorsEnabled & 0b00001000000000000000000000) >> 21 == 1) && ((SenorsHealth & 0b00001000000000000000000000)) >> 21 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "航 姿 参 考 系 统 AHRS", myfont, text_scale);
+      row += 1;
+    }   
+    #endif
+    #if ALARM_23 == true
+    if (((SenorsEnabled & 0b00010000000000000000000000) >> 22 == 1) && ((SenorsHealth & 0b00010000000000000000000000)) >> 22 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "地 形", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+    #if ALARM_24 == true
+    if (((SenorsEnabled & 0b00100000000000000000000000) >> 23 == 1) && ((SenorsHealth & 0b00100000000000000000000000)) >> 23 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "电 机 反 转", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+    #if ALARM_25 == true
+    if (((SenorsEnabled & 0b01000000000000000000000000) >> 24 == 1) && ((SenorsHealth & 0b01000000000000000000000000)) >> 24 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "日 志 记 录", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+    #if ALARM_26 == true
+    if (((SenorsEnabled & 0b10000000000000000000000000) >> 25 == 1) && ((SenorsHealth & 0b10000000000000000000000000)) >> 25 == 0)  {
+      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "电 池 传 感 器", myfont, text_scale);
+      row += 1;
+    }
+    #endif
+
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
+    
+}
+
+void draw_home_radar(float abs_heading, float craft_heading, int homedst, float pos_x, float pos_y, float scale){
+    float text_scale = getWidth(2) * scale;
+    int dstrng;
+    
+    /*
+    int bearing;
+    int position_algle;
+    int dst;
+    float dstlat;
+    float dstlon;
+    float scaleLongDown = cos(abs(homelat)*0.0174532925);
+    dstlat = (homelat - lat)*111319.5;
+    dstlon = (homelon - lon)*111319.5*scaleLongDown;
+    bearing = atan2(dstlat, -dstlon) * 57.295775;
+    position_algle = bearing+180;
+    if (position_algle < 0) position_algle += 360;
+    if (position_algle >= 360) position_algle -= 360;
+    dst=sqrt(dstlat*dstlat+dstlon*dstlon);
+    */
+    
+    if (homedst <= 500)   dstrng = 500;
+    //else if (homedst > 250 && homedst<=500)   dstrng = 500;
+    else if (homedst > 500 && homedst<=1000)   dstrng = 1000;
+    else if (homedst > 1000 && homedst<=2000)   dstrng = 2000;
+    else if (homedst > 1000 && homedst<=4000)   dstrng = 4000;
+    else if (homedst > 4000 && homedst<=8000)   dstrng = 8000;
+    else if (homedst > 8000 && homedst<=16000)  dstrng = 16000;
+    else if (homedst > 16000 && homedst<=32000) dstrng = 32000;
+    else dstrng = homedst;
+
+    //sprintf(buffer, "%d", position_algle);
+    //TextEnd(700, 400, buffer, myfont, text_scale);
+    //sprintf(buffer, "%.2f", 500.000/dstrng*homedst);
+    //TextEnd(700, 350, buffer, myfont, text_scale);
+    //sprintf(buffer, "%.2f", 280.000/dstrng*homedst);
+    //TextEnd(700, 300, buffer, myfont, text_scale);
+
+    pos_x = getWidth(pos_x/2);
+    pos_y = getHeight(pos_y/2);
+    pos_x = pos_x/dstrng*homedst*sin(abs_heading*0.0174532925)+width/2;
+    pos_y = pos_y/dstrng*homedst*cos(abs_heading*0.0174532925)+height/2;   
+    //pos_x = 500*sin(position_algle*0.0174532925)+960;
+    //pos_y = 500*cos(position_algle*0.0174532925)+540;  
+    float x[5] = {pos_x-getWidth(1.25)*scale, pos_x, pos_x+getWidth(1.25)*scale, pos_x, pos_x-getWidth(1.25)*scale};
+    float y[5] = {pos_y-getWidth(1)*scale, getWidth(1)*scale+pos_y, pos_y-getWidth(1)*scale, getWidth(0.25)*scale+pos_y, pos_y-getWidth(1)*scale};
+    rotatePoints(x, y, craft_heading, 5, pos_x+getWidth(1.25)*scale,pos_y+getWidth(1.25)*scale);
+    Fill(255,255,0,getOpacity(COLOR)); // yellow
+    Stroke(255,255,0,getOpacity(OUTLINECOLOR)); 
+    Polygon(x, y, 5);
+    Polyline(x, y, 5);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
+    
+}
+
+void draw_throttle(uint16_t throttle, uint16_t throttle_target, float pos_x, float pos_y, float scale){
+
+    float text_scale = getHeight(2) * scale;
+    float width_element = getWidth(0.15) * scale;
+    float height_element = getWidth(3) * scale;
+    
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
+
+    sprintf(buffer, "%d%%",  throttle);
+    Text(getWidth(pos_x)+getWidth(0.2), getHeight(pos_y), buffer, myfont, text_scale);
+
+#if THROTTLE_GAUGE == true
+//save the current matrix so it can be reset later
+VGfloat savedMatrix[9];
+vgGetMatrix(savedMatrix);
+
+//move the reference point to center of gauge (now 0,0)
+Translate(getWidth(pos_x), getHeight(pos_y+3));
+
+Stroke(COLOR);
+//Circle(getWidth(pos_x+3), getHeight(pos_y+3), width_gauge);
+CircleOutline(0, 0, height_element*2.2);
+
+// 0 tick
+Rotate(135);
+Rect(0, height_element*.85, width_element, height_element*.2);
+vgLoadMatrix(savedMatrix); //reload matrix
+
+// Throttle target tick
+Translate(getWidth(pos_x), getHeight(pos_y+3));
+Rotate(135);
+Rotate((throttle_target*2.35)*-1);
+Stroke(COLOR_GOOD); //green
+Fill(COLOR_GOOD); //green
+Rect(0, height_element*.85, width_element, height_element*.2);
+vgLoadMatrix(savedMatrix); //reload matrix
+
+// 100 tick
+Translate(getWidth(pos_x), getHeight(pos_y+3));
+Rotate(270);
+Stroke(COLOR_WARNING); //red
+Fill(COLOR_WARNING); //red
+Rect(0, height_element*.85, width_element, height_element*.2);
+vgLoadMatrix(savedMatrix);//reload matrix
+
+//set initial rotation at 135 degrees for 0 throttle
+Translate(getWidth(pos_x), getHeight(pos_y+3));
+Rotate(135);
+//2.35 so that 100 percent throttle=235 degrees
+Rotate((throttle*2.35)*-1);
+
+if (global_armed==1){
+Stroke(COLOR_WARNING); //red
+Fill(COLOR_WARNING);} //if armed needle is red
+else {
+Fill(COLOR);
+Stroke(OUTLINECOLOR);}
+
+
+if ( (throttle >throttle_target-2) && (throttle<throttle_target+2) ){
+    Stroke(COLOR_GOOD);
+    Fill(COLOR_GOOD);} //green
+   
+
+//draw needle
+Rect(0, 0, width_element, height_element*.8);
+
+//reset matrix so coordinate system is good for next draw
+vgLoadMatrix(savedMatrix);
+
+#endif
+}
+
+void draw_throttle_V2(uint16_t throttle, float pos_x, float pos_y, float scale){
+    float text_scale = getWidth(2) * scale;
+    VGfloat width_value = TextWidth(".", myfont, text_scale)*1.3;
+    VGfloat width_value_1 = TextWidth("0000", myfont, text_scale)*1.1;
+    //Fill(COLOR);
+    //Stroke(OUTLINECOLOR);
+    
+    int j = throttle;
+    char* c;
+    #if THROTTLE_V2_COMPLEX == true
+    if (j <= 2 )   c = "᐀";
+    else if (j > 2 && j <= 5 )   c = "ᐁ";
+    else if (j > 5 && j <= 10 )   c = "ᐂ";
+    else if (j > 10 && j <= 15 )   c = "ᐃ";
+    else if (j > 15 && j <= 20 )   c = "ᐄ";
+    else if (j > 20 && j <= 25 )   c = "ᐅ";
+    else if (j > 25 && j <= 30 )   c = "ᐆ";
+    else if (j > 30 && j <= 35 )   c = "ᐇ";
+    else if (j > 35 && j <= 40 )   c = "ᐈ";
+    else if (j > 40 && j <= 45 )   c = "ᐉ";
+    else if (j > 45 && j <= 50 )   c = "ᐊ";
+    else if (j > 50 && j <= 55 )   c = "ᐋ";
+    else if (j > 55 && j <= 60 )   c = "ᐌ";
+    else if (j > 60 && j <= 65 )   c = "ᐍ";
+    else if (j > 65 && j <= 70 )   c = "ᐎ";
+    else if (j > 70 && j <= 75 )   c = "ᐏ";
+    else if (j > 75 && j <= 80 )   c = "ᐐ";
+    else if (j > 80 && j <= 85 )   c = "ᐑ";
+    else if (j > 85 && j <= 90 )   c = "ᐒ";
+    else if (j > 90 && j <= 95 )   c = "ᐓ";
+    else if (j == 99 )   c = "ᐔ";
+    else  c = "ᐔ";
+
+    
+    Fill(0,190,90,getOpacity(COLOR)); // green
+    Stroke(0,190,90,getOpacity(OUTLINECOLOR));
+    TextEnd(getWidth(pos_x)+width_value, getHeight(pos_y)-getHeight(2.4)*scale, "ᐗ", osdicons, text_scale);
+    
+    Fill(255,165,0,getOpacity(COLOR)); // orange
+    Stroke(255,165,0,getOpacity(OUTLINECOLOR));
+    TextEnd(getWidth(pos_x)+width_value, getHeight(pos_y)-getHeight(2.4)*scale, "ᐘ", osdicons, text_scale); 
+    
+    Fill(255,20,20,getOpacity(COLOR)); // red
+    Stroke(255,20,20,getOpacity(OUTLINECOLOR));
+    TextEnd(getWidth(pos_x)+width_value, getHeight(pos_y)-getHeight(2.4)*scale, "ᐙ", osdicons, text_scale); 
+    
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
+    sprintf(buffer, "%d", throttle);
+    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
+    TextEnd(getWidth(pos_x)+width_value, getHeight(pos_y)-getHeight(2.4)*scale, c, osdicons, text_scale);   
+    #else
+    if (j <= 10 )   c = "ᎋ";
+    else if (j > 10 && j <= 20 )   c = "ᎌ";
+    else if (j > 20 && j <= 30 )   c = "ᎍ";
+    else if (j > 30 && j <= 40 )   c = "ᎎ";
+    else if (j > 40 && j <= 50 )   c = "ᎏ";
+    else if (j > 50 && j <= 60 )   c = "᎐";
+    else if (j > 60 && j <= 70 )   c = "᎑";
+    else if (j > 70 && j <= 80 )   c = "᎒";
+    else  c = "᎓";
+    sprintf(buffer, "%d", throttle);
+    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
+    TextEnd(getWidth(pos_x)-width_value_1, getHeight(pos_y), c, osdicons, text_scale);
+    
+
+    #endif
+    
+}
+
 
