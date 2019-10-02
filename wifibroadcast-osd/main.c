@@ -51,6 +51,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mavlink.h"
 #elif defined(SMARTPORT)
 #include "smartport.h"
+#elif defined(VOT)
+#include "vot.h"
 #endif
 
 long long current_timestamp() {
@@ -163,6 +165,8 @@ int main(int argc, char *argv[]) {
 		do_render = mavlink_read(&td, buf, n);
 #elif defined(SMARTPORT)
 		smartport_read(&td, buf, n);
+#elif defined(VOT)
+		do_render =  vot_read(&td, buf, n);
 #endif
 	    }
 	    counter++;
