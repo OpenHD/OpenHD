@@ -430,22 +430,6 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 #endif
 
 
-#ifdef AHI
-#if defined(FRSKY) || defined(SMARTPORT)
-    float x_val, y_val, z_val;
-    x_val = td->x;
-    y_val = td->y;
-    z_val = td->z;
-    #if AHI_SWAP_ROLL_AND_PITCH == true
-    draw_ahi(AHI_INVERT_ROLL * TO_DEG * (atan(y_val / sqrt((x_val*x_val) + (z_val*z_val)))), AHI_INVERT_PITCH * TO_DEG * (atan(x_val / sqrt((y_val*y_val)+(z_val*z_val)))), AHI_SCALE * GLOBAL_SCALE);
-    #else
-    draw_ahi(AHI_INVERT_ROLL * TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), AHI_INVERT_PITCH * TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))), AHI_SCALE * GLOBAL_SCALE);
-    #endif // AHI_SWAP_ROLL_AND_PITCH
-#elif defined(LTM) || defined(MAVLINK) || defined(VOT)
-    draw_ahi(AHI_INVERT_ROLL * td->roll, AHI_INVERT_PITCH * td->pitch, AHI_SCALE * GLOBAL_SCALE);
-#endif //protocol
-#endif //AHI
-
 #ifdef HOME_RADAR 
     #if HOME_RADAR_USECOG == true
     draw_home_radar(course_to(home_lat, home_lon, td->latitude, td->longitude), td->cog, (int)distance_between(home_lat, home_lon, td->latitude, td->longitude), HOME_RADAR_POS_X, HOME_RADAR_POS_Y, HOME_RADAR_SCALE * GLOBAL_SCALE);
@@ -456,10 +440,6 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 
 #if defined(HDOP) && defined(MAVLINK)
  //   draw_Hdop(td->hdop, HDOP_POS_X, HDOP_POS_Y, HDOP_SCALE * GLOBAL_SCALE);
-#endif
-
-#ifdef RPA  //roll and pitch angle
-    draw_RPA(RPA_INVERT_ROLL * td->roll, RPA_INVERT_PITCH * td->pitch, RPA_POS_X, RPA_POS_Y, RPA_SCALE * GLOBAL_SCALE);
 #endif
 
 #if defined(THROTTLE_V2) && defined(MAVLINK) 
@@ -485,6 +465,27 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 #if defined(ALARM) && defined(MAVLINK) 
     draw_Alarm(td->SP, td->SE, td->SH, ALARM_POS_X, ALARM_POS_Y, ALARM_SCALE * GLOBAL_SCALE);
 #endif
+
+#ifdef RPA  //roll and pitch angle
+    draw_RPA(RPA_INVERT_ROLL * td->roll, RPA_INVERT_PITCH * td->pitch, RPA_POS_X, RPA_POS_Y, RPA_SCALE * GLOBAL_SCALE);
+#endif
+
+//ahi rotates everything that follows it. Needs fix from throttle to correct the transformation
+#ifdef AHI
+#if defined(FRSKY) || defined(SMARTPORT)
+    float x_val, y_val, z_val;
+    x_val = td->x;
+    y_val = td->y;
+    z_val = td->z;
+    #if AHI_SWAP_ROLL_AND_PITCH == true
+    draw_ahi(AHI_INVERT_ROLL * TO_DEG * (atan(y_val / sqrt((x_val*x_val) + (z_val*z_val)))), AHI_INVERT_PITCH * TO_DEG * (atan(x_val / sqrt((y_val*y_val)+(z_val*z_val)))), AHI_SCALE * GLOBAL_SCALE);
+    #else
+    draw_ahi(AHI_INVERT_ROLL * TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), AHI_INVERT_PITCH * TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))), AHI_SCALE * GLOBAL_SCALE);
+    #endif // AHI_SWAP_ROLL_AND_PITCH
+#elif defined(LTM) || defined(MAVLINK) || defined(VOT)
+    draw_ahi(AHI_INVERT_ROLL * td->roll, AHI_INVERT_PITCH * td->pitch, AHI_SCALE * GLOBAL_SCALE);
+#endif //protocol
+#endif //AHI
 
     End(); // Render end (causes everything to be drawn on next vsync)
 }
@@ -2471,5 +2472,4 @@ void draw_throttle_V2(uint16_t throttle, float pos_x, float pos_y, float scale){
     #endif
     
 }
-
 
