@@ -466,11 +466,11 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
     draw_Alarm(td->SP, td->SE, td->SH, ALARM_POS_X, ALARM_POS_Y, ALARM_SCALE * GLOBAL_SCALE);
 #endif
 
+//rpa or ahi rotates everything that follows it. Needs fix from throttle to correct the transformation
 #ifdef RPA  //roll and pitch angle
     draw_RPA(RPA_INVERT_ROLL * td->roll, RPA_INVERT_PITCH * td->pitch, RPA_POS_X, RPA_POS_Y, RPA_SCALE * GLOBAL_SCALE);
 #endif
 
-//ahi rotates everything that follows it. Needs fix from throttle to correct the transformation
 #ifdef AHI
 #if defined(FRSKY) || defined(SMARTPORT)
     float x_val, y_val, z_val;
@@ -1462,7 +1462,7 @@ void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale, float warn,
         }
     }
     
-    //VSI
+    //ALTITUDE TREND - VSI
     if (climb<0){
     Stroke(COLOR_DECLUTTER); //make outline opaque
     Fill(245,222,20,getOpacity(COLOR));} //yellow for decent
@@ -1470,41 +1470,29 @@ void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale, float warn,
             Stroke(COLOR_DECLUTTER); //make outline opaque
             Fill(43,240,36,getOpacity(COLOR));} //green for climb
 
-    //draw the main body
-    //Rect(pxlabel+(width_ladder_value)*.5,    getHeight(pos_y),     5* scale,   climb*vsi_time);
-
-    //draw the point
-  //  Polygon(  pxlabel+(width_ladder_value)*.5, getHeight(pos_y),    
-   //           pxlabel+(width_ladder_value)*.5+5* scale, getHeight(pos_y),
-   //           pxlabel+(width_ladder_value)*.5+5* scale, getHeight(pos_y)+climb*vsi_time,
-    //         pxlabel+(width_ladder_value)*.5+2.5* scale, getHeight(pos_y)+climb*vsi_time+2.5,
-   //           pxlabel+(width_ladder_value)*.5, getHeight(pos_y)+climb*vsi_time,
-    //         5);
-
-
-VGfloat *LX,*LY;
-VGfloat Left_X[5] = {pxlabel+(width_ladder_value)*.5, pxlabel+(width_ladder_value)*.5+5* scale, pxlabel+(width_ladder_value)*.5+5* scale, 
-    pxlabel+(width_ladder_value)*.5+2.5* scale, pxlabel+(width_ladder_value)*.5};
+	VGfloat *LX,*LY;
+	VGfloat Left_X[5] = {px+ width_element+.5, px+ width_element+.5+5* scale,
+	px+ width_element+.5+5* scale, px+ width_element+.5+2.5* scale, px+ width_element+.5};
 
 //VGfloat Left_Y[5];
 //REALLY DIRTY VAR SCOPE FIX
 //so arrow points up and or down with positive and negative climb
 if (climb>0){
-VGfloat Left_Y[5] ={getHeight(pos_y), getHeight(pos_y), getHeight(pos_y)+climb*vsi_time, getHeight(pos_y)+climb*vsi_time+2.5,
-   getHeight(pos_y)+climb*vsi_time};
-VGint npt = 5;
-LX = &Left_X[0];
-LY = &Left_Y[0];
-Polygon(LX,LY,npt);}
-else { 
-VGfloat Left_Y[5] ={getHeight(pos_y), getHeight(pos_y), getHeight(pos_y)+climb*vsi_time, getHeight(pos_y)+climb*vsi_time-2.5,
-    getHeight(pos_y)+climb*vsi_time};
-VGint npt = 5;
-LX = &Left_X[0];
-LY = &Left_Y[0];
-Polygon(LX,LY,npt);}
-
-
+	VGfloat Left_Y[5] ={getHeight(pos_y), getHeight(pos_y), getHeight(pos_y)+climb*vsi_time, 
+	getHeight(pos_y)+climb*vsi_time+2.5,
+   	getHeight(pos_y)+climb*vsi_time};
+	VGint npt = 5;
+	LX = &Left_X[0];
+	LY = &Left_Y[0];
+	Polygon(LX,LY,npt);}
+	else { 
+	VGfloat Left_Y[5] ={getHeight(pos_y), getHeight(pos_y), getHeight(pos_y)+climb*vsi_time, 
+	getHeight(pos_y)+climb*vsi_time-2.5,
+    	getHeight(pos_y)+climb*vsi_time};
+	VGint npt = 5;
+	LX = &Left_X[0];
+	LY = &Left_Y[0];
+	Polygon(LX,LY,npt);}
 
 }
 
@@ -1602,8 +1590,8 @@ void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale, float t
 
     VGfloat *LX,*LY;
 
-VGfloat Left_X[5] = {pxlabel+(width_ladder_value)*.5, pxlabel+(width_ladder_value)*.5+5* scale, pxlabel+(width_ladder_value)*.5+5* scale, 
-    pxlabel+(width_ladder_value)*.5+2.5* scale, pxlabel+(width_ladder_value)*.5};
+VGfloat Left_X[5] = {pxlabel+.5, pxlabel+.5+5* scale, pxlabel+.5+5* scale, 
+    pxlabel+.5+2.5* scale, pxlabel+.5};
 
 //VGfloat Left_Y[5];
 //REALLY DIRTY VAR SCOPE FIX
@@ -2114,158 +2102,262 @@ void draw_Alarm(int SenorsPresent, int SenorsEnabled, int SenorsHealth, float po
       TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);  */
     #if ALARM_1 == true
     if (((SenorsEnabled & 0b00000000000000000000000001) == 1) && ((SenorsHealth & 0b00000000000000000000000001) == 0))  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "陀 螺 仪", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "陀 螺 仪", myfont, text_scale);
+	#else
+	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "3D GYRO", myfont, text_scale);
+	#endif
+      	row += 1;
     }
     #endif
     #if ALARM_2 == true
     if (((SenorsEnabled & 0b00000000000000000000000010) >> 1 == 1) && ((SenorsHealth & 0b00000000000000000000000010)) >> 1 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "加 速 度 计", myfont, text_scale);
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "加 速 度 计", myfont, text_scale);
+	#else
+	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "3D ACCEL", myfont, text_scale);
+	#endif
       row += 1;
     }
     #endif
     #if ALARM_3 == true
     if (((SenorsEnabled & 0b00000000000000000000000100) >> 2 == 1) && ((SenorsHealth & 0b00000000000000000000000100)) >> 2 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "磁 罗 盘", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "磁 罗 盘", myfont, text_scale);
+	#else
+	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "3D MAG", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_4 == true
     if (((SenorsEnabled & 0b00000000000000000000001000) >> 3 == 1) && ((SenorsHealth & 0b00000000000000000000001000)) >> 3 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "空 速 计 静 压", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "空 速 计 静 压", myfont, text_scale);
+	#else
+	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "ABSOLUTE PRESSURE", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_5 == true
     if (((SenorsEnabled & 0b00000000000000000000010000) >> 4 == 1) && ((SenorsHealth & 0b00000000000000000000010000)) >> 4 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "空 速 计 动 压", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "空 速 计 动 压", myfont, text_scale);
+	#else
+	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "DIFFERENTIAL PRESSURE", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_6 == true
     if (((SenorsEnabled & 0b00000000000000000000100000) >> 5 == 1) && ((SenorsHealth & 0b00000000000000000000100000)) >> 5 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "全 球 定 位 系 统 GPS", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "全 球 定 位 系 统 GPS", myfont, text_scale);
+	#else
+	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "GPS", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_7 == true
     if (((SenorsEnabled & 0b00000000000000000001000000) >> 6 == 1) && ((SenorsHealth & 0b00000000000000000001000000)) >> 6 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "光 流 传 感 器", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "光 流 传 感 器", myfont, text_scale);
+	#else
+	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "OPTICAL FLOW", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_8 == true
     if (((SenorsEnabled & 0b00000000000000000010000000) >> 7 == 1) && ((SenorsHealth & 0b00000000000000000010000000)) >> 7 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "视 觉 传 感 器", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "视 觉 传 感 器", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "VISION POSITION", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_9 == true
     if (((SenorsEnabled & 0b00000000000000000100000000) >> 8 == 1) && ((SenorsHealth & 0b00000000000000000100000000)) >> 8 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "激 光 传 感 器", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "激 光 传 感 器", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "LASER POSITION", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_10 == true
     if (((SenorsEnabled & 0b00000000000000001000000000) >> 9 == 1) && ((SenorsHealth & 0b00000000000000001000000000)) >> 9 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "External Ground Truth", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "External Ground Truth", myfont, text_scale);
+	#else
+	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "External Ground Truth", myfont, text_scale);
+	#endif
+      	row += 1;
     }
     #endif
     #if ALARM_11 == true
     if (((SenorsEnabled & 0b00000000000000010000000000) >> 10 == 1) && ((SenorsHealth & 0b00000000000000010000000000)) >> 10 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "角 速 率 控 制", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "角 速 率 控 制", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "ANGULAR RATE CONTROL", myfont, text_scale);
+	#endif
+      	row += 1;
     }
     #endif
     #if ALARM_12 == true
     if (((SenorsEnabled & 0b00000000000000100000000000) >> 11 == 1) && ((SenorsHealth & 0b00000000000000100000000000)) >> 11 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "姿 态 稳 定", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "姿 态 稳 定", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "ATTITUDE STABILIZATION", myfont, text_scale);
+	#endif
+      	row += 1;
     }
     #endif
     #if ALARM_13 == true
     if (((SenorsEnabled & 0b00000000000001000000000000) >> 12 == 1) && ((SenorsHealth & 0b00000000000001000000000000)) >> 12 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "偏 航 位 置", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "偏 航 位 置", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "YAW POSITION", myfont, text_scale);
+	#endif
+      	row += 1;
     }
     #endif
     #if ALARM_14 == true
     if (((SenorsEnabled & 0b00000000000010000000000000) >> 13 == 1) && ((SenorsHealth & 0b00000000000010000000000000)) >> 13 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "Z 轴 高 度 控 制", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "Z 轴 高 度 控 制", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "Z ALTITUDE CONTROL", myfont, text_scale);
+	#endif
+      	row += 1;
     }
     #endif
     #if ALARM_15 == true
     if (((SenorsEnabled & 0b00000000000100000000000000) >> 14 == 1) && ((SenorsHealth & 0b00000000000100000000000000)) >> 14 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "X/Y 轴 位 置 控 制", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "X/Y 轴 位 置 控 制", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "XY POSITION CONTROL", myfont, text_scale);
+	#endif
+      	row += 1;
     }
     #endif
     #if ALARM_16 == true
     if (((SenorsEnabled & 0b00000000001000000000000000) >> 15 == 1) && ((SenorsHealth & 0b00000000001000000000000000)) >> 15 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "电 机 输 出", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "电 机 输 出", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "MOTOR OUTPUTS", myfont, text_scale);
+	#endif
+      	row += 1;
     }
     #endif
     #if ALARM_17 == true
     if (((SenorsEnabled & 0b00000000010000000000000000) >> 16 == 1) && ((SenorsHealth & 0b00000000010000000000000000)) >> 16 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "接 收 机", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "接 收 机", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "RC RECEIVER ", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_18 == true
     if (((SenorsEnabled & 0b00000000100000000000000000) >> 17 == 1) && ((SenorsHealth & 0b00000000100000000000000000)) >> 17 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "2 号 陀 螺 仪", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "2 号 陀 螺 仪", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "3D GYRO2", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_19 == true
     if (((SenorsEnabled & 0b00000001000000000000000000) >> 18 == 1) && ((SenorsHealth & 0b00000001000000000000000000)) >> 18 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "2 号 加 速 度 计", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "2 号 加 速 度 计", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "3D ACCEL2", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_20 == true
     if (((SenorsEnabled & 0b00000010000000000000000000) >> 19 == 1) && ((SenorsHealth & 0b00000010000000000000000000)) >> 19 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "2 号 磁 罗 盘", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "2 号 磁 罗 盘", myfont, text_scale);
+	#else
+	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "3D MAG2", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_21 == true
     if (((SenorsEnabled & 0b00000100000000000000000000) >> 20 == 1) && ((SenorsHealth & 0b00000100000000000000000000)) >> 20 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "地 理 围 栏", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "地 理 围 栏", myfont, text_scale);
+	#else
+	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "GEOFENCE", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_22 == true
     if (((SenorsEnabled & 0b00001000000000000000000000) >> 21 == 1) && ((SenorsHealth & 0b00001000000000000000000000)) >> 21 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "航 姿 参 考 系 统 AHRS", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "航 姿 参 考 系 统 AHRS", myfont, text_scale);
+	#else
+	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "AHRS", myfont, text_scale);
+	#endif
+      	row += 1;
     }   
     #endif
     #if ALARM_23 == true
     if (((SenorsEnabled & 0b00010000000000000000000000) >> 22 == 1) && ((SenorsHealth & 0b00010000000000000000000000)) >> 22 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "地 形", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "地 形", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "TERRAIN", myfont, text_scale);
+	#endif
+      	row += 1;
     }
     #endif
     #if ALARM_24 == true
     if (((SenorsEnabled & 0b00100000000000000000000000) >> 23 == 1) && ((SenorsHealth & 0b00100000000000000000000000)) >> 23 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "电 机 反 转", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "电 机 反 转", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "REVERSE MOTOR", myfont, text_scale);
+	#endif
+      	row += 1;
     }
     #endif
     #if ALARM_25 == true
     if (((SenorsEnabled & 0b01000000000000000000000000) >> 24 == 1) && ((SenorsHealth & 0b01000000000000000000000000)) >> 24 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "日 志 记 录", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "日 志 记 录", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "LOGGING", myfont, text_scale);
+	#endif
+      	row += 1;
     }
     #endif
     #if ALARM_26 == true
     if (((SenorsEnabled & 0b10000000000000000000000000) >> 25 == 1) && ((SenorsHealth & 0b10000000000000000000000000)) >> 25 == 0)  {
-      TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "电 池 传 感 器", myfont, text_scale);
-      row += 1;
+	#if CHINESE == true
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "电 池 传 感 器", myfont, text_scale);
+	#else
+      	TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text*row, "BATTERY", myfont, text_scale);
+	#endif
+      	row += 1;
     }
     #endif
 
