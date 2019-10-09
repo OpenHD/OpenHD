@@ -46,6 +46,8 @@ char buffer[40];
 Fontinfo myfont,osdicons;
 
 int packetslost_last[6];
+int lpb_array[20]; //lost per block
+int lpb_counter=1;
 
 int fecs_skipped_last;
 int injection_failed_last;
@@ -454,10 +456,6 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
   draw_Mission(td->mission_current_seq , MISSION_POS_X, MISSION_POS_Y, MISSION_SCALE * GLOBAL_SCALE);
 #endif
 
-#ifdef ANGLE
-  draw_Angle(ANGLE_POS_X, ANGLE_POS_Y, ANGLE_SCALE * GLOBAL_SCALE);
-#endif
-
 #ifdef ANGLE2
   draw_Angle2(ANGLE2_POS_X, ANGLE2_POS_Y, ANGLE2_SCALE * GLOBAL_SCALE);
 #endif
@@ -466,7 +464,6 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
     draw_Alarm(td->SP, td->SE, td->SH, ALARM_POS_X, ALARM_POS_Y, ALARM_SCALE * GLOBAL_SCALE);
 #endif
 
-//rpa or ahi rotates everything that follows it. Needs fix from throttle to correct the transformation
 #ifdef RPA  //roll and pitch angle
     draw_RPA(RPA_INVERT_ROLL * td->roll, RPA_INVERT_PITCH * td->pitch, RPA_POS_X, RPA_POS_Y, RPA_SCALE * GLOBAL_SCALE);
 #endif
@@ -486,6 +483,10 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
     draw_ahi(AHI_INVERT_ROLL * td->roll, AHI_INVERT_PITCH * td->pitch, AHI_SCALE * GLOBAL_SCALE);
 #endif //protocol
 #endif //AHI
+
+#ifdef ANGLE //bank angle indicator. Must follow AHI 
+  draw_Angle(ANGLE_POS_X, ANGLE_POS_Y, ANGLE_SCALE * GLOBAL_SCALE);
+#endif
 
     End(); // Render end (causes everything to be drawn on next vsync)
 }
@@ -1313,7 +1314,7 @@ void draw_TOTAL_TIME(float fly_time, float pos_x, float pos_y, float scale){
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
     sprintf(buffer, "%3.0f:%02d", fly_time, (int)(fly_time*60) % 60);
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
-    Text(getWidth(pos_x), getHeight(pos_y), " mins", myfont, text_scale*0.6);
+    Text(getWidth(pos_x), getHeight(pos_y), "⏱", myfont, text_scale*0.9);
  
 }
 
@@ -1339,7 +1340,7 @@ void draw_position(float lat, float lon, float pos_x, float pos_y, float scale){
     #if CHINESE == true
     TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y), "  ", osdicons, text_scale*0.6);
     #else
-    TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y), "ﵲ", osdicons, text_scale*0.6);
+    TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y), "ﵳ", osdicons, text_scale*0.6);
     #endif
 
     #if HIDE_LATLON == true
@@ -1353,7 +1354,7 @@ void draw_position(float lat, float lon, float pos_x, float pos_y, float scale){
     #if CHINESE == true
     TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y)+height_text, "  ", osdicons, text_scale*0.6);
     #else
-    TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y)+height_text, "ﵳ", osdicons, text_scale*0.6);
+    TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y)+height_text, "ﵲ", osdicons, text_scale*0.6);
     #endif
 
     #if HIDE_LATLON == true
@@ -1432,8 +1433,12 @@ void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale, float warn,
     }
 
     sprintf(buffer, "%d", alt); // large alt number
-    Text(pxlabel+width_ladder_value+width_symbol, getHeight(pos_y)-offset_alt_value, buffer, myfont, text_scale*2);
-    Text(pxlabel+width_ladder_value, getHeight(pos_y)-offset_symbol, "", osdicons, text_scale*2);
+
+ //   Text(pxlabel+width_ladder_value+width_symbol, getHeight(pos_y)-offset_alt_value, buffer, myfont, text_scale*2);
+ //   Text(pxlabel+width_ladder_value, getHeight(pos_y)-offset_symbol, "", osdicons, text_scale*2);
+
+    Text(px+ width_element+20* scale, getHeight(pos_y)-offset_alt_value, buffer, myfont, text_scale*1.7);
+    Text(px+ width_element+20* scale, getHeight(pos_y)-offset_symbol, "ᎆ", osdicons, text_scale*1.7);
 
     Fill(COLOR); //normal
     Stroke(OUTLINECOLOR);
@@ -1447,8 +1452,11 @@ void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale, float warn,
         Fill(COLOR); //normal
         Stroke(OUTLINECOLOR);
         Rect(px-width_element, y, width_element*2, height_element);
-        sprintf(buffer, "%d", k);
-        Text(pxlabel, y-offset_text_ladder, buffer, myfont, text_scale);
+        
+		if (k>alt+5 || k<alt-5){
+		sprintf(buffer, "%d", k);
+        	Text(pxlabel, y-offset_text_ladder, buffer, myfont, text_scale);
+		}
         }
         if (k < 0) {
         Fill(255,20,20,getOpacity(COLOR)); // red
@@ -1471,8 +1479,8 @@ void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale, float warn,
             Fill(43,240,36,getOpacity(COLOR));} //green for climb
 
 	VGfloat *LX,*LY;
-	VGfloat Left_X[5] = {px+ width_element+.5, px+ width_element+.5+5* scale,
-	px+ width_element+.5+5* scale, px+ width_element+.5+2.5* scale, px+ width_element+.5};
+	VGfloat Left_X[5] = {px+ width_element-4, px+ width_element+5,
+	px+ width_element+5, px+ width_element+1.5, px+ width_element-4};
 
 //VGfloat Left_Y[5];
 //REALLY DIRTY VAR SCOPE FIX
@@ -1552,8 +1560,12 @@ void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale, float t
     VGfloat width_ladder_value = TextWidth("0", myfont, text_scale);
 
     sprintf(buffer, "%d", speed); // large speed number
-    TextEnd(pxlabel-width_ladder_value-width_symbol, getHeight(pos_y)-offset_speed_value, buffer, myfont, text_scale*2);
-    TextEnd(pxlabel-width_ladder_value, getHeight(pos_y)-offset_symbol, "", osdicons, text_scale*2);
+  //  TextEnd(pxlabel-width_ladder_value-width_symbol, getHeight(pos_y)-offset_speed_value, buffer, myfont, text_scale*2);
+ //   TextEnd(pxlabel-width_ladder_value, getHeight(pos_y)-offset_symbol, "", osdicons, text_scale*2);
+
+    TextEnd(pxlabel-9*scale, getHeight(pos_y)-offset_speed_value, buffer, myfont, text_scale*1.7);
+    TextEnd(pxlabel-9*scale, getHeight(pos_y)-offset_symbol, "ᎄ", osdicons, text_scale*1.7);
+
 
     int k;
     for (k = (int) (speed - range_half); k <= speed + range_half; k++) {
@@ -1564,8 +1576,13 @@ void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale, float t
         Fill(COLOR); //normal
         Stroke(OUTLINECOLOR);
         Rect(px-width_element, y, width_element*2, height_element);
-        sprintf(buffer, "%d", k);
-        TextEnd(pxlabel, y-offset_text_ladder, buffer, myfont, text_scale);
+		
+		//so the box around number is not overwritten
+		if (k>speed+3 || k<speed-3){
+        	sprintf(buffer, "%d", k);
+        	TextEnd(pxlabel, y-offset_text_ladder, buffer, myfont, text_scale);
+		}
+
         }
         if (k < low_limit) {
         Fill(255,20,20,getOpacity(COLOR)); // red
@@ -1590,8 +1607,8 @@ void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale, float t
 
     VGfloat *LX,*LY;
 
-VGfloat Left_X[5] = {pxlabel+.5, pxlabel+.5+5* scale, pxlabel+.5+5* scale, 
-    pxlabel+.5+2.5* scale, pxlabel+.5};
+VGfloat Left_X[5] = {pxlabel+3, pxlabel+12, pxlabel+12, 
+    pxlabel+7.5, pxlabel+3};
 
 //VGfloat Left_Y[5];
 //REALLY DIRTY VAR SCOPE FIX
@@ -1738,9 +1755,31 @@ void draw_total_signal(int8_t signal, int goodblocks, int badblocks, int packets
 
     sprintf(buffer, "%d (%d%%)/%d (%d%%)", badblocks, percent_badblocks, packets_lost, percent_packets_lost);
     
-    Text(getWidth(pos_x)-width_value-width_symbol, getHeight(pos_y)-height_text, buffer, myfont, text_scale*0.6);
+    Text(getWidth(pos_x)-width_value-width_symbol+2, getHeight(pos_y)-height_text, buffer, myfont, text_scale*0.6);
 
     TextEnd(getWidth(pos_x)-width_value - getWidth(0.3) * scale, getHeight(pos_y), "", osdicons, text_scale * 0.7);
+
+	//MOVING AVERAGE: LOST PER BLOCK (LPB)
+	int lpb_average=0;
+	int lpb_sum=0;
+
+	//new lpb.. overwrite oldest value in array
+		if (lpb_counter>20){
+			lpb_counter=0;
+		}
+
+		lpb_array[lpb_counter++]=lost_per_block;
+
+	//calculate average
+		//total array value divided by array size
+	int i;
+		for (i = 0; i < 20; i++) {
+		    lpb_sum += lpb_array[i];
+		}
+		//8 per block. so array length x 8
+		lpb_average=lpb_sum/20;
+
+		//display options- graphical only or with number TODO
 
     switch (lost_per_block) {
     case 0:
@@ -1791,6 +1830,13 @@ void draw_total_signal(int8_t signal, int goodblocks, int badblocks, int packets
     StrokeWidth(1);
     Fill(0,0,0,0); // transparent
     Text(getWidth(pos_x)+width_label+getWidth(0.7), getHeight(pos_y)+getHeight(0.5), "█", osdicons, text_scale*0.7);
+
+Fill(COLOR);
+Stroke(OUTLINECOLOR);
+sprintf(buffer, "%d%%", lpb_average);
+Text(getWidth(pos_x)+width_label+getWidth(3), getHeight(pos_y)+getHeight(0.5), buffer, myfont, text_scale*0.5);
+
+
     #endif
 }
 
