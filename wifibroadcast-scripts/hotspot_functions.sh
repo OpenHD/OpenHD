@@ -144,10 +144,8 @@ function hotspot_check_function {
 	  	fi 
 		
 		if [ "$HOTSPOT_TIMEOUT" != "0" ]; then
-			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shutting Down in $HOTSPOT_TIMEOUT seconds" 7 55 0
-    			sleep $HOTSPOT_TIMEOUT
-			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shutting Down in 10s" 7 55 0
-    			sleep 10
+			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shutting Down in ${HOTSPOT_TIMEOUT} seconds" 7 55 0
+    		sleep $HOTSPOT_TIMEOUT
    			killall hostapd
 			ps -ef | nice grep "wifihotspot" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shut Down" 7 55 0
