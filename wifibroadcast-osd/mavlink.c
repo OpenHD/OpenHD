@@ -138,11 +138,72 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
                                 case MAVLINK_MSG_ID_HEARTBEAT:
 					fprintf(stdout, "HEARTBEAT ");
 					td->mav_flightmode = mavlink_msg_heartbeat_get_custom_mode(&msg);
-					if (((mavlink_msg_heartbeat_get_base_mode(&msg) & 0b10000000) >> 7) == 0) {
-					    td->armed = 0;
-					} else {
-					    td->armed = 1;
-					}
+					//if (((mavlink_msg_heartbeat_get_base_mode(&msg) & 0b10000000) >> 7) == 0) {
+					//    td->armed = 0;
+					//} else {
+					 //   td->armed = 1;
+					//}
+
+td->armed=mavlink_msg_heartbeat_get_base_mode(&msg);
+
+if (td->armed==0){ 
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 0;} //preflight
+
+else if (td->armed==64){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 0;} //manual disarm
+
+else if (td->armed==81){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 0;} //UKNOWN disarm mode
+
+else if (td->armed==88){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 0;} //guided disarm
+
+else if (td->armed==92){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 0;} //auto disarm
+
+else if (td->armed==66){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 0;} //test disarm
+
+else if (td->armed==208){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 1;} //stab arm
+
+else if (td->armed==209){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 1;} //UKNOWN arm
+
+else if (td->armed==192){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 1;} //manual arm
+
+else if (td->armed==216){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 1;} //guided arm
+
+else if (td->armed==220){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 1;} //auto arm
+
+else if (td->armed==194){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 1;} //test arm
+
+else if (td->armed>100){
+	fprintf(stdout, "base mode:%d  Greater than 100", td->armed);
+	td->armed = 1;} //>100 arm
+
+else if (td->armed<100){
+	fprintf(stdout, "base mode:%d  less than 100", td->armed);
+	td->armed = 0;} //>100 arm
+
+else {fprintf(stdout, "UNKNOWN base mode:%d  ", td->armed);}
+	
 					fprintf(stdout, "mode:%d  ", td->mav_flightmode);
 					fprintf(stdout, "armed:%d  ", td->armed);
                                         break;
@@ -323,4 +384,3 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 	return render_data;
 }
 #endif
-
