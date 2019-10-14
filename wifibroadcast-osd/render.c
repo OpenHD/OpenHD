@@ -53,7 +53,6 @@ int fecs_skipped_last;
 int injection_failed_last;
 int tx_restart_count_last;
 
-int global_armed;
 int last_speed;
 
 bool no_signal = false;
@@ -249,12 +248,12 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 
 
 #ifdef KBITRATE
-    draw_kbitrate(td->rx_status_sysair->cts, td->rx_status->kbitrate, td->rx_status_sysair->bitrate_measured_kbit, td->rx_status_sysair->bitrate_kbit, td->rx_status_sysair->skipped_fec_cnt, td->rx_status_sysair->injection_fail_cnt,td->rx_status_sysair->injection_time_block,KBITRATE_POS_X, KBITRATE_POS_Y, KBITRATE_SCALE * GLOBAL_SCALE, KBITRATE_WARN, KBITRATE_CAUTION, KBITRATE_DECLUTTER);
+    draw_kbitrate(td->rx_status_sysair->cts, td->rx_status->kbitrate, td->rx_status_sysair->bitrate_measured_kbit, td->rx_status_sysair->bitrate_kbit, td->rx_status_sysair->skipped_fec_cnt, td->rx_status_sysair->injection_fail_cnt,td->rx_status_sysair->injection_time_block, td->armed, KBITRATE_POS_X, KBITRATE_POS_Y, KBITRATE_SCALE * GLOBAL_SCALE, KBITRATE_WARN, KBITRATE_CAUTION, KBITRATE_DECLUTTER);
 #endif
 
 
 #ifdef SYS
-    draw_sys(td->rx_status_sysair->cpuload, td->rx_status_sysair->temp, cpuload_gnd, temp_gnd, SYS_POS_X, SYS_POS_Y, SYS_SCALE * GLOBAL_SCALE, CPU_LOAD_WARN, CPU_LOAD_CAUTION, CPU_TEMP_WARN, CPU_TEMP_CAUTION, SYS_DECLUTTER);
+    draw_sys(td->rx_status_sysair->cpuload, td->rx_status_sysair->temp, cpuload_gnd, temp_gnd, td->armed, SYS_POS_X, SYS_POS_Y, SYS_SCALE * GLOBAL_SCALE, CPU_LOAD_WARN, CPU_LOAD_CAUTION, CPU_TEMP_WARN, CPU_TEMP_CAUTION, SYS_DECLUTTER);
 #endif
 
 
@@ -272,7 +271,7 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 
 
 #if defined(RSSI)
-    draw_rssi(td->rssi, RSSI_POS_X, RSSI_POS_Y, RSSI_SCALE * GLOBAL_SCALE, RSSI_WARN, RSSI_CAUTION, RSSI_DECLUTTER);
+    draw_rssi(td->rssi, td->armed, RSSI_POS_X, RSSI_POS_Y, RSSI_SCALE * GLOBAL_SCALE, RSSI_WARN, RSSI_CAUTION, RSSI_DECLUTTER);
 #endif
 
 
@@ -422,7 +421,7 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
     draw_sat(0, 0, SAT_POS_X, SAT_POS_Y, SAT_SCALE * GLOBAL_SCALE);
     }
     #elif defined(MAVLINK) || defined(SMARTPORT) || defined(LTM) || defined(VOT)
-    draw_sat(td->sats, td->fix, td->hdop, SAT_POS_X, SAT_POS_Y, SAT_SCALE * GLOBAL_SCALE, SAT_HDOP_WARN, SAT_HDOP_CAUTION, SAT_DECLUTTER);
+    draw_sat(td->sats, td->fix, td->hdop, (int)td->armed, SAT_POS_X, SAT_POS_Y, SAT_SCALE * GLOBAL_SCALE, SAT_HDOP_WARN, SAT_HDOP_CAUTION, SAT_DECLUTTER);
     #endif
 #endif
 
@@ -449,7 +448,7 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 #endif
 
 #if defined(THROTTLE) && defined(MAVLINK)
-    draw_throttle((int)td->throttle, THROTTLE_TARGET, THROTTLE_POS_X, THROTTLE_POS_Y, THROTTLE_SCALE * GLOBAL_SCALE);
+    draw_throttle((int)td->throttle, THROTTLE_TARGET, (int)td->armed, THROTTLE_POS_X, THROTTLE_POS_Y, THROTTLE_SCALE * GLOBAL_SCALE);
 #endif
 
 #if defined(MISSION) && defined(MAVLINK) 
@@ -469,18 +468,28 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 #endif
 
 #ifdef AHI
-#if defined(FRSKY) || defined(SMARTPORT)
+    #if defined(FRSKY) || defined(SMARTPORT)
     float x_val, y_val, z_val;
     x_val = td->x;
     y_val = td->y;
     z_val = td->z;
     #if AHI_SWAP_ROLL_AND_PITCH == true
-    draw_ahi(AHI_INVERT_ROLL * TO_DEG * (atan(y_val / sqrt((x_val*x_val) + (z_val*z_val)))), AHI_INVERT_PITCH * TO_DEG * (atan(x_val / sqrt((y_val*y_val)+(z_val*z_val)))), AHI_SCALE * GLOBAL_SCALE);
+    draw_ahi(AHI_INVERT_ROLL * TO_DEG * (atan(y_val / sqrt((x_val*x_val) + (z_val*z_val)))), 
+    AHI_INVERT_PITCH * TO_DEG * (atan(x_val / sqrt((y_val*y_val)+(z_val*z_val)))), AHI_SCALE * GLOBAL_SCALE);
     #else
-    draw_ahi(AHI_INVERT_ROLL * TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), AHI_INVERT_PITCH * TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))), AHI_SCALE * GLOBAL_SCALE);
+    draw_ahi(AHI_INVERT_ROLL * TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), 
+    AHI_INVERT_PITCH * TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))), AHI_SCALE * GLOBAL_SCALE);
     #endif // AHI_SWAP_ROLL_AND_PITCH
-#elif defined(LTM) || defined(MAVLINK) || defined(VOT)
+
+    #elif defined(LTM) || defined(VOT)
     draw_ahi(AHI_INVERT_ROLL * td->roll, AHI_INVERT_PITCH * td->pitch, AHI_SCALE * GLOBAL_SCALE);
+    #elif defined(MAVLINK)	
+	#if REVERSE_ALTITUDES == true
+        draw_ahi_mav(AHI_INVERT_ROLL * td->roll, AHI_INVERT_PITCH * td->pitch, td->mav_climb, (int)td->speed, 
+    (int)td->msl_altitude, AHI_SCALE * GLOBAL_SCALE);
+        #else
+        draw_ahi_mav(AHI_INVERT_ROLL * td->roll, AHI_INVERT_PITCH * td->pitch, td->mav_climb, td->vz, td->vx, td->vy, (int)td->speed, (int)td->rel_altitude, AHI_SCALE * GLOBAL_SCALE);
+        #endif  
 #endif //protocol
 #endif //AHI
 
@@ -519,7 +528,71 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
  }
  TextMid(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
 }
-#else
+
+#endif
+
+#ifdef LTM
+void draw_ltmmode(int mode, int armed, int failsafe, float pos_x, float pos_y, float scale){
+    float text_scale = getWidth(2) * scale;
+    
+    sprintf(buffer, "[-----]");
+    if (armed == 0){
+      switch (mode) {
+       case 0: sprintf(buffer, "[手   动]"); break;
+       case 1: sprintf(buffer, "[RATE]"); break;
+       case 2: sprintf(buffer, "[自   稳]"); break;
+       case 3: sprintf(buffer, "[半 自 稳]"); break;
+       case 4: sprintf(buffer, "[特   技]"); break;
+       case 5: sprintf(buffer, "[自 稳 1]"); break;
+       case 6: sprintf(buffer, "[自 稳 2]"); break;
+       case 7: sprintf(buffer, "[自 稳 3]"); break;  
+       case 8: sprintf(buffer, "[定   高]"); break;
+       case 9: sprintf(buffer, "[GPS 定点]"); break;
+       case 10: sprintf(buffer, "[自   动]"); break;
+       case 11: sprintf(buffer, "[无   头]"); break;
+       case 12: sprintf(buffer, "[绕   圈]"); break;
+       case 13: sprintf(buffer, "[返   航]"); break;
+       case 14: sprintf(buffer, "[跟   随]"); break;
+       case 15: sprintf(buffer, "[降   落]"); break;
+       case 16: sprintf(buffer, "[线 性 增 稳]"); break;
+       case 17: sprintf(buffer, "[增 稳 定 高]"); break;
+       case 18: sprintf(buffer, "[巡   航]"); break;
+      }
+    }
+    else  {
+      switch (mode) {
+       case 0: sprintf(buffer, "手   动"); break;
+       case 1: sprintf(buffer, "RATE"); break;
+       case 2: sprintf(buffer, "自   稳"); break;
+       case 3: sprintf(buffer, "半 自 稳"); break;
+       case 4: sprintf(buffer, "特   技"); break;
+       case 5: sprintf(buffer, "自 稳 1"); break;
+       case 6: sprintf(buffer, "自 稳 2"); break;
+       case 7: sprintf(buffer, "自 稳 3"); break;  
+       case 8: sprintf(buffer, "定   高"); break;
+       case 9: sprintf(buffer, "GPS 定点"); break;
+       case 10: sprintf(buffer, "自   动"); break;
+       case 11: sprintf(buffer, "无   头"); break;
+       case 12: sprintf(buffer, "绕   圈"); break;
+       case 13: sprintf(buffer, "返   航"); break;
+       case 14: sprintf(buffer, "跟   随"); break;
+       case 15: sprintf(buffer, "降   落"); break;
+       case 16: sprintf(buffer, "线 性 增 稳"); break;
+       case 17: sprintf(buffer, "增 稳 定 高"); break;
+       case 18: sprintf(buffer, "巡   航"); break;
+      }
+    }  
+    
+    if (failsafe == 1)  {
+       sprintf(buffer, "失 控 保 护");
+    }
+    
+    TextMid(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
+    
+} 
+#endif
+
+#ifdef MAVLINK
 
 void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
     //autopilot mode, mavlink specific, could be used if mode is in telemetry data of other protocols as well
@@ -527,9 +600,6 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
 
     Fill(COLOR);
     Stroke(OUTLINECOLOR);
-
- if (armed == 1){global_armed=1;}
-    else{global_armed=0;}  
 
     if (armed == 1){
     switch (mode) {
@@ -718,69 +788,8 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
 }
 #endif
 
-void draw_ltmmode(int mode, int armed, int failsafe, float pos_x, float pos_y, float scale){
-    float text_scale = getWidth(2) * scale;
-    
-    sprintf(buffer, "[-----]");
-    if (armed == 0){
-      switch (mode) {
-       case 0: sprintf(buffer, "[手   动]"); break;
-       case 1: sprintf(buffer, "[RATE]"); break;
-       case 2: sprintf(buffer, "[自   稳]"); break;
-       case 3: sprintf(buffer, "[半 自 稳]"); break;
-       case 4: sprintf(buffer, "[特   技]"); break;
-       case 5: sprintf(buffer, "[自 稳 1]"); break;
-       case 6: sprintf(buffer, "[自 稳 2]"); break;
-       case 7: sprintf(buffer, "[自 稳 3]"); break;  
-       case 8: sprintf(buffer, "[定   高]"); break;
-       case 9: sprintf(buffer, "[GPS 定点]"); break;
-       case 10: sprintf(buffer, "[自   动]"); break;
-       case 11: sprintf(buffer, "[无   头]"); break;
-       case 12: sprintf(buffer, "[绕   圈]"); break;
-       case 13: sprintf(buffer, "[返   航]"); break;
-       case 14: sprintf(buffer, "[跟   随]"); break;
-       case 15: sprintf(buffer, "[降   落]"); break;
-       case 16: sprintf(buffer, "[线 性 增 稳]"); break;
-       case 17: sprintf(buffer, "[增 稳 定 高]"); break;
-       case 18: sprintf(buffer, "[巡   航]"); break;
-      }
-    }
-    else  {
-      switch (mode) {
-       case 0: sprintf(buffer, "手   动"); break;
-       case 1: sprintf(buffer, "RATE"); break;
-       case 2: sprintf(buffer, "自   稳"); break;
-       case 3: sprintf(buffer, "半 自 稳"); break;
-       case 4: sprintf(buffer, "特   技"); break;
-       case 5: sprintf(buffer, "自 稳 1"); break;
-       case 6: sprintf(buffer, "自 稳 2"); break;
-       case 7: sprintf(buffer, "自 稳 3"); break;  
-       case 8: sprintf(buffer, "定   高"); break;
-       case 9: sprintf(buffer, "GPS 定点"); break;
-       case 10: sprintf(buffer, "自   动"); break;
-       case 11: sprintf(buffer, "无   头"); break;
-       case 12: sprintf(buffer, "绕   圈"); break;
-       case 13: sprintf(buffer, "返   航"); break;
-       case 14: sprintf(buffer, "跟   随"); break;
-       case 15: sprintf(buffer, "降   落"); break;
-       case 16: sprintf(buffer, "线 性 增 稳"); break;
-       case 17: sprintf(buffer, "增 稳 定 高"); break;
-       case 18: sprintf(buffer, "巡   航"); break;
-      }
-    }  
-    
-    if (failsafe == 1)  {
-       sprintf(buffer, "失 控 保 护");
-    }
-    
-    TextMid(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
-    
-} 
 
-
-
-
-void draw_rssi(int rssi, float pos_x, float pos_y, float scale, float warn, float caution, float declutter){
+void draw_rssi(int rssi, int armed, float pos_x, float pos_y, float scale, float warn, float caution, float declutter){
     float text_scale = getWidth(2) * scale;
     VGfloat width_value = TextWidth("00", myfont, text_scale);   
 
@@ -793,7 +802,7 @@ void draw_rssi(int rssi, float pos_x, float pos_y, float scale, float warn, floa
     } else {    
         Fill(COLOR); //normal
         Stroke(OUTLINECOLOR);
-        if ((global_armed==1)&&(declutter==1)){
+        if ((armed==1)&&(declutter==1)){
         Stroke(COLOR_DECLUTTER); //opaque
         Fill(COLOR_DECLUTTER);}
     } 
@@ -942,7 +951,7 @@ void draw_uplink_signal(int8_t uplink_signal, int uplink_lostpackets, int8_t rc_
 
 
 
-void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_t kbitrate_tx, uint32_t fecs_skipped, uint32_t injection_failed, long long injection_time,float pos_x, float pos_y, float scale, float mbit_warn, float mbit_caution, float declutter){
+void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_t kbitrate_tx, uint32_t fecs_skipped, uint32_t injection_failed, long long injection_time,int armed, float pos_x, float pos_y, float scale, float mbit_warn, float mbit_caution, float declutter){
     
     Fill(COLOR);
     Stroke(OUTLINECOLOR);
@@ -976,7 +985,7 @@ void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_
     } else {
         Fill(COLOR);
         Stroke(OUTLINECOLOR);
-    if ((global_armed==1)&&(declutter==1)){
+    if ((armed==1)&&(declutter==1)){
         Stroke(COLOR_DECLUTTER); //opaque
         Fill(COLOR_DECLUTTER);}
     }
@@ -996,7 +1005,7 @@ void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_
     } else {    
         Fill(COLOR); //normal
         Stroke(OUTLINECOLOR);
-        if ((global_armed==1)&&(declutter==1)){
+        if ((armed==1)&&(declutter==1)){
         Stroke(COLOR_DECLUTTER); //opaque
         Fill(COLOR_DECLUTTER);}
     } 
@@ -1022,7 +1031,7 @@ void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_
 
 
 
-void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_t temp_gnd, float pos_x, float pos_y, float scale, float load_warn, float load_caution, float temp_warn, float temp_caution, float declutter) {
+void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_t temp_gnd, int armed, float pos_x, float pos_y, float scale, float load_warn, float load_caution, float temp_warn, float temp_caution, float declutter) {
 
     float text_scale = getWidth(2) * scale;
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
@@ -1041,7 +1050,7 @@ void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_
     } else {    
         Fill(COLOR); //normal
         Stroke(OUTLINECOLOR);
-        if ((global_armed==1)&&(declutter==1)){
+        if ((armed==1)&&(declutter==1)){
         Stroke(COLOR_DECLUTTER); //opaque
         Fill(COLOR_DECLUTTER);}
     }
@@ -1063,7 +1072,7 @@ void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_
     } else {    
         Fill(COLOR); //normal
         Stroke(OUTLINECOLOR);
-        if ((global_armed==1)&&(declutter==1)){
+        if ((armed==1)&&(declutter==1)){
         Stroke(COLOR_DECLUTTER); //opaque
         Fill(COLOR_DECLUTTER);}
     }
@@ -1082,7 +1091,7 @@ void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_
     } else {    
         Fill(COLOR); //normal
         Stroke(OUTLINECOLOR);
-        if ((global_armed==1)&&(declutter==1)){
+        if ((armed==1)&&(declutter==1)){
         Stroke(COLOR_DECLUTTER); //opaque
         Fill(COLOR_DECLUTTER);}
     }
@@ -1103,7 +1112,7 @@ void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_
     } else {    
         Fill(COLOR); //normal
         Stroke(OUTLINECOLOR);
-        if ((global_armed==1)&&(declutter==1)){
+        if ((armed==1)&&(declutter==1)){
         Stroke(COLOR_DECLUTTER); //opaque
         Fill(COLOR_DECLUTTER);}
     }
@@ -1649,7 +1658,7 @@ void draw_yaw_display(float vy, float pos_x, float pos_y, float scale, float tre
    VGfloat Left_Y[5] ={getHeight(pos_y), getHeight(pos_y), getHeight(pos_y)+height_element/2, getHeight(pos_y)+height_element, getHeight(pos_y)+height_element};
 
 //REALLY DIRTY VAR SCOPE FIX
-if (vy>0){
+if (vy<0){
     VGfloat Left_X[5] = { getWidth(pos_x), getWidth(pos_x)+(vy*trend_time), getWidth(pos_x)+(vy*trend_time)+height_element/2, getWidth(pos_x)+(vy*trend_time),getWidth(pos_x)};
     
     VGint npt = 5;
@@ -1657,7 +1666,7 @@ if (vy>0){
     LY = &Left_Y[0];
     Polygon(LX,LY,npt);
 }
-if (vy<0) {
+if (vy>0) {
 VGfloat Left_X[5] = { getWidth(pos_x), getWidth(pos_x)+(vy*trend_time), getWidth(pos_x)+(vy*trend_time)-height_element/2, getWidth(pos_x)+(vy*trend_time),getWidth(pos_x)}; // so tip of arrow goes correct way
     
     VGint npt = 5;
@@ -1781,7 +1790,7 @@ void draw_total_signal(int8_t signal, int goodblocks, int badblocks, int packets
 
 		//display options- graphical only or with number TODO
 
-    switch (lost_per_block) {
+    switch (lpb_average) {
     case 0:
         sprintf(buffer, "▁");
         Fill(COLOR);
@@ -1833,7 +1842,7 @@ void draw_total_signal(int8_t signal, int goodblocks, int badblocks, int packets
 
 Fill(COLOR);
 Stroke(OUTLINECOLOR);
-sprintf(buffer, "%d%%", lpb_average);
+sprintf(buffer, "%d/12", lpb_average);
 Text(getWidth(pos_x)+width_label+getWidth(3), getHeight(pos_y)+getHeight(0.5), buffer, myfont, text_scale*0.5);
 
 
@@ -1842,7 +1851,7 @@ Text(getWidth(pos_x)+width_label+getWidth(3), getHeight(pos_y)+getHeight(0.5), b
 
 
 
-void draw_sat(int sats, int fixtype, int hdop, float pos_x, float pos_y, float scale, float hdop_warn, float hdop_caution, float declutter){
+void draw_sat(int sats, int fixtype, int hdop, int armed, float pos_x, float pos_y, float scale, float hdop_warn, float hdop_caution, float declutter){
     float text_scale = getWidth(2) * scale;
 
     StrokeWidth(OUTLINEWIDTH);
@@ -1852,7 +1861,7 @@ void draw_sat(int sats, int fixtype, int hdop, float pos_x, float pos_y, float s
     }else{
         Fill(COLOR); //normal
         Stroke(OUTLINECOLOR);
-        if ((global_armed==1)&&(declutter==1)){
+        if ((armed==1)&&(declutter==1)){
         Stroke(COLOR_DECLUTTER); //opaque
         Fill(COLOR_DECLUTTER);}
     }
@@ -1870,7 +1879,7 @@ void draw_sat(int sats, int fixtype, int hdop, float pos_x, float pos_y, float s
     } else {    
         Fill(COLOR); //normal
         Stroke(OUTLINECOLOR);
-        if ((global_armed==1)&&(declutter==1)){
+        if ((armed==1)&&(declutter==1)){
         Stroke(COLOR_DECLUTTER); //opaque
         Fill(COLOR_DECLUTTER);}
     } 
@@ -1948,6 +1957,8 @@ void draw_ahi(float roll, float pitch, float scale){
     Stroke(OUTLINECOLOR);
     Fill(COLOR);
 
+    TextEnd(getWidth(50), getHeight(50), "ᎅ", osdicons, text_scale*2.5);
+
     Translate(pos_x, pos_y);
     Rotate(roll);
     Translate(-pos_x, -pos_y);
@@ -1989,6 +2000,162 @@ void draw_ahi(float roll, float pitch, float scale){
     k++;
     }
 }
+
+
+void draw_ahi_mav(float roll, float pitch, float climb, float vz, float vx, float vy, float gpsspeed, float alt, float scale){
+    float text_scale = getHeight(1.2) * scale;
+    float height_ladder = getWidth(15) * scale;
+    float width_ladder = getWidth(30) * scale;
+    float height_element = getWidth(0.25) * scale;
+    float range = 100;
+    float space_text = getWidth(0.2) * scale;
+    float ratio = height_ladder / range;
+    float pos_x = getWidth(50);
+    float pos_y = getHeight(50);
+
+
+//Limit draw area
+ClipRect(pos_x-width_ladder, pos_y-getHeight(30), width_ladder*2, getHeight(60));
+
+
+
+
+    VGfloat offset_text_ladder = (TextHeight(myfont, text_scale*0.85) / 2) - height_element/2;
+
+    float px_l  = pos_x - width_ladder / 2 + width_ladder / 3 - width_ladder / 12; // left three bars
+    float px3_l = pos_x - width_ladder / 2 + 0.205f * width_ladder- width_ladder / 12; // left three bars
+    float px5_l = pos_x - width_ladder / 2 + 0.077f * width_ladder- width_ladder / 12; // left three bars
+    float px_r =  pos_x + width_ladder / 2 - width_ladder / 3; // right three bars
+    float px3_r = pos_x + width_ladder / 2 - 0.205f * width_ladder; // right three bars
+    float px5_r = pos_x + width_ladder / 2 - 0.077f * width_ladder; // right three bars
+  
+
+    StrokeWidth(OUTLINEWIDTH);
+    Stroke(OUTLINECOLOR);
+    Fill(COLOR);
+	
+
+  if (alt < ALTLADDER_CAUTION) {	
+	if (climb < -3.0f) {
+	  Stroke(COLOR_WARNING); //red
+          Fill(COLOR_WARNING);
+	}
+	else if ((climb >= -3.0f) && (climb < -1.5f)) {
+	  Stroke(COLOR_WARNING); //caution
+          Fill(COLOR_WARNING);
+	}
+	//else if ((climb >= -1.5f) && (climb < 0.0f)) {
+	//  Stroke(COLOR_GOOD); //good
+    	//  Fill(COLOR_GOOD);
+	//}
+	else {
+	  StrokeWidth(OUTLINEWIDTH);
+    	  Stroke(OUTLINECOLOR);
+          Fill(COLOR);
+	}
+  }
+
+  if (gpsspeed < SPEEDLADDER_LOW_LIMIT) {
+          Stroke(COLOR_WARNING); //red
+          Fill(COLOR_WARNING);
+  }	
+    //Bore Sight
+ //   TextEnd(getWidth(50), getHeight(50), "ᎅ", osdicons, text_scale*2.5); 
+  
+    Translate(pos_x, pos_y);
+    Rotate(roll);
+    Translate(-pos_x, -pos_y);
+
+//Flight Path Vector
+
+	//get x y z axis
+
+	//FPV_Z calculate vector 
+	// x*x+z*z= resultant/resultant=resultant
+
+	//get angle
+	//tan(Theta) = (5/10) = 0.5      (x/y) tan-1 + 90
+	//Theta = tan-1 (0.5)
+	//Theta = 26.6 degrees
+	//Direction of R = 90 deg + 26.6 deg
+	//Direction of R = 116.6 deg
+
+	//FPV_Y
+        double fpv_y;
+	fpv_y=tan(vx/vy);
+	fpv_y=fpv_y+90;
+	//FPV_Z
+        double fpv_z;
+	fpv_z=tan(vx/vz) +90; 
+
+    int k = pitch - range;
+    int max = pitch + range; //range and max not as important as clipping is implimented
+    while (k <= max){
+	float y = pos_y + (k - pitch) * ratio;
+	if (k % 5 == 0 && k!= 0) {
+	    #if AHI_LADDER == true    
+		  #if AHI_ROLLANGLE == true
+		     sprintf(buffer, "%.1f°", roll*AHI_ROLLANGLE_INVERT);
+	         Text(pos_x + width_ladder / 2 + space_text, y - width / height_ladder, buffer, myfont, text_scale*1.1); // right numbers
+		  #else
+			 sprintf(buffer, "%d", k);
+	         Text(pos_x + width_ladder / 2 + space_text, y - width / height_ladder, buffer, myfont, text_scale*1.1); // right numbers
+		  #endif
+		sprintf(buffer, "%d", k);
+		TextEnd(pos_x - width_ladder / 2 - space_text, y - width / height_ladder, buffer, myfont, text_scale*1.1); // left numbers
+	    #endif
+	}
+	if ((k > 0) && (k % 5 == 0)) { // upper ladders
+	    #if AHI_LADDER == true
+	    float px = pos_x - width_ladder / 2;
+	    Rect(px, y, width_ladder/3, height_element);
+	    Rect(px+width_ladder*2/3, y, width_ladder/3, height_element);
+	    #endif
+	} else if ((k < 0) && (k % 5 == 0)) { // lower ladders
+	    #if AHI_LADDER == true
+	    Rect( px_l, y, width_ladder/12, height_element);
+	    Rect(px3_l, y, width_ladder/12, height_element);
+	    Rect(px5_l, y, width_ladder/12, height_element);
+	    Rect( px_r, y, width_ladder/12, height_element);
+	    Rect(px3_r, y, width_ladder/12, height_element);
+	    Rect(px5_r, y, width_ladder/12, height_element);
+	    #endif
+	} else if (k == 0) { // center line
+	    #if AHI_LADDER == true
+	    sprintf(buffer, "%d", k);
+	    TextEnd(pos_x - width_ladder / 1.25f - space_text, y - width / height_ladder, buffer, myfont, text_scale*1.1); // left number
+		  #if AHI_ROLLANGLE == true
+		    sprintf(buffer, "%.1f°", roll*AHI_ROLLANGLE_INVERT);
+	        Text(pos_x + width_ladder / 1.25f + space_text, y - width / height_ladder, buffer, myfont, text_scale*1.1); // right number
+		  #else
+			sprintf(buffer, "%d", k);
+	        Text(pos_x + width_ladder / 1.25f + space_text, y - width / height_ladder, buffer, myfont, text_scale*1.1); // right number  
+		  #endif	  
+	    #endif
+//DRAW MAIN HORIZON BAR
+	    Rect(pos_x - width_ladder / 1.25f, y, 2*(width_ladder /1.25f)/5*2, height_element*1.5);
+	    Rect(pos_x - width_ladder / 1.25f + 2*(width_ladder /1.25f)/5*3, y, 2*(width_ladder /1.25f)/5*2,
+                 height_element*1.5);
+
+//Bore Sight
+    TextEnd(pos_x+vy*30, y-vz*30, "ᎅ", osdicons, text_scale*2.5);
+
+		  #if AHI_ROLLANGLE == true
+		    sprintf(buffer, "%.1f°", roll*AHI_ROLLANGLE_INVERT);
+	        Text(pos_x + width_ladder / 1.25f + space_text, y - width / height_ladder, buffer, myfont, text_scale*1.1); // right number
+		  #endif	  
+	}
+	k++;
+    }
+
+//TODO
+ClipEnd();
+
+    StrokeWidth(OUTLINEWIDTH);
+    Stroke(OUTLINECOLOR);
+    Fill(COLOR);
+}
+
 
 // work in progress
 void draw_osdinfos(int osdfps, float pos_x, float pos_y, float scale){
@@ -2467,7 +2634,7 @@ void draw_home_radar(float abs_heading, float craft_heading, int homedst, float 
     
 }
 
-void draw_throttle(uint16_t throttle, uint16_t throttle_target, float pos_x, float pos_y, float scale){
+void draw_throttle(uint16_t throttle, uint16_t throttle_target, int armed, float pos_x, float pos_y, float scale){
 
     float text_scale = getHeight(2) * scale;
     float width_element = getWidth(0.15) * scale;
@@ -2519,7 +2686,7 @@ Rotate(135);
 //2.35 so that 100 percent throttle=235 degrees
 Rotate((throttle*2.35)*-1);
 
-if (global_armed==1){
+if (armed == 1){
 Stroke(COLOR_WARNING); //red
 Fill(COLOR_WARNING);} //if armed needle is red
 else {
