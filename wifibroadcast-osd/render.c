@@ -1323,7 +1323,7 @@ void draw_TOTAL_TIME(float fly_time, float pos_x, float pos_y, float scale){
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
     sprintf(buffer, "%3.0f:%02d", fly_time, (int)(fly_time*60) % 60);
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
-    Text(getWidth(pos_x), getHeight(pos_y), "⏱", myfont, text_scale*0.9);
+    Text(getWidth(pos_x), getHeight(pos_y), "", osdicons, text_scale*0.9);
  
 }
 
@@ -2777,4 +2777,3 @@ void draw_throttle_V2(uint16_t throttle, float pos_x, float pos_y, float scale){
     #endif
     
 }
-
