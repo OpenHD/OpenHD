@@ -1,404 +1,369 @@
-// rssitx by Rodizio (c) 2017. Licensed under GPL2
-// reads rssi from shared mem and sends it out on wifi interfaces (for R/C and telemetry uplink RSSI)
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/resource.h>
-#include <termios.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include <pcap.h>
-#include <stdint.h>
-#include <sys/ioctl.h>
-#include <netpacket/packet.h>
-#include <net/if.h>
-#include <netinet/ether.h>
-#include <string.h>
-#include <getopt.h>
+// rssirx by Rodizio. Based on wifibroadcast rx by Befinitiv. Licensed under GPL2
+/*
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; version 2.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License along
+ *   with this program; if not, write to the Free Software Foundation, Inc.,
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 #include "lib.h"
-#include <inttypes.h>
-#include <stdbool.h>
+#include "radiotap.h"
+#include <time.h>
+#include <sys/resource.h>
 
-char *ifname = NULL;
+// this is where we store a summary of the information from the radiotap header
+typedef struct  {
+	int m_nChannel;
+	int m_nChannelFlags;
+	int m_nRate;
+	int m_nAntenna;
+	int m_nRadiotapFlags;
+} __attribute__((packed)) PENUMBRA_RADIOTAP_DATA;
+
+
 int flagHelp = 0;
 
-int sock=0;
-int socks[5];
+wifibroadcast_rx_status_t *rx_status = NULL;
+wifibroadcast_rx_status_t_rc *rx_status_rc = NULL;
+wifibroadcast_rx_status_t_sysair *rx_status_sysair = NULL;
 
-bool no_signal, no_signal_rc;
-
-struct framedata_s {
-    uint8_t rt1;
-    uint8_t rt2;
-    uint8_t rt3;
-    uint8_t rt4;
-    uint8_t rt5;
-    uint8_t rt6;
-    uint8_t rt7;
-    uint8_t rt8;
-
-    uint8_t rt9;
-    uint8_t rt10;
-    uint8_t rt11;
-    uint8_t rt12;
-
-    uint8_t fc1;
-    uint8_t fc2;
-    uint8_t dur1;
-    uint8_t dur2;
-
-    uint8_t mac1_1; // Port
-    uint8_t mac1_2;
-    uint8_t mac1_3;
-    uint8_t mac1_4;
-    uint8_t mac1_5;
-    uint8_t mac1_6;
-
-    uint8_t mac2_1;
-    uint8_t mac2_2;
-    uint8_t mac2_3;
-    uint8_t mac2_4;
-    uint8_t mac2_5;
-    uint8_t mac2_6;
-
-    uint8_t mac3_1;
-    uint8_t mac3_2;
-    uint8_t mac3_3;
-    uint8_t mac3_4;
-    uint8_t mac3_5;
-    uint8_t mac3_6;
-
-    uint8_t ieeeseq1;
-    uint8_t ieeeseq2;
-
-    int8_t signal;
-    uint32_t lostpackets;
-    int8_t signal_rc;
-    uint32_t lostpackets_rc;
-    uint8_t cpuload;
-    uint8_t temp;
-    uint32_t injected_block_cnt;
-    uint32_t skipped_fec_cnt;
-    uint32_t injection_fail_cnt;
-    long long injection_time_block;
-    uint16_t bitrate_kbit;
-    uint16_t bitrate_measured_kbit;
-    uint8_t cts;
-    uint8_t undervolt;
-}  __attribute__ ((__packed__));
-
-struct framedata_s framedata;
-
-
-void usage(void)
-{
-    printf(
-        "rssitx by Rodizio.\n"
-        "\n"
-        "Usage: rssitx <interface>\n"
-        "\n"
-        "Example:\n"
-        "  rssitx wlan0\n"
-        "\n");
-    exit(1);
+void usage(void) {
+	printf(
+	    "rssirx by Rodizio. Based on wifibroadcast rx by Befinitiv. Licensed under GPL2\n\n"
+	    "Usage: rssirx <interfaces>\n\n"
+	    "Example:\n"
+	    "  rssirx wlan0 (receive standard DATA frames on wlan0)\n\n");
+	exit(1);
 }
 
-
-static int open_sock (char *ifname) {
-    struct sockaddr_ll ll_addr;
-    struct ifreq ifr;
-
-    sock = socket (AF_PACKET, SOCK_RAW, 0);
-    if (sock == -1) {
-	fprintf(stderr, "Error:\tSocket failed\n");
-	exit(1);
-    }
-
-    ll_addr.sll_family = AF_PACKET;
-    ll_addr.sll_protocol = 0;
-    ll_addr.sll_halen = ETH_ALEN;
-
-    strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-
-    if (ioctl(sock, SIOCGIFINDEX, &ifr) < 0) {
-	fprintf(stderr, "Error:\tioctl(SIOCGIFINDEX) failed\n");
-	exit(1);
-    }
-
-    ll_addr.sll_ifindex = ifr.ifr_ifindex;
-
-    if (ioctl(sock, SIOCGIFHWADDR, &ifr) < 0) {
-	fprintf(stderr, "Error:\tioctl(SIOCGIFHWADDR) failed\n");
-	exit(1);
-    }
-
-    memcpy(ll_addr.sll_addr, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
-
-    if (bind (sock, (struct sockaddr *)&ll_addr, sizeof(ll_addr)) == -1) {
-	fprintf(stderr, "Error:\tbind failed\n");
-	close(sock);
-	exit(1);
-    }
-
-    if (sock == -1 ) {
-        fprintf(stderr,
-        "Error:\tCannot open socket\n"
-        "Info:\tMust be root with an 802.11 card with RFMON enabled\n");
-        exit(1);
-    }
-
-    return sock;
-}
+typedef struct {
+	pcap_t *ppcap;
+	int selectable_fd;
+	int n80211HeaderLength;
+} monitor_interface_t;
 
 
-void sendRSSI(int sock, telemetry_data_t *td) {
-	if(td->rx_status != NULL) {
-		long double a[4], b[4];
-		FILE *fp;
+void open_and_configure_interface(const char *name, monitor_interface_t *interface) {
+	struct bpf_program bpfprogram;
+	char szProgram[512];
+	char szErrbuf[PCAP_ERRBUF_SIZE];
 
-		int best_dbm = -127;
-		int best_dbm_rc = -127;
-		int cardcounter = 0;
-		int number_cards = td->rx_status->wifi_adapter_cnt;
-		int number_cards_rc = td->rx_status_rc->wifi_adapter_cnt;
-//		printf("num_cards:%d num_cards_rc:%d\n", number_cards,number_cards_rc);
+	// open the interface in pcap
+	szErrbuf[0] = '\0';
 
-//		no_signal=true;
-//                for(cardcounter=0; cardcounter<number_cards; ++cardcounter) {
-//		    if (td->rx_status->adapter[cardcounter].signal_good == 1) { printf("card[%i] signal good\n",cardcounter); };
-//		    printf("dbm[%i]: %d  \n",cardcounter, td->rx_status->adapter[cardcounter].current_signal_dbm);
-//		    if (td->rx_status->adapter[cardcounter].signal_good == 1) {
-//                	if (best_dbm < td->rx_status->adapter[cardcounter].current_signal_dbm) best_dbm = td->rx_status->adapter[cardcounter].current_signal_dbm;
-//		    }
-//		    if (td->rx_status->adapter[cardcounter].signal_good == 1) no_signal=false;
-//                }
-
-		no_signal_rc=true;
-                for(cardcounter=0; cardcounter<number_cards_rc; ++cardcounter) {
-		    if (td->rx_status_rc->adapter[cardcounter].signal_good == 1) { printf("card[%i] rc signal good\n",cardcounter); };
-		    //printf("dbm_rc[%i]: %d\n",cardcounter, td->rx_status_rc->adapter[cardcounter].current_signal_dbm);
-		    if (td->rx_status_rc->adapter[cardcounter].signal_good == 1) {
-                	if (best_dbm_rc < td->rx_status_rc->adapter[cardcounter].current_signal_dbm) best_dbm_rc = td->rx_status_rc->adapter[cardcounter].current_signal_dbm;
-		    }
-		    if (td->rx_status_rc->adapter[cardcounter].signal_good == 1) no_signal_rc=false;
-                }
-
-		if (no_signal_rc == false) { printf("rc signal good   "); };
-		//printf("best_dbm_rc:%d\n",best_dbm_rc);
-
-		if (no_signal == false) {
-		    framedata.signal = best_dbm;
-		} else {
-		    framedata.signal = -127;
-		}
-		if (no_signal_rc == false) {
-		    framedata.signal_rc = best_dbm_rc;
-		} else {
-		    framedata.signal_rc = -127;
-		}
-		framedata.lostpackets = td->rx_status->lost_packet_cnt;
-		framedata.lostpackets_rc = td->rx_status_rc->lost_packet_cnt;
-
-		framedata.injected_block_cnt = td->tx_status->injected_block_cnt;
-		framedata.skipped_fec_cnt = td->tx_status->skipped_fec_cnt;
-		framedata.injection_fail_cnt = td->tx_status->injection_fail_cnt;
-		framedata.injection_time_block = td->tx_status->injection_time_block;
-
-    		fp = fopen("/proc/stat","r");
-    		fscanf(fp,"%*s %Lf %Lf %Lf %Lf",&a[0],&a[1],&a[2],&a[3]);
-    		fclose(fp);
-    		usleep(333333); // send about 3 times per second
-    		fp = fopen("/proc/stat","r");
-    		fscanf(fp,"%*s %Lf %Lf %Lf %Lf",&b[0],&b[1],&b[2],&b[3]);
-    		fclose(fp);
-		framedata.cpuload = (((b[0]+b[1]+b[2]) - (a[0]+a[1]+a[2])) / ((b[0]+b[1]+b[2]+b[3]) - (a[0]+a[1]+a[2]+a[3]))) * 100;
-
-		fp = fopen("/sys/class/thermal/thermal_zone0/temp","r");
-		int temp = 0;
-		fscanf(fp,"%d",&temp);
-		fclose(fp);
-		//fprintf(stderr,"temp: %d\n",temp/1000);
-		framedata.temp = temp / 1000;
+	interface->ppcap = pcap_open_live(name, 120, 0, -1, szErrbuf);
+	if (interface->ppcap == NULL) {
+		fprintf(stderr, "Unable to open %s: %s\n", name, szErrbuf);
+		exit(1);
+	}
+	
+	if(pcap_setnonblock(interface->ppcap, 1, szErrbuf) < 0) {
+		fprintf(stderr, "Error setting %s to nonblocking mode: %s\n", name, szErrbuf);
 	}
 
-//	printf("signal: %d\n", framedata.signal);
-//	printf("skipped fec %d\n", td->tx_status->skipped_fec_cnt);
-//	printf("injection time: %lld\n", td->tx_status->injection_time_block);
-//	printf("injection time: %lld\n", td->tx_status->injection_time_block);
+	int nLinkEncap = pcap_datalink(interface->ppcap);
 
-//	fprintf(stdout,"\t\t%d blocks injected, injection time per block %lldus, %d fecs skipped, %d packet injections failed.          \r", td->tx_status->injected_block_cnt,td->tx_status->injection_time_block,td->tx_status->skipped_fec_cnt,td->tx_status->injection_fail_cnt);
+	if (nLinkEncap == DLT_IEEE802_11_RADIO) {
+	   //sprintf(szProgram, "ether[0x00:2] == 0x0802 && ether[0x04:1] == 0x7F"); // match on frametype, 1st byte of mac (0x7F) for portnumber 63((127-1)/2 for rssi)
+		sprintf(szProgram, "(ether[0x00:2] == 0x0801 || ether[0x00:2] == 0x0802 || ether[0x00:4] == 0xb4010000) && ether[0x04:1] == 0x7F");	
+	} else {
+		fprintf(stderr, "ERROR: unknown encapsulation on %s! check if monitor mode is supported and enabled\n", name);
+		exit(1);
+	}
 
-//	printf("signal_rc: %d\n", framedata.signal_rc);
-//	printf("lostpackets: %d\n", framedata.lostpackets);
-//	printf("lostpackets_rc: %d\n", framedata.lostpackets_rc);
-	// send three times with different delay in between to increase robustness against packetloss
-	if (write(socks[0], &framedata, 74) < 0 ) fprintf(stderr, "!");
-	usleep(1500);
-	if (write(socks[0], &framedata, 74) < 0 ) fprintf(stderr, "!");
-	usleep(2000);
-	if (write(socks[0], &framedata, 74) < 0 ) fprintf(stderr, "!");
+	if (pcap_compile(interface->ppcap, &bpfprogram, szProgram, 1, 0) == -1) {
+		puts(szProgram);
+		puts(pcap_geterr(interface->ppcap));
+		exit(1);
+	} else {
+		if (pcap_setfilter(interface->ppcap, &bpfprogram) == -1) {
+			fprintf(stderr, "%s\n", szProgram);
+			fprintf(stderr, "%s\n", pcap_geterr(interface->ppcap));
+		} else {
+		}
+		pcap_freecode(&bpfprogram);
+	}
+
+	interface->selectable_fd = pcap_get_selectable_fd(interface->ppcap);
 }
 
 
 
-wifibroadcast_rx_status_t *telemetry_wbc_status_memory_open(void) {
-    int fd = 0;
-    fd = shm_open("/wifibroadcast_rx_status_3", O_RDONLY, S_IRUSR | S_IWUSR);
-    if(fd < 0) {
-	fprintf(stderr, "RSSITX: ERROR: Could not open wifibroadcast rx uplink status!\n");
-	exit(1);
+uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
+	struct pcap_pkthdr * ppcapPacketHeader = NULL;
+	struct ieee80211_radiotap_iterator rti;
+	PENUMBRA_RADIOTAP_DATA prd;
+	u8 payloadBuffer[100];
+	u8 *pu8Payload = payloadBuffer;
+	int bytes, n, retval, u16HeaderLen;
+
+	struct payloaddata_s {
+	    int8_t signal;
+	    uint32_t lostpackets;
+	    int8_t signal_rc;
+	    uint32_t lostpackets_rc;
+	    uint8_t cpuload;
+	    uint8_t temp;
+	    uint32_t injected_block_cnt;
+	    uint32_t skipped_fec_cnt;
+	    uint32_t injection_fail_cnt;
+	    long long injection_time_block;
+	    uint16_t bitrate_kbit;
+	    uint16_t bitrate_measured_kbit;
+	    uint8_t cts;
+	    uint8_t undervolt;
+	}  __attribute__ ((__packed__));
+
+	struct payloaddata_s payloaddata;
+
+	retval = pcap_next_ex(interface->ppcap, &ppcapPacketHeader,(const u_char**)&pu8Payload); // receive
+
+	if (retval < 0) {
+		if (strcmp("The interface went down",pcap_geterr(interface->ppcap)) == 0) {
+		    fprintf(stderr, "rx: The interface went down\n");
+		    exit(9);
+		} else {
+		    fprintf(stderr, "rx: %s\n", pcap_geterr(interface->ppcap));
+		    exit(2);
+		}
+	}
+
+	if (retval != 1) return 0;
+
+	// fetch radiotap header length from radiotap header (seems to be 36 for Atheros and 18 for Ralink)
+	u16HeaderLen = (pu8Payload[2] + (pu8Payload[3] << 8));
+//	fprintf(stderr, "u16headerlen: %d\n", u16HeaderLen);
+
+    pu8Payload += u16HeaderLen;
+    switch (pu8Payload[1]) {
+    case 0x01: // data short, rts (telemetry)
+//	fprintf(stderr, "data short or rts telemetry frame\n");
+        interface->n80211HeaderLength = 0x05;
+        break;
+    case 0x02: // data (telemetry)
+//	fprintf(stderr, "data telemetry frame\n");
+        interface->n80211HeaderLength = 0x18;
+        break;
+    default:
+        break;
     }
-    void *retval = mmap(NULL, sizeof(wifibroadcast_rx_status_t), PROT_READ, MAP_SHARED, fd, 0);
-    if (retval == MAP_FAILED) { perror("mmap"); exit(1); }
-    return (wifibroadcast_rx_status_t*)retval;
+    pu8Payload -= u16HeaderLen;
+
+//	fprintf(stderr, "ppcapPacketHeader->len: %d\n", ppcapPacketHeader->len);
+	if (ppcapPacketHeader->len < (u16HeaderLen + interface->n80211HeaderLength)) exit(1);
+
+	bytes = ppcapPacketHeader->len - (u16HeaderLen + interface->n80211HeaderLength);
+
+	if (bytes < 0) return(0);
+	if (ieee80211_radiotap_iterator_init(&rti, (struct ieee80211_radiotap_header *)pu8Payload, ppcapPacketHeader->len) < 0) exit(1);
+
+	while ((n = ieee80211_radiotap_iterator_next(&rti)) == 0) {
+		switch (rti.this_arg_index) {
+		case IEEE80211_RADIOTAP_FLAGS:
+			prd.m_nRadiotapFlags = *rti.this_arg;
+			break;
+//		case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:
+//			rx_status->adapter[adapter_no].current_signal_dbm = (int8_t)(*rti.this_arg);
+//			break;
+		}
+	}
+	pu8Payload += u16HeaderLen + interface->n80211HeaderLength;
+	memcpy(&payloaddata,pu8Payload,38); // copy payloaddata (signal, lost packets count, cpuload, temp, ....) to struct
+
+//	printf ("signal:%d\n",payloaddata.signal);
+//	printf ("lostpackets:%d\n",payloaddata.lostpackets);
+//	printf ("signal_rc:%d\n",payloaddata.signal_rc);
+//	printf ("lostpackets_rc:%d\n",payloaddata.lostpackets_rc);
+//	printf ("cpuload:%d\n",payloaddata.cpuload);
+//	printf ("temp:%d\n",payloaddata.temp);
+//	printf ("injected_blocl_cnt:%d\n",payloaddata.injected_block_cnt);
+
+//	printf ("bitrate_kbit:%d\n",payloaddata.bitrate_kbit);
+//	printf ("bitrate_measured_kbit:%d\n",payloaddata.bitrate_measured_kbit);
+
+//	printf ("cts:%d\n",payloaddata.cts);
+//	printf ("undervolt:%d\n",payloaddata.undervolt);
+
+	rx_status->adapter[0].current_signal_dbm = payloaddata.signal;
+	rx_status->lost_packet_cnt = payloaddata.lostpackets;
+	rx_status_rc->adapter[0].current_signal_dbm = payloaddata.signal_rc;
+	rx_status_rc->lost_packet_cnt = payloaddata.lostpackets_rc;
+	rx_status_sysair->cpuload = payloaddata.cpuload;
+	rx_status_sysair->temp = payloaddata.temp;
+
+	rx_status_sysair->skipped_fec_cnt = payloaddata.skipped_fec_cnt;
+	rx_status_sysair->injected_block_cnt = payloaddata.injected_block_cnt;
+	rx_status_sysair->injection_fail_cnt = payloaddata.injection_fail_cnt;
+	rx_status_sysair->injection_time_block = payloaddata.injection_time_block;
+
+	rx_status_sysair->bitrate_kbit = payloaddata.bitrate_kbit;
+	rx_status_sysair->bitrate_measured_kbit = payloaddata.bitrate_measured_kbit;
+
+	rx_status_sysair->cts = payloaddata.cts;
+	rx_status_sysair->undervolt = payloaddata.undervolt;
+
+//	write(STDOUT_FILENO, pu8Payload, 18);
+	return(0);
 }
 
-wifibroadcast_rx_status_t_rc *telemetry_wbc_status_memory_open_rc(void) {
-    int fd = 0;
-    fd = shm_open("/wifibroadcast_rx_status_rc", O_RDONLY, S_IRUSR | S_IWUSR);
-    if(fd < 0) {
-	fprintf(stderr, "RSSITX: ERROR: Could not open wifibroadcast R/C status!\n");
-	exit(1);
-    }
-    void *retval = mmap(NULL, sizeof(wifibroadcast_rx_status_t_rc), PROT_READ, MAP_SHARED, fd, 0);
-    if (retval == MAP_FAILED) { perror("mmap"); exit(1); }
-    return (wifibroadcast_rx_status_t_rc*)retval;
+void status_memory_init(wifibroadcast_rx_status_t *s) {
+	s->received_block_cnt = 0;
+	s->damaged_block_cnt = 0;
+	s->received_packet_cnt = 0;
+	s->lost_packet_cnt = 0;
+	s->tx_restart_cnt = 0;
+	s->wifi_adapter_cnt = 0;
+
+	int i;
+	for(i=0; i<8; ++i) {
+		s->adapter[i].received_packet_cnt = 0;
+		s->adapter[i].wrong_crc_cnt = 0;
+		s->adapter[i].current_signal_dbm = -126;
+	}
 }
 
-wifibroadcast_tx_status_t *telemetry_wbc_status_memory_open_tx(void) {
-    int fd = 0;
-    fd = shm_open("/wifibroadcast_tx_status_0", O_RDONLY, S_IRUSR | S_IWUSR);
-    if(fd < 0) {
-	fprintf(stderr, "RSSITX: ERROR: Could not open wifibroadcast tx status!\n");
-	exit(1);
-    }
-    void *retval = mmap(NULL, sizeof(wifibroadcast_tx_status_t), PROT_READ, MAP_SHARED, fd, 0);
-    if (retval == MAP_FAILED) { perror("mmap"); exit(1); }
-    return (wifibroadcast_tx_status_t*)retval;
+void status_memory_init_rc(wifibroadcast_rx_status_t_rc *s) {
+	s->received_block_cnt = 0;
+	s->damaged_block_cnt = 0;
+	s->received_packet_cnt = 0;
+	s->lost_packet_cnt = 0;
+	s->tx_restart_cnt = 0;
+	s->wifi_adapter_cnt = 0;
+
+	int i;
+	for(i=0; i<8; ++i) {
+		s->adapter[i].received_packet_cnt = 0;
+		s->adapter[i].wrong_crc_cnt = 0;
+		s->adapter[i].current_signal_dbm = -126;
+	}
 }
 
-void telemetry_init(telemetry_data_t *td) {
-	// init RSSI shared memory
-	td->rx_status = telemetry_wbc_status_memory_open();
-	td->rx_status_rc = telemetry_wbc_status_memory_open_rc();
-	td->tx_status = telemetry_wbc_status_memory_open_tx();
+void status_memory_init_sysair(wifibroadcast_rx_status_t_sysair *s) {
+	s->cpuload = 0;
+	s->temp = 0;
+	s->skipped_fec_cnt = 0;
+	s->injected_block_cnt = 0;
+	s->injection_fail_cnt = 0;
+	s->injection_time_block = 0;
+	s->bitrate_kbit = 0;
+	s->bitrate_measured_kbit = 0;
+	s->cts = 0;
+	s->undervolt = 0;
 }
 
-int main (int argc, char *argv[]) {
+
+wifibroadcast_rx_status_t *status_memory_open(void) {
+	char buf[128];
+	int fd;
+	sprintf(buf, "/wifibroadcast_rx_status_uplink");
+	fd = shm_open(buf, O_RDWR, S_IRUSR | S_IWUSR);
+	if(fd < 0) { perror("shm_open"); exit(1); }
+	void *retval = mmap(NULL, sizeof(wifibroadcast_rx_status_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (retval == MAP_FAILED) { perror("mmap"); exit(1); }
+	wifibroadcast_rx_status_t *tretval = (wifibroadcast_rx_status_t*)retval;
+	status_memory_init(tretval);
+	return tretval;
+}
+
+wifibroadcast_rx_status_t_rc *status_memory_open_rc(void) {
+	char buf[128];
+	int fd;
+	sprintf(buf, "/wifibroadcast_rx_status_rc");
+	fd = shm_open(buf, O_RDWR, S_IRUSR | S_IWUSR);
+	if(fd < 0) { perror("shm_open"); exit(1); }
+	void *retval = mmap(NULL, sizeof(wifibroadcast_rx_status_t_rc), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (retval == MAP_FAILED) { perror("mmap"); exit(1); }
+	wifibroadcast_rx_status_t_rc *tretval = (wifibroadcast_rx_status_t_rc*)retval;
+	status_memory_init_rc(tretval);
+	return tretval;
+}
+
+wifibroadcast_rx_status_t_sysair *status_memory_open_sysair(void) {
+	char buf[128];
+	int fd;
+	sprintf(buf, "/wifibroadcast_rx_status_sysair");
+	fd = shm_open(buf, O_RDWR, S_IRUSR | S_IWUSR);
+	if(fd < 0) { perror("shm_open"); exit(1); }
+	void *retval = mmap(NULL, sizeof(wifibroadcast_rx_status_t_sysair), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (retval == MAP_FAILED) { perror("mmap"); exit(1); }
+	wifibroadcast_rx_status_t_sysair *tretval = (wifibroadcast_rx_status_t_sysair*)retval;
+	status_memory_init_sysair(tretval);
+	return tretval;
+}
+
+
+int main(int argc, char *argv[]) {
+	printf("RSSI RX started\n");
 	setpriority(PRIO_PROCESS, 0, 10);
 
-	int done = 1;
+	monitor_interface_t interfaces[8];
+	int num_interfaces = 0;
+	int i;
+	int result = 0;
 
-//	fprintf(stderr,"RSSI TX started\n");
-	socks[0] = open_sock(argv[1]);
-
-	FILE * pFile;
-	int bitrate_kbit;
-	pFile = fopen ("/tmp/bitrate_kbit","r");
-	if(NULL == pFile) {
-    	    perror("ERROR: Could not open /tmp/bitrate_kbit");
-    	    exit(EXIT_FAILURE);
+	while (1) {
+		int nOptionIndex;
+		static const struct option optiona[] = { { "help", no_argument, &flagHelp, 1 }, { 0, 0, 0, 0 } };
+		int c = getopt_long(argc, argv, "h:", optiona, &nOptionIndex);
+		if (c == -1) break;
+		switch (c) {
+		case 0: // long option
+			break;
+		case 'h': // help
+			usage();
+		default:
+			fprintf(stderr, "unknown switch %c\n", c);
+			usage();
+		}
 	}
-        fscanf(pFile, "%i\n", &bitrate_kbit);
-//	printf("bitrate_kbit: %i\n", bitrate_kbit);
-	fclose (pFile);
 
-	int bitrate_measured_kbit;
-	pFile = fopen ("/tmp/bitrate_measured_kbit","r");
-	if(NULL == pFile) {
-    	    perror("ERROR: Could not open /tmp/measured_kbit");
-    	    exit(EXIT_FAILURE);
+	if (optind >= argc) usage();
+	int x = optind;
+	while(x < argc && num_interfaces < 8) {
+		open_and_configure_interface(argv[x], interfaces + num_interfaces);
+		++num_interfaces;
+		++x;
+		usleep(10000); // wait a bit between configuring interfaces to reduce Atheros and Pi USB flakiness
 	}
-	fscanf(pFile, "%i\n", &bitrate_measured_kbit);
-//	printf("bitrate_measured_kbit: %i\n", bitrate_measured_kbit);
-	fclose (pFile);
 
-	int cts;
-	pFile = fopen ("/tmp/cts","r");
-	if(NULL == pFile) {
-    	    perror("ERROR: Could not open /tmp/cts");
-    	    exit(EXIT_FAILURE);
+	rx_status = status_memory_open();
+	rx_status->wifi_adapter_cnt = num_interfaces;
+
+	rx_status_rc = status_memory_open_rc();
+	rx_status_rc->wifi_adapter_cnt = num_interfaces;
+
+	rx_status_sysair = status_memory_open_sysair();
+
+	for(;;) {
+		fd_set readset;
+		struct timeval to;
+
+		to.tv_sec = 0;
+		to.tv_usec = 1e5;
+	
+		FD_ZERO(&readset);
+		for(i=0; i<num_interfaces; ++i)
+			FD_SET(interfaces[i].selectable_fd, &readset);
+
+		int n = select(30, &readset, NULL, NULL, &to);
+
+		for(i=0; i<num_interfaces; ++i) {
+			if(n == 0) {
+//			    printf("n == 0\n");
+		    	    //break;
+			}
+			if(FD_ISSET(interfaces[i].selectable_fd, &readset)) {
+			    result = process_packet(interfaces + i, i);
+			}
+		}
 	}
-	fscanf(pFile, "%i\n", &cts);
-//	printf("cts: %i\n", cts);
-	fclose (pFile);
 
-	int undervolt;
-	pFile = fopen ("/tmp/undervolt","r");
-	if(NULL == pFile) {
-    	    perror("ERROR: Could not open /tmp/undervolt");
-    	    exit(EXIT_FAILURE);
-	}
-	fscanf(pFile, "%i\n", &undervolt);
-//	printf("undervolt: %i\n", undervolt);
-	fclose (pFile);
-
-	telemetry_data_t td;
-	telemetry_init(&td);
-
-	framedata.rt1 = 0; // <-- radiotap version
-	framedata.rt2 = 0; // <-- radiotap version
-
-	framedata.rt3 = 12; // <- radiotap header length
-	framedata.rt4 = 0; // <- radiotap header length
-
-	framedata.rt5 = 4; // <-- radiotap present flags
-	framedata.rt6 = 128; // <-- radiotap present flags
-	framedata.rt7 = 0; // <-- radiotap present flags
-	framedata.rt8 = 0; // <-- radiotap present flags
-
-	framedata.rt9 = 24; // <-- radiotap rate
-	framedata.rt10 = 0; // <-- radiotap stuff
-	framedata.rt11 = 0; // <-- radiotap stuff
-	framedata.rt12 = 0; // <-- radiotap stuff
-
-	framedata.fc1 = 8; // <-- frame control field 0x08 = 8 data frame (180 = rts frame)
-	framedata.fc2 = 2; // <-- frame control field 0x02 = 2
-	framedata.dur1 = 0; // <-- duration
-	framedata.dur2 = 0; // <-- duration
-
-	framedata.mac1_1 = 255 ; // port 127
-	framedata.mac1_2 = 0;
-	framedata.mac1_3 = 0;
-	framedata.mac1_4 = 0;
-	framedata.mac1_5 = 0;
-	framedata.mac1_6 = 0;
-
-	framedata.mac2_1 = 0;
-	framedata.mac2_2 = 0;
-	framedata.mac2_3 = 0;
-	framedata.mac2_4 = 0;
-	framedata.mac2_5 = 0;
-	framedata.mac2_6 = 0;
-
-	framedata.mac3_1 = 0;
-	framedata.mac3_2 = 0;
-	framedata.mac3_3 = 0;
-	framedata.mac3_4 = 0;
-	framedata.mac3_5 = 0;
-	framedata.mac3_6 = 0;
-
-	framedata.ieeeseq1 = 0;
-	framedata.ieeeseq2 = 0;
-
-	framedata.signal = 0;
-	framedata.lostpackets = 0;
-	framedata.signal_rc = 0;
-	framedata.lostpackets_rc = 0;
-	framedata.cpuload = 0;
-	framedata.temp = 0;
-	framedata.injected_block_cnt = 0;
-	framedata.skipped_fec_cnt = 0;
-	framedata.injection_fail_cnt = 0;
-	framedata.injection_time_block = 0;
-
-	framedata.bitrate_kbit = bitrate_kbit;
-	framedata.bitrate_measured_kbit = bitrate_measured_kbit;
-	framedata.cts = cts;
-	framedata.undervolt = undervolt;
-
-	while (done) {
-		sendRSSI(sock,&td);
-	}
-	return 0;
+	return (0);
 }
