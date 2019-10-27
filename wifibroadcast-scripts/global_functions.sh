@@ -553,12 +553,14 @@ function collect_errorlog {
 function wbclogger_function {
   if [ "$CAM" == "0" ]; then # if we are RX ...
 
-    # Waiting until video is running ...
-    VIDEORXRUNNING=0
-    while [ $VIDEORXRUNNING -ne 1 ]; do
-		VIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
-		sleep 1
-    done
+	if [ "$ENABLE_QOPENHD" != "Y" ]; then
+		# Waiting until video is running ...
+		VIDEORXRUNNING=0
+		while [ $VIDEORXRUNNING -ne 1 ]; do
+			VIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
+			sleep 1
+		done
+	fi
 	
     echo
 	

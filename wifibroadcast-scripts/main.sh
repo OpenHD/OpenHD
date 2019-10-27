@@ -17,6 +17,9 @@ TTY=`tty`
 # GPIO variable
 CONFIGFILE=`/root/wifibroadcast_misc/gpio-config.py`
 
+export PATH=/home/pi/wifibroadcast-status:${PATH}
+
+
 # Check for the camera
 check_camera_attached
 

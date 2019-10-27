@@ -1,9 +1,11 @@
 function rx_function {
 
-    if [ "$AdjustLCDBacklight" == "Y" ]; then
-        /home/pi/wifibroadcast-misc/LCD/MouseListener $AutoDimTime $AutoDimValue /dev/input/event0 & > /dev/null 2>&1
-    fi
-    
+	if [ "$ENABLE_QOPENHD" != "Y" ]; then
+    	if [ "$AdjustLCDBacklight" == "Y" ]; then
+        	/home/pi/wifibroadcast-misc/LCD/MouseListener $AutoDimTime $AutoDimValue /dev/input/event0 & > /dev/null 2>&1
+    	fi
+	fi
+
     /home/pi/wifibroadcast-base/sharedmem_init_rx
 
     # start virtual serial port for cmavnode and ser2net
@@ -31,7 +33,11 @@ function rx_function {
         STICKGONE=0
 	while [ $STICKGONE -ne 1 ]; do
 	    killall wbc_status > /dev/null 2>&1
-	    nice /home/pi/wifibroadcast-status/wbc_status "USB memory stick detected - please remove and re-plug after flight" 7 65 0 &
+		if [ "$ENABLE_QOPENHD" == "Y" ]; then
+		    qstatus "USB memory stick detected - please remove and re-plug after flight" 5
+		else
+		    wbc_status "USB memory stick detected - please remove and re-plug after flight" 7 65 0 &
+		fi
 	    sleep 4
 	    if [ ! -e $STARTUSBDEV ]; then
 			STICKGONE=1
@@ -227,7 +233,18 @@ function rx_function {
                         killall omxplayer.bin  > /dev/null 2>/dev/null
                 fi
 
-		ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 $DISPLAY_PROGRAM > /dev/null 2>&1 &
+		# Temporarily continue using hello_video even if QOpenHD is enabled until we can find the cause of
+		# GStreamer display jitter (affects every platform not just the GroundPi)
+		#if [ "$ENABLE_QOPENHD" == "Y" ]; then
+	    #	if [ "$FORWARD_STREAM" == "rtp" ]; then
+		#		ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=$VIDEO_UDP_PORT host=127.0.0.1 &
+		#	else
+		#		ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 gst-launch-1.0 fdsrc ! udpsink port=$VIDEO_UDP_PORT host=127.0.0.1 &
+		#	fi
+		#else
+			ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 $DISPLAY_PROGRAM > /dev/null 2>&1 &
+		#fi
+
 		ionice -c 3 nice cat /root/videofifo3 >> $VIDEOFILE &
 
 		if [ "$RELAY" == "Y" ]; then
@@ -270,7 +287,9 @@ function rx_function {
 
 		RX_EXITSTATUS=${PIPESTATUS[0]}
 		check_exitstatus $RX_EXITSTATUS
-		ps -ef | nice grep "$DISPLAY_PROGRAM" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+		#if [ "$ENABLE_QOPENHD" != "Y" ]; then
+			ps -ef | nice grep "$DISPLAY_PROGRAM" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+		#fi
 		ps -ef | nice grep "rx -p 0" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 		ps -ef | nice grep "ftee /root/videofifo" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 		ps -ef | nice grep "cat /root/videofifo" | nice grep -v grep | awk '{print $2}' | xargs kill -9

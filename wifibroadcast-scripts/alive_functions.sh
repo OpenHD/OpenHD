@@ -22,10 +22,12 @@ function check_alive_function {
 		
 		ALIVE=`nice /home/pi/wifibroadcast-base/check_alive`
 		if [ $ALIVE == "0" ]; then
-			echo "no new packets, restarting hello_video and sleeping for 5s ..."
-			ps -ef | nice grep "cat /root/videofifo1" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-			ps -ef | nice grep "$DISPLAY_PROGRAM" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-			ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 $DISPLAY_PROGRAM > /dev/null 2>&1 &
+			if [ "$ENABLE_QOPENHD" != "Y" ]; then
+				echo "no new packets, restarting hello_video and sleeping for 5s ..."
+				ps -ef | nice grep "cat /root/videofifo1" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+				ps -ef | nice grep "$DISPLAY_PROGRAM" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+				ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 $DISPLAY_PROGRAM > /dev/null 2>&1 &
+			fi
 			sleep 5
 		else
 			echo "received packets, doing nothing ..."

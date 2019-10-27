@@ -9,24 +9,27 @@ function osdrx_function {
     echo
 	
     if [ "$DISPLAY_OSD" == "Y" ]; then
-    
-    cd /home/pi/wifibroadcast-osd
-	
-    echo Building OSD:
-	
-    ionice -c 3 nice make -j2 || {
-        echo
-        echo "ERROR: Could not build OSD, check osdconfig.txt!"
-		
-		sleep 5
-		
-        nice /home/pi/wifibroadcast-status/wbc_status "ERROR: Could not build OSD, check osdconfig.txt for errors." 7 55 0
-		
-		sleep 5
-    }
+		if [ "$ENABLE_QOPENHD" == "Y" ]; then
+			systemctl start qopenhd
+		else
+			cd /home/pi/wifibroadcast-osd
+			
+			echo Building OSD:
+			
+			ionice -c 3 nice make -j2 || {
+				echo
+				echo "ERROR: Could not build OSD, check osdconfig.txt!"
+				
+				sleep 5
+				
+				wbc_status "ERROR: Could not build OSD, check osdconfig.txt for errors." 7 55 0 &
+				
+				sleep 5
+			}
+		fi
     
     else 
-	echo "OSD selected off..."
+		echo "OSD selected off..."
     fi
 	
     echo
@@ -34,14 +37,16 @@ function osdrx_function {
     while true; do
 		killall wbc_status > /dev/null 2>&1
 
-		echo -n "Waiting until video is running ..."
-		VIDEORXRUNNING=0
-		
-		while [ $VIDEORXRUNNING -ne 1 ]; do
-			sleep 0.5
-			VIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
-			echo -n "."
-		done
+		if [ "$ENABLE_QOPENHD" != "Y"]; then
+			echo -n "Waiting until video is running ..."
+			VIDEORXRUNNING=0
+			
+			while [ $VIDEORXRUNNING -ne 1 ]; do
+				sleep 0.5
+				VIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
+				echo -n "."
+			done
+		fi
 		
 		echo
 		echo "Video running, starting OSD processes ..."
@@ -72,7 +77,9 @@ function osdrx_function {
 
 		ionice -c 3 nice cat /root/telemetryfifo3 >> /wbc_tmp/telemetrydowntmp.raw &
 		pause_while
-		/tmp/osd >> /wbc_tmp/telemetrydowntmp.txt &
+		if [ "$ENABLE_QOPENHD" != "Y" ]; then
+		    /tmp/osd >> /wbc_tmp/telemetrydowntmp.txt &
+        fi
 
 		if [ "$RELAY" == "Y" ]; then
 			ionice -c 1 -n 4 nice -n -9 cat /root/telemetryfifo4 | nice /home/pi/wifibroadcast-base/tx_telemetry -p 1 -c $TELEMETRY_CTS -r 2 -x $TELEMETRY_TYPE -d 12 -y 0 relay0 > /dev/null 2>&1 &

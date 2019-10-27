@@ -51,8 +51,10 @@ function save_function {
     # kill video and telemetry recording and also local video display
     ps -ef | nice grep "cat /root/videofifo3" | nice grep -v grep | awk '{print $2}' | xargs kill -9
     ps -ef | nice grep "cat /root/telemetryfifo3" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-    ps -ef | nice grep "$DISPLAY_PROGRAM" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-    ps -ef | nice grep "cat /root/videofifo1" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+	if [ "$ENABLE_QOPENHD" != "Y" ]; then
+    	ps -ef | nice grep "$DISPLAY_PROGRAM" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+    	ps -ef | nice grep "cat /root/videofifo1" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+	fi
 
     # kill video rx
     ps -ef | nice grep "rx -p 0" | nice grep -v grep | awk '{print $2}' | xargs kill -9
@@ -67,7 +69,11 @@ function save_function {
     nice /rootfs/home/pi/wifibroadcast-hello_video/hello_video.bin.player $VIDEOFILE $FPS &
 
     killall wbc_status > /dev/null 2>&1
-    nice /home/pi/wifibroadcast-status/wbc_status "Saving to USB. This may take some time ..." 7 55 0 &
+	if [ "$ENABLE_QOPENHD" == "Y" ]; then
+        qstatus "Saving to USB. This may take some time ..." 3
+	else
+        wbc_status "Saving to USB. This may take some time ..." 7 55 0 &
+	fi
 
     echo -n "Accessing file system.. "
 
@@ -166,7 +172,11 @@ function save_function {
 				#echo "AVCONVRUNNING: $AVCONVRUNNING"
 				sleep 4
 				killall wbc_status > /dev/null 2>&1
-				nice /home/pi/wifibroadcast-status/wbc_status "Saving - please wait ..." 7 65 0 &
+				if [ "$ENABLE_QOPENHD" == "Y" ]; then
+				    qstatus "Saving - please wait ..." 3
+				else
+				    wbc_status "Saving - please wait ..." 7 65 0 &
+				fi
 			done
 		fi
 		
@@ -179,7 +189,11 @@ function save_function {
 		STICKGONE=0
 		while [ $STICKGONE -ne 1 ]; do
 			killall wbc_status > /dev/null 2>&1
-			nice /home/pi/wifibroadcast-status/wbc_status "Done - USB memory stick can be removed now" 7 65 0 &
+			if [ "$ENABLE_QOPENHD" == "Y" ]; then
+			    qstatus "Done - USB memory stick can be removed now" 3
+			else
+			    wbc_status "Done - USB memory stick can be removed now" 7 65 0 &
+			fi
 			sleep 4
 			if [ ! -e "/dev/sda" ]; then
 				STICKGONE=1
@@ -195,7 +209,11 @@ function save_function {
 		STICKGONE=0
 		while [ $STICKGONE -ne 1 ]; do
 			killall wbc_status > /dev/null 2>&1
-			nice /home/pi/wifibroadcast-status/wbc_status "ERROR: Could not access USB memory stick!" 7 65 0 &
+			if [ "$ENABLE_QOPENHD" == "Y" ]; then
+			    qstatus "ERROR: Could not access USB memory stick!" 5
+			else
+			    wbc_status "ERROR: Could not access USB memory stick!" 7 65 0 &
+			fi
 			sleep 4
 			if [ ! -e "/dev/sda" ]; then
 				STICKGONE=1
@@ -216,7 +234,9 @@ function save_function {
 		echo "OSD already running!"
     else
 		killall wbc_status > /dev/null 2>&1
-		/tmp/osd >> /wbc_tmp/telemetrydowntmp.txt &
+		if [ "$ENABLE_QOPENHD" != "Y" ]; then
+			/tmp/osd >> /wbc_tmp/telemetrydowntmp.txt &
+		fi
     fi
 	
     # let screenshot function know that it can continue taking screenshots

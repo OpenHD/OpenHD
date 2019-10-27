@@ -1,14 +1,16 @@
 function MAIN_HOTSPOT_FUNCTION {
 	echo "================== CHECK HOTSPOT (tty8) ==========================="
 	if [ "$CAM" == "0" ]; then
-		echo -n "Waiting until video is running ..."
-		HVIDEORXRUNNING=0
-	
-		while [ $HVIDEORXRUNNING -ne 1 ]; do
-			sleep 0.5
-			HVIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
-			echo -n "."
-		done
+		if [ "$ENABLE_QOPENHD" != "Y"]; then
+			echo -n "Waiting until video is running ..."
+			HVIDEORXRUNNING=0
+		
+			while [ $HVIDEORXRUNNING -ne 1 ]; do
+				sleep 0.5
+				HVIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
+				echo -n "."
+			done
+		fi
 		
 		echo
 		echo "Video running, starting hotspot processes ..."
@@ -31,7 +33,11 @@ function hotspot_check_function {
             pause_while
 
          nice cat /root/telemetryfifo5 > /dev/pts/0 &
-        /home/pi/mavlink-router/mavlink-routerd  /dev/pts/1:57600 &
+		if [ "$ENABLE_QOPENHD" == "Y" ]; then
+            /home/pi/mavlink-router/mavlink-routerd -e 127.0.0.1:14550  /dev/pts/1:57600 &
+		else
+            /home/pi/mavlink-router/mavlink-routerd /dev/pts/1:57600 &
+		fi
         #we still can have USB phone connected anytime. So, start programs anyway
         #Maybe add code inside USB tethering file to check  HOTSPOT is off and phone connected - start....
         #if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" != "N" ]; then
@@ -145,11 +151,19 @@ function hotspot_check_function {
 	  	fi 
 		
 		if [ "$HOTSPOT_TIMEOUT" != "0" ]; then
-			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shutting Down in ${HOTSPOT_TIMEOUT} seconds" 7 55 0
+			if [ "$ENABLE_QOPENHD" == "Y" ]; then
+			    qstatus "Hotspot Shutting Down in ${HOTSPOT_TIMEOUT} seconds" 3
+			else
+			    wbc_status "Hotspot Shutting Down in ${HOTSPOT_TIMEOUT} seconds" 7 55 0 &
+			fi
     		sleep $HOTSPOT_TIMEOUT
    			killall hostapd
 			ps -ef | nice grep "wifihotspot" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shut Down" 7 55 0
+			if [ "$ENABLE_QOPENHD" == "Y" ]; then
+			    qstatus "Hotspot Shut Down" 3
+			else
+			    wbc_status "Hotspot Shut Down" 7 55 0 &
+			fi
 		fi
 	fi
 
