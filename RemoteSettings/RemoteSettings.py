@@ -25,6 +25,7 @@ IPAndroidClient = ""
 IsPhoneThredRunning = 0
 
 ConfigResp = bytearray(b'ConfigResp')
+ConfigEnd = bytearray(b'ConfigRespConfigEnd=ConfigEnd')
 RequestAllSettings = bytearray(b'RequestAllSettings')
 RequestChangeSettings = bytearray(b'RequestChangeSettings')
 RequestChangeOSD = bytearray(b'RequestChangeOSD')
@@ -210,6 +211,8 @@ read_osd_settings(complete_response)
 read_joystick_settings(complete_response)
 
 def SendAllSettingToPhone():
+    global IPAndroidClient
+
     for te in complete_response['settings']:
         
         SendBuff = bytearray()
@@ -226,11 +229,11 @@ def SendAllSettingToPhone():
         ValueDataPayload = data.encode('utf-8')
         SendBuff.extend(ValueDataPayload)
 
-        global IPAndroidClient
         SendData(IPAndroidClient,SendBuff)
         print("v :", SendBuff)
         SendBuff.clear()
         sleep(0.02)
+    SendData(IPAndroidClient, ConfigEnd)
 
 def ConfirmSave(VarName):
     SendBuffSave = bytearray()
