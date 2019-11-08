@@ -16,10 +16,7 @@
 #include "fec.h"
 #include "lib.h"
 #include "wifibroadcast.h"
-#include "radiotap_rc.h"
-#include "radiotap_iter.h"
-
-
+#include "radiotap.h"
 #include <time.h>
 #include <sys/resource.h>
 
@@ -38,25 +35,6 @@ typedef struct  {
 	int m_nAntenna;
 	int m_nRadiotapFlags;
 } __attribute__((packed)) PENUMBRA_RADIOTAP_DATA;
-
-static const struct radiotap_align_size align_size_000000_00[] = {
-	[0] = { .align = 1, .size = 4, },
-	[52] = { .align = 1, .size = 4, },
-};
-
-static const struct ieee80211_radiotap_namespace vns_array[] = {
-	{
-		.oui = 0x000000,
-		.subns = 0,
-		.n_bits = sizeof(align_size_000000_00),
-		.align_size = align_size_000000_00,
-	},
-};
-
-static const struct ieee80211_radiotap_vendor_namespaces vns = {
-	.ns = vns_array,
-	.n_ns = sizeof(vns_array)/sizeof(vns_array[0]),
-};
 
 
 int flagHelp = 0;
@@ -84,7 +62,8 @@ int bytes_written = 0;
 int packets_missing;
 int packets_missing_last;
 
-int dbm[6];
+//int dbm[6];
+//int dbm_last[6];
 
 int packetcounter[6];
 int packetcounter_last[6];
@@ -92,8 +71,8 @@ int packetcounter_last[6];
 long long pm_prev_time = 0;
 long long pm_now = 0;
 
-long long dbm_ts_prev[6];
-long long dbm_ts_now[6];
+//long long dbm_ts_prev[6];
+//long long dbm_ts_now[6];
 
 long long packetcounter_ts_prev[6];
 long long packetcounter_ts_now[6];
@@ -152,10 +131,6 @@ void open_and_configure_interface(const char *name, int port, monitor_interface_
 	if(pcap_setdirection(interface->ppcap, PCAP_D_IN) < 0) {
 		fprintf(stderr, "Error setting %s direction\n", name);
 	}
-
-
-	//if (pcap_set_promisc(interface->ppcap, 1) != 0)
-	//	fprintf(stderr, "Error pcap_set_promisc\n");
 
 	int nLinkEncap = pcap_datalink(interface->ppcap);
 
@@ -479,12 +454,10 @@ void process_packet(monitor_interface_t *interface, block_buffer_t *block_buffer
 		return;
 	}
 
-	if (ieee80211_radiotap_iterator_init(&rti,(struct ieee80211_radiotap_header *)pu8Payload, ppcapPacketHeader->len, &vns) < 0) {
+	if (ieee80211_radiotap_iterator_init(&rti,(struct ieee80211_radiotap_header *)pu8Payload, ppcapPacketHeader->len) < 0) {
 		fprintf(stderr, "rx ERROR: radiotap_iterator_init < 0\n");
 		return;
 	}
-
-int best_signal = -127;
 
 	while ((n = ieee80211_radiotap_iterator_next(&rti)) == 0) {
 		switch (rti.this_arg_index) {
@@ -497,54 +470,36 @@ int best_signal = -127;
 			    le16_to_cpu(*((u16 *)rti.this_arg));
 			prd.m_nChannelFlags =
 			    le16_to_cpu(*((u16 *)(rti.this_arg + 2)));
-*/			break;
-
-		case IEEE80211_RADIOTAP_DB_ANTSIGNAL:
-//                        fprintf(stderr, "IEEE80211_RADIOTAP_DB_ANTSIGNAL0: %d\n", ra);
-
 			break;
 		case IEEE80211_RADIOTAP_ANTENNA:
-
-//			 ra = (int) (*rti.this_arg);
-//			fprintf(stderr, "IEEE80211_RADIOTAP_ANTENNA0: %d\n", ra);
+			prd.m_nAntenna = (*rti.this_arg) + 1;
 			break;
-
-		
+		*/
 		case IEEE80211_RADIOTAP_FLAGS:
 			prd.m_nRadiotapFlags = *rti.this_arg;
 			break;
-		case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:
+      /*case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:
 			//rx_status->adapter[adapter_no].current_signal_dbm = (int8_t)(*rti.this_arg);
 
-			if( best_signal == -127 && (int8_t)(*rti.this_arg) < 0)
-			{
-				best_signal = (int8_t)(*rti.this_arg);
-				//fprintf(stderr, "Init best_signal with value:%d\n", best_signal);
-			}
-			else
-			{
-				if( best_signal < (int8_t)(*rti.this_arg) && (int8_t)(*rti.this_arg) < 0 )
-				{
-					//fprintf(stderr, "Old best_signal:%d\n",best_signal);
-					best_signal = (int8_t)(*rti.this_arg);
-					//fprintf(stderr, "New best_signal:%d\n",best_signal);
-				}
+			dbm_last[adapter_no] = dbm[adapter_no];
+			dbm[adapter_no] = (int8_t)(*rti.this_arg);
+
+			if (dbm[adapter_no] > dbm_last[adapter_no]) { // if we have a better signal than last time, ignore
+			    dbm[adapter_no] = dbm_last[adapter_no];
 			}
 
+			dbm_ts_now[adapter_no] = current_timestamp();
+			if (dbm_ts_now[adapter_no] - dbm_ts_prev[adapter_no] > 220) {
+			    dbm_ts_prev[adapter_no] = current_timestamp();
+		//	    fprintf(stderr, "miss: %d   last: %d\n", packets_missing,packets_missing_last);
+			    rx_status->adapter[adapter_no].current_signal_dbm = dbm[adapter_no];
+			    dbm[adapter_no] = 99;
+			    dbm_last[adapter_no] = 99;
+			}
 			break;
-		
+		*/
 		}
 	}
-
-	//fprintf(stderr, "best_signal switch end:%d\n",best_signal);
-	dbm_ts_now[adapter_no] = current_timestamp();
-	if (dbm_ts_now[adapter_no] - dbm_ts_prev[adapter_no] > 220)
-	{
-        	dbm_ts_prev[adapter_no] = current_timestamp();
-		//fprintf(stderr, "CardN: %d, signal_result: %d\n", adapter_no, best_signal);
-        	//fprintf(stderr, "miss: %d   last: %d\n", packets_missing,packets_missing_last);
-        	rx_status->adapter[adapter_no].current_signal_dbm = best_signal;
-        }
 
 	pu8Payload += u16HeaderLen + interface->n80211HeaderLength;
 //	fprintf(stderr, "pu8payload: %d\n", pu8Payload);
@@ -579,7 +534,7 @@ void status_memory_init(wifibroadcast_rx_status_t *s) {
 		s->adapter[i].received_packet_cnt = 0;
 		s->adapter[i].wrong_crc_cnt = 0;
 		s->adapter[i].current_signal_dbm = -126;
-		s->adapter[i].type = 2; // set to 2 to see if it didnt get set later ...
+//		s->adapter[i].type = 2; // set to 2 to see if it didnt get set later ...
 	}
 }
 
@@ -589,16 +544,10 @@ wifibroadcast_rx_status_t *status_memory_open(void) {
 	int fd;
 	
 	sprintf(buf, "/wifibroadcast_rx_status_%d", param_port);
-///	fd = shm_open(buf, O_RDWR, S_IRUSR | S_IWUSR);
-	fd = shm_open(buf, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+	fd = shm_open(buf, O_RDWR, S_IRUSR | S_IWUSR);
 
 	if(fd < 0) {
 		perror("shm_open");
-		exit(1);
-	}
-
-	if (ftruncate(fd, sizeof(wifibroadcast_rx_status_t)) == -1) {
-		perror("ftruncate");
 		exit(1);
 	}
 
@@ -675,32 +624,32 @@ int main(int argc, char *argv[]) {
 
 	rx_status = status_memory_open();
 
-	int j = 0;
+//	int j = 0;
 	int x = optind;
 
-	char path[45], line[100];
-	FILE* procfile;
+//	char path[45], line[100];
+//	FILE* procfile;
 
 	while(x < argc && num_interfaces < MAX_PENUMBRA_INTERFACES) {
 		open_and_configure_interface(argv[x], param_port, interfaces + num_interfaces);
 
-		snprintf(path, 45, "/sys/class/net/%s/device/uevent", argv[x]);
-		procfile = fopen(path, "r");
-		if(!procfile) {fprintf(stderr,"ERROR: opening %s failed!\n", path); return 0;}
-		fgets(line, 100, procfile); // read the first line
-		fgets(line, 100, procfile); // read the 2nd line
-		if(strncmp(line, "DRIVER=ath9k_htc", 16) == 0) { // it's an atheros card
+//		snprintf(path, 45, "/sys/class/net/%s/device/uevent", argv[x]);
+//		procfile = fopen(path, "r");
+//		if(!procfile) {fprintf(stderr,"ERROR: opening %s failed!\n", path); return 0;}
+//		fgets(line, 100, procfile); // read the first line
+//		fgets(line, 100, procfile); // read the 2nd line
+//		if(strncmp(line, "DRIVER=ath9k_htc", 16) == 0) { // it's an atheros card
 //		    fprintf(stderr, "Atheros\n");
-		    rx_status->adapter[j].type = (int8_t)(0);
-		} else {
+//		    rx_status->adapter[j].type = (int8_t)(0);
+//		} else {
 //		    fprintf(stderr, "Ralink\n");
-		    rx_status->adapter[j].type = (int8_t)(1);
-		}
-		fclose(procfile);
+//		    rx_status->adapter[j].type = (int8_t)(1);
+//		}
+//		fclose(procfile);
 
 		++num_interfaces;
 		++x;
-		++j;
+//		++j;
 		usleep(10000); // wait a bit between configuring interfaces to reduce Atheros and Pi USB flakiness
 	}
 

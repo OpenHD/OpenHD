@@ -31,6 +31,18 @@ typedef struct  {
 int flagHelp = 0;
 
 wifibroadcast_rx_status_t *rx_status = NULL;
+long long current_timestamp() {
+    struct timeval te; 
+    gettimeofday(&te, NULL); // get current time
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // caculate milliseconds
+    return milliseconds;
+}
+
+int dbm[6];
+int dbm_last[6];
+long long dbm_ts_prev[6];
+long long dbm_ts_now[6];
+wifibroadcast_rx_status_t *rx_status_uplink = NULL;
 wifibroadcast_rx_status_t_rc *rx_status_rc = NULL;
 wifibroadcast_rx_status_t_sysair *rx_status_sysair = NULL;
 
@@ -71,8 +83,8 @@ void open_and_configure_interface(const char *name, monitor_interface_t *interfa
 	int nLinkEncap = pcap_datalink(interface->ppcap);
 
 	if (nLinkEncap == DLT_IEEE802_11_RADIO) {
-		interface->n80211HeaderLength = 0x18; // 24 bytes
-		sprintf(szProgram, "ether[0x00:2] == 0x0802 && ether[0x04:1] == 0xff"); // match on frametype, 1st byte of mac (ff) and portnumber (255 = 127 for rssi)
+	   //sprintf(szProgram, "ether[0x00:2] == 0x0802 && ether[0x04:1] == 0x7F"); // match on frametype, 1st byte of mac (0x7F) for portnumber 63((127-1)/2 for rssi)
+		sprintf(szProgram, "(ether[0x00:2] == 0x0801 || ether[0x00:2] == 0x0802 || ether[0x00:4] == 0xb4010000) && ether[0x04:1] == 0x7F");	
 	} else {
 		fprintf(stderr, "ERROR: unknown encapsulation on %s! check if monitor mode is supported and enabled\n", name);
 		exit(1);
@@ -140,6 +152,22 @@ uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
 	// fetch radiotap header length from radiotap header (seems to be 36 for Atheros and 18 for Ralink)
 	u16HeaderLen = (pu8Payload[2] + (pu8Payload[3] << 8));
 //	fprintf(stderr, "u16headerlen: %d\n", u16HeaderLen);
+
+    pu8Payload += u16HeaderLen;
+    switch (pu8Payload[1]) {
+    case 0x01: // data short, rts (telemetry)
+//	fprintf(stderr, "data short or rts telemetry frame\n");
+        interface->n80211HeaderLength = 0x05;
+        break;
+    case 0x02: // data (telemetry)
+//	fprintf(stderr, "data telemetry frame\n");
+        interface->n80211HeaderLength = 0x18;
+        break;
+    default:
+        break;
+    }
+    pu8Payload -= u16HeaderLen;
+
 //	fprintf(stderr, "ppcapPacketHeader->len: %d\n", ppcapPacketHeader->len);
 	if (ppcapPacketHeader->len < (u16HeaderLen + interface->n80211HeaderLength)) exit(1);
 
@@ -153,9 +181,25 @@ uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
 		case IEEE80211_RADIOTAP_FLAGS:
 			prd.m_nRadiotapFlags = *rti.this_arg;
 			break;
-//		case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:
-//			rx_status->adapter[adapter_no].current_signal_dbm = (int8_t)(*rti.this_arg);
-//			break;
+		case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:
+			//rx_status->adapter[adapter_no].current_signal_dbm = (int8_t)(*rti.this_arg);
+
+			dbm_last[adapter_no] = dbm[adapter_no];
+			dbm[adapter_no] = (int8_t)(*rti.this_arg);
+
+			if (dbm[adapter_no] > dbm_last[adapter_no]) { // if we have a better signal than last time, ignore
+			    dbm[adapter_no] = dbm_last[adapter_no];
+			}
+
+			dbm_ts_now[adapter_no] = current_timestamp();
+			if (dbm_ts_now[adapter_no] - dbm_ts_prev[adapter_no] > 220) {
+			    dbm_ts_prev[adapter_no] = current_timestamp();
+//			    fprintf(stderr, "miss: %d   last: %d\n", packets_missing,packets_missing_last);
+			    rx_status->adapter[adapter_no].current_signal_dbm = dbm[adapter_no];
+			    dbm[adapter_no] = 99;
+			    dbm_last[adapter_no] = 99;
+			}
+			break;
 		}
 	}
 	pu8Payload += u16HeaderLen + interface->n80211HeaderLength;
@@ -175,8 +219,8 @@ uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
 //	printf ("cts:%d\n",payloaddata.cts);
 //	printf ("undervolt:%d\n",payloaddata.undervolt);
 
-	rx_status->adapter[0].current_signal_dbm = payloaddata.signal;
-	rx_status->lost_packet_cnt = payloaddata.lostpackets;
+	rx_status_uplink->adapter[0].current_signal_dbm = payloaddata.signal;
+	rx_status_uplink->lost_packet_cnt = payloaddata.lostpackets;
 	rx_status_rc->adapter[0].current_signal_dbm = payloaddata.signal_rc;
 	rx_status_rc->lost_packet_cnt = payloaddata.lostpackets_rc;
 	rx_status_sysair->cpuload = payloaddata.cpuload;
@@ -204,15 +248,16 @@ void status_memory_init(wifibroadcast_rx_status_t *s) {
 	s->lost_packet_cnt = 0;
 	s->tx_restart_cnt = 0;
 	s->wifi_adapter_cnt = 0;
+	s->kbitrate = 0;
 
 	int i;
 	for(i=0; i<8; ++i) {
 		s->adapter[i].received_packet_cnt = 0;
 		s->adapter[i].wrong_crc_cnt = 0;
 		s->adapter[i].current_signal_dbm = -126;
+		s->adapter[i].type = 2; // set to 2 to see if it didnt get set later ...
 	}
 }
-
 void status_memory_init_rc(wifibroadcast_rx_status_t_rc *s) {
 	s->received_block_cnt = 0;
 	s->damaged_block_cnt = 0;
@@ -242,8 +287,20 @@ void status_memory_init_sysair(wifibroadcast_rx_status_t_sysair *s) {
 	s->undervolt = 0;
 }
 
-
 wifibroadcast_rx_status_t *status_memory_open(void) {
+	char buf[128];
+	int fd;
+	sprintf(buf, "/wifibroadcast_rx_status_%d", 0);
+	fd = shm_open(buf, O_RDWR, S_IRUSR | S_IWUSR);
+	if(fd < 0) { perror("shm_open"); exit(1); }
+	void *retval = mmap(NULL, sizeof(wifibroadcast_rx_status_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (retval == MAP_FAILED) { perror("mmap"); exit(1); }
+	wifibroadcast_rx_status_t *tretval = (wifibroadcast_rx_status_t*)retval;
+	status_memory_init(tretval);
+	return tretval;
+}
+
+wifibroadcast_rx_status_t *status_memory_open_uplink(void) {
 	char buf[128];
 	int fd;
 	sprintf(buf, "/wifibroadcast_rx_status_uplink");
@@ -319,6 +376,15 @@ int main(int argc, char *argv[]) {
 
 	rx_status = status_memory_open();
 	rx_status->wifi_adapter_cnt = num_interfaces;
+	
+	int g;
+    for(g=0; g<8; ++g) {
+	    rx_status->adapter[g].current_signal_dbm = -126;
+	    rx_status->adapter[g].signal_good = 1;
+    }
+
+	rx_status_uplink = status_memory_open_uplink();
+	rx_status_uplink->wifi_adapter_cnt = num_interfaces;
 
 	rx_status_rc = status_memory_open_rc();
 	rx_status_rc->wifi_adapter_cnt = num_interfaces;
