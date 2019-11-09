@@ -301,6 +301,17 @@ while True:
                 subprocess.check_call(['/usr/local/bin/txpower_atheros',  filter ])
         except Exception as e:
             print("TxPowerGround except: " + str(e) )
+
+        atheros_parameters = ["aifs", "cwmin", "cwmax", "cck_sifs", "ofdm_sifs", "slottime", "thresh62"]
+        for module_param in atheros_parameters:
+            try:
+                if VariableNamAndData.startswith(module_param + '=') == True:
+                    splitResult = VariableNamAndData.split("=")
+                    filter = re.sub("\D", "", splitResult[1])
+                    subprocess.check_call(['/usr/local/bin/set_atheros_' + module_param,  filter ])
+            except Exception as e:
+                print(module_param + " except: " + str(e) )
+
         ConfirmSave(VariableNameReport)
         complete_response = {}
         read_wbc_settings(complete_response)
