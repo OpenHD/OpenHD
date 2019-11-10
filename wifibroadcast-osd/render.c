@@ -485,7 +485,7 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
     draw_ahi(AHI_INVERT_ROLL * td->roll, AHI_INVERT_PITCH * td->pitch, AHI_SCALE * GLOBAL_SCALE);
     #elif defined(MAVLINK)	
 	#if REVERSE_ALTITUDES == true
-        draw_ahi_mav(AHI_INVERT_ROLL * td->roll, AHI_INVERT_PITCH * td->pitch, td->mav_climb, (int)td->speed, 
+        draw_ahi_mav(AHI_INVERT_ROLL * td->roll, AHI_INVERT_PITCH * td->pitch, td->mav_climb, td->vz, td->vx, td->vy, (int)td->speed, 
     (int)td->msl_altitude, AHI_SCALE * GLOBAL_SCALE);
         #else
         draw_ahi_mav(AHI_INVERT_ROLL * td->roll, AHI_INVERT_PITCH * td->pitch, td->mav_climb, td->vz, td->vx, td->vy, (int)td->speed, (int)td->rel_altitude, AHI_SCALE * GLOBAL_SCALE);
