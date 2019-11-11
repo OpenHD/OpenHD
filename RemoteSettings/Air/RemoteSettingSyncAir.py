@@ -17,9 +17,24 @@ SwitchToFreq = "0"
 DefaultCommunicateFreq = "2412"
 
 SettingsFilePath = "/boot/openhd-settings-1.txt"
-TxPowerConfigFilePath="/etc/modprobe.d/ath9k_hw.conf"
+TxParamsConfigFilePath="/etc/modprobe.d/ath9k_hw.conf"
 TxPowerFromConfig="-1"
+AIFSFromConfig="-1"
+CWMINFromConfig="-1"
+CWMAXFromConfig="-1"
+CCK_SIFSFromConfig="-1"
+OFDM_SIFSFromConfig="-1"
+SlotTimeFromConfig="-1"
+Thresh62FromConfig="-1"
+
 TxPowerFromAth9k_hw="-1"
+AIFSFromAth9k_hw="-1"
+CWMINFromAth9k_hw="-1"
+CWMAXFromAth9k_hw="-1"
+CCK_SIFSFromAth9k_hw="-1"
+OFDM_SIFSFromAth9k_hw="-1"
+SlotTimeFromAth9k_hw="-1"
+Thresh62FromAth9k_hw="-1"
 
 
 WlanName = "0"
@@ -330,16 +345,45 @@ def InitSettings():
     if SettingsFileTXMODE == "0":
         SettingsFileTXMODE = "single"
 
-def ReadTxPowerAth9k_hw():
+def ReadTxParamsAth9k_hw():
     global TxPowerFromAth9k_hw
+    global AIFSFromAth9k_hw
+    global CWMINFromAth9k_hw
+    global CWMAXFromAth9k_hw
+    global CCK_SIFSFromAth9k_hw
+    global OFDM_SIFSFromAth9k_hw
+    global SlotTimeFromAth9k_hw
+    global Thresh62FromAth9k_hw
+
     try:
-        with open(TxPowerConfigFilePath, "r") as f:
+        with open(TxParamsConfigFilePath, "r") as f:
             lines = f.readlines()
             for line in lines:
                 if line.startswith("options ath9k_hw txpower") == True:
-                    SplitLines = line.split("=")
-                    FilterDigits = SplitLines[1]
-                    TxPowerFromAth9k_hw = re.sub("\D", "", FilterDigits)
+                    SplitLines = line.split(" ")
+                    for group in SplitLines:
+                        kv = group.split("=")
+                        if kv.count == 2:
+                            key = kv[0]
+                            value = kv[1]
+                            if key == "txpower":
+                                TxPowerFromAth9k_hw = value
+                            elif key == "aifs":
+                                AIFSFromAth9k_hw = value
+                            elif key == "cwmin":
+                                CWMINFromAth9k_hw = value
+                            elif key == "cwmax":
+                                CWMAXFromAth9k_hw = value
+                            elif key == "cck_sifs":
+                                CCK_SIFSFromAth9k_hw = value
+                            elif key == "ofdm_sifs":
+                                OFDM_SIFSFromAth9k_hw = value
+                            elif key == "slottime":
+                                SlotTimeFromAth9k_hw = value
+                            elif key == "thresh62":
+                                Thresh62FromAth9k_hw = value
+                            else:
+                                pass # explicitly ignoring the rest
 
             return True
 
@@ -348,17 +392,52 @@ def ReadTxPowerAth9k_hw():
        return False
     return False
 
-
-def ReadTxPower():
+def ReadTxParams():
     global TxPowerFromConfig
+    global AIFSFromConfig
+    global CWMINFromConfig
+    global CWMAXFromConfig
+    global CCK_SIFSFromConfig
+    global OFDM_SIFSFromConfig
+    global SlotTimeFromConfig
+    global Thresh62FromConfig
+
     try:
         with open(SettingsFilePath, "r") as f:
             lines = f.readlines()
             for line in lines:
-                if line.startswith("TxPowerAir") == True:
+                if line.startswith("TxPowerGround") == True:
                     SplitLines = line.split("=")
                     FilterDigits = SplitLines[1]
                     TxPowerFromConfig = re.sub("\D", "", FilterDigits)
+                elif line.startswith("aifs") == True:
+                    SplitLines = line.split("=")
+                    FilterDigits = SplitLines[1]
+                    AIFSFromConfig = re.sub("\D", "", FilterDigits)
+                elif line.startswith("cwmin") == True:
+                    SplitLines = line.split("=")
+                    FilterDigits = SplitLines[1]
+                    CWMINFromConfig = re.sub("\D", "", FilterDigits)
+                elif line.startswith("cwmax") == True:
+                    SplitLines = line.split("=")
+                    FilterDigits = SplitLines[1]
+                    CWMAXFromConfig = re.sub("\D", "", FilterDigits)
+                elif line.startswith("cck_sifs") == True:
+                    SplitLines = line.split("=")
+                    FilterDigits = SplitLines[1]
+                    CCK_SIFSFromConfig = re.sub("\D", "", FilterDigits)
+                elif line.startswith("ofdm_sifs") == True:
+                    SplitLines = line.split("=")
+                    FilterDigits = SplitLines[1]
+                    OFDM_SIFSFromConfig = re.sub("\D", "", FilterDigits)
+                elif line.startswith("slottime") == True:
+                    SplitLines = line.split("=")
+                    FilterDigits = SplitLines[1]
+                    SlotTimeFromConfig = re.sub("\D", "", FilterDigits)
+                elif line.startswith("thresh62") == True:
+                    SplitLines = line.split("=")
+                    FilterDigits = SplitLines[1]
+                    Thresh62FromConfig = re.sub("\D", "", FilterDigits)
 
             return True
 
@@ -368,18 +447,49 @@ def ReadTxPower():
     return False
 
 
-def CheckTxPower():
+def CheckTxParams():
     try:
-        if ReadTxPowerAth9k_hw() != False:
-            print("TxPowerFromAth9k_hw= " + TxPowerFromAth9k_hw)
-            if ReadTxPower() != False:
-                print("TxPowerFromConfig= " + TxPowerFromConfig)
-                if TxPowerFromConfig != TxPowerFromAth9k_hw:
-                    print("TxPower not equal Check if all ok and apply")
-                    if TxPowerFromAth9k_hw != "-1" and TxPowerFromConfig != "-1":
-                        print("all ok, apply")
-                        subprocess.check_call(['/usr/local/bin/txpower_atheros', TxPowerFromConfig ] )
-                        return True
+        if ReadTxParamsAth9k_hw() == False:
+            return False
+
+        if ReadTxParams() == False:
+            return False
+
+        print("TxPowerFromAth9k_hw= " + TxPowerFromAth9k_hw)
+        print("TxPowerFromConfig= " + TxPowerFromConfig)
+        if TxPowerFromConfig != TxPowerFromAth9k_hw and TxPowerFromAth9k_hw != "-1" and TxPowerFromConfig != "-1":
+            print("TxPower not equal, applying")
+            subprocess.check_call(['/usr/local/bin/txpower_atheros', TxPowerFromConfig ] )
+        
+        if AIFSFromConfig != AIFSFromAth9k_hw and AIFSFromAth9k_hw != "-1" and AIFSFromConfig != "-1":
+            print("aifs not equal, applying")
+            subprocess.check_call(['/usr/local/bin/set_atheros_aifs', AIFSFromConfig ] )
+        
+        if CWMINFromConfig != CWMINFromAth9k_hw and CWMINFromAth9k_hw != "-1" and CWMINFromConfig != "-1":
+            print("cwmin not equal, applying")
+            subprocess.check_call(['/usr/local/bin/set_atheros_cwmin', CWMINFromConfig ] )
+        
+        if CWMAXFromConfig != CWMAXFromAth9k_hw and CWMAXFromAth9k_hw != "-1" and CWMAXFromConfig != "-1":
+            print("cwmax not equal, applying")
+            subprocess.check_call(['/usr/local/bin/set_atheros_cwmax', CWMAXFromConfig ] )
+        
+        if CCK_SIFSFromConfig != CCK_SIFSFromAth9k_hw and CCK_SIFSFromAth9k_hw != "-1" and CCK_SIFSFromConfig != "-1":
+            print("cck_sifs not equal, applying")
+            subprocess.check_call(['/usr/local/bin/set_atheros_cck_sifs', CCK_SIFSFromConfig ] )
+        
+        if OFDM_SIFSFromConfig != OFDM_SIFSFromAth9k_hw and OFDM_SIFSFromAth9k_hw != "-1" and OFDM_SIFSFromConfig != "-1":
+            print("ofdm_sifs not equal, applying")
+            subprocess.check_call(['/usr/local/bin/set_atheros_ofdm_sifs', OFDM_SIFSFromConfig ] )
+        
+        if SlotTimeFromConfig != SlotTimeFromAth9k_hw and SlotTimeFromAth9k_hw != "-1" and SlotTimeFromConfig != "-1":
+            print("slottime not equal, applying")
+            subprocess.check_call(['/usr/local/bin/set_atheros_slottime', SlotTimeFromConfig ] )
+        
+        if Thresh62FromConfig != Thresh62FromAth9k_hw and Thresh62FromAth9k_hw != "-1" and Thresh62FromConfig != "-1":
+            print("thresh62 not equal, applying")
+            subprocess.check_call(['/usr/local/bin/set_atheros_thresh62', Thresh62FromConfig ] )
+
+        return True
     except Exception as e:
         print(e)
         return False
@@ -387,7 +497,7 @@ def CheckTxPower():
 
 
 def CleanAndExit():
-    CheckTxPower()
+    CheckTxParams()
     print("SmartSync done.")
     ReturnWlanFreq()
     sleep(1)
