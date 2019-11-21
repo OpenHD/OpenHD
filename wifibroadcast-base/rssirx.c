@@ -208,17 +208,18 @@ uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
 
 			dbm_last[adapter_no] = dbm[adapter_no];
 			dbm[adapter_no] = (int8_t)(*rti.this_arg);
-fprintf(stderr, "Raw DBM: %d   ", dbm[adapter_no]);
+//                      fprintf(stderr, "Raw DBM: %d   ", dbm[adapter_no]);
 
 			if (dbm[adapter_no] > dbm_last[adapter_no]) {
-			    
-			dbm_ts_now[adapter_no] = current_timestamp();
-				if (dbm_ts_now[adapter_no] - dbm_ts_prev[adapter_no] > 220) {
+			    dbm_last[adapter_no] = dbm[adapter_no];
+			    dbm_ts_now[adapter_no] = current_timestamp();
+				
+			    if (dbm_ts_now[adapter_no] - dbm_ts_prev[adapter_no] > 220) {
 			    	dbm_ts_prev[adapter_no] = current_timestamp();
 //			    	fprintf(stderr, "miss: %d   last: %d\n", packets_missing,packets_missing_last);
 			    	rx_status->adapter[adapter_no].current_signal_dbm = dbm[adapter_no];
-			    	dbm_last[adapter_no] = dbm[adapter_no];
-				}
+			    	dbm_last[adapter_no] = -126;
+		            }
 			}
 			break;
 		}
