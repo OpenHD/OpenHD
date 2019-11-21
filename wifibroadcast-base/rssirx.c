@@ -14,7 +14,8 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 #include "lib.h"
-#include "radiotap.h"
+#include "radiotap_rc.h"
+#include "radiotap_iter.h"
 #include <time.h>
 #include <sys/resource.h>
 
@@ -26,6 +27,27 @@ typedef struct  {
 	int m_nAntenna;
 	int m_nRadiotapFlags;
 } __attribute__((packed)) PENUMBRA_RADIOTAP_DATA;
+
+
+static const struct radiotap_align_size align_size_000000_00[] = {
+	[0] = { .align = 1, .size = 4, },
+	[52] = { .align = 1, .size = 4, },
+};
+
+static const struct ieee80211_radiotap_namespace vns_array[] = {
+	{
+		.oui = 0x000000,
+		.subns = 0,
+		.n_bits = sizeof(align_size_000000_00),
+		.align_size = align_size_000000_00,
+	},
+};
+
+static const struct ieee80211_radiotap_vendor_namespaces vns = {
+	.ns = vns_array,
+	.n_ns = sizeof(vns_array)/sizeof(vns_array[0]),
+};
+
 
 
 int flagHelp = 0;
@@ -168,13 +190,13 @@ uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
     }
     pu8Payload -= u16HeaderLen;
 
-//	fprintf(stderr, "ppcapPacketHeader->len: %d\n", ppcapPacketHeader->len);
+//	fprintf(stderr, "ppcapPacketHeader->len: %d\n", ppcapPacketHeader->len, &vns);
 	if (ppcapPacketHeader->len < (u16HeaderLen + interface->n80211HeaderLength)) exit(1);
 
 	bytes = ppcapPacketHeader->len - (u16HeaderLen + interface->n80211HeaderLength);
 
 	if (bytes < 0) return(0);
-	if (ieee80211_radiotap_iterator_init(&rti, (struct ieee80211_radiotap_header *)pu8Payload, ppcapPacketHeader->len) < 0) exit(1);
+	if (ieee80211_radiotap_iterator_init(&rti, (struct ieee80211_radiotap_header *)pu8Payload, ppcapPacketHeader->len, &vns) < 0) exit(1);
 
 	while ((n = ieee80211_radiotap_iterator_next(&rti)) == 0) {
 		switch (rti.this_arg_index) {
@@ -186,18 +208,17 @@ uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
 
 			dbm_last[adapter_no] = dbm[adapter_no];
 			dbm[adapter_no] = (int8_t)(*rti.this_arg);
+fprintf(stderr, "Raw DBM: %d   ", dbm[adapter_no]);
 
-			if (dbm[adapter_no] > dbm_last[adapter_no]) { // if we have a better signal than last time, ignore
-			    dbm[adapter_no] = dbm_last[adapter_no];
-			}
-
+			if (dbm[adapter_no] > dbm_last[adapter_no]) {
+			    
 			dbm_ts_now[adapter_no] = current_timestamp();
-			if (dbm_ts_now[adapter_no] - dbm_ts_prev[adapter_no] > 220) {
-			    dbm_ts_prev[adapter_no] = current_timestamp();
-//			    fprintf(stderr, "miss: %d   last: %d\n", packets_missing,packets_missing_last);
-			    rx_status->adapter[adapter_no].current_signal_dbm = dbm[adapter_no];
-			    dbm[adapter_no] = 99;
-			    dbm_last[adapter_no] = 99;
+				if (dbm_ts_now[adapter_no] - dbm_ts_prev[adapter_no] > 220) {
+			    	dbm_ts_prev[adapter_no] = current_timestamp();
+//			    	fprintf(stderr, "miss: %d   last: %d\n", packets_missing,packets_missing_last);
+			    	rx_status->adapter[adapter_no].current_signal_dbm = dbm[adapter_no];
+			    	dbm_last[adapter_no] = dbm[adapter_no];
+				}
 			}
 			break;
 		}
