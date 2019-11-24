@@ -48,11 +48,10 @@ static const struct ieee80211_radiotap_vendor_namespaces vns = {
 	.n_ns = sizeof(vns_array)/sizeof(vns_array[0]),
 };
 
-
-
 int flagHelp = 0;
 
 wifibroadcast_rx_status_t *rx_status = NULL;
+
 long long current_timestamp() {
     struct timeval te; 
     gettimeofday(&te, NULL); // get current time
@@ -61,7 +60,12 @@ long long current_timestamp() {
 }
 
 int dbm[6];
+int ant[6];
+int db[6];
+int dbm_noise[6];
 int dbm_last[6];
+int quality[6];
+long long tsft[6];
 long long dbm_ts_prev[6];
 long long dbm_ts_now[6];
 wifibroadcast_rx_status_t *rx_status_uplink = NULL;
@@ -200,27 +204,59 @@ uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
 
 	while ((n = ieee80211_radiotap_iterator_next(&rti)) == 0) {
 		switch (rti.this_arg_index) {
+
 		case IEEE80211_RADIOTAP_FLAGS:
 			prd.m_nRadiotapFlags = *rti.this_arg;
 			break;
+		case IEEE80211_RADIOTAP_ANTENNA:
+			ant[adapter_no] = (int8_t) (*rti.this_arg);
+//			fprintf(stderr, "Ant: %d   ", ant[adapter_no]);
+			break;
+		case IEEE80211_RADIOTAP_DB_ANTSIGNAL:
+			db[adapter_no] = (int8_t) (*rti.this_arg);
+//			fprintf(stderr, "DB: %d   ", db[adapter_no]);
+			break;
+		case IEEE80211_RADIOTAP_DBM_ANTNOISE:
+			dbm_noise[adapter_no] = (int8_t) (*rti.this_arg);
+//			fprintf(stderr, "DBM Noise: %d   ", dbm_noise[adapter_no]);
+			break;
+		case IEEE80211_RADIOTAP_LOCK_QUALITY:
+			quality[adapter_no] = (int16_t) (*rti.this_arg);
+//			fprintf(stderr, "Quality: %d   ", quality[adapter_no]);
+			break;
+		case IEEE80211_RADIOTAP_TSFT:
+			tsft[adapter_no] = (int64_t) (*rti.this_arg);
+//			fprintf(stderr, "TSFT: %d   ", tsft[adapter_no]);
+			break;
 		case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:
-			//rx_status->adapter[adapter_no].current_signal_dbm = (int8_t)(*rti.this_arg);
+			
+		    if( ((int8_t)(*rti.this_arg) < 0 && (int8_t)(*rti.this_arg) > -126) 
+   			&& (ant[adapter_no] == 0)){
+
 
 			dbm_last[adapter_no] = dbm[adapter_no];
+
 			dbm[adapter_no] = (int8_t)(*rti.this_arg);
-//                      fprintf(stderr, "Raw DBM: %d   ", dbm[adapter_no]);
+//			fprintf(stderr, "DBM Signal: %d   ", dbm[adapter_no]);
 
 			if (dbm[adapter_no] > dbm_last[adapter_no]) {
 			    dbm_last[adapter_no] = dbm[adapter_no];
+//				fprintf(stderr, "New DBM: %d   ", dbm_last[adapter_no]);
+
 			    dbm_ts_now[adapter_no] = current_timestamp();
-				
-			    if (dbm_ts_now[adapter_no] - dbm_ts_prev[adapter_no] > 220) {
+//				fprintf(stderr, "Time: %d   ", dbm_ts_now[adapter_no]);	
+			
+			    if (dbm_ts_now[adapter_no] - dbm_ts_prev[adapter_no] > 1000) {
 			    	dbm_ts_prev[adapter_no] = current_timestamp();
-//			    	fprintf(stderr, "miss: %d   last: %d\n", packets_missing,packets_missing_last);
+
 			    	rx_status->adapter[adapter_no].current_signal_dbm = dbm[adapter_no];
+//				fprintf(stderr, "Best DBM: %d   ", dbm_last[adapter_no]);
 			    	dbm_last[adapter_no] = -126;
+				ant[adapter_no] = 99;
 		            }
 			}
+		      }
+//		      fprintf(stderr, "/n");
 			break;
 		}
 	}
