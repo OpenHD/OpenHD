@@ -1,27 +1,21 @@
 function MAIN_HOTSPOT_FUNCTION {
 	echo "================== CHECK HOTSPOT (tty8) ==========================="
 	if [ "$CAM" == "0" ]; then
-	    if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" != "N" ]; then
-			echo
-			echo -n "Waiting until video is running ..."
-			HVIDEORXRUNNING=0
+		echo -n "Waiting until video is running ..."
+		HVIDEORXRUNNING=0
+	
+		while [ $HVIDEORXRUNNING -ne 1 ]; do
+			sleep 0.5
+			HVIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
+			echo -n "."
+		done
 		
-			while [ $HVIDEORXRUNNING -ne 1 ]; do
-				sleep 0.5
-				HVIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
-				echo -n "."
-			done
-			
-			echo
-			echo "Video running, starting hotspot processes ..."
-			
-			sleep 1
-			
-			hotspot_check_function
-	    else
-			echo "Check hotspot function not enabled in config file"
-			sleep 365d
-	    fi
+		echo
+		echo "Video running, starting hotspot processes ..."
+		
+		sleep 1
+		
+		hotspot_check_function
 	else
 	    echo "Check hotspot function not enabled - we are TX (Air Pi)"
 	    sleep 365d
@@ -30,14 +24,55 @@ function MAIN_HOTSPOT_FUNCTION {
 
 
 function hotspot_check_function {
-    
+
 	# Convert hostap config from DOS format to UNIX format
 	ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
-			
+
+            pause_while
+
+         nice cat /root/telemetryfifo5 > /dev/pts/0 &
+        /home/pi/mavlink-router/mavlink-routerd  /dev/pts/1:57600 &
+        #we still can have USB phone connected anytime. So, start programs anyway
+        #Maybe add code inside USB tethering file to check  HOTSPOT is off and phone connected - start....
+        #if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" != "N" ]; then
+                /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9121 5621 $VIDEO_UDP_PORT2 &  #Secondary video stream
+                /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9120 5620 $VIDEO_UDP_PORT &  #Main video stream
+
+                if [ "$FORWARD_STREAM" == "rtp" ]; then
+                        echo "ionice -c 1 -n 4 nice -n -5 cat /root/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=5620 host=127.0.0.1 > /dev/null 2>&1 &" > /tmp/ForwardRTPMainCamera.sh
+                else
+                        echo "ionice -c 1 -n 4 nice -n -10 socat -b $VIDEO_UDP_BLOCKSIZE GOPEN:/root/videofifo2 UDP4-SENDTO:127.0.0.1:5620 &" > /tmp/ForwardRTPMainCamera.sh
+                fi
+                chmod +x /tmp/ForwardRTPMainCamera.sh
+                /tmp/ForwardRTPMainCamera.sh &
+        #fi
+
+        #redirect telemetry to UDP splitter
+        nice socat -b $TELEMETRY_UDP_BLOCKSIZE GOPEN:/root/telemetryfifo2 UDP4-SENDTO:127.0.0.1:6610 &
+        /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9122 6610 $TELEMETRY_UDP_PORT &
+
+
+        nice /home/pi/wifibroadcast-base/rssi_forward 127.0.0.1 5003 &
+        /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9123 5003 5003 &
+
+        nice /home/pi/wifibroadcast-base/rssi_qgc_forward 127.0.0.1 5154 &
+        /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9124 5154 5154 &
+
+	##OpenHD RemoteSettings android app
+	/home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9125 5116 5115 &
+
+
+
+
+        #if [ "$TELEMETRY_UPLINK" == "msp" ]; then
+        #       cat /root/mspfifo > /dev/pts/2 &
+        #       ser2net
+        #fi
+
 	if [ "$ETHERNET_HOTSPOT" == "Y" ]; then
 	    # setup hotspot on RPI3 internal ethernet chip
 	    nice ifconfig eth0 192.168.1.1 up
-	    nice udhcpd -I 192.168.1.1 /etc/udhcpd-eth.conf
+	    nice /usr/sbin/dnsmasq --conf-file=/etc/dnsmasqEth0.conf
 	fi
 
 	if [ "$WIFI_HOTSPOT" != "N" ]; then
@@ -52,7 +87,7 @@ function hotspot_check_function {
 			echo "Setting up Hotspot..."
 
 	    		# Read if hotspot config is auto
-	     		if [ "$WIFI_HOTSPOT" == "auto" ]; then	
+	     		if [ "$WIFI_HOTSPOT" == "auto" ]&&[ "$WIFI_HOTSPOT_NIC" == "internal" ]; then	
 				echo "wifihotspot auto..."
 
 	        		# for both a and g ability choose opposite of video	   	         	
@@ -72,10 +107,13 @@ function hotspot_check_function {
 					echo "G Band only capable..."
 					HOTSPOT_BAND=g
 
-					if [ "$FREQ" -gt "2452" ]; then					
+					if [ "$FREQ" -gt "3000" ]; then					
 					HOTSPOT_CHANNEL=1
-					else	         			
-					HOTSPOT_CHANNEL=11
+					else	         							   			
+					echo "Hotspot Disabled. Not recommended to share same band as video..."	
+					echo "If you still want hotspot you must manually set up..."
+					#kill the function	
+					return 1
 					fi
 				fi
 	     		# NOTHING TO DO For user defined use of A (5.8ghz) OR G (2.4ghz) 
@@ -90,178 +128,29 @@ function hotspot_check_function {
 
 	    	echo "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL"
 		tmessage "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL..."
-		
-	    	nice udhcpd -I 192.168.2.1 /etc/udhcpd-wifi.conf
+
+		/usr/sbin/dnsmasq --conf-file=/etc/dnsmasqWifi.conf
 	    	nice -n 5 hostapd -B -d /tmp/apconfig.txt
+		
+		#set wifihotspot to low power
+		iwconfig wifihotspot0 txpower 1mW
 
 	  	else
 	     	echo "NO HOTSPOT CAPABILTY WAS FOUND"
 		tmessage "no hotspot hardware found..."
-	  	fi   
+	  	fi 
+		
+		if [ "$HOTSPOT_TIMEOUT" != "0" ]; then
+			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shutting Down in $HOTSPOT_TIMEOUT seconds" 7 55 0
+    			sleep $HOTSPOT_TIMEOUT
+			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shutting Down in 10s" 7 55 0
+    			sleep 10
+   			killall hostapd
+			ps -ef | nice grep "wifihotspot" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+			nice /home/pi/wifibroadcast-status/wbc_status "Hotspot Shut Down" 7 55 0
+		fi
 	fi
 
-	while true; do
-	    # pause loop while saving is in progress
-	    pause_while
-	    pidRX=`ps -ef | nice grep "rx -p 0" | nice grep -v grep | awk '{print $2}'`
-	    IP=0
-	    if [ "$ETHERNET_HOTSPOT" == "Y" ]; then
-			if nice ping -I eth0 -c 1 -W 1 -n -q 192.168.1.2 > /dev/null 2>&1; then
-				IP="192.168.1.2"
-				echo "Ethernet device detected. IP: $IP"
-				
-				nice socat -b $TELEMETRY_UDP_BLOCKSIZE GOPEN:/root/telemetryfifo2 UDP4-SENDTO:$IP:$TELEMETRY_UDP_PORT &
-				nice /home/pi/wifibroadcast-base/rssi_forward $IP 5003 &
-				nice /home/pi/wifibroadcast-base/rssi_qgc_forward $IP 5154 &
-				
-				if [ "$FORWARD_STREAM" == "rtp" ]; then
-					ionice -c 1 -n 4 nice -n -5 cat /root/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=$VIDEO_UDP_PORT host=$IP > /dev/null 2>&1 &
-				else
-					ionice -c 1 -n 4 nice -n -10 socat -b $VIDEO_UDP_BLOCKSIZE GOPEN:/root/videofifo2 UDP4-SENDTO:$IP:$VIDEO_UDP_PORT &
-				fi
-				
-				if cat /boot/osdconfig.txt | grep -q "^#define MAVLINK"; then
-					nice cat /root/telemetryfifo5 > /dev/pts/0 &
-					if [ "$MAVLINK_FORWARDER" == "mavlink-routerd" ]; then
-						ionice -c 3 nice /home/pi/mavlink-router/mavlink-routerd -e $IP:14550 /dev/pts/1:57600 &
-					else
-						cp /boot/cmavnode.conf /tmp/
-						echo "targetip=$IP" >> /tmp/cmavnode.conf
-						ionice -c 3 nice /home/pi/cmavnode/build/cmavnode --file /tmp/cmavnode.conf &
-					fi
-					
-					if [ "$DEBUG" == "Y" ]; then
-						tshark -i eth0 -f "udp and port 14550" -w /wbc_tmp/mavlink`date +%s`.pcap &
-					fi
-				fi
-				
-				if [ "$TELEMETRY_UPLINK" == "msp" ]; then
-					cat /root/mspfifo > /dev/pts/2 &
-					#socat /dev/pts/3 TCP-LISTEN:23
-					ser2net
-				fi
-			fi
-	    fi
-		
-	    if [ "$WIFI_HOTSPOT" != "N" ]; then
 
-			if nice ping -I wifihotspot0 -c 2 -W 1 -n -q 192.168.2.2 > /dev/null 2>&1; then
-				IP="192.168.2.2"
-				echo "Wifi device detected. IP: $IP"
-				
-				nice socat -b $TELEMETRY_UDP_BLOCKSIZE GOPEN:/root/telemetryfifo2 UDP4-SENDTO:$IP:$TELEMETRY_UDP_PORT &
-				nice /home/pi/wifibroadcast-base/rssi_forward $IP 5003 &
-				nice /home/pi/wifibroadcast-base/rssi_qgc_forward $IP 5154 &
-				
-				if [ "$FORWARD_STREAM" == "rtp" ]; then
-					ionice -c 1 -n 4 nice -n -5 cat /root/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=$VIDEO_UDP_PORT host=$IP > /dev/null 2>&1 &
-				else
-					ionice -c 1 -n 4 nice -n -10 socat -b $VIDEO_UDP_BLOCKSIZE GOPEN:/root/videofifo2 UDP4-SENDTO:$IP:$VIDEO_UDP_PORT &
-				fi
-				
-				if cat /boot/osdconfig.txt | grep -q "^#define MAVLINK"; then
-					cat /root/telemetryfifo5 > /dev/pts/0 &
-					
-					if [ "$MAVLINK_FORWARDER" == "mavlink-routerd" ]; then
-						ionice -c 3 nice /home/pi/mavlink-router/mavlink-routerd -e $IP:14550 /dev/pts/1:57600 &
-					else
-						cp /boot/cmavnode.conf /tmp/
-						echo "targetip=$IP" >> /tmp/cmavnode.conf
-						ionice -c 3 nice /home/pi/cmavnode/build/cmavnode --file /tmp/cmavnode.conf &
-					fi
-					
-					if [ "$DEBUG" == "Y" ]; then
-						tshark -i wifihotspot0 -f "udp and port 14550" -w /wbc_tmp/mavlink`date +%s`.pcap &
-					fi
-				fi
 
-				if [ "$TELEMETRY_UPLINK" == "msp" ]; then
-					cat /root/mspfifo > /dev/pts/2 &
-					#socat /dev/pts/3 TCP-LISTEN:23
-					ser2net
-				fi
-			fi
-	    fi
-		
-	    if [ "$IP" != "0" ]; then
-			# kill and pause OSD so we can safeley start wbc_status
-			ps -ef | nice grep "osd" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-
-	        killall wbc_status > /dev/null 2>&1
-		    if [ "$QUIET" == "N" ]; then
-			nice /home/pi/wifibroadcast-status/wbc_status "Secondary display connected (Hotspot)" 7 55 0
-                    fi
-			# re-start osd
-			OSDRUNNING=`pidof /tmp/osd | wc -w`
-			if [ $OSDRUNNING  -ge 1 ]; then
-				echo "OSD already running!"
-			else
-				killall wbc_status > /dev/null 2>&1
-				/tmp/osd >> /wbc_tmp/telemetrydowntmp.txt &
-			fi
-
-			# check if connection is still connected
-			IPTHERE=1
-			while [  $IPTHERE -eq 1 ]; do
-				pidRXNow=`ps -ef | nice grep "rx -p 0" | nice grep -v grep | awk '{print $2}'`
-                        	#if ping -c 2 -W 1 -n -q $IP > /dev/null 2>&1 && [ "$pidRX" == "$pidRXNow"  ]; then
-				ping -c 3 -W 1 -n -q $IP > /dev/null 2>&1
-				if [ $? -eq 0 ] && [ "$pidRX" == "$pidRXNow"  ]; then
-					IPTHERE=1
-					echo "IP $IP still connected ..."
-					else
-						echo "IP $IP gone. Check 2..."
-						ping -c 3 -W 1 -n -q $IP > /dev/null 2>&1
-						if [ $? -ne 0 ] || [ "$pidRX" != "$pidRXNow"  ]; then
-							echo "IP $IP gone. Check 2 - gone."
-							# kill and pause OSD so we can safeley start wbc_status
-							ps -ef | nice grep "osd" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-
-							killall wbc_status > /dev/null 2>&1
-							if [ "$QUIET" == "N" ]; then
-							   nice /home/pi/wifibroadcast-status/wbc_status "Secondary display disconnected (Hotspot)" 7 55 0
-							fi
-							# re-start osd
-							OSDRUNNING=`pidof /tmp/osd | wc -w`
-							if [ $OSDRUNNING  -ge 1 ]; then
-								echo "OSD already running!"
-							else
-								killall wbc_status > /dev/null 2>&1
-								OSDRUNNING=`pidof /tmp/osd | wc -w`
-								if [ $OSDRUNNING  -ge 1 ]; then
-									echo "OSD already running!"
-								else
-									killall wbc_status > /dev/null 2>&1
-									/tmp/osd >> /wbc_tmp/telemetrydowntmp.txt &
-								fi
-							fi
-
-							IPTHERE=0					
-							# kill forwarding of video and telemetry to secondary display
-							ps -ef | nice grep "socat -b $VIDEO_UDP_BLOCKSIZE GOPEN:/root/videofifo2" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-							ps -ef | nice grep "gst-launch-1.0 fdsrc" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-							ps -ef | nice grep "cat /root/videofifo2" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-							ps -ef | nice grep "socat -b $TELEMETRY_UDP_BLOCKSIZE GOPEN:/root/telemetryfifo2" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-							ps -ef | nice grep "cat /root/telemetryfifo5" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-							ps -ef | nice grep "cmavnode" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-							ps -ef | nice grep "mavlink-routerd" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-							ps -ef | nice grep "tshark" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-							ps -ef | nice grep "rssi_forward" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-							ps -ef | nice grep "rssi_qgc_forward" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-
-							# kill msp processes
-							ps -ef | nice grep "cat /root/mspfifo" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-							#ps -ef | nice grep "socat /dev/pts/3" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-							ps -ef | nice grep "ser2net" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-						fi
-				fi
-				
-				sleep 1
-			done
-	    else
-			echo "No IP detected ..."
-	    fi
-		
-	    sleep 1
-	done
 }

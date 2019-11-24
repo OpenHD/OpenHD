@@ -1,0 +1,6 @@
+gcc -lmmal_core -lmmal_util -lmmal_vc_client -lvcos -lbcm_host -lbrcmGLESv2 -lbrcmEGL -lm  -pthread -I./ -I./gl_scenes -I/opt/vc/include/ -I/opt/vc/include/interface/vctypes/ -I/opt/vc/include/interface/vcsm -L/opt/vc/lib/ -L./ -o veye_raspipreview  VeyeRaspiPreview.c tga.c RaspiCamControl.c RaspiCLI.c RaspiPreview.c libveyecam.a
+
+
+gcc -lmmal_core -lmmal_util -lmmal_vc_client -lvcos -lbcm_host -lbrcmGLESv2 -lbrcmEGL -lm  -pthread -I./ -I./gl_scenes -I/opt/vc/include/ -I/opt/vc/include/interface/vctypes/ -I/opt/vc/include/interface/vcsm -L/opt/vc/lib/ -L./ -o veye_raspivid  VeyeRaspiVid.c tga.c RaspiCamControl.c RaspiCLI.c RaspiPreview.c libveyecam.a
+
+gcc -lmmal_core -lmmal_util -lmmal_vc_client -lvcos -lbcm_host -lbrcmGLESv2 -lbrcmEGL -lm  -pthread -I./ -I./gl_scenes -I/opt/vc/include/ -I/opt/vc/include/interface/vctypes/ -I/opt/vc/include/interface/vcsm -L/opt/vc/lib/ -L./ -o veye_raspividyuv  VeyeRaspiVidYUV.c tga.c RaspiCamControl.c RaspiCLI.c  libveyecam.a

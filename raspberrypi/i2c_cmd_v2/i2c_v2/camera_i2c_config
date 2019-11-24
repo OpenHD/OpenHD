@@ -1,0 +1,121 @@
+#!/bin/sh
+
+# Setup GPIO and I2C ports for raspicam
+
+# Broadcom GPIO numbers used here
+
+# http://elinux.org/RPi_HardwareHistory#Board_Revision_History
+rev=`cat /proc/cpuinfo | grep Revision | awk '{print substr($NF,length($NF)-5,6)}'`
+echo "setting GPIO for board revsion: $rev"
+
+case $rev in
+
+'0002'|'0003')
+echo "B Rev1 - I2C 1 on GPIOs 2 & 3. GPIOs 5 & 27 for LED and power"
+# i2c on these pins
+gpio -g mode 0 in
+gpio -g mode 0 alt0
+gpio -g mode 1 in
+gpio -g mode 1 alt0
+#shutdown
+gpio -g write 27 1
+#LED
+gpio -g write 5 1
+#
+echo "Use 'raspiraw -y 1' to communicate with the sensor"
+;;
+
+'0004'|'0005'|'0006'|'000d'|'000e'|'000f')
+echo "B Rev2 - I2C 0 on GPIOs 0 & 1. GPIOs 5 & 21 for LED and power"
+# i2c on these pins
+gpio -g mode 0 in
+gpio -g mode 0 alt0
+gpio -g mode 1 in
+gpio -g mode 1 alt0
+#shutdown
+gpio -g write 21 1
+#LED
+gpio -g write 5 1
+;;
+
+'0010'|'0012'|'0013'|'1041'|'a01041'|'a21041'|'900093'|'920093')
+echo "A+, B+, B2, and Zero (not W) all revisions - I2C 0 on GPIOs 28 & 29. GPIOs 32 & 41 for LED and power"
+# i2c can be on pins 0 and 1, so make sure they are not set to alt0
+gpio -g mode 0 in
+gpio -g mode 1 in
+# i2c on these pins
+gpio -g mode 28 in
+gpio -g mode 28 alt0
+gpio -g mode 29 in
+gpio -g mode 29 alt0
+#shutdown
+gpio -g write 41 1
+#LED
+gpio -g write 32 1
+;;
+
+'9000c1')
+echo "PiZero W - I2C 0 on GPIO 28 & 29. GPIOs 40 & 44 for LED and power"
+# i2c can be on pins 0 and 1, so make sure they are not set to alt0
+gpio -g mode 0 in
+gpio -g mode 1 in
+# i2c on these pins
+gpio -g mode 28 in
+gpio -g mode 28 alt0
+gpio -g mode 29 in
+gpio -g mode 29 alt0
+# shutdown
+gpio -g write 44 1
+# LED
+gpio -g write 40 1
+;;
+
+'0011'|'0014'|'a020a0')
+echo "Compute Module/ CM3 - I2C 0 on GPIO 0 & 1. GPIOs 2 & 3 for LED and power"
+echo "Warning: This is just a default setting for cam1."
+echo "Download dt-blob.bin from https://www.raspberrypi.org/documentation/hardware/computemodule/dt-blob-cam1.bin and place it in /boot/."
+echo "For cable connection, see https://www.raspberrypi.org/documentation/hardware/computemodule/cmio-camera.md"
+# i2c can be on pins 28 and 29, so make sure they are not set to alt0
+gpio -g mode 28 in
+gpio -g mode 29 in
+# i2c on these pins
+gpio -g mode 0 in
+gpio -g mode 0 alt0
+gpio -g mode 1 in
+gpio -g mode 1 alt0
+# shutdown
+gpio -g mode 3 out
+gpio -g write 3 1
+# LED
+gpio -g mode 2 out
+gpio -g write 2 1
+;;
+
+'a02082'|'a22082')
+echo "Raspberry Pi3"
+# https://www.raspberrypi.org/forums/viewtopic.php?f=38&t=120702&start=100
+# "Direct i2c1 to GPIO44&45."
+# Pins 44&45 Alt1=i2c0, alt2=i2c1
+# i2c0 can be on pins 0 and 1, so make sure they are not set to alt0
+gpio -g mode 0 in
+gpio -g mode 1 in
+gpio -g mode 28 in
+gpio -g mode 29 in
+# i2c on these pins
+gpio -g mode 44 in
+gpio -g mode 44 alt1
+gpio -g mode 45 in
+gpio -g mode 45 alt1
+#shutdown
+# you need this one: https://github.com/6by9/rpi3-gpiovirtbuf
+#gpio -g write 41 1
+./rpi3-gpiovirtbuf s 133 1
+#LED
+#gpio -g write 32 1
+i2cdetect -y 0
+;;
+
+*)
+echo "Failed: don't know how to set GPIO for this board!"
+;;
+esac

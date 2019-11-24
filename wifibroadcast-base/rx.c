@@ -16,7 +16,10 @@
 #include "fec.h"
 #include "lib.h"
 #include "wifibroadcast.h"
-#include "radiotap.h"
+#include "radiotap_rc.h"
+#include "radiotap_iter.h"
+
+
 #include <time.h>
 #include <sys/resource.h>
 
@@ -35,6 +38,25 @@ typedef struct  {
 	int m_nAntenna;
 	int m_nRadiotapFlags;
 } __attribute__((packed)) PENUMBRA_RADIOTAP_DATA;
+
+static const struct radiotap_align_size align_size_000000_00[] = {
+	[0] = { .align = 1, .size = 4, },
+	[52] = { .align = 1, .size = 4, },
+};
+
+static const struct ieee80211_radiotap_namespace vns_array[] = {
+	{
+		.oui = 0x000000,
+		.subns = 0,
+		.n_bits = sizeof(align_size_000000_00),
+		.align_size = align_size_000000_00,
+	},
+};
+
+static const struct ieee80211_radiotap_vendor_namespaces vns = {
+	.ns = vns_array,
+	.n_ns = sizeof(vns_array)/sizeof(vns_array[0]),
+};
 
 
 int flagHelp = 0;
@@ -63,7 +85,6 @@ int packets_missing;
 int packets_missing_last;
 
 int dbm[6];
-int dbm_last[6];
 
 int packetcounter[6];
 int packetcounter_last[6];
@@ -131,6 +152,10 @@ void open_and_configure_interface(const char *name, int port, monitor_interface_
 	if(pcap_setdirection(interface->ppcap, PCAP_D_IN) < 0) {
 		fprintf(stderr, "Error setting %s direction\n", name);
 	}
+
+
+	//if (pcap_set_promisc(interface->ppcap, 1) != 0)
+	//	fprintf(stderr, "Error pcap_set_promisc\n");
 
 	int nLinkEncap = pcap_datalink(interface->ppcap);
 
@@ -454,10 +479,12 @@ void process_packet(monitor_interface_t *interface, block_buffer_t *block_buffer
 		return;
 	}
 
-	if (ieee80211_radiotap_iterator_init(&rti,(struct ieee80211_radiotap_header *)pu8Payload, ppcapPacketHeader->len) < 0) {
+	if (ieee80211_radiotap_iterator_init(&rti,(struct ieee80211_radiotap_header *)pu8Payload, ppcapPacketHeader->len, &vns) < 0) {
 		fprintf(stderr, "rx ERROR: radiotap_iterator_init < 0\n");
 		return;
 	}
+
+int best_signal = -127;
 
 	while ((n = ieee80211_radiotap_iterator_next(&rti)) == 0) {
 		switch (rti.this_arg_index) {
@@ -470,35 +497,54 @@ void process_packet(monitor_interface_t *interface, block_buffer_t *block_buffer
 			    le16_to_cpu(*((u16 *)rti.this_arg));
 			prd.m_nChannelFlags =
 			    le16_to_cpu(*((u16 *)(rti.this_arg + 2)));
+*/			break;
+
+		case IEEE80211_RADIOTAP_DB_ANTSIGNAL:
+//                        fprintf(stderr, "IEEE80211_RADIOTAP_DB_ANTSIGNAL0: %d\n", ra);
+
 			break;
 		case IEEE80211_RADIOTAP_ANTENNA:
-			prd.m_nAntenna = (*rti.this_arg) + 1;
+
+//			 ra = (int) (*rti.this_arg);
+//			fprintf(stderr, "IEEE80211_RADIOTAP_ANTENNA0: %d\n", ra);
 			break;
-		*/
+
+		
 		case IEEE80211_RADIOTAP_FLAGS:
 			prd.m_nRadiotapFlags = *rti.this_arg;
 			break;
 		case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:
 			//rx_status->adapter[adapter_no].current_signal_dbm = (int8_t)(*rti.this_arg);
 
-			dbm_last[adapter_no] = dbm[adapter_no];
-			dbm[adapter_no] = (int8_t)(*rti.this_arg);
-
-			if (dbm[adapter_no] > dbm_last[adapter_no]) { // if we have a better signal than last time, ignore
-			    dbm[adapter_no] = dbm_last[adapter_no];
+			if( best_signal == -127 && (int8_t)(*rti.this_arg) < 0)
+			{
+				best_signal = (int8_t)(*rti.this_arg);
+				//fprintf(stderr, "Init best_signal with value:%d\n", best_signal);
+			}
+			else
+			{
+				if( best_signal < (int8_t)(*rti.this_arg) && (int8_t)(*rti.this_arg) < 0 )
+				{
+					//fprintf(stderr, "Old best_signal:%d\n",best_signal);
+					best_signal = (int8_t)(*rti.this_arg);
+					//fprintf(stderr, "New best_signal:%d\n",best_signal);
+				}
 			}
 
-			dbm_ts_now[adapter_no] = current_timestamp();
-			if (dbm_ts_now[adapter_no] - dbm_ts_prev[adapter_no] > 220) {
-			    dbm_ts_prev[adapter_no] = current_timestamp();
-		//	    fprintf(stderr, "miss: %d   last: %d\n", packets_missing,packets_missing_last);
-			    rx_status->adapter[adapter_no].current_signal_dbm = dbm[adapter_no];
-			    dbm[adapter_no] = 99;
-			    dbm_last[adapter_no] = 99;
-			}
 			break;
+		
 		}
 	}
+
+	//fprintf(stderr, "best_signal switch end:%d\n",best_signal);
+	dbm_ts_now[adapter_no] = current_timestamp();
+	if (dbm_ts_now[adapter_no] - dbm_ts_prev[adapter_no] > 220)
+	{
+        	dbm_ts_prev[adapter_no] = current_timestamp();
+		//fprintf(stderr, "CardN: %d, signal_result: %d\n", adapter_no, best_signal);
+        	//fprintf(stderr, "miss: %d   last: %d\n", packets_missing,packets_missing_last);
+        	rx_status->adapter[adapter_no].current_signal_dbm = best_signal;
+        }
 
 	pu8Payload += u16HeaderLen + interface->n80211HeaderLength;
 //	fprintf(stderr, "pu8payload: %d\n", pu8Payload);

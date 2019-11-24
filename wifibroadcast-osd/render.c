@@ -109,8 +109,31 @@ void render_init() {
     amps_ts = dist_ts = time_ts = current_ts(); //wowi
 }
 
+void loopUpdate(telemetry_data_t *td) {
+    // Update fly time. Get time passed since last update
+    long time_diff = current_ts() - time_ts;
+    time_ts = current_ts();
+
+#if COPTER == true
+if ( (td->armed == 1) && (td->ampere > 3) )
+    total_time += (float)time_diff/60000;
+#else
+if (td->speed>0)
+   total_time += (float)time_diff/60000;
+#endif
+
+
+    // Update total amps used. Get time passed since last rendering
+    time_diff = current_ts() - amps_ts;
+    amps_ts = current_ts();
+    total_amps = total_amps + td->ampere*(float)time_diff/3600;
+}
 
 void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t undervolt, int osdfps) {
+
+    // call loopUpdate to update stuff that should be updated even when particular elements are off (like total curent);
+    loopUpdate(td);
+
     Start(width,height); // render start
     setfillstroke();
 
@@ -256,34 +279,26 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 #endif
 
 
-#ifdef BAROALT
-    draw_baroalt(td->baro_altitude, BAROALT_POS_X, BAROALT_POS_Y, BAROALT_SCALE * GLOBAL_SCALE);
-#endif
-
-#ifdef GPSALT
-    draw_gpsalt(td->altitude, GPSALT_POS_X, GPSALT_POS_Y, GPSALT_SCALE * GLOBAL_SCALE);
-#endif
-
-
 #ifdef COURSE_OVER_GROUND
     draw_cog((int)td->cog, COURSE_OVER_GROUND_POS_X, COURSE_OVER_GROUND_POS_Y, COURSE_OVER_GROUND_SCALE * GLOBAL_SCALE);
 #endif
 
 
-#ifdef ALTLADDER
-    #if IMPERIAL == true
-    #if ALTLADDER_USEBAROALT == true
-    draw_alt_ladder((int)(td->baro_altitude * TO_FEET), ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
-    #else
-    draw_alt_ladder((int)(td->altitude * TO_FEET), ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
-    #endif
-    #else
-    #if ALTLADDER_USEBAROALT == true
-    draw_alt_ladder((int)td->baro_altitude, ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
-    #else
-    draw_alt_ladder((int)td->altitude, ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
-    #endif
-    #endif
+#ifdef ALTLADDER //by default in osdconfig usemslalt = false (relative alt should be shown)
+        #if REVERSE_ALTITUDES == true
+        draw_alt_ladder((int)td->msl_altitude, ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
+        #else
+        draw_alt_ladder((int)td->rel_altitude, ALTLADDER_POS_X, 50, ALTLADDER_SCALE * GLOBAL_SCALE);
+        #endif  
+#endif
+
+
+#ifdef MSLALT 
+        #if REVERSE_ALTITUDES == true
+        draw_mslalt(td->rel_altitude, MSLALT_POS_X, MSLALT_POS_Y, MSLALT_SCALE * GLOBAL_SCALE);
+        #else
+        draw_mslalt(td->msl_altitude, MSLALT_POS_X, MSLALT_POS_Y, MSLALT_SCALE * GLOBAL_SCALE);
+        #endif
 #endif
 
 
@@ -332,7 +347,7 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
 #endif
 
 #ifdef TOTAL_AMPS 
-    draw_TOTAL_AMPS(td->ampere, TOTAL_AMPS_POS_X, TOTAL_AMPS_POS_Y, TOTAL_AMPS_SCALE * GLOBAL_SCALE);
+    draw_TOTAL_AMPS(total_amps, TOTAL_AMPS_POS_X, TOTAL_AMPS_POS_Y, TOTAL_AMPS_SCALE * GLOBAL_SCALE);
 #endif
 
 #ifdef TOTAL_DIST
@@ -340,7 +355,7 @@ void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t
  #endif
 
 #ifdef TOTAL_TIME
-    draw_TOTAL_TIME((int)td->speed, TOTAL_TIME_POS_X, TOTAL_TIME_POS_Y, TOTAL_TIME_SCALE * GLOBAL_SCALE);
+    draw_TOTAL_TIME((float)total_time, TOTAL_TIME_POS_X, TOTAL_TIME_POS_Y, TOTAL_TIME_SCALE * GLOBAL_SCALE);
 #endif
 
 #ifdef POSITION
@@ -463,6 +478,12 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
     case 12: sprintf(buffer, "LOIT"); break;
     case 15: sprintf(buffer, "GUID"); break;
     case 16: sprintf(buffer, "INIT"); break;
+    case 17: sprintf(buffer, "Q-STAB"); break;
+    case 18: sprintf(buffer, "Q-HOVR"); break;
+    case 19: sprintf(buffer, "Q-LOIT"); break;
+    case 20: sprintf(buffer, "Q-LAND"); break;
+    case 21: sprintf(buffer, "Q-RTL"); break;
+    case 23: sprintf(buffer, "Q-ACRO"); break;
     case 255: sprintf(buffer, "-----"); break;
     #endif
     default: sprintf(buffer, "-----"); break; // TODO: find out why strange numbers when using zs6bujs telemetry logs, default to something more sensible like "unknown mode"
@@ -504,6 +525,12 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
     case 12: sprintf(buffer, "[LOIT]"); break;
     case 15: sprintf(buffer, "[GUID]"); break;
     case 16: sprintf(buffer, "[INIT]"); break;
+    case 17: sprintf(buffer, "Q-STAB"); break;
+    case 18: sprintf(buffer, "Q-HOVR"); break;
+    case 19: sprintf(buffer, "Q-LOIT"); break;
+    case 20: sprintf(buffer, "Q-LAND"); break;
+    case 21: sprintf(buffer, "Q-RTL"); break;
+    case 23: sprintf(buffer, "Q-ACRO"); break;
     case 255: sprintf(buffer, "[-----]"); break;
     #endif
     default: sprintf(buffer, "[-----]"); break; // TODO: find out why strange numbers when using zs6bujs telemetry logs, default to something more sensible like "unknown mode"
@@ -552,53 +579,6 @@ void draw_climb(float climb, float pos_x, float pos_y, float scale){
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
     Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "m/s", myfont, text_scale*0.6);
 }
-
-
-
-void draw_baroalt(float baroalt, float pos_x, float pos_y, float scale){
-    float text_scale = getWidth(2) * scale;
-
-    #if IMPERIAL == true
-    VGfloat width_value = TextWidth("0000", myfont, text_scale);
-    sprintf(buffer, "%.0f", baroalt*TO_FEET);
-    #else
-    VGfloat width_value = TextWidth("000.0", myfont, text_scale);
-    sprintf(buffer, "%.1f", baroalt);
-    #endif
-    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
-
-    TextEnd(getWidth(pos_x)-width_value-getWidth(0.3)*scale, getHeight(pos_y), " ", osdicons, text_scale*0.7);
-
-    #if IMPERIAL == true
-    Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "ft", myfont, text_scale*0.6);
-    #else
-    Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "m", myfont, text_scale*0.6);
-    #endif
-}
-
-
-
-void draw_gpsalt(float gpsalt, float pos_x, float pos_y, float scale){
-    float text_scale = getWidth(2) * scale;
-
-    #if IMPERIAL == true
-    VGfloat width_value = TextWidth("0000", myfont, text_scale);
-    sprintf(buffer, "%.0f", gpsalt*TO_FEET);
-    #else
-    VGfloat width_value = TextWidth("000.0", myfont, text_scale);
-    sprintf(buffer, "%.1f", gpsalt);
-    #endif
-    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
-
-    TextEnd(getWidth(pos_x)-width_value-getWidth(0.3)*scale, getHeight(pos_y), " ", osdicons, text_scale*0.7);
-
-    #if IMPERIAL == true
-    Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "ft", myfont, text_scale*0.6);
-    #else
-    Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "m", myfont, text_scale*0.6);
-    #endif
-}
-
 
 
 void draw_airspeed(int airspeed, float pos_x, float pos_y, float scale){
@@ -962,17 +942,10 @@ void draw_batt_status(float voltage, float current, float pos_x, float pos_y, fl
 }
 
 // display totals mAh used, distance flown (km), airborne time (mins) - wowi
-void draw_TOTAL_AMPS(float current, float pos_x, float pos_y, float scale){
- 
-    // get time passed since last rendering
-    long time_diff = current_ts() - amps_ts;
-    amps_ts = current_ts();
-    total_amps = total_amps + current*(float)time_diff/3600;
- 
-  
+void draw_TOTAL_AMPS(float current, float pos_x, float pos_y, float scale){ 
     float text_scale = getWidth(2) * scale;
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
-    sprintf(buffer, "%5.0f", total_amps);
+    sprintf(buffer, "%5.0f", current);
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
     Text(getWidth(pos_x), getHeight(pos_y), " mAh", myfont, text_scale*0.6);
  
@@ -991,18 +964,10 @@ void draw_TOTAL_DIST(int gpsspeed, float pos_x, float pos_y, float scale){
     Text(getWidth(pos_x), getHeight(pos_y), " km", myfont, text_scale*0.6);
  
 }
-void draw_TOTAL_TIME(int gpsspeed, float pos_x, float pos_y, float scale){
- 
-    // get time passed since last rendering
-    long time_diff = current_ts() - time_ts;
-    time_ts = current_ts();
-    if(gpsspeed>0){
-        total_time = total_time + (float)time_diff/60000; // flying time in minutes
-    }
- 
+void draw_TOTAL_TIME(float fly_time, float pos_x, float pos_y, float scale){    
     float text_scale = getWidth(2) * scale;
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
-    sprintf(buffer, "%3.0f:%02d", total_time, (int)(total_time*60) % 60);
+    sprintf(buffer, "%3.0f:%02d", fly_time, (int)(fly_time*60) % 60);
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
     Text(getWidth(pos_x), getHeight(pos_y), " mins", myfont, text_scale*0.6);
  
@@ -1013,14 +978,35 @@ void draw_position(float lat, float lon, float pos_x, float pos_y, float scale){
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
     VGfloat width_value = TextWidth("-100.000000", myfont, text_scale);
 
+    float mylat;
+    float mylon;
+
+    #if HIDE_LATLON == true
+  	mylat = lat - (int)lat;
+  	mylon = lon - (int)lon;	
+    #else
+	mylon=lon;
+        mylat=lat;
+    #endif
+
     TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y), "  ", osdicons, text_scale*0.6);
 
-    sprintf(buffer, "%.6f", lon);
+    #if HIDE_LATLON == true
+	sprintf(buffer, "0%f", mylon);
+    #else
+    	sprintf(buffer, "%.6f", mylon);
+    #endif
+
     TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
 
     TextEnd(getWidth(pos_x) - width_value, getHeight(pos_y)+height_text, "  ", osdicons, text_scale*0.6);
 
-    sprintf(buffer, "%.6f", lat);
+    #if HIDE_LATLON == true
+	sprintf(buffer, "0%f", mylat);
+    #else
+    	sprintf(buffer, "%.6f", mylat);
+    #endif
+
     TextEnd(getWidth(pos_x), getHeight(pos_y)+height_text, buffer, myfont, text_scale);
 }
 
@@ -1055,6 +1041,11 @@ void draw_home_distance(int distance, bool home_fixed, float pos_x, float pos_y,
 
 
 void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale){
+
+    #if IMPERIAL == true
+        alt=alt *TO_FEET;
+    #endif
+
     float text_scale = getHeight(1.3) * scale;
     float width_element = getWidth(0.50) * scale;
     float height_element = getWidth(0.25) * scale;
@@ -1091,6 +1082,28 @@ void draw_alt_ladder(int alt, float pos_x, float pos_y, float scale){
     }
 }
 
+
+void draw_mslalt(float mslalt, float pos_x, float pos_y, float scale){
+
+    float text_scale = getWidth(2) * scale;
+
+    #if IMPERIAL == true
+    VGfloat width_value = TextWidth("0000", myfont, text_scale);
+    sprintf(buffer, "%.0f", mslalt*TO_FEET);
+    #else
+    VGfloat width_value = TextWidth("000.0", myfont, text_scale);
+    sprintf(buffer, "%.1f", mslalt);
+    #endif
+    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
+
+    TextEnd(getWidth(pos_x)-width_value-getWidth(0.3)*scale, getHeight(pos_y), " ", osdicons, text_scale*0.7);
+
+    #if IMPERIAL == true
+    Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "ft", myfont, text_scale*0.6);
+    #else
+    Text(getWidth(pos_x)+getWidth(0.4), getHeight(pos_y), "m", myfont, text_scale*0.6);
+    #endif
+}
 
 
 void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale){
@@ -1301,8 +1314,6 @@ void draw_sat(int sats, int fixtype, int hdop, float pos_x, float pos_y, float s
 
 
 void draw_batt_gauge(int remaining, float pos_x, float pos_y, float scale){
-    //new stuff from fritz walter https://www.youtube.com/watch?v=EQ01b3aJ-rk
-    //prevent black empty indicator to draw left to battery
     if (remaining < 0) remaining = 0;
     else if (remaining > 100) remaining = 100;
 

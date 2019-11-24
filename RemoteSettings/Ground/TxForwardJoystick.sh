@@ -23,16 +23,21 @@ NICS_LIST=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep 
 if [ "$EncryptionOrRange" == "Encryption" ]; then
 	while true
 	do
-		if [ "$PrimaryCardMAC" == "0" ]; then
-			echo "start joystick forward wfb_tx -k 1 -n 1 -u 5565 -p 97 -B 20 -M 0 $NICS_LIST \n"
-			./wfb_tx -k 1 -n 1 -u 5565 -p 97 -B 20 -M 0 $NICS_LIST
+		if [ "$Lora" == "1" ]; then
+			/home/pi/wifibroadcast-rc-Ath9k/lora /dev/ttyUSB0
 		else
-			echo "start joystick forward wfb_tx -k 1 -n 1 -u 5565 -p 97 -B 20 -M 0 \n"
-			./wfb_tx -k 1 -n 1 -u 5565 -p 97 -B 20 -M 0 $PrimaryCardMAC
-		fi
 
-		echo "start wfb_tx -k 1 -n 1 -u 5565 -p 97 -B 20 -M 0 down. Restating... \n"
+			if [ "$PrimaryCardMAC" == "0" ]; then
+				echo "start joystick forward wfb_tx -k 1 -n 1 -u 5566 -p 97 -B 20 -M 0 $NICS_LIST \n"
+				./wfb_tx -k 1 -n 1 -u 5566 -p 97 -B 20 -M 0 $NICS_LIST
+			else
+				echo "start joystick forward wfb_tx -k 1 -n 1 -u 5565 -p 97 -B 20 -M 0 \n"
+				./wfb_tx -k 1 -n 1 -u 5566 -p 97 -B 20 -M 0 $PrimaryCardMAC
+			fi
+
+			echo "start wfb_tx -k 1 -n 1 -u 5566 -p 97 -B 20 -M 0 down. Restating... \n"
+			NICS_LIST=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot`
+		fi
 		sleep 2
-		NICS_LIST=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot`
 	done
 fi

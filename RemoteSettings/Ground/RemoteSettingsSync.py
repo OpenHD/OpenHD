@@ -32,11 +32,33 @@ print("Selected: " + SelectedControl)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(26, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+GPIO.setup(20, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+input_state0 = GPIO.input(20)
+input_state1 = GPIO.input(21)
+
+SettingsFilePath = "/boot/openhd-settings-1.txt"
+
+if (input_state0 == False) and (input_state1 == False):
+    SettingsFilePath = "/boot/openhd-settings-4.txt"
+
+if (input_state0 == False) and (input_state1 == True):
+    SettingsFilePath = "/boot/openhd-settings-3.txt"
+
+if (input_state0 == True) and (input_state1 == False):
+    SettingsFilePath = "/boot/openhd-settings-2.txt"
+
+if (input_state0 == True) and (input_state1 == True):
+    SettingsFilePath = "/boot/openhd-settings-1.txt"
+
+print(SettingsFilePath)
+
+
 UDP_PORT_OUT = 1376
 UDP_PORT_IN = 1375
 UDP_INFO_PORT_OUT=1379
 RecvSocket = 0
-SettingsFilePath = "/boot/openhd-settings-1.txt"
 JoystickSettingsFilePath = "/boot/joyconfig.txt"
 IsMainScriptRunning = False
 DefaultCommunicateFreq = "2412"
@@ -839,7 +861,7 @@ else:
 StartRC_Reader(SmartSyncRC_Channel)
 
 if SmartSync_StartupMode != 1:
-    SendInfoToDisplay("SmartSync disabled.Starting RC reader to check force On ")
+    SendInfoToDisplay("SmartSync disabled. RC reader force checked On")
     for i in range(0, 10):
         #SendInfoToDisplay("I is:", i, "RC value: ", RC_Value)
         #stdout.write("\r RC value: "+  str(RC_Value) + " Retry: " + str(i) + " of 30")

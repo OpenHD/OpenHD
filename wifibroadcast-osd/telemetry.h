@@ -102,8 +102,8 @@ typedef struct {
 	float voltage;
 	float ampere;
 	int32_t mah;
-	float baro_altitude;
-	float altitude;
+	float msl_altitude;
+	float rel_altitude;
 	double longitude;
 	double latitude;
 	float heading;
