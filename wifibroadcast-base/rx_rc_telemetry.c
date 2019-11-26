@@ -16,8 +16,7 @@
 
 #include "lib.h"
 #include "wifibroadcast.h"
-#include "radiotap_rc.h"
-#include "radiotap_iter.h"
+#include "radiotap.h"
 #include <time.h>
 #include <sys/resource.h>
 #include <fcntl.h>        // serialport
@@ -32,26 +31,6 @@ typedef struct  {
 	int m_nAntenna;
 	int m_nRadiotapFlags;
 } __attribute__((packed)) PENUMBRA_RADIOTAP_DATA;
-
-
-static const struct radiotap_align_size align_size_000000_00[] = {
-	[0] = { .align = 1, .size = 4, },
-	[52] = { .align = 1, .size = 4, },
-};
-
-static const struct ieee80211_radiotap_namespace vns_array[] = {
-	{
-		.oui = 0x000000,
-		.subns = 0,
-		.n_bits = sizeof(align_size_000000_00),
-		.align_size = align_size_000000_00,
-	},
-};
-
-static const struct ieee80211_radiotap_vendor_namespaces vns = {
-	.ns = vns_array,
-	.n_ns = sizeof(vns_array)/sizeof(vns_array[0]),
-};
 
 
 int flagHelp = 0;
@@ -250,7 +229,6 @@ void process_packet(monitor_interface_t *interface, int adapter_no, int serialpo
     int u16HeaderLen;
     int type = 0; // r/c or telemetry
     int dbm_tmp;
-    int ant_tmp;
 	
     // receive
     retval = pcap_next_ex(interface->ppcap, &ppcapPacketHeader, (const u_char**)&pu8Payload);
@@ -300,17 +278,13 @@ void process_packet(monitor_interface_t *interface, int adapter_no, int serialpo
 //  fprintf(stderr, "bytes: %d\n", bytes);
     if (bytes < 0) exit(1);
 
-    if (ieee80211_radiotap_iterator_init(&rti, (struct ieee80211_radiotap_header *)pu8Payload, ppcapPacketHeader->len, &vns) < 0) exit(1);
+    if (ieee80211_radiotap_iterator_init(&rti, (struct ieee80211_radiotap_header *)pu8Payload, ppcapPacketHeader->len) < 0) exit(1);
 
     while ((n = ieee80211_radiotap_iterator_next(&rti)) == 0) {
 	switch (rti.this_arg_index) {
 	    case IEEE80211_RADIOTAP_FLAGS:
 		prd.m_nRadiotapFlags = *rti.this_arg;
 		break;
-	    case IEEE80211_RADIOTAP_ANTENNA:
-			ant_tmp = (int8_t) (*rti.this_arg);
-//			fprintf(stderr, "Ant: %d   ", ant_tmp);
-			break;
 	    case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:
 //		fprintf(stderr, "ant signal:%d\n",(int8_t)(*rti.this_arg));
 //		rx_status->adapter[adapter_no].current_signal_dbm = (int8_t)(*rti.this_arg);
@@ -326,9 +300,7 @@ void process_packet(monitor_interface_t *interface, int adapter_no, int serialpo
 	mavlink_message_t msg;
 	uint8_t checksum=0;
 	uint8_t outputbuffer[100];	/// 33
-	if (ant_tmp == 0){ // only use the main antenna 0
-		rx_status_rc->adapter[adapter_no].current_signal_dbm = dbm_tmp;
-	}
+	rx_status_rc->adapter[adapter_no].current_signal_dbm = dbm_tmp;
 	rx_status_rc->adapter[adapter_no].received_packet_cnt++;
 	rx_status_rc->last_update = time(NULL);
 	//dbm_tmp = 0;
@@ -529,9 +501,8 @@ void process_packet(monitor_interface_t *interface, int adapter_no, int serialpo
 //	fprintf(stderr, "telemetry packet received\n");
 	int len = 0;
 	int lostpackets = 0;
-	if (ant_tmp == 0){ // only use the main antenna 0
-		rx_status->adapter[adapter_no].current_signal_dbm = dbm_tmp;
-	}
+
+	rx_status->adapter[adapter_no].current_signal_dbm = dbm_tmp;
 	rx_status->adapter[adapter_no].received_packet_cnt++;
 	rx_status->last_update = time(NULL);
 	//dbm_tmp = 0;
