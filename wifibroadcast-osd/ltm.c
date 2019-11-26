@@ -139,7 +139,7 @@ int ltm_check(telemetry_data_t *td) {
     printf("LTM G FRAME: ");
     printf("fix:%d  ", td->fix);
     printf("sats:%d  ", td->sats);
-    printf("altitude:%.2f  ", td->altitude);
+    printf("altitude:%.2f  ", td->rel_altitude);
     printf("latitude:%.2f  ", td->latitude);
     printf("longitude:%.2f  ", td->longitude);
     printf("groundspeed:%.2f  ", td->speed);

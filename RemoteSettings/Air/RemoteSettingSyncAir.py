@@ -355,7 +355,7 @@ def ReadTxPower():
         with open(SettingsFilePath, "r") as f:
             lines = f.readlines()
             for line in lines:
-                if line.startswith("TxPowerAir") == True:
+                if line.startswith("TxPowerGround") == True:
                     SplitLines = line.split("=")
                     FilterDigits = SplitLines[1]
                     TxPowerFromConfig = re.sub("\D", "", FilterDigits)

@@ -132,8 +132,11 @@ function hotspot_check_function {
 		/usr/sbin/dnsmasq --conf-file=/etc/dnsmasqWifi.conf
 	    	nice -n 5 hostapd -B -d /tmp/apconfig.txt
 		
-		#set wifihotspot to low power
-		iwconfig wifihotspot0 txpower 1mW
+			if [ ${HOTSPOT_TXPOWER} != "" ]; then
+				iw dev wifihotspot0 set txpower fixed ${HOTSPOT_TXPOWER}
+			else
+				iw dev wifihotspot0 set txpower fixed 100
+			fi
 
 	  	else
 	     	echo "NO HOTSPOT CAPABILTY WAS FOUND"
