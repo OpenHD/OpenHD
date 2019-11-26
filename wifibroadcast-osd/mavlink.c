@@ -38,10 +38,19 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					
 					td->msl_altitude = mavlink_msg_global_position_int_get_alt(&msg)/1000.0f;
 					fprintf(stdout, "msl alt global:%.2f  ", td->msl_altitude);
+
+
+					td->vx = mavlink_msg_global_position_int_get_vx(&msg)/100.0f;
+    				td->vy = mavlink_msg_global_position_int_get_vy(&msg)/100.0f;
+    				td->vz = mavlink_msg_global_position_int_get_vz(&msg)/100.0f;
+					
+					fprintf(stdout, "vx:%.2f  ", td->vx);
+					fprintf(stdout, "vy:%.2f  ", td->vy);
+					fprintf(stdout, "vz:%.2f  ", td->vz);
 					
 
-                                        td->latitude = mavlink_msg_global_position_int_get_lat(&msg)/10000000.0f;
-                                        td->longitude = mavlink_msg_global_position_int_get_lon(&msg)/10000000.0f;
+                    td->latitude = mavlink_msg_global_position_int_get_lat(&msg)/10000000.0f;
+                    td->longitude = mavlink_msg_global_position_int_get_lon(&msg)/10000000.0f;
 					
 					fprintf(stdout, "heading:%.2f  ", td->heading);
 					fprintf(stdout, "latitude:%.6f  ", td->latitude);
@@ -93,8 +102,14 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 					fprintf(stdout, "SYS_STATUS: ");
 					td->voltage = mavlink_msg_sys_status_get_voltage_battery(&msg)/1000.0f;
 					td->ampere = mavlink_msg_sys_status_get_current_battery(&msg)/100.0f;
+					td->SP = mavlink_msg_sys_status_get_onboard_control_sensors_present(&msg);
+					td->SE = mavlink_msg_sys_status_get_onboard_control_sensors_enabled(&msg);
+					td->SH = mavlink_msg_sys_status_get_onboard_control_sensors_health(&msg);
 					fprintf(stdout, "voltage:%.2f  ", td->voltage);
 					fprintf(stdout, "ampere:%.2f  ", td->ampere);
+					fprintf(stdout, "Status1:%d ",td->SP);
+					fprintf(stdout, "Status2:%d ",td->SE);
+					fprintf(stdout, "Status3:%d ",td->SH);
                                         break;
 
                                 case MAVLINK_MSG_ID_VFR_HUD:
@@ -108,10 +123,12 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
                     			#endif
 
 					td->mav_climb = mavlink_msg_vfr_hud_get_climb(&msg);
+					td->throttle = mavlink_msg_vfr_hud_get_throttle(&msg);
 					fprintf(stdout, "speed:%.2f  ", td->speed);
 					fprintf(stdout, "airspeed:%.2f  ", td->airspeed);
 //					fprintf(stdout, "heading:%.2f  ", td->heading);
 					fprintf(stdout, "climb:%f  ", td->mav_climb);
+					fprintf(stdout, "throttle:%.2f  ", td->throttle);
                                         break;
 
                                 case MAVLINK_MSG_ID_GPS_STATUS:
@@ -121,11 +138,72 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
                                 case MAVLINK_MSG_ID_HEARTBEAT:
 					fprintf(stdout, "HEARTBEAT ");
 					td->mav_flightmode = mavlink_msg_heartbeat_get_custom_mode(&msg);
-					if (((mavlink_msg_heartbeat_get_base_mode(&msg) & 0b10000000) >> 7) == 0) {
-					    td->armed = 0;
-					} else {
-					    td->armed = 1;
-					}
+					//if (((mavlink_msg_heartbeat_get_base_mode(&msg) & 0b10000000) >> 7) == 0) {
+					//    td->armed = 0;
+					//} else {
+					 //   td->armed = 1;
+					//}
+
+td->armed=mavlink_msg_heartbeat_get_base_mode(&msg);
+
+if (td->armed==0){ 
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 0;} //preflight
+
+else if (td->armed==64){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 0;} //manual disarm
+
+else if (td->armed==81){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 0;} //UKNOWN disarm mode
+
+else if (td->armed==88){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 0;} //guided disarm
+
+else if (td->armed==92){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 0;} //auto disarm
+
+else if (td->armed==66){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 0;} //test disarm
+
+else if (td->armed==208){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 1;} //stab arm
+
+else if (td->armed==209){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 1;} //UKNOWN arm
+
+else if (td->armed==192){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 1;} //manual arm
+
+else if (td->armed==216){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 1;} //guided arm
+
+else if (td->armed==220){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 1;} //auto arm
+
+else if (td->armed==194){
+	fprintf(stdout, "base mode:%d  ", td->armed);
+	td->armed = 1;} //test arm
+
+else if (td->armed>100){
+	fprintf(stdout, "base mode:%d  Greater than 100", td->armed);
+	td->armed = 1;} //>100 arm
+
+else if (td->armed<100){
+	fprintf(stdout, "base mode:%d  less than 100", td->armed);
+	td->armed = 0;} //>100 arm
+
+else {fprintf(stdout, "UNKNOWN base mode:%d  ", td->armed);}
+	
 					fprintf(stdout, "mode:%d  ", td->mav_flightmode);
 					fprintf(stdout, "armed:%d  ", td->armed);
                                         break;
@@ -157,6 +235,15 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
                                 case MAVLINK_MSG_ID_EXTENDED_SYS_STATE:
 					fprintf(stdout, "EXTENDED_SYS_STATE: vtol_state:%d, landed_state:%d",mavlink_msg_extended_sys_state_get_vtol_state(&msg),mavlink_msg_extended_sys_state_get_landed_state(&msg));
                                         break;
+                              	case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
+					td->servo1 = mavlink_msg_servo_output_raw_get_servo1_raw(&msg);
+					fprintf(stdout, "SERVO1:%d ",mavlink_msg_servo_output_raw_get_servo1_raw(&msg));
+                                        break;
+                             	case MAVLINK_MSG_ID_MISSION_CURRENT:				
+					td->mission_current_seq = mavlink_msg_mission_current_get_seq(&msg);
+					fprintf(stdout, "MISSION_CURRENT ");
+					fprintf(stdout, "MC:%d ", td->mission_current_seq);
+                                        break;
 
 
  /*                            case MAVLINK_MSG_ID_ALTITUDE:
@@ -173,11 +260,9 @@ int mavlink_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
                                         break;
                                 case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
 					fprintf(stdout, "LOCAL_POSITION_NED ");
-                                        break;
-                                case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
-					fprintf(stdout, "SERVO_OUTPUT_RAW ");
-                                        break;
-                                case MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED:
+                                        break; */
+                                
+ /*                               case MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED:
 					fprintf(stdout, "POSITION_TARGET_LOCAL_NED ");
                                         break;
                                 case MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT:

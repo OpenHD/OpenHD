@@ -22,6 +22,7 @@ void telemetry_init(telemetry_data_t *td) {
 	td->cog = 0;
 	td->speed = 0;
 	td->airspeed = 0;
+	td->throttle = 0;
 	td->roll = 0;
 	td->pitch = 0;
 	td->sats = 0;
@@ -30,6 +31,11 @@ void telemetry_init(telemetry_data_t *td) {
 	td->armed = 255;
 	td->rssi = 0;
 	td->home_fix = 0;
+
+	td->mav_climb = 0;
+	td->vx=0;
+	td->vy=0;
+	td->vz=0;
 
 #ifdef FRSKY
 	td->x = 0;
@@ -40,11 +46,21 @@ void telemetry_init(telemetry_data_t *td) {
 #endif
 
 #ifdef MAVLINK
-    	td->mav_flightmode = 255;
-    	td->mav_climb = 0;
+    td->mav_flightmode = 255;
+ //   td->mav_climb = 0;
 	td->version=0;
 	td->vendor=0;
 	td->product=0;
+//	td->vx=0;
+//	td->vy=0;
+//	td->vz=0;
+//	td->hdop = 0;
+	td->servo1 = 1500;
+	td->mission_current_seq = 0;
+	td->SP = 0;
+	td->SE = 0;
+	td->SH = 0;
+	
 #endif
 
 #ifdef LTM
@@ -172,3 +188,4 @@ wifibroadcast_rx_status_t_sysair *telemetry_wbc_status_memory_open_sysair(void) 
         if (retval == MAP_FAILED) { perror("mmap"); exit(1); }
         return (wifibroadcast_rx_status_t_sysair*)retval;
 }
+

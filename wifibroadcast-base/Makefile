@@ -7,7 +7,7 @@ all: rx_rc_telemetry_buf rx rx_rc_telemetry rssirx rssitx tx_rawsock tx_telemetr
 	gcc -c -o $@ $< $(CPPFLAGS)
 
 
-rx: rx.o lib.o radiotap_rc.o fec.o
+rx: rx.o lib.o radiotap.o fec.o
 	gcc -o $@ $^ $(LDFLAGS)
 
 rx_rc_telemetry: rx_rc_telemetry.o lib.o radiotap.o
@@ -16,7 +16,7 @@ rx_rc_telemetry: rx_rc_telemetry.o lib.o radiotap.o
 rx_rc_telemetry_buf: rx_rc_telemetry_buf.o lib.o radiotap.o
 	gcc -o $@ $^ $(LDFLAGS)
 
-rssirx: rssirx.o lib.o radiotap.o
+rssirx: rssirx.o lib.o radiotap_rc.o
 	gcc -o $@ $^ $(LDFLAGS)
 
 rssitx: rssitx.o lib.o radiotap.o
