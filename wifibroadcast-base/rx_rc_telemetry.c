@@ -250,7 +250,7 @@ void process_packet(monitor_interface_t *interface, int adapter_no, int serialpo
     int u16HeaderLen;
     int type = 0; // r/c or telemetry
     int dbm_tmp;
-    int ant_tmp;
+//  int ant_tmp;
 	
     // receive
     retval = pcap_next_ex(interface->ppcap, &ppcapPacketHeader, (const u_char**)&pu8Payload);
@@ -326,9 +326,9 @@ void process_packet(monitor_interface_t *interface, int adapter_no, int serialpo
 	mavlink_message_t msg;
 	uint8_t checksum=0;
 	uint8_t outputbuffer[100];	/// 33
-	if (ant_tmp == 0){ // only use the main antenna 0
+//	if (ant_tmp == 0){ // only use the main antenna 0
 		rx_status_rc->adapter[adapter_no].current_signal_dbm = dbm_tmp;
-	}
+//	}
 	rx_status_rc->adapter[adapter_no].received_packet_cnt++;
 	rx_status_rc->last_update = time(NULL);
 	//dbm_tmp = 0;
@@ -529,9 +529,9 @@ void process_packet(monitor_interface_t *interface, int adapter_no, int serialpo
 //	fprintf(stderr, "telemetry packet received\n");
 	int len = 0;
 	int lostpackets = 0;
-	if (ant_tmp == 0){ // only use the main antenna 0
+//	if (ant_tmp == 0){ // only use the main antenna 0
 		rx_status->adapter[adapter_no].current_signal_dbm = dbm_tmp;
-	}
+//	}
 	rx_status->adapter[adapter_no].received_packet_cnt++;
 	rx_status->last_update = time(NULL);
 	//dbm_tmp = 0;
