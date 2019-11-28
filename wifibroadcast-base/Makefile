@@ -10,7 +10,7 @@ all: rx_rc_telemetry_buf rx rx_rc_telemetry rssirx rssitx tx_rawsock tx_telemetr
 rx: rx.o lib.o radiotap.o fec.o
 	gcc -o $@ $^ $(LDFLAGS)
 
-rx_rc_telemetry: rx_rc_telemetry.o lib.o radiotap.o
+rx_rc_telemetry: rx_rc_telemetry.o lib.o radiotap_rc.o
 	gcc -o $@ $^ $(LDFLAGS)
 
 rx_rc_telemetry_buf: rx_rc_telemetry_buf.o lib.o radiotap.o
