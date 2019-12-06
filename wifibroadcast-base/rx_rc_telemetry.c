@@ -16,7 +16,8 @@
 
 #include "lib.h"
 #include "wifibroadcast.h"
-#include "radiotap.h"
+#include "radiotap_rc.h"
+#include "radiotap_iter.h"
 #include <time.h>
 #include <sys/resource.h>
 #include <fcntl.h>        // serialport
@@ -31,6 +32,27 @@ typedef struct  {
 	int m_nAntenna;
 	int m_nRadiotapFlags;
 } __attribute__((packed)) PENUMBRA_RADIOTAP_DATA;
+
+
+static const struct radiotap_align_size align_size_000000_00[] = {
+	[0] = { .align = 1, .size = 4, },
+	[52] = { .align = 1, .size = 4, },
+};
+
+static const struct ieee80211_radiotap_namespace vns_array[] = {
+	{
+		.oui = 0x000000,
+		.subns = 0,
+		.n_bits = sizeof(align_size_000000_00),
+		.align_size = align_size_000000_00,
+	},
+};
+
+static const struct ieee80211_radiotap_vendor_namespaces vns = {
+	.ns = vns_array,
+	.n_ns = sizeof(vns_array)/sizeof(vns_array[0]),
+};
+
 
 
 int flagHelp = 0;
@@ -278,7 +300,7 @@ void process_packet(monitor_interface_t *interface, int adapter_no, int serialpo
 //  fprintf(stderr, "bytes: %d\n", bytes);
     if (bytes < 0) exit(1);
 
-    if (ieee80211_radiotap_iterator_init(&rti, (struct ieee80211_radiotap_header *)pu8Payload, ppcapPacketHeader->len) < 0) exit(1);
+    if (ieee80211_radiotap_iterator_init(&rti, (struct ieee80211_radiotap_header *)pu8Payload, ppcapPacketHeader->len, &vns) < 0) exit(1);
 
     while ((n = ieee80211_radiotap_iterator_next(&rti)) == 0) {
 	switch (rti.this_arg_index) {
