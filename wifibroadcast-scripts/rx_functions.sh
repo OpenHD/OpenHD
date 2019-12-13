@@ -93,7 +93,7 @@ function rx_function {
 				collect_errorlog
 				sleep 365d 
 				}
-				mkdir -p /video_tmp > /dev/null 2>&1
+				mkdir -p /video_tmp
 				mount -t vfat /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
 				tmessage "ERROR: Could not mount video storage on SDCARD!"
 				collect_errorlog
@@ -105,9 +105,9 @@ function rx_function {
 				tmessage "ERROR: Could not format video storage on SDCARD!"
 				collect_errorlog
 				sleep 365d 
-				}
-				e2fsck -p /dev/mmcblk0p3 > /dev/null 2>&1
-				mkdir -p /video_tmp > /dev/null 2>&1
+				}				
+				e2fsck -p /dev/mmcblk0p3 
+				mkdir -p /video_tmp 
 				mount -t ext4 /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
 				tmessage "ERROR: Could not mount video storage on SDCARD!"
 				collect_errorlog
@@ -120,7 +120,7 @@ function rx_function {
 		
 		VIDEOFILE=/video_tmp/videotmp.raw
 		echo "VIDEOFILE=/video_tmp/videotmp.raw" > /tmp/videofile
-		rm $VIDEOFILE > /dev/null 2>&1
+		rm $VIDEOFILE > /dev/null 2>&1		
     else
 		VIDEOFILE=/wbc_tmp/videotmp.raw
 		echo "VIDEOFILE=/wbc_tmp/videotmp.raw" > /tmp/videofile
