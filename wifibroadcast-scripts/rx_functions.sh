@@ -112,16 +112,17 @@ function rx_function {
 				mount -o remount,rw /dev/mmcblk0p2
 				mkdir -p /video_tmp > /dev/null 2>&1
 				mount -o remount,ro /dev/mmcblk0p2
-				mount -t ext4 /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
-				tmessage "ERROR: Could not mount video storage on SDCARD!"
-				collect_errorlog
-				sleep 365d
-				}				
+						
 			fi
 
 		fi
 
 		
+		mount -t ext4 /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
+				tmessage "ERROR: Could not mount video storage on SDCARD!"
+				collect_errorlog
+				sleep 365d
+				}		
 		VIDEOFILE=/video_tmp/videotmp.raw
 		echo "VIDEOFILE=/video_tmp/videotmp.raw" > /tmp/videofile
 		rm $VIDEOFILE > /dev/null 2>&1		
@@ -129,6 +130,7 @@ function rx_function {
 		VIDEOFILE=/wbc_tmp/videotmp.raw
 		echo "VIDEOFILE=/wbc_tmp/videotmp.raw" > /tmp/videofile
     fi
+
 
 
 	# tracker disabled
