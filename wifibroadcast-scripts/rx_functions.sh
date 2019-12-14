@@ -93,7 +93,9 @@ function rx_function {
 				collect_errorlog
 				sleep 365d 
 				}
+				mount -o remount,rw /dev/mmcblk0p2
 				mkdir -p /video_tmp
+				mount -o remount,ro /dev/mmcblk0p2
 				mount -t vfat /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
 				tmessage "ERROR: Could not mount video storage on SDCARD!"
 				collect_errorlog
@@ -106,13 +108,15 @@ function rx_function {
 				collect_errorlog
 				sleep 365d 
 				}				
-				e2fsck -p /dev/mmcblk0p3 
-				mkdir -p /video_tmp 
+				e2fsck -p /dev/mmcblk0p3 > /dev/null 2>&1
+				mount -o remount,rw /dev/mmcblk0p2
+				mkdir -p /video_tmp > /dev/null 2>&1
+				mount -o remount,ro /dev/mmcblk0p2
 				mount -t ext4 /dev/mmcblk0p3 /video_tmp > /dev/null 2>&1 || {
 				tmessage "ERROR: Could not mount video storage on SDCARD!"
 				collect_errorlog
 				sleep 365d
-				}
+				}				
 			fi
 
 		fi
