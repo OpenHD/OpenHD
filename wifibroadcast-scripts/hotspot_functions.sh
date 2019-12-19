@@ -61,7 +61,8 @@ function hotspot_check_function {
 	##OpenHD RemoteSettings android app
 	/home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9125 5116 5115 &
 
-
+        # used for QOpenHD when running on the ground pi itself
+        nice /home/pi/wifibroadcast-base/rssi_qgc_forward 127.0.0.1 5155 &
 
 
         #if [ "$TELEMETRY_UPLINK" == "msp" ]; then
