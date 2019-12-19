@@ -13,7 +13,7 @@ import subprocess
 from subprocess import call
 from tempfile import mkstemp
 from shutil import move
-from os import fdopen, remove
+from os import fdopen, remove, system
 from time import sleep
 import RPi.GPIO as GPIO
 import threading
@@ -31,6 +31,8 @@ RequestChangeSettings = bytearray(b'RequestChangeSettings')
 RequestChangeOSD = bytearray(b'RequestChangeOSD')
 RequestChangeJoystick = bytearray(b'RequestChangeJoystick')
 RequestChangeTxPower = bytearray(b'RequestChangeTxPower')
+RequestReboot = bytearray(b'RequestReboot')
+RequestShutdown = bytearray(b'RequestShutdown')
 
 wbc_settings_blacklist = [""]
 
@@ -373,6 +375,12 @@ while True:
         read_txpower_settings(complete_response)
         read_osd_settings(complete_response)
         read_joystick_settings(complete_response)
+    
+    if RequestReboot in data:
+        system('reboot')
+
+    if RequestShutdown in data:
+        system('shutdown -h -P now')
 
     print("received message:", data)
 
