@@ -120,40 +120,11 @@ case $TTY in
 			echo "Ethernet connection detected"
 			CARRIER=1
 			if nice pump -i eth0 --no-ntp -h $OHDHOSTNAME; then
-			    #ETHCLIENTIP=`ifconfig eth0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1`
-			    ETHCLIENTIP=`ip addr show eth0 | grep -Po 'inet \K[\d.]+'`
-			    # kill and pause OSD so we can safeley start wbc_status
-			    ps -ef | nice grep "osd" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-			    killall wbc_status > /dev/null 2>&1
-			    nice /home/pi/wifibroadcast-status/wbc_status "Ethernet connected. IP: $ETHCLIENTIP" 7 55 0
-			    pause_while # make sure we don't restart osd while in pause state
-			    OSDRUNNING=`pidof /tmp/osd | wc -w`
-			    if [ $OSDRUNNING  -ge 1 ]; then
-				echo "OSD already running!"
-			    else
-				killall wbc_status > /dev/null 2>&1
-				if [ "$CAM" == "0" ]; then # only (re-)start OSD if we are RX
-				    /tmp/osd >> /wbc_tmp/telemetrydowntmp.txt &
-				fi
-			    fi
 			    ping -n -q -c 1 1.1.1.1
 			else
 			    ps -ef | nice grep "pump -i eth0" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 			    nice ifconfig eth0 down
 			    echo "DHCP failed"
-			    ps -ef | nice grep "osd" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-			    killall wbc_status > /dev/null 2>&1
-			    nice /home/pi/wifibroadcast-status/wbc_status "ERROR: Could not acquire IP via DHCP!" 7 55 0
-			    pause_while # make sure we don't restart osd while in pause state
-			    OSDRUNNING=`pidof /tmp/osd | wc -w`
-			    if [ $OSDRUNNING  -ge 1 ]; then
-				echo "OSD already running!"
-			    else
-				killall wbc_status > /dev/null 2>&1
-				if [ "$CAM" == "0" ]; then # only (re-)start OSD if we are RX
-				    /tmp/osd >> /wbc_tmp/telemetrydowntmp.txt &
-				fi
-			    fi
 			fi
 		    else
 			echo "No ethernet connection detected"
