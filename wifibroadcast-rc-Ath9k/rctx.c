@@ -19,6 +19,7 @@
 #include <string.h>
 #include <getopt.h>
 #include "lib.h"
+#include <inttypes.h>
 
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -50,7 +51,14 @@ int IsTrimDone[8] =  { 0 };
 #ifdef JSSWITCHES  // 1 or 2 byte more for channels 9 - 16/24 as switches
 
 	static uint16_t *rcData = NULL;
-
+    static uint16_t lastValidCh0 = 1500; 
+	static uint16_t lastValidCh1 = 1500; 
+	static uint16_t lastValidCh2 = 1500; 
+	static uint16_t lastValidCh3 = 1500; 
+	static uint16_t lastValidCh4 = 1500; 
+	static uint16_t lastValidCh5 = 1500; 
+	static uint16_t lastValidCh6 = 1500; 
+	static uint16_t lastValidCh7 = 1500; 
 	uint16_t *rc_channels_memory_open(void) {
 
 		int fd = shm_open("/wifibroadcast_rc_channels", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
@@ -758,8 +766,47 @@ int main (int argc, char *argv[]) {
 		done = eventloop_joystick();
 //		fprintf(stderr, "eventloop_joystick\n");
 
-		if (counter % UPDATE_NTH_TIME == 0)
-                {
+		if (counter % UPDATE_NTH_TIME == 0) {
+			if (rcData[0] == 1000) {
+				rcData[0] = lastValidCh0;
+				//printf("Channel 1 currupt, replaced: " "%" PRIu16 "\n", rcData[0]);
+			}
+			if (rcData[1] == 1000) {
+				rcData[1] = lastValidCh1;
+				//printf("Channel 2 currupt, replaced: " "%" PRIu16 "\n", rcData[1]);
+			}
+			if (rcData[2] == 1000) {
+				rcData[2] = lastValidCh2;
+				//printf("Channel 3 currupt, replaced: " "%" PRIu16 "\n", rcData[2]);
+			}
+			if (rcData[3] == 1000) {
+				rcData[3] = lastValidCh3;
+				//printf("Channel 4 currupt, replaced: " "%" PRIu16 "\n", rcData[3]);
+			}
+			if (rcData[4] == 1000) {
+				rcData[4] = lastValidCh4;
+				//printf("Channel 5 currupt, replaced: " "%" PRIu16 "\n", rcData[4]);
+			}
+			if (rcData[5] == 1000) {
+				rcData[5] = lastValidCh5;
+				//printf("Channel 6 currupt, replaced: " "%" PRIu16 "\n", rcData[5]);
+			}
+			if (rcData[6] == 1000) {
+				rcData[6] = lastValidCh6;
+				//printf("Channel 7 currupt, replaced: " "%" PRIu16 "\n", rcData[6]);
+			}
+			if (rcData[7] == 1000) {
+				rcData[7] = lastValidCh7;
+				//printf("Channel 8 currupt, replaced: " "%" PRIu16 "\n", rcData[7]);
+			}
+			lastValidCh0 = rcData[0];
+			lastValidCh1 = rcData[1];
+			lastValidCh2 = rcData[2];
+			lastValidCh3 = rcData[3];
+			lastValidCh4 = rcData[4];
+			lastValidCh5 = rcData[5];
+			lastValidCh6 = rcData[6];
+			lastValidCh7 = rcData[7];
 			tmp = TrimChannel;
 			//fprintf(stderr, "TrimChannelPWMBefore: %d \n", rcData[tmp]);
 			CheckTrimChannel(tmp);
