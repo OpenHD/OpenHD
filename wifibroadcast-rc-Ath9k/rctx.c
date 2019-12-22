@@ -82,7 +82,7 @@ int IsTrimDone[8] =  { 0 };
 	return (uint16_t *)retval;
 	}
 #else
-	static uint16_t rcData[8]; // interval [1000;2000]
+	static uint16_t rcData[9]; // interval [1000;2000]
 #endif
 
 static SDL_Joystick *js;
