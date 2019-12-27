@@ -141,13 +141,15 @@ function mspdownlinktx_function {
 function uplinktx_function {
     # wait until video is running to make sure NICS are configured
     echo
-    echo -n "Waiting until video is running ..."
-    VIDEORXRUNNING=0
-    while [ $VIDEORXRUNNING -ne 1 ]; do
-		VIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
-		sleep 1
-		echo -n "."
-    done
+	if [ "$ENABLE_QOPENHD" != "Y" ]; then
+		echo -n "Waiting until video is running ..."
+		VIDEORXRUNNING=0
+		while [ $VIDEORXRUNNING -ne 1 ]; do
+			VIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
+			sleep 1
+			echo -n "."
+		done
+	fi
 	
     sleep 1
 	
@@ -202,15 +204,17 @@ function uplinktx_function {
 # runs on RX (ground pi)
 function mspdownlinkrx_function {
     echo
-    echo -n "Waiting until video is running ..."
-	
-    VIDEORXRUNNING=0
-	
-    while [ $VIDEORXRUNNING -ne 1 ]; do
-		sleep 0.5
-		VIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
-		echo -n "."
-	done
+    if [ "$ENABLE_QOPENHD" != "Y" ]; then
+		echo -n "Waiting until video is running ..."
+
+		VIDEORXRUNNING=0
+		
+		while [ $VIDEORXRUNNING -ne 1 ]; do
+			sleep 0.5
+			VIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
+			echo -n "."
+		done
+	fi
 	
     echo
     echo "Video running ..."

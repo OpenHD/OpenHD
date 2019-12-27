@@ -23,7 +23,11 @@ function tether_check_function {
 			nice pump -h wifibrdcast -i usb0 --no-dns --keep-up --no-resolvconf --no-ntp || {
 				echo "ERROR: Could not configure IP for USB tethering device!"
 				nice killall wbc_status > /dev/null 2>&1
-				nice /home/pi/wifibroadcast-status/wbc_status "ERROR: Could not configure IP for USB tethering device!" 7 55 0
+				if [ "$ENABLE_QOPENHD" == "Y" ]; then
+				    qstatus "ERROR: Could not configure IP for USB tethering device!" 5
+				else
+				    wbc_status "ERROR: Could not configure IP for USB tethering device!" 7 55 0 &
+				fi
 				collect_errorlog
 				sleep 365d
 			}

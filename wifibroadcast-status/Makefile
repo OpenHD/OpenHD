@@ -2,7 +2,7 @@ CPPFLAGS+= -I/opt/vc/include/ -I/opt/vc/include/interface/vcos/pthreads -I/opt/v
 LDFLAGS+= -lfreetype -lz
 LDFLAGS+=-L/opt/vc/lib/ -lbrcmGLESv2 -lbrcmEGL -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread -lrt -lm -lshapes
 
-all: wbc_status
+all: wbc_status qstatus
 
 %.o: %.c
 	gcc -c -o $@ $< $(CPPFLAGS)
@@ -11,7 +11,9 @@ all: wbc_status
 wbc_status: wbc_status.o
 	gcc -o $@ $^ $(LDFLAGS)
 
+qstatus: qstatus.o
+	gcc -o $@ $^
 
 clean:
-	rm -f wbc_status *.o *~
+	rm -f wbc_status qstatus *.o *~
 

@@ -10,16 +10,17 @@ function MAIN_RSSI_RX_FUNCTION {
 
 function rssirx_function {
     echo
-    echo -n "Waiting until video is running ..."
-	
-    VIDEORXRUNNING=0
-	
-    while [ $VIDEORXRUNNING -ne 1 ]; do
-        sleep 0.5
-        VIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
-        echo -n "."
-    done
-	
+    if [ "$ENABLE_QOPENHD" != "Y" ]; then
+        echo -n "Waiting until video is running ..."
+        
+        VIDEORXRUNNING=0
+        
+        while [ $VIDEORXRUNNING -ne 1 ]; do
+            sleep 0.5
+            VIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
+            echo -n "."
+        done
+	fi
     echo
     
 	# get NICS (exclude devices with wlanx)
