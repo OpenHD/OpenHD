@@ -51,14 +51,14 @@ int IsTrimDone[8] =  { 0 };
 #ifdef JSSWITCHES  // 1 or 2 byte more for channels 9 - 16/24 as switches
 
 	static uint16_t *rcData = NULL;
-    static uint16_t lastValidCh0 = 1500; 
-	static uint16_t lastValidCh1 = 1500; 
-	static uint16_t lastValidCh2 = 1500; 
-	static uint16_t lastValidCh3 = 1500; 
-	static uint16_t lastValidCh4 = 1500; 
-	static uint16_t lastValidCh5 = 1500; 
-	static uint16_t lastValidCh6 = 1500; 
-	static uint16_t lastValidCh7 = 1500; 
+    static uint16_t lastValidCh0 = AXIS0_INITIAL; 
+	static uint16_t lastValidCh1 = AXIS1_INITIAL; 
+	static uint16_t lastValidCh2 = AXIS2_INITIAL; 
+	static uint16_t lastValidCh3 = AXIS3_INITIAL; 
+	static uint16_t lastValidCh4 = AXIS4_INITIAL; 
+	static uint16_t lastValidCh5 = AXIS5_INITIAL; 
+	static uint16_t lastValidCh6 = AXIS6_INITIAL; 
+	static uint16_t lastValidCh7 = AXIS7_INITIAL; 
 	uint16_t *rc_channels_memory_open(void) {
 
 		int fd = shm_open("/wifibroadcast_rc_channels", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
