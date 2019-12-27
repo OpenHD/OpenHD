@@ -767,6 +767,7 @@ int main (int argc, char *argv[]) {
 //		fprintf(stderr, "eventloop_joystick\n");
 
 		if (counter % UPDATE_NTH_TIME == 0) {
+			#if defined(FIX_USB_JOYSTICK_INTERRUPT_QUIRK)
 			if (rcData[0] == 1000) {
 				rcData[0] = lastValidCh0;
 				//printf("Channel 1 currupt, replaced: " "%" PRIu16 "\n", rcData[0]);
@@ -807,6 +808,7 @@ int main (int argc, char *argv[]) {
 			lastValidCh5 = rcData[5];
 			lastValidCh6 = rcData[6];
 			lastValidCh7 = rcData[7];
+			#endif
 			tmp = TrimChannel;
 			//fprintf(stderr, "TrimChannelPWMBefore: %d \n", rcData[tmp]);
 			CheckTrimChannel(tmp);
