@@ -1307,7 +1307,7 @@ void draw_TOTAL_DIST(int gpsspeed, float pos_x, float pos_y, float scale){
     // get time passed since last rendering
     long time_diff = current_ts() - dist_ts;
     dist_ts = current_ts();
-    total_dist = total_dist + gpsspeed*(float)time_diff/3600000;
+    total_dist = total_dist + (gpsspeed*(float)time_diff/3600000);
  
     float text_scale = getWidth(2) * scale;
     VGfloat height_text = TextHeight(myfont, text_scale)+getHeight(0.3)*scale;
