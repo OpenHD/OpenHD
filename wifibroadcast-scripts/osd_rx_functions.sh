@@ -37,7 +37,7 @@ function osdrx_function {
     while true; do
 		killall wbc_status > /dev/null 2>&1
 
-		if [ "$ENABLE_QOPENHD" != "Y"]; then
+		if [ "$ENABLE_QOPENHD" != "Y" ]; then
 			echo -n "Waiting until video is running ..."
 			VIDEORXRUNNING=0
 			

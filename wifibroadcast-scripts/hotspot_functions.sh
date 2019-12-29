@@ -1,7 +1,7 @@
 function MAIN_HOTSPOT_FUNCTION {
 	echo "================== CHECK HOTSPOT (tty8) ==========================="
 	if [ "$CAM" == "0" ]; then
-		if [ "$ENABLE_QOPENHD" != "Y"]; then
+		if [ "$ENABLE_QOPENHD" != "Y" ]; then
 			echo -n "Waiting until video is running ..."
 			HVIDEORXRUNNING=0
 		
