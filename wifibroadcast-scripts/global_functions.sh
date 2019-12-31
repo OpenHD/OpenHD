@@ -4,6 +4,10 @@ function tmessage {
     fi
 }
 
+function detect_memory {
+	TOTAL_MEMORY=$(cat /proc/meminfo | grep 'MemTotal' | awk '{print $2}')
+}
+
 function detect_hardware {
 	HARDWARE=$(cat /proc/cpuinfo | grep 'Revision' | awk '{print $3}')
 
