@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
+import pathlib
 import subprocess
 import sys
 from time import sleep
+import time
+
+import shutil
 
 import picamera
 #from pymavlink import mavutil
@@ -81,6 +86,18 @@ class OpenHDCamera:
         else:
             self.output = option.output
 
+        if option.record:
+            self.record_local = True
+            old_file = pathlib.Path(option.record)
+            try:
+                old_file.unlink()
+            except:
+                pass # we don't care, it might not exist
+            old_file.touch()
+
+        else:
+            self.record_local = False
+
         self.codec = option.codec
         self.profile = option.profile
         self.intra_period = option.intra_period
@@ -90,6 +107,13 @@ class OpenHDCamera:
         self.bitrate = option.bitrate
         print("Camera initialized")
         print(option)
+
+    def check_used_space(self, path):
+        total, used, free = shutil.disk_usage(path)
+
+        percent_used = float(used) / float(total) * 100.0
+
+        return percent_used
 
     def run(self):
         print("OpenHDCamera.run()")
@@ -101,18 +125,46 @@ class OpenHDCamera:
                                     intra_refresh=self.intra_refresh,
                                     inline_headers=self.inline_headers,
                                     sps_timing=self.sps_timing,
-                                    bitrate=self.bitrate)
+                                    bitrate=self.bitrate,
+                                    splitter_port=1)
+
+        if self.record_local:
+            percent_used = self.check_used_space(option.record)
+            if percent_used > 90.0:
+                self.record_local = False
+                print("Not enough space available to record locally")
+            else:
+                self.camera.start_recording(option.record, 'h264', resize=(option.width_record, option.height_record), splitter_port=2)
+                print("Recording to file " + option.record)
 
         print("Camera running")
 
         #self.event = mavutil.periodic_event(30)
+        
+        start = time.time()
 
         while True:
             #if self.event.trigger():
             #    self.mav.mav.openhd_camera_status_send(brightness=75)
             #msg = self.mav.recv_match(type='HEARTBEAT', blocking=True)
             #print(msg)
+
+            # this can be replaced with a pymavlink event trigger once pymavlink is available on the image
+            now = time.time()
+            elapsed = now - start
+            if self.record_local and elapsed > 1:
+                start = time.time()
+
+                percent_used = self.check_used_space(option.record)
+
+                if percent_used > 90.0:
+                    self.record_local = False
+                    print("Available space less than 10%, stopping video recording")
+                    self.camera.stop_recording(splitter_port=2)
             sleep(0.05)
+
+        self.camera.stop_recording(splitter_port=1)
+        self.camera.stop_recording(splitter_port=2)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Short sample app', add_help=False)
@@ -134,6 +186,11 @@ if __name__ == '__main__':
 
     parser.add_argument('--width', '-w', action="store", dest="width", type=int, default=1280)
     parser.add_argument('--height', '-h', action="store", dest="height", type=int, default=720)
+
+    parser.add_argument('--record', '-rec', action="store", dest="record", type=str)
+    parser.add_argument('--width_record', '-wr', action="store", dest="width_record", type=int, default=1280)
+    parser.add_argument('--height_record', '-hr', action="store", dest="height_record", type=int, default=720)
+
 
     parser.add_argument('--output', '-o', action="store", dest="output", type=str, default="-")
 
