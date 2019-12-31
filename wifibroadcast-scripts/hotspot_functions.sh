@@ -34,9 +34,9 @@ function hotspot_check_function {
 
          nice cat /root/telemetryfifo5 > /dev/pts/0 &
 		if [ "$ENABLE_QOPENHD" == "Y" ]; then
-            /home/pi/mavlink-router/mavlink-routerd -e 127.0.0.1:14550  /dev/pts/1:57600 &
+            /usr/local/bin/mavlink-routerd -e 127.0.0.1:14550  /dev/pts/1:57600 &
 		else
-            /home/pi/mavlink-router/mavlink-routerd /dev/pts/1:57600 &
+            /usr/local/bin/mavlink-routerd /dev/pts/1:57600 &
 		fi
         #we still can have USB phone connected anytime. So, start programs anyway
         #Maybe add code inside USB tethering file to check  HOTSPOT is off and phone connected - start....
