@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+import sys
+from time import sleep
+
+import picamera
+#from pymavlink import mavutil
+#mavutil.set_dialect('openhd')
+
+
+class OpenHDCamera:
+    def __init__(self, option):
+        print("OpenHDCamera.__init__()")
+        #self.mav = mavutil.mavlink_connection('udpin:localhost:14550', 
+        #                                      planner_format=False,
+        #                                      notimestamps=True,
+        #                                      robust_parsing=True,
+        #                                      source_system=255)
+
+
+        
+        self.camera = picamera.PiCamera(resolution=(option.width, option.height), framerate=option.framerate)
+
+        if option.iso:
+            self.camera.iso = option.iso
+
+        if option.awb_mode:
+            self.camera.awb_mode = option.awb_mode
+
+        if option.brightness:
+            self.camera.brightness = option.brightness
+        
+        if option.contrast:
+            self.camera.contrast = option.contrast
+
+        if option.saturation:
+            self.camera.saturation = option.saturation
+
+        if option.sharpness:
+            self.camera.sharpness = option.sharpness
+
+        if option.drc_strength:
+            self.camera.drc_strength = option.drc_strength
+        
+        if option.exposure_compensation:
+            self.camera.exposure_compensation = option.exposure_compensation
+
+        if option.exposure_mode:
+            self.camera.exposure_mode = option.exposure_mode
+
+        if option.hflip:
+            self.camera.hflip = option.hflip
+
+        if option.vflip:
+            self.camera.vflip = option.vflip
+
+        if option.meter_mode:
+            self.camera.meter_mode = option.meter_mode
+
+        if option.rotation:
+            self.camera.rotation = option.rotation
+
+        if option.sensor_mode:
+            self.camera.sensor_mode = option.sensor_mode
+
+        if option.shutter_speed:
+            self.camera.shutter_speed = option.shutter_speed
+
+        if option.video_stabilization:
+            self.camera.video_stabilization = option.video_stabilization
+
+        if option.zoom:
+            self.camera.zoom = option.zoom
+
+        if option.output == '-':
+            out_file = open('/dev/stdout', 'wb')
+            self.output = out_file
+
+        else:
+            self.output = option.output
+
+        self.codec = option.codec
+        self.profile = option.profile
+        self.intra_period = option.intra_period
+        self.intra_refresh = option.intra_refresh
+        self.inline_headers = option.inline_headers
+        self.sps_timing = option.sps_timing
+        self.bitrate = option.bitrate
+        print("Camera initialized")
+        print(option)
+
+    def run(self):
+        print("OpenHDCamera.run()")
+
+        self.camera.start_recording(self.output, 
+                                    format=self.codec.lower(), 
+                                    profile=self.profile,
+                                    intra_period=self.intra_period,
+                                    intra_refresh=self.intra_refresh,
+                                    inline_headers=self.inline_headers,
+                                    sps_timing=self.sps_timing,
+                                    bitrate=self.bitrate)
+
+        print("Camera running")
+
+        #self.event = mavutil.periodic_event(30)
+
+        while True:
+            #if self.event.trigger():
+            #    self.mav.mav.openhd_camera_status_send(brightness=75)
+            #msg = self.mav.recv_match(type='HEARTBEAT', blocking=True)
+            #print(msg)
+            sleep(0.05)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Short sample app', add_help=False)
+
+    parser.add_argument('--bitrate', '-b', action="store", dest="bitrate", type=int, default=4000000)
+    parser.add_argument('--framerate', '-fps', action="store", dest="framerate", type=int, default=30)
+    parser.add_argument('--intra', '-g', action="store", dest="intra_period", type=int, default=10)
+    parser.add_argument('--profile', '-pf', action="store", dest="profile", type=str, default="high")
+    parser.add_argument('--inline', '-ih', action="store_true", dest="inline_headers")
+    parser.add_argument('--irefresh', '-if', action="store", dest="intra_refresh", type=str)
+    parser.add_argument('--timeout', '-t', action="store", dest="timeout", type=int)
+    parser.add_argument('--nopreview', '-n', action="store_true", dest="nopreview")
+
+    parser.add_argument('--flush', '-fl', action="store_true", dest="flush")
+    parser.add_argument('--codec', '-cd', action="store", dest="codec", type=str, default="h264")
+    parser.add_argument('--level', '-lev', action="store", dest="level", type=int)
+    parser.add_argument('--spstimings', '-stm', action="store_true", dest="sps_timing", default=False)
+    parser.add_argument('--slices', '-sl', action="store_true", dest="slices", default=False)
+
+    parser.add_argument('--width', '-w', action="store", dest="width", type=int, default=1280)
+    parser.add_argument('--height', '-h', action="store", dest="height", type=int, default=720)
+
+    parser.add_argument('--output', '-o', action="store", dest="output", type=str, default="-")
+
+    parser.add_argument('--camselect', '-cs', action="store", dest="camselect", type=int)
+
+    parser.add_argument('--mode', '-md', action="store", dest="sensor_mode", type=int)
+
+
+    parser.add_argument('--sharpness', '-sh', action="store", dest="sharpness", type=int, choices=range(-100, 100))
+    parser.add_argument('--contrast', '-co', action="store", dest="contrast", type=int, choices=range(-100, 100))
+    parser.add_argument('--brightness', '-br', action="store", dest="brightness", type=int, choices=range(-100, 100))
+    parser.add_argument('--saturation', '-sa', action="store", dest="saturation", type=int, choices=range(-100, 100))
+
+    parser.add_argument('--ISO', '-ISO', action="store", dest="iso", type=int)
+
+    parser.add_argument('--vstab', '-vs', action="store_true", dest="video_stabilization")
+
+    parser.add_argument('-ev', action="store", dest="exposure_compensation", type=int, choices=range(-25, 25))
+
+    parser.add_argument('--exposure', '-ex', action="store", dest="exposure_mode", type=str)
+
+    parser.add_argument('--flicker', '-fli', action="store_true", dest="flicker")
+
+    parser.add_argument('--awb', '-awb', action="store", dest="awb_mode", type=str)
+
+    parser.add_argument('--imxfx', '-ifx', action="store", dest="image_effect", type=str)
+
+    parser.add_argument('--colfx', '-cfx', action="store", dest="colfx", type=str)
+
+    parser.add_argument('--metering', '-mm', action="store", dest="meter_mode", type=str, choices=["average","spot","backlit","matrix"])
+
+    parser.add_argument('--rotation', '-rot', action="store", dest="rotation", type=int, choices=range(0, 359))
+
+    parser.add_argument('--hflip', '-hf', action="store_true", dest="hflip")
+    parser.add_argument('--vflip', '-vf', action="store_true", dest="vflip")
+
+    parser.add_argument('--roi', '-roi', action="store", dest="zoom", type=str)
+
+    parser.add_argument('--shutter', '-ss', action="store", dest="shutter_speed", type=int)
+
+    # NOTE: check the type of arguments this actually takes
+    parser.add_argument('--awbgains', '-awbg', action="store", dest="awbgains", type=int)
+
+    parser.add_argument('--drc', '-drc', action="store", dest="drc_strength", type=str, choices=["off","low","med","high"])
+
+    parser.add_argument('--stats', '-st', action="store_true", dest="stats")
+
+    parser.add_argument('--annotate', '-a', action="store", dest="annotate")
+
+    parser.add_argument('--stereo', '-3d', action="store_true", dest="stereo")
+    parser.add_argument('--decimate', '-dec', action="store_true", dest="decimate")
+
+    parser.add_argument('--3dswap', '-3dswap', action="store_true", dest="3dswap")
+
+    parser.add_argument('--annotateex', '-ae', action="store", dest="annotateex")
+
+    parser.add_argument('--analoggain', '-ag', action="store", dest="analoggain", type=float)
+    parser.add_argument('--digitalgain', '-dg', action="store", dest="digitalgain", type=float)
+
+    option = parser.parse_args()
+
+    openhd_camera = OpenHDCamera(option)
+    openhd_camera.run()
