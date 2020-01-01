@@ -111,10 +111,16 @@ function mspdownlinktx_function {
     echo
     echo -n "Waiting until video TX is running ..."
     VIDEOTXRUNNING=0
+
+	if [ "$ENABLE_OPENHDVID" == "Y" ]; then
+		CAMERA_PROGRAM="openhdvid"
+	else
+		CAMERA_PROGRAM="raspivid"
+	fi
 	
     while [ $VIDEOTXRUNNING -ne 1 ]; do
 		sleep 0.5
-		VIDEOTXRUNNING=`pidof raspivid | wc -w`
+		VIDEOTXRUNNING=`ps -ef | nice grep "${CAMERA_PROGRAM}" | nice grep -v grep | awk '{print $2}' | wc -w`
 		echo -n "."
     done
 	
