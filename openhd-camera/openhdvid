@@ -17,7 +17,7 @@ import picamera
 
 class OpenHDCamera:
     def __init__(self, option):
-        print("OpenHDCamera.__init__()")
+        print("OpenHDCamera.__init__()", file=sys.stderr)
         #self.mav = mavutil.mavlink_connection('udpin:localhost:14550', 
         #                                      planner_format=False,
         #                                      notimestamps=True,
@@ -105,8 +105,7 @@ class OpenHDCamera:
         self.inline_headers = option.inline_headers
         self.sps_timing = option.sps_timing
         self.bitrate = option.bitrate
-        print("Camera initialized")
-        print(option)
+        print("Camera initialized", file=sys.stderr)
 
     def check_used_space(self, path):
         total, used, free = shutil.disk_usage(path)
@@ -116,7 +115,7 @@ class OpenHDCamera:
         return percent_used
 
     def run(self):
-        print("OpenHDCamera.run()")
+        print("OpenHDCamera.run()", file=sys.stderr)
 
         self.camera.start_recording(self.output, 
                                     format=self.codec.lower(), 
@@ -132,12 +131,12 @@ class OpenHDCamera:
             percent_used = self.check_used_space(option.record)
             if percent_used > 90.0:
                 self.record_local = False
-                print("Not enough space available to record locally")
+                print("Not enough space available to record locally", file=sys.stderr)
             else:
                 self.camera.start_recording(option.record, 'h264', resize=(option.width_record, option.height_record), splitter_port=2)
-                print("Recording to file " + option.record)
+                print("Recording to file " + option.record, file=sys.stderr)
 
-        print("Camera running")
+        print("Camera running", file=sys.stderr)
 
         #self.event = mavutil.periodic_event(30)
         
@@ -147,7 +146,7 @@ class OpenHDCamera:
             #if self.event.trigger():
             #    self.mav.mav.openhd_camera_status_send(brightness=75)
             #msg = self.mav.recv_match(type='HEARTBEAT', blocking=True)
-            #print(msg)
+            #print(msg, file=sys.stderr)
 
             # this can be replaced with a pymavlink event trigger once pymavlink is available on the image
             now = time.time()
@@ -159,7 +158,7 @@ class OpenHDCamera:
 
                 if percent_used > 90.0:
                     self.record_local = False
-                    print("Available space less than 10%, stopping video recording")
+                    print("Available space less than 10%, stopping video recording", file=sys.stderr)
                     self.camera.stop_recording(splitter_port=2)
             sleep(0.05)
 
