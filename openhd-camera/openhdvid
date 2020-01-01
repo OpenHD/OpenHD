@@ -14,6 +14,7 @@ import picamera
 #from pymavlink import mavutil
 #mavutil.set_dialect('openhd')
 
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb', 0)
 
 class OpenHDCamera:
     def __init__(self, option):
