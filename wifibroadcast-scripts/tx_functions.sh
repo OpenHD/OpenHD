@@ -319,6 +319,9 @@ NotIMX290=`/usr/bin/vcgencmd get_camera | nice grep -c detected=1`
 if [ "$NotIMX290" == "1" ];  then
     if [ "$ENABLE_OPENHDVID" == "Y" ]; then
 		CAMERA_PROGRAM="openhdvid"
+		if [ "$AIR_VIDEO_RECORDING" == "Y" ]; then
+			EXTRAPARAMS="${EXTRAPARAMS} --record ${AIR_VIDEO_RECORDING_PATH} -wr ${AIR_VIDEO_RECORDING_WIDTH} -hr ${AIR_VIDEO_RECORDING_HEIGHT}"
+		fi
 	else
 		CAMERA_PROGRAM="raspivid"
 	fi
@@ -360,6 +363,9 @@ echo $BITRATE_5
 if [ "$NotIMX290" == "1" ]; then
     if [ "$ENABLE_OPENHDVID" == "Y" ]; then
 		CAMERA_PROGRAM="openhdvid"
+		if [ "$AIR_VIDEO_RECORDING" == "Y" ]; then
+			EXTRAPARAMS="${EXTRAPARAMS} --record ${AIR_VIDEO_RECORDING_PATH} -wr ${AIR_VIDEO_RECORDING_WIDTH} -hr ${AIR_VIDEO_RECORDING_HEIGHT}"
+		fi
 	else
 		CAMERA_PROGRAM="raspivid"
 	fi
