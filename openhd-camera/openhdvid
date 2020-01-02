@@ -174,7 +174,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Short sample app', add_help=False)
 
     parser.add_argument('--bitrate', '-b', action="store", dest="bitrate", type=int, default=4000000)
-    parser.add_argument('--framerate', '-fps', action="store", dest="framerate", type=int, default=30)
+    parser.add_argument('--framerate', '-fps', action="store", dest="framerate", type=float, default=30)
     parser.add_argument('--intra', '-g', action="store", dest="intra_period", type=int, default=10)
     parser.add_argument('--profile', '-pf', action="store", dest="profile", type=str, default="high")
     parser.add_argument('--inline', '-ih', action="store_true", dest="inline_headers")
