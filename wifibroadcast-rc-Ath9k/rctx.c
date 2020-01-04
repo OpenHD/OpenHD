@@ -4,6 +4,7 @@
 // Licensed under GPL2
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>					
 #include <sys/resource.h>
 #include <SDL/SDL.h>
 #include <termios.h>
@@ -59,6 +60,15 @@ int IsTrimDone[8] =  { 0 };
 	static uint16_t lastValidCh5 = AXIS5_INITIAL; 
 	static uint16_t lastValidCh6 = AXIS6_INITIAL; 
 	static uint16_t lastValidCh7 = AXIS7_INITIAL; 
+
+	static uint16_t validButton1 = 0;
+	static uint16_t validButton2 = 0;
+	static uint16_t validButton3 = 0;
+	static uint16_t validButton4 = 0;
+	static uint16_t validButton5 = 0;
+	bool validButtons = false;
+	int discardCounter = 0;							  
+
 	uint16_t *rc_channels_memory_open(void) {
 
 		int fd = shm_open("/wifibroadcast_rc_channels", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
@@ -291,6 +301,7 @@ static int eventloop_joystick (void) {
 		case SDL_JOYBUTTONDOWN:
 			if (event.jbutton.button < JSSWITCHES) { // newer Taranis software can send 24 buttons - we use 16
 				rcData[8] |= 1 << event.jbutton.button;
+				validButton1 = rcData[8];			  
 			}
 			return 5;
 			break;
@@ -809,27 +820,40 @@ int main (int argc, char *argv[]) {
 			lastValidCh6 = rcData[6];
 			lastValidCh7 = rcData[7];
 			#endif
+
+#ifdef JSSWITCHES
+			validButton3 = validButton2;
+			validButton2 = validButton1;
+#endif
+
 			tmp = TrimChannel;
 			//fprintf(stderr, "TrimChannelPWMBefore: %d \n", rcData[tmp]);
 			CheckTrimChannel(tmp);
 		//	fprintf(stderr, "TrimChannelPWMAfter: %d \n", rcData[tmp]);
 //		    fprintf(stderr, "SendRC\n");
-		    for(k=0; k < TRANSMISSIONS; ++k)
-		    {
-				if(IsEncrypt == 1)
-				{
-					packMessage(seqno);
-					if (sendto(sRCEncrypt, messageRCEncrypt, 21, 0, (struct sockaddr *) &si_otherRCEncrypt, slenRCEncrypt) == -1)
-					{
-                		fprintf(stderr, "sendto() error");
-						exit(1);
-					}
-				}
-				else
-				{
-					sendRC(seqno,&td);
-				}
-				usleep(2000); // wait 2ms between sending multiple frames to lower collision probability
+		    for (k = 0; k < TRANSMISSIONS; ++k) {
+			    if (IsEncrypt == 1) {
+				    packMessage(seqno);
+				    if (sendto(sRCEncrypt, messageRCEncrypt, 21, 0, (struct sockaddr *) &si_otherRCEncrypt, slenRCEncrypt) == -1) {
+            			fprintf(stderr, "sendto() error");
+				        exit(1);
+				    }
+			    } else {
+					#ifdef JSSWITCHES
+				    if (validButton1 == validButton2 && validButton1 == validButton3 && validButton2 == validButton3) {
+					    sendRC(seqno, &td);
+					    validButton1 = rcData[8];
+					    //printf("OK  : " "%" PRIu16 "\n", rcData[8]);
+				    } else {
+					    discardCounter++;
+					    printf("RC Blocks discarded: " "%" PRIu16 "\n", discardCounter);
+					    //printf("FAIL: " "%" PRIu16 "\n", rcData[8]);
+				    }
+					#else
+					sendRC(seqno, &td);
+					#endif
+			    }
+			    usleep(2000); // wait 2ms between sending multiple frames to lower collision probability
 		    }
 
 		    seqno++;
