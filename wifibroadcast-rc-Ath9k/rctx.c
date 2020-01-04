@@ -834,36 +834,31 @@ int main (int argc, char *argv[]) {
 
 		    seqno++;
 			
-            if( Channel >= 1 && Channel <= 8 && IsBandSwitcherEnabled == 1)
-		    {
-			message2[0] = 0;
-			message2[1] = 0;
-			tmp = Channel;
-			tmp--;
-			message2[0] = rcData[tmp] & 0xFF;
-			message2[1] = rcData[tmp] >> 8;
+            if (Channel >= 1 && Channel <= 8 && IsBandSwitcherEnabled == 1) {
+			    message2[0] = 0;
+			    message2[1] = 0;
+			    tmp = Channel;
+			    tmp--;
+			    message2[0] = rcData[tmp] & 0xFF;
+			    message2[1] = rcData[tmp] >> 8;
 
-            if (sendto(s2, message2, 2, 0, (struct sockaddr *) &si_other2, slen2) == -1)
-			{
-				//printf("sendto() error");
-			}
+                if (sendto(s2, message2, 2, 0, (struct sockaddr *) &si_other2, slen2) == -1) {
+				    //printf("sendto() error");
+			    }
+            }
 
-                    }
+            if (ChannelIPCamera >= 1 && ChannelIPCamera <= 8 && IsIPCameraSwitcherEnabled == 1) {
+				message3[0] = 0;
+				message3[1] = 0;
+				tmp = ChannelIPCamera;
+                tmp--;
+                message3[0] = rcData[tmp] & 0xFF;
+                message3[1] = rcData[tmp] >> 8;
 
-                    if( ChannelIPCamera  >= 1 && ChannelIPCamera  <= 8 && IsIPCameraSwitcherEnabled == 1)
-                    {
-                        message3[0] = 0;
-                        message3[1] = 0;
-                        tmp = ChannelIPCamera;
-                        tmp--;
-                        message3[0] = rcData[tmp] & 0xFF;
-                        message3[1] = rcData[tmp] >> 8;
-
-                        if (sendto(s3, message3, 2, 0, (struct sockaddr *) &si_other3, slen3) == -1)
-                        {
-                                //printf("sendto() error");
-                        }
-                    }
+                if (sendto(s3, message3, 2, 0, (struct sockaddr *) &si_other3, slen3) == -1) {
+					//printf("sendto() error");
+                }
+            }
 		}
 		if (counter % JOY_CHECK_NTH_TIME == 0) {
 		    joy_connected=access(JOY_DEV, F_OK);
