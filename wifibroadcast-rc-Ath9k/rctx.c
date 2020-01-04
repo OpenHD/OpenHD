@@ -882,6 +882,37 @@ int main (int argc, char *argv[]) {
                 if (sendto(s3, message3, 2, 0, (struct sockaddr *) &si_other3, slen3) == -1) {
 					//printf("sendto() error");
                 }
+            } else if (ChannelIPCamera > 8 && IsIPCameraSwitcherEnabled == 1) {
+				/* 
+				 * This treats 2 consecutive button channels as a fake axis, if ChannelIPCamera is set to 9-24.
+				 * 
+				 */
+
+				message3[0] = 0;
+				message3[1] = 0;
+
+				uint8_t static_offset = 8;
+				// buttons are channel 9-24 in a uint16_t bitpattern in rcData[8], so we bitshift to get the correct bit 
+				// for the configure camera switching channel, along with the +1 channel as the 2nd button.
+				uint8_t button_a = 1 << (ChannelIPCamera - static_offset - 1);
+				uint8_t button_b = 1 << (ChannelIPCamera + 1 - static_offset - 1);
+
+				tmp = 8; //because rcData[0-7] holds Axis data and rcData[8] holds all Buttondata in a bitpattern
+				if (((rcData[tmp] & 0xFF) & button_a) == button_a && ((rcData[tmp] & 0xFF) & button_b) == button_b) { // BTNA=High & BTNB=High
+					message3[0] = 0xD0;	//decimal payload = 2000 => Hex 07D0
+					message3[1] = 0x07;
+				}
+				if (((rcData[tmp] & 0xFF) & button_a) == button_a && ((rcData[tmp] & 0xFF) & button_b) != button_b) { // BTNA=High & BTNB=Low
+					message3[0] = 0xDC;	//decimal payload = 1500 => Hex 05DC
+					message3[1] = 0x05;
+				}
+				if (((rcData[tmp] & 0xFF) & button_a) != button_a && ((rcData[tmp] & 0xFF) & button_b) != button_b) { // BTNA=Low & BTNB=Low
+					message3[0] = 0xE8;	//decimal payload = 1000 => Hex 03E8
+					message3[1] = 0x03;
+				}
+				if (sendto(s3, message3, 2, 0, (struct sockaddr *) &si_other3, slen3) == -1) {
+					//printf("sendto() error");
+                }
             }
 		}
 		if (counter % JOY_CHECK_NTH_TIME == 0) {
