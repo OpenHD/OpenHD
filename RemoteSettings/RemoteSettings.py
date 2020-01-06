@@ -303,6 +303,13 @@ while True:
                 subprocess.check_call(['/usr/local/bin/txpower_atheros',  filter ])
         except Exception as e:
             print("TxPowerGround except: " + str(e) )
+        try:
+            if VariableNamAndData.startswith('HOTSPOT_TXPOWER=') == True:
+                splitResult = VariableNamAndData.split("=")
+                filter = re.sub("\D", "", splitResult[1])
+                subprocess.check_call(['/sbin/iw', "dev", "wifihotspot0", "set", "txpower", "fixed", filter ])
+        except Exception as e:
+            print("HOTSPOT_TXPOWER except: " + str(e) )
         ConfirmSave(VariableNameReport)
         complete_response = {}
         read_wbc_settings(complete_response)
