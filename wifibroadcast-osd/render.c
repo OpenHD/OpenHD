@@ -32,7 +32,7 @@ long long amps_ts;
 long long dist_ts; 
 long long time_ts;
 float total_amps; 
-float total_dist; 
+double total_dist; 
 float total_time;
 
 int width, height;
