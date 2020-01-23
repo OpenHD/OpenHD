@@ -136,10 +136,12 @@ function check_camera_attached {
         		grepRet=$?
         		if [[ $grepRet -eq 0 ]] ; then
 				echo  "1" > /tmp/cam
+				IMX290="1"
 				rm /tmp/CameraNotDetected
 				CAM="1"
 		        else
 				echo  "0" > /tmp/cam
+				IMX290="0"
 			fi
 		else # else we are TX ...
 			touch /tmp/TX
