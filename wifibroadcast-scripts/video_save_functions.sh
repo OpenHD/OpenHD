@@ -162,14 +162,18 @@ function save_function {
 				echo "Creating video save path $VIDEO_SAVE_PATH.. "
 				mkdir /media/usb$VIDEO_SAVE_PATH
 			fi
+
+			if [ -z "${VIDEO_SAVE_FORMAT}" ]; then
+				VIDEO_SAVE_FORMAT=avi
+			fi
 			
-			FILE_NAME_AVI=/media/usb$VIDEO_SAVE_PATH/video`ls /media/usb$VIDEO_SAVE_PATH | wc -l`.avi
-			echo "FILE_NAME_AVI: $FILE_NAME_AVI"
-			nice avconv -framerate $FPS -i $VIDEOFILE -vcodec copy $FILE_NAME_AVI > /dev/null 2>&1 &
-			AVCONVRUNNING=1
-			while [ $AVCONVRUNNING -eq 1 ]; do
-				AVCONVRUNNING=`pidof avconv | wc -w`
-				#echo "AVCONVRUNNING: $AVCONVRUNNING"
+			USB_VIDEO_FILE=/media/usb$VIDEO_SAVE_PATH/video`ls /media/usb$VIDEO_SAVE_PATH | wc -l`.${VIDEO_SAVE_FORMAT}
+			echo "USB_VIDEO_FILE: $USB_VIDEO_FILE"
+			nice ffmpeg -framerate $FPS -i $VIDEOFILE -c:v copy $USB_VIDEO_FILE > /dev/null 2>&1 &
+			FFMPEGRUNNING=1
+			while [ $FFMPEGRUNNING -eq 1 ]; do
+				FFMPEGRUNNING=`pidof ffmpeg | wc -w`
+				#echo "FFMPEGRUNNING: $FFMPEGRUNNING"
 				sleep 4
 				killall wbc_status > /dev/null 2>&1
 				if [ "$ENABLE_QOPENHD" == "Y" ]; then
