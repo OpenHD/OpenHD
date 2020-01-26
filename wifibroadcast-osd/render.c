@@ -971,9 +971,17 @@ void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_
     float ms = (float)injection_time / 1000;
 
     if (cts == 0) {
-    sprintf(buffer, "%.1f (%.1f)", mbit_tx, mbit_measured);
+        if (mbit_measured == 0) {
+            sprintf(buffer, "%.1f (-)", mbit_tx);
+        } else {
+            sprintf(buffer, "%.1f (%.1f)", mbit_tx, mbit_measured);
+        }
     } else {
-    sprintf(buffer, "%.1f (%.1f) CTS", mbit_tx, mbit_measured);
+        if (mbit_measured == 0) {
+            sprintf(buffer, "%.1f (-) CTS", mbit_tx);
+        } else {
+            sprintf(buffer, "%.1f (%.1f) CTS", mbit_tx, mbit_measured);
+        }
     }
     Text(getWidth(pos_x)-width_value-width_symbol, getHeight(pos_y)-height_text_small, buffer, myfont, text_scale*0.6);
 

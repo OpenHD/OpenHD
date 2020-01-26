@@ -546,7 +546,7 @@ int main (int argc, char *argv[]) {
 	int bitrate_measured_kbit;
 	pFile = fopen ("/tmp/bitrate_measured_kbit","r");
 	if(NULL == pFile) {
-    	    perror("ERROR: Could not open /tmp/measured_kbit");
+    	    perror("ERROR: Could not open /tmp/bitrate_measured_kbit");
     	    exit(EXIT_FAILURE);
 	}
 	fscanf(pFile, "%i\n", &bitrate_measured_kbit);
