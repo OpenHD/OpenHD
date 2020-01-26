@@ -1004,12 +1004,12 @@ void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_
     #else
     TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y),"ﵴ", osdicons, text_scale * 0.8);
     #endif
-    if (mbit > mbit_measured*mbit_warn) {
+    if (mbit_measured != 0 && mbit > mbit_measured*mbit_warn) {
         Stroke(COLOR_WARNING); //red
-    Fill(COLOR_WARNING); 
-    } else if (mbit > mbit_measured*mbit_caution) {
+        Fill(COLOR_WARNING); 
+    } else if (mbit_measured != 0 && mbit > mbit_measured*mbit_caution) {
         Stroke(COLOR_CAUTION); //yellow
-    Fill(COLOR_CAUTION); 
+        Fill(COLOR_CAUTION); 
     } else {    
         Fill(COLOR); //normal
         Stroke(OUTLINECOLOR);
