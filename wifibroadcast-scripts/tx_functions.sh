@@ -192,6 +192,8 @@ function tx_function {
 			echo "$BITRATE_MEASURED_KBIT kBit/s * $BITRATE_PERCENT% = $BITRATE_KBIT kBit/s video bitrate"
 		else
 			BITRATE=$(($VIDEO_BITRATE*1000))
+			BITRATE_MEASURED_KBIT=0
+			BITRATE_KBIT=${VIDEO_BITRATE}
 			echo "Using fixed bitrate: $VIDEO_BITRATE kBit"
 		fi
 	else
