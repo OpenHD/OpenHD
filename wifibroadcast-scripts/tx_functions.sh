@@ -191,10 +191,10 @@ function tx_function {
 			BITRATE_MEASURED_KBIT=$((BITRATE_MEASURED/1000))
 			echo "$BITRATE_MEASURED_KBIT kBit/s * $BITRATE_PERCENT% = $BITRATE_KBIT kBit/s video bitrate"
 		else
-			BITRATE=$(($VIDEO_BITRATE*1000*1000))
-			BITRATE_KBIT=$(($VIDEO_BITRATE*1000))
+			BITRATE=$(python -c "print(int(${VIDEO_BITRATE}*1000*1000))")
+			BITRATE_KBIT=$(python -c "print(int(${VIDEO_BITRATE}*1000))")
 			BITRATE_MEASURED_KBIT=0
-			echo "Using fixed bitrate: $VIDEO_BITRATE kBit"
+			echo "Using fixed bitrate: $VIDEO_BITRATE MBit"
 		fi
 	else
 		BITRATE=$((1000*1000))
