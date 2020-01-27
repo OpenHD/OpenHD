@@ -30,6 +30,10 @@ echo "-------------------------------------"
 echo "SETTINGS FILE: $CONFIGFILE"
 echo "-------------------------------------"
 
+
+autoenable_i2c_vc
+
+
 # Set the wifi parameters based on the selected datarate
 datarate_to_wifi_settings
 

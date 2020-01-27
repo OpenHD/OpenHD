@@ -82,6 +82,47 @@ function detect_hardware {
 		echo "This pi model is $MODEL..."
 }
 
+# If an imx290 is connected but i2c_vc is not on, we must immediately enable
+# it and reboot. This should not add more than a few seconds to the air boot 
+# time and only needs to be done once, but the camera won't work without it
+function autoenable_i2c_vc {
+	if [ "$AUTO_I2C_VC" != "Y" ]; then
+		return
+	fi
+
+	# only run this on tty1
+	if [ "$TTY" != "/dev/tty1" ]; then
+		return
+	fi
+
+	# only run if there's actually a camera connected
+	if [ "$CAM" == "0" ]; then
+		return
+	fi
+
+
+	# check if imx290 is found
+	if [ "$IMX290" == "1" ]; then
+		I2C_VC_ENABLED=$(cat /boot/config.txt | grep "^dtparam=i2c_vc" | wc -l)
+		if [ $I2C_VC_ENABLED == "0" ]; then
+			I2C_VC_DISABLED=$(cat /boot/config.txt | grep "^#dtparam=i2c_vc" | wc -l)
+			
+			mount -o remount,rw /boot
+			if [ $I2C_VC_DISABLED == "1" ]; then
+				# it's present but disabled, we can use sed it to enable it in-place
+				sed -i 's/^#dtparam=i2c_vc.*/dtparam=i2c_vc=on/g' /boot/config.txt
+			else
+				# it's not in the file at all so we'll have to add it manually, but at the end of the
+				# file with an [all] section to ensure that the setting applies to ever model in case
+				# the config.txt file has sections like [pi3] [pi0] at the end.
+				echo "[all]" >> /boot/config.txt
+				echo "dtparam=i2c_vc=on" >> /boot/config.txt
+			fi
+			mount -o remount,ro /boot
+			reboot
+		fi
+	fi
+}
 
 function check_exitstatus {
     STATUS=$1
@@ -136,10 +177,12 @@ function check_camera_attached {
         		grepRet=$?
         		if [[ $grepRet -eq 0 ]] ; then
 				echo  "1" > /tmp/cam
+				IMX290="1"
 				rm /tmp/CameraNotDetected
 				CAM="1"
 		        else
 				echo  "0" > /tmp/cam
+				IMX290="0"
 			fi
 		else # else we are TX ...
 			touch /tmp/TX
