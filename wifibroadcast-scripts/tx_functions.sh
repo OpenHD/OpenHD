@@ -9,12 +9,12 @@ function tx_function {
     i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
     grepRet=$?
     if [[ $grepRet -eq 0 ]] ; then
-             echo  "1" > /tmp/imx290
-    	 cd /home/pi/raspberrypi/i2c_cmd_v2/i2c_v2/
-        	/home/pi/raspberrypi/i2c_cmd_v2/i2c_v2/veye_mipi_290_i2c.sh -w -f wdrmode -p1 $IMX290_wdrmode > /tmp/imx290log
-       		/home/pi/raspberrypi/i2c_cmd_v2/i2c_v2/veye_mipi_290_i2c.sh -w -f mirrormode -p1 $IMX290_mirrormode >> /tmp/imx290log
-        	/home/pi/raspberrypi/i2c_cmd_v2/i2c_v2/veye_mipi_290_i2c.sh -w -f denoise -p1 $IMX290_denoise >> /tmp/imx290log
- 
+        echo  "1" > /tmp/imx290
+        IMX290="1"
+        cd /home/pi/raspberrypi/i2c_cmd_v2/i2c_v2/
+        /home/pi/raspberrypi/i2c_cmd_v2/i2c_v2/veye_mipi_290_i2c.sh -w -f wdrmode -p1 $IMX290_wdrmode > /tmp/imx290log
+        /home/pi/raspberrypi/i2c_cmd_v2/i2c_v2/veye_mipi_290_i2c.sh -w -f mirrormode -p1 $IMX290_mirrormode >> /tmp/imx290log
+        /home/pi/raspberrypi/i2c_cmd_v2/i2c_v2/veye_mipi_290_i2c.sh -w -f denoise -p1 $IMX290_denoise >> /tmp/imx290log
     fi
 
     if [ "$LoadFlirDriver" == "Y" ]; then
@@ -180,6 +180,22 @@ function tx_function {
 		UNDERVOLT=0
 		echo "0" > /tmp/undervolt
     fi
+
+	IsTC358743="0"
+	lsmod | grep "tc358743"
+	grepRet=$?
+	if [[ ${grepRet} -eq 0 ]] ; then
+		IsTC358743="1"
+	fi
+
+	# if a tc358743 is detected and framerate is 30fps, or an IMX290 camera is in use, cut bitrate in half
+	# this is a fix for an odd bug, it would be nice to find the real cause but this works for now
+	if [[ "${IsTC358743}" == "1" && "${FPS}" == "30" || "${IMX290}" == "1" ]]; then
+		BITRATE_PERCENT=$(python -c "print(${BITRATE_PERCENT}/2)")
+		if [ "${VIDEO_BITRATE}" != "auto" ]; then
+			BITRATE=$(python -c "print(${VIDEO_BITRATE}/2)")
+		fi
+	fi
 
     # if yes, we don't do the bitrate measuring to increase chances we "survive"
 	if [ "$UNDERVOLT" == "0" ]; then
