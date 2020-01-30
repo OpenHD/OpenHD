@@ -183,6 +183,7 @@ void usage(void) {
 	"-t <type>   Frame type to send. 0 = DATA short, 1 = DATA standard, 2 = RTS\n"
 	"-d <rate>   Data rate to send frames with. Currently only supported with Ralink cards. Choose 6,12,18,24,36 Mbit\n"
 	"-y <mode>   Transmission mode. 0 = send on all interfaces, 1 = send only on interface with best RSSI\n"
+	"-z          Start measurement for auto bandwidth\n"
 	"-M          Use 802.11N MCS modes: 0,1,2,3\n"
 	"-S          Use STBC. Only for 802.11N\n  0\1\n"
 	"-L          Use LDPC. Only for 802.11n and 8812AU 0\1\n"
@@ -349,11 +350,11 @@ int pb_transmit_packet(int seq_nr, uint8_t *packet_transmit_buffer, int packet_h
 
     if (best_adapter == 5) {
 	for(i=0; i<num_interfaces; ++i) {
-//	    if (write(socks[i], packet_transmit_buffer, plen) < 0 ) fprintf(stdout, "!");
+//	    if (write(socks[i], packet_transmit_buffer, plen) < 0 ) fprintf(stderr, "!");
 	    if (write(socks[i], packet_transmit_buffer, plen) < 0 ) return 1;
 	}
     } else {
-//	if (write(socks[best_adapter], packet_transmit_buffer, plen) < 0 ) fprintf(stdout, "!");
+//	if (write(socks[best_adapter], packet_transmit_buffer, plen) < 0 ) fprintf(stderr, "!");
 	if (write(socks[best_adapter], packet_transmit_buffer, plen) < 0 ) return 1;
     }
     return 0;
@@ -362,7 +363,7 @@ int pb_transmit_packet(int seq_nr, uint8_t *packet_transmit_buffer, int packet_h
 
 
 
-void pb_transmit_block(packet_buffer_t *pbl, int *seq_nr, int port, int packet_length, uint8_t *packet_transmit_buffer, int packet_header_len, int data_packets_per_block, int fec_packets_per_block, int num_interfaces, int param_transmission_mode, telemetry_data_t *td1) {
+void pb_transmit_block(packet_buffer_t *pbl, int *seq_nr, int port, int packet_length, uint8_t *packet_transmit_buffer, int packet_header_len, int data_packets_per_block, int fec_packets_per_block, int num_interfaces, int param_transmission_mode, telemetry_data_t *td1, int param_measure) {
 	int i;
 	uint8_t *data_blocks[MAX_DATA_OR_FEC_PACKETS_PER_BLOCK];
 	uint8_t fec_pool[MAX_DATA_OR_FEC_PACKETS_PER_BLOCK][MAX_USER_PACKET_LENGTH];
@@ -398,7 +399,7 @@ void pb_transmit_block(packet_buffer_t *pbl, int *seq_nr, int port, int packet_l
         		best_adapter = i;
     		    }
     		}
-//    		printf ("bestadapter: %d (%d dbm)\n",best_adapter, best_dbm);
+//    		printf(stderr, "bestadapter: %d (%d dbm)\n",best_adapter, best_dbm);
 	    } else {
 		best_adapter = 5; // set to 5 to let transmit packet function know it shall transmit on all interfaces
 	    }
@@ -416,7 +417,7 @@ void pb_transmit_block(packet_buffer_t *pbl, int *seq_nr, int port, int packet_l
 		    if (counterfec % 2 == 0) {
 			if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, fec_blocks[fi], packet_length,num_interfaces,param_transmission_mode,best_adapter)) td1->tx_status->injection_fail_cnt++;
 		    } else {
-//			   fprintf(stdout,"not transmitted\n");
+//			   fprintf(stderr, "not transmitted\n");
 		    }
 		    counterfec++;
 		}
@@ -432,16 +433,16 @@ void pb_transmit_block(packet_buffer_t *pbl, int *seq_nr, int port, int packet_l
 	took_last = took;
 	took = current_timestamp() - prev_time;
 
-//	if (took > 50) fprintf(stdout,"write took %lldus\n", took);
+//	if (took > 50) fprintf(stderr, "write took %lldus\n", took);
 	if (took > (packet_length * (data_packets_per_block + fec_packets_per_block)) / 1.5 ) { // we simply assume 1us per byte = 1ms per 1024 byte packet (not very exact ...)
-//	    fprintf(stdout,"\nwrite took %lldus skipping FEC packets ...\n", took);
+//	    fprintf(stderr, "\nwrite took %lldus skipping FEC packets ...\n", took);
 	    skipfec=4;
 	    td1->tx_status->skipped_fec_cnt = td1->tx_status->skipped_fec_cnt + skipfec;
 	}
 
-	if(block_cnt % 50 == 0) {
-	    fprintf(stdout,"\t\t%d blocks sent, injection time per block %lldus, %d fecs skipped, %d packet injections failed.          \r", block_cnt,td1->tx_status->injection_time_block,td1->tx_status->skipped_fec_cnt,td1->tx_status->injection_fail_cnt);
-	    fflush(stdout);
+	if(block_cnt % 50 == 0 && param_measure == 0) {
+    	fprintf(stderr,"\t\t%d blocks sent, injection time per block %lldus, %d fecs skipped, %d packet injections failed.          \r", block_cnt,td1->tx_status->injection_time_block,td1->tx_status->skipped_fec_cnt,td1->tx_status->injection_fail_cnt);
+		fflush(stderr);		
 	}
 
 	if (took < took_last) { // if we have a lower injection_time than last time, ignore
@@ -554,8 +555,23 @@ int main(int argc, char *argv[]) {
     int param_packet_type = 1;
     int param_data_rate = 18;
     int param_transmission_mode = 0;
+	int param_measure = 0;
 
-    printf("tx_rawsock (c)2017 by Rodizio. Based on wifibroadcast tx by Befinitiv. GPL2 licensed.\n");
+
+    // measurement variables
+    long long prev_time = 0;
+    long long now = 0;
+
+    int pcntnow = 0;
+    int pcntprev = 0;
+    int bitrate[9];
+    int i_bitrate = 0;
+    int measure_count = 0;
+    int bitrate_avg = 0;
+	// end measurement variables
+
+
+    fprintf(stderr, "tx_rawsock (c)2017 by Rodizio. Based on wifibroadcast tx by Befinitiv. GPL2 licensed.\n");
 
     while (1) {
 	int nOptionIndex;
@@ -564,7 +580,7 @@ int main(int argc, char *argv[]) {
 	    { 0, 0, 0, 0 }
 	};
 
-	int c = getopt_long(argc, argv, "h:r:f:p:b:m:t:d:y:M:S:L:", optiona, &nOptionIndex);
+	int c = getopt_long(argc, argv, "h:r:f:p:b:m:t:d:y:z:M:S:L:", optiona, &nOptionIndex);
 	if (c == -1) break;
 	switch (c) {
 	    case 0: // long option
@@ -595,6 +611,9 @@ int main(int argc, char *argv[]) {
 		break;
 	    case 'y': // transmission mode
 		param_transmission_mode = atoi(optarg);
+		break;
+		case 'z': // measurement mode
+		param_measure = atoi(optarg);
 		break;
             case 'M': //use 802.11N datarates
 		UseMCS = atoi(optarg);
@@ -718,14 +737,35 @@ int main(int argc, char *argv[]) {
 	    pcnt++;
 	    // check if this block is finished
 	    if(input.curr_pb == param_data_packets_per_block-1) {
-		pb_transmit_block(input.pbl, &(input.seq_nr), param_port, param_packet_length, packet_transmit_buffer, packet_header_length, param_data_packets_per_block, param_fec_packets_per_block, num_interfaces, param_transmission_mode, &td);
+		pb_transmit_block(input.pbl, &(input.seq_nr), param_port, param_packet_length, packet_transmit_buffer, packet_header_length, param_data_packets_per_block, param_fec_packets_per_block, num_interfaces, param_transmission_mode, &td, param_measure);
 		input.curr_pb = 0;
 	    } else {
 		input.curr_pb++;
 	    }
 	}
-    }
 
-    printf("ERROR: Broken socket!\n");
+		if (param_measure == 1) {
+			now = current_timestamp();
+			pcntnow = pcnt;
+
+			if (now - prev_time > 250000) {
+				prev_time = current_timestamp();
+				bitrate[i_bitrate] = ((pcntnow - pcntprev) * param_packet_length * 8) * 4;
+				pcntprev = pcnt;
+				measure_count++;
+				i_bitrate++;
+				if (measure_count == 9) {
+					// measure for 2 seconds (1st measurement is instant, thus 9 * 250ms)
+					bitrate_avg = (bitrate[2] + bitrate[3] + bitrate[4] + bitrate[5] + bitrate[6] + bitrate[7] + bitrate[8]) / 7; // do not use 1st and 2nd measurement, these are flawed
+					// for some reason, the above measurement yield about 5% too high bitrate, reduce it by 5% here
+					bitrate_avg = bitrate_avg * 0.95;
+					fprintf(stdout, "%d\n", bitrate_avg);
+					return 0;
+				}
+			}
+		}
+	}
+
+	printf("ERROR: Broken socket!\n");
     return (0);
 }
