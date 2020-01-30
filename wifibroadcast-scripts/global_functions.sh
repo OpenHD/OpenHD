@@ -82,27 +82,17 @@ function detect_hardware {
 		echo "This pi model is $MODEL..."
 }
 
-# If an imx290 is connected but i2c_vc is not on, we must immediately enable
-# it and reboot. This should not add more than a few seconds to the air boot 
-# time and only needs to be done once, but the camera won't work without it
+# If a /boot/i2c_vc exists, we check to see if i2c_vc is already enabled in
+# config.txt, and if not we enable it and reboot. This should not add more
+# than a few seconds to the air boot time, and only needs to be done once, 
+# but IMX290 and other 3rd party cameras won't work without it
 function autoenable_i2c_vc {
-	if [ "$AUTO_I2C_VC" != "Y" ]; then
-		return
-	fi
-
 	# only run this on tty1
 	if [ "$TTY" != "/dev/tty1" ]; then
 		return
 	fi
 
-	# only run if there's actually a camera connected
-	if [ "$CAM" == "0" ]; then
-		return
-	fi
-
-
-	# check if imx290 is found
-	if [ "$IMX290" == "1" ]; then
+	if [ -e "/boot/i2c_vc" ]; then
 		I2C_VC_ENABLED=$(cat /boot/config.txt | grep "^dtparam=i2c_vc" | wc -l)
 		if [ $I2C_VC_ENABLED == "0" ]; then
 			I2C_VC_DISABLED=$(cat /boot/config.txt | grep "^#dtparam=i2c_vc" | wc -l)
@@ -171,7 +161,7 @@ function check_camera_attached {
                 	echo "force boot as Air via GPIO"
                         CAM="1"
                 fi
-
+	    
 		if [ "$CAM" == "0" ]; then # if we are RX ...
 			i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
         		grepRet=$?

@@ -19,6 +19,7 @@ CONFIGFILE=`/root/wifibroadcast_misc/gpio-config.py`
 
 export PATH=/home/pi/wifibroadcast-status:${PATH}
 
+autoenable_i2c_vc
 
 # Check for the camera
 check_camera_attached
@@ -29,9 +30,6 @@ read_config_file
 echo "-------------------------------------"
 echo "SETTINGS FILE: $CONFIGFILE"
 echo "-------------------------------------"
-
-
-autoenable_i2c_vc
 
 
 # Set the wifi parameters based on the selected datarate
