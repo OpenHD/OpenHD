@@ -678,6 +678,7 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
       case 10: sprintf(buffer, "AUTO"); break;
       case 11: sprintf(buffer, "RTL"); break;
       case 12: sprintf(buffer, "LOIT"); break;
+      case 13: sprintf(buffer, "TAKE"); break;
       case 15: sprintf(buffer, "GUID"); break;
       case 16: sprintf(buffer, "INIT"); break;
       case 17: sprintf(buffer, "Q-STAB"); break;
@@ -769,6 +770,7 @@ void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
       case 10: sprintf(buffer, "[AUTO]"); break;
       case 11: sprintf(buffer, "[RTL]"); break;
       case 12: sprintf(buffer, "[LOIT]"); break;
+      case 13: sprintf(buffer, "[TAKE]"); break;
       case 15: sprintf(buffer, "[GUID]"); break;
       case 16: sprintf(buffer, "[INIT]"); break;
       case 17: sprintf(buffer, "Q-STAB"); break;
