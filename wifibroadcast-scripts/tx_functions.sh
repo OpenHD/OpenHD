@@ -218,7 +218,7 @@ function tx_function {
 		BITRATE=$((1000*1000))
 		BITRATE_KBIT=1000
 		BITRATE_MEASURED_KBIT=2000
-		echo "Using reduced bitrate: 1000 kBit due to undervoltage!"
+		echo "Using fixed $BITRATE_KBIT kBit/s video bitrate due to undervoltage!"
 	fi
 
 
@@ -248,6 +248,7 @@ function tx_function {
 				BITRATE=$((1000*1000))
 				BITRATE_KBIT=1000
 				BITRATE_MEASURED_KBIT=2000
+				echo "Using fixed $BITRATE_KBIT kBit/s video bitrate due to undervoltage!"
 			else # it was either over-temp or both undervolt and over-temp, we set undervolt to 0 anyway, since overtemp can be seen at the temp display on the rx
 				UNDERVOLT=0
 				echo "0" > /tmp/undervolt
