@@ -142,10 +142,6 @@ case $TTY in
     /dev/tty12) # tty for local interactive login
 	echo
 	if [ "$CAM" == "0" ]; then
-
-	#Turn text output back on for Groundpi. Other part is in cmdline.txt fbcon=map:2 vs 10
-	con2fbmap 1 0
-
 	    echo -n "Welcome to OpenHD"
 	    read -p "Press <enter> to login"
 	    killall osd
