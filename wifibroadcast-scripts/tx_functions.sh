@@ -212,7 +212,7 @@ function tx_function {
 			BITRATE=$(python -c "print(int(${VIDEO_BITRATE}*1000*1000))")
 			BITRATE_KBIT=$(python -c "print(int(${VIDEO_BITRATE}*1000))")
 			BITRATE_MEASURED_KBIT=0
-			echo "Using fixed bitrate: $VIDEO_BITRATE MBit"
+			echo "Using fixed $BITRATE_KBIT kBit/s video bitrate"
 		fi
 	else
 		BITRATE=$((1000*1000))
