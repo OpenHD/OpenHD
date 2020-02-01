@@ -127,10 +127,12 @@ function rx_function {
 		VIDEOFILE=/video_tmp/videotmp.raw
 		echo "VIDEOFILE=/video_tmp/videotmp.raw" > /tmp/videofile
 		rm $VIDEOFILE > /dev/null 2>&1
-    else
+	elif [ "$VIDEO_TMP" == "memory" ]; then
 		VIDEOFILE=/wbc_tmp/videotmp.raw
 		echo "VIDEOFILE=/wbc_tmp/videotmp.raw" > /tmp/videofile
-    fi
+	else
+		echo "Video save disabled"
+	fi
 
 
 	# tracker disabled
@@ -245,7 +247,9 @@ function rx_function {
 			ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 $DISPLAY_PROGRAM > /dev/null 2>&1 &
 		#fi
 
-		ionice -c 3 nice cat /root/videofifo3 >> $VIDEOFILE &
+		if [ "$VIDEO_TMP" != "none" ]; then
+			ionice -c 3 nice cat /root/videofifo3 >> $VIDEOFILE &
+		fi
 
 		if [ "$RELAY" == "Y" ]; then
 		        /root/wifibroadcast/sharedmem_init_tx
@@ -282,8 +286,11 @@ function rx_function {
 		IsFirstTime=1
 		#MYADDEND
 		
-		
-		ionice -c 1 -n 3 /home/pi/wifibroadcast-base/rx -p 0 -d 1 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH $NICS | ionice -c 1 -n 4 nice -n -10 tee >(ionice -c 1 -n 4 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo2 > /dev/null 2>&1) >(ionice -c 1 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo4 > /dev/null 2>&1) >(ionice -c 3 nice /home/pi/wifibroadcast-misc/ftee /root/videofifo3 > /dev/null 2>&1) | ionice -c 1 -n 4 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo1 > /dev/null 2>&1
+		if [ "$VIDEO_TMP" != "none" ]; then
+			ionice -c 1 -n 3 /home/pi/wifibroadcast-base/rx -p 0 -d 1 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH $NICS | ionice -c 1 -n 4 nice -n -10 tee >(ionice -c 1 -n 4 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo2 > /dev/null 2>&1) >(ionice -c 1 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo4 > /dev/null 2>&1) >(ionice -c 3 nice /home/pi/wifibroadcast-misc/ftee /root/videofifo3 > /dev/null 2>&1) | ionice -c 1 -n 4 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo1 > /dev/null 2>&1
+		else
+			ionice -c 1 -n 3 /home/pi/wifibroadcast-base/rx -p 0 -d 1 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH $NICS | ionice -c 1 -n 4 nice -n -10 tee >(ionice -c 1 -n 4 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo2 > /dev/null 2>&1) >(ionice -c 1 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo4 > /dev/null 2>&1) | ionice -c 1 -n 4 nice -n -10 /home/pi/wifibroadcast-misc/ftee /root/videofifo1 > /dev/null 2>&1
+		fi
 
 		RX_EXITSTATUS=${PIPESTATUS[0]}
 		check_exitstatus $RX_EXITSTATUS

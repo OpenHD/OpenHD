@@ -60,13 +60,15 @@ function save_function {
     ps -ef | nice grep "rx -p 0" | nice grep -v grep | awk '{print $2}' | xargs kill -9
     ps -ef | nice grep "ftee /root/videofifo" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 
-    # find out if video is on ramdisk or sd
-    source /tmp/videofile
-    echo "VIDEOFILE: $VIDEOFILE"
+    if [ "$VIDEO_TMP" != "none" ]; then
+        # find out if video is on ramdisk or sd
+        source /tmp/videofile
+        echo "VIDEOFILE: $VIDEOFILE"
 
-    # start re-play of recorded video ....
-    # nice /opt/vc/src/hello_pi/hello_video/hello_video.bin.player $VIDEOFILE $FPS &
-    nice /rootfs/home/pi/wifibroadcast-hello_video/hello_video.bin.player $VIDEOFILE $FPS &
+        # start re-play of recorded video ....
+        # nice /opt/vc/src/hello_pi/hello_video/hello_video.bin.player $VIDEOFILE $FPS &
+        nice /rootfs/home/pi/wifibroadcast-hello_video/hello_video.bin.player $VIDEOFILE $FPS &
+    fi
 
     killall wbc_status > /dev/null 2>&1
 	if [ "$ENABLE_QOPENHD" == "Y" ]; then
@@ -154,8 +156,7 @@ function save_function {
 			mkdir $DIR_NAME_SCREENSHOT
 			cp /wbc_tmp/screenshot* $DIR_NAME_SCREENSHOT > /dev/null 2>&1
 		fi
-
-		if [ -s "$VIDEOFILE" ]; then
+		if [ -s "$VIDEOFILE" ] && [ "$VIDEO_TMP" != "none" ]; then
 			if [ -d "/media/usb$VIDEO_SAVE_PATH" ]; then
 				echo "Video save path $VIDEO_SAVE_PATH found"
 			else
@@ -229,7 +230,9 @@ function save_function {
 
     #killall tracker
     # re-start video/telemetry recording
-    ionice -c 3 nice cat /root/videofifo3 >> $VIDEOFILE &
+    if [ "$VIDEO_TMP" != "none" ]; then
+        ionice -c 3 nice cat /root/videofifo3 >> $VIDEOFILE &
+    fi
     ionice -c 3 nice cat /root/telemetryfifo3 >> /wbc_tmp/telemetrydowntmp.raw &
 
     killall wbc_status > /dev/null 2>&1
