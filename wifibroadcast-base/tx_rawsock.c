@@ -405,24 +405,38 @@ void pb_transmit_block(packet_buffer_t *pbl, int *seq_nr, int port, int packet_l
 	    }
 
 	    if(di < data_packets_per_block) {
-		if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, data_blocks[di], packet_length,num_interfaces, param_transmission_mode,best_adapter)) td1->tx_status->injection_fail_cnt++;
-		seq_nr_tmp++;
-		di++;
+			if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, data_blocks[di], packet_length,num_interfaces, param_transmission_mode,best_adapter)) {
+				// only increment the injection fail count if we aren't measuring bandwidth
+				if (param_measure == 0) {
+				    td1->tx_status->injection_fail_cnt++;
+				}
+			}
+			seq_nr_tmp++;
+			di++;
 	    }
 
-	    if(fi < fec_packets_per_block) {
-		if (skipfec < 1) {
-		    if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, fec_blocks[fi], packet_length,num_interfaces,param_transmission_mode,best_adapter)) td1->tx_status->injection_fail_cnt++;
-		} else {
-		    if (counterfec % 2 == 0) {
-			if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, fec_blocks[fi], packet_length,num_interfaces,param_transmission_mode,best_adapter)) td1->tx_status->injection_fail_cnt++;
-		    } else {
-//			   fprintf(stderr, "not transmitted\n");
-		    }
-		    counterfec++;
-		}
-		seq_nr_tmp++;
-		fi++;
+	    if (fi < fec_packets_per_block) {
+			if (param_measure == 1) {
+				// don't skip FECs or increment the injection fail count when measuring bandwidth
+				pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, fec_blocks[fi], packet_length,num_interfaces,param_transmission_mode,best_adapter);
+			} else {
+				if (skipfec < 1) {
+					if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, fec_blocks[fi], packet_length,num_interfaces,param_transmission_mode,best_adapter)) {
+						td1->tx_status->injection_fail_cnt++;
+					}
+				} else {
+					if (counterfec % 2 == 0) {
+						if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, fec_blocks[fi], packet_length,num_interfaces,param_transmission_mode,best_adapter)) {
+							td1->tx_status->injection_fail_cnt++;
+						}
+					} else {
+						// fprintf(stderr, "not transmitted\n");
+					}
+					counterfec++;
+				}
+			}
+			seq_nr_tmp++;
+			fi++;
 	    }
 	    skipfec--;
 	}
