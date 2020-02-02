@@ -10,6 +10,7 @@
 ###############################################################################
 source global_functions.sh
 
+sudo systemctl stop zerotier-one
 
 TTY=`tty`
 #TTY="/dev/tty1"
