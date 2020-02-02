@@ -17,7 +17,7 @@ function osdtx_function {
     echo
     echo "nics configured, starting Downlink telemetry TX processes ..."
 
-    NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi`
+    NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v ztrf2varxz`
 
     echo "telemetry CTS: $TELEMETRY_CTS"
 
