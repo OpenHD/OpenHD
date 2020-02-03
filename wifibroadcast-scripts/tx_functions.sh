@@ -2,8 +2,8 @@ function tx_function {
     killall wbc_status > /dev/null 2>&1
 
     if [ "$LTE" == "Y" ]; then
-    	sudo systemctl start zerotier-one
-    	zerotier-cli join 1d71939404c3d2fd
+	source lte_functions.sh
+	lte_function
     fi
 
     if [ "$DEBUG" == "Y" ]; then
