@@ -6,13 +6,27 @@ if log.handlers:
     for handler in log.handlers:
         log.removeHandler(handler)
 
+logFile = '/tmp/illog.txt'
+file_handler = RotatingFileHandler(logFile, mode='a', maxBytes=5*1024*1024,
+                                 backupCount=1, encoding=None, delay=0)
+
 log_formatter = logging.Formatter('[%(asctime)s] {%(funcName)-15s:%(lineno)d} %(levelname)-8s - %(message)s','%m-%d %H:%M:%S')
+
+
+file_handler.setFormatter(log_formatter)
+file_handler.setLevel(logging.DEBUG)
+
+
+
 console = logging.StreamHandler()
 console.setFormatter(log_formatter)
+
+
 
 app_log = logging.getLogger('generic')
 log.setLevel(logging.DEBUG)
 log.addHandler(console)
+log.addHandler(file_handler)
 
 
 
@@ -32,7 +46,7 @@ RetryCountMD5 = 15
 FileSizeInt = 0
 SettingsFilePath = "/boot/openhd-settings-1.txt"
 SwitchToFreq = "0"
-DefaultCommunicateFreq = "2412"
+DefaultCommunicateFreq = "2484"
 
 SettingsFilePath = "/boot/openhd-settings-1.txt"
 TxPowerConfigFilePath="/etc/modprobe.d/ath9k_hw.conf"
@@ -73,7 +87,9 @@ if (input_state0 == True) and (input_state1 == True):
 def run_bash(stringa):
     devnull = open('/dev/null', 'w')
     try:
-        subprocess.Popen(stringa, stdout=devnull,shell=True)
+        #subprocess.call(stringa, shell=True)
+        os.system(stringa+'&')
+        #subprocess.Popen(stringa, stdout=devnull,shell=False)
         log.debug("runnig bash: {}".format(stringa))
         return True
     except Exception as e:
@@ -90,6 +106,7 @@ def SendData(MessageBuf):
         return False
 
 def InitUDPServer():
+    log.debug('InitUDPServer')
     global RecvSocket
     UDP_IP = ""
     try:
@@ -113,6 +130,7 @@ def RecvPacket():
 
 
 def RequestSettingsFile():
+    log.debug('RequestSettingsFile')
     #recv packet header: 6 bytes offset + data up to 1024. Max 1030 bytes
     InBuffer = ""
     offset = 0
@@ -167,6 +185,7 @@ def md5(fname):
        return False
 
 def RequestMd5FileSize():
+    log.debug('RequestMd5FileSize')
     global FileSizeInt
     FailCounter = 0
 
@@ -191,6 +210,7 @@ def RequestMd5FileSize():
     return False
 
 def NotifyGroundWithACK(message):
+    log.debug(message)
     SendData(message)
     result = RecvPacket()
     if result != False:
@@ -206,21 +226,25 @@ def MoveFile():
     os.system('cp /tmp/infile.txt /boot/openhd-settings-1.txt')
     os.system('sync')
     os.system('mount -o remount,ro /boot')
-    log.debug("copy file process completed.")
+    log.info("copy file process completed.")
 
 
 def StartSVPcomTx():
+    log.debug('StartSVPcomTx')
     return run_bash('/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -k 1 -n 1 -K /home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/tx.key -u {UDP_PORT_OUT} -p 92 -B 20 -M 0 {interface}'.format(
         UDP_PORT_OUT=UDP_PORT_OUT,
         interface=USER_SETTINGS['WlanName'])
         )
 
 def StartSVPcomRx():
-    return run_bash('/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_rx -k 1 -n 1 -K /home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/rx.key -c {IP_ADRRESS} -u {UDP_PORT_OUT} -p 93  {interface}'.format(
+    x=run_bash('/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_rx -k 1 -n 1 -K /home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/rx.key -c {IP_ADRRESS} -u {UDP_PORT_OUT} -p 93  {interface}'.format(
         IP_ADRRESS='127.0.0.1',
         UDP_PORT_OUT=UDP_PORT_OUT,
         interface=USER_SETTINGS['WlanName'])
         )
+    log.debug(x)
+    return x
+
 
 def StartConfigureWlanScript():
     return run_bash('/home/pi/RemoteSettings/Air/helper/ConfigureNicsAir.sh {DATARATE} {FREQ} single'.format(
@@ -239,24 +263,20 @@ def FindWlanToUseAir():
                     USER_SETTINGS['WlanName'] = dir
         if USER_SETTINGS['WlanName'] != "0":
             log.debug("Using WLAN with name: {}".format( USER_SETTINGS['WlanName']))
-            subprocess.check_call(['/sbin/iw', "dev", USER_SETTINGS['WlanName'] , "set", "freq", DefaultCommunicateFreq ])
-            return True
-        else:
-            return False
+            return run_bash('/sbin/iw dev {interface} set freq {freq}'.format(interface=USER_SETTINGS['WlanName'],freq=DefaultCommunicateFreq))
 
     except Exception as e:
         log.error(e)
         return False
 
 def ReturnWlanFreq():
+    log.debug('ReturnWlanFreq')
     if USER_SETTINGS['WlanName'] != "0":
         try:
             if USER_SETTINGS['FREQ'] == "0":
-                #subprocess.check_call(['/sbin/iw', "dev", USER_SETTINGS['WlanName'] , "set", "freq", "2472" ])
                 subprocess.check_call(['/home/pi/RemoteSettings/Air/SetWlanFreq.sh', USER_SETTINGS['WlanName'] , "2472" ])
                 log.debug("Can`t read frequency from config file. Frequency set to: 2472")
             else:
-                #subprocess.check_call(['/sbin/iw', "dev", USER_SETTINGS['WlanName'] , "set", "freq", USER_SETTINGS['FREQ'] ])
                 subprocess.check_call(['/home/pi/RemoteSettings/Air/SetWlanFreq.sh', USER_SETTINGS['WlanName'] , USER_SETTINGS['FREQ'] ])
                 log.debug("Frequency for WLAN: " + USER_SETTINGS['WlanName'] + " returned back to: " + USER_SETTINGS['FREQ'])
 
@@ -273,6 +293,7 @@ def ReadSettingsFromConfigFile():
                     if not line:
                         continue
                     USER_SETTINGS[line[0]] = str(line[1]).replace('\n', '')
+            log.debug(USER_SETTINGS)
             return True
     except Exception as e:
        log.error(e)
@@ -294,11 +315,14 @@ def InitSettings():
         USER_SETTINGS['TXMODE'] = "single"
 
 def ReadTxPowerAth9k_hw():
-    ####           if line.startswith("options ath9k_hw txpower") == True:
-    return True if 'TxPowerFromAth9k_hw' in USER_SETTINGS else False
+    x = True if 'TxPowerFromAth9k_hw' in USER_SETTINGS else False
+    log.debug(x)
+    return x
 
 def ReadTxPower():
-    return True if 'TxPowerGround' in USER_SETTINGS else False
+    x =  True if 'TxPowerGround' in USER_SETTINGS else False
+    log.debug(x)
+    return x
 
 def CheckTxPower():
     try:
@@ -344,6 +368,8 @@ def CleanAndExit():
     exit()
 
 #########################################################Start
+
+
 if __name__ == '__main__':
 
     if os.path.isfile("/tmp/ReadyToGo") == True:
@@ -352,15 +378,13 @@ if __name__ == '__main__':
 
     InitSettings()
 
-    if StartConfigureWlanScript() != False:
-        if FindWlanToUseAir() != False:
-            if StartSVPcomRx() != False:
-                log.debug("StartSVPcomRx")
-                if StartSVPcomTx() != False:
-                    log.debug("StartSVPcomTx")
+    if StartConfigureWlanScript():
+        if FindWlanToUseAir():
+            if StartSVPcomRx():
+                if StartSVPcomTx():
                     InitUDPServer()
                     MD5CheckSumGround = RequestMd5FileSize()
-                    if MD5CheckSumGround != False:
+                    if MD5CheckSumGround:
                         MD5CheckSumAirCurrent = md5(SettingsFilePath)
                         if MD5CheckSumGround == MD5CheckSumAirCurrent:
                             log.info("Air and Ground config files equal. No need in sync")
@@ -368,7 +392,7 @@ if __name__ == '__main__':
                             IsACK_RetryCounter = 0
                             for i in range(0,15):
                                 IsACK = NotifyGroundWithACK("NoNeedInSync")
-                                if IsACK == True:
+                                if IsACK:
                                     CleanAndExit()
                                     sleep(0.1)
                                     CleanAndExit()
@@ -389,15 +413,14 @@ if __name__ == '__main__':
                                                     log.debug("ACK received. ready to boot")
                                                     CleanAndExit()
                                                     break
-                                                    CleanAndExit()
-
-                                                else:
-                                                    log.debug("Downloaded file checksum not match to Ground. Retry...")
-
-
-                                            else:
-                                                log.debug("Failed to request ground MD5 config checksum. Current config file will be loaded.")
-                                        else:
-                                            log.debug("Faile to start /home/pi/RemoteSettings/Air/helper/ConfigureNicsAir.sh file")
-
                                             CleanAndExit()
+
+                                        else:
+                                            log.debug("Downloaded file checksum not match to Ground. Retry...")
+
+                    else:
+                        log.debug("Failed to request ground MD5 config checksum. Current config file will be loaded.")
+    else:
+        log.debug("Faile to start /home/pi/RemoteSettings/Air/helper/ConfigureNicsAir.sh file")
+
+    CleanAndExit()
