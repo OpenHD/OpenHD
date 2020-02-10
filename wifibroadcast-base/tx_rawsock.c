@@ -405,58 +405,74 @@ void pb_transmit_block(packet_buffer_t *pbl, int *seq_nr, int port, int packet_l
 	    }
 
 	    if(di < data_packets_per_block) {
-		if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, data_blocks[di], packet_length,num_interfaces, param_transmission_mode,best_adapter)) td1->tx_status->injection_fail_cnt++;
-		seq_nr_tmp++;
-		di++;
+			if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, data_blocks[di], packet_length,num_interfaces, param_transmission_mode,best_adapter)) {
+				// only increment the injection fail count if we aren't measuring bandwidth
+				if (param_measure == 0) {
+				    td1->tx_status->injection_fail_cnt++;
+				}
+			}
+			seq_nr_tmp++;
+			di++;
 	    }
 
-	    if(fi < fec_packets_per_block) {
-		if (skipfec < 1) {
-		    if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, fec_blocks[fi], packet_length,num_interfaces,param_transmission_mode,best_adapter)) td1->tx_status->injection_fail_cnt++;
-		} else {
-		    if (counterfec % 2 == 0) {
-			if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, fec_blocks[fi], packet_length,num_interfaces,param_transmission_mode,best_adapter)) td1->tx_status->injection_fail_cnt++;
-		    } else {
-//			   fprintf(stderr, "not transmitted\n");
-		    }
-		    counterfec++;
-		}
-		seq_nr_tmp++;
-		fi++;
+	    if (fi < fec_packets_per_block) {
+			if (param_measure == 1) {
+				// don't skip FECs or increment the injection fail count when measuring bandwidth
+				pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, fec_blocks[fi], packet_length,num_interfaces,param_transmission_mode,best_adapter);
+			} else {
+				if (skipfec < 1) {
+					if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, fec_blocks[fi], packet_length,num_interfaces,param_transmission_mode,best_adapter)) {
+						td1->tx_status->injection_fail_cnt++;
+					}
+				} else {
+					if (counterfec % 2 == 0) {
+						if (pb_transmit_packet(seq_nr_tmp, packet_transmit_buffer, packet_header_len, fec_blocks[fi], packet_length,num_interfaces,param_transmission_mode,best_adapter)) {
+							td1->tx_status->injection_fail_cnt++;
+						}
+					} else {
+						// fprintf(stderr, "not transmitted\n");
+					}
+					counterfec++;
+				}
+			}
+			seq_nr_tmp++;
+			fi++;
 	    }
 	    skipfec--;
 	}
 
-	block_cnt++;
-	td1->tx_status->injected_block_cnt++;
+	if (param_measure == 0) {
+		// we don't do any of this during a bandwidth measurement 
+		block_cnt++;
+		td1->tx_status->injected_block_cnt++;
 
-	took_last = took;
-	took = current_timestamp() - prev_time;
+		took_last = took;
+		took = current_timestamp() - prev_time;
 
-//	if (took > 50) fprintf(stderr, "write took %lldus\n", took);
-	if (took > (packet_length * (data_packets_per_block + fec_packets_per_block)) / 1.5 ) { // we simply assume 1us per byte = 1ms per 1024 byte packet (not very exact ...)
-//	    fprintf(stderr, "\nwrite took %lldus skipping FEC packets ...\n", took);
-	    skipfec=4;
-	    td1->tx_status->skipped_fec_cnt = td1->tx_status->skipped_fec_cnt + skipfec;
+		// if (took > 50) fprintf(stderr, "write took %lldus\n", took);
+		if (took > (packet_length * (data_packets_per_block + fec_packets_per_block)) / 1.5 ) { // we simply assume 1us per byte = 1ms per 1024 byte packet (not very exact ...)
+			// fprintf(stderr, "\nwrite took %lldus skipping FEC packets ...\n", took);
+			skipfec=4;
+			td1->tx_status->skipped_fec_cnt = td1->tx_status->skipped_fec_cnt + skipfec;
+		}
+
+		if(block_cnt % 50 == 0 && param_measure == 0) {
+			fprintf(stderr,"\t\t%d blocks sent, injection time per block %lldus, %d fecs skipped, %d packet injections failed.          \r", block_cnt,td1->tx_status->injection_time_block,td1->tx_status->skipped_fec_cnt,td1->tx_status->injection_fail_cnt);
+			fflush(stderr);		
+		}
+
+		if (took < took_last) { // if we have a lower injection_time than last time, ignore
+			took = took_last;
+		}
+
+		injection_time_now = current_timestamp();
+		if (injection_time_now - injection_time_prev > 220) {
+			injection_time_prev = current_timestamp();
+			td1->tx_status->injection_time_block = took;
+			took=0;
+			took_last=0;
+		}
 	}
-
-	if(block_cnt % 50 == 0 && param_measure == 0) {
-    	fprintf(stderr,"\t\t%d blocks sent, injection time per block %lldus, %d fecs skipped, %d packet injections failed.          \r", block_cnt,td1->tx_status->injection_time_block,td1->tx_status->skipped_fec_cnt,td1->tx_status->injection_fail_cnt);
-		fflush(stderr);		
-	}
-
-	if (took < took_last) { // if we have a lower injection_time than last time, ignore
-	    took = took_last;
-	}
-
-	injection_time_now = current_timestamp();
-	if (injection_time_now - injection_time_prev > 220) {
-	    injection_time_prev = current_timestamp();
-	    td1->tx_status->injection_time_block = took;
-	    took=0;
-	    took_last=0;
-	}
-
 
 	*seq_nr += data_packets_per_block + fec_packets_per_block;
 
