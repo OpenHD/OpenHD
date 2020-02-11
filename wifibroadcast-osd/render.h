@@ -41,7 +41,7 @@ void draw_total_signal(int8_t signal, int goodblocks, int badblocks, int packets
 void draw_card_signal(int8_t signal, int signal_good, int card, int adapter_cnt, int restart_count, int packets, int wrongcrcs, int type, int totalpackets, int totalpacketslost, float pos_x, float pos_y, float scale);
 void draw_uplink_signal(int8_t uplink_signal, int uplink_lostpackets, int8_t rc_signal, int rc_lostpackets, float pos_x, float pos_y, float scale);
 
-void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_t kbitrate_tx, uint32_t fecs_skipped, uint32_t injection_failed, long long injection_time, int armed, float pos_x, float pos_y, float scale, float mbit_warn, float mbit_caution, float declutter);
+void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_tx, uint16_t current_air_datarate_kbit, uint16_t kbitrate_measured_tx, double hw_datarate_mbit, uint32_t fecs_skipped, uint32_t injection_failed, long long injection_time,int armed, float pos_x, float pos_y, float scale, float mbit_warn, float mbit_caution, float declutter);
 void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_t temp_gnd, int armed, float pos_x, float pos_y, float scale, float load_warn, float load_caution, float temp_warn, float temp_caution, float declutter);
 void draw_message(int severity, char line1[30], char line2[30], char line3[30], float pos_x, float pos_y, float scale);
 

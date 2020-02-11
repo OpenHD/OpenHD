@@ -122,6 +122,21 @@ int main(int argc, char *argv[]) {
     long long prev_cpu_time = current_timestamp();
     long long delta = 0;
 
+
+
+    FILE *datarate_file = fopen("/tmp/DATARATE.txt", "r");
+    if (datarate_file == NULL) {
+        perror("ERROR: Could not open /tmp/DATARATE.txt");
+        exit(EXIT_FAILURE);
+    }
+
+    double datarate = 0.0;
+    fscanf(datarate_file, "%lf", &datarate);
+    fclose(datarate_file);
+
+    td.datarate = datarate;
+
+
     int cpuload_gnd = 0;
     int temp_gnd = 0;
     int undervolt_gnd = 0;

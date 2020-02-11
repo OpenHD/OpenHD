@@ -307,6 +307,7 @@ void status_memory_init(wifibroadcast_rx_status_t *s) {
 	s->tx_restart_cnt = 0;
 	s->wifi_adapter_cnt = 0;
 	s->kbitrate = 0;
+	s->current_air_datarate_kbit = 0;
 
 	int i;
 	for(i=0; i<8; ++i) {

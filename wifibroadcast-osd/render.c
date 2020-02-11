@@ -248,7 +248,7 @@ void render(telemetry_data_t_osd *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uin
 
 
 #ifdef KBITRATE
-    draw_kbitrate(td->rx_status_sysair->cts, td->rx_status->kbitrate, td->rx_status_sysair->bitrate_measured_kbit, td->rx_status_sysair->bitrate_kbit, td->rx_status_sysair->skipped_fec_cnt, td->rx_status_sysair->injection_fail_cnt,td->rx_status_sysair->injection_time_block, td->armed, KBITRATE_POS_X, KBITRATE_POS_Y, KBITRATE_SCALE * GLOBAL_SCALE, KBITRATE_WARN, KBITRATE_CAUTION, KBITRATE_DECLUTTER);
+    draw_kbitrate(td->rx_status_sysair->cts, td->rx_status->kbitrate, td->rx_status_sysair->bitrate_kbit, td->rx_status->current_air_datarate_kbit, td->rx_status_sysair->bitrate_measured_kbit, td->datarate, td->rx_status_sysair->skipped_fec_cnt, td->rx_status_sysair->injection_fail_cnt,td->rx_status_sysair->injection_time_block, td->armed, KBITRATE_POS_X, KBITRATE_POS_Y, KBITRATE_SCALE * GLOBAL_SCALE, KBITRATE_WARN, KBITRATE_CAUTION, KBITRATE_DECLUTTER);
 #endif
 
 
@@ -953,7 +953,7 @@ void draw_uplink_signal(int8_t uplink_signal, int uplink_lostpackets, int8_t rc_
 
 
 
-void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_t kbitrate_tx, uint32_t fecs_skipped, uint32_t injection_failed, long long injection_time,int armed, float pos_x, float pos_y, float scale, float mbit_warn, float mbit_caution, float declutter){
+void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_tx, uint16_t current_air_datarate_kbit, uint16_t kbitrate_measured_tx, double hw_datarate_mbit, uint32_t fecs_skipped, uint32_t injection_failed, long long injection_time,int armed, float pos_x, float pos_y, float scale, float mbit_warn, float mbit_caution, float declutter){
     
     Fill(COLOR);
     Stroke(OUTLINECOLOR);
@@ -971,21 +971,37 @@ void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_
     float mbit_measured = (float)kbitrate_measured_tx / 1000;
     float mbit_tx = (float)kbitrate_tx / 1000;
     float ms = (float)injection_time / 1000;
+    float air_rx_mbit = (float)current_air_datarate_kbit / 1000;
+    
+
+    if (air_rx_mbit / hw_datarate_mbit >= 0.75) {
+        Stroke(COLOR_WARNING); //red
+        Fill(COLOR_WARNING);
+    } else if (air_rx_mbit > mbit_measured) {
+        Stroke(COLOR_CAUTION); //yellow
+        Fill(COLOR_CAUTION);
+    } else {
+        Fill(COLOR);
+        Stroke(OUTLINECOLOR);
+    }
 
     if (cts == 0) {
         if (mbit_measured == 0) {
-            sprintf(buffer, "%.1f (-)", mbit_tx);
+            sprintf(buffer, "(%.1f/-/%.1f)", air_rx_mbit, hw_datarate_mbit);
         } else {
-            sprintf(buffer, "%.1f (%.1f)", mbit_tx, mbit_measured);
+            sprintf(buffer, "(%.1f/%.1f/%.1f)", air_rx_mbit, mbit_measured, hw_datarate_mbit);
         }
     } else {
         if (mbit_measured == 0) {
-            sprintf(buffer, "%.1f (-) CTS", mbit_tx);
+            sprintf(buffer, "(%.1f/-/%.1f) CTS", air_rx_mbit, hw_datarate_mbit);
         } else {
-            sprintf(buffer, "%.1f (%.1f) CTS", mbit_tx, mbit_measured);
+            sprintf(buffer, "(%.1f/%.1f/%.1f) CTS", air_rx_mbit, mbit_measured, hw_datarate_mbit);
         }
     }
+
     Text(getWidth(pos_x)-width_value-width_symbol, getHeight(pos_y)-height_text_small, buffer, myfont, text_scale*0.6);
+    Fill(COLOR);
+    Stroke(OUTLINECOLOR);
 
 //this is the reason for constant blinking of the cam icon
 
@@ -1020,10 +1036,11 @@ void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_measured_tx, uint16_
         Fill(COLOR_DECLUTTER);}
     } 
 
-    sprintf(buffer, "%.1f", mbit);
-    TextEnd(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
+    sprintf(buffer, "%.1f/", mbit);
+    TextEnd(getWidth(pos_x) + 20, getHeight(pos_y), buffer, myfont, text_scale);
 
-    Text(getWidth(pos_x), getHeight(pos_y), "Mbit", myfont, text_scale*0.6);
+    sprintf(buffer, "%.1f", mbit_tx);
+    Text(getWidth(pos_x) + 20, getHeight(pos_y), buffer, myfont, text_scale*0.6);
 
     Fill(COLOR);
     Stroke(OUTLINECOLOR);

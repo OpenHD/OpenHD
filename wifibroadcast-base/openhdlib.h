@@ -66,6 +66,7 @@ typedef struct {
 	uint32_t lost_per_block_cnt;
 	uint32_t tx_restart_cnt;
 	uint32_t kbitrate;
+	uint32_t current_air_datarate_kbit;
 	uint32_t wifi_adapter_cnt;
 	wifi_adapter_rx_status_t adapter[MAX_PENUMBRA_INTERFACES];
 } wifibroadcast_rx_status_t;
