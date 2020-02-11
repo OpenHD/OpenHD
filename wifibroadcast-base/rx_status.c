@@ -11,7 +11,7 @@
 #include <endian.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include "lib.h"
+#include "openhdlib.h"
 
 wifibroadcast_rx_status_t_rc *status_memory_open(char* shm_file, char* line) {
 	int fd;

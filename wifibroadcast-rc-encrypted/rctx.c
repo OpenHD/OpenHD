@@ -18,10 +18,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <getopt.h>
-#include "lib.h"
-
-
-
+#include "openhdlib.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -32,6 +29,10 @@
 
 
 #include "/tmp/rctx.h"
+
+
+wifibroadcast_rx_status_t *telemetry_wbc_status_memory_open(void);
+
 
 #define SERVER "127.0.0.1"
 #define BUFLEN 40   //Max length of buffer

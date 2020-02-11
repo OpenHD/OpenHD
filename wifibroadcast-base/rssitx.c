@@ -15,7 +15,7 @@
 #include <netinet/ether.h>
 #include <string.h>
 #include <getopt.h>
-#include "lib.h"
+#include "openhdlib.h"
 #include <inttypes.h>
 #include <stdbool.h>
 

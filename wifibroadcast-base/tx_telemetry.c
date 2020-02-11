@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/resource.h>
-#include "lib.h"
+#include "openhdlib.h"
 #include <netpacket/packet.h>
 #include <net/if.h>
 #include <netinet/ether.h>

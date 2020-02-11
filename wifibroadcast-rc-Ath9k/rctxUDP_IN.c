@@ -18,7 +18,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <getopt.h>
-#include "lib.h"
+#include "openhdlib.h"
 
 #include "/tmp/rctx.h"
 

@@ -18,9 +18,13 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <getopt.h>
-#include "lib.h"
+#include "openhdlib.h"
 
 #include "/tmp/rctx.h"
+
+
+wifibroadcast_rx_status_t *telemetry_wbc_status_memory_open(void);
+
 
 #define UPDATE_INTERVAL 2000 // read Joystick every 2 ms or 500x per second
 #define JOY_CHECK_NTH_TIME 400 // check if joystick disconnected every 400th time or 200ms or 5x per second

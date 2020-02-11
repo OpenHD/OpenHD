@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
     }
 
     fprintf(stderr,"OSD: Initializing sharedmem ...\n");
-    telemetry_data_t td;
+    telemetry_data_t_osd td;
     telemetry_init(&td);
     fprintf(stderr,"OSD: Sharedmem init done\n");
 

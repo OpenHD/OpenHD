@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #ifdef SMARTPORT
-void smartport_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
+void smartport_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
     static uint8_t s = 0;
     static uint8_t e = 0;
     static uint8_t tBuffer[7];
@@ -60,7 +60,7 @@ uint8_t u8CheckCrcSPORT( uint8_t *b ) {
 }
 
 
-void smartport_check(telemetry_data_t *td, uint8_t *b) {
+void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
     tSPortData tel;
 
     tel.id   = (uint16_t)b[1];

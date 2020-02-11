@@ -13,7 +13,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
-#include "lib.h"
+#include "openhdlib.h"
 
 #include <wiringPi.h>
 

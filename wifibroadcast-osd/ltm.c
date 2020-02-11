@@ -52,7 +52,7 @@ static enum _serial_state {
 }
 c_state = IDLE;
 
-int ltm_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
+int ltm_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
   int i;
   int render_data = 0;
   td->datarx++;
@@ -121,7 +121,7 @@ int ltm_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 
 // --------------------------------------------------------------------------------------
 // Decoded received commands
-int ltm_check(telemetry_data_t *td) {
+int ltm_check(telemetry_data_t_osd *td) {
   LTMreadIndex = 0;
   int render_data = 0;
 

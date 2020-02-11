@@ -113,7 +113,7 @@ void render_init() {
     amps_ts = dist_ts = time_ts = current_ts(); //wowi
 }
 
-void loopUpdate(telemetry_data_t *td) {
+void loopUpdate(telemetry_data_t_osd *td) {
     // Update fly time. Get time passed since last update
     long time_diff = current_ts() - time_ts;
     time_ts = current_ts();
@@ -133,7 +133,7 @@ if (td->speed>0)
     total_amps = total_amps + td->ampere*(float)time_diff/3600;
 }
 
-void render(telemetry_data_t *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t undervolt, int osdfps) {
+void render(telemetry_data_t_osd *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uint8_t undervolt, int osdfps) {
 
     // call loopUpdate to update stuff that should be updated even when particular elements are off (like total curent);
     loopUpdate(td);

@@ -3,8 +3,8 @@
 #ifdef LTM
 #include "telemetry.h"
 
-int ltm_read(telemetry_data_t *td, uint8_t *buf, int buflen);
-int ltm_check(telemetry_data_t *td);
+int ltm_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen);
+int ltm_check(telemetry_data_t_osd *td);
 
 #define LIGHTTELEMETRY_START1 0x24 //$ Header byte 1
 #define LIGHTTELEMETRY_START2 0x54 //T Header byte 2

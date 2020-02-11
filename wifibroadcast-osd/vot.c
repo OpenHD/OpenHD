@@ -152,7 +152,7 @@ uint16_t CalculateCRC(uint8_t * pPacket, uint8_t Size, uint16_t InitCRC)
 	return CRC;
 }
 
-void vot_read(telemetry_data_t *td, uint8_t *buf, uint8_t buflen) {
+void vot_read(telemetry_data_t_osd *td, uint8_t *buf, uint8_t buflen) {
   int i;
   uint8_t c;
   uint16_t cs;
@@ -199,7 +199,7 @@ return;
 
 // --------------------------------------------------------------------------------------
 // Decoded received commands 
-void vot_decode(telemetry_data_t *td) {
+void vot_decode(telemetry_data_t_osd *td) {
   int i;
   uint8_t  dummy8;
   uint16_t dummy16;
