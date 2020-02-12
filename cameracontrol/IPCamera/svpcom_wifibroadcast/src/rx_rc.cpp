@@ -45,29 +45,7 @@ extern "C"
 #include "wifibroadcast.hpp"
 #include "rx.hpp"
 
-#define	MAX_PENUMBRA_INTERFACES 8
-
-typedef struct {
-	uint32_t received_packet_cnt;
-	uint32_t wrong_crc_cnt;
-	int8_t current_signal_dbm;
-	int8_t type; // 0 = Atheros, 1 = Ralink
-	int signal_good;
-} wifi_adapter_rx_status_t;
-
-
-typedef struct {
-	time_t last_update;
-	uint32_t received_block_cnt;
-	uint32_t damaged_block_cnt;
-	uint32_t lost_packet_cnt;
-	uint32_t received_packet_cnt;
-	uint32_t lost_per_block_cnt;
-	uint32_t tx_restart_cnt;
-	uint32_t kbitrate;
-	uint32_t wifi_adapter_cnt;
-	wifi_adapter_rx_status_t adapter[MAX_PENUMBRA_INTERFACES];
-} wifibroadcast_rx_status_t_rc;
+#include "openhdlib.h"
 
 void status_memory_init_rc(wifibroadcast_rx_status_t_rc *s) {
 	s->received_block_cnt = 0;

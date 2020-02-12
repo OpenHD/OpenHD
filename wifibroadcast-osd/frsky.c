@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 
-int frsky_parse_buffer(frsky_state_t *state, telemetry_data_t *td, uint8_t *buf, int buflen) {
+int frsky_parse_buffer(frsky_state_t *state, telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
 	int new_data = 0;
 	int i;
 
@@ -50,7 +50,7 @@ int frsky_parse_buffer(frsky_state_t *state, telemetry_data_t *td, uint8_t *buf,
 	return new_data;
 }
 
-int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t *td) {
+int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
 	uint16_t data;
 	int new_data = 1;
 

@@ -7,7 +7,7 @@
 #include "telemetry.h"
 #include "osdconfig.h"
 
-void telemetry_init(telemetry_data_t *td) {
+void telemetry_init(telemetry_data_t_osd *td) {
 	td->validmsgsrx = 0;
 	td->datarx = 0;
 

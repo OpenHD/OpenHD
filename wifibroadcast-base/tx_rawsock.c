@@ -21,7 +21,7 @@
 #include <time.h>
 #include <sys/resource.h>
 #include "fec.h"
-#include "lib.h"
+#include "openhdlib.h"
 #include "wifibroadcast.h"
 #include <netpacket/packet.h>
 #include <net/if.h>

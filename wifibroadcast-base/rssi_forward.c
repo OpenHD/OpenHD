@@ -13,7 +13,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <arpa/inet.h>
-#include "lib.h"
+#include "openhdlib.h"
 
 typedef struct {
     uint32_t received_packet_cnt;

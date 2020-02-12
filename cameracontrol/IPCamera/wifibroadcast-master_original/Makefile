@@ -1,6 +1,6 @@
 
 _LDFLAGS := $(LDFLAGS) -lrt -lpcap -lsodium
-_CFLAGS := $(CFLAGS) -Wall -O2
+_CFLAGS := $(CFLAGS) -Wall -O2 -I/home/pi/wifibroadcast-base 
 
 all: rx tx keygen
 

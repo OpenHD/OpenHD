@@ -14,7 +14,7 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "lib.h"
+#include "openhdlib.h"
 #include "wifibroadcast.h"
 #include "radiotap_rc.h"
 #include "radiotap_iter.h"

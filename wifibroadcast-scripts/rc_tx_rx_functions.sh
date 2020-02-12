@@ -42,7 +42,7 @@ function rctx_function {
     fi
   
     
-    ionice -c 3 nice gcc -lrt -lwiringPi -lpcap rctx.c -o /tmp/rctx `sdl-config --libs` `sdl-config --cflags` || {
+    ionice -c 3 nice gcc -lrt -lwiringPi -lpcap -I/home/pi/wifibroadcast-base rctx.c -o /tmp/rctx `sdl-config --libs` `sdl-config --cflags` || {
 		echo "ERROR: Could not build RC, check joyconfig.txt!"
     }
 	

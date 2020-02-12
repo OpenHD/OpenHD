@@ -54,8 +54,8 @@ typedef struct {
 	uint8_t crc;
 	} tSPortData;
 
-void smartport_read(telemetry_data_t *td, uint8_t *buf, int buflen);
+void smartport_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen);
 uint8_t u8CheckCrcSPORT( uint8_t *t );
-void smartport_check(telemetry_data_t *td, uint8_t *t); // Frsky-specific
+void smartport_check(telemetry_data_t_osd *td, uint8_t *t); // Frsky-specific
 
 #endif

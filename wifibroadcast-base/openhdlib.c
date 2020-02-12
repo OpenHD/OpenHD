@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "lib.h"
+#include "openhdlib.h"
 
 void lib_init_packet_buffer(packet_buffer_t *p) {
 	assert(p != NULL);
