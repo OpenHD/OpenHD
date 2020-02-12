@@ -9,6 +9,7 @@
 typedef struct {
 	uint32_t validmsgsrx;
 	uint32_t datarx;
+	double datarate;
 
 	float voltage;
 	float ampere;

@@ -61,6 +61,8 @@ long long current_timestamp() {
 long long prev_time = 0;
 long long now = 0;
 int bytes_written = 0;
+int bytes_received = 0;
+long long current_air_datarate_ts = 0;
 
 int packets_missing;
 int packets_missing_last;
@@ -518,6 +520,16 @@ void process_packet(monitor_interface_t *interface, block_buffer_t *block_buffer
 //	rx_status->adapter[adapter_no].last_update = dbm_ts_now[adapter_no];
 //	fprintf(stderr,"lu[%d]: %lld\n",adapter_no,rx_status->adapter[adapter_no].last_update);
 //	rx_status->adapter[adapter_no].last_update = current_timestamp();
+
+	bytes_received = bytes_received + bytes;
+	long long now = current_timestamp();
+	if (now - current_air_datarate_ts > 500) {
+		double bits_received = (bytes_received * 8);
+		double bits_per_second = (bits_received / (now - current_air_datarate_ts)) * 1000.0;
+		rx_status->current_air_datarate_kbit = bits_per_second / 1024;
+		current_air_datarate_ts = now;
+		bytes_received = 0;
+	}
 
 	process_payload(pu8Payload, bytes, checksum_correct, block_buffer_list, adapter_no);
 }
