@@ -977,7 +977,7 @@ void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_tx, uint16_t current
     if (air_rx_mbit / hw_datarate_mbit >= 0.75) {
         Stroke(COLOR_WARNING); //red
         Fill(COLOR_WARNING);
-    } else if (air_rx_mbit > mbit_measured) {
+    } else if (mbit_measured != 0 && air_rx_mbit > mbit_measured) {
         Stroke(COLOR_CAUTION); //yellow
         Fill(COLOR_CAUTION);
     } else {
