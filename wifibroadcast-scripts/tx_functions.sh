@@ -201,13 +201,27 @@ function tx_function {
     # if yes, we don't do the bitrate measuring to increase chances we "survive"
 	if [ "$UNDERVOLT" == "0" ]; then
 		if [ "$VIDEO_BITRATE" == "auto" ]; then
-			echo -n "Measuring max. available bitrate .. "
-			BITRATE_MEASURED=$(cat /dev/zero | /home/pi/wifibroadcast-base/tx_rawsock -z 1 -p 77 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS)
-			echo "Measured: ${BITRATE_MEASURED}"
-			BITRATE=$((BITRATE_MEASURED*$BITRATE_PERCENT/100))
-			BITRATE_KBIT=$((BITRATE/1000))
-			BITRATE_MEASURED_KBIT=$((BITRATE_MEASURED/1000))
-			echo "$BITRATE_MEASURED_KBIT kBit/s * $BITRATE_PERCENT% = $BITRATE_KBIT kBit/s video bitrate"
+			echo "-----------------------------------------"
+			echo "Running bandwidth measurement...         "
+			echo "-----------------------------------------"
+			BANDWIDTH_MEASURED=$(cat /dev/zero | /home/pi/wifibroadcast-base/tx_rawsock -z 1 -p 77 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS)
+			BANDWIDTH_MEASURED_KBIT=$(python -c "print(int(${BANDWIDTH_MEASURED} / 1000.0))")
+			echo "Bandwidth available: ${BANDWIDTH_MEASURED_KBIT}Kbit/s"
+			
+			FEC_SIZE=$(python -c "print(${VIDEO_BLOCKS} + ${VIDEO_FECS})")
+			echo "Video/FEC ratio: ${VIDEO_BLOCKS}/${FEC_SIZE}"
+
+			AVAILABLE_VIDEO_BANDWIDTH=$(python -c "print(int(${BANDWIDTH_MEASURED} * (float(${VIDEO_BLOCKS}) / float(${FEC_SIZE}))))")
+			AVAILABLE_VIDEO_BANDWIDTH_KBIT=$(python -c "print(int(float(${AVAILABLE_VIDEO_BANDWIDTH}) / 1000.0))")
+			echo "Bandwidth available for video: ${AVAILABLE_VIDEO_BANDWIDTH_KBIT}Kbit/s"
+			
+			BITRATE=$(python -c "print(int(${AVAILABLE_VIDEO_BANDWIDTH} * ${BITRATE_PERCENT} / 100.0))")
+			BITRATE_KBIT=$(($BITRATE/1000))
+			BITRATE_MEASURED_KBIT=$(($BANDWIDTH_MEASURED/1000))
+			echo "Using average of $BITRATE_PERCENT% of available video bandwidth"
+			echo "-----------------------------------------"
+			echo "Final video bitrate: $BITRATE_KBIT kBit/s"
+			echo "-----------------------------------------"
 		else
 			BITRATE=$(python -c "print(int(${VIDEO_BITRATE}*1000*1000))")
 			BITRATE_KBIT=$(python -c "print(int(${VIDEO_BITRATE}*1000))")
