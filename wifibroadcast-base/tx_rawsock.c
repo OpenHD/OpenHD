@@ -766,7 +766,8 @@ int main(int argc, char *argv[]) {
 
 			if (now - prev_time > 250000) {
 				prev_time = current_timestamp();
-				bitrate[i_bitrate] = ((pcntnow - pcntprev) * param_packet_length * 8) * 4;
+				int fec_size = param_data_packets_per_block + param_fec_packets_per_block;
+				bitrate[i_bitrate] = ((pcntnow - pcntprev) * (param_packet_length * fec_size / param_data_packets_per_block) * 8) * 4;
 				pcntprev = pcnt;
 				measure_count++;
 				i_bitrate++;
