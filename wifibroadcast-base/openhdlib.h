@@ -5,6 +5,7 @@
 #include "wifibroadcast.h"
 
 #define	MAX_PENUMBRA_INTERFACES 8
+#define SWITCH_COUNT 16
 
 
 typedef struct {

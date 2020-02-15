@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define JSSWITCHES 16
+#include "openhdlib.h"
 
 struct rcdata_s {
 	unsigned int chan1 : 11;
@@ -19,13 +19,11 @@ struct rcdata_s {
 	unsigned int chan6 : 11;
 	unsigned int chan7 : 11;
 	unsigned int chan8 : 11;
-	unsigned int switches : 16;
+	unsigned int switches : SWITCH_COUNT;
 } __attribute__ ((__packed__));
 
 
 void main (void) {
-#ifdef JSSWITCHES  // 
-
 //	uint16_t *rcdata = 0; // 
 	struct rcdata_s *rcdata = NULL;
 	void *retval;
@@ -40,9 +38,7 @@ void main (void) {
 	}
 	if (rcdata == NULL)	{	//Error
 		printf("-1\n");
-	} else
-		printf("%d\n",rcdata->switches);
-#else
-	printf("-1\n");
-#endif
+	} else {
+		printf("%d\n", rcdata->switches);
+	}
 }

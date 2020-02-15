@@ -53,51 +53,46 @@ int PWMCount=0;
 int ActivateChannel=0;
 int IsTrimDone[8] =  { 0 };
 
-#ifdef JSSWITCHES  // 1 or 2 byte more for channels 9 - 16/24 as switches
+static uint16_t *rcData = NULL;
+static uint16_t lastValidCh0 = AXIS0_INITIAL; 
+static uint16_t lastValidCh1 = AXIS1_INITIAL; 
+static uint16_t lastValidCh2 = AXIS2_INITIAL; 
+static uint16_t lastValidCh3 = AXIS3_INITIAL; 
+static uint16_t lastValidCh4 = AXIS4_INITIAL; 
+static uint16_t lastValidCh5 = AXIS5_INITIAL; 
+static uint16_t lastValidCh6 = AXIS6_INITIAL; 
+static uint16_t lastValidCh7 = AXIS7_INITIAL; 
 
-	static uint16_t *rcData = NULL;
-    static uint16_t lastValidCh0 = AXIS0_INITIAL; 
-	static uint16_t lastValidCh1 = AXIS1_INITIAL; 
-	static uint16_t lastValidCh2 = AXIS2_INITIAL; 
-	static uint16_t lastValidCh3 = AXIS3_INITIAL; 
-	static uint16_t lastValidCh4 = AXIS4_INITIAL; 
-	static uint16_t lastValidCh5 = AXIS5_INITIAL; 
-	static uint16_t lastValidCh6 = AXIS6_INITIAL; 
-	static uint16_t lastValidCh7 = AXIS7_INITIAL; 
+static uint16_t validButton1 = 0;
+static uint16_t validButton2 = 0;
+static uint16_t validButton3 = 0;
+static uint16_t validButton4 = 0;
+static uint16_t validButton5 = 0;
+bool validButtons = false;
+int discardCounter = 0;							  
 
-	static uint16_t validButton1 = 0;
-	static uint16_t validButton2 = 0;
-	static uint16_t validButton3 = 0;
-	static uint16_t validButton4 = 0;
-	static uint16_t validButton5 = 0;
-	bool validButtons = false;
-	int discardCounter = 0;							  
+uint16_t *rc_channels_memory_open(void) {
+	int fd = shm_open("/wifibroadcast_rc_channels", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 
-	uint16_t *rc_channels_memory_open(void) {
+	if (fd < 0) {
+		fprintf(stderr, "rc shm_open\n");
+		exit(1);
+	}
 
-		int fd = shm_open("/wifibroadcast_rc_channels", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+	if (ftruncate(fd, 9 * sizeof(uint16_t)) == -1) {
+		fprintf(stderr, "rc ftruncate\n");
+		exit(1);
+	}
 
-		if(fd < 0) {
-			fprintf(stderr,"rc shm_open\n");
-			exit(1);
-		}
-
-		if (ftruncate(fd, 9 * sizeof(uint16_t)) == -1) {
-			fprintf(stderr,"rc ftruncate\n");
-			exit(1);
-		}
-
-		void *retval = mmap(NULL, 9 * sizeof(uint16_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-		if (retval == MAP_FAILED) {
-			fprintf(stderr,"rc mmap\n");
-			exit(1);
-		}
+	void *retval = mmap(NULL, 9 * sizeof(uint16_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (retval == MAP_FAILED) {
+		fprintf(stderr,"rc mmap\n");
+		exit(1);
+	}
 
 	return (uint16_t *)retval;
-	}
-#else
-	static uint16_t rcData[9]; // interval [1000;2000]
-#endif
+}
+
 
 static SDL_Joystick *js;
 char *ifname = NULL;
@@ -137,9 +132,7 @@ struct framedata_s {
     unsigned int chan6 : 11;
     unsigned int chan7 : 11;
     unsigned int chan8 : 11;
-#ifdef JSSWITCHES
-    unsigned int switches : JSSWITCHES; // 8 or 16 bits for rc channels 9 - 16/24  as switches
-#endif
+    unsigned int switches : SWITCH_COUNT; // 16 bits for rc channels 9 - 24  as switches
 } __attribute__ ((__packed__));
 
 struct framedata_s framedatas;
@@ -176,9 +169,8 @@ struct framedata_n {
     unsigned int chan6 : 11;
     unsigned int chan7 : 11;
     unsigned int chan8 : 11;
-#ifdef JSSWITCHES
-    unsigned int switches : JSSWITCHES; // 8 or 16 bits for rc channels 9 - 16/24  as switches
-#endif
+    unsigned int switches : SWITCH_COUNT; // 16 bits for rc channels 9 - 24  as switches
+
 } __attribute__ ((__packed__));
 
 struct framedata_n framedatan;
@@ -293,35 +285,33 @@ void readAxis(SDL_Event *event) {
 
 
 static int eventloop_joystick (void) {
-  SDL_Event event;
-  while (SDL_PollEvent (&event)) {
-    switch (event.type) {
-		case SDL_JOYAXISMOTION:
-			//printf ("Joystick %d, Axis %d moved to %d\n", event.jaxis.which, event.jaxis.axis, event.jaxis.value);
-			readAxis(&event);
-			return 2;
-			break;
-#ifdef	JSSWITCHES  // channels 9 - 16 as switches
-		case SDL_JOYBUTTONDOWN:
-			if (event.jbutton.button < JSSWITCHES) { // newer Taranis software can send 24 buttons - we use 16
-				rcData[8] |= 1 << event.jbutton.button;
-				validButton1 = rcData[8];			  
-			}
-			return 5;
-			break;
-		case SDL_JOYBUTTONUP:
-			if (event.jbutton.button < JSSWITCHES) {
-				rcData[8] &= ~(1 << event.jbutton.button);
-			}
-			return 4;
-			break;
-#endif
+	SDL_Event event;
+	while (SDL_PollEvent (&event)) {
+		switch (event.type) {
+			case SDL_JOYAXISMOTION:
+				//printf ("Joystick %d, Axis %d moved to %d\n", event.jaxis.which, event.jaxis.axis, event.jaxis.value);
+				readAxis(&event);
+				return 2;
+				break;
+			case SDL_JOYBUTTONDOWN:
+				if (event.jbutton.button < SWITCH_COUNT) { // newer Taranis software can send 24 buttons - we use 16
+					rcData[8] |= 1 << event.jbutton.button;
+					validButton1 = rcData[8];			  
+				}
+				return 5;
+				break;
+			case SDL_JOYBUTTONUP:
+				if (event.jbutton.button < SWITCH_COUNT) {
+					rcData[8] &= ~(1 << event.jbutton.button);
+				}
+				return 4;
+				break;
 			case SDL_QUIT:
-			return 0;
-    }
-    usleep(100);
-  }
-  return 1;
+				return 0;
+		}
+		usleep(100);
+	}
+	return 1;
 }
 
 void sendRC(unsigned char seqno, telemetry_data_t *td) {
@@ -337,10 +327,8 @@ void sendRC(unsigned char seqno, telemetry_data_t *td) {
     framedatas.chan6 = rcData[5];
     framedatas.chan7 = rcData[6];
     framedatas.chan8 = rcData[7];
-#ifdef JSSWITCHES
-	framedatas.switches = rcData[8];	/// channels 9 - 24 as switches
-//	printf ("rcdata0:%x\t",rcData[8]);
-#endif
+    framedatas.switches = rcData[8]; // channels 9 - 24 as switches
+
 //  printf ("rcdata0:%d\n",rcData[0]);
 
     framedatan.seqnumber = seqno;
@@ -352,10 +340,8 @@ void sendRC(unsigned char seqno, telemetry_data_t *td) {
     framedatan.chan6 = rcData[5];
     framedatan.chan7 = rcData[6];
     framedatan.chan8 = rcData[7];
-#ifdef JSSWITCHES
-	framedatan.switches = rcData[8];	/// channels 9 - 24 as switches
-//	printf ("rcdata0:%x\t",rcData[8]);
-#endif
+    framedatan.switches = rcData[8]; // channels 9 - 24 as switches
+
 //  printf ("rcdata0:%d\n",rcData[0]);
 
     int best_adapter = 0;
@@ -460,14 +446,9 @@ void packMessage(int seqno)
         messageRCEncrypt[16] = seqno & 0xFF;
         messageRCEncrypt[17] = seqno >> 8;
 	messageRCEncrypt[18] = 0;
-	#ifdef JSSWITCHES
-//      		framedatas.switches = rcData[8]; /// channels 9 - 24 as switches
-//      		framedatan.switches = rcData[8]; /// channels 9 - 24 as switches
-//        		printf ("rcdata0:%x\t",rcData[8]);
 	messageRCEncrypt[18] = 1;
 	messageRCEncrypt[19] = rcData[8] & 0xFF;
 	messageRCEncrypt[20] = rcData[8] >> 8;
-	#endif
 }
 
 void CheckTrimChannel(int Channel)
@@ -737,10 +718,9 @@ int main (int argc, char *argv[]) {
 
 	// we need to prefill channels since we have no values for them as
 	// long as the corresponding axis has not been moved yet
-#ifdef	JSSWITCHES
 	rcData = rc_channels_memory_open();
-	rcData[8]=0;		/// switches
-#endif
+	rcData[8] = 0; // switches
+
 	rcData[0]=AXIS0_INITIAL;
 	rcData[1]=AXIS1_INITIAL;
 	rcData[2]=AXIS2_INITIAL;
@@ -825,10 +805,8 @@ int main (int argc, char *argv[]) {
 			lastValidCh7 = rcData[7];
 			#endif
 
-#ifdef JSSWITCHES
 			validButton3 = validButton2;
 			validButton2 = validButton1;
-#endif
 
 			tmp = TrimChannel;
 			//fprintf(stderr, "TrimChannelPWMBefore: %d \n", rcData[tmp]);
@@ -843,7 +821,6 @@ int main (int argc, char *argv[]) {
 				        exit(1);
 				    }
 			    } else {
-					#ifdef JSSWITCHES
 				    if (validButton1 == validButton2 && validButton1 == validButton3 && validButton2 == validButton3) {
 					    sendRC(seqno, &td);
 					    validButton1 = rcData[8];
@@ -853,9 +830,6 @@ int main (int argc, char *argv[]) {
 					    printf("RC Blocks discarded: " "%" PRIu16 "\n", discardCounter);
 					    //printf("FAIL: " "%" PRIu16 "\n", rcData[8]);
 				    }
-					#else
-					sendRC(seqno, &td);
-					#endif
 			    }
 			    usleep(2000); // wait 2ms between sending multiple frames to lower collision probability
 		    }

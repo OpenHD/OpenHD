@@ -7,10 +7,11 @@
 #include <sys/mman.h>
 #include <stdint.h>
 #include <string.h>
-#define JSSWITCHES 16
+
+#include "openhdlib.h"
+
 //int main (int argc, char *argv[]) {
 void main (void) {
-#ifdef JSSWITCHES  // 
     int done = 1;
 	uint16_t *rcdata = 0; // 
 	void *retval;
@@ -26,9 +27,7 @@ void main (void) {
 	}
 	if (rcdata == 0)	{	//Error
 		printf("-1\n");
-	} else
+	} else {
 		printf("%d\n",rcdata[8]);
-#else
-	printf("-1\n");
-#endif
+	}
 }

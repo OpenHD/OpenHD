@@ -42,36 +42,32 @@ int IsEncrypt = 0;
 int IsIPCameraSwitcherEnabled = 0;
 int IsBandSwitcherEnabled = 0;
 
-#ifdef JSSWITCHES  // 1 or 2 byte more for channels 9 - 16/24 as switches
+static uint16_t *rcData = NULL;
 
-	static uint16_t *rcData = NULL;
+uint16_t *rc_channels_memory_open(void) {
 
-	uint16_t *rc_channels_memory_open(void)
-	{
+	int fd = shm_open("/wifibroadcast_rc_channels", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 
-		int fd = shm_open("/wifibroadcast_rc_channels", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+	if (fd < 0) {
+		fprintf(stderr,"rc shm_open\n");
+		exit(1);
+	}
 
-		if(fd < 0) {
-			fprintf(stderr,"rc shm_open\n");
-			exit(1);
-		}
+	if (ftruncate(fd, 9 * sizeof(uint16_t)) == -1) {
+		fprintf(stderr,"rc ftruncate\n");
+		exit(1);
+	}
 
-		if (ftruncate(fd, 9 * sizeof(uint16_t)) == -1) {
-			fprintf(stderr,"rc ftruncate\n");
-			exit(1);
-		}
-
-		void *retval = mmap(NULL, 9 * sizeof(uint16_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-		if (retval == MAP_FAILED) {
-			fprintf(stderr,"rc mmap\n");
-			exit(1);
-		}
+	void *retval = mmap(NULL, 9 * sizeof(uint16_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	
+	if (retval == MAP_FAILED) {
+		fprintf(stderr,"rc mmap\n");
+		exit(1);
+	}
 
 	return (uint16_t *)retval;
-	}
-#else
-	static uint16_t rcData[8]; // interval [1000;2000]
-#endif
+}
+
 
 static SDL_Joystick *js;
 char *ifname = NULL;
@@ -112,7 +108,7 @@ struct framedata_s {
     unsigned int chan7 : 11;
     unsigned int chan8 : 11;
 
-    unsigned int switches : 16; // 8 or 16 bits for rc channels 9 - 16/24  as switches
+    unsigned int switches : SWITCH_COUNT; // 16 bits for rc channels 9 - 24  as switches
 
 } __attribute__ ((__packed__));
 
@@ -150,9 +146,7 @@ struct framedata_n {
     unsigned int chan6 : 11;
     unsigned int chan7 : 11;
     unsigned int chan8 : 11;
-#ifdef JSSWITCHES
-    unsigned int switches : JSSWITCHES; // 8 or 16 bits for rc channels 9 - 16/24  as switches
-#endif
+    unsigned int switches : SWITCH_COUNT; // 16 bits for rc channels 9 - 24 as switches
 } __attribute__ ((__packed__));
 
 struct framedata_n framedatan;
@@ -433,11 +427,8 @@ int main (int argc, char *argv[]) {
 
 	// we need to prefill channels since we have no values for them as
 	// long as the corresponding axis has not been moved yet
-#ifdef	JSSWITCHES
 	rcData = rc_channels_memory_open();
-	rcData[8]=0;		/// switches
-#endif
-
+	rcData[8] = 0;		/// switches
 
 
 	

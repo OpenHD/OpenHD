@@ -82,7 +82,7 @@ struct rcdata_s {
 	unsigned int chan7 : 11;
 	unsigned int chan8 : 11;
 	unsigned int Is16  : 8;
-        unsigned int switches : 16;
+        unsigned int switches : SWITCH_COUNT;
 } __attribute__ ((__packed__));
 struct rcdata_s rcdata;
 
