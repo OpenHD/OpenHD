@@ -40,6 +40,7 @@
 #define BUFLEN 21  //Max length of buffer
 #define PORT 5565   //The port on which to listen for incoming data
 
+#define SWITCH_COUNT 16
 
 int rc_received_yet = 0;
 int serialport = 0;
@@ -82,7 +83,7 @@ struct rcdata_s {
 	unsigned int chan7 : 11;
 	unsigned int chan8 : 11;
 	unsigned int Is16  : 8;
-        unsigned int switches : 16;
+        unsigned int switches : SWITCH_COUNT;
 } __attribute__ ((__packed__));
 struct rcdata_s rcdata;
 

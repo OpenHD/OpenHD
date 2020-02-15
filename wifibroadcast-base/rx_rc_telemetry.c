@@ -87,6 +87,8 @@ wifibroadcast_rx_status_t_rc *rx_status_rc = NULL;
 uint16_t sumdcrc = 0;
 uint16_t ibuschecksum = 0;
 
+#define SWITCH_COUNT 16
+
 const uint16_t sumdcrc16_table[256] = {
     0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7, 0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
     0x1231, 0x0210, 0x3273, 0x2252, 0x52B5, 0x4294, 0x72F7, 0x62D6, 0x9339, 0x8318, 0xB37B, 0xA35A, 0xD3BD, 0xC39C, 0xF3FF, 0xE3DE,
@@ -152,41 +154,34 @@ struct rcdata_s {
 	unsigned int chan6 : 11;
 	unsigned int chan7 : 11;
 	unsigned int chan8 : 11;
-	unsigned int switches : 16;
+	unsigned int switches : SWITCH_COUNT;
 } __attribute__ ((__packed__));
 
-#define JSSWITCHES 16
-#ifdef JSSWITCHES
 
-	struct rcdata_s *rcdata = NULL;
+struct rcdata_s *rcdata = NULL;
 
-	struct rcdata_s *rc_channels_memory_open(void) {
+struct rcdata_s *rc_channels_memory_open(void) {
+	int fd = shm_open("/wifibroadcast_rc_channels", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 
-		int fd = shm_open("/wifibroadcast_rc_channels", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+	if (fd < 0) {
+		fprintf(stderr,"rc shm_open\n");
+		exit(1);
+	}
 
-		if(fd < 0) {
-			fprintf(stderr,"rc shm_open\n");
-			exit(1);
-		}
+	if (ftruncate(fd, sizeof(struct rcdata_s)) == -1) {
+		fprintf(stderr,"rc ftruncate\n");
+		exit(1);
+	}
 
-		if (ftruncate(fd, sizeof(struct rcdata_s)) == -1) {
-			fprintf(stderr,"rc ftruncate\n");
-			exit(1);
-		}
-
-		void *retval = mmap(NULL, sizeof(struct rcdata_s), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-		if (retval == MAP_FAILED) {
-			fprintf(stderr,"rc mmap\n");
-			exit(1);
-		}
+	void *retval = mmap(NULL, sizeof(struct rcdata_s), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (retval == MAP_FAILED) {
+		fprintf(stderr,"rc mmap\n");
+		exit(1);
+	}
 
 	return (struct rcdata_s *)retval;
-	}
-#else
-///	static uint16_t rcData[8]; // interval [1000;2000]
-	struct rcdata_s rcdatamem;
-	struct rcdata_s *rcdata = &rcdatamem;
-#endif 
+}
+
 
 void open_and_configure_interface(const char *name, monitor_interface_t *interface) {
 	struct bpf_program bpfprogram;
@@ -661,9 +656,7 @@ int main(int argc, char *argv[]) {
 
 	int serialport = 0;
 
-#ifdef	JSSWITCHES
 	rcdata = rc_channels_memory_open();
-#endif
 	
 	while (1) {
 		int nOptionIndex;

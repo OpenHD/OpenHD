@@ -31,6 +31,7 @@
 #define BUFLEN 2  //Max length of buffer
 #define PORT 1260 //SettingsSync py script in
 
+#define SWITCH_COUNT 16
 
 static SDL_Joystick *js;
 char *ifname = NULL;
@@ -80,33 +81,31 @@ void readAxis(SDL_Event *event) {
 
 
 static int eventloop_joystick (void) {
-  SDL_Event event;
-  while (SDL_PollEvent (&event)) {
-    switch (event.type) {
-		case SDL_JOYAXISMOTION:
-			//printf ("Joystick %d, Axis %d moved to %d\n", event.jaxis.which, event.jaxis.axis, event.jaxis.value);
-			readAxis(&event);
-			return 2;
-			break;
-#ifdef	JSSWITCHES  // channels 9 - 16 as switches
-		case SDL_JOYBUTTONDOWN:
-			if (event.jbutton.button < JSSWITCHES) { // newer Taranis software can send 24 buttons - we use 16
-				rcData[8] |= 1 << event.jbutton.button;
-			}
-			return 5;
-			break;
-		case SDL_JOYBUTTONUP:
-			if (event.jbutton.button < JSSWITCHES) {
-				rcData[8] &= ~(1 << event.jbutton.button);
-			}
-			return 4;
-			break;
-#endif
+	SDL_Event event;
+	while (SDL_PollEvent (&event)) {
+		switch (event.type) {
+			case SDL_JOYAXISMOTION:
+				//printf ("Joystick %d, Axis %d moved to %d\n", event.jaxis.which, event.jaxis.axis, event.jaxis.value);
+				readAxis(&event);
+				return 2;
+				break;
+			case SDL_JOYBUTTONDOWN:
+				if (event.jbutton.button < SWITCH_COUNT) { // newer Taranis software can send 24 buttons - we use 16
+					rcData[8] |= 1 << event.jbutton.button;
+				}
+				return 5;
+				break;
+			case SDL_JOYBUTTONUP:
+				if (event.jbutton.button < SWITCH_COUNT) {
+					rcData[8] &= ~(1 << event.jbutton.button);
+				}
+				return 4;
+				break;
 			case SDL_QUIT:
-			return 0;
-    }
-    usleep(100);
-  }
+				return 0;
+		}
+		usleep(100);
+	}
   return 1;
 }
 
