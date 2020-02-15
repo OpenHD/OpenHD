@@ -16,6 +16,15 @@ int mavlink_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
 	for(i=0; i<buflen; i++) {
 		uint8_t c = buf[i];
 		if (mavlink_parse_char(0, c, &msg, &status)) {
+			/* QGC sends its own heartbeats with compid 0 (fixed)
+			 * and sysid 255 (configurable). We want to ignore these
+			 * because they cause UI glitches like the flight mode
+			 * appearing to change and the armed status flipping back
+			 * and forth.
+			 */
+			if (msg.compid != MAV_COMP_ID_AUTOPILOT1 && msg.compid != MAV_COMP_ID_SYSTEM_CONTROL) {
+				return render_data;
+			}
                     	td->validmsgsrx++;
 			fprintf(stdout, "Msg seq:%d sysid:%d, compid:%d  ", msg.seq, msg.sysid, msg.compid);
                 	switch (msg.msgid){
