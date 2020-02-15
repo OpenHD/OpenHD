@@ -22,14 +22,6 @@ function rctx_function {
     echo Building RC ...
     
     cd /home/pi/wifibroadcast-rc-Ath9k/
-	
-#    if [ "$EncryptionOrRange" == "Range" ]; then
-#          cd /home/pi/wifibroadcast-rc
-#    fi
-
-#    if [ "$EncryptionOrRange" == "Encryption" ]; then
-#		cd /home/pi/wifibroadcast-rc-encrypted/
-#    fi
     
     if [ "$PrimaryCardMAC" == "0" ]; then
     	echo "PrimaryCardMAC not selected. RC Joystick program will use WiFi card with best RSSI as tx."
