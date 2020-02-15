@@ -19,6 +19,8 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
+#include "openhdlib.h"
+
 #define UPDATE_NTH_TIME 8 
 #define AXIS_INITIAL 1500
 
@@ -30,8 +32,6 @@
 #define SERVER "127.0.0.1"
 #define BUFLEN 2  //Max length of buffer
 #define PORT 1260 //SettingsSync py script in
-
-#define SWITCH_COUNT 16
 
 static SDL_Joystick *js;
 char *ifname = NULL;

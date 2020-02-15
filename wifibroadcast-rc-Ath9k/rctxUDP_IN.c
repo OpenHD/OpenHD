@@ -32,7 +32,6 @@
 #define PORT2 1258 //BandSwitch py script in
 #define PORT3 1259 //IP or USB camera switch py script in
 
-#define SWITCH_COUNT 16
 
 char messageRCEncrypt[40];   //Encrypted RC Message
 

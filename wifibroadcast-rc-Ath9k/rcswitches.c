@@ -7,7 +7,8 @@
 #include <sys/mman.h>
 #include <stdint.h>
 #include <string.h>
-#define SWITCH_COUNT 16
+
+#include "openhdlib.h"
 
 //int main (int argc, char *argv[]) {
 void main (void) {

@@ -71,8 +71,6 @@ static uint16_t validButton5 = 0;
 bool validButtons = false;
 int discardCounter = 0;							  
 
-#define SWITCH_COUNT 16
-
 uint16_t *rc_channels_memory_open(void) {
 	int fd = shm_open("/wifibroadcast_rc_channels", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 

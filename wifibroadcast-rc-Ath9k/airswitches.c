@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define SWITCH_COUNT 16
+#include "openhdlib.h"
 
 struct rcdata_s {
 	unsigned int chan1 : 11;

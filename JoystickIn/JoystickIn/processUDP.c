@@ -40,7 +40,6 @@
 #define BUFLEN 21  //Max length of buffer
 #define PORT 5565   //The port on which to listen for incoming data
 
-#define SWITCH_COUNT 16
 
 int rc_received_yet = 0;
 int serialport = 0;

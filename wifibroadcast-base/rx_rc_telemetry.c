@@ -87,7 +87,6 @@ wifibroadcast_rx_status_t_rc *rx_status_rc = NULL;
 uint16_t sumdcrc = 0;
 uint16_t ibuschecksum = 0;
 
-#define SWITCH_COUNT 16
 
 const uint16_t sumdcrc16_table[256] = {
     0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7, 0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
