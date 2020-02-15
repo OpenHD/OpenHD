@@ -522,15 +522,15 @@ void process_packet(monitor_interface_t *interface, block_buffer_t *block_buffer
 //	rx_status->adapter[adapter_no].last_update = current_timestamp();
 
 	int best_adapter = 0;
-	if (td->rx_status != NULL) {
+	if (rx_status != NULL) {
 		int j = 0;
-		int ac = td->rx_status->wifi_adapter_cnt;
+		int ac = rx_status->wifi_adapter_cnt;
 		int best_dbm = -1000;
 
 		// find out which card has best signal and ignore ralink (type=1) ones
 		for (j = 0; j < ac; ++j) {
-			if (best_dbm < td->rx_status->adapter[j].current_signal_dbm) {
-				best_dbm = td->rx_status->adapter[j].current_signal_dbm;
+			if (best_dbm < rx_status->adapter[j].current_signal_dbm) {
+				best_dbm = rx_status->adapter[j].current_signal_dbm;
 				best_adapter = j;
 			}
 		}
