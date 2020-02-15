@@ -521,7 +521,24 @@ void process_packet(monitor_interface_t *interface, block_buffer_t *block_buffer
 //	fprintf(stderr,"lu[%d]: %lld\n",adapter_no,rx_status->adapter[adapter_no].last_update);
 //	rx_status->adapter[adapter_no].last_update = current_timestamp();
 
-	bytes_received = bytes_received + bytes;
+	int best_adapter = 0;
+	if (td->rx_status != NULL) {
+		int j = 0;
+		int ac = td->rx_status->wifi_adapter_cnt;
+		int best_dbm = -1000;
+
+		// find out which card has best signal and ignore ralink (type=1) ones
+		for (j = 0; j < ac; ++j) {
+			if (best_dbm < td->rx_status->adapter[j].current_signal_dbm) {
+				best_dbm = td->rx_status->adapter[j].current_signal_dbm;
+				best_adapter = j;
+			}
+		}
+		// only calculate received data for the adapter with the best signal
+		if (adapter_no == best_adapter) {
+			bytes_received = bytes_received + bytes;
+		}
+	}
 	long long now = current_timestamp();
 	if (now - current_air_datarate_ts > 500) {
 		double bits_received = (bytes_received * 8);
