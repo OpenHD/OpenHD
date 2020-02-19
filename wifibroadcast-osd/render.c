@@ -1331,7 +1331,7 @@ void draw_TOTAL_AMPS(float current, float pos_x, float pos_y, float scale){
     Text(getWidth(pos_x), getHeight(pos_y), " mAh", myfont, text_scale*0.6);
  
 }
-void draw_TOTAL_DIST(int gpsspeed, float pos_x, float pos_y, float scale){
+void draw_TOTAL_DIST(double kmh, float pos_x, float pos_y, float scale){
     Stroke(OUTLINECOLOR);
     Fill(COLOR);
  
@@ -1339,11 +1339,9 @@ void draw_TOTAL_DIST(int gpsspeed, float pos_x, float pos_y, float scale){
     long time_diff = current_ts() - dist_ts;
     dist_ts = current_ts();
 
-    float _kmh = (float)gpsspeed * 3.6;
-
     float _hours = (float)time_diff / (float)3600000;
 
-    float added_distance = _kmh * _hours;
+    float added_distance = kmh * _hours;
 
     total_dist = total_dist + added_distance;
  
