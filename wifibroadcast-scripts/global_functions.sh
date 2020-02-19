@@ -233,6 +233,7 @@ function datarate_to_wifi_settings {
 		UPLINK_WIFI_BITRATE=11
 		TELEMETRY_WIFI_BITRATE=11
 		VIDEO_WIFI_BITRATE=5.5
+		OSD_HW_BITRATE=5.5
                 if [ "$UseMCS" == "Y" ]; then
                         UseMCS="1"
                         VIDEO_WIFI_BITRATE="0"
@@ -244,6 +245,7 @@ function datarate_to_wifi_settings {
 		UPLINK_WIFI_BITRATE=11
 		TELEMETRY_WIFI_BITRATE=11
 		VIDEO_WIFI_BITRATE=11
+		OSD_HW_BITRATE=11
                 if [ "$UseMCS" == "Y" ]; then
                         UseMCS="1"
                         VIDEO_WIFI_BITRATE="1"
@@ -255,6 +257,7 @@ function datarate_to_wifi_settings {
 		UPLINK_WIFI_BITRATE=11
 		TELEMETRY_WIFI_BITRATE=12
 		VIDEO_WIFI_BITRATE=12
+		OSD_HW_BITRATE=12
                 if [ "$UseMCS" == "Y" ]; then
                         UseMCS="1"
                         VIDEO_WIFI_BITRATE="1"
@@ -266,6 +269,7 @@ function datarate_to_wifi_settings {
 		UPLINK_WIFI_BITRATE=11
 		TELEMETRY_WIFI_BITRATE=19.5
 		VIDEO_WIFI_BITRATE=19.5
+		OSD_HW_BITRATE=19.5
                 if [ "$UseMCS" == "Y" ]; then
                         UseMCS="1"
                         VIDEO_WIFI_BITRATE="2"
@@ -277,6 +281,7 @@ function datarate_to_wifi_settings {
 		UPLINK_WIFI_BITRATE=11
 		TELEMETRY_WIFI_BITRATE=24
 		VIDEO_WIFI_BITRATE=24
+		OSD_HW_BITRATE=24
                 if [ "$UseMCS" == "Y" ]; then
                         UseMCS="1"
                         VIDEO_WIFI_BITRATE="3"
@@ -288,6 +293,7 @@ function datarate_to_wifi_settings {
 		UPLINK_WIFI_BITRATE=12
 		TELEMETRY_WIFI_BITRATE=36
 		VIDEO_WIFI_BITRATE=36
+		OSD_HW_BITRATE=36
                 if [ "$UseMCS" == "Y" ]; then
                         UseMCS="1"
                         VIDEO_WIFI_BITRATE="4"
