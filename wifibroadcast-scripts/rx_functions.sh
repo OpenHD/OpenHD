@@ -71,12 +71,14 @@ function rx_function {
 
 	if [ "$VIDEO_WIFI_BITRATE" == "19.5" ]; then # set back to 18 to match air side in tx_functions.sh
 		VIDEO_WIFI_BITRATE=18
+		OSD_HW_BITRATE=18
     fi
     if [ "$VIDEO_WIFI_BITRATE" == "5.5" ]; then # set back to 6 to match air side logic in tx_functions.sh
 		VIDEO_WIFI_BITRATE=5
+		OSD_HW_BITRATE=5
     fi
 	# on the ground side this is read by the osd code so we can display it alongside the current/measured air datarate
-	echo $VIDEO_WIFI_BITRATE > /tmp/DATARATE.txt
+	echo $OSD_HW_BITRATE > /tmp/DATARATE.txt
 
     sleep 0.5
 
