@@ -27,17 +27,14 @@ function MAIN_HOTSPOT_FUNCTION {
 
 function hotspot_check_function {
 
-	# Convert hostap config from DOS format to UNIX format
-	ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
+    # Convert hostap config from DOS format to UNIX format
+    ionice -c 3 nice dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
 
-            pause_while
+    pause_while
 
-         nice cat /root/telemetryfifo5 > /dev/pts/0 &
-		if [ "$ENABLE_QOPENHD" == "Y" ]; then
-            /usr/local/bin/mavlink-routerd -e 127.0.0.1:14550  /dev/pts/1:57600 &
-		else
-            /usr/local/bin/mavlink-routerd /dev/pts/1:57600 &
-		fi
+    nice cat /root/telemetryfifo5 > /dev/pts/0 &
+    /usr/local/bin/mavlink-routerd -e 127.0.0.1:14550 /dev/pts/1:57600 &
+
         #we still can have USB phone connected anytime. So, start programs anyway
         #Maybe add code inside USB tethering file to check  HOTSPOT is off and phone connected - start....
         #if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" != "N" ]; then
