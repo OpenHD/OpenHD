@@ -22,7 +22,9 @@
 #include <sys/resource.h>
 #include <fcntl.h>        // serialport
 #include <termios.h>      // serialport
-#include "mavlink/common/mavlink.h"
+
+
+#include <openhd/mavlink.h>
 
 // this is where we store a summary of the information from the radiotap header
 typedef struct  {

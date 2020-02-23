@@ -33,7 +33,7 @@
 #include <sodium.h>
 #include <endian.h>
 
-#include "mavlink/common/mavlink.h"
+#include <openhd/mavlink.h>
 
 #include "openhdlib.h"
 
