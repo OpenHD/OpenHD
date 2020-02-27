@@ -3,7 +3,31 @@ function MAIN_UPLINK_FUNCTION {
 	
 	sleep 7
 	
+	# set the mavlink sysid for air and ground microservices. this does not need to avoid conflicts
+	# with other mavlink devices connected to the flight controller because it is an entirely separate
+	# mavlink bus dedicated to OpenHD services.
+	if [ "$CAM" == "1" ]; then 
+		# air is always sysid 253 for all services
+		echo "SYSID=253" > /etc/openhd/openhd_microservice.conf
+	else
+		# ground is always sysid 254 for all services
+		echo "SYSID=254" > /etc/openhd/openhd_microservice.conf
+	fi
+	# OpenHDRouter and the associated ptys are used for openhd microservices, our internal 
+	# GCS<->Ground<->Air communications channel for things like GPIO support, live camera 
+	# settings, air/ground power status, safe shutdown, etc
+	ionice -c 3 nice socat -lf /wbc_tmp/socat3.log -d -d pty,raw,echo=0,link=/dev/openhd_microservice1 pty,raw,echo=0,link=/dev/openhd_microservice2 & > /dev/null 2>&1
+    sleep 1
+	stty -F /dev/openhd_microservice1 -icrnl -ocrnl -imaxbel -opost -isig -icanon -echo -echoe -ixoff -ixon 115200
+	systemctl start openhd_router
+	sleep 1
+
 	if [ "$CAM" == "1" ]; then # we are video TX and uplink RX
+		# start the microservice channel and the services that run on the air side
+		microservice_air_rx_function &
+		microservice_air_tx_function &
+		systemctl start openhd_microservice@power
+		systemctl start openhd_microservice@gpio
 	    if [ "$TELEMETRY_UPLINK" != "disabled" ] || [ "$RC" != "disabled" ]; then
 			echo "Uplink and/or R/C enabled ... we are RX"
 			uplinkrx_and_rcrx_function &
@@ -19,6 +43,10 @@ function MAIN_UPLINK_FUNCTION {
 		
 	    sleep 365d
 	else # we are video RX and uplink TX
+		# start the microservice channel and the services that run on the ground side
+		microservice_ground_rx_function &
+		microservice_ground_tx_function &
+		systemctl start openhd_microservice@power
 	    if [ "$TELEMETRY_UPLINK" != "disabled" ]; then
 			echo "uplink  enabled ... we are uplink TX"
 			uplinktx_function &
@@ -142,6 +170,56 @@ function mspdownlinktx_function {
     done
 }
 
+function microservice_ground_tx_function {
+    while true; do
+        echo "Starting ground microservice tx"
+        NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
+        OPENHD_MICROSERVICE_GROUND_TX_CMD="nice /home/pi/wifibroadcast-base/tx_telemetry -p 30 -c 0 -r 2 -x 0 -d 12 -y 0"
+		
+        nice socat -u /dev/openhd_microservice2 STDOUT | $OPENHD_MICROSERVICE_GROUND_TX_CMD $NICS
+        ps -ef | nice grep "socat -u /dev/openhd_microservice2 STDOUT" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+        ps -ef | nice grep "tx_telemetry -p 30" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+        sleep 1
+    done
+}
+
+function microservice_ground_rx_function {
+    while true; do
+        echo "Starting ground microservice rx"
+        NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
+        nice /home/pi/wifibroadcast-base/rx_rc_telemetry_buf -n 1 -p 31 -o 1 -r 99 -b 115200 -s /dev/null $NICS | ionice nice socat -u STDIN /dev/openhd_microservice2
+		
+        ps -ef | nice grep "nice socat -u STDIN /dev/openhd_microservice2" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+        ps -ef | nice grep "rx_rc_telemetry -n 1 -p 31" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+        sleep 1
+    done
+}
+
+function microservice_air_tx_function {
+    while true; do
+        echo "Starting air microservice tx"
+        NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
+        OPENHD_MICROSERVICE_AIR_TX_CMD="nice /home/pi/wifibroadcast-base/tx_telemetry -p 31 -c 0 -r 2 -x 0 -d 12 -y 0"
+		
+        nice socat -u /dev/openhd_microservice2 STDOUT | $OPENHD_MICROSERVICE_AIR_TX_CMD $NICS
+
+        ps -ef | nice grep "socat -u /dev/openhd_microservice2 STDOUT" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+        ps -ef | nice grep "tx_telemetry -p 31" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+        sleep 1
+    done
+}
+
+function microservice_air_rx_function {
+    while true; do
+        echo "Starting air microservice rx"
+        NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
+        nice /home/pi/wifibroadcast-base/rx_rc_telemetry_buf -n 1 -p 30 -o 1 -r 99 -b 115200 -s /dev/null $NICS |  ionice nice socat -u STDIN /dev/openhd_microservice2
+		
+        ps -ef | nice grep "nice socat -u STDIN /dev/openhd_microservice2" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+        ps -ef | nice grep "rx_rc_telemetry -n 1 -p 30" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+        sleep 1
+    done
+}
 
 ## runs on RX (ground pi)
 function uplinktx_function {
