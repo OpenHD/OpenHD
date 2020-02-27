@@ -55,6 +55,7 @@ int param_rc_protocol = 0;
 int param_output = 0;
 int param_port = 0;
 int param_debug = 0;
+int param_noshm = 0;
 char *param_serialport = "none";
 
 uint32_t seqno_telemetry = 0;
@@ -111,6 +112,7 @@ void usage(void) {
 	    "-r <protocol>   R/C protocol to output. 0 = MSP. 1 = Mavlink. 2 = SUMD. 3 = IBUS. 4 = SRXL/XBUS. 99 = disable R/C\n"
 	    "-p <port>       Port for telemetry data. Default = 1\n"
 	    "-d <debug>      Debug. Set to 1 for debug output\n"
+		"-n <noshm>      Disable shared memory use if set to 1, used for the dedicated microservices mavlink channel to prevent interference with telemetry\n"
 	    "\n"
 	    "Example:\n"
 	    "  rx_rc_telemetry_buf -o 0 -b 19200 -s /dev/serial0 -r 0 -p 1 wlan0\n"
@@ -280,9 +282,12 @@ void receive_packet(monitor_interface_t *interface, int adapter_no) {
 
     if (param_debug == 1) fprintf(stderr, "dbm:%d ", dbm_tmp);
 
-    rx_status->adapter[adapter_no].current_signal_dbm = dbm_tmp;
-    rx_status->adapter[adapter_no].received_packet_cnt++;
-    rx_status->last_update = time(NULL);
+	if (param_noshm == 0) {
+		rx_status->adapter[adapter_no].current_signal_dbm = dbm_tmp;
+		rx_status->adapter[adapter_no].received_packet_cnt++;
+		rx_status->last_update = time(NULL);
+	}
+
     dbm_tmp = 0;
     pu8Payload += u16HeaderLen + interface->n80211HeaderLength;
     memcpy(&header,pu8Payload,6); //copy header (seqnum and length) to header struct
@@ -417,7 +422,7 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		int nOptionIndex;
 		static const struct option optiona[] = { { "help", no_argument, &flagHelp, 1 }, { 0, 0, 0, 0 } };
-		int c = getopt_long(argc, argv, "h:o:b:s:r:p:d:", optiona, &nOptionIndex);
+		int c = getopt_long(argc, argv, "h:o:b:s:r:p:d:n:", optiona, &nOptionIndex);
 		if (c == -1)
 			break;
 		switch (c) {
@@ -442,6 +447,9 @@ int main(int argc, char *argv[]) {
 			break;
 		case 'd': // debug
 			param_debug = atoi(optarg);
+			break;
+		case 'n': // no shm
+			param_noshm = atoi(optarg);
 			break;
 		default:
 			fprintf(stderr, "unknown switch %c\n", c);
@@ -476,9 +484,11 @@ int main(int argc, char *argv[]) {
 		usleep(10000); // wait a bit between configuring interfaces to reduce Atheros and Pi USB flakiness
 	}
 
-	rx_status = status_memory_open();
-	rx_status->wifi_adapter_cnt = num_interfaces;
-	fprintf(stderr, "RX_RC_TELEMETRY: rx_status->wifi_adapter_cnt: %d\n",rx_status->wifi_adapter_cnt);
+	if (param_noshm == 0) {
+		rx_status = status_memory_open();
+		rx_status->wifi_adapter_cnt = num_interfaces;
+		fprintf(stderr, "RX_RC_TELEMETRY: rx_status->wifi_adapter_cnt: %d\n",rx_status->wifi_adapter_cnt);
+	}
 
 	if (param_rc_protocol != 99) { // do not open rx status rc if no R/C output configured
 	    rx_status_rc = status_memory_open_rc();
@@ -670,7 +680,9 @@ int main(int argc, char *argv[]) {
 		if (lowestseq != 2000000000) {
 		    if (lowestseq > lastseq){
 			lostpackets = lowestseq - lastseq - 1;
-            		rx_status->lost_packet_cnt = (rx_status->lost_packet_cnt + lostpackets);
+			if (param_noshm == 0) {
+				rx_status->lost_packet_cnt = (rx_status->lost_packet_cnt + lostpackets);
+			}
 //			fprintf(stderr,"lowestseq > lasstseq, setting lastseq to lowestseq - 1. lostpackets:%d, rx_stats->lost_packet_cnt:%d\n",lostpackets,rx_status->lost_packet_cnt);
 			lostpackets = 0;
 			lastseq = lowestseq - 1;
