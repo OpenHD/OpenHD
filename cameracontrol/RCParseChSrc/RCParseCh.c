@@ -20,7 +20,7 @@
 #include<arpa/inet.h>
 #include<sys/socket.h>
 
-#include "mavlink/common/mavlink.h"
+#include <openhd/mavlink.h>
 
 #define SERVER "127.0.0.1"
 #define BUFLEN 2  //Max length of buffer

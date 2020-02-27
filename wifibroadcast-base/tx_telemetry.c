@@ -30,7 +30,9 @@
 #include <stdint.h>
 #include <sys/ioctl.h>
 #include <getopt.h>
-#include "mavlink/common/mavlink.h"
+
+#include <openhd/mavlink.h>
+
 
 int sock = 0;
 int socks[5];

@@ -1,5 +1,5 @@
 _LDFLAGS := $(LDFLAGS) -lrt
-CFLAGS := $(CFLAGS) -I/home/pi/wifibroadcast-base 
+CFLAGS := $(CFLAGS) -I/home/pi/wifibroadcast-base -I/usr/local/include/mavlink
  
 all: processUDP
 
