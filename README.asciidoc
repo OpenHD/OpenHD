@@ -6,7 +6,7 @@
 
 :toc:
 :toclevels: 3
-// :toc-title: Table of Contents
+:toc-title: 
 :toc-placement!:
 
 // -- Icons
@@ -37,10 +37,20 @@ endif::[]
 :imageBuilder: link:https://github.com/HD-Fpv/Open.HD_Image_Builder[Image Builder]
 :settingsApp: link:https://github.com/HD-Fpv/Open.HD_AndroidApp[Settings App]
 
-
 // === BEGIN OF CONTENT === \\
 
-image::wiki-content/Open.HD Logo Splashscreen/Plain_OpenHD_Logo.jpg[OpenHD Logo]
+// Logo
+image:wiki-content/Open.HD Logo Splashscreen/Plain_OpenHD_Logo.jpg[OpenHD Logo]
+
+// Badges
+image:https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&style=flat-square[title="Telegram", link="https://t.me/OpenHD_HDFPV"]
+image:https://img.shields.io/github/commit-activity/m/OpenHD/Open.HD?style=flat-square[title="GitHub commit activity", link=""]
+image:https://img.shields.io/github/issues-raw/OpenHD/Open.HD?style=flat-square[title="GitHub issues", link="https://github.com/OpenHD/Open.HD/issues"]
+image:https://img.shields.io/github/downloads/OpenHD/Open.HD/total?style=flat-square[title="GitHub All Releases", link=""]
+image:https://img.shields.io/github/repo-size/OpenHD/Open.HD?style=flat-square[title="GitHub repo size", link=""]
+image:https://img.shields.io/github/license/OpenHD/Open.HD?style=flat-square[title="GitHub License", link=""]
+
+---
 
 // Table of Contents
 toc::[]
