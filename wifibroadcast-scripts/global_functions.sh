@@ -14,6 +14,9 @@ function detect_hardware {
 		  echo "Found hardware $HARDWARE..."
 		  
 		  case "$HARDWARE" in
+			'b03111')
+			ABLE_BAND=ag
+			MODEL=4b
                        '29020e0')
 		        ABLE_BAND=ag
 			MODEL=3a+
