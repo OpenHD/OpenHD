@@ -16,6 +16,6 @@ fi
 
 while true
 do
-	python3.5 /home/pi/RemoteSettings/BandSwitch.py -PrimaryCardMAC $PrimaryCardMAC -Band5Below $Band5Below -Band10ValueMin $Band10ValueMin -Band10ValueMax $Band10ValueMax -Band20After $Band20After -Camera1ValueMin $Camera1ValueMin -Camera1ValueMax $Camera1ValueMax -Camera2ValueMin $Camera2ValueMin -Camera2ValueMax $Camera2ValueMax -Camera3ValueMin $Camera3ValueMin -Camera3ValueMax $Camera3ValueMax -Camera4ValueMin $Camera4ValueMin -Camera4ValueMax $Camera4ValueMax
+	python3 /home/pi/RemoteSettings/BandSwitch.py -PrimaryCardMAC $PrimaryCardMAC -Band5Below $Band5Below -Band10ValueMin $Band10ValueMin -Band10ValueMax $Band10ValueMax -Band20After $Band20After -Camera1ValueMin $Camera1ValueMin -Camera1ValueMax $Camera1ValueMax -Camera2ValueMin $Camera2ValueMin -Camera2ValueMax $Camera2ValueMax -Camera3ValueMin $Camera3ValueMin -Camera3ValueMax $Camera3ValueMax -Camera4ValueMin $Camera4ValueMin -Camera4ValueMax $Camera4ValueMax
         sleep 2
 done

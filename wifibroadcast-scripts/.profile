@@ -12,7 +12,7 @@ case $TTY in
 	i2cdetect -y 1 | grep  "70: 70"
         grepRet=$?
         if [[ $grepRet -eq 0 ]] ; then
-            /usr/bin/python3.5 /home/pi/cameracontrol/InitArduCamV21Ch1.py
+            /usr/bin/python3 /home/pi/cameracontrol/InitArduCamV21Ch1.py
         fi
 	
 	CAM=`/usr/bin/vcgencmd get_camera | nice grep -c detected=1`
@@ -22,7 +22,7 @@ case $TTY in
 	#killall omxplayer  > /dev/null 2>/dev/null
 	#killall omxplayer.bin  > /dev/null 2>/dev/null
         if [[ $grepRet -eq 0 ]] ; then
-			/usr/bin/python3.5 /home/pi/RemoteSettings/Air/RemoteSettingSyncAir.py
+			/usr/bin/python3 /home/pi/RemoteSettings/Air/RemoteSettingSyncAir.py
 			CAM="1"
 			echo "0" > /tmp/ReadyToGo
         else
@@ -38,12 +38,12 @@ case $TTY in
 				retCode=$?
 				if [ $retCode == 1 ]; then
 					# Ret Code is 1. joystick selected as control
-					/usr/bin/python3.5 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia joystick
+					/usr/bin/python3 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia joystick
 				fi
 
 				if [ $retCode == 2 ]; then
 					# Ret code is 2  GPIO  selected as control
-					/usr/bin/python3.5 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia GPIO
+					/usr/bin/python3 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia GPIO
 				fi
 				killall omxplayer  > /dev/null 2>/dev/null
 				killall omxplayer.bin  > /dev/null 2>/dev/null
@@ -51,7 +51,7 @@ case $TTY in
 	
 				echo "0" > /tmp/ReadyToGo
 			else # else we are TX ...
-				/usr/bin/python3.5 /home/pi/RemoteSettings/Air/RemoteSettingSyncAir.py
+				/usr/bin/python3 /home/pi/RemoteSettings/Air/RemoteSettingSyncAir.py
 				echo "0" > /tmp/ReadyToGo
 			fi
 		fi

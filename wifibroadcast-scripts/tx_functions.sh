@@ -326,7 +326,7 @@ if [ "$RemoteSettingsEnabled" == "1" ]; then
         echo "\n RemoteSettings enabled \n"
         /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
         /home/pi/RemoteSettings/AirRSSI.sh &
-        /usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettingsAir.py &
+        /usr/bin/python3 /home/pi/RemoteSettings/RemoteSettingsAir.py &
 else
         re='^[0-9]+$'
         if ! [[ $RemoteSettingsEnabled =~ $re ]] ; then
@@ -336,7 +336,7 @@ else
                         echo "\n RemoteSettings enabled with timer \n"
                          /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
                         /home/pi/RemoteSettings/AirRSSI.sh &
-                        /usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettingsAir.py $RemoteSettingsEnabled &
+                        /usr/bin/python3 /home/pi/RemoteSettings/RemoteSettingsAir.py $RemoteSettingsEnabled &
                 fi
         fi
 fi
@@ -459,7 +459,7 @@ fi
 
 if [ "$IsBandSwicherEnabled" == "1" ]; then
         /home/pi/RemoteSettings/BandSwitcherAir.sh $SecondaryCamera  $BITRATE &
-	/usr/bin/python3.5 /home/pi/RemoteSettings/Air/MessageSorter.py &
+	/usr/bin/python3 /home/pi/RemoteSettings/Air/MessageSorter.py &
 fi
 
 WithoutNativeRPiCamera="0"

@@ -284,7 +284,7 @@ function rx_function {
 			if [ "$RemoteSettingsEnabled" != "0" ]; then
 				echo "SETTINGS CHANGE MODULE ENABLED..."
 				/home/pi/RemoteSettings/ipchecker/iphelper.sh > /dev/null 2>&1 &
-				/usr/bin/python3.5 /home/pi/RemoteSettings/RemoteSettings.py > /dev/null 2>&1 &
+				/usr/bin/python3 /home/pi/RemoteSettings/RemoteSettings.py > /dev/null 2>&1 &
 				/home/pi/RemoteSettings/RemoteSettingsWFBC_UDP.sh > /dev/null 2>&1 &
 				/home/pi/RemoteSettings/GroundRSSI.sh &
 			fi
