@@ -57,7 +57,7 @@ void vsync(DISPMANX_UPDATE_HANDLE_T u, void* arg) {
 	}
 }
 
-static int video_decode_test(char *filename)
+static int video_decode_test(int change_layer)
 {
    OMX_VIDEO_PARAM_PORTFORMATTYPE format;
    COMPONENT_T *video_decode = NULL, *video_render = NULL;
@@ -93,6 +93,22 @@ static int video_decode_test(char *filename)
       status = -14;
    list[1] = video_render;
 
+   if (change_layer) {
+      OMX_CONFIG_DISPLAYREGIONTYPE configDisplay;
+      memset(&configDisplay, 0, sizeof configDisplay);
+      configDisplay.nSize = sizeof configDisplay;
+      configDisplay.nVersion.nVersion = OMX_VERSION;
+      configDisplay.nPortIndex = 90;
+
+      configDisplay.set = (OMX_DISPLAYSETTYPE)(OMX_DISPLAY_SET_TRANSFORM | OMX_DISPLAY_SET_LAYER | OMX_DISPLAY_SET_NUM);
+      configDisplay.num = 0;
+      configDisplay.layer = -128;
+      configDisplay.transform = 0;
+
+
+      if (OMX_SetConfig(ILC_GET_HANDLE(video_render), OMX_IndexConfigDisplayRegion, &configDisplay) != OMX_ErrorNone)
+      status = -15;
+   }
 
    set_tunnel(tunnel, video_decode, 131, video_render, 90);
 
@@ -252,7 +268,9 @@ int main (int argc, char **argv)
   display = vc_dispmanx_display_open( 0 );
   vc_dispmanx_vsync_callback(display, vsync, NULL);
 
-  return video_decode_test(argv[1]);
+  int change_layer = atoi(argv[1]);
+
+  return video_decode_test(change_layer);
 }
 
 

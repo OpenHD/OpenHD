@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "bcm_host.h"
 #include "ilclient.h"
 
-static int video_decode_test()
+static int video_decode_test(int change_layer)
 {
    OMX_VIDEO_PARAM_PORTFORMATTYPE format;
    OMX_TIME_CONFIG_CLOCKSTATETYPE cstate;
@@ -68,6 +68,23 @@ static int video_decode_test()
    if(status == 0 && ilclient_create_component(client, &video_render, "video_render", ILCLIENT_DISABLE_ALL_PORTS) != 0)
       status = -14;
    list[1] = video_render;
+
+   if (change_layer) {
+      OMX_CONFIG_DISPLAYREGIONTYPE configDisplay;
+      memset(&configDisplay, 0, sizeof configDisplay);
+      configDisplay.nSize = sizeof configDisplay;
+      configDisplay.nVersion.nVersion = OMX_VERSION;
+      configDisplay.nPortIndex = 90;
+
+      configDisplay.set = (OMX_DISPLAYSETTYPE)(OMX_DISPLAY_SET_TRANSFORM | OMX_DISPLAY_SET_LAYER | OMX_DISPLAY_SET_NUM);
+      configDisplay.num = 0;
+      configDisplay.layer = -128;
+      configDisplay.transform = 0;
+
+
+      if (OMX_SetConfig(ILC_GET_HANDLE(video_render), OMX_IndexConfigDisplayRegion, &configDisplay) != OMX_ErrorNone)
+      status = -15;
+   }
 
    // create clock
    if(status == 0 && ilclient_create_component(client, &clock, "clock", ILCLIENT_DISABLE_ALL_PORTS) != 0)
@@ -208,7 +225,8 @@ static int video_decode_test()
 int main (int argc, char **argv)
 {
    bcm_host_init();
-   return video_decode_test();
+   int change_layer = atoi(argv[1]);
+   return video_decode_test(change_layer);
 }
 
 
