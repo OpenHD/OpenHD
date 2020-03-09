@@ -124,11 +124,23 @@ case $TTY in
 			echo "Ethernet connection detected"
 			CARRIER=1
 			if nice pump -i eth0 --no-ntp -h $OHDHOSTNAME; then
+			    ETHCLIENTIP=`ip addr show eth0 | grep -Po 'inet \K[\d.]+'`
+				if [ "$ENABLE_QOPENHD" == "Y" ]; then
+					qstatus "Ethernet connected. IP: $ETHCLIENTIP" 3
+				else
+					wbc_status "Ethernet connected. IP: $ETHCLIENTIP" 7 55 0 &
+				fi
 			    ping -n -q -c 1 1.1.1.1
 			else
 			    ps -ef | nice grep "pump -i eth0" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 			    nice ifconfig eth0 down
 			    echo "DHCP failed"
+			    killall wbc_status > /dev/null 2>&1
+				if [ "$ENABLE_QOPENHD" == "Y" ]; then
+					qstatus "ERROR: Could not acquire IP via DHCP!" 5
+				else
+					wbc_status "ERROR: Could not acquire IP via DHCP!" 7 55 0 &
+				fi
 			fi
 		    else
 			echo "No ethernet connection detected"
