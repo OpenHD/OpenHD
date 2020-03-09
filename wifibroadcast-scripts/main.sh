@@ -27,6 +27,8 @@ check_camera_attached
 # Read the config file
 read_config_file
 
+detect_os
+
 echo "-------------------------------------"
 echo "SETTINGS FILE: $CONFIGFILE"
 echo "-------------------------------------"

@@ -4,6 +4,17 @@ function tmessage {
     fi
 }
 
+function detect_os {
+	source /etc/os-release
+	if [[ "${VERSION_ID}" == "9" ]]; then
+		export OPENHD_VERSION="stretch"
+	elif [[ "${VERSION_ID}" == "10" ]]; then
+		export OPENHD_VERSION="buster"
+	else
+		export OPENHD_VERSION="unknown"
+	fi
+}
+
 function detect_memory {
 	TOTAL_MEMORY=$(cat /proc/meminfo | grep 'MemTotal' | awk '{print $2}')
 }
