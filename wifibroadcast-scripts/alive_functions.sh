@@ -26,7 +26,7 @@ function check_alive_function {
 				echo "no new packets, restarting hello_video and sleeping for 5s ..."
 				ps -ef | nice grep "cat /root/videofifo1" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 				ps -ef | nice grep "$DISPLAY_PROGRAM" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-				ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 $DISPLAY_PROGRAM > /dev/null 2>&1 &
+				ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 $DISPLAY_PROGRAM ${HELLO_VIDEO_ARGS} > /dev/null 2>&1 &
 			fi
 			sleep 5
 		else

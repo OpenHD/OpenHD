@@ -29,6 +29,8 @@ read_config_file
 
 detect_os
 
+configure_hello_video_args
+
 echo "-------------------------------------"
 echo "SETTINGS FILE: $CONFIGFILE"
 echo "-------------------------------------"

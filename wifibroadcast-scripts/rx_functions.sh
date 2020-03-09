@@ -255,7 +255,7 @@ function rx_function {
 		#		ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 gst-launch-1.0 fdsrc ! udpsink port=$VIDEO_UDP_PORT host=127.0.0.1 &
 		#	fi
 		#else
-			ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 $DISPLAY_PROGRAM > /dev/null 2>&1 &
+			ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 $DISPLAY_PROGRAM ${HELLO_VIDEO_ARGS} > /dev/null 2>&1 &
 		#fi
 
 		if [ "$VIDEO_TMP" != "none" ]; then
