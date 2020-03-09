@@ -93,6 +93,9 @@ We also offer pre-built images that you can directly download.
 Feel free to join our growing community.
 We have a public {telegram} group with more then 100 members helping each other.
 
+If you just want to see when new releases are announced, you can either star this repository on Github (requires an
+account), or follow the link:https://t.me/OpenHDReleaseAnnouncements[Open.HD Release Announcements] channel on Telegram.
+
 == Developers
 Contribution is always welcome!
 Start helping us by open up an issue or pull request.
