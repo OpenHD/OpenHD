@@ -172,6 +172,17 @@ function check_exitstatus {
     esac
 }
 
+function check_hdmi_csi_attached {
+	i2cdetect -y 0 | grep  "0f"
+	grepRet=$?
+	if [[ $grepRet -eq 0 ]] ; then
+		export HDMI_CSI="1"
+		echo "Detected HDMI CSI input board"
+	else
+		export HDMI_CSI="0"
+	fi
+}
+
 function check_camera_attached {
 	# check if cam is detected to determine if we're going to be RX or TX
 	# only do this on one tty so that we don't run vcgencmd multiple times (which may make it hang)

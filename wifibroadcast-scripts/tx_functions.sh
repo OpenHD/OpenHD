@@ -181,17 +181,10 @@ function tx_function {
 		echo "0" > /tmp/undervolt
     fi
 
-	IsTC358743="0"
-	lsmod | grep "tc358743"
-	grepRet=$?
-	if [[ ${grepRet} -eq 0 ]] ; then
-		IsTC358743="1"
-	fi
-
-	# if a tc358743 is detected and framerate is 30fps, cut bitrate in half. this is a fix for an odd 
-	# bug, it would be nice to find the real cause but this works for now
-	if [[ "${IsTC358743}" == "1" && "${FPS}" == "30" ]]; then
-		echo "Reducing video bitrate by half for TC358743 @ 30fps"
+	# if a tc358743 HDMI CSI board is detected and framerate is 30fps, cut bitrate in half. 
+	# this is a fix for an odd bug, it would be nice to find the real cause but this works for now
+	if [[ "${HDMI_CSI}" == "1" && "${FPS}" == "30" ]]; then
+		echo "Reducing video bitrate by half for HDMI CSI board @ 30fps"
 		BITRATE_PERCENT=$(python -c "print(${BITRATE_PERCENT}/2)")
 		if [ "${VIDEO_BITRATE}" != "auto" ]; then
 			BITRATE=$(python -c "print(${VIDEO_BITRATE}/2)")

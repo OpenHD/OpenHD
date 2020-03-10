@@ -24,6 +24,8 @@ autoenable_i2c_vc
 # Check for the camera
 check_camera_attached
 
+check_hdmi_csi_attached
+
 # Read the config file
 read_config_file
 
