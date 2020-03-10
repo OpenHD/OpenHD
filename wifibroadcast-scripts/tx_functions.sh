@@ -188,10 +188,10 @@ function tx_function {
 		IsTC358743="1"
 	fi
 
-	# if a tc358743 is detected and framerate is 30fps, or an IMX290 camera is in use, cut bitrate in half
-	# this is a fix for an odd bug, it would be nice to find the real cause but this works for now
-	if [[ "${IsTC358743}" == "1" && "${FPS}" == "30" || "${IMX290}" == "1" ]]; then
-		echo "Reducing video bitrate by half for TC358743 @ 30fps / IMX290"
+	# if a tc358743 is detected and framerate is 30fps, cut bitrate in half. this is a fix for an odd 
+	# bug, it would be nice to find the real cause but this works for now
+	if [[ "${IsTC358743}" == "1" && "${FPS}" == "30" ]]; then
+		echo "Reducing video bitrate by half for TC358743 @ 30fps"
 		BITRATE_PERCENT=$(python -c "print(${BITRATE_PERCENT}/2)")
 		if [ "${VIDEO_BITRATE}" != "auto" ]; then
 			BITRATE=$(python -c "print(${VIDEO_BITRATE}/2)")
