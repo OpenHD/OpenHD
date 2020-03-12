@@ -38,6 +38,7 @@ function detect_hardware {
 			'b03111')
 			ABLE_BAND=ag
 			MODEL=4b
+			;;
                        '29020e0')
 		        ABLE_BAND=ag
 			MODEL=3a+
