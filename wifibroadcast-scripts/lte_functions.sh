@@ -1,6 +1,6 @@
 function lte_function {  
 
-	# TODO need a first run type of tracker.
+	# Need a first run type of tracker. Delete the below file in boot to force install to rerun
 	if test -f "/boot/zerotier-install-tracker.txt"; then
 		echo "Zerotier already attempted to install..."
 	else
@@ -31,8 +31,11 @@ function lte_function {
 	fi	
 
 	# Find id of wbc nic
-	local PI_NIC=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot | nice grep -v $NIC_BLACKLIST | nice grep -v eth1`
+	local PI_NIC=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot | nice grep -v eth1`
 
+	# Replace white space with comma for case where there are multiple nic for wbc
+	PI_NIC=$(echo $PI_NIC | sed 's/ /","/g')
+	
 	echo "PI_NIC to be blacklisted for zerotier=$PI_NIC"
 
 	# Blacklist all wbc connections except our zerotier lte stick
