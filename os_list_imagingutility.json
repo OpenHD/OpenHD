@@ -1,0 +1,41 @@
+{
+    "os_list": [
+        {
+            "name": "Open.HD Stable",
+            "description": "The most recent Open.HD release",
+            "icon": "http://downloads.raspberrypi.org/raspbian/Raspbian.png",
+            "url": "https://github.com/OpenHD/Open.HD/releases/download/2.0.0rc1.2/Open.HD_V2.0_RC1.2-2019-11-24_RSSI-FIX.img.zip",
+            "extract_size": 4013948928,
+            "extract_sha256": "717e6c31fa5573ed98f4f3776fe740773a1e211052b8de83f6e3aaec64089021",
+            "image_download_size": 1270683195,
+            "release_date": "2019-11-24"
+        },
+        {
+            "name": "Open.HD Nightly",
+            "description": "Current development snapshots",
+            "icon": "http://downloads.raspberrypi.org/raspbian/Raspbian.png",
+            "subitems": [
+                {
+                    "name": "Pi Zero, Pi 3, Compute Module 3",
+                    "description": "Standard image for most Pi models",
+                    "icon": "http://downloads.raspberrypi.org/raspbian_lite/Raspbian_Lite.png",
+                    "url": "https://github.com/OpenHD/Open.HD/releases/download/nightly-2020-3-1/Open.HD-nightly-2020-3-1.img.gz",
+                    "extract_size": 4013948929,
+                    "extract_sha256": "14f4c593f2c77a1a35775ee57f706f24d2170280dadb86f4d9819d13c402bcde",
+                    "image_download_size": 1436306689,
+                    "release_date": "2020-3-1"
+                },{
+                    "name": "Compute Module 3+",
+                    "description": "Test image for the Compute Module 3+",
+                    "icon": "http://downloads.raspberrypi.org/raspbian_full/Raspbian_Full.png",
+                    "url": "https://github.com/OpenHD/Open.HD/releases/download/nightly-2020-3-1/Open.HD-nightly-2020-3-1-CM3P.img.gz",
+                    "extract_size": 3951034369,
+                    "extract_sha256": "94f348b112974b1cf45a2c3f762ac1fb80921eee731cf26dabd99409564cb225",
+                    "image_download_size": 1466463537,
+                    "release_date": "2020-3-1"
+                }
+            ]
+        }
+    ]
+}
+
