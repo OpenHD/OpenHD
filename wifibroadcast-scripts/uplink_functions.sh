@@ -6,7 +6,7 @@ function MAIN_UPLINK_FUNCTION {
 	# set the mavlink sysid for air and ground microservices. this does not need to avoid conflicts
 	# with other mavlink devices connected to the flight controller because it is an entirely separate
 	# mavlink bus dedicated to OpenHD services.
-	if [ "$CAM" == "1" ]; then 
+	if [ "${CAM}" -ge 1 ]; then 
 		# air is always sysid 253 for all services
 		echo "SYSID=253" > /etc/openhd/openhd_microservice.conf
 	else
@@ -22,7 +22,7 @@ function MAIN_UPLINK_FUNCTION {
 	systemctl start openhd_router
 	sleep 1
 
-	if [ "$CAM" == "1" ]; then # we are video TX and uplink RX
+	if [ "${CAM}" -ge 1 ]; then # we are video TX and uplink RX
 		# start the microservice channel and the services that run on the air side
 		microservice_air_rx_function &
 		microservice_air_tx_function &
