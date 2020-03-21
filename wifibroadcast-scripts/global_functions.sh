@@ -411,6 +411,11 @@ function get_telemetry_settings {
         TELEMETRY_TYPE=1
     fi
 
+    if cat /boot/osdconfig.txt | grep -q "^#define VOT"; then
+        TELEMETRY_UDP_PORT=5011
+        TELEMETRY_TYPE=1
+    fi
+
     if cat /boot/osdconfig.txt | grep -q "^#define MAVLINK"; then
         TELEMETRY_UDP_PORT=5004
         TELEMETRY_TYPE=0
