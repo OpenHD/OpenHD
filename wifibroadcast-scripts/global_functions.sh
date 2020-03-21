@@ -224,7 +224,7 @@ function check_camera_attached {
             fi
         else # else we are TX ...
             touch /tmp/TX
-            echo  "1" > /tmp/cam
+            echo ${CAM} > /tmp/cam
         fi
     else
         echo -n "Waiting until TX/RX has been determined"
