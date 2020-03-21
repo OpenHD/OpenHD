@@ -4,14 +4,14 @@ source osd_tx_functions.sh
 function MAIN_OSD_TX_RX_FUNCTION {
     echo "================== OSD (tty2) ==========================="
     
-    # only run osdrx if no cam found
-    if [ "$CAM" == "0" ]; then
-        osdrx_function
-    else
+    if [ "${CAM}" -ge 1 ]; then
         # only run osdtx if cam found, osd enabled and telemetry input is the tx
-        if [ "$CAM" == "1" ] && [ "$TELEMETRY_TRANSMISSION" == "wbc" ]; then
+        if [ "$TELEMETRY_TRANSMISSION" == "wbc" ]; then
             osdtx_function
         fi
+    else
+        # only run osdrx if no cam found
+        osdrx_function
     fi
     
     echo "OSD not enabled in configfile"
