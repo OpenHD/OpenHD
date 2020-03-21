@@ -151,26 +151,26 @@ ChannelValueCurrent=-1
 ChannelValueNew=0
 SwitchCameraEvent=0
 
-gp.setmode(gp.BOARD)
+gp.setmode(gp.BCM)
 
 def InitGPIO():
     print("GPIO init start...")
-    gp.setup(7, gp.OUT) 
-    gp.setup(11, gp.OUT)
-    gp.setup(12, gp.OUT)
+    gp.setup(4, gp.OUT) 
+    gp.setup(17, gp.OUT)
+    gp.setup(18, gp.OUT)
 
-    gp.setup(15, gp.OUT)
-    gp.setup(16, gp.OUT)
-    gp.setup(21, gp.OUT)
     gp.setup(22, gp.OUT)
+    gp.setup(23, gp.OUT)
+    gp.setup(9, gp.OUT)
+    gp.setup(25, gp.OUT)
     
     if IsArduCameraV21 == 0:
-        gp.output(11, True)
-        gp.output(12, True)
-        gp.output(15, True)
-        gp.output(16, True)
-        gp.output(21, True)
+        gp.output(17, True)
+        gp.output(18, True)
         gp.output(22, True)
+        gp.output(23, True)
+        gp.output(9, True)
+        gp.output(25, True)
 
     print("GPIO init ended.")
 
@@ -322,35 +322,35 @@ def SwitchMultiCameraTo(id):
             if IsArduCameraV21 == 21:
                 i2c = "i2cset -y 1 0x70 0x00 0x04"
                 os.system(i2c)
-            gp.output(7,  False)
-            gp.output(11,  False)
-            gp.output(12,  True)
+            gp.output(4,  False)
+            gp.output(17,  False)
+            gp.output(18,  True)
             ActiveCameraId = id
         if id == 2:
             print("SW GPIO 2")
             if IsArduCameraV21 == 21:
                 i2c = "i2cset -y 1 0x70 0x00 0x05"
                 os.system(i2c)
-            gp.output(7,  True)
-            gp.output(11,  False)
-            gp.output(12,  True)
+            gp.output(4,  True)
+            gp.output(17,  False)
+            gp.output(18,  True)
             ActiveCameraId = id
         if id == 3:
             print("SW GPIO 3")
             if IsArduCameraV21 == 21:
                 i2c = "i2cset -y 1 0x70 0x00 0x06"
                 os.system(i2c)
-            gp.output(7,  False)
-            gp.output(11,  True)
-            gp.output(12,  False)
+            gp.output(4,  False)
+            gp.output(17,  True)
+            gp.output(18,  False)
             ActiveCameraId = id
         if id == 4:
             if IsArduCameraV21 == 21:
                 i2c = "i2cset -y 1 0x70 0x00 0x07"
                 os.system(i2c)
-            gp.output(7, True)
-            gp.output(11, True)
-            gp.output(12, False)
+            gp.output(4, True)
+            gp.output(17, True)
+            gp.output(18, False)
             ActiveCameraId = id
         print("GPIO Switched to: ", id)
     else:
