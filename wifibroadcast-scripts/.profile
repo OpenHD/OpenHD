@@ -15,8 +15,7 @@ case $TTY in
             /usr/bin/python3 /home/pi/cameracontrol/InitArduCamV21Ch1.py
         fi
 	
-	CAM=`/usr/bin/vcgencmd get_camera | nice grep -c detected=1`
-	
+	CAM=`/usr/bin/vcgencmd get_camera | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("supported=\d+ detected=", "", s); print(s);'`
         i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
         grepRet=$?
 	#killall omxplayer  > /dev/null 2>/dev/null

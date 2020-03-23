@@ -198,7 +198,7 @@ function check_camera_attached {
     # only do this on one tty so that we don't run vcgencmd multiple times (which may make it hang)
     
     if [ "$TTY" == "/dev/tty1" ]; then
-        CAM=`/usr/bin/vcgencmd get_camera | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("supported=1 detected=", "", s); print(s);'`
+        CAM=`/usr/bin/vcgencmd get_camera | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("supported=\d+ detected=", "", s); print(s);'`
         
         if [ "$CAM" == "0" ]; then
             #is use by cameracontrolUDP.py to restricted video mode change

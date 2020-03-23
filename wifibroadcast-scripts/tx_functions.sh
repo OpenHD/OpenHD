@@ -348,8 +348,10 @@ NICS="${NICS//$'\n'/ }"
 
 echo "#!/bin/bash" >  /dev/shm/startReadCameraTransferExteranlBitrate.sh
 
-NotIMX290=`/usr/bin/vcgencmd get_camera | nice grep -c detected=1`
-if [ "$NotIMX290" == "1" ];  then
+# If tx_functions is running but the GPU says there are no cameras connected (CAM=0), it's
+# likely an IMX290. We could explicitly detect that, but this works for now.
+CAM=`/usr/bin/vcgencmd get_camera | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("supported=\d+ detected=", "", s); print(s);'`
+if [ "${CAM}" -ge 1 ];  then
     if [ "$ENABLE_OPENHDVID" == "Y" ]; then
 		CAMERA_PROGRAM="openhdvid"
 		if [ "$AIR_VIDEO_RECORDING" == "Y" ]; then
@@ -392,8 +394,9 @@ echo "BitRate_5: "
 echo $BITRATE_5
 
 
-
-if [ "$NotIMX290" == "1" ]; then
+# If tx_functions is running but the GPU says there are no cameras connected (CAM=0), it's
+# likely an IMX290. We could explicitly detect that, but this works for now.
+if [ "${CAM}" -ge 1 ]; then
     if [ "$ENABLE_OPENHDVID" == "Y" ]; then
 		CAMERA_PROGRAM="openhdvid"
 		if [ "$AIR_VIDEO_RECORDING" == "Y" ]; then
