@@ -25,6 +25,14 @@ function configure_hello_video_args {
     fi
 }
 
+
+function migration_helper {
+    # force enable QOpenHD because it's the only option on buster
+    if [[ "$OPENHD_VERSION" == "buster" ]]; then
+        export ENABLE_QOPENHD="Y"
+    fi
+}
+
 function detect_memory {
     TOTAL_MEMORY=$(cat /proc/meminfo | grep 'MemTotal' | awk '{print $2}')
 }

@@ -30,6 +30,8 @@ read_config_file
 
 detect_os
 
+migration_helper
+
 configure_hello_video_args
 
 echo "-------------------------------------"
