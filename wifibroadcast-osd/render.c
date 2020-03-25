@@ -865,10 +865,14 @@ void draw_airspeed(int airspeed, float pos_x, float pos_y, float scale){
 
     float text_scale = getWidth(2) * scale;
     VGfloat width_value = TextWidth("100", myfont, text_scale);
+#if CHINESE == true
     VGfloat width_speedo = TextWidth("", osdicons, text_scale*0.65) + getWidth(0.5)*scale;
 
     TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y), "", osdicons, text_scale*0.65);
     TextEnd(getWidth(pos_x)-width_value-width_speedo, getHeight(pos_y), "", osdicons, text_scale*0.65);
+#else
+    TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y), "ﵷ", osdicons, text_scale*0.65);
+#endif
 
     #if IMPERIAL == true
     sprintf(buffer, "%d", airspeed*TO_MPH);
