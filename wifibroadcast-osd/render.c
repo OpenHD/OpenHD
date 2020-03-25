@@ -795,10 +795,10 @@ void draw_rssi(int rssi, int armed, float pos_x, float pos_y, float scale, float
     float text_scale = getWidth(2) * scale;
     VGfloat width_value = TextWidth("00", myfont, text_scale);   
 
-    if (rssi > warn) {
+    if (rssi < warn) {
         Stroke(COLOR_WARNING); //red
     Fill(COLOR_WARNING); 
-    } else if (rssi > caution) {
+    } else if (rssi < caution) {
         Stroke(COLOR_CAUTION); //yellow
     Fill(COLOR_CAUTION); 
     } else {    
