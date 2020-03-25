@@ -901,8 +901,8 @@ void draw_gpsspeed(int gpsspeed, float pos_x, float pos_y, float scale){
     TextEnd(getWidth(pos_x)-width_value-width_speedo, getHeight(pos_y), "", osdicons, text_scale*0.7);
     #else
     VGfloat width_speedo = TextWidth("ﵵ", osdicons, text_scale*0.65);
-    TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y),"ﵵ", osdicons, text_scale*0.65);
-    TextEnd(getWidth(pos_x)-width_value-width_speedo, getHeight(pos_y), "ﵷ", osdicons, text_scale*0.7);
+    TextEnd(getWidth(pos_x)-width_value, getHeight(pos_y), "ﵷ", osdicons, text_scale*0.7);
+    TextEnd(getWidth(pos_x)-width_value-width_speedo, getHeight(pos_y), "", osdicons, text_scale*0.65);
     #endif
 
     #if IMPERIAL == true
