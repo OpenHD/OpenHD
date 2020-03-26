@@ -25,6 +25,8 @@ check_camera_attached
 
 check_hdmi_csi_attached
 
+check_lifepowered_pi_attached
+
 # Read the config file
 read_config_file
 

@@ -205,6 +205,19 @@ function check_exitstatus {
     esac
 }
 
+function check_lifepowered_pi_attached {
+    i2cdetect -y 1 | grep  "0x43"
+    grepRet=$?
+
+    if [[ $grepRet -eq 0 ]] ; then
+        export LIFEPO4WERED_PI="1"
+        echo "Detected LiFePO4wered Pi power hat"
+        systemctl start lifepo4wered-daemon
+    else
+        export LIFEPO4WERED_PI="0"
+    fi
+}
+
 function check_hdmi_csi_attached {
     i2cdetect -y 0 | grep  "0f"
     grepRet=$?
