@@ -169,6 +169,36 @@ function detect_hardware {
 }
 
 
+function detect_wfb_primary_band {
+    lsmod | grep 88XXau
+    grepRet=$?
+    if [[ $grepRet -eq 0 ]] ; then
+        export WFB_PRIMARY_BAND_58="1"
+        export WFB_PRIMARY_BAND_24="0"
+        echo "58" > /tmp/wfb_primary_band
+        return
+    fi
+
+    # every other card we support is 2.4-only, so we default to 2.4
+    export WFB_PRIMARY_BAND_58="0"
+    export WFB_PRIMARY_BAND_24="1"
+    echo "24" > /tmp/wfb_primary_band
+}
+
+
+function auto_frequency_select {
+    if [[ "${WFB_PRIMARY_BAND_58}" == "1" ]]; then
+        if [[ "${FREQ}" == "auto" ]]; then
+            export FREQ="5180"
+        fi
+    else
+        if [[ "${FREQ}" == "auto" ]]; then
+            export FREQ="2412"
+        fi
+    fi
+}
+
+
 #
 # If /boot/i2c_vc exists, we check to see if i2c_vc is already enabled in
 # config.txt, and if not we enable it and reboot. 

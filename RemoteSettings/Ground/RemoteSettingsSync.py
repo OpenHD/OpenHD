@@ -84,8 +84,15 @@ UDP_SMARTSYNC_STATE_PORT_OUT=50001
 RecvSocket = 0
 JoystickSettingsFilePath = "/boot/joyconfig.txt"
 IsMainScriptRunning = False
-DefaultCommunicateFreq = "2412"
-FreqFromConfigFile= "0"
+
+WFBDefultFreq24="2412"
+WFBDefultFreq58="5180"
+FreqFromConfigFile="auto"
+
+SmartSyncFreqDefault24 = "2412"
+SmartSyncFreqDefault58 = "5180"
+SmartSyncFreqFromConfigFile="auto"
+
 WlanName = "0"
 RC_Value = 0
 ExitRCThread = 0
@@ -256,14 +263,15 @@ def ReadSettingsFromConfigFile():
     global SmartSync_StartupMode
     global SmartSyncGround_Countdown
     global FreqFromConfigFile
+    global SmartSyncFreqFromConfigFile
+
     try:
         with open(SettingsFilePath, "r") as f:
             lines = f.readlines()
             for line in lines:
                 if line.startswith("FREQ=") == True:
                     SplitLines = line.split("=")
-                    FilterDigits = SplitLines[1]
-                    FreqFromConfigFile = re.sub("\D", "", FilterDigits) 
+                    FreqFromConfigFile = SplitLines[1]
 
                 if line.startswith("SmartSyncOFF_RC_Value") == True:
                     SplitLines = line.split("=")
@@ -290,6 +298,10 @@ def ReadSettingsFromConfigFile():
                     FilterDigits = SplitLines[1]
                     SmartSyncGround_Countdown = int(re.sub("\D", "", FilterDigits) )
                     
+                if line.startswith("SmartSync_Frequency=") == True:
+                    SplitLines = line.split("=")
+                    FilterDigits = SplitLines[1]
+                    SmartSyncFreqFromConfigFile = re.sub("\D", "", FilterDigits) 
 
             return True
 
@@ -321,6 +333,8 @@ def FindWlanNameByMAC(PrimaryCardMAC):
 def FindWlanToUseGround():
     global WlanName
 
+    SmartSyncFreq = SelectSmartSyncFrequency()
+
     PrimaryCardMAC = GetPrimaryCardMAC_Config()
     if PrimaryCardMAC == False or PrimaryCardMAC == "0":
         SendInfoToDisplay(5, "SmartSync: trying to initialize WLAN...")
@@ -332,8 +346,8 @@ def FindWlanToUseGround():
                         WlanName = dir
             if WlanName != "0":
                 SendInfoToDisplay(5, "SmartSync: using WLAN interface " + WlanName)
-                subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", "2412" ])
-                SendInfoToDisplay(5, "SmartSync: frequency set to 2412")
+                subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", SmartSyncFreq ])
+                SendInfoToDisplay(5, "SmartSync: frequency set to " + SmartSyncFreq)
                 return True
             else:
                 return False
@@ -349,8 +363,8 @@ def FindWlanToUseGround():
             try:
                 WlanName = result
                 SendInfoToDisplay(5, "SmartSync: using WLAN interface " + WlanName)
-                subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", "2412" ])
-                SendInfoToDisplay(5, "SmartSync: frequency set to 2412")
+                subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", SmartSyncFreq])
+                SendInfoToDisplay(5, "SmartSync: frequency set to " + SmartSyncFreq)
                 return True
             except Exception as e:
                 SendInfoToDisplay(3, e)
@@ -365,8 +379,8 @@ def FindWlanToUseGround():
                             WlanName = dir
                 if WlanName != "0":
                     SendInfoToDisplay(5, "SmartSync: using WLAN interface "  + WlanName)
-                    subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", "2412" ])
-                    SendInfoToDisplay(5, "SmartSync: frequency set to 2412")
+                    subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", SmartSyncFreq])
+                    SendInfoToDisplay(5, "SmartSync: frequency set to " + SmartSyncFreq)
                     return True
                 else:
                     return False
@@ -378,13 +392,14 @@ def FindWlanToUseGround():
 #Not used. Can be used with ath9k driver reload.
 def InitWlan():
     global WlanName
+    SmartSyncFreq = SelectSmartSyncFrequency()
     PrimaryCardMAC = GetPrimaryCardMAC_Config()
     if PrimaryCardMAC == False or PrimaryCardMAC == "0":
         SendInfoToDisplay(5, "SmartSync: trying to initialize wlan0...")
         try:
             if os.path.isdir("/sys/class/net/wlan0") == True:
                 WlanName = "wlan0"
-                subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', "wlan0" ,"2412" ])
+                subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', "wlan0", SmartSyncFreq ])
                 return True
             else:
                 SendInfoToDisplay(3, "SmartSync: wlan0 not found")
@@ -399,7 +414,7 @@ def InitWlan():
             SendInfoToDisplay(5, "SmartSync: wlan name with MAC: " + result)
             try:
                 WlanName = result
-                subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', result ,"2412" ])
+                subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', result, SmartSyncFreq ])
                 return True
             except Exception as e:
                 SendInfoToDisplay(3, e)
@@ -409,7 +424,7 @@ def InitWlan():
             try:
                 if os.path.isdir("/sys/class/net/wlan0") == True:
                     WlanName = "wlan0"
-                    subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', "wlan0" ,"2412" ])
+                    subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', "wlan0", SmartSyncFreq ])
                     return True
                 else:
                     SendInfoToDisplay(3, "SmartSync: wlan0 not found")
@@ -490,6 +505,45 @@ def InitDevNull():
     except Exception as e:
         SendInfoToDisplay(3, e)
     return False
+
+def DetectWFBPrimaryBand():
+    ret = os.system('lsmod | grep 88XXau')
+    if ret == 0:
+        return "58"
+    else:
+        return "24"
+
+def GetDefaultWFBFrequency():
+    WFBPrimaryBand = DetectWFBPrimaryBand()
+    if WFBPrimaryBand == "58":
+        return WFBDefultFreq58
+    elif WFBPrimaryBand == "24":
+        return WFBDefultFreq24
+    else:
+        # we have no way of knowing what to use because the supported bands aren't known
+        return WFBDefultFreq24
+
+def SelectSmartSyncFrequency():
+    WFBPrimaryBand = DetectWFBPrimaryBand()
+    try:
+        if not SmartSyncFreqFromConfigFile or "auto" in SmartSyncFreqFromConfigFile:
+            # either the file couldn't be read or the user still has auto chosen, so we pick for them
+            WFBPrimaryBand = DetectWFBPrimaryBand()
+            if WFBPrimaryBand == "58":
+                return SmartSyncFreqDefault58
+            elif WFBPrimaryBand == "24":
+                return SmartSyncFreqDefault24
+            else:
+                # we have no way of knowing what to use because the supported bands aren't known
+                return SmartSyncFreqDefault24
+        else:
+            # the user changed the smartsync frequency, we use it but they're on their own now
+            return SmartSyncFreqFromConfigFile
+    except Exception as e:
+       print(e)
+       return False
+    return False
+
 
 def StartSVPcomTx():                                     
     try:                                     
@@ -755,10 +809,18 @@ def StartRCThreadIn():
 
 
 def ReturnWlanFreq():
-    if FreqFromConfigFile != "0" and WlanName != "0":
+    global FreqFromConfigFile
+    if WlanName != "0":
         try:
-            subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanFreq.sh', WlanName , FreqFromConfigFile ])
-            SendInfoToDisplay(5, "SmartSync: normal frequency for interface " + WlanName + " returned to: " + FreqFromConfigFile)
+            if not FreqFromConfigFile or "auto" in FreqFromConfigFile:
+                WFBFreq = GetDefaultWFBFrequency()
+                subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanFreq.sh', WlanName , WFBFreq ])
+                SendInfoToDisplay("Using automatic WFB frequency: " + WFBFreq)
+                SendInfoToDisplay(5, "Using automatic WFB frequency: " + WFBFreq)
+            else:
+                FreqFromConfigFile = re.sub("\D", "", FreqFromConfigFile) 
+                subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanFreq.sh', WlanName , FreqFromConfigFile ])
+                SendInfoToDisplay(5, "SmartSync: normal frequency for interface " + WlanName + " returned to: " + FreqFromConfigFile)
         except Exception as e:
             SendInfoToDisplay(3, e)
 
