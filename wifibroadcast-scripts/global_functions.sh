@@ -206,7 +206,7 @@ function check_exitstatus {
 }
 
 function check_lifepowered_pi_attached {
-    i2cdetect -y 1 | grep  "0x43"
+    i2cdetect -y 1 | grep  "43"
     grepRet=$?
 
     if [[ $grepRet -eq 0 ]] ; then
