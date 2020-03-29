@@ -1,6 +1,10 @@
 function tx_function {
     killall wbc_status > /dev/null 2>&1
 
+	if [[ "${OPENHD_VERSION}" == "buster" ]]; then
+		vcdbg set awb_mode 0
+	fi
+
     if [ "$LTE" == "Y" ]; then
 	source lte_functions.sh
 	lte_function
