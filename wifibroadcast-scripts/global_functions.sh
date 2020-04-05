@@ -31,6 +31,12 @@ function migration_helper {
     if [[ "$OPENHD_VERSION" == "buster" ]]; then
         export ENABLE_QOPENHD="Y"
     fi
+
+    # replace omxh264enc with v4l2h264enc on buster, the former doesn't work right now due to a bug in gstreamer-omx package in raspbian
+    # this is only a bandaid for people who have not updated their settings file yet, just to ensure that things work
+    if [[ "${OPENHD_VERSION}" == "buster" ]]; then
+        export USBCamera=`echo ${USBCamera} | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("omxh264enc.+\s*\!", "videoconvert ! v4l2h264enc !", s); print(s);'`
+    fi
 }
 
 function detect_memory {
