@@ -53,6 +53,10 @@ function hotspot_check_function {
         #redirect telemetry to UDP splitter
         nice socat -b $TELEMETRY_UDP_BLOCKSIZE GOPEN:/root/telemetryfifo2 UDP4-SENDTO:127.0.0.1:6610 &
         /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9122 6610 $TELEMETRY_UDP_PORT &
+        # this is pretty crude but ensures that all telemetry protocols will be forwarded to QOpenHD
+        # when running on the ground station. Normally, devices joining the hotspot will trigger 
+        # forwarding like this, but when running on the ground station itself that never happens.
+        ( sleep 10; echo "add 127.0.0.1"  > /dev/udp/127.0.0.1/9122 ) &
 
 
         nice /home/pi/wifibroadcast-base/rssi_forward 127.0.0.1 5003 &
