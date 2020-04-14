@@ -20,10 +20,10 @@ function tx_function {
     if [[ $grepRet -eq 0 ]] ; then
         echo  "1" > /tmp/imx290
         IMX290="1"
-        cd /home/pi/raspberrypi/i2c_cmd_v2/i2c_v2/
-        /home/pi/raspberrypi/i2c_cmd_v2/i2c_v2/veye_mipi_290_i2c.sh -w -f wdrmode -p1 $IMX290_wdrmode > /tmp/imx290log
-        /home/pi/raspberrypi/i2c_cmd_v2/i2c_v2/veye_mipi_290_i2c.sh -w -f mirrormode -p1 $IMX290_mirrormode >> /tmp/imx290log
-        /home/pi/raspberrypi/i2c_cmd_v2/i2c_v2/veye_mipi_290_i2c.sh -w -f denoise -p1 $IMX290_denoise >> /tmp/imx290log
+        cd /usr/local/bin
+        /usr/local/bin/veye_mipi_i2c.sh -w -f wdrmode -p1 $IMX290_wdrmode > /tmp/imx290log
+        /usr/local/bin/veye_mipi_i2c.sh -w -f mirrormode -p1 $IMX290_mirrormode >> /tmp/imx290log
+        /usr/local/bin/veye_mipi_i2c.sh -w -f denoise -p1 $IMX290_denoise >> /tmp/imx290log
     fi
 
     if [ "$LoadFlirDriver" == "Y" ]; then
@@ -366,7 +366,7 @@ if [ "${CAM}" -ge 1 ];  then
 	fi
 	echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
 else
-	echo "nice -n -9 /home/pi/raspberrypi/veye_raspcam/source/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
+	echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
 fi
 
 echo "#!/bin/bash" > /dev/shm/startReadUSBCamera.sh
@@ -421,9 +421,9 @@ if [ "${CAM}" -ge 1 ]; then
 else
 
 
-	echo "nice -n -9 /home/pi/raspberrypi/veye_raspcam/source/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
-	echo "nice -n -9 /home/pi/raspberrypi/veye_raspcam/source/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_10 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_10.sh
-	echo "nice -n -9 /home/pi/raspberrypi/veye_raspcam/source/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_5 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_5.sh
+	echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
+	echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_10 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_10.sh
+	echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_5 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_5.sh
 fi
 
 echo $NICS > /tmp/NICS.txt
