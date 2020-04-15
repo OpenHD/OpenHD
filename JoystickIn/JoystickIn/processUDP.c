@@ -1,45 +1,36 @@
-#include<stdio.h> //printf
-#include<string.h> //memset
-#include<stdlib.h> //exit(0);
-#include<arpa/inet.h>
-#include<sys/socket.h>
+#include <arpa/inet.h>
+#include <stdio.h>	//printf
+#include <stdlib.h> //exit(0);
+#include <string.h> //memset
+#include <sys/socket.h>
 
 #include <getopt.h>
 #include <sys/mman.h>
 
-#include <sys/resource.h>
 #include <fcntl.h> // serialport
+#include <sys/resource.h>
 #include <termios.h> // serialport
 
-
-
-
-
-
-
-
-#include <stdlib.h>
+#include <endian.h>
 #include <errno.h>
-#include <resolv.h>
-#include <string.h>
-#include <utime.h>
-#include <unistd.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <pcap.h>
-#include <endian.h>
-#include <fcntl.h>
-#include <time.h>
-#include <sys/mman.h>
+#include <resolv.h>
 #include <sodium.h>
-#include <endian.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <time.h>
+#include <unistd.h>
+#include <utime.h>
 
 #include <openhd/mavlink.h>
 
 #include "openhdlib.h"
 
-#define BUFLEN 21  //Max length of buffer
-#define PORT 5565   //The port on which to listen for incoming data
-
+#define BUFLEN 21 //Max length of buffer
+#define PORT 5565 //The port on which to listen for incoming data
 
 int rc_received_yet = 0;
 int serialport = 0;
@@ -47,10 +38,15 @@ int param_baudrate = 0;
 int param_rc_protocol = 0;
 char *param_serialport = "none";
 
-
 int flagHelp = 0;
 uint16_t sumdcrc = 0;
 uint16_t ibuschecksum = 0;
+
+int rssii;
+
+wifibroadcast_rx_status_t_rc *rx_status_rc = NULL;
+
+
 
 const uint16_t sumdcrc16_table[256] = {
     0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7, 0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
@@ -68,310 +64,347 @@ const uint16_t sumdcrc16_table[256] = {
     0xD94C, 0xC96D, 0xF90E, 0xE92F, 0x99C8, 0x89E9, 0xB98A, 0xA9AB, 0x5844, 0x4865, 0x7806, 0x6827, 0x18C0, 0x08E1, 0x3882, 0x28A3,
     0xCB7D, 0xDB5C, 0xEB3F, 0xFB1E, 0x8BF9, 0x9BD8, 0xABBB, 0xBB9A, 0x4A75, 0x5A54, 0x6A37, 0x7A16, 0x0AF1, 0x1AD0, 0x2AB3, 0x3A92,
     0xFD2E, 0xED0F, 0xDD6C, 0xCD4D, 0xBDAA, 0xAD8B, 0x9DE8, 0x8DC9, 0x7C26, 0x6C07, 0x5C64, 0x4C45, 0x3CA2, 0x2C83, 0x1CE0, 0x0CC1,
-    0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8, 0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
-};
+    0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8, 0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0};
 
 
 struct rcdata_s {
-	unsigned int chan1 : 11;
-	unsigned int chan2 : 11;
-	unsigned int chan3 : 11;
-	unsigned int chan4 : 11;
-	unsigned int chan5 : 11;
-	unsigned int chan6 : 11;
-	unsigned int chan7 : 11;
-	unsigned int chan8 : 11;
-	unsigned int Is16  : 8;
-        unsigned int switches : SWITCH_COUNT;
-} __attribute__ ((__packed__));
+    unsigned int chan1 : 11;
+    unsigned int chan2 : 11;
+    unsigned int chan3 : 11;
+    unsigned int chan4 : 11;
+    unsigned int chan5 : 11;
+    unsigned int chan6 : 11;
+    unsigned int chan7 : 11;
+    unsigned int chan8 : 11;
+    unsigned int Is16 : 8;
+    unsigned int switches : SWITCH_COUNT;
+} __attribute__((__packed__));
+
 struct rcdata_s rcdata;
 
 
 
 void status_memory_init_rc(wifibroadcast_rx_status_t_rc *s) {
-        s->received_block_cnt = 0;
-        s->damaged_block_cnt = 0;
-        s->received_packet_cnt = 0;
-        s->lost_packet_cnt = 0;
-        s->tx_restart_cnt = 0;
-        s->wifi_adapter_cnt = 0;
-        s->kbitrate = 0;
+    s->received_block_cnt = 0;
+    s->damaged_block_cnt = 0;
+    s->received_packet_cnt = 0;
+    s->lost_packet_cnt = 0;
+    s->tx_restart_cnt = 0;
+    s->wifi_adapter_cnt = 0;
+    s->kbitrate = 0;
 
-        int i;
-        for(i=0; i<8; ++i) {
-                s->adapter[i].received_packet_cnt = 0;
-                s->adapter[i].wrong_crc_cnt = 0;
-                s->adapter[i].current_signal_dbm = -126;
-                s->adapter[i].signal_good = 0;
-        }
+    int i;
+    for (i = 0; i < 8; ++i) {
+        s->adapter[i].received_packet_cnt = 0;
+        s->adapter[i].wrong_crc_cnt = 0;
+        s->adapter[i].current_signal_dbm = -126;
+        s->adapter[i].signal_good = 0;
+    }
 }
 
 
 wifibroadcast_rx_status_t_rc *status_memory_open_rc(void) {
-        char buf[128];
-        int fd;
+    char buf[128];
+    int fd;
 
-        sprintf(buf, "/wifibroadcast_rx_status_rc");
-        fd = shm_open(buf, O_RDWR, S_IRUSR | S_IWUSR);
-        if(fd < 0) {
-                perror("shm_open"); exit(1);
-        }
-        void *retval = mmap(NULL, sizeof(wifibroadcast_rx_status_t_rc), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (retval == MAP_FAILED) {
-                perror("mmap"); exit(1);
-        }
-        wifibroadcast_rx_status_t_rc *tretval = (wifibroadcast_rx_status_t_rc*)retval;
-        status_memory_init_rc(tretval);
-        return tretval;
+    sprintf(buf, "/wifibroadcast_rx_status_rc");
+
+    fd = shm_open(buf, O_RDWR, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
+        perror("shm_open");
+        exit(1);
+    }
+
+    void *retval = mmap(NULL, sizeof(wifibroadcast_rx_status_t_rc), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (retval == MAP_FAILED) {
+        perror("mmap");
+        exit(1);
+    }
+
+    wifibroadcast_rx_status_t_rc *tretval = (wifibroadcast_rx_status_t_rc *)retval;
+    status_memory_init_rc(tretval);
+
+    return tretval;
 }
 
-int rssii;
-wifibroadcast_rx_status_t_rc *rx_status_rc = NULL;
 
 void usage(void) {
-	printf(
-	    "Usage: processUDP [options] \n"
-	    "-b <baudrate>   Serial port baudrate\n"
-	    "-s <serialport> Serial port to use\n"
-	    "-r <protocol>   R/C protocol to output. 0 = MSP. 1 = Mavlink. 2 = SUMD. 3 = IBUS. 4 = SRXL/XBUS. 99 = disable R/C\n"
-	    "-p <port>        for telemetry data. Default = 1\n"
-	    "\n"
-	    "Example:\n"
-	    "  processUDP -b 19200 -s /dev/serial0 -r 1 \n"
-	    "\n");
-	exit(1);
+    printf("Usage: processUDP [options] \n"
+           "-b <baudrate>   Serial port baudrate\n"
+           "-s <serialport> Serial port to use\n"
+           "-r <protocol>   R/C protocol to output. 0 = MSP. 1 = Mavlink. 2 = SUMD. 3 = IBUS. 4 = SRXL/XBUS. 99 = disable R/C\n"
+           "-p <port>        for telemetry data. Default = 1\n"
+           "\n"
+           "Example:\n"
+           "  processUDP -b 19200 -s /dev/serial0 -r 1 \n"
+           "\n");
+    exit(1);
 }
 
-void die(char *s)
-{
+
+void die(char *s) {
     perror(s);
     exit(1);
 }
 
-void initSerialPort()
-{
-if (param_baudrate != 0)
-	{
-	    serialport = open(param_serialport, O_WRONLY | O_NOCTTY | O_NDELAY);
-	    if (serialport == -1)
-		{ // for some strange reason this doesn't work, although strace and the above fprintf shows -1
-			printf("RX_RC_TELEMETRY ERROR: Unable to open UART. Ensure it is not in use by another application\n");
-	    }
-    	    switch (param_baudrate)
-			{
-				case 2400:
-				{
-						struct termios options;
-						tcgetattr(serialport, &options);
-						cfmakeraw(&options);
-						cfsetospeed(&options, B2400);
-						options.c_cflag &= ~CSIZE;
-						options.c_cflag |= CS8; // Set 8 data bits
-						options.c_cflag &= ~PARENB; // Set no parity
-						options.c_cflag &= ~CSTOPB; // 1 stop bit
-						options.c_lflag &= ~ECHO; // no echo
-						options.c_cflag &= ~CRTSCTS; // no RTS/CTS Flow Control
-						options.c_cflag |= CLOCAL; // Set local mode on
-						tcsetattr(serialport, TCSANOW, &options); //write options
-						printf("UART %s output set to %d baud\n",param_serialport,param_baudrate);
-					break;
-				}
-				case 4800:
-				{
-						struct termios options;
-						tcgetattr(serialport, &options);
-						cfmakeraw(&options);
-						cfsetospeed(&options, B4800);
-						options.c_cflag &= ~CSIZE;
-						options.c_cflag |= CS8; // Set 8 data bits
-						options.c_cflag &= ~PARENB; // Set no parity
-						options.c_cflag &= ~CSTOPB; // 1 stop bit
-						options.c_lflag &= ~ECHO; // no echo
-						options.c_cflag &= ~CRTSCTS; // no RTS/CTS Flow Control
-						options.c_cflag |= CLOCAL; // Set local mode on
-						tcsetattr(serialport, TCSANOW, &options); //write options
-						printf("UART %s output set to %d baud\n",param_serialport,param_baudrate);
-					break;
-				}
-				case 9600:
-				{
-						struct termios options;
-						tcgetattr(serialport, &options);
-						cfmakeraw(&options);
-						cfsetospeed(&options, B9600);
-						options.c_cflag &= ~CSIZE;
-						options.c_cflag |= CS8; // Set 8 data bits
-						options.c_cflag &= ~PARENB; // Set no parity
-						options.c_cflag &= ~CSTOPB; // 1 stop bit
-						options.c_lflag &= ~ECHO; // no echo
-						options.c_cflag &= ~CRTSCTS; // no RTS/CTS Flow Control
-						options.c_cflag |= CLOCAL; // Set local mode on
-						tcsetattr(serialport, TCSANOW, &options); //write options
-						printf("UART %s output set to %d baud\n",param_serialport,param_baudrate);
-					break;
-				}
-				case 19200:
-				{
-						struct termios options;
-						tcgetattr(serialport, &options);
-						cfmakeraw(&options);
-						cfsetospeed(&options, B19200);
-						options.c_cflag &= ~CSIZE;
-						options.c_cflag |= CS8; // Set 8 data bits
-						options.c_cflag &= ~PARENB; // Set no parity
-						options.c_cflag &= ~CSTOPB; // 1 stop bit
-						options.c_lflag &= ~ECHO; // no echo
-						options.c_cflag &= ~CRTSCTS; // no RTS/CTS Flow Control
-						options.c_cflag |= CLOCAL; // Set local mode on
-						tcsetattr(serialport, TCSANOW, &options); //write options
-						printf("UART %s output set to %d baud\n",param_serialport,param_baudrate);
-					break;
-				}
-				case 38400:
-				{
-						struct termios options;
-						tcgetattr(serialport, &options);
-						cfmakeraw(&options);
-						cfsetospeed(&options, B38400);
-						options.c_cflag &= ~CSIZE;
-						options.c_cflag |= CS8; // Set 8 data bits
-						options.c_cflag &= ~PARENB; // Set no parity
-						options.c_cflag &= ~CSTOPB; // 1 stop bit
-						options.c_lflag &= ~ECHO; // no echo
-						options.c_cflag &= ~CRTSCTS; // no RTS/CTS Flow Control
-						options.c_cflag |= CLOCAL; // Set local mode on
-						tcsetattr(serialport, TCSANOW, &options); //write options
-						printf("UART %s output set to %d baud\n",param_serialport,param_baudrate);
-					break;
-				}
-				case 57600:
-				{
-						struct termios options;
-						tcgetattr(serialport, &options);
-						cfmakeraw(&options);
-						cfsetospeed(&options, B57600);
-						options.c_cflag &= ~CSIZE;
-						options.c_cflag |= CS8; // Set 8 data bits
-						options.c_cflag &= ~PARENB; // Set no parity
-						options.c_cflag &= ~CSTOPB; // 1 stop bit
-						options.c_lflag &= ~ECHO; // no echo
-						options.c_cflag &= ~CRTSCTS; // no RTS/CTS Flow Control
-						options.c_cflag |= CLOCAL; // Set local mode on
-						tcsetattr(serialport, TCSANOW, &options); //write options
-						printf("UART %s output set to %d baud\n",param_serialport,param_baudrate);
-					break;
-				}
-				case 115200:
-				{
-						struct termios options;
-						tcgetattr(serialport, &options);
-						cfmakeraw(&options);
-						cfsetospeed(&options, B115200);
-						options.c_cflag &= ~CSIZE;
-						options.c_cflag |= CS8; // Set 8 data bits
-						options.c_cflag &= ~PARENB; // Set no parity
-						options.c_cflag &= ~CSTOPB; // 1 stop bit
-						options.c_lflag &= ~ECHO; // no echo
-						options.c_cflag &= ~CRTSCTS; // no RTS/CTS Flow Control
-						options.c_cflag |= CLOCAL; // Set local mode on
-						tcsetattr(serialport, TCSANOW, &options); //write options
-						printf("UART %s output set to %d baud\n",param_serialport,param_baudrate);
-					break;
-				}
-				default:
-				printf("ERROR: unsupported baudrate: %d\n", param_baudrate);
-				exit(1);
-    	    }
-	}
-	else
-	{
-		printf("No baudrate param");
-		exit(1);
-	}
+
+void initSerialPort() {
+    if (param_baudrate != 0) {
+        serialport = open(param_serialport, O_WRONLY | O_NOCTTY | O_NDELAY);
+
+        if (serialport == -1) {
+            // for some strange reason this doesn't work, although strace and the above fprintf shows -1
+            
+            printf("RX_RC_TELEMETRY ERROR: Unable to open UART. Ensure it is not in use by another application\n");
+        }
+
+        switch (param_baudrate) {
+            case 2400: {
+                struct termios options;
+                
+                tcgetattr(serialport, &options);
+                cfmakeraw(&options);
+                cfsetospeed(&options, B2400);
+
+                options.c_cflag &= ~CSIZE;
+                options.c_cflag |= CS8;					  // Set 8 data bits
+                options.c_cflag &= ~PARENB;				  // Set no parity
+                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
+                options.c_lflag &= ~ECHO;				  // no echo
+                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;				  // Set local mode on
+                
+                tcsetattr(serialport, TCSANOW, &options); //write options
+                
+                printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
+                break;
+            }
+            case 4800: {
+                struct termios options;
+
+                tcgetattr(serialport, &options);
+                cfmakeraw(&options);
+                cfsetospeed(&options, B4800);
+
+                options.c_cflag &= ~CSIZE;
+                options.c_cflag |= CS8;					  // Set 8 data bits
+                options.c_cflag &= ~PARENB;				  // Set no parity
+                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
+                options.c_lflag &= ~ECHO;				  // no echo
+                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;				  // Set local mode on
+                
+                tcsetattr(serialport, TCSANOW, &options); //write options
+
+                printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
+                break;
+            }
+            case 9600: {
+                struct termios options;
+
+                tcgetattr(serialport, &options);
+                cfmakeraw(&options);
+                cfsetospeed(&options, B9600);
+
+                options.c_cflag &= ~CSIZE;
+                options.c_cflag |= CS8;					  // Set 8 data bits
+                options.c_cflag &= ~PARENB;				  // Set no parity
+                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
+                options.c_lflag &= ~ECHO;				  // no echo
+                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;				  // Set local mode on
+
+                tcsetattr(serialport, TCSANOW, &options); //write options
+                
+                printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
+                break;
+            }
+            case 19200: {
+                struct termios options;
+
+                tcgetattr(serialport, &options);
+                cfmakeraw(&options);
+                cfsetospeed(&options, B19200);
+                
+                options.c_cflag &= ~CSIZE;
+                options.c_cflag |= CS8;					  // Set 8 data bits
+                options.c_cflag &= ~PARENB;				  // Set no parity
+                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
+                options.c_lflag &= ~ECHO;				  // no echo
+                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;				  // Set local mode on
+                
+                tcsetattr(serialport, TCSANOW, &options); //write options
+                
+                printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
+                break;
+            }
+            case 38400: {
+                struct termios options;
+
+                tcgetattr(serialport, &options);
+                cfmakeraw(&options);
+                cfsetospeed(&options, B38400);
+                
+                options.c_cflag &= ~CSIZE;
+                options.c_cflag |= CS8;					  // Set 8 data bits
+                options.c_cflag &= ~PARENB;				  // Set no parity
+                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
+                options.c_lflag &= ~ECHO;				  // no echo
+                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;				  // Set local mode on
+                
+                tcsetattr(serialport, TCSANOW, &options); //write options
+                
+                printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
+                break;
+            }
+            case 57600: {
+                struct termios options;
+
+                tcgetattr(serialport, &options);
+                cfmakeraw(&options);
+                cfsetospeed(&options, B57600);
+                
+                options.c_cflag &= ~CSIZE;
+                options.c_cflag |= CS8;					  // Set 8 data bits
+                options.c_cflag &= ~PARENB;				  // Set no parity
+                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
+                options.c_lflag &= ~ECHO;				  // no echo
+                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;				  // Set local mode on
+                
+                tcsetattr(serialport, TCSANOW, &options); //write options
+                
+                printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
+                break;
+            }
+            case 115200: {
+                struct termios options;
+
+                tcgetattr(serialport, &options);
+                cfmakeraw(&options);
+                cfsetospeed(&options, B115200);
+                
+                options.c_cflag &= ~CSIZE;
+                options.c_cflag |= CS8;					  // Set 8 data bits
+                options.c_cflag &= ~PARENB;				  // Set no parity
+                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
+                options.c_lflag &= ~ECHO;				  // no echo
+                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;				  // Set local mode on
+                
+                tcsetattr(serialport, TCSANOW, &options); //write options
+                
+                printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
+                break;
+            }
+            default: {
+                printf("ERROR: unsupported baudrate: %d\n", param_baudrate);
+
+                exit(1);
+            }
+        }
+    }
+    else {
+        printf("No baudrate param");
+        exit(1);
+    }
 }
 
 
- 
-int main(int argc, char *argv[])
-{
-	rx_status_rc = status_memory_open_rc();
-	rx_status_rc->wifi_adapter_cnt = 1;
+int main(int argc, char *argv[]) {
+    rx_status_rc = status_memory_open_rc();
+    rx_status_rc->wifi_adapter_cnt = 1;
+
     struct sockaddr_in si_me, si_other;
-    int s, i, slen = sizeof(si_other) , recv_len;
-    uint8_t seqno_rc  = 0;
+    int s, i, slen = sizeof(si_other), recv_len;
+    
+    uint8_t seqno_rc = 0;
     uint8_t seqnolast_rc = 0;
+    
     char buf[BUFLEN];
 
+    while (1) {
+        int nOptionIndex;
+        
+        static const struct option optiona[] = {
+            { "help", no_argument, &flagHelp, 1 },
+            {      0,           0,         0, 0 }
+        };
+        
+        int c = getopt_long(argc, 
+                            argv,
+                            "h:o:b:s:r:p:",
+                            optiona,
+                            &nOptionIndex);
+
+        if (c == -1) {
+            break;
+        }
+
+        switch (c) {
+            case 0: {
+                // long option
+                break;
+            }
+            case 'h': {
+                // help
+                usage();
+            }
+            case 'b': {
+                // baudrate
+                param_baudrate = atoi(optarg);
+                break;
+            }
+            case 's': {
+                // serialport
+                param_serialport = optarg;
+                break;
+            }
+            case 'r': {
+                // R/C protocol
+                param_rc_protocol = atoi(optarg);
+                break;
+            }
+            default: {
+                fprintf(stderr, "unknown switch %c\n", c);
+                usage();
+            }
+        }
+    }
+
+    printf(" -b param_baudrate:%d\n", param_baudrate);
+    printf(" -r param_rc_protocol:%d\n", param_rc_protocol);
+    printf(" -s param_serialport:%s\n", param_serialport);
 
 
-	while (1) {
-		int nOptionIndex;
-		static const struct option optiona[] = {
-			{ "help", no_argument, &flagHelp, 1 },
-			{ 0, 0, 0, 0 }
-		};
-		int c = getopt_long(argc, argv, "h:o:b:s:r:p:",
-			optiona, &nOptionIndex);
-
-		if (c == -1)
-			break;
-		switch (c) {
-		case 0: // long option
-			break;
-		case 'h': // help
-			usage();
-		case 'b': // baudrate
-			param_baudrate = atoi(optarg);
-			break;
-		case 's': // serialport
-			param_serialport = optarg;
-			break;
-		case 'r': // R/C protocol
-			param_rc_protocol = atoi(optarg);
-			break;
-		
-		default:
-			fprintf(stderr, "unknown switch %c\n", c);
-			usage();
-		}
-	}
-
-	printf(" -b param_baudrate:%d\n",param_baudrate);
- 	printf(" -r param_rc_protocol:%d\n",param_rc_protocol);
- 	printf(" -s param_serialport:%s\n",param_serialport);
-
-
-     
     //create a UDP socket
-    if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-    {
+    if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
         die("socket");
     }
-     
+
     // zero out the structure
-    memset((char *) &si_me, 0, sizeof(si_me));
-     
+    memset((char *)&si_me, 0, sizeof(si_me));
+
     si_me.sin_family = AF_INET;
     si_me.sin_port = htons(PORT);
     si_me.sin_addr.s_addr = htonl(INADDR_ANY);
-     
+
     //bind socket to port
-    if( bind(s , (struct sockaddr*)&si_me, sizeof(si_me) ) == -1)
-    {
+    if (bind(s, (struct sockaddr *)&si_me, sizeof(si_me)) == -1) {
         die("bind");
     }
 
     initSerialPort();
 
-   //keep listening for data
-    while(1)
-    {
+    // Listen for new data
+    while (1) {
         //printf("Waiting for data...");
         //fflush(stdout);
 
         //try to receive some data, this is a blocking call
-        if ((recv_len = recvfrom(s, buf, BUFLEN, 0, (struct sockaddr *) &si_other, &slen)) == -1)
-        {
+        if ((recv_len = recvfrom(s, buf, BUFLEN, 0, (struct sockaddr *)&si_other, &slen)) == -1) {
             die("recvfrom()");
         }
 
@@ -386,244 +419,391 @@ int main(int argc, char *argv[])
         rcdata.chan7 = (buf[13] << 8) | buf[12];
         rcdata.chan8 = (buf[15] << 8) | buf[14];
 
-	rcdata.Is16 = buf[18];
-	rcdata.switches  = (buf[20] << 8) | buf[19];
+        rcdata.Is16 = buf[18];
+        rcdata.switches = (buf[20] << 8) | buf[19];
 
+        //printf ("rcdata1:%d\n",rcdata.chan1);
+        //printf ("rcdata2:%d\n",rcdata.chan2);
+        //printf ("rcdata3:%d\n",rcdata.chan3);
+        //printf ("rcdata4:%d\n",rcdata.chan4);
+        //printf ("rcdata5:%d\n",rcdata.chan5);
+        //printf ("rcdata6:%d\n",rcdata.chan6);
+        //printf ("rcdata7:%d\n",rcdata.chan7);
+        //printf ("rcdata8:%d\n",rcdata.chan8);
+        //printf ("seqno_rc:%d\n", seqno_rc);
+        //printf ("is16 :%d\n", rcdata.Is16);
+        //printf ("switches :%d\n", rcdata.switches);
 
-//printf ("rcdata1:%d\n",rcdata.chan1); 
-//printf ("rcdata2:%d\n",rcdata.chan2);
-//printf ("rcdata3:%d\n",rcdata.chan3);
-//printf ("rcdata4:%d\n",rcdata.chan4); 
-//printf ("rcdata5:%d\n",rcdata.chan5);
-//printf ("rcdata6:%d\n",rcdata.chan6);
-//printf ("rcdata7:%d\n",rcdata.chan7);
-//printf ("rcdata8:%d\n",rcdata.chan8);
-//printf ("seqno_rc:%d\n", seqno_rc);
-//printf ("is16 :%d\n", rcdata.Is16);
-//printf ("switches :%d\n", rcdata.switches);
+        int len = 0;
+        int lostpackets = 0;
+        mavlink_message_t msg;
+        uint8_t checksum = 0;
+        uint8_t outputbuffer[100];
 
+        seqnolast_rc = seqno_rc;
 
+        seqno_rc = buf[16];
 
-	int len = 0;
-	int lostpackets = 0;
-	mavlink_message_t msg;
-        uint8_t checksum=0;
-	uint8_t outputbuffer[100];
+        rx_status_rc->adapter[0].received_packet_cnt++;
+        rx_status_rc->last_update = time(NULL);
 
+        if (seqno_rc == seqnolast_rc) {
+            // we already received that frame, do nothing
+            //	fprintf(stderr,"seqno_rc = seqnolast_rc\n");
+        } else {
+            if ((seqno_rc - seqnolast_rc) != 1) {
+                // we've either lost packets, or the counter wrapped or packets received out of order
 
-	seqnolast_rc = seqno_rc;
+                if ((seqno_rc - seqnolast_rc) < 0) {
+                    // counter wrapped or out of order reception
+                    //fprintf (stderr,"seqno_rc wrapped or out of order reception!\n");
+                    
+                    lostpackets = seqno_rc - seqnolast_rc + 255;
+                } else {
+                    if (rc_received_yet == 0) {
+                        // if the tx is already running and rx has just started ...
+                        
+                        seqnolast_rc = seqno_rc; // we set the last seqno to the current to avoid wrong packetloss numbers
+                        
+                        rc_received_yet = 1;
+                    } else {
+                        lostpackets = seqno_rc - seqnolast_rc - 1;
+                    }
+                }
+            }
 
-	seqno_rc = buf[16];
+            if (lostpackets > 0) {
+                rx_status_rc->lost_packet_cnt = rx_status_rc->lost_packet_cnt + lostpackets;
+                lostpackets = 0;
+                
+                fprintf(stderr, "rx_status_rc->lost_packet_cnt: %d\n", rx_status_rc->lost_packet_cnt);
+            }
 
-	rx_status_rc->adapter[0].received_packet_cnt++;
-	rx_status_rc->last_update = time(NULL);
+            switch (param_rc_protocol) {
+                case 0: {
+                    /* 
+                     * MSP
+                     * 
+                     */
+                    checksum ^= 16;
+                    checksum ^= 200;
 
-	if (seqno_rc == seqnolast_rc)
-	{ // we already received that frame, do nothing
-	//	fprintf(stderr,"seqno_rc = seqnolast_rc\n");
-	}
-	else
-	{
+                    // MSP header
+                    outputbuffer[0] = '$';
 
-		if ((seqno_rc - seqnolast_rc) != 1)
-		{ // we've either lost packets, or the counter wrapped or packets received out of order
-			if ((seqno_rc - seqnolast_rc) < 0)
-			{ // counter wrapped or out of order reception
-			//fprintf (stderr,"seqno_rc wrapped or out of order reception!\n");
-				lostpackets = seqno_rc - seqnolast_rc + 255;
-			}
-			else
-			{
-				if (rc_received_yet == 0)
-				{ // if the tx is already running and rx has just started ...
-					seqnolast_rc = seqno_rc; // we set the last seqno to the current to avoid wrong packetloss numbers
-					rc_received_yet = 1;
-				}
-				else
-				{
-					lostpackets = seqno_rc - seqnolast_rc - 1;
-				}
-			}
-		}
+                    // MSP header
+                    outputbuffer[1] = 'M';
 
-		if (lostpackets > 0)
-		{
-			rx_status_rc->lost_packet_cnt = rx_status_rc->lost_packet_cnt + lostpackets;
-			lostpackets = 0;
-		    fprintf(stderr,"rx_status_rc->lost_packet_cnt: %d\n",rx_status_rc->lost_packet_cnt);
-		}
+                    // MSP header (direction)
+                    outputbuffer[2] = '<';
 
-	//	fprintf(stderr, "new packet" );
-		switch (param_rc_protocol) {
-		case 0: // MSP
-			checksum^=16;
-			checksum^=200;
-			outputbuffer[0]='$'; // MSP header
-			outputbuffer[1]='M'; // MSP header
-			outputbuffer[2]='<'; // MSP header (direction)
-			outputbuffer[3]=16;  // size
-			outputbuffer[4]=200; // message type
-			outputbuffer[5]= (uint8_t)(rcdata.chan1&0xFF); checksum^=outputbuffer[5];
-			outputbuffer[6]= (uint8_t)(rcdata.chan1>>8); checksum^=outputbuffer[6];
-			outputbuffer[7]= (uint8_t)(rcdata.chan2&0xFF); checksum^=outputbuffer[7];
-			outputbuffer[8]= (uint8_t)(rcdata.chan2>>8); checksum^=outputbuffer[8];
-			outputbuffer[9]= (uint8_t)(rcdata.chan3&0xFF); checksum^=outputbuffer[9];
-			outputbuffer[10]=(uint8_t)(rcdata.chan3>>8); checksum^=outputbuffer[10];
-			outputbuffer[11]=(uint8_t)(rcdata.chan4&0xFF); checksum^=outputbuffer[11];
-			outputbuffer[12]=(uint8_t)(rcdata.chan4>>8); checksum^=outputbuffer[12];
-			outputbuffer[13]=(uint8_t)(rcdata.chan5&0xFF); checksum^=outputbuffer[13];
-			outputbuffer[14]=(uint8_t)(rcdata.chan5>>8); checksum^=outputbuffer[14];
-			outputbuffer[15]=(uint8_t)(rcdata.chan6&0xFF); checksum^=outputbuffer[15];
-			outputbuffer[16]=(uint8_t)(rcdata.chan6>>8); checksum^=outputbuffer[16];
-			outputbuffer[17]=(uint8_t)(rcdata.chan7&0xFF); checksum^=outputbuffer[17];
-			outputbuffer[18]=(uint8_t)(rcdata.chan7>>8); checksum^=outputbuffer[18];
-			outputbuffer[19]=(uint8_t)(rcdata.chan8&0xFF); checksum^=outputbuffer[19];
-			outputbuffer[20]=(uint8_t)(rcdata.chan8>>8); checksum^=outputbuffer[20];
-			outputbuffer[21]=checksum; // checksum
-			len = 22;
-			break;
-		case 1: // Mavlink
-//			mavlink_msg_rc_channels_override_pack(255, 0, &msg, 1, 1,
-//			rcdata.chan1, rcdata.chan2, rcdata.chan3, rcdata.chan4,
-//			rcdata.chan5, rcdata.chan6, rcdata.chan7, rcdata.chan8);
-//				mavlink_msg_to_send_buffer(outputbuffer, &msg);
-//			len = 26;
-			
-			mavlink_msg_rc_channels_override_pack(255, 1, &msg, 1, 1,
-			rcdata.chan1, rcdata.chan2, rcdata.chan3, rcdata.chan4,
-			rcdata.chan5, rcdata.chan6, rcdata.chan7, rcdata.chan8,
-//			0,0,0,0,0,0,0,0,0,0);
-			(rcdata.switches &   1) ? 2000 : 1000, (rcdata.switches &   2) ? 2000 : 1000,
-			(rcdata.switches &   4) ? 2000 : 1000, (rcdata.switches &   8) ? 2000 : 1000,
-			(rcdata.switches &  16) ? 2000 : 1000, (rcdata.switches &  32) ? 2000 : 1000,
-			(rcdata.switches &  64) ? 2000 : 1000, (rcdata.switches & 128) ? 2000 : 1000,
-			(rcdata.switches & 256) ? 2000 : 1000, (rcdata.switches & 512) ? 2000 : 1000);
-			
-			len = mavlink_msg_to_send_buffer(outputbuffer, &msg);
-//			printf("Len: %d\n",len);
-			
-			break;
-		case 2: // SUMD
-			sumdcrc = 0;
-			outputbuffer[0]=  0xa8; sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[0]];// SUMD header Vendor_ID
-			outputbuffer[1]=  0x01; sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[1]];// SUMD header Status
-			outputbuffer[2]=  0x08; sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[2]];// SUMD header num channels (8)
-			outputbuffer[3]=  (uint8_t)((rcdata.chan1 * 8) >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[3]];
-			outputbuffer[4]=  (uint8_t)((rcdata.chan1 * 8) &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[4]];
-			outputbuffer[5]=  (uint8_t)((rcdata.chan2 * 8) >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[5]];
-			outputbuffer[6]=  (uint8_t)((rcdata.chan2 * 8) &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[6]];
-			outputbuffer[7]=  (uint8_t)((rcdata.chan3 * 8) >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[7]];
-			outputbuffer[8]=  (uint8_t)((rcdata.chan3 * 8) &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[8]];
-			outputbuffer[9]=  (uint8_t)((rcdata.chan4 * 8) >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[9]];
-			outputbuffer[10]= (uint8_t)((rcdata.chan4 * 8) &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[10]];
-			outputbuffer[11]= (uint8_t)((rcdata.chan5 * 8) >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[11]];
-			outputbuffer[12]= (uint8_t)((rcdata.chan5 * 8) &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[12]];
-			outputbuffer[13]= (uint8_t)((rcdata.chan6 * 8) >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[13]];
-			outputbuffer[14]= (uint8_t)((rcdata.chan6 * 8) &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[14]];
-			outputbuffer[15]= (uint8_t)((rcdata.chan7 * 8) >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[15]];
-			outputbuffer[16]= (uint8_t)((rcdata.chan7 * 8) &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[16]];
-			outputbuffer[17]= (uint8_t)((rcdata.chan8 * 8) >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[17]];
-			outputbuffer[18]= (uint8_t)((rcdata.chan8 * 8) &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[18]];
-			outputbuffer[19]=(uint8_t)(sumdcrc >>8); // crc16
-			outputbuffer[20]=(uint8_t)(sumdcrc &0xFF); // crc16
-			len = 21;
-			break;
-		case 3: // IBUS
-			ibuschecksum = 0xFFFF;
-			outputbuffer[0]=  0x20; ibuschecksum -= outputbuffer[0]; // header
-			outputbuffer[1]=  0x40; ibuschecksum -= outputbuffer[1]; // header
-			outputbuffer[2]= (uint8_t)(rcdata.chan1&0xFF); ibuschecksum -= outputbuffer[2];
-			outputbuffer[3]= (uint8_t)(rcdata.chan1>>8); ibuschecksum -= outputbuffer[3];
-			outputbuffer[4]= (uint8_t)(rcdata.chan2&0xFF); ibuschecksum -= outputbuffer[4];
-			outputbuffer[5]= (uint8_t)(rcdata.chan2>>8); ibuschecksum -= outputbuffer[5];
-			outputbuffer[6]= (uint8_t)(rcdata.chan3&0xFF); ibuschecksum -= outputbuffer[6];
-			outputbuffer[7]= (uint8_t)(rcdata.chan3>>8); ibuschecksum -= outputbuffer[7];
-			outputbuffer[8]= (uint8_t)(rcdata.chan4&0xFF); ibuschecksum -= outputbuffer[8];
-			outputbuffer[9]= (uint8_t)(rcdata.chan4>>8); ibuschecksum -= outputbuffer[9];
-			outputbuffer[10]=(uint8_t)(rcdata.chan5&0xFF); ibuschecksum -= outputbuffer[10];
-			outputbuffer[11]=(uint8_t)(rcdata.chan5>>8); ibuschecksum -= outputbuffer[11];
-			outputbuffer[12]=(uint8_t)(rcdata.chan6&0xFF); ibuschecksum -= outputbuffer[12];
-			outputbuffer[13]=(uint8_t)(rcdata.chan6>>8); ibuschecksum -= outputbuffer[13];
-			outputbuffer[14]=(uint8_t)(rcdata.chan7&0xFF); ibuschecksum -= outputbuffer[14];
-			outputbuffer[15]=(uint8_t)(rcdata.chan7>>8); ibuschecksum -= outputbuffer[15];
-			outputbuffer[16]=(uint8_t)(rcdata.chan8&0xFF); ibuschecksum -= outputbuffer[16];
-			outputbuffer[17]=(uint8_t)(rcdata.chan8>>8); ibuschecksum -= outputbuffer[17];
-			outputbuffer[18]=0xdc; ibuschecksum -= outputbuffer[18];
-			outputbuffer[19]=0x05; ibuschecksum -= outputbuffer[19];
-			outputbuffer[20]=0xdc; ibuschecksum -= outputbuffer[20];
-			outputbuffer[21]=0x05; ibuschecksum -= outputbuffer[21];
-			outputbuffer[22]=0xdc; ibuschecksum -= outputbuffer[22];
-			outputbuffer[23]=0x05; ibuschecksum -= outputbuffer[23];
-			outputbuffer[24]=0xdc; ibuschecksum -= outputbuffer[24];
-			outputbuffer[25]=0x05; ibuschecksum -= outputbuffer[25];
-			outputbuffer[26]=0xdc; ibuschecksum -= outputbuffer[26];
-			outputbuffer[27]=0x05; ibuschecksum -= outputbuffer[27];
-			outputbuffer[28]=0xdc; ibuschecksum -= outputbuffer[28];
-			outputbuffer[29]=0x05; ibuschecksum -= outputbuffer[29];
-			outputbuffer[30]=(uint8_t)(ibuschecksum &0xFF);
-			outputbuffer[31]=(uint8_t)(ibuschecksum >>8);
-			len = 32;
-			break;
-		case 4: // Multiplex SRXL V1 / XBUS Mode B
-			// protocl uses the same checksum as sumd so we use the sumd variables and checksum functions
-			sumdcrc = 0;
-			// http://www.wolframalpha.com/input/?i=linear+fit+%7B800,+0%7D,+%7B1500,2048%7D,+%7B2200,+4095%7D
-			// 2.925 * rcdata.chanX - 2339.83 = SRXL 12bit channel format
-			rcdata.chan1 = (2.925 * rcdata.chan1) - 2339.83;
-			rcdata.chan2 = (2.925 * rcdata.chan2) - 2339.83;
-			rcdata.chan3 = (2.925 * rcdata.chan3) - 2339.83;
-			rcdata.chan4 = (2.925 * rcdata.chan4) - 2339.83;
-			rcdata.chan5 = (2.925 * rcdata.chan5) - 2339.83;
-			rcdata.chan6 = (2.925 * rcdata.chan6) - 2339.83;
-			rcdata.chan7 = (2.925 * rcdata.chan7) - 2339.83;
-			rcdata.chan8 = (2.925 * rcdata.chan8) - 2339.83;
-			//printf ("rcdata1:%d\n",rcdata.chan1);
-			//printf ("rcdata2:%d\n",rcdata.chan2);
-			outputbuffer[0]=  0xa1; sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[0]]; // header
-			outputbuffer[1]=  (uint8_t)(rcdata.chan1 >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[1]];
-			outputbuffer[2]=  (uint8_t)(rcdata.chan1 &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[2]];
-			outputbuffer[3]=  (uint8_t)(rcdata.chan2 >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[3]];
-			outputbuffer[4]=  (uint8_t)(rcdata.chan2 &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[4]];
-			outputbuffer[5]=  (uint8_t)(rcdata.chan3 >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[5]];
-			outputbuffer[6]=  (uint8_t)(rcdata.chan3 &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[6]];
-			outputbuffer[7]=  (uint8_t)(rcdata.chan4 >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[7]];
-			outputbuffer[8]=  (uint8_t)(rcdata.chan4 &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[8]];
-			outputbuffer[9]=  (uint8_t)(rcdata.chan5 >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[9]];
-			outputbuffer[10]= (uint8_t)(rcdata.chan5 &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[10]];
-			outputbuffer[11]= (uint8_t)(rcdata.chan6 >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[11]];
-			outputbuffer[12]= (uint8_t)(rcdata.chan6 &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[12]];
-			outputbuffer[13]= (uint8_t)(rcdata.chan7 >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[13]];
-			outputbuffer[14]= (uint8_t)(rcdata.chan7 &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[14]];
-			outputbuffer[15]= (uint8_t)(rcdata.chan8 >>8); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[15]];
-			outputbuffer[16]= (uint8_t)(rcdata.chan8 &0xFF); sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[16]];
-			outputbuffer[17]=0x08; ibuschecksum -= outputbuffer[17];
-			outputbuffer[18]=0x00; ibuschecksum -= outputbuffer[18];
-			outputbuffer[19]=0x08; ibuschecksum -= outputbuffer[19];
-			outputbuffer[20]=0x00; ibuschecksum -= outputbuffer[20];
-			outputbuffer[21]=0x08; ibuschecksum -= outputbuffer[21];
-			outputbuffer[22]=0x00; ibuschecksum -= outputbuffer[22];
-			outputbuffer[23]=0x08; ibuschecksum -= outputbuffer[23];
-			outputbuffer[24]=0x00; ibuschecksum -= outputbuffer[24];
-			outputbuffer[25]=(uint8_t)(sumdcrc >>8); // crc16
-			outputbuffer[26]=(uint8_t)(sumdcrc &0xFF); // crc16
-			len = 27;
-			break;
-		}
-		if (param_baudrate != 0)
-		{ // only write to serialport if selected via commandline parameter
-			write(serialport, outputbuffer, len);
-			// write(STDOUT_FILENO, outputbuffer, len);
-		}
+                    // Size
+                    outputbuffer[3] = 16;
 
-	//end of new packet recv
-	}
+                    // Message type
+                    outputbuffer[4] = 200; 
 
+                    // Channel data
+                    outputbuffer[5] = (uint8_t)(rcdata.chan1 & 0xFF);
+                    checksum ^= outputbuffer[5];
+                    outputbuffer[6] = (uint8_t)(rcdata.chan1 >> 8);
+                    checksum ^= outputbuffer[6];
+                    outputbuffer[7] = (uint8_t)(rcdata.chan2 & 0xFF);
+                    checksum ^= outputbuffer[7];
+                    outputbuffer[8] = (uint8_t)(rcdata.chan2 >> 8);
+                    checksum ^= outputbuffer[8];
+                    outputbuffer[9] = (uint8_t)(rcdata.chan3 & 0xFF);
+                    checksum ^= outputbuffer[9];
+                    outputbuffer[10] = (uint8_t)(rcdata.chan3 >> 8);
+                    checksum ^= outputbuffer[10];
+                    outputbuffer[11] = (uint8_t)(rcdata.chan4 & 0xFF);
+                    checksum ^= outputbuffer[11];
+                    outputbuffer[12] = (uint8_t)(rcdata.chan4 >> 8);
+                    checksum ^= outputbuffer[12];
+                    outputbuffer[13] = (uint8_t)(rcdata.chan5 & 0xFF);
+                    checksum ^= outputbuffer[13];
+                    outputbuffer[14] = (uint8_t)(rcdata.chan5 >> 8);
+                    checksum ^= outputbuffer[14];
+                    outputbuffer[15] = (uint8_t)(rcdata.chan6 & 0xFF);
+                    checksum ^= outputbuffer[15];
+                    outputbuffer[16] = (uint8_t)(rcdata.chan6 >> 8);
+                    checksum ^= outputbuffer[16];
+                    outputbuffer[17] = (uint8_t)(rcdata.chan7 & 0xFF);
+                    checksum ^= outputbuffer[17];
+                    outputbuffer[18] = (uint8_t)(rcdata.chan7 >> 8);
+                    checksum ^= outputbuffer[18];
+                    outputbuffer[19] = (uint8_t)(rcdata.chan8 & 0xFF);
+                    checksum ^= outputbuffer[19];
+                    outputbuffer[20] = (uint8_t)(rcdata.chan8 >> 8);
+                    checksum ^= outputbuffer[20];
 
+                    // checksum
+                    outputbuffer[21] = checksum; 
+                    
+                    len = 22;
 
+                    break;
+                }
+                case 1: {
+                    /* 
+                     * Mavlink
+                     * 
+                     * We send 8 real axis channels and 10 buttons to the flight controller 
+                     * 
+                     * The buttons are provided to the FC as 10 additional axis channels that only have 
+                     * low/high values.
+                     * 
+                     */
+                    mavlink_msg_rc_channels_override_pack(255, 1, &msg, 1, 1,
+                                                        rcdata.chan1, rcdata.chan2, rcdata.chan3, rcdata.chan4,
+                                                        rcdata.chan5, rcdata.chan6, rcdata.chan7, rcdata.chan8,
+                                                        (rcdata.switches & 1) ? 2000 : 1000, (rcdata.switches & 2) ? 2000 : 1000,
+                                                        (rcdata.switches & 4) ? 2000 : 1000, (rcdata.switches & 8) ? 2000 : 1000,
+                                                        (rcdata.switches & 16) ? 2000 : 1000, (rcdata.switches & 32) ? 2000 : 1000,
+                                                        (rcdata.switches & 64) ? 2000 : 1000, (rcdata.switches & 128) ? 2000 : 1000,
+                                                        (rcdata.switches & 256) ? 2000 : 1000, (rcdata.switches & 512) ? 2000 : 1000);
 
+                    len = mavlink_msg_to_send_buffer(outputbuffer, &msg);
+                    
+                    break;
+                }
+                case 2: {
+                    /*
+                     * SUMD
+                     * 
+                     */
+                    sumdcrc = 0;
+                    
+                    // SUMD header Vendor_ID
+                    outputbuffer[0] = 0xa8; 
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[0]];
+
+                    // SUMD header Status
+                    outputbuffer[1] = 0x01;
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[1]];
+
+                    // SUMD header num channels (8)
+                    outputbuffer[2] = 0x08;
+
+                    // channel data
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[2]];
+                    outputbuffer[3] = (uint8_t)((rcdata.chan1 * 8) >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[3]];
+                    outputbuffer[4] = (uint8_t)((rcdata.chan1 * 8) & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[4]];
+                    outputbuffer[5] = (uint8_t)((rcdata.chan2 * 8) >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[5]];
+                    outputbuffer[6] = (uint8_t)((rcdata.chan2 * 8) & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[6]];
+                    outputbuffer[7] = (uint8_t)((rcdata.chan3 * 8) >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[7]];
+                    outputbuffer[8] = (uint8_t)((rcdata.chan3 * 8) & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[8]];
+                    outputbuffer[9] = (uint8_t)((rcdata.chan4 * 8) >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[9]];
+                    outputbuffer[10] = (uint8_t)((rcdata.chan4 * 8) & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[10]];
+                    outputbuffer[11] = (uint8_t)((rcdata.chan5 * 8) >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[11]];
+                    outputbuffer[12] = (uint8_t)((rcdata.chan5 * 8) & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[12]];
+                    outputbuffer[13] = (uint8_t)((rcdata.chan6 * 8) >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[13]];
+                    outputbuffer[14] = (uint8_t)((rcdata.chan6 * 8) & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[14]];
+                    outputbuffer[15] = (uint8_t)((rcdata.chan7 * 8) >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[15]];
+                    outputbuffer[16] = (uint8_t)((rcdata.chan7 * 8) & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[16]];
+                    outputbuffer[17] = (uint8_t)((rcdata.chan8 * 8) >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[17]];
+                    outputbuffer[18] = (uint8_t)((rcdata.chan8 * 8) & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[18]];
+
+                    // crc16
+                    outputbuffer[19] = (uint8_t)(sumdcrc >> 8);
+                    outputbuffer[20] = (uint8_t)(sumdcrc & 0xFF);
+
+                    len = 21;
+                    break;
+                }
+                case 3: {
+                    /*
+                     * IBUS
+                     * 
+                     */
+
+                    ibuschecksum = 0xFFFF;
+
+                    // Header
+                    outputbuffer[0] = 0x20;
+                    ibuschecksum -= outputbuffer[0];
+                    outputbuffer[1] = 0x40;
+                    ibuschecksum -= outputbuffer[1];
+
+                    // Channel data
+                    outputbuffer[2] = (uint8_t)(rcdata.chan1 & 0xFF);
+                    ibuschecksum -= outputbuffer[2];
+                    outputbuffer[3] = (uint8_t)(rcdata.chan1 >> 8);
+                    ibuschecksum -= outputbuffer[3];
+                    outputbuffer[4] = (uint8_t)(rcdata.chan2 & 0xFF);
+                    ibuschecksum -= outputbuffer[4];
+                    outputbuffer[5] = (uint8_t)(rcdata.chan2 >> 8);
+                    ibuschecksum -= outputbuffer[5];
+                    outputbuffer[6] = (uint8_t)(rcdata.chan3 & 0xFF);
+                    ibuschecksum -= outputbuffer[6];
+                    outputbuffer[7] = (uint8_t)(rcdata.chan3 >> 8);
+                    ibuschecksum -= outputbuffer[7];
+                    outputbuffer[8] = (uint8_t)(rcdata.chan4 & 0xFF);
+                    ibuschecksum -= outputbuffer[8];
+                    outputbuffer[9] = (uint8_t)(rcdata.chan4 >> 8);
+                    ibuschecksum -= outputbuffer[9];
+                    outputbuffer[10] = (uint8_t)(rcdata.chan5 & 0xFF);
+                    ibuschecksum -= outputbuffer[10];
+                    outputbuffer[11] = (uint8_t)(rcdata.chan5 >> 8);
+                    ibuschecksum -= outputbuffer[11];
+                    outputbuffer[12] = (uint8_t)(rcdata.chan6 & 0xFF);
+                    ibuschecksum -= outputbuffer[12];
+                    outputbuffer[13] = (uint8_t)(rcdata.chan6 >> 8);
+                    ibuschecksum -= outputbuffer[13];
+                    outputbuffer[14] = (uint8_t)(rcdata.chan7 & 0xFF);
+                    ibuschecksum -= outputbuffer[14];
+                    outputbuffer[15] = (uint8_t)(rcdata.chan7 >> 8);
+                    ibuschecksum -= outputbuffer[15];
+                    outputbuffer[16] = (uint8_t)(rcdata.chan8 & 0xFF);
+                    ibuschecksum -= outputbuffer[16];
+                    outputbuffer[17] = (uint8_t)(rcdata.chan8 >> 8);
+                    ibuschecksum -= outputbuffer[17];
+
+                    outputbuffer[18] = 0xdc;
+                    ibuschecksum -= outputbuffer[18];
+                    outputbuffer[19] = 0x05;
+                    ibuschecksum -= outputbuffer[19];
+                    outputbuffer[20] = 0xdc;
+                    ibuschecksum -= outputbuffer[20];
+                    outputbuffer[21] = 0x05;
+                    ibuschecksum -= outputbuffer[21];
+                    outputbuffer[22] = 0xdc;
+                    ibuschecksum -= outputbuffer[22];
+                    outputbuffer[23] = 0x05;
+                    ibuschecksum -= outputbuffer[23];
+                    outputbuffer[24] = 0xdc;
+                    ibuschecksum -= outputbuffer[24];
+                    outputbuffer[25] = 0x05;
+                    ibuschecksum -= outputbuffer[25];
+                    outputbuffer[26] = 0xdc;
+                    ibuschecksum -= outputbuffer[26];
+                    outputbuffer[27] = 0x05;
+                    ibuschecksum -= outputbuffer[27];
+                    outputbuffer[28] = 0xdc;
+                    ibuschecksum -= outputbuffer[28];
+                    outputbuffer[29] = 0x05;
+                    ibuschecksum -= outputbuffer[29];
+
+                    outputbuffer[30] = (uint8_t)(ibuschecksum & 0xFF);
+                    outputbuffer[31] = (uint8_t)(ibuschecksum >> 8);
+
+                    len = 32;
+                    break;
+                }
+                case 4: {
+                    /*
+                     * Multiplex SRXL V1 / XBUS Mode B
+                     * 
+                     * Protocol uses the same checksum as sumd so we use the sumd variables and checksum functions
+                     * 
+                     */
+
+                    sumdcrc = 0;
+
+                    // http://www.wolframalpha.com/input/?i=linear+fit+%7B800,+0%7D,+%7B1500,2048%7D,+%7B2200,+4095%7D
+                    // 2.925 * rcdata.chanX - 2339.83 = SRXL 12bit channel format
+                    rcdata.chan1 = (2.925 * rcdata.chan1) - 2339.83;
+                    rcdata.chan2 = (2.925 * rcdata.chan2) - 2339.83;
+                    rcdata.chan3 = (2.925 * rcdata.chan3) - 2339.83;
+                    rcdata.chan4 = (2.925 * rcdata.chan4) - 2339.83;
+                    rcdata.chan5 = (2.925 * rcdata.chan5) - 2339.83;
+                    rcdata.chan6 = (2.925 * rcdata.chan6) - 2339.83;
+                    rcdata.chan7 = (2.925 * rcdata.chan7) - 2339.83;
+                    rcdata.chan8 = (2.925 * rcdata.chan8) - 2339.83;
+                    
+                    // Header
+                    outputbuffer[0] = 0xa1;
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[0]];
+
+                    // Channel data
+                    outputbuffer[1] = (uint8_t)(rcdata.chan1 >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[1]];
+                    outputbuffer[2] = (uint8_t)(rcdata.chan1 & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[2]];
+                    outputbuffer[3] = (uint8_t)(rcdata.chan2 >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[3]];
+                    outputbuffer[4] = (uint8_t)(rcdata.chan2 & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[4]];
+                    outputbuffer[5] = (uint8_t)(rcdata.chan3 >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[5]];
+                    outputbuffer[6] = (uint8_t)(rcdata.chan3 & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[6]];
+                    outputbuffer[7] = (uint8_t)(rcdata.chan4 >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[7]];
+                    outputbuffer[8] = (uint8_t)(rcdata.chan4 & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[8]];
+                    outputbuffer[9] = (uint8_t)(rcdata.chan5 >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[9]];
+                    outputbuffer[10] = (uint8_t)(rcdata.chan5 & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[10]];
+                    outputbuffer[11] = (uint8_t)(rcdata.chan6 >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[11]];
+                    outputbuffer[12] = (uint8_t)(rcdata.chan6 & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[12]];
+                    outputbuffer[13] = (uint8_t)(rcdata.chan7 >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[13]];
+                    outputbuffer[14] = (uint8_t)(rcdata.chan7 & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[14]];
+                    outputbuffer[15] = (uint8_t)(rcdata.chan8 >> 8);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[15]];
+                    outputbuffer[16] = (uint8_t)(rcdata.chan8 & 0xFF);
+                    sumdcrc = (sumdcrc << 8) ^ sumdcrc16_table[(sumdcrc >> 8) ^ outputbuffer[16]];
+
+                    outputbuffer[17] = 0x08;
+                    ibuschecksum -= outputbuffer[17];
+                    outputbuffer[18] = 0x00;
+                    ibuschecksum -= outputbuffer[18];
+                    outputbuffer[19] = 0x08;
+                    ibuschecksum -= outputbuffer[19];
+                    outputbuffer[20] = 0x00;
+                    ibuschecksum -= outputbuffer[20];
+                    outputbuffer[21] = 0x08;
+                    ibuschecksum -= outputbuffer[21];
+                    outputbuffer[22] = 0x00;
+                    ibuschecksum -= outputbuffer[22];
+                    outputbuffer[23] = 0x08;
+                    ibuschecksum -= outputbuffer[23];
+                    outputbuffer[24] = 0x00;
+                    ibuschecksum -= outputbuffer[24];
+
+                    // CRC16
+                    outputbuffer[25] = (uint8_t)(sumdcrc >> 8);
+                    outputbuffer[26] = (uint8_t)(sumdcrc & 0xFF);
+
+                    len = 27;
+                    break;
+                }
+            }
+
+            if (param_baudrate != 0) {
+                // only write to serialport if selected via commandline parameter
+
+                write(serialport, outputbuffer, len);
+
+                // write(STDOUT_FILENO, outputbuffer, len);
+            }
+
+            //end of new packet recv
+        }
     }
- 
+
     close(s);
+
     return 0;
 }
-
