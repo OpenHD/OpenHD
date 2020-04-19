@@ -234,7 +234,7 @@ void vot_decode(telemetry_data_t_osd *td) {
   td->distance = (float) (uint32_t) votbread_u32() / 10.0f;      // DistanceFromHomeMX10 horizontal GPS distance from home point, in meters X 10 (decimeters)
   td->speed = (float)(uint16_t) votbread_u16()/10.0f;            // -speed- ( km/h * 10 )
   td->coursedegrees = (uint16_t) votbread_u16();                 // CourseDegrees -not used- GPS course over ground, in degrees
-  td->rel_altitude = (float) (int32_t) votbread_u32()/100.0f; 	     // -altitude- ( GPS altitude, using WGS-84 ellipsoid, cm)
+  td->msl_altitude = (float) (int32_t) votbread_u32()/100.0f;    // -altitude- ( GPS altitude, using WGS-84 ellipsoid, cm)
   td->hdop = (float) (uint8_t) votread_u8();                     // -HDOPx10- GPS HDOP * 10
   td->sats = (uint8_t) votread_u8();                             // -SatsInUse- satellites used for navigation
   td->flightmode = (uint8_t) votread_u8();                       // PresentFlightMode -uav_flightmode- present flight mode, as defined in VECTOR_FLIGHT_MODES
