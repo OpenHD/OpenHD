@@ -29,8 +29,16 @@
 
 #include "openhdlib.h"
 
-#define BUFLEN 21 //Max length of buffer
-#define PORT 5565 //The port on which to listen for incoming data
+
+/* 
+ * Max length of buffer
+ */
+#define BUFLEN 21 
+
+/* 
+ * The port on which to listen for incoming data
+ */
+#define PORT 5565
 
 int rc_received_yet = 0;
 int serialport = 0;
@@ -103,6 +111,7 @@ void status_memory_init_rc(wifibroadcast_rx_status_t_rc *s) {
 }
 
 
+
 wifibroadcast_rx_status_t_rc *status_memory_open_rc(void) {
     char buf[128];
     int fd;
@@ -128,6 +137,7 @@ wifibroadcast_rx_status_t_rc *status_memory_open_rc(void) {
 }
 
 
+
 void usage(void) {
     printf("Usage: processUDP [options] \n"
            "-b <baudrate>   Serial port baudrate\n"
@@ -142,10 +152,12 @@ void usage(void) {
 }
 
 
+
 void die(char *s) {
     perror(s);
     exit(1);
 }
+
 
 
 void initSerialPort() {
@@ -153,7 +165,9 @@ void initSerialPort() {
         serialport = open(param_serialport, O_WRONLY | O_NOCTTY | O_NDELAY);
 
         if (serialport == -1) {
-            // for some strange reason this doesn't work, although strace and the above fprintf shows -1
+            /*
+             * For some strange reason this doesn't work, although strace and the above fprintf shows -1
+             */
             
             printf("RX_RC_TELEMETRY ERROR: Unable to open UART. Ensure it is not in use by another application\n");
         }
@@ -167,14 +181,14 @@ void initSerialPort() {
                 cfsetospeed(&options, B2400);
 
                 options.c_cflag &= ~CSIZE;
-                options.c_cflag |= CS8;					  // Set 8 data bits
-                options.c_cflag &= ~PARENB;				  // Set no parity
-                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
-                options.c_lflag &= ~ECHO;				  // no echo
-                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
-                options.c_cflag |= CLOCAL;				  // Set local mode on
+                options.c_cflag |= CS8;      // Set 8 data bits
+                options.c_cflag &= ~PARENB;  // Set no parity
+                options.c_cflag &= ~CSTOPB;  // 1 stop bit
+                options.c_lflag &= ~ECHO;    // no echo
+                options.c_cflag &= ~CRTSCTS; // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;   // Set local mode on
                 
-                tcsetattr(serialport, TCSANOW, &options); //write options
+                tcsetattr(serialport, TCSANOW, &options);
                 
                 printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
                 break;
@@ -187,14 +201,14 @@ void initSerialPort() {
                 cfsetospeed(&options, B4800);
 
                 options.c_cflag &= ~CSIZE;
-                options.c_cflag |= CS8;					  // Set 8 data bits
-                options.c_cflag &= ~PARENB;				  // Set no parity
-                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
-                options.c_lflag &= ~ECHO;				  // no echo
-                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
-                options.c_cflag |= CLOCAL;				  // Set local mode on
+                options.c_cflag |= CS8;      // Set 8 data bits
+                options.c_cflag &= ~PARENB;  // Set no parity
+                options.c_cflag &= ~CSTOPB;  // 1 stop bit
+                options.c_lflag &= ~ECHO;    // no echo
+                options.c_cflag &= ~CRTSCTS; // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;   // Set local mode on
                 
-                tcsetattr(serialport, TCSANOW, &options); //write options
+                tcsetattr(serialport, TCSANOW, &options);
 
                 printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
                 break;
@@ -207,14 +221,14 @@ void initSerialPort() {
                 cfsetospeed(&options, B9600);
 
                 options.c_cflag &= ~CSIZE;
-                options.c_cflag |= CS8;					  // Set 8 data bits
-                options.c_cflag &= ~PARENB;				  // Set no parity
-                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
-                options.c_lflag &= ~ECHO;				  // no echo
-                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
-                options.c_cflag |= CLOCAL;				  // Set local mode on
+                options.c_cflag |= CS8;       // Set 8 data bits
+                options.c_cflag &= ~PARENB;   // Set no parity
+                options.c_cflag &= ~CSTOPB;   // 1 stop bit
+                options.c_lflag &= ~ECHO;     // no echo
+                options.c_cflag &= ~CRTSCTS;  // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;    // Set local mode on
 
-                tcsetattr(serialport, TCSANOW, &options); //write options
+                tcsetattr(serialport, TCSANOW, &options);
                 
                 printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
                 break;
@@ -227,14 +241,14 @@ void initSerialPort() {
                 cfsetospeed(&options, B19200);
                 
                 options.c_cflag &= ~CSIZE;
-                options.c_cflag |= CS8;					  // Set 8 data bits
-                options.c_cflag &= ~PARENB;				  // Set no parity
-                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
-                options.c_lflag &= ~ECHO;				  // no echo
-                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
-                options.c_cflag |= CLOCAL;				  // Set local mode on
+                options.c_cflag |= CS8;      // Set 8 data bits
+                options.c_cflag &= ~PARENB;  // Set no parity
+                options.c_cflag &= ~CSTOPB;  // 1 stop bit
+                options.c_lflag &= ~ECHO;    // no echo
+                options.c_cflag &= ~CRTSCTS; // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;   // Set local mode on
                 
-                tcsetattr(serialport, TCSANOW, &options); //write options
+                tcsetattr(serialport, TCSANOW, &options);
                 
                 printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
                 break;
@@ -247,14 +261,14 @@ void initSerialPort() {
                 cfsetospeed(&options, B38400);
                 
                 options.c_cflag &= ~CSIZE;
-                options.c_cflag |= CS8;					  // Set 8 data bits
-                options.c_cflag &= ~PARENB;				  // Set no parity
-                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
-                options.c_lflag &= ~ECHO;				  // no echo
-                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
-                options.c_cflag |= CLOCAL;				  // Set local mode on
+                options.c_cflag |= CS8;      // Set 8 data bits
+                options.c_cflag &= ~PARENB;  // Set no parity
+                options.c_cflag &= ~CSTOPB;  // 1 stop bit
+                options.c_lflag &= ~ECHO;    // no echo
+                options.c_cflag &= ~CRTSCTS; // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;   // Set local mode on
                 
-                tcsetattr(serialport, TCSANOW, &options); //write options
+                tcsetattr(serialport, TCSANOW, &options);
                 
                 printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
                 break;
@@ -267,14 +281,14 @@ void initSerialPort() {
                 cfsetospeed(&options, B57600);
                 
                 options.c_cflag &= ~CSIZE;
-                options.c_cflag |= CS8;					  // Set 8 data bits
-                options.c_cflag &= ~PARENB;				  // Set no parity
-                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
-                options.c_lflag &= ~ECHO;				  // no echo
-                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
-                options.c_cflag |= CLOCAL;				  // Set local mode on
+                options.c_cflag |= CS8;       // Set 8 data bits
+                options.c_cflag &= ~PARENB;   // Set no parity
+                options.c_cflag &= ~CSTOPB;   // 1 stop bit
+                options.c_lflag &= ~ECHO;     // no echo
+                options.c_cflag &= ~CRTSCTS;  // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;    // Set local mode on
                 
-                tcsetattr(serialport, TCSANOW, &options); //write options
+                tcsetattr(serialport, TCSANOW, &options);
                 
                 printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
                 break;
@@ -287,14 +301,14 @@ void initSerialPort() {
                 cfsetospeed(&options, B115200);
                 
                 options.c_cflag &= ~CSIZE;
-                options.c_cflag |= CS8;					  // Set 8 data bits
-                options.c_cflag &= ~PARENB;				  // Set no parity
-                options.c_cflag &= ~CSTOPB;				  // 1 stop bit
-                options.c_lflag &= ~ECHO;				  // no echo
-                options.c_cflag &= ~CRTSCTS;			  // no RTS/CTS Flow Control
-                options.c_cflag |= CLOCAL;				  // Set local mode on
+                options.c_cflag |= CS8;        // Set 8 data bits
+                options.c_cflag &= ~PARENB;    // Set no parity
+                options.c_cflag &= ~CSTOPB;    // 1 stop bit
+                options.c_lflag &= ~ECHO;      // no echo
+                options.c_cflag &= ~CRTSCTS;   // no RTS/CTS Flow Control
+                options.c_cflag |= CLOCAL;     // Set local mode on
                 
-                tcsetattr(serialport, TCSANOW, &options); //write options
+                tcsetattr(serialport, TCSANOW, &options);
                 
                 printf("UART %s output set to %d baud\n", param_serialport, param_baudrate);
                 break;
@@ -349,21 +363,17 @@ int main(int argc, char *argv[]) {
                 break;
             }
             case 'h': {
-                // help
                 usage();
             }
             case 'b': {
-                // baudrate
                 param_baudrate = atoi(optarg);
                 break;
             }
             case 's': {
-                // serialport
                 param_serialport = optarg;
                 break;
             }
             case 'r': {
-                // R/C protocol
                 param_rc_protocol = atoi(optarg);
                 break;
             }
@@ -379,31 +389,41 @@ int main(int argc, char *argv[]) {
     printf(" -s param_serialport:%s\n", param_serialport);
 
 
-    //create a UDP socket
+    /* 
+     * Create a UDP socket
+     */
     if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
         die("socket");
     }
 
-    // zero out the structure
+    /* 
+     * Zero out the structure
+     */
     memset((char *)&si_me, 0, sizeof(si_me));
 
     si_me.sin_family = AF_INET;
     si_me.sin_port = htons(PORT);
     si_me.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    //bind socket to port
+    /*
+     * Bind socket to port
+     */
     if (bind(s, (struct sockaddr *)&si_me, sizeof(si_me)) == -1) {
         die("bind");
     }
 
     initSerialPort();
 
-    // Listen for new data
+    /*
+     * Listen for new data
+     */
     while (1) {
         //printf("Waiting for data...");
         //fflush(stdout);
 
-        //try to receive some data, this is a blocking call
+        /* 
+         * Try to receive some data, this is a blocking call
+         */
         if ((recv_len = recvfrom(s, buf, BUFLEN, 0, (struct sockaddr *)&si_other, &slen)) == -1) {
             die("recvfrom()");
         }
@@ -448,22 +468,33 @@ int main(int argc, char *argv[]) {
         rx_status_rc->last_update = time(NULL);
 
         if (seqno_rc == seqnolast_rc) {
-            // we already received that frame, do nothing
-            //	fprintf(stderr,"seqno_rc = seqnolast_rc\n");
+            /* 
+             * We already received that frame, do nothing
+             */
+
+            //fprintf(stderr,"seqno_rc = seqnolast_rc\n");
         } else {
             if ((seqno_rc - seqnolast_rc) != 1) {
-                // we've either lost packets, or the counter wrapped or packets received out of order
+                /*
+                 * We've either lost packets, or the counter wrapped or packets received out of order
+                 */
 
                 if ((seqno_rc - seqnolast_rc) < 0) {
-                    // counter wrapped or out of order reception
-                    //fprintf (stderr,"seqno_rc wrapped or out of order reception!\n");
-                    
+                    /* 
+                     * Counter wrapped or out of order reception
+                     */                    
                     lostpackets = seqno_rc - seqnolast_rc + 255;
+
+                    //fprintf (stderr,"seqno_rc wrapped or out of order reception!\n");
                 } else {
                     if (rc_received_yet == 0) {
-                        // if the tx is already running and rx has just started ...
+                        /*
+                         * If the tx is already running and rx has just started
+                         * 
+                         * We set the last seqno to the current to avoid wrong packetloss numbers
+                         */
                         
-                        seqnolast_rc = seqno_rc; // we set the last seqno to the current to avoid wrong packetloss numbers
+                        seqnolast_rc = seqno_rc;
                         
                         rc_received_yet = 1;
                     } else {
@@ -483,7 +514,6 @@ int main(int argc, char *argv[]) {
                 case 0: {
                     /* 
                      * MSP
-                     * 
                      */
                     checksum ^= 16;
                     checksum ^= 200;
@@ -552,7 +582,6 @@ int main(int argc, char *argv[]) {
                      * 
                      * The buttons are provided to the FC as 10 additional axis channels that only have 
                      * low/high values.
-                     * 
                      */
                     mavlink_msg_rc_channels_override_pack(255, 1, &msg, 1, 1,
                                                         rcdata.chan1, rcdata.chan2, rcdata.chan3, rcdata.chan4,
@@ -570,7 +599,6 @@ int main(int argc, char *argv[]) {
                 case 2: {
                     /*
                      * SUMD
-                     * 
                      */
                     sumdcrc = 0;
                     
@@ -630,7 +658,6 @@ int main(int argc, char *argv[]) {
                 case 3: {
                     /*
                      * IBUS
-                     * 
                      */
 
                     ibuschecksum = 0xFFFF;
@@ -711,7 +738,6 @@ int main(int argc, char *argv[]) {
                      * Multiplex SRXL V1 / XBUS Mode B
                      * 
                      * Protocol uses the same checksum as sumd so we use the sumd variables and checksum functions
-                     * 
                      */
 
                     sumdcrc = 0;
@@ -792,14 +818,18 @@ int main(int argc, char *argv[]) {
             }
 
             if (param_baudrate != 0) {
-                // only write to serialport if selected via commandline parameter
+                /*
+                 * Only write to serialport if selected via commandline parameter
+                 */
 
                 write(serialport, outputbuffer, len);
 
                 // write(STDOUT_FILENO, outputbuffer, len);
             }
 
-            //end of new packet recv
+            /* 
+             * End of new packet recv
+             */
         }
     }
 
