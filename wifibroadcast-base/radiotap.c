@@ -4,13 +4,16 @@
  * Copyright 2007		Andy Green <andy@warmcat.com>
  */
 
-#include "wifibroadcast.h"
 #include "radiotap.h"
+#include "wifibroadcast.h"
 
 /**
  * ieee80211_radiotap_iterator_init - radiotap parser iterator initialization
+ * 
  * @iterator: radiotap_iterator to initialize
+ * 
  * @radiotap_header: radiotap header to parse
+ * 
  * @max_length: total length we can parse into (eg, whole packet length)
  *
  * Returns: 0 or a negative error code if there is a problem.
@@ -21,6 +24,7 @@
  * present headers and handles them.
  *
  * How to use:
+ * 
  * call __ieee80211_radiotap_iterator_init() to init a semi-opaque iterator
  * struct ieee80211_radiotap_iterator (no need to init the struct beforehand)
  * checking for a good 0 return code.  Then loop calling
@@ -40,66 +44,80 @@
  * See Documentation/networking/radiotap-headers.txt
  */
 
-int ieee80211_radiotap_iterator_init(
-    struct ieee80211_radiotap_iterator *iterator,
-    struct ieee80211_radiotap_header *radiotap_header,
-    int max_length)
-{
-	/* Linux only supports version 0 radiotap format */
-	if (radiotap_header->it_version)
-		return -EINVAL;
 
-	/* sanity check for allowed length and radiotap length field */
-	if (max_length < le16_to_cpu(radiotap_header->it_len))
-		return -EINVAL;
 
-	iterator->rtheader = radiotap_header;
-	iterator->max_length = le16_to_cpu(radiotap_header->it_len);
-	iterator->arg_index = 0;
-	iterator->bitmap_shifter = le32_to_cpu(radiotap_header->it_present);
-	iterator->arg = (u8 *)radiotap_header + sizeof(*radiotap_header);
-	iterator->this_arg = 0;
+int ieee80211_radiotap_iterator_init(struct ieee80211_radiotap_iterator *iterator,
+                                     struct ieee80211_radiotap_header *radiotap_header,
+                                     int max_length) {
 
-	/* find payload start allowing for extended bitmap(s) */
 
-	if (unlikely(iterator->bitmap_shifter & (1<<IEEE80211_RADIOTAP_EXT))) {
-		while (le32_to_cpu(*((u32 *)iterator->arg)) &
-				   (1<<IEEE80211_RADIOTAP_EXT)) {
-			iterator->arg += sizeof(u32);
+    /*
+     * Linux only supports version 0 radiotap format
+     */
+    if (radiotap_header->it_version) {
+        return -EINVAL;
+    }
 
-			/*
-			 * check for insanity where the present bitmaps
-			 * keep claiming to extend up to or even beyond the
-			 * stated radiotap header length
-			 */
 
-			if (((ulong)iterator->arg -
-			     (ulong)iterator->rtheader) > iterator->max_length)
-				return -EINVAL;
-		}
+    /* 
+     * Sanity check for allowed length and radiotap length field 
+     */
+    if (max_length < le16_to_cpu(radiotap_header->it_len)) {
+        return -EINVAL;
+    }
 
-		iterator->arg += sizeof(u32);
 
-		/*
-		 * no need to check again for blowing past stated radiotap
-		 * header length, because ieee80211_radiotap_iterator_next
-		 * checks it before it is dereferenced
-		 */
-	}
+    iterator->rtheader = radiotap_header;
+    iterator->max_length = le16_to_cpu(radiotap_header->it_len);
+    iterator->arg_index = 0;
+    iterator->bitmap_shifter = le32_to_cpu(radiotap_header->it_present);
+    iterator->arg = (__u8 *)radiotap_header + sizeof(*radiotap_header);
+    iterator->this_arg = 0;
 
-	/* we are all initialized happily */
 
-	return 0;
+    /*
+     * Find payload start allowing for extended bitmap(s) 
+     */
+    if (unlikely(iterator->bitmap_shifter & (1 << IEEE80211_RADIOTAP_EXT))) {
+        while (le32_to_cpu(*((__u32 *)iterator->arg)) & (1 << IEEE80211_RADIOTAP_EXT)) {
+            iterator->arg += sizeof(__u32);
+
+            /*
+             * Check for insanity where the present bitmaps keep claiming to extend up to or even beyond the
+             * stated radiotap header length
+             */
+            if (((ulong)iterator->arg - (ulong)iterator->rtheader) > iterator->max_length) {
+                return -EINVAL;
+            }
+        }
+
+        iterator->arg += sizeof(__u32);
+
+        /*
+         * No need to check again for blowing past stated radiotap header length, because 
+         * ieee80211_radiotap_iterator_next checks it before it is dereferenced
+         */
+    }
+
+    /* 
+     * We are all initialized happily 
+     */
+    return 0;
 }
+
 
 
 /**
  * ieee80211_radiotap_iterator_next - return next radiotap parser iterator arg
+ * 
  * @iterator: radiotap_iterator to move to next arg (if any)
  *
- * Returns: 0 if there is an argument to handle,
- * -ENOENT if there are no more args or -EINVAL
- * if there is something else wrong.
+ * Returns: 
+ *               0 if there is an argument to handle
+ * 
+ *         -ENOENT if there are no more args 
+ * 
+ *         -EINVAL if there is something else wrong.
  *
  * This function provides the next radiotap arg index (IEEE80211_RADIOTAP_*)
  * in @this_arg_index and sets @this_arg to point to the
@@ -109,130 +127,152 @@ int ieee80211_radiotap_iterator_init(
  * IEEE80211_RADIOTAP_CHANNEL).  The args pointed to are in
  * little-endian format whatever the endianess of your CPU.
  */
+int ieee80211_radiotap_iterator_next(struct ieee80211_radiotap_iterator *iterator) {
 
-int ieee80211_radiotap_iterator_next(
-    struct ieee80211_radiotap_iterator *iterator)
-{
+    /*
+     * Small length lookup table for all radiotap types we heard of
+     * starting from b0 in the bitmap, so we can walk the payload
+     * area of the radiotap header
+     *
+     * There is a requirement to pad args, so that args
+     * of a given length must begin at a boundary of that length
+     * -- but note that compound args are allowed (eg, 2 x u16
+     * for IEEE80211_RADIOTAP_CHANNEL) so total arg length is not
+     * a reliable indicator of alignment requirement.
+     *
+     * upper nybble: content alignment for arg
+     * lower nybble: content length for arg
+     */
 
-	/*
-	 * small length lookup table for all radiotap types we heard of
-	 * starting from b0 in the bitmap, so we can walk the payload
-	 * area of the radiotap header
-	 *
-	 * There is a requirement to pad args, so that args
-	 * of a given length must begin at a boundary of that length
-	 * -- but note that compound args are allowed (eg, 2 x u16
-	 * for IEEE80211_RADIOTAP_CHANNEL) so total arg length is not
-	 * a reliable indicator of alignment requirement.
-	 *
-	 * upper nybble: content alignment for arg
-	 * lower nybble: content length for arg
-	 */
+    static const __u8 rt_sizes[] = {
+        [IEEE80211_RADIOTAP_TSFT] = 0x88,
+        [IEEE80211_RADIOTAP_FLAGS] = 0x11,
+        [IEEE80211_RADIOTAP_RATE] = 0x11,
+        [IEEE80211_RADIOTAP_CHANNEL] = 0x24,
+        [IEEE80211_RADIOTAP_FHSS] = 0x22,
+        [IEEE80211_RADIOTAP_DBM_ANTSIGNAL] = 0x11,
+        [IEEE80211_RADIOTAP_DBM_ANTNOISE] = 0x11,
+        [IEEE80211_RADIOTAP_LOCK_QUALITY] = 0x22,
+        [IEEE80211_RADIOTAP_TX_ATTENUATION] = 0x22,
+        [IEEE80211_RADIOTAP_DB_TX_ATTENUATION] = 0x22,
+        [IEEE80211_RADIOTAP_DBM_TX_POWER] = 0x11,
+        [IEEE80211_RADIOTAP_ANTENNA] = 0x11,
+        [IEEE80211_RADIOTAP_DB_ANTSIGNAL] = 0x11,
+        [IEEE80211_RADIOTAP_DB_ANTNOISE] = 0x11
 
-	static const u8 rt_sizes[] = {
-		[IEEE80211_RADIOTAP_TSFT] = 0x88,
-		[IEEE80211_RADIOTAP_FLAGS] = 0x11,
-		[IEEE80211_RADIOTAP_RATE] = 0x11,
-		[IEEE80211_RADIOTAP_CHANNEL] = 0x24,
-		[IEEE80211_RADIOTAP_FHSS] = 0x22,
-		[IEEE80211_RADIOTAP_DBM_ANTSIGNAL] = 0x11,
-		[IEEE80211_RADIOTAP_DBM_ANTNOISE] = 0x11,
-		[IEEE80211_RADIOTAP_LOCK_QUALITY] = 0x22,
-		[IEEE80211_RADIOTAP_TX_ATTENUATION] = 0x22,
-		[IEEE80211_RADIOTAP_DB_TX_ATTENUATION] = 0x22,
-		[IEEE80211_RADIOTAP_DBM_TX_POWER] = 0x11,
-		[IEEE80211_RADIOTAP_ANTENNA] = 0x11,
-		[IEEE80211_RADIOTAP_DB_ANTSIGNAL] = 0x11,
-		[IEEE80211_RADIOTAP_DB_ANTNOISE] = 0x11
-		/*
-		 * add more here as they are defined in
-		 * include/net/ieee80211_radiotap.h
-		 */
-	};
+        /*
+         * Add more here as they are defined in
+         * include/net/ieee80211_radiotap.h
+         */
+    };
 
-	/*
-	 * for every radiotap entry we can at
-	 * least skip (by knowing the length)...
-	 */
 
-	while (iterator->arg_index < sizeof(rt_sizes)) {
-		int hit = 0;
-		int pad;
 
-		if (!(iterator->bitmap_shifter & 1))
-			goto next_entry; /* arg not present */
+    /*
+     * For every radiotap entry we can at
+     * least skip (by knowing the length)...
+     */
+    while (iterator->arg_index < sizeof(rt_sizes)) {
+        int hit = 0;
+        int pad;
 
-		/*
-		 * arg is present, account for alignment padding
-		 *  8-bit args can be at any alignment
-		 * 16-bit args must start on 16-bit boundary
-		 * 32-bit args must start on 32-bit boundary
-		 * 64-bit args must start on 64-bit boundary
-		 *
-		 * note that total arg size can differ from alignment of
-		 * elements inside arg, so we use upper nybble of length
-		 * table to base alignment on
-		 *
-		 * also note: these alignments are ** relative to the
-		 * start of the radiotap header **.  There is no guarantee
-		 * that the radiotap header itself is aligned on any
-		 * kind of boundary.
-		 */
 
-		pad = (((ulong)iterator->arg) -
-			((ulong)iterator->rtheader)) &
-			((rt_sizes[iterator->arg_index] >> 4) - 1);
+        if (!(iterator->bitmap_shifter & 1)) {
+            // arg not present
+            goto next_entry; 
+        }
 
-		if (pad)
-			iterator->arg +=
-				(rt_sizes[iterator->arg_index] >> 4) - pad;
 
-		/*
-		 * this is what we will return to user, but we need to
-		 * move on first so next call has something fresh to test
-		 */
-		iterator->this_arg_index = iterator->arg_index;
-		iterator->this_arg = iterator->arg;
-		hit = 1;
 
-		/* internally move on the size of this arg */
-		iterator->arg += rt_sizes[iterator->arg_index] & 0x0f;
+        /*
+         * Arg is present, account for alignment padding
+         * 
+         *  8-bit args can be at any alignment
+         * 16-bit args must start on 16-bit boundary
+         * 32-bit args must start on 32-bit boundary
+         * 64-bit args must start on 64-bit boundary
+         *
+         * Note that total arg size can differ from alignment of
+         * elements inside arg, so we use upper nybble of length
+         * table to base alignment on
+         *
+         * Also note: these alignments are ** relative to the
+         * start of the radiotap header **. 
+         * 
+         * There is no guarantee that the radiotap header itself 
+         * is aligned on any kind of boundary.
+         */
 
-		/*
-		 * check for insanity where we are given a bitmap that
-		 * claims to have more arg content than the length of the
-		 * radiotap section.  We will normally end up equalling this
-		 * max_length on the last arg, never exceeding it.
-		 */
+        pad = (((ulong)iterator->arg) - ((ulong)iterator->rtheader)) & ((rt_sizes[iterator->arg_index] >> 4) - 1);
 
-		if (((ulong)iterator->arg - (ulong)iterator->rtheader) >
-		    iterator->max_length)
-			return -EINVAL;
+        if (pad) {
+            iterator->arg += (rt_sizes[iterator->arg_index] >> 4) - pad;
+        }
 
-	next_entry:
-		iterator->arg_index++;
-		if (unlikely((iterator->arg_index & 31) == 0)) {
-			/* completed current u32 bitmap */
-			if (iterator->bitmap_shifter & 1) {
-				/* b31 was set, there is more */
-				/* move to next u32 bitmap */
-				iterator->bitmap_shifter =
-				    le32_to_cpu(*iterator->next_bitmap);
-				iterator->next_bitmap++;
-			} else {
-				/* no more bitmaps: end */
-				iterator->arg_index = sizeof(rt_sizes);
-			}
-		} else { /* just try the next bit */
-			iterator->bitmap_shifter >>= 1;
-		}
+        /*
+         * This is what we will return to user, but we need to
+         * move on first so next call has something fresh to test
+         */
+        iterator->this_arg_index = iterator->arg_index;
+        iterator->this_arg = iterator->arg;
 
-		/* if we found a valid arg earlier, return it now */
-		if (hit)
-			return 0;
-	}
+        hit = 1;
 
-	/* we don't know how to handle any more args, we're done */
-	return -ENOENT;
+        /* 
+         * Internally move on the size of this arg 
+         */
+        iterator->arg += rt_sizes[iterator->arg_index] & 0x0f;
+
+        /*
+         * Check for insanity where we are given a bitmap that claims to have more 
+         * arg content than the length of the radiotap section.  
+         * 
+         * We will normally end up equalling this max_length on the last arg, never exceeding it.
+         */
+
+        if (((ulong)iterator->arg - (ulong)iterator->rtheader) > iterator->max_length) {
+            return -EINVAL;
+        }
+
+    next_entry:
+        iterator->arg_index++;
+
+        if (unlikely((iterator->arg_index & 31) == 0)) {
+            /* 
+             * Completed current u32 bitmap 
+             */
+            if (iterator->bitmap_shifter & 1) {
+                /* 
+                 * b31 was set, there is more
+                 * 
+                 * Move to next u32 bitmap 
+                 */
+                iterator->bitmap_shifter = le32_to_cpu(*iterator->next_bitmap);
+                iterator->next_bitmap++;
+            } else {
+                /* 
+                 * No more bitmaps: end 
+                 */
+                iterator->arg_index = sizeof(rt_sizes);
+            }
+        } else { 
+            /*
+             * Just try the next bit 
+             */
+            iterator->bitmap_shifter >>= 1;
+        }
+
+        /* 
+         * If we found a valid arg earlier, return it now 
+         */
+        if (hit) {
+            return 0;
+        }
+    }
+
+
+    /* 
+     * We don't know how to handle any more args, we're done 
+     */
+    return -ENOENT;
 }
-

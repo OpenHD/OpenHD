@@ -11,20 +11,19 @@ typedef struct fec_parms *fec_code_t;
 void fec_init(void);
 
 void fec_encode(unsigned int blockSize,
-		unsigned char **data_blocks,
-		unsigned int nrDataBlocks,
-		unsigned char **fec_blocks,
-		unsigned int nrFecBlocks);
+                unsigned char **data_blocks,
+                unsigned int nrDataBlocks,
+                unsigned char **fec_blocks,
+                unsigned int nrFecBlocks);
 
 void fec_decode(unsigned int blockSize,
-		unsigned char **data_blocks,
-		unsigned int nr_data_blocks,
-		unsigned char **fec_blocks,
-		unsigned int *fec_block_nos,
-		unsigned int *erased_blocks,
-		unsigned short nr_fec_blocks  /* how many blocks per stripe */);
+                unsigned char **data_blocks,
+                unsigned int nr_data_blocks,
+                unsigned char **fec_blocks,
+                unsigned int *fec_block_nos,
+                unsigned int *erased_blocks,
+                unsigned short nr_fec_blocks /* how many blocks per stripe */);
 
 void fec_print(fec_code_t code, int width);
 
 void fec_license(void);
-
