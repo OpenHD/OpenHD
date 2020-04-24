@@ -5,15 +5,20 @@ function MAIN_OSD_TX_RX_FUNCTION {
     echo "================== OSD (tty2) ==========================="
     
     if [ "${CAM}" -ge 1 ]; then
-        # only run osdtx if cam found, osd enabled and telemetry input is the tx
+        #
+        # Run osdtx if pi camera found and telemetry transmission is enabled through Open.HD itself
+        #
         if [ "$TELEMETRY_TRANSMISSION" == "wbc" ]; then
             osdtx_function
         fi
     else
-        # only run osdrx if no cam found
+        #
+        # Run osdrx if no cam found
+        #
         osdrx_function
     fi
     
-    echo "OSD not enabled in configfile"
+    echo "OSD not enabled in config file"
+
     sleep 365d
 }
