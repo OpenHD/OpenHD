@@ -4,8 +4,10 @@ function tmessage {
     fi
 }
 
+
 function detect_os {
     source /etc/os-release
+
     if [[ "${VERSION_ID}" == "9" ]]; then
         export OPENHD_VERSION="stretch"
     elif [[ "${VERSION_ID}" == "10" ]]; then
@@ -14,6 +16,7 @@ function detect_os {
         export OPENHD_VERSION="unknown"
     fi
 }
+
 
 function configure_hello_video_args {
     if [[ "$OPENHD_VERSION" == "stretch" ]]; then
@@ -27,122 +30,140 @@ function configure_hello_video_args {
 
 
 function migration_helper {
-    # force enable QOpenHD because it's the only option on buster
+    #
+    # Force enable QOpenHD because it's the only option on buster
+    #
     if [[ "$OPENHD_VERSION" == "buster" ]]; then
         export ENABLE_QOPENHD="Y"
     fi
 
-    # replace omxh264enc with v4l2h264enc on buster, the former doesn't work right now due to a bug in gstreamer-omx package in raspbian
-    # this is only a bandaid for people who have not updated their settings file yet, just to ensure that things work
+
+    #
+    # Automatically replace omxh264enc with v4l2h264enc on buster, the former doesn't work right now due to a bug 
+    # in gstreamer-omx package in raspbian. 
+    #
+    # This is only a bandaid for people who have not updated their settings file yet, just to ensure that things work
+    #
     if [[ "${OPENHD_VERSION}" == "buster" ]]; then
         export USBCamera=`echo ${USBCamera} | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("omxh264enc.+\s*\!", "videoconvert ! v4l2h264enc !", s); print(s);'`
     fi
 }
 
+
 function detect_memory {
     TOTAL_MEMORY=$(cat /proc/meminfo | grep 'MemTotal' | awk '{print $2}')
 }
+
 
 function detect_hardware {
     HARDWARE=$(cat /proc/cpuinfo | grep 'Revision' | awk '{print $3}')
 
     echo "Found hardware $HARDWARE..."
-          
+
     case "$HARDWARE" in
         'a03111')
             ABLE_BAND=ag
             MODEL=4b
-            ;;
+        ;;
         'b03111')
             ABLE_BAND=ag
             MODEL=4b
-            ;;
+        ;;
         'b03112')
             ABLE_BAND=ag
             MODEL=4b
-            ;;
+        ;;
         'c03111')
             ABLE_BAND=ag
             MODEL=4b
-            ;;
+        ;;
         'c03112')
             ABLE_BAND=ag
             MODEL=4b
-            ;;
+        ;;
         '29020e0')
             ABLE_BAND=ag
             MODEL=3a+
-            ;;
+        ;;
         '2a02082')
             ABLE_BAND=g
             MODEL=3b
-            ;;
+        ;;
         '2a22082')
             ABLE_BAND=g
             MODEL=3b
-            ;;
+        ;;
         '2a32082')
             ABLE_BAND=g
             MODEL=3b
-            ;;		
+        ;;		
         '2a52082')
             ABLE_BAND=g
             MODEL=3b
-            ;;	
+        ;;	
         '2a020d3')
             ABLE_BAND=ag
             MODEL=3b+
-            ;;
+        ;;
         '2900092')
             ABLE_BAND=none
             MODEL=Zero
-            ;;
+        ;;
         '2900093')
             ABLE_BAND=none
             MODEL=Zero
-            ;;
+        ;;
         '29000c1')
             ABLE_BAND=ag
             MODEL=ZeroW
-            ;;
+        ;;
         '2920092')
             ABLE_BAND=none
             MODEL=Zero
-            ;;
+        ;;
         '2920093')
             ABLE_BAND=none
             MODEL=Zero
-            ;;
+        ;;
         '2a22042')
             ABLE_BAND=none
             MODEL=2b
-            ;;
+        ;;
         '2a21041')
             ABLE_BAND=none
             MODEL=2b
-            ;;
+        ;;
         '2a01041')
             ABLE_BAND=none
             MODEL=2b
-            ;;
+        ;;
         '2a01040')
             ABLE_BAND=none
             MODEL=2b
-            ;;
+        ;;
         *)
             ABLE_BAND=unknown
             MODEL=unknown
-            ;;
+        ;;
     esac
-    echo "This pi model is $MODEL..."
+
+    echo "Running on Pi $MODEL"
 }
 
-# If a /boot/i2c_vc exists, we check to see if i2c_vc is already enabled in
-# config.txt, and if not we enable it and reboot. This should not add more
-# than a few seconds to the air boot time, and only needs to be done once, 
-# but IMX290 and other 3rd party cameras won't work without it
+
+#
+# If /boot/i2c_vc exists, we check to see if i2c_vc is already enabled in
+# config.txt, and if not we enable it and reboot. 
+#
+# This should not add more than a few seconds to the air boot time, and 
+# only needs to be done once, but IMX290 and other 3rd party cameras won't 
+# work without it
+#
 function autoenable_i2c_vc {
-    # only run this on tty1
+    #
+    # Only run this on TTY1 to ensure it only runs once, we don't want it running several times and
+    # partially overwriting the config.txt file
+    #
     if [ "$TTY" != "/dev/tty1" ]; then
         return
     fi
@@ -158,12 +179,16 @@ function autoenable_i2c_vc {
             mount -o remount,rw /boot
         
             if [ $I2C_VC_DISABLED == "1" ]; then
-                # it's present but disabled, we can use sed it to enable it in-place
+                #
+                # Present but disabled, we can use sed it to enable it in-place
+                #
                 sed -i 's/^#dtparam=i2c_vc.*/dtparam=i2c_vc=on/g' /boot/config.txt
             else
-                # it's not in the file at all so we'll have to add it manually, but at the end of the
+                #
+                # It's not in the file at all, so we'll have to add it manually, but at the end of the
                 # file with an [all] section to ensure that the setting applies to ever model in case
                 # the config.txt file has sections like [pi3] [pi0] at the end.
+                #
                 echo "[all]" >> /boot/config.txt
                 echo "dtparam=i2c_vc=on" >> /boot/config.txt
             fi
@@ -175,41 +200,57 @@ function autoenable_i2c_vc {
     fi
 }
 
+
 function check_exitstatus {
     STATUS=$1
 
     case $STATUS in
         9)
-            # rx returned with exit code 9 = the interface went down
-            # wifi card must've been removed during running
-            # check if wifi card is really gone
+            #
+            # RX returned with exit code 9, which means the interface went down
+            #
+            # The wifi card must have been removed during running, so we check if the wifi card is really gone
+            #
             NICS2=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
+            
             if [ "$NICS" == "$NICS2" ]; then
-                # wifi card has not been removed, something else must've gone wrong
-                echo "ERROR: RX stopped, wifi card _not_ removed!             "
+                #
+                # Wifi card has not been removed, something else must've gone wrong
+                #
+
+                echo "ERROR: RX stopped, wifi card _not_ removed!"
             else
-                # wifi card has been removed
-                echo "ERROR: Wifi card removed!                               "
+                #
+                # Wifi card has been removed
+                #
+
+                echo "ERROR: Wifi card removed!"
             fi
-            ;;
+        ;;
         2)
-            # something else that is fatal happened during running
-            echo "ERROR: RX chain stopped wifi card _not_ removed!             "
-            ;;
+            #
+            # Something else that is fatal happened during running
+            #
+            echo "ERROR: RX chain stopped, but not because the wifi card was removed"
+        ;;
         1)
+            #
             # something that is fatal went wrong at rx startup
-            echo "ERROR: could not start RX                           "
-            #echo "ERROR: could not start RX                           "
-            ;;
+            #
+
+            echo "ERROR: could not start RX"
+        ;;
         *)
             if [  $RX_EXITSTATUS -lt 128 ]; then
-                # whatever it was ...
-                #echo "RX exited with status: $RX_EXITSTATUS                        "
+                # 
+                # We don't know why, but it failed
+                #
                 echo -n ""
             fi
-            ;;
+        ;;
     esac
 }
+
 
 function check_lifepowered_pi_attached {
     i2cdetect -y 1 | grep  "43"
@@ -217,12 +258,15 @@ function check_lifepowered_pi_attached {
 
     if [[ $grepRet -eq 0 ]] ; then
         export LIFEPO4WERED_PI="1"
+
         echo "Detected LiFePO4wered Pi power hat"
+
         systemctl start lifepo4wered-daemon
     else
         export LIFEPO4WERED_PI="0"
     fi
 }
+
 
 function check_hdmi_csi_attached {
     i2cdetect -y 0 | grep  "0f"
@@ -230,71 +274,103 @@ function check_hdmi_csi_attached {
 
     if [[ $grepRet -eq 0 ]] ; then
         export HDMI_CSI="1"
+
         echo "Detected HDMI CSI input board"
     else
         export HDMI_CSI="0"
     fi
 }
 
+
 function check_camera_attached {
-    # check if cam is detected to determine if we're going to be RX or TX
-    # only do this on one tty so that we don't run vcgencmd multiple times (which may make it hang)
-    
+    #
+    # Check if pi camera is detected to determine if we're going to be air or ground
+    #
+    # Only do this on one tty so that we don't run vcgencmd multiple times, which could make the GPU hang
+    #
     if [ "$TTY" == "/dev/tty1" ]; then
         CAM=`/usr/bin/vcgencmd get_camera | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("supported=\d+ detected=", "", s); print(s);'`
         
         if [ "$CAM" == "0" ]; then
-            #is use by cameracontrolUDP.py to restricted video mode change
+            #
+            # Used by cameracontrolUDP.py to restrict video mode change
+            #
             echo  "1" > /tmp/CameraNotDetected
         fi
+
 
         if [ -e /tmp/Air ]; then
             echo "force boot as Air via GPIO"
             CAM="1"
         fi
-        
-        if [ "$CAM" == "0" ]; then # if we are RX ...
+
+
+        if [ "$CAM" == "0" ]; then
+            #
+            # No pi camera detected, but we still might have a VEYE, and the only way to detect
+            # it is to have i2c_vc enabled already, and then probe the i2c-0 bus
+            #
             i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
             grepRet=$?
+
             if [[ $grepRet -eq 0 ]] ; then
                 echo  "1" > /tmp/cam
+
                 IMX290="1"
+
                 rm /tmp/CameraNotDetected
+
                 CAM="1"
             else
                 echo  "0" > /tmp/cam
+
                 IMX290="0"
             fi
-        else # else we are TX ...
+        else
+            # 
+            # We found a pi camera, so this is definitely air side
+            #
             touch /tmp/TX
+
             echo ${CAM} > /tmp/cam
         fi
     else
         echo -n "Waiting until TX/RX has been determined"
+
         while [ ! -f /tmp/cam ]; do
             sleep 0.5
-            #echo -n "."
         done
+        
         CAM=`cat /tmp/cam`
     fi
 }
 
+
 function set_font_for_resolution {
-    if [ "$CAM" == "0" ]; then 
-        # if we are RX ...
-        
-        # if local TTY, set font according to display resolution
+    #
+    # Only run on the ground station
+    #
+    if [ "$CAM" == "0" ]; then
+        # 
+        # Set font according to display resolution
+        #
+        # TODO: this may be a good way to set QOpenHD scaling, if we need to do it manually
+        #
         
         if [ "$TTY" = "/dev/tty1" ] || [ "$TTY" = "/dev/tty2" ] || [ "$TTY" = "/dev/tty3" ] || [ "$TTY" = "/dev/tty4" ] || [ "$TTY" = "/dev/tty5" ] || [ "$TTY" = "/dev/tty6" ] || [ "$TTY" = "/dev/tty7" ] || [ "$TTY" = "/dev/tty8" ] || [ "$TTY" = "/dev/tty9" ] || [ "$TTY" = "/dev/tty10" ] || [ "$TTY" = "/dev/tty11" ] || [ "$TTY" = "/dev/tty12" ]; then
+            
             H_RES=`tvservice -s | cut -f 2 -d "," | cut -f 2 -d " " | cut -f 1 -d "x"`
             
             if [ "$H_RES" -ge "1680" ]; then
+
                 setfont /usr/share/consolefonts/Lat15-TerminusBold24x12.psf.gz
             else
                 if [ "$H_RES" -ge "1280" ]; then
+
                     setfont /usr/share/consolefonts/Lat15-TerminusBold20x10.psf.gz
                 else
                     if [ "$H_RES" -ge "800" ]; then
+
                         setfont /usr/share/consolefonts/Lat15-TerminusBold14.psf.gz
                     fi
                 fi
@@ -302,6 +378,7 @@ function set_font_for_resolution {
         fi
     fi
 }
+
 
 function read_config_file {
     if [ -e "/boot/$CONFIGFILE" ]; then
@@ -314,15 +391,20 @@ function read_config_file {
             source /tmp/settings.sh
         else
             echo "ERROR: openhd-settings file contains syntax error(s)!"
+
             collect_errorlog
+
             sleep 365d
         fi
     else
         echo "ERROR: openhd-settings file not found!"
+
         collect_errorlog
+        
         sleep 365d
     fi
 }
+
 
 function datarate_to_wifi_settings {
     case $DATARATE in
@@ -331,80 +413,94 @@ function datarate_to_wifi_settings {
             TELEMETRY_WIFI_BITRATE=11
             VIDEO_WIFI_BITRATE=5.5
             OSD_HW_BITRATE=5.5
+
             if [ "$UseMCS" == "Y" ]; then
                 UseMCS="1"
+
                 VIDEO_WIFI_BITRATE="0"
             else
                 UseMCS="0"
             fi
-            ;;
+        ;;
         2)
             UPLINK_WIFI_BITRATE=11
             TELEMETRY_WIFI_BITRATE=11
             VIDEO_WIFI_BITRATE=11
             OSD_HW_BITRATE=11
+
             if [ "$UseMCS" == "Y" ]; then
                 UseMCS="1"
+
                 VIDEO_WIFI_BITRATE="1"
             else
                 UseMCS="0"
             fi
-            ;;
+        ;;
         3)
             UPLINK_WIFI_BITRATE=11
             TELEMETRY_WIFI_BITRATE=12
             VIDEO_WIFI_BITRATE=12
             OSD_HW_BITRATE=12
+
             if [ "$UseMCS" == "Y" ]; then
                 UseMCS="1"
+
                 VIDEO_WIFI_BITRATE="1"
             else
                 UseMCS="0"
             fi
-            ;;
+        ;;
         4)
             UPLINK_WIFI_BITRATE=11
             TELEMETRY_WIFI_BITRATE=19.5
             VIDEO_WIFI_BITRATE=19.5
             OSD_HW_BITRATE=19.5
+
             if [ "$UseMCS" == "Y" ]; then
                 UseMCS="1"
+
                 VIDEO_WIFI_BITRATE="2"
             else
                 UseMCS="0"
             fi
-            ;;
+        ;;
         5)
             UPLINK_WIFI_BITRATE=11
             TELEMETRY_WIFI_BITRATE=24
             VIDEO_WIFI_BITRATE=24
             OSD_HW_BITRATE=24
+
             if [ "$UseMCS" == "Y" ]; then
                 UseMCS="1"
+
                 VIDEO_WIFI_BITRATE="3"
             else
                 UseMCS="0"
             fi
-            ;;
+        ;;
         6)
             UPLINK_WIFI_BITRATE=12
             TELEMETRY_WIFI_BITRATE=36
             VIDEO_WIFI_BITRATE=36
             OSD_HW_BITRATE=36
+
             if [ "$UseMCS" == "Y" ]; then
                 UseMCS="1"
+
                 VIDEO_WIFI_BITRATE="4"
             else
                 UseMCS="0"
             fi
-            ;;
+        ;;
     esac
+
 
     if [ "$UseSTBC" == "Y" ]; then
         UseSTBC="1"
     else
         UseSTBC="0"
     fi
+
 
     if [ "$UseLDPC" == "Y" ]; then
         UseLDPC="1"
@@ -413,32 +509,52 @@ function datarate_to_wifi_settings {
     fi
 }
 
+
 function set_video_player_based_fps {
-    # mmormota's stutter-free hello_video.bin: "hello_video.bin.30-mm" (for 30fps) or "hello_video.bin.48-mm" (for 48 and 59.9fps)
-    # befinitiv's hello_video.bin: "hello_video.bin.240-befi" (for any fps, use this for higher than 59.9fps)
+    #
+    # Select the version of hello_video to use based on the framerate
+    #
+    # Note that only the 30fps version actually adjusts to match the timing of the video, the 48fps version is just 
+    # matching vsync and is named that way because it isn't 30 and it isn't 59.9.
+    #
+    # For framerates faster than 59.9, we use the special 240fps version.
+    # 
     
-    if [ "$CAM" == "0" ]; then 
-        # if we are RX ...
-        
+    if [ "$CAM" == "0" ]; then         
         if [ "$FPS" == "59.9" ]; then
+
             DISPLAY_PROGRAM=/opt/vc/src/hello_pi/hello_video/hello_video.bin.48-mm
         else
             if [ "$FPS" -eq 30 ]; then
+
                 DISPLAY_PROGRAM=/opt/vc/src/hello_pi/hello_video/hello_video.bin.30-mm
             fi
 
             if [ "$FPS" -lt 60 ]; then
+
                 DISPLAY_PROGRAM=/opt/vc/src/hello_pi/hello_video/hello_video.bin.48-mm
             fi
             
             if [ "$FPS" -gt 60 ]; then
+            
                 DISPLAY_PROGRAM=/opt/vc/src/hello_pi/hello_video/hello_video.bin.240-befi
             fi
         fi
     fi
 }
 
+
+
 function get_telemetry_settings {
+    #
+    # This determines how telemetry will be handled in the rest of the system
+    # 
+    # One of the things it affects is tx_telemetry, which will choose to parse individual messages for
+    # mavlink to ensure they get sent out in individual wifi frames
+    #
+    # The ports here are used when distributing telemetry to hotspot devices using UDPsplitter, with the
+    # exception of mavlink which uses mavlink-routerd
+    #
     if cat /boot/osdconfig.txt | grep -q "^#define LTM"; then
         TELEMETRY_UDP_PORT=5001
         TELEMETRY_TYPE=1
@@ -465,37 +581,53 @@ function get_telemetry_settings {
     fi
 }
 
+
 function set_cts_protection {
     if [ "$CTS_PROTECTION" == "Y" ]; then
-        # use standard data frames, so that CTS is generated for Atheros
+        #
+        # Use standard data frames, so that CTS is generated for Atheros
+        #
         VIDEO_FRAMETYPE=1
+
         TELEMETRY_CTS=1
     else
-        # auto or N
-        # use RTS frames for video, CTS for telemetry (only atheros anyway)
+        #
+        # Use RTS frames for video, CTS for telemetry (only atheros)
+        #
+        # This is also used when CTS is set to auto or disabled
+        #
         VIDEO_FRAMETYPE=2
+
         TELEMETRY_CTS=1
     fi
     
     if [ "$TXMODE" != "single" ]; then
-        # always type 1 in dual tx mode since ralink beacon injection broken
+        #
+        # Always use standard data frames in dual TX mode, because Ralink beacon injection is broken
+        #
         VIDEO_FRAMETYPE=1
+
         TELEMETRY_CTS=1
     fi
 }
+
 
 function collect_debug {
     sleep 25
 
     DEBUGPATH=$1
+
     if [ "$DEBUGPATH" == "/boot" ]; then
-        # if debugpath is boot partition, make it writeable first and move old logs
+        #
+        # If debugpath is the /boot partition, make it writeable first and move old logs
+        #
         nice mount -o remount,rw /boot
         mv /boot/debug.txt /boot/debug-old.txt > /dev/null 2>&1
     fi
 
     uptime >>$DEBUGPATH/debug.txt
     echo >>$DEBUGPATH/debug.txt
+
     echo -n "Camera: " >>$DEBUGPATH/debug.txt
     nice /usr/bin/vcgencmd get_camera >>$DEBUGPATH/debug.txt
     nice dmesg | nice grep disconnect >>$DEBUGPATH/debug.txt
@@ -571,32 +703,46 @@ function collect_debug {
 
     nice top -n 3 -b -d 2 >>$DEBUGPATH/debug.txt
 
-    if [ "$DEBUGPATH" == "/boot" ]; then # if debugpath is boot partition, sync and remount ro
+    #
+    # If debugpath is the /boot partition, sync and remount read-only
+    #
+    if [ "$DEBUGPATH" == "/boot" ]; then
         sync
         nice mount -o remount,ro /boot
     fi
 }
 
+
 function collect_errorlog {
     sleep 3
     echo
-    
+
+
     if nice dmesg | nice grep -q over-current; then
         echo "ERROR: Over-current detected - potential power supply problems!"
     fi
+
 
     # check for USB disconnects (due to power-supply problems)
     if nice dmesg | nice grep -q disconnect; then
         echo "ERROR: USB disconnect detected - potential power supply problems!"
     fi
 
+
     nice mount -o remount,rw /boot
 
-    # check if over-temp or under-voltage occured
+    
+    #
+    # Check to see if the pi is throttled so we can show a warning on the OSD
+    # 
     if vcgencmd get_throttled | nice grep -q -v "0x0"; then
         TEMP=`cat /sys/class/thermal/thermal_zone0/temp`
         TEMP_C=$(($TEMP/1000))
-        if [ "$TEMP_C" -lt 75 ]; then # it must be under-voltage
+
+        #
+        # If the pi is throttled but not becuase of temperature, we assume it must be due to undervolt
+        #
+        if [ "$TEMP_C" -lt 75 ]; then
             echo
             echo "  ---------------------------------------------------------------------------------------------------"
             echo "  | ERROR: Under-Voltage detected on the TX Pi. Your Pi is not supplied with stable 5 Volts.        |"
@@ -629,7 +775,9 @@ function collect_errorlog {
     echo >>/boot/errorlog.txt
     echo
 
+
     NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb`
+
 
     for NIC in $NICS
     do
@@ -709,23 +857,30 @@ function collect_errorlog {
     nice mount -o remount,ro /boot
 }
 
-function wbclogger_function {
-    if [ "$CAM" == "0" ]; then
-        # if we are RX ...
 
-        if [ "$ENABLE_QOPENHD" != "Y" ]; then
-            # Waiting until video is running ...
-            VIDEORXRUNNING=0
-            while [ $VIDEORXRUNNING -ne 1 ]; do
-                VIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
-                sleep 1
-            done
-        fi
+
+function wbclogger_function {
+    #
+    # Only run on the ground side
+    #
+    if [ "$CAM" == "0" ]; then
+        #
+        # Waiting until video is running ...
+        #
+        VIDEORXRUNNING=0
+        while [ $VIDEORXRUNNING -ne 1 ]; do
+            VIDEORXRUNNING=`pidof $DISPLAY_PROGRAM | wc -w`
+            sleep 1
+        done
+
     
         echo
         
         sleep 5
         
+        #
+        # Start saving Open.HD telemetry to the temporary area, so it can be copied to the USB drive after flight
+        #
         nice /home/pi/wifibroadcast-base/rssilogger /wifibroadcast_rx_status_0 >> /wbc_tmp/videorssi.csv &
         nice /home/pi/wifibroadcast-base/rssilogger /wifibroadcast_rx_status_1 >> /wbc_tmp/telemetrydownrssi.csv &
         nice /home/pi/wifibroadcast-base/syslogger /wifibroadcast_rx_status_sysair >> /wbc_tmp/system.csv &
@@ -746,6 +901,7 @@ function wbclogger_function {
     fi
 }
 
+
 function pause_while {
     if [ -f "/tmp/pausewhile" ]; then
         PAUSE=1
@@ -763,6 +919,7 @@ function detect_nics {
     NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
 }
 
+
 function prepare_nic {
     DRIVER=`cat /sys/class/net/$1/device/uevent | nice grep DRIVER | sed 's/DRIVER=//'`
     
@@ -772,44 +929,57 @@ function prepare_nic {
 
     case $DRIVER in
         *881[24]au)
-        DRIVER=rtl88xxau
+            DRIVER=rtl88xxau
         ;;
     esac
 
     tmessage -n "Setting up $1: "
     
     if [ "$DRIVER" == "ath9k_htc" ]; then 
-        # set bitrates for Atheros via iw
+
         ifconfig $1 up || {
             echo
             echo "ERROR: Bringing up interface $1 failed!"
             collect_errorlog
             sleep 365d
         }
+
         sleep 0.2
 
         if [ "$CAM" == "0" ]; then
-            # we are RX, set bitrate to uplink bitrate
-            #tmessage -n "bitrate $UPLINK_WIFI_BITRATE Mbit "
+            #
+            # Running on ground side, set bitrate to uplink bitrate
+            #
+
             iw dev $1 set bitrates legacy-2.4 $UplinkSpeed || {
                 echo
                 echo "ERROR: Setting bitrate on $1 failed!"
+                
                 collect_errorlog
+                
                 sleep 365d
             }
+
             sleep 0.2
-            #tmessage -n "done. "
+            
         else 
-            # we are TX, set bitrate to downstream bitrate
+            #
+            # Running on air side, set bitrate to downstream bitrate
+            #
             tmessage -n "bitrate "
             
             if [ "$VIDEO_WIFI_BITRATE" != "19.5" ]; then
-                # only set bitrate if something else than 19.5 is requested (19.5 is default compiled in ath9k_htc firmware)
+                #
+                # Only set bitrate if not configured for 19.5 (19.5 is the default in ath9k_htc firmware)
+                #
                 tmessage -n "$VIDEO_WIFI_BITRATE Mbit "
+                
                 iw dev $1 set bitrates legacy-2.4 $VIDEO_WIFI_BITRATE || {
                     echo
                     echo "ERROR: Setting bitrate on $1 failed!"
+
                     collect_errorlog
+                    
                     sleep 365d
                 }
             else
@@ -817,94 +987,143 @@ function prepare_nic {
             fi
         
             sleep 0.2
+
             tmessage -n "done. "
         fi
 
+
+        #
+        # Bring the interface down again so we can configure monitor mode
+        # 
         ifconfig $1 down || {
             echo
             echo "ERROR: Bringing down interface $1 failed!"
+
             collect_errorlog
+            
             sleep 365d
         }
         sleep 0.2
+
 
         tmessage -n "monitor mode.. "
         iw dev $1 set monitor none || {
             echo
             echo "ERROR: Setting monitor mode on $1 failed!"
+
             collect_errorlog
+            
             sleep 365d
         }
+
         
         sleep 0.2
         tmessage -n "done. "
 
+
+        #
+        # Now that monitor mode is configured, we bring the interface up again
+        # 
         ifconfig $1 up || {
             echo
             echo "ERROR: Bringing up interface $1 failed!"
+            
             collect_errorlog
+
             sleep 365d
         }
         sleep 0.2
 
+        #
+        # Configure the interface with the wifi frequency supplied to this function as the 2nd argument
+        #
         if [ "$2" != "0" ]; then
             tmessage -n "frequency $2 MHz.. "
+
             iw dev $1 set freq $2 || {
                 echo
                 echo "ERROR: Setting frequency $2 MHz on $1 failed!"
+
                 collect_errorlog
+                
                 sleep 365d
             }
+
             tmessage "done!"
         else
             echo
         fi
     fi
 
+
     if [ "$DRIVER" == "rt2800usb" ] || [ "$DRIVER" == "mt7601u" ] || [ "$DRIVER" == "rtl8192cu" ] || [ "$DRIVER" == "rtl88xxau" ]; then
-        # do not set bitrate for Ralink, Mediatek, Realtek, done through tx parameter
+        #
+        # Do not set the bitrate for Ralink, Mediatek, Realtek, those are handled through tx parameter
+        #
+
         tmessage -n "monitor mode.. "
+        
         iw dev $1 set monitor none || {
             echo
             echo "ERROR: Setting monitor mode on $1 failed!"
+
             collect_errorlog
+            
             sleep 365d
         }
+
         sleep 0.2
         tmessage -n "done. "
+
 
         #tmessage -n "bringing up.. "
         ifconfig $1 up || {
             echo
             echo "ERROR: Bringing up interface $1 failed!"
+
             collect_errorlog
+            
             sleep 365d
         }
+
         sleep 0.2
         #tmessage -n "done. "
 
+
         if [ "$2" != "0" ]; then
             tmessage -n "frequency $2 MHz.. "
+
             iw dev $1 set freq $2 || {
-            echo
-            echo "ERROR: Setting frequency $2 MHz on $1 failed!"
-            collect_errorlog
-            sleep 365d
+                echo
+                echo "ERROR: Setting frequency $2 MHz on $1 failed!"
+
+                collect_errorlog
+                
+                sleep 365d
             }
+
             tmessage "done!"
         else
             echo
         fi
 
+        #
+        # Configure the interface with the power level supplied to this function as the 3rd argument
+        #
         if  [ "$DRIVER" == "rtl88xxau" -a -n "$3" ]; then
             tmessage -n "TX power $3.. "
+
             iw dev $1 set txpower fixed $3 || {
                 echo
                 echo "ERROR: Setting TX power to $3 on $1 failed!"
+
                 collect_errorlog
+                
                 sleep 365d
             }
+
             sleep 0.2
+            
             tmessage -n "done. "
         fi
     fi

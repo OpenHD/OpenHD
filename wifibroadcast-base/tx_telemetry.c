@@ -73,6 +73,7 @@ struct header_s {
 struct header_s header;
 
 
+
 static int open_sock(char *ifname) {
     struct sockaddr_ll ll_addr;
     struct ifreq ifr;
@@ -172,6 +173,7 @@ static u8 dummydata[] = {
 int flagHelp = 0;
 
 
+
 void usage(void) {
     printf("\nUsage: tx_telemetry [options] <interfaces>\n\n"
            "Options:\n"
@@ -187,6 +189,7 @@ void usage(void) {
            "\n");
     exit(1);
 }
+
 
 
 wifibroadcast_rx_status_t *telemetry_wbc_status_memory_open(void) {
@@ -208,9 +211,11 @@ wifibroadcast_rx_status_t *telemetry_wbc_status_memory_open(void) {
 }
 
 
+
 void telemetry_init(telemetry_data_t *td) {
     td->rx_status = telemetry_wbc_status_memory_open();
 }
+
 
 
 void sendpacket(uint32_t seqno, uint16_t len, telemetry_data_t *td, int transmission_mode, int num_int, uint8_t data[302]) {
@@ -240,7 +245,6 @@ void sendpacket(uint32_t seqno, uint16_t len, telemetry_data_t *td, int transmis
             case 0: {
                 /* 
                  * Ralink
-                 * 
                  */
 
                 // telemetry header (seqno and len)
@@ -263,7 +267,6 @@ void sendpacket(uint32_t seqno, uint16_t len, telemetry_data_t *td, int transmis
             case 1: {
                 /* 
                  * Atheros
-                 * 
                  */
                 memcpy(packet_buffer_ath + headers_atheros_len, &header, 6);
                 
@@ -286,7 +289,6 @@ void sendpacket(uint32_t seqno, uint16_t len, telemetry_data_t *td, int transmis
             case 2: {
                 /* 
                  * Realtek
-                 * 
                  */
                 memcpy(packet_buffer_rea + headers_Realtek_len, &header, 6);
                 memcpy(packet_buffer_rea + headers_Realtek_len + 6, data, len);
@@ -314,7 +316,6 @@ void sendpacket(uint32_t seqno, uint16_t len, telemetry_data_t *td, int transmis
     } else {
         /*
          * Transmit on all interfaces
-         * 
          */
 
         int i;
@@ -324,7 +325,6 @@ void sendpacket(uint32_t seqno, uint16_t len, telemetry_data_t *td, int transmis
                 case 0: {
                     /* 
                      * Ralink
-                     * 
                      */
                     
                     // telemetry header (seqno and len)
@@ -347,7 +347,6 @@ void sendpacket(uint32_t seqno, uint16_t len, telemetry_data_t *td, int transmis
                 case 1: {
                     /* 
                      * Atheros
-                     * 
                      */
                     memcpy(packet_buffer_ath + headers_atheros_len, &header, 6);
                     // telemetry data
@@ -369,7 +368,6 @@ void sendpacket(uint32_t seqno, uint16_t len, telemetry_data_t *td, int transmis
                 case 2: {
                     /* 
                      * Realtek
-                     * 
                      */
                     memcpy(packet_buffer_rea + headers_Realtek_len, &header, 6);
                     memcpy(packet_buffer_rea + headers_Realtek_len + 6, data, len);
@@ -398,17 +396,19 @@ void sendpacket(uint32_t seqno, uint16_t len, telemetry_data_t *td, int transmis
     }
 }
 
+
+
 long long current_timestamp() {
     struct timeval te;
 
-    // get current time
     gettimeofday(&te, NULL);
 
-    // caculate milliseconds
     long long milliseconds = te.tv_sec * 1000LL + te.tv_usec / 1000;
 
     return milliseconds;
 }
+
+
 
 int main(int argc, char *argv[]) {
     char fBrokenSocket = 0;
@@ -426,7 +426,9 @@ int main(int argc, char *argv[]) {
     int param_transmission_mode = 0;
     int param_debug = 0;
 
-    // data read from stdin
+    /*
+     * Data read from stdin
+     */
     uint8_t buf[402];
 
     uint8_t mavlink_message[263];
@@ -459,37 +461,30 @@ int main(int argc, char *argv[]) {
                 break;
             }
             case 'c': {
-                // CTS protection
                 param_cts = atoi(optarg);
                 break;
             }
             case 'p': {
-                // port
                 param_port = atoi(optarg);
                 break;
             }
             case 'r': {
-                // retransmissions
                 param_retransmissions = atoi(optarg);
                 break;
             }
             case 'x': {
-                // telemetry protocol
                 param_telemetry_protocol = atoi(optarg);
                 break;
             }
             case 'd': {
-                // data rate
                 param_data_rate = atoi(optarg);
                 break;
             }
             case 'y': {
-                // transmission mode
                 param_transmission_mode = atoi(optarg);
                 break;
             }
             case 'z': {
-                // debug
                 param_debug = atoi(optarg);
                 break;
             }
@@ -534,7 +529,6 @@ int main(int argc, char *argv[]) {
              * Atheros/Realtek
              *
              */
-
             if (strncmp(line, "DRIVER=ath9k_htc", 16) == 0) {
                 fprintf(stderr, "tx_telemetry: Atheros card detected\n");
                 type[num_interfaces] = 1;
@@ -546,9 +540,7 @@ int main(int argc, char *argv[]) {
         } else { 
             /*
              * Ralink/Mediatek
-             *
              */
-
             fprintf(stderr, "tx_telemetry: Ralink card detected\n");
             type[num_interfaces] = 0;
         }
@@ -558,11 +550,15 @@ int main(int argc, char *argv[]) {
         ++x;
         fclose(procfile);
 
-        // wait a bit between configuring interfaces to reduce Atheros and Pi USB flakiness
+        /*
+         * Wait a bit between configuring interfaces to reduce Atheros and Pi USB flakiness
+         */
         usleep(10000);
     }
 
-    // initialize telemetry shared mem for rssi based transmission (-y 1)
+    /*
+     * Initialize telemetry shared mem for rssi based transmission (-y 1)
+     */
     telemetry_data_t td;
     telemetry_init(&td);
 
@@ -626,12 +622,10 @@ int main(int argc, char *argv[]) {
      * CTS protection enabled: use data frames
      * 
      * CTS protection disabled: use RTS frames
-     * 
      */
     if (param_cts == 1) {
         /* 
          * Use data frames
-         * 
          */
 
         // radiotap header
@@ -642,7 +636,6 @@ int main(int argc, char *argv[]) {
     } else {
         /* 
          * Use RTS frames
-         * 
          */
 
         // radiotap header
@@ -654,8 +647,8 @@ int main(int argc, char *argv[]) {
 
     /*
      * For Ralink always use data short
-     * 
      */
+
     // radiotap header
     memcpy(headers_ralink, u8aRadiotapHeader, sizeof(u8aRadiotapHeader));
      // ieee header
@@ -664,8 +657,8 @@ int main(int argc, char *argv[]) {
 
     /*
      * For Realtek use RTS frames
-     * 
      */
+
     // radiotap header
     memcpy(headers_Realtek, u8aRadiotapHeader80211n, sizeof(u8aRadiotapHeader80211n));
      // ieee header
@@ -674,7 +667,6 @@ int main(int argc, char *argv[]) {
 
     /*
      * Radiotap and ieee headers
-     * 
      */
     memcpy(packet_buffer_ath, headers_atheros, headers_atheros_len);
     memcpy(packet_buffer_ral, headers_ralink, headers_ralink_len);
@@ -686,7 +678,6 @@ int main(int argc, char *argv[]) {
 
 
     while (!fBrokenSocket) {
-        // read the data
         int inl = read(STDIN_FILENO, buf, 350);
 
         if (param_debug == 1) {
@@ -716,9 +707,7 @@ int main(int argc, char *argv[]) {
             /* 
              * Parse Mavlink messages so that each message can be sent in a separate wifi frame, and
              * so that we can send the same message twice to handle interference.
-             * 
              */
-
             int i = 0;
             for (i = 0; i < inl; i++) {
                 uint8_t c = buf[i];
@@ -903,11 +892,12 @@ int main(int argc, char *argv[]) {
                     } else {
                         /*
                          * Send twice, helps ensure that one of them makes it to the other side in case of interferene
-                         * 
                          */
                         sendpacket(seqno, len_msg, &td, param_transmission_mode, num_interfaces, mavlink_message);
 
-                        // wait 0.5ms to increase probability of 2nd packet coming through
+                        /*
+                         * Wait 0.5ms to increase probability of 2nd packet coming through
+                         */
                         usleep(500);
 
                         sendpacket(seqno, len_msg, &td, param_transmission_mode, num_interfaces, mavlink_message);
@@ -920,18 +910,18 @@ int main(int argc, char *argv[]) {
         } else { 
             /*
              * Generic telemetry handling, we don't parse the message structure 
-             * 
              */
             if (param_retransmissions == 1) {
                 sendpacket(seqno, inl, &td, param_transmission_mode, num_interfaces, buf);
             } else {
                 /*
                  * Send twice, helps ensure that one of them makes it to the other side in case of interferene
-                 * 
                  */
                 sendpacket(seqno, inl, &td, param_transmission_mode, num_interfaces, buf);
 
-                // wait 0.5ms to increase probability of 2nd packet coming through
+                /*
+                 * Wait 0.5ms to increase probability of 2nd packet coming through
+                 */
                 usleep(500);
 
                 sendpacket(seqno, inl, &td, param_transmission_mode, num_interfaces, buf);

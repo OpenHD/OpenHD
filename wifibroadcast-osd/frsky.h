@@ -38,6 +38,7 @@
 #define ID_VOLTAGE_AMP_BP 0x3A
 #define ID_VOLTAGE_AMP_AP 0x3B
 #define ID_CURRENT 0x28
+
 // User defined data IDs
 #define ID_GYRO_X 0x40
 #define ID_GYRO_Y 0x41
@@ -45,11 +46,12 @@
 #define ID_VERT_SPEED 0x30 //opentx vario
 
 typedef struct {
-	int sm_state;
-	uint8_t pkg[64];
-	int pkg_pos;
+    int sm_state;
+    uint8_t pkg[64];
+    int pkg_pos;
 } frsky_state_t;
 
 int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td);
 int frsky_parse_buffer(frsky_state_t *state, telemetry_data_t_osd *td, uint8_t *buf, int buflen);
+
 #endif

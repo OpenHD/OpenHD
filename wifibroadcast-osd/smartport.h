@@ -40,22 +40,26 @@
 #define FR_ID_VFAS 0x0210 //VFAS_FIRST_ID
 
 typedef struct {
-	uint16_t id;
-	union {
-		uint32_t u32;
-		int32_t i32;
-		uint16_t u16;
-		int16_t i16;
-		uint8_t u8;
-		uint8_t b[4];
-		int8_t i8;
-		float f;
-		}data;
-	uint8_t crc;
-	} tSPortData;
+    uint16_t id;
+    union {
+        uint32_t u32;
+        int32_t i32;
+        uint16_t u16;
+        int16_t i16;
+        uint8_t u8;
+        uint8_t b[4];
+        int8_t i8;
+        float f;
+    } data;
+    uint8_t crc;
+} tSPortData;
+
 
 void smartport_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen);
+
 uint8_t u8CheckCrcSPORT( uint8_t *t );
-void smartport_check(telemetry_data_t_osd *td, uint8_t *t); // Frsky-specific
+
+// Frsky-specific
+void smartport_check(telemetry_data_t_osd *td, uint8_t *t); 
 
 #endif

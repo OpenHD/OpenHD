@@ -14,7 +14,6 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
- *
  */
 
 #include <stdio.h>
@@ -28,20 +27,37 @@
 
 int main(int argc, char *argv[]) {
     int width, height;
-		
-    char filepath[] = {"/home/pi/wifibroadcast-splash/splash.jpg"};	// The path to the splash screen
+        
+    /* 
+     * The path to the splash screen
+     */
+    char filepath[] = { "/home/pi/wifibroadcast-splash/splash.jpg" };
 
-    InitShapes(&width, &height);            						// Graphics initialization
-
+    /*
+     * Graphics initialization
+     */
+    InitShapes(&width, &height);
     Start(width, height);
-	
-	VGImage splash = CreateImageFromJpeg(filepath);					// Load the image
+    
+    /*
+     * Load the image
+     */
+    VGImage splash = CreateImageFromJpeg(filepath);
 
-	DrawImageAtFit(0, 0, width, height, splash);    				// Draw stretched across entire screen
+    /*
+     * Draw stretched across entire screen
+     */
+    DrawImageAtFit(0, 0, width, height, splash);
     
     End();
     usleep(7000000);
 
-    FinishShapes();                 								// Graphics cleanup
+    /*
+     * Graphics cleanup
+     */
+    FinishShapes();
+
+
+    
     exit(0);
 }
