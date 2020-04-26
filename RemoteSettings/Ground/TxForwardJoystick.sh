@@ -24,7 +24,7 @@ if [ "$EncryptionOrRange" == "Encryption" ]; then
 	while true
 	do
 		if [ "$Lora" == "1" ]; then
-			/home/pi/wifibroadcast-rc-Ath9k/lora /dev/ttyUSB0
+			/usr/local/bin/lora /dev/ttyUSB0
 		else
 
 			if [ "$PrimaryCardMAC" == "0" ]; then
