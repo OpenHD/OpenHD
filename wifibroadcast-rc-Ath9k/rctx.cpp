@@ -75,6 +75,23 @@ wifibroadcast_rx_status_t *telemetry_wbc_status_memory_open(void);
 int NICCount = 0;
 int IsTrimDone[8] = {0};
 
+/*
+ * Encrypted RC sockets
+ */
+
+// UDP RC
+struct sockaddr_in si_otherRCEncrypt;
+int sRCEncrypt;
+
+// UDP Band switcher init
+struct sockaddr_in si_other2;
+char message2[BUFLEN];
+int s2;
+
+// UDP IP or USB camera sender init
+struct sockaddr_in si_other3;
+char message3[BUFLEN];
+int s3;
 
 /*
  * Global settings
@@ -127,6 +144,14 @@ int axis7_initial = 1000;
  * Global state
  */
 static uint16_t *rcData = NULL;
+uint16_t lastValidCh0 = 0;
+uint16_t lastValidCh1 = 0;
+uint16_t lastValidCh2 = 0;
+uint16_t lastValidCh3 = 0;
+uint16_t lastValidCh4 = 0;
+uint16_t lastValidCh5 = 0;
+uint16_t lastValidCh6 = 0;
+uint16_t lastValidCh7 = 0;
 static uint16_t validButton1 = 0;
 static uint16_t validButton2 = 0;
 static uint16_t validButton3 = 0;
@@ -142,7 +167,19 @@ int flagHelp = 0;
 int sock = 0;
 int socks[5];
 int type[5];
+int counter = 0;
+int seqno = 0;
 
+/*
+ * RSSI shared memory
+ */
+telemetry_data_t td;
+
+
+/*
+ * Master packet sending function, called by both joystick and UDP code
+ */
+void process();
 
 
 struct framedata_s {
@@ -227,6 +264,7 @@ enum ConfigType {
     ConfigTypeKeyValue,
     ConfigTypeDefine
 };
+
 
 std::pair<std::string, std::string> parse_define(std::string kv) {
     boost::smatch result;
@@ -685,7 +723,6 @@ int main(int argc, char *argv[]) {
     int shmid;
     char *shared_memory;
     char ShmBuf[2];
-    int tmp = 0;
     char line[100], path[100];
     FILE *procfile;
 
@@ -766,14 +803,14 @@ int main(int argc, char *argv[]) {
     load_setting(joystick_settings, "AXIS7_INITIAL",   &axis7_initial);
 
 
-    uint16_t lastValidCh0 = axis0_initial;
-    uint16_t lastValidCh1 = axis1_initial;
-    uint16_t lastValidCh2 = axis2_initial;
-    uint16_t lastValidCh3 = axis3_initial;
-    uint16_t lastValidCh4 = axis4_initial;
-    uint16_t lastValidCh5 = axis5_initial;
-    uint16_t lastValidCh6 = axis6_initial;
-    uint16_t lastValidCh7 = axis7_initial;
+    lastValidCh0 = axis0_initial;
+    lastValidCh1 = axis1_initial;
+    lastValidCh2 = axis2_initial;
+    lastValidCh3 = axis3_initial;
+    lastValidCh4 = axis4_initial;
+    lastValidCh5 = axis5_initial;
+    lastValidCh6 = axis6_initial;
+    lastValidCh7 = axis7_initial;
 
 
     /*
@@ -893,9 +930,6 @@ int main(int argc, char *argv[]) {
     }
 
     // UDP RC Encrypted init
-    struct sockaddr_in si_otherRCEncrypt;
-    int sRCEncrypt, iRCEncrypt, slenRCEncrypt = sizeof(si_otherRCEncrypt);
-
     if ((sRCEncrypt = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
         perror("sRCEncrypt");
         exit(1);
@@ -910,15 +944,10 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "inet_aton() failed\n");
         exit(1);
     }
-
     // UDP RC Encrypted end
 
 
     // UDP Band switcher init
-    struct sockaddr_in si_other2;
-    int s2, slen2 = sizeof(si_other2);
-    char message2[BUFLEN];
-
     if ((s2 = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
         exit(1);
     }
@@ -935,10 +964,6 @@ int main(int argc, char *argv[]) {
 
 
     // UDP IP or USB camera sender init
-    struct sockaddr_in si_other3;
-    int s3, slen3 = sizeof(si_other3);
-    char message3[BUFLEN];
-
     if ((s3 = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
         exit(1);
     }
@@ -1059,12 +1084,7 @@ int main(int argc, char *argv[]) {
     }
 
     // init RSSI shared memory
-    telemetry_data_t td;
     telemetry_init(&td);
-
-    int counter = 0;
-    int seqno = 0;
-    int k = 0;
 
     while (done) {
         done = eventloop_joystick();
@@ -1072,201 +1092,8 @@ int main(int argc, char *argv[]) {
         //fprintf(stderr, "eventloop_joystick\n");
 
         if (counter % update_nth_time == 0) {
-            if (fix_usb_joystick_interrupt_quirk) {
-                if (rcData[0] == 1000) {
-                    rcData[0] = lastValidCh0;
-                    //printf("Channel 1 currupt, replaced: " "%" PRIu16 "\n", rcData[0]);
-                }
-
-                if (rcData[1] == 1000) {
-                    rcData[1] = lastValidCh1;
-                    //printf("Channel 2 currupt, replaced: " "%" PRIu16 "\n", rcData[1]);
-                }
-
-                if (rcData[2] == 1000) {
-                    rcData[2] = lastValidCh2;
-                    //printf("Channel 3 currupt, replaced: " "%" PRIu16 "\n", rcData[2]);
-                }
-                
-                if (rcData[3] == 1000) {
-                    rcData[3] = lastValidCh3;
-                    //printf("Channel 4 currupt, replaced: " "%" PRIu16 "\n", rcData[3]);
-                }
-                
-                if (rcData[4] == 1000) {
-                    rcData[4] = lastValidCh4;
-                    //printf("Channel 5 currupt, replaced: " "%" PRIu16 "\n", rcData[4]);
-                }
-                
-                if (rcData[5] == 1000) {
-                    rcData[5] = lastValidCh5;
-                    //printf("Channel 6 currupt, replaced: " "%" PRIu16 "\n", rcData[5]);
-                }
-                
-                if (rcData[6] == 1000) {
-                    rcData[6] = lastValidCh6;
-                    //printf("Channel 7 currupt, replaced: " "%" PRIu16 "\n", rcData[6]);
-                }
-                
-                if (rcData[7] == 1000) {
-                    rcData[7] = lastValidCh7;
-                    //printf("Channel 8 currupt, replaced: " "%" PRIu16 "\n", rcData[7]);
-                }
-
-                lastValidCh0 = rcData[0];
-                lastValidCh1 = rcData[1];
-                lastValidCh2 = rcData[2];
-                lastValidCh3 = rcData[3];
-                lastValidCh4 = rcData[4];
-                lastValidCh5 = rcData[5];
-                lastValidCh6 = rcData[6];
-                lastValidCh7 = rcData[7];
-            }
-
-            validButton3 = validButton2;
-            validButton2 = validButton1;
-
-            tmp = TrimChannel;
-
-            //fprintf(stderr, "TrimChannelPWMBefore: %d \n", rcData[tmp]);
-
-            CheckTrimChannel(tmp);
-
-            //fprintf(stderr, "TrimChannelPWMAfter: %d \n", rcData[tmp]);
-            //fprintf(stderr, "SendRC\n");
-
-
-            for (k = 0; k < transmissions; ++k) {
-                if (IsEncrypt == 1) {
-                    /*
-                     * Using SVPCOM to send the RC packet
-                     * 
-                     */
-                    packMessage(seqno);
-                    
-                    if (sendto(sRCEncrypt, messageRCEncrypt, 21, 0, (struct sockaddr *)&si_otherRCEncrypt, slenRCEncrypt) == -1) {
-                        fprintf(stderr, "sendto() error");
-                        
-                        exit(1);
-                    }
-
-                } else {
-                    /*
-                     * Using normal wifibroadcast RC system to send RC packet
-                     * 
-                     */
-
-                    if (validButton1 == validButton2 && validButton1 == validButton3 && validButton2 == validButton3) {
-                        // Buttons really did change, so we send the packet out
-                        sendRC(seqno, &td);
-                        
-                        validButton1 = rcData[8];
-                        
-                        //printf("OK  : " "%" PRIu16 "\n", rcData[8]);
-
-                    } else {
-                        // Buttons only changed briefly, likely the result of hardware or OS issues so we ignore it
-
-                        discardCounter++;
-
-                        printf("RC Blocks discarded: "
-                               "%" PRIu16 "\n",
-                               discardCounter);
-
-                        //printf("FAIL: " "%" PRIu16 "\n", rcData[8]);
-
-                    }
-                }
-
-                // Wait 2ms between sending multiple frames to lower collision probability
-                usleep(2000); 
-            }
-
-            seqno++;
-
-            if (Channel >= 1 && Channel <= 8 && IsBandSwitcherEnabled == 1) {
-                message2[0] = 0;
-                message2[1] = 0;
-                tmp = Channel;
-                tmp--;
-                message2[0] = rcData[tmp] & 0xFF;
-                message2[1] = rcData[tmp] >> 8;
-
-                if (sendto(s2, message2, 2, 0, (struct sockaddr *)&si_other2, slen2) == -1) {
-                    //printf("sendto() error");
-                }
-            }
-
-            if (ChannelIPCamera >= 1 && ChannelIPCamera <= 8 && IsIPCameraSwitcherEnabled == 1) {
-                message3[0] = 0;
-                message3[1] = 0;
-                tmp = ChannelIPCamera;
-                tmp--;
-                message3[0] = rcData[tmp] & 0xFF;
-                message3[1] = rcData[tmp] >> 8;
-
-                if (sendto(s3, message3, 2, 0, (struct sockaddr *)&si_other3, slen3) == -1) {
-                    //printf("sendto() error");
-                }
-            } else if (ChannelIPCamera > 8 && IsIPCameraSwitcherEnabled == 1) {
-                /* 
-                 * This treats 2 consecutive button channels as a fake axis, if ChannelIPCamera is set to 9-24.
-                 * 
-                 */
-
-                message3[0] = 0;
-                message3[1] = 0;
-
-                uint8_t static_offset = 8;
-
-                /*
-                 * Buttons are channel 9-24 in a uint16_t bitpattern in rcData[8], so we bitshift to get the correct bit
-                 * for the configure camera switching channel, along with the +1 channel as the 2nd button.
-                 * 
-                 */
-                uint8_t button_a = 1 << (ChannelIPCamera - static_offset - 1);
-                uint8_t button_b = 1 << (ChannelIPCamera + 1 - static_offset - 1);
-
-                // Because rcData[0-7] holds Axis data and rcData[8] holds all Buttondata in a bitpattern
-                tmp = 8; 
-
-                if (((rcData[tmp] & 0xFF) & button_a) == button_a && ((rcData[tmp] & 0xFF) & button_b) == button_b) {
-                    /*
-                     * BTNA=High & BTNB=High
-                     *
-                     */
-
-                    // Decimal payload = 2000 => Hex 07D0
-                    message3[0] = 0xD0; 
-                    message3[1] = 0x07;
-                }
-
-                if (((rcData[tmp] & 0xFF) & button_a) == button_a && ((rcData[tmp] & 0xFF) & button_b) != button_b) {
-                    /*
-                     * BTNA=High & BTNB=Low
-                     *
-                     */
-
-                    // Decimal payload = 1500 => Hex 05DC
-                    message3[0] = 0xDC; 
-                    message3[1] = 0x05;
-                }
-
-                if (((rcData[tmp] & 0xFF) & button_a) != button_a && ((rcData[tmp] & 0xFF) & button_b) != button_b) {
-                    /*
-                     * BTNA=Low & BTNB=Low
-                     *
-                     */
-
-                    // Decimal payload = 1000 => Hex 03E8
-                    message3[0] = 0xE8; 
-                    message3[1] = 0x03;
-                }
-
-                if (sendto(s3, message3, 2, 0, (struct sockaddr *)&si_other3, slen3) == -1) {
-                    //printf("sendto() error");
-                }
-            }
+            // send from joystick
+            process();
         }
 
         if (counter % JOY_CHECK_NTH_TIME == 0) {
@@ -1288,4 +1115,202 @@ int main(int argc, char *argv[]) {
     close(s2);
 
     return EXIT_SUCCESS;
+}
+
+
+void process() {
+    int tmp = 0;
+    int k = 0;
+
+    if (fix_usb_joystick_interrupt_quirk) {
+        if (rcData[0] == 1000) {
+            rcData[0] = lastValidCh0;
+            //printf("Channel 1 currupt, replaced: " "%" PRIu16 "\n", rcData[0]);
+        }
+
+        if (rcData[1] == 1000) {
+            rcData[1] = lastValidCh1;
+            //printf("Channel 2 currupt, replaced: " "%" PRIu16 "\n", rcData[1]);
+        }
+
+        if (rcData[2] == 1000) {
+            rcData[2] = lastValidCh2;
+            //printf("Channel 3 currupt, replaced: " "%" PRIu16 "\n", rcData[2]);
+        }
+
+        if (rcData[3] == 1000) {
+            rcData[3] = lastValidCh3;
+            //printf("Channel 4 currupt, replaced: " "%" PRIu16 "\n", rcData[3]);
+        }
+
+        if (rcData[4] == 1000) {
+            rcData[4] = lastValidCh4;
+            //printf("Channel 5 currupt, replaced: " "%" PRIu16 "\n", rcData[4]);
+        }
+
+        if (rcData[5] == 1000) {
+            rcData[5] = lastValidCh5;
+            //printf("Channel 6 currupt, replaced: " "%" PRIu16 "\n", rcData[5]);
+        }
+
+        if (rcData[6] == 1000) {
+            rcData[6] = lastValidCh6;
+            //printf("Channel 7 currupt, replaced: " "%" PRIu16 "\n", rcData[6]);
+        }
+
+        if (rcData[7] == 1000) {
+            rcData[7] = lastValidCh7;
+            //printf("Channel 8 currupt, replaced: " "%" PRIu16 "\n", rcData[7]);
+        }
+
+        lastValidCh0 = rcData[0];
+        lastValidCh1 = rcData[1];
+        lastValidCh2 = rcData[2];
+        lastValidCh3 = rcData[3];
+        lastValidCh4 = rcData[4];
+        lastValidCh5 = rcData[5];
+        lastValidCh6 = rcData[6];
+        lastValidCh7 = rcData[7];
+    }
+
+    validButton3 = validButton2;
+    validButton2 = validButton1;
+
+    tmp = TrimChannel;
+
+    //fprintf(stderr, "TrimChannelPWMBefore: %d \n", rcData[tmp]);
+
+    CheckTrimChannel(tmp);
+
+    //fprintf(stderr, "TrimChannelPWMAfter: %d \n", rcData[tmp]);
+    //fprintf(stderr, "SendRC\n");
+
+    for (k = 0; k < transmissions; ++k) {
+        if (IsEncrypt == 1) {
+            /*
+             * Using SVPCOM to send the RC packet
+             * 
+             */
+            packMessage(seqno);
+
+            if (sendto(sRCEncrypt, messageRCEncrypt, 21, 0, (struct sockaddr *)&si_otherRCEncrypt, sizeof(si_otherRCEncrypt)) == -1) {
+                fprintf(stderr, "sendto() error");
+
+                exit(1);
+            }
+        } else {
+            /*
+             * Using normal wifibroadcast RC system to send RC packet
+             * 
+             */
+
+            if (validButton1 == validButton2 && validButton1 == validButton3 && validButton2 == validButton3) {
+                // Buttons really did change, so we send the packet out
+                sendRC(seqno, &td);
+
+                validButton1 = rcData[8];
+
+                //printf("OK  : " "%" PRIu16 "\n", rcData[8]);
+            } else {
+                // Buttons only changed briefly, likely the result of hardware or OS issues so we ignore it
+
+                discardCounter++;
+
+                printf("RC Blocks discarded: "
+                       "%" PRIu16 "\n",
+                       discardCounter);
+
+                //printf("FAIL: " "%" PRIu16 "\n", rcData[8]);
+            }
+        }
+
+        // Wait 2ms between sending multiple frames to lower collision probability
+        usleep(2000);
+    }
+
+    seqno++;
+
+    if (Channel >= 1 && Channel <= 8 && IsBandSwitcherEnabled == 1) {
+        message2[0] = 0;
+        message2[1] = 0;
+        tmp = Channel;
+        tmp--;
+        message2[0] = rcData[tmp] & 0xFF;
+        message2[1] = rcData[tmp] >> 8;
+
+        if (sendto(s2, message2, 2, 0, (struct sockaddr *)&si_other2, sizeof(si_other2)) == -1) {
+            //printf("sendto() error");
+        }
+    }
+
+    if (ChannelIPCamera >= 1 && ChannelIPCamera <= 8 && IsIPCameraSwitcherEnabled == 1) {
+        message3[0] = 0;
+        message3[1] = 0;
+        tmp = ChannelIPCamera;
+        tmp--;
+        message3[0] = rcData[tmp] & 0xFF;
+        message3[1] = rcData[tmp] >> 8;
+
+        if (sendto(s3, message3, 2, 0, (struct sockaddr *)&si_other3, sizeof(si_other3)) == -1) {
+            //printf("sendto() error");
+        }
+    } else if (ChannelIPCamera > 8 && IsIPCameraSwitcherEnabled == 1) {
+        /* 
+         * This treats 2 consecutive button channels as a fake axis, if ChannelIPCamera is set to 9-24.
+         * 
+         */
+
+        message3[0] = 0;
+        message3[1] = 0;
+
+        uint8_t static_offset = 8;
+
+        /*
+         * Buttons are channel 9-24 in a uint16_t bitpattern in rcData[8], so we bitshift to get the correct bit
+         * for the configure camera switching channel, along with the +1 channel as the 2nd button.
+         * 
+         */
+        uint8_t button_a = 1 << (ChannelIPCamera - static_offset - 1);
+        uint8_t button_b = 1 << (ChannelIPCamera + 1 - static_offset - 1);
+
+        // Because rcData[0-7] holds Axis data and rcData[8] holds all Buttondata in a bitpattern
+        tmp = 8;
+
+        if (((rcData[tmp] & 0xFF) & button_a) == button_a && ((rcData[tmp] & 0xFF) & button_b) == button_b) {
+            /*
+             * BTNA=High & BTNB=High
+             *
+             */
+
+            // Decimal payload = 2000 => Hex 07D0
+            message3[0] = 0xD0;
+            message3[1] = 0x07;
+        }
+
+        if (((rcData[tmp] & 0xFF) & button_a) == button_a && ((rcData[tmp] & 0xFF) & button_b) != button_b) {
+            /*
+             * BTNA=High & BTNB=Low
+             *
+             */
+
+            // Decimal payload = 1500 => Hex 05DC
+            message3[0] = 0xDC;
+            message3[1] = 0x05;
+        }
+
+        if (((rcData[tmp] & 0xFF) & button_a) != button_a && ((rcData[tmp] & 0xFF) & button_b) != button_b) {
+            /*
+             * BTNA=Low & BTNB=Low
+             *
+             */
+
+            // Decimal payload = 1000 => Hex 03E8
+            message3[0] = 0xE8;
+            message3[1] = 0x03;
+        }
+
+        if (sendto(s3, message3, 2, 0, (struct sockaddr *)&si_other3, sizeof(si_other3)) == -1) {
+            //printf("sendto() error");
+        }
+    }
 }
