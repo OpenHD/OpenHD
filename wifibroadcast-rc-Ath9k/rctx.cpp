@@ -13,10 +13,11 @@
 #include <net/if.h>
 #include <netinet/ether.h>
 #include <netpacket/packet.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+
+#include <cstdbool>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -28,7 +29,15 @@
 #include <sys/shm.h>
 #include <sys/types.h>
 
-#include "/tmp/rctx.h"
+#include <tuple>
+#include <string>
+#include <iostream>
+#include <boost/regex.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
+
 
 
 // read Joystick every 2 ms or 500x per second
@@ -44,6 +53,9 @@
 #define SERVER "127.0.0.1"
 
 #define BUFLEN 2
+
+//RC Joystick -> USB -> Android phone -> WiFi -> RPi ground hotspot -> 5565 udp in port
+#define InUDPPort 5565
 
 // Encrypted RC out via SVPCom
 #define PORT 5566 
@@ -61,24 +73,60 @@ char messageRCEncrypt[40];
 wifibroadcast_rx_status_t *telemetry_wbc_status_memory_open(void);
 
 int NICCount = 0;
-
-int TrimChannel = 0;
-int Action = 0;
-int PWMCount = 0;
-int ActivateChannel = 0;
 int IsTrimDone[8] = {0};
 
 
-static uint16_t *rcData = NULL;
-static uint16_t lastValidCh0 = AXIS0_INITIAL;
-static uint16_t lastValidCh1 = AXIS1_INITIAL;
-static uint16_t lastValidCh2 = AXIS2_INITIAL;
-static uint16_t lastValidCh3 = AXIS3_INITIAL;
-static uint16_t lastValidCh4 = AXIS4_INITIAL;
-static uint16_t lastValidCh5 = AXIS5_INITIAL;
-static uint16_t lastValidCh6 = AXIS6_INITIAL;
-static uint16_t lastValidCh7 = AXIS7_INITIAL;
+/*
+ * Global settings
+ */
+std::map<std::string, std::string> openhd_settings;
 
+int TrimChannel = 0;
+int Action = 1;
+int PWMCount = 202;
+int ActivateChannel = 0;
+int Channel = 8;
+int ChannelIPCamera = 7;
+int IsEncrypt = 0;
+int IsIPCameraSwitcherEnabled = 0;
+int IsBandSwitcherEnabled = 0;
+std::string PrimaryCardMAC = "0";
+
+
+/* 
+ * Joystick settings
+ */
+std::map<std::string, std::string> joystick_settings;
+
+int update_nth_time = 8;
+int transmissions = 2;
+int fix_usb_joystick_interrupt_quirk = 0;
+
+/*
+ * These match the defaults in joyconfig.txt, but are only used if for some reason there is no default 
+ * in the settings file. 
+ */
+int roll_axis      = 0;
+int pitch_axis     = 1;
+int yaw_axis       = 3;
+int throttle_axis  = 2;
+int aux1_axis      = 4;
+int aux2_axis      = 5;
+int aux3_axis      = 6;
+int aux4_axis      = 7;
+int axis0_initial = 1500;
+int axis1_initial = 1500;
+int axis2_initial = 1020;
+int axis3_initial = 1500;
+int axis4_initial = 1000;
+int axis5_initial = 1000;
+int axis6_initial = 1000;
+int axis7_initial = 1000;
+
+/*
+ * Global state
+ */
+static uint16_t *rcData = NULL;
 static uint16_t validButton1 = 0;
 static uint16_t validButton2 = 0;
 static uint16_t validButton3 = 0;
@@ -175,6 +223,74 @@ struct framedata_n {
 struct framedata_n framedatan;
 
 
+enum ConfigType {
+    ConfigTypeKeyValue,
+    ConfigTypeDefine
+};
+
+std::pair<std::string, std::string> parse_define(std::string kv) {
+    boost::smatch result;
+
+    boost::regex r{ "^#define\\s+([\\w]+)\\s+([\\w]+)\r?$"};
+    if (!boost::regex_match(kv, result, r)) {
+        throw std::runtime_error("Ignoring invalid setting, check file for errors");
+    }
+
+    if (result.size() != 3) {
+        throw std::runtime_error("Ignoring invalid setting, check file for errors");
+    }
+
+    return std::make_pair<std::string, std::string>(result[1], result[2]);
+}
+
+
+std::pair<std::string, std::string> parse_kv(std::string kv) {
+    boost::smatch result;
+
+    boost::regex r{ "^([\\w\\[\\]]+)\\s*=\\s*(.*)"};
+    if (!boost::regex_match(kv, result, r)) {
+        throw std::runtime_error("Ignoring invalid setting, check file for errors");
+    }
+
+    if (result.size() != 3) {
+        throw std::runtime_error("Ignoring invalid setting, check file for errors");
+    }
+
+    return std::make_pair<std::string, std::string>(result[1], result[2]);
+}
+
+
+std::map<std::string, std::string> read_config(ConfigType type, std::string path) {
+    std::ifstream in(path);
+
+    std::map<std::string, std::string> settings;
+
+    std::string str;
+
+    while (std::getline(in, str)) {
+        if (str.size() > 0) {
+            try {
+                if (type == ConfigTypeKeyValue) {
+                    auto pair = parse_kv(str);
+                    settings.insert(pair);
+                } else if (type == ConfigTypeDefine) {
+                    auto pair = parse_define(str);
+                    settings.insert(pair);
+                }
+            } catch (std::exception &ex) {
+                /* 
+                 * Ignore, likely a comment or user error in which case we will use a default.
+                 * 
+                 * We might need to mark the ones that could not be read so we can warn the user, but
+                 * not by printing messages to the console that they might never see.
+                 */
+            }
+        }
+    }
+
+    return settings;
+}
+
 
 uint16_t *rc_channels_memory_open(void) {
     int fd = shm_open("/wifibroadcast_rc_channels", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
@@ -199,20 +315,7 @@ uint16_t *rc_channels_memory_open(void) {
 }
 
 
-void usage(void) {
-    printf("rctx by Rodizio. Based on JS2Serial by Oliver Mueller and wbc all-in-one tx by Anemostec. GPL2\n"
-           "\n"
-           "Usage: rctx rctx ChannelToListen2 ChannelIPCamera IsBandSwitcherEnabled(1\\0) IsIPCameraSwitcherEnabled(1\\0) IsEncrypt(1\\0) $TrimChannel $Action $PWMCount $ActivateChannel $PrimaryCardMAC \n"
-           "\n"
-           "Example:\n"
-           "  rctx 2 3 1 1 0 wlan0\n"
-           "\n");
-
-    exit(1);
-}
-
-
-static int open_sock(char *ifname) {
+static int open_sock(const char *ifname) {
     struct sockaddr_ll ll_addr;
     struct ifreq ifr;
 
@@ -221,9 +324,9 @@ static int open_sock(char *ifname) {
     sock = socket(AF_PACKET, SOCK_RAW, 0);
     if (sock == -1) {
         fprintf(stderr, "Error:\tSocket failed\n");
+
         exit(1);
     }
-
 
     ll_addr.sll_family = AF_PACKET;
     ll_addr.sll_protocol = 0;
@@ -233,6 +336,7 @@ static int open_sock(char *ifname) {
 
     if (ioctl(sock, SIOCGIFINDEX, &ifr) < 0) {
         fprintf(stderr, "Error:\tioctl(SIOCGIFINDEX) failed\n");
+
         exit(1);
     }
 
@@ -241,8 +345,10 @@ static int open_sock(char *ifname) {
 
     if (ioctl(sock, SIOCGIFHWADDR, &ifr) < 0) {
         fprintf(stderr, "Error:\tioctl(SIOCGIFHWADDR) failed\n");
+
         exit(1);
     }
+
 
     memcpy(ll_addr.sll_addr, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
 
@@ -271,50 +377,48 @@ int16_t parsetoMultiWii(Sint16 value) {
 void readAxis(SDL_Event *event) {
     SDL_Event myevent = (SDL_Event)*event;
 
-    switch (myevent.jaxis.axis) {
-        case ROLL_AXIS: {
-            rcData[0] = parsetoMultiWii(myevent.jaxis.value);
-            IsTrimDone[0] = 0;
-            break;
-        }
-        case PITCH_AXIS: {
-            rcData[1] = parsetoMultiWii(myevent.jaxis.value);
+    /*
+     * These are separate if tests instead of a switch statement because the values 
+     * are not constants, they can be changed at runtime
+     */
+    if (myevent.jaxis.axis == roll_axis) { 
+        rcData[0] = parsetoMultiWii(myevent.jaxis.value);
+        IsTrimDone[0] = 0;
+    }
+
+    if (myevent.jaxis.axis == pitch_axis) { 
+        rcData[1] = parsetoMultiWii(myevent.jaxis.value);
             IsTrimDone[1] = 0;
-            break;
-        }
-        case THROTTLE_AXIS: {
-            rcData[2] = parsetoMultiWii(myevent.jaxis.value);
-            IsTrimDone[2] = 0;
-            break;
-        }
-        case YAW_AXIS: {
-            rcData[3] = parsetoMultiWii(myevent.jaxis.value);
-            IsTrimDone[3] = 0;
-            break;
-        }
-        case AUX1_AXIS: {
-            rcData[4] = parsetoMultiWii(myevent.jaxis.value);
-            IsTrimDone[4] = 0;
-            break;
-        }
-        case AUX2_AXIS: {
-            rcData[5] = parsetoMultiWii(myevent.jaxis.value);
-            IsTrimDone[5] = 0;
-            break;
-        }
-        case AUX3_AXIS: {
-            rcData[6] = parsetoMultiWii(myevent.jaxis.value);
-            IsTrimDone[6] = 0;
-            break;
-        }
-        case AUX4_AXIS: {
-            rcData[7] = parsetoMultiWii(myevent.jaxis.value);
-            IsTrimDone[7] = 0;
-            break;
-        }
-        default: {
-            break; //do nothing
-        }
+    }
+
+    if (myevent.jaxis.axis == throttle_axis) { 
+        rcData[2] = parsetoMultiWii(myevent.jaxis.value);
+        IsTrimDone[2] = 0;
+    }
+
+    if (myevent.jaxis.axis == yaw_axis) { 
+        rcData[3] = parsetoMultiWii(myevent.jaxis.value);
+        IsTrimDone[3] = 0;
+    }
+
+    if (myevent.jaxis.axis == aux1_axis) { 
+        rcData[4] = parsetoMultiWii(myevent.jaxis.value);
+        IsTrimDone[4] = 0;
+    }
+
+    if (myevent.jaxis.axis == aux2_axis) { 
+        rcData[5] = parsetoMultiWii(myevent.jaxis.value);
+        IsTrimDone[5] = 0;
+    }
+
+    if (myevent.jaxis.axis == aux3_axis) { 
+        rcData[6] = parsetoMultiWii(myevent.jaxis.value);
+        IsTrimDone[6] = 0;
+    }
+
+    if (myevent.jaxis.axis == aux4_axis) { 
+        rcData[7] = parsetoMultiWii(myevent.jaxis.value);
+        IsTrimDone[7] = 0;
     }
 }
 
@@ -515,6 +619,18 @@ void packMessage(int seqno) {
 }
 
 
+void load_setting(std::map<std::string, std::string> settings, std::string name, int *variable) {
+    auto search = settings.find(name);
+    if (search != settings.end()) {
+        *variable = atoi(search->second.c_str());
+        std::cout << name << ": " << search->second << std::endl;
+    } else {
+        std::cerr << "WARNING: " << name << " not found in settings file, using default value: " << *variable << std::endl;
+    }
+}
+
+
+
 void CheckTrimChannel(int Channel) {
     if (TrimChannel >= 0 && ActivateChannel >= 0) {
         if (Channel == TrimChannel) {
@@ -566,87 +682,164 @@ int main(int argc, char *argv[]) {
     int done = 1;
     int joy_connected = 0;
     int joy = 1;
-    int update_nth_time = 0;
     int shmid;
     char *shared_memory;
-    int Channel = 0;
-    int ChannelIPCamera = 0;
-    int IsEncrypt = 0;
-    int IsIPCameraSwitcherEnabled = 0;
-    int IsBandSwitcherEnabled = 0;
     char ShmBuf[2];
     int tmp = 0;
-
-    TrimChannel = 0;
-    Action = 0;
-    PWMCount = 0;
-    ActivateChannel = 0;
-
     char line[100], path[100];
     FILE *procfile;
 
-    while (1) {
-        int nOptionIndex;
 
-        static const struct option optiona[] = {
-            { "help", no_argument, &flagHelp, 1 },
-            {      0,           0,         0, 0 }
-        };
+    /*
+     * Read the settings files
+     */
+    joystick_settings = read_config(ConfigTypeDefine,   "/boot/joyconfig.txt");
+    openhd_settings   = read_config(ConfigTypeKeyValue, "/boot/openhd-settings-1.txt");
 
-        int c = getopt_long(argc, 
-                            argv, 
-                            "h:",
-                            optiona, 
-                            &nOptionIndex);
+    
+    /*
+     * Process the openhd settings we care about and store them
+     */
+    load_setting(openhd_settings, "ChannelToListen2",      &Channel);
+    load_setting(openhd_settings, "ChannelIPCamera",       &ChannelIPCamera);
+    load_setting(openhd_settings, "IsBandSwitcherEnabled", &IsBandSwitcherEnabled);
+    load_setting(openhd_settings, "ChannelToListen2",      &Channel);
+    load_setting(openhd_settings, "TrimChannel",           &TrimChannel);
+    load_setting(openhd_settings, "Action",                &Action);
+    load_setting(openhd_settings, "PWMCount",              &PWMCount);
+    load_setting(openhd_settings, "ActivateChannel",       &ActivateChannel);
 
-        if (c == -1) {
-            break;
-        }
 
-        switch (c) {
-            case 0: {
-                // long option
-                break;
-            }
-            case 'h': {
-                // help
-                usage();
-                break;
-            }
-            default: {
-                fprintf(stderr, "unknown switch %c\n", c);
-                usage();
-            }
+    // These are handled manually because they aren't direct settings to store as-is
+    {
+        auto search = openhd_settings.find("SecondaryCamera");
+        if (search != openhd_settings.end() && (search->second == "USB" || search->second == "IP")) {
+            std::cout << "Enabling camera switcher for: " << search->second << std::endl;
+            IsIPCameraSwitcherEnabled = 1;
+        } else {
+            std::cout << "Disabling camera switcher" << std::endl;
         }
     }
 
-    if (optind >= argc) {
-        usage();
+    {
+        auto search = openhd_settings.find("EncryptionOrRange");
+        if (search != openhd_settings.end() && (search->second == "Encryption")) {
+            std::cout << "Encrypted RC enabled" << std::endl;
+            IsEncrypt = 1;
+        } else {
+            std::cout << "Encrypted RC disabled" << std::endl;
+        }
     }
 
-    int x = optind;
-    x += 9;
+    {
+        auto search = openhd_settings.find("PrimaryCardMAC");
+        if (search != openhd_settings.end() && (search->second != "0")) {
+            std::cout << "PrimaryCardMAC: " << search->second << std::endl;
+            PrimaryCardMAC = search->second;
+        } else {
+            std::cout << "PrimaryCardMAC disabled" << std::endl;
+        }
+    }
 
-    Channel = atoi(argv[1]);
-    ChannelIPCamera = atoi(argv[2]);
+    /*
+     * Process the joystick settings we care about and store them
+     */    
+    load_setting(joystick_settings, "UPDATE_NTH_TIME", &update_nth_time);
+    load_setting(joystick_settings, "TRANSMISSIONS",   &transmissions);
+    load_setting(joystick_settings, "FIX_USB_JOYSTICK_INTERRUPT_QUIRK",   &fix_usb_joystick_interrupt_quirk);
+    load_setting(joystick_settings, "ROLL_AXIS",       &roll_axis);
+    load_setting(joystick_settings, "PITCH_AXIS",      &pitch_axis);
+    load_setting(joystick_settings, "YAW_AXIS",        &yaw_axis);
+    load_setting(joystick_settings, "THROTTLE_AXIS",   &throttle_axis);
+    load_setting(joystick_settings, "AUX1_AXIS",       &aux1_axis);
+    load_setting(joystick_settings, "AUX2_AXIS",       &aux2_axis);
+    load_setting(joystick_settings, "AUX3_AXIS",       &aux3_axis);
+    load_setting(joystick_settings, "AUX4_AXIS",       &aux4_axis);
 
-    IsBandSwitcherEnabled = atoi(argv[3]);
-    IsIPCameraSwitcherEnabled = atoi(argv[4]);
-    IsEncrypt = atoi(argv[5]);
+    load_setting(joystick_settings, "AXIS0_INITIAL",   &axis0_initial);
+    load_setting(joystick_settings, "AXIS1_INITIAL",   &axis1_initial);
+    load_setting(joystick_settings, "AXIS2_INITIAL",   &axis2_initial);
+    load_setting(joystick_settings, "AXIS3_INITIAL",   &axis3_initial);
+    load_setting(joystick_settings, "AXIS4_INITIAL",   &axis4_initial);
+    load_setting(joystick_settings, "AXIS5_INITIAL",   &axis5_initial);
+    load_setting(joystick_settings, "AXIS6_INITIAL",   &axis6_initial);
+    load_setting(joystick_settings, "AXIS7_INITIAL",   &axis7_initial);
 
-    TrimChannel = atoi(argv[6]);
-    Action = atoi(argv[7]);
-    PWMCount = atoi(argv[8]);
-    ActivateChannel = atoi(argv[9]);
+
+    uint16_t lastValidCh0 = axis0_initial;
+    uint16_t lastValidCh1 = axis1_initial;
+    uint16_t lastValidCh2 = axis2_initial;
+    uint16_t lastValidCh3 = axis3_initial;
+    uint16_t lastValidCh4 = axis4_initial;
+    uint16_t lastValidCh5 = axis5_initial;
+    uint16_t lastValidCh6 = axis6_initial;
+    uint16_t lastValidCh7 = axis7_initial;
+
+
+    /*
+     * Decrement by one to get an index into rcData
+     */
     TrimChannel--;
     ActivateChannel--;
 
 
+
+    /*
+     * Find the wfb cards, excluding specific kinds of interfaces.
+     * 
+     * This is the C++ equivalent of the bash NICS="" lines in the scripts
+     */    
+    std::vector<std::string> excluded_interfaces = {
+        "usb",
+        "lo",
+        "eth",
+        "intwifi",
+        "relay",
+        "wifihotspot"
+    };
+
+    std::vector<std::string> wifi_cards;
+
+    /*
+     * If PrimaryCardMAC is set to 0, it means the user does not want a specific card
+     * to be used for RC, and whichever card appears to have the best *downlink* signal
+     * will be used. 
+     */
+    if (PrimaryCardMAC == "0") {
+        boost::filesystem::path net("/sys/class/net");
+        for (auto &entry : boost::filesystem::directory_iterator(net)) { 
+            auto interface_name = entry.path().filename().string();
+
+            auto excluded = false;
+            for (auto &excluded_interface : excluded_interfaces) {
+                if (boost::algorithm::contains(interface_name, excluded_interface)) {
+                    excluded = true;
+                    break;
+                }   
+            }
+
+            if (!excluded) {
+                std::cout << "Found card: " << interface_name << std::endl;
+                wifi_cards.push_back(interface_name);
+            }
+        }
+    } else {
+        /*
+         * If PrimaryCardMAC is set, we completely skip looking for cards and just use that one
+         */
+        wifi_cards.push_back(PrimaryCardMAC);
+    }
+
+
+
+    /*
+     * If encrypted RC is disabled, we set up the raw sockets for each card
+     */
     if (IsEncrypt == 0) {
         int num_interfaces = 0;
 
-        while (x < argc && num_interfaces < 8) {
-            snprintf(path, 45, "/sys/class/net/%s/device/uevent", argv[x]);
+        for (auto &interface : wifi_cards) {
+            snprintf(path, 45, "/sys/class/net/%s/device/uevent", interface.c_str());
             procfile = fopen(path, "r");
             
             if (!procfile) {
@@ -689,9 +882,8 @@ int main(int argc, char *argv[]) {
                 type[num_interfaces] = 0;
             }
 
-            socks[num_interfaces] = open_sock(argv[x]);
+            socks[num_interfaces] = open_sock(interface.c_str());
             ++num_interfaces;
-            ++x;
 
             fclose(procfile);
 
@@ -833,14 +1025,14 @@ int main(int argc, char *argv[]) {
      * long as the corresponding axis has not been moved yet
      *
      */
-    rcData[0] = AXIS0_INITIAL;
-    rcData[1] = AXIS1_INITIAL;
-    rcData[2] = AXIS2_INITIAL;
-    rcData[3] = AXIS3_INITIAL;
-    rcData[4] = AXIS4_INITIAL;
-    rcData[5] = AXIS5_INITIAL;
-    rcData[6] = AXIS6_INITIAL;
-    rcData[7] = AXIS7_INITIAL;
+    rcData[0] = axis0_initial;
+    rcData[1] = axis1_initial;
+    rcData[2] = axis2_initial;
+    rcData[3] = axis3_initial;
+    rcData[4] = axis4_initial;
+    rcData[5] = axis5_initial;
+    rcData[6] = axis6_initial;
+    rcData[7] = axis7_initial;
     // Switches
     rcData[8] = 0;
     
@@ -879,57 +1071,57 @@ int main(int argc, char *argv[]) {
 
         //fprintf(stderr, "eventloop_joystick\n");
 
-        if (counter % UPDATE_NTH_TIME == 0) {
-            #if defined(FIX_USB_JOYSTICK_INTERRUPT_QUIRK)
-            if (rcData[0] == 1000) {
-                rcData[0] = lastValidCh0;
-                //printf("Channel 1 currupt, replaced: " "%" PRIu16 "\n", rcData[0]);
-            }
+        if (counter % update_nth_time == 0) {
+            if (fix_usb_joystick_interrupt_quirk) {
+                if (rcData[0] == 1000) {
+                    rcData[0] = lastValidCh0;
+                    //printf("Channel 1 currupt, replaced: " "%" PRIu16 "\n", rcData[0]);
+                }
 
-            if (rcData[1] == 1000) {
-                rcData[1] = lastValidCh1;
-                //printf("Channel 2 currupt, replaced: " "%" PRIu16 "\n", rcData[1]);
-            }
+                if (rcData[1] == 1000) {
+                    rcData[1] = lastValidCh1;
+                    //printf("Channel 2 currupt, replaced: " "%" PRIu16 "\n", rcData[1]);
+                }
 
-            if (rcData[2] == 1000) {
-                rcData[2] = lastValidCh2;
-                //printf("Channel 3 currupt, replaced: " "%" PRIu16 "\n", rcData[2]);
-            }
-            
-            if (rcData[3] == 1000) {
-                rcData[3] = lastValidCh3;
-                //printf("Channel 4 currupt, replaced: " "%" PRIu16 "\n", rcData[3]);
-            }
-            
-            if (rcData[4] == 1000) {
-                rcData[4] = lastValidCh4;
-                //printf("Channel 5 currupt, replaced: " "%" PRIu16 "\n", rcData[4]);
-            }
-            
-            if (rcData[5] == 1000) {
-                rcData[5] = lastValidCh5;
-                //printf("Channel 6 currupt, replaced: " "%" PRIu16 "\n", rcData[5]);
-            }
-            
-            if (rcData[6] == 1000) {
-                rcData[6] = lastValidCh6;
-                //printf("Channel 7 currupt, replaced: " "%" PRIu16 "\n", rcData[6]);
-            }
-            
-            if (rcData[7] == 1000) {
-                rcData[7] = lastValidCh7;
-                //printf("Channel 8 currupt, replaced: " "%" PRIu16 "\n", rcData[7]);
-            }
+                if (rcData[2] == 1000) {
+                    rcData[2] = lastValidCh2;
+                    //printf("Channel 3 currupt, replaced: " "%" PRIu16 "\n", rcData[2]);
+                }
+                
+                if (rcData[3] == 1000) {
+                    rcData[3] = lastValidCh3;
+                    //printf("Channel 4 currupt, replaced: " "%" PRIu16 "\n", rcData[3]);
+                }
+                
+                if (rcData[4] == 1000) {
+                    rcData[4] = lastValidCh4;
+                    //printf("Channel 5 currupt, replaced: " "%" PRIu16 "\n", rcData[4]);
+                }
+                
+                if (rcData[5] == 1000) {
+                    rcData[5] = lastValidCh5;
+                    //printf("Channel 6 currupt, replaced: " "%" PRIu16 "\n", rcData[5]);
+                }
+                
+                if (rcData[6] == 1000) {
+                    rcData[6] = lastValidCh6;
+                    //printf("Channel 7 currupt, replaced: " "%" PRIu16 "\n", rcData[6]);
+                }
+                
+                if (rcData[7] == 1000) {
+                    rcData[7] = lastValidCh7;
+                    //printf("Channel 8 currupt, replaced: " "%" PRIu16 "\n", rcData[7]);
+                }
 
-            lastValidCh0 = rcData[0];
-            lastValidCh1 = rcData[1];
-            lastValidCh2 = rcData[2];
-            lastValidCh3 = rcData[3];
-            lastValidCh4 = rcData[4];
-            lastValidCh5 = rcData[5];
-            lastValidCh6 = rcData[6];
-            lastValidCh7 = rcData[7];
-            #endif
+                lastValidCh0 = rcData[0];
+                lastValidCh1 = rcData[1];
+                lastValidCh2 = rcData[2];
+                lastValidCh3 = rcData[3];
+                lastValidCh4 = rcData[4];
+                lastValidCh5 = rcData[5];
+                lastValidCh6 = rcData[6];
+                lastValidCh7 = rcData[7];
+            }
 
             validButton3 = validButton2;
             validButton2 = validButton1;
@@ -944,7 +1136,7 @@ int main(int argc, char *argv[]) {
             //fprintf(stderr, "SendRC\n");
 
 
-            for (k = 0; k < TRANSMISSIONS; ++k) {
+            for (k = 0; k < transmissions; ++k) {
                 if (IsEncrypt == 1) {
                     /*
                      * Using SVPCOM to send the RC packet

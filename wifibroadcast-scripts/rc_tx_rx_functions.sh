@@ -38,9 +38,9 @@ function rctx_function {
     fi
   
     
-    ionice -c 3 nice gcc -lrt -lwiringPi -lpcap -I/home/pi/wifibroadcast-base rctx.c -o /tmp/rctx `sdl-config --libs` `sdl-config --cflags` || {
-        echo "ERROR: Could not build rctx, check joyconfig.txt!"
-    }
+    ./build.sh
+
+    cp rctx /tmp/
     
     #
     # Wait until video is running to make sure NICS are configured and wifibroadcast_rx_status shared memory is available
@@ -101,7 +101,7 @@ function rctx_function {
                 /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $ChannelIPCamera $IsBandSwicherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $NICS &
             fi
 
-            nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwicherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $TrimChannel $Action $PWMCount $ActivateChannel $NICS
+            nice -n -5 /tmp/rctx
             
             sleep 1
             
@@ -113,8 +113,7 @@ function rctx_function {
                     /home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh $ChannelToListen2 $ChannelIPCamera $IsBandSwicherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $PrimaryCardMAC &
                 fi
 
-                #nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $PrimaryCardMAC
-                #nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwicherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $PrimaryCardMAC
+                #nice -n -5 /tmp/rctx
                 #sleep 1	
             #else
                 #if [ $FirstTimeRC == 0  ]; then
@@ -122,13 +121,13 @@ function rctx_function {
                     #/home/pi/wifibroadcast-rc-Ath9k/rctxUDP.sh 0 $PrimaryCardMAC &
                 #fi
                 
-                #nice -n -5 /tmp/rctx $PrimaryCardMAC
+                #nice -n -5 /tmp/rctx
                 
                 #sleep 1
             #fi
 
 
-            nice -n -5 /tmp/rctx $ChannelToListen2 $ChannelIPCamera $IsBandSwicherEnabled $IsIPCameraSwitcherEnabled $IsEncrypt $TrimChannel $Action $PWMCount $ActivateChannel $PrimaryCardMAC
+            nice -n -5 /tmp/rctx
             sleep 1
         fi
     done
