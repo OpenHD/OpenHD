@@ -15,15 +15,7 @@ function MAIN_RC_TX_RX_FUNCTION {
 }
 
 # runs on RX (ground pi)
-function rctx_function {    
-    echo "Building rctx"
-    
-    cd /home/pi/wifibroadcast-rc-Ath9k/
-    
-    ./build.sh
-
-    cp rctx /tmp/
-    
+function rctx_function {        
     #
     # Wait until video is running to make sure NICS are configured and wifibroadcast_rx_status shared memory is available
     #
@@ -43,7 +35,7 @@ function rctx_function {
     echo "Starting RC TX..."
 
     while true; do
-        nice -n -5 /tmp/rctx
+        nice -n -5 /usr/local/bin/rctx
         sleep 1
     done
 }
