@@ -37,7 +37,8 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
-
+#include <boost/thread.hpp>
+#include <boost/chrono.hpp>
 
 
 // read Joystick every 2 ms or 500x per second
@@ -74,6 +75,15 @@ wifibroadcast_rx_status_t *telemetry_wbc_status_memory_open(void);
 
 int NICCount = 0;
 int IsTrimDone[8] = {0};
+
+/*
+ * UDP joystick input from Android/QOpenHD
+ */
+struct sockaddr_in si_me, si_other;
+int s, i, recv_len;
+
+void udpInputThread();
+bool udpThreadRun = true;
 
 /*
  * Encrypted RC sockets
@@ -929,6 +939,25 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Incoming UDP packets from joystick via android HID app init
+    if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+        return 1;
+    }
+
+    memset((char *)&si_me, 0, sizeof(si_me));
+
+    si_me.sin_family = AF_INET;
+    si_me.sin_port = htons(InUDPPort);
+    si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if (bind(s, (struct sockaddr *)&si_me, sizeof(si_me)) == -1) {
+        fprintf(stderr, "Bind error. Exit");
+        return 1;
+    }
+    // Incoming UDP packets from joystick via android HID app end
+
+
+
     // UDP RC Encrypted init
     if ((sRCEncrypt = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
         perror("sRCEncrypt");
@@ -1086,6 +1115,8 @@ int main(int argc, char *argv[]) {
     // init RSSI shared memory
     telemetry_init(&td);
 
+    boost::thread t{udpInputThread};
+
     while (done) {
         done = eventloop_joystick();
 
@@ -1114,7 +1145,68 @@ int main(int argc, char *argv[]) {
 
     close(s2);
 
+    std::cout << "closing..." << std::endl;
+
+    udpThreadRun = false;
+
+    t.join();
+
     return EXIT_SUCCESS;
+}
+
+
+void udpInputThread() {
+    std::cout << "UDP thread running..." << std::endl;
+
+    char buf[21];
+
+    socklen_t slen = sizeof(si_other);
+
+    while (udpThreadRun) {
+        if ((recv_len = recvfrom(s, buf, 21, 0, (struct sockaddr *)&si_other, &slen)) == -1) {
+            fprintf(stderr, "UDP recv error, closing thread. USB joystick will continue to function.");
+
+            return;
+        }
+
+        framedatas.seqnumber = buf[16];
+        framedatas.chan1 = (buf[1] << 8) | buf[0];
+        framedatas.chan2 = (buf[3] << 8) | buf[2];
+        framedatas.chan3 = (buf[5] << 8) | buf[4];
+        framedatas.chan4 = (buf[7] << 8) | buf[6];
+        framedatas.chan5 = (buf[9] << 8) | buf[8];
+        framedatas.chan6 = (buf[11] << 8) | buf[10];
+        framedatas.chan7 = (buf[13] << 8) | buf[12];
+        framedatas.chan8 = (buf[15] << 8) | buf[14];
+
+        framedatas.switches = (buf[20] << 8) | buf[19];
+
+        framedatan.seqnumber = buf[16];
+        framedatan.chan1 = (buf[1] << 8) | buf[0];
+        framedatan.chan2 = (buf[3] << 8) | buf[2];
+        framedatan.chan3 = (buf[5] << 8) | buf[4];
+        framedatan.chan4 = (buf[7] << 8) | buf[6];
+        framedatan.chan5 = (buf[9] << 8) | buf[8];
+        framedatan.chan6 = (buf[11] << 8) | buf[10];
+        framedatan.chan7 = (buf[13] << 8) | buf[12];
+        framedatan.chan8 = (buf[15] << 8) | buf[14];
+
+        framedatan.switches = (buf[20] << 8) | buf[19];
+
+        rcData[0] = (buf[1] << 8) | buf[0];
+        rcData[1] = (buf[3] << 8) | buf[2];
+        rcData[2] = (buf[5] << 8) | buf[4];
+        rcData[3] = (buf[7] << 8) | buf[6];
+        rcData[4] = (buf[9] << 8) | buf[8];
+        rcData[5] = (buf[11] << 8) | buf[10];
+        rcData[6] = (buf[13] << 8) | buf[12];
+        rcData[7] = (buf[15] << 8) | buf[14];
+
+        // send rc data from Android/QOpenHD
+        process();
+    }
+
+    std::cout << "UDP thread done" << std::endl;
 }
 
 
