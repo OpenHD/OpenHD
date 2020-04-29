@@ -46,7 +46,6 @@ function datarate_to_wifi_settings {
 
 function collect_errorlog {
     con2fbmap 1 0
-    killall DisplayProgram
     sleep 3
     echo
 	

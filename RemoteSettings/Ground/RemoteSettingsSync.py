@@ -754,13 +754,6 @@ def CleanAndExit():
     except Exception as e:
         SendInfoToDisplay(e)
 
-    
-    try:
-        subprocess.check_call(['/usr/bin/killall', "DisplayProgram" ]) 
-    except Exception as e:
-        print(e)
-
-    
 
     RxDevNull.close()
     RCDevNull.close()

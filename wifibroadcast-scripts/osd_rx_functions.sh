@@ -8,6 +8,8 @@ function osdrx_function {
     
     if [ "${DISPLAY_OSD}" == "Y" ]; then
         if [ "${ENABLE_QOPENHD}" == "Y" ]; then
+            sleep 5
+            systemctl stop openhdboot
             systemctl start qopenhd
         else
             cd /home/pi/wifibroadcast-osd
@@ -78,6 +80,8 @@ function osdrx_function {
         ionice -c 3 nice cat /root/telemetryfifo3 >> /wbc_tmp/telemetrydowntmp.raw &
         pause_while
         if [ "${ENABLE_QOPENHD}" != "Y" ]; then
+            sleep 5
+            systemctl stop openhdboot
             /tmp/osd >> /wbc_tmp/telemetrydowntmp.txt &
         fi
 

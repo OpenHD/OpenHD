@@ -9,38 +9,6 @@ function MAIN_UPLINK_FUNCTION {
     #       of time
     # 
     sleep 7
-    
-
-    #
-    # Set the mavlink sysid for air and ground microservices. 
-    # 
-    # This does not need to avoid conflicts with other mavlink devices connected to the flight 
-    # controller because it is an entirely separate mavlink bus dedicated to OpenHD services.
-    #
-    if [ "${CAM}" -ge 1 ]; then 
-        #
-        # Air is always sysid 253 for all services
-        #
-
-        echo "SYSID=253" > /etc/openhd/openhd_microservice.conf
-    else
-        #
-        # Ground is always sysid 254 for all services
-        #
-
-        echo "SYSID=254" > /etc/openhd/openhd_microservice.conf
-    fi
-
-    #
-    # OpenHDRouter and the associated ptys are used for openhd microservices, our internal 
-    # GCS<->Ground<->Air communications channel for things like GPIO support, live camera 
-    # settings, air/ground power status, safe shutdown, etc
-    #
-    ionice -c 3 nice socat -lf /wbc_tmp/socat3.log -d -d pty,raw,echo=0,link=/dev/openhd_microservice1 pty,raw,echo=0,link=/dev/openhd_microservice2 & > /dev/null 2>&1
-    sleep 1
-    stty -F /dev/openhd_microservice1 -icrnl -ocrnl -imaxbel -opost -isig -icanon -echo -echoe -ixoff -ixon 115200
-    systemctl start openhd_router
-    sleep 1
 
     if [ "${CAM}" -ge 1 ]; then
         # 
