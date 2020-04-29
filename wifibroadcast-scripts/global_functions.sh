@@ -29,6 +29,19 @@ function configure_hello_video_args {
 }
 
 
+function start_microservices {
+    if [ "$TTY" != "/dev/tty1" ]; then
+        return
+    fi
+    systemctl start openhd_microservice@power
+
+    # gpio service only runs on the air side
+    if [ "${CAM}" -ge 1 ]; then 
+        systemctl start openhd_microservice@gpio
+    fi
+}
+
+
 function migration_helper {
     #
     # Force enable QOpenHD because it's the only option on buster
