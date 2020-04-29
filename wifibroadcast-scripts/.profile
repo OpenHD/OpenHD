@@ -62,7 +62,8 @@ if [ "$TTY" == "/dev/tty1" ]; then
         systemctl start openhd_microservice@status
         sleep 1
 
-        /home/pi/RemoteSettings/Ground/helper/ConfigureNics.sh
+        /home/pi/wifibroadcast-scripts/configure_nics.sh
+
 
         /usr/bin/python3 /home/pi/RemoteSettings/Air/RemoteSettingSyncAir.py
         echo "0" > /tmp/ReadyToGo
@@ -85,7 +86,7 @@ if [ "$TTY" == "/dev/tty1" ]; then
         # No cameras found, and we did not see GPIO7 pulled low, so this is a ground station
         #
         /home/pi/RemoteSettings/Ground/helper/AirRSSI.sh &
-        /home/pi/RemoteSettings/Ground/helper/ConfigureNics.sh
+        /home/pi/wifibroadcast-scripts/configure_nics.sh
         retCode=$?
         
         # now we will run SmartSync, using either GPIOs or Joystick to control it
