@@ -1,4 +1,11 @@
-CONFIGFILE=`/root/wifibroadcast_misc/gpio-config.py`
+#!/bin/bash
+
+if [ "$CAM" == "0" ]; then
+    CONFIGFILE=`/root/wifibroadcast_misc/gpio-config.py`
+else
+    # air side has no concept of profiles, it is always just one settings file being overwritten
+    CONFIGFILE="openhd-settings-1.txt"
+fi
 
 function tmessage {
     if [ "$QUIET" == "N" ]; then
@@ -45,7 +52,7 @@ function datarate_to_wifi_settings {
 
 
 function collect_errorlog {
-    con2fbmap 1 0
+
     sleep 3
     echo
 	
@@ -228,7 +235,7 @@ function detect_nics {
 
 
 
-    
+    if [ "$CAM" == "0" ]; then
 	    # get wifi hotspot card out of the way
 	    if [ "$WIFI_HOTSPOT" != "N" ]; then
 			if [ "$WIFI_HOTSPOT_NIC" != "internal" ]; then
@@ -269,6 +276,7 @@ function detect_nics {
 				sleep 0.5
 			fi
 	    fi
+	fi
 
     NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
 #	echo "NICS: $NICS"
@@ -423,11 +431,10 @@ function prepare_nic {
 	if [ "$2" != "0" ]; then
 	    tmessage -n "frequency $2 MHz.. "
 	    iw dev $1 set freq $2 || {
-	        con2fbmap 1 0
 		echo
 		echo "ERROR: Setting frequency $2 MHz on $1 failed!"
-		#collect_errorlog
-		#sleep 365d
+		collect_errorlog
+		sleep 365d
 	    }
 	    tmessage "done!"
 	else
@@ -460,11 +467,10 @@ function prepare_nic {
 	if [ "$2" != "0" ]; then
 	    tmessage -n "frequency $2 MHz.. "
 	    iw dev $1 set freq $2 || {
-	        con2fbmap 1 0
 		echo
 		echo "ERROR: Setting frequency $2 MHz on $1 failed!"
-		#collect_errorlog
-		#sleep 365d
+		collect_errorlog
+		sleep 365d
 	    }
 	    tmessage "done!"
 	else
@@ -488,7 +494,7 @@ function prepare_nic {
 
 read_config_file
 
-
+if [ "$CAM" == "0" ]; then
    if [[ "$MirrorDSI_To_HDMI" == "y" || "$MirrorDSI_To_HDMI" == "Y" ]]; then
             if [ -e "/dev/fb0" ]; then
                     echo "/dev/fb0 - found"
@@ -498,17 +504,20 @@ read_config_file
                     fi
             fi
     fi
+fi
 
 datarate_to_wifi_settings
 
 detect_nics
 
-if [ "$SmartSyncControlVia" == "GPIO" ]; then
+if [ "$CAM" == "0" ]; then
+    if [ "$SmartSyncControlVia" == "GPIO" ]; then
         exit 2
-fi
+    fi
 
-if [ "$SmartSyncControlVia" == "joystick" ]; then
+    if [ "$SmartSyncControlVia" == "joystick" ]; then
         exit 1
+    fi
 fi
 
 exit 0
