@@ -216,15 +216,6 @@ def StartSVPcomRx():
         return False
     return False
 
-def StartConfigureWlanScript():   
-    try:       
-        subprocess.check_call(['/home/pi/RemoteSettings/Air/helper/ConfigureNicsAir.sh', SettingsFileDATARATE, DefaultCommunicateFreq, "single" ])
-        return True
-    except Exception as e:
-        print(e)
-        return False
-    return False
-
 
 def FindWlanToUseAir():
     global WlanName
