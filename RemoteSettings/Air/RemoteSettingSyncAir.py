@@ -6,7 +6,7 @@ if log.handlers:
     for handler in log.handlers:
         log.removeHandler(handler)
 
-logFile = '/tmp/illog.txt'
+logFile = '/tmp/AIRLOG.txt'
 file_handler = RotatingFileHandler(logFile, mode='a', maxBytes=5*1024*1024,
                                  backupCount=1, encoding=None, delay=0)
 
@@ -46,7 +46,7 @@ RetryCountMD5 = 15
 FileSizeInt = 0
 SettingsFilePath = "/boot/openhd-settings-1.txt"
 SwitchToFreq = "0"
-DefaultCommunicateFreq = "2484"
+
 
 SettingsFilePath = "/boot/openhd-settings-1.txt"
 TxPowerConfigFilePath="/etc/modprobe.d/ath9k_hw.conf"
@@ -249,7 +249,7 @@ def StartSVPcomRx():
 def StartConfigureWlanScript():
     return run_bash('/home/pi/RemoteSettings/Air/helper/ConfigureNicsAir.sh {DATARATE} {FREQ} single'.format(
         DATARATE=USER_SETTINGS['DATARATE'],
-        FREQ=DefaultCommunicateFreq)
+        FREQ=USER_SETTINGS['FREQ']))
         )
 
 
