@@ -62,6 +62,8 @@ if [ "$TTY" == "/dev/tty1" ]; then
         systemctl start openhd_microservice@status
         sleep 1
 
+        /home/pi/RemoteSettings/Ground/helper/ConfigureNics.sh
+
         /usr/bin/python3 /home/pi/RemoteSettings/Air/RemoteSettingSyncAir.py
         echo "0" > /tmp/ReadyToGo
     else
