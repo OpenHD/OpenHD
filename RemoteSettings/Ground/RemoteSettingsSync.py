@@ -718,7 +718,6 @@ def StartRCThreadIn():
                 break
 
     RCSock.close()
-    SendInfoToDisplay("RC thread terminated")
 
 
 def ReturnWlanFreq():

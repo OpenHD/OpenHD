@@ -64,8 +64,11 @@ if [ "$TTY" == "/dev/tty1" ]; then
 
         /home/pi/wifibroadcast-scripts/configure_nics.sh
 
+        /home/pi/wifibroadcast-status/qstatus "Configured NIC(s)" 5
+        /home/pi/wifibroadcast-status/qstatus "Running SmartSync" 5
 
         /usr/bin/python3 /home/pi/RemoteSettings/Air/RemoteSettingSyncAir.py
+
         echo "0" > /tmp/ReadyToGo
     else
         systemctl start openhdboot
@@ -88,7 +91,10 @@ if [ "$TTY" == "/dev/tty1" ]; then
         /home/pi/RemoteSettings/Ground/helper/AirRSSI.sh &
         /home/pi/wifibroadcast-scripts/configure_nics.sh
         retCode=$?
-        
+
+        /home/pi/wifibroadcast-status/qstatus "Configured NIC(s)" 5
+        /home/pi/wifibroadcast-status/qstatus "Running SmartSync" 5
+
         # now we will run SmartSync, using either GPIOs or Joystick to control it
 
         if [ $retCode == 1 ]; then
@@ -102,6 +108,9 @@ if [ "$TTY" == "/dev/tty1" ]; then
         fi
     
         echo "0" > /tmp/ReadyToGo
+        
+        echo "Configuring system"
+        /home/pi/wifibroadcast-status/qstatus "Configuring system" 5
     fi
 fi
 
@@ -111,8 +120,6 @@ do
     echo "sleep..."
     sleep 1
 done
-
-echo "SmartSync finished, beginning OpenHD hardware+video configuration"
 
 cd /home/pi/wifibroadcast-scripts
 source main.sh

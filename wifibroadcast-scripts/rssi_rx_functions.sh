@@ -33,7 +33,8 @@ function rssirx_function {
     #
     NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot`
     
-    echo "Starting RSSI RX ..."
+    echo "Starting OpenHD RSSI RX"
+    qstatus "Starting OpenHD RSSI RX" 5
     
     nice /home/pi/wifibroadcast-base/rssirx $NICS
 }

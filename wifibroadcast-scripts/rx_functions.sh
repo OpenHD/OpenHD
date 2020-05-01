@@ -75,6 +75,7 @@ function rx_function {
     
 
     if [ "${Bandwidth}" == "10" ]; then
+        qstatus "Using 10MHz channel bandwidth" 5
         echo "HardCode dirty code for tests only. Values are it Hex, to set 10MHz use 0xa (10 in dec)"
         echo 0xa > /sys/kernel/debug/ieee80211/phy0/ath9k_htc/chanbw
         echo 0xa > /sys/kernel/debug/ieee80211/phy1/ath9k_htc/chanbw
@@ -84,6 +85,7 @@ function rx_function {
     fi
 
     if [ "${Bandwidth}" == "5" ]; then
+        qstatus "Using 5MHz channel bandwidth" 5
         echo "HardCode dirty code for tests only. Values are it Hex, to set 10MHz use 0xa (10 in dec)"
         echo 5 > /sys/kernel/debug/ieee80211/phy0/ath9k_htc/chanbw
         echo 5 > /sys/kernel/debug/ieee80211/phy1/ath9k_htc/chanbw
@@ -139,6 +141,7 @@ function rx_function {
         touch /tmp/pausewhile
 
         tmessage "Saving to SD card enabled, preparing video storage"
+        qstatus "Saving video to SD card" 5
         
         tmessage "WARNING: SD card video saving may cause instability in the live video stream, this is temporary"
         
@@ -210,8 +213,11 @@ function rx_function {
         VIDEOFILE=/wbc_tmp/videotmp.raw
 
         echo "VIDEOFILE=/wbc_tmp/videotmp.raw" > /tmp/videofile
+
+        qstatus "Saving video to memory" 5
     else
         echo "Video save disabled"
+        qstatus "Saving video disabled" 5
     fi
 
 
@@ -231,6 +237,7 @@ function rx_function {
 
         
         echo "AiroDump is enabled, running airodump-ng for ${AIRODUMP_SECONDS} seconds ..."
+        qstatus "AiroDump is enabled, running airodump-ng for ${AIRODUMP_SECONDS} seconds ..." 5
         
         sleep 3
         
@@ -323,6 +330,8 @@ function rx_function {
             echo "  | Either your power-supply or wiring is not sufficent, check the wiring instructions in the Wiki! |"
             echo "  ---------------------------------------------------------------------------------------------------"
             
+            qstatus "ERROR: Undervoltage detected, your pi is not supplied with stable 5 volts" 3
+
             UNDERVOLT=1
 
             echo "1" > /tmp/undervolt
@@ -409,14 +418,17 @@ function rx_function {
         #
         NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot`
 
-        tmessage "Starting RX (FEC: $VIDEO_BLOCKS/$VIDEO_FECS/$VIDEO_BLOCKLENGTH)"
-        
+        tmessage "Starting video RX, FEC: $VIDEO_BLOCKS/$VIDEO_FECS/$VIDEO_BLOCKLENGTH"
+        qstatus "Starting video RX" 5
+        qstatus "FEC: $VIDEO_BLOCKS/$VIDEO_FECS/$VIDEO_BLOCKLENGTH" 5
+
         #
         # Start audio and remote settings
         #
         if [ $IsFirstTime -eq 0 ]; then
             if [ "$IsAudioTransferEnabled" == "1" ]; then
                 echo "Audio enabled"
+                qstatus "Audio enabled" 5
 
                 amixer cset numid=3 $DefaultAudioOut
 
@@ -426,6 +438,7 @@ function rx_function {
 
             if [ "$RemoteSettingsEnabled" != "0" ]; then
                 echo "Remote settings enabled"
+                qstatus "Remote settings enabled" 5
 
                 /home/pi/RemoteSettings/ipchecker/iphelper.sh > /dev/null 2>&1 &
                 /usr/bin/python3 /home/pi/RemoteSettings/RemoteSettings.py > /dev/null 2>&1 &
@@ -435,6 +448,7 @@ function rx_function {
             
             #if [ "$IsBandSwicherEnabled" == "1" ]; then
                 echo "Band switcher enabled"
+                qstatus "Band switcher enabled" 5
                 /home/pi/RemoteSettings/BandSwitcher.sh &
             #fi
         fi

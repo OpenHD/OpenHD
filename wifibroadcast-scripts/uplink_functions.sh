@@ -25,8 +25,6 @@ function MAIN_UPLINK_FUNCTION {
         # Start the telemetry and RC receiver (downlink telemetry is started in another area)
         #
         if [ "$TELEMETRY_UPLINK" != "disabled" ] || [ "$RC" != "disabled" ]; then
-            echo "Telemetry uplink and/or R/C enabled"
-
             uplinkrx_and_rcrx_function &
             
             if [ "$TELEMETRY_UPLINK" == "msp" ]; then
@@ -35,7 +33,8 @@ function MAIN_UPLINK_FUNCTION {
             
             sleep 365d
         else
-            echo "Telemetry uplink and R/C not enabled"
+            echo "Telemetry uplink/RC disabled"
+            qstatus "Telemetry uplink/RC disabled" 5
         fi
         
         sleep 365d
@@ -55,6 +54,7 @@ function MAIN_UPLINK_FUNCTION {
         #
         if [ "$TELEMETRY_UPLINK" != "disabled" ]; then
             echo "Telemetry uplink enabled"
+            qstatus "Telemetry uplink enabled" 5
 
             uplinktx_function &
             
@@ -64,7 +64,8 @@ function MAIN_UPLINK_FUNCTION {
             
             sleep 365d
         else
-            echo "Telemetry uplink not enabled in config"
+            echo "Telemetry uplink disabled"
+            qstatus "Telemetry uplink disabled" 5
         fi
         
         sleep 365d
@@ -100,7 +101,11 @@ function uplinkrx_and_rcrx_function {
     #
     stty -F $FC_TELEMETRY_SERIALPORT $FC_TELEMETRY_STTY_OPTIONS $FC_TELEMETRY_BAUDRATE
 
-    echo "Starting Uplink telemetry and R/C RX ..."
+    echo "Starting ${TELEMETRY_UPLINK} telemetry uplink @${FC_TELEMETRY_BAUDRATE} baud"
+    echo "Starting ${RC} RC RX"
+
+    qstatus "Starting ${TELEMETRY_UPLINK} telemetry uplink @${FC_TELEMETRY_BAUDRATE} baud" 5
+    qstatus "Starting ${RC} RC RX"
     
 
     if [ "$EncryptionOrRange" == "Encryption" ]; then
@@ -291,7 +296,8 @@ function uplinktx_function {
     echo
 
     while true; do
-        echo "Starting uplink telemetry transmission"
+        echo "Starting ${TELEMETRY_UPLINK} telemetry uplink"
+        qstatus "Starting ${TELEMETRY_UPLINK} telemetry uplink" 5
         
         if [ "$TELEMETRY_TRANSMISSION" == "wbc" ]; then
             echo "telemetry transmission = wbc, starting tx_telemetry ..."

@@ -15,6 +15,7 @@ function osdrx_function {
             cd /home/pi/wifibroadcast-osd
             
             echo "Building OSD"
+            qstatus "Building OSD" 5
             
             ionice -c 3 nice make -j2 || {
                 echo
@@ -22,7 +23,7 @@ function osdrx_function {
                 
                 sleep 5
                 
-                wbc_status "ERROR: Could not build OSD, check osdconfig.txt for errors." 7 55 0 &
+                qstatus "ERROR: Could not build OSD, check osdconfig.txt!" 3
                 
                 sleep 5
             }
