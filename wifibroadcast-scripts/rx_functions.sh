@@ -11,16 +11,16 @@ function rx_function {
     #
     # Start virtual serial port for cmavnode and ser2net
     #
-    ionice -c 3 nice socat -lf /wbc_tmp/socat1.log -d -d pty,raw,echo=0 pty,raw,echo=0 & > /dev/null 2>&1
+    ionice -c 3 nice socat -lf /wbc_tmp/socat1.log -d -d pty,raw,echo=0,link=/dev/openhd_mavlink2 pty,raw,echo=0,link=/dev/openhd_mavlink1 & > /dev/null 2>&1
     sleep 1
-    ionice -c 3 nice socat -lf /wbc_tmp/socat2.log -d -d pty,raw,echo=0 pty,raw,echo=0 & > /dev/null 2>&1
+    ionice -c 3 nice socat -lf /wbc_tmp/socat2.log -d -d pty,raw,echo=0,link=/dev/openhd_msp2 pty,raw,echo=0,link=/dev/openhd_msp1 & > /dev/null 2>&1
     sleep 1
 
     #
     # Setup virtual serial ports
     #
-    stty -F /dev/pts/0 -icrnl -ocrnl -imaxbel -opost -isig -icanon -echo -echoe -ixoff -ixon 115200
-    stty -F /dev/pts/1 -icrnl -ocrnl -imaxbel -opost -isig -icanon -echo -echoe -ixoff -ixon 115200
+    stty -F /dev/openhd_mavlink2 -icrnl -ocrnl -imaxbel -opost -isig -icanon -echo -echoe -ixoff -ixon 115200
+    stty -F /dev/openhd_msp2 -icrnl -ocrnl -imaxbel -opost -isig -icanon -echo -echoe -ixoff -ixon 115200
 
     echo
 

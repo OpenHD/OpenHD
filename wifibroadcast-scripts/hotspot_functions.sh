@@ -40,8 +40,8 @@ function hotspot_check_function {
 
     pause_while
 
-    nice cat /root/telemetryfifo5 > /dev/pts/0 &
-    /usr/local/bin/mavlink-routerd -e 127.0.0.1:14550 /dev/pts/1:115200 &
+    nice cat /root/telemetryfifo5 > /dev/openhd_mavlink1 &
+    /usr/local/bin/mavlink-routerd -e 127.0.0.1:14550 /dev/openhd_mavlink2:115200 &
 
     #
     # Phone can be connected at any time, so always start hotspot programs
@@ -103,7 +103,7 @@ function hotspot_check_function {
 
 
     #if [ "$TELEMETRY_UPLINK" == "msp" ]; then
-        #cat /root/mspfifo > /dev/pts/2 &
+        #cat /root/mspfifo > /dev/openhd_msp1 &
         #ser2net
     #fi
 
