@@ -16,7 +16,7 @@ if [ "$TTY" == "/dev/tty1" ]; then
     fi
 
     
-    CAM=`/usr/bin/vcgencmd get_camera | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("supported=\d+ detected=", "", s); print(s);'`
+    export CAM=`/usr/bin/vcgencmd get_camera | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("supported=\d+ detected=", "", s); print(s);'`
 
 
     if [[ "${CAM}" -ge 1 ]] ; then
