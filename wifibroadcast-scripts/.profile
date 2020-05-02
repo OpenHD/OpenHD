@@ -18,10 +18,8 @@ if [ "$TTY" == "/dev/tty1" ]; then
     
     CAM=`/usr/bin/vcgencmd get_camera | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("supported=\d+ detected=", "", s); print(s);'`
 
-    i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
-    grepRet=$?
 
-    if [[ $grepRet -eq 0 ]] ; then
+    if [[ "${CAM}" -ge 1 ]] ; then
         #
         # Normal pi cameras found, this is definitely air side so we will start the air side of SmartSync
         #
