@@ -24,6 +24,8 @@
 #include "telemetry.h"
 #include "osdconfig.h"
 
+#include "flightmode.h"
+
 #define TO_FEET 3.28084
 #define TO_MPH 0.621371
 #define CELL_WARNING_PCT1 (CELL_WARNING1-CELL_MIN)/(CELL_MAX-CELL_MIN)*100
@@ -43,7 +45,9 @@ bool home_set;
 float home_lat;
 float home_lon;
 int home_counter;
-char buffer[40];
+
+#define TEXT_BUFFER_SIZE 40
+char buffer[TEXT_BUFFER_SIZE];
 Fontinfo myfont, osdicons;
 
 int packetslost_last[6];
@@ -636,103 +640,18 @@ void render(telemetry_data_t_osd *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uin
 
     #ifdef VOT
 
-        void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
+        void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale) {
             /* 
              * Flight modes Eagletree Vector
              */
             float text_scale = getWidth(2) * scale;
 
-            switch (mode) {
-                case 0: { 
-                    sprintf(buffer, "2D"); 
+            char *fmode = vot_mode_from_telemetry(mode);
 
-                    break;
-                }
-                case 1: {
-                    sprintf(buffer, "2DAH"); 
-
-                    break;
-                }
-                case 2: {
-                    sprintf(buffer, "2DHH"); 
-
-                    break;
-                }
-                case 3: {
-                    sprintf(buffer, "2DAHH"); 
-
-                    break;
-                }
-                case 4: {
-                    sprintf(buffer, "LOITER"); 
-
-                    break;
-                }
-                case 5: {
-                    sprintf(buffer, "3D"); 
-
-                    break;
-                }
-                case 6: {
-                    sprintf(buffer, "3DHH"); 
-
-                    break;
-                }
-                case 7: {
-                    sprintf(buffer, "RTH"); 
-
-                    break;
-                }
-                case 8: {
-                    sprintf(buffer, "LAND");
-
-                    break;
-                }
-                case 9: {
-                    sprintf(buffer, "CART"); 
-
-                    break;
-                }
-                case 10: {
-                    sprintf(buffer, "CARTLOI"); 
-
-                    break;
-                }
-                case 11: {
-                    sprintf(buffer, "POLAR"); 
-
-                    break;
-                }
-                case 12: {
-                    sprintf(buffer, "POLARLOI"); 
-
-                    break;
-                }
-                case 13: {
-                    sprintf(buffer, "CENTERSTICK"); 
-
-                    break;
-                }
-                case 14: {
-                    sprintf(buffer, "OFF"); 
-
-                    break;
-                }
-                case 15: {
-                    sprintf(buffer, "WAYPOINT"); 
-
-                    break;
-                }
-                case 16: {
-                    sprintf(buffer, "MAX"); 
-
-                    break;
-                }
-                default: {
-                    sprintf(buffer, "-----"); 
-
-                    break;
-                }
+            if (armed == 1) {
+                sprintf(buffer, "[%s]", fmode);
+            } else {
+                sprintf(buffer, "%s", fmode);
             }
 
             TextMid(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
@@ -742,215 +661,33 @@ void render(telemetry_data_t_osd *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uin
 
 
     #ifdef LTM
-        void draw_ltmmode(int mode, int armed, int failsafe, float pos_x, float pos_y, float scale){
+        void draw_ltmmode(int mode, int armed, int failsafe, float pos_x, float pos_y, float scale) {
             float text_scale = getWidth(2) * scale;
             
-            sprintf(buffer, "[-----]");
-
-            if (armed == 0) {
-                switch (mode) {
-                    case 0: {
-                        sprintf(buffer, "[手   动]"); 
-
-                        break;
-                    }
-                    case 1: {
-                        sprintf(buffer, "[RATE]"); 
-
-                        break;
-                    }
-                    case 2: {
-                        sprintf(buffer, "[自   稳]");  
-                         
-                        break;
-                    }
-                    }
-                    case 3: {
-                        sprintf(buffer, "[半 自 稳]");  
-
-                        break;
-                    }
-                    case 4: {
-                        sprintf(buffer, "[特   技]");  
-
-                        break;
-                    }
-                    case 5: {
-                        sprintf(buffer, "[自 稳 1]"); 
-
-                        break;
-                    }
-                    case 6: {
-                        sprintf(buffer, "[自 稳 2]"); 
-
-                        break;
-                    }
-                    case 7: {
-                        sprintf(buffer, "[自 稳 3]"); 
-
-                        break;
-                    }
-                    case 8: {
-                        sprintf(buffer, "[定   高]");  
-                        break;
-                    }
-                    case 9: {
-                        sprintf(buffer, "[GPS 定点]"); 
-                        break;
-                    }
-                    case 10: {
-                        sprintf(buffer, "[自   动]"); 
-                        break;
-                    }
-                    case 11: {
-                        sprintf(buffer, "[无   头]"); 
-                        break;
-                    }
-                    case 12: {
-                        sprintf(buffer, "[绕   圈]"); 
-                        break;
-                    }
-                    case 13: {
-                        sprintf(buffer, "[返   航]"); 
-                        break;
-                    }
-                    case 14: {
-                        sprintf(buffer, "[跟   随]"); 
-                        break;
-                    }
-                    case 15: {
-                        sprintf(buffer, "[降   落]"); 
-                        break;
-                    }
-                    case 16: {
-                        sprintf(buffer, "[线 性 增 稳]"); 
-                        break;
-                    }
-                    case 17: {
-                        sprintf(buffer, "[增 稳 定 高]"); 
-                        break;
-                    }
-                    case 18: {
-                        sprintf(buffer, "[巡   航]"); 
-                        break;
-                    }
-                    default: {
-                        break;
-                    }
-                }
-            } else  {
-                switch (mode) {
-                    case 0: {
-                        sprintf(buffer, "手   动"); 
-
-                        break;
-                    }
-                    case 1: {
-                        sprintf(buffer, "RATE"); 
-
-                        break;
-                    }
-                    case 2: {
-                        sprintf(buffer, "自   稳"); 
-
-                        break;
-                    }
-                    case 3: {
-                        sprintf(buffer, "半 自 稳"); 
-
-                        break;
-                    }
-                    case 4: {
-                        sprintf(buffer, "特   技"); 
-
-                        break;
-                    }
-                    case 5: {
-                        sprintf(buffer, "自 稳 1"); 
-
-                        break;
-                    }
-                    case 6: {
-                        sprintf(buffer, "自 稳 2"); 
-
-                        break;
-                    }
-                    case 7: {
-                        sprintf(buffer, "自 稳 3"); 
-
-                        break;
-                    } 
-                    case 8: {
-                        sprintf(buffer, "定   高"); 
-
-                        break;
-                    }
-                    case 9: {
-                        sprintf(buffer, "GPS 定点"); 
-
-                        break;
-                    }
-                    case 10: {
-                        sprintf(buffer, "自   动"); 
-
-                        break;
-                    }
-                    case 11: {
-                        sprintf(buffer, "无   头"); 
-
-                        break;
-                    }
-                    case 12: {
-                        sprintf(buffer, "绕   圈"); 
-
-                        break;
-                    }
-                    case 13: {
-                        sprintf(buffer, "返   航"); 
-
-                        break;
-                    }
-                    case 14: {
-                        sprintf(buffer, "跟   随"); 
-
-                        break;
-                    }
-                    case 15: {
-                        sprintf(buffer, "降   落"); 
-
-                        break;
-                    }
-                    case 16: {
-                        sprintf(buffer, "线 性 增 稳"); 
-
-                        break;
-                    }
-                    case 17: {
-                        sprintf(buffer, "增 稳 定 高"); 
-
-                        break;
-                    }
-                    case 18: {
-                        sprintf(buffer, "巡   航"); 
-
-                        break;
-                    }
-                    default: {
-                        break;
-                    }
-                }
-            }  
+            #if CHINESE == true
+                char *fmode = chinese_ltm_mode_from_telem((COPTER_MODE)mode);
+            #else
+                char *fmode = ltm_mode_from_telem((COPTER_MODE)mode);
+            #endif
             
             if (failsafe == 1) {
                 sprintf(buffer, "失 控 保 护");
+            } else {
+                if (armed == 1) {
+                    sprintf(buffer, "[%s]", fmode);
+                } else {
+                    sprintf(buffer, "%s", fmode);
+                }
             }
             
             TextMid(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
         } 
     #endif
 
+    #define MAVLINK
+
     #ifdef MAVLINK
-        void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale){
+        void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale) {
             /*
              * Autopilot mode, mavlink specific, could be used if mode is in telemetry data of other protocols as well
              */
@@ -959,197 +696,24 @@ void render(telemetry_data_t_osd *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uin
             Fill(COLOR);
             Stroke(OUTLINECOLOR);
 
+            #if COPTER == true
+                #if CHINESE == true
+                    char *fmode = chinese_copter_mode_from_enum((COPTER_MODE)mode);
+                #else
+                    char *fmode = copter_mode_from_enum((COPTER_MODE)mode);
+                #endif
+            #else
+                #if CHINESE == true
+                    char *fmode = chinese_plane_mode_from_enum((PLANE_MODE)mode);
+                #else
+                    char *fmode = plane_mode_from_enum((PLANE_MODE)mode);
+                #endif
+            #endif
+            
             if (armed == 1) {
-                switch (mode) {
-                    #if COPTER == true
-                        #if CHINESE == true
-                            case 0: sprintf(buffer, "自   稳"); break;
-                            case 1: sprintf(buffer, "特   技"); break;
-                            case 2: sprintf(buffer, "定   高"); break;
-                            case 3: sprintf(buffer, "自   动"); break;
-                            case 4: sprintf(buffer, "指   引"); break;
-                            case 5: sprintf(buffer, "悬   停"); break;
-                            case 6: sprintf(buffer, "返   航"); break;
-                            case 7: sprintf(buffer, "绕   圈"); break;
-                            case 9: sprintf(buffer, "降   落"); break;
-                            case 11: sprintf(buffer, "漂   移"); break;
-                            case 13: sprintf(buffer, "运   动"); break;
-                            case 14: sprintf(buffer, "翻   滚"); break;
-                            case 15: sprintf(buffer, "自 动 调 参"); break;
-                            case 16: sprintf(buffer, "定   点"); break;
-                            case 17: sprintf(buffer, "制   动"); break;
-                            case 18: sprintf(buffer, "抛   飞"); break;
-                            case 19: sprintf(buffer, "避   障"); break;
-                            case 20: sprintf(buffer, "无 GPS 指 引"); break;
-                            case 255: sprintf(buffer, "-----"); break;
-                        #else
-                            case 0: sprintf(buffer, "STAB"); break;
-                            case 1: sprintf(buffer, "ACRO"); break;
-                            case 2: sprintf(buffer, "ALTHOLD"); break;
-                            case 3: sprintf(buffer, "AUTO"); break;
-                            case 4: sprintf(buffer, "GUIDED"); break;
-                            case 5: sprintf(buffer, "LOITER"); break;
-                            case 6: sprintf(buffer, "RTL"); break;
-                            case 7: sprintf(buffer, "CIRCLE"); break;
-                            case 9: sprintf(buffer, "LAND"); break;
-                            case 11: sprintf(buffer, "DRIFT"); break;
-                            case 13: sprintf(buffer, "SPORT"); break;
-                            case 14: sprintf(buffer, "FLIP"); break;
-                            case 15: sprintf(buffer, "AUTOTUNE"); break;
-                            case 16: sprintf(buffer, "POSHOLD"); break;
-                            case 17: sprintf(buffer, "BRAKE"); break;
-                            case 18: sprintf(buffer, "THROW"); break;
-                            case 19: sprintf(buffer, "AVOIDADSB"); break;
-                            case 20: sprintf(buffer, "GUIDEDNOGPS"); break;
-                            case 255: sprintf(buffer, "-----"); break;
-                        #endif
-                    #else       
-                        #if CHINESE == true
-                            case 0: sprintf(buffer, "手   动"); break;
-                            case 1: sprintf(buffer, "盘   旋"); break;
-                            case 2: sprintf(buffer, "自   稳"); break;
-                            case 3: sprintf(buffer, "教   练"); break;
-                            case 4: sprintf(buffer, "特   技"); break;
-                            //case 5: sprintf(buffer, "半 自 稳"); break;
-                            case 5: sprintf(buffer, "自   稳"); break;
-                            case 6: sprintf(buffer, "自 稳 定 高"); break;
-                            case 7: sprintf(buffer, "巡   航"); break;
-                            case 8: sprintf(buffer, "自 动 调 参"); break;
-                            case 10: sprintf(buffer, "自   动"); break;
-                            case 11: sprintf(buffer, "返   航"); break;
-                            case 12: sprintf(buffer, "定   点"); break;
-                            //case 15: sprintf(buffer, "抛   飞"); break;
-                            case 15: sprintf(buffer, "指   引"); break;
-                            //case 16: sprintf(buffer, "失 控 保 护"); break;
-                            case 16: sprintf(buffer, "INIT"); break;
-                            case 255: sprintf(buffer, "-----"); break;
-                        #else
-                            case 0: sprintf(buffer, "MAN"); break;
-                            case 1: sprintf(buffer, "CIRC"); break;
-                            case 2: sprintf(buffer, "STAB"); break;
-                            case 3: sprintf(buffer, "TRAI"); break;
-                            case 4: sprintf(buffer, "ACRO"); break;
-                            case 5: sprintf(buffer, "FBWA"); break;
-                            case 6: sprintf(buffer, "FBWB"); break;
-                            case 7: sprintf(buffer, "CRUZ"); break;
-                            case 8: sprintf(buffer, "TUNE"); break;
-                            case 10: sprintf(buffer, "AUTO"); break;
-                            case 11: sprintf(buffer, "RTL"); break;
-                            case 12: sprintf(buffer, "LOIT"); break;
-                            case 13: sprintf(buffer, "TAKE"); break;
-                            case 15: sprintf(buffer, "GUID"); break;
-                            case 16: sprintf(buffer, "INIT"); break;
-                            case 17: sprintf(buffer, "Q-STAB"); break;
-                            case 18: sprintf(buffer, "Q-HOVR"); break;
-                            case 19: sprintf(buffer, "Q-LOIT"); break;
-                            case 20: sprintf(buffer, "Q-LAND"); break;
-                            case 21: sprintf(buffer, "Q-RTL"); break;
-                            case 23: sprintf(buffer, "Q-ACRO"); break;
-                            case 255: sprintf(buffer, "-----"); break;
-                        #endif
-                    #endif
-                    /*
-                     * TODO: find out why strange numbers when using zs6bujs telemetry logs, default to 
-                     * something more sensible like "unknown mode"
-                     *
-                     */
-                    default: sprintf(buffer, "-----"); break; 
-                }
+                sprintf(buffer, "[%s]", fmode);
             } else {
-                switch (mode) {
-                    #if COPTER == true
-                        #if CHINESE == true
-                            case 0: sprintf(buffer, "[自   稳]"); break;
-                            case 1: sprintf(buffer, "[特   技]"); break;
-                            case 2: sprintf(buffer, "[定   高]"); break;
-                            case 3: sprintf(buffer, "[自   动]"); break;
-                            case 4: sprintf(buffer, "[指   引]"); break;
-                            case 5: sprintf(buffer, "[悬   停]"); break;
-                            case 6: sprintf(buffer, "[返   航]"); break;
-                            case 7: sprintf(buffer, "[绕   圈]"); break;
-                            case 9: sprintf(buffer, "[降   落]"); break;
-                            case 11: sprintf(buffer, "[漂   移]"); break;
-                            case 13: sprintf(buffer, "[运   动]"); break;
-                            case 14: sprintf(buffer, "[翻   滚]"); break;
-                            case 15: sprintf(buffer, "[自 动 调 参]"); break;
-                            case 16: sprintf(buffer, "[定   点]"); break;
-                            case 17: sprintf(buffer, "[制   动]"); break;
-                            case 18: sprintf(buffer, "[抛   飞]"); break;
-                            case 19: sprintf(buffer, "[避   障]"); break;
-                            case 20: sprintf(buffer, "[无 GPS 指 引]"); break;
-                            case 255: sprintf(buffer, "[-----]"); break;
-                        #else
-                            case 0: sprintf(buffer, "[STAB]"); break;
-                            case 1: sprintf(buffer, "[ACRO]"); break;
-                            case 2: sprintf(buffer, "[ALTHOLD]"); break;
-                            case 3: sprintf(buffer, "[AUTO]"); break;
-                            case 4: sprintf(buffer, "[GUID]"); break;
-                            case 5: sprintf(buffer, "[LOIT]"); break;
-                            case 6: sprintf(buffer, "[RTL]"); break;
-                            case 7: sprintf(buffer, "[CIRCLE]"); break;
-                            case 9: sprintf(buffer, "[LAND]"); break;
-                            case 11: sprintf(buffer, "[DRIFT]"); break;
-                            case 13: sprintf(buffer, "[SPORT]"); break;
-                            case 14: sprintf(buffer, "[FLIP]"); break;
-                            case 15: sprintf(buffer, "[AUTOTUNE]"); break;
-                            case 16: sprintf(buffer, "[POSHOLD]"); break;
-                            case 17: sprintf(buffer, "[BRAKE]"); break;
-                            case 18: sprintf(buffer, "[THROW]"); break;
-                            case 19: sprintf(buffer, "[AVOIDADSB]"); break;
-                            case 20: sprintf(buffer, "[GUIDEDNOGPS]"); break;
-                            case 255: sprintf(buffer, "[-----]"); break;
-                        #endif
-                    #else
-                        #if CHINESE == true
-                            case 0: sprintf(buffer, "[手   动]"); break;
-                            case 1: sprintf(buffer, "[盘   旋]"); break;
-                            case 2: sprintf(buffer, "[自   稳]"); break;
-                            case 3: sprintf(buffer, "[教   练]"); break;
-                            case 4: sprintf(buffer, "[特   技]"); break;
-                            //case 5: sprintf(buffer, "[半 自 稳]"); break;
-                            case 5: sprintf(buffer, "[自   稳]"); break;
-                            case 6: sprintf(buffer, "[自 稳 定 高]"); break;
-                            case 7: sprintf(buffer, "[巡   航]"); break;
-                            case 8: sprintf(buffer, "[自 动 调 参]"); break;
-                            case 10: sprintf(buffer, "[自   动]"); break;
-                            case 11: sprintf(buffer, "[返   航]"); break;
-                            case 12: sprintf(buffer, "[定   点]"); break;
-                            //case 15: sprintf(buffer, "[抛   飞]"); break;
-                            case 15: sprintf(buffer, "[指   引]"); break;
-                            //case 16: sprintf(buffer, "[失 控 保 护]"); break;
-                            case 16: sprintf(buffer, "[INIT]"); break;
-                            case 255: sprintf(buffer, "[-----]"); break;
-                        #else
-                            case 0: sprintf(buffer, "[MAN]"); break;
-                            case 1: sprintf(buffer, "[CIRC]"); break;
-                            case 2: sprintf(buffer, "[STAB]"); break;
-                            case 3: sprintf(buffer, "[TRAI]"); break;
-                            case 4: sprintf(buffer, "[ACRO]"); break;
-                            case 5: sprintf(buffer, "[FBWA]"); break;
-                            case 6: sprintf(buffer, "[FBWB]"); break;
-                            case 7: sprintf(buffer, "[CRUZ]"); break;
-                            case 8: sprintf(buffer, "[TUNE]"); break;
-                            case 10: sprintf(buffer, "[AUTO]"); break;
-                            case 11: sprintf(buffer, "[RTL]"); break;
-                            case 12: sprintf(buffer, "[LOIT]"); break;
-                            case 13: sprintf(buffer, "[TAKE]"); break;
-                            case 15: sprintf(buffer, "[GUID]"); break;
-                            case 16: sprintf(buffer, "[INIT]"); break;
-                            case 17: sprintf(buffer, "Q-STAB"); break;
-                            case 18: sprintf(buffer, "Q-HOVR"); break;
-                            case 19: sprintf(buffer, "Q-LOIT"); break;
-                            case 20: sprintf(buffer, "Q-LAND"); break;
-                            case 21: sprintf(buffer, "Q-RTL"); break;
-                            case 23: sprintf(buffer, "Q-ACRO"); break;
-                            case 255: sprintf(buffer, "[-----]"); break;
-                        #endif
-                    #endif
-                    /*
-                     * TODO: find out why strange numbers when using zs6bujs telemetry logs, default to something 
-                     * more sensible like "unknown mode"
-                     */
-                    default: sprintf(buffer, "[-----]"); break;
-                }
+                sprintf(buffer, "%s", fmode);
             }
             TextMid(getWidth(pos_x), getHeight(pos_y), buffer, myfont, text_scale);
         }
