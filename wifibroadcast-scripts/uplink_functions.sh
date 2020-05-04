@@ -344,13 +344,13 @@ function uplinktx_function {
                 #
                 # We can and should do the same for the other protocols, but we don't yet
                 #
-                VSERIALPORT=/dev/pts/0
+                VSERIALPORT=/dev/openhd_mavlink1
                 UPLINK_TX_CMD="nice /home/pi/wifibroadcast-base/tx_telemetry -p 3 -c 0 -r 2 -x 0 -d 12 -y 0"
             else
                 #
                 # Non-mavlink telemetry is all handled the same
                 # 
-                VSERIALPORT=/dev/pts/2
+                VSERIALPORT=/dev/openhd_msp1
                 UPLINK_TX_CMD="nice /home/pi/wifibroadcast-base/tx_telemetry -p 3 -c 0 -r 2 -x 1 -d 12 -y 0"
             fi
 
@@ -371,9 +371,9 @@ function uplinktx_function {
             nice stty -F $EXTERNAL_TELEMETRY_SERIALPORT_GROUND $EXTERNAL_TELEMETRY_SERIALPORT_GROUND_STTY_OPTIONS $EXTERNAL_TELEMETRY_SERIALPORT_GROUND_BAUDRATE
             
             if [ "$TELEMETRY_UPLINK" == "mavlink" ]; then
-                VSERIALPORT=/dev/pts/0
+                VSERIALPORT=/dev/openhd_mavlink1
             else
-                VSERIALPORT=/dev/pts/2
+                VSERIALPORT=/dev/openhd_msp1
             fi
             
             UPLINK_TX_CMD="$EXTERNAL_TELEMETRY_SERIALPORT_GROUND"
