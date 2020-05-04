@@ -52,9 +52,6 @@ function MAIN_UPLINK_FUNCTION {
         #
         microservice_air_rx_function &
         microservice_air_tx_function &
-        systemctl start openhd_microservice@power
-        systemctl start openhd_microservice@gpio
-
 
         #
         # Start the telemetry and RC receiver (downlink telemetry is started in another area)
@@ -84,7 +81,6 @@ function MAIN_UPLINK_FUNCTION {
         #
         microservice_ground_rx_function &
         microservice_ground_tx_function &
-        systemctl start openhd_microservice@power
 
         #
         # Start the telemetry uplink

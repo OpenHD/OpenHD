@@ -24,6 +24,8 @@ check_camera_attached
 
 check_hdmi_csi_attached
 
+start_microservices
+
 check_lifepowered_pi_attached
 
 read_config_file
