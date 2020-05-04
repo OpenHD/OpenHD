@@ -1,18 +1,18 @@
-#include "/tmp/rctx.h"
-
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/types.h>
 #include <termios.h>
+#include <unistd.h>
 
 #include "openhdlib.h"
 
 
 
-void main(void) {
+int main() {
     int done = 1;
     uint16_t *rcdata = 0; //
     void *retval;
