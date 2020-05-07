@@ -477,7 +477,7 @@ void load_settings() {
     /*
      * Process the OSD settings we care about and store them
      */
-    MAVLINK = load_bool_setting(osd_settings, "MAVLINK", true);
+    MAVLINK = load_bool_setting(osd_settings, "MAVLINK", false);
     LTM = load_bool_setting(osd_settings, "LTM", false);
     SMARTPORT = load_bool_setting(osd_settings, "SMARTPORT", false);
     FRSKY = load_bool_setting(osd_settings, "FRSKY", false);
@@ -501,6 +501,10 @@ void load_settings() {
     OUTLINEWIDTH = load_double_setting(osd_settings, "OUTLINEWIDTH", 1.2);
 
     FONT = load_string_setting(osd_settings, "FONT", "Archivo-Bold.ttf");
+    size_t pos = 0;
+    while ((pos = FONT.find('"', pos)) != std::string::npos) {
+        FONT = FONT.erase(pos, 1);
+    }
 
     GLOBAL_SCALE = load_double_setting(osd_settings, "GLOBAL_SCALE", 1.2);
 

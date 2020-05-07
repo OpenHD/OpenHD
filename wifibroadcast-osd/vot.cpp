@@ -182,7 +182,7 @@ uint16_t CalculateCRC(uint8_t *pPacket, uint8_t Size, uint16_t InitCRC) {
 
 
 
-void vot_read(telemetry_data_t_osd *td, uint8_t *buf, uint8_t buflen) {
+void vot_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
     int i;
     uint8_t c;
     uint16_t cs;

@@ -237,17 +237,17 @@ int main(int argc, char *argv[]) {
             }
 
 
-            #ifdef FRSKY
-            frsky_parse_buffer(&fs, &td, buf, n);
-            #elif defined(LTM)
-            do_render = ltm_read(&td, buf, n);
-            #elif defined(MAVLINK)
-            do_render = mavlink_read(&td, buf, n);
-            #elif defined(SMARTPORT)
-            smartport_read(&td, buf, n);
-            #elif defined(VOT)
-            do_render =  vot_read(&td, buf, n);
-            #endif
+            if (FRSKY) {
+                frsky_parse_buffer(&fs, &td, buf, n);
+            } else if (LTM) {
+                do_render = ltm_read(&td, buf, n);
+            } else if (MAVLINK) {
+                do_render = mavlink_read(&td, buf, n);
+            } else if (SMARTPORT) {
+                smartport_read(&td, buf, n);
+            } else if (VOT) {
+                vot_read(&td, buf, n);
+            }
 
         }
 

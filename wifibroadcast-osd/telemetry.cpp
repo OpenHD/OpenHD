@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "telemetry.h"
-#include "osdconfig.h"
 
 
 

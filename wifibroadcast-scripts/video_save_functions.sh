@@ -62,9 +62,11 @@ function save_function {
     
 
     #
-    # Kill OSD so we can safely start wbc_status
-    #
-    ps -ef | nice grep "osd" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+    # Kill old OSD temporarily
+    #   
+    if [ "${ENABLE_QOPENHD}" != "Y" ]; then
+        systemctl stop osd
+    fi
     
 
     #
@@ -386,7 +388,7 @@ function save_function {
         # Re-start the OSD, we only do this for the old OSD because QOpenHD never stops
         #
         if [ "${ENABLE_QOPENHD}" != "Y" ]; then
-            /tmp/osd >> /wbc_tmp/telemetrydowntmp.txt &
+            systemctl start osd
         fi
     fi
     
