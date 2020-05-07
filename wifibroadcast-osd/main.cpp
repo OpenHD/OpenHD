@@ -42,22 +42,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/select.h>
 #include <locale.h>
 
+#include <tuple>
+#include <string>
+#include <iostream>
+#include <boost/regex.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/thread.hpp>
+#include <boost/chrono.hpp>
+
+
 #include "render.h"
-#include "osdconfig.h"
 #include "telemetry.h"
+#include "settings.h"
 
 
-#ifdef FRSKY
 #include "frsky.h"
-#elif defined(LTM)
 #include "ltm.h"
-#elif defined(MAVLINK)
 #include "mavlink.h"
-#elif defined(SMARTPORT)
 #include "smartport.h"
-#elif defined(VOT)
 #include "vot.h"
-#endif
+
+
 
 
 
@@ -85,6 +93,9 @@ int main(int argc, char *argv[]) {
 
     setlocale(LC_ALL, "en_GB.UTF-8");
 
+
+    load_settings();
+
     /*
      * Mavlink maximum packet length
      */
@@ -103,9 +114,7 @@ int main(int argc, char *argv[]) {
     int counter = 0;
 
 
-    #ifdef FRSKY
     frsky_state_t fs;
-    #endif
 
     struct stat fdstatus;
 

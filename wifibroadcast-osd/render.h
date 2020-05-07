@@ -50,7 +50,7 @@ void draw_uplink_signal(int8_t uplink_signal, int uplink_lostpackets, int8_t rc_
 
 void draw_kbitrate(int cts, int kbitrate, uint16_t kbitrate_tx, uint16_t current_air_datarate_kbit, uint16_t kbitrate_measured_tx, double hw_datarate_mbit, uint32_t fecs_skipped, uint32_t injection_failed, long long injection_time, int armed, float pos_x, float pos_y, float scale, float mbit_warn, float mbit_caution, float declutter);
 void draw_sys(uint8_t cpuload_air, uint8_t temp_air, uint8_t cpuload_gnd, uint8_t temp_gnd, int armed, float pos_x, float pos_y, float scale, float load_warn, float load_caution, float temp_warn, float temp_caution, float declutter);
-void draw_message(int severity, char line1[30], char line2[30], char line3[30], float pos_x, float pos_y, float scale);
+void draw_message(int severity, const char line1[30], const char line2[30], const char line3[30], float pos_x, float pos_y, float scale);
 
 /* 
  * New stuff from fritz walter https://www.youtube.com/watch?v=EQ01b3aJ-rk
@@ -72,7 +72,9 @@ void draw_position(float lat, float lon, float pos_x, float pos_y, float scale);
 
 
 void draw_home_distance(int distance, bool home_fixed, float pos_x, float pos_y, float scale);
-void draw_mode(int mode, int armed, float pos_x, float pos_y, float scale);
+void draw_mavlink_mode(int mode, int armed, float pos_x, float pos_y, float scale);
+void draw_vot_mode(int mode, int armed, float pos_x, float pos_y, float scale);
+void draw_ltm_mode(int mode, int armed, int failsafe, float pos_x, float pos_y, float scale);
 void draw_rssi(int rssi, int armed, float pos_x, float pos_y, float scale, float mbit_warn, float mbit_caution, float declutter);
 void draw_cog(int cog, float pos_x, float pos_y, float scale);
 void draw_climb(float climb, float pos_x, float pos_y, float scale);
@@ -106,6 +108,6 @@ void draw_Mission(int Seq,float pos_x, float pos_y, float scale);
 void draw_Angle(float pos_x, float pos_y, float scale);
 void draw_Angle2(float pos_x, float pos_y, float scale);
 void draw_Alarm(int SenorsPresent, int SenorsEnabled, int SenorsHealth, float pos_x, float pos_y, float scale);
-int width, height;
 
-int width, height;
+extern int width;
+extern int height;

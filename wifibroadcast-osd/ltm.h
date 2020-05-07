@@ -1,6 +1,5 @@
-#include "osdconfig.h"
+#pragma once
 
-#ifdef LTM
 #include "telemetry.h"
 
 int ltm_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen);
@@ -24,5 +23,3 @@ int ltm_check(telemetry_data_t_osd *td);
 #define LIGHTTELEMETRY_XFRAMELENGTH 10
 
 void telemetry_off(void);
-
-#endif

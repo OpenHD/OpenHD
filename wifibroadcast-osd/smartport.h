@@ -1,6 +1,5 @@
-#include "osdconfig.h"
+#pragma once
 
-#ifdef SMARTPORT
 #include "telemetry.h"
 
 #define START_STOP 0x7e
@@ -61,5 +60,3 @@ uint8_t u8CheckCrcSPORT( uint8_t *t );
 
 // Frsky-specific
 void smartport_check(telemetry_data_t_osd *td, uint8_t *t); 
-
-#endif

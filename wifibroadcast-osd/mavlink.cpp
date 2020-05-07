@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#ifdef MAVLINK
-
 mavlink_status_t status;
 mavlink_message_t msg;
 
@@ -484,4 +482,3 @@ int mavlink_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
 
     return render_data;
 }
-#endif

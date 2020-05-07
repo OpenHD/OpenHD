@@ -25,7 +25,7 @@
 #include "vot.h"
 #include <stdio.h>
 
-#ifdef VOT
+
 #define VOTFrameLength 97 // 97 bytes
 #define VOT_REVISION 0
 #define VOT_SC1 0xB0
@@ -295,4 +295,3 @@ void vot_decode(telemetry_data_t_osd *td) {
 
     td->validmsgsrx++;
 }
-#endif
