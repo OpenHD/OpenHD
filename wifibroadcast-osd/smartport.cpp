@@ -62,7 +62,7 @@ uint8_t u8CheckCrcSPORT(uint8_t *b) {
     if ((uint8_t)(0xFF - u16Crc) == b[6]) {
         return 1u;
     } else {
-        printf("\r\nsmartport crc fail (%d != %d)", (uint8_t)(0xFF - u16Crc), b[6]);
+        fprintf(telemetry_file, "\r\nsmartport crc fail (%d != %d)", (uint8_t)(0xFF - u16Crc), b[6]);
 
         return 0u;
     }
@@ -88,7 +88,7 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
         case FR_ID_VFAS: {
             // uint32_t , 100=1V
             td->voltage = (float)tel.data.u16 / 100.0;
-            printf("\r\nsmartport FR_ID_VFAS is %f", td->voltage);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_VFAS is %f", td->voltage);
 
             break;
         }
@@ -108,7 +108,7 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
                 //                  }
                 //	        }
 
-                printf("\r\nsmartport FR_ID_LATLONG is %f", td->longitude);
+                fprintf(telemetry_file, "\r\nsmartport FR_ID_LATLONG is %f", td->longitude);
             } else {
                 td->latitude = (float)(tel.data.u32 & 0x3fffffff);
                 td->latitude /= 600000;
@@ -124,7 +124,7 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
                 //                  }
                 //              }
 
-                printf("\r\nsmartport FR_ID_LATLONG is %f", td->latitude);
+                fprintf(telemetry_file, "\r\nsmartport FR_ID_LATLONG is %f", td->latitude);
             }
 
             break;
@@ -133,7 +133,7 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
             // uint32_t , 100=1m
             td->msl_altitude = (float)(tel.data.i32) / 100.0;
 
-            printf("\r\nsmartport FR_ID_GPS_ALT is %f", td->msl_altitude);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_GPS_ALT is %f", td->msl_altitude);
 
             break;
         }
@@ -141,7 +141,7 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
             // uint32_t , 2000=1kmh ???
             td->speed = (float)(tel.data.u32) / 2000.0;
 
-            printf("\r\nsmartport FR_ID_SPEED is %f", td->speed);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_SPEED is %f", td->speed);
 
             break;
         }
@@ -149,15 +149,15 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
             // uint32_t , // 10000 = 100 deg
             td->heading = (float)(tel.data.u32) / 100.0;
 
-            printf("\r\nsmartport FR_ID_GPS_COURSE is %f", td->heading);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_GPS_COURSE is %f", td->heading);
          
             break;
         }
         case FR_ID_T1:  {
             // iNac, CF flight modes / arm
-            //u16Modes = tel->d.data.u16; // see inav smartport.c //printf( "T1: %x", tel->d.data.u32 );
+            //u16Modes = tel->d.data.u16; // see inav smartport.c //fprintf(telemetry_file,  "T1: %x", tel->d.data.u32 );
 
-            printf("\r\nsmartport FR_ID_T1");
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_T1");
 
             break;
         }
@@ -166,7 +166,7 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
             td->fix = (uint8_t)(tel.data.u32 / 1000);
             td->sats = (uint8_t)(tel.data.u32 % 1000);
 
-            printf("\r\nsmartport FR_ID_T2 ( %d / %d )", td->sats, td->fix);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_T2 ( %d / %d )", td->sats, td->fix);
 
             break;
         }
@@ -175,14 +175,14 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
             td->fix = (uint8_t)(tel.data.u16 % 10);
             td->sats = (uint8_t)(tel.data.u16 / 10);
 
-            printf("\r\nsmartport FR_ID_GPS_SAT ( %d / %d )", td->sats, td->fix);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_GPS_SAT ( %d / %d )", td->sats, td->fix);
 
             break;
         }
         case FR_ID_RSSI: {
             td->rssi = (uint8_t)tel.data.u8;
 
-            printf("\r\nsmartport FR_ID_RSSI is %d", td->rssi);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_RSSI is %d", td->rssi);
 
             break;
         }
@@ -190,14 +190,14 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
             td->rx_batt = (float)(tel.data.u8);
             td->rx_batt *= 3.3 / 255.0 * 4.0;
 
-            printf("\r\nsmartport FR_ID_RXBATT is %f", td->rx_batt);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_RXBATT is %f", td->rx_batt);
 
             break;
         }
         case FR_ID_SWR: {
             td->swr = (uint8_t)(tel.data.u32);
 
-            printf("\r\nsmartport FR_ID_SWR is %d", td->swr);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_SWR is %d", td->swr);
 
             break;
         }
@@ -205,7 +205,7 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
             td->adc1 = (float)tel.data.u8;
             td->adc1 *= 3.3 / 255.0;
 
-            printf("\r\nsmartport FR_ID_ADC1 is %f", td->adc1);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_ADC1 is %f", td->adc1);
 
             break;
         }
@@ -213,7 +213,7 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
             td->adc2 = (float)tel.data.u8;
             td->adc2 = 3.3 / 255.0;
 
-            printf("\r\nsmartport FR_ID_ADC2 is %f", td->adc2);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_ADC2 is %f", td->adc2);
 
             break;
         }
@@ -221,35 +221,35 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
             // uint32_t, from barometer, 100 = 1m
             td->rel_altitude = (float)(tel.data.i32) / 100.0;
 
-            printf("\r\nsmartport FR_ID_ALTITUDE is %f", td->rel_altitude);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_ALTITUDE is %f", td->rel_altitude);
 
             break;
         case FR_ID_VARIO: {
             // uint32_t , 100 = 1m/s
             td->vario = (float)(tel.data.i32) / 100;
 
-            printf("\r\nsmartport FR_ID_VARIO is %f", td->vario);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_VARIO is %f", td->vario);
 
             break;
         }
         case FR_ID_ACCX: {
             td->x = tel.data.i16;
 
-            printf("\r\nsmartport FR_ID_ACCX is %d", td->x);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_ACCX is %d", td->x);
 
             break;
         }
         case FR_ID_ACCY: {
             td->y = tel.data.i16;
 
-            printf("\r\nsmartport FR_ID_ACCY is %d", td->y);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_ACCY is %d", td->y);
 
             break;
         }
         case FR_ID_ACCZ: {
             td->z = tel.data.i16;
 
-            printf("\r\nsmartport FR_ID_ACCZ is %d", td->z);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_ACCZ is %d", td->z);
 
             break;
         }
@@ -257,7 +257,7 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
             // this is guessed
             td->ampere = (float)tel.data.u16 / 10.0; 
 
-            printf("\r\nsmartport FR_ID_CURRENT is %f", td->ampere);
+            fprintf(telemetry_file, "\r\nsmartport FR_ID_CURRENT is %f", td->ampere);
 
             break;
         }
@@ -286,12 +286,12 @@ void smartport_check(telemetry_data_t_osd *td, uint8_t *b) {
             break;
         }
         case FR_ID_FIRMWARE: {
-            printf("\r\nsmartport id %x not used in osd", tel.id);
+            fprintf(telemetry_file, "\r\nsmartport id %x not used in osd", tel.id);
 
             break;
         }
         default: {
-            printf("\r\nsmartport unknown id: %x , %x", (uint16_t)tel.id, tel.data.u32);
+            fprintf(telemetry_file, "\r\nsmartport unknown id: %x , %x", (uint16_t)tel.id, tel.data.u32);
 
             break;
         }

@@ -241,7 +241,7 @@ void vot_decode(telemetry_data_t_osd *td) {
     uint32_t dummy32;
 
     VOTReadIndex = 0;
-    printf("\n");
+    fprintf(telemetry_file, "\n");
     dummy32 = (uint32_t)votread_u32();                              // StartCode
     dummy32 = (uint32_t)votread_u32();                              // TimeStamp
     td->rel_altitude = (float)(signed long)votbread_u32() / 100.0f; // BaroAltitudecm
@@ -277,21 +277,21 @@ void vot_decode(telemetry_data_t_osd *td) {
                                                                     // CRC);
     VOTReadIndex = 0;
 
-    printf("\n");
-    printf("latitude:%f  ", td->latitude);
-    printf("longitude:%f  ", td->longitude);
-    printf("groundspeed:%d  ", td->speed);
-    printf("altitude:%f  ", td->rel_altitude);
-    printf("sats:%d  ", td->sats);
-    printf("pitch:%d  ", td->pitch);
-    printf("roll:%d  ", td->roll);
-    printf("heading:%f  ", td->heading);
-    printf("voltage:%f  ", td->voltage);
-    printf("ampere:%f  ", td->ampere);
-    printf("rssi:%f  ", td->rssi);
-    //printf("GPS hdop:%f  ", td->hdop);
-    //printf("flightmode:%d  ", td->flightmode);
-    printf("\n");
+    fprintf(telemetry_file, "\n");
+    fprintf(telemetry_file, "latitude:%f  ", td->latitude);
+    fprintf(telemetry_file, "longitude:%f  ", td->longitude);
+    fprintf(telemetry_file, "groundspeed:%d  ", td->speed);
+    fprintf(telemetry_file, "altitude:%f  ", td->rel_altitude);
+    fprintf(telemetry_file, "sats:%d  ", td->sats);
+    fprintf(telemetry_file, "pitch:%d  ", td->pitch);
+    fprintf(telemetry_file, "roll:%d  ", td->roll);
+    fprintf(telemetry_file, "heading:%f  ", td->heading);
+    fprintf(telemetry_file, "voltage:%f  ", td->voltage);
+    fprintf(telemetry_file, "ampere:%f  ", td->ampere);
+    fprintf(telemetry_file, "rssi:%f  ", td->rssi);
+    //fprintf(telemetry_file, "GPS hdop:%f  ", td->hdop);
+    //fprintf(telemetry_file, "flightmode:%d  ", td->flightmode);
+    fprintf(telemetry_file, "\n");
 
     td->validmsgsrx++;
 }

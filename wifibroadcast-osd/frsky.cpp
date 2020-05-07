@@ -78,7 +78,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->validmsgsrx++;
             td->voltage = data / 10.0f;
 
-            printf("voltage:%f  ", td->voltage);
+            fprintf(telemetry_file, "voltage:%f  ", td->voltage);
 
             break;
         }
@@ -86,13 +86,13 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->validmsgsrx++;
             td->rel_altitude = data;
 
-            printf("baro altitude BP:%f  ", td->rel_altitude);
+            fprintf(telemetry_file, "baro altitude BP:%f  ", td->rel_altitude);
 
             break;
         }
         case ID_ALTITUDE_AP: {
             //td->baro_altitude += data/100;
-            //printf("Baro Altitude AP:%f  ", td->baro_altitude);
+            //fprintf(telemetry_file, ("Baro Altitude AP:%f  ", td->baro_altitude);
 
             break;
         }
@@ -100,7 +100,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->validmsgsrx++;
             td->msl_altitude = data;
 
-            printf("GPS altitude:%f  ", td->msl_altitude);
+            fprintf(telemetry_file, "GPS altitude:%f  ", td->msl_altitude);
 
             break;
         }
@@ -109,7 +109,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->longitude = data / 100;
             td->longitude += 1.0 * (data - td->longitude * 100) / 60;
 
-            printf("longitude BP:%f  ", td->longitude);
+            fprintf(telemetry_file, "longitude BP:%f  ", td->longitude);
 
             break;
         }
@@ -117,7 +117,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->validmsgsrx++;
             td->longitude +=  1.0 * data / 60 / 10000;
 
-            printf("longitude AP:%f  ", td->longitude);
+            fprintf(telemetry_file, "longitude AP:%f  ", td->longitude);
 
             break;
         }
@@ -126,7 +126,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->latitude = data / 100;
             td->latitude += 1.0 * (data - td->latitude * 100) / 60;
 
-            printf("latitude BP:%f  ", td->latitude);
+            fprintf(telemetry_file, "latitude BP:%f  ", td->latitude);
 
             break;
         }
@@ -134,7 +134,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->validmsgsrx++;
             td->latitude +=  1.0 * data / 60 / 10000;
             
-            printf("latitude AP:%f  ", td->latitude);
+            fprintf(telemetry_file, "latitude AP:%f  ", td->latitude);
 
             break;
         }
@@ -142,7 +142,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->validmsgsrx++;
             td->heading = data;
 
-            printf("heading:%f  ", td->heading);
+            fprintf(telemetry_file, "heading:%f  ", td->heading);
 
             break;
         }
@@ -150,7 +150,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->validmsgsrx++;
             td->speed = 1.0 * data / 0.0194384449;
 
-            printf("GPS speed BP:%f  ", td->speed);
+            fprintf(telemetry_file, "GPS speed BP:%f  ", td->speed);
             
             break;
         }
@@ -159,7 +159,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->speed += 1.0 * data / 1.94384449; //now we are in cm/s
             td->speed = td->speed / 100 / 1000 * 3600; //now we are in km/h
 
-            printf("GPS speed AP:%f  ", td->speed);
+            fprintf(telemetry_file, "GPS speed AP:%f  ", td->speed);
             
             break;
         }
@@ -167,7 +167,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->validmsgsrx++;
             td->x = data;
 
-            printf("accel X:%d  ", td->x);
+            fprintf(telemetry_file, "accel X:%d  ", td->x);
 
             break;
         }
@@ -175,7 +175,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->validmsgsrx++;
             td->y = data;
 
-            printf("accel Y:%d  ", td->y);
+            fprintf(telemetry_file, "accel Y:%d  ", td->y);
 
             break;
         }
@@ -183,7 +183,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->validmsgsrx++;
             td->z = data;
 
-            printf("accel Z:%d  ", td->z);
+            fprintf(telemetry_file, "accel Z:%d  ", td->z);
 
             break;
         }
@@ -191,7 +191,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->validmsgsrx++;
             td->ew = data;
 
-            printf("E/W:%d  ", td->ew);
+            fprintf(telemetry_file, "E/W:%d  ", td->ew);
 
             break;
         }
@@ -199,19 +199,19 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t_osd *td) {
             td->validmsgsrx++;
             td->ns = data;
             
-            printf("N/S:%d  ", td->ns);
+            fprintf(telemetry_file, "N/S:%d  ", td->ns);
 
             break;
         }
         default: {
             new_data = 0;
 
-            //printf("%x\n", pkg[0]);
+            //fprintf(telemetry_file, "%x\n", pkg[0]);
             break;
         }
     }
 
-    printf("\n");
+    fprintf(telemetry_file, "\n");
     
     return new_data;
 }

@@ -9,6 +9,8 @@
 
 
 
+FILE * telemetry_file;
+
 void telemetry_init(telemetry_data_t_osd *td) {
     td->validmsgsrx = 0;
     td->datarx = 0;

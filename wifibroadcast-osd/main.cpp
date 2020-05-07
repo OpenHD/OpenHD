@@ -94,6 +94,13 @@ int main(int argc, char *argv[]) {
     setlocale(LC_ALL, "en_GB.UTF-8");
 
 
+    telemetry_file = fopen("/wbc_tmp/telemetrydowntmp.txt", "w+");
+
+    if (!telemetry_file) {
+        fprintf(stderr, "WARNING: cannot open telemetry file!");
+        exit(1);
+    }
+
     load_settings();
 
     /*

@@ -5,6 +5,8 @@
 #include <time.h>
 
 
+extern FILE * telemetry_file;
+
 typedef struct {
     uint32_t validmsgsrx;
     uint32_t datarx;
