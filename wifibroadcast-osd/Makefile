@@ -9,7 +9,7 @@ all: osd
 	g++ $(CFLAGS) -c -o $@ $< $(CPPFLAGS)
 
 osd: /tmp/main.o /tmp/render.o /tmp/telemetry.o /tmp/flightmode.o /tmp/frsky.o /tmp/ltm.o /tmp/mavlink.o /tmp/smartport.o /tmp/vot.o /tmp/settings.o
-	g++ -o /tmp/$@ $^ $(LDFLAGS)
+	g++ -o /usr/local/bin/$@ $^ $(LDFLAGS)
 
 clean:
-	rm -f /tmp/osd /tmp/*.o /tmp/*~
+	rm -f /usr/local/bin/osd /tmp/*.o /tmp/*~

@@ -374,7 +374,7 @@ function save_function {
 
 
     killall wbc_status > /dev/null 2>&1
-    OSDRUNNING=`pidof /tmp/osd | wc -w`
+    OSDRUNNING=`pidof /usr/local/bin/osd | wc -w`
 
 
     if [ ${OSDRUNNING}  -ge 1 ]; then
