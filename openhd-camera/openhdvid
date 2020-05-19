@@ -106,6 +106,7 @@ class OpenHDCamera:
         self.inline_headers = option.inline_headers
         self.sps_timing = option.sps_timing
         self.bitrate = option.bitrate
+        self.record_bitrate = option.record_bitrate
         print("Camera initialized", file=sys.stderr)
 
     def check_used_space(self, path):
@@ -136,9 +137,9 @@ class OpenHDCamera:
             else:
                 # don't hook up the resize component in the pipeline if the resolution is the same as the main stream
                 if option.width_record == option.width and option.height_record == option.height:
-                    self.camera.start_recording(option.record, 'h264', splitter_port=2)
+                    self.camera.start_recording(option.record, 'h264', splitter_port=2, bitrate=self.record_bitrate)
                 else:
-                    self.camera.start_recording(option.record, 'h264', resize=(option.width_record, option.height_record), splitter_port=2)
+                    self.camera.start_recording(option.record, 'h264', resize=(option.width_record, option.height_record), splitter_port=2, bitrate=self.record_bitrate)
                 print("Recording to file " + option.record, file=sys.stderr)
 
         print("Camera running", file=sys.stderr)
@@ -194,6 +195,7 @@ if __name__ == '__main__':
     parser.add_argument('--record', '-rec', action="store", dest="record", type=str)
     parser.add_argument('--width_record', '-wr', action="store", dest="width_record", type=int, default=1280)
     parser.add_argument('--height_record', '-hr', action="store", dest="height_record", type=int, default=720)
+    parser.add_argument('--bitrate_record', '-br', action="store", dest="bitrate_record", type=int, default=4000000)
 
 
     parser.add_argument('--output', '-o', action="store", dest="output", type=str, default="-")
