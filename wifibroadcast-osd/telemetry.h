@@ -1,10 +1,11 @@
 #pragma once
 
 #include "openhdlib.h"
-#include "osdconfig.h"
 #include <stdint.h>
 #include <time.h>
 
+
+extern FILE * telemetry_file;
 
 typedef struct {
     uint32_t validmsgsrx;
@@ -55,16 +56,20 @@ typedef struct {
     int16_t ew, ns;
     //#endif
 
-#if defined(SMARTPORT)
+    /*
+     * Smartport
+     */
     uint8_t swr;
     float rx_batt;
     float adc1;
     float adc2;
-    float vario;
-#endif
+    // duplicated down in vot section
+    //float vario;
 
 
-#if defined(MAVLINK)
+    /*
+     * Mavlink
+     */
     uint32_t mav_flightmode;
     //float mav_climb;
     uint32_t version;
@@ -79,10 +84,13 @@ typedef struct {
     uint32_t SP;
     uint32_t SE;
     uint32_t SH;
-#endif
 
 
-#if defined(LTM)
+
+    /*
+     * LTM
+     */
+
     // LTM S frame
     uint8_t ltm_status;
     uint8_t ltm_failsafe;
@@ -107,10 +115,11 @@ typedef struct {
     double ltm_home_latitude;
     uint8_t ltm_osdon;
     uint8_t ltm_homefix;
-#endif
 
 
-#if defined(VOT)
+    /*
+     * VOT
+     */
     uint8_t flightmode;
     float vtxvoltage;
     float camvoltage;
@@ -124,7 +133,6 @@ typedef struct {
     float distance;
     uint16_t coursedegrees;
     //float hdop;
-#endif
 
     wifibroadcast_rx_status_t *rx_status;
     wifibroadcast_rx_status_t_osd *rx_status_osd;

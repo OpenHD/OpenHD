@@ -5,7 +5,7 @@
 #include <openhd/mavlink.h>
 
 
-char * sub_mode_from_enum(SUB_MODE mode) {
+const char * sub_mode_from_enum(SUB_MODE mode) {
     switch (mode) {
        case SUB_MODE_MANUAL:
             return "MAN";
@@ -29,7 +29,7 @@ char * sub_mode_from_enum(SUB_MODE mode) {
     return "-----";
 }
 
-char * rover_mode_from_enum(ROVER_MODE mode) {
+const char * rover_mode_from_enum(ROVER_MODE mode) {
     switch (mode) {
        case ROVER_MODE_HOLD:
             return "HOLD";
@@ -55,7 +55,7 @@ char * rover_mode_from_enum(ROVER_MODE mode) {
     return "-----";
 }
 
-char * chinese_copter_mode_from_enum(COPTER_MODE mode) {
+const char * chinese_copter_mode_from_enum(COPTER_MODE mode) {
     switch (mode) {
         case COPTER_MODE_STABILIZE: 
             return "自   稳"; 
@@ -99,7 +99,7 @@ char * chinese_copter_mode_from_enum(COPTER_MODE mode) {
     return "-----";
 }
 
-char * copter_mode_from_enum(COPTER_MODE mode) {
+const char * copter_mode_from_enum(COPTER_MODE mode) {
     switch (mode) {
        case COPTER_MODE_LAND:
             return "LAND";
@@ -143,7 +143,7 @@ char * copter_mode_from_enum(COPTER_MODE mode) {
     return "-----";
 }
 
-char * chinese_plane_mode_from_enum(PLANE_MODE mode) {
+const char * chinese_plane_mode_from_enum(PLANE_MODE mode) {
     switch (mode) {
         case PLANE_MODE_MANUAL:
             return "手   动";
@@ -193,7 +193,7 @@ char * chinese_plane_mode_from_enum(PLANE_MODE mode) {
     return "-----";
 }
 
-char * plane_mode_from_enum(PLANE_MODE mode) {
+const char * plane_mode_from_enum(PLANE_MODE mode) {
     switch (mode) {
         case PLANE_MODE_MANUAL:
             return "MAN";
@@ -243,7 +243,7 @@ char * plane_mode_from_enum(PLANE_MODE mode) {
     return "-----";
 }
 
-char * tracker_mode_from_enum(TRACKER_MODE mode) {
+const char * tracker_mode_from_enum(TRACKER_MODE mode) {
     switch (mode) {
        case TRACKER_MODE_MANUAL:
             return "MAN";
@@ -261,7 +261,7 @@ char * tracker_mode_from_enum(TRACKER_MODE mode) {
     return "-----";
 }
 
-char * vot_mode_from_telemetry(uint8_t mode) {
+const char * vot_mode_from_telemetry(uint8_t mode) {
     switch (mode) {
         case 0:
             return "2D";
@@ -302,7 +302,7 @@ char * vot_mode_from_telemetry(uint8_t mode) {
 }
 
 
-char * chinese_ltm_mode_from_telem(int mode) {
+const char * chinese_ltm_mode_from_telem(int mode) {
     switch (mode) {
         case 0:
             return "手   动";
@@ -347,7 +347,7 @@ char * chinese_ltm_mode_from_telem(int mode) {
 }
 
 
-char * ltm_mode_from_telem(int mode) {
+const char * ltm_mode_from_telem(int mode) {
     switch (mode) {
         case 0:
             return "MAN";

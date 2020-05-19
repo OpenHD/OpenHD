@@ -5,9 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "telemetry.h"
-#include "osdconfig.h"
 
 
+
+FILE * telemetry_file;
 
 void telemetry_init(telemetry_data_t_osd *td) {
     td->validmsgsrx = 0;
@@ -39,15 +40,19 @@ void telemetry_init(telemetry_data_t_osd *td) {
     td->vy=0;
     td->vz=0;
 
-#ifdef FRSKY
+    /*
+     * Frsky
+     */
     td->x = 0;
     td->y = 0;
     td->z = 0;
     td->ew = 0;
     td->ns = 0;
-#endif
 
-#ifdef MAVLINK
+
+    /*
+     * Mavlink
+     */
     td->mav_flightmode = 255;
     //td->mav_climb = 0;
     td->version=0;
@@ -63,9 +68,11 @@ void telemetry_init(telemetry_data_t_osd *td) {
     td->SE = 0;
     td->SH = 0;
     
-#endif
 
-#ifdef LTM
+    /*
+     * LTM
+     */
+
     // LTM S frame
     td->ltm_status = 0;
     td->ltm_failsafe = 0;
@@ -88,24 +95,18 @@ void telemetry_init(telemetry_data_t_osd *td) {
     td->ltm_home_altitude = 0;
     td->ltm_home_longitude = 0;
     td->ltm_home_latitude = 0;
-#endif
 
 
-#ifdef DOWNLINK_RSSI
     td->rx_status = telemetry_wbc_status_memory_open();
-#endif
 
-
-#ifdef UPLINK_RSSI
     td->rx_status_uplink = telemetry_wbc_status_memory_open_uplink();
     td->rx_status_rc = telemetry_wbc_status_memory_open_rc();
-#endif
 
     td->rx_status_osd = telemetry_wbc_status_memory_open_osd();
     td->rx_status_sysair = telemetry_wbc_status_memory_open_sysair();
 }
 
-#ifdef DOWNLINK_RSSI
+
 wifibroadcast_rx_status_t *telemetry_wbc_status_memory_open(void) {
     int fd = 0;
 
@@ -134,7 +135,6 @@ wifibroadcast_rx_status_t *telemetry_wbc_status_memory_open(void) {
 
     return (wifibroadcast_rx_status_t*)retval;
 }
-#endif
 
 
 
@@ -169,7 +169,6 @@ wifibroadcast_rx_status_t_osd *telemetry_wbc_status_memory_open_osd(void) {
 
 
 
-#ifdef UPLINK_RSSI
 wifibroadcast_rx_status_t_rc *telemetry_wbc_status_memory_open_rc(void) {
     
     int fd = 0;
@@ -229,7 +228,6 @@ wifibroadcast_rx_status_t_uplink *telemetry_wbc_status_memory_open_uplink(void) 
     
     return (wifibroadcast_rx_status_t_uplink*)retval;
 }
-#endif
 
 
 

@@ -18,8 +18,6 @@
 #include "ltm.h"
 #include <stdio.h>
 
-#ifdef LTM
-
 static uint8_t LTMserialBuffer[LIGHTTELEMETRY_GFRAMELENGTH-4];
 static uint8_t LTMreceiverIndex;
 static uint8_t LTMcmd;
@@ -172,13 +170,13 @@ int ltm_check(telemetry_data_t_osd *td) {
 
         td->validmsgsrx++;
 
-        printf("LTM G FRAME: ");
-        printf("fix:%d  ", td->fix);
-        printf("sats:%d  ", td->sats);
-        printf("altitude:%.2f  ", td->rel_altitude);
-        printf("latitude:%.2f  ", td->latitude);
-        printf("longitude:%.2f  ", td->longitude);
-        printf("groundspeed:%.2f  ", td->speed);
+        fprintf(telemetry_file, "LTM G FRAME: ");
+        fprintf(telemetry_file, "fix:%d  ", td->fix);
+        fprintf(telemetry_file, "sats:%d  ", td->sats);
+        fprintf(telemetry_file, "altitude:%.2f  ", td->rel_altitude);
+        fprintf(telemetry_file, "latitude:%.2f  ", td->latitude);
+        fprintf(telemetry_file, "longitude:%.2f  ", td->longitude);
+        fprintf(telemetry_file, "groundspeed:%.2f  ", td->speed);
 
     } else if (LTMcmd == LIGHTTELEMETRY_AFRAME) {
         td->pitch = (int16_t)ltmread_u16();
@@ -195,10 +193,10 @@ int ltm_check(telemetry_data_t_osd *td) {
 
         td->validmsgsrx++;
 
-        printf("LTM A FRAME: ");
-        printf("heading:%.2f  ", td->heading);
-        printf("roll:%.2f  ", td->roll);
-        printf("pitch:%.2f  ", td->pitch);
+        fprintf(telemetry_file, "LTM A FRAME: ");
+        fprintf(telemetry_file, "heading:%.2f  ", td->heading);
+        fprintf(telemetry_file, "roll:%.2f  ", td->roll);
+        fprintf(telemetry_file, "pitch:%.2f  ", td->pitch);
 
         render_data = 1;
 
@@ -210,12 +208,12 @@ int ltm_check(telemetry_data_t_osd *td) {
         td->ltm_homefix = ltmread_u8();
         td->validmsgsrx++;
     
-        printf("LTM O FRAME: ");
-        printf("home_altitude:%.2f  ", td->ltm_home_altitude);
-        printf("home_latitude:%.2f  ", td->ltm_home_latitude);
-        printf("home_longitude:%.2f  ", td->ltm_home_longitude);
-        printf("osdon:%d  ", td->ltm_osdon);
-        printf("homefix:%d  ", td->ltm_homefix);
+        fprintf(telemetry_file, "LTM O FRAME: ");
+        fprintf(telemetry_file, "home_altitude:%.2f  ", td->ltm_home_altitude);
+        fprintf(telemetry_file, "home_latitude:%.2f  ", td->ltm_home_latitude);
+        fprintf(telemetry_file, "home_longitude:%.2f  ", td->ltm_home_longitude);
+        fprintf(telemetry_file, "osdon:%d  ", td->ltm_osdon);
+        fprintf(telemetry_file, "homefix:%d  ", td->ltm_homefix);
 
     } else if (LTMcmd == LIGHTTELEMETRY_XFRAME)  {
         //HDOP 		uint16 HDOP * 100
@@ -226,8 +224,8 @@ int ltm_check(telemetry_data_t_osd *td) {
 
         td->hdop = (float)((uint16_t)ltmread_u16())/10000.0f;
 
-        printf("LTM X FRAME:\n");
-        printf("GPS hdop:%.2f  ", td->hdop);
+        fprintf(telemetry_file, "LTM X FRAME:\n");
+        fprintf(telemetry_file, "GPS hdop:%.2f  ", td->hdop);
 
     } else if (LTMcmd == LIGHTTELEMETRY_SFRAME)  {
         //Vbat 			uint16, mV
@@ -250,19 +248,17 @@ int ltm_check(telemetry_data_t_osd *td) {
 
         td->validmsgsrx++;
 
-        printf("LTM S FRAME: ");
-        printf("voltage:%.2f  ", td->voltage);
-        printf("mAh:%.2f  ", td->mah);
-        printf("rssi:%.2f  ", td->rssi);
-        printf("airspeed:%.2f  ", td->airspeed);
-        printf("arm:%d  ", td->armed);
-        printf("failsafe:%d  ", td->ltm_failsafe);
-        printf("flightmode:%d  ", td->ltm_flightmode);
+        fprintf(telemetry_file, "LTM S FRAME: ");
+        fprintf(telemetry_file, "voltage:%.2f  ", td->voltage);
+        fprintf(telemetry_file, "mAh:%.2f  ", td->mah);
+        fprintf(telemetry_file, "rssi:%.2f  ", td->rssi);
+        fprintf(telemetry_file, "airspeed:%.2f  ", td->airspeed);
+        fprintf(telemetry_file, "arm:%d  ", td->armed);
+        fprintf(telemetry_file, "failsafe:%d  ", td->ltm_failsafe);
+        fprintf(telemetry_file, "flightmode:%d  ", td->ltm_flightmode);
     }
     
-    printf("\n");
+    fprintf(telemetry_file, "\n");
     
     return render_data;
 }
-
-#endif

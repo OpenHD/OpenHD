@@ -42,22 +42,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/select.h>
 #include <locale.h>
 
+#include <tuple>
+#include <string>
+#include <iostream>
+#include <boost/regex.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/thread.hpp>
+#include <boost/chrono.hpp>
+
+
 #include "render.h"
-#include "osdconfig.h"
 #include "telemetry.h"
+#include "settings.h"
 
 
-#ifdef FRSKY
 #include "frsky.h"
-#elif defined(LTM)
 #include "ltm.h"
-#elif defined(MAVLINK)
 #include "mavlink.h"
-#elif defined(SMARTPORT)
 #include "smartport.h"
-#elif defined(VOT)
 #include "vot.h"
-#endif
+
+
 
 
 
@@ -85,6 +93,16 @@ int main(int argc, char *argv[]) {
 
     setlocale(LC_ALL, "en_GB.UTF-8");
 
+
+    telemetry_file = fopen("/wbc_tmp/telemetrydowntmp.txt", "w+");
+
+    if (!telemetry_file) {
+        fprintf(stderr, "WARNING: cannot open telemetry file!");
+        exit(1);
+    }
+
+    load_settings();
+
     /*
      * Mavlink maximum packet length
      */
@@ -103,9 +121,7 @@ int main(int argc, char *argv[]) {
     int counter = 0;
 
 
-    #ifdef FRSKY
     frsky_state_t fs;
-    #endif
 
     struct stat fdstatus;
 
@@ -221,17 +237,17 @@ int main(int argc, char *argv[]) {
             }
 
 
-            #ifdef FRSKY
-            frsky_parse_buffer(&fs, &td, buf, n);
-            #elif defined(LTM)
-            do_render = ltm_read(&td, buf, n);
-            #elif defined(MAVLINK)
-            do_render = mavlink_read(&td, buf, n);
-            #elif defined(SMARTPORT)
-            smartport_read(&td, buf, n);
-            #elif defined(VOT)
-            do_render =  vot_read(&td, buf, n);
-            #endif
+            if (FRSKY) {
+                frsky_parse_buffer(&fs, &td, buf, n);
+            } else if (LTM) {
+                do_render = ltm_read(&td, buf, n);
+            } else if (MAVLINK) {
+                do_render = mavlink_read(&td, buf, n);
+            } else if (SMARTPORT) {
+                smartport_read(&td, buf, n);
+            } else if (VOT) {
+                vot_read(&td, buf, n);
+            }
 
         }
 
