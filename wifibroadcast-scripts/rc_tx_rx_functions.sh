@@ -32,7 +32,8 @@ function rctx_function {
     pause_while
     
     echo
-    echo "Starting RC TX..."
+    echo "Starting $RC RC transmission"
+    qstatus "Starting $RC RC transmission" 5
 
     while true; do
         nice -n -5 /usr/local/bin/rctx

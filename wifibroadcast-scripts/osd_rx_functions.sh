@@ -8,11 +8,14 @@ function osdrx_function {
     
     if [ "${DISPLAY_OSD}" == "Y" ]; then
         if [ "${ENABLE_QOPENHD}" == "Y" ]; then
+            sleep 5
+            systemctl stop openhdboot
             systemctl start qopenhd
         else
             cd /home/pi/wifibroadcast-osd
             
             echo "Building OSD"
+            qstatus "Building OSD" 5
             
             ionice -c 3 nice make -j2 || {
                 echo
@@ -20,7 +23,7 @@ function osdrx_function {
                 
                 sleep 5
                 
-                wbc_status "ERROR: Could not build OSD, check osdconfig.txt for errors." 7 55 0 &
+                qstatus "ERROR: Could not build OSD, check osdconfig.txt!" 3
                 
                 sleep 5
             }
@@ -78,6 +81,8 @@ function osdrx_function {
         ionice -c 3 nice cat /root/telemetryfifo3 >> /wbc_tmp/telemetrydowntmp.raw &
         pause_while
         if [ "${ENABLE_QOPENHD}" != "Y" ]; then
+            sleep 5
+            systemctl stop openhdboot
             /tmp/osd >> /wbc_tmp/telemetrydowntmp.txt &
         fi
 

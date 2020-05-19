@@ -9,38 +9,6 @@ function MAIN_UPLINK_FUNCTION {
     #       of time
     # 
     sleep 7
-    
-
-    #
-    # Set the mavlink sysid for air and ground microservices. 
-    # 
-    # This does not need to avoid conflicts with other mavlink devices connected to the flight 
-    # controller because it is an entirely separate mavlink bus dedicated to OpenHD services.
-    #
-    if [ "${CAM}" -ge 1 ]; then 
-        #
-        # Air is always sysid 253 for all services
-        #
-
-        echo "SYSID=253" > /etc/openhd/openhd_microservice.conf
-    else
-        #
-        # Ground is always sysid 254 for all services
-        #
-
-        echo "SYSID=254" > /etc/openhd/openhd_microservice.conf
-    fi
-
-    #
-    # OpenHDRouter and the associated ptys are used for openhd microservices, our internal 
-    # GCS<->Ground<->Air communications channel for things like GPIO support, live camera 
-    # settings, air/ground power status, safe shutdown, etc
-    #
-    ionice -c 3 nice socat -lf /wbc_tmp/socat3.log -d -d pty,raw,echo=0,link=/dev/openhd_microservice1 pty,raw,echo=0,link=/dev/openhd_microservice2 & > /dev/null 2>&1
-    sleep 1
-    stty -F /dev/openhd_microservice1 -icrnl -ocrnl -imaxbel -opost -isig -icanon -echo -echoe -ixoff -ixon 115200
-    systemctl start openhd_router
-    sleep 1
 
     if [ "${CAM}" -ge 1 ]; then
         # 
@@ -57,8 +25,6 @@ function MAIN_UPLINK_FUNCTION {
         # Start the telemetry and RC receiver (downlink telemetry is started in another area)
         #
         if [ "$TELEMETRY_UPLINK" != "disabled" ] || [ "$RC" != "disabled" ]; then
-            echo "Telemetry uplink and/or R/C enabled"
-
             uplinkrx_and_rcrx_function &
             
             if [ "$TELEMETRY_UPLINK" == "msp" ]; then
@@ -67,7 +33,8 @@ function MAIN_UPLINK_FUNCTION {
             
             sleep 365d
         else
-            echo "Telemetry uplink and R/C not enabled"
+            echo "Telemetry uplink/RC disabled"
+            qstatus "Telemetry uplink/RC disabled" 5
         fi
         
         sleep 365d
@@ -87,6 +54,7 @@ function MAIN_UPLINK_FUNCTION {
         #
         if [ "$TELEMETRY_UPLINK" != "disabled" ]; then
             echo "Telemetry uplink enabled"
+            qstatus "Telemetry uplink enabled" 5
 
             uplinktx_function &
             
@@ -96,7 +64,8 @@ function MAIN_UPLINK_FUNCTION {
             
             sleep 365d
         else
-            echo "Telemetry uplink not enabled in config"
+            echo "Telemetry uplink disabled"
+            qstatus "Telemetry uplink disabled" 5
         fi
         
         sleep 365d
@@ -132,7 +101,11 @@ function uplinkrx_and_rcrx_function {
     #
     stty -F $FC_TELEMETRY_SERIALPORT $FC_TELEMETRY_STTY_OPTIONS $FC_TELEMETRY_BAUDRATE
 
-    echo "Starting Uplink telemetry and R/C RX ..."
+    echo "Starting ${TELEMETRY_UPLINK} telemetry uplink @${FC_TELEMETRY_BAUDRATE} baud"
+    echo "Starting ${RC} RC RX"
+
+    qstatus "Starting ${TELEMETRY_UPLINK} telemetry uplink @${FC_TELEMETRY_BAUDRATE} baud" 5
+    qstatus "Starting ${RC} RC RX"
     
 
     if [ "$EncryptionOrRange" == "Encryption" ]; then
@@ -323,7 +296,8 @@ function uplinktx_function {
     echo
 
     while true; do
-        echo "Starting uplink telemetry transmission"
+        echo "Starting ${TELEMETRY_UPLINK} telemetry uplink"
+        qstatus "Starting ${TELEMETRY_UPLINK} telemetry uplink" 5
         
         if [ "$TELEMETRY_TRANSMISSION" == "wbc" ]; then
             echo "telemetry transmission = wbc, starting tx_telemetry ..."

@@ -216,15 +216,6 @@ def StartSVPcomRx():
         return False
     return False
 
-def StartConfigureWlanScript():   
-    try:       
-        subprocess.check_call(['/home/pi/RemoteSettings/Air/helper/ConfigureNicsAir.sh', SettingsFileDATARATE, DefaultCommunicateFreq, "single" ])
-        return True
-    except Exception as e:
-        print(e)
-        return False
-    return False
-
 
 def FindWlanToUseAir():
     global WlanName
@@ -421,83 +412,79 @@ InitSettings()
 
 
 
-if StartConfigureWlanScript() != False:
-    if FindWlanToUseAir() != False:
-        if StartSVPcomRx() != False:
-            print("StartSVPcomRx")
-            if StartSVPcomTx() != False:
-                print("StartSVPcomTx")
-                InitUDPServer()
-                MD5CheckSumGround = RequestMd5FileSize()
-                if MD5CheckSumGround != False:
-                    MD5CheckSumAirCurrent = md5(SettingsFilePath)
-                    if MD5CheckSumGround == MD5CheckSumAirCurrent:
-                        print("Air and Ground config files equal. No need in sync")
-                        print("Notify ground that it can boot.")
-                        IsACK_RetryCounter = 0
-                        for i in range(0,15):
-                            IsACK = NotifyGroundWithACK("NoNeedInSync")
-                            if IsACK == True:
-                                CleanAndExit()
-                            sleep(0.1)
-                        CleanAndExit()
-                    else:
-                        print("Air and Ground config mismatch. Sync required")
-                        while True:
-                            InFileBuff = RequestSettingsFile()
-                            SaveFile(InFileBuff,"/tmp/infile.txt")
-                            InFileHash = md5("/tmp/infile.txt")
-                            print("InFileMD5: ", InFileHash)
-                            if InFileHash == MD5CheckSumGround:
-                                print("Ground and downloaded file checksum equal.")
-                                print("ACK received. Moving tmp file to /boot...")
-                                MoveFile()
-                                for x in range(0,15):
-                                    IsACK = NotifyGroundWithACK("DownloadFinished")
-                                    if IsACK == True:
-                                        print("ACK received. ready to boot")
-                                        CleanAndExit()
-                                        break
-                                CleanAndExit()
 
-                                #while True:
-                                #    IsACK = NotifyGroundWithACK("DownloadFinished")
-                                #    if IsACK == True:
-                                #        print("ACK received. Moving tmp file to /boot...")
-                                #        MoveFile()
-                                #        CleanAndExit()
-                                #    print("NotifyGroundWithACK failed. Retry...")
-                                #    IsACK_RetryCounter += 1
-                                #    if IsACK_RetryCounter % 2 == 0:
-                                #        if SwitchToFreq == "0":
-                                #            print("Reading freq from file...")
-                                #            SwitchToFreq = GetFreqFromConfig()
-                                #            if SwitchToFreq == False:
-                                #                print("Failed to read freq from settings file")
-                                #                SwitchToFreq = "0"
-                                #            else:
-                                #                print("Ground main frequency is: ", SwitchToFreq)
-                                #                print("switching to frequency: ", SwitchToFreq )
-                                #                SwitchWlanToFreq(SwitchToFreq)
-                                #
-                                #        else:
-                                #            print("switching to frequency: ", SwitchToFreq)
-                                #            SwitchWlanToFreq(SwitchToFreq)
-                                #
-                                #    else:
-                                #        print("switching to default frequency: ", DefaultCommunicateFreq)
-                                #        SwitchWlanToFreq(DefaultCommunicateFreq)
-
-                                #    sleep(1) #wait a bit between ACK request resend. 
-
-                                #break
-                            else:
-                                print("Downloaded file checksum not match to Ground. Retry...")
-
-
+if FindWlanToUseAir() != False:
+    if StartSVPcomRx() != False:
+        print("StartSVPcomRx")
+        if StartSVPcomTx() != False:
+            print("StartSVPcomTx")
+            InitUDPServer()
+            MD5CheckSumGround = RequestMd5FileSize()
+            if MD5CheckSumGround != False:
+                MD5CheckSumAirCurrent = md5(SettingsFilePath)
+                if MD5CheckSumGround == MD5CheckSumAirCurrent:
+                    print("Air and Ground config files equal. No need in sync")
+                    print("Notify ground that it can boot.")
+                    IsACK_RetryCounter = 0
+                    for i in range(0,15):
+                        IsACK = NotifyGroundWithACK("NoNeedInSync")
+                        if IsACK == True:
+                            CleanAndExit()
+                        sleep(0.1)
+                    CleanAndExit()
                 else:
-                    print("Failed to request ground MD5 config checksum. Current config file will be loaded.")
-else:
-    print("Faile to start /home/pi/RemoteSettings/Air/helper/ConfigureNicsAir.sh file")
+                    print("Air and Ground config mismatch. Sync required")
+                    while True:
+                        InFileBuff = RequestSettingsFile()
+                        SaveFile(InFileBuff,"/tmp/infile.txt")
+                        InFileHash = md5("/tmp/infile.txt")
+                        print("InFileMD5: ", InFileHash)
+                        if InFileHash == MD5CheckSumGround:
+                            print("Ground and downloaded file checksum equal.")
+                            print("ACK received. Moving tmp file to /boot...")
+                            MoveFile()
+                            for x in range(0,15):
+                                IsACK = NotifyGroundWithACK("DownloadFinished")
+                                if IsACK == True:
+                                    print("ACK received. ready to boot")
+                                    CleanAndExit()
+                                    break
+                            CleanAndExit()
+
+                            #while True:
+                            #    IsACK = NotifyGroundWithACK("DownloadFinished")
+                            #    if IsACK == True:
+                            #        print("ACK received. Moving tmp file to /boot...")
+                            #        MoveFile()
+                            #        CleanAndExit()
+                            #    print("NotifyGroundWithACK failed. Retry...")
+                            #    IsACK_RetryCounter += 1
+                            #    if IsACK_RetryCounter % 2 == 0:
+                            #        if SwitchToFreq == "0":
+                            #            print("Reading freq from file...")
+                            #            SwitchToFreq = GetFreqFromConfig()
+                            #            if SwitchToFreq == False:
+                            #                print("Failed to read freq from settings file")
+                            #                SwitchToFreq = "0"
+                            #            else:
+                            #                print("Ground main frequency is: ", SwitchToFreq)
+                            #                print("switching to frequency: ", SwitchToFreq )
+                            #                SwitchWlanToFreq(SwitchToFreq)
+                            #
+                            #        else:
+                            #            print("switching to frequency: ", SwitchToFreq)
+                            #            SwitchWlanToFreq(SwitchToFreq)
+                            #
+                            #    else:
+                            #        print("switching to default frequency: ", DefaultCommunicateFreq)
+                            #        SwitchWlanToFreq(DefaultCommunicateFreq)
+
+                            #    sleep(1) #wait a bit between ACK request resend. 
+
+                            #break
+                        else:
+                            print("Downloaded file checksum not match to Ground. Retry...")
+            else:
+                print("Failed to request ground MD5 config checksum. Current config file will be loaded.")
 
 CleanAndExit()

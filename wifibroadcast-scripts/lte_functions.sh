@@ -7,6 +7,7 @@ function lte_function {
     #
     if test -f "/boot/zerotier-install-tracker.txt"; then
         echo "Zerotier already attempted to install..."
+        qstatus "Zerotier already attempted to install..." 5
     else
 
         #
@@ -55,6 +56,8 @@ function lte_function {
     PI_NIC=$(echo $PI_NIC | sed 's/ /","/g')
 
     echo "PI_NIC to be blacklisted for zerotier=$PI_NIC"
+    qstatus "NIC to be blacklisted for zerotier: $PI_NIC" 5
+
 
     #
     # Blacklist all wbc connections except our ZeroTier LTE stick
@@ -64,6 +67,7 @@ function lte_function {
     #
     # Start ZeroTier
     #
+    qstatus "Stating ZeroTier" 5
     sudo systemctl start zerotier-one
     
 }

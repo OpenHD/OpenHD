@@ -31,7 +31,7 @@ function tether_check_function {
                 nice killall wbc_status > /dev/null 2>&1
                 
                 if [ "$ENABLE_QOPENHD" == "Y" ]; then
-                    qstatus "ERROR: Could not configure IP for USB tethering device!" 5
+                    qstatus "ERROR: Could not configure IP for USB tethering device!" 3
                 else
                     wbc_status "ERROR: Could not configure IP for USB tethering device!" 7 55 0 &
                 fi

@@ -33,10 +33,13 @@ function start_microservices {
     if [ "$TTY" != "/dev/tty1" ]; then
         return
     fi
+    /home/pi/wifibroadcast-status/qstatus "Starting power microservice" 5
+
     systemctl start openhd_microservice@power
 
     # gpio service only runs on the air side
     if [ "${CAM}" -ge 1 ]; then 
+        /home/pi/wifibroadcast-status/qstatus "Starting GPIO microservice" 5
         systemctl start openhd_microservice@gpio
     fi
 }
@@ -76,83 +79,83 @@ function detect_hardware {
     case "$HARDWARE" in
         'a03111')
             ABLE_BAND=ag
-            MODEL=4b
+            MODEL=Pi4b
         ;;
         'b03111')
             ABLE_BAND=ag
-            MODEL=4b
+            MODEL=Pi4b
         ;;
         'b03112')
             ABLE_BAND=ag
-            MODEL=4b
+            MODEL=Pi4b
         ;;
         'c03111')
             ABLE_BAND=ag
-            MODEL=4b
+            MODEL=Pi4b
         ;;
         'c03112')
             ABLE_BAND=ag
-            MODEL=4b
+            MODEL=Pi4b
         ;;
         '29020e0')
             ABLE_BAND=ag
-            MODEL=3a+
+            MODEL=Pi3a+
         ;;
         '2a02082')
             ABLE_BAND=g
-            MODEL=3b
+            MODEL=Pi3b
         ;;
         '2a22082')
             ABLE_BAND=g
-            MODEL=3b
+            MODEL=Pi3b
         ;;
         '2a32082')
             ABLE_BAND=g
-            MODEL=3b
+            MODEL=Pi3b
         ;;		
         '2a52082')
             ABLE_BAND=g
-            MODEL=3b
+            MODEL=Pi3b
         ;;	
         '2a020d3')
             ABLE_BAND=ag
-            MODEL=3b+
+            MODEL=Pi3b+
         ;;
         '2900092')
             ABLE_BAND=none
-            MODEL=Zero
+            MODEL=PiZero
         ;;
         '2900093')
             ABLE_BAND=none
-            MODEL=Zero
+            MODEL=PiZero
         ;;
         '29000c1')
             ABLE_BAND=ag
-            MODEL=ZeroW
+            MODEL=PiZeroW
         ;;
         '2920092')
             ABLE_BAND=none
-            MODEL=Zero
+            MODEL=PiZero
         ;;
         '2920093')
             ABLE_BAND=none
-            MODEL=Zero
+            MODEL=PiZero
         ;;
         '2a22042')
             ABLE_BAND=none
-            MODEL=2b
+            MODEL=Pi2b
         ;;
         '2a21041')
             ABLE_BAND=none
-            MODEL=2b
+            MODEL=Pi2b
         ;;
         '2a01041')
             ABLE_BAND=none
-            MODEL=2b
+            MODEL=Pi2b
         ;;
         '2a01040')
             ABLE_BAND=none
-            MODEL=2b
+            MODEL=Pi2b
         ;;
         *)
             ABLE_BAND=unknown
@@ -160,7 +163,9 @@ function detect_hardware {
         ;;
     esac
 
-    echo "Running on Pi $MODEL"
+    /home/pi/wifibroadcast-status/qstatus "Running on $MODEL system" 5
+
+    echo "Running on $MODEL system"
 }
 
 
@@ -272,9 +277,12 @@ function check_lifepowered_pi_attached {
     if [[ $grepRet -eq 0 ]] ; then
         export LIFEPO4WERED_PI="1"
 
-        echo "Detected LiFePO4wered Pi power hat"
-
         systemctl start lifepo4wered-daemon
+
+        if [ "$TTY" == "/dev/tty1" ]; then
+            echo "Detected LiFePO4wered Pi power hat"
+            /home/pi/wifibroadcast-status/qstatus "Detected LiFePO4wered Pi power hat" 5
+        fi
     else
         export LIFEPO4WERED_PI="0"
     fi
@@ -288,7 +296,10 @@ function check_hdmi_csi_attached {
     if [[ $grepRet -eq 0 ]] ; then
         export HDMI_CSI="1"
 
-        echo "Detected HDMI CSI input board"
+        if [ "$TTY" == "/dev/tty1" ]; then
+            echo "Detected HDMI CSI input board"
+            /home/pi/wifibroadcast-status/qstatus "Detected HDMI CSI input board" 5
+        fi
     else
         export HDMI_CSI="0"
     fi
@@ -334,6 +345,8 @@ function check_camera_attached {
                 rm /tmp/CameraNotDetected
 
                 CAM="1"
+
+                /home/pi/wifibroadcast-status/qstatus "Detected VEYE camera" 5
             else
                 echo  "0" > /tmp/cam
 
@@ -346,6 +359,8 @@ function check_camera_attached {
             touch /tmp/TX
 
             echo ${CAM} > /tmp/cam
+
+            /home/pi/wifibroadcast-status/qstatus "Detected ${CAM} official Raspberry Pi camera(s)" 5
         fi
     else
         echo -n "Waiting until TX/RX has been determined"
@@ -404,6 +419,7 @@ function read_config_file {
             source /tmp/settings.sh
         else
             echo "ERROR: openhd-settings file contains syntax error(s)!"
+            /home/pi/wifibroadcast-status/qstatus "ERROR: openhd-settings file contains syntax error(s)!" 3
 
             collect_errorlog
 
@@ -411,6 +427,7 @@ function read_config_file {
         fi
     else
         echo "ERROR: openhd-settings file not found!"
+        /home/pi/wifibroadcast-status/qstatus "ERROR: openhd-settings file not found!" 3
 
         collect_errorlog
         
@@ -938,6 +955,7 @@ function prepare_nic {
     
     if [ "$DRIVER" != "rt2800usb" ] && [ "$DRIVER" != "mt7601u" ] && [ "$DRIVER" != "ath9k_htc" ]; then
         tmessage "WARNING: Unsupported or experimental wifi card: $DRIVER"
+        /home/pi/wifibroadcast-status/qstatus "WARNING: Unsupported or experimental wifi card: $DRIVER" 4
     fi
 
     case $DRIVER in
@@ -953,6 +971,7 @@ function prepare_nic {
         ifconfig $1 up || {
             echo
             echo "ERROR: Bringing up interface $1 failed!"
+            /home/pi/wifibroadcast-status/qstatus "ERROR: Bringing up interface $1 failed!" 3
             collect_errorlog
             sleep 365d
         }
@@ -967,6 +986,7 @@ function prepare_nic {
             iw dev $1 set bitrates legacy-2.4 $UplinkSpeed || {
                 echo
                 echo "ERROR: Setting bitrate on $1 failed!"
+                /home/pi/wifibroadcast-status/qstatus "ERROR: Setting bitrate on $1 failed!" 3
                 
                 collect_errorlog
                 
@@ -990,6 +1010,7 @@ function prepare_nic {
                 iw dev $1 set bitrates legacy-2.4 $VIDEO_WIFI_BITRATE || {
                     echo
                     echo "ERROR: Setting bitrate on $1 failed!"
+                    /home/pi/wifibroadcast-status/qstatus "ERROR: Setting bitrate on $1 failed!" 3
 
                     collect_errorlog
                     
@@ -1011,6 +1032,7 @@ function prepare_nic {
         ifconfig $1 down || {
             echo
             echo "ERROR: Bringing down interface $1 failed!"
+            /home/pi/wifibroadcast-status/qstatus "ERROR: Bringing down interface $1 failed!" 3
 
             collect_errorlog
             
@@ -1023,6 +1045,7 @@ function prepare_nic {
         iw dev $1 set monitor none || {
             echo
             echo "ERROR: Setting monitor mode on $1 failed!"
+            /home/pi/wifibroadcast-status/qstatus "ERROR: Setting monitor mode on $1 failed!" 3
 
             collect_errorlog
             
@@ -1040,6 +1063,7 @@ function prepare_nic {
         ifconfig $1 up || {
             echo
             echo "ERROR: Bringing up interface $1 failed!"
+            /home/pi/wifibroadcast-status/qstatus "ERROR: Bringing up interface $1 failed!" 3
             
             collect_errorlog
 
@@ -1056,6 +1080,7 @@ function prepare_nic {
             iw dev $1 set freq $2 || {
                 echo
                 echo "ERROR: Setting frequency $2 MHz on $1 failed!"
+                /home/pi/wifibroadcast-status/qstatus "ERROR: Setting frequency $2 Mhz on $1 failed!" 3
 
                 collect_errorlog
                 
@@ -1079,6 +1104,7 @@ function prepare_nic {
         iw dev $1 set monitor none || {
             echo
             echo "ERROR: Setting monitor mode on $1 failed!"
+            /home/pi/wifibroadcast-status/qstatus "ERROR: Setting monitor mode on $1 failed!" 3
 
             collect_errorlog
             
@@ -1093,6 +1119,7 @@ function prepare_nic {
         ifconfig $1 up || {
             echo
             echo "ERROR: Bringing up interface $1 failed!"
+            /home/pi/wifibroadcast-status/qstatus "ERROR: Bringing up interfce $1 failed!" 3
 
             collect_errorlog
             
@@ -1109,6 +1136,7 @@ function prepare_nic {
             iw dev $1 set freq $2 || {
                 echo
                 echo "ERROR: Setting frequency $2 MHz on $1 failed!"
+                /home/pi/wifibroadcast-status/qstatus "ERROR: Setting frequency $2 MHz on $1 failed!" 3
 
                 collect_errorlog
                 
@@ -1129,6 +1157,7 @@ function prepare_nic {
             iw dev $1 set txpower fixed $3 || {
                 echo
                 echo "ERROR: Setting TX power to $3 on $1 failed!"
+                /home/pi/wifibroadcast-status/qstatus "ERROR: Setting TX power to $3 on $1 failed!" 3
 
                 collect_errorlog
                 

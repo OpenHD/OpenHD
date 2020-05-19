@@ -123,20 +123,20 @@ function hotspot_check_function {
     if [ "$WIFI_HOTSPOT" != "N" ]; then
         detect_hardware
 
-        echo "Running on Pi model $MODEL with hotspot band $ABLE_BAND"
+        echo "Ground supports hotspot band(s): $ABLE_BAND"
 
         if [ "$ABLE_BAND" != "unknown" ]; then
-            echo "Setting up Hotspot..."
+            echo "Setting up WiFi hotspot..."
+            qstatus "Setting up WiFi hotspot" 5
 
             if [ "$WIFI_HOTSPOT" == "auto" ] && [ "$WIFI_HOTSPOT_NIC" == "internal" ]; then	
-                echo "wifihotspot auto..."
+                echo "Autoselecting WiFi hotspot band"
+                qstatus "Autoselecting WiFi hotspot band" 5
 
                 #
                 # Automatically choose a hotspot band that will not conflict with the Open.HD broadcast link
                 #
                 if [ "$ABLE_BAND" == "ag" ]; then
-                    echo "Dual Band capable..."
-
                     if [ "$FREQ" -gt "3000" ]; then
                         HOTSPOT_BAND=g
                         HOTSPOT_CHANNEL=7
@@ -145,14 +145,13 @@ function hotspot_check_function {
                         HOTSPOT_CHANNEL=36
                     fi
                 else
-                    echo "G Band only capable..."
-
                     HOTSPOT_BAND=g
 
                     if [ "$FREQ" -gt "3000" ]; then
                         HOTSPOT_CHANNEL=1
                     else
-                        echo "Hotspot disabled, you are using a 2.4Ghz Open.HD wifi card but your ground station only supports 2.4Ghz hotspot"	
+                        echo "Hotspot disabled due to WiFi card band mismatch"
+                        qstatus "Hotspot disabled due to WiFi card band mismatch" 5
                         return 1
                     fi
                 fi
@@ -166,8 +165,9 @@ function hotspot_check_function {
             sudo sed -i -e "s/hw_mode=$hw_mode/hw_mode=$HOTSPOT_BAND/g" /tmp/apconfig.txt
             sudo sed -i -e "s/channel=$channel/channel=$HOTSPOT_CHANNEL/g" /tmp/apconfig.txt
 
-            echo "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL"
-            tmessage "setting up hotspot with mode $HOTSPOT_BAND on channel $HOTSPOT_CHANNEL..."
+            echo "Hotspot running on band $HOTSPOT_BAND, channel $HOTSPOT_CHANNEL"
+            tmessage "Hotspot running on band $HOTSPOT_BAND, channel $HOTSPOT_CHANNEL"
+            qstatus "Hotspot running on band $HOTSPOT_BAND, channel $HOTSPOT_CHANNEL" 5
 
             #
             # Start a DHCP server and then configure access point management
@@ -184,8 +184,9 @@ function hotspot_check_function {
                 iw dev wifihotspot0 set txpower fixed 100
             fi
         else
-            echo "No hotspot capable hardware"
-            tmessage "No hotspot capable hardware"
+            echo "No WiFi hotspot capable hardware found"
+            tmessage "No WiFi hotspot capable hardware found"
+            qstatus "No WiFi hotspot capable hardware found" 5
         fi 
         
 
