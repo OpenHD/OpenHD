@@ -130,7 +130,6 @@ def md5(fname):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
     except Exception as e:
-       SendInfoToDisplay(3, e)
        return False
 
 
@@ -140,7 +139,6 @@ def SendData(MessageBuf):
         #sockToAir.sendto( bytes(MessageBuf,'utf-8'), ('127.0.0.1', UDP_PORT_OUT))
         sockToAir.sendto(MessageBuf, ('127.0.0.1', UDP_PORT_OUT))
     except Exception as e:
-        SendInfoToDisplay(3, e)
         return False
 
 
@@ -172,7 +170,6 @@ def ReadFileFrom(offset, BytesToRead):
         f.close()
         return text
     except Exception as e:
-        SendInfoToDisplay(3, e)
         return False
 
 def GetPrimaryCardMAC_Config():
@@ -187,7 +184,6 @@ def GetPrimaryCardMAC_Config():
                     return result
 
     except Exception as e:
-       SendInfoToDisplay(3, e)
        return False
     return False
 
@@ -251,7 +247,7 @@ def ReadJoystickConfigFile():
         return  {'ROLL_AXIS':ROLL_AXIS, 'PITCH_AXIS':PITCH_AXIS ,'YAW_AXIS':YAW_AXIS,    'THROTTLE_AXIS':THROTTLE_AXIS, 'AUX1_AXIS':AUX1_AXIS ,'AUX2_AXIS':AUX2_AXIS,    'AUX3_AXIS':AUX3_AXIS, 'AUX4_AXIS':AUX4_AXIS }
 
     except Exception as e:
-       SendInfoToDisplay(3, e)
+       print(e)
 
     return False
 
@@ -307,7 +303,7 @@ def ReadSettingsFromConfigFile():
 
 
     except Exception as e:
-       SendInfoToDisplay(3, e)
+       SendInfoToDisplay(3, "SmartSync: error occurred while reading settings file")
        return False
     return False
 
@@ -324,7 +320,6 @@ def FindWlanNameByMAC(PrimaryCardMAC):
                         return dir
 
     except Exception as e:
-       SendInfoToDisplay(3, e)
        return False
     return False
 
@@ -353,7 +348,6 @@ def FindWlanToUseGround():
                 return False
 
         except Exception as e:
-            SendInfoToDisplay(3, e)
             return False
     else:
         SendInfoToDisplay(5, "SmartSync: trying to find wlan with MAC:" + PrimaryCardMAC)
@@ -367,7 +361,6 @@ def FindWlanToUseGround():
                 SendInfoToDisplay(5, "SmartSync: frequency set to " + SmartSyncFreq)
                 return True
             except Exception as e:
-                SendInfoToDisplay(3, e)
                 return False
         else:
             SendInfoToDisplay(5, "SmartSync: wlan with MAC" + PrimaryCardMAC +  "not found, looking for another...")
@@ -386,7 +379,6 @@ def FindWlanToUseGround():
                     return False
 
             except Exception as e:
-                SendInfoToDisplay(3, e)
                 return False
 
 #Not used. Can be used with ath9k driver reload.
@@ -405,7 +397,6 @@ def InitWlan():
                 SendInfoToDisplay(3, "SmartSync: wlan0 not found")
                 return False
         except Exception as e:
-            SendInfoToDisplay(3, e)
             return False
     else:
         SendInfoToDisplay(5, "SmartSync: configuring wlan with MAC: " + PrimaryCardMAC)
@@ -417,7 +408,6 @@ def InitWlan():
                 subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', result, SmartSyncFreq ])
                 return True
             except Exception as e:
-                SendInfoToDisplay(3, e)
                 return False
         else:
             SendInfoToDisplay(5, "SmartSync: wlan with primary card MAC not found, trying wlan0...")
@@ -430,7 +420,6 @@ def InitWlan():
                     SendInfoToDisplay(3, "SmartSync: wlan0 not found")
                     return False
             except Exception as e:
-                SendInfoToDisplay(3, e)
                 return False
 
 def ShutDownWlan():
@@ -438,7 +427,6 @@ def ShutDownWlan():
         subprocess.check_call(['/bin/ip', "link" ,"set", WlanName, "down" ])
         return True
     except Exception as e:
-        SendInfoToDisplay(3, e)
         return False
     return False
 
@@ -453,7 +441,6 @@ def IsWlanAth9k():
                     return True
         return False
     except Exception as e:
-        SendInfoToDisplay(3, e)
         return False
     return False
 
@@ -467,7 +454,6 @@ def UnloadAth9kDriver():
         subprocess.check_call(['rmmod', "ath"  ])
         return True
     except Exception as e:
-        SendInfoToDisplay(3, e)
         return False
     return False
 
@@ -480,7 +466,6 @@ def LoadAth9kDriver():
         subprocess.check_call(['modprobe', "ath"  ])
         return True
     except Exception as e:
-        SendInfoToDisplay(3, e)
         return False
     return False
 
@@ -491,7 +476,6 @@ def CreateFinishMarkFile():
         f.close()
         return True
     except Exception as e:
-        SendInfoToDisplay(3, e)
         return False
     return False
 
@@ -503,7 +487,6 @@ def InitDevNull():
         RCDevNull = open(os.devnull, 'w')
         return True
     except Exception as e:
-        SendInfoToDisplay(3, e)
     return False
 
 def DetectWFBPrimaryBand():
@@ -552,7 +535,6 @@ def StartSVPcomTx():
                           "-u" ,str(UDP_PORT_OUT), "-p", "93", "-B", "20", "-M", "0", WlanName ])
         return True
     except Exception as e:
-        SendInfoToDisplay(3, e)
         return False
     return False
 
@@ -563,7 +545,6 @@ def StartSVPcomRx():
                               "-c" ,"127.0.0.1", "-u", str(UDP_PORT_IN), "-p", "92",  WlanName ], stdout=RxDevNull)
         return True
     except Exception as e:
-        SendInfoToDisplay(3, e)
         return False
     return False
 
@@ -602,7 +583,6 @@ def StartRC_Reader(ChannelToRead):
         subprocess.Popen( ['/home/pi/RemoteSettings/Ground/helper/JoystickSender', str(ChannelToRead), ROLL_AXIS, PITCH_AXIS,YAW_AXIS, THROTTLE_AXIS,AUX1_AXIS,AUX2_AXIS,AUX3_AXIS,AUX4_AXIS ], stdout=RCDevNull)
         return True
     except Exception as e:
-        SendInfoToDisplay(3, e)
         return False
     return False
 
@@ -664,8 +644,8 @@ def InitUDPServer():
         RecvSocket.settimeout(0.5)
         RecvSocket.bind((UDP_IP, UDP_PORT_IN))
     except Exception as e:
-        SendInfoToDisplay(3, e)
         return False
+
     MessageBufFile =  bytearray()
     while True:
         try:
@@ -777,7 +757,6 @@ def InitUDPServer():
 
         except Exception as e:
             pass
-            #SendInfoToDisplay(3, e)
 
     return False
 
@@ -822,7 +801,7 @@ def ReturnWlanFreq():
                 subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanFreq.sh', WlanName , FreqFromConfigFile ])
                 SendInfoToDisplay(5, "SmartSync: normal frequency for interface " + WlanName + " returned to: " + FreqFromConfigFile)
         except Exception as e:
-            SendInfoToDisplay(3, e)
+            SendInfoToDisplay(3, "SmartSync: error setting wifi frequency back to " + FreqFromConfigFile)
 
 def CleanAndExit():
     global ExitRCThread
@@ -836,17 +815,17 @@ def CleanAndExit():
     try:
         subprocess.check_call(['/usr/bin/killall', "JoystickSender" ]) 
     except Exception as e:
-        SendInfoToDisplay(3, e)
+        pass
 
     try:
         subprocess.check_call(['/usr/bin/killall', "wfb_rx" ]) 
     except Exception as e:
-        SendInfoToDisplay(3, e)
+        pass
 
     try:
         subprocess.check_call(['/usr/bin/killall', "wfb_tx" ]) 
     except Exception as e:
-        SendInfoToDisplay(3, e)
+        pass
 
 
     RxDevNull.close()
