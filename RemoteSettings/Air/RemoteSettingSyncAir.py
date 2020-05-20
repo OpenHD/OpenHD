@@ -13,8 +13,13 @@ RecvSocket = 0
 RetryCountMD5 = 15
 FileSizeInt = 0
 SettingsFilePath = "/boot/openhd-settings-1.txt"
-SwitchToFreq = "0"
-DefaultCommunicateFreq = "2412"
+
+WFBDefultFreq24="2412"
+WFBDefultFreq58="5180"
+
+SmartSyncFreqDefault24 = "2412"
+SmartSyncFreqDefault58 = "5180"
+SmartSyncFreqFromConfigFile="auto"
 
 SettingsFilePath = "/boot/openhd-settings-1.txt"
 TxPowerConfigFilePath="/etc/modprobe.d/ath9k_hw.conf"
@@ -194,7 +199,43 @@ def GetFreqFromConfig():
        return False
     return False
 
+def DetectWFBPrimaryBand():
+    ret = os.system('lsmod | grep 88XXau')
+    if ret == 0:
+        return "58"
+    else:
+        return "24"
 
+def GetDefaultWFBFrequency():
+    WFBPrimaryBand = DetectWFBPrimaryBand()
+    if WFBPrimaryBand == "58":
+        return WFBDefultFreq58
+    elif WFBPrimaryBand == "24":
+        return WFBDefultFreq24
+    else:
+        # we have no way of knowing what to use because the supported bands aren't known
+        return WFBDefultFreq24
+
+def SelectSmartSyncFrequency():
+    WFBPrimaryBand = DetectWFBPrimaryBand()
+    try:
+        if not SmartSyncFreqFromConfigFile or "auto" in SmartSyncFreqFromConfigFile:
+            # either the file couldn't be read or the user still has auto chosen, so we pick for them
+            WFBPrimaryBand = DetectWFBPrimaryBand()
+            if WFBPrimaryBand == "58":
+                return SmartSyncFreqDefault58
+            elif WFBPrimaryBand == "24":
+                return SmartSyncFreqDefault24
+            else:
+                # we have no way of knowing what to use because the supported bands aren't known
+                return SmartSyncFreqDefault24
+        else:
+            # the user changed the smartsync frequency, we use it but they're on their own now
+            return SmartSyncFreqFromConfigFile
+    except Exception as e:
+       print(e)
+       return False
+    return False
 
 
 def StartSVPcomTx():                                     
@@ -229,7 +270,8 @@ def FindWlanToUseAir():
                     WlanName = dir
         if WlanName != "0":
             print("Using WLAN with name: ", WlanName)
-            subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", DefaultCommunicateFreq ])
+            SmartSyncFreq = SelectSmartSyncFrequency()
+            subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", SmartSyncFreq ])
             return True
         else:
             return False
@@ -241,20 +283,21 @@ def FindWlanToUseAir():
 def ReturnWlanFreq():
     if WlanName != "0":
         try:
-            SettingsFileFREQ = "0"
+            SettingsFileFREQ = ""
             with open(SettingsFilePath, "r") as f:
                 lines = f.readlines()
                 for line in lines:
                     if line.startswith("FREQ=") == True:
                         SplitLines = line.split("=")
-                        FilterDigits = SplitLines[1]
-                        SettingsFileFREQ = re.sub("\D", "", FilterDigits)
+                        SettingsFileFREQ = SplitLines[1]
                         
-            if SettingsFileFREQ == "0":
+            if "auto" in SettingsFileFREQ or not SettingsFileFREQ:
+                WFBFreq = GetDefaultWFBFrequency()
                 #subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", "2472" ])
-                subprocess.check_call(['/home/pi/RemoteSettings/Air/SetWlanFreq.sh', WlanName , "2472" ])
-                print("Can`t read frequency from config file. Frequency set to: 2472")
+                subprocess.check_call(['/home/pi/RemoteSettings/Air/SetWlanFreq.sh', WlanName , WFBFreq ])
+                print("Using automatic WFB frequency: " + WFBFreq)
             else:
+                SettingsFileFREQ = re.sub("\D", "", SettingsFileFREQ)
                 #subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", SettingsFileFREQ ])
                 subprocess.check_call(['/home/pi/RemoteSettings/Air/SetWlanFreq.sh', WlanName , SettingsFileFREQ ])
                 print("Frequency for WLAN: " + WlanName + " returned back to: " + SettingsFileFREQ)
@@ -269,6 +312,7 @@ def ReadSettingsFromConfigFile():
     global SettingsFileTXPOWER
     global SettingsFileTXMODE
 #   global SmartSync_StartupMode
+    global SmartSyncFreqFromConfigFile
 
     try:
         with open(SettingsFilePath, "r") as f:
@@ -293,6 +337,11 @@ def ReadSettingsFromConfigFile():
                     SplitLines = line.split("=")
                     FilterDigits = SplitLines[1]
                     SettingsFileTXMODE = re.sub("\D", "", FilterDigits)
+
+                if line.startswith("SmartSync_Frequency=") == True:
+                    SplitLines = line.split("=")
+                    FilterDigits = SplitLines[1]
+                    SmartSyncFreqFromConfigFile = re.sub("\D", "", FilterDigits) 
 
             return True
 

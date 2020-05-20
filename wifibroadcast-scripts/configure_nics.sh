@@ -10,6 +10,7 @@ else
     CONFIGFILE="openhd-settings-1.txt"
 fi
 
+source /home/pi/wifibroadcast-scripts/global_functions.sh
 
 
 function tmessage {
@@ -600,6 +601,10 @@ function prepare_nic {
 
 
 read_config_file
+
+detect_wfb_primary_band
+
+auto_frequency_select
 
 if [ "$CAM" == "0" ]; then
     if [[ "$MirrorDSI_To_HDMI" == "y" || "$MirrorDSI_To_HDMI" == "Y" ]]; then

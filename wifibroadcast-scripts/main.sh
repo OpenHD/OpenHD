@@ -37,6 +37,10 @@ migration_helper
 configure_hello_video_args
 
 
+detect_wfb_primary_band
+
+auto_frequency_select
+
 
 echo "-------------------------------------"
 echo "SETTINGS FILE: $CONFIGFILE"
