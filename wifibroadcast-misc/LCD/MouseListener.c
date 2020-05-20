@@ -317,6 +317,8 @@ void *eventThread(void *arg) {
                     //printf("Right button\n");
                 }
             }
+
+            usleep(50000);
         }
     }
 }
