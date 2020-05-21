@@ -950,6 +950,12 @@ int main(int argc, char *argv[]) {
     si_me.sin_port = htons(InUDPPort);
     si_me.sin_addr.s_addr = htonl(INADDR_ANY);
 
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+
+
     if (bind(s, (struct sockaddr *)&si_me, sizeof(si_me)) == -1) {
         fprintf(stderr, "Bind error. Exit");
         return 1;
@@ -1166,7 +1172,15 @@ void udpInputThread() {
     socklen_t slen = sizeof(si_other);
 
     while (udpThreadRun) {
-        if ((recv_len = recvfrom(s, buf, 21, 0, (struct sockaddr *)&si_other, &slen)) == -1) {
+        auto recv_len = recvfrom(s, buf, 21, 0, (struct sockaddr *)&si_other, &slen);
+
+        if (recv_len == -1) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                usleep(50000);
+
+                continue;
+            }
+
             fprintf(stderr, "UDP recv error, closing thread. USB joystick will continue to function.");
 
             return;
