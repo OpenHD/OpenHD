@@ -1053,6 +1053,33 @@ int main(int argc, char *argv[]) {
     framedatas.dur2 =   0; // <-- duration
 
 
+
+    // init RSSI shared memory
+    telemetry_init(&td);
+
+
+    /*
+     * We need to prefill channels, since we have no values for them as
+     * long as the corresponding axis has not been moved yet
+     *
+     */
+    rcData = rc_channels_memory_open();
+    rcData[0] = axis0_initial;
+    rcData[1] = axis1_initial;
+    rcData[2] = axis2_initial;
+    rcData[3] = axis3_initial;
+    rcData[4] = axis4_initial;
+    rcData[5] = axis5_initial;
+    rcData[6] = axis6_initial;
+    rcData[7] = axis7_initial;
+    // Switches
+    rcData[8] = 0;
+
+
+    boost::thread t{udpInputThread};
+
+
+
     fprintf(stderr, "Waiting for joystick ...");
     
 
@@ -1069,26 +1096,6 @@ int main(int argc, char *argv[]) {
 
         usleep(100000);
     }
-
-
-    
-    rcData = rc_channels_memory_open();
-
-    /*
-     * We need to prefill channels, since we have no values for them as
-     * long as the corresponding axis has not been moved yet
-     *
-     */
-    rcData[0] = axis0_initial;
-    rcData[1] = axis1_initial;
-    rcData[2] = axis2_initial;
-    rcData[3] = axis3_initial;
-    rcData[4] = axis4_initial;
-    rcData[5] = axis5_initial;
-    rcData[6] = axis6_initial;
-    rcData[7] = axis7_initial;
-    // Switches
-    rcData[8] = 0;
     
 
     if (SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_VIDEO) != 0) {
@@ -1112,10 +1119,6 @@ int main(int argc, char *argv[]) {
         printf("\tHats: %i\n", SDL_JoystickNumHats(js));
     }
 
-    // init RSSI shared memory
-    telemetry_init(&td);
-
-    boost::thread t{udpInputThread};
 
     while (done) {
         done = eventloop_joystick();
