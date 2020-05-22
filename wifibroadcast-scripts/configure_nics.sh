@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export PATH=/usr/local/bin:${PATH}
 
 if [ "$CAM" == "0" ]; then
     CONFIGFILE=`/root/wifibroadcast_misc/gpio-config.py`
@@ -11,14 +12,6 @@ else
 fi
 
 source /home/pi/wifibroadcast-scripts/global_functions.sh
-
-
-function tmessage {
-    if [ "$QUIET" == "N" ]; then
-        echo $1 "$2"
-    fi
-}
-
 
 
 function datarate_to_wifi_settings {
@@ -214,12 +207,12 @@ function read_config_file {
         if [ "$?" == "0" ]; then
             source /tmp/settings.sh
         else
-            echo "ERROR: openhd-settings file contains syntax error(s)!"
+            qstatus "Could not read settings file" 3
             collect_errorlog
             sleep 365d
         fi
     else
-        echo "ERROR: openhd-settings file not found!"
+        qstatus "Settings file missing" 3
         collect_errorlog
         sleep 365d
     fi
@@ -227,8 +220,7 @@ function read_config_file {
 
 
 function detect_nics {
-    tmessage "Setting up wifi cards ... "
-    echo
+    qstatus "Setting up wifi cards" 5
 
     #
     # Set reg domain to DE to allow channel 12 and 13 for hotspot
@@ -256,7 +248,7 @@ function detect_nics {
     done
 
     if [ "$NUM_CARDS" == "-1" ]; then
-        echo "ERROR: No wifi cards detected"
+        qstatus "No wifi cards detected" 1
         collect_errorlog
         sleep 365d
     fi
@@ -273,13 +265,12 @@ function detect_nics {
                 # Only configure it if it's there
                 #
                 if ls /sys/class/net/ | grep -q $WIFI_HOTSPOT_NIC; then
-                    tmessage -n "Setting up $WIFI_HOTSPOT_NIC for Wifi Hotspot operation.. "
+                    qstatus "Set up card $WIFI_HOTSPOT_NIC for hotspot" 5
                     ip link set $WIFI_HOTSPOT_NIC name wifihotspot0
                     ifconfig wifihotspot0 192.168.2.1 up
-                    tmessage "done!"
                     let "NUM_CARDS--"
                 else
-                    tmessage "Wifi Hotspot card $WIFI_HOTSPOT_NIC not found!"
+                    qstatus "Hotspot card $WIFI_HOTSPOT_NIC not found" 3
                     sleep 0.5
                 fi
             else
@@ -287,12 +278,11 @@ function detect_nics {
                 # Only configure it if it's there
                 #
                 if ls /sys/class/net/ | grep -q intwifi0; then
-                    tmessage -n "Setting up intwifi0 for Wifi Hotspot operation.. "
+                    qstatus "Set up internal wifi for hotspot" 5
                     ip link set intwifi0 name wifihotspot0
                     ifconfig wifihotspot0 192.168.2.1 up
-                    tmessage "done!"
                 else
-                    tmessage "Pi3 Onboard Wifi Hotspot card not found!"
+                    qstatus "Internal wifi card not found, hotspot disabled" 3
                     sleep 0.5
                 fi
             fi
@@ -307,11 +297,12 @@ function detect_nics {
             # Only configure it if it's there
             #
             if ls /sys/class/net/ | grep -q $RELAY_NIC; then
+                qstatus "Set up card $RELAY_NIC for relay" 5
                 ip link set $RELAY_NIC name relay0
                 prepare_nic relay0 $RELAY_FREQ
                 let "NUM_CARDS--"
             else
-                tmessage "Relay card $RELAY_NIC not found!"
+                qstatus "Relay card $RELAY_NIC not found" 3
                 sleep 0.5
             fi
         fi
@@ -353,8 +344,7 @@ function detect_nics {
             
             sleep 0.5
             
-            echo
-            echo -n "Please wait, scanning for TX ..."
+            qstatus "Scanning for nearby transmitters" 5
             FREQ=0
 
             if iw list | nice grep -q 5180; then 
@@ -380,14 +370,13 @@ function detect_nics {
                 FREQ=`$FREQCMD`
             done
 
-            echo "found on $FREQ MHz"
+            qstatus "Transmitter found on ${FREQ}MHz" 5
             echo
             ps -ef | nice grep "rx -p 0" | nice grep -v grep | awk '{print $2}' | xargs kill -9
             for NIC in $NICS
             do
-                echo -n "Setting frequency on $NIC to $FREQ MHz.. "
+                qstatus "Setting card $NIC to ${FREQ}MHz" 5
                 iw dev $NIC set freq $FREQ
-                echo "done."
                 sleep 0.1
             done
             
@@ -419,7 +408,7 @@ function prepare_nic {
     DRIVER=`cat /sys/class/net/${1}/device/uevent | nice grep DRIVER | sed 's/DRIVER=//'`
     
     if [ "$DRIVER" != "rtl88xxau" ] && [ "$DRIVER" != "rt2800usb" ] && [ "$DRIVER" != "mt7601u" ] && [ "$DRIVER" != "ath9k_htc" ]; then
-        tmessage "WARNING: Unsupported or experimental wifi card: $DRIVER"
+        qstatus "Unsupported card: $DRIVER" 3
     fi
 
     case $DRIVER in
@@ -428,15 +417,14 @@ function prepare_nic {
         ;;
     esac
 
-    tmessage -n "Setting up $1: "
+    qstatus "Setting up interface $1" 5
     
     if [ "$DRIVER" == "ath9k_htc" ]; then 
         #
         # set bitrates for Atheros via iw
         #
         ifconfig $1 up || {
-            echo
-            echo "ERROR: Bringing up interface $1 failed!"
+            qstatus "Setting up card $1 failed" 1
             collect_errorlog
             sleep 365d
         }
@@ -451,8 +439,7 @@ function prepare_nic {
             #tmessage -n "bitrate $UPLINK_WIFI_BITRATE Mbit "
             
             iw dev $1 set bitrates legacy-2.4 $UplinkSpeed || {
-                echo
-                echo "ERROR: Setting bitrate on $1 failed!"
+                qstatus "Setting datarate on wifi card $1 failed" 3
                 #collect_errorlog
                 #sleep 365d
             }
@@ -462,55 +449,47 @@ function prepare_nic {
             #
             # We are TX, set bitrate to downstream bitrate
             #
-            tmessage -n "bitrate "
-
             if [ "$VIDEO_WIFI_BITRATE" != "19.5" ]; then
                 #
                 # Only set bitrate if something else than 19.5 is requested
                 # 
                 # 19.5 is default compiled in ath9k_htc firmware
                 #
-                tmessage -n "$VIDEO_WIFI_BITRATE Mbit "
+                qstatus "Setting card $1 to ${VIDEO_WIFI_BITRATE}Mbit" 5
                 iw dev $1 set bitrates legacy-2.4 $VIDEO_WIFI_BITRATE || {
-                    echo
-                    echo "ERROR: Setting bitrate on $1 failed!"
+                    qstatus "Setting card $1 to ${VIDEO_WIFI_BITRATE} failed" 3
                     collect_errorlog
                     sleep 365d
                 }
             else
-                tmessage -n "$VIDEO_WIFI_BITRATE Mbit "
+                qstatus "Setting card $1 to ${VIDEO_WIFI_BITRATE}Mbit" 5
             fi
             
-            sleep 0.2
-            
-            tmessage -n "done. "
+            sleep 0.2            
         fi
 
+        qstatus "Disabling card $1 to set monitor mode" 5
+
         ifconfig $1 down || {
-            echo
-            echo "ERROR: Bringing down interface $1 failed!"
+            qstatus "Disabling card $1 failed" 1
             collect_errorlog
             sleep 365d
         }
         
         sleep 0.2
-        tmessage -n "monitor mode.. "
+        qstatus "Setting card $1 to monitor mode" 5
         
 
         iw dev $1 set monitor none || {
-            echo
-            echo "ERROR: Setting monitor mode on $1 failed!"
+            qstatus "Setting card $1 to monitor mode failed" 1
             collect_errorlog
             sleep 365d
         }
         
         sleep 0.2
-        tmessage -n "done. "
-
 
         ifconfig $1 up || {
-            echo
-            echo "ERROR: Bringing up interface $1 failed!"
+            qstatus "Re-enabling card $1 failed" 1
             collect_errorlog
             sleep 365d
         }
@@ -519,16 +498,13 @@ function prepare_nic {
 
 
         if [ "$2" != "0" ]; then
-            tmessage -n "frequency $2 MHz.. "
+            qstatus "Setting card $1 to ${2}MHz" 5
             
             iw dev $1 set freq $2 || {
-                echo
-                echo "ERROR: Setting frequency $2 MHz on $1 failed!"
+                qstatus "Setting card $1 to ${2}MHz failed" 1
                 collect_errorlog
                 sleep 365d
             }
-            
-            tmessage "done!"
         else
             echo
         fi
@@ -540,24 +516,20 @@ function prepare_nic {
         #
         # do not set bitrate for Ralink, Mediatek, Realtek, done through tx parameter
         #
-        tmessage -n "monitor mode.. "
+        qstatus "Setting card $1 to monitor mode" 5
         
         iw dev $1 set monitor none || {
-            echo
-            echo "ERROR: Setting monitor mode on $1 failed!"
+            qstatus "Setting card $1 to monitor mode failed" 1
             collect_errorlog
             sleep 365d
         }
         
 
         sleep 0.2
-        tmessage -n "done. "
-
         
         #tmessage -n "bringing up.. "
         ifconfig $1 up || {
-            echo
-            echo "ERROR: Bringing up interface $1 failed!"
+            qstatus "Re-enabling card $1 failed" 1
             collect_errorlog
             sleep 365d
         }
@@ -567,35 +539,26 @@ function prepare_nic {
 
 
         if [ "$2" != "0" ]; then
-            tmessage -n "frequency $2 MHz.. "
+            qstatus "Setting card $1 to ${2}MHz" 5
             
             iw dev $1 set freq $2 || {
-                echo
-                echo "ERROR: Setting frequency $2 MHz on $1 failed!"
+                qstatus "Setting card $1 to ${2}MHz failed" 1
                 collect_errorlog
                 sleep 365d
             }
-            
-            tmessage "done!"
-        else
-            echo
         fi
 
         if  [ "$DRIVER" == "rtl88xxau" -a -n "$3" ]; then
-            tmessage -n "TX power $3.. "
+            qstatus "Setting card $1 to TX power ${3}" 5
             
             iw dev $1 set txpower fixed $3 || {
-                echo
-                echo "ERROR: Setting TX power to $3 on $1 failed!"
+                qstatus "Setting card $1 to TX power ${3} failed" 1
                 collect_errorlog
                 sleep 365d
             }
         
             sleep 0.2
-        
-            tmessage -n "done. "
         fi
-
     fi
 }
 
@@ -608,14 +571,16 @@ auto_frequency_select
 
 if [ "$CAM" == "0" ]; then
     if [[ "$MirrorDSI_To_HDMI" == "y" || "$MirrorDSI_To_HDMI" == "Y" ]]; then
-        if [ -e "/dev/fb0" ]; then
-            echo "/dev/fb0 - found"
+        qstatus "Enabling DSI to HDMI mirroring" 5
 
-            if [ -e "/dev/fb1" ]; then
-                echo "/dev/fb1 - found. Start framebuffer copy"
-                
+        if [ -e "/dev/fb0" ]; then
+            if [ -e "/dev/fb1" ]; then                
                 /home/pi/wifibroadcast-misc/raspi2raspi &
+            else
+                qstatus "/dev/fb1 not found, mirroring disabled" 4
             fi
+        else
+            qstatus "/dev/fb0 not found, mirroring disabled" 4
         fi
     fi
 fi
