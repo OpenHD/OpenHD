@@ -61,7 +61,9 @@ if [ "$TTY" == "/dev/tty1" ]; then
         sleep 1
 
         systemctl start openhd_microservice@status
-        sleep 1
+        while [ ! -f /tmp/status_service ]; do
+            sleep 0.1
+        done
 
         /home/pi/wifibroadcast-scripts/configure_nics.sh
 
@@ -84,7 +86,9 @@ if [ "$TTY" == "/dev/tty1" ]; then
         sleep 1
 
         systemctl start openhd_microservice@status
-        sleep 1
+        while [ ! -f /tmp/status_service ]; do
+            sleep 0.1
+        done
         
         #
         # No cameras found, and we did not see GPIO7 pulled low, so this is a ground station
