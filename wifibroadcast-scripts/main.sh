@@ -16,7 +16,7 @@ TTY=`tty`
 # GPIO variable
 CONFIGFILE=`/root/wifibroadcast_misc/gpio-config.py`
 
-export PATH=/home/pi/wifibroadcast-status:${PATH}
+export PATH=/usr/local/bin:${PATH}
 
 autoenable_i2c_vc
 
@@ -47,7 +47,7 @@ echo "SETTINGS FILE: $CONFIGFILE"
 echo "-------------------------------------"
 if [ "$TTY" == "/dev/tty1" ]; then
     echo "Using settings file $CONFIGFILE"
-    /home/pi/wifibroadcast-status/qstatus "Using settings file $CONFIGFILE" 5
+    qstatus "Using settings file $CONFIGFILE" 5
 fi
 
 #

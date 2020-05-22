@@ -1,6 +1,7 @@
 # Change to script folder and execute main entry point
 TTY=`tty`
 
+export PATH=/usr/local/bin:${PATH}
 
 if [ "$TTY" == "/dev/tty1" ]; then
     echo "tty1"
@@ -64,8 +65,8 @@ if [ "$TTY" == "/dev/tty1" ]; then
 
         /home/pi/wifibroadcast-scripts/configure_nics.sh
 
-        /home/pi/wifibroadcast-status/qstatus "Configured NIC(s)" 5
-        /home/pi/wifibroadcast-status/qstatus "Running SmartSync" 5
+        qstatus "Configured NIC(s)" 5
+        qstatus "Running SmartSync" 5
 
         /usr/bin/python3 /home/pi/RemoteSettings/Air/RemoteSettingSyncAir.py
 
@@ -92,8 +93,8 @@ if [ "$TTY" == "/dev/tty1" ]; then
         /home/pi/wifibroadcast-scripts/configure_nics.sh
         retCode=$?
 
-        /home/pi/wifibroadcast-status/qstatus "Configured NIC(s)" 5
-        /home/pi/wifibroadcast-status/qstatus "Running SmartSync" 5
+        qstatus "Configured NIC(s)" 5
+        qstatus "Running SmartSync" 5
 
         # now we will run SmartSync, using either GPIOs or Joystick to control it
 
@@ -110,7 +111,7 @@ if [ "$TTY" == "/dev/tty1" ]; then
         echo "0" > /tmp/ReadyToGo
         
         echo "Configuring system"
-        /home/pi/wifibroadcast-status/qstatus "Configuring system" 5
+        qstatus "Configuring system" 5
     fi
 fi
 

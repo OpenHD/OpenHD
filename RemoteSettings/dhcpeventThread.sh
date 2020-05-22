@@ -15,7 +15,7 @@ echo $op
 #echo $ip
 #echo $hostname
 
-export PATH=/home/pi/wifibroadcast-status:${PATH}
+export PATH=/usr/local/bin:${PATH}
 
 if [ ! -f /tmp/mavlink_router_pipe ]; then 
     sleep 1
