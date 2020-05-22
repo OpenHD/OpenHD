@@ -9,10 +9,10 @@ all: wbc_status qstatus
  
 
 wbc_status: wbc_status.o
-	gcc -o $@ $^ $(LDFLAGS)
+	gcc -o /usr/local/bin/$@ $^ $(LDFLAGS)
 
 qstatus: qstatus.o
-	gcc -o $@ $^
+	gcc -o /usr/local/bin/$@ $^
 
 clean:
 	rm -f wbc_status qstatus *.o *~
