@@ -950,6 +950,12 @@ int main(int argc, char *argv[]) {
     si_me.sin_port = htons(InUDPPort);
     si_me.sin_addr.s_addr = htonl(INADDR_ANY);
 
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+
+
     if (bind(s, (struct sockaddr *)&si_me, sizeof(si_me)) == -1) {
         fprintf(stderr, "Bind error. Exit");
         return 1;
@@ -1053,6 +1059,33 @@ int main(int argc, char *argv[]) {
     framedatas.dur2 =   0; // <-- duration
 
 
+
+    // init RSSI shared memory
+    telemetry_init(&td);
+
+
+    /*
+     * We need to prefill channels, since we have no values for them as
+     * long as the corresponding axis has not been moved yet
+     *
+     */
+    rcData = rc_channels_memory_open();
+    rcData[0] = axis0_initial;
+    rcData[1] = axis1_initial;
+    rcData[2] = axis2_initial;
+    rcData[3] = axis3_initial;
+    rcData[4] = axis4_initial;
+    rcData[5] = axis5_initial;
+    rcData[6] = axis6_initial;
+    rcData[7] = axis7_initial;
+    // Switches
+    rcData[8] = 0;
+
+
+    boost::thread t{udpInputThread};
+
+
+
     fprintf(stderr, "Waiting for joystick ...");
     
 
@@ -1069,26 +1102,6 @@ int main(int argc, char *argv[]) {
 
         usleep(100000);
     }
-
-
-    
-    rcData = rc_channels_memory_open();
-
-    /*
-     * We need to prefill channels, since we have no values for them as
-     * long as the corresponding axis has not been moved yet
-     *
-     */
-    rcData[0] = axis0_initial;
-    rcData[1] = axis1_initial;
-    rcData[2] = axis2_initial;
-    rcData[3] = axis3_initial;
-    rcData[4] = axis4_initial;
-    rcData[5] = axis5_initial;
-    rcData[6] = axis6_initial;
-    rcData[7] = axis7_initial;
-    // Switches
-    rcData[8] = 0;
     
 
     if (SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_VIDEO) != 0) {
@@ -1112,10 +1125,6 @@ int main(int argc, char *argv[]) {
         printf("\tHats: %i\n", SDL_JoystickNumHats(js));
     }
 
-    // init RSSI shared memory
-    telemetry_init(&td);
-
-    boost::thread t{udpInputThread};
 
     while (done) {
         done = eventloop_joystick();
@@ -1163,7 +1172,15 @@ void udpInputThread() {
     socklen_t slen = sizeof(si_other);
 
     while (udpThreadRun) {
-        if ((recv_len = recvfrom(s, buf, 21, 0, (struct sockaddr *)&si_other, &slen)) == -1) {
+        auto recv_len = recvfrom(s, buf, 21, 0, (struct sockaddr *)&si_other, &slen);
+
+        if (recv_len == -1) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                usleep(50000);
+
+                continue;
+            }
+
             fprintf(stderr, "UDP recv error, closing thread. USB joystick will continue to function.");
 
             return;
