@@ -487,6 +487,7 @@ def InitDevNull():
         RCDevNull = open(os.devnull, 'w')
         return True
     except Exception as e:
+        return False
     return False
 
 def DetectWFBPrimaryBand():
