@@ -33,6 +33,10 @@ if [ "$TTY" == "/dev/tty1" ]; then
 
     AIR="0"
 
+    #
+    # Note: this is duplicated logic (mostly) doing the same thing check_camera_attached does, but it won't 
+    #       be here much longer and it's only a few lines.
+    #
     if [[ "${CAM}" -ge 1 ]] ; then
         #
         # Normal pi cameras found, this is definitely air side so we will start the air side of SmartSync
