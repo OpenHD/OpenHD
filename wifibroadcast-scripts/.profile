@@ -52,6 +52,18 @@ if [ "$TTY" == "/dev/tty1" ]; then
             CAM="1"
             AIR="1"
         fi
+
+        #
+        # No pi camera detected, but we still might have a VEYE, and the only way to detect
+        # it is to have i2c_vc enabled already, and then probe the i2c-0 bus
+        #
+        i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
+        grepRet=$?
+
+        if [[ $grepRet -eq 0 ]] ; then
+            CAM="1"
+            AIR="1"
+        fi
     fi
 
 
