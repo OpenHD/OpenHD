@@ -490,7 +490,7 @@ void load_settings() {
     IMPERIAL = load_bool_setting(osd_settings, "IMPERIAL", false);
     COPTER = load_bool_setting(osd_settings, "COPTER", true);
 
-    HIDE_LATLON = load_bool_setting(osd_settings, "HIDE_LATLON", true);
+    HIDE_LATLON = load_bool_setting(osd_settings, "HIDE_LATLON", false);
 
     REVERSE_ALTITUDES = load_bool_setting(osd_settings, "REVERSE_ALTITUDES", false);
 
@@ -518,20 +518,20 @@ void load_settings() {
     std::tie(COLOR_DECLUTTER_R, COLOR_DECLUTTER_G, COLOR_DECLUTTER_B, COLOR_DECLUTTER_A) = load_osd_define_color(osd_settings, "COLOR_DECLUTTER", 255, 255, 255, 0.0);
 
 
-    DOWNLINK_RSSI = load_bool_setting(osd_settings, "DOWNLINK_RSSI", true);
+    DOWNLINK_RSSI = load_bool_setting(osd_settings, "DOWNLINK_RSSI", false);
     DOWNLINK_RSSI_POS_X = load_double_setting(osd_settings, "DOWNLINK_RSSI_POS_X", 11);
     DOWNLINK_RSSI_POS_Y = load_double_setting(osd_settings, "DOWNLINK_RSSI_POS_Y", 89);
     DOWNLINK_RSSI_SCALE = load_double_setting(osd_settings, "DOWNLINK_RSSI_SCALE", 1.0);
-    DOWNLINK_RSSI_FEC_BAR = load_bool_setting(osd_settings, "DOWNLINK_RSSI_FEC_BAR", true);
+    DOWNLINK_RSSI_FEC_BAR = load_bool_setting(osd_settings, "DOWNLINK_RSSI_FEC_BAR", false);
 
 
-    DOWNLINK_RSSI_DETAILED = load_bool_setting(osd_settings, "DOWNLINK_RSSI_DETAILED", true);
+    DOWNLINK_RSSI_DETAILED = load_bool_setting(osd_settings, "DOWNLINK_RSSI_DETAILED", false);
     DOWNLINK_RSSI_DETAILED_POS_X = load_double_setting(osd_settings, "DOWNLINK_RSSI_DETAILED_POS_X", 28);
     DOWNLINK_RSSI_DETAILED_POS_Y = load_double_setting(osd_settings, "DOWNLINK_RSSI_DETAILED_POS_Y", 89);
     DOWNLINK_RSSI_DETAILED_SCALE = load_double_setting(osd_settings, "DOWNLINK_RSSI_DETAILED_SCALE", 0.75);
 
 
-    UPLINK_RSSI = load_bool_setting(osd_settings, "UPLINK_RSSI", true);
+    UPLINK_RSSI = load_bool_setting(osd_settings, "UPLINK_RSSI", false);
     UPLINK_RSSI_POS_X = load_double_setting(osd_settings, "UPLINK_RSSI_POS_X", 92);
     UPLINK_RSSI_POS_Y = load_double_setting(osd_settings, "DOWNLINK_RSSI_DETAILED_POS_Y", 89);
     UPLINK_RSSI_SCALE = load_double_setting(osd_settings, "UPLINK_RSSI_SCALE", 1);
@@ -547,7 +547,7 @@ void load_settings() {
     RSSI_DECLUTTER = load_int_setting(osd_settings, "RSSI_DECLUTTER", 1);
 
 
-    KBITRATE = load_bool_setting(osd_settings, "KBITRATE", true);
+    KBITRATE = load_bool_setting(osd_settings, "KBITRATE", false);
     KBITRATE_POS_X = load_double_setting(osd_settings, "KBITRATE_POS_X", 68);
     KBITRATE_POS_Y = load_double_setting(osd_settings, "KBITRATE_POS_Y", 89);
     KBITRATE_SCALE = load_double_setting(osd_settings, "KBITRATE_SCALE", 1.0);
@@ -557,7 +557,7 @@ void load_settings() {
 
 
 
-    SYS = load_bool_setting(osd_settings, "SYS", true);
+    SYS = load_bool_setting(osd_settings, "SYS", false);
     SYS_POS_X = load_double_setting(osd_settings, "SYS_POS_X", 79);
     SYS_POS_Y = load_double_setting(osd_settings, "SYS_POS_Y", 89);
     SYS_SCALE = load_double_setting(osd_settings, "SYS_SCALE", 0.6);
@@ -568,7 +568,7 @@ void load_settings() {
     SYS_DECLUTTER = load_int_setting(osd_settings, "SYS_DECLUTTER", 1);
 
 
-    HOME_ARROW = load_bool_setting(osd_settings, "HOME_ARROW", true);
+    HOME_ARROW = load_bool_setting(osd_settings, "HOME_ARROW", false);
     HOME_ARROW_POS_X = load_double_setting(osd_settings, "HOME_ARROW_POS_X", 50);
     HOME_ARROW_POS_Y = load_double_setting(osd_settings, "HOME_ARROW_POS_Y", 75);
     HOME_ARROW_SCALE = load_double_setting(osd_settings, "HOME_ARROW_SCALE", 1.0);
@@ -577,15 +577,15 @@ void load_settings() {
 
 
 
-    BATT_STATUS = load_bool_setting(osd_settings, "BATT_STATUS", true);
+    BATT_STATUS = load_bool_setting(osd_settings, "BATT_STATUS", false);
     BATT_STATUS_POS_X = load_double_setting(osd_settings, "BATT_STATUS_POS_X", 9);
     BATT_STATUS_POS_Y = load_double_setting(osd_settings, "BATT_STATUS_POS_Y", 12);
     BATT_STATUS_SCALE = load_double_setting(osd_settings, "BATT_STATUS_SCALE", 1.0);
-    BATT_STATUS_CURRENT = load_bool_setting(osd_settings, "BATT_STATUS_CURRENT", true);
+    BATT_STATUS_CURRENT = load_bool_setting(osd_settings, "BATT_STATUS_CURRENT", false);
 
 
 
-    BATT_GAUGE = load_bool_setting(osd_settings, "BATT_GAUGE", true);
+    BATT_GAUGE = load_bool_setting(osd_settings, "BATT_GAUGE", false);
     BATT_GAUGE_POS_X = load_double_setting(osd_settings, "BATT_GAUGE_POS_X", 5);
     BATT_GAUGE_POS_Y = load_double_setting(osd_settings, "BATT_GAUGE_POS_Y", 5);
     BATT_GAUGE_SCALE = load_double_setting(osd_settings, "BATT_GAUGE_SCALE", 1.0);
@@ -596,18 +596,18 @@ void load_settings() {
     CELL_WARNING2 = load_double_setting(osd_settings, "CELL_WARNING2", 3.40);
 
 
-    COMPASS = load_bool_setting(osd_settings, "COMPASS", true);
+    COMPASS = load_bool_setting(osd_settings, "COMPASS", false);
     COMPASS_POS_Y = load_double_setting(osd_settings, "COMPASS_POS_Y", 91);
     COMPASS_SCALE = load_double_setting(osd_settings, "COMPASS_SCALE", 1.0);
     COMPASS_USECOG = load_bool_setting(osd_settings, "COMPASS_USECOG", false);
     COMPASS_INAV = load_bool_setting(osd_settings, "COMPASS_INAV", false);
     COMPASS_COMPLEX = load_bool_setting(osd_settings, "COMPASS_COMPLEX", false);
     COMPASS_LEN = load_int_setting(osd_settings, "COMPASS_LEN", 45);
-    COMPASS_BEARING = load_bool_setting(osd_settings, "COMPASS_BEARING", true);
+    COMPASS_BEARING = load_bool_setting(osd_settings, "COMPASS_BEARING", false);
 
 
 
-    ALTLADDER = load_bool_setting(osd_settings, "ALTLADDER", true);
+    ALTLADDER = load_bool_setting(osd_settings, "ALTLADDER", false);
     ALTLADDER_POS_X = load_double_setting(osd_settings, "ALTLADDER_POS_X", 83);
     ALTLADDER_SCALE = load_double_setting(osd_settings, "ALTLADDER_SCALE", 1.1);
     ALTLADDER_WARN = load_int_setting(osd_settings, "ALTLADDER_WARN", 5);
@@ -615,13 +615,13 @@ void load_settings() {
     ALTLADDER_VSI_TIME = load_int_setting(osd_settings, "ALTLADDER_VSI_TIME", 20);
 
 
-    MSLALT = load_bool_setting(osd_settings, "MSLALT", true);
+    MSLALT = load_bool_setting(osd_settings, "MSLALT", false);
     MSLALT_POS_X = load_double_setting(osd_settings, "MSLALT_POS_X", 93);
     MSLALT_POS_Y = load_double_setting(osd_settings, "MSLALT_POS_Y", 29);
     MSLALT_SCALE = load_double_setting(osd_settings, "MSLALT_SCALE", 0.6);
 
 
-    SPEEDLADDER = load_bool_setting(osd_settings, "SPEEDLADDER", true);
+    SPEEDLADDER = load_bool_setting(osd_settings, "SPEEDLADDER", false);
     SPEEDLADDER_POS_X = load_double_setting(osd_settings, "SPEEDLADDER_POS_X", 16);
     SPEEDLADDER_SCALE = load_double_setting(osd_settings, "SPEEDLADDER_SCALE", 1.1);
     SPEEDLADDER_USEAIRSPEED = load_bool_setting(osd_settings, "SPEEDLADDER_USEAIRSPEED", false);
@@ -630,7 +630,7 @@ void load_settings() {
 
 
 
-    YAWDISPLAY = load_bool_setting(osd_settings, "YAWDISPLAY", true);
+    YAWDISPLAY = load_bool_setting(osd_settings, "YAWDISPLAY", false);
     YAWDISPLAY_POS_X = load_double_setting(osd_settings, "YAWDISPLAY_POS_X", 50);
     YAWDISPLAY_POS_Y = load_double_setting(osd_settings, "YAWDISPLAY_POS_Y", 81);
     YAWDISPLAY_SCALE = load_double_setting(osd_settings, "YAWDISPLAY_SCALE", 1.0);
@@ -638,24 +638,24 @@ void load_settings() {
 
 
 
-    AHI = load_bool_setting(osd_settings, "AHI", true);
+    AHI = load_bool_setting(osd_settings, "AHI", false);
     AHI_SCALE = load_double_setting(osd_settings, "AHI_SCALE", 1.0);
     AHI_LADDER = load_bool_setting(osd_settings, "AHI_LADDER", false);
     AHI_INVERT_ROLL = load_int_setting(osd_settings, "AHI_INVERT_ROLL", 1);
     AHI_INVERT_PITCH = load_int_setting(osd_settings, "AHI_INVERT_PITCH", 1);
-    AHI_SWAP_ROLL_AND_PITCH = load_bool_setting(osd_settings, "AHI_SWAP_ROLL_AND_PITCH", true);
+    AHI_SWAP_ROLL_AND_PITCH = load_bool_setting(osd_settings, "AHI_SWAP_ROLL_AND_PITCH", false);
     AHI_ROLLANGLE = load_bool_setting(osd_settings, "AHI_ROLLANGLE", false);
     AHI_ROLLANGLE_INVERT = load_int_setting(osd_settings, "AHI_ROLLANGLE_INVERT", -1);
 
 
-    POSITION = load_bool_setting(osd_settings, "POSITION", true);
+    POSITION = load_bool_setting(osd_settings, "POSITION", false);
     POSITION_POS_X = load_double_setting(osd_settings, "POSITION_POS_X", 75);
     POSITION_POS_Y = load_double_setting(osd_settings, "POSITION_POS_Y", 5);
     POSITION_SCALE = load_double_setting(osd_settings, "POSITION_SCALE", 0.8);
 
 
 
-    SAT = load_bool_setting(osd_settings, "SAT", true);
+    SAT = load_bool_setting(osd_settings, "SAT", false);
     SAT_POS_X = load_double_setting(osd_settings, "SAT_POS_X", 64);
     SAT_POS_Y = load_double_setting(osd_settings, "SAT_POS_Y", 14);
     SAT_SCALE = load_double_setting(osd_settings, "SAT_SCALE", 0.8);
@@ -664,19 +664,19 @@ void load_settings() {
     SAT_DECLUTTER = load_int_setting(osd_settings, "SAT_DECLUTTER", 1);
 
 
-    DISTANCE = load_bool_setting(osd_settings, "DISTANCE", true);
+    DISTANCE = load_bool_setting(osd_settings, "DISTANCE", false);
     DISTANCE_POS_X = load_double_setting(osd_settings, "DISTANCE_POS_X", 94);
     DISTANCE_POS_Y = load_double_setting(osd_settings, "DISTANCE_POS_Y", 5);
     DISTANCE_SCALE = load_double_setting(osd_settings, "DISTANCE_SCALE", 1.0);
 
 
-    FLIGHTMODE = load_bool_setting(osd_settings, "FLIGHTMODE", true);
+    FLIGHTMODE = load_bool_setting(osd_settings, "FLIGHTMODE", false);
     FLIGHTMODE_POS_X = load_double_setting(osd_settings, "FLIGHTMODE_POS_X", 50);
     FLIGHTMODE_POS_Y = load_double_setting(osd_settings, "FLIGHTMODE_POS_Y", 6);
     FLIGHTMODE_SCALE = load_double_setting(osd_settings, "FLIGHTMODE_SCALE", 1.0);
 
 
-    CLIMB = load_bool_setting(osd_settings, "CLIMB", true);
+    CLIMB = load_bool_setting(osd_settings, "CLIMB", false);
     CLIMB_POS_X = load_double_setting(osd_settings, "CLIMB_POS_X", 93);
     CLIMB_POS_Y = load_double_setting(osd_settings, "CLIMB_POS_Y", 24);
     CLIMB_SCALE = load_double_setting(osd_settings, "CLIMB_SCALE", 0.6);
@@ -706,33 +706,33 @@ void load_settings() {
 
 
 
-    TOTAL_AMPS = load_bool_setting(osd_settings, "TOTAL_AMPS", true);
+    TOTAL_AMPS = load_bool_setting(osd_settings, "TOTAL_AMPS", false);
     TOTAL_AMPS_POS_X = load_double_setting(osd_settings, "TOTAL_AMPS_POS_X", 24);
     TOTAL_AMPS_POS_Y = load_double_setting(osd_settings, "TOTAL_AMPS_POS_Y", 5);
     TOTAL_AMPS_SCALE = load_double_setting(osd_settings, "TOTAL_AMPS_SCALE", 1.0);
 
 
-    TOTAL_DIST = load_bool_setting(osd_settings, "TOTAL_DIST", true);
+    TOTAL_DIST = load_bool_setting(osd_settings, "TOTAL_DIST", false);
     TOTAL_DIST_POS_X = load_double_setting(osd_settings, "TOTAL_DIST_POS_X", 50);
     TOTAL_DIST_POS_Y = load_double_setting(osd_settings, "TOTAL_DIST_POS_Y", 14);
     TOTAL_DIST_SCALE = load_double_setting(osd_settings, "TOTAL_DIST_SCALE", 0.8);
 
 
-    TOTAL_TIME = load_bool_setting(osd_settings, "TOTAL_TIME", true);
+    TOTAL_TIME = load_bool_setting(osd_settings, "TOTAL_TIME", false);
     TOTAL_TIME_POS_X = load_double_setting(osd_settings, "TOTAL_TIME_POS_X", 92);
     TOTAL_TIME_POS_Y = load_double_setting(osd_settings, "TOTAL_TIME_POS_Y", 13);
     TOTAL_TIME_SCALE = load_double_setting(osd_settings, "TOTAL_TIME_SCALE", 0.8);
 
 
-    HOME_RADAR = load_bool_setting(osd_settings, "HOME_RADAR", true);
+    HOME_RADAR = load_bool_setting(osd_settings, "HOME_RADAR", false);
     HOME_RADAR_POS_X = load_double_setting(osd_settings, "HOME_RADAR_POS_X", 60);
     HOME_RADAR_POS_Y = load_double_setting(osd_settings, "HOME_RADAR_POS_Y", 65);
     HOME_RADAR_SCALE = load_double_setting(osd_settings, "HOME_RADAR_SCALE", 0.8);
-    HOME_RADAR_USECOG = load_bool_setting(osd_settings, "HOME_RADAR_USECOG", true);
+    HOME_RADAR_USECOG = load_bool_setting(osd_settings, "HOME_RADAR_USECOG", false);
 
 
 
-    RPA = load_bool_setting(osd_settings, "RPA", true);
+    RPA = load_bool_setting(osd_settings, "RPA", false);
     RPA_POS_X = load_double_setting(osd_settings, "RPA_POS_X", 97);
     RPA_POS_Y = load_double_setting(osd_settings, "RPA_POS_Y", 66);
     RPA_SCALE = load_double_setting(osd_settings, "RPA_SCALE", 0.6);
@@ -740,11 +740,11 @@ void load_settings() {
     RPA_INVERT_PITCH = load_int_setting(osd_settings, "RPA_INVERT_PITCH", 1);
 
 
-    THROTTLE = load_bool_setting(osd_settings, "THROTTLE", true);
+    THROTTLE = load_bool_setting(osd_settings, "THROTTLE", false);
     THROTTLE_POS_X = load_double_setting(osd_settings, "THROTTLE_POS_X", 5);
     THROTTLE_POS_Y = load_double_setting(osd_settings, "THROTTLE_POS_Y", 28);
     THROTTLE_SCALE = load_double_setting(osd_settings, "THROTTLE_SCALE", 1);
-    THROTTLE_GAUGE = load_bool_setting(osd_settings, "THROTTLE_GAUGE", true);
+    THROTTLE_GAUGE = load_bool_setting(osd_settings, "THROTTLE_GAUGE", false);
     THROTTLE_TARGET = load_int_setting(osd_settings, "THROTTLE_TARGET", 20);
 
 
@@ -753,7 +753,7 @@ void load_settings() {
     THROTTLE_V2_POS_X = load_double_setting(osd_settings, "THROTTLE_V2_POS_X", 10.5);
     THROTTLE_V2_POS_Y = load_double_setting(osd_settings, "THROTTLE_V2_POS_Y", 28);
     THROTTLE_V2_SCALE = load_double_setting(osd_settings, "THROTTLE_V2_SCALE", 0.65);
-    THROTTLE_V2_COMPLEX = load_bool_setting(osd_settings, "THROTTLE_V2_COMPLEX", true);
+    THROTTLE_V2_COMPLEX = load_bool_setting(osd_settings, "THROTTLE_V2_COMPLEX", false);
 
 
     HDOP = load_bool_setting(osd_settings, "HDOP", false);
@@ -762,53 +762,53 @@ void load_settings() {
     HDOP_SCALE = load_double_setting(osd_settings, "HDOP_SCALE", 0.6);
 
 
-    MISSION = load_bool_setting(osd_settings, "MISSION", true);
+    MISSION = load_bool_setting(osd_settings, "MISSION", false);
     MISSION_POS_X = load_double_setting(osd_settings, "MISSION_POS_X", 35);
     MISSION_POS_Y = load_double_setting(osd_settings, "MISSION_POS_Y", 1);
     MISSION_SCALE = load_double_setting(osd_settings, "MISSION_SCALE", 1);
 
 
-    ANGLE = load_bool_setting(osd_settings, "ANGLE", true);
+    ANGLE = load_bool_setting(osd_settings, "ANGLE", false);
     ANGLE_POS_X = load_double_setting(osd_settings, "ANGLE_POS_X", 50);
     ANGLE_POS_Y = load_double_setting(osd_settings, "ANGLE_POS_Y", 77);
     ANGLE_SCALE = load_double_setting(osd_settings, "ANGLE_SCALE", 1);
 
 
-    ANGLE2 = load_bool_setting(osd_settings, "ANGLE2", true);
+    ANGLE2 = load_bool_setting(osd_settings, "ANGLE2", false);
     ANGLE2_POS_X = load_double_setting(osd_settings, "ANGLE2_POS_X", 50);
     ANGLE2_POS_Y = load_double_setting(osd_settings, "ANGLE2_POS_Y", 78);
     ANGLE2_SCALE = load_double_setting(osd_settings, "ANGLE2_SCALE", 1);
 
 
-    ALARM = load_bool_setting(osd_settings, "ALARM", true);
+    ALARM = load_bool_setting(osd_settings, "ALARM", false);
     ALARM_POS_X = load_double_setting(osd_settings, "ALARM_POS_X", 83);
     ALARM_POS_Y = load_double_setting(osd_settings, "ALARM_POS_Y", 33);
     ALARM_SCALE = load_double_setting(osd_settings, "ALARM_SCALE", 0.5);
 
-    ALARM_1 = load_bool_setting(osd_settings, "ALARM_1", true);
-    ALARM_2 = load_bool_setting(osd_settings, "ALARM_2", true);
-    ALARM_3 = load_bool_setting(osd_settings, "ALARM_3", true);
-    ALARM_4 = load_bool_setting(osd_settings, "ALARM_4", true);
-    ALARM_5 = load_bool_setting(osd_settings, "ALARM_5", true);
-    ALARM_6 = load_bool_setting(osd_settings, "ALARM_6", true);
-    ALARM_7 = load_bool_setting(osd_settings, "ALARM_7", true);
-    ALARM_8 = load_bool_setting(osd_settings, "ALARM_8", true);
-    ALARM_9 = load_bool_setting(osd_settings, "ALARM_9", true);
-    ALARM_10 = load_bool_setting(osd_settings, "ALARM_10", true);
-    ALARM_11 = load_bool_setting(osd_settings, "ALARM_11", true);
-    ALARM_12 = load_bool_setting(osd_settings, "ALARM_12", true);
-    ALARM_13 = load_bool_setting(osd_settings, "ALARM_13", true);
-    ALARM_14 = load_bool_setting(osd_settings, "ALARM_14", true);
-    ALARM_15 = load_bool_setting(osd_settings, "ALARM_15", true);
-    ALARM_16 = load_bool_setting(osd_settings, "ALARM_16", true);
-    ALARM_17 = load_bool_setting(osd_settings, "ALARM_17", true);
-    ALARM_18 = load_bool_setting(osd_settings, "ALARM_18", true);
-    ALARM_19 = load_bool_setting(osd_settings, "ALARM_19", true);
-    ALARM_20 = load_bool_setting(osd_settings, "ALARM_20", true);
-    ALARM_21 = load_bool_setting(osd_settings, "ALARM_21", true);
-    ALARM_22 = load_bool_setting(osd_settings, "ALARM_22", true);
-    ALARM_23 = load_bool_setting(osd_settings, "ALARM_23", true);
-    ALARM_24 = load_bool_setting(osd_settings, "ALARM_24", true);
+    ALARM_1 = load_bool_setting(osd_settings, "ALARM_1", false);
+    ALARM_2 = load_bool_setting(osd_settings, "ALARM_2", false);
+    ALARM_3 = load_bool_setting(osd_settings, "ALARM_3", false);
+    ALARM_4 = load_bool_setting(osd_settings, "ALARM_4", false);
+    ALARM_5 = load_bool_setting(osd_settings, "ALARM_5", false);
+    ALARM_6 = load_bool_setting(osd_settings, "ALARM_6", false);
+    ALARM_7 = load_bool_setting(osd_settings, "ALARM_7", false);
+    ALARM_8 = load_bool_setting(osd_settings, "ALARM_8", false);
+    ALARM_9 = load_bool_setting(osd_settings, "ALARM_9", false);
+    ALARM_10 = load_bool_setting(osd_settings, "ALARM_10", false);
+    ALARM_11 = load_bool_setting(osd_settings, "ALARM_11", false);
+    ALARM_12 = load_bool_setting(osd_settings, "ALARM_12", false);
+    ALARM_13 = load_bool_setting(osd_settings, "ALARM_13", false);
+    ALARM_14 = load_bool_setting(osd_settings, "ALARM_14", false);
+    ALARM_15 = load_bool_setting(osd_settings, "ALARM_15", false);
+    ALARM_16 = load_bool_setting(osd_settings, "ALARM_16", false);
+    ALARM_17 = load_bool_setting(osd_settings, "ALARM_17", false);
+    ALARM_18 = load_bool_setting(osd_settings, "ALARM_18", false);
+    ALARM_19 = load_bool_setting(osd_settings, "ALARM_19", false);
+    ALARM_20 = load_bool_setting(osd_settings, "ALARM_20", false);
+    ALARM_21 = load_bool_setting(osd_settings, "ALARM_21", false);
+    ALARM_22 = load_bool_setting(osd_settings, "ALARM_22", false);
+    ALARM_23 = load_bool_setting(osd_settings, "ALARM_23", false);
+    ALARM_24 = load_bool_setting(osd_settings, "ALARM_24", false);
     ALARM_25 = load_bool_setting(osd_settings, "ALARM_25", false);
-    ALARM_26 = load_bool_setting(osd_settings, "ALARM_26", true);
+    ALARM_26 = load_bool_setting(osd_settings, "ALARM_26", false);
 }
