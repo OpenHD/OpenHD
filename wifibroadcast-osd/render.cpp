@@ -113,7 +113,7 @@ void render_init() {
     myfont = LoadTTFFile(filename);
     if (!myfont) {
         fputs("ERROR: Failed to load font!", stderr);
-        exit(1);
+        myfont = LoadTTFFile("/boot/osdfonts/Archivo-Bold.ttf");
     }
 
     osdicons = LoadTTFFile("/boot/osdfonts/osdicons.ttf");
@@ -2543,7 +2543,7 @@ void draw_ahi_mav(float roll, float pitch, float climb, float vz, float vx, floa
     float height_ladder = getWidth(15) * scale;
     float width_ladder = getWidth(30) * scale;
     float height_element = getWidth(0.25) * scale;
-    float range = 100;
+    float range = 20;
     float space_text = getWidth(0.2) * scale;
     float ratio = height_ladder / range;
     float pos_x = getWidth(50);
