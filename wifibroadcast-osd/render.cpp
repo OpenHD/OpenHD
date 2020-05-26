@@ -113,7 +113,7 @@ void render_init() {
     myfont = LoadTTFFile(filename);
     if (!myfont) {
         fputs("ERROR: Failed to load font!", stderr);
-        exit(1);
+        myfont = LoadTTFFile("/boot/osdfonts/Archivo-Bold.ttf");
     }
 
     osdicons = LoadTTFFile("/boot/osdfonts/osdicons.ttf");
