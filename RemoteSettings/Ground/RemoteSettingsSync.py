@@ -924,8 +924,9 @@ else:
 
 StartRC_Reader(SmartSyncRC_Channel)
 
+SendInfoToDisplay(5, "SmartSync: initializing")
+
 if SmartSync_StartupMode != 1:
-    SendInfoToDisplay(5, "SmartSync: initializing")
     SendSmartSyncState(SmartSyncState.WaitingForTrigger, 0)
 
     for i in range(0, 10):
@@ -956,7 +957,6 @@ if SmartSync_StartupMode != 1:
 
 
 if SmartSync_StartupMode == 1:
-    SendInfoToDisplay(5, "SmartSync: initializing")
     SendSmartSyncState(SmartSyncState.WaitingForAir, 0)
 
     #if InitWlan() != False:
@@ -966,9 +966,6 @@ if SmartSync_StartupMode == 1:
                 if SmartSyncGround_Countdown > 5:
                     SendInfoToDisplay(5, "SmartSync: starting timer")
                     StartTime = datetime.now()
-                else:
-                    SendInfoToDisplay(5, "SmartSync: timer < 5 seconds, disabled")
-
                 InitUDPServer()
             else:
                 SendInfoToDisplay(3, "SmartSync: can't initialize radio TX")
