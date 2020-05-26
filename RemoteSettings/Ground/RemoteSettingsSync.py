@@ -632,7 +632,6 @@ def IsTimeToExit():
 
 def InitUDPServer():
     for i in range(0,10):
-        SendSmartSyncState(SmartSyncState.WaitingForTrigger, 0)
         sleep(0.02)
 
     global RecvSocket
