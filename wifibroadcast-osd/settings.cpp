@@ -409,9 +409,13 @@ std::tuple<double, double, double, double> load_osd_define_color(std::map<std::s
     if (search != settings.end()) {
         boost::smatch result;
 
-        boost::regex r{ "([\\w]+),([\\w]+),([\\w]+),([\\w]+)" };
-        if (boost::regex_match(search->second, result, r) || result.size() != 6) {
-            //return std::tuple<double, double, double, double>(result[1], result[2], result[3], result[4]);
+        boost::regex r{ "([\\w\\.]+),\\s*([\\w\\.]+),\\s*([\\w\\.]+),\\s*([\\w\\.]+)" };
+        if (boost::regex_match(search->second, result, r)) {
+            std::string r = result[1];
+            std::string g = result[2];
+            std::string b = result[3];
+            std::string a = result[4];
+            return std::tuple<double, double, double, double>(atof(r.c_str()), atof(g.c_str()), atof(b.c_str()), atof(a.c_str()));
         } else {
             std::cerr << "Ignoring invalid color setting: " << name << ", check file for errors" << std::endl;
         }
