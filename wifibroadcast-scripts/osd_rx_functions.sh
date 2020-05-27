@@ -47,12 +47,12 @@ function osdrx_function {
         pause_while
         sleep 5
 
+        systemctl stop openhdboot
+
         if [ "${DISPLAY_OSD}" == "Y" ]; then
             if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-                systemctl stop openhdboot
                 systemctl start qopenhd
             else
-                systemctl stop openhdboot
                 systemctl start osd
             fi
         fi
