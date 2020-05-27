@@ -259,7 +259,7 @@ function tx_function {
             echo "  ---------------------------------------------------------------------------------------------------"
             echo
             
-            qstatus "ERROR: Undervoltage detected, your pi is not supplied with stable 5 volts" 3
+            qstatus "ERROR: Undervoltage detected, check power supply" 3
 
             
             mount -o remount,rw /boot

@@ -330,7 +330,7 @@ function rx_function {
             echo "  | Either your power-supply or wiring is not sufficent, check the wiring instructions in the Wiki! |"
             echo "  ---------------------------------------------------------------------------------------------------"
             
-            qstatus "ERROR: Undervoltage detected, your pi is not supplied with stable 5 volts" 3
+            qstatus "ERROR: Undervoltage detected, check power supply" 3
 
             UNDERVOLT=1
 
