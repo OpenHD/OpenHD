@@ -677,8 +677,6 @@ def InitUDPServer():
                         SendData(MessageBufFile)
                         MessageBufFile.clear()
             if RequestSFile in data:
-                SendInfoToDisplay(5, "SmartSync: sending settings file to air side")
-                SendSmartSyncState(SmartSyncState.Transferring, 0)
                 LastRequestTime = datetime.now()
                 #return: 6 bytes - offset that was read + data 1024 bytes or less
                 if len(data) > 13:
