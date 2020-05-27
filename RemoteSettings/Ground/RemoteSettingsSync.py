@@ -689,7 +689,7 @@ def InitUDPServer():
                     Transferred = SizeInBytes - BytesTillEndOfFile
                     PercentFinished = (float(Transferred) / float(SizeInBytes)) * 100.0
 
-                    SendSmartSyncState(SmartSyncState.Transferring, chr(PercentFinished))
+                    SendSmartSyncState(SmartSyncState.Transferring, int(PercentFinished))
 
                     headerStr =  '{:0>6}'.format(offsetInt)
                     header = headerStr.encode('ascii')
