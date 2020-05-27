@@ -688,6 +688,8 @@ def InitUDPServer():
 
                     Transferred = SizeInBytes - BytesTillEndOfFile
                     PercentFinished = (float(Transferred) / float(SizeInBytes)) * 100.0
+                    
+                    SendInfoToDisplay(5, "SmartSync: transferred {:d}%".format(int(PercentFinished)))
 
                     SendSmartSyncState(SmartSyncState.Transferring, int(PercentFinished))
 
