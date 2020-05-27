@@ -792,7 +792,6 @@ def ReturnWlanFreq():
             if not FreqFromConfigFile or "auto" in FreqFromConfigFile:
                 WFBFreq = GetDefaultWFBFrequency()
                 subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanFreq.sh', WlanName , WFBFreq ])
-                SendInfoToDisplay("Using automatic WFB frequency: " + WFBFreq)
                 SendInfoToDisplay(5, "Using automatic WFB frequency: " + WFBFreq)
             else:
                 FreqFromConfigFile = re.sub("\D", "", FreqFromConfigFile) 
