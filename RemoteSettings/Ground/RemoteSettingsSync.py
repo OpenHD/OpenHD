@@ -798,9 +798,9 @@ def ReturnWlanFreq():
             else:
                 FreqFromConfigFile = re.sub("\D", "", FreqFromConfigFile) 
                 subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanFreq.sh', WlanName , FreqFromConfigFile ])
-                SendInfoToDisplay(5, "SmartSync: normal frequency for interface " + WlanName + " returned to: " + FreqFromConfigFile)
+                SendInfoToDisplay(5, "SmartSync: setting  " + WlanName + " to: " + FreqFromConfigFile)
         except Exception as e:
-            SendInfoToDisplay(3, "SmartSync: error setting wifi frequency back to " + FreqFromConfigFile)
+            SendInfoToDisplay(3, "SmartSync: error setting frequency to " + FreqFromConfigFile)
 
 def CleanAndExit():
     global ExitRCThread
