@@ -2,17 +2,6 @@ function tx_function {
     killall wbc_status > /dev/null 2>&1
 
 
-    #
-    # Fix for stereo pi on buster, the AWB algorithm has been changed in more recent pi firmware and for some reason
-    # that breaks stereo camera use. 
-    #
-    # Ref: https://github.com/raspberrypi/firmware/issues/1253
-    #
-    if [[ "${OPENHD_VERSION}" == "buster" ]]; then
-        vcdbg set awb_mode 0
-    fi
-
-
     if [ "$LTE" == "Y" ]; then
         source lte_functions.sh
         lte_function
