@@ -350,11 +350,14 @@ function check_camera_attached {
             # Used by cameracontrolUDP.py to restrict video mode change
             #
             echo  "1" > /tmp/CameraNotDetected
+        else
+            qstatus "Detected ${CAM} official Raspberry Pi camera(s)" 5
         fi
 
 
         if [ -e /tmp/Air ]; then
             echo "force boot as Air via GPIO"
+            qstatus "Force boot as air" 5
             CAM="1"
         fi
 
@@ -389,8 +392,6 @@ function check_camera_attached {
             touch /tmp/TX
 
             echo ${CAM} > /tmp/cam
-
-            qstatus "Detected ${CAM} official Raspberry Pi camera(s)" 5
         fi
     else
         echo -n "Waiting until TX/RX has been determined"
