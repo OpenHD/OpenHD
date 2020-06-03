@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "settings.h"
+
 mavlink_status_t status;
 mavlink_message_t msg;
 
@@ -43,17 +45,17 @@ int mavlink_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
                     fprintf(telemetry_file, "GLOBAL_POSITION_INT: ");
 
 
-                    #if COMPASS_INAV == true
-                    td->heading = mavlink_msg_global_position_int_get_hdg(&msg);
-                    #else
-                    td->heading = mavlink_msg_global_position_int_get_hdg(&msg) / 100.0f;
-                    #endif
+                    if (COMPASS_INAV) {
+                        td->heading = mavlink_msg_global_position_int_get_hdg(&msg);
+                    } else {
+                        td->heading = mavlink_msg_global_position_int_get_hdg(&msg) / 100.0f;
+                    }
 
 
-                    #if REL_ALT_SOURCE == 1
-                    td->rel_altitude = mavlink_msg_global_position_int_get_relative_alt(&msg) / 1000.0f;
-                    fprintf(telemetry_file, "REL altitude global rel: %.2f", td->rel_altitude);
-                    #endif
+                    if (REL_ALT_SOURCE == 1) {
+                        td->rel_altitude = mavlink_msg_global_position_int_get_relative_alt(&msg) / 1000.0f;
+                        fprintf(telemetry_file, "REL altitude global rel: %.2f", td->rel_altitude);
+                    }
 
 
                     td->msl_altitude = mavlink_msg_global_position_int_get_alt(&msg) / 1000.0f;
@@ -89,10 +91,10 @@ int mavlink_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
 
                     //td->heading = mavlink_msg_gps_raw_int_get_cog(&msg)/100.0f;
 
-                    #if REL_ALT_SOURCE == 2
-                    td->rel_altitude = mavlink_msg_gps_raw_int_get_alt(&msg)/1000.0f;
-                    fprintf(telemetry_file, "REL altitude gps alt: %.2f", td->rel_altitude);
-                    #endif
+                    if (REL_ALT_SOURCE == 2) {
+                        td->rel_altitude = mavlink_msg_gps_raw_int_get_alt(&msg)/1000.0f;
+                        fprintf(telemetry_file, "REL altitude gps alt: %.2f", td->rel_altitude);
+                    }
 
                     //td->latitude = mavlink_msg_gps_raw_int_get_lat(&msg)/10000000.0f;
                     //td->longitude = mavlink_msg_gps_raw_int_get_lon(&msg)/10000000.0f;
@@ -149,10 +151,10 @@ int mavlink_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
                     td->speed = mavlink_msg_vfr_hud_get_groundspeed(&msg) * 3.6f;
                     td->airspeed = mavlink_msg_vfr_hud_get_airspeed(&msg) * 3.6f;
 
-                    #if REL_ALT_SOURCE == 3
-                    td->rel_altitude = mavlink_msg_vfr_hud_get_alt(&msg);
-                    fprintf(telemetry_file, "REL altitude vfr hud: %.2f", td->rel_altitude);
-                    #endif
+                    if (REL_ALT_SOURCE == 3) {
+                        td->rel_altitude = mavlink_msg_vfr_hud_get_alt(&msg);
+                        fprintf(telemetry_file, "REL altitude vfr hud: %.2f", td->rel_altitude);
+                    }
 
                     td->mav_climb = mavlink_msg_vfr_hud_get_climb(&msg);
                     td->throttle = mavlink_msg_vfr_hud_get_throttle(&msg);
@@ -343,10 +345,10 @@ int mavlink_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
                     break;
                 }
                 case MAVLINK_MSG_ID_ALTITUDE: {
-                    #if REL_ALT_SOURCE == 4
-                    td->rel_altitude = mavlink_msg_altitude_get_altitude_relative(&msg);
-                    fprintf(telemetry_file, "REL altitude altitude_relative:%.2f  ", td->rel_altitude);
-                    #endif
+                    if (REL_ALT_SOURCE == 4) {
+                        td->rel_altitude = mavlink_msg_altitude_get_altitude_relative(&msg);
+                        fprintf(telemetry_file, "REL altitude altitude_relative:%.2f  ", td->rel_altitude);
+                    }
 
                     break;
                 }
