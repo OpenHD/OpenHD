@@ -357,6 +357,7 @@ function check_camera_attached {
 
         if [ -e /tmp/Air ]; then
             echo "force boot as Air via GPIO"
+            qstatus "Force boot as air" 5
             CAM="1"
         fi
 
