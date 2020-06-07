@@ -338,7 +338,6 @@ int main(int argc, char *argv[]) {
             prev_cpu_time = current_timestamp();
 
             if (wbcdata.HomeLon == 0 && wbcdata.HomeLat == 0) {
-                printf("HomeLon == 0\n");
 
                 float lonlat[2];
                 
