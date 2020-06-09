@@ -36,6 +36,7 @@ endif::[]
 :openhd: link:https://github.com/HD-Fpv/Open.HD[OpenHD]
 :imageBuilder: link:https://github.com/HD-Fpv/Open.HD_Image_Builder[Image Builder]
 :settingsApp: link:https://github.com/HD-Fpv/Open.HD_AndroidApp[Settings App]
+:forum: link:https://discuss.openhdfpv.com[OpenHD Forum]
 
 // === BEGIN OF CONTENT === \\
 
@@ -91,7 +92,8 @@ We also offer pre-built images that you can directly download.
 
 == Community
 Feel free to join our growing community.
-We have a public {telegram} group with more then 100 members helping each other.
+
+We have a {forum}, and public {telegram} group with more then 400 members helping each other.
 
 If you just want to see when new releases are announced, you can either star this repository on Github (requires an
 account), or follow the link:https://t.me/OpenHDReleaseAnnouncements[Open.HD Release Announcements] channel on Telegram.
