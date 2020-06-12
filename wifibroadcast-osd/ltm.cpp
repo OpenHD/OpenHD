@@ -215,6 +215,24 @@ int ltm_check(telemetry_data_t_osd *td) {
         fprintf(telemetry_file, "osdon:%d  ", td->ltm_osdon);
         fprintf(telemetry_file, "homefix:%d  ", td->ltm_homefix);
 
+    } else if (LTMcmd == LIGHTTELEMETRY_NFRAME) {
+        uint8_t ltm_nav_mode = ltmread_u8();
+        uint8_t ltm_nav_state = ltmread_u8();
+        uint8_t ltm_nav_activeWpAction = ltmread_u8();
+        uint8_t ltm_nav_activeWpNumber = ltmread_u8();
+        uint8_t ltm_nav_error = ltmread_u8();
+        uint8_t ltm_nav_flags = ltmread_u8();
+
+        td->mission_current_seq = ltm_nav_activeWpNumber;
+
+        fprintf(telemetry_file, "LTM N FRAME: ");
+        fprintf(telemetry_file, "NavMode: %d ", ltm_nav_mode);
+        fprintf(telemetry_file, "NavState: %d ", ltm_nav_state);
+        fprintf(telemetry_file, "NavActiveWpAction: %d ", ltm_nav_activeWpAction);
+        fprintf(telemetry_file, "NavActiveWpNumber: %d ", ltm_nav_activeWpNumber);
+        fprintf(telemetry_file, "NavError: %d ", ltm_nav_error);
+        fprintf(telemetry_file, "NavFlags: %d ", ltm_nav_flags);
+
     } else if (LTMcmd == LIGHTTELEMETRY_XFRAME)  {
         //HDOP 		uint16 HDOP * 100
         //hw status 	uint8
