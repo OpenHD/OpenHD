@@ -1,6 +1,9 @@
 function tx_function {
     killall wbc_status > /dev/null 2>&1
 
+    if [[ "${ENABLE_NEW_PI_AWB}" != "Y" ]]; then
+        vcdbg set awb_mode 0
+    fi
 
     if [ "$LTE" == "Y" ]; then
         source lte_functions.sh
