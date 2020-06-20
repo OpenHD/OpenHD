@@ -31,17 +31,17 @@ function check_alive_function {
         #
         pause_while
         
-        ALIVE=`nice /home/pi/wifibroadcast-base/check_alive`
+        ALIVE=`nice /usr/local/bin/check_alive`
 
         if [ ${ALIVE} == "0" ]; then
 
 
             echo "No new packets received, restarting hello_video and sleeping for 5s ..."
                 
-            ps -ef | nice grep "cat /root/videofifo1" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+            ps -ef | nice grep "cat /var/run/openhd/videofifo1" | nice grep -v grep | awk '{print $2}' | xargs kill -9
             ps -ef | nice grep "${DISPLAY_PROGRAM}" | nice grep -v grep | awk '{print $2}' | xargs kill -9
                 
-            ionice -c 1 -n 4 nice -n -10 cat /root/videofifo1 | ionice -c 1 -n 4 nice -n -10 ${DISPLAY_PROGRAM} ${HELLO_VIDEO_ARGS} > /dev/null 2>&1 &
+            ionice -c 1 -n 4 nice -n -10 cat /var/run/openhd/videofifo1 | ionice -c 1 -n 4 nice -n -10 ${DISPLAY_PROGRAM} ${HELLO_VIDEO_ARGS} > /dev/null 2>&1 &
 
 
             sleep 5

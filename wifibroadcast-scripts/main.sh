@@ -14,7 +14,7 @@ TTY=`tty`
 
 
 # GPIO variable
-CONFIGFILE=`/root/wifibroadcast_misc/gpio-config.py`
+CONFIGFILE=`/usr/local/bin/gpio-config.py`
 
 export PATH=/usr/local/bin:${PATH}
 

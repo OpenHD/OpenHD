@@ -40,11 +40,11 @@ function tx_function {
         echo "FLIR enabled"
         qstatus "FLIR enabled" 5
 
-        /home/pi/cameracontrol/LoadFlirDriver.sh &
+        /usr/local/share/cameracontrol/LoadFlirDriver.sh &
     fi
 
 
-    /home/pi/wifibroadcast-base/sharedmem_init_tx
+    /usr/local/bin/sharedmem_init_tx
 
 
     if [ "$TXMODE" == "single" ]; then
@@ -194,7 +194,7 @@ function tx_function {
     if [ "$CTS_PROTECTION" == "auto" ] && [ "$DRIVER" == "ath9k_htc" ]; then
         echo -n "Checking for other wifi traffic ... "
 
-        WIFIPPS=`/home/pi/wifibroadcast-base/wifiscan $NICS`
+        WIFIPPS=`/usr/local/bin/wifiscan $NICS`
 
         echo -n "Detected WiFi packets per second:  $WIFIPPS"
 
@@ -313,7 +313,7 @@ function tx_function {
 
             qstatus "Running bandwidth measurement..." 5
             
-            BANDWIDTH_MEASURED=$(cat /dev/zero | /home/pi/wifibroadcast-base/tx_rawsock -z 1 -p 77 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS)
+            BANDWIDTH_MEASURED=$(cat /dev/zero | /usr/local/bin/tx_rawsock -z 1 -p 77 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS)
             BANDWIDTH_MEASURED_KBIT=$(python -c "print(int(${BANDWIDTH_MEASURED} / 1000.0))")
             echo "Bandwidth available: ${BANDWIDTH_MEASURED_KBIT}Kbit/s"
             qstatus "Bandwidth available: ${BANDWIDTH_MEASURED_KBIT}Kbit/s" 5
@@ -473,7 +473,7 @@ function tx_function {
     fi
 
 
-    /home/pi/RemoteSettings/Air/rssitx.sh &
+    /usr/local/share/RemoteSettings/Air/rssitx.sh &
 
     echo
     echo "Starting video TX, FEC $VIDEO_BLOCKS/$VIDEO_FECS/$VIDEO_BLOCKLENGTH: $WIDTH x $HEIGHT $FPS fps, video bitrate: $BITRATE_KBIT kBit/s, keyframe interval: $KEYFRAMERATE"
@@ -486,16 +486,16 @@ function tx_function {
 
     if [ "$IsAudioTransferEnabled" == "1" ]; then
         qstatus "Audio enabled" 5
-        /home/pi/RemoteSettings/Air/AudioCapture.sh &
-        /home/pi/RemoteSettings/Air/AudioTX.sh &
+        /usr/local/share/RemoteSettings/Air/AudioCapture.sh &
+        /usr/local/share/RemoteSettings/Air/AudioTX.sh &
     fi
 
     #
     # Start joystick processes
     #
     if [ "$EncryptionOrRange" == "Encryption" ]; then
-        /home/pi/RemoteSettings/Air/RxJoystick.sh &
-        /home/pi/RemoteSettings/Air/processUDP.sh &
+        /usr/local/share/RemoteSettings/Air/RxJoystick.sh &
+        /usr/local/share/RemoteSettings/Air/processUDP.sh &
     fi
 
     # 
@@ -505,9 +505,9 @@ function tx_function {
         echo "RemoteSettings enabled"
         qstatus "Remote settings enabled" 5
 
-        /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
-        /home/pi/RemoteSettings/AirRSSI.sh &
-        /usr/bin/python3 /home/pi/RemoteSettings/RemoteSettingsAir.py &
+        /usr/local/share/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
+        /usr/local/share/RemoteSettings/AirRSSI.sh &
+        /usr/bin/python3 /usr/local/share/RemoteSettings/RemoteSettingsAir.py &
     else
         #
         # Check to see if RemoteSettings was enabled with a value other than 0/1/2, which we interpret
@@ -524,9 +524,9 @@ function tx_function {
             if [ "$RemoteSettingsEnabled" -ne "0" ] && [ "$RemoteSettingsEnabled" -ne "2" ]; then
                     echo "RemoteSettings enabled with timer"
 
-                    /home/pi/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
-                    /home/pi/RemoteSettings/AirRSSI.sh &
-                    /usr/bin/python3 /home/pi/RemoteSettings/RemoteSettingsAir.py $RemoteSettingsEnabled &
+                    /usr/local/share/RemoteSettings/RemoteSettingsWFBC_UDP_Air.sh > /dev/null &
+                    /usr/local/share/RemoteSettings/AirRSSI.sh &
+                    /usr/bin/python3 /usr/local/share/RemoteSettings/RemoteSettingsAir.py $RemoteSettingsEnabled &
             fi
         fi
     fi
@@ -560,10 +560,10 @@ function tx_function {
             CAMERA_PROGRAM="raspivid"
         fi
 
-        echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
+        echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
     else
 
-        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
+        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
     fi
 
     #
@@ -635,25 +635,25 @@ function tx_function {
         # duplicated and sent out through the LTE card as well.
         # 
         if [ "$LTE" == "Y" ]; then
-            echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | gst-launch-1.0 -v fdsrc !  tee name=splitter ! queue ! h264parse ! rtph264pay config-interval=10 pt=96 ! udpsink host=$ZT_IP port=8000 splitter. ! queue ! fdsink | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
+            echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | gst-launch-1.0 -v fdsrc !  tee name=splitter ! queue ! h264parse ! rtph264pay config-interval=10 pt=96 ! udpsink host=$ZT_IP port=8000 splitter. ! queue ! fdsink | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
         else
-            echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
+            echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
         fi
 
         #
         # Create the half/quarter bandwidth camera scripts, used for camera switching
         # 
-        echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_10 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_10.sh
-        echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_5 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_5.sh
+        echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_10 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_10.sh
+        echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_5 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_5.sh
     else
 
         #
         # No pi camera was detected, but this is an air pi so we assume it's a VEYE camera that the GPU can't detect
         #
 
-        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
-        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_10 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_10.sh
-        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_5 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /home/pi/wifibroadcast-base/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_5.sh
+        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
+        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_10 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_10.sh
+        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_5 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_5.sh
     fi
 
 
@@ -692,7 +692,7 @@ function tx_function {
         CameraType="Secondary"
         
         if [ "$IsBandSwicherEnabled" != "1" ]; then
-            /home/pi/RemoteSettings/Air/TxBandSwitcher.sh &
+            /usr/local/share/RemoteSettings/Air/TxBandSwitcher.sh &
         fi
 
         if [ $SecondaryCamera == "No" ]; then
@@ -706,7 +706,7 @@ function tx_function {
     # Start the 2nd camera, currently uses SVPCOM but will be switched to rawsock soon
     #
     if [ $SecondaryCamera != "No" ]; then
-        /home/pi/RemoteSettings/Air/TxSecondaryCamera.sh &
+        /usr/local/share/RemoteSettings/Air/TxSecondaryCamera.sh &
     fi
 
 
@@ -717,8 +717,8 @@ function tx_function {
     #
     if [ "$IsBandSwicherEnabled" == "1" ]; then
         qstatus "Starting band switcher" 5
-        /home/pi/RemoteSettings/BandSwitcherAir.sh $SecondaryCamera  $BITRATE &
-        /usr/bin/python3 /home/pi/RemoteSettings/Air/MessageSorter.py &
+        /usr/local/share/RemoteSettings/BandSwitcherAir.sh $SecondaryCamera  $BITRATE &
+        /usr/bin/python3 /usr/local/share/RemoteSettings/Air/MessageSorter.py &
     fi
 
     #
@@ -743,7 +743,7 @@ function tx_function {
     #
     # Note: this is going to become part of the camera microservice soon
     #
-    /usr/bin/python /home/pi/cameracontrol/cameracontrolUDP.py -IsArduCameraV21 $IsArduCameraV21 -IsCamera1Enabled $IsCamera1Enabled -IsCamera2Enabled $IsCamera2Enabled -IsCamera3Enabled $IsCamera3Enabled -IsCamera4Enabled $IsCamera4Enabled  -Camera1ValueMin $Camera1ValueMin -Camera1ValueMax $Camera1ValueMax -Camera2ValueMin $Camera2ValueMin -Camera2ValueMax $Camera2ValueMax -Camera3ValueMin $Camera3ValueMin -Camera3ValueMax $Camera3ValueMax  -Camera4ValueMin $Camera4ValueMin -Camera4ValueMax $Camera4ValueMax -DefaultCameraId $DefaultCameraId -BitrateMeasured $BITRATE -SecondaryCamera $SecondaryCamera -CameraType $CameraType -WithoutNativeRPiCamera $WithoutNativeRPiCamera -DefaultBandWidthAth9k $Bandwidth
+    /usr/bin/python /usr/local/share/cameracontrol/cameracontrolUDP.py -IsArduCameraV21 $IsArduCameraV21 -IsCamera1Enabled $IsCamera1Enabled -IsCamera2Enabled $IsCamera2Enabled -IsCamera3Enabled $IsCamera3Enabled -IsCamera4Enabled $IsCamera4Enabled  -Camera1ValueMin $Camera1ValueMin -Camera1ValueMax $Camera1ValueMax -Camera2ValueMin $Camera2ValueMin -Camera2ValueMax $Camera2ValueMax -Camera3ValueMin $Camera3ValueMin -Camera3ValueMax $Camera3ValueMax  -Camera4ValueMin $Camera4ValueMin -Camera4ValueMax $Camera4ValueMax -DefaultCameraId $DefaultCameraId -BitrateMeasured $BITRATE -SecondaryCamera $SecondaryCamera -CameraType $CameraType -WithoutNativeRPiCamera $WithoutNativeRPiCamera -DefaultBandWidthAth9k $Bandwidth
 
 
     TX_EXITSTATUS=${PIPESTATUS[1]}

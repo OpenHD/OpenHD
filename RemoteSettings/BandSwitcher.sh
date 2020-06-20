@@ -1,8 +1,8 @@
 
 #!/bin/bash
 
-/home/pi/RemoteSettings/Ground/TxForwardBandSwitcher.sh &
+/usr/local/share/RemoteSettings/Ground/TxForwardBandSwitcher.sh &
 sleep 0.5
-/home/pi/RemoteSettings/Ground/RxForwardToBandSwitcher.sh &
+/usr/local/share/RemoteSettings/Ground/RxForwardToBandSwitcher.sh &
 sleep 0.5
-/home/pi/RemoteSettings/Ground/BandSwitcher.sh &
+/usr/local/share/RemoteSettings/Ground/BandSwitcher.sh &

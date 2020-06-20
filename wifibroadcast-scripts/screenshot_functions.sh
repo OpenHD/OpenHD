@@ -30,7 +30,7 @@ function screenshot_function {
         pause_while
         
 
-        SCALIVE=`nice /home/pi/wifibroadcast-base/check_alive`
+        SCALIVE=`nice /usr/local/bin/check_alive`
 
         #
         # 3 Megabytes free space limit, the code below will stop saving screenshots if free space falls below

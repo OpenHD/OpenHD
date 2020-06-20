@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#!/bin/bash
+cd /usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/
 
 if [ -e "/tmp/settings.sh" ]; then
     OK=`bash -n /tmp/settings.sh`
@@ -17,7 +17,6 @@ if [ -e "/tmp/settings.sh" ]; then
 fi
 
 
-cd /home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/
 
 NICS_LIST=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot`
 
@@ -28,19 +27,19 @@ do
 
 	if [ "$PrimaryCardMAC" == "0" ]; then
 		if [ "$EncryptionOrRange" == "Range" ]; then
-			./wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 $NICS_LIST
+			/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 $NICS_LIST
     		fi
 		
 		if [ "$EncryptionOrRange" == "Encryption" ]; then
-            		./wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 $NICS_LIST
+            		/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 $NICS_LIST
     		fi
 	else
 		if [ "$EncryptionOrRange" == "Range" ]; then
-			./wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 $PrimaryCardMAC
+			/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 $PrimaryCardMAC
     		fi
 		
 		if [ "$EncryptionOrRange" == "Encryption" ]; then
-            		./wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 $PrimaryCardMAC
+            		/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 $PrimaryCardMAC
     		fi	
 	fi
 

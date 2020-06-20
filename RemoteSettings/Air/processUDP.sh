@@ -19,7 +19,7 @@ while true
 do
 	echo "start processUDP -b $FC_TELEMETRY_BAUDRATE -s $FC_TELEMETRY_SERIALPORT -r 1 \n"
 
-	/home/pi/JoystickIn/processUDP -b $FC_TELEMETRY_BAUDRATE -s $FC_TELEMETRY_SERIALPORT -r 1
+	/usr/local/bin/processUDP -b $FC_TELEMETRY_BAUDRATE -s $FC_TELEMETRY_SERIALPORT -r 1
 
         echo "Restating  processUDP -b $FC_TELEMETRY_BAUDRATE -s $FC_TELEMETRY_SERIALPORT -r 1 \n"
         sleep 2

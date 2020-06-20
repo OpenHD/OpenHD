@@ -458,7 +458,7 @@ def SwitchLocalDisplayMode():
             lock.release()
 
         try:
-            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh  > /dev/null 2>&1')
+            os.system('/usr/local/share/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh  > /dev/null 2>&1')
         except Exception as e:
             print("Exception. KillForwardRTPSecondaryCamera.sh: "  + str(e))
 
@@ -470,12 +470,12 @@ def SwitchLocalDisplayMode():
             lock.release()
 
         try:
-            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh  > /dev/null 2>&1')
+            os.system('/usr/local/share/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh  > /dev/null 2>&1')
         except Exception as e:
             print("Exception. KillForwardRTPSecondaryCamera.sh: " +  str(e))
 
         try:
-            os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTP.sh  > /dev/null 2>&1 &')
+            os.system('/usr/local/share/RemoteSettings/Ground/RxForwardSecondaryRTP.sh  > /dev/null 2>&1 &')
         except Exception as e:
             print("RxForwardSecondaryRTP.sh forward exception: " +  str(e))
 
@@ -487,12 +487,12 @@ def SwitchLocalDisplayMode():
             lock.release()
 
         try:
-            os.system('/home/pi/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh  > /dev/null 2>&1')
+            os.system('/usr/local/share/RemoteSettings/Ground/KillForwardRTPSecondaryCamera.sh  > /dev/null 2>&1')
         except Exception as e:
             print("Exception. KillForwardRTPSecondaryCamera.sh: " +  str(e))
 
         try:
-            os.system('/home/pi/RemoteSettings/Ground/RxForwardSecondaryRTPAndDisplayLocally.sh  > /dev/null 2>&1 &')
+            os.system('/usr/local/share/RemoteSettings/Ground/RxForwardSecondaryRTPAndDisplayLocally.sh  > /dev/null 2>&1 &')
         except Exception as e:
             print("RxForwardSecondaryRTPAndDisplayLocally forward exception: " +  str(e))
 

@@ -15,7 +15,7 @@ if [ -e "/tmp/settings.sh" ]; then
 fi
 
 
-/home/pi/RemoteSettings/Air/TxRemoteSettings.sh &
+/usr/local/share/RemoteSettings/Air/TxRemoteSettings.sh &
 #sleep 0.5
-/home/pi/RemoteSettings/Air/RxRemoteSettings.sh &
+/usr/local/share/RemoteSettings/Air/RxRemoteSettings.sh &
 

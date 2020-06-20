@@ -74,10 +74,10 @@ def replace_OSD_config(LookFor, NewLine):
 def replace_TxPower_config(Param, Value):
 
     if 'txpowerA' in Param:
-        subprocess.Popen(["txpower_atheros", Value])
+        subprocess.Popen(["/usr/local/bin/txpower_atheros", Value])
 
     if 'txpowerR' in Param:
-        subprocess.Popen(["txpower_ralink", Value])
+        subprocess.Popen(["/usr/local/bin/txpower_ralink", Value])
 
     return 1
 

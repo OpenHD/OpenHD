@@ -40,7 +40,7 @@ function hotspot_check_function {
 
     pause_while
 
-    nice cat /root/telemetryfifo5 > /dev/openhd_mavlink1 &
+    nice cat /var/run/openhd/telemetryfifo5 > /dev/openhd_mavlink1 &
     /usr/local/bin/mavlink-routerd -e 127.0.0.1:14550 /dev/openhd_mavlink2:115200 &
 
     #
@@ -50,13 +50,13 @@ function hotspot_check_function {
     #
 
     #if [ "$ETHERNET_HOTSPOT" == "Y" ] || [ "$WIFI_HOTSPOT" != "N" ]; then
-        /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9121 5621 ${VIDEO_UDP_PORT2} &  #Secondary video stream
-        /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9120 5620 ${VIDEO_UDP_PORT} &  #Main video stream
+        /usr/local/share/wifibroadcast-scripts/UDPsplitterhelper.sh 9121 5621 ${VIDEO_UDP_PORT2} &  #Secondary video stream
+        /usr/local/share/wifibroadcast-scripts/UDPsplitterhelper.sh 9120 5620 ${VIDEO_UDP_PORT} &  #Main video stream
 
         if [ "${FORWARD_STREAM}" == "rtp" ]; then
-            echo "ionice -c 1 -n 4 nice -n -5 cat /root/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=5620 host=127.0.0.1 > /dev/null 2>&1 &" > /tmp/ForwardRTPMainCamera.sh
+            echo "ionice -c 1 -n 4 nice -n -5 cat /var/run/openhd/videofifo2 | nice -n -5 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=5620 host=127.0.0.1 > /dev/null 2>&1 &" > /tmp/ForwardRTPMainCamera.sh
         else
-            echo "ionice -c 1 -n 4 nice -n -10 socat -b ${VIDEO_UDP_BLOCKSIZE} GOPEN:/root/videofifo2 UDP4-SENDTO:127.0.0.1:5620 &" > /tmp/ForwardRTPMainCamera.sh
+            echo "ionice -c 1 -n 4 nice -n -10 socat -b ${VIDEO_UDP_BLOCKSIZE} GOPEN:/var/run/openhd/videofifo2 UDP4-SENDTO:127.0.0.1:5620 &" > /tmp/ForwardRTPMainCamera.sh
         fi
 
         chmod +x /tmp/ForwardRTPMainCamera.sh
@@ -68,8 +68,8 @@ function hotspot_check_function {
     #
     # Redirect telemetry to UDP splitter
     #
-    nice socat -b ${TELEMETRY_UDP_BLOCKSIZE} GOPEN:/root/telemetryfifo2 UDP4-SENDTO:127.0.0.1:6610 &
-    /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9122 6610 ${TELEMETRY_UDP_PORT} &
+    nice socat -b ${TELEMETRY_UDP_BLOCKSIZE} GOPEN:/var/run/openhd/telemetryfifo2 UDP4-SENDTO:127.0.0.1:6610 &
+    /usr/local/share/wifibroadcast-scripts/UDPsplitterhelper.sh 9122 6610 ${TELEMETRY_UDP_PORT} &
     
 
     #
@@ -84,26 +84,26 @@ function hotspot_check_function {
     #
     # TODO: use constants for all these ports
     #
-    nice /home/pi/wifibroadcast-base/rssi_forward 127.0.0.1 5003 &
-    /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9123 5003 5003 &
+    nice /usr/local/bin/rssi_forward 127.0.0.1 5003 &
+    /usr/local/share/wifibroadcast-scripts/UDPsplitterhelper.sh 9123 5003 5003 &
 
-    nice /home/pi/wifibroadcast-base/rssi_qgc_forward 127.0.0.1 5154 &
-    /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9124 5154 5154 &
+    nice /usr/local/bin/rssi_qgc_forward 127.0.0.1 5154 &
+    /usr/local/share/wifibroadcast-scripts/UDPsplitterhelper.sh 9124 5154 5154 &
 
 
     #
     # Distribute remote settings messages to connected hotspot devices
     # 
-    /home/pi/wifibroadcast-scripts/UDPsplitterhelper.sh 9125 5116 5115 &
+    /usr/local/share/wifibroadcast-scripts/UDPsplitterhelper.sh 9125 5116 5115 &
 
     #
     # Distribute Open.HD telemetry/rssi to QOpenHD when running on the ground station
     #
-    nice /home/pi/wifibroadcast-base/rssi_qgc_forward 127.0.0.1 5155 &
+    nice /usr/local/bin/rssi_qgc_forward 127.0.0.1 5155 &
 
 
     #if [ "$TELEMETRY_UPLINK" == "msp" ]; then
-        #cat /root/mspfifo > /dev/openhd_msp1 &
+        #cat /var/run/openhd/mspfifo > /dev/openhd_msp1 &
         #ser2net
     #fi
 

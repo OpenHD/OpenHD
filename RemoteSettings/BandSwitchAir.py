@@ -130,7 +130,7 @@ def StartRecv():
                     CurrentBand = "5"
                     lock.release()
                     NotifyCameraControl(CurrentBand)
-                    #os.system('/home/pi/RemoteSettings/KillRaspivid.sh')
+                    #os.system('/usr/local/share/RemoteSettings/KillRaspivid.sh')
                     #os.system('/dev/shm/startReadCameraTransfer_5.sh &')
 
                 
@@ -142,7 +142,7 @@ def StartRecv():
                     CurrentBand = "a"
                     lock.release()
                     NotifyCameraControl(CurrentBand)
-                    #os.system('/home/pi/RemoteSettings/KillRaspivid.sh')
+                    #os.system('/usr/local/share/RemoteSettings/KillRaspivid.sh')
                     #os.system('/dev/shm/startReadCameraTransfer_10.sh &')
 
                 
@@ -154,7 +154,7 @@ def StartRecv():
                     CurrentBand = "0"
                     lock.release()
                     NotifyCameraControl(CurrentBand)
-                    #os.system('/home/pi/RemoteSettings/KillRaspivid.sh')
+                    #os.system('/usr/local/share/RemoteSettings/KillRaspivid.sh')
                     #os.system('/dev/shm/startReadCameraTransfer.sh &')
                  
         print(".")

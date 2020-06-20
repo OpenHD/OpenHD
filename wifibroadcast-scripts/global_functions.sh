@@ -584,21 +584,21 @@ function set_video_player_based_fps {
     if [ "$CAM" == "0" ]; then         
         if [ "$FPS" == "59.9" ]; then
 
-            DISPLAY_PROGRAM=/opt/vc/src/hello_pi/hello_video/hello_video.bin.48-mm
+            DISPLAY_PROGRAM=/usr/local/bin/hello_video.bin.48-mm
         else
             if [ "$FPS" -eq 30 ]; then
 
-                DISPLAY_PROGRAM=/opt/vc/src/hello_pi/hello_video/hello_video.bin.30-mm
+                DISPLAY_PROGRAM=/usr/local/bin/hello_video.bin.30-mm
             fi
 
             if [ "$FPS" -lt 60 ]; then
 
-                DISPLAY_PROGRAM=/opt/vc/src/hello_pi/hello_video/hello_video.bin.48-mm
+                DISPLAY_PROGRAM=/usr/local/bin/hello_video.bin.48-mm
             fi
             
             if [ "$FPS" -gt 60 ]; then
             
-                DISPLAY_PROGRAM=/opt/vc/src/hello_pi/hello_video/hello_video.bin.240-befi
+                DISPLAY_PROGRAM=/usr/local/bin/hello_video.bin.240-befi
             fi
         fi
     fi
@@ -942,20 +942,20 @@ function wbclogger_function {
         #
         # Start saving Open.HD telemetry to the temporary area, so it can be copied to the USB drive after flight
         #
-        nice /home/pi/wifibroadcast-base/rssilogger /wifibroadcast_rx_status_0 >> /wbc_tmp/videorssi.csv &
-        nice /home/pi/wifibroadcast-base/rssilogger /wifibroadcast_rx_status_1 >> /wbc_tmp/telemetrydownrssi.csv &
-        nice /home/pi/wifibroadcast-base/syslogger /wifibroadcast_rx_status_sysair >> /wbc_tmp/system.csv &
+        nice /usr/local/bin/rssilogger /wifibroadcast_rx_status_0 >> /wbc_tmp/videorssi.csv &
+        nice /usr/local/bin/rssilogger /wifibroadcast_rx_status_1 >> /wbc_tmp/telemetrydownrssi.csv &
+        nice /usr/local/bin/syslogger /wifibroadcast_rx_status_sysair >> /wbc_tmp/system.csv &
 
         if [ "$TELEMETRY_UPLINK" != "disabled" ]; then
-            nice /home/pi/wifibroadcast-base/rssilogger /wifibroadcast_rx_status_uplink >> /wbc_tmp/telemetryuprssi.csv &
+            nice /usr/local/bin/rssilogger /wifibroadcast_rx_status_uplink >> /wbc_tmp/telemetryuprssi.csv &
         fi
 
         if [ "$RC" != "disabled" ]; then
-            nice /home/pi/wifibroadcast-base/rssilogger /wifibroadcast_rx_status_rc >> /wbc_tmp/rcrssi.csv &
+            nice /usr/local/bin/rssilogger /wifibroadcast_rx_status_rc >> /wbc_tmp/rcrssi.csv &
         fi
 
         if [ "$DEBUG" == "Y" ]; then
-            nice /home/pi/wifibroadcast-base/wifibackgroundscan $NICS >> /wbc_tmp/wifibackgroundscan.csv &
+            nice /usr/local/bin/wifibackgroundscan $NICS >> /wbc_tmp/wifibackgroundscan.csv &
         fi
 
         sleep 365d
