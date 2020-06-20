@@ -17,3 +17,7 @@ qstatus: qstatus.o
 clean:
 	rm -f wbc_status qstatus *.o *~
 
+install:
+	install -m 755 -p wbc_status ${DESTDIR}/usr/local/bin/
+	install -m 755 -p qstatus ${DESTDIR}/usr/local/bin/
+
