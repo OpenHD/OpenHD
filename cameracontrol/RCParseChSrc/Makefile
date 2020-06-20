@@ -8,3 +8,6 @@ all: RCParseCh
 
 clean :
 	rm RCParseCh RCParseCh.o
+
+install:
+	install -m 755 -p RCParseCh ${DESTDIR}/usr/local/bin/
