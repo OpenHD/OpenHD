@@ -1,0 +1,3 @@
+[submodule "lib/mavlink"]
+	path = lib/mavlink
+	url = https://github.com/OpenHD/mavlink.git
