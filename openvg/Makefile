@@ -56,8 +56,3 @@ install:
 	ldconfig
 	install -m 644 -p shapes.h /usr/include/
 	install -m 644 -p fontinfo.h /usr/include/
-
-uninstall:
-	rm -f /usr/bin/font2openvg
-	rm -f /usr/lib/libshapes.so.2.0.0 /usr/lib/libshapes.so
-	rm -f /usr/include/shapes.h /usr/include/fontinfo.h
