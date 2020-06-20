@@ -11,3 +11,6 @@ processUDP: processUDP.o
 
 clean :
 	rm processUDP processUDP.o
+
+install:
+	install -m 755 -p processUDP ${DESTDIR}/usr/local/bin/
