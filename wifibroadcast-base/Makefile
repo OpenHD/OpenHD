@@ -69,3 +69,24 @@ sharedmem_init_tx: sharedmem_init_tx.o openhdlib.o
 
 clean:
 	rm -f rx_rc_telemetry_buf rx rx_rc_telemetry rssirx rssitx tx_rawsock tx_telemetry rx_status tracker rssilogger syslogger channelscan check_alive rssi_forward rssi_qgc_forward wifiscan wifibackgroundscan sharedmem_init_rx sharedmem_init_tx *~ *.o
+
+install:
+	install -m 755 -p rx ${DESTDIR}/usr/local/bin/
+	install -m 755 -p rx_rc_telemetry ${DESTDIR}/usr/local/bin/
+	install -m 755 -p rx_rc_telemetry_buf ${DESTDIR}/usr/local/bin/
+	install -m 755 -p rssirx ${DESTDIR}/usr/local/bin/
+	install -m 755 -p rssitx ${DESTDIR}/usr/local/bin/
+	install -m 755 -p tx_rawsock ${DESTDIR}/usr/local/bin/
+	install -m 755 -p tx_telemetry ${DESTDIR}/usr/local/bin/
+	install -m 755 -p rx_status ${DESTDIR}/usr/local/bin/
+	install -m 755 -p tracker ${DESTDIR}/usr/local/bin/
+	install -m 755 -p rssilogger ${DESTDIR}/usr/local/bin/
+	install -m 755 -p syslogger ${DESTDIR}/usr/local/bin/
+	install -m 755 -p channelscan ${DESTDIR}/usr/local/bin/
+	install -m 755 -p check_alive ${DESTDIR}/usr/local/bin/
+	install -m 755 -p rssi_forward ${DESTDIR}/usr/local/bin/
+	install -m 755 -p rssi_qgc_forward ${DESTDIR}/usr/local/bin/
+	install -m 755 -p wifiscan ${DESTDIR}/usr/local/bin/
+	install -m 755 -p wifibackgroundscan ${DESTDIR}/usr/local/bin/
+	install -m 755 -p sharedmem_init_rx ${DESTDIR}/usr/local/bin/
+	install -m 755 -p sharedmem_init_tx ${DESTDIR}/usr/local/bin/
