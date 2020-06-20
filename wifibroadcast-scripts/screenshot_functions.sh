@@ -57,7 +57,7 @@ function screenshot_function {
                 # from hardware *after* all the layers have been scaled and composited, it works well but can
                 # only be done every few seconds since it is not efficient enough to run continuously
                 #
-                ionice -c 3 nice -n 19 /home/pi/wifibroadcast-misc/raspi2png -p $PNG_NAME
+                ionice -c 3 nice -n 19 /usr/local/bin/raspi2png -p $PNG_NAME
             else
                 echo "RAM disk full - no screenshot taken ..."
             fi

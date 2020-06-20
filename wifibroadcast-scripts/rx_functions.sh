@@ -267,7 +267,7 @@ function rx_function {
         #
         # Use raspi2png to take a screenshot of the rendered airodump display
         #
-        ionice -c 3 nice -n 19 /home/pi/wifibroadcast-misc/raspi2png -p /wbc_tmp/airodump.png >> /dev/null
+        ionice -c 3 nice -n 19 /usr/local/bin/raspi2png -p /wbc_tmp/airodump.png >> /dev/null
         killall airodump-ng
         
         sleep 1
