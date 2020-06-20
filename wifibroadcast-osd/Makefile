@@ -1,7 +1,7 @@
-CPPFLAGS+= -I/home/pi/wifibroadcast-base -I/opt/vc/include/ -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host/linux
+CPPFLAGS+= -I../openvg -I../wifibroadcast-base -I/opt/vc/include/ -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host/linux
 LDFLAGS+= -lfreetype -lz -lboost_system -lboost_regex -lboost_filesystem -lboost_thread -lpthread
-LDFLAGS+=-L/opt/vc/lib/ -lbrcmGLESv2 -lbrcmEGL -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread -lrt -lm -lshapes
-CFLAGS := $(CFLAGS) -I/usr/local/include/mavlink
+LDFLAGS+= -L../openvg -L/opt/vc/lib/ -lbrcmGLESv2 -lbrcmEGL -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread -lrt -lm -lshapes
+CFLAGS := $(CFLAGS) -I../lib/mavlink_generated/include/mavlink/v2.0/
 
 all: osd
 

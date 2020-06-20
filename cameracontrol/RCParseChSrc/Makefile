@@ -1,5 +1,5 @@
 _LDFLAGS := $(LDFLAGS) -lrt
-CFLAGS := $(CFLAGS) -I/home/pi/wifibroadcast-base -I/usr/local/include/mavlink
+CFLAGS := $(CFLAGS) -I../../wifibroadcast-base -I../../lib/mavlink_generated/include/mavlink/v2.0
 
 all: RCParseCh
 
