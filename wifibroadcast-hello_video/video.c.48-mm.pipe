@@ -59,7 +59,7 @@ static int video_decode_test(char *filename)
 {
 
     char fifonam[100];
-    sprintf(fifonam, "/root/videofifo1");
+    sprintf(fifonam, "/var/run/openhd/videofifo1");
 
     printf("still alive");
 
