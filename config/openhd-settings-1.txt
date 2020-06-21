@@ -1,0 +1,514 @@
+#!/bin/bash
+#
+# ======================================================================================
+#    <BASIC RF/VIDEO LINK CONFIGURATION>
+# ======================================================================================
+
+# >>>>>>>>>>[FREQUENCY FOR OPEN.HD]-- in MHz (See full Frequency List Below)
+# By default the frequency will be chosen automatically for the hardware you have connected to your ground/air pi,
+# but if you want to set a frequency manually, make sure it is supported by your hardware. Atheros cards are 2.4Ghz only
+# and Realtek 8812/14 cards are only stable on 5.8Ghz. Frequencies are listed at the bottom of this file
+FREQ=auto
+
+# >>>>>>>>>>[DATARATE] Lower settings yield higher range and vice versa.  
+# Below are the datarate settings for Legacy B/G and MCS "N" modes. 
+DATARATE=4
+
+# 1 - 5.5   =    802.11b         1 - 6.5   =     MCS 0
+# 2 - 11    =    802.11b         2 - 13    =     MCS 1
+# 3 - 12    =    802.11g         3 - 13    =     MCS 1
+# 4 - 19.5  =    802.11n         4 - 19.5  =     MCS 2
+# 5 - 24    =    802.11g         5 - 26    =     MCS 3           
+# 6 - 36    =    802.11g         6 - 39    =     MCS 4
+
+# # >>>>>>>>>>[MCS ; Space Time Block Coding ; Low Density Parity Check]
+# Only tested MCS+STBC+LDPC with RTL8812AU cards. MCS=Y only should work with Atheros cards when STBC/LDPC=N 
+UseMCS=N
+UseSTBC=N
+UseLDPC=N
+
+# # >>>>>>>>>>[IP/USB CAMERA SECONDARY DATA RATES]
+# Applied only to 8812AU with 2nd IP/USB cam, all other setups, ignore! Ath9k will ignore secondary camera datarate and use DATARATE=
+# 0=6.5Mbit (BPSK 1\2),		1=13Mbit (QPSK 1\2)
+# 2= 19.5MBit (QPSK 3/4), 	3=26Mbit (16-QAM 1\2)
+DATARATE_SECONDARY_8812AU=2
+
+# >>>>>>>>>>[TXPOWER-AIR/GROUND]-- For Atheros AR9271 or RTL8812/14AU Cards ONLY
+TxPowerAir=58
+TxPowerGround=58
+
+# >>>>>>>>>>[TXPOWER-RALINK]-- (Not confirmed Working]
+TXPOWER=2000
+
+# >>>>>>>>>>[FEC (FORWARD ERROR CORRECTION)]-- (8/4/1024 default) 
+# *For higher bitrate and range, you can reduce FEC to "2" for example by setting (10/2/1024)
+# max. blocklength Ralink = 2278, Atheros = 1550
+# min. sensible blocklength ~ 700
+VIDEO_BLOCKS=8
+VIDEO_FECS=4
+VIDEO_BLOCKLENGTH=1024
+
+#Secondary camera (IP\USB)
+VIDEO_BLOCKS_SECONDARY=8
+VIDEO_FECS_SECONDARY=4
+
+# >>>>>>>>>>[DEBUGGING OR SSH]--
+# Set this to "Y" to enable collection of extra debug logs or to allow SSH. If you experience anyways
+# issues. "Y" also turns on the display for the airpi
+DEBUG=N
+
+# >>>>>>>>>>[DISABLE SCREEN MESSAGES]--
+# Set this to "Y" to disable text messages about Display and Wifi card setup etc.
+QUIET=N
+
+# >>>>>>>>>>[SCREENSHOTS]--
+# Set to "Y" to enable periodic screenshots every 10 seconds
+ENABLE_SCREENSHOTS=N
+
+# >>>>>>>>>>[DISABLE OSD]--
+# Set to "Y" to enable ground OSD. set "N" to only display video. 
+DISPLAY_OSD=Y
+
+# set to "Y" to use the QOpenHD app instead of the original OSD
+ENABLE_QOPENHD=N
+
+
+# >>>>>>>>>>[5/10/20Mhz BANDWIDTH SETTINGS]--Default 20mhz
+# !!!!!!! ATHEROS CARDS ONLY  !!!!!!!!!!!!!!!!!!!!!
+# Users can choose between 20mhz, 10mhz or 5mhz bandwidth at the expense of 1/4 or 1/2 of total available 
+# Datarate/Bitrate. Range can be increased significantly with 5/10mhz "Narrowband".
+# ***Default @ 20mhz compatible with all Wireless cards. 5/10mhz Bandwidth options will result in
+# Bandwidth:5, 10 or 20.
+Bandwidth=20
+
+
+# ======================================================================================
+#                            <VIDEO/CAMERA CONFIGURATION>
+# ======================================================================================
+
+# >>>>>>>>>>[VIDEO BITRATE]-- "auto" recommended
+# Air Pi reads available bandwidth to determine bitrate.
+# 
+# Set to a fixed value to disable automatic measuring 
+# 
+# Note: the unit for this setting is megabits, not kilobits or bits!
+# For 4.5mbit, set to 4.5
+VIDEO_BITRATE=auto
+
+# >>>>>>>>>>[BITRATE PERCENTAGE]-- "65 default"
+# Depending on channel utilization by other wifi networks you may need to set
+# this to a lower value like 60% to avoid a delayed video stream.
+# On free channels you may set this to a higher value like 75% to get a higher
+# bitrate and thus image quality.
+BITRATE_PERCENT=60
+
+# >>>>>>>>>>[CAMERA RESOLUTION]--
+# V1 cam: 1280x720: 30fps, 48fps. 1920x1080: 30fps
+# V2 cam: 1280x720: 30fps, 48fps, 59.9fps. 1640x922: 30fps, 40fps. 1920x1080: 30fps
+WIDTH=1280
+HEIGHT=720
+
+# >>>>>>>>>>[CAMERA FPS]--"48 default"
+# Choose between 30, 40, 48, 59.9, values above 60 are experimental
+FPS=30
+
+# >>>>>>>>>>[KEYFRAME RATE]-- 
+# ***This is how often a "fresh-new" video frame is transmitted***
+# Lower values mean faster glitch-recovery, but also lower video quality.
+# With fps=48 and keyframerate=5, glitches will stay visible for around 100ms in worst case.
+# You can set this higher or lower according to your needs. Minimum value is 2.
+KEYFRAMERATE=10
+#
+# >>>>>>>>>>[RASPIVID CAMERA SETTINGS]--
+# There are dozens of paramaters, see the RPI forum for all settings.
+EXTRAPARAMS="-cd H264 -n -fl -ih -pf high -if both -ex sports -mm average -awb horizon"
+# UNCOMMENT, AND USE THESE CAMERA SETTINGS FOR THE B101 OR SIMILAR HDMI-CSI ADAPTER
+#EXTRAPARAMS="-cd H264 -n -fl -ih -pf high -if both"
+
+# >>>>>>>>>>[SAVE VIDEO-RAMdisk/Memory]--Set to "memory" to use RAMdisk for temporary video/screenshot/telemetry 
+# storage recording time to ~12-14 minutes, but is the safe way. If you need longer recording times, use "sdcard", to 
+# use the sdcard as the temporary video storage. Keep in mind though, that this might introduce video stutter and/or bad blocks. 
+# you can also disable recording entirely by setting VIDEO_TMP=none
+VIDEO_TMP=memory
+
+# >>>>>>>>>>[Use openhdvid instead of raspivid]
+# Raspivid is the default and stable option, openhdvid is a new replacement for it that will allow live camera
+# parameter changes and other enhancements. It is not well tested yet.
+ENABLE_OPENHDVID=N
+
+
+# >>>>>>>>>>[Use new raspberry pi camera AWB algorithm]
+# Buster only (strech doesn't have new enough firmware for it)
+# This option is here because the new AWB algorithm can cause color tint in certain cases, we're
+# disabling it to use the old one by default. The advantage of the newer one is it doesn't shift as
+# rapidly when the scene changes.
+ENABLE_NEW_PI_AWB=N
+
+# ======================================================================================
+#                   <GROUND STATION/PC/PHONE/TABLET INTERFACE CONFIG>
+# ======================================================================================
+
+# >>>>>>>>>>[HOTSPOT SOURCE]-- **THE EXTERNAL HOTSPOT IS CURRENTLY BROKEN, DON'T USE**
+# Set "internal" or MAC address of EXTERNAL wifi card
+WIFI_HOTSPOT_NIC=internal
+
+# >>>>>>>>>>[HOTSPOT MODE]-- Default SSID is "Openhd" Password "wifiopenhd"
+# ***USE WITH QGC-PHONE, OPENHD APP, MISSION PLANNER OR HID/RC APP***
+# Set "auto" (default) with Pi3b+ as GroundPi (it has 2.4/5ghz internal hotspot) OR Pi3b/2b video is 5.8ghz 
+# and internal hotspot is 2.4ghz. For 2.4ghz hotspot and 2.4ghz video must be manually set at your own risk!
+# Set "Y" to enable Hotspot and you (manually) set the band & ch below. 
+# Set to "N" for no wifi hotspot (Recommended If NOT using Pi3b+ & 2.4ghz for video as it could # interfere.
+WIFI_HOTSPOT=auto
+
+# >>>>>>>>>>[HOTSPOT BAND/CHANNEL_MANUAL CONFIG]
+# NOTE with WIFI_HOTSPOT=auto your setting here will be over written.
+# Set to "g" for 2.4ghz , "a" for 5.8ghz, 
+# Channels 1-11 for 2.4Ghz, 
+# Channels 36,40,44,48,52,56,60,64 for 5Ghz
+HOTSPOT_BAND=a
+HOTSPOT_CHANNEL=36
+# Set to number of seconds you wany hotspot to shutdown. Default is "0", run forever
+HOTSPOT_TIMEOUT=0
+# hotspot transmit power in units of mBm, so 100 corresponds to 1dBm
+# to set full power, use HOTSPOT_TXPOWER=3100
+HOTSPOT_TXPOWER=3100
+
+# >>>>>>>>>>[ETHERNET HOTSPOT]--*Only used for PC/Mission Planner Ethernet connection
+# Set this to "Y" to enable Ethernet hotspot. This will forward the received video and 
+# telemetry to another PC.
+ETHERNET_HOTSPOT=N
+
+# >>>>>>>>>>[FORWARD RTP/RAW h.264 VIDEO TO PC/PHONE]
+# Set this to "raw" to forward a raw h264 stream to 2nd display devices (for QGC/FPV_VR app)
+# Set to "rtp" to forward RTP h264 stream 
+FORWARD_STREAM=rtp
+
+# >>>>>>>>>>[UDP PORT SETUP]--
+# UDP port to send video stream to, set to 5000 for FPV_VR app or 5600 for Mission Planner/QGC
+VIDEO_UDP_PORT=5600
+# *EXPERIMENTAL* Secondary IP/USB Camera UDP Port (DON'T CHANGE)
+VIDEO_UDP_PORT2=5601
+
+
+
+
+# ======================================================================================
+#                     <TELEMETRY/USB RC CONFIGURATION>
+# ======================================================================================
+
+# >>>>>>>>>>[CTS PROTECTION]--Use in areas with other wifi networks or Interference
+# Set "Y" in conjunction with ATHEROS "Range" RC
+# Set "auto" for automatic detection. 
+# Set "N" to disable.
+CTS_PROTECTION=N
+
+# >>>>>>>>>>[USB RC RANGE OR ENCRYPTION]-- 
+# For Atheros AND RTL8812AU Cards use "Range".
+# For any other cards use "Encryption" + CTS=N (NOT TESTED VERY MUCH)
+# ***"Range" Uses the original EZ-wifibroadcast "joystick" code. This setting should provide better range. 
+
+# ***"Encryption" Is a more secure means of RC uplink and works with any wifi cards but may
+# Result in higher packet loss at longer ranges.
+EncryptionOrRange=Range
+
+# >>>>>>>>>>[RC JOYSTICK MODE OVER OPEN.HD SETTINGS]
+# Set this to "mavlink" to enable R/C over Open.HD using mavlink protocol or "msp" for MSP
+# protocol.
+# Set to "sumd" for Graupner SUMD, "ibus" for Flysky IBUS, "srxl" for Multiplex SRXL/XBUS
+# Mode B. Set to "disabled" to disable
+# **See joyconfig.txt for other settings, default settings work for Taranis in USB.
+RC=mavlink
+
+# >>>>>>>>>>[DEDICATED WIFI-CARD UPLINK/RC MAC ADDR.]-- If different types of Ground wifi cards are used.
+# Set this if you have 1 High-Power ground card plus 1 or more lower power cards so that
+# all uplink is sent using the high-power card. Otherwise, leave "0" and RC/Uplink will
+# be automatically selected based on RSSI signal. 
+# ***Also Set for Bandwidth Switcher Function (Below)***
+#Ground RX card Primary
+PrimaryCardMAC=0
+
+# >>>>>>>>>>[TELEMETRY WBC/OTHER]--
+# wbc = use wifibroadcast as telemetry up/downlink
+# external = use external means as telemetry up/downlink (LRS or 3DR dongles)
+# if set to external, set serialport to which LRS or 3DR dongle is connected
+# both on ground and air pi
+TELEMETRY_TRANSMISSION=wbc
+
+# >>>>>>>>>>[TELEMETRY UPLINK]--
+# Set to "disabled" or "mavlink" for Mavlink (QGC, Missionplanner, etc.)
+TELEMETRY_UPLINK=mavlink
+
+# >>>>>>>>>>[USB OPENHD-RC SERIAL PORT/BAUDRATE]--Serial Port Settings between Air Pi & Flight Controller.
+# Serial port and baudrate (19200 is minimum) 
+# Set this to "/dev/serial0" for Pi onboard UART serial port or "/dev/ttyUSB0" for FTDI adapter. 
+FC_RC_SERIALPORT=/dev/serial0
+FC_RC_BAUDRATE=115200
+
+# >>>>>>>>>>[OPENHD-FC SERIAL PORT/BAUDRATE]-- Air Pi and Flight Controller 
+# *Should be the same as FC_RC_BAUDRATE 
+FC_TELEMETRY_SERIALPORT=/dev/serial0
+FC_TELEMETRY_BAUDRATE=115200
+
+# >>>>>>>>>>[EXTERNAL DEVICE SERIAL PORT BAUDRATE]--Serial port settings if using TELEMETRY_TRANSMISSION=external
+EXTERNAL_TELEMETRY_SERIALPORT_GROUND=/dev/serial0
+EXTERNAL_TELEMETRY_SERIALPORT_GROUND_BAUDRATE=57600
+
+# >>>>>>>>>>[GROUND SERIAL PORT OUT ENABLE?]--Set to "Y" to enable output of telemetry to serialport on ground Pi
+# (for antenna tracker etc.)
+ENABLE_SERIAL_TELEMETRY_OUTPUT=N
+
+# >>>>>>>>>>[GROUND SERIAL PORT/BAUDRATE OUT]-- 
+# Used for ground Pi telemetry output if TELEMETRY_OUTPUT=Y
+TELEMETRY_OUTPUT_SERIALPORT_GROUND=/dev/serial0
+TELEMETRY_OUTPUT_SERIALPORT_GROUND_BAUDRATE=57600
+
+
+#  ======================================================================================
+#                      <ADVANCED/ADDITIONAL HARDWARE SETTINGS>
+#  ======================================================================================
+
+# >>>>>>>>>>[ARDUCAM V2.0 OR V2.1 MULTI-CAMERA ADAPTER]-- 
+# This Camera Switcher feature must be used with the Arducam 4 camera Raspberry Pi multiplexer.  
+# If no camera switcher is detected, feature is automatically disabled.  if used, simply assign
+# desired RC Channel and pwm values for each camera.  Default settings are for 2 Cams A&B.
+IsCamera1Enabled=0
+IsCamera2Enabled=0
+IsCamera3Enabled=0
+IsCamera4Enabled=0
+#
+DefaultCameraId=1
+ChannelToListen=16
+#
+Camera1ValueMin=700
+Camera1ValueMax=1400
+#
+Camera2ValueMin=1450
+Camera2ValueMax=2100
+#
+Camera3ValueMin=2150
+Camera3ValueMax=2200
+#
+Camera4ValueMin=2250
+Camera4ValueMax=2500
+
+# >>>>>>>>>>[AUDIO OVER OPENHD-USB-MICROPHONE]--
+# Aability to transmit audio with Linux USB-Microphone and output over analog, HDMI or set to auto. 
+# *USE ONLY WITH PI2 or PI3/3b+ Air.
+# 0 Auto, 1 Analog, 2 HDMI
+DefaultAudioOut=0
+# Audio Enabled? "0"= Off "1"=ON
+IsAudioTransferEnabled=0
+# Audio Mic/Speaker Gains
+MicBoost=75
+SpeakersLevel=75
+
+# >>>>>>>>>>[VEYE-IMX290 CAMERA MODULE & SETTINGS]--
+EXTRAPARAMS_IMX290="-cd H264 -n -fl -ih -pf high -if both"
+IMX290_videoformat=PAL
+IMX290_wdrmode=0x03
+IMX290_mirrormode=0x00
+IMX290_denoise=0x00
+
+
+# ======================================================================================
+#                    <DEVELOPER-ENHANCEMENTS IN PROGRESS OPTIONS>
+# ======================================================================================
+
+# >>>>>>>>>>[MIRROR DSI AND HDMI DISPLAY]--See wiki for how-to
+MirrorDSI_To_HDMI=N
+
+# >>>>>>>>>>[MSP TELEMETRY STUFF]--not supported yet, do not change
+FC_MSP_SERIALPORT=/dev/ttyUSB0
+FC_MSP_BAUDRATE=115200
+
+# >>>>>>>>>>[ADJUST UPLINK DATARATE]--
+# *11Mbps is the default 802.11 data rate, lower rates do not appear to improve any range/quality because
+# the "packet size" of the RC/Uplink data is so small to begin with that 1, 5.5, 6 Mbps makes no difference.
+UplinkSpeed=11
+
+# >>>>>>>>>>[FEATURE BANDWIDTH SWITCHER] Allows users to remotely switch between 5/10/20 mhz bandwidth. simply assign RC 
+# Channel and pwm values for each setting (>2 selectable settings must be used on Axis RC channels 1-8)
+# **ONLY TESTED ON THE GROUND SO FAR. IN ORDER FOR THE BANDWIDTH TO SWITCH, THERE MUST BE A GOOD LINK BETWEEN ALL AIR AND GROUND WIFI CARDS. 
+# **RC bandwidth switcher is only tested with pi2/3 air.  if using RPI zero it is recommended to disable the switcher and instead set a 
+# fixed desired bandwidth prior to flight.  
+# **YOU MUST ALSO DEFINE THE MAC ADDRESSES OF YOUR GROUND ath9k Atheros cards for use with the RC bandwidth Switcher.  
+# MAKE SURE THAT YOUR MOST POWERFUL GROUND RECEIVER CARD MAC ADDRESS IS SET AS THE "PRIMARY RX/TX".
+# IsBandSwicherEnabled "0"=disabled "1"= enabled 
+# *Must have "Master-Mac address set above". 
+IsBandSwicherEnabled=0
+ChannelToListen2=8
+Band5Below=1200
+Band10ValueMin=1200
+Band10ValueMax=1650
+Band20After=1650
+
+# >>>>>>>>>>[RELAY OPEN.HD}--
+# DO NOT USE. BROKEN.
+# Set this to "Y" to enable Open.HD relay mode. Will forward the received video and teleme stream.
+# to another Open.HD RX.
+RELAY=N
+RELAY_NIC=112233445566
+RELAY_FREQ=5220
+
+# >>>>>>>>>>[CHANGE TMP VIDEO PARTITION TYPE]--
+# VIDEO_FS set to "ext4" (Linux, which is recommended for performance) or "fat" (Windows)
+VIDEO_FS=ext4
+
+# >>>>>>>>>>[CHANGE TMP VIDEO PARTITION TYPE]--
+# VIDEO_SAVE_FORMAT sets the container used when saving video to a USB stick on the ground station.
+# You can choose any format that ffmpeg can handle, the default is still avi but mp4 is broadly compatible
+# with most devices now as well. The default may change soon.
+VIDEO_SAVE_FORMAT=avi
+
+# >>>>>>>>>>[AIRODUMP Y/N]--Set to "Y" to scan for wifi networks with airodump-ng before starting RX
+AIRODUMP=N
+# Number of seconds wifi scanner is shown. Minimum recommended scanning time is 25 seconds.
+AIRODUMP_SECONDS=25
+
+# >>>>>>>>>>[FEATURE: 2-WAY COMM APP]-- For Air/Ground settings with Open.HD APP.
+# This enables or disables two-way communication between the open HD app and air/ground units.
+# **Setting "2" disables AirPi remote settings (not needed anyways), 
+# Primary benefit is to keep RPI zero CPU Usage down to a minimum with Atheros. Setting "1" Is helpful for quickly changing/testing
+# settings on Air Side by immediately applying changes for comparison without the need for SmartSync. 
+#Values "2"=Enables Ground Only, then uploads changes to air during SSync Boot (default) ; "1"=EnableAir/Ground Immediately save air changes through app...(Not recommended for regular usage)
+RemoteSettingsEnabled=2
+
+# >>>>>>>>>>[SmartSync Settings]--**SmartSync_StartupMode="0" means air/ground will boot quickly but can trigger SmartSync with CH2 movement or GPIO# 26 Cross Connected.
+SmartSync_StartupMode=0
+# RC Channel should default to middle (1500pwm position) to work properly
+SmartSyncRC_Channel=2
+# DO NOT CHANGE THE BELOW SMARTSYNC SETTINGS!
+SmartSyncGround_Countdown=50
+SmartSyncOFF_RC_Value=1700
+SmartSyncStayON_RC_Value=1300
+SmartSyncControlVia=joystick
+# We strongly suggest leaving this on auto, but any frequency from the list at the bottom of this file will work.
+# If you change this it MUST be a frequency that works on your wifi cards, and it MUST match on the ground and air 
+# side or smartsync itself will not work
+SmartSync_Frequency=auto
+
+
+# ======================================================================================
+#                    <DEVELOPER-ENHANCEMENTS IN PROGRESS OPTIONS>
+# ======================================================================================
+
+# >>>>>>>>>>[SECONDARY IP/USB CAMERA SETTINGS]--
+# Values: No, IP, USB
+SecondaryCamera=No
+
+# >>>>>>>>>>[SECONDARY PIP CAMERA SWITCHER RC CHANNEL]--
+# IP or USB secondary camera. To use "IsBandSwicherEnabled=1" must be enabled
+# RC channel to switch 3 different modes:  (#Camera1ValueMin .. Camera3ValueMax - used )
+#     Mode 1: LCD(HDMI) + android phone - RPi CSI camera
+#     Mode 2: LCD(HDMI) - RPi CSI camera, android phone - IP or USB camera. Bitrate = bitrate / 2 (20MHz) ,4(10Mhz) ,8(5Mhz). IPCameraLowRes is used  
+#     Mode 3: Adroid phone only -  IP or USB camera. IPCameraHiRes (20MHz) , or auto bitrate = initial-bitrate=\$1 USBCamera. (20MHz, 10Mhz /2, 5Mhz /4). 
+#             (To use fixed: initial-bitrate=200000)
+# Note: if set to 1-8, this will use one of the 8 RC axis from your transmitter. If set to 9-24, it will
+# use 2 consecutive buttons on the transmitter as a sort of fake 3-way switch.
+ChannelIPCamera=7
+
+# >>>>>>>>>>[OPTIONAL FLIR-USB CAMERA DRIVER SETUP]--
+# Values: Y N
+LoadFlirDriver=N
+
+
+# >>>>>>>>>>[IP/USB CAMERA PIPELINE OPTIONS]--*Uncomment corresponding per ip/usb camera type
+#USBCamera="gst-launch-1.0 uvch264src device=/dev/video0 initial-bitrate=\$1 average-bitrate=\$1 iframe-period=1000 name=src auto-start=true src.vidsrc ! queue ! video/x-h264,width=1280,height=720,framerate=30/1 ! h264parse ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
+
+#IPCameraHiRes="gst-launch-1.0 rtspsrc location=\"rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp\" latency=0 ! udpsink port=5600 host=127.0.0.1"
+#IPCameraLowRes="gst-launch-1.0 rtspsrc location=\"rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=1.sdp\" latency=0 ! udpsink port=5600 host=127.0.0.1"
+
+# >>>>>>>>>>[FLIR CAMERA PIPELINE OPTIONS]--
+#FLIR HD (visible image) -  640 x 480 @ 9fps:
+#USBCamera="gst-launch-1.0 v4l2src device=/dev/video2 ! video/x-raw,width=640,height=480,framerate=30/1 ! omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1 ! h264parse config-interval=3 ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
+
+#FLIR Thermal  - 160 x 128 @ 9fps:
+#USBCamera="gst-launch-1.0 v4l2src device=/dev/video3 ! video/x-raw,width=160,height=128,framerate=30/1 ! omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1 ! h264parse config-interval=3 ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
+
+#gstreamer videotestsrc:
+#USBCamera="gst-launch-1.0 videotestsrc ! video/x-raw,width=160,height=120,framerate=30/1 ! omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1 ! h264parse config-interval=3 ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
+
+
+# >>>>>>>>>>[Adjust channel value using other channel.]--
+# That function let make 2 way toggle switch be 3 way switch using other 2 way toggle switch. May be used with IP\USB camera switch, etc...
+# Values: 1-8
+# In case if channel 0 is selected function disabled.
+TrimChannel=0
+# Action: 1 - add PWM to channel. 0 - extract PWM from channel
+Action=1
+# PWM value to add\extract: 1-900
+PWMCount=202
+# To trigger function PWM value must be above 1850. To return back lower 1700
+ActivateChannel=0
+
+# >>>>>>>>>>[LORA RADIO]--Under Development
+# Values "0" or "1"
+Lora=0
+
+# >>>>>>>>>>[LTE]--Under Development
+# Enable LTE. Y or N
+LTE=N
+# Zerotier network ID
+ZT_NETWORK=1d71939404c3d2fd
+# IP address of client (Zerotier managed IP on viewing device)
+ZT_IP=172.26.128.187
+
+# >>>>>>>>>>[Adjust LCD screen backlight using touchscreen]--
+AdjustLCDBacklight=Y
+# Time in seconds
+AutoDimTime=30
+# Values from 0 to 255, where 0 - off or 0%, 255 - or or 100%
+AutoDimValue=255
+
+
+# >>>>>>>>>> [TTY CONSOLE]-- View Output of GroundPi Consoles and Scripts
+# set to "13" for a blank screen
+TTY_CONSOLE=13
+
+# ======================================================================================
+#                          FREQUENCY LIST AND OTHER Settings
+# ======================================================================================
+
+# [FREQUENCY AND ALTERNATIVE MULTI-CARD TRANSMISSION CONFIGURATION]
+# Set to "Y" on the RX for auto-scanning. Frequency still has to be set on TX!
+# Feature might be buggy or not work at all!
+FREQSCAN=N
+
+# [FREQUENCY LIST]
+# {2.3-2.7Ghz}
+# 2412, 2417, 2422, 2427, 2432, 2437, 2442, 2447, 2452, 2457, 2462, 2467, 2472, 2484 (Ralink and Atheros)
+# 2312, 2317, 2322, 2327, 2332, 2337, 2342, 2347, 2352, 2357, 2362, 2367, 2372, 2377, 2382, 2387, 2392, 2397, 2402, 2407 (Atheros only)
+# 2477, 2482, 2487, 2489, 2492, 2494, 2497, 2499, 2512, 2532, 2572, 2592, 2612, 2632, 2652, 2672, 2692, 2712 (Atheros only)
+#
+# {5Ghz)
+# 5180, 5200, 5220, 5240
+# 5260, 5280, 5300, 5320, 5500, 5520, 5540, 5560, 5580, 5600, 5620, 5640, 5660, 5680, 5700 *(DFS RADAR CHANNELS--MAY CAUSE PROBLEMS, RECOMMEND TO AVOID THESE).
+# 5745, 5765, 5785, 5805, 5825
+#
+# ***(2.3Ghz and 2.5-2.7Ghz band only works with Atheros cards. Check your local regulations before transmitting)!
+# Frequencies higher than 2512MHz work with Atheros, but with a lot lower transmit power and sensitivity and
+# thus greatly reduced range. Only useable for short-range applications!
+#
+# Set this to "single" for single TX wifi card, for dual TX wifi cards set "dual".
+# MAC addresses and frequency for the RX and TX wifi need to be set here when dual TX mode is enabled.
+#
+TXMODE=single
+#
+MAC_RX[0]=00c0ca91ee30
+FREQ_RX[0]=2484
+#
+MAC_RX[1]=24050f953384
+FREQ_RX[1]=2484
+#
+MAC_RX[2]=24050f953378
+FREQ_RX[2]=2484
+#
+MAC_RX[3]=24050f953373
+FREQ_RX[3]=2484
+#
+#
+MAC_TX[0]=24050f953378
+FREQ_TX[0]=5745
+#
+MAC_TX[1]=ec086b1c7834
+FREQ_TX[1]=2472
