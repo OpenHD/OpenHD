@@ -4,6 +4,26 @@ function tmessage {
     fi
 }
 
+function create_fifos {
+    if [ "$TTY" != "/dev/tty1" ]; then
+        return
+    fi
+    
+    mkdir -p /var/run/openhd
+    
+    mkfifo /var/run/openhd/videofifo1
+    mkfifo /var/run/openhd/videofifo2
+    mkfifo /var/run/openhd/videofifo3
+    mkfifo /var/run/openhd/videofifo4
+    mkfifo /var/run/openhd/telemetryfifo1
+    mkfifo /var/run/openhd/telemetryfifo2
+    mkfifo /var/run/openhd/telemetryfifo3
+    mkfifo /var/run/openhd/telemetryfifo4
+    mkfifo /var/run/openhd/telemetryfifo5
+    mkfifo /var/run/openhd/telemetryfifo6
+    mkfifo /var/run/openhd/mspfifo
+}
+
 
 function detect_os {
     source /etc/os-release

@@ -18,6 +18,8 @@ CONFIGFILE=`/usr/local/bin/gpio-config.py`
 
 export PATH=/usr/local/bin:${PATH}
 
+create_fifos
+
 autoenable_i2c_vc
 
 check_camera_attached
