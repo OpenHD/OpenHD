@@ -22,6 +22,8 @@ function create_fifos {
     mkfifo /var/run/openhd/telemetryfifo5
     mkfifo /var/run/openhd/telemetryfifo6
     mkfifo /var/run/openhd/mspfifo
+
+    touch /var/run/openhd/fifoready
 }
 
 

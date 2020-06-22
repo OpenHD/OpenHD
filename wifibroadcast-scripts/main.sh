@@ -20,6 +20,11 @@ export PATH=/usr/local/bin:${PATH}
 
 create_fifos
 
+# don't allow anything to proceed until the fifos are created
+while [ ! -f "/var/run/openhd/fifoready" ]; do
+    sleep 0.5
+done
+
 autoenable_i2c_vc
 
 check_camera_attached
