@@ -91,10 +91,9 @@ build_source() {
 
 
     pushd wifibroadcast-hello_video
-    cp -a hello_video.bin.48-mm ${TMPDIR}/usr/local/bin/ || exit 1
-    cp -a hello_video.bin.30-mm ${TMPDIR}/usr/local/bin/ || exit 1
-    cp -a hello_video.bin.240-befi ${TMPDIR}/usr/local/bin/ || exit 1
-    cp -a hello_video.bin.player ${TMPDIR}/usr/local/bin/ || exit 1
+    make clean
+    make || exit 1
+    make install DESTDIR=${TMPDIR} || exit 1
     popd
 
 
