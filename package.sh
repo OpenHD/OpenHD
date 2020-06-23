@@ -189,7 +189,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "openhd-router = 0.1.5" \
   -d "openhd-microservice = 0.1.12" \
   -d "openhd-qt = 5.15.0-1" \
-  -d "qopenhd = 0.4.0b5" \
+  -d "qopenhd" \
   -d "flirone-driver" \
   -d "veye-raspberrypi" \
   -d "lifepoweredpi" \
