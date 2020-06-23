@@ -358,7 +358,7 @@ VIDEO_FS=ext4
 # VIDEO_SAVE_FORMAT sets the container used when saving video to a USB stick on the ground station.
 # You can choose any format that ffmpeg can handle, the default is still avi but mp4 is broadly compatible
 # with most devices now as well. The default may change soon.
-VIDEO_SAVE_FORMAT=avi
+VIDEO_SAVE_FORMAT=mp4
 
 # >>>>>>>>>>[AIRODUMP Y/N]--Set to "Y" to scan for wifi networks with airodump-ng before starting RX
 AIRODUMP=N
