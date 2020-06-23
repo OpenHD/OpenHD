@@ -1,5 +1,5 @@
 _LDFLAGS := $(LDFLAGS) -lrt
-CFLAGS := $(CFLAGS) -I/home/pi/wifibroadcast-base -I/usr/local/include/mavlink
+CFLAGS := $(CFLAGS) -I../../wifibroadcast-base -I../../lib/mavlink_generated/include/mavlink/v2.0/
  
 all: processUDP
 
@@ -11,3 +11,6 @@ processUDP: processUDP.o
 
 clean :
 	rm processUDP processUDP.o
+
+install:
+	install -m 755 -p processUDP ${DESTDIR}/usr/local/bin/

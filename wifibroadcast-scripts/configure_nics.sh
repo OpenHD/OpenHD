@@ -3,7 +3,7 @@
 export PATH=/usr/local/bin:${PATH}
 
 if [ "$CAM" == "0" ]; then
-    CONFIGFILE=`/root/wifibroadcast_misc/gpio-config.py`
+    CONFIGFILE=`/usr/local/bin/gpio-config.py`
 else
     #
     # Air side has no concept of profiles, it is always just one settings file being overwritten
@@ -11,7 +11,7 @@ else
     CONFIGFILE="openhd-settings-1.txt"
 fi
 
-source /home/pi/wifibroadcast-scripts/global_functions.sh
+source /usr/local/share/wifibroadcast-scripts/global_functions.sh
 
 
 function datarate_to_wifi_settings {
@@ -169,7 +169,7 @@ function collect_errorlog {
     echo >>/boot/errorlog.txt
     nice vcgencmd get_config int >>/boot/errorlog.txt
 
-    nice /home/pi/wifibroadcast-misc/raspi2png -p /boot/errorlog.png
+    nice /usr/local/bin/raspi2png -p /boot/errorlog.png
     echo >>/boot/errorlog.txt
     nice dmesg >>/boot/errorlog.txt
     echo >>/boot/errorlog.txt
@@ -340,7 +340,7 @@ function detect_nics {
             #
             touch /tmp/pausewhile
            
-            /home/pi/wifibroadcast-base/rx -p 0 -d 1 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEOBLOCKLENGTH $NICS >/dev/null &
+            /usr/local/bin/rx -p 0 -d 1 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEOBLOCKLENGTH $NICS >/dev/null &
             
             sleep 0.5
             
@@ -351,18 +351,18 @@ function detect_nics {
                 #
                 # Cards support 5G and 2.4G
                 #
-                FREQCMD="/home/pi/wifibroadcast-base/channelscan 245 $NICS"
+                FREQCMD="/usr/local/bin/channelscan 245 $NICS"
             else
                 if iw list | nice grep -q 2312; then 
                     #
                     # Cards support 2.3G and 2.4G
                     #
-                    FREQCMD="/home/pi/wifibroadcast-base/channelscan 2324 $NICS"
+                    FREQCMD="/usr/local/bin/channelscan 2324 $NICS"
                 else 
                     #
                     # Cards support only 2.4G
                     #
-                    FREQCMD="/home/pi/wifibroadcast-base/channelscan 24 $NICS"
+                    FREQCMD="/usr/local/bin/channelscan 24 $NICS"
                 fi
             fi
 
@@ -575,7 +575,7 @@ if [ "$CAM" == "0" ]; then
 
         if [ -e "/dev/fb0" ]; then
             if [ -e "/dev/fb1" ]; then                
-                /home/pi/wifibroadcast-misc/raspi2raspi &
+                /usr/local/bin/raspi2raspi &
             else
                 qstatus "/dev/fb1 not found, mirroring disabled" 4
             fi

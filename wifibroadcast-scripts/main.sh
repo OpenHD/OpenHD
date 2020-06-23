@@ -14,9 +14,16 @@ TTY=`tty`
 
 
 # GPIO variable
-CONFIGFILE=`/root/wifibroadcast_misc/gpio-config.py`
+CONFIGFILE=`/usr/local/bin/gpio-config.py`
 
 export PATH=/usr/local/bin:${PATH}
+
+create_fifos
+
+# don't allow anything to proceed until the fifos are created
+while [ ! -f "/var/run/openhd/fifoready" ]; do
+    sleep 0.5
+done
 
 autoenable_i2c_vc
 

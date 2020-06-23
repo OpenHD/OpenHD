@@ -5,4 +5,4 @@ mac="${2:-mac}"
 IP="${3:-ip}"
 hostname="${4}"
 
-/home/pi/RemoteSettings/dhcpeventThread.sh $op $IP &
+/usr/local/share/RemoteSettings/dhcpeventThread.sh $op $IP &

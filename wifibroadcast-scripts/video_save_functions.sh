@@ -39,7 +39,7 @@ function MAIN_VIDEO_SAVE_FUNCTION {
                 if [ ${FREETMPSPACE} -lt ${LIMITFREE} ]; then
                     echo "RAM disk full, killing cat video file writing  process ..."
                 
-                    ps -ef | nice grep "cat /root/videofifo3" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+                    ps -ef | nice grep "cat /var/run/openhd/videofifo3" | nice grep -v grep | awk '{print $2}' | xargs kill -9
                     KILLED=1
                 fi
             fi
@@ -72,15 +72,15 @@ function save_function {
     #
     # Kill video, telemetry recording, and local video display
     #
-    ps -ef | nice grep "cat /root/videofifo3" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-    ps -ef | nice grep "cat /root/telemetryfifo3" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+    ps -ef | nice grep "cat /var/run/openhd/videofifo3" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+    ps -ef | nice grep "cat /var/run/openhd/telemetryfifo3" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 
 
     #
     # Kill hello_video
     #
     ps -ef | nice grep "${DISPLAY_PROGRAM}" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-    ps -ef | nice grep "cat /root/videofifo1" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+    ps -ef | nice grep "cat /var/run/openhd/videofifo1" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 
 
 
@@ -89,7 +89,7 @@ function save_function {
     # written to
     #
     ps -ef | nice grep "rx -p 0" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-    ps -ef | nice grep "ftee /root/videofifo" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+    ps -ef | nice grep "ftee /var/run/openhd/videofifo" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 
 
     #
@@ -103,8 +103,7 @@ function save_function {
         echo "VIDEOFILE: ${VIDEOFILE}"
 
         # start re-play of recorded video ....
-        # nice /opt/vc/src/hello_pi/hello_video/hello_video.bin.player ${VIDEOFILE} ${FPS} &
-        nice /rootfs/home/pi/wifibroadcast-hello_video/hello_video.bin.player ${VIDEOFILE} ${FPS} &
+        nice /usr/local/bin/hello_video.bin.player ${VIDEOFILE} ${FPS} &
     fi
 
 
@@ -168,18 +167,18 @@ function save_function {
         #
         # Create charts for the video and downstream telemetry
         # 
-        gnuplot -e "load '/root/gnuplot/videorssi.gp'" &
-        gnuplot -e "load '/root/gnuplot/videopackets.gp'"
-        gnuplot -e "load '/root/gnuplot/telemetrydownrssi.gp'" &
-        gnuplot -e "load '/root/gnuplot/telemetrydownpackets.gp'"
+        gnuplot -e "load '/usr/local/share/openhd/gnuplot/videorssi.gp'" &
+        gnuplot -e "load '/usr/local/share/openhd/gnuplot/videopackets.gp'"
+        gnuplot -e "load '/usr/local/share/openhd/gnuplot/telemetrydownrssi.gp'" &
+        gnuplot -e "load '/usr/local/share/openhd/gnuplot/telemetrydownpackets.gp'"
 
 
         #
         # Upstream telemetry was enabled, this creates a chart with the data
         #
         if [ "${TELEMETRY_UPLINK}" != "disabled" ]; then
-            gnuplot -e "load '/root/gnuplot/telemetryuprssi.gp'" &
-            gnuplot -e "load '/root/gnuplot/telemetryuppackets.gp'"
+            gnuplot -e "load '/usr/local/share/openhd/gnuplot/telemetryuprssi.gp'" &
+            gnuplot -e "load '/usr/local/share/openhd/gnuplot/telemetryuppackets.gp'"
         fi
 
 
@@ -187,13 +186,13 @@ function save_function {
         # RC was in use, this creates a chart with the data
         #
         if [ "${RC}" != "disabled" ]; then
-            gnuplot -e "load '/root/gnuplot/rcrssi.gp'" &
-            gnuplot -e "load '/root/gnuplot/rcpackets.gp'"
+            gnuplot -e "load '/usr/local/share/openhd/gnuplot/rcrssi.gp'" &
+            gnuplot -e "load '/usr/local/share/openhd/gnuplot/rcpackets.gp'"
         fi
 
 
         if [ "${DEBUG}" == "Y" ]; then
-            gnuplot -e "load '/root/gnuplot/wifibackgroundscan.gp'" &
+            gnuplot -e "load '/usr/local/share/openhd/gnuplot/wifibackgroundscan.gp'" &
         fi
 
 
@@ -366,13 +365,13 @@ function save_function {
     # Re-start video recording
     #
     if [ "${VIDEO_TMP}" != "none" ]; then
-        ionice -c 3 nice cat /root/videofifo3 >> ${VIDEOFILE} &
+        ionice -c 3 nice cat /var/run/openhd/videofifo3 >> ${VIDEOFILE} &
     fi
 
     #
     # Re-start raw telemetry recording
     #
-    ionice -c 3 nice cat /root/telemetryfifo3 >> /wbc_tmp/telemetrydowntmp.raw &
+    ionice -c 3 nice cat /var/run/openhd/telemetryfifo3 >> /wbc_tmp/telemetrydowntmp.raw &
 
 
     killall wbc_status > /dev/null 2>&1

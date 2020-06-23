@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd /usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/
+
 if [ -e "/tmp/settings.sh" ]; then
     OK=`bash -n /tmp/settings.sh`
     if [ "$?" == "0" ]; then
@@ -14,11 +16,10 @@ if [ -e "/tmp/settings.sh" ]; then
     sleep 365d
 fi
 
-cd /home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/
 
 NICS_LIST=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot`
 
-./wfb_rx -u 5612 -p 23 -c 127.0.0.1 -n $VIDEO_BLOCKS_SECONDARY -k $VIDEO_FECS_SECONDARY $NICS_LIST >/dev/null 2>/dev/null &
+/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_rx -u 5612 -p 23 -c 127.0.0.1 -n $VIDEO_BLOCKS_SECONDARY -k $VIDEO_FECS_SECONDARY $NICS_LIST >/dev/null 2>/dev/null &
 
 if [ "$ENABLE_QOPENHD" == "Y" ]; then
     gst-launch-1.0 udpsrc port=5612 ! tee name=t !  queue ! udpsink host=127.0.0.1 port=5621 t. ! udpsink host=127.0.0.1 port=$VIDEO_UDP_PORT2

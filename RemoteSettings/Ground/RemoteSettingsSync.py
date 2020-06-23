@@ -391,7 +391,7 @@ def InitWlan():
         try:
             if os.path.isdir("/sys/class/net/wlan0") == True:
                 WlanName = "wlan0"
-                subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', "wlan0", SmartSyncFreq ])
+                subprocess.check_call(['/usr/local/share/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', "wlan0", SmartSyncFreq ])
                 return True
             else:
                 SendInfoToDisplay(3, "SmartSync: wlan0 not found")
@@ -405,7 +405,7 @@ def InitWlan():
             SendInfoToDisplay(5, "SmartSync: wlan name with MAC: " + result)
             try:
                 WlanName = result
-                subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', result, SmartSyncFreq ])
+                subprocess.check_call(['/usr/local/share/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', result, SmartSyncFreq ])
                 return True
             except Exception as e:
                 return False
@@ -414,7 +414,7 @@ def InitWlan():
             try:
                 if os.path.isdir("/sys/class/net/wlan0") == True:
                     WlanName = "wlan0"
-                    subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', "wlan0", SmartSyncFreq ])
+                    subprocess.check_call(['/usr/local/share/RemoteSettings/Ground/SetWlanXMonitorModeFreq.sh', "wlan0", SmartSyncFreq ])
                     return True
                 else:
                     SendInfoToDisplay(3, "SmartSync: wlan0 not found")
@@ -531,8 +531,8 @@ def SelectSmartSyncFrequency():
 
 def StartSVPcomTx():                                     
     try:                                     
-        subprocess.Popen(['/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx',"-k", "1", "-n", "1",
-                          "-K", "/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/tx.key",
+        subprocess.Popen(['/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx',"-k", "1", "-n", "1",
+                          "-K", "/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/tx.key",
                           "-u" ,str(UDP_PORT_OUT), "-p", "93", "-B", "20", "-M", "0", WlanName ])
         return True
     except Exception as e:
@@ -541,8 +541,8 @@ def StartSVPcomTx():
 
 def StartSVPcomRx():   
     try:                                     
-        subprocess.Popen( ['/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_rx', "-k", "1", "-n", "1",
-                               "-K", "/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/rx.key",
+        subprocess.Popen( ['/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_rx', "-k", "1", "-n", "1",
+                               "-K", "/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/rx.key",
                               "-c" ,"127.0.0.1", "-u", str(UDP_PORT_IN), "-p", "92",  WlanName ], stdout=RxDevNull)
         return True
     except Exception as e:
@@ -581,7 +581,7 @@ def StartRC_Reader(ChannelToRead):
            SendInfoToDisplay(4, "SmartSync: selected RC channel less than 1.  Forced to channel 1")
            ChannelToRead = 1
 
-        subprocess.Popen( ['/home/pi/RemoteSettings/Ground/helper/JoystickSender', str(ChannelToRead), ROLL_AXIS, PITCH_AXIS,YAW_AXIS, THROTTLE_AXIS,AUX1_AXIS,AUX2_AXIS,AUX3_AXIS,AUX4_AXIS ], stdout=RCDevNull)
+        subprocess.Popen( ['/usr/local/share/RemoteSettings/Ground/helper/JoystickSender', str(ChannelToRead), ROLL_AXIS, PITCH_AXIS,YAW_AXIS, THROTTLE_AXIS,AUX1_AXIS,AUX2_AXIS,AUX3_AXIS,AUX4_AXIS ], stdout=RCDevNull)
         return True
     except Exception as e:
         return False
@@ -793,11 +793,11 @@ def ReturnWlanFreq():
         try:
             if not FreqFromConfigFile or "auto" in FreqFromConfigFile:
                 WFBFreq = GetDefaultWFBFrequency()
-                subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanFreq.sh', WlanName , WFBFreq ])
+                subprocess.check_call(['/usr/local/share/RemoteSettings/Ground/SetWlanFreq.sh', WlanName , WFBFreq ])
                 SendInfoToDisplay(5, "Using automatic WFB frequency: " + WFBFreq)
             else:
                 FreqFromConfigFile = re.sub("\D", "", FreqFromConfigFile) 
-                subprocess.check_call(['/home/pi/RemoteSettings/Ground/SetWlanFreq.sh', WlanName , FreqFromConfigFile ])
+                subprocess.check_call(['/usr/local/share/RemoteSettings/Ground/SetWlanFreq.sh', WlanName , FreqFromConfigFile ])
                 SendInfoToDisplay(5, "SmartSync: setting  " + WlanName + " to: " + FreqFromConfigFile)
         except Exception as e:
             SendInfoToDisplay(3, "SmartSync: error setting frequency to " + FreqFromConfigFile)

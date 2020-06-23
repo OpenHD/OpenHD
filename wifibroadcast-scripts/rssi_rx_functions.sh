@@ -36,5 +36,5 @@ function rssirx_function {
     echo "Starting OpenHD RSSI RX"
     qstatus "Starting OpenHD RSSI RX" 5
     
-    nice /home/pi/wifibroadcast-base/rssirx $NICS
+    nice /usr/local/bin/rssirx $NICS
 }

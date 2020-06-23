@@ -48,7 +48,7 @@ function tether_check_function {
             # the same data to all connected devices
             #
             PHONE_IP=`ip route show 0.0.0.0/0 dev usb0 | cut -d\  -f3`
-            /home/pi/RemoteSettings/dhcpeventThread.sh add $PHONE_IP &
+            /usr/local/share/RemoteSettings/dhcpeventThread.sh add $PHONE_IP &
 
 
             #

@@ -94,10 +94,10 @@ def replace_Joystick_config(LookFor, NewLine):
 def replace_TxPower_config(Param, Value):
 
     if 'txpowerA' in Param:
-        subprocess.Popen(["txpower_atheros", Value])
+        subprocess.Popen(["/usr/local/bin/txpower_atheros", Value])
 
     if 'txpowerR' in Param:
-        subprocess.Popen(["txpower_ralink", Value])
+        subprocess.Popen(["/usr/local/bin/txpower_ralink", Value])
 
     return 1
 
@@ -268,7 +268,7 @@ def NoPhoneDetected():
         hFile = open(IsTerminateRemoteSettingsPath,"w")
         hFile.write("1")
         hFile.close()
-        os.system('/home/pi/RemoteSettings/TerminateRemoteSettingsAir.sh')
+        os.system('/usr/local/share/RemoteSettings/TerminateRemoteSettingsAir.sh')
         sys.exit(1)
 
 def PhoneConnected():

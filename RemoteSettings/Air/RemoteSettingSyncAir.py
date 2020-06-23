@@ -240,7 +240,7 @@ def SelectSmartSyncFrequency():
 
 def StartSVPcomTx():                                     
     try: 
-        subprocess.Popen(['/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx', "-k", "1", "-n", "1", "-K", "/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/tx.key",  "-u" ,str(UDP_PORT_OUT), "-p", "92", "-B", "20", "-M", "0", WlanName ] )
+        subprocess.Popen(['/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx', "-k", "1", "-n", "1", "-K", "/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/tx.key",  "-u" ,str(UDP_PORT_OUT), "-p", "92", "-B", "20", "-M", "0", WlanName ] )
         return True
     except Exception as e:
         print(e)
@@ -250,7 +250,7 @@ def StartSVPcomTx():
 def StartSVPcomRx():   
     try:       
         
-        subprocess.Popen( ['/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_rx', "-k", "1", "-n", "1", "-K", "/home/pi/cameracontrol/IPCamera/svpcom_wifibroadcast/rx.key",  "-c" ,"127.0.0.1", "-u", str(UDP_PORT_IN), "-p", "93",  WlanName ] )
+        subprocess.Popen( ['/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_rx', "-k", "1", "-n", "1", "-K", "/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/rx.key",  "-c" ,"127.0.0.1", "-u", str(UDP_PORT_IN), "-p", "93",  WlanName ] )
         return True
     except Exception as e:
         print(e)
@@ -294,12 +294,12 @@ def ReturnWlanFreq():
             if "auto" in SettingsFileFREQ or not SettingsFileFREQ:
                 WFBFreq = GetDefaultWFBFrequency()
                 #subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", "2472" ])
-                subprocess.check_call(['/home/pi/RemoteSettings/Air/SetWlanFreq.sh', WlanName , WFBFreq ])
+                subprocess.check_call(['/usr/local/share/RemoteSettings/Air/SetWlanFreq.sh', WlanName , WFBFreq ])
                 print("Using automatic WFB frequency: " + WFBFreq)
             else:
                 SettingsFileFREQ = re.sub("\D", "", SettingsFileFREQ)
                 #subprocess.check_call(['/sbin/iw', "dev", WlanName , "set", "freq", SettingsFileFREQ ])
-                subprocess.check_call(['/home/pi/RemoteSettings/Air/SetWlanFreq.sh', WlanName , SettingsFileFREQ ])
+                subprocess.check_call(['/usr/local/share/RemoteSettings/Air/SetWlanFreq.sh', WlanName , SettingsFileFREQ ])
                 print("Frequency for WLAN: " + WlanName + " returned back to: " + SettingsFileFREQ)
 
             

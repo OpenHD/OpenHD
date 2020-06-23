@@ -1,0 +1,12 @@
+[Unit]
+Description=OSD
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/osd
+User=root
+
+[Install]
+WantedBy=multi-user.target
+

@@ -215,9 +215,9 @@ def SwitchCamera(InCameraType, InBand):
     print("CurrentBand: ", InBand )
     if InCameraType == "RPi":
         try:
-            os.system('/home/pi/RemoteSettings/KillIPCamera.sh 2>/dev/null')
-            os.system('/home/pi/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
-            os.system('/home/pi/RemoteSettings/KillRaspivid.sh 2>/dev/null')
+            os.system('/usr/local/share/RemoteSettings/KillIPCamera.sh 2>/dev/null')
+            os.system('/usr/local/share/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
+            os.system('/usr/local/share/RemoteSettings/KillRaspivid.sh 2>/dev/null')
             if InBand == "0":
                 os.system('/dev/shm/startReadCameraTransfer.sh &')
             if InBand == "a":
@@ -244,16 +244,16 @@ def SwitchCamera(InCameraType, InBand):
 
             print("BitrateMainCamera: ",  BitrateMainCamera )
             print("BitrateUSBCamera: ", BitrateSecondaryCamera )
-            os.system('/home/pi/RemoteSettings/KillIPCamera.sh 2>/dev/null')
-            os.system('/home/pi/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
-            os.system('/home/pi/RemoteSettings/KillRaspivid.sh 2>/dev/null')
+            os.system('/usr/local/share/RemoteSettings/KillIPCamera.sh 2>/dev/null')
+            os.system('/usr/local/share/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
+            os.system('/usr/local/share/RemoteSettings/KillRaspivid.sh 2>/dev/null')
             subprocess.Popen( ['/dev/shm/startReadCameraTransferExteranlBitrate.sh', str(BitrateMainCamera) ] )
 
             if SecondaryCamera == "IP":
-                os.system('/home/pi/RemoteSettings/KillIPCamera.sh 2>/dev/null')
+                os.system('/usr/local/share/RemoteSettings/KillIPCamera.sh 2>/dev/null')
                 os.system('/dev/shm/startReadIPCameraLowRes.sh &')
             if SecondaryCamera == "USB":
-                os.system('/home/pi/RemoteSettings/KillUSBCamera.sh 2>/dev/null')     
+                os.system('/usr/local/share/RemoteSettings/KillUSBCamera.sh 2>/dev/null')     
                 subprocess.Popen( ['/dev/shm/startReadUSBCamera.sh', str(BitrateSecondaryCamera) ] )
         except Exception as e:
             print(e)
@@ -267,13 +267,13 @@ def SwitchCamera(InCameraType, InBand):
             if InBand == "5":
                 BitrateSecondaryCamera = int(BitrateMeasured / 4)
 
-            os.system('/home/pi/RemoteSettings/KillIPCamera.sh  2>/dev/null')
-            os.system('/home/pi/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
-            os.system('/home/pi/RemoteSettings/KillRaspivid.sh  2>/dev/null')
+            os.system('/usr/local/share/RemoteSettings/KillIPCamera.sh  2>/dev/null')
+            os.system('/usr/local/share/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
+            os.system('/usr/local/share/RemoteSettings/KillRaspivid.sh  2>/dev/null')
 
             if SecondaryCamera == "IP":
-                os.system('/home/pi/RemoteSettings/KillRaspivid.sh 2>/dev/null')
-                os.system('/home/pi/RemoteSettings/KillIPCamera.sh  2>/dev/null')
+                os.system('/usr/local/share/RemoteSettings/KillRaspivid.sh 2>/dev/null')
+                os.system('/usr/local/share/RemoteSettings/KillIPCamera.sh  2>/dev/null')
                 if InBand == "0":
                     os.system('/dev/shm/startReadIPCameraHiRes.sh &')
                 if InBand == "a":
@@ -281,8 +281,8 @@ def SwitchCamera(InCameraType, InBand):
                 if InBand == "5":
                     os.system('/dev/shm/startReadIPCameraLowRes.sh &')
             if SecondaryCamera == "USB":
-                os.system('/home/pi/RemoteSettings/KillRaspivid.sh 2>/dev/nulll')
-                os.system('/home/pi/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
+                os.system('/usr/local/share/RemoteSettings/KillRaspivid.sh 2>/dev/nulll')
+                os.system('/usr/local/share/RemoteSettings/KillUSBCamera.sh 2>/dev/null')
                 subprocess.Popen( ['/dev/shm/startReadUSBCamera.sh', str(BitrateSecondaryCamera) ] )
         except Exception as e:
             print(e)

@@ -49,15 +49,10 @@ library: oglinit.o libshapes.o fontsystem.o
 	$(CC) $(LIBFLAGS) -shared -o libshapes.so -Wl,-soname,libshapes.so.2.0.0 oglinit.o libshapes.o fontsystem.o
 
 install:
-	install -m 755 -p font2openvg /usr/bin/
-	install -m 755 -p libshapes.so /usr/lib/libshapes.so.2.0.0
-	strip --strip-unneeded /usr/lib/libshapes.so.2.0.0
-	ln -f -s /usr/lib/libshapes.so.2.0.0 /usr/lib/libshapes.so
+	install -m 755 -p font2openvg ${DESTDIR}/usr/bin/
+	install -m 755 -p libshapes.so ${DESTDIR}/usr/lib/libshapes.so.2.0.0
+	strip --strip-unneeded ${DESTDIR}/usr/lib/libshapes.so.2.0.0
+	ln -f -s /usr/lib/libshapes.so.2.0.0 ${DESTDIR}/usr/lib/libshapes.so
 	ldconfig
-	install -m 644 -p shapes.h /usr/include/
-	install -m 644 -p fontinfo.h /usr/include/
-
-uninstall:
-	rm -f /usr/bin/font2openvg
-	rm -f /usr/lib/libshapes.so.2.0.0 /usr/lib/libshapes.so
-	rm -f /usr/include/shapes.h /usr/include/fontinfo.h
+	install -m 644 -p shapes.h ${DESTDIR}/usr/include/
+	install -m 644 -p fontinfo.h ${DESTDIR}/usr/include/

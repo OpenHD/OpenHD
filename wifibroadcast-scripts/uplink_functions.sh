@@ -143,22 +143,22 @@ function uplinkrx_and_rcrx_function {
                 #
                 # Use the telemetry serial port and baudrate, as it's the same anyway
                 #
-                /home/pi/wifibroadcast-base/rx_rc_telemetry -p 3 -o 0 -b $FC_TELEMETRY_BAUDRATE -s $FC_TELEMETRY_SERIALPORT -r $RC_PROTOCOL $NICS
+                /usr/local/bin/rx_rc_telemetry -p 3 -o 0 -b $FC_TELEMETRY_BAUDRATE -s $FC_TELEMETRY_SERIALPORT -r $RC_PROTOCOL $NICS
             else
                 #
                 # Use the configured r/c serialport and baudrate
                 #
                 
-                /home/pi/wifibroadcast-base/rx_rc_telemetry -p 3 -o 0 -b $FC_RC_BAUDRATE -s $FC_RC_SERIALPORT -r $RC_PROTOCOL $NICS
+                /usr/local/bin/rx_rc_telemetry -p 3 -o 0 -b $FC_RC_BAUDRATE -s $FC_RC_SERIALPORT -r $RC_PROTOCOL $NICS
             fi
         else
-            /home/pi/wifibroadcast-base/rx_rc_telemetry -p 3 -o 1 -b $FC_RC_BAUDRATE -s $FC_RC_SERIALPORT -r $RC_PROTOCOL $NICS > $FC_TELEMETRY_SERIALPORT
+            /usr/local/bin/rx_rc_telemetry -p 3 -o 1 -b $FC_RC_BAUDRATE -s $FC_RC_SERIALPORT -r $RC_PROTOCOL $NICS > $FC_TELEMETRY_SERIALPORT
         fi
     else
         #
         # No RC, just telemetry
         #
-        nice /home/pi/wifibroadcast-base/rx_rc_telemetry  -p 3 -o 0 -b $FC_TELEMETRY_BAUDRATE -s $FC_TELEMETRY_SERIALPORT -r 98 $NICS
+        nice /usr/local/bin/rx_rc_telemetry  -p 3 -o 0 -b $FC_TELEMETRY_BAUDRATE -s $FC_TELEMETRY_SERIALPORT -r 98 $NICS
     fi
 }
 
@@ -172,7 +172,7 @@ function mspdownlinktx_function {
     
     stty -F $FC_MSP_SERIALPORT -imaxbel -opost -isig -icanon -echo -echoe -ixoff -ixon $FC_MSP_BAUDRATE
     
-    #/home/pi/wifibroadcast-base/setupuart -d 0 -s $FC_MSP_SERIALPORT -b $FC_MSP_BAUDRATE
+    #/usr/local/bin/setupuart -d 0 -s $FC_MSP_SERIALPORT -b $FC_MSP_BAUDRATE
 
     # wait until tx is running to make sure NICS are configured
     echo
@@ -202,7 +202,7 @@ function mspdownlinktx_function {
     while true; do
         echo "Starting MSP transmission, FC MSP Serialport: $FC_MSP_SERIALPORT"
         
-        nice cat $FC_MSP_SERIALPORT | nice /home/pi/wifibroadcast-base/tx_telemetry -p 4 -c $TELEMETRY_CTS -r 2 -x 1 -d 12 -y 0 $NICS
+        nice cat $FC_MSP_SERIALPORT | nice /usr/local/bin/tx_telemetry -p 4 -c $TELEMETRY_CTS -r 2 -x 1 -d 12 -y 0 $NICS
         ps -ef | nice grep "cat $FC_MSP_SERIALPORT" | nice grep -v grep | awk '{print $2}' | xargs kill -9
         ps -ef | nice grep "tx_telemetry -p 4" | nice grep -v grep | awk '{print $2}' | xargs kill -9
         
@@ -218,7 +218,7 @@ function microservice_ground_tx_function {
         
         NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
         
-        OPENHD_MICROSERVICE_GROUND_TX_CMD="nice /home/pi/wifibroadcast-base/tx_telemetry -p 30 -c 0 -r 2 -x 0 -d 12 -y 0"
+        OPENHD_MICROSERVICE_GROUND_TX_CMD="nice /usr/local/bin/tx_telemetry -p 30 -c 0 -r 2 -x 0 -d 12 -y 0"
         
         nice socat -u /dev/openhd_microservice2 STDOUT | $OPENHD_MICROSERVICE_GROUND_TX_CMD $NICS
         ps -ef | nice grep "socat -u /dev/openhd_microservice2 STDOUT" | nice grep -v grep | awk '{print $2}' | xargs kill -9
@@ -233,7 +233,7 @@ function microservice_ground_rx_function {
         
         NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
         
-        nice /home/pi/wifibroadcast-base/rx_rc_telemetry_buf -n 1 -p 31 -o 1 -r 99 -b 115200 -s /dev/null $NICS | ionice nice socat -u STDIN /dev/openhd_microservice2
+        nice /usr/local/bin/rx_rc_telemetry_buf -n 1 -p 31 -o 1 -r 99 -b 115200 -s /dev/null $NICS | ionice nice socat -u STDIN /dev/openhd_microservice2
         
         ps -ef | nice grep "nice socat -u STDIN /dev/openhd_microservice2" | nice grep -v grep | awk '{print $2}' | xargs kill -9
         ps -ef | nice grep "rx_rc_telemetry -n 1 -p 31" | nice grep -v grep | awk '{print $2}' | xargs kill -9
@@ -247,7 +247,7 @@ function microservice_air_tx_function {
         
         NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
         
-        OPENHD_MICROSERVICE_AIR_TX_CMD="nice /home/pi/wifibroadcast-base/tx_telemetry -p 31 -c 0 -r 2 -x 0 -d 12 -y 0"
+        OPENHD_MICROSERVICE_AIR_TX_CMD="nice /usr/local/bin/tx_telemetry -p 31 -c 0 -r 2 -x 0 -d 12 -y 0"
         
         nice socat -u /dev/openhd_microservice2 STDOUT | $OPENHD_MICROSERVICE_AIR_TX_CMD $NICS
 
@@ -263,7 +263,7 @@ function microservice_air_rx_function {
         
         NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
         
-        nice /home/pi/wifibroadcast-base/rx_rc_telemetry_buf -n 1 -p 30 -o 1 -r 99 -b 115200 -s /dev/null $NICS |  ionice nice socat -u STDIN /dev/openhd_microservice2
+        nice /usr/local/bin/rx_rc_telemetry_buf -n 1 -p 30 -o 1 -r 99 -b 115200 -s /dev/null $NICS |  ionice nice socat -u STDIN /dev/openhd_microservice2
         
         ps -ef | nice grep "nice socat -u STDIN /dev/openhd_microservice2" | nice grep -v grep | awk '{print $2}' | xargs kill -9
         ps -ef | nice grep "rx_rc_telemetry -n 1 -p 30" | nice grep -v grep | awk '{print $2}' | xargs kill -9
@@ -315,13 +315,13 @@ function uplinktx_function {
                 # We can and should do the same for the other protocols, but we don't yet
                 #
                 VSERIALPORT=/dev/openhd_mavlink1
-                UPLINK_TX_CMD="nice /home/pi/wifibroadcast-base/tx_telemetry -p 3 -c 0 -r 2 -x 0 -d 12 -y 0"
+                UPLINK_TX_CMD="nice /usr/local/bin/tx_telemetry -p 3 -c 0 -r 2 -x 0 -d 12 -y 0"
             else
                 #
                 # Non-mavlink telemetry is all handled the same
                 # 
                 VSERIALPORT=/dev/openhd_msp1
-                UPLINK_TX_CMD="nice /home/pi/wifibroadcast-base/tx_telemetry -p 3 -c 0 -r 2 -x 1 -d 12 -y 0"
+                UPLINK_TX_CMD="nice /usr/local/bin/tx_telemetry -p 3 -c 0 -r 2 -x 1 -d 12 -y 0"
             fi
 
             # 
@@ -392,22 +392,22 @@ function mspdownlinkrx_function {
     while true; do
         #
         #if [ "$RELAY" == "Y" ]; then
-        #    ionice -c 1 -n 4 nice -n -9 cat /root/telemetryfifo4 | /home/pi/wifibroadcast-base/tx_rawsock -p 1 -b $RELAY_TELEMETRY_BLOCKS -r $RELAY_TELEMETRY_FECS -f $RELAY_TELEMETRY_BLOCKLENGTH -m $TELEMETRY_MIN_BLOCKLENGTH -y 0 relay0 > /dev/null 2>&1 &
+        #    ionice -c 1 -n 4 nice -n -9 cat /var/run/openhd/telemetryfifo4 | /usr/local/bin/tx_rawsock -p 1 -b $RELAY_TELEMETRY_BLOCKS -r $RELAY_TELEMETRY_FECS -f $RELAY_TELEMETRY_BLOCKLENGTH -m $TELEMETRY_MIN_BLOCKLENGTH -y 0 relay0 > /dev/null 2>&1 &
         #fi
         # update NICS variable in case a NIC has been removed (exclude devices with wlanx)
 
         NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot`
 
-        #nice /home/pi/wifibroadcast-base/rx -p 4 -d 1 -b $TELEMETRY_BLOCKS -r $TELEMETRY_FECS -f $TELEMETRY_BLOCKLENGTH $NICS | ionice nice /home/pi/wifibroadcast-misc/ftee /root/mspfifo > /dev/null 2>&1
+        #nice /usr/local/bin/rx -p 4 -d 1 -b $TELEMETRY_BLOCKS -r $TELEMETRY_FECS -f $TELEMETRY_BLOCKLENGTH $NICS | ionice nice /usr/local/bin/ftee /var/run/openhd/mspfifo > /dev/null 2>&1
 
         echo "Starting msp downlink rx ..."
 
-        nice /home/pi/wifibroadcast-base/rx_rc_telemetry -p 4 -o 1 -r 99 $NICS | ionice nice /home/pi/wifibroadcast-misc/ftee /root/mspfifo > /dev/null 2>&1
+        nice /usr/local/bin/rx_rc_telemetry -p 4 -o 1 -r 99 $NICS | ionice nice /usr/local/bin/ftee /var/run/openhd/mspfifo > /dev/null 2>&1
 
         echo "ERROR: MSP RX has been stopped - restarting ..."
 
         ps -ef | nice grep "rx_rc_telemetry -p 4" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-        ps -ef | nice grep "ftee /root/mspfifo" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+        ps -ef | nice grep "ftee /var/run/openhd/mspfifo" | nice grep -v grep | awk '{print $2}' | xargs kill -9
         sleep 1
     done
 }

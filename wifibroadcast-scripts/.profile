@@ -8,7 +8,7 @@ if [ "$TTY" == "/dev/tty1" ]; then
 
     service ssh start
 
-    python /root/wifibroadcast_misc/gpio-IsAir.py
+    python /usr/local/bin/gpio-IsAir.py
     
 
     #
@@ -24,7 +24,7 @@ if [ "$TTY" == "/dev/tty1" ]; then
     i2cdetect -y 1 | grep  "70: 70"
     grepRet=$?
     if [[ $grepRet -eq 0 ]] ; then
-        /usr/bin/python3 /home/pi/cameracontrol/InitArduCamV21Ch1.py
+        /usr/bin/python3 /usr/local/share/cameracontrol/InitArduCamV21Ch1.py
     fi
 
     
@@ -81,12 +81,12 @@ if [ "$TTY" == "/dev/tty1" ]; then
             sleep 0.1
         done
 
-        /home/pi/wifibroadcast-scripts/configure_nics.sh
+        /usr/local/share/wifibroadcast-scripts/configure_nics.sh
 
         qstatus "Configured NIC(s)" 5
         qstatus "Running SmartSync" 5
 
-        /usr/bin/python3 /home/pi/RemoteSettings/Air/RemoteSettingSyncAir.py
+        /usr/bin/python3 /usr/local/share/RemoteSettings/Air/RemoteSettingSyncAir.py
 
         echo "0" > /tmp/ReadyToGo
     else
@@ -109,8 +109,8 @@ if [ "$TTY" == "/dev/tty1" ]; then
         #
         # No cameras found, and we did not see GPIO7 pulled low, so this is a ground station
         #
-        /home/pi/RemoteSettings/Ground/helper/AirRSSI.sh &
-        /home/pi/wifibroadcast-scripts/configure_nics.sh
+        /usr/local/share/RemoteSettings/Ground/helper/AirRSSI.sh &
+        /usr/local/share/wifibroadcast-scripts/configure_nics.sh
         retCode=$?
 
         qstatus "Configured NIC(s)" 5
@@ -120,12 +120,12 @@ if [ "$TTY" == "/dev/tty1" ]; then
 
         if [ $retCode == 1 ]; then
             # joystick selected as SmartSync control
-            /usr/bin/python3 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia joystick
+            /usr/bin/python3 /usr/local/share/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia joystick
         fi
 
         if [ $retCode == 2 ]; then
             # GPIO  selected as SmartSync control
-            /usr/bin/python3 /home/pi/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia GPIO
+            /usr/bin/python3 /usr/local/share/RemoteSettings/Ground/RemoteSettingsSync.py -ControlVia GPIO
         fi
     
         echo "0" > /tmp/ReadyToGo
@@ -142,5 +142,5 @@ do
     sleep 1
 done
 
-cd /home/pi/wifibroadcast-scripts
+cd /usr/local/share/wifibroadcast-scripts
 source main.sh

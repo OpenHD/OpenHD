@@ -1,0 +1,21 @@
+#!/bin/bash
+
+usage(){
+    echo
+    echo "txpower_ralink - Script to set txpower for Ralink cards"
+    echo
+    echo "Usage: $0 <txpower> (default 0, minimum -5, maximum 5)"
+    echo
+    echo "Example: txpower_ralink 3"
+    echo
+    exit 1
+}
+
+[[ $# -eq 0 ]] && usage
+
+mv /etc/modprobe.d/rt2800usb.conf /etc/modprobe.d/rt2800usb.conf.old
+sed -r -e's/txpower=[^ ]+/txpower='$1'/g' /etc/modprobe.d/rt2800usb.conf.old > /etc/modprobe.d/rt2800usb.conf
+sync
+echo
+echo "txpower set to $1. You may power-off now or type \"reboot\" to restart"
+echo

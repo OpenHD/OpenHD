@@ -128,18 +128,18 @@ int main(int argc, char *argv[]) {
     signal(SIGPIPE, SIG_IGN);
 
     char fifonam[100];
-    sprintf(fifonam, "/root/telemetryfifo1");
+    sprintf(fifonam, "/var/run/openhd/telemetryfifo1");
 
 
     int readfd;
     readfd = open(fifonam, O_RDONLY | O_NONBLOCK);
     if (readfd == -1) {
-        perror("ERROR: Could not open /root/telemetryfifo1");
+        perror("ERROR: Could not open /var/run/openhd/telemetryfifo1");
         exit(EXIT_FAILURE);
     }
 
     if (fstat(readfd, &fdstatus) == -1) {
-        perror("ERROR: fstat /root/telemetryfifo1");
+        perror("ERROR: fstat /var/run/openhd/telemetryfifo1");
         close(readfd);
         exit(EXIT_FAILURE);
     }
