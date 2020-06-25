@@ -271,9 +271,9 @@ TELEMETRY_OUTPUT_SERIALPORT_GROUND_BAUDRATE=57600
 # This Camera Switcher feature must be used with the Arducam 4 camera Raspberry Pi multiplexer.  
 # If no camera switcher is detected, feature is automatically disabled.  if used, simply assign
 # desired RC Channel and pwm values for each camera.  Default settings are for 2 Cams A&B.
-IsCamera1Enabled=0
-IsCamera2Enabled=0
-IsCamera3Enabled=0
+IsCamera1Enabled=1
+IsCamera2Enabled=1
+IsCamera3Enabled=1
 IsCamera4Enabled=0
 #
 DefaultCameraId=1
