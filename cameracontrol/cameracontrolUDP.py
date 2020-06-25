@@ -417,7 +417,7 @@ def random_string(length):
 
 def AirToGroundNotifyCameraModeThread():
     while True:
-	SendDataToGround(SessionID)
+        SendDataToGround(SessionID)
         lock.acquire()
         type = CameraType
         lock.release()
