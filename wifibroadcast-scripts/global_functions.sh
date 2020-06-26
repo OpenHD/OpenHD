@@ -913,7 +913,7 @@ function collect_errorlog {
     echo >>/boot/errorlog.txt
     nice vcgencmd get_config int >>/boot/errorlog.txt
 
-    nice /usr/local/bin/raspi2png -p /boot/errorlog.png
+    nice /usr/bin/raspi2png -p /boot/errorlog.png
     echo >>/boot/errorlog.txt
     nice dmesg >>/boot/errorlog.txt
     echo >>/boot/errorlog.txt
