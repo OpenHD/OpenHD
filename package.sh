@@ -155,6 +155,12 @@ build_source() {
     cp -a gnuplot/* ${TMPDIR}/usr/local/share/openhd/gnuplot/ || exit 1
 
     cp -a config/* ${TMPDIR}/boot/ || exit 1
+    if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "buster" ]]; then
+        cat << EOF >> ${TMPDIR}/boot/config.txt
+[all]
+dtoverlay=vc4-fkms-v3d
+EOF
+    fi
     cp -a config/openhd-settings-1.txt ${TMPDIR}/boot/openhd-settings-2.txt || exit 1
     cp -a config/openhd-settings-1.txt ${TMPDIR}/boot/openhd-settings-3.txt || exit 1
     cp -a config/openhd-settings-1.txt ${TMPDIR}/boot/openhd-settings-4.txt || exit 1
