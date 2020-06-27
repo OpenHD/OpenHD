@@ -88,6 +88,9 @@ gpu_mem=128
 # force gpu to run in turbo mode for less latency and jitter
 force_turbo=1
 
+# prevent throttling on undervoltage, but still allow throttling on overtemp
+avoid_warnings=2
+
 # Set CPU speed to 900Mhz
 arm_freq=900
 
