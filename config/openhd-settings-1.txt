@@ -308,6 +308,7 @@ IMX290_videoformat=PAL
 IMX290_wdrmode=0x03
 IMX290_mirrormode=0x00
 IMX290_denoise=0x00
+IMX290_lowlight=0x00
 
 
 # ======================================================================================
