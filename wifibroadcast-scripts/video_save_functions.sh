@@ -85,15 +85,6 @@ function save_function {
     ps -ef | nice grep "cat /var/run/openhd/videofifo1" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 
 
-
-    #
-    # Kill video receive process so that we aren't trying to save a video file that is still being
-    # written to
-    #
-    ps -ef | nice grep "rx -p 0" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-    ps -ef | nice grep "ftee /var/run/openhd/videofifo" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-
-
     #
     # Start replaying the video during save, but only if saving was enabled in the first place
     #
