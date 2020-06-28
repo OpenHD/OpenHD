@@ -196,7 +196,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "openhd-microservice = 0.1.12" \
   -d "qopenhd" \
   -d "flirone-driver" \
-  -d "veye-raspberrypi" \
+  -d "veye-raspberrypi=20200628.1" \
   -d "lifepoweredpi" \
   -d "mavlink-router = 20200620.1" \
   -d "hostapd" \
