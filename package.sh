@@ -197,7 +197,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "qopenhd" \
   -d "flirone-driver=20200620.1" \
   -d "veye-raspberrypi=20200628.1" \
-  -d "lifepoweredpi" \
+  -d "lifepoweredpi=20200620.1" \
   -d "mavlink-router = 20200620.1" \
   -d "hostapd" \
   -d "iw" \
