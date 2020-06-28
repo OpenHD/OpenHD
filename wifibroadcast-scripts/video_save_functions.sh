@@ -70,14 +70,16 @@ function save_function {
     
 
     #
-    # Kill video, telemetry recording, and local video display
+    # Stop saving the incoming video transmission while it is being copied to USB
     #
     ps -ef | nice grep "cat /var/run/openhd/videofifo3" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+
+    # Stop saving the incoming telemetry stream while it is being copied to USB
     ps -ef | nice grep "cat /var/run/openhd/telemetryfifo3" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 
 
     #
-    # Kill hello_video
+    # Stop local video display
     #
     ps -ef | nice grep "${DISPLAY_PROGRAM}" | nice grep -v grep | awk '{print $2}' | xargs kill -9
     ps -ef | nice grep "cat /var/run/openhd/videofifo1" | nice grep -v grep | awk '{print $2}' | xargs kill -9
