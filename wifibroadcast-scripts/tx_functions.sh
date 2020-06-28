@@ -39,8 +39,6 @@ function tx_function {
             # turn it off by default to avoid framerate changing during flight
             /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f lowlight -p1 0x00 >> /tmp/imx290log
         fi
-
-        /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f videofmt -p1 ${WIDTH} -p2 ${HEIGHT} -p3 ${FPS}
         popd
     fi
 
