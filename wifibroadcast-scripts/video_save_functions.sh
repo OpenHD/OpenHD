@@ -79,28 +79,6 @@ function save_function {
 
 
     #
-    # Stop local video display
-    #
-    ps -ef | nice grep "${DISPLAY_PROGRAM}" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-    ps -ef | nice grep "cat /var/run/openhd/videofifo1" | nice grep -v grep | awk '{print $2}' | xargs kill -9
-
-
-    #
-    # Start replaying the video during save, but only if saving was enabled in the first place
-    #
-    if [ "${VIDEO_TMP}" != "none" ]; then
-        #
-        # Find out if video is on ramdisk or sd
-        #
-        source /tmp/videofile
-        echo "VIDEOFILE: ${VIDEOFILE}"
-
-        # start re-play of recorded video ....
-        nice /usr/local/bin/hello_video.bin.player ${VIDEOFILE} ${FPS} &
-    fi
-
-
-    #
     # Kill any on-screen status display so that we can show another one
     #
     killall wbc_status > /dev/null 2>&1
