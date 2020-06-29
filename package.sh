@@ -199,6 +199,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "veye-raspberrypi = 20200628.1" \
   -d "lifepoweredpi = 20200620.1" \
   -d "mavlink-router = 20200620.1" \
+  -d "gnuplot-nox" \
   -d "hostapd" \
   -d "iw" \
   -d "pump" \
