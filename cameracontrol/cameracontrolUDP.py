@@ -517,26 +517,16 @@ while True:
     data = d[0]
     chValue = struct.unpack("H", data)[0]
     
-    print(" ")
-    print(" Ch value: ", chValue)
-
     ChannelValueNew = chValue
-    print("ChannelValueNew", ChannelValueNew)    
 
     if ChannelValueNew != ChannelValueCurrent:
         if ChannelValueNew >= Camera1ValueMin and ChannelValueNew <= Camera1ValueMax and IsCamera1Enabled == 1:
-            print("Camera1 selected")
-            print("ChannelValueNew: ", ChannelValueNew)
             ChangeTo(1)
         if ChannelValueNew >= Camera2ValueMin and ChannelValueNew <= Camera2ValueMax  and IsCamera2Enabled == 1:
-            print("Camera2 selected")
-            print("ChannelValueNew: ", ChannelValueNew)
             ChangeTo(2)
         if ChannelValueNew >= Camera3ValueMin and ChannelValueNew <= Camera3ValueMax and IsCamera3Enabled == 1:
-            print("Camera3 selected")
             ChangeTo(3)
         if ChannelValueNew >= Camera4ValueMin and ChannelValueNew <= Camera4ValueMax and IsCamera4Enabled == 1:
-            print("Camera4 selected")
             ChangeTo(4)
     
     ChannelValueCurrent = ChannelValueNew
