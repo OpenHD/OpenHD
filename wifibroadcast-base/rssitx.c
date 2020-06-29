@@ -714,6 +714,7 @@ int main(int argc, char *argv[]) {
 
 
         if (strncmp(line, "DRIVER=ath9k_htc", 16) == 0 ||
+            strncmp(line, "DRIVER=rtl88x2bu", 16) == 0 ||
            (strncmp(line, "DRIVER=8812au", 13) == 0 ||
             strncmp(line, "DRIVER=8814au", 13) == 0 ||
             strncmp(line, "DRIVER=rtl8812au", 16) == 0 ||
