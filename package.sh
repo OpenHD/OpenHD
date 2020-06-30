@@ -247,7 +247,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
 git describe --exact-match HEAD > /dev/null 2>&1
 if [[ $? -eq 0 ]]; then
     echo "Pushing package to OpenHD repository"
-    cloudsmith push deb openhd/openhd-2-0/${OS}/${DISTRO} ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb
+    cloudsmith push deb openhd/openhd-2-0/${OS}/${DISTRO} ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb || exit 1
 else
     echo "Not a tagged release, skipping push to OpenHD repository"
 fi
