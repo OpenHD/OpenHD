@@ -142,7 +142,10 @@ function tx_function {
 
         case $DRIVER in
             *881[24]au)
-                DRIVER=rtl88xxau
+                DRIVER=rtl88XXau
+                ;;
+            rtl88xxau)
+                DRIVER=rtl88XXau
                 ;;
         esac
 
@@ -152,7 +155,7 @@ function tx_function {
             #
 
             VIDEO_FRAMETYPE=0
-            if [[ "$DRIVER" == "rtl88xxau" || "$DRIVER" == "rtl88x2bu" ]]; then
+            if [[ "$DRIVER" == "rtl88XXau" || "$DRIVER" == "rtl88x2bu" ]]; then
                 if [ "$CTS_PROTECTION" != "Y" ] && [ "$UseMCS" == "1" ]; then
                     VIDEO_FRAMETYPE=2
                 else
@@ -189,8 +192,10 @@ function tx_function {
     DRIVER=`cat /sys/class/net/$NICS/device/uevent | nice grep DRIVER | sed 's/DRIVER=//'`
     case $DRIVER in
         *881[24]au)
-            DRIVER=rtl88xxau
+            DRIVER=rtl88XXau
         ;;
+        rtl88xxau)
+            DRIVER=rtl88XXau
     esac
 
 
@@ -225,7 +230,7 @@ function tx_function {
 
             CTS=N
         else
-            if [[ "$DRIVER" == "ath9k_htc" || "$DRIVER" == "rtl88xxau" || "$DRIVER" == "rtl88x2bu" ]]; then
+            if [[ "$DRIVER" == "ath9k_htc" || "$DRIVER" == "rtl88XXau" || "$DRIVER" == "rtl88x2bu" ]]; then
                 echo "Video CTS: enabled"
                 qstatus "Video CTS: enabled" 5
 

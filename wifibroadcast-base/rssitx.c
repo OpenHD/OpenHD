@@ -719,7 +719,8 @@ int main(int argc, char *argv[]) {
             strncmp(line, "DRIVER=8814au", 13) == 0 ||
             strncmp(line, "DRIVER=rtl8812au", 16) == 0 ||
             strncmp(line, "DRIVER=rtl8814au", 16) == 0 ||
-            strncmp(line, "DRIVER=rtl88xxau", 16) == 0)) {
+            strncmp(line, "DRIVER=rtl88xxau", 16) == 0 ||
+            strncmp(line, "DRIVER=rtl88XXau", 16) == 0)) {
 
             if (strncmp(line, "DRIVER=ath9k_htc", 16) == 0) {
                 fprintf(stderr, "rssitx: Atheros card detected\n");

@@ -407,13 +407,16 @@ function detect_nics {
 function prepare_nic {
     DRIVER=`cat /sys/class/net/${1}/device/uevent | nice grep DRIVER | sed 's/DRIVER=//'`
     
-    if [ "$DRIVER" != "rtl88xxau" ] && [ "$DRIVER" != "rt2800usb" ] && [ "$DRIVER" != "mt7601u" ] && [ "$DRIVER" != "ath9k_htc" ]; then
+    if [ "$DRIVER" != "rtl88xxau" ] && [ "$DRIVER" != "rtl88XXau" ] && [ "$DRIVER" != "rt2800usb" ] && [ "$DRIVER" != "mt7601u" ] && [ "$DRIVER" != "ath9k_htc" ]; then
         qstatus "Unsupported card: $DRIVER" 3
     fi
 
     case $DRIVER in
         *881[24]au)
-            DRIVER=rtl88xxau
+            DRIVER=rtl88XXau
+            ;;
+        rtl88xxau)
+            DRIVER=rtl88XXau
             ;;
     esac
 
@@ -512,7 +515,7 @@ function prepare_nic {
 
 
 
-    if [ "$DRIVER" == "rt2800usb" ] || [ "$DRIVER" == "mt7601u" ] || [ "$DRIVER" == "rtl8192cu" ] || [ "$DRIVER" == "rtl88xxau" ] || [ "$DRIVER" == "rtl88x2bu" ]; then 
+    if [ "$DRIVER" == "rt2800usb" ] || [ "$DRIVER" == "mt7601u" ] || [ "$DRIVER" == "rtl8192cu" ] || [ "$DRIVER" == "rtl88XXau" ] || [ "$DRIVER" == "rtl88x2bu" ]; then 
         #
         # do not set bitrate for Ralink, Mediatek, Realtek, done through tx parameter
         #
@@ -548,7 +551,7 @@ function prepare_nic {
             }
         fi
 
-        if  [ "$DRIVER" == "rtl88xxau" -a -n "$3" ]; then
+        if  [ "$DRIVER" == "rtl88XXau" -a -n "$3" ]; then
             qstatus "Setting card $1 to TX power ${3}" 5
             
             iw dev $1 set txpower fixed $3 || {

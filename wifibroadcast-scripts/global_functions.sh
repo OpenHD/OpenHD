@@ -1010,14 +1010,17 @@ function detect_nics {
 function prepare_nic {
     DRIVER=`cat /sys/class/net/$1/device/uevent | nice grep DRIVER | sed 's/DRIVER=//'`
     
-    if [ "$DRIVER" != "rtl88xxau" ] && [ "$DRIVER" != "rt2800usb" ] && [ "$DRIVER" != "mt7601u" ] && [ "$DRIVER" != "ath9k_htc" ]; then
+    if [ "$DRIVER" != "rtl88xxau" ] && [ "$DRIVER" != "rtl88XXau" ] && [ "$DRIVER" != "rt2800usb" ] && [ "$DRIVER" != "mt7601u" ] && [ "$DRIVER" != "ath9k_htc" ]; then
         tmessage "WARNING: Unsupported or experimental wifi card: $DRIVER"
         qstatus "WARNING: Unsupported or experimental wifi card: $DRIVER" 4
     fi
 
     case $DRIVER in
         *881[24]au)
-            DRIVER=rtl88xxau
+            DRIVER=rtl88XXau
+            ;;
+        rtl88xxau)
+            DRIVER=rtl88XXau
             ;;
     esac
 
@@ -1151,7 +1154,7 @@ function prepare_nic {
     fi
 
 
-    if [ "$DRIVER" == "rt2800usb" ] || [ "$DRIVER" == "mt7601u" ] || [ "$DRIVER" == "rtl8192cu" ] || [ "$DRIVER" == "rtl88xxau" ] || [ "$DRIVER" == "rtl88x2bu" ]; then
+    if [ "$DRIVER" == "rt2800usb" ] || [ "$DRIVER" == "mt7601u" ] || [ "$DRIVER" == "rtl8192cu" ] || [ "$DRIVER" == "rtl88XXau" ] || [ "$DRIVER" == "rtl88x2bu" ]; then
         #
         # Do not set the bitrate for Ralink, Mediatek, Realtek, those are handled through tx parameter
         #
@@ -1208,7 +1211,7 @@ function prepare_nic {
         #
         # Configure the interface with the power level supplied to this function as the 3rd argument
         #
-        if  [ "$DRIVER" == "rtl88xxau" -a -n "$3" ]; then
+        if  [ "$DRIVER" == "rtl88XXau" -a -n "$3" ]; then
             tmessage -n "TX power $3.. "
 
             iw dev $1 set txpower fixed $3 || {
