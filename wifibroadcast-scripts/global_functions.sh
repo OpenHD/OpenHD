@@ -1018,7 +1018,7 @@ function prepare_nic {
     case $DRIVER in
         *881[24]au)
             DRIVER=rtl88xxau
-        ;;
+            ;;
     esac
 
     tmessage -n "Setting up $1: "

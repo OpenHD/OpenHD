@@ -414,7 +414,7 @@ function prepare_nic {
     case $DRIVER in
         *881[24]au)
             DRIVER=rtl88xxau
-        ;;
+            ;;
     esac
 
     qstatus "Setting up interface $1" 5
