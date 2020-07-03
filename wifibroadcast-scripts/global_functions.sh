@@ -1010,7 +1010,7 @@ function detect_nics {
 function prepare_nic {
     DRIVER=`cat /sys/class/net/$1/device/uevent | nice grep DRIVER | sed 's/DRIVER=//'`
     
-    if [ "$DRIVER" != "rt2800usb" ] && [ "$DRIVER" != "mt7601u" ] && [ "$DRIVER" != "ath9k_htc" ]; then
+    if [ "$DRIVER" != "rtl88xxau" ] && [ "$DRIVER" != "rt2800usb" ] && [ "$DRIVER" != "mt7601u" ] && [ "$DRIVER" != "ath9k_htc" ]; then
         tmessage "WARNING: Unsupported or experimental wifi card: $DRIVER"
         qstatus "WARNING: Unsupported or experimental wifi card: $DRIVER" 4
     fi
