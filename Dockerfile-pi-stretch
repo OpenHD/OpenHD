@@ -12,8 +12,6 @@ RUN apt -y install python-pip
 
 RUN apt -y purge python-configparser
 
-RUN apt -y purge python3-configparser
-
 RUN gem install fpm
 
 RUN pip install cloudsmith-cli
