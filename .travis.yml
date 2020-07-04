@@ -1,0 +1,17 @@
+language: cpp
+os: linux
+dist: focal
+before_install:
+  - sudo docker run --privileged linuxkit/binfmt:v0.6
+  - sudo apt -y install qemu-user-static:i386
+services:
+  - docker
+compiler:
+  - gcc
+jobs:
+  include:
+  - name: "Pi stretch"
+    env: DOCKERFILE=Dockerfile-pi-stretch
+  - name: "Pi buster"
+    env: DOCKERFILE=Dockerfile-pi-buster
+script: docker build -f $DOCKERFILE --build-arg CLOUDSMITH_API_KEY=${CLOUDSMITH_API_KEY} .
