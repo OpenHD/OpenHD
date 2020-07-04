@@ -53,7 +53,7 @@ apt install build-essential autotools-dev automake libtool autoconf \
             libreadline-dev libjpeg8-dev libusb-1.0-0-dev libsodium-dev \
             libfontconfig1-dev libfreetype6-dev ttf-dejavu-core \
             libboost-dev libboost-program-options-dev libboost-system-dev libasio-dev libboost-chrono-dev \
-            libboost-regex-dev libboost-filesystem-dev libboost-thread-dev wiringpi
+            libboost-regex-dev libboost-filesystem-dev libboost-thread-dev wiringpi indent
 
 
 
