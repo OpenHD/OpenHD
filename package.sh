@@ -48,7 +48,7 @@ mkdir -p ${TMPDIR}/usr/local/share/cameracontrol || exit 1
 mkdir -p ${TMPDIR}/usr/local/share/wifibroadcast-scripts || exit 1
 
 
-apt install build-essential autotools-dev automake libtool autoconf \
+apt -y install build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libpng-dev libsdl2-dev libsdl1.2-dev libconfig++-dev \
             libreadline-dev libjpeg8-dev libusb-1.0-0-dev libsodium-dev \
             libfontconfig1-dev libfreetype6-dev ttf-dejavu-core \
