@@ -56,6 +56,7 @@ apt install build-essential autotools-dev automake libtool autoconf \
             libboost-regex-dev libboost-filesystem-dev libboost-thread-dev wiringpi
 
 
+
 build_source() {
     cp openhd-camera/openhdvid ${TMPDIR}/usr/local/bin/ || exit 1
     chmod +x ${TMPDIR}/usr/local/bin/openhdvid || exit 1
@@ -231,8 +232,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "libfontconfig1" \
   -d "libfreetype6" \
   -d "ttf-dejavu-core" \
-  -d "libboost-program-options-dev" \
-  -d "libboost-system-dev" \
   -d "libboost-chrono-dev" \
   -d "libboost-regex-dev" \
   -d "libboost-filesystem-dev" \
