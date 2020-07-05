@@ -151,13 +151,14 @@ build_source() {
     cp -a rctx ${TMPDIR}/usr/local/bin/ || exit 1
     popd
 
-
-    pushd wifibroadcast-osd
-    make clean
-    make || exit 1
-    make install DESTDIR=${TMPDIR} || exit 1
-    cp -a osdfonts/* ${TMPDIR}/usr/local/share/openhd/osdfonts/ || exit 1
-    popd
+    if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "stretch" ]]; then
+        pushd wifibroadcast-osd
+        make clean
+        make || exit 1
+        make install DESTDIR=${TMPDIR} || exit 1
+        cp -a osdfonts/* ${TMPDIR}/usr/local/share/openhd/osdfonts/ || exit 1
+        popd
+    fi
 
 
     pushd wifibroadcast-misc/LCD
