@@ -97,9 +97,6 @@ function save_function {
         wbc_status "Saving to USB..." 7 55 0 &
     fi
 
-
-    echo -n "Accessing file system.. "
-
     #
     # Some USB drives show up as sda1, others as sda, check for both in order (checking for sda first
     # would always succeed even if sda1 exists)
@@ -109,9 +106,6 @@ function save_function {
     else
         USBDEV="/dev/sda"
     fi
-
-
-    echo "USBDEV: ${USBDEV}"
 
 
     if mount ${USBDEV} /media/usb; then
@@ -219,9 +213,6 @@ function save_function {
             
 
             USB_VIDEO_FILE=${VIDEO_SAVE_PATH}/video.${VIDEO_SAVE_FORMAT}
-
-
-            echo "USB_VIDEO_FILE: ${USB_VIDEO_FILE}"
 
 
             nice ffmpeg -framerate ${FPS} -i ${VIDEOFILE} -c:v copy ${USB_VIDEO_FILE} > /dev/null 2>&1 &
