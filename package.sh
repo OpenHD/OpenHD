@@ -238,7 +238,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "pump" \
   -d "dnsmasq" \
   -d "aircrack-ng" \
-  -d "usbmount" \
   -d "ser2net" \
   -d "i2c-tools" \
   -d "dos2unix" \
