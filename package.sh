@@ -71,11 +71,13 @@ build_source() {
     
     cp UDPSplitter/udpsplitter.py ${TMPDIR}/usr/local/bin/ || exit 1
 
-    pushd openvg
-    make clean
-    make library || exit 1
-    make install DESTDIR=${TMPDIR} || exit 1
-    popd
+    if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "stretch" ]]; then
+        pushd openvg
+        make clean
+        make library || exit 1
+        make install DESTDIR=${TMPDIR} || exit 1
+        popd
+    fi
 
     pushd wifibroadcast-base
     make clean
