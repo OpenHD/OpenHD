@@ -107,13 +107,13 @@ build_source() {
     popd
 
 
-
-    pushd wifibroadcast-hello_video
-    make clean
-    make || exit 1
-    make install DESTDIR=${TMPDIR} || exit 1
-    popd
-
+    if [[ "${PLATFORM}" == "pi" ]]; then
+        pushd wifibroadcast-hello_video
+        make clean
+        make || exit 1
+        make install DESTDIR=${TMPDIR} || exit 1
+        popd
+    fi
 
     pushd JoystickIn/JoystickIn
     make clean
