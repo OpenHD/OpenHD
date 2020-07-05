@@ -111,9 +111,9 @@ function save_function {
 
 
     if mount ${USBDEV} /media/usb; then
-        killall rssilogger
-        killall syslogger
-        killall wifibackgroundscan
+        killall rssilogger > /dev/null 2>&1
+        killall syslogger > /dev/null 2>&1
+        killall wifibackgroundscan > /dev/null 2>&1
 
 
         #
@@ -166,18 +166,18 @@ function save_function {
 
         if [ -s "/wbc_tmp/telemetrydowntmp.raw" ]; then
             cp /wbc_tmp/telemetrydowntmp.raw ${TELEMETRY_SAVE_PATH}/telemetrydown.raw
-            cp /wbc_tmp/telemetrydowntmp.txt ${TELEMETRY_SAVE_PATH}/telemetrydown.txt
+            cp /wbc_tmp/telemetrydowntmp.txt ${TELEMETRY_SAVE_PATH}/telemetrydown.txt > /dev/null 2>&1
         fi
 
-        cp /wbc_tmp/telemetrydowndebug.txt ${TELEMETRY_SAVE_PATH}/telemetrydowndebug.txt
-        cp /wbc_tmp/telemetryupdebug.txt ${TELEMETRY_SAVE_PATH}/telemetryupdebug.txt
+        cp /wbc_tmp/telemetrydowndebug.txt ${TELEMETRY_SAVE_PATH}/telemetrydowndebug.txt > /dev/null 2>&1
+        cp /wbc_tmp/telemetryupdebug.txt ${TELEMETRY_SAVE_PATH}/telemetryupdebug.txt > /dev/null 2>&1
 
 
 
         #
         # Stop capturing packet data so the file can be saved to USB
         # 
-        killall tshark
+        killall tshark > /dev/null 2>&1
 
 
         #
@@ -185,13 +185,13 @@ function save_function {
         #
         CAP_SAVE_PATH="/media/usb/${SAVE_IDENTIFIER}/cap"
         mkdir -p ${CAP_SAVE_PATH}
-        cp /wbc_tmp/*.pcap ${CAP_SAVE_PATH}/
-        cp /wbc_tmp/*.cap ${CAP_SAVE_PATH}/
+        cp /wbc_tmp/*.pcap ${CAP_SAVE_PATH}/ > /dev/null 2>&1
+        cp /wbc_tmp/*.cap ${CAP_SAVE_PATH}/ > /dev/null 2>&1
 
         #
         # Copy the airodump chart to the USB drive
         #
-        cp /wbc_tmp/airodump.png /media/usb/${SAVE_IDENTIFIER}/
+        cp /wbc_tmp/airodump.png /media/usb/${SAVE_IDENTIFIER}/ > /dev/null 2>&1
 
 
         if [ "${ENABLE_SCREENSHOTS}" == "Y" ]; then
@@ -249,7 +249,7 @@ function save_function {
         #
 
         #cp /wbc_tmp/tracker.txt /media/usb/${SAVE_IDENTIFIER}/
-        cp /wbc_tmp/debug.txt /media/usb/${SAVE_IDENTIFIER}/debug.txt
+        cp /wbc_tmp/debug.txt /media/usb/${SAVE_IDENTIFIER}/debug.txt > /dev/null 2>&1
 
         sync
 
