@@ -252,7 +252,13 @@ function save_function {
         cp /wbc_tmp/debug.txt /media/usb/${SAVE_IDENTIFIER}/debug.txt
 
         sync
-        nice umount /media/usb
+
+        MOUNTED=`mount | grep /media/usb | wc -l`
+        while [ $MOUNTED -ge 1 ]; do
+            umount -A /media/usb
+            sleep 1
+            MOUNTED=`mount | grep /media/usb | wc -l`
+        done
 
         #
         # Inform the user that saving is done and the USB drive can be removed
