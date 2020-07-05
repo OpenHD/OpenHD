@@ -66,7 +66,9 @@ function save_function {
     touch /tmp/pausewhile
 
     SAVE_IDENTIFIER=$(date '+%Y-%m-%d-%H-%M-%S')
-    
+    source /tmp/videofile
+
+     
 
     #
     # Kill old OSD temporarily
