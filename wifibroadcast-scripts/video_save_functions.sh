@@ -291,7 +291,7 @@ function save_function {
             killall wbc_status > /dev/null 2>&1
 
             if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-                qstatus "ERROR: Could not access USB memory stick!" 5
+                qstatus "ERROR: Could not access USB memory stick!" 3
             else
                 wbc_status "ERROR: Could not access USB memory stick!" 7 65 0 &
             fi
