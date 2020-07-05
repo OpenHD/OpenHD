@@ -85,11 +85,13 @@ build_source() {
     make install DESTDIR=${TMPDIR} || exit 1
     popd
 
-    pushd wifibroadcast-status
-    make clean
-    make || exit 1
-    make install DESTDIR=${TMPDIR} || exit 1
-    popd
+    if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "stretch" ]]; then
+        pushd wifibroadcast-status
+        make clean
+        make || exit 1
+        make install DESTDIR=${TMPDIR} || exit 1
+        popd
+    fi
 
     #
     # Copy to root so it runs on startup
