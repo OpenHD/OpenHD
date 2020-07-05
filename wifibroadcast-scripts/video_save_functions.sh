@@ -92,7 +92,7 @@ function save_function {
 
 
     if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-        qstatus "Saving to USB..." 3
+        qstatus "Saving to USB..." 5
     else
         wbc_status "Saving to USB..." 7 55 0 &
     fi
@@ -231,7 +231,7 @@ function save_function {
                     PERCENT_FINISHED=$(python -c "print(int(float(${TARGET_FILE_SIZE}) / float(${ORIGINAL_FILE_SIZE}) * 100.0))"  )
 
                     if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-                        qstatus "Saving to usb ${PERCENT_FINISHED}%" 3
+                        qstatus "Saving to usb ${PERCENT_FINISHED}%" 5
                     else
                         killall wbc_status > /dev/null 2>&1
                         wbc_status "Saving to usb ${PERCENT_FINISHED}%" 7 65 0 &
@@ -259,7 +259,7 @@ function save_function {
             killall wbc_status > /dev/null 2>&1
 
             if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-                qstatus "Done - USB memory stick can be removed now" 3
+                qstatus "Done - USB memory stick can be removed now" 5
             else
                 wbc_status "Done - USB memory stick can be removed now" 7 65 0 &
             fi
