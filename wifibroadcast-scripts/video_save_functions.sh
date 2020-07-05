@@ -59,6 +59,8 @@ function save_function {
     # Let screenshot and check_alive function know that saving is in progress
     #
     touch /tmp/pausewhile
+
+    SAVE_IDENTIFIER=$(date '+%Y-%m-%d-%H-%M-%S')
     
 
     #
@@ -108,28 +110,6 @@ function save_function {
 
 
     if mount ${USBDEV} /media/usb; then
-        TELEMETRY_SAVE_PATH="telemetry"
-        SCREENSHOT_SAVE_PATH="screenshot"
-        VIDEO_SAVE_PATH="video"
-        RSSI_SAVE_PATH="rssi"
-
-
-        if [ -d "/media/usb/${RSSI_SAVE_PATH}" ]; then
-            echo "RSSI save path '${RSSI_SAVE_PATH}' found"
-        else
-            echo "Creating RSSI save path '${RSSI_SAVE_PATH}'"
-            mkdir /media/usb/${RSSI_SAVE_PATH}
-        fi
-
-
-        if [ -d "/media/usb/${TELEMETRY_SAVE_PATH}" ]; then
-            echo "Telemetry save path '${TELEMETRY_SAVE_PATH}' found"
-        else
-            echo "Creating Telemetry save path '${TELEMETRY_SAVE_PATH}'"
-            mkdir /media/usb/${TELEMETRY_SAVE_PATH}
-        fi
-
-
         killall rssilogger
         killall syslogger
         killall wifibackgroundscan
@@ -170,16 +150,27 @@ function save_function {
         #
         # Save all the raw chart data to the USB drive
         #
-        cp /wbc_tmp/*.csv /media/usb/${RSSI_SAVE_PATH}/
+        RSSI_SAVE_PATH="/media/usb/${SAVE_IDENTIFIER}/rssi"
+        mkdir -p ${RSSI_SAVE_PATH}
+
+        cp /wbc_tmp/*.csv ${RSSI_SAVE_PATH}/
+        cp /wbc_tmp/rssi/*.png ${RSSI_SAVE_PATH}/
 
 
         #
         # Save the telemetry data to the USB drive
         #
+        TELEMETRY_SAVE_PATH="/media/usb/${SAVE_IDENTIFIER}/telemetry"
+        mkdir -p ${TELEMETRY_SAVE_PATH}
+
         if [ -s "/wbc_tmp/telemetrydowntmp.raw" ]; then
-            cp /wbc_tmp/telemetrydowntmp.raw /media/usb/${TELEMETRY_SAVE_PATH}/telemetrydown`ls /media/usb/${TELEMETRY_SAVE_PATH}/*.raw | wc -l`.raw
-            cp /wbc_tmp/telemetrydowntmp.txt /media/usb/${TELEMETRY_SAVE_PATH}/telemetrydown`ls /media/usb/${TELEMETRY_SAVE_PATH}/*.txt | wc -l`.txt
+            cp /wbc_tmp/telemetrydowntmp.raw ${TELEMETRY_SAVE_PATH}/telemetrydown.raw
+            cp /wbc_tmp/telemetrydowntmp.txt ${TELEMETRY_SAVE_PATH}/telemetrydown.txt
         fi
+
+        cp /wbc_tmp/telemetrydowndebug.txt ${TELEMETRY_SAVE_PATH}/telemetrydowndebug.txt
+        cp /wbc_tmp/telemetryupdebug.txt ${TELEMETRY_SAVE_PATH}/telemetryupdebug.txt
+
 
 
         #
@@ -191,48 +182,38 @@ function save_function {
         #
         # Copy any captured packet data to the USB drive
         #
-        cp /wbc_tmp/*.pcap /media/usb/
-        cp /wbc_tmp/*.cap /media/usb/
+        CAP_SAVE_PATH="/media/usb/${SAVE_IDENTIFIER}/cap"
+        mkdir -p ${CAP_SAVE_PATH}
+        cp /wbc_tmp/*.pcap ${CAP_SAVE_PATH}/
+        cp /wbc_tmp/*.cap ${CAP_SAVE_PATH}/
 
         #
         # Copy the airodump chart to the USB drive
         #
-        cp /wbc_tmp/airodump.png /media/usb/
+        cp /wbc_tmp/airodump.png /media/usb/${SAVE_IDENTIFIER}/
 
 
         if [ "${ENABLE_SCREENSHOTS}" == "Y" ]; then
-            if [ -d "/media/usb/${SCREENSHOT_SAVE_PATH}" ]; then
-                echo "Screenshots save path '${SCREENSHOT_SAVE_PATH}' found"
-            else
-                echo "Creating screenshots save path '${SCREENSHOT_SAVE_PATH}'"
-                mkdir /media/usb/${SCREENSHOT_SAVE_PATH}
-            fi
-            
-            DIR_NAME_SCREENSHOT=/media/usb/${SCREENSHOT_SAVE_PATH}/`ls /media/usb/${SCREENSHOT_SAVE_PATH} | wc -l`
-            
-            mkdir ${DIR_NAME_SCREENSHOT}
-            cp /wbc_tmp/screenshot* ${DIR_NAME_SCREENSHOT} > /dev/null 2>&1
+            SCREENSHOT_SAVE_PATH="/media/usb/${SAVE_IDENTIFIER}/screenshot"
+
+            mkdir -p ${SCREENSHOT_SAVE_PATH}
+            cp /wbc_tmp/screenshot* ${SCREENSHOT_SAVE_PATH}/ > /dev/null 2>&1
         fi
 
         #
         # Only save video if the user enabled saving via memory or sdcard
         #
         if [ -s "${VIDEOFILE}" ] && [ "${VIDEO_TMP}" != "none" ]; then
+            VIDEO_SAVE_PATH="/media/usb/${SAVE_IDENTIFIER}/video"
 
-            if [ -d "/media/usb/${VIDEO_SAVE_PATH}" ]; then
-                echo "Video save path '${VIDEO_SAVE_PATH}' found"
-            else
-                echo "Creating video save path '${VIDEO_SAVE_PATH}'"
-                mkdir /media/usb/${VIDEO_SAVE_PATH}
-            fi
-
+            mkdir -p ${VIDEO_SAVE_PATH}
 
             if [ -z "${VIDEO_SAVE_FORMAT}" ]; then
                 VIDEO_SAVE_FORMAT=avi
             fi
             
 
-            USB_VIDEO_FILE=/media/usb/${VIDEO_SAVE_PATH}/video`ls /media/usb/${VIDEO_SAVE_PATH} | wc -l`.${VIDEO_SAVE_FORMAT}
+            USB_VIDEO_FILE=${VIDEO_SAVE_PATH}/video.${VIDEO_SAVE_FORMAT}
 
 
             echo "USB_VIDEO_FILE: ${USB_VIDEO_FILE}"
@@ -263,11 +244,8 @@ function save_function {
         # Copy telemetry logs to the USB drive
         #
 
-        #cp /wbc_tmp/tracker.txt /media/usb/
-        cp /wbc_tmp/debug.txt /media/usb/
-        cp /wbc_tmp/telemetrydowndebug.txt /media/usb/${TELEMETRY_SAVE_PATH}/
-        cp /wbc_tmp/telemetryupdebug.txt /media/usb/${TELEMETRY_SAVE_PATH}/
-
+        #cp /wbc_tmp/tracker.txt /media/usb/${SAVE_IDENTIFIER}/
+        cp /wbc_tmp/debug.txt /media/usb/${SAVE_IDENTIFIER}/debug.txt
 
         nice umount /media/usb
 
@@ -302,6 +280,8 @@ function save_function {
         #
         rm /wbc_tmp/* > /dev/null 2>&1
         rm /video_tmp/* > /dev/null 2>&1
+        rm /wbc_tmp/rssi/* > /dev/null 2>&1
+
         sync
     else
         STICKGONE=0
