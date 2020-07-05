@@ -92,7 +92,7 @@ function save_function {
 
 
     if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-        qstatus "Saving to USB. This may take some time ..." 5
+        qstatus "Saving to USB. This may take some time ..." 3
     else
         wbc_status "Saving to USB. This may take some time ..." 7 55 0 &
     fi
@@ -262,7 +262,7 @@ function save_function {
             killall wbc_status > /dev/null 2>&1
 
             if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-                qstatus "Done - USB memory stick can be removed now" 5
+                qstatus "Done - USB memory stick can be removed now" 3
             else
                 wbc_status "Done - USB memory stick can be removed now" 7 65 0 &
             fi
@@ -294,7 +294,7 @@ function save_function {
             killall wbc_status > /dev/null 2>&1
 
             if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-                qstatus "ERROR: Could not access USB memory stick!" 3
+                qstatus "ERROR: Could not access USB memory stick!" 5
             else
                 wbc_status "ERROR: Could not access USB memory stick!" 7 65 0 &
             fi
