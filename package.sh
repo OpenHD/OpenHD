@@ -56,6 +56,12 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
             libboost-regex-dev libboost-filesystem-dev libboost-thread-dev wiringpi indent
 
 
+build_pi_dep() {
+    pushd /opt/vc/src/hello_pi/libs/ilclient
+    make || exit 1
+    popd
+}
+
 
 build_source() {
     cp openhd-camera/openhdvid ${TMPDIR}/usr/local/bin/ || exit 1
@@ -176,6 +182,9 @@ EOF
     cp -a driver-helpers/* ${TMPDIR}/usr/local/bin/ || exit 1
 }
 
+if [[ "${PLATFORM}" == "pi" ]]; then
+    build_pi_dep
+fi
 
 build_source
 
