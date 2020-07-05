@@ -233,10 +233,10 @@ function save_function {
                     PERCENT_FINISHED=$(python -c "print(int(float(${TARGET_FILE_SIZE}) / float(${ORIGINAL_FILE_SIZE}) * 100.0))"  )
 
                     if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-                        qstatus "Saving to usb ${PERCENT_FINISHED}%" 5
+                        qstatus "Saving: ${PERCENT_FINISHED}% done" 5
                     else
                         killall wbc_status > /dev/null 2>&1
-                        wbc_status "Saving to usb ${PERCENT_FINISHED}%" 7 65 0 &
+                        wbc_status "Saving: ${PERCENT_FINISHED}% done" 7 65 0 &
                     fi
                 fi
             done
