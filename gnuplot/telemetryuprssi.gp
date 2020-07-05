@@ -57,7 +57,7 @@ set style line 4 lt 1 lc rgb "#D0D000" lw 2
 set style line 5 lt 1 lc rgb "#FF00DC" lw 2
 
 # Name our output file
-set output "/media/usb/rssi/telemetryuprssi.png"
+set output "/wbc_tmp/rssi/telemetryuprssi.png"
 
 # Put X and Y labels
 set xlabel "seconds"

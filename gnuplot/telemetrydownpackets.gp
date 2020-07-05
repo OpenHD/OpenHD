@@ -59,7 +59,7 @@ set style line 6 lt 1 lc rgb "#FF3300" lw 2
 set style line 7 lt 1 lc rgb "#AF00DC" lw 2
 
 # Name our output file
-set output "/media/usb/rssi/telemetrydownpackets.png"
+set output "/wbc_tmp/rssi/telemetrydownpackets.png"
 
 #	1	   2		     3				4	   5             6            7           8    
 #    counter, kbitrate, packets_lost_per_second, badblocks_per_second,adapter1_dbm,adapter1_pps,adapter2_dbm,adaoter2_pps, ...

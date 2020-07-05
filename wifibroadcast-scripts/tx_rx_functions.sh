@@ -21,6 +21,7 @@ function MAIN_TX_RX_FUNCTION {
 
     mount -t tmpfs -o size=${available_for_wbc_tmp_final}K tmpfs /wbc_tmp
 
+    mkdir -p /wbc_tmp/rssi/
 
     if [ "$CAM" == "0" ]; then
         rx_function

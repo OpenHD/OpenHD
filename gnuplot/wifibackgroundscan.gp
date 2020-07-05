@@ -59,7 +59,7 @@ set style line 6 lt 1 lc rgb "#FA00DC" lw 2
 set style line 7 lt 1 lc rgb "#AF00DC" lw 2
 
 # Name our output file
-set output "/media/usb/rssi/foreignwifipackets.png"
+set output "/wbc_tmp/rssi/foreignwifipackets.png"
 
 #	1	   2
 #    counter, foreign_packets_per_second
