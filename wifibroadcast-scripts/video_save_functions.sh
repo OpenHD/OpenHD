@@ -226,24 +226,30 @@ function save_function {
 
             nice ffmpeg -framerate ${FPS} -i ${VIDEOFILE} -c:v copy ${USB_VIDEO_FILE} > /dev/null 2>&1 &
 
+            killall wbc_status > /dev/null 2>&1
 
             FFMPEGRUNNING=1
             while [ ${FFMPEGRUNNING} -eq 1 ]; do
                 FFMPEGRUNNING=`pidof ffmpeg | wc -w`
-                #echo "FFMPEGRUNNING: ${FFMPEGRUNNING}"
 
                 sleep 4
+        
+                if [ -f ${USB_VIDEO_FILE} ]; then
+                    ORIGINAL_FILE_SIZE=$(ls -l ${VIDEOFILE} | awk '{print $5}')
+                    TARGET_FILE_SIZE=$(ls -l ${USB_VIDEO_FILE} | awk '{print $5}')
+                    PERCENT_FINISHED=$(python -c "print(int(float(${TARGET_FILE_SIZE}) / float(${ORIGINAL_FILE_SIZE}) * 100.0))"  )
 
-                killall wbc_status > /dev/null 2>&1
-
-                if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-                    qstatus "Saving - please wait ..." 5
-                else
-                    wbc_status "Saving - please wait ..." 7 65 0 &
+                    if [ "${ENABLE_QOPENHD}" == "Y" ]; then
+                        qstatus "Saving to usb ${PERCENT_FINISHED}%" 3
+                    else
+                        killall wbc_status > /dev/null 2>&1
+                        wbc_status "Saving to usb ${PERCENT_FINISHED}%" 7 65 0 &
+                    fi
                 fi
             done
         fi
         
+        killall wbc_status > /dev/null 2>&1
 
         #
         # Copy telemetry logs to the USB drive
