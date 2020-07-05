@@ -37,7 +37,12 @@ function MAIN_VIDEO_SAVE_FUNCTION {
                 FREETMPSPACE=`nice df -P /wbc_tmp/ | nice awk 'NR==2 {print $4}'`
 
                 if [ ${FREETMPSPACE} -lt ${LIMITFREE} ]; then
-                    echo "RAM disk full, killing cat video file writing  process ..."
+                    if [ "${ENABLE_QOPENHD}" == "Y" ]; then
+                        qstatus "Ground recording space full" 4
+                    else
+                        killall wbc_status > /dev/null 2>&1
+                        wbc_status "Ground recording space full" 7 65 0 &
+                    fi
                 
                     ps -ef | nice grep "cat /var/run/openhd/videofifo3" | nice grep -v grep | awk '{print $2}' | xargs kill -9
                     KILLED=1
