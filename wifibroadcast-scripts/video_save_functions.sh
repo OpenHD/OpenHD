@@ -251,6 +251,7 @@ function save_function {
         #cp /wbc_tmp/tracker.txt /media/usb/${SAVE_IDENTIFIER}/
         cp /wbc_tmp/debug.txt /media/usb/${SAVE_IDENTIFIER}/debug.txt
 
+        sync
         nice umount /media/usb
 
         #
