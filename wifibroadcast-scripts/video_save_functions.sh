@@ -375,4 +375,6 @@ function save_function {
     # Let screenshot function know that it can continue taking screenshots
     #
     rm /tmp/pausewhile
+
+    echo "USB save done"
 }
