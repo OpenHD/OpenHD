@@ -273,7 +273,6 @@ function save_function {
         # Stop any processes left over from the save step
         #
         killall wbc_status > /dev/null 2>&1
-        killall hello_video.bin.player > /dev/null 2>&1
 
         #
         # Clear out the temporary directories so we can start saving again
@@ -306,7 +305,6 @@ function save_function {
         # Stop any processes left over from the save step
         #
         killall wbc_status > /dev/null 2>&1
-        killall hello_video.bin.player > /dev/null 2>&1
     fi
 
 
