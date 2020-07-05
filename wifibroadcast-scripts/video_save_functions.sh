@@ -255,6 +255,7 @@ function save_function {
 
         MOUNTED=`mount | grep /media/usb | wc -l`
         while [ $MOUNTED -ge 1 ]; do
+            echo "Attempting to unmount USB drive"
             umount -A /media/usb > /dev/null 2>&1
             sleep 1
             MOUNTED=`mount | grep /media/usb | wc -l`
