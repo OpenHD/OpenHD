@@ -100,7 +100,9 @@ build_source() {
 
     pushd wifibroadcast-misc
     cp -a ftee ${TMPDIR}/usr/local/bin/ || exit 1
-    cp -a raspi2raspi ${TMPDIR}/usr/local/bin/ || exit 1
+    if [[ "${PLATFORM}" == "pi" ]]; then
+        cp -a raspi2raspi ${TMPDIR}/usr/local/bin/ || exit 1
+    fi
     cp -a gpio-IsAir.py ${TMPDIR}/usr/local/bin/ || exit 1
     cp -a gpio-config.py ${TMPDIR}/usr/local/bin/ || exit 1
     cp -a openhdconfig.sh ${TMPDIR}/usr/local/bin/ || exit 1
