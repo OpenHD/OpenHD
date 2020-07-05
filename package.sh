@@ -93,6 +93,12 @@ build_source() {
         popd
     fi
 
+    pushd openhd-status
+    make clean
+    make || exit 1
+    make install DESTDIR=${TMPDIR} || exit 1
+    popd
+
     #
     # Copy to root so it runs on startup
     #
