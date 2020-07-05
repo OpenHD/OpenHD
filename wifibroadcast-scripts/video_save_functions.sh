@@ -328,6 +328,25 @@ function save_function {
     ionice -c 3 nice cat /var/run/openhd/telemetryfifo3 >> /wbc_tmp/telemetrydowntmp.raw &
 
 
+    #
+    # Re-start rssi logging
+    #
+    nice /usr/local/bin/rssilogger /wifibroadcast_rx_status_0 >> /wbc_tmp/videorssi.csv &
+    nice /usr/local/bin/rssilogger /wifibroadcast_rx_status_1 >> /wbc_tmp/telemetrydownrssi.csv &
+    nice /usr/local/bin/syslogger /wifibroadcast_rx_status_sysair >> /wbc_tmp/system.csv &
+
+    if [ "$TELEMETRY_UPLINK" != "disabled" ]; then
+        nice /usr/local/bin/rssilogger /wifibroadcast_rx_status_uplink >> /wbc_tmp/telemetryuprssi.csv &
+    fi
+
+    if [ "$RC" != "disabled" ]; then
+        nice /usr/local/bin/rssilogger /wifibroadcast_rx_status_rc >> /wbc_tmp/rcrssi.csv &
+    fi
+
+    if [ "$DEBUG" == "Y" ]; then
+        nice /usr/local/bin/wifibackgroundscan $NICS >> /wbc_tmp/wifibackgroundscan.csv &
+    fi
+
     killall wbc_status > /dev/null 2>&1
     OSDRUNNING=`pidof /usr/local/bin/osd | wc -w`
 
