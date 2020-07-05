@@ -92,9 +92,9 @@ function save_function {
 
 
     if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-        qstatus "Saving to USB. This may take some time ..." 3
+        qstatus "Saving to USB..." 3
     else
-        wbc_status "Saving to USB. This may take some time ..." 7 55 0 &
+        wbc_status "Saving to USB..." 7 55 0 &
     fi
 
 
