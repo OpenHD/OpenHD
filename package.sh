@@ -221,6 +221,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   --config-files /boot/osdconfig.txt \
   -p ${PACKAGE_NAME}_VERSION_ARCH.deb \
   --after-install after-install.sh \
+  --before-install before-install.sh \
   -d "wiringpi" \
   -d "libasio-dev >= 1.10" \
   -d "libboost-system-dev >= 1.62.0" \
