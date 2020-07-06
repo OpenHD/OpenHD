@@ -11,13 +11,13 @@ if [[ "${PLATFORM}" == "pi" ]]; then
     PACKAGE_ARCH="armhf"
 fi
 
-apt-get install -y apt-transport-https
-curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-0/cfg/gpg/gpg.B9F0E99CF5787237.key' | apt-key add -
+apt-get install -y apt-transport-https || exit 1
+curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-0/cfg/gpg/gpg.B9F0E99CF5787237.key' | apt-key add - || exit 1
 
 
-echo "deb https://dl.cloudsmith.io/public/openhd/openhd-2-0/deb/${OS} ${DISTRO} main" > /etc/apt/sources.list.d/openhd-2-0.list
+echo "deb https://dl.cloudsmith.io/public/openhd/openhd-2-0/deb/${OS} ${DISTRO} main" > /etc/apt/sources.list.d/openhd-2-0.list || exit 1
 
-apt -y update
+apt -y update || exit 1
 
 PACKAGE_NAME=openhd
 
@@ -53,7 +53,7 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
             libreadline-dev libjpeg8-dev libusb-1.0-0-dev libsodium-dev \
             libfontconfig1-dev libfreetype6-dev ttf-dejavu-core \
             libboost-dev libboost-program-options-dev libboost-system-dev libasio-dev libboost-chrono-dev \
-            libboost-regex-dev libboost-filesystem-dev libboost-thread-dev wiringpi indent
+            libboost-regex-dev libboost-filesystem-dev libboost-thread-dev wiringpi indent || exit 1
 
 
 build_pi_dep() {
