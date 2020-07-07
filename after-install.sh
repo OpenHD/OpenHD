@@ -9,4 +9,4 @@ mkdir -p /media/usb
 # crude hack to avoid making people put fonts somewhere else
 cp -a /usr/local/share/openhd/osdfonts/*.ttf /boot/osdfonts/ > /dev/null 2>&1 || true
 
-mount -oremount,ro /boot
+mount -oremount,ro /boot || true
