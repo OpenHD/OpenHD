@@ -693,17 +693,28 @@ void draw_mavlink_mode(uint32_t custom_mode, MAV_MODE_FLAG mav_base_mode, MAV_AU
 
     const char *fmode;
 
-    if (COPTER) {
-        if (CHINESE) {
-            fmode = chinese_copter_mode_from_enum((COPTER_MODE)custom_mode);
-        } else {
-            fmode = copter_mode_from_enum((COPTER_MODE)custom_mode);
+    switch (autopilot) {
+        case MAV_AUTOPILOT_PX4: {
+            if (mav_base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
+                fmode = px4_mode_from_custom_mode(custom_mode);
+            }
+            break;
         }
-    } else {
-        if (CHINESE) {
-            fmode = chinese_plane_mode_from_enum((PLANE_MODE)custom_mode);
-        } else {
-            fmode = plane_mode_from_enum((PLANE_MODE)custom_mode);
+        default: {
+            if (COPTER) {
+                if (CHINESE) {
+                    fmode = chinese_copter_mode_from_enum((COPTER_MODE)custom_mode);
+                } else {
+                    fmode = copter_mode_from_enum((COPTER_MODE)custom_mode);
+                }
+            } else {
+                if (CHINESE) {
+                    fmode = chinese_plane_mode_from_enum((PLANE_MODE)custom_mode);
+                } else {
+                    fmode = plane_mode_from_enum((PLANE_MODE)custom_mode);
+                }
+            }
+            break;
         }
     }
 
