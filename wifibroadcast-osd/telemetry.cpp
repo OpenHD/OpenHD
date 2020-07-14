@@ -53,7 +53,9 @@ void telemetry_init(telemetry_data_t_osd *td) {
     /*
      * Mavlink
      */
-    td->mav_flightmode = 255;
+    td->mav_custom_mode = 255;
+    td->mav_base_mode = (MAV_MODE_FLAG)0;
+    td->mav_autopilot = MAV_AUTOPILOT_GENERIC;
     //td->mav_climb = 0;
     td->version=0;
     td->vendor=0;

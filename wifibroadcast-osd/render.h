@@ -27,6 +27,8 @@
 #include <fontinfo.h>
 #include <time.h>
 
+#include <openhd/mavlink.h>
+
 #define TO_DEG 180.0f / M_PI
 
 void render_init();
@@ -72,7 +74,7 @@ void draw_position(float lat, float lon, float pos_x, float pos_y, float scale);
 
 
 void draw_home_distance(int distance, bool home_fixed, float pos_x, float pos_y, float scale);
-void draw_mavlink_mode(int mode, int armed, float pos_x, float pos_y, float scale);
+void draw_mavlink_mode(uint32_t custom_mode, MAV_MODE_FLAG mav_base_mode, MAV_AUTOPILOT autopilot, int armed, float pos_x, float pos_y, float scale);
 void draw_vot_mode(int mode, int armed, float pos_x, float pos_y, float scale);
 void draw_ltm_mode(int mode, int armed, int failsafe, float pos_x, float pos_y, float scale);
 void draw_rssi(int rssi, int armed, float pos_x, float pos_y, float scale, float mbit_warn, float mbit_caution, float declutter);

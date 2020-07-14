@@ -312,7 +312,7 @@ void render(telemetry_data_t_osd *td, uint8_t cpuload_gnd, uint8_t temp_gnd, uin
 
     if (FLIGHTMODE) {
         if (MAVLINK) {
-            draw_mavlink_mode(td->mav_flightmode, td->armed, FLIGHTMODE_POS_X, FLIGHTMODE_POS_Y, FLIGHTMODE_SCALE * GLOBAL_SCALE);
+            draw_mavlink_mode(td->mav_custom_mode, td->mav_base_mode, td->mav_autopilot, td->armed, FLIGHTMODE_POS_X, FLIGHTMODE_POS_Y, FLIGHTMODE_SCALE * GLOBAL_SCALE);
         }
 
         if (VOT) {
@@ -682,7 +682,7 @@ void draw_ltm_mode(int mode, int armed, int failsafe, float pos_x, float pos_y, 
 }
 
 
-void draw_mavlink_mode(int mode, int armed, float pos_x, float pos_y, float scale) {
+void draw_mavlink_mode(uint32_t custom_mode, MAV_MODE_FLAG mav_base_mode, MAV_AUTOPILOT autopilot, int armed, float pos_x, float pos_y, float scale) {
     /*
      * Autopilot mode, mavlink specific, could be used if mode is in telemetry data of other protocols as well
      */
@@ -695,15 +695,15 @@ void draw_mavlink_mode(int mode, int armed, float pos_x, float pos_y, float scal
 
     if (COPTER) {
         if (CHINESE) {
-            fmode = chinese_copter_mode_from_enum((COPTER_MODE)mode);
+            fmode = chinese_copter_mode_from_enum((COPTER_MODE)custom_mode);
         } else {
-            fmode = copter_mode_from_enum((COPTER_MODE)mode);
+            fmode = copter_mode_from_enum((COPTER_MODE)custom_mode);
         }
     } else {
         if (CHINESE) {
-            fmode = chinese_plane_mode_from_enum((PLANE_MODE)mode);
+            fmode = chinese_plane_mode_from_enum((PLANE_MODE)custom_mode);
         } else {
-            fmode = plane_mode_from_enum((PLANE_MODE)mode);
+            fmode = plane_mode_from_enum((PLANE_MODE)custom_mode);
         }
     }
 

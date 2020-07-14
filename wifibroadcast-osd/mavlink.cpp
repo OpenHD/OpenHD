@@ -175,7 +175,9 @@ int mavlink_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
                 case MAVLINK_MSG_ID_HEARTBEAT: {
                     fprintf(telemetry_file, "HEARTBEAT ");
 
-                    td->mav_flightmode = mavlink_msg_heartbeat_get_custom_mode(&msg);
+                    td->mav_custom_mode = mavlink_msg_heartbeat_get_custom_mode(&msg);
+                    td->mav_base_mode = (MAV_MODE_FLAG)mavlink_msg_heartbeat_get_base_mode(&msg);
+                    td->mav_autopilot = (MAV_AUTOPILOT)mavlink_msg_heartbeat_get_autopilot(&msg);
 
                     /*
                     if (((mavlink_msg_heartbeat_get_base_mode(&msg) & 0b10000000) >> 7) == 0) {
@@ -289,7 +291,7 @@ int mavlink_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
                         fprintf(telemetry_file, "UNKNOWN base mode: %d", td->armed);
                     }
                         
-                    fprintf(telemetry_file, "mode: %d", td->mav_flightmode);
+                    fprintf(telemetry_file, "mode: %d", td->mav_custom_mode);
                     fprintf(telemetry_file, "armed: %d", td->armed);
                     
                     break;

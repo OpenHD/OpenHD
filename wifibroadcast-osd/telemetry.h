@@ -3,6 +3,7 @@
 #include "openhdlib.h"
 #include <stdint.h>
 #include <time.h>
+#include <openhd/mavlink.h>
 
 
 extern FILE * telemetry_file;
@@ -70,7 +71,9 @@ typedef struct {
     /*
      * Mavlink
      */
-    uint32_t mav_flightmode;
+    uint32_t mav_custom_mode;
+    MAV_AUTOPILOT mav_autopilot;
+    MAV_MODE_FLAG mav_base_mode;
     //float mav_climb;
     uint32_t version;
     uint16_t vendor;
