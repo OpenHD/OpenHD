@@ -310,6 +310,10 @@ IMX290_mirrormode=0x00
 IMX290_denoise=0x00
 IMX290_lowlight=0x00
 
+# Used to flip/mirror the IMX307 camera, separate setting from IMX290 because they don't handle it the same way
+# 0: normal, 1: flip, 2: mirror, 3: flip+mirror. 
+# Note that the IMX307 configuration system seems to expect numbers like 0, not 0x00 like imx290 mirrormode
+IMX307_imagedir=0
 
 # ======================================================================================
 #                    <DEVELOPER-ENHANCEMENTS IN PROGRESS OPTIONS>
