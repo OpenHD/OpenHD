@@ -37,16 +37,16 @@ int height;
 long long amps_ts; 
 long long dist_ts; 
 long long time_ts;
-float total_amps; 
-double total_dist; 
-float total_time;
+float total_amps = 0.0; 
+double total_dist = 0.0; 
+float total_time = 0.0;
 
 float scale_factor_font;
 bool setting_home;
 bool home_set;
-float home_lat;
-float home_lon;
-int home_counter;
+float home_lat = 0.0;
+float home_lon = 0.0;
+int home_counter = 0;;
 
 #define TEXT_BUFFER_SIZE 40
 char buffer[TEXT_BUFFER_SIZE];
