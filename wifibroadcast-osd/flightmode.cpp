@@ -391,3 +391,87 @@ const char * ltm_mode_from_telem(int mode) {
     return "-----";
 }
 
+const char * px4_mode_from_custom_mode(int custom_mode) {
+    union px4_custom_mode px4_mode;
+    px4_mode.data = custom_mode;
+
+    auto main_mode = px4_mode.main_mode;
+
+    switch (main_mode) {
+        case PX4_CUSTOM_MAIN_MODE_MANUAL: {
+            return "Manual";
+        }
+        case PX4_CUSTOM_MAIN_MODE_ALTCTL: {
+            return "Altitude Control";
+        }
+        case PX4_CUSTOM_MAIN_MODE_POSCTL: {
+            switch (px4_mode.sub_mode) {
+                case PX4_CUSTOM_SUB_MODE_POSCTL_POSCTL: {
+                    return "Position Control";
+                }
+                case PX4_CUSTOM_SUB_MODE_POSCTL_ORBIT: {
+                    return "Position Control Orbit";
+                }
+                default: {
+                    break;
+                }
+            }
+
+            break;
+        }
+        case PX4_CUSTOM_MAIN_MODE_AUTO: {
+            switch (px4_mode.sub_mode) {
+                case PX4_CUSTOM_SUB_MODE_AUTO_READY: {
+                    return "Auto Ready";
+                }
+                case PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF: {
+                    return "Takeoff";
+                }
+                case PX4_CUSTOM_SUB_MODE_AUTO_LOITER: {
+                    return "Auto Loiter";
+                }
+                case PX4_CUSTOM_SUB_MODE_AUTO_MISSION: {
+                    return "Auto Mission";
+                }
+                case PX4_CUSTOM_SUB_MODE_AUTO_RTL: {
+                    return "Auto RTL";
+                }
+                case PX4_CUSTOM_SUB_MODE_AUTO_LAND: {
+                    return "Auto Land";
+                }
+                case PX4_CUSTOM_SUB_MODE_AUTO_RESERVED_DO_NOT_USE: {
+                    break;
+                }
+                case PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET: {
+                    return "Auto Follow Tgt";
+                }
+                case PX4_CUSTOM_SUB_MODE_AUTO_PRECLAND: {
+                    return "Auto Precision Land";
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+        case PX4_CUSTOM_MAIN_MODE_ACRO: {
+            return "Acro";
+        }
+        case PX4_CUSTOM_MAIN_MODE_OFFBOARD: {
+            return "Offboard";
+        }
+        case PX4_CUSTOM_MAIN_MODE_STABILIZED: {
+            return "Stabilized";
+        }
+        case PX4_CUSTOM_MAIN_MODE_RATTITUDE: {
+            return "Rattitude";
+        }
+        case PX4_CUSTOM_MAIN_MODE_SIMPLE: {
+            return "Simple";
+        }
+        default: {
+            break;
+        }
+    }
+    return "-----";
+}
