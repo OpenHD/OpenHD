@@ -22,4 +22,4 @@ ARG CLOUDSMITH_API_KEY=000000000000
 
 RUN export CLOUDSMITH_API_KEY=$CLOUDSMITH_API_KEY
 
-RUN /data/package.sh pi stretch
+RUN /data/package.sh pi stretch docker
