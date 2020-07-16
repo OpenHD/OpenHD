@@ -53,6 +53,13 @@ function tx_function {
         /usr/local/share/cameracontrol/LoadFlirDriver.sh &
     fi
 
+    if [ "$LoadSeekDriver" == "Y" ]; then
+        echo "Seek Thermal camera enabled"
+        qstatus "Seek Thermal camera enabled" 5
+
+        /usr/local/share/wifibroadcast-scripts/load_seek_thermal.sh &
+    fi
+
 
     /usr/local/bin/sharedmem_init_tx
 
