@@ -236,14 +236,14 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "libasio-dev >= 1.10" \
   -d "libboost-system-dev >= 1.62.0" \
   -d "libboost-program-options-dev >= 1.62.0" \
-  -d "openhd-router = 0.1.7" \
-  -d "openhd-microservice = 0.1.13" \
+  -d "openhd-router <= 0.1.7" \
+  -d "openhd-microservice <= 0.1.13" \
   -d "qopenhd" \
-  -d "libseek-thermal = 20200716.1" \
-  -d "flirone-driver = 20200704.3" \
-  -d "veye-raspberrypi = 20200706.1" \
-  -d "lifepoweredpi = 20200704.2" \
-  -d "mavlink-router = 20200704.3" \
+  -d "libseek-thermal <= 20200716.1" \
+  -d "flirone-driver <= 20200704.3" \
+  -d "veye-raspberrypi <= 20200706.1" \
+  -d "lifepoweredpi <= 20200704.2" \
+  -d "mavlink-router <= 20200704.3" \
   -d "gnuplot-nox" \
   -d "hostapd" \
   -d "iw" \
