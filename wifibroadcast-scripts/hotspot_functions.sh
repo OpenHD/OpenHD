@@ -104,7 +104,7 @@ function hotspot_check_function {
 
     #if [ "$TELEMETRY_UPLINK" == "msp" ]; then
         #cat /var/run/openhd/mspfifo > /dev/openhd_msp1 &
-        #ser2net
+        #ser2net -c /usr/local/etc/ser2net.conf
     #fi
 
 
