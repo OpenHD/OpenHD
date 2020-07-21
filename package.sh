@@ -202,7 +202,7 @@ build_source() {
 
     cp -a overlay/usr/local/etc/* ${TMPDIR}/usr/local/etc/ || exit 1
 
-    cp -a systemd/* ${TMPDIR}/etc/systemd/system/ || exit 1
+    cp -a overlay/etc/systemd/system/* ${TMPDIR}/etc/systemd/system/ || exit 1
 
     cp -a gnuplot/* ${TMPDIR}/usr/local/share/openhd/gnuplot/ || exit 1
 
