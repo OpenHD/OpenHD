@@ -1,0 +1,10 @@
+[Unit]
+Description=Read only boot partition
+
+[Service]
+Type=oneshot
+ExecStart=/bin/mount -oremount,ro /boot
+RemainAfterExit=true
+
+[Install]
+WantedBy=basic.target
