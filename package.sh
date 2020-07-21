@@ -44,6 +44,8 @@ mkdir -p ${TMPDIR}/etc/network || exit 1
 mkdir -p ${TMPDIR}/etc/sysctl.d || exit 1
 mkdir -p ${TMPDIR}/etc/systemd/system || exit 1
 
+mkdir -p ${TMPDIR}/root || exit 1
+
 mkdir -p ${TMPDIR}/usr/bin || exit 1
 mkdir -p ${TMPDIR}/usr/sbin || exit 1
 mkdir -p ${TMPDIR}/usr/share || exit 1
@@ -194,6 +196,10 @@ build_source() {
     cp -a wifibroadcast-scripts/* ${TMPDIR}/usr/local/share/wifibroadcast-scripts/ || exit 1
 
     cp -a overlay/etc/* ${TMPDIR}/etc/ || exit 1
+    
+    # note: this is non-standard behavior, packaging stuff in /root, but it's temporary
+    cp -a overlay/root/.bashrc ${TMPDIR}/root/ || exit 1
+
     cp -a overlay/usr/local/etc/* ${TMPDIR}/usr/local/etc/ || exit 1
 
     cp -a systemd/* ${TMPDIR}/etc/systemd/system/ || exit 1
