@@ -32,7 +32,11 @@ int mavlink_read(telemetry_data_t_osd *td, uint8_t *buf, int buflen) {
              *       to see if it came from a flight controller or not, and only
              *       then decide to use the data it provides.
              */
-            if (msg.compid != MAV_COMP_ID_AUTOPILOT1 && msg.compid != MAV_COMP_ID_SYSTEM_CONTROL) {
+
+            // Note: wrong way to handle this, but it's fine for now, nothing sends any messages and that's the only
+            //       instance where it would matter.
+            // Note: compid 200 is for betaflight mavlink telemetry
+            if (msg.compid != MAV_COMP_ID_AUTOPILOT1 && msg.compid != MAV_COMP_ID_SYSTEM_CONTROL && msg.compid != 200) {
                 return render_data;
             }
             
