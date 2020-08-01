@@ -44,6 +44,7 @@ mkdir -p ${TMPDIR}/etc/network || exit 1
 mkdir -p ${TMPDIR}/etc/sysctl.d || exit 1
 mkdir -p ${TMPDIR}/etc/systemd/system || exit 1
 
+mkdir -p ${TMPDIR}/home/pi || exit 1
 mkdir -p ${TMPDIR}/root || exit 1
 
 mkdir -p ${TMPDIR}/usr/bin || exit 1
@@ -197,8 +198,9 @@ build_source() {
 
     cp -a overlay/etc/* ${TMPDIR}/etc/ || exit 1
     
-    # note: this is non-standard behavior, packaging stuff in /root, but it's temporary
+    # note: this is non-standard behavior, packaging stuff in /root and /home, but it's temporary
     cp -a overlay/root/.bashrc ${TMPDIR}/root/ || exit 1
+    cp -a overlay/home/pi/.bashrc ${TMPDIR}/home/pi/ || exit 1
 
     cp -a overlay/usr/local/etc/* ${TMPDIR}/usr/local/etc/ || exit 1
 
