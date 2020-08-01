@@ -251,6 +251,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "openhd-router >= 0.1.8" \
   -d "openhd-microservice >= 0.1.18" \
   -d "qopenhd" \
+  -d "openhd-linux-pi >= 20200801.1" \
   -d "libseek-thermal >= 20200716.1" \
   -d "flirone-driver >= 20200704.3" \
   -d "veye-raspberrypi >= 20200706.1" \
