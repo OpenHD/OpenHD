@@ -6,8 +6,6 @@ systemctl enable openhdconfig
 mkdir -p /wbc_tmp
 mkdir -p /media/usb
 
-touch /boot/ssh || true
-
 # crude hack to avoid making people put fonts somewhere else
 cp -a /usr/local/share/openhd/osdfonts/*.ttf /boot/osdfonts/ > /dev/null 2>&1 || true
 
