@@ -34,7 +34,8 @@ def command_thread(command_port):
                 arg = received_command[1]
                 if command == "add":
                     print("Adding remote address: " + arg)
-                    remote_addresses.append(arg)
+                    if not arg in remote_addresses:
+                        remote_addresses.append(arg)
                 elif command == "del":
                     print("Removing remote address: " + arg)
                     remote_addresses.remove(arg)
