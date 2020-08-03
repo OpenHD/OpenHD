@@ -1,1 +1,2 @@
-dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 nofsck elevator=deadline fsck.mode=skip noswap rootwait consoleblank=0 loglevel=0 vt.global_cursor_default=0 vt.cur_default=1 dwc_otg.fiq_fsm_enable=1 dwc_otg.fiq_enable=1 dwc_otg.nak_holdoff=0 dwc_otg.int_ep_interval_min=0 
+dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 nofsck elevator=deadline fsck.mode=skip noswap rootwait consoleblank=0 loglevel=0 vt.global_cursor_default=0 vt.cur_default=1 dwc_otg.fiq_fsm_enable=1 dwc_otg.fiq_enable=1 dwc_otg.nak_holdoff=0 dwc_otg.int_ep_interval_min=0 cma=160M
+
