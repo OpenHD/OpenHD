@@ -67,6 +67,12 @@
 // IP or USB camera switch py script in
 #define PORT3 1259 
 
+typedef enum CARD_TYPE {
+    CARD_TYPE_RALINK,
+    CARD_TYPE_REALTEK,
+    CARD_TYPE_ATHEROS
+} CARD_TYPE;
+
 
 // Encrypted RC Message
 char messageRCEncrypt[40]; 
@@ -176,7 +182,7 @@ char *ifname = NULL;
 int flagHelp = 0;
 int sock = 0;
 int socks[5];
-int type[5];
+CARD_TYPE card_types[5];
 int counter = 0;
 int seqno = 0;
 
@@ -553,7 +559,7 @@ void sendRC(unsigned char seqno, telemetry_data_t *td) {
 
         // find out which card has best signal and ignore ralink (type=1) ones
         for (j = 0; j < ac; ++j) {
-            if ((best_dbm < td->rx_status->adapter[j].current_signal_dbm) && (type[j] != 0)) {
+            if ((best_dbm < td->rx_status->adapter[j].current_signal_dbm) && (card_types[j] != CARD_TYPE_RALINK)) {
                 best_dbm = td->rx_status->adapter[j].current_signal_dbm;
                 best_adapter = j;
                 //printf ("best_adapter: :%d\n",best_adapter);
@@ -561,18 +567,18 @@ void sendRC(unsigned char seqno, telemetry_data_t *td) {
         }
         
         if (NICCount == 1) {
-            switch (type[0]) {
-                case 0: {
+            switch (card_types[0]) {
+                case CARD_TYPE_RALINK: {
                     break;
                 }
-                case 1: {
+                case CARD_TYPE_ATHEROS: {
                     if (write(socks[0], &framedatas, sizeof(framedatas)) < 0) {
                         fprintf(stderr, "!");
                         exit(1);
                     }
                     break;
                 }
-                case 2: {
+                case CARD_TYPE_REALTEK: {
                     if (write(socks[0], &framedatan, sizeof(framedatan)) < 0) {
                         fprintf(stderr, "!");
                         exit(1);
@@ -581,18 +587,18 @@ void sendRC(unsigned char seqno, telemetry_data_t *td) {
                 }
             }
         } else {
-            switch (type[best_adapter]) {
-                case 0: {
+            switch (card_types[best_adapter]) {
+                case CARD_TYPE_RALINK: {
                     break;
                 }
-                case 1: {
+                case CARD_TYPE_ATHEROS: {
                     if (write(socks[best_adapter], &framedatas, sizeof(framedatas)) < 0) {
                         fprintf(stderr, "!");
                         exit(1);
                     }
                     break;
                 }
-                case 2: {
+                case CARD_TYPE_REALTEK: {
                     if (write(socks[best_adapter], &framedatan, sizeof(framedatan)) < 0) {
                         fprintf(stderr, "!");
                         exit(1);
@@ -930,11 +936,11 @@ int main(int argc, char *argv[]) {
                 if (strncmp(line, "DRIVER=ath9k_htc", 16) == 0) {
                     fprintf(stderr, "rctx: Atheros card detected\n");
 
-                    type[num_interfaces] = 1;
+                    card_types[num_interfaces] = CARD_TYPE_ATHEROS;
                 } else {
                     fprintf(stderr, "rctx: Realtek card detected\n");
 
-                    type[num_interfaces] = 2;
+                    card_types[num_interfaces] = CARD_TYPE_REALTEK;
                 }
             } else {
                 /*
@@ -943,7 +949,7 @@ int main(int argc, char *argv[]) {
                  */
                 fprintf(stderr, "rctx: Ralink card detected\n");
 
-                type[num_interfaces] = 0;
+                card_types[num_interfaces] = CARD_TYPE_RALINK;
             }
 
             socks[num_interfaces] = open_sock(interface.c_str());
