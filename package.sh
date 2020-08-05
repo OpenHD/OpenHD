@@ -284,6 +284,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "libfontconfig1" \
   -d "libfreetype6" \
   -d "ttf-dejavu-core" \
+  -d "libgles2-mesa-dev" \
   -d "libboost-chrono-dev" \
   -d "libboost-regex-dev" \
   -d "libboost-filesystem-dev" \
