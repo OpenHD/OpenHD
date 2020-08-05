@@ -205,6 +205,33 @@ function detect_wfb_primary_band {
         return
     fi
 
+    lsmod | grep 88xxau
+    grepRet=$?
+    if [[ $grepRet -eq 0 ]] ; then
+        export WFB_PRIMARY_BAND_58="1"
+        export WFB_PRIMARY_BAND_24="0"
+        echo "58" > /tmp/wfb_primary_band
+        return
+    fi
+
+    lsmod | grep 8188eu
+    grepRet=$?
+    if [[ $grepRet -eq 0 ]] ; then
+        export WFB_PRIMARY_BAND_58="1"
+        export WFB_PRIMARY_BAND_24="0"
+        echo "58" > /tmp/wfb_primary_band
+        return
+    fi
+
+    lsmod | grep 88x2bu
+    grepRet=$?
+    if [[ $grepRet -eq 0 ]] ; then
+        export WFB_PRIMARY_BAND_58="1"
+        export WFB_PRIMARY_BAND_24="0"
+        echo "58" > /tmp/wfb_primary_band
+        return
+    fi
+
     # every other card we support is 2.4-only, so we default to 2.4
     export WFB_PRIMARY_BAND_58="0"
     export WFB_PRIMARY_BAND_24="1"

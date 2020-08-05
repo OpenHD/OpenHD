@@ -200,8 +200,12 @@ def GetFreqFromConfig():
     return False
 
 def DetectWFBPrimaryBand():
-    ret = os.system('lsmod | grep 88XXau')
-    if ret == 0:
+    rtl8812au = os.system('lsmod | grep 88XXau')
+    rtl8812au_newer = os.system('lsmod | grep 88xxau')
+    rtl8188eu = os.system('lsmod | grep 8188eu')
+    rtl8x12bu = os.system('lsmod | grep 88x2bu')
+
+    if rtl8812au == 0 or rtl8812au_newer == 0 or rtl8188eu == 0 or rtl8x12bu == 0:
         return "58"
     else:
         return "24"
