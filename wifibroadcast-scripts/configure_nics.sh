@@ -515,7 +515,7 @@ function prepare_nic {
 
 
 
-    if [ "$DRIVER" == "rt2800usb" ] || [ "$DRIVER" == "mt7601u" ] || [ "$DRIVER" == "rtl8192cu" ] || [ "$DRIVER" == "rtl88XXau" ] || [ "$DRIVER" == "rtl88x2bu" ]; then 
+    if [ "$DRIVER" == "rt2800usb" ] || [ "$DRIVER" == "mt7601u" ] || [ "$DRIVER" == "rtl8192cu" ] || [ "$DRIVER" == "rtl88XXau" ] || [ "$DRIVER" == "rtl88x2bu" ] || [ "$DRIVER" == "8188eu" ] || [ "$DRIVER" == "rtl8188eu" ]; then 
         #
         # do not set bitrate for Ralink, Mediatek, Realtek, done through tx parameter
         #
