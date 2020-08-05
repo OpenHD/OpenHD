@@ -561,31 +561,43 @@ void sendRC(unsigned char seqno, telemetry_data_t *td) {
         }
         
         if (NICCount == 1) {
-            if (type[0] == 2) {
-                if (write(socks[0], &framedatan, sizeof(framedatan)) < 0) {
-                    fprintf(stderr, "!");
-
-                    exit(1);
+            switch (type[0]) {
+                case 0: {
+                    break;
                 }
-            } else {
-                if (write(socks[0], &framedatas, sizeof(framedatas)) < 0) {
-                    fprintf(stderr, "!");
-
-                    exit(1);
+                case 1: {
+                    if (write(socks[0], &framedatas, sizeof(framedatas)) < 0) {
+                        fprintf(stderr, "!");
+                        exit(1);
+                    }
+                    break;
+                }
+                case 2: {
+                    if (write(socks[0], &framedatan, sizeof(framedatan)) < 0) {
+                        fprintf(stderr, "!");
+                        exit(1);
+                    }
+                    break;
                 }
             }
         } else {
-            if (type[best_adapter] == 2) {
-                if (write(socks[best_adapter], &framedatan, sizeof(framedatan)) < 0) {
-                    fprintf(stderr, "!");
-
-                    exit(1);
+            switch (type[best_adapter]) {
+                case 0: {
+                    break;
                 }
-            } else {
-                if (write(socks[best_adapter], &framedatas, sizeof(framedatas)) < 0) {
-                    fprintf(stderr, "!");
-
-                    exit(1);
+                case 1: {
+                    if (write(socks[best_adapter], &framedatas, sizeof(framedatas)) < 0) {
+                        fprintf(stderr, "!");
+                        exit(1);
+                    }
+                    break;
+                }
+                case 2: {
+                    if (write(socks[best_adapter], &framedatan, sizeof(framedatan)) < 0) {
+                        fprintf(stderr, "!");
+                        exit(1);
+                    }
+                    break;
                 }
             }
         }
