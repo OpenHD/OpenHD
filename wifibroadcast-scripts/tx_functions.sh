@@ -165,7 +165,7 @@ function tx_function {
             #
 
             VIDEO_FRAMETYPE=0
-            if [[ "$DRIVER" == "rtl88XXau" || "$DRIVER" == "rtl88x2bu" ]]; then
+            if [[ "$DRIVER" == "rtl88XXau" || "$DRIVER" == "rtl88x2bu" || "$DRIVER" == "rtl8188eu" || "$DRIVER" == "8188eu" ]]; then
                 if [ "$CTS_PROTECTION" != "Y" ] && [ "$UseMCS" == "1" ]; then
                     VIDEO_FRAMETYPE=2
                 else
