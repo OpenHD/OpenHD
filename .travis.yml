@@ -18,4 +18,4 @@ jobs:
     env: PLATFORM=pi DISTRO=stretch
   - name: "Pi buster"
     env: PLATFORM=pi DISTRO=buster
-script: ./build_docker.sh $PLATFORM $DISTRO
+script: bash ./build_docker.sh $PLATFORM $DISTRO
