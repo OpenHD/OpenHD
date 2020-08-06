@@ -1,21 +1,25 @@
 language: cpp
 os: linux
 dist: bionic
+env:
+  global:
+  - DOCKER_USERNAME=limitlessgreen
+  - secure: XKiksqrRxqTAablNn1mD1f2tAmDHbndhyYvPvhMQPyjPB5F2pZOs/4l+7uMPFCnj+MVWCechItgY2WWBm+xkPARFvPf3bCbito+xVhQvPYzSju4wS5inO2tcOIKhNNmzxaDs0P7Uvzx+rTzhHR3eNwYjTm3JugMHWW0m/CEXKLvcW3+o7Iv8qcqIi2z0buA1Vb96g0Ep4qmomRO9taLWy1SoK9YBzwSkiRG0hVRuoWz8F1aAU6JoNJaUEi2eCsncV2HG9oZsY0afurqksd3Y1TgytL/yysOzgOGPvwzD4MS3uw0zpnWe4Garuhu8xUotqfM8j91hirOccP2VeeCsh5o7dTPUDWp1OD2eGCbZ52Q3zn4mP1AleOjamKYlfxzf6JLcveuy1Gky4iRLsojmQsJHa8Cuaa7PNkyt4OSHcrhoDjc178BbwfpFJQy7beKWVbbpfFqNxSN3F7OGZiWfzeRfn3YNTiBgEVpS5aj35ySdixpUVbov1MbzbMQpBAfX6H353GSjL/tnwsIHJXxqgo68qC9l4kolDJfHs/i1Ja0Jw1RlmscOZgYzpUKzaGPhatct9BxilgNlJPrze4OzPtr9TwxVPDwqrBIpPxfc533MZFIxz03nPWD0BBdzozRoDv/ASlVc9eNhxvtJqTZC9FqVevIqqBDGFZ3/xmMS4w4=
 before_install:
-  - sudo docker run --privileged linuxkit/binfmt:v0.6
-  - sudo dpkg --add-architecture i386
-  - sudo apt -y update
-  - sudo apt -y install qemu-user-static:i386
+- sudo docker run --privileged linuxkit/binfmt:v0.6
+- sudo dpkg --add-architecture i386
+- sudo apt -y update
+- sudo apt -y install qemu-user-static:i386
 services:
-  - docker
+- docker
 compiler:
-  - gcc
+- gcc
 cache:
-  - $HOME/.openhd_cache
+- "$HOME/.openhd_cache"
 jobs:
   include:
-  - name: "Pi stretch"
+  - name: Pi stretch
     env: PLATFORM=pi DISTRO=stretch
-  - name: "Pi buster"
+  - name: Pi buster
     env: PLATFORM=pi DISTRO=buster
 script: bash ./build_docker.sh $PLATFORM $DISTRO
