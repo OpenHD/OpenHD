@@ -13,9 +13,7 @@ RUN apt -y purge python-configparser
 RUN gem install fpm
 RUN pip install cloudsmith-cli
 
-COPY . /data/
-
-WORKDIR /data
+WORKDIR /src
 
 ARG CLOUDSMITH_API_KEY=000000000000
 RUN export CLOUDSMITH_API_KEY=$CLOUDSMITH_API_KEY
