@@ -7,23 +7,18 @@ COPY install_dep.sh /data/install_dep.sh
 RUN /data/install_dep.sh
 
 RUN apt -y install git
-
 RUN apt -y install ruby-dev
-
 RUN apt -y install python3-pip
-
 RUN apt -y purge python-configparser
-
 RUN gem install fpm
-
 RUN pip3 install cloudsmith-cli
 
-COPY . /data/
-
-WORKDIR /data
+WORKDIR /src
 
 ARG CLOUDSMITH_API_KEY=000000000000
-
 RUN export CLOUDSMITH_API_KEY=$CLOUDSMITH_API_KEY
 
-RUN /data/package.sh pi buster docker
+ENTRYPOINT ["./package.sh"]
+CMD ["pi", "buster", "docker"]
+
+VOLUME /src
