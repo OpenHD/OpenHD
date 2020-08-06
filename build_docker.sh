@@ -24,11 +24,12 @@ set -e
 
 # Only (re)build image, if SHA of Dockerfile has changed
 function build_docker_image() {
-    
-    mkdir -p $HOME/.openhd_cache > /dev/null 2>&1
-    
-    if ! sha256sum -c $HOME/.openhd_cache/${DOCKERFILE}.sha256 > /dev/null 2>&1 ; then
-        $DOCKER build -f=./${DOCKERFILE} -t=$DOCKER_USERNAME/${DISTRO} .
+
+    mkdir -p $HOME/.openhd_cache > /dev/null
+
+    if ! sha256sum -c $HOME/.openhd_cache/${DOCKERFILE}.sha256 > /dev/null ; then
+        $DOCKER rm -v ${CONTAINER} > /dev/null 2>&1 || true
+	$DOCKER build -f=./${DOCKERFILE} -t=$DOCKER_USERNAME/${DISTRO} .
 
         if [[ -n $TRAVIS ]]; then
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
@@ -40,8 +41,7 @@ function build_docker_image() {
 }
 
 function create_docker_container() {
-    $DOCKER rm -v ${CONTAINER} > /dev/null 2>&1
-    $DOCKER create -it -v $PWD:/src --name ${CONTAINER} --env CLOUDSMITH_API_KEY=$CLOUDSMITH_API_KEY
+    $DOCKER create -it -v $PWD:/src --name ${CONTAINER} --env CLOUDSMITH_API_KEY=$CLOUDSMITH_API_KEY $DOCKER_USERNAME/${DISTRO} || true
 }
 
 function run_build() {
