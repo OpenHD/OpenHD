@@ -21,6 +21,6 @@ ARG CLOUDSMITH_API_KEY=000000000000
 RUN export CLOUDSMITH_API_KEY=$CLOUDSMITH_API_KEY
 
 ENTRYPOINT ["./package.sh"]
-CMD ["pi", "buster", "docker"]
+CMD ["pi", "stretch", "docker"]
 
 VOLUME /src
