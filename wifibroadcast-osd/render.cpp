@@ -1933,16 +1933,16 @@ void draw_speed_ladder(int speed, float pos_x, float pos_y, float scale, float t
         /* 
          * Opaque, yellow for descent
          */
-        Stroke(COLOR_DECLUTTER_R, COLOR_DECLUTTER_G, COLOR_DECLUTTER_B, COLOR_DECLUTTER_A);
+        //Stroke(COLOR_DECLUTTER_R, COLOR_DECLUTTER_G, COLOR_DECLUTTER_B, COLOR_DECLUTTER_A);
 
-        Fill(245, 222, 20, getOpacity(COLOR_R, COLOR_G, COLOR_B, COLOR_A));
+        //Fill(245, 222, 20, getOpacity(COLOR_R, COLOR_G, COLOR_B, COLOR_A));
     } else {
         /* 
          * Opaque, green for climb
          */
-        Stroke(COLOR_DECLUTTER_R, COLOR_DECLUTTER_G, COLOR_DECLUTTER_B, COLOR_DECLUTTER_A);
+        //Stroke(COLOR_DECLUTTER_R, COLOR_DECLUTTER_G, COLOR_DECLUTTER_B, COLOR_DECLUTTER_A);
 
-        Fill(43, 240, 36, getOpacity(COLOR_R, COLOR_G, COLOR_B, COLOR_A));
+        //Fill(43, 240, 36, getOpacity(COLOR_R, COLOR_G, COLOR_B, COLOR_A));
     }
 
     
@@ -2041,7 +2041,7 @@ void draw_yaw_display(float vy, float pos_x, float pos_y, float scale, float tre
         LX = &Left_X[0];
         LY = &Left_Y[0];
 
-        Polygon(LX, LY, npt);
+        //Polygon(LX, LY, npt);
     }
 
     if (vy > 0) {
@@ -2061,7 +2061,7 @@ void draw_yaw_display(float vy, float pos_x, float pos_y, float scale, float tre
         LX = &Left_X[0];
         LY = &Left_Y[0];
 
-        Polygon(LX, LY, npt);
+        //Polygon(LX, LY, npt);
     }
 }
 
