@@ -104,6 +104,23 @@ Contribution is always welcome!
 Start helping us by open up an issue or pull request.
 We recommend to get in touch with us via the {telegram} group.
 
+=== Build this repo
+The build system of the OpenHD main package is docker based.
+
+This showcase is for buster and works the same way for stretch:
+```
+docker build -f=./Dockerfile-pi-buster -t=openhd/buster .
+docker create -it -v $PWD:/src --name openhd_buster_build openhd/buster
+```
+And build the package with:
+```
+docker start -i openhd_buster_build
+```
+Steps 1 and 2 only need to be done once.
+After that, only step 3 should be executed (provided that nothing has been changed in the image)
+
+The DEB file should now be in your cloned directory.
+
 == License
 
 OpenHD is licensed under GPLv2, you can find it's contents in this link Raspbian, Linux Kernel, Drivers are licensed under GPLv2 Original code (if found) is licensed as stipulated in respective source files or under the GPLv2 license
