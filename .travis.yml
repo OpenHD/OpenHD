@@ -13,7 +13,11 @@ compiler:
 jobs:
   include:
   - name: "Pi stretch"
-    env: DOCKERFILE=Dockerfile-pi-stretch
+    env: DOCKERFILE=Dockerfile-pi-stretch DISTRO=stretch
   - name: "Pi buster"
-    env: DOCKERFILE=Dockerfile-pi-buster
-script: docker build -f $DOCKERFILE --build-arg CLOUDSMITH_API_KEY=${CLOUDSMITH_API_KEY} .
+    env: DOCKERFILE=Dockerfile-pi-buster DISTRO=buster
+script: |
+
+        docker build -f $DOCKERFILE --build-arg CLOUDSMITH_API_KEY=${CLOUDSMITH_API_KEY} -t=openhd/${DISTRO} .
+        docker create -it -v $PWD:/src --name openhd_${DISTRO}_build openhd/${DISTRO}
+        docker start -i openhd_${DISTRO}_build
