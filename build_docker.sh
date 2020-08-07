@@ -33,8 +33,8 @@ function build_docker_image() {
 	$DOCKER build -f=./${DOCKERFILE} -t=${IMAGE} .
 
         if [[ -n $TRAVIS ]]; then
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-            $DOCKER push ${IMAGE}
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin || true
+            $DOCKER push ${IMAGE} || true
         fi
 
         sha256sum ${DOCKERFILE} > $HOME/.openhd_cache/${DOCKERFILE}.sha256
