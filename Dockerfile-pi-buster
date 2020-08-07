@@ -18,8 +18,8 @@ RUN apt -y install \
             libboost-dev libboost-program-options-dev libboost-system-dev libasio-dev libboost-chrono-dev \
             libboost-regex-dev libboost-filesystem-dev libboost-thread-dev wiringpi indent
 
-RUN gem install fpm
-RUN pip3 install cloudsmith-cli
+RUN gem install --no-document fpm
+RUN pip3 install --upgrade cloudsmith-clii
 
 WORKDIR /src
 
