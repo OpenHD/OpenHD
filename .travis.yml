@@ -14,8 +14,6 @@ services:
 - docker
 compiler:
 - gcc
-cache:
-- "$HOME/.openhd_cache"
 jobs:
   include:
   - name: Pi stretch
