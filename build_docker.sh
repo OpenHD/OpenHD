@@ -38,7 +38,7 @@ function build_docker_image() {
 
 function create_docker_container() {
     if [[ (! -n "$($DOCKER images -q ${IMAGE})") && (-n "$($DOCKER images -q $DOCKER_USERNAME/${PLATFORM}_${DISTRO}_openhd_builder)")]] ; then
-        $DOCKER rm -v $DOCKER_USERNAME/${PLATFORM}_${DISTRO}_openhd_builder > /dev/null 2>&1 || true
+        $DOCKER rm -v ${CONTAINER} > /dev/null 2>&1 || true
         create_docker_container
 
     elif [[ -n "$($DOCKER images -q ${IMAGE})" ]] ; then
