@@ -26,9 +26,9 @@ set -e
 
 function create_docker_container() {
     if $DOCKER create -it -v $PWD:/src --name ${CONTAINER} --env CLOUDSMITH_API_KEY=$CLOUDSMITH_API_KEY ${IMAGE} ; then
-        return true
+        return 0
     else
-        return false
+        return 1
     fi
 }
 
