@@ -58,5 +58,5 @@ function run_build() {
 }
 
 
-build_docker_image
+create_docker_container
 run_build
