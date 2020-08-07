@@ -44,6 +44,9 @@ function create_docker_container() {
     elif [[ -n "$($DOCKER images -q ${IMAGE})" ]] ; then
         return 0
 
+    elif [[ $TRAVIS_EVENT_TYPE == "cron" ]] ; then
+        build_docker_image
+        
     else
         if ! $DOCKER create -it -v $PWD:/src --name ${CONTAINER} --env CLOUDSMITH_API_KEY=$CLOUDSMITH_API_KEY ${IMAGE} ; then
             build_docker_image
