@@ -1,8 +1,10 @@
 FROM openhd/2020-05-27-raspios-buster-lite-armhf:v1
 
-COPY . /data/
-
 RUN apt update
+
+COPY install_dep.sh /data/install_dep.sh
+
+RUN /data/install_dep.sh
 
 RUN apt -y install git
 
@@ -15,6 +17,8 @@ RUN apt -y purge python-configparser
 RUN gem install fpm
 
 RUN pip3 install cloudsmith-cli
+
+COPY . /data/
 
 WORKDIR /data
 
