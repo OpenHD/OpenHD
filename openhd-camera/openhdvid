@@ -195,7 +195,7 @@ if __name__ == '__main__':
     parser.add_argument('--record', '-rec', action="store", dest="record", type=str)
     parser.add_argument('--width_record', '-wr', action="store", dest="width_record", type=int, default=1280)
     parser.add_argument('--height_record', '-hr', action="store", dest="height_record", type=int, default=720)
-    parser.add_argument('--bitrate_record', '-br', action="store", dest="bitrate_record", type=int, default=4000000)
+    parser.add_argument('--bitrate_record', '-brec', action="store", dest="bitrate_record", type=int, default=4000000)
 
 
     parser.add_argument('--output', '-o', action="store", dest="output", type=str, default="-")
