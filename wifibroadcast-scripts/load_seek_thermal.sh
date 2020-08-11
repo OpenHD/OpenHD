@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [ -e "/tmp/settings.sh" ]; then
+    OK=`bash -n /tmp/settings.sh`
+    if [ "$?" == "0" ]; then
+        source /tmp/settings.sh
+    fi
+fi
+
 modprobe v4l2loopback devices=5
 
 while true
