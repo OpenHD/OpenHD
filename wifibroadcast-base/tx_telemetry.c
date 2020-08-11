@@ -184,6 +184,7 @@ void usage(void) {
            "-d <rate>   Data rate to send frames with. Currently only supported with Ralink cards. Choose 6,12,18,24,36 Mbit\n"
            "-y <mode>   Transmission mode. 0 = send on all interfaces, 1 = send only on interface with best RSSI\n"
            "-z <debug>  Debug. 0 = disable debug output, 1 = enable debug output\n\n"
+           "-f <force>  Force data frames. 0 = disable, 1 = use data frames on realtek cards\n\n"
            "Example:\n"
            "  cat /dev/serial0 | tx_telemetry -c 0 -p 1 -r 1 -x 0 -d 24 -y 0 wlan0\n"
            "\n");
@@ -425,6 +426,7 @@ int main(int argc, char *argv[]) {
     int param_data_rate = 12;
     int param_transmission_mode = 0;
     int param_debug = 0;
+    int force_data = 0;
 
     /*
      * Data read from stdin
@@ -445,7 +447,7 @@ int main(int argc, char *argv[]) {
             {      0,           0,         0, 0 }
         };
 
-        int c = getopt_long(argc, argv, "h:c:p:r:x:d:y:z:", optiona, &nOptionIndex);
+        int c = getopt_long(argc, argv, "h:c:p:r:x:d:y:z:f:", optiona, &nOptionIndex);
         if (c == -1) {
             break;
         }
@@ -486,6 +488,10 @@ int main(int argc, char *argv[]) {
             }
             case 'z': {
                 param_debug = atoi(optarg);
+                break;
+            }
+            case 'f': {
+                force_data = atoi(optarg);
                 break;
             }
             default: {
@@ -661,14 +667,23 @@ int main(int argc, char *argv[]) {
     headers_ralink_len = sizeof(u8aRadiotapHeader) + sizeof(u8aIeeeHeader_data_short);
 
     /*
-     * For Realtek use RTS frames
+     * For Realtek use RTS frames, unless override is set
      */
-
-    // radiotap header
-    memcpy(headers_Realtek, u8aRadiotapHeader80211n, sizeof(u8aRadiotapHeader80211n));
-     // ieee header
-    memcpy(headers_Realtek + sizeof(u8aRadiotapHeader80211n), u8aIeeeHeader_rts, sizeof(u8aIeeeHeader_rts));
-    headers_Realtek_len = sizeof(u8aRadiotapHeader80211n) + sizeof(u8aIeeeHeader_rts);
+    if (force_data == 1) {
+        fprintf(stderr, "force data frames");
+        // radiotap header
+        memcpy(headers_Realtek, u8aRadiotapHeader80211n, sizeof(u8aRadiotapHeader80211n));
+        // ieee header
+        memcpy(headers_Realtek + sizeof(u8aRadiotapHeader80211n), u8aIeeeHeader_data, sizeof(u8aIeeeHeader_data));
+        headers_Realtek_len = sizeof(u8aRadiotapHeader80211n) + sizeof(u8aIeeeHeader_data);
+    } else {
+        fprintf(stderr, "not forcing data frames");
+        // radiotap header
+        memcpy(headers_Realtek, u8aRadiotapHeader80211n, sizeof(u8aRadiotapHeader80211n));
+        // ieee header
+        memcpy(headers_Realtek + sizeof(u8aRadiotapHeader80211n), u8aIeeeHeader_rts, sizeof(u8aIeeeHeader_rts));
+        headers_Realtek_len = sizeof(u8aRadiotapHeader80211n) + sizeof(u8aIeeeHeader_rts);
+    }
 
     /*
      * Radiotap and ieee headers
