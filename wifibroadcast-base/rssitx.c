@@ -433,7 +433,7 @@ void sendRSSI(int num_int, telemetry_data_t *td) {
                 break;
             }
             default: {
-                fprintf(stderr, "ERROR: Wrong or no frame type specified (see -t parameter)\n");
+                fprintf(stderr, "ERROR: Unknown card type\n");
 
                 exit(1);
                 
