@@ -20,7 +20,7 @@ rx_rc_telemetry_buf: rx_rc_telemetry_buf.o openhdlib.o radiotap.o
 rssirx: rssirx.o openhdlib.o radiotap_rc.o
 	gcc -o $@ $^ $(LDFLAGS)
 
-rssitx: rssitx.o openhdlib.o radiotap.o
+rssitx: rssitx.o openhdlib.o
 	gcc -o $@ $^ $(LDFLAGS)
 
 
