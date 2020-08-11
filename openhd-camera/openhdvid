@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from datetime import datetime
 import os
 import pathlib
 import subprocess
@@ -89,14 +90,13 @@ class OpenHDCamera:
 
         if option.record:
             self.record_local = True
-            old_file = pathlib.Path(option.record)
-            try:
-                old_file.unlink()
-            except:
-                pass # we don't care, it might not exist
-            old_file.touch()
+            filename, file_extension = os.path.splitext(option.record)
+            self.record_path = filename + datetime.utcnow().strftime("-%Y-%m-%d-%H-%M-%S") + file_extension
+
+            self.record_path.touch()
 
         else:
+            self.record_path = None
             self.record_local = False
 
         self.codec = option.codec
@@ -130,17 +130,17 @@ class OpenHDCamera:
                                     splitter_port=1)
 
         if self.record_local:
-            percent_used = self.check_used_space(option.record)
+            percent_used = self.check_used_space(self.record_path)
             if percent_used > 90.0:
                 self.record_local = False
                 print("Not enough space available to record locally", file=sys.stderr)
             else:
                 # don't hook up the resize component in the pipeline if the resolution is the same as the main stream
                 if option.width_record == option.width and option.height_record == option.height:
-                    self.camera.start_recording(option.record, 'h264', splitter_port=2, bitrate=self.record_bitrate)
+                    self.camera.start_recording(self.record_path, 'h264', splitter_port=2, bitrate=self.record_bitrate)
                 else:
-                    self.camera.start_recording(option.record, 'h264', resize=(option.width_record, option.height_record), splitter_port=2, bitrate=self.record_bitrate)
-                print("Recording to file " + option.record, file=sys.stderr)
+                    self.camera.start_recording(self.record_path, 'h264', resize=(option.width_record, option.height_record), splitter_port=2, bitrate=self.record_bitrate)
+                print("Recording to file " + self.record_path, file=sys.stderr)
 
         print("Camera running", file=sys.stderr)
 
@@ -160,7 +160,7 @@ class OpenHDCamera:
             if self.record_local and elapsed > 1:
                 start = time.time()
 
-                percent_used = self.check_used_space(option.record)
+                percent_used = self.check_used_space(self.record_path)
 
                 if percent_used > 90.0:
                     self.record_local = False
