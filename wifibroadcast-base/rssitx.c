@@ -266,6 +266,103 @@ static int open_sock(char *ifname) {
 
 
 void sendRSSI(int num_int, telemetry_data_t *td) {
+    if (td->rx_status != NULL) {
+        long double a[4], b[4];
+        FILE *fp;
+
+        int best_dbm = -127;
+        int best_dbm_rc = -127;
+        int cardcounter = 0;
+        int number_cards_rc = td->rx_status_rc->wifi_adapter_cnt;
+
+        no_signal_rc = true;
+
+        for (cardcounter = 0; cardcounter < number_cards_rc; ++cardcounter) {
+            if (td->rx_status_rc->adapter[cardcounter].signal_good == 1) {
+                if (best_dbm_rc < td->rx_status_rc->adapter[cardcounter].current_signal_dbm) {
+                    best_dbm_rc = td->rx_status_rc->adapter[cardcounter].current_signal_dbm;
+                }
+                
+                no_signal_rc = false;
+            }
+        }
+
+        if (no_signal == false) {
+            framedatal.signal = best_dbm;
+            framedatas.signal = best_dbm;
+            framedatan.signal = best_dbm;
+        } else {
+            framedatal.signal = -127;
+            framedatas.signal = -127;
+            framedatan.signal = -127;
+        }
+
+
+        if (no_signal_rc == false) {
+            framedatal.signal_rc = best_dbm_rc;
+            framedatas.signal_rc = best_dbm_rc;
+            framedatan.signal_rc = best_dbm_rc;
+        } else {
+            framedatal.signal_rc = -127;
+            framedatas.signal_rc = -127;
+            framedatan.signal_rc = -127;
+        }
+
+
+        framedatal.lostpackets = td->rx_status->lost_packet_cnt;
+        framedatas.lostpackets = td->rx_status->lost_packet_cnt;
+        framedatan.lostpackets = td->rx_status->lost_packet_cnt;
+
+        framedatal.lostpackets_rc = td->rx_status_rc->lost_packet_cnt;
+        framedatas.lostpackets_rc = td->rx_status_rc->lost_packet_cnt;
+        framedatan.lostpackets_rc = td->rx_status_rc->lost_packet_cnt;
+
+        framedatal.injected_block_cnt = td->tx_status->injected_block_cnt;
+        framedatas.injected_block_cnt = td->tx_status->injected_block_cnt;
+        framedatan.injected_block_cnt = td->tx_status->injected_block_cnt;
+
+        framedatal.skipped_fec_cnt = td->tx_status->skipped_fec_cnt;
+        framedatas.skipped_fec_cnt = td->tx_status->skipped_fec_cnt;
+        framedatan.skipped_fec_cnt = td->tx_status->skipped_fec_cnt;
+
+        framedatal.injection_fail_cnt = td->tx_status->injection_fail_cnt;
+        framedatas.injection_fail_cnt = td->tx_status->injection_fail_cnt;
+        framedatan.injection_fail_cnt = td->tx_status->injection_fail_cnt;
+
+        framedatal.injection_time_block = td->tx_status->injection_time_block;
+        framedatas.injection_time_block = td->tx_status->injection_time_block;
+        framedatan.injection_time_block = td->tx_status->injection_time_block;
+
+
+        fp = fopen("/proc/stat", "r");
+        fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
+        fclose(fp);
+        
+        /*
+        * Send about 3 times per second
+        */
+        usleep(333333); 
+
+        fp = fopen("/proc/stat", "r");
+        fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &b[0], &b[1], &b[2], &b[3]);
+        fclose(fp);
+        framedatal.cpuload = (((b[0] + b[1] + b[2]) - (a[0] + a[1] + a[2])) / ((b[0] + b[1] + b[2] + b[3]) - (a[0] + a[1] + a[2] + a[3]))) * 100;
+        framedatas.cpuload = (((b[0] + b[1] + b[2]) - (a[0] + a[1] + a[2])) / ((b[0] + b[1] + b[2] + b[3]) - (a[0] + a[1] + a[2] + a[3]))) * 100;
+        framedatan.cpuload = (((b[0] + b[1] + b[2]) - (a[0] + a[1] + a[2])) / ((b[0] + b[1] + b[2] + b[3]) - (a[0] + a[1] + a[2] + a[3]))) * 100;
+
+        fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
+        int temp = 0;
+        fscanf(fp, "%d", &temp);
+        fclose(fp);
+
+        framedatal.temp = temp / 1000;
+        framedatas.temp = temp / 1000;
+        framedatan.temp = temp / 1000;
+    }
+
+    void *ralink_frame = &framedatal;
+    void *atheros_frame = &framedatas;
+    void *realtek_frame = &framedatan;
     int i;
     for (i = 0; i < num_int; ++i) {
         switch (type[i]) {
@@ -273,87 +370,19 @@ void sendRSSI(int num_int, telemetry_data_t *td) {
                 /*
                  * Ralink
                  */
-                if (td->rx_status != NULL) {
-                    long double a[4], b[4];
-                    FILE *fp;
-
-                    int best_dbm = -127;
-                    int best_dbm_rc = -127;
-                    int cardcounter = 0;
-                    int number_cards_rc = td->rx_status_rc->wifi_adapter_cnt;
-
-                    no_signal_rc = true;
-
-                    for (cardcounter = 0; cardcounter < number_cards_rc; ++cardcounter) {
-                        if (td->rx_status_rc->adapter[cardcounter].signal_good == 1) {
-                            if (best_dbm_rc < td->rx_status_rc->adapter[cardcounter].current_signal_dbm) {
-                                best_dbm_rc = td->rx_status_rc->adapter[cardcounter].current_signal_dbm;
-                            }
-                            
-                            no_signal_rc = false;
-                        }
-                    }
-
-                    if (no_signal == false) {
-                        framedatal.signal = best_dbm;
-                    } else {
-                        framedatal.signal = -127;
-                    }
-
-
-                    if (no_signal_rc == false) {
-                        framedatal.signal_rc = best_dbm_rc;
-                    } else {
-                        framedatal.signal_rc = -127;
-                    }
-
-
-                    framedatal.lostpackets = td->rx_status->lost_packet_cnt;
-                    framedatal.lostpackets_rc = td->rx_status_rc->lost_packet_cnt;
-
-                    framedatal.injected_block_cnt = td->tx_status->injected_block_cnt;
-                    framedatal.skipped_fec_cnt = td->tx_status->skipped_fec_cnt;
-                    framedatal.injection_fail_cnt = td->tx_status->injection_fail_cnt;
-                    framedatal.injection_time_block = td->tx_status->injection_time_block;
-
-
-
-                    fp = fopen("/proc/stat", "r");
-                    fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
-                    fclose(fp);
-                    
-                    /*
-                     * Send about 3 times per second
-                     */
-                    usleep(333333); 
-
-                    fp = fopen("/proc/stat", "r");
-                    fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &b[0], &b[1], &b[2], &b[3]);
-                    fclose(fp);
-                    framedatal.cpuload = (((b[0] + b[1] + b[2]) - (a[0] + a[1] + a[2])) / ((b[0] + b[1] + b[2] + b[3]) - (a[0] + a[1] + a[2] + a[3]))) * 100;
-
-                    fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
-                    int temp = 0;
-                    fscanf(fp, "%d", &temp);
-                    fclose(fp);
-
-                    framedatal.temp = temp / 1000;
-                }
-
-
-                if (write(socks[i], &framedatal, 74) < 0) {
+                if (write(socks[i], ralink_frame, 74) < 0) {
                     fprintf(stderr, "!");
                 }
                 
                 usleep(1500);
                 
-                if (write(socks[i], &framedatal, 74) < 0) {
+                if (write(socks[i], ralink_frame, 74) < 0) {
                     fprintf(stderr, "!");
                 }
                 
                 usleep(2000);
                 
-                if (write(socks[i], &framedatal, 74) < 0) {
+                if (write(socks[i], ralink_frame, 74) < 0) {
                     fprintf(stderr, "!");
                 }
 
@@ -363,87 +392,19 @@ void sendRSSI(int num_int, telemetry_data_t *td) {
                 /*
                  * Atheros
                  */
-                if (td->rx_status != NULL) {
-                    long double a[4], b[4];
-                    FILE *fp;
-
-                    int best_dbm = -127;
-                    int best_dbm_rc = -127;
-                    int cardcounter = 0;
-                    int number_cards_rc = td->rx_status_rc->wifi_adapter_cnt;
-
-                    no_signal_rc = true;
-
-
-                    for (cardcounter = 0; cardcounter < number_cards_rc; ++cardcounter) {
-                        if (td->rx_status_rc->adapter[cardcounter].signal_good == 1) {
-                            if (best_dbm_rc < td->rx_status_rc->adapter[cardcounter].current_signal_dbm) {
-                                best_dbm_rc = td->rx_status_rc->adapter[cardcounter].current_signal_dbm;
-                            }
-
-                            no_signal_rc = false;
-                        }
-                    }
-
-
-                    if (no_signal == false) {
-                        framedatas.signal = best_dbm;
-                    } else {
-                        framedatas.signal = -127;
-                    }
-
-
-                    if (no_signal_rc == false) {
-                        framedatas.signal_rc = best_dbm_rc;
-                    } else {
-                        framedatas.signal_rc = -127;
-                    }
-
-
-                    framedatas.lostpackets = td->rx_status->lost_packet_cnt;
-                    framedatas.lostpackets_rc = td->rx_status_rc->lost_packet_cnt;
-
-                    framedatas.injected_block_cnt = td->tx_status->injected_block_cnt;
-                    framedatas.skipped_fec_cnt = td->tx_status->skipped_fec_cnt;
-                    framedatas.injection_fail_cnt = td->tx_status->injection_fail_cnt;
-                    framedatas.injection_time_block = td->tx_status->injection_time_block;
-
-                    fp = fopen("/proc/stat", "r");
-                    fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
-                    fclose(fp);
-
-                    /*
-                     * Send about 3 times per second
-                     */
-                    usleep(333333); 
-                   
-                    fp = fopen("/proc/stat", "r");
-                    fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &b[0], &b[1], &b[2], &b[3]);
-                    fclose(fp);
-                    framedatas.cpuload = (((b[0] + b[1] + b[2]) - (a[0] + a[1] + a[2])) / ((b[0] + b[1] + b[2] + b[3]) - (a[0] + a[1] + a[2] + a[3]))) * 100;
-
-
-                    fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
-                    int temp = 0;
-                    fscanf(fp, "%d", &temp);
-                    fclose(fp);
-
-                    framedatas.temp = temp / 1000;
-                }
-
-                if (write(socks[i], &framedatas, 74) < 0) {
+                if (write(socks[i], atheros_frame, 74) < 0) {
                     fprintf(stderr, "!");
                 }
                 
                 usleep(1500);
                 
-                if (write(socks[i], &framedatas, 74) < 0) {
+                if (write(socks[i], atheros_frame, 74) < 0) {
                     fprintf(stderr, "!");
                 }
                 
                 usleep(2000);
                 
-                if (write(socks[i], &framedatas, 74) < 0) {
+                if (write(socks[i], atheros_frame, 74) < 0) {
                     fprintf(stderr, "!");
                 }
 
@@ -453,89 +414,19 @@ void sendRSSI(int num_int, telemetry_data_t *td) {
                 /*
                  * Realtek
                  */
-                if (td->rx_status != NULL) {
-                    long double a[4], b[4];
-                    FILE *fp;
-
-                    int best_dbm = -127;
-                    int best_dbm_rc = -127;
-                    int cardcounter = 0;
-                    int number_cards_rc = td->rx_status_rc->wifi_adapter_cnt;
-
-                    no_signal_rc = true;
-                    for (cardcounter = 0; cardcounter < number_cards_rc; ++cardcounter) {
-                        if (td->rx_status_rc->adapter[cardcounter].signal_good == 1) {
-                            if (best_dbm_rc < td->rx_status_rc->adapter[cardcounter].current_signal_dbm) {
-                                best_dbm_rc = td->rx_status_rc->adapter[cardcounter].current_signal_dbm;
-                            }
-
-                            no_signal_rc = false;
-                        }
-                    }
-
-
-                    if (no_signal == false) {
-                        framedatan.signal = best_dbm;
-                    } else {
-                        framedatan.signal = -127;
-                    }
-
-
-                    if (no_signal_rc == false) {
-                        framedatan.signal_rc = best_dbm_rc;
-                    } else {
-                        framedatan.signal_rc = -127;
-                    }
-
-
-                    framedatan.lostpackets = td->rx_status->lost_packet_cnt;
-                    framedatan.lostpackets_rc = td->rx_status_rc->lost_packet_cnt;
-
-                    framedatan.injected_block_cnt = td->tx_status->injected_block_cnt;
-                    framedatan.skipped_fec_cnt = td->tx_status->skipped_fec_cnt;
-                    framedatan.injection_fail_cnt = td->tx_status->injection_fail_cnt;
-                    framedatan.injection_time_block = td->tx_status->injection_time_block;
-
-
-                    fp = fopen("/proc/stat", "r");
-                    fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
-                    fclose(fp);
-
-                    /*
-                     * Send about 3 times per second
-                     *
-                     */
-                    usleep(333333); 
-
-
-                    fp = fopen("/proc/stat", "r");
-                    fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &b[0], &b[1], &b[2], &b[3]);
-                    fclose(fp);
-                    framedatan.cpuload = (((b[0] + b[1] + b[2]) - (a[0] + a[1] + a[2])) / ((b[0] + b[1] + b[2] + b[3]) - (a[0] + a[1] + a[2] + a[3]))) * 100;
-
-                    fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
-                    int temp = 0;
-                    fscanf(fp, "%d", &temp);
-                    fclose(fp);
-
-                    framedatan.temp = temp / 1000;
-                }
-
-
-
-                if (write(socks[i], &framedatan, 74) < 0) {
+                if (write(socks[i], realtek_frame, 74) < 0) {
                     fprintf(stderr, "!");
                 }
                 
                 usleep(1500);
                 
-                if (write(socks[i], &framedatan, 74) < 0) {
+                if (write(socks[i], realtek_frame, 74) < 0) {
                     fprintf(stderr, "!");
                 }
                 
                 usleep(2000);
                 
-                if (write(socks[i], &framedatan, 74) < 0) {
+                if (write(socks[i], realtek_frame, 74) < 0) {
                     fprintf(stderr, "!");
                 }
                 
