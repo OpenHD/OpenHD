@@ -41,7 +41,7 @@ function osdtx_function {
         qstatus "Starting ${TELEMETRY_DOWNLINK} telemetry downlink @${FC_TELEMETRY_BAUDRATE} baud" 5
 
 
-        nice cat ${FC_TELEMETRY_SERIALPORT} | nice /usr/local/bin/RCParseCh ${ChannelToListen} | nice /usr/local/bin/tx_telemetry -p 1 -c ${TELEMETRY_CTS} -r 2 -x ${TELEMETRY_TYPE} -d 12 -y 0 ${NICS}
+        nice cat ${FC_TELEMETRY_SERIALPORT} | nice /usr/local/bin/RCParseCh ${ChannelToListen} | nice /usr/local/bin/tx_telemetry -p 1 -c ${TELEMETRY_CTS} -r 2 -x ${TELEMETRY_TYPE} -d 12 -y 0 ${NICS} -f ${FORCE_REALTEK_TELEMETRY_DATA_FRAME}
         
         ps -ef | nice grep "cat ${FC_TELEMETRY_SERIALPORT}" | nice grep -v grep | awk '{print $2}' | xargs kill -9
         ps -ef | nice grep "tx_telemetry -p 1" | nice grep -v grep | awk '{print $2}' | xargs kill -9

@@ -487,6 +487,9 @@ AutoDimValue=255
 # set to "13" for a blank screen
 TTY_CONSOLE=13
 
+# Used to override the 802.11 frame type that will be used for telemetry, for testing purposes
+FORCE_REALTEK_TELEMETRY_DATA_FRAME=N
+
 # ======================================================================================
 #                          FREQUENCY LIST AND OTHER Settings
 # ======================================================================================

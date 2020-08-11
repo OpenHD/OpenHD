@@ -202,7 +202,7 @@ function mspdownlinktx_function {
     while true; do
         echo "Starting MSP transmission, FC MSP Serialport: $FC_MSP_SERIALPORT"
         
-        nice cat $FC_MSP_SERIALPORT | nice /usr/local/bin/tx_telemetry -p 4 -c $TELEMETRY_CTS -r 2 -x 1 -d 12 -y 0 $NICS
+        nice cat $FC_MSP_SERIALPORT | nice /usr/local/bin/tx_telemetry -p 4 -c $TELEMETRY_CTS -r 2 -x 1 -d 12 -y 0 $NICS -f ${FORCE_REALTEK_TELEMETRY_DATA_FRAME}
         ps -ef | nice grep "cat $FC_MSP_SERIALPORT" | nice grep -v grep | awk '{print $2}' | xargs kill -9
         ps -ef | nice grep "tx_telemetry -p 4" | nice grep -v grep | awk '{print $2}' | xargs kill -9
         
@@ -218,7 +218,7 @@ function microservice_ground_tx_function {
         
         NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
         
-        OPENHD_MICROSERVICE_GROUND_TX_CMD="nice /usr/local/bin/tx_telemetry -p 30 -c 0 -r 2 -x 0 -d 12 -y 0"
+        OPENHD_MICROSERVICE_GROUND_TX_CMD="nice /usr/local/bin/tx_telemetry -p 30 -c 0 -r 2 -x 0 -d 12 -y 0 -f ${FORCE_REALTEK_TELEMETRY_DATA_FRAME}"
         
         nice socat -u /dev/openhd_microservice2 STDOUT | $OPENHD_MICROSERVICE_GROUND_TX_CMD $NICS
         ps -ef | nice grep "socat -u /dev/openhd_microservice2 STDOUT" | nice grep -v grep | awk '{print $2}' | xargs kill -9
@@ -247,7 +247,7 @@ function microservice_air_tx_function {
         
         NICS=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v relay | nice grep -v wifihotspot`
         
-        OPENHD_MICROSERVICE_AIR_TX_CMD="nice /usr/local/bin/tx_telemetry -p 31 -c 0 -r 2 -x 0 -d 12 -y 0"
+        OPENHD_MICROSERVICE_AIR_TX_CMD="nice /usr/local/bin/tx_telemetry -p 31 -c 0 -r 2 -x 0 -d 12 -y 0 -f ${FORCE_REALTEK_TELEMETRY_DATA_FRAME}"
         
         nice socat -u /dev/openhd_microservice2 STDOUT | $OPENHD_MICROSERVICE_AIR_TX_CMD $NICS
 
@@ -315,13 +315,13 @@ function uplinktx_function {
                 # We can and should do the same for the other protocols, but we don't yet
                 #
                 VSERIALPORT=/dev/openhd_mavlink1
-                UPLINK_TX_CMD="nice /usr/local/bin/tx_telemetry -p 3 -c 0 -r 2 -x 0 -d 12 -y 0"
+                UPLINK_TX_CMD="nice /usr/local/bin/tx_telemetry -p 3 -c 0 -r 2 -x 0 -d 12 -y 0 -f ${FORCE_REALTEK_TELEMETRY_DATA_FRAME}"
             else
                 #
                 # Non-mavlink telemetry is all handled the same
                 # 
                 VSERIALPORT=/dev/openhd_msp1
-                UPLINK_TX_CMD="nice /usr/local/bin/tx_telemetry -p 3 -c 0 -r 2 -x 1 -d 12 -y 0"
+                UPLINK_TX_CMD="nice /usr/local/bin/tx_telemetry -p 3 -c 0 -r 2 -x 1 -d 12 -y 0 -f ${FORCE_REALTEK_TELEMETRY_DATA_FRAME}"
             fi
 
             # 

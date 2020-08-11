@@ -48,6 +48,11 @@ detect_wfb_primary_band
 
 auto_frequency_select
 
+if [ "${FORCE_REALTEK_TELEMETRY_DATA_FRAME}" == "Y" ]; then
+    export FORCE_REALTEK_TELEMETRY_DATA_FRAME=1
+else
+    export FORCE_REALTEK_TELEMETRY_DATA_FRAME=0
+fi
 
 echo "-------------------------------------"
 echo "SETTINGS FILE: $CONFIGFILE"

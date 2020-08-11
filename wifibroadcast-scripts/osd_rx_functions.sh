@@ -58,7 +58,7 @@ function osdrx_function {
         fi
 
         if [ "${RELAY}" == "Y" ]; then
-            ionice -c 1 -n 4 nice -n -9 cat /var/run/openhd/telemetryfifo4 | nice /usr/local/bin/tx_telemetry -p 1 -c ${TELEMETRY_CTS} -r 2 -x ${TELEMETRY_TYPE} -d 12 -y 0 relay0 > /dev/null 2>&1 &
+            ionice -c 1 -n 4 nice -n -9 cat /var/run/openhd/telemetryfifo4 | nice /usr/local/bin/tx_telemetry -p 1 -c ${TELEMETRY_CTS} -r 2 -x ${TELEMETRY_TYPE} -d 12 -y 0 relay0 -f ${FORCE_REALTEK_TELEMETRY_DATA_FRAME} > /dev/null 2>&1 &
         fi
 
         #
