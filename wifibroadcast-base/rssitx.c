@@ -200,6 +200,7 @@ void usage(void) {
     printf("rssitx by Rodizio.\n"
            "\n"
            "Usage: rssitx <interface>\n"
+           "-f <force>  Force data frames. 0 = disable, 1 = use data frames on realtek cards\n\n"
            "\n"
            "Example:\n"
            "  rssitx wlan0\n"
@@ -265,7 +266,7 @@ static int open_sock(char *ifname) {
 
 
 
-void sendRSSI(int num_int, telemetry_data_t *td) {
+void sendRSSI(int num_int, telemetry_data_t *td, int force_data) {
     if (td->rx_status != NULL) {
         long double a[4], b[4];
         FILE *fp;
@@ -362,7 +363,16 @@ void sendRSSI(int num_int, telemetry_data_t *td) {
 
     void *ralink_frame = &framedatal;
     void *atheros_frame = &framedatas;
-    void *realtek_frame = &framedatan;
+    void *realtek_frame = NULL;
+    
+    if (force_data == 1) {
+        realtek_frame = &framedatal;
+    } else {
+        realtek_frame = &framedatan;
+    }
+
+
+
     int i;
     for (i = 0; i < num_int; ++i) {
         switch (type[i]) {
@@ -528,6 +538,7 @@ int main(int argc, char *argv[]) {
     setpriority(PRIO_PROCESS, 0, 10);
 
     int done = 1;
+    int force_data = 0;
 
     char line[100];
     char path[100];
@@ -544,7 +555,7 @@ int main(int argc, char *argv[]) {
 
 
         int c = getopt_long(argc,
-                            argv, "h:",
+                            argv, "h:f:",
                             optiona,
                             &nOptionIndex);
 
@@ -564,6 +575,10 @@ int main(int argc, char *argv[]) {
 
                 usage();
                 
+                break;
+            }
+            case 'f': {
+                force_data = atoi(optarg);
                 break;
             }
             default: {
@@ -843,7 +858,7 @@ int main(int argc, char *argv[]) {
 
 
     while (done) {
-        sendRSSI(num_interfaces, &td);
+        sendRSSI(num_interfaces, &td, force_data);
     }
 
 
