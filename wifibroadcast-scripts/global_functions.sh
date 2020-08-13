@@ -804,7 +804,7 @@ function collect_debug {
 
     echo >>$DEBUGPATH/debug.txt
     echo >>$DEBUGPATH/debug.txt
-    nice cat /boot/openhd-settings-1.txt | egrep -v "^(#|$)" >> $DEBUGPATH/debug.txt
+    nice cat /boot/$CONFIGFILE | egrep -v "^(#|$)" >> $DEBUGPATH/debug.txt
     echo >>$DEBUGPATH/debug.txt
     echo >>$DEBUGPATH/debug.txt
     nice cat /boot/osdconfig.txt | egrep -v "^(//|$)" >> $DEBUGPATH/debug.txt
@@ -956,7 +956,7 @@ function collect_errorlog {
 
     echo >>/boot/errorlog.txt
     echo >>/boot/errorlog.txt
-    nice cat /boot/openhd-settings-1.txt | egrep -v "^(#|$)" >> /boot/errorlog.txt
+    nice cat /boot/$CONFIGFILE | egrep -v "^(#|$)" >> /boot/errorlog.txt
     echo >>/boot/errorlog.txt
     echo >>/boot/errorlog.txt
     nice cat /boot/osdconfig.txt | egrep -v "^(//|$)" >> /boot/errorlog.txt
