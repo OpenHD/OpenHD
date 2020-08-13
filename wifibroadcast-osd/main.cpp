@@ -103,10 +103,8 @@ int main(int argc, char *argv[]) {
 
     load_settings();
 
-    /*
-     * Mavlink maximum packet length
-     */
-    uint8_t buf[263];
+
+    uint8_t buf[1024];
 
 
     size_t n;
