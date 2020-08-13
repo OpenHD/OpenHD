@@ -433,7 +433,7 @@ int main(int argc, char *argv[]) {
      */
     uint8_t buf[402];
 
-    uint8_t mavlink_message[263];
+    uint8_t mavlink_message[MAVLINK_MAX_PACKET_LEN];
 
     uint16_t len_msg = 0;
     uint32_t seqno = 0;
