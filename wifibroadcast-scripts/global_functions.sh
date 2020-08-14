@@ -217,8 +217,8 @@ function detect_wfb_primary_band {
     lsmod | grep 8188eu
     grepRet=$?
     if [[ $grepRet -eq 0 ]] ; then
-        export WFB_PRIMARY_BAND_58="1"
-        export WFB_PRIMARY_BAND_24="0"
+        export WFB_PRIMARY_BAND_58="0"
+        export WFB_PRIMARY_BAND_24="1"
         echo "58" > /tmp/wfb_primary_band
         return
     fi
