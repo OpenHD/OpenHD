@@ -301,6 +301,7 @@ if [[ $? -eq 0 ]]; then
     echo "Pushing package to OpenHD repository"
     cloudsmith push deb openhd/openhd-2-0/${OS}/${DISTRO} ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb || exit 1
 else
-    echo "Not a tagged release, skipping push to OpenHD repository"
+    echo "Pushing package to OpenHD testing repository"
+    cloudsmith push deb openhd/openhd-2-0-testing/${OS}/${DISTRO} ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb || exit 1
 fi
 
