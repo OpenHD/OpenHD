@@ -119,9 +119,9 @@ function save_function {
         #
         # Create charts for the video and downstream telemetry
         # 
-        gnuplot -e "load '/usr/local/share/openhd/gnuplot/videorssi.gp'" &
+        gnuplot -e "load '/usr/local/share/openhd/gnuplot/videorssi.gp'"
         gnuplot -e "load '/usr/local/share/openhd/gnuplot/videopackets.gp'"
-        gnuplot -e "load '/usr/local/share/openhd/gnuplot/telemetrydownrssi.gp'" &
+        gnuplot -e "load '/usr/local/share/openhd/gnuplot/telemetrydownrssi.gp'"
         gnuplot -e "load '/usr/local/share/openhd/gnuplot/telemetrydownpackets.gp'"
 
 
@@ -129,7 +129,7 @@ function save_function {
         # Upstream telemetry was enabled, this creates a chart with the data
         #
         if [ "${TELEMETRY_UPLINK}" != "disabled" ]; then
-            gnuplot -e "load '/usr/local/share/openhd/gnuplot/telemetryuprssi.gp'" &
+            gnuplot -e "load '/usr/local/share/openhd/gnuplot/telemetryuprssi.gp'"
             gnuplot -e "load '/usr/local/share/openhd/gnuplot/telemetryuppackets.gp'"
         fi
 
@@ -138,13 +138,13 @@ function save_function {
         # RC was in use, this creates a chart with the data
         #
         if [ "${RC}" != "disabled" ]; then
-            gnuplot -e "load '/usr/local/share/openhd/gnuplot/rcrssi.gp'" &
+            gnuplot -e "load '/usr/local/share/openhd/gnuplot/rcrssi.gp'"
             gnuplot -e "load '/usr/local/share/openhd/gnuplot/rcpackets.gp'"
         fi
 
 
         if [ "${DEBUG}" == "Y" ]; then
-            gnuplot -e "load '/usr/local/share/openhd/gnuplot/wifibackgroundscan.gp'" &
+            gnuplot -e "load '/usr/local/share/openhd/gnuplot/wifibackgroundscan.gp'"
         fi
 
 
