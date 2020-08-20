@@ -165,7 +165,7 @@ case $TTY in
         # TODO: Move this to a separate script
         #
 
-        if [ "$CAM" != "0" ] && [ "$DEBUG" == "Y" ] || [ "$CAM" == "0" ]; then
+        if [ "$CAM" != "0" ] && [ "$DEBUG" == "Y" ] && [ "$SecondaryCamera" != "IP" ] || [ "$CAM" == "0" ]; then
     
             if [ "$CAM" == "0" ]; then
                 OHDHOSTNAME="openhd-ground"
