@@ -1,8 +1,5 @@
 auto lo
 iface lo inet loopback
-iface wlan0 inet manual
-iface wlan1 inet manual
-iface wlan2 inet manual
 auto eth1
 allow-hotplug eth1
 iface eth1 inet dhcp
