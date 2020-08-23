@@ -180,7 +180,7 @@ case $TTY in
             #
             if [ "$ETHERNET_HOTSPOT" == "N" ]; then
 
-                nice ifconfig eth0 up
+                ip link set dev eth0 up
                 
                 sleep 5
                 
