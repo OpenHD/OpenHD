@@ -182,7 +182,10 @@ case $TTY in
 
                 ip link set dev eth0 up
                 
-                sleep 5
+                while ! [ "$(cat /sys/class/net/eth0/operstate)" = "up" ] 
+                do
+                    sleep 1
+                done
                 
                 if cat /sys/class/net/eth0/carrier | nice grep -q 1; then
                     echo "Ethernet connection detected"
