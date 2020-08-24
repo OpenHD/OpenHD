@@ -793,9 +793,14 @@ int main(int argc, char *argv[]) {
 
     {
         auto search = openhd_settings.find("EncryptionOrRange");
-        if (search != openhd_settings.end() && (search->second == "Encryption")) {
-            std::cout << "Encrypted RC enabled" << std::endl;
-            IsEncrypt = 1;
+        if (search != openhd_settings.end()) {
+            auto value = search->second;
+            boost::trim_right(value);
+
+            if (value == "Encryption") {
+                std::cout << "Encrypted RC enabled" << std::endl;
+                IsEncrypt = 1;
+            }
         } else {
             std::cout << "Encrypted RC disabled" << std::endl;
         }
