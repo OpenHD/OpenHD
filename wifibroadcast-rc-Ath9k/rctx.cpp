@@ -801,6 +801,7 @@ int main(int argc, char *argv[]) {
         if (search != openhd_settings.end() && (search->second != "0")) {
             std::cout << "PrimaryCardMAC: " << search->second << std::endl;
             PrimaryCardMAC = search->second;
+            boost::trim_right(PrimaryCardMAC);
         } else {
             std::cout << "PrimaryCardMAC disabled" << std::endl;
         }
