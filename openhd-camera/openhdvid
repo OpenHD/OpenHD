@@ -93,7 +93,8 @@ class OpenHDCamera:
             filename, file_extension = os.path.splitext(option.record)
             self.record_path = filename + datetime.utcnow().strftime("-%Y-%m-%d-%H-%M-%S") + file_extension
 
-            self.record_path.touch()
+            f = pathlib.Path(self.record_path)
+            f.touch()
 
         else:
             self.record_path = None
