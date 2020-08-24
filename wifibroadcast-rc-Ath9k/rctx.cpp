@@ -779,8 +779,13 @@ int main(int argc, char *argv[]) {
     {
         auto search = openhd_settings.find("SecondaryCamera");
         if (search != openhd_settings.end() && (search->second == "USB" || search->second == "IP")) {
-            std::cout << "Enabling camera switcher for: " << search->second << std::endl;
-            IsIPCameraSwitcherEnabled = 1;
+            auto value = search->second;
+            boost::trim_right(value);
+
+            if ((value == "USB" || value == "IP")) {
+                std::cout << "Enabling camera switcher for: " << search->second << std::endl;
+                IsIPCameraSwitcherEnabled = 1;
+            }
         } else {
             std::cout << "Disabling camera switcher" << std::endl;
         }
