@@ -25,7 +25,7 @@ EOF
 fi
 
 apt-get install -y apt-transport-https || exit 1
-curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1/cfg/gpg/gpg.B9F0E99CF5787237.key' | apt-key add - || exit 1
+curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1/cfg/gpg/gpg.0AD501344F75A993.key' | apt-key add - || exit 1
 
 
 echo "deb https://dl.cloudsmith.io/public/openhd/openhd-2-1/deb/${OS} ${DISTRO} main" > /etc/apt/sources.list.d/openhd-2-1.list || exit 1
