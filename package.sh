@@ -10,9 +10,11 @@ BUILD_TYPE=$4
 
 
 if [[ "${OS}" == "raspbian" ]]; then
+    PLATFORM_PACKAGES=("-d wiringpi"  "-d veye-raspberrypi >= 20200706.1"  "-d lifepoweredpi >= 20200704.2"  "-d raspi2png >= 20200704.2"  "-d gstreamer1.0-omx-rpi-config")
 fi
 
-if [[ "${OS}" == "ubuntu" && [ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ] ]]; then
+if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
+    PLATFORM_PACKAGES=("-d wiringpi")
 fi
 
 if [ "${BUILD_TYPE}" == "docker" ]; then
@@ -242,20 +244,16 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -p ${PACKAGE_NAME}_VERSION_ARCH.deb \
   --after-install after-install.sh \
   --before-install before-install.sh \
-  -d "wiringpi" \
+  "${PLATFORM_PACAKGES[@]}" \
   -d "libasio-dev >= 1.10" \
   -d "libboost-system-dev >= 1.62.0" \
   -d "libboost-program-options-dev >= 1.62.0" \
   -d "openhd-router >= 0.1.8" \
   -d "openhd-microservice >= 0.1.18" \
   -d "qopenhd" \
-  -d "openhd-linux-pi >= 20200802.1" \
   -d "libseek-thermal >= 20200801.1" \
   -d "flirone-driver >= 20200704.3" \
-  -d "veye-raspberrypi >= 20200706.1" \
-  -d "lifepoweredpi >= 20200704.2" \
   -d "mavlink-router >= 20200704.3" \
-  -d "raspi2png >= 20200704.2" \
   -d "gnuplot-nox" \
   -d "hostapd" \
   -d "iw" \
@@ -292,8 +290,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "gstreamer1.0-libav" \
   -d "gstreamer1.0-tools" \
   -d "gstreamer1.0-alsa" \
-  -d "gstreamer1.0-pulseaudio" \
-  -d "gstreamer1.0-omx-rpi-config" || exit 1
+  -d "gstreamer1.0-pulseaudio" || exit 1
 
 #
 # Only push to cloudsmith for tags. If you don't want something to be pushed to the repo, 
