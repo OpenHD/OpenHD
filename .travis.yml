@@ -16,4 +16,6 @@ jobs:
     env: DOCKERFILE=Dockerfile-armhf-raspbian-stretch
   - name: "armhf raspbian buster"
     env: DOCKERFILE=Dockerfile-armhf-raspbian-buster
+  - name: "arm64 ubuntu xenial"
+    env: DOCKERFILE=Dockerfile-arm64-ubuntu-xenial
 script: docker build -f $DOCKERFILE --build-arg CLOUDSMITH_API_KEY=${CLOUDSMITH_API_KEY} .

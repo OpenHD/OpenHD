@@ -1,0 +1,29 @@
+FROM openhd/rootfs_friendlycore_4.14-neo2:v1
+
+RUN apt update
+
+COPY install_dep.sh /data/install_dep.sh
+
+RUN /data/install_dep.sh
+
+RUN apt -y install git
+
+RUN apt -y install ruby-dev
+
+RUN apt -y install python3-pip
+
+RUN apt -y purge python-configparser
+
+RUN gem install fpm
+
+RUN pip3 install cloudsmith-cli
+
+COPY . /data/
+
+WORKDIR /data
+
+ARG CLOUDSMITH_API_KEY=000000000000
+
+RUN export CLOUDSMITH_API_KEY=$CLOUDSMITH_API_KEY
+
+RUN /data/package.sh arm64 ubuntu xenial docker
