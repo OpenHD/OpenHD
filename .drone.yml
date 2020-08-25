@@ -1,6 +1,6 @@
 kind: pipeline
 type: docker
-name: pi-stretch
+name: armhf-raspbian-stretch
 platform:
   os: linux
   arch: arm
@@ -19,13 +19,13 @@ steps:
   settings:
       repo: openhd/qopenhd
       dry_run: true
-      dockerfile: Dockerfile-pi-stretch
+      dockerfile: Dockerfile-armhf-raspbian-stretch
       build_args_from_env:
         - CLOUDSMITH_API_KEY
 ---
 kind: pipeline
 type: docker
-name: pi-buster
+name: armhf-raspbian-buster
 platform:
   os: linux
   arch: arm
@@ -44,6 +44,6 @@ steps:
   settings:
       repo: openhd/qopenhd
       dry_run: true
-      dockerfile: Dockerfile-pi-buster
+      dockerfile: Dockerfile-armhf-raspbian-buster
       build_args_from_env:
         - CLOUDSMITH_API_KEY

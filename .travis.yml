@@ -12,8 +12,8 @@ compiler:
   - gcc
 jobs:
   include:
-  - name: "Pi stretch"
-    env: DOCKERFILE=Dockerfile-pi-stretch
-  - name: "Pi buster"
-    env: DOCKERFILE=Dockerfile-pi-buster
+  - name: "armhf raspbian stretch"
+    env: DOCKERFILE=Dockerfile-armhf-raspbian-stretch
+  - name: "armhf raspbian buster"
+    env: DOCKERFILE=Dockerfile-armhf-raspbian-buster
 script: docker build -f $DOCKERFILE --build-arg CLOUDSMITH_API_KEY=${CLOUDSMITH_API_KEY} .

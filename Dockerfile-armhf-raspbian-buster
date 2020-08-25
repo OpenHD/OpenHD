@@ -1,4 +1,4 @@
-FROM openhd/2018-10-09-raspbian-stretch-lite:v1  
+FROM openhd/2020-05-27-raspios-buster-lite-armhf:v1
 
 RUN apt update
 
@@ -10,13 +10,13 @@ RUN apt -y install git
 
 RUN apt -y install ruby-dev
 
-RUN apt -y install python-pip
+RUN apt -y install python3-pip
 
 RUN apt -y purge python-configparser
 
 RUN gem install fpm
 
-RUN pip install cloudsmith-cli
+RUN pip3 install cloudsmith-cli
 
 COPY . /data/
 
@@ -26,4 +26,4 @@ ARG CLOUDSMITH_API_KEY=000000000000
 
 RUN export CLOUDSMITH_API_KEY=$CLOUDSMITH_API_KEY
 
-RUN /data/package.sh pi stretch docker
+RUN /data/package.sh armhf raspbian buster docker
