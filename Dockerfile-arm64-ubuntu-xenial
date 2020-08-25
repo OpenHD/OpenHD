@@ -12,7 +12,7 @@ RUN apt -y install ruby-dev
 
 RUN apt -y install python3-pip
 
-RUN apt -y purge python3-configparser
+RUN apt -y purge python-configparser
 
 RUN gem install fpm
 
