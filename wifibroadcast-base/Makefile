@@ -1,4 +1,4 @@
-LDFLAGS=-lrt -lpcap -lwiringPi
+LDFLAGS=-lrt -lpcap
 CPPFLAGS=-Wall -O2 -march=armv6zk -mcpu=arm1176jzf-s -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -D _GNU_SOURCE
 CFLAGS := $(CFLAGS) -I../lib/mavlink_generated/include/mavlink/v2.0/
 
