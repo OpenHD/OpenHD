@@ -18,4 +18,6 @@ jobs:
     env: DOCKERFILE=Dockerfile-armhf-raspbian-buster
   - name: "arm64 ubuntu xenial"
     env: DOCKERFILE=Dockerfile-arm64-ubuntu-xenial
+  - name: "arm64 armbian focal"
+    env: DOCKERFILE=Dockerfile-arm64-armbian-focal
 script: docker build -f $DOCKERFILE --build-arg CLOUDSMITH_API_KEY=${CLOUDSMITH_API_KEY} .
