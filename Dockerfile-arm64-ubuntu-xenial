@@ -10,13 +10,13 @@ RUN apt -y install git
 
 RUN apt -y install ruby-dev
 
-RUN apt -y install python3-pip python3-setuptools
+RUN apt -y install python-pip python-setuptools
 
 RUN apt -y purge python-configparser
 
 RUN gem install fpm
 
-RUN pip3 install cloudsmith-cli
+RUN pip install cloudsmith-cli
 
 COPY . /data/
 
