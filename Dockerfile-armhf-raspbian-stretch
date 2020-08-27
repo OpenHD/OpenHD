@@ -10,7 +10,7 @@ RUN apt -y install git
 
 RUN apt -y install ruby-dev
 
-RUN apt -y install python-pip
+RUN apt -y install python-pip python-setuptools
 
 RUN apt -y purge python-configparser
 
