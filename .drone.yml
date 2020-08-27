@@ -50,7 +50,7 @@ steps:
 ---
 kind: pipeline
 type: docker
-name: arm64-ubuntu-xenial
+name: arm64-armbian-buster
 platform:
   os: linux
   arch: arm64
@@ -69,6 +69,6 @@ steps:
   settings:
       repo: openhd/qopenhd
       dry_run: true
-      dockerfile: Dockerfile-arm64-ubuntu-xenial
+      dockerfile: Dockerfile-arm64-armbian-buster
       build_args_from_env:
         - CLOUDSMITH_API_KEY
