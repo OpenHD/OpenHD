@@ -72,3 +72,28 @@ steps:
       dockerfile: Dockerfile-arm64-armbian-buster
       build_args_from_env:
         - CLOUDSMITH_API_KEY
+---
+kind: pipeline
+type: docker
+name: arm64-ubuntu-bionic
+platform:
+  os: linux
+  arch: arm64
+steps:
+- name: fetch
+  image: arm64v8/alpine
+  commands:
+  - apk add git
+  - git fetch --tags
+  - git submodule update --init --recursive --remote
+- name: build
+  image: plugins/docker
+  environment:
+    CLOUDSMITH_API_KEY:
+      from_secret: CLOUDSMITH_API_KEY
+  settings:
+      repo: openhd/qopenhd
+      dry_run: true
+      dockerfile: Dockerfile-arm64-ubuntu-bionic
+      build_args_from_env:
+        - CLOUDSMITH_API_KEY
