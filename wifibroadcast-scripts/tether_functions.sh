@@ -25,7 +25,7 @@ function tether_check_function {
             echo "USB tethering device detected. Configuring IP ..."
 
 
-            nice pump -h wifibrdcast -i usb0 --no-dns --keep-up --no-resolvconf --no-ntp || {
+            nice dhclient usb0 || {
                 echo "ERROR: Could not configure IP for USB tethering device!"
                 
                 nice killall wbc_status > /dev/null 2>&1

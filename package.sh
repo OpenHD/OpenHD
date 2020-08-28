@@ -257,7 +257,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "gnuplot-nox" \
   -d "hostapd" \
   -d "iw" \
-  -d "pump" \
+  -d "isc-dhcp-common" \
   -d "dnsmasq" \
   -d "aircrack-ng" \
   -d "ser2net" \

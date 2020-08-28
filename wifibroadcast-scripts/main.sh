@@ -193,7 +193,7 @@ case $TTY in
 
                     CARRIER=1
                     
-                    if nice pump -i eth0 --no-ntp -h $OHDHOSTNAME; then
+                    if dhclient eth0; then
                         ETHCLIENTIP=`ip addr show eth0 | grep -Po 'inet \K[\d.]+'`
                     
                         if [ "$ENABLE_QOPENHD" == "Y" ]; then
@@ -204,7 +204,7 @@ case $TTY in
 
                         ping -n -q -c 1 1.1.1.1
                     else
-                        ps -ef | nice grep "pump -i eth0" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+                        ps -ef | nice grep "dhclient eth0" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 
                         nice ifconfig eth0 down
                         
