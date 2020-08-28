@@ -50,7 +50,7 @@ steps:
 ---
 kind: pipeline
 type: docker
-name: arm64-armbian-buster
+name: arm64-debian-buster
 platform:
   os: linux
   arch: arm64
@@ -69,7 +69,7 @@ steps:
   settings:
       repo: openhd/qopenhd
       dry_run: true
-      dockerfile: Dockerfile-arm64-armbian-buster
+      dockerfile: Dockerfile-arm64-debian-buster
       build_args_from_env:
         - CLOUDSMITH_API_KEY
 ---
