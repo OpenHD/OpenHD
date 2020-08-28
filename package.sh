@@ -250,7 +250,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "libboost-program-options-dev >= 1.62.0" \
   -d "openhd-router >= 0.1.8" \
   -d "openhd-microservice >= 0.1.18" \
-  -d "qopenhd" \
   -d "libseek-thermal >= 20200801.1" \
   -d "flirone-driver >= 20200704.3" \
   -d "mavlink-router >= 20200704.3" \
