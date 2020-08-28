@@ -206,7 +206,7 @@ case $TTY in
                     else
                         ps -ef | nice grep "dhclient eth0" | nice grep -v grep | awk '{print $2}' | xargs kill -9
 
-                        nice ifconfig eth0 down
+                        ip link set dev eth0 down
                         
                         echo "DHCP failed"
                         qstatus "DHCP failed" 3
