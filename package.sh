@@ -272,7 +272,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "libsdl1.2debian" \
   -d "libconfig++9v5" \
   -d "libreadline-dev" \
-  -d "libjpeg62-turbo" \
+  -d "libjpeg-dev" \
   -d "libsodium-dev" \
   -d "libfontconfig1" \
   -d "libfreetype6" \
