@@ -83,7 +83,7 @@ function migration_helper {
     # This is only a bandaid for people who have not updated their settings file yet, just to ensure that things work
     #
     if [[ "${OPENHD_VERSION}" == "buster" && "${USBCamera}" != "" ]]; then
-        export USBCamera=`echo ${USBCamera} | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("omxh264enc.+\s*\!", "v4l2h264enc !", s); print(s);'`
+        export USBCamera=`echo ${USBCamera} | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("omxh264enc.+\s*\!", "videconvert ! v4l2h264enc !", s); print(s);'`
     fi
 }
 
