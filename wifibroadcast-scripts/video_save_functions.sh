@@ -230,7 +230,7 @@ function save_function {
                 if [ -f ${USB_VIDEO_FILE} ]; then
                     ORIGINAL_FILE_SIZE=$(ls -l ${VIDEOFILE} | awk '{print $5}')
                     TARGET_FILE_SIZE=$(ls -l ${USB_VIDEO_FILE} | awk '{print $5}')
-                    PERCENT_FINISHED=$(python -c "print(int(float(${TARGET_FILE_SIZE}) / float(${ORIGINAL_FILE_SIZE}) * 100.0))"  )
+                    PERCENT_FINISHED=$(python3 -c "print(int(float(${TARGET_FILE_SIZE}) / float(${ORIGINAL_FILE_SIZE}) * 100.0))"  )
 
                     if [ "${ENABLE_QOPENHD}" == "Y" ]; then
                         qstatus "Saving: ${PERCENT_FINISHED}% done" 5

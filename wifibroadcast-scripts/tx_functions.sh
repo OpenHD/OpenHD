@@ -315,10 +315,10 @@ function tx_function {
         echo "Reducing video bitrate by half for HDMI CSI board @ 30fps"
         qstatus "Reducing video bitrate by half for HDMI CSI board @ 30fps" 5
 
-        BITRATE_PERCENT=$(python -c "print(${BITRATE_PERCENT}/2)")
+        BITRATE_PERCENT=$(python3 -c "print(${BITRATE_PERCENT}/2)")
 
         if [ "${VIDEO_BITRATE}" != "auto" ]; then
-            BITRATE=$(python -c "print(${VIDEO_BITRATE}/2)")
+            BITRATE=$(python3 -c "print(${VIDEO_BITRATE}/2)")
         fi
     fi
 
@@ -336,20 +336,20 @@ function tx_function {
             qstatus "Running bandwidth measurement..." 5
             
             BANDWIDTH_MEASURED=$(cat /dev/zero | /usr/local/bin/tx_rawsock -z 1 -p 77 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS)
-            BANDWIDTH_MEASURED_KBIT=$(python -c "print(int(${BANDWIDTH_MEASURED} / 1000.0))")
+            BANDWIDTH_MEASURED_KBIT=$(python3 -c "print(int(${BANDWIDTH_MEASURED} / 1000.0))")
             echo "Bandwidth available: ${BANDWIDTH_MEASURED_KBIT}Kbit/s"
             qstatus "Bandwidth available: ${BANDWIDTH_MEASURED_KBIT}Kbit/s" 5
             
-            FEC_SIZE=$(python -c "print(${VIDEO_BLOCKS} + ${VIDEO_FECS})")
+            FEC_SIZE=$(python3 -c "print(${VIDEO_BLOCKS} + ${VIDEO_FECS})")
             echo "Video/FEC ratio: ${VIDEO_BLOCKS}/${FEC_SIZE}"
             qstatus "Video/FEC ratio: ${VIDEO_BLOCKS}/${FEC_SIZE}" 5
 
-            AVAILABLE_VIDEO_BANDWIDTH=$(python -c "print(int(${BANDWIDTH_MEASURED} * (float(${VIDEO_BLOCKS}) / float(${FEC_SIZE}))))")
-            AVAILABLE_VIDEO_BANDWIDTH_KBIT=$(python -c "print(int(float(${AVAILABLE_VIDEO_BANDWIDTH}) / 1000.0))")
+            AVAILABLE_VIDEO_BANDWIDTH=$(python3 -c "print(int(${BANDWIDTH_MEASURED} * (float(${VIDEO_BLOCKS}) / float(${FEC_SIZE}))))")
+            AVAILABLE_VIDEO_BANDWIDTH_KBIT=$(python3 -c "print(int(float(${AVAILABLE_VIDEO_BANDWIDTH}) / 1000.0))")
             echo "Bandwidth available for video: ${AVAILABLE_VIDEO_BANDWIDTH_KBIT}Kbit/s"
             qstatus "Bandwidth available for video: ${AVAILABLE_VIDEO_BANDWIDTH_KBIT}Kbit/s" 5
             
-            BITRATE=$(python -c "print(int(${AVAILABLE_VIDEO_BANDWIDTH} * ${BITRATE_PERCENT} / 100.0))")
+            BITRATE=$(python3 -c "print(int(${AVAILABLE_VIDEO_BANDWIDTH} * ${BITRATE_PERCENT} / 100.0))")
             BITRATE_KBIT=$(($BITRATE/1000))
             BITRATE_MEASURED_KBIT=$(($BANDWIDTH_MEASURED/1000))
 
@@ -360,8 +360,8 @@ function tx_function {
             qstatus "Final video bitrate: $BITRATE_KBIT kBit/s" 5
             echo "-----------------------------------------"
         else
-            BITRATE=$(python -c "print(int(${VIDEO_BITRATE}*1000*1000))")
-            BITRATE_KBIT=$(python -c "print(int(${VIDEO_BITRATE}*1000))")
+            BITRATE=$(python3 -c "print(int(${VIDEO_BITRATE}*1000*1000))")
+            BITRATE_KBIT=$(python3 -c "print(int(${VIDEO_BITRATE}*1000))")
             BITRATE_MEASURED_KBIT=0
 
             echo "Using fixed $BITRATE_KBIT kBit/s video bitrate"
@@ -765,7 +765,7 @@ function tx_function {
     #
     # Note: this is going to become part of the camera microservice soon
     #
-    /usr/bin/python /usr/local/share/cameracontrol/cameracontrolUDP.py -IsArduCameraV21 $IsArduCameraV21 -IsCamera1Enabled $IsCamera1Enabled -IsCamera2Enabled $IsCamera2Enabled -IsCamera3Enabled $IsCamera3Enabled -IsCamera4Enabled $IsCamera4Enabled  -Camera1ValueMin $Camera1ValueMin -Camera1ValueMax $Camera1ValueMax -Camera2ValueMin $Camera2ValueMin -Camera2ValueMax $Camera2ValueMax -Camera3ValueMin $Camera3ValueMin -Camera3ValueMax $Camera3ValueMax  -Camera4ValueMin $Camera4ValueMin -Camera4ValueMax $Camera4ValueMax -DefaultCameraId $DefaultCameraId -BitrateMeasured $BITRATE -SecondaryCamera $SecondaryCamera -CameraType $CameraType -WithoutNativeRPiCamera $WithoutNativeRPiCamera -DefaultBandWidthAth9k $Bandwidth
+    /usr/bin/python3 /usr/local/share/cameracontrol/cameracontrolUDP.py -IsArduCameraV21 $IsArduCameraV21 -IsCamera1Enabled $IsCamera1Enabled -IsCamera2Enabled $IsCamera2Enabled -IsCamera3Enabled $IsCamera3Enabled -IsCamera4Enabled $IsCamera4Enabled  -Camera1ValueMin $Camera1ValueMin -Camera1ValueMax $Camera1ValueMax -Camera2ValueMin $Camera2ValueMin -Camera2ValueMax $Camera2ValueMax -Camera3ValueMin $Camera3ValueMin -Camera3ValueMax $Camera3ValueMax  -Camera4ValueMin $Camera4ValueMin -Camera4ValueMax $Camera4ValueMax -DefaultCameraId $DefaultCameraId -BitrateMeasured $BITRATE -SecondaryCamera $SecondaryCamera -CameraType $CameraType -WithoutNativeRPiCamera $WithoutNativeRPiCamera -DefaultBandWidthAth9k $Bandwidth
 
 
     TX_EXITSTATUS=${PIPESTATUS[1]}

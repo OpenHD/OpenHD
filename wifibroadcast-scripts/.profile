@@ -8,7 +8,7 @@ if [ "$TTY" == "/dev/tty1" ]; then
 
     service ssh start
 
-    python /usr/local/bin/gpio-IsAir.py
+    python3 /usr/local/bin/gpio-IsAir.py
     
 
     #
