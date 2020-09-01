@@ -96,9 +96,22 @@ function detect_memory {
 function detect_hardware {
     HARDWARE=$(cat /proc/cpuinfo | grep 'Revision' | awk '{print $3}')
 
+    if [ "${HARDWARE}" == "" ]; then
+        # check for jetson carrier type
+        HARDWARE=$(cat /proc/device-tree/nvidia,boardids)
+    fi
+
     echo "Found hardware $HARDWARE..."
 
     case "$HARDWARE" in
+        '3448')
+            ABLE_BAND=none
+            MODEL=jetson
+        ;;
+        '3449')
+            ABLE_BAND=none
+            MODEL=jetson
+        ;;
         'a03111')
             ABLE_BAND=ag
             MODEL=Pi4b
