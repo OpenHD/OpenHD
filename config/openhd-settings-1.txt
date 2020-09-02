@@ -12,7 +12,7 @@ FREQ=auto
 
 # >>>>>>>>>>[DATARATE] Lower settings yield higher range and vice versa.  
 # Below are the datarate settings for Legacy B/G and MCS "N" modes. 
-DATARATE=4
+DATARATE=3
 
 # 1 - 5.5   =    802.11b         1 - 6.5   =     MCS 0
 # 2 - 11    =    802.11b         2 - 13    =     MCS 1
