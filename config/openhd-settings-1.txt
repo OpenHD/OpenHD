@@ -100,7 +100,7 @@ VIDEO_BITRATE=auto
 # this to a lower value like 60% to avoid a delayed video stream.
 # On free channels you may set this to a higher value like 75% to get a higher
 # bitrate and thus image quality.
-BITRATE_PERCENT=60
+BITRATE_PERCENT=50
 
 # >>>>>>>>>>[CAMERA RESOLUTION]--
 # V1 cam: 1280x720: 30fps, 48fps. 1920x1080: 30fps
