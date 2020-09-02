@@ -262,6 +262,11 @@ ENABLE_SERIAL_TELEMETRY_OUTPUT=N
 TELEMETRY_OUTPUT_SERIALPORT_GROUND=/dev/serial0
 TELEMETRY_OUTPUT_SERIALPORT_GROUND_BAUDRATE=57600
 
+# >>>>>>>>>>[Filter Mavlink 2 telemetry for slow trackers]
+# This prevents some antenna trackers from being overloaded by extra mavlink messages.
+# You should not enable this if you do not use Mavlink or if you are not using an antenna tracker.
+TELEMETRY_OUTPUT_SERIALPORT_GROUND_FILTER=N
+
 
 #  ======================================================================================
 #                      <ADVANCED/ADDITIONAL HARDWARE SETTINGS>

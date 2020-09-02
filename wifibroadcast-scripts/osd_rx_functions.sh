@@ -30,10 +30,19 @@ function osdrx_function {
 
         if [ "${ENABLE_SERIAL_TELEMETRY_OUTPUT}" == "Y" ]; then
             echo "Sending telemetry stream to ${TELEMETRY_OUTPUT_SERIALPORT_GROUND}"
-            
-            nice stty -F ${TELEMETRY_OUTPUT_SERIALPORT_GROUND} ${TELEMETRY_OUTPUT_SERIALPORT_GROUND_STTY_OPTIONS} ${TELEMETRY_OUTPUT_SERIALPORT_GROUND_BAUDRATE}
-                        
-            nice cat /var/run/openhd/telemetryfifo6 > ${TELEMETRY_OUTPUT_SERIALPORT_GROUND} &
+      
+            if [ "${TELEMETRY_OUTPUT_SERIALPORT_GROUND_FILTER}" == "Y" ]; then
+                echo "Sending filtered telemetry stream to ${TELEMETRY_OUTPUT_SERIALPORT_GROUND}"
+
+                nice cat /var/run/openhd/telemetryfifo6 | /usr/local/bin/trackermavlinkfilter -d ${TELEMETRY_OUTPUT_SERIALPORT_GROUND} -b ${TELEMETRY_OUTPUT_SERIALPORT_GROUND_BAUDRATE} -n &
+            else
+                echo "Sending telemetry stream to ${TELEMETRY_OUTPUT_SERIALPORT_GROUND}"
+        
+                nice stty -F ${TELEMETRY_OUTPUT_SERIALPORT_GROUND} ${TELEMETRY_OUTPUT_SERIALPORT_GROUND_STTY_OPTIONS} ${TELEMETRY_OUTPUT_SERIALPORT_GROUND_BAUDRATE}
+        
+                nice cat /var/run/openhd/telemetryfifo6 > ${TELEMETRY_OUTPUT_SERIALPORT_GROUND} &
+            fi
+
         fi
 
         # telemetryfifo1: local display, osd
