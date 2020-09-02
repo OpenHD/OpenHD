@@ -213,10 +213,10 @@ EOF
     cp -a config/openhd-settings-1.txt ${TMPDIR}/boot/openhd-settings-4.txt || exit 1
 
     if [[ "${OS}" == "raspbian" && "${DISTRO}" == "buster" ]]; then
-        sed -i s/omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1/videoconvert ! v4l2h264enc /g ${TMPDIR}/boot/openhd-settings-1.txt
-        sed -i s/omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1/videoconvert ! v4l2h264enc /g ${TMPDIR}/boot/openhd-settings-2.txt
-        sed -i s/omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1/videoconvert ! v4l2h264enc /g ${TMPDIR}/boot/openhd-settings-3.txt
-        sed -i s/omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1/videoconvert ! v4l2h264enc /g ${TMPDIR}/boot/openhd-settings-4.txt
+        sed -i "s/omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1/videoconvert ! v4l2h264enc /g" ${TMPDIR}/boot/openhd-settings-1.txt
+        sed -i "s/omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1/videoconvert ! v4l2h264enc /g" ${TMPDIR}/boot/openhd-settings-2.txt
+        sed -i "s/omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1/videoconvert ! v4l2h264enc /g" ${TMPDIR}/boot/openhd-settings-3.txt
+        sed -i "s/omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1/videoconvert ! v4l2h264enc /g" ${TMPDIR}/boot/openhd-settings-4.txt
     fi
 
     cp -a driver-helpers/* ${TMPDIR}/usr/local/bin/ || exit 1
