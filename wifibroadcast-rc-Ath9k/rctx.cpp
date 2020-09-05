@@ -133,7 +133,6 @@ std::map<std::string, std::string> joystick_settings;
 
 int update_nth_time = 8;
 int transmissions = 2;
-int fix_usb_joystick_interrupt_quirk = 0;
 
 /*
  * These match the defaults in joyconfig.txt, but are only used if for some reason there is no default 
@@ -160,14 +159,6 @@ int axis7_initial = 1000;
  * Global state
  */
 static uint16_t *rcData = NULL;
-uint16_t lastValidCh0 = 0;
-uint16_t lastValidCh1 = 0;
-uint16_t lastValidCh2 = 0;
-uint16_t lastValidCh3 = 0;
-uint16_t lastValidCh4 = 0;
-uint16_t lastValidCh5 = 0;
-uint16_t lastValidCh6 = 0;
-uint16_t lastValidCh7 = 0;
 static uint16_t validButton1 = 0;
 static uint16_t validButton2 = 0;
 static uint16_t validButton3 = 0;
@@ -822,7 +813,6 @@ int main(int argc, char *argv[]) {
      */    
     load_setting(joystick_settings, "UPDATE_NTH_TIME", &update_nth_time);
     load_setting(joystick_settings, "TRANSMISSIONS",   &transmissions);
-    load_setting(joystick_settings, "FIX_USB_JOYSTICK_INTERRUPT_QUIRK",   &fix_usb_joystick_interrupt_quirk);
     load_setting(joystick_settings, "ROLL_AXIS",       &roll_axis);
     load_setting(joystick_settings, "PITCH_AXIS",      &pitch_axis);
     load_setting(joystick_settings, "YAW_AXIS",        &yaw_axis);
@@ -840,16 +830,6 @@ int main(int argc, char *argv[]) {
     load_setting(joystick_settings, "AXIS5_INITIAL",   &axis5_initial);
     load_setting(joystick_settings, "AXIS6_INITIAL",   &axis6_initial);
     load_setting(joystick_settings, "AXIS7_INITIAL",   &axis7_initial);
-
-
-    lastValidCh0 = axis0_initial;
-    lastValidCh1 = axis1_initial;
-    lastValidCh2 = axis2_initial;
-    lastValidCh3 = axis3_initial;
-    lastValidCh4 = axis4_initial;
-    lastValidCh5 = axis5_initial;
-    lastValidCh6 = axis6_initial;
-    lastValidCh7 = axis7_initial;
 
 
     /*
@@ -1264,57 +1244,6 @@ void udpInputThread() {
 void process() {
     int tmp = 0;
     int k = 0;
-
-    if (fix_usb_joystick_interrupt_quirk) {
-        if (rcData[0] == 1000) {
-            rcData[0] = lastValidCh0;
-            //printf("Channel 1 currupt, replaced: " "%" PRIu16 "\n", rcData[0]);
-        }
-
-        if (rcData[1] == 1000) {
-            rcData[1] = lastValidCh1;
-            //printf("Channel 2 currupt, replaced: " "%" PRIu16 "\n", rcData[1]);
-        }
-
-        if (rcData[2] == 1000) {
-            rcData[2] = lastValidCh2;
-            //printf("Channel 3 currupt, replaced: " "%" PRIu16 "\n", rcData[2]);
-        }
-
-        if (rcData[3] == 1000) {
-            rcData[3] = lastValidCh3;
-            //printf("Channel 4 currupt, replaced: " "%" PRIu16 "\n", rcData[3]);
-        }
-
-        if (rcData[4] == 1000) {
-            rcData[4] = lastValidCh4;
-            //printf("Channel 5 currupt, replaced: " "%" PRIu16 "\n", rcData[4]);
-        }
-
-        if (rcData[5] == 1000) {
-            rcData[5] = lastValidCh5;
-            //printf("Channel 6 currupt, replaced: " "%" PRIu16 "\n", rcData[5]);
-        }
-
-        if (rcData[6] == 1000) {
-            rcData[6] = lastValidCh6;
-            //printf("Channel 7 currupt, replaced: " "%" PRIu16 "\n", rcData[6]);
-        }
-
-        if (rcData[7] == 1000) {
-            rcData[7] = lastValidCh7;
-            //printf("Channel 8 currupt, replaced: " "%" PRIu16 "\n", rcData[7]);
-        }
-
-        lastValidCh0 = rcData[0];
-        lastValidCh1 = rcData[1];
-        lastValidCh2 = rcData[2];
-        lastValidCh3 = rcData[3];
-        lastValidCh4 = rcData[4];
-        lastValidCh5 = rcData[5];
-        lastValidCh6 = rcData[6];
-        lastValidCh7 = rcData[7];
-    }
 
     validButton3 = validButton2;
     validButton2 = validButton1;
