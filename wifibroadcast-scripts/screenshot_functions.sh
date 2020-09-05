@@ -45,10 +45,10 @@ function screenshot_function {
             #
             # Check if tmp disk is full, if yes, do not save screenshot
             #
-            FREETMPSPACE=`df -P /wbc_tmp/ | awk 'NR==2 {print $4}'`
+            FREETMPSPACE=`df -P /video_tmp/ | awk 'NR==2 {print $4}'`
             
             if [ $FREETMPSPACE -gt $LIMITFREE ]; then
-                PNG_NAME=/wbc_tmp/screenshot`ls /wbc_tmp/screenshot* | wc -l`.png
+                PNG_NAME=/video_tmp/screenshot`ls /video_tmp/screenshot* | wc -l`.png
             
                 echo "Taking screenshot: $PNG_NAME"
 
@@ -59,7 +59,7 @@ function screenshot_function {
                 #
                 ionice -c 3 nice -n 19 /usr/bin/raspi2png -p $PNG_NAME
             else
-                echo "RAM disk full - no screenshot taken ..."
+                echo "Storage area full - no screenshot taken ..."
             fi
         else
             echo "Video not running - no screenshot taken ..."
