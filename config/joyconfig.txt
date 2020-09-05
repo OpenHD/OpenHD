@@ -35,9 +35,3 @@
 // 3 = 6ms (167Hz), 4 = 8ms (125Hz), 5 = 10ms (100Hz), 6 = 12ms (83Hz), 7 = 14ms (71Hz), 8 = 16ms (63Hz), 9 = 18ms (56Hz), 10 = 20ms (50Hz) 
 #define UPDATE_NTH_TIME 8
 #define TRANSMISSIONS 2
-
-// This is intended as a bandaid to address issues with USB joysticks connected to a ground station where
-// there are already multiple other USB devices connected, which can lead to RC channels spontaneously and
-// incorrectly reading the lowest possible value. Only uncomment this line this if you are SURE that you need it!
-//#define FIX_USB_JOYSTICK_INTERRUPT_QUIRK 1
-
