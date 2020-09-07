@@ -78,6 +78,12 @@ build_pi_dep() {
 
 
 build_source() {
+    pushd openhd-system
+    make clean
+    make || exit 1
+    make install DESTDIR=${TMPDIR} || exit 1
+    popd
+
     if [[ "${PLATFORM}" == "pi" ]]; then
         cp openhd-camera/openhdvid ${TMPDIR}/usr/local/bin/ || exit 1
         chmod +x ${TMPDIR}/usr/local/bin/openhdvid || exit 1
