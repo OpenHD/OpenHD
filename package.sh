@@ -273,6 +273,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "socat" \
   -d "ffmpeg" \
   -d "indent" \
+  -d "libv4l-dev" \
   -d "libpcap-dev" \
   -d "libpng-dev" \
   -d "libsdl2-2.0-0" \
