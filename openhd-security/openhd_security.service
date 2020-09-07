@@ -1,0 +1,15 @@
+[Unit]
+Description=openhd-security
+Before=basic.target
+After=local-fs.target sysinit.target
+DefaultDependencies=no
+
+[Service]
+Restart=always
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/local/bin/openhd_security
+
+[Install]
+WantedBy=multi-user.target
+Alias=openhdsecurity@.service
