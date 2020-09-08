@@ -40,7 +40,7 @@ install: openhd_system
 	install -d $(DESTDIR)$(PREFIX)/bin/
 	install -d $(DESTDIR)/etc/systemd/system
 	install -m 755 openhd_system $(DESTDIR)$(PREFIX)/bin/
-	install -m 644 openhd_system@.service $(DESTDIR)/etc/systemd/system/
+	install -m 644 openhd_system.service $(DESTDIR)/etc/systemd/system/
 
 .PHONY: enable
 enable: install
