@@ -165,7 +165,6 @@ build_source() {
     pushd cameracontrol/IPCamera/svpcom_wifibroadcast
     chmod 755 version.py
     make || exit 1
-    ./wfb_keygen || exit 1
     popd
 
     cp -a cameracontrol/* ${TMPDIR}/usr/local/share/cameracontrol/ || exit 1
