@@ -27,19 +27,19 @@ do
 
 	if [ "$PrimaryCardMAC" == "0" ]; then
 		if [ "$EncryptionOrRange" == "Range" ]; then
-			/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 $NICS_LIST
+			/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 -K /tmp/tx.key $NICS_LIST
     		fi
 		
 		if [ "$EncryptionOrRange" == "Encryption" ]; then
-            		/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 $NICS_LIST
+            		/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 -K /tmp/tx.key $NICS_LIST
     		fi
 	else
 		if [ "$EncryptionOrRange" == "Range" ]; then
-			/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 $PrimaryCardMAC
+			/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 -K /tmp/tx.key $PrimaryCardMAC
     		fi
 		
 		if [ "$EncryptionOrRange" == "Encryption" ]; then
-            		/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 $PrimaryCardMAC
+            		/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 -K /tmp/tx.key $PrimaryCardMAC
     		fi	
 	fi
 
