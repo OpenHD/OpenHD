@@ -410,8 +410,8 @@ def SendDataToGround(MessageBuf):
     sockToAir.sendto(MessageBuf, ('127.0.0.1', UDP_PORT))
 
 def random_string(length):
-    pool = string.letters + string.digits
-    return ''.join(random.choice(pool) for i in xrange(length))
+    return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(length))
+
 
 def AirToGroundNotifyCameraModeThread():
     while True:
