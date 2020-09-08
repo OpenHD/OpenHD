@@ -2,6 +2,9 @@
 
 systemctl disable osd
 systemctl enable openhdconfig
+systemctl enable openhd_system
+systemctl enable openhd_security
+
 
 mkdir -p /wbc_tmp
 mkdir -p /media/usb
