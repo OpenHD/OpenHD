@@ -3,6 +3,7 @@
 
 #include <array>
 #include <chrono>
+#include <vector>
 
 #include "platform.h"
 
