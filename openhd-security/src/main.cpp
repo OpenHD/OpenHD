@@ -97,8 +97,8 @@ int main(int argc, char *argv[]) {
                             openhd_password.length(),
                             ground_salt,
                             3,
-                            1024000,
-                            crypto_pwhash_ALG_ARGON2ID13);
+                            crypto_pwhash_argon2i_MEMLIMIT_INTERACTIVE,
+                            crypto_pwhash_ALG_ARGON2I13);
 
         if (res < 0) {
             throw std::runtime_error("Ground key generation failed");
@@ -110,8 +110,8 @@ int main(int argc, char *argv[]) {
                             openhd_password.length(),
                             air_salt,
                             3,
-                            1024000,
-                            crypto_pwhash_ALG_ARGON2ID13);
+                            crypto_pwhash_argon2i_MEMLIMIT_INTERACTIVE,
+                            crypto_pwhash_ALG_ARGON2I13);
 
         if (res < 0) {
             throw std::runtime_error("Air key generation failed");
