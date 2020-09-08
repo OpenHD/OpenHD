@@ -6,7 +6,6 @@ DefaultDependencies=no
 
 
 [Service]
-Restart=always
 Type=oneshot
 RemainAfterExit=true
 ExecStart=/usr/local/bin/openhd_system

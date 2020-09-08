@@ -5,7 +5,6 @@ After=local-fs.target sysinit.target
 DefaultDependencies=no
 
 [Service]
-Restart=always
 Type=oneshot
 RemainAfterExit=true
 ExecStart=/usr/local/bin/openhd_security
