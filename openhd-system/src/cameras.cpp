@@ -104,7 +104,7 @@ void Cameras::detect_raspberrypi_csi() {
         CameraEndpoint endpoint;
         endpoint.bus = camera.bus;
         endpoint.support_h264 = true;
-        endpoint.support_mjpeg = true;
+        endpoint.support_mjpeg = false;
         m_camera_endpoints.push_back(endpoint);
         m_cameras.push_back(camera);
     }
@@ -117,7 +117,7 @@ void Cameras::detect_raspberrypi_csi() {
         CameraEndpoint endpoint;
         endpoint.bus = camera.bus;
         endpoint.support_h264 = true;
-        endpoint.support_mjpeg = true;
+        endpoint.support_mjpeg = false;
         m_camera_endpoints.push_back(endpoint);
         m_cameras.push_back(camera);
     }
