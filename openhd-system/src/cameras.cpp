@@ -282,23 +282,62 @@ bool Cameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, std::
     struct v4l2_fmtdesc fmtdesc;
     memset(&fmtdesc, 0, sizeof(fmtdesc));
     fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    
+    struct v4l2_frmsizeenum frmsize;
+    struct v4l2_frmivalenum frmival;
+
 
     while (ioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc) == 0) {    
-        if (fmtdesc.pixelformat == V4L2_PIX_FMT_H264) {
-            endpoint.support_h264 = true;
-        }
-        #if defined V4L2_PIX_FMT_H265
-        else if (fmtdesc.pixelformat == V4L2_PIX_FMT_H265) {
-            endpoint.support_h265 = true;
-        }
-        #endif
-        else if (fmtdesc.pixelformat == V4L2_PIX_FMT_MJPEG) {
-            endpoint.support_mjpeg = true;
-        }
-        else {
-            // if it supports something else it's one of the raw formats, the camera service will
-            // figure out what to do with it
-            endpoint.support_raw = true;
+        frmsize.pixel_format = fmtdesc.pixelformat;
+        frmsize.index = 0;
+
+        while (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) == 0) {
+            if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
+                frmival.index = 0;
+                frmival.pixel_format = fmtdesc.pixelformat;
+                frmival.width = frmsize.discrete.width;
+                frmival.height = frmsize.discrete.height;
+
+                while (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) == 0) {
+                    if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
+
+                        std::stringstream new_format;
+
+                        if (fmtdesc.pixelformat == V4L2_PIX_FMT_H264) {
+                            endpoint.support_h264 = true;
+                        }
+                        #if defined V4L2_PIX_FMT_H265
+                        else if (fmtdesc.pixelformat == V4L2_PIX_FMT_H265) {
+                            endpoint.support_h265 = true;
+                        }
+                        #endif
+                        else if (fmtdesc.pixelformat == V4L2_PIX_FMT_MJPEG) {
+                            endpoint.support_mjpeg = true;
+                        }
+                        else {
+                            // if it supports something else it's one of the raw formats, the camera service will
+                            // figure out what to do with it
+                            endpoint.support_raw = true;
+                        }
+                        
+                        new_format << fmtdesc.description;
+                        new_format << "|";
+                        new_format << frmsize.discrete.width;
+                        new_format << "x";
+                        new_format << frmsize.discrete.height;
+                        new_format << "@";
+                        new_format << frmival.discrete.denominator;
+
+                        endpoint.formats.push_back(new_format.str());
+
+                        std::cerr << "Found format: " << new_format.str() << std::endl;
+                    }
+
+                    frmival.index++;
+                }
+            }
+
+            frmsize.index++;
         }
         
         fmtdesc.index++;
@@ -337,7 +376,8 @@ std::string Cameras::generate_manifest() {
                     {"support_h264",  _endpoint.support_h264 },
                     {"support_h265",  _endpoint.support_h265 },
                     {"support_mjpeg", _endpoint.support_mjpeg },
-                    {"support_raw",   _endpoint.support_raw }
+                    {"support_raw",   _endpoint.support_raw },
+                    {"formats",       _endpoint.formats }
                 };
 
                 endpoint_index++;
