@@ -46,6 +46,18 @@ int main(int argc, char *argv[]) {
         _pr << profile_manifest.dump(4);
         _pr.close();
 
+
+        nlohmann::json j;
+    
+        j["profile"] = profile_manifest;
+        j["platform"] = platform_manifest;
+        j["wifi"] = wifi_manifest;
+        j["camera"] = camera_manifest;
+
+        std::ofstream _manifest("/tmp/manifest");
+        _manifest << j.dump(4);
+        _manifest.close();
+
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
         exit(1);
