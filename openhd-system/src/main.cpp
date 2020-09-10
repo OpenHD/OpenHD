@@ -7,6 +7,7 @@
 #include "platform.h"
 #include "cameras.h"
 #include "wifi.h"
+#include "profile.h"
 
 int main(int argc, char *argv[]) {
 
@@ -34,6 +35,13 @@ int main(int argc, char *argv[]) {
         std::ofstream _w("/tmp/wifi_manifest");
         _w << wifi_manifest;
         _w.close();
+
+        Profile profile(platform.platform_type(), platform.board_type(), platform.carrier_type());
+        profile.discover();
+        auto profile_manifest = profile.generate_manifest();
+        std::ofstream _pr("/tmp/profile_manifest");
+        _pr << profile_manifest;
+        _pr.close();
 
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
