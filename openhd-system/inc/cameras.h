@@ -7,6 +7,7 @@
 
 #include "platform.h"
 
+#include "json.hpp"
 
 typedef enum CameraType {
     CameraTypeRaspberryPiCSI,
@@ -50,7 +51,7 @@ public:
 
     void discover();
 
-    std::string generate_manifest();
+    nlohmann::json generate_manifest();
 
 private:
     /*

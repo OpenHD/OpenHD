@@ -160,7 +160,7 @@ void WiFi::process_card(std::string interface_name) {
 }
 
 
-std::string WiFi::generate_manifest() {
+nlohmann::json WiFi::generate_manifest() {
     nlohmann::json j;
 
     auto wifi_cards = nlohmann::json::array();
@@ -185,7 +185,7 @@ std::string WiFi::generate_manifest() {
     j["hotspot"] = wifi_hotspot_type_string(m_wifi_hotspot_type);
     j["cards"] = wifi_cards;
 
-    return j.dump(4);
+    return j;
 }
 
 

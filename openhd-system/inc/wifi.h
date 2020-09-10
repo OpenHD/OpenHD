@@ -7,6 +7,8 @@
 
 #include "platform.h"
 
+#include "json.hpp"
+
 typedef enum WiFiCardType {
     WiFiCardTypeRealtek8812au,
     WiFiCardTypeRealtek8814au,
@@ -37,7 +39,7 @@ public:
     void discover();
     void process_card(std::string interface_name);
 
-    std::string generate_manifest();
+    nlohmann::json generate_manifest();
 
 private:
     WiFiCardType string_to_wifi_card_type(std::string str);

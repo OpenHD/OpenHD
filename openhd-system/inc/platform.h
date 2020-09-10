@@ -4,6 +4,8 @@
 #include <array>
 #include <chrono>
 
+#include "json.hpp"
+
 typedef enum PlatformType {
     PlatformTypeRaspberryPi,
     PlatformTypeJetson,
@@ -64,7 +66,7 @@ public:
 
     void discover();
 
-    std::string generate_manifest();
+    nlohmann::json generate_manifest();
 
     PlatformType platform_type() {
         return m_platform_type;

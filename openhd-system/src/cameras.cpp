@@ -384,7 +384,7 @@ void Cameras::detect_ip() {
 
 
 
-std::string Cameras::generate_manifest() {
+nlohmann::json Cameras::generate_manifest() {
     nlohmann::json j = nlohmann::json::array();
 
     for (auto &camera : m_cameras) {
@@ -427,7 +427,7 @@ std::string Cameras::generate_manifest() {
         }
     }
 
-    return j.dump(4);
+    return j;
 }
 
 

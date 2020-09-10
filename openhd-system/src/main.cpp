@@ -9,6 +9,9 @@
 #include "wifi.h"
 #include "profile.h"
 
+#include "json.hpp"
+
+
 int main(int argc, char *argv[]) {
 
 
@@ -17,7 +20,7 @@ int main(int argc, char *argv[]) {
         platform.discover();
         auto platform_manifest = platform.generate_manifest();
         std::ofstream _p("/tmp/platform_manifest");
-        _p << platform_manifest;
+        _p << platform_manifest.dump(4);
         _p.close();
 
 
@@ -25,7 +28,7 @@ int main(int argc, char *argv[]) {
         cameras.discover();
         auto camera_manifest = cameras.generate_manifest();
         std::ofstream _c("/tmp/camera_manifest");
-        _c << camera_manifest;
+        _c << camera_manifest.dump(4);
         _c.close();
 
 
@@ -33,14 +36,14 @@ int main(int argc, char *argv[]) {
         wifi.discover();
         auto wifi_manifest = wifi.generate_manifest();
         std::ofstream _w("/tmp/wifi_manifest");
-        _w << wifi_manifest;
+        _w << wifi_manifest.dump(4);
         _w.close();
 
         Profile profile(platform.platform_type(), platform.board_type(), platform.carrier_type());
         profile.discover();
         auto profile_manifest = profile.generate_manifest();
         std::ofstream _pr("/tmp/profile_manifest");
-        _pr << profile_manifest;
+        _pr << profile_manifest.dump(4);
         _pr.close();
 
     } catch (std::exception &ex) {

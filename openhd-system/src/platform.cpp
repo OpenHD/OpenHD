@@ -133,14 +133,14 @@ void Platform::detect_pc() {
 }
 
 
-std::string Platform::generate_manifest() {
+nlohmann::json Platform::generate_manifest() {
     nlohmann::ordered_json j;
     
     j["platform"] = platform_type_string(m_platform_type);
     j["board"] = board_type_string(m_board_type);
     j["carrier"] = carrier_type_string(m_carrier_type);
 
-    return j.dump(4);
+    return j;
 }
 
 

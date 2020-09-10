@@ -6,6 +6,8 @@
 
 #include "platform.h"
 
+#include "json.hpp"
+
 class Profile {
 public:
     Profile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type);
@@ -14,7 +16,7 @@ public:
 
     void discover();
 
-    std::string generate_manifest();
+    nlohmann::json generate_manifest();
 
 private:
     PlatformType m_platform_type;

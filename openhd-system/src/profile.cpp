@@ -80,11 +80,11 @@ void Profile::discover() {
 }
 
 
-std::string Profile::generate_manifest() {
+nlohmann::json Profile::generate_manifest() {
     nlohmann::json j;
     
     j["profile"] = m_profile;
     j["settings-file"] = m_settings_file;
 
-    return j.dump(4);
+    return j;
 }
