@@ -37,6 +37,8 @@ function rctx_function {
 
     while true; do
         nice -n -5 /usr/local/bin/rctx
+        qstatus "Restarting ${RC} RC transmission!" 3
+        wbc_status "Restarting ${RC} RC transmission!" 5 55 0 &
         sleep 1
     done
 }
