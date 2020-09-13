@@ -17,6 +17,7 @@ typedef enum WiFiCardType {
     WiFiCardTypeAtheros9k,
     WiFiCardTypeRalink,
     WiFiCardTypeIntel,
+    WiFiCardTypeBroadcom,
     WiFiCardTypeUnknown
 } WiFiCardType;
 

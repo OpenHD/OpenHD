@@ -138,6 +138,13 @@ void WiFi::process_card(std::string interface_name) {
             card.supports_injection = true;
             break;
         }
+        case WiFiCardTypeBroadcom: {
+            card.supports_5ghz = supports_5ghz;
+            card.supports_2ghz = supports_2ghz;
+            card.supports_rts = false;
+            card.supports_injection = false;
+            break;
+        }
         case WiFiCardTypeRealtek8812au: {
             card.supports_5ghz = supports_5ghz;
             card.supports_2ghz = false; // quirk, the driver doesn't support it for injection, we should allow it for hotspot though
@@ -222,6 +229,9 @@ std::string WiFi::wifi_card_type_string(WiFiCardType card_type) {
         case WiFiCardTypeIntel: {
             return "intel";
         }
+        case WiFiCardTypeBroadcom: {
+            return "broadcom";
+        }
         default: {
             return "unknown";
         }
@@ -236,6 +246,8 @@ WiFiCardType WiFi::string_to_wifi_card_type(std::string driver_name) {
         return WiFiCardTypeRalink;
     } else if (to_uppercase(driver_name).find(to_uppercase("iwlwifi")) != std::string::npos) {
         return WiFiCardTypeIntel;
+    } else if (to_uppercase(driver_name).find(to_uppercase("brcmfmac")) != std::string::npos) {
+        return WiFiCardTypeBroadcom;
     } else if (to_uppercase(driver_name).find(to_uppercase("88xxau")) != std::string::npos) {
         return WiFiCardTypeRealtek8812au;
     } else if (to_uppercase(driver_name).find(to_uppercase("8812au")) != std::string::npos) {
