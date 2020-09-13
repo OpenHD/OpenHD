@@ -51,10 +51,7 @@ void WiFi::discover() {
     std::vector<std::string> excluded_interfaces = {
         "usb",
         "lo",
-        "eth",
-        "intwifi",
-        "relay",
-        "wifihotspot"
+        "eth"
     };
 
     boost::filesystem::path net("/sys/class/net");
