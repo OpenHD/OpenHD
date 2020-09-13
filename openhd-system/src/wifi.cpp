@@ -1,4 +1,5 @@
  #include <cstdio>
+#include <stdio.h>
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -19,7 +20,9 @@
 #include "platform.h"
 #include "wifi.h"
 
-
+extern "C" {
+    #include "nl.h"
+}
 
 std::string to_uppercase(std::string input) {
     for (std::string::iterator it = input.begin(); it != input.end(); ++ it) {
@@ -103,52 +106,65 @@ void WiFi::process_card(std::string interface_name) {
 
     card.type = string_to_wifi_card_type(driver_name);
 
+    std::stringstream phy_file;
+    phy_file << "/sys/class/net/";
+    phy_file << interface_name.c_str();
+    phy_file << "/phy80211/index";
+
+    std::ifstream d(phy_file.str());
+    std::string phy_val((std::istreambuf_iterator<char>(d)), std::istreambuf_iterator<char>());    
+
+    bool supports_2ghz = false;
+    bool supports_5ghz = false;
+
+    int ret = phy_lookup((char*)interface_name.c_str(), atoi(phy_val.c_str()), &supports_2ghz, &supports_5ghz);
+
     switch (card.type) {
         case WiFiCardTypeAtheros9k: {
-            card.supports_5ghz = false;
-            card.supports_2ghz = true;
+            card.supports_5ghz = supports_5ghz;
+            card.supports_2ghz = supports_2ghz;
             card.supports_rts = true;
             card.supports_injection = true;
             break;
         }
         case WiFiCardTypeRalink: {
-            card.supports_5ghz = false;
-            card.supports_2ghz = true;
+            card.supports_5ghz = supports_5ghz;
+            card.supports_2ghz = supports_2ghz;
             card.supports_rts = false;
             card.supports_injection = true;
             break;
         }
         case WiFiCardTypeIntel: {
-            card.supports_5ghz = true;
-            card.supports_2ghz = true;
+            card.supports_5ghz = supports_5ghz;
+            card.supports_2ghz = supports_2ghz;
             card.supports_rts = false;
             card.supports_injection = true;
             break;
         }
         case WiFiCardTypeRealtek8812au: {
-            card.supports_5ghz = true;
-            card.supports_2ghz = false;
+            card.supports_5ghz = supports_5ghz;
+            card.supports_2ghz = false; // quirk, the driver doesn't support it for injection, we should allow it for hotspot though
             card.supports_rts = true;
             card.supports_injection = true;
             break;
         }
         case WiFiCardTypeRealtek88x2bu: {
-            card.supports_5ghz = true;
-            card.supports_2ghz = true;
+            card.supports_5ghz = supports_5ghz;
+            card.supports_2ghz = supports_2ghz;
             card.supports_rts = false;
             card.supports_injection = true;
             break;
         }
         case WiFiCardTypeRealtek8188eu: {
-            card.supports_5ghz = false;
-            card.supports_2ghz = true;
+            card.supports_5ghz = supports_5ghz;
+            card.supports_2ghz = supports_2ghz;
             card.supports_rts = false;
             card.supports_injection = true;
             break;
         }
         default: {
-            card.supports_5ghz = true;
-            card.supports_2ghz = true;
+            card.supports_5ghz = supports_5ghz;
+            card.supports_2ghz = supports_2ghz;
             card.supports_rts = false;
             card.supports_injection = false;
             m_wifi_hotspot_type = WiFiHotspotTypeExternal;

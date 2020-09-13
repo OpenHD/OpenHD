@@ -2,7 +2,7 @@
 SRC_DIR = $(PWD)/src
 LIB_DIR = $(PWD)/lib
 
-INC_DIR = -I$(PWD)/inc
+INC_DIR = -I$(PWD)/inc -I/usr/include/libnl3
 
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local
@@ -14,11 +14,11 @@ endif
 
 SYSTEM_INCLUDE = $(PREFIX)/include
 LOCAL_INCLUDE = $(PWD)/lib/include
-LDFLAGS = -L$(PREFIX)/lib -lboost_filesystem -lboost_regex -lboost_system -lv4l2
+LDFLAGS = -L$(PREFIX)/lib -lboost_filesystem -lboost_regex -lboost_system -lv4l2 `pkg-config --cflags --libs libnl-3.0 libnl-genl-3.0`
 
 
-openhd_system: bcm2835.o profile.o wifi.o cameras.o platform.o main.o 
-	g++ -g -pthread -o openhd_system bcm2835.o profile.o wifi.o cameras.o platform.o main.o $(LDFLAGS)
+openhd_system: nl.o bcm2835.o profile.o wifi.o cameras.o platform.o main.o 
+	g++ -g -pthread -o openhd_system nl.o bcm2835.o profile.o wifi.o cameras.o platform.o main.o $(LDFLAGS)
 
 main.o: $(SRC_DIR)/main.cpp
 	g++ -std=c++17 -Wno-psabi -g -c -pthread -I$(SYSTEM_INCLUDE) -I$(LOCAL_INCLUDE) $(INC_DIR) $(SRC_DIR)/main.cpp
@@ -38,6 +38,8 @@ profile.o: $(SRC_DIR)/profile.cpp
 bcm2835.o: $(LIB_DIR)/bcm2835.c
 	gcc -g -c -pthread -I$(SYSTEM_INCLUDE) -I$(LOCAL_INCLUDE) $(INC_DIR) $(LIB_DIR)/bcm2835.c
 
+nl.o: $(SRC_DIR)/nl.c
+	gcc -g -c -pthread -I$(SYSTEM_INCLUDE) -I$(LOCAL_INCLUDE) $(INC_DIR) $(SRC_DIR)/nl.c
 
 
 clean:
