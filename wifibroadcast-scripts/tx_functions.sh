@@ -571,18 +571,7 @@ function tx_function {
     CAM=`/usr/bin/vcgencmd get_camera | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("supported=\d+ detected=", "", s); print(s);'`
     
     if [ "${CAM}" -ge 1 ];  then
-
-        if [ "$ENABLE_OPENHDVID" == "Y" ]; then
-            CAMERA_PROGRAM="openhdvid"
-
-            if [ "$AIR_VIDEO_RECORDING" == "Y" ]; then
-                EXTRAPARAMS="${EXTRAPARAMS} --record ${AIR_VIDEO_RECORDING_PATH} -wr ${AIR_VIDEO_RECORDING_WIDTH} -hr ${AIR_VIDEO_RECORDING_HEIGHT}"
-            fi
-        else
-            CAMERA_PROGRAM="raspivid"
-        fi
-
-        echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
+        echo "nice -n -9 raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
     else
 
         echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
@@ -636,30 +625,14 @@ function tx_function {
     # Note: this should be expanded to support single USB cameras as well
     #
     if [ "${CAM}" -ge 1 ]; then
-
-        #
-        # If openhdvid is enabled we mark it as the camera program and pull in the configuration variables it uses
-        # 
-        # Note that openhdvid is being removed and replaced with the camera microservice
-        #
-        if [ "$ENABLE_OPENHDVID" == "Y" ]; then
-            CAMERA_PROGRAM="openhdvid"
-
-            if [ "$AIR_VIDEO_RECORDING" == "Y" ]; then
-                EXTRAPARAMS="${EXTRAPARAMS} --record ${AIR_VIDEO_RECORDING_PATH} -wr ${AIR_VIDEO_RECORDING_WIDTH} -hr ${AIR_VIDEO_RECORDING_HEIGHT}"
-            fi
-        else
-            CAMERA_PROGRAM="raspivid"
-        fi
-
         #
         # When LTE is enabled, the camera stream goes to a splitter rather than directly to tx_rawsock, so that it can be
         # duplicated and sent out through the LTE card as well.
         # 
         if [ "$LTE" == "Y" ]; then
-            echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | gst-launch-1.0 -v fdsrc !  tee name=splitter ! queue ! h264parse ! rtph264pay config-interval=10 pt=96 ! udpsink host=$ZT_IP port=8000 splitter. ! queue ! fdsink | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
+            echo "nice -n -9 raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | gst-launch-1.0 -v fdsrc !  tee name=splitter ! queue ! h264parse ! rtph264pay config-interval=10 pt=96 ! udpsink host=$ZT_IP port=8000 splitter. ! queue ! fdsink | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
         else
-            echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
+            echo "nice -n -9 raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
         fi
 
         #

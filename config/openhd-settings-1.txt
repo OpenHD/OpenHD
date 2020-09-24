@@ -131,12 +131,6 @@ EXTRAPARAMS="-cd H264 -n -fl -ih -pf high -if both -ex sports -mm average -awb h
 # you can also disable recording entirely by setting VIDEO_TMP=none
 VIDEO_TMP=memory
 
-# >>>>>>>>>>[Use openhdvid instead of raspivid]
-# Raspivid is the default and stable option, openhdvid is a new replacement for it that will allow live camera
-# parameter changes and other enhancements. It is not well tested yet.
-ENABLE_OPENHDVID=N
-
-
 # >>>>>>>>>>[Use new raspberry pi camera AWB algorithm]
 # Buster only (strech doesn't have new enough firmware for it)
 # This option is here because the new AWB algorithm can cause color tint in certain cases, we're
