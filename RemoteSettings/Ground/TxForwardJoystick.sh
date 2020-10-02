@@ -1,7 +1,5 @@
 #!/bin/bash
 
-cd /usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/
-
 if [ -e "/tmp/settings.sh" ]; then
     OK=`bash -n /tmp/settings.sh`
     if [ "$?" == "0" ]; then
@@ -28,10 +26,10 @@ if [ "$EncryptionOrRange" == "Encryption" ]; then
 
 			if [ "$PrimaryCardMAC" == "0" ]; then
 				echo "start joystick forward wfb_tx -k 1 -n 1 -u 5566 -p 97 -B 20 -M 0 $NICS_LIST \n"
-				/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -k 1 -n 1 -u 5566 -p 97 -B 20 -M 0 -K /tmp/tx.key $NICS_LIST
+				/usr/local/bin/wfb_tx -k 1 -n 1 -u 5566 -p 97 -B 20 -M 0 -K /tmp/tx.key $NICS_LIST
 			else
 				echo "start joystick forward wfb_tx -k 1 -n 1 -u 5565 -p 97 -B 20 -M 0 \n"
-				/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -k 1 -n 1 -u 5566 -p 97 -B 20 -M 0 -K /tmp/tx.key $PrimaryCardMAC
+				/usr/local/bin/wfb_tx -k 1 -n 1 -u 5566 -p 97 -B 20 -M 0 -K /tmp/tx.key $PrimaryCardMAC
 			fi
 
 			echo "start wfb_tx -k 1 -n 1 -u 5566 -p 97 -B 20 -M 0 down. Restating... \n"

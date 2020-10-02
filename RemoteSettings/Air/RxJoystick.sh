@@ -1,7 +1,5 @@
 #!/bin/bash
 
-cd /usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/
-
 if [ -e "/tmp/settings.sh" ]; then
     OK=`bash -n /tmp/settings.sh`
     if [ "$?" == "0" ]; then
@@ -23,7 +21,7 @@ if [ "$EncryptionOrRange" == "Encryption" ]; then
 	while true
 	do
 		echo "strt Joystick rc rx -c 127.0.0.1 -u 5565 -p 97 $NICS_LIST \n"
-		/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_rx_rc -c 127.0.0.1 -k 1 -n 1 -u 5565 -p 97 -K /tmp/rx.key $NICS_LIST
+		/usr/local/bin/wfb_rx_rc -c 127.0.0.1 -k 1 -n 1 -u 5565 -p 97 -K /tmp/rx.key $NICS_LIST
 
 		NICS_LIST=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot`
 	        echo "Joystick rc rx -c 127.0.0.1 -u 5565 -p 97 Restating with:  $NICS_LIST \n"

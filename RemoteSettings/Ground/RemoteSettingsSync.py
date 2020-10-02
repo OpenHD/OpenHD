@@ -531,7 +531,7 @@ def SelectSmartSyncFrequency():
 
 def StartSVPcomTx():                                     
     try:                                     
-        subprocess.Popen(['/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx',"-k", "1", "-n", "1",
+        subprocess.Popen(['/usr/local/bin/wfb_tx',"-k", "1", "-n", "1",
                           "-K", "/tmp/tx.key",
                           "-u" ,str(UDP_PORT_OUT), "-p", "93", "-B", "20", "-M", "0", WlanName ])
         return True
@@ -541,7 +541,7 @@ def StartSVPcomTx():
 
 def StartSVPcomRx():   
     try:                                     
-        subprocess.Popen( ['/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_rx', "-k", "1", "-n", "1",
+        subprocess.Popen( ['/usr/local/bin/wfb_rx', "-k", "1", "-n", "1",
                                "-K", "/tmp/rx.key",
                               "-c" ,"127.0.0.1", "-u", str(UDP_PORT_IN), "-p", "92",  WlanName ], stdout=RxDevNull)
         return True

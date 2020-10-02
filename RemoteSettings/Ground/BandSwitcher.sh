@@ -1,7 +1,5 @@
 #!/bin/bash
 
-cd /usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/
-
 if [ -e "/tmp/settings.sh" ]; then
     OK=`bash -n /tmp/settings.sh`
     if [ "$?" == "0" ]; then

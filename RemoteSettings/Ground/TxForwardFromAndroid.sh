@@ -1,6 +1,5 @@
 #!/bin/bash
 
-cd /usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/
 
 if [ -e "/tmp/settings.sh" ]; then
     OK=`bash -n /tmp/settings.sh`
@@ -27,20 +26,20 @@ do
 
 	if [ "$PrimaryCardMAC" == "0" ]; then
 		if [ "$EncryptionOrRange" == "Range" ]; then
-			/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 -K /tmp/tx.key $NICS_LIST
+			/usr/local/bin/wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 -K /tmp/tx.key $NICS_LIST
     		fi
 		
 		if [ "$EncryptionOrRange" == "Encryption" ]; then
-            		/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 -K /tmp/tx.key $NICS_LIST
-    		fi
+			/usr/local/bin/wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 -K /tmp/tx.key $NICS_LIST
+		fi
 	else
 		if [ "$EncryptionOrRange" == "Range" ]; then
-			/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 -K /tmp/tx.key $PrimaryCardMAC
+			/usr/local/bin/wfb_tx -u 9090 -t 2 -p 90 -B 20 -M 0 -K /tmp/tx.key $PrimaryCardMAC
     		fi
 		
 		if [ "$EncryptionOrRange" == "Encryption" ]; then
-            		/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 -K /tmp/tx.key $PrimaryCardMAC
-    		fi	
+				/usr/local/bin/wfb_tx -u 9090 -t 0 -p 90 -B 20 -M 0 -K /tmp/tx.key $PrimaryCardMAC
+		fi	
 	fi
 
 	echo "start wfb_tx -u 9090 -p 90 down. Restating...  $PrimaryCardMAC \n"
