@@ -266,6 +266,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "libseek-thermal >= 20200801.1" \
   -d "flirone-driver >= 20200704.3" \
   -d "mavlink-router >= 20200704.3" \
+  -d "wifibroadcast >= 20200930.1" \
   -d "gnuplot-nox" \
   -d "hostapd" \
   -d "iw" \
