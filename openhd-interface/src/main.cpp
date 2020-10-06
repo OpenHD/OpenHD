@@ -10,6 +10,7 @@
 
 
 #include "wifi.h"
+#include "ethernet.h"
 
 
 #include "json.hpp"
@@ -20,9 +21,11 @@ int main(int argc, char *argv[]) {
     boost::asio::io_service io_service;
 
     WiFi wifi(io_service);
+    Ethernet ethernet(io_service);
 
     try {
         wifi.configure();
+        ethernet.configure();
 
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
