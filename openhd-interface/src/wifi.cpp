@@ -83,7 +83,7 @@ void WiFi::process_card(WiFiCard card) {
 
     // todo: errors encountered here need to be submitted to the status service, users will never see stdout
     set_card_state(card, false);
-    enable_monitor_mode(card, true);
+    enable_monitor_mode(card);
     set_card_state(card, true);
 
     // todo: temporary hardcoding until new settings system is merged
