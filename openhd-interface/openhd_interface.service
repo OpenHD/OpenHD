@@ -1,0 +1,11 @@
+[Unit]
+Description=openhd-interface
+After=openhd-system.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/openhd_interface
+
+[Install]
+WantedBy=multi-user.target
+Alias=openhdinterface.service
