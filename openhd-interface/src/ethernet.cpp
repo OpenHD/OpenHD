@@ -55,6 +55,8 @@ void Ethernet::process_manifest() {
         nlohmann::json j;
         f >> j;
 
+        m_ethernet_hotspot_type = string_to_ethernet_hotspot_type(j["hotspot"]);
+
         for (auto _card : j["cards"]) {
 
             EthernetCard card;

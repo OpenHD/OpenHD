@@ -37,6 +37,8 @@ private:
     std::string m_ethernet_hotspot_address = "192.168.3.1";
 
     std::vector<EthernetCard> m_ethernet_cards;
+
+    EthernetHotspotType m_ethernet_hotspot_type;
 };
 
 #endif
