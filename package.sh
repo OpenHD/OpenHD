@@ -283,6 +283,8 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "libv4l-dev" \
   -d "libpcap-dev" \
   -d "libpng-dev" \
+  -d "libnl-3-dev" \
+  -d "libnl-genl-3-dev" \
   -d "libsdl2-2.0-0" \
   -d "libsdl1.2debian" \
   -d "libconfig++9v5" \
