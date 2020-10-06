@@ -40,6 +40,26 @@ inline std::string camera_type_to_string(CameraType camera_type) {
 }
 
 
+inline std::string carrier_type_to_string(CarrierType carrier_type) {
+    switch (carrier_type) {
+        case CarrierTypeStereoPi: {
+            return "stereopi";
+        }
+        case CarrierTypeComputeModuleIO: {
+            return "computemoduleio";
+        }
+        case CarrierTypeJetsonNanoDevkit: {
+            return "jetson-nano-devkit";
+        }
+        case CarrierTypeJetsonNCB00: {
+            return "jetson-ncb00";
+        }
+        default: {
+            return "none";
+        }
+    }
+}
+
 
 inline std::string board_type_to_string(BoardType board_type) {
     switch (board_type) {

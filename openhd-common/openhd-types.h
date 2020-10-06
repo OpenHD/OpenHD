@@ -44,6 +44,15 @@ typedef enum BoardType {
 } BoardType;
 
 
+typedef enum CarrierType {
+    CarrierTypeStereoPi,
+    CarrierTypeComputeModuleIO,
+    CarrierTypeJetsonNanoDevkit,
+    CarrierTypeJetsonNCB00,
+    CarrierTypeNone
+} CarrierType;
+
+
 typedef enum WiFiCardType {
     WiFiCardTypeRealtek8812au,
     WiFiCardTypeRealtek8814au,
