@@ -11,5 +11,29 @@ typedef enum CameraType {
 } CameraType;
 
 
+
+typedef enum WiFiCardType {
+    WiFiCardTypeRealtek8812au,
+    WiFiCardTypeRealtek8814au,
+    WiFiCardTypeRealtek88x2bu,
+    WiFiCardTypeRealtek8188eu,
+    WiFiCardTypeAtheros9k,
+    WiFiCardTypeRalink,
+    WiFiCardTypeIntel,
+    WiFiCardTypeBroadcom,
+    WiFiCardTypeUnknown
+} WiFiCardType;
+
+
+typedef enum WiFiHotspotType {
+    WiFiHotspotTypeInternal2GBand,
+    WiFiHotspotTypeInternal5GBand,
+    WiFiHotspotTypeInternalDualBand,
+    WiFiHotspotTypeExternal,
+    WiFiHotspotTypeNone
+} WiFiHotspotType;
+
+
+
 #endif
 

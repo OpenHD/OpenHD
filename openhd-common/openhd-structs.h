@@ -28,4 +28,13 @@ struct Camera {
 };
 
 
+struct WiFiCard {
+    WiFiCardType type;
+    std::string name;
+    bool supports_5ghz;
+    bool supports_2ghz;
+    bool supports_injection;
+    bool supports_rts;
+};
+
 #endif
