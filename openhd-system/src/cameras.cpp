@@ -20,8 +20,7 @@
 
 #include "json.hpp"
 
-#include "openhd-types.h"
-#include "openhd-structs.h"
+#include "openhd-camera.hpp"
 #include "openhd-util.hpp"
 
 #include "cameras.h"

@@ -17,8 +17,7 @@
 
 #include "json.hpp"
 
-#include "openhd-types.h"
-#include "openhd-structs.h"
+#include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 
 

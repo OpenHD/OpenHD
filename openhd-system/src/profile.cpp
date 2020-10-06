@@ -10,8 +10,7 @@
 
 #include "json.hpp"
 
-#include "openhd-types.h"
-#include "openhd-structs.h"
+#include "openhd-platform.hpp"
 #include "openhd-util.hpp"
 
 #include "platform.h"

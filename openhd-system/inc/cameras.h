@@ -9,8 +9,7 @@
 
 #include "json.hpp"
 
-#include "openhd-types.h"
-#include "openhd-structs.h"
+#include "openhd-camera.hpp"
 
 
 class Cameras {

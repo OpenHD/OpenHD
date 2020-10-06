@@ -6,8 +6,9 @@
 
 #include "json.hpp"
 
-#include "openhd-types.h"
-#include "openhd-structs.h"
+#include "openhd-platform.hpp"
+#include "openhd-wifi.hpp"
+#include "openhd-ethernet.hpp"
 
 class Platform {
 public:

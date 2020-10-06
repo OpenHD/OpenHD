@@ -11,8 +11,9 @@
 
 #include "json.hpp"
 
-#include "openhd-types.h"
-#include "openhd-structs.h"
+#include "openhd-platform.hpp"
+#include "openhd-ethernet.hpp"
+#include "openhd-wifi.hpp"
 
 int main(int argc, char *argv[]) {
 

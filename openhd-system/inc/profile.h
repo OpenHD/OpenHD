@@ -8,8 +8,8 @@
 
 #include "json.hpp"
 
-#include "openhd-types.h"
-#include "openhd-structs.h"
+#include "openhd-platform.hpp"
+
 
 class Profile {
 public:
