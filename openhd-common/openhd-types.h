@@ -20,6 +20,29 @@ typedef enum PlatformType {
 } PlatformType;
 
 
+typedef enum BoardType {
+    BoardTypeRaspberryPiZero,
+    BoardTypeRaspberryPiZeroW,
+    BoardTypeRaspberryPi2B,
+    BoardTypeRaspberryPi3A,
+    BoardTypeRaspberryPi3APlus,
+    BoardTypeRaspberryPi3B,
+    BoardTypeRaspberryPi3BPlus,
+    BoardTypeRaspberryPiCM,
+    BoardTypeRaspberryPiCM3,
+    BoardTypeRaspberryPiCM3Plus,
+    BoardTypeRaspberryPiCM4,
+    BoardTypeRaspberryPi4B,
+    BoardTypeJetsonNano,
+    BoardTypeJetsonTX1,
+    BoardTypeJetsonTX2,
+    BoardTypeJetsonNX,
+    BoardTypeJetsonAGX,
+    BoardTypeNanoPiNeo4,
+    BoardTypeGenericPC,
+    BoardTypeUnknown
+} BoardType;
+
 
 typedef enum WiFiCardType {
     WiFiCardTypeRealtek8812au,
