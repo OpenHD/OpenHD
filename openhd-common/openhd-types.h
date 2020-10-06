@@ -11,6 +11,15 @@ typedef enum CameraType {
 } CameraType;
 
 
+typedef enum PlatformType {
+    PlatformTypeRaspberryPi,
+    PlatformTypeJetson,
+    PlatformTypeNanoPi,
+    PlatformTypePC,
+    PlatformTypeUnknown
+} PlatformType;
+
+
 
 typedef enum WiFiCardType {
     WiFiCardTypeRealtek8812au,

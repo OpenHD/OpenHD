@@ -41,6 +41,27 @@ inline std::string camera_type_to_string(CameraType camera_type) {
 
 
 
+inline std::string platform_type_to_string(PlatformType platform_type) {
+    switch (platform_type) {
+        case PlatformTypeJetson: {
+            return "jetson";
+        }
+        case PlatformTypeRaspberryPi: {
+            return "raspberrypi";
+        }
+        case PlatformTypeNanoPi: {
+            return "nanopi";
+        }
+        case PlatformTypePC: {
+            return "pc";
+        }
+        default: {
+            return "unknown";
+        }
+    }
+}
+
+
 inline std::string wifi_card_type_to_string(WiFiCardType card_type) {
     switch (card_type) {
         case WiFiCardTypeAtheros9k: {
