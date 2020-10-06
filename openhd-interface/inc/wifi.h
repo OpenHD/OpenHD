@@ -43,6 +43,8 @@ private:
     
     std::vector<WiFiCard> m_broadcast_cards;
 
+    bool m_hotspot_configured = false;
+    
     // todo: read from settings file once new settings system merged
     std::string m_wifi_hotspot_address = "192.168.2.1";
 
