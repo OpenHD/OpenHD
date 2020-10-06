@@ -6,6 +6,7 @@
 
 #include "platform.h"
 #include "cameras.h"
+#include "ethernet.h"
 #include "wifi.h"
 #include "profile.h"
 
@@ -42,6 +43,13 @@ int main(int argc, char *argv[]) {
         _w << wifi_manifest.dump(4);
         _w.close();
 
+        Ethernet ethernet(platform.platform_type(), platform.board_type(), platform.carrier_type(), platform.ethernet_hotspot_type());
+        ethernet.discover();
+        auto ethernet_manifest = ethernet.generate_manifest();
+        std::ofstream _t("/tmp/ethernet_manifest");
+        _t << ethernet_manifest.dump(4);
+        _t.close();
+
         int camera_count = cameras.count();
 
         Profile profile(platform.platform_type(), platform.board_type(), platform.carrier_type(), camera_count);
@@ -57,6 +65,7 @@ int main(int argc, char *argv[]) {
         j["profile"] = profile_manifest;
         j["platform"] = platform_manifest;
         j["wifi"] = wifi_manifest;
+        j["ethernet"] = ethernet_manifest;
         j["camera"] = camera_manifest;
 
         std::ofstream _manifest("/tmp/manifest");

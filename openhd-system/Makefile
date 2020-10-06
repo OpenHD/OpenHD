@@ -17,8 +17,8 @@ LOCAL_INCLUDE = $(PWD)/lib/include
 LDFLAGS = -L$(PREFIX)/lib -lboost_filesystem -lboost_regex -lboost_system -lv4l2 `pkg-config --cflags --libs libnl-3.0 libnl-genl-3.0`
 
 
-openhd_system: nl.o bcm2835.o profile.o wifi.o cameras.o platform.o main.o 
-	g++ -g -pthread -o openhd_system nl.o bcm2835.o profile.o wifi.o cameras.o platform.o main.o $(LDFLAGS)
+openhd_system: nl.o bcm2835.o profile.o ethernet.o wifi.o cameras.o platform.o main.o 
+	g++ -g -pthread -o openhd_system nl.o bcm2835.o profile.o ethernet.o wifi.o cameras.o platform.o main.o $(LDFLAGS)
 
 main.o: $(SRC_DIR)/main.cpp
 	g++ -std=c++17 -Wno-psabi -g -c -pthread -I$(SYSTEM_INCLUDE) -I$(LOCAL_INCLUDE) $(INC_DIR) $(SRC_DIR)/main.cpp
@@ -31,6 +31,9 @@ cameras.o: $(SRC_DIR)/cameras.cpp
 
 wifi.o: $(SRC_DIR)/wifi.cpp
 	g++ -std=c++17 -Wno-psabi -g -c -pthread -I$(SYSTEM_INCLUDE) -I$(LOCAL_INCLUDE) $(INC_DIR) $(SRC_DIR)/wifi.cpp
+
+ethernet.o: $(SRC_DIR)/ethernet.cpp
+	g++ -std=c++17 -Wno-psabi -g -c -pthread -I$(SYSTEM_INCLUDE) -I$(LOCAL_INCLUDE) $(INC_DIR) $(SRC_DIR)/ethernet.cpp
 
 profile.o: $(SRC_DIR)/profile.cpp
 	g++ -std=c++17 -Wno-psabi -g -c -pthread -I$(SYSTEM_INCLUDE) -I$(LOCAL_INCLUDE) $(INC_DIR) $(SRC_DIR)/profile.cpp

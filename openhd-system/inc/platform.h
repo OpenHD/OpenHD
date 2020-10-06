@@ -36,6 +36,11 @@ public:
         return m_wifi_hotspot_type;
     }
 
+    EthernetHotspotType ethernet_hotspot_type() {
+        return m_ethernet_hotspot_type;
+    }
+    
+
 private:
     void detect_raspberrypi();
     void detect_jetson();
