@@ -45,6 +45,7 @@ private:
     BoardType m_board_type = BoardTypeUnknown;
     CarrierType m_carrier_type = CarrierTypeNone;
 
+    EthernetHotspotType m_ethernet_hotspot_type = EthernetHotspotTypeNone;
     WiFiHotspotType m_wifi_hotspot_type = WiFiHotspotTypeNone;
 };
 

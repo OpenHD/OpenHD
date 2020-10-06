@@ -58,6 +58,7 @@ void Platform::detect_raspberrypi() {
     }
 
     m_platform_type = PlatformTypeRaspberryPi;
+    m_ethernet_hotspot_type = EthernetHotspotTypeInternal;
 
     std::string raspberry_identifier = result[1];
 
@@ -77,6 +78,7 @@ void Platform::detect_raspberrypi() {
     if (pizero_identifiers.find(raspberry_identifier) != pizero_identifiers.end()) {
         m_board_type = BoardTypeRaspberryPiZero;
         m_wifi_hotspot_type = WiFiHotspotTypeNone;
+        m_ethernet_hotspot_type = EthernetHotspotTypeNone;
     }
 
     std::set<std::string> pi2b_identifiers = { "2a22042", "2a21041", "2a01041", "2a01040" };
@@ -88,6 +90,7 @@ void Platform::detect_raspberrypi() {
     if (raspberry_identifier == "29020e0") {
         m_board_type = BoardTypeRaspberryPi3APlus;
         m_wifi_hotspot_type = WiFiHotspotTypeInternalDualBand;
+        m_ethernet_hotspot_type = EthernetHotspotTypeNone;
     }
 
     if (raspberry_identifier == "2a020d3") {
@@ -98,6 +101,7 @@ void Platform::detect_raspberrypi() {
     if (raspberry_identifier == "29000c1") {
         m_board_type = BoardTypeRaspberryPiZeroW;
         m_wifi_hotspot_type = WiFiHotspotTypeInternal2GBand;
+        m_ethernet_hotspot_type = EthernetHotspotTypeNone;
     }
 }
 
@@ -106,6 +110,8 @@ void Platform::detect_jetson() {
     if (boost::filesystem::exists(JETSON_BOARDID_PATH)) {
         m_platform_type = PlatformTypeJetson;
         m_board_type = BoardTypeJetsonNano;
+        // todo: this is not technically accurate, some carriers don't have ethernet ports
+        m_ethernet_hotspot_type = EthernetHotspotTypeInternal;
     }
 }
 
@@ -136,6 +142,7 @@ void Platform::detect_pc() {
 
     m_platform_type = PlatformTypePC;
     m_board_type = BoardTypeGenericPC;
+    m_ethernet_hotspot_type = EthernetHotspotTypeInternal;
 }
 
 
