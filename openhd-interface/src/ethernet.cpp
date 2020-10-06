@@ -77,6 +77,7 @@ void Ethernet::process_card(EthernetCard card) {
     if (m_is_air) {
         // use for other transmission types that present as ethernet interfaces
     } else {
+        // todo: handle other transmission interface types (requires new settings system support to differentiate them)
         setup_hotspot(card);
     }
 }
