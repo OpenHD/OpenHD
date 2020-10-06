@@ -9,38 +9,8 @@
 
 #include "json.hpp"
 
-typedef enum CameraType {
-    CameraTypeRaspberryPiCSI,
-    CameraTypeJetsonCSI,
-    CameraTypeRockchipCSI,
-    CameraTypeUVC,
-    CameraTypeIP,
-    CameraTypeUnknown
-} CameraType;
-
-
-struct CameraEndpoint {
-    std::string device_node;
-    std::string bus;
-    bool support_h264 = false;
-    bool support_h265 = false;
-    bool support_mjpeg = false;
-    bool support_raw = false;
-
-    std::vector<std::string> formats;
-};
-
-
-struct Camera {
-    CameraType type;
-    std::string name = "unknown";
-    std::string vendor = "unknown";
-    std::string vid;
-    std::string pid;
-    // for USB this is the bus number, for CSI it's the connector number
-    std::string bus;
-};
-
+#include "openhd-types.h"
+#include "openhd-structs.h"
 
 
 class Cameras {
@@ -71,8 +41,6 @@ private:
 
     void detect_ip();
     void probe_ip_camera(std::string url);
-
-    std::string camera_type_string(CameraType camera_type);
 
     std::vector<Camera> m_cameras;
     std::vector<CameraEndpoint> m_camera_endpoints;

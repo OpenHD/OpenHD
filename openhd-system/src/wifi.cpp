@@ -17,21 +17,16 @@
 
 #include "json.hpp"
 
+#include "openhd-types.h"
+#include "openhd-structs.h"
+#include "openhd-util.hpp"
+
 #include "platform.h"
 #include "wifi.h"
 
 extern "C" {
     #include "nl.h"
 }
-
-std::string to_uppercase(std::string input) {
-    for (std::string::iterator it = input.begin(); it != input.end(); ++ it) {
-        *it = toupper((unsigned char)*it);
-    }
-
-    return input;
-}
-
 
 
 WiFi::WiFi(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, WiFiHotspotType wifi_hotspot_type) : 
@@ -188,7 +183,7 @@ nlohmann::json WiFi::generate_manifest() {
     for (auto &_card : m_wifi_cards) {
         try {
             nlohmann::json card = { 
-                {"type",               wifi_card_type_string(_card.type) }, 
+                {"type",               wifi_card_type_to_string(_card.type) }, 
                 {"name",               _card.name },
                 {"supports_5ghz",      _card.supports_5ghz },
                 {"supports_2ghz",      _card.supports_2ghz },
@@ -202,82 +197,8 @@ nlohmann::json WiFi::generate_manifest() {
         }
     }
     
-    j["hotspot"] = wifi_hotspot_type_string(m_wifi_hotspot_type);
+    j["hotspot"] = wifi_hotspot_type_to_string(m_wifi_hotspot_type);
     j["cards"] = wifi_cards;
 
     return j;
-}
-
-
-std::string WiFi::wifi_card_type_string(WiFiCardType card_type) {
-    switch (card_type) {
-        case WiFiCardTypeAtheros9k: {
-            return "atheros9k";
-        }
-        case WiFiCardTypeRealtek8812au: {
-            return "realtek8812au";
-        }
-        case WiFiCardTypeRealtek88x2bu: {
-            return "realtek88x2bu";
-        }
-        case WiFiCardTypeRealtek8188eu: {
-            return "realtek8188eu";
-        }
-        case WiFiCardTypeRalink: {
-            return "ralink";
-        }
-        case WiFiCardTypeIntel: {
-            return "intel";
-        }
-        case WiFiCardTypeBroadcom: {
-            return "broadcom";
-        }
-        default: {
-            return "unknown";
-        }
-    }
-}
-
-
-WiFiCardType WiFi::string_to_wifi_card_type(std::string driver_name) {
-    if (to_uppercase(driver_name).find(to_uppercase("ath9k_htc")) != std::string::npos) {
-        return WiFiCardTypeAtheros9k;
-    } else if (to_uppercase(driver_name).find(to_uppercase("rt2800usb")) != std::string::npos) {
-        return WiFiCardTypeRalink;
-    } else if (to_uppercase(driver_name).find(to_uppercase("iwlwifi")) != std::string::npos) {
-        return WiFiCardTypeIntel;
-    } else if (to_uppercase(driver_name).find(to_uppercase("brcmfmac")) != std::string::npos) {
-        return WiFiCardTypeBroadcom;
-    } else if (to_uppercase(driver_name).find(to_uppercase("88xxau")) != std::string::npos) {
-        return WiFiCardTypeRealtek8812au;
-    } else if (to_uppercase(driver_name).find(to_uppercase("8812au")) != std::string::npos) {
-        return WiFiCardTypeRealtek8812au;
-    } else if (to_uppercase(driver_name).find(to_uppercase("88x2bu")) != std::string::npos) {
-        return WiFiCardTypeRealtek88x2bu;
-    } else if (to_uppercase(driver_name).find(to_uppercase("8188eu")) != std::string::npos) {
-        return WiFiCardTypeRealtek8188eu;
-    }
-
-    return WiFiCardTypeUnknown;
-}
-
-
-std::string WiFi::wifi_hotspot_type_string(WiFiHotspotType wifi_hotspot_type) {
-    switch (wifi_hotspot_type) {
-        case WiFiHotspotTypeInternal2GBand: {
-            return "internal2g";
-        }
-        case WiFiHotspotTypeInternal5GBand: {
-            return "internal5g";
-        }
-        case WiFiHotspotTypeInternalDualBand: {
-            return "internaldualband";
-        }
-        case WiFiHotspotTypeExternal: {
-            return "external";
-        }
-        default: {
-            return "none";
-        }
-    }
 }

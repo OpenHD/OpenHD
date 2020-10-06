@@ -2,7 +2,7 @@
 SRC_DIR = $(PWD)/src
 LIB_DIR = $(PWD)/lib
 
-INC_DIR = -I$(PWD)/inc -I/usr/include/libnl3
+INC_DIR = -I$(PWD)/inc -I$(PWD)/../openhd-common -I/usr/include/libnl3
 
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local

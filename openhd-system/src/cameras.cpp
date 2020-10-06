@@ -20,6 +20,10 @@
 
 #include "json.hpp"
 
+#include "openhd-types.h"
+#include "openhd-structs.h"
+#include "openhd-util.hpp"
+
 #include "cameras.h"
 
 
@@ -412,7 +416,7 @@ nlohmann::json Cameras::generate_manifest() {
             }
 
             nlohmann::json _camera = { 
-                {"type",          camera_type_string(camera.type) }, 
+                {"type",          camera_type_to_string(camera.type) }, 
                 {"name",          camera.name },
                 {"vendor",        camera.vendor },
                 {"vid",           camera.vid },
@@ -428,30 +432,5 @@ nlohmann::json Cameras::generate_manifest() {
     }
 
     return j;
-}
-
-
-
-std::string Cameras::camera_type_string(CameraType camera_type) {
-    switch (camera_type) {
-        case CameraTypeRaspberryPiCSI: {
-            return "pi-csi";
-        }
-        case CameraTypeJetsonCSI: {
-            return "jetson-csi";
-        }
-        case CameraTypeRockchipCSI: {
-            return "rockchip-csi";
-        }
-        case CameraTypeUVC: {
-            return "uvc";
-        }
-        case CameraTypeIP: {
-            return "ip";
-        }
-        default: {
-            return "unknown";
-        }
-    }
 }
 
