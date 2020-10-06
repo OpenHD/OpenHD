@@ -2,6 +2,8 @@
 #define OPENHD_UTIL_H
 
 
+#include <boost/process.hpp>
+
 
 #include "openhd-types.h"
 #include "openhd-structs.h"
@@ -15,6 +17,16 @@ inline std::string to_uppercase(std::string input) {
 
     return input;
 }
+
+
+inline bool run_command(std::string command, std::vector<std::string> args) {    
+    boost::process::child c(boost::process::search_path(command), args);
+
+    c.wait();
+
+    return c.exit_code() == 0;
+}
+
 
 inline std::string camera_type_to_string(CameraType camera_type) {
     switch (camera_type) {
