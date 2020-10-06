@@ -11,6 +11,8 @@
 
 #include "json.hpp"
 
+#include "openhd-types.h"
+#include "openhd-structs.h"
 
 int main(int argc, char *argv[]) {
 
@@ -39,7 +41,9 @@ int main(int argc, char *argv[]) {
         _w << wifi_manifest.dump(4);
         _w.close();
 
-        Profile profile(platform.platform_type(), platform.board_type(), platform.carrier_type());
+        int camera_count = cameras.count();
+
+        Profile profile(platform.platform_type(), platform.board_type(), platform.carrier_type(), camera_count);
         profile.discover();
         auto profile_manifest = profile.generate_manifest();
         std::ofstream _pr("/tmp/profile_manifest");

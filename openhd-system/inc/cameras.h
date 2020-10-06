@@ -23,6 +23,10 @@ public:
 
     nlohmann::json generate_manifest();
 
+    int count() {
+        return m_cameras.size();
+    }
+
 private:
     /*
      * These are for platform-specific camera access methods, most can also be accessed through v4l2

@@ -10,6 +10,10 @@
 
 #include "json.hpp"
 
+#include "openhd-types.h"
+#include "openhd-structs.h"
+#include "openhd-util.hpp"
+
 #include "platform.h"
 #include "profile.h"
 
@@ -18,10 +22,11 @@ extern "C" {
 }
 
 
-Profile::Profile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type) : 
+Profile::Profile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, int camera_count) : 
     m_platform_type(platform_type),
     m_board_type(board_type),
-    m_carrier_type(carrier_type) {}
+    m_carrier_type(carrier_type),
+    m_camera_count(camera_count) {}
 
 
 void Profile::discover() {
@@ -85,6 +90,7 @@ nlohmann::json Profile::generate_manifest() {
     
     j["profile"] = m_profile;
     j["settings-file"] = m_settings_file;
+    j["is-air"] = m_camera_count > 0 ? true : false;
 
     return j;
 }
