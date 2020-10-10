@@ -11,6 +11,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 
 #include <boost/filesystem/fstream.hpp>
@@ -21,6 +22,7 @@
 #include "json.hpp"
 
 #include "openhd-camera.hpp"
+#include "openhd-status.hpp"
 #include "openhd-util.hpp"
 
 #include "cameras.h"
@@ -423,6 +425,12 @@ nlohmann::json Cameras::generate_manifest() {
                 {"bus",           camera.bus },
                 {"endpoints",     endpoints }
             };
+
+            std::ostringstream message;
+            message << "Detected camera: " << camera.name << std::endl;
+
+            status_message(STATUS_LEVEL_INFO, message.str());
+
 
             j.push_back(_camera);
         } catch (std::exception &ex) {
