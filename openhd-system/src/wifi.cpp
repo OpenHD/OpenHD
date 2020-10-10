@@ -19,6 +19,7 @@
 
 #include "openhd-ethernet.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-status.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 
@@ -191,6 +192,11 @@ nlohmann::json WiFi::generate_manifest() {
                 {"supports_injection", _card.supports_injection },
                 {"supports_rts",       _card.supports_rts }
             };
+
+            std::ostringstream message;
+            message << "Detected wifi (" << wifi_card_type_to_string(_card.type) << ") interface: " << _card.name << std::endl;
+
+            status_message(STATUS_LEVEL_INFO, message.str());
 
             wifi_cards.push_back(card);
         } catch (std::exception &ex) {
