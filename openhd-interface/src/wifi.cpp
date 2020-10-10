@@ -17,6 +17,7 @@
 
 #include "json.hpp"
 
+#include "openhd-status.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 
@@ -61,6 +62,7 @@ void WiFi::process_manifest() {
         }
     } catch (std::exception &ex) {
         // don't do anything, but send an error message to the user through the status service
+        status_message(STATUS_LEVEL_EMERGENCY, "WiFi manifest processing failed");
         std::cerr << "WiFi::process_manifest: " << ex.what() << std::endl;
         return;
     }
@@ -117,6 +119,7 @@ void WiFi::setup_hotspot(WiFiCard card) {
     bool success = set_card_name(card, "wifihotspot0");
 
     if (!success) {
+        status_message(STATUS_LEVEL_WARNING, "Failed to rename wifi hotspot interface");
         std::cout << "WiFi::setup_hotspot: renaming interface failed, wifi hotspot disabled" << std::endl;
         return;
     }
@@ -129,9 +132,24 @@ void WiFi::setup_hotspot(WiFiCard card) {
     success = run_command("ifconfig", args);
 
     if (!success) {
+        status_message(STATUS_LEVEL_WARNING, "Failed to enable wifi hotspot interface");
         std::cout << "WiFi::setup_hotspot: bringing up interface failed, wifi hotspot disabled" << std::endl;
         return;
     }
+
+
+    std::ostringstream message1;
+    message1 << "WiFi hotspot enabled on frequency: ";
+
+    if (card.supports_5ghz) {
+        message1 << m_default_5ghz_frequency;
+    } else {
+        message1 << m_default_2ghz_frequency;
+    }
+
+    message1 << std::endl;
+    status_message(STATUS_LEVEL_INFO, message1.str());
+
 
     m_hotspot_configured = true;
 }
