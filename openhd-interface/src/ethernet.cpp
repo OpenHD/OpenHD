@@ -18,6 +18,7 @@
 #include "json.hpp"
 
 #include "openhd-ethernet.hpp"
+#include "openhd-status.hpp"
 #include "openhd-util.hpp"
 
 #include "ethernet.h"
@@ -46,6 +47,7 @@ void Ethernet::process_manifest() {
 
     } catch (std::exception &ex) {
         // don't do anything, but send an error message to the user through the status service
+        status_message(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
         std::cerr << "Ethernet::process_manifest: " << ex.what() << std::endl;
         return;
     }
@@ -67,6 +69,8 @@ void Ethernet::process_manifest() {
         }
     } catch (std::exception &ex) {
         // don't do anything, but send an error message to the user through the status service
+        status_message(STATUS_LEVEL_EMERGENCY, "Ethernet manifest processing failed");
+            
         std::cerr << "Ethernet::process_manifest: " << ex.what() << std::endl;
         return;
     }
@@ -101,11 +105,17 @@ bool Ethernet::set_card_name(EthernetCard card, std::string name) {
 void Ethernet::setup_hotspot(EthernetCard card) {
     std::cout << "Ethernet::setup_hotspot()" << std::endl;
 
+    std::ostringstream message1;
+
+    message1 << "Setting up ethernet hotspot on " << card.name << std::endl;
+    status_message(STATUS_LEVEL_INFO, message1.str());
+
     // todo: we really shouldn't be renaming the interface, we should just inform hostapd and dnsmasq which
     //       interface to use, but this is the right way to go for now.
     bool success = set_card_name(card, "ethernethotspot0");
 
     if (!success) {
+        status_message(STATUS_LEVEL_WARNING, "Failed to rename ethernet hotspot interface");
         std::cout << "Ethernet::setup_hotspot: renaming interface failed, hotspot disabled" << std::endl;
         return;
     }
@@ -120,7 +130,10 @@ void Ethernet::setup_hotspot(EthernetCard card) {
     success = run_command("ifconfig", args);
 
     if (!success) {
+        status_message(STATUS_LEVEL_WARNING, "Failed to enable ethenet hotspot interface");
         std::cout << "Ethernet::setup_hotspot: bringing up interface failed, ethernet hotspot disabled" << std::endl;
         return;
     }
+
+    status_message(STATUS_LEVEL_INFO, "Ethernet hotspot running");
 }
