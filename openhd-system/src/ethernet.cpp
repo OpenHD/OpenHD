@@ -19,6 +19,7 @@
 
 #include "openhd-ethernet.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-status.hpp"
 #include "openhd-util.hpp"
 
 #include "platform.h"
@@ -113,6 +114,11 @@ nlohmann::json Ethernet::generate_manifest() {
                 {"type",               ethernet_card_type_to_string(_card.type) }, 
                 {"name",               _card.name }
             };
+
+            std::ostringstream message;
+            message << "Detected ethernet interface: " << _card.name << std::endl;
+
+            status_message(STATUS_LEVEL_INFO, message.str());
 
             ethernet_cards.push_back(card);
         } catch (std::exception &ex) {
