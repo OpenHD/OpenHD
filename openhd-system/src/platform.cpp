@@ -17,7 +17,7 @@
 #include "openhd-platform.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-ethernet.hpp"
-
+#include "openhd-status.hpp"
 #include "openhd-util.hpp"
 
 #include "platform.h"
@@ -149,6 +149,19 @@ void Platform::detect_pc() {
 nlohmann::json Platform::generate_manifest() {
     nlohmann::ordered_json j;
     
+    std::ostringstream message1;
+
+    message1 << "Platform: " << platform_type_to_string(m_platform_type) << std::endl;
+    status_message(STATUS_LEVEL_INFO, message1.str());
+
+    std::ostringstream message2;
+    message2 << "Board: " << board_type_to_string(m_board_type) << std::endl;
+    status_message(STATUS_LEVEL_INFO, message2.str());
+
+    std::ostringstream message3;
+    message3 << "Carrier: " << carrier_type_to_string(m_carrier_type) << std::endl;
+    status_message(STATUS_LEVEL_INFO, message3.str());
+
     j["platform"] = platform_type_to_string(m_platform_type);
     j["board"] = board_type_to_string(m_board_type);
     j["carrier"] = carrier_type_to_string(m_carrier_type);
