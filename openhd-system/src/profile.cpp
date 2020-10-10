@@ -94,6 +94,11 @@ nlohmann::json Profile::generate_manifest() {
     bool is_air = m_camera_count > 0 ? true : false;
     j["is-air"] = is_air;
 
+    // global sysid for microservices
+    int sys_id = is_air ? 253 : 254;
+
+    j["microservice-sys-id"] = sys_id;
+
 
     std::ostringstream message1;
     message1 << "Profile: " << m_profile << std::endl;
@@ -104,6 +109,10 @@ nlohmann::json Profile::generate_manifest() {
 
     message2 << "Booting as: " << boot_type << std::endl;
     status_message(STATUS_LEVEL_INFO, message2.str());
+
+    std::ostringstream message3;
+    message3 << "Microservice sysid: " << sys_id << std::endl;
+    status_message(STATUS_LEVEL_INFO, message3.str());
 
 
     return j;
