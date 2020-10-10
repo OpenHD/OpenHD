@@ -60,6 +60,7 @@ mkdir -p ${TMPDIR}/usr/include || exit 1
 
 mkdir -p ${TMPDIR}/usr/local/bin || exit 1
 mkdir -p ${TMPDIR}/usr/local/etc || exit 1
+mkdir -p ${TMPDIR}/usr/local/include || exit 1
 mkdir -p ${TMPDIR}/usr/local/share || exit 1
 
 mkdir -p ${TMPDIR}/usr/local/share/openhd/osdfonts || exit 1
@@ -89,6 +90,8 @@ build_source() {
     make || exit 1
     make install DESTDIR=${TMPDIR} || exit 1
     popd
+
+    cp openhd-common/* ${TMPDIR}/usr/local/include || exit 1
     
     cp UDPSplitter/udpsplitter.py ${TMPDIR}/usr/local/bin/ || exit 1
 
