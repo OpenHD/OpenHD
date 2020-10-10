@@ -11,6 +11,7 @@
 #include "json.hpp"
 
 #include "openhd-platform.hpp"
+#include "openhd-status.hpp"
 #include "openhd-util.hpp"
 
 #include "platform.h"
@@ -89,7 +90,21 @@ nlohmann::json Profile::generate_manifest() {
     
     j["profile"] = m_profile;
     j["settings-file"] = m_settings_file;
-    j["is-air"] = m_camera_count > 0 ? true : false;
+
+    bool is_air = m_camera_count > 0 ? true : false;
+    j["is-air"] = is_air;
+
+
+    std::ostringstream message1;
+    message1 << "Profile: " << m_profile << std::endl;
+    status_message(STATUS_LEVEL_INFO, message1.str());
+
+    std::ostringstream message2;
+    std::string boot_type = is_air ? "Air" : "Ground";
+
+    message2 << "Booting as: " << boot_type << std::endl;
+    status_message(STATUS_LEVEL_INFO, message2.str());
+
 
     return j;
 }
