@@ -8,6 +8,8 @@ if [ "$TTY" == "/dev/tty1" ]; then
 
     service ssh start
 
+    systemctl start openhd_security
+
     python /usr/local/bin/gpio-IsAir.py
     
 
