@@ -72,6 +72,12 @@ int main(int argc, char *argv[]) {
         _manifest << j.dump(4);
         _manifest.close();
 
+        // temporary compatibility with the older microservice code, which doesn't yet know about manifests
+        std::ofstream _u("/etc/openhd/openhd_microservice.conf", std::ios::binary | std::ios::out);
+        _u.write("SYSID=");
+        _u.write(profile_manifest["microservice-sys-id"]);
+        _u.close();
+
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
         exit(1);
