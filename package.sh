@@ -97,6 +97,12 @@ build_source() {
     make install DESTDIR=${TMPDIR} || exit 1
     popd
 
+    pushd openhd-status
+    make clean
+    make || exit 1
+    make install DESTDIR=${TMPDIR} || exit 1
+    popd
+
     cp openhd-common/* ${TMPDIR}/usr/local/include || exit 1
     
     cp UDPSplitter/udpsplitter.py ${TMPDIR}/usr/local/bin/ || exit 1
@@ -122,12 +128,6 @@ build_source() {
         make install DESTDIR=${TMPDIR} || exit 1
         popd
     fi
-
-    pushd openhd-status
-    make clean
-    make || exit 1
-    make install DESTDIR=${TMPDIR} || exit 1
-    popd
 
     #
     # Copy to root so it runs on startup
