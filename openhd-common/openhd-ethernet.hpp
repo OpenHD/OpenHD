@@ -1,5 +1,5 @@
-#ifndef OPENHD_STRUCTS_H
-#define OPENHD_STRUCTS_H
+#ifndef OPENHD_ETHERNET_H
+#define OPENHD_ETHERNET_H
 
 
 #include <string>
