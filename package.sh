@@ -105,6 +105,9 @@ build_source() {
 
     cp openhd-common/* ${TMPDIR}/usr/local/include || exit 1
     
+
+    # legacy stuff, we should be working to reduce and eventually eliminate most of the stuff below
+    # this line, aside from overlay files and default settings templates
     cp UDPSplitter/udpsplitter.py ${TMPDIR}/usr/local/bin/ || exit 1
 
     if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "stretch" ]]; then
