@@ -197,14 +197,6 @@ build_source() {
         popd
     fi
 
-    if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "stretch" ]]; then
-        pushd wifibroadcast-misc/LCD
-        make || exit 1
-        chmod 755 MouseListener || exit 1
-        cp -a MouseListener ${TMPDIR}/usr/local/bin/ || exit 1
-        popd
-    fi
-
     cp -a wifibroadcast-scripts/* ${TMPDIR}/usr/local/share/wifibroadcast-scripts/ || exit 1
 
     cp -a overlay/etc/* ${TMPDIR}/etc/ || exit 1
