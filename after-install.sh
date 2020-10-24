@@ -31,4 +31,11 @@ if [[ "$?" -ne 0 ]]; then
 fi
 
 
+# enable the loopback module if it isn't already, so that seek and flir cameras can be used
+grep "v4l2loopback" /etc/modules
+if [[ "$?" -ne 0 ]]; then
+    echo "v4l2loopback" >> /etc/modules
+fi
+
+
 mount -oremount,ro /boot || true
