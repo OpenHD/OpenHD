@@ -47,3 +47,5 @@ std::map<std::string, std::string> read_config(std::string path) {
 
     return settings;
 }
+
+#endif
