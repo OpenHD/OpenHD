@@ -65,7 +65,6 @@ mkdir -p ${TMPDIR}/usr/local/share || exit 1
 
 mkdir -p ${TMPDIR}/usr/local/share/openhd/osdfonts || exit 1
 mkdir -p ${TMPDIR}/usr/local/share/openhd/gnuplot || exit 1
-mkdir -p ${TMPDIR}/usr/local/share/cameracontrol || exit 1
 mkdir -p ${TMPDIR}/usr/local/share/wifibroadcast-scripts || exit 1
 
 ./install_dep.sh || exit 1
@@ -131,23 +130,6 @@ build_source() {
         popd
     fi
 
-    #
-    # Copy to root so it runs on startup
-    #
-    pushd wifibroadcast-scripts
-    cp -a .profile ${TMPDIR}/root/
-    popd
-
-    pushd wifibroadcast-misc
-    cp -a ftee ${TMPDIR}/usr/local/bin/ || exit 1
-    if [[ "${PLATFORM}" == "pi" ]]; then
-        cp -a raspi2raspi ${TMPDIR}/usr/local/bin/ || exit 1
-    fi
-    cp -a gpio-IsAir.py ${TMPDIR}/usr/local/bin/ || exit 1
-    cp -a gpio-config.py ${TMPDIR}/usr/local/bin/ || exit 1
-    cp -a openhdconfig.sh ${TMPDIR}/usr/local/bin/ || exit 1
-    popd
-
 
     if [[ "${PLATFORM}" == "pi" ]]; then
         pushd wifibroadcast-hello_video
@@ -162,21 +144,6 @@ build_source() {
     make || exit 1
     make install DESTDIR=${TMPDIR} || exit 1
     pushd
-
-
-    pushd cameracontrol/RCParseChSrc
-    make clean
-    make RCParseCh || exit 1
-    make install DESTDIR=${TMPDIR} || exit 1
-    popd
-
-    pushd cameracontrol/IPCamera/svpcom_wifibroadcast
-    chmod 755 version.py
-    make || exit 1
-    popd
-
-    cp -a cameracontrol/* ${TMPDIR}/usr/local/share/cameracontrol/ || exit 1
-
 
     pushd wifibroadcast-rc-Ath9k
     ./buildlora.sh || exit 1
