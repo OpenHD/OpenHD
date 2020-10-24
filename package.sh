@@ -65,7 +65,6 @@ mkdir -p ${TMPDIR}/usr/local/share || exit 1
 
 mkdir -p ${TMPDIR}/usr/local/share/openhd/osdfonts || exit 1
 mkdir -p ${TMPDIR}/usr/local/share/openhd/gnuplot || exit 1
-mkdir -p ${TMPDIR}/usr/local/share/RemoteSettings || exit 1
 mkdir -p ${TMPDIR}/usr/local/share/cameracontrol || exit 1
 mkdir -p ${TMPDIR}/usr/local/share/wifibroadcast-scripts || exit 1
 
@@ -163,10 +162,6 @@ build_source() {
     make || exit 1
     make install DESTDIR=${TMPDIR} || exit 1
     pushd
-
-
-    cp -a RemoteSettings/* ${TMPDIR}/usr/local/share/RemoteSettings/ || exit 1
-
 
 
     pushd cameracontrol/RCParseChSrc
