@@ -3,14 +3,6 @@
 COMMAND="${1}"
 IP="${2}"
 
-if [ -e "/tmp/settings.sh" ]; then
-    OK=`bash -n /tmp/settings.sh`
-    if [ "$?" == "0" ]; then
-        source /tmp/settings.sh
-    fi
-fi
-
-
 export PATH=/usr/local/bin:${PATH}
 
 if [ ! -f /tmp/mavlink_router_pipe ]; then 
@@ -25,14 +17,8 @@ if [[ ${COMMAND} == "old" || ${COMMAND} == "add" ]]; then
     echo "add ${IP}" > /dev/udp/127.0.0.1/9124
     echo "add udp ${IP} ${IP} 14550 0" > /tmp/mavlink_router_pipe
  
-    if [ "${QUIET}" == "N" ]; then
-        if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-            qstatus "External device connected: ${IP}" 5
-        else
-            wbc_status "External device connected: ${IP}" 5 55 0 &
-        fi
-    fi
-
+    qstatus "External device connected: ${IP}" 5
+    
     PINGFAIL=0
     IPTHERE=1
     while [ ${IPTHERE} -eq 1 ]; do
@@ -60,11 +46,5 @@ if [[ ${COMMAND} == "old" || ${COMMAND} == "add" ]]; then
         sleep 1
     done
 
-    if [ "${QUIET}" == "N" ]; then
-        if [ "${ENABLE_QOPENHD}" == "Y" ]; then
-            qstatus "External device gone: ${IP}" 5
-        else
-            wbc_status "External device gone: ${IP}" 5 55 0 &
-        fi
-    fi
+    qstatus "External device gone: ${IP}" 5
 fi
