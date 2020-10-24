@@ -4,6 +4,17 @@ source /usr/local/bin/wifibroadcast-scripts/global_functions.sh
 
 detect_memory
 
+# todo: these should not be top level root folders, they should either be in /tmp or /var/run/openhd
+
+
+# telemetry is stored separately from video to avoid affecting telemetry recording when video space
+# fills up
+mkdir -p /wbc_tmp
+mount -t tmpfs -o size=15024K tmpfs /wbc_tmp
+mkdir -p /wbc_tmp/rssi/
+
+
+
 mkdir -p /video_tmp
 
 # use 1/3 of available ram by default for /video_tmp, which is used for recording telemetry and video
