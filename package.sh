@@ -10,7 +10,7 @@ BUILD_TYPE=$4
 
 
 if [[ "${OS}" == "raspbian" ]]; then
-    PLATFORM_PACKAGES=("-d wiringpi"  "-d veye-raspberrypi >= 20200706.1"  "-d lifepoweredpi >= 20200704.2"  "-d raspi2png >= 20200704.2"  "-d gstreamer1.0-omx-rpi-config")
+    PLATFORM_PACKAGES=("-d wiringpi"  "-d veye-raspberrypi >= 20200706.1"  "-d lifepoweredpi >= 20200704.2"  "-d raspi2png >= 20200704.2"  "-d gstreamer1.0-omx-rpi-config" "-d gst-rpicamsrc")
 fi
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
