@@ -198,7 +198,7 @@ function save_function {
             SCREENSHOT_SAVE_PATH="/media/usb/${SAVE_IDENTIFIER}/screenshot"
 
             mkdir -p ${SCREENSHOT_SAVE_PATH}
-            cp /wbc_tmp/screenshot* ${SCREENSHOT_SAVE_PATH}/ > /dev/null 2>&1
+            cp /video_tmp/screenshot* ${SCREENSHOT_SAVE_PATH}/ > /dev/null 2>&1
         fi
 
         #
