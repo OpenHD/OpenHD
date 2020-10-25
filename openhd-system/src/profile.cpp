@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include <iostream>
+#include <sstream>
 
 #include "json.hpp"
 
