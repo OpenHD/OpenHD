@@ -188,7 +188,6 @@ EOF
     cp -a config/openhd-settings-1.txt ${TMPDIR}/boot/openhd-settings-4.txt || exit 1
 
 
-    cp -a driver-helpers/* ${TMPDIR}/usr/local/bin/ || exit 1
 }
 
 if [[ "${PLATFORM}" == "pi" ]]; then
