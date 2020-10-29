@@ -290,6 +290,9 @@ bool Cameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, std::
     if (driver == "uvcvideo") {
         camera.type = CameraTypeUVC;
         std::cerr << "Found UVC camera" << std::endl;
+    } else if (driver == "tegra-video") {
+        camera.type = CameraTypeJetsonCSI;
+        std::cerr << "Found Jetson CSI camera" << std::endl;
     } else {
         /*
          * This is primarily going to be the bcm2835-v4l2 interface on the Pi, and non-camera interfaces.
