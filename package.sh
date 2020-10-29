@@ -168,11 +168,6 @@ build_source() {
 dtoverlay=vc4-fkms-v3d
 EOF
     fi
-    cp -a config/openhd-settings-1.txt ${TMPDIR}/boot/openhd-settings-2.txt || exit 1
-    cp -a config/openhd-settings-1.txt ${TMPDIR}/boot/openhd-settings-3.txt || exit 1
-    cp -a config/openhd-settings-1.txt ${TMPDIR}/boot/openhd-settings-4.txt || exit 1
-
-
 }
 
 if [[ "${PLATFORM}" == "pi" ]]; then
@@ -187,10 +182,6 @@ VERSION=$(git describe)
 rm ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
 
 fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TMPDIR} \
-  --config-files /boot/openhd-settings-1.txt \
-  --config-files /boot/openhd-settings-2.txt \
-  --config-files /boot/openhd-settings-3.txt \
-  --config-files /boot/openhd-settings-4.txt \
   --config-files /boot/apconfig.txt \
   --config-files /boot/cmdline.txt \
   --config-files /boot/config.txt \
