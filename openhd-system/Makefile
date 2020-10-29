@@ -2,7 +2,7 @@
 SRC_DIR = $(PWD)/src
 LIB_DIR = $(PWD)/lib
 
-INC_DIR = -I$(PWD)/inc -I$(PWD)/../openhd-common -I/usr/include/libnl3
+INC_DIR = -I$(PWD)/inc -I$(PWD)/../openhd-common -I/usr/include/libnl3 -I/usr/include/libusb-1.0
 
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local
@@ -14,7 +14,7 @@ endif
 
 SYSTEM_INCLUDE = $(PREFIX)/include
 LOCAL_INCLUDE = $(PWD)/lib/include
-LDFLAGS = -L$(PREFIX)/lib -lboost_filesystem -lboost_regex -lboost_system -lv4l2 `pkg-config --cflags --libs libnl-3.0 libnl-genl-3.0`
+LDFLAGS = -L$(PREFIX)/lib -lboost_filesystem -lboost_regex -lboost_system -lv4l2 -lusb-1.0 `pkg-config --cflags --libs libnl-3.0 libnl-genl-3.0`
 
 
 openhd_system: nl.o bcm2835.o profile.o ethernet.o wifi.o cameras.o platform.o main.o 
