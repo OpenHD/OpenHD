@@ -28,6 +28,14 @@
 #include "cameras.h"
 
 
+ #define FLIR_ONE_VENDOR_ID 0x09cb
+ #define FLIR_ONE_PRODUCT_ID 0x1996
+
+ #define SEEK_COMPACT_VENDOR_ID 0x289d
+ #define SEEK_COMPACT_PRODUCT_ID 0x0010
+
+ #define SEEK_COMPACT_PRO_VENDOR_ID 0x289d
+ #define SEEK_COMPACT_PRO_PRODUCT_ID 0x0011
 
 Cameras::Cameras(PlatformType platform_type, BoardType board_type, CarrierType carrier_type) : 
     m_platform_type(platform_type),
