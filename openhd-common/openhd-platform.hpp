@@ -157,14 +157,14 @@ inline std::string platform_type_to_string(PlatformType platform_type) {
 }
 
 
-inline PlatformType string_to_platform_type(std::string hotspot_type) {
-    if (to_uppercase(hotspot_type).find(to_uppercase("jetson")) != std::string::npos) {
+inline PlatformType string_to_platform_type(std::string platform_type) {
+    if (to_uppercase(platform_type).find(to_uppercase("jetson")) != std::string::npos) {
         return PlatformTypeJetson;
-    } else if (to_uppercase(hotspot_type).find(to_uppercase("raspberrypi")) != std::string::npos) {
+    } else if (to_uppercase(platform_type).find(to_uppercase("raspberrypi")) != std::string::npos) {
         return PlatformTypeRaspberryPi;
-    } else if (to_uppercase(hotspot_type).find(to_uppercase("nanopi")) != std::string::npos) {
+    } else if (to_uppercase(platform_type).find(to_uppercase("nanopi")) != std::string::npos) {
         return PlatformTypeNanoPi;
-    } else if (to_uppercase(hotspot_type).find(to_uppercase("pc")) != std::string::npos) {
+    } else if (to_uppercase(platform_type).find(to_uppercase("pc")) != std::string::npos) {
         return PlatformTypePC;
     }
 
