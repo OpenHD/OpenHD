@@ -36,6 +36,7 @@ typedef enum BoardType {
     BoardTypeJetsonNX,
     BoardTypeJetsonAGX,
     BoardTypeNanoPiNeo4,
+    BoardType3DRSolo,
     BoardTypeGenericPC,
     BoardTypeUnknown
 } BoardType;
@@ -126,6 +127,9 @@ inline std::string board_type_to_string(BoardType board_type) {
         }
         case BoardTypeNanoPiNeo4: {
             return "nanopi-neo4";
+        }
+        case BoardType3DRSolo: {
+            return "3dr-solo";
         }
         case BoardTypeGenericPC: {
             return "generic-pc";
