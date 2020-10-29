@@ -116,13 +116,6 @@ build_source() {
         popd
     fi
 
-    pushd wifibroadcast-base
-    make clean
-    make || exit 1
-    make install DESTDIR=${TMPDIR} || exit 1
-    popd
-
-
     if [[ "${PLATFORM}" == "pi" ]]; then
         pushd wifibroadcast-hello_video
         make clean
