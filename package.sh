@@ -139,12 +139,6 @@ build_source() {
         popd
     fi
 
-    pushd JoystickIn/JoystickIn
-    make clean
-    make || exit 1
-    make install DESTDIR=${TMPDIR} || exit 1
-    pushd
-
     pushd wifibroadcast-rc-Ath9k
     ./buildlora.sh || exit 1
     chmod 775 lora || exit 1
@@ -153,6 +147,10 @@ build_source() {
     ./build.sh || exit 1
     chmod 775 rctx || exit 1
     cp -a rctx ${TMPDIR}/usr/local/bin/ || exit 1
+
+    make clean
+    make || exit 1
+    make install DESTDIR=${TMPDIR} || exit 1
     popd
 
     if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "stretch" ]]; then
