@@ -242,6 +242,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "ffmpeg" \
   -d "indent" \
   -d "libv4l-dev" \
+  -d "libusb-1.0-0" \
   -d "libpcap-dev" \
   -d "libpng-dev" \
   -d "libnl-3-dev" \
