@@ -62,7 +62,7 @@ mkdir -p ${TMPDIR}/usr/local/bin || exit 1
 mkdir -p ${TMPDIR}/usr/local/etc || exit 1
 mkdir -p ${TMPDIR}/usr/local/include || exit 1
 mkdir -p ${TMPDIR}/usr/local/share || exit 1
-
+mkdir -p ${TMPDIR}/usr/local/share/openhd || exit 1
 mkdir -p ${TMPDIR}/usr/local/share/openhd/osdfonts || exit 1
 mkdir -p ${TMPDIR}/usr/local/share/openhd/gnuplot || exit 1
 mkdir -p ${TMPDIR}/usr/local/share/wifibroadcast-scripts || exit 1
