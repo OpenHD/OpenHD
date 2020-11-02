@@ -428,7 +428,7 @@ LoadSeekDriver=N
 SeekFramerate=7
 # This affects the colorization used for the thermal range, experiement to find the one you like
 SeekColormap=0
-SeekRotate=270
+SeekRotate=0
 # Can also be seekpro
 SeekModel=seek
 
