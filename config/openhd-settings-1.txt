@@ -427,7 +427,7 @@ LoadSeekDriver=N
 # You should change this in USBCamera as well if you need to change it at all
 SeekFramerate=7
 # This affects the colorization used for the thermal range, experiement to find the one you like
-SeekColormap=0
+SeekColormap=1
 SeekRotate=0
 # Can also be seekpro
 SeekModel=seek
