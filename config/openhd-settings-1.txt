@@ -446,10 +446,10 @@ SeekModel=seek
 #USBCamera="gst-launch-1.0 v4l2src device=/dev/video3 ! video/x-raw,width=160,height=128,framerate=30/1 ! omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1 ! h264parse config-interval=3 ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
 
 #Seek Thermal  - 206 x 156 @ 7fps:
-#USBCamera="gst-launch-1.0 v4l2src device=/dev/video4 ! video/x-raw,format=RGB ! omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1 ! h264parse config-interval=3 ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
+#USBCamera="gst-launch-1.0 v4l2src device=/dev/video4 ! video/x-raw ! omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1 ! h264parse config-interval=3 ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
 
 #Seek Thermal Pro - 320 x 240 @ 15fps:
-#USBCamera="gst-launch-1.0 v4l2src device=/dev/video4 ! video/x-raw,format=RGB ! omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1 ! h264parse config-interval=3 ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
+#USBCamera="gst-launch-1.0 v4l2src device=/dev/video4 ! video/x-raw ! omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1 ! h264parse config-interval=3 ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
 
 
 #gstreamer videotestsrc:
