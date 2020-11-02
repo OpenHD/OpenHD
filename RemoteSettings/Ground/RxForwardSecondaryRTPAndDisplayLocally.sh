@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /usr/local/share/wifibroadcast-scripts/global_functions.sh
+
 cd /usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/
 
 if [ -e "/tmp/settings.sh" ]; then
@@ -16,6 +18,9 @@ if [ -e "/tmp/settings.sh" ]; then
     sleep 365d
 fi
 
+detect_os
+
+migration_helper
 
 NICS_LIST=`ls /sys/class/net/ | nice grep -v eth0 | nice grep -v lo | nice grep -v usb | nice grep -v intwifi | nice grep -v wlan | nice grep -v relay | nice grep -v wifihotspot`
 
