@@ -60,6 +60,8 @@ function tx_function {
         /usr/local/share/wifibroadcast-scripts/load_seek_thermal.sh &
     fi
 
+    # Allow the flir/seek drivers some time to start up
+    sleep 5
 
     /usr/local/bin/sharedmem_init_tx
 
