@@ -400,9 +400,9 @@ function rx_function {
 
         #if [ "$ENABLE_QOPENHD" == "Y" ]; then
         #	if [ "$FORWARD_STREAM" == "rtp" ]; then
-        #		ionice -c 1 -n 4 nice -n -10 cat /var/run/openhd/videofifo1 | ionice -c 1 -n 4 nice -n -10 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=$VIDEO_UDP_PORT host=127.0.0.1 &
+        #		ionice -c 1 -n 4 nice -n -10 cat /var/run/openhd/videofifo1 | ionice -c 1 -n 4 nice -n -10 gst-launch-1.0 fdsrc ! h264parse ! rtph264pay pt=96 config-interval=5 ! udpsink port=${VIDEO_UDP_PORT} host=127.0.0.1 &
         #	else
-        #		ionice -c 1 -n 4 nice -n -10 cat /var/run/openhd/videofifo1 | ionice -c 1 -n 4 nice -n -10 gst-launch-1.0 fdsrc ! udpsink port=$VIDEO_UDP_PORT host=127.0.0.1 &
+        #		ionice -c 1 -n 4 nice -n -10 cat /var/run/openhd/videofifo1 | ionice -c 1 -n 4 nice -n -10 gst-launch-1.0 fdsrc ! udpsink port=${VIDEO_UDP_PORT} host=127.0.0.1 &
         #	fi
         #else
             ionice -c 1 -n 4 nice -n -10 cat /var/run/openhd/videofifo1 | ionice -c 1 -n 4 nice -n -10 $DISPLAY_PROGRAM ${HELLO_VIDEO_ARGS} > /dev/null 2>&1 &
