@@ -72,6 +72,9 @@ DISPLAY_OSD=Y
 # set to "Y" to use the QOpenHD app instead of the original OSD
 ENABLE_QOPENHD=N
 
+# this should be on by default, unless you want USB/IP cameras to be shown as the main video
+ENABLE_QOPENHD_PIP=Y
+
 
 # >>>>>>>>>>[5/10/20Mhz BANDWIDTH SETTINGS]--Default 20mhz
 # !!!!!!! ATHEROS CARDS ONLY  !!!!!!!!!!!!!!!!!!!!!
