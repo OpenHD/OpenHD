@@ -91,9 +91,6 @@ force_turbo=1
 # prevent throttling on undervoltage, but still allow throttling on overtemp
 avoid_warnings=2
 
-# Set CPU speed to 900Mhz
-arm_freq=900
-
 # Set higher voltage for stability
 over_voltage=3
 
