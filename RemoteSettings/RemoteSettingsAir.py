@@ -323,7 +323,7 @@ while True:
                 filter = re.sub("\D", "", splitResult[1])
                 subprocess.check_call(['/usr/local/bin/txpower_atheros',  filter ])
         except Exception as e:
-            print("TxPowerGround except: " + str(e) )
+            print("TxPowerAir except: " + str(e) )
 
         ConfirmSave(VariableNameReport)
         complete_response = {}
