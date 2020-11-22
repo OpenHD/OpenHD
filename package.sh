@@ -266,7 +266,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "lifepoweredpi >= 20200704.2" \
   -d "mavlink-router >= 20200704.3" \
   -d "raspi2png >= 20200704.2" \
-  -d "dump1090-fa >= 20201024.1" \
+  -d "openhd-dump1090-mutability >= 20201122.2" \
   -d "gnuplot-nox" \
   -d "hostapd" \
   -d "iw" \
