@@ -291,9 +291,9 @@ Camera1ValueMin=700
 Camera1ValueMax=1400
 #
 Camera2ValueMin=1450
-Camera2ValueMax=2100
+Camera2ValueMax=1800
 #
-Camera3ValueMin=2150
+Camera3ValueMin=1850
 Camera3ValueMax=2200
 #
 Camera4ValueMin=2250
