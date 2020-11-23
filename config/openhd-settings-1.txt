@@ -309,9 +309,24 @@ SpeakersLevel=75
 # >>>>>>>>>>[VEYE-IMX290 CAMERA MODULE & SETTINGS]--
 EXTRAPARAMS_IMX290="-cd H264 -n -fl -ih -pf high -if both"
 IMX290_videoformat=PAL
+
+# 0x00 Back Light Mode OFF
+# 0x01 Back Light Mode LOW
+# 0x02 Back Light Mode HIGH
+# 0x03 DOL WDR Enable
 IMX290_wdrmode=0x03
+
+# 0x00 Normal
+# 0x01 Mirror
+# 0x02 V-Flip
+# 0x03 Mirror And V-Flip(180 Degree Rotate)
 IMX290_mirrormode=0x00
+
+# This is a complicated setting, see here: http://wiki.veye.cc/index.php/VEYE-MIPI-290/327_i2c
 IMX290_denoise=0x00
+
+# 0x00 means fixed framerate, up to 0x11 will allow the camera to adjust framerate to increase exposure, which 
+# may not be desirable for FPV
 IMX290_lowlight=0x00
 
 # Used to flip/mirror the IMX307 camera, separate setting from IMX290 because they don't handle it the same way
