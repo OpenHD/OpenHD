@@ -40,6 +40,38 @@ function tx_function {
             /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f lowlight -p1 0x00 >> /tmp/imx290log
         fi
 
+        if [ "${IMX290_agc}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f agc -p1 ${IMX290_agc} >> /tmp/imx290log
+        fi
+
+        if [ "${IMX290_brightness}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f brightness -p1 ${IMX290_brightness} >> /tmp/imx290log
+        fi
+
+        if [ "${IMX290_aespeed1}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f aespeed  -p1 ${IMX290_aespeed1} -p2 ${IMX290_aespeed2} >> /tmp/imx290log
+        fi
+
+        if [ "${IMX290_contrast}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f contrast -p1 ${IMX290_contrast} >> /tmp/imx290log
+        fi
+
+        if [ "${IMX290_saturation}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f saturation -p1 ${IMX290_saturation} >> /tmp/imx290log
+        fi
+
+        if [ "${IMX290_sharppen1}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f sharppen -p1 ${IMX290_sharppen1} -p2 ${IMX290_sharppen2} >> /tmp/imx290log
+        fi
+
+        if [ "${IMX290_wdrtargetbr}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f wdrtargetbr -p1 ${IMX290_wdrtargetbr} >> /tmp/imx290log
+        fi
+
+        if [ "${IMX290_wdrbtargetbr}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f wdrbtargetbr -p1 ${IMX290_wdrbtargetbr} >> /tmp/imx290log
+        fi
+
         /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f imagedir -p1 $IMX307_imagedir >> /tmp/imx290log
         /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f videofmt -p1 ${WIDTH} -p2 ${HEIGHT} -p3 ${FPS}
         popd

@@ -329,6 +329,41 @@ IMX290_denoise=0x00
 # may not be desirable for FPV
 IMX290_lowlight=0x00
 
+# agc indicated max gain of AE mode
+# Range 0x00 to 0x0F
+IMX290_agc=0x00
+
+# AE Target Brightness
+# Range 0x00 to 0x64
+IMX290_brightness=0x32
+
+# AE adjust speed, p1 is agc speed, p2 is shutter speed，Slow to Fast: [0, 0x64]
+# Range 0x00 to 0x64
+IMX290_aespeed1=0x32
+IMX290_aespeed2=0x32
+
+# Range 0x00 to 0xFF
+IMX290_contrast=0x80
+
+# Range 0x00 to 0x64
+IMX290_saturation=0x32
+
+# 0x0 disables, 0x1 enables
+IMX290_sharppen1=0x1
+
+# Sets the sharpen strength, sharppen1 must be enabled
+# Range [0x0-0xA]
+IMX290_sharppen2=0xA
+
+# The overall AE target value in WDR mode.
+# Takes effect in WDR mode. range: [0-0xFF]
+IMX290_wdrtargetbr=0x80
+
+# The auto exposure target value of the bright area in WDR mode.
+# Takes effect in WDR mode. range: [0-0xFF]
+IMX290_wdrbtargetbr=0x80
+
+
 # Used to flip/mirror the IMX307 camera, separate setting from IMX290 because they don't handle it the same way
 # 0: normal, 1: flip, 2: mirror, 3: flip+mirror. 
 # Note that the IMX307 configuration system seems to expect numbers like 0, not 0x00 like imx290 mirrormode
