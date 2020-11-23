@@ -262,7 +262,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -d "openhd-linux-pi >= 20200802.1" \
   -d "libseek-thermal >= 20200801.1" \
   -d "flirone-driver >= 20200704.3" \
-  -d "veye-raspberrypi >= 20200706.1" \
+  -d "veye-raspberrypi >= 20201122.1" \
   -d "lifepoweredpi >= 20200704.2" \
   -d "mavlink-router >= 20200704.3" \
   -d "raspi2png >= 20200704.2" \
