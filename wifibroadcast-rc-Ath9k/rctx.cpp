@@ -5,7 +5,7 @@
 
 
 #include "openhdlib.h"
-#include <SDL/SDL.h>
+//#include <SDL2/SDL.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -40,6 +40,12 @@
 #include <boost/thread.hpp>
 #include <boost/chrono.hpp>
 
+#include <linux/input.h>
+#include <linux/joystick.h>
+
+
+//#include <sys/time.h>
+
 
 // read Joystick every 2 ms or 500x per second
 #define UPDATE_INTERVAL 2000
@@ -48,8 +54,8 @@
 #define JOY_CHECK_NTH_TIME 400 
 
 #define JOYSTICK_N 0
-
-#define JOY_DEV "/sys/class/input/js0"
+//#define JOY_DEV "/sys/class/input/js0"
+#define JOY_DEV "/dev/input/js0"
 
 #define SERVER "127.0.0.1"
 
@@ -137,6 +143,9 @@ int transmissions = 2;
 /*
  * These match the defaults in joyconfig.txt, but are only used if for some reason there is no default 
  * in the settings file. 
+ *
+ * Default values will no longer have any impact of the system, init values will be retreived from the joystick during startup
+ *
  */
 int roll_axis      = 0;
 int pitch_axis     = 1;
@@ -168,7 +177,7 @@ bool validButtons = false;
 int discardCounter = 0;
 
 
-static SDL_Joystick *js;
+//static SDL_Joystick *js;
 char *ifname = NULL;
 int flagHelp = 0;
 int sock = 0;
@@ -341,19 +350,19 @@ uint16_t *rc_channels_memory_open(void) {
     int fd = shm_open("/wifibroadcast_rc_channels", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 
     if (fd < 0) {
-        fprintf(stderr, "rc shm_open\n");
-        exit(1);
+	fprintf(stderr,"rc shm_open() failed in file %s at line # %d\n", __FILE__,__LINE__);
+        exit(EXIT_FAILURE);
     }
 
-    if (ftruncate(fd, 9 * sizeof(uint16_t)) == -1) {
-        fprintf(stderr, "rc ftruncate\n");
-        exit(1);
+    if (ftruncate(fd, 9 * sizeof(uint16_t)) == -1) { // 8 16bit for Axis, 1 16 bit for Buttons
+	fprintf(stderr,"rc ftruncate failed in file %s at line # %d\n", __FILE__,__LINE__);
+        exit(EXIT_FAILURE);
     }
 
     void *retval = mmap(NULL, 9 * sizeof(uint16_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (retval == MAP_FAILED) {
-        fprintf(stderr, "rc mmap\n");
-        exit(1);
+	fprintf(stderr,"rc mmap failed in file %s at line # %d\n", __FILE__,__LINE__);
+       	exit(EXIT_FAILURE);
     }
 
     return (uint16_t *)retval;
@@ -368,9 +377,8 @@ static int open_sock(const char *ifname) {
 
     sock = socket(AF_PACKET, SOCK_RAW, 0);
     if (sock == -1) {
-        fprintf(stderr, "Error:\tSocket failed\n");
-
-        exit(1);
+        fprintf(stderr,"create socketfailed in file %s at line # %d\n", __FILE__,__LINE__);
+        exit(EXIT_FAILURE);
     }
 
     ll_addr.sll_family = AF_PACKET;
@@ -380,131 +388,146 @@ static int open_sock(const char *ifname) {
     strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
 
     if (ioctl(sock, SIOCGIFINDEX, &ifr) < 0) {
-        fprintf(stderr, "Error:\tioctl(SIOCGIFINDEX) failed\n");
-
-        exit(1);
+        fprintf(stderr,"ioctl(SIOCGIFINDEX) failed in file %s at line # %d\n", __FILE__,__LINE__);
+        exit(EXIT_FAILURE);
     }
 
 
     ll_addr.sll_ifindex = ifr.ifr_ifindex;
 
     if (ioctl(sock, SIOCGIFHWADDR, &ifr) < 0) {
-        fprintf(stderr, "Error:\tioctl(SIOCGIFHWADDR) failed\n");
-
-        exit(1);
+        fprintf(stderr,"ioctl(SIOCGIFHWADDR) failed in file %s at line # %d\n", __FILE__,__LINE__);
+        exit(EXIT_FAILURE);
     }
 
 
     memcpy(ll_addr.sll_addr, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
 
     if (bind(sock, (struct sockaddr *)&ll_addr, sizeof(ll_addr)) == -1) {
-        fprintf(stderr, "Error:\tbind failed\n");
         close(sock);
-        exit(1);
+        fprintf(stderr,"bind() failed in file %s at line # %d\n", __FILE__,__LINE__);
+        exit(EXIT_FAILURE);
     }
 
     if (sock == -1) {
-        fprintf(stderr, 
-                "Error:\tCannot open socket\n" 
-                "Info:\tMust be root with an 802.11 card with RFMON enabled\n");
-        exit(1);
+        fprintf(stderr,"open socket failed in file %s at line # %d\n"
+		       "Info: Must be root with an 802.11 card with RFMON enabled\n", __FILE__,__LINE__);
+        exit(EXIT_FAILURE);
     }
 
     return sock;
 }
 
 
-int16_t parsetoMultiWii(Sint16 value) {
+int16_t parsetoMultiWii(int16_t value) {
     return (int16_t)(((((double)value) + 32768.0) / 65.536) + 1000);
 }
 
 
-void readAxis(SDL_Event *event) {
-    SDL_Event myevent = (SDL_Event)*event;
-
+void readAxis(js_event *myevent) {
+    struct js_event event = (js_event)*myevent;
     /*
      * These are separate if tests instead of a switch statement because the values 
      * are not constants, they can be changed at runtime
      */
-    if (myevent.jaxis.axis == roll_axis) { 
-        rcData[0] = parsetoMultiWii(myevent.jaxis.value);
+    if (event.number == roll_axis) { 
+        rcData[0] = parsetoMultiWii(event.value);
         IsTrimDone[0] = 0;
     }
 
-    if (myevent.jaxis.axis == pitch_axis) { 
-        rcData[1] = parsetoMultiWii(myevent.jaxis.value);
-            IsTrimDone[1] = 0;
+    if (event.number == pitch_axis) { 
+        rcData[1] = parsetoMultiWii(event.value);
+        IsTrimDone[1] = 0;
     }
 
-    if (myevent.jaxis.axis == throttle_axis) { 
-        rcData[2] = parsetoMultiWii(myevent.jaxis.value);
+    if (event.number == throttle_axis) { 
+        rcData[2] = parsetoMultiWii(event.value);
         IsTrimDone[2] = 0;
     }
 
-    if (myevent.jaxis.axis == yaw_axis) { 
-        rcData[3] = parsetoMultiWii(myevent.jaxis.value);
+    if (event.number == yaw_axis) { 
+        rcData[3] = parsetoMultiWii(event.value);
         IsTrimDone[3] = 0;
     }
 
-    if (myevent.jaxis.axis == aux1_axis) { 
-        rcData[4] = parsetoMultiWii(myevent.jaxis.value);
+    if (event.number == aux1_axis) { 
+        rcData[4] = parsetoMultiWii(event.value);
         IsTrimDone[4] = 0;
     }
 
-    if (myevent.jaxis.axis == aux2_axis) { 
-        rcData[5] = parsetoMultiWii(myevent.jaxis.value);
+    if (event.number == aux2_axis) { 
+        rcData[5] = parsetoMultiWii(event.value);
         IsTrimDone[5] = 0;
     }
 
-    if (myevent.jaxis.axis == aux3_axis) { 
-        rcData[6] = parsetoMultiWii(myevent.jaxis.value);
+    if (event.number == aux3_axis) { 
+        rcData[6] = parsetoMultiWii(event.value);
         IsTrimDone[6] = 0;
     }
 
-    if (myevent.jaxis.axis == aux4_axis) { 
-        rcData[7] = parsetoMultiWii(myevent.jaxis.value);
+    if (event.number == aux4_axis) { 
+        rcData[7] = parsetoMultiWii(event.value);
         IsTrimDone[7] = 0;
     }
+//    printf("Axis %d %d\n", event.number, parsetoMultiWii(event.value));
 }
 
 
 
-static int eventloop_joystick(void) {
-    SDL_Event event;
+static int eventloop_joystick(int fd) {
+//    SDL_Event event;
 
-    while (SDL_PollEvent(&event)) {
-        switch (event.type) {
-            case SDL_JOYAXISMOTION: {
-                //printf ("Joystick %d, Axis %d moved to %d\n", event.jaxis.which, event.jaxis.axis, event.jaxis.value);
-                readAxis(&event);
-                return 2;
-            }
-            case SDL_JOYBUTTONDOWN: {
-                if (event.jbutton.button < SWITCH_COUNT) {
-                    // newer Taranis software can send 24 buttons - we use 16
-                    rcData[8] |= 1 << event.jbutton.button;
+	int *axis;
+	char *button;
+	int i;
+	struct js_event js;
+        int contreading = 1;
+	const int expectedSize = sizeof(struct js_event);
+	int responseSize = 0;
+	#define  MAX_EVENTS_PER_SESSION 5 // Max events to read in one session, dont count inits
+	int axisEventCounter = MAX_EVENTS_PER_SESSION;
 
-                    validButton1 = rcData[8];
-                }
-                return 5;
-            }
-            case SDL_JOYBUTTONUP: {
-                if (event.jbutton.button < SWITCH_COUNT) {
-                    rcData[8] &= ~(1 << event.jbutton.button);
-                }
-                return 4;
-            }
-            case SDL_QUIT: {
-                return 0;
-            }
-            default: {
-                // 2020-4-5: added default case during cleanup to prevent jumping off the end of the switch
-                break;
-            }
-        }
-        usleep(100);
-    }
-    return 1;
+// Read is non blocking, check if there is an event waiting
+	axisEventCounter = MAX_EVENTS_PER_SESSION; //MAX_EVENTS_PER_SESSION;
+    	while (axisEventCounter > 0) {
+		responseSize = read(fd, &js, expectedSize);
+		if (responseSize == expectedSize) {
+			if (js.type & JS_EVENT_INIT == 0)
+				axisEventCounter--;
+        		switch (js.type & ~JS_EVENT_INIT) {
+            			case JS_EVENT_AXIS: {
+//	            			printf ("A %d\t%d\t%d\t%d\n", js.number, js.value, js.time, axisEventCounter);
+                			readAxis(&js);
+					break;
+            			}
+            			case JS_EVENT_BUTTON: {
+                			if (js.number < SWITCH_COUNT) {
+//	                			printf ("B\t%d\t%d\t%d\n", js.number, js.value, js.time);
+
+						if(js.value == 1){
+		                    			// newer Taranis software can send 24 buttons - we use 16
+        		            			rcData[8] |= 1 << js.number;
+                		    			validButton1 = rcData[8];
+						}
+						else {
+			                    		rcData[8] &= ~(1 << js.number);
+						}
+                			}
+					break;
+            			}
+            			default: {
+                			// 2020-4-5: added default case during cleanup to prevent jumping off the end of the switch
+                			break;
+            			}
+        		}
+        		usleep(100);
+		}
+		else 
+		if (responseSize<0) { // Buffer was empty, nothing read. Stop reading
+			axisEventCounter = 0; // Exit next loop
+        	}
+	}
+	return 1;
 }
 
 
@@ -564,15 +587,15 @@ void sendRC(unsigned char seqno, telemetry_data_t *td) {
                 }
                 case CARD_TYPE_ATHEROS: {
                     if (write(socks[0], &framedatas, sizeof(framedatas)) < 0) {
-                        fprintf(stderr, "!");
-                        exit(1);
+			fprintf(stderr,"Write to Atheros failed in file %s at line # %d\n", __FILE__,__LINE__);
+        		exit(EXIT_FAILURE);
                     }
                     break;
                 }
                 case CARD_TYPE_REALTEK: {
                     if (write(socks[0], &framedatan, sizeof(framedatan)) < 0) {
-                        fprintf(stderr, "!");
-                        exit(1);
+			fprintf(stderr,"Write to Realtek failed in file %s at line # %d\n", __FILE__,__LINE__);
+                        exit(EXIT_FAILURE);
                     }
                     break;
                 }
@@ -584,15 +607,15 @@ void sendRC(unsigned char seqno, telemetry_data_t *td) {
                 }
                 case CARD_TYPE_ATHEROS: {
                     if (write(socks[best_adapter], &framedatas, sizeof(framedatas)) < 0) {
-                        fprintf(stderr, "!");
-                        exit(1);
+			fprintf(stderr,"Write to best Atheros failed in file %s at line # %d\n", __FILE__,__LINE__);
+                        exit(EXIT_FAILURE);
                     }
                     break;
                 }
                 case CARD_TYPE_REALTEK: {
                     if (write(socks[best_adapter], &framedatan, sizeof(framedatan)) < 0) {
-                        fprintf(stderr, "!");
-                        exit(1);
+			fprintf(stderr,"Write to best Realtek failed in file %s at line # %d\n", __FILE__,__LINE__);
+                        exit(EXIT_FAILURE);
                     }
                     break;
                 }
@@ -735,10 +758,66 @@ void CheckTrimChannel(int Channel) {
     }
 }
 
+
+int waitforUSBjoystick() { 
+// Stuck here until Joystick found and fileidentifier retrieved
+
+#define MAX_NAME_LENGTH 128
+
+        unsigned char axes = 2;
+        unsigned char buttons = 2;
+        int version = 0x000800;
+        char name[MAX_NAME_LENGTH] = "Unknown";
+        int retryOpen = 10;     // In normal case this shall be instant.
+        int fd;                 // file identifier
+        int waiting = 1;
+	char spinner[5] = "-\\|/";
+	int i=1;
+
+        while(waiting) {
+                retryOpen = 10;
+                fprintf(stderr, "Waiting for USB joystick to be connected and turned on ");
+                while (access(JOY_DEV, F_OK)==-1){
+                        fprintf(stderr, "%c\b",spinner[i%4]);
+			i++;
+                        usleep(100000);
+                };
+		fprintf(stderr,"\n" JOY_DEV " found, trying to open port\n");
+		// sleep(6); // Give USB a chance to settle, removed Taranis does this instant
+                while(waiting){ // This should never be an issue. If retryOpen counts to 0 exit.
+                        if ((fd = open(JOY_DEV, O_NONBLOCK)) < 0) {
+                                fprintf(stderr, "_");
+                                sleep(1); // In most cases this will only happen for slow devices so we do not rush this process
+                                if (retryOpen-- < 0) {
+                                        // Unexpected issue no way to resolv
+					// If we havn't been able to open the port within 10s kill app and it will be restarted to see if that helps
+                                        fprintf(stderr,"open(JOY_DEV) failed in file %s at line # %d\n", __FILE__,__LINE__);
+					waiting = 0; 
+                                }
+                        } 
+                        else {
+                                fprintf(stderr, "\nConnected!\n");
+
+				ioctl(fd, JSIOCGVERSION, &version);
+        			ioctl(fd, JSIOCGAXES, &axes);
+        			ioctl(fd, JSIOCGBUTTONS, &buttons);
+        			ioctl(fd, JSIOCGNAME(MAX_NAME_LENGTH), name);
+
+	        		printf("\tName:       %s\n", name);
+        			printf("\tVersion:    %i\n", version);
+        			printf("\tAxis:       %i\n", axes);
+        			printf("\tButtons:    %i\n", buttons);
+
+                                waiting = 0;
+                        }
+                }
+        }
+        return fd;
+}
+
+
 int main(int argc, char *argv[]) {
-    int done = 1;
-    int joy_connected = 0;
-    int joy = 1;
+    int fd; // file handler for the USB joystick
     int shmid;
     char *shared_memory;
     char ShmBuf[2];
@@ -822,7 +901,8 @@ int main(int argc, char *argv[]) {
     load_setting(joystick_settings, "AUX3_AXIS",       &aux3_axis);
     load_setting(joystick_settings, "AUX4_AXIS",       &aux4_axis);
 
-    load_setting(joystick_settings, "AXIS0_INITIAL",   &axis0_initial);
+// Below could potentially be removed
+    load_setting(joystick_settings, "AXIS0_INITIAL",   &axis0_initial); // These values are no longer used, instead read out from real device when connected
     load_setting(joystick_settings, "AXIS1_INITIAL",   &axis1_initial);
     load_setting(joystick_settings, "AXIS2_INITIAL",   &axis2_initial);
     load_setting(joystick_settings, "AXIS3_INITIAL",   &axis3_initial);
@@ -830,15 +910,13 @@ int main(int argc, char *argv[]) {
     load_setting(joystick_settings, "AXIS5_INITIAL",   &axis5_initial);
     load_setting(joystick_settings, "AXIS6_INITIAL",   &axis6_initial);
     load_setting(joystick_settings, "AXIS7_INITIAL",   &axis7_initial);
-
+// End of potentially removed
 
     /*
      * Decrement by one to get an index into rcData
      */
     TrimChannel--;
     ActivateChannel--;
-
-
 
     /*
      * Find the wfb cards, excluding specific kinds of interfaces.
@@ -990,15 +1068,16 @@ int main(int argc, char *argv[]) {
 
 
     if (inet_aton(SERVER, &si_otherRCEncrypt.sin_addr) == 0) {
-        fprintf(stderr, "inet_aton() failed\n");
-        exit(1);
+        fprintf(stderr,"inet_aton() failed in file %s at line # %d\n", __FILE__,__LINE__);
+        exit(EXIT_FAILURE);
     }
     // UDP RC Encrypted end
 
 
     // UDP Band switcher init
     if ((s2 = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-        exit(1);
+	fprintf(stderr,"s2 socket() failed in file %s at line # %d\n", __FILE__,__LINE__);
+        exit(EXIT_FAILURE);
     }
 
     memset((char *)&si_other2, 0, sizeof(si_other2));
@@ -1006,15 +1085,16 @@ int main(int argc, char *argv[]) {
     si_other2.sin_port = htons(PORT2);
 
     if (inet_aton(SERVER, &si_other2.sin_addr) == 0) {
-        fprintf(stderr, "inet_aton() failed\n");
-        exit(1);
+	fprintf(stderr,"inet_aton() failed in file %s at line # %d\n", __FILE__,__LINE__);
+        exit(EXIT_FAILURE);
     }
     // UDP Band switcher init end
 
 
     // UDP IP or USB camera sender init
     if ((s3 = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-        exit(1);
+	fprintf(stderr,"s3 socket() failed in file %s at line # %d\n", __FILE__,__LINE__);
+        exit(EXIT_FAILURE);
     }
 
     memset((char *)&si_other3, 0, sizeof(si_other3));
@@ -1022,8 +1102,8 @@ int main(int argc, char *argv[]) {
     si_other3.sin_port = htons(PORT3);
 
     if (inet_aton(SERVER, &si_other3.sin_addr) == 0) {
-        fprintf(stderr, "inet_aton() failed\n");
-        exit(1);
+	fprintf(stderr,"inet_aton() failed in file %s at line # %d\n", __FILE__,__LINE__);
+        exit(EXIT_FAILURE);
     }
     // UDP IP or USB camera sender end
 
@@ -1077,13 +1157,14 @@ int main(int argc, char *argv[]) {
     // init RSSI shared memory
     telemetry_init(&td);
 
-
     /*
      * We need to prefill channels, since we have no values for them as
      * long as the corresponding axis has not been moved yet
      *
      */
-    rcData = rc_channels_memory_open();
+    rcData = rc_channels_memory_open(); // Get memory for the data channels
+
+// ToDo: Could potentially be removed
     rcData[0] = axis0_initial;
     rcData[1] = axis1_initial;
     rcData[2] = axis2_initial;
@@ -1094,78 +1175,47 @@ int main(int argc, char *argv[]) {
     rcData[7] = axis7_initial;
     // Switches
     rcData[8] = 0;
-
+// ToDo: End potentially removed
 
     boost::thread t{udpInputThread};
 
-
-
-    fprintf(stderr, "Waiting for joystick ...");
+// ToDo: Should something else be cleaned up at exit? Previously was   atexit(SDL_Quit);
     
+	int joystickConnected = 0;
+	int running = 1;
+	int lastEvent;
 
-    while (joy) {
-        joy_connected = access(JOY_DEV, F_OK);
-        
-        fprintf(stderr, ".");
+	while (running) { // Only quit by exit() 
+		fd = waitforUSBjoystick(); // Will only return when joystick is connected
+		if (fd>-1) {
+			joystickConnected = 1;
+			counter = 0;
 
-        if (joy_connected == 0) {
-            fprintf(stderr, "connected!\n");
+			while (joystickConnected){
+			        lastEvent = eventloop_joystick(fd);
 
-            joy = 0;
-        }
+			        //fprintf(stderr, "eventloop_joystick\n");
 
-        usleep(100000);
-    }
-    
+			        if (counter % update_nth_time == 0) {
+	       		    		// send from joystick
+        	    			process();
+				}
+	        		if (counter % JOY_CHECK_NTH_TIME == 0) {
+		            		if (access(JOY_DEV, F_OK) != 0) {
+        		        		fprintf(stderr, "joystick disconnected\n");
+                				joystickConnected = 0;
+						close(fd); // Previous connection has stopped working, close the port
+            				}
+	        		}
+	        		usleep(UPDATE_INTERVAL);
+        			counter++;
+			}
 
-    if (SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_VIDEO) != 0) {
-        printf("ERROR: %s\n", SDL_GetError());
-        return EXIT_FAILURE;
-    }
+    		} else
+		running = 0;
+    	}
 
-    atexit(SDL_Quit);
-    
-    js = SDL_JoystickOpen(JOYSTICK_N);
-    
-    if (js == NULL) {
-        printf("Couldn't open desired Joystick: %s\n", SDL_GetError());
-
-        done = 0;
-    } else {
-        printf("\tName:       %s\n", SDL_JoystickName(JOYSTICK_N));
-        printf("\tAxis:       %i\n", SDL_JoystickNumAxes(js));
-        printf("\tTrackballs: %i\n", SDL_JoystickNumBalls(js));
-        printf("\tButtons:   %i\n", SDL_JoystickNumButtons(js));
-        printf("\tHats: %i\n", SDL_JoystickNumHats(js));
-    }
-
-
-    while (done) {
-        done = eventloop_joystick();
-
-        //fprintf(stderr, "eventloop_joystick\n");
-
-        if (counter % update_nth_time == 0) {
-            // send from joystick
-            process();
-        }
-
-        if (counter % JOY_CHECK_NTH_TIME == 0) {
-            
-            joy_connected = access(JOY_DEV, F_OK);
-
-            if (joy_connected != 0) {
-                fprintf(stderr, "joystick disconnected, exiting\n");
-                done = 0;
-            }
-        }
-
-        usleep(UPDATE_INTERVAL);
-        counter++;
-    }
-
-    SDL_JoystickClose(js);
-
+    close(fd);
     close(s2);
 
     std::cout << "closing..." << std::endl;
@@ -1266,9 +1316,8 @@ void process() {
             packMessage(seqno);
 
             if (sendto(sRCEncrypt, messageRCEncrypt, 21, 0, (struct sockaddr *)&si_otherRCEncrypt, sizeof(si_otherRCEncrypt)) == -1) {
-                fprintf(stderr, "sendto() error");
-
-                exit(1);
+                fprintf(stderr,"sendto() failed in file %s at line # %d\n", __FILE__,__LINE__);
+                exit(EXIT_FAILURE);
             }
         } else {
             /*
