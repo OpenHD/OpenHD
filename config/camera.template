@@ -1,0 +1,45 @@
+[Camera]
+
+# DO NOT change these, they are used for identifying this camera to the system
+type={type}
+id={id}
+name={name}
+vendor={vendor}
+# end identification section
+
+#
+# The resolution, framerate and video encoding for this camera.
+#
+# Note: it is not always simple to determine what a specific camera supports, if you
+#       are not sure what to put here, please use QOpenHD to configure the camera as it
+#       will show you the resolutions and framerates you can use
+#
+format={format}
+
+#
+# We strongly recommend you leave this on auto. If possible, constant bitrate encoding will
+# be used, but this is not always possible as some video encoders do not support it.
+# 
+bitrate={bitrate}
+
+# 
+# Picture adjustments
+# 
+# Note: some of these settings may not be possible on some cameras, and some have camera-specific values such
+#       as the VEYE WDR setting.
+#
+# WARNING: rotation can add latency on some cameras!
+#
+rotate={rotate}
+brightness={brightness}
+contrast={contrast}
+wdr={wdr}
+denoise={denoise}
+
+
+#
+# IP Camera URL
+# 
+# Note: IP cameras do not always support the same settings or capabilities that CSI or USB cameras can support.
+#
+url={url}
