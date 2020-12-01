@@ -500,6 +500,8 @@ SeekModel=seek
 #Seek Thermal Pro - 320 x 240 @ 15fps:
 #USBCamera="gst-launch-1.0 v4l2src device=/dev/video4 ! video/x-raw ! omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1 ! h264parse config-interval=3 ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
 
+#Hti-301 thermal camera - 384 x 288 @ 25fps
+#USBCamera="gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw ! videocrop top=0 left=0 right=0 bottom=4 ! omxh264enc control-rate=1 target-bitrate=2000000 ! h264parse config-interval=3 ! rtph264pay mtu=1024 ! udpsink host=127.0.0.1 port=5600"
 
 #gstreamer videotestsrc:
 #USBCamera="gst-launch-1.0 videotestsrc ! video/x-raw,width=160,height=120,framerate=30/1 ! omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1 ! h264parse config-interval=3 ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
