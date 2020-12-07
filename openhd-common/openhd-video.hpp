@@ -7,24 +7,23 @@
 
 #include "openhd-util.hpp"
 
-typedef enum RecordingType {
-    RecordingTypeNone,
-    RecordingTypeMemory,
-    RecordingTypeSD,
-    RecordingTypeUSB
-} RecordingType;
+typedef enum RecordingStorage {
+    RecordingStorageMemory,
+    RecordingStorageSD,
+    RecordingStorageUSB
+} RecordingStorage;
 
 
-inline RecordingType string_to_recording_type(std::string recording_type) {
+inline RecordingStorage string_to_recording_type(std::string recording_type) {
     if (to_uppercase(recording_type).find(to_uppercase("memory")) != std::string::npos) {
-        return RecordingTypeMemory;
+        return RecordingStorageMemory;
     } else if (to_uppercase(recording_type).find(to_uppercase("sd")) != std::string::npos) {
-        return RecordingTypeSD;
+        return RecordingStorageSD;
     } else if (to_uppercase(recording_type).find(to_uppercase("usb")) != std::string::npos) {
-        return RecordingTypeUSB;
+        return RecordingStorageUSB;
     }
 
-    return RecordingTypeNone;
+    return RecordingStorageMemory;
 }
 
 
