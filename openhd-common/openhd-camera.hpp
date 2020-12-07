@@ -13,6 +13,7 @@ typedef enum CameraType {
     CameraTypeRockchipCSI,
     CameraTypeUVC,
     CameraTypeIP,
+    CameraTypeV4L2Loopback,
     CameraTypeUnknown
 } CameraType;
 
@@ -56,6 +57,9 @@ inline std::string camera_type_to_string(CameraType camera_type) {
         }
         case CameraTypeIP: {
             return "ip";
+        }
+        case CameraTypeV4L2Loopback: {
+            return "v4l2loopback";
         }
         default: {
             return "unknown";
