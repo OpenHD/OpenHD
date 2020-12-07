@@ -2,7 +2,7 @@
 
 # DO NOT change these, they are used for identifying this ethernet card to the system
 type={type}
-id={id}
+mac={mac}
 name={name}
 vendor={vendor}
 # end identification section
