@@ -1,0 +1,35 @@
+[WiFi Card]
+
+# DO NOT change these, they are used for identifying this wifi card to the system
+type={type}
+mac={mac}
+name={name}
+vendor={vendor}
+# end identification section
+
+# used for wifibroadcast
+#
+# 2412-2484, 5180-5825 depending on which card is in use. will be selected automatically by default
+frequency={frequency}
+
+# 
+# 100-3100: manual power setting, unit is mBm
+txpower={txpower}
+
+#
+# wifibroadcast: the card will be used for packet injection/reception
+# client: the card will join the wifi network configured below, and obtain an IP address automatically with DHCP
+# hotspot: the card will be configured as a traditional wifi access point with DHCP server
+# relay: the card will be configured as a wifibroadcast relay (requires the password to match on both sides)
+#
+use_for={use_for}
+
+wifi_client_ap_name={wifi_client_ap_name}
+wifi_client_password={wifi_client_password}
+
+hotspot_channel={hotspot_channel}
+hotspot_password={hotspot_password}
+
+# g: 2.4ghz
+# a: 5.8ghz
+hotspot_band={hotspot_band}
