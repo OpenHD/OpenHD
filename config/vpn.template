@@ -1,0 +1,10 @@
+[VPN]
+
+provider={provider}
+
+# 
+# for zerotier this is the network ID number
+network_id={network_id}
+
+# for zerotier this sets the client IP address
+client_ip={client_ip}
