@@ -12,7 +12,7 @@ endif
 
 SYSTEM_INCLUDE = $(PREFIX)/include
 LOCAL_INCLUDE = $(PWD)/lib/include
-LDFLAGS = -L$(PREFIX)/lib -lboost_filesystem -lboost_regex -lboost_system -lsodium
+LDFLAGS = -L$(PREFIX)/lib -lboost_filesystem -lboost_regex -lboost_system -lsodium -lsystemd
 
 
 openhd_security: main.o 
