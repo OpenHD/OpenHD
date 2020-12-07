@@ -105,6 +105,8 @@ bool Ethernet::set_card_name(EthernetCard card, std::string name) {
 void Ethernet::setup_hotspot(EthernetCard card) {
     std::cout << "Ethernet::setup_hotspot()" << std::endl;
 
+    bool success = false;
+
     if (m_hotspot_configured) {
         std::cout << "Ethernet::setup_hotspot: already configured with another card" << std::endl;
         return;
@@ -114,30 +116,20 @@ void Ethernet::setup_hotspot(EthernetCard card) {
 
     message1 << "Setting up ethernet hotspot on " << card.name << std::endl;
     status_message(STATUS_LEVEL_INFO, message1.str());
+    
+    {
+        // todo: allow the interface address to be configured. this requires changing the dnsmasq config file though, not
+        //       just the interface address.
+        std::vector<std::string> args { 
+            card.name, m_ethernet_hotspot_address, "up",
+        };
 
-    // todo: we really shouldn't be renaming the interface, we should just inform hostapd and dnsmasq which
-    //       interface to use, but this is the right way to go for now.
-    bool success = set_card_name(card, "ethernethotspot0");
+        success = run_command("ifconfig", args);
 
-    if (!success) {
-        status_message(STATUS_LEVEL_WARNING, "Failed to rename ethernet hotspot interface");
-        std::cout << "Ethernet::setup_hotspot: renaming interface failed, hotspot disabled" << std::endl;
-        return;
-    }
-
-
-    // todo: allow the interface address to be configured. this requires changing the dnsmasq config file though, not
-    //       just the interface address. 
-    std::vector<std::string> args { 
-         "ethernethotspot0", m_ethernet_hotspot_address, "up",
-    };
-
-    success = run_command("ifconfig", args);
-
-    if (!success) {
-        status_message(STATUS_LEVEL_WARNING, "Failed to enable ethenet hotspot interface");
-        std::cout << "Ethernet::setup_hotspot: bringing up interface failed, ethernet hotspot disabled" << std::endl;
-        return;
+        if (!success) {
+            status_message(STATUS_LEVEL_WARNING, "Failed to enable ethenet hotspot interface");
+            return;
+        }
     }
 
     m_hotspot_configured = true;
