@@ -9,6 +9,11 @@
 #include <iostream>
 #include <sstream>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 #include "json.hpp"
 
 #include "openhd-platform.hpp"
@@ -30,67 +35,53 @@ Profile::Profile(PlatformType platform_type, BoardType board_type, CarrierType c
     m_camera_count(camera_count) {}
 
 
+std::string Profile::generate_unit_id() {
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+
+    std::ofstream of("/conf/openhd/unit.id");
+    if (of) {
+        of << uuid;
+    }
+
+    return boost::lexical_cast<std::string>(uuid);
+}
+
+
+/*
+ * This is a unique ID for the ground and air unit. 
+ * 
+ * When the air side first connects, it will announce itself with a service channel message that
+ * contains this ID. The ground side can then use the ID to find the correct settings files for
+ * that air unit, and if needed it will send them over. This takes the place of SmartSync and 
+ * is automatic.
+ * 
+ */
 void Profile::discover() {
     std::cout << "Profile::discover()" << std::endl;
 
-    int input0 = true;
-    int input1 = true;
+    std::ifstream unit_id_file("/conf/openhd/unit.id");
 
-    switch (m_platform_type) {
-        case PlatformTypeRaspberryPi: {
-            if (!bcm2835_init()) {
-                throw std::runtime_error("bcm2835 gpio init failed");
-            }
-            bcm2835_gpio_fsel(20, BCM2835_GPIO_FSEL_INPT);
-            bcm2835_gpio_fsel(21, BCM2835_GPIO_FSEL_INPT);
-
-            bcm2835_gpio_set_pud(20, BCM2835_GPIO_PUD_UP);
-            bcm2835_gpio_set_pud(21, BCM2835_GPIO_PUD_UP);
-
-            input0 = bcm2835_gpio_lev(20);
-            input1 = bcm2835_gpio_lev(21);
-
-            break;
-        }
-        case PlatformTypeJetson: {
-
-            break;
-        }
-        case PlatformTypeNanoPi: {
-            break;
-        }
-        case PlatformTypeRockchip: {
-            break;
-        }
-        case PlatformTypePC: {
-            break;
-        }
-        case PlatformTypeUnknown: {
-            break;
-        }
+    if (!unit_id_file.is_open()) {
+        m_unit_id = generate_unit_id();
+        return;
     }
 
-    if (input0 == 0 && input1 == 0) {
-        m_settings_file = "/boot/openhd-settings-4.txt";
-        m_profile = 4;
-    } else if (input0 == 0 && input1 == 1) {
-        m_settings_file = "/boot/openhd-settings-3.txt";
-        m_profile = 3;
-    } else if (input0 == 1 && input1 == 0) {
-        m_settings_file = "/boot/openhd-settings-2.txt";
-        m_profile = 2;
-    } else if (input0 == 1 && input1 == 1) {
-        m_settings_file = "/boot/openhd-settings-1.txt";
-        m_profile = 1;
+    std::string unit_id((std::istreambuf_iterator<char>(unit_id_file)),
+                         std::istreambuf_iterator<char>());
+
+    if (!unit_id.size() > 0) {
+        m_unit_id = generate_unit_id();
+        return;
     }
+
+    m_unit_id = unit_id;
 }
 
 
 nlohmann::json Profile::generate_manifest() {
     nlohmann::json j;
     
-    j["profile"] = m_profile;
-    j["settings-file"] = m_settings_file;
+    j["unit-id"] = m_unit_id;
 
     bool is_air = m_camera_count > 0 ? true : false;
     j["is-air"] = is_air;
@@ -102,7 +93,7 @@ nlohmann::json Profile::generate_manifest() {
 
 
     std::ostringstream message1;
-    message1 << "Profile: " << m_profile << std::endl;
+    message1 << "Unit ID: " << m_unit_id << std::endl;
     status_message(STATUS_LEVEL_INFO, message1.str());
 
     std::ostringstream message2;
