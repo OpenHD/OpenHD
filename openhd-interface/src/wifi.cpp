@@ -125,7 +125,6 @@ void WiFi::setup_hotspot(WiFiCard card) {
 
     if (!success) {
         status_message(STATUS_LEVEL_WARNING, "Failed to enable wifi hotspot interface");
-        std::cout << "WiFi::setup_hotspot: bringing up interface failed, wifi hotspot disabled" << std::endl;
         return;
     }
 
