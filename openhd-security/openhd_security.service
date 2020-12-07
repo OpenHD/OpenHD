@@ -1,8 +1,6 @@
 [Unit]
 Description=openhd-security
-Before=basic.target
 After=local-fs.target sysinit.target
-DefaultDependencies=no
 
 [Service]
 Type=notify
