@@ -56,6 +56,7 @@ void WiFi::process_manifest() {
             card.supports_5ghz = _card["supports_5ghz"];
             card.supports_2ghz = _card["supports_2ghz"];
             card.supports_injection = _card["supports_injection"];
+            card.supports_hotspot = _card["supports_hotspot"];
             card.supports_rts = _card["supports_rts"];
 
             m_wifi_cards.push_back(card);
@@ -108,6 +109,17 @@ void WiFi::process_card(WiFiCard card) {
  */
 void WiFi::setup_hotspot(WiFiCard card) {
     std::cout << "WiFi::setup_hotspot()" << std::endl;
+
+    if (!card.supports_hotspot) {
+        std::ostringstream message;
+        message << "WiFi hotspot not supported on ";
+        message << wifi_card_type_to_string(card.type);
+        message << "cards (";
+        message << card.name;
+        message << ")";
+        message << std::endl;
+        status_message(STATUS_LEVEL_INFO, message.str());
+    }
 
     bool success = false;
 
