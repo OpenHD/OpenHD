@@ -11,7 +11,7 @@ vendor={vendor}
 # hotspot: the card will be configured to serve as an ethernet hotspot (DHCP server)
 # lan: connect to a router (mostly useful for development purposes, acts as DHCP client)
 #
-use_for={use_for}}
+use_for={use_for}
 
 # 
 # The IP settings for this interface (used for hotspot, LAN is always DHCP)
