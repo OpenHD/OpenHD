@@ -301,6 +301,11 @@ bool Cameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, std::
     } else if (driver == "tegra-video") {
         camera.type = CameraTypeJetsonCSI;
         std::cerr << "Found Jetson CSI camera" << std::endl;
+    } else if (driver == "v4l2 loopback") {
+        // this is temporary, we are not going to use v4l2loopback for thermal cameras they'll be directly
+        // handled by the camera service instead
+        camera.type = CameraTypeV4L2Loopback;
+        std::cerr << "Found v4l2 loopback camera (likely a thermal camera)" << std::endl;
     } else {
         /*
          * This is primarily going to be the bcm2835-v4l2 interface on the Pi, and non-camera interfaces.
