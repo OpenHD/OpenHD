@@ -4,6 +4,8 @@
 #include <string.h>
 #include <sys/types.h> 
 
+#include <iostream>
+
 
 #include "openhd-status.hpp"
 
