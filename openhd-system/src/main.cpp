@@ -4,6 +4,8 @@
 #include <iterator>
 #include <exception>
 
+#include <systemd/sd-daemon.h>
+
 #include "platform.h"
 #include "cameras.h"
 #include "ethernet.h"
@@ -85,6 +87,8 @@ int main(int argc, char *argv[]) {
         std::cerr << "Unknown exception occurred" << std::endl;
         exit(1);
     }
+
+    sd_notify(0, "READY=1");
 
     return 0;
 }
