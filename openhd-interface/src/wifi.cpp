@@ -77,6 +77,7 @@ void WiFi::process_card(WiFiCard card) {
      *      we will have to let users mark one as being for hotspot use in the new settings system, once it's merged
      */
      if (!card.supports_injection) {
+         std::cerr << "Card does not support injection: " << card.name << std::endl;
          setup_hotspot(card);
          return;
     }
