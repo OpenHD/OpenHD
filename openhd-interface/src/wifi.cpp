@@ -95,7 +95,7 @@ void WiFi::process_card(WiFiCard card) {
     }
 
     // todo: temporary hardcoding until new settings system is merged    
-    set_txpower(card, "54");
+    set_txpower(card, "3100");
 
     m_broadcast_cards.push_back(card);
 }
