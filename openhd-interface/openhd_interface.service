@@ -3,7 +3,7 @@ Description=openhd-interface
 After=openhd-system.target
 
 [Service]
-Type=simple
+Type=notify
 ExecStart=/usr/local/bin/openhd_interface
 
 [Install]
