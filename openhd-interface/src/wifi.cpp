@@ -110,25 +110,16 @@ void WiFi::process_card(WiFiCard card) {
 void WiFi::setup_hotspot(WiFiCard card) {
     std::cout << "WiFi::setup_hotspot()" << std::endl;
 
+    bool success = false;
+
     if (m_hotspot_configured) {
         std::cout << "WiFi::setup_hotspot: already configured with another card" << std::endl;
         return;
     }
 
-    // todo: we really shouldn't be renaming the interface, we should just inform hostapd and dnsmasq which
-    //       interface to use, but this is the right way to go for now.
-    bool success = set_card_name(card, "wifihotspot0");
-
-    if (!success) {
-        status_message(STATUS_LEVEL_WARNING, "Failed to rename wifi hotspot interface");
-        std::cout << "WiFi::setup_hotspot: renaming interface failed, wifi hotspot disabled" << std::endl;
-        return;
-    }
-
-
     // todo: allow the interface address to be configured. this requires changing the dnsmasq config file though, not
     //       just the interface address. 
-    std::vector<std::string> args { "wifihotspot0", m_wifi_hotspot_address, "up", };
+    std::vector<std::string> args { card.name, m_wifi_hotspot_address, "up", };
 
     success = run_command("ifconfig", args);
 
