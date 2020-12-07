@@ -47,6 +47,7 @@ private:
     
     // todo: read from settings file once new settings system merged
     std::string m_wifi_hotspot_address = "192.168.2.1";
+    std::string m_wifi_hotspot_txpower = "3100";
 
     std::string m_default_5ghz_frequency = "5180";
     std::string m_default_2ghz_frequency = "2412";
