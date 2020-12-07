@@ -90,7 +90,7 @@ void Ethernet::process_card(EthernetCard card) {
 bool Ethernet::set_card_name(EthernetCard card, std::string name) {
     std::cout << "Ethernet::set_card_name()" << std::endl;
 
-    std::vector<std::string> args { "link", "set", card.name, "name", name };
+    std::vector<std::string> args { "link", "set", "dev", card.name, "name", name };
 
     bool success = run_command("ip", args);
 
