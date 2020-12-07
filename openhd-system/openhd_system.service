@@ -1,8 +1,6 @@
 [Unit]
 Description=openhd-system
-Before=basic.target
-After=local-fs.target sysinit.target
-DefaultDependencies=no
+After=openhdsecurity.service
 
 
 [Service]
