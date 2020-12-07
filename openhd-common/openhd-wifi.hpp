@@ -34,6 +34,7 @@ struct WiFiCard {
     bool supports_5ghz;
     bool supports_2ghz;
     bool supports_injection;
+    bool supports_hotspot;
     bool supports_rts;
 };
 

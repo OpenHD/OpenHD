@@ -119,6 +119,7 @@ void WiFi::process_card(std::string interface_name) {
             card.supports_2ghz = supports_2ghz;
             card.supports_rts = true;
             card.supports_injection = true;
+            card.supports_hotspot = true;
             break;
         }
         case WiFiCardTypeRalink: {
@@ -126,6 +127,7 @@ void WiFi::process_card(std::string interface_name) {
             card.supports_2ghz = supports_2ghz;
             card.supports_rts = false;
             card.supports_injection = true;
+            card.supports_hotspot = true;
             break;
         }
         case WiFiCardTypeIntel: {
@@ -133,6 +135,7 @@ void WiFi::process_card(std::string interface_name) {
             card.supports_2ghz = supports_2ghz;
             card.supports_rts = false;
             card.supports_injection = true;
+            card.supports_hotspot = false;
             break;
         }
         case WiFiCardTypeBroadcom: {
@@ -140,6 +143,7 @@ void WiFi::process_card(std::string interface_name) {
             card.supports_2ghz = supports_2ghz;
             card.supports_rts = false;
             card.supports_injection = false;
+            card.supports_hotspot = true;
             break;
         }
         case WiFiCardTypeRealtek8812au: {
@@ -147,6 +151,7 @@ void WiFi::process_card(std::string interface_name) {
             card.supports_2ghz = false; // quirk, the driver doesn't support it for injection, we should allow it for hotspot though
             card.supports_rts = true;
             card.supports_injection = true;
+            card.supports_hotspot = true;
             break;
         }
         case WiFiCardTypeRealtek88x2bu: {
@@ -154,6 +159,7 @@ void WiFi::process_card(std::string interface_name) {
             card.supports_2ghz = supports_2ghz;
             card.supports_rts = false;
             card.supports_injection = true;
+            card.supports_hotspot = true;
             break;
         }
         case WiFiCardTypeRealtek8188eu: {
@@ -161,6 +167,7 @@ void WiFi::process_card(std::string interface_name) {
             card.supports_2ghz = supports_2ghz;
             card.supports_rts = false;
             card.supports_injection = true;
+            card.supports_hotspot = true;
             break;
         }
         default: {
@@ -168,6 +175,7 @@ void WiFi::process_card(std::string interface_name) {
             card.supports_2ghz = supports_2ghz;
             card.supports_rts = false;
             card.supports_injection = false;
+            card.supports_hotspot = true;
             m_wifi_hotspot_type = WiFiHotspotTypeExternal;
             break;
         }
@@ -190,6 +198,7 @@ nlohmann::json WiFi::generate_manifest() {
                 {"supports_5ghz",      _card.supports_5ghz },
                 {"supports_2ghz",      _card.supports_2ghz },
                 {"supports_injection", _card.supports_injection },
+                {"supports_hotspot",   _card.supports_hotspot },
                 {"supports_rts",       _card.supports_rts }
             };
 
