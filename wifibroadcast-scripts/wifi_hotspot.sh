@@ -17,6 +17,7 @@ source /tmp/apconfig.txt
 
 sed -i -e "s/hw_mode=$hw_mode/hw_mode=$HOTSPOT_BAND/g" /tmp/apconfig.txt
 sed -i -e "s/channel=$channel/channel=$HOTSPOT_CHANNEL/g" /tmp/apconfig.txt
+sed -i -e "s/interface=wifihotspot0/interface=${HOTSPOT_INTERFACE}/g" /tmp/apconfig.txt
 
 
 sed -i -e "s/interface=wifihotspot0/interface=${HOTSPOT_INTERFACE}/g" /etc/dnsmasqWifi.conf
