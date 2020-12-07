@@ -103,7 +103,6 @@ void WiFi::process_card(WiFiCard card) {
 
 
 /*
- * todo: signal systemd to start the hostapd and dnsmasq services afterward by signaling we've reached wifi-hotspot-interface.target
  *
  * todo: deduplicate this and similar logic in Ethernet/LTE, they should be subclasses of a common base
  */
@@ -132,16 +131,43 @@ void WiFi::setup_hotspot(WiFiCard card) {
     std::ostringstream message1;
     message1 << "WiFi hotspot enabled on frequency: ";
 
+    std::string band;
+    std::string channel;
+
+    /*
+     * Note: This is not currently choosing to use the band that wifibroadcast cards are not using. Most
+     *       people seem to choose not to use the G band no matter what, so we might as well just default to 5Ghz
+     *       and then perhaps lean on FEC to avoid interference, it's far more likely things will work that way
+     *       than to prefer the 2.4ghz band in any situation.
+     *
+     */
+    // todo: the channel, band, and txpower comes from the settings system once it's merged, not intended to be hardcoded
     if (card.supports_5ghz) {
-        message1 << m_default_5ghz_frequency;
+        message1 << "Using band A, channel 165 for WiFi hotspot";
+        channel = "165";
+        band = "a";
     } else {
-        message1 << m_default_2ghz_frequency;
+        message1 << "Using band G, channel 11 for WiFi hotspot";
+        band = "g";
+        channel = "11";
     }
 
     message1 << std::endl;
     status_message(STATUS_LEVEL_INFO, message1.str());
 
+    {
+        std::vector<std::string> args { 
+            "/usr/local/share/wifibroadcast-scripts/wifi_hotspot.sh", band, channel, card.name, m_wifi_hotspot_txpower
+        };
 
+        success = run_command("/bin/bash", args);
+
+        if (!success) {
+            status_message(STATUS_LEVEL_WARNING, "Failed to enable hostap on wifi hotspot");
+            return;
+        }
+    }
+    
     m_hotspot_configured = true;
 }
 
