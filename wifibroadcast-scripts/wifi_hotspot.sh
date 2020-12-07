@@ -30,4 +30,4 @@ sed -i -e "s/dhcp-range=wifihotspot0/dhcp-range==${HOTSPOT_INTERFACE}/g" /etc/dn
 /usr/sbin/dnsmasq --conf-file=/etc/dnsmasqWifi.conf
 hostapd -B -d /tmp/apconfig.txt
 
-iw dev wifihotspot0 set txpower fixed ${HOTSPOT_TXPOWER}
+iw dev ${HOTSPOT_INTERFACE} set txpower fixed ${HOTSPOT_TXPOWER}
