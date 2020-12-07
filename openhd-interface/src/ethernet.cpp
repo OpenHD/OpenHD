@@ -97,10 +97,8 @@ bool Ethernet::set_card_name(EthernetCard card, std::string name) {
     return success;
 }
 
-/*
- * todo: signal systemd to start the hostapd and dnsmasq services afterward by signaling we've reached eth-hotspot-interface.target
- * 
- * todo: deduplicate this and similar logic in WiFi/LTE, they should be subclasses of a common base
+/* 
+ * todo: deduplicate this and similar logic in WiFi/LTE, they should be subclasses of a common base, or just an inline function
  */
 void Ethernet::setup_hotspot(EthernetCard card) {
     std::cout << "Ethernet::setup_hotspot()" << std::endl;
@@ -128,6 +126,19 @@ void Ethernet::setup_hotspot(EthernetCard card) {
 
         if (!success) {
             status_message(STATUS_LEVEL_WARNING, "Failed to enable ethenet hotspot interface");
+            return;
+        }
+    }
+
+    {
+        std::vector<std::string> args { 
+            "/usr/local/share/wifibroadcast-scripts/ethernet_hotspot.sh", card.name,
+        };
+
+        success = run_command("/bin/bash", args);
+
+        if (!success) {
+            status_message(STATUS_LEVEL_WARNING, "Failed to enable dnsmasq on eth hotspot");
             return;
         }
     }
