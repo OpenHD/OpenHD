@@ -28,7 +28,7 @@ inline RecordingStorage string_to_recording_type(std::string recording_type) {
 
 
 typedef enum RecordingTriggerType {
-    RecordingTriggerTypeNone,
+    RecordingTriggerTypeAlways,
     RecordingTriggerTypeRC,
     RecordingTriggerTypeArm
 } RecordingTriggerType;
@@ -41,7 +41,7 @@ inline RecordingTriggerType string_to_recording_trigger_type(std::string trigger
         return RecordingTriggerTypeArm;
     }
 
-    return RecordingTriggerTypeNone;
+    return RecordingTriggerTypeAlways;
 }
 
 
