@@ -191,7 +191,7 @@ bool WiFi::set_frequency(WiFiCard card, std::string frequency) {
 bool WiFi::set_txpower(WiFiCard card, std::string txpower) {
     std::cout << "WiFi::set_txpower(" << txpower << ")" << std::endl;
 
-    std::vector<std::string> args { "dev", card.name, "set", "txpower", txpower };
+    std::vector<std::string> args { "dev", card.name, "set", "txpower", "fixed", txpower };
 
     bool success = run_command("iw", args);
 
