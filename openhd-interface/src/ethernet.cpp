@@ -105,6 +105,11 @@ bool Ethernet::set_card_name(EthernetCard card, std::string name) {
 void Ethernet::setup_hotspot(EthernetCard card) {
     std::cout << "Ethernet::setup_hotspot()" << std::endl;
 
+    if (m_hotspot_configured) {
+        std::cout << "Ethernet::setup_hotspot: already configured with another card" << std::endl;
+        return;
+    }
+
     std::ostringstream message1;
 
     message1 << "Setting up ethernet hotspot on " << card.name << std::endl;
@@ -134,6 +139,8 @@ void Ethernet::setup_hotspot(EthernetCard card) {
         std::cout << "Ethernet::setup_hotspot: bringing up interface failed, ethernet hotspot disabled" << std::endl;
         return;
     }
+
+    m_hotspot_configured = true;
 
     status_message(STATUS_LEVEL_INFO, "Ethernet hotspot running");
 }

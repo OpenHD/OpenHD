@@ -33,6 +33,8 @@ private:
 
     bool m_is_air = false;
 
+    bool m_hotspot_configured = false;
+
     // todo: read from settings file once new settings system merged
     std::string m_ethernet_hotspot_address = "192.168.3.1";
 
