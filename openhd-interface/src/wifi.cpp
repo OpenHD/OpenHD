@@ -55,8 +55,8 @@ void WiFi::process_manifest() {
 
             card.supports_5ghz = _card["supports_5ghz"];
             card.supports_2ghz = _card["supports_2ghz"];
-            card.supports_rts = _card["supports_injection"];
-            card.supports_injection = _card["supports_rts"];
+            card.supports_injection = _card["supports_injection"];
+            card.supports_rts = _card["supports_rts"];
 
             m_wifi_cards.push_back(card);
         }
