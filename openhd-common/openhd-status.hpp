@@ -42,6 +42,8 @@ typedef enum STATUS_LEVEL {
  */
 inline void status_message(STATUS_LEVEL level, std::string message) {
 
+    std::cerr << message << std::endl;
+
     localmessage_t lmessage;
     lmessage.level = static_cast<uint8_t>(level);
     strncpy((char*)lmessage.message, message.c_str(), 50);
