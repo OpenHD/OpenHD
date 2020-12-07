@@ -168,6 +168,12 @@ build_source() {
 dtoverlay=vc4-fkms-v3d
 EOF
     fi
+
+    cp -a config/camera.template ${TMPDIR}/usr/local/share/openhd/ || exit 1
+    cp -a config/ethernetcard.template ${TMPDIR}/usr/local/share/openhd/ || exit 1
+    cp -a config/general.template ${TMPDIR}/usr/local/share/openhd/ || exit 1
+    cp -a config/vpn.template ${TMPDIR}/usr/local/share/openhd/ || exit 1
+    cp -a config/wificard.template ${TMPDIR}/usr/local/share/openhd/ || exit 1
 }
 
 if [[ "${PLATFORM}" == "pi" ]]; then
