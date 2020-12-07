@@ -38,6 +38,8 @@ private:
     void detect_rockchip_csi();
 
 
+    void detect_seek();
+    
     void detect_v4l2();
     void probe_v4l2_device(std::string device_node);
     bool process_video_node(Camera& camera, CameraEndpoint& endpoint, std::string node);

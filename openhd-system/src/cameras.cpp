@@ -13,10 +13,12 @@
 #include <iostream>
 #include <sstream>
 
+#include <libusb.h>
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/process.hpp>
 #include <boost/regex.hpp>
 
 #include "json.hpp"
@@ -64,6 +66,8 @@ void Cameras::discover() {
             break;
         }
     }
+
+    detect_seek();
 
     detect_v4l2();
     detect_ip();
@@ -403,6 +407,83 @@ void Cameras::detect_ip() {
 
 }
 
+
+
+
+void Cameras::detect_seek() {
+    /*
+     * What this is:
+     * 
+     * We're detecting whether the 2 known Seek thermal USB cameras are connected, then constructing
+     * arguments for the seekthermal driver depending on which model it is. We then run the seek driver
+     * with systemd using the arguments file we provided to it in seekthermal.service in the libseek-thermal 
+     * package.
+     *
+     * What happens after:
+     * 
+     * The systemd service starts, finds the camera and begins running on the device node we select. Then
+     * we will let it be found by the rest of this class just like any other camera, so it gets recorded 
+     * in the manifest and found by the camera service.
+     *
+     *
+     * todo: this should pull the camera settings from the settings file if available
+     */
+    
+    libusb_context *context = nullptr;
+    int result = libusb_init(&context);
+    if (result) {
+        std::cerr << "Failed to initialize libusb" << std::endl;
+        return;
+    }
+
+    libusb_device_handle *handle_compact = libusb_open_device_with_vid_pid(nullptr, SEEK_COMPACT_VENDOR_ID, SEEK_COMPACT_PRODUCT_ID);
+    libusb_device_handle *handle_compact_pro = libusb_open_device_with_vid_pid(nullptr, SEEK_COMPACT_PRO_VENDOR_ID, SEEK_COMPACT_PRO_PRODUCT_ID);
+    
+    // todo: this will need to be pulled from the config, we may end up running these from the camera service so that
+    //       it can see the camera settings, which are not visible to openhd-system early at boot
+    std::string model;
+    std::string fps;
+
+    if (handle_compact) {
+        std::cerr << "Found seek" << std::endl;
+        model = "seek";
+        fps = "7";
+    }
+
+    if (handle_compact_pro) {
+        std::cerr << "Found seekpro" << std::endl;
+        model = "seekpro";
+        // todo: this is not necessarily accurate, not all compact pro models are 15hz
+        fps = "15";
+    }
+
+    if (handle_compact_pro || handle_compact) {
+        std::cerr << "Found seek thermal camera" << std::endl;
+
+        std::ofstream _u("/etc/openhd/seekthermal.conf", std::ios::binary | std::ios::out);
+        // todo: this should be more dynamic and allow for multiple cameras
+        _u << "DeviceNode=/dev/video4";
+        _u << std::endl;
+        _u << "SeekModel=";
+        _u << model;
+        _u << std::endl;
+        _u << "FPS=";
+        _u << fps;
+        _u << std::endl;
+        _u << "SeekColormap=11";
+        _u << std::endl;
+        _u << "SeekRotate=11";
+        _u << std::endl;
+        _u.close();
+
+        std::vector<std::string> ar { 
+            "start", "seekthermal"
+        };
+
+        boost::process::child p(boost::process::search_path("systemctl"), ar);
+        p.wait();
+    }
+}
 
 
 nlohmann::json Cameras::generate_manifest() {
