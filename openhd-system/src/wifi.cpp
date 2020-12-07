@@ -134,7 +134,7 @@ void WiFi::process_card(std::string interface_name) {
             card.supports_5ghz = supports_5ghz;
             card.supports_2ghz = supports_2ghz;
             card.supports_rts = false;
-            card.supports_injection = true;
+            card.supports_injection = false;
             card.supports_hotspot = false;
             break;
         }
