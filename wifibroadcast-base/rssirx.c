@@ -93,6 +93,13 @@ int dbm_noise[6];
 int dbm_last[6];
 int quality[6];
 
+typedef enum CARD_TYPE {
+    CARD_TYPE_RALINK,
+    CARD_TYPE_REALTEK,
+    CARD_TYPE_ATHEROS
+} CARD_TYPE;
+CARD_TYPE card_types[8];
+
 long long tsft[6];
 
 long long dbm_ts_prev[6];
@@ -331,8 +338,28 @@ uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
                 break;
             }
             case IEEE80211_RADIOTAP_DBM_ANTSIGNAL: {
+                // crude hack because this needs to be fixed before we replace everything in 2.1
+                int _ant = 0;
 
-                if (((int8_t)(*rti.this_arg) < 0 && (int8_t)(*rti.this_arg) > -126) && (ant[adapter_no] == 0)) {
+                switch (card_types[adapter_no]) {
+                    case CARD_TYPE_RALINK: {
+                        _ant = 1;
+                        break;
+                    }
+                    case CARD_TYPE_ATHEROS: {
+                        _ant = 0;
+                        break;
+                    }
+                    case CARD_TYPE_REALTEK: {
+                        _ant = 0;
+                        break;
+                    }
+                    default: {
+                        _ant = 0;
+                        break;
+                    }
+                }
+                if (((int8_t)(*rti.this_arg) < 0 && (int8_t)(*rti.this_arg) > -126) && (ant[adapter_no] == _ant)) {
 
                     dbm_last[adapter_no] = dbm[adapter_no];
 
@@ -644,8 +671,57 @@ int main(int argc, char *argv[]) {
     }
 
 
+    char line[100], path[100];
+    FILE *procfile;
+
     int x = optind;
     while (x < argc && num_interfaces < 8) {
+        snprintf(path, 45, "/sys/class/net/%s/device/uevent", argv[x]);
+
+        procfile = fopen(path, "r");
+        if (!procfile) {
+            fprintf(stderr, "ERROR: opening %s failed!\n", path);
+            return 0;
+        }
+
+         // read the first line
+        fgets(line, 100, procfile);
+
+         // read the 2nd line
+        fgets(line, 100, procfile);
+
+        if (strncmp(line, "DRIVER=ath9k_htc", 16) == 0 ||
+            strncmp(line, "DRIVER=88x2bu",    13) == 0 ||
+            strncmp(line, "DRIVER=rtl88x2bu", 16) == 0 ||
+            strncmp(line, "DRIVER=8188eu",    13) == 0 ||
+            strncmp(line, "DRIVER=rtl8188eu", 16) == 0 ||
+           (strncmp(line, "DRIVER=8812au",    13) == 0 ||
+            strncmp(line, "DRIVER=8814au",    13) == 0 ||
+            strncmp(line, "DRIVER=rtl8812au", 16) == 0 ||
+            strncmp(line, "DRIVER=rtl8814au", 16) == 0 ||
+            strncmp(line, "DRIVER=rtl88xxau", 16) == 0 ||
+            strncmp(line, "DRIVER=rtl88XXau", 16) == 0)) {
+            
+            /*
+             * Atheros/Realtek
+             *
+             */
+            if (strncmp(line, "DRIVER=ath9k_htc", 16) == 0) {
+                fprintf(stderr, "tx_telemetry: Atheros card detected\n");
+                card_types[num_interfaces] = CARD_TYPE_ATHEROS;
+            } else {
+                fprintf(stderr, "tx_telemetry: Realtek card detected\n");
+                card_types[num_interfaces] = CARD_TYPE_REALTEK;
+            }
+
+        } else { 
+            /*
+             * Ralink/Mediatek
+             */
+            fprintf(stderr, "tx_telemetry: Ralink card detected\n");
+            card_types[num_interfaces] = CARD_TYPE_RALINK;
+        }
+
         open_and_configure_interface(argv[x], interfaces + num_interfaces);
 
         ++num_interfaces;
