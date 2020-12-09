@@ -39,7 +39,7 @@ extern "C"
 
 #include "wifibroadcast.hpp"
 #include "tx.hpp"
-int IsRTS;
+int frame_type;
 
 Transmitter::Transmitter(int k, int n, const string &keypair):  fec_k(k), fec_n(n), block_idx(0),
                                                                 fragment_idx(0),
@@ -127,11 +127,11 @@ void PcapTransmitter::inject_packet(const uint8_t *buf, size_t size)
     p += sizeof(radiotap_header);
 
     // ieee80211 header
-    if(IsRTS == 0)
+    if(frame_type == 0 || frame_type == 1)
     {
     	memcpy(p, ieee80211_header, sizeof(ieee80211_header));
     }
-    if(IsRTS == 2)
+    if(frame_type == 2)
     {
         memcpy(p, ieee80211_header_rts, sizeof(ieee80211_header_rts));
     }
@@ -143,11 +143,11 @@ void PcapTransmitter::inject_packet(const uint8_t *buf, size_t size)
     ieee80211_seq += 16;
   
    
-    if(IsRTS == 0)
+    if(frame_type == 0 || frame_type == 1)
     {
 	      p += sizeof(ieee80211_header);
     }
-    if(IsRTS == 2)
+    if(frame_type == 2)
     {
 	      p += sizeof(ieee80211_header_rts);
     }
@@ -305,7 +305,7 @@ int main(int argc, char * const *argv)
     int short_gi = 1;
     int stbc = 1;
     int mcs_index = 1;
-    IsRTS=0;
+    frame_type=0;
 
     string keypair = "tx.key";
 
@@ -339,7 +339,7 @@ int main(int argc, char * const *argv)
             mcs_index = atoi(optarg);
             break;
         case 't':
-	          IsRTS = atoi(optarg);
+	          frame_type = atoi(optarg);
             break;
         default: /* '?' */
         show_usage:
