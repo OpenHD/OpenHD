@@ -216,6 +216,8 @@ function tx_function {
         RALINK=1
     fi
 
+    echo ${VIDEO_FRAMETYPE} > /tmp/video_frametype
+    echo ${RALINK} > /tmp/ralink
 
     if [ "$VIDEO_WIFI_BITRATE" == "19.5" ]; then
         #

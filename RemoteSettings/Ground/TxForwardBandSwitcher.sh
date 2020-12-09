@@ -17,7 +17,7 @@ if [ -e "/tmp/settings.sh" ]; then
     sleep 365d
 fi
 
-
+VIDEO_FRAMETYPE=$(cat /tmp/video_frametype)
 
 if [ "$PrimaryCardMAC" == "0" ]; then
 	echo "PrimaryCardMAC must be configured. Starting for IP USB camera switcher \n"
@@ -29,7 +29,7 @@ else
 		echo "start wfb_tx -u 4321 -t 2 -p 57 -B 20 -M 0 $PrimaryCardMAC  (BandSwitcher uplink)"
 
 #    		if [ "$EncryptionOrRange" == "Range" ]; then
-			/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -k 1 -n 1 -u 4321 -t 2 -p 42 -B 20 -M 0 -K /tmp/tx.key $PrimaryCardMAC
+			/usr/local/share/cameracontrol/IPCamera/svpcom_wifibroadcast/wfb_tx -k 1 -n 1 -u 4321 -t ${VIDEO_FRAMETYPE} -p 42 -B 20 -M 0 -K /tmp/tx.key $PrimaryCardMAC
 #		else
 #			echo "EncryptionOrRange must be set to Range to work with BandSwitcher\n"
 #    		fi
