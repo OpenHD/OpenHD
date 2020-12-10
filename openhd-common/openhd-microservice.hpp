@@ -21,7 +21,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
-
+#include "openhd-platform.hpp"
 
 typedef enum MavlinkCommandState {
     MavlinkCommandStateReady,
