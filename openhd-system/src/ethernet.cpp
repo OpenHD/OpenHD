@@ -102,7 +102,11 @@ void Ethernet::process_card(std::string interface_name) {
     EthernetCard card;
     card.name = interface_name;
     
-    card.mac = address.str();
+    std::ifstream f(address.str());
+    std::string mac((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());  
+    boost::trim_right(mac);
+
+    card.mac = mac;
 
     card.type = string_to_ethernet_card_type(driver_name);
 

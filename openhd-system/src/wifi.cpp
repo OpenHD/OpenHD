@@ -119,7 +119,11 @@ void WiFi::process_card(std::string interface_name) {
     address << interface_name;
     address << "/address";
 
-    card.mac = address.str();
+    std::ifstream f(address.str());
+    std::string mac((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());  
+    boost::trim_right(mac);
+
+    card.mac = mac;
 
     switch (card.type) {
         case WiFiCardTypeAtheros9k: {
