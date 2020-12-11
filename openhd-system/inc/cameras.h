@@ -50,6 +50,8 @@ private:
     std::vector<Camera> m_cameras;
     std::vector<CameraEndpoint> m_camera_endpoints;
 
+    int m_discover_index = 0;
+
     PlatformType m_platform_type;
     BoardType m_board_type;
     CarrierType m_carrier_type;

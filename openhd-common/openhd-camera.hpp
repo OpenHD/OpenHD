@@ -38,6 +38,7 @@ struct Camera {
     std::string pid;
     // for USB this is the bus number, for CSI it's the connector number
     std::string bus;
+    int index;
 };
 
 

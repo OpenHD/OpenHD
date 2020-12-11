@@ -118,6 +118,8 @@ void Cameras::detect_raspberrypi_csi() {
         camera.vendor = "Raspberry Pi";
         camera.type = CameraTypeRaspberryPiCSI;
         camera.bus = "0";
+        camera.index = m_discover_index;
+        m_discover_index++;
         CameraEndpoint endpoint;
         endpoint.bus = camera.bus;
         endpoint.support_h264 = true;
@@ -146,6 +148,8 @@ void Cameras::detect_raspberrypi_csi() {
         camera.vendor = "Raspberry Pi";
         camera.type = CameraTypeRaspberryPiCSI;
         camera.bus = "1";
+        camera.index = m_discover_index;
+        m_discover_index++;
         CameraEndpoint endpoint;
         endpoint.bus = camera.bus;
         endpoint.support_h264 = true;
@@ -273,6 +277,8 @@ void Cameras::probe_v4l2_device(std::string device) {
     }
 
     if (!found) {
+        camera.index = m_discover_index;
+        m_discover_index++;
         m_cameras.push_back(camera);
     }
 
@@ -520,6 +526,7 @@ nlohmann::json Cameras::generate_manifest() {
                 {"vid",           camera.vid },
                 {"pid",           camera.pid },
                 {"bus",           camera.bus },
+                {"index",         camera.index },
                 {"endpoints",     endpoints }
             };
 
