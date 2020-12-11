@@ -6,9 +6,86 @@
 #include <stdexcept> // runtime_error
 #include <optional>
 #include <string>
+#include <fstream>
+#include <streambuf>
 #include <utility> // make_pair
 
 #include <boost/regex.hpp>
+#include <boost/filesystem.hpp>
+
+
+std::string find_settings_path(bool is_air, std::string unit_id) {
+    std::string config_path;
+    std::string base_path = "/conf/openhd";
+
+    boost::filesystem::create_directory(base_path);
+
+    if (is_air) {
+        for (auto & p : boost::filesystem::recursive_directory_iterator(base_path)) {            
+            if (p.path() == "/conf/openhd/unit.id") {
+                continue;
+            }
+                
+            if (p.path().filename() == "unit.id") {
+                std::ifstream f(p.path().string());
+                std::string _unit_id((std::istreambuf_iterator<char>(f)),
+                                      std::istreambuf_iterator<char>());
+
+                if (_unit_id == unit_id) {
+                    config_path = p.path().parent_path().string();
+                    break;
+                }
+            }
+        }
+    } else {
+        config_path = base_path + "/ground";
+    }
+
+    if (config_path.size() == 0) {
+        throw std::runtime_error("Settings directory missing2");
+    }
+
+    return config_path;
+}
+
+
+std::string create_settings_path(bool is_air, std::string unit_id) {
+    std::string config_path;
+    std::string base_path = "/conf/openhd";
+
+    boost::filesystem::create_directory(base_path);
+
+    if (is_air) {
+        for (int drone_index = 1; drone_index <= 100; drone_index++) {
+            std::string drone_path = base_path + "/vehicle" + std::to_string(drone_index);
+
+            if (boost::filesystem::is_directory(drone_path)) {
+                continue;
+            }
+
+            config_path = drone_path;
+            
+            break;
+        }
+    } else {
+        config_path = base_path + "/ground";
+    }
+
+    if (config_path.size() == 0) {
+        throw std::runtime_error("Settings files missing");
+    }
+
+    boost::filesystem::create_directory(config_path);
+
+    std::string unit_id_file = config_path + "/unit.id";
+
+    std::ofstream _f(unit_id_file);
+    _f << unit_id;
+    _f.close();
+
+    return config_path;
+}
+
 
 std::optional<std::string> parse_section(std::string line) {
     boost::smatch result;
