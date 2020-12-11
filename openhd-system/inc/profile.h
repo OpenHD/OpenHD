@@ -23,6 +23,14 @@ public:
 
     std::string generate_unit_id();
 
+    bool is_air() {
+        return m_camera_count != 0;
+    }
+
+    std::string unit_id() {
+        return m_unit_id;
+    }
+
 private:
     PlatformType m_platform_type;
     BoardType m_board_type;
