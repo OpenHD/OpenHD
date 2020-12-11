@@ -68,4 +68,22 @@ inline std::string camera_type_to_string(CameraType camera_type) {
 }
 
 
+inline CameraType string_to_camera_type(std::string camera_type) {
+    if (to_uppercase(camera_type).find(to_uppercase("pi-csi")) != std::string::npos) {
+        return CameraTypeRaspberryPiCSI;
+    } else if (to_uppercase(camera_type).find(to_uppercase("jetson-csi")) != std::string::npos) {
+        return CameraTypeJetsonCSI;
+    } else if (to_uppercase(camera_type).find(to_uppercase("rockchip-csi")) != std::string::npos) {
+        return CameraTypeRockchipCSI;
+    } else if (to_uppercase(camera_type).find(to_uppercase("uvc")) != std::string::npos) {
+        return CameraTypeUVC;
+    } else if (to_uppercase(camera_type).find(to_uppercase("ip")) != std::string::npos) {
+        return CameraTypeIP;
+    } else if (to_uppercase(camera_type).find(to_uppercase("v4l2loopback")) != std::string::npos) {
+        return CameraTypeV4L2Loopback;
+    }
+
+    return CameraTypeUnknown;
+}
+
 #endif
