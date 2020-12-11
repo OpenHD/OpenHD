@@ -37,7 +37,7 @@ private:
     void detect_jetson_csi();
     void detect_rockchip_csi();
 
-
+    void detect_flir();
     void detect_seek();
     
     void detect_v4l2();

@@ -67,6 +67,7 @@ void Cameras::discover() {
         }
     }
 
+    detect_flir();
     detect_seek();
 
     detect_v4l2();
@@ -414,6 +415,42 @@ void Cameras::detect_ip() {
 }
 
 
+void Cameras::detect_flir() {
+    /*
+     * What this is:
+     * 
+     * We're detecting whether the flir one USB thermal camera is connected. We then run the flir one driver
+     * with systemd.
+     *
+     * What happens after:
+     * 
+     * The systemd service starts, finds the camera and begins running on the device node we select. Then
+     * we will let it be found by the rest of this class just like any other camera, so it gets recorded 
+     * in the manifest and found by the camera service.
+     *
+     *
+     * todo: this should really be marking the camera as a thermal cam instead of starting v4l2loopback and
+     *       abstracting it away like this, but the camera service doesn't yet have a thermal handling class
+     */
+
+    libusb_context *context = nullptr;
+    int result = libusb_init(&context);
+    if (result) {
+        std::cerr << "Failed to initialize libusb" << std::endl;
+        return;
+    }
+
+    libusb_device_handle *handle = libusb_open_device_with_vid_pid(nullptr, FLIR_ONE_VENDOR_ID, FLIR_ONE_PRODUCT_ID);
+
+    if (handle) {
+        std::vector<std::string> ar { 
+            "start", "flirone"
+        };
+
+        boost::process::child p(boost::process::search_path("systemctl"), ar);
+        p.wait();
+    }
+}
 
 
 void Cameras::detect_seek() {
