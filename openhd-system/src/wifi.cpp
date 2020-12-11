@@ -113,6 +113,14 @@ void WiFi::process_card(std::string interface_name) {
 
     int ret = phy_lookup((char*)interface_name.c_str(), atoi(phy_val.c_str()), &supports_2ghz, &supports_5ghz);
 
+
+    std::stringstream address;
+    address << "/sys/class/net/";
+    address << interface_name;
+    address << "/address";
+
+    card.mac = address.str();
+
     switch (card.type) {
         case WiFiCardTypeAtheros9k: {
             card.supports_5ghz = supports_5ghz;
@@ -195,6 +203,7 @@ nlohmann::json WiFi::generate_manifest() {
             nlohmann::json card = { 
                 {"type",               wifi_card_type_to_string(_card.type) }, 
                 {"name",               _card.name },
+                {"mac",                _card.mac },
                 {"supports_5ghz",      _card.supports_5ghz },
                 {"supports_2ghz",      _card.supports_2ghz },
                 {"supports_injection", _card.supports_injection },

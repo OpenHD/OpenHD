@@ -63,6 +63,7 @@ void Ethernet::process_manifest() {
 
             EthernetCard card;
             card.name = _card["name"];
+            card.mac = _card["mac"];
 
             m_ethernet_cards.push_back(card);
 

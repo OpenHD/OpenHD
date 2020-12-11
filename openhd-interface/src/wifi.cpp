@@ -58,6 +58,7 @@ void WiFi::process_manifest() {
             card.supports_injection = _card["supports_injection"];
             card.supports_hotspot = _card["supports_hotspot"];
             card.supports_rts = _card["supports_rts"];
+            card.mac = _card["mac"];
 
             m_wifi_cards.push_back(card);
         }
