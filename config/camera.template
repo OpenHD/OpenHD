@@ -1,10 +1,10 @@
 [Camera]
 
 # DO NOT change these, they are used for identifying this camera to the system
-type={type}
-id={id}
-name={name}
-vendor={vendor}
+type={{type}}
+id={{id}}
+name={{name}}
+vendor={{vendor}}
 # end identification section
 
 #
@@ -14,13 +14,13 @@ vendor={vendor}
 #       are not sure what to put here, please use QOpenHD to configure the camera as it
 #       will show you the resolutions and framerates you can use
 #
-format={format}
+format={{format}}
 
 #
 # We strongly recommend you leave this on auto. If possible, constant bitrate encoding will
 # be used, but this is not always possible as some video encoders do not support it.
 # 
-bitrate={bitrate}
+bitrate={{bitrate}}
 
 # 
 # Picture adjustments
@@ -30,11 +30,11 @@ bitrate={bitrate}
 #
 # WARNING: rotation can add latency on some cameras!
 #
-rotate={rotate}
-brightness={brightness}
-contrast={contrast}
-wdr={wdr}
-denoise={denoise}
+rotate={{rotate}}
+brightness={{brightness}}
+contrast={{contrast}}
+wdr={{wdr}}
+denoise={{denoise}}
 
 
 #
@@ -42,4 +42,4 @@ denoise={denoise}
 # 
 # Note: IP cameras do not always support the same settings or capabilities that CSI or USB cameras can support.
 #
-url={url}
+url={{url}}

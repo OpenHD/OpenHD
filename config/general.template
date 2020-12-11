@@ -21,48 +21,48 @@
 # memory: record each video stream to memory
 # sd: record each video stream to sd card
 # usb: will record to any connected USB storage drive
-recording_storage={recording_storage}
+recording_storage={{recording_storage}}
 
 # none: don't record video at all
 # ground: record each video stream on the ground side
 # air: record each video stream on the air side
 # both: record on air and ground
-recording_location={recording_location}
+recording_location={{recording_location}}
 
 # always: record video as soon as the vehicle starts sending it
 # arm: record to a new file on the chosen storage area whenever the drone becomes armed
 # rc: record to a new file on the chosen storage area whenever the selected RC channel is set high
-recording_trigger={recording_trigger}
+recording_trigger={{recording_trigger}}
 
 [Hotspot]
 
 # rtp: unicast rtp on port 5600 through 5603
 # rtsp: start rtsp servers on port 554 through 558
-hotspot_video_type={hotspot_video_type}
+hotspot_video_type={{hotspot_video_type}}
 
 # mavlink: Mavlink v2, 18 channels
 # mspv2: MSPv2 for iNav or Betaflight
 # ibus: Flysky IBUS
 # sumd: Graupner SUMD
 # srxl: Multiplex SRXL/XBUS
-rc={rc}
+rc={{rc}}
 
 
 [Wifibroadcast]
-video_block={video_block}
-video_fec={video_fec}
-video_bandwidth={video_bandwidth}
-video_stbc={video_stbc}
-video_ldpc={video_ldpc}
-video_datarate={video_datarate}
-video_short_gi={video_short_gi}
+video_block={{video_block}}
+video_fec={{video_fec}}
+video_bandwidth={{video_bandwidth}}
+video_stbc={{video_stbc}}
+video_ldpc={{video_ldpc}}
+video_datarate={{video_datarate}}
+video_short_gi={{video_short_gi}}
 
-telemetry_block={telemetry_block}
-telemetry_fec={telemetry_fec}
-telemetry_bandwidth={telemetry_bandwidth}
-telemetry_stbc={telemetry_stbc}
-telemetry_ldpc={telemetry_ldpc}
-telemetry_datarate={telemetry_datarate}
-telemetry_short_gi={telemetry_short_gi}
+telemetry_block={{telemetry_block}}
+telemetry_fec={{telemetry_fec}}
+telemetry_bandwidth={{telemetry_bandwidth}}
+telemetry_stbc={{telemetry_stbc}}
+telemetry_ldpc={{telemetry_ldpc}}
+telemetry_datarate={{telemetry_datarate}}
+telemetry_short_gi={{telemetry_short_gi}}
 
-enable_ip_tunnel={enable_ip_tunnel}
+enable_ip_tunnel={{enable_ip_tunnel}}

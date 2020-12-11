@@ -1,20 +1,20 @@
 [Ethernet Card]
 
 # DO NOT change these, they are used for identifying this ethernet card to the system
-type={type}
-mac={mac}
-name={name}
-vendor={vendor}
+type={{type}}
+mac={{mac}}
+name={{name}}
+vendor={{vendor}}
 # end identification section
 
 #
 # hotspot: the card will be configured to serve as an ethernet hotspot (DHCP server)
 # lan: connect to a router (mostly useful for development purposes, acts as DHCP client)
 #
-use_for={use_for}
+use_for={{use_for}}
 
 # 
 # The IP settings for this interface (used for hotspot, LAN is always DHCP)
-ip={ip}
-netmask={netmask}
-gateway={gateway}
+ip={{ip}}
+netmask={{netmask}}
+gateway={{gateway}}
