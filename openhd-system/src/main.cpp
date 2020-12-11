@@ -15,6 +15,7 @@
 #include "json.hpp"
 
 #include "openhd-platform.hpp"
+#include "openhd-settings.hpp"
 #include "openhd-ethernet.hpp"
 #include "openhd-wifi.hpp"
 
@@ -80,6 +81,11 @@ int main(int argc, char *argv[]) {
         _u << profile_manifest["microservice-sys-id"];
         _u.close();
 
+        try {
+            find_settings_path(profile.is_air(), profile.unit_id());
+        } catch (std::exception &ex) {
+            create_settings_path(profile.is_air(), profile.unit_id());
+        }
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
         exit(1);
