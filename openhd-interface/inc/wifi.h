@@ -15,7 +15,7 @@
 
 class WiFi {
 public:
-    WiFi(boost::asio::io_service &io_service);
+    WiFi(boost::asio::io_service &io_service, bool is_air, std::string unit_id);
     
     virtual ~WiFi() {}
 
@@ -38,6 +38,10 @@ public:
 
 private:
     boost::asio::io_service &m_io_service;
+
+    std::string m_unit_id;
+
+    bool m_is_air = false;
 
     std::vector<WiFiCard> m_wifi_cards;
     

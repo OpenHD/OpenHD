@@ -10,6 +10,9 @@
 #include <boost/bind.hpp>
 
 
+#include "openhd-platform.hpp"
+#include "openhd-status.hpp"
+
 #include "wifi.h"
 #include "ethernet.h"
 
@@ -21,8 +24,24 @@ int main(int argc, char *argv[]) {
 
     boost::asio::io_service io_service;
 
-    WiFi wifi(io_service);
-    Ethernet ethernet(io_service);
+    std::string unit_id;
+    bool is_air = false;
+
+    try {
+        std::ifstream f("/tmp/profile_manifest");
+        nlohmann::json j;
+        f >> j;
+
+        is_air = j["is-air"];
+
+        unit_id = j["unit-id"];
+    } catch (std::exception &ex) {
+        // don't do anything, but send an error message to the user through the status service
+        status_message(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
+    }
+
+    WiFi wifi(io_service, is_air, unit_id);
+    Ethernet ethernet(io_service, is_air, unit_id);
 
     try {
         wifi.configure();

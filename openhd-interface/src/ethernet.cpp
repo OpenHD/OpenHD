@@ -24,7 +24,7 @@
 #include "ethernet.h"
 
 
-Ethernet::Ethernet(boost::asio::io_service &io_service): m_io_service(io_service) {}
+Ethernet::Ethernet(boost::asio::io_service &io_service, bool is_air, std::string unit_id): m_io_service(io_service), m_is_air(is_air), m_unit_id(unit_id) {}
 
 
 void Ethernet::configure() {
@@ -38,20 +38,6 @@ void Ethernet::configure() {
 }
 
 void Ethernet::process_manifest() {
-    try {
-        std::ifstream f("/tmp/profile_manifest");
-        nlohmann::json j;
-        f >> j;
-
-        m_is_air = j["is-air"];
-
-    } catch (std::exception &ex) {
-        // don't do anything, but send an error message to the user through the status service
-        status_message(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
-        std::cerr << "Ethernet::process_manifest: " << ex.what() << std::endl;
-        return;
-    }
-
     try {
         std::ifstream f("/tmp/ethernet_manifest");
         nlohmann::json j;
