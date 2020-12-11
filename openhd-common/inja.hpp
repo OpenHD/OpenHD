@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 // #include "environment.hpp"
 // Copyright (c) 2019 Pantor. All rights reserved.
@@ -18,7 +18,7 @@
 #include <sstream>
 #include <string>
 
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 // #include "config.hpp"
 // Copyright (c) 2019 Pantor. All rights reserved.
@@ -2289,7 +2289,7 @@ public:
 #include <string>
 #include <utility>
 
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 // #include "function_storage.hpp"
 
@@ -2715,7 +2715,7 @@ using TemplateStorage = std::map<std::string, Template>;
 // #include "utils.hpp"
 
 
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 namespace inja {
 
@@ -3263,7 +3263,7 @@ public:
 #include <utility>
 #include <vector>
 
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 // #include "config.hpp"
 
