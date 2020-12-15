@@ -38,6 +38,15 @@ struct WiFiCard {
     bool supports_injection;
     bool supports_hotspot;
     bool supports_rts;
+
+    std::string frequency;
+    std::string txpower;
+    std::string use_for;
+    std::string wifi_client_ap_name;
+    std::string wifi_client_password;
+    std::string hotspot_channel;
+    std::string hotspot_password;
+    std::string hotspot_band;
 };
 
 
