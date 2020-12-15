@@ -36,6 +36,10 @@ contrast={{contrast}}
 wdr={{wdr}}
 denoise={{denoise}}
 
+#
+# The RC channel this camera should use to start a recording, if any. To disable, use 0
+#
+rc_channel_record={{rc_channel_record}}
 
 #
 # IP Camera URL
