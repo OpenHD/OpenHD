@@ -24,7 +24,6 @@ public:
 
     void process_card(EthernetCard card);
 
-    bool set_card_name(EthernetCard card, std::string name);
 
     void setup_hotspot(EthernetCard card);
 
