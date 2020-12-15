@@ -26,7 +26,6 @@ public:
 
     void setup_hotspot(WiFiCard &card);
 
-    bool set_card_name(WiFiCard card, std::string name);
     bool set_card_state(WiFiCard card, bool up);
     bool set_frequency(WiFiCard card, std::string frequency);
     bool set_txpower(WiFiCard card, std::string txpower);

@@ -279,17 +279,6 @@ void WiFi::setup_hotspot(WiFiCard &card) {
 }
 
 
-bool WiFi::set_card_name(WiFiCard card, std::string name) {
-    std::cout << "WiFi::set_card_name()" << std::endl;
-
-    std::vector<std::string> args { "link", "set", card.name, "name", name };
-
-    bool success = run_command("ip", args);
-
-    return success;
-}
-
-
 bool WiFi::set_card_state(WiFiCard card, bool up) {
     std::cout << "WiFi::set_card_state()" << std::endl;
 
