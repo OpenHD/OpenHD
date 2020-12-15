@@ -36,6 +36,8 @@ public:
         return m_broadcast_cards;
     }
 
+    void save_settings(std::vector<WiFiCard> cards, std::string settings_file);
+
 private:
     boost::asio::io_service &m_io_service;
 
