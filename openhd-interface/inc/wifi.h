@@ -22,9 +22,9 @@ public:
     void process_manifest();
     void configure();
 
-    void process_card(WiFiCard card);
+    void process_card(WiFiCard &card);
 
-    void setup_hotspot(WiFiCard card);
+    void setup_hotspot(WiFiCard &card);
 
     bool set_card_name(WiFiCard card, std::string name);
     bool set_card_state(WiFiCard card, bool up);

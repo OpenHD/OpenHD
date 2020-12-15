@@ -71,7 +71,7 @@ void WiFi::process_manifest() {
 }
 
 
-void WiFi::process_card(WiFiCard card) {
+void WiFi::process_card(WiFiCard &card) {
     std::cerr << "Processing card: " << card.name << std::endl;
 
     /*
@@ -108,7 +108,7 @@ void WiFi::process_card(WiFiCard card) {
  *
  * todo: deduplicate this and similar logic in Ethernet/LTE, they should be subclasses of a common base
  */
-void WiFi::setup_hotspot(WiFiCard card) {
+void WiFi::setup_hotspot(WiFiCard &card) {
     std::cout << "WiFi::setup_hotspot()" << std::endl;
 
     if (!card.supports_hotspot) {
