@@ -16,5 +16,4 @@ use_for={{use_for}}
 # 
 # The IP settings for this interface (used for hotspot/static, LAN is always DHCP)
 ip={{ip}}
-netmask={{netmask}}
 gateway={{gateway}}
