@@ -29,6 +29,10 @@ struct EthernetCard {
     std::string vid;
     std::string pid;
     std::string usb_bus;
+
+    std::string use_for;
+    std::string ip;
+    std::string gateway;
 };
 
 
