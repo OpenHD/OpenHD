@@ -64,7 +64,7 @@ void Ethernet::process_manifest() {
 }
 
 
-void Ethernet::process_card(EthernetCard card) {
+void Ethernet::process_card(EthernetCard &card) {
     if (m_is_air) {
         // use for other transmission types that present as ethernet interfaces
     } else {
@@ -77,7 +77,7 @@ void Ethernet::process_card(EthernetCard card) {
 /* 
  * todo: deduplicate this and similar logic in WiFi/LTE, they should be subclasses of a common base, or just an inline function
  */
-void Ethernet::setup_hotspot(EthernetCard card) {
+void Ethernet::setup_hotspot(EthernetCard &card) {
     std::cout << "Ethernet::setup_hotspot()" << std::endl;
 
     bool success = false;

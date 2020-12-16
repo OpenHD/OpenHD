@@ -22,10 +22,10 @@ public:
     void process_manifest();
     void configure();
 
-    void process_card(EthernetCard card);
+    void process_card(EthernetCard &card);
 
+    void setup_hotspot(EthernetCard &card);
 
-    void setup_hotspot(EthernetCard card);
 
 private:
     boost::asio::io_service &m_io_service;
