@@ -14,7 +14,7 @@
 #include <boost/filesystem.hpp>
 
 
-std::string find_settings_path(bool is_air, std::string unit_id) {
+inline std::string find_settings_path(bool is_air, std::string unit_id) {
     std::string config_path;
     std::string base_path = "/conf/openhd";
 
@@ -49,7 +49,7 @@ std::string find_settings_path(bool is_air, std::string unit_id) {
 }
 
 
-std::string create_settings_path(bool is_air, std::string unit_id) {
+inline std::string create_settings_path(bool is_air, std::string unit_id) {
     std::string config_path;
     std::string base_path = "/conf/openhd";
 
@@ -87,7 +87,7 @@ std::string create_settings_path(bool is_air, std::string unit_id) {
 }
 
 
-std::optional<std::string> parse_section(std::string line) {
+inline std::optional<std::string> parse_section(std::string line) {
     boost::smatch result;
 
     boost::regex r{ "^\\[([\\w\\s]+)\\]"};
@@ -102,7 +102,8 @@ std::optional<std::string> parse_section(std::string line) {
     return result[1];
 }
 
-std::pair<std::string, std::string> parse_kv(std::string kv) {
+
+inline std::pair<std::string, std::string> parse_kv(std::string kv) {
     boost::smatch result;
 
     boost::regex r{ "^([\\w\\[\\]]+)\\s*=\\s*(.*)"};
@@ -118,7 +119,7 @@ std::pair<std::string, std::string> parse_kv(std::string kv) {
 }
 
 
-std::vector<std::map<std::string, std::string> > read_config(std::string path) {
+inline std::vector<std::map<std::string, std::string> > read_config(std::string path) {
     std::ifstream in(path);
 
     std::vector<std::map<std::string, std::string> > settings;
