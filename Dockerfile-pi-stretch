@@ -1,4 +1,4 @@
-FROM openhd/2018-10-09-raspbian-stretch-lite:v1  
+FROM openhd/2018-10-09-raspbian-stretch-lite:v2
 
 RUN apt update
 
