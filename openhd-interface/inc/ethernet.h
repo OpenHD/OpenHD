@@ -28,6 +28,7 @@ public:
     void setup_static(EthernetCard &card);
     void setup_client(EthernetCard &card);
 
+    void save_settings(std::vector<EthernetCard> cards, std::string settings_file);
 
 private:
     boost::asio::io_service &m_io_service;
