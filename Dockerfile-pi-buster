@@ -6,18 +6,6 @@ COPY install_dep.sh /data/install_dep.sh
 
 RUN /data/install_dep.sh
 
-RUN apt -y install git
-
-RUN apt -y install ruby-dev
-
-RUN apt -y install python3-pip
-
-RUN apt -y purge python-configparser
-
-RUN gem install fpm
-
-RUN pip3 install cloudsmith-cli==0.23.0
-
 COPY . /data/
 
 WORKDIR /data
