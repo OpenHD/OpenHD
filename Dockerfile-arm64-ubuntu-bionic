@@ -1,4 +1,4 @@
-FROM openhd/tegra_linux_sample-root-filesystem_r32.4.2_aarch64:v1
+FROM openhd/tegra_linux_sample-root-filesystem_r32.4.2_aarch64:v2
 
 RUN apt update
 
