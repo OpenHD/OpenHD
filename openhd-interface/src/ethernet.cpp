@@ -48,6 +48,7 @@ void Ethernet::process_manifest() {
         for (auto _card : j["cards"]) {
 
             EthernetCard card;
+            card.type = string_to_ethernet_card_type(_card["type"]);
             card.name = _card["name"];
             card.mac = _card["mac"];
 
