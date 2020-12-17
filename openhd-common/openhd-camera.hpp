@@ -43,6 +43,8 @@ struct Camera {
     // for USB this is the bus number, for CSI it's the connector number
     std::string bus;
     int index;
+
+    std::vector<CameraEndpoint> endpoints;
 };
 
 
