@@ -25,6 +25,8 @@ public:
     void process_card(EthernetCard &card);
 
     void setup_hotspot(EthernetCard &card);
+    void setup_static(EthernetCard &card);
+    void setup_client(EthernetCard &card);
 
 
 private:

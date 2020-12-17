@@ -124,3 +124,88 @@ void Ethernet::setup_hotspot(EthernetCard &card) {
 
     status_message(STATUS_LEVEL_INFO, "Ethernet hotspot running");
 }
+
+
+
+void Ethernet::setup_static(EthernetCard &card) {
+    std::cout << "Ethernet::setup_static()" << std::endl;
+
+    bool success = false;
+
+    std::ostringstream message1;
+
+    message1 << "Setting up ethernet static interface " << card.name << std::endl;
+    status_message(STATUS_LEVEL_INFO, message1.str());
+    
+    card.use_for = "static";
+
+    if (card.ip.empty()) {
+        card.ip = "192.168.3.1/24";
+    }
+
+    {
+        std::vector<std::string> args { 
+            card.name, card.ip, "up",
+        };
+
+        success = run_command("ifconfig", args);
+
+        if (!success) {
+            status_message(STATUS_LEVEL_WARNING, "Failed to enable ethenet interface");
+            return;
+        }
+    }
+
+    if (!card.gateway.empty()) {
+        {
+            std::vector<std::string> args { 
+                "route", "add", "default", "via", card.gateway, "dev", card.name
+            };
+
+            success = run_command("ip", args);
+
+            if (!success) {
+                status_message(STATUS_LEVEL_WARNING, "Failed to enable default route on ethernet card");
+                return;
+            }
+        }
+    }
+
+    std::ostringstream message2;
+
+    message2 << "Ethernet static interface " << card.name << " running" << std::endl;
+    status_message(STATUS_LEVEL_INFO, message2.str());
+}
+
+
+void Ethernet::setup_client(EthernetCard &card) {
+    std::cout << "Ethernet::setup_client()" << std::endl;
+
+    bool success = false;
+
+    std::ostringstream message1;
+
+    message1 << "Setting up ethernet LAN interface " << card.name << std::endl;
+    status_message(STATUS_LEVEL_INFO, message1.str());
+    
+    card.use_for = "client";
+
+    {
+        std::vector<std::string> args { 
+            "-i", card.name, "--no-ntp"
+        };
+
+        success = run_command("pump", args);
+
+        if (!success) {
+            status_message(STATUS_LEVEL_WARNING, "Failed to enable ethenet interface");
+            return;
+        }
+    }
+
+    std::ostringstream message2;
+
+    message2 << "Ethernet LAN interface " << card.name << " running" << std::endl;
+    status_message(STATUS_LEVEL_INFO, message2.str());
+}
+
