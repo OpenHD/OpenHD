@@ -158,6 +158,11 @@ inline std::vector<std::map<std::string, std::string> > read_config(std::string 
         }
     }
 
+    /*
+     * Push the last section since there aren't any more in the file for the earlier check to be trigged by
+     */
+    settings.push_back(section);
+
     return settings;
 }
 
