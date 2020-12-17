@@ -12,6 +12,10 @@ typedef enum CameraType {
     CameraTypeJetsonCSI,
     CameraTypeRockchipCSI,
     CameraTypeUVC,
+    // this is not just a UVC camera that happens to support h264, it's the standard UVC H264 that only a few cameras
+    // support, like the older models of the Logitech C920. Other UVC cameras may support h264, but they do it in a 
+    // completely different way so we keep them separate
+    CameraTypeUVCH264,
     CameraTypeIP,
     CameraTypeV4L2Loopback,
     CameraTypeUnknown
@@ -56,6 +60,9 @@ inline std::string camera_type_to_string(CameraType camera_type) {
         case CameraTypeUVC: {
             return "uvc";
         }
+        case CameraTypeUVCH264: {
+            return "uvch264";
+        }
         case CameraTypeIP: {
             return "ip";
         }
@@ -78,6 +85,8 @@ inline CameraType string_to_camera_type(std::string camera_type) {
         return CameraTypeRockchipCSI;
     } else if (to_uppercase(camera_type).find(to_uppercase("uvc")) != std::string::npos) {
         return CameraTypeUVC;
+    } else if (to_uppercase(camera_type).find(to_uppercase("uvch264")) != std::string::npos) {
+        return CameraTypeUVCH264;
     } else if (to_uppercase(camera_type).find(to_uppercase("ip")) != std::string::npos) {
         return CameraTypeIP;
     } else if (to_uppercase(camera_type).find(to_uppercase("v4l2loopback")) != std::string::npos) {
