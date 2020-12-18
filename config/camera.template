@@ -2,24 +2,19 @@
 
 # DO NOT change these, they are used for identifying this camera to the system
 type={{type}}
-id={{id}}
+bus={{bus}}
 name={{name}}
 vendor={{vendor}}
 # end identification section
 
 #
-# The resolution, framerate and video encoding for this camera.
-#
-# Note: it is not always simple to determine what a specific camera supports, if you
-#       are not sure what to put here, please use QOpenHD to configure the camera as it
-#       will show you the resolutions and framerates you can use
+# The resolution and framerate, use QOpenHD if you aren't sure what your camera supports
 #
 format={{format}}
 
+# Video codec: h264, h265
 #
-# We strongly recommend you leave this on auto. If possible, constant bitrate encoding will
-# be used, but this is not always possible as some video encoders do not support it.
-# 
+codec={{codec}}
 bitrate={{bitrate}}
 
 # 
@@ -33,8 +28,13 @@ bitrate={{bitrate}}
 rotate={{rotate}}
 brightness={{brightness}}
 contrast={{contrast}}
+sharpness={{sharpness}}
 wdr={{wdr}}
 denoise={{denoise}}
+
+# Thermal camera settings
+thermal_palette={{thermal_palette}}
+thermal_span={{thermal_span}}
 
 #
 # The RC channel this camera should use to start a recording, if any. To disable, use 0
@@ -43,7 +43,14 @@ rc_channel_record={{rc_channel_record}}
 
 #
 # IP Camera URL
-# 
-# Note: IP cameras do not always support the same settings or capabilities that CSI or USB cameras can support.
-#
 url={{url}}
+
+
+#
+# Manually specified GStreamer pipeline
+# 
+# This can be used to specify a video pipeline manually using any available gst-launch-1.0 elements. Unless you have
+# a reason to override the camera autoconfig system this should be left blank so the system can handle it for you
+# 
+manual_pipeline={{manual_pipeline}}
+
