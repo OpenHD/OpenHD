@@ -51,6 +51,33 @@ struct Camera {
     std::string bus;
     int index;
 
+
+    // these come from the settings system
+
+    // this comes from the camera itself, includes width/height/fps, we will need to automate this in QOpenHD
+    std::string format;
+
+    std::string rc_channel_record = "0";
+
+    std::string bitrate;
+
+    std::string brightness;
+    std::string contrast;
+    std::string sharpness;
+    std::string rotate;
+
+    std::string wdr;
+    std::string denoise;
+
+    std::string thermal_palette;
+    std::string thermal_span;
+
+    std::string url;
+
+    std::string manual_pipeline;
+
+    VideoCodec codec = VideoCodecH264;
+
     std::vector<CameraEndpoint> endpoints;
 };
 
