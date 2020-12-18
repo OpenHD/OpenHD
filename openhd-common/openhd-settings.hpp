@@ -42,7 +42,7 @@ inline std::string find_settings_path(bool is_air, std::string unit_id) {
     }
 
     if (config_path.size() == 0) {
-        throw std::runtime_error("Settings directory missing2");
+        throw std::runtime_error("Settings directory missing");
     }
 
     return config_path;
