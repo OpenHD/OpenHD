@@ -41,6 +41,10 @@ inline std::string find_settings_path(bool is_air, std::string unit_id) {
         config_path = base_path + "/ground";
     }
 
+    if (!boost::filesystem::exists(config_path)) {
+        throw std::runtime_error("Settings directory missing");
+    }
+
     if (config_path.size() == 0) {
         throw std::runtime_error("Settings directory missing");
     }
