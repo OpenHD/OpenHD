@@ -33,6 +33,13 @@ struct CameraEndpoint {
     std::vector<std::string> formats;
 };
 
+typedef enum VideoCodec {
+    VideoCodecH264,
+    VideoCodecH265,
+    VideoCodecMJPEG,
+    VideoCodecUnknown
+} VideoCodec;
+
 
 struct Camera {
     CameraType type;
@@ -97,5 +104,37 @@ inline CameraType string_to_camera_type(std::string camera_type) {
 
     return CameraTypeUnknown;
 }
+
+
+inline std::string video_codec_to_string(VideoCodec codec) {
+    switch (codec) {
+        case VideoCodecH264: {
+            return "h264";
+        }
+        case VideoCodecH265: {
+            return "h265";
+        }
+        case VideoCodecMJPEG: {
+            return "mjpeg";
+        }
+        default: {
+            return "unknown";
+        }
+    }
+}
+
+
+inline VideoCodec string_to_video_codec(std::string codec) {
+    if (to_uppercase(codec).find(to_uppercase("h264")) != std::string::npos) {
+        return VideoCodecH264;
+    } else if (to_uppercase(codec).find(to_uppercase("h265")) != std::string::npos) {
+        return VideoCodecH265;
+    } else if (to_uppercase(codec).find(to_uppercase("mjpeg")) != std::string::npos) {
+        return VideoCodecMJPEG;
+    }
+
+    return VideoCodecUnknown;
+}
+
 
 #endif
