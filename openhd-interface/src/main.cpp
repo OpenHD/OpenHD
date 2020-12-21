@@ -13,6 +13,8 @@
 #include "openhd-platform.hpp"
 #include "openhd-status.hpp"
 
+
+#include "streams.h"
 #include "wifi.h"
 #include "ethernet.h"
 
@@ -42,10 +44,14 @@ int main(int argc, char *argv[]) {
 
     WiFi wifi(io_service, is_air, unit_id);
     Ethernet ethernet(io_service, is_air, unit_id);
+    Streams streams(io_service, is_air, unit_id);
+
 
     try {
         wifi.configure();
         ethernet.configure();
+        streams.set_broadcast_cards(wifi.broadcast_cards());
+        streams.configure();
 
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;

@@ -17,8 +17,8 @@ LOCAL_INCLUDE = $(PWD)/lib/include
 LDFLAGS = -L$(PREFIX)/lib -lboost_filesystem -lboost_regex -lboost_system -lsystemd
 
 
-openhd_interface: ethernet.o wifi.o main.o 
-	g++ -g -pthread -o openhd_interface ethernet.o wifi.o main.o  $(LDFLAGS)
+openhd_interface: streams.o ethernet.o wifi.o main.o 
+	g++ -g -pthread -o openhd_interface streams.o ethernet.o wifi.o main.o  $(LDFLAGS)
 
 main.o: $(SRC_DIR)/main.cpp
 	g++ -std=c++17 -Wno-psabi -g -c -pthread -I$(SYSTEM_INCLUDE) -I$(LOCAL_INCLUDE) $(INC_DIR) $(SRC_DIR)/main.cpp
@@ -28,6 +28,9 @@ wifi.o: $(SRC_DIR)/wifi.cpp
 
 ethernet.o: $(SRC_DIR)/ethernet.cpp
 	g++ -std=c++17 -Wno-psabi -g -c -pthread -I$(SYSTEM_INCLUDE) -I$(LOCAL_INCLUDE) $(INC_DIR) $(SRC_DIR)/ethernet.cpp
+
+streams.o: $(SRC_DIR)/streams.cpp
+	g++ -std=c++17 -Wno-psabi -g -c -pthread -I$(SYSTEM_INCLUDE) -I$(LOCAL_INCLUDE) $(INC_DIR) $(SRC_DIR)/streams.cpp
 
 clean:
 	rm -f *.o openhd_interface
