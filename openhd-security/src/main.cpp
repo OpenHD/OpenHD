@@ -1,15 +1,13 @@
+#include <exception>
 #include <fstream>
-
 #include <iostream>
 #include <iterator>
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
-
 #include <boost/regex.hpp>
-
-#include <exception>
 
 #include <systemd/sd-daemon.h>
 
