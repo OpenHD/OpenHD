@@ -71,7 +71,7 @@ mkdir -p ${TMPDIR}/usr/local/share/wifibroadcast-scripts || exit 1
 
 build_pi_dep() {
     pushd /opt/vc/src/hello_pi/libs/ilclient
-    make || exit 1
+    make -j3 || exit 1
     popd
 }
 
@@ -79,25 +79,25 @@ build_pi_dep() {
 build_source() {
     pushd openhd-system
     make clean
-    make || exit 1
+    make -j3 || exit 1
     make install DESTDIR=${TMPDIR} || exit 1
     popd
 
     pushd openhd-security
     make clean
-    make || exit 1
+    make -j3 || exit 1
     make install DESTDIR=${TMPDIR} || exit 1
     popd
 
     pushd openhd-interface
     make clean
-    make || exit 1
+    make -j3 || exit 1
     make install DESTDIR=${TMPDIR} || exit 1
     popd
 
     pushd openhd-status
     make clean
-    make || exit 1
+    make -j3 || exit 1
     make install DESTDIR=${TMPDIR} || exit 1
     popd
 
@@ -111,7 +111,7 @@ build_source() {
     if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "stretch" ]]; then
         pushd openvg
         make clean
-        make library || exit 1
+        make -j3 library || exit 1
         make install DESTDIR=${TMPDIR} || exit 1
         popd
     fi
@@ -119,7 +119,7 @@ build_source() {
     if [[ "${PLATFORM}" == "pi" ]]; then
         pushd wifibroadcast-hello_video
         make clean
-        make || exit 1
+        make -j3 || exit 1
         make install DESTDIR=${TMPDIR} || exit 1
         popd
     fi
@@ -134,14 +134,14 @@ build_source() {
     cp -a rctx ${TMPDIR}/usr/local/bin/ || exit 1
 
     make clean
-    make || exit 1
+    make -j3 || exit 1
     make install DESTDIR=${TMPDIR} || exit 1
     popd
 
     if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "stretch" ]]; then
         pushd wifibroadcast-osd
         make clean
-        make || exit 1
+        make -j3 || exit 1
         make install DESTDIR=${TMPDIR} || exit 1
         cp -a osdfonts/* ${TMPDIR}/usr/local/share/openhd/osdfonts/ || exit 1
         popd
