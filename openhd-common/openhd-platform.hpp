@@ -12,6 +12,7 @@ typedef enum PlatformType {
     PlatformTypeNanoPi,
     PlatformTypeiMX6,
     PlatformTypeRockchip,
+    PlatformTypeZynq,
     PlatformTypePC,
     PlatformTypeUnknown
 } PlatformType;
@@ -155,6 +156,9 @@ inline std::string platform_type_to_string(PlatformType platform_type) {
         case PlatformTypeiMX6: {
             return "imx6";
         }
+        case PlatformTypeZynq: {
+            return "zynq";
+        }
         case PlatformTypePC: {
             return "pc";
         }
@@ -174,6 +178,8 @@ inline PlatformType string_to_platform_type(std::string platform_type) {
         return PlatformTypeNanoPi;
     } else if (to_uppercase(platform_type).find(to_uppercase("imx6")) != std::string::npos) {
         return PlatformTypeiMX6;
+    } else if (to_uppercase(platform_type).find(to_uppercase("zynq")) != std::string::npos) {
+        return PlatformTypeZynq;
     } else if (to_uppercase(platform_type).find(to_uppercase("pc")) != std::string::npos) {
         return PlatformTypePC;
     }
