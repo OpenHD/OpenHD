@@ -1,0 +1,9 @@
+[Telemetry]
+
+#
+# mavlink/ltm/mspv2/vector/frsky
+#
+telemetry_type={{telemetry_type}}
+
+serial_port={{serial_port}}
+baud={{baud}}
