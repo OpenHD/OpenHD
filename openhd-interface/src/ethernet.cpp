@@ -39,7 +39,7 @@ void Ethernet::configure() {
 
 
     /*
-     * Then get the local settings, if there are any
+     * Get the local settings, if there are any
      */
     std::vector<std::map<std::string, std::string> > settings;
 
