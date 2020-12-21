@@ -5,6 +5,9 @@ systemctl enable openhdconfig
 systemctl enable openhd_system
 systemctl enable openhd_security
 systemctl enable openhd_interface
+# this is the serial port on the jetson boards, we don't want a tty running on it
+systemctl stop nvgetty || true
+systemctl disable nvgetty || true
 
 
 mkdir -p /wbc_tmp
