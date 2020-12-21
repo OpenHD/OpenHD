@@ -13,6 +13,8 @@
 
 #include "sodium.h"
 
+#include "openhd-settings.hpp"
+
 
 /*
  *
@@ -24,68 +26,49 @@ unsigned char air_salt[crypto_pwhash_argon2i_SALTBYTES] = { 0, 1, 0, 1, 0, 1, 0,
 unsigned char ground_salt[crypto_pwhash_argon2i_SALTBYTES] = { 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0 };
 
 
-std::map<std::string, std::string> openhd_settings;
-
-
-
-std::pair<std::string, std::string> parse_kv(std::string kv) {
-    boost::smatch result;
-
-    boost::regex r{ "^([\\w\\[\\]]+)\\s*=\\s*(.*)"};
-    if (!boost::regex_match(kv, result, r)) {
-        throw std::runtime_error("Ignoring invalid setting, check file for errors");
-    }
-
-    if (result.size() != 3) {
-        throw std::runtime_error("Ignoring invalid setting, check file for errors");
-    }
-
-    return std::make_pair<std::string, std::string>(result[1], result[2]);
-}
-
-
-std::map<std::string, std::string> read_config(std::string path) {
-    std::ifstream in(path);
-
-    std::map<std::string, std::string> settings;
-
-    std::string str;
-
-    while (std::getline(in, str)) {
-        if (str.size() > 0) {
-            try {
-                auto pair = parse_kv(str);
-                settings.insert(pair);
-            } catch (std::exception &ex) {
-                /* 
-                 * Ignore, likely a comment or user error in which case we will use a default.
-                 */
-            }
-        }
-    }
-
-    return settings;
-}
-
-
 int main(int argc, char *argv[]) {
 
 
     try {
-        openhd_settings = read_config("openhd-settings-1.txt");
+        bool is_air = false;
+        std::string unit_id;
+
+        try {
+            std::ifstream f("/tmp/profile_manifest");
+            nlohmann::json j;
+            f >> j;
+
+            is_air = j["is-air"];
+            unit_id = j["unit-id"];
+        } catch (std::exception &ex) {
+            // don't do anything, but send an error message to the user through the status service
+            status_message(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
+            std::cerr << "EX: " << ex.what() << std::endl;
+        }
+
+        std::vector<std::map<std::string, std::string> > settings;
+
+        try {
+            std::string settings_path = find_settings_path(m_is_air, m_unit_id);
+            std::cerr << "settings_path: " << settings_path << std::endl;
+            std::string settings_file = settings_path + "/camera.conf";
+            std::cerr << "settings_file: " << settings_file << std::endl;
+            settings = read_config(settings_file);
+        } catch (std::exception &ex) {
+            std::cerr << "Camera settings load error: " << ex.what() << std::endl;
+        }
 
         std::string openhd_password;
 
-        {
-            auto search = openhd_settings.find("OPENHD_PASSWORD");
-            if (search != openhd_settings.end() && (search->second != "0")) {
-                openhd_password = search->second;
+        for (auto _s : settings) {
+            if (_s.count("openhd_password")) {
+                openhd_password = _s["openhd_password"];
                 boost::trim_right(openhd_password);
             } else {
-                std::cout << "OpenHD password missing, using default!!!" << std::endl;
                 openhd_password = "OPENHDLINK";
             }
         }
+
 
         int res;
         unsigned char air_key[crypto_box_SEEDBYTES];
