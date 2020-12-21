@@ -138,7 +138,7 @@ void Ethernet::process_card(EthernetCard &card) {
     if (m_is_air) {
         setup_static(card);
     } else {        
-        setup_hotspot(card);
+        setup_client(card);
     }
 }
 
