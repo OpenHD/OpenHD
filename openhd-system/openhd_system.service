@@ -1,6 +1,6 @@
 [Unit]
 Description=openhd-system
-After=openhdsecurity.service
+After=local-fs.target sysinit.target
 
 
 [Service]

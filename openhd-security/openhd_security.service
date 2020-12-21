@@ -1,6 +1,6 @@
 [Unit]
 Description=openhd-security
-After=local-fs.target sysinit.target
+After=openhd_system.service
 
 [Service]
 Type=notify
