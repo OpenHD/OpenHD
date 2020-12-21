@@ -37,8 +37,8 @@ typedef enum BoardType {
     BoardTypeJetsonNX,
     BoardTypeJetsonAGX,
     BoardTypeNanoPiNeo4,
-    PlatformTypePynqZ1,
-    PlatformTypePynqZ2,
+    BoardTypePynqZ1,
+    BoardTypePynqZ2,
     BoardType3DRSolo,
     BoardTypeGenericPC,
     BoardTypeUnknown
