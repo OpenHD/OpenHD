@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
         std::vector<std::map<std::string, std::string> > settings;
 
         try {
-            std::string settings_path = find_settings_path(m_is_air, m_unit_id);
+            std::string settings_path = find_settings_path(is_air, unit_id);
             std::cerr << "settings_path: " << settings_path << std::endl;
             std::string settings_file = settings_path + "/camera.conf";
             std::cerr << "settings_file: " << settings_file << std::endl;
