@@ -1,6 +1,6 @@
 [Unit]
 Description=openhd-interface
-After=openhdsystem.service
+After=openhdsecurity.service
 
 [Service]
 Type=notify
