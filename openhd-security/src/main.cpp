@@ -15,6 +15,7 @@
 
 #include "openhd-settings.hpp"
 
+#include "json.hpp"
 
 /*
  *
