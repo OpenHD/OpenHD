@@ -14,6 +14,7 @@
 #include "sodium.h"
 
 #include "openhd-settings.hpp"
+#include "openhd-status.hpp"
 
 #include "json.hpp"
 
