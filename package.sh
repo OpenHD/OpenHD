@@ -170,7 +170,6 @@ build_source() {
 
     cp -a gnuplot/* ${TMPDIR}/usr/local/share/openhd/gnuplot/ || exit 1
 
-    cp -a config/* ${TMPDIR}/boot/ || exit 1
     if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "buster" ]]; then
         cat << EOF >> ${TMPDIR}/boot/config.txt
 [all]
