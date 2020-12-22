@@ -1,6 +1,6 @@
 [Unit]
 Description=openhd-system
-After=local-fs.target sysinit.target
+After=local-fs.target sysinit.target conf.mount
 
 
 [Service]
