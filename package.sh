@@ -110,6 +110,12 @@ build_source() {
     make install DESTDIR=${TMPDIR} || exit 1
     popd
 
+    pushd openhd-telemetry
+    make clean
+    make -j3 || exit 1
+    make install DESTDIR=${TMPDIR} || exit 1
+    popd
+
     cp openhd-common/* ${TMPDIR}/usr/local/include || exit 1
     
 
@@ -182,6 +188,7 @@ EOF
     cp -a config/general.template ${TMPDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/vpn.template ${TMPDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/wificard.template ${TMPDIR}/usr/local/share/openhd/ || exit 1
+    cp -a config/telemetry.template ${TMPDIR}/usr/local/share/openhd/ || exit 1
 }
 
 if [[ "${PLATFORM}" == "pi" ]]; then
