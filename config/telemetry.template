@@ -5,5 +5,4 @@
 #
 telemetry_type={{telemetry_type}}
 
-serial_port={{serial_port}}
-baud={{baud}}
+serial_ports={{serial_ports}}
