@@ -284,7 +284,7 @@ stream_pair Streams::start_telemetry_stream(Stream stream) {
 
     std::vector<std::string> rx_args { 
         "-p", std::to_string(m_is_air ? stream.rf_rx_port : stream.rf_tx_port), 
-        "-u", std::to_string(m_is_air ? stream.local_rx_port : stream.local_tx_port), 
+        "-u", std::to_string(stream.local_rx_port), 
         "-K", m_is_air ? stream.rx_keypair : stream.tx_keypair,
         "-k", std::to_string(stream.data_blocks), 
         "-n", std::to_string(stream.total_blocks),
@@ -294,7 +294,7 @@ stream_pair Streams::start_telemetry_stream(Stream stream) {
 
     std::vector<std::string> tx_args { 
         "-p", std::to_string(m_is_air ? stream.rf_tx_port : stream.rf_rx_port),
-        "-u", std::to_string(m_is_air ? stream.local_tx_port : stream.local_rx_port), 
+        "-u", std::to_string(stream.local_tx_port), 
         "-K", m_is_air ? stream.tx_keypair : stream.rx_keypair,
         "-B", std::to_string(stream.bandwidth), 
         "-G", stream.short_gi ? "short" : "long", 
