@@ -152,3 +152,5 @@ fixup_file=1to3bup_x.dat
 start_file=start_x.elf
 fixup_file=fixup_x.dat
 
+# uncomment to activate CM4 USB
+#dtoverlay=dwc2,dr_mode=host
