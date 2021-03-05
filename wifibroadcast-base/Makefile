@@ -1,5 +1,11 @@
-LDFLAGS=-lrt -lpcap -lwiringPi
-CPPFLAGS=-Wall -O2 -march=armv6zk -mcpu=arm1176jzf-s -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -D _GNU_SOURCE
+CFLAGS=-Wall -D _GNU_SOURCE
+CFLAGS+=-O2 -march=armv6zk -mcpu=arm1176jzf-s -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard
+#CFLAGS+=-DRF_DEBUG=1
+LDFLAGS=-lrt -lpcap
+LDFLAGS+=-lwiringPi
+
+CPPFLAGS=-Wall -g -D _GNU_SOURCE
+CPPFLAGS= $(CFLAGS)
 CFLAGS := $(CFLAGS) -I../lib/mavlink_generated/include/mavlink/v2.0/
 
 all: rx_rc_telemetry_buf rx rx_rc_telemetry rssirx rssitx tx_rawsock tx_telemetry rx_status tracker rssilogger syslogger channelscan check_alive rssi_forward rssi_qgc_forward wifiscan wifibackgroundscan sharedmem_init_rx sharedmem_init_tx
