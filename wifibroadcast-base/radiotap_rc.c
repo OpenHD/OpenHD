@@ -206,6 +206,7 @@ int ieee80211_radiotap_iterator_init(struct ieee80211_radiotap_iterator *iterato
     iterator->_vns = vns;
     iterator->current_namespace = &radiotap_ns;
     iterator->is_radiotap_ns = 1;
+    iterator->ext_count = 0;
 
     #ifdef RADIOTAP_SUPPORT_OVERRIDES
     iterator->n_overrides = 0;
@@ -534,6 +535,7 @@ int ieee80211_radiotap_iterator_next(struct ieee80211_radiotap_iterator *iterato
                     iterator->_arg_index++;
                 }
 
+		iterator->ext_count++;
                 iterator->_reset_on_ext = 0;
                 
                 break;

@@ -123,6 +123,7 @@ struct ieee80211_radiotap_iterator {
     int n_overrides;
     int this_arg_index;
     int this_arg_size;
+    int ext_count;
 
     int is_radiotap_ns;
 
