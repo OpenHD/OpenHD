@@ -306,66 +306,71 @@ uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
 
     while ((n = ieee80211_radiotap_iterator_next(&rti)) == 0) {
 
-        switch (rti.this_arg_index) {
+	// RadioTap Header may include several Extension SET:
+	// First Extention (rti.ext_count==0) is the reported RF RSSI, Qual, SNR for all antennas.
+	// Following Extention (rti.ext_count>0) is optional, and it is the reported RF RSSI, Qual, SNR for rti.ext_count (==IEEE80211_RADIOTAP_ANTENNA value) antenna.
+	// Because we can report only the dbm + Quality indicator, we discard reported RF RSSI, Qual, SNR for rti.ext_count>0
+	// For RF Debuging purposes, if RF_DEBUG defined, continue parsing to display RF metric on stdout
+#ifndef RF_DEBUG
+	if (rti.ext_count>0)
+	    break;
+#endif
+
+	switch (rti.this_arg_index) {
 
             case IEEE80211_RADIOTAP_FLAGS: {
                 prd.m_nRadiotapFlags = *rti.this_arg;
                 break;
             }
             case IEEE80211_RADIOTAP_ANTENNA: {
+		// Most Wireless Driver don't include IEEE80211_RADIOTAP_ANTENNA in the first RadioTap Header Extention, because it the average value for all antennas
+		// but we stop parsing radiotap header when rti.ext_count>0
+		// Thus ant[adapter_no] will never be filled
                 ant[adapter_no] = (int8_t)(*rti.this_arg);
-                //fprintf(stderr, "Ant: %d   ", ant[adapter_no]);
+#ifdef RF_DEBUG
+                fprintf(stderr, "Ant: %2d ", ant[adapter_no]);
+                fprintf(stderr, " | ");
+#endif
                 break;
             }
             case IEEE80211_RADIOTAP_DB_ANTSIGNAL: {
                 db[adapter_no] = (int8_t)(*rti.this_arg);
-                //fprintf(stderr, "DB: %d   ", db[adapter_no]);
+#ifdef RF_DEBUG
+                fprintf(stderr, "DB: %+4d ", db[adapter_no]);
+#endif
                 break;
             }
             case IEEE80211_RADIOTAP_DBM_ANTNOISE: {
                 dbm_noise[adapter_no] = (int8_t)(*rti.this_arg);
-                //fprintf(stderr, "DBM Noise: %d   ", dbm_noise[adapter_no]);
+#ifdef RF_DEBUG
+                fprintf(stderr, "DBM Noise: %+4d ", dbm_noise[adapter_no]);
+#endif
                 break;
             }
             case IEEE80211_RADIOTAP_LOCK_QUALITY: {
                 quality[adapter_no] = (int16_t)(*rti.this_arg);
-                //fprintf(stderr, "Quality: %d   ", quality[adapter_no]);
+#ifdef RF_DEBUG
+                fprintf(stderr, "Quality: %3d ", quality[adapter_no]);
+#endif
                 break;
             }
             case IEEE80211_RADIOTAP_TSFT: {
                 tsft[adapter_no] = (int64_t)(*rti.this_arg);
-                //fprintf(stderr, "TSFT: %d   ", tsft[adapter_no]);
+#ifdef RF_DEBUG
+                fprintf(stderr, "TSFT: %d ", tsft[adapter_no]);
+#endif
                 break;
             }
             case IEEE80211_RADIOTAP_DBM_ANTSIGNAL: {
-                // crude hack because this needs to be fixed before we replace everything in 2.1
-                int _ant = 0;
-
-                switch (card_types[adapter_no]) {
-                    case CARD_TYPE_RALINK: {
-                        _ant = 1;
-                        break;
-                    }
-                    case CARD_TYPE_ATHEROS: {
-                        _ant = 0;
-                        break;
-                    }
-                    case CARD_TYPE_REALTEK: {
-                        _ant = 0;
-                        break;
-                    }
-                    default: {
-                        _ant = 0;
-                        break;
-                    }
-                }
-                if (((int8_t)(*rti.this_arg) < 0 && (int8_t)(*rti.this_arg) > -126) && (ant[adapter_no] == _ant)) {
+                if (((int8_t)(*rti.this_arg) < 0 && (int8_t)(*rti.this_arg) > -126) ) {
 
                     dbm_last[adapter_no] = dbm[adapter_no];
 
                     dbm[adapter_no] = (int8_t)(*rti.this_arg);
-                    //fprintf(stderr, "DBM Signal: %d   ", dbm[adapter_no]);
-
+#ifdef RF_DEBUG
+                    fprintf(stderr, "DBM Signal: %+4d [%d] ", dbm[adapter_no], rti.ext_count);
+#endif
+		    // TODO : improove this metric with a sliding AVG on N last seconds
                     if (dbm[adapter_no] > dbm_last[adapter_no]) {
                         dbm_last[adapter_no] = dbm[adapter_no];
 
@@ -388,7 +393,6 @@ uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
                     }
                 }
 
-                //fprintf(stderr, "/n");
 
                 break;
             }
@@ -440,6 +444,9 @@ uint8_t process_packet(monitor_interface_t *interface, int adapter_no) {
 
     //write(STDOUT_FILENO, pu8Payload, 18);
 
+#ifdef RF_DEBUG
+    fprintf(stderr, "\n");
+#endif
 
     return (0);
 }

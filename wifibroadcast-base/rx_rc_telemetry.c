@@ -320,7 +320,6 @@ void process_packet(monitor_interface_t *interface, int adapter_no, int serialpo
     int u16HeaderLen;
     int type = 0; // r/c or telemetry
     int dbm_tmp;
-
     /* 
      * Receive a packet
      */
@@ -406,6 +405,16 @@ void process_packet(monitor_interface_t *interface, int adapter_no, int serialpo
     }
 
     while ((n = ieee80211_radiotap_iterator_next(&rti)) == 0) {
+	// RadioTap Header may include several Extension SET:
+	// First Extention (rti.ext_count==0) is the reported RF RSSI, Qual, SNR for all antennas.
+	// Following Extention (rti.ext_count>0) is optional, and it is the reported RF RSSI, Qual, SNR for rti.ext_count (==IEEE80211_RADIOTAP_ANTENNA value) antenna.
+	// Because we can report only the dbm + Quality indicator, we discard reported RF RSSI, Qual, SNR for rti.ext_count>0
+	// For RF Debuging purposes, if RF_DEBUG defined, continue parsing to display RF metric on stdout
+#ifndef RF_DEBUG
+	if (rti.ext_count>0)
+	    break;
+#endif
+
         switch (rti.this_arg_index) {
             case IEEE80211_RADIOTAP_FLAGS: {
                 prd.m_nRadiotapFlags = *rti.this_arg;
