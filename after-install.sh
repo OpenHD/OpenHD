@@ -24,17 +24,17 @@ cp -a /usr/local/share/openhd/osdfonts/*.ttf /boot/osdfonts/ > /dev/null 2>&1 ||
 # find them as long as a line for each of these mountpoints is present
 grep " /tmp " /etc/fstab
 if [[ "$?" -ne 0 ]]; then
-    echo "tmpfs /tmp tmpfs nosuid,nodev,noatime,size=10M 0 0" >> /etc/fstab
+    echo "tmpfs /tmp tmpfs nosuid,nodev,noatime,size=50M 0 0" >> /etc/fstab
 fi
 
 grep " /var/log " /etc/fstab
 if [[ "$?" -ne 0 ]]; then
-    echo "tmpfs /var/log tmpfs nosuid,nodev,noatime,size=10M 0 0" >> /etc/fstab
+    echo "tmpfs /var/log tmpfs nosuid,nodev,noatime,size=50M 0 0" >> /etc/fstab
 fi
 
 grep " /var/tmp " /etc/fstab
 if [[ "$?" -ne 0 ]]; then
-    echo "tmpfs /var/tmp tmpfs nosuid,nodev,noatime,size=10M 0 0" >> /etc/fstab
+    echo "tmpfs /var/tmp tmpfs nosuid,nodev,noatime,size=50M 0 0" >> /etc/fstab
 fi
 
 
