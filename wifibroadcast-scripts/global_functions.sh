@@ -358,7 +358,7 @@ function check_exitstatus {
 
 
 function check_lifepowered_pi_attached {
-    i2cdetect -y 1 | grep  "43"
+    i2cdetect -y 1 0x43 0x43 | grep  "43"
     grepRet=$?
 
     if [[ $grepRet -eq 0 ]] ; then
@@ -377,7 +377,7 @@ function check_lifepowered_pi_attached {
 
 
 function check_hdmi_csi_attached {
-    i2cdetect -y 0 | grep  "0f"
+    i2cdetect -y 0 0x0f 0x0f| grep  "0f"
     grepRet=$?
 
     if [[ $grepRet -eq 0 ]] ; then
@@ -424,7 +424,7 @@ function check_camera_attached {
             # No pi camera detected, but we still might have a VEYE, and the only way to detect
             # it is to have i2c_vc enabled already, and then probe the i2c-0 bus
             #
-            i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
+            i2cdetect -y 0 0x3b 0x3b | grep  "30:                                  3b            "
             grepRet=$?
 
             if [[ $grepRet -eq 0 ]] ; then
