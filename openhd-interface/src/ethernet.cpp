@@ -180,7 +180,7 @@ void Ethernet::setup_hotspot(EthernetCard &card) {
 
     {
         std::vector<std::string> args { 
-            "/usr/local/share/wifibroadcast-scripts/ethernet_hotspot.sh", card.name,
+            "/usr/local/share/wifibroadcast-scripts/ethernet_hotspot.sh", card.name, m_ethernet_hotspot_address
         };
 
         success = run_command("/bin/bash", args);
