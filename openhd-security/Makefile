@@ -1,6 +1,6 @@
 
 SRC_DIR = $(PWD)/src
-INC_DIR = -I$(PWD)/inc
+INC_DIR = -I$(PWD)/inc -I$(PWD)/../openhd-common
 
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local
