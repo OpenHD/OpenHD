@@ -42,6 +42,7 @@ rm -rf ${TMPDIR}/*
 
 mkdir -p ${TMPDIR}/root || exit 1
 
+mkdir -p ${TMPDIR}/conf/openhd || exit 1
 mkdir -p ${TMPDIR}/boot || exit 1
 mkdir -p ${TMPDIR}/boot/osdfonts || exit 1
 
