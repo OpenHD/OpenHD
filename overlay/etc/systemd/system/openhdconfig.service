@@ -1,5 +1,5 @@
 [Unit]
-Description=openhdchconfig
+Description=openhdconfig
 After=multi-user.target
 
 [Service]
