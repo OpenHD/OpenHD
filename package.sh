@@ -184,6 +184,9 @@ dtoverlay=vc4-fkms-v3d
 EOF
     fi
 
+    cp -a config/apconfig.txt ${TMPDIR}/usr/local/share/openhd/ || exit 1
+    cp -a config/joyconfig.txt ${TMPDIR}/usr/local/share/openhd/ || exit 1
+
     cp -a config/camera.template ${TMPDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/ethernetcard.template ${TMPDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/general.template ${TMPDIR}/usr/local/share/openhd/ || exit 1
