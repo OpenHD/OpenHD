@@ -84,8 +84,6 @@ private:
     boost::asio::io_service &m_io_service;
     std::vector<std::shared_ptr<Endpoint> > m_endpoints;
     boost::asio::ip::tcp::acceptor *m_tcp_acceptor = nullptr;
-
-    Serial *m_serial = nullptr;
 };
 
 #endif
