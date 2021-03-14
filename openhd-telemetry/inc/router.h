@@ -15,7 +15,7 @@
 #include "tcpendpoint.h"
 #include "udpendpoint.h"
 
-#include "serial.h"
+#include "serialendpoint.h"
 
 class Router {
 public:

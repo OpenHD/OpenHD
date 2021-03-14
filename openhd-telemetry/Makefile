@@ -32,7 +32,7 @@ udpendpoint.o: $(SRC_DIR)/udpendpoint.cpp
 	g++ -std=c++17 -g -c -pthread $(INC_DIR) $(SRC_DIR)/udpendpoint.cpp
 
 
-serialendpoint.o: $(SRC_DIR)/serial.cpp
+serialendpoint.o: $(SRC_DIR)/serialendpoint.cpp
 	g++ -std=c++17 -g -c -pthread $(INC_DIR) $(SRC_DIR)/serialendpoint.cpp
 
 
