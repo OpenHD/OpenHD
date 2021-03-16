@@ -119,7 +119,7 @@ void Router::configure() {
              // this goes to the wifibroadcast channel and should never change
             m_udp_endpoints.push_back("16551:127.0.0.1:16550");
 
-            // goes to QOpenHD, hotspot devices should had their endpoint added dynamically in response to DHCP
+            // goes to QOpenHD, hotspot devices should have their endpoint added dynamically in response to DHCP
             // or statically set in one of the settings files (not telemetry.conf, we should make it global so it
             // can be used to direct video to a specific device as well).
             m_udp_endpoints.push_back("14551:127.0.0.1:14550");
