@@ -68,5 +68,7 @@ int main(int argc, char *argv[]) {
 
     io_service.run();
 
+    std::cerr << "OpenHD Interface service exiting, this should not happen" << std::endl;
+
     return 0;
 }
