@@ -2,7 +2,7 @@
 SRC_DIR = $(PWD)/src
 LIB_DIR = $(PWD)/lib
 
-INC_DIR = -I$(PWD)/inc -I$(PWD)/../openhd-common
+INC_DIR = -I$(PWD)/inc -I$(PWD)/../openhd-common -I$(PWD)/../lib/mavlink_generated/include/mavlink/v2.0
 
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local
