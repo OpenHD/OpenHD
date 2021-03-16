@@ -181,7 +181,7 @@ void Router::command_received(std::string command_uri) {
     boost::smatch result;
 
     boost::regex r{ "([\\w]+)\\:([\\w\\d\\.]+)\\:([\\d]+)"};
-    if (!boost::regex_match(command_uri, result, r)) {
+    if (!boost::regex_search(command_uri, result, r)) {
         std::cerr << "Failed to match regex" << std::endl;
         return;
     }
