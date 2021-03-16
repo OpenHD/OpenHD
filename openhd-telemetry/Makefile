@@ -13,8 +13,8 @@ endif
 LDFLAGS = -L$(PWD)/../lib/fmt/build -lfmt -L$(PREFIX)/lib -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
 
 
-openhd_telemetry: serialendpoint.o router.o endpoint.o udpendpoint.o tcpendpoint.o main.o 
-	g++ -std=c++17 -g -pthread -o openhd_telemetry serialendpoint.o router.o endpoint.o udpendpoint.o tcpendpoint.o main.o $(LDFLAGS)
+openhd_telemetry: control.o serialendpoint.o router.o endpoint.o udpendpoint.o tcpendpoint.o main.o 
+	g++ -std=c++17 -g -pthread -o openhd_telemetry control.o serialendpoint.o router.o endpoint.o udpendpoint.o tcpendpoint.o main.o $(LDFLAGS)
 
 main.o: $(SRC_DIR)/main.cpp
 	g++ -std=c++17  -g -c -pthread $(INC_DIR) $(SRC_DIR)/main.cpp
@@ -34,6 +34,10 @@ udpendpoint.o: $(SRC_DIR)/udpendpoint.cpp
 
 serialendpoint.o: $(SRC_DIR)/serialendpoint.cpp
 	g++ -std=c++17 -g -c -pthread $(INC_DIR) $(SRC_DIR)/serialendpoint.cpp
+
+
+control.o: $(SRC_DIR)/control.cpp
+	g++ -std=c++17 -g -c -pthread $(INC_DIR) $(SRC_DIR)/control.cpp
 
 
 clean:

@@ -15,6 +15,7 @@ using json = nlohmann::json;
 #include "openhd-status.hpp"
 
 #include "router.h"
+#include "control.h"
 
 int main(int argc, char *argv[]) {
     boost::asio::io_service io_service;
@@ -72,6 +73,9 @@ int main(int argc, char *argv[]) {
         }
 
         auto router = new Router(io_service, platform_type, is_air, unit_id, is_microservice);
+
+        auto control = new Control(router, io_service, is_microservice);
+
 
         io_service.run();
 

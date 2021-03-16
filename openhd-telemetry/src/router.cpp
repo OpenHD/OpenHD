@@ -14,6 +14,7 @@
 using namespace inja;
 using json = nlohmann::json;
 
+#include <fmt/core.h>
 
 #include "openhd-settings.hpp"
 #include "openhd-status.hpp"
@@ -172,6 +173,67 @@ void Router::add_serial_endpoint(std::string endpoint) {
     std::static_pointer_cast<SerialEndpoint>(new_connection)->setup(m_telemetry_type, endpoint);
     m_endpoints.push_back(new_connection);
 }
+
+
+void Router::command_received(std::string command_uri) {
+    std::cerr << "Received command: " << command_uri << std::endl;
+
+    boost::smatch result;
+
+    boost::regex r{ "([\\w]+)\\:([\\w\\d\\.]+)\\:([\\d]+)"};
+    if (!boost::regex_match(command_uri, result, r)) {
+        std::cerr << "Failed to match regex" << std::endl;
+        return;
+    }
+
+    if (result.size() != 4) {
+        std::cerr << "Command format incorrect" << std::endl;
+
+        return;
+    }
+
+    std::string command = result[1];
+
+    if (command != "add" && command != "del") {
+        std::cerr << "Invalid command received" << std::endl;
+
+        return;
+    }
+
+
+    std::string address = result[2];
+    std::string remote_port = result[3];
+
+    std::stringstream _ep;
+
+
+    if (command == "add") {
+        std::vector<std::shared_ptr<Endpoint> >::iterator endpoint;
+
+        for (endpoint = m_endpoints.begin(); endpoint != m_endpoints.end();) {
+            if ((*endpoint)->get_address() == address) {
+                // already added this endpoint, skip it
+                return;
+            }
+        }
+
+        // we don't know what port will be used yet so we use zero, the OS will pick one
+        _ep << fmt::format("{}:{}:{}", 0, address, remote_port);
+
+        add_udp_endpoint(_ep.str());
+    } else if (command == "del") {
+        std::vector<std::shared_ptr<Endpoint> >::iterator endpoint;
+
+        for (endpoint = m_endpoints.begin(); endpoint != m_endpoints.end();) {
+            if ((*endpoint)->get_address() == address) {
+                // we found it in the list, just remove it and that will stop any new packets from being sent to it
+                m_endpoints.erase(endpoint);
+                return;
+            }
+        }
+    }
+}
+
 
 
 void Router::save_settings(std::string settings_file) {

@@ -22,6 +22,8 @@ public:
     Router(boost::asio::io_service &io_service, PlatformType platform_type, bool is_air, std::string unit_id, bool is_microservice);
     void setup(std::vector<std::string> new_udp_endpoints);
 
+    void command_received(std::string command_uri);
+
     void start_accept();
     void handle_accept(TCPEndpoint::pointer new_connection, const boost::system::error_code& error);
     void close_endpoint(std::shared_ptr<Endpoint> endpoint);
