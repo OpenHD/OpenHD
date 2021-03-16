@@ -11,10 +11,12 @@ BUILD_TYPE=$4
 
 if [[ "${OS}" == "raspbian" ]]; then
     PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc"
+    PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt"
 fi
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
     PLATFORM_PACKAGES="-d wiringpi"
+    PLATFORM_CONFIGS=""
 fi
 
 if [ "${BUILD_TYPE}" == "docker" ]; then
@@ -184,6 +186,9 @@ dtoverlay=vc4-fkms-v3d
 EOF
     fi
 
+    cp -a config/config.txt ${TMPDIR}/boot/ || exit 1
+    cp -a config/cmdline.txt ${TMPDIR}/boot/ || exit 1
+
     cp -a config/apconfig.txt ${TMPDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/joyconfig.txt ${TMPDIR}/usr/local/share/openhd/ || exit 1
 
@@ -207,6 +212,7 @@ VERSION=$(git describe)
 rm ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
 
 fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TMPDIR} \
+  $PLATFORM_CONFIGS \
   -p ${PACKAGE_NAME}_VERSION_ARCH.deb \
   --after-install after-install.sh \
   --before-install before-install.sh \
