@@ -1,4 +1,4 @@
-INC_DIR = -I$(PREFIX)/include -I$(PWD)/inc -I$(PWD)/../openhd-common -I$(PWD)/../lib/mavlink_generated/include/mavlink/v2.0
+INC_DIR = -I$(PWD)/../lib/fmt/include -I$(PREFIX)/include -I$(PWD)/inc -I$(PWD)/../openhd-common -I$(PWD)/../lib/mavlink_generated/include/mavlink/v2.0
 SRC_DIR = ./src
 
 ifeq ($(PREFIX),)
@@ -10,7 +10,7 @@ ifdef $(DESTDIR)
 endif
 
 
-LDFLAGS = -L$(PREFIX)/lib -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
+LDFLAGS = -L$(PWD)/../lib/fmt/build -lfmt -L$(PREFIX)/lib -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
 
 
 openhd_telemetry: serialendpoint.o router.o endpoint.o udpendpoint.o tcpendpoint.o main.o 

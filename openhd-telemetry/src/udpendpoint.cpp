@@ -5,6 +5,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include <fmt/core.h>
+
 #include <openhd/mavlink.h>
 
 #include "openhd-status.hpp"
@@ -40,6 +42,13 @@ void UDPEndpoint::setup(TelemetryType telemetry_type, std::string endpoint_s) {
     std::string port_s = result[3];
     uint16_t port = atoi(port_s.c_str());
 
+    std::stringstream _add;
+
+    // we don't know what port will be used yet so we use zero
+    _add << fmt::format("{}:{}:{}", "0", address, port_s);
+
+    // this is used by Router to figure out if a dynamic endpoint has been added already
+    m_address = _add.str();
 
     m_endpoint = boost::asio::ip::udp::endpoint(boost::asio::ip::address::from_string(address), port);
     m_udp_socket.open(boost::asio::ip::udp::v4());

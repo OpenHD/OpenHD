@@ -56,12 +56,18 @@ public:
         return m_udp_socket;
     }
 
+    std::string get_address() {
+        return m_address;
+    }
+
     virtual void send_message(uint8_t *buf, int size);
 
 protected:
     Router *m_router = nullptr;
 
     std::vector<uint8_t> m_known_sys_ids;
+
+    std::string m_address;
 
     TelemetryType m_telemetry_type = TelemetryTypeUnknown;
 
