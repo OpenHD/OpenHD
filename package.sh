@@ -10,11 +10,11 @@ BUILD_TYPE=$4
 
 
 if [[ "${OS}" == "raspbian" ]]; then
-    PLATFORM_PACKAGES=("-d wiringpi"  "-d veye-raspberrypi >= 20200706.1"  "-d lifepoweredpi >= 20200704.2"  "-d raspi2png >= 20200704.2"  "-d gstreamer1.0-omx-rpi-config" "-d gst-rpicamsrc")
+    PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc"
 fi
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
-    PLATFORM_PACKAGES=("-d wiringpi")
+    PLATFORM_PACKAGES="-d wiringpi"
 fi
 
 if [ "${BUILD_TYPE}" == "docker" ]; then
@@ -210,7 +210,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   -p ${PACKAGE_NAME}_VERSION_ARCH.deb \
   --after-install after-install.sh \
   --before-install before-install.sh \
-  "${PLATFORM_PACAKGES[@]}" \
+  $PLATFORM_PACKAGES \
   -d "libasio-dev >= 1.10" \
   -d "libboost-system-dev >= 1.62.0" \
   -d "libboost-program-options-dev >= 1.62.0" \
