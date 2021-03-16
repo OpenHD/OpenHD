@@ -9,7 +9,7 @@ HOTSPOT_PASSWORD=$5
 #
 # Convert hostap config from DOS format to UNIX format
 #
-dos2unix -n /boot/apconfig.txt /tmp/apconfig.txt
+dos2unix -n /usr/local/share/openhd/apconfig.txt /tmp/apconfig.txt
 
 #
 # Read the hotspot configuration file and replace the band/channel
