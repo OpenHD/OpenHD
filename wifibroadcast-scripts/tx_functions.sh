@@ -14,7 +14,7 @@ function tx_function {
     # Look for a VEYE camera by probing the i2c bus. Note that this *requires*
     # i2c_vc to already be enabled or the bus won't even be available.
     #
-    i2cdetect -y 0 | grep  "30: -- -- -- -- -- -- -- -- -- -- -- 3b -- -- -- --"
+    i2cdetect -y 0 0x3b 0x3b | grep  "30:                                  3b            "
     grepRet=$?
     if [[ $grepRet -eq 0 ]] ; then
         echo "VEYE camera detected"
