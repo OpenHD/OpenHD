@@ -12,12 +12,10 @@ HOTSPOT_PASSWORD=$5
 dos2unix -n /usr/local/share/openhd/apconfig.txt /tmp/apconfig.txt
 
 #
-# Read the hotspot configuration file and replace the band/channel
+# Replace the band/channel in the hotspot config file
 #
-source /tmp/apconfig.txt
-
-sed -i -e "s/hw_mode=$hw_mode/hw_mode=$HOTSPOT_BAND/g" /tmp/apconfig.txt
-sed -i -e "s/channel=$channel/channel=$HOTSPOT_CHANNEL/g" /tmp/apconfig.txt
+sed -i -e "s/hw_mode=a/hw_mode=$HOTSPOT_BAND/g" /tmp/apconfig.txt
+sed -i -e "s/channel=36/channel=$HOTSPOT_CHANNEL/g" /tmp/apconfig.txt
 sed -i -e "s/interface=wifihotspot0/interface=${HOTSPOT_INTERFACE}/g" /tmp/apconfig.txt
 sed -i -e "s/wpa_passphrase=wifiopenhd/wpa_passphrase=${HOTSPOT_PASSWORD}/g" /tmp/apconfig.txt
 
