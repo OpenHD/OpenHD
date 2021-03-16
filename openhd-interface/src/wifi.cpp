@@ -232,7 +232,7 @@ void WiFi::setup_hotspot(WiFiCard &card) {
      */
     if (card.hotspot_channel.empty()) {
         if (card.supports_5ghz) {
-            card.hotspot_channel = "165";
+            card.hotspot_channel = "151";
         } else {
             card.hotspot_channel = "11";
         }
