@@ -219,6 +219,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TM
   $PLATFORM_PACKAGES \
   -d "libasio-dev >= 1.10" \
   -d "libboost-system-dev >= 1.62.0" \
+  -d "libboost-signals-dev >= 1.62.0" \
   -d "libboost-program-options-dev >= 1.62.0" \
   -d "libseek-thermal >= 20200801.1" \
   -d "flirone-driver >= 20200704.3" \
