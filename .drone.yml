@@ -21,6 +21,10 @@ steps:
   settings:
       repo: openhd/qopenhd
       dry_run: true
+      username:
+        from_secret: docker_openhd_username
+      password:
+        from_secret: docker_openhd_password
       dockerfile: Dockerfile-armhf-raspbian-buster
       build_args_from_env:
         - CLOUDSMITH_API_KEY
@@ -48,6 +52,10 @@ steps:
   settings:
       repo: openhd/qopenhd
       dry_run: true
+      username:
+        from_secret: docker_openhd_username
+      password:
+        from_secret: docker_openhd_password
       dockerfile: Dockerfile-arm64-debian-buster
       build_args_from_env:
         - CLOUDSMITH_API_KEY
@@ -75,6 +83,10 @@ steps:
   settings:
       repo: openhd/qopenhd
       dry_run: true
+      username:
+        from_secret: docker_openhd_username
+      password:
+        from_secret: docker_openhd_password
       dockerfile: Dockerfile-arm64-ubuntu-bionic
       build_args_from_env:
         - CLOUDSMITH_API_KEY
