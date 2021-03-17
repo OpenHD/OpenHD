@@ -143,6 +143,9 @@ void WiFi::process_card(WiFiCard &card) {
         return;
     }
 
+    if (card.use_for == "client") {
+        //setup_client(card);
+        return;
     }
 
 
@@ -276,6 +279,12 @@ void WiFi::setup_hotspot(WiFiCard &card) {
     }
     
     m_hotspot_configured = true;
+}
+
+
+
+void WiFi::setup_client(WiFiCard &card) {
+
 }
 
 
