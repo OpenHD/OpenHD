@@ -11,12 +11,12 @@ BUILD_TYPE=$4
 
 if [[ "${OS}" == "raspbian" ]]; then
     PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc"
-    PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt"
+    PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
     PLATFORM_PACKAGES="-d wiringpi"
-    PLATFORM_CONFIGS=""
+    PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
 if [ "${BUILD_TYPE}" == "docker" ]; then
