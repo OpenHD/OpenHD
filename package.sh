@@ -113,6 +113,12 @@ build_source() {
     make install DESTDIR=${PKGDIR} || exit 1
     popd
 
+    pushd openhd-video
+    make clean
+    make -j3 || exit 1
+    make install DESTDIR=${PKGDIR} || exit 1
+    popd
+
     pushd openhd-telemetry
     make clean
     make -j3 || exit 1
@@ -195,6 +201,7 @@ EOF
     cp -a config/camera.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/ethernetcard.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/general.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
+    cp -a config/ltecard.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/vpn.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/wificard.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/telemetry.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
