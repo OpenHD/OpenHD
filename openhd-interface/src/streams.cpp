@@ -131,8 +131,8 @@ void Streams::configure_video() {
         stream.data_type = DataTypeVideo;
         stream.rf_tx_port = 56;
         stream.rf_rx_port = 56;
-        stream.local_tx_port = 5600;
-        stream.local_rx_port = 5600;
+        stream.local_tx_port = 5620;
+        stream.local_rx_port = 5620;
         stream.tx_keypair = "/tmp/tx.key";
         stream.rx_keypair = "/tmp/rx.key";
         stream.bandwidth = m_bandwidth;
@@ -152,8 +152,8 @@ void Streams::configure_video() {
         stream.index = 1;
         stream.rf_tx_port = 57;
         stream.rf_rx_port = 57;
-        stream.local_tx_port = 5601;
-        stream.local_rx_port = 5601;
+        stream.local_tx_port = 5621;
+        stream.local_rx_port = 5621;
         auto video2 = start_video_stream(stream);
         m_video_processes.push_back(std::move(video2));
 
@@ -161,8 +161,8 @@ void Streams::configure_video() {
         stream.index = 2;
         stream.rf_tx_port = 58;
         stream.rf_rx_port = 58;
-        stream.local_tx_port = 5602;
-        stream.local_rx_port = 5602;
+        stream.local_tx_port = 5622;
+        stream.local_rx_port = 5622;
         auto video3 = start_video_stream(stream);
         m_video_processes.push_back(std::move(video3));
 
@@ -170,8 +170,8 @@ void Streams::configure_video() {
         stream.index = 3;
         stream.rf_tx_port = 59;
         stream.rf_rx_port = 59;
-        stream.local_tx_port = 5603;
-        stream.local_rx_port = 5603;
+        stream.local_tx_port = 5623;
+        stream.local_rx_port = 5623;
         auto video4 = start_video_stream(stream);
         m_video_processes.push_back(std::move(video4));
     } catch (std::exception &ex) {
