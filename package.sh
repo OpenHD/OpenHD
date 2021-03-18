@@ -15,7 +15,7 @@ if [[ "${OS}" == "raspbian" ]]; then
 fi
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
-    PLATFORM_PACKAGES="-d wiringpi"
+    PLATFORM_PACKAGES="-d nvidia-l4t-gstreamer"
     PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
