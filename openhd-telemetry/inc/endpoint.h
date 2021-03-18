@@ -68,6 +68,7 @@ protected:
     std::vector<uint8_t> m_known_sys_ids;
 
     std::string m_address;
+    uint16_t m_port;
 
     TelemetryType m_telemetry_type = TelemetryTypeUnknown;
 
