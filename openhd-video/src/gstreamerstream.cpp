@@ -638,12 +638,14 @@ std::vector<std::string> GStreamerStream::get_supported_formats() {
 std::string GStreamerStream::get_format() {
     std::cerr << "GStreamerStream::get_format()" << std::endl;
 
-    return std::string("");
+    return m_camera.format;
 }
 
 
 void GStreamerStream::set_format(std::string format) {
     std::cerr << "GStreamerStream::set_format(" << format << ")" << std::endl;
+
+    m_camera.format = format;
 }
 
 
