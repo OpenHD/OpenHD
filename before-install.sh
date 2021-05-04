@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-mount -oremount,rw /boot || true
+mount -o remount,rw /boot || true
