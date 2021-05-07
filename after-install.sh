@@ -29,4 +29,4 @@ if [[ "$?" -ne 0 ]]; then
 fi
 
 
-mount -oremount,ro /boot || true
+mount -o remount,ro /boot || true
