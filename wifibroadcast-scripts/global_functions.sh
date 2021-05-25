@@ -123,6 +123,10 @@ function detect_hardware {
             ABLE_BAND=ag
             MODEL=Pi4b
         ;;
+        'c03114')
+            ABLE_BAND=ag
+            MODEL=Pi4b
+        ;;
         'd03114')
             ABLE_BAND=ag
             MODEL=Pi4b
