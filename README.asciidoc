@@ -35,8 +35,11 @@ endif::[]
 :wiki: link:https://github.com/HD-Fpv/Open.HD/wiki[Wiki]
 :openhd: link:https://github.com/HD-Fpv/Open.HD[OpenHD]
 :imageBuilder: link:https://github.com/HD-Fpv/Open.HD_Image_Builder[Image Builder]
-:settingsApp: link:https://github.com/HD-Fpv/Open.HD_AndroidApp[Settings App]
+:settingsApp: link:https://github.com/HD-Fpv/Open.HD_AndroidApp[App Settings]
 :forum: link:https://discuss.openhdfpv.com[OpenHD Forum]
+:raspbian: link:https://www.raspberrypi.org/documentation/[Raspbian]
+:linux-kernel: link:https://www.kernel.org/doc/html/v4.16/process/license-rules.html[Linux Kernel]
+:gnu-gplv2: link:https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html[GPLv2]
 
 // === BEGIN OF CONTENT === \\
 
@@ -58,11 +61,11 @@ toc::[]
 
 == Welcome to OpenHD!
 
-OpenHD uses off-the-shelf Wi-Fi adapters available for purchase online, however it is not standard Wi-Fi, which is unsuitable for low-latency
-or very long distance transmission. Instead, Open.HD configures the Wi-Fi adapter in a way that is closer to a simple broadcast, much like analog
+OpenHD uses off-the-shelf Wi-Fi adapters available for purchase online. However, it is not standard Wi-Fi, which is unsuitable for low-latency
+or very long-distance transmission. Instead, OpenHD configures the Wi-Fi adapter in a way that is closer to a simple broadcast, much like analog
 video transmission hardware you may be using already.
 
-High definition video, 2-way UAV telemetry, audio, and RC control signals can all be sent over a single transmission channel.
+High-definition video, 2-way UAV telemetry, audio, and RC control signals can all be sent over a single transmission channel.
 
 A multi-platform Open.HD app is available for live video with a customizable OSD.
 
@@ -70,7 +73,7 @@ TIP: Look around, read the {wiki}, ask questions on {telegram} and contribute ba
 
 == Structure
 
-This repository is one of the following which form the foundation of the project:
+This repository is one of the following which forms the foundation of the project:
 
 [options="header"]
 [cols="1, 5"]
@@ -87,14 +90,14 @@ This repository is one of the following which form the foundation of the project
 | The Image Builder preinstalls the OpenHD packages on a ready-to-use image.
 
 | {settingsApp}
-| For changing settings remotely on ground and air unit.
+| For changing settings remotely on the ground and air unit.
 
 |===
 
 == Community
 Feel free to join our growing community.
 
-We have a {forum}, and public {telegram} group with more then 400 members helping each other.
+We have a {forum} and public {telegram} group with more than 400 members helping each other.
 
 If you just want to see when new releases are announced, you can either star this repository on Github (requires an
 account), or follow the link:https://t.me/OpenHDReleaseAnnouncements[Open.HD Release Announcements] channel on Telegram.
@@ -102,15 +105,15 @@ account), or follow the link:https://t.me/OpenHDReleaseAnnouncements[Open.HD Rel
 == Developers
 Contribution is always welcome!
 Start helping us by open up an issue or pull request.
-We recommend to get in touch with us via the {telegram} group.
+We recommend to getting in touch with us via the {telegram} group.
 
 == License
 
-OpenHD is licensed under GPLv2, you can find it's contents in this link Raspbian, Linux Kernel, Drivers are licensed under GPLv2 Original code (if found) is licensed as stipulated in respective source files or under the GPLv2 license
+OpenHD is licensed under {gnu-gplv2}, and you can find its contents in this link {raspbian}, {linux-kernel}. Drivers are licensed under GPLv2. Original code (if found) is licensed as stipulated in respective source files or under the GPLv2 license.
 
 == Credits
 
-Befinitiv- original wifibroadcast, Rangarid- OSD, Rodizio- EZ-WifiBroadcast, SVP-COM, Dino.de, Jelle, Vitaliy, and many others
+Befinitiv - original wifibroadcast, Rangarid - OSD, Rodizio - EZ-WifiBroadcast, SVP-COM, Dino.de, Jelle, Vitaliy, and many others.
 
 == Logotype
 
@@ -118,5 +121,5 @@ OpenHD logo was designed by link:https://kurtzgraphics.com/[KURTZ]
 
 == Warranty/Disclaimer
 
-This is a free software and comes with no Warranty as stated in parts 11 and 12 of GPLv2 license.
+This is free software and comes with no warranty, as stated in parts 11 and 12 of the GPLv2 license.
 The creators and contributors of the software are not responsible for how it is used.
