@@ -105,7 +105,7 @@ account), or follow the link:https://t.me/OpenHDReleaseAnnouncements[Open.HD Rel
 == Developers
 Contribution is always welcome!
 Start helping us by open up an issue or pull request.
-We recommend to getting in touch with us via the {telegram} group.
+We recommend getting in touch with us via the {telegram} group.
 
 == License
 
