@@ -8,6 +8,7 @@ import subprocess
 import sys
 from time import sleep
 import time
+import threading
 
 import shutil
 
@@ -16,6 +17,28 @@ import picamera
 #mavutil.set_dialect('openhd')
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb', 0)
+
+class threadSaveTimelaps(threading.Thread):
+    def __init__(self, myPiCamera, timelapsPath, resize=False, width=0, height=0):
+        threading.Thread.__init__(self)
+        self.timelapsPath = timelapsPath
+        self.picam = myPiCamera
+        self.threadLock = threading.Lock()
+        self.resize=resize
+        self.width=width
+        self.height=height
+    def run(self):
+        self.threadLock.acquire(0)
+        img_file_name = self.timelapsPath + datetime.now().strftime("%y%m%d-%H%M%S-%f") + ".yuv"
+        # don't hook up the resize component in the pipeline if the resolution is the same as the main stream
+        if self.resize:
+            self.picam.capture(img_file_name, format='yuv', use_video_port=True, resize=(self.width, self.height), splitter_port=3)
+        else:
+            #capture_continuous
+            self.picam.capture(img_file_name, format='yuv', use_video_port=True, splitter_port=3)
+        # Free lock to release next thread
+        self.threadLock.release()
+
 
 class OpenHDCamera:
     def __init__(self, option):
@@ -126,17 +149,17 @@ class OpenHDCamera:
         #setting the camera sensor resolution to the biggest one configured
         self.max_width=option.width
         self.max_height=option.height
-        if self.record_local and (option.width_record > self.max_width or option.height_record > self.max_height):
-            self.max_width = option.width_record
-            self.max_height = option.height_record
+        #if self.record_local and (option.width_record > self.max_width or option.height_record > self.max_height):
+        #    self.max_width = option.width_record
+        #    self.max_height = option.height_record
             
-        if self.timelaps_local and (option.width_timelaps > self.max_width or option.height_timelaps > self.max_height):
-            self.max_width = option.width_timelaps
-            self.max_height = option.height_timelaps    
+        #if self.timelaps_local and (option.width_timelaps > self.max_width or option.height_timelaps > self.max_height):
+        #    self.max_width = option.width_timelaps
+        #    self.max_height = option.height_timelaps    
         
         self.camera.resolution=(self.max_width,self.max_height)
 
-        print("Camera initialized", file=sys.stderr)
+        print("Camera initialized with a main resolution of " + str(self.max_width) + "x" + str(self.max_height), file=sys.stderr)
 
     def check_used_space(self, path):
         total, used, free = shutil.disk_usage(path)
@@ -148,9 +171,9 @@ class OpenHDCamera:
     def run(self):
         print("OpenHDCamera.run()", file=sys.stderr)
 
+        #resize=(option.width, option.height),
         self.camera.start_recording(self.output, 
                                     format=self.codec.lower(), 
-                                    resize=(option.width, option.height),
                                     profile=self.profile,
                                     intra_period=self.intra_period,
                                     intra_refresh=self.intra_refresh,
@@ -195,7 +218,7 @@ class OpenHDCamera:
             # this can be replaced with a pymavlink event trigger once pymavlink is available on the image
             now = time.time()
             elapsed = now - start
-            if self.record_local and elapsed > 1:
+            if self.record_local and elapsed > 5:
                 start = time.time()
 
                 percent_used = self.check_used_space(self.record_path)
@@ -215,18 +238,17 @@ class OpenHDCamera:
                     self.timelaps_local = False
                     print("Available space less than 10%, stopping image timelaps recording", file=sys.stderr)
                 else:
-                    img_file_name = self.timelaps_path + datetime.now().strftime("%y%m%d-%H%M%S-%f") + ".yuv"
-                    # don't hook up the resize component in the pipeline if the resolution is the same as the main stream
+                    #Saving timelaps in a thread to avoid latency
+                    resize = True
                     if option.width_timelaps == self.max_width and option.height_timelaps == self.max_height:
-                        self.camera.capture(img_file_name, format='yuv', use_video_port=True, splitter_port=3)
-                        print(str(now) + " Recording image to file with video resolution" + img_file_name, file=sys.stderr)
-                    else:
-                        #capture_continuous
-                        self.camera.capture(img_file_name, format='yuv', use_video_port=True, resize=(option.width_timelaps, option.height_timelaps), splitter_port=3)
-                        print(str(now) + " Recording image to file " + img_file_name + " with specific resolution " + str(option.width_timelaps) + "x" + str(option.height_timelaps), file=sys.stderr)
+                        resize = False
+                    myThreadSaveTimelaps = threadSaveTimelaps(myPiCamera=self.camera, timelapsPath=self.timelaps_path, resize=resize, width=option.width_timelaps, height=option.height_timelaps)
+                    myThreadSaveTimelaps.start()
+            
+            sleep(0.05)
             
             #allow the camera to generate errors 
-            self.camera.wait_recording(self.second_timelaps);
+            #self.camera.wait_recording(0);
             
         self.camera.stop_recording(splitter_port=1)
         self.camera.stop_recording(splitter_port=2)
