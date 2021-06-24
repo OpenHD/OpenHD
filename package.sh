@@ -1,5 +1,8 @@
 #!/bin/bash
 
+export LC_ALL=C.UTF-8
+export LANG=C.UTF-8
+
 PACKAGE_ARCH=$1
 OS=$2
 DISTRO=$3
