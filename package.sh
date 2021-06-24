@@ -5,13 +5,6 @@ OS=$2
 DISTRO=$3
 BUILD_TYPE=$4
 
-
-#if [[ "${PLATFORM}" == "pi" ]]; then
-    OS="raspbian"
-    ARCH="arm"
-    PACKAGE_ARCH="armhf"
-#fi
-
 if [[ "${OS}" == "raspbian" ]]; then
     PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc"
     PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
@@ -32,8 +25,6 @@ curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-0/cfg/gpg/gpg.B9F0E9
 echo "Success getting gpg key"
 
 echo "deb https://dl.cloudsmith.io/public/openhd/openhd-2-0/deb/${OS} ${DISTRO} main" > /etc/apt/sources.list.d/openhd-2-0.list || exit 1
-
-echo "deb https://dl.cloudsmith.io/public/openhd/openhd-2-1/deb/${OS} ${DISTRO} main" > /etc/apt/sources.list.d/openhd-2-1.list || exit 1
 
 apt -y update || exit 1
 
