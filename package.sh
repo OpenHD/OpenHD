@@ -5,11 +5,6 @@ OS=$2
 DISTRO=$3
 BUILD_TYPE=$4
 
-if [[ "${OS}" == "raspbian" ]]; then
-    PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc"
-    PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
-fi
-
 if [ "${BUILD_TYPE}" == "docker" ]; then
     cat << EOF > /etc/resolv.conf
 options rotate
