@@ -6,11 +6,11 @@ DISTRO=$2
 BUILD_TYPE=$3
 
 
-if [[ "${PLATFORM}" == "pi" ]]; then
+#if [[ "${PLATFORM}" == "pi" ]]; then
     OS="raspbian"
     ARCH="arm"
     PACKAGE_ARCH="armhf"
-fi
+#fi
 
 if [ "${BUILD_TYPE}" == "docker" ]; then
     cat << EOF > /etc/resolv.conf
