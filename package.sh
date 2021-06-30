@@ -8,6 +8,11 @@ OS=$2
 DISTRO=$3
 BUILD_TYPE=$4
 
+echo "Package Architecture:"$1
+echo "OS:"$2
+echo "Distro:"$3
+echo "Build Type:"$4
+
 if [ "${BUILD_TYPE}" == "docker" ]; then
     cat << EOF > /etc/resolv.conf
 options rotate
