@@ -1,7 +1,7 @@
 kind: pipeline
 type: docker
 name: armhf-raspbian-buster
-platform: pi
+platform:
   os: linux
   arch: arm
 image_pull_secrets:
