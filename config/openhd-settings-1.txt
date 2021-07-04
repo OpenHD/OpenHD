@@ -363,6 +363,29 @@ IMX290_wdrtargetbr=0x80
 # Takes effect in WDR mode. range: [0-0xFF]
 IMX290_wdrbtargetbr=0x80
 
+#IR-CUT (Infrared cut-off filter) is a mechanical shutter design. It is placed between the lens and the image sensor, and is controlled by a motor or an electromagnet.
+#IR-CUT has two status: Block or Deliver the infrared.
+#Color Mode - Image is Color Mode and IR_CUT status Block infrared.
+#Black&White Mode - Image is Black&White Mode and IR_CUT status Deliver infrared.
+#Trigger Mode - Trigger pin : J3 pin1.
+#Trigger pin High(3.3~12V),Image is Black&White Mode and IR-CUT status Deliver infrared.
+#Trigger pin Low(GND),Image is Color Mode and IR-CUT status Bolck infrared.
+IMX290_daynightmode=0xFF
+
+#close AE, use manual shutter
+#value is exposure time（seconds）
+#If value is greater than or equal to 0x4B, it will reduce framerate.
+IMX290_mshutter=0x40
+
+#White balance mode setting.
+IMX290_wbmode=0x18
+
+#Rgain and Bgain setting in manual white balance mode.arameter range [0,0xFF].
+IMX290_mwbgain1=0x00
+IMX290_mwbgain2=0x00
+
+#Set yuv seq of camera. Note: only supported on hdver >= 0x4
+#IMX290_yuvseq=YUYV
 
 # Used to flip/mirror the IMX307 camera, separate setting from IMX290 because they don't handle it the same way
 # 0: normal, 1: flip, 2: mirror, 3: flip+mirror. 

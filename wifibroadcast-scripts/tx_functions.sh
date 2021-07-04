@@ -29,6 +29,7 @@ function tx_function {
         # Configure the camera's ISP parameters
         #
         pushd /usr/local/share/veye-raspberrypi
+        /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f videoformat -p1 $IMX290_videoformat > /tmp/imx290log
         /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f wdrmode -p1 $IMX290_wdrmode > /tmp/imx290log
         /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f mirrormode -p1 $IMX290_mirrormode >> /tmp/imx290log
         /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f denoise -p1 $IMX290_denoise >> /tmp/imx290log
@@ -70,6 +71,26 @@ function tx_function {
 
         if [ "${IMX290_wdrbtargetbr}" != "" ]; then
             /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f wdrbtargetbr -p1 ${IMX290_wdrbtargetbr} >> /tmp/imx290log
+        fi
+
+        if [ "${IMX290_daynightmode}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f daynightmode -p1 ${IMX290_daynightmode} >> /tmp/imx290log
+        fi
+
+        if [ "${IMX290_mshutter}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f mshutter -p1 ${IMX290_mshutter} >> /tmp/imx290log
+        fi
+
+        if [ "${IMX290_wbmode}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f wbmode -p1 ${IMX290_wbmode} >> /tmp/imx290log
+        fi
+        
+        if [ "${IMX290_mwbgain1}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f mwbgain -p1 ${IMX290_mwbgain1} -p2 ${IMX290_mwbgain2} >> /tmp/imx290log
+        fi
+        
+        if [ "${IMX290_yuvseq}" != "" ]; then
+            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f yuvseq -p1 ${IMX290_yuvseq} >> /tmp/imx290log
         fi
 
         /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f imagedir -p1 $IMX307_imagedir >> /tmp/imx290log
