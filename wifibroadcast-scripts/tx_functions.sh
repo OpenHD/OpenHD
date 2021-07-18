@@ -29,7 +29,6 @@ function tx_function {
         # Configure the camera's ISP parameters
         #
         pushd /usr/local/share/veye-raspberrypi
-        /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f videoformat -p1 $IMX290_videoformat > /tmp/imx290log
         /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f wdrmode -p1 $IMX290_wdrmode > /tmp/imx290log
         /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f mirrormode -p1 $IMX290_mirrormode >> /tmp/imx290log
         /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f denoise -p1 $IMX290_denoise >> /tmp/imx290log
