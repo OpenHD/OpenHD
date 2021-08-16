@@ -59,6 +59,8 @@ if [ "$TTY" == "/dev/tty1" ]; then
         # No pi camera detected, but we still might have a VEYE, and the only way to detect
         # it is to have i2c_vc enabled already, and then probe the i2c-0 bus
         #
+        /usr/local/share/veye-raspberrypi/camera_i2c_config
+
         i2cdetect -y 0 0x3b 0x3b | grep  "30:                                  3b            "
         grepRet=$?
 
