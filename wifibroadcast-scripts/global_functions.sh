@@ -265,7 +265,7 @@ function auto_frequency_select {
 # config.txt, and if not we enable it and reboot. 
 #
 # This should not add more than a few seconds to the air boot time, and 
-# only needs to be done once, but IMX290 and other 3rd party cameras won't 
+# only needs to be done once, but VEYE and other 3rd party cameras won't 
 # work without it
 #
 function autoenable_i2c_vc {
@@ -434,7 +434,7 @@ function check_camera_attached {
             if [[ $grepRet -eq 0 ]] ; then
                 echo  "1" > /tmp/cam
 
-                IMX290="1"
+                VEYE="1"
 
                 rm /tmp/CameraNotDetected
 
@@ -444,7 +444,7 @@ function check_camera_attached {
             else
                 echo  "0" > /tmp/cam
 
-                IMX290="0"
+                VEYE="0"
             fi
         else
             # 

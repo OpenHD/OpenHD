@@ -10,94 +10,6 @@ function tx_function {
         lte_function
     fi
 
-    #
-    # Look for a VEYE camera by probing the i2c bus. Note that this *requires*
-    # i2c_vc to already be enabled or the bus won't even be available.
-    #
-    i2cdetect -y 0 0x3b 0x3b | grep  "30:                                  3b            "
-    grepRet=$?
-    if [[ $grepRet -eq 0 ]] ; then
-        echo "VEYE camera detected"
-
-        #
-        # Signal to the rest of the system that a VEYE camera was detected
-        #
-        echo "1" > /tmp/imx290
-        IMX290="1"
-
-        #
-        # Configure the camera's ISP parameters
-        #
-        pushd /usr/local/share/veye-raspberrypi
-        /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f wdrmode -p1 $IMX290_wdrmode > /tmp/imx290log
-        /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f mirrormode -p1 $IMX290_mirrormode >> /tmp/imx290log
-        /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f denoise -p1 $IMX290_denoise >> /tmp/imx290log
-
-        if [ "${IMX290_lowlight}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f lowlight -p1 ${IMX290_lowlight} >> /tmp/imx290log
-        else
-            # turn it off by default to avoid framerate changing during flight
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f lowlight -p1 0x00 >> /tmp/imx290log
-        fi
-
-        if [ "${IMX290_agc}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f agc -p1 ${IMX290_agc} >> /tmp/imx290log
-        fi
-
-        if [ "${IMX290_brightness}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f brightness -p1 ${IMX290_brightness} >> /tmp/imx290log
-        fi
-
-        if [ "${IMX290_aespeed1}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f aespeed  -p1 ${IMX290_aespeed1} -p2 ${IMX290_aespeed2} >> /tmp/imx290log
-        fi
-
-        if [ "${IMX290_contrast}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f contrast -p1 ${IMX290_contrast} >> /tmp/imx290log
-        fi
-
-        if [ "${IMX290_saturation}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f saturation -p1 ${IMX290_saturation} >> /tmp/imx290log
-        fi
-
-        if [ "${IMX290_sharppen1}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f sharppen -p1 ${IMX290_sharppen1} -p2 ${IMX290_sharppen2} >> /tmp/imx290log
-        fi
-
-        if [ "${IMX290_wdrtargetbr}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f wdrtargetbr -p1 ${IMX290_wdrtargetbr} >> /tmp/imx290log
-        fi
-
-        if [ "${IMX290_wdrbtargetbr}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f wdrbtargetbr -p1 ${IMX290_wdrbtargetbr} >> /tmp/imx290log
-        fi
-
-        if [ "${IMX290_daynightmode}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f daynightmode -p1 ${IMX290_daynightmode} >> /tmp/imx290log
-        fi
-
-        if [ "${IMX290_mshutter}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f mshutter -p1 ${IMX290_mshutter} >> /tmp/imx290log
-        fi
-
-        if [ "${IMX290_wbmode}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f wbmode -p1 ${IMX290_wbmode} >> /tmp/imx290log
-        fi
-        
-        if [ "${IMX290_mwbgain1}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f mwbgain -p1 ${IMX290_mwbgain1} -p2 ${IMX290_mwbgain2} >> /tmp/imx290log
-        fi
-        
-        if [ "${IMX290_yuvseq}" != "" ]; then
-            /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f yuvseq -p1 ${IMX290_yuvseq} >> /tmp/imx290log
-        fi
-
-        /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f imagedir -p1 $IMX307_imagedir >> /tmp/imx290log
-        /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f videofmt -p1 ${WIDTH} -p2 ${HEIGHT} -p3 ${FPS}
-        popd
-    fi
-
-
     if [ "$LoadFlirDriver" == "Y" ]; then
         echo "FLIR enabled"
         qstatus "FLIR enabled" 5
@@ -622,7 +534,7 @@ function tx_function {
 
     #
     # If tx_functions is running but the GPU says there are no cameras connected (CAM=0), it's
-    # likely an IMX290. We could explicitly detect that, but this works for now.
+    # likely an VEYE. We could explicitly detect that, but this works for now.
     #
     CAM=`/usr/bin/vcgencmd get_camera | python3 -c 'import sys, re; s = sys.stdin.read(); s=re.sub("supported=\d+ detected=", "", s); print(s);'`
     
@@ -641,7 +553,7 @@ function tx_function {
         echo "nice -n -9 ${CAMERA_PROGRAM} -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
     else
 
-        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
+        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b \$1 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_VEYE -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransferExteranlBitrate.sh
     fi
 
     #
@@ -687,7 +599,7 @@ function tx_function {
 
     #
     # If tx_functions is running but the GPU says there are no cameras connected (CAM=0), it's
-    # likely an IMX290. We could explicitly detect that, but this works for now.
+    # likely an VEYE. We could explicitly detect that, but this works for now.
     #
     # Note: this should be expanded to support single USB cameras as well
     #
@@ -729,9 +641,9 @@ function tx_function {
         # No pi camera was detected, but this is an air pi so we assume it's a VEYE camera that the GPU can't detect
         #
 
-        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
-        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_10 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_10.sh
-        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_5 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_IMX290 -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_5.sh
+        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_VEYE -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer.sh
+        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_10 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_VEYE -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_10.sh
+        echo "nice -n -9 /usr/local/bin/veye_raspivid -w $WIDTH -h $HEIGHT -fps $FPS -b $BITRATE_5 -g $KEYFRAMERATE -t 0 $EXTRAPARAMS_VEYE -o - | nice -n -9 /usr/local/bin/tx_rawsock -p 0 -b $VIDEO_BLOCKS -r $VIDEO_FECS -f $VIDEO_BLOCKLENGTH -t $VIDEO_FRAMETYPE -d $VIDEO_WIFI_BITRATE -M $UseMCS -S $UseSTBC -L $UseLDPC -y 0 $NICS" >> /dev/shm/startReadCameraTransfer_5.sh
     fi
 
 
