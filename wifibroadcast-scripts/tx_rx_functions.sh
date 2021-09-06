@@ -1,5 +1,6 @@
 source rx_functions.sh
 source tx_functions.sh
+source camera_setup.sh
 
 function MAIN_TX_RX_FUNCTION {
     ###############################################################################
@@ -14,6 +15,7 @@ function MAIN_TX_RX_FUNCTION {
     if [ "$CAM" == "0" ]; then
         rx_function
     else
+        camera_setup
         tx_function
     fi
 }
