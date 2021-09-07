@@ -281,7 +281,7 @@ void GStreamerStream::setup_jetson_csi() {
     parse_user_format(m_camera.format, width, height, fps);
 
 
-    m_pipeline << fmt::format("nvarguscamerasrc maxperf=1 do-timestamp=true sensor-id={} ! ", sensor_id);
+    m_pipeline << fmt::format("nvarguscamerasrc do-timestamp=true sensor-id={} ! ", sensor_id);
     m_pipeline << fmt::format("video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! ", width, height, fps);
     m_pipeline << "queue ! ";
 
