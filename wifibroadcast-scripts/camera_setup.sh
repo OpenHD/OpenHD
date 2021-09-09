@@ -42,9 +42,6 @@ function camera_setup {
             wdrbtargetbr=VEYE_MIPI${VEYE_MIPI_profile}_wdrbtargetbr
             daynightmode=VEYE_MIPI${VEYE_MIPI_profile}_daynightmode
             mshutter=VEYE_MIPI${VEYE_MIPI_profile}_mshutter
-            wbmode=VEYE_MIPI${VEYE_MIPI_profile}_wbmode
-            mwbgain1=VEYE_MIPI${VEYE_MIPI_profile}_mwbgain1
-            mwbgain2=VEYE_MIPI${VEYE_MIPI_profile}_mwbgain2
             yuvseq=VEYE_MIPI${VEYE_MIPI_profile}_yuvseq
 
             #
@@ -101,14 +98,6 @@ function camera_setup {
             if [ "${!mshutter}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f mshutter -p1 ${!mshutter} >> /tmp/veyelog
             fi
-
-            if [ "${!wbmode}" != "" ]; then
-                /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f wbmode -p1 ${!wbmode} >> /tmp/veyelog
-            fi
-            
-            if [ "${!mwbgain1}" != "" ]; then
-                /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f mwbgain -p1 ${!mwbgain1} -p2 ${!mwbgain2} >> /tmp/veyelog
-            fi
             
             if [ "${!yuvseq}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -w -f yuvseq -p1 ${!yuvseq} >> /tmp/veyelog
@@ -117,6 +106,7 @@ function camera_setup {
 
 
         /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -r -f devid > /tmp/veyecsdevid
+        /usr/local/share/veye-raspberrypi/veye_mipi_i2c.sh -r -f hdver >> /tmp/veyecsdevid
         /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -r -f firmwarever >> /tmp/veyecsdevid
         /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -r -f devid | grep "0x 2"
         grepRet=$?
@@ -124,8 +114,30 @@ function camera_setup {
             echo "VEYE CS Detected"
 
             #
+            # Load the settings based on the profile selected.
+            #
+
+            daynightmode=VEYE_CS${VEYE_CS_profile}_daynightmode
+            hue=VEYE_CS${VEYE_CS_profile}_hue            
+            contrast=VEYE_CS${VEYE_CS_profile}_contrast
+            satu=VEYE_CS${VEYE_CS_profile}_satu            
+            expmode=VEYE_CS${VEYE_CS_profile}_expmode
+            aetarget=VEYE_CS${VEYE_CS_profile}_aetarget           
+            aetime=VEYE_CS${VEYE_CS_profile}_aetime
+            aeagc1=VEYE_CS${VEYE_CS_profile}_aeagc1
+            aeagc2=VEYE_CS${VEYE_CS_profile}_aeagc2       
+            metime=VEYE_CS${VEYE_CS_profile}_metime
+            meagain1=VEYE_CS${VEYE_CS_profile}_meagain1
+            meagain2=VEYE_CS${VEYE_CS_profile}_meagain2         
+            medgain1=VEYE_CS${VEYE_CS_profile}_medgain1
+            medgain2=VEYE_CS${VEYE_CS_profile}_medgain2
+            awbmode=VEYE_CS${VEYE_CS_profile}_awbmode            
+            mwbcolortemp=VEYE_CS${VEYE_CS_profile}_mwbcolortemp            
+            yuvseq=VEYE_CS${VEYE_CS_profile}_yuvseq
+
+            #
             # Check the firmware version so we know what videofmt to use.
-            # On Version >2.35 a decimal framerate is used and set via -p2
+            # On Version >2.35 a decimal framerate is used and set via -p4
             #
 
             fwv=$(/usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -r -f firmwarever | grep -o -E "[0-9]+\.[0-9]+")
@@ -145,48 +157,59 @@ function camera_setup {
 
             if [ "${!daynightmode}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f daynightmode -p1 ${!daynightmode} >> /tmp/veyelog
+            fi
                 
             if [ "${!hue}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f hue -p1 ${!hue} >> /tmp/veyelog
+            fi
                 
             if [ "${!contrast}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f contrast -p1 ${!contrast} >> /tmp/veyelog
-                
+            fi
+
             if [ "${!satu}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f satu -p1 ${!satu} >> /tmp/veyelog
-                                
+            fi
+
             if [ "${!expmode}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f expmode -p1 ${!expmode} >> /tmp/veyelog
-                                              
+            fi
+
             if [ "${!aetarget}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f aetarget -p1 ${!aetarget} >> /tmp/veyelog
-                                              
+            fi
+
             if [ "${!aetime}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f aetime -p1 ${!aetime} >> /tmp/veyelog
-                                                              
-            if [ "${!aeagc}" != "" ]; then
-                /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f aeagc -p1 ${!aeagc} >> /tmp/veyelog
-                                                                              
+            fi
+
+            if [ "${!aeagc1}" != "" ]; then
+                /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f aeagc -p1 ${!aeagc1} -p2 ${!aeagc2} >> /tmp/veyelog
+            fi
+
             if [ "${!metime}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f metime -p1 ${!metime} >> /tmp/veyelog
-                                                                                              
-            if [ "${!meagain}" != "" ]; then
-                /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f meagain -p1 ${!meagain} >> /tmp/veyelog
-                                                                                                              
-            if [ "${!medgain}" != "" ]; then
-                /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f medgain -p1 ${!medgain} >> /tmp/veyelog
-                                                                                                                              
+            fi
+
+            if [ "${!meagain1}" != "" ]; then
+                /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f meagain -p1 ${!meagain1} -p2 ${!meagain2} >> /tmp/veyelog
+            fi
+
+            if [ "${!medgain1}" != "" ]; then
+                /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f medgain -p1 ${!medgain1} -p2 ${!medgain2} >> /tmp/veyelog
+            fi
+
             if [ "${!awbmode}" != "" ]; then
-                /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f awbmode -p1 ${!awbmode} >> /tmp/veyelog
-                                                                                                                                              
-            if [ "${!mwbgain}" != "" ]; then
-                /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f mwbgain -p1 ${!mwbgain} >> /tmp/veyelog
-                                                                                                                                                              
+                /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f awbmode -p1 ${!awbmode} >> /tmp/veyelog                                                                                                                                            
+            fi
+
             if [ "${!mwbcolortemp}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f mwbcolortemp -p1 ${!mwbcolortemp} >> /tmp/veyelog
-                                                                                                                                                                              
+            fi
+
             if [ "${!yuvseq}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f yuvseq -p1 ${!yuvseq} >> /tmp/veyelog
+            fi
                 
             
         fi
