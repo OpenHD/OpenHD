@@ -1,8 +1,8 @@
-LDFLAGS=-lrt -lpcap -lwiringPi
-CPPFLAGS=-Wall -O2 -march=armv6zk -mcpu=arm1176jzf-s -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -D _GNU_SOURCE
+LDFLAGS=-lrt -lpcap
+CPPFLAGS=-Wall -O2 -D _GNU_SOURCE
 CFLAGS := $(CFLAGS) -I../lib/mavlink_generated/include/mavlink/v2.0/
 
-all: rx_rc_telemetry_buf rx rx_rc_telemetry rssirx rssitx tx_rawsock tx_telemetry rx_status tracker rssilogger syslogger channelscan check_alive rssi_forward rssi_qgc_forward wifiscan wifibackgroundscan sharedmem_init_rx sharedmem_init_tx
+all: rx_rc_telemetry_buf rx rx_rc_telemetry rssirx rssitx tx_rawsock tx_telemetry rx_status rssilogger syslogger channelscan check_alive rssi_forward rssi_qgc_forward wifiscan wifibackgroundscan sharedmem_init_rx sharedmem_init_tx
 
 %.o: %.c
 	gcc $(CFLAGS) -c -o $@ $< $(CPPFLAGS)
@@ -32,9 +32,6 @@ tx_telemetry: tx_telemetry.o openhdlib.o fec.o
 	gcc -o $@ $^ $(LDFLAGS)
 
 rx_status: rx_status.o
-	gcc -o $@ $^ $(LDFLAGS)
-
-tracker: tracker.o
 	gcc -o $@ $^ $(LDFLAGS)
 
 rssilogger: rssilogger.o
@@ -79,7 +76,6 @@ install:
 	install -m 755 -p tx_rawsock ${DESTDIR}/usr/local/bin/
 	install -m 755 -p tx_telemetry ${DESTDIR}/usr/local/bin/
 	install -m 755 -p rx_status ${DESTDIR}/usr/local/bin/
-	install -m 755 -p tracker ${DESTDIR}/usr/local/bin/
 	install -m 755 -p rssilogger ${DESTDIR}/usr/local/bin/
 	install -m 755 -p syslogger ${DESTDIR}/usr/local/bin/
 	install -m 755 -p channelscan ${DESTDIR}/usr/local/bin/

@@ -328,19 +328,22 @@ function check_exitstatus {
                 #
 
                 echo "ERROR: RX stopped, wifi card _not_ removed!"
+                qstatus "ERROR: RX stopped, wifi card _not_ removed!" 3
             else
                 #
                 # Wifi card has been removed
                 #
 
                 echo "ERROR: Wifi card removed!"
+                qstatus "ERROR: Wifi card removed!" 3
             fi
         ;;
         2)
             #
             # Something else that is fatal happened during running
             #
-            echo "ERROR: RX chain stopped, but not because the wifi card was removed"
+            echo "ERROR: RX chain stopped, but not because the wifi card was removed!"
+            qstatus "ERROR: RX chain stopped, but not because the wifi card was removed!" 3
         ;;
         1)
             #
@@ -348,6 +351,7 @@ function check_exitstatus {
             #
 
             echo "ERROR: could not start RX"
+            qstatus "ERROR: could not start RX" 3
         ;;
         *)
             if [  $RX_EXITSTATUS -lt 128 ]; then
@@ -680,26 +684,31 @@ function get_telemetry_settings {
     if cat /boot/osdconfig.txt | grep -q "^#define LTM"; then
         TELEMETRY_UDP_PORT=5001
         TELEMETRY_TYPE=1
+        qstatus "Minimal to no support for LTM..." 3
     fi
 
     if cat /boot/osdconfig.txt | grep -q "^#define FRSKY"; then
         TELEMETRY_UDP_PORT=5002
         TELEMETRY_TYPE=1
+        qstatus "Minimal to no support for FRSKY..." 3
     fi
 
     if cat /boot/osdconfig.txt | grep -q "^#define SMARTPORT"; then
         TELEMETRY_UDP_PORT=5010
         TELEMETRY_TYPE=1
+        qstatus "Minimal to no support for SMARTPORT..." 3
     fi
 
     if cat /boot/osdconfig.txt | grep -q "^#define VOT"; then
         TELEMETRY_UDP_PORT=5011
         TELEMETRY_TYPE=1
+        qstatus "Minimal to no support for VOT telemetry..." 3
     fi
 
     if cat /boot/osdconfig.txt | grep -q "^#define MAVLINK"; then
         TELEMETRY_UDP_PORT=5004
         TELEMETRY_TYPE=0
+        qstatus "Mavlink telemetry selected..." 5
     fi
 }
 
@@ -842,12 +851,14 @@ function collect_errorlog {
 
     if nice dmesg | nice grep -q over-current; then
         echo "ERROR: Over-current detected - potential power supply problems!"
+        qstatus "OVER CURRENT DETECTED!" 3
     fi
 
 
     # check for USB disconnects (due to power-supply problems)
     if nice dmesg | nice grep -q disconnect; then
         echo "ERROR: USB disconnect detected - potential power supply problems!"
+        qstatus "ERROR: USB disconnect detected - potential power supply problems!" 3
     fi
 
 
@@ -878,6 +889,8 @@ function collect_errorlog {
             echo "  | Video Bitrate will be reduced to 1000kbit to reduce current consumption!                        |" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
             echo "  | When you have fixed wiring/power-supply, delete this file and make sure it doesn't re-appear!   |" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
             echo "  ---------------------------------------------------------------------------------------------------" >> /boot/UNDERVOLTAGE-ERROR!!!.txt
+
+            qstatus "UNDER VOLTAGE DETECTED!!! CHECK YOUR WIRING and POWER" 3
         fi
     fi
 
