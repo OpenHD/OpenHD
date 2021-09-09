@@ -31,7 +31,7 @@ curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-0/cfg/gpg/gpg.B9F0E9
 
 echo "deb https://dl.cloudsmith.io/public/openhd/openhd-2-0/deb/${OS} ${DISTRO} main" > /etc/apt/sources.list.d/openhd-2-0.list || exit 1
 
-apt -y update || exit 1
+apt -y update --allow-releaseinfo-change || exit 1
 
 PACKAGE_NAME=openhd
 
