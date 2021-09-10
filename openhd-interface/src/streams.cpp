@@ -290,7 +290,7 @@ stream_pair Streams::start_telemetry_stream(Stream stream) {
         "-k", std::to_string(stream.data_blocks), 
         "-n", std::to_string(stream.total_blocks),
     };
-    rx_args.insert(rx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
+    tx_args.insert(tx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
 
 
     boost::process::child c_tx(boost::process::search_path("wfb_tx"), tx_args, m_io_service);
