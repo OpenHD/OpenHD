@@ -138,7 +138,7 @@ void GStreamerStream::setup() {
 
 
     // this directs the video stream back to this system for recording in the Record class
-    m_pipeline << fmt::format("udpsink host=127.0.0.1 port={} t. ! ", m_video_port - 10);
+    m_pipeline << fmt::format("udpsink host=127.0.0.1 port={}", m_video_port - 10);
 
 
     std::cerr << "Pipeline: " << m_pipeline.str() << std::endl;
