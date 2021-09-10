@@ -208,14 +208,6 @@ boost::process::child Streams::start_video_stream(Stream stream) {
         throw std::runtime_error("no wifibroadcast interfaces available");
     }
 
-    std::string interface_names;
-
-    for (auto interface : broadcast_interfaces) {
-        interface_names += interface;
-        interface_names += " ";
-    }
-
-    boost::trim_right(interface_names);
 
 
     if (m_is_air) {    
@@ -230,8 +222,10 @@ boost::process::child Streams::start_video_stream(Stream stream) {
             "-M", std::to_string(stream.mcs), 
             "-k", std::to_string(stream.data_blocks), 
             "-n", std::to_string(stream.total_blocks),
-            interface_names
         };
+
+        tx_args.insert(tx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
+
 
 
         boost::process::child c_tx(boost::process::search_path("wfb_tx"), tx_args, m_io_service);
@@ -246,8 +240,9 @@ boost::process::child Streams::start_video_stream(Stream stream) {
             "-K", stream.rx_keypair, 
             "-k", std::to_string(stream.data_blocks), 
             "-n", std::to_string(stream.total_blocks),
-            interface_names
         };
+
+        rx_args.insert(rx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
 
 
         boost::process::child c_rx(boost::process::search_path("wfb_rx"), rx_args, m_io_service);
@@ -272,15 +267,6 @@ stream_pair Streams::start_telemetry_stream(Stream stream) {
     }
 
 
-    std::string interface_names;
-
-    for (auto interface : broadcast_interfaces) {
-        interface_names += interface;
-        interface_names += " ";
-    }
-
-    boost::trim_right(interface_names);
-
 
     std::vector<std::string> rx_args { 
         "-p", std::to_string(m_is_air ? stream.rf_rx_port : stream.rf_tx_port), 
@@ -288,8 +274,8 @@ stream_pair Streams::start_telemetry_stream(Stream stream) {
         "-K", m_is_air ? stream.rx_keypair : stream.tx_keypair,
         "-k", std::to_string(stream.data_blocks), 
         "-n", std::to_string(stream.total_blocks),
-        interface_names
     };
+    rx_args.insert(rx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
 
 
     std::vector<std::string> tx_args { 
@@ -303,8 +289,8 @@ stream_pair Streams::start_telemetry_stream(Stream stream) {
         "-M", std::to_string(stream.mcs), 
         "-k", std::to_string(stream.data_blocks), 
         "-n", std::to_string(stream.total_blocks),
-        interface_names
     };
+    rx_args.insert(rx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
 
 
     boost::process::child c_tx(boost::process::search_path("wfb_tx"), tx_args, m_io_service);
