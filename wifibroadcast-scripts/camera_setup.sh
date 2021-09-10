@@ -27,22 +27,22 @@ function camera_setup {
             # Load the settings based on the profile selected.
             #
 
-            wdrmode=VEYE_MIPI${VEYE_MIPI_profile}_wdrmode
-            denoise=VEYE_MIPI${VEYE_MIPI_profile}_denoise
-            lowlight=VEYE_MIPI${VEYE_MIPI_profile}_lowlight
-            agc=VEYE_MIPI${VEYE_MIPI_profile}_agc
-            brightness=VEYE_MIPI${VEYE_MIPI_profile}_brightness
-            aespeed1=VEYE_MIPI${VEYE_MIPI_profile}_aespeed1
-            aespeed2=VEYE_MIPI${VEYE_MIPI_profile}_aespeed2
-            contrast=VEYE_MIPI${VEYE_MIPI_profile}_contrast
-            saturation=VEYE_MIPI${VEYE_MIPI_profile}_saturation
-            sharppen1=VEYE_MIPI${VEYE_MIPI_profile}_sharppen1
-            sharppen2=VEYE_MIPI${VEYE_MIPI_profile}_sharppen2
-            wdrtargetbr=VEYE_MIPI${VEYE_MIPI_profile}_wdrtargetbr
-            wdrbtargetbr=VEYE_MIPI${VEYE_MIPI_profile}_wdrbtargetbr
-            daynightmode=VEYE_MIPI${VEYE_MIPI_profile}_daynightmode
-            mshutter=VEYE_MIPI${VEYE_MIPI_profile}_mshutter
-            yuvseq=VEYE_MIPI${VEYE_MIPI_profile}_yuvseq
+            wdrmode=VEYE_MIPI${VEYE_profile}_wdrmode
+            denoise=VEYE_MIPI${VEYE_profile}_denoise
+            lowlight=VEYE_MIPI${VEYE_profile}_lowlight
+            agc=VEYE_MIPI${VEYE_profile}_agc
+            brightness=VEYE_MIPI${VEYE_profile}_brightness
+            aespeed1=VEYE_MIPI${VEYE_profile}_aespeed1
+            aespeed2=VEYE_MIPI${VEYE_profile}_aespeed2
+            contrast=VEYE_MIPI${VEYE_profile}_contrast
+            saturation=VEYE_MIPI${VEYE_profile}_saturation
+            sharppen1=VEYE_MIPI${VEYE_profile}_sharppen1
+            sharppen2=VEYE_MIPI${VEYE_profile}_sharppen2
+            wdrtargetbr=VEYE_MIPI${VEYE_profile}_wdrtargetbr
+            wdrbtargetbr=VEYE_MIPI${VEYE_profile}_wdrbtargetbr
+            daynightmode=VEYE_MIPI${VEYE_profile}_daynightmode
+            mshutter=VEYE_MIPI${VEYE_profile}_mshutter
+            yuvseq=VEYE_MIPI${VEYE_profile}_yuvseq
 
             #
             # Configure the camera's ISP parameters
@@ -117,23 +117,23 @@ function camera_setup {
             # Load the settings based on the profile selected.
             #
 
-            daynightmode=VEYE_CS${VEYE_CS_profile}_daynightmode
-            hue=VEYE_CS${VEYE_CS_profile}_hue            
-            contrast=VEYE_CS${VEYE_CS_profile}_contrast
-            satu=VEYE_CS${VEYE_CS_profile}_satu            
-            expmode=VEYE_CS${VEYE_CS_profile}_expmode
-            aetarget=VEYE_CS${VEYE_CS_profile}_aetarget           
-            aetime=VEYE_CS${VEYE_CS_profile}_aetime
-            aeagc1=VEYE_CS${VEYE_CS_profile}_aeagc1
-            aeagc2=VEYE_CS${VEYE_CS_profile}_aeagc2       
-            metime=VEYE_CS${VEYE_CS_profile}_metime
-            meagain1=VEYE_CS${VEYE_CS_profile}_meagain1
-            meagain2=VEYE_CS${VEYE_CS_profile}_meagain2         
-            medgain1=VEYE_CS${VEYE_CS_profile}_medgain1
-            medgain2=VEYE_CS${VEYE_CS_profile}_medgain2
-            awbmode=VEYE_CS${VEYE_CS_profile}_awbmode            
-            mwbcolortemp=VEYE_CS${VEYE_CS_profile}_mwbcolortemp            
-            yuvseq=VEYE_CS${VEYE_CS_profile}_yuvseq
+            daynightmode=VEYE_CS${VEYE_profile}_daynightmode
+            hue=VEYE_CS${VEYE_profile}_hue            
+            contrast=VEYE_CS${VEYE_profile}_contrast
+            satu=VEYE_CS${VEYE_profile}_satu            
+            expmode=VEYE_CS${VEYE_profile}_expmode
+            aetarget=VEYE_CS${VEYE_profile}_aetarget           
+            aetime=VEYE_CS${VEYE_profile}_aetime
+            aeagc1=VEYE_CS${VEYE_profile}_aeagc1
+            aeagc2=VEYE_CS${VEYE_profile}_aeagc2       
+            metime=VEYE_CS${VEYE_profile}_metime
+            meagain1=VEYE_CS${VEYE_profile}_meagain1
+            meagain2=VEYE_CS${VEYE_profile}_meagain2         
+            medgain1=VEYE_CS${VEYE_profile}_medgain1
+            medgain2=VEYE_CS${VEYE_profile}_medgain2
+            awbmode=VEYE_CS${VEYE_profile}_awbmode            
+            mwbcolortemp=VEYE_CS${VEYE_profile}_mwbcolortemp            
+            yuvseq=VEYE_CS${VEYE_profile}_yuvseq
 
             #
             # Check the firmware version so we know what videofmt to use.
@@ -210,7 +210,7 @@ function camera_setup {
             if [ "${!yuvseq}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f yuvseq -p1 ${!yuvseq} >> /tmp/veyelog
             fi
-                
+
             
         fi
 
