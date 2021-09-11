@@ -304,10 +304,6 @@ SpeakersLevel=75
 # >>>>>>>>>>[CAMERA MODULES & SETTINGS]--
 
 # >>>>>>>>>>[RASPIVID CAMERA SETTINGS]--
-# There are dozens of paramaters, see the RPI forum for all settings.
-EXTRAPARAMS="-cd H264 -n -fl -ih -pf high -if both -ex sports -mm average -awb horizon"
-# UNCOMMENT, AND USE THESE CAMERA SETTINGS FOR THE B101 OR SIMILAR HDMI-CSI ADAPTER
-#EXTRAPARAMS="-cd H264 -n -fl -ih -pf high -if both"
 
 # ------GENERIC CAMERA SETTINGS----------------
 
@@ -342,7 +338,19 @@ rpi0_contrast=0
 # Brightness range 0 to 100. Default 50.
 rpi0_brightness=50
 
+# Saturation range -100 to 100. Default 0.
+rpi0_saturation=0
 
+# 0 Normal
+# 1 Mirror
+# 2 V-Flip
+# 3 Mirror And V-Flip(180 Degree Rotate)
+rpi0_mirrormode=0
+
+# There are extra paramaters available beyond what is above or already applied in the code, see the RPI forum for all settings.
+# Do not use the following in the EXTRAPARAMS as they are already applied:
+# -cd -n -fl -ih -pf -if -ex -mm -awb -sh -co -br -sa -hf -vf
+EXTRAPARAMS=""
 
 # ------GENERIC VEYE SETTINGS------------------
 
@@ -510,6 +518,38 @@ VEYE_CS0_yuvseq=YUYV
 # Profile 3=3, Profile 2=2, Profile 1=1, Custom=0
 # Default is Custom which uses the settings from the above section which can be changed in the UI.
 camera_profile=0
+
+#-----------RPI CAMERA PROFILES
+
+# Profile 1
+rpi1_camera_exposure=backlight
+rpi1_metering_mode=average
+rpi1_awb=sun
+rpi1_sharpness=0
+rpi1_contrast=0
+rpi1_brightness=50
+rpi1_saturation=0
+rpi1_mirrormode=0
+
+# Profile 2
+rpi2_camera_exposure=backlight
+rpi2_metering_mode=average
+rpi2_awb=sun
+rpi2_sharpness=0
+rpi2_contrast=0
+rpi2_brightness=50
+rpi2_saturation=0
+rpi2_mirrormode=0
+
+# Profile 3
+rpi3_camera_exposure=backlight
+rpi3_metering_mode=average
+rpi3_awb=sun
+rpi3_sharpness=0
+rpi3_contrast=0
+rpi3_brightness=50
+rpi3_saturation=0
+rpi3_mirrormode=0
 
 # ----------VEYE MIPI PROFILES-----------------
 

@@ -224,6 +224,8 @@ function camera_setup {
     sharpness=rpi${camera_profile}_sharpness
     contrast=rpi${camera_profile}_contrast
     brightness=rpi${camera_profile}_brightness
+    saturation=rpi${camera_profile}_saturation
+    mirrormode=rpi${camera_profile}_mirrormode
 
     # Build EXTRAPARAMS
 
@@ -281,7 +283,24 @@ function camera_setup {
         brightness=""
     fi
 
-    EXTRAPARAMS="${codec} -n -fl -ih${h264_profile}${intra_refresh}${camera_exposure}${metering_mode}${awb}${sharpness}${contrast}${brightness}"
+    if [ "${!saturation}" != "" ]; then
+        saturation=" -sa ${!saturation}"
+    else
+        saturation=""
+    fi
 
+    if [ "${!mirrormode}" -eq 1 ]; then
+        mirrormode=" -hf"
+    elif [ "${!mirrormode}" -eq 2 ]; then
+        mirrormode=" -vf"
+    elif [ "${!mirrormode}" -eq 3 ]; then
+        mirrormode=" -vf -hf"
+    else
+        mirrormode=""
+    fi
+
+
+
+    EXTRAPARAMS="${codec} -n -fl -ih${h264_profile}${intra_refresh}${camera_exposure}${metering_mode}${awb}${sharpness}${contrast}${brightness}${saturation}${mirrormode}"
 
 }
