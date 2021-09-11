@@ -221,7 +221,9 @@ function camera_setup {
     camera_exposure=rpi${camera_profile}_camera_exposure
     metering_mode=rpi${camera_profile}_metering_mode
     awb=rpi${camera_profile}_awb
-
+    sharpness=rpi${camera_profile}_sharpness
+    contrast=rpi${camera_profile}_contrast
+    brightness=rpi${camera_profile}_brightness
 
     # Build EXTRAPARAMS
 
@@ -232,36 +234,54 @@ function camera_setup {
     fi
 
     if [ "${h264_profile}" != "" ]; then
-        h264_profile="-pf ${h264_profile}"
+        h264_profile=" -pf ${h264_profile}"
     else
-        h264_profile="-pf high"
+        h264_profile=" -pf high"
     fi
 
     if [ "${intra_refresh}" != "" ]; then
-        intra_refresh="-if ${intra_refresh}"
+        intra_refresh=" -if ${intra_refresh}"
     else
-        intra_refresh="-if both"
+        intra_refresh=" -if both"
     fi
 
     if [ "${!camera_exposure}" != "" ]; then
-        camera_exposure="-ex ${!camera_exposure}"
+        camera_exposure=" -ex ${!camera_exposure}"
     else
         camera_exposure=""
     fi
 
     if [ "${!metering_mode}" != "" ]; then
-        metering_mode="-mm ${!metering_mode}"
+        metering_mode=" -mm ${!metering_mode}"
     else
         metering_mode=""
     fi
 
     if [ "${!awb}" != "" ]; then
-        awb="-awb ${!awb}"
+        awb=" -awb ${!awb}"
     else
         awb=""
     fi
 
-    EXTRAPARAMS="${codec} -n -fl -ih ${h264_profile} ${intra_refresh} ${camera_exposure} ${metering_mode} ${awb} "
+    if [ "${!sharpness}" != "" ]; then
+        sharpness=" -sh ${!sharpness}"
+    else
+        sharpness=""
+    fi
+
+    if [ "${!contrast}" != "" ]; then
+        contrast=" -co ${!contrast}"
+    else
+        contrast=""
+    fi
+
+    if [ "${!brightness}" != "" ]; then
+        brightness=" -br ${!brightness}"
+    else
+        brightness=""
+    fi
+
+    EXTRAPARAMS="${codec} -n -fl -ih${h264_profile}${intra_refresh}${camera_exposure}${metering_mode}${awb}${sharpness}${contrast}${brightness}"
 
 
 }

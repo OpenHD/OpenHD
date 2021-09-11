@@ -333,6 +333,15 @@ rpi0_metering_mode=average
 # off, auto, sun, cloud, shade, tungsten, fluorescent, incandescent, flash, horizon, greyworld
 rpi0_awb=sun
 
+# Sharpness range -100 to 100. Default 0.
+rpi0_sharpness=0
+
+# Contrast range -100 to 100. Default 0.
+rpi0_contrast=0
+
+# Brightness range 0 to 100. Default 50.
+rpi0_brightness=50
+
 
 
 # ------GENERIC VEYE SETTINGS------------------
