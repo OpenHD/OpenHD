@@ -120,6 +120,12 @@ build_source() {
     make install DESTDIR=${PKGDIR} || exit 1
     popd
 
+    pushd openhd-power
+    make clean
+    make -j3 || exit 1
+    make install DESTDIR=${PKGDIR} || exit 1
+    popd
+
     pushd openhd-telemetry
     make clean
     make -j3 || exit 1

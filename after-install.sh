@@ -6,6 +6,7 @@ systemctl enable openhd_system
 systemctl enable openhd_security
 systemctl enable openhd_interface
 systemctl enable openhd_video
+systemctl enable openhd_power
 systemctl enable openhd_telemetry@microservice
 systemctl enable openhd_telemetry@telemetry
 
