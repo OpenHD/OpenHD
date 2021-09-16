@@ -8,4 +8,4 @@ ExecStart=/usr/local/bin/openhd_power
 
 [Install]
 WantedBy=multi-user.target
-Alias=openhdvideo.service
+Alias=openhdpower.service
