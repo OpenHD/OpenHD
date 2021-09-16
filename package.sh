@@ -15,6 +15,7 @@ if [[ "${OS}" == "raspbian" ]]; then
 fi
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
+    echo "--------------ADDING nvidia-l4t-gstreamer to package list--------------- "
     PLATFORM_PACKAGES="-d nvidia-l4t-gstreamer"
     PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
 fi
@@ -132,7 +133,7 @@ build_source() {
     # this line, aside from overlay files and default settings templates
     cp UDPSplitter/udpsplitter.py ${PKGDIR}/usr/local/bin/ || exit 1
 
-    if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "stretch" ]]; then
+    if [[ "${OS}" == "raspbian" && "${DISTRO}" == "stretch" ]]; then
         pushd openvg
         make clean
         make -j3 library || exit 1
@@ -140,7 +141,8 @@ build_source() {
         popd
     fi
 
-    if [[ "${PLATFORM}" == "pi" ]]; then
+    if [[ "${OS}" == "raspbian" ]]; then
+        echo "-------------BUILDING HELLO VIDEO FOR RASPBIAN--------"
         pushd wifibroadcast-hello_video
         make clean
         make -j3 || exit 1
@@ -162,7 +164,7 @@ build_source() {
     make install DESTDIR=${PKGDIR} || exit 1
     popd
 
-    if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "stretch" ]]; then
+    if [[ "${OS}" == "raspbian" && "${DISTRO}" == "stretch" ]]; then
         pushd wifibroadcast-osd
         make clean
         make -j3 || exit 1
@@ -185,7 +187,7 @@ build_source() {
 
     cp -a gnuplot/* ${PKGDIR}/usr/local/share/openhd/gnuplot/ || exit 1
 
-    if [[ "${PLATFORM}" == "pi" && "${DISTRO}" == "buster" ]]; then
+    if [[ "${OS}" == "raspbian" && "${DISTRO}" == "buster" ]]; then
         cat << EOF >> ${PKGDIR}/boot/config.txt
 [all]
 dtoverlay=vc4-fkms-v3d
@@ -207,7 +209,7 @@ EOF
     cp -a config/telemetry.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
 }
 
-if [[ "${PLATFORM}" == "pi" ]]; then
+if [[ "${OS}" == "raspbian" ]]; then
     build_pi_dep
 fi
 
@@ -231,6 +233,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
   -d "libseek-thermal >= 20200801.1" \
   -d "flirone-driver >= 20200704.3" \
   -d "wifibroadcast >= 20200930.1" \
+  -d "qopenhd" \
   -d "openhd-dump1090-mutability >= 20201122.2" \
   -d "gnuplot-nox" \
   -d "hostapd" \

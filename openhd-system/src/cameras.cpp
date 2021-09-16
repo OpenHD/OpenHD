@@ -89,6 +89,7 @@ void Cameras::detect_raspberrypi_csi() {
     std::string raw_value;
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("vcgencmd get_camera", "r"), pclose);
     if (!pipe) {
+        std::cerr << "Cameras::detect_raspberrypi_csi() no pipe from vcgencmd" << std::endl;
         return;
     }
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
@@ -101,15 +102,19 @@ void Cameras::detect_raspberrypi_csi() {
     boost::regex r{ "supported=([\\d]+)\\s+detected=([\\d]+)"};
     
     if (!boost::regex_search(raw_value, result, r)) {
+        std::cerr << "Cameras::detect_raspberrypi_csi() no regex match" << std::endl;
         return;
     }
 
     if (result.size() != 3) {
+        std::cerr << "Cameras::detect_raspberrypi_csi() regex unexpected result" << std::endl;
         return;
     }
 
     std::string supported = result[1];
     std::string detected = result[2];
+
+    std::cerr << "Cameras::detect_raspberrypi_csi() supported="+supported+" detected="+detected << std::endl;
 
     auto camera_count = atoi(detected.c_str());
 
