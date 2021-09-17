@@ -16,7 +16,6 @@
 #include "openhd-status.hpp"
 
 
-#include "mavlinkcontrol.h"
 //#include "record.h"
 #include "json.hpp"
 
