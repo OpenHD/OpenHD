@@ -118,11 +118,6 @@ FPS=30
 # You can set this higher or lower according to your needs. Minimum value is 2.
 KEYFRAMERATE=10
 #
-# >>>>>>>>>>[RASPIVID CAMERA SETTINGS]--
-# There are dozens of paramaters, see the RPI forum for all settings.
-EXTRAPARAMS="-cd H264 -n -fl -ih -pf high -if both -ex sports -mm average -awb horizon"
-# UNCOMMENT, AND USE THESE CAMERA SETTINGS FOR THE B101 OR SIMILAR HDMI-CSI ADAPTER
-#EXTRAPARAMS="-cd H264 -n -fl -ih -pf high -if both"
 
 # >>>>>>>>>>[SAVE VIDEO-RAMdisk/Memory]--Set to "memory" to use RAMdisk for temporary video/screenshot/telemetry 
 # storage recording time to ~12-14 minutes, but is the safe way. If you need longer recording times, use "sdcard", to 
@@ -306,7 +301,56 @@ IsAudioTransferEnabled=0
 MicBoost=75
 SpeakersLevel=75
 
-# >>>>>>>>>>[VEYE CAMERA MODULES & SETTINGS]--
+# >>>>>>>>>>[CAMERA MODULES & SETTINGS]--
+
+# >>>>>>>>>>[RASPIVID CAMERA SETTINGS]--
+
+# ------GENERIC CAMERA SETTINGS----------------
+
+# Only supported codec currently is H264
+camera_codec=H264
+
+# choose between baseline, main or high
+h264_profile=high
+
+# Sets the H264 intra-refresh type. Possible options are cyclic, adaptive, both, and cyclicrows
+intra_refresh=both
+
+# ------RASPBERRY PI CAMERA SETTINGS-----------
+
+# Possible options are: off, auto, night, nightpreview, backlight, spotlight, sports, snow, beach, verylong, fixedfps, antishake, fireworks
+# Note that not all of these settings may be implemented, depending on camera tuning.
+rpi0_camera_exposure=backlight
+
+# Specify the metering mode used for the preview and capture: average, spot, backlit, matrix
+rpi0_metering_mode=average
+
+# Modes for which colour temperature ranges (K) are available have these settings in brackets.
+# off, auto, sun, cloud, shade, tungsten, fluorescent, incandescent, flash, horizon, greyworld
+rpi0_awb=sun
+
+# Sharpness range -100 to 100. Default 0.
+rpi0_sharpness=0
+
+# Contrast range -100 to 100. Default 0.
+rpi0_contrast=0
+
+# Brightness range 0 to 100. Default 50.
+rpi0_brightness=50
+
+# Saturation range -100 to 100. Default 0.
+rpi0_saturation=0
+
+# 0 Normal
+# 1 Mirror
+# 2 V-Flip
+# 3 Mirror And V-Flip(180 Degree Rotate)
+rpi0_mirrormode=0
+
+# There are extra paramaters available beyond what is above or already applied in the code, see the RPI forum for all settings.
+# Do not use the following in the EXTRAPARAMS as they are already applied:
+# -cd -n -fl -ih -pf -if -ex -mm -awb -sh -co -br -sa -hf -vf
+EXTRAPARAMS=""
 
 # ------GENERIC VEYE SETTINGS------------------
 
@@ -465,15 +509,47 @@ VEYE_CS0_mwbcolortemp=3200
 VEYE_CS0_yuvseq=YUYV
 
 
-# >>>>>>>>>>[VEYE CAMERA PROFILES]--
-# This section is to provide a number of default profile settings for easy switching on the VEYE CAMERAS.
+# >>>>>>>>>>[CAMERA PROFILES]--
+# This section is to provide a number of default profile settings for easy switching on RPi and VEYE CAMERAS.
 
 # For explanation of settings please refer to the section above.
 
 # This is the setting for profile selection.
 # Profile 3=3, Profile 2=2, Profile 1=1, Custom=0
 # Default is Custom which uses the settings from the above section which can be changed in the UI.
-VEYE_profile=0
+camera_profile=0
+
+#-----------RPI CAMERA PROFILES
+
+# Profile 1
+rpi1_camera_exposure=backlight
+rpi1_metering_mode=average
+rpi1_awb=sun
+rpi1_sharpness=0
+rpi1_contrast=0
+rpi1_brightness=50
+rpi1_saturation=0
+rpi1_mirrormode=0
+
+# Profile 2
+rpi2_camera_exposure=backlight
+rpi2_metering_mode=average
+rpi2_awb=sun
+rpi2_sharpness=0
+rpi2_contrast=0
+rpi2_brightness=50
+rpi2_saturation=0
+rpi2_mirrormode=0
+
+# Profile 3
+rpi3_camera_exposure=backlight
+rpi3_metering_mode=average
+rpi3_awb=sun
+rpi3_sharpness=0
+rpi3_contrast=0
+rpi3_brightness=50
+rpi3_saturation=0
+rpi3_mirrormode=0
 
 # ----------VEYE MIPI PROFILES-----------------
 

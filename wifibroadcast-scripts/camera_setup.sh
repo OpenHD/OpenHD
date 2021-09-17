@@ -27,22 +27,22 @@ function camera_setup {
             # Load the settings based on the profile selected.
             #
 
-            wdrmode=VEYE_MIPI${VEYE_MIPI_profile}_wdrmode
-            denoise=VEYE_MIPI${VEYE_MIPI_profile}_denoise
-            lowlight=VEYE_MIPI${VEYE_MIPI_profile}_lowlight
-            agc=VEYE_MIPI${VEYE_MIPI_profile}_agc
-            brightness=VEYE_MIPI${VEYE_MIPI_profile}_brightness
-            aespeed1=VEYE_MIPI${VEYE_MIPI_profile}_aespeed1
-            aespeed2=VEYE_MIPI${VEYE_MIPI_profile}_aespeed2
-            contrast=VEYE_MIPI${VEYE_MIPI_profile}_contrast
-            saturation=VEYE_MIPI${VEYE_MIPI_profile}_saturation
-            sharppen1=VEYE_MIPI${VEYE_MIPI_profile}_sharppen1
-            sharppen2=VEYE_MIPI${VEYE_MIPI_profile}_sharppen2
-            wdrtargetbr=VEYE_MIPI${VEYE_MIPI_profile}_wdrtargetbr
-            wdrbtargetbr=VEYE_MIPI${VEYE_MIPI_profile}_wdrbtargetbr
-            daynightmode=VEYE_MIPI${VEYE_MIPI_profile}_daynightmode
-            mshutter=VEYE_MIPI${VEYE_MIPI_profile}_mshutter
-            yuvseq=VEYE_MIPI${VEYE_MIPI_profile}_yuvseq
+            wdrmode=VEYE_MIPI${camera_profile}_wdrmode
+            denoise=VEYE_MIPI${camera_profile}_denoise
+            lowlight=VEYE_MIPI${camera_profile}_lowlight
+            agc=VEYE_MIPI${camera_profile}_agc
+            brightness=VEYE_MIPI${camera_profile}_brightness
+            aespeed1=VEYE_MIPI${camera_profile}_aespeed1
+            aespeed2=VEYE_MIPI${camera_profile}_aespeed2
+            contrast=VEYE_MIPI${camera_profile}_contrast
+            saturation=VEYE_MIPI${camera_profile}_saturation
+            sharppen1=VEYE_MIPI${camera_profile}_sharppen1
+            sharppen2=VEYE_MIPI${camera_profile}_sharppen2
+            wdrtargetbr=VEYE_MIPI${camera_profile}_wdrtargetbr
+            wdrbtargetbr=VEYE_MIPI${camera_profile}_wdrbtargetbr
+            daynightmode=VEYE_MIPI${camera_profile}_daynightmode
+            mshutter=VEYE_MIPI${camera_profile}_mshutter
+            yuvseq=VEYE_MIPI${camera_profile}_yuvseq
 
             #
             # Configure the camera's ISP parameters
@@ -117,23 +117,23 @@ function camera_setup {
             # Load the settings based on the profile selected.
             #
 
-            daynightmode=VEYE_CS${VEYE_CS_profile}_daynightmode
-            hue=VEYE_CS${VEYE_CS_profile}_hue            
-            contrast=VEYE_CS${VEYE_CS_profile}_contrast
-            satu=VEYE_CS${VEYE_CS_profile}_satu            
-            expmode=VEYE_CS${VEYE_CS_profile}_expmode
-            aetarget=VEYE_CS${VEYE_CS_profile}_aetarget           
-            aetime=VEYE_CS${VEYE_CS_profile}_aetime
-            aeagc1=VEYE_CS${VEYE_CS_profile}_aeagc1
-            aeagc2=VEYE_CS${VEYE_CS_profile}_aeagc2       
-            metime=VEYE_CS${VEYE_CS_profile}_metime
-            meagain1=VEYE_CS${VEYE_CS_profile}_meagain1
-            meagain2=VEYE_CS${VEYE_CS_profile}_meagain2         
-            medgain1=VEYE_CS${VEYE_CS_profile}_medgain1
-            medgain2=VEYE_CS${VEYE_CS_profile}_medgain2
-            awbmode=VEYE_CS${VEYE_CS_profile}_awbmode            
-            mwbcolortemp=VEYE_CS${VEYE_CS_profile}_mwbcolortemp            
-            yuvseq=VEYE_CS${VEYE_CS_profile}_yuvseq
+            daynightmode=VEYE_CS${camera_profile}_daynightmode
+            hue=VEYE_CS${camera_profile}_hue            
+            contrast=VEYE_CS${camera_profile}_contrast
+            satu=VEYE_CS${camera_profile}_satu            
+            expmode=VEYE_CS${camera_profile}_expmode
+            aetarget=VEYE_CS${camera_profile}_aetarget           
+            aetime=VEYE_CS${camera_profile}_aetime
+            aeagc1=VEYE_CS${camera_profile}_aeagc1
+            aeagc2=VEYE_CS${camera_profile}_aeagc2       
+            metime=VEYE_CS${camera_profile}_metime
+            meagain1=VEYE_CS${camera_profile}_meagain1
+            meagain2=VEYE_CS${camera_profile}_meagain2         
+            medgain1=VEYE_CS${camera_profile}_medgain1
+            medgain2=VEYE_CS${camera_profile}_medgain2
+            awbmode=VEYE_CS${camera_profile}_awbmode            
+            mwbcolortemp=VEYE_CS${camera_profile}_mwbcolortemp            
+            yuvseq=VEYE_CS${camera_profile}_yuvseq
 
             #
             # Check the firmware version so we know what videofmt to use.
@@ -210,10 +210,97 @@ function camera_setup {
             if [ "${!yuvseq}" != "" ]; then
                 /usr/local/share/veye-raspberrypi/cs_mipi_i2c.sh -w -f yuvseq -p1 ${!yuvseq} >> /tmp/veyelog
             fi
-                
+
             
         fi
 
         popd
     fi
+
+    # Build RPI Camera Profile specific settings
+    camera_exposure=rpi${camera_profile}_camera_exposure
+    metering_mode=rpi${camera_profile}_metering_mode
+    awb=rpi${camera_profile}_awb
+    sharpness=rpi${camera_profile}_sharpness
+    contrast=rpi${camera_profile}_contrast
+    brightness=rpi${camera_profile}_brightness
+    saturation=rpi${camera_profile}_saturation
+    mirrormode=rpi${camera_profile}_mirrormode
+
+    # Build EXTRAPARAMS
+
+    if [ "${codec}" != "" ]; then
+        codec="-cd ${codec}"
+    else
+        codec="-cd H264"
+    fi
+
+    if [ "${h264_profile}" != "" ]; then
+        h264_profile=" -pf ${h264_profile}"
+    else
+        h264_profile=" -pf high"
+    fi
+
+    if [ "${intra_refresh}" != "" ]; then
+        intra_refresh=" -if ${intra_refresh}"
+    else
+        intra_refresh=" -if both"
+    fi
+
+    if [ "${!camera_exposure}" != "" ]; then
+        camera_exposure=" -ex ${!camera_exposure}"
+    else
+        camera_exposure=""
+    fi
+
+    if [ "${!metering_mode}" != "" ]; then
+        metering_mode=" -mm ${!metering_mode}"
+    else
+        metering_mode=""
+    fi
+
+    if [ "${!awb}" != "" ]; then
+        awb=" -awb ${!awb}"
+    else
+        awb=""
+    fi
+
+    if [ "${!sharpness}" != "" ]; then
+        sharpness=" -sh ${!sharpness}"
+    else
+        sharpness=""
+    fi
+
+    if [ "${!contrast}" != "" ]; then
+        contrast=" -co ${!contrast}"
+    else
+        contrast=""
+    fi
+
+    if [ "${!brightness}" != "" ]; then
+        brightness=" -br ${!brightness}"
+    else
+        brightness=""
+    fi
+
+    if [ "${!saturation}" != "" ]; then
+        saturation=" -sa ${!saturation}"
+    else
+        saturation=""
+    fi
+
+    if [ "${!mirrormode}" -eq 1 ]; then
+        mirrormode=" -hf"
+    elif [ "${!mirrormode}" -eq 2 ]; then
+        mirrormode=" -vf"
+    elif [ "${!mirrormode}" -eq 3 ]; then
+        mirrormode=" -vf -hf"
+    else
+        mirrormode=""
+    fi
+
+
+
+    EXTRAPARAMS="${codec} -n -fl -ih${h264_profile}${intra_refresh}${camera_exposure}${metering_mode}${awb}${sharpness}${contrast}${brightness}${saturation}${mirrormode}"
+
 }
