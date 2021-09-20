@@ -82,11 +82,34 @@ void PowerMicroservice::process_mavlink_message(mavlink_message_t msg) {
             switch (command.command) {
             	case OPENHD_CMD_POWER_SHUTDOWN: {
             		std::cerr << "Shutdown command received!\n";
+                    uint8_t raw[MAVLINK_MAX_PACKET_LEN];
+                    int len = 0;
+					mavlink_message_t ack;
+					mavlink_msg_command_ack_pack(this->m_sysid, // mark the message as being from the local system ID
+												 this->m_compid,  // and from this component
+												 &ack,
+												 OPENHD_CMD_POWER_SHUTDOWN, // the command we're ack'ing
+												 MAV_CMD_ACK_OK,
+												 0,
+												 0,
+												 msg.sysid, // send ack to the senders system ID...
+												 msg.compid); // ... and the senders component ID
+					len = mavlink_msg_to_send_buffer(raw, &ack);
+
+					this->m_socket->async_send(boost::asio::buffer(raw, len),
+											   boost::bind(&Microservice::handle_write,
+														   this,
+														   boost::asio::placeholders::error));
+
+					sync();
+					sleep(3);
+
             		boost::process::child c_systemctl_shutdown(
             				boost::process::search_path("systemctl"),
             				std::vector<std::string>{"start", "poweroff.target"},
 							m_io_service);
             		c_systemctl_shutdown.detach();
+            		break;
             	}
 
             	case OPENHD_CMD_POWER_REBOOT: {
@@ -96,6 +119,30 @@ void PowerMicroservice::process_mavlink_message(mavlink_message_t msg) {
 							std::vector<std::string>{"start", "reboot.target"},
 							m_io_service);
             		c_systemctl_reboot.detach();
+            		uint8_t raw[MAVLINK_MAX_PACKET_LEN];
+            		int len = 0;
+
+            		// acknowledge the command, no reply
+            		mavlink_message_t ack;
+            		mavlink_msg_command_ack_pack(this->m_sysid, // mark the message as being from the local system ID
+            				this->m_compid,  // and from this component
+							&ack,
+							OPENHD_CMD_POWER_REBOOT, // the command we're ack'ing
+							MAV_CMD_ACK_OK,
+							0,
+							0,
+							msg.sysid, // send ack to the senders system ID...
+							msg.compid); // ... and the senders component ID
+							len = mavlink_msg_to_send_buffer(raw, &ack);
+
+					this->m_socket->async_send(boost::asio::buffer(raw, len),
+							boost::bind(&Microservice::handle_write,
+									this,
+									boost::asio::placeholders::error));
+
+					sync();
+					sleep(3);
+					break;
             	}
 
 
