@@ -426,7 +426,7 @@ VEYE_MIPI0_daynightmode=0xFF
 VEYE_MIPI0_mshutter=0x40
 
 #Set yuv seq of camera. Note: only supported on hdver >= 0x4
-VEYE_MIPI0_yuvseq=YUYV
+VEYE_MIPI0_yuvseq=UYVY
 
 # ----------VEYE CS SETTINGS--------------------
 
@@ -506,7 +506,7 @@ VEYE_CS0_mwbcolortemp=3200
 
 # Set yuv seq of camera. YUYV or UYVY
 # Note: only supported on firmware version >= 2.38
-VEYE_CS0_yuvseq=YUYV
+VEYE_CS0_yuvseq=UYVY
 
 
 # >>>>>>>>>>[CAMERA PROFILES]--
@@ -569,7 +569,7 @@ VEYE_MIPI1_wdrtargetbr=0x80
 VEYE_MIPI1_wdrbtargetbr=0x80
 VEYE_MIPI1_daynightmode=0xFF
 VEYE_MIPI1_mshutter=0x40
-VEYE_MIPI1_yuvseq=YUYV
+VEYE_MIPI1_yuvseq=UYVY
 
 # Profile 2
 VEYE_MIPI2_wdrmode=0x03
@@ -587,7 +587,7 @@ VEYE_MIPI2_wdrtargetbr=0x80
 VEYE_MIPI2_wdrbtargetbr=0x80
 VEYE_MIPI2_daynightmode=0xFF
 VEYE_MIPI2_mshutter=0x40
-VEYE_MIPI2_yuvseq=YUYV
+VEYE_MIPI2_yuvseq=UYVY
 
 # Profile 3
 VEYE_MIPI3_wdrmode=0x03
@@ -605,7 +605,7 @@ VEYE_MIPI3_wdrtargetbr=0x80
 VEYE_MIPI3_wdrbtargetbr=0x80
 VEYE_MIPI3_daynightmode=0xFF
 VEYE_MIPI3_mshutter=0x40
-VEYE_MIPI3_yuvseq=YUYV
+VEYE_MIPI3_yuvseq=UYVY
 
 # ----------VEYE CS PROFILES-------------------
 
@@ -626,7 +626,7 @@ VEYE_CS1_medgain1=42
 VEYE_CS1_medgain2=0
 VEYE_CS1_awbmode=0
 VEYE_CS1_mwbcolortemp=3200
-VEYE_CS1_yuvseq=YUYV
+VEYE_CS1_yuvseq=UYVY
 
 # Profile 2
 VEYE_CS2_daynightmode=0x1
@@ -645,7 +645,7 @@ VEYE_CS2_medgain1=42
 VEYE_CS2_medgain2=0
 VEYE_CS2_awbmode=0
 VEYE_CS2_mwbcolortemp=3200
-VEYE_CS2_yuvseq=YUYV
+VEYE_CS2_yuvseq=UYVY
 
 # Profile 3
 VEYE_CS3_daynightmode=0x1
@@ -664,7 +664,7 @@ VEYE_CS3_medgain1=42
 VEYE_CS3_medgain2=0
 VEYE_CS3_awbmode=0
 VEYE_CS3_mwbcolortemp=3200
-VEYE_CS3_yuvseq=YUYV
+VEYE_CS3_yuvseq=UYVY
 
 # ======================================================================================
 #                    <DEVELOPER-ENHANCEMENTS IN PROGRESS OPTIONS>
