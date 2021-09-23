@@ -138,7 +138,7 @@ void GStreamerStream::setup() {
 
 
     // this directs the video stream back to this system for recording in the Record class
-    m_pipeline << fmt::format("udpsink host=127.0.0.1 port={} t. ! ", m_video_port - 10);
+    m_pipeline << fmt::format("udpsink host=127.0.0.1 port={}", m_video_port - 10);
 
 
     std::cerr << "Pipeline: " << m_pipeline.str() << std::endl;
@@ -281,7 +281,7 @@ void GStreamerStream::setup_jetson_csi() {
     parse_user_format(m_camera.format, width, height, fps);
 
 
-    m_pipeline << fmt::format("nvarguscamerasrc maxperf=1 do-timestamp=true sensor-id={} ! ", sensor_id);
+    m_pipeline << fmt::format("nvarguscamerasrc do-timestamp=true sensor-id={} ! ", sensor_id);
     m_pipeline << fmt::format("video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! ", width, height, fps);
     m_pipeline << "queue ! ";
 

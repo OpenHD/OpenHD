@@ -11,6 +11,7 @@ typedef enum WiFiCardType {
     WiFiCardTypeRealtek8814au,
     WiFiCardTypeRealtek88x2bu,
     WiFiCardTypeRealtek8188eu,
+    WiFiCardTypeAtheros9khtc,
     WiFiCardTypeAtheros9k,
     WiFiCardTypeRalink,
     WiFiCardTypeIntel,
@@ -55,6 +56,9 @@ inline std::string wifi_card_type_to_string(WiFiCardType card_type) {
         case WiFiCardTypeAtheros9k: {
             return "ath9k_htc";
         }
+        case WiFiCardTypeAtheros9khtc: {
+            return "ath9k_htc";
+        }
         case WiFiCardTypeRealtek8812au: {
             return "88xxau";
         }
@@ -82,6 +86,8 @@ inline std::string wifi_card_type_to_string(WiFiCardType card_type) {
 
 inline WiFiCardType string_to_wifi_card_type(std::string driver_name) {
     if (to_uppercase(driver_name).find(to_uppercase("ath9k_htc")) != std::string::npos) {
+        return WiFiCardTypeAtheros9khtc;
+    } else if (to_uppercase(driver_name).find(to_uppercase("ath9k")) != std::string::npos) {
         return WiFiCardTypeAtheros9k;
     } else if (to_uppercase(driver_name).find(to_uppercase("rt2800usb")) != std::string::npos) {
         return WiFiCardTypeRalink;

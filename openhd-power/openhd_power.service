@@ -1,0 +1,11 @@
+[Unit]
+Description=openhd-power
+After=openhdinterface.service
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/openhd_power
+
+[Install]
+WantedBy=multi-user.target
+Alias=openhdpower.service
