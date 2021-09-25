@@ -250,7 +250,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
   -d "hostapd" \
   -d "iw" \
   -d "isc-dhcp-common" \
-  -d "pump" \
   -d "dnsmasq" \
   -d "aircrack-ng" \
   -d "i2c-tools" \
