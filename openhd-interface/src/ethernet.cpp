@@ -263,10 +263,13 @@ void Ethernet::setup_client(EthernetCard &card) {
 
     {
         std::vector<std::string> args { 
-            "-i", card.name, "--no-ntp"
+          //  "-i", card.name, "--no-ntp"
+          // "pump" was depreciated so trying "dhclient"
+          // TODO : TEST this change
+          card.name
         };
 
-        success = run_command("pump", args);
+        success = run_command("dhclient", args);
 
         if (!success) {
             status_message(STATUS_LEVEL_WARNING, "Failed to enable ethenet interface");
