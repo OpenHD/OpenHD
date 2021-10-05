@@ -199,11 +199,11 @@ build_source() {
 
     cp -a gnuplot/* ${PKGDIR}/usr/local/share/openhd/gnuplot/ || exit 1
 
-    if [[ "${OS}" == "raspbian" && "${DISTRO}" == "buster" ]]; then
+    if [[ "${OS}" == "raspbian" ]]; then
         cat << EOF >> ${PKGDIR}/boot/config.txt
-[all]
-dtoverlay=vc4-fkms-v3d
-EOF
+        [all]
+        dtoverlay=vc4-fkms-v3d
+        EOF
     fi
 
     cp -a config/config.txt ${PKGDIR}/boot/ || exit 1
