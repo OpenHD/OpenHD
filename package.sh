@@ -201,9 +201,9 @@ build_source() {
 
     if [[ "${OS}" == "raspbian" ]]; then
         cat << EOF >> ${PKGDIR}/boot/config.txt
-        [all]
-        dtoverlay=vc4-fkms-v3d
-        EOF
+[all]
+dtoverlay=vc4-fkms-v3d
+EOF
     fi
 
     cp -a config/config.txt ${PKGDIR}/boot/ || exit 1
