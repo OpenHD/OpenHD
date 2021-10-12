@@ -11,7 +11,7 @@ BUILD_TYPE=$4
 
 if [[ "${OS}" == "raspbian" ]]; then
     PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc"
-    PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt --config-files /boot/ssh"
+    PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
@@ -202,6 +202,7 @@ build_source() {
 
     cp -a config/config.txt ${PKGDIR}/boot/ || exit 1
     cp -a config/cmdline.txt ${PKGDIR}/boot/ || exit 1
+    cp -a config/ssh ${PKGDIR}/boot/ || exit 1
 
     cp -a config/apconfig.txt ${PKGDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/joyconfig.txt ${PKGDIR}/usr/local/share/openhd/ || exit 1
