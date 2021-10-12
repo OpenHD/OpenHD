@@ -36,6 +36,7 @@ install: openhd_security
 .PHONY: enable
 enable: install
 	systemctl enable openhd_security
+	systemctl start wfb_keygen
 	systemctl start openhd_security
 
 .PHONY: uninstall
