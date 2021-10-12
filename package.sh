@@ -11,7 +11,7 @@ BUILD_TYPE=$4
 
 if [[ "${OS}" == "raspbian" ]]; then
     PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc"
-    PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
+    PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt --config-files /boot/ssh"
 fi
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
@@ -199,12 +199,6 @@ build_source() {
 
     cp -a gnuplot/* ${PKGDIR}/usr/local/share/openhd/gnuplot/ || exit 1
 
-    if [[ "${OS}" == "raspbian" ]]; then
-        cat << EOF >> ${PKGDIR}/boot/config.txt
-[all]
-dtoverlay=vc4-fkms-v3d
-EOF
-    fi
 
     cp -a config/config.txt ${PKGDIR}/boot/ || exit 1
     cp -a config/cmdline.txt ${PKGDIR}/boot/ || exit 1
@@ -219,6 +213,14 @@ EOF
     cp -a config/vpn.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/wificard.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/telemetry.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
+
+    if [[ "${OS}" == "raspbian" ]]; then
+        cat << EOF >> ${PKGDIR}/boot/config.txt
+[all]
+dtoverlay=vc4-fkms-v3d
+EOF
+
+    fi
 }
 
 if [[ "${OS}" == "raspbian" ]]; then
