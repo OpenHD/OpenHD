@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
             "start", "openhdboot"
         };
 
-        boost::process::child c_systemctl_openhdboot(boost::process::search_path("systemctl"), boot);
+        boost::process::child c_systemctl_openhdboot(boost::process::search_path("systemctl"), openhdboot);
         c_systemctl_openhdboot.wait();
 
 		std::vector<std::string> qopenhd { 
