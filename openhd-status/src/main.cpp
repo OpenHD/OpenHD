@@ -55,22 +55,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (!is_air) {
-		std::vector<std::string> openhdboot { 
-            "start", "openhdboot"
-        };
-
-        boost::process::child c_systemctl_openhdboot(boost::process::search_path("systemctl"), openhdboot);
-        c_systemctl_openhdboot.wait();
 
 		std::vector<std::string> qopenhd { 
             "start", "qopenhd"
         };
 
         boost::process::child c_systemctl_qopenhd(boost::process::search_path("systemctl"), qopenhd);
-        c_systemctl_qopenhd.wait();
-
 	}
-
 
 	StatusMicroservice * status_microservice;
 
