@@ -61,6 +61,7 @@ int main(int argc, char *argv[]) {
         };
 
         boost::process::child c_systemctl_qopenhd(boost::process::search_path("systemctl"), qopenhd);
+        c_systemctl_qopenhd.wait();
 	}
 
 	StatusMicroservice * status_microservice;
