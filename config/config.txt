@@ -148,4 +148,5 @@ fixup_file=1to3bup_x.dat
 [pi3+]
 start_file=start_x.elf
 fixup_file=fixup_x.dat
-
+[pi4]
+total_mem=3072
