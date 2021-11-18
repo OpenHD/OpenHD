@@ -46,9 +46,15 @@ steps:
   - git submodule update --init --recursive --remote
 - name: build
   image: plugins/docker
+  commands:
+  - docker login -u $env:DUSERNAME -p $env:DPASSWORD
   environment:
     CLOUDSMITH_API_KEY:
       from_secret: CLOUDSMITH_API_KEY
+    DUSERNAME:
+      from_secret: docker_openhd_username
+    DPASSWORD:
+      from_secret: docker_openhd_password
   settings:
       repo: openhd/qopenhd
       dry_run: true
