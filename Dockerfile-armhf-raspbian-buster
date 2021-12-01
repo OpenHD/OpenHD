@@ -1,4 +1,4 @@
-FROM openhd/2020-05-27-raspios-buster-lite-armhf:v2
+FROM ghcr.io/openhd/2020-05-27-raspios-buster-lite-armhf
 
 RUN apt update --allow-releaseinfo-change
 
