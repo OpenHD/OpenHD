@@ -1,4 +1,4 @@
-FROM ghcr.io/openhd/bullseye-lite:v2
+FROM ghcr.io/openhd/bullseye-lite:v2.2
 
 RUN apt update
 
