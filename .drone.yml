@@ -107,7 +107,7 @@ steps:
   - git fetch --tags
   - git submodule update --init --recursive --remote
 - name: build
-  image: ghcr.io/openhd/plugins-docker:v2
+  image: ghcr.io/openhd/plugins-docker:v2.1
   environment:
     CLOUDSMITH_API_KEY:
       from_secret: CLOUDSMITH_API_KEY
