@@ -80,13 +80,6 @@ mkdir -p ${PKGDIR}/usr/local/share/wifibroadcast-scripts || exit 1
 
 ./install_dep.sh || exit 1
 
-build_pi_dep() {
-    pushd /opt/vc/src/hello_pi/libs/ilclient
-    make -j3 || exit 1
-    popd
-}
-
-
 build_source() {
     pushd lib/fmt
     rm -r build
