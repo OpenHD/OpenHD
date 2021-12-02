@@ -7,7 +7,6 @@ PACKAGE_ARCH=$1
 OS=$2
 DISTRO=$3
 BUILD_TYPE=$4
-"${DISTRO}" == "stretch"
 
 if [[ "${OS}" == "raspbian" ]]; then
     PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
