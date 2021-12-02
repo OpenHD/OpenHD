@@ -1,6 +1,6 @@
 FROM ghcr.io/openhd/bullseye-lite:v2
 
-RUN apt update --allow-releaseinfo-change
+RUN apt update
 
 COPY install_dep.sh /data/install_dep.sh
 
