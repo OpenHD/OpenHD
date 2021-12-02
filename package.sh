@@ -7,23 +7,16 @@ PACKAGE_ARCH=$1
 OS=$2
 DISTRO=$3
 BUILD_TYPE=$4
-"${DISTRO}" == "stretch"
+
 
 if [[ "${OS}" == "raspbian" ]]; then
+    PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc"
     PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
-fi
-
-if [[ "${DISTRO}" == "buster" ]]; then
-    PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc -d libboost-signals-dev >= 1.62.0"
-fi
-
-if [[ "${DISTRO}" == "bullseye" ]]; then
-    PLATFORM_PACKAGES="-d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gst-rpicamsrc libboost-signals-dev >= 1.74.0.3 -d gstreamer1.0-omx-rpi-config >= 1.18.3-1"
 fi
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
     echo "--------------ADDING nvidia-l4t-gstreamer to package list--------------- "
-    PLATFORM_PACKAGES="-d nvidia-l4t-gstreamer -d libboost-signals-dev >= 1.62.0"
+    PLATFORM_PACKAGES="-d nvidia-l4t-gstreamer"
     PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
@@ -250,6 +243,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
   $PLATFORM_PACKAGES \
   -d "libasio-dev >= 1.10" \
   -d "libboost-system-dev >= 1.62.0" \
+  -d "libboost-signals-dev >= 1.62.0" \
   -d "libboost-program-options-dev >= 1.62.0" \
   -d "libseek-thermal >= 20200801.1" \
   -d "flirone-driver >= 20200704.3" \
@@ -282,6 +276,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
   -d "libsodium-dev" \
   -d "libfontconfig1" \
   -d "libfreetype6" \
+  -d "ttf-dejavu-core" \
   -d "libgles2-mesa-dev" \
   -d "libboost-chrono-dev" \
   -d "libboost-regex-dev" \
@@ -308,4 +303,3 @@ else
     echo "Pushing package to OpenHD testing repository"
     cloudsmith push deb openhd/openhd-2-1-testing/${OS}/${DISTRO} ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb || exit 1
 fi
-
