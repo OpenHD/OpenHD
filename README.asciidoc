@@ -32,7 +32,7 @@ endif::[]
 
 // Variables \\
 :telegram: link:https://t.me/OpenHD_May_2019[Telegram]
-:wiki: link:hhttps://openhd.gitbook.io/open-hd[Wiki]
+:wiki: link:https://openhd.gitbook.io/open-hd[Wiki]
 :openhd: link:https://github.com/HD-Fpv/Open.HD[OpenHD]
 :imageBuilder: link:https://github.com/HD-Fpv/Open.HD_Image_Builder[Image Builder]
 :settingsApp: link:https://github.com/HD-Fpv/Open.HD_AndroidApp[Settings App]
