@@ -147,14 +147,14 @@ build_source() {
         popd
     fi
 
-    if [[ "${OS}" == "raspbian" ]]; then
-        echo "-------------BUILDING HELLO VIDEO FOR RASPBIAN--------"
-        pushd wifibroadcast-hello_video
-        make clean
-        make -j3 || exit 1
-        make install DESTDIR=${PKGDIR} || exit 1
-        popd
-    fi
+    # if [[ "${OS}" == "raspbian" ]]; then
+    #     echo "-------------BUILDING HELLO VIDEO FOR RASPBIAN--------"
+    #     pushd wifibroadcast-hello_video
+    #     make clean
+    #     make -j3 || exit 1
+    #     make install DESTDIR=${PKGDIR} || exit 1
+    #     popd
+    # fi
 
     pushd wifibroadcast-rc-Ath9k
     ./buildlora.sh || exit 1
