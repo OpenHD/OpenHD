@@ -12,7 +12,7 @@ ifdef $(DESTDIR)
 	$(DESTDIR) := $(DESTDIR)/
 endif
 
-LDFLAGS = -L$(PWD)/../lib/fmt/build -lfmt -L$(PREFIX)/lib -lboost_filesystem -lboost_regex -lboost_system -lboost_signals -lsystemd `pkg-config --libs gstreamer-base-1.0`
+LDFLAGS = -L$(PWD)/../lib/fmt/build -lfmt -L$(PREFIX)/lib -lboost_filesystem -lboost_regex -lboost_system -lsystemd `pkg-config --libs gstreamer-base-1.0`
 
 openhd_video: cameramicroservice.o control.o hotspot.o camerastream.o gstreamerstream.o main.o
 	g++ -g -pthread -o openhd_video control.o hotspot.o cameramicroservice.o camerastream.o gstreamerstream.o main.o  $(LDFLAGS)
