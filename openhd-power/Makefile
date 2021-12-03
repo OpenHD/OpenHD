@@ -12,7 +12,7 @@ ifdef $(DESTDIR)
 	$(DESTDIR) := $(DESTDIR)/
 endif
 
-LDFLAGS = -L$(PWD)/../lib/fmt/build -lfmt -L$(PREFIX)/lib -lboost_filesystem -lboost_regex -lboost_system -lboost_signals -lsystemd `pkg-config --libs gstreamer-base-1.0`
+LDFLAGS = -L$(PWD)/../lib/fmt/build -lfmt -L$(PREFIX)/lib -lboost_filesystem -lboost_regex -lboost_system -lsystemd `pkg-config --libs gstreamer-base-1.0`
 
 openhd_power: powermicroservice.o main.o
 	g++ -g -pthread -o openhd_power powermicroservice.o main.o  $(LDFLAGS)

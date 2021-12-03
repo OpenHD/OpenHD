@@ -7,7 +7,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
-#include <boost/signal.hpp>
+#include <boost/signals2.hpp>
 
 
 class Control {
@@ -18,7 +18,7 @@ public:
 
     void start_receive();
 
-    boost::signal<void (std::string command_uri)> command_received;
+    boost::signals2::signal<void (std::string command_uri)> command_received;
 
 protected:
     void handle_receive(const boost::system::error_code& error,
