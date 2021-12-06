@@ -127,7 +127,8 @@ void MavlinkControl::process_mavlink_message(mavlink_message_t msg) {
             }
 
             // only process commands sent to this component or boadcast to all components on this system
-            if ((command.target_component != this->m_compid && command.target_component != MAV_COMP_ID_ALL)) {
+            // add compid 200 for betaflight same fix aß here https://github.com/OpenHD/Open.HD/commit/d7e9c9956601235d105196616c20d68443a73be1
+            if ((command.target_component != this->m_compid && command.target_component != MAV_COMP_ID_ALL && command.target_component != 200)) {
                 return;
             }
 
