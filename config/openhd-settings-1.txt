@@ -784,6 +784,9 @@ SeekModel=seek
 #IPCameraHiRes="gst-launch-1.0 rtspsrc location=\"rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp\" latency=0 ! udpsink port=5600 host=127.0.0.1"
 #IPCameraLowRes="gst-launch-1.0 rtspsrc location=\"rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=1.sdp\" latency=0 ! udpsink port=5600 host=127.0.0.1"
 
+#CVBS to MJPEG USB encoder pipeline (640x480 25fps) Use for any analogue camera that you want use as video source for openhd. Alpha release.
+#USBCamera="gst-launch-1.0 -e v4l2src device=/dev/video0 ! image/jpeg,width=640,height=480,framerate=25/1 ! v4l2jpegdec ! v4l2h264enc  ! h264parse config-interval=2 ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
+
 # >>>>>>>>>>[FLIR CAMERA PIPELINE OPTIONS]--
 #FLIR HD (visible image) -  640 x 480 @ 9fps:
 #USBCamera="gst-launch-1.0 v4l2src device=/dev/video2 ! video/x-raw,width=640,height=480,framerate=30/1 ! omxh264enc control-rate=1 target-bitrate=600000 interval-intraframes=1 periodicty-idr=1 ! h264parse config-interval=3 ! rtph264pay ! udpsink host=127.0.0.1 port=5600"
