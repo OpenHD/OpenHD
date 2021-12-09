@@ -45,7 +45,7 @@ steps:
   - git fetch --tags
   - git submodule update --init --recursive --remote
 - name: build
-  image: plugins/docker
+  image: plugins/docker:linux-arm64
   environment:
     CLOUDSMITH_API_KEY:
       from_secret: CLOUDSMITH_API_KEY
@@ -76,7 +76,7 @@ steps:
   - git fetch --tags
   - git submodule update --init --recursive --remote
 - name: build
-  image: plugins/docker
+  image: plugins/docker:linux-arm64
   environment:
     CLOUDSMITH_API_KEY:
       from_secret: CLOUDSMITH_API_KEY
