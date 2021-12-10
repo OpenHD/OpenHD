@@ -9,12 +9,12 @@ DISTRO=$3
 BUILD_TYPE=$4
 
 
-# if [[ "${OS}" == "raspbian" ]]; then
-#     PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc"
-#     PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
-# fi
+if [[ "${DISTRO}" == "buster" ]]; then
+    PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc"
+    PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
+fi
 
-if [[ "${OS}" == "raspbian" ]]; then
+if [[ "${DISTRO}" == "bullseye" ]]; then
     PLATFORM_PACKAGES="-d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gst-rpicamsrc"
     PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
 fi
@@ -214,7 +214,7 @@ build_source() {
     cp -a config/wificard.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/telemetry.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
 
-    if [[ "${OS}" == "raspbian" ]]; then
+    if [[ "${DISTRO}" == "buster" ]]; then
         cat << EOF >> ${PKGDIR}/boot/config.txt
 [all]
 dtoverlay=vc4-fkms-v3d
