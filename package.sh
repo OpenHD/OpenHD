@@ -144,14 +144,6 @@ build_source() {
     # this line, aside from overlay files and default settings templates
     cp UDPSplitter/udpsplitter.py ${PKGDIR}/usr/local/bin/ || exit 1
 
-    if [[ "${OS}" == "raspbian" && "${DISTRO}" == "stretch" ]]; then
-        pushd openvg
-        make clean
-        make -j3 library || exit 1
-        make install DESTDIR=${PKGDIR} || exit 1
-        popd
-    fi
-
     # if [[ "${OS}" == "raspbian" ]]; then
     #     echo "-------------BUILDING HELLO VIDEO FOR RASPBIAN--------"
     #     pushd wifibroadcast-hello_video
@@ -174,15 +166,6 @@ build_source() {
     make -j3 || exit 1
     make install DESTDIR=${PKGDIR} || exit 1
     popd
-
-    if [[ "${OS}" == "raspbian" && "${DISTRO}" == "stretch" ]]; then
-        pushd wifibroadcast-osd
-        make clean
-        make -j3 || exit 1
-        make install DESTDIR=${PKGDIR} || exit 1
-        cp -a osdfonts/* ${PKGDIR}/usr/local/share/openhd/osdfonts/ || exit 1
-        popd
-    fi
 
     cp -a wifibroadcast-scripts/* ${PKGDIR}/usr/local/share/wifibroadcast-scripts/ || exit 1
 
