@@ -173,12 +173,92 @@ case $TTY in
                 OHDHOSTNAME="openhd-air"
             fi
         
+            if [ "$ETHERNET_HOTSPOT" == "B" ]; then
+
+                while true; do
+                    #
+                    # pause loop while saving is in progress
+                    #
+                    pause_while
+
+                    ip link set dev eth0 up
+                
+                    while ! [ "$(cat /sys/class/net/eth0/operstate)" = "up" ] 
+                    do
+                        sleep 1
+                    done
+                    
+                    if cat /sys/class/net/eth0/carrier | nice grep -q 1; then
+                        echo "Ethernet connection detected"
+                        qstatus "Ethernet connection detected" 5
+
+                        CARRIER=1
+                        
+                        if nice pump -i eth0 --no-ntp -h $OHDHOSTNAME; then
+                            ETHCLIENTIP=`ip addr show eth0 | grep -Po 'inet \K[\d.]+'`
+                        
+                            if [ "$ENABLE_QOPENHD" == "Y" ]; then
+                                qstatus "Ethernet IP: $ETHCLIENTIP" 5
+                            else
+                                wbc_status "Ethernet IP: $ETHCLIENTIP" 7 55 0 &
+                            fi
+
+                            ping -n -q -c 1 1.1.1.1
+
+                            #
+                            # Find out bridge device IP so video can be sent to it
+                            #
+                            # We do not directly send video to connected devices, we use a splitter process to distibute
+                            # the same data to all connected devices
+                            #
+                            BRIDGE_IP=`ip route show 0.0.0.0/0 dev eth0 | cut -d\  -f3`
+                            /usr/local/share/RemoteSettings/dhcpeventThread.sh add $BRIDGE_IP &
+
+                            if [ "$ENABLE_QOPENHD" == "Y" ]; then
+                                qstatus "Stream video and mavlink to: $BRIDGE_IP" 5
+                            else
+                                wbc_status "Stream video and mavlink to: $BRIDGE_IP" 7 55 0 &
+                            fi
+
+                            #
+                            # Check if bridge device has disconnected
+                            #
+                            BRIDGETHERE=1            
+                            while [  $BRIDGETHERE -eq 1 ]; do
+                                ping -n -q -c 1 $BRIDGE_IP || BRIDGETHERE=0 
+                                sleep 1
+                            done
+
+                            if [ "$ENABLE_QOPENHD" == "Y" ]; then
+                                qstatus "Lost connection to: $BRIDGE_IP" 5
+                            else
+                                wbc_status "Lost connection to: $BRIDGE_IP" 7 55 0 &
+                            fi
+                        else
+                            ps -ef | nice grep "pump -i eth0" | nice grep -v grep | awk '{print $2}' | xargs kill -9
+
+                            nice ifconfig eth0 down
+                            
+                            echo "DHCP failed"
+                            qstatus "DHCP failed" 3
+                            
+                            killall wbc_status > /dev/null 2>&1
+                            
+                            if [ "$ENABLE_QOPENHD" == "Y" ]; then
+                                qstatus "ERROR: Could not acquire IP via DHCP!" 5
+                            else
+                                wbc_status "ERROR: Could not acquire IP via DHCP!" 7 55 0 &
+                            fi
+                        fi
+                    fi
+                done
+
             #
             # If ethernet hotspot is disabled, we allow the ethernet interface to be used for connecting
             # to a normal LAN. This requires a router or something else handing out DHCP addresses, the
             # ground station only does that when ethernet hotspot is enabled
             #
-            if [ "$ETHERNET_HOTSPOT" == "N" ]; then
+            elif [ "$ETHERNET_HOTSPOT" == "N" ]; then
 
                 ip link set dev eth0 up
                 
