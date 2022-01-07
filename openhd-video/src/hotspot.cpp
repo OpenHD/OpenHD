@@ -32,7 +32,7 @@ Hotspot::Hotspot(boost::asio::io_service &io_service, uint16_t port):
     m_io_service(io_service),
     m_port(port),
     m_udp_socket(io_service) {
-    std::cerr << "Hotspot::Hotspot()" << std::endl;
+    std::cerr << "Hotspot::Hotspot()" << port << std::endl;
 
     setup();
 }
@@ -100,7 +100,7 @@ void Hotspot::command_received(std::string command_uri) {
 
     std::string command = result[1];
 
-    if (command != "add" && command != "del") {
+    if (command != "add" && command != "del" && command != "list") {
         std::cerr << "Invalid command received" << std::endl;
 
         return;
@@ -110,6 +110,7 @@ void Hotspot::command_received(std::string command_uri) {
 
     if (command == "add") {
         for (auto & endpoint : m_endpoints) {
+        std::cerr << "*"<< endpoint << std::endl;
             if (endpoint == address) {
                 // already added this endpoint, skip it
                 return;
@@ -117,14 +118,26 @@ void Hotspot::command_received(std::string command_uri) {
         }
 
         m_endpoints.push_back(address);
+        std::cerr << "New endpoint added" << address << std::endl;
 
     } else if (command == "del") {
-        for (auto & endpoint : m_endpoints) {
-            if (endpoint == address) {
-                // skipping this for the moment, it's not critical
-                //m_endpoints.erase(endpoint);
-                return;
+        auto ep = m_endpoints.begin();
+        while (ep != m_endpoints.end()){
+            std::cerr << "*"<< *ep << std::endl;
+            if (*ep == address) {
+                std::cerr << "-"<< *ep << std::endl;
+                m_endpoints.erase(ep);
+                //return;
             }
+            else
+            {
+                ep++;
+            }
+            }
+
+    } else if (command == "list") {
+        for (auto const & endpoint : m_endpoints) {
+            std::cerr << "*"<< endpoint << ":" << m_port << std::endl;
         }
     }
 }

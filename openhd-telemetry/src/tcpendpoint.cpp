@@ -12,12 +12,14 @@
 
 #include "router.h"
 #include "tcpendpoint.h"
+#include <boost/lexical_cast.hpp>
 
 
 
 void TCPEndpoint::setup(TelemetryType telemetry_type) {
     std::cerr << "TCPEndpoint::setup()" << std::endl;
 
+    m_medium = "tcp";
     m_telemetry_type = telemetry_type;
 
     m_tcp_socket.async_read_some(boost::asio::buffer(data, max_length),
@@ -38,6 +40,7 @@ void TCPEndpoint::handle_write(const boost::system::error_code& error,
 
 void TCPEndpoint::handle_read(const boost::system::error_code& error,
                               size_t bytes_transferred) {
+    try {
     if (!error) {
         switch (m_telemetry_type) {
             case TelemetryTypeMavlink: {
@@ -64,14 +67,26 @@ void TCPEndpoint::handle_read(const boost::system::error_code& error,
                                              boost::asio::placeholders::bytes_transferred));
     } else {
         m_router->close_endpoint(shared_from_this());
+            std::cerr << "TCP:handle_read error" << std::endl;
     }
+    } catch (...) {
+        std::cerr << "TCP: catch handle_read error" << std::endl;
+        m_router->close_endpoint(shared_from_this());
+}
 }
 
 
 void TCPEndpoint::send_message(uint8_t *buf, int size) {
-    boost::asio::async_write(this->get_tcp_socket(), boost::asio::buffer(buf, size),
+    
+    try {
+        
+        std::cout << " TCP" << std::endl;
+        boost::asio::async_write(this->get_tcp_socket(), boost::asio::buffer(buf, size),
                              boost::bind(&TCPEndpoint::handle_write, 
                                          this,
                                          boost::asio::placeholders::error,
                                          boost::asio::placeholders::bytes_transferred));
+    } catch (...) {
+        std::cerr << "TCP: catch handle_write error" << std::endl;
+    }
 }

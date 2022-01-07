@@ -60,6 +60,10 @@ public:
         return m_address;
     }
 
+    std::string get_medium() {
+        return m_medium;
+    }
+
     virtual void send_message(uint8_t *buf, int size);
 
 protected:
@@ -68,6 +72,8 @@ protected:
     std::vector<uint8_t> m_known_sys_ids;
 
     std::string m_address;
+    std::string m_medium;
+
     uint16_t m_port;
 
     TelemetryType m_telemetry_type = TelemetryTypeUnknown;
