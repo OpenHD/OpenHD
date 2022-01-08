@@ -5,6 +5,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <openhd/mavlink.h>
 #include <mavlink_types.h>
@@ -157,8 +158,9 @@ void Router::configure() {
 }
 
 
+
 void Router::add_udp_endpoint(std::string endpoint) {
-    std::cerr << "Adding UDP endpoint: " << endpoint << std::endl;
+    std::cout << "Adding UDP endpoint: " << endpoint << std::endl;
 
     UDPEndpoint::pointer new_connection = UDPEndpoint::create(this, m_io_service);
     std::static_pointer_cast<UDPEndpoint>(new_connection)->setup(m_telemetry_type, endpoint);
@@ -171,7 +173,7 @@ void Router::add_serial_endpoint(std::string endpoint) {
 
     SerialEndpoint::pointer new_connection = SerialEndpoint::create(this, m_io_service);
     std::static_pointer_cast<SerialEndpoint>(new_connection)->setup(m_telemetry_type, endpoint);
-    m_endpoints.push_back(new_connection);
+    m_endpoints.push_back(std::static_pointer_cast<SerialEndpoint>(new_connection));
 }
 
 
@@ -194,7 +196,7 @@ void Router::command_received(std::string command_uri) {
 
     std::string command = result[1];
 
-    if (command != "add" && command != "del") {
+    if (command != "add" && command != "del" && command != "list") {
         std::cerr << "Invalid command received" << std::endl;
 
         return;
@@ -209,27 +211,61 @@ void Router::command_received(std::string command_uri) {
 
     if (command == "add") {
         std::vector<std::shared_ptr<Endpoint> >::iterator endpoint;
+          // we don't know what port will be used yet so we use zero, the OS will pick one
+        _ep << fmt::format("{}:{}:{}", 0, address, remote_port);
 
-        for (endpoint = m_endpoints.begin(); endpoint != m_endpoints.end();) {
-            if ((*endpoint)->get_address() == address) {
-                // already added this endpoint, skip it
-                return;
+        for (endpoint = m_endpoints.begin(); endpoint != m_endpoints.end(); ) {
+            std::cout << "*";
+            if ((*endpoint)->get_medium() == "ser") 
+                std::cout << "ser" << std::endl;
+            else if ((*endpoint)->get_medium() == "tcp")
+                std::cout << "tcp " << (boost::lexical_cast<std::string>(((*endpoint)->get_tcp_socket()).remote_endpoint())) << std::endl;
+            else {
+                std::cout << "udp " << (*endpoint)->get_address();
+                if ((*endpoint)->get_address() == address) {
+                    // already added this endpoint, skip it
+                    std::cout << "already added" << std::endl;
+                    return;
+                }
             }
+            ++endpoint;
         }
 
         // we don't know what port will be used yet so we use zero, the OS will pick one
-        _ep << fmt::format("{}:{}:{}", 0, address, remote_port);
-
+        //_ep << fmt::format("{}:{}:{}", 0, address, remote_port);
+        std::cout << "+"<< _ep.str() << std::endl;
         add_udp_endpoint(_ep.str());
     } else if (command == "del") {
         std::vector<std::shared_ptr<Endpoint> >::iterator endpoint;
 
+         // we don't know what port will be used yet so we use zero, the OS will pick one
+        _ep << fmt::format("{}:{}:{}", 0, address, remote_port);
+
         for (endpoint = m_endpoints.begin(); endpoint != m_endpoints.end();) {
-            if ((*endpoint)->get_address() == address) {
+            std::cout << "*";
+            if ((*endpoint)->get_medium()=="udp") 
+                std::cout << (*endpoint)->get_address() << std::endl;
+            else if ((*endpoint)->get_medium()=="tcp") {
+                std::cout << "tcp" << std::endl;
+                //std::cout << (boost::lexical_cast<std::string>(((*endpoint)->get_tcp_socket()).remote_endpoint())) << std::endl;
+            } if ((*endpoint)->get_address() == _ep.str()) {
                 // we found it in the list, just remove it and that will stop any new packets from being sent to it
+                std::cout << "-"<< (*endpoint)->get_address() << std::endl;
                 m_endpoints.erase(endpoint);
                 return;
             }
+            ++endpoint;
+        }
+    } else if (command == "list") {
+        for (auto endpoint = m_endpoints.begin(); endpoint != m_endpoints.end(); ++endpoint){
+            std::cout << "*";
+            if ((*endpoint)->get_medium()=="ser"){
+                std::cout << "serial" << std::endl; 
+            } else if ((*endpoint)->get_medium()=="udp"){
+                std::cout << " UDP: " << (*endpoint)->get_address() << std::endl;
+            } else {
+                std::cout << " TCP: " << (boost::lexical_cast<std::string>(((*endpoint)->get_tcp_socket()).remote_endpoint())) << std::endl;
+    }
         }
     }
 }
@@ -291,7 +327,7 @@ void Router::handle_accept(TCPEndpoint::pointer new_connection, const boost::sys
 
     if (!error) {
         m_endpoints.push_back(new_connection);
-        new_connection->setup(m_telemetry_type);
+        std::static_pointer_cast<TCPEndpoint>(new_connection)->setup(m_telemetry_type);
     }
 
     start_accept();
@@ -344,11 +380,16 @@ void Router::process_mavlink_message(Endpoint::pointer source_endpoint, mavlink_
         }
 
         if (send) {
-            endpoint->send_message(buf, size);
+            if (endpoint->get_medium() == "ser") {
+                std::static_pointer_cast<SerialEndpoint>(endpoint)->send_message(buf, size);
+            } else if (endpoint->get_medium() == "udp"){
+                endpoint->send_message(buf, size);
+            } else
+                std::static_pointer_cast<TCPEndpoint>(endpoint)->send_message(buf, size);
         }
     }
 
-    std::cerr << "----------------------------------------------------------------------------------------------------" << std::endl;
+//    std::cout << "----------------------------------------------------------------------------------------------------" << std::endl;
 }
 
 
@@ -368,7 +409,11 @@ void Router::process_telemetry_message(Endpoint::pointer source_endpoint, uint8_
         }
 
         if (send) {
-            endpoint->send_message(buf, size);
+            if (endpoint->get_medium() == "ser"){
+                std::static_pointer_cast<SerialEndpoint>(endpoint)->send_message(buf, size);
+            } else {
+                endpoint->send_message(buf, size);
+            }
         }
     }
 }

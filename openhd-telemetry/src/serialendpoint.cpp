@@ -57,6 +57,8 @@ void SerialEndpoint::setup(TelemetryType telemetry_type, std::string endpoint_s)
         return;
     }
 
+    // this is used by Router to figure out if a dynamic endpoint has been added already
+    m_medium = "ser";
 
     start_receive();
 }
@@ -64,6 +66,7 @@ void SerialEndpoint::setup(TelemetryType telemetry_type, std::string endpoint_s)
 
 void SerialEndpoint::send_message(uint8_t* buf, size_t size) {
     if (!m_serial.is_open()) {
+        std::cerr << "SER: not open" << std::endl;
         return;
     }
 
@@ -108,6 +111,7 @@ void SerialEndpoint::handle_serial_read(const boost::system::error_code& error,
                 break;
             }
             default: {
+                std::cerr << "Not mavlink" << std::endl;
                 break;
             }
         }
