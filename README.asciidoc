@@ -32,6 +32,7 @@ endif::[]
 
 // Variables \\
 :telegram: link:https://t.me/OpenHD_User[Telegram]
+:discord: link:https://discord.gg/5Ptj3tvx[Discord]
 :wiki: link:https://openhd.gitbook.io/open-hd/v/2.1[Wiki]
 :openhd: link:https://github.com/HD-Fpv/Open.HD[OpenHD]
 :imageBuilder: link:https://github.com/HD-Fpv/Open.HD_Image_Builder[Image Builder]
@@ -97,7 +98,7 @@ This repository is one of the following which forms the foundation of the projec
 == Community
 Feel free to join our growing community.
 
-We have a {forum} and public {telegram} group with more than 1000 members helping each other.
+We have an {forum} , a public {telegram} group with many active members helping each other and a {discord} server with many useful information and photos.
 
 If you just want to see when new releases are announced, you can star this repository on Github 
 
