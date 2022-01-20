@@ -234,7 +234,10 @@ void GStreamerStream::setup_raspberrypi_csi() {
     if (m_camera.format.empty()) {
         m_camera.format = "1280x720@48";
     }
-
+  
+    std::string width;
+    std::string height;
+    std::string fps;
     parse_user_format(m_camera.format, width, height, fps);
 
     m_pipeline << fmt::format("rpicamsrc name=bitratectrl camera-number={} bitrate={} preview=0 ! ", m_camera.bus, m_camera.bitrate);
@@ -270,7 +273,10 @@ void GStreamerStream::setup_jetson_csi() {
     if (m_camera.format.empty()) {
         m_camera.format = "1280x720@48";
     }
-
+  
+    std::string width;
+    std::string height;
+    std::string fps;
     parse_user_format(m_camera.format, width, height, fps);
 
     m_pipeline << fmt::format("nvarguscamerasrc do-timestamp=true sensor-id={} ! ", sensor_id);
