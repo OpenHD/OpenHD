@@ -60,6 +60,9 @@ struct Camera {
     std::string rc_channel_record = "0";
 
     std::string bitrate;
+    std::string width;
+    std::string height;
+    std::string fps;
 
     std::string brightness;
     std::string contrast;
