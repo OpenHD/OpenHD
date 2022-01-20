@@ -235,11 +235,7 @@ void GStreamerStream::setup_raspberrypi_csi() {
         m_camera.format = "1280x720@48";
     }
 
-    std::string width = "1280";
-    std::string height = "720";
-    std::string fps = "48";
     parse_user_format(m_camera.format, width, height, fps);
-
 
     m_pipeline << fmt::format("rpicamsrc name=bitratectrl camera-number={} bitrate={} preview=0 ! ", m_camera.bus, m_camera.bitrate);
     m_pipeline << fmt::format("video/x-h264, profile=constrained-baseline, width={}, height={}, framerate={}/1, level=3.0 ! ", width, height, fps);
@@ -275,11 +271,7 @@ void GStreamerStream::setup_jetson_csi() {
         m_camera.format = "1280x720@48";
     }
 
-    std::string width = "1280";
-    std::string height = "720";
-    std::string fps = "48";
     parse_user_format(m_camera.format, width, height, fps);
-
 
     m_pipeline << fmt::format("nvarguscamerasrc do-timestamp=true sensor-id={} ! ", sensor_id);
     m_pipeline << fmt::format("video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! ", width, height, fps);
