@@ -98,7 +98,7 @@ This repository is one of the following which forms the foundation of the projec
 == Community
 Feel free to join our growing community.
 
-We have an {forum} , a public {telegram} group with many active members helping each other and a {discord} server with many useful information and photos.
+We have an {forum} , a public {telegram} group with many active members helping each other and a {discord} server with useful information and photos.
 
 If you just want to see when new releases are announced, you can star this repository on Github 
 
