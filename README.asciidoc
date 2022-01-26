@@ -32,6 +32,7 @@ endif::[]
 
 // Variables \\
 :telegram: link:https://t.me/OpenHD_User[Telegram]
+:discord: link:https://discord.gg/ncPCyDxK[Discord]
 :wiki: link:https://openhd.gitbook.io/open-hd/v/2.1[Wiki]
 :openhd: link:https://github.com/HD-Fpv/Open.HD[OpenHD]
 :imageBuilder: link:https://github.com/HD-Fpv/Open.HD_Image_Builder[Image Builder]
@@ -69,7 +70,7 @@ High-definition video, 2-way UAV telemetry, audio, and RC control signals can al
 
 A multi-platform Open.HD app is available for live video with a customizable OSD.
 
-TIP: Look around, read the {wiki}, ask questions on {telegram} and contribute back!
+TIP: Look around, read the {wiki}, ask questions on {telegram} or {discord}!
 
 == Structure
 
@@ -97,14 +98,14 @@ This repository is one of the following which forms the foundation of the projec
 == Community
 Feel free to join our growing community.
 
-We have a {forum} and public {telegram} group with more than 1000 members helping each other.
+We have an {forum} , a public {telegram} group with many active members helping each other and a {discord} server with useful information and photos.
 
 If you just want to see when new releases are announced, you can star this repository on Github 
 
 == Developers
 Contribution is always welcome!
 Start helping us by open up an issue or pull request.
-We recommend getting in touch with us via the {telegram} group.
+We recommend getting in touch with us via the {telegram} group or the {discord} server.
 
 == License
 
