@@ -1,0 +1,61 @@
+// regarding the broadcast stuff
+// ( a lot of contradictary info)
+https://gist.github.com/Lothiraldan/3951784
+
+if(addGroup){
+        auto GROUP="239.255.255.250";
+        //auto GROUP="127.0.0.1";
+        struct ip_mreq mreq;
+        mreq.imr_multiaddr.s_addr = inet_addr(GROUP);
+        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+        if (
+                setsockopt(
+                        mSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*) &mreq, sizeof(mreq)
+                ) < 0
+                ){
+            perror("setsockopt");
+            return;
+        }
+    }else{
+        auto GROUP="239.255.255.251";
+        //auto GROUP="127.0.0.1";
+        struct ip_mreq mreq;
+        mreq.imr_multiaddr.s_addr = inet_addr(GROUP);
+        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+        if (
+                setsockopt(
+                        mSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*) &mreq, sizeof(mreq)
+                ) < 0
+                ){
+            perror("setsockopt");
+            return;
+        }
+    }
+
+static int openUdpSocketForSendingData2(const std::string &client_addr, int client_port) {
+        struct sockaddr_in saddr;
+        int fd = socket(AF_INET, SOCK_DGRAM, 0);
+        if (fd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket: %s", strerror(errno)));
+
+        bzero((char *) &saddr, sizeof(saddr));
+        saddr.sin_family = AF_INET;
+        saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
+        saddr.sin_port = htons((unsigned short) client_port);
+
+        if (connect(fd, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
+            throw std::runtime_error(StringFormat::convert("Connect error: %s", strerror(errno)));
+        }
+
+        // multicast
+        int enable = 1;
+        if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0){
+            throw std::runtime_error(StringFormat::convert("Error setting reuse on socket %d: %s",client_port, strerror(errno)));
+        }
+        if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &enable, sizeof(int)) < 0){
+            throw std::runtime_error(StringFormat::convert("Error setting multicast on socket %d: %s",client_port, strerror(errno)));
+        }
+        //
+
+
+        return fd;
+    }
