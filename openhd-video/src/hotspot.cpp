@@ -20,6 +20,7 @@
 
 #include "hotspot.h"
 
+int sendMeasuredSpeed = 500;
 
 /* this is the point where video is actually received on the ground side directly from wfb_rx, this class
  * distributes it around to the Record class and to user devices.
@@ -47,7 +48,7 @@ void Hotspot::setup() {
 
     m_udp_socket.open(boost::asio::ip::udp::v4());
     m_udp_socket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::address::from_string("0.0.0.0"), m_port));
-
+    
     start_receive();
 }
 
@@ -74,6 +75,15 @@ void Hotspot::handle_receive(const boost::system::error_code& error,
         
             m_udp_socket.send_to(boost::asio::buffer(data, bytes_transferred), _endpoint);
         }
+        
+        if (sendMeasuredSpeed--<0){
+            const uint64_t runTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
+            INIT_TIME = std::chrono::steady_clock::now();
+            std::cout << "VS:" << +((tot_bytes_transferred/runTime)/125.0) << "Mb/s" << std::endl;
+            tot_bytes_transferred = 0;
+            sendMeasuredSpeed = 500;
+        }
+        tot_bytes_transferred+= bytes_transferred;
 
         start_receive();
     }
@@ -133,7 +143,7 @@ void Hotspot::command_received(std::string command_uri) {
             {
                 ep++;
             }
-            }
+        }
 
     } else if (command == "list") {
         for (auto const & endpoint : m_endpoints) {

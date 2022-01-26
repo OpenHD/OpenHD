@@ -212,7 +212,7 @@ boost::process::child Streams::start_video_stream(Stream stream) {
 
     if (m_is_air) {    
         std::vector<std::string> tx_args { 
-            "-p", std::to_string(stream.rf_tx_port),
+            "-r", std::to_string(stream.rf_tx_port),
             "-u", std::to_string(stream.local_tx_port), 
             "-K", stream.tx_keypair, 
             "-B", std::to_string(m_bandwidth), 
@@ -220,8 +220,8 @@ boost::process::child Streams::start_video_stream(Stream stream) {
             "-S", stream.stbc ? "1" : "0", 
             "-L", stream.ldpc ? "1" : "0", 
             "-M", std::to_string(stream.mcs), 
-            "-k", std::to_string(stream.data_blocks), 
-            "-n", std::to_string(stream.total_blocks),
+            //"-k", std::to_string(stream.data_blocks), 
+            //"-n", std::to_string(stream.total_blocks),
         };
 
         tx_args.insert(tx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
@@ -235,11 +235,11 @@ boost::process::child Streams::start_video_stream(Stream stream) {
         return std::move(c_tx);
     } else {
         std::vector<std::string> rx_args { 
-            "-p", std::to_string(stream.rf_rx_port), 
+            "-r", std::to_string(stream.rf_rx_port), 
             "-u", std::to_string(stream.local_rx_port), 
             "-K", stream.rx_keypair, 
-            "-k", std::to_string(stream.data_blocks), 
-            "-n", std::to_string(stream.total_blocks),
+            //"-k", std::to_string(stream.data_blocks), 
+            //"-n", std::to_string(stream.total_blocks),
         };
 
         rx_args.insert(rx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
@@ -269,17 +269,17 @@ stream_pair Streams::start_telemetry_stream(Stream stream) {
 
 
     std::vector<std::string> rx_args { 
-        "-p", std::to_string(m_is_air ? stream.rf_rx_port : stream.rf_tx_port), 
+        "-r", std::to_string(m_is_air ? stream.rf_rx_port : stream.rf_tx_port), 
         "-u", std::to_string(stream.local_rx_port), 
         "-K", stream.rx_keypair,
-        "-k", std::to_string(stream.data_blocks), 
-        "-n", std::to_string(stream.total_blocks),
+       // "-k", std::to_string(stream.data_blocks), 
+       // "-n", std::to_string(stream.total_blocks),
     };
     rx_args.insert(rx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
 
 
     std::vector<std::string> tx_args { 
-        "-p", std::to_string(m_is_air ? stream.rf_tx_port : stream.rf_rx_port),
+        "-r", std::to_string(m_is_air ? stream.rf_tx_port : stream.rf_rx_port),
         "-u", std::to_string(stream.local_tx_port), 
         "-K", stream.tx_keypair,
         "-B", std::to_string(stream.bandwidth), 
@@ -287,8 +287,8 @@ stream_pair Streams::start_telemetry_stream(Stream stream) {
         "-S", stream.stbc ? "1" : "0", 
         "-L", stream.ldpc ? "1" : "0", 
         "-M", std::to_string(stream.mcs), 
-        "-k", std::to_string(stream.data_blocks), 
-        "-n", std::to_string(stream.total_blocks),
+        //"-k", std::to_string(stream.data_blocks), 
+        //"-n", std::to_string(stream.total_blocks),
     };
     tx_args.insert(tx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
 

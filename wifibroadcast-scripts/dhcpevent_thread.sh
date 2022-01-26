@@ -26,6 +26,7 @@ if [[ ${COMMAND} == "old" || ${COMMAND} == "add" ]]; then
             IPTHERE=1
             PINGFAIL=0
         else
+	    echo "GroundIP" > /dev/udp/${IP}/5115
             ping -c 1 -W 10 -n -q ${IP} > /dev/null 2>&1
             if [ $? -ne 0 ]; then
                 if [ ${PINGFAIL} -ge 6 ]; then

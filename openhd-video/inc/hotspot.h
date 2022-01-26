@@ -38,6 +38,8 @@ private:
     char data[max_length];
 
     boost::asio::ip::udp::socket m_udp_socket;
+    std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
+    uint64_t tot_bytes_transferred=0;
 };
 
 

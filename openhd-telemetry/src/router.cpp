@@ -158,7 +158,6 @@ void Router::configure() {
 }
 
 
-
 void Router::add_udp_endpoint(std::string endpoint) {
     std::cout << "Adding UDP endpoint: " << endpoint << std::endl;
 
@@ -182,13 +181,13 @@ void Router::command_received(std::string command_uri) {
 
     boost::smatch result;
 
-    boost::regex r{ "([\\w]+)\\:([\\w\\d\\.]+)\\:([\\d]+)"};
+    boost::regex r{ "([\\w]+)\\:([\\w\\d\\.]+)\\:([\\d]+)|^list$"};
     if (!boost::regex_search(command_uri, result, r)) {
         std::cerr << "Failed to match regex" << std::endl;
         return;
     }
 
-    if (result.size() != 4) {
+    if ((result.size() != 4) && result[1] != "list") {
         std::cerr << "Command format incorrect" << std::endl;
 
         return;
