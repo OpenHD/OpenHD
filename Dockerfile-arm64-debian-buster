@@ -1,4 +1,4 @@
-FROM openhd/armbian_20.08_buster_arm64:v2
+FROM ghcr.io/openhd/armbian_20.08_buster_arm64:latest
 
 RUN apt update --allow-releaseinfo-change
 
