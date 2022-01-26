@@ -10,7 +10,7 @@ BUILD_TYPE=$4
 
 
 if [[ "${DISTRO}" == "buster" ]]; then
-    PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc"
+    PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc -d qopenhd"
     PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
@@ -21,7 +21,7 @@ fi
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
     echo "--------------ADDING nvidia-l4t-gstreamer to package list--------------- "
-    PLATFORM_PACKAGES="-d nvidia-l4t-gstreamer"
+    PLATFORM_PACKAGES="-d nvidia-l4t-gstreamer -d qopenhd"
     PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
@@ -246,7 +246,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
   -d "libseek-thermal >= 20200801.1" \
   -d "flirone-driver >= 20200704.3" \
   -d "wifibroadcast >= 20200930.1" \
-  -d "qopenhd" \
   -d "openhd-dump1090-mutability >= 20201122.2" \
   -d "gnuplot-nox" \
   -d "hostapd" \

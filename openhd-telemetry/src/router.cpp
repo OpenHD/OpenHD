@@ -159,7 +159,7 @@ void Router::configure() {
 
 
 void Router::add_udp_endpoint(std::string endpoint) {
-    std::cerr << "Adding UDP endpoint: " << endpoint << std::endl;
+    std::cout << "Adding UDP endpoint: " << endpoint << std::endl;
 
     UDPEndpoint::pointer new_connection = UDPEndpoint::create(this, m_io_service);
     std::static_pointer_cast<UDPEndpoint>(new_connection)->setup(m_telemetry_type, endpoint);
