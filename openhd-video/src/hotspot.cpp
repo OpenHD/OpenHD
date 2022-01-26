@@ -20,6 +20,7 @@
 
 #include "hotspot.h"
 
+int sendMeasuredSpeed = 500;
 
 /* this is the point where video is actually received on the ground side directly from wfb_rx, this class
  * distributes it around to the Record class and to user devices.
@@ -32,7 +33,7 @@ Hotspot::Hotspot(boost::asio::io_service &io_service, uint16_t port):
     m_io_service(io_service),
     m_port(port),
     m_udp_socket(io_service) {
-    std::cerr << "Hotspot::Hotspot()" << std::endl;
+    std::cerr << "Hotspot::Hotspot()" << port << std::endl;
 
     setup();
 }
@@ -47,7 +48,7 @@ void Hotspot::setup() {
 
     m_udp_socket.open(boost::asio::ip::udp::v4());
     m_udp_socket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::address::from_string("0.0.0.0"), m_port));
-
+    
     start_receive();
 }
 
@@ -74,6 +75,15 @@ void Hotspot::handle_receive(const boost::system::error_code& error,
         
             m_udp_socket.send_to(boost::asio::buffer(data, bytes_transferred), _endpoint);
         }
+        
+        if (sendMeasuredSpeed--<0){
+            const uint64_t runTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
+            INIT_TIME = std::chrono::steady_clock::now();
+            std::cout << "VS:" << +((tot_bytes_transferred/runTime)/125.0) << "Mb/s" << std::endl;
+            tot_bytes_transferred = 0;
+            sendMeasuredSpeed = 500;
+        }
+        tot_bytes_transferred+= bytes_transferred;
 
         start_receive();
     }
@@ -100,7 +110,7 @@ void Hotspot::command_received(std::string command_uri) {
 
     std::string command = result[1];
 
-    if (command != "add" && command != "del") {
+    if (command != "add" && command != "del" && command != "list") {
         std::cerr << "Invalid command received" << std::endl;
 
         return;
@@ -110,6 +120,7 @@ void Hotspot::command_received(std::string command_uri) {
 
     if (command == "add") {
         for (auto & endpoint : m_endpoints) {
+        std::cerr << "*"<< endpoint << std::endl;
             if (endpoint == address) {
                 // already added this endpoint, skip it
                 return;
@@ -117,14 +128,26 @@ void Hotspot::command_received(std::string command_uri) {
         }
 
         m_endpoints.push_back(address);
+        std::cerr << "New endpoint added" << address << std::endl;
 
     } else if (command == "del") {
-        for (auto & endpoint : m_endpoints) {
-            if (endpoint == address) {
-                // skipping this for the moment, it's not critical
-                //m_endpoints.erase(endpoint);
-                return;
+        auto ep = m_endpoints.begin();
+        while (ep != m_endpoints.end()){
+            std::cerr << "*"<< *ep << std::endl;
+            if (*ep == address) {
+                std::cerr << "-"<< *ep << std::endl;
+                m_endpoints.erase(ep);
+                //return;
             }
+            else
+            {
+                ep++;
+            }
+        }
+
+    } else if (command == "list") {
+        for (auto const & endpoint : m_endpoints) {
+            std::cerr << "*"<< endpoint << ":" << m_port << std::endl;
         }
     }
 }

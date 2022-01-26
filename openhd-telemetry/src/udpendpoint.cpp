@@ -48,6 +48,7 @@ void UDPEndpoint::setup(TelemetryType telemetry_type, std::string endpoint_s) {
     _add << fmt::format("{}:{}:{}", "0", address, port_s);
 
     // this is used by Router to figure out if a dynamic endpoint has been added already
+    m_medium = "udp";
     m_address = _add.str();
 
     m_endpoint = boost::asio::ip::udp::endpoint(boost::asio::ip::address::from_string(address), m_port);
@@ -95,5 +96,7 @@ void UDPEndpoint::handle_read(const boost::system::error_code& error,
 
 
 void UDPEndpoint::send_message(uint8_t *buffer, int size) {
+    m_endpoint.port(m_port);
+    std::cout << " UDP:" << m_endpoint.address() << ":" << m_endpoint.port() << std::endl;
     auto sent = m_udp_socket.send_to(boost::asio::buffer(buffer, size), m_endpoint);
 }
