@@ -5,17 +5,6 @@
 #ifndef WIFIBROADCAST_PACKETIZEDBENCHMARK_H
 #define WIFIBROADCAST_PACKETIZEDBENCHMARK_H
 
-#include <cassert>
-#include <cstdio>
-#include <memory>
-#include <string>
-#include <chrono>
-#include <sstream>
-#include <list>
-
-// Helpers fo performing packet-based throughput measurement
-// and/or duration-based measurement
-
 // Wrapper for counting the packet throughput in packets per second and MBit/s.
 // Print the current in 1 second intervals and the total at the end.
 class PacketizedBenchmark{
@@ -76,39 +65,6 @@ private:
     double totalBytesDelta=0;
     const std::string name;
     const double factor=1.0f;
-};
-
-// Measure how long "something" took and print the average at the end.
-// E.g. encoding a FEC block, encrypting/decrypting a packet,...
-class DurationBenchmark{
-public:
-    DurationBenchmark(std::string name1,int dataSizeBytes1):name(name1),dataSizeBytes(dataSizeBytes1){}
-    void start(){
-        before=std::chrono::steady_clock::now();
-    }
-    void stop(){
-        const auto delta=std::chrono::steady_clock::now()-before;
-        const auto deltaUs=std::chrono::duration_cast<std::chrono::microseconds>(delta).count();
-        //std::cout<<"Encoding a block of size:"<<StringHelper::memorySizeReadable(blockSizeBytes)<<
-        //    " took "<<blockEncodingTimeUs/1000.0f<<" ms"<<"\n";
-        blockEncodingTimeUsTotal+=deltaUs;
-        blockEncodingTimeCount++;
-    }
-    void print(){
-        double avgDeltaUs=(blockEncodingTimeUsTotal/blockEncodingTimeCount);
-        float avgDeltaMs=avgDeltaUs/1000.0f;
-        std::cout<<"Performing "<<name<<" on "<<StringHelper::memorySizeReadable(dataSizeBytes)<<
-                 " took "<<avgDeltaMs<<" ms on average"<<"\n";
-        //
-        double emulatedThroughputMBits=1000.0/avgDeltaMs*dataSizeBytes*8/1024/1024;
-        std::cout<<"This would equate to a throughput of: "<<emulatedThroughputMBits<<" Mbit/s\n";
-    }
-private:
-    const std::string name;
-    const int dataSizeBytes;
-    double blockEncodingTimeUsTotal=0;
-    int blockEncodingTimeCount=0;
-    std::chrono::steady_clock::time_point before;
 };
 
 

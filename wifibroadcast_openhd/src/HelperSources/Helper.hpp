@@ -155,15 +155,6 @@ namespace GenericHelper{
         }
         return ret;
     }
-    template<std::size_t S>
-    static std::vector<const uint8_t*> convertToP_const(std::vector<std::array<uint8_t,S>>& buff,std::size_t offset=0,std::size_t n=-1){
-        if(n==-1)n=buff.size();
-        std::vector<const uint8_t*> ret(n);
-        for(int i=0;i<ret.size();i++){
-            ret[i]=buff[offset+i].data();
-        }
-        return ret;
-    }
     // given an array of available indices, for each index int the rane [0...range[, check if this index is contained in the input array.
     // if not, the index is "missing" and added to the return array
     static std::vector<unsigned int> findMissingIndices(const std::vector<unsigned int>& indicesAvailable,const std::size_t range){

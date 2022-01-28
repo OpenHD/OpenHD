@@ -30,7 +30,7 @@
 #include <chrono>
 #include <sstream>
 #include <list>
-#include "HelperSources/Benchmark.hpp"
+#include "HelperSources/PacketizedBenchmark.hpp"
 
 // Test the FEC encoding / decoding performance (throughput) of this system
 // Basically measures the throughput of encoding,decoding or en&decoding FEC packets on one CPU core
@@ -75,22 +75,31 @@ void benchmark_fec_encode(const Options& options,bool printBlockTime=false){
     encoder.outputDataCallback=cb;
     //
     PacketizedBenchmark packetizedBenchmark("FEC_ENCODE",(100+options.FEC_PERCENTAGE)/100.0f);
-    DurationBenchmark durationBenchmark("FEC_BLOCK_ENCODE",options.PACKET_SIZE*options.FEC_K);
     const auto testBegin=std::chrono::steady_clock::now();
     packetizedBenchmark.begin();
+    double blockEncodingTimeUsTotal=0;
+    int blockEncodingTimeCount=0;
+    const int blockSizeBytes=options.PACKET_SIZE*options.FEC_K;
     // run the test for X seconds
     while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)) {
         for (const auto &packet: testPackets) {
-            durationBenchmark.start();
+            // also measure the time (in us) it takes to encode a FEC block
+            const auto before=std::chrono::steady_clock::now();
             bool fecPerformed=encoder.encodePacket(packet.data(), packet.size());
             if(fecPerformed){
-                durationBenchmark.stop();
+                auto delta=std::chrono::steady_clock::now()-before;
+                const auto blockEncodingTimeUs=std::chrono::duration_cast<std::chrono::microseconds>(delta).count();
+                //std::cout<<"Encoding a block of size:"<<StringHelper::memorySizeReadable(blockSizeBytes)<<
+                //    " took "<<blockEncodingTimeUs/1000.0f<<" ms"<<"\n";
+                blockEncodingTimeUsTotal+=blockEncodingTimeUs;
+                blockEncodingTimeCount++;
             }
             packetizedBenchmark.doneWithPacket(packet.size());
         }
     }
     packetizedBenchmark.end();
-    durationBenchmark.print();
+    std::cout<<"Encoding a block of size:"<<StringHelper::memorySizeReadable(blockSizeBytes)<<
+        " took "<<(blockEncodingTimeUsTotal/blockEncodingTimeCount)/1000.0f<<" ms on average"<<"\n";
     //printDetail();
 }
 
@@ -141,7 +150,6 @@ void benchmark_crypt(const Options& options){
     uint64_t nonce=0;
 
     PacketizedBenchmark packetizedBenchmark(benchmarkTypeReadable(options.benchmarkType),1.0); // roughly 1:1
-    DurationBenchmark durationBenchmark("ENC",options.PACKET_SIZE);
 
     const auto testBegin=std::chrono::steady_clock::now();
     packetizedBenchmark.begin();
@@ -150,9 +158,7 @@ void benchmark_crypt(const Options& options){
         for(int i=0;i<N_BUFFERS;i++){
             const auto buffer=randomBufferPot.getBuffer(i);
             uint8_t add=1;
-            durationBenchmark.start();
             const auto encrypted=encryptor.encryptPacket(nonce,buffer->data(),buffer->size(),add);
-            durationBenchmark.stop();
             assert(encrypted.size()>0);
             nonce++;
             //
@@ -160,27 +166,7 @@ void benchmark_crypt(const Options& options){
         }
     }
     packetizedBenchmark.end();
-    durationBenchmark.print();
 }
-
-/*void benchmark_lol(const Options& options){
-    static constexpr auto SIZE=1446;
-    const auto N_ALLOCATED_BLOCKS=100:
-    const auto N_ALLOCATED_PACKETS=options.FEC_K*100;
-
-    const int FEC_N=options.FEC_K*options.FEC_PERCENTAGE;
-
-    auto buffers=SemiRandomBuffers::createSemiRandomBuffers2<SIZE>(N_ALLOCATED_PACKETS);
-
-    while (true){
-        for(int i=0;i<N_ALLOCATED_BLOCKS;i++){
-            st
-        }
-    }
-
-
-}*/
-
 
 int main(int argc, char *const *argv) {
     int opt;
@@ -236,6 +222,7 @@ int main(int argc, char *const *argv) {
             std::cout<<"Unimplemented\n";
             break;
     }
+
     return 0;
 }
 

@@ -1,6 +1,6 @@
 Here I collect code that once came from 'some github repository' and should not be modified.
 Only maybe 'Updated' when these repositories receive updates
-Also, some of this code is written in 'c' not 'c++'
+Also, all this code is written in 'c' not 'c++'
 
 30.Jan 2021:
 The sources from "zfec" are not used anymore (https://github.com/tahoe-lafs/zfec/tree/master/zfec)
