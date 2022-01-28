@@ -22,6 +22,48 @@
 // only thing that matters is how many secondary fragments you received (either enough for fec_decode() or not enough for fec_decode() )
 // Also note: you obviously cannot use the same secondary fragment more than once
 
+/**
+ * @param fragmentSize size of each fragment in this block
+ * @param primaryFragments list of pointers to memory for primary fragments
+ * @param secondaryFragments list of pointers to memory for secondary fragments (fec fragments)
+ * Using the data from @param primaryFragments constructs as many secondary fragments as @param secondaryFragments holds
+ */
+void fec_encode(unsigned int fragmentSize,
+                const std::vector<uint8_t*>& primaryFragments,
+                const std::vector<uint8_t*>& secondaryFragments){
+    fec_encode(fragmentSize, (const unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
+}
+
+/**
+ * @param fragmentSize size of each fragment in this block
+ * @param primaryFragments list of pointers to memory for primary fragments. Must be same size as used for fec_encode()
+ * @param indicesMissingPrimaryFragments list of the indices of missing primary fragments.
+ * Example: if @param indicesMissingPrimaryFragments contains 2, the 3rd primary fragment is missing
+ * @param secondaryFragmentsReceived list of pointers to memory for secondary fragments (fec fragments). Must not be same size as used for fec_encode(), only MUST contain "enough" secondary fragments
+ * @param indicesOfSecondaryFragmentsReceived list of the indices of secondaryFragments that are used to reconstruct missing primary fragments.
+ * Example: if @param indicesOfSecondaryFragmentsReceived contains {0,2}, the first secondary fragment has the index 0, and the second secondary fragment has the index 2
+ * When this call returns, all missing primary fragments (gaps) have been filled / reconstructed
+ */
+void fec_decode(unsigned int fragmentSize,
+                const std::vector<uint8_t*>& primaryFragments,
+                const std::vector<unsigned int>& indicesMissingPrimaryFragments,
+                const std::vector<uint8_t*>& secondaryFragmentsReceived,
+                const std::vector<unsigned int>& indicesOfSecondaryFragmentsReceived){
+    //std::cout<<"primaryFragmentsS:"<<primaryFragments.size()<<"\n";
+    //std::cout<<"indicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
+    //std::cout<<"secondaryFragmentsS:"<<secondaryFragments.size()<<"\n";
+    //std::cout << "indicesOfSecondaryFragments:" << StringHelper::vectorAsString(indicesOfSecondaryFragments) << "\n";
+    for(const auto& idx:indicesMissingPrimaryFragments){
+        assert(idx<primaryFragments.size());
+    }
+    assert(indicesMissingPrimaryFragments.size() <= indicesOfSecondaryFragmentsReceived.size());
+    assert(indicesMissingPrimaryFragments.size() == secondaryFragmentsReceived.size());
+    assert(secondaryFragmentsReceived.size() == indicesOfSecondaryFragmentsReceived.size());
+    fec_decode(fragmentSize, (unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragmentsReceived.data(),
+               (unsigned int*)indicesOfSecondaryFragmentsReceived.data(), (unsigned int*)indicesMissingPrimaryFragments.data(), indicesMissingPrimaryFragments.size());
+
+}
+
 
 //Note: By using "blockBuffer" as input the fecEncode / fecDecode function(s) don't need to allocate any new memory.
 // Also note, indices in blockBuffer can refer to either primary or secondary fragments. Whereas when calling
@@ -38,11 +80,11 @@ template<std::size_t S>
 void fecEncode(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& blockBuffer, unsigned int nPrimaryFragments, unsigned int nSecondaryFragments){
     assert(fragmentSize <= S);
     assert(nPrimaryFragments+nSecondaryFragments<=blockBuffer.size());
-    auto primaryFragmentsP= GenericHelper::convertToP_const(blockBuffer,0,nPrimaryFragments);
+    auto primaryFragmentsP= GenericHelper::convertToP(blockBuffer,0,nPrimaryFragments);
     auto secondaryFragmentsP=GenericHelper::convertToP(blockBuffer,nPrimaryFragments,blockBuffer.size()-nPrimaryFragments);
     secondaryFragmentsP.resize(nSecondaryFragments);
     //const auto before=std::chrono::steady_clock::now();
-    fec_encode2(fragmentSize, primaryFragmentsP, secondaryFragmentsP);
+    fec_encode(fragmentSize, primaryFragmentsP, secondaryFragmentsP);
     //const auto delta=std::chrono::steady_clock::now()-before;
     //std::cout<<"fec_encode step took:"<<std::chrono::duration_cast<std::chrono::microseconds>(delta).count()<<"us\n";
 }
@@ -85,12 +127,13 @@ std::vector<unsigned int> fecDecode(unsigned int fragmentSize, std::vector<std::
     // assert if fecDecode is called too late (e.g. more secondary fragments than needed for fec
     assert(indicesMissingPrimaryFragments.size()==secondaryFragmentP.size());
     // do fec step
-    fec_decode2(fragmentSize,primaryFragmentP,indicesMissingPrimaryFragments,secondaryFragmentP,secondaryFragmentIndices);
+    fec_decode(fragmentSize,primaryFragmentP,indicesMissingPrimaryFragments,secondaryFragmentP,secondaryFragmentIndices);
     return indicesMissingPrimaryFragments;
 }
 
 // randomly select a possible combination of received indices (either primary or secondary).
 static void testFecCPlusPlusWrapperY(const int nPrimaryFragments,const int nSecondaryFragments){
+    fec_init();
     srand (time(NULL));
     constexpr auto FRAGMENT_SIZE=1446;
 
@@ -120,7 +163,7 @@ static void testFecCPlusPlusWrapperY(const int nPrimaryFragments,const int nSeco
         fecDecode(FRAGMENT_SIZE, rxBlockBuffer, nPrimaryFragments, fragmentMap);
 
         for(unsigned int i=0;i<nPrimaryFragments;i++){
-            //std::cout<<"Comparing fragment:"<<i<<"\n";
+            std::cout<<"Comparing fragment:"<<i<<"\n";
             GenericHelper::assertArraysEqual(txBlockBuffer[i], rxBlockBuffer[i]);
         }
     }

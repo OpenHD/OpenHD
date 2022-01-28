@@ -3,7 +3,6 @@
  * 980624
  * (C) 1997-98 Luigi Rizzo (luigi@iet.unipi.it)
  * (C) 2001 Alain Knaff (alain@knaff.lu)
- * (C) 2022 Constantin Geier (optimize using libmoepgf source code)
  *
  * Portions derived from code by Phil Karn (karn@ka9q.ampr.org),
  * Robert Morelos-Zaragoza (robert@spectra.eng.hawaii.edu) and Hari
@@ -37,9 +36,11 @@
 
 /*
  * The following parameter defines how many bits are used for
- * field elements. The code only supports 8.
+ * field elements. The code supports any value from 2 to 16
+ * but fastest operation is achieved with 8 bit elements
+ * This is the only parameter you may want to change.
  */
-#define GF_BITS  8	/* code over GF(2^GF_BITS) - DO NOT CHANGE*/
+#define GF_BITS  8	/* code over GF(2**GF_BITS) - change to suit */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,16 +48,6 @@
 
 #include <assert.h>
 #include "fec.h"
-/**
- * Include our optimized GF256 math functions - since FEC mostly boils down to "Galois field" mul / madd on big memory blocks
- * this is the most straight forward optimization, and it really speeds up the code by a lot (see paper and my benchmark results)
- * The previous optimization by Alain Knaff used a lookup table. This optimization is still used as a backup, but faster options exists
- * depending on the architecture the code is running on.
- */
-#include "gf_optimized//gf256_optimized_include.h"
-#include "gf_simple/gf_simple.h"
-#include <vector>
-#include <iostream>
 
 /*
  * stuff used for testing purposes only
@@ -90,18 +81,326 @@ u_long ticks[10];	/* vars for timekeeping */
 #define TOCK(x)
 #endif /* TEST */
 
-
-/**
- * Consti10 - the original implementation supported variable GF_BITS values. However, with the optimizations
- * and the HW developments since 1997 it makes no sense to use anything lower than GF(2^8). And the optimizations by
- * Alain Knaff made GF_BITS == 8 an requirement anyways
+/*
+ * You should not need to change anything beyond this point.
+ * The first part of the file implements linear algebra in GF.
+ *
+ * gf is the type used to store an element of the Galois Field.
+ * Must constain at least GF_BITS bits.
+ *
+ * Note: unsigned char will work up to GF(256) but int seems to run
+ * faster on the Pentium. We use int whenever have to deal with an
+ * index, since they are generally faster.
+ */
+/*
+ * AK: Udpcast only uses GF_BITS=8. Remove other possibilities
  */
 #if (GF_BITS != 8)
 #error "GF_BITS must be 8"
 #endif
+typedef unsigned char gf;
 
+#define	GF_SIZE ((1 << GF_BITS) - 1)	/* powers of \alpha */
+
+/*
+ * Primitive polynomials - see Lin & Costello, Appendix A,
+ * and  Lee & Messerschmitt, p. 453.
+ */
+static char *allPp[] = {    /* GF_BITS	polynomial		*/
+        NULL,		    /*  0	no code			*/
+        NULL,		    /*  1	no code			*/
+        "111",		    /*  2	1+x+x^2			*/
+        "1101",		    /*  3	1+x+x^3			*/
+        "11001",		    /*  4	1+x+x^4			*/
+        "101001",		    /*  5	1+x^2+x^5		*/
+        "1100001",		    /*  6	1+x+x^6			*/
+        "10010001",		    /*  7	1 + x^3 + x^7		*/
+        "101110001",	    /*  8	1+x^2+x^3+x^4+x^8	*/
+        "1000100001",	    /*  9	1+x^4+x^9		*/
+        "10010000001",	    /* 10	1+x^3+x^10		*/
+        "101000000001",	    /* 11	1+x^2+x^11		*/
+        "1100101000001",	    /* 12	1+x+x^4+x^6+x^12	*/
+        "11011000000001",	    /* 13	1+x+x^3+x^4+x^13	*/
+        "110000100010001",	    /* 14	1+x+x^6+x^10+x^14	*/
+        "1100000000000001",	    /* 15	1+x+x^15		*/
+        "11010000000010001"	    /* 16	1+x+x^3+x^12+x^16	*/
+};
+
+
+/*
+ * To speed up computations, we have tables for logarithm, exponent
+ * and inverse of a number. If GF_BITS <= 8, we use a table for
+ * multiplication as well (it takes 64K, no big deal even on a PDA,
+ * especially because it can be pre-initialized an put into a ROM!),
+ * otherwhise we use a table of logarithms.
+ * In any case the macro gf_mul(x,y) takes care of multiplications.
+ */
+
+static gf gf_exp[2*GF_SIZE];	/* index->poly form conversion table	*/
+static int gf_log[GF_SIZE + 1];	/* Poly->index form conversion table	*/
+static gf inverse[GF_SIZE+1];	/* inverse of field elem.		*/
+/* inv[\alpha**i]=\alpha**(GF_SIZE-i-1)	*/
+
+/*
+ * modnn(x) computes x % GF_SIZE, where GF_SIZE is 2**GF_BITS - 1,
+ * without a slow divide.
+ */
+static inline gf
+modnn(int x)
+{
+    while (x >= GF_SIZE) {
+        x -= GF_SIZE;
+        x = (x >> GF_BITS) + (x & GF_SIZE);
+    }
+    return x;
+}
 
 #define SWAP(a,b,t) {t tmp; tmp=a; a=b; b=tmp;}
+
+/*
+ * gf_mul(x,y) multiplies two numbers. If GF_BITS<=8, it is much
+ * faster to use a multiplication table.
+ *
+ * USE_GF_MULC, GF_MULC0(c) and GF_ADDMULC(x) can be used when multiplying
+ * many numbers by the same constant. In this case the first
+ * call sets the constant, and others perform the multiplications.
+ * A value related to the multiplication is held in a local variable
+ * declared with USE_GF_MULC . See usage in addmul1().
+ */
+static gf gf_mul_table[(GF_SIZE + 1)*(GF_SIZE + 1)]
+#ifdef WINDOWS
+        __attribute__((aligned (16)))
+#else
+        __attribute__((aligned (256)))
+#endif
+;
+
+#define gf_mul(x,y) gf_mul_table[(x<<8)+y]
+
+#define USE_GF_MULC register gf * __gf_mulc_
+#define GF_MULC0(c) __gf_mulc_ = &gf_mul_table[(c)<<8]
+#define GF_ADDMULC(dst, x) dst ^= __gf_mulc_[x]
+#define GF_MULC(dst, x) dst = __gf_mulc_[x]
+
+static void
+init_mul_table(void)
+{
+    int i, j;
+    for (i=0; i< GF_SIZE+1; i++)
+        for (j=0; j< GF_SIZE+1; j++)
+            gf_mul_table[(i<<8)+j] = gf_exp[modnn(gf_log[i] + gf_log[j]) ] ;
+
+    for (j=0; j< GF_SIZE+1; j++)
+        gf_mul_table[j] = gf_mul_table[j<<8] = 0;
+}
+
+/*
+ * Generate GF(2**m) from the irreducible polynomial p(X) in p[0]..p[m]
+ * Lookup tables:
+ *     index->polynomial form		gf_exp[] contains j= \alpha^i;
+ *     polynomial form -> index form	gf_log[ j = \alpha^i ] = i
+ * \alpha=x is the primitive element of GF(2^m)
+ *
+ * For efficiency, gf_exp[] has size 2*GF_SIZE, so that a simple
+ * multiplication of two numbers can be resolved without calling modnn
+ */
+
+
+
+/*
+ * initialize the data structures used for computations in GF.
+ */
+static void
+generate_gf(void)
+{
+    int i;
+    gf mask;
+    char *Pp =  allPp[GF_BITS] ;
+
+    mask = 1;	/* x ** 0 = 1 */
+    gf_exp[GF_BITS] = 0; /* will be updated at the end of the 1st loop */
+    /*
+     * first, generate the (polynomial representation of) powers of \alpha,
+     * which are stored in gf_exp[i] = \alpha ** i .
+     * At the same time build gf_log[gf_exp[i]] = i .
+     * The first GF_BITS powers are simply bits shifted to the left.
+     */
+    for (i = 0; i < GF_BITS; i++, mask <<= 1 ) {
+        gf_exp[i] = mask;
+        gf_log[gf_exp[i]] = i;
+        /*
+         * If Pp[i] == 1 then \alpha ** i occurs in poly-repr
+         * gf_exp[GF_BITS] = \alpha ** GF_BITS
+         */
+        if ( Pp[i] == '1' )
+            gf_exp[GF_BITS] ^= mask;
+    }
+    /*
+     * now gf_exp[GF_BITS] = \alpha ** GF_BITS is complete, so can als
+     * compute its inverse.
+     */
+    gf_log[gf_exp[GF_BITS]] = GF_BITS;
+    /*
+     * Poly-repr of \alpha ** (i+1) is given by poly-repr of
+     * \alpha ** i shifted left one-bit and accounting for any
+     * \alpha ** GF_BITS term that may occur when poly-repr of
+     * \alpha ** i is shifted.
+     */
+    mask = 1 << (GF_BITS - 1 ) ;
+    for (i = GF_BITS + 1; i < GF_SIZE; i++) {
+        if (gf_exp[i - 1] >= mask)
+            gf_exp[i] = gf_exp[GF_BITS] ^ ((gf_exp[i - 1] ^ mask) << 1);
+        else
+            gf_exp[i] = gf_exp[i - 1] << 1;
+        gf_log[gf_exp[i]] = i;
+    }
+    /*
+     * log(0) is not defined, so use a special value
+     */
+    gf_log[0] =	GF_SIZE ;
+    /* set the extended gf_exp values for fast multiply */
+    for (i = 0 ; i < GF_SIZE ; i++)
+        gf_exp[i + GF_SIZE] = gf_exp[i] ;
+
+    /*
+     * again special cases. 0 has no inverse. This used to
+     * be initialized to GF_SIZE, but it should make no difference
+     * since noone is supposed to read from here.
+     */
+    inverse[0] = 0 ;
+    inverse[1] = 1;
+    for (i=2; i<=GF_SIZE; i++)
+        inverse[i] = gf_exp[GF_SIZE-gf_log[i]];
+}
+
+/*
+ * Various linear algebra operations that i use often.
+ */
+
+/*
+ * addmul() computes dst[] = dst[] + c * src[]
+ * This is used often, so better optimize it! Currently the loop is
+ * unrolled 16 times, a good value for 486 and pentium-class machines.
+ * The case c=0 is also optimized, whereas c=1 is not. These
+ * calls are unfrequent in my typical apps so I did not bother.
+ *
+ * Note that gcc on
+ */
+#if 0
+#define addmul(dst, src, c, sz) \
+    if (c != 0) addmul1(dst, src, c, sz)
+#endif
+
+
+
+#define UNROLL 16 /* 1, 4, 8, 16 */
+static void
+slow_addmul1(register gf*restrict dst,const register gf*restrict src, gf c, int sz)
+{
+    USE_GF_MULC ;
+    //register gf *dst = dst1, *src = src1 ;
+    gf *lim = &dst[sz - UNROLL + 1] ;
+
+    GF_MULC0(c) ;
+
+#if (UNROLL > 1) /* unrolling by 8/16 is quite effective on the pentium */
+    for (; dst < lim ; dst += UNROLL, src += UNROLL ) {
+        GF_ADDMULC( dst[0] , src[0] );
+        GF_ADDMULC( dst[1] , src[1] );
+        GF_ADDMULC( dst[2] , src[2] );
+        GF_ADDMULC( dst[3] , src[3] );
+#if (UNROLL > 4)
+        GF_ADDMULC( dst[4] , src[4] );
+        GF_ADDMULC( dst[5] , src[5] );
+        GF_ADDMULC( dst[6] , src[6] );
+        GF_ADDMULC( dst[7] , src[7] );
+#endif
+#if (UNROLL > 8)
+        GF_ADDMULC( dst[8] , src[8] );
+        GF_ADDMULC( dst[9] , src[9] );
+        GF_ADDMULC( dst[10] , src[10] );
+        GF_ADDMULC( dst[11] , src[11] );
+        GF_ADDMULC( dst[12] , src[12] );
+        GF_ADDMULC( dst[13] , src[13] );
+        GF_ADDMULC( dst[14] , src[14] );
+        GF_ADDMULC( dst[15] , src[15] );
+#endif
+    }
+#endif
+    lim += UNROLL - 1 ;
+    for (; dst < lim; dst++, src++ )		/* final components */
+        GF_ADDMULC( *dst , *src );
+}
+
+# define addmul1 slow_addmul1
+
+
+static void addmul(gf *dst,const gf *src, gf c, int sz) {
+    // fprintf(stderr, "Dst=%p Src=%p, gf=%02x sz=%d\n", dst, src, c, sz);
+    if (c != 0) addmul1(dst, src, c, sz);
+}
+
+/*
+ * mul() computes dst[] = c * src[]
+ * This is used often, so better optimize it! Currently the loop is
+ * unrolled 16 times, a good value for 486 and pentium-class machines.
+ * The case c=0 is also optimized, whereas c=1 is not. These
+ * calls are unfrequent in my typical apps so I did not bother.
+ *
+ * Note that gcc on
+ */
+#if 0
+#define mul(dst, src, c, sz) \
+    do { if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz); } while(0)
+#endif
+
+#define UNROLL 16 /* 1, 4, 8, 16 */
+static void
+slow_mul1(gf *dst1,const gf *src1, gf c,const int sz)
+{
+    USE_GF_MULC ;
+    register gf *dst = dst1;
+    const register gf *src = src1 ;
+    gf *lim = &dst[sz - UNROLL + 1] ;
+
+    GF_MULC0(c) ;
+
+#if (UNROLL > 1) /* unrolling by 8/16 is quite effective on the pentium */
+    for (; dst < lim ; dst += UNROLL, src += UNROLL ) {
+        GF_MULC( dst[0] , src[0] );
+        GF_MULC( dst[1] , src[1] );
+        GF_MULC( dst[2] , src[2] );
+        GF_MULC( dst[3] , src[3] );
+#if (UNROLL > 4)
+        GF_MULC( dst[4] , src[4] );
+        GF_MULC( dst[5] , src[5] );
+        GF_MULC( dst[6] , src[6] );
+        GF_MULC( dst[7] , src[7] );
+#endif
+#if (UNROLL > 8)
+        GF_MULC( dst[8] , src[8] );
+        GF_MULC( dst[9] , src[9] );
+        GF_MULC( dst[10] , src[10] );
+        GF_MULC( dst[11] , src[11] );
+        GF_MULC( dst[12] , src[12] );
+        GF_MULC( dst[13] , src[13] );
+        GF_MULC( dst[14] , src[14] );
+        GF_MULC( dst[15] , src[15] );
+#endif
+    }
+#endif
+    lim += UNROLL - 1 ;
+    for (; dst < lim; dst++, src++ )		/* final components */
+        GF_MULC( *dst , *src );
+}
+
+# define mul1 slow_mul1
+
+static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
+    /*fprintf(stderr, "%p = %02x * %p\n", dst, c, src);*/
+    if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
+}
+
 /*
  * invert_mat() takes a matrix and produces its inverse
  * k is the size of the matrix.
@@ -188,10 +487,10 @@ invert_mat(gf *src, int k)
              * fruitful, at least in the obvious ways (unrolling)
              */
             DEB( pivswaps++ ; )
-            c = gf256_inverse( c ) ;
+            c = inverse[ c ] ;
             pivot_row[icol] = 1 ;
             for (ix = 0 ; ix < k ; ix++ )
-                pivot_row[ix] = gf256_mul(c, pivot_row[ix] );
+                pivot_row[ix] = gf_mul(c, pivot_row[ix] );
         }
         /*
          * from all rows, remove multiples of the selected row
@@ -206,7 +505,7 @@ invert_mat(gf *src, int k)
                 if (ix != icol) {
                     c = p[icol] ;
                     p[icol] = 0 ;
-                    gf256_madd_optimized(p, pivot_row, c, k );
+                    addmul(p, pivot_row, c, k );
                 }
             }
         }
@@ -227,6 +526,22 @@ invert_mat(gf *src, int k)
     error = 0 ;
     fail:
     return error ;
+}
+
+
+static int fec_initialized = 0 ;
+
+void fec_init(void)
+{
+    TICK(ticks[0]);
+    generate_gf();
+    TOCK(ticks[0]);
+    DDB(fprintf(stderr, "generate_gf took %ldus\n", ticks[0]);)
+    TICK(ticks[0]);
+    init_mul_table();
+    TOCK(ticks[0]);
+    DDB(fprintf(stderr, "init_mul_table took %ldus\n", ticks[0]);)
+    fec_initialized = 1 ;
 }
 
 
@@ -335,6 +650,7 @@ void fec_encode(unsigned int blockSize,
     unsigned int blockNo; /* loop for block counter */
     unsigned int row, col;
 
+    assert(fec_initialized);
     assert(nrDataBlocks <= 128);
     assert(nrFecBlocks <= 128);
 
@@ -342,12 +658,12 @@ void fec_encode(unsigned int blockSize,
         return;
 
     for(row=0; row < nrFecBlocks; row++)
-        gf256_mul_optimized(fec_blocks[row], data_blocks[0], gf256_inverse(128 ^ row), blockSize);
+        mul(fec_blocks[row], data_blocks[0], inverse[128 ^ row], blockSize);
 
     for(col=129, blockNo=1; blockNo < nrDataBlocks; col++, blockNo ++) {
         for(row=0; row < nrFecBlocks; row++)
-            gf256_madd_optimized(fec_blocks[row], data_blocks[blockNo],
-                   gf256_inverse(row ^ col),
+            addmul(fec_blocks[row], data_blocks[blockNo],
+                   inverse[row ^ col],
                    blockSize);
     }
 }
@@ -379,7 +695,7 @@ static inline void reduce(unsigned int blockSize,
             int j;
             for(j=0; j < nr_fec_blocks; j++) {
                 int blno = fec_block_nos[j];
-                gf256_madd_optimized(fec_blocks[j],src,gf256_inverse(blno^col^128),blockSize);
+                addmul(fec_blocks[j],src,inverse[blno^col^128],blockSize);
             }
         }
     }
@@ -430,7 +746,7 @@ static inline void resolve(int blockSize,
         /*assert(irow < fec_blocks+128);*/
         for(col = 0; col < nr_fec_blocks; col++, ptr++) {
             int icol = erased_blocks[col];
-            matrix[ptr] = gf256_inverse(irow ^ icol);
+            matrix[ptr] = inverse[irow ^ icol];
         }
     }
 
@@ -460,14 +776,15 @@ static inline void resolve(int blockSize,
     for(row = 0, ptr=0; row < nr_fec_blocks; row++) {
         int col;
         gf *target = data_blocks[erased_blocks[row]];
-        gf256_mul_optimized(target,fec_blocks[0],matrix[ptr++],blockSize);
+        mul(target,fec_blocks[0],matrix[ptr++],blockSize);
         for(col = 1; col < nr_fec_blocks;  col++,ptr++) {
-            gf256_madd_optimized(target,fec_blocks[col],matrix[ptr],blockSize);
+            addmul(target,fec_blocks[col],matrix[ptr],blockSize);
         }
     }
 }
 
 void fec_decode(unsigned int blockSize,
+
                 gf **data_blocks,
                 unsigned int nr_data_blocks,
                 gf **fec_blocks,
@@ -496,7 +813,6 @@ void fec_decode(unsigned int blockSize,
 #ifdef PROFILE
     end = rdtsc();
     resolveTime += end - begin;
-    printDetail();
 #endif
 }
 
@@ -534,7 +850,6 @@ void fec_license(void)
             "980624\n"
             "(C) 1997-98 Luigi Rizzo (luigi@iet.unipi.it)\n"
             "(C) 2001 Alain Knaff (alain@knaff.lu)\n"
-            "(C) 2022 Constantin Geier (optimize using libmoepgf source code)\n"
             "\n"
             "Portions derived from code by Phil Karn (karn@ka9q.ampr.org),\n"
             "Robert Morelos-Zaragoza (robert@spectra.eng.hawaii.edu) and Hari\n"
@@ -565,222 +880,4 @@ void fec_license(void)
             "OF SUCH DAMAGE.\n"
     );
     exit(0);
-}
-
-namespace FUCK{
-    static void fillBufferWithRandomData(std::vector<uint8_t>& data){
-        const std::size_t size=data.size();
-        for(std::size_t i=0;i<size;i++){
-            data[i] = rand() % 255;
-        }
-    }
-    std::vector<uint8_t> createRandomDataBuffer(const ssize_t sizeBytes){
-        std::vector<uint8_t> buf(sizeBytes);
-        fillBufferWithRandomData(buf);
-        return buf;
-    }
-    void assertVectorsEqual(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
-        assert(sb.size()==rb.size());
-        const int result=memcmp (sb.data(),rb.data(),sb.size());
-        if(result!=0){
-            std::cout<<"memcpmp returned "<<result<<"\n";
-            assert(true);
-        }
-        assert(result==0);
-    }
-    std::vector<std::vector<uint8_t>> createRandomDataBuffers(const std::size_t nBuffers, const std::size_t sizeB){
-        std::vector<std::vector<uint8_t>> buffers;
-        for(std::size_t i=0;i<nBuffers;i++){
-            buffers.push_back(createRandomDataBuffer(sizeB));
-        }
-        return buffers;
-    }
-    static std::vector<const uint8_t*> convertToP(const std::vector<std::vector<uint8_t>>& buffs){
-        std::vector<const uint8_t*> ret;
-        for(int i=0;i<buffs.size();i++){
-            ret.push_back(buffs[i].data());
-        }
-        return ret;
-    }
-    static std::vector<uint8_t*> convertToP2(std::vector<std::vector<uint8_t>>& buffs){
-        std::vector<uint8_t*> ret;
-        for(int i=0;i<buffs.size();i++){
-            ret.push_back(buffs[i].data());
-        }
-        return ret;
-    }
-}
-
-
-
-void fec_encode2(unsigned int fragmentSize,
-                const std::vector<const uint8_t*>& primaryFragments,
-                const std::vector<uint8_t*>& secondaryFragments){
-    fec_encode(fragmentSize, (const gf**)primaryFragments.data(), primaryFragments.size(), (gf**)secondaryFragments.data(), secondaryFragments.size());
-}
-
-void fec_decode2(unsigned int fragmentSize,
-                const std::vector<uint8_t*>& primaryFragments,
-                const std::vector<unsigned int>& indicesMissingPrimaryFragments,
-                const std::vector<uint8_t*>& secondaryFragmentsReceived,
-                const std::vector<unsigned int>& indicesOfSecondaryFragmentsReceived){
-    //std::cout<<"primaryFragmentsS:"<<primaryFragments.size()<<"\n";
-    //std::cout<<"indicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
-    //std::cout<<"secondaryFragmentsS:"<<secondaryFragments.size()<<"\n";
-    //std::cout << "indicesOfSecondaryFragments:" << StringHelper::vectorAsString(indicesOfSecondaryFragments) << "\n";
-    for(const auto& idx:indicesMissingPrimaryFragments){
-        assert(idx<primaryFragments.size());
-    }
-    //This assertion is not always true - as an example,you might have gotten FEC secondary packets 0 and 4, but these 2 are enough to perform the fec step.
-    //Then packet index 0 is inside @param secondaryFragmentsReceived at position 0, but packet index 4 at position 1
-    //for(const auto& idx:indicesOfSecondaryFragmentsReceived){
-    //    assert(idx<secondaryFragmentsReceived.size());
-    //}
-    assert(indicesMissingPrimaryFragments.size() <= indicesOfSecondaryFragmentsReceived.size());
-    assert(indicesMissingPrimaryFragments.size() == secondaryFragmentsReceived.size());
-    assert(secondaryFragmentsReceived.size() == indicesOfSecondaryFragmentsReceived.size());
-    fec_decode(fragmentSize, (gf**)primaryFragments.data(), primaryFragments.size(), (gf**)secondaryFragmentsReceived.data(),
-               (unsigned int*)indicesOfSecondaryFragmentsReceived.data(), (unsigned int*)indicesMissingPrimaryFragments.data(), indicesMissingPrimaryFragments.size());
-}
-
-
-/**
- * @param nDataPackets n of data packets to create
- * @param nFecPackets n of fec packets to create
- * @param packetSize size of each data packet
- * @param nLostDataPackets how many data packets were "lost" and need to be recovered by fec step.
- */
-static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPackets, const int packetSize, const int nLostDataPackets){
-    // sum of lost data and fec packets must be <= n of generated FEC packets, else not recoverable
-    assert(nLostDataPackets<=nFecPackets);
-    // create our data packets
-    const auto dataPackets=FUCK::createRandomDataBuffers(nDataPackets,packetSize);
-    assert(dataPackets.size()==nDataPackets);
-    // allocate memory for the fec packets
-    std::vector<std::vector<uint8_t>> fecPackets(nFecPackets,std::vector<uint8_t>(packetSize));
-    assert(fecPackets.size()==nFecPackets);
-    // encode data packets, store in fec packets
-    // the "convert" is for c++ to c-style conversion
-    fec_encode2(packetSize,FUCK::convertToP(dataPackets),FUCK::convertToP2(fecPackets));
-    //
-    // here we have to "emulate" receiving a specific amount of data and fec packets
-    //
-    const int nReceivedDataPackets=nDataPackets-nLostDataPackets;
-    const int nReceivedFecPackets=nLostDataPackets;
-    //std::cout<<"N received data packets:"<<nReceivedDataPackets<<" N received FEC packets "<<nReceivedFecPackets<<"\n";
-    // FEC will fill the not received data packets
-    std::vector<std::vector<uint8_t>> fullyReconstructedDataPackets(nDataPackets,std::vector<uint8_t>(packetSize));
-    // write as many data packets as we have "received"
-    for(int i=0;i<nReceivedDataPackets;i++){
-        memcpy(fullyReconstructedDataPackets[i].data(),dataPackets[i].data(),packetSize);
-    }
-    assert(fullyReconstructedDataPackets.size()==nDataPackets);
-    // mark the rest as missing
-    std::vector<unsigned int> erasedDataPacketsIndices;
-    for(int i=nReceivedDataPackets;i<nDataPackets;i++){
-        erasedDataPacketsIndices.push_back(i);
-        //std::cout<<"erased dpi:"<<i<<"\n";
-    }
-    assert(erasedDataPacketsIndices.size()==nLostDataPackets);
-
-    // and write the received FEC packets
-    std::vector<std::vector<uint8_t>> receivedFecPackets(nReceivedFecPackets,std::vector<uint8_t>(packetSize));
-    std::vector<unsigned int> receivedFecPacketsIndices;
-    for(int i=0;i<nReceivedFecPackets;i++){
-        memcpy(receivedFecPackets[i].data(),fecPackets[i].data(),packetSize);
-        receivedFecPacketsIndices.push_back(i);
-        //std::cout<<"received fecpi:"<<i<<"\n";
-        assert(receivedFecPackets[i].size()==packetSize);
-    }
-    assert(receivedFecPacketsIndices.size()==nReceivedFecPackets);
-
-    for(const auto& idx:receivedFecPacketsIndices){
-        FUCK::assertVectorsEqual(fecPackets[idx],receivedFecPackets[idx]);
-        //std::cout<<"fec packet okay:"<<idx<<"\n";
-    }
-
-    // perform the (reconstructing) fec step
-    fec_decode2(packetSize,
-                // data packets (missing will be filled)
-                FUCK::convertToP2(fullyReconstructedDataPackets),
-                erasedDataPacketsIndices,
-                // fec packets (used for reconstruction)
-                FUCK::convertToP2(receivedFecPackets),
-                receivedFecPacketsIndices
-                );
-
-
-    // make sure everything was reconstructed properly
-    for(int i=0;i<nDataPackets;i++){
-        FUCK::assertVectorsEqual(dataPackets[i],fullyReconstructedDataPackets[i]);
-        //std::cout<<i<<"\n";
-    }
-    //std::cout<<"SUCCESS: N data packets:"<<nDataPackets<<" N fec packets:"<<nFecPackets<<" N lost&reconstructed data packets:"<<nLostDataPackets<<"\n";
-}
-
-
-void test_fec(){
-    gf256_print_optimization_method();
-    std::cout<<"Testing FEC reconstruction:\n";
-    //test_fec_encode_and_decode(8,2,1024,0);
-    //test_fec_encode_and_decode(8,2,1024,1);
-    //test_fec_encode_and_decode(8,8,1024,2);
-    //test_fec_encode_and_decode(10,5,1024,1,0);
-    for(int packetSize=1;packetSize<2048;packetSize++){
-        test_fec_encode_and_decode(8,2,packetSize,1);
-        test_fec_encode_and_decode(8,2,packetSize,2);
-        test_fec_encode_and_decode(9,3,packetSize,1);
-        test_fec_encode_and_decode(9,3,packetSize,2);
-        test_fec_encode_and_decode(9,3,packetSize,3);
-    }
-    std::cout<<"TEST_FEC passed\n";
-}
-
-
-
-
-void
-test_gf()
-{
-    gf256_print_optimization_method();
-    std::cout<<"Testing mul of 2 values\n";
-    for(int i=0;i<256;i++){
-        for(int j=0;j<256;j++){
-            auto res1= gf256_mul(i,j);
-            auto res2= gal_mul(i,j);
-            assert(res1==res2);
-        }
-    }
-    std::cout<<" - success.\n";
-
-    std::cout<<"Testing gf256 mul operation (array)\n";
-    for(int size=0;size<2048;size++){
-        std::cout<<"x"<<std::flush;
-        const auto source=FUCK::createRandomDataBuffer(size);
-        std::vector<uint8_t> res1(size);
-        std::vector<uint8_t> res2(size);
-        for(int constant=0;constant<255;constant++){
-            gal_mul_region(res1.data(),source.data(),constant,size);
-            gf256_mul_optimized(res2.data(),source.data(),constant,size);
-            FUCK::assertVectorsEqual(res1,res2);
-        }
-    }
-    std::cout<<" - success.\n";
-
-    std::cout<<"Testing gf256 madd operation (array)\n";
-    for(int size=0;size<2048;size++){
-        std::cout<<"x"<<std::flush;
-        const auto source=FUCK::createRandomDataBuffer(size);
-        const auto source2=FUCK::createRandomDataBuffer(size);
-        for(int constant=0;constant<255;constant++){
-            // other than mul, madd actually also reads from the dst array
-            auto res1=source2;
-            auto res2=source2;
-            gal_madd_region(res1.data(),source.data(),constant,size);
-            gf256_madd_optimized(res2.data(),source.data(),constant,size);
-            FUCK::assertVectorsEqual(res1,res2);
-        }
-    }
-    std::cout<<" - success.\n";
-    std::cout<<"TEST_GF passed\n";
 }
