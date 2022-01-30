@@ -160,7 +160,7 @@ void GStreamerStream::setup() {
 }
 
 
-bool GStreamerStream::parse_user_format(std::string format, std::string &width, std::string &height, std::string &fps) {
+bool GStreamerStream::parse_user_format(std::string format, std::int &width, std::int &height, std::string &fps) {
     boost::smatch result;
     boost::regex reg{ "([\\w\\s\\/\\-\\:])*\\|(\\d)*x(\\d)*\\@(\\d)*"};
     if (boost::regex_search(format, result, reg)) {
@@ -274,9 +274,9 @@ void GStreamerStream::setup_jetson_csi() {
         m_camera.format = "1280x720@48";
     }
   
-    std::string width;
-    std::string height;
-    std::string fps;
+    std::int width;
+    std::int height;
+    std::string fps = "48";
     parse_user_format(m_camera.format, width, height, fps);
 
 
