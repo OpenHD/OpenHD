@@ -274,14 +274,12 @@ void GStreamerStream::setup_jetson_csi() {
         m_camera.format = "1280x720@48";
     }
   
-    parse_user_format(m_camera.format, width, height, fps);
-
     std::string width;
     std::string height;
     std::string fps = "48";
-  
+    parse_user_format(m_camera.format, width, height, fps);
     int intwidth = atoi(width.c_str());
-    int intheight = atoi(width.c_str());
+    int intheight = atoi(height.c_str());
 
     m_pipeline << fmt::format("nvarguscamerasrc do-timestamp=true sensor-id={} ! ", sensor_id);
     m_pipeline << fmt::format("video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! ", intwidth, intheight, fps);
