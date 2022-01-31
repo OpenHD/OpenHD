@@ -161,17 +161,21 @@ void GStreamerStream::setup() {
 
 
 bool GStreamerStream::parse_user_format(std::string format, std::string &width, std::string &height, std::string &fps) {
-    boost::smatch result;
-    boost::regex reg{ "([\\w\\s\\/\\-\\:])*\\|(\\d)*x(\\d)*\\@(\\d)*"};
-    if (boost::regex_search(format, result, reg)) {
-        if (result.size() == 4) {
-            width = result[2];
-            height = result[3];
-            fps = result[4];
-
-            return true;
-        }
+    std::string s = format;
+    std::string delimiter = "x";
+    size_t pos = 0;
+    while ((pos = s.find(delimiter)) != std::string::npos) {
+        width = s.substr(0, pos);
+        s.erase(0, pos + delimiter.length());
     }
+    std::string ss = s;
+    std::string delimiter2 = "@";
+    size_t pos2 = 0;
+    while ((pos2 = ss.find(delimiter2)) != std::string::npos) {
+        height = ss.substr(0, pos2);
+        ss.erase(0, pos2 + delimiter2.length());
+    }
+    fps = ss;
 
     return false;
 }
@@ -276,7 +280,7 @@ void GStreamerStream::setup_jetson_csi() {
   
     std::string width;
     std::string height;
-    std::string fps = "48";
+    std::string fps;
     parse_user_format(m_camera.format, width, height, fps);
     int intwidth = atoi(width.c_str());
     int intheight = atoi(height.c_str());
