@@ -160,7 +160,7 @@ void GStreamerStream::setup() {
 }
 
 
-bool GStreamerStream::parse_user_format(std::string format, std::int &width, std::int &height, std::string &fps) {
+bool GStreamerStream::parse_user_format(std::string format, std::string &width, std::string &height, std::string &fps) {
     boost::smatch result;
     boost::regex reg{ "([\\w\\s\\/\\-\\:])*\\|(\\d)*x(\\d)*\\@(\\d)*"};
     if (boost::regex_search(format, result, reg)) {
@@ -274,14 +274,17 @@ void GStreamerStream::setup_jetson_csi() {
         m_camera.format = "1280x720@48";
     }
   
-    std::int width;
-    std::int height;
-    std::string fps = "48";
     parse_user_format(m_camera.format, width, height, fps);
 
+    std::string width;
+    std::string height;
+    std::string fps = "48";
+  
+    int intwidth = atoi(width.c_str());
+    int intheight = atoi(width.c_str());
 
     m_pipeline << fmt::format("nvarguscamerasrc do-timestamp=true sensor-id={} ! ", sensor_id);
-    m_pipeline << fmt::format("video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! ", width, height, fps);
+    m_pipeline << fmt::format("video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! ", intwidth, intheight, fps);
     m_pipeline << "queue ! ";
 
     if (m_camera.codec == VideoCodecH265) {
