@@ -162,15 +162,24 @@ void GStreamerStream::setup() {
 
 bool GStreamerStream::parse_user_format(std::string format, std::string &width, std::string &height, std::string &fps) {
     boost::smatch result;
-    boost::regex reg{ "([\\w\\s\\/\\-\\:])*\\|(\\d)*x(\\d)*\\@(\\d)*"};
+    boost::regex reg{"(\\d*)x(\\d*)\\@(\\d*)"};
+    std::cout << "Parsing:" << format << std::endl;
     if (boost::regex_search(format, result, reg)) {
         if (result.size() == 4) {
-            width = result[2];
-            height = result[3];
-            fps = result[4];
-
+            width = result[1];
+            height = result[2];
+            fps = result[3];
+            std::cout << "Video format " << width << " x "<< height << " @ " << fps << std::endl; 
             return true;
+        } else {
+           std::cout << "Video format missmatch " << result.size(); 
+           for (int a=1; a<=result.size(); a++) {
+                std::cout << " " << +a << " " << result[a] << "." ;  
+           }
+           std::cout << std::endl;
         }
+    } else {
+        std::cout << "Video regex format failed " << format << " " << reg <<std::endl;
     }
 
     return false;
@@ -198,9 +207,9 @@ std::string GStreamerStream::find_v4l2_format(CameraEndpoint &endpoint, bool for
     for (auto & default_format : search_order) {
         for (auto & format : endpoint.formats) {
             boost::smatch result;
-            boost::regex reg{ "([\\w\\d\\s\\-\\:\\/])*\\|(\\d)*x(\\d)*\\@(\\d)*"};
+            boost::regex reg{ "([\\w\\d\\s\\-\\:\\/]*)\\|(\\d*)x(\\d*)\\@(\\d*)"};
             if (boost::regex_search(format, result, reg)) {
-                if (result.size() == 4) {
+                if (result.size() == 5) {
                     auto c = fmt::format("{}x{}@{}", width, height, fps);
 
                     if (force_pixel_format) {

@@ -142,12 +142,15 @@ public:
         mavlink_msg_heartbeat_pack(this->m_sysid, this->m_compid, &outgoing_msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_INVALID, 0, 0, 0);
         len = mavlink_msg_to_send_buffer(raw, &outgoing_msg);
 
-
+        try {
         this->m_socket->async_send(boost::asio::buffer(raw, len),
                                     boost::bind(&Microservice::handle_write,
                                                 this,
                                                 boost::asio::placeholders::error));
-
+        }
+        catch (...){
+            std::cerr << "could not send micro service heartbeat" << std::endl;
+        }
         m_heartbeat_timer.expires_at(m_heartbeat_timer.expires_at() + m_heartbeat_interval);
         this->m_heartbeat_timer.async_wait(boost::bind(&Microservice::send_heartbeat, 
                                                        this, 
@@ -168,12 +171,15 @@ public:
         mavlink_msg_system_time_pack(this->m_sysid, this->m_compid, &outgoing_msg, now, boot_time);
         len = mavlink_msg_to_send_buffer(raw, &outgoing_msg);
 
-
-        this->m_socket->async_send(boost::asio::buffer(raw, len),
+        try {
+            this->m_socket->async_send(boost::asio::buffer(raw, len),
                                     boost::bind(&Microservice::handle_write,
                                                 this,
                                                 boost::asio::placeholders::error));
-
+        }
+        catch (...) {
+            std::cerr << "Error: could not send Microservice system time" << std::endl;
+        }
         m_sys_time_timer.expires_at(m_sys_time_timer.expires_at() + m_sys_time_interval);
         this->m_sys_time_timer.async_wait(boost::bind(&Microservice::send_system_time, 
                                                       this, 
