@@ -21,14 +21,17 @@ void TCPEndpoint::setup(TelemetryType telemetry_type) {
 
     m_medium = "tcp";
     m_telemetry_type = telemetry_type;
-
+    try {
     m_tcp_socket.async_read_some(boost::asio::buffer(data, max_length),
                                  boost::bind(&TCPEndpoint::handle_read,
                                              this,
                                              boost::asio::placeholders::error,
                                              boost::asio::placeholders::bytes_transferred));
-}
+    } catch (...) {
+        std::cerr << "Error reading TCP" << std :: endl;
+    }
 
+}
 
 void TCPEndpoint::handle_write(const boost::system::error_code& error,
                                size_t bytes_transferred) {
@@ -52,7 +55,6 @@ void TCPEndpoint::handle_read(const boost::system::error_code& error,
                                 add_known_sys_id(msg.sysid);
                             }
                             m_router->process_mavlink_message(shared_from_this(), msg);
-    //                        std::cout << "mav TCP " << +(msg.sysid) << " "<< +(msg.msgid) << std::endl;
                         }
                     }
                     break;
@@ -68,8 +70,8 @@ void TCPEndpoint::handle_read(const boost::system::error_code& error,
                                                 boost::asio::placeholders::bytes_transferred));
         } else {
             m_router->close_endpoint(shared_from_this());
-            std::cerr << "TCP:handle_read error" << std::endl;
-            m_router->close_endpoint(shared_from_this());
+            std::cerr << "TCP:handle_read error code:" << error <<std::endl;
+
         }
     } catch (...) {
         std::cerr << "TCP: catch handle_read error" << std::endl;
