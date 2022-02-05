@@ -310,14 +310,13 @@ void Router::save_settings(std::string settings_file) {
 
 void Router::start_accept() {
     std::cerr << "Router::start_accept()" << std::endl;
-    // We are not using TCP protocol to transfer telemetry or anything.
-    //TCPEndpoint::pointer new_connection = TCPEndpoint::create(this, m_io_service);
+    TCPEndpoint::pointer new_connection = TCPEndpoint::create(this, m_io_service);
 
-    //m_tcp_acceptor->async_accept(new_connection->get_tcp_socket(),
-    //                            boost::bind(&Router::handle_accept,
-    //                                        this,
-    //                                        new_connection,
-    //                                        boost::asio::placeholders::error));
+    m_tcp_acceptor->async_accept(new_connection->get_tcp_socket(),
+                                boost::bind(&Router::handle_accept,
+                                            this,
+                                            new_connection,
+                                            boost::asio::placeholders::error));
 }
 
 
