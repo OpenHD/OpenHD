@@ -125,7 +125,7 @@ void GStreamerStream::setup() {
      * depends on which camera index this was and where the stream is going, which users won't know how to configure themselves.
      */
     if (!m_camera.manual_pipeline.empty()) {
-        m_pipeline.clear();
+        m_pipeline.str("");
         m_pipeline << m_camera.manual_pipeline;
     }
 
