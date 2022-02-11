@@ -79,6 +79,7 @@ void Hotspot::handle_receive(const boost::system::error_code& error,
         }
         
         if (sendMeasuredSpeed--<0){
+            std::string bitRate;
             const uint64_t runTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
             INIT_TIME = std::chrono::steady_clock::now();
             std::cout << "VS:" << +((tot_bytes_transferred/runTime)/125.0) << "Mb/s" << std::endl;
