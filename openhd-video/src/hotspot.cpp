@@ -14,6 +14,8 @@
 
 #include <json.hpp>
 
+#include <fmt/core.h>
+
 #include "openhd-platform.hpp"
 #include "openhd-status.hpp"
 #include "openhd-video.hpp"
@@ -82,6 +84,8 @@ void Hotspot::handle_receive(const boost::system::error_code& error,
             std::cout << "VS:" << +((tot_bytes_transferred/runTime)/125.0) << "Mb/s" << std::endl;
             tot_bytes_transferred = 0;
             sendMeasuredSpeed = 500;
+            auto _status_video_bitrate = boost::asio::ip::udp::endpoint(boost::asio::ip::address::from_string("127.0.0.1"), 50000);
+            m_udp_socket.send_to(boost::asio::buffer(bitRate, bitRate.size()), _status_video_bitrate);
         }
         tot_bytes_transferred+= bytes_transferred;
 

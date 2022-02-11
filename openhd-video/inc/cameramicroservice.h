@@ -24,6 +24,7 @@ public:
     void setup();
     void process_manifest();
     void process_settings();
+    void debug_camerastream();
 
     void save_settings(std::vector<Camera> cards, std::string settings_file);
 
