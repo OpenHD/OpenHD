@@ -191,6 +191,7 @@ bool GStreamerStream::parse_user_format(std::string format, std::string &width, 
  * This is used to pick a default based on the hardware format
  */
 std::string GStreamerStream::find_v4l2_format(CameraEndpoint &endpoint, bool force_pixel_format, std::string pixel_format) {
+    std::cerr << "find_v4l2_format" << std::endl;
     std::string width = "1280";
     std::string height = "720";
     std::string fps = "30";
@@ -210,6 +211,7 @@ std::string GStreamerStream::find_v4l2_format(CameraEndpoint &endpoint, bool for
             boost::smatch result;
             boost::regex reg{ "([\\w\\d\\s\\-\\:\\/]*)\\|(\\d*)x(\\d*)\\@(\\d*)"};
             if (boost::regex_search(format, result, reg)) {
+                std::cerr << "format:"<< format << std::endl;
                 if (result.size() == 5) {
                     auto c = fmt::format("{}x{}@{}", width, height, fps);
 
@@ -229,11 +231,13 @@ std::string GStreamerStream::find_v4l2_format(CameraEndpoint &endpoint, bool for
                         return fmt::format("{}x{}@{}", width, height, fps);
                     }
                 }
+                std::cerr << "unexpected match size"<< result.size() << std::endl;
             }
         }
     }
 
     // fallback using the default above
+    std::cerr << "returning default format:"<< width << " " << height << " " << fps << std::endl;
     return fmt::format("{}x{}@{}", width, height, fps);
 }
 
@@ -330,9 +334,10 @@ void GStreamerStream::setup_usb_uvc() {
     std::cerr << "Setting up USB camera" << std::endl;
 
     std::string device_node;
-
-    for (auto &endpoint : m_camera.endpoints) {
+    std::cerr << m_camera.name << " type " << m_camera.type << std::endl;
+    for (auto &endpoint : m_camera.endpoints) {    
         if (m_camera.codec == VideoCodecH264 && endpoint.support_h264) {
+           std::cerr << "h264" << std::endl;
             device_node = endpoint.device_node;
             m_pipeline << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
 
@@ -352,6 +357,7 @@ void GStreamerStream::setup_usb_uvc() {
         }
 
         if (m_camera.codec == VideoCodecMJPEG && endpoint.support_mjpeg) {
+            std::cerr << "MJPEG" << std::endl;
             device_node = endpoint.device_node;
             m_pipeline << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
 
@@ -380,6 +386,7 @@ void GStreamerStream::setup_usb_uvc() {
      */
     if (device_node.empty()) {
         for (auto &endpoint : m_camera.endpoints) {
+            std::cerr << "empty" << std::endl;
             if (endpoint.support_raw) {
                 device_node = endpoint.device_node;
 
@@ -408,9 +415,12 @@ void GStreamerStream::setup_usb_uvc() {
                     case PlatformTypeRaspberryPi: {
                         // Pi has no h265 encoder yet, but this will support it when that happens
                         if (m_camera.codec == VideoCodecH265) {
-                            m_pipeline << fmt::format("v4l2h265enc name=encodectrl bitrate={} ! ", m_camera.bitrate);
+                            //m_pipeline << fmt::format("v4l2h265enc name=encodectrl bitrate={} ! ", m_camera.bitrate);
+                            m_pipeline << "v4l2h265enc ! ";
                         } else {
-                            m_pipeline << fmt::format("v4l2h264enc name=encodectrl bitrate={} ! ", m_camera.bitrate);
+                            // encodectrl not suppoerted
+                            // m_pipeline << fmt::format("v4l2h264enc name=encodectrl bitrate={} ! ", m_camera.bitrate);
+                            m_pipeline << fmt::format("v4l2h264enc extra-controls=s,video_bitrate={} ! ", m_camera.bitrate);
                         }
                         break;
                     }
@@ -478,11 +488,27 @@ void GStreamerStream::setup_ip_camera() {
     m_pipeline << fmt::format("rtspsrc location=\"{}\" latency=0 ! ", m_camera.url);
 }
 
+void GStreamerStream::debug() {
+    std::cerr << "GS_debug";
+    GstState state;
+    GstState pending;
+    auto returnValue = gst_element_get_state(gst_pipeline, &state ,&pending, 1000000000);
+    std::cerr << "Gst state:" << returnValue << "." << state << "."<< pending << "." << std::endl;
+    if (returnValue==0){
+        stop();
+        sleep(3);
+        start();
+    }
+}
 
 void GStreamerStream::start() {
     std::cerr << "GStreamerStream::start()" << std::endl;
     
     gst_element_set_state(gst_pipeline, GST_STATE_PLAYING);
+    GstState state;
+    GstState pending;
+    auto returnValue = gst_element_get_state(gst_pipeline, &state ,&pending, 1000000000);
+    std::cerr << "Gst state:" << returnValue << "." << state << "."<< pending << "." << std::endl;
 }
 
 
@@ -523,7 +549,9 @@ void GStreamerStream::set_bitrate(int bitrate) {
             g_object_set(ctrl, "bitrate", bitrate, NULL);
             break;
         }
-        case CameraTypeV4L2Loopback:
+        case CameraTypeV4L2Loopback:{
+            GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "");
+        }
         case CameraTypeUVC: {
             GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
             if (!ctrl) return;

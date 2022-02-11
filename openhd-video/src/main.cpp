@@ -15,7 +15,7 @@
 #include "openhd-status.hpp"
 
 #include "control.h"
-//#include "mavlinkcontrol.h"
+#include "mavlinkcontrol.h"
 #include "hotspot.h"
 //#include "record.h"
 #include "cameramicroservice.h"
@@ -118,6 +118,7 @@ int main(int argc, char *argv[]) {
     }
 
     sd_notify(0, "READY=1");
+    std::cerr << "Video ready" << std::endl;
 
     io_service.run();
 
