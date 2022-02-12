@@ -149,6 +149,6 @@ steps:
         from_secret: docker_openhd_username
       password:
         from_secret: docker_openhd_password
-      dockerfile: Dockerfile-armhf-raspbian-bullseye
+      dockerfile: Dockerfile-x86-ubuntu-bionic
       build_args_from_env:
         - CLOUDSMITH_API_KEY
