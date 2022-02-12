@@ -81,7 +81,10 @@ void Hotspot::handle_receive(const boost::system::error_code& error,
         if (sendMeasuredSpeed--<0){
             const uint64_t runTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
             INIT_TIME = std::chrono::steady_clock::now();
-            std::cout << "VS:" << +((tot_bytes_transferred/runTime)/125.0) << "Mb/s" << std::endl;
+            uint16_t br = (tot_bytes_transferred/runTime)*8;
+            std::cout << "VS:" << +(br/1000) << "Mb/s" << std::endl;
+            
+            std::string bitRate = fmt::format ("vbr{0:d}end",br);
             tot_bytes_transferred = 0;
             sendMeasuredSpeed = 500;
             auto _status_video_bitrate = boost::asio::ip::udp::endpoint(boost::asio::ip::address::from_string("127.0.0.1"), 50000);
