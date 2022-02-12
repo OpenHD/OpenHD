@@ -212,7 +212,6 @@ fi
 
 build_source
 
-
 VERSION=$(git describe)
 
 rm ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
