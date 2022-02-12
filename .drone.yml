@@ -13,7 +13,6 @@ steps:
   - apt-get install git
   - git fetch --tags
   - git submodule update --init --recursive --remote
-  - apt-get install ruby-dev build-essential && sudo gem i fpm -f
 - name: build
   image: plugins/docker:linux-amd64
   environment:
