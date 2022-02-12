@@ -1,4 +1,4 @@
-FROM file:c6039a4f004b6b6c2e4c281a228d64d8410cb9fdf0c67776f84bb173d3522be1
+FROM ghcr.io/openhd/x86-ubuntu-bionic:18.04
 
 RUN apt update
 
