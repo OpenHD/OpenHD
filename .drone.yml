@@ -6,9 +6,6 @@ platform:
   arch: arm
 image_pull_secrets:
 - dockerconfigjson
-trigger:
-  event:
-  - pull_request
 steps:
 - name: fetch
   image: arm32v6/alpine:3.12
@@ -40,9 +37,6 @@ platform:
   arch: arm64
 image_pull_secrets:
 - dockerconfigjson
-trigger:
-  event:
-  - pull_request
 steps:
 - name: fetch
   image: arm64v8/alpine:3.12
@@ -74,9 +68,6 @@ platform:
   arch: arm64
 image_pull_secrets:
 - dockerconfigjson
-trigger:
-  event:
-  - pull_request
 steps:
 - name: fetch
   image: arm64v8/alpine:3.12
@@ -108,9 +99,6 @@ platform:
   arch: arm
 image_pull_secrets:
 - dockerconfigjson
-trigger:
-  event:
-  - pull_request
 steps:
 - name: fetch
   image: arm32v6/alpine:3.12
