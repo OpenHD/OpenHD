@@ -31,7 +31,8 @@ public:
 
     void start();
     void stop();
-
+    void debug();
+    
     bool supports_cbr();
     bool get_cbr();
     void set_cbr(bool enable);

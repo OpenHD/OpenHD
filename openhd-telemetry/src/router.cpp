@@ -310,7 +310,6 @@ void Router::save_settings(std::string settings_file) {
 
 void Router::start_accept() {
     std::cerr << "Router::start_accept()" << std::endl;
-
     TCPEndpoint::pointer new_connection = TCPEndpoint::create(this, m_io_service);
 
     m_tcp_acceptor->async_accept(new_connection->get_tcp_socket(),

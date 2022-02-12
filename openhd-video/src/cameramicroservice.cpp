@@ -54,11 +54,12 @@ void CameraMicroservice::process_manifest() {
         f >> j;
 
         for (auto _camera : j) {
-
+            std::cerr << "Processing camera_manifest" << std::endl; 
             Camera camera;
             std::string camera_type = _camera["type"];
             camera.type = string_to_camera_type(camera_type);
             camera.name = _camera["name"];
+            std::cerr << camera.name << std::endl;
             camera.vendor = _camera["vendor"];
             camera.vid = _camera["vid"];
             camera.pid = _camera["pid"];
@@ -75,6 +76,7 @@ void CameraMicroservice::process_manifest() {
                 endpoint.support_raw   = _endpoint["support_raw"];
                 for (auto& format : _endpoint["formats"]) {
                     endpoint.formats.push_back(format);
+                    std::cerr << format << std::endl;
                 }
 
                 camera.endpoints.push_back(endpoint);
@@ -290,6 +292,20 @@ void CameraMicroservice::process_mavlink_message(mavlink_message_t msg) {
             break;
         }
     }
+}
+
+void CameraMicroservice::debug_camerastream(){
+    std::cerr << "debug_camerastream" << std::endl;
+    for (auto & stream : m_camera_streams) {
+        if(m_camera_streams.empty()) break;
+        std::cerr << "size " << m_camera_streams.size() << std::endl;
+        //std::cerr << +stream.index << "." +stream.stream_type << "." << +stream.data_type << std::endl;
+
+        //GStreamerStream::CameraStream gstr;
+        //stream= &gstr;
+        //stream.GStreamerStream::CameraStream->debug();
+    }
+    std::cerr << "end of debug";
 }
 
 void CameraMicroservice::save_settings(std::vector<Camera> cameras, std::string settings_file) {

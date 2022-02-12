@@ -10,6 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <streambuf>
+#include <boost/regex.hpp>
 
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
@@ -21,6 +22,9 @@
 #include "../../openhd-common/openhd-status.hpp"
 
 
+uint32_t videoBitrate=0;
+uint32_t temp_air,temp_gnd,load_gnd,load_air = 0;
+int32_t rssi_air = 0;
 
 constexpr uint8_t SERVICE_COMPID = MAV_COMP_ID_USER3;
 
@@ -60,32 +64,6 @@ typedef struct {
 } __attribute__((packed)) wifibroadcast_rx_status_forward_t;
 
 #define MAX_RX_INTERFACES 8;
-
-typedef struct{
-    int32_t count_all;
-    int32_t rssi_sum;
-    int8_t rssi_min;
-    int8_t rssi_max;
-}RSSIForWifiCard_t;
-
-typedef struct {
-       // all these values are absolute (like done previously in OpenHD)
-        // all received packets
-        uint64_t count_p_all=0;
-        // n packets that were received but could not be used (after already filtering for the right port)
-        uint64_t count_p_bad=0;
-        // n packets that could not be decrypted
-        uint64_t count_p_dec_err=0;
-        // n packets that were successfully decrypted
-        uint64_t count_p_dec_ok=0;
-        // n packets that were corrected by FEC
-        uint64_t count_p_fec_recovered=0;
-        // n packets that were completely lost though FEC
-        uint64_t count_p_lost=0;
-        // min max and avg rssi for each wifi card since the last call.
-        // if count_all for a card at position N is 0 nothing has been received on this card from the last call (or the card at position N is not used for this instance)
-        std::array<RSSIForWifiCard_t, 8> rssiPerCard{};    
-}localWifiStatusmessage_t;
 
 std::string get_openhd_version() {
     std::array<char, 128> buffer;
@@ -171,111 +149,154 @@ void StatusMicroservice::handle_udp_read(const boost::system::error_code& error,
         }
         if (bytes_transferred == sizeof(localWifiStatusmessage_t)) {
             localWifiStatusmessage_t in_message;
-            wifibroadcast_rx_status_forward_t out_message;
             memcpy(&in_message, data, bytes_transferred);
+                
+            if (!m_is_air && (in_message.radioport == 56)) {
+                wifibroadcast_rx_status_forward_t out_message;
+                
+                int cpuload_gnd = 0;
+                int temp_gnd = 0;
+                long double a[4];
 
-            int cpuload_gnd = 0;
-            int temp_gnd = 0;
-            long double a[4], b[4];
+                FILE *fp;
+                FILE *fp2;
 
-            FILE *fp;
-            FILE *fp2;
+                try {
+                    fp2 = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
+                    fscanf(fp2, "%d", &temp_gnd);
+                } catch (...){
+                    std::cout << "ERROR: thermal reading" << std::endl;
+                }
+                fclose(fp2);
+                temp_gnd= temp_gnd/1000;
 
-            try {
-                fp2 = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
-                fscanf(fp2, "%d", &temp_gnd);
-            } catch (...){
-                std::cout << "ERROR: thermal reading" << std::endl;
+                try {
+                    fp = fopen("/proc/stat", "r");
+                    fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
+                } catch (...){
+                    std::cout << "ERROR: proc reading1" << std::endl;
+                }
+                fclose(fp);
+                
+                cpuload_gnd = (a[0] + a[1] + a[2]) / (a[0] + a[1] + a[2] + a[3]) * 100;
+
+                uint32_t bitrate = videoBitrate; //Scale factor only to tune to real measurement
+                out_message.damaged_block_cnt = (uint32_t)in_message.count_p_bad;
+                out_message.lost_packet_cnt = (uint32_t)in_message.count_p_lost;
+                out_message.skipped_packet_cnt = (uint32_t)in_message.count_p_bad;
+                out_message.injection_fail_cnt = (uint32_t)in_message.count_p_lost;
+                out_message.received_packet_cnt = (uint32_t)in_message.count_p_all;
+                out_message.kbitrate = bitrate;
+                out_message.kbitrate_measured = bitrate;
+                out_message.kbitrate_set = bitrate;
+                out_message.lost_packet_cnt_telemetry_up =0;
+                out_message.lost_packet_cnt_telemetry_down =0;
+                out_message.lost_packet_cnt_msp_up=0;
+                out_message.lost_packet_cnt_msp_down=0;
+                out_message.lost_packet_cnt_rc=0;
+                out_message.current_signal_joystick_uplink=rssi_air;
+                out_message.current_signal_telemetry_uplink=0;
+                out_message.joystick_connected=0;
+                out_message.HomeLat=0;
+                out_message.HomeLon=0;
+                out_message.cpuload_gnd = cpuload_gnd;
+                out_message.temp_gnd = temp_gnd;
+                out_message.cpuload_air = load_air;
+                out_message.temp_air = temp_air;
+                
+                int8_t nr_of_cards=0;
+
+                for (int8_t j = 0; (j < 6) && (in_message.rssiPerCard[j].count_all > 0); ++j) {
+                    out_message.adapter[j].received_packet_cnt = in_message.rssiPerCard[j].count_all;
+                    if (out_message.adapter[j].received_packet_cnt==0)
+                        out_message.adapter[j].current_signal_dbm = -127;
+                    else
+                        out_message.adapter[j].current_signal_dbm = in_message.rssiPerCard[j].rssi_min;
+                    out_message.adapter[j].type = 0;
+                    out_message.adapter[j].signal_good = 0;
+                    nr_of_cards++;
+                }
+        
+                out_message.wifi_adapter_cnt = nr_of_cards;
+
+                struct sockaddr_in si_other_rssi;
+                int s_rssi, slen_rssi = sizeof(si_other_rssi);
+                int broadcast = 1;
+                si_other_rssi.sin_family = AF_INET;
+                si_other_rssi.sin_port = htons(5155);
+                si_other_rssi.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+                memset(si_other_rssi.sin_zero, '\0', sizeof(si_other_rssi.sin_zero));
+
+                if ((s_rssi = socket(PF_INET, SOCK_DGRAM, 0)) == -1) {
+                    std::cout << "ERROR: Could not create UDP socket!" << std::endl;
+                } 
+                else if (sendto(s_rssi, &out_message, sizeof(out_message), 0, (struct sockaddr*)&si_other_rssi, slen_rssi) == -1) {
+                    std::cout << "ERROR: Could not send RSSI data to localhost!" << std::endl;
+                }
+                close (s_rssi);
+
+                // -- REMOVE IN FINAL --
+                // Below should be replaced by mavlink telemetry packages
+                si_other_rssi.sin_port = htons(5154);
+                si_other_rssi.sin_addr.s_addr = inet_addr("192.168.2.255");
+                
+                if ((s_rssi = socket(PF_INET, SOCK_DGRAM, 0)) == -1) {
+                    std::cout << "ERROR: Could not create UDP socket!" << std::endl;
+                    exit(1);
+                } 
+
+                if (setsockopt(s_rssi, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast) == -1) {
+                    std::cout << "setsockopt (SO_BROADCAST)" << std::endl;
+                    exit(1);
+                }
+
+                if (sendto(s_rssi, &out_message, sizeof(out_message), 0, (struct sockaddr*)&si_other_rssi, slen_rssi) == -1) {
+                    std::cout << "ERROR: Could not broadcast RSSI data!" << std::endl;
+                }
+                close (s_rssi);
+                
+                //Broadcast to all ethernet hotspot connected devices
+                si_other_rssi.sin_addr.s_addr = inet_addr("192.168.3.255");
+                
+                if ((s_rssi = socket(PF_INET, SOCK_DGRAM, 0)) == -1) {
+                    std::cout << "ERROR: Could not create UDP socket!" << std::endl;
+                    exit(1);
+                } 
+
+                if (setsockopt(s_rssi, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast) == -1) {
+                    std::cout << "setsockopt (SO_BROADCAST)" << std::endl;
+                    exit(1);
+                }
+
+                if (sendto(s_rssi, &out_message, sizeof(out_message), 0, (struct sockaddr*)&si_other_rssi, slen_rssi) == -1) {
+                    std::cout << "ERROR: Could not broadcast RSSI data!" << std::endl;
+                }
+                close (s_rssi);
+
+            } else {
+                std::cerr << "Air radioport:" << +in_message.radioport << std::endl;
+
+                if (in_message.radioport < 10)
+                    Send_air_telemetrystatus(in_message, bytes_transferred);
+                Send_air_load();
             }
-            fclose(fp2);
-
-            try {
-                fp = fopen("/proc/stat", "r");
-                fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
-            } catch (...){
-                std::cout << "ERROR: proc reading1" << std::endl;
-            }
-            fclose(fp);
-
-            cpuload_gnd = (((b[0] + b[1] + b[2]) - (a[0] + a[1] + a[2])) / ((b[0] + b[1] + b[2] + b[3]) - (a[0] + a[1] + a[2] + a[3]))) * 100;
-
-            try {
-            fp = fopen("/proc/stat", "r");
-            fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &b[0], &b[1], &b[2], &b[3]);
-            } catch (...){
-                std::cout << "ERROR: proc reading2" << std::endl; 
-            }
-            fclose(fp);
-            uint32_t bitrate = in_message.rssiPerCard[0].count_all * 2.5; //Scale factor only to tune to real measurement
-            out_message.damaged_block_cnt = (uint32_t)in_message.count_p_bad;
-            out_message.lost_packet_cnt = (uint32_t)in_message.count_p_lost;
-            out_message.skipped_packet_cnt = (uint32_t)in_message.count_p_bad;
-            out_message.injection_fail_cnt = (uint32_t)in_message.count_p_lost;
-            out_message.received_packet_cnt = (uint32_t)in_message.count_p_all;
-            out_message.kbitrate = bitrate;
-            out_message.kbitrate_measured = bitrate;
-            out_message.kbitrate_set = bitrate;
-            out_message.lost_packet_cnt_telemetry_up =0;
-            out_message.lost_packet_cnt_telemetry_down =0;
-            out_message.lost_packet_cnt_msp_up=0;
-            out_message.lost_packet_cnt_msp_down=0;
-            out_message.lost_packet_cnt_rc=0;
-            out_message.current_signal_joystick_uplink=0;
-            out_message.current_signal_telemetry_uplink=0;
-            out_message.joystick_connected=0;
-            out_message.HomeLat=0;
-            out_message.HomeLon=0;
-            out_message.cpuload_gnd = cpuload_gnd;
-            out_message.temp_gnd = temp_gnd / 1000;
-            out_message.cpuload_air = 0;
-            out_message.temp_air = 0;
             
-            int8_t nr_of_cards=0;
-
-            for (int8_t j = 0; (j < 6) && (in_message.rssiPerCard[j].count_all > 0); ++j) {
-                out_message.adapter[j].received_packet_cnt = in_message.rssiPerCard[j].count_all;
-                if (out_message.adapter[j].received_packet_cnt==0)
-                    out_message.adapter[j].current_signal_dbm = -127;
-                else
-                    out_message.adapter[j].current_signal_dbm = in_message.rssiPerCard[j].rssi_min;
-                out_message.adapter[j].type = 0;
-                out_message.adapter[j].signal_good = 0;
-                nr_of_cards++;
-            }
-       
-            out_message.wifi_adapter_cnt = nr_of_cards;
-
-            struct sockaddr_in si_other_rssi;
-            int s_rssi, slen_rssi = sizeof(si_other_rssi);
-            si_other_rssi.sin_family = AF_INET;
-            si_other_rssi.sin_port = htons(5155);
-            si_other_rssi.sin_addr.s_addr = inet_addr("127.0.0.1");
-            //si_other_rssi.sin_port = htons(5154);
-            //si_other_rssi.sin_addr.s_addr = inet_addr("172.16.1.12");
-            memset(si_other_rssi.sin_zero, '\0', sizeof(si_other_rssi.sin_zero));
-
-            if ((s_rssi = socket(PF_INET, SOCK_DGRAM, 0)) == -1) {
-            std::cout << "ERROR: Could not create UDP socket!" << std::endl;
-            } 
-            else if (sendto(s_rssi, &out_message, sizeof(out_message), 0, (struct sockaddr*)&si_other_rssi, slen_rssi) == -1) {
-                std::cout << "ERROR: Could not send RSSI data!" << std::endl;
-            }
-            close (s_rssi);
-            // -- REMOVE IN FINAL --
-            /* Below only used for Debug, sending to network connected device
-            si_other_rssi.sin_port = htons(5154);
-            si_other_rssi.sin_addr.s_addr = inet_addr("172.16.1.12");
-            
-            if ((s_rssi = socket(PF_INET, SOCK_DGRAM, 0)) == -1) {
-            std::cout << "ERROR: Could not create UDP socket!" << std::endl;
-            } 
-            else if (sendto(s_rssi, &out_message, sizeof(out_message), 0, (struct sockaddr*)&si_other_rssi, slen_rssi) == -1) {
-                std::cout << "ERROR: Could not send RSSI data!" << std::endl;
-            }
-            close (s_rssi);
-            */
             // -- END REMOVE --
         }
+
+        boost::smatch result;
+        boost::regex reg{"vbr([0-9]*)end"};
+        std::string input(data, bytes_transferred);
+
+        if (boost::regex_search(input, result, reg)){
+            //std::cerr << "regex: _" << input << "_ " << result.size() << " :" << result[1] << std::endl;
+            if (result.size()==2) {
+                std::cerr << "Video " << result[1] << "kbit" << std::endl;
+                videoBitrate = std::stoi(result[1]);
+            }
+        }
+
     }
     start_udp_read();
 }
@@ -328,9 +349,126 @@ void StatusMicroservice::send_status_message(MAV_SEVERITY severity, std::string 
                                            boost::asio::placeholders::error));
 }
 
+//void StatusMicroservice::Send_air_load(const boost::system::error_code& error) {
+//void Send_air_telemetrystatus(localWifiStatusmessage_t msg,
+//                                size_t bytes_transferred);
+void StatusMicroservice::Send_air_telemetrystatus(localWifiStatusmessage_t& msg, size_t bytes_transferred) {
+    uint8_t raw[MAVLINK_MAX_PACKET_LEN];
+    int len = 0;
+
+    mavlink_message_t outgoing_msg;
+    memcpy(&msg, data, bytes_transferred);
+    static int32_t rssi = 0;
+    static int rssi_timeout = 0;
+
+    if (msg.rssiPerCard[0].count_all) {
+        rssi = (msg.rssiPerCard[0].rssi_sum)/(msg.rssiPerCard[0].count_all);
+        rssi_timeout=3; // Three concurrent messages with no RSSI before celaring it
+    } else {
+        if ((rssi_timeout--)<0) {
+            rssi = 0;
+            rssi_timeout = 0;
+        }
+    }
+    std::cerr << "Air RSSI " << +rssi << std::endl;
+    mavlink_msg_openhd_air_telemetry_pack(this->m_sysid, this->m_compid, &outgoing_msg, 254, this->m_compid, msg.count_p_bad, msg.count_p_lost, 0, 0, rssi);
+    len = mavlink_msg_to_send_buffer(raw, &outgoing_msg);
+
+    try {
+    this->m_socket->async_send(boost::asio::buffer(raw, len),
+                                boost::bind(&Microservice::handle_write,
+                                            this,
+                                            boost::asio::placeholders::error));
+    }
+    catch (...){
+        std::cerr << "could not send micro service heartbeat" << std::endl;
+    }
+
+}
+
+
+void StatusMicroservice::Send_air_load() {
+    std::cout << "Microservice::status::send_air_load" << std::endl;
+
+    int cpuload = 0;
+    int temp = 0;
+    long double a[4], b[4];
+
+    FILE *fp;
+    FILE *fp2;
+
+    try {
+        fp2 = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
+        fscanf(fp2, "%d", &temp);
+    } catch (...){
+        std::cout << "ERROR: thermal reading" << std::endl;
+    }
+    fclose(fp2);
+    temp = temp /1000;
+
+    try {
+        fp = fopen("/proc/stat", "r");
+        fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
+    } catch (...){
+        std::cout << "ERROR: proc reading1" << std::endl;
+    }
+    fclose(fp);
+    long tmp = ((a[0] + a[1] + a[2]) / (a[0] + a[1] + a[2] + a[3])) * 100;
+    cpuload = tmp; 
+
+    uint8_t raw[MAVLINK_MAX_PACKET_LEN];
+    int len = 0;
+
+    mavlink_message_t outgoing_msg;
+
+    /**
+    * @brief Pack a openhd_air_load message
+    * @param system_id ID of this system
+    * @param component_id ID of this component (e.g. 200 for IMU)
+    * @param msg The MAVLink message to compress the data into
+    *
+    * @param target_system  system id of the requesting system
+    * @param target_component  component id of the requesting component
+    * @param cpuload  cpuload
+    * @param temp  temp
+    * @return length of the message in bytes (excluding serial stream start sign)
+    */
+    //static inline uint16_t mavlink_msg_openhd_air_load_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+    //                            uint8_t target_system, uint8_t target_component, uint8_t cpuload, uint8_t temp)
+
+
+    len = mavlink_msg_openhd_air_load_pack(this->m_sysid, this->m_compid, &outgoing_msg, 0, this->m_compid, cpuload, temp);
+    //mavlink_msg_heartbeat_pack(this->m_sysid, this->m_compid, &outgoing_msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_INVALID, 0, 0, 0);
+    len = mavlink_msg_to_send_buffer(raw, &outgoing_msg);
+
+    try {
+    this->m_socket->async_send(boost::asio::buffer(raw, len),
+                                boost::bind(&Microservice::handle_write,
+                                            this,
+                                            boost::asio::placeholders::error));
+    }
+    catch (...){
+        std::cerr << "could not send micro service heartbeat" << std::endl;
+    }
+}
 
 void StatusMicroservice::process_mavlink_message(mavlink_message_t msg) {
         switch (msg.msgid) {
+        case MAVLINK_MSG_ID_OPENHD_AIR_LOAD: {
+            mavlink_openhd_air_load_t air_load_msg;
+            mavlink_msg_openhd_air_load_decode(&msg, &air_load_msg);
+            load_air = air_load_msg.cpuload;
+            temp_air = air_load_msg.temp;
+            std::cerr << "air temp " << temp_air << " cpu load " << load_air << std::endl;      
+        }
+
+        case MAVLINK_MSG_ID_OPENHD_AIR_TELEMETRY: {
+            //mavlink_openhd_air_telemetry_t status_msg;
+            //mavlink_msg_openhd_status_message_decode(&msg, &status_msg);
+            rssi_air = (int8_t) mavlink_msg_openhd_air_telemetry_get_current_signal_dbm(&msg);
+            std::cerr << "air RSSI " << +rssi_air << std::endl;
+        }
+        
         case MAVLINK_MSG_ID_OPENHD_STATUS_MESSAGE: {
 
             mavlink_openhd_status_message_t status;
@@ -342,8 +480,11 @@ void StatusMicroservice::process_mavlink_message(mavlink_message_t msg) {
             mavlink_command_long_t command;
             mavlink_msg_command_long_decode(&msg, &command);
 
-            // only process commands sent to this system or broadcast to all systems
             if ((command.target_system != this->m_sysid && command.target_system != 0)) {
+                std::cerr << "message received:" << +command.target_system << " " << command.target_component << std::endl;
+                mavlink_command_long_t command;
+                mavlink_msg_command_long_decode(&msg, &command);
+                std::cerr << "decoded long message"<< std::endl;
                 return;
             }
 
