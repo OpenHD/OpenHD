@@ -7,6 +7,8 @@ platform:
 image_pull_secrets:
 - dockerconfigjson
 trigger:
+  branch:
+  - master
   event:
   - pull_request
 steps:
@@ -41,6 +43,8 @@ platform:
 image_pull_secrets:
 - dockerconfigjson
 trigger:
+  branch:
+  - master
   event:
   - pull_request
 steps:
@@ -75,6 +79,8 @@ platform:
 image_pull_secrets:
 - dockerconfigjson
 trigger:
+  branch:
+  - master
   event:
   - pull_request
 steps:
@@ -109,6 +115,8 @@ platform:
 image_pull_secrets:
 - dockerconfigjson
 trigger:
+  branch:
+  - master
   event:
   - pull_request
 steps:
