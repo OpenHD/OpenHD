@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+if [[ "${PACKAGE_ARCH}" != "x86" ]]; then 
+#for x86 these services should be stopped at runtime
+
 systemctl disable osd
 systemctl enable openhdconfig
 systemctl enable openhd_system
@@ -15,6 +18,7 @@ systemctl enable openhd_telemetry@telemetry
 systemctl stop nvgetty || true
 systemctl disable nvgetty || true
 
+fi
 
 mkdir -p /wbc_tmp
 mkdir -p /media/usb
