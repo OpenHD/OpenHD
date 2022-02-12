@@ -134,7 +134,7 @@ steps:
 - name: fetch
   image: golang
   commands:
-  - apk add git
+  - apt-get install git
   - git fetch --tags
   - git submodule update --init --recursive --remote
 - name: build
