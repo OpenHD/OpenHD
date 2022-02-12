@@ -121,3 +121,34 @@ steps:
       dockerfile: Dockerfile-armhf-raspbian-bullseye
       build_args_from_env:
         - CLOUDSMITH_API_KEY
+---
+kind: pipeline
+type: docker
+name: x86-ubuntu-bionic
+platform:
+  os: linux
+  arch: amd64
+image_pull_secrets:
+- dockerconfigjson
+steps:
+- name: fetch
+  image: golang
+  commands:
+  - apk add git
+  - git fetch --tags
+  - git submodule update --init --recursive --remote
+- name: build
+  image: plugins/docker:linux-amd64
+  environment:
+    CLOUDSMITH_API_KEY:
+      from_secret: CLOUDSMITH_API_KEY
+  settings:
+      repo: openhd/qopenhd
+      dry_run: true
+      username:
+        from_secret: docker_openhd_username
+      password:
+        from_secret: docker_openhd_password
+      dockerfile: Dockerfile-armhf-raspbian-bullseye
+      build_args_from_env:
+        - CLOUDSMITH_API_KEY
