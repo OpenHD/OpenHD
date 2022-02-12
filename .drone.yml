@@ -6,6 +6,11 @@ platform:
   arch: amd64
 image_pull_secrets:
 - dockerconfigjson
+trigger:
+  branch:
+  - x86
+  event:
+  - pull_request
 steps:
 - name: fetch
   image: golang
