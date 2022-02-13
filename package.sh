@@ -167,35 +167,35 @@ build_source() {
     make install DESTDIR=${PKGDIR} || exit 1
     popd
 
-    cp -a wifibroadcast-scripts/* ${PKGDIR}/usr/local/share/wifibroadcast-scripts/ || exit 1
+    cp -a wifibroadcast-scripts/* ${PKGDIR}/usr/local/share/wifibroadcast-scripts/ 
 
-    cp -a overlay/etc/* ${PKGDIR}/etc/ || exit 1
+    cp -a overlay/etc/* ${PKGDIR}/etc/ 
     
     # note: this is non-standard behavior, packaging stuff in /root and /home, but it's temporary
-    cp -a overlay/root/.bashrc ${PKGDIR}/root/ || exit 1
-    cp -a overlay/home/openhd/.bashrc ${PKGDIR}/home/openhd/ || exit 1
+    cp -a overlay/root/.bashrc ${PKGDIR}/root/ 
+    cp -a overlay/home/openhd/.bashrc ${PKGDIR}/home/openhd/ 
 
-    cp -a overlay/usr/local/etc/* ${PKGDIR}/usr/local/etc/ || exit 1
+    cp -a overlay/usr/local/etc/* ${PKGDIR}/usr/local/etc/ 
 
-    cp -a overlay/etc/systemd/system/* ${PKGDIR}/etc/systemd/system/ || exit 1
+    cp -a overlay/etc/systemd/system/* ${PKGDIR}/etc/systemd/system/ 
 
-    cp -a gnuplot/* ${PKGDIR}/usr/local/share/openhd/gnuplot/ || exit 1
+    cp -a gnuplot/* ${PKGDIR}/usr/local/share/openhd/gnuplot/ 
 
 
-    cp -a config/config.txt ${PKGDIR}/boot/ || exit 1
-    cp -a config/cmdline.txt ${PKGDIR}/boot/ || exit 1
-    cp -a config/ssh ${PKGDIR}/boot/ || exit 1
+    cp -a config/config.txt ${PKGDIR}/boot/ 
+    cp -a config/cmdline.txt ${PKGDIR}/boot/ 
+    cp -a config/ssh ${PKGDIR}/boot/ 
 
-    cp -a config/apconfig.txt ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/joyconfig.txt ${PKGDIR}/usr/local/share/openhd/ || exit 1
+    cp -a config/apconfig.txt ${PKGDIR}/usr/local/share/openhd/ 
+    cp -a config/joyconfig.txt ${PKGDIR}/usr/local/share/openhd/ 
 
-    cp -a config/camera.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/ethernetcard.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/general.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/ltecard.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/vpn.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/wificard.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/telemetry.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
+    cp -a config/camera.template ${PKGDIR}/usr/local/share/openhd/ 
+    cp -a config/ethernetcard.template ${PKGDIR}/usr/local/share/openhd/ 
+    cp -a config/general.template ${PKGDIR}/usr/local/share/openhd/ 
+    cp -a config/ltecard.template ${PKGDIR}/usr/local/share/openhd/ 
+    cp -a config/vpn.template ${PKGDIR}/usr/local/share/openhd/ 
+    cp -a config/wificard.template ${PKGDIR}/usr/local/share/openhd/ 
+    cp -a config/telemetry.template ${PKGDIR}/usr/local/share/openhd/ 
 
     if [[ "${DISTRO}" == "buster" ]]; then
         cat << EOF >> ${PKGDIR}/boot/config.txt
