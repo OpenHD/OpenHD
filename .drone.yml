@@ -12,7 +12,7 @@ steps:
   commands:
   - apt update && apt-get install --no-install-recommends -y ruby-dev build-essential
   - gem i fpm -f
-  - apt-get install git
+  - apt-get install git -y
   - git fetch --tags
   - git submodule update --init --recursive --remote
 - name: build
