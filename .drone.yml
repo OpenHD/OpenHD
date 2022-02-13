@@ -8,11 +8,11 @@ image_pull_secrets:
 - dockerconfigjson
 steps:
 - name: fetch
-  image: openhd/x86-ubuntu-bionic  
+  image: amd64/alpine:3.12  
   commands:
-  - apt update && apt-get install --no-install-recommends -y ruby-full bsdtar rpm libopenjp2-tools
+  - apk ruby-full
   - gem install fpm -v 1.10.1
-  - apt-get install git
+  - apk install git
   - git fetch --tags
   - git submodule update --init --recursive --remote
 - name: build
