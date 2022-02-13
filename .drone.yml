@@ -3,7 +3,7 @@ type: docker
 name: x86-ubuntu-bionic
 platform:
   os: linux
-  arch: x86-64
+  arch: amd64
 image_pull_secrets:
 - dockerconfigjson
 steps:
