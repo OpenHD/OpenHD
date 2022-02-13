@@ -3,17 +3,16 @@ type: docker
 name: x86-ubuntu-bionic
 platform:
   os: linux
-  arch: amd64
+  arch: x86-64
 image_pull_secrets:
 - dockerconfigjson
 steps:
 - name: fetch
-  image: amd64/alpine:3.12  
+  image: ubuntu:bionic
   commands:
-  - apk update
-  - apk add ruby-full rpm
+  - apt update && apt-get install --no-install-recommends -y ruby-full bsdtar rpm libopenjp2-tools
   - gem install fpm -v 1.10.1
-  - apk add git
+  - apt-get install git
   - git fetch --tags
   - git submodule update --init --recursive --remote
 - name: build
