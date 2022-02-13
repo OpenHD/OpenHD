@@ -44,7 +44,8 @@ apt -y update || exit 1
 
 echo "-------------------------------get ruby for fpm----------------------------------------------"
 
-apt install ruby-dev build-essential && sudo gem i fpm -f
+apt install ruby-dev build-essential || exit 1
+gem i fpm -f || exit 1
 
 PACKAGE_NAME=openhd
 
