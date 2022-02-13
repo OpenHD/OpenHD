@@ -10,5 +10,7 @@ apt-get -y install cmake build-essential autotools-dev automake libtool autoconf
             git ruby-dev build-essential python3-pip || exit 1
             
 gem i fpm -f
+sudo apt install python3-pip
+pip3 --version
 pip install --upgrade cloudsmith-cli
   
