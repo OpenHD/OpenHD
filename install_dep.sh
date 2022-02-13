@@ -7,4 +7,7 @@ apt -y install cmake build-essential autotools-dev automake libtool autoconf \
             libgstreamer-plugins-base1.0-dev \
             libboost-dev libboost-program-options-dev libboost-system-dev libasio-dev libboost-chrono-dev libsystemd-dev \
             libboost-regex-dev libboost-filesystem-dev libboost-thread-dev indent libv4l-dev libnl-3-dev libnl-genl-3-dev \
-            git || exit 1
+            git ruby-dev build-essential || exit 1
+            
+gem i fpm -f
+  
