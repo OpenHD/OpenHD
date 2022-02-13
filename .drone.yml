@@ -10,9 +10,9 @@ steps:
 - name: fetch
   image: amd64/alpine:3.12  
   commands:
-  - apk install ruby-full
+  - apk add ruby-full
   - gem install fpm -v 1.10.1
-  - apk install git
+  - apk add git
   - git fetch --tags
   - git submodule update --init --recursive --remote
 - name: build
