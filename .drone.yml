@@ -8,7 +8,7 @@ image_pull_secrets:
 - dockerconfigjson
 steps:
 - name: fetch
-  image: golang
+  image: arm64v8/ubuntu:bionic
   commands:
   - apt update && apt-get install --no-install-recommends -y ruby-full bsdtar rpm libopenjp2-tools
   - gem install fpm -v 1.10.1
