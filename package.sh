@@ -42,10 +42,10 @@ echo "deb https://dl.cloudsmith.io/public/openhd/openhd-2-1/deb/${OS} ${DISTRO} 
 
 apt -y update || exit 1
 
-echo "-------------------------------get ruby for fpm----------------------------------------------"
+#echo "-------------------------------get ruby for fpm----------------------------------------------"
 
-apt install ruby-dev build-essential || exit 1
-gem i fpm -f || exit 1
+#apt install ruby-dev build-essential || exit 1
+#gem i fpm -f || exit 1
 
 PACKAGE_NAME=openhd
 
