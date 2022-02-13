@@ -42,6 +42,10 @@ echo "deb https://dl.cloudsmith.io/public/openhd/openhd-2-1/deb/${OS} ${DISTRO} 
 
 apt -y update || exit 1
 
+echo "-------------------------------get ruby for fpm----------------------------------------------"
+
+apt install ruby-dev build-essential && sudo gem i fpm -f
+
 PACKAGE_NAME=openhd
 
 PKGDIR=/tmp/${PACKAGE_NAME}-installdir
