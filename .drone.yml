@@ -10,8 +10,7 @@ steps:
 - name: fetch
   image: ubuntu:bionic
   commands:
-  - apt update 
-  - apt-get install ruby-dev build-essential
+  - apt update && apt-get install --no-install-recommends -y ruby-dev build-essential
   - gem i fpm -f
   - apt-get install git
   - git fetch --tags
