@@ -25,7 +25,11 @@ DISTRO=bionic
 
 PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
 
-echo "set sources"
+echo "test fpm install"
+
+ apt update && apt-get install --no-install-recommends -y ruby-dev build-essential
+    gem i fpm -f
+  
 
 
 apt -y update || exit 1
@@ -167,6 +171,12 @@ echo "+++++++++++++build openhd from source++++++++++++"
     make install DESTDIR=${PKGDIR} || exit 1
     popd
 
+    pushd openhd-settings-m
+    make clean
+    make -j3 || exit 1
+    make install DESTDIR=${PKGDIR} || exit 1
+    popd
+
     cp openhd-common/* /usr/local/include || exit 1
     
     cp UDPSplitter/udpsplitter.py /usr/local/bin/ || exit 1
@@ -187,13 +197,16 @@ echo "+++++++++++++build openhd from source++++++++++++"
 
     cp -a wifibroadcast-scripts/* /usr/local/share/wifibroadcast-scripts/ 
 
-    #cp -a overlay/etc/* /etc/ 
+echo "######################################################################"
+echo "copying the /overlay/etc dir into your system... This could jack it up"
+echo "######################################################################"
+    cp -a overlay/etc/* /etc/ 
     
     # note: this is non-standard behavior, packaging stuff in /root and /home, but it's temporary
     #cp -a overlay/root/.bashrc /root/ 
     #cp -a overlay/home/openhd/.bashrc /home/openhd/ 
 
-    #cp -a overlay/usr/local/etc/* /usr/local/etc/ 
+    cp -a overlay/usr/local/etc/* /usr/local/etc/ 
 
     #cp -a overlay/etc/systemd/system/* /etc/systemd/system/ 
 
@@ -204,7 +217,7 @@ echo "+++++++++++++build openhd from source++++++++++++"
     #cp -a config/cmdline.txt ${PKGDIR}/boot/ 
     #cp -a config/ssh ${PKGDIR}/boot/ 
 
-    #cp -a config/apconfig.txt /usr/local/share/openhd/ 
+    cp -a config/apconfig.txt /usr/local/share/openhd/ 
     cp -a config/joyconfig.txt /usr/local/share/openhd/ 
 
     cp -a config/camera.template /usr/local/share/openhd/ 

@@ -1,0 +1,11 @@
+[Unit]
+Description=openhd-settings-m
+After=openhdinterface.service
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/openhd_settings_m
+
+[Install]
+WantedBy=multi-user.target
+Alias=openhdsettingsm.service
