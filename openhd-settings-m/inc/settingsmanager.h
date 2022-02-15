@@ -21,8 +21,8 @@ public:
 SettingsManager(boost::asio::io_service &io_service, PlatformType platform, bool is_air, std::string unit_id);
   
     void setup();
-    void get_air_settings();
-    void send_settings();
+    void read_air_settings();
+    void send_air_settings(Camera &camera);
     void settings_listener();
     
 

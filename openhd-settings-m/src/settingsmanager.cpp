@@ -26,21 +26,14 @@
 
 #include "openhd-camera.hpp"
 
+#include "json.hpp"
+#include "inja.hpp"
+using namespace inja;
+using json = nlohmann::json;
+
 
 constexpr uint8_t SERVICE_COMPID = MAV_COMP_ID_USER7;
 
-std::string get_openhd_version() {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("dpkg-query --showformat='${Version}' --show openhd", "r"), pclose);
-    if (!pipe) {
-        throw std::runtime_error("Checking openhd version failed");
-    }
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-    }
-    return result;
-}
 
 SettingsManager::SettingsManager(boost::asio::io_service &io_service, PlatformType platform, bool is_air, std::string unit_id):
 		Microservice(io_service, platform), m_udp_socket(io_service), m_is_air(is_air), m_unit_id(unit_id) {
@@ -52,24 +45,74 @@ SettingsManager::SettingsManager(boost::asio::io_service &io_service, PlatformTy
 void SettingsManager::setup() {
     std::cout << "SettingsManager::setup()" << std::endl;
 
-    try {
-        m_openhd_version = get_openhd_version();
-    } catch (std::exception& ex) {
-        // the exception itself doesn't matter, will just mean the m_openhd_version default
-        // gets sent to QOpenHD
+    Microservice::setup();
+
+    if (m_is_air) {
+        std::cout << "SettingsManager::we are Air!" << std::endl;
+        SettingsManager::read_air_settings();
+       // SettingsManager::send_air_settings();
+    }
+    else {
+        std::cout << "SettingsManager::we are Ground!" << std::endl;
+        //listen for air settings
     }
 
-
-    Microservice::setup();
-    SettingsManager::get_air_settings();
-    SettingsManager::send_settings();
     SettingsManager::settings_listener();
 }
 
 
-void SettingsManager::get_air_settings() {
-    std::cout << "SettingsManager::send_settings()" << std::endl;
+void SettingsManager::read_air_settings() {
+    std::cout << "SettingsManager::read_air_settings()" << std::endl;
     //todo read the air settings that ground does not have
+
+
+
+
+try {
+        std::ifstream f("/tmp/camera_manifest");
+        nlohmann::json j;
+        f >> j;
+
+        for (auto _camera : j) {
+            std::cerr << "Processing camera_manifest" << std::endl; 
+            Camera camera;
+            std::string camera_type = _camera["type"];
+            camera.type = string_to_camera_type(camera_type);
+            camera.name = _camera["name"];
+            std::cerr << camera.name << std::endl;
+            camera.vendor = _camera["vendor"];
+            camera.vid = _camera["vid"];
+            camera.pid = _camera["pid"];
+            camera.bus = _camera["bus"];
+            camera.index = _camera["index"];
+
+            auto _endpoints = _camera["endpoints"];
+            for (auto _endpoint : _endpoints) {
+                CameraEndpoint endpoint;
+                endpoint.device_node   = _endpoint["device_node"];
+                endpoint.support_h264  = _endpoint["support_h264"];
+                endpoint.support_h265  = _endpoint["support_h265"];
+                endpoint.support_mjpeg = _endpoint["support_mjpeg"];
+                endpoint.support_raw   = _endpoint["support_raw"];
+                for (auto& format : _endpoint["formats"]) {
+                    endpoint.formats.push_back(format);
+                    std::cerr << format << std::endl;
+                }
+
+                camera.endpoints.push_back(endpoint);
+            }
+
+            m_cameras.push_back(camera);
+        }
+    } catch (std::exception &ex) {
+        // don't do anything, but send an error message to the user through the status service
+        std::cerr << "Camera error: " << ex.what() << std::endl;
+    }
+
+
+
+
+
 
     std::vector<std::map<std::string, std::string> > settings;
 
@@ -84,10 +127,11 @@ void SettingsManager::get_air_settings() {
         std::cerr << "Camera settings load error: " << ex.what() << std::endl;
     }
 
-    std::vector<Camera> save_cameras;
 
     for (auto camera : m_cameras) {
         std::map<std::string, std::string> setting_map;
+
+        std::cout << "Found Camera in Conf file" << std::endl;
 
         for (auto & settings_for_camera : settings) {
             if (settings_for_camera.count("bus") == 1 && settings_for_camera["bus"] == camera.bus) {
@@ -114,14 +158,24 @@ void SettingsManager::get_air_settings() {
 //TODO for testing as test if file is read 
 std::cout << "cam bitrate=" << camera.bitrate << std::endl;
 std::cout << "cam codec=" << camera.codec << std::endl;
+
+send_air_settings(camera);
     }
 }
 
 
-void SettingsManager::send_settings() {
-    std::cout << "SettingsManager::send_settings()" << std::endl;
+void SettingsManager::send_air_settings(Camera &camera) {
+    std::cout << "SettingsManager::send_air_settings()" << std::endl;
 //TODO if air this will send the unique air settings on a timer
 //once ground acks that it recieved the settings this will stop
+
+std::cout << "Camera vendor=" << camera.vendor <<std::endl;
+std::cout << "Camera name=" << camera.name <<std::endl;
+std::cout << "Camera type=" << camera.type <<std::endl;
+std::cout << "Camera vid=" << camera.vid <<std::endl;
+
+
+
 }
 
 
