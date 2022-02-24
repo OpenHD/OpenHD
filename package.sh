@@ -15,7 +15,7 @@ if [[ "${DISTRO}" == "buster" ]]; then
 fi
 
 if [[ "${DISTRO}" == "bullseye" ]]; then
-    PLATFORM_PACKAGES="-d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gst-rpicamsrc -d libx264-dev -d gstreamer1.0-gl -d gstreamer1.0-gtk3"
+    PLATFORM_PACKAGES="-d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-qt5 -d libx264-dev -d gstreamer1.0-gl -d gstreamer1.0-gtk3"
     PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
