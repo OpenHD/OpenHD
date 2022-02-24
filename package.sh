@@ -207,6 +207,10 @@ EOF
 
 if [[ "${OS}" == "raspbian" ]]; then
     build_pi_dep
+        cat << EOF >> ${PKGDIR}/boot/config.txt
+[all]
+dtoverlay=vc4-kms-v3d
+EOF
 fi
 
 build_source
