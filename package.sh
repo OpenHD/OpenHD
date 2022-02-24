@@ -215,19 +215,12 @@ VERSION=$(git describe)
 
 rm ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
 
-fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${TMPDIR} \
-  --config-files /boot/openhd-settings-1.txt \
-  --config-files /boot/openhd-settings-2.txt \
-  --config-files /boot/openhd-settings-3.txt \
-  --config-files /boot/openhd-settings-4.txt \
-  --config-files /boot/apconfig.txt \
-  --config-files /boot/cmdline.txt \
-  --config-files /boot/config.txt \
-  --config-files /boot/joyconfig.txt \
-  --config-files /boot/osdconfig.txt \
+fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PKGDIR} \
+  $PLATFORM_CONFIGS \
   -p ${PACKAGE_NAME}_VERSION_ARCH.deb \
   --after-install after-install.sh \
   --before-install before-install.sh \
+  $PLATFORM_PACKAGES \
   -d "wiringpi" \
   -d "trackermavfilter" \
   -d "libasio-dev >= 1.10" \
