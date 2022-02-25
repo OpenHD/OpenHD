@@ -15,7 +15,7 @@ if [[ "${DISTRO}" == "buster" ]]; then
 fi
 
 if [[ "${DISTRO}" == "bullseye" ]]; then
-    PLATFORM_PACKAGES="-d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gst-rpicamsrc"
+    PLATFORM_PACKAGES="-d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gst-rpicamsrc -d qopenhd"
     PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
