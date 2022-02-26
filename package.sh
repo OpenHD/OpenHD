@@ -205,12 +205,15 @@ EOF
     fi
 }
 
-if [[ "${OS}" == "raspbian" ]]; then
-    build_pi_dep
+if [[ "${DISTRO}" == "bullseye" ]]; then
         cat << EOF >> ${PKGDIR}/boot/config.txt
 [all]
 dtoverlay=vc4-kms-v3d
 EOF
+fi
+
+if [[ "${OS}" == "raspbian" ]]; then
+    build_pi_dep
 fi
 
 build_source
