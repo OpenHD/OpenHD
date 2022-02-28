@@ -52,6 +52,7 @@ void Cameras::discover() {
     switch (m_platform_type) {
         case PlatformTypeRaspberryPi: {
             detect_raspberrypi_csi();
+            detect_raspberrypi_veye();
             break;
         }
         case PlatformTypeJetson: {
@@ -175,6 +176,21 @@ void Cameras::detect_raspberrypi_csi() {
 
         m_camera_endpoints.push_back(endpoint);
         m_cameras.push_back(camera);
+    }
+}
+
+void Cameras::detect_raspberrypi_veye() {
+    std::cerr << "Cameras::detect_raspberrypi_veye()" << std::endl;
+
+    std::array<char, 512> buffer;
+    std::string raw_value;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("/usr/local/share/veye-raspberrypi/camera_i2c_config", "r"), pclose);
+    if (!pipe) {
+        std::cerr << "Cameras::detect_raspberrypi_veye() no pipe from camera config" << std::endl;
+        return;
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        raw_value += buffer.data();
     }
 }
 

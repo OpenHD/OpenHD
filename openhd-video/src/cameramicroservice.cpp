@@ -163,6 +163,7 @@ void CameraMicroservice::configure(Camera &camera) {
     // these are all using gstreamer at the moment, but that may not be the case forever
     switch (camera.type) {
         case CameraTypeRaspberryPiCSI:
+        case CameraTypeRaspberryPiVEYE:
         case CameraTypeJetsonCSI: 
         case CameraTypeIP:         
         case CameraTypeRockchipCSI:

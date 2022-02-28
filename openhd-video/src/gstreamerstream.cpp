@@ -74,6 +74,10 @@ void GStreamerStream::setup() {
             setup_raspberrypi_csi();
             break;
         }
+        case CameraTypeRaspberryPiVEYE: {
+            setup_raspberrypi_veye();
+            break;
+        }
         case CameraTypeJetsonCSI: {
             setup_jetson_csi();
             break;
@@ -543,6 +547,12 @@ void GStreamerStream::set_bitrate(int bitrate) {
             g_object_set(ctrl, "bitrate", bitrate, NULL);
             break;
         }
+        case CameraTypeRaspberryPiVEYE: {
+            GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
+            if (!ctrl) return;
+            g_object_set(ctrl, "bitrate", bitrate, NULL);
+            break;
+        }
         case CameraTypeJetsonCSI: {
             GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
             if (!ctrl) return;
@@ -582,7 +592,7 @@ bool GStreamerStream::supports_cbr() {
 
     // todo: this is not necessarily true, some USB and IP cameras support it but on an IP camera it may not be easy to
     //       set
-    return m_camera.type == CameraTypeRaspberryPiCSI || m_camera.type == CameraTypeJetsonCSI || m_camera.type == CameraTypeUVCH264;
+    return m_camera.type == CameraTypeRaspberryPiCSI || m_camera.type == CameraTypeRaspberryPiVEYE || m_camera.type == CameraTypeJetsonCSI || m_camera.type == CameraTypeUVCH264;
 }
 
 
@@ -599,6 +609,9 @@ void GStreamerStream::set_cbr(bool enable) {
 
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
+            break;
+        }
+        case CameraTypeRaspberryPiVEYE: {
             break;
         }
         case CameraTypeJetsonCSI: {
@@ -623,6 +636,11 @@ std::vector<std::string> GStreamerStream::get_supported_formats() {
 
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
+            auto endpoint = m_camera.endpoints.front();
+            formats = endpoint.formats;
+            break;
+        }
+        case CameraTypeRaspberryPiVEYE: {
             auto endpoint = m_camera.endpoints.front();
             formats = endpoint.formats;
             break;
@@ -706,6 +724,12 @@ std::string GStreamerStream::get_brightness() {
             g_object_get(ctrl, "brightness", &_brightness, NULL);
             break;
         }
+        case CameraTypeRaspberryPiVEYE: {
+            GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
+            if (!ctrl) break;
+            g_object_get(ctrl, "brightness", &_brightness, NULL);
+            break;
+        }
         case CameraTypeJetsonCSI: {
             GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
             if (!ctrl) break;
@@ -738,6 +762,12 @@ void GStreamerStream::set_brightness(std::string brightness) {
 
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
+            GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
+            if (!ctrl) break;
+            g_object_set(ctrl, "brightness", atoi(brightness.c_str()), NULL);
+            break;
+        }
+        case CameraTypeRaspberryPiVEYE: {
             GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
             if (!ctrl) break;
             g_object_set(ctrl, "brightness", atoi(brightness.c_str()), NULL);
@@ -781,6 +811,12 @@ std::string GStreamerStream::get_contrast() {
             g_object_get(ctrl, "contrast", &_contrast, NULL);
             break;
         }
+        case CameraTypeRaspberryPiVEYE: {
+            GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
+            if (!ctrl) break;
+            g_object_get(ctrl, "contrast", &_contrast, NULL);
+            break;
+        }
         case CameraTypeJetsonCSI: {
             GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
             if (!ctrl) break;
@@ -813,6 +849,12 @@ void GStreamerStream::set_contrast(std::string contrast) {
 
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
+            GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
+            if (!ctrl) return;
+            g_object_set(ctrl, "contrast", atoi(contrast.c_str()), NULL);
+            break;
+        }
+        case CameraTypeRaspberryPiVEYE: {
             GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
             if (!ctrl) return;
             g_object_set(ctrl, "contrast", atoi(contrast.c_str()), NULL);
