@@ -181,6 +181,8 @@ void Cameras::detect_raspberrypi_csi() {
 
 void Cameras::detect_raspberrypi_veye() {
     std::cerr << "Cameras::detect_raspberrypi_veye()" << std::endl;
+    
+    bool success = false;
 
     std::vector<std::string> args { 
         "/usr/local/share/veye-raspberrypi/camera_i2c_config"
