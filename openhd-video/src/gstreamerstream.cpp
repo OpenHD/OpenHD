@@ -262,6 +262,22 @@ void GStreamerStream::setup_raspberrypi_csi() {
     m_pipeline << fmt::format("video/x-h264, profile=constrained-baseline, width={}, height={}, framerate={}/1, level=3.0 ! ", width, height, fps);
 }
 
+void GStreamerStream::setup_raspberrypi_veye() {
+    std::cerr << "Setting up Raspberry Pi VEYE camera" << std::endl;
+
+    if (m_camera.format.empty()) {
+        m_camera.format = "1920x1080@30";
+    }
+  
+    std::string width;
+    std::string height;
+    std::string fps;
+    parse_user_format(m_camera.format, width, height, fps);
+
+    m_pipeline << fmt::format("rpicamsrc name=bitratectrl camera-number={} bitrate={} preview=0 ! ", m_camera.bus, m_camera.bitrate);
+    m_pipeline << fmt::format("video/x-h264, profile=constrained-baseline, width={}, height={}, framerate={}/1, level=3.0 ! ", width, height, fps);
+}
+
 
 void GStreamerStream::setup_jetson_csi() {
     std::cerr << "Setting up Jetson CSI camera" << std::endl;
