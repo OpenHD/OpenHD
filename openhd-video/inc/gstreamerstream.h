@@ -21,6 +21,7 @@ public:
     void setup();
 
     void setup_raspberrypi_csi();
+    void setup_raspberrypi_veye();
     void setup_jetson_csi();
     void setup_rockchip_csi();
 
