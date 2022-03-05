@@ -194,6 +194,19 @@ void Cameras::detect_raspberrypi_veye() {
         status_message(STATUS_LEVEL_WARNING, "Failed to enable veye camera config");
         return;
     }
+
+    std::array<char, 512> buffer;
+    std::string veye_detect;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("i2cdetect -y 0 0x3b 0x3b | grep  '3b'", "r"), pclose);
+    if (!pipe) {
+        std::cerr << "Cameras::detect_raspberrypi_veye() no pipe from i2cdetect" << std::endl;
+        return;
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        veye_detect += buffer.data();
+    }
+
+    std::cerr << "i2cdetect result: "+veye_detect << std::endl;
 }
 
 
