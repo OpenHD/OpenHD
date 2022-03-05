@@ -52,6 +52,7 @@ void Cameras::discover() {
     switch (m_platform_type) {
         case PlatformTypeRaspberryPi: {
             detect_raspberrypi_csi();
+            detect_raspberrypi_veye();
             break;
         }
         case PlatformTypeJetson: {
@@ -175,6 +176,23 @@ void Cameras::detect_raspberrypi_csi() {
 
         m_camera_endpoints.push_back(endpoint);
         m_cameras.push_back(camera);
+    }
+}
+
+void Cameras::detect_raspberrypi_veye() {
+    std::cerr << "Cameras::detect_raspberrypi_veye()" << std::endl;
+    
+    bool success = false;
+
+    std::vector<std::string> args { 
+        "/usr/local/share/veye-raspberrypi/camera_i2c_config"
+    };
+
+    success = run_command("/bin/bash", args);
+
+    if (!success) {
+        status_message(STATUS_LEVEL_WARNING, "Failed to enable veye camera config");
+        return;
     }
 }
 

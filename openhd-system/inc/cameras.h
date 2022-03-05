@@ -34,6 +34,7 @@ private:
      *
      */
     void detect_raspberrypi_csi();
+    void detect_raspberrypi_veye();
     void detect_jetson_csi();
     void detect_rockchip_csi();
 

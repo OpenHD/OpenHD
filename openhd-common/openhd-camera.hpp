@@ -9,6 +9,7 @@
 
 typedef enum CameraType {
     CameraTypeRaspberryPiCSI,
+    CameraTypeRaspberryPiVEYE,
     CameraTypeJetsonCSI,
     CameraTypeRockchipCSI,
     CameraTypeUVC,
@@ -87,6 +88,9 @@ inline std::string camera_type_to_string(CameraType camera_type) {
         case CameraTypeRaspberryPiCSI: {
             return "pi-csi";
         }
+        case CameraTypeRaspberryPiVEYE: {
+            return "pi-veye";
+        }
         case CameraTypeJetsonCSI: {
             return "jetson-csi";
         }
@@ -115,6 +119,8 @@ inline std::string camera_type_to_string(CameraType camera_type) {
 inline CameraType string_to_camera_type(std::string camera_type) {
     if (to_uppercase(camera_type).find(to_uppercase("pi-csi")) != std::string::npos) {
         return CameraTypeRaspberryPiCSI;
+    } else if (to_uppercase(camera_type).find(to_uppercase("pi-veye")) != std::string::npos) {
+        return CameraTypeRaspberryPiVEYE;
     } else if (to_uppercase(camera_type).find(to_uppercase("jetson-csi")) != std::string::npos) {
         return CameraTypeJetsonCSI;
     } else if (to_uppercase(camera_type).find(to_uppercase("rockchip-csi")) != std::string::npos) {
