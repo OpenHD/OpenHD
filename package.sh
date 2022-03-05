@@ -10,12 +10,12 @@ BUILD_TYPE=$4
 
 
 if [[ "${DISTRO}" == "buster" ]]; then
-    PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc -d qopenhd"
+    PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc -d qopenhd -d openhd-linux-pi -d libjpeg62-turbo"
     PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
 if [[ "${DISTRO}" == "bullseye" ]]; then
-    PLATFORM_PACKAGES="-d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gst-rpicamsrc -d qopenhd"
+    PLATFORM_PACKAGES="-d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gst-rpicamsrc -d qopenhd -d openhd-linux-pi -d libjpeg62-turbo"
     PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
@@ -231,14 +231,9 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
   -d "libasio-dev >= 1.10" \
   -d "libboost-system-dev >= 1.62.0" \
   -d "libboost-program-options-dev >= 1.62.0" \
-  -d "libseek-thermal >= 20200801.1" \
-  -d "openhd-linux-pi >= 20201122.2" \
   -d "libseek-thermal >= 20201118.1" \
   -d "flirone-driver >= 20200704.3" \
   -d "wifibroadcast >= 20200930.1" \
-  -d "veye-raspberrypi >= 20201122.1" \
-  -d "lifepoweredpi >= 20200704.2" \
-  -d "raspi2png >= 20200704.2" \
   -d "openhd-dump1090-mutability >= 20201122.2" \
   -d "gnuplot-nox" \
   -d "hostapd" \
@@ -265,7 +260,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
   -d "libconfig++9v5" \
   -d "libreadline-dev" \
   -d "libjpeg-dev" \
-  -d "libjpeg62-turbo" \
   -d "libsodium-dev" \
   -d "libfontconfig1" \
   -d "libfreetype6" \
