@@ -207,6 +207,33 @@ void Cameras::detect_raspberrypi_veye() {
     }
 
     std::cerr << "i2cdetect result: "+veye_detect << std::endl;
+
+    boost::smatch result;
+
+    boost::regex r{ "30:                                  3b            "};
+    
+    if (!boost::regex_search(veye_detect, result, r)) {
+        std::cerr << "Cameras::detect_raspberrypi_veye() no regex match" << std::endl;
+        return;
+    }
+
+    Camera camera;
+    camera.name = "Pi VEYE 0";
+    camera.vendor = "VEYE";
+    camera.type = CameraTypeRaspberryPiVEYE;
+    camera.bus = "0";
+    camera.index = m_discover_index;
+    m_discover_index++;
+    CameraEndpoint endpoint;
+    endpoint.bus = camera.bus;
+    endpoint.support_h264 = true;
+    endpoint.support_mjpeg = false;
+
+    endpoint.formats.push_back("H.264|1920x1080@25");
+    endpoint.formats.push_back("H.264|1920x1080@30");
+
+    m_camera_endpoints.push_back(endpoint);
+    m_cameras.push_back(camera);
 }
 
 
