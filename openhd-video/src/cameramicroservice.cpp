@@ -40,6 +40,8 @@ CameraMicroservice::CameraMicroservice(boost::asio::io_service &io_service, Plat
 
 void CameraMicroservice::setup() {
     std::cout << "CameraMicroservice::setup()" << std::endl;
+
+    //this might not need to be here as it gets called later too
     Microservice::setup();
 
     process_manifest();
@@ -139,21 +141,22 @@ void CameraMicroservice::process_settings() {
         if (setting_map.count("manual_pipeline")) camera.manual_pipeline = setting_map["manual_pipeline"];
         if (setting_map.count("codec")) camera.codec = string_to_video_codec(setting_map["codec"]);
 
-        configure(camera);
         save_cameras.push_back(camera);
-    }
 
-    /*
-     * And now save the complete set of cameras back to the settings file, ensuring that all hardware
-     * ends up in the file automatically but users can change it as needed
-     */
-    try {
-        std::string settings_path = find_settings_path(m_is_air, m_unit_id);
-        std::string settings_file = settings_path + "/camera.conf";
-        save_settings(save_cameras, settings_file);
-    } catch (std::exception &ex) {
-        status_message(STATUS_LEVEL_EMERGENCY, "Camera settings save failed");
-    }
+            /*
+        * And now save the complete set of cameras back to the settings file, ensuring that all hardware
+        * ends up in the file automatically but users can change it as needed
+        */
+        try {
+            std::string settings_path = find_settings_path(m_is_air, m_unit_id);
+            std::string settings_file = settings_path + "/camera.conf";
+            save_settings(save_cameras, settings_file);
+        } catch (std::exception &ex) {
+            status_message(STATUS_LEVEL_EMERGENCY, "Camera settings save failed");
+        }
+
+        configure(camera);
+    } 
 }
 
 
@@ -182,6 +185,8 @@ void CameraMicroservice::configure(Camera &camera) {
 void CameraMicroservice::process_mavlink_message(mavlink_message_t msg) {
     switch (msg.msgid) {
         case MAVLINK_MSG_ID_PARAM_REQUEST_LIST: {
+            std::cerr << "-------------Request for param list REACHED---------" << std::endl;
+            
             mavlink_param_request_list_t request;
             mavlink_msg_param_request_list_decode(&msg, &request);
             break;
@@ -189,6 +194,10 @@ void CameraMicroservice::process_mavlink_message(mavlink_message_t msg) {
         case MAVLINK_MSG_ID_COMMAND_LONG: {
             mavlink_command_long_t command;
             mavlink_msg_command_long_decode(&msg, &command);
+
+            std::cerr << "-------------DEBUG CMD REACHED---------" << std::endl;
+            std::cerr << "Long command received, target system=" << (uint16_t)command.target_system << "; target comp=" << (uint16_t)command.target_component << "; command=" << command.command << "\n";  
+            std::cerr << "My component id=" << (uint16_t) this->m_compid << "\n";
 
             // only process commands sent to this system or broadcast to all systems
             if ((command.target_system != this->m_sysid && command.target_system != 0)) {
@@ -203,6 +212,7 @@ void CameraMicroservice::process_mavlink_message(mavlink_message_t msg) {
 
             switch (command.command) {
                 case OPENHD_CMD_GET_CAMERA_SETTINGS: {
+                    std::cerr << "-------------OPENHD_CMD_GET_CAMERA_SETTINGS---------" << std::endl;
                     uint8_t brightness = 128; //(uint8_t)settings.value("brightness", 128).toUInt();
                     uint8_t contrast   = 128; //(uint8_t)settings.value("contrast", 128).toUInt();
                     uint8_t saturation = 128; //(uint8_t)settings.value("saturation", 128).toUInt();
@@ -249,6 +259,7 @@ void CameraMicroservice::process_mavlink_message(mavlink_message_t msg) {
                     break;
                 }
                 case OPENHD_CMD_SET_CAMERA_SETTINGS: {
+                    std::cerr << "SET-------------OPENHD_CMD_SET_CAMERA_SETTINGS---------SET" << std::endl;
                     /* this is how you would store a setting for the component when
                      * replying to a settings request
                      */
