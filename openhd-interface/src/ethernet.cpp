@@ -74,20 +74,23 @@ void Ethernet::configure() {
         if (setting_map.count("ip")) card.ip = setting_map["ip"];
         if (setting_map.count("gateway")) card.gateway = setting_map["gateway"];
 
-        process_card(card);
+        
         save_cards.push_back(card);
-    }
 
-    /*
-     * And now save the complete set of ethernet cards back to the settings file, ensuring that all hardware
-     * ends up in the file automatically but users can change it as needed
-     */
-    try {
-        std::string settings_path = find_settings_path(m_is_air, m_unit_id);
-        std::string settings_file = settings_path + "/ethernet.conf";
-        save_settings(save_cards, settings_file);
-    } catch (std::exception &ex) {
-        status_message(STATUS_LEVEL_EMERGENCY, "Ethernet settings save failed");
+            /*
+        * And now save the complete set of ethernet cards back to the settings file, ensuring that all hardware
+        * ends up in the file automatically but users can change it as needed
+        */
+        try {
+            std::string settings_path = find_settings_path(m_is_air, m_unit_id);
+            std::string settings_file = settings_path + "/ethernet.conf";
+            save_settings(save_cards, settings_file);
+        } catch (std::exception &ex) {
+            status_message(STATUS_LEVEL_EMERGENCY, "Ethernet settings save failed");
+        }
+
+        process_card(card);
+
     }
 }
 
@@ -126,7 +129,9 @@ void Ethernet::process_card(EthernetCard &card) {
     }
 
     if (card.use_for == "hotspot") {
-        setup_hotspot(card);
+        if (!m_is_air) {
+            setup_hotspot(card);
+        }
         return;
     }
 

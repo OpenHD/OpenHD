@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 systemctl disable osd
-systemctl enable openhdconfig
+# systemctl enable openhdconfig
 systemctl enable openhd_system
 systemctl enable openhd_security
 systemctl enable openhd_interface
