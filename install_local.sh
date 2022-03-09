@@ -228,8 +228,14 @@ echo "######################################################################"
     cp -a config/wificard.template /usr/local/share/openhd/ 
     cp -a config/telemetry.template /usr/local/share/openhd/
 
+echo "###############MAKE WIFIBROADCAST FROM CONSTI SOURCE################"
+echo "------------------->>untested below"
+git clone https://github.com/Consti10/wifibroadcast.git
 
-
-
+cd wifibroadcast
+make
+cp wfb_tx /usr/local/bin/
+cp wfb_rx /usr/local/bin/
+cp wfb_keygen /usr/local/bin/
 
   
