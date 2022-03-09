@@ -81,21 +81,22 @@ void WiFi::configure() {
         if (setting_map.count("hotspot_password")) card.hotspot_password = setting_map["hotspot_password"];
         if (setting_map.count("hotspot_band")) card.hotspot_band = setting_map["hotspot_band"];
 
-        process_card(card);
         save_cards.push_back(card);
-    }
 
-    /*
-     * And now save the complete set of wifi cards back to the settings file, ensuring that all hardware
-     * ends up in the file automatically but users can change it as needed
-     */
-    try {
-        std::string settings_path = find_settings_path(m_is_air, m_unit_id);
-        std::string settings_file = settings_path + "/wifi.conf";
-        save_settings(save_cards, settings_file);
-    } catch (std::exception &ex) {
-        status_message(STATUS_LEVEL_EMERGENCY, "WiFi settings save failed");
-    }
+            /*
+        * And now save the complete set of wifi cards back to the settings file, ensuring that all hardware
+        * ends up in the file automatically but users can change it as needed
+        */
+        try {
+            std::string settings_path = find_settings_path(m_is_air, m_unit_id);
+            std::string settings_file = settings_path + "/wifi.conf";
+            save_settings(save_cards, settings_file);
+        } catch (std::exception &ex) {
+            status_message(STATUS_LEVEL_EMERGENCY, "WiFi settings save failed");
+        }
+
+        process_card(card);
+    }  
 }
 
 
@@ -139,7 +140,9 @@ void WiFi::process_card(WiFiCard &card) {
     // be up to the autodetected settings from the system service to decide what this card will be
     // used for
     if (card.use_for == "hotspot") {
-        setup_hotspot(card);
+        if (!m_is_air) {
+            setup_hotspot(card);
+        }
         return;
     }
 
@@ -150,8 +153,10 @@ void WiFi::process_card(WiFiCard &card) {
 
 
     if (!card.supports_injection) {
-        std::cerr << "Card does not support injection: " << card.name << std::endl;
-        setup_hotspot(card);
+        if (!m_is_air) {
+            std::cerr << "Card does not support injection: " << card.name << std::endl;
+            setup_hotspot(card);
+        }
         return;
     }
 
@@ -182,7 +187,7 @@ void WiFi::process_card(WiFiCard &card) {
         set_txpower(card, "3100");
         card.txpower = "3100";
     }
-
+    std::cout << "WiFi::process card() push_back" << std::endl;
     m_broadcast_cards.push_back(card);
 }
 
@@ -192,7 +197,7 @@ void WiFi::process_card(WiFiCard &card) {
  * todo: deduplicate this and similar logic in Ethernet/LTE, they should be subclasses of a common base
  */
 void WiFi::setup_hotspot(WiFiCard &card) {
-    std::cout << "WiFi::setup_hotspot()" << std::endl;
+    std::cout << "WiFi::setup_hotspot(" << card.name << ")" << std::endl;
 
     if (!card.supports_hotspot) {
         std::ostringstream message;
@@ -289,7 +294,7 @@ void WiFi::setup_client(WiFiCard &card) {
 
 
 bool WiFi::set_card_state(WiFiCard card, bool up) {
-    std::cout << "WiFi::set_card_state()" << std::endl;
+    std::cout << "WiFi::set_card_state(" << up << ") for " << card.name <<  ")" << std::endl;
 
     std::vector<std::string> args { "link", "set", "dev", card.name, up ? "up" : "down" };
 
@@ -300,7 +305,7 @@ bool WiFi::set_card_state(WiFiCard card, bool up) {
 
 
 bool WiFi::set_frequency(WiFiCard card, std::string frequency) {
-    std::cout << "WiFi::set_frequency(" << frequency << ")" << std::endl;
+    std::cout << "WiFi::set_frequency(" << frequency << ") for " << card.name <<  ")" << std::endl;
 
     std::vector<std::string> args { "dev", card.name, "set", "freq", frequency };
 
@@ -311,7 +316,7 @@ bool WiFi::set_frequency(WiFiCard card, std::string frequency) {
 
 
 bool WiFi::set_txpower(WiFiCard card, std::string txpower) {
-    std::cout << "WiFi::set_txpower(" << txpower << ")" << std::endl;
+    std::cout << "WiFi::set_txpower(" << txpower << ") for " << card.name <<  ")" << std::endl;
 
     std::vector<std::string> args { "dev", card.name, "set", "txpower", "fixed", txpower };
 
@@ -322,7 +327,7 @@ bool WiFi::set_txpower(WiFiCard card, std::string txpower) {
 
 
 bool WiFi::enable_monitor_mode(WiFiCard card) {
-    std::cout << "WiFi::enable_monitor_mode()" << std::endl;
+    std::cout << "WiFi::enable_monitor_mode(" << card.name <<  ")" << std::endl;
 
     std::vector<std::string> args { "dev", card.name, "set", "monitor", "otherbss" };
 
