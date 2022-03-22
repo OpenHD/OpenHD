@@ -151,6 +151,10 @@ fixup_file=1to3bup_x.dat
 [pi3+]
 start_file=start_x.elf
 fixup_file=fixup_x.dat
+[pi4]
+dtoverlay=vc4-fkms-v3d
+dtoverlay=raspivid-v4l2
+dtoverlay=cma,cma-size=402653184
 
 # uncomment to activate CM4 USB
 #dtoverlay=dwc2,dr_mode=host
