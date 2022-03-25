@@ -129,9 +129,7 @@ void Ethernet::process_card(EthernetCard &card) {
     }
 
     if (card.use_for == "hotspot") {
-        if (!m_is_air) {
-            setup_hotspot(card);
-        }
+        setup_hotspot(card);
         return;
     }
 
