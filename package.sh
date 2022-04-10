@@ -218,7 +218,7 @@ fi
 
 build_source
 
-VERSION="2.1_Milestone_1_$(date '+%m%d')"
+VERSION="2.1Milestone1.$(date '+%m%d')"
 
 rm ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
 
