@@ -1,6 +1,10 @@
 # General note: You can find more info on the options in this file here:
 # https://www.raspberrypi.org/documentation/configuration/config-txt.md
 
+# uncomment if you have a raspberry pi 4 with 4GB of ram or more and it 
+# is not booting
+#total_mem=3072
+
 # uncomment if you get no picture on HDMI for a default "safe" mode
 #hdmi_safe=1
 
