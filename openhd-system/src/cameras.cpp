@@ -197,9 +197,9 @@ void Cameras::detect_raspberrypi_veye() {
 
     std::array<char, 512> buffer;
     std::string veye_detect;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("i2cdetect -y 0 0x3b 0x3b | grep  '3b'", "r"), pclose);
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("dmesg | grep 'camera id is veyecam2m'", "r"), pclose);
     if (!pipe) {
-        std::cerr << "Cameras::detect_raspberrypi_veye() no pipe from i2cdetect" << std::endl;
+        std::cerr << "Cameras::detect_raspberrypi_veye() no pipe from dmesg" << std::endl;
         return;
     }
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
@@ -210,7 +210,7 @@ void Cameras::detect_raspberrypi_veye() {
 
     boost::smatch result;
 
-    boost::regex r{ "30:                                  3b            "};
+    boost::regex r{ "camera id is veyecam2m"};
     
     if (!boost::regex_search(veye_detect, result, r)) {
         std::cerr << "Cameras::detect_raspberrypi_veye() no regex match" << std::endl;
