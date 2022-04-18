@@ -274,8 +274,8 @@ void GStreamerStream::setup_raspberrypi_veye() {
     std::string fps;
     parse_user_format(m_camera.format, width, height, fps);
 
-    m_pipeline << fmt::format("rpicamsrc name=bitratectrl camera-number={} bitrate={} preview=0 ! ", m_camera.bus, m_camera.bitrate);
-    m_pipeline << fmt::format("video/x-h264, profile=constrained-baseline, width={}, height={}, framerate={}/1, level=3.0 ! ", width, height, fps);
+    m_pipeline << fmt::format("v4l2src name=picturectrl device=/dev/video0 ! ");
+    m_pipeline << fmt::format("video/x-raw,format=(string)UYVY, width=(int){}, height=(int){},framerate=(fraction){}/1 ! ", width, height, fps);
 }
 
 
