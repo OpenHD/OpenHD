@@ -16,6 +16,15 @@
 
 #include <string>
 
+/**
+ * This provides convenient methods to send log messages from any service running on the air or ground unit to a final output deice,
+ * for example QOpenHD.
+ * As an example, this makes it possible to view the logs from the air unit on QOpenHD without connecting a display to the air unit.
+ * The general way this works is simple:
+ * The log messages is sent to a specific udp port on localhost and then picked up by the telemetry service,
+ * which converts it to mavlink and forwards it accordingly.
+ */
+
 typedef struct {
     uint8_t level;
     uint8_t message[50];
