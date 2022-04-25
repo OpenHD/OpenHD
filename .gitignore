@@ -4,3 +4,6 @@
 
 # exclude everything that is created by intellij when you open this repository
 .idea
+
+# same for visual studio
+.vscode
