@@ -20,7 +20,7 @@
 using namespace inja;
 using json = nlohmann::json;
 
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 #include "openhd-settings.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"

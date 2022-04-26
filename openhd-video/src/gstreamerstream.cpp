@@ -17,7 +17,7 @@
 
 #include <fmt/core.h>
 
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 
 #include "gstreamerstream.h"
 

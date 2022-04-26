@@ -12,7 +12,7 @@ using json = nlohmann::json;
 
 #include "openhd-platform.hpp"
 #include "openhd-settings.hpp"
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 
 #include "router.h"
 #include "control.h"

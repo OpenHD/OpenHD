@@ -19,7 +19,7 @@
 
 #include "openhd-platform.hpp"
 
-#include "../../openhd-common/openhd-status.hpp"
+#include "../../openhd-common/openhd-log.hpp"
 
 
 uint32_t videoBitrate=0;

@@ -21,7 +21,7 @@
 #include "openhd-camera.hpp"
 #include "openhd-ethernet.hpp"
 #include "openhd-platform.hpp"
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 #include "openhd-stream.hpp"
 #include "openhd-wifi.hpp"
 

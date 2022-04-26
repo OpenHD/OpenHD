@@ -17,7 +17,7 @@
 #include <fmt/core.h>
 
 #include "openhd-platform.hpp"
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 #include "openhd-video.hpp"
 
 #include "hotspot.h"

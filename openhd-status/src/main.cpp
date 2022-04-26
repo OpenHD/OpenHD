@@ -13,7 +13,7 @@
 
 #include "../inc/statusmicroservice.h"
 #include "openhd-platform.hpp"
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 
 
 //#include "record.h"

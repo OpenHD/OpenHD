@@ -4,7 +4,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 
 #include "router.h"
 #include "serialendpoint.h"

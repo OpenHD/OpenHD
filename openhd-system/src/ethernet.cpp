@@ -19,7 +19,7 @@
 
 #include "openhd-ethernet.hpp"
 #include "openhd-platform.hpp"
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
 #include "platform.h"

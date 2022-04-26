@@ -16,7 +16,7 @@
 #include <openhd/mavlink.h>
 
 #include "openhd-platform.hpp"
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 
 #include "mavlinkcontrol.h"
 

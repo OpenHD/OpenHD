@@ -22,7 +22,7 @@ using namespace inja;
 using json = nlohmann::json;
 
 #include "openhd-camera.hpp"
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 #include "openhd-settings.hpp"
 
 #include "cameramicroservice.h"

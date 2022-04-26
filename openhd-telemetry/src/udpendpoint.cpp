@@ -9,7 +9,7 @@
 
 #include <openhd/mavlink.h>
 
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 #include "openhd-telemetry.hpp"
 
 #include "router.h"

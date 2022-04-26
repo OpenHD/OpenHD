@@ -7,7 +7,7 @@
 #include <iostream>
 
 
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 
 int main(int argc, char **argv) {
     if (argc < 3) {

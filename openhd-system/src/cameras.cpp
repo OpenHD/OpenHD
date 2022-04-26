@@ -24,7 +24,7 @@
 #include "json.hpp"
 
 #include "openhd-camera.hpp"
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
 #include "cameras.h"

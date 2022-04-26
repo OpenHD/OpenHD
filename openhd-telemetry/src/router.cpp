@@ -18,7 +18,7 @@ using json = nlohmann::json;
 #include <fmt/core.h>
 
 #include "openhd-settings.hpp"
-#include "openhd-status.hpp"
+#include "openhd-log.hpp"
 #include "openhd-telemetry.hpp"
 
 
