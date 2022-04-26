@@ -87,7 +87,7 @@ inline void ohd_log_emergency(std::string message){
 inline void ohd_log_info(std::string message){
     ohd_log(STATUS_LEVEL_INFO,message);
 }
-inline void ohd_log_debug(){
+inline void ohd_log_debug(std::string message){
     ohd_log(STATUS_LEVEL_DEBUG,message);
 }
 
