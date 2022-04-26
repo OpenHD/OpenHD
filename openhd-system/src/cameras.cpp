@@ -191,7 +191,7 @@ void Cameras::detect_raspberrypi_veye() {
     success = run_command("/bin/bash", args);
 
     if (!success) {
-        status_message(STATUS_LEVEL_WARNING, "Failed to enable veye camera config");
+        ohd_log(STATUS_LEVEL_WARNING, "Failed to enable veye camera config");
         return;
     }
 
@@ -633,7 +633,7 @@ nlohmann::json Cameras::generate_manifest() {
             std::ostringstream message;
             message << "Detected camera: " << camera.name << std::endl;
 
-            status_message(STATUS_LEVEL_INFO, message.str());
+            ohd_log(STATUS_LEVEL_INFO, message.str());
 
 
             j.push_back(_camera);

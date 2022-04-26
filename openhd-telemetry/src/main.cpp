@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
             unit_id = j["unit-id"];
         } catch (std::exception &ex) {
             std::cerr << "Profile manifest processing failed: " << ex.what() << std::endl;
-            status_message(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
+            ohd_log(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
             exit(1);
         }
 
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
             platform_type = string_to_platform_type(j["platform"]);
         } catch (std::exception &ex) {
             std::cerr << "Platform manifest processing failed: " << ex.what() << std::endl;
-            status_message(STATUS_LEVEL_EMERGENCY, "Platform manifest processing failed");
+            ohd_log(STATUS_LEVEL_EMERGENCY, "Platform manifest processing failed");
             exit(1);
         }
 
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     } catch (std::exception &ex) {
         std::cerr << "Telemetry service has stopped unexpectedly: " << ex.what() << std::endl;
 
-        status_message(STATUS_LEVEL_EMERGENCY, "Telemetry service has stopped unexpectedly");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "Telemetry service has stopped unexpectedly");
 
         exit(1);
     }

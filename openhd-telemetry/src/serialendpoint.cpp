@@ -21,12 +21,12 @@ void SerialEndpoint::setup(TelemetryType telemetry_type, std::string endpoint_s)
     boost::regex r{ "([\\/\\w\\d]+)\\:([\\w\\d]+)"};
 
     if (!boost::regex_match(endpoint_s, result, r)) {
-        status_message(STATUS_LEVEL_EMERGENCY, "Serial endpoint setting not in proper format");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "Serial endpoint setting not in proper format");
         return;
     }
 
     if (result.size() != 3) {
-        status_message(STATUS_LEVEL_EMERGENCY, "Serial endpoint setting not in proper format");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "Serial endpoint setting not in proper format");
         return;
     }
 
@@ -41,7 +41,7 @@ void SerialEndpoint::setup(TelemetryType telemetry_type, std::string endpoint_s)
         std::cerr << "Opening serial port: " << serial_port << " baud: " << baud_s << std::endl;
         m_serial.open(serial_port);
     } catch (boost::system::system_error::exception e) {
-        status_message(STATUS_LEVEL_EMERGENCY, "Failed to open serial port");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "Failed to open serial port");
         return;
     }
 
@@ -53,7 +53,7 @@ void SerialEndpoint::setup(TelemetryType telemetry_type, std::string endpoint_s)
         m_serial.set_option(boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none));
         m_serial.set_option(boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one));
     } catch (boost::system::system_error::exception e) {
-        status_message(STATUS_LEVEL_EMERGENCY, "Faild to set serial port baud rate");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "Faild to set serial port baud rate");
         return;
     }
 

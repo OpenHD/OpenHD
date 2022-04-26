@@ -226,7 +226,7 @@ nlohmann::json WiFi::generate_manifest() {
             std::ostringstream message;
             message << "Detected wifi (" << wifi_card_type_to_string(_card.type) << ") interface: " << _card.name << std::endl;
 
-            status_message(STATUS_LEVEL_INFO, message.str());
+            ohd_log(STATUS_LEVEL_INFO, message.str());
 
             wifi_cards.push_back(card);
         } catch (std::exception &ex) {

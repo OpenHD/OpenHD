@@ -33,6 +33,7 @@ typedef struct {
 
 // these match the mavlink SEVERITY_LEVEL enum, but this code should not depend on
 // the mavlink headers
+// See https://mavlink.io/en/messages/common.html - MAV_SEVERITY
 typedef enum STATUS_LEVEL {
     STATUS_LEVEL_EMERGENCY = 0,
     STATUS_LEVEL_ALERT,
@@ -45,11 +46,10 @@ typedef enum STATUS_LEVEL {
 } STATUS_LEVEL;
 
 /*
- * Messages sent here will end up in the status microservice, where they will be packed up and sent through
- * the microservice channel for storage and review by qopenhd, the boot screen system, and other software.
- *
+ * Messages sent here will end up in the telemetry microservice, where they will be packed up and sent through
+ * mavlink for storage and review by qopenhd, the boot screen system, and other software.
  */
-inline void status_message(STATUS_LEVEL level, std::string message) {
+inline void ohd_log(STATUS_LEVEL level, std::string message) {
 
     std::cerr << message << std::endl;
 
@@ -79,6 +79,23 @@ inline void status_message(STATUS_LEVEL level, std::string message) {
       
     sendto(sockfd, &lmessage, sizeof(lmessage), 0, (const struct sockaddr *) &servaddr, sizeof(servaddr)); 
 }
+
+// Direct implementations for the 3 most common used log types
+inline void ohd_log_emergency(std::string message){
+    ohd_log(STATUS_LEVEL_EMERGENCY,message);
+}
+inline void ohd_log_info(std::string message){
+    ohd_log(STATUS_LEVEL_INFO,message);
+}
+inline void ohd_log_debug(){
+    ohd_log(STATUS_LEVEL_DEBUG,message);
+}
+
+
+// TODO REMOVE, has been renamed
+/*inline void status_message(STATUS_LEVEL level, std::string message){
+    log_message(level,message);
+}*/
 
 
 #endif

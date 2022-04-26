@@ -130,7 +130,7 @@ nlohmann::json Ethernet::generate_manifest() {
             std::ostringstream message;
             message << "Detected ethernet interface: " << _card.name << std::endl;
 
-            status_message(STATUS_LEVEL_INFO, message.str());
+            ohd_log(STATUS_LEVEL_INFO, message.str());
 
             ethernet_cards.push_back(card);
         } catch (std::exception &ex) {

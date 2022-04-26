@@ -92,7 +92,7 @@ void WiFi::configure() {
             std::string settings_file = settings_path + "/wifi.conf";
             save_settings(save_cards, settings_file);
         } catch (std::exception &ex) {
-            status_message(STATUS_LEVEL_EMERGENCY, "WiFi settings save failed");
+            ohd_log(STATUS_LEVEL_EMERGENCY, "WiFi settings save failed");
         }
 
         process_card(card);
@@ -126,7 +126,7 @@ void WiFi::process_manifest() {
         }
     } catch (std::exception &ex) {
         // don't do anything, but send an error message to the user through the status service
-        status_message(STATUS_LEVEL_EMERGENCY, "WiFi manifest processing failed");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "WiFi manifest processing failed");
         std::cerr << "WiFi::process_manifest: " << ex.what() << std::endl;
         return;
     }
@@ -207,7 +207,7 @@ void WiFi::setup_hotspot(WiFiCard &card) {
         message << card.name;
         message << ")";
         message << std::endl;
-        status_message(STATUS_LEVEL_INFO, message.str());
+        ohd_log(STATUS_LEVEL_INFO, message.str());
         return;
     }
 
@@ -227,7 +227,7 @@ void WiFi::setup_hotspot(WiFiCard &card) {
     success = run_command("ifconfig", args);
 
     if (!success) {
-        status_message(STATUS_LEVEL_WARNING, "Failed to enable wifi hotspot interface");
+        ohd_log(STATUS_LEVEL_WARNING, "Failed to enable wifi hotspot interface");
         return;
     }
 
@@ -268,7 +268,7 @@ void WiFi::setup_hotspot(WiFiCard &card) {
     message1 << " channel ";
     message1 << card.hotspot_channel;
     message1 << std::endl;
-    status_message(STATUS_LEVEL_INFO, message1.str());
+    ohd_log(STATUS_LEVEL_INFO, message1.str());
 
     {
         std::vector<std::string> args { 
@@ -278,7 +278,7 @@ void WiFi::setup_hotspot(WiFiCard &card) {
         success = run_command("/bin/bash", args);
 
         if (!success) {
-            status_message(STATUS_LEVEL_WARNING, "Failed to enable hostap on wifi hotspot");
+            ohd_log(STATUS_LEVEL_WARNING, "Failed to enable hostap on wifi hotspot");
             return;
         }
     }

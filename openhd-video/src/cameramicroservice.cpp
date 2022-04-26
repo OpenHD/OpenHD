@@ -152,7 +152,7 @@ void CameraMicroservice::process_settings() {
         std::string settings_file = settings_path + "/camera.conf";
         save_settings(save_cameras, settings_file);
     } catch (std::exception &ex) {
-        status_message(STATUS_LEVEL_EMERGENCY, "Camera settings save failed");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "Camera settings save failed");
     }
 }
 

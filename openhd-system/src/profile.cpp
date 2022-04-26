@@ -94,17 +94,17 @@ nlohmann::json Profile::generate_manifest() {
 
     std::ostringstream message1;
     message1 << "Unit ID: " << m_unit_id << std::endl;
-    status_message(STATUS_LEVEL_INFO, message1.str());
+    ohd_log(STATUS_LEVEL_INFO, message1.str());
 
     std::ostringstream message2;
     std::string boot_type = is_air ? "Air" : "Ground";
 
     message2 << "Booting as: " << boot_type << std::endl;
-    status_message(STATUS_LEVEL_INFO, message2.str());
+    ohd_log(STATUS_LEVEL_INFO, message2.str());
 
     std::ostringstream message3;
     message3 << "Microservice sysid: " << sys_id << std::endl;
-    status_message(STATUS_LEVEL_INFO, message3.str());
+    ohd_log(STATUS_LEVEL_INFO, message3.str());
 
 
     return j;

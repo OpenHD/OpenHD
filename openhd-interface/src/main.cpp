@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
         unit_id = j["unit-id"];
     } catch (std::exception &ex) {
         // don't do anything, but send an error message to the user through the status service
-        status_message(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
     }
 
     WiFi wifi(io_service, is_air, unit_id);

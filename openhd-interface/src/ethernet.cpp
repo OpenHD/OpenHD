@@ -86,7 +86,7 @@ void Ethernet::configure() {
             std::string settings_file = settings_path + "/ethernet.conf";
             save_settings(save_cards, settings_file);
         } catch (std::exception &ex) {
-            status_message(STATUS_LEVEL_EMERGENCY, "Ethernet settings save failed");
+            ohd_log(STATUS_LEVEL_EMERGENCY, "Ethernet settings save failed");
         }
 
         process_card(card);
@@ -114,7 +114,7 @@ void Ethernet::process_manifest() {
         }
     } catch (std::exception &ex) {
         // don't do anything, but send an error message to the user through the status service
-        status_message(STATUS_LEVEL_EMERGENCY, "Ethernet manifest processing failed");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "Ethernet manifest processing failed");
             
         std::cerr << "Ethernet::process_manifest: " << ex.what() << std::endl;
         return;
@@ -162,7 +162,7 @@ void Ethernet::setup_hotspot(EthernetCard &card) {
     std::ostringstream message1;
 
     message1 << "Setting up ethernet hotspot on " << card.name << std::endl;
-    status_message(STATUS_LEVEL_INFO, message1.str());
+    ohd_log(STATUS_LEVEL_INFO, message1.str());
     
     card.use_for = "hotspot";
 
@@ -176,7 +176,7 @@ void Ethernet::setup_hotspot(EthernetCard &card) {
         success = run_command("ifconfig", args);
 
         if (!success) {
-            status_message(STATUS_LEVEL_WARNING, "Failed to enable ethenet hotspot interface");
+            ohd_log(STATUS_LEVEL_WARNING, "Failed to enable ethenet hotspot interface");
             return;
         }
     }
@@ -189,14 +189,14 @@ void Ethernet::setup_hotspot(EthernetCard &card) {
         success = run_command("/bin/bash", args);
 
         if (!success) {
-            status_message(STATUS_LEVEL_WARNING, "Failed to enable dnsmasq on eth hotspot");
+            ohd_log(STATUS_LEVEL_WARNING, "Failed to enable dnsmasq on eth hotspot");
             return;
         }
     }
 
     m_hotspot_configured = true;
 
-    status_message(STATUS_LEVEL_INFO, "Ethernet hotspot running");
+    ohd_log(STATUS_LEVEL_INFO, "Ethernet hotspot running");
 }
 
 
@@ -209,7 +209,7 @@ void Ethernet::setup_static(EthernetCard &card) {
     std::ostringstream message1;
 
     message1 << "Setting up ethernet static interface " << card.name << std::endl;
-    status_message(STATUS_LEVEL_INFO, message1.str());
+    ohd_log(STATUS_LEVEL_INFO, message1.str());
     
     card.use_for = "static";
 
@@ -225,7 +225,7 @@ void Ethernet::setup_static(EthernetCard &card) {
         success = run_command("ifconfig", args);
 
         if (!success) {
-            status_message(STATUS_LEVEL_WARNING, "Failed to enable ethenet interface");
+            ohd_log(STATUS_LEVEL_WARNING, "Failed to enable ethenet interface");
             return;
         }
     }
@@ -239,7 +239,7 @@ void Ethernet::setup_static(EthernetCard &card) {
             success = run_command("ip", args);
 
             if (!success) {
-                status_message(STATUS_LEVEL_WARNING, "Failed to enable default route on ethernet card");
+                ohd_log(STATUS_LEVEL_WARNING, "Failed to enable default route on ethernet card");
                 return;
             }
         }
@@ -248,7 +248,7 @@ void Ethernet::setup_static(EthernetCard &card) {
     std::ostringstream message2;
 
     message2 << "Ethernet static interface " << card.name << " running" << std::endl;
-    status_message(STATUS_LEVEL_INFO, message2.str());
+    ohd_log(STATUS_LEVEL_INFO, message2.str());
 }
 
 
@@ -260,7 +260,7 @@ void Ethernet::setup_client(EthernetCard &card) {
     std::ostringstream message1;
 
     message1 << "Setting up ethernet LAN interface " << card.name << std::endl;
-    status_message(STATUS_LEVEL_INFO, message1.str());
+    ohd_log(STATUS_LEVEL_INFO, message1.str());
     
     card.use_for = "client";
 
@@ -272,7 +272,7 @@ void Ethernet::setup_client(EthernetCard &card) {
         success = run_command("pump", args);
 
         if (!success) {
-            status_message(STATUS_LEVEL_WARNING, "Failed to enable ethenet interface");
+            ohd_log(STATUS_LEVEL_WARNING, "Failed to enable ethenet interface");
             return;
         }
     }
@@ -280,7 +280,7 @@ void Ethernet::setup_client(EthernetCard &card) {
     std::ostringstream message2;
 
     message2 << "Ethernet LAN interface " << card.name << " running" << std::endl;
-    status_message(STATUS_LEVEL_INFO, message2.str());
+    ohd_log(STATUS_LEVEL_INFO, message2.str());
 }
 
 

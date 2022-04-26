@@ -299,7 +299,7 @@ void GStreamerStream::setup_jetson_csi() {
     }
 
     if (sensor_id == -1) {
-        status_message(STATUS_LEVEL_CRITICAL, "Failed to determine Jetson CSI sensor ID");
+        ohd_log(STATUS_LEVEL_CRITICAL, "Failed to determine Jetson CSI sensor ID");
         return;
     }
 

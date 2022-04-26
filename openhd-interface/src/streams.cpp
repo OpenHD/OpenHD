@@ -204,7 +204,7 @@ boost::process::child Streams::start_video_stream(Stream stream) {
 
     auto broadcast_interfaces = broadcast_card_names();
     if (broadcast_interfaces.size() == 0) {
-        status_message(STATUS_LEVEL_EMERGENCY, "No wifibroadcast interfaces available");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "No wifibroadcast interfaces available");
         throw std::runtime_error("no wifibroadcast interfaces available");
     }
 
@@ -262,7 +262,7 @@ stream_pair Streams::start_telemetry_stream(Stream stream) {
     auto broadcast_interfaces = broadcast_card_names();
     
     if (broadcast_interfaces.size() == 0) {
-        status_message(STATUS_LEVEL_EMERGENCY, "No wifibroadcast interfaces available");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "No wifibroadcast interfaces available");
         throw std::runtime_error("no wifibroadcast interfaces available");
     }
 

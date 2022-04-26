@@ -139,7 +139,7 @@ void Router::configure() {
 
             save_settings(settings_file);
         } catch (std::exception &ex) {
-            status_message(STATUS_LEVEL_EMERGENCY, "Telemetry settings save failed");
+            ohd_log(STATUS_LEVEL_EMERGENCY, "Telemetry settings save failed");
         }
     }
 

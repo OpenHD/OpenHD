@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
 
     const char* message = argv[1];
 
-    status_message((STATUS_LEVEL)level, message);
+    ohd_log((STATUS_LEVEL)level, message);
     
     return 0;
 }

@@ -47,7 +47,7 @@ void MavlinkControl::process_manifest() {
 
     } catch (std::exception &ex) {
         // don't do anything, but send an error message to the user through the status service
-        status_message(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
         std::cerr << "MavlinkControl::process_manifest: " << ex.what() << std::endl;
         return;
     }
@@ -60,7 +60,7 @@ void MavlinkControl::command_done() {
 
 
 void MavlinkControl::command_failed() {
-    status_message(STATUS_LEVEL_ALERT, "Video control command failed");
+    ohd_log(STATUS_LEVEL_ALERT, "Video control command failed");
 }
 
 
