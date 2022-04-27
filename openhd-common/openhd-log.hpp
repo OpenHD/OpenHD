@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include "openhd-global-constants.h"
+
 /**
  * This provides convenient methods to send log messages from any service running on the air or ground unit to a final output deice,
  * for example QOpenHD.
@@ -72,7 +74,7 @@ inline void ohd_log(STATUS_LEVEL level, std::string message) {
     memset(&servaddr, 0, sizeof(servaddr)); 
       
     servaddr.sin_family = AF_INET; 
-    servaddr.sin_port = htons(50000); 
+    servaddr.sin_port = htons(OHD_LOCAL_LOG_MESSAGES_UDP_PORT);
     inet_aton("127.0.0.1", (in_addr*)&servaddr.sin_addr.s_addr);
 
     int n, len; 
