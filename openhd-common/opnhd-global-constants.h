@@ -11,7 +11,7 @@
 // which would lead to error-prone code.
 
 // The ground station wifibroadcast instance(s) send data to the ground rx port
-// and listen for data on the grount tx port.
+// and listen for data on the ground tx port.
 // Note that the ports for the air unit are just reversed - this way, one can either run
 // the telemetry service on the same system in 2 instances and they talk to each other,
 // or run it on 2 different systems with wifibroadcast in between.
