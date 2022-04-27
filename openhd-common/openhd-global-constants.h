@@ -21,7 +21,7 @@ static_assert(OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX != OHD_TELEME
 // The radio_port in wifibroadcast
 static constexpr auto OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID=3;
 static constexpr auto OHD_TELEMETRY_WIFIBROADCAST_RF_TX_PORT_ID=4;
-static_assert(OHD_TELEMETRY_RF_RX_PORT_ID!= OHD_TELEMETRY_RF_TX_PORT_ID,"Must be different");
+static_assert(OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID!= OHD_TELEMETRY_WIFIBROADCAST_RF_TX_PORT_ID,"Must be different");
 
 // Where any service can send log messages to
 static constexpr auto OHD_LOCAL_LOG_MESSAGES_UDP_PORT=50000;
