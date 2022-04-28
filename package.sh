@@ -79,14 +79,6 @@ mkdir -p ${PKGDIR}/usr/local/share/wifibroadcast-scripts || exit 1
 
 
 build_source() {
-    pushd lib/fmt
-    rm -r build
-    mkdir -p build
-    pushd build
-    cmake ../
-    make -j3 || exit 1
-    popd
-    popd
 
     pushd openhd-system
     make clean
