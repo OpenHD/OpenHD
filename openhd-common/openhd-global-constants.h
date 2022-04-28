@@ -40,6 +40,7 @@ static_assert(OHD_VIDEO_AIR_VIDEO_STREAM_1 != OHD_VIDEO_AIR_VIDEO_STREAM_2,"Must
 // I don't see a reason why not to use the same port the video is sent locally - it makes debugging much easier,
 // aka for debugging one could theoretically just start QOpenHD on the air pi lol ;)
 static constexpr auto OHD_VIDEO_GROUND_VIDEO_STREAM_1=5620;
-static constexpr auto OHD_VIDEO_GROUND_VIDEO_STREAM_1=5621;
+static constexpr auto OHD_VIDEO_GROUND_VIDEO_STREAM_2=5621;
+static_assert(OHD_VIDEO_GROUND_VIDEO_STREAM_1 != OHD_VIDEO_GROUND_VIDEO_STREAM_2,"Must be different");
 
 #endif //OPEN_HD_OPNHD_GLOBAL_CONSTANTS_H
