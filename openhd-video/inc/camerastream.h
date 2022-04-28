@@ -19,6 +19,9 @@
  * 3) If the user changes camera parameters, it should store these changes locally (such that they are also set after the next
  * re-start) and apply the changes. It is no problem to just restart the underlying camera/encoding process with the new parameters.
  * 4) The implementation(s) should report if changing the various parameters is possible.
+ *
+ * TODO for performance, we probably want to get rid of the UDP port(s) here and instead go with a raw data callback
+ * that can be dynamically added and does the bridge to wifibroadcast.
  */
 class CameraStream {
 public:
