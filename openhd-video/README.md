@@ -1,3 +1,9 @@
+## FOR NOW:
+Relies on two unidirectional links (direction: air pi to ground pi) setup by openhd-interface.
+(One link for primary video down, one link for secondary video down)
+
+## Old notes
+
 I think this module needs to be (re-written) just as mavlink telemetry, it is too complex in my opinion.
 
 Why is it too complex: It breaks the biggest and most usefully paradigm of our old OpenHD releases:
