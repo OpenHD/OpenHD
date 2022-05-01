@@ -34,11 +34,13 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         #src/endpoints/WBEndpoint.cpp
         src/ohd_telemetry/InternalTelemetry.cpp)
 
-add_executable(XMavlinkService src/main.cpp
+# The main service that is run on OpenHD
+add_executable(openhd_telemetry src/main.cpp
         ${ALL_TELEMETRY_SOURCE_FILES})
 
-target_link_libraries(XMavlinkService ${USED_LIBS})
+target_link_libraries(openhd_telemetry ${USED_LIBS})
 
+# All the test files for development
 add_executable(SerialEndpointTest tests/test_serial_endpoint.cpp
         src/endpoints/SerialEndpoint.cpp)
 target_link_libraries(SerialEndpointTest ${USED_LIBS})
@@ -57,9 +59,7 @@ target_link_libraries(OHDRebootTest ${USED_LIBS})
 add_executable(test_generate_log_message tests/test_generate_log_message.cpp)
 target_link_libraries(test_generate_log_message ${USED_LIBS})
 
-#####
 add_executable(ServicesLocallyTest tests/test_services_locally.cpp
         ${ALL_TELEMETRY_SOURCE_FILES})
-
 target_link_libraries(ServicesLocallyTest ${USED_LIBS})
 #####
