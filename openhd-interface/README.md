@@ -9,8 +9,7 @@ Hmm, I think this service also starts the wfb_tx / wfb_rx instances.
 
 I think it is possible to have this service constrained by "run once at startup, then never again" paradigm.
 
-## For now, this module must setup the following wifibroadcast links, since they are needed by openhd-telemetry
-## and openhd-video:
+## For now, this module must setup the following wifibroadcast links, since they are needed by openhd-telemetry and openhd-video:
 
 1) Bidirectional link made up of 2 wifibroadcast instances for telemetry up / down, both on air and ground
 2) 2 Unidirectional links for video down from air pi to ground pi (primary and secondary video stream)
