@@ -14,7 +14,7 @@ include(../lib/wifibroadcast/WBLib.cmake)
 include_directories(lib/c_library_v2_openhd)
 
 # include the general openhd stuff
-include_directories(../openhd-commonp)
+include_directories(../openhd-common)
 
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
