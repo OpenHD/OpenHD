@@ -11,7 +11,7 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 include(../lib/wifibroadcast/WBLib.cmake)
 
 # include mavlink (header-only)
-include_directories(lib/c_library_v2_openhd)
+include_directories(../lib/c_library_v2_openhd)
 
 # include the general openhd stuff
 include_directories(../openhd-common)

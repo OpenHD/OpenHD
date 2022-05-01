@@ -15,6 +15,7 @@
 #include <netinet/in.h> 
 
 #include <string>
+#include <iostream>
 
 #include "openhd-global-constants.h"
 
