@@ -1,3 +1,6 @@
 [submodule "lib/wifibroadcast"]
 	path = lib/wifibroadcast
 	url = git@github.com:Consti10/wifibroadcast.git
+[submodule "lib/mavlink"]
+	path = lib/mavlink
+	url = git@github.com:OpenHD/mavlink.git

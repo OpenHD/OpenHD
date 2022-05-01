@@ -3,7 +3,7 @@
 // With telemetry service running, generate a log message that most likely will show up somewhere (lossy)
 //
 
-#include "../src/tmp/openhd-log.hpp"
+#include "openhd-log.hpp"
 
 int main() {
     ohd_log(STATUS_LEVEL_EMERGENCY,"Test log message\n");

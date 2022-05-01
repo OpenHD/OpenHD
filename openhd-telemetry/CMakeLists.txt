@@ -8,10 +8,13 @@ set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
 # Build and include wifibroadcast
-include(lib/wifibroadcast/WBLib.cmake)
+include(../lib/wifibroadcast/WBLib.cmake)
 
 # include mavlink (header-only)
 include_directories(lib/c_library_v2_openhd)
+
+# include the general openhd stuff
+include_directories(../openhd-commonp)
 
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
