@@ -29,23 +29,11 @@ ENDIF(Boost_FOUND)
 SET(OHD_VIDEO_USED_LIBS ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
 
 # FUCKING GSTREAMER !! begin
-find_package(PkgConfig)
-pkg_search_module(GLIB REQUIRED glib-2.0)
-#include(cmake/FindGstreamer.cmake)
-#include_directories(${GSTREAMER_INCLUDE_DIR})
-#SET(USED_LIBS ${USED_LIBS} ${GSTREAMER_LIBRARY})
-pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
-pkg_check_modules(GST_APP REQUIRED gstreamer-app-1.0)
-pkg_check_modules(GST_VIDEO REQUIRED gstreamer-video-1.0)
-SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} ${GST_APP_LIBRARIES} ${GST_VIDEO_LIBRARIES})
-include_directories(${GSTREAMER_INCLUDE_DIR})
-link_directories(${GSTLIBS_LIBRARY_DIRS})
-include_directories(
-        /usr/lib/x86_64-linux-gnu/glib-2.0/include
-        /usr/include/glib-2.0
-        /usr/local/include/gstreamer-1.0
-        /usr/local/include/libsoup-2.4
-        /usr/local/include/json-glib-1.0)
+find_package(PkgConfig REQUIRED)
+pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
+        gstreamer-sdp-1.0>=1.4
+        gstreamer-video-1.0>=1.4
+        gstreamer-app-1.0>=1.4)
 # FUCKING GSTREAMER !! end
 find_package(fmt)
 SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} fmt::fmt)
@@ -67,3 +55,6 @@ SET(ALL_VIDEO_SOURCE_FILES
 add_executable(openhd_video src/main.cpp
         ${ALL_VIDEO_SOURCE_FILES})
 target_link_libraries(openhd_video ${OHD_VIDEO_USED_LIBS})
+
+target_include_directories(openhd_video PRIVATE ${GST_INCLUDE_DIRS})
+target_link_libraries(openhd_video ${GST_LIBRARIES})
