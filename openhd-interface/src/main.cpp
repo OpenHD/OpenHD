@@ -65,8 +65,7 @@ int main(int argc, char *argv[]) {
 
     // fake it for the moment so the service doesn't exit, won't be needed once the microservice channel is wired in
     boost::asio::io_service::work work(io_service);
-    
-    //TODO link, otherwise services running after won't be notified
+
     sd_notify(0, "READY=1");
 
     io_service.run();
