@@ -9,7 +9,7 @@
 #include <boost/bind.hpp>
 #include <boost/signals2.hpp>
 
-#include <systemd/sd-daemon.h>
+//#include <systemd/sd-daemon.h>
 
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
@@ -117,7 +117,8 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    sd_notify(0, "READY=1");
+    // TODO fix
+    //sd_notify(0, "READY=1");
     std::cerr << "Video ready" << std::endl;
 
     io_service.run();
