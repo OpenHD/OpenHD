@@ -1,4 +1,0 @@
-/home/consti10/Downloads/clion-2020.3/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_DEPENDS_USE_COMPILER=FALSE -G "CodeBlocks - Unix Makefiles" /home/consti10/Desktop/Open.HD/OpenHD
--- Configuring done
--- Generating done
--- Build files have been written to: /home/consti10/Desktop/Open.HD/OpenHD/cmake-build-debug
