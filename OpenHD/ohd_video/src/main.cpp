@@ -19,7 +19,7 @@
 #include "hotspot.h"
 //#include "record.h"
 #include "cameramicroservice.h"
-
+#include "OHDVideo.h"
 
 #include "json.hpp"
 
@@ -58,65 +58,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "EX: " << ex.what() << std::endl;
     }
 
-    Control *control;
-    Hotspot *hotspot1;
-    Hotspot *hotspot2;
-    Hotspot *hotspot3;
-    Hotspot *hotspot4;
-
-    if (!is_air) {
-        control = new Control(io_service);
-
-        try {
-            control->setup();
-        } catch (std::exception &exception) {
-            std::cout << "Control setup failed: " << exception.what() << std::endl;
-            exit(1);
-        }
-        
-        hotspot1 = new Hotspot(io_service, 5620);
-        hotspot2 = new Hotspot(io_service, 5621);
-        hotspot3 = new Hotspot(io_service, 5622);
-        hotspot4 = new Hotspot(io_service, 5623);
-
-        control->command_received.connect(boost::bind(&Hotspot::command_received, hotspot1, _1));
-        control->command_received.connect(boost::bind(&Hotspot::command_received, hotspot2, _1));
-        control->command_received.connect(boost::bind(&Hotspot::command_received, hotspot3, _1));
-        control->command_received.connect(boost::bind(&Hotspot::command_received, hotspot4, _1));
-    }
-
-
-    //MavlinkControl mavlink_control(io_service, platform_type);
-    //Record record(io_service);
-
-    //mavlinkcontrol.armed.connect(&record.set_armed);
-    //mavlinkcontrol.rc_channels.connect(&record.set_rc_channels);
-
-
-    try {
-        //mavlink_control.setup();
-    } catch (std::exception &exception) {
-        std::cout << "Microservice connection failed: " << exception.what() << std::endl;
-        exit(1);
-    }
-
-    CameraMicroservice * camera_microservice;
-
-    try {
-        //record.setup();
-
-        if (is_air) {
-            camera_microservice = new CameraMicroservice(io_service, platform_type, is_air, unit_id);
-            camera_microservice->setup();
-        }
-    } catch (std::exception &ex) {
-        std::cerr << "Error: " << ex.what() << std::endl;
-        exit(1);
-    } catch (...) {
-        std::cerr << "Unknown exception occurred" << std::endl;
-        exit(1);
-    }
-
+    OHDVideo ohdVideo(io_service,is_air,unit_id,platform_type);
     // TODO fix
     //sd_notify(0, "READY=1");
     std::cerr << "Video ready" << std::endl;

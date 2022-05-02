@@ -49,7 +49,13 @@ SET(ALL_VIDEO_SOURCE_FILES
         src/gstreamerstream.cpp
         src/hotspot.cpp
         src/mavlinkcontrol.cpp
-        src/seekstream.cpp)
+        src/seekstream.cpp
+        src/OHDVideo.cpp)
+
+#add_library(OHDVideoLib
+#        SHARED
+#        ${ALL_})
+#target_link_libraries(OHDInterfaceLib ${INTERFACE_USED_BOOST_LIBRARIES})
 
 # The main service that is run on OpenHD
 add_executable(openhd_video src/main.cpp
