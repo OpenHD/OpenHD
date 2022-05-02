@@ -4,7 +4,7 @@
 #include <iterator>
 #include <exception>
 
-#include <systemd/sd-daemon.h>
+//#include <systemd/sd-daemon.h>
 
 #include "platform.h"
 #include "cameras.h"
@@ -94,7 +94,8 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    sd_notify(0, "READY=1");
+    // TODO re-enable
+    //sd_notify(0, "READY=1");
 
     return 0;
 }
