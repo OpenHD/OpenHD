@@ -29,9 +29,6 @@ GStreamerStream::GStreamerStream(boost::asio::io_service &io_service,
                                  uint16_t port)
     : CameraStream(io_service, platform, camera, port) {
     std::cerr << "GStreamerStream::GStreamerStream()" << std::endl;
-
-    setup();
-    start();
 }
 
 

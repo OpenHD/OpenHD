@@ -170,6 +170,8 @@ void CameraMicroservice::configure(Camera &camera) {
         case CameraTypeUVC:
         case CameraTypeV4L2Loopback: {
             auto stream=std::make_unique<GStreamerStream>(m_io_service, m_platform_type, camera, m_base_port + camera.index);
+            stream->setup();
+            stream->start();
             m_camera_streams.push_back(std::move(stream));
             break;
         }

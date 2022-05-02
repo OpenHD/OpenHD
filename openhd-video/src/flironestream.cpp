@@ -21,9 +21,6 @@ FlirOneStream::FlirOneStream(boost::asio::io_service &io_service,
                              Camera camera, 
                              uint16_t port)
     : CameraStream(io_service, platform, camera, port) {
-
-    setup();
-    start();
 }
 
 
