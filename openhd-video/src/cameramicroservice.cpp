@@ -202,7 +202,7 @@ void CameraMicroservice::process_mavlink_message(mavlink_message_t msg) {
                 return;
             }
 
-            switch (command.command) {
+            /*switch (command.command) {
                 case OPENHD_CMD_GET_CAMERA_SETTINGS: {
                     uint8_t brightness = 128; //(uint8_t)settings.value("brightness", 128).toUInt();
                     uint8_t contrast   = 128; //(uint8_t)settings.value("contrast", 128).toUInt();
@@ -250,9 +250,9 @@ void CameraMicroservice::process_mavlink_message(mavlink_message_t msg) {
                     break;
                 }
                 case OPENHD_CMD_SET_CAMERA_SETTINGS: {
-                    /* this is how you would store a setting for the component when
-                     * replying to a settings request
-                     */
+                    // this is how you would store a setting for the component when
+                    //  replying to a settings request
+                    //
                     //QSettings settings;
                     //settings.beginGroup("OpenHDCamera");
 
@@ -286,7 +286,7 @@ void CameraMicroservice::process_mavlink_message(mavlink_message_t msg) {
                 default: {
                     break;
                 }
-            }
+            }*/
             break;
         }
         default: {

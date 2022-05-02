@@ -2,7 +2,7 @@
 SRC_DIR = $(PWD)/src
 LIB_DIR = $(PWD)/lib
 
-CFLAGS = -I$(PWD)/../lib/fmt/include  -I$(PREFIX)/include -I$(PWD)/inc -I$(PWD)/../openhd-common -I$(PWD)/../lib/mavlink_generated/include/mavlink/v2.0 `pkg-config --cflags gstreamer-base-1.0`
+CFLAGS = -I$(PWD)/../lib/fmt/include  -I$(PREFIX)/include -I$(PWD)/inc -I$(PWD)/../openhd-common -I$(PWD)/../lib/c_library_v2_openhd `pkg-config --cflags gstreamer-base-1.0`
 
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local
