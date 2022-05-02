@@ -31,6 +31,17 @@
 typedef struct {
     uint8_t level;
     uint8_t message[50];
+    bool verifyNullTerminator()const{
+        // check if the string has a null-terminator
+        bool nullTerminatorFound=false;
+        for(const auto& i : message){
+            if(i=='\0'){
+                nullTerminatorFound= true;
+                break;
+            }
+        }
+        return nullTerminatorFound;
+    }
 } __attribute__((packed)) localmessage_t;
 
 

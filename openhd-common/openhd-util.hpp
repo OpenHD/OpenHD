@@ -1,8 +1,13 @@
 #ifndef OPENHD_UTIL_H
 #define OPENHD_UTIL_H
 
+// OpenHD stuff
+#include "json.hpp"
+using json = nlohmann::json;
 
 #include <boost/process.hpp>
+
+#include "openhd-log.hpp"
 
 inline std::string to_uppercase(std::string input) {
     for (std::string::iterator it = input.begin(); it != input.end(); ++ it) {

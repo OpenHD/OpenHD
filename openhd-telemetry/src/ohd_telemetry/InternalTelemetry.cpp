@@ -94,23 +94,20 @@ void InternalTelemetry::processLogMessageData(const uint8_t* data,std::size_t da
     if (dataLen == sizeof(localmessage_t)) {
         localmessage_t local_message;
         memcpy((uint8_t*)&local_message, data, dataLen);
-        // check if the string has a null-terminator
-        bool nullTerminatorFound=false;
-        for(auto i : local_message.message){
-            if(i=='\0'){
-                nullTerminatorFound= true;
-                break;
-            }
-        }
+        const auto nullTerminatorFound=local_message.verifyNullTerminator();
         if(!nullTerminatorFound){
             std::cerr<<"Log message without null terminator\n";
             return;
         }
-        std::lock_guard<std::mutex> guard(bufferedLogMessagesLock);
-        bufferedLogMessages.push(local_message);
+        processLogMessage(local_message);
     }else{
         std::cerr<<"Invalid size for local log message\n";
     }
+}
+
+void InternalTelemetry::processLogMessage(localmessage_t msg) {
+    std::lock_guard<std::mutex> guard(bufferedLogMessagesLock);
+    bufferedLogMessages.push(msg);
 }
 
 
