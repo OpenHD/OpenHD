@@ -22,8 +22,9 @@ IF(Boost_FOUND)
     LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 ENDIF(Boost_FOUND)
 
-# hmmm
+# for the sd_notify
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lsystemd")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lsystemd-daemon")
 
 SET(USED_LIBS ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
 

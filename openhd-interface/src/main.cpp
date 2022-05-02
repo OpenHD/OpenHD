@@ -4,7 +4,7 @@
 #include <iterator>
 #include <exception>
 
-#include <systemd/sd-daemon.h>
+//#include <systemd/sd-daemon.h>
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
@@ -66,7 +66,8 @@ int main(int argc, char *argv[]) {
     // fake it for the moment so the service doesn't exit, won't be needed once the microservice channel is wired in
     boost::asio::io_service::work work(io_service);
 
-    sd_notify(0, "READY=1");
+    // TODO !!! service notify
+    //sd_notify(0, "READY=1");
 
     io_service.run();
 
