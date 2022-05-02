@@ -22,6 +22,9 @@ IF(Boost_FOUND)
     LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 ENDIF(Boost_FOUND)
 
+# hmmm
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
 SET(USED_LIBS ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
 
 SET(ALL_INTERFACE_SOURCE_FILES
@@ -32,3 +35,4 @@ SET(ALL_INTERFACE_SOURCE_FILES
 # The main service that is run on OpenHD
 add_executable(openhd_interface src/main.cpp
         ${ALL_INTERFACE_SOURCE_FILES})
+target_link_libraries(openhd_interface ${USED_LIBS})
