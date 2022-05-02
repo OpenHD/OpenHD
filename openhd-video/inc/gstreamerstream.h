@@ -18,7 +18,7 @@ class GStreamerStream: public CameraStream {
 public:
     GStreamerStream(boost::asio::io_service &io_service, PlatformType platform, Camera &camera, uint16_t port);
 
-    void setup();
+    void setup() override;
 
     void setup_raspberrypi_csi();
     void setup_raspberrypi_veye();
@@ -30,21 +30,27 @@ public:
     void setup_ip_camera();
 
 
-    void start();
-    void stop();
+    void start() override;
+    void stop() override;
     void debug();
     
-    bool supports_cbr();
-    bool get_cbr();
-    void set_cbr(bool enable);
+    bool supports_cbr() override;
+    bool get_cbr() {
+        return false;
+    }
 
-    bool supports_bitrate();
-    std::string get_bitrate();
-    void set_bitrate(int bitrate);
+    void set_cbr(bool enable) override;
 
-    std::vector<std::string> get_supported_formats();
-    std::string get_format();
-    void set_format(std::string format);
+    bool supports_bitrate() override;
+    std::string get_bitrate() {
+        return std::string();
+    }
+
+    void set_bitrate(int bitrate) override;
+
+    std::vector<std::string> get_supported_formats() override;
+    std::string get_format() override;
+    void set_format(std::string format) override;
 
     std::string get_brightness();
     void set_brightness(std::string);

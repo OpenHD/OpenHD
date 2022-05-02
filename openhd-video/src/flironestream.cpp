@@ -54,6 +54,7 @@ void FlirOneStream::stop() {
 
 bool FlirOneStream::supports_bitrate() {
     std::cerr << "FlirOneStream::supports_bitrate()" << std::endl;
+    return false;
 }
 
 
@@ -64,6 +65,7 @@ void FlirOneStream::set_bitrate(int bitrate) {
 
 bool FlirOneStream::supports_cbr() {
     std::cerr << "FlirOneStream::supports_cbr()" << std::endl;
+    return false;
 }
 
 
@@ -74,11 +76,13 @@ void FlirOneStream::set_cbr(bool enable) {
 
 std::vector<std::string> FlirOneStream::get_supported_formats() {
     std::cerr << "FlirOneStream::get_supported_formats()" << std::endl;
+    return {};
 }
 
 
 std::string FlirOneStream::get_format() {
     std::cerr << "FlirOneStream::get_format()" << std::endl;
+    return {};
 }
 
 

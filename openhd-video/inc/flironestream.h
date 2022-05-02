@@ -18,20 +18,20 @@ class FlirOneStream: public CameraStream {
 public:
     FlirOneStream(boost::asio::io_service &io_service, PlatformType platform, Camera camera, uint16_t port);
 
-    void setup();
+    void setup() override;
 
-    void start();
-    void stop();
+    void start() override;
+    void stop() override;
 
-    bool supports_bitrate();
-    void set_bitrate(int bitrate);
+    bool supports_bitrate() override;
+    void set_bitrate(int bitrate) override;
 
-    bool supports_cbr();
-    void set_cbr(bool enable);
+    bool supports_cbr() override;
+    void set_cbr(bool enable) override;
 
-    std::vector<std::string> get_supported_formats();
-    std::string get_format();
-    void set_format(std::string format);
+    std::vector<std::string> get_supported_formats() override;
+    std::string get_format() override;
+    void set_format(std::string format) override;
 };
 
 #endif

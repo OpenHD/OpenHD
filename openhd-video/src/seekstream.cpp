@@ -53,6 +53,7 @@ void SeekStream::stop() {
 
 bool SeekStream::supports_bitrate() {
     std::cerr << "SeekStream::supports_bitrate()" << std::endl;
+    return false;
 }
 
 
@@ -63,6 +64,7 @@ void SeekStream::set_bitrate(int bitrate) {
 
 bool SeekStream::supports_cbr() {
     std::cerr << "SeekStream::supports_cbr()" << std::endl;
+    return false;
 }
 
 
@@ -73,11 +75,13 @@ void SeekStream::set_cbr(bool enable) {
 
 std::vector<std::string> SeekStream::get_supported_formats() {
     std::cerr << "SeekStream::get_supported_formats()" << std::endl;
+    return {};
 }
 
 
 std::string SeekStream::get_format() {
     std::cerr << "SeekStream::get_format()" << std::endl;
+    return {};
 }
 
 

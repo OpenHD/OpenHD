@@ -6,6 +6,7 @@
 #include <array>
 #include <stdexcept>
 #include <vector>
+#include <memory>
 
 #include <boost/asio.hpp>
 
@@ -33,7 +34,8 @@ public:
     void configure(Camera &camera);
 
 private:
-    std::vector<CameraStream> m_camera_streams;
+    //std::vector<CameraStream> m_camera_streams;
+    std::vector<std::unique_ptr<CameraStream>> m_camera_streams;
 
     std::vector<Camera> m_cameras;
 

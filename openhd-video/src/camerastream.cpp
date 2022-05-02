@@ -26,7 +26,7 @@ CameraStream::CameraStream(boost::asio::io_service &io_service,
     m_video_port(port) {}
 
 
-void CameraStream::setup() {}
+/*void CameraStream::setup() {}
 void CameraStream::start() {}
 void CameraStream::stop() {}
 bool CameraStream::supports_bitrate() { return false; }
@@ -35,5 +35,5 @@ bool CameraStream::supports_cbr() { return false; }
 void CameraStream::set_cbr(bool enable) {}
 std::vector<std::string> CameraStream::get_supported_formats() {}
 std::string CameraStream::get_format() {}
-void CameraStream::set_format(std::string format) {}
+void CameraStream::set_format(std::string format) {}*/
 

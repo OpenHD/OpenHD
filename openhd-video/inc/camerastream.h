@@ -27,31 +27,32 @@ class CameraStream {
 public:
     CameraStream(boost::asio::io_service &io_service, PlatformType platform, Camera &camera, uint16_t port);
 
-    virtual void setup();
+    // It is a good common programming practice to make them pure virtual
+    virtual void setup()=0;
 
-    virtual void start();
-    virtual void stop();
+    virtual void start()=0;
+    virtual void stop()=0;
 
     // expected as bits per second
-    virtual bool supports_bitrate();
-    virtual void set_bitrate(int bitrate);
+    virtual bool supports_bitrate()=0;
+    virtual void set_bitrate(int bitrate)=0;
 
     // not supported by every encoder, some USB cameras can do it but only with custom commands
-    virtual bool supports_cbr();
-    virtual void set_cbr(bool enable);
+    virtual bool supports_cbr()=0;
+    virtual void set_cbr(bool enable)=0;
 
     // expected to be widthXheight@fps format
-    std::vector<std::string> get_supported_formats();
-    virtual std::string get_format();
-    virtual void set_format(std::string format);
+    virtual std::vector<std::string> get_supported_formats()=0;
+    virtual std::string get_format()=0;
+    virtual void set_format(std::string format)=0;
 
 protected:
     boost::asio::io_service &m_io_service;
 
-    PlatformType m_platform_type;
+    const PlatformType m_platform_type;
     Camera &m_camera;
 
-    uint16_t m_video_port;
+    const uint16_t m_video_port;
 
     bool m_enable_videotest = false;
 };
