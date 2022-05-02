@@ -35,8 +35,8 @@ include_directories(${LIBUSB_1_INCLUDE_DIRS})
 SET(USED_LIBS ${USED_LIBS} ${LIBUSB_1_LIBRARIES})
 #
 include(cmake/FindV4L2.cmake)
-include_directories(${V4L2_LIBRARY})
-SET(USED_LIBS ${USED_LIBS} ${V4L2_INCLUDE_DIR})
+include_directories(${V4L2_INCLUDE_DIR})
+SET(USED_LIBS ${USED_LIBS} ${V4L2_LIBRARY})
 
 # TODO make nice
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lsystemd")

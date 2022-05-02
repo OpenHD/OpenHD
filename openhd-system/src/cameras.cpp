@@ -353,10 +353,8 @@ void Cameras::probe_v4l2_device(std::string device) {
 
 bool Cameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, std::string node) {
     std::cerr << "Cameras::process_video_node(" << node << ")" << std::endl;
-    // TODO fx comp issue
-    return false;
 
-    /*int fd;
+    int fd;
     if ((fd = v4l2_open(node.c_str(), O_RDWR)) == -1) {
         std::cerr << "Can't open: " << node << std::endl;
         return false;
@@ -383,13 +381,13 @@ bool Cameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, std::
         camera.type = CameraTypeV4L2Loopback;
         std::cerr << "Found v4l2 loopback camera (likely a thermal camera)" << std::endl;
     } else {
-        //
-        //This is primarily going to be the bcm2835-v4l2 interface on the Pi, and non-camera interfaces.
-        //
-        //We don't want to use the v4l2 interface to the CSI hardware on Raspberry Pi yet, it offers no
-        //advantage over the mmal interface and doesn't offer the same image controls. Once libcamera is
-        //being widely used this will be the way to support those cameras, but not yet.
-        ///
+        /*
+         * This is primarily going to be the bcm2835-v4l2 interface on the Pi, and non-camera interfaces.
+         *
+         * We don't want to use the v4l2 interface to the CSI hardware on Raspberry Pi yet, it offers no
+         * advantage over the mmal interface and doesn't offer the same image controls. Once libcamera is
+         * being widely used this will be the way to support those cameras, but not yet.
+         */
         return false;
     }
 
@@ -470,7 +468,7 @@ bool Cameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, std::
 
     v4l2_close(fd);
 
-    return true;*/
+    return true;
 }
 
 
