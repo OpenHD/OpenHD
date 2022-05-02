@@ -12,6 +12,9 @@ include_directories(../openhd-common)
 
 include_directories(inc)
 
+# find and include wifibroacast, this module sets up the links
+include(../lib/wifibroadcast/WBLib.cmake)
+
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
 SET(Boost_USE_STATIC_LIBS OFF)

@@ -34,6 +34,10 @@ public:
 
     std::vector<std::string> broadcast_card_names();
 
+    /**
+     * Set the wifi cards fund on the system, needs to be called before configure().
+     * @param cards the wifi cards on the system
+     */
     void set_broadcast_cards(std::vector<WiFiCard> cards);
 
     stream_pair start_telemetry_stream(Stream stream);
