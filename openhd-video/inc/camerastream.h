@@ -25,6 +25,13 @@
  */
 class CameraStream {
 public:
+    /**
+     * After a camera stream is constructed, it won't start streaming until setup() and start() are called
+     * @param io_service
+     * @param platform
+     * @param camera
+     * @param port
+     */
     CameraStream(boost::asio::io_service &io_service, PlatformType platform, Camera &camera, uint16_t port);
 
     // It is a good common programming practice to make them pure virtual
