@@ -33,11 +33,11 @@ public:
 private:
     boost::asio::io_service &m_io_service;
 
-    bool m_is_air = false;
+    const bool m_is_air = false;
 
     bool m_hotspot_configured = false;
 
-    std::string m_unit_id;
+    const std::string m_unit_id;
 
     // todo: read from settings file once new settings system merged
     std::string m_ethernet_hotspot_address = "192.168.3.1";

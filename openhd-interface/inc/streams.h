@@ -43,9 +43,9 @@ public:
 private:
     boost::asio::io_service &m_io_service;
 
-    std::string m_unit_id;
+    const std::string m_unit_id;
 
-    bool m_is_air = false;
+    const bool m_is_air = false;
 
     int m_bandwidth = 20;
     bool m_short_gi = false;
