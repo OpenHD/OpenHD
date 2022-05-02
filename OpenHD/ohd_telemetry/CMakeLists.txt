@@ -15,7 +15,7 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 include_directories(../lib/c_library_v2_openhd)
 
 # include the general openhd stuff
-include_directories(../openhd-common)
+include_directories(../ohd_common)
 
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost

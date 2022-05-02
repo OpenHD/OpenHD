@@ -4,6 +4,9 @@ project(OpenHD)
 add_subdirectory(lib)
 
 add_subdirectory(ohd_interface)
-#add_subdirectory(openhd-system)
-#add_subdirectory(openhd-telemetry)
-#add_subdirectory(openhd-video)
+add_subdirectory(ohd_system)
+#add_subdirectory(ohd_telemetry)
+add_subdirectory(ohd_video)
+
+add_executable(OpenHD main.cpp)
+#target_link_libraries(OpenHD)
