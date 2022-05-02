@@ -4,7 +4,7 @@
 #include <iterator>
 #include <exception>
 
-//#include <systemd/sd-daemon.h>
+#include <systemd/sd-daemon.h>
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     boost::asio::io_service::work work(io_service);
     
     //TODO link, otherwise services running after won't be notified
-    // sd_notify(0, "READY=1");
+    sd_notify(0, "READY=1");
 
     io_service.run();
 
