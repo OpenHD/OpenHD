@@ -1,0 +1,174 @@
+[root@RV1126_RV1109:/oem/usr]# ./benchmark -k 10
+Benchmark type: 0(ENCODE_ONLY)
+PacketSize: 1446 B
+FEC_K: 10
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:10 and percentage:50
+For a block size of k max this is (10:15) in old (K:N) terms.
+curr. Packets per second:5420 before FEC: 59.794Mbit/s after FEC: 89.691MBit/s
+curr. Packets per second:5440 before FEC: 60.0146Mbit/s after FEC: 90.022MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5415 before FEC: 59.7388Mbit/s after FEC: 89.6083MBit/s
+curr. Packets per second:5425 before FEC: 59.8492Mbit/s after FEC: 89.7738MBit/s
+curr. Packets per second:5400 before FEC: 59.5734Mbit/s after FEC: 89.36MBit/s
+curr. Packets per second:5440 before FEC: 60.0146Mbit/s after FEC: 90.022MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5420 before FEC: 59.794Mbit/s after FEC: 89.691MBit/s
+curr. Packets per second:5410 before FEC: 59.6837Mbit/s after FEC: 89.5255MBit/s
+curr. Packets per second:5410 before FEC: 59.6837Mbit/s after FEC: 89.5255MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5420 before FEC: 59.794Mbit/s after FEC: 89.691MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5410 before FEC: 59.6837Mbit/s after FEC: 89.5255MBit/s
+curr. Packets per second:5440 before FEC: 60.0146Mbit/s after FEC: 90.022MBit/s
+curr. Packets per second:5410 before FEC: 59.6837Mbit/s after FEC: 89.5255MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5460 before FEC: 60.2353Mbit/s after FEC: 90.3529MBit/s
+curr. Packets per second:5440 before FEC: 60.0146Mbit/s after FEC: 90.022MBit/s
+curr. Packets per second:5410 before FEC: 59.6837Mbit/s after FEC: 89.5255MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5440 before FEC: 60.0146Mbit/s after FEC: 90.022MBit/s
+curr. Packets per second:5420 before FEC: 59.794Mbit/s after FEC: 89.691MBit/s
+curr. Packets per second:5420 before FEC: 59.794Mbit/s after FEC: 89.691MBit/s
+curr. Packets per second:5400 before FEC: 59.5734Mbit/s after FEC: 89.36MBit/s
+curr. Packets per second:5410 before FEC: 59.6837Mbit/s after FEC: 89.5255MBit/s
+curr. Packets per second:5450 before FEC: 60.125Mbit/s after FEC: 90.1875MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5420 before FEC: 59.794Mbit/s after FEC: 89.691MBit/s
+curr. Packets per second:5410 before FEC: 59.6837Mbit/s after FEC: 89.5255MBit/s
+curr. Packets per second:5450 before FEC: 60.125Mbit/s after FEC: 90.1875MBit/s
+curr. Packets per second:5420 before FEC: 59.794Mbit/s after FEC: 89.691MBit/s
+curr. Packets per second:5440 before FEC: 60.0146Mbit/s after FEC: 90.022MBit/s
+curr. Packets per second:5420 before FEC: 59.794Mbit/s after FEC: 89.691MBit/s
+curr. Packets per second:5410 before FEC: 59.6837Mbit/s after FEC: 89.5255MBit/s
+curr. Packets per second:5450 before FEC: 60.125Mbit/s after FEC: 90.1875MBit/s
+curr. Packets per second:5420 before FEC: 59.794Mbit/s after FEC: 89.691MBit/s
+curr. Packets per second:5410 before FEC: 59.6837Mbit/s after FEC: 89.5255MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5440 before FEC: 60.0146Mbit/s after FEC: 90.022MBit/s
+curr. Packets per second:5420 before FEC: 59.794Mbit/s after FEC: 89.691MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5440 before FEC: 60.0146Mbit/s after FEC: 90.022MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5440 before FEC: 60.0146Mbit/s after FEC: 90.022MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+curr. Packets per second:5410 before FEC: 59.6837Mbit/s after FEC: 89.5255MBit/s
+curr. Packets per second:5450 before FEC: 60.125Mbit/s after FEC: 90.1875MBit/s
+curr. Packets per second:5420 before FEC: 59.794Mbit/s after FEC: 89.691MBit/s
+curr. Packets per second:5440 before FEC: 60.0146Mbit/s after FEC: 90.022MBit/s
+curr. Packets per second:5440 before FEC: 60.0146Mbit/s after FEC: 90.022MBit/s
+curr. Packets per second:5430 before FEC: 59.9043Mbit/s after FEC: 89.8565MBit/s
+TOTAL Packets per second:5427.2 before FEC: 59.8734Mbit/s after FEC: 89.8102MBit/s
+
+
+
+--------------------------------------------------------------------------------------------
+
+[root@RV1126_RV1109:/oem/usr]# ./benchmark -k 20
+Benchmark type: 0(ENCODE_ONLY)
+PacketSize: 1446 B
+FEC_K: 20
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:20 and percentage:50
+For a block size of k max this is (20:30) in old (K:N) terms.
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2681 before FEC: 29.5771Mbit/s after FEC: 44.3656MBit/s
+curr. Packets per second:2679 before FEC: 29.555Mbit/s after FEC: 44.3325MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2680 before FEC: 29.566Mbit/s after FEC: 44.3491MBit/s
+curr. Packets per second:2690 before FEC: 29.6764Mbit/s after FEC: 44.5145MBit/s
+curr. Packets per second:2690 before FEC: 29.6764Mbit/s after FEC: 44.5145MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+curr. Packets per second:2700 before FEC: 29.7867Mbit/s after FEC: 44.68MBit/s
+TOTAL Packets per second:2696.53 before FEC: 29.7484Mbit/s after FEC: 44.6227MBit/s
+
+appendix:
+freq 577.08 Mzhz (estimated):
+
+--- clocked at more freq ( I think max it can go):
+[root@RV1126_RV1109:/oem]# freq
+Runtime (seconds)     = 1.267429
+Instructions executed = 1000001536
+Estimated frequency   = 789.00 MHz
+
+--
+root@RV1126_RV1109:/oem/usr/bin]# ./benchmark
+TEST_MAIN has priority 0
+TEST_MAIN has policy 1 and priority 99
+Benchmark type: 0(FEC_ENCODE)
+PacketSize: 1446 B
+FEC_K: 10
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:10 and percentage:50
+For a block size of k max this is (10:15) in old (K:N) terms.
+curr. Packets per second:7350 before FEC_ENCODE: 81.086Mbit/s after FEC_ENCODE: 121.629MBit/s
+...
+curr. Packets per second:7310 before FEC_ENCODE: 80.6447Mbit/s after FEC_ENCODE: 120.967MBit/s
+Testing FEC_ENCODE took 60.138 seconds
+TOTAL Packets per second:7321.83 before FEC_ENCODE: 80.7752Mbit/s after FEC_ENCODE: 121.163MBit/s
+Performing FEC_BLOCK_ENCODE on 14.121094kB took 1.33991 ms on average
+This would equate to a throughput of: 82.3345 Mbit/s
+
+
+

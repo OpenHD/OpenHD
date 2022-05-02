@@ -1,0 +1,89 @@
+name: test pymavlink
+
+on: [push, pull_request]
+# paths:
+# - "*"
+# - "!README.md" <-- don't rebuild on doc change
+
+jobs:
+  build:
+
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false  # don't cancel if a job from the matrix fails
+      matrix:
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9, '3.10']
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest pytest-mock numpy
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          sudo apt update
+          sudo apt install -y libgtest-dev g++
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: '12'
+      - run: npm install
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub web ui editor is 127 chars wide
+          SELECT=C,E10,E11,E401,E502,E703,E8,E9,F,W191,W291,W292,W293,W391
+          flake8 . --count --exit-zero --select=${SELECT} --max-complexity=10 --max-line-length=127 --statistics
+      # NOTE: we must do all testing on the installed python package, not
+      # on the build tree. Otherwise the testing is invalid and may not
+      # indicate the code actually works
+      #
+      # Set pythonpath
+
+      # install
+      - name: Install mavlink message
+        run: |
+          git clone https://github.com/ArduPilot/mavlink.git
+          ln -s $PWD/mavlink/message_definitions ../
+
+      - name: Install pymavlink
+        run: |
+          python setup.py build install
+
+      - name: Generate messages
+        run: |
+          mavgen.py --lang='C'          --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=1.0 --strict-units
+          mavgen.py --lang='CS'         --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=1.0 --strict-units
+          mavgen.py --lang='JavaScript' --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=1.0 --strict-units
+          mavgen.py --lang='Python'     --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=1.0 --strict-units
+          mavgen.py --lang='WLua'       --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=1.0 --strict-units
+          mavgen.py --lang='ObjC'       --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=1.0 --strict-units
+          mavgen.py --lang='Swift'      --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=1.0 --strict-units
+          mavgen.py --lang='Java'       --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=1.0 --strict-units
+
+          mavgen.py --lang='C'          --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=2.0 --strict-units
+          mavgen.py --lang='CS'         --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=2.0 --strict-units
+          mavgen.py --lang='JavaScript' --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=2.0 --strict-units
+          mavgen.py --lang='TypeScript' --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=2.0 --strict-units
+          mavgen.py --lang='Python'     --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=2.0 --strict-units
+          mavgen.py --lang='WLua'       --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=2.0 --strict-units
+          mavgen.py --lang='ObjC'       --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=2.0 --strict-units
+          mavgen.py --lang='Swift'      --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=2.0 --strict-units
+          mavgen.py --lang='Java'       --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=2.0 --strict-units
+          mavgen.py --lang='C++11'      --output=/tmp/mavgen_test mavlink/message_definitions/v1.0/common.xml --wire-protocol=2.0 --strict-units # C++11 generator only supports 2.0
+
+      - name : Test generators
+        run: |
+          ./test_generator.sh
+
+      - name : Test NPM
+        run: |
+          cd generator/javascript && npm test
+
+      - name: Test with pytest
+        run: |
+          python -m pytest

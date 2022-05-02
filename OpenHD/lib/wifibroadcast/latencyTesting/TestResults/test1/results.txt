@@ -1,0 +1,96 @@
+5.3.21
+Used test environment 1:
+Ubuntu pc with aircrag-ng driver
+ASUS card as TX
+Taobao card as RX
+
+ez-wb tx setup as you can see from the script
+simple test program:
+sudo ./test -i 6100 -o 6000 -s 1446 -p 3000 -t 20
+
+=> Results, run Nr 1
+WANTED_PACKETS_PER_SECOND 3000 Got 3000.05
+BITRATE: 4.13711MB/s (33.0969MBit/s)
+N of packets sent | rec | diff [60000 | 59890 | 110]
+nReceivedPacketsWhereContentDoesntMatch 0
+LostPacketsSeqNrDiffs 3,2,2,2,2,2,2,2,2,3,2,2,2,2,2,2,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,2,2,2,2,2,2,2,2,3,2,2,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+------- Latency between (I<=>O) ------- 
+min=814.234009us max=31.474001ms avg=23.489000ms N samples=59890
+
+=> Results, run Nr 2:
+WANTED_PACKETS_PER_SECOND 3000 Got 3000.05
+BITRATE: 4.13711MB/s (33.0969MBit/s)
+N of packets sent | rec | diff [60000 | 59899 | 101]
+nReceivedPacketsWhereContentDoesntMatch 0
+LostPacketsSeqNrDiffs 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+------- Latency between (I<=>O) ------- 
+min=573.908997us max=31.489000ms avg=22.995001ms N samples=59899
+
+
+----------------------------------------------------------------------------
+simple test program:
+sudo ./test -i 6100 -o 6000 -s 1446 -p 2000 -t 20
+
+=> Results, run Nr 1
+WANTED_PACKETS_PER_SECOND 2000 Got 2000.05
+BITRATE: 2.75809MB/s (22.0648MBit/s)
+N of packets sent | rec | diff [40000 | 39999 | 1]
+nReceivedPacketsWhereContentDoesntMatch 0
+LostPacketsSeqNrDiffs 2,
+------- Latency between (I<=>O) ------- 
+min=488.497986us max=7.906000ms avg=1.286000ms N samples=39999
+
+=> Results, run Nr 2:
+ANTED_PACKETS_PER_SECOND 2000 Got 2000.05
+BITRATE: 2.75809MB/s (22.0647MBit/s)
+N of packets sent | rec | diff [40000 | 39997 | 3]
+nReceivedPacketsWhereContentDoesntMatch 0
+LostPacketsSeqNrDiffs 2,2,2,
+------- Latency between (I<=>O) ------- 
+min=504.160004us max=5.055000ms avg=1.270000ms N samples=39997
+
+Conclusion from test environment 1:
+22MBit/s seems to be the "sweet spot" here. 33MBit/s also "works", but latency increases
+
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Now same as above, but done on rpi cm4 usb ports:
+simple test program:
+sudo ./test -i 6100 -o 6000 -s 1446 -p 2000 -t 20
+
+since 33Mbit/s gave "almost issues" on ubuntu, here I am starting with the slower one:
+=> Results,run Nr 1:
+ANTED_PACKETS_PER_SECOND 2000 Got 2000.05
+BITRATE: 2.75809MB/s (22.0647MBit/s)
+N of packets sent | rec | diff [40000 | 2642 | 37358]
+nReceivedPacketsWhereContentDoesntMatch 0
+LostPacketsSeqNrDiffs 3,4,2,2,3,2,2,2,3,2,21,23,2,2,65,2,83,2,83,2,2,99,2,102,122,2,170,2,160,2,160,2,160,2,162,2,2,161,
+------- Latency between (I<=>O) ------- 
+min=788.083984us max=5.232000ms avg=1.627000ms N samples=2642
+Note: Worked fine in the beginning, then stopped working
+(that's where all the lost packets "in the end" come from)
+
+=> Results,run Nr 2:
+ANTED_PACKETS_PER_SECOND 2000 Got 2000.05
+BITRATE: 2.75809MB/s (22.0647MBit/s)
+N of packets sent | rec | diff [40000 | 0 | 40000]
+nReceivedPacketsWhereContentDoesntMatch 0
+LostPacketsSeqNrDiffs 
+------- Latency between (I<=>O) ------- 
+min=0ns max=0ns avg=0ns N samples=0
+
+Once broken, it doesn't work again, as you can see here.
+
+Plugging it out and back in, restarting tx and rx:
+=> Results,run Nr 3:
+ANTED_PACKETS_PER_SECOND 2000 Got 2000.05
+BITRATE: 2.75809MB/s (22.0647MBit/s)
+N of packets sent | rec | diff [40000 | 7148 | 32852]
+nReceivedPacketsWhereContentDoesntMatch 0
+LostPacketsSeqNrDiffs 6,24,51,37,3,12,2,4,8,10,17,2,26, ... (didn't copy since it goes on for ages)
+
+
+=> Results,run Nr 4:
+Okay, doesn't work again
+
+

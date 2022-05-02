@@ -1,0 +1,28 @@
+Aparently I was able to "catch a window" where RF noise is low. Here are a couple of runs,
+these are "so far" the best results I got.
+
+BW=20, MCS=7
+
+BITRATE: 4.13711MB/s (33.0969MBit/s)
+N of packets sent | rec | diff [60000 | 59998 | 2]
+nReceivedPacketsWhereContentDoesntMatch 0
+LostPacketsSeqNrDiffs 2,
+------- Latency between (I<=>O) ------- 
+min=528.327026us max=5.015000ms avg=1.436000ms N samples=59998
+
+33MBit/s with pretty much zero packet loss and no packet delays.
+So it is possible to get 33MBit/s with low latency if the rf interference is low.
+I strongly think that rf interference is noticable in 2 ways:
+a) packet loss
+b) increased latency, probably created at the TX queuing packets
+
+
+
+BITRATE: 4.68872MB/s (37.5098MBit/s)
+N of packets sent | rec | diff [68000 | 67999 | 1]
+nReceivedPacketsWhereContentDoesntMatch 0
+LostPacketsSeqNrDiffs 
+------- Latency between (I<=>O) ------- 
+min=578.356995us max=5.108000ms avg=2.190000ms N samples=67999
+
+Anything higher than 37 MBit/s and the latency increases greatly

@@ -1,0 +1,38 @@
+<?xml version='1.0'?>
+<mavlink>
+    <include>common.xml</include>
+    <include>ardupilotmega.xml</include>
+    <messages>
+        <message id="1210" name="OPENHD_SYSTEM_TELEMETRY">
+            <wip />
+            <description>Used for ground/air system load,current,and more</description>
+            <field type="uint8_t" name="cpuload">cpuload in percent</field>
+            <field type="uint8_t" name="temperature">temperature in degree</field>
+            <field type="uint8_t" name="reserved">reserved</field>
+        </message>
+        <message id="1211" name="OPENHD_WIFIBROADCAST_STATISTICS">
+            <wip />
+            <description>Wifibroadcast statistics for a uniqe WB stream</description>
+            <field type="uint8_t" name="radio_port">the unique stream ID this data refers to</field>
+            <field type="uint8_t" name="count_p_all">count_p_all</field>
+            <field type="uint8_t" name="count_p_bad">count_p_bad</field>
+            <field type="uint8_t" name="count_p_dec_err">count_p_dec_err</field>
+            <field type="uint8_t" name="count_p_dec_ok">count_p_dec_ok</field>
+            <field type="uint8_t" name="count_p_fec_recovered">count_p_fec_recovered</field>
+            <field type="uint8_t" name="count_p_lost">count_p_lost</field>
+        </message>
+
+        <message id="1260" name="OPENHD_LOG_MESSAGE">
+            <description>Log message for internal Open.HD components</description>
+            <field type="uint8_t" name="severity" enum="MAV_SEVERITY">severity level, relies on the definitions within RFC-5424.</field>
+            <field type="char[50]" name="text">status message, 49 character max length since it *must* be null-terminated</field>
+            <field type="uint64_t" name="timestamp">timestamp when message was originally generated</field>
+        </message>
+
+        <message id="1261" name="OPENHD_VERSION_MESSAGE">
+            <description>The current Open.HD version running on the system sending the message</description>
+            <field type="char[30]" name="version">version string, 29 character max length since it *must* be null-terminated</field>
+        </message>
+
+    </messages>
+</mavlink>

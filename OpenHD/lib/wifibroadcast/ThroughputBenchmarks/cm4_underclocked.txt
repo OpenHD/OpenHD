@@ -1,0 +1,152 @@
+set arm_freq min max to 600
+
+pi@raspberrypi:~/Desktop/wifibroadcast/src $ ./freq
+Runtime (seconds)     = 1.729941
+Instructions executed = 1000001536
+Estimated frequency   = 578.06 MHz
+pi@raspberrypi:~/Desktop/wifibroadcast/src $ cd ../
+pi@raspberrypi:~/Desktop/wifibroadcast $ ./benchmark
+WARNING cannot set ThreadParamsMaxRealtime
+TEST_MAIN has priority 0
+TEST_MAIN has policy 0 and priority 0
+Benchmark type: 0(ENCODE_ONLY)
+PacketSize: 1446 B
+FEC_K: 10
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:10 and percentage:50
+For a block size of k max this is (10:15) in old (K:N) terms.
+curr. Packets per second:21410 before FEC: 236.197Mbit/s after FEC: 354.296MBit/s
+curr. Packets per second:21360 before FEC: 235.646Mbit/s after FEC: 353.469MBit/s
+curr. Packets per second:21510 before FEC: 237.301Mbit/s after FEC: 355.951MBit/s
+curr. Packets per second:21420 before FEC: 236.308Mbit/s after FEC: 354.462MBit/s
+curr. Packets per second:21450 before FEC: 236.639Mbit/s after FEC: 354.958MBit/s
+curr. Packets per second:21520 before FEC: 237.411Mbit/s after FEC: 356.116MBit/s
+curr. Packets per second:21450 before FEC: 236.639Mbit/s after FEC: 354.958MBit/s
+curr. Packets per second:21460 before FEC: 236.749Mbit/s after FEC: 355.123MBit/s
+curr. Packets per second:21375 before FEC: 235.811Mbit/s after FEC: 353.717MBit/s
+curr. Packets per second:21505 before FEC: 237.245Mbit/s after FEC: 355.868MBit/s
+curr. Packets per second:21380 before FEC: 235.866Mbit/s after FEC: 353.8MBit/s
+curr. Packets per second:21470 before FEC: 236.859Mbit/s after FEC: 355.289MBit/s
+curr. Packets per second:21410 before FEC: 236.197Mbit/s after FEC: 354.296MBit/s
+curr. Packets per second:21500 before FEC: 237.19Mbit/s after FEC: 355.785MBit/s
+curr. Packets per second:21470 before FEC: 236.859Mbit/s after FEC: 355.289MBit/s
+curr. Packets per second:21441 before FEC: 236.539Mbit/s after FEC: 354.809MBit/s
+curr. Packets per second:21504 before FEC: 237.234Mbit/s after FEC: 355.852MBit/s
+curr. Packets per second:21328 before FEC: 235.293Mbit/s after FEC: 352.939MBit/s
+curr. Packets per second:21497 before FEC: 237.157Mbit/s after FEC: 355.736MBit/s
+curr. Packets per second:21410 before FEC: 236.197Mbit/s after FEC: 354.296MBit/s
+curr. Packets per second:21500 before FEC: 237.19Mbit/s after FEC: 355.785MBit/s
+curr. Packets per second:21370 before FEC: 235.756Mbit/s after FEC: 353.634MBit/s
+curr. Packets per second:21500 before FEC: 237.19Mbit/s after FEC: 355.785MBit/s
+curr. Packets per second:21520 before FEC: 237.411Mbit/s after FEC: 356.116MBit/s
+curr. Packets per second:21394 before FEC: 236.021Mbit/s after FEC: 354.031MBit/s
+curr. Packets per second:21506 before FEC: 237.256Mbit/s after FEC: 355.885MBit/s
+curr. Packets per second:21380 before FEC: 235.866Mbit/s after FEC: 353.8MBit/s
+curr. Packets per second:21460 before FEC: 236.749Mbit/s after FEC: 355.123MBit/s
+curr. Packets per second:21410 before FEC: 236.197Mbit/s after FEC: 354.296MBit/s
+curr. Packets per second:21500 before FEC: 237.19Mbit/s after FEC: 355.785MBit/s
+curr. Packets per second:21420 before FEC: 236.308Mbit/s after FEC: 354.462MBit/s
+curr. Packets per second:21450 before FEC: 236.639Mbit/s after FEC: 354.958MBit/s
+curr. Packets per second:21520 before FEC: 237.411Mbit/s after FEC: 356.116MBit/s
+curr. Packets per second:21450 before FEC: 236.639Mbit/s after FEC: 354.958MBit/s
+curr. Packets per second:21450 before FEC: 236.639Mbit/s after FEC: 354.958MBit/s
+curr. Packets per second:21380 before FEC: 235.866Mbit/s after FEC: 353.8MBit/s
+curr. Packets per second:21510 before FEC: 237.301Mbit/s after FEC: 355.951MBit/s
+curr. Packets per second:21360 before FEC: 235.646Mbit/s after FEC: 353.469MBit/s
+curr. Packets per second:21500 before FEC: 237.19Mbit/s after FEC: 355.785MBit/s
+curr. Packets per second:21420 before FEC: 236.308Mbit/s after FEC: 354.462MBit/s
+curr. Packets per second:21500 before FEC: 237.19Mbit/s after FEC: 355.785MBit/s
+curr. Packets per second:21470 before FEC: 236.859Mbit/s after FEC: 355.289MBit/s
+curr. Packets per second:21450 before FEC: 236.639Mbit/s after FEC: 354.958MBit/s
+curr. Packets per second:21510 before FEC: 237.301Mbit/s after FEC: 355.951MBit/s
+curr. Packets per second:21330 before FEC: 235.315Mbit/s after FEC: 352.972MBit/s
+curr. Packets per second:21500 before FEC: 237.19Mbit/s after FEC: 355.785MBit/s
+curr. Packets per second:21410 before FEC: 236.197Mbit/s after FEC: 354.296MBit/s
+curr. Packets per second:21500 before FEC: 237.19Mbit/s after FEC: 355.785MBit/s
+curr. Packets per second:21370 before FEC: 235.756Mbit/s after FEC: 353.634MBit/s
+curr. Packets per second:21494 before FEC: 237.124Mbit/s after FEC: 355.686MBit/s
+curr. Packets per second:21446 before FEC: 236.595Mbit/s after FEC: 354.892MBit/s
+curr. Packets per second:21450 before FEC: 236.639Mbit/s after FEC: 354.958MBit/s
+curr. Packets per second:21450 before FEC: 236.639Mbit/s after FEC: 354.958MBit/s
+curr. Packets per second:21430 before FEC: 236.418Mbit/s after FEC: 354.627MBit/s
+curr. Packets per second:21470 before FEC: 236.859Mbit/s after FEC: 355.289MBit/s
+curr. Packets per second:21390 before FEC: 235.977Mbit/s after FEC: 353.965MBit/s
+curr. Packets per second:21510 before FEC: 237.301Mbit/s after FEC: 355.951MBit/s
+curr. Packets per second:21540 before FEC: 237.632Mbit/s after FEC: 356.447MBit/s
+curr. Packets per second:21460 before FEC: 236.749Mbit/s after FEC: 355.123MBit/s
+curr. Packets per second:21460 before FEC: 236.749Mbit/s after FEC: 355.123MBit/s
+TOTAL Packets per second:21452.8 before FEC: 236.67Mbit/s after FEC: 355.004MBit/s
+
+pi@raspberrypi:~/Desktop/wifibroadcast $ ./benchmark -k 20
+WARNING cannot set ThreadParamsMaxRealtime
+TEST_MAIN has priority 0
+TEST_MAIN has policy 0 and priority 0
+Benchmark type: 0(ENCODE_ONLY)
+PacketSize: 1446 B
+FEC_K: 20
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:20 and percentage:50
+For a block size of k max this is (20:30) in old (K:N) terms.
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10780 before FEC: 118.926Mbit/s after FEC: 178.389MBit/s
+curr. Packets per second:10822 before FEC: 119.389Mbit/s after FEC: 179.084MBit/s
+curr. Packets per second:10758 before FEC: 118.683Mbit/s after FEC: 178.025MBit/s
+curr. Packets per second:10825 before FEC: 119.423Mbit/s after FEC: 179.134MBit/s
+curr. Packets per second:10755 before FEC: 118.65Mbit/s after FEC: 177.975MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10780 before FEC: 118.926Mbit/s after FEC: 178.389MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10760 before FEC: 118.705Mbit/s after FEC: 178.058MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10740 before FEC: 118.485Mbit/s after FEC: 177.727MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10780 before FEC: 118.926Mbit/s after FEC: 178.389MBit/s
+curr. Packets per second:10800 before FEC: 119.147Mbit/s after FEC: 178.72MBit/s
+curr. Packets per second:10880 before FEC: 120.029Mbit/s after FEC: 180.044MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10860 before FEC: 119.809Mbit/s after FEC: 179.713MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10780 before FEC: 118.926Mbit/s after FEC: 178.389MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10800 before FEC: 119.147Mbit/s after FEC: 178.72MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10860 before FEC: 119.809Mbit/s after FEC: 179.713MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10800 before FEC: 119.147Mbit/s after FEC: 178.72MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10827 before FEC: 119.445Mbit/s after FEC: 179.167MBit/s
+curr. Packets per second:10833 before FEC: 119.511Mbit/s after FEC: 179.266MBit/s
+curr. Packets per second:10860 before FEC: 119.809Mbit/s after FEC: 179.713MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10860 before FEC: 119.809Mbit/s after FEC: 179.713MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10841 before FEC: 119.599Mbit/s after FEC: 179.399MBit/s
+curr. Packets per second:10799 before FEC: 119.136Mbit/s after FEC: 178.704MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10820 before FEC: 119.367Mbit/s after FEC: 179.051MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+curr. Packets per second:10840 before FEC: 119.588Mbit/s after FEC: 179.382MBit/s
+TOTAL Packets per second:10820.3 before FEC: 119.37Mbit/s after FEC: 179.055MBit/s
+

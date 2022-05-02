@@ -1,0 +1,44 @@
+Here are some excerpts of the telegram chat during development such that stuff doesn't get lost:
+
+To sum it up, here is how the rx ring should now behave:
+( and can behave at its best)
+Size of 1:
+Same behaviour as if you were using no rx ring.
+Best case- latency of packet travel time
+Worst case- latency of infinity.
+( assuming you get 1 block that is not fully recoverable and then the link is suddenly fully cut)
+However, the worst case is not practical - it is actually the latency until you get the the first packet refering to the next block.
+Because in this case the pipeline gets flushed due to size of 1.
+Size of 2 ( or N):
+Best case - latency of packet travel time
+Worst case- latency of infinity.
+Here the worst-case practical latency is
+"time until you either receive the first fully recoverable block" or "time until you receive data for block with idx+2" if N==2 and so on.
+With N==3 this increases to idx+3 , ...
+As you can see, decreasing the rx ring size can decrease the likeniness of stuck packets "aka latency of infinity" but not fully fix it.
+So the only sensible option is to add a 3rd parameter - a timeout on the receiver.
+If data doesn't arrive for n milliseconds, you can say:
+Hey, I don't think that after 10ms we will get a new packet that helps us with the old blocks in the ring.
+It is most likely a new block by itself.
+And flush the pipeline.
+But if you use a timeout too small you loose on packet recovery.
+So for video we are probably best with "rx ring size as small as possible" and a timeout that is close to the video frame time.
+With telemetry down we can either use FEC K,N == 1,2 to avoid the problem of stuck packets entirely or use a smaller timeout.
+And for RX up we should probably skip FEC entirely. ( I added K==0 for that) or also go with K,N==1,2 which is the same as sending each packet twice.
+Also,when using a small timeout we must not forget that it's overhead is not to underestimate, since even though we do nothing in case of no data the cpu still has to swithch to the current context to determine that.
+
+
+So I've added a parameter -f (flush pipeline) to the rx.
+If no data is received for more than f milliseconds, the pipeline is fully flushed.
+To use a smaller time intervall we have to fulfill the premise "video NALUs are always aligned with one FEC block" or add stuff to the tx that flushes the fec encoder queue,too.
+Without that the flush intervall on the rx cannot be smaller than "video frame time + max deviation between wifi packets on rx".
+Therefore I defaultet to 40ms , which is quite a lot (40ms of max latency on the link)
+However, even without stuff like that on the tx you could use a really small flush intervall - like 10ms.
+If the there is no packet loss in the last block, you won't loose any packets
+
+So I've added a flush parameter to the tx, too.
+If data doesn'arrive on the tx for n ms, if the current block is not finished, it adds as many "empty packets" to the pipeline until the fec packets can be calculated and the block is finished.
+On the tx, the flush parameter can be much smaller for video independent of the fps.
+For example, 2ms for video. Defaults to 40ms too.
+
+With 2ms on the TX you can go for something much smaller on the RX. Like 10ms. This would give you 8ms to account for deviation(s) between your multiple RX cards.

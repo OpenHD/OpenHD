@@ -1,0 +1,76 @@
+rpi cm4 @ 600Mhz
+also measuring the FEC step duration:
+
+pi@raspberrypi:~/Desktop/wifibroadcast $ ./benchmark
+WARNING cannot set ThreadParamsMaxRealtime
+TEST_MAIN has priority 0
+TEST_MAIN has policy 0 and priority 0
+Benchmark type: 0(FEC_ENCODE)
+PacketSize: 1446 B
+FEC_K: 10
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:10 and percentage:50
+For a block size of k max this is (10:15) in old (K:N) terms.
+...
+Testing FEC_ENCODE took 60.022 seconds
+TOTAL Packets per second:20779.6 before FEC_ENCODE: 229.243Mbit/s after FEC_ENCODE: 343.864MBit/s
+Encoding a block of size:14.121094kB took 0.442483 ms on average
+
+
+pi@raspberrypi:~/Desktop/wifibroadcast $ ./benchmark -k 20
+WARNING cannot set ThreadParamsMaxRealtime
+TEST_MAIN has priority 0
+TEST_MAIN has policy 0 and priority 0
+Benchmark type: 0(FEC_ENCODE)
+PacketSize: 1446 B
+FEC_K: 20
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:20 and percentage:50
+For a block size of k max this is (20:30) in old (K:N) terms.
+curr. Packets per second:10660 before FEC_ENCODE: 117.602Mbit/s after FEC_ENCODE: 176.403MBit/s
+...
+curr. Packets per second:10740 before FEC_ENCODE: 118.485Mbit/s after FEC_ENCODE: 177.727MBit/s
+Testing FEC_ENCODE took 60.003 seconds
+TOTAL Packets per second:10717.3 before FEC_ENCODE: 118.235Mbit/s after FEC_ENCODE: 177.352MBit/s
+Encoding a block of size:28.242188kB took 1.78779 ms on average
+
+pi@raspberrypi:~/Desktop/wifibroadcast $ ./benchmark -k 50
+WARNING cannot set ThreadParamsMaxRealtime
+TEST_MAIN has priority 0
+TEST_MAIN has policy 0 and priority 0
+Benchmark type: 0(FEC_ENCODE)
+PacketSize: 1446 B
+FEC_K: 50
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:50 and percentage:50
+For a block size of k max this is (50:75) in old (K:N) terms.
+curr. Packets per second:4350 before FEC_ENCODE: 47.9897Mbit/s after FEC_ENCODE: 71.9845MBit/s
+...
+curr. Packets per second:4350 before FEC_ENCODE: 47.9897Mbit/s after FEC_ENCODE: 71.9845MBit/s
+Testing FEC_ENCODE took 60.213 seconds
+TOTAL Packets per second:4319.6 before FEC_ENCODE: 47.6543Mbit/s after FEC_ENCODE: 71.4814MBit/s
+Encoding a block of size:70.605469kB took 11.3778 ms on average
+
+---------------------------------------------------------------------------------------------------
+
+rv1126 @600Mhz
+
+[root@RV1126_RV1109:/oem/usr/bin]# ./benchmark
+TEST_MAIN has priority 0
+TEST_MAIN has policy 1 and priority 99
+Benchmark type: 0(FEC_ENCODE)
+PacketSize: 1446 B
+FEC_K: 10
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:10 and percentage:50
+For a block size of k max this is (10:15) in old (K:N) terms.
+curr. Packets per second:5400 before FEC_ENCODE: 59.5734Mbit/s after FEC_ENCODE: 89.36MBit/s
+curr. Packets per second:5400 before FEC_ENCODE: 59.5734Mbit/s after FEC_ENCODE: 89.36MBit/s
+Testing FEC_ENCODE took 60.004 seconds
+TOTAL Packets per second:5426.84 before FEC_ENCODE: 59.8694Mbit/s after FEC_ENCODE: 89.8042MBit/s
+Encoding a block of size:14.121094kB took 1.81136 ms on average
+

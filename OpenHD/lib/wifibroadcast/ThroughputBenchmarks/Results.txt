@@ -1,0 +1,9 @@
+Summary of the test results. Note that these test only measure the FEC encoding performance.
+
+
+                  |    k=20
+INTEL             | TOTAL Packets per second:101666 before FEC: 1121.59Mbit/s after FEC: 1682.39MBit/s
+RPI CM4 (1.5 Ghz) | TOTAL Packets per second:27289.6 before FEC: 301.062Mbit/s after FEC: 451.593MBit/s
+RV1126  at 600mhz | TOTAL Packets per second:2696.53 before FEC: 29.7484Mbit/s after FEC: 44.6227MBit/s
+RPI CM4 at 600mhz | TOTAL Packets per second:10820.3 before FEC: 119.37Mbit/s after FEC: 179.055MBit/s
+RPI 2   at 900mhz | TOTAL Packets per second:4006.13 before FEC_ENCODE: 44.196Mbit/s after FEC_ENCODE: 66.294MBit/s

@@ -1,0 +1,289 @@
+TEST_MAIN has priority 0
+TEST_MAIN has policy 0 and priority 0
+Benchmark type: 0(FEC_ENCODE)
+PacketSize: 1446 B
+FEC_K: 10
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:10 and percentage:50
+For a block size of k max this is (10:15) in old (K:N) terms.
+curr. Packets per second:31500 before FEC_ENCODE: 347.511Mbit/s after FEC_ENCODE: 521.267MBit/s
+curr. Packets per second:31530 before FEC_ENCODE: 347.842Mbit/s after FEC_ENCODE: 521.763MBit/s
+curr. Packets per second:31580 before FEC_ENCODE: 348.394Mbit/s after FEC_ENCODE: 522.591MBit/s
+curr. Packets per second:31590 before FEC_ENCODE: 348.504Mbit/s after FEC_ENCODE: 522.756MBit/s
+curr. Packets per second:31590 before FEC_ENCODE: 348.504Mbit/s after FEC_ENCODE: 522.756MBit/s
+curr. Packets per second:31590 before FEC_ENCODE: 348.504Mbit/s after FEC_ENCODE: 522.756MBit/s
+curr. Packets per second:31580 before FEC_ENCODE: 348.394Mbit/s after FEC_ENCODE: 522.591MBit/s
+curr. Packets per second:31550 before FEC_ENCODE: 348.063Mbit/s after FEC_ENCODE: 522.094MBit/s
+curr. Packets per second:31600 before FEC_ENCODE: 348.615Mbit/s after FEC_ENCODE: 522.922MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31590 before FEC_ENCODE: 348.504Mbit/s after FEC_ENCODE: 522.756MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31590 before FEC_ENCODE: 348.504Mbit/s after FEC_ENCODE: 522.756MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31580 before FEC_ENCODE: 348.394Mbit/s after FEC_ENCODE: 522.591MBit/s
+curr. Packets per second:31600 before FEC_ENCODE: 348.615Mbit/s after FEC_ENCODE: 522.922MBit/s
+curr. Packets per second:31610 before FEC_ENCODE: 348.725Mbit/s after FEC_ENCODE: 523.087MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31590 before FEC_ENCODE: 348.504Mbit/s after FEC_ENCODE: 522.756MBit/s
+curr. Packets per second:31590 before FEC_ENCODE: 348.504Mbit/s after FEC_ENCODE: 522.756MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31610 before FEC_ENCODE: 348.725Mbit/s after FEC_ENCODE: 523.087MBit/s
+curr. Packets per second:31590 before FEC_ENCODE: 348.504Mbit/s after FEC_ENCODE: 522.756MBit/s
+curr. Packets per second:31600 before FEC_ENCODE: 348.615Mbit/s after FEC_ENCODE: 522.922MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31590 before FEC_ENCODE: 348.504Mbit/s after FEC_ENCODE: 522.756MBit/s
+curr. Packets per second:31600 before FEC_ENCODE: 348.615Mbit/s after FEC_ENCODE: 522.922MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31534 before FEC_ENCODE: 347.886Mbit/s after FEC_ENCODE: 521.83MBit/s
+curr. Packets per second:31606 before FEC_ENCODE: 348.681Mbit/s after FEC_ENCODE: 523.021MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31610 before FEC_ENCODE: 348.725Mbit/s after FEC_ENCODE: 523.087MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31612 before FEC_ENCODE: 348.747Mbit/s after FEC_ENCODE: 523.12MBit/s
+curr. Packets per second:31618 before FEC_ENCODE: 348.813Mbit/s after FEC_ENCODE: 523.22MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31610 before FEC_ENCODE: 348.725Mbit/s after FEC_ENCODE: 523.087MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31610 before FEC_ENCODE: 348.725Mbit/s after FEC_ENCODE: 523.087MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31610 before FEC_ENCODE: 348.725Mbit/s after FEC_ENCODE: 523.087MBit/s
+curr. Packets per second:31610 before FEC_ENCODE: 348.725Mbit/s after FEC_ENCODE: 523.087MBit/s
+curr. Packets per second:31620 before FEC_ENCODE: 348.835Mbit/s after FEC_ENCODE: 523.253MBit/s
+curr. Packets per second:31610 before FEC_ENCODE: 348.725Mbit/s after FEC_ENCODE: 523.087MBit/s
+curr. Packets per second:31616 before FEC_ENCODE: 348.791Mbit/s after FEC_ENCODE: 523.187MBit/s
+Testing FEC_ENCODE took 60.017 seconds
+TOTAL Packets per second:31598.5 before FEC_ENCODE: 348.598Mbit/s after FEC_ENCODE: 522.897MBit/s
+Encoding a block of size:14.121094kB took 0.291133 ms on average
+TEST_MAIN has priority 0
+TEST_MAIN has policy 0 and priority 0
+Benchmark type: 0(FEC_ENCODE)
+PacketSize: 1446 B
+FEC_K: 20
+FEC_PERCENTAGE: 20
+Benchmark time: 60 s
+FEC with k max:20 and percentage:20
+For a block size of k max this is (20:24) in old (K:N) terms.
+curr. Packets per second:38080 before FEC_ENCODE: 420.103Mbit/s after FEC_ENCODE: 504.123MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38080 before FEC_ENCODE: 420.103Mbit/s after FEC_ENCODE: 504.123MBit/s
+curr. Packets per second:38091 before FEC_ENCODE: 420.224Mbit/s after FEC_ENCODE: 504.269MBit/s
+curr. Packets per second:38089 before FEC_ENCODE: 420.202Mbit/s after FEC_ENCODE: 504.242MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38085 before FEC_ENCODE: 420.158Mbit/s after FEC_ENCODE: 504.189MBit/s
+curr. Packets per second:38095 before FEC_ENCODE: 420.268Mbit/s after FEC_ENCODE: 504.322MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38080 before FEC_ENCODE: 420.103Mbit/s after FEC_ENCODE: 504.123MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:37940 before FEC_ENCODE: 418.558Mbit/s after FEC_ENCODE: 502.27MBit/s
+curr. Packets per second:38080 before FEC_ENCODE: 420.103Mbit/s after FEC_ENCODE: 504.123MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38095 before FEC_ENCODE: 420.268Mbit/s after FEC_ENCODE: 504.322MBit/s
+curr. Packets per second:38065 before FEC_ENCODE: 419.937Mbit/s after FEC_ENCODE: 503.925MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38087 before FEC_ENCODE: 420.18Mbit/s after FEC_ENCODE: 504.216MBit/s
+curr. Packets per second:38093 before FEC_ENCODE: 420.246Mbit/s after FEC_ENCODE: 504.295MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38095 before FEC_ENCODE: 420.268Mbit/s after FEC_ENCODE: 504.322MBit/s
+curr. Packets per second:38085 before FEC_ENCODE: 420.158Mbit/s after FEC_ENCODE: 504.189MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38080 before FEC_ENCODE: 420.103Mbit/s after FEC_ENCODE: 504.123MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+curr. Packets per second:38100 before FEC_ENCODE: 420.323Mbit/s after FEC_ENCODE: 504.388MBit/s
+Testing FEC_ENCODE took 60.016 seconds
+TOTAL Packets per second:38082.6 before FEC_ENCODE: 420.132Mbit/s after FEC_ENCODE: 504.158MBit/s
+Encoding a block of size:28.242188kB took 0.474705 ms on average
+TEST_MAIN has priority 0
+TEST_MAIN has policy 0 and priority 0
+Benchmark type: 0(FEC_ENCODE)
+PacketSize: 1446 B
+FEC_K: 50
+FEC_PERCENTAGE: 20
+Benchmark time: 60 s
+FEC with k max:50 and percentage:20
+For a block size of k max this is (50:60) in old (K:N) terms.
+curr. Packets per second:15750 before FEC_ENCODE: 173.756Mbit/s after FEC_ENCODE: 208.507MBit/s
+curr. Packets per second:15750 before FEC_ENCODE: 173.756Mbit/s after FEC_ENCODE: 208.507MBit/s
+curr. Packets per second:15750 before FEC_ENCODE: 173.756Mbit/s after FEC_ENCODE: 208.507MBit/s
+curr. Packets per second:15900 before FEC_ENCODE: 175.41Mbit/s after FEC_ENCODE: 210.493MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:15950 before FEC_ENCODE: 175.962Mbit/s after FEC_ENCODE: 211.154MBit/s
+curr. Packets per second:16000 before FEC_ENCODE: 176.514Mbit/s after FEC_ENCODE: 211.816MBit/s
+curr. Packets per second:16000 before FEC_ENCODE: 176.514Mbit/s after FEC_ENCODE: 211.816MBit/s
+curr. Packets per second:16000 before FEC_ENCODE: 176.514Mbit/s after FEC_ENCODE: 211.816MBit/s
+curr. Packets per second:16000 before FEC_ENCODE: 176.514Mbit/s after FEC_ENCODE: 211.816MBit/s
+curr. Packets per second:16000 before FEC_ENCODE: 176.514Mbit/s after FEC_ENCODE: 211.816MBit/s
+curr. Packets per second:16000 before FEC_ENCODE: 176.514Mbit/s after FEC_ENCODE: 211.816MBit/s
+curr. Packets per second:15900 before FEC_ENCODE: 175.41Mbit/s after FEC_ENCODE: 210.493MBit/s
+curr. Packets per second:16000 before FEC_ENCODE: 176.514Mbit/s after FEC_ENCODE: 211.816MBit/s
+curr. Packets per second:16000 before FEC_ENCODE: 176.514Mbit/s after FEC_ENCODE: 211.816MBit/s
+curr. Packets per second:16000 before FEC_ENCODE: 176.514Mbit/s after FEC_ENCODE: 211.816MBit/s
+curr. Packets per second:15988 before FEC_ENCODE: 176.381Mbit/s after FEC_ENCODE: 211.658MBit/s
+curr. Packets per second:15962 before FEC_ENCODE: 176.094Mbit/s after FEC_ENCODE: 211.313MBit/s
+curr. Packets per second:15992 before FEC_ENCODE: 176.425Mbit/s after FEC_ENCODE: 211.711MBit/s
+curr. Packets per second:15954 before FEC_ENCODE: 176.006Mbit/s after FEC_ENCODE: 211.207MBit/s
+curr. Packets per second:15954 before FEC_ENCODE: 176.006Mbit/s after FEC_ENCODE: 211.207MBit/s
+curr. Packets per second:16000 before FEC_ENCODE: 176.514Mbit/s after FEC_ENCODE: 211.816MBit/s
+curr. Packets per second:15975 before FEC_ENCODE: 176.238Mbit/s after FEC_ENCODE: 211.485MBit/s
+Testing FEC_ENCODE took 60.051 seconds
+TOTAL Packets per second:15926.7 before FEC_ENCODE: 175.705Mbit/s after FEC_ENCODE: 210.846MBit/s
+Encoding a block of size:70.605469kB took 3.01358 ms on average
+TEST_MAIN has priority 0
+TEST_MAIN has policy 0 and priority 0
+Benchmark type: 0(FEC_ENCODE)
+PacketSize: 1446 B
+FEC_K: 20
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:20 and percentage:50
+For a block size of k max this is (20:30) in old (K:N) terms.
+curr. Packets per second:16100 before FEC_ENCODE: 177.617Mbit/s after FEC_ENCODE: 266.425MBit/s
+curr. Packets per second:16120 before FEC_ENCODE: 177.838Mbit/s after FEC_ENCODE: 266.756MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16160 before FEC_ENCODE: 178.279Mbit/s after FEC_ENCODE: 267.418MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16200 before FEC_ENCODE: 178.72Mbit/s after FEC_ENCODE: 268.08MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16196 before FEC_ENCODE: 178.676Mbit/s after FEC_ENCODE: 268.014MBit/s
+curr. Packets per second:16164 before FEC_ENCODE: 178.323Mbit/s after FEC_ENCODE: 267.484MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16200 before FEC_ENCODE: 178.72Mbit/s after FEC_ENCODE: 268.08MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16198 before FEC_ENCODE: 178.698Mbit/s after FEC_ENCODE: 268.047MBit/s
+curr. Packets per second:16162 before FEC_ENCODE: 178.301Mbit/s after FEC_ENCODE: 267.451MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16200 before FEC_ENCODE: 178.72Mbit/s after FEC_ENCODE: 268.08MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16192 before FEC_ENCODE: 178.632Mbit/s after FEC_ENCODE: 267.948MBit/s
+curr. Packets per second:16172 before FEC_ENCODE: 178.411Mbit/s after FEC_ENCODE: 267.617MBit/s
+curr. Packets per second:16196 before FEC_ENCODE: 178.676Mbit/s after FEC_ENCODE: 268.014MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16200 before FEC_ENCODE: 178.72Mbit/s after FEC_ENCODE: 268.08MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16180 before FEC_ENCODE: 178.499Mbit/s after FEC_ENCODE: 267.749MBit/s
+curr. Packets per second:16183 before FEC_ENCODE: 178.533Mbit/s after FEC_ENCODE: 267.799MBit/s
+Testing FEC_ENCODE took 60.024 seconds
+TOTAL Packets per second:16172.7 before FEC_ENCODE: 178.419Mbit/s after FEC_ENCODE: 267.629MBit/s
+Encoding a block of size:28.242188kB took 1.18654 ms on average
+
+
+cat /sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq
+900000

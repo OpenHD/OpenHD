@@ -1,0 +1,216 @@
+onsti10@consti10-AERO-15XV8:~/Desktop/wifibroadcast$ ./benchmark -k 10
+Benchmark type: 0(ENCODE_ONLY)
+PacketSize: 1446 B
+FEC_K: 10
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:10 and percentage:50
+For a block size of k max this is (10:15) in old (K:N) terms.
+curr. Packets per second:220920 before FEC: 2437.21Mbit/s after FEC: 3655.82MBit/s
+curr. Packets per second:221480 before FEC: 2443.39Mbit/s after FEC: 3665.09MBit/s
+curr. Packets per second:218680 before FEC: 2412.5Mbit/s after FEC: 3618.75MBit/s
+curr. Packets per second:219970 before FEC: 2426.73Mbit/s after FEC: 3640.1MBit/s
+curr. Packets per second:218480 before FEC: 2410.29Mbit/s after FEC: 3615.44MBit/s
+curr. Packets per second:218400 before FEC: 2409.41Mbit/s after FEC: 3614.12MBit/s
+curr. Packets per second:218060 before FEC: 2405.66Mbit/s after FEC: 3608.49MBit/s
+curr. Packets per second:218460 before FEC: 2410.07Mbit/s after FEC: 3615.11MBit/s
+curr. Packets per second:218950 before FEC: 2415.48Mbit/s after FEC: 3623.22MBit/s
+curr. Packets per second:220160 before FEC: 2428.83Mbit/s after FEC: 3643.24MBit/s
+curr. Packets per second:220730 before FEC: 2435.12Mbit/s after FEC: 3652.67MBit/s
+curr. Packets per second:212000 before FEC: 2338.81Mbit/s after FEC: 3508.21MBit/s
+curr. Packets per second:206140 before FEC: 2274.16Mbit/s after FEC: 3411.24MBit/s
+curr. Packets per second:197340 before FEC: 2177.08Mbit/s after FEC: 3265.61MBit/s
+curr. Packets per second:213670 before FEC: 2357.23Mbit/s after FEC: 3535.84MBit/s
+curr. Packets per second:214100 before FEC: 2361.97Mbit/s after FEC: 3542.96MBit/s
+curr. Packets per second:214250 before FEC: 2363.63Mbit/s after FEC: 3545.44MBit/s
+curr. Packets per second:215060 before FEC: 2372.56Mbit/s after FEC: 3558.85MBit/s
+curr. Packets per second:216000 before FEC: 2382.93Mbit/s after FEC: 3574.4MBit/s
+curr. Packets per second:216750 before FEC: 2391.21Mbit/s after FEC: 3586.81MBit/s
+curr. Packets per second:218120 before FEC: 2406.32Mbit/s after FEC: 3609.48MBit/s
+curr. Packets per second:216760 before FEC: 2391.32Mbit/s after FEC: 3586.98MBit/s
+curr. Packets per second:212190 before FEC: 2340.9Mbit/s after FEC: 3511.35MBit/s
+curr. Packets per second:212360 before FEC: 2342.78Mbit/s after FEC: 3514.17MBit/s
+curr. Packets per second:214220 before FEC: 2363.3Mbit/s after FEC: 3544.95MBit/s
+curr. Packets per second:215830 before FEC: 2381.06Mbit/s after FEC: 3571.59MBit/s
+curr. Packets per second:213450 before FEC: 2354.8Mbit/s after FEC: 3532.2MBit/s
+curr. Packets per second:209802 before FEC: 2314.56Mbit/s after FEC: 3471.84MBit/s
+curr. Packets per second:199008 before FEC: 2195.48Mbit/s after FEC: 3293.22MBit/s
+curr. Packets per second:209960 before FEC: 2316.3Mbit/s after FEC: 3474.45MBit/s
+curr. Packets per second:212910 before FEC: 2348.85Mbit/s after FEC: 3523.27MBit/s
+curr. Packets per second:211000 before FEC: 2327.77Mbit/s after FEC: 3491.66MBit/s
+curr. Packets per second:211790 before FEC: 2336.49Mbit/s after FEC: 3504.73MBit/s
+curr. Packets per second:212470 before FEC: 2343.99Mbit/s after FEC: 3515.99MBit/s
+curr. Packets per second:205230 before FEC: 2264.12Mbit/s after FEC: 3396.18MBit/s
+curr. Packets per second:208740 before FEC: 2302.84Mbit/s after FEC: 3454.26MBit/s
+curr. Packets per second:209480 before FEC: 2311.01Mbit/s after FEC: 3466.51MBit/s
+curr. Packets per second:208520 before FEC: 2300.41Mbit/s after FEC: 3450.62MBit/s
+curr. Packets per second:204550 before FEC: 2256.62Mbit/s after FEC: 3384.93MBit/s
+curr. Packets per second:206460 before FEC: 2277.69Mbit/s after FEC: 3416.53MBit/s
+curr. Packets per second:207910 before FEC: 2293.68Mbit/s after FEC: 3440.53MBit/s
+curr. Packets per second:207000 before FEC: 2283.65Mbit/s after FEC: 3425.47MBit/s
+curr. Packets per second:207390 before FEC: 2287.95Mbit/s after FEC: 3431.92MBit/s
+curr. Packets per second:206790 before FEC: 2281.33Mbit/s after FEC: 3421.99MBit/s
+curr. Packets per second:205740 before FEC: 2269.75Mbit/s after FEC: 3404.62MBit/s
+curr. Packets per second:203980 before FEC: 2250.33Mbit/s after FEC: 3375.49MBit/s
+curr. Packets per second:205740 before FEC: 2269.75Mbit/s after FEC: 3404.62MBit/s
+curr. Packets per second:205730 before FEC: 2269.63Mbit/s after FEC: 3404.45MBit/s
+curr. Packets per second:202440 before FEC: 2233.34Mbit/s after FEC: 3350.01MBit/s
+curr. Packets per second:203420 before FEC: 2244.15Mbit/s after FEC: 3366.23MBit/s
+curr. Packets per second:198010 before FEC: 2184.47Mbit/s after FEC: 3276.7MBit/s
+curr. Packets per second:201470 before FEC: 2222.64Mbit/s after FEC: 3333.96MBit/s
+curr. Packets per second:203140 before FEC: 2241.06Mbit/s after FEC: 3361.59MBit/s
+curr. Packets per second:198260 before FEC: 2187.23Mbit/s after FEC: 3280.84MBit/s
+curr. Packets per second:203800 before FEC: 2248.34Mbit/s after FEC: 3372.51MBit/s
+curr. Packets per second:204020 before FEC: 2250.77Mbit/s after FEC: 3376.16MBit/s
+curr. Packets per second:204380 before FEC: 2254.74Mbit/s after FEC: 3382.11MBit/s
+curr. Packets per second:205030 before FEC: 2261.91Mbit/s after FEC: 3392.87MBit/s
+curr. Packets per second:205850 before FEC: 2270.96Mbit/s after FEC: 3406.44MBit/s
+curr. Packets per second:207120 before FEC: 2284.97Mbit/s after FEC: 3427.45MBit/s
+TOTAL Packets per second:210330 before FEC: 2320.38Mbit/s after FEC: 3480.57MBit/s
+
+--------------------------------------------------------------------------------------------
+consti10@consti10-AERO-15XV8:~/Desktop/wifibroadcast$ ./benchmark -k 20
+Benchmark type: 0(ENCODE_ONLY)
+PacketSize: 1446 B
+FEC_K: 20
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:20 and percentage:50
+For a block size of k max this is (20:30) in old (K:N) terms.
+curr. Packets per second:102860 before FEC: 1134.76Mbit/s after FEC: 1702.14MBit/s
+curr. Packets per second:101420 before FEC: 1118.88Mbit/s after FEC: 1678.31MBit/s
+curr. Packets per second:101240 before FEC: 1116.89Mbit/s after FEC: 1675.34MBit/s
+curr. Packets per second:100440 before FEC: 1108.06Mbit/s after FEC: 1662.1MBit/s
+curr. Packets per second:99440 before FEC: 1097.03Mbit/s after FEC: 1645.55MBit/s
+curr. Packets per second:99780 before FEC: 1100.78Mbit/s after FEC: 1651.18MBit/s
+curr. Packets per second:99500 before FEC: 1097.69Mbit/s after FEC: 1646.54MBit/s
+curr. Packets per second:99300 before FEC: 1095.49Mbit/s after FEC: 1643.23MBit/s
+curr. Packets per second:99160 before FEC: 1093.94Mbit/s after FEC: 1640.92MBit/s
+curr. Packets per second:98960 before FEC: 1091.74Mbit/s after FEC: 1637.61MBit/s
+curr. Packets per second:98880 before FEC: 1090.85Mbit/s after FEC: 1636.28MBit/s
+curr. Packets per second:98880 before FEC: 1090.85Mbit/s after FEC: 1636.28MBit/s
+curr. Packets per second:98660 before FEC: 1088.43Mbit/s after FEC: 1632.64MBit/s
+curr. Packets per second:91800 before FEC: 1012.75Mbit/s after FEC: 1519.12MBit/s
+curr. Packets per second:94140 before FEC: 1038.56Mbit/s after FEC: 1557.84MBit/s
+curr. Packets per second:95460 before FEC: 1053.12Mbit/s after FEC: 1579.69MBit/s
+curr. Packets per second:93400 before FEC: 1030.4Mbit/s after FEC: 1545.6MBit/s
+curr. Packets per second:89040 before FEC: 982.299Mbit/s after FEC: 1473.45MBit/s
+curr. Packets per second:90680 before FEC: 1000.39Mbit/s after FEC: 1500.59MBit/s
+curr. Packets per second:93780 before FEC: 1034.59Mbit/s after FEC: 1551.89MBit/s
+curr. Packets per second:94040 before FEC: 1037.46Mbit/s after FEC: 1556.19MBit/s
+curr. Packets per second:95940 before FEC: 1058.42Mbit/s after FEC: 1587.63MBit/s
+curr. Packets per second:96100 before FEC: 1060.19Mbit/s after FEC: 1590.28MBit/s
+curr. Packets per second:94180 before FEC: 1039Mbit/s after FEC: 1558.51MBit/s
+curr. Packets per second:87400 before FEC: 964.206Mbit/s after FEC: 1446.31MBit/s
+curr. Packets per second:97680 before FEC: 1077.62Mbit/s after FEC: 1616.42MBit/s
+curr. Packets per second:101380 before FEC: 1118.43Mbit/s after FEC: 1677.65MBit/s
+curr. Packets per second:101580 before FEC: 1120.64Mbit/s after FEC: 1680.96MBit/s
+curr. Packets per second:101720 before FEC: 1122.19Mbit/s after FEC: 1683.28MBit/s
+curr. Packets per second:101700 before FEC: 1121.97Mbit/s after FEC: 1682.95MBit/s
+curr. Packets per second:101121 before FEC: 1115.58Mbit/s after FEC: 1673.37MBit/s
+curr. Packets per second:102879 before FEC: 1134.97Mbit/s after FEC: 1702.46MBit/s
+curr. Packets per second:103700 before FEC: 1144.03Mbit/s after FEC: 1716.04MBit/s
+curr. Packets per second:103840 before FEC: 1145.57Mbit/s after FEC: 1718.36MBit/s
+curr. Packets per second:104020 before FEC: 1147.56Mbit/s after FEC: 1721.34MBit/s
+curr. Packets per second:104200 before FEC: 1149.55Mbit/s after FEC: 1724.32MBit/s
+curr. Packets per second:104240 before FEC: 1149.99Mbit/s after FEC: 1724.98MBit/s
+curr. Packets per second:105040 before FEC: 1158.81Mbit/s after FEC: 1738.22MBit/s
+curr. Packets per second:105480 before FEC: 1163.67Mbit/s after FEC: 1745.5MBit/s
+curr. Packets per second:105880 before FEC: 1168.08Mbit/s after FEC: 1752.12MBit/s
+curr. Packets per second:105960 before FEC: 1168.96Mbit/s after FEC: 1753.44MBit/s
+curr. Packets per second:106720 before FEC: 1177.35Mbit/s after FEC: 1766.02MBit/s
+curr. Packets per second:106760 before FEC: 1177.79Mbit/s after FEC: 1766.68MBit/s
+curr. Packets per second:106800 before FEC: 1178.23Mbit/s after FEC: 1767.34MBit/s
+curr. Packets per second:106760 before FEC: 1177.79Mbit/s after FEC: 1766.68MBit/s
+curr. Packets per second:106920 before FEC: 1179.55Mbit/s after FEC: 1769.33MBit/s
+curr. Packets per second:107200 before FEC: 1182.64Mbit/s after FEC: 1773.96MBit/s
+curr. Packets per second:107060 before FEC: 1181.1Mbit/s after FEC: 1771.65MBit/s
+curr. Packets per second:107540 before FEC: 1186.39Mbit/s after FEC: 1779.59MBit/s
+curr. Packets per second:108700 before FEC: 1199.19Mbit/s after FEC: 1798.78MBit/s
+curr. Packets per second:108960 before FEC: 1202.06Mbit/s after FEC: 1803.09MBit/s
+curr. Packets per second:108980 before FEC: 1202.28Mbit/s after FEC: 1803.42MBit/s
+curr. Packets per second:109040 before FEC: 1202.94Mbit/s after FEC: 1804.41MBit/s
+curr. Packets per second:109180 before FEC: 1204.49Mbit/s after FEC: 1806.73MBit/s
+curr. Packets per second:107960 before FEC: 1191.03Mbit/s after FEC: 1786.54MBit/s
+curr. Packets per second:103760 before FEC: 1144.69Mbit/s after FEC: 1717.04MBit/s
+curr. Packets per second:105820 before FEC: 1167.42Mbit/s after FEC: 1751.13MBit/s
+curr. Packets per second:102880 before FEC: 1134.98Mbit/s after FEC: 1702.47MBit/s
+curr. Packets per second:106920 before FEC: 1179.55Mbit/s after FEC: 1769.33MBit/s
+TOTAL Packets per second:101666 before FEC: 1121.59Mbit/s after FEC: 1682.39MBit/s
+
+--------------------------------------------------------------------------------------------
+consti10@consti10-AERO-15XV8:~/Desktop/wifibroadcast$ ./benchmark -k 50
+Benchmark type: 0(ENCODE_ONLY)
+PacketSize: 1446 B
+FEC_K: 50
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:50 and percentage:50
+For a block size of k max this is (50:75) in old (K:N) terms.
+curr. Packets per second:35350 before FEC: 389.985Mbit/s after FEC: 584.977MBit/s
+curr. Packets per second:34800 before FEC: 383.917Mbit/s after FEC: 575.876MBit/s
+curr. Packets per second:34900 before FEC: 385.02Mbit/s after FEC: 577.531MBit/s
+curr. Packets per second:34850 before FEC: 384.469Mbit/s after FEC: 576.703MBit/s
+curr. Packets per second:34800 before FEC: 383.917Mbit/s after FEC: 575.876MBit/s
+curr. Packets per second:34950 before FEC: 385.572Mbit/s after FEC: 578.358MBit/s
+curr. Packets per second:35000 before FEC: 386.124Mbit/s after FEC: 579.185MBit/s
+curr. Packets per second:35200 before FEC: 388.33Mbit/s after FEC: 582.495MBit/s
+curr. Packets per second:35450 before FEC: 391.088Mbit/s after FEC: 586.632MBit/s
+curr. Packets per second:35350 before FEC: 389.985Mbit/s after FEC: 584.977MBit/s
+curr. Packets per second:35600 before FEC: 392.743Mbit/s after FEC: 589.114MBit/s
+curr. Packets per second:35700 before FEC: 393.846Mbit/s after FEC: 590.769MBit/s
+curr. Packets per second:35750 before FEC: 394.398Mbit/s after FEC: 591.597MBit/s
+curr. Packets per second:35200 before FEC: 388.33Mbit/s after FEC: 582.495MBit/s
+curr. Packets per second:34800 before FEC: 383.917Mbit/s after FEC: 575.876MBit/s
+curr. Packets per second:35400 before FEC: 390.536Mbit/s after FEC: 585.805MBit/s
+curr. Packets per second:35350 before FEC: 389.985Mbit/s after FEC: 584.977MBit/s
+curr. Packets per second:35950 before FEC: 396.604Mbit/s after FEC: 594.906MBit/s
+curr. Packets per second:35978 before FEC: 396.913Mbit/s after FEC: 595.37MBit/s
+curr. Packets per second:35772 before FEC: 394.64Mbit/s after FEC: 591.961MBit/s
+curr. Packets per second:35700 before FEC: 393.846Mbit/s after FEC: 590.769MBit/s
+curr. Packets per second:35550 before FEC: 392.191Mbit/s after FEC: 588.287MBit/s
+curr. Packets per second:35500 before FEC: 391.64Mbit/s after FEC: 587.46MBit/s
+curr. Packets per second:35350 before FEC: 389.985Mbit/s after FEC: 584.977MBit/s
+curr. Packets per second:35300 before FEC: 389.433Mbit/s after FEC: 584.15MBit/s
+curr. Packets per second:35300 before FEC: 389.433Mbit/s after FEC: 584.15MBit/s
+curr. Packets per second:35250 before FEC: 388.882Mbit/s after FEC: 583.323MBit/s
+curr. Packets per second:35250 before FEC: 388.882Mbit/s after FEC: 583.323MBit/s
+curr. Packets per second:35100 before FEC: 387.227Mbit/s after FEC: 580.84MBit/s
+curr. Packets per second:35100 before FEC: 387.227Mbit/s after FEC: 580.84MBit/s
+curr. Packets per second:35000 before FEC: 386.124Mbit/s after FEC: 579.185MBit/s
+curr. Packets per second:34850 before FEC: 384.469Mbit/s after FEC: 576.703MBit/s
+curr. Packets per second:34700 before FEC: 382.814Mbit/s after FEC: 574.221MBit/s
+curr. Packets per second:34800 before FEC: 383.917Mbit/s after FEC: 575.876MBit/s
+curr. Packets per second:34850 before FEC: 384.469Mbit/s after FEC: 576.703MBit/s
+curr. Packets per second:34800 before FEC: 383.917Mbit/s after FEC: 575.876MBit/s
+curr. Packets per second:34700 before FEC: 382.814Mbit/s after FEC: 574.221MBit/s
+curr. Packets per second:34700 before FEC: 382.814Mbit/s after FEC: 574.221MBit/s
+curr. Packets per second:34600 before FEC: 381.711Mbit/s after FEC: 572.566MBit/s
+curr. Packets per second:34550 before FEC: 381.159Mbit/s after FEC: 571.739MBit/s
+curr. Packets per second:34600 before FEC: 381.711Mbit/s after FEC: 572.566MBit/s
+curr. Packets per second:34450 before FEC: 380.056Mbit/s after FEC: 570.084MBit/s
+curr. Packets per second:34550 before FEC: 381.159Mbit/s after FEC: 571.739MBit/s
+curr. Packets per second:34550 before FEC: 381.159Mbit/s after FEC: 571.739MBit/s
+curr. Packets per second:34350 before FEC: 378.953Mbit/s after FEC: 568.429MBit/s
+curr. Packets per second:34200 before FEC: 377.298Mbit/s after FEC: 565.947MBit/s
+curr. Packets per second:33800 before FEC: 372.885Mbit/s after FEC: 559.328MBit/s
+curr. Packets per second:33300 before FEC: 367.369Mbit/s after FEC: 551.054MBit/s
+curr. Packets per second:33900 before FEC: 373.988Mbit/s after FEC: 560.982MBit/s
+curr. Packets per second:34150 before FEC: 376.746Mbit/s after FEC: 565.12MBit/s
+curr. Packets per second:33750 before FEC: 372.334Mbit/s after FEC: 558.5MBit/s
+curr. Packets per second:34250 before FEC: 377.85Mbit/s after FEC: 566.774MBit/s
+curr. Packets per second:34250 before FEC: 377.85Mbit/s after FEC: 566.774MBit/s
+curr. Packets per second:34200 before FEC: 377.298Mbit/s after FEC: 565.947MBit/s
+curr. Packets per second:34100 before FEC: 376.195Mbit/s after FEC: 564.292MBit/s
+curr. Packets per second:33950 before FEC: 374.54Mbit/s after FEC: 561.81MBit/s
+curr. Packets per second:33950 before FEC: 374.54Mbit/s after FEC: 561.81MBit/s
+curr. Packets per second:34000 before FEC: 375.092Mbit/s after FEC: 562.637MBit/s
+curr. Packets per second:34000 before FEC: 375.092Mbit/s after FEC: 562.637MBit/s
+TOTAL Packets per second:34816 before FEC: 384.094Mbit/s after FEC: 576.141MBit/s
+
+--------------------------------------------------------------------------------------------
+
+
+
+
+

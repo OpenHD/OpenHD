@@ -1,0 +1,79 @@
+Determining if the function pcap_get_pfring_id exists failed with the following output:
+Change Dir: /home/consti10/Desktop/Open.HD/OpenHD/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_d3ef9/fast && /usr/bin/make  -f CMakeFiles/cmTC_d3ef9.dir/build.make CMakeFiles/cmTC_d3ef9.dir/build
+make[1]: Entering directory '/home/consti10/Desktop/Open.HD/OpenHD/cmake-build-debug/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d3ef9.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pcap_get_pfring_id -o CMakeFiles/cmTC_d3ef9.dir/CheckFunctionExists.c.o -c /home/consti10/Downloads/clion-2020.3/bin/cmake/linux/share/cmake-3.20/Modules/CheckFunctionExists.c
+Linking C executable cmTC_d3ef9
+/home/consti10/Downloads/clion-2020.3/bin/cmake/linux/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d3ef9.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pcap_get_pfring_id CMakeFiles/cmTC_d3ef9.dir/CheckFunctionExists.c.o -o cmTC_d3ef9  /usr/lib/x86_64-linux-gnu/libpcap.so 
+/usr/bin/ld: CMakeFiles/cmTC_d3ef9.dir/CheckFunctionExists.c.o: in function `main':
+CheckFunctionExists.c:(.text+0x14): undefined reference to `pcap_get_pfring_id'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_d3ef9.dir/build.make:100: cmTC_d3ef9] Error 1
+make[1]: Leaving directory '/home/consti10/Desktop/Open.HD/OpenHD/cmake-build-debug/CMakeFiles/CMakeTmp'
+make: *** [Makefile:127: cmTC_d3ef9/fast] Error 2
+
+
+
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/consti10/Desktop/Open.HD/OpenHD/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_68c95/fast && /usr/bin/make  -f CMakeFiles/cmTC_68c95.dir/build.make CMakeFiles/cmTC_68c95.dir/build
+make[1]: Entering directory '/home/consti10/Desktop/Open.HD/OpenHD/cmake-build-debug/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_68c95.dir/src.c.o
+/usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_68c95.dir/src.c.o -c /home/consti10/Desktop/Open.HD/OpenHD/cmake-build-debug/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_68c95
+/home/consti10/Downloads/clion-2020.3/bin/cmake/linux/bin/cmake -E cmake_link_script CMakeFiles/cmTC_68c95.dir/link.txt --verbose=1
+/usr/bin/cc CMakeFiles/cmTC_68c95.dir/src.c.o -o cmTC_68c95 
+/usr/bin/ld: CMakeFiles/cmTC_68c95.dir/src.c.o: in function `main':
+src.c:(.text+0x46): undefined reference to `pthread_create'
+/usr/bin/ld: src.c:(.text+0x52): undefined reference to `pthread_detach'
+/usr/bin/ld: src.c:(.text+0x5e): undefined reference to `pthread_cancel'
+/usr/bin/ld: src.c:(.text+0x6f): undefined reference to `pthread_join'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_68c95.dir/build.make:99: cmTC_68c95] Error 1
+make[1]: Leaving directory '/home/consti10/Desktop/Open.HD/OpenHD/cmake-build-debug/CMakeFiles/CMakeTmp'
+make: *** [Makefile:127: cmTC_68c95/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+static void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/consti10/Desktop/Open.HD/OpenHD/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_24a06/fast && /usr/bin/make  -f CMakeFiles/cmTC_24a06.dir/build.make CMakeFiles/cmTC_24a06.dir/build
+make[1]: Entering directory '/home/consti10/Desktop/Open.HD/OpenHD/cmake-build-debug/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_24a06.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create -o CMakeFiles/cmTC_24a06.dir/CheckFunctionExists.c.o -c /home/consti10/Downloads/clion-2020.3/bin/cmake/linux/share/cmake-3.20/Modules/CheckFunctionExists.c
+Linking C executable cmTC_24a06
+/home/consti10/Downloads/clion-2020.3/bin/cmake/linux/bin/cmake -E cmake_link_script CMakeFiles/cmTC_24a06.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create CMakeFiles/cmTC_24a06.dir/CheckFunctionExists.c.o -o cmTC_24a06  -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_24a06.dir/build.make:99: cmTC_24a06] Error 1
+make[1]: Leaving directory '/home/consti10/Desktop/Open.HD/OpenHD/cmake-build-debug/CMakeFiles/CMakeTmp'
+make: *** [Makefile:127: cmTC_24a06/fast] Error 2
+
+
+

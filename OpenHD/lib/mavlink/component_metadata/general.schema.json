@@ -1,0 +1,73 @@
+{
+    "$id":          "https://mavlink.io/comp_version.schema.json",
+    "$schema":      "http://json-schema.org/draft-07/schema",
+    "description":  "Schema for COMP_METADATA_TYPE_GENERAL",
+    "type":         "object",
+
+    "properties": {
+        "version": {
+            "description":  "Version number for the format of this file.",
+            "type":         "integer",
+            "minimum":      1
+        },
+        "vendorName": {
+            "type":         "string",
+            "description":  "Name of the component vendor."
+        },
+        "modelName": {
+            "type":         "string",
+            "description":  "Name of the component model."
+            },
+        "firmwareVersion": {
+            "type":         "string",
+            "pattern":      "^\\d+\\.\\d+\\.\\d+(\\.\\d+)?$",
+            "description":  "major.minor.patch.dev format"
+        },
+        "hardwareVersion": {
+            "type":         "string",
+            "pattern":      "^\\d+\\.\\d+\\.\\d+(\\.\\d+)?$",
+            "description":  "major.minor.patch.dev format"
+        },
+        "metadataTypes": {
+            "type":         "array",
+            "description":  "Which `COMP_METADATA_TYPE` specs are supported, with URI's.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "description":  "COMP_METADATA_TYPE",
+                        "type":         "integer"
+                    },
+                    "uri": {
+                        "description":  "https or MAVLink FTP uri",
+                        "type":         "string"
+                    },
+                    "fileCrc": {
+                        "description":  "CRC32 checksum of the file. This should not be set for dynamically updated metadata.",
+                        "type":         "integer"
+                    },
+                    "uriFallback": {
+                        "description":  "Fallback URI when primary is not available",
+                        "type":         "string"
+                    },
+                    "fileCrcFallback": {
+                        "description":  "CRC32 checksum of the fallback file",
+                        "type":         "integer"
+                    },
+                    "translationUri": {
+                        "description":  "https or MAVLink FTP url",
+                        "type":         "string"
+                    },
+                    "translationUriFallback": {
+                        "description":  "Fallback URI when primary translation is not available",
+                        "type":         "string"
+                    }
+                },
+                "required":             [ "type", "uri" ],
+                "additionalProperties": false
+            }
+        }
+    },
+    "required":             [ "version", "metadataTypes" ],
+    "additionalProperties": false
+}
