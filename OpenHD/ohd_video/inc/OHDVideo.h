@@ -25,6 +25,11 @@
 
 #include "json.hpp"
 
+/**
+ * Main entry point for OpenHD video streaming.
+ * NOTE: This module only needs to be run on air pi, so to say it is a "Video stream camera wrapper".
+ * TODO: Needs to be untangled & perhaps merged with what is now cameramicroservice.
+ */
 class OHDVideo {
 public:
     OHDVideo(boost::asio::io_service& io_service,bool is_air,std::string unit_id,PlatformType platform_type);

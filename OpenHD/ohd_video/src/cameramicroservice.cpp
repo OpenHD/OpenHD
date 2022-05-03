@@ -299,15 +299,7 @@ void CameraMicroservice::process_mavlink_message(mavlink_message_t msg) {
 
 void CameraMicroservice::debug_camerastream(){
     std::cerr << "debug_camerastream" << std::endl;
-    for (auto & stream : m_camera_streams) {
-        if(m_camera_streams.empty()) break;
-        std::cerr << "size " << m_camera_streams.size() << std::endl;
-        //std::cerr << +stream.index << "." +stream.stream_type << "." << +stream.data_type << std::endl;
-
-        //GStreamerStream::CameraStream gstr;
-        //stream= &gstr;
-        //stream.GStreamerStream::CameraStream->debug();
-    }
+    std::cerr<<"N camera streams:"<<m_camera_streams.size()<<"\n";
     std::cerr << "end of debug";
 }
 

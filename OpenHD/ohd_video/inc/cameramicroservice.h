@@ -34,7 +34,6 @@ public:
     void configure(Camera &camera);
 
 private:
-    //std::vector<CameraStream> m_camera_streams;
     std::vector<std::unique_ptr<CameraStream>> m_camera_streams;
 
     std::vector<Camera> m_cameras;
