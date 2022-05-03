@@ -6,7 +6,6 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include "openhd-log.hpp"
-#include "openhd-telemetry.hpp"
 
 #include "control.h"
 
