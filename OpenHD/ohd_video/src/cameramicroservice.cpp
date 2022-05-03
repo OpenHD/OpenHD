@@ -169,7 +169,9 @@ void CameraMicroservice::configure(Camera &camera) {
         case CameraTypeRockchipCSI:
         case CameraTypeUVC:
         case CameraTypeV4L2Loopback: {
-            auto stream=std::make_unique<GStreamerStream>(m_io_service, m_platform_type, camera, m_base_port + camera.index);
+            std::cout<<"Camera index:"<<camera.index<<"\n";
+            const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1 : OHD_VIDEO_AIR_VIDEO_STREAM_2;
+            auto stream=std::make_unique<GStreamerStream>(m_io_service, m_platform_type, camera, udp_port);
             stream->setup();
             stream->start();
             m_camera_streams.push_back(std::move(stream));

@@ -18,12 +18,12 @@
 
 CameraStream::CameraStream(boost::asio::io_service &io_service, 
                            PlatformType platform,
-                           Camera &camera, 
-                           uint16_t port):
+                           Camera &camera,
+                           uint16_t video_udp_port):
         m_io_service(io_service),
         m_platform_type(platform),
         m_camera(camera),
-        m_video_udp_port(port) {}
+        m_video_udp_port(video_udp_port) {}
 
 
 /*void CameraStream::setup() {}

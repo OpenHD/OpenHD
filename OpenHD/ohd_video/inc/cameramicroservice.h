@@ -34,13 +34,14 @@ public:
     void configure(Camera &camera);
 
 private:
+    // All the created camera streams
     std::vector<std::unique_ptr<CameraStream>> m_camera_streams;
-
+    // each camera stream has a camera, is this duplicated ??!
     std::vector<Camera> m_cameras;
 
     std::string m_unit_id;
 
-    bool m_is_air = false;
+    const bool m_is_air = false;
 
     int m_base_port = 5620;
 };
