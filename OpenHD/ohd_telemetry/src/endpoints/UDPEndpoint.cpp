@@ -39,6 +39,7 @@ std::unique_ptr<UDPEndpoint> UDPEndpoint::createEndpointForOHDWifibroadcast(cons
     const std::string tag=std::string("WBUDPEndpoint").append(isAir ? "A":"G");
     int txp;
     int rxp;
+    // tx and rx is swapped on air and ground to debug this module locally.
     if(isAir){
         txp=OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX;
         rxp=OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX;
