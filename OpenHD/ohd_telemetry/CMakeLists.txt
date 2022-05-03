@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
 # Build and include wifibroadcast
-#include(../lib/wifibroadcast/WBLib.cmake)
+include(../lib/wifibroadcast/WBLib.cmake)
 #include_directories(../lib/wifibroadcast/src/HelperSources)
 
 # include mavlink (header-only)
@@ -27,7 +27,7 @@ IF(Boost_FOUND)
     LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 ENDIF(Boost_FOUND)
 
-SET(USED_LIBS ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${WB_TARGET_LINK_LIBRARIES})
+SET(OHD_TELEMETRY_USED_BOOST_LIBS ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${WB_TARGET_LINK_LIBRARIES})
 
 SET(ALL_TELEMETRY_SOURCE_FILES
         src/AirTelemetry.cpp
@@ -42,28 +42,28 @@ SET(ALL_TELEMETRY_SOURCE_FILES
 add_executable(openhd_telemetry src/main.cpp
         ${ALL_TELEMETRY_SOURCE_FILES})
 
-target_link_libraries(openhd_telemetry ${USED_LIBS})
+target_link_libraries(openhd_telemetry ${OHD_TELEMETRY_USED_BOOST_LIBS})
 
 # All the test files for development
 add_executable(SerialEndpointTest tests/test_serial_endpoint.cpp
         src/endpoints/SerialEndpoint.cpp)
-target_link_libraries(SerialEndpointTest ${USED_LIBS})
+target_link_libraries(SerialEndpointTest ${OHD_TELEMETRY_USED_BOOST_LIBS})
 
 add_executable(UDPEndpointTest tests/test_udp_endpoint.cpp
         src/endpoints/UDPEndpoint.cpp)
-target_link_libraries(UDPEndpointTest ${USED_LIBS})
+target_link_libraries(UDPEndpointTest ${OHD_TELEMETRY_USED_BOOST_LIBS})
 
 add_executable(OHDGenerateTelemetryTest tests/test_ohd_generate_telemetry.cpp
         src/ohd_telemetry/InternalTelemetry.cpp)
-target_link_libraries(OHDGenerateTelemetryTest ${USED_LIBS})
+target_link_libraries(OHDGenerateTelemetryTest ${OHD_TELEMETRY_USED_BOOST_LIBS})
 
 add_executable(OHDRebootTest tests/test_ohd_reboot.cpp)
-target_link_libraries(OHDRebootTest ${USED_LIBS})
+target_link_libraries(OHDRebootTest ${OHD_TELEMETRY_USED_BOOST_LIBS})
 
 add_executable(test_generate_log_message tests/test_generate_log_message.cpp)
-target_link_libraries(test_generate_log_message ${USED_LIBS})
+target_link_libraries(test_generate_log_message ${OHD_TELEMETRY_USED_BOOST_LIBS})
 
 add_executable(ServicesLocallyTest tests/test_services_locally.cpp
         ${ALL_TELEMETRY_SOURCE_FILES})
-target_link_libraries(ServicesLocallyTest ${USED_LIBS})
+target_link_libraries(ServicesLocallyTest ${OHD_TELEMETRY_USED_BOOST_LIBS})
 #####
