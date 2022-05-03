@@ -79,6 +79,10 @@ void OHDVideo::process_manifest() {
         // don't do anything, but send an error message to the user through the status service
         std::cerr << "Camera error: " << ex.what() << std::endl;
     }
+    if(m_cameras.size()==0){
+        std::cerr<<"Started as air but no camera(s) have been found from json\n";
+        // TODO: just start a gstreamer stream that creates a white noise or something similar.
+    }
 
 }
 
