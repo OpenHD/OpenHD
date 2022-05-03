@@ -15,15 +15,12 @@
 #include <boost/bind.hpp>
 #include <boost/signals2.hpp>
 
-//#include <systemd/sd-daemon.h>
-
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 
 #include "control.h"
 #include "mavlinkcontrol.h"
 #include "hotspot.h"
-//#include "record.h"
 #include "cameramicroservice.h"
 #include <string>
 
