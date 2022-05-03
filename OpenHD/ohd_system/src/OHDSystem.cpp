@@ -79,12 +79,6 @@ void OHDSystem::runOnceOnStartup(){
         _manifest << j.dump(4);
         _manifest.close();
 
-        // temporary compatibility with the older microservice code, which doesn't yet know about manifests
-        std::ofstream _u("/etc/openhd/openhd_microservice.conf", std::ios::binary | std::ios::out);
-        _u << "SYSID=";
-        _u << profile_manifest["microservice-sys-id"];
-        _u.close();
-
         try {
             find_settings_path(profile.is_air(), profile.unit_id());
         } catch (std::exception &ex) {
