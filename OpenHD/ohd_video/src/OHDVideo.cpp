@@ -4,6 +4,7 @@
 
 #include <gstreamerstream.h>
 #include "openhd-settings.hpp"
+#include "inja.hpp"
 #include "OHDVideo.h"
 
 

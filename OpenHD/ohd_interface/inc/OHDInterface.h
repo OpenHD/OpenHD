@@ -27,6 +27,8 @@ public:
     std::unique_ptr<WiFi> wifi;
     std::unique_ptr<Ethernet> ethernet;
     std::unique_ptr<Streams> streams;
+    // TODO: here we can add setters / getters for interface / link / wifi related settings.
+    // For example, setting the wifi card power.
 private:
     boost::asio::io_service& io_service;
     const bool is_air;

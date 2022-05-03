@@ -18,6 +18,9 @@
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 
+#include "camerastream.h"
+#include "openhd-camera.hpp"
+
 #include <string>
 
 /**
