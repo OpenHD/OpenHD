@@ -16,8 +16,6 @@
 
 #include "json.hpp"
 #include "inja.hpp"
-using namespace inja;
-using json = nlohmann::json;
 
 #include "openhd-log.hpp"
 #include "openhd-settings.hpp"
@@ -337,7 +335,7 @@ bool WiFi::enable_monitor_mode(WiFiCard card) {
 
 
 void WiFi::save_settings(std::vector<WiFiCard> cards, std::string settings_file) {
-    Environment env;
+    inja::Environment env;
 
     // load the wifi card template, we format it once for each card and write that to the file
     std::ifstream template_file("/usr/local/share/openhd/wificard.template");
@@ -349,7 +347,7 @@ void WiFi::save_settings(std::vector<WiFiCard> cards, std::string settings_file)
 
     // now fill in the template params
     for (auto & card : cards) {
-        json data;
+        nlohmann::json data;
 
         data["type"] = wifi_card_type_to_string(card.type);
         data["mac"] = card.mac;
@@ -364,7 +362,7 @@ void WiFi::save_settings(std::vector<WiFiCard> cards, std::string settings_file)
         data["hotspot_password"] = card.hotspot_password;
         data["hotspot_band"] = card.hotspot_band;
 
-        Template temp = env.parse(template_s.c_str());
+        inja::Template temp = env.parse(template_s.c_str());
         std::string rendered = env.render(temp, data);
 
         // and write this card to the settings file

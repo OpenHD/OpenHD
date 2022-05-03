@@ -17,9 +17,6 @@
 
 #include "json.hpp"
 #include "inja.hpp"
-using namespace inja;
-using json = nlohmann::json;
-
 
 #include "openhd-ethernet.hpp"
 #include "openhd-settings.hpp"
@@ -285,7 +282,7 @@ void Ethernet::setup_client(EthernetCard &card) {
 
 
 void Ethernet::save_settings(std::vector<EthernetCard> cards, std::string settings_file) {
-    Environment env;
+    inja::Environment env;
 
     // load the ethernet card template, we format it once for each card and write that to the file
     std::ifstream template_file("/usr/local/share/openhd/ethernetcard.template");
@@ -297,7 +294,7 @@ void Ethernet::save_settings(std::vector<EthernetCard> cards, std::string settin
 
     // now fill in the template params
     for (auto & card : cards) {
-        json data;
+        nlohmann::json data;
 
         data["type"] = ethernet_card_type_to_string(card.type);
         data["mac"] = card.mac;
