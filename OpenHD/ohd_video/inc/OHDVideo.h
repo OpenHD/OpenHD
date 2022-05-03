@@ -18,9 +18,7 @@
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 
-#include "control.h"
 #include "mavlinkcontrol.h"
-#include "hotspot.h"
 #include "cameramicroservice.h"
 #include <string>
 
@@ -37,11 +35,6 @@ private:
     const PlatformType platform_type;
 private:
     // the undocumented crap from main.cpp
-    Control *control;
-    Hotspot *hotspot1;
-    Hotspot *hotspot2;
-    Hotspot *hotspot3;
-    Hotspot *hotspot4;
     CameraMicroservice * camera_microservice;
 };
 
