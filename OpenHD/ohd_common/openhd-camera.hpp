@@ -50,6 +50,7 @@ struct Camera {
     std::string pid;
     // for USB this is the bus number, for CSI it's the connector number
     std::string bus;
+    // Unique index of this camera, should start at 0
     int index;
 
 
