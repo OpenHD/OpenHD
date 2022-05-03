@@ -19,3 +19,5 @@ jobs:
       - name: Build
         run: |
           cmake -B build -S OpenHD/
+          cd build
+          make
