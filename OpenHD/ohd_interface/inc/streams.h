@@ -30,7 +30,6 @@ public:
     void configure_video();
     void configure_microservice();
     void configure_telemetry();
-    void configure_microservices();
 
     std::vector<std::string> broadcast_card_names();
 
