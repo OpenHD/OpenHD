@@ -1,62 +1,18 @@
-#include <fstream>
 
 #include <iostream>
-#include <iterator>
-#include <exception>
-
-
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
-#include <boost/signals2.hpp>
 
-//#include <systemd/sd-daemon.h>
-
-#include "openhd-platform.hpp"
-#include "openhd-log.hpp"
-
-#include "control.h"
-#include "mavlinkcontrol.h"
-#include "hotspot.h"
-//#include "record.h"
-#include "cameramicroservice.h"
+#include "openhd-read-util.hpp"
 #include "OHDVideo.h"
-
-#include "json.hpp"
 
 
 int main(int argc, char *argv[]) {
 
     boost::asio::io_service io_service;
 
-    PlatformType platform_type = PlatformTypeUnknown;
-    bool is_air = false;
-    std::string unit_id;
-
-    try {
-        std::ifstream f("/tmp/platform_manifest");
-        nlohmann::json j;
-        f >> j;
-
-        platform_type = string_to_platform_type(j["platform"]);
-    } catch (std::exception &ex) {
-        // don't do anything, but send an error message to the user through the status service
-        ohd_log(STATUS_LEVEL_EMERGENCY, "Platform manifest processing failed");
-        std::cerr << "Platform manifest error: " << ex.what() << std::endl;
-    }
-
-    try {
-        std::ifstream f("/tmp/profile_manifest");
-        nlohmann::json j;
-        f >> j;
-
-        is_air = j["is-air"];
-
-        unit_id = j["unit-id"];
-    } catch (std::exception &ex) {
-        // don't do anything, but send an error message to the user through the status service
-        ohd_log(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
-        std::cerr << "EX: " << ex.what() << std::endl;
-    }
+    const std::string unit_id=OHDReadUtil::get_unit_id();
+    const bool is_air = OHDReadUtil::runs_on_air();
+    const auto platform_type=OHDReadUtil::get_platform_type();
 
     OHDVideo ohdVideo(io_service,is_air,unit_id,platform_type);
     // TODO fix

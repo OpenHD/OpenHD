@@ -13,7 +13,6 @@ OHDInterface::OHDInterface(boost::asio::io_service& io_service,bool is_air,std::
         ethernet->configure();
         streams->set_broadcast_cards(wifi->broadcast_cards());
         streams->configure();
-
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
         exit(1);

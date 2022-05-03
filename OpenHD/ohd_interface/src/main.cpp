@@ -1,48 +1,15 @@
-#include <fstream>
-
 #include <iostream>
-#include <iterator>
-#include <exception>
-
-//#include <systemd/sd-daemon.h>
-
 #include <boost/asio.hpp>
-#include <boost/thread.hpp>
-#include <boost/filesystem.hpp>
-//#include <boost/bind.hpp>
 
-
-#include "openhd-platform.hpp"
-#include "openhd-log.hpp"
-
-
-#include "streams.h"
-#include "wifi.h"
-#include "ethernet.h"
-
-#include "json.hpp"
-
+#include "openhd-read-util.hpp"
 #include "OHDInterface.h"
 
 int main(int argc, char *argv[]) {
 
     boost::asio::io_service io_service;
 
-    std::string unit_id;
-    bool is_air = false;
-
-    try {
-        std::ifstream f("/tmp/profile_manifest");
-        nlohmann::json j;
-        f >> j;
-
-        is_air = j["is-air"];
-
-        unit_id = j["unit-id"];
-    } catch (std::exception &ex) {
-        // don't do anything, but send an error message to the user through the status service
-        ohd_log(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
-    }
+    const std::string unit_id=OHDReadUtil::get_unit_id();
+    const bool is_air = OHDReadUtil::runs_on_air();
 
     OHDInterface ohdInterface(io_service,is_air,unit_id);
 

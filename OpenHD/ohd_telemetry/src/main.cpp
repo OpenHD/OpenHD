@@ -2,14 +2,7 @@
 
 #include "GroundTelemetry.h"
 #include "AirTelemetry.h"
-#include <thread>
 // OpenHD stuff
-#include "json.hpp"
-using json = nlohmann::json;
-#include "openhd-platform.hpp"
-#include "openhd-settings.hpp"
-#include "openhd-log.hpp"
-#include "openhd-util.hpp"
 #include "openhd-read-util.hpp"
 
 static constexpr auto TAG="XMAVLINK_SERVICE";

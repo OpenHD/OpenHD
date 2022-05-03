@@ -8,6 +8,7 @@
 #include <fstream>
 #include "json.hpp"
 #include "openhd-log.hpp"
+#include "openhd-platform.hpp"
 
 // Generally they need to be run after openhd-system
 namespace OHDReadUtil{
@@ -42,6 +43,21 @@ namespace OHDReadUtil{
             ohd_log(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed (unit_id)");
         }
         return unit_id;
+    }
+    static PlatformType get_platform_type(){
+        PlatformType platform_type = PlatformTypeUnknown;
+        try {
+            std::ifstream f("/tmp/platform_manifest");
+            nlohmann::json j;
+            f >> j;
+
+            platform_type = string_to_platform_type(j["platform"]);
+        } catch (std::exception &ex) {
+            // don't do anything, but send an error message to the user through the status service
+            ohd_log(STATUS_LEVEL_EMERGENCY, "Platform manifest processing failed");
+            std::cerr << "Platform manifest error: " << ex.what() << std::endl;
+        }
+        return platform_type;
     }
 }
 
