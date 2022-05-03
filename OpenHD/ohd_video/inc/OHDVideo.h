@@ -34,8 +34,10 @@ private:
     const std::string unit_id;
     const PlatformType platform_type;
 private:
-    // the undocumented crap from main.cpp
-    CameraMicroservice * camera_microservice;
+    // Only set when running on the air pi,
+    // This will probably get un- spaghetti soon.
+    // For now we need it, since it is what actually starts the streaming (I think)
+    std::unique_ptr<CameraMicroservice> camera_microservice;
 };
 
 
