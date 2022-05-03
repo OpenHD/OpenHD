@@ -18,11 +18,7 @@
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 
-#include "cameramicroservice.h"
 #include <string>
-
-
-#include "json.hpp"
 
 /**
  * Main entry point for OpenHD video streaming.
@@ -39,11 +35,6 @@ private:
     const bool m_is_air;
     const std::string m_unit_id;
     const PlatformType m_platform_type;
-private:
-    // Only set when running on the air pi,
-    // This will probably get un- spaghetti soon.
-    // For now we need it, since it is what actually starts the streaming (I think)
-    std::unique_ptr<CameraMicroservice> camera_microservice;
 private:
     // These members are what used to be in camera microservice
     // All the created camera streams

@@ -40,7 +40,6 @@ SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} fmt::fmt)
 
 
 SET(ALL_VIDEO_SOURCE_FILES
-        src/cameramicroservice.cpp
         src/camerastream.cpp
         src/flironestream.cpp
         src/gstreamerstream.cpp

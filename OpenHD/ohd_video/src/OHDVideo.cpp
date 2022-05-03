@@ -4,18 +4,13 @@
 
 #include <gstreamerstream.h>
 #include "openhd-settings.hpp"
-#include "inja.hpp"
 #include "OHDVideo.h"
 
 
 OHDVideo::OHDVideo(boost::asio::io_service &io_service, bool is_air, std::string unit_id,PlatformType platform_type):m_io_service(io_service),m_is_air(is_air),m_unit_id(unit_id),m_platform_type(platform_type) {
+    assert(("This module must only run on the air pi !", m_is_air==true));
     try {
-        if (is_air) {
-            // TDOD: re-write this one
-            camera_microservice =std::make_unique<CameraMicroservice>(io_service, platform_type, is_air, unit_id);
-            camera_microservice->setup();
-            //setup();
-        }
+        setup();
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
         exit(1);
