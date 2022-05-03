@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include "openhd-util.hpp"
 
@@ -81,10 +82,17 @@ struct Camera {
     VideoCodec codec = VideoCodecH264;
 
     std::vector<CameraEndpoint> endpoints;
+    std::string debug()const{
+        std::stringstream ss;
+        ss<<"Camera{";
+        //ss<<"CameraType:"<<camera_type_to_string(camera_type);
+        ss<<"}\n";
+        return ss.str();
+    }
 };
 
 
-inline std::string camera_type_to_string(CameraType camera_type) {
+static std::string camera_type_to_string(const CameraType& camera_type) {
     switch (camera_type) {
         case CameraTypeRaspberryPiCSI: {
             return "pi-csi";
@@ -117,7 +125,7 @@ inline std::string camera_type_to_string(CameraType camera_type) {
 }
 
 
-inline CameraType string_to_camera_type(std::string camera_type) {
+static CameraType string_to_camera_type(const std::string camera_type) {
     if (to_uppercase(camera_type).find(to_uppercase("pi-csi")) != std::string::npos) {
         return CameraTypeRaspberryPiCSI;
     } else if (to_uppercase(camera_type).find(to_uppercase("pi-veye")) != std::string::npos) {

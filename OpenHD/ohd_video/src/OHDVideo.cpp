@@ -25,6 +25,17 @@ OHDVideo::OHDVideo(boost::asio::io_service &io_service, bool is_air, std::string
     }
 }
 
+void OHDVideo::debug() const{
+    // TODO make it much more verbose
+    std::cerr << "OHDVideo::debug\n";
+    std::cerr<<"N camera streams:"<<m_camera_streams.size()<<"\n";
+    for(int i=0;i<m_camera_streams.size();i++){
+        const auto& stream=m_camera_streams.at(i);
+        std::cout<<"Camera stream:"<<i<<"\n";
+    }
+    std::cerr << "end of debug";
+}
+
 void OHDVideo::setup() {
     std::cout << "OHDVideo::setup()" << std::endl;
     process_manifest();
@@ -210,3 +221,4 @@ void OHDVideo::save_settings(std::vector<Camera> cameras, std::string settings_f
 
     out.close();
 }
+

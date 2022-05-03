@@ -32,6 +32,8 @@
 class OHDVideo {
 public:
     OHDVideo(boost::asio::io_service& io_service,bool is_air,std::string unit_id,PlatformType platform_type);
+    // Debug stuff LOL :)
+    void debug()const;
 private:
     boost::asio::io_service& m_io_service;
     const bool m_is_air;
