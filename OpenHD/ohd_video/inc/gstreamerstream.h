@@ -14,6 +14,8 @@
 
 #include <gst/gst.h>
 
+// Implementation of OHD CameraStream for pretty much everything, using gstreamer.
+
 class GStreamerStream: public CameraStream {
 public:
     GStreamerStream(boost::asio::io_service &io_service, PlatformType platform, Camera &camera, uint16_t port);

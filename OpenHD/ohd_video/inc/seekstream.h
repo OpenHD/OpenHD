@@ -14,6 +14,8 @@
 
 #include <gst/gst.h>
 
+// Implementation of OHD CameraStream for Seek ?! . Untested.
+
 class SeekStream: public CameraStream {
 public:
     SeekStream(boost::asio::io_service &io_service, PlatformType platform, Camera camera, uint16_t port);
