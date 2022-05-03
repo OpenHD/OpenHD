@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Install all the dependencies needed to build OpenHD from source.
+
 apt -y install cmake build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libpng-dev libsdl2-dev libsdl1.2-dev libconfig++-dev \
             libreadline-dev libjpeg-dev libusb-1.0-0-dev libsodium-dev \

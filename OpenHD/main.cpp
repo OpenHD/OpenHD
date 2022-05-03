@@ -12,6 +12,8 @@
 #include <memory>
 #include <boost/asio/io_service.hpp>
 
+//TODO fix the cmake crap and then we can build a single executable.
+
 int main(int argc, char *argv[]) {
     std::cout<<"OpenHD START\n";
 
