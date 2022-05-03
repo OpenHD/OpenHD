@@ -38,8 +38,6 @@ pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
 find_package(fmt)
 SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} fmt::fmt)
 
-# TODO make nice
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lsystemd")
 
 SET(ALL_VIDEO_SOURCE_FILES
         src/cameramicroservice.cpp
@@ -52,15 +50,16 @@ SET(ALL_VIDEO_SOURCE_FILES
         src/seekstream.cpp
         src/OHDVideo.cpp)
 
-#add_library(OHDVideoLib
-#        SHARED
-#        ${ALL_})
-#target_link_libraries(OHDInterfaceLib ${INTERFACE_USED_BOOST_LIBRARIES})
+add_library(OHDVideoLib
+        SHARED
+        ${ALL_VIDEO_SOURCE_FILES})
+target_link_libraries(OHDVideoLib ${OHD_VIDEO_USED_LIBS})
+target_include_directories(OHDVideoLib PRIVATE ${GST_INCLUDE_DIRS})
+target_link_libraries(OHDVideoLib ${GST_LIBRARIES})
 
 # The main service that is run on OpenHD
-add_executable(openhd_video src/main.cpp
-        ${ALL_VIDEO_SOURCE_FILES})
-target_link_libraries(openhd_video ${OHD_VIDEO_USED_LIBS})
+add_executable(openhd_video src/main.cpp)
+target_link_libraries(openhd_video OHDVideoLib)
 
-target_include_directories(openhd_video PRIVATE ${GST_INCLUDE_DIRS})
-target_link_libraries(openhd_video ${GST_LIBRARIES})
+#target_include_directories(openhd_video PRIVATE ${GST_INCLUDE_DIRS})
+#target_link_libraries(openhd_video ${GST_LIBRARIES})

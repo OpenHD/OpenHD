@@ -14,4 +14,4 @@ include_directories(ohd_common)
 #include_directories(ohd_video/inc)
 
 add_executable(OpenHD main.cpp)
-#target_link_libraries(OpenHD OHDInterfaceLib OHDSystemLib OHDVideoLib)
+target_link_libraries(OpenHD OHDInterfaceLib OHDSystemLib OHDVideoLib)
