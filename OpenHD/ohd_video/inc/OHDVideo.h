@@ -18,7 +18,6 @@
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 
-#include "mavlinkcontrol.h"
 #include "cameramicroservice.h"
 #include <string>
 
