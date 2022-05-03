@@ -5,8 +5,8 @@
 #ifndef OPENHD_OPENHD_PLATFORM_UTIL_H
 #define OPENHD_OPENHD_PLATFORM_UTIL_H
 
+#include <fstream>
 #include "json.hpp"
-using json = nlohmann::json;
 #include "openhd-log.hpp"
 
 // Generally they need to be run after openhd-system
