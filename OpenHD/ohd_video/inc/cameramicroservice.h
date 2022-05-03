@@ -17,7 +17,7 @@
 
 #include "camerastream.h"
 
-
+// TODO: Re-write this one
 class CameraMicroservice: public Microservice {
 public:
     CameraMicroservice(boost::asio::io_service &io_service, PlatformType platform, bool is_air, std::string unit_id);

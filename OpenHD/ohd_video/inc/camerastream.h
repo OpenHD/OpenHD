@@ -58,8 +58,9 @@ protected:
 
     const PlatformType m_platform_type;
     Camera &m_camera;
-
-    const uint16_t m_video_port;
+    // This is the UDP port the video (for now rtp) stream is send to.
+    // It then needs to be picked up, most likely by a wfb instance created by ohd-interface
+    const uint16_t m_video_udp_port;
 
     bool m_enable_videotest = false;
 };

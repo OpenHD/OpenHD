@@ -44,7 +44,6 @@ SET(ALL_VIDEO_SOURCE_FILES
         src/camerastream.cpp
         src/flironestream.cpp
         src/gstreamerstream.cpp
-        src/hotspot.cpp
         src/mavlinkcontrol.cpp
         src/seekstream.cpp
         src/OHDVideo.cpp)
