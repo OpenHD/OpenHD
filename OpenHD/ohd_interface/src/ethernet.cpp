@@ -304,7 +304,7 @@ void Ethernet::save_settings(std::vector<EthernetCard> cards, std::string settin
         data["ip"] = card.ip;
         data["gateway"] = card.gateway;
 
-        Template temp = env.parse(template_s.c_str());
+        inja::Template temp = env.parse(template_s.c_str());
         std::string rendered = env.render(temp, data);
 
         // and write this card to the settings file
