@@ -459,7 +459,7 @@ void GStreamerStream::setup_usb_uvc() {
                         if (m_camera.codec == VideoCodecH265) {
                             m_pipeline << fmt::format("x265enc name=encodectrl bitrate={} ! ", m_camera.bitrate);
                         } else {
-                            m_pipeline << fmt::format("x264enc name=encodectrl bitrate={} ! ", m_camera.bitrate);
+                            m_pipeline << fmt::format("x264enc name=encodectrl bitrate={} tune=zerolatency ! ", m_camera.bitrate);
                         }
                         break;
                     }
