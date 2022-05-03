@@ -22,14 +22,14 @@ class CameraMicroservice: public Microservice {
 public:
     CameraMicroservice(boost::asio::io_service &io_service, PlatformType platform, bool is_air, std::string unit_id);
 
-    void setup();
+    void setup() override;
     void process_manifest();
     void process_settings();
     void debug_camerastream();
 
     void save_settings(std::vector<Camera> cards, std::string settings_file);
 
-    void process_mavlink_message(mavlink_message_t msg);
+    void process_mavlink_message(mavlink_message_t msg) override;
 
     void configure(Camera &camera);
 
@@ -38,12 +38,8 @@ private:
     std::vector<std::unique_ptr<CameraStream>> m_camera_streams;
     // each camera stream has a camera, is this duplicated ??!
     std::vector<Camera> m_cameras;
-
-    std::string m_unit_id;
-
+    const std::string m_unit_id;
     const bool m_is_air = false;
-
-    int m_base_port = 5620;
 };
 
 #endif
