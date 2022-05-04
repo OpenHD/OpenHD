@@ -39,7 +39,7 @@ struct WiFiCard {
     bool supports_injection;
     bool supports_hotspot;
     bool supports_rts;
-
+    // ? Dynamically changed settings ?
     std::string frequency;
     std::string txpower;
     std::string use_for;

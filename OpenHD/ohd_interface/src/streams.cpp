@@ -114,6 +114,7 @@ std::unique_ptr<UDPWBTransmitter> Streams::createUdpWbTx(uint8_t radio_port, int
     RadiotapHeader radiotapHeader{wifiParams};
     TOptions options{};
     options.radio_port=radio_port;
+    options.keypair=std::nullopt;
     const auto cards=broadcast_card_names();
     assert(cards.size()>=1);
     options.wlan=cards.at(0);
@@ -123,6 +124,7 @@ std::unique_ptr<UDPWBTransmitter> Streams::createUdpWbTx(uint8_t radio_port, int
 std::unique_ptr<UDPWBReceiver> Streams::createUdpWbRx(uint8_t radio_port, int udp_port) {
     ROptions options{};
     options.radio_port=radio_port;
+    options.keypair=std::nullopt;
     const auto cards=broadcast_card_names();
     assert(cards.size()>=1);
     options.rxInterfaces=cards;
