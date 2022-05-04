@@ -23,6 +23,18 @@ typedef enum DataType {
     DataTypeUnknown
 } DataType;
 
+// Wrapper that helps with creating a wifibroadcast stream.
+// Each stream of data has a direction - from air to ground or ground to air.
+struct OHDWBStream{
+    DataType data_type; // unused for now
+    uint8_t radio_port; // each stream has a unique radio port
+    // true if this stream goes from air to g
+    bool transmitFromAirToGround;
+    // the UDP port that received packets will be sent to
+    uint16_t udp_tx_port;
+    // the UDP port that will accept packets for transmission
+    uint16_t udp_rx_port;
+};
 
 struct Stream {
     StreamType stream_type;

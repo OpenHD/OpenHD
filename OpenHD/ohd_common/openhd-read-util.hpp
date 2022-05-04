@@ -5,10 +5,11 @@
 #ifndef OPENHD_OPENHD_PLATFORM_UTIL_H
 #define OPENHD_OPENHD_PLATFORM_UTIL_H
 
-#include <fstream>
 #include "json.hpp"
 #include "openhd-log.hpp"
 #include "openhd-platform.hpp"
+#include <fstream>
+#include <sstream>
 
 // Generally they need to be run after openhd-system
 namespace OHDReadUtil{
@@ -40,7 +41,9 @@ namespace OHDReadUtil{
             unit_id = j["unit-id"];
         } catch (std::exception &ex) {
             // don't do anything, but send an error message to the user through the status service
-            ohd_log(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed (unit_id)");
+            std::stringstream ss;
+            ss<<"Profile manifest processing failed (unit_id)"<<ex.what()<<"\n";
+            ohd_log(STATUS_LEVEL_EMERGENCY, ss.str());
         }
         return unit_id;
     }
@@ -50,12 +53,12 @@ namespace OHDReadUtil{
             std::ifstream f("/tmp/platform_manifest");
             nlohmann::json j;
             f >> j;
-
             platform_type = string_to_platform_type(j["platform"]);
         } catch (std::exception &ex) {
             // don't do anything, but send an error message to the user through the status service
-            ohd_log(STATUS_LEVEL_EMERGENCY, "Platform manifest processing failed");
-            std::cerr << "Platform manifest error: " << ex.what() << std::endl;
+            std::stringstream ss;
+            ss<<"Platform manifest processing failed"<<ex.what()<<"\n";
+            ohd_log(STATUS_LEVEL_EMERGENCY, ss.str());
         }
         return platform_type;
     }

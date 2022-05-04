@@ -83,7 +83,6 @@ void OHDVideo::process_manifest() {
         std::cerr<<"Started as air but no camera(s) have been found from json\n";
         // TODO: just start a gstreamer stream that creates a white noise or something similar.
     }
-
 }
 
 void OHDVideo::process_settings() {
@@ -152,7 +151,7 @@ void OHDVideo::process_settings() {
 }
 
 void OHDVideo::configure(Camera &camera) {
-    std::cerr << "Configuring camera: " << camera.type << std::endl;
+    std::cerr << "Configuring camera: " << camera_type_to_string(camera.type) << std::endl;
     // these are all using gstreamer at the moment, but that may not be the case forever
     switch (camera.type) {
         case CameraTypeRaspberryPiCSI:

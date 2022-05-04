@@ -7,10 +7,9 @@ add_subdirectory(ohd_telemetry)
 add_subdirectory(ohd_video)
 
 # TODO: make it a single executable
-#include_directories(ohd_common)
-#include_directories(ohd_interface/inc)
-#include_directories(ohd_system/inc)
-#include_directories(ohd_video/inc)
 
 #add_executable(OpenHD main.cpp)
 #target_link_libraries(OpenHD OHDInterfaceLib OHDSystemLib OHDVideoLib)
+#target_include_directories(OpenHD ohd_interface/inc)
+#target_include_directories(OpenHD ohd_system/inc)
+#target_include_directories(OpenHD ohd_video/inc)

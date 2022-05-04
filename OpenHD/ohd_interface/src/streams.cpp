@@ -185,13 +185,11 @@ void Streams::set_broadcast_cards(std::vector<WiFiCard> cards) {
 }
 
 
-std::vector<std::string> Streams::broadcast_card_names() {
+std::vector<std::string> Streams::broadcast_card_names()const {
     std::vector<std::string> names;
-
-    for (auto card : m_broadcast_cards) {
+    for (const auto& card : m_broadcast_cards) {
         names.push_back(card.name);
     }
-
     return names;
 }
 
@@ -207,9 +205,6 @@ boost::process::child Streams::start_video_stream(Stream stream) {
         ohd_log(STATUS_LEVEL_EMERGENCY, "No wifibroadcast interfaces available");
         throw std::runtime_error("no wifibroadcast interfaces available");
     }
-
-
-
     if (m_is_air) {    
         std::vector<std::string> tx_args { 
             "-r", std::to_string(stream.rf_tx_port),

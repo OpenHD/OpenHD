@@ -16,7 +16,6 @@
 
 #include <boost/process.hpp>
 
-
 typedef std::pair<boost::process::child, boost::process::child> stream_pair;
 
 class Streams {
@@ -31,7 +30,7 @@ public:
     void configure_microservice();
     void configure_telemetry();
 
-    std::vector<std::string> broadcast_card_names();
+    std::vector<std::string> broadcast_card_names()const;
 
     /**
      * Set the wifi cards fund on the system, needs to be called before configure().

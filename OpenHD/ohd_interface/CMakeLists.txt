@@ -8,6 +8,8 @@ include_directories(../ohd_common)
 
 include_directories(inc)
 
+# Build and include wifibroadcast
+include(../lib/wifibroadcast/WBLib.cmake)
 
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
@@ -31,6 +33,7 @@ add_library(OHDInterfaceLib
         SHARED
         ${ALL_INTERFACE_SOURCE_FILES})
 target_link_libraries(OHDInterfaceLib ${INTERFACE_USED_BOOST_LIBRARIES})
+target_link_libraries(${WB_TARGET_LINK_LIBRARIES})
 
 # The main service that is run on OpenHD
 add_executable(openhd_interface src/main.cpp)
