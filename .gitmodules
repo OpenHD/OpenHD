@@ -5,3 +5,4 @@
 [submodule "OpenHD/lib/mavlink"]
 	path = OpenHD/lib/mavlink
 	url = git@github.com:OpenHD/mavlink.git
+	branch = xopenhd2
