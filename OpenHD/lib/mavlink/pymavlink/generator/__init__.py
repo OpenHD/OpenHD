@@ -1,1 +1,0 @@
-'''pymavlink code generator'''

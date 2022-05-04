@@ -1,4 +1,0 @@
-module MAVLink_C [system] {
-    header "../MAVLink/C/ardupilotmega/mavlink.h"
-    export *
-}
