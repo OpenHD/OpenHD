@@ -9,7 +9,6 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
 # Build and include wifibroadcast
 include(../lib/wifibroadcast/WBLib.cmake)
-#include_directories(../lib/wifibroadcast/src/HelperSources)
 
 # include mavlink (header-only)
 include_directories(../lib/c_library_v2_openhd)
@@ -27,7 +26,7 @@ IF(Boost_FOUND)
     LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 ENDIF(Boost_FOUND)
 
-SET(OHD_TELEMETRY_USED_BOOST_LIBS ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${WB_TARGET_LINK_LIBRARIES})
+SET(OHD_TELEMETRY_USED_BOOST_LIBS ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
 
 SET(ALL_TELEMETRY_SOURCE_FILES
         src/AirTelemetry.cpp
@@ -38,32 +37,31 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         #src/endpoints/WBEndpoint.cpp
         src/ohd_telemetry/InternalTelemetry.cpp)
 
-# The main service that is run on OpenHD
-add_executable(openhd_telemetry src/main.cpp
-        ${ALL_TELEMETRY_SOURCE_FILES})
+# Build it as a library
+add_library(OHDTelemetryLib SHARED ${ALL_TELEMETRY_SOURCE_FILES})
+target_link_libraries(OHDTelemetryLib PUBLIC ${OHD_TELEMETRY_USED_BOOST_LIBS})
+target_link_libraries(OHDTelemetryLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
 
-target_link_libraries(openhd_telemetry ${OHD_TELEMETRY_USED_BOOST_LIBS})
+# The main service that is run on OpenHD
+add_executable(openhd_telemetry src/main.cpp)
+target_link_libraries(openhd_telemetry  OHDTelemetryLib)
 
 # All the test files for development
-add_executable(SerialEndpointTest tests/test_serial_endpoint.cpp
-        src/endpoints/SerialEndpoint.cpp)
-target_link_libraries(SerialEndpointTest ${OHD_TELEMETRY_USED_BOOST_LIBS})
+add_executable(SerialEndpointTest tests/test_serial_endpoint.cpp)
+target_link_libraries(SerialEndpointTest ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
 
-add_executable(UDPEndpointTest tests/test_udp_endpoint.cpp
-        src/endpoints/UDPEndpoint.cpp)
-target_link_libraries(UDPEndpointTest ${OHD_TELEMETRY_USED_BOOST_LIBS})
+add_executable(UDPEndpointTest tests/test_udp_endpoint.cpp)
+target_link_libraries(UDPEndpointTest ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
 
-add_executable(OHDGenerateTelemetryTest tests/test_ohd_generate_telemetry.cpp
-        src/ohd_telemetry/InternalTelemetry.cpp)
-target_link_libraries(OHDGenerateTelemetryTest ${OHD_TELEMETRY_USED_BOOST_LIBS})
+add_executable(OHDGenerateTelemetryTest tests/test_ohd_generate_telemetry.cpp)
+target_link_libraries(OHDGenerateTelemetryTest ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
 
 add_executable(OHDRebootTest tests/test_ohd_reboot.cpp)
-target_link_libraries(OHDRebootTest ${OHD_TELEMETRY_USED_BOOST_LIBS})
+target_link_libraries(OHDRebootTest ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
 
 add_executable(test_generate_log_message tests/test_generate_log_message.cpp)
-target_link_libraries(test_generate_log_message ${OHD_TELEMETRY_USED_BOOST_LIBS})
+target_link_libraries(test_generate_log_message ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
 
-add_executable(ServicesLocallyTest tests/test_services_locally.cpp
-        ${ALL_TELEMETRY_SOURCE_FILES})
-target_link_libraries(ServicesLocallyTest ${OHD_TELEMETRY_USED_BOOST_LIBS})
+add_executable(ServicesLocallyTest tests/test_services_locally.cpp)
+target_link_libraries(ServicesLocallyTest ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
 #####

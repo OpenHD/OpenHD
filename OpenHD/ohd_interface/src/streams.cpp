@@ -61,11 +61,7 @@ void Streams::configure() {
         ohd_log(STATUS_LEVEL_EMERGENCY, "No wifibroadcast interfaces available");
         throw std::runtime_error("no wifibroadcast interfaces available");
     }
-    /*
-     * These are static for the moment for testing purposes, they may move to another process and be split up, and will
-     * likely need to run *after* the connected drone notifies the ground what the settings are, otherwise we would have
-     * settings that must be manually updated on the ground to match different vehicles, which we're trying to avoid
-     */
+    // Static for the moment
     configure_telemetry();
     configure_video();
 }

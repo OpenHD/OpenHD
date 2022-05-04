@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.16.3)
 set(CMAKE_CXX_STANDARD 17)
 
+if(FUCKING_OHD_LIB_HELL_ALREADY_INCLUDED)
+    return()
+endif()
+
 # find and build wifibroacast
 include(wifibroadcast/WBLib.cmake)
 
@@ -9,3 +13,5 @@ include(wifibroadcast/WBLib.cmake)
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 # include mavlink (header-only)
 include_directories(c_library_v2_openhd)
+
+SET(FUCKING_OHD_LIB_HELL_ALREADY_INCLUDED)

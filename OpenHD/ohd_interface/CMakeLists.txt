@@ -9,7 +9,7 @@ include_directories(../ohd_common)
 include_directories(inc)
 
 # Build and include wifibroadcast
-include(../lib/wifibroadcast/WBLib.cmake)
+#include(../lib/wifibroadcast/WBLib.cmake)
 
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost

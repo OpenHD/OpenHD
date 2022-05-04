@@ -162,7 +162,7 @@ void OHDVideo::configure(Camera &camera) {
         case CameraTypeUVC:
         case CameraTypeV4L2Loopback: {
             std::cout<<"Camera index:"<<camera.index<<"\n";
-            const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1 : OHD_VIDEO_AIR_VIDEO_STREAM_2;
+            const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
             auto stream=std::make_unique<GStreamerStream>(m_io_service, m_platform_type, camera, udp_port);
             stream->setup();
             stream->start();
