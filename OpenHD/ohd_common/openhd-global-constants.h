@@ -27,11 +27,13 @@ static_assert(OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID!= OHD_TELEMETRY_WIFIBROA
 // Picked up by telemetry service.
 static constexpr auto OHD_LOCAL_LOG_MESSAGES_UDP_PORT=50000;
 
-
+static constexpr auto OHD_VIDEO_PRIMARY_RADIO_PORT=10;
+static constexpr auto OHD_VIDEO_SECONDARY_RADIO_PORT=11;
+static_assert(OHD_VIDEO_PRIMARY_RADIO_PORT!= OHD_VIDEO_SECONDARY_RADIO_PORT,"Must be different");
 // Where on the air pi the video stream rtp data (h264 or h265) is sent to via UDP (localhost)
-static constexpr auto OHD_VIDEO_AIR_VIDEO_STREAM_1=5620; // first (primary) stream
-static constexpr auto OHD_VIDEO_AIR_VIDEO_STREAM_2=5621; // secondary stream
-static_assert(OHD_VIDEO_AIR_VIDEO_STREAM_1 != OHD_VIDEO_AIR_VIDEO_STREAM_2,"Must be different");
+static constexpr auto OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP=5620; // first (primary) stream
+static constexpr auto OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP=5621; // secondary stream
+static_assert(OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP != OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,"Must be different");
 // TODO: Do we really need more than 2 video stream(s) ?!! I don't think so, there is no bandwidth for more anyways.
 // Also, In case someone has more than 2 cameras connected, the best would probably be to have the option to dynamically
 // assign camera X to the primary video stream.
@@ -39,8 +41,8 @@ static_assert(OHD_VIDEO_AIR_VIDEO_STREAM_1 != OHD_VIDEO_AIR_VIDEO_STREAM_2,"Must
 // Where the video stream transmitted via wifibroadcast is made available to QOpenHD to be picked up.
 // I don't see a reason why not to use the same port the video is sent locally - it makes debugging much easier,
 // aka for debugging one could theoretically just start QOpenHD on the air pi lol ;)
-static constexpr auto OHD_VIDEO_GROUND_VIDEO_STREAM_1=5620;
-static constexpr auto OHD_VIDEO_GROUND_VIDEO_STREAM_2=5621;
-static_assert(OHD_VIDEO_GROUND_VIDEO_STREAM_1 != OHD_VIDEO_GROUND_VIDEO_STREAM_2,"Must be different");
+static constexpr auto OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP=5620;
+static constexpr auto OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP=5621;
+static_assert(OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP != OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP,"Must be different");
 
 #endif //OPEN_HD_OPNHD_GLOBAL_CONSTANTS_H

@@ -5,68 +5,47 @@
 #include <chrono>
 #include <vector>
 #include <utility>
-
+#include <boost/process.hpp>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
 #include "json.hpp"
-
 #include "openhd-stream.hpp"
 #include "openhd-wifi.hpp"
 
-#include <boost/process.hpp>
-
-typedef std::pair<boost::process::child, boost::process::child> stream_pair;
+#include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
 
 class Streams {
 public:
     Streams(boost::asio::io_service &io_service, bool is_air, std::string unit_id);
-    
-    virtual ~Streams() {}
-    
-    void configure();
-    
-    void configure_video();
-    void configure_microservice();
-    void configure_telemetry();
-
-    std::vector<std::string> broadcast_card_names()const;
-
     /**
-     * Set the wifi cards fund on the system, needs to be called before configure().
-     * @param cards the wifi cards on the system
+     * Set the wifi cards for broadcasting found on the system, needs to be called before configure().
+     * @param cards the broadcast wifi cards on the system.
      */
     void set_broadcast_cards(std::vector<WiFiCard> cards);
-
-    stream_pair start_telemetry_stream(Stream stream);
-
-    boost::process::child start_video_stream(Stream stream);
-
+    /*
+     * Call this after setting the broadcast cards to start the wifibroadcast instances.
+     */
+    void configure();
+    void configure_telemetry();
+    void configure_video();
+    [[nodiscard]] std::vector<std::string> broadcast_card_names()const;
 private:
     boost::asio::io_service &m_io_service;
-
     const std::string m_unit_id;
     const bool m_is_air = false;
-
-    int m_bandwidth = 20;
-    bool m_short_gi = false;
-
-    bool m_ldpc = false;
-    bool m_stbc = false;
-    int m_mcs = 3;
-
-    int m_data_blocks = 8;
-    int m_total_blocks = 12;
-
+    const int m_mcs = 3;
     std::vector<WiFiCard> m_broadcast_cards;
-
-    std::vector<Stream> m_streams;
-
-    std::vector<boost::process::child> m_video_processes;
-
-    stream_pair m_microservice_processes;
-
-    stream_pair m_telemetry_processes;
+private:
+    // For telemetry, bidirectional in opposite drections
+    std::unique_ptr<UDPWBTransmitter> udpTelemetryTx;
+    std::unique_ptr<UDPWBReceiver> udpTelemetryRx;
+    // For video, on air there are only tx instances, on ground there are only rx instances.
+    std::vector<std::unique_ptr<UDPWBTransmitter>> udpVideoTxList;
+    std::vector<std::unique_ptr<UDPWBReceiver>> udpVideoRxList;
+    // TODO make more configurable
+    std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port,int udp_port);
+    std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port,int udp_port);
 };
 
 

@@ -24,6 +24,7 @@
 #include "openhd-log.hpp"
 #include "openhd-stream.hpp"
 #include "openhd-wifi.hpp"
+#include "openhd-global-constants.h"
 
 #include "streams.h"
 
@@ -36,14 +37,30 @@
  * in the same place.
  *
  */
-Streams::Streams(boost::asio::io_service &io_service, bool is_air, std::string unit_id): m_io_service(io_service), m_is_air(is_air), m_unit_id(unit_id) {}
+Streams::Streams(boost::asio::io_service &io_service, bool is_air, std::string unit_id):
+m_io_service(io_service), m_is_air(is_air), m_unit_id(unit_id) {}
 
+
+void Streams::set_broadcast_cards(std::vector<WiFiCard> cards) {
+    if(!m_broadcast_cards.empty()){
+        std::cerr<<"dangerous, overwriting old broadcast cards\n";
+    }
+    if(m_is_air && cards.size()>1){
+        std::cerr<<"dangerous, the air unit should not have more than 1 wifi card for wifibroadcast\n";
+    }
+    if(cards.empty()){
+        std::cerr<<"Without at least one wifi card, the stream(s) cannot be started\n";
+    }
+    m_broadcast_cards = cards;
+}
 
 void Streams::configure() {
     std::cout << "Streams::configure()" << std::endl;
-
-    configure_microservice();
-
+    const auto broadcast_interfaces = broadcast_card_names();
+    if (broadcast_interfaces.empty()) {
+        ohd_log(STATUS_LEVEL_EMERGENCY, "No wifibroadcast interfaces available");
+        throw std::runtime_error("no wifibroadcast interfaces available");
+    }
     /*
      * These are static for the moment for testing purposes, they may move to another process and be split up, and will
      * likely need to run *after* the connected drone notifies the ground what the settings are, otherwise we would have
@@ -54,136 +71,39 @@ void Streams::configure() {
 }
 
 
-void Streams::configure_microservice() {
-    std::cout << "Streams::configure_microservice()" << std::endl;
-
-    try {
-        Stream stream;
-        stream.index = 0;
-        stream.stream_type = StreamTypeWBC;
-        stream.data_type = DataTypeTelemetry;
-        stream.rf_tx_port = 1;
-        stream.rf_rx_port = 2;
-        // these match the openhd-telemetry@microservice systemd unit and should never change
-        stream.local_tx_port = 15550;
-        stream.local_rx_port = 15551;
-        stream.tx_keypair = "/tmp/tx.key";
-        stream.rx_keypair = "/tmp/rx.key";
-        stream.bandwidth = 20;
-        stream.short_gi = false;
-        stream.ldpc = false;
-        stream.stbc = false;
-        stream.mcs = 1;
-        stream.data_blocks = 1;
-        stream.total_blocks = 2;
-        m_microservice_processes = start_telemetry_stream(stream);
-    } catch (std::exception &ex) {
-        std::cerr << "Failed to start microservice processes: " << ex.what() << std::endl;
-    }
-}
-
-
 void Streams::configure_telemetry() {
     std::cout << "Streams::configure_telemetry()" << std::endl;
-
-    try {
-        /*
-        * todo: these will be configurable by the new settings system, but for now they don't need to be, and non-mavlink
-        *        telemetry isn't merged in the router yet anyway
-        */
-        Stream stream;
-        stream.index = 1;
-        stream.stream_type = StreamTypeWBC;
-        stream.data_type = DataTypeTelemetry;
-        stream.rf_tx_port = 3;
-        stream.rf_rx_port = 4;
-        // these match the openhd-telemetry@telemetry systemd unit and should never change
-        stream.local_tx_port = 16550;
-        stream.local_rx_port = 16551;
-        stream.tx_keypair = "/tmp/tx.key";
-        stream.rx_keypair = "/tmp/rx.key";
-        stream.bandwidth = 20;
-        stream.short_gi = false;
-        stream.ldpc = false;
-        stream.stbc = false;
-        stream.mcs = 1;
-        stream.data_blocks = 1;
-        stream.total_blocks = 2;
-        m_telemetry_processes = start_telemetry_stream(stream);
-    } catch (std::exception &ex) {
-        std::cerr << "Failed to start telemetry processes: " << ex.what() << std::endl;
-    }
+    // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
+    // uses 2 UDP streams in oposite directions.
+    auto radioPort1=m_is_air ? OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID : OHD_TELEMETRY_WIFIBROADCAST_RF_TX_PORT_ID;
+    auto radioPort2=m_is_air ? OHD_TELEMETRY_WIFIBROADCAST_RF_TX_PORT_ID : OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID;
+    auto udpPort1=m_is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX;
+    auto udpPort2=m_is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX;
+    udpTelemetryRx= createUdpWbRx(radioPort1,udpPort1);
+    udpTelemetryTx = createUdpWbTx(radioPort2,udpPort2);
+    udpTelemetryRx->runInBackground();
+    udpTelemetryTx->runInBackground();
 }
-
 
 void Streams::configure_video() {
     std::cout << "Streams::configure_video()" << std::endl;
-
-    try {
-        /*
-        * todo: this will need to change when the settings are wired in, and when streams are started based on the
-        *       detected cameras on the air side. It will not just be set with 4 static streams like this with the
-        *       same params for everything, it's for testing purposes.
-        */
-        Stream stream;
-        stream.index = 0;
-        stream.stream_type = StreamTypeWBC;
-        stream.data_type = DataTypeVideo;
-        stream.rf_tx_port = 56;
-        stream.rf_rx_port = 56;
-        stream.local_tx_port = 5620;
-        stream.local_rx_port = 5620;
-        stream.tx_keypair = "/tmp/tx.key";
-        stream.rx_keypair = "/tmp/rx.key";
-        stream.bandwidth = m_bandwidth;
-        stream.short_gi = m_short_gi;
-        stream.ldpc = m_ldpc;
-        stream.stbc = m_stbc;
-        stream.mcs = m_mcs;
-        stream.data_blocks = m_data_blocks;
-        stream.total_blocks = m_total_blocks;
-
-        auto video1 = start_video_stream(stream);
-        m_video_processes.push_back(std::move(video1));
-
-
-
-        // reusing the above stream object because most of it is the same and this is temporary
-        stream.index = 1;
-        stream.rf_tx_port = 57;
-        stream.rf_rx_port = 57;
-        stream.local_tx_port = 5621;
-        stream.local_rx_port = 5621;
-        auto video2 = start_video_stream(stream);
-        m_video_processes.push_back(std::move(video2));
-
-
-        stream.index = 2;
-        stream.rf_tx_port = 58;
-        stream.rf_rx_port = 58;
-        stream.local_tx_port = 5622;
-        stream.local_rx_port = 5622;
-        auto video3 = start_video_stream(stream);
-        m_video_processes.push_back(std::move(video3));
-
-
-        stream.index = 3;
-        stream.rf_tx_port = 59;
-        stream.rf_rx_port = 59;
-        stream.local_tx_port = 5623;
-        stream.local_rx_port = 5623;
-        auto video4 = start_video_stream(stream);
-        m_video_processes.push_back(std::move(video4));
-    } catch (std::exception &ex) {
-        std::cerr << "Failed to start video processes: " << ex.what() << std::endl;
+    // Video is unidirectional, aka always goes from air pi to ground pi
+    if(m_is_air){
+        auto primary= createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP);
+        primary->runInBackground();
+        auto secondary= createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP);
+        secondary->runInBackground();
+        udpVideoTxList.push_back(std::move(primary));
+        udpVideoTxList.push_back(std::move(secondary));
+    }else{
+        auto primary= createUdpWbRx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP);
+        primary->runInBackground();
+        auto secondary= createUdpWbRx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP);
+        secondary->runInBackground();
+        udpVideoRxList.push_back(std::move(primary));
+        udpVideoRxList.push_back(std::move(secondary));
     }
 }
-
-
-void Streams::set_broadcast_cards(std::vector<WiFiCard> cards) {
-    m_broadcast_cards = cards;
-}
-
 
 std::vector<std::string> Streams::broadcast_card_names()const {
     std::vector<std::string> names;
@@ -193,108 +113,22 @@ std::vector<std::string> Streams::broadcast_card_names()const {
     return names;
 }
 
-
-
-boost::process::child Streams::start_video_stream(Stream stream) {
-    std::cout << "Streams::start_video_stream()" << std::endl;
-
-    m_streams.push_back(stream);
-
-    auto broadcast_interfaces = broadcast_card_names();
-    if (broadcast_interfaces.size() == 0) {
-        ohd_log(STATUS_LEVEL_EMERGENCY, "No wifibroadcast interfaces available");
-        throw std::runtime_error("no wifibroadcast interfaces available");
-    }
-    if (m_is_air) {    
-        std::vector<std::string> tx_args { 
-            "-r", std::to_string(stream.rf_tx_port),
-            "-u", std::to_string(stream.local_tx_port), 
-            "-K", stream.tx_keypair, 
-            "-B", std::to_string(m_bandwidth), 
-            "-G", stream.short_gi ? "short" : "long", 
-            "-S", stream.stbc ? "1" : "0", 
-            "-L", stream.ldpc ? "1" : "0", 
-            "-M", std::to_string(stream.mcs), 
-            //"-k", std::to_string(stream.data_blocks), 
-            //"-n", std::to_string(stream.total_blocks),
-        };
-
-        tx_args.insert(tx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
-
-
-
-        boost::process::child c_tx(boost::process::search_path("wfb_tx"), tx_args, m_io_service);
-
-        c_tx.detach();
-
-        return std::move(c_tx);
-    } else {
-        std::vector<std::string> rx_args { 
-            "-r", std::to_string(stream.rf_rx_port), 
-            "-u", std::to_string(stream.local_rx_port), 
-            "-K", stream.rx_keypair, 
-            //"-k", std::to_string(stream.data_blocks), 
-            //"-n", std::to_string(stream.total_blocks),
-        };
-
-        rx_args.insert(rx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
-
-
-        boost::process::child c_rx(boost::process::search_path("wfb_rx"), rx_args, m_io_service);
-
-        c_rx.detach();
-
-        return std::move(c_rx);
-    }
+std::unique_ptr<UDPWBTransmitter> Streams::createUdpWbTx(uint8_t radio_port, int udp_port) {
+    RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, m_mcs};
+    RadiotapHeader radiotapHeader{wifiParams};
+    TOptions options{};
+    options.radio_port=radio_port;
+    const auto cards=broadcast_card_names();
+    assert(cards.size()>=1);
+    options.wlan=cards.at(0);
+    return std::make_unique<UDPWBTransmitter>(radiotapHeader,options,"127.0.0.1",udp_port);
 }
 
-
-stream_pair Streams::start_telemetry_stream(Stream stream) {
-    std::cout << "Streams::start_telemetry_stream()" << std::endl;
-
-    m_streams.push_back(stream);
-
-    auto broadcast_interfaces = broadcast_card_names();
-    
-    if (broadcast_interfaces.size() == 0) {
-        ohd_log(STATUS_LEVEL_EMERGENCY, "No wifibroadcast interfaces available");
-        throw std::runtime_error("no wifibroadcast interfaces available");
-    }
-
-
-
-    std::vector<std::string> rx_args { 
-        "-r", std::to_string(m_is_air ? stream.rf_rx_port : stream.rf_tx_port), 
-        "-u", std::to_string(stream.local_rx_port), 
-        "-K", stream.rx_keypair,
-       // "-k", std::to_string(stream.data_blocks), 
-       // "-n", std::to_string(stream.total_blocks),
-    };
-    rx_args.insert(rx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
-
-
-    std::vector<std::string> tx_args { 
-        "-r", std::to_string(m_is_air ? stream.rf_tx_port : stream.rf_rx_port),
-        "-u", std::to_string(stream.local_tx_port), 
-        "-K", stream.tx_keypair,
-        "-B", std::to_string(stream.bandwidth), 
-        "-G", stream.short_gi ? "short" : "long", 
-        "-S", stream.stbc ? "1" : "0", 
-        "-L", stream.ldpc ? "1" : "0", 
-        "-M", std::to_string(stream.mcs), 
-        //"-k", std::to_string(stream.data_blocks), 
-        //"-n", std::to_string(stream.total_blocks),
-    };
-    tx_args.insert(tx_args.end(), broadcast_interfaces.begin(), broadcast_interfaces.end());
-
-
-    boost::process::child c_tx(boost::process::search_path("wfb_tx"), tx_args, m_io_service);
-
-    c_tx.detach();
-
-    boost::process::child c_rx(boost::process::search_path("wfb_rx"), rx_args, m_io_service);
-
-    c_rx.detach();
-
-    return std::make_pair(std::move(c_tx), std::move(c_rx));
+std::unique_ptr<UDPWBReceiver> Streams::createUdpWbRx(uint8_t radio_port, int udp_port) {
+    ROptions options{};
+    options.radio_port=radio_port;
+    const auto cards=broadcast_card_names();
+    assert(cards.size()>=1);
+    options.rxInterfaces=cards;
+    return std::make_unique<UDPWBReceiver>(options,"127.0.0.1",udp_port);
 }

@@ -33,7 +33,8 @@ add_library(OHDInterfaceLib
         SHARED
         ${ALL_INTERFACE_SOURCE_FILES})
 target_link_libraries(OHDInterfaceLib ${INTERFACE_USED_BOOST_LIBRARIES})
-target_link_libraries(${WB_TARGET_LINK_LIBRARIES})
+target_link_libraries(OHDInterfaceLib ${WB_TARGET_LINK_LIBRARIES})
+#target_include_directories(OHDInterfaceLib PUBLIC ${WB_INCLUDE_DIRECTORES})
 
 # The main service that is run on OpenHD
 add_executable(openhd_interface src/main.cpp)
