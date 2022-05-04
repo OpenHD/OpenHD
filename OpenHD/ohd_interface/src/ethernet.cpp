@@ -178,6 +178,7 @@ void Ethernet::setup_hotspot(EthernetCard &card) {
         }
     }
 
+    // TODO we should not just call scripts from code
     {
         std::vector<std::string> args { 
             "/usr/local/share/wifibroadcast-scripts/ethernet_hotspot.sh", card.name, m_ethernet_hotspot_address

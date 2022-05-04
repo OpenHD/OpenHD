@@ -267,6 +267,7 @@ void WiFi::setup_hotspot(WiFiCard &card) {
     message1 << std::endl;
     ohd_log(STATUS_LEVEL_INFO, message1.str());
 
+    // TODO we should not just call scripts from code
     {
         std::vector<std::string> args { 
             "/usr/local/share/wifibroadcast-scripts/wifi_hotspot.sh", card.hotspot_band, card.hotspot_channel, card.name, card.txpower, card.hotspot_password
