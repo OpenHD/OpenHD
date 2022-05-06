@@ -46,7 +46,7 @@ SET(ALL_SYSTEM_SOURCE_FILES
         src/EthernetCards.cpp
         src/main.cpp
         src/nl.c
-        src/Platform.cpp
+        src/PlatformDiscovery.cpp
         src/Profile.cpp
         src/WifiCards.cpp
         src/OHDSystem.cpp

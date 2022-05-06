@@ -22,7 +22,7 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-#include "Platform.h"
+#include "PlatformDiscovery.h"
 #include "EthernetCards.h"
 
 extern "C" {

@@ -4,7 +4,7 @@
 #include <string>
 #include <cstdint>
 
-#include "Platform.h"
+#include "PlatformDiscovery.h"
 
 #include "json.hpp"
 

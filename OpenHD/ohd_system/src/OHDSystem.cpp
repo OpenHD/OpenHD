@@ -12,7 +12,7 @@
 
 //#include <systemd/sd-daemon.h>
 
-#include "Platform.h"
+#include "PlatformDiscovery.h"
 #include "Cameras.h"
 #include "EthernetCards.h"
 #include "WifiCards.h"
@@ -27,7 +27,7 @@
 
 void OHDSystem::runOnceOnStartup(){
     try {
-        Platform platform;
+        PlatformDiscovery platform;
         platform.discover();
         auto platform_manifest = platform.generate_manifest();
         std::ofstream _p("/tmp/platform_manifest");

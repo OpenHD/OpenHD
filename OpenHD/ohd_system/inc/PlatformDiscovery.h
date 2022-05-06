@@ -12,12 +12,14 @@
 #include "openhd-discoverable.hpp"
 
 /**
- * Platfrom discovery.
+ * Platform discovery.
+ * Note: One should not use a instance of this class for anything else than discovery, to pass around the discovered
+ * data use the struct from ohd_platform.
  */
-class Platform: public OHD::IDiscoverable{
+class PlatformDiscovery: public OHD::IDiscoverable{
 public:
-    Platform()=default;
-    virtual ~Platform() = default;
+    PlatformDiscovery()=default;
+    virtual ~PlatformDiscovery() = default;
 
     void discover() override;
 

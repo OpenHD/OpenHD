@@ -5,7 +5,7 @@
 #include <chrono>
 #include <vector>
 
-#include "Platform.h"
+#include "PlatformDiscovery.h"
 
 #include "json.hpp"
 

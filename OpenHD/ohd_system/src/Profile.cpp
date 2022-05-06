@@ -20,7 +20,7 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-#include "Platform.h"
+#include "PlatformDiscovery.h"
 #include "Profile.h"
 
 extern "C" {

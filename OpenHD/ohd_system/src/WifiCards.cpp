@@ -23,7 +23,7 @@
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 
-#include "Platform.h"
+#include "PlatformDiscovery.h"
 #include "WifiCards.h"
 
 extern "C" {
