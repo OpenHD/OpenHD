@@ -45,15 +45,6 @@ std::string Profile::generate_unit_id() {
 }
 
 
-/*
- * This is a unique ID for the ground and air unit. 
- * 
- * When the air side first connects, it will announce itself with a service channel message that
- * contains this ID. The ground side can then use the ID to find the correct settings files for
- * that air unit, and if needed it will send them over. This takes the place of SmartSync and 
- * is automatic.
- * 
- */
 void Profile::discover() {
     std::cout << "Profile::discover()" << std::endl;
 
