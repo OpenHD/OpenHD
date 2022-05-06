@@ -5,8 +5,9 @@
 #ifndef XMAVLINKSERVICE_WBSTATISTICSCONVERTER_HPP
 #define XMAVLINKSERVICE_WBSTATISTICSCONVERTER_HPP
 
-#include "../endpoints/wb_include.h"
+//#include "../endpoints/wb_include.h"
 #include "../mav_include.h"
+#include "../../../lib/wifibroadcast/src/OpenHDStatisticsWriter.hpp"
 
 // Helper for converting the WB statistics raw struct to mavlink package
 namespace WBStatisticsConverter{
