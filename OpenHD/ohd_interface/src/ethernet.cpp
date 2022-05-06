@@ -282,7 +282,7 @@ void Ethernet::setup_client(EthernetCard &card) {
 }
 
 
-void Ethernet::save_settings(std::vector<EthernetCard> cards, std::string settings_file) {
+void Ethernet::save_settings(const std::vector<EthernetCard>& cards, std::string settings_file) {
     inja::Environment env;
 
     // load the ethernet card template, we format it once for each card and write that to the file

@@ -28,8 +28,6 @@ public:
     std::unique_ptr<WiFi> wifi;
     std::unique_ptr<Ethernet> ethernet;
     std::unique_ptr<WBStreams> streams;
-    // TODO: here we can add setters / getters for interface / link / wifi related settings.
-    // For example, setting the wifi card power.
 private:
     const bool is_air;
     const std::string unit_id;

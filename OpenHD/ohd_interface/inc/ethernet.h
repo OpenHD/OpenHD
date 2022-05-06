@@ -25,11 +25,9 @@ public:
     void process_card(EthernetCard &card);
 
     void setup_hotspot(EthernetCard &card);
-    void setup_static(EthernetCard &card);
-    void setup_client(EthernetCard &card);
-
-    void save_settings(std::vector<EthernetCard> cards, std::string settings_file);
-
+    static void setup_static(EthernetCard &card);
+    static void setup_client(EthernetCard &card);
+    static void save_settings(const std::vector<EthernetCard>& cards, std::string settings_file);
 private:
     const bool m_is_air = false;
     const std::string m_unit_id;
