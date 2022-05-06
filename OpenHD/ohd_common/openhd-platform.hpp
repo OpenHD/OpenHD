@@ -221,7 +221,7 @@ static nlohmann::json generate_platform_manifest(const OHDPlatform& ohdPlatform)
     return j;
 }
 
-static OHDPlatform from_manifest(){
+static OHDPlatform platform_from_manifest(){
     OHDPlatform ohdPlatform;
     try {
         std::ifstream f("/tmp/platform_manifest");
