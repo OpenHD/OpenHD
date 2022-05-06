@@ -58,5 +58,5 @@ add_library(OHDSystemLib
 target_link_libraries(OHDSystemLib ${OHD_SYSTEM_USED_LIBRARIES})
 
 # The main service that is run on OpenHD
-add_executable(openhd_system src/main.cpp)
-target_link_libraries(openhd_system OHDSystemLib)
+add_executable(test_discovery test/test_discovery.cpp)
+target_link_libraries(test_discovery OHDSystemLib)
