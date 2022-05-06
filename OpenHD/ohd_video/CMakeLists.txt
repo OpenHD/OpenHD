@@ -13,9 +13,6 @@ include_directories(../ohd_common)
 # local includes
 include_directories(inc)
 
-# include mavlink (header-only)
-include_directories(../lib/c_library_v2_openhd)
-
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
 SET(Boost_USE_STATIC_LIBS OFF)

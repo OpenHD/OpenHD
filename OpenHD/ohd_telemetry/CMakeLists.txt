@@ -42,6 +42,7 @@ add_library(OHDTelemetryLib SHARED ${ALL_TELEMETRY_SOURCE_FILES})
 target_link_libraries(OHDTelemetryLib PUBLIC ${OHD_TELEMETRY_USED_BOOST_LIBS})
 target_link_libraries(OHDTelemetryLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
 
+
 # The main service that is run on OpenHD
 add_executable(openhd_telemetry src/main.cpp)
 target_link_libraries(openhd_telemetry  OHDTelemetryLib)
