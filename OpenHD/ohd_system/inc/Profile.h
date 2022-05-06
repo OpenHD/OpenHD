@@ -4,13 +4,15 @@
 #include <string>
 #include <cstdint>
 
-#include "platform.h"
+#include "Platform.h"
 
 #include "json.hpp"
 
 #include "openhd-platform.hpp"
 
-
+/**
+ * Profile discovery.
+ */
 class Profile {
 public:
     Profile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, int camera_count);

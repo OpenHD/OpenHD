@@ -27,7 +27,7 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-#include "cameras.h"
+#include "Cameras.h"
 
 
  #define FLIR_ONE_VENDOR_ID 0x09cb

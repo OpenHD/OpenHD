@@ -22,22 +22,22 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-#include "platform.h"
-#include "ethernet.h"
+#include "Platform.h"
+#include "EthernetCards.h"
 
 extern "C" {
     #include "nl.h"
 }
 
 
-Ethernet::Ethernet(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, EthernetHotspotType ethernet_hotspot_type) : 
+EthernetCards::EthernetCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, EthernetHotspotType ethernet_hotspot_type) :
     m_platform_type(platform_type),
     m_board_type(board_type),
     m_carrier_type(carrier_type),
     m_ethernet_hotspot_type(ethernet_hotspot_type) {}
 
 
-void Ethernet::discover() {
+void EthernetCards::discover() {
     std::cout << "Ethernet::discover()" << std::endl;
 
     /*
@@ -69,7 +69,7 @@ void Ethernet::discover() {
 }
 
 
-void Ethernet::process_card(std::string interface_name) {
+void EthernetCards::process_card(std::string interface_name) {
     std::stringstream device_file;
     device_file << "/sys/class/net/";
     device_file << interface_name.c_str();
@@ -114,7 +114,7 @@ void Ethernet::process_card(std::string interface_name) {
 }
 
 
-nlohmann::json Ethernet::generate_manifest() {
+nlohmann::json EthernetCards::generate_manifest() {
     nlohmann::json j;
 
     auto ethernet_cards = nlohmann::json::array();

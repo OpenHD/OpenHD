@@ -12,11 +12,11 @@
 
 //#include <systemd/sd-daemon.h>
 
-#include "platform.h"
-#include "cameras.h"
-#include "ethernet.h"
-#include "wifi.h"
-#include "profile.h"
+#include "Platform.h"
+#include "Cameras.h"
+#include "EthernetCards.h"
+#include "WifiCards.h"
+#include "Profile.h"
 
 #include "json.hpp"
 
@@ -43,14 +43,14 @@ void OHDSystem::runOnceOnStartup(){
         _c.close();
 
 
-        WiFi wifi(platform.platform_type(), platform.board_type(), platform.carrier_type(), platform.wifi_hotspot_type());
+        WifiCards wifi(platform.platform_type(), platform.board_type(), platform.carrier_type(), platform.wifi_hotspot_type());
         wifi.discover();
         auto wifi_manifest = wifi.generate_manifest();
         std::ofstream _w("/tmp/wifi_manifest");
         _w << wifi_manifest.dump(4);
         _w.close();
 
-        Ethernet ethernet(platform.platform_type(), platform.board_type(), platform.carrier_type(), platform.ethernet_hotspot_type());
+        EthernetCards ethernet(platform.platform_type(), platform.board_type(), platform.carrier_type(), platform.ethernet_hotspot_type());
         ethernet.discover();
         auto ethernet_manifest = ethernet.generate_manifest();
         std::ofstream _t("/tmp/ethernet_manifest");

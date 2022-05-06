@@ -5,13 +5,15 @@
 #include <chrono>
 #include <vector>
 
-#include "platform.h"
+#include "Platform.h"
 
 #include "json.hpp"
 
 #include "openhd-camera.hpp"
 
-
+/**
+ * Discovery and access to all cameras on the system.
+ */
 class Cameras {
 public:
     Cameras(PlatformType platform_type, BoardType board_type, CarrierType carrier_type);
@@ -46,7 +48,6 @@ private:
     bool process_video_node(Camera& camera, CameraEndpoint& endpoint, std::string node);
 
     void detect_ip();
-    void probe_ip_camera(std::string url);
 
     std::vector<Camera> m_cameras;
     std::vector<CameraEndpoint> m_camera_endpoints;

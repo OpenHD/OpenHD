@@ -21,7 +21,7 @@ struct OpenHDProfile {
 } OpenHDProfile;
 
 
-inline OpenHDProfile get_profile(VideoCodec codec) {
+inline OpenHDProfile get_profile() {
     std::ifstream f("/tmp/profile_manifest");
     nlohmann::json j;
     f >> j;

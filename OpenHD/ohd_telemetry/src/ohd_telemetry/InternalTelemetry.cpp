@@ -90,6 +90,7 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
 }
 
 void InternalTelemetry::processLogMessageData(const uint8_t* data,std::size_t dataLen) {
+    std::cout<<"XX"<<dataLen<<"\n";
     //TODO fix safety
     if (dataLen == sizeof(localmessage_t)) {
         localmessage_t local_message;
@@ -106,6 +107,7 @@ void InternalTelemetry::processLogMessageData(const uint8_t* data,std::size_t da
 }
 
 void InternalTelemetry::processLogMessage(localmessage_t msg) {
+    //std::cout<<"Log message:"<<msg.message<<"\n";
     std::lock_guard<std::mutex> guard(bufferedLogMessagesLock);
     bufferedLogMessages.push(msg);
 }

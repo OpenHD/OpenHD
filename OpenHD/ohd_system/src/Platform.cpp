@@ -20,13 +20,10 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-#include "platform.h"
+#include "Platform.h"
 
 
 constexpr char JETSON_BOARDID_PATH[] = "/proc/device-tree/nvidia,boardids";
-
-
-Platform::Platform() {}
 
 
 void Platform::discover() {
@@ -36,7 +33,6 @@ void Platform::discover() {
     detect_jetson();
     detect_pc();
 }
-
 
 void Platform::detect_raspberrypi() {
     std::ifstream t("/proc/cpuinfo");
@@ -117,7 +113,7 @@ void Platform::detect_jetson() {
 
 
 void Platform::detect_pc() {
-    std::array<char, 512> buffer;
+    std::array<char, 512> buffer{};
     std::string raw_value;
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("arch", "r"), pclose);
     if (!pipe) {

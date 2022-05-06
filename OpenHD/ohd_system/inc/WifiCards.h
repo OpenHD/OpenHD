@@ -5,7 +5,7 @@
 #include <chrono>
 #include <vector>
 
-#include "platform.h"
+#include "Platform.h"
 
 #include "json.hpp"
 
@@ -13,11 +13,13 @@
 #include "openhd-platform.hpp"
 
 
-class WiFi {
+/**
+ * Discovery and access to all wifi cards on the system.
+ */
+class WifiCards {
 public:
-    WiFi(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, WiFiHotspotType wifi_hotspot_type);
-    
-    virtual ~WiFi() {}
+    WifiCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, WiFiHotspotType wifi_hotspot_type);
+    virtual ~WifiCards() = default;
 
     void discover();
     void process_card(std::string interface_name);
@@ -26,10 +28,9 @@ public:
 
 private:
     std::vector<WiFiCard> m_wifi_cards;
-
-    PlatformType m_platform_type;
-    BoardType m_board_type;
-    CarrierType m_carrier_type;
+    const PlatformType m_platform_type;
+    const BoardType m_board_type;
+    const CarrierType m_carrier_type;
     WiFiHotspotType m_wifi_hotspot_type;
 };
 

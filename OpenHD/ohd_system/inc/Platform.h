@@ -10,11 +10,13 @@
 #include "openhd-wifi.hpp"
 #include "openhd-ethernet.hpp"
 
+/**
+ * Platfrom discovery.
+ */
 class Platform {
 public:
-    Platform();
-    
-    virtual ~Platform() {}
+    Platform()=default;
+    virtual ~Platform() = default;
 
     void discover();
 
@@ -39,7 +41,6 @@ public:
     EthernetHotspotType ethernet_hotspot_type() {
         return m_ethernet_hotspot_type;
     }
-    
 
 private:
     void detect_raspberrypi();

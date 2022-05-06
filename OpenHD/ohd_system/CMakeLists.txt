@@ -42,13 +42,13 @@ SET(OHD_SYSTEM_USED_LIBRARIES ${OHD_SYSTEM_USED_LIBRARIES} ${V4L2_LIBRARY})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lsystemd")
 
 SET(ALL_SYSTEM_SOURCE_FILES
-        src/cameras.cpp
-        src/ethernet.cpp
+        src/Cameras.cpp
+        src/EthernetCards.cpp
         src/main.cpp
         src/nl.c
-        src/platform.cpp
-        src/profile.cpp
-        src/wifi.cpp
+        src/Platform.cpp
+        src/Profile.cpp
+        src/WifiCards.cpp
         src/OHDSystem.cpp
         lib/bcm2835.c)
 

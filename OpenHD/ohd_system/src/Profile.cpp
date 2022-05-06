@@ -20,8 +20,8 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-#include "platform.h"
-#include "profile.h"
+#include "Platform.h"
+#include "Profile.h"
 
 extern "C" {
     #include <bcm2835.h>
@@ -37,12 +37,10 @@ Profile::Profile(PlatformType platform_type, BoardType board_type, CarrierType c
 
 std::string Profile::generate_unit_id() {
     boost::uuids::uuid uuid = boost::uuids::random_generator()();
-
     std::ofstream of("/conf/openhd/unit.id");
     if (of) {
         of << uuid;
     }
-
     return boost::lexical_cast<std::string>(uuid);
 }
 

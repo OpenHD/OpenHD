@@ -26,8 +26,8 @@
 GStreamerStream::GStreamerStream(boost::asio::io_service &io_service, 
                                  PlatformType platform,
                                  Camera &camera, 
-                                 uint16_t port)
-    : CameraStream(io_service, platform, camera, port) {
+                                 uint16_t video_udp_port)
+    : CameraStream(io_service, platform, camera, video_udp_port) {
     std::cerr << "GStreamerStream::GStreamerStream()" << std::endl;
 }
 
@@ -149,13 +149,6 @@ void GStreamerStream::setup() {
         std::cerr << "Failed to create pipeline: " << error->message << std::endl;
         return;
     }
-
-    // todo: send a microservice channel message to inform the recording class, the ground station, and any connected apps
-    //       about the camera codec in use
-
-    //GstBus *bus = gst_pipeline_get_bus (GST_PIPELINE(gst_pipeline));
-    //gst_bus_add_signal_watch(bus);
-    //g_signal_connect(bus, "message", (GCallback)PipelineCb, this);
 }
 
 

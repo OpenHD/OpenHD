@@ -23,22 +23,22 @@
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 
-#include "platform.h"
-#include "wifi.h"
+#include "Platform.h"
+#include "WifiCards.h"
 
 extern "C" {
     #include "nl.h"
 }
 
 
-WiFi::WiFi(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, WiFiHotspotType wifi_hotspot_type) : 
+WifiCards::WifiCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, WiFiHotspotType wifi_hotspot_type) :
     m_platform_type(platform_type),
     m_board_type(board_type),
     m_carrier_type(carrier_type),
     m_wifi_hotspot_type(wifi_hotspot_type) {}
 
 
-void WiFi::discover() {
+void WifiCards::discover() {
     std::cout << "WiFi::discover()" << std::endl;
 
     /*
@@ -70,7 +70,7 @@ void WiFi::discover() {
 }
 
 
-void WiFi::process_card(std::string interface_name) {
+void WifiCards::process_card(std::string interface_name) {
     std::stringstream device_file;
     device_file << "/sys/class/net/";
     device_file << interface_name.c_str();
@@ -205,7 +205,7 @@ void WiFi::process_card(std::string interface_name) {
 }
 
 
-nlohmann::json WiFi::generate_manifest() {
+nlohmann::json WifiCards::generate_manifest() {
     nlohmann::json j;
 
     auto wifi_cards = nlohmann::json::array();

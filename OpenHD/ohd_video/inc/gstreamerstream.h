@@ -18,7 +18,7 @@
 
 class GStreamerStream: public CameraStream {
 public:
-    GStreamerStream(boost::asio::io_service &io_service, PlatformType platform, Camera &camera, uint16_t port);
+    GStreamerStream(boost::asio::io_service &io_service, PlatformType platform, Camera &camera, uint16_t video_udp_port);
 
     void setup() override;
 

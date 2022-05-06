@@ -23,7 +23,7 @@
 #include "openhd-util.hpp"
 
 
-#include "wifi.h"
+#include "WifiCards.h"
 
 WiFi::WiFi(boost::asio::io_service &io_service, bool is_air, std::string unit_id): m_io_service(io_service), m_is_air(is_air), m_unit_id(unit_id) {}
 
