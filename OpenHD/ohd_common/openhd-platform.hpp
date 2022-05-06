@@ -229,6 +229,7 @@ static OHDPlatform platform_from_manifest(){
         f >> j;
         ohdPlatform.platform_type = string_to_platform_type(j["platform"]);
         // TODO
+        ohdPlatform.carrier_type=CarrierTypeNone;
         //ohdPlatform.board_type= j["board"];
         //ohdPlatform.carrier_type=j["carrier"];
     } catch (std::exception &ex) {
