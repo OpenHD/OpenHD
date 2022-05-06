@@ -22,7 +22,6 @@
 #include "openhd-ethernet.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
-//#include "openhd-stream.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-global-constants.h"
 
