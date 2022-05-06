@@ -23,7 +23,7 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-#include "EthernetCards.h"
+#include "ethernet.h"
 
 
 Ethernet::Ethernet(boost::asio::io_service &io_service, bool is_air, std::string unit_id): m_io_service(io_service), m_is_air(is_air), m_unit_id(unit_id) {}

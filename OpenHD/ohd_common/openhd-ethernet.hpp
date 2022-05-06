@@ -51,7 +51,7 @@ inline std::string ethernet_card_type_to_string(EthernetCardType card_type) {
 }
 
 
-inline EthernetCardType string_to_ethernet_card_type(std::string driver_name) {
+inline EthernetCardType string_to_ethernet_card_type(const std::string& driver_name) {
     if (to_uppercase(driver_name).find(to_uppercase("ipheth")) != std::string::npos) {
         return EthernetCardTypeiPhoneTether;
     } else if (to_uppercase(driver_name).find(to_uppercase("rndis_host")) != std::string::npos) {
@@ -74,7 +74,7 @@ inline std::string ethernet_hotspot_type_to_string(EthernetHotspotType ethernet_
 }
 
 
-inline EthernetHotspotType string_to_ethernet_hotspot_type(std::string hotspot_type) {
+inline EthernetHotspotType string_to_ethernet_hotspot_type(const std::string& hotspot_type) {
     if (to_uppercase(hotspot_type).find(to_uppercase("internal")) != std::string::npos) {
         return EthernetHotspotTypeInternal;
     }

@@ -75,7 +75,7 @@ struct Stream {
 };
 
 
-inline std::string stream_type_to_string(StreamType stream_type) {
+inline std::string stream_type_to_string(const StreamType& stream_type) {
     switch (stream_type) {
         case StreamTypeWBC: {
             return "wbc";
@@ -93,7 +93,7 @@ inline std::string stream_type_to_string(StreamType stream_type) {
 }
 
 
-inline std::string data_type_to_string(DataType data_type) {
+inline std::string data_type_to_string(const DataType& data_type) {
     switch (data_type) {
         case DataTypeVideo: {
             return "video";

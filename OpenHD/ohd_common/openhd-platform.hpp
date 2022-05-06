@@ -5,6 +5,7 @@
 #include <string>
 
 #include "openhd-util.hpp"
+#include "openhd-log.hpp"
 
 typedef enum PlatformType {
     PlatformTypeRaspberryPi,
