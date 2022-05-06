@@ -20,7 +20,7 @@ public:
     EthernetCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, EthernetHotspotType ethernet_hotspot_type);
     virtual ~EthernetCards() = default;
     void discover();
-    void process_card(std::string interface_name);
+    void process_card(const std::string& interface_name);
     nlohmann::json generate_manifest();
 private:
     // All the discovered ethernet cards

@@ -39,21 +39,17 @@ EthernetCards::EthernetCards(PlatformType platform_type, BoardType board_type, C
 
 void EthernetCards::discover() {
     std::cout << "Ethernet::discover()" << std::endl;
-
     /*
      * Find ethernet cards, excluding specific kinds of interfaces.
-     * 
      */    
     std::vector<std::string> excluded_interfaces = {
         "wlan",
         "wifi",
         "lo"
     };
-
     boost::filesystem::path net("/sys/class/net");
     for (auto &entry : boost::filesystem::directory_iterator(net)) { 
         auto interface_name = entry.path().filename().string();
-
         auto excluded = false;
         for (auto &excluded_interface : excluded_interfaces) {
             if (boost::algorithm::contains(interface_name, excluded_interface)) {
@@ -61,7 +57,6 @@ void EthernetCards::discover() {
                 break;
             }   
         }
-
         if (!excluded) {
             process_card(interface_name);
         }
@@ -69,7 +64,7 @@ void EthernetCards::discover() {
 }
 
 
-void EthernetCards::process_card(std::string interface_name) {
+void EthernetCards::process_card(const std::string& interface_name) {
     std::stringstream device_file;
     device_file << "/sys/class/net/";
     device_file << interface_name.c_str();
@@ -109,16 +104,13 @@ void EthernetCards::process_card(std::string interface_name) {
     card.mac = mac;
 
     card.type = string_to_ethernet_card_type(driver_name);
-
     m_ethernet_cards.push_back(card);
 }
 
 
 nlohmann::json EthernetCards::generate_manifest() {
     nlohmann::json j;
-
     auto ethernet_cards = nlohmann::json::array();
-
     for (auto &_card : m_ethernet_cards) {
         try {
             nlohmann::json card = { 
@@ -126,20 +118,15 @@ nlohmann::json EthernetCards::generate_manifest() {
                 {"name",               _card.name },
                 {"mac",                _card.mac },
             };
-
             std::ostringstream message;
             message << "Detected ethernet interface: " << _card.name << std::endl;
-
             ohd_log(STATUS_LEVEL_INFO, message.str());
-
             ethernet_cards.push_back(card);
         } catch (std::exception &ex) {
             std::cerr << "exception: " << ex.what() << std::endl;
         }
     }
-    
     j["hotspot"] = ethernet_hotspot_type_to_string(m_ethernet_hotspot_type);
     j["cards"] = ethernet_cards;
-
     return j;
 }
