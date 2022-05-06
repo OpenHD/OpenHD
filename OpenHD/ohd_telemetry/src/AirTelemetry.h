@@ -5,7 +5,6 @@
 #ifndef OPENHD_TELEMETRY_AIRTELEMETRY_H
 #define OPENHD_TELEMETRY_AIRTELEMETRY_H
 
-#include "Helper.hpp"
 #include "endpoints/SerialEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
 //#include "endpoints/WBEndpoint.h"

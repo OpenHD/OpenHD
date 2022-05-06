@@ -5,8 +5,8 @@
 #ifndef XMAVLINKSERVICE_UDPENDPOINT_H
 #define XMAVLINKSERVICE_UDPENDPOINT_H
 
-#include "SocketHelper.hpp"
 #include "MEndpoint.hpp"
+#include "../../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
 #include <thread>
 
 // Wraps two UDP ports, one for sending and one for receiving data

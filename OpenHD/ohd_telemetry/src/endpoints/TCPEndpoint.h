@@ -5,7 +5,6 @@
 #ifndef XMAVLINKSERVICE_TCPENDPOINT_H
 #define XMAVLINKSERVICE_TCPENDPOINT_H
 
-#include "Helper.hpp"
 #include "MEndpoint.hpp"
 #include <queue>
 #include <vector>

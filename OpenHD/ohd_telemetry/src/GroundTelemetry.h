@@ -5,7 +5,6 @@
 #ifndef OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 #define OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 
-#include "Helper.hpp"
 #include "endpoints/TCPEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
 //#include "endpoints/WBEndpoint.h"

@@ -10,9 +10,7 @@
 #include <boost/thread.hpp>
 #include <chrono>
 
-
 #include "MEndpoint.hpp"
-#include "Helper.hpp"
 
 // UART endpoint
 // Supports sending (mavlink) messages to the connected UART device (aka the flight controller)
