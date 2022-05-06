@@ -11,11 +11,12 @@
 
 #include "openhd-ethernet.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-discoverable.hpp"
 
 /**
  * Discovery and access to all ethernet cards on the system.
  */
-class EthernetCards {
+class EthernetCards :public OHD::IDiscoverable{
 public:
     EthernetCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, EthernetHotspotType ethernet_hotspot_type);
     virtual ~EthernetCards() = default;

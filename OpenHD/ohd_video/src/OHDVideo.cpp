@@ -5,6 +5,7 @@
 #include <gstreamerstream.h>
 #include "openhd-settings.hpp"
 #include "inja.hpp"
+#include "json.hpp"
 #include "OHDVideo.h"
 
 
@@ -188,7 +189,7 @@ void OHDVideo::save_settings(std::vector<Camera> cameras, std::string settings_f
 
     // now fill in the template params
     for (auto & camera : cameras) {
-        json data;
+        nlohmann::json data;
 
         data["type"] = camera_type_to_string(camera.type);
         data["bus"] = camera.bus;

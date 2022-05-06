@@ -7,6 +7,7 @@
 
 #include "openhd-util.hpp"
 #include "openhd-log.hpp"
+#include "json.hpp"
 
 typedef enum PlatformType {
     PlatformTypeRaspberryPi,
@@ -54,6 +55,13 @@ typedef enum CarrierType {
     CarrierTypeJetsonNCB00,
     CarrierTypeNone
 } CarrierType;
+
+// All these members must not change during run time once they have been discovered !
+struct OHDPlatform{
+    PlatformType platform_type = PlatformTypeUnknown;
+    BoardType board_type = BoardTypeUnknown;
+    CarrierType carrier_type = CarrierTypeNone;
+};
 
 inline std::string carrier_type_to_string(CarrierType carrier_type) {
     switch (carrier_type) {
@@ -195,12 +203,6 @@ inline PlatformType string_to_platform_type(const std::string& platform_type) {
 
     return PlatformTypeUnknown;
 }
-
-struct OHDPlatform{
-    PlatformType platform_type = PlatformTypeUnknown;
-    BoardType board_type = BoardTypeUnknown;
-    CarrierType carrier_type = CarrierTypeNone;
-};
 
 // Writes the detected platform data to a json.
 // This can be used for debugging, mostly a microservices artifact.

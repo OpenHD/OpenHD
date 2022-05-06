@@ -10,19 +10,20 @@
 #include "json.hpp"
 
 #include "openhd-camera.hpp"
+#include "openhd-discoverable.hpp"
 
 /**
  * Discovery and access to all cameras on the system.
  */
-class Cameras {
+class Cameras: public OHD::IDiscoverable{
 public:
     Cameras(PlatformType platform_type, BoardType board_type, CarrierType carrier_type);
     
-    virtual ~Cameras() {}
+    virtual ~Cameras() = default;
 
-    void discover();
+    void discover() override;
 
-    nlohmann::json generate_manifest();
+    nlohmann::json generate_manifest() override;
 
     int count() {
         return m_cameras.size();

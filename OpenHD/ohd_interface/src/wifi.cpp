@@ -292,7 +292,7 @@ bool WiFi::set_card_state(const WiFiCard& card, bool up) {
 }
 
 
-bool WiFi::set_frequency(const WiFiCard& card, std::string frequency) {
+bool WiFi::set_frequency(const WiFiCard& card, const std::string& frequency) {
     std::cout << "WiFi::set_frequency(" << frequency << ") for " << card.name <<  ")" << std::endl;
     std::vector<std::string> args { "dev", card.name, "set", "freq", frequency };
     bool success = run_command("iw", args);
@@ -300,7 +300,7 @@ bool WiFi::set_frequency(const WiFiCard& card, std::string frequency) {
 }
 
 
-bool WiFi::set_txpower(const WiFiCard& card, std::string txpower) {
+bool WiFi::set_txpower(const WiFiCard& card, const std::string& txpower) {
     std::cout << "WiFi::set_txpower(" << txpower << ") for " << card.name <<  ")" << std::endl;
     std::vector<std::string> args { "dev", card.name, "set", "txpower", "fixed", txpower };
     bool success = run_command("iw", args);
@@ -316,7 +316,7 @@ bool WiFi::enable_monitor_mode(const WiFiCard& card) {
 }
 
 
-void WiFi::save_settings(const std::vector<WiFiCard>& cards, std::string settings_file) {
+void WiFi::save_settings(const std::vector<WiFiCard>& cards, const std::string& settings_file) {
     inja::Environment env;
 
     // load the wifi card template, we format it once for each card and write that to the file

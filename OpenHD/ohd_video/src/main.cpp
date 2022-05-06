@@ -12,9 +12,9 @@ int main(int argc, char *argv[]) {
 
     const std::string unit_id=OHDReadUtil::get_unit_id();
     const bool is_air = OHDReadUtil::runs_on_air();
-    const auto platform_type=OHDReadUtil::get_platform_type();
+    const auto ohdPlatform=platform_from_manifest();
     if(is_air){
-        OHDVideo ohdVideo(io_service,is_air,unit_id,platform_type);
+        OHDVideo ohdVideo(io_service,is_air,unit_id,ohdPlatform.platform_type);
     }
     // TODO fix
     //sd_notify(0, "READY=1");

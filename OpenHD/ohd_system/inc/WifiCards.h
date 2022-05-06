@@ -16,16 +16,14 @@
 /**
  * Discovery and access to all wifi cards on the system.
  */
-class WifiCards {
+class WifiCards:public OHD::IDiscoverable  {
 public:
     WifiCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, WiFiHotspotType wifi_hotspot_type);
     virtual ~WifiCards() = default;
+    void discover() override;
+    nlohmann::json generate_manifest() override;
 
-    void discover();
     void process_card(std::string interface_name);
-
-    nlohmann::json generate_manifest();
-
 private:
     std::vector<WiFiCard> m_wifi_cards;
     const PlatformType m_platform_type;

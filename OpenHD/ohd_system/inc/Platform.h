@@ -9,18 +9,19 @@
 #include "openhd-platform.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-ethernet.hpp"
+#include "openhd-discoverable.hpp"
 
 /**
  * Platfrom discovery.
  */
-class Platform {
+class Platform: public OHD::IDiscoverable{
 public:
     Platform()=default;
     virtual ~Platform() = default;
 
-    void discover();
+    void discover() override;
 
-    nlohmann::json generate_manifest();
+    nlohmann::json generate_manifest() override;
 
     PlatformType platform_type() {
         return m_platform_type;

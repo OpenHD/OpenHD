@@ -27,15 +27,15 @@ public:
     void setup_hotspot(WiFiCard &card);
 
     static bool set_card_state(const WiFiCard& card, bool up);
-    static bool set_frequency(const WiFiCard& card, std::string frequency);
-    static bool set_txpower(const WiFiCard& card, std::string txpower);
+    static bool set_frequency(const WiFiCard& card, const std::string& frequency);
+    static bool set_txpower(const WiFiCard& card, const std::string& txpower);
     static bool enable_monitor_mode(const WiFiCard& card);
 
     std::vector<WiFiCard> broadcast_cards() {
         return m_broadcast_cards;
     }
 
-    static void save_settings(const std::vector<WiFiCard>& cards, std::string settings_file);
+    static void save_settings(const std::vector<WiFiCard>& cards, const std::string& settings_file);
 
 private:
     const std::string m_unit_id;

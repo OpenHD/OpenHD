@@ -9,23 +9,24 @@
 #include "json.hpp"
 
 #include "openhd-platform.hpp"
+#include "openhd-discoverable.hpp"
 
 /**
  * Profile discovery.
  */
-class Profile {
+class Profile:public OHD::IDiscoverable {
 public:
     Profile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, int camera_count);
     
     virtual ~Profile() = default;
 
-    void discover();
+    void discover() override;
 
-    nlohmann::json generate_manifest();
+    nlohmann::json generate_manifest() override;
 
     static std::string generate_unit_id();
 
-    bool is_air() const {
+    [[nodiscard]] bool is_air() const {
         return m_camera_count != 0;
     }
 
