@@ -47,7 +47,7 @@ private:
     std::vector<std::unique_ptr<UDPWBReceiver>> udpVideoRxList;
     // TODO make more configurable
     std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port,int udp_port);
-    std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port,int udp_port) const;
+    [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port,int udp_port) const;
 };
 
 

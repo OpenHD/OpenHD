@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
     const std::string unit_id=OHDReadUtil::get_unit_id();
     const bool is_air = OHDReadUtil::runs_on_air();
 
-    OHDInterface ohdInterface(io_service,is_air,unit_id);
+    OHDInterface ohdInterface(is_air,unit_id);
 
     // fake it for the moment so the service doesn't exit, won't be needed once the microservice channel is wired in
     boost::asio::io_service::work work(io_service);

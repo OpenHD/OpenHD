@@ -22,10 +22,9 @@
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 
-
 #include "wifi.h"
 
-WiFi::WiFi(boost::asio::io_service &io_service, bool is_air, std::string unit_id): m_io_service(io_service), m_is_air(is_air), m_unit_id(unit_id) {}
+WiFi::WiFi(bool is_air, std::string unit_id):m_is_air(is_air), m_unit_id(unit_id) {}
 
 
 void WiFi::configure() {
@@ -285,64 +284,45 @@ void WiFi::setup_hotspot(WiFiCard &card) {
 }
 
 
-
-void WiFi::setup_client(WiFiCard &card) {
-
-}
-
-
-bool WiFi::set_card_state(WiFiCard card, bool up) {
+bool WiFi::set_card_state(const WiFiCard& card, bool up) {
     std::cout << "WiFi::set_card_state(" << up << ") for " << card.name <<  ")" << std::endl;
-
     std::vector<std::string> args { "link", "set", "dev", card.name, up ? "up" : "down" };
-
     bool success = run_command("ip", args);
-
     return success;
 }
 
 
-bool WiFi::set_frequency(WiFiCard card, std::string frequency) {
+bool WiFi::set_frequency(const WiFiCard& card, std::string frequency) {
     std::cout << "WiFi::set_frequency(" << frequency << ") for " << card.name <<  ")" << std::endl;
-
     std::vector<std::string> args { "dev", card.name, "set", "freq", frequency };
-
     bool success = run_command("iw", args);
-
     return success;
 }
 
 
-bool WiFi::set_txpower(WiFiCard card, std::string txpower) {
+bool WiFi::set_txpower(const WiFiCard& card, std::string txpower) {
     std::cout << "WiFi::set_txpower(" << txpower << ") for " << card.name <<  ")" << std::endl;
-
     std::vector<std::string> args { "dev", card.name, "set", "txpower", "fixed", txpower };
-
     bool success = run_command("iw", args);
-
     return success;
 }
 
 
-bool WiFi::enable_monitor_mode(WiFiCard card) {
+bool WiFi::enable_monitor_mode(const WiFiCard& card) {
     std::cout << "WiFi::enable_monitor_mode(" << card.name <<  ")" << std::endl;
-
     std::vector<std::string> args { "dev", card.name, "set", "monitor", "otherbss" };
-
     bool success = run_command("iw", args);
-
     return success;
 }
 
 
-void WiFi::save_settings(std::vector<WiFiCard> cards, std::string settings_file) {
+void WiFi::save_settings(const std::vector<WiFiCard>& cards, std::string settings_file) {
     inja::Environment env;
 
     // load the wifi card template, we format it once for each card and write that to the file
     std::ifstream template_file("/usr/local/share/openhd/wificard.template");
     std::string template_s((std::istreambuf_iterator<char>(template_file)),
                           std::istreambuf_iterator<char>());
-
 
     std::ofstream out(settings_file);
 

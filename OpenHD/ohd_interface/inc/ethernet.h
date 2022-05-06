@@ -15,9 +15,9 @@
 
 class Ethernet {
 public:
-    Ethernet(boost::asio::io_service &io_service, bool is_air, std::string unit_id);
+    Ethernet(bool is_air, std::string unit_id);
     
-    virtual ~Ethernet() {}
+    virtual ~Ethernet() = default;
 
     void process_manifest();
     void configure();
@@ -31,19 +31,12 @@ public:
     void save_settings(std::vector<EthernetCard> cards, std::string settings_file);
 
 private:
-    boost::asio::io_service &m_io_service;
-
     const bool m_is_air = false;
-
-    bool m_hotspot_configured = false;
-
     const std::string m_unit_id;
-
+    bool m_hotspot_configured = false;
     // todo: read from settings file once new settings system merged
     std::string m_ethernet_hotspot_address = "192.168.3.1";
-
     std::vector<EthernetCard> m_ethernet_cards;
-
     EthernetHotspotType m_ethernet_hotspot_type;
 };
 

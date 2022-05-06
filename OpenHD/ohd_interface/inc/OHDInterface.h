@@ -24,14 +24,13 @@ public:
      * air or ground pi, for example wifi hotspot can only be enabled on the ground pi.
      * @param unit_id ?? Stephen no idea ?
      */
-    OHDInterface(boost::asio::io_service& io_service,bool is_air,std::string unit_id);
+    OHDInterface(bool is_air,std::string unit_id);
     std::unique_ptr<WiFi> wifi;
     std::unique_ptr<Ethernet> ethernet;
     std::unique_ptr<WBStreams> streams;
     // TODO: here we can add setters / getters for interface / link / wifi related settings.
     // For example, setting the wifi card power.
 private:
-    boost::asio::io_service& io_service;
     const bool is_air;
     const std::string unit_id;
 };

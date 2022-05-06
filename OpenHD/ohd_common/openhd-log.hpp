@@ -106,10 +106,4 @@ inline void ohd_log_debug(std::string message){
 }
 
 
-// TODO REMOVE, has been renamed
-/*inline void status_message(STATUS_LEVEL level, std::string message){
-    log_message(level,message);
-}*/
-
-
 #endif

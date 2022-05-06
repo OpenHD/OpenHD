@@ -51,7 +51,7 @@ struct WiFiCard {
 };
 
 
-inline std::string wifi_card_type_to_string(WiFiCardType card_type) {
+inline std::string wifi_card_type_to_string(const WiFiCardType& card_type) {
     switch (card_type) {
         case WiFiCardTypeAtheros9k: {
             return "ath9k_htc";
@@ -84,7 +84,7 @@ inline std::string wifi_card_type_to_string(WiFiCardType card_type) {
 }
 
 
-inline WiFiCardType string_to_wifi_card_type(std::string driver_name) {
+inline WiFiCardType string_to_wifi_card_type(const std::string& driver_name) {
     if (to_uppercase(driver_name).find(to_uppercase("ath9k_htc")) != std::string::npos) {
         return WiFiCardTypeAtheros9khtc;
     } else if (to_uppercase(driver_name).find(to_uppercase("ath9k")) != std::string::npos) {
@@ -109,7 +109,7 @@ inline WiFiCardType string_to_wifi_card_type(std::string driver_name) {
 }
 
 
-inline std::string wifi_hotspot_type_to_string(WiFiHotspotType wifi_hotspot_type) {
+inline std::string wifi_hotspot_type_to_string(const WiFiHotspotType& wifi_hotspot_type) {
     switch (wifi_hotspot_type) {
         case WiFiHotspotTypeInternal2GBand: {
             return "internal2g";
@@ -130,7 +130,7 @@ inline std::string wifi_hotspot_type_to_string(WiFiHotspotType wifi_hotspot_type
 }
 
 
-inline WiFiHotspotType string_to_wifi_hotspot_type(std::string hotspot_type) {
+inline WiFiHotspotType string_to_wifi_hotspot_type(const std::string& hotspot_type) {
     if (to_uppercase(hotspot_type).find(to_uppercase("internal2g")) != std::string::npos) {
         return WiFiHotspotTypeInternal2GBand;
     } else if (to_uppercase(hotspot_type).find(to_uppercase("internal5g")) != std::string::npos) {
