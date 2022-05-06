@@ -17,15 +17,15 @@ class Profile {
 public:
     Profile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, int camera_count);
     
-    virtual ~Profile() {}
+    virtual ~Profile() = default;
 
     void discover();
 
     nlohmann::json generate_manifest();
 
-    std::string generate_unit_id();
+    static std::string generate_unit_id();
 
-    bool is_air() {
+    bool is_air() const {
         return m_camera_count != 0;
     }
 
@@ -34,12 +34,11 @@ public:
     }
 
 private:
-    PlatformType m_platform_type;
-    BoardType m_board_type;
-    CarrierType m_carrier_type;
+    const PlatformType m_platform_type;
+    const BoardType m_board_type;
+    const CarrierType m_carrier_type;
 
     int m_camera_count = 0;
-    
     std::string m_unit_id;
 };
 

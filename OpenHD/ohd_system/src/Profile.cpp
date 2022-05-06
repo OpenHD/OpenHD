@@ -84,12 +84,6 @@ nlohmann::json Profile::generate_manifest() {
     bool is_air = m_camera_count > 0 ? true : false;
     j["is-air"] = is_air;
 
-    // global sysid for microservices
-    int sys_id = is_air ? 253 : 254;
-
-    j["microservice-sys-id"] = sys_id;
-
-
     std::ostringstream message1;
     message1 << "Unit ID: " << m_unit_id << std::endl;
     ohd_log(STATUS_LEVEL_INFO, message1.str());
