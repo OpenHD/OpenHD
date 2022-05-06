@@ -94,10 +94,5 @@ nlohmann::json Profile::generate_manifest() {
     message2 << "Booting as: " << boot_type << std::endl;
     ohd_log(STATUS_LEVEL_INFO, message2.str());
 
-    std::ostringstream message3;
-    message3 << "Microservice sysid: " << sys_id << std::endl;
-    ohd_log(STATUS_LEVEL_INFO, message3.str());
-
-
     return j;
 }

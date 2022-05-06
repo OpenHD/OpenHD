@@ -239,21 +239,5 @@ static OHDPlatform from_manifest(){
     return ohdPlatform;
 }
 
-// Determine at run time what platform we are running on
-// !!!!! Needs to be used AFTER openhd-system has written all the config stuff !!!!
-static PlatformType getPlatformType(){
-    PlatformType platform_type = PlatformTypeUnknown;
-    try {
-        std::ifstream f("/tmp/platform_manifest");
-        nlohmann::json j;
-        f >> j;
-        platform_type = string_to_platform_type(j["platform"]);
-    } catch (std::exception &ex) {
-        std::cerr << "Platform manifest processing failed: " << ex.what() << std::endl;
-        ohd_log(STATUS_LEVEL_EMERGENCY, "Platform manifest processing failed");
-        exit(1);
-    }
-    return platform_type;
-}
 
 #endif
