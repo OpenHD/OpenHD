@@ -16,6 +16,7 @@
 
 /**
  * This class is responsible for setting up all the Wifibroadcast streams needed for OpenHD.
+ * There should only be one instance of this class in the whole project.
  */
 class WBStreams {
 public:

@@ -12,7 +12,10 @@
 
 #include "openhd-wifi.hpp"
 
-
+/**
+ * Provides access to the discovered wifi cards on the system.
+ * There should only be one instance of this class in the whole OpenHD project.
+ */
 class WiFi {
 public:
     WiFi(bool is_air, std::string unit_id);

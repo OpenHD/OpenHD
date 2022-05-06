@@ -12,7 +12,10 @@
 
 #include "openhd-ethernet.hpp"
 
-
+/**
+ * Provides access to the discovered ethernet cards on the system.
+ * There should only be one instance of this class in the whole OpenHD project.
+ */
 class Ethernet {
 public:
     Ethernet(bool is_air, std::string unit_id);
