@@ -26,7 +26,7 @@ SET(INTERFACE_USED_BOOST_LIBRARIES ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRAR
 SET(ALL_INTERFACE_SOURCE_FILES
         src/wifi.cpp
         src/ethernet.cpp
-        src/streams.cpp
+        src/WBStreams.cpp
         src/OHDInterface.cpp)
 
 add_library(OHDInterfaceLib

@@ -7,7 +7,7 @@
 
 #include <memory>
 
-#include "streams.h"
+#include "WBStreams.h"
 #include "wifi.h"
 #include "ethernet.h"
 
@@ -27,7 +27,7 @@ public:
     OHDInterface(boost::asio::io_service& io_service,bool is_air,std::string unit_id);
     std::unique_ptr<WiFi> wifi;
     std::unique_ptr<Ethernet> ethernet;
-    std::unique_ptr<Streams> streams;
+    std::unique_ptr<WBStreams> streams;
     // TODO: here we can add setters / getters for interface / link / wifi related settings.
     // For example, setting the wifi card power.
 private:

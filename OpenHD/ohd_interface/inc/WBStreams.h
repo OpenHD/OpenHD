@@ -15,9 +15,12 @@
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
 
-class Streams {
+/**
+ * This class is responsible for setting up all the Wifibroadcast streams needed for OpenHD.
+ */
+class WBStreams {
 public:
-    Streams(boost::asio::io_service &io_service, bool is_air, std::string unit_id);
+    WBStreams(bool is_air, std::string unit_id);
     /**
      * Set the wifi cards for broadcasting found on the system, needs to be called before configure().
      * @param cards the broadcast wifi cards on the system.
@@ -31,7 +34,6 @@ public:
     void configure_video();
     [[nodiscard]] std::vector<std::string> broadcast_card_names()const;
 private:
-    boost::asio::io_service &m_io_service;
     const std::string m_unit_id;
     const bool m_is_air = false;
     const int m_mcs = 3;
@@ -45,7 +47,7 @@ private:
     std::vector<std::unique_ptr<UDPWBReceiver>> udpVideoRxList;
     // TODO make more configurable
     std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port,int udp_port);
-    std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port,int udp_port);
+    std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port,int udp_port) const;
 };
 
 

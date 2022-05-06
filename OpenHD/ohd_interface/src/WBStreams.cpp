@@ -26,7 +26,7 @@
 #include "openhd-wifi.hpp"
 #include "openhd-global-constants.h"
 
-#include "streams.h"
+#include "WBStreams.h"
 
 /*
  * This file is likely temporary, there are some unresolved questions over whether stream settings should be global
@@ -37,11 +37,11 @@
  * in the same place.
  *
  */
-Streams::Streams(boost::asio::io_service &io_service, bool is_air, std::string unit_id):
-m_io_service(io_service), m_is_air(is_air), m_unit_id(unit_id) {}
+WBStreams::WBStreams(bool is_air, std::string unit_id):
+m_is_air(is_air), m_unit_id(unit_id) {}
 
 
-void Streams::set_broadcast_cards(std::vector<WiFiCard> cards) {
+void WBStreams::set_broadcast_cards(std::vector<WiFiCard> cards) {
     if(!m_broadcast_cards.empty()){
         std::cerr<<"dangerous, overwriting old broadcast cards\n";
     }
@@ -54,7 +54,7 @@ void Streams::set_broadcast_cards(std::vector<WiFiCard> cards) {
     m_broadcast_cards = cards;
 }
 
-void Streams::configure() {
+void WBStreams::configure() {
     std::cout << "Streams::configure()" << std::endl;
     const auto broadcast_interfaces = broadcast_card_names();
     if (broadcast_interfaces.empty()) {
@@ -67,7 +67,7 @@ void Streams::configure() {
 }
 
 
-void Streams::configure_telemetry() {
+void WBStreams::configure_telemetry() {
     std::cout << "Streams::configure_telemetry()" << std::endl;
     // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
     // uses 2 UDP streams in oposite directions.
@@ -81,7 +81,7 @@ void Streams::configure_telemetry() {
     udpTelemetryTx->runInBackground();
 }
 
-void Streams::configure_video() {
+void WBStreams::configure_video() {
     std::cout << "Streams::configure_video()" << std::endl;
     // Video is unidirectional, aka always goes from air pi to ground pi
     if(m_is_air){
@@ -101,7 +101,7 @@ void Streams::configure_video() {
     }
 }
 
-std::vector<std::string> Streams::broadcast_card_names()const {
+std::vector<std::string> WBStreams::broadcast_card_names()const {
     std::vector<std::string> names;
     for (const auto& card : m_broadcast_cards) {
         names.push_back(card.name);
@@ -109,24 +109,24 @@ std::vector<std::string> Streams::broadcast_card_names()const {
     return names;
 }
 
-std::unique_ptr<UDPWBTransmitter> Streams::createUdpWbTx(uint8_t radio_port, int udp_port) {
+std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port) {
     RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, m_mcs};
     RadiotapHeader radiotapHeader{wifiParams};
     TOptions options{};
     options.radio_port=radio_port;
     options.keypair=std::nullopt;
     const auto cards=broadcast_card_names();
-    assert(cards.size()>=1);
+    assert(!cards.empty());
     options.wlan=cards.at(0);
     return std::make_unique<UDPWBTransmitter>(radiotapHeader,options,"127.0.0.1",udp_port);
 }
 
-std::unique_ptr<UDPWBReceiver> Streams::createUdpWbRx(uint8_t radio_port, int udp_port) {
+std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int udp_port) const {
     ROptions options{};
     options.radio_port=radio_port;
     options.keypair=std::nullopt;
     const auto cards=broadcast_card_names();
-    assert(cards.size()>=1);
+    assert(!cards.empty());
     options.rxInterfaces=cards;
     return std::make_unique<UDPWBReceiver>(options,"127.0.0.1",udp_port);
 }
