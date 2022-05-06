@@ -15,6 +15,9 @@ public:
      * doesn't really make sense (writing json first, then reading it) but for now it will stay this way.
      */
     static void runOnceOnStartup();
+    // Generated data is written into this directory.
+// NOTE: Please leave it at this directory and this directory only !
+    static constexpr auto OUTPUT_DIRECTORY="/conf/openhd/";
 };
 
 
