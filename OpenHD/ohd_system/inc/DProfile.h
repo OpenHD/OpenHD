@@ -4,7 +4,7 @@
 #include <string>
 #include <cstdint>
 
-#include "PlatformDiscovery.h"
+#include "DPlatform.h"
 
 #include "json.hpp"
 
@@ -12,13 +12,13 @@
 #include "openhd-discoverable.hpp"
 
 /**
- * Profile discovery.
+ * Discover the profile we are running on and write it to json.
  */
-class Profile:public OHD::IDiscoverable {
+class DProfile: public OHD::IDiscoverable {
 public:
-    Profile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, int camera_count);
+    DProfile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, int camera_count);
     
-    virtual ~Profile() = default;
+    virtual ~DProfile() = default;
 
     void discover() override;
 

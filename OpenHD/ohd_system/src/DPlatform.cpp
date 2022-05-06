@@ -20,13 +20,13 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-#include "PlatformDiscovery.h"
+#include "DPlatform.h"
 
 
 constexpr char JETSON_BOARDID_PATH[] = "/proc/device-tree/nvidia,boardids";
 
 
-void PlatformDiscovery::discover() {
+void DPlatform::discover() {
     std::cout << "Platform::discover()" << std::endl;
 
     detect_raspberrypi();
@@ -34,7 +34,7 @@ void PlatformDiscovery::discover() {
     detect_pc();
 }
 
-void PlatformDiscovery::detect_raspberrypi() {
+void DPlatform::detect_raspberrypi() {
     std::ifstream t("/proc/cpuinfo");
     std::string raw_value((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
     
@@ -102,7 +102,7 @@ void PlatformDiscovery::detect_raspberrypi() {
 }
 
 
-void PlatformDiscovery::detect_jetson() {
+void DPlatform::detect_jetson() {
     if (boost::filesystem::exists(JETSON_BOARDID_PATH)) {
         m_platform_type = PlatformTypeJetson;
         m_board_type = BoardTypeJetsonNano;
@@ -112,7 +112,7 @@ void PlatformDiscovery::detect_jetson() {
 }
 
 
-void PlatformDiscovery::detect_pc() {
+void DPlatform::detect_pc() {
     std::array<char, 512> buffer{};
     std::string raw_value;
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("arch", "r"), pclose);
@@ -142,7 +142,7 @@ void PlatformDiscovery::detect_pc() {
 }
 
 
-nlohmann::json PlatformDiscovery::generate_manifest() {
+nlohmann::json DPlatform::generate_manifest() {
     const OHDPlatform ohdPlatform{m_platform_type,m_board_type,m_carrier_type};
     return generate_platform_manifest(ohdPlatform);
 }

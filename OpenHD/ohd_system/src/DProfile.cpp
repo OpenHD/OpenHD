@@ -20,22 +20,22 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-#include "PlatformDiscovery.h"
-#include "Profile.h"
+#include "DPlatform.h"
+#include "DProfile.h"
 
 extern "C" {
     #include <bcm2835.h>
 }
 
 
-Profile::Profile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, int camera_count) : 
+DProfile::DProfile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, int camera_count) :
     m_platform_type(platform_type),
     m_board_type(board_type),
     m_carrier_type(carrier_type),
     m_camera_count(camera_count) {}
 
 
-std::string Profile::generate_unit_id() {
+std::string DProfile::generate_unit_id() {
     boost::uuids::uuid uuid = boost::uuids::random_generator()();
     std::ofstream of("/conf/openhd/unit.id");
     if (of) {
@@ -45,7 +45,7 @@ std::string Profile::generate_unit_id() {
 }
 
 
-void Profile::discover() {
+void DProfile::discover() {
     std::cout << "Profile::discover()" << std::endl;
 
     std::ifstream unit_id_file("/conf/openhd/unit.id");
@@ -67,7 +67,7 @@ void Profile::discover() {
 }
 
 
-nlohmann::json Profile::generate_manifest() {
+nlohmann::json DProfile::generate_manifest() {
     nlohmann::json j;
     
     j["unit-id"] = m_unit_id;

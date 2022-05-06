@@ -5,7 +5,7 @@
 #include <chrono>
 #include <vector>
 
-#include "PlatformDiscovery.h"
+#include "DPlatform.h"
 
 #include "json.hpp"
 
@@ -14,12 +14,12 @@
 
 
 /**
- * Discovery and access to all wifi cards on the system.
+ * Discover all connected wifi cards and write them to json.
  */
-class WifiCards:public OHD::IDiscoverable  {
+class DWifiCards: public OHD::IDiscoverable  {
 public:
-    WifiCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, WiFiHotspotType wifi_hotspot_type);
-    virtual ~WifiCards() = default;
+    DWifiCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, WiFiHotspotType wifi_hotspot_type);
+    virtual ~DWifiCards() = default;
     void discover() override;
     nlohmann::json generate_manifest() override;
 

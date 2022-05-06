@@ -12,11 +12,11 @@
 
 //#include <systemd/sd-daemon.h>
 
-#include "PlatformDiscovery.h"
-#include "Cameras.h"
-#include "EthernetCards.h"
-#include "WifiCards.h"
-#include "Profile.h"
+#include "DPlatform.h"
+#include "DCameras.h"
+#include "DEthernetCards.h"
+#include "DWifiCards.h"
+#include "DProfile.h"
 
 #include "json.hpp"
 
@@ -27,15 +27,14 @@
 
 void OHDSystem::runOnceOnStartup(){
     try {
-        PlatformDiscovery platform;
+        DPlatform platform;
         platform.discover();
         auto platform_manifest = platform.generate_manifest();
         std::ofstream _p("/tmp/platform_manifest");
         _p << platform_manifest.dump(4);
         _p.close();
 
-
-        Cameras cameras(platform.platform_type(), platform.board_type(), platform.carrier_type());
+        DCameras cameras(platform.platform_type(), platform.board_type(), platform.carrier_type());
         cameras.discover();
         auto camera_manifest = cameras.generate_manifest();
         std::ofstream _c("/tmp/camera_manifest");
@@ -43,14 +42,14 @@ void OHDSystem::runOnceOnStartup(){
         _c.close();
 
 
-        WifiCards wifi(platform.platform_type(), platform.board_type(), platform.carrier_type(), platform.wifi_hotspot_type());
+        DWifiCards wifi(platform.platform_type(), platform.board_type(), platform.carrier_type(), platform.wifi_hotspot_type());
         wifi.discover();
         auto wifi_manifest = wifi.generate_manifest();
         std::ofstream _w("/tmp/wifi_manifest");
         _w << wifi_manifest.dump(4);
         _w.close();
 
-        EthernetCards ethernet(platform.platform_type(), platform.board_type(), platform.carrier_type(), platform.ethernet_hotspot_type());
+        DEthernetCards ethernet(platform.platform_type(), platform.board_type(), platform.carrier_type(), platform.ethernet_hotspot_type());
         ethernet.discover();
         auto ethernet_manifest = ethernet.generate_manifest();
         std::ofstream _t("/tmp/ethernet_manifest");
@@ -59,7 +58,7 @@ void OHDSystem::runOnceOnStartup(){
 
         int camera_count = cameras.count();
 
-        Profile profile(platform.platform_type(), platform.board_type(), platform.carrier_type(), camera_count);
+        DProfile profile(platform.platform_type(), platform.board_type(), platform.carrier_type(), camera_count);
         profile.discover();
         auto profile_manifest = profile.generate_manifest();
         std::ofstream _pr("/tmp/profile_manifest");

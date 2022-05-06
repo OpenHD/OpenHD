@@ -12,14 +12,14 @@
 #include "openhd-discoverable.hpp"
 
 /**
- * Platform discovery.
+ * Discover the platform we are running on and write it to json.
  * Note: One should not use a instance of this class for anything else than discovery, to pass around the discovered
  * data use the struct from ohd_platform.
  */
-class PlatformDiscovery: public OHD::IDiscoverable{
+class DPlatform: public OHD::IDiscoverable{
 public:
-    PlatformDiscovery()=default;
-    virtual ~PlatformDiscovery() = default;
+    DPlatform()=default;
+    virtual ~DPlatform() = default;
 
     void discover() override;
 

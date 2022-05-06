@@ -22,22 +22,22 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-#include "PlatformDiscovery.h"
-#include "EthernetCards.h"
+#include "DPlatform.h"
+#include "DEthernetCards.h"
 
 extern "C" {
     #include "nl.h"
 }
 
 
-EthernetCards::EthernetCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, EthernetHotspotType ethernet_hotspot_type) :
+DEthernetCards::DEthernetCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, EthernetHotspotType ethernet_hotspot_type) :
     m_platform_type(platform_type),
     m_board_type(board_type),
     m_carrier_type(carrier_type),
     m_ethernet_hotspot_type(ethernet_hotspot_type) {}
 
 
-void EthernetCards::discover() {
+void DEthernetCards::discover() {
     std::cout << "Ethernet::discover()" << std::endl;
     /*
      * Find ethernet cards, excluding specific kinds of interfaces.
@@ -64,7 +64,7 @@ void EthernetCards::discover() {
 }
 
 
-void EthernetCards::process_card(const std::string& interface_name) {
+void DEthernetCards::process_card(const std::string& interface_name) {
     std::stringstream device_file;
     device_file << "/sys/class/net/";
     device_file << interface_name.c_str();
@@ -108,7 +108,7 @@ void EthernetCards::process_card(const std::string& interface_name) {
 }
 
 
-nlohmann::json EthernetCards::generate_manifest() {
+nlohmann::json DEthernetCards::generate_manifest() {
     nlohmann::json j;
     auto ethernet_cards = nlohmann::json::array();
     for (auto &_card : m_ethernet_cards) {

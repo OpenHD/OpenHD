@@ -27,7 +27,7 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-#include "Cameras.h"
+#include "DCameras.h"
 
 
  #define FLIR_ONE_VENDOR_ID 0x09cb
@@ -39,14 +39,14 @@
  #define SEEK_COMPACT_PRO_VENDOR_ID 0x289d
  #define SEEK_COMPACT_PRO_PRODUCT_ID 0x0011
 
-Cameras::Cameras(PlatformType platform_type, BoardType board_type, CarrierType carrier_type) : 
+DCameras::DCameras(PlatformType platform_type, BoardType board_type, CarrierType carrier_type) :
     m_platform_type(platform_type),
     m_board_type(board_type),
     m_carrier_type(carrier_type) {}
 
 
 
-void Cameras::discover() {
+void DCameras::discover() {
     std::cout << "Cameras::discover()" << std::endl;
 
     switch (m_platform_type) {
@@ -83,7 +83,7 @@ void Cameras::discover() {
  * needs to know should read from the openhd system manifest instead.
  *
  */
-void Cameras::detect_raspberrypi_csi() {
+void DCameras::detect_raspberrypi_csi() {
     std::cerr << "Cameras::detect_raspberrypi_csi()" << std::endl;
 
     std::array<char, 512> buffer{};
@@ -179,7 +179,7 @@ void Cameras::detect_raspberrypi_csi() {
     }
 }
 
-void Cameras::detect_raspberrypi_veye() {
+void DCameras::detect_raspberrypi_veye() {
     std::cerr << "Cameras::detect_raspberrypi_veye()" << std::endl;
     
     bool success = false;
@@ -238,19 +238,19 @@ void Cameras::detect_raspberrypi_veye() {
 
 
 
-void Cameras::detect_jetson_csi() {
+void DCameras::detect_jetson_csi() {
     std::cerr << "Cameras::detect_jetson_csi()" << std::endl;
 }
 
 
 
-void Cameras::detect_rockchip_csi() {
+void DCameras::detect_rockchip_csi() {
     std::cerr << "Cameras::detect_rockchip_csi()" << std::endl;
 }
 
 
 
-void Cameras::detect_v4l2() {
+void DCameras::detect_v4l2() {
     std::cerr << "Cameras::detect_v4l2()" << std::endl;
 
     boost::filesystem::path dev("/dev");
@@ -269,7 +269,7 @@ void Cameras::detect_v4l2() {
 
 
 
-void Cameras::probe_v4l2_device(std::string device) {
+void DCameras::probe_v4l2_device(std::string device) {
     std::cerr << "Cameras::probe_v4l2_device()" << std::endl;
 
     std::stringstream command;
@@ -351,7 +351,7 @@ void Cameras::probe_v4l2_device(std::string device) {
 
 
 
-bool Cameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, std::string node) {
+bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, std::string node) {
     std::cerr << "Cameras::process_video_node(" << node << ")" << std::endl;
 
     int fd;
@@ -473,12 +473,12 @@ bool Cameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, std::
 
 
 
-void Cameras::detect_ip() {
+void DCameras::detect_ip() {
 
 }
 
 
-void Cameras::detect_flir() {
+void DCameras::detect_flir() {
     /*
      * What this is:
      * 
@@ -516,7 +516,7 @@ void Cameras::detect_flir() {
 }
 
 
-void Cameras::detect_seek() {
+void DCameras::detect_seek() {
     /*
      * What this is:
      * 
@@ -592,7 +592,7 @@ void Cameras::detect_seek() {
 }
 
 
-nlohmann::json Cameras::generate_manifest() {
+nlohmann::json DCameras::generate_manifest() {
     nlohmann::json j = nlohmann::json::array();
 
     for (auto &camera : m_cameras) {

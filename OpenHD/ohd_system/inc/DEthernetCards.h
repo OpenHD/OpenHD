@@ -5,7 +5,7 @@
 #include <chrono>
 #include <vector>
 
-#include "PlatformDiscovery.h"
+#include "DPlatform.h"
 
 #include "json.hpp"
 
@@ -14,12 +14,12 @@
 #include "openhd-discoverable.hpp"
 
 /**
- * Discovery and access to all ethernet cards on the system.
+ * Discover all connected ethernet cards and write them to json.
  */
-class EthernetCards :public OHD::IDiscoverable{
+class DEthernetCards : public OHD::IDiscoverable{
 public:
-    EthernetCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, EthernetHotspotType ethernet_hotspot_type);
-    virtual ~EthernetCards() = default;
+    DEthernetCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, EthernetHotspotType ethernet_hotspot_type);
+    virtual ~DEthernetCards() = default;
     void discover();
     void process_card(const std::string& interface_name);
     nlohmann::json generate_manifest();
