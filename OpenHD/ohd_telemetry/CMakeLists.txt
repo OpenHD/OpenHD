@@ -48,21 +48,21 @@ add_executable(openhd_telemetry src/main.cpp)
 target_link_libraries(openhd_telemetry OHDTelemetryLib)
 
 # All the test files for development
-#add_executable(test_serial_endpoint tests/test_serial_endpoint.cpp)
-#target_link_libraries(test_serial_endpoint ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
+add_executable(test_serial_endpoint tests/test_serial_endpoint.cpp)
+target_link_libraries(test_serial_endpoint ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
 
-#add_executable(test_udp_endpoint tests/test_udp_endpoint.cpp)
-#target_link_libraries(test_udp_endpoint ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
+add_executable(test_udp_endpoint tests/test_udp_endpoint.cpp)
+target_link_libraries(test_udp_endpoint ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
 
-#add_executable(test_ohd_generate_telemetry tests/test_ohd_generate_telemetry.cpp)
-#target_link_libraries(test_ohd_generate_telemetry ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
+add_executable(test_ohd_generate_telemetry tests/test_ohd_generate_telemetry.cpp)
+target_link_libraries(test_ohd_generate_telemetry ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
 
-#add_executable(test_ohd_reboot tests/test_ohd_reboot.cpp)
-#target_link_libraries(test_ohd_reboot ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
+add_executable(test_ohd_reboot tests/test_ohd_reboot.cpp)
+target_link_libraries(test_ohd_reboot ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
 
-#add_executable(test_generate_log_message tests/test_generate_log_message.cpp)
-#target_link_libraries(test_generate_log_message ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
+add_executable(test_generate_log_message tests/test_generate_log_message.cpp)
+target_link_libraries(test_generate_log_message ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
 
-#add_executable(test_services_locally tests/test_services_locally.cpp)
-#target_link_libraries(test_services_locally ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
+add_executable(test_services_locally tests/test_services_locally.cpp)
+target_link_libraries(test_services_locally ${OHD_TELEMETRY_USED_BOOST_LIBS} OHDTelemetryLib)
 #####
