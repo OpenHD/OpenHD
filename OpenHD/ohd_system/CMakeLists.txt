@@ -44,7 +44,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lsystemd")
 SET(ALL_SYSTEM_SOURCE_FILES
         src/DCameras.cpp
         src/DEthernetCards.cpp
-        src/main.cpp
         src/nl.c
         src/DPlatform.cpp
         src/DProfile.cpp
