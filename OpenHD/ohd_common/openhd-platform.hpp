@@ -3,6 +3,7 @@
 
 
 #include <string>
+#include <sstream>
 
 #include "openhd-util.hpp"
 #include "openhd-log.hpp"
@@ -53,7 +54,6 @@ typedef enum CarrierType {
     CarrierTypeJetsonNCB00,
     CarrierTypeNone
 } CarrierType;
-
 
 inline std::string carrier_type_to_string(CarrierType carrier_type) {
     switch (carrier_type) {
@@ -178,7 +178,7 @@ inline std::string platform_type_to_string(PlatformType platform_type) {
 }
 
 
-inline PlatformType string_to_platform_type(std::string platform_type) {
+inline PlatformType string_to_platform_type(const std::string& platform_type) {
     if (to_uppercase(platform_type).find(to_uppercase("jetson")) != std::string::npos) {
         return PlatformTypeJetson;
     } else if (to_uppercase(platform_type).find(to_uppercase("raspberrypi")) != std::string::npos) {
@@ -194,6 +194,49 @@ inline PlatformType string_to_platform_type(std::string platform_type) {
     }
 
     return PlatformTypeUnknown;
+}
+
+struct OHDPlatform{
+    PlatformType platform_type = PlatformTypeUnknown;
+    BoardType board_type = BoardTypeUnknown;
+    CarrierType carrier_type = CarrierTypeNone;
+};
+
+// Writes the detected platform data to a json.
+// This can be used for debugging, mostly a microservices artifact.
+static nlohmann::json generate_platform_manifest(const OHDPlatform& ohdPlatform) {
+    nlohmann::ordered_json j;
+    std::stringstream message1;
+    message1 << "Platform: " << platform_type_to_string(ohdPlatform.platform_type) << std::endl;
+    ohd_log(STATUS_LEVEL_INFO, message1.str());
+    std::stringstream message2;
+    message2 << "Board: " << board_type_to_string(ohdPlatform.board_type) << std::endl;
+    ohd_log(STATUS_LEVEL_INFO, message2.str());
+    std::stringstream message3;
+    message3 << "Carrier: " << carrier_type_to_string(ohdPlatform.carrier_type) << std::endl;
+    ohd_log(STATUS_LEVEL_INFO, message3.str());
+    j["platform"] = platform_type_to_string(ohdPlatform.platform_type);
+    j["board"] = board_type_to_string(ohdPlatform.board_type);
+    j["carrier"] = carrier_type_to_string(ohdPlatform.carrier_type);
+    return j;
+}
+
+static OHDPlatform from_manifest(){
+    OHDPlatform ohdPlatform;
+    try {
+        std::ifstream f("/tmp/platform_manifest");
+        nlohmann::json j;
+        f >> j;
+        ohdPlatform.platform_type = string_to_platform_type(j["platform"]);
+        // TODO
+        //ohdPlatform.board_type= j["board"];
+        //ohdPlatform.carrier_type=j["carrier"];
+    } catch (std::exception &ex) {
+        std::cerr << "Platform manifest processing failed: " << ex.what() << std::endl;
+        ohd_log(STATUS_LEVEL_EMERGENCY, "Platform manifest processing failed");
+        exit(1);
+    }
+    return ohdPlatform;
 }
 
 // Determine at run time what platform we are running on

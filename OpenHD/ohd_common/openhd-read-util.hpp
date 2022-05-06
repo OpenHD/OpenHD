@@ -47,21 +47,6 @@ namespace OHDReadUtil{
         }
         return unit_id;
     }
-    static PlatformType get_platform_type(){
-        PlatformType platform_type = PlatformTypeUnknown;
-        try {
-            std::ifstream f("/tmp/platform_manifest");
-            nlohmann::json j;
-            f >> j;
-            platform_type = string_to_platform_type(j["platform"]);
-        } catch (std::exception &ex) {
-            // don't do anything, but send an error message to the user through the status service
-            std::stringstream ss;
-            ss<<"Platform manifest processing failed"<<ex.what()<<"\n";
-            ohd_log(STATUS_LEVEL_EMERGENCY, ss.str());
-        }
-        return platform_type;
-    }
 }
 
 #endif //OPENHD_OPENHD_PLATFORM_UTIL_H
