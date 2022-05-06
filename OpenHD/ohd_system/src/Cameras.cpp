@@ -86,7 +86,7 @@ void Cameras::discover() {
 void Cameras::detect_raspberrypi_csi() {
     std::cerr << "Cameras::detect_raspberrypi_csi()" << std::endl;
 
-    std::array<char, 512> buffer;
+    std::array<char, 512> buffer{};
     std::string raw_value;
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("vcgencmd get_camera", "r"), pclose);
     if (!pipe) {
@@ -134,17 +134,17 @@ void Cameras::detect_raspberrypi_csi() {
 
         // these are temporary, there isn't a way to ask the old broadcom camera drivers about the supported
         // resolutions, but we know which ones people actually use so we can simply mark them for now
-        endpoint.formats.push_back("H.264|640x480@30");
-        endpoint.formats.push_back("H.264|640x480@48");
-        endpoint.formats.push_back("H.264|640x480@60");
-        endpoint.formats.push_back("H.264|800x480@30");
-        endpoint.formats.push_back("H.264|1280x720@30");
-        endpoint.formats.push_back("H.264|1280x720@48");
-        endpoint.formats.push_back("H.264|1280x720@59.9");
-        endpoint.formats.push_back("H.264|1012x760@90");
-        endpoint.formats.push_back("H.264|1012x760@120");
-        endpoint.formats.push_back("H.264|1920x1080@30");
-        endpoint.formats.push_back("H.264|1920x1080@59.9");
+        endpoint.formats.emplace_back("H.264|640x480@30");
+        endpoint.formats.emplace_back("H.264|640x480@48");
+        endpoint.formats.emplace_back("H.264|640x480@60");
+        endpoint.formats.emplace_back("H.264|800x480@30");
+        endpoint.formats.emplace_back("H.264|1280x720@30");
+        endpoint.formats.emplace_back("H.264|1280x720@48");
+        endpoint.formats.emplace_back("H.264|1280x720@59.9");
+        endpoint.formats.emplace_back("H.264|1012x760@90");
+        endpoint.formats.emplace_back("H.264|1012x760@120");
+        endpoint.formats.emplace_back("H.264|1920x1080@30");
+        endpoint.formats.emplace_back("H.264|1920x1080@59.9");
 
         m_camera_endpoints.push_back(endpoint);
         m_cameras.push_back(camera);
@@ -162,17 +162,17 @@ void Cameras::detect_raspberrypi_csi() {
         endpoint.support_h264 = true;
         endpoint.support_mjpeg = false;
 
-        endpoint.formats.push_back("H.264|640x480@30");
-        endpoint.formats.push_back("H.264|640x480@48");
-        endpoint.formats.push_back("H.264|640x480@60");
-        endpoint.formats.push_back("H.264|800x480@30");
-        endpoint.formats.push_back("H.264|1280x720@30");
-        endpoint.formats.push_back("H.264|1280x720@48");
-        endpoint.formats.push_back("H.264|1280x720@59.9");
-        endpoint.formats.push_back("H.264|1012x760@90");
-        endpoint.formats.push_back("H.264|1012x760@120");
-        endpoint.formats.push_back("H.264|1920x1080@30");
-        endpoint.formats.push_back("H.264|1920x1080@59.9");
+        endpoint.formats.emplace_back("H.264|640x480@30");
+        endpoint.formats.emplace_back("H.264|640x480@48");
+        endpoint.formats.emplace_back("H.264|640x480@60");
+        endpoint.formats.emplace_back("H.264|800x480@30");
+        endpoint.formats.emplace_back("H.264|1280x720@30");
+        endpoint.formats.emplace_back("H.264|1280x720@48");
+        endpoint.formats.emplace_back("H.264|1280x720@59.9");
+        endpoint.formats.emplace_back("H.264|1012x760@90");
+        endpoint.formats.emplace_back("H.264|1012x760@120");
+        endpoint.formats.emplace_back("H.264|1920x1080@30");
+        endpoint.formats.emplace_back("H.264|1920x1080@59.9");
 
         m_camera_endpoints.push_back(endpoint);
         m_cameras.push_back(camera);
@@ -195,7 +195,7 @@ void Cameras::detect_raspberrypi_veye() {
         return;
     }
 
-    std::array<char, 512> buffer;
+    std::array<char, 512> buffer{};
     std::string veye_detect;
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("i2cdetect -y 0 0x3b 0x3b | grep  '3b'", "r"), pclose);
     if (!pipe) {
@@ -229,8 +229,8 @@ void Cameras::detect_raspberrypi_veye() {
     endpoint.support_h264 = true;
     endpoint.support_mjpeg = false;
 
-    endpoint.formats.push_back("H.264|1920x1080@25");
-    endpoint.formats.push_back("H.264|1920x1080@30");
+    endpoint.formats.emplace_back("H.264|1920x1080@25");
+    endpoint.formats.emplace_back("H.264|1920x1080@30");
 
     m_camera_endpoints.push_back(endpoint);
     m_cameras.push_back(camera);
@@ -276,7 +276,7 @@ void Cameras::probe_v4l2_device(std::string device) {
     command << "udevadm info ";
     command << device.c_str();
 
-    std::array<char, 512> buffer;
+    std::array<char, 512> buffer{};
     std::string udev_info;
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.str().c_str(), "r"), pclose);
     if (!pipe) {
