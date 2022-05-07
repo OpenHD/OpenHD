@@ -35,7 +35,7 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         src/endpoints/TCPEndpoint.cpp
         src/endpoints/SerialEndpoint.cpp
         #src/endpoints/WBEndpoint.cpp
-        src/ohd_telemetry/InternalTelemetry.cpp)
+        src/internal/InternalTelemetry.cpp)
 
 # Build it as a library
 add_library(OHDTelemetryLib SHARED ${ALL_TELEMETRY_SOURCE_FILES})

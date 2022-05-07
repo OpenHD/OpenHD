@@ -4,7 +4,7 @@
 // Probably needs to be run with sudo
 //
 
-#include "../src/ohd_telemetry/RebootUtil.hpp"
+#include "../src/internal//RebootUtil.hpp"
 
 int main() {
     RebootUtil::handlePowerCommand(false);

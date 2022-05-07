@@ -7,7 +7,9 @@
 
 #include "endpoints/SerialEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
-#include "ohd_telemetry/InternalTelemetry.h"
+#include "internal/InternalTelemetry.h"
+#include "openhd-platform.hpp"
+#include <string>
 
 /**
  * OpenHD Air telemetry service
@@ -34,6 +36,13 @@ private:
     //std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;
     std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
     InternalTelemetry ohdTelemetryGenerator{true};
+private:
+    /**
+     * Return the name of the default UART for the different platforms OpenHD is running on.
+     * @param platformType the platform we are running on
+     * @return the uart name string (linux file)
+     */
+    static std::string uartForPlatformType(const PlatformType& platformType);
 };
 
 
