@@ -23,8 +23,7 @@
 #include "DPlatform.h"
 
 
-constexpr char JETSON_BOARDID_PATH[] = "/proc/device-tree/nvidia,boardids";
-
+static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
 
 void DPlatform::discover() {
     std::cout << "Platform::discover()" << std::endl;
