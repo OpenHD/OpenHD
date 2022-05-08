@@ -143,9 +143,6 @@ void Ethernet::process_card(EthernetCard &card) {
 }
 
 
-/* 
- * todo: deduplicate this and similar logic in WiFi/LTE, they should be subclasses of a common base, or just an inline function
- */
 void Ethernet::setup_hotspot(EthernetCard &card) {
     std::cout << "Ethernet::setup_hotspot()" << std::endl;
 

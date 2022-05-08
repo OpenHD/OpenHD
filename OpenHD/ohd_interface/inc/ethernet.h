@@ -15,6 +15,13 @@
 /**
  * Provides access to the discovered ethernet cards on the system.
  * There should only be one instance of this class in the whole OpenHD project.
+ * TODO: I think it would be a good idea to go back to a "discover in intervalls -> do stuff"
+ * like in EZ-wifibroadcast here. Because:
+ * 1) For ethernet hotspot: Users might connect / disconnect a device via USB during run time.
+ * 2) For wifi hotspot: The behaviour of "setting up a wifi hotspot if and only if" there is a internal
+ * wifi card / the user connected cards for both the 2.4 and 5.8 ghz band was quite error resilient
+ * 3) On wifi hotspot, the user might connect / disconnect multiple devices at run time.
+ * Aka we could probably get rid of ethernet, and have a global "Hotspots" class.
  */
 class Ethernet {
 public:
