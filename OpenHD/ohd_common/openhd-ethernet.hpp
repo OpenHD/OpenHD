@@ -13,13 +13,10 @@ typedef enum EthernetCardType {
     EthernetCardTypeUnknown
 } EthernetCardType;
 
-
 typedef enum EthernetHotspotType {
     EthernetHotspotTypeInternal,
     EthernetHotspotTypeNone
 } EthernetHotspotType;
-
-
 
 struct EthernetCard {
     EthernetCardType type;

@@ -1,20 +1,15 @@
 ## FOR NOW:
 Relies on two unidirectional links (direction: air pi to ground pi) setup by openhd-interface.
-(One link for primary video down, one link for secondary video down)
+(One link for primary video down, one link for secondary video down).
 
-## Old notes
+This module uses the generated .json by openhd-system to start a camera stream 
+for each of the discovered cameras.
+Resolution and format as well as other params are fixed for now, we'l add settings via mavlink here.
 
-I think this module needs to be (re-written) just as mavlink telemetry, it is too complex in my opinion.
+Note that code in this module should follow the following paradigm:
+1) It only generates encoded video data, without knowing if the video data is actually picked up
+or makes it to the ground.
+2) It never runs on the ground pi, only on the air pi. 
+3) There are no code dependencies to other modules like ohd_interface.
 
-Why is it too complex: It breaks the biggest and most usefully paradigm of our old OpenHD releases:
-
-Even when there is only a downlink from the Air pi to the ground pi, as long as enough packets are received, you
-get video. Stephens approach was to do it with a mutable service on both the ground and air pi, breaking this paradigm.
-
-My approach would be to do it with a mutable service on the air pi (that exposes changing the video resolution usw) but
-an immutable service on the ground pi which responds to changes embedded in the downlink data.
-This way, the video ground pi service never has to talk to the air pi video service.
-
-Related to https://github.com/OpenHD/Open.HD/issues/623
-
-However, we probably can re-use a good amount of code.
+BIG TODO: Introduce settings in a sensible manner.

@@ -63,7 +63,7 @@ typedef enum STATUS_LEVEL {
  * Messages sent here will end up in the telemetry microservice, where they will be packed up and sent through
  * mavlink for storage and review by qopenhd, the boot screen system, and other software.
  */
-inline void ohd_log(STATUS_LEVEL level, std::string message) {
+inline void ohd_log(STATUS_LEVEL level, const std::string& message) {
 
     std::cerr << message << std::endl;
 
@@ -95,13 +95,13 @@ inline void ohd_log(STATUS_LEVEL level, std::string message) {
 }
 
 // Direct implementations for the 3 most common used log types
-inline void ohd_log_emergency(std::string message){
+inline void ohd_log_emergency(const std::string& message){
     ohd_log(STATUS_LEVEL_EMERGENCY,message);
 }
-inline void ohd_log_info(std::string message){
+inline void ohd_log_info(const std::string& message){
     ohd_log(STATUS_LEVEL_INFO,message);
 }
-inline void ohd_log_debug(std::string message){
+inline void ohd_log_debug(const std::string& message){
     ohd_log(STATUS_LEVEL_DEBUG,message);
 }
 
