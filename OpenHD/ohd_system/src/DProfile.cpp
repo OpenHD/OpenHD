@@ -58,7 +58,7 @@ void DProfile::discover() {
     std::string unit_id((std::istreambuf_iterator<char>(unit_id_file)),
                          std::istreambuf_iterator<char>());
 
-    if (!unit_id.size() > 0) {
+    if (unit_id.empty() > 0) {
         m_unit_id = generate_unit_id();
         return;
     }

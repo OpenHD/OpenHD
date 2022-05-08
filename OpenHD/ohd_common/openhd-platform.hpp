@@ -230,7 +230,7 @@ static OHDPlatform platform_from_manifest(){
         nlohmann::json j;
         f >> j;
         ohdPlatform.platform_type = string_to_platform_type(j["platform"]);
-        // TODO
+        // TODO the to string for board and carrier type are still missing.
         ohdPlatform.carrier_type=CarrierTypeNone;
         //ohdPlatform.board_type= j["board"];
         //ohdPlatform.carrier_type=j["carrier"];
