@@ -1,9 +1,3 @@
-# WORK IN PROGRESS
-
-## Building
-sudo apt-get install libboost-all-dev
-and build with cmake
-
 # Developer information
 
 ## Preconditions
