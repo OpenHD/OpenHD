@@ -19,27 +19,20 @@
 class WiFi {
 public:
     WiFi(bool is_air, std::string unit_id);
-    
     virtual ~WiFi() = default;
-
     void process_manifest();
     void configure();
-
-    void process_card(WiFiCard &card);
-
     void setup_hotspot(WiFiCard &card);
-
     static bool set_card_state(const WiFiCard& card, bool up);
     static bool set_frequency(const WiFiCard& card, const std::string& frequency);
     static bool set_txpower(const WiFiCard& card, const std::string& txpower);
     static bool enable_monitor_mode(const WiFiCard& card);
-
     std::vector<WiFiCard> broadcast_cards() {
         return m_broadcast_cards;
     }
-
     static void save_settings(const std::vector<WiFiCard>& cards, const std::string& settings_file);
-
+private:
+    void process_card(WiFiCard &card);
 private:
     const std::string m_unit_id;
     const bool m_is_air = false;

@@ -19,18 +19,15 @@
 class Ethernet {
 public:
     Ethernet(bool is_air, std::string unit_id);
-    
     virtual ~Ethernet() = default;
-
     void process_manifest();
     void configure();
-
-    void process_card(EthernetCard &card);
-
     void setup_hotspot(EthernetCard &card);
     static void setup_static(EthernetCard &card);
     static void setup_client(EthernetCard &card);
     static void save_settings(const std::vector<EthernetCard>& cards, std::string settings_file);
+private:
+    void process_card(EthernetCard &card);
 private:
     const bool m_is_air = false;
     const std::string m_unit_id;
