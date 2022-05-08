@@ -129,14 +129,14 @@ dtparam=i2c_arm=on
 #dtparam=i2c_vc=on
 
 #uncomment below for IMX327, IMX462 or IMX385
-dtoverlay=veyecam2m,media-controller=0
+#dtoverlay=veyecam2m,media-controller=0
 
 #uncomment below for IMX307
 #dtoverlay=csimx307,media-controller=0
 # uncomment for SPI
 #dtparam=spi=on
 
-camera_auto_detect=1
+#camera_auto_detect=1
 
 start_x=1
 
