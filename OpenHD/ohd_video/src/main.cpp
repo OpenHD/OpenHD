@@ -2,19 +2,20 @@
 #include <iostream>
 #include <boost/asio.hpp>
 
-#include "openhd-read-util.hpp"
-#include "OHDVideo.h"
+#include "openhd-profile.hpp"
+#include "openhd-platform.hpp"
 
+#include "OHDVideo.h"
 
 int main(int argc, char *argv[]) {
 
     boost::asio::io_service io_service;
 
-    const std::string unit_id=OHDReadUtil::get_unit_id();
-    const bool is_air = OHDReadUtil::runs_on_air();
-    const auto ohdPlatform=platform_from_manifest();
-    if(is_air){
-        OHDVideo ohdVideo(io_service,is_air,unit_id,ohdPlatform.platform_type);
+    const auto profile=profile_from_manifest();
+    const auto platform=platform_from_manifest();
+
+    if(profile.is_air){
+        OHDVideo ohdVideo(io_service,profile.is_air,profile.unit_id,platform.platform_type);
     }
     // TODO fix
     //sd_notify(0, "READY=1");

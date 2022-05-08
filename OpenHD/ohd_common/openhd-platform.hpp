@@ -223,10 +223,13 @@ static nlohmann::json generate_platform_manifest(const OHDPlatform& ohdPlatform)
     return j;
 }
 
+static constexpr auto PLATFORM_MANIFEST_FILENAME="/tmp/platform_manifest";
+
+// NOTE: It is only safe to call this method after the discovery step.
 static OHDPlatform platform_from_manifest(){
     OHDPlatform ohdPlatform;
     try {
-        std::ifstream f("/tmp/platform_manifest");
+        std::ifstream f(PLATFORM_MANIFEST_FILENAME);
         nlohmann::json j;
         f >> j;
         ohdPlatform.platform_type = string_to_platform_type(j["platform"]);

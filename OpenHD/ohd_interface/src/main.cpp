@@ -1,23 +1,22 @@
 #include <iostream>
 #include <boost/asio.hpp>
 
-#include "openhd-read-util.hpp"
+#include "openhd-platform.hpp"
+#include "openhd-profile.hpp"
+
 #include "OHDInterface.h"
 
 int main(int argc, char *argv[]) {
 
     boost::asio::io_service io_service;
 
-    const std::string unit_id=OHDReadUtil::get_unit_id();
-    const bool is_air = OHDReadUtil::runs_on_air();
+    const auto profile=profile_from_manifest();
+    const auto platform=platform_from_manifest();
 
-    OHDInterface ohdInterface(is_air,unit_id);
+    OHDInterface ohdInterface(profile.is_air,profile.unit_id);
 
     // fake it for the moment so the service doesn't exit, won't be needed once the microservice channel is wired in
     boost::asio::io_service::work work(io_service);
-
-    // TODO !!! service notify
-    //sd_notify(0, "READY=1");
 
     io_service.run();
 

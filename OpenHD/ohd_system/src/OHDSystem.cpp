@@ -21,6 +21,7 @@
 #include "json.hpp"
 
 #include "openhd-platform.hpp"
+#include "openhd-profile.hpp"
 #include "openhd-settings.hpp"
 #include "openhd-ethernet.hpp"
 #include "openhd-wifi.hpp"
@@ -30,7 +31,7 @@ void OHDSystem::runOnceOnStartup(){
         DPlatform platform;
         platform.discover();
         auto platform_manifest = platform.generate_manifest();
-        std::ofstream _p("/tmp/platform_manifest");
+        std::ofstream _p(PLATFORM_MANIFEST_FILENAME);
         _p << platform_manifest.dump(4);
         _p.close();
 
@@ -61,7 +62,7 @@ void OHDSystem::runOnceOnStartup(){
         DProfile profile(platform.platform_type(), platform.board_type(), platform.carrier_type(), camera_count);
         profile.discover();
         auto profile_manifest = profile.generate_manifest();
-        std::ofstream _pr("/tmp/profile_manifest");
+        std::ofstream _pr(PROFILE_MANIFEST_FILENAME);
         _pr << profile_manifest.dump(4);
         _pr.close();
 
