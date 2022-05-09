@@ -3,14 +3,9 @@ project(OpenHD-Telemetry)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Note: We do not need wifibroadcast as a whole here, we can get the header-only files.
-include_directories(../lib/wifibroadcast/src)
-
 # from https://mavlink.io/en/mavgen_c/
 #You can supress the warnings in CMake using
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
-# include mavlink (header-only)
-include_directories(../lib/c_library_v2_openhd)
 
 # include the general openhd stuff
 include_directories(../ohd_common)
@@ -39,8 +34,11 @@ SET(ALL_TELEMETRY_SOURCE_FILES
 # Build it as a library
 add_library(OHDTelemetryLib SHARED ${ALL_TELEMETRY_SOURCE_FILES})
 target_link_libraries(OHDTelemetryLib PUBLIC ${OHD_TELEMETRY_USED_BOOST_LIBS})
-#target_link_libraries(OHDTelemetryLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
-
+target_include_directories(OHDTelemetryLib PUBLIC src/)
+# include mavlink (header-only)
+target_include_directories(OHDTelemetryLib PUBLIC ../lib/c_library_v2_openhd)
+# Note: We do not need wifibroadcast as a whole here, we can get the header-only files.
+target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
 
 # The main service that is run on OpenHD
 add_executable(openhd_telemetry src/main.cpp)

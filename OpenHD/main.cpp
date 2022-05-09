@@ -3,15 +3,17 @@
 //
 
 #include <iostream>
-#include "openhd-log.hpp"
-#include "ohd_system/inc/OHDSystem.h"
-#include "ohd_interface/inc/OHDInterface.h"
-#include "ohd_video/inc/OHDVideo.h"
-#include "ohd_telemetry/src/GroundTelemetry.h"
-#include "ohd_telemetry/src/AirTelemetry.h"
-
 #include <memory>
 #include <boost/asio/io_service.hpp>
+
+#include "ohd_common/openhd-platform.hpp"
+#include "ohd_common/openhd-profile.hpp"
+
+#include <OHDSystem.h>
+#include <OHDInterface.h>
+#include <OHDVideo.h>
+#include <AirTelemetry.h>
+#include <GroundTelemetry.h>
 
 //TODO fix the cmake crap and then we can build a single executable.
 
@@ -23,15 +25,25 @@ int main(int argc, char *argv[]) {
 
     // Now this is kinda stupid - we write json's during the discovery, then we read them back in
     // merged stupidly with some fragments that resemble settings.
-    const std::string unit_id=OHDReadUtil::get_unit_id();
-    const bool is_air = OHDReadUtil::runs_on_air();
-    const auto platform_type=
+    const auto platform=platform_from_manifest();
+    const auto profile=profile_from_manifest();
 
-    // These 2 get all the hardware info from json
-    auto ohdInterface=std::make_unique<OHDInterface>(is_air,unit_id);
+
+    // First start ohdInterface, which does wifibroadcast and more
+    auto ohdInterface=std::make_unique<OHDInterface>(profile.is_air,profile.unit_id);
     boost::asio::io_service io_service;
 
-    auto ohdVideo=std::make_unique<OHDVideo>(io_service,is_air,unit_id,platform_type);
+    // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
+    if(profile.is_air){
+        auto telemetry=std::make_unique<AirTelemetry>();
+    }else{
+        auto telemetry=std::make_unique<GroundTelemetry>();
+    }
+
+    // and start ohdVideo if we are on the air pi
+    if(profile.is_air){
+        auto ohdVideo=std::make_unique<OHDVideo>(io_service,profile.is_air,profile.unit_id,platform.platform_type);
+    }
 
     // fake it for the moment so the service doesn't exit, won't be needed once the microservice channel is wired in
     boost::asio::io_service::work work(io_service);
