@@ -10,9 +10,6 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 # include the general openhd stuff
 include_directories(../ohd_common)
 
-# local includes
-include_directories(inc)
-
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
 SET(Boost_USE_STATIC_LIBS OFF)
@@ -47,12 +44,13 @@ SET(ALL_VIDEO_SOURCE_FILES
 add_library(OHDVideoLib
         SHARED
         ${ALL_VIDEO_SOURCE_FILES})
+target_include_directories(OHDVideoLib PUBLIC inc/)
 target_link_libraries(OHDVideoLib ${OHD_VIDEO_USED_LIBS})
 target_include_directories(OHDVideoLib PRIVATE ${GST_INCLUDE_DIRS})
 target_link_libraries(OHDVideoLib ${GST_LIBRARIES})
 
-# The main service that is run on OpenHD
-add_executable(openhd_video src/main.cpp)
+# Executable for testing manually, note that this one needs generated jsons
+add_executable(openhd_video test/main.cpp)
 target_link_libraries(openhd_video OHDVideoLib)
 
 #target_include_directories(openhd_video PRIVATE ${GST_INCLUDE_DIRS})

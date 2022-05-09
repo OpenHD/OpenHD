@@ -6,8 +6,6 @@ set(CMAKE_CXX_STANDARD 17)
 # include the general openhd stuff
 include_directories(../ohd_common)
 
-include_directories(inc)
-
 # Build and include wifibroadcast
 include(../lib/wifibroadcast/WBLib.cmake)
 
@@ -32,6 +30,7 @@ SET(ALL_INTERFACE_SOURCE_FILES
 add_library(OHDInterfaceLib
         SHARED
         ${ALL_INTERFACE_SOURCE_FILES})
+target_include_directories(OHDInterfaceLib PUBLIC inc/)
 target_link_libraries(OHDInterfaceLib PUBLIC ${INTERFACE_USED_BOOST_LIBRARIES})
 target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
 #target_include_directories(OHDInterfaceLib PUBLIC ${WB_INCLUDE_DIRECTORES})

@@ -3,8 +3,8 @@ project(OpenHD)
 
 #add_subdirectory(ohd_interface)
 #add_subdirectory(ohd_system)
-add_subdirectory(ohd_telemetry)
-#add_subdirectory(ohd_video)
+#add_subdirectory(ohd_telemetry)
+add_subdirectory(ohd_video)
 
 # TODO: make it a single executable
 

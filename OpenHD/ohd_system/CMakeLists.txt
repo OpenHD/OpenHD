@@ -10,9 +10,6 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 # include the general openhd stuff
 include_directories(../ohd_common)
 
-include_directories(inc)
-include_directories(lib/include)
-
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
 SET(Boost_USE_STATIC_LIBS OFF)
@@ -54,6 +51,8 @@ SET(ALL_SYSTEM_SOURCE_FILES
 add_library(OHDSystemLib
         SHARED
         ${ALL_SYSTEM_SOURCE_FILES})
+target_include_directories(OHDSystemLib PUBLIC inc/)
+target_include_directories(OHDSystemLib PUBLIC lib/include)
 target_link_libraries(OHDSystemLib ${OHD_SYSTEM_USED_LIBRARIES})
 
 # The main service that is run on OpenHD
