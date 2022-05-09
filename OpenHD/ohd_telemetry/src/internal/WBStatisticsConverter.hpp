@@ -7,7 +7,8 @@
 
 //#include "../endpoints/wb_include.h"
 #include "../mav_include.h"
-#include "../../../lib/wifibroadcast/src/OpenHDStatisticsWriter.hpp"
+// wifibroadcast header-only
+#include "OpenHDStatisticsWriter.hpp"
 
 // Helper for converting the WB statistics raw struct to mavlink package
 namespace WBStatisticsConverter{

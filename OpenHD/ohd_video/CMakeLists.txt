@@ -40,6 +40,7 @@ SET(ALL_VIDEO_SOURCE_FILES
         src/camerastream.cpp
         src/flironestream.cpp
         src/gstreamerstream.cpp
+        src/libcamerastream.cpp
         src/seekstream.cpp
         src/OHDVideo.cpp)
 

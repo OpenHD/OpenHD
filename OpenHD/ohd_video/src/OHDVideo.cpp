@@ -2,10 +2,12 @@
 // Created by consti10 on 03.05.22.
 //
 
-#include <gstreamerstream.h>
-#include "openhd-settings.hpp"
 #include "inja.hpp"
 #include "json.hpp"
+#include "gstreamerstream.h"
+#include "libcamerastream.h"
+#include "openhd-settings.hpp"
+
 #include "OHDVideo.h"
 
 

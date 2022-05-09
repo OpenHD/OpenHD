@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     std::cout<<"OpenHD START\n";
 
     // Always needs to run first.
-    /*OHDSystem::runOnceOnStartup();
+    OHDSystem::runOnceOnStartup();
 
     // Now this is kinda stupid - we write json's during the discovery, then we read them back in
     // merged stupidly with some fragments that resemble settings.
@@ -35,6 +35,6 @@ int main(int argc, char *argv[]) {
 
     // fake it for the moment so the service doesn't exit, won't be needed once the microservice channel is wired in
     boost::asio::io_service::work work(io_service);
-    io_service.run();*/
+    io_service.run();
 
 }

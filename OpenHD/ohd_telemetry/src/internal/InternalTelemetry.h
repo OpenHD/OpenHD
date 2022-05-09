@@ -6,8 +6,9 @@
 #define XMAVLINKSERVICE_INTERNALTELEMETRY_H
 
 #include "../mav_helper.h"
-#include "../../../lib/wifibroadcast/src/OpenHDStatisticsWriter.hpp"
-#include "../../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
+// wifibroadcast header-only
+#include "OpenHDStatisticsWriter.hpp"
+#include "HelperSources/SocketHelper.hpp"
 #include "openhd-log.hpp"
 #include <map>
 #include <vector>

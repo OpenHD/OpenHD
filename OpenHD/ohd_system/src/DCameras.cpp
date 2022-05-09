@@ -170,9 +170,9 @@ void DCameras::detect_raspberrypi_csi() {
         endpoint.formats.emplace_back("H.264|1280x720@48");
         endpoint.formats.emplace_back("H.264|1280x720@59.9");
         endpoint.formats.emplace_back("H.264|1012x760@90");
-        endpoint.formats.emplace_back("H.264|1012x760@120");
+        //endpoint.formats.emplace_back("H.264|1012x760@120");
         endpoint.formats.emplace_back("H.264|1920x1080@30");
-        endpoint.formats.emplace_back("H.264|1920x1080@59.9");
+        //endpoint.formats.emplace_back("H.264|1920x1080@59.9");
 
         m_camera_endpoints.push_back(endpoint);
         m_cameras.push_back(camera);

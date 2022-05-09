@@ -4,7 +4,6 @@
 
 #include "InternalTelemetry.h"
 #include <iostream>
-#include "../../lib/wifibroadcast/src/OpenHDStatisticsWriter.hpp"
 #include "SystemReadUtil.hpp"
 #include "WBStatisticsConverter.hpp"
 
