@@ -27,7 +27,7 @@ public:
      * injection.
      * @param cards the broadcast wifi cards on the system.
      */
-    void set_broadcast_cards(std::vector<WiFiCard> cards);
+    void set_broadcast_cards(const std::vector<WiFiCard>& cards);
     /*
      * Call this after setting the broadcast cards to start the wifibroadcast instances.
      */

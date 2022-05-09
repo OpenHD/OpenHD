@@ -15,6 +15,7 @@
 #include <boost/process.hpp>
 
 #include <boost/regex.hpp>
+#include <utility>
 
 #include "json.hpp"
 
@@ -37,10 +38,10 @@
  *
  */
 WBStreams::WBStreams(bool is_air, std::string unit_id):
-m_is_air(is_air), m_unit_id(unit_id) {}
+m_is_air(is_air), m_unit_id(std::move(unit_id)) {}
 
 
-void WBStreams::set_broadcast_cards(std::vector<WiFiCard> cards) {
+void WBStreams::set_broadcast_cards(const std::vector<WiFiCard>& cards) {
     if(!m_broadcast_cards.empty()){
         std::cerr<<"dangerous, overwriting old broadcast cards\n";
     }
@@ -57,8 +58,8 @@ void WBStreams::configure() {
     std::cout << "Streams::configure()" << std::endl;
     const auto broadcast_interfaces = broadcast_card_names();
     if (broadcast_interfaces.empty()) {
-        ohd_log(STATUS_LEVEL_EMERGENCY, "No wifibroadcast interfaces available\n");
-        throw std::invalid_argument("no wifibroadcast interfaces available");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "WBStreams::configure:No wifibroadcast interfaces available\n");
+        throw std::invalid_argument("WBStreams::configure:No wifibroadcast interfaces available");
     }
     // Static for the moment
     configure_telemetry();
