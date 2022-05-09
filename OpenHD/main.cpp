@@ -19,38 +19,44 @@
 
 int main(int argc, char *argv[]) {
     std::cout<<"OpenHD START\n";
+    try{
+        // Always needs to run first.
+        OHDSystem::runOnceOnStartup();
 
-    // Always needs to run first.
-    OHDSystem::runOnceOnStartup();
+        // Now this is kinda stupid - we write json's during the discovery, then we read them back in
+        // merged stupidly with some fragments that resemble settings.
+        // Note that interface, telemetry and video might also read the or update the jsons
+        const auto platform=platform_from_manifest();
+        const auto profile=profile_from_manifest();
 
-    // Now this is kinda stupid - we write json's during the discovery, then we read them back in
-    // merged stupidly with some fragments that resemble settings.
-    // Note that interface, telemetry and video might also read the or update the jsons
-    const auto platform=platform_from_manifest();
-    const auto profile=profile_from_manifest();
+        // First start ohdInterface, which does wifibroadcast and more
+        auto ohdInterface=std::make_unique<OHDInterface>(profile.is_air,profile.unit_id);
 
-    // First start ohdInterface, which does wifibroadcast and more
-    auto ohdInterface=std::make_unique<OHDInterface>(profile.is_air,profile.unit_id);
+        // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
+        if(profile.is_air){
+            auto telemetry=std::make_unique<AirTelemetry>();
+        }else{
+            auto telemetry=std::make_unique<GroundTelemetry>();
+        }
 
-    // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
-    if(profile.is_air){
-        auto telemetry=std::make_unique<AirTelemetry>();
-    }else{
-        auto telemetry=std::make_unique<GroundTelemetry>();
+        // and start ohdVideo if we are on the air pi
+        if(profile.is_air){
+            auto ohdVideo=std::make_unique<OHDVideo>(profile.is_air,profile.unit_id,platform.platform_type);
+        }
+
+        std::cout<<"All OpenHD modules running\n";
+
+        // run forever, everything has its own threads. Note that the only way to break out basically
+        // is when one of the modules encounters a uncatchable exception.
+        while(true){
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::cout<<"OpenHD\n";
+        }
+    } catch (std::exception &ex) {
+        std::cerr << "Error: " << ex.what() << std::endl;
+        exit(1);
+    } catch (...) {
+        std::cerr << "Unknown exception occurred" << std::endl;
+        exit(1);
     }
-
-    // and start ohdVideo if we are on the air pi
-    if(profile.is_air){
-        auto ohdVideo=std::make_unique<OHDVideo>(profile.is_air,profile.unit_id,platform.platform_type);
-    }
-
-    std::cout<<"All OpenHD modules running\n";
-
-    // run forever, everything has its own threads. Note that the only way to break out basically
-    // is when one of the modules encounters a uncatchable exception.
-    while(true){
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        std::cout<<"OpenHD\n";
-    }
-
 }
