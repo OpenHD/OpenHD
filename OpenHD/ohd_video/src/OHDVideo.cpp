@@ -10,8 +10,10 @@
 
 #include "OHDVideo.h"
 
+#include <utility>
 
-OHDVideo::OHDVideo(bool is_air, std::string unit_id,PlatformType platform_type):m_is_air(is_air),m_unit_id(unit_id),m_platform_type(platform_type) {
+
+OHDVideo::OHDVideo(bool is_air, std::string unit_id,PlatformType platform_type):m_is_air(is_air),m_unit_id(std::move(unit_id)),m_platform_type(platform_type) {
     assert(("This module must only run on the air pi !", m_is_air==true));
     try {
         setup();
