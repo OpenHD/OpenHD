@@ -71,7 +71,6 @@ static std::string getOrCreateUnitId(){
     return unit_id;
 }
 
-//
 /**
  * The settings are stored in a directory called air_$unit_id or ground_$unit_id.
  * @return the settings directory, created newly if non existent. As an example, it will return a path like
@@ -93,6 +92,7 @@ static std::string findOrCreateSettingsDirectory(bool is_air){
     return str;
 }
 
+// ------------------ Stephen code, undocumented ------------------------------
 
 inline std::optional<std::string> parse_section(const std::string& line) {
     boost::smatch result;

@@ -13,6 +13,8 @@ namespace OHD{
      * The discovery step should be performed for all subclasses at startup, and we run OpenHD
      * under the assumption that the connected hardware does not change during run time.
      * (If a user wants to connect new hardware, like a new camera or wifi card, he needs to de-power the system first).
+     * For hardware that must be added dynamically at run time (for example one might connect/disconnect the FC at run time)
+     * In general, a "check alive every 1 second" pattern should be used. (Not IDiscoverable).
      * Note: One cannot assume that the connected hardware stays the same between reboot.
      */
     class IDiscoverable{

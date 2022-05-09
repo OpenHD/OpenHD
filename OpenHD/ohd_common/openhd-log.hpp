@@ -64,8 +64,12 @@ typedef enum STATUS_LEVEL {
  * mavlink for storage and review by qopenhd, the boot screen system, and other software.
  */
 inline void ohd_log(STATUS_LEVEL level, const std::string& message) {
-
-    std::cerr << message << std::endl;
+    // Each message is logged with a newline at the end, add a new line at the end if non-existing.
+    if(message.back()=='\n'){
+        std::cerr << message;
+    }else{
+        std::cerr << message << std::endl;
+    }
 
     localmessage_t lmessage;
     lmessage.level = static_cast<uint8_t>(level);
