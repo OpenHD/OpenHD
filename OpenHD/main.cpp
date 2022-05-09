@@ -19,6 +19,7 @@
 
 int main(int argc, char *argv[]) {
     std::cout<<"OpenHD START\n";
+
     try{
         // Always needs to run first.
         OHDSystem::runOnceOnStartup();

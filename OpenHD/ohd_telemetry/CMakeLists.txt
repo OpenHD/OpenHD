@@ -40,10 +40,6 @@ target_include_directories(OHDTelemetryLib PUBLIC ../lib/c_library_v2_openhd)
 # Note: We do not need wifibroadcast as a whole here, we can get the header-only files.
 target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
 
-# The main service that is run on OpenHD
-add_executable(openhd_telemetry src/main.cpp)
-target_link_libraries(openhd_telemetry OHDTelemetryLib)
-
 # All the test files for development
 add_executable(test_serial_endpoint tests/test_serial_endpoint.cpp)
 target_link_libraries(test_serial_endpoint OHDTelemetryLib)
