@@ -18,7 +18,7 @@
 
 class SeekStream: public CameraStream {
 public:
-    SeekStream(boost::asio::io_service &io_service, PlatformType platform, Camera camera, uint16_t port);
+    SeekStream(PlatformType platform, Camera camera, uint16_t port);
 
     void setup() override;
 

@@ -15,11 +15,10 @@
 #include "seekstream.h"
 
 
-SeekStream::SeekStream(boost::asio::io_service &io_service, 
-                       PlatformType platform,
+SeekStream::SeekStream(PlatformType platform,
                        Camera camera, 
                        uint16_t port)
-    : CameraStream(io_service, platform, camera, port) {
+    : CameraStream(platform, camera, port) {
 }
 
 

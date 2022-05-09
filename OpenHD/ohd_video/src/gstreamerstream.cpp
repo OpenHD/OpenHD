@@ -23,11 +23,10 @@
 
 
 
-GStreamerStream::GStreamerStream(boost::asio::io_service &io_service, 
-                                 PlatformType platform,
+GStreamerStream::GStreamerStream(PlatformType platform,
                                  Camera &camera, 
                                  uint16_t video_udp_port)
-    : CameraStream(io_service, platform, camera, video_udp_port) {
+    : CameraStream(platform, camera, video_udp_port) {
     std::cerr << "GStreamerStream::GStreamerStream()" << std::endl;
 }
 

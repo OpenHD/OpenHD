@@ -18,7 +18,7 @@
 
 class FlirOneStream: public CameraStream {
 public:
-    FlirOneStream(boost::asio::io_service &io_service, PlatformType platform, Camera camera, uint16_t port);
+    FlirOneStream(PlatformType platform, Camera camera, uint16_t port);
 
     void setup() override;
 

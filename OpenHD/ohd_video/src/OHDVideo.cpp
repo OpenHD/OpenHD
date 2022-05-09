@@ -11,7 +11,7 @@
 #include "OHDVideo.h"
 
 
-OHDVideo::OHDVideo(boost::asio::io_service &io_service, bool is_air, std::string unit_id,PlatformType platform_type):m_io_service(io_service),m_is_air(is_air),m_unit_id(unit_id),m_platform_type(platform_type) {
+OHDVideo::OHDVideo(bool is_air, std::string unit_id,PlatformType platform_type):m_is_air(is_air),m_unit_id(unit_id),m_platform_type(platform_type) {
     assert(("This module must only run on the air pi !", m_is_air==true));
     try {
         setup();
@@ -166,7 +166,7 @@ void OHDVideo::configure(Camera &camera) {
         case CameraTypeV4L2Loopback: {
             std::cout<<"Camera index:"<<camera.index<<"\n";
             const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-            auto stream=std::make_unique<GStreamerStream>(m_io_service, m_platform_type, camera, udp_port);
+            auto stream=std::make_unique<GStreamerStream>(m_platform_type, camera, udp_port);
             stream->setup();
             stream->start();
             m_camera_streams.push_back(std::move(stream));

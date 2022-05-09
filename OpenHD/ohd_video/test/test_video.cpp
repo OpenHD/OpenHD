@@ -8,22 +8,20 @@
 #include "OHDVideo.h"
 
 int main(int argc, char *argv[]) {
-
-    boost::asio::io_service io_service;
-
     const auto profile=profile_from_manifest();
     const auto platform=platform_from_manifest();
 
     if(profile.is_air){
-        OHDVideo ohdVideo(io_service,profile.is_air,profile.unit_id,platform.platform_type);
+        OHDVideo ohdVideo(profile.is_air,profile.unit_id,platform.platform_type);
     }
-    // TODO fix
-    //sd_notify(0, "READY=1");
-    std::cerr << "Video ready" << std::endl;
+    std::cerr<<"OHDVideo started\n";
 
-    // fake it for the moment
-    boost::asio::io_service::work work(io_service);
-    io_service.run();
+    while (true){
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::cout<<"XVideo\n";
+    }
+
+    std::cerr << "OHDVideo stopped\n";
 
     return 0;
 }

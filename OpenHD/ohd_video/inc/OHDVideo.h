@@ -32,17 +32,15 @@ class OHDVideo {
 public:
     /**
      * Reads the detected cameras (from ohd_system & json) then creates an according stream for each of them.
-     * @param io_service stephen
      * @param is_air MUST ALWAYS RUN ON AIR ONLY, there are no cameras on the ground pi and the transmission
      * (and optionally forwarding) of the generated video stream(s) is done by ohd_interface.
      * @param unit_id stephen
      * @param platform_type the platform we are running on.
      */
-    OHDVideo(boost::asio::io_service& io_service,bool is_air,std::string unit_id,PlatformType platform_type);
+    OHDVideo(bool is_air,std::string unit_id,PlatformType platform_type);
     // Debug stuff LOL :)
     void debug()const;
 private:
-    boost::asio::io_service& m_io_service;
     const bool m_is_air;
     const std::string m_unit_id;
     const PlatformType m_platform_type;

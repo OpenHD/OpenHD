@@ -4,8 +4,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include <boost/asio.hpp>
-
 #include "openhd-camera.hpp"
 #include "openhd-platform.hpp"
 
@@ -27,12 +25,11 @@ class CameraStream {
 public:
     /**
      * After a camera stream is constructed, it won't start streaming until setup() and start() are called
-     * @param io_service stephen
      * @param platform the platform we are running on
      * @param camera the camera to create the stream with
      * @param video_udp_port the udp port where rtp data is forwarded to, picked up by interface.
      */
-    CameraStream(boost::asio::io_service &io_service, PlatformType platform, Camera &camera, uint16_t video_udp_port);
+    CameraStream(PlatformType platform, Camera &camera, uint16_t video_udp_port);
 
     // It is a good common programming practice to make them pure virtual
     virtual void setup()=0;
@@ -54,8 +51,6 @@ public:
     virtual void set_format(std::string format)=0;
 
 protected:
-    boost::asio::io_service &m_io_service;
-
     const PlatformType m_platform_type;
     Camera &m_camera;
     // This is the UDP port the video (for now rtp) stream is send to.

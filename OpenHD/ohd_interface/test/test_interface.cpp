@@ -13,11 +13,15 @@ int main(int argc, char *argv[]) {
 
     OHDInterface ohdInterface(profile.is_air,profile.unit_id);
 
-    while(true){
+    std::cerr<<"OHDInterface started\n";
 
+    // run forever, OHDInterface runs in its own threads
+    while(true){
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::cout<<"XInterface\n";
     }
 
-    std::cerr << "OpenHD Interface service exiting, this should not happen" << std::endl;
+    std::cerr<<"OHDInterface stopped\n";
 
     return 0;
 }
