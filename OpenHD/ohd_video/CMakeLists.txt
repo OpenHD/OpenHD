@@ -32,7 +32,6 @@ pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
 find_package(fmt)
 SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} fmt::fmt)
 
-
 SET(ALL_VIDEO_SOURCE_FILES
         src/camerastream.cpp
         src/flironestream.cpp
@@ -46,6 +45,7 @@ add_library(OHDVideoLib
         ${ALL_VIDEO_SOURCE_FILES})
 target_include_directories(OHDVideoLib PUBLIC inc/)
 target_link_libraries(OHDVideoLib ${OHD_VIDEO_USED_LIBS})
+# link and include gstreamer
 target_include_directories(OHDVideoLib PRIVATE ${GST_INCLUDE_DIRS})
 target_link_libraries(OHDVideoLib ${GST_LIBRARIES})
 
