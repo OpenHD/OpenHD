@@ -8,6 +8,10 @@ add_subdirectory(ohd_system)
 add_subdirectory(ohd_telemetry)
 add_subdirectory(ohd_video)
 
+# from https://mavlink.io/en/mavgen_c/
+#You can supress the warnings in CMake using
+add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
+
 # Here we build the single executable that makes up OpenHD.
 # It depends on all the libraries we have just added above
 include_directories(ohd_common)
