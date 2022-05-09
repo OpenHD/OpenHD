@@ -53,7 +53,7 @@ static std::string getOrCreateUnitId(){
     std::ifstream unit_id_file(UNIT_ID_FILE);
     std::string unit_id;
     if(!unit_id_file.is_open()){
-        std::cout<<"Generating new unit id\n";
+        //std::cout<<"Generating new unit id\n";
         // generate new unit id
         const boost::uuids::uuid uuid=boost::uuids::random_generator()();
         unit_id=boost::lexical_cast<std::string>(uuid);
@@ -63,7 +63,7 @@ static std::string getOrCreateUnitId(){
         of << uuid;
         of.close();
     }else{
-        std::cout<<"Unit id exists, reading\n";
+        //std::cout<<"Unit id exists, reading\n";
         unit_id=std::string((std::istreambuf_iterator<char>(unit_id_file)),
                             std::istreambuf_iterator<char>());
         std::cout<<"Read unit id:["<<unit_id<<"]\n";
@@ -77,7 +77,7 @@ static std::string getOrCreateUnitId(){
 /**
  * The settings are stored in a directory called air_$unit_id or ground_$unit_id.
  * @return the settings directory, created newly if non existent. As an example, it will return a path like
- * this: BASE_PATH/air_8bfff348-c17e-4833-af66-cef83f90c208
+ * this: BASE_PATH/air_8bfff348-c17e-4833-af66-cef83f90c208/
  */
 static std::string findOrCreateSettingsDirectory(bool is_air){
     std::stringstream settingsPath;
