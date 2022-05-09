@@ -14,7 +14,7 @@
 #include <boost/filesystem.hpp>
 
 
-inline std::string find_settings_path(bool is_air, std::string unit_id) {
+inline std::string find_settings_path(bool is_air, const std::string& unit_id) {
     std::string config_path;
     std::string base_path = "/conf/openhd";
 
@@ -45,7 +45,7 @@ inline std::string find_settings_path(bool is_air, std::string unit_id) {
         throw std::runtime_error("Settings directory missing");
     }
 
-    if (config_path.size() == 0) {
+    if (config_path.empty()) {
         throw std::runtime_error("Settings directory missing");
     }
 
@@ -53,7 +53,7 @@ inline std::string find_settings_path(bool is_air, std::string unit_id) {
 }
 
 
-inline std::string create_settings_path(bool is_air, std::string unit_id) {
+inline std::string create_settings_path(bool is_air, const std::string& unit_id) {
     std::string config_path;
     std::string base_path = "/conf/openhd";
 
@@ -75,7 +75,7 @@ inline std::string create_settings_path(bool is_air, std::string unit_id) {
         config_path = base_path + "/ground";
     }
 
-    if (config_path.size() == 0) {
+    if (config_path.empty()) {
         throw std::runtime_error("Settings files missing");
     }
 
@@ -91,7 +91,7 @@ inline std::string create_settings_path(bool is_air, std::string unit_id) {
 }
 
 
-inline std::optional<std::string> parse_section(std::string line) {
+inline std::optional<std::string> parse_section(const std::string& line) {
     boost::smatch result;
 
     boost::regex r{ "^\\[([\\w\\s]+)\\]"};
@@ -123,7 +123,7 @@ inline std::pair<std::string, std::string> parse_kv(std::string kv) {
 }
 
 
-inline std::vector<std::map<std::string, std::string> > read_config(std::string path) {
+inline std::vector<std::map<std::string, std::string> > read_config(const std::string& path) {
     std::ifstream in(path);
 
     std::vector<std::map<std::string, std::string> > settings;
@@ -133,12 +133,12 @@ inline std::vector<std::map<std::string, std::string> > read_config(std::string 
     std::map<std::string, std::string> section;
 
     while (std::getline(in, str)) {
-        if (str.size() > 0) {
+        if (!str.empty()) {
             try {
                 auto section_name = parse_section(str);
 
                 if (section_name) {
-                    if (section.size() > 0) {
+                    if (!section.empty()) {
                         settings.push_back(section);
                         section.clear();
                     }
