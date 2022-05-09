@@ -35,6 +35,6 @@ target_link_libraries(OHDInterfaceLib PUBLIC ${INTERFACE_USED_BOOST_LIBRARIES})
 target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
 #target_include_directories(OHDInterfaceLib PUBLIC ${WB_INCLUDE_DIRECTORES})
 
-# The main service that is run on OpenHD
-add_executable(openhd_interface src/main.cpp)
-target_link_libraries(openhd_interface OHDInterfaceLib)
+# Custom testing, requires written jsons
+add_executable(test_interface test/test_interface.cpp)
+target_link_libraries(test_interface OHDInterfaceLib)

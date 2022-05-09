@@ -50,8 +50,8 @@ target_include_directories(OHDVideoLib PRIVATE ${GST_INCLUDE_DIRS})
 target_link_libraries(OHDVideoLib ${GST_LIBRARIES})
 
 # Executable for testing manually, note that this one needs generated jsons
-add_executable(openhd_video test/main.cpp)
-target_link_libraries(openhd_video OHDVideoLib)
+add_executable(test_video test/test_video.cpp)
+target_link_libraries(test_video OHDVideoLib)
 
 #target_include_directories(openhd_video PRIVATE ${GST_INCLUDE_DIRS})
 #target_link_libraries(openhd_video ${GST_LIBRARIES})
