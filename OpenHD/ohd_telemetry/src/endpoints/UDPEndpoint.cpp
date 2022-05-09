@@ -10,7 +10,7 @@ UDPEndpoint::UDPEndpoint(std::string TAG,const int senderPort, const int receive
 MEndpoint(TAG),
 SEND_PORT(senderPort),RECV_PORT(receiverPort){
     if(senderPort==receiverPort){
-        throw std::runtime_error("UDPEndpoint - cannot send and receive on same UDP port\n");
+        throw std::invalid_argument("UDPEndpoint - cannot send and receive on same UDP port\n");
     }
     if(SEND_PORT>=0){
         transmitter=std::make_unique<SocketHelper::UDPForwarder>(SocketHelper::ADDRESS_LOCALHOST,SEND_PORT);

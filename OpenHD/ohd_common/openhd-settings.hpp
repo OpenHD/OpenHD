@@ -115,11 +115,11 @@ inline std::pair<std::string, std::string> parse_kv(std::string kv) {
 
     boost::regex r{ "^([\\w\\[\\]]+)\\s*=\\s*(.*)"};
     if (!boost::regex_match(kv, result, r)) {
-        throw std::runtime_error("Ignoring invalid setting, check file for errors");
+        throw std::invalid_argument("Ignoring invalid setting, check file for errors");
     }
 
     if (result.size() != 3) {
-        throw std::runtime_error("Ignoring invalid setting, check file for errors");
+        throw std::invalid_argument("Ignoring invalid setting, check file for errors");
     }
 
     return std::make_pair<std::string, std::string>(result[1], result[2]);
