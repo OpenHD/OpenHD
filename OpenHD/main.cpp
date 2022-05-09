@@ -29,7 +29,6 @@ int main(int argc, char *argv[]) {
     const auto platform=platform_from_manifest();
     const auto profile=profile_from_manifest();
 
-
     // First start ohdInterface, which does wifibroadcast and more
     auto ohdInterface=std::make_unique<OHDInterface>(profile.is_air,profile.unit_id);
 

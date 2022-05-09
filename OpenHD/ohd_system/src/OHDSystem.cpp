@@ -25,6 +25,7 @@
 #include "openhd-settings.hpp"
 #include "openhd-ethernet.hpp"
 #include "openhd-wifi.hpp"
+#include "openhd-settings.hpp"
 
 void OHDSystem::runOnceOnStartup(){
     try {
@@ -66,7 +67,7 @@ void OHDSystem::runOnceOnStartup(){
         _pr << profile_manifest.dump(4);
         _pr.close();
 
-        // ? Link all the sub-manifest files in one big manifest
+        // Write all the sub-manifest files into one big manifest
         nlohmann::json j;
 
         j["profile"] = profile_manifest;
@@ -78,12 +79,6 @@ void OHDSystem::runOnceOnStartup(){
         std::ofstream _manifest("/tmp/manifest");
         _manifest << j.dump(4);
         _manifest.close();
-
-        try {
-            find_settings_path(profile.is_air(), profile.unit_id());
-        } catch (std::exception &ex) {
-            create_settings_path(profile.is_air(), profile.unit_id());
-        }
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
         exit(1);

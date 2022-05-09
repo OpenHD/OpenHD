@@ -9,85 +9,90 @@
 #include <fstream>
 #include <streambuf>
 #include <utility> // make_pair
+#include <optional>
+#include <iostream>
 
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
 
+// x
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/lexical_cast.hpp>
 
-inline std::string find_settings_path(bool is_air, const std::string& unit_id) {
-    std::string config_path;
-    std::string base_path = "/conf/openhd";
+// from https://superuser.com/questions/631859/preferred-place-to-store-configuration-files-that-change-often
+// All persistent settings are written into this directory.
+//static constexpr auto BASE_PATH="/etc/opt/openhd/";
+static constexpr auto BASE_PATH="/home/consti10/openhd/";
+// for example, the unique id
+static const auto UNIT_ID_FILE=std::string(BASE_PATH)+"unit.id";
 
-    boost::filesystem::create_directory(base_path);
-
-    if (is_air) {
-        for (auto & p : boost::filesystem::recursive_directory_iterator(base_path)) {            
-            if (p.path() == "/conf/openhd/unit.id") {
-                continue;
-            }
-                
-            if (p.path().filename() == "unit.id") {
-                std::ifstream f(p.path().string());
-                std::string _unit_id((std::istreambuf_iterator<char>(f)),
-                                      std::istreambuf_iterator<char>());
-
-                if (_unit_id == unit_id) {
-                    config_path = p.path().parent_path().string();
-                    break;
-                }
-            }
+/**
+ * If the directory does not exist yet,
+ * generate the directory where all persistent settings of OpenHD are stored.
+ */
+static void generateSettingsDirectoryIfNonExists(){
+    if(!boost::filesystem::exists(BASE_PATH)){
+        std::cout<<"Creating settings directory\n";
+        if(!boost::filesystem::create_directory(BASE_PATH)){
+            std::cerr<<"Cannot create settings directory\n";
         }
-    } else {
-        config_path = base_path + "/ground";
     }
-
-    if (!boost::filesystem::exists(config_path)) {
-        throw std::runtime_error("Settings directory missing");
-    }
-
-    if (config_path.empty()) {
-        throw std::runtime_error("Settings directory missing");
-    }
-
-    return config_path;
+    assert(boost::filesystem::exists(BASE_PATH));
 }
 
-
-inline std::string create_settings_path(bool is_air, const std::string& unit_id) {
-    std::string config_path;
-    std::string base_path = "/conf/openhd";
-
-    boost::filesystem::create_directory(base_path);
-
-    if (is_air) {
-        for (int drone_index = 1; drone_index <= 100; drone_index++) {
-            std::string drone_path = base_path + "/vehicle" + std::to_string(drone_index);
-
-            if (boost::filesystem::is_directory(drone_path)) {
-                continue;
-            }
-
-            config_path = drone_path;
-            
-            break;
-        }
-    } else {
-        config_path = base_path + "/ground";
+/**
+ * If no unit id file exists, this is the first boot of this OpenHD image on the platform.
+ * In this case, generate a new random unit id, and store it persistently.
+ * Then return the unit id.
+ * If a unit id file already exists, read and return the unit id.
+ * @return the unit id, it doesn't change during reboots of the same system.
+ */
+static std::string getOrCreateUnitId(){
+    std::ifstream unit_id_file(UNIT_ID_FILE);
+    std::string unit_id;
+    if(!unit_id_file.is_open()){
+        std::cout<<"Generating new unit id\n";
+        // generate new unit id
+        const boost::uuids::uuid uuid=boost::uuids::random_generator()();
+        unit_id=boost::lexical_cast<std::string>(uuid);
+        std::cout<<"Created new unit id:["<<unit_id<<"]\n";
+        // and write it ot to the right file
+        std::ofstream of(UNIT_ID_FILE);
+        of << uuid;
+        of.close();
+    }else{
+        std::cout<<"Unit id exists, reading\n";
+        unit_id=std::string((std::istreambuf_iterator<char>(unit_id_file)),
+                            std::istreambuf_iterator<char>());
+        std::cout<<"Read unit id:["<<unit_id<<"]\n";
+        return unit_id;
     }
+    assert(!unit_id.empty());
+    return unit_id;
+}
 
-    if (config_path.empty()) {
-        throw std::runtime_error("Settings files missing");
+//
+/**
+ * The settings are stored in a directory called air_$unit_id or ground_$unit_id.
+ * @return the settings directory, created newly if non existent. As an example, it will return a path like
+ * this: BASE_PATH/air_8bfff348-c17e-4833-af66-cef83f90c208
+ */
+static std::string findOrCreateSettingsDirectory(bool is_air){
+    std::stringstream settingsPath;
+    settingsPath<<BASE_PATH;
+    settingsPath<<(is_air ? "air_":"ground_");
+    const auto unit_id=getOrCreateUnitId();
+    settingsPath<<unit_id;
+    const auto str=settingsPath.str();
+    std::cout<<"SettingsDirectory:["<<str<<"]\n";
+    // create the directory if it is non existing
+    if(!boost::filesystem::exists(str.c_str())){
+        boost::filesystem::create_directory(str.c_str());
     }
-
-    boost::filesystem::create_directory(config_path);
-
-    std::string unit_id_file = config_path + "/unit.id";
-
-    std::ofstream _f(unit_id_file);
-    _f << unit_id;
-    _f.close();
-
-    return config_path;
+    assert(boost::filesystem::exists(str.c_str()));
+    return str;
 }
 
 

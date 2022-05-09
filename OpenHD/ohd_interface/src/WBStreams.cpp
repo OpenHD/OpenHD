@@ -57,8 +57,8 @@ void WBStreams::configure() {
     std::cout << "Streams::configure()" << std::endl;
     const auto broadcast_interfaces = broadcast_card_names();
     if (broadcast_interfaces.empty()) {
-        ohd_log(STATUS_LEVEL_EMERGENCY, "No wifibroadcast interfaces available");
-        throw std::runtime_error("no wifibroadcast interfaces available");
+        ohd_log(STATUS_LEVEL_EMERGENCY, "No wifibroadcast interfaces available\n");
+        throw std::invalid_argument("no wifibroadcast interfaces available");
     }
     // Static for the moment
     configure_telemetry();

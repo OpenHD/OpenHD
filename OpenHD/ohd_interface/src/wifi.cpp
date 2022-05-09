@@ -42,8 +42,7 @@ void WiFi::configure() {
     std::vector<std::map<std::string, std::string> > settings;
 
     try {
-        std::string settings_path = find_settings_path(m_is_air, m_unit_id);
-        std::cerr << "settings_path: " << settings_path << std::endl;
+        const std::string settings_path = findOrCreateSettingsDirectory(m_is_air);
         std::string settings_file = settings_path + "/wifi.conf";
         std::cerr << "settings_file: " << settings_file << std::endl;
         settings = read_config(settings_file);
@@ -84,7 +83,7 @@ void WiFi::configure() {
         * ends up in the file automatically but users can change it as needed
         */
         try {
-            std::string settings_path = find_settings_path(m_is_air, m_unit_id);
+            const std::string settings_path = findOrCreateSettingsDirectory(m_is_air);
             std::string settings_file = settings_path + "/wifi.conf";
             save_settings(save_cards, settings_file);
         } catch (std::exception &ex) {
