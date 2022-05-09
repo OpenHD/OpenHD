@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
         std::cout<<"All OpenHD modules running\n";
 
         // run forever, everything has its own threads. Note that the only way to break out basically
-        // is when one of the modules encounters a uncatchable exception.
+        // is when one of the modules encounters an exception.
         while(true){
             std::this_thread::sleep_for(std::chrono::seconds(1));
             std::cout<<"OpenHD\n";
