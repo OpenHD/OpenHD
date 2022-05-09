@@ -5,6 +5,7 @@
 #include "OHDInterface.h"
 
 OHDInterface::OHDInterface(bool is_air,std::string unit_id):is_air(is_air),unit_id(unit_id){
+    std::cout<<"OHDInterface::OHDInterface()\n";
     wifi=std::make_unique<WiFi>(is_air, unit_id);
     ethernet=std::make_unique<Ethernet>(is_air, unit_id);
     streams=std::make_unique<WBStreams>(is_air, unit_id);
@@ -20,4 +21,5 @@ OHDInterface::OHDInterface(bool is_air,std::string unit_id):is_air(is_air),unit_
         std::cerr << "Unknown exception occurred" << std::endl;
         exit(1);
     }
+    std::cout<<"OHDInterface::created\n";
 }

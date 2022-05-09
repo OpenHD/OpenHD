@@ -2,20 +2,18 @@
 #ifndef OPENHD_SETTINGS_H
 #define OPENHD_SETTINGS_H
 
-#include <exception> // exception
-#include <stdexcept> // runtime_error
+#include <exception>
+#include <stdexcept>
 #include <optional>
 #include <string>
 #include <fstream>
 #include <streambuf>
-#include <utility> // make_pair
+#include <utility>
 #include <optional>
 #include <iostream>
 
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
-
-// x
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>

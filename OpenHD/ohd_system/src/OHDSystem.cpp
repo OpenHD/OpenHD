@@ -28,6 +28,7 @@
 #include "openhd-settings.hpp"
 
 void OHDSystem::runOnceOnStartup(){
+    std::cout<<"OHDSystem::runOnceOnStartup()\n";
     try {
         DPlatform platform;
         platform.discover();
@@ -79,6 +80,7 @@ void OHDSystem::runOnceOnStartup(){
         std::ofstream _manifest("/tmp/manifest");
         _manifest << j.dump(4);
         _manifest.close();
+        std::cout<<"OHDSystem::done\n";
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
         exit(1);
