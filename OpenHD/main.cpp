@@ -45,7 +45,10 @@ int main(int argc, char *argv[]) {
         auto ohdVideo=std::make_unique<OHDVideo>(profile.is_air,profile.unit_id,platform.platform_type);
     }
 
-    // run forever, everything has its own threads
+    std::cout<<"All OpenHD modules running\n";
+
+    // run forever, everything has its own threads. Note that the only way to break out basically
+    // is when one of the modules encounters a uncatchable exception.
     while(true){
         std::this_thread::sleep_for(std::chrono::seconds(1));
         std::cout<<"OpenHD\n";
