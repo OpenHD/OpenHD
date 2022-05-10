@@ -125,7 +125,7 @@ static std::string camera_type_to_string(const CameraType& camera_type) {
 }
 
 
-static CameraType string_to_camera_type(const std::string camera_type) {
+static CameraType string_to_camera_type(const std::string& camera_type) {
     if (to_uppercase(camera_type).find(to_uppercase("pi-csi")) != std::string::npos) {
         return CameraTypeRaspberryPiCSI;
     } else if (to_uppercase(camera_type).find(to_uppercase("pi-veye")) != std::string::npos) {
@@ -166,7 +166,7 @@ inline std::string video_codec_to_string(VideoCodec codec) {
 }
 
 
-inline VideoCodec string_to_video_codec(std::string codec) {
+inline VideoCodec string_to_video_codec(const std::string& codec) {
     if (to_uppercase(codec).find(to_uppercase("h264")) != std::string::npos) {
         return VideoCodecH264;
     } else if (to_uppercase(codec).find(to_uppercase("h265")) != std::string::npos) {
