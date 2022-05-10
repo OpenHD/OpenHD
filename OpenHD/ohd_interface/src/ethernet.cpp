@@ -152,7 +152,7 @@ void Ethernet::setup_hotspot(EthernetCard &card) {
         return;
     }
 
-    std::ostringstream message1;
+    std::stringstream message1;
 
     message1 << "Setting up ethernet hotspot on " << card.name << std::endl;
     ohd_log(STATUS_LEVEL_INFO, message1.str());
@@ -200,7 +200,7 @@ void Ethernet::setup_static(EthernetCard &card) {
 
     bool success = false;
 
-    std::ostringstream message1;
+    std::stringstream message1;
 
     message1 << "Setting up ethernet static interface " << card.name << std::endl;
     ohd_log(STATUS_LEVEL_INFO, message1.str());
@@ -239,7 +239,7 @@ void Ethernet::setup_static(EthernetCard &card) {
         }
     }
 
-    std::ostringstream message2;
+    std::stringstream message2;
 
     message2 << "Ethernet static interface " << card.name << " running" << std::endl;
     ohd_log(STATUS_LEVEL_INFO, message2.str());
@@ -251,7 +251,7 @@ void Ethernet::setup_client(EthernetCard &card) {
 
     bool success = false;
 
-    std::ostringstream message1;
+    std::stringstream message1;
 
     message1 << "Setting up ethernet LAN interface " << card.name << std::endl;
     ohd_log(STATUS_LEVEL_INFO, message1.str());
@@ -271,7 +271,7 @@ void Ethernet::setup_client(EthernetCard &card) {
         }
     }
 
-    std::ostringstream message2;
+    std::stringstream message2;
 
     message2 << "Ethernet LAN interface " << card.name << " running" << std::endl;
     ohd_log(STATUS_LEVEL_INFO, message2.str());

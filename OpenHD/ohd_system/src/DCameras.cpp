@@ -630,7 +630,7 @@ nlohmann::json DCameras::generate_manifest() {
                 {"endpoints",     endpoints }
             };
 
-            std::ostringstream message;
+            std::stringstream message;
             message << "Detected camera: " << camera.name << std::endl;
 
             ohd_log(STATUS_LEVEL_INFO, message.str());

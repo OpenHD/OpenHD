@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sstream>
 
 #include <iostream>
 #include <boost/algorithm/string.hpp>
@@ -118,7 +119,7 @@ nlohmann::json DEthernetCards::generate_manifest() {
                 {"name",               _card.name },
                 {"mac",                _card.mac },
             };
-            std::ostringstream message;
+            std::stringstream message;
             message << "Detected ethernet interface: " << _card.name << std::endl;
             ohd_log(STATUS_LEVEL_INFO, message.str());
             ethernet_cards.push_back(card);

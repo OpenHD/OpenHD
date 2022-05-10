@@ -195,7 +195,7 @@ void WiFi::setup_hotspot(WiFiCard &card) {
     std::cout << "WiFi::setup_hotspot(" << card.name << ")" << std::endl;
 
     if (!card.supports_hotspot) {
-        std::ostringstream message;
+        std::stringstream message;
         message << "WiFi hotspot not supported on ";
         message << wifi_card_type_to_string(card.type);
         message << "cards (";
@@ -257,7 +257,7 @@ void WiFi::setup_hotspot(WiFiCard &card) {
         card.hotspot_password = "wifiopenhd";
     }
 
-    std::ostringstream message1;
+    std::stringstream message1;
     message1 << "WiFi hotspot enabled on band ";
     message1 << card.hotspot_band;
     message1 << " channel ";

@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sstream>
 
 #include <iostream>
 #include <boost/algorithm/string.hpp>
@@ -223,7 +224,7 @@ nlohmann::json DWifiCards::generate_manifest() {
                 {"supports_rts",       _card.supports_rts }
             };
 
-            std::ostringstream message;
+            std::stringstream message;
             message << "Detected wifi (" << wifi_card_type_to_string(_card.type) << ") interface: " << _card.name << std::endl;
 
             ohd_log(STATUS_LEVEL_INFO, message.str());
