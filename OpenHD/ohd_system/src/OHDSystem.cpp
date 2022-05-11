@@ -62,6 +62,9 @@ void OHDSystem::runOnceOnStartup(bool forceAir){
         // When we write the profile we need to reason weather this is an air or ground pi.
         const int camera_count = cameras.count();
         bool is_air=camera_count > 0 ? true : false;
+        if(forceAir){
+            is_air=true;
+        }
         DProfile profile(platform.platform_type(), platform.board_type(), platform.carrier_type(), is_air);
         profile.discover();
         auto profile_manifest = profile.generate_manifest();
