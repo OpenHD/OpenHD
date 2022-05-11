@@ -55,8 +55,7 @@ void WBStreams::set_broadcast_card_names(const std::vector<std::string>& broadca
 
 void WBStreams::configure() {
     std::cout << "Streams::configure()" << std::endl;
-    const auto broadcast_interfaces = broadcast_card_names();
-    if (broadcast_interfaces.empty()) {
+    if (m_broadcast_cards_names.empty()) {
         ohd_log(STATUS_LEVEL_EMERGENCY, "WBStreams::configure:No wifibroadcast interfaces available\n");
         throw std::invalid_argument("WBStreams::configure:No wifibroadcast interfaces available");
     }
