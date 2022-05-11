@@ -42,16 +42,12 @@ DWifiCards::DWifiCards(PlatformType platform_type, BoardType board_type, Carrier
 void DWifiCards::discover() {
     std::cout << "WiFi::discover()" << std::endl;
 
-    /*
-     * Find wifi cards, excluding specific kinds of interfaces.
-     * 
-     */    
+    // Find wifi cards, excluding specific kinds of interfaces.
     std::vector<std::string> excluded_interfaces = {
         "usb",
         "lo",
         "eth"
     };
-
     boost::filesystem::path net("/sys/class/net");
     for (auto &entry : boost::filesystem::directory_iterator(net)) { 
         auto interface_name = entry.path().filename().string();
@@ -63,9 +59,21 @@ void DWifiCards::discover() {
                 break;
             }   
         }
-
         if (!excluded) {
             process_card(interface_name);
+        }
+    }
+    // Now that we have all the connected cards, we need to figure out what to use them for.
+    // Fo now, just go with what we used to do in EZ-Wifibroadcast.
+    for(auto& card: m_wifi_cards){
+        if(card.supports_injection){
+            card.use_for=WifiUseForMonitorMode;
+        }else if(card.supports_hotspot){
+            // if a card does not support injection, we use it for hotspot
+            card.use_for=WifiUseForHotspot;
+        }else{
+            // and if a card supports neither hotspot nor injection, we use it for nothing
+            card.use_for=WifiUseForUnknown;
         }
     }
 }
@@ -200,8 +208,7 @@ void DWifiCards::process_card(const std::string& interface_name) {
             m_wifi_hotspot_type = WiFiHotspotTypeExternal;
             break;
         }
-    }  
-
+    }
     m_wifi_cards.push_back(card);
 }
 
