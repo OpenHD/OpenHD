@@ -20,6 +20,7 @@ public:
     void setup()override;
     void start()override;
     void stop()override;
+    void debug()override;
 private:
     GstElement * gst_pipeline = nullptr;
 };

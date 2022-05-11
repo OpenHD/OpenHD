@@ -16,10 +16,10 @@
  * Provides access to the discovered wifi cards on the system.
  * There should only be one instance of this class in the whole OpenHD project.
  */
-class WiFi {
+class WifiCards {
 public:
-    WiFi(bool is_air, std::string unit_id);
-    virtual ~WiFi() = default;
+    WifiCards(bool is_air, std::string unit_id);
+    virtual ~WifiCards() = default;
     void process_manifest();
     void configure();
     void setup_hotspot(WiFiCard &card);

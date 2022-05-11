@@ -22,12 +22,12 @@
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 
-#include "wifi.h"
+#include "WifiCards.h"
 
-WiFi::WiFi(bool is_air, std::string unit_id):m_is_air(is_air), m_unit_id(unit_id) {}
+WifiCards::WifiCards(bool is_air, std::string unit_id): m_is_air(is_air), m_unit_id(unit_id) {}
 
 
-void WiFi::configure() {
+void WifiCards::configure() {
     std::cout << "WiFi::configure()" << std::endl;
 
     /*
@@ -95,7 +95,7 @@ void WiFi::configure() {
 }
 
 
-void WiFi::process_manifest() {
+void WifiCards::process_manifest() {
     try {
         std::ifstream f("/tmp/wifi_manifest");
         nlohmann::json j;
@@ -128,7 +128,7 @@ void WiFi::process_manifest() {
 }
 
 
-void WiFi::process_card(WiFiCard &card) {
+void WifiCards::process_card(WiFiCard &card) {
     std::cerr << "Processing card: " << card.name << std::endl;
 
     // if there isn't a settings file for this card yet, this field will not be set and it will
@@ -191,7 +191,7 @@ void WiFi::process_card(WiFiCard &card) {
  *
  * todo: deduplicate this and similar logic in Ethernet/LTE, they should be subclasses of a common base
  */
-void WiFi::setup_hotspot(WiFiCard &card) {
+void WifiCards::setup_hotspot(WiFiCard &card) {
     std::cout << "WiFi::setup_hotspot(" << card.name << ")" << std::endl;
 
     if (!card.supports_hotspot) {
@@ -283,7 +283,7 @@ void WiFi::setup_hotspot(WiFiCard &card) {
 }
 
 
-bool WiFi::set_card_state(const WiFiCard& card, bool up) {
+bool WifiCards::set_card_state(const WiFiCard& card, bool up) {
     std::cout << "WiFi::set_card_state(" << up << ") for " << card.name <<  ")" << std::endl;
     std::vector<std::string> args { "link", "set", "dev", card.name, up ? "up" : "down" };
     bool success = run_command("ip", args);
@@ -291,7 +291,7 @@ bool WiFi::set_card_state(const WiFiCard& card, bool up) {
 }
 
 
-bool WiFi::set_frequency(const WiFiCard& card, const std::string& frequency) {
+bool WifiCards::set_frequency(const WiFiCard& card, const std::string& frequency) {
     std::cout << "WiFi::set_frequency(" << frequency << ") for " << card.name <<  ")" << std::endl;
     std::vector<std::string> args { "dev", card.name, "set", "freq", frequency };
     bool success = run_command("iw", args);
@@ -299,7 +299,7 @@ bool WiFi::set_frequency(const WiFiCard& card, const std::string& frequency) {
 }
 
 
-bool WiFi::set_txpower(const WiFiCard& card, const std::string& txpower) {
+bool WifiCards::set_txpower(const WiFiCard& card, const std::string& txpower) {
     std::cout << "WiFi::set_txpower(" << txpower << ") for " << card.name <<  ")" << std::endl;
     std::vector<std::string> args { "dev", card.name, "set", "txpower", "fixed", txpower };
     bool success = run_command("iw", args);
@@ -307,7 +307,7 @@ bool WiFi::set_txpower(const WiFiCard& card, const std::string& txpower) {
 }
 
 
-bool WiFi::enable_monitor_mode(const WiFiCard& card) {
+bool WifiCards::enable_monitor_mode(const WiFiCard& card) {
     std::cout << "WiFi::enable_monitor_mode(" << card.name <<  ")" << std::endl;
     std::vector<std::string> args { "dev", card.name, "set", "monitor", "otherbss" };
     bool success = run_command("iw", args);
@@ -315,7 +315,7 @@ bool WiFi::enable_monitor_mode(const WiFiCard& card) {
 }
 
 
-void WiFi::save_settings(const std::vector<WiFiCard>& cards, const std::string& settings_file) {
+void WifiCards::save_settings(const std::vector<WiFiCard>& cards, const std::string& settings_file) {
     inja::Environment env;
 
     // load the wifi card template, we format it once for each card and write that to the file

@@ -8,8 +8,8 @@
 #include <memory>
 
 #include "WBStreams.h"
-#include "wifi.h"
-#include "ethernet.h"
+#include "WifiCards.h"
+#include "EthernetCards.h"
 
 class OHDInterface {
 public:
@@ -25,8 +25,8 @@ public:
      * @param unit_id ?? Stephen no idea ?
      */
     OHDInterface(bool is_air,std::string unit_id);
-    std::unique_ptr<WiFi> wifi;
-    std::unique_ptr<Ethernet> ethernet;
+    std::unique_ptr<WifiCards> wifi;
+    std::unique_ptr<EthernetCards> ethernet;
     std::unique_ptr<WBStreams> streams;
 private:
     const bool is_air;

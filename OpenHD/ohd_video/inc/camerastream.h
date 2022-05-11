@@ -50,6 +50,9 @@ public:
     virtual std::string get_format()=0;
     virtual void set_format(std::string format)=0;
 
+    //debug
+    virtual void debug()=0;
+
 protected:
     const PlatformType m_platform_type;
     Camera &m_camera;

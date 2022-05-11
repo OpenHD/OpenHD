@@ -38,7 +38,7 @@ void DummyGstreamerStream::setup() {
 }
 
 void DummyGstreamerStream::start() {
-    std::cerr<<"DummyGstreamerStream::start()\n";
+    std::cout<<"DummyGstreamerStream::start()\n";
     gst_element_set_state(gst_pipeline, GST_STATE_PLAYING);
     GstState state;
     GstState pending;
@@ -47,6 +47,10 @@ void DummyGstreamerStream::start() {
 }
 
 void DummyGstreamerStream::stop() {
-    std::cerr<<"DummyGstreamerStream::stop()\n";
+    std::cout<<"DummyGstreamerStream::stop()\n";
     gst_element_set_state(gst_pipeline, GST_STATE_PAUSED);
+}
+
+void DummyGstreamerStream::debug() {
+    std::cout<<"TODO DummyGstreamerStream::debug()\n";
 }

@@ -22,8 +22,8 @@ ENDIF(Boost_FOUND)
 SET(INTERFACE_USED_BOOST_LIBRARIES ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
 
 SET(ALL_INTERFACE_SOURCE_FILES
-        src/wifi.cpp
-        src/ethernet.cpp
+        src/WifiCards.cpp
+        src/EthernetCards.cpp
         src/WBStreams.cpp
         src/OHDInterface.cpp)
 

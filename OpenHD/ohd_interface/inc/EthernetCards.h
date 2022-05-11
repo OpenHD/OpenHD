@@ -23,10 +23,10 @@
  * 3) On wifi hotspot, the user might connect / disconnect multiple devices at run time.
  * Aka we could probably get rid of ethernet, and have a global "Hotspots" class.
  */
-class Ethernet {
+class EthernetCards {
 public:
-    Ethernet(bool is_air, std::string unit_id);
-    virtual ~Ethernet() = default;
+    EthernetCards(bool is_air, std::string unit_id);
+    virtual ~EthernetCards() = default;
     void process_manifest();
     void configure();
     void setup_hotspot(EthernetCard &card);

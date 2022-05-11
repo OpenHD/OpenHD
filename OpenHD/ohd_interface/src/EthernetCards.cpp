@@ -23,13 +23,13 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-#include "ethernet.h"
+#include "EthernetCards.h"
 
 
-Ethernet::Ethernet(bool is_air, std::string unit_id): m_is_air(is_air), m_unit_id(unit_id) {}
+EthernetCards::EthernetCards(bool is_air, std::string unit_id): m_is_air(is_air), m_unit_id(unit_id) {}
 
 
-void Ethernet::configure() {
+void EthernetCards::configure() {
     std::cout << "Ethernet::configure()" << std::endl;
 
     process_manifest();
@@ -90,7 +90,7 @@ void Ethernet::configure() {
     }
 }
 
-void Ethernet::process_manifest() {
+void EthernetCards::process_manifest() {
     try {
         std::ifstream f("/tmp/ethernet_manifest");
         nlohmann::json j;
@@ -118,7 +118,7 @@ void Ethernet::process_manifest() {
 }
 
 
-void Ethernet::process_card(EthernetCard &card) {
+void EthernetCards::process_card(EthernetCard &card) {
     if (card.use_for == "static") {
         setup_static(card);
         return;
@@ -142,7 +142,7 @@ void Ethernet::process_card(EthernetCard &card) {
 }
 
 
-void Ethernet::setup_hotspot(EthernetCard &card) {
+void EthernetCards::setup_hotspot(EthernetCard &card) {
     std::cout << "Ethernet::setup_hotspot()" << std::endl;
 
     bool success = false;
@@ -195,7 +195,7 @@ void Ethernet::setup_hotspot(EthernetCard &card) {
 
 
 
-void Ethernet::setup_static(EthernetCard &card) {
+void EthernetCards::setup_static(EthernetCard &card) {
     std::cout << "Ethernet::setup_static()" << std::endl;
 
     bool success = false;
@@ -246,7 +246,7 @@ void Ethernet::setup_static(EthernetCard &card) {
 }
 
 
-void Ethernet::setup_client(EthernetCard &card) {
+void EthernetCards::setup_client(EthernetCard &card) {
     std::cout << "Ethernet::setup_client()" << std::endl;
 
     bool success = false;
@@ -278,7 +278,7 @@ void Ethernet::setup_client(EthernetCard &card) {
 }
 
 
-void Ethernet::save_settings(const std::vector<EthernetCard>& cards, std::string settings_file) {
+void EthernetCards::save_settings(const std::vector<EthernetCard>& cards, std::string settings_file) {
     inja::Environment env;
 
     // load the ethernet card template, we format it once for each card and write that to the file

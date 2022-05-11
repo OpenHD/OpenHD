@@ -45,14 +45,13 @@ add_library(OHDVideoLib
         SHARED
         ${ALL_VIDEO_SOURCE_FILES})
 target_include_directories(OHDVideoLib PUBLIC inc/)
-target_link_libraries(OHDVideoLib ${OHD_VIDEO_USED_LIBS})
+target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})
 # link and include gstreamer
-target_include_directories(OHDVideoLib PRIVATE ${GST_INCLUDE_DIRS})
-target_link_libraries(OHDVideoLib ${GST_LIBRARIES})
+target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
+target_link_libraries(OHDVideoLib PUBLIC ${GST_LIBRARIES})
 
 # Executable for testing manually, note that this one needs generated jsons
 add_executable(test_video test/test_video.cpp)
 target_link_libraries(test_video OHDVideoLib)
-
-#target_include_directories(openhd_video PRIVATE ${GST_INCLUDE_DIRS})
-#target_link_libraries(openhd_video ${GST_LIBRARIES})
+add_executable(test_dummy_gstreamer test/test_dummy_gstreamer.cpp)
+target_link_libraries(test_dummy_gstreamer OHDVideoLib)
