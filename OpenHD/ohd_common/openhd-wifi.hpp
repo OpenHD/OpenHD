@@ -185,9 +185,6 @@ static nlohmann::json wificards_to_manifest(const std::vector<WiFiCard>& cards){
     auto wifi_cards_json = nlohmann::json::array();
     for (auto &_card : cards) {
         auto cardJson = wificard_to_json(_card);
-        std::stringstream message;
-        message << "Detected wifi (" << wifi_card_type_to_string(_card.type) << ") interface: " << _card.name << std::endl;
-        ohd_log(STATUS_LEVEL_INFO, message.str());
         wifi_cards_json.push_back(cardJson);
     }
     j["cards"] = wifi_cards_json;

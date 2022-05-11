@@ -206,6 +206,9 @@ void DWifiCards::process_card(const std::string& interface_name) {
             break;
         }
     }
+    std::stringstream message;
+    message << "Detected wifi (" << wifi_card_type_to_string(card.type) << ") interface: " << card.name << std::endl;
+    ohd_log(STATUS_LEVEL_INFO, message.str());
     m_wifi_cards.push_back(card);
 }
 
