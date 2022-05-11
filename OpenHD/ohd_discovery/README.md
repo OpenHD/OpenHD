@@ -1,7 +1,11 @@
 
-This module handles detection of hw and configuration info that does not change during run time.
-See inc/OHDSystem.h for more info
+The intended use case of this module is to handle detection of hw that does not change during run time.
+Members should adhere to the following paradigms:
+1) After the discovery step, we developers assume that the connected hardware does not change.
+2) HW Capabilities are written out to json, and then can be easily accessed by other modules.
+    NOTE: This might change, we could also just as well not use json for that and do it all in code with const Structs.
 
+See inc/OHDSystem.h for more info
 
 ## Old notes
 I think stephens idea here was to run this service at startup, and it figures out the platform with
