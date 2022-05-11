@@ -28,6 +28,12 @@ typedef enum WiFiHotspotType {
     WiFiHotspotTypeNone
 } WiFiHotspotType;
 
+typedef enum WifiUseFor{
+    WifiUseForMonitorMode, //Use for wifibroadcast, aka set to monitor mode
+    WifiUseForHotspot, //Use for hotspot, aka start a wifi hotspot with it
+    WifiUseForUnknown // Not sure what to use this wifi card for ;)
+}WifiUseFor;
+
 
 struct WiFiCard {
     WiFiCardType type;
@@ -42,7 +48,7 @@ struct WiFiCard {
     // ? Dynamically changed settings ?
     std::string frequency;
     std::string txpower;
-    std::string use_for;
+    WifiUseFor use_for=WifiUseForUnknown;
     std::string wifi_client_ap_name;
     std::string wifi_client_password;
     std::string hotspot_channel;

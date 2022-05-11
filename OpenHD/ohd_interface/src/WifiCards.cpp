@@ -29,18 +29,14 @@ WifiCards::WifiCards(bool is_air, std::string unit_id): m_is_air(is_air), m_unit
 
 void WifiCards::configure() {
     std::cout << "WiFi::configure()" << std::endl;
-
     /*
      * Find out which cards are connected first
      */
     process_manifest();
-
-
     /*
      * Then get the local settings, if there are any
      */
     std::vector<std::map<std::string, std::string> > settings;
-
     try {
         const std::string settings_path = findOrCreateSettingsDirectory(m_is_air);
         std::string settings_file = settings_path + "/wifi.conf";
@@ -49,14 +45,11 @@ void WifiCards::configure() {
     } catch (std::exception &ex) {
         std::cerr << "WiFi settings load error: " << ex.what() << std::endl;
     }
-
-
     /*
      * Now use the settings to override the detected hardware configuration in each WiFiCard in m_wifi_cards
      *
      */
     std::vector<WiFiCard> save_cards;
-
     for (auto card : m_wifi_cards) {
         std::map<std::string, std::string> setting_map;
 
@@ -69,7 +62,7 @@ void WifiCards::configure() {
 
         if (setting_map.count("frequency")) card.frequency = setting_map["frequency"];
         if (setting_map.count("txpower")) card.txpower = setting_map["txpower"];
-        if (setting_map.count("use_for")) card.use_for = setting_map["use_for"];
+        //if (setting_map.count("use_for")) card.use_for = setting_map["use_for"];
         if (setting_map.count("wifi_client_ap_name")) card.wifi_client_ap_name = setting_map["wifi_client_ap_name"];
         if (setting_map.count("wifi_client_password")) card.wifi_client_password = setting_map["wifi_client_password"];
         if (setting_map.count("hotspot_channel")) card.hotspot_channel = setting_map["hotspot_channel"];
@@ -89,9 +82,52 @@ void WifiCards::configure() {
         } catch (std::exception &ex) {
             ohd_log(STATUS_LEVEL_EMERGENCY, "WiFi settings save failed");
         }
+    }
+    // fucking hell, just go with what we used to do in EZ-Wifibroadcast -
+    for(auto& card: m_wifi_cards){
+        if(card.supports_injection){
+            card.use_for=WifiUseForMonitorMode;
+        }else if(card.supports_hotspot){
+            // if a card does not support injection, we use it for hotspot
+            card.use_for=WifiUseForHotspot;
+        }else{
+            // and if a card supports neither hotspot nor injection, we use it for nothing
+            card.use_for=WifiUseForUnknown;
+        }
+    }
 
-        process_card(card);
-    }  
+    // Consti10 - now do some sanity checks. No idea if and how the settings from stephen handle default values.
+    for (auto& card : m_wifi_cards) {
+        if(card.use_for==WifiUseForMonitorMode && m_is_air){
+            // There is no wifi hotspot created on the air pi
+            std::cerr<<"No hotspot on air\n";
+            card.use_for=WifiUseForUnknown;
+        }
+        if(card.use_for==WifiUseForMonitorMode && !card.supports_injection){
+            std::cerr<<"Cannot use monitor mode on card that cannot inject\n";
+            card.use_for=WifiUseForUnknown;
+        }
+        // Set the default frequency if not set yet.
+        // If the card supports 5ghz, prefer the 5ghz band
+        if(card.frequency.empty()){
+            if(card.supports_5ghz){
+                card.frequency=m_default_5ghz_frequency;
+            }else{
+                card.frequency=m_default_2ghz_frequency;
+            }
+        }
+        //
+        if(card.txpower.empty()){
+            // No idea where this comes from, for now use it ??!!
+            // TODO what should be the default value ?
+            card.txpower="3100";
+        }
+    }
+    // When we are done with the sanity checks, we can use the wifi card for its intended use case
+    for(const auto& card: m_wifi_cards){
+        setup_card(card);
+    }
+
 }
 
 
@@ -100,8 +136,6 @@ void WifiCards::process_manifest() {
         std::ifstream f("/tmp/wifi_manifest");
         nlohmann::json j;
         f >> j;
-
-        m_wifi_hotspot_type = string_to_wifi_hotspot_type(j["hotspot"]);
 
         for (auto _card : j["cards"]) {
 
@@ -128,158 +162,31 @@ void WifiCards::process_manifest() {
 }
 
 
-void WifiCards::process_card(WiFiCard &card) {
-    std::cerr << "Processing card: " << card.name << std::endl;
-
-    // if there isn't a settings file for this card yet, this field will not be set and it will
-    // be up to the autodetected settings from the system service to decide what this card will be
-    // used for
-    if (card.use_for == "hotspot") {
-        if (!m_is_air) {
+void WifiCards::setup_card(const WiFiCard &card) {
+    std::cerr << "Setup card: " << card.name << std::endl;
+    switch (card.use_for) {
+        case WifiUseForMonitorMode:
+            set_card_state(card, false);
+            enable_monitor_mode(card);
+            set_card_state(card, true);
+            set_frequency(card, card.frequency);
+            set_txpower(card, card.txpower);
+            m_broadcast_cards.push_back(card);
+            break;
+        case WifiUseForHotspot:
             setup_hotspot(card);
-        }
-        return;
+            break;
+        case WifiUseForUnknown:
+        default:
+            std::cerr<<"Card "<<card.name<<" unknown use for\n";
+            return;
     }
-
-    if (card.use_for == "client") {
-        //setup_client(card);
-        return;
-    }
-
-
-    if (!card.supports_injection) {
-        if (!m_is_air) {
-            std::cerr << "Card does not support injection: " << card.name << std::endl;
-            setup_hotspot(card);
-        }
-        return;
-    }
-
-    card.use_for = "wifibroadcast";
-
-
-    // todo: errors encountered here need to be submitted to the status service, users will never see stdout
-    set_card_state(card, false);
-    enable_monitor_mode(card);
-    set_card_state(card, true);
-
-    
-    if (!card.frequency.empty()) {
-        set_frequency(card, card.frequency);
-    } else {
-        if (card.supports_5ghz) {
-            set_frequency(card, m_default_5ghz_frequency);
-            card.frequency = m_default_5ghz_frequency;
-        } else {
-            set_frequency(card, m_default_2ghz_frequency);
-            card.frequency = m_default_2ghz_frequency;
-        }
-    }
-
-    if (!card.txpower.empty()) {
-        set_txpower(card, card.txpower);
-    } else {
-        set_txpower(card, "3100");
-        card.txpower = "3100";
-    }
-    std::cout << "WiFi::process card() push_back" << std::endl;
-    m_broadcast_cards.push_back(card);
 }
 
 
-/*
- *
- * todo: deduplicate this and similar logic in Ethernet/LTE, they should be subclasses of a common base
- */
-void WifiCards::setup_hotspot(WiFiCard &card) {
-    std::cout << "WiFi::setup_hotspot(" << card.name << ")" << std::endl;
-
-    if (!card.supports_hotspot) {
-        std::stringstream message;
-        message << "WiFi hotspot not supported on ";
-        message << wifi_card_type_to_string(card.type);
-        message << "cards (";
-        message << card.name;
-        message << ")";
-        message << std::endl;
-        ohd_log(STATUS_LEVEL_INFO, message.str());
-        return;
-    }
-
-    bool success = false;
-
-    if (m_hotspot_configured) {
-        std::cout << "WiFi::setup_hotspot: already configured with another card" << std::endl;
-        return;
-    }
-
-    card.use_for = "hotspot";
-
-    // todo: allow the interface address to be configured. this requires changing the dnsmasq config file though, not
-    //       just the interface address. 
-    std::vector<std::string> args { card.name, m_wifi_hotspot_address, "up", };
-
-    success = run_command("ifconfig", args);
-
-    if (!success) {
-        ohd_log(STATUS_LEVEL_WARNING, "Failed to enable wifi hotspot interface");
-        return;
-    }
-
-    /*
-     * Note: This is not currently choosing to use the band that wifibroadcast cards are not using. Most
-     *       people seem to choose not to use the G band no matter what, so we might as well just default to 5Ghz
-     *       and then perhaps lean on FEC to avoid interference, it's far more likely things will work that way
-     *       than to prefer the 2.4ghz band in any situation.
-     *
-     */
-    if (card.hotspot_channel.empty()) {
-        if (card.supports_5ghz) {
-            card.hotspot_channel = "36";
-        } else {
-            card.hotspot_channel = "11";
-        }
-    }
-
-    if (card.hotspot_band.empty()) {
-        if (card.supports_5ghz) {
-            card.hotspot_band = "a";
-        } else {
-            card.hotspot_band = "g";
-        }
-    }
-
-    if (card.txpower.empty()) {
-        card.txpower = m_wifi_hotspot_txpower;
-    }
-
-    if (card.hotspot_password.empty()) {
-        card.hotspot_password = "wifiopenhd";
-    }
-
-    std::stringstream message1;
-    message1 << "WiFi hotspot enabled on band ";
-    message1 << card.hotspot_band;
-    message1 << " channel ";
-    message1 << card.hotspot_channel;
-    message1 << std::endl;
-    ohd_log(STATUS_LEVEL_INFO, message1.str());
-
-    // TODO we should not just call scripts from code
-    {
-        std::vector<std::string> args { 
-            "/usr/local/share/wifibroadcast-scripts/wifi_hotspot.sh", card.hotspot_band, card.hotspot_channel, card.name, card.txpower, card.hotspot_password
-        };
-
-        success = run_command("/bin/bash", args);
-
-        if (!success) {
-            ohd_log(STATUS_LEVEL_WARNING, "Failed to enable hostap on wifi hotspot");
-            return;
-        }
-    }
-    
-    m_hotspot_configured = true;
+void WifiCards::setup_hotspot(const WiFiCard &card) {
+    std::cerr<<"Setup hotspot unimplemented right now\n";
+    //std::cout << "WiFi::setup_hotspot(" << card.name << ")" << std::endl;
 }
 
 
