@@ -10,6 +10,11 @@
 #include "openhd-util.hpp"
 #include "openhd-log.hpp"
 
+/**
+ * The profile is created on startup and then NEVER CHANGES !.
+ * Note that while the unit id never changes between successive re-boots of OpenHD,
+ * the is_air variable might change (aka a ground pi might become an air pi when the user switches things around, or opposite).
+ */
 struct OHDProfile{
     // Weather we run on an air or ground "pi" (air or ground system).
     // R.n this is determined by weather there is at least one camera connected to the system

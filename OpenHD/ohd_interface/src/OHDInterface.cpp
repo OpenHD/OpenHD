@@ -4,11 +4,11 @@
 
 #include "OHDInterface.h"
 
-OHDInterface::OHDInterface(bool is_air,std::string unit_id):is_air(is_air),unit_id(unit_id){
+OHDInterface::OHDInterface(const OHDProfile& profile):profile(profile){
     std::cout<<"OHDInterface::OHDInterface()\n";
-    wifi=std::make_unique<WifiCards>(is_air, unit_id);
+    wifi=std::make_unique<WifiCards>(profile);
     //ethernet=std::make_unique<EthernetCards>(is_air, unit_id);
-    streams=std::make_unique<WBStreams>(is_air, unit_id);
+    streams=std::make_unique<WBStreams>(profile);
     try {
         wifi->configure();
         //ethernet->configure();

@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
         const auto profile=profile_from_manifest();
 
         // First start ohdInterface, which does wifibroadcast and more
-        auto ohdInterface=std::make_unique<OHDInterface>(profile.is_air,profile.unit_id);
+        auto ohdInterface=std::make_unique<OHDInterface>(profile);
 
         // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
         auto telemetry=std::make_unique<OHDTelemetry>(platform,profile);

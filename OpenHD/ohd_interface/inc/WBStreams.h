@@ -11,6 +11,7 @@
 
 #include "json.hpp"
 #include "openhd-wifi.hpp"
+#include "openhd-profile.hpp"
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
 
@@ -20,7 +21,7 @@
  */
 class WBStreams {
 public:
-    WBStreams(bool is_air, std::string unit_id);
+    WBStreams(const OHDProfile& profile);
     /**
      * Set the names of all wifi cards for broadcasting found on the system, needs to be called before configure().
      * Note that this class expects these cards to be configured for wifibroadcast aka monitor mode with
@@ -35,8 +36,7 @@ public:
     void configure_telemetry();
     void configure_video();
 private:
-    const std::string m_unit_id;
-    const bool m_is_air = false;
+    const OHDProfile& profile;
     const int m_mcs = 3;
     std::vector<std::string> m_broadcast_cards_names;
 private:

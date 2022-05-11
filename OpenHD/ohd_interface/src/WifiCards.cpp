@@ -11,7 +11,7 @@
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 
-WifiCards::WifiCards(bool is_air, std::string unit_id): m_is_air(is_air), m_unit_id(unit_id) {}
+WifiCards::WifiCards(const OHDProfile& profile): profile(profile){}
 
 
 void WifiCards::configure() {
@@ -20,7 +20,7 @@ void WifiCards::configure() {
     process_manifest();
     // Consti10 - now do some sanity checks. No idea if and how the settings from stephen handle default values.
     for (auto& card : m_wifi_cards) {
-        if(card.use_for==WifiUseForMonitorMode && m_is_air){
+        if(card.use_for==WifiUseForMonitorMode && profile.is_air){
             // There is no wifi hotspot created on the air pi
             std::cerr<<"No hotspot on air\n";
             card.use_for=WifiUseForUnknown;

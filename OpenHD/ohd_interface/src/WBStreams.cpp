@@ -35,13 +35,13 @@
  * in the same place.
  *
  */
-WBStreams::WBStreams(bool is_air, std::string unit_id):
-m_is_air(is_air), m_unit_id(std::move(unit_id)) {}
+WBStreams::WBStreams(const OHDProfile& profile):
+profile(profile) {}
 
 
 void WBStreams::set_broadcast_card_names(const std::vector<std::string>& broadcast_cards_names) {
     m_broadcast_cards_names=broadcast_cards_names;
-    if(m_is_air && m_broadcast_cards_names.size()>1){
+    if(profile.is_air && m_broadcast_cards_names.size()>1){
         std::cerr<<"dangerous, the air unit should not have more than 1 wifi card for wifibroadcast\n";
     }
     if(broadcast_cards_names.empty()){
@@ -69,10 +69,10 @@ void WBStreams::configure_telemetry() {
     std::cout << "Streams::configure_telemetry()" << std::endl;
     // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
     // uses 2 UDP streams in oposite directions.
-    auto radioPort1=m_is_air ? OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID : OHD_TELEMETRY_WIFIBROADCAST_RF_TX_PORT_ID;
-    auto radioPort2=m_is_air ? OHD_TELEMETRY_WIFIBROADCAST_RF_TX_PORT_ID : OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID;
-    auto udpPort1=m_is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX;
-    auto udpPort2=m_is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX;
+    auto radioPort1=profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID : OHD_TELEMETRY_WIFIBROADCAST_RF_TX_PORT_ID;
+    auto radioPort2=profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RF_TX_PORT_ID : OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID;
+    auto udpPort1=profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX;
+    auto udpPort2=profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX;
     udpTelemetryRx= createUdpWbRx(radioPort1,udpPort1);
     udpTelemetryTx = createUdpWbTx(radioPort2,udpPort2);
     udpTelemetryRx->runInBackground();
@@ -82,7 +82,7 @@ void WBStreams::configure_telemetry() {
 void WBStreams::configure_video() {
     std::cout << "Streams::configure_video()" << std::endl;
     // Video is unidirectional, aka always goes from air pi to ground pi
-    if(m_is_air){
+    if(profile.is_air){
         auto primary= createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP);
         primary->runInBackground();
         auto secondary= createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP);

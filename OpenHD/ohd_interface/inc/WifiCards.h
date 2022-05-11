@@ -11,6 +11,7 @@
 #include "json.hpp"
 
 #include "openhd-wifi.hpp"
+#include "openhd-profile.hpp"
 
 /**
  * Provides access to the discovered wifi cards on the system.
@@ -18,7 +19,7 @@
  */
 class WifiCards {
 public:
-    WifiCards(bool is_air, std::string unit_id);
+    WifiCards(const OHDProfile& profile);
     virtual ~WifiCards() = default;
     void process_manifest();
     void configure();
@@ -40,8 +41,7 @@ private:
     // the specified state of WifiCard by its struct members.
     void setup_card(const WiFiCard &card);
 private:
-    const std::string m_unit_id;
-    const bool m_is_air = false;
+    const OHDProfile& profile;
     std::vector<WiFiCard> m_wifi_cards;
     // todo: read from settings file once new settings system merged
     std::string m_wifi_hotspot_address = "192.168.2.1";

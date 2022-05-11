@@ -9,6 +9,7 @@
 
 #include "WBStreams.h"
 #include "WifiCards.h"
+#include "openhd-profile.hpp"
 
 class OHDInterface {
 public:
@@ -19,18 +20,15 @@ public:
      * For example, changing the wifi frequency (needs to be synced between air and ground) but also
      * settings that can be unsinced (like enable / disable wifi hotspot, which - as an example - is only
      * a setting that affects the ground pi.
-     * @param is_air true if we run on the air pi, ground pi otherwise. Note that some (TODO settings) might be different for
-     * air or ground pi, for example wifi hotspot can only be enabled on the ground pi.
-     * @param unit_id ?? Stephen no idea ?
+     * @param profile the (never-changing) profile we are running with.
      */
-    OHDInterface(bool is_air,std::string unit_id);
+    OHDInterface(const OHDProfile& profile);
     std::unique_ptr<WifiCards> wifi;
     // temprarily removed
     //std::unique_ptr<EthernetCards> ethernet;
     std::unique_ptr<WBStreams> streams;
 private:
-    const bool is_air;
-    const std::string unit_id;
+    const OHDProfile& profile;
 };
 
 
