@@ -12,7 +12,7 @@ OHDInterface::OHDInterface(bool is_air,std::string unit_id):is_air(is_air),unit_
     try {
         wifi->configure();
         ethernet->configure();
-        streams->set_broadcast_cards(wifi->broadcast_cards());
+        //streams->set_broadcast_cards(wifi->broadcast_cards());
         streams->configure();
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;

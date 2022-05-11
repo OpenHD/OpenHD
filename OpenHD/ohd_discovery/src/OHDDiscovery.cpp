@@ -2,7 +2,7 @@
 // Created by consti10 on 02.05.22.
 //
 
-#include "OHDSystem.h"
+#include "OHDDiscovery.h"
 
 #include <fstream>
 
@@ -27,7 +27,7 @@
 #include "openhd-wifi.hpp"
 #include "openhd-settings.hpp"
 
-void OHDSystem::runOnceOnStartup(bool forceAir){
+void OHDDiscovery::runOnceOnStartup(bool forceAir){
     std::cout<<"OHDSystem::runOnceOnStartup()\n";
     try {
         DPlatform platform;

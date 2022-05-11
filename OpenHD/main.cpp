@@ -9,7 +9,7 @@
 #include "ohd_common/openhd-platform.hpp"
 #include "ohd_common/openhd-profile.hpp"
 
-#include <OHDSystem.h>
+#include <OHDDiscovery.h>
 #include <OHDInterface.h>
 #include <OHDVideo.h>
 #include <OHDTelemetry.hpp>
@@ -17,13 +17,13 @@
 //TODO fix the cmake crap and then we can build a single executable.
 static const char optstr[] = "?:da";
 static const struct option long_options[] = {
-        {"skip_detection", no_argument, nullptr, 'd'},
+        {"skip_discovery", no_argument, nullptr, 'd'},
         {"force_air", no_argument, nullptr, 'a'},
         {NULL, 0, nullptr, 0},
 };
 
 struct OHDRunOptions{
-    bool skip_detection=false;
+    bool skip_discovery=false;
     bool force_air=false;
 };
 
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
         const char *tmp_optarg = optarg;
         switch (c) {
             case 'd':
-                options.skip_detection=true;
+                options.skip_discovery=true;
                 break;
             case 'a':
                 options.force_air=true;
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
     try{
         if(!options.skip_detection){
             // Always needs to run first.
-            OHDSystem::runOnceOnStartup(options.force_air);
+            OHDDiscovery::runOnceOnStartup(options.force_air);
         }
 
         // Now this is kinda stupid - we write json's during the discovery, then we read them back in

@@ -171,7 +171,7 @@ void WifiCards::setup_card(const WiFiCard &card) {
             set_card_state(card, true);
             set_frequency(card, card.frequency);
             set_txpower(card, card.txpower);
-            m_broadcast_cards.push_back(card);
+            //m_broadcast_cards.push_back(card);
             break;
         case WifiUseForHotspot:
             setup_hotspot(card);

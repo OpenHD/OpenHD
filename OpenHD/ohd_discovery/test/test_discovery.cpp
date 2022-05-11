@@ -1,4 +1,4 @@
-#include "OHDSystem.h"
+#include "OHDDiscovery.h"
 #include "openhd-settings.hpp"
 
 #include <iostream>
@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     assert(id1==id2);
 
     std::cerr<<"OHDSystem begin\n";
-    OHDSystem::runOnceOnStartup(false);
+    OHDDiscovery::runOnceOnStartup(false);
     std::cerr<<"OHDSystem end\n";
 
     return 0;

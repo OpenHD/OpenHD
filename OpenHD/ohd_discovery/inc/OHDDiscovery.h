@@ -2,11 +2,11 @@
 // Created by consti10 on 02.05.22.
 //
 
-#ifndef OPENHD_OHDSYSTEM_H
-#define OPENHD_OHDSYSTEM_H
+#ifndef OPENHD_OHDDISCOVERY_H
+#define OPENHD_OHDDISCOVERY_H
 
 
-class OHDSystem {
+class OHDDiscovery {
 public:
     /**
      * Writes all the system information into json files.
@@ -19,4 +19,4 @@ public:
 };
 
 
-#endif //OPENHD_OHDSYSTEM_H
+#endif //OPENHD_OHDDISCOVERY_H
