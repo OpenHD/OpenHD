@@ -31,11 +31,10 @@ extern "C" {
 }
 
 
-DEthernetCards::DEthernetCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, EthernetHotspotType ethernet_hotspot_type) :
+DEthernetCards::DEthernetCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type) :
     m_platform_type(platform_type),
     m_board_type(board_type),
-    m_carrier_type(carrier_type),
-    m_ethernet_hotspot_type(ethernet_hotspot_type) {}
+    m_carrier_type(carrier_type){}
 
 
 void DEthernetCards::discover() {
@@ -127,7 +126,7 @@ nlohmann::json DEthernetCards::generate_manifest() {
             std::cerr << "exception: " << ex.what() << std::endl;
         }
     }
-    j["hotspot"] = ethernet_hotspot_type_to_string(m_ethernet_hotspot_type);
+    //j["hotspot"] = ethernet_hotspot_type_to_string(m_ethernet_hotspot_type);
     j["cards"] = ethernet_cards;
     return j;
 }

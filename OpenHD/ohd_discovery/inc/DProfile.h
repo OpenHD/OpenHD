@@ -16,8 +16,7 @@
  */
 class DProfile: public OHD::IDiscoverable {
 public:
-    DProfile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type,bool is_air);
-    
+    DProfile(bool is_air);
     virtual ~DProfile() = default;
 
     void discover() override;
@@ -29,9 +28,6 @@ public:
     }
 
 private:
-    const PlatformType m_platform_type;
-    const BoardType m_board_type;
-    const CarrierType m_carrier_type;
     const bool m_is_air;
     std::string m_unit_id;
 };

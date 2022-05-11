@@ -18,7 +18,7 @@
  */
 class DWifiCards: public OHD::IDiscoverable  {
 public:
-    DWifiCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, WiFiHotspotType wifi_hotspot_type);
+    DWifiCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type);
     virtual ~DWifiCards() = default;
     void discover() override;
     nlohmann::json generate_manifest() override;
@@ -29,7 +29,6 @@ private:
     const PlatformType m_platform_type;
     const BoardType m_board_type;
     const CarrierType m_carrier_type;
-    WiFiHotspotType m_wifi_hotspot_type;
 };
 
 #endif

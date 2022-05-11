@@ -10,11 +10,9 @@
 
 #include "DProfile.h"
 
-DProfile::DProfile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type,bool is_air) :
-    m_platform_type(platform_type),
-    m_board_type(board_type),
-    m_carrier_type(carrier_type),
+DProfile::DProfile(bool is_air) :
     m_is_air(is_air){}
+
 
 void DProfile::discover() {
     std::cout << "Profile::discover()" << std::endl;

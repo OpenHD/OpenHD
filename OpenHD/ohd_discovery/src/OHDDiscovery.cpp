@@ -23,9 +23,7 @@
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-settings.hpp"
-#include "openhd-ethernet.hpp"
 #include "openhd-wifi.hpp"
-#include "openhd-settings.hpp"
 
 void OHDDiscovery::runOnceOnStartup(bool forceAir){
     std::cout<<"OHDSystem::runOnceOnStartup()\n";
@@ -45,14 +43,14 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir){
         _c.close();
 
 
-        DWifiCards wifi(platform.platform_type(), platform.board_type(), platform.carrier_type(), platform.wifi_hotspot_type());
+        DWifiCards wifi(platform.platform_type(), platform.board_type(), platform.carrier_type());
         wifi.discover();
         auto wifi_manifest = wifi.generate_manifest();
         std::ofstream _w(WIFI_MANIFEST_FILENAME);
         _w << wifi_manifest.dump(4);
         _w.close();
 
-        DEthernetCards ethernet(platform.platform_type(), platform.board_type(), platform.carrier_type(), platform.ethernet_hotspot_type());
+        DEthernetCards ethernet(platform.platform_type(), platform.board_type(), platform.carrier_type());
         ethernet.discover();
         auto ethernet_manifest = ethernet.generate_manifest();
         std::ofstream _t("/tmp/ethernet_manifest");
@@ -65,7 +63,7 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir){
         if(forceAir){
             is_air=true;
         }
-        DProfile profile(platform.platform_type(), platform.board_type(), platform.carrier_type(), is_air);
+        DProfile profile(is_air);
         profile.discover();
         auto profile_manifest = profile.generate_manifest();
         std::ofstream _pr(PROFILE_MANIFEST_FILENAME);

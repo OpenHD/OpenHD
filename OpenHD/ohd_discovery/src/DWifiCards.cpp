@@ -18,7 +18,6 @@
 
 #include "json.hpp"
 
-#include "openhd-ethernet.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 #include "openhd-wifi.hpp"
@@ -32,11 +31,10 @@ extern "C" {
 }
 
 
-DWifiCards::DWifiCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, WiFiHotspotType wifi_hotspot_type) :
+DWifiCards::DWifiCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type) :
     m_platform_type(platform_type),
     m_board_type(board_type),
-    m_carrier_type(carrier_type),
-    m_wifi_hotspot_type(wifi_hotspot_type) {}
+    m_carrier_type(carrier_type){}
 
 
 void DWifiCards::discover() {
@@ -205,7 +203,6 @@ void DWifiCards::process_card(const std::string& interface_name) {
             card.supports_rts = false;
             card.supports_injection = false;
             card.supports_hotspot = true;
-            m_wifi_hotspot_type = WiFiHotspotTypeExternal;
             break;
         }
     }

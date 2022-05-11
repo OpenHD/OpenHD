@@ -19,8 +19,6 @@
 
 #include "json.hpp"
 
-#include "openhd-camera.hpp"
-#include "openhd-ethernet.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 #include "openhd-wifi.hpp"
