@@ -16,7 +16,7 @@
  */
 class AirTelemetry {
 public:
-    explicit AirTelemetry();
+    explicit AirTelemetry(std::string fcSerialPort);
     // this is the main entry point for this service - it will run infinitely (until the air unit is either powered down or crashes).
     // This must NEVER crash
     void loopInfinite();
@@ -36,7 +36,7 @@ private:
     //std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;
     std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
     InternalTelemetry ohdTelemetryGenerator{true};
-private:
+public:
     /**
      * Return the name of the default UART for the different platforms OpenHD is running on.
      * @param platformType the platform we are running on

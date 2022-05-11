@@ -13,7 +13,7 @@ int main() {
     std::cout << TAG << "start\n";
     // Start one service in its own thread
     std::thread air([]{
-        AirTelemetry airTelemetry{};
+        AirTelemetry airTelemetry{SerialEndpoint::TEST_SERIAL_PORT};
         airTelemetry.loopInfinite();
     });
     // And run the other one, which blocks until error.

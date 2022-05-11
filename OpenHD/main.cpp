@@ -12,8 +12,7 @@
 #include <OHDSystem.h>
 #include <OHDInterface.h>
 #include <OHDVideo.h>
-#include <AirTelemetry.h>
-#include <GroundTelemetry.h>
+#include <OHDTelemetry.hpp>
 
 //TODO fix the cmake crap and then we can build a single executable.
 static const char optstr[] = "?:da";
@@ -70,11 +69,7 @@ int main(int argc, char *argv[]) {
         auto ohdInterface=std::make_unique<OHDInterface>(profile.is_air,profile.unit_id);
 
         // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
-        if(profile.is_air){
-            auto telemetry=std::make_unique<AirTelemetry>();
-        }else{
-            auto telemetry=std::make_unique<GroundTelemetry>();
-        }
+        auto telemetry=std::make_unique<OHDTelemetry>(platform,profile);
 
         // and start ohdVideo if we are on the air pi
         if(profile.is_air){
