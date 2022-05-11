@@ -119,10 +119,12 @@ void WifiCards::save_settings(const std::vector<WiFiCard>& cards, const std::str
     std::cerr<<"Unimplemented\n";
 }
 
-std::vector<std::string> WifiCards::get_broadcast_card_names() {
+std::vector<std::string> WifiCards::get_broadcast_card_names()const {
     std::vector<std::string> names;
-    for (const auto& card : m_broadcast_cards) {
-        names.push_back(card.name);
+    for(const auto& card: m_wifi_cards){
+        if(card.use_for==WifiUseForMonitorMode){
+            names.push_back(card.name);
+        }
     }
     return names;
 }

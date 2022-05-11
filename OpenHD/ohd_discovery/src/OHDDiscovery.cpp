@@ -14,7 +14,7 @@
 
 #include "DPlatform.h"
 #include "DCameras.h"
-#include "DEthernetCards.h"
+//#include "DEthernetCards.h"
 #include "DWifiCards.h"
 #include "DProfile.h"
 

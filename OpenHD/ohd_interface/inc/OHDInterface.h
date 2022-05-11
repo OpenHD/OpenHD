@@ -9,7 +9,6 @@
 
 #include "WBStreams.h"
 #include "WifiCards.h"
-#include "EthernetCards.h.txt"
 
 class OHDInterface {
 public:
