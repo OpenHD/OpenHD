@@ -182,7 +182,7 @@ void OHDVideo::configure(Camera &camera) {
     }
 }
 
-void OHDVideo::save_settings(std::vector<Camera> cameras, std::string settings_file) {
+void OHDVideo::save_settings(std::vector<Camera> cameras, const std::string& settings_file) {
     inja::Environment env;
 
     // load the camera template, we format it once for each camera and write that to the file
