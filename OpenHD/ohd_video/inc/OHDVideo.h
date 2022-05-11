@@ -16,6 +16,7 @@
 #include <boost/signals2.hpp>
 
 #include "openhd-platform.hpp"
+#include "openhd-profile.hpp"
 #include "openhd-log.hpp"
 
 #include "camerastream.h"
@@ -37,13 +38,12 @@ public:
      * @param unit_id stephen
      * @param platform_type the platform we are running on.
      */
-    OHDVideo(bool is_air,std::string unit_id,PlatformType platform_type);
+    OHDVideo(const OHDPlatform& platform,const OHDProfile& profile);
     // Debug stuff LOL :)
     void debug()const;
 private:
-    const bool m_is_air;
-    const std::string m_unit_id;
-    const PlatformType m_platform_type;
+    const OHDPlatform& platform;
+    const OHDProfile& profile;
 private:
     // These members are what used to be in camera microservice
     // All the created camera streams

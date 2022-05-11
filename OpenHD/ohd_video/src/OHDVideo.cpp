@@ -14,8 +14,8 @@
 #include <utility>
 
 
-OHDVideo::OHDVideo(bool is_air, std::string unit_id,PlatformType platform_type):m_is_air(is_air),m_unit_id(std::move(unit_id)),m_platform_type(platform_type) {
-    assert(("This module must only run on the air pi !", m_is_air==true));
+OHDVideo::OHDVideo(const OHDPlatform& platform,const OHDProfile& profile):platform(platform),profile(profile) {
+    assert(("This module must only run on the air pi !", profile.is_air==true));
     std::cout<<"OHDVideo::OHDVideo()\n";
     try {
         setup();
@@ -121,7 +121,7 @@ void OHDVideo::process_settings() {
     std::vector<std::map<std::string, std::string> > settings;
 
     try {
-        const std::string settings_path = findOrCreateSettingsDirectory(m_is_air);
+        const std::string settings_path = findOrCreateSettingsDirectory(profile.is_air);
         std::string settings_file = settings_path + "/camera.conf";
         std::cerr << "settings_file: " << settings_file << std::endl;
         settings = read_config(settings_file);
@@ -169,7 +169,7 @@ void OHDVideo::process_settings() {
      * ends up in the file automatically but users can change it as needed
      */
     try {
-        const std::string settings_path = findOrCreateSettingsDirectory(m_is_air);
+        const std::string settings_path = findOrCreateSettingsDirectory(profile.is_air);
         std::string settings_file = settings_path + "/camera.conf";
         save_settings(save_cameras, settings_file);
     } catch (std::exception &ex) {
@@ -190,7 +190,7 @@ void OHDVideo::configure(Camera &camera) {
         case CameraTypeV4L2Loopback: {
             std::cout<<"Camera index:"<<camera.index<<"\n";
             const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-            auto stream=std::make_unique<GStreamerStream>(m_platform_type, camera, udp_port);
+            auto stream=std::make_unique<GStreamerStream>(platform.platform_type, camera, udp_port);
             stream->setup();
             stream->start();
             m_camera_streams.push_back(std::move(stream));
@@ -199,7 +199,7 @@ void OHDVideo::configure(Camera &camera) {
         case CameraTypeDummy:{
             std::cout<<"Dummy Camera index:"<<camera.index<<"\n";
             const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-            auto stream=std::make_unique<DummyGstreamerStream>(m_platform_type, camera, udp_port);
+            auto stream=std::make_unique<DummyGstreamerStream>(platform.platform_type, camera, udp_port);
             stream->setup();
             stream->start();
             m_camera_streams.push_back(std::move(stream));
