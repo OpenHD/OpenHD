@@ -17,9 +17,9 @@
 //TODO fix the cmake crap and then we can build a single executable.
 static const char optstr[] = "?:da";
 static const struct option long_options[] = {
-        {"skip_detection", no_argument, NULL, 'd'},
-        {"force_air", no_argument, NULL, 'a'},
-        {NULL, 0, NULL, 0},
+        {"skip_detection", no_argument, nullptr, 'd'},
+        {"force_air", no_argument, nullptr, 'a'},
+        {NULL, 0, nullptr, 0},
 };
 
 struct OHDRunOptions{
