@@ -1,5 +1,9 @@
-This one is a bit more complex.
 
+This module handles detection of hw and configuration info that does not change during run time.
+See inc/OHDSystem.h for more info
+
+
+## Old notes
 I think stephens idea here was to run this service at startup, and it figures out the platform with
 its connected devices (wifi, ethernet, camera(s)) and writes this information into json files.
 
