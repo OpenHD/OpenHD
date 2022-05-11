@@ -24,10 +24,15 @@
 // TODO: Maybe replace all the boost stuff with https://github.com/mavlink/c_uart_interface_example/blob/master/serial_port.cpp
 class SerialEndpoint:public MEndpoint{
 public:
+    struct HWOptions{
+        std::string linux_filename; // the linux file name,for example /dev/tty..
+        int baud_rate=0; // manual baud rate, set to 0 to leave untouched
+    };
+public:
     /**
      * @param serial_port the serial port linux name (dev/.. ) for this serial port
      */
-    explicit SerialEndpoint(std::string TAG,std::string serial_port);
+    explicit SerialEndpoint(std::string TAG,HWOptions options);
     void sendMessage(const MavlinkMessage& message) override;
     //
     static constexpr auto USB_SERIAL_PORT="/dev/ttyUSB0";
@@ -44,8 +49,7 @@ private:
                     size_t bytes_transferred);
     void handleWrite(const boost::system::error_code& error,
                      size_t bytes_transferred);
-    const std::string SERIAL_PORT;
-    const int BAUD=5600;
+    const HWOptions m_options;
     boost::asio::io_service io_service;
     boost::asio::serial_port m_serial;
     std::array<uint8_t,1024> readBuffer{};

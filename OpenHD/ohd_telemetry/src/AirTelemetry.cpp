@@ -6,7 +6,7 @@
 #include "mav_helper.h"
 
 AirTelemetry::AirTelemetry(std::string fcSerialPort) {
-    serialEndpoint=std::make_unique<SerialEndpoint>("FCSerial",fcSerialPort);
+    serialEndpoint=std::make_unique<SerialEndpoint>("FCSerial",SerialEndpoint::HWOptions{fcSerialPort,115200});
     serialEndpoint->registerCallback([this](MavlinkMessage& msg){
         this->onMessageFC(msg);
     });
