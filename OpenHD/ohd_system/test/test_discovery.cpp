@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     assert(id1==id2);
 
     std::cerr<<"OHDSystem begin\n";
-    OHDSystem::runOnceOnStartup();
+    OHDSystem::runOnceOnStartup(false);
     std::cerr<<"OHDSystem end\n";
 
     return 0;

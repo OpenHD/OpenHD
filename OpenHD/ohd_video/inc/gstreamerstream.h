@@ -22,6 +22,7 @@ public:
 
     void setup() override;
 
+private:
     void setup_raspberrypi_csi();
     void setup_raspberrypi_veye();
     void setup_jetson_csi();
@@ -31,7 +32,7 @@ public:
     void setup_usb_uvch264();
     void setup_ip_camera();
 
-
+public:
     void start() override;
     void stop() override;
     void debug();
@@ -44,9 +45,6 @@ public:
     void set_cbr(bool enable) override;
 
     bool supports_bitrate() override;
-    std::string get_bitrate() {
-        return std::string();
-    }
 
     void set_bitrate(int bitrate) override;
 

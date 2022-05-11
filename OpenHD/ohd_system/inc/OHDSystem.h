@@ -13,8 +13,9 @@ public:
      * Needs to be run on every startup of OpenHD air or ground unit.
      * NOTE: Since Stephen had his microservice approach, looking at this as a whole
      * doesn't really make sense (writing json first, then reading it) but for now it will stay this way.
+     * @param forceAir forces the pi to boot as air pi, even though no cameras are found.
      */
-    static void runOnceOnStartup();
+    static void runOnceOnStartup(bool forceAir);
 };
 
 

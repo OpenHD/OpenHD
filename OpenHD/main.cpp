@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
     try{
         if(!options.skip_detection){
             // Always needs to run first.
-            OHDSystem::runOnceOnStartup();
+            OHDSystem::runOnceOnStartup(options.force_air);
         }
 
         // Now this is kinda stupid - we write json's during the discovery, then we read them back in

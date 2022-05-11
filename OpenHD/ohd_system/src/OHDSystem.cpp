@@ -27,7 +27,7 @@
 #include "openhd-wifi.hpp"
 #include "openhd-settings.hpp"
 
-void OHDSystem::runOnceOnStartup(){
+void OHDSystem::runOnceOnStartup(bool forceAir){
     std::cout<<"OHDSystem::runOnceOnStartup()\n";
     try {
         DPlatform platform;
@@ -59,9 +59,10 @@ void OHDSystem::runOnceOnStartup(){
         _t << ethernet_manifest.dump(4);
         _t.close();
 
-        int camera_count = cameras.count();
-
-        DProfile profile(platform.platform_type(), platform.board_type(), platform.carrier_type(), camera_count);
+        // When we write the profile we need to reason weather this is an air or ground pi.
+        const int camera_count = cameras.count();
+        bool is_air=camera_count > 0 ? true : false;
+        DProfile profile(platform.platform_type(), platform.board_type(), platform.carrier_type(), is_air);
         profile.discover();
         auto profile_manifest = profile.generate_manifest();
         std::ofstream _pr(PROFILE_MANIFEST_FILENAME);

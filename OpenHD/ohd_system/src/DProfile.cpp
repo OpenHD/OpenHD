@@ -10,13 +10,11 @@
 
 #include "DProfile.h"
 
-DProfile::DProfile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type, int camera_count) :
+DProfile::DProfile(PlatformType platform_type, BoardType board_type, CarrierType carrier_type,bool is_air) :
     m_platform_type(platform_type),
     m_board_type(board_type),
     m_carrier_type(carrier_type),
-    m_camera_count(camera_count) {}
-
-
+    m_is_air(is_air){}
 
 void DProfile::discover() {
     std::cout << "Profile::discover()" << std::endl;
@@ -24,9 +22,7 @@ void DProfile::discover() {
     m_unit_id = getOrCreateUnitId();
 }
 
-
 nlohmann::json DProfile::generate_manifest() {
-    const bool is_air = m_camera_count > 0 ? true : false;
-    OHDProfile ohdProfile{is_air,m_unit_id};
+    OHDProfile ohdProfile{m_is_air,m_unit_id};
     return generate_profile_manifest(ohdProfile);
 }
