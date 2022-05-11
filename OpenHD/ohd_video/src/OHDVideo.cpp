@@ -6,7 +6,7 @@
 #include "json.hpp"
 #include "gstreamerstream.h"
 #include "libcamerastream.h"
-#include "DummyGstreamerStream.h"
+#include "dummygstreamerstream.h"
 #include "openhd-settings.hpp"
 
 #include "OHDVideo.h"

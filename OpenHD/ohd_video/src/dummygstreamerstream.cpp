@@ -2,7 +2,7 @@
 // Created by consti10 on 11.05.22.
 //
 
-#include "DummyGstreamerStream.h"
+#include "dummygstreamerstream.h"
 
 #include <sstream>
 
@@ -23,7 +23,6 @@ void DummyGstreamerStream::setup() {
         throw std::runtime_error("GStreamer initialization failed");
     }
     std::stringstream pipeline;
-
 
     pipeline<<"videotestsrc num-buffers=1000 !";
     pipeline<<"x264enc name=encodectrl bitrate={} tune=zerolatency ! ";
