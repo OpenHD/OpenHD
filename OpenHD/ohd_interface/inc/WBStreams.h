@@ -22,24 +22,23 @@ class WBStreams {
 public:
     WBStreams(bool is_air, std::string unit_id);
     /**
-     * Set the wifi cards for broadcasting found on the system, needs to be called before configure().
+     * Set the names of all wifi cards for broadcasting found on the system, needs to be called before configure().
      * Note that this class expects these cards to be configured for wifibroadcast aka monitor mode with
      * injection.
-     * @param cards the broadcast wifi cards on the system.
+     * @param broadcast_cards_names the names of all broadcast wifi cards on the system.
      */
-    void set_broadcast_cards(const std::vector<WiFiCard>& cards);
+    void set_broadcast_card_names(const std::vector<std::string>& broadcast_cards_names);
     /*
      * Call this after setting the broadcast cards to start the wifibroadcast instances.
      */
     void configure();
     void configure_telemetry();
     void configure_video();
-    [[nodiscard]] std::vector<std::string> broadcast_card_names()const;
 private:
     const std::string m_unit_id;
     const bool m_is_air = false;
     const int m_mcs = 3;
-    std::vector<WiFiCard> m_broadcast_cards;
+    std::vector<std::string> m_broadcast_cards_names;
 private:
     // For telemetry, bidirectional in opposite drections
     std::unique_ptr<UDPWBTransmitter> udpTelemetryTx;

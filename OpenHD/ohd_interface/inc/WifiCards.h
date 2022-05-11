@@ -23,6 +23,11 @@ public:
     void process_manifest();
     void configure();
     void setup_hotspot(const WiFiCard &card);
+    /**
+     * Get the names for the broadcast cards so we can start the wfb_tx/rx instances.
+     * @return a list of the names (as can be used for wifibroadcast) of all cards currently in monitor mode.
+     */
+    std::vector<std::string> get_broadcast_card_names()const;
     static bool set_card_state(const WiFiCard& card, bool up);
     static bool set_frequency(const WiFiCard& card, const std::string& frequency);
     static bool set_txpower(const WiFiCard& card, const std::string& txpower);

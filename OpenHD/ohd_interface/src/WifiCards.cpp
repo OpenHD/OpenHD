@@ -118,3 +118,11 @@ bool WifiCards::enable_monitor_mode(const WiFiCard& card) {
 void WifiCards::save_settings(const std::vector<WiFiCard>& cards, const std::string& settings_file) {
     std::cerr<<"Unimplemented\n";
 }
+
+std::vector<std::string> WifiCards::get_broadcast_card_names() {
+    std::vector<std::string> names;
+    for (const auto& card : m_broadcast_cards) {
+        names.push_back(card.name);
+    }
+    return names;
+}

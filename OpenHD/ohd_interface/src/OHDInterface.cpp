@@ -7,12 +7,12 @@
 OHDInterface::OHDInterface(bool is_air,std::string unit_id):is_air(is_air),unit_id(unit_id){
     std::cout<<"OHDInterface::OHDInterface()\n";
     wifi=std::make_unique<WifiCards>(is_air, unit_id);
-    ethernet=std::make_unique<EthernetCards>(is_air, unit_id);
+    //ethernet=std::make_unique<EthernetCards>(is_air, unit_id);
     streams=std::make_unique<WBStreams>(is_air, unit_id);
     try {
         wifi->configure();
-        ethernet->configure();
-        //streams->set_broadcast_cards(wifi->broadcast_cards());
+        //ethernet->configure();
+        streams->set_broadcast_card_names(wifi->get_broadcast_card_names());
         streams->configure();
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;

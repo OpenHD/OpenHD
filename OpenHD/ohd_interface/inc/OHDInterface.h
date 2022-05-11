@@ -9,7 +9,7 @@
 
 #include "WBStreams.h"
 #include "WifiCards.h"
-#include "EthernetCards.h"
+#include "EthernetCards.h.txt"
 
 class OHDInterface {
 public:
@@ -26,7 +26,8 @@ public:
      */
     OHDInterface(bool is_air,std::string unit_id);
     std::unique_ptr<WifiCards> wifi;
-    std::unique_ptr<EthernetCards> ethernet;
+    // temprarily removed
+    //std::unique_ptr<EthernetCards> ethernet;
     std::unique_ptr<WBStreams> streams;
 private:
     const bool is_air;

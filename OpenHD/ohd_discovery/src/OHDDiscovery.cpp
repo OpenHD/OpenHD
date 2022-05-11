@@ -50,12 +50,12 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir){
         _w << wifi_manifest.dump(4);
         _w.close();
 
-        DEthernetCards ethernet(platform.platform_type(), platform.board_type(), platform.carrier_type());
+        /*DEthernetCards ethernet(platform.platform_type(), platform.board_type(), platform.carrier_type());
         ethernet.discover();
         auto ethernet_manifest = ethernet.generate_manifest();
         std::ofstream _t("/tmp/ethernet_manifest");
         _t << ethernet_manifest.dump(4);
-        _t.close();
+        _t.close();*/
 
         // When we write the profile we need to reason weather this is an air or ground pi.
         const int camera_count = cameras.count();

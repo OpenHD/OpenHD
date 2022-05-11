@@ -39,17 +39,18 @@ WBStreams::WBStreams(bool is_air, std::string unit_id):
 m_is_air(is_air), m_unit_id(std::move(unit_id)) {}
 
 
-void WBStreams::set_broadcast_cards(const std::vector<WiFiCard>& cards) {
-    if(!m_broadcast_cards.empty()){
-        std::cerr<<"dangerous, overwriting old broadcast cards\n";
-    }
-    if(m_is_air && cards.size()>1){
+void WBStreams::set_broadcast_card_names(const std::vector<std::string>& broadcast_cards_names) {
+    m_broadcast_cards_names=broadcast_cards_names;
+    if(m_is_air && m_broadcast_cards_names.size()>1){
         std::cerr<<"dangerous, the air unit should not have more than 1 wifi card for wifibroadcast\n";
     }
-    if(cards.empty()){
+    if(broadcast_cards_names.empty()){
         std::cerr<<"Without at least one wifi card, the stream(s) cannot be started\n";
     }
-    m_broadcast_cards = cards;
+    if(!m_broadcast_cards_names.empty()){
+        std::cerr<<"dangerous, overwriting old broadcast cards\n";
+    }
+    m_broadcast_cards_names=broadcast_cards_names;
 }
 
 void WBStreams::configure() {
@@ -99,13 +100,6 @@ void WBStreams::configure_video() {
     }
 }
 
-std::vector<std::string> WBStreams::broadcast_card_names()const {
-    std::vector<std::string> names;
-    for (const auto& card : m_broadcast_cards) {
-        names.push_back(card.name);
-    }
-    return names;
-}
 
 std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port) {
     RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, m_mcs};
@@ -113,7 +107,7 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
     TOptions options{};
     options.radio_port=radio_port;
     options.keypair=std::nullopt;
-    const auto cards=broadcast_card_names();
+    const auto cards=m_broadcast_cards_names;
     assert(!cards.empty());
     options.wlan=cards.at(0);
     return std::make_unique<UDPWBTransmitter>(radiotapHeader,options,"127.0.0.1",udp_port);
@@ -123,7 +117,7 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
     ROptions options{};
     options.radio_port=radio_port;
     options.keypair=std::nullopt;
-    const auto cards=broadcast_card_names();
+    const auto cards=m_broadcast_cards_names;
     assert(!cards.empty());
     options.rxInterfaces=cards;
     return std::make_unique<UDPWBReceiver>(options,"127.0.0.1",udp_port);
