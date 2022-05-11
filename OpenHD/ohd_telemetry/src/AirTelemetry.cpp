@@ -65,25 +65,3 @@ void AirTelemetry::loopInfinite() {
         std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 }
-
-std::string AirTelemetry::uartForPlatformType(const PlatformType &platformType) {
-    // we default to using a USB serial adapter on any other platform at the moment, some just need
-    // to be checked to see what the port is called, but PC will likely always be USB
-    std::string platformSerialPort="/dev/ttyUSB0";
-    switch (platformType) {
-        case PlatformTypeRaspberryPi: {
-            platformSerialPort = "/dev/serial0";
-            break;
-        }
-        case PlatformTypeJetson: {
-            platformSerialPort = "/dev/ttyTHS1";
-            break;
-        }
-        default: {
-            std::cerr<<"Using default UART "<<platformSerialPort<<"\n";
-            break;
-        }
-    }
-    return platformSerialPort;
-}
-
