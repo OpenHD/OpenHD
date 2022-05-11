@@ -38,7 +38,8 @@ private:
     void detect_raspberrypi();
     void detect_jetson();
     void detect_pc();
-
+    // This data is written by this class as information is gathered.
+    //OHDPlatform ohdPlatform;
     PlatformType m_platform_type = PlatformTypeUnknown;
     BoardType m_board_type = BoardTypeUnknown;
     CarrierType m_carrier_type = CarrierTypeNone;
