@@ -28,7 +28,7 @@ struct OHDRunOptions{
 };
 
 int main(int argc, char *argv[]) {
-    OHDRunOptions options;
+    OHDRunOptions options{};
     // parse some arguments usefully for debugging
     int c;
     while ((c = getopt_long(argc, argv, optstr, long_options, NULL)) != -1) {
