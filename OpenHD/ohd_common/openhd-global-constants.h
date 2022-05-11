@@ -18,10 +18,11 @@
 static constexpr auto OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX=16550;
 static constexpr auto OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX=16551;
 static_assert(OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX != OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX,"Must be different");
-// The radio_port in wifibroadcast
-static constexpr auto OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID=3;
-static constexpr auto OHD_TELEMETRY_WIFIBROADCAST_RF_TX_PORT_ID=4;
-static_assert(OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID!= OHD_TELEMETRY_WIFIBROADCAST_RF_TX_PORT_ID,"Must be different");
+// The radio_port in wifibroadcast. These variables are from the perspective of the air pi
+// aka for the ground pi, tx and rx radio ports are the opposite.
+static constexpr auto OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT=3;
+static constexpr auto OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT=4;
+static_assert(OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT != OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT, "Must be different");
 
 // Where any service can send log messages to, both on air and ground pi.
 // Picked up by telemetry service.

@@ -69,8 +69,8 @@ void WBStreams::configure_telemetry() {
     std::cout << "Streams::configure_telemetry()" << std::endl;
     // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
     // uses 2 UDP streams in oposite directions.
-    auto radioPort1=profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID : OHD_TELEMETRY_WIFIBROADCAST_RF_TX_PORT_ID;
-    auto radioPort2=profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RF_TX_PORT_ID : OHD_TELEMETRY_WIFIBROADCAST_RF_RX_PORT_ID;
+    auto radioPort1= profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
+    auto radioPort2= profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
     auto udpPort1=profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX;
     auto udpPort2=profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX;
     udpTelemetryRx= createUdpWbRx(radioPort1,udpPort1);
