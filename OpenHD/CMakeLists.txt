@@ -4,7 +4,7 @@ project(OpenHD)
 set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(ohd_interface)
-add_subdirectory(ohd_system)
+add_subdirectory(ohd_discovery)
 add_subdirectory(ohd_telemetry)
 add_subdirectory(ohd_video)
 
@@ -16,4 +16,4 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 # It depends on all the libraries we have just added above
 include_directories(ohd_common)
 add_executable(OpenHD main.cpp)
-target_link_libraries(OpenHD OHDInterfaceLib OHDSystemLib OHDVideoLib OHDTelemetryLib)
+target_link_libraries(OpenHD OHDInterfaceLib OHDDiscoveryLib OHDVideoLib OHDTelemetryLib)

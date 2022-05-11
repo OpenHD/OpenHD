@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16.3)
-project(OpenHD-System)
+project(OpenHD-Discovery)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -48,13 +48,13 @@ SET(ALL_SYSTEM_SOURCE_FILES
         src/OHDSystem.cpp
         lib/bcm2835.c)
 
-add_library(OHDSystemLib
+add_library(OHDDiscoveryLib
         SHARED
         ${ALL_SYSTEM_SOURCE_FILES})
-target_include_directories(OHDSystemLib PUBLIC inc/)
-target_include_directories(OHDSystemLib PUBLIC lib/include)
-target_link_libraries(OHDSystemLib ${OHD_SYSTEM_USED_LIBRARIES})
+target_include_directories(OHDDiscoveryLib PUBLIC inc/)
+target_include_directories(OHDDiscoveryLib PUBLIC lib/include)
+target_link_libraries(OHDDiscoveryLib ${OHD_SYSTEM_USED_LIBRARIES})
 
 # The main service that is run on OpenHD
 add_executable(test_discovery test/test_discovery.cpp)
-target_link_libraries(test_discovery OHDSystemLib)
+target_link_libraries(test_discovery OHDDiscoveryLib)
