@@ -20,6 +20,7 @@ typedef enum CameraType {
     CameraTypeUVCH264,
     CameraTypeIP,
     CameraTypeV4L2Loopback,
+    CameraTypeDummy, // Dummy camera, is created fully in sw
     CameraTypeUnknown
 } CameraType;
 

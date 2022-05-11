@@ -12,6 +12,7 @@
 DummyGstreamerStream::DummyGstreamerStream(PlatformType platform, Camera &camera, uint16_t video_udp_port)
         : CameraStream(platform, camera, video_udp_port) {
     std::cout<<"DummyGstreamerStream::DummyGstreamerStream\n";
+    assert(camera.type=CameraTypeDummy);
 }
 
 void DummyGstreamerStream::setup() {

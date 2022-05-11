@@ -44,6 +44,27 @@ void OHDVideo::setup() {
     std::cout << "OHDVideo::setup()" << std::endl;
     process_manifest();
     process_settings();
+    // If there is no camera, but we are running as air, create and start a dummy camera:
+    if(m_cameras.empty()){
+        Camera camera{};
+        camera.type=CameraTypeDummy;
+        configure(camera);
+        // Don't store the dummy camera in the list, since it might clash with settings.
+    }
+    // Consti10 sanity checks
+    for(auto& camera:m_cameras){
+        // check to see if the user set a bitrate
+        if (camera.bitrate.empty()) {
+            camera.bitrate = "5000000";
+        }
+        // check to see if the user configured a specific video codec
+        if (camera.codec == VideoCodecUnknown) {
+            camera.codec = VideoCodecH264;
+        }
+    }
+    for(auto& camera:m_cameras){
+        configure(camera);
+    }
 }
 
 void OHDVideo::process_manifest() {
@@ -140,7 +161,6 @@ void OHDVideo::process_settings() {
         if (setting_map.count("manual_pipeline")) camera.manual_pipeline = setting_map["manual_pipeline"];
         if (setting_map.count("codec")) camera.codec = string_to_video_codec(setting_map["codec"]);
 
-        configure(camera);
         save_cameras.push_back(camera);
     }
 
@@ -176,13 +196,21 @@ void OHDVideo::configure(Camera &camera) {
             m_camera_streams.push_back(std::move(stream));
             break;
         }
+        case CameraTypeDummy:{
+            std::cout<<"Dummy Camera index:"<<camera.index<<"\n";
+            const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
+            auto stream=std::make_unique<DummyGstreamerStream>(m_platform_type, camera, udp_port);
+            stream->setup();
+            stream->start();
+            m_camera_streams.push_back(std::move(stream));
+        }
         default: {
             std::cerr << "Unknown camera type, skipping" << std::endl;
         }
     }
 }
 
-void OHDVideo::save_settings(std::vector<Camera> cameras, const std::string& settings_file) {
+void OHDVideo::save_settings(const std::vector<Camera>& cameras, const std::string& settings_file) {
     inja::Environment env;
 
     // load the camera template, we format it once for each camera and write that to the file

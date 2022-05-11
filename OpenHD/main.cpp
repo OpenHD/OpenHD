@@ -49,12 +49,12 @@ int main(int argc, char *argv[]) {
         }
     }
     std::cout<<"OpenHD START with "<<
-             "skip_detection:"<<(options.skip_detection ? "Y": "N")<<
+             "skip_discovery:"<<(options.skip_discovery ? "Y": "N")<<
              "force_air:"<<(options.force_air ? "Y": "N")<<
              "\n";
 
     try{
-        if(!options.skip_detection){
+        if(!options.skip_discovery){
             // Always needs to run first.
             OHDDiscovery::runOnceOnStartup(options.force_air);
         }

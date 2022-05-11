@@ -55,15 +55,10 @@ void GStreamerStream::setup() {
 
     std::cerr << "Creating GStreamer pipeline" << std::endl;
 
-    // check to see if the user set a bitrate
-    if (m_camera.bitrate.empty()) {
-        m_camera.bitrate = "5000000";
-    }
-
-    // check to see if the user configured a specific video codec
-    if (m_camera.codec == VideoCodecUnknown) {
-        m_camera.codec = VideoCodecH264;
-    }
+    // sanity checks
+    assert(!m_camera.bitrate.empty());
+    assert(m_camera.codec!=VideoCodecUnknown);
+    assert(m_camera.type!=CameraTypeDummy);
 
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
@@ -119,7 +114,6 @@ void GStreamerStream::setup() {
         m_pipeline << "rtph264pay mtu=1024 ! ";
     }
 
-
     /*
      * Allow users to write the first part manually if they want to, we take care of the sink element because the port 
      * depends on which camera index this was and where the stream is going, which users won't know how to configure themselves.
@@ -129,10 +123,7 @@ void GStreamerStream::setup() {
         m_pipeline << m_camera.manual_pipeline;
     }
 
-    
-    m_pipeline << "tee name=t ! queue ! ";
-
-    m_pipeline << fmt::format("udpsink host=127.0.0.1 port={} t. ! ", m_video_udp_port);
+    m_pipeline << fmt::format(" udpsink host=127.0.0.1 port={} ", m_video_udp_port);
 
     // TODO: re-add recording, we need a better way than this crap
     //m_pipeline << "queue ! ";
@@ -151,7 +142,7 @@ void GStreamerStream::setup() {
 }
 
 
-bool GStreamerStream::parse_user_format(std::string format, std::string &width, std::string &height, std::string &fps) {
+bool GStreamerStream::parse_user_format(const std::string& format, std::string &width, std::string &height, std::string &fps) {
 
     boost::smatch result;
     boost::regex reg{"(\\d*)x(\\d*)\\@(\\d*)"};
@@ -755,7 +746,7 @@ std::string GStreamerStream::get_brightness() {
 }
 
 
-void GStreamerStream::set_brightness(std::string brightness) {
+void GStreamerStream::set_brightness(const std::string& brightness) {
     std::cerr << "GStreamerStream::set_brightness(" << brightness << ")" << std::endl;
 
     if (!gst_pipeline) {
@@ -842,7 +833,7 @@ std::string GStreamerStream::get_contrast() {
 }
 
 
-void GStreamerStream::set_contrast(std::string contrast) {
+void GStreamerStream::set_contrast(const std::string& contrast) {
     std::cerr << "GStreamerStream::set_contrast(" << contrast << ")" << std::endl;
 
     if (!gst_pipeline) {
