@@ -71,7 +71,7 @@ void DWifiCards::discover() {
 }
 
 
-void DWifiCards::process_card(std::string interface_name) {
+void DWifiCards::process_card(const std::string& interface_name) {
     std::stringstream device_file;
     device_file << "/sys/class/net/";
     device_file << interface_name.c_str();

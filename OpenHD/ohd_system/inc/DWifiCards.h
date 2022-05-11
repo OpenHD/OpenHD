@@ -23,7 +23,7 @@ public:
     void discover() override;
     nlohmann::json generate_manifest() override;
 
-    void process_card(std::string interface_name);
+    void process_card(const std::string& interface_name);
 private:
     std::vector<WiFiCard> m_wifi_cards;
     const PlatformType m_platform_type;
