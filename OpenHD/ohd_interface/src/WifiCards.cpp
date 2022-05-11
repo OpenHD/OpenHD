@@ -18,7 +18,6 @@ void WifiCards::configure() {
     std::cout << "WiFi::configure()" << std::endl;
     //Find out which cards are connected first
     process_manifest();
-
     // Consti10 - now do some sanity checks. No idea if and how the settings from stephen handle default values.
     for (auto& card : m_wifi_cards) {
         if(card.use_for==WifiUseForMonitorMode && m_is_air){
