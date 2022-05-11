@@ -1,6 +1,5 @@
 
 #include <iostream>
-#include <boost/asio.hpp>
 
 #include "dummygstreamerstream.h"
 
@@ -10,7 +9,7 @@ int main(int argc, char *argv[]) {
     PlatformType platformType;
     uint16_t video_port=OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP;
     
-    const auto stream=std::make_unique<DummyGstreamerStream>(platformType,camera,video_port);
+    auto stream=std::make_unique<DummyGstreamerStream>(platformType,camera,video_port);
     stream->setup();
     stream->start();
 

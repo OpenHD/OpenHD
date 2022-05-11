@@ -32,10 +32,14 @@ public:
     CameraStream(PlatformType platform, Camera &camera, uint16_t video_udp_port);
 
     // It is a good common programming practice to make them pure virtual
+    // setup everything needed to start streaming
     virtual void setup()=0;
-
+    // start streaming
     virtual void start()=0;
+    // stop streaming
     virtual void stop()=0;
+    //debug
+    virtual void debug()=0;
 
     // expected as bits per second
     virtual bool supports_bitrate()=0;
@@ -49,9 +53,6 @@ public:
     virtual std::vector<std::string> get_supported_formats()=0;
     virtual std::string get_format()=0;
     virtual void set_format(std::string format)=0;
-
-    //debug
-    virtual void debug()=0;
 
 protected:
     const PlatformType m_platform_type;

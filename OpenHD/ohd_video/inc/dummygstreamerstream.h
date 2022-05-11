@@ -14,13 +14,23 @@
  */
 class DummyGstreamerStream : public CameraStream{
 public:
-    DummyGstreamerStream(PlatformType platform,
+    explicit DummyGstreamerStream(PlatformType platform,
                          Camera &camera,
                          uint16_t video_udp_port);
     void setup()override;
     void start()override;
     void stop()override;
     void debug()override;
+private:
+    bool supports_bitrate() override;
+    void set_bitrate(int bitrate) override;
+    // not supported by every encoder, some USB cameras can do it but only with custom commands
+    bool supports_cbr() override;
+    void set_cbr(bool enable) override;
+    // expected to be widthXheight@fps format
+    std::vector<std::string> get_supported_formats() override;
+    std::string get_format() override;
+    void set_format(std::string format) override;
 private:
     GstElement * gst_pipeline = nullptr;
 };

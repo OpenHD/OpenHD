@@ -24,11 +24,11 @@ void DummyGstreamerStream::setup() {
     }
     std::stringstream pipeline;
 
-    pipeline<<"videotestsrc num-buffers=1000 !";
-    pipeline<<"x264enc name=encodectrl bitrate={} tune=zerolatency ! ";
-    pipeline << "h264parse config-interval=-1 ! ";
-    pipeline << "rtph264pay mtu=1024 ! ";
-    pipeline<< fmt::format("udpsink host=127.0.0.1 port={} t. ! ", m_video_udp_port);
+    pipeline<<"videotestsrc num-buffers=0 !";
+    pipeline<<fmt::format("x264enc name=encodectrl bitrate={} tune=zerolatency ! ",5000);
+    pipeline<<"h264parse config-interval=-1 ! ";
+    pipeline<<"rtph264pay mtu=1024 ! ";
+    pipeline<<fmt::format("udpsink host=127.0.0.1 port={} ", m_video_udp_port);
 
     gst_pipeline = gst_parse_launch(pipeline.str().c_str(), &error);
     if (error) {
@@ -53,4 +53,30 @@ void DummyGstreamerStream::stop() {
 
 void DummyGstreamerStream::debug() {
     std::cout<<"TODO DummyGstreamerStream::debug()\n";
+}
+
+bool DummyGstreamerStream::supports_bitrate() {
+    return false;
+}
+
+void DummyGstreamerStream::set_bitrate(int bitrate) {
+
+}
+
+bool DummyGstreamerStream::supports_cbr() {
+    return false;
+}
+
+void DummyGstreamerStream::set_cbr(bool enable) {
+}
+
+std::vector<std::string> DummyGstreamerStream::get_supported_formats() {
+    return {};
+}
+
+std::string DummyGstreamerStream::get_format() {
+    return {};
+}
+
+void DummyGstreamerStream::set_format(std::string format) {
 }

@@ -35,7 +35,7 @@ private:
 public:
     void start() override;
     void stop() override;
-    void debug();
+    void debug() override;
     
     bool supports_cbr() override;
     bool get_cbr() {
