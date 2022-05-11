@@ -7,19 +7,20 @@
 
 #include "endpoints/TCPEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
-//#include "endpoints/WBEndpoint.h"
 #include "endpoints/SerialEndpoint.h"
 #include "internal/InternalTelemetry.h"
 
 /**
- * OpenHD Ground telemetry service
+ * OpenHD Ground telemetry. Assumes a air instance running on the air pi.
  */
 class GroundTelemetry {
 public:
     explicit GroundTelemetry();
-    // this is the main entry point for this service - it will run infinitely (until the air unit is either powered down or crashes).
-    // This must NEVER crash
-    void loopInfinite();
+    /**
+     * Telemetry will run infinite in its own threads until an error occurs.
+     * @param enableExtendedLogging be really verbose on logging.
+     */
+    void loopInfinite(const bool enableExtendedLogging=false);
 private:
     // called every time a message from the air pi is received
     void onMessageAirPi(MavlinkMessage& message);

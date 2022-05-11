@@ -44,7 +44,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage& message) {
     sendMessageFC(message);
 }
 
-void AirTelemetry::loopInfinite() {
+void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
     while (true){
         std::cout<<"AirTelemetry::loopInfinite()\n";
         // for debugging, check if any of the endpoints is not alive

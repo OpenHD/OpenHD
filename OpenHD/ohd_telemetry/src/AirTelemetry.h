@@ -12,14 +12,16 @@
 #include <string>
 
 /**
- * OpenHD Air telemetry service
+ * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
  */
 class AirTelemetry {
 public:
     explicit AirTelemetry(std::string fcSerialPort);
-    // this is the main entry point for this service - it will run infinitely (until the air unit is either powered down or crashes).
-    // This must NEVER crash
-    void loopInfinite();
+    /**
+     * Telemetry will run infinite in its own threads until an error occurs.
+     * @param enableExtendedLogging be really verbose on logging.
+     */
+    void loopInfinite(const bool enableExtendedLogging=false);
 private:
     // send a mavlink message to the flight controller connected to the air unit via UART
     void sendMessageFC(MavlinkMessage& message);
