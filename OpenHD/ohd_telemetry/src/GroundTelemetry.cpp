@@ -72,10 +72,10 @@ void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
     while (true){
         std::cout<<"GroundTelemetry::loopInfinite()\n";
         // for debugging, check if any of the endpoints is not alive
-        if(wifibroadcastEndpoint){
+        if(enableExtendedLogging && wifibroadcastEndpoint){
             wifibroadcastEndpoint->debugIfAlive();
         }
-        if(udpGroundClient){
+        if(enableExtendedLogging && udpGroundClient){
             udpGroundClient->debugIfAlive();
         }
         // Broadcast existence of OpenHD ground station to all connected clients

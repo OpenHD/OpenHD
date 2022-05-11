@@ -48,10 +48,10 @@ void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
     while (true){
         std::cout<<"AirTelemetry::loopInfinite()\n";
         // for debugging, check if any of the endpoints is not alive
-        if(wifibroadcastEndpoint){
+        if(enableExtendedLogging && wifibroadcastEndpoint){
             wifibroadcastEndpoint->debugIfAlive();
         }
-        if(serialEndpoint){
+        if(enableExtendedLogging && serialEndpoint){
             serialEndpoint->debugIfAlive();
         }
         // send heartbeat to the ground pi - everything else is handled by the callbacks and their threads
