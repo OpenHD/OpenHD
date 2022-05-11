@@ -25,10 +25,9 @@ public:
 
     nlohmann::json generate_manifest() override;
 
-    int count() {
-        return m_cameras.size();
+    [[nodiscard]] int count() const{
+        return (int)m_cameras.size();
     }
-
 private:
     /*
      * These are for platform-specific camera access methods, most can also be accessed through v4l2

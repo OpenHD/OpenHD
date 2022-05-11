@@ -16,7 +16,12 @@
  */
 class DProfile: public OHD::IDiscoverable {
 public:
-    DProfile(bool is_air);
+    /**
+     *
+     * @param is_air weather we run as air or ground pi is decided elsewhere, we just take it as a param here
+     * and write this param out to json.
+     */
+    explicit DProfile(bool is_air);
     virtual ~DProfile() = default;
 
     void discover() override;
