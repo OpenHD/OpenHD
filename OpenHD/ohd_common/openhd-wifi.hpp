@@ -5,6 +5,7 @@
 #include <string>
 
 #include "openhd-util.hpp"
+#include "openhd-log.hpp"
 
 typedef enum WiFiCardType {
     WiFiCardTypeRealtek8812au,
@@ -55,6 +56,34 @@ struct WiFiCard {
     std::string hotspot_password;
     std::string hotspot_band;
 };
+
+static nlohmann::json wificard_to_json(const WiFiCard& p) {
+    auto j=nlohmann::json{ {"type", p.type},
+                        {"name", p.name},
+                        {"vendor", p.vendor},
+                        {"mac", p.mac},
+                        {"supports_5ghz", p.supports_5ghz},
+                        {"supports_2ghz", p.supports_2ghz},
+                        {"supports_injection", p.supports_injection},
+                        {"supports_hotspot", p.supports_hotspot},
+                        {"supports_rts", p.supports_rts},
+    };
+    return j;
+}
+
+static WiFiCard wificard_from_json(const nlohmann::json& j) {
+    WiFiCard p;
+    j.at("type").get_to(p.type);
+    j.at("name").get_to(p.name);
+    j.at("vendor").get_to(p.vendor);
+    j.at("mac").get_to(p.mac);
+    j.at("supports_5ghz").get_to(p.supports_5ghz);
+    j.at("supports_2ghz").get_to(p.supports_2ghz);
+    j.at("supports_injection").get_to(p.supports_injection);
+    j.at("supports_hotspot").get_to(p.supports_hotspot);
+    j.at("supports_rts").get_to(p.supports_rts);
+    return p;
+}
 
 
 inline std::string wifi_card_type_to_string(const WiFiCardType& card_type) {
@@ -150,5 +179,40 @@ inline WiFiHotspotType string_to_wifi_hotspot_type(const std::string& hotspot_ty
     return WiFiHotspotTypeNone;
 }
 
+
+static nlohmann::json wificards_to_manifest(const std::vector<WiFiCard>& cards){
+    nlohmann::json j;
+    auto wifi_cards_json = nlohmann::json::array();
+    for (auto &_card : cards) {
+        auto cardJson = wificard_to_json(_card);
+        std::stringstream message;
+        message << "Detected wifi (" << wifi_card_type_to_string(_card.type) << ") interface: " << _card.name << std::endl;
+        ohd_log(STATUS_LEVEL_INFO, message.str());
+        wifi_cards_json.push_back(cardJson);
+    }
+    j["cards"] = wifi_cards_json;
+    return j;
+}
+
+static constexpr auto WIFI_MANIFEST_FILENAME="/tmp/wifi_manifest";
+
+static std::vector<WiFiCard> wificards_from_manifest(){
+    std::vector<WiFiCard> ret;
+    try {
+        std::ifstream f(WIFI_MANIFEST_FILENAME);
+        nlohmann::json j;
+        f >> j;
+        for (const auto& _card : j["cards"]) {
+            WiFiCard card= wificard_from_json(_card);
+            ret.push_back(card);
+        }
+    } catch (std::exception &ex) {
+        // don't do anything, but send an error message to the user through the status service
+        ohd_log(STATUS_LEVEL_EMERGENCY, "WiFi manifest processing failed");
+        std::cerr << "WiFi::process_manifest: " << ex.what() << std::endl;
+        return ret;
+    }
+    return ret;
+}
 
 #endif

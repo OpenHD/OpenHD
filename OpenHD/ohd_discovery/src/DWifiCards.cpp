@@ -207,36 +207,5 @@ void DWifiCards::process_card(const std::string& interface_name) {
 
 
 nlohmann::json DWifiCards::generate_manifest() {
-    nlohmann::json j;
-
-    auto wifi_cards = nlohmann::json::array();
-
-    for (auto &_card : m_wifi_cards) {
-        try {
-            nlohmann::json card = { 
-                {"type",               wifi_card_type_to_string(_card.type) }, 
-                {"name",               _card.name },
-                {"mac",                _card.mac },
-                {"supports_5ghz",      _card.supports_5ghz },
-                {"supports_2ghz",      _card.supports_2ghz },
-                {"supports_injection", _card.supports_injection },
-                {"supports_hotspot",   _card.supports_hotspot },
-                {"supports_rts",       _card.supports_rts }
-            };
-
-            std::stringstream message;
-            message << "Detected wifi (" << wifi_card_type_to_string(_card.type) << ") interface: " << _card.name << std::endl;
-
-            ohd_log(STATUS_LEVEL_INFO, message.str());
-
-            wifi_cards.push_back(card);
-        } catch (std::exception &ex) {
-            std::cerr << "exception: " << ex.what() << std::endl;
-        }
-    }
-    
-    j["hotspot"] = wifi_hotspot_type_to_string(m_wifi_hotspot_type);
-    j["cards"] = wifi_cards;
-
-    return j;
+    return wificards_to_manifest(m_wifi_cards);
 }

@@ -48,7 +48,7 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir){
         DWifiCards wifi(platform.platform_type(), platform.board_type(), platform.carrier_type(), platform.wifi_hotspot_type());
         wifi.discover();
         auto wifi_manifest = wifi.generate_manifest();
-        std::ofstream _w("/tmp/wifi_manifest");
+        std::ofstream _w(WIFI_MANIFEST_FILENAME);
         _w << wifi_manifest.dump(4);
         _w.close();
 
@@ -61,7 +61,7 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir){
 
         // When we write the profile we need to reason weather this is an air or ground pi.
         const int camera_count = cameras.count();
-        bool is_air=camera_count > 0 ? true : false;
+        bool is_air=camera_count > 0;
         if(forceAir){
             is_air=true;
         }
@@ -72,18 +72,11 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir){
         _pr << profile_manifest.dump(4);
         _pr.close();
 
-        // Write all the sub-manifest files into one big manifest
-        nlohmann::json j;
-
-        j["profile"] = profile_manifest;
-        j["platform"] = platform_manifest;
-        j["wifi"] = wifi_manifest;
-        j["ethernet"] = ethernet_manifest;
-        j["camera"] = camera_manifest;
-
-        std::ofstream _manifest("/tmp/manifest");
-        _manifest << j.dump(4);
-        _manifest.close();
+        // Note: Here stephen wrote all the small sub-manifests into one big manifest.
+        // In my opinion, there is an aparent issue with that: The data is suddenly duplicated,
+        // and one cannot know what is actually then read by the services running after -
+        // The sub-files or the one big file.
+        // Since sub-files promote separation, there is only sub-files now.
         std::cout<<"OHDSystem::done\n";
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;

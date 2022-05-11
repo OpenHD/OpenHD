@@ -132,35 +132,8 @@ void WifiCards::configure() {
 
 
 void WifiCards::process_manifest() {
-    try {
-        std::ifstream f("/tmp/wifi_manifest");
-        nlohmann::json j;
-        f >> j;
-
-        for (auto _card : j["cards"]) {
-
-            WiFiCard card;
-            card.name = _card["name"];
-
-            card.type = string_to_wifi_card_type(_card["type"]);
-
-            card.supports_5ghz = _card["supports_5ghz"];
-            card.supports_2ghz = _card["supports_2ghz"];
-            card.supports_injection = _card["supports_injection"];
-            card.supports_hotspot = _card["supports_hotspot"];
-            card.supports_rts = _card["supports_rts"];
-            card.mac = _card["mac"];
-
-            m_wifi_cards.push_back(card);
-        }
-    } catch (std::exception &ex) {
-        // don't do anything, but send an error message to the user through the status service
-        ohd_log(STATUS_LEVEL_EMERGENCY, "WiFi manifest processing failed");
-        std::cerr << "WiFi::process_manifest: " << ex.what() << std::endl;
-        return;
-    }
+    m_wifi_cards=wificards_from_manifest();
 }
-
 
 void WifiCards::setup_card(const WiFiCard &card) {
     std::cerr << "Setup card: " << card.name << std::endl;

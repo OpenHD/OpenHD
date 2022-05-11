@@ -45,7 +45,7 @@ SET(ALL_SYSTEM_SOURCE_FILES
         src/DPlatform.cpp
         src/DProfile.cpp
         src/DWifiCards.cpp
-        src/OHDSystem.cpp
+        src/OHDDiscovery.cpp
         lib/bcm2835.c)
 
 add_library(OHDDiscoveryLib
