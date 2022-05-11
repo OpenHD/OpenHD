@@ -21,7 +21,7 @@
  */
 class WBStreams {
 public:
-    WBStreams(const OHDProfile& profile);
+    explicit WBStreams(const OHDProfile& profile);
     /**
      * Set the names of all wifi cards for broadcasting found on the system, needs to be called before configure().
      * Note that this class expects these cards to be configured for wifibroadcast aka monitor mode with

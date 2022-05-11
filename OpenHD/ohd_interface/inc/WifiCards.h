@@ -19,7 +19,7 @@
  */
 class WifiCards {
 public:
-    WifiCards(const OHDProfile& profile);
+    explicit WifiCards(const OHDProfile& profile);
     virtual ~WifiCards() = default;
     void process_manifest();
     void configure();

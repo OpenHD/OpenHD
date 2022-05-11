@@ -22,7 +22,7 @@ public:
      * a setting that affects the ground pi.
      * @param profile the (never-changing) profile we are running with.
      */
-    OHDInterface(const OHDProfile& profile);
+    explicit OHDInterface(const OHDProfile& profile);
     std::unique_ptr<WifiCards> wifi;
     // temprarily removed
     //std::unique_ptr<EthernetCards> ethernet;
