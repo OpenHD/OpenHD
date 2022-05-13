@@ -5,7 +5,7 @@ Members should adhere to the following paradigms:
 2) HW Capabilities are written out to json, and then can be easily accessed by other modules.
     NOTE: This might change, we could also just as well not use json for that and do it all in code with const Structs.
 
-See inc/OHDSystem.h for more info
+See inc/OHDDiscovery.h for more info
 
 ## Old notes
 I think stephens idea here was to run this service at startup, and it figures out the platform with

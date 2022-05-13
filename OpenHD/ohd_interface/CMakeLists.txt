@@ -11,15 +11,11 @@ include(../lib/wifibroadcast/WBLib.cmake)
 
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
+# Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
 SET(Boost_USE_STATIC_LIBS OFF)
 SET(Boost_USE_MULTITHREAD ON)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS regex filesystem)
-IF(Boost_FOUND)
-    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
-    LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
-ENDIF(Boost_FOUND)
-
-SET(INTERFACE_USED_BOOST_LIBRARIES ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
+SET(INTERFACE_USED_BOOST_LIBRARIES Boost::regex Boost::filesystem)
 
 SET(ALL_INTERFACE_SOURCE_FILES
         src/WifiCards.cpp

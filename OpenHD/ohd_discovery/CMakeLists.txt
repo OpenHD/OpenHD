@@ -12,17 +12,13 @@ include_directories(../ohd_common)
 
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
+# Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
 SET(Boost_USE_STATIC_LIBS OFF)
 SET(Boost_USE_MULTITHREAD ON)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS regex filesystem)
-IF(Boost_FOUND)
-    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
-    LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
-ENDIF(Boost_FOUND)
+SET(OHD_SYSTEM_USED_LIBRARIES Boost::regex Boost::filesystem)
 
-SET(OHD_SYSTEM_USED_LIBRARIES ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
-
-# find and include  all the libs
+# find and include all the other libs
 include(cmake/FindLibNL.cmake)
 include_directories(${LibNL_INCLUDE_DIR})
 SET(OHD_SYSTEM_USED_LIBRARIES ${OHD_SYSTEM_USED_LIBRARIES} ${LibNL_LIBRARIES})
