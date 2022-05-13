@@ -14,8 +14,10 @@ int main(int argc, char *argv[]) {
 
     if(profile.is_air){
         OHDVideo ohdVideo(platform,profile);
+        std::cout<<"OHDVideo started\n";
+    }else{
+        std::cout<<"OHDVideo not started - not on air pi\n";
     }
-    std::cerr<<"OHDVideo started\n";
 
     while (true){
         std::this_thread::sleep_for(std::chrono::seconds(10));
