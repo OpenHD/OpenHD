@@ -49,7 +49,7 @@ void DCameras::discover() {
     switch (m_platform_type) {
         case PlatformTypeRaspberryPi: {
             detect_raspberrypi_csi();
-            detect_raspberrypi_veye();
+            //detect_raspberrypi_veye();
             break;
         }
         case PlatformTypeJetson: {
@@ -177,7 +177,7 @@ void DCameras::detect_raspberrypi_csi() {
 
 }
 
-void DCameras::detect_raspberrypi_veye() {
+/*void DCameras::detect_raspberrypi_veye() {
     std::cout<< "Cameras::detect_raspberrypi_veye()" << std::endl;
 
     std::vector<std::string> args { 
@@ -239,7 +239,7 @@ void DCameras::detect_raspberrypi_veye() {
     m_camera_endpoints.push_back(endpoint);
     m_cameras.push_back(camera);
     std::cout<< "Cameras::detect_raspberrypi_veye() end\n";
-}
+}*/
 
 
 

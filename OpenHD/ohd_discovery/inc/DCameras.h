@@ -36,7 +36,9 @@ private:
      *
      */
     void detect_raspberrypi_csi();
-    void detect_raspberrypi_veye();
+    // There is some weird bug in the discover veye implementation I cannot find easily.
+    // Since veye is unlikely to work with libcamera for now anyways, remove it for now.
+    //void detect_raspberrypi_veye();
     void detect_jetson_csi();
     void detect_rockchip_csi();
 
