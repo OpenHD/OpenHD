@@ -178,7 +178,6 @@ build_source() {
     cp -a config/ssh ${PKGDIR}/boot/ || exit 1
 
     cp -a config/apconfig.txt ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/joyconfig.txt ${PKGDIR}/usr/local/share/openhd/ || exit 1
 
     cp -a config/camera.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
     cp -a config/ethernetcard.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
