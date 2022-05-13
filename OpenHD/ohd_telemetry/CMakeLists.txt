@@ -17,12 +17,7 @@ SET(Boost_USE_STATIC_LIBS OFF)
 SET(Boost_USE_MULTITHREAD ON)
 find_package(Boost REQUIRED COMPONENTS system thread regex filesystem)
 message(STATUS "Boost version: ${Boost_VERSION}")
-IF(Boost_FOUND)
-    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
-    LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
-ENDIF(Boost_FOUND)
-
-SET(OHD_TELEMETRY_USED_BOOST_LIBS ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
+SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::system Boost::thread Boost::regex Boost::filesystem)
 
 SET(ALL_TELEMETRY_SOURCE_FILES
         src/AirTelemetry.cpp
