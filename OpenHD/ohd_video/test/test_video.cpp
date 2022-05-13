@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     std::cerr<<"OHDVideo started\n";
 
     while (true){
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(10));
         std::cout<<"XVideo\n";
     }
 
