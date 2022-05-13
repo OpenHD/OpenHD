@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
 
         // and start ohdVideo if we are on the air pi
         if(profile.is_air){
-            auto ohdVideo=std::make_unique<OHDVideo>(profile.is_air,profile.unit_id,platform.platform_type);
+            auto ohdVideo=std::make_unique<OHDVideo>(platform,profile);
         }
 
         std::cout<<"All OpenHD modules running\n";
