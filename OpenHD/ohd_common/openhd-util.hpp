@@ -3,6 +3,7 @@
 
 #include <boost/process.hpp>
 #include <sstream>
+#include <iostream>
 #include <cctype>
 
 inline std::string to_uppercase(std::string input) {
