@@ -110,6 +110,7 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
     ROptions options{};
     options.radio_port=radio_port;
     options.keypair=std::nullopt;
+    options.log_interval=std::chrono::seconds(5);
     const auto cards=m_broadcast_cards_names;
     assert(!cards.empty());
     options.rxInterfaces=cards;
