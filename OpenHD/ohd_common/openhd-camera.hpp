@@ -174,6 +174,7 @@ inline VideoCodec string_to_video_codec(const std::string& codec) {
     return VideoCodecUnknown;
 }
 
+// TODO: Why the heck did stephen not use the endpoints member variable here ?
 static nlohmann::json cameras_to_manifest(const std::vector<Camera>& cameras,const std::vector<CameraEndpoint>& camera_endpoints){
     nlohmann::json j;
     for (const auto &camera : cameras) {
