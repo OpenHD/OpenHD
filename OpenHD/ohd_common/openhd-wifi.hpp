@@ -3,6 +3,7 @@
 
 
 #include <string>
+#include <fstream>
 
 #include "openhd-util.hpp"
 #include "openhd-log.hpp"
