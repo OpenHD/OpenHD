@@ -55,7 +55,7 @@ struct Camera {
     // for USB this is the bus number, for CSI it's the connector number
     std::string bus;
     // Unique index of this camera, should start at 0
-    int index;
+    int index=0;
 
     // these come from the settings system
 
