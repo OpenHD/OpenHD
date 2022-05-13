@@ -6,7 +6,11 @@
 
 #include "../src/GroundTelemetry.h"
 #include "../src/AirTelemetry.h"
+#include "../src/OHDTelemetry.hpp"
+#include "openhd-profile.hpp"
+#include "openhd-platform.hpp"
 #include <thread>
+#include <memory>
 
 static constexpr auto TAG="XMAVLINK_SERVICE_TEST";
 int main() {
@@ -20,5 +24,23 @@ int main() {
     GroundTelemetry groundTelemetry{};
     groundTelemetry.loopInfinite();
     std::cout << TAG << "end\n";
+    /*std::unique_ptr<OHDTelemetry> air;
+    std::unique_ptr<OHDTelemetry> ground;
+    {
+        OHDProfile profile{true,"XX"};
+        OHDPlatform platform{};
+        air=std::make_unique<OHDTelemetry>(platform,profile);
+    }
+    {
+        OHDProfile profile{false,"XX"};
+        OHDPlatform platform{};
+        ground=std::make_unique<OHDTelemetry>(platform,profile);
+    }
+    while (true){
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        if(air && ground){
+            std::cout<<"A & G\n";
+        }
+    }*/
 }
 

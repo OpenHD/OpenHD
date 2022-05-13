@@ -35,9 +35,6 @@ include(cmake/FindV4L2.cmake)
 include_directories(${V4L2_INCLUDE_DIR})
 SET(OHD_SYSTEM_USED_LIBRARIES ${OHD_SYSTEM_USED_LIBRARIES} ${V4L2_LIBRARY})
 
-# TODO make nice
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lsystemd")
-
 SET(ALL_SYSTEM_SOURCE_FILES
         src/DCameras.cpp
         #src/DEthernetCards.cpp

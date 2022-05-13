@@ -235,6 +235,7 @@ void DCameras::detect_raspberrypi_veye() {
 
     m_camera_endpoints.push_back(endpoint);
     m_cameras.push_back(camera);
+    std::cout<< "Cameras::detect_raspberrypi_veye() end\n";
 }
 
 

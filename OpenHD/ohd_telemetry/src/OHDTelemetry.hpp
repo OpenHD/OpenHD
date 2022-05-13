@@ -55,7 +55,7 @@ private:
                 break;
             }
             default: {
-                std::cerr<<"Using default UART "<<platformSerialPort<<"\n";
+                std::cout<<"Using default UART "<<platformSerialPort<<"\n";
                 break;
             }
         }
