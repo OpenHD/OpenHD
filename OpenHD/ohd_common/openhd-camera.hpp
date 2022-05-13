@@ -47,7 +47,7 @@ typedef enum VideoCodec {
 
 
 struct Camera {
-    CameraType type;
+    CameraType type=CameraTypeUnknown;
     std::string name = "unknown";
     std::string vendor = "unknown";
     std::string vid;
@@ -56,7 +56,6 @@ struct Camera {
     std::string bus;
     // Unique index of this camera, should start at 0
     int index;
-
 
     // these come from the settings system
 
@@ -250,10 +249,8 @@ static std::vector<Camera> cameras_from_manifest(){
                     endpoint.formats.push_back(format);
                     std::cerr << format << std::endl;
                 }
-
                 camera.endpoints.push_back(endpoint);
             }
-
             ret.push_back(camera);
         }
     } catch (std::exception &ex) {
