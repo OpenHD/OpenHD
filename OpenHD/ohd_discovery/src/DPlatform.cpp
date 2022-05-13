@@ -6,10 +6,7 @@
 #include <iostream>
 #include <fstream>
 
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/filesystem.hpp>
-
 #include <boost/regex.hpp>
 
 #include "json.hpp"
