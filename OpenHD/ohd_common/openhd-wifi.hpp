@@ -46,6 +46,7 @@ struct WiFiCard {
     bool supports_injection= false;
     bool supports_hotspot= false;
     bool supports_rts= false;
+    // deterministic info and capabilities part end.
     WifiUseFor use_for=WifiUseForUnknown; // This one needs to be set for the card to then be used for something.
     // Otherwise, it is not used for anything
     // ? Dynamically changed settings ?
