@@ -19,7 +19,7 @@ inline bool run_command(const std::string& command,const std::vector<std::string
     std::stringstream ss;
     ss<<command;
     for(const auto& arg:args){
-        ss<<arg<<" ";
+        ss<<" "<<arg;
     }
     std::cout<<"run command begin ["<<ss.str()<<"]\n";
     // Some weird locale issue ?!
