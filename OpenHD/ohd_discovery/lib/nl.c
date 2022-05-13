@@ -19,7 +19,7 @@
 #include <netlink/genl/ctrl.h>
 #include <net/if.h>
 
-#include "nl80211.h"
+#include "include/nl80211.h"
 
 
 typedef struct lookup_data {

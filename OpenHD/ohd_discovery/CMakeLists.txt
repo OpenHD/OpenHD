@@ -34,11 +34,11 @@ SET(OHD_SYSTEM_USED_LIBRARIES ${OHD_SYSTEM_USED_LIBRARIES} ${V4L2_LIBRARY})
 SET(ALL_SYSTEM_SOURCE_FILES
         src/DCameras.cpp
         #src/DEthernetCards.cpp
-        src/nl.c
         src/DPlatform.cpp
         src/DProfile.cpp
         src/DWifiCards.cpp
         src/OHDDiscovery.cpp
+        lib/nl.c
         lib/bcm2835.c)
 
 add_library(OHDDiscoveryLib
