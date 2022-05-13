@@ -45,6 +45,19 @@ typedef enum VideoCodec {
     VideoCodecUnknown
 } VideoCodec;
 
+// Each camera should support at least one video format,
+// But it might support a wide variety of video formats.
+// For example,a camera might be able to do h264 and h265
+// for multiple resolution@framerate tuples.
+// Example: one of the supported formats of rpi cam is
+// h264,1280x720@60
+// TODO: what did stephen do there with the endpoints ?!!
+struct VideoFormat{
+    VideoCodec videoCodec;
+    int width;
+    int height;
+    int framerate;
+};
 
 struct Camera {
     CameraType type=CameraTypeUnknown;
