@@ -1,5 +1,7 @@
 
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
