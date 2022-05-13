@@ -15,7 +15,7 @@ inline std::string to_uppercase(std::string input) {
 }
 
 
-inline bool run_command(std::string command, std::vector<std::string> args) {
+inline bool run_command(const std::string& command,const std::vector<std::string>& args) {
     std::stringstream ss;
     ss<<command;
     for(const auto& arg:args){
