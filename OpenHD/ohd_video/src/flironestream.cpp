@@ -9,8 +9,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include <boost/bind.hpp>
-
 #include "flironestream.h"
 
 

@@ -11,9 +11,6 @@
 #include <iterator>
 #include <exception>
 
-#include <boost/bind.hpp>
-#include <boost/signals2.hpp>
-
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-log.hpp"
