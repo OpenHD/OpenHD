@@ -59,18 +59,22 @@ typedef enum STATUS_LEVEL {
     STATUS_LEVEL_DEBUG
 } STATUS_LEVEL;
 
+static void print_log_by_level(const STATUS_LEVEL level,std::string message){
+    // Each message is logged with a newline at the end, add a new line at the end if non-existing.
+    const auto messageN=message.back()=='\n' ? message : (message+"\n");
+    if(level==STATUS_LEVEL_INFO || level==STATUS_LEVEL_NOTICE || level==STATUS_LEVEL_DEBUG){
+        std::cout<<messageN;
+    }else{
+        std::cerr<<messageN;
+    }
+}
+
 /*
  * Messages sent here will end up in the telemetry microservice, where they will be packed up and sent through
  * mavlink for storage and review by qopenhd, the boot screen system, and other software.
  */
 inline void ohd_log(STATUS_LEVEL level, const std::string& message) {
-    // Each message is logged with a newline at the end, add a new line at the end if non-existing.
-    if(message.back()=='\n'){
-        std::cerr << message;
-    }else{
-        std::cerr << message << std::endl;
-    }
-
+    print_log_by_level(level,message);
     localmessage_t lmessage;
     lmessage.level = static_cast<uint8_t>(level);
     strncpy((char*)lmessage.message, message.c_str(), 50);

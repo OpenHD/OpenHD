@@ -112,7 +112,6 @@ inline WiFiCardType string_to_wifi_card_type(const std::string& driver_name) {
     } else if (to_uppercase(driver_name).find(to_uppercase("8188eu")) != std::string::npos) {
         return WiFiCardTypeRealtek8188eu;
     }
-
     return WiFiCardTypeUnknown;
 }
 

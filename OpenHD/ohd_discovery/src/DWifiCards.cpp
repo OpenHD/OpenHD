@@ -38,13 +38,13 @@ DWifiCards::DWifiCards(PlatformType platform_type, BoardType board_type, Carrier
 
 
 void DWifiCards::discover() {
-    std::cout << "WiFi::discover()" << std::endl;
-
+    std::cout << "WiFi::discover()\n";
     // Find wifi cards, excluding specific kinds of interfaces.
     std::vector<std::string> excluded_interfaces = {
         "usb",
         "lo",
-        "eth"
+        "eth",
+        "enp2s0" // Consti10 added
     };
     boost::filesystem::path net("/sys/class/net");
     for (auto &entry : boost::filesystem::directory_iterator(net)) { 
@@ -74,6 +74,7 @@ void DWifiCards::discover() {
             card.use_for=WifiUseForUnknown;
         }
     }
+    std::cout << "WiFi::discover done, n cards:"<<m_wifi_cards.size()<<"\n";
 }
 
 
