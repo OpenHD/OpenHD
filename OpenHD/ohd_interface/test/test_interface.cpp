@@ -1,5 +1,4 @@
 #include <iostream>
-#include <boost/asio.hpp>
 
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"

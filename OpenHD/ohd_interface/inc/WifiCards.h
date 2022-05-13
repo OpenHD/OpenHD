@@ -5,9 +5,6 @@
 #include <chrono>
 #include <vector>
 
-#include <boost/asio.hpp>
-#include <boost/bind.hpp>
-
 #include "json.hpp"
 
 #include "openhd-wifi.hpp"

@@ -8,13 +8,7 @@
 #include <unistd.h>
 
 #include <iostream>
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/process.hpp>
 
-#include <boost/regex.hpp>
 #include <utility>
 
 #include "json.hpp"
