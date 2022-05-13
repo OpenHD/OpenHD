@@ -514,9 +514,7 @@ void DCameras::detect_flir() {
         std::vector<std::string> ar { 
             "start", "flirone"
         };
-
-        boost::process::child p(boost::process::search_path("systemctl"), ar);
-        p.wait();
+        run_command("systemctl",ar);
     }
 }
 
@@ -590,9 +588,7 @@ void DCameras::detect_seek() {
         std::vector<std::string> ar { 
             "start", "seekthermal"
         };
-
-        boost::process::child p(boost::process::search_path("systemctl"), ar);
-        p.wait();
+        run_command("systemctl",ar);
     }
 }
 

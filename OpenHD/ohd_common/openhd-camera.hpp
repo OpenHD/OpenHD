@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <fstream>
 
 #include "openhd-util.hpp"
 #include "openhd-log.hpp"

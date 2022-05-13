@@ -11,6 +11,7 @@
 #include <utility>
 #include <optional>
 #include <iostream>
+#include <fstream>
 
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>

@@ -4,6 +4,7 @@
 
 #include <string>
 #include <sstream>
+#include <fstream>
 
 #include "openhd-util.hpp"
 #include "openhd-log.hpp"

@@ -14,13 +14,13 @@ include_directories(../ohd_common)
 # Find and include boost
 SET(Boost_USE_STATIC_LIBS OFF)
 SET(Boost_USE_MULTITHREAD ON)
-FIND_PACKAGE(Boost REQUIRED COMPONENTS system thread regex filesystem)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS regex filesystem)
 IF(Boost_FOUND)
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
     LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 ENDIF(Boost_FOUND)
 
-SET(OHD_SYSTEM_USED_LIBRARIES ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
+SET(OHD_SYSTEM_USED_LIBRARIES ${Boost_REGEX_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
 
 # find and include  all the libs
 include(cmake/FindLibNL.cmake)
