@@ -2,6 +2,7 @@
 #define OPENHD_UTIL_H
 
 #include <boost/process.hpp>
+#include <sstream>
 #include <cctype>
 
 inline std::string to_uppercase(std::string input) {
@@ -13,7 +14,13 @@ inline std::string to_uppercase(std::string input) {
 
 
 inline bool run_command(std::string command, std::vector<std::string> args) {
-    std::cout<<"Run command begin\n";
+    std::stringstream ss;
+    ss<<"["<<command;
+    for(const auto& arg:args){
+        ss<<arg<<" ";
+    }
+    ss<<"]";
+    std::cout<<"run command begin "<<ss.str()<<"\n";
     boost::process::child c(boost::process::search_path(command), args);
     c.wait();
     std::cout<<"Run command end\n";
