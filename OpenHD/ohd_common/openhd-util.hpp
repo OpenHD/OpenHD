@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cctype>
 #include <cstdlib>
+#include <vector>
 
 inline std::string to_uppercase(std::string input) {
     for (char & it : input) {
@@ -15,6 +16,14 @@ inline std::string to_uppercase(std::string input) {
 }
 
 
+/**
+ * Utility to execute a command on the command line.
+ * Blocks until the command has been executed, and returns its result.
+ * @param command the command to run
+ * @param args the args for the command to run
+ * @return the command result
+ * NOTE: Used to use boost, there were issues with that, I changed it to use c standard library.
+ */
 inline bool run_command(const std::string& command,const std::vector<std::string>& args) {
     std::stringstream ss;
     ss<<command;
