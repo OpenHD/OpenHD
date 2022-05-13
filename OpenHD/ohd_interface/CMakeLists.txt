@@ -38,3 +38,7 @@ target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
 # Custom testing, requires written jsons
 add_executable(test_interface test/test_interface.cpp)
 target_link_libraries(test_interface OHDInterfaceLib)
+
+#special, temporary
+add_executable(test_common_util test/test_common_util.cpp)
+target_link_libraries(test_common_util OHDInterfaceLib)

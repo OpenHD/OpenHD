@@ -14,7 +14,7 @@ WifiCards::WifiCards(const OHDProfile& profile): profile(profile){}
 
 
 void WifiCards::configure() {
-    std::cout << "WiFi::configure()" << std::endl;
+    std::cout << "WifiCards::configure()" << std::endl;
     //Find out which cards are connected first
     process_manifest();
     // Consti10 - now do some sanity checks. No idea if and how the settings from stephen handle default values.
@@ -80,38 +80,37 @@ void WifiCards::setup_card(const WiFiCard &card) {
 
 void WifiCards::setup_hotspot(const WiFiCard &card) {
     std::cerr<<"Setup hotspot unimplemented right now\n";
-    //std::cout << "WiFi::setup_hotspot(" << card.name << ")" << std::endl;
+    //std::cout << "WifiCards::setup_hotspot(" << card.name << ")" << std::endl;
 }
 
 
 bool WifiCards::set_card_state(const WiFiCard& card, bool up) {
-    std::cout << "WiFi::set_card_state(" << up << ") for " << card.name <<  ")" << std::endl;
+    std::cout << "WifiCards::set_card_state(" << up << ") for " << card.name <<  ")" << std::endl;
     std::vector<std::string> args { "link", "set", "dev", card.name, up ? "up" : "down" };
     bool success = run_command("ip", args);
     return success;
 }
 
 bool WifiCards::set_frequency(const WiFiCard& card, const std::string& frequency) {
-    std::cout << "WiFi::set_frequency(" << frequency << ") for " << card.name <<  ")" << std::endl;
+    std::cout << "WifiCards::set_frequency(" << frequency << ") for " << card.name <<  ")" << std::endl;
     std::vector<std::string> args { "dev", card.name, "set", "freq", frequency };
     bool success = run_command("iw", args);
     return success;
 }
 
 bool WifiCards::set_txpower(const WiFiCard& card, const std::string& txpower) {
-    std::cout << "WiFi::set_txpower(" << txpower << ") for " << card.name <<  ")" << std::endl;
+    std::cout << "WifiCards::set_txpower(" << txpower << ") for " << card.name <<  ")" << std::endl;
     std::vector<std::string> args { "dev", card.name, "set", "txpower", "fixed", txpower };
     bool success = run_command("iw", args);
     return success;
 }
 
 bool WifiCards::enable_monitor_mode(const WiFiCard& card) {
-    std::cout << "WiFi::enable_monitor_mode(" << card.name <<  ")" << std::endl;
+    std::cout << "WifiCards::enable_monitor_mode(" << card.name <<  ")" << std::endl;
     std::vector<std::string> args { "dev", card.name, "set", "monitor", "otherbss" };
     bool success = run_command("iw", args);
     return success;
 }
-
 
 void WifiCards::save_settings(const std::vector<WiFiCard>& cards, const std::string& settings_file) {
     std::cerr<<"Unimplemented\n";
