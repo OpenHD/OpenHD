@@ -179,19 +179,21 @@ void DCameras::detect_raspberrypi_csi() {
 
 void DCameras::detect_raspberrypi_veye() {
     std::cout<< "Cameras::detect_raspberrypi_veye()" << std::endl;
-    
-    bool success = false;
 
     std::vector<std::string> args { 
         "/usr/local/share/veye-raspberrypi/camera_i2c_config"
     };
 
-    success = run_command("/bin/bash", args);
+    std::cout<<"T1\n";
+
+    bool success = run_command("/bin/bash", args);
 
     if (!success) {
         ohd_log(STATUS_LEVEL_WARNING, "Failed to enable veye camera config");
         return;
     }
+
+    std::cout<<"T2\n";
 
     std::array<char, 512> buffer{};
     std::string veye_detect;
@@ -204,6 +206,8 @@ void DCameras::detect_raspberrypi_veye() {
         veye_detect += buffer.data();
     }
 
+    std::cout<<"T3\n";
+
     std::cout<< "i2cdetect result: "+veye_detect << std::endl;
 
     boost::smatch result;
@@ -214,6 +218,8 @@ void DCameras::detect_raspberrypi_veye() {
         std::cout<< "Cameras::detect_raspberrypi_veye() no regex match" << std::endl;
         return;
     }
+
+    std::cout<<"T4\n";
 
     Camera camera;
     camera.name = "Pi VEYE 0";
