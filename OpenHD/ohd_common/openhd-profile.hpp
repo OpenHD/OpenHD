@@ -24,17 +24,21 @@ struct OHDProfile{
     std::string unit_id="0";
 };
 
-static nlohmann::json generate_profile_manifest(const OHDProfile& ohdProfile) {
+static nlohmann::json profile_to_json(const OHDProfile& ohdProfile) {
     nlohmann::json j;
     j["unit-id"] = ohdProfile.unit_id;
     j["is-air"] = ohdProfile.is_air;
-    std::stringstream message;
-    message<<"OHDProfile:is_air:"<<(ohdProfile.is_air ? "Y" : "N")<<" unit_id:"<<ohdProfile.unit_id<<"\n";
-    ohd_log(STATUS_LEVEL_INFO, message.str());
     return j;
 }
 
 static constexpr auto PROFILE_MANIFEST_FILENAME="/tmp/profile_manifest";
+
+static void write_profile_manifest(const OHDProfile& ohdProfile){
+    auto manifest=profile_to_json(ohdProfile);
+    std::ofstream _t(PROFILE_MANIFEST_FILENAME);
+    _t << manifest.dump(4);
+    _t.close();
+}
 
 // The to/from json are mostly a microservices artifact.
 // NOTE: It is only safe to call this method after the discovery step.

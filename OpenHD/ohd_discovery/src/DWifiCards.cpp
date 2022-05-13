@@ -214,8 +214,5 @@ void DWifiCards::process_card(const std::string& interface_name) {
 
 
 void DWifiCards::write_manifest() {
-    auto manifest=wificards_to_manifest(m_wifi_cards);
-    std::ofstream _t(WIFI_MANIFEST_FILENAME);
-    _t << manifest.dump(4);
-    _t.close();
+    write_wificards_manifest(m_wifi_cards);
 }

@@ -174,7 +174,7 @@ inline VideoCodec string_to_video_codec(const std::string& codec) {
 }
 
 // TODO: Why the heck did stephen not use the endpoints member variable here ?
-static nlohmann::json cameras_to_manifest(const std::vector<Camera>& cameras,const std::vector<CameraEndpoint>& camera_endpoints){
+static nlohmann::json cameras_to_json(const std::vector<Camera>& cameras,const std::vector<CameraEndpoint>& camera_endpoints){
     nlohmann::json j;
     for (const auto &camera : cameras) {
         try {
@@ -216,6 +216,13 @@ static nlohmann::json cameras_to_manifest(const std::vector<Camera>& cameras,con
 }
 
 static constexpr auto CAMERA_MANIFEST_FILENAME="/tmp/camera_manifest";
+
+static void write_camera_manifest(const std::vector<Camera>& cameras,const std::vector<CameraEndpoint>& camera_endpoints){
+    auto manifest=cameras_to_json(cameras,camera_endpoints);
+    std::ofstream _t(CAMERA_MANIFEST_FILENAME);
+    _t << manifest.dump(4);
+    _t.close();
+}
 
 static std::vector<Camera> cameras_from_manifest(){
     std::vector<Camera> ret;

@@ -127,9 +127,6 @@ void DPlatform::detect_pc() {
 
 void DPlatform::write_manifest() {
     const OHDPlatform ohdPlatform{m_platform_type,m_board_type,m_carrier_type};
-    auto manifest=generate_platform_manifest(ohdPlatform);
-    std::ofstream _t(PLATFORM_MANIFEST_FILENAME);
-    _t << manifest.dump(4);
-    _t.close();
+    write_platform_manifest(ohdPlatform);
 }
 

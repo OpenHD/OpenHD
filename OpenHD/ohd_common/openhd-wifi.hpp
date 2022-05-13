@@ -181,7 +181,7 @@ static WiFiCard wificard_from_json(const nlohmann::json& j) {
     return p;
 }
 
-static nlohmann::json wificards_to_manifest(const std::vector<WiFiCard>& cards){
+static nlohmann::json wificards_to_json(const std::vector<WiFiCard>& cards){
     nlohmann::json j;
     auto wifi_cards_json = nlohmann::json::array();
     for (auto &_card : cards) {
@@ -193,6 +193,13 @@ static nlohmann::json wificards_to_manifest(const std::vector<WiFiCard>& cards){
 }
 
 static constexpr auto WIFI_MANIFEST_FILENAME="/tmp/wifi_manifest";
+
+static void write_wificards_manifest(const std::vector<WiFiCard>& cards){
+    auto manifest= wificards_to_json(cards);
+    std::ofstream _t(WIFI_MANIFEST_FILENAME);
+    _t << manifest.dump(4);
+    _t.close();
+}
 
 static std::vector<WiFiCard> wificards_from_manifest(){
     std::vector<WiFiCard> ret;

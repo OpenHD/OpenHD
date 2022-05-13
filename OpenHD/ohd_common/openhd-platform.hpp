@@ -206,17 +206,8 @@ inline PlatformType string_to_platform_type(const std::string& platform_type) {
 
 // Writes the detected platform data to a json.
 // This can be used for debugging, mostly a microservices artifact.
-static nlohmann::json generate_platform_manifest(const OHDPlatform& ohdPlatform) {
+static nlohmann::json platform_to_json(const OHDPlatform& ohdPlatform) {
     nlohmann::ordered_json j;
-    std::stringstream message1;
-    message1 << "Platform: " << platform_type_to_string(ohdPlatform.platform_type) << std::endl;
-    ohd_log(STATUS_LEVEL_INFO, message1.str());
-    std::stringstream message2;
-    message2 << "Board: " << board_type_to_string(ohdPlatform.board_type) << std::endl;
-    ohd_log(STATUS_LEVEL_INFO, message2.str());
-    std::stringstream message3;
-    message3 << "Carrier: " << carrier_type_to_string(ohdPlatform.carrier_type) << std::endl;
-    ohd_log(STATUS_LEVEL_INFO, message3.str());
     j["platform"] = platform_type_to_string(ohdPlatform.platform_type);
     j["board"] = board_type_to_string(ohdPlatform.board_type);
     j["carrier"] = carrier_type_to_string(ohdPlatform.carrier_type);
@@ -224,6 +215,13 @@ static nlohmann::json generate_platform_manifest(const OHDPlatform& ohdPlatform)
 }
 
 static constexpr auto PLATFORM_MANIFEST_FILENAME="/tmp/platform_manifest";
+
+static void write_platform_manifest(const OHDPlatform& ohdPlatform){
+    auto manifest=platform_to_json(ohdPlatform);
+    std::ofstream _t(PLATFORM_MANIFEST_FILENAME);
+    _t << manifest.dump(4);
+    _t.close();
+}
 
 // NOTE: It is only safe to call this method after the discovery step.
 static OHDPlatform platform_from_manifest(){

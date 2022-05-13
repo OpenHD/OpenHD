@@ -22,8 +22,5 @@ void DProfile::discover() {
 
 void DProfile::write_manifest() {
     OHDProfile ohdProfile{m_is_air,m_unit_id};
-    auto manifest=generate_profile_manifest(ohdProfile);
-    std::ofstream _t(PROFILE_MANIFEST_FILENAME);
-    _t << manifest.dump(4);
-    _t.close();
+    write_profile_manifest(ohdProfile);
 }

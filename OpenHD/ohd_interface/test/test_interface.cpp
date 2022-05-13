@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
     const auto profile=profile_from_manifest();
     const auto platform=platform_from_manifest();
 
-    OHDInterface ohdInterface(profile.is_air,profile.unit_id);
+    OHDInterface ohdInterface(profile);
 
     std::cerr<<"OHDInterface started\n";
 

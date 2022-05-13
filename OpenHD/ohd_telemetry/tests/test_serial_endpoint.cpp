@@ -11,7 +11,8 @@
 
 int main() {
     std::cout<< "SerialEndpointTest::start" << std::endl;
-    SerialEndpoint serialEndpoint("TestSerialPort",SerialEndpoint::TEST_SERIAL_PORT);
+    SerialEndpoint::HWOptions opt{SerialEndpoint::TEST_SERIAL_PORT};
+    SerialEndpoint serialEndpoint("TestSerialPort",opt);
     serialEndpoint.registerCallback([](MavlinkMessage& msg){
         debugMavlinkMessage(msg.m,"SerialTest");
     });

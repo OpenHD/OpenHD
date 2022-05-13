@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
     const auto platform=platform_from_manifest();
 
     if(profile.is_air){
-        OHDVideo ohdVideo(profile.is_air,profile.unit_id,platform.platform_type);
+        OHDVideo ohdVideo(platform,profile);
     }
     std::cerr<<"OHDVideo started\n";
 
