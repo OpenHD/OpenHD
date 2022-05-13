@@ -5,8 +5,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include <boost/asio.hpp>
-
 #include "openhd-camera.hpp"
 #include "openhd-platform.hpp"
 
