@@ -7,6 +7,8 @@
 #include <sstream>
 
 #include "openhd-util.hpp"
+#include "openhd-log.hpp"
+#include "json.hpp"
 
 typedef enum CameraType {
     CameraTypeRaspberryPiCSI,
@@ -83,13 +85,6 @@ struct Camera {
     VideoCodec codec = VideoCodecH264;
 
     std::vector<CameraEndpoint> endpoints;
-    std::string debug()const{
-        std::stringstream ss;
-        ss<<"Camera{";
-        //ss<<"CameraType:"<<camera_type_to_string(camera_type);
-        ss<<"}\n";
-        return ss.str();
-    }
 };
 
 
@@ -179,5 +174,91 @@ inline VideoCodec string_to_video_codec(const std::string& codec) {
     return VideoCodecUnknown;
 }
 
+static nlohmann::json cameras_to_manifest(const std::vector<Camera>& cameras,const std::vector<CameraEndpoint>& camera_endpoints){
+    nlohmann::json j;
+    for (const auto &camera : cameras) {
+        try {
+            nlohmann::json endpoints = nlohmann::json::array();
+            int endpoint_index = 0;
+            for (auto &_endpoint : camera_endpoints) {
+                if (_endpoint.bus != camera.bus) {
+                    continue;
+                }
+                endpoints[endpoint_index] = {
+                        {"device_node",   _endpoint.device_node },
+                        {"support_h264",  _endpoint.support_h264 },
+                        {"support_h265",  _endpoint.support_h265 },
+                        {"support_mjpeg", _endpoint.support_mjpeg },
+                        {"support_raw",   _endpoint.support_raw },
+                        {"formats",       _endpoint.formats }
+                };
+                endpoint_index++;
+            }
+            nlohmann::json _camera = {
+                    {"type",          camera_type_to_string(camera.type) },
+                    {"name",          camera.name },
+                    {"vendor",        camera.vendor },
+                    {"vid",           camera.vid },
+                    {"pid",           camera.pid },
+                    {"bus",           camera.bus },
+                    {"index",         camera.index },
+                    {"endpoints",     endpoints }
+            };
+            std::stringstream message;
+            message << "Detected camera: " << camera.name << std::endl;
+            ohd_log(STATUS_LEVEL_INFO, message.str());
+            j.push_back(_camera);
+        } catch (std::exception &ex) {
+            std::cerr << "exception: " << ex.what() << std::endl;
+        }
+    }
+    return j;
+}
 
+static constexpr auto CAMERA_MANIFEST_FILENAME="/tmp/camera_manifest";
+
+static std::vector<Camera> cameras_from_manifest(){
+    std::vector<Camera> ret;
+    try {
+        std::ifstream f(CAMERA_MANIFEST_FILENAME);
+        nlohmann::json j;
+        f >> j;
+
+        for (auto _camera : j) {
+            std::cerr << "Processing camera_manifest" << std::endl;
+            Camera camera;
+            std::string camera_type = _camera["type"];
+            camera.type = string_to_camera_type(camera_type);
+            camera.name = _camera["name"];
+            std::cerr << camera.name << std::endl;
+            camera.vendor = _camera["vendor"];
+            camera.vid = _camera["vid"];
+            camera.pid = _camera["pid"];
+            camera.bus = _camera["bus"];
+            camera.index = _camera["index"];
+
+            auto _endpoints = _camera["endpoints"];
+            for (auto _endpoint : _endpoints) {
+                CameraEndpoint endpoint;
+                endpoint.device_node   = _endpoint["device_node"];
+                endpoint.support_h264  = _endpoint["support_h264"];
+                endpoint.support_h265  = _endpoint["support_h265"];
+                endpoint.support_mjpeg = _endpoint["support_mjpeg"];
+                endpoint.support_raw   = _endpoint["support_raw"];
+                for (auto& format : _endpoint["formats"]) {
+                    endpoint.formats.push_back(format);
+                    std::cerr << format << std::endl;
+                }
+
+                camera.endpoints.push_back(endpoint);
+            }
+
+            ret.push_back(camera);
+        }
+    } catch (std::exception &ex) {
+        // don't do anything, but send an error message to the user through the status service
+        std::cerr << "Camera error: " << ex.what() << std::endl;
+    }
+    return ret;
+}
 #endif

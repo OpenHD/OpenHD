@@ -177,6 +177,7 @@ void DCameras::detect_raspberrypi_csi() {
         m_camera_endpoints.push_back(endpoint);
         m_cameras.push_back(camera);
     }
+
 }
 
 void DCameras::detect_raspberrypi_veye() {
@@ -269,7 +270,7 @@ void DCameras::detect_v4l2() {
 
 
 
-void DCameras::probe_v4l2_device(std::string device) {
+void DCameras::probe_v4l2_device(const std::string& device) {
     std::cerr << "Cameras::probe_v4l2_device()" << std::endl;
 
     std::stringstream command;
@@ -351,7 +352,7 @@ void DCameras::probe_v4l2_device(std::string device) {
 
 
 
-bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, std::string node) {
+bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, const std::string& node) {
     std::cerr << "Cameras::process_video_node(" << node << ")" << std::endl;
 
     int fd;
@@ -593,55 +594,6 @@ void DCameras::detect_seek() {
 
 
 nlohmann::json DCameras::generate_manifest() {
-    nlohmann::json j = nlohmann::json::array();
-
-    for (auto &camera : m_cameras) {
-        try {
-
-            nlohmann::json endpoints = nlohmann::json::array();
-
-            int endpoint_index = 0;
-
-            for (auto &_endpoint : m_camera_endpoints) {
-                if (_endpoint.bus != camera.bus) {
-                    continue;
-                }
-
-                endpoints[endpoint_index] = {
-                    {"device_node",   _endpoint.device_node },
-                    {"support_h264",  _endpoint.support_h264 },
-                    {"support_h265",  _endpoint.support_h265 },
-                    {"support_mjpeg", _endpoint.support_mjpeg },
-                    {"support_raw",   _endpoint.support_raw },
-                    {"formats",       _endpoint.formats }
-                };
-
-                endpoint_index++;
-            }
-
-            nlohmann::json _camera = { 
-                {"type",          camera_type_to_string(camera.type) }, 
-                {"name",          camera.name },
-                {"vendor",        camera.vendor },
-                {"vid",           camera.vid },
-                {"pid",           camera.pid },
-                {"bus",           camera.bus },
-                {"index",         camera.index },
-                {"endpoints",     endpoints }
-            };
-
-            std::stringstream message;
-            message << "Detected camera: " << camera.name << std::endl;
-
-            ohd_log(STATUS_LEVEL_INFO, message.str());
-
-
-            j.push_back(_camera);
-        } catch (std::exception &ex) {
-            std::cerr << "exception: " << ex.what() << std::endl;
-        }
-    }
-
-    return j;
+    return cameras_to_manifest(m_cameras,m_camera_endpoints);
 }
 

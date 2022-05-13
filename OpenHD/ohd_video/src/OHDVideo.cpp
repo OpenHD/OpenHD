@@ -68,46 +68,7 @@ void OHDVideo::setup() {
 }
 
 void OHDVideo::process_manifest() {
-    try {
-        std::ifstream f("/tmp/camera_manifest");
-        nlohmann::json j;
-        f >> j;
-
-        for (auto _camera : j) {
-            std::cerr << "Processing camera_manifest" << std::endl;
-            Camera camera;
-            std::string camera_type = _camera["type"];
-            camera.type = string_to_camera_type(camera_type);
-            camera.name = _camera["name"];
-            std::cerr << camera.name << std::endl;
-            camera.vendor = _camera["vendor"];
-            camera.vid = _camera["vid"];
-            camera.pid = _camera["pid"];
-            camera.bus = _camera["bus"];
-            camera.index = _camera["index"];
-
-            auto _endpoints = _camera["endpoints"];
-            for (auto _endpoint : _endpoints) {
-                CameraEndpoint endpoint;
-                endpoint.device_node   = _endpoint["device_node"];
-                endpoint.support_h264  = _endpoint["support_h264"];
-                endpoint.support_h265  = _endpoint["support_h265"];
-                endpoint.support_mjpeg = _endpoint["support_mjpeg"];
-                endpoint.support_raw   = _endpoint["support_raw"];
-                for (auto& format : _endpoint["formats"]) {
-                    endpoint.formats.push_back(format);
-                    std::cerr << format << std::endl;
-                }
-
-                camera.endpoints.push_back(endpoint);
-            }
-
-            m_cameras.push_back(camera);
-        }
-    } catch (std::exception &ex) {
-        // don't do anything, but send an error message to the user through the status service
-        std::cerr << "Camera error: " << ex.what() << std::endl;
-    }
+    m_cameras=cameras_from_manifest();
     if(m_cameras.empty()){
         std::cerr<<"Started as air but no camera(s) have been found from json\n";
         // TODO: just start a gstreamer stream that creates a white noise or something similar.

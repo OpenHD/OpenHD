@@ -44,8 +44,8 @@ private:
     void detect_seek();
     
     void detect_v4l2();
-    void probe_v4l2_device(std::string device_node);
-    bool process_video_node(Camera& camera, CameraEndpoint& endpoint, std::string node);
+    void probe_v4l2_device(const std::string& device_node);
+    static bool process_video_node(Camera& camera, CameraEndpoint& endpoint, const std::string& node);
 
     void detect_ip();
 

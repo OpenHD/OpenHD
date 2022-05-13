@@ -10,8 +10,6 @@
 #include <iterator>
 #include <exception>
 
-//#include <systemd/sd-daemon.h>
-
 #include "DPlatform.h"
 #include "DCameras.h"
 //#include "DEthernetCards.h"
@@ -19,11 +17,11 @@
 #include "DProfile.h"
 
 #include "json.hpp"
-
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-settings.hpp"
 #include "openhd-wifi.hpp"
+#include "openhd-camera.hpp"
 
 void OHDDiscovery::runOnceOnStartup(bool forceAir){
     std::cout<<"OHDSystem::runOnceOnStartup()\n";
@@ -38,7 +36,7 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir){
         DCameras cameras(platform.platform_type(), platform.board_type(), platform.carrier_type());
         cameras.discover();
         auto camera_manifest = cameras.generate_manifest();
-        std::ofstream _c("/tmp/camera_manifest");
+        std::ofstream _c(CAMERA_MANIFEST_FILENAME);
         _c << camera_manifest.dump(4);
         _c.close();
 
@@ -71,7 +69,7 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir){
         _pr.close();
 
         // Note: Here stephen wrote all the small sub-manifests into one big manifest.
-        // In my opinion, there is an aparent issue with that: The data is suddenly duplicated,
+        // In my opinion, there is an apparent issue with that: The data is suddenly duplicated,
         // and one cannot know what is actually then read by the services running after -
         // The sub-files or the one big file.
         // Since sub-files promote separation, there is only sub-files now.
