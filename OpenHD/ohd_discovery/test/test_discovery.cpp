@@ -13,9 +13,7 @@ int main(int argc, char *argv[]) {
     const auto id2=getOrCreateUnitId();
     assert(id1==id2);
 
-    std::cerr<<"OHDSystem begin\n";
     OHDDiscovery::runOnceOnStartup(false);
-    std::cerr<<"OHDSystem end\n";
 
     return 0;
 }

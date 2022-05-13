@@ -16,15 +16,8 @@
 #include "DWifiCards.h"
 #include "DProfile.h"
 
-#include "json.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-profile.hpp"
-#include "openhd-settings.hpp"
-#include "openhd-wifi.hpp"
-#include "openhd-camera.hpp"
-
 void OHDDiscovery::runOnceOnStartup(bool forceAir){
-    std::cout<<"OHDSystem::runOnceOnStartup()\n";
+    std::cout<<"OHDDiscovery::runOnceOnStartup\n";
     try {
         DPlatform platform;
         platform.discover();
@@ -60,7 +53,7 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir){
         // and one cannot know what is actually then read by the services running after -
         // The sub-files or the one big file.
         // Since sub-files promote separation, there is only sub-files now.
-        std::cout<<"OHDSystem::done\n";
+        std::cout<<"OHDDiscovery::runOnceOnStartup::done\n";
     } catch (std::exception &ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
         exit(1);
