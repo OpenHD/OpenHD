@@ -593,7 +593,10 @@ void DCameras::detect_seek() {
 }
 
 
-nlohmann::json DCameras::generate_manifest() {
-    return cameras_to_manifest(m_cameras,m_camera_endpoints);
+void DCameras::write_manifest() {
+    auto manifest=cameras_to_manifest(m_cameras,m_camera_endpoints);
+    std::ofstream _t(CAMERA_MANIFEST_FILENAME);
+    _t << manifest.dump(4);
+    _t.close();
 }
 

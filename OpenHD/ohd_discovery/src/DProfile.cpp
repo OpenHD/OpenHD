@@ -20,7 +20,10 @@ void DProfile::discover() {
     m_unit_id = getOrCreateUnitId();
 }
 
-nlohmann::json DProfile::generate_manifest() {
+void DProfile::write_manifest() {
     OHDProfile ohdProfile{m_is_air,m_unit_id};
-    return generate_profile_manifest(ohdProfile);
+    auto manifest=generate_profile_manifest(ohdProfile);
+    std::ofstream _t(PROFILE_MANIFEST_FILENAME);
+    _t << manifest.dump(4);
+    _t.close();
 }

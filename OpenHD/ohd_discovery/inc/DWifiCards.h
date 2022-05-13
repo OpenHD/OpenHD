@@ -21,7 +21,7 @@ public:
     DWifiCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type);
     virtual ~DWifiCards() = default;
     void discover() override;
-    nlohmann::json generate_manifest() override;
+    void write_manifest() override;
 
     void process_card(const std::string& interface_name);
 private:

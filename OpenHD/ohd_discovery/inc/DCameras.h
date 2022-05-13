@@ -23,7 +23,7 @@ public:
 
     void discover() override;
 
-    nlohmann::json generate_manifest() override;
+    void write_manifest() override;
 
     [[nodiscard]] int count() const{
         return (int)m_cameras.size();

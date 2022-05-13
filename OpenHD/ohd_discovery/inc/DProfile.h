@@ -26,7 +26,7 @@ public:
 
     void discover() override;
 
-    nlohmann::json generate_manifest() override;
+    void write_manifest() override;
 
     std::string unit_id() {
         return m_unit_id;

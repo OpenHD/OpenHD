@@ -21,7 +21,7 @@ public:
 
     void discover() override;
 
-    nlohmann::json generate_manifest() override;
+    void write_manifest() override;
 
     PlatformType platform_type() {
         return m_platform_type;

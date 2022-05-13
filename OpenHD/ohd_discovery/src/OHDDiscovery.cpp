@@ -28,25 +28,15 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir){
     try {
         DPlatform platform;
         platform.discover();
-        auto platform_manifest = platform.generate_manifest();
-        std::ofstream _p(PLATFORM_MANIFEST_FILENAME);
-        _p << platform_manifest.dump(4);
-        _p.close();
+        platform.write_manifest();
 
         DCameras cameras(platform.platform_type(), platform.board_type(), platform.carrier_type());
         cameras.discover();
-        auto camera_manifest = cameras.generate_manifest();
-        std::ofstream _c(CAMERA_MANIFEST_FILENAME);
-        _c << camera_manifest.dump(4);
-        _c.close();
-
+        cameras.write_manifest();
 
         DWifiCards wifi(platform.platform_type(), platform.board_type(), platform.carrier_type());
         wifi.discover();
-        auto wifi_manifest = wifi.generate_manifest();
-        std::ofstream _w(WIFI_MANIFEST_FILENAME);
-        _w << wifi_manifest.dump(4);
-        _w.close();
+        wifi.write_manifest();
 
         /*DEthernetCards ethernet(platform.platform_type(), platform.board_type(), platform.carrier_type());
         ethernet.discover();
@@ -63,10 +53,7 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir){
         }
         DProfile profile(is_air);
         profile.discover();
-        auto profile_manifest = profile.generate_manifest();
-        std::ofstream _pr(PROFILE_MANIFEST_FILENAME);
-        _pr << profile_manifest.dump(4);
-        _pr.close();
+        profile.write_manifest();
 
         // Note: Here stephen wrote all the small sub-manifests into one big manifest.
         // In my opinion, there is an apparent issue with that: The data is suddenly duplicated,

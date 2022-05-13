@@ -125,8 +125,11 @@ void DPlatform::detect_pc() {
 }
 
 
-nlohmann::json DPlatform::generate_manifest() {
+void DPlatform::write_manifest() {
     const OHDPlatform ohdPlatform{m_platform_type,m_board_type,m_carrier_type};
-    return generate_platform_manifest(ohdPlatform);
+    auto manifest=generate_platform_manifest(ohdPlatform);
+    std::ofstream _t(PLATFORM_MANIFEST_FILENAME);
+    _t << manifest.dump(4);
+    _t.close();
 }
 

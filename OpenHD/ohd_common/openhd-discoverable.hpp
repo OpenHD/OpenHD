@@ -25,9 +25,9 @@ namespace OHD{
         virtual void discover()=0;
         /**
          * Write out a manifest that contains the information about the discovered hardware.
-         * @return a json file with key-value pairs, the key-value-pairs are sub-class specific.
+         * In general, this writes a .json to a implementation-specific filename.
          */
-        virtual nlohmann::json generate_manifest()=0;
+        virtual void write_manifest()=0;
     };
 }
 #endif //OPENHD_OPENHD_DISCOVERABLE_HPP
