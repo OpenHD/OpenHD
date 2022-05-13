@@ -41,12 +41,12 @@ void DPlatform::detect_raspberrypi() {
     boost::regex r { "Revision\\t*:\\s*([\\w]+)" };
 
     if (!boost::regex_search(raw_value, result, r)) {
-        std::cerr << "no result" << std::endl;
+        std::cout<< "Detect rpi no result" << std::endl;
         return;
     }
 
     if (result.size() != 2) {
-        std::cerr << "result doesnt match" << std::endl;
+        std::cout<< "Detect ri result doesnt match" << std::endl;
         return;
     }
 

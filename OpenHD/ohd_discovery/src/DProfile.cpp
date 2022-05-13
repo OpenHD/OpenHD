@@ -15,7 +15,7 @@ DProfile::DProfile(bool is_air) :
 
 
 void DProfile::discover() {
-    std::cout << "Profile::discover()" << std::endl;
+    std::cout << "Profile::discover()\n";
     // We read the unit id from the persistent storage, later write it to the tmp storage json
     m_unit_id = getOrCreateUnitId();
 }

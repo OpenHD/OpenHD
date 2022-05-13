@@ -84,13 +84,13 @@ void DCameras::discover() {
  *
  */
 void DCameras::detect_raspberrypi_csi() {
-    std::cerr << "Cameras::detect_raspberrypi_csi()" << std::endl;
+    std::cout<< "Cameras::detect_raspberrypi_csi()" << std::endl;
 
     std::array<char, 512> buffer{};
     std::string raw_value;
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("vcgencmd get_camera", "r"), pclose);
     if (!pipe) {
-        std::cerr << "Cameras::detect_raspberrypi_csi() no pipe from vcgencmd" << std::endl;
+        std::cout << "Cameras::detect_raspberrypi_csi() no pipe from vcgencmd" << std::endl;
         return;
     }
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
@@ -103,19 +103,19 @@ void DCameras::detect_raspberrypi_csi() {
     boost::regex r{ "supported=([\\d]+)\\s+detected=([\\d]+)"};
     
     if (!boost::regex_search(raw_value, result, r)) {
-        std::cerr << "Cameras::detect_raspberrypi_csi() no regex match" << std::endl;
+        std::cout<< "Cameras::detect_raspberrypi_csi() no regex match" << std::endl;
         return;
     }
 
     if (result.size() != 3) {
-        std::cerr << "Cameras::detect_raspberrypi_csi() regex unexpected result" << std::endl;
+        std::cout << "Cameras::detect_raspberrypi_csi() regex unexpected result" << std::endl;
         return;
     }
 
     std::string supported = result[1];
     std::string detected = result[2];
 
-    std::cerr << "Cameras::detect_raspberrypi_csi() supported="+supported+" detected="+detected << std::endl;
+    std::cout << "Cameras::detect_raspberrypi_csi() supported="+supported+" detected="+detected << std::endl;
 
     auto camera_count = atoi(detected.c_str());
 
@@ -181,7 +181,7 @@ void DCameras::detect_raspberrypi_csi() {
 }
 
 void DCameras::detect_raspberrypi_veye() {
-    std::cerr << "Cameras::detect_raspberrypi_veye()" << std::endl;
+    std::cout<< "Cameras::detect_raspberrypi_veye()" << std::endl;
     
     bool success = false;
 
@@ -200,21 +200,21 @@ void DCameras::detect_raspberrypi_veye() {
     std::string veye_detect;
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("i2cdetect -y 0 0x3b 0x3b | grep  '3b'", "r"), pclose);
     if (!pipe) {
-        std::cerr << "Cameras::detect_raspberrypi_veye() no pipe from i2cdetect" << std::endl;
+        std::cout<< "Cameras::detect_raspberrypi_veye() no pipe from i2cdetect" << std::endl;
         return;
     }
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         veye_detect += buffer.data();
     }
 
-    std::cerr << "i2cdetect result: "+veye_detect << std::endl;
+    std::cout<< "i2cdetect result: "+veye_detect << std::endl;
 
     boost::smatch result;
 
     boost::regex r{ "30:                                  3b            "};
     
     if (!boost::regex_search(veye_detect, result, r)) {
-        std::cerr << "Cameras::detect_raspberrypi_veye() no regex match" << std::endl;
+        std::cout<< "Cameras::detect_raspberrypi_veye() no regex match" << std::endl;
         return;
     }
 
@@ -240,19 +240,19 @@ void DCameras::detect_raspberrypi_veye() {
 
 
 void DCameras::detect_jetson_csi() {
-    std::cerr << "Cameras::detect_jetson_csi()" << std::endl;
+    std::cout<< "Cameras::detect_jetson_csi()" << std::endl;
 }
 
 
 
 void DCameras::detect_rockchip_csi() {
-    std::cerr << "Cameras::detect_rockchip_csi()" << std::endl;
+    std::cout<< "Cameras::detect_rockchip_csi()" << std::endl;
 }
 
 
 
 void DCameras::detect_v4l2() {
-    std::cerr << "Cameras::detect_v4l2()" << std::endl;
+    std::cout<< "Cameras::detect_v4l2()" << std::endl;
 
     boost::filesystem::path dev("/dev");
     for (auto &entry : boost::filesystem::directory_iterator(dev)) { 
@@ -271,7 +271,7 @@ void DCameras::detect_v4l2() {
 
 
 void DCameras::probe_v4l2_device(const std::string& device) {
-    std::cerr << "Cameras::probe_v4l2_device()" << std::endl;
+    std::cout<< "Cameras::probe_v4l2_device()" << std::endl;
 
     std::stringstream command;
     command << "udevadm info ";
@@ -353,11 +353,11 @@ void DCameras::probe_v4l2_device(const std::string& device) {
 
 
 bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, const std::string& node) {
-    std::cerr << "Cameras::process_video_node(" << node << ")" << std::endl;
+    std::cout<< "Cameras::process_video_node(" << node << ")" << std::endl;
 
     int fd;
     if ((fd = v4l2_open(node.c_str(), O_RDWR)) == -1) {
-        std::cerr << "Can't open: " << node << std::endl;
+        std::cout<< "Can't open: " << node << std::endl;
         return false;
     }
 
@@ -372,15 +372,15 @@ bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, cons
 
     if (driver == "uvcvideo") {
         camera.type = CameraTypeUVC;
-        std::cerr << "Found UVC camera" << std::endl;
+        std::cout << "Found UVC camera" << std::endl;
     } else if (driver == "tegra-video") {
         camera.type = CameraTypeJetsonCSI;
-        std::cerr << "Found Jetson CSI camera" << std::endl;
+        std::cout << "Found Jetson CSI camera" << std::endl;
     } else if (driver == "v4l2 loopback") {
         // this is temporary, we are not going to use v4l2loopback for thermal cameras they'll be directly
         // handled by the camera service instead
         camera.type = CameraTypeV4L2Loopback;
-        std::cerr << "Found v4l2 loopback camera (likely a thermal camera)" << std::endl;
+        std::cout << "Found v4l2 loopback camera (likely a thermal camera)" << std::endl;
     } else {
         /*
          * This is primarily going to be the bcm2835-v4l2 interface on the Pi, and non-camera interfaces.
@@ -454,7 +454,7 @@ bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, cons
 
                         endpoint.formats.push_back(new_format.str());
 
-                        std::cerr << "Found format: " << new_format.str() << std::endl;
+                        std::cout << "Found format: " << new_format.str() << std::endl;
                     }
 
                     frmival.index++;
@@ -552,20 +552,20 @@ void DCameras::detect_seek() {
     std::string fps;
 
     if (handle_compact) {
-        std::cerr << "Found seek" << std::endl;
+        std::cout << "Found seek" << std::endl;
         model = "seek";
         fps = "7";
     }
 
     if (handle_compact_pro) {
-        std::cerr << "Found seekpro" << std::endl;
+        std::cout<< "Found seekpro" << std::endl;
         model = "seekpro";
         // todo: this is not necessarily accurate, not all compact pro models are 15hz
         fps = "15";
     }
 
     if (handle_compact_pro || handle_compact) {
-        std::cerr << "Found seek thermal camera" << std::endl;
+        std::cout<< "Found seek thermal camera" << std::endl;
 
         std::ofstream _u("/etc/openhd/seekthermal.conf", std::ios::binary | std::ios::out);
         // todo: this should be more dynamic and allow for multiple cameras
