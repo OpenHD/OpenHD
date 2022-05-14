@@ -44,7 +44,13 @@ private:
 
     void detect_flir();
     void detect_seek();
-    
+
+    /**
+     * Search for all v4l2 video devices, that means devices named /dev/videoX where X=0,1,...
+     * @return list of all the devices that have the above name scheme.
+     */
+    static std::vector<std::string> findV4l2VideoDevices();
+
     void detect_v4l2();
     void probe_v4l2_device(const std::string& device_node);
     static bool process_video_node(Camera& camera, CameraEndpoint& endpoint, const std::string& node);

@@ -253,48 +253,47 @@ void DCameras::detect_rockchip_csi() {
     std::cout<< "Cameras::detect_rockchip_csi()" << std::endl;
 }
 
-
-
-void DCameras::detect_v4l2() {
-    std::cout<< "Cameras::detect_v4l2()" << std::endl;
-
+std::vector<std::string> DCameras::findV4l2VideoDevices() {
     boost::filesystem::path dev("/dev");
-    for (auto &entry : boost::filesystem::directory_iterator(dev)) { 
+    std::vector<std::string> ret;
+    for (auto &entry : boost::filesystem::directory_iterator(dev)) {
         auto device_file = entry.path().string();
-
         boost::smatch result;
         boost::regex r{ "/dev/video([\\d]+)"};
         if (!boost::regex_search(device_file, result, r)) {
             continue;
         }
-        
-        probe_v4l2_device(entry.path().string());
+        ret.push_back(entry.path().string());
+    }
+    return ret;
+}
+
+
+void DCameras::detect_v4l2() {
+    std::cout<< "Cameras::detect_v4l2()" << std::endl;
+    // Get all the devices to take into consideration.
+    const auto devices=findV4l2VideoDevices();
+    for(const auto& device:devices){
+        probe_v4l2_device(device);
     }
 }
 
 
-
-void DCameras::probe_v4l2_device(const std::string& device) {
-    std::cout<< "Cameras::probe_v4l2_device()" << std::endl;
-
+void DCameras::probe_v4l2_device(const std::string& device){
+    std::cout<< "Cameras::probe_v4l2_device()"<<device<<"\n";
     std::stringstream command;
     command << "udevadm info ";
     command << device.c_str();
-
     std::array<char, 512> buffer{};
     std::string udev_info;
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.str().c_str(), "r"), pclose);
     if (!pipe) {
         return;
     }
-
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         udev_info += buffer.data();
     }
-
-
     Camera camera;
-
     // check for device name
     boost::smatch model_result;
     boost::regex model_regex{ "ID_MODEL=([\\w]+)"};
@@ -303,7 +302,6 @@ void DCameras::probe_v4l2_device(const std::string& device) {
             camera.name = model_result[1];
         }
     }
-
     // check for device vendor
     boost::smatch vendor_result;
     boost::regex vendor_regex{ "ID_VENDOR=([\\w]+)"};
@@ -312,7 +310,6 @@ void DCameras::probe_v4l2_device(const std::string& device) {
             camera.vendor = vendor_result[1];
         }
     }
-
     // check for vid
     boost::smatch vid_result;
     boost::regex vid_regex{ "ID_VENDOR_ID=([\\w]+)"};
@@ -321,7 +318,6 @@ void DCameras::probe_v4l2_device(const std::string& device) {
             camera.vid = vid_result[1];
         }
     }
-
     // check for pid
     boost::smatch pid_result;
     boost::regex pid_regex{ "ID_MODEL_ID=([\\w]+)"};
@@ -330,27 +326,22 @@ void DCameras::probe_v4l2_device(const std::string& device) {
             camera.pid = pid_result[1];
         }
     }
-
     CameraEndpoint endpoint;
     endpoint.device_node = device;
-
     if (!process_video_node(camera, endpoint, device)) {
         return;
     }
-
     bool found = false;
     for (auto &stored_camera : m_cameras) {
         if (stored_camera.bus == camera.bus) {
             found = true;
         }
     }
-
     if (!found) {
         camera.index = m_discover_index;
         m_discover_index++;
         m_cameras.push_back(camera);
     }
-
     m_camera_endpoints.push_back(endpoint);
 }
 
@@ -358,22 +349,17 @@ void DCameras::probe_v4l2_device(const std::string& device) {
 
 bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, const std::string& node) {
     std::cout<< "Cameras::process_video_node(" << node << ")" << std::endl;
-
     int fd;
     if ((fd = v4l2_open(node.c_str(), O_RDWR)) == -1) {
         std::cout<< "Can't open: " << node << std::endl;
         return false;
     }
-
     struct v4l2_capability caps = {};
     if (ioctl(fd, VIDIOC_QUERYCAP, &caps) == -1) {
         std::cerr << "Capability query failed: " << node << std::endl;
         return false;
     }
-
     std::string driver((char*)caps.driver);
-
-
     if (driver == "uvcvideo") {
         camera.type = CameraTypeUVC;
         std::cout << "Found UVC camera" << std::endl;
@@ -395,30 +381,21 @@ bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, cons
          */
         return false;
     }
-
-
     std::string bus((char*)caps.bus_info);
-
     camera.bus = bus;
     endpoint.bus = bus;
-
     if (!caps.capabilities & V4L2_BUF_TYPE_VIDEO_CAPTURE) {
         std::cerr << "Not a capture device: " << node << std::endl;
         return false;
     }
-
     struct v4l2_fmtdesc fmtdesc;
     memset(&fmtdesc, 0, sizeof(fmtdesc));
     fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    
     struct v4l2_frmsizeenum frmsize;
     struct v4l2_frmivalenum frmival;
-
-
     while (ioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc) == 0) {    
         frmsize.pixel_format = fmtdesc.pixelformat;
         frmsize.index = 0;
-
         while (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) == 0) {
             if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
                 frmival.index = 0;
@@ -428,9 +405,7 @@ bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, cons
 
                 while (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) == 0) {
                     if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
-
                         std::stringstream new_format;
-
                         if (fmtdesc.pixelformat == V4L2_PIX_FMT_H264) {
                             endpoint.support_h264 = true;
                         }
@@ -447,7 +422,6 @@ bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, cons
                             // figure out what to do with it
                             endpoint.support_raw = true;
                         }
-                        
                         new_format << fmtdesc.description;
                         new_format << "|";
                         new_format << frmsize.discrete.width;
@@ -455,24 +429,17 @@ bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, cons
                         new_format << frmsize.discrete.height;
                         new_format << "@";
                         new_format << frmival.discrete.denominator;
-
                         endpoint.formats.push_back(new_format.str());
-
                         std::cout << "Found format: " << new_format.str() << std::endl;
                     }
-
                     frmival.index++;
                 }
             }
-
             frmsize.index++;
         }
-        
         fmtdesc.index++;
     }
-
     v4l2_close(fd);
-
     return true;
 }
 
@@ -596,4 +563,5 @@ void DCameras::detect_seek() {
 void DCameras::write_manifest() {
     write_camera_manifest(m_cameras,m_camera_endpoints);
 }
+
 
