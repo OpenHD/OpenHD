@@ -49,7 +49,6 @@ private:
     // these methods are from camera microservice
     void setup();
     void process_manifest();
-    void process_settings();
     void configure(Camera &camera);
     static void save_settings(const std::vector<Camera>& cards, const std::string& settings_file);
 };
