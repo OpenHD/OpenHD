@@ -160,9 +160,8 @@ bool GStreamerStream::parse_user_format(const std::string& format, std::string &
            std::cout << std::endl;
         }
     } else {
-        std::cout << "Video regex format failed " << format << " " << reg <<std::endl;
+        std::cout << "Video regex format failed "<<format <<std::endl;
     }
-
     return false;
 }
 
@@ -170,7 +169,7 @@ bool GStreamerStream::parse_user_format(const std::string& format, std::string &
 /*
  * This is used to pick a default based on the hardware format
  */
-std::string GStreamerStream::find_v4l2_format(CameraEndpoint &endpoint, bool force_pixel_format, const std::string& pixel_format) {
+[[maybe_unused]] std::string GStreamerStream::find_v4l2_format(CameraEndpoint &endpoint, bool force_pixel_format, const std::string& pixel_format) {
     std::cerr << "find_v4l2_format" << std::endl;
     std::string width = "1280";
     std::string height = "720";
