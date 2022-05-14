@@ -20,7 +20,7 @@ public:
     void setup()override;
     void start()override;
     void stop()override;
-    void debug()override;
+    std::string debug()override;
 private:
     bool supports_bitrate() override;
     void set_bitrate(int bitrate) override;

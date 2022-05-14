@@ -52,8 +52,9 @@ void DummyGstreamerStream::stop() {
     gst_element_set_state(gst_pipeline, GST_STATE_PAUSED);
 }
 
-void DummyGstreamerStream::debug() {
+std::string DummyGstreamerStream::debug() {
     std::cout<<"TODO DummyGstreamerStream::debug()\n";
+    return {};
 }
 
 bool DummyGstreamerStream::supports_bitrate() {

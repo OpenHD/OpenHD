@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <vector>
+#include <string>
 
 #include "openhd-camera.hpp"
 #include "openhd-platform.hpp"
@@ -38,8 +39,11 @@ public:
     virtual void start()=0;
     // stop streaming
     virtual void stop()=0;
-    //debug
-    virtual void debug()=0;
+    /**
+     * Create a verbose debug string about the current state of the stream
+     * @return a string, can be printed to stdout or similar.
+     */
+    virtual std::string debug()=0;
 
     // expected as bits per second
     virtual bool supports_bitrate()=0;

@@ -459,7 +459,7 @@ void GStreamerStream::setup_ip_camera() {
     m_pipeline << fmt::format("rtspsrc location=\"{}\" latency=0 ! ", m_camera.url);
 }
 
-void GStreamerStream::debug() {
+std::string GStreamerStream::debug() {
     std::cerr << "GS_debug";
     GstState state;
     GstState pending;
@@ -470,11 +470,11 @@ void GStreamerStream::debug() {
         sleep(3);
         start();
     }
+    return {};
 }
 
 void GStreamerStream::start() {
     std::cerr << "GStreamerStream::start()" << std::endl;
-    
     gst_element_set_state(gst_pipeline, GST_STATE_PLAYING);
     GstState state;
     GstState pending;
@@ -674,16 +674,11 @@ void GStreamerStream::set_format(std::string format) {
 
 std::string GStreamerStream::get_brightness() {
     std::cerr << "GStreamerStream::get_brightness()" << std::endl;
-
     gint _brightness = 0;
-
-
     if (!gst_pipeline) {
         std::cerr << "No pipeline, ignoring brightness request" << std::endl;
         return std::to_string(_brightness);
     }
-
-    
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
             GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");

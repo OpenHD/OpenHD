@@ -31,7 +31,7 @@ private:
 public:
     void start() override;
     void stop() override;
-    void debug() override;
+    std::string debug() override;
     
     bool supports_cbr() override;
     void set_cbr(bool enable) override;
