@@ -7,6 +7,8 @@
 #include <sstream>
 #include <fstream>
 
+#include <boost/regex.hpp>
+
 #include "openhd-util.hpp"
 #include "openhd-log.hpp"
 #include "json.hpp"
@@ -49,20 +51,95 @@ typedef enum VideoCodec {
     VideoCodecMJPEG,
     VideoCodecUnknown
 } VideoCodec;
+inline std::string video_codec_to_string(VideoCodec codec) {
+    switch (codec) {
+        case VideoCodecH264: {
+            return "h264";
+        }
+        case VideoCodecH265: {
+            return "h265";
+        }
+        case VideoCodecMJPEG: {
+            return "mjpeg";
+        }
+        default: {
+            return "unknown";
+        }
+    }
+}
+inline VideoCodec string_to_video_codec(const std::string& codec) {
+    if (to_uppercase(codec).find(to_uppercase("h264")) != std::string::npos) {
+        return VideoCodecH264;
+    } else if (to_uppercase(codec).find(to_uppercase("h265")) != std::string::npos) {
+        return VideoCodecH265;
+    } else if (to_uppercase(codec).find(to_uppercase("mjpeg")) != std::string::npos) {
+        return VideoCodecMJPEG;
+    }
+    return VideoCodecUnknown;
+}
 
 // Each camera should support at least one video format,
 // But it might support a wide variety of video formats.
 // For example,a camera might be able to do h264 and h265
 // for multiple resolution@framerate tuples.
 // Example: one of the supported formats of rpi cam is
-// h264,1280x720@60
-// TODO: what did stephen do there with the endpoints ?!!
+// h264|1280x720@60
 struct VideoFormat{
     VideoCodec videoCodec;
     int width;
     int height;
     int framerate;
+    bool operator==(const VideoFormat& o) const{
+        return this->width==o.width && this->height==o.height && this->framerate==o.framerate;
+    }
+    // For debugging, I use https://regex101.com/
+    /**
+     * Convert the VideoFormat into a readable string
+     * @return the video format in a readable form.
+     */
+    [[nodiscard]] std::string toString()const{
+        std::stringstream ss;
+        ss<<video_codec_to_string(videoCodec)<<"|"<<width<<"x"<<height<<"@"<<framerate;
+        return ss.str();
+    }
+    /**
+     * Convert a readable video format string into a type-safe video format.
+     * @param input the string, for example as generated above.
+     * @return the video format, with the parsed values from above. On failure,
+     * behaviour is undefined.
+     */
+    static VideoFormat fromString(const std::string& input){
+        VideoFormat ret{};
+        boost::smatch result;
+        const boost::regex reg{ "([\\w\\d\\s\\-\\:\\/]*)\\|(\\d*)x(\\d*)\\@(\\d*)"};
+        std::cout << "Parsing:" << input << std::endl;
+        if (boost::regex_search(input, result, reg)) {
+            if (result.size() == 5) {
+                ret.videoCodec= string_to_video_codec(result[1]);
+                ret.width =  atoi(result[2].str().c_str());
+                ret.height =  atoi(result[3].str().c_str());
+                ret.framerate =  atoi(result[4].str().c_str());
+                std::cout<<"Parsed:"<<ret.toString()<<"\n";
+            } else {
+                std::cout << "Video format missmatch " << result.size();
+                for (int a=0; a<result.size(); a++) {
+                    std::cout<<" "<<a << " " << result[a] << "." ;
+                }
+                std::cout << std::endl;
+            }
+        } else {
+            std::cout << "Video regex format failed " << input << " " << reg <<std::endl;
+        }
+        return ret;
+    }
 };
+static void test_video_format_regex(){
+    const VideoFormat source{VideoCodecH264,1280,720,30};
+    const auto serialized=source.toString();
+    const auto from=VideoFormat::fromString(serialized);
+    assert(source==from);
+
+}
 
 struct Camera {
     CameraType type=CameraTypeUnknown;
@@ -95,12 +172,11 @@ struct Camera {
     std::string thermal_palette;
     std::string thermal_span;
 
+    // I think this is for cameras connected via ethernet that use a rtp:// ... or similar URL ?!!
     std::string url;
-
     std::string manual_pipeline;
 
     VideoCodec codec = VideoCodecH264;
-
     std::vector<CameraEndpoint> endpoints;
 };
 
@@ -160,36 +236,6 @@ static CameraType string_to_camera_type(const std::string& camera_type) {
     return CameraTypeUnknown;
 }
 
-
-inline std::string video_codec_to_string(VideoCodec codec) {
-    switch (codec) {
-        case VideoCodecH264: {
-            return "h264";
-        }
-        case VideoCodecH265: {
-            return "h265";
-        }
-        case VideoCodecMJPEG: {
-            return "mjpeg";
-        }
-        default: {
-            return "unknown";
-        }
-    }
-}
-
-
-inline VideoCodec string_to_video_codec(const std::string& codec) {
-    if (to_uppercase(codec).find(to_uppercase("h264")) != std::string::npos) {
-        return VideoCodecH264;
-    } else if (to_uppercase(codec).find(to_uppercase("h265")) != std::string::npos) {
-        return VideoCodecH265;
-    } else if (to_uppercase(codec).find(to_uppercase("mjpeg")) != std::string::npos) {
-        return VideoCodecMJPEG;
-    }
-
-    return VideoCodecUnknown;
-}
 
 // TODO: Why the heck did stephen not use the endpoints member variable here ?
 static nlohmann::json cameras_to_json(const std::vector<Camera>& cameras){
