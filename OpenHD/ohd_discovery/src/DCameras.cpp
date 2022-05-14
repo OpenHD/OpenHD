@@ -561,7 +561,30 @@ void DCameras::detect_seek() {
 
 
 void DCameras::write_manifest() {
-    write_camera_manifest(m_cameras,m_camera_endpoints);
+    // Fixup endpoints, would be better to seperate the discovery steps properly so that this is not needed
+    for(auto & camera:m_cameras){
+        std::vector<CameraEndpoint> endpointsForThisCamera;
+        for(const auto& endpoint:m_camera_endpoints){
+            if(camera.bus==endpoint.bus){
+                // an endpoint who cannot do anything is just a waste and added complexity for later modules
+                if(endpoint.formats.empty()){
+                    std::cerr<<"Discarding endpoint due to no formats\n";
+                    continue;
+                }
+                if(!endpoint.supports_anything()){
+                    std::cerr<<"Discarding endpoint due to no capabilities\n";
+                    continue;
+                }
+                endpointsForThisCamera.push_back(endpoint);
+            }
+        }
+        camera.endpoints=endpointsForThisCamera;
+        // also, a camera without a endpoint - what the heck should that be
+        if(camera.endpoints.empty()){
+            std::cerr<<"Warning Camera without endpoints\n";
+        }
+    }
+    write_camera_manifest(m_cameras);
 }
 
 

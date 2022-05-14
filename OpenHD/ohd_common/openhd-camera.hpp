@@ -16,6 +16,7 @@ typedef enum CameraType {
     CameraTypeRaspberryPiVEYE,
     CameraTypeJetsonCSI,
     CameraTypeRockchipCSI,
+    // I think this is a 44l2 camera so to say, too.
     CameraTypeUVC,
     // this is not just a UVC camera that happens to support h264, it's the standard UVC H264 that only a few cameras
     // support, like the older models of the Logitech C920. Other UVC cameras may support h264, but they do it in a 
@@ -36,6 +37,10 @@ struct CameraEndpoint {
     bool support_mjpeg = false;
     bool support_raw = false;
     std::vector<std::string> formats;
+    // Consti10: cleanup- an endpoint that supports nothing, what the heck should we do with that ;)
+    [[nodiscard]] bool supports_anything()const{
+        return (support_h264 || support_h265 || support_mjpeg || support_raw);
+    }
 };
 
 typedef enum VideoCodec {
@@ -187,15 +192,20 @@ inline VideoCodec string_to_video_codec(const std::string& codec) {
 }
 
 // TODO: Why the heck did stephen not use the endpoints member variable here ?
-static nlohmann::json cameras_to_json(const std::vector<Camera>& cameras,const std::vector<CameraEndpoint>& camera_endpoints){
+static nlohmann::json cameras_to_json(const std::vector<Camera>& cameras){
     nlohmann::json j;
     for (const auto &camera : cameras) {
         try {
             nlohmann::json endpoints = nlohmann::json::array();
             int endpoint_index = 0;
-            for (auto &_endpoint : camera_endpoints) {
-                if (_endpoint.bus != camera.bus) {
-                    continue;
+            for (const auto &_endpoint : camera.endpoints) {
+                // Now this is for safety, the code by stephen was buggy in this regard
+                // Aka why the heck should a camera have endpoints that are not even related to it ???!!
+                // If this assertion fails, we need to check the discovery step.
+                assert(camera.bus==_endpoint.bus);
+                // also, a camera without a endpoint - what the heck should that be
+                if(camera.endpoints.empty()){
+                    std::cerr<<"to json Warning Camera without endpoints\n";
                 }
                 endpoints[endpoint_index] = {
                         {"device_node",   _endpoint.device_node },
@@ -230,8 +240,8 @@ static nlohmann::json cameras_to_json(const std::vector<Camera>& cameras,const s
 
 static constexpr auto CAMERA_MANIFEST_FILENAME="/tmp/camera_manifest";
 
-static void write_camera_manifest(const std::vector<Camera>& cameras,const std::vector<CameraEndpoint>& camera_endpoints){
-    auto manifest=cameras_to_json(cameras,camera_endpoints);
+static void write_camera_manifest(const std::vector<Camera>& cameras){
+    auto manifest=cameras_to_json(cameras);
     std::ofstream _t(CAMERA_MANIFEST_FILENAME);
     _t << manifest.dump(4);
     _t.close();
