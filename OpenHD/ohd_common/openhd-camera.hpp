@@ -35,7 +35,6 @@ struct CameraEndpoint {
     bool support_h265 = false;
     bool support_mjpeg = false;
     bool support_raw = false;
-
     std::vector<std::string> formats;
 };
 

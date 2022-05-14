@@ -653,21 +653,18 @@ std::vector<std::string> GStreamerStream::get_supported_formats() {
             break;
         }
     }
-
     return formats;
 }
 
 
 std::string GStreamerStream::get_format() {
     std::cerr << "GStreamerStream::get_format()" << std::endl;
-
     return m_camera.format;
 }
 
 
 void GStreamerStream::set_format(std::string format) {
     std::cerr << "GStreamerStream::set_format(" << format << ")" << std::endl;
-
     m_camera.format = format;
 }
 
@@ -709,7 +706,6 @@ std::string GStreamerStream::get_brightness() {
             break;
         }
     }
-
     return std::to_string(_brightness);
 }
 
@@ -790,7 +786,6 @@ std::string GStreamerStream::get_contrast() {
             break;
         }
     }
-
     return std::to_string(_contrast);
 }
 
