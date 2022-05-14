@@ -99,7 +99,7 @@ void OHDVideo::process_settings() {
 
     for (auto camera : m_cameras) {
         std::map<std::string, std::string> setting_map;
-        for (const auto& settings_for_camera : settings) {
+        for (auto& settings_for_camera : settings) {
             if (settings_for_camera.count("bus") == 1 && settings_for_camera["bus"] == camera.bus) {
                 setting_map = settings_for_camera;
                 break;

@@ -56,7 +56,7 @@ private:
     std::stringstream m_pipeline;
 
     bool parse_user_format(const std::string& format, std::string &width, std::string &height, std::string &fps);
-    std::string find_v4l2_format(CameraEndpoint &endpoint, bool force_pixel_format, std::string pixel_format);
+    std::string find_v4l2_format(CameraEndpoint &endpoint, bool force_pixel_format, const std::string& pixel_format);
 
 };
 

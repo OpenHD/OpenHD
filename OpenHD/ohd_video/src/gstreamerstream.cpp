@@ -170,7 +170,7 @@ bool GStreamerStream::parse_user_format(const std::string& format, std::string &
 /*
  * This is used to pick a default based on the hardware format
  */
-std::string GStreamerStream::find_v4l2_format(CameraEndpoint &endpoint, bool force_pixel_format, std::string pixel_format) {
+std::string GStreamerStream::find_v4l2_format(CameraEndpoint &endpoint, bool force_pixel_format, const std::string& pixel_format) {
     std::cerr << "find_v4l2_format" << std::endl;
     std::string width = "1280";
     std::string height = "720";
@@ -327,8 +327,7 @@ void GStreamerStream::setup_rockchip_csi() {
 
 
 void GStreamerStream::setup_usb_uvc() {
-    std::cerr << "Setting up USB camera" << std::endl;
-
+    std::cerr << "Setting up usb UVC camera" << std::endl;
     std::string device_node;
     std::cerr << m_camera.name << " type " << m_camera.type << std::endl;
     for (auto &endpoint : m_camera.endpoints) {    
@@ -336,44 +335,31 @@ void GStreamerStream::setup_usb_uvc() {
            std::cerr << "h264" << std::endl;
             device_node = endpoint.device_node;
             m_pipeline << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
-
-
             if (m_camera.format.empty()) {
                 m_camera.format = "1280x720@30";
             }
-
             std::string width = "1280";
             std::string height = "720";
             std::string fps = "30";
             auto have_format = parse_user_format(m_camera.format, width, height, fps);
-
             m_pipeline << fmt::format("video/x-h264, width={}, height={}, framerate={}/1 ! ", width, height, fps);
-
             break;
         }
-
         if (m_camera.codec == VideoCodecMJPEG && endpoint.support_mjpeg) {
             std::cerr << "MJPEG" << std::endl;
             device_node = endpoint.device_node;
             m_pipeline << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
-
-
             if (m_camera.format.empty()) {
                 m_camera.format = "1280x720@30";
             }
-
             std::string width = "1280";
             std::string height = "720";
             std::string fps = "30";
             auto have_format = parse_user_format(m_camera.format, width, height, fps);
-
             m_pipeline << fmt::format("image/jpeg, width={}, height={}, framerate={}/1 ! ", width, height, fps);
-
             break;
         }
     }
-
-
     /*
      * No H264 or MJPEG endpoint was found/chosen, so we do YUV encoding. Most of these will be thermal cameras and 
      * won't be handled like this very long because support for them will be in a different class with thermal 
@@ -385,9 +371,7 @@ void GStreamerStream::setup_usb_uvc() {
             std::cerr << "empty" << std::endl;
             if (endpoint.support_raw) {
                 device_node = endpoint.device_node;
-
                 m_pipeline << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
-
                 /*
                  * This looks a little weird but if the user didn't supply a format we don't want to pick one, we'll get it
                  * wrong most of the time and letting gstreamer pick will generally work out
@@ -396,7 +380,6 @@ void GStreamerStream::setup_usb_uvc() {
                 std::string height;
                 std::string fps;
                 auto have_format = parse_user_format(m_camera.format, width, height, fps);
-
                 if (have_format) {
                     std::cerr << "Found format: " << m_camera.format << std::endl;
                     m_pipeline << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ", width, height, fps);
@@ -422,14 +405,12 @@ void GStreamerStream::setup_usb_uvc() {
                     }
                     case PlatformTypeJetson: {
                         m_pipeline << "nvvidconv ! ";
-                        
                         // todo: this requires tuning for latency and image quality
                         if (m_camera.codec == VideoCodecH265) {
                             m_pipeline << fmt::format("nvv4l2h265enc name=encodectrl control-rate=1 insert-sps-pps=1 bitrate={} ! ", m_camera.bitrate);
                         } else {
                             m_pipeline << fmt::format("nvv4l2h264enc name=encodectrl control-rate=1 insert-sps-pps=1 bitrate={} ! ", m_camera.bitrate);
                         }
-
                         break;
                     }
                     case PlatformTypeRockchip: {
@@ -454,18 +435,14 @@ void GStreamerStream::setup_usb_uvc() {
 
 void GStreamerStream::setup_usb_uvch264() {
     std::cerr << "Setting up UVC H264 camera" << std::endl;
-
     auto endpoint = m_camera.endpoints.front();
-
     if (m_camera.format.empty()) {
         m_camera.format = "1920x1080@30";
     }
-
     std::string width = "1920";
     std::string height = "1080";
     std::string fps = "30";
     auto have_format = parse_user_format(m_camera.format, width, height, fps);
-
     // uvch265 cameras don't seem to exist, codec setting is ignored
     m_pipeline << fmt::format("uvch264src device={} peak-bitrate={} initial-bitrate={} average-bitrate={} rate-control=1 iframe-period=1000 name=encodectrl auto-start=true encodectrl.vidsrc ! ", endpoint.device_node, m_camera.bitrate, m_camera.bitrate, m_camera.bitrate);
     m_pipeline << fmt::format("video/x-h264,width={}, height={}, framerate={}/1 ! ", width, height, fps);
@@ -474,11 +451,9 @@ void GStreamerStream::setup_usb_uvch264() {
 
 void GStreamerStream::setup_ip_camera() {
     std::cerr << "Setting up IP camera" << std::endl;
-
     if (m_camera.url.empty()) {
         m_camera.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
     }
-
     // none of the other params are used at the moment, we would need to set them with ONVIF or a per-camera API of some sort,
     // however most people seem to set them in advance with the proprietary app that came with the camera anyway
     m_pipeline << fmt::format("rtspsrc location=\"{}\" latency=0 ! ", m_camera.url);
@@ -746,12 +721,10 @@ std::string GStreamerStream::get_brightness() {
 
 void GStreamerStream::set_brightness(const std::string& brightness) {
     std::cerr << "GStreamerStream::set_brightness(" << brightness << ")" << std::endl;
-
     if (!gst_pipeline) {
         std::cerr << "No pipeline, ignoring brightness command" << std::endl;
         return;
     }
-
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
             GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
@@ -787,15 +760,11 @@ void GStreamerStream::set_brightness(const std::string& brightness) {
 
 std::string GStreamerStream::get_contrast() {
     std::cerr << "GStreamerStream::get_contrast()" << std::endl;
-
     gint _contrast = 0;
-
     if (!gst_pipeline) {
         std::cerr << "No pipeline, ignoring contrast request" << std::endl;
         return std::to_string(_contrast);
     }
-
-    
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
             GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
@@ -833,12 +802,10 @@ std::string GStreamerStream::get_contrast() {
 
 void GStreamerStream::set_contrast(const std::string& contrast) {
     std::cerr << "GStreamerStream::set_contrast(" << contrast << ")" << std::endl;
-
     if (!gst_pipeline) {
         std::cerr << "No pipeline, ignoring brightness command" << std::endl;
         return;
     }
-
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
             GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
