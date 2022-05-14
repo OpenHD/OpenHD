@@ -14,18 +14,18 @@
 #include "json.hpp"
 
 typedef enum CameraType {
-    CameraTypeRaspberryPiCSI,
+    CameraTypeRaspberryPiCSI, //Rpi foundation CSI camera
     CameraTypeRaspberryPiVEYE,
-    CameraTypeJetsonCSI,
-    CameraTypeRockchipCSI,
+    CameraTypeJetsonCSI, //Any CSI camera on jetson
+    CameraTypeRockchipCSI, //Any CSI camera on rockchip
     // I think this is a 44l2 camera so to say, too.
     CameraTypeUVC,
     // this is not just a UVC camera that happens to support h264, it's the standard UVC H264 that only a few cameras
     // support, like the older models of the Logitech C920. Other UVC cameras may support h264, but they do it in a 
     // completely different way so we keep them separate
     CameraTypeUVCH264,
-    CameraTypeIP,
-    CameraTypeV4L2Loopback,
+    CameraTypeIP, // IP camera that connects via ethernet and provides a video feet at special network address
+    CameraTypeV4L2Loopback, // See https://github.com/umlaeute/v4l2loopback, unimplemented
     CameraTypeDummy, // Dummy camera, is created fully in sw
     CameraTypeUnknown
 } CameraType;
@@ -53,18 +53,10 @@ typedef enum VideoCodec {
 } VideoCodec;
 inline std::string video_codec_to_string(VideoCodec codec) {
     switch (codec) {
-        case VideoCodecH264: {
-            return "h264";
-        }
-        case VideoCodecH265: {
-            return "h265";
-        }
-        case VideoCodecMJPEG: {
-            return "mjpeg";
-        }
-        default: {
-            return "unknown";
-        }
+        case VideoCodecH264: return "h264";
+        case VideoCodecH265: return "h265";
+        case VideoCodecMJPEG: return "mjpeg";
+        default: return "unknown";
     }
 }
 inline VideoCodec string_to_video_codec(const std::string& codec) {
