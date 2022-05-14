@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include <boost/regex.hpp>
+#include <regex>
 
 #include <gst/gst.h>
 
@@ -142,10 +142,10 @@ void GStreamerStream::setup() {
 
 bool GStreamerStream::parse_user_format(const std::string& format, std::string &width, std::string &height, std::string &fps) {
 
-    boost::smatch result;
-    boost::regex reg{"(\\d*)x(\\d*)\\@(\\d*)"};
+    std::smatch result;
+    std::regex reg{"(\\d*)x(\\d*)\\@(\\d*)"};
     std::cout << "Parsing:" << format << std::endl;
-    if (boost::regex_search(format, result, reg)) {
+    if (std::regex_search(format, result, reg)) {
         if (result.size() == 4) {
             width = result[1];
             height = result[2];
@@ -188,9 +188,9 @@ std::string GStreamerStream::find_v4l2_format(CameraEndpoint &endpoint, bool for
 
     for (auto & default_format : search_order) {
         for (auto & format : endpoint.formats) {
-            boost::smatch result;
-            boost::regex reg{ "([\\w\\d\\s\\-\\:\\/]*)\\|(\\d*)x(\\d*)\\@(\\d*)"};
-            if (boost::regex_search(format, result, reg)) {
+            std::smatch result;
+            std::regex reg{ "([\\w\\d\\s\\-\\:\\/]*)\\|(\\d*)x(\\d*)\\@(\\d*)"};
+            if (std::regex_search(format, result, reg)) {
                 std::cerr << "format:"<< format << std::endl;
                 if (result.size() == 5) {
                     auto c = fmt::format("{}x{}@{}", width, height, fps);
@@ -265,9 +265,9 @@ void GStreamerStream::setup_jetson_csi() {
 
     int sensor_id = -1;
 
-    boost::smatch result;
-    boost::regex reg{ "/dev/video([\\d])"};
-    if (boost::regex_search(endpoint.device_node, result, reg)) {
+    std::smatch result;
+    std::regex reg{ "/dev/video([\\d])"};
+    if (std::regex_search(endpoint.device_node, result, reg)) {
         if (result.size() == 2) {
             std::string s = result[1];
             sensor_id = std::stoi(s);
