@@ -95,7 +95,6 @@ static std::string findOrCreateSettingsDirectory(bool is_air){
 }
 
 // ------------------ Stephen code, undocumented ------------------------------
-
 inline std::optional<std::string> parse_section(const std::string& line) {
     boost::smatch result;
     boost::regex r{ "^\\[([\\w\\s]+)\\]"};
@@ -108,8 +107,7 @@ inline std::optional<std::string> parse_section(const std::string& line) {
     return result[1];
 }
 
-
-inline std::pair<std::string, std::string> parse_kv(std::string kv) {
+inline std::pair<std::string, std::string> parse_kv(const std::string& kv) {
     boost::smatch result;
     boost::regex r{ "^([\\w\\[\\]]+)\\s*=\\s*(.*)"};
     if (!boost::regex_match(kv, result, r)) {
@@ -121,6 +119,12 @@ inline std::pair<std::string, std::string> parse_kv(std::string kv) {
     return std::make_pair<std::string, std::string>(result[1], result[2]);
 }
 
+// This is likely temporarily, here I just try to refactor stephens code to be more
+// understandable
+//struct SettingsValue{
+//    std::string key;
+//    std::string value;
+//};
 
 inline std::vector<std::map<std::string, std::string> > read_config(const std::string& path) {
     std::ifstream in(path);

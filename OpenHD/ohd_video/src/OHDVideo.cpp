@@ -99,14 +99,12 @@ void OHDVideo::process_settings() {
 
     for (auto camera : m_cameras) {
         std::map<std::string, std::string> setting_map;
-
-        for (auto & settings_for_camera : settings) {
+        for (const auto& settings_for_camera : settings) {
             if (settings_for_camera.count("bus") == 1 && settings_for_camera["bus"] == camera.bus) {
                 setting_map = settings_for_camera;
                 break;
             }
         }
-
         if (setting_map.count("format")) camera.format = setting_map["format"];
         if (setting_map.count("bitrate")) camera.bitrate = setting_map["bitrate"];
         if (setting_map.count("rotate")) camera.rotate = setting_map["rotate"];
