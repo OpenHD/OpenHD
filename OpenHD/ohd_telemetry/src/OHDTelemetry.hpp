@@ -15,18 +15,30 @@
 class OHDTelemetry{
 public:
     OHDTelemetry(const OHDPlatform& platform,const OHDProfile& profile):profile(profile){
-        if(profile.is_air){
+        if(this->profile.is_air){
             airTelemetry=std::make_unique<AirTelemetry>(OHDTelemetry::uartForPlatformType(platform.platform_type));
+            assert(airTelemetry);
+            loopThread=std::make_unique<std::thread>([this]{
+                assert(airTelemetry);
+                airTelemetry->loopInfinite();
+            });
         }else{
             groundTelemetry=std::make_unique<GroundTelemetry>();
+            assert(groundTelemetry);
+            loopThread=std::make_unique<std::thread>([this]{
+                assert(groundTelemetry);
+                groundTelemetry->loopInfinite();
+            });
         }
-        loopThread=std::make_unique<std::thread>([this]{
+        /*loopThread=std::make_unique<std::thread>([this]{
             if(this->profile.is_air){
+                assert(airTelemetry);
                 airTelemetry->loopInfinite();
             }else{
+                assert(groundTelemetry);
                 groundTelemetry->loopInfinite();
             }
-        });
+        });*/
     }
     // only either one of them both is active at a time.
     // active when air

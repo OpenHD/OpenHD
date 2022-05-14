@@ -15,7 +15,7 @@
  */
 class GroundTelemetry {
 public:
-    explicit GroundTelemetry();
+    GroundTelemetry();
     /**
      * Telemetry will run infinite in its own threads until an error occurs.
      * @param enableExtendedLogging be really verbose on logging.
@@ -32,11 +32,10 @@ private:
     void sendMessageGroundStationClients(MavlinkMessage& message);
 private:
     static constexpr auto M_SYS_ID=OHD_SYS_ID_GROUND;
-    std::unique_ptr<TCPEndpoint> tcpGroundCLient;
-    std::unique_ptr<UDPEndpoint> udpGroundClient;
-    // For now, use UDP endpoint and rely on another service for starting the rx/tx links
-    //std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;
-    std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
+    std::unique_ptr<TCPEndpoint> tcpGroundCLient= nullptr;
+    std::unique_ptr<UDPEndpoint> udpGroundClient= nullptr;
+    // We rely on another service for starting the rx/tx links
+    std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;
     InternalTelemetry ohdTelemetryGenerator{true};
 };
 

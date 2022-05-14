@@ -18,8 +18,8 @@ GroundTelemetry::GroundTelemetry() {
     // hacky, start breoadcasting the existence of the OHD ground station
     // udpGroundClient->startHeartBeat(OHD_SYS_ID_GROUND,0);
     // any message coming in via wifibroadcast is a message from the air pi
-    wifibroadcastEndpoint=UDPEndpoint::createEndpointForOHDWifibroadcast(false);
-    wifibroadcastEndpoint->registerCallback([this](MavlinkMessage& msg){
+    udpWifibroadcastEndpoint=UDPEndpoint::createEndpointForOHDWifibroadcast(false);
+    udpWifibroadcastEndpoint->registerCallback([this](MavlinkMessage& msg){
         onMessageAirPi(msg);
     });
     std::cout<<"Created GroundTelemetry\n";
@@ -63,8 +63,8 @@ void GroundTelemetry::sendMessageGroundStationClients(MavlinkMessage& message) {
 
 void GroundTelemetry::sendMessageAirPi(MavlinkMessage& message) {
     // transmit via wifibroadcast
-    if(wifibroadcastEndpoint){
-        wifibroadcastEndpoint->sendMessage(message);
+    if(udpWifibroadcastEndpoint){
+        udpWifibroadcastEndpoint->sendMessage(message);
     }
 }
 
@@ -72,8 +72,8 @@ void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
     while (true){
         std::cout<<"GroundTelemetry::loopInfinite()\n";
         // for debugging, check if any of the endpoints is not alive
-        if(enableExtendedLogging && wifibroadcastEndpoint){
-            wifibroadcastEndpoint->debugIfAlive();
+        if(enableExtendedLogging && udpWifibroadcastEndpoint){
+            udpWifibroadcastEndpoint->debugIfAlive();
         }
         if(enableExtendedLogging && udpGroundClient){
             udpGroundClient->debugIfAlive();

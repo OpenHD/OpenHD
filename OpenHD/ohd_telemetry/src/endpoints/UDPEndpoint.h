@@ -6,7 +6,6 @@
 #define XMAVLINKSERVICE_UDPENDPOINT_H
 
 #include "MEndpoint.hpp"
-// wifibroadcast header-only
 #include "HelperSources/SocketHelper.hpp"
 #include <thread>
 
