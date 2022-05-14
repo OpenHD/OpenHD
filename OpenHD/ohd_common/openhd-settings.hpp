@@ -17,6 +17,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/random_generator.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <boost/lexical_cast.hpp>
 
 // from https://superuser.com/questions/631859/preferred-place-to-store-configuration-files-that-change-often
@@ -53,8 +54,9 @@ static std::string getOrCreateUnitId(){
     if(!unit_id_file.is_open()){
         //std::cout<<"Generating new unit id\n";
         // generate new unit id
-        const boost::uuids::uuid uuid=boost::uuids::random_generator()();
-        unit_id=boost::lexical_cast<std::string>(uuid);
+        // See https://www.boost.org/doc/libs/1_62_0/libs/uuid/uuid.html
+        const boost::uuids::uuid _uuid=boost::uuids::random_generator()();
+        unit_id=to_string(_uuid);
         std::cout<<"Created new unit id:["<<unit_id<<"]\n";
         // and write it ot to the right file
         std::ofstream of(UNIT_ID_FILE);
