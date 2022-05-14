@@ -29,21 +29,40 @@ typedef enum CameraType {
     CameraTypeDummy, // Dummy camera, is created fully in sw
     CameraTypeUnknown
 } CameraType;
-
-
-struct CameraEndpoint {
-    std::string device_node;
-    std::string bus;
-    bool support_h264 = false;
-    bool support_h265 = false;
-    bool support_mjpeg = false;
-    bool support_raw = false;
-    std::vector<std::string> formats;
-    // Consti10: cleanup- an endpoint that supports nothing, what the heck should we do with that ;)
-    [[nodiscard]] bool supports_anything()const{
-        return (support_h264 || support_h265 || support_mjpeg || support_raw);
+static std::string camera_type_to_string(const CameraType& camera_type) {
+    switch (camera_type) {
+        case CameraTypeRaspberryPiCSI: return "pi-csi";
+        case CameraTypeRaspberryPiVEYE: return "pi-veye";
+        case CameraTypeJetsonCSI: return "jetson-csi";
+        case CameraTypeRockchipCSI: return "rockchip-csi";
+        case CameraTypeUVC: return "uvc";
+        case CameraTypeUVCH264: return "uvch264";
+        case CameraTypeIP: return "ip";
+        case CameraTypeV4L2Loopback: return "v4l2loopback";
+        default: return "unknown";
     }
-};
+}
+static CameraType string_to_camera_type(const std::string& camera_type) {
+    if (to_uppercase(camera_type).find(to_uppercase("pi-csi")) != std::string::npos) {
+        return CameraTypeRaspberryPiCSI;
+    } else if (to_uppercase(camera_type).find(to_uppercase("pi-veye")) != std::string::npos) {
+        return CameraTypeRaspberryPiVEYE;
+    } else if (to_uppercase(camera_type).find(to_uppercase("jetson-csi")) != std::string::npos) {
+        return CameraTypeJetsonCSI;
+    } else if (to_uppercase(camera_type).find(to_uppercase("rockchip-csi")) != std::string::npos) {
+        return CameraTypeRockchipCSI;
+    } else if (to_uppercase(camera_type).find(to_uppercase("uvc")) != std::string::npos) {
+        return CameraTypeUVC;
+    } else if (to_uppercase(camera_type).find(to_uppercase("uvch264")) != std::string::npos) {
+        return CameraTypeUVCH264;
+    } else if (to_uppercase(camera_type).find(to_uppercase("ip")) != std::string::npos) {
+        return CameraTypeIP;
+    } else if (to_uppercase(camera_type).find(to_uppercase("v4l2loopback")) != std::string::npos) {
+        return CameraTypeV4L2Loopback;
+    }
+    return CameraTypeUnknown;
+}
+
 
 typedef enum VideoCodec {
     VideoCodecH264,
@@ -132,6 +151,20 @@ static void test_video_format_regex(){
     assert(source==from);
 }
 
+struct CameraEndpoint {
+    std::string device_node;
+    std::string bus;
+    bool support_h264 = false;
+    bool support_h265 = false;
+    bool support_mjpeg = false;
+    bool support_raw = false;
+    std::vector<std::string> formats;
+    // Consti10: cleanup- an endpoint that supports nothing, what the heck should we do with that ;)
+    [[nodiscard]] bool supports_anything()const{
+        return (support_h264 || support_h265 || support_mjpeg || support_raw);
+    }
+};
+
 struct Camera {
     CameraType type=CameraTypeUnknown;
     std::string name = "unknown";
@@ -170,62 +203,6 @@ struct Camera {
     VideoCodec codec = VideoCodecH264;
     std::vector<CameraEndpoint> endpoints;
 };
-
-
-static std::string camera_type_to_string(const CameraType& camera_type) {
-    switch (camera_type) {
-        case CameraTypeRaspberryPiCSI: {
-            return "pi-csi";
-        }
-        case CameraTypeRaspberryPiVEYE: {
-            return "pi-veye";
-        }
-        case CameraTypeJetsonCSI: {
-            return "jetson-csi";
-        }
-        case CameraTypeRockchipCSI: {
-            return "rockchip-csi";
-        }
-        case CameraTypeUVC: {
-            return "uvc";
-        }
-        case CameraTypeUVCH264: {
-            return "uvch264";
-        }
-        case CameraTypeIP: {
-            return "ip";
-        }
-        case CameraTypeV4L2Loopback: {
-            return "v4l2loopback";
-        }
-        default: {
-            return "unknown";
-        }
-    }
-}
-
-
-static CameraType string_to_camera_type(const std::string& camera_type) {
-    if (to_uppercase(camera_type).find(to_uppercase("pi-csi")) != std::string::npos) {
-        return CameraTypeRaspberryPiCSI;
-    } else if (to_uppercase(camera_type).find(to_uppercase("pi-veye")) != std::string::npos) {
-        return CameraTypeRaspberryPiVEYE;
-    } else if (to_uppercase(camera_type).find(to_uppercase("jetson-csi")) != std::string::npos) {
-        return CameraTypeJetsonCSI;
-    } else if (to_uppercase(camera_type).find(to_uppercase("rockchip-csi")) != std::string::npos) {
-        return CameraTypeRockchipCSI;
-    } else if (to_uppercase(camera_type).find(to_uppercase("uvc")) != std::string::npos) {
-        return CameraTypeUVC;
-    } else if (to_uppercase(camera_type).find(to_uppercase("uvch264")) != std::string::npos) {
-        return CameraTypeUVCH264;
-    } else if (to_uppercase(camera_type).find(to_uppercase("ip")) != std::string::npos) {
-        return CameraTypeIP;
-    } else if (to_uppercase(camera_type).find(to_uppercase("v4l2loopback")) != std::string::npos) {
-        return CameraTypeV4L2Loopback;
-    }
-
-    return CameraTypeUnknown;
-}
 
 
 // TODO: Why the heck did stephen not use the endpoints member variable here ?
