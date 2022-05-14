@@ -49,6 +49,6 @@ include(cmake/FindV4L2.cmake)
 target_include_directories(OHDDiscoveryLib PUBLIC ${V4L2_INCLUDE_DIR})
 target_link_libraries(OHDDiscoveryLib PUBLIC ${V4L2_LIBRARY})
 
-# The main service that is run on OpenHD
+# Test the discovery step on its own
 add_executable(test_discovery test/test_discovery.cpp)
 target_link_libraries(test_discovery OHDDiscoveryLib)

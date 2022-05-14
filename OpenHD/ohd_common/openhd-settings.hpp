@@ -16,8 +16,7 @@
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/random_generator.hpp>
 #include <boost/lexical_cast.hpp>
 
 // from https://superuser.com/questions/631859/preferred-place-to-store-configuration-files-that-change-often
@@ -59,7 +58,7 @@ static std::string getOrCreateUnitId(){
         std::cout<<"Created new unit id:["<<unit_id<<"]\n";
         // and write it ot to the right file
         std::ofstream of(UNIT_ID_FILE);
-        of << uuid;
+        of << unit_id;
         of.close();
     }else{
         //std::cout<<"Unit id exists, reading\n";

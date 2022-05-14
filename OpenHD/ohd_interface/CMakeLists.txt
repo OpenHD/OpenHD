@@ -31,7 +31,7 @@ target_link_libraries(OHDInterfaceLib PUBLIC ${INTERFACE_USED_BOOST_LIBRARIES})
 target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
 #target_include_directories(OHDInterfaceLib PUBLIC ${WB_INCLUDE_DIRECTORES})
 
-# Custom testing, requires written jsons
+# Custom testing, requires written jsons from discovery
 add_executable(test_interface test/test_interface.cpp)
 target_link_libraries(test_interface OHDInterfaceLib)
 
