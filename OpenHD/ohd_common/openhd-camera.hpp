@@ -111,7 +111,7 @@ struct VideoFormat{
     static VideoFormat fromString(const std::string& input){
         VideoFormat ret{};
         boost::smatch result;
-        const boost::regex reg{ "([\\w\\d\\s\\-\\:\\/]*)\\|(\\d*)x(\\d*)\\@(\\d*)"};
+        const boost::regex reg{ R"(([\w\d\s\-\:\/]*)\|(\d*)x(\d*)\@(\d*))"};
         std::cout << "Parsing:" << input << std::endl;
         if (boost::regex_search(input, result, reg)) {
             if (result.size() == 5) {
@@ -138,7 +138,6 @@ static void test_video_format_regex(){
     const auto serialized=source.toString();
     const auto from=VideoFormat::fromString(serialized);
     assert(source==from);
-
 }
 
 struct Camera {
