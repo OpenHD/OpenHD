@@ -175,33 +175,27 @@ struct Camera {
     std::string bus;
     // Unique index of this camera, should start at 0
     int index=0;
-
-    // these come from the settings system
+    // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar form
+    std::string url;
+    // optional, if not empty we should always use the manual pipeline and discard everything else.
+    std::string manual_pipeline;
 
     // this comes from the camera itself, includes width/height/fps, we will need to automate this in QOpenHD
     std::string format;
-
-    std::string rc_channel_record = "0";
-
+    VideoCodec codec = VideoCodecH264;
+    std::vector<CameraEndpoint> endpoints;
+    // All these are for the future, and probably implemented on a best effort approach-
+    // e.g. changing them does not neccessarly mean the camera supports changing them,
+    // and they are too many to do it in a "check if supported" manner.
     std::string bitrate;
-
     std::string brightness;
     std::string contrast;
     std::string sharpness;
     std::string rotate;
-
     std::string wdr;
     std::string denoise;
-
     std::string thermal_palette;
     std::string thermal_span;
-
-    // I think this is for cameras connected via ethernet that use a rtp:// ... or similar URL ?!!
-    std::string url;
-    std::string manual_pipeline;
-
-    VideoCodec codec = VideoCodecH264;
-    std::vector<CameraEndpoint> endpoints;
 };
 
 
