@@ -501,11 +501,13 @@ void DCameras::write_manifest() {
             if(camera.bus==endpoint.bus){
                 // an endpoint who cannot do anything is just a waste and added complexity for later modules
                 if(endpoint.formats.empty()){
-                    std::cerr<<"Discarding endpoint due to no formats\n";
+                    // not really an error, since it is an implementation issue during detection that is negated here
+                    std::cout<<"Discarding endpoint due to no formats\n";
                     continue;
                 }
                 if(!endpoint.supports_anything()){
-                    std::cerr<<"Discarding endpoint due to no capabilities\n";
+                    // not really an error, since it is an implementation issue during detection that is negated here
+                    std::cout<<"Discarding endpoint due to no capabilities\n";
                     continue;
                 }
                 endpointsForThisCamera.push_back(endpoint);
