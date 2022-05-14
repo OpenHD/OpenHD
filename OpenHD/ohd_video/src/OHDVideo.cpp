@@ -104,49 +104,4 @@ void OHDVideo::configure(Camera &camera) {
     }
 }
 
-void OHDVideo::save_settings(const std::vector<Camera>& cameras, const std::string& settings_file) {
-    inja::Environment env;
-
-    // load the camera template, we format it once for each camera and write that to the file
-    std::ifstream template_file("/usr/local/share/openhd/camera.template");
-    std::string template_s((std::istreambuf_iterator<char>(template_file)),
-                           std::istreambuf_iterator<char>());
-
-
-    std::ofstream out(settings_file);
-
-    // now fill in the template params
-    for (auto & camera : cameras) {
-        nlohmann::json data;
-
-        data["type"] = camera_type_to_string(camera.type);
-        data["bus"] = camera.bus;
-        data["name"] = camera.name;
-        data["vendor"] = camera.vendor;
-
-        data["format"] = camera.format;
-        data["bitrate"] = camera.bitrate;
-        data["rotate"] = camera.rotate;
-        data["brightness"] = camera.brightness;
-        data["contrast"] = camera.contrast;
-        data["sharpness"] = camera.sharpness;
-        data["wdr"] = camera.wdr;
-        data["denoise"] = camera.denoise;
-        data["thermal_palette"] = camera.thermal_palette;
-        data["thermal_span"] = camera.thermal_span;
-        data["rc_channel_record"] = camera.rc_channel_record;
-        data["url"] = camera.url;
-        data["manual_pipeline"] = camera.manual_pipeline;
-        data["codec"] = video_codec_to_string(camera.codec);
-
-        inja::Template temp = env.parse(template_s.c_str());
-        std::string rendered = env.render(temp, data);
-
-        // and write this camera to the settings file
-        out << rendered;
-        out << "\n\n";
-    }
-
-    out.close();
-}
 

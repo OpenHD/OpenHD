@@ -50,7 +50,6 @@ private:
     void setup();
     void process_manifest();
     void configure(Camera &camera);
-    static void save_settings(const std::vector<Camera>& cards, const std::string& settings_file);
 };
 
 
