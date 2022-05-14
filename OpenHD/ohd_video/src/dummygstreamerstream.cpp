@@ -26,7 +26,7 @@ void DummyGstreamerStream::setup() {
     std::stringstream pipeline;
 
     pipeline<<"videotestsrc num-buffers=0 !";
-    pipeline<<fmt::format("x264enc name=encodectrl bitrate={} tune=zerolatency ! ",5000);
+    pipeline<<fmt::format("x264enc bitrate={} tune=zerolatency ! ",5000);
     pipeline<<"h264parse config-interval=-1 ! ";
     pipeline<<"rtph264pay mtu=1024 ! ";
     pipeline<<fmt::format("udpsink host=127.0.0.1 port={} ", m_video_udp_port);
