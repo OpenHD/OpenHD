@@ -12,11 +12,11 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <regex>
 
 #include <libusb.h>
 
 #include <boost/filesystem.hpp>
-#include <boost/regex.hpp>
 
 #include "json.hpp"
 
@@ -94,12 +94,11 @@ void DCameras::detect_raspberrypi_csi() {
         raw_value += buffer.data();
     }
 
-    boost::smatch result;
-
+    std::smatch result;
     // example "supported=2 detected=2"
-    boost::regex r{ "supported=([\\d]+)\\s+detected=([\\d]+)"};
+    std::regex r{ R"(supported=([\d]+)\s+detected=([\d]+))"};
     
-    if (!boost::regex_search(raw_value, result, r)) {
+    if (!std::regex_search(raw_value, result, r)) {
         std::cout<< "Cameras::detect_raspberrypi_csi() no regex match" << std::endl;
         return;
     }
@@ -258,9 +257,9 @@ std::vector<std::string> DCameras::findV4l2VideoDevices() {
     std::vector<std::string> ret;
     for (auto &entry : boost::filesystem::directory_iterator(dev)) {
         auto device_file = entry.path().string();
-        boost::smatch result;
-        boost::regex r{ "/dev/video([\\d]+)"};
-        if (!boost::regex_search(device_file, result, r)) {
+        std::smatch result;
+        std::regex r{ "/dev/video([\\d]+)"};
+        if (!std::regex_search(device_file, result, r)) {
             continue;
         }
         ret.push_back(entry.path().string());
@@ -295,33 +294,33 @@ void DCameras::probe_v4l2_device(const std::string& device){
     }
     Camera camera;
     // check for device name
-    boost::smatch model_result;
-    boost::regex model_regex{ "ID_MODEL=([\\w]+)"};
-    if (boost::regex_search(udev_info, model_result, model_regex)) {
+    std::smatch model_result;
+    std::regex model_regex{ "ID_MODEL=([\\w]+)"};
+    if (std::regex_search(udev_info, model_result, model_regex)) {
         if (model_result.size() == 2) {
             camera.name = model_result[1];
         }
     }
     // check for device vendor
-    boost::smatch vendor_result;
-    boost::regex vendor_regex{ "ID_VENDOR=([\\w]+)"};
-    if (boost::regex_search(udev_info, vendor_result, vendor_regex)) {
+    std::smatch vendor_result;
+    std::regex vendor_regex{ "ID_VENDOR=([\\w]+)"};
+    if (std::regex_search(udev_info, vendor_result, vendor_regex)) {
         if (vendor_result.size() == 2) {
             camera.vendor = vendor_result[1];
         }
     }
     // check for vid
-    boost::smatch vid_result;
-    boost::regex vid_regex{ "ID_VENDOR_ID=([\\w]+)"};
-    if (boost::regex_search(udev_info, vid_result, vid_regex)) {
+    std::smatch vid_result;
+    std::regex vid_regex{ "ID_VENDOR_ID=([\\w]+)"};
+    if (std::regex_search(udev_info, vid_result, vid_regex)) {
         if (vid_result.size() == 2) {
             camera.vid = vid_result[1];
         }
     }
     // check for pid
-    boost::smatch pid_result;
-    boost::regex pid_regex{ "ID_MODEL_ID=([\\w]+)"};
-    if (boost::regex_search(udev_info, pid_result, pid_regex)) {
+    std::smatch pid_result;
+    std::regex pid_regex{ "ID_MODEL_ID=([\\w]+)"};
+    if (std::regex_search(udev_info, pid_result, pid_regex)) {
         if (pid_result.size() == 2) {
             camera.pid = pid_result[1];
         }

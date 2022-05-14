@@ -5,9 +5,10 @@
 
 #include <iostream>
 #include <fstream>
+#include <set>
 
 #include <boost/filesystem.hpp>
-#include <boost/regex.hpp>
+#include <regex>
 
 #include "json.hpp"
 
@@ -32,12 +33,11 @@ void DPlatform::detect_raspberrypi() {
     std::ifstream t("/proc/cpuinfo");
     std::string raw_value((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
     
-    boost::smatch result;
-
+    std::smatch result;
     // example "Revision	: 2a020d3"
-    boost::regex r { "Revision\\t*:\\s*([\\w]+)" };
+    std::regex r { "Revision\\t*:\\s*([\\w]+)" };
 
-    if (!boost::regex_search(raw_value, result, r)) {
+    if (!std::regex_search(raw_value, result, r)) {
         std::cout<< "Detect rpi no result" << std::endl;
         return;
     }
@@ -105,13 +105,12 @@ void DPlatform::detect_pc() {
         raw_value += buffer.data();
     }
 
-    boost::smatch result;
+    std::smatch result;
+    std::regex r1 { "x86_64" };
+    auto res1 = std::regex_search(raw_value, result, r1);
 
-    boost::regex r1 { "x86_64" };
-    auto res1 = boost::regex_search(raw_value, result, r1);
-
-    boost::regex r2 { "i386" };
-    auto res2 = boost::regex_search(raw_value, result, r2);
+    std::regex r2 { "i386" };
+    auto res2 = std::regex_search(raw_value, result, r2);
 
     if (!res1 && !res2) {
         return;
