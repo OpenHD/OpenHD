@@ -94,7 +94,7 @@ struct VideoFormat{
     }
     // For debugging, I use https://regex101.com/
     /**
-     * Convert the VideoFormat into a readable string
+     * Convert the VideoFormat into a readable string, in this format it can be parsed back by regex.
      * @return the video format in a readable form.
      */
     [[nodiscard]] std::string toString()const{
