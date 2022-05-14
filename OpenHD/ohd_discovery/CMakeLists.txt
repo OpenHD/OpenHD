@@ -21,7 +21,7 @@ SET(ALL_SYSTEM_SOURCE_FILES
         lib/bcm2835.c)
 
 add_library(OHDDiscoveryLib
-        SHARED
+        STATIC
         ${ALL_SYSTEM_SOURCE_FILES})
 target_include_directories(OHDDiscoveryLib PUBLIC inc/)
 target_include_directories(OHDDiscoveryLib PUBLIC lib/include)
