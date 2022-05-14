@@ -7,11 +7,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sstream>
+#include <regex>
 
 #include <iostream>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/regex.hpp>
 
 #include "json.hpp"
 
@@ -84,11 +84,11 @@ void DWifiCards::process_card(const std::string& interface_name) {
     std::ifstream t(device_file.str());
     std::string raw_value((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 
-    boost::smatch result;
+    std::smatch result;
 
-    boost::regex r { "DRIVER=([\\w]+)" };
+    std::regex r { "DRIVER=([\\w]+)" };
 
-    if (!boost::regex_search(raw_value, result, r)) {
+    if (!std::regex_search(raw_value, result, r)) {
         std::cerr << "no result" << std::endl;
         return;
     }
