@@ -7,7 +7,7 @@
 #include <sstream>
 #include <fstream>
 
-#include <boost/regex.hpp>
+#include <regex>
 
 #include "openhd-util.hpp"
 #include "openhd-log.hpp"
@@ -110,10 +110,10 @@ struct VideoFormat{
      */
     static VideoFormat fromString(const std::string& input){
         VideoFormat ret{};
-        boost::smatch result;
-        const boost::regex reg{ R"(([\w\d\s\-\:\/]*)\|(\d*)x(\d*)\@(\d*))"};
+        std::smatch result;
+        const std::regex reg{ R"(([\w\d\s\-\:\/]*)\|(\d*)x(\d*)\@(\d*))"};
         std::cout << "Parsing:" << input << std::endl;
-        if (boost::regex_search(input, result, reg)) {
+        if (std::regex_search(input, result, reg)) {
             if (result.size() == 5) {
                 ret.videoCodec= string_to_video_codec(result[1]);
                 ret.width =  atoi(result[2].str().c_str());
@@ -128,7 +128,7 @@ struct VideoFormat{
                 std::cout << std::endl;
             }
         } else {
-            std::cout << "Video regex format failed " << input << " " << reg <<std::endl;
+            std::cerr<<"Video regex format failed "<<input<<"\n";
         }
         return ret;
     }
