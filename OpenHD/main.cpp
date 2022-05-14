@@ -4,7 +4,6 @@
 
 #include <iostream>
 #include <memory>
-#include <boost/asio/io_service.hpp>
 
 #include "ohd_common/openhd-platform.hpp"
 #include "ohd_common/openhd-profile.hpp"
