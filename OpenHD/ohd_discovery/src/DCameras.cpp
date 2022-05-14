@@ -176,76 +176,10 @@ void DCameras::detect_raspberrypi_csi() {
 
 }
 
-/*void DCameras::detect_raspberrypi_veye() {
-    std::cout<< "Cameras::detect_raspberrypi_veye()" << std::endl;
-
-    std::vector<std::string> args { 
-        "/usr/local/share/veye-raspberrypi/camera_i2c_config"
-    };
-
-    std::cout<<"T1\n";
-
-    bool success = run_command("/bin/bash", args);
-
-    if (!success) {
-        ohd_log(STATUS_LEVEL_WARNING, "Failed to enable veye camera config");
-        return;
-    }
-
-    std::cout<<"T2\n";
-
-    std::array<char, 512> buffer{};
-    std::string veye_detect;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("i2cdetect -y 0 0x3b 0x3b | grep  '3b'", "r"), pclose);
-    if (!pipe) {
-        std::cout<< "Cameras::detect_raspberrypi_veye() no pipe from i2cdetect" << std::endl;
-        return;
-    }
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        veye_detect += buffer.data();
-    }
-
-    std::cout<<"T3\n";
-
-    std::cout<< "i2cdetect result: "+veye_detect << std::endl;
-
-    boost::smatch result;
-
-    boost::regex r{ "30:                                  3b            "};
-    
-    if (!boost::regex_search(veye_detect, result, r)) {
-        std::cout<< "Cameras::detect_raspberrypi_veye() no regex match" << std::endl;
-        return;
-    }
-
-    std::cout<<"T4\n";
-
-    Camera camera;
-    camera.name = "Pi VEYE 0";
-    camera.vendor = "VEYE";
-    camera.type = CameraTypeRaspberryPiVEYE;
-    camera.bus = "0";
-    camera.index = m_discover_index;
-    m_discover_index++;
-    CameraEndpoint endpoint;
-    endpoint.bus = camera.bus;
-    endpoint.support_h264 = true;
-    endpoint.support_mjpeg = false;
-
-    endpoint.formats.emplace_back("H.264|1920x1080@25");
-    endpoint.formats.emplace_back("H.264|1920x1080@30");
-
-    m_camera_endpoints.push_back(endpoint);
-    m_cameras.push_back(camera);
-    std::cout<< "Cameras::detect_raspberrypi_veye() end\n";
-}*/
-
-
 
 void DCameras::detect_jetson_csi() {
     std::cout<< "Cameras::detect_jetson_csi()" << std::endl;
 }
-
 
 
 void DCameras::detect_rockchip_csi() {
