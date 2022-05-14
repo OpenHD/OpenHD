@@ -1,7 +1,6 @@
 #ifndef OPENHD_UTIL_H
 #define OPENHD_UTIL_H
 
-//#include <boost/process.hpp>
 #include <sstream>
 #include <iostream>
 #include <cctype>
