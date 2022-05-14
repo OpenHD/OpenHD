@@ -13,7 +13,6 @@
 #include <iostream>
 #include <fstream>
 
-#include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/random_generator.hpp>
@@ -92,71 +91,6 @@ static std::string findOrCreateSettingsDirectory(bool is_air){
     }
     assert(boost::filesystem::exists(str.c_str()));
     return str;
-}
-
-// ------------------ Stephen code, undocumented ------------------------------
-inline std::optional<std::string> parse_section(const std::string& line) {
-    boost::smatch result;
-    boost::regex r{ "^\\[([\\w\\s]+)\\]"};
-    if (!boost::regex_match(line, result, r)) {
-        return {};
-    }
-    if (result.size() != 2) {
-        return {};
-    }
-    return result[1];
-}
-
-inline std::pair<std::string, std::string> parse_kv(const std::string& kv) {
-    boost::smatch result;
-    boost::regex r{ "^([\\w\\[\\]]+)\\s*=\\s*(.*)"};
-    if (!boost::regex_match(kv, result, r)) {
-        throw std::invalid_argument("Ignoring invalid setting, check file for errors");
-    }
-    if (result.size() != 3) {
-        throw std::invalid_argument("Ignoring invalid setting, check file for errors");
-    }
-    return std::make_pair<std::string, std::string>(result[1], result[2]);
-}
-
-// This is likely temporarily, here I just try to refactor stephens code to be more
-// understandable
-//struct SettingsValue{
-//    std::string key;
-//    std::string value;
-//};
-
-inline std::vector<std::map<std::string, std::string> > read_config(const std::string& path) {
-    std::ifstream in(path);
-    std::vector<std::map<std::string, std::string> > settings;
-    std::string str;
-    std::map<std::string, std::string> section;
-    while (std::getline(in, str)) {
-        if (!str.empty()) {
-            try {
-                auto section_name = parse_section(str);
-                if (section_name) {
-                    if (!section.empty()) {
-                        settings.push_back(section);
-                        section.clear();
-                    }
-
-                    continue;
-                }
-            } catch (std::exception &ex) {
-                //Ignore, likely a comment or user error in which case we will use a default.
-            }
-            try {
-                auto pair = parse_kv(str);
-                section.insert(pair);
-            } catch (std::exception &ex) {
-                //Ignore, likely a comment or user error in which case we will use a default.
-            }
-        }
-    }
-    //Push the last section since there aren't any more in the file for the earlier check to be trigged by
-    settings.push_back(section);
-    return settings;
 }
 
 #endif
