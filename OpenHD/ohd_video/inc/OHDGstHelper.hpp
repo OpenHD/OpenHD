@@ -101,7 +101,7 @@ namespace OHDGstHelper{
 
     /**
     * Create the part of the pipeline that takes the raw h264/h265/mjpeg from gstreamer and packs it into rtp.
-    * @param udpOutPort the udp (localhost) port.
+    * @param videoCodec the video codec o create the rtp for.
     * @return the gstreamer pipeline part.
     */
     static std::string createRtpForVideoCodec(const VideoCodec videoCodec){
@@ -114,6 +114,7 @@ namespace OHDGstHelper{
             ss << "h265parse config-interval=-1 ! ";
             ss << "rtph265pay mtu=1024 ! ";
         }else{
+            assert(videoCodec==VideoCodecMJPEG);
             // mjpeg
             ss << "jpegparse config-interval=-1 ! ";
             ss << "rtpjpegpay mtu=1024 ! ";
