@@ -36,14 +36,14 @@ GStreamerStream::GStreamerStream(PlatformType platform,
 
 
 void GStreamerStream::setup() {
-    std::cerr << "GStreamerStream::setup()" << std::endl;
+    std::cout<< "GStreamerStream::setup()" << std::endl;
     GError* error = nullptr;
     if (!gst_init_check(nullptr, nullptr, &error)) {
         std::cerr << "gst_init_check() failed: " << error->message << std::endl;
         g_error_free(error);
         throw std::runtime_error("GStreamer initialization failed");
     }
-    std::cerr << "Creating GStreamer pipeline" << std::endl;
+    std::cout<< "Creating GStreamer pipeline" << std::endl;
     // sanity checks
     if(m_camera.bitrateKBits<=100 || m_camera.bitrateKBits>(1024*1024*50)){
         m_camera.bitrateKBits=5000;
@@ -105,15 +105,13 @@ void GStreamerStream::setup() {
 
 
 void GStreamerStream::setup_raspberrypi_csi() {
-    std::cerr << "Setting up Raspberry Pi CSI camera" << std::endl;
-    assert(m_camera.userSelectedVideoFormat.isValid());
+    std::cout << "Setting up Raspberry Pi CSI camera" << std::endl;
     m_pipeline<<OHDGstHelper::createRpicamsrcStream(m_camera.bus,m_camera.bitrateKBits,m_camera.userSelectedVideoFormat);
 }
 
 
 void GStreamerStream::setup_jetson_csi() {
-    std::cerr << "Setting up Jetson CSI camera" << std::endl;
-    assert(m_camera.userSelectedVideoFormat.isValid());
+    std::cout << "Setting up Jetson CSI camera" << std::endl;
     // if there's no endpoint this isn't a runtime bug but a programming error in the system service,
     // because it never found an endpoint to use for some reason
     // TODO well, we should not have to deal with that here ?!
@@ -135,10 +133,10 @@ void GStreamerStream::setup_jetson_csi() {
 }
 
 void GStreamerStream::setup_usb_uvc() {
-    std::cerr << "Setting up usb UVC camera" << std::endl;
+    std::cout<< "Setting up usb UVC camera Name:" << m_camera.name << " type:" << m_camera.type << std::endl;
     std::string device_node;
-    std::cerr << m_camera.name << " type " << m_camera.type << std::endl;
-    for (auto &endpoint : m_camera.endpoints) {
+    // First we try and start a hw encoded path, where v4l2src directly provides encoded video buffers
+    for (const auto &endpoint : m_camera.endpoints) {
         if (m_camera.userSelectedVideoFormat.videoCodec == VideoCodecH264 && endpoint.support_h264) {
            std::cerr << "h264" << std::endl;
             device_node = endpoint.device_node;
@@ -158,19 +156,14 @@ void GStreamerStream::setup_usb_uvc() {
             break;
         }
     }
-    /*
-     * No H264 or MJPEG endpoint was found/chosen, so we do YUV encoding. Most of these will be thermal cameras and 
-     * won't be handled like this very long because support for them will be in a different class with thermal 
-     * span and pallete support. However once in a while people do connect YUV webcams for testing purposes, and this
-     * code supports those too.
-     */
+    // If we land here, we need to do SW encoding, the v4l2src can only do raw video fromats like YUV
     if (device_node.empty()) {
         for (auto &endpoint : m_camera.endpoints) {
-            std::cerr << "empty" << std::endl;
+            std::cout << "empty" << std::endl;
             if (endpoint.support_raw) {
                 device_node = endpoint.device_node;
                 m_pipeline << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
-                std::cerr << "Allowing gstreamer to choose UVC format" << std::endl;
+                std::cout << "Allowing gstreamer to choose UVC format" << std::endl;
                 m_pipeline << fmt::format("video/x-raw ! ");
 
                 m_pipeline << "videoconvert ! ";
@@ -187,7 +180,7 @@ void GStreamerStream::setup_usb_uvc() {
 }
 
 void GStreamerStream::setup_usb_uvch264() {
-    std::cerr << "Setting up UVC H264 camera" << std::endl;
+    std::cout << "Setting up UVC H264 camera" << std::endl;
     const auto endpoint=m_camera.endpoints.front();
     // uvch265 cameras don't seem to exist, codec setting is ignored
     m_pipeline<<OHDGstHelper::createUVCH264Stream(endpoint.device_node,m_camera.bitrateKBits,m_camera.userSelectedVideoFormat);
@@ -195,7 +188,7 @@ void GStreamerStream::setup_usb_uvch264() {
 
 
 void GStreamerStream::setup_ip_camera() {
-    std::cerr << "Setting up IP camera" << std::endl;
+    std::cout << "Setting up IP camera" << std::endl;
     if (m_camera.url.empty()) {
         m_camera.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
     }
@@ -260,7 +253,7 @@ VideoFormat GStreamerStream::get_format() {
 }
 
 void GStreamerStream::set_format(VideoFormat videoFormat) {
-    std::cerr << "GStreamerStream::set_format(" << videoFormat.toString() << ")" << std::endl;
+    std::cout << "GStreamerStream::set_format(" << videoFormat.toString() << ")" << std::endl;
     m_camera.userSelectedVideoFormat=videoFormat;
 }
 
