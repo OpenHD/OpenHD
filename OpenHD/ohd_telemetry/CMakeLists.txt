@@ -32,7 +32,7 @@ SET(ALL_TELEMETRY_SOURCE_FILES
 add_library(OHDTelemetryLib
         STATIC
         ${ALL_TELEMETRY_SOURCE_FILES})
-target_link_libraries(OHDTelemetryLib PUBLIC ${OHD_TELEMETRY_USED_BOOST_LIBS})
+target_link_libraries(OHDTelemetryLib PRIVATE ${OHD_TELEMETRY_USED_BOOST_LIBS})
 target_include_directories(OHDTelemetryLib PUBLIC src/)
 # include mavlink (header-only)
 target_include_directories(OHDTelemetryLib PUBLIC ../lib/c_library_v2_openhd)
