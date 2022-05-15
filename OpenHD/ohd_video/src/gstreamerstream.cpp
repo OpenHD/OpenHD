@@ -95,58 +95,6 @@ void GStreamerStream::setup() {
 }
 
 
-/*
- * This is used to pick a default based on the hardware format
- */
-[[maybe_unused]] std::string GStreamerStream::find_v4l2_format(CameraEndpoint &endpoint, bool force_pixel_format, const std::string& pixel_format) {
-    std::cerr << "find_v4l2_format" << std::endl;
-    std::string width = "1280";
-    std::string height = "720";
-    std::string fps = "30";
-    std::vector<std::string> search_order = {
-        "1920x1080@60",
-        "1920x1080@30",
-        "1280x720@60",
-        "1280x720@30",
-        "800x600@30",
-        "640x480@30",
-        "320x240@30"
-    };
-    for (auto & default_format : search_order) {
-        for (auto & format : endpoint.formats) {
-            std::smatch result;
-            std::regex reg{ "([\\w\\d\\s\\-\\:\\/]*)\\|(\\d*)x(\\d*)\\@(\\d*)"};
-            if (std::regex_search(format, result, reg)) {
-                std::cerr << "format:"<< format << std::endl;
-                if (result.size() == 5) {
-                    auto c = fmt::format("{}x{}@{}", width, height, fps);
-
-                    if (force_pixel_format) {
-                        if (result[1] == pixel_format && c == default_format) {
-                            width = result[2];
-                            height = result[3];
-                            fps = result[4];
-                            
-                            return fmt::format("{}x{}@{}", width, height, fps);
-                        }
-                    } else if (c == default_format) {
-                        width = result[2];
-                        height = result[3];
-                        fps = result[4];
-
-                        return fmt::format("{}x{}@{}", width, height, fps);
-                    }
-                }
-                std::cerr << "unexpected match size"<< result.size() << std::endl;
-            }
-        }
-    }
-    // fallback using the default above
-    std::cerr << "returning default format:"<< width << " " << height << " " << fps << std::endl;
-    return fmt::format("{}x{}@{}", width, height, fps);
-}
-
-
 void GStreamerStream::setup_raspberrypi_csi() {
     std::cerr << "Setting up Raspberry Pi CSI camera" << std::endl;
     assert(m_camera.userSelectedVideoFormat.isValid());

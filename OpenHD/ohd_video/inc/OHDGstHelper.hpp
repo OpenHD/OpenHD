@@ -47,18 +47,17 @@ namespace OHDGstHelper{
     }
 
     static std::string createJetsonStream(const int sensor_id,const int bitrate,const VideoFormat videoFormat){
+        assert(videoFormat.videoCodec!=VideoCodecUnknown);
         std::stringstream ss;
         ss << fmt::format("nvarguscamerasrc do-timestamp=true sensor-id={} ! ", sensor_id);
         ss << fmt::format("video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! ",
                                   videoFormat.width, videoFormat.height,videoFormat.framerate);
-        //ss << "queue ! ";
         if (videoFormat.videoCodec == VideoCodecH265) {
             ss << fmt::format("nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} ! ",bitrate);
-        } else if (videoFormat.videoCodec == VideoCodecMJPEG) {
-            ss<< fmt::format("nvjpegenc quality=50 ! ");
-        } else {
-            // H264 or unknown
+        } else if(videoFormat.videoCodec==VideoCodecH264){
             ss << fmt::format("nvv4l2h264enc name=nvenc control-rate=1 insert-sps-pps=1 bitrate={} ! ",bitrate);
+        }else  {
+            ss<< fmt::format("nvjpegenc quality=50 ! ");
         }
         return ss.str();
     }
@@ -67,22 +66,22 @@ namespace OHDGstHelper{
       * For V4l2 Cameras that do raw YUV (or RGB) we use a sw hw encoder.
       * This one has no custom resolution(s) yet.
       */
-    static std::string createV4l2SrcRawSwEncodingStream(const std::string& device_node,const VideoCodec videoCodec,const int bitrate){
-        std::stringstream ss;
-        ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
-        //std::cerr << "Allowing gstreamer to choose UVC format" << std::endl;
-        ss << fmt::format("video/x-raw ! ");
-        ss << "videoconvert ! ";
-        assert(videoCodec!=VideoCodecUnknown);
-        if(videoCodec==VideoCodecH264){
-            ss<<fmt::format("x264enc name=encodectrl bitrate={} tune=zerolatency key-int-max=10 ! ", bitrate);
-        }else if(videoCodec==VideoCodecH265){
-            ss<<fmt::format("x265enc name=encodectrl bitrate={} ! ", bitrate);
-        }else{
-            std::cerr<<"no sw encoder for MJPEG\n";
-        }
-        return ss.str();
-    }
+     static std::string createV4l2SrcRawSwEncodingStream(const std::string& device_node,const VideoCodec videoCodec,const int bitrate){
+         std::stringstream ss;
+         ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
+         //std::cerr << "Allowing gstreamer to choose UVC format" << std::endl;
+         ss << fmt::format("video/x-raw ! ");
+         ss << "videoconvert ! ";
+         assert(videoCodec!=VideoCodecUnknown);
+         if(videoCodec==VideoCodecH264){
+             ss<<fmt::format("x264enc name=encodectrl bitrate={} tune=zerolatency key-int-max=10 ! ", bitrate);
+         }else if(videoCodec==VideoCodecH265){
+             ss<<fmt::format("x265enc name=encodectrl bitrate={} ! ", bitrate);
+         }else{
+             std::cerr<<"no sw encoder for MJPEG\n";
+         }
+         return ss.str();
+     }
 
      /**
       * This one is for v4l2src cameras that outputs already encoded video.
