@@ -21,25 +21,20 @@
 #include "gstreamerstream.h"
 
 
-
 GStreamerStream::GStreamerStream(PlatformType platform,
                                  Camera &camera, 
                                  uint16_t video_udp_port)
     : CameraStream(platform, camera, video_udp_port) {
-    std::cerr << "GStreamerStream::GStreamerStream()" << std::endl;
+    std::cout<<"GStreamerStream::GStreamerStream()\n";
+    // rn the dummy camera doesn't support any custom resolution or framerate
+    if(camera.type==CameraTypeDummy){
+        camera.userSelectedVideoFormat.videoCodec=VideoCodecH264;
+        camera.userSelectedVideoFormat.width=640;
+        camera.userSelectedVideoFormat.height=480;
+    }
 }
 
 
-/*
- * This constructs the camera pipeline automatically from the detected hardware capabilities. If a settings entry
- * in camera.conf is found for a detected camera (matched using the "bus" field), the settings override the defaults for
- * that kind of camera.
- *
- * IP cameras are handled specially because we have no way to guarantee they can be autodetected yet, and some may not be
- * detectable automatically at all. So for those we attempt to start a pipeline for any camera entry in the settings file
- * marked as an IP camera, using the URL provided by the user.
- *
- */
 void GStreamerStream::setup() {
     std::cerr << "GStreamerStream::setup()" << std::endl;
     GError* error = nullptr;
@@ -54,7 +49,6 @@ void GStreamerStream::setup() {
         m_camera.bitrateKBits=5000;
     }
     assert(m_camera.userSelectedVideoFormat.isValid());
-    assert(m_camera.type!=CameraTypeDummy);
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
             setup_raspberrypi_csi();
@@ -80,93 +74,33 @@ void GStreamerStream::setup() {
             setup_ip_camera();
             break;
         }
+        case CameraTypeDummy:{
+            m_pipeline<<OHDGstHelper::createDummyStream(m_camera.userSelectedVideoFormat);
+            break;
+        }
+        case CameraTypeRaspberryPiVEYE:
+        case CameraTypeRockchipCSI:
+            std::cerr<<"Veye and rockchip are unsupported at the time\n";
+            return;
         case CameraTypeUnknown: {
             std::cerr << "Unknown camera type" << std::endl;
             return;
         }
     }
-    m_pipeline << "queue ! ";
-    assert(m_camera.userSelectedVideoFormat.videoCodec!=VideoCodecUnknown);
-    if (m_camera.userSelectedVideoFormat.videoCodec == VideoCodecH265) {
-        m_pipeline << "h265parse config-interval=-1 ! ";
-        m_pipeline << "rtph265pay mtu=1024 ! ";
-    } else if (m_camera.userSelectedVideoFormat.videoCodec == VideoCodecMJPEG) {
-        m_pipeline << "jpegparse config-interval=-1 ! ";
-        m_pipeline << "rtpjpegpay mtu=1024 ! ";
-    } else {
-        m_pipeline << "h264parse config-interval=-1 ! ";
-        m_pipeline << "rtph264pay mtu=1024 ! ";
-    }
-    /**
-     * Allows users to fully write a manual pipeline, this must be used carefully.
-     */
+    m_pipeline<< OHDGstHelper::createRtpForVideoCodec(m_camera.userSelectedVideoFormat.videoCodec);
+    // Allows users to fully write a manual pipeline, this must be used carefully.
     if (!m_camera.manual_pipeline.empty()) {
         m_pipeline.str("");
         m_pipeline << m_camera.manual_pipeline;
     }
-    m_pipeline << fmt::format(" udpsink host=127.0.0.1 port={} ", m_video_udp_port);
-    // TODO: re-add recording, we need a better way than this crap
-    //m_pipeline << "queue ! ";
-    // this directs the video stream back to this system for recording in the Record class
-    //m_pipeline << fmt::format("udpsink host=127.0.0.1 port={}", m_video_port - 10);
-    std::cerr << "Pipeline: " << m_pipeline.str() << std::endl;
+    m_pipeline << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
+
+    std::cout << "Starting pipeline:" << m_pipeline.str() << std::endl;
     gst_pipeline = gst_parse_launch(m_pipeline.str().c_str(), &error);
     if (error) {
         std::cerr << "Failed to create pipeline: " << error->message << std::endl;
         return;
     }
-}
-
-
-/*
- * This is used to pick a default based on the hardware format
- */
-[[maybe_unused]] std::string GStreamerStream::find_v4l2_format(CameraEndpoint &endpoint, bool force_pixel_format, const std::string& pixel_format) {
-    std::cerr << "find_v4l2_format" << std::endl;
-    std::string width = "1280";
-    std::string height = "720";
-    std::string fps = "30";
-    std::vector<std::string> search_order = {
-        "1920x1080@60",
-        "1920x1080@30",
-        "1280x720@60",
-        "1280x720@30",
-        "800x600@30",
-        "640x480@30",
-        "320x240@30"
-    };
-    for (auto & default_format : search_order) {
-        for (auto & format : endpoint.formats) {
-            std::smatch result;
-            std::regex reg{ "([\\w\\d\\s\\-\\:\\/]*)\\|(\\d*)x(\\d*)\\@(\\d*)"};
-            if (std::regex_search(format, result, reg)) {
-                std::cerr << "format:"<< format << std::endl;
-                if (result.size() == 5) {
-                    auto c = fmt::format("{}x{}@{}", width, height, fps);
-
-                    if (force_pixel_format) {
-                        if (result[1] == pixel_format && c == default_format) {
-                            width = result[2];
-                            height = result[3];
-                            fps = result[4];
-                            
-                            return fmt::format("{}x{}@{}", width, height, fps);
-                        }
-                    } else if (c == default_format) {
-                        width = result[2];
-                        height = result[3];
-                        fps = result[4];
-
-                        return fmt::format("{}x{}@{}", width, height, fps);
-                    }
-                }
-                std::cerr << "unexpected match size"<< result.size() << std::endl;
-            }
-        }
-    }
-    // fallback using the default above
-    std::cerr << "returning default format:"<< width << " " << height << " " << fps << std::endl;
-    return fmt::format("{}x{}@{}", width, height, fps);
 }
 
 
@@ -179,6 +113,7 @@ void GStreamerStream::setup_raspberrypi_csi() {
 
 void GStreamerStream::setup_jetson_csi() {
     std::cerr << "Setting up Jetson CSI camera" << std::endl;
+    assert(m_camera.userSelectedVideoFormat.isValid());
     // if there's no endpoint this isn't a runtime bug but a programming error in the system service,
     // because it never found an endpoint to use for some reason
     // TODO well, we should not have to deal with that here ?!
@@ -268,59 +203,61 @@ void GStreamerStream::setup_ip_camera() {
 }
 
 std::string GStreamerStream::debug() {
-    std::cerr << "GS_debug";
+    std::stringstream ss;
+    ss<<"GS_debug|";
+    ss<<"Pipeline:"<<m_pipeline.str();
     GstState state;
     GstState pending;
     auto returnValue = gst_element_get_state(gst_pipeline, &state ,&pending, 1000000000);
-    std::cerr << "Gst state:" << returnValue << "." << state << "."<< pending << "." << std::endl;
+    ss<<" Gst state:"<< returnValue << "." << state << "."<< pending << "." << std::endl;
     if (returnValue==0){
         stop();
         sleep(3);
         start();
     }
-    return {};
+    ss<<"|GS_debug";
+    std::cout<<ss.str();
+    return ss.str();
 }
 
 void GStreamerStream::start() {
-    std::cerr << "GStreamerStream::start()" << std::endl;
+    std::cout << "GStreamerStream::start()" << std::endl;
     gst_element_set_state(gst_pipeline, GST_STATE_PLAYING);
     GstState state;
     GstState pending;
     auto returnValue = gst_element_get_state(gst_pipeline, &state ,&pending, 1000000000);
-    std::cerr << "Gst state:" << returnValue << "." << state << "."<< pending << "." << std::endl;
+    std::cout << "Gst state:" << returnValue << "." << state << "."<< pending << "." << std::endl;
 }
 
 
 void GStreamerStream::stop() {
-    std::cerr << "GStreamerStream::stop()" << std::endl;
+    std::cout << "GStreamerStream::stop()" << std::endl;
     gst_element_set_state(gst_pipeline, GST_STATE_PAUSED);
 }
 
 
 bool GStreamerStream::supports_bitrate() {
-    std::cerr << "GStreamerStream::supports_bitrate()" << std::endl;
+    std::cout << "GStreamerStream::supports_bitrate()" << std::endl;
     return false;
 }
 
 void GStreamerStream::set_bitrate(int bitrate) {
-    std::cerr << "Unmplemented GStreamerStream::set_bitrate(" << bitrate << ")" << std::endl;
+    std::cout << "Unmplemented GStreamerStream::set_bitrate(" << bitrate << ")" << std::endl;
 }
 
 bool GStreamerStream::supports_cbr() {
-    std::cerr << "GStreamerStream::supports_cbr()" << std::endl;
+    std::cout << "GStreamerStream::supports_cbr()" << std::endl;
     return false;
 }
 
 void GStreamerStream::set_cbr(bool enable) {
-    std::cerr << "Unsupported GStreamerStream::set_cbr(" << enable << ")" << std::endl;
+    std::cout<< "Unsupported GStreamerStream::set_cbr(" << enable << ")" << std::endl;
 }
-
 
 VideoFormat GStreamerStream::get_format() {
-    std::cerr << "GStreamerStream::get_format()" << std::endl;
+    std::cout << "GStreamerStream::get_format()" << std::endl;
     return m_camera.userSelectedVideoFormat;
 }
-
 
 void GStreamerStream::set_format(VideoFormat videoFormat) {
     std::cerr << "GStreamerStream::set_format(" << videoFormat.toString() << ")" << std::endl;

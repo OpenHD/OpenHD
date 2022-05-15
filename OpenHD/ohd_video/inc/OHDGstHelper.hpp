@@ -32,7 +32,13 @@ namespace OHDGstHelper{
         ss<<"videotestsrc ! ";
         // this part for some reason creates issues when used in combination with gst-launch
         //pipeline<<"'video/x-raw,format=(string)NV12,width=640,height=480,framerate=(fraction)30/1' ! ";
-        ss<<fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",5000);
+        if(videoFormat.videoCodec==VideoCodecH264){
+            ss<<fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",DEFAULT_BITRATE_KBITS);
+        }else if(videoFormat.videoCodec==VideoCodecH265){
+            ss<<fmt::format("x265enc name=encodectrl bitrate={} ! ", DEFAULT_BITRATE_KBITS);
+        }else{
+            std::cerr<<"no sw encoder for MJPEG,cannot start dummy camera\n";
+        }
         return ss.str();
     }
 
@@ -47,29 +53,63 @@ namespace OHDGstHelper{
     }
 
     static std::string createJetsonStream(const int sensor_id,const int bitrate,const VideoFormat videoFormat){
+        assert(videoFormat.videoCodec!=VideoCodecUnknown);
         std::stringstream ss;
         ss << fmt::format("nvarguscamerasrc do-timestamp=true sensor-id={} ! ", sensor_id);
         ss << fmt::format("video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! ",
                                   videoFormat.width, videoFormat.height,videoFormat.framerate);
-        //ss << "queue ! ";
         if (videoFormat.videoCodec == VideoCodecH265) {
             ss << fmt::format("nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} ! ",bitrate);
-        } else if (videoFormat.videoCodec == VideoCodecMJPEG) {
-            ss<< fmt::format("nvjpegenc quality=50 ! ");
-        } else {
-            // H264 or unknown
+        } else if(videoFormat.videoCodec==VideoCodecH264){
             ss << fmt::format("nvv4l2h264enc name=nvenc control-rate=1 insert-sps-pps=1 bitrate={} ! ",bitrate);
+        }else  {
+            ss<< fmt::format("nvjpegenc quality=50 ! ");
         }
         return ss.str();
     }
 
-    // For Cameras that do raw YUV (or RGB) we use a sw hw encoder, which also means no h265
-    static std::string createUvcRawSwEncodingStream(){
-        return {};
-    }
+     /**
+      * For V4l2 Cameras that do raw YUV (or RGB) we use a sw encoder.
+      * This one has no custom resolution(s) yet.
+      */
+     static std::string createV4l2SrcRawSwEncodingStream(const std::string& device_node,const VideoCodec videoCodec,const int bitrate){
+         std::stringstream ss;
+         ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
+         //std::cerr << "Allowing gstreamer to choose UVC format" << std::endl;
+         ss << fmt::format("video/x-raw ! ");
+         ss << "videoconvert ! ";
+         assert(videoCodec!=VideoCodecUnknown);
+         if(videoCodec==VideoCodecH264){
+             ss<<fmt::format("x264enc name=encodectrl bitrate={} tune=zerolatency key-int-max=10 ! ", bitrate);
+         }else if(videoCodec==VideoCodecH265){
+             ss<<fmt::format("x265enc name=encodectrl bitrate={} ! ", bitrate);
+         }else{
+             std::cerr<<"no sw encoder for MJPEG\n";
+         }
+         return ss.str();
+     }
+
+     /**
+      * This one is for v4l2src cameras that outputs already encoded video.
+      */
+     static std::string createV4l2SrcEncodedEncodingStream(const std::string& device_node,const VideoFormat videoFormat){
+         std::stringstream ss;
+         ss<< fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
+         if(videoFormat.videoCodec==VideoCodecH264){
+             ss<< fmt::format("video/x-h264, width={}, height={}, framerate={}/1 ! ",
+                              videoFormat.width, videoFormat.height,videoFormat.framerate);
+         }else if(videoFormat.videoCodec==VideoCodecH265){
+             ss<< fmt::format("video/x-h265, width={}, height={}, framerate={}/1 ! ",
+                              videoFormat.width, videoFormat.height,videoFormat.framerate);
+         }else{
+             assert(videoFormat.videoCodec==VideoCodecMJPEG);
+             ss << fmt::format("image/jpeg, width={}, height={}, framerate={}/1 ! ",
+                                       videoFormat.width, videoFormat.height,videoFormat.framerate);
+         }
+         return ss.str();
+     }
 
     // These are not tested
-
     static std::string createUVCH264Stream(const std::string& device_node,const int bitrate,const VideoFormat videoFormat){
         assert(videoFormat.videoCodec==VideoCodecH264);
         std::stringstream ss;
@@ -78,7 +118,6 @@ namespace OHDGstHelper{
                                   videoFormat.width,videoFormat.height,videoFormat.framerate);
         return ss.str();
     }
-
     static std::string createIpCameraStream(const std::string& url){
         std::stringstream ss;
         // none of the other params are used at the moment, we would need to set them with ONVIF or a per-camera API of some sort,
@@ -86,19 +125,16 @@ namespace OHDGstHelper{
         ss << fmt::format("rtspsrc location=\"{}\" latency=0 ! ", url);
         return ss.str();
     }
-
     // ------------- crateXXXStream end  -------------
 
     /**
-     * Create the part of the pipeline that takes the raw h264/h265/mjpeg, packs it into rtp and then
-     * sends it out via UDP.
-     * @param videoCodec rtp supports h264,h265 and mjpeg which fits nicely with our requirements
-     * @param udpOutPort the udp port where data is sent to (localhost)
-     * @return the gstreamer pipeline part.
-     */
-    static std::string createRtpUDPPart(const VideoCodec videoCodec,const int udpOutPort){
-        assert(videoCodec!=VideoCodecUnknown);
+    * Create the part of the pipeline that takes the raw h264/h265/mjpeg from gstreamer and packs it into rtp.
+    * @param videoCodec the video codec o create the rtp for.
+    * @return the gstreamer pipeline part.
+    */
+    static std::string createRtpForVideoCodec(const VideoCodec videoCodec){
         std::stringstream ss;
+        assert(videoCodec!=VideoCodecUnknown);
         if(videoCodec==VideoCodecH264){
             ss << "h264parse config-interval=-1 ! ";
             ss << "rtph264pay mtu=1024 ! ";
@@ -106,12 +142,21 @@ namespace OHDGstHelper{
             ss << "h265parse config-interval=-1 ! ";
             ss << "rtph265pay mtu=1024 ! ";
         }else{
+            assert(videoCodec==VideoCodecMJPEG);
             // mjpeg
             ss << "jpegparse config-interval=-1 ! ";
             ss << "rtpjpegpay mtu=1024 ! ";
         }
-        ss << fmt::format(" udpsink host=127.0.0.1 port={} ", udpOutPort);
         return ss.str();
+    }
+
+    /**
+    * Create the part of the pipeline that takes the rtp from gstreamer and sends it to udp.
+    * @param udpOutPort the udp (localhost) port.
+    * @return the gstreamer pipeline part
+    */
+    static std::string createOutputUdpLocalhost(const int udpOutPort){
+        return fmt::format(" udpsink host=127.0.0.1 port={} ", udpOutPort);
     }
 }
 #endif //OPENHD_OHDGSTHELPER_H
