@@ -8,6 +8,8 @@ mkdir build
 
 cd build
 
-cmake ..
+cmake -G Ninja ..
+ninja
 
-make
+#cmake ..
+#make
