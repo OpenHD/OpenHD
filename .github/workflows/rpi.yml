@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: test
-      run: |
+        run: |
         echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
         echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
 
