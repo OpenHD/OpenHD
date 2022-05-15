@@ -24,11 +24,17 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo ./install_dep.sh
-          
+
       - name: Build with make
         run: |
           cd OpenHD
           ./build_cmake.sh
+
+      - name: Show files
+        run: |
+          tree
+
+          
       #- name: Install
       #  run: |
       #    cd OpenHD/build
