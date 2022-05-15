@@ -31,6 +31,10 @@ target_include_directories(OHDInterfaceLib PUBLIC inc/)
 target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
 #target_include_directories(OHDInterfaceLib PUBLIC ${WB_INCLUDE_DIRECTORES})
 
+#for some reason, otherwise pi complains about threads
+find_package(Threads REQUIRED)
+target_link_libraries(OHDInterfaceLib PUBLIC Threads::Threads)
+
 # Custom testing, requires written jsons from discovery
 add_executable(test_interface test/test_interface.cpp)
 target_link_libraries(test_interface OHDInterfaceLib)
