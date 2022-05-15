@@ -19,7 +19,8 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo ./install_dep.sh
-      - name: Build
+      - name: Build ninja
         run: |
+          sudo apt -y install ninja-build
           cd OpenHD
           ./build_cmake.sh
