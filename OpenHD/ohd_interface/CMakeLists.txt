@@ -14,8 +14,8 @@ include(../lib/wifibroadcast/WBLib.cmake)
 # Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
 SET(Boost_USE_STATIC_LIBS OFF)
 SET(Boost_USE_MULTITHREAD ON)
-FIND_PACKAGE(Boost REQUIRED COMPONENTS regex filesystem)
-SET(INTERFACE_USED_BOOST_LIBRARIES Boost::regex Boost::filesystem)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
+SET(INTERFACE_USED_BOOST_LIBRARIES Boost::filesystem)
 
 SET(ALL_INTERFACE_SOURCE_FILES
         src/WifiCards.cpp

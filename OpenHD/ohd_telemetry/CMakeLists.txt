@@ -17,7 +17,7 @@ SET(Boost_USE_STATIC_LIBS OFF)
 SET(Boost_USE_MULTITHREAD ON)
 find_package(Boost REQUIRED COMPONENTS system thread regex filesystem)
 message(STATUS "Boost version: ${Boost_VERSION}")
-SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::system Boost::thread Boost::regex Boost::filesystem)
+SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::system Boost::thread Boost::filesystem)
 
 SET(ALL_TELEMETRY_SOURCE_FILES
         src/AirTelemetry.cpp

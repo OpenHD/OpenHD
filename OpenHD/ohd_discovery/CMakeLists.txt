@@ -33,8 +33,8 @@ target_include_directories(OHDDiscoveryLib PUBLIC lib/include)
 # Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
 SET(Boost_USE_STATIC_LIBS OFF)
 SET(Boost_USE_MULTITHREAD ON)
-FIND_PACKAGE(Boost REQUIRED COMPONENTS regex filesystem)
-target_link_libraries(OHDDiscoveryLib PUBLIC Boost::regex Boost::filesystem)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
+target_link_libraries(OHDDiscoveryLib PUBLIC Boost::filesystem)
 
 # find and include all the other libs
 include(cmake/FindLibNL.cmake)
