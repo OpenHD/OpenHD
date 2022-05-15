@@ -85,26 +85,13 @@ void GStreamerStream::setup() {
             return;
         }
     }
-    m_pipeline << "queue ! ";
-    assert(m_camera.userSelectedVideoFormat.videoCodec!=VideoCodecUnknown);
-    if (m_camera.userSelectedVideoFormat.videoCodec == VideoCodecH265) {
-        m_pipeline << "h265parse config-interval=-1 ! ";
-        m_pipeline << "rtph265pay mtu=1024 ! ";
-    } else if (m_camera.userSelectedVideoFormat.videoCodec == VideoCodecMJPEG) {
-        m_pipeline << "jpegparse config-interval=-1 ! ";
-        m_pipeline << "rtpjpegpay mtu=1024 ! ";
-    } else {
-        m_pipeline << "h264parse config-interval=-1 ! ";
-        m_pipeline << "rtph264pay mtu=1024 ! ";
-    }
-    /**
-     * Allows users to fully write a manual pipeline, this must be used carefully.
-     */
+    m_pipeline<< OHDGstHelper::createRtpForVideoCodec(m_camera.userSelectedVideoFormat.videoCodec);
+    // Allows users to fully write a manual pipeline, this must be used carefully.
     if (!m_camera.manual_pipeline.empty()) {
         m_pipeline.str("");
         m_pipeline << m_camera.manual_pipeline;
     }
-    m_pipeline << fmt::format(" udpsink host=127.0.0.1 port={} ", m_video_udp_port);
+    m_pipeline << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
     // TODO: re-add recording, we need a better way than this crap
     //m_pipeline << "queue ! ";
     // this directs the video stream back to this system for recording in the Record class

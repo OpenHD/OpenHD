@@ -89,16 +89,24 @@ namespace OHDGstHelper{
 
     // ------------- crateXXXStream end  -------------
 
+
     /**
-     * Create the part of the pipeline that takes the raw h264/h265/mjpeg, packs it into rtp and then
-     * sends it out via UDP.
-     * @param videoCodec rtp supports h264,h265 and mjpeg which fits nicely with our requirements
-     * @param udpOutPort the udp port where data is sent to (localhost)
-     * @return the gstreamer pipeline part.
+     * Create the part of the pipeline that takes the rtp from gstreamer and sends it to udp.
+     * @param udpOutPort the udp (localhost) port.
+     * @return the gstreamer pipeline part
      */
-    static std::string createRtpUDPPart(const VideoCodec videoCodec,const int udpOutPort){
-        assert(videoCodec!=VideoCodecUnknown);
+    static std::string createOutputUdpLocalhost(const int udpOutPort){
+        return fmt::format(" udpsink host=127.0.0.1 port={} ", udpOutPort);
+    }
+
+    /**
+    * Create the part of the pipeline that takes the raw h264/h265/mjpeg from gstreamer and packs it into rtp.
+    * @param udpOutPort the udp (localhost) port.
+    * @return the gstreamer pipeline part.
+    */
+    static std::string createRtpForVideoCodec(const VideoCodec videoCodec){
         std::stringstream ss;
+        assert(videoCodec!=VideoCodecUnknown);
         if(videoCodec==VideoCodecH264){
             ss << "h264parse config-interval=-1 ! ";
             ss << "rtph264pay mtu=1024 ! ";
@@ -110,7 +118,6 @@ namespace OHDGstHelper{
             ss << "jpegparse config-interval=-1 ! ";
             ss << "rtpjpegpay mtu=1024 ! ";
         }
-        ss << fmt::format(" udpsink host=127.0.0.1 port={} ", udpOutPort);
         return ss.str();
     }
 }
