@@ -155,13 +155,6 @@ struct VideoFormat{
         return ret;
     }
 };
-// Simple test for to and from string
-static void test_video_format_regex(){
-    const VideoFormat source{VideoCodecH264,1280,720,30};
-    const auto serialized=source.toString();
-    const auto from=VideoFormat::fromString(serialized);
-    assert(source==from);
-}
 
 // CSI cameras don't have an endpoint,
 // Since there are too many specialities as if we could generify them.
@@ -363,4 +356,6 @@ static bool check_bitrate_sane(const int bitrateKBits){
     }
     return true;
 }
+
+
 #endif

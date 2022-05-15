@@ -1,6 +1,7 @@
 #include "OHDDiscovery.h"
 #include "openhd-settings.hpp"
 #include "openhd-camera.hpp"
+#include "tests.hpp"
 
 #include <iostream>
 
@@ -9,7 +10,7 @@
  */
 int main(int argc, char *argv[]) {
 
-    test_video_format_regex();
+    OHDCommonTests::test_video_format_regex();
 
     generateSettingsDirectoryIfNonExists();
     const auto id1=getOrCreateUnitId();
