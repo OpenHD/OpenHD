@@ -13,7 +13,8 @@
 #include <iostream>
 #include <fstream>
 
-#include <boost/filesystem.hpp>
+//#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -31,13 +32,13 @@ static const auto UNIT_ID_FILE=std::string(BASE_PATH)+"unit.id";
  * generate the directory where all persistent settings of OpenHD are stored.
  */
 static void generateSettingsDirectoryIfNonExists(){
-    if(!boost::filesystem::exists(BASE_PATH)){
+    if(!std::filesystem::exists(BASE_PATH)){
         std::cout<<"Creating settings directory\n";
-        if(!boost::filesystem::create_directory(BASE_PATH)){
+        if(!std::filesystem::create_directory(BASE_PATH)){
             std::cerr<<"Cannot create settings directory\n";
         }
     }
-    assert(boost::filesystem::exists(BASE_PATH));
+    assert(std::filesystem::exists(BASE_PATH));
 }
 
 /**
@@ -86,10 +87,10 @@ static std::string findOrCreateSettingsDirectory(bool is_air){
     const auto str=settingsPath.str();
     std::cout<<"SettingsDirectory:["<<str<<"]\n";
     // create the directory if it is non existing
-    if(!boost::filesystem::exists(str.c_str())){
-        boost::filesystem::create_directory(str.c_str());
+    if(!std::filesystem::exists(str.c_str())){
+        std::filesystem::create_directory(str.c_str());
     }
-    assert(boost::filesystem::exists(str.c_str()));
+    assert(std::filesystem::exists(str.c_str()));
     return str;
 }
 
