@@ -12,4 +12,4 @@ cd build
 #ninja
 
 cmake ..
-make
+make -j4
