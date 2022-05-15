@@ -63,7 +63,7 @@ namespace OHDGstHelper{
     }
 
      /**
-      * For V4l2 Cameras that do raw YUV (or RGB) we use a sw hw encoder.
+      * For V4l2 Cameras that do raw YUV (or RGB) we use a sw encoder.
       * This one has no custom resolution(s) yet.
       */
      static std::string createV4l2SrcRawSwEncodingStream(const std::string& device_node,const VideoCodec videoCodec,const int bitrate){
