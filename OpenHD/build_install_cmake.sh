@@ -4,4 +4,5 @@
 
 ./build_cmake.sh
 
+cd build
 sudo cmake --install .
