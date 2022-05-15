@@ -121,16 +121,6 @@ namespace OHDGstHelper{
     }
     // ------------- crateXXXStream end  -------------
 
-
-    /**
-     * Create the part of the pipeline that takes the rtp from gstreamer and sends it to udp.
-     * @param udpOutPort the udp (localhost) port.
-     * @return the gstreamer pipeline part
-     */
-    static std::string createOutputUdpLocalhost(const int udpOutPort){
-        return fmt::format(" udpsink host=127.0.0.1 port={} ", udpOutPort);
-    }
-
     /**
     * Create the part of the pipeline that takes the raw h264/h265/mjpeg from gstreamer and packs it into rtp.
     * @param videoCodec the video codec o create the rtp for.
@@ -152,6 +142,15 @@ namespace OHDGstHelper{
             ss << "rtpjpegpay mtu=1024 ! ";
         }
         return ss.str();
+    }
+
+    /**
+    * Create the part of the pipeline that takes the rtp from gstreamer and sends it to udp.
+    * @param udpOutPort the udp (localhost) port.
+    * @return the gstreamer pipeline part
+    */
+    static std::string createOutputUdpLocalhost(const int udpOutPort){
+        return fmt::format(" udpsink host=127.0.0.1 port={} ", udpOutPort);
     }
 }
 #endif //OPENHD_OHDGSTHELPER_H
