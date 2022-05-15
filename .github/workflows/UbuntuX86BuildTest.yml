@@ -21,6 +21,4 @@ jobs:
           sudo ./install_dep.sh
       - name: Build
         run: |
-          cmake -B build -S OpenHD/
-          cd build
-          make
+          ./OpenHD/build_cmake.sh
