@@ -336,7 +336,8 @@ static std::vector<Camera> cameras_from_manifest(){
                 camera.endpoints.push_back(endpoint);
             }
             camera.userSelectedVideoFormat=VideoFormat::fromString(_camera["userSelectedVideoFormat"]);
-            camera.bitrateKBits=_camera["bitrateKBits"];
+            const std::string bitrateKBits=_camera["bitrateKBits"];
+            camera.bitrateKBits= atoi(bitrateKBits.c_str());
             ret.push_back(camera);
         }
     } catch (std::exception &ex) {
