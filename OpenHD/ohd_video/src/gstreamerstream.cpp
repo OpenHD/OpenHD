@@ -113,6 +113,7 @@ void GStreamerStream::setup_raspberrypi_csi() {
 
 void GStreamerStream::setup_jetson_csi() {
     std::cerr << "Setting up Jetson CSI camera" << std::endl;
+    assert(m_camera.userSelectedVideoFormat.isValid());
     // if there's no endpoint this isn't a runtime bug but a programming error in the system service,
     // because it never found an endpoint to use for some reason
     // TODO well, we should not have to deal with that here ?!
@@ -202,59 +203,61 @@ void GStreamerStream::setup_ip_camera() {
 }
 
 std::string GStreamerStream::debug() {
-    std::cerr << "GS_debug";
+    std::stringstream ss;
+    ss<<"GS_debug|";
+    ss<<"Pipeline:"<<m_pipeline.str();
     GstState state;
     GstState pending;
     auto returnValue = gst_element_get_state(gst_pipeline, &state ,&pending, 1000000000);
-    std::cerr << "Gst state:" << returnValue << "." << state << "."<< pending << "." << std::endl;
+    ss<<" Gst state:"<< returnValue << "." << state << "."<< pending << "." << std::endl;
     if (returnValue==0){
         stop();
         sleep(3);
         start();
     }
-    return {};
+    ss<<"|GS_debug";
+    std::cout<<ss.str();
+    return ss.str();
 }
 
 void GStreamerStream::start() {
-    std::cerr << "GStreamerStream::start()" << std::endl;
+    std::cout << "GStreamerStream::start()" << std::endl;
     gst_element_set_state(gst_pipeline, GST_STATE_PLAYING);
     GstState state;
     GstState pending;
     auto returnValue = gst_element_get_state(gst_pipeline, &state ,&pending, 1000000000);
-    std::cerr << "Gst state:" << returnValue << "." << state << "."<< pending << "." << std::endl;
+    std::cout << "Gst state:" << returnValue << "." << state << "."<< pending << "." << std::endl;
 }
 
 
 void GStreamerStream::stop() {
-    std::cerr << "GStreamerStream::stop()" << std::endl;
+    std::cout << "GStreamerStream::stop()" << std::endl;
     gst_element_set_state(gst_pipeline, GST_STATE_PAUSED);
 }
 
 
 bool GStreamerStream::supports_bitrate() {
-    std::cerr << "GStreamerStream::supports_bitrate()" << std::endl;
+    std::cout << "GStreamerStream::supports_bitrate()" << std::endl;
     return false;
 }
 
 void GStreamerStream::set_bitrate(int bitrate) {
-    std::cerr << "Unmplemented GStreamerStream::set_bitrate(" << bitrate << ")" << std::endl;
+    std::cout << "Unmplemented GStreamerStream::set_bitrate(" << bitrate << ")" << std::endl;
 }
 
 bool GStreamerStream::supports_cbr() {
-    std::cerr << "GStreamerStream::supports_cbr()" << std::endl;
+    std::cout << "GStreamerStream::supports_cbr()" << std::endl;
     return false;
 }
 
 void GStreamerStream::set_cbr(bool enable) {
-    std::cerr << "Unsupported GStreamerStream::set_cbr(" << enable << ")" << std::endl;
+    std::cout<< "Unsupported GStreamerStream::set_cbr(" << enable << ")" << std::endl;
 }
-
 
 VideoFormat GStreamerStream::get_format() {
-    std::cerr << "GStreamerStream::get_format()" << std::endl;
+    std::cout << "GStreamerStream::get_format()" << std::endl;
     return m_camera.userSelectedVideoFormat;
 }
-
 
 void GStreamerStream::set_format(VideoFormat videoFormat) {
     std::cerr << "GStreamerStream::set_format(" << videoFormat.toString() << ")" << std::endl;
