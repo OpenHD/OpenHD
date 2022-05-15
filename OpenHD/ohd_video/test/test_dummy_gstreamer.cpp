@@ -3,7 +3,7 @@
 #include <thread>
 #include <chrono>
 
-#include "dummygstreamerstream.h"
+#include "gstreamerstream.h"
 
 int main(int argc, char *argv[]) {
 
@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
     PlatformType platformType;
     uint16_t video_port=OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP;
     
-    auto stream=std::make_unique<DummyGstreamerStream>(platformType,camera,video_port);
+    auto stream=std::make_unique<GStreamerStream>(platformType,camera,video_port);
     stream->setup();
     stream->start();
 

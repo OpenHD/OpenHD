@@ -21,12 +21,17 @@
 #include "gstreamerstream.h"
 
 
-
 GStreamerStream::GStreamerStream(PlatformType platform,
                                  Camera &camera, 
                                  uint16_t video_udp_port)
     : CameraStream(platform, camera, video_udp_port) {
-    std::cerr << "GStreamerStream::GStreamerStream()" << std::endl;
+    std::cout<<"GStreamerStream::GStreamerStream()\n";
+    // rn the dummy camera doesn't support any custom resolution or framerate
+    if(camera.type==CameraTypeDummy){
+        camera.userSelectedVideoFormat.videoCodec=VideoCodecH264;
+        camera.userSelectedVideoFormat.width=640;
+        camera.userSelectedVideoFormat.height=480;
+    }
 }
 
 
@@ -44,7 +49,6 @@ void GStreamerStream::setup() {
         m_camera.bitrateKBits=5000;
     }
     assert(m_camera.userSelectedVideoFormat.isValid());
-    assert(m_camera.type!=CameraTypeDummy);
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
             setup_raspberrypi_csi();
@@ -70,6 +74,14 @@ void GStreamerStream::setup() {
             setup_ip_camera();
             break;
         }
+        case CameraTypeDummy:{
+            m_pipeline<<OHDGstHelper::createDummyStream(m_camera.userSelectedVideoFormat);
+            break;
+        }
+        case CameraTypeRaspberryPiVEYE:
+        case CameraTypeRockchipCSI:
+            std::cerr<<"Veye and rockchip are unsupported at the time\n";
+            return;
         case CameraTypeUnknown: {
             std::cerr << "Unknown camera type" << std::endl;
             return;
@@ -82,11 +94,8 @@ void GStreamerStream::setup() {
         m_pipeline << m_camera.manual_pipeline;
     }
     m_pipeline << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
-    // TODO: re-add recording, we need a better way than this crap
-    //m_pipeline << "queue ! ";
-    // this directs the video stream back to this system for recording in the Record class
-    //m_pipeline << fmt::format("udpsink host=127.0.0.1 port={}", m_video_port - 10);
-    std::cerr << "Pipeline: " << m_pipeline.str() << std::endl;
+
+    std::cout << "Starting pipeline:" << m_pipeline.str() << std::endl;
     gst_pipeline = gst_parse_launch(m_pipeline.str().c_str(), &error);
     if (error) {
         std::cerr << "Failed to create pipeline: " << error->message << std::endl;

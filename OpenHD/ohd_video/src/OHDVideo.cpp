@@ -6,7 +6,6 @@
 #include "json.hpp"
 #include "gstreamerstream.h"
 #include "libcamerastream.h"
-#include "dummygstreamerstream.h"
 #include "openhd-settings.hpp"
 
 #include "OHDVideo.h"
@@ -81,7 +80,8 @@ void OHDVideo::configure(Camera &camera) {
         case CameraTypeIP:
         case CameraTypeRockchipCSI:
         case CameraTypeUVC:
-        case CameraTypeV4L2Loopback: {
+        case CameraTypeV4L2Loopback:
+        case CameraTypeDummy:{
             std::cout<<"Camera index:"<<camera.index<<"\n";
             const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
             auto stream=std::make_unique<GStreamerStream>(platform.platform_type, camera, udp_port);
@@ -89,14 +89,6 @@ void OHDVideo::configure(Camera &camera) {
             stream->start();
             m_camera_streams.push_back(std::move(stream));
             break;
-        }
-        case CameraTypeDummy:{
-            std::cout<<"Dummy Camera index:"<<camera.index<<"\n";
-            const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-            auto stream=std::make_unique<DummyGstreamerStream>(platform.platform_type, camera, udp_port);
-            stream->setup();
-            stream->start();
-            m_camera_streams.push_back(std::move(stream));
         }
         default: {
             std::cerr << "Unknown camera type, skipping" << std::endl;
