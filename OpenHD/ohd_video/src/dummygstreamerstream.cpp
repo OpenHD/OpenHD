@@ -25,11 +25,16 @@ void DummyGstreamerStream::setup() {
     }
     std::stringstream pipeline;
 
-    pipeline<<"videotestsrc num-buffers=0 !";
-    pipeline<<fmt::format("x264enc bitrate={} tune=zerolatency ! ",5000);
+    pipeline<<"videotestsrc ! ";
+    // this part for some reason creates issues when used in combination with gst-launch
+    //pipeline<<"'video/x-raw,format=(string)NV12,width=640,height=480,framerate=(fraction)30/1' ! ";
+    pipeline<<fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",5000);
+    // from https://gstreamer.freedesktop.org/documentation/videoparsersbad/h264parse.html?gi-language=c
+    // config-intervall=-1 send sps/pps with every IDR frame
     pipeline<<"h264parse config-interval=-1 ! ";
     pipeline<<"rtph264pay mtu=1024 ! ";
     pipeline<<fmt::format("udpsink host=127.0.0.1 port={} ", m_video_udp_port);
+    std::cout<<"Pipeline: "<<pipeline.str()<<"\n";
 
     gst_pipeline = gst_parse_launch(pipeline.str().c_str(), &error);
     if (error) {
