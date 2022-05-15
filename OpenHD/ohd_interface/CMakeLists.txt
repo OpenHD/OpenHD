@@ -9,14 +9,6 @@ include_directories(../ohd_common)
 # Build and include wifibroadcast
 include(../lib/wifibroadcast/WBLib.cmake)
 
-# from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
-# Find and include boost
-# Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
-SET(Boost_USE_STATIC_LIBS OFF)
-SET(Boost_USE_MULTITHREAD ON)
-FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
-SET(INTERFACE_USED_BOOST_LIBRARIES Boost::filesystem)
-
 SET(ALL_INTERFACE_SOURCE_FILES
         src/WifiCards.cpp
         #src/EthernetCards.cpp
@@ -26,8 +18,16 @@ SET(ALL_INTERFACE_SOURCE_FILES
 add_library(OHDInterfaceLib
         STATIC
         ${ALL_INTERFACE_SOURCE_FILES})
+
+# from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
+# Find and include boost
+# Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
+SET(Boost_USE_STATIC_LIBS OFF)
+SET(Boost_USE_MULTITHREAD ON)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
+target_link_libraries(OHDInterfaceLib PUBLIC Boost::filesystem)
+
 target_include_directories(OHDInterfaceLib PUBLIC inc/)
-target_link_libraries(OHDInterfaceLib PUBLIC ${INTERFACE_USED_BOOST_LIBRARIES})
 target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
 #target_include_directories(OHDInterfaceLib PUBLIC ${WB_INCLUDE_DIRECTORES})
 
