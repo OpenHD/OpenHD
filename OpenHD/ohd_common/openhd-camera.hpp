@@ -165,6 +165,15 @@ struct UvcCameraEndpoint{
     std::string device_node;
 };
 
+// A raw endpoint is for cameras that support YUV or RGB raw frames.
+// Most likely, the stream is then going to do sw encoding on them.
+// This way, we can handle thermal cameras for example.
+struct RawEndpoint {
+    std::string device_node;
+    std::string bus;
+    std::vector<std::string> supportedRawFormats;
+};
+
 struct CameraEndpoint {
     std::string device_node;
     std::string bus;
@@ -179,15 +188,6 @@ struct CameraEndpoint {
     }
 };
 
-// A raw endpoint is for cameras that support YUV or RGB raw frames.
-// Most likely, the stream is then going to do sw encoding on them.
-// This way, we can handle thermal cameras for example.
-struct RawEndpoint {
-    std::string device_node;
-    std::string bus;
-    std::vector<std::string> supportedRawFormats;
-};
-
 // An encoded endpoint is for cameras that support h264,h265 or MJPEG.
 // This is mostly for CSI cameras, for which we then later have a HW accelerated method
 // Of generating an encoded video stream that doesn't directly talk to the underlying v4l2 device node,
@@ -195,6 +195,9 @@ struct RawEndpoint {
 // However, some UVC cameras also support directly encoded MJPEG or h264/h265 out. In this case, they get a encoded endpoint,too.
 struct EncodedEndpoint{
     // A list of all the video formats this camera can do for generating encoded data.
+    // If the list of supported formats is empty, one can assume that the camera can do anything ?
+    // TODO: Or should we make it a hard requirement, and what we as develoers have not said is "feasible" for the camera
+    // is all it can do ?
    std::vector<VideoFormat> supportedFormats;
 };
 
@@ -208,7 +211,8 @@ struct Camera {
     std::string pid;
     // for USB this is the bus number, for CSI it's the connector number
     std::string bus;
-    // Unique index of this camera, should start at 0
+    // Unique index of this camera, should start at 0. The index number depends on the order the cameras were picked
+    // during the discovery step.
     int index=0;
     // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar form
     std::string url;

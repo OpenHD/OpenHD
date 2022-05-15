@@ -45,7 +45,6 @@ DCameras::DCameras(PlatformType platform_type, BoardType board_type, CarrierType
 
 void DCameras::discover() {
     std::cout << "Cameras::discover()" << std::endl;
-
     switch (m_platform_type) {
         case PlatformTypeRaspberryPi: {
             detect_raspberrypi_csi();
@@ -64,10 +63,8 @@ void DCameras::discover() {
             break;
         }
     }
-
     detect_flir();
     detect_seek();
-
     detect_v4l2();
     detect_ip();
 }
@@ -82,7 +79,6 @@ void DCameras::discover() {
  */
 void DCameras::detect_raspberrypi_csi() {
     std::cout<< "Cameras::detect_raspberrypi_csi()" << std::endl;
-
     std::array<char, 512> buffer{};
     std::string raw_value;
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("vcgencmd get_camera", "r"), pclose);
@@ -93,28 +89,21 @@ void DCameras::detect_raspberrypi_csi() {
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         raw_value += buffer.data();
     }
-
     std::smatch result;
     // example "supported=2 detected=2"
     std::regex r{ R"(supported=([\d]+)\s+detected=([\d]+))"};
-    
     if (!std::regex_search(raw_value, result, r)) {
         std::cout<< "Cameras::detect_raspberrypi_csi() no regex match" << std::endl;
         return;
     }
-
     if (result.size() != 3) {
         std::cout << "Cameras::detect_raspberrypi_csi() regex unexpected result" << std::endl;
         return;
     }
-
     std::string supported = result[1];
     std::string detected = result[2];
-
     std::cout << "Cameras::detect_raspberrypi_csi() supported="+supported+" detected="+detected << std::endl;
-
     auto camera_count = atoi(detected.c_str());
-
     if (camera_count >= 1) {
         Camera camera;
         camera.name = "Pi CSI 0";
@@ -127,7 +116,6 @@ void DCameras::detect_raspberrypi_csi() {
         endpoint.bus = camera.bus;
         endpoint.support_h264 = true;
         endpoint.support_mjpeg = false;
-
         // these are temporary, there isn't a way to ask the old broadcom camera drivers about the supported
         // resolutions, but we know which ones people actually use so we can simply mark them for now
         endpoint.formats.emplace_back("H.264|640x480@30");
@@ -141,7 +129,6 @@ void DCameras::detect_raspberrypi_csi() {
         endpoint.formats.emplace_back("H.264|1012x760@120");
         endpoint.formats.emplace_back("H.264|1920x1080@30");
         endpoint.formats.emplace_back("H.264|1920x1080@59.9");
-
         m_camera_endpoints.push_back(endpoint);
         m_cameras.push_back(camera);
     }
@@ -157,7 +144,6 @@ void DCameras::detect_raspberrypi_csi() {
         endpoint.bus = camera.bus;
         endpoint.support_h264 = true;
         endpoint.support_mjpeg = false;
-
         endpoint.formats.emplace_back("H.264|640x480@30");
         endpoint.formats.emplace_back("H.264|640x480@48");
         endpoint.formats.emplace_back("H.264|640x480@60");
@@ -169,7 +155,6 @@ void DCameras::detect_raspberrypi_csi() {
         //endpoint.formats.emplace_back("H.264|1012x760@120");
         endpoint.formats.emplace_back("H.264|1920x1080@30");
         //endpoint.formats.emplace_back("H.264|1920x1080@59.9");
-
         m_camera_endpoints.push_back(endpoint);
         m_cameras.push_back(camera);
     }
@@ -518,6 +503,12 @@ void DCameras::write_manifest() {
         if(camera.endpoints.empty()){
             std::cerr<<"Warning Camera without endpoints\n";
         }
+    }
+    // make sure the camera indices are right
+    int camIdx=0;
+    for(auto& camera:m_cameras){
+        camera.index=camIdx;
+        camIdx++;
     }
     write_camera_manifest(m_cameras);
 }
