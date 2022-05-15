@@ -89,21 +89,24 @@ inline VideoCodec string_to_video_codec(const std::string& codec) {
     return VideoCodecUnknown;
 }
 
-// Each camera should support at least one video format,
-// But it might support a wide variety of video formats.
-// For example,a camera might be able to do h264 and h265
-// for multiple resolution@framerate tuples.
+// A video format refers to a selected configuration supported by OpenHD.
+// It is possible that a camera cannot do the selected configuration in HW,
+// In this case a sw encoder can be used (in case of low res streams, that will work even on the pi).
 // Example: one of the supported formats of rpi cam is
 // h264|1280x720@60
 struct VideoFormat{
-    VideoCodec videoCodec;
-    int width;
-    int height;
-    int framerate;
+    VideoCodec videoCodec=VideoCodecH264; //always default to h264
+    int width=640;
+    int height=480;
+    int framerate=30;
     bool operator==(const VideoFormat& o) const{
         return this->width==o.width && this->height==o.height && this->framerate==o.framerate;
     }
-    // For debugging, I use https://regex101.com/
+    // Return true if the Video format is valid, aka the values set "make sense".
+    // values <=0 mean something went wrong during parsing or similar.
+    [[nodiscard]] bool isValid()const{
+        return videoCodec!=VideoCodecUnknown && width>0 && height >0 && framerate>0;
+    }
     /**
      * Convert the VideoFormat into a readable string, in this format it can be parsed back by regex.
      * @return the video format in a readable form.
@@ -118,6 +121,7 @@ struct VideoFormat{
      * @param input the string, for example as generated above.
      * @return the video format, with the parsed values from above. On failure,
      * behaviour is undefined.
+     * Note: For debugging, I use https://regex101.com/
      */
     static VideoFormat fromString(const std::string& input){
         VideoFormat ret{};
@@ -151,6 +155,15 @@ static void test_video_format_regex(){
     assert(source==from);
 }
 
+// CSI cameras don't have an endpoint,
+// Since there are too many specialities as if we could generify them.
+// Also, in case of CIS cameras, we don't need the raw stuff, since pretty much every
+// CSI camera then has a custom hw-accelerated pipeline that produces H264/H265/MJPEG out.
+// However, a UVC camera might have YUV and/or MJPEG out and requires custom encoding.
+struct UvcCameraEndpoint{
+    std::string device_node;
+};
+
 struct CameraEndpoint {
     std::string device_node;
     std::string bus;
@@ -164,6 +177,8 @@ struct CameraEndpoint {
         return (support_h264 || support_h265 || support_mjpeg || support_raw);
     }
 };
+
+static constexpr auto DEFAULT_BITRATE_KBITS=5000;
 
 struct Camera {
     CameraType type=CameraTypeUnknown;
@@ -179,15 +194,19 @@ struct Camera {
     std::string url;
     // optional, if not empty we should always use the manual pipeline and discard everything else.
     std::string manual_pipeline;
-
-    // this comes from the camera itself, includes width/height/fps, we will need to automate this in QOpenHD
-    std::string format;
-    VideoCodec codec = VideoCodecH264;
+    // All the endpoints supported by this camera.
     std::vector<CameraEndpoint> endpoints;
+    // These values are settings that can change dynamically at run time (non-deterministic)
+    // --------------------------------------- non-deterministic begin ---------------------------------------
+    // The video format selected by the user. If the user sets a video format that isn't supported
+    // (for example, he might select h264|1920x1080@120 but the camera can only do 60fps)
+    // The stream should default to the first available video format.
+    // If no video format is available, it should default to h264|640x480@30.
+    VideoFormat userSelectedVideoFormat;
     // All these are for the future, and probably implemented on a best effort approach-
     // e.g. changing them does not neccessarly mean the camera supports changing them,
     // and they are too many to do it in a "check if supported" manner.
-    std::string bitrate;
+    int bitrateKBits=DEFAULT_BITRATE_KBITS;
     std::string brightness;
     std::string contrast;
     std::string sharpness;
@@ -196,6 +215,7 @@ struct Camera {
     std::string denoise;
     std::string thermal_palette;
     std::string thermal_span;
+    // --------------------------------------- end ---------------------------------------
 };
 
 
@@ -233,7 +253,11 @@ static nlohmann::json cameras_to_json(const std::vector<Camera>& cameras){
                     {"pid",           camera.pid },
                     {"bus",           camera.bus },
                     {"index",         camera.index },
-                    {"endpoints",     endpoints }
+                    {"url",           camera.url },
+                    {"manual_pipeline",camera.manual_pipeline },
+                    {"endpoints",              endpoints },
+                    {"userSelectedVideoFormat",camera.userSelectedVideoFormat.toString()},
+                    {"bitrateKBits",camera.bitrateKBits}
             };
             std::stringstream message;
             message << "Detected camera: " << camera.name << std::endl;
@@ -257,24 +281,24 @@ static void write_camera_manifest(const std::vector<Camera>& cameras){
 
 static std::vector<Camera> cameras_from_manifest(){
     std::vector<Camera> ret;
+    std::cout<< "Processing camera_manifest" << std::endl;
     try {
         std::ifstream f(CAMERA_MANIFEST_FILENAME);
         nlohmann::json j;
         f >> j;
-
         for (auto _camera : j) {
-            std::cerr << "Processing camera_manifest" << std::endl;
             Camera camera;
             std::string camera_type = _camera["type"];
             camera.type = string_to_camera_type(camera_type);
             camera.name = _camera["name"];
-            std::cerr << camera.name << std::endl;
+            std::cout << camera.name << std::endl;
             camera.vendor = _camera["vendor"];
             camera.vid = _camera["vid"];
             camera.pid = _camera["pid"];
             camera.bus = _camera["bus"];
             camera.index = _camera["index"];
-
+            camera.url = _camera["url"];
+            camera.manual_pipeline=_camera["manual_pipeline"];
             auto _endpoints = _camera["endpoints"];
             for (auto _endpoint : _endpoints) {
                 CameraEndpoint endpoint;
@@ -285,16 +309,27 @@ static std::vector<Camera> cameras_from_manifest(){
                 endpoint.support_raw   = _endpoint["support_raw"];
                 for (auto& format : _endpoint["formats"]) {
                     endpoint.formats.push_back(format);
-                    std::cerr << format << std::endl;
+                    std::cout << format << std::endl;
                 }
                 camera.endpoints.push_back(endpoint);
             }
+            camera.userSelectedVideoFormat=VideoFormat::fromString(_camera["userSelectedVideoFormat"]);
+            camera.bitrateKBits=_camera["bitrateKBits"];
             ret.push_back(camera);
         }
     } catch (std::exception &ex) {
         // don't do anything, but send an error message to the user through the status service
         std::cerr << "Camera error: " << ex.what() << std::endl;
     }
+    std::cout<<"Done processing camera manifest\n";
     return ret;
+}
+
+// Return true if the bitrate is considered sane, false otherwise
+static bool check_bitrate_sane(const int bitrateKBits){
+    if(bitrateKBits<=100 || bitrateKBits>(1024*1024*50)){
+        return false;
+    }
+    return true;
 }
 #endif

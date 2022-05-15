@@ -12,7 +12,7 @@
 DummyGstreamerStream::DummyGstreamerStream(PlatformType platform, Camera &camera, uint16_t video_udp_port)
         : CameraStream(platform, camera, video_udp_port) {
     std::cout<<"DummyGstreamerStream::DummyGstreamerStream\n";
-    assert(camera.type=CameraTypeDummy);
+    assert(camera.type==CameraTypeDummy);
 }
 
 void DummyGstreamerStream::setup() {
@@ -77,13 +77,11 @@ bool DummyGstreamerStream::supports_cbr() {
 void DummyGstreamerStream::set_cbr(bool enable) {
 }
 
-std::vector<std::string> DummyGstreamerStream::get_supported_formats() {
+VideoFormat DummyGstreamerStream::get_format() {
+    std::cerr<<"unimplemented\n";
     return {};
 }
 
-std::string DummyGstreamerStream::get_format() {
-    return {};
-}
-
-void DummyGstreamerStream::set_format(std::string format) {
+void DummyGstreamerStream::set_format(VideoFormat videoFormat) {
+    std::cerr<<"unimplemented\n";
 }

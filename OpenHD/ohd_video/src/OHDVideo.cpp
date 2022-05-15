@@ -46,14 +46,14 @@ void OHDVideo::setup() {
     // Consti10 sanity checks
     for(auto& camera:m_cameras){
         // check to see if we need to set a default bitrate.
-        if (camera.bitrate.empty()) {
-            camera.bitrate = "5000000";
+        if(!check_bitrate_sane(camera.bitrateKBits)){
+            camera.bitrateKBits=DEFAULT_BITRATE_KBITS;
         }
         // check to see if the video codec is messed up.
-        if (camera.codec == VideoCodecUnknown) {
-            std::cout<<"Fixing VideoCodecUnknown to VideoCodecH264\n";
-            camera.codec = VideoCodecH264;
-        }
+        //if (camera.codec == VideoCodecUnknown) {
+        //    std::cout<<"Fixing VideoCodecUnknown to VideoCodecH264\n";
+        //    camera.codec = VideoCodecH264;
+        //}
     }
     for(auto& camera:m_cameras){
         configure(camera);

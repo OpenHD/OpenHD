@@ -178,12 +178,12 @@ void DCameras::detect_raspberrypi_csi() {
 
 
 void DCameras::detect_jetson_csi() {
-    std::cout<< "Cameras::detect_jetson_csi()" << std::endl;
+    std::cout<< "Unimpl. Cameras::detect_jetson_csi()" << std::endl;
 }
 
 
 void DCameras::detect_rockchip_csi() {
-    std::cout<< "Cameras::detect_rockchip_csi()" << std::endl;
+    std::cout<< "Unimpl. Cameras::detect_rockchip_csi()" << std::endl;
 }
 
 std::vector<std::string> DCameras::findV4l2VideoDevices() {

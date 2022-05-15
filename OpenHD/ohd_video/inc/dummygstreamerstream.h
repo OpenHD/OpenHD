@@ -28,9 +28,8 @@ private:
     bool supports_cbr() override;
     void set_cbr(bool enable) override;
     // expected to be widthXheight@fps format
-    std::vector<std::string> get_supported_formats() override;
-    std::string get_format() override;
-    void set_format(std::string format) override;
+    VideoFormat get_format() override;
+    void set_format(VideoFormat videoFormat) override;
 private:
     GstElement * gst_pipeline = nullptr;
 };

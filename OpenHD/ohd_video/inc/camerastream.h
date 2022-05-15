@@ -53,11 +53,9 @@ public:
     virtual bool supports_cbr()=0;
     virtual void set_cbr(bool enable)=0;
 
-    // expected to be widthXheight@fps format
-    virtual std::vector<std::string> get_supported_formats()=0;
-    virtual std::string get_format()=0;
-    virtual void set_format(std::string format)=0;
-
+    // Change/set the video format selected by the user.
+    virtual VideoFormat get_format()=0;
+    virtual void set_format(VideoFormat newVideoFormat)=0;
 protected:
     const PlatformType m_platform_type;
     Camera &m_camera;
