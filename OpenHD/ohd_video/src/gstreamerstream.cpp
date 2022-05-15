@@ -30,16 +30,6 @@ GStreamerStream::GStreamerStream(PlatformType platform,
 }
 
 
-/*
- * This constructs the camera pipeline automatically from the detected hardware capabilities. If a settings entry
- * in camera.conf is found for a detected camera (matched using the "bus" field), the settings override the defaults for
- * that kind of camera.
- *
- * IP cameras are handled specially because we have no way to guarantee they can be autodetected yet, and some may not be
- * detectable automatically at all. So for those we attempt to start a pipeline for any camera entry in the settings file
- * marked as an IP camera, using the URL provided by the user.
- *
- */
 void GStreamerStream::setup() {
     std::cerr << "GStreamerStream::setup()" << std::endl;
     GError* error = nullptr;

@@ -63,13 +63,48 @@ namespace OHDGstHelper{
         return ss.str();
     }
 
-    // For Cameras that do raw YUV (or RGB) we use a sw hw encoder, which also means no h265
-    static std::string createUvcRawSwEncodingStream(){
-        return {};
+     /**
+      * For V4l2 Cameras that do raw YUV (or RGB) we use a sw hw encoder.
+      * This one has no custom resolution(s) yet.
+      */
+    static std::string createV4l2SrcRawSwEncodingStream(const std::string& device_node,const VideoCodec videoCodec,const int bitrate){
+        std::stringstream ss;
+        ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
+        //std::cerr << "Allowing gstreamer to choose UVC format" << std::endl;
+        ss << fmt::format("video/x-raw ! ");
+        ss << "videoconvert ! ";
+        assert(videoCodec!=VideoCodecUnknown);
+        if(videoCodec==VideoCodecH264){
+            ss<<fmt::format("x264enc name=encodectrl bitrate={} tune=zerolatency key-int-max=10 ! ", bitrate);
+        }else if(videoCodec==VideoCodecH265){
+            ss<<fmt::format("x265enc name=encodectrl bitrate={} ! ", bitrate);
+        }else{
+            std::cerr<<"no sw encoder for MJPEG\n";
+        }
+        return ss.str();
     }
 
-    // These are not tested
+     /**
+      * This one is for v4l2src cameras that outputs already encoded video.
+      */
+     static std::string createV4l2SrcEncodedEncodingStream(const std::string& device_node,const VideoFormat videoFormat){
+         std::stringstream ss;
+         ss<< fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
+         if(videoFormat.videoCodec==VideoCodecH264){
+             ss<< fmt::format("video/x-h264, width={}, height={}, framerate={}/1 ! ",
+                              videoFormat.width, videoFormat.height,videoFormat.framerate);
+         }else if(videoFormat.videoCodec==VideoCodecH265){
+             ss<< fmt::format("video/x-h265, width={}, height={}, framerate={}/1 ! ",
+                              videoFormat.width, videoFormat.height,videoFormat.framerate);
+         }else{
+             assert(videoFormat.videoCodec==VideoCodecMJPEG);
+             ss << fmt::format("image/jpeg, width={}, height={}, framerate={}/1 ! ",
+                                       videoFormat.width, videoFormat.height,videoFormat.framerate);
+         }
+         return ss.str();
+     }
 
+    // These are not tested
     static std::string createUVCH264Stream(const std::string& device_node,const int bitrate,const VideoFormat videoFormat){
         assert(videoFormat.videoCodec==VideoCodecH264);
         std::stringstream ss;
@@ -78,7 +113,6 @@ namespace OHDGstHelper{
                                   videoFormat.width,videoFormat.height,videoFormat.framerate);
         return ss.str();
     }
-
     static std::string createIpCameraStream(const std::string& url){
         std::stringstream ss;
         // none of the other params are used at the moment, we would need to set them with ONVIF or a per-camera API of some sort,
@@ -86,7 +120,6 @@ namespace OHDGstHelper{
         ss << fmt::format("rtspsrc location=\"{}\" latency=0 ! ", url);
         return ss.str();
     }
-
     // ------------- crateXXXStream end  -------------
 
 
