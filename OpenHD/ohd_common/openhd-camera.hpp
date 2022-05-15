@@ -96,10 +96,15 @@ inline VideoCodec string_to_video_codec(const std::string& codec) {
 // This class also provides a safe way to cast from/to a readable string. However, in case someone manually
 // enters a wrong string (for example h264OOPS|1280x720@60) the behaviour is undefined.
 struct VideoFormat{
-    VideoCodec videoCodec=VideoCodecH264; //always default to h264
+    // The video codec, we default to h264
+    VideoCodec videoCodec=VideoCodecH264;
+    // The width of this stream, in pixels
     int width=640;
+    // The height of this stream, in pixels
     int height=480;
+    // The framerate of this stream, in frames per second.
     int framerate=30;
+    // For checking if 2 video formats are exactly the same
     bool operator==(const VideoFormat& o) const{
         return this->width==o.width && this->height==o.height && this->framerate==o.framerate;
     }
@@ -150,13 +155,13 @@ struct VideoFormat{
         return ret;
     }
 };
+// Simple test for to and from string
 static void test_video_format_regex(){
     const VideoFormat source{VideoCodecH264,1280,720,30};
     const auto serialized=source.toString();
     const auto from=VideoFormat::fromString(serialized);
     assert(source==from);
 }
-
 
 // CSI cameras don't have an endpoint,
 // Since there are too many specialities as if we could generify them.
@@ -228,6 +233,9 @@ struct Camera {
     // All these are for the future, and probably implemented on a best effort approach-
     // e.g. changing them does not neccessarly mean the camera supports changing them,
     // and they are too many to do it in a "check if supported" manner.
+    //--
+    // The bitrate the generated stream should have. Note that not all cameras / encoder support a constant bitrate,
+    // and not all encoders support all bitrates, especially really low ones.
     int bitrateKBits=DEFAULT_BITRATE_KBITS;
     std::string brightness;
     std::string contrast;

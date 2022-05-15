@@ -5,6 +5,9 @@
 
 #include "gstreamerstream.h"
 
+// Indepenent of OpenHD, start a stream for the dummy camera
+// Which rn is implemented in gstreamer.
+
 int main(int argc, char *argv[]) {
 
     Camera camera;

@@ -32,7 +32,13 @@ namespace OHDGstHelper{
         ss<<"videotestsrc ! ";
         // this part for some reason creates issues when used in combination with gst-launch
         //pipeline<<"'video/x-raw,format=(string)NV12,width=640,height=480,framerate=(fraction)30/1' ! ";
-        ss<<fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",5000);
+        if(videoFormat.videoCodec==VideoCodecH264){
+            ss<<fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",DEFAULT_BITRATE_KBITS);
+        }else if(videoFormat.videoCodec==VideoCodecH265){
+            ss<<fmt::format("x265enc name=encodectrl bitrate={} ! ", DEFAULT_BITRATE_KBITS);
+        }else{
+            std::cerr<<"no sw encoder for MJPEG,cannot start dummy camera\n";
+        }
         return ss.str();
     }
 
