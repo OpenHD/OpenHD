@@ -257,7 +257,7 @@ static nlohmann::json cameras_to_json(const std::vector<Camera>& cameras){
                     {"manual_pipeline",camera.manual_pipeline },
                     {"endpoints",              endpoints },
                     {"userSelectedVideoFormat",camera.userSelectedVideoFormat.toString()},
-                    {"bitrateKBits",camera.bitrateKBits}
+                    {"bitrateKBits",std::to_string(camera.bitrateKBits)}
             };
             std::stringstream message;
             message << "Detected camera: " << camera.name << std::endl;
