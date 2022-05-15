@@ -17,3 +17,5 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 include_directories(ohd_common)
 add_executable(OpenHD main.cpp)
 target_link_libraries(OpenHD OHDInterfaceLib OHDDiscoveryLib OHDVideoLib OHDTelemetryLib)
+
+install(TARGETS OpenHD DESTINATION bin)

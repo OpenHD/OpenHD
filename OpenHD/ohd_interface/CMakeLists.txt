@@ -24,7 +24,7 @@ SET(ALL_INTERFACE_SOURCE_FILES
         src/OHDInterface.cpp)
 
 add_library(OHDInterfaceLib
-        SHARED
+        STATIC
         ${ALL_INTERFACE_SOURCE_FILES})
 target_include_directories(OHDInterfaceLib PUBLIC inc/)
 target_link_libraries(OHDInterfaceLib PUBLIC ${INTERFACE_USED_BOOST_LIBRARIES})

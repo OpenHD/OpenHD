@@ -36,7 +36,7 @@ SET(ALL_VIDEO_SOURCE_FILES
         src/OHDVideo.cpp)
 
 add_library(OHDVideoLib
-        SHARED
+        STATIC
         ${ALL_VIDEO_SOURCE_FILES})
 target_include_directories(OHDVideoLib PUBLIC inc/)
 target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})

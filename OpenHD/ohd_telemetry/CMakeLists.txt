@@ -29,7 +29,9 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         src/internal/InternalTelemetry.cpp)
 
 # Build it as a library
-add_library(OHDTelemetryLib SHARED ${ALL_TELEMETRY_SOURCE_FILES})
+add_library(OHDTelemetryLib
+        STATIC
+        ${ALL_TELEMETRY_SOURCE_FILES})
 target_link_libraries(OHDTelemetryLib PUBLIC ${OHD_TELEMETRY_USED_BOOST_LIBS})
 target_include_directories(OHDTelemetryLib PUBLIC src/)
 # include mavlink (header-only)
