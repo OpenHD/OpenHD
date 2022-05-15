@@ -41,23 +41,18 @@ GStreamerStream::GStreamerStream(PlatformType platform,
  */
 void GStreamerStream::setup() {
     std::cerr << "GStreamerStream::setup()" << std::endl;
-
     GError* error = nullptr;
-
     if (!gst_init_check(nullptr, nullptr, &error)) {
         std::cerr << "gst_init_check() failed: " << error->message << std::endl;
         g_error_free(error);
 
         throw std::runtime_error("GStreamer initialization failed");
     }
-
     std::cerr << "Creating GStreamer pipeline" << std::endl;
-
     // sanity checks
     assert(!m_camera.bitrate.empty());
     assert(m_camera.codec!=VideoCodecUnknown);
     assert(m_camera.type!=CameraTypeDummy);
-
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
             setup_raspberrypi_csi();
@@ -97,10 +92,7 @@ void GStreamerStream::setup() {
         }
     }
 
-
-    m_pipeline << "queue ! ";  
-
-
+    m_pipeline << "queue ! ";
     if (m_camera.codec == VideoCodecH265) {
         m_pipeline << "h265parse config-interval=-1 ! ";
         m_pipeline << "rtph265pay mtu=1024 ! ";
@@ -111,7 +103,6 @@ void GStreamerStream::setup() {
         m_pipeline << "h264parse config-interval=-1 ! ";
         m_pipeline << "rtph264pay mtu=1024 ! ";
     }
-
     /*
      * Allow users to write the first part manually if they want to, we take care of the sink element because the port 
      * depends on which camera index this was and where the stream is going, which users won't know how to configure themselves.
@@ -120,19 +111,13 @@ void GStreamerStream::setup() {
         m_pipeline.str("");
         m_pipeline << m_camera.manual_pipeline;
     }
-
     m_pipeline << fmt::format(" udpsink host=127.0.0.1 port={} ", m_video_udp_port);
-
     // TODO: re-add recording, we need a better way than this crap
     //m_pipeline << "queue ! ";
     // this directs the video stream back to this system for recording in the Record class
     //m_pipeline << fmt::format("udpsink host=127.0.0.1 port={}", m_video_port - 10);
-
     std::cerr << "Pipeline: " << m_pipeline.str() << std::endl;
-
     gst_pipeline = gst_parse_launch(m_pipeline.str().c_str(), &error);
-
-
     if (error) {
         std::cerr << "Failed to create pipeline: " << error->message << std::endl;
         return;
@@ -141,7 +126,6 @@ void GStreamerStream::setup() {
 
 
 bool GStreamerStream::parse_user_format(const std::string& format, std::string &width, std::string &height, std::string &fps) {
-
     std::smatch result;
     std::regex reg{"(\\d*)x(\\d*)\\@(\\d*)"};
     std::cout << "Parsing:" << format << std::endl;
@@ -174,7 +158,6 @@ bool GStreamerStream::parse_user_format(const std::string& format, std::string &
     std::string width = "1280";
     std::string height = "720";
     std::string fps = "30";
-
     std::vector<std::string> search_order = {
         "1920x1080@60",
         "1920x1080@30",
@@ -184,7 +167,6 @@ bool GStreamerStream::parse_user_format(const std::string& format, std::string &
         "640x480@30",
         "320x240@30"
     };
-
     for (auto & default_format : search_order) {
         for (auto & format : endpoint.formats) {
             std::smatch result;
@@ -214,7 +196,6 @@ bool GStreamerStream::parse_user_format(const std::string& format, std::string &
             }
         }
     }
-
     // fallback using the default above
     std::cerr << "returning default format:"<< width << " " << height << " " << fps << std::endl;
     return fmt::format("{}x{}@{}", width, height, fps);
@@ -256,14 +237,10 @@ void GStreamerStream::setup_raspberrypi_veye() {
 
 void GStreamerStream::setup_jetson_csi() {
     std::cerr << "Setting up Jetson CSI camera" << std::endl;
-
     // if there's no endpoint this isn't a runtime bug but a programming error in the system service,
     // because it never found an endpoint to use for some reason
     auto endpoint = m_camera.endpoints.front();
-
-
     int sensor_id = -1;
-
     std::smatch result;
     std::regex reg{ "/dev/video([\\d])"};
     if (std::regex_search(endpoint.device_node, result, reg)) {
@@ -272,28 +249,22 @@ void GStreamerStream::setup_jetson_csi() {
             sensor_id = std::stoi(s);
         }
     }
-
     if (sensor_id == -1) {
         ohd_log(STATUS_LEVEL_CRITICAL, "Failed to determine Jetson CSI sensor ID");
         return;
     }
-
-
     if (m_camera.format.empty()) {
         m_camera.format = "1280x720@48";
     }
-  
     std::string width;
     std::string height;
     std::string fps;
     parse_user_format(m_camera.format, width, height, fps);
     int intwidth = atoi(width.c_str());
     int intheight = atoi(height.c_str());
-
     m_pipeline << fmt::format("nvarguscamerasrc do-timestamp=true sensor-id={} ! ", sensor_id);
     m_pipeline << fmt::format("video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! ", intwidth, intheight, fps);
     m_pipeline << "queue ! ";
-
     if (m_camera.codec == VideoCodecH265) {
         m_pipeline << fmt::format("nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} ! ", m_camera.bitrate);
     } else if (m_camera.codec == VideoCodecMJPEG) {
@@ -306,18 +277,13 @@ void GStreamerStream::setup_jetson_csi() {
 
 void GStreamerStream::setup_rockchip_csi() {
     std::cerr << "Setting up Rockchip CSI camera" << std::endl;
-
-
     if (m_camera.format.empty()) {
         m_camera.format = "1280x720@30";
     }
-
     std::string width = "1280";
     std::string height = "720";
     std::string fps = "48";
     parse_user_format(m_camera.format, width, height, fps);
-
-
     m_pipeline << fmt::format("rkisp num-buffers=512 device={} io-mode=1 ! ", m_camera.bus);
     m_pipeline << fmt::format("video/x-raw, format=NV12, width={}, height={}, format=NV12, framerate={}/1 ! ", width, height, fps);
     m_pipeline << "queue ! ";
@@ -500,12 +466,10 @@ bool GStreamerStream::supports_bitrate() {
 
 void GStreamerStream::set_bitrate(int bitrate) {
     std::cerr << "GStreamerStream::set_bitrate(" << bitrate << ")" << std::endl;
-
     if (!gst_pipeline) {
         std::cerr << "No pipeline, ignoring bitrate command" << std::endl;
         return;
     }
-
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
             GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
@@ -555,7 +519,6 @@ void GStreamerStream::set_bitrate(int bitrate) {
 
 bool GStreamerStream::supports_cbr() {
     std::cerr << "GStreamerStream::supports_cbr()" << std::endl;
-
     // todo: this is not necessarily true, some USB and IP cameras support it but on an IP camera it may not be easy to
     //       set
     return m_camera.type == CameraTypeRaspberryPiCSI || m_camera.type == CameraTypeRaspberryPiVEYE || m_camera.type == CameraTypeJetsonCSI || m_camera.type == CameraTypeUVCH264;
@@ -564,15 +527,12 @@ bool GStreamerStream::supports_cbr() {
 
 void GStreamerStream::set_cbr(bool enable) {
     std::cerr << "GStreamerStream::set_cbr(" << enable << ")" << std::endl;
-
     if (!gst_pipeline) {
         std::cerr << "No pipeline, ignoring cbr command" << std::endl;
         return;
     }
-
     GstElement *ctrl = gst_bin_get_by_name(GST_BIN(gst_pipeline), "encodectrl");
     if (!ctrl) return;
-
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
             break;
@@ -597,9 +557,7 @@ void GStreamerStream::set_cbr(bool enable) {
 
 std::vector<std::string> GStreamerStream::get_supported_formats() {
     std::cerr << "GStreamerStream::get_supported_formats()" << std::endl;
-
     std::vector<std::string> formats;
-
     switch (m_camera.type) {
         case CameraTypeRaspberryPiCSI: {
             auto endpoint = m_camera.endpoints.front();

@@ -49,7 +49,7 @@ void DummyGstreamerStream::start() {
     GstState state;
     GstState pending;
     auto returnValue = gst_element_get_state(gst_pipeline, &state ,&pending, 1000000000);
-    std::cerr << "Gst state:" << returnValue << "." << state << "."<< pending << "." << std::endl;
+    std::cout << "Gst state:" << returnValue << "." << state << "."<< pending << "." << std::endl;
 }
 
 void DummyGstreamerStream::stop() {
