@@ -92,8 +92,9 @@ inline VideoCodec string_to_video_codec(const std::string& codec) {
 // A video format refers to a selected configuration supported by OpenHD.
 // It is possible that a camera cannot do the selected configuration in HW,
 // In this case a sw encoder can be used (in case of low res streams, that will work even on the pi).
-// Example: one of the supported formats of rpi cam is
-// h264|1280x720@60
+// Example string: h264|1280x720@60
+// This class also provides a safe way to cast from/to a readable string. However, in case someone manually
+// enters a wrong string (for example h264OOPS|1280x720@60) the behaviour is undefined.
 struct VideoFormat{
     VideoCodec videoCodec=VideoCodecH264; //always default to h264
     int width=640;
@@ -124,6 +125,7 @@ struct VideoFormat{
      * Note: For debugging, I use https://regex101.com/
      */
     static VideoFormat fromString(const std::string& input){
+        //We default to values that are most likely going to work, in case parsing fails.
         VideoFormat ret{};
         std::smatch result;
         const std::regex reg{ R"(([\w\d\s\-\:\/]*)\|(\d*)x(\d*)\@(\d*))"};
@@ -155,6 +157,7 @@ static void test_video_format_regex(){
     assert(source==from);
 }
 
+
 // CSI cameras don't have an endpoint,
 // Since there are too many specialities as if we could generify them.
 // Also, in case of CIS cameras, we don't need the raw stuff, since pretty much every
@@ -176,6 +179,25 @@ struct CameraEndpoint {
     [[nodiscard]] bool supports_anything()const{
         return (support_h264 || support_h265 || support_mjpeg || support_raw);
     }
+};
+
+// A raw endpoint is for cameras that support YUV or RGB raw frames.
+// Most likely, the stream is then going to do sw encoding on them.
+// This way, we can handle thermal cameras for example.
+struct RawEndpoint {
+    std::string device_node;
+    std::string bus;
+    std::vector<std::string> supportedRawFormats;
+};
+
+// An encoded endpoint is for cameras that support h264,h265 or MJPEG.
+// This is mostly for CSI cameras, for which we then later have a HW accelerated method
+// Of generating an encoded video stream that doesn't directly talk to the underlying v4l2 device node,
+// but rather uses somthing else (raspivid or libcamera, as an example).
+// However, some UVC cameras also support directly encoded MJPEG or h264/h265 out. In this case, they get a encoded endpoint,too.
+struct EncodedEndpoint{
+    // A list of all the video formats this camera can do for generating encoded data.
+   std::vector<VideoFormat> supportedFormats;
 };
 
 static constexpr auto DEFAULT_BITRATE_KBITS=5000;
