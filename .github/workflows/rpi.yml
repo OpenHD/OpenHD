@@ -27,7 +27,8 @@ jobs:
 
       - name: Build with make
         run: |
-          ./package.sh
+          cd OpenHD
+          sudo ../package.sh
 
       - name: Show files
         run: |
