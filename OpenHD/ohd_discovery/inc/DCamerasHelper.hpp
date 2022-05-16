@@ -8,20 +8,19 @@
 #include <libusb.h>
 #include <vector>
 
-#define FLIR_ONE_VENDOR_ID 0x09cb
-#define FLIR_ONE_PRODUCT_ID 0x1996
-
-#define SEEK_COMPACT_VENDOR_ID 0x289d
-#define SEEK_COMPACT_PRODUCT_ID 0x0010
-
-#define SEEK_COMPACT_PRO_VENDOR_ID 0x289d
-#define SEEK_COMPACT_PRO_PRODUCT_ID 0x0011
-
 /**
  * Helper for the discover cameras step.
  * Rn I just copy pasted stephens code for the flir and seek here
  */
 namespace DCamerasHelper{
+    static constexpr auto FLIR_ONE_VENDOR_ID=0x09cb;
+    static constexpr auto FLIR_ONE_PRODUCT_ID =0x1996;
+
+    static constexpr auto SEEK_COMPACT_VENDOR_ID=0x289d;
+    static constexpr auto SEEK_COMPACT_PRODUCT_ID=0x0010;
+
+    static constexpr auto SEEK_COMPACT_PRO_VENDOR_ID=0x289d;
+    static constexpr auto SEEK_COMPACT_PRO_PRODUCT_ID=0x0011;
     /*
      * What this is:
      *
