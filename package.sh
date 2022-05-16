@@ -38,8 +38,9 @@ fi
 
 apt-get install -y apt-transport-https curl || exit 1
 
-curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-testing/setup.deb.sh' | sudo -E bash && \
-curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1/setup.deb.sh' | sudo -E bash
+curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash && \
+
+pip install --upgrade cloudsmith-cli
 
 apt -y update || exit 1
 
@@ -66,7 +67,10 @@ make -j4
 ls -a
 
 mkdir -p ${PACKAGE_DIR}/usr/local/bin || exit 1
+tree
 cp OpenHD ${PACKAGE_DIR}/usr/local/bin/OpenHD || exit 1
+echo "copied files"
+echo ${PACKAGE_DIR}
 
 VERSION="2.1-$(date '+%m%d%H')"
 
