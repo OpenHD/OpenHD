@@ -99,6 +99,8 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, m_mcs};
   RadiotapHeader radiotapHeader{wifiParams};
   TOptions options{};
+  // We log them all manually together
+  options.enableLogAlive= false;
   options.radio_port = radio_port;
   options.keypair = std::nullopt;
   const auto cards = m_broadcast_cards_names;
@@ -111,7 +113,9 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
   ROptions options{};
   options.radio_port = radio_port;
   options.keypair = std::nullopt;
+  // We log them all manually together
   options.log_interval = std::chrono::seconds(5);
+  options.enableLogAlive=false;
   const auto cards = m_broadcast_cards_names;
   assert(!cards.empty());
   options.rxInterfaces = cards;
