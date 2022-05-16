@@ -39,9 +39,6 @@ private:
     void detect_jetson_csi();
     void detect_rockchip_csi();
 
-    void detect_flir();
-    void detect_seek();
-
     /**
      * Search for all v4l2 video devices, that means devices named /dev/videoX where X=0,1,...
      * @return list of all the devices that have the above name scheme.
