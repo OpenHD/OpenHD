@@ -74,8 +74,9 @@ mkdir -p ${PKGDIR}/usr/local/bin || exit 1
 mkdir -p ${PKGDIR}/tmp
 mkdir -p ${PKGDIR}/settings
 
-tree
 cp OpenHD ${PKGDIR}/usr/local/bin/OpenHD || exit 1
+cp openhd.service  ${PKGDIR}//etc/systemd/system/openhd.service
+
 echo "copied files"
 echo ${PKGDIR}
 
