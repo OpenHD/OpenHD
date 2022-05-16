@@ -89,7 +89,7 @@ namespace OHDGstHelper{
       * For V4l2 Cameras that do raw YUV (or RGB) we use a sw encoder.
       * This one has no custom resolution(s) yet.
       */
-     static std::string createV4l2SrcRawSwEncodingStream(const std::string& device_node,const VideoCodec videoCodec,const int bitrate){
+     static std::string createV4l2SrcRawAndSwEncodeStream(const std::string& device_node, const VideoCodec videoCodec, const int bitrate){
          std::stringstream ss;
          assert(videoCodec!=VideoCodecUnknown);
          ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
@@ -114,7 +114,7 @@ namespace OHDGstHelper{
      /**
       * This one is for v4l2src cameras that outputs already encoded video.
       */
-     static std::string createV4l2SrcEncodedEncodingStream(const std::string& device_node,const VideoFormat videoFormat){
+     static std::string createV4l2SrcAlreadyEncodedStream(const std::string& device_node, const VideoFormat videoFormat){
          std::stringstream ss;
          assert(videoFormat.videoCodec!=VideoCodecUnknown);
          ss<< fmt::format("v4l2src name=picturectrl device={} ! ", device_node);

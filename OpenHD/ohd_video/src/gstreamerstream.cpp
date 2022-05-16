@@ -132,13 +132,13 @@ void GStreamerStream::setup_usb_uvc() {
         if (m_camera.userSelectedVideoFormat.videoCodec == VideoCodecH264 && endpoint.support_h264) {
             std::cerr << "h264" << std::endl;
             device_node = endpoint.device_node;
-            m_pipeline<<OHDGstHelper::createV4l2SrcEncodedEncodingStream(device_node,m_camera.userSelectedVideoFormat);
+            m_pipeline<< OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, m_camera.userSelectedVideoFormat);
             return;
         }
         if (m_camera.userSelectedVideoFormat.videoCodec == VideoCodecMJPEG && endpoint.support_mjpeg) {
             std::cerr << "MJPEG" << std::endl;
             device_node = endpoint.device_node;
-            m_pipeline<<OHDGstHelper::createV4l2SrcEncodedEncodingStream(device_node,m_camera.userSelectedVideoFormat);
+            m_pipeline<< OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, m_camera.userSelectedVideoFormat);
             return;
         }
     }
@@ -148,7 +148,9 @@ void GStreamerStream::setup_usb_uvc() {
             std::cout << "empty" << std::endl;
             if (endpoint.support_raw) {
                 device_node = endpoint.device_node;
-                m_pipeline<<OHDGstHelper::createV4l2SrcRawSwEncodingStream(device_node,m_camera.userSelectedVideoFormat.videoCodec,m_camera.bitrateKBits);
+                m_pipeline<< OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,
+                                                                             m_camera.userSelectedVideoFormat.videoCodec,
+                                                                             m_camera.bitrateKBits);
                 return;
             }
         }
