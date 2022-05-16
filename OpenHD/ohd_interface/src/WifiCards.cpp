@@ -125,3 +125,7 @@ std::vector<std::string> WifiCards::get_broadcast_card_names()const {
     }
     return names;
 }
+
+void WifiCards::debug() const {
+
+}

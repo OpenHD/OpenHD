@@ -32,6 +32,8 @@ public:
     void configure();
     void configure_telemetry();
     void configure_video();
+    // Debug the current state
+    void debug()const;
 private:
     const OHDProfile& profile;
     const int m_mcs = 3;

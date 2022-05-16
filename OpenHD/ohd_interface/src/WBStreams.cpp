@@ -116,3 +116,7 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
     options.rxInterfaces=cards;
     return std::make_unique<UDPWBReceiver>(options,"127.0.0.1",udp_port);
 }
+
+void WBStreams::debug() const {
+
+}

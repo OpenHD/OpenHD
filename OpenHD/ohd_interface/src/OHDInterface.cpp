@@ -23,3 +23,17 @@ OHDInterface::OHDInterface(const OHDProfile& profile):profile(profile){
     }
     std::cout<<"OHDInterface::created\n";
 }
+
+void OHDInterface::debug() const {
+    std::cout<<"OHDInterface::debug:begin\n";
+    if(wifi){
+        wifi->debug();
+    }
+    if(streams){
+        streams->debug();
+    }
+    //if(ethernet){
+    //    ethernet->debug();
+    //}
+    std::cout<<"OHDInterface::debug:end\n";
+}
