@@ -286,9 +286,11 @@ bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, cons
         std::cout << "Found Jetson CSI camera" << std::endl;
     } else if (driver == "v4l2 loopback") {
         // this is temporary, we are not going to use v4l2loopback for thermal cameras they'll be directly
-        // handled by the camera service instead
-        camera.type = CameraTypeV4L2Loopback;
+        // handled by the camera service instead work anyways
+        // Consti10: Removed for this release, won't
+        //camera.type = CameraTypeV4L2Loopback;
         std::cout << "Found v4l2 loopback camera (likely a thermal camera)" << std::endl;
+        std::cerr<< "Loopback is unimplemented rn\n";
     } else {
         /*
          * This is primarily going to be the bcm2835-v4l2 interface on the Pi, and non-camera interfaces.
@@ -302,7 +304,7 @@ bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, cons
     std::string bus((char*)caps.bus_info);
     camera.bus = bus;
     endpoint.bus = bus;
-    if (!caps.capabilities & V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+    if (!(caps.capabilities & V4L2_BUF_TYPE_VIDEO_CAPTURE)) {
         std::cerr << "Not a capture device: " << node << std::endl;
         return false;
     }

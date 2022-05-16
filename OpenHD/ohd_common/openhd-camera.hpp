@@ -25,7 +25,6 @@ typedef enum CameraType {
     // completely different way so we keep them separate
     CameraTypeUVCH264,
     CameraTypeIP, // IP camera that connects via ethernet and provides a video feet at special network address
-    CameraTypeV4L2Loopback, // See https://github.com/umlaeute/v4l2loopback, unimplemented
     CameraTypeDummy, // Dummy camera, is created fully in sw
     CameraTypeUnknown
 } CameraType;
@@ -38,7 +37,6 @@ static std::string camera_type_to_string(const CameraType& camera_type) {
         case CameraTypeUVC: return "uvc";
         case CameraTypeUVCH264: return "uvch264";
         case CameraTypeIP: return "ip";
-        case CameraTypeV4L2Loopback: return "v4l2loopback";
         default: return "unknown";
     }
 }
@@ -57,8 +55,6 @@ static CameraType string_to_camera_type(const std::string& camera_type) {
         return CameraTypeUVCH264;
     } else if (to_uppercase(camera_type).find(to_uppercase("ip")) != std::string::npos) {
         return CameraTypeIP;
-    } else if (to_uppercase(camera_type).find(to_uppercase("v4l2loopback")) != std::string::npos) {
-        return CameraTypeV4L2Loopback;
     }
     return CameraTypeUnknown;
 }

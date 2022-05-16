@@ -58,10 +58,6 @@ void GStreamerStream::setup() {
             setup_usb_uvc();
             break;
         }
-        case CameraTypeV4L2Loopback: {
-            setup_usb_uvc();
-            break;
-        }
         case CameraTypeUVCH264: {
             setup_usb_uvch264();
             break;
