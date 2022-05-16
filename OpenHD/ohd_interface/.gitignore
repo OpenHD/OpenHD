@@ -1,6 +1,3 @@
-openhd_interface
-*.o
-
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
