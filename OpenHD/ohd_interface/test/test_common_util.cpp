@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[]) {
 
-  auto res = run_command("echo", {"1"});
+  auto res = OHDUtil::run_command("echo", {"1"});
   std::cout << "Res is:" << res << "\n";
 }
 

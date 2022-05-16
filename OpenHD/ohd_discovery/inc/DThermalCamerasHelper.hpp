@@ -7,6 +7,7 @@
 
 #include <libusb.h>
 #include <vector>
+#include "openhd-util.hpp"
 
 /**
  * Helper for the discover thermal cameras step.
@@ -50,7 +51,7 @@ static void enableFlirIfFound() {
 	std::vector<std::string> ar{
 		"start", "flirone"
 	};
-	run_command("systemctl", ar);
+	OHDUtil::run_command("systemctl", ar);
   }
 }
 
@@ -124,7 +125,7 @@ static void enableSeekIfFound() {
 	std::vector<std::string> ar{
 		"start", "seekthermal"
 	};
-	run_command("systemctl", ar);
+	OHDUtil::run_command("systemctl", ar);
   }
 }
 }

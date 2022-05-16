@@ -40,19 +40,19 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
   }
 }
 static CameraType string_to_camera_type(const std::string &camera_type) {
-  if (to_uppercase(camera_type).find(to_uppercase("pi-csi")) != std::string::npos) {
+  if (OHDUtil::to_uppercase(camera_type).find(OHDUtil::to_uppercase("pi-csi")) != std::string::npos) {
 	return CameraTypeRaspberryPiCSI;
-  } else if (to_uppercase(camera_type).find(to_uppercase("pi-veye")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(camera_type).find(OHDUtil::to_uppercase("pi-veye")) != std::string::npos) {
 	return CameraTypeRaspberryPiVEYE;
-  } else if (to_uppercase(camera_type).find(to_uppercase("jetson-csi")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(camera_type).find(OHDUtil::to_uppercase("jetson-csi")) != std::string::npos) {
 	return CameraTypeJetsonCSI;
-  } else if (to_uppercase(camera_type).find(to_uppercase("rockchip-csi")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(camera_type).find(OHDUtil::to_uppercase("rockchip-csi")) != std::string::npos) {
 	return CameraTypeRockchipCSI;
-  } else if (to_uppercase(camera_type).find(to_uppercase("uvc")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(camera_type).find(OHDUtil::to_uppercase("uvc")) != std::string::npos) {
 	return CameraTypeUVC;
-  } else if (to_uppercase(camera_type).find(to_uppercase("uvch264")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(camera_type).find(OHDUtil::to_uppercase("uvch264")) != std::string::npos) {
 	return CameraTypeUVCH264;
-  } else if (to_uppercase(camera_type).find(to_uppercase("ip")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(camera_type).find(OHDUtil::to_uppercase("ip")) != std::string::npos) {
 	return CameraTypeIP;
   }
   return CameraTypeUnknown;
@@ -73,11 +73,11 @@ inline std::string video_codec_to_string(VideoCodec codec) {
   }
 }
 inline VideoCodec string_to_video_codec(const std::string &codec) {
-  if (to_uppercase(codec).find(to_uppercase("h264")) != std::string::npos) {
+  if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h264")) != std::string::npos) {
 	return VideoCodecH264;
-  } else if (to_uppercase(codec).find(to_uppercase("h265")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h265")) != std::string::npos) {
 	return VideoCodecH265;
-  } else if (to_uppercase(codec).find(to_uppercase("mjpeg")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("mjpeg")) != std::string::npos) {
 	return VideoCodecMJPEG;
   }
   return VideoCodecUnknown;

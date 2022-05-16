@@ -7,13 +7,14 @@
 #include <cstdlib>
 #include <vector>
 
-inline std::string to_uppercase(std::string input) {
+namespace OHDUtil {
+
+static std::string to_uppercase(std::string input) {
   for (char &it: input) {
 	it = toupper((unsigned char)it);
   }
   return input;
 }
-
 /**
  * Utility to execute a command on the command line.
  * Blocks until the command has been executed, and returns its result.
@@ -22,7 +23,7 @@ inline std::string to_uppercase(std::string input) {
  * @return the command result
  * NOTE: Used to use boost, there were issues with that, I changed it to use c standard library.
  */
-inline bool run_command(const std::string &command, const std::vector<std::string> &args) {
+static bool run_command(const std::string &command, const std::vector<std::string> &args) {
   std::stringstream ss;
   ss << command;
   for (const auto &arg: args) {
@@ -39,6 +40,7 @@ inline bool run_command(const std::string &command, const std::vector<std::strin
   return c.exit_code() == 0;*/
   std::cout << "Run command end\n";
   return ret;
+}
 }
 
 #endif

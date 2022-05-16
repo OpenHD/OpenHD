@@ -182,17 +182,17 @@ inline std::string platform_type_to_string(PlatformType platform_type) {
 }
 
 inline PlatformType string_to_platform_type(const std::string &platform_type) {
-  if (to_uppercase(platform_type).find(to_uppercase("jetson")) != std::string::npos) {
+  if (OHDUtil::to_uppercase(platform_type).find(OHDUtil::to_uppercase("jetson")) != std::string::npos) {
 	return PlatformTypeJetson;
-  } else if (to_uppercase(platform_type).find(to_uppercase("raspberrypi")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(platform_type).find(OHDUtil::to_uppercase("raspberrypi")) != std::string::npos) {
 	return PlatformTypeRaspberryPi;
-  } else if (to_uppercase(platform_type).find(to_uppercase("nanopi")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(platform_type).find(OHDUtil::to_uppercase("nanopi")) != std::string::npos) {
 	return PlatformTypeNanoPi;
-  } else if (to_uppercase(platform_type).find(to_uppercase("imx6")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(platform_type).find(OHDUtil::to_uppercase("imx6")) != std::string::npos) {
 	return PlatformTypeiMX6;
-  } else if (to_uppercase(platform_type).find(to_uppercase("zynq")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(platform_type).find(OHDUtil::to_uppercase("zynq")) != std::string::npos) {
 	return PlatformTypeZynq;
-  } else if (to_uppercase(platform_type).find(to_uppercase("pc")) != std::string::npos) {
+  } else if (OHDUtil::to_uppercase(platform_type).find(OHDUtil::to_uppercase("pc")) != std::string::npos) {
 	return PlatformTypePC;
   }
 
