@@ -111,7 +111,7 @@ void InternalTelemetry::processLogMessageData(const uint8_t *data, std::size_t d
   if (dataLen == sizeof(OHDLocalLogMessage)) {
 	OHDLocalLogMessage local_message;
 	memcpy((uint8_t *)&local_message, data, dataLen);
-	const auto nullTerminatorFound = local_message.verifyNullTerminator();
+	const auto nullTerminatorFound = local_message.hasNullTerminator();
 	if (!nullTerminatorFound) {
 	  std::cerr << "Log message without null terminator\n";
 	  return;

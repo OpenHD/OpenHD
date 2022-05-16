@@ -15,6 +15,7 @@
 
 #include <string>
 #include <iostream>
+#include <cassert>
 
 #include "openhd-global-constants.h"
 
@@ -30,7 +31,9 @@
 struct OHDLocalLogMessage{
   uint8_t level;
   uint8_t message[50];
-  [[nodiscard]] bool verifyNullTerminator() const {
+  // returns true if the message has a proper null terminator.
+  // Only in this case we can treat the raw string array as a string.
+  [[nodiscard]] bool hasNullTerminator() const {
 	// check if the string has a null-terminator
 	bool nullTerminatorFound = false;
 	for (const auto &i: message) {
@@ -68,18 +71,12 @@ static void print_log_by_level(const STATUS_LEVEL level, std::string message) {
   }
 }
 
-/*
- * Messages sent here will end up in the telemetry microservice, where they will be packed up and sent through
- * mavlink for storage and review by qopenhd, the boot screen system, and other software.
+/**
+ * Send a log message out via udp to localhost, it wll be picked up by the telemetry service.
+ * @param message the log message to send, has to have a valid null terminator.
  */
-inline void ohd_log(STATUS_LEVEL level, const std::string &message) {
-  print_log_by_level(level, message);
-  OHDLocalLogMessage lmessage{};
-  lmessage.level = static_cast<uint8_t>(level);
-  strncpy((char *)lmessage.message, message.c_str(), 50);
-  if (lmessage.message[49] != '\0') {
-	lmessage.message[49] = '\0';
-  }
+static void sendLocalLogMessageUDP(const OHDLocalLogMessage& message){
+  assert(message.hasNullTerminator());
   int sockfd;
   struct sockaddr_in servaddr{};
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -90,8 +87,23 @@ inline void ohd_log(STATUS_LEVEL level, const std::string &message) {
   servaddr.sin_family = AF_INET;
   servaddr.sin_port = htons(OHD_LOCAL_LOG_MESSAGES_UDP_PORT);
   inet_aton("127.0.0.1", (in_addr *)&servaddr.sin_addr.s_addr);
-  int n, len;
-  sendto(sockfd, &lmessage, sizeof(lmessage), 0, (const struct sockaddr *)&servaddr, sizeof(servaddr));
+  sendto(sockfd, &message, sizeof(message), 0, (const struct sockaddr *)&servaddr, sizeof(servaddr));
+  close(sockfd);
+}
+
+/*
+ * Messages sent here will end up in the telemetry microservice, where they will be packed up and sent through
+ * mavlink for storage and review by qopenhd, the boot screen system, and other software.
+ */
+static void ohd_log(STATUS_LEVEL level, const std::string &message) {
+  print_log_by_level(level, message);
+  OHDLocalLogMessage lmessage{};
+  lmessage.level = static_cast<uint8_t>(level);
+  strncpy((char *)lmessage.message, message.c_str(), 50);
+  if (lmessage.message[49] != '\0') {
+	lmessage.message[49] = '\0';
+  }
+  sendLocalLogMessageUDP(lmessage);
 }
 
 // Direct implementations for the 3 most common used log types
