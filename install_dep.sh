@@ -12,7 +12,6 @@ apt -y install cmake build-essential autotools-dev automake libtool autoconf \
             tree \
             ruby-dev \
             python3-pip \
-            cloudsmith-cli \
             libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
             libfmt-dev || exit 1
 
