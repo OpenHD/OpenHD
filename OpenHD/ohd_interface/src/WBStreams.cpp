@@ -121,18 +121,21 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
   return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port);
 }
 
-void WBStreams::debug() const {
-  std::cout << " WBStreams::debug\n";
+std::string WBStreams::createDebug() const {
+  std::stringstream ss;
+  ss << " WBStreams[\n";
   if (udpTelemetryRx) {
-	std::cout<<udpTelemetryRx->createDebug();
+	ss<<udpTelemetryRx->createDebug();
   }
   if (udpTelemetryTx) {
-	std::cout<<udpTelemetryTx->createDebug();
+	ss<<udpTelemetryTx->createDebug();
   }
   for (const auto &txvid: udpVideoTxList) {
-	std::cout<<txvid->createDebug();
+	ss<<txvid->createDebug();
   }
   for (const auto &rxvid: udpVideoRxList) {
-	std::cout<<rxvid->createDebug();
+	ss<<rxvid->createDebug();
   }
+  ss<<"]\n";
+  return ss.str();
 }

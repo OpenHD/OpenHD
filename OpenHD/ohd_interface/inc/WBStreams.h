@@ -32,8 +32,8 @@ class WBStreams {
   void configure();
   void configure_telemetry();
   void configure_video();
-  // Debug the current state
-  void debug() const;
+  // Verbose string about the current state.
+  [[nodiscard]] std::string createDebug() const;
  private:
   const OHDProfile &profile;
   const int m_mcs = 3;

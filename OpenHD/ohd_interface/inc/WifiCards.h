@@ -21,8 +21,8 @@ class WifiCards {
   void process_manifest();
   void configure();
   void setup_hotspot(const WiFiCard &card);
-  // Debug the current state
-  void debug() const;
+  // Verbose string about the current state.
+  [[nodiscard]] std::string createDebug() const;
   /**
    * Get the names for the broadcast cards so we can start the wfb_tx/rx instances.
    * @return a list of the names (as can be used for wifibroadcast) of all cards currently in monitor mode.

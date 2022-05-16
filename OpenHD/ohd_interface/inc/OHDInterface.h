@@ -27,8 +27,8 @@ class OHDInterface {
   // temprarily removed
   //std::unique_ptr<EthernetCards> ethernet;
   std::unique_ptr<WBStreams> streams;
-  // Debug the current state of OHDInterface
-  void debug() const;
+  // Verbose string about the current state.
+  [[nodiscard]] std::string createDebug() const;
  private:
   const OHDProfile &profile;
 };

@@ -118,6 +118,8 @@ std::vector<std::string> WifiCards::get_broadcast_card_names() const {
   return names;
 }
 
-void WifiCards::debug() const {
-  std::cout << "WifiCards::debug():N cards:" << m_wifi_cards.size() << "\n";
+std::string WifiCards::createDebug() const {
+  std::stringstream ss;
+  ss << "WifiCards::createDebug():N cards:" << m_wifi_cards.size() << "\n";
+  return ss.str();
 }
