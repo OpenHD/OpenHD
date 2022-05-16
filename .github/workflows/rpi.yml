@@ -9,9 +9,44 @@ env:
 jobs:
   build:
     runs-on: self-hosted
-steps:
-  - shell: bash
-    env:
-      SUPER_SECRET: ${{ secrets.CLOUDSMITH_API_KEY }}
-    run: |
-      echo "$SUPER_SECRET"
+    steps:
+      - name: test
+        run: |
+          echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
+          echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
+
+      - name: Clean UP
+        run: |
+          sudo rm -Rf *
+
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          
+      - name: Install Dependencies
+        run: |
+          sudo ./install_dep.sh
+
+      - name: Build with make
+        run: |
+          sudo ./package.sh
+
+      - name: Upload to Github
+        uses: 'actions/upload-artifact@v2'
+        with:
+          name: "Open.HD"
+          path: |
+            *.deb
+            *.log
+          if-no-files-found: error
+          
+      #- name: Install
+      #  run: |
+      #    cd OpenHD/build
+      #    sudo cmake --install .
+      #- name: Build ninja
+      #  run: |
+      #    sudo apt -y install ninja-build
+      #    cd OpenHD
+      #    ./build_cmake.sh
