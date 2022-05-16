@@ -23,7 +23,7 @@
 #include "openhd-camera.hpp"
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
-#include "DCamerasHelper.hpp"
+#include "DThermalCamerasHelper.hpp"
 
 #include "DCameras.h"
 
@@ -56,8 +56,8 @@ void DCameras::discover() {
         }
     }
     // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
-    DCamerasHelper::enableFlirIfFound();
-    DCamerasHelper::enableSeekIfFound();
+    DThermalCamerasHelper::enableFlirIfFound();
+    DThermalCamerasHelper::enableSeekIfFound();
     detect_v4l2();
     detect_ip();
 }
@@ -359,7 +359,7 @@ bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, cons
 
 
 void DCameras::detect_ip() {
-
+    std::cerr<<"Detect_ip unimplemented\n";
 }
 
 void DCameras::write_manifest() {

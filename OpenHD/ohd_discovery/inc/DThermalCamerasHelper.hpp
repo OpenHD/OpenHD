@@ -9,10 +9,11 @@
 #include <vector>
 
 /**
- * Helper for the discover cameras step.
+ * Helper for the discover thermal cameras step.
+ * It is a bit more complicated, once we actually support them the code here will probably blow a bit.
  * Rn I just copy pasted stephens code for the flir and seek here
  */
-namespace DCamerasHelper{
+namespace DThermalCamerasHelper{
     static constexpr auto FLIR_ONE_VENDOR_ID=0x09cb;
     static constexpr auto FLIR_ONE_PRODUCT_ID =0x1996;
 
@@ -44,9 +45,7 @@ namespace DCamerasHelper{
             std::cerr << "Failed to initialize libusb" << std::endl;
             return;
         }
-
         libusb_device_handle *handle = libusb_open_device_with_vid_pid(nullptr, FLIR_ONE_VENDOR_ID, FLIR_ONE_PRODUCT_ID);
-
         if (handle) {
             std::vector<std::string> ar {
                     "start", "flirone"
