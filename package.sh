@@ -48,13 +48,11 @@ PACKAGE_NAME=openhd
 PACKAGE_ARCH=armhf
 
 PKGDIR=/tmp/${PACKAGE_NAME}-installdir
+sudo rm -rf ${PKGDIR}/*
 
 ./install_dep.sh || exit 1
 
 cd OpenHD
-
-sudo rm -rf ${PACKAGE_DIR}/
-mkdir ${PACKAGE_DIR}
 
 rm -rf build
 
@@ -67,11 +65,11 @@ make -j4
 
 ls -a
 
-mkdir -p ${PACKAGE_DIR}/usr/local/bin || exit 1
+mkdir -p ${PKGDIR}/usr/local/bin || exit 1
 tree
-cp OpenHD ${PACKAGE_DIR}/usr/local/bin/OpenHD || exit 1
+cp OpenHD ${PKGDIR}/usr/local/bin/OpenHD || exit 1
 echo "copied files"
-echo ${PACKAGE_DIR}
+echo ${PKGDIR}
 
 VERSION="2.1-$(date '+%m%d%H')"
 
