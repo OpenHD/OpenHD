@@ -9,6 +9,7 @@ DISTRO=$3
 BUILD_TYPE=$4
 
 
+
 if [[ "${DISTRO}" == "buster" ]]; then
     PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d raspi2png -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc -d qopenhd -d openhd-linux-pi -d libjpeg62-turbo"
     PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
@@ -33,6 +34,7 @@ nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
 fi
+
 
 apt-get install -y apt-transport-https curl || exit 1
 
@@ -80,134 +82,18 @@ mkdir -p ${PKGDIR}/usr/local/share/wifibroadcast-scripts || exit 1
 
 build_source() {
 
-    pushd openhd-system
-    make clean
-    make -j3 || exit 1
-    make install DESTDIR=${PKGDIR} || exit 1
-    popd
-
-    pushd openhd-security
-    make clean
-    make -j3 || exit 1
-    make install DESTDIR=${PKGDIR} || exit 1
-    popd
-
-    pushd openhd-interface
-    make clean
-    make -j3 || exit 1
-    make install DESTDIR=${PKGDIR} || exit 1
-    popd
-
-    pushd openhd-status
-    make clean
-    make -j3 || exit 1
-    make install DESTDIR=${PKGDIR} || exit 1
-    popd
-
-    pushd openhd-video
-    make clean
-    make -j3 || exit 1
-    make install DESTDIR=${PKGDIR} || exit 1
-    popd
-
-    pushd openhd-power
-    make clean
-    make -j3 || exit 1
-    make install DESTDIR=${PKGDIR} || exit 1
-    popd
     
-    pushd openhd-status
-    make clean
-    make -j3 || exit 1
-    make install DESTDIR=${PKGDIR} || exit 1
-    popd
+rm -rf build
 
-    pushd openhd-telemetry
-    make clean
-    make -j3 || exit 1
-    make install DESTDIR=${PKGDIR} || exit 1
-    popd
+mkdir build
 
-    cp openhd-common/* ${PKGDIR}/usr/local/include || exit 1
-    
+cd build
 
-    # legacy stuff, we should be working to reduce and eventually eliminate most of the stuff below
-    # this line, aside from overlay files and default settings templates
-    cp UDPSplitter/udpsplitter.py ${PKGDIR}/usr/local/bin/ || exit 1
+cmake ..
+make -j4
 
-    # if [[ "${OS}" == "raspbian" ]]; then
-    #     echo "-------------BUILDING HELLO VIDEO FOR RASPBIAN--------"
-    #     pushd wifibroadcast-hello_video
-    #     make clean
-    #     make -j3 || exit 1
-    #     make install DESTDIR=${PKGDIR} || exit 1
-    #     popd
-    # fi
-
-    pushd wifibroadcast-rc-Ath9k
-    ./buildlora.sh || exit 1
-    chmod 775 lora || exit 1
-    cp -a lora ${PKGDIR}/usr/local/bin/ || exit 1
-    
-    ./build.sh || exit 1
-    chmod 775 rctx || exit 1
-    cp -a rctx ${PKGDIR}/usr/local/bin/ || exit 1
-
-    make clean
-    make -j3 || exit 1
-    make install DESTDIR=${PKGDIR} || exit 1
-    popd
-
-    cp -a wifibroadcast-scripts/* ${PKGDIR}/usr/local/share/wifibroadcast-scripts/ || exit 1
-
-    cp -a overlay/etc/* ${PKGDIR}/etc/ || exit 1
-    
-    # note: this is non-standard behavior, packaging stuff in /root and /home, but it's temporary
-    cp -a overlay/root/.bashrc ${PKGDIR}/root/ || exit 1
-    cp -a overlay/home/openhd/.bashrc ${PKGDIR}/home/openhd/ || exit 1
-
-    cp -a overlay/usr/local/etc/* ${PKGDIR}/usr/local/etc/ || exit 1
-
-    cp -a overlay/etc/systemd/system/* ${PKGDIR}/etc/systemd/system/ || exit 1
-
-    cp -a gnuplot/* ${PKGDIR}/usr/local/share/openhd/gnuplot/ || exit 1
-
-
-    cp -a config/config.txt ${PKGDIR}/boot/ || exit 1
-    cp -a config/cmdline.txt ${PKGDIR}/boot/ || exit 1
-    cp -a config/ssh ${PKGDIR}/boot/ || exit 1
-
-    cp -a config/apconfig.txt ${PKGDIR}/usr/local/share/openhd/ || exit 1
-
-    cp -a config/camera.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/ethernetcard.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/general.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/ltecard.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/vpn.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/wificard.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-    cp -a config/telemetry.template ${PKGDIR}/usr/local/share/openhd/ || exit 1
-
-    if [[ "${DISTRO}" == "buster" ]]; then
-        cat << EOF >> ${PKGDIR}/boot/config.txt
-[all]
-dtoverlay=vc4-fkms-v3d
-EOF
-
-    fi
 }
 
-if [[ "${DISTRO}" == "bullseye" ]]; then
-        cat << EOF >> ${PKGDIR}/boot/config.txt
-[all]
-dtoverlay=vc4-kms-v3d
-EOF
-fi
-
-if [[ "${OS}" == "raspbian" ]]; then
-    build_pi_dep
-fi
-
-build_source
 
 VERSION=$(git describe)
 

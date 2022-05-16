@@ -28,7 +28,7 @@ jobs:
       - name: Build with make
         run: |
           cd OpenHD
-          ./build_cmake.sh
+          ./package.sh
 
       - name: Show files
         run: |
