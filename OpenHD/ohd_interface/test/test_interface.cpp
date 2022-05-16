@@ -20,7 +20,6 @@ int main(int argc, char *argv[]) {
 	std::cout<<"XInterface\n";
 	std::cout<<ohdInterface.createDebug();
   }
-
   std::cerr << "OHDInterface stopped\n";
 
   return 0;
