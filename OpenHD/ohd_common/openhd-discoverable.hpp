@@ -5,8 +5,6 @@
 #ifndef OPENHD_OPENHD_DISCOVERABLE_HPP
 #define OPENHD_OPENHD_DISCOVERABLE_HPP
 
-#include "json.hpp"
-
 namespace OHD {
 /**
  * This is a pure virtual interface for classes that perform a "discovery" step.
