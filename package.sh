@@ -47,39 +47,7 @@ PACKAGE_NAME=openhd
 
 PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 
-rm -rf ${PKGDIR}/*
-
-mkdir -p ${PKGDIR}/root || exit 1
-
-mkdir -p ${PKGDIR}/conf/openhd || exit 1
-mkdir -p ${PKGDIR}/boot || exit 1
-mkdir -p ${PKGDIR}/boot/osdfonts || exit 1
-
-mkdir -p ${PKGDIR}/etc/network || exit 1
-mkdir -p ${PKGDIR}/etc/sysctl.d || exit 1
-mkdir -p ${PKGDIR}/etc/systemd/system || exit 1
-
-mkdir -p ${PKGDIR}/home/openhd || exit 1
-mkdir -p ${PKGDIR}/root || exit 1
-
-mkdir -p ${PKGDIR}/usr/bin || exit 1
-mkdir -p ${PKGDIR}/usr/sbin || exit 1
-mkdir -p ${PKGDIR}/usr/share || exit 1
-mkdir -p ${PKGDIR}/usr/lib || exit 1
-mkdir -p ${PKGDIR}/usr/include || exit 1
-
-mkdir -p ${PKGDIR}/usr/local/bin || exit 1
-mkdir -p ${PKGDIR}/usr/local/etc || exit 1
-mkdir -p ${PKGDIR}/usr/local/include || exit 1
-mkdir -p ${PKGDIR}/usr/local/share || exit 1
-mkdir -p ${PKGDIR}/usr/local/share/openhd || exit 1
-mkdir -p ${PKGDIR}/usr/local/share/openhd/osdfonts || exit 1
-mkdir -p ${PKGDIR}/usr/local/share/openhd/gnuplot || exit 1
-mkdir -p ${PKGDIR}/usr/local/share/wifibroadcast-scripts || exit 1
-
 ./install_dep.sh || exit 1
-
-
 
 cd OpenHD
 
@@ -92,7 +60,10 @@ cd build
 cmake ..
 make -j4
 
-VERSION=$(git describe)
+mkdir -p ${PACKAGE_DIR}/usr/local/bin || exit 1
+cp openhd ${PACKAGE_DIR}/usr/local/bin/openhd
+
+VERSION="2.1-$(date '+%m%d%H')"
 
 rm ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
 
