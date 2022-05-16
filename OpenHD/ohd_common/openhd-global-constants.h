@@ -29,7 +29,7 @@ static_assert(OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT != OHD_TELEMETRY_WIFIBRO
 
 // Where any service can send log messages to, both on air and ground pi.
 // Picked up by telemetry service.
-static constexpr auto OHD_LOCAL_LOG_MESSAGES_UDP_PORT = 50000;
+static constexpr auto OHD_LOCAL_LOG_MESSAGES_UDP_PORT = 50001;
 
 static constexpr auto OHD_VIDEO_PRIMARY_RADIO_PORT = 10;
 static constexpr auto OHD_VIDEO_SECONDARY_RADIO_PORT = 11;
