@@ -77,6 +77,3 @@ echo "copied files"
 echo ${PKGDIR}
 
 VERSION="2.1-$(date '+%m%d%H')"
-
-rm ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
-
