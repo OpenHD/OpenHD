@@ -28,7 +28,7 @@ public:
     void start() override;
     void stop() override;
     std::string debug() override;
-    
+
     bool supports_cbr() override;
     void set_cbr(bool enable) override;
 
@@ -43,7 +43,6 @@ private:
     GMainLoop *mainLoop = nullptr;
     // The pipeline that is started in the end
     std::stringstream m_pipeline;
-
 };
 
 #endif
