@@ -31,6 +31,8 @@ namespace OHDGstHelper{
 
     // a createXXXStream function always ends wth "h164,h265 or mjpeg stream ! "
     // aka after that, onc can add a rtp encoder or similar.
+    // All these methods also start from zero - aka have a source like videotestsrc, nvarguscamerasr usw in the beginning
+    // and end with a OpenHD supported video codec (e.g. h264,h265 or mjpeg)
     // ------------- crateXXXStream begin -------------
     /**
      * Create a encoded dummy stream for the selected video format, that means a stream that encodes data coming from a videotestsrc.
@@ -40,8 +42,7 @@ namespace OHDGstHelper{
         assert(videoFormat.videoCodec==VideoCodecH264);
         std::stringstream ss;
         ss<<"videotestsrc ! ";
-        // this part for some reason creates issues when used in combination with gst-launch
-        //pipeline<<"'video/x-raw,format=(string)NV12,width=640,height=480,framerate=(fraction)30/1' ! ";
+        ss<<fmt::format("video/x-raw, format=NV12,width={},height={},framerate={}/1 ! ",videoFormat.width,videoFormat.height,videoFormat.framerate);
         if(videoFormat.videoCodec==VideoCodecH264){
             ss<<fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",DEFAULT_BITRATE_KBITS);
         }else if(videoFormat.videoCodec==VideoCodecH265){
