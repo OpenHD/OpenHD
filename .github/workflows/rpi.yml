@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: self-hosted
 
-     steps:
+    steps:
       - name: test
         run: |
           echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
@@ -36,6 +36,10 @@ jobs:
         run: |
           sudo ./package.sh
 
+      - name: Show files
+        run: |
+          tree
+      
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
         with:
