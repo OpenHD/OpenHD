@@ -76,7 +76,7 @@ mkdir -p ${PKGDIR}/settings
 mkdir -p ${PKGDIR}/etc/systemd/system/openhd.service
 
 cp OpenHD ${PKGDIR}/usr/local/bin/OpenHD || exit 1
-cp ../../openhd.service  ${PKGDIR}/etc/systemd/system/openhd.service
+cp ../../openhd.service  ${PKGDIR}/etc/systemd/system/
 
 echo "copied files"
 echo ${PKGDIR}
