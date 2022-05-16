@@ -13,3 +13,4 @@ _deps
 .idea
 cmake-build-createDebug
 build
+cmake-build-debug
