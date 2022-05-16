@@ -125,15 +125,15 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
 void WBStreams::debug() const {
   std::cout << " WBStreams::debug\n";
   if (udpTelemetryRx) {
-	udpTelemetryRx->createDebug();
+	std::cout<<udpTelemetryRx->createDebug();
   }
   if (udpTelemetryTx) {
-	udpTelemetryTx->createDebug();
+	std::cout<<udpTelemetryTx->createDebug();
   }
   for (const auto &txvid: udpVideoTxList) {
-	txvid->createDebug();
+	std::cout<<txvid->createDebug();
   }
   for (const auto &rxvid: udpVideoRxList) {
-	rxvid->createDebug();
+	std::cout<<rxvid->createDebug();
   }
 }
