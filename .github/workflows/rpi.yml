@@ -11,6 +11,8 @@ jobs:
     runs-on: self-hosted
     
     steps:
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY2 }}
       - name: test
         run: |
           echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
@@ -30,8 +32,6 @@ jobs:
           sudo ./install_dep.sh
 
       - name: Build with make
-    env:
-      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY2 }}
         run: |
           sudo ./package.sh
 
