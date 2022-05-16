@@ -82,7 +82,8 @@ mkdir -p ${PKGDIR}/usr/local/share/wifibroadcast-scripts || exit 1
 
 build_source() {
 
-    
+cd OpenHD
+   
 rm -rf build
 
 mkdir build
