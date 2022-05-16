@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	std::cout<<"XInterface\n";
-	ohdInterface.debug();
+	std::cout<<ohdInterface.createDebug();
   }
 
   std::cerr << "OHDInterface stopped\n";
