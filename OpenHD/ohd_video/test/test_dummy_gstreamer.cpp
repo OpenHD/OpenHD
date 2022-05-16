@@ -10,21 +10,21 @@
 
 int main(int argc, char *argv[]) {
 
-    Camera camera;
-    camera.type=CameraTypeDummy;
-    PlatformType platformType;
-    uint16_t video_port=OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP;
-    
-    auto stream=std::make_unique<GStreamerStream>(platformType,camera,video_port);
-    stream->setup();
-    stream->start();
+  Camera camera;
+  camera.type = CameraTypeDummy;
+  PlatformType platformType;
+  uint16_t video_port = OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP;
 
-    while (true){
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        std::cout<<stream->debug()<<"\n";
-    }
+  auto stream = std::make_unique<GStreamerStream>(platformType, camera, video_port);
+  stream->setup();
+  stream->start();
 
-    std::cerr << "OHDVideo stopped\n";
+  while (true) {
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::cout << stream->debug() << "\n";
+  }
 
-    return 0;
+  std::cerr << "OHDVideo stopped\n";
+
+  return 0;
 }

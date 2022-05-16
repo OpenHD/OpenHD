@@ -7,5 +7,5 @@
 #include "../src/internal//RebootUtil.hpp"
 
 int main() {
-    RebootUtil::handlePowerCommand(false);
+  RebootUtil::handlePowerCommand(false);
 }

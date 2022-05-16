@@ -1,4 +1,3 @@
-
 The code for all commands that can be handled by this service itself (commands without side effects)
 should be placed here. As well as code generating OHD fire and forget telemetry messages (like CPU Usage).
 
