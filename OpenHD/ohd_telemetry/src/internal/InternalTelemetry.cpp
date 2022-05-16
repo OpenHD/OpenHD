@@ -56,7 +56,7 @@ void InternalTelemetry::processWifibroadcastStatisticsData(const uint8_t *payloa
   }
 }
 
-MavlinkMessage InternalTelemetry::generateSystemTelemetry() {
+MavlinkMessage InternalTelemetry::generateSystemTelemetry() const {
   MavlinkMessage msg;
   mavlink_msg_openhd_system_telemetry_pack(SYS_ID,
 										   MAV_COMP_ID_ALL,
@@ -67,7 +67,7 @@ MavlinkMessage InternalTelemetry::generateSystemTelemetry() {
   return msg;
 }
 
-MavlinkMessage InternalTelemetry::generateWifibroadcastStatistics() {
+MavlinkMessage InternalTelemetry::generateWifibroadcastStatistics() const {
   OpenHDStatisticsWriter::Data data;
   // for now, write some crap
   data.radio_port = 0;
@@ -106,10 +106,10 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
 }
 
 void InternalTelemetry::processLogMessageData(const uint8_t *data, std::size_t dataLen) {
-  std::cout << "XX" << dataLen << "\n";
+  //std::cout << "XX" << dataLen << "\n";
   //TODO fix safety
   if (dataLen == sizeof(OHDLocalLogMessage)) {
-	OHDLocalLogMessage local_message;
+	OHDLocalLogMessage local_message{};
 	memcpy((uint8_t *)&local_message, data, dataLen);
 	const auto nullTerminatorFound = local_message.hasNullTerminator();
 	if (!nullTerminatorFound) {

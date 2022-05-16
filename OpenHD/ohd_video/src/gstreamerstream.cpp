@@ -168,8 +168,8 @@ void GStreamerStream::setup_ip_camera() {
 
 std::string GStreamerStream::debug() {
   std::stringstream ss;
-  ss << "GS_debug|";
-  ss << "Pipeline:" << m_pipeline.str();
+  ss << "GStreamerStream[";
+  ss << "Pipeline:" << m_pipeline.str()<<"\n";
   GstState state;
   GstState pending;
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
@@ -179,7 +179,7 @@ std::string GStreamerStream::debug() {
 	sleep(3);
 	start();
   }
-  ss << "|GS_debug";
+  ss << "]GStreamerStream";
   return ss.str();
 }
 

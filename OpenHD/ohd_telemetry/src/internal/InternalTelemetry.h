@@ -52,8 +52,8 @@ class InternalTelemetry {
    * Called with the raw Wifibroadcast statistics data from UDP
    */
   void processWifibroadcastStatisticsData(const uint8_t *payload, std::size_t payloadSize);
-  MavlinkMessage generateSystemTelemetry();
-  MavlinkMessage generateWifibroadcastStatistics();
+  MavlinkMessage generateSystemTelemetry() const;
+  MavlinkMessage generateWifibroadcastStatistics() const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
   // here all the log messages are sent to - not in their mavlink form yet.
