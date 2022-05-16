@@ -69,8 +69,9 @@ int main(int argc, char *argv[]) {
 	auto telemetry = std::make_unique<OHDTelemetry>(platform, profile);
 
 	// and start ohdVideo if we are on the air pi
+	std::unique_ptr<OHDVideo> ohdVideo;
 	if (profile.is_air) {
-	  auto ohdVideo = std::make_unique<OHDVideo>(platform, profile);
+	  ohdVideo = std::make_unique<OHDVideo>(platform, profile);
 	}
 
 	std::cout << "All OpenHD modules running\n";
@@ -78,8 +79,13 @@ int main(int argc, char *argv[]) {
 	// run forever, everything has its own threads. Note that the only way to break out basically
 	// is when one of the modules encounters an exception.
 	while (true) {
-	  std::this_thread::sleep_for(std::chrono::seconds(1));
+	  std::this_thread::sleep_for(std::chrono::seconds(2));
 	  std::cout << "OpenHD\n";
+	  ohdInterface->debug();
+	  telemetry->debug();
+	  if(ohdVideo){
+		ohdVideo->debug();
+	  }
 	}
   } catch (std::exception &ex) {
 	std::cerr << "Error: " << ex.what() << std::endl;

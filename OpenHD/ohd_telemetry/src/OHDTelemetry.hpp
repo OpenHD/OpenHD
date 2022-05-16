@@ -46,6 +46,9 @@ class OHDTelemetry {
   // active when ground
   std::unique_ptr<GroundTelemetry> groundTelemetry;
   std::unique_ptr<std::thread> loopThread;
+  void debug()const{
+	//
+  }
  private:
   const OHDProfile &profile;
   /**
