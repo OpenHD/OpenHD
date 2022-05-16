@@ -37,6 +37,15 @@ jobs:
       - name: Show files
         run: |
           tree
+      
+      - name: Upload to Github
+        uses: 'actions/upload-artifact@v2'
+        with:
+          name: "Open.HD"
+          path: |
+            *.deb
+            *.log
+          if-no-files-found: error
           
       #- name: Install
       #  run: |
