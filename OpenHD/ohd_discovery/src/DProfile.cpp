@@ -11,16 +11,15 @@
 #include "DProfile.h"
 
 DProfile::DProfile(bool is_air) :
-    m_is_air(is_air){}
-
+	m_is_air(is_air) {}
 
 void DProfile::discover() {
-    std::cout << "Profile::discover()\n";
-    // We read the unit id from the persistent storage, later write it to the tmp storage json
-    m_unit_id = getOrCreateUnitId();
+  std::cout << "Profile::discover()\n";
+  // We read the unit id from the persistent storage, later write it to the tmp storage json
+  m_unit_id = getOrCreateUnitId();
 }
 
 void DProfile::write_manifest() {
-    OHDProfile ohdProfile{m_is_air,m_unit_id};
-    write_profile_manifest(ohdProfile);
+  OHDProfile ohdProfile{m_is_air, m_unit_id};
+  write_profile_manifest(ohdProfile);
 }

@@ -12,15 +12,15 @@
  * Try and break out some of the stuff from stephen.
  * Even though it mght not be re-used in multiple places, it makes the code more readable in my opinion.
  */
-namespace DV4l2DevicesHelper{
+namespace DV4l2DevicesHelper {
 
-    /**
-     * For each format
-     * enumerate the suported framesizes
-     *      enumerate the supported frameintervals.
-     */
-    static void enumarateSupportedFormats(){
+/**
+ * For each format
+ * enumerate the suported framesizes
+ *      enumerate the supported frameintervals.
+ */
+static void enumarateSupportedFormats() {
 
-    }
+}
 }
 #endif //OPENHD_DV4L2DEVICESHELPER_HPP

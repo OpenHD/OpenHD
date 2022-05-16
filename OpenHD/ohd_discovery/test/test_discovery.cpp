@@ -10,17 +10,17 @@
  */
 int main(int argc, char *argv[]) {
 
-    OHDCommonTests::test_video_format_regex();
+  OHDCommonTests::test_video_format_regex();
 
-    generateSettingsDirectoryIfNonExists();
-    const auto id1=getOrCreateUnitId();
-    const auto id2=getOrCreateUnitId();
-    assert(id1==id2);
+  generateSettingsDirectoryIfNonExists();
+  const auto id1 = getOrCreateUnitId();
+  const auto id2 = getOrCreateUnitId();
+  assert(id1 == id2);
 
-    // putting it here, since where else
+  // putting it here, since where else
 
 
-    OHDDiscovery::runOnceOnStartup(false);
+  OHDDiscovery::runOnceOnStartup(false);
 
-    return 0;
+  return 0;
 }
