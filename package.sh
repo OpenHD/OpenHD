@@ -71,12 +71,15 @@ make -j4
 ls -a
 
 mkdir -p ${PKGDIR}/usr/local/bin || exit 1
+mkdir -p ${PKGDIR}/tmp
+mkdir -p ${PKGDIR}/settings
+
 tree
 cp OpenHD ${PKGDIR}/usr/local/bin/OpenHD || exit 1
 echo "copied files"
 echo ${PKGDIR}
 
-VERSION="2.1-$(date '+%m%d%H')"
+VERSION="2.1-$(date '+%m%d%H%M')"
 
 rm ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
 
