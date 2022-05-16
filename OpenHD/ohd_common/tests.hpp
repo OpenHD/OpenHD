@@ -10,16 +10,15 @@
 #include "openhd-profile.hpp"
 #include "openhd-wifi.hpp"
 
+namespace OHDCommonTests {
 
-namespace OHDCommonTests{
-
-    // Simple test for to and from string
-    static void test_video_format_regex(){
-        const VideoFormat source{VideoCodecH264,1280,720,30};
-        const auto serialized=source.toString();
-        const auto from=VideoFormat::fromString(serialized);
-        assert(source==from);
-    }
+// Simple test for to and from string
+static void test_video_format_regex() {
+  const VideoFormat source{VideoCodecH264, 1280, 720, 30};
+  const auto serialized = source.toString();
+  const auto from = VideoFormat::fromString(serialized);
+  assert(source == from);
+}
 
 }
 #endif //OPENHD_TESTS_H
