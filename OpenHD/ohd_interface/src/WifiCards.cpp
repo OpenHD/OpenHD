@@ -127,5 +127,5 @@ std::vector<std::string> WifiCards::get_broadcast_card_names()const {
 }
 
 void WifiCards::debug() const {
-
+    std::cout<<"WifiCards::debug():N cards:"<<m_wifi_cards.size()<<"\n";
 }
