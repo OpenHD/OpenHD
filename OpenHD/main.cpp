@@ -80,12 +80,13 @@ int main(int argc, char *argv[]) {
 	// is when one of the modules encounters an exception.
 	while (true) {
 	  std::this_thread::sleep_for(std::chrono::seconds(2));
-	  std::cout << "OpenHD\n";
+	  std::cout << "---------------------------------OpenHD log begin ---------------------------------\n";
 	  ohdInterface->debug();
 	  telemetry->debug();
 	  if(ohdVideo){
 		ohdVideo->debug();
 	  }
+	  std::cout << "---------------------------------OpenHD log end ---------------------------------\n";
 	}
   } catch (std::exception &ex) {
 	std::cerr << "Error: " << ex.what() << std::endl;
