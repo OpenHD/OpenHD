@@ -44,6 +44,7 @@ curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1/setup.deb.sh' | su
 apt -y update || exit 1
 
 PACKAGE_NAME=openhd
+PACKAGE_ARCH=armhf
 
 PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 
@@ -59,6 +60,8 @@ cd build
 
 cmake ..
 make -j4
+
+ls -a
 
 mkdir -p ${PACKAGE_DIR}/usr/local/bin || exit 1
 cp openhd ${PACKAGE_DIR}/usr/local/bin/openhd
@@ -121,6 +124,9 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
   -d "gstreamer1.0-tools" \
   -d "gstreamer1.0-alsa" \
   -d "gstreamer1.0-pulseaudio" || exit 1
+
+
+  sudo rm -Rf 
 
 #
 # Only push to cloudsmith for tags. If you don't want something to be pushed to the repo, 
