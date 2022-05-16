@@ -36,10 +36,23 @@ jobs:
         run: |
           sudo ./package.sh
 
-      - name: Show files
-        run: |
-          tree
-      
+      - name: Upload to Cloudsmith
+      steps:
+    - uses: actions/checkout@v1
+    - name: Push
+      id: push
+      uses: cloudsmith-io/action@master
+      with:
+        api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+        command: 'push'
+        format: 'deb'
+        owner: 'stephen-oliver'             # Your Cloudsmith account name or org name (namespace) 
+        repo: 'openhd-2-1-alpha'         # Your Cloudsmith Repository name (slug)
+        distro: 'raspbian'     # Your Distribution  (i.e Debian, Ubuntu)
+        release: 'bullseye'         # Your Distribution Release (i.e xenial, buster) 
+        republish: 'true'          # needed ONLY if version is not changing
+        file: 'openhd_2.1*'  # debian package filename
+
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
         with:
