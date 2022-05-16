@@ -61,8 +61,8 @@ class InternalTelemetry {
   // process the incoming log messages. This one is a bit dangerous, it must handle the character
   // limit imposed by mavlink and the null terminator
   void processLogMessageData(const uint8_t *data, std::size_t dataLen);
-  void processLogMessage(localmessage_t msg);
-  std::queue<localmessage_t> bufferedLogMessages;
+  void processLogMessage(OHDLocalLogMessage msg);
+  std::queue<OHDLocalLogMessage> bufferedLogMessages;
   // one thread writes the queue, another one reads the queue
   std::mutex bufferedLogMessagesLock;
 };

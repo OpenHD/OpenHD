@@ -81,15 +81,13 @@ int main(int argc, char *argv[]) {
 	// is when one of the modules encounters an exception.
 	while (true) {
 	  std::this_thread::sleep_for(std::chrono::seconds(2));
-	  std::stringstream ss;
-	  ss<< "---------------------------------OpenHD log begin ---------------------------------\n";
-	  ss<<ohdInterface->createDebug();
-	  std::cout<<ss.str();
+	  std::cout<< "---------------------------------OpenHD log begin ---------------------------------\n";
+	  std::cout<<ohdInterface->createDebug();
 	  telemetry->debug();
 	  if(ohdVideo){
 		ohdVideo->debug();
 	  }
-	  std::cout << "---------------------------------OpenHD log end ---------------------------------\n";*/
+	  std::cout << "---------------------------------OpenHD log end ---------------------------------\n";
 	}
   } catch (std::exception &ex) {
 	std::cerr << "Error: " << ex.what() << std::endl;

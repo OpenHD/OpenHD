@@ -108,8 +108,8 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
 void InternalTelemetry::processLogMessageData(const uint8_t *data, std::size_t dataLen) {
   std::cout << "XX" << dataLen << "\n";
   //TODO fix safety
-  if (dataLen == sizeof(localmessage_t)) {
-	localmessage_t local_message;
+  if (dataLen == sizeof(OHDLocalLogMessage)) {
+	OHDLocalLogMessage local_message;
 	memcpy((uint8_t *)&local_message, data, dataLen);
 	const auto nullTerminatorFound = local_message.verifyNullTerminator();
 	if (!nullTerminatorFound) {
@@ -118,11 +118,11 @@ void InternalTelemetry::processLogMessageData(const uint8_t *data, std::size_t d
 	}
 	processLogMessage(local_message);
   } else {
-	std::cerr << "Invalid size for local log message\n";
+	std::cerr << "Invalid size for local log message" << dataLen << " wanted:" << sizeof(OHDLocalLogMessage) << "\n";
   }
 }
 
-void InternalTelemetry::processLogMessage(localmessage_t msg) {
+void InternalTelemetry::processLogMessage(OHDLocalLogMessage msg) {
   //std::cout<<"Log message:"<<msg.message<<"\n";
   std::lock_guard<std::mutex> guard(bufferedLogMessagesLock);
   bufferedLogMessages.push(msg);

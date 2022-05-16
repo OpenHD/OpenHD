@@ -27,7 +27,7 @@
  * which converts it to mavlink and forwards it accordingly.
  */
 
-typedef struct {
+struct OHDLocalLogMessage{
   uint8_t level;
   uint8_t message[50];
   [[nodiscard]] bool verifyNullTerminator() const {
@@ -41,7 +41,8 @@ typedef struct {
 	}
 	return nullTerminatorFound;
   }
-} __attribute__((packed)) localmessage_t;
+} __attribute__((packed));
+
 
 // these match the mavlink SEVERITY_LEVEL enum, but this code should not depend on
 // the mavlink headers
@@ -73,30 +74,23 @@ static void print_log_by_level(const STATUS_LEVEL level, std::string message) {
  */
 inline void ohd_log(STATUS_LEVEL level, const std::string &message) {
   print_log_by_level(level, message);
-  localmessage_t lmessage;
+  OHDLocalLogMessage lmessage{};
   lmessage.level = static_cast<uint8_t>(level);
   strncpy((char *)lmessage.message, message.c_str(), 50);
   if (lmessage.message[49] != '\0') {
 	lmessage.message[49] = '\0';
   }
-
   int sockfd;
-
-  struct sockaddr_in servaddr;
-
+  struct sockaddr_in servaddr{};
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 	perror("Socket create failed");
 	exit(EXIT_FAILURE);
   }
-
   memset(&servaddr, 0, sizeof(servaddr));
-
   servaddr.sin_family = AF_INET;
   servaddr.sin_port = htons(OHD_LOCAL_LOG_MESSAGES_UDP_PORT);
   inet_aton("127.0.0.1", (in_addr *)&servaddr.sin_addr.s_addr);
-
   int n, len;
-
   sendto(sockfd, &lmessage, sizeof(lmessage), 0, (const struct sockaddr *)&servaddr, sizeof(servaddr));
 }
 
