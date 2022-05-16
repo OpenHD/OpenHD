@@ -1,18 +1,13 @@
 
 #include <unistd.h>
-
 #include <iostream>
 #include <stdexcept>
 #include <vector>
-
 #include <regex>
 
 #include <gst/gst.h>
 
-#include <fmt/core.h>
-
 #include "openhd-log.hpp"
-
 #include "OHDGstHelper.hpp"
 #include "gstreamerstream.h"
 
@@ -79,14 +74,16 @@ void GStreamerStream::setup() {
             return;
         }
     }
+    // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
+    // add rtp part
     m_pipeline<< OHDGstHelper::createRtpForVideoCodec(m_camera.userSelectedVideoFormat.videoCodec);
     // Allows users to fully write a manual pipeline, this must be used carefully.
     if (!m_camera.manual_pipeline.empty()) {
         m_pipeline.str("");
         m_pipeline << m_camera.manual_pipeline;
     }
+    // add udp out part
     m_pipeline << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
-
     std::cout << "Starting pipeline:" << m_pipeline.str() << std::endl;
     gst_pipeline = gst_parse_launch(m_pipeline.str().c_str(), &error);
     if (error) {
@@ -95,12 +92,10 @@ void GStreamerStream::setup() {
     }
 }
 
-
 void GStreamerStream::setup_raspberrypi_csi() {
     std::cout << "Setting up Raspberry Pi CSI camera" << std::endl;
     m_pipeline<<OHDGstHelper::createRpicamsrcStream(m_camera.bus,m_camera.bitrateKBits,m_camera.userSelectedVideoFormat);
 }
-
 
 void GStreamerStream::setup_jetson_csi() {
     std::cout << "Setting up Jetson CSI camera" << std::endl;
@@ -126,35 +121,32 @@ void GStreamerStream::setup_jetson_csi() {
 
 void GStreamerStream::setup_usb_uvc() {
     std::cout<< "Setting up usb UVC camera Name:" << m_camera.name << " type:" << m_camera.type << std::endl;
-    std::string device_node;
     // First we try and start a hw encoded path, where v4l2src directly provides encoded video buffers
     for (const auto &endpoint : m_camera.endpoints) {
         if (m_camera.userSelectedVideoFormat.videoCodec == VideoCodecH264 && endpoint.support_h264) {
             std::cerr << "h264" << std::endl;
-            device_node = endpoint.device_node;
+            const auto device_node = endpoint.device_node;
             m_pipeline<< OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, m_camera.userSelectedVideoFormat);
             return;
         }
         if (m_camera.userSelectedVideoFormat.videoCodec == VideoCodecMJPEG && endpoint.support_mjpeg) {
             std::cerr << "MJPEG" << std::endl;
-            device_node = endpoint.device_node;
+            const auto device_node = endpoint.device_node;
             m_pipeline<< OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, m_camera.userSelectedVideoFormat);
             return;
         }
     }
-    // If we land here, we need to do SW encoding, the v4l2src can only do raw video fromats like YUV
-    if (device_node.empty()) {
-        for (auto &endpoint : m_camera.endpoints) {
-            std::cout << "empty" << std::endl;
-            if (endpoint.support_raw) {
-                device_node = endpoint.device_node;
-                m_pipeline<< OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,
-                                                                             m_camera.userSelectedVideoFormat.videoCodec,
-                                                                             m_camera.bitrateKBits);
-                return;
-            }
+    // If we land here, we need to do SW encoding, the v4l2src can only do raw video formats like YUV
+    for (const auto &endpoint : m_camera.endpoints) {
+        std::cout << "empty" << std::endl;
+        if (endpoint.support_raw) {
+            const auto device_node = endpoint.device_node;
+            m_pipeline << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,m_camera.userSelectedVideoFormat.videoCodec,m_camera.bitrateKBits);
+            return;
         }
     }
+    // If we land here, we couldn't create a stream for this camera.
+    std::cerr<<"Setup USB UVC failed\n";
 }
 
 void GStreamerStream::setup_usb_uvch264() {
