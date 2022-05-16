@@ -16,6 +16,10 @@ jobs:
           echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
 
+      - name: Clean UP
+        run: |
+          sudo rm -Rf *
+          
       - name: Checkout repository and submodules
         uses: actions/checkout@v3
         with:
@@ -32,10 +36,6 @@ jobs:
       - name: Show files
         run: |
           tree
-
-      - name: Clean UP
-        run: |
-          sudo rm -Rf *
           
       #- name: Install
       #  run: |
