@@ -63,13 +63,6 @@ void DCameras::discover() {
 }
 
 
-
-/*
- * This is used when the gpu firmware is in charge of the camera, we have to ask it. This should 
- * be the only place in the entire system that uses vcgencmd for this purpose, anything else that 
- * needs to know should read from the openhd system manifest instead.
- *
- */
 void DCameras::detect_raspberrypi_csi() {
     std::cout<< "Cameras::detect_raspberrypi_csi()" << std::endl;
     std::array<char, 512> buffer{};
