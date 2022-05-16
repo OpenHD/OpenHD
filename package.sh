@@ -80,10 +80,9 @@ mkdir -p ${PKGDIR}/usr/local/share/wifibroadcast-scripts || exit 1
 ./install_dep.sh || exit 1
 
 
-build_source() {
 
 cd OpenHD
-   
+
 rm -rf build
 
 mkdir build
@@ -92,9 +91,6 @@ cd build
 
 cmake ..
 make -j4
-
-}
-
 
 VERSION=$(git describe)
 
