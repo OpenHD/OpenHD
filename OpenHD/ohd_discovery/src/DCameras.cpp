@@ -232,7 +232,7 @@ void DCameras::probe_v4l2_device(const std::string& device){
     }
     CameraEndpoint endpoint;
     endpoint.device_node = device;
-    if (!process_video_node(camera, endpoint, device)) {
+    if (!process_v4l2_node(device,camera,endpoint)) {
         return;
     }
     bool found = false;
@@ -250,9 +250,8 @@ void DCameras::probe_v4l2_device(const std::string& device){
 }
 
 
-
-bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, const std::string& node) {
-    std::cout<< "Cameras::process_video_node(" << node << ")" << std::endl;
+bool DCameras::process_v4l2_node(const std::string& node,Camera& camera, CameraEndpoint& endpoint) {
+    std::cout<< "Cameras::process_v4l2_node(" << node << ")" << std::endl;
     int fd;
     if ((fd = v4l2_open(node.c_str(), O_RDWR)) == -1) {
         std::cout<< "Can't open: " << node << std::endl;
@@ -277,6 +276,7 @@ bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, cons
         //camera.type = CameraTypeV4L2Loopback;
         std::cout << "Found v4l2 loopback camera (likely a thermal camera)" << std::endl;
         std::cerr<< "Loopback is unimplemented rn\n";
+        return false;
     } else {
         /*
          * This is primarily going to be the bcm2835-v4l2 interface on the Pi, and non-camera interfaces.
@@ -285,6 +285,7 @@ bool DCameras::process_video_node(Camera& camera, CameraEndpoint& endpoint, cons
          * advantage over the mmal interface and doesn't offer the same image controls. Once libcamera is
          * being widely used this will be the way to support those cameras, but not yet.
          */
+        std::cerr<<"Found V4l2 device with unknown driver:"<<driver<<"\n";
         return false;
     }
     std::string bus((char*)caps.bus_info);

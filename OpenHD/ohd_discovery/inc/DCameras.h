@@ -56,9 +56,9 @@ private:
      */
     static std::vector<std::string> findV4l2VideoDevices();
     /**
-     * Something something stephen
+     * Something something stephen.
      */
-    static bool process_video_node(Camera& camera, CameraEndpoint& endpoint, const std::string& node);
+    static bool process_v4l2_node(const std::string& node,Camera& camera, CameraEndpoint& endpoint);
     /*
      * Detect all v4l2 cameras, that is cameras that show up as a v4l2 device (/dev/videoXX)
      */
