@@ -54,6 +54,7 @@ PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 cd OpenHD
 
 sudo rm -rf ${PACKAGE_DIR}/
+mkdir ${PACKAGE_DIR}
 
 rm -rf build
 
