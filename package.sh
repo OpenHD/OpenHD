@@ -52,6 +52,8 @@ PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 
 cd OpenHD
 
+sudo rm -rf ${PACKAGE_DIR}/
+
 rm -rf build
 
 mkdir build
@@ -64,7 +66,7 @@ make -j4
 ls -a
 
 mkdir -p ${PACKAGE_DIR}/usr/local/bin || exit 1
-cp OpenHD ${PACKAGE_DIR}/usr/local/bin/OpenHD
+cp OpenHD ${PACKAGE_DIR}/usr/local/bin/OpenHD || exit 1
 
 VERSION="2.1-$(date '+%m%d%H')"
 
