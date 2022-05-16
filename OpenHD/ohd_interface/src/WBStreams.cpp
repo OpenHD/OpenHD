@@ -29,16 +29,15 @@
  * in the same place.
  *
  */
-WBStreams::WBStreams(const OHDProfile &profile) :
-	profile(profile) {}
+WBStreams::WBStreams(const OHDProfile &profile1) :
+	profile(profile1) {}
 
 void WBStreams::set_broadcast_card_names(const std::vector<std::string> &broadcast_cards_names) {
-  m_broadcast_cards_names = broadcast_cards_names;
-  if (profile.is_air && m_broadcast_cards_names.size() > 1) {
-	std::cerr << "dangerous, the air unit should not have more than 1 wifi card for wifibroadcast\n";
-  }
   if (broadcast_cards_names.empty()) {
 	std::cerr << "Without at least one wifi card, the stream(s) cannot be started\n";
+  }
+  if (profile.is_air && m_broadcast_cards_names.size() > 1) {
+	std::cerr << "dangerous, the air unit should not have more than 1 wifi card for wifibroadcast\n";
   }
   if (!m_broadcast_cards_names.empty()) {
 	std::cerr << "dangerous, overwriting old broadcast cards\n";
@@ -58,7 +57,7 @@ void WBStreams::configure() {
 }
 
 void WBStreams::configure_telemetry() {
-  std::cout << "Streams::configure_telemetry()" << std::endl;
+  std::cout << "Streams::configure_telemetry()isAir:"<<(profile.is_air ? "Y":"N")<<std::endl;
   // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
   // uses 2 UDP streams in oposite directions.
   auto radioPort1 =
@@ -95,7 +94,7 @@ void WBStreams::configure_video() {
   }
 }
 
-std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port) {
+std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port)const {
   RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, m_mcs};
   RadiotapHeader radiotapHeader{wifiParams};
   TOptions options{};

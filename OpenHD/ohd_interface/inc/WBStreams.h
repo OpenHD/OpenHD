@@ -37,7 +37,7 @@ class WBStreams {
  private:
   const OHDProfile &profile;
   const int m_mcs = 3;
-  std::vector<std::string> m_broadcast_cards_names;
+  std::vector<std::string> m_broadcast_cards_names={};
  private:
   // For telemetry, bidirectional in opposite drections
   std::unique_ptr<UDPWBTransmitter> udpTelemetryTx;
@@ -46,7 +46,7 @@ class WBStreams {
   std::vector<std::unique_ptr<UDPWBTransmitter>> udpVideoTxList;
   std::vector<std::unique_ptr<UDPWBReceiver>> udpVideoRxList;
   // TODO make more configurable
-  std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port);
+  [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port)const;
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port) const;
 };
 

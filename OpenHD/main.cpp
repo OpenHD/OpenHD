@@ -84,11 +84,12 @@ int main(int argc, char *argv[]) {
 	  std::stringstream ss;
 	  ss<< "---------------------------------OpenHD log begin ---------------------------------\n";
 	  ss<<ohdInterface->createDebug();
+	  std::cout<<ss.str();
 	  telemetry->debug();
 	  if(ohdVideo){
 		ohdVideo->debug();
 	  }
-	  std::cout << "---------------------------------OpenHD log end ---------------------------------\n";
+	  std::cout << "---------------------------------OpenHD log end ---------------------------------\n";*/
 	}
   } catch (std::exception &ex) {
 	std::cerr << "Error: " << ex.what() << std::endl;
