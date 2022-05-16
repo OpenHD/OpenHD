@@ -5,6 +5,7 @@ on: [push]
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
+  CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
 
 jobs:
   build:
@@ -19,7 +20,7 @@ jobs:
       - name: Clean UP
         run: |
           sudo rm -Rf *
-          
+
       - name: Checkout repository and submodules
         uses: actions/checkout@v3
         with:

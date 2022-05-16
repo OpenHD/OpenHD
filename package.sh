@@ -46,6 +46,10 @@ apt -y update || exit 1
 
 PACKAGE_NAME=openhd
 PACKAGE_ARCH=armhf
+OS=raspbian
+DISTRO=bullseye
+
+
 
 PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
@@ -130,9 +134,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
   -d "gstreamer1.0-alsa" \
   -d "gstreamer1.0-pulseaudio" || exit 1
 
-
-  sudo rm -Rf 
-
 #
 # Only push to cloudsmith for tags. If you don't want something to be pushed to the repo, 
 # don't create a tag. You can build packages and test them locally without tagging.
@@ -143,5 +144,5 @@ if [[ $? -eq 0 ]]; then
     cloudsmith push deb openhd/openhd-2-1/${OS}/${DISTRO} ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb || exit 1
 else
     echo "Pushing package to OpenHD testing repository"
-    cloudsmith push deb openhd/openhd-2-1-testing/${OS}/${DISTRO} ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb || exit 1
+    cloudsmith push deb openhd/openhd-2-1-alpha/${OS}/${DISTRO} ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb || exit 1
 fi
