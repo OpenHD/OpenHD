@@ -91,10 +91,15 @@ namespace OHDGstHelper{
       */
      static std::string createV4l2SrcRawSwEncodingStream(const std::string& device_node,const VideoCodec videoCodec,const int bitrate){
          std::stringstream ss;
+         assert(videoCodec!=VideoCodecUnknown);
          ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
-         //std::cerr << "Allowing gstreamer to choose UVC format" << std::endl;
+         // rn we omit the set resolution/framerate here and let gstreamer figure it out.
+         // TODO: do it better ;)
+         std::cout<< "Allowing gstreamer to choose UVC format" << std::endl;
          ss << fmt::format("video/x-raw ! ");
          ss << "videoconvert ! ";
+         // Add a queue here. With sw we are not low latency anyways.
+         ss<<"queue ! ";
          assert(videoCodec!=VideoCodecUnknown);
          if(videoCodec==VideoCodecH264){
              ss<<fmt::format("x264enc name=encodectrl bitrate={} tune=zerolatency key-int-max=10 ! ", bitrate);
@@ -111,6 +116,7 @@ namespace OHDGstHelper{
       */
      static std::string createV4l2SrcEncodedEncodingStream(const std::string& device_node,const VideoFormat videoFormat){
          std::stringstream ss;
+         assert(videoFormat.videoCodec!=VideoCodecUnknown);
          ss<< fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
          if(videoFormat.videoCodec==VideoCodecH264){
              ss<< fmt::format("video/x-h264, width={}, height={}, framerate={}/1 ! ",

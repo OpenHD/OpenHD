@@ -130,22 +130,16 @@ void GStreamerStream::setup_usb_uvc() {
     // First we try and start a hw encoded path, where v4l2src directly provides encoded video buffers
     for (const auto &endpoint : m_camera.endpoints) {
         if (m_camera.userSelectedVideoFormat.videoCodec == VideoCodecH264 && endpoint.support_h264) {
-           std::cerr << "h264" << std::endl;
+            std::cerr << "h264" << std::endl;
             device_node = endpoint.device_node;
-            m_pipeline << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
-            const auto videoFormat=m_camera.userSelectedVideoFormat;
-            m_pipeline << fmt::format("video/x-h264, width={}, height={}, framerate={}/1 ! ",
-                                      videoFormat.width, videoFormat.height,videoFormat.framerate);
-            break;
+            m_pipeline<<OHDGstHelper::createV4l2SrcEncodedEncodingStream(device_node,m_camera.userSelectedVideoFormat);
+            return;
         }
         if (m_camera.userSelectedVideoFormat.videoCodec == VideoCodecMJPEG && endpoint.support_mjpeg) {
             std::cerr << "MJPEG" << std::endl;
             device_node = endpoint.device_node;
-            m_pipeline << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
-            const auto videoFormat=m_camera.userSelectedVideoFormat;
-            m_pipeline << fmt::format("image/jpeg, width={}, height={}, framerate={}/1 ! ",
-                                      videoFormat.width, videoFormat.height,videoFormat.framerate);
-            break;
+            m_pipeline<<OHDGstHelper::createV4l2SrcEncodedEncodingStream(device_node,m_camera.userSelectedVideoFormat);
+            return;
         }
     }
     // If we land here, we need to do SW encoding, the v4l2src can only do raw video fromats like YUV
@@ -154,18 +148,8 @@ void GStreamerStream::setup_usb_uvc() {
             std::cout << "empty" << std::endl;
             if (endpoint.support_raw) {
                 device_node = endpoint.device_node;
-                m_pipeline << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
-                std::cout << "Allowing gstreamer to choose UVC format" << std::endl;
-                m_pipeline << fmt::format("video/x-raw ! ");
-
-                m_pipeline << "videoconvert ! ";
-
-                if (m_camera.userSelectedVideoFormat.videoCodec== VideoCodecH265) {
-                    m_pipeline << fmt::format("x265enc name=encodectrl bitrate={} ! ", m_camera.bitrateKBits);
-                } else {
-                    m_pipeline << fmt::format("x264enc name=encodectrl bitrate={} tune=zerolatency key-int-max=10 ! ", m_camera.bitrateKBits);
-                }
-
+                m_pipeline<<OHDGstHelper::createV4l2SrcRawSwEncodingStream(device_node,m_camera.userSelectedVideoFormat.videoCodec,m_camera.bitrateKBits);
+                return;
             }
         }
     }
