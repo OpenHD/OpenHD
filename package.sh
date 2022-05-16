@@ -41,6 +41,7 @@ apt-get install -y apt-transport-https curl || exit 1
 curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash && \
 
 pip install --upgrade cloudsmith-cli
+cloudsmith token
 
 apt -y update || exit 1
 
