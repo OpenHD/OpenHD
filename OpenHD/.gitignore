@@ -1,6 +1,3 @@
-# generated .o files
-*.o
-
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
