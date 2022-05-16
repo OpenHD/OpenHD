@@ -9,8 +9,8 @@ env:
 jobs:
   build:
     runs-on: self-hosted
-    steps:
- - shell: bash
+steps:
+  - shell: bash
     env:
       SUPER_SECRET: ${{ secrets.CLOUDSMITH_API_KEY }}
     run: |
