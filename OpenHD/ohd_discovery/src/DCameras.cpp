@@ -24,6 +24,7 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 #include "DThermalCamerasHelper.hpp"
+#include "DV4l2DevicesHelper.hpp"
 
 #include "DCameras.h"
 
@@ -295,15 +296,15 @@ bool DCameras::process_v4l2_node(const std::string& node,Camera& camera, CameraE
         std::cerr << "Not a capture device: " << node << std::endl;
         return false;
     }
-    struct v4l2_fmtdesc fmtdesc;
+    struct v4l2_fmtdesc fmtdesc{};
     memset(&fmtdesc, 0, sizeof(fmtdesc));
     fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    struct v4l2_frmsizeenum frmsize;
-    struct v4l2_frmivalenum frmival;
-    while (ioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc) == 0) {    
+    while (ioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc) == 0) {
+        struct v4l2_frmsizeenum frmsize{};
         frmsize.pixel_format = fmtdesc.pixelformat;
         frmsize.index = 0;
         while (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) == 0) {
+            struct v4l2_frmivalenum frmival{};
             if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
                 frmival.index = 0;
                 frmival.pixel_format = fmtdesc.pixelformat;
@@ -354,6 +355,7 @@ bool DCameras::process_v4l2_node(const std::string& node,Camera& camera, CameraE
 
 void DCameras::detect_ip() {
     std::cerr<<"Detect_ip unimplemented\n";
+    // Note: I don't think there is an easy way to detect ip cameras,it probably requires some manual user input.
 }
 
 void DCameras::write_manifest() {
