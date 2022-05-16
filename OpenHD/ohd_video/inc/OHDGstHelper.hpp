@@ -11,8 +11,15 @@
 #include <string>
 #include <fmt/format.h>
 
+/**
+ * Helper methods to create parts of gstreamer pipes.
+ * Note: Unless a pipeline part is used at the end, all pipelines should end with '! '.
+ * This way we avoid syntax errors.
+ */
 namespace OHDGstHelper{
-
+    /**
+     * Check if we can find gstreamer at run time, throw a runtime error if not.
+     */
     static void initGstreamerOrThrow(){
         GError* error = nullptr;
         if (!gst_init_check(nullptr, nullptr, &error)) {
@@ -25,6 +32,9 @@ namespace OHDGstHelper{
     // a createXXXStream function always ends wth "h164,h265 or mjpeg stream ! "
     // aka after that, onc can add a rtp encoder or similar.
     // ------------- crateXXXStream begin -------------
+    /**
+     * Create a encoded dummy stream for the selected video format, that means a stream that encodes data coming from a videotestsrc.
+     */
     static std::string createDummyStream(const VideoFormat videoFormat){
         // TODO: create dummies for h265 and jpeg
         assert(videoFormat.videoCodec==VideoCodecH264);
@@ -42,6 +52,9 @@ namespace OHDGstHelper{
         return ss.str();
     }
 
+    /**
+     * Create a encoded stream for rpicamsrc, which supports h264 only.
+     */
     static std::string createRpicamsrcStream(const std::string& bus,const int bitrate,const VideoFormat videoFormat){
         assert(videoFormat.isValid());
         assert(videoFormat.videoCodec==VideoCodecH264);
@@ -52,6 +65,9 @@ namespace OHDGstHelper{
         return ss.str();
     }
 
+    /**
+     * Create a encoded stream for the jetson, which is fully hardware accelerated for h264,h265 and mjpeg.
+     */
     static std::string createJetsonStream(const int sensor_id,const int bitrate,const VideoFormat videoFormat){
         assert(videoFormat.videoCodec!=VideoCodecUnknown);
         std::stringstream ss;
