@@ -33,6 +33,9 @@ jobs:
         run: |
           tree
 
+      - name: Clean UP
+        run: |
+          sudo rm -Rf *
           
       #- name: Install
       #  run: |
