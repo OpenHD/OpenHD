@@ -30,13 +30,13 @@ OHDVideo::OHDVideo(const OHDPlatform& platform,const OHDProfile& profile):platfo
 
 void OHDVideo::debug() const{
     // TODO make it much more verbose
-    std::cerr << "OHDVideo::debug\n";
-    std::cerr<<"N camera streams:"<<m_camera_streams.size()<<"\n";
+    std::stringstream ss;
+    ss<<"OHDVideo::N camera streams:"<<m_camera_streams.size()<<"\n";
     for(int i=0;i<m_camera_streams.size();i++){
         const auto& stream=m_camera_streams.at(i);
-        std::cout<<"Camera stream:"<<i<<"\n";
+        ss<<"Camera stream:"<<i<<stream->debug()<<"\n";
     }
-    std::cerr << "end of debug";
+    std::cout<<ss.str();
 }
 
 void OHDVideo::setup() {

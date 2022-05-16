@@ -201,7 +201,6 @@ std::string GStreamerStream::debug() {
         start();
     }
     ss<<"|GS_debug";
-    std::cout<<ss.str();
     return ss.str();
 }
 
