@@ -81,14 +81,17 @@ int main(int argc, char *argv[]) {
 	// is when one of the modules encounters an exception.
 	while (true) {
 	  std::this_thread::sleep_for(std::chrono::seconds(2));
-	  std::cout<< "---------------------------------OpenHD log begin ---------------------------------\n";
+	  // To make sure this is all tightly packed together, we write it to a stringstream first
+	  // and then to stdout in one big chunk. Otherwise, some other debug output might stand in between the OpenHD
+	  // state debug chunk.
+	  std::cout<< "---------------------------------OpenHD-state debug begin ---------------------------------\n";
 	  std::cout<<ohdInterface->createDebug();
 	  telemetry->debug();
 	  if(ohdVideo){
 		ohdVideo->restartIfStopped();
 		std::cout<<ohdVideo->createDebug();
 	  }
-	  std::cout << "---------------------------------OpenHD log end ---------------------------------\n";
+	  std::cout << "---------------------------------OpenHD-state debug   end ---------------------------------\n";
 	}
   } catch (std::exception &ex) {
 	std::cerr << "Error: " << ex.what() << std::endl;

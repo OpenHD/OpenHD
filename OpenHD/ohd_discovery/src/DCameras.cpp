@@ -35,27 +35,19 @@ DCameras::DCameras(PlatformType platform_type, BoardType board_type, CarrierType
 
 void DCameras::discover() {
   std::cout << "Cameras::discover()" << std::endl;
-  switch (m_platform_type) {
-	case PlatformTypeRaspberryPi: {
-	  detect_raspberrypi_csi();
-	  //detect_raspberrypi_veye();
-	  break;
-	}
-	case PlatformTypeJetson: {
-	  detect_jetson_csi();
-	  break;
-	}
-	case PlatformTypeRockchip: {
-	  detect_rockchip_csi();
-	  break;
-	}
-	default: {
-	  break;
-	}
+
+  // Only on raspberry pi with the old broadcom stack we need a special detection method for the rpi CSI camera.
+  // On all other platforms (for example jetson) the CSI camera is exposed as a normal V4l2 linux device,and we cah
+  // check the driver if it is actually a CSI camera handled by nvidia.
+  // Note: With libcamera, also the rpi will do v4l2 for cameras.
+  if(m_platform_type==PlatformTypeRaspberryPi){
+	detect_raspberrypi_csi();
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
+  // Will need custom debugging before anything here is usable again though.
   DThermalCamerasHelper::enableFlirIfFound();
   DThermalCamerasHelper::enableSeekIfFound();
+  // This will detect all cameras (CSI or not) that do it the proper way (linux v4l2)
   detect_v4l2();
   detect_ip();
 }

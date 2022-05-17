@@ -41,14 +41,6 @@ class DCameras : public OHD::IDiscoverable {
    * needs to know should read from the openhd system manifest instead.
    */
   void detect_raspberrypi_csi();
-  /**
-   * TODO
-   */
-  void detect_jetson_csi();
-  /**
-   * TODO or remove
-   */
-  void detect_rockchip_csi();
 
   /**
    * Search for all v4l2 video devices, that means devices named /dev/videoX where X=0,1,...
