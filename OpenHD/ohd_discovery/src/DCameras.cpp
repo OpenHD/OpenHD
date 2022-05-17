@@ -87,11 +87,7 @@ void DCameras::detect_raspberrypi_csi() {
 	camera.bus = "0";
 	camera.index = m_discover_index;
 	m_discover_index++;
-	CameraEndpoint endpoint;
-	endpoint.bus = camera.bus;
-	endpoint.support_h264 = true;
-	endpoint.support_mjpeg = false;
-	endpoint.formats=DRPICamerasHelper::createDefaultSupportedLIstRpiCam();
+	CameraEndpoint endpoint=DRPICamerasHelper::createCameraEndpointRpi(false);
 	m_camera_endpoints.push_back(endpoint);
 	m_cameras.push_back(camera);
   }
@@ -103,11 +99,7 @@ void DCameras::detect_raspberrypi_csi() {
 	camera.bus = "1";
 	camera.index = m_discover_index;
 	m_discover_index++;
-	CameraEndpoint endpoint;
-	endpoint.bus = camera.bus;
-	endpoint.support_h264 = true;
-	endpoint.support_mjpeg = false;
-	endpoint.formats=DRPICamerasHelper::createDefaultSupportedLIstRpiCam();
+	CameraEndpoint endpoint=DRPICamerasHelper::createCameraEndpointRpi(false);
 	m_camera_endpoints.push_back(endpoint);
 	m_cameras.push_back(camera);
   }
