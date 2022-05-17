@@ -64,7 +64,8 @@ void GStreamerStream::setup() {
 	  break;
 	}
 	case CameraTypeRaspberryPiVEYE:
-	case CameraTypeRockchipCSI:std::cerr << "Veye and rockchip are unsupported at the time\n";
+	case CameraTypeRockchipCSI:
+	  std::cerr << "Veye and rockchip are unsupported at the time\n";
 	  return;
 	case CameraTypeUnknown: {
 	  std::cerr << "Unknown camera type" << std::endl;
@@ -91,8 +92,7 @@ void GStreamerStream::setup() {
 
 void GStreamerStream::setup_raspberrypi_csi() {
   std::cout << "Setting up Raspberry Pi CSI camera" << std::endl;
-  m_pipeline
-	  << OHDGstHelper::createRpicamsrcStream(m_camera.bus, m_camera.bitrateKBits, m_camera.userSelectedVideoFormat);
+  m_pipeline<< OHDGstHelper::createRpicamsrcStream(m_camera.bus, m_camera.bitrateKBits, m_camera.userSelectedVideoFormat);
 }
 
 void GStreamerStream::setup_jetson_csi() {

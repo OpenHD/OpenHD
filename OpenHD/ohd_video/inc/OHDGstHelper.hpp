@@ -58,6 +58,7 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
 
 /**
  * Create a encoded stream for rpicamsrc, which supports h264 only.
+ * @param bus the camera number, aka 0, 1 ??!!
  */
 static std::string createRpicamsrcStream(const std::string &bus, const int bitrate, const VideoFormat videoFormat) {
   assert(videoFormat.isValid());

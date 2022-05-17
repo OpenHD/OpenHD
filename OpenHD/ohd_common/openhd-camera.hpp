@@ -222,7 +222,7 @@ struct Camera {
   // (for example, he might select h264|1920x1080@120 but the camera can only do 60fps)
   // The stream should default to the first available video format.
   // If no video format is available, it should default to h264|640x480@30.
-  VideoFormat userSelectedVideoFormat;
+  VideoFormat userSelectedVideoFormat{VideoCodecH264,640,480,30};
   // All these are for the future, and probably implemented on a best effort approach-
   // e.g. changing them does not neccessarly mean the camera supports changing them,
   // and they are too many to do it in a "check if supported" manner.
