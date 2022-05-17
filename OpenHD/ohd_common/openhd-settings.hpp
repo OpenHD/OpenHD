@@ -84,7 +84,7 @@ static std::string findOrCreateSettingsDirectory(bool is_air) {
   settingsPath << (is_air ? "air_" : "ground_");
   const auto unit_id = getOrCreateUnitId();
   settingsPath << unit_id;
-  const auto str = settingsPath.str();
+  auto str = settingsPath.str();
   std::cout << "SettingsDirectory:[" << str << "]\n";
   // create the directory if it is non existing
   if (!std::filesystem::exists(str.c_str())) {
