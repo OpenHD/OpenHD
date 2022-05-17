@@ -138,6 +138,7 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
   -d "gstreamer1.0-libav" \
   -d "gstreamer1.0-tools" \
   -d "gstreamer1.0-alsa" \
+  -d "gst-rpicamsrc" \
   -d "gstreamer1.0-pulseaudio" || exit 1
 
 cp *.deb ../../
