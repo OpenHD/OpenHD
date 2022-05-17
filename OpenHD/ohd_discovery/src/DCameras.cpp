@@ -23,7 +23,7 @@
 #include "openhd-camera.hpp"
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
-#include "DThermalCamerasHelper.hpp"
+#include "DCamerasHelper.hpp"
 #include "DV4l2DevicesHelper.hpp"
 
 #include "DCameras.h"
@@ -91,19 +91,7 @@ void DCameras::detect_raspberrypi_csi() {
 	endpoint.bus = camera.bus;
 	endpoint.support_h264 = true;
 	endpoint.support_mjpeg = false;
-	// these are temporary, there isn't a way to ask the old broadcom camera drivers about the supported
-	// resolutions, but we know which ones people actually use so we can simply mark them for now
-	endpoint.formats.emplace_back("H.264|640x480@30");
-	endpoint.formats.emplace_back("H.264|640x480@48");
-	endpoint.formats.emplace_back("H.264|640x480@60");
-	endpoint.formats.emplace_back("H.264|800x480@30");
-	endpoint.formats.emplace_back("H.264|1280x720@30");
-	endpoint.formats.emplace_back("H.264|1280x720@48");
-	endpoint.formats.emplace_back("H.264|1280x720@59.9");
-	endpoint.formats.emplace_back("H.264|1012x760@90");
-	endpoint.formats.emplace_back("H.264|1012x760@120");
-	endpoint.formats.emplace_back("H.264|1920x1080@30");
-	endpoint.formats.emplace_back("H.264|1920x1080@59.9");
+	endpoint.formats=DRPICamerasHelper::createDefaultSupportedLIstRpiCam();
 	m_camera_endpoints.push_back(endpoint);
 	m_cameras.push_back(camera);
   }
@@ -119,29 +107,10 @@ void DCameras::detect_raspberrypi_csi() {
 	endpoint.bus = camera.bus;
 	endpoint.support_h264 = true;
 	endpoint.support_mjpeg = false;
-	endpoint.formats.emplace_back("H.264|640x480@30");
-	endpoint.formats.emplace_back("H.264|640x480@48");
-	endpoint.formats.emplace_back("H.264|640x480@60");
-	endpoint.formats.emplace_back("H.264|800x480@30");
-	endpoint.formats.emplace_back("H.264|1280x720@30");
-	endpoint.formats.emplace_back("H.264|1280x720@48");
-	endpoint.formats.emplace_back("H.264|1280x720@59.9");
-	endpoint.formats.emplace_back("H.264|1012x760@90");
-	//endpoint.formats.emplace_back("H.264|1012x760@120");
-	endpoint.formats.emplace_back("H.264|1920x1080@30");
-	//endpoint.formats.emplace_back("H.264|1920x1080@59.9");
+	endpoint.formats=DRPICamerasHelper::createDefaultSupportedLIstRpiCam();
 	m_camera_endpoints.push_back(endpoint);
 	m_cameras.push_back(camera);
   }
-
-}
-
-void DCameras::detect_jetson_csi() {
-  std::cout << "Unimpl. Cameras::detect_jetson_csi()" << std::endl;
-}
-
-void DCameras::detect_rockchip_csi() {
-  std::cout << "Unimpl. Cameras::detect_rockchip_csi()" << std::endl;
 }
 
 std::vector<std::string> DCameras::findV4l2VideoDevices() {
