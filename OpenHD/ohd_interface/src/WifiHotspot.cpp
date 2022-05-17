@@ -18,3 +18,7 @@ void WifiHotspot::start() {
 void WifiHotspot::stop() {
 
 }
+
+void WifiHotspot::setupWifiHotspot(WiFiCard& wifiCard) {
+
+}

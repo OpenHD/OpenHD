@@ -33,6 +33,8 @@ class WifiHotspot {
    */
   void stop();
 
+  static void setupWifiHotspot(WiFiCard& wifiCard);
+
  private:
   // Ip addresses of all connected clients.
   // A client might dynamically connect or disconnect from the AP at run time,
