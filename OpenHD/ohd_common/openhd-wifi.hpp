@@ -152,10 +152,7 @@ static nlohmann::json wificard_to_json(const WiFiCard &p) {
 static WiFiCard wificard_from_json(const nlohmann::json &j) {
   WiFiCard p;
   j.at("driver_name").get_to(p.driver_name);
-  j.at("type").get_to(p.type);
-  std::string type;
-  j.at("type").get_to(type);
-  p.type= wifi_card_type_from_string(type);
+  p.type= wifi_card_type_from_string(j.at("type"));
   j.at("interface_name").get_to(p.interface_name);
   j.at("mac").get_to(p.mac);
   j.at("supports_5ghz").get_to(p.supports_5ghz);
@@ -163,9 +160,7 @@ static WiFiCard wificard_from_json(const nlohmann::json &j) {
   j.at("supports_injection").get_to(p.supports_injection);
   j.at("supports_hotspot").get_to(p.supports_hotspot);
   j.at("supports_rts").get_to(p.supports_rts);
-  std::string use_for;
-  j.at("use_for").get_to(use_for);
-  p.use_for= wifi_use_for_from_string(use_for);
+  p.use_for= wifi_use_for_from_string(j.at("use_for"));
   return p;
 }
 
