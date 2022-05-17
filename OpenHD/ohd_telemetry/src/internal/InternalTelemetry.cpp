@@ -44,7 +44,7 @@ bool InternalTelemetry::handleMavlinkCommandIfPossible(const MavlinkMessage &msg
 }
 
 void InternalTelemetry::processWifibroadcastStatisticsData(const uint8_t *payload, const std::size_t payloadSize) {
-  std::cout << "OHDTelemetryGenerator::processNewWifibroadcastStatisticsMessage: " << payloadSize << "\n";
+  //std::cout << "OHDTelemetryGenerator::processNewWifibroadcastStatisticsMessage: " << payloadSize << "\n";
   const auto MSG_SIZE = sizeof(OpenHDStatisticsWriter::Data);
   if (payloadSize >= MSG_SIZE && (payloadSize % MSG_SIZE == 0)) {
 	// we got new properly aligned data
