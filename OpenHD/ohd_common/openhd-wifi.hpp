@@ -19,6 +19,42 @@ typedef enum WiFiCardType {
   WiFiCardTypeIntel,
   WiFiCardTypeBroadcom,
 } WiFiCardType;
+inline std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
+  switch (card_type) {
+	case WiFiCardTypeAtheros9k:  return "ath9k";
+	case WiFiCardTypeAtheros9khtc: return "ath9k_htc";
+	case WiFiCardTypeRealtek8812au: return "88xxau";
+	case WiFiCardTypeRealtek88x2bu: return "88x2bu";
+	case WiFiCardTypeRealtek8188eu: return "8188eu";
+	case WiFiCardTypeRalink: return "rt2800usb";
+	case WiFiCardTypeIntel: return "iwlwifi";
+	case WiFiCardTypeBroadcom: return "brcmfmac";
+	default: return "unknown";
+  }
+}
+
+inline WiFiCardType string_to_wifi_card_type(const std::string &driver_name) {
+  if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
+	return WiFiCardTypeAtheros9khtc;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k")) != std::string::npos) {
+	return WiFiCardTypeAtheros9k;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("rt2800usb")) != std::string::npos) {
+	return WiFiCardTypeRalink;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("iwlwifi")) != std::string::npos) {
+	return WiFiCardTypeIntel;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("brcmfmac")) != std::string::npos) {
+	return WiFiCardTypeBroadcom;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("88xxau")) != std::string::npos) {
+	return WiFiCardTypeRealtek8812au;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8812au")) != std::string::npos) {
+	return WiFiCardTypeRealtek8812au;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("88x2bu")) != std::string::npos) {
+	return WiFiCardTypeRealtek88x2bu;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8188eu")) != std::string::npos) {
+	return WiFiCardTypeRealtek8188eu;
+  }
+  return WiFiCardTypeUnknown;
+}
 
 typedef enum WiFiHotspotType {
   WiFiHotspotTypeNone = 0,
@@ -27,6 +63,27 @@ typedef enum WiFiHotspotType {
   WiFiHotspotTypeInternalDualBand,
   WiFiHotspotTypeExternal,
 } WiFiHotspotType;
+inline std::string wifi_hotspot_type_to_string(const WiFiHotspotType &wifi_hotspot_type) {
+  switch (wifi_hotspot_type) {
+	case WiFiHotspotTypeInternal2GBand:return "internal2g";
+	case WiFiHotspotTypeInternal5GBand:  return "internal5g";
+	case WiFiHotspotTypeInternalDualBand:  return "internaldualband";
+	case WiFiHotspotTypeExternal:  return "external";
+	default: return "none";
+  }
+}
+inline WiFiHotspotType string_to_wifi_hotspot_type(const std::string &hotspot_type) {
+  if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("internal2g")) != std::string::npos) {
+	return WiFiHotspotTypeInternal2GBand;
+  } else if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("internal5g")) != std::string::npos) {
+	return WiFiHotspotTypeInternal5GBand;
+  } else if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("internaldualband")) != std::string::npos) {
+	return WiFiHotspotTypeInternalDualBand;
+  } else if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("external")) != std::string::npos) {
+	return WiFiHotspotTypeExternal;
+  }
+  return WiFiHotspotTypeNone;
+}
 
 typedef enum WifiUseFor {
   WifiUseForUnknown = 0, // Not sure what to use this wifi card for ;)
@@ -57,94 +114,6 @@ struct WiFiCard {
   std::string hotspot_band;
 };
 
-inline std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
-  switch (card_type) {
-	case WiFiCardTypeAtheros9k: {
-	  return "ath9k";
-	}
-	case WiFiCardTypeAtheros9khtc: {
-	  return "ath9k_htc";
-	}
-	case WiFiCardTypeRealtek8812au: {
-	  return "88xxau";
-	}
-	case WiFiCardTypeRealtek88x2bu: {
-	  return "88x2bu";
-	}
-	case WiFiCardTypeRealtek8188eu: {
-	  return "8188eu";
-	}
-	case WiFiCardTypeRalink: {
-	  return "rt2800usb";
-	}
-	case WiFiCardTypeIntel: {
-	  return "iwlwifi";
-	}
-	case WiFiCardTypeBroadcom: {
-	  return "brcmfmac";
-	}
-	default: {
-	  return "unknown";
-	}
-  }
-}
-
-inline WiFiCardType string_to_wifi_card_type(const std::string &driver_name) {
-  if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
-	return WiFiCardTypeAtheros9khtc;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k")) != std::string::npos) {
-	return WiFiCardTypeAtheros9k;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("rt2800usb")) != std::string::npos) {
-	return WiFiCardTypeRalink;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("iwlwifi")) != std::string::npos) {
-	return WiFiCardTypeIntel;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("brcmfmac")) != std::string::npos) {
-	return WiFiCardTypeBroadcom;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("88xxau")) != std::string::npos) {
-	return WiFiCardTypeRealtek8812au;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8812au")) != std::string::npos) {
-	return WiFiCardTypeRealtek8812au;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("88x2bu")) != std::string::npos) {
-	return WiFiCardTypeRealtek88x2bu;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8188eu")) != std::string::npos) {
-	return WiFiCardTypeRealtek8188eu;
-  }
-  return WiFiCardTypeUnknown;
-}
-
-inline std::string wifi_hotspot_type_to_string(const WiFiHotspotType &wifi_hotspot_type) {
-  switch (wifi_hotspot_type) {
-	case WiFiHotspotTypeInternal2GBand: {
-	  return "internal2g";
-	}
-	case WiFiHotspotTypeInternal5GBand: {
-	  return "internal5g";
-	}
-	case WiFiHotspotTypeInternalDualBand: {
-	  return "internaldualband";
-	}
-	case WiFiHotspotTypeExternal: {
-	  return "external";
-	}
-	default: {
-	  return "none";
-	}
-  }
-}
-
-inline WiFiHotspotType string_to_wifi_hotspot_type(const std::string &hotspot_type) {
-  if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("internal2g")) != std::string::npos) {
-	return WiFiHotspotTypeInternal2GBand;
-  } else if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("internal5g")) != std::string::npos) {
-	return WiFiHotspotTypeInternal5GBand;
-  } else if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("internaldualband")) != std::string::npos) {
-	return WiFiHotspotTypeInternalDualBand;
-  } else if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("external")) != std::string::npos) {
-	return WiFiHotspotTypeExternal;
-  }
-
-  return WiFiHotspotTypeNone;
-}
 
 static nlohmann::json wificard_to_json(const WiFiCard &p) {
   auto j = nlohmann::json{{"type", p.type},
@@ -164,6 +133,9 @@ static nlohmann::json wificard_to_json(const WiFiCard &p) {
 static WiFiCard wificard_from_json(const nlohmann::json &j) {
   WiFiCard p;
   j.at("type").get_to(p.type);
+  //std::string type;
+  //j.at("type").get_to(type);
+  //p.type= string_to_wifi_card_type()
   j.at("name").get_to(p.name);
   j.at("vendor").get_to(p.vendor);
   j.at("mac").get_to(p.mac);
