@@ -121,7 +121,8 @@ void DWifiCards::process_card(const std::string &interface_name) {
   std::string driver_name = result[1];
 
   WiFiCard card;
-  card.name = interface_name;
+  card.interface_name = interface_name;
+  card.driver_name=driver_name;
 
   card.type = driver_to_wifi_card_type(driver_name);
 
@@ -225,7 +226,7 @@ void DWifiCards::process_card(const std::string &interface_name) {
 	}
   }
   std::stringstream message;
-  message << "Detected wifi (" << wifi_card_type_to_string(card.type) << ") interface: " << card.name << std::endl;
+  message << "Detected wifi (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name << std::endl;
   ohd_log(STATUS_LEVEL_INFO, message.str());
   m_wifi_cards.push_back(card);
 }
