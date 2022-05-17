@@ -14,7 +14,6 @@ apt -y install snapd build-essential autotools-dev automake libtool autoconf \
             python3-pip \
             libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
             libfmt-dev || exit 1
-sudo apt remove --purge cmake
-hash -r
-snap install cmake --classic
+snap install cmake
+cmake --version
 gem install fpm
