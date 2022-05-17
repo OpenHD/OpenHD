@@ -46,10 +46,6 @@ cloudsmith token
 apt -y update || exit 1
 
 PACKAGE_NAME=openhd
-PACKAGE_ARCH=armhf
-OS=raspbian
-DISTRO=bullseye
-
 
 
 PKGDIR=/tmp/${PACKAGE_NAME}-installdir

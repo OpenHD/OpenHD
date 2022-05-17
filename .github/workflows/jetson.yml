@@ -1,4 +1,4 @@
-name: Build RPI
+name: Build Jetson
 
 on: [push]
 
@@ -8,7 +8,7 @@ env:
 
 jobs:
   build:
-    runs-on: [self-hosted, linux, ARM]
+    runs-on: [self-hosted, linux, ARM64]
     steps:
       - name: test
         run: |
@@ -30,7 +30,7 @@ jobs:
 
       - name: Build with make
         run: |
-          sudo ./package.sh armhf raspbian bullseye
+          sudo ./package.sh
 
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
