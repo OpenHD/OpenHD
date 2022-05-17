@@ -24,10 +24,11 @@ class GStreamerStream : public CameraStream {
   void setup_usb_uvc();
   void setup_usb_uvch264();
   void setup_ip_camera();
+  void restartIfStopped() override;
  public:
   void start() override;
   void stop() override;
-  std::string debug() override;
+  std::string createDebug()const override;
 
   bool supports_cbr() override;
   void set_cbr(bool enable) override;

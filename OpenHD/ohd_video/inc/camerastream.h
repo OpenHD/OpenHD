@@ -40,10 +40,16 @@ class CameraStream {
   // stop streaming
   virtual void stop() = 0;
   /**
-   * Create a verbose debug string about the current state of the stream
+   * Create a verbose debug string about the current state of the stream.
    * @return a string, can be printed to stdout or similar.
    */
-  virtual std::string debug() = 0;
+  [[nodiscard]] virtual std::string createDebug()const = 0;
+
+  /**
+   * This can be called in regular intervals by the main OpenHD thread to restart a camera stream
+   * if it has stopped / crashed for some reason.
+   */
+  virtual void restartIfStopped()=0;
 
   // expected as bits per second
   virtual bool supports_bitrate() = 0;

@@ -85,7 +85,8 @@ int main(int argc, char *argv[]) {
 	  std::cout<<ohdInterface->createDebug();
 	  telemetry->debug();
 	  if(ohdVideo){
-		ohdVideo->debug();
+		ohdVideo->restartIfStopped();
+		std::cout<<ohdVideo->createDebug();
 	  }
 	  std::cout << "---------------------------------OpenHD log end ---------------------------------\n";
 	}

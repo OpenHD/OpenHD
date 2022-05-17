@@ -35,8 +35,17 @@ class OHDVideo {
    * @param platform_type the platform we are running on.
    */
   OHDVideo(const OHDPlatform &platform, const OHDProfile &profile);
-  // Debug stuff LOL :)
-  void debug() const;
+  /**
+   * Create a verbose debug string about the current state of OHDVideo, doesn't
+   * print to stdout.
+   * @return a verbose debug string.
+   */
+  [[nodiscard]] std::string createDebug() const;
+  /**
+   * This should be called in regular intervals by the OpenHD main thread to restart any camera stream
+   * if it has unexpectedly stopped.
+   */
+  void restartIfStopped();
  private:
   const OHDPlatform &platform;
   const OHDProfile &profile;

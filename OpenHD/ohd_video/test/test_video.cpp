@@ -17,7 +17,8 @@ int main(int argc, char *argv[]) {
 	std::cout << "OHDVideo started\n";
 	while (true) {
 	  std::this_thread::sleep_for(std::chrono::seconds(5));
-	  ohdVideo.debug();
+	  std::cout<<"XOHDVid\n";
+	  std::cout<<ohdVideo.createDebug();
 	}
   } else {
 	std::cout << "OHDVideo not started - not on air pi\n";

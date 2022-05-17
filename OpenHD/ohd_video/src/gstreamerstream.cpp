@@ -166,7 +166,7 @@ void GStreamerStream::setup_ip_camera() {
   m_pipeline << OHDGstHelper::createIpCameraStream(m_camera.url);
 }
 
-std::string GStreamerStream::debug() {
+std::string GStreamerStream::createDebug()const {
   std::stringstream ss;
   ss << "GStreamerStream[";
   ss << "Pipeline:" << m_pipeline.str()<<"\n";
@@ -174,11 +174,6 @@ std::string GStreamerStream::debug() {
   GstState pending;
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
   ss << " Gst state:" << returnValue << "." << state << "." << pending << "." << std::endl;
-  if (returnValue == 0) {
-	stop();
-	sleep(3);
-	start();
-  }
   ss << "]GStreamerStream";
   return ss.str();
 }
@@ -223,6 +218,18 @@ VideoFormat GStreamerStream::get_format() {
 void GStreamerStream::set_format(VideoFormat videoFormat) {
   std::cout << "GStreamerStream::set_format(" << videoFormat.toString() << ")" << std::endl;
   m_camera.userSelectedVideoFormat = videoFormat;
+}
+
+void GStreamerStream::restartIfStopped() {
+  GstState state;
+  GstState pending;
+  auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
+  if (returnValue == 0) {
+	std::cerr<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<m_camera.index<<"\n";
+	stop();
+	sleep(3);
+	start();
+  }
 }
 
 

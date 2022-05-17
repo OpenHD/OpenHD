@@ -21,7 +21,8 @@ int main(int argc, char *argv[]) {
 
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(1));
-	std::cout << stream->debug() << "\n";
+	std::cout<<"XOHDVid\n";
+	std::cout << stream->createDebug() << "\n";
   }
 
   std::cerr << "OHDVideo stopped\n";

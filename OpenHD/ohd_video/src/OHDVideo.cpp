@@ -27,15 +27,15 @@ OHDVideo::OHDVideo(const OHDPlatform &platform, const OHDProfile &profile) : pla
   std::cout << "OHDVideo::running\n";
 }
 
-void OHDVideo::debug() const {
+std::string OHDVideo::createDebug() const {
   // TODO make it much more verbose
   std::stringstream ss;
   ss << "OHDVideo::N camera streams:" << m_camera_streams.size() << "\n";
   for (int i = 0; i < m_camera_streams.size(); i++) {
 	const auto &stream = m_camera_streams.at(i);
-	ss << "Camera stream:" << i << stream->debug() << "\n";
+	ss << "Camera stream:" << i << stream->createDebug() << "\n";
   }
-  std::cout << ss.str();
+  return ss.str();
 }
 
 void OHDVideo::setup() {
@@ -91,6 +91,12 @@ void OHDVideo::configure(Camera &camera) {
 	default: {
 	  std::cerr << "Unknown camera type, skipping" << std::endl;
 	}
+  }
+}
+
+void OHDVideo::restartIfStopped() {
+  for(auto& stream:m_camera_streams){
+	stream->restartIfStopped();
   }
 }
 
