@@ -56,14 +56,16 @@ void WifiCards::process_manifest() {
 void WifiCards::setup_card(const WiFiCard &card) {
   std::cerr << "Setup card: " << card.interface_name << std::endl;
   switch (card.use_for) {
-	case WifiUseForMonitorMode:set_card_state(card, false);
+	case WifiUseForMonitorMode:
+	  set_card_state(card, false);
 	  enable_monitor_mode(card);
 	  set_card_state(card, true);
 	  set_frequency(card, card.frequency);
 	  set_txpower(card, card.txpower);
 	  //m_broadcast_cards.push_back(card);
 	  break;
-	case WifiUseForHotspot:setup_hotspot(card);
+	case WifiUseForHotspot:
+	  setup_hotspot(card);
 	  break;
 	case WifiUseForUnknown:
 	default:std::cerr << "Card " << card.interface_name << " unknown use for\n";

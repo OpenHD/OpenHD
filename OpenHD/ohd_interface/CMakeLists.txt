@@ -13,6 +13,7 @@ SET(ALL_INTERFACE_SOURCE_FILES
         src/WifiCards.cpp
         #src/EthernetCards.cpp
         src/WBStreams.cpp
+        src/WifiHotspot.cpp
         src/OHDInterface.cpp)
 
 add_library(OHDInterfaceLib

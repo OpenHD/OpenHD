@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include "openhd-wifi.hpp"
 
 /**
  * Wifi hotspot refers to creating a WiFi Access point on the device we are running on.
@@ -17,10 +18,19 @@
 
 class WifiHotspot {
  public:
-  WifiHotspot();
+  /**
+   *
+   */
+  explicit WifiHotspot(WiFiCard wifiCard);
 
+  /**
+   * initialize and start the hotspot.
+   */
   void start();
 
+  /**
+   * stop,de-init and cleanup hotspot.
+   */
   void stop();
 
  private:
@@ -28,6 +38,7 @@ class WifiHotspot {
   // A client might dynamically connect or disconnect from the AP at run time,
   // In this case the apropriate callbacks have to be called.
   std::vector<std::string> connectedClientsIps;
+  WiFiCard wifiCard;
 };
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_

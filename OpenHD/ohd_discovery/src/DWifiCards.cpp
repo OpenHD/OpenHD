@@ -44,7 +44,6 @@ void DWifiCards::discover() {
   boost::filesystem::path net("/sys/class/net");
   for (auto &entry: boost::filesystem::directory_iterator(net)) {
 	const auto interface_name = entry.path().filename().string();
-
 	auto excluded = false;
 	for (const auto &excluded_interface: excluded_interfaces) {
 	  if (boost::algorithm::contains(interface_name, excluded_interface)) {
@@ -180,7 +179,7 @@ void DWifiCards::process_card(const std::string &interface_name) {
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
 	  card.supports_injection = false;
-	  card.supports_hotspot = false;
+	  card.supports_hotspot = true; // Why the heck should intel not support wlan hotspot ?!
 	  break;
 	}
 	case WiFiCardTypeBroadcom: {

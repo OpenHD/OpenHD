@@ -3,3 +3,18 @@
 //
 
 #include "WifiHotspot.h"
+
+#include <utility>
+
+WifiHotspot::WifiHotspot(WiFiCard wifiCard):
+wifiCard(std::move(wifiCard)) {
+
+}
+
+void WifiHotspot::start() {
+
+}
+
+void WifiHotspot::stop() {
+
+}

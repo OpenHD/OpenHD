@@ -15,6 +15,8 @@
 /**
  * This class is responsible for setting up all the Wifibroadcast streams needed for OpenHD.
  * There should only be one instance of this class in the whole project.
+ * Note that this class does not set the cards to monitor mode, it assumes they provided cards are
+ * already in monitor mode.
  */
 class WBStreams {
  public:
