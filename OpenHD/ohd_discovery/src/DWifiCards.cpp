@@ -72,6 +72,29 @@ void DWifiCards::discover() {
   std::cout << "WiFi::discover done, n cards:" << m_wifi_cards.size() << "\n";
 }
 
+static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
+  if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
+	return WiFiCardTypeAtheros9khtc;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k")) != std::string::npos) {
+	return WiFiCardTypeAtheros9k;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("rt2800usb")) != std::string::npos) {
+	return WiFiCardTypeRalink;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("iwlwifi")) != std::string::npos) {
+	return WiFiCardTypeIntel;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("brcmfmac")) != std::string::npos) {
+	return WiFiCardTypeBroadcom;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("88xxau")) != std::string::npos) {
+	return WiFiCardTypeRealtek8812au;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8812au")) != std::string::npos) {
+	return WiFiCardTypeRealtek8812au;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("88x2bu")) != std::string::npos) {
+	return WiFiCardTypeRealtek88x2bu;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8188eu")) != std::string::npos) {
+	return WiFiCardTypeRealtek8188eu;
+  }
+  return WiFiCardTypeUnknown;
+}
+
 void DWifiCards::process_card(const std::string &interface_name) {
   std::stringstream device_file;
   device_file << "/sys/class/net/";
@@ -100,7 +123,7 @@ void DWifiCards::process_card(const std::string &interface_name) {
   WiFiCard card;
   card.name = interface_name;
 
-  card.type = string_to_wifi_card_type(driver_name);
+  card.type = driver_to_wifi_card_type(driver_name);
 
   std::stringstream phy_file;
   phy_file << "/sys/class/net/";
