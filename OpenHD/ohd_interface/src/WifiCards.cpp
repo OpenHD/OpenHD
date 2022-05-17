@@ -54,7 +54,7 @@ void WifiCards::process_manifest() {
 }
 
 void WifiCards::setup_card(const WiFiCard &card) {
-  std::cerr << "Setup card: " << card.name << std::endl;
+  std::cerr << "Setup card: " << card.interface_name << std::endl;
   switch (card.use_for) {
 	case WifiUseForMonitorMode:set_card_state(card, false);
 	  enable_monitor_mode(card);
@@ -66,7 +66,7 @@ void WifiCards::setup_card(const WiFiCard &card) {
 	case WifiUseForHotspot:setup_hotspot(card);
 	  break;
 	case WifiUseForUnknown:
-	default:std::cerr << "Card " << card.name << " unknown use for\n";
+	default:std::cerr << "Card " << card.interface_name << " unknown use for\n";
 	  return;
   }
 }
@@ -77,29 +77,29 @@ void WifiCards::setup_hotspot(const WiFiCard &card) {
 }
 
 bool WifiCards::set_card_state(const WiFiCard &card, bool up) {
-  std::cout << "WifiCards::set_card_state(" << up << ") for " << card.name << ")" << std::endl;
-  std::vector<std::string> args{"link", "set", "dev", card.name, up ? "up" : "down"};
+  std::cout << "WifiCards::set_card_state(" << up << ") for " << card.interface_name << ")" << std::endl;
+  std::vector<std::string> args{"link", "set", "dev", card.interface_name, up ? "up" : "down"};
   bool success = OHDUtil::run_command("ip", args);
   return success;
 }
 
 bool WifiCards::set_frequency(const WiFiCard &card, const std::string &frequency) {
-  std::cout << "WifiCards::set_frequency(" << frequency << ") for " << card.name << ")" << std::endl;
-  std::vector<std::string> args{"dev", card.name, "set", "freq", frequency};
+  std::cout << "WifiCards::set_frequency(" << frequency << ") for " << card.interface_name << ")" << std::endl;
+  std::vector<std::string> args{"dev", card.interface_name, "set", "freq", frequency};
   bool success = OHDUtil::run_command("iw", args);
   return success;
 }
 
 bool WifiCards::set_txpower(const WiFiCard &card, const std::string &txpower) {
-  std::cout << "WifiCards::set_txpower(" << txpower << ") for " << card.name << ")" << std::endl;
-  std::vector<std::string> args{"dev", card.name, "set", "txpower", "fixed", txpower};
+  std::cout << "WifiCards::set_txpower(" << txpower << ") for " << card.interface_name << ")" << std::endl;
+  std::vector<std::string> args{"dev", card.interface_name, "set", "txpower", "fixed", txpower};
   bool success = OHDUtil::run_command("iw", args);
   return success;
 }
 
 bool WifiCards::enable_monitor_mode(const WiFiCard &card) {
-  std::cout << "WifiCards::enable_monitor_mode(" << card.name << ")" << std::endl;
-  std::vector<std::string> args{"dev", card.name, "set", "monitor", "otherbss"};
+  std::cout << "WifiCards::enable_monitor_mode(" << card.interface_name << ")" << std::endl;
+  std::vector<std::string> args{"dev", card.interface_name, "set", "monitor", "otherbss"};
   bool success = OHDUtil::run_command("iw", args);
   return success;
 }
@@ -112,7 +112,7 @@ std::vector<std::string> WifiCards::get_broadcast_card_names() const {
   std::vector<std::string> names;
   for (const auto &card: m_wifi_cards) {
 	if (card.use_for == WifiUseForMonitorMode) {
-	  names.push_back(card.name);
+	  names.push_back(card.interface_name);
 	}
   }
   return names;
