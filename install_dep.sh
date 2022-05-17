@@ -5,7 +5,7 @@
 
 apt -y install snapd build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libsodium-dev \
-            libboost-dev libboost-system-dev libasio-dev libboost-filesystem-dev libboost-thread-dev libboost-regex-dev \
+            libboost1.74-dev libboost1.74-system-dev libasio-dev libboost1.74-filesystem-dev libboost1.74-thread-dev libboost1.74-regex-dev \
             libgstreamer-plugins-base1.0-dev \
             libusb-1.0-0-dev \
             libv4l-dev \
