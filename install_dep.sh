@@ -3,7 +3,7 @@
 # Install all the dependencies needed to build OpenHD from source.
 # TODO do we need libgstreamer1.0-dev and libgstreamer-plugins-base1.0-dev ?
 
-apt -y install cmake build-essential autotools-dev automake libtool autoconf \
+apt -y install snapd build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libsodium-dev \
             libboost-dev libboost-system-dev libasio-dev libboost-filesystem-dev libboost-thread-dev libboost-regex-dev \
             libgstreamer-plugins-base1.0-dev \
@@ -14,5 +14,7 @@ apt -y install cmake build-essential autotools-dev automake libtool autoconf \
             python3-pip \
             libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
             libfmt-dev || exit 1
-
+sudo apt remove --purge cmake
+hash -r
+snap install cmake --classic
 gem install fpm
