@@ -85,11 +85,31 @@ inline WiFiHotspotType string_to_wifi_hotspot_type(const std::string &hotspot_ty
   return WiFiHotspotTypeNone;
 }
 
+// What to use a discovered wifi card for. R.n We support hotspot or monitor mode (wifibroadcast),
+// I doubt that will change.
 typedef enum WifiUseFor {
   WifiUseForUnknown = 0, // Not sure what to use this wifi card for ;)
   WifiUseForMonitorMode, //Use for wifibroadcast, aka set to monitor mode
   WifiUseForHotspot, //Use for hotspot, aka start a wifi hotspot with it
 } WifiUseFor;
+static WifiUseFor wifi_use_for_from_string(const std::string s){
+  if(OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("monitor_mode"))!=std::string::npos){
+	return WifiUseForMonitorMode;
+  }else if(OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("hotspot"))!=std::string::npos){
+	return WifiUseForHotspot;
+  }else{
+	return WifiUseForUnknown;
+  }
+}
+static std::string wifi_use_for_to_string(const WifiUseFor wifi_use_for){
+  switch (wifi_use_for) {
+	case WifiUseForHotspot:return "hotspot";
+	case WifiUseForMonitorMode:return "monitor_mode";
+	case WifiUseForUnknown:
+	default:
+	  return "unknown";
+  }
+}
 
 struct WiFiCard {
   WiFiCardType type = WiFiCardTypeUnknown;
@@ -125,7 +145,7 @@ static nlohmann::json wificard_to_json(const WiFiCard &p) {
 						  {"supports_injection", p.supports_injection},
 						  {"supports_hotspot", p.supports_hotspot},
 						  {"supports_rts", p.supports_rts},
-						  {"use_for", p.use_for},
+						  {"use_for", wifi_use_for_to_string(p.use_for)},
   };
   return j;
 }
@@ -144,7 +164,9 @@ static WiFiCard wificard_from_json(const nlohmann::json &j) {
   j.at("supports_injection").get_to(p.supports_injection);
   j.at("supports_hotspot").get_to(p.supports_hotspot);
   j.at("supports_rts").get_to(p.supports_rts);
-  j.at("use_for").get_to(p.use_for);
+  std::string use_for;
+  j.at("use_for").get_to(use_for);
+  p.use_for= wifi_use_for_from_string(use_for);
   return p;
 }
 
