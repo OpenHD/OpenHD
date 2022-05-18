@@ -15,6 +15,7 @@
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
+#include "openhd-util-filesystem.hpp"
 
 #include "DPlatform.h"
 
@@ -84,7 +85,7 @@ void DPlatform::detect_raspberrypi() {
 }
 
 void DPlatform::detect_jetson() {
-  if (boost::filesystem::exists(JETSON_BOARDID_PATH)) {
+  if (OHDFilesystemUtil::exists(JETSON_BOARDID_PATH)) {
 	m_platform_type = PlatformTypeJetson;
 	m_board_type = BoardTypeJetsonNano;
   }

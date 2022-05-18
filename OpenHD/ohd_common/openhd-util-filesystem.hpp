@@ -36,6 +36,9 @@ static std::vector<std::string> getAllEntriesFilenameOnlyInDirectory(const char*
 }
 
 
+static bool exists(const char* file){
+  return boost::filesystem::exists(file);
+}
 }
 
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_UTIL_FILESYSTEM_H_
