@@ -20,15 +20,7 @@ jobs:
       - name: Clean UP
         run: |
           sudo rm -Rf *
-
-      - name: Install cloudsmith
-        run: |
-          sudo apt update
-          sudo apt install python3-pip
-          pip3 install --upgrade cloudsmith-cli
-          curl -H "X-Api-Key: ${{ secrets.CLOUDSMITH_API_KEY }}" https://api.cloudsmith.io/user/self/
-                
-
+              
       - name: Checkout repository and submodules
         uses: actions/checkout@v3
         with:
@@ -41,7 +33,6 @@ jobs:
 
       - name: Build with make
         run: |
-          curl -H "X-Api-Key: ${{ secrets.CLOUDSMITH_API_KEY }}" https://api.cloudsmith.io/user/self/
           sudo ./package.sh x86 ubuntu bionic
 
       - name: Upload to Github
