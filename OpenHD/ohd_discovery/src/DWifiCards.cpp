@@ -10,7 +10,7 @@
 #include <regex>
 
 #include <iostream>
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include "json.hpp"
 
@@ -45,7 +45,7 @@ void DWifiCards::discover() {
   for(const auto& filename:netFilenames){
 	auto excluded = false;
 	for (const auto &excluded_interface: excluded_interfaces) {
-	  if (boost::algorithm::contains(filename, excluded_interface)) {
+	  if (filename.find(excluded_interface)!=std::string::npos) {
 		excluded = true;
 		break;
 	  }

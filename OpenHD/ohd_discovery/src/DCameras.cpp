@@ -14,8 +14,6 @@
 #include <sstream>
 #include <regex>
 
-#include <libusb.h
-
 #include "json.hpp"
 
 #include "openhd-camera.hpp"
