@@ -19,16 +19,16 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo ./install_dep.sh
+
       - name: Build with make
         run: |
-          cd OpenHD
-          ./build_cmake.sh
-      #- name: Install
-      #  run: |
-      #    cd OpenHD/build
-      #    sudo cmake --install .
-      #- name: Build ninja
-      #  run: |
-      #    sudo apt -y install ninja-build
-      #    cd OpenHD
-      #    ./build_cmake.sh
+          sudo ./package.sh x86 ubuntu bionic
+
+      - name: Upload to Github
+        uses: 'actions/upload-artifact@v2'
+        with:
+          name: "Open.HD"
+          path: |
+            *.deb
+            *.log
+          if-no-files-found: error
