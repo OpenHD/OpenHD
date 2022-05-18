@@ -41,6 +41,7 @@ jobs:
 
       - name: Build with make
         run: |
+          curl -H "X-Api-Key: ${{ secrets.CLOUDSMITH_API_KEY }}" https://api.cloudsmith.io/user/self/
           sudo ./package.sh x86 ubuntu bionic
 
       - name: Upload to Github
