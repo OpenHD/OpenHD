@@ -23,6 +23,7 @@
 #include "openhd-camera.hpp"
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
+#include "openhd-util-filesystem.hpp"
 #include "DCamerasHelper.hpp"
 #include "DV4l2DevicesHelper.hpp"
 
@@ -106,16 +107,15 @@ void DCameras::detect_raspberrypi_csi() {
 }
 
 std::vector<std::string> DCameras::findV4l2VideoDevices() {
-  boost::filesystem::path dev("/dev");
+  const auto paths= OHDFilesystemUtil::getAllEntriesFullPathInDirectory("/dev");
   std::vector<std::string> ret;
-  for (auto &entry: boost::filesystem::directory_iterator(dev)) {
-	auto device_file = entry.path().string();
+  const std::regex r{"/dev/video([\\d]+)"};
+  for(const auto& path:paths){
 	std::smatch result;
-	std::regex r{"/dev/video([\\d]+)"};
-	if (!std::regex_search(device_file, result, r)) {
+	if (!std::regex_search(path, result, r)) {
 	  continue;
 	}
-	ret.push_back(entry.path().string());
+	ret.push_back(path);
   }
   return ret;
 }

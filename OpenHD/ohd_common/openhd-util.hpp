@@ -41,6 +41,7 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   std::cout << "Run command end\n";
   return ret;
 }
+
 }
 
 #endif

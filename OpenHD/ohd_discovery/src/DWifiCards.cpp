@@ -19,6 +19,7 @@
 #include "openhd-log.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
+#include "openhd-util-filesystem.hpp"
 
 #include "DPlatform.h"
 #include "DWifiCards.h"
@@ -41,18 +42,17 @@ void DWifiCards::discover() {
 	  "eth",
 	  "enp2s0" // Consti10 added
   };
-  boost::filesystem::path net("/sys/class/net");
-  for (auto &entry: boost::filesystem::directory_iterator(net)) {
-	const auto interface_name = entry.path().filename().string();
+  const auto netFilenames=OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory("/sys/class/net");
+  for(const auto& filename:netFilenames){
 	auto excluded = false;
 	for (const auto &excluded_interface: excluded_interfaces) {
-	  if (boost::algorithm::contains(interface_name, excluded_interface)) {
+	  if (boost::algorithm::contains(filename, excluded_interface)) {
 		excluded = true;
 		break;
 	  }
 	}
 	if (!excluded) {
-	  process_card(interface_name);
+	  process_card(filename);
 	}
   }
   // Now that we have all the connected cards, we need to figure out what to use them for.
