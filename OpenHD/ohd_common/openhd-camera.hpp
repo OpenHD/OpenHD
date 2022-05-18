@@ -152,24 +152,6 @@ struct VideoFormat {
   }
 };
 
-// CSI cameras don't have an endpoint,
-// Since there are too many specialities as if we could generify them.
-// Also, in case of CIS cameras, we don't need the raw stuff, since pretty much every
-// CSI camera then has a custom hw-accelerated pipeline that produces H264/H265/MJPEG out.
-// However, a UVC camera might have YUV and/or MJPEG out and requires custom encoding.
-struct UvcCameraEndpoint {
-  std::string device_node;
-};
-
-// A raw endpoint is for cameras that support YUV or RGB raw frames.
-// Most likely, the stream is then going to do sw encoding on them.
-// This way, we can handle thermal cameras for example.
-struct RawEndpoint {
-  std::string device_node;
-  std::string bus;
-  std::vector<std::string> supportedRawFormats;
-};
-
 struct CameraEndpoint {
   std::string device_node;
   std::string bus;
@@ -182,19 +164,6 @@ struct CameraEndpoint {
   [[nodiscard]] bool supports_anything() const {
 	return (support_h264 || support_h265 || support_mjpeg || support_raw);
   }
-};
-
-// An encoded endpoint is for cameras that support h264,h265 or MJPEG.
-// This is mostly for CSI cameras, for which we then later have a HW accelerated method
-// Of generating an encoded video stream that doesn't directly talk to the underlying v4l2 device node,
-// but rather uses somthing else (raspivid or libcamera, as an example).
-// However, some UVC cameras also support directly encoded MJPEG or h264/h265 out. In this case, they get a encoded endpoint,too.
-struct EncodedEndpoint {
-  // A list of all the video formats this camera can do for generating encoded data.
-  // If the list of supported formats is empty, one can assume that the camera can do anything ?
-  // TODO: Or should we make it a hard requirement, and what we as develoers have not said is "feasible" for the camera
-  // is all it can do ?
-  std::vector<VideoFormat> supportedFormats;
 };
 
 static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
