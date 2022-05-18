@@ -26,7 +26,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-         ./install_dep_x86.sh
+         sudo ./install_dep_x86.sh
 
       - name: Build with make
         run: |
