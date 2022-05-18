@@ -12,8 +12,7 @@ apt -y install snapd build-essential autotools-dev automake libtool autoconf \
             tree \
             ruby-dev \
             python3-pip \
-            libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
-            libfmt-dev || exit 1
+            libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \ || exit 1
 snap install cmake
 cmake --version
 gem install fpm
