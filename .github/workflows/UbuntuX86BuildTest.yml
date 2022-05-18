@@ -26,6 +26,7 @@ jobs:
           sudo apt update
           sudo apt install python3-pip
           pip3 install --upgrade cloudsmith-cli
+          curl -H "X-Api-Key: ${{ secrets.CLOUDSMITH_API_KEY }}" https://api.cloudsmith.io/user/self/
                 
 
       - name: Checkout repository and submodules
