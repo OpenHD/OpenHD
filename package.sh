@@ -81,6 +81,12 @@ VERSION="2.1-$(date '+%m%d%H%M')"
 
 rm ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
 
+echo $PACKAGE_ARCH
+echo $PACKAGE_NAME
+echo $VERSION
+echo $PKGDIR
+
+
 fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PKGDIR} \
   $PLATFORM_CONFIGS \
   -p ${PACKAGE_NAME}_VERSION_ARCH.deb \
