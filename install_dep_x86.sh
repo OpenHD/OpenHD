@@ -3,7 +3,7 @@
 # Install all the dependencies needed to build OpenHD from source.
 # TODO do we need libgstreamer1.0-dev and libgstreamer-plugins-base1.0-dev ?
 
-apt -y install snapd build-essential autotools-dev automake libtool autoconf \
+apt -y install sudo snapd build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libsodium-dev \
             libboost-dev libasio-dev \
             libgstreamer-plugins-base1.0-dev \
