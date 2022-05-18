@@ -81,7 +81,6 @@ echo $PACKAGE_NAME
 echo $VERSION
 echo $PKGDIR
 
-
 fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PKGDIR} \
   $PLATFORM_CONFIGS \
   -p ${PACKAGE_NAME}_VERSION_ARCH.deb \
@@ -140,6 +139,10 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
 cp *.deb ../../
 
 git describe --exact-match HEAD >/dev/null 2>&1
+
+pip install --upgrade cloudsmith-cli
+cloudsmith -k $CLOUDSMITH_API_KEY
+
 
 if [[ "${DISTRO}" == "bullseye" ]]; then
             cloudsmith push deb openhd/openhd-2-1-alpha/raspbian/${DISTRO} ${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb
