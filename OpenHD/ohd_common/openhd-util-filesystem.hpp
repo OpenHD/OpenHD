@@ -35,7 +35,7 @@ static std::vector<std::string> getAllEntriesFilenameOnlyInDirectory(const char*
   return ret;
 }
 
-
+// same as boost::filesystem::exists
 static bool exists(const char* file){
   return boost::filesystem::exists(file);
 }
