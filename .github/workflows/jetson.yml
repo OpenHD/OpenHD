@@ -30,7 +30,7 @@ jobs:
 
       - name: Build with make
         run: |
-          sudo ./package.sh
+          sudo ./package.sh arm64 ubuntu bionic
 
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
