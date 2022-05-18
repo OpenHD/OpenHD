@@ -149,5 +149,10 @@ git describe --exact-match HEAD >/dev/null 2>&1
 
 echo CLOUDSMITH_API_KEY
 
-echo "Pushing package to OpenHD Milestone repository"
+if [[ "${DISTRO}" == "bullseye" ]]; then
             cloudsmith push deb openhd/openhd-2-1-alpha/raspbian/${DISTRO} ${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb
+fi
+
+if [[ "${DISTRO}" == "bionic" ]]; then
+            cloudsmith push deb openhd/openhd-2-1-alpha/ubuntu/${DISTRO} ${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb
+fi
