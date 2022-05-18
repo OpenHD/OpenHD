@@ -88,8 +88,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
   --before-install ../../before-install.sh \
   $PLATFORM_PACKAGES \
   -d "libasio-dev >= 1.10" \
-  -d "libboost-system-dev >= 1.62.0" \
-  -d "libboost-program-options-dev >= 1.62.0" \
   -d "libseek-thermal >= 20201118.1" \
   -d "flirone-driver >= 20200704.3" \
   -d "wifibroadcast >= 20200930.1" \
@@ -123,10 +121,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
   -d "libfontconfig1" \
   -d "libfreetype6" \
   -d "libgles2-mesa-dev" \
-  -d "libboost-chrono-dev" \
-  -d "libboost-regex-dev" \
-  -d "libboost-filesystem-dev" \
-  -d "libboost-thread-dev" \
   -d "gstreamer1.0-plugins-base" \
   -d "gstreamer1.0-plugins-good" \
   -d "gstreamer1.0-plugins-bad" \
