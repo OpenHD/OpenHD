@@ -8,7 +8,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: test
         run: |
@@ -26,6 +26,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
+         sudo chmod +x install_dep_x86.sh
          sudo ./install_dep_x86.sh
 
       - name: Build with make
