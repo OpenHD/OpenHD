@@ -38,11 +38,6 @@ fi
 
 apt-get install -y apt-transport-https curl || exit 1
 
-curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash && \
-
-pip install --upgrade cloudsmith-cli
-cloudsmith token
-
 apt -y update || exit 1
 
 PACKAGE_NAME=openhd
@@ -145,8 +140,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
 cp *.deb ../../
 
 git describe --exact-match HEAD >/dev/null 2>&1
-
-echo CLOUDSMITH_API_KEY
 
 if [[ "${DISTRO}" == "bullseye" ]]; then
             cloudsmith push deb openhd/openhd-2-1-alpha/raspbian/${DISTRO} ${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb
