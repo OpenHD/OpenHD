@@ -8,7 +8,7 @@ env:
 
 jobs:
   build:
-    runs-on: [self-hosted, linux, ARM]
+    runs-on: ubuntu-20.04
     steps:
       - name: test
         run: |
@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
-          
+
       - name: Install Dependencies
         run: |
           sudo ./install_dep_x86.sh
