@@ -29,7 +29,7 @@ static void initGstreamerOrThrow() {
   }
 }
 
-// a createXXXStream function always ends wth "h164,h265 or mjpeg stream ! "
+// a createXXXStream function always ends wth an encoded "h164,h265 or mjpeg stream ! "
 // aka after that, onc can add a rtp encoder or similar.
 // All these methods also start from zero - aka have a source like videotestsrc, nvarguscamerasr usw in the beginning
 // and end with a OpenHD supported video codec (e.g. h264,h265 or mjpeg)
