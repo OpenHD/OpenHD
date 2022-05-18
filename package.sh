@@ -22,7 +22,7 @@ fi
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
     echo "--------------ADDING nvidia-l4t-gstreamer to package list--------------- "
-    PLATFORM_PACKAGES="-d nvidia-l4t-gstreamer"
+    PLATFORM_PACKAGES="-d nvidia-l4t-gstreamer -d gcc-8 -d g++-8 -d gcc-9 -d g++-9 -d gcc-10 -d g++-10 -d libboost1.74-dev"
     PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
