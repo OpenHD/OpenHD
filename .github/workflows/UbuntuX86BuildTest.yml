@@ -21,6 +21,13 @@ jobs:
         run: |
           sudo rm -Rf *
 
+      - name: Install cloudsmith
+        run: |
+          sudo apt update
+          sudo apt install python3-pip
+          pip3 install --upgrade cloudsmith-cli
+                
+
       - name: Checkout repository and submodules
         uses: actions/checkout@v3
         with:
