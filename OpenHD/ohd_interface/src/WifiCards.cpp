@@ -39,7 +39,7 @@ void WifiCards::configure() {
 	if (card.txpower.empty()) {
 	  // No idea where this comes from, for now use it ??!!
 	  // TODO what should be the default value ?
-	  card.txpower = "3100";
+	  card.txpower = DEFAULT_WIFI_TX_POWER;
 	}
   }
   // When we are done with the sanity checks, we can use the wifi card for its intended use case
