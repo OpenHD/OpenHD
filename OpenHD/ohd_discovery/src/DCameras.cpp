@@ -14,9 +14,7 @@
 #include <sstream>
 #include <regex>
 
-#include <libusb.h>
-
-#include <boost/filesystem.hpp>
+#include <libusb.h
 
 #include "json.hpp"
 

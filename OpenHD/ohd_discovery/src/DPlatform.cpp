@@ -7,7 +7,6 @@
 #include <fstream>
 #include <set>
 
-#include <boost/filesystem.hpp>
 #include <regex>
 
 #include "json.hpp"
