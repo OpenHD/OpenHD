@@ -17,7 +17,7 @@ fi
 
 if [[ "${DISTRO}" == "bullseye" ]]; then
     PLATFORM_PACKAGES="-d lifepoweredpi -d gst-rpicamsrc -d openhd-linux-pi -d libjpeg62-turbo"
-    PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
+    PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
