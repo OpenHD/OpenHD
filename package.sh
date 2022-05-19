@@ -25,6 +25,9 @@ if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_AR
     PLATFORM_PACKAGES="-d nvidia-l4t-gstreamer -d gcc-8 -d g++-8 -d gcc-9 -d g++-9 -d gcc-10 -d g++-10 -d libboost1.74-dev"
     PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
     echo "--------------install fmt--------------- "
+    sudo apt purge cmake
+    sudo snap install cmake --classic
+    hash -r
     cd /opt
     wget https://codeload.github.com/fmtlib/fmt/zip/refs/tags/7.1.3
     unzip 7.1.3
@@ -33,9 +36,7 @@ if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_AR
     cd build
     cmake ..
     sudo make install
-    sudo apt purge cmake
-    sudo snap install cmake --classic
-    hash -r
+  
 fi
 
 if [ "${BUILD_TYPE}" == "docker" ]; then
