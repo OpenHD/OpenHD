@@ -287,6 +287,7 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 	fmtdesc.index++;
   }
   v4l2_close(fd);
+  std::cout<<"process_v4l2_node done\n";
   return true;
 }
 

@@ -172,4 +172,16 @@ static CameraEndpoint createCameraEndpointRpi(bool isCsi1= false){
 }
 
 }
+
+/*namespace DCamerasHelper{
+
+struct SupportedFormat{
+  struct v4l2_fmtdesc _v4l2_fmtdesc;
+};
+
+std::vector<v4l2_fmtdesc> getAllSupportedFormats(){
+
+}*/
+
+}
 #endif //OPENHD_DCAMERASHELPER_H
