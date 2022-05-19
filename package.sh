@@ -33,7 +33,7 @@ if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_AR
     mkdir build 
     cd build
     cmake ..
-    sudo make install
+    sudo make -j4 install
     cd ../../
   
 fi

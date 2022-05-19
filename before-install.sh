@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-if [  -n "$(uname -a | grep Ubuntu)" ]; then
-    sudo apt remove libboost*
-
-fi
-
 echo "-------------trying to mount boot... might not exist if jetson --------------"
 
 mount -o remount,rw /boot || true
