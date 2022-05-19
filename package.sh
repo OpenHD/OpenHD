@@ -27,8 +27,6 @@ if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_AR
     echo "--------------install fmt--------------- "
     sudo apt purge cmake
     sudo snap install cmake --classic
-    hash -r
-    cd /opt
     wget https://codeload.github.com/fmtlib/fmt/zip/refs/tags/7.1.3
     unzip 7.1.3
     cd fmt*
@@ -36,6 +34,7 @@ if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_AR
     cd build
     cmake ..
     sudo make install
+    cd ../../
   
 fi
 
