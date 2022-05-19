@@ -181,7 +181,7 @@ struct SupportedFormat{
 
 std::vector<v4l2_fmtdesc> getAllSupportedFormats(){
 
-}*/
-
 }
+
+}*/
 #endif //OPENHD_DCAMERASHELPER_H
