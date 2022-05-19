@@ -6,6 +6,12 @@
 #include <boost/filesystem.hpp>
 
 // boost::filesystem or std::filesystem, what a pain
+// If possible, one should not use boost::filesystem or anything from boost::
+// inside the project, but quickly write a wrapper here.
+// We want to get rid of boost at some time.
+// which should reduce build time and dependency issues on all the platforms.
+// However, for std::filesystem we need c++17 AND support from the compiler for std::filesystem
+// which is lagging behind immensely.
 
 namespace OHDFilesystemUtil{
 
