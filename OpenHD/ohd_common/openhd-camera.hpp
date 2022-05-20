@@ -208,6 +208,16 @@ struct Camera {
   std::string thermal_palette;
   std::string thermal_span;
   // --------------------------------------- end ---------------------------------------
+  /**
+   * For logging, create a quick name string that gives developers enough info such that they can figure out
+   * what this camera is.
+   * @return verbose string.
+   */
+  [[nodiscard]] std::string debugName()const{
+	std::stringstream ss;
+	ss<<name<<"|"<<camera_type_to_string(type);
+	return ss.str();
+  }
 };
 
 // TODO: Why the heck did stephen not use the endpoints member variable here ?

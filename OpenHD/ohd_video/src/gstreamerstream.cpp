@@ -155,13 +155,10 @@ void GStreamerStream::setup_ip_camera() {
 
 std::string GStreamerStream::createDebug()const {
   std::stringstream ss;
-  ss << "GStreamerStream[";
-  //ss << "Pipeline:" << m_pipeline.str()<<"\n";
   GstState state;
   GstState pending;
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
-  ss << " Gst state:" << returnValue << "." << state << "." << pending << "." << std::endl;
-  ss << "]GStreamerStream";
+  ss << "GStreamerStream for camera:"<<m_camera.debugName()<<" State:"<< returnValue << "." << state << "." << pending << ".";
   return ss.str();
 }
 
