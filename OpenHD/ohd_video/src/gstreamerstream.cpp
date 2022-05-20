@@ -17,7 +17,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,
 	: CameraStream(platform, camera, video_udp_port) {
   std::cout << "GStreamerStream::GStreamerStream()\n";
   // rn the dummy camera doesn't support any custom resolution or framerate
-  // since it is sw, 640x48@30 might already be too much on embedded devices.
+  // since it is sw, 640x48@30 might already be too much on embedded devices anyways.
   if (camera.type == CameraTypeDummy) {
 	camera.userSelectedVideoFormat.width = 640;
 	camera.userSelectedVideoFormat.height = 480;

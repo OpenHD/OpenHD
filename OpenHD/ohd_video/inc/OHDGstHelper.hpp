@@ -35,19 +35,23 @@ static void initGstreamerOrThrow() {
 // and end with a OpenHD supported video codec (e.g. h264,h265 or mjpeg)
 // ------------- crateXXXStream begin -------------
 /**
- * Create a encoded dummy stream for the selected video format, that means a stream that encodes data coming from a videotestsrc.
+ * Create a encoded dummy stream for the selected video format, that means a stream that encodes data coming from a videotestsrc
+ * in either h264, h265 or mjpeg.
  */
 static std::string createDummyStream(const VideoFormat videoFormat) {
   std::stringstream ss;
   ss << "videotestsrc ! ";
-  ss << fmt::format("video/x-raw, format=NV12,width={},height={},framerate={}/1 ! ",
+  // h265 cannot do NV12, but I420.
+  // x264 and mjpeg can do both NV12 and I420
+  ss << fmt::format("video/x-raw, format=I420,width={},height={},framerate={}/1 ! ",
 					videoFormat.width,
 					videoFormat.height,
 					videoFormat.framerate);
+  // since the primary purpose here is testing, use a fixed low key frame intervall.
   if (videoFormat.videoCodec == VideoCodecH264) {
 	ss << fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ", DEFAULT_BITRATE_KBITS);
   } else if (videoFormat.videoCodec == VideoCodecH265) {
-	ss << fmt::format("x265enc name=encodectrl bitrate={} ! ", DEFAULT_BITRATE_KBITS);
+	ss << fmt::format("x265enc bitrate={} tune=zerolatency key-int-max=10 ! ", DEFAULT_BITRATE_KBITS);
   } else {
 	ss << "jpegenc !";
   }
@@ -184,8 +188,8 @@ static std::string createRtpForVideoCodec(const VideoCodec videoCodec) {
 	ss << "rtph265pay mtu=1024 ! ";
   } else {
 	assert(videoCodec == VideoCodecMJPEG);
-	// mjpeg
-	ss << "jpegparse config-interval=-1 ! ";
+	// mjpeg has no config-interval
+	ss << "jpegparse ! ";
 	ss << "rtpjpegpay mtu=1024 ! ";
   }
   return ss.str();
