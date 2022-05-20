@@ -24,19 +24,7 @@ if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_AR
     echo "--------------ADDING nvidia-l4t-gstreamer to package list--------------- "
     PLATFORM_PACKAGES="-d nvidia-l4t-gstreamer -d gcc-8 -d g++-8 -d gcc-9 -d g++-9 -d gcc-10 -d g++-10 -d libboost1.74-dev"
     PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
-    echo "--------------install fmt--------------- "
-    sudo apt purge cmake
-    sudo snap install cmake --classic
-    wget https://codeload.github.com/fmtlib/fmt/zip/refs/tags/7.1.3
-    unzip 7.1.3
-    cd fmt*
-    mkdir build 
-    cd build
-    cmake ..
-    sudo make -j4 install
-    cd ../../
-  
-fi
+ fi
 
 if [ "${BUILD_TYPE}" == "docker" ]; then
     cat << EOF > /etc/resolv.conf
@@ -46,11 +34,6 @@ nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
 fi
-
-
-apt-get install -y apt-transport-https curl || exit 1
-
-apt -y update || exit 1
 
 PACKAGE_NAME=openhd
 

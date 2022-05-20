@@ -11,6 +11,8 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
             libv4l-dev \
             ruby-dev \
             python3-pip \
+            apt-transport-https \
+            curl \
             libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
 
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
