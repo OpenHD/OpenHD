@@ -18,8 +18,10 @@
  * Since the USB tethering is always initiated by the user (when he switches USB Tethering on on his phone/tablet)
  * we don't need any settings or similar, and checking once every second barely uses any CPU resources.
  * This was created by translating the tether_functions.sh script from wifibroadcast-scripts into c++.
- * This class configures and forwards the connect and disconnect event(s) for a USB tethering device.
+ * This class configures and forwards the connect and disconnect event(s) for a USB tethering device, such that
+ * we can start/stop forwarding to the device's ip address.
  * Only supports one USB tethering device connected at the same time.
+ * Also, assumes that the usb tethering device always shows up under /sys/class/net/usb0.
  */
 class USBTetherListener{
  public:

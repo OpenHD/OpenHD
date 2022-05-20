@@ -58,7 +58,11 @@ static std::optional<std::string> run_command_out(const char* command){
   std::array<char, 512> buffer{};
   std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command, "r"), pclose);
   if (!pipe) {
-	std::cout << "Cannot open pipe in run_command_out:"<<command<<"\n";
+	// if the pipe opening fails, this doesn't mean the command failed (see above)
+	// But rather we need to find a different way to implement this functionality on this platform.
+	std::stringstream ss;
+	ss<<"run_command_out with "<<command<<" cannot open pipe";
+	throw std::runtime_error(ss.str());
 	return std::nullopt;
   }
   while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
