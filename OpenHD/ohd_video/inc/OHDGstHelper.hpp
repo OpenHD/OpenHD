@@ -38,8 +38,6 @@ static void initGstreamerOrThrow() {
  * Create a encoded dummy stream for the selected video format, that means a stream that encodes data coming from a videotestsrc.
  */
 static std::string createDummyStream(const VideoFormat videoFormat) {
-  // TODO: create dummies for h265 and jpeg
-  assert(videoFormat.videoCodec == VideoCodecH264);
   std::stringstream ss;
   ss << "videotestsrc ! ";
   ss << fmt::format("video/x-raw, format=NV12,width={},height={},framerate={}/1 ! ",
@@ -51,7 +49,7 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
   } else if (videoFormat.videoCodec == VideoCodecH265) {
 	ss << fmt::format("x265enc name=encodectrl bitrate={} ! ", DEFAULT_BITRATE_KBITS);
   } else {
-	std::cerr << "no sw encoder for MJPEG,cannot start dummy camera\n";
+	ss << "jpegenc !";
   }
   return ss.str();
 }

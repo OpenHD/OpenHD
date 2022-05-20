@@ -12,6 +12,7 @@ int main(int argc, char *argv[]) {
 
   Camera camera;
   camera.type = CameraTypeDummy;
+  camera.userSelectedVideoFormat.videoCodec=VideoCodecMJPEG;
   PlatformType platformType;
   uint16_t video_port = OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP;
 
