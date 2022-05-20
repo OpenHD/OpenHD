@@ -48,6 +48,8 @@ static bool run_command(const std::string &command, const std::vector<std::strin
  * from https://stackoverflow.com/questions/646241/c-run-a-system-command-and-get-output
  * also see https://linux.die.net/man/3/popen
  * Not sure how to describe this - it runs a command and returns its shell output.
+ * NOTE: This just returns the shell output, it does not check if the executed command is actually available on
+ * the system. If the command is not available on the system, it most likely returns "command not found" as a string.
  * @param command the command and its args to run
  * @return the shell output, or std::nullopt if something went wrong.
  */
