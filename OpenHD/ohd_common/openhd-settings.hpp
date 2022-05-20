@@ -22,8 +22,7 @@
 
 // from https://superuser.com/questions/631859/preferred-place-to-store-configuration-files-that-change-often
 // All persistent settings are written into this directory.
-//static constexpr auto BASE_PATH="/etc/opt/openhd/";
-static constexpr auto BASE_PATH = "/home/consti10/openhd/";
+static constexpr auto BASE_PATH="/etc/openhd/";
 // for example, the unique id
 static const auto UNIT_ID_FILE = std::string(BASE_PATH) + "unit.id";
 
@@ -49,6 +48,7 @@ static void generateSettingsDirectoryIfNonExists() {
  * @return the unit id, it doesn't change during reboots of the same system.
  */
 static std::string getOrCreateUnitId() {
+  generateSettingsDirectoryIfNonExists();
   std::ifstream unit_id_file(UNIT_ID_FILE);
   std::string unit_id;
   if (!unit_id_file.is_open()) {
@@ -79,6 +79,7 @@ static std::string getOrCreateUnitId() {
  * this: BASE_PATH/air_8bfff348-c17e-4833-af66-cef83f90c208/
  */
 static std::string findOrCreateSettingsDirectory(bool is_air) {
+  generateSettingsDirectoryIfNonExists();
   std::stringstream settingsPath;
   settingsPath << BASE_PATH;
   settingsPath << (is_air ? "air_" : "ground_");
