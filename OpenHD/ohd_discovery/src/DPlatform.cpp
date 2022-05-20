@@ -91,23 +91,16 @@ void DPlatform::detect_jetson() {
 }
 
 void DPlatform::detect_pc() {
-  std::array<char, 512> buffer{};
-  std::string raw_value;
-  std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("arch", "r"), pclose);
-  if (!pipe) {
+  const auto arch=OHDUtil::run_command_out("arch");
+  if(arch==std::nullopt){
 	return;
   }
-
-  while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-	raw_value += buffer.data();
-  }
-
   std::smatch result;
   std::regex r1{"x86_64"};
-  auto res1 = std::regex_search(raw_value, result, r1);
+  auto res1 = std::regex_search(arch.value(), result, r1);
 
   std::regex r2{"i386"};
-  auto res2 = std::regex_search(raw_value, result, r2);
+  auto res2 = std::regex_search(arch.value(), result, r2);
 
   if (!res1 && !res2) {
 	return;
