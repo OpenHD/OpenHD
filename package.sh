@@ -41,8 +41,6 @@ PACKAGE_NAME=openhd
 PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
-./install_dep.sh || exit 1
-
 cd OpenHD
 
 rm -rf build
