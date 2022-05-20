@@ -97,9 +97,7 @@ void GStreamerStream::setup_raspberrypi_csi() {
 
 void GStreamerStream::setup_jetson_csi() {
   std::cout << "Setting up Jetson CSI camera" << std::endl;
-  // if there's no endpoint this isn't a runtime bug but a programming error in the system service,
-  // because it never found an endpoint to use for some reason
-  // TODO well, we should not have to deal with that here ?!
+  // Well, i fixed the bug in the detection, was the v4l2_open
   auto endpoint = m_camera.endpoints.front();
   int sensor_id = -1;
   std::smatch result;
@@ -111,8 +109,8 @@ void GStreamerStream::setup_jetson_csi() {
 	}
   }
   if (sensor_id == -1) {
-	ohd_log(STATUS_LEVEL_CRITICAL, "Failed to determine Jetson CSI sensor ID");
-	return;
+	std::cerr<<"Failed to determine Jetson CSI sensor ID,using 0 as default\n";
+	sensor_id=0;
   }
   m_pipeline << OHDGstHelper::createJetsonStream(sensor_id, m_camera.bitrateKBits, m_camera.userSelectedVideoFormat);
 }

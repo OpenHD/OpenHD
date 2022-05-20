@@ -187,7 +187,6 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
   std::cout << "Cameras::process_v4l2_node(" << node << ")" << std::endl;
   // fucking hell, on jetson v4l2_open seems to be bugged
   // https://forums.developer.nvidia.com/t/v4l2-open-create-core-with-jetpack-4-5-or-later/170624/6
-  std::cout<<"X0\n";
   int fd;
   if(m_platform_type==PlatformTypeJetson){
 	fd = open(node.c_str(), O_RDWR | O_NONBLOCK, 0);
@@ -198,14 +197,13 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 	std::cout << "Can't open: " << node << std::endl;
 	return false;
   }
-  std::cout<<"X1\n";
   struct v4l2_capability caps = {};
   if (ioctl(fd, VIDIOC_QUERYCAP, &caps) == -1) {
 	std::cerr << "Capability query failed: " << node << std::endl;
 	return false;
   }
-  std::cout<<"X2\n";
   std::string driver((char *)caps.driver);
+  std::cout<<"Driver is:"<<caps.driver<<"\n";
   if (driver == "uvcvideo") {
 	camera.type = CameraTypeUVC;
 	std::cout << "Found UVC camera" << std::endl;
