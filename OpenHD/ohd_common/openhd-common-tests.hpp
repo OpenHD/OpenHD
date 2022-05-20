@@ -36,11 +36,9 @@ static void test_execute_commands(){
   }
   // Here we get the actual output in the shell, which should be 1
   auto res2=OHDUtil::run_command_out("echo 1");
-  if(res2.has_value()){
-	std::cout << "Res2 is:[" << res2.value() << "]\n";
-	if(res2.value()!="1\n"){
-	  throw std::runtime_error("run_command_out return does not match expected\n");
-	}
+  std::cout << "Res2 is:[" << res2 << "]\n";
+  if(res2!="1\n"){
+	throw std::runtime_error("run_command_out return does not match expected\n");
   }
 }
 

@@ -51,8 +51,8 @@ void DCameras::discover() {
 void DCameras::detect_raspberrypi_csi() {
   std::cout << "Cameras::detect_raspberrypi_csi()" << std::endl;
   const auto vcgencmd_result=OHDUtil::run_command_out("vcgencmd get_camera");
-  if(vcgencmd_result==std::nullopt){
-	std::cout << "Cameras::detect_raspberrypi_csi() no pipe from vcgencmd" << std::endl;
+  if(!OHDUtil::commandFound(vcgencmd_result)){
+	std::cout << "Cameras::detect_raspberrypi_csi() vcgencmd not found" << std::endl;
 	return;
   }
   const auto raw_value=vcgencmd_result.value();
@@ -112,7 +112,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
   command << "udevadm info ";
   command << device.c_str();
   const auto udev_info=OHDUtil::run_command_out(command.str().c_str());
-  if(udev_info==std::nullopt){
+  if(!OHDUtil::commandFound(udev_info)){
 	std::cerr<<"udev_info no result\n";
 	return;
   }

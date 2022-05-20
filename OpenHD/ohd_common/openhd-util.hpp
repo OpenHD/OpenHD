@@ -53,7 +53,7 @@ static bool run_command(const std::string &command, const std::vector<std::strin
  * @param command the command and its args to run
  * @return the shell output, or std::nullopt if something went wrong.
  */
-static std::optional<std::string> run_command_out(const char* command){
+static std::string run_command_out(const char* command){
   std::string raw_value;
   std::array<char, 512> buffer{};
   std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command, "r"), pclose);
@@ -63,12 +63,19 @@ static std::optional<std::string> run_command_out(const char* command){
 	std::stringstream ss;
 	ss<<"run_command_out with "<<command<<" cannot open pipe";
 	throw std::runtime_error(ss.str());
-	return std::nullopt;
   }
   while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
 	raw_value += buffer.data();
   }
   return raw_value;
+}
+
+// TODO thats not a good practice.
+static bool commandFound(const std::string run_command_result){
+  if(run_command_result.find("command not found")==std::string::npos){
+	return true;
+  }
+  return false;
 }
 
 }

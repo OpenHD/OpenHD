@@ -90,8 +90,8 @@ class USBTetherListener{
 
 	// now we find the IP of the connected device so we can forward video usw to it
 	const auto ip_opt=OHDUtil::run_command_out("ip route show 0.0.0.0/0 dev usb0 | cut -d\\  -f3");
-	if(ip_opt!=std::nullopt){
-	  setDeviceIp(ip_opt.value());
+	if(true){
+	  setDeviceIp(ip_opt);
 	  std::cout<<"Found ip:["<<device_ip<<"]\n";
 	  if(ip_callback){
 		ip_callback(false,device_ip);
