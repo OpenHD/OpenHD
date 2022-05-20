@@ -17,6 +17,9 @@ static void test_video_format_regex() {
   const VideoFormat source{VideoCodecH264, 1280, 720, 30};
   const auto serialized = source.toString();
   const auto from = VideoFormat::fromString(serialized);
+  if(!(from == source)){
+	throw std::runtime_error("Error VideoFormat from/to\n");
+  }
   assert(source == from);
 }
 
