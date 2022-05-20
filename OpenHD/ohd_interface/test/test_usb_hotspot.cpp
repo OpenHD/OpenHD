@@ -1,10 +1,11 @@
 //
 // Created by consti10 on 20.05.22.
 //
-#include "openhd-util.hpp"
 #include "USBTether.hpp"
 
 int main(int argc, char *argv[]) {
 
-  USBTether::enable();
+  USBTetherListener usb_tether_listener{nullptr};
+  usb_tether_listener.loopInfinite();
+
 }

@@ -13,7 +13,9 @@
 
 
 /**
- * Forward the connect and disconnect event(s) for a USB tethering device.
+ * USB hotspot (USB Tethering).
+ * This was created by translating the tether_functions.sh script from wifibroadcast-scripts into c++.
+ * Configures and forwards the connect and disconnect event(s) for a USB tethering device.
  * Only supports one USB tethering device connected at the same time.
  */
 class USBTetherListener{
@@ -64,6 +66,7 @@ class USBTetherListener{
 	// in regular intervals, check if the devices becomes available - if yes, the user connected a ethernet hotspot device.
 	while (true){
 	  std::this_thread::sleep_for(std::chrono::seconds(1));
+	  std::cout<<"Checking for USB tethering device\n";
 	  if(OHDFilesystemUtil::exists(connectedDevice)) {
 		std::cout << "Found USB tethering device\n";
 		break;
@@ -74,8 +77,13 @@ class USBTetherListener{
 
 	// now we find the IP of the connected device so we can forward video usw to it
 	const auto ip_opt=OHDUtil::run_command_out("ip route show 0.0.0.0/0 dev usb0 | cut -d\\  -f3");
-	device_ip=ip_opt.value();
-
+	if(ip_opt!=std::nullopt){
+	  device_ip=ip_opt.value();
+	  std::cout<<"Found ip:["<<ip<<"]\n";
+	}else{
+	  std::cerr<<"USBHotspot find ip no success\n";
+	  return;
+	}
 	// check in regular intervals if the tethering device disconnects.
 	while (true){
 	  std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -87,48 +95,5 @@ class USBTetherListener{
 	}
   }
 };
-
-// USB hotspot (USB Tethering)
-// This was created by translating the tether_functions.sh script form wifibroadcast-scripts into c++.
-namespace USBTether{
-
-static void enable(){
-  // in regular intervals, check if the devices becomes available - if yes, the user connected a ethernet hotspot device.
-  while (true){
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-	const char* connectedDevice="/sys/class/net/usb0";
-	// When the file above becomes available, we almost 100% have a usb device with "mobile hotspot"
-	// connected.
-	std::cout<<"Checking for USB tethering device\n";
-	if(OHDFilesystemUtil::exists(connectedDevice)){
-	  std::cout<<"Found USB tethering device\n";
-	  // Not sure if this is needed, configure the IP ?!
-	  OHDUtil::run_command("dhclient",{"usb0"});
-
-	  // now we find the IP of the connected device so we can forward video usw to it
-	  const auto ip_opt=OHDUtil::run_command_out("ip route show 0.0.0.0/0 dev usb0 | cut -d\\  -f3");
-
-	  if(ip_opt!=std::nullopt){
-		const std::string ip=ip_opt.value();
-		std::cout<<"Found ip:["<<ip<<"]\n";
-	  }else{
-		std::cerr<<"USBHotspot find ip no success\n";
-		return;
-	  }
-	  // Now that we have hotspot setup and queried the IP,
-	  // check in regular intervals if the tethering device is disconnected.
-	  while (true){
-		std::cout<<"Checking if USB tethering device disconnected\n";
-		if(!OHDFilesystemUtil::exists(connectedDevice)){
-		  std::cout<<"USB Tether device disconnected\n";
-		  return;
-		}
-		std::this_thread::sleep_for(std::chrono::seconds(1));
-	  }
-	}
-  }
-}
-
-}
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_INC_USBHOTSPOT_H_
