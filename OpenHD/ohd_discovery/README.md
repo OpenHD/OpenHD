@@ -10,3 +10,6 @@ See inc/OHDDiscovery.h for more info
 ## NOTE:
 We should never introduce any dynamically changed settings here, since the purpose of this module is to create
 deterministic results (on each re-start, if the hardware does not change, the output of this module does not change).
+
+## Dev info:
+If you need to debug this module, instead of re-starting OpenHD you can also just run test/test_discovery.cpp
