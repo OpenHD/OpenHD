@@ -10,6 +10,9 @@
 #include "openhd-profile.hpp"
 #include "openhd-wifi.hpp"
 
+/**
+ * Tests for the ohd_common directory.
+ */
 namespace OHDCommonTests {
 
 // Simple test for to and from string
