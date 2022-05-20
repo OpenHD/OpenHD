@@ -44,9 +44,13 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   return ret;
 }
 
-// from https://stackoverflow.com/questions/646241/c-run-a-system-command-and-get-output
-// also see https://linux.die.net/man/3/popen
-// Not sure how to describe this - it runs a command and returns its shell output.
+/**
+ * from https://stackoverflow.com/questions/646241/c-run-a-system-command-and-get-output
+ * also see https://linux.die.net/man/3/popen
+ * Not sure how to describe this - it runs a command and returns its shell output.
+ * @param command the command and its args to run
+ * @return the shell output, or std::nullopt if something went wrong.
+ */
 static std::optional<std::string> run_command_out(const char* command){
   std::string raw_value;
   std::array<char, 512> buffer{};
