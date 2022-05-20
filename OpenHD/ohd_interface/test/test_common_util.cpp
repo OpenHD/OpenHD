@@ -9,7 +9,9 @@ int main(int argc, char *argv[]) {
 
   auto res = OHDUtil::run_command("echo", {"1"});
   std::cout << "Res is:" << res << "\n";
-
+  if(res!=1){
+	throw std::runtime_error("run_command return does not match expected\n");
+  }
   auto res2=OHDUtil::run_command_out("echo 1");
   if(res2.has_value()){
 	std::cout << "Res2 is:[" << res2.value() << "]\n";
