@@ -173,15 +173,30 @@ static CameraEndpoint createCameraEndpointRpi(bool isCsi1= false){
 
 }
 
-/*namespace DCamerasHelper{
 
-struct SupportedFormat{
-  struct v4l2_fmtdesc _v4l2_fmtdesc;
-};
-
-std::vector<v4l2_fmtdesc> getAllSupportedFormats(){
+/**
+ * Try and break out some of the stuff from stephen.
+ * Even though it mght not be re-used in multiple places, it makes the code more readable in my opinion.
+ */
+namespace DV4l2DevicesHelper {
+/**
+ * Search for all v4l2 video devices, that means devices named /dev/videoX where X=0,1,...
+ * @return list of all the devices that have the above name scheme.
+ */
+static std::vector<std::string> findV4l2VideoDevices(){
+  const auto paths= OHDFilesystemUtil::getAllEntriesFullPathInDirectory("/dev");
+  std::vector<std::string> ret;
+  const std::regex r{"/dev/video([\\d]+)"};
+  for(const auto& path:paths){
+	std::smatch result;
+	if (!std::regex_search(path, result, r)) {
+	  continue;
+	}
+	ret.push_back(path);
+  }
+  return ret;
+}
 
 }
 
-}*/
 #endif //OPENHD_DCAMERASHELPER_H
