@@ -190,11 +190,13 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 	std::cout << "Can't open: " << node << std::endl;
 	return false;
   }
+  std::cout<<"X1\n";
   struct v4l2_capability caps = {};
   if (ioctl(fd, VIDIOC_QUERYCAP, &caps) == -1) {
 	std::cerr << "Capability query failed: " << node << std::endl;
 	return false;
   }
+  std::cout<<"X2\n";
   std::string driver((char *)caps.driver);
   if (driver == "uvcvideo") {
 	camera.type = CameraTypeUVC;
