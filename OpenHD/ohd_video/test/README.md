@@ -1,1 +1,1 @@
-# Scripts and more that make development on ohd_video easier.
+# executables and scripts and more that make development on ohd_video easier.

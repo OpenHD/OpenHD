@@ -22,7 +22,8 @@
 
 // from https://superuser.com/questions/631859/preferred-place-to-store-configuration-files-that-change-often
 // All persistent settings are written into this directory.
-static constexpr auto BASE_PATH="/etc/openhd/";
+//static constexpr auto BASE_PATH="/etc/openhd/";
+static constexpr auto BASE_PATH="/home/consti10/openhd/";
 // for example, the unique id
 static const auto UNIT_ID_FILE = std::string(BASE_PATH) + "unit.id";
 
