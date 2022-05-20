@@ -43,3 +43,6 @@ target_link_libraries(test_interface OHDInterfaceLib)
 #special, temporary
 add_executable(test_common_util test/test_common_util.cpp)
 target_link_libraries(test_common_util OHDInterfaceLib)
+
+add_executable(test_usb_hotspot test/test_usb_hotspot.cpp)
+target_link_libraries(test_usb_hotspot OHDInterfaceLib)

@@ -6,6 +6,8 @@
 #include <cctype>
 #include <cstdlib>
 #include <vector>
+#include <memory>
+#include <optional>
 
 namespace OHDUtil {
 
@@ -40,6 +42,23 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   return c.exit_code() == 0;*/
   std::cout << "Run command end\n";
   return ret;
+}
+
+// from https://stackoverflow.com/questions/646241/c-run-a-system-command-and-get-output
+// also see https://linux.die.net/man/3/popen
+// Not sure how to describe this - it runs a command and returns its shell output.
+static std::optional<std::string> run_command_out(const char* command){
+  std::string raw_value;
+  std::array<char, 512> buffer{};
+  std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command, "r"), pclose);
+  if (!pipe) {
+	std::cout << "Cameras::detect_raspberrypi_csi() no pipe from vcgencmd" << std::endl;
+	return std::nullopt;
+  }
+  while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+	raw_value += buffer.data();
+  }
+  return raw_value;
 }
 
 }
