@@ -28,12 +28,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,
 
 void GStreamerStream::setup() {
   std::cout << "GStreamerStream::setup()" << std::endl;
-  GError *error = nullptr;
-  if (!gst_init_check(nullptr, nullptr, &error)) {
-	std::cerr << "gst_init_check() failed: " << error->message << std::endl;
-	g_error_free(error);
-	throw std::runtime_error("GStreamer initialization failed");
-  }
+  OHDGstHelper::initGstreamerOrThrow();
   std::cout << "Creating GStreamer pipeline" << std::endl;
   // sanity checks
   if (m_camera.bitrateKBits <= 100 || m_camera.bitrateKBits > (1024 * 1024 * 50)) {
