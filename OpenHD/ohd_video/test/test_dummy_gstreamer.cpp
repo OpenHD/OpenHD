@@ -12,7 +12,8 @@ int main(int argc, char *argv[]) {
 
   Camera camera;
   camera.type = CameraTypeDummy;
-  camera.userSelectedVideoFormat.videoCodec=VideoCodecMJPEG;
+  // Depending on what you selected here, you will have to use the proper main_stream_display_XXX.sh if you want to see the video.
+  camera.userSelectedVideoFormat.videoCodec=VideoCodecH265;
   PlatformType platformType;
   uint16_t video_port = OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP;
 
