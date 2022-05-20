@@ -82,6 +82,7 @@ void GStreamerStream::setup() {
   // add udp out part
   m_pipeline << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
   std::cout << "Starting pipeline:" << m_pipeline.str() << std::endl;
+  GError *error = nullptr;
   gst_pipeline = gst_parse_launch(m_pipeline.str().c_str(), &error);
   if (error) {
 	std::cerr << "Failed to create pipeline: " << error->message << std::endl;
