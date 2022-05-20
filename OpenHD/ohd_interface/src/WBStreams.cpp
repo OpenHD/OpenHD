@@ -102,6 +102,7 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   options.enableLogAlive= false;
   options.radio_port = radio_port;
   options.keypair = std::nullopt;
+  options.fec_percentage=20; // Default to 20% fec overhead
   const auto cards = m_broadcast_cards_names;
   assert(!cards.empty());
   options.wlan = cards.at(0);
