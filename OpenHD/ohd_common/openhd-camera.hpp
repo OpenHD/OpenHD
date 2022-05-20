@@ -24,7 +24,7 @@ typedef enum CameraType {
   // completely different way so we keep them separate
   CameraTypeUVCH264,
   CameraTypeIP, // IP camera that connects via ethernet and provides a video feet at special network address
-  CameraTypeDummy, // Dummy camera, is created fully in sw
+  CameraTypeDummy, // Dummy camera, is created fully in sw, for debugging purposes.
   CameraTypeUnknown
 } CameraType;
 static std::string camera_type_to_string(const CameraType &camera_type) {
@@ -36,6 +36,7 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
 	case CameraTypeUVC: return "uvc";
 	case CameraTypeUVCH264: return "uvch264";
 	case CameraTypeIP: return "ip";
+	case CameraTypeDummy:return "dummy";
 	default: return "unknown";
   }
 }
@@ -54,6 +55,8 @@ static CameraType string_to_camera_type(const std::string &camera_type) {
 	return CameraTypeUVCH264;
   } else if (OHDUtil::to_uppercase(camera_type).find(OHDUtil::to_uppercase("ip")) != std::string::npos) {
 	return CameraTypeIP;
+  }else if (OHDUtil::to_uppercase(camera_type).find(OHDUtil::to_uppercase("dummy")) != std::string::npos) {
+	return CameraTypeDummy;
   }
   return CameraTypeUnknown;
 }
