@@ -5,11 +5,13 @@
 #ifndef OPENHD_OHDGSTHELPER_H
 #define OPENHD_OHDGSTHELPER_H
 
-#include <gst/gst.h>
 #include "openhd-camera.hpp"
+
+#include <gst/gst.h>
+#include <fmt/format.h>
+
 #include <sstream>
 #include <string>
-#include <fmt/format.h>
 
 /**
  * Helper methods to create parts of gstreamer pipes.
