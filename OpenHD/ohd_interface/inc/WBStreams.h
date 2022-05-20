@@ -41,7 +41,7 @@ class WBStreams {
   const int m_mcs = 3;
   std::vector<std::string> m_broadcast_cards_names={};
  private:
-  // For telemetry, bidirectional in opposite drections
+  // For telemetry, bidirectional in opposite directions
   std::unique_ptr<UDPWBTransmitter> udpTelemetryTx;
   std::unique_ptr<UDPWBReceiver> udpTelemetryRx;
   // For video, on air there are only tx instances, on ground there are only rx instances.
