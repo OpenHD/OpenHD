@@ -10,6 +10,7 @@
 #include <thread>
 #include <chrono>
 #include <utility>
+#include <mutex>
 
 
 /**
@@ -44,7 +45,8 @@ class USBTetherListener{
   /**
    * @return the valid ip address of the connected USB tether device if there is one. Empty if there is currently no device deteced.
    */
-  [[nodiscard]] std::vector<std::string> getConnectedTetherIPs()const{
+  [[nodiscard]] std::vector<std::string> getConnectedTetherIPs(){
+	std::lock_guard<std::mutex> guard(device_ip_mutex);
 	if(device_ip.empty()){
 	  return {};
 	}
@@ -52,7 +54,14 @@ class USBTetherListener{
   }
  private:
   const IP_CALLBACK ip_callback;
+  // protects against simultaneous read/wrte of the device_ip variable.
+  std::mutex device_ip_mutex;
   std::string device_ip;
+  // write the device ip, protected by mutex.
+  void setDeviceIp(std::string newDeviceIp){
+	std::lock_guard<std::mutex> guard(device_ip_mutex);
+	device_ip=std::move(newDeviceIp);
+  }
   /**
    * @brief simple state-based method
    * 1) Wait until a tethering device is connected
@@ -78,7 +87,7 @@ class USBTetherListener{
 	// now we find the IP of the connected device so we can forward video usw to it
 	const auto ip_opt=OHDUtil::run_command_out("ip route show 0.0.0.0/0 dev usb0 | cut -d\\  -f3");
 	if(ip_opt!=std::nullopt){
-	  device_ip=ip_opt.value();
+	  setDeviceIp(ip_opt.value());
 	  std::cout<<"Found ip:["<<device_ip<<"]\n";
 	  if(ip_callback){
 		ip_callback(false,device_ip);
