@@ -72,6 +72,7 @@ static std::string createRpicamsrcStream(const std::string &bus, const int bitra
 
 /**
  * Create a encoded stream for the jetson, which is fully hardware accelerated for h264,h265 and mjpeg.
+ * @param sensor_id sensor id, set to -1 to let nvarguscamerasrc figure it out
  */
 static std::string createJetsonStream(const int sensor_id, const int bitrate, const VideoFormat videoFormat) {
   assert(videoFormat.videoCodec != VideoCodecUnknown);

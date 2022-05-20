@@ -97,9 +97,10 @@ void GStreamerStream::setup_raspberrypi_csi() {
 
 void GStreamerStream::setup_jetson_csi() {
   std::cout << "Setting up Jetson CSI camera" << std::endl;
-  // Well, i fixed the bug in the detection, was the v4l2_open.
+  // Well, i fixed the bug in the detection, with v4l2_open.
   // But still, /dev/video1 can be camera index 0 on jetson.
   // Therefore, for now, we just default to no camera index rn and let nvarguscamerasrc figure out the camera index.
+  // This will work as long as there is no more than 1 CSI camera.
   m_pipeline << OHDGstHelper::createJetsonStream(-1, m_camera.bitrateKBits, m_camera.userSelectedVideoFormat);
 }
 
