@@ -16,8 +16,8 @@ GStreamerStream::GStreamerStream(PlatformType platform,
 								 uint16_t video_udp_port)
 	: CameraStream(platform, camera, video_udp_port) {
   std::cout << "GStreamerStream::GStreamerStream()\n";
-  // rn the dummy camera doesn't support any custom resolution or framerate
-  // since it is sw, 640x48@30 might already be too much on embedded devices anyways.
+  // Since the dummy camera is SW, we generally cannot do more than 640x480@30 anyways.
+  // (640x48@30 might already be too much on embedded devices).
   if (camera.type == CameraTypeDummy) {
 	camera.userSelectedVideoFormat.width = 640;
 	camera.userSelectedVideoFormat.height = 480;
@@ -40,6 +40,8 @@ void GStreamerStream::setup() {
 	m_camera.bitrateKBits = 5000;
   }
   assert(m_camera.userSelectedVideoFormat.isValid());
+  m_pipeline.str("");
+  m_pipeline.clear();
   switch (m_camera.type) {
 	case CameraTypeRaspberryPiCSI: {
 	  setup_raspberrypi_csi();
