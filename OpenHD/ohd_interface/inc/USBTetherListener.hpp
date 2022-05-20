@@ -15,7 +15,7 @@
 /**
  * USB hotspot (USB Tethering).
  * This was created by translating the tether_functions.sh script from wifibroadcast-scripts into c++.
- * Configures and forwards the connect and disconnect event(s) for a USB tethering device.
+ * This class configures and forwards the connect and disconnect event(s) for a USB tethering device.
  * Only supports one USB tethering device connected at the same time.
  */
 class USBTetherListener{
@@ -79,7 +79,10 @@ class USBTetherListener{
 	const auto ip_opt=OHDUtil::run_command_out("ip route show 0.0.0.0/0 dev usb0 | cut -d\\  -f3");
 	if(ip_opt!=std::nullopt){
 	  device_ip=ip_opt.value();
-	  std::cout<<"Found ip:["<<ip<<"]\n";
+	  std::cout<<"Found ip:["<<device_ip<<"]\n";
+	  if(ip_callback){
+		ip_callback(false,device_ip);
+	  }
 	}else{
 	  std::cerr<<"USBHotspot find ip no success\n";
 	  return;
@@ -93,6 +96,10 @@ class USBTetherListener{
 		break;
 	  }
 	}
+	if(ip_callback){
+	  ip_callback(true,device_ip);
+	}
+	device_ip="";
   }
 };
 
