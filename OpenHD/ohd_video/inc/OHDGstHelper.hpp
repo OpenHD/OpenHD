@@ -35,14 +35,15 @@ static void initGstreamerOrThrow() {
 // and end with a OpenHD supported video codec (e.g. h264,h265 or mjpeg)
 // ------------- crateXXXStream begin -------------
 /**
- * Create a encoded dummy stream for the selected video format, that means a stream that encodes data coming from a videotestsrc
- * in either h264, h265 or mjpeg.
+ * Create a encoded dummy stream for the selected video format, that means a stream that takes raw data coming from a videotestsrc
+ * and encodes it in either h264, h265 or mjpeg.
  */
 static std::string createDummyStream(const VideoFormat videoFormat) {
   std::stringstream ss;
   ss << "videotestsrc ! ";
   // h265 cannot do NV12, but I420.
   // x264 and mjpeg can do both NV12 and I420
+  // so we use I420 here since every SW encoder can do it.
   ss << fmt::format("video/x-raw, format=I420,width={},height={},framerate={}/1 ! ",
 					videoFormat.width,
 					videoFormat.height,
