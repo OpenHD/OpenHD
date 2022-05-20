@@ -11,8 +11,8 @@
 #include <chrono>
 
 // USB hotspot (USB Tethering)
+// This was created by translating the tether_functions.sh script form wifibroadcast-scripts into c++.
 namespace USBHotspot{
-
 
 static void enable(){
   // in regular intervals, check if the devices becomes available - if yes, the user connected a ethernet hotspot device.
