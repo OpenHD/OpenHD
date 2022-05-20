@@ -26,7 +26,7 @@ jobs:
           
       - name: Install Dependencies
         run: |
-          sudo ./install_dep.sh
+          sudo ./install_dep_jetson.sh
 
       - name: Build with make
         run: |
