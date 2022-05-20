@@ -76,7 +76,13 @@ static std::string createRpicamsrcStream(const std::string &bus, const int bitra
 static std::string createJetsonStream(const int sensor_id, const int bitrate, const VideoFormat videoFormat) {
   assert(videoFormat.videoCodec != VideoCodecUnknown);
   std::stringstream ss;
-  ss << fmt::format("nvarguscamerasrc do-timestamp=true sensor-id={} ! ", sensor_id);
+  // possible to omit the sensor id, nvarguscamerasrc will then figure out the right sensor id.
+  // This only works with one csi camera though.
+  if(sensor_id==-1){
+	ss << fmt::format("nvarguscamerasrc do-timestamp=true sensor-id={} ! ", sensor_id);
+  }else{
+	ss << fmt::format("nvarguscamerasrc do-timestamp=true ! ");
+  }
   ss << fmt::format("video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! ",
 					videoFormat.width, videoFormat.height, videoFormat.framerate);
   if (videoFormat.videoCodec == VideoCodecH265) {

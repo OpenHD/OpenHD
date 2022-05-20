@@ -97,22 +97,10 @@ void GStreamerStream::setup_raspberrypi_csi() {
 
 void GStreamerStream::setup_jetson_csi() {
   std::cout << "Setting up Jetson CSI camera" << std::endl;
-  // Well, i fixed the bug in the detection, was the v4l2_open
-  auto endpoint = m_camera.endpoints.front();
-  int sensor_id = -1;
-  std::smatch result;
-  std::regex reg{"/dev/video([\\d])"};
-  if (std::regex_search(endpoint.device_node, result, reg)) {
-	if (result.size() == 2) {
-	  std::string s = result[1];
-	  sensor_id = std::stoi(s);
-	}
-  }
-  if (sensor_id == -1) {
-	std::cerr<<"Failed to determine Jetson CSI sensor ID,using 0 as default\n";
-	sensor_id=0;
-  }
-  m_pipeline << OHDGstHelper::createJetsonStream(sensor_id, m_camera.bitrateKBits, m_camera.userSelectedVideoFormat);
+  // Well, i fixed the bug in the detection, was the v4l2_open.
+  // But still, /dev/video1 can be camera index 0 on jetson.
+  // Therefore, for now, we just default to no camera index rn and let nvarguscamerasrc figure out the camera index.
+  m_pipeline << OHDGstHelper::createJetsonStream(-1, m_camera.bitrateKBits, m_camera.userSelectedVideoFormat);
 }
 
 void GStreamerStream::setup_usb_uvc() {
