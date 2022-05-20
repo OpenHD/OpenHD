@@ -178,7 +178,7 @@ void DWifiCards::process_card(const std::string &interface_name) {
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
 	  card.supports_injection = false;
-	  card.supports_hotspot = true; // Why the heck should intel not support wlan hotspot ?!
+	  card.supports_hotspot = true;
 	  break;
 	}
 	case WiFiCardTypeBroadcom: {
@@ -222,6 +222,11 @@ void DWifiCards::process_card(const std::string &interface_name) {
 	  card.supports_hotspot = true;
 	  break;
 	}
+  }
+  // rn we only support hotspot on the rpi integrated wifi adapter
+  card.supports_hotspot=false;
+  if(card.type==WiFiCardTypeBroadcom){
+	card.supports_hotspot= true;
   }
   std::stringstream message;
   message << "Detected wifi (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name << std::endl;
