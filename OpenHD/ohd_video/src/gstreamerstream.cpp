@@ -22,6 +22,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,
 	camera.userSelectedVideoFormat.width = 640;
 	camera.userSelectedVideoFormat.height = 480;
 	camera.userSelectedVideoFormat.framerate=30;
+	std::cout<<"Configured dummy for:"<<m_camera.userSelectedVideoFormat.toString()<<"\n";
   }
 }
 
