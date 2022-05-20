@@ -50,7 +50,7 @@ class DCameras : public OHD::IDiscoverable {
   /**
    * Something something stephen.
    */
-  static bool process_v4l2_node(const std::string &node, Camera &camera, CameraEndpoint &endpoint);
+  bool process_v4l2_node(const std::string &node, Camera &camera, CameraEndpoint &endpoint);
   /*
    * Detect all v4l2 cameras, that is cameras that show up as a v4l2 device (/dev/videoXX)
    */
