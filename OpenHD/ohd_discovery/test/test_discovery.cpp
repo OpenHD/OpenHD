@@ -1,7 +1,7 @@
 #include "OHDDiscovery.h"
 #include "openhd-settings.hpp"
 #include "openhd-camera.hpp"
-#include "tests.hpp"
+#include "openhd-common-tests.hpp"
 
 #include <iostream>
 
