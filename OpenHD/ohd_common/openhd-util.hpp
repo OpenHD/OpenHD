@@ -56,7 +56,7 @@ static std::optional<std::string> run_command_out(const char* command){
   std::array<char, 512> buffer{};
   std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command, "r"), pclose);
   if (!pipe) {
-	std::cout << "Cameras::detect_raspberrypi_csi() no pipe from vcgencmd" << std::endl;
+	std::cout << "Cannot open pipe in run_command_out:"<<command<<"\n";
 	return std::nullopt;
   }
   while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
