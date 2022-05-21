@@ -41,80 +41,29 @@ class USBTetherListener{
    * Continuously checks for connected or disconnected USB tether devices.
    * Does not return as long as there is no fatal error, and blocks the calling thread.
    */
-  [[noreturn]] void loopInfinite(){
-	while (true){
-	  connectOnce();
-	}
-  }
+  [[noreturn]] void loopInfinite();
   /**
+   * Can be called safely from any thread.
    * @return the valid ip address of the connected USB tether device if there is one. Empty if there is currently no device deteced.
    */
-  [[nodiscard]] std::vector<std::string> getConnectedTetherIPs(){
-	std::lock_guard<std::mutex> guard(device_ip_mutex);
-	if(device_ip.empty()){
-	  return {};
-	}
-	return std::vector<std::string>{device_ip};
-  }
+  [[nodiscard]] std::vector<std::string> getConnectedTetherIPsLocked();
  private:
   const IP_CALLBACK ip_callback;
-  // protects against simultaneous read/wrte of the device_ip variable.
+  // protects against simultaneous read/write of the device_ip variable.
   std::mutex device_ip_mutex;
   std::string device_ip;
   // write the device ip, protected by mutex.
-  void setDeviceIp(std::string newDeviceIp){
-	std::lock_guard<std::mutex> guard(device_ip_mutex);
-	device_ip=std::move(newDeviceIp);
-  }
+  void setDeviceIpLocked(std::string newDeviceIp);
   /**
-   * @brief simple state-based method
+   * @brief simple state-based method that performs the following sequential steps:
    * 1) Wait until a tethering device is connected
-   * 2) Configure and forward the IP address of the connected device
+   * 2) Configure the connected device
+   * -> if success, forward the IP address of the connected device.
    * 3) Wait until the device disconnects
    * 4) forward the now disconnected IP address.
    * Nr. 3) might never become true during run time as long as the user does not disconnect his tethering device.
    */
-  void connectOnce(){
-	const char* connectedDevice="/sys/class/net/usb0";
-	// in regular intervals, check if the devices becomes available - if yes, the user connected a ethernet hotspot device.
-	while (true){
-	  std::this_thread::sleep_for(std::chrono::seconds(1));
-	  std::cout<<"Checking for USB tethering device\n";
-	  if(OHDFilesystemUtil::exists(connectedDevice)) {
-		std::cout << "Found USB tethering device\n";
-		break;
-	  }
-	}
-	// Configure the detected USB tether device (not sure if needed)
-	OHDUtil::run_command("dhclient",{"usb0"});
-
-	// now we find the IP of the connected device so we can forward video usw to it
-	const auto ip_opt=OHDUtil::run_command_out("ip route show 0.0.0.0/0 dev usb0 | cut -d\\  -f3");
-	if(ip_opt!=std::nullopt){
-	  const auto ip=ip_opt.value();
-	  setDeviceIp(ip);
-	  std::cout<<"Found ip:["<<device_ip<<"]\n";
-	  if(ip_callback){
-		ip_callback(false,device_ip);
-	  }
-	}else{
-	  std::cerr<<"USBHotspot find ip no success\n";
-	  return;
-	}
-	// check in regular intervals if the tethering device disconnects.
-	while (true){
-	  std::this_thread::sleep_for(std::chrono::seconds(1));
-	  std::cout<<"Checking if USB tethering device disconnected\n";
-	  if(!OHDFilesystemUtil::exists(connectedDevice)){
-		std::cout<<"USB Tether device disconnected\n";
-		break;
-	  }
-	}
-	if(ip_callback){
-	  ip_callback(true,device_ip);
-	}
-	device_ip="";
-  }
+  void connectOnce();
 };
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_INC_USBHOTSPOT_H_
