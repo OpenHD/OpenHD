@@ -24,10 +24,9 @@
 
 #include "DCameras.h"
 
-DCameras::DCameras(PlatformType platform_type, BoardType board_type, CarrierType carrier_type) :
+DCameras::DCameras(PlatformType platform_type, BoardType board_type) :
 	m_platform_type(platform_type),
-	m_board_type(board_type),
-	m_carrier_type(carrier_type) {}
+	m_board_type(board_type){}
 
 void DCameras::discover() {
   std::cout << "Cameras::discover()" << std::endl;

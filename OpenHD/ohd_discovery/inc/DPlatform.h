@@ -30,10 +30,6 @@ class DPlatform : public OHD::IDiscoverable {
   BoardType board_type() {
 	return m_board_type;
   }
-
-  CarrierType carrier_type() {
-	return m_carrier_type;
-  }
  private:
   void detect_raspberrypi();
   void detect_jetson();
@@ -42,7 +38,6 @@ class DPlatform : public OHD::IDiscoverable {
   //OHDPlatform ohdPlatform;
   PlatformType m_platform_type = PlatformTypeUnknown;
   BoardType m_board_type = BoardTypeUnknown;
-  CarrierType m_carrier_type = CarrierTypeNone;
 };
 
 #endif

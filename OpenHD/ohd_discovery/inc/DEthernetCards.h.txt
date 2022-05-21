@@ -18,7 +18,7 @@
  */
 class DEthernetCards : public OHD::IDiscoverable{
 public:
-    DEthernetCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type);
+    DEthernetCards(PlatformType platform_type, BoardType board_type);
     virtual ~DEthernetCards() = default;
     void discover();
     void process_card(const std::string& interface_name);
@@ -28,7 +28,6 @@ private:
     std::vector<EthernetCard> m_ethernet_cards;
     const PlatformType m_platform_type;
     const BoardType m_board_type;
-    const CarrierType m_carrier_type;
 };
 
 #endif

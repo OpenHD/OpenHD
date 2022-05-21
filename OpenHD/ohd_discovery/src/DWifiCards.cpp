@@ -27,10 +27,9 @@ extern "C" {
 #include "nl.h"
 }
 
-DWifiCards::DWifiCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type) :
+DWifiCards::DWifiCards(PlatformType platform_type, BoardType board_type) :
 	m_platform_type(platform_type),
-	m_board_type(board_type),
-	m_carrier_type(carrier_type) {}
+	m_board_type(board_type) {}
 
 void DWifiCards::discover() {
   std::cout << "WiFi::discover()\n";

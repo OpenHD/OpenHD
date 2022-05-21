@@ -127,40 +127,11 @@ inline BoardType board_type_from_string(const std::string& s){
   }
 }
 
-typedef enum CarrierType {
-  CarrierTypeStereoPi,
-  CarrierTypeComputeModuleIO,
-  CarrierTypeJetsonNanoDevkit,
-  CarrierTypeJetsonNCB00,
-  CarrierTypeNone
-} CarrierType;
-inline std::string carrier_type_to_string(CarrierType carrier_type) {
-  switch (carrier_type) {
-	case CarrierTypeStereoPi: {
-	  return "stereopi";
-	}
-	case CarrierTypeComputeModuleIO: {
-	  return "computemoduleio";
-	}
-	case CarrierTypeJetsonNanoDevkit: {
-	  return "jetson-nano-devkit";
-	}
-	case CarrierTypeJetsonNCB00: {
-	  return "jetson-ncb00";
-	}
-	default: {
-	  return "none";
-	}
-  }
-}
-
 // All these members must not change during run time once they have been discovered !
 struct OHDPlatform {
   PlatformType platform_type = PlatformTypeUnknown;
   BoardType board_type = BoardTypeUnknown;
-  CarrierType carrier_type = CarrierTypeNone;
 };
-
 
 // Writes the detected platform data to a json.
 // This can be used for debugging, mostly a microservices artifact.
@@ -168,7 +139,6 @@ static nlohmann::json platform_to_json(const OHDPlatform &ohdPlatform) {
   nlohmann::ordered_json j;
   j["platform"] = platform_type_to_string(ohdPlatform.platform_type);
   j["board"] = board_type_to_string(ohdPlatform.board_type);
-  j["carrier"] = carrier_type_to_string(ohdPlatform.carrier_type);
   return j;
 }
 
@@ -189,10 +159,7 @@ static OHDPlatform platform_from_manifest() {
 	nlohmann::json j;
 	f >> j;
 	ohdPlatform.platform_type = string_to_platform_type(j["platform"]);
-	// TODO the to string for board and carrier type are still missing.
-	ohdPlatform.carrier_type = CarrierTypeNone;
 	ohdPlatform.board_type= board_type_from_string(j["board"]);
-	//ohdPlatform.carrier_type=j["carrier"];
   } catch (std::exception &ex) {
 	std::cerr << "Platform manifest processing failed: " << ex.what() << std::endl;
 	ohd_log(STATUS_LEVEL_EMERGENCY, "Platform manifest processing failed");
