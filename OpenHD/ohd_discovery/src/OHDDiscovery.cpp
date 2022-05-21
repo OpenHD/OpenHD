@@ -23,11 +23,11 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir) {
 	platform.discover();
 	platform.write_manifest();
 
-	DCameras cameras(platform.platform_type(), platform.board_type(), platform.carrier_type());
+	DCameras cameras(platform.platform_type(), platform.board_type());
 	cameras.discover();
 	cameras.write_manifest();
 
-	DWifiCards wifi(platform.platform_type(), platform.board_type(), platform.carrier_type());
+	DWifiCards wifi(platform.platform_type(), platform.board_type());
 	wifi.discover();
 	wifi.write_manifest();
 
