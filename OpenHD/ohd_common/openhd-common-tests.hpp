@@ -36,9 +36,14 @@ static void test_execute_commands(){
   }
   // Here we get the actual output in the shell, which should be 1
   auto res2=OHDUtil::run_command_out("echo 1");
-  std::cout << "Res2 is:[" << res2 << "]\n";
+  std::cout << "Res2 is:[" << res2.value() << "]\n";
   if(res2!="1\n"){
 	throw std::runtime_error("run_command_out return does not match expected\n");
+  }
+  auto res3=OHDUtil::run_command_out("rambazambathiscommanddoesnotexist");
+  if(res3!=std::nullopt){
+	std::cerr<<"res3 is:["<<res3.value()<<"]\n";
+	//throw std::runtime_error("run_command_out an unknown command should return command not found\n");
   }
 }
 

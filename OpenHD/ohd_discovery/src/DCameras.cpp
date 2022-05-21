@@ -51,11 +51,11 @@ void DCameras::discover() {
 void DCameras::detect_raspberrypi_csi() {
   std::cout << "Cameras::detect_raspberrypi_csi()" << std::endl;
   const auto vcgencmd_result=OHDUtil::run_command_out("vcgencmd get_camera");
-  if(!OHDUtil::commandFound(vcgencmd_result)){
+  if(vcgencmd_result==std::nullopt){
 	std::cout << "Cameras::detect_raspberrypi_csi() vcgencmd not found" << std::endl;
 	return;
   }
-  const auto raw_value=vcgencmd_result;
+  const auto raw_value=vcgencmd_result.value();
   std::smatch result;
   // example "supported=2 detected=2"
   const std::regex r{R"(supported=([\d]+)\s+detected=([\d]+))"};
@@ -111,11 +111,12 @@ void DCameras::probe_v4l2_device(const std::string &device) {
   std::stringstream command;
   command << "udevadm info ";
   command << device.c_str();
-  const auto udev_info=OHDUtil::run_command_out(command.str().c_str());
-  if(!OHDUtil::commandFound(udev_info)){
+  const auto udev_info_opt=OHDUtil::run_command_out(command.str().c_str());
+  if(udev_info_opt==std::nullopt){
 	std::cerr<<"udev_info no result\n";
 	return;
   }
+  const auto udev_info=udev_info_opt.value();
   Camera camera;
   // check for device name
   std::smatch model_result;

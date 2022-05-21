@@ -91,7 +91,12 @@ void DPlatform::detect_jetson() {
 }
 
 void DPlatform::detect_pc() {
-  const auto arch=OHDUtil::run_command_out("arch");
+  const auto arch_opt=OHDUtil::run_command_out("arch");
+  if(arch_opt==std::nullopt){
+	std::cerr<<"Arch not found\n";
+	return;
+  }
+  const auto arch=arch_opt.value();
   std::smatch result;
   std::regex r1{"x86_64"};
   auto res1 = std::regex_search(arch, result, r1);
