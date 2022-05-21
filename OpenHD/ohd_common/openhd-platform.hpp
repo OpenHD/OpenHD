@@ -129,7 +129,9 @@ inline BoardType board_type_from_string(const std::string& s){
 
 // All these members must not change during run time once they have been discovered !
 struct OHDPlatform {
+  // The platform we are running on, for example rpi, jetson
   PlatformType platform_type = PlatformTypeUnknown;
+  // The board type we are running on, for example rpi 3B+
   BoardType board_type = BoardTypeUnknown;
 };
 
