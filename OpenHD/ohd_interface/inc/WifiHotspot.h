@@ -41,6 +41,7 @@ class WifiHotspot {
   // In this case the apropriate callbacks have to be called.
   std::vector<std::string> connectedClientsIps;
   WiFiCard wifiCard;
+  std::string m_hostapd_config_file_content;
 };
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_
