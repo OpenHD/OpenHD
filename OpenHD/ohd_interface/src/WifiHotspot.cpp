@@ -10,10 +10,10 @@
  * Create the content of a hostapd configuration file for wifi access point.
  * @return the content of the file, should be written somewhere for hostapd.
  */
-static std::string createHostapdConfigFile(){
+static std::string createHostapdConfigFile(const std::string& interface_name){
   std::stringstream ss;
   // the interface used by the AP
-  ss<<"interface=wlx244bfeb71c05\n";
+  ss<<"interface="<<interface_name<<"\n";
   // set this to "a" for 5Ghz, to "g" for 2.4Ghz
   ss<<"hw_mode=a\n";
   // Channels 1-13 for 2.4Ghz, Channels 36,40,44,48,52,56,60,64 for 5Ghz
@@ -119,8 +119,9 @@ wifiCard(std::move(wifiCard)) {
 }
 
 void WifiHotspot::start() {
+  std::cout<<"Starting WIFI hotspot on card:"<<wifiCard.interface_name<<"\n";
   // first, we create the content for the config file
-  m_hostapd_config_file_content=createHostapdConfigFile();
+  m_hostapd_config_file_content=createHostapdConfigFile(wifiCard.interface_name);
   // then we write it out to /tmp
   std::ofstream _config("/tmp/hostapd.conf");
   _config << m_hostapd_config_file_content;
@@ -128,6 +129,7 @@ void WifiHotspot::start() {
   // disable hostapd if it is running
   OHDUtil::run_command("systemctl",{"disable hostapd"});
   // then start hostapd with the created config file. Now the wifi AP is running.
+  // -B means run in the background.
   OHDUtil::run_command("hostapd",{"-B -d /tmp/hostapd.conf"});
 }
 
