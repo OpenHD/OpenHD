@@ -3,6 +3,8 @@
 //
 
 #include "WifiHotspot.h"
+#include <thread>
+#include <csignal>
 
 int main(int argc, char *argv[]) {
 
@@ -14,7 +16,15 @@ int main(int argc, char *argv[]) {
 
   WifiHotspot wifiHotspot{wifiCard};
   wifiHotspot.start();
-
+  std::cout<<"Wifi hotspot started\n";
+  static bool quit=false;
+  signal(SIGTERM, [](int sig){ quit= true;});
+  while (!quit){
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::cout<<"X\n";
+  }
+  std::cout<<"test end\n";
+  wifiHotspot.stop();
   return 0;
 
 }
