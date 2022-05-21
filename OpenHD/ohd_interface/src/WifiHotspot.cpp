@@ -37,7 +37,7 @@ static std::string createHostapdConfigFile(){
 
   // Now this stuff comes from someone (from the apconfig.txt in the old releases),
   // I think they are optimizations for our specific use case. They are completely optional though.
-  ss<<"# Optimizations begin -----------------------\n";
+  /*ss<<"# Optimizations begin -----------------------\n";
   ss<<"supported_rates=240 360\n"
 	  "basic_rates=240 360\n"
 	  "\n"
@@ -109,7 +109,7 @@ static std::string createHostapdConfigFile(){
 	  "wmm_ac_vo_txop_limit=47\n"
 	  "wmm_ac_vo_acm=0\n"
 	  "# Note: for IEEE 802.11b mode: cWmin=3 cWmax=4 burst=102\n";
-  ss<<"# Optimizations end -----------------------\n";
+  ss<<"# Optimizations end -----------------------\n";*/
   return ss.str();
 }
 
