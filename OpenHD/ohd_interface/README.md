@@ -1,5 +1,5 @@
 This module is responsible for starting and configuring all the OpenHD
-interfaces - aka all the OpenHD links like wifibroadcast, hotspot, ethernet, ...
+interfaces - aka all OpenHD links like wifibroadcast (between aur and ground), ground hotspot, ...
 
 It has to be started after the discovery step.
 
@@ -9,4 +9,4 @@ It has to be started after the discovery step.
    -> NOTE: Video only goes from air pi to ground pi, so we need 2 tx instances on air pi and 2 rx instances on ground
    pi
 
-look at the code to find out the ports usw, they should come from openhd-constants
+look at the code to find out the ports usw, they should come from openhd-constants.hpp
