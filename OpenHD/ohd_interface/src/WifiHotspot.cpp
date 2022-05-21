@@ -35,8 +35,9 @@ static std::string createHostapdConfigFile(){
   ss<<"wpa_passphrase=wifiopenhd\n";
   ss<<"\n";
 
-  // Now this stuff comes from someone, I think they are optimizations for our specific use case.
-  ss<<"# Optimizations begin\n";
+  // Now this stuff comes from someone (from the apconfig.txt in the old releases),
+  // I think they are optimizations for our specific use case. They are completely optional though.
+  ss<<"# Optimizations begin -----------------------\n";
   ss<<"supported_rates=240 360\n"
 	  "basic_rates=240 360\n"
 	  "\n"
@@ -107,8 +108,8 @@ static std::string createHostapdConfigFile(){
 	  "wmm_ac_vo_cwmax=3\n"
 	  "wmm_ac_vo_txop_limit=47\n"
 	  "wmm_ac_vo_acm=0\n"
-	  "# Note: for IEEE 802.11b mode: cWmin=3 cWmax=4 burst=102";
-  ss<<"# Optimizations end\n";
+	  "# Note: for IEEE 802.11b mode: cWmin=3 cWmax=4 burst=102\n";
+  ss<<"# Optimizations end -----------------------\n";
   return ss.str();
 }
 
@@ -118,12 +119,13 @@ wifiCard(std::move(wifiCard)) {
 }
 
 void WifiHotspot::start() {
+  // first, we create the content for the config file
   m_hostapd_config_file_content=createHostapdConfigFile();
-  // write it to a file
+  // then we write it out to /tmp
   std::ofstream _config("/tmp/hostapd.conf");
   _config << m_hostapd_config_file_content;
   _config.close();
-  // start hostapd with the created config file
+  // and start hostapd with the created config file.
   OHDUtil::run_command("hostapd",{"-B -d /tmp/hostapd.conf"});
 }
 
