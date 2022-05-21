@@ -43,7 +43,7 @@ target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})
 target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
 target_link_libraries(OHDVideoLib PUBLIC ${GST_LIBRARIES})
 
-# Executable for testing manually, note that this one needs generated jsons
+# Executables for testing manually, note that some might need to run after discovery
 add_executable(test_video test/test_video.cpp)
 target_link_libraries(test_video OHDVideoLib)
 add_executable(test_dummy_gstreamer test/test_dummy_gstreamer.cpp)
