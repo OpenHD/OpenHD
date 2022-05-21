@@ -14,6 +14,7 @@ SET(ALL_INTERFACE_SOURCE_FILES
         #src/EthernetCards.cpp
         src/WBStreams.cpp
         src/WifiHotspot.cpp
+        src/USBTetherListener.cpp
         src/OHDInterface.cpp)
 
 add_library(OHDInterfaceLib

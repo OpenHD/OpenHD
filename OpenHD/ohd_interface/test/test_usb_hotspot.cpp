@@ -1,7 +1,7 @@
 //
 // Created by consti10 on 20.05.22.
 //
-#include "USBTetherListener.hpp"
+#include "USBTetherListener.h"
 
 int main(int argc, char *argv[]) {
 
