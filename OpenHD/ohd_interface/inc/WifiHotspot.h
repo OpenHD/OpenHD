@@ -13,28 +13,22 @@
  * Wifi hotspot refers to creating a WiFi Access point on the device we are running on.
  * External clients like QOpenHD running on a tablet can then connect to the hotspot.
  * Note that video and telemetry has to be forwarded to clients connected to the wifi hotspot.
- * For that, there is a callback to register by OHDInterface.
+ * For that, you can register a callback here.
  */
-
 class WifiHotspot {
  public:
   /**
-   *
+   * Utility for starting, stopping WIFI AP (Hotspot) and forwarding the client connect/disconnect events.
    */
   explicit WifiHotspot(WiFiCard wifiCard);
-
   /**
    * initialize and start the hotspot.
    */
   void start();
-
   /**
    * stop,de-init and cleanup hotspot.
    */
   void stop();
-
-  static void setupWifiHotspot(WiFiCard& wifiCard);
-
  private:
   // Ip addresses of all connected clients.
   // A client might dynamically connect or disconnect from the AP at run time,
