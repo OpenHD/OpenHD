@@ -8,4 +8,5 @@ int main(int argc, char *argv[]) {
   USBTetherListener usb_tether_listener{nullptr};
   usb_tether_listener.loopInfinite();
 
+  return 0;
 }

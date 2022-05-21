@@ -47,3 +47,6 @@ target_link_libraries(test_common_util OHDInterfaceLib)
 
 add_executable(test_usb_hotspot test/test_usb_hotspot.cpp)
 target_link_libraries(test_usb_hotspot OHDInterfaceLib)
+
+add_executable(test_wifi_hotspot test/test_wifi_hotspot.cpp)
+target_link_libraries(test_wifi_hotspot OHDInterfaceLib)
