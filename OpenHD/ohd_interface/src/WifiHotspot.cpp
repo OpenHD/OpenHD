@@ -125,10 +125,12 @@ void WifiHotspot::start() {
   std::ofstream _config("/tmp/hostapd.conf");
   _config << m_hostapd_config_file_content;
   _config.close();
-  // and start hostapd with the created config file.
+  // disable hostapd if it is running
+  OHDUtil::run_command("systemctl",{"disable hostapd"});
+  // then start hostapd with the created config file. Now the wifi AP is running.
   OHDUtil::run_command("hostapd",{"-B -d /tmp/hostapd.conf"});
 }
 
 void WifiHotspot::stop() {
-
+  OHDUtil::run_command("systemctl",{"disable hostapd"});
 }
