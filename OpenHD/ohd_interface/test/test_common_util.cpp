@@ -3,7 +3,6 @@
 //
 // Should be placed under ohd_common, test the execute command for weird locale issue
 
-#include "openhd-util.hpp"
 #include "openhd-common-tests.hpp"
 
 int main(int argc, char *argv[]) {
