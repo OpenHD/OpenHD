@@ -13,5 +13,8 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
             curl \
             ruby-dev \
             python3-pip \
-            libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
+            libnl-3-dev libnl-genl-3-dev \
+            libnl-route-3-dev || exit 1
+
+
 gem install fpm
