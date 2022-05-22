@@ -1,7 +1,7 @@
 #include "OHDDiscovery.h"
 #include "openhd-settings.hpp"
 #include "openhd-camera.hpp"
-#include "tests.hpp"
+#include "openhd-common-tests.hpp"
 
 #include <iostream>
 
@@ -10,17 +10,11 @@
  */
 int main(int argc, char *argv[]) {
 
-    OHDCommonTests::test_video_format_regex();
+  const auto id1 = getOrCreateUnitId();
+  const auto id2 = getOrCreateUnitId();
+  assert(id1 == id2);
 
-    generateSettingsDirectoryIfNonExists();
-    const auto id1=getOrCreateUnitId();
-    const auto id2=getOrCreateUnitId();
-    assert(id1==id2);
+  OHDDiscovery::runOnceOnStartup(false);
 
-    // putting it here, since where else
-
-
-    OHDDiscovery::runOnceOnStartup(false);
-
-    return 0;
+  return 0;
 }

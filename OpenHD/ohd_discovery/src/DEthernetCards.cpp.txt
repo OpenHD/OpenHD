@@ -31,10 +31,9 @@ extern "C" {
 }
 
 
-DEthernetCards::DEthernetCards(PlatformType platform_type, BoardType board_type, CarrierType carrier_type) :
+DEthernetCards::DEthernetCards(PlatformType platform_type, BoardType board_type) :
     m_platform_type(platform_type),
-    m_board_type(board_type),
-    m_carrier_type(carrier_type){}
+    m_board_type(board_type){}
 
 
 void DEthernetCards::discover() {

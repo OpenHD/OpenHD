@@ -25,7 +25,7 @@ pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
         gstreamer-video-1.0>=1.4
         gstreamer-app-1.0>=1.4)
 # FUCKING GSTREAMER !! end
-find_package(fmt)
+find_package(fmt REQUIRED)
 SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} fmt::fmt)
 
 SET(ALL_VIDEO_SOURCE_FILES
@@ -43,7 +43,7 @@ target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})
 target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
 target_link_libraries(OHDVideoLib PUBLIC ${GST_LIBRARIES})
 
-# Executable for testing manually, note that this one needs generated jsons
+# Executables for testing manually, note that some might need to run after discovery
 add_executable(test_video test/test_video.cpp)
 target_link_libraries(test_video OHDVideoLib)
 add_executable(test_dummy_gstreamer test/test_dummy_gstreamer.cpp)

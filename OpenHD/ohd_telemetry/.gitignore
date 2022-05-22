@@ -11,5 +11,5 @@ CTestTestfile.cmake
 _deps
 
 .idea
-cmake-build-debug
+cmake-build-createDebug
 build

@@ -38,16 +38,17 @@ target_link_libraries(OHDDiscoveryLib PRIVATE Boost::filesystem)
 
 # find and include all the other libs
 include(cmake/FindLibNL.cmake)
-target_include_directories(OHDDiscoveryLib PUBLIC ${LibNL_INCLUDE_DIR})
-target_link_libraries(OHDDiscoveryLib PUBLIC ${LibNL_LIBRARIES})
+#find_package(LibNL REQUIRED)
+target_include_directories(OHDDiscoveryLib PRIVATE ${LibNL_INCLUDE_DIR})
+target_link_libraries(OHDDiscoveryLib PRIVATE ${LibNL_LIBRARIES})
 #
 include(cmake/FindLibUSB.cmake)
-target_include_directories(OHDDiscoveryLib PUBLIC ${LIBUSB_1_INCLUDE_DIRS})
-target_link_libraries(OHDDiscoveryLib PUBLIC ${LIBUSB_1_LIBRARIES})
+target_include_directories(OHDDiscoveryLib PRIVATE ${LIBUSB_1_INCLUDE_DIRS})
+target_link_libraries(OHDDiscoveryLib PRIVATE ${LIBUSB_1_LIBRARIES})
 #
 include(cmake/FindV4L2.cmake)
-target_include_directories(OHDDiscoveryLib PUBLIC ${V4L2_INCLUDE_DIR})
-target_link_libraries(OHDDiscoveryLib PUBLIC ${V4L2_LIBRARY})
+target_include_directories(OHDDiscoveryLib PRIVATE ${V4L2_INCLUDE_DIR})
+target_link_libraries(OHDDiscoveryLib PRIVATE ${V4L2_LIBRARY})
 
 # Test the discovery step on its own
 add_executable(test_discovery test/test_discovery.cpp)

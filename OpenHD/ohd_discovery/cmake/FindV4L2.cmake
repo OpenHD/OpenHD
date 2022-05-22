@@ -19,41 +19,41 @@
 #
 #=============================================================================
 
-SET (V4L2_FOUND 0)
+SET(V4L2_FOUND 0)
 
-FIND_PATH (V4L2_INCLUDE_DIR
+FIND_PATH(V4L2_INCLUDE_DIR
         NAMES libv4l2.h libv4lconvert.h
         PATH_SUFFIXES v4l2 video4linux
         DOC "The Video4Linux Version 2 (v4l2) include directory"
         )
 
-FIND_PATH (_videodev2
+FIND_PATH(_videodev2
         NAMES videodev2.h
         PATH_SUFFIXES linux
         DOC "Video for Linux Two header file include directory"
         )
 
-FIND_LIBRARY (V4L2_LIBRARY
+FIND_LIBRARY(V4L2_LIBRARY
         NAMES v4l2 v4lconvert
         DOC "The Video4Linux Version 2 (v4l2) library"
         )
 
 # handle the QUIETLY and REQUIRED arguments and set V4L2_FOUND to TRUE if all listed variables are TRUE
-INCLUDE (FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS (V4L2 DEFAULT_MSG V4L2_LIBRARY V4L2_INCLUDE_DIR)
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(V4L2 DEFAULT_MSG V4L2_LIBRARY V4L2_INCLUDE_DIR)
 
 IF (V4L2_FOUND)
-    SET (V4L2_LIBRARIES ${V4L2_LIBRARY})
-    SET (V4L2_INCLUDE_DIRS ${V4L2_INCLUDE_DIR})
+    SET(V4L2_LIBRARIES ${V4L2_LIBRARY})
+    SET(V4L2_INCLUDE_DIRS ${V4L2_INCLUDE_DIR})
 ELSE (V4L2_FOUND)
-    MESSAGE (WARNING "libv4l2 or libv4lconvert libraries from http://linuxtv.org not found!")
+    MESSAGE(WARNING "libv4l2 or libv4lconvert libraries from http://linuxtv.org not found!")
 ENDIF (V4L2_FOUND)
 
 IF (NOT _videodev2)
-    MESSAGE (WARNING "videodev2.h kernel header not found!")
-    SET (V4L2_FOUND 0)
-ENDIF(NOT _videodev2)
+    MESSAGE(WARNING "videodev2.h kernel header not found!")
+    SET(V4L2_FOUND 0)
+ENDIF (NOT _videodev2)
 
-MARK_AS_ADVANCED (V4L2_INCLUDE_DIR V4L2_LIBRARY)
+MARK_AS_ADVANCED(V4L2_INCLUDE_DIR V4L2_LIBRARY)
 
 ##EOF

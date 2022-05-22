@@ -10,10 +10,9 @@
 //TODO
 // rpi might need libcamera
 
-class LibcameraStream: public CameraStream{
-public:
+class LibcameraStream : public CameraStream {
+ public:
 
 };
-
 
 #endif //OPENHD_LIBCAMERASTREAM_H

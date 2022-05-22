@@ -3,11 +3,12 @@
 //
 // Should be placed under ohd_common, test the execute command for weird locale issue
 
-#include "openhd-util.hpp"
+#include "openhd-common-tests.hpp"
 
 int main(int argc, char *argv[]) {
 
-    auto res=run_command("echo",{"1"});
-    std::cout<<"Res is:"<<res<<"\n";
+  OHDCommonTests::test_execute_commands();
+
+  OHDCommonTests::test_video_format_regex();
 }
 

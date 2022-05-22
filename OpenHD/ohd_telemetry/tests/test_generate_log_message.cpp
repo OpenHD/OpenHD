@@ -6,5 +6,5 @@
 #include "openhd-log.hpp"
 
 int main() {
-    ohd_log(STATUS_LEVEL_EMERGENCY,"Test log message\n");
+  ohd_log(STATUS_LEVEL_EMERGENCY, "Test log message\n");
 }
