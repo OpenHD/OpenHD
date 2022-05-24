@@ -31,8 +31,9 @@ void GStreamerStream::setup() {
   OHDGstHelper::initGstreamerOrThrow();
   std::cout << "Creating GStreamer pipeline" << std::endl;
   // sanity checks
-  if (m_camera.bitrateKBits <= 100 || m_camera.bitrateKBits > (1024 * 1024 * 50)) {
-	m_camera.bitrateKBits = 5000;
+  if(!check_bitrate_sane(m_camera.bitrateKBits)){
+	std::cerr<<"manually fixing insane camera bitrate"<<m_camera.bitrateKBits<<"\n";
+	m_camera.bitrateKBits=DEFAULT_BITRATE_KBITS;
   }
   assert(m_camera.userSelectedVideoFormat.isValid());
   m_pipeline.str("");
