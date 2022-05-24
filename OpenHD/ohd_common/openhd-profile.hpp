@@ -11,14 +11,14 @@
 #include "openhd-log.hpp"
 
 /**
- * The profile is created on startup and then NEVER CHANGES !.
+ * The profile is created on startup and then doesn't change during run time.
  * Note that while the unit id never changes between successive re-boots of OpenHD,
  * the is_air variable might change (aka a ground pi might become an air pi when the user switches things around, or opposite).
  */
 struct OHDProfile {
   // Weather we run on an air or ground "pi" (air or ground system).
-  // R.n this is determined by weather there is at least one camera connected to the system
-  // TODO or if there is a file air.txt, for debugging.
+  // R.n this is determined by checking if there is at least one camera connected to the system
+  // or by using the force_air (development) variable.
   bool is_air = false;
   // The unique id of this system, it is created once then never changed again.
   std::string unit_id = "0";
@@ -40,8 +40,6 @@ static void write_profile_manifest(const OHDProfile &ohdProfile) {
   _t.close();
 }
 
-// The to/from json are mostly a microservices artifact.
-// NOTE: It is only safe to call this method after the discovery step.
 static OHDProfile profile_from_manifest() {
   try {
 	std::ifstream f(PROFILE_MANIFEST_FILENAME);
@@ -52,9 +50,10 @@ static OHDProfile profile_from_manifest() {
 	profile.unit_id = j["unit-id"];
 	return profile;
   } catch (std::exception &ex) {
-	std::cerr << "Profile manifest processing failed: " << ex.what() << std::endl;
-	ohd_log(STATUS_LEVEL_EMERGENCY, "Profile manifest processing failed");
-	exit(1);
+	std::stringstream ss;
+	ss<< "Profile manifest processing failed: " << ex.what() << std::endl;
+	std::cerr<<ss.str();
+	throw std::runtime_error(ss.str());
   }
 }
 
