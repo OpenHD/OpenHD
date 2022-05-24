@@ -1,13 +1,13 @@
 #ifndef OPENHD_STATUS_H
 #define OPENHD_STATUS_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstdint>
+#include <cstring>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
