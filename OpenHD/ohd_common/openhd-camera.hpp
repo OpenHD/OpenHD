@@ -17,7 +17,7 @@ typedef enum CameraType {
   CameraTypeRaspberryPiVEYE,
   CameraTypeJetsonCSI, //Any CSI camera on jetson
   CameraTypeRockchipCSI, //Any CSI camera on rockchip
-  // I think this is a 44l2 camera so to say, too.
+  // I think this is a V4l2 camera so to say, too.
   CameraTypeUVC,
   // this is not just a UVC camera that happens to support h264, it's the standard UVC H264 that only a few cameras
   // support, like the older models of the Logitech C920. Other UVC cameras may support h264, but they do it in a
