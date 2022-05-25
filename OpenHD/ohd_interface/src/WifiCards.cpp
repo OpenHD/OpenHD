@@ -46,7 +46,6 @@ void WifiCards::configure() {
   for (const auto &card: m_wifi_cards) {
 	setup_card(card);
   }
-
 }
 
 void WifiCards::process_manifest() {
