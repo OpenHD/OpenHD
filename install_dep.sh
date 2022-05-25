@@ -1,20 +1,9 @@
 #!/usr/bin/env bash
 
-# Install all the dependencies needed to build OpenHD from source.
-# TODO do we need libgstreamer1.0-dev and libgstreamer-plugins-base1.0-dev ?
-
-apt -y install build-essential autotools-dev automake libtool autoconf \
-            libpcap-dev libsodium-dev \
-            libboost1.74-dev libasio-dev \
+apt -y install cmake build-essential autotools-dev automake libtool autoconf \
+            libpcap-dev libpng-dev libsdl2-dev libsdl1.2-dev libconfig++-dev \
+            libreadline-dev libjpeg-dev libusb-1.0-0-dev libsodium-dev \
+            libfontconfig1-dev libfreetype6-dev \
             libgstreamer-plugins-base1.0-dev \
-            libusb-1.0-0-dev \
-            libv4l-dev \
-            apt-transport-https \
-            curl \
-            ruby-dev \
-            python3-pip \
-            libnl-3-dev libnl-genl-3-dev \
-            libnl-route-3-dev || exit 1
-
-
-gem install fpm
+            libboost-dev libboost-program-options-dev libboost-system-dev libasio-dev libboost-chrono-dev libsystemd-dev \
+            libboost-regex-dev libboost-filesystem-dev libboost-thread-dev indent libv4l-dev libnl-3-dev libnl-genl-3-dev libfmt-dev || exit 1

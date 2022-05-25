@@ -1,0 +1,11 @@
+[Unit]
+Description=openhd-video
+After=openhdinterface.service
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/openhd_video
+
+[Install]
+WantedBy=multi-user.target
+Alias=openhdvideo.service

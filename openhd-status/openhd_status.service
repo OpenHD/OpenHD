@@ -1,0 +1,11 @@
+[Unit]
+Description=openhd-status
+After=openhdinterface.service
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/openhd_status
+
+[Install]
+WantedBy=multi-user.target
+Alias=openhdstatus.service

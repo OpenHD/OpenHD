@@ -1,0 +1,13 @@
+[Unit]
+Description=openhd-system
+After=local-fs.target sysinit.target conf.mount
+
+
+[Service]
+Type=notify
+RemainAfterExit=true
+ExecStart=/usr/local/bin/openhd_system
+
+[Install]
+WantedBy=multi-user.target
+Alias=openhdsystem.service
