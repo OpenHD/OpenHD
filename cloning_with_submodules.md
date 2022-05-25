@@ -1,0 +1,1 @@
+git clone --recurse-submodules -b consti-test git@github.com:OpenHD/Open.HD.git
