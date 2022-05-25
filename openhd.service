@@ -1,0 +1,11 @@
+[Unit]
+Description=OpenHD 
+
+[Service]
+User=root
+ExecStart=/usr/local/bin/OpenHD
+Restart=always
+
+
+[Install]
+WantedBy=multi-user.target
