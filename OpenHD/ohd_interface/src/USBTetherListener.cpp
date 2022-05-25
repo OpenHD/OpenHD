@@ -18,7 +18,7 @@ std::vector<std::string> USBTetherListener::getConnectedTetherIPsLocked() {
 }
 
 void USBTetherListener::loopInfinite() {
-  while (true){
+  while (!loopThreadStop){
 	connectOnce();
   }
 }
@@ -26,7 +26,7 @@ void USBTetherListener::loopInfinite() {
 void USBTetherListener::connectOnce() {
   const char* connectedDevice="/sys/class/net/usb0";
   // in regular intervals, check if the device becomes available - if yes, the user connected an ethernet hotspot device.
-  while (true){
+  while (!loopThreadStop){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	std::cout<<"Checking for USB tethering device\n";
 	if(OHDFilesystemUtil::exists(connectedDevice)) {
@@ -51,7 +51,7 @@ void USBTetherListener::connectOnce() {
 	return;
   }
   // check in regular intervals if the tethering device disconnects.
-  while (true){
+  while (!loopThreadStop){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	std::cout<<"Checking if USB tethering device disconnected\n";
 	if(!OHDFilesystemUtil::exists(connectedDevice)){
@@ -66,6 +66,16 @@ void USBTetherListener::connectOnce() {
 }
 
 void USBTetherListener::startLooping() {
+  loopThreadStop=false;
+  assert(loopThread== nullptr);
   loopThread=std::make_unique<std::thread>([this](){loopInfinite();});
+}
+
+void USBTetherListener::stopLooping() {
+  loopThreadStop=true;
+  if(loopThread->joinable()){
+	loopThread->join();
+  }
+  loopThread.reset();
 }
 
