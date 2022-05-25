@@ -12,6 +12,7 @@
  */
 static std::string createHostapdConfigFile(const std::string& interface_name){
   std::stringstream ss;
+  ss<<"#OpenHD wifi hotspot hostapd config file\n";
   // the interface used by the AP
   ss<<"interface="<<interface_name<<"\n";
   // set this to "a" for 5Ghz, to "g" for 2.4Ghz
@@ -126,11 +127,16 @@ void WifiHotspot::start() {
   std::ofstream _config("/tmp/hostapd.conf");
   _config << m_hostapd_config_file_content;
   _config.close();
+  if(true){
+	return;
+  }
   // disable hostapd if it is running
   OHDUtil::run_command("systemctl",{"disable hostapd"});
   // then start hostapd with the created config file. Now the wifi AP is running.
   // -B means run in the background.
   OHDUtil::run_command("hostapd",{"-B -d /tmp/hostapd.conf"});
+  // and we re-start the hostapd service
+  OHDUtil::run_command("systemctl",{"disable hostapd"});
 }
 
 void WifiHotspot::stop() {

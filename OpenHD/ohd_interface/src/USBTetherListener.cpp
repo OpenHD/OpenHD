@@ -25,7 +25,7 @@ void USBTetherListener::loopInfinite() {
 
 void USBTetherListener::connectOnce() {
   const char* connectedDevice="/sys/class/net/usb0";
-  // in regular intervals, check if the devices becomes available - if yes, the user connected a ethernet hotspot device.
+  // in regular intervals, check if the device becomes available - if yes, the user connected an ethernet hotspot device.
   while (true){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	std::cout<<"Checking for USB tethering device\n";
