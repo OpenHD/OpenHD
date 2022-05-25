@@ -1,5 +1,0 @@
-# the build exec
-openhd_system
-
-# generated .o files
-*.o

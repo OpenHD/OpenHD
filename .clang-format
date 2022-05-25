@@ -1,0 +1,3 @@
+# We use Google c++ style for OpenHD code.
+# Any contributions should run clang-format before opening a pull request.
+BasedOnStyle: Google
