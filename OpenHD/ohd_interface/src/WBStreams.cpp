@@ -20,15 +20,7 @@
 
 #include "WBStreams.h"
 
-/*
- * This file is likely temporary, there are some unresolved questions over whether stream settings should be global
- * and therefore part of the system.conf settings file, or per-camera, in which case it might make more sense for
- * the video service to be starting the video streams.
- *
- * That's why the telemetry and video stream functions, which are somewhat duplicated, are separate. They may not end up
- * in the same place.
- *
- */
+
 WBStreams::WBStreams(const OHDProfile &profile1) :
 	profile(profile1) {}
 
