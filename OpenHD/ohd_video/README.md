@@ -13,4 +13,6 @@ Note that code in this module should follow the following paradigm:
 2) It never runs on the ground pi, only on the air pi.
 3) There are no code dependencies to other modules like ohd_interface.
 
-BIG TODO: Introduce settings in a sensible manner.
+## List of TODO's
+1) introduce settings
+2) add recording to sd card
