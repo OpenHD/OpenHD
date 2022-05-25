@@ -43,6 +43,10 @@ class USBTetherListener{
    */
   [[noreturn]] void loopInfinite();
   /**
+   * start looping in a new thread.
+   */
+  void startLooping();
+  /**
    * Can be called safely from any thread.
    * @return the valid ip address of the connected USB tether device if there is one. Empty if there is currently no device deteced.
    */
@@ -52,6 +56,7 @@ class USBTetherListener{
   // protects against simultaneous read/write of the device_ip variable.
   std::mutex device_ip_mutex;
   std::string device_ip;
+  std::unique_ptr<std::thread> loopThread;
   // write the device ip, protected by mutex.
   void setDeviceIpLocked(std::string newDeviceIp);
   /**

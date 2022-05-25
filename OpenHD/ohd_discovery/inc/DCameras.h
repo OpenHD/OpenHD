@@ -41,10 +41,6 @@ class DCameras : public OHD::IDiscoverable {
    * needs to know should read from the openhd system manifest instead.
    */
   void detect_raspberrypi_csi();
-  /**
-   * Something something stephen.
-   */
-  bool process_v4l2_node(const std::string &node, Camera &camera, CameraEndpoint &endpoint);
   /*
    * Detect all v4l2 cameras, that is cameras that show up as a v4l2 device (/dev/videoXX)
    */
@@ -53,7 +49,10 @@ class DCameras : public OHD::IDiscoverable {
    * Something something stephen.
    */
   void probe_v4l2_device(const std::string &device_node);
-
+/**
+   * Something something stephen.
+   */
+  bool process_v4l2_node(const std::string &node, Camera &camera, CameraEndpoint &endpoint);
   /**
    * TODO unimplemented.
    */

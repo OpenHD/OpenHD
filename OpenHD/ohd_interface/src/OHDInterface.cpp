@@ -14,6 +14,15 @@ OHDInterface::OHDInterface(const OHDProfile &profile) : profile(profile) {
 	//ethernet->configure();
 	streams->set_broadcast_card_names(wifi->get_broadcast_card_names());
 	streams->configure();
+	//
+	usbTetherListener=std::make_unique<USBTetherListener>([this](bool removed,std::string ip){
+	  if(removed){
+		removeExternalDeviceIpForwarding(ip);
+	  }else{
+		addExternalDeviceIpForwarding(ip);
+	  }
+	});
+	usbTetherListener->startLooping();
   } catch (std::exception &ex) {
 	std::cerr << "Error: " << ex.what() << std::endl;
 	exit(1);
@@ -38,4 +47,11 @@ std::string OHDInterface::createDebug() const {
   //}
   ss<<"OHDInterface::createDebug:end\n";
   return ss.str();
+}
+
+void OHDInterface::addExternalDeviceIpForwarding(std::string ip) {
+
+}
+void OHDInterface::removeExternalDeviceIpForwarding(std::string ip) {
+
 }

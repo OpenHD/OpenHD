@@ -65,3 +65,7 @@ void USBTetherListener::connectOnce() {
   device_ip="";
 }
 
+void USBTetherListener::startLooping() {
+  loopThread=std::make_unique<std::thread>([this](){loopInfinite();});
+}
+
