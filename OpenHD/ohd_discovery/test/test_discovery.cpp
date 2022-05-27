@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
   const auto id2 = getOrCreateUnitId();
   assert(id1 == id2);
 
-  OHDDiscovery::runOnceOnStartup(false);
+  OHDDiscovery::runOnceOnStartup(false, false);
 
   return 0;
 }

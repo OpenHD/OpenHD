@@ -14,7 +14,7 @@ class OHDDiscovery {
    * doesn't really make sense (writing json first, then reading it) but for now it will stay this way.
    * @param forceAir forces the pi to boot as air pi, even though no cameras are found.
    */
-  static void runOnceOnStartup(bool forceAir);
+  static void runOnceOnStartup(bool forceAir,bool forceGround);
 };
 
 #endif //OPENHD_OHDDISCOVERY_H

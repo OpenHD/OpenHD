@@ -16,7 +16,11 @@
 #include "DWifiCards.h"
 #include "DProfile.h"
 
-void OHDDiscovery::runOnceOnStartup(bool forceAir) {
+void OHDDiscovery::runOnceOnStartup(bool forceAir,bool forceGround) {
+  if(forceAir && forceGround){
+	std::cerr << "Cannot force air and ground at the same time\n";
+	exit(1);
+  }
   std::cout << "OHDDiscovery::runOnceOnStartup\n";
   try {
 	DPlatform platform;
@@ -43,6 +47,9 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir) {
 	bool is_air = camera_count > 0;
 	if (forceAir) {
 	  is_air = true;
+	}
+	if(forceGround){
+	  is_air = false;
 	}
 	DProfile profile(is_air);
 	profile.discover();

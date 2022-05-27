@@ -19,12 +19,14 @@ static const char optstr[] = "?:da";
 static const struct option long_options[] = {
 	{"skip_discovery", no_argument, nullptr, 'd'},
 	{"force_air", no_argument, nullptr, 'a'},
+	{"force_ground", no_argument, nullptr, 'g'},
 	{NULL, 0, nullptr, 0},
 };
 
 struct OHDRunOptions {
   bool skip_discovery = false;
   bool force_air = false;
+  bool force_ground=false;
 };
 
 int main(int argc, char *argv[]) {
@@ -38,23 +40,30 @@ int main(int argc, char *argv[]) {
 		break;
 	  case 'a':options.force_air = true;
 		break;
+	  case 'g':options.force_ground = true;
+		break;
 	  case '?':
 	  default:
-		std::cout << "Usage: --skip_detection [Skip detection step, usefully for changing things in json manually] " <<
-				  "force_air [Force to boot as air pi, even when no camera is detected] " <<
-				  "\n";
+		std::cout << "Usage: --skip_detection [Skip detection step, usefully for changing things in json manually] \n" <<
+				  "force_air [Force to boot as air pi, even when no camera is detected] \n" <<
+				  "force_ground [Force to boot as ground pi,even though one or more cameras are connected] \n";
 		return 0;
 	}
+  }
+  if(options.force_air && options.force_ground){
+	std::cerr << "Cannot force air and ground at the same time\n";
+	exit(1);
   }
   std::cout << "OpenHD START with " <<
 			"skip_discovery:" << (options.skip_discovery ? "Y" : "N") <<
 			"force_air:" << (options.force_air ? "Y" : "N") <<
+			"force_ground:" << (options.force_ground ? "Y" : "N") <<
 			"\n";
 
   try {
 	if (!options.skip_discovery) {
 	  // Always needs to run first.
-	  OHDDiscovery::runOnceOnStartup(options.force_air);
+	  OHDDiscovery::runOnceOnStartup(options.force_air,options.force_ground);
 	}
 
 	// Now this is kinda stupid - we write json's during the discovery, then we read them back in
