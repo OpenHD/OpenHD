@@ -93,6 +93,7 @@ void GStreamerStream::setup() {
 
 void GStreamerStream::setup_raspberrypi_csi() {
   std::cout << "Setting up Raspberry Pi CSI camera" << std::endl;
+  // similar to jetson, for now we assume there is only one CSI camera connected.
   m_pipeline<< OHDGstHelper::createRpicamsrcStream(-1, m_camera.bitrateKBits, m_camera.userSelectedVideoFormat);
 }
 
