@@ -115,14 +115,10 @@ static constexpr auto DEFAULT_WIFI_TX_POWER="3100";
 struct WifiCardSettings{
   // This one needs to be set for the card to then be used for something.Otherwise, it is not used for anything
   WifiUseFor use_for = WifiUseForUnknown;
-  // ? Dynamically changed settings ?
+  // frequency for this card
   std::string frequency;
+  // transmission power for this card
   std::string txpower=DEFAULT_WIFI_TX_POWER;
-  std::string wifi_client_ap_name;
-  std::string wifi_client_password;
-  std::string hotspot_channel;
-  std::string hotspot_password;
-  std::string hotspot_band;
 };
 
 struct WiFiCard {
@@ -135,7 +131,6 @@ struct WiFiCard {
   bool supports_injection = false;
   bool supports_hotspot = false;
   bool supports_rts = false;
-  // deterministic info and capabilities part end.
   WifiCardSettings settings;
 };
 
