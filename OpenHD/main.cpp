@@ -54,11 +54,10 @@ int main(int argc, char *argv[]) {
 	std::cerr << "Cannot force air and ground at the same time\n";
 	exit(1);
   }
-  std::cout << "OpenHD START with " <<
-			"skip_discovery:" << (options.skip_discovery ? "Y" : "N") <<
-			"force_air:" << (options.force_air ? "Y" : "N") <<
-			"force_ground:" << (options.force_ground ? "Y" : "N") <<
-			"\n";
+  std::cout << "OpenHD START with " <<"\n"<<
+			"skip_discovery:" << (options.skip_discovery ? "Y" : "N") <<"\n"<<
+			"force_air:" << (options.force_air ? "Y" : "N") <<"\n"<<
+			"force_ground:" << (options.force_ground ? "Y" : "N") <<"\n";
 
   try {
 	if (!options.skip_discovery) {
