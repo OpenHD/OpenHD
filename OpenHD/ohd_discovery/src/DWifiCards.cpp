@@ -57,13 +57,13 @@ void DWifiCards::discover() {
   // Fo now, just go with what we used to do in EZ-Wifibroadcast.
   for (auto &card: m_wifi_cards) {
 	if (card.supports_injection) {
-	  card.use_for = WifiUseForMonitorMode;
+	  card.settings.use_for = WifiUseForMonitorMode;
 	} else if (card.supports_hotspot) {
 	  // if a card does not support injection, we use it for hotspot
-	  card.use_for = WifiUseForHotspot;
+	  card.settings.use_for = WifiUseForHotspot;
 	} else {
 	  // and if a card supports neither hotspot nor injection, we use it for nothing
-	  card.use_for = WifiUseForUnknown;
+	  card.settings.use_for = WifiUseForUnknown;
 	}
   }
   std::cout << "WiFi::discover done, n cards:" << m_wifi_cards.size() << "\n";
