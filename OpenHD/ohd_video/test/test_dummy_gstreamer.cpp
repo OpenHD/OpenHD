@@ -9,7 +9,7 @@
 // Which rn is implemented in gstreamer.
 
 int main(int argc, char *argv[]) {
-
+  //
   Camera camera;
   camera.type = CameraTypeDummy;
   // Depending on what you selected here, you will have to use the proper main_stream_display_XXX.sh if you want to see the video.

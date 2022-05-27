@@ -119,7 +119,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
   Camera camera;
   // check for device name
   std::smatch model_result;
-  std::regex model_regex{"ID_MODEL=([\\w]+)"};
+  const std::regex model_regex{"ID_MODEL=([\\w]+)"};
   if (std::regex_search(udev_info, model_result, model_regex)) {
 	if (model_result.size() == 2) {
 	  camera.name = model_result[1];
@@ -127,7 +127,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
   }
   // check for device vendor
   std::smatch vendor_result;
-  std::regex vendor_regex{"ID_VENDOR=([\\w]+)"};
+  const std::regex vendor_regex{"ID_VENDOR=([\\w]+)"};
   if (std::regex_search(udev_info, vendor_result, vendor_regex)) {
 	if (vendor_result.size() == 2) {
 	  camera.vendor = vendor_result[1];
@@ -135,7 +135,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
   }
   // check for vid
   std::smatch vid_result;
-  std::regex vid_regex{"ID_VENDOR_ID=([\\w]+)"};
+  const std::regex vid_regex{"ID_VENDOR_ID=([\\w]+)"};
   if (std::regex_search(udev_info, vid_result, vid_regex)) {
 	if (vid_result.size() == 2) {
 	  camera.vid = vid_result[1];
@@ -143,7 +143,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
   }
   // check for pid
   std::smatch pid_result;
-  std::regex pid_regex{"ID_MODEL_ID=([\\w]+)"};
+  const std::regex pid_regex{"ID_MODEL_ID=([\\w]+)"};
   if (std::regex_search(udev_info, pid_result, pid_regex)) {
 	if (pid_result.size() == 2) {
 	  camera.pid = pid_result[1];
