@@ -27,7 +27,7 @@ class OHDInterface {
   std::unique_ptr<WifiCards> wifiCards;
   // temprarily removed
   //std::unique_ptr<EthernetCards> ethernet;
-  std::unique_ptr<WBStreams> streams;
+  std::unique_ptr<WBStreams> wbStreams;
   std::unique_ptr<USBTetherListener> usbTetherListener;
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
