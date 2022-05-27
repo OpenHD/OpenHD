@@ -4,6 +4,8 @@
 
 #include "OHDInterface.h"
 
+#include <utility>
+
 OHDInterface::OHDInterface(const OHDProfile &profile) : profile(profile) {
   std::cout << "OHDInterface::OHDInterface()\n";
   wifi = std::make_unique<WifiCards>(profile);
@@ -50,9 +52,9 @@ std::string OHDInterface::createDebug() const {
 }
 
 void OHDInterface::addExternalDeviceIpForwarding(std::string ip) {
-  //TODO forwarding
-  std::cout<<"TODO forward data to:";
+  streams->addExternalDeviceIpForwarding(std::move(ip));
 }
+
 void OHDInterface::removeExternalDeviceIpForwarding(std::string ip) {
-	//TODO forwarding
+	streams->removeExternalDeviceIpForwarding(std::move(ip));
 }

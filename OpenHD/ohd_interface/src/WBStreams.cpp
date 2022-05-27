@@ -129,3 +129,20 @@ std::string WBStreams::createDebug() const {
   }
   return ss.str();
 }
+
+void WBStreams::addExternalDeviceIpForwarding(std::string ip) {
+  bool first= true;
+  for(auto& rxVid:udpVideoRxList){
+	const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
+	first= false;
+	rxVid->addForwarder(ip,udpPort);
+  }
+}
+void WBStreams::removeExternalDeviceIpForwarding(std::string ip) {
+  bool first= true;
+  for(auto& rxVid:udpVideoRxList){
+	const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
+	first= false;
+	rxVid->removeForwarder(ip,udpPort);
+  }
+}

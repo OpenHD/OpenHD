@@ -36,6 +36,9 @@ class WBStreams {
   void configure_video();
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
+  // see interface
+  void addExternalDeviceIpForwarding(std::string ip);
+  void removeExternalDeviceIpForwarding(std::string ip);
  private:
   const OHDProfile &profile;
   const int m_mcs = 3;
