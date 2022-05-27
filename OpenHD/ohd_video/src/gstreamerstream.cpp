@@ -19,10 +19,10 @@ GStreamerStream::GStreamerStream(PlatformType platform,
   // Since the dummy camera is SW, we generally cannot do more than 640x480@30 anyways.
   // (640x48@30 might already be too much on embedded devices).
   if (camera.type == CameraTypeDummy) {
-	camera.camera_settings.userSelectedVideoFormat.width = 640;
-	camera.camera_settings.userSelectedVideoFormat.height = 480;
-	camera.camera_settings.userSelectedVideoFormat.framerate=30;
-	std::cout<<"Configured dummy for:"<<m_camera.camera_settings.userSelectedVideoFormat.toString()<<"\n";
+	camera.settings.userSelectedVideoFormat.width = 640;
+	camera.settings.userSelectedVideoFormat.height = 480;
+	camera.settings.userSelectedVideoFormat.framerate=30;
+	std::cout << "Configured dummy for:" << m_camera.settings.userSelectedVideoFormat.toString() << "\n";
   }
 }
 
@@ -31,11 +31,11 @@ void GStreamerStream::setup() {
   OHDGstHelper::initGstreamerOrThrow();
   std::cout << "Creating GStreamer pipeline" << std::endl;
   // sanity checks
-  if(!check_bitrate_sane(m_camera.camera_settings.bitrateKBits)){
-	std::cerr<<"manually fixing insane camera bitrate"<<m_camera.camera_settings.bitrateKBits<<"\n";
-	m_camera.camera_settings.bitrateKBits=DEFAULT_BITRATE_KBITS;
+  if(!check_bitrate_sane(m_camera.settings.bitrateKBits)){
+	std::cerr << "manually fixing insane camera bitrate" << m_camera.settings.bitrateKBits << "\n";
+	m_camera.settings.bitrateKBits=DEFAULT_BITRATE_KBITS;
   }
-  assert(m_camera.camera_settings.userSelectedVideoFormat.isValid());
+  assert(m_camera.settings.userSelectedVideoFormat.isValid());
   m_pipeline.str("");
   m_pipeline.clear();
   switch (m_camera.type) {
@@ -60,7 +60,7 @@ void GStreamerStream::setup() {
 	  break;
 	}
 	case CameraTypeDummy: {
-	  m_pipeline << OHDGstHelper::createDummyStream(m_camera.camera_settings.userSelectedVideoFormat);
+	  m_pipeline << OHDGstHelper::createDummyStream(m_camera.settings.userSelectedVideoFormat);
 	  break;
 	}
 	case CameraTypeRaspberryPiVEYE:
@@ -74,11 +74,11 @@ void GStreamerStream::setup() {
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
-  m_pipeline << OHDGstHelper::createRtpForVideoCodec(m_camera.camera_settings.userSelectedVideoFormat.videoCodec);
+  m_pipeline << OHDGstHelper::createRtpForVideoCodec(m_camera.settings.userSelectedVideoFormat.videoCodec);
   // Allows users to fully write a manual pipeline, this must be used carefully.
-  if (!m_camera.manual_pipeline.empty()) {
+  if (!m_camera.settings.manual_pipeline.empty()) {
 	m_pipeline.str("");
-	m_pipeline << m_camera.manual_pipeline;
+	m_pipeline << m_camera.settings.manual_pipeline;
   }
   // add udp out part
   m_pipeline << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
@@ -94,7 +94,7 @@ void GStreamerStream::setup() {
 void GStreamerStream::setup_raspberrypi_csi() {
   std::cout << "Setting up Raspberry Pi CSI camera" << std::endl;
   // similar to jetson, for now we assume there is only one CSI camera connected.
-  m_pipeline<< OHDGstHelper::createRpicamsrcStream(-1, m_camera.camera_settings.bitrateKBits, m_camera.camera_settings.userSelectedVideoFormat);
+  m_pipeline<< OHDGstHelper::createRpicamsrcStream(-1, m_camera.settings.bitrateKBits, m_camera.settings.userSelectedVideoFormat);
 }
 
 void GStreamerStream::setup_jetson_csi() {
@@ -103,23 +103,23 @@ void GStreamerStream::setup_jetson_csi() {
   // But still, /dev/video1 can be camera index 0 on jetson.
   // Therefore, for now, we just default to no camera index rn and let nvarguscamerasrc figure out the camera index.
   // This will work as long as there is no more than 1 CSI camera.
-  m_pipeline << OHDGstHelper::createJetsonStream(-1, m_camera.camera_settings.bitrateKBits, m_camera.camera_settings.userSelectedVideoFormat);
+  m_pipeline << OHDGstHelper::createJetsonStream(-1, m_camera.settings.bitrateKBits, m_camera.settings.userSelectedVideoFormat);
 }
 
 void GStreamerStream::setup_usb_uvc() {
   std::cout << "Setting up usb UVC camera Name:" << m_camera.name << " type:" << m_camera.type << std::endl;
   // First we try and start a hw encoded path, where v4l2src directly provides encoded video buffers
   for (const auto &endpoint: m_camera.endpoints) {
-	if (m_camera.camera_settings.userSelectedVideoFormat.videoCodec == VideoCodecH264 && endpoint.support_h264) {
+	if (m_camera.settings.userSelectedVideoFormat.videoCodec == VideoCodecH264 && endpoint.support_h264) {
 	  std::cerr << "h264" << std::endl;
 	  const auto device_node = endpoint.device_node;
-	  m_pipeline << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, m_camera.camera_settings.userSelectedVideoFormat);
+	  m_pipeline << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, m_camera.settings.userSelectedVideoFormat);
 	  return;
 	}
-	if (m_camera.camera_settings.userSelectedVideoFormat.videoCodec == VideoCodecMJPEG && endpoint.support_mjpeg) {
+	if (m_camera.settings.userSelectedVideoFormat.videoCodec == VideoCodecMJPEG && endpoint.support_mjpeg) {
 	  std::cerr << "MJPEG" << std::endl;
 	  const auto device_node = endpoint.device_node;
-	  m_pipeline << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, m_camera.camera_settings.userSelectedVideoFormat);
+	  m_pipeline << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, m_camera.settings.userSelectedVideoFormat);
 	  return;
 	}
   }
@@ -129,8 +129,8 @@ void GStreamerStream::setup_usb_uvc() {
 	if (endpoint.support_raw) {
 	  const auto device_node = endpoint.device_node;
 	  m_pipeline << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,
-																	m_camera.camera_settings.userSelectedVideoFormat.videoCodec,
-																	m_camera.camera_settings.bitrateKBits);
+																	m_camera.settings.userSelectedVideoFormat.videoCodec,
+																	m_camera.settings.bitrateKBits);
 	  return;
 	}
   }
@@ -143,16 +143,16 @@ void GStreamerStream::setup_usb_uvch264() {
   const auto endpoint = m_camera.endpoints.front();
   // uvch265 cameras don't seem to exist, codec setting is ignored
   m_pipeline << OHDGstHelper::createUVCH264Stream(endpoint.device_node,
-												  m_camera.camera_settings.bitrateKBits,
-												  m_camera.camera_settings.userSelectedVideoFormat);
+												  m_camera.settings.bitrateKBits,
+												  m_camera.settings.userSelectedVideoFormat);
 }
 
 void GStreamerStream::setup_ip_camera() {
   std::cout << "Setting up IP camera" << std::endl;
-  if (m_camera.url.empty()) {
-	m_camera.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
+  if (m_camera.settings.url.empty()) {
+	m_camera.settings.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
   }
-  m_pipeline << OHDGstHelper::createIpCameraStream(m_camera.url);
+  m_pipeline << OHDGstHelper::createIpCameraStream(m_camera.settings.url);
 }
 
 std::string GStreamerStream::createDebug()const {
@@ -198,12 +198,12 @@ void GStreamerStream::set_cbr(bool enable) {
 
 VideoFormat GStreamerStream::get_format() {
   std::cout << "GStreamerStream::get_format()" << std::endl;
-  return m_camera.camera_settings.userSelectedVideoFormat;
+  return m_camera.settings.userSelectedVideoFormat;
 }
 
 void GStreamerStream::set_format(VideoFormat videoFormat) {
   std::cout << "GStreamerStream::set_format(" << videoFormat.toString() << ")" << std::endl;
-  m_camera.camera_settings.userSelectedVideoFormat = videoFormat;
+  m_camera.settings.userSelectedVideoFormat = videoFormat;
 }
 
 void GStreamerStream::restartIfStopped() {

@@ -185,6 +185,11 @@ struct CameraSettings{
   // The bitrate the generated stream should have. Note that not all cameras / encoder support a constant bitrate,
   // and not all encoders support all bitrates, especially really low ones.
   int bitrateKBits = DEFAULT_BITRATE_KBITS;
+  // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar form
+  std::string url;
+  // optional, if not empty we should always use the manual pipeline and discard everything else.
+  std::string manual_pipeline;
+  // todo they are simple for the most part, but rn not implemented yet.
   std::string brightness;
   std::string contrast;
   std::string sharpness;
@@ -206,14 +211,10 @@ struct Camera {
   // Unique index of this camera, should start at 0. The index number depends on the order the cameras were picked
   // during the discovery step.
   int index = 0;
-  // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar form
-  std::string url;
-  // optional, if not empty we should always use the manual pipeline and discard everything else.
-  std::string manual_pipeline;
   // All the endpoints supported by this camera.
   std::vector<CameraEndpoint> endpoints;
   // These values are settings that can change dynamically at run time (non-deterministic)
-  CameraSettings camera_settings;
+  CameraSettings settings;
   /**
    * For logging, create a quick name string that gives developers enough info such that they can figure out
    * what this camera is.
@@ -260,11 +261,11 @@ static nlohmann::json cameras_to_json(const std::vector<Camera> &cameras) {
 		  {"pid", camera.pid},
 		  {"bus", camera.bus},
 		  {"index", camera.index},
-		  {"url", camera.url},
-		  {"manual_pipeline", camera.manual_pipeline},
+		  {"url", camera.settings.url},
+		  {"manual_pipeline", camera.settings.manual_pipeline},
 		  {"endpoints", endpoints},
-		  {"userSelectedVideoFormat", camera.camera_settings.userSelectedVideoFormat.toString()},
-		  {"bitrateKBits", std::to_string(camera.camera_settings.bitrateKBits)}
+		  {"userSelectedVideoFormat", camera.settings.userSelectedVideoFormat.toString()},
+		  {"bitrateKBits", std::to_string(camera.settings.bitrateKBits)}
 	  };
 	  std::stringstream message;
 	  message << "Detected camera: " << camera.name << std::endl;
@@ -304,8 +305,8 @@ static std::vector<Camera> cameras_from_manifest() {
 	  camera.pid = _camera["pid"];
 	  camera.bus = _camera["bus"];
 	  camera.index = _camera["index"];
-	  camera.url = _camera["url"];
-	  camera.manual_pipeline = _camera["manual_pipeline"];
+	  camera.settings.url = _camera["url"];
+	  camera.settings.manual_pipeline = _camera["manual_pipeline"];
 	  auto _endpoints = _camera["endpoints"];
 	  for (auto _endpoint: _endpoints) {
 		CameraEndpoint endpoint;
@@ -320,9 +321,9 @@ static std::vector<Camera> cameras_from_manifest() {
 		}
 		camera.endpoints.push_back(endpoint);
 	  }
-	  camera.camera_settings.userSelectedVideoFormat = VideoFormat::fromString(_camera["userSelectedVideoFormat"]);
+	  camera.settings.userSelectedVideoFormat = VideoFormat::fromString(_camera["userSelectedVideoFormat"]);
 	  const std::string bitrateKBits = _camera["bitrateKBits"];
-	  camera.camera_settings.bitrateKBits = atoi(bitrateKBits.c_str());
+	  camera.settings.bitrateKBits = atoi(bitrateKBits.c_str());
 	  ret.push_back(camera);
 	}
   } catch (std::exception &ex) {
