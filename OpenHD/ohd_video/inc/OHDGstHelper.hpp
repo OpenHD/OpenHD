@@ -69,7 +69,7 @@ static std::string createRpicamsrcStream(const std::string &bus, const int bitra
   assert(videoFormat.isValid());
   assert(videoFormat.videoCodec == VideoCodecH264);
   std::stringstream ss;
-  ss << fmt::format("rpicamsrc name=bitratectrl camera-number={} bitrate={} preview=0 ! ", bus, bitrate);
+  ss << fmt::format("rpicamsrc camera-number={} bitrate={} preview=0 ! ", bus, bitrate);
   ss << fmt::format("video/x-h264, profile=constrained-baseline, width={}, height={}, framerate={}/1, level=3.0 ! ",
 					videoFormat.width, videoFormat.height, videoFormat.framerate);
   return ss.str();
