@@ -44,8 +44,8 @@ void OHDVideo::setup() {
   // Consti10 sanity checks
   for (auto &camera: m_cameras) {
 	// check to see if we need to set a default bitrate.
-	if (!check_bitrate_sane(camera.bitrateKBits)) {
-	  camera.bitrateKBits = DEFAULT_BITRATE_KBITS;
+	if (!check_bitrate_sane(camera.settings.bitrateKBits)) {
+	  camera.settings.bitrateKBits = DEFAULT_BITRATE_KBITS;
 	}
 	// check to see if the video codec is messed up.
 	//if (camera.codec == VideoCodecUnknown) {
