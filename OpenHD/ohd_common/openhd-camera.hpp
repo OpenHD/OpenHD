@@ -171,25 +171,8 @@ struct CameraEndpoint {
 
 static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
 
-struct Camera {
-  CameraType type = CameraTypeUnknown;
-  std::string name = "unknown";
-  std::string vendor = "unknown";
-  std::string vid;
-  std::string pid;
-  // for USB this is the bus number, for CSI it's the connector number
-  std::string bus;
-  // Unique index of this camera, should start at 0. The index number depends on the order the cameras were picked
-  // during the discovery step.
-  int index = 0;
-  // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar form
-  std::string url;
-  // optional, if not empty we should always use the manual pipeline and discard everything else.
-  std::string manual_pipeline;
-  // All the endpoints supported by this camera.
-  std::vector<CameraEndpoint> endpoints;
-  // These values are settings that can change dynamically at run time (non-deterministic)
-  // --------------------------------------- non-deterministic begin ---------------------------------------
+// User-selectable camera options
+struct CameraSettings{
   // The video format selected by the user. If the user sets a video format that isn't supported
   // (for example, he might select h264|1920x1080@120 but the camera can only do 60fps)
   // The stream should default to the first available video format.
@@ -210,7 +193,27 @@ struct Camera {
   std::string denoise;
   std::string thermal_palette;
   std::string thermal_span;
-  // --------------------------------------- end ---------------------------------------
+};
+
+struct Camera {
+  CameraType type = CameraTypeUnknown;
+  std::string name = "unknown";
+  std::string vendor = "unknown";
+  std::string vid;
+  std::string pid;
+  // for USB this is the bus number, for CSI it's the connector number
+  std::string bus;
+  // Unique index of this camera, should start at 0. The index number depends on the order the cameras were picked
+  // during the discovery step.
+  int index = 0;
+  // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar form
+  std::string url;
+  // optional, if not empty we should always use the manual pipeline and discard everything else.
+  std::string manual_pipeline;
+  // All the endpoints supported by this camera.
+  std::vector<CameraEndpoint> endpoints;
+  // These values are settings that can change dynamically at run time (non-deterministic)
+  CameraSettings camera_settings;
   /**
    * For logging, create a quick name string that gives developers enough info such that they can figure out
    * what this camera is.
@@ -260,8 +263,8 @@ static nlohmann::json cameras_to_json(const std::vector<Camera> &cameras) {
 		  {"url", camera.url},
 		  {"manual_pipeline", camera.manual_pipeline},
 		  {"endpoints", endpoints},
-		  {"userSelectedVideoFormat", camera.userSelectedVideoFormat.toString()},
-		  {"bitrateKBits", std::to_string(camera.bitrateKBits)}
+		  {"userSelectedVideoFormat", camera.camera_settings.userSelectedVideoFormat.toString()},
+		  {"bitrateKBits", std::to_string(camera.camera_settings.bitrateKBits)}
 	  };
 	  std::stringstream message;
 	  message << "Detected camera: " << camera.name << std::endl;
@@ -317,9 +320,9 @@ static std::vector<Camera> cameras_from_manifest() {
 		}
 		camera.endpoints.push_back(endpoint);
 	  }
-	  camera.userSelectedVideoFormat = VideoFormat::fromString(_camera["userSelectedVideoFormat"]);
+	  camera.camera_settings.userSelectedVideoFormat = VideoFormat::fromString(_camera["userSelectedVideoFormat"]);
 	  const std::string bitrateKBits = _camera["bitrateKBits"];
-	  camera.bitrateKBits = atoi(bitrateKBits.c_str());
+	  camera.camera_settings.bitrateKBits = atoi(bitrateKBits.c_str());
 	  ret.push_back(camera);
 	}
   } catch (std::exception &ex) {
