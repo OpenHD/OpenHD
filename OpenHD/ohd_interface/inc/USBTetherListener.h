@@ -11,6 +11,7 @@
 #include <chrono>
 #include <utility>
 #include <mutex>
+#include <atomic>
 
 
 /**
@@ -62,7 +63,7 @@ class USBTetherListener{
   std::mutex device_ip_mutex;
   std::string device_ip;
   std::unique_ptr<std::thread> loopThread;
-  std::atomic<bool> loopThreadStop{false};
+  std::atomic<bool> loopThreadStop=false;
   // write the device ip, protected by mutex.
   void setDeviceIpLocked(std::string newDeviceIp);
   /**
