@@ -28,7 +28,7 @@ void USBTetherListener::connectOnce() {
   // in regular intervals, check if the device becomes available - if yes, the user connected an ethernet hotspot device.
   while (!loopThreadStop){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
-	std::cout<<"Checking for USB tethering device\n";
+	//std::cout<<"Checking for USB tethering device\n";
 	if(OHDFilesystemUtil::exists(connectedDevice)) {
 	  std::cout << "Found USB tethering device\n";
 	  break;
@@ -53,7 +53,7 @@ void USBTetherListener::connectOnce() {
   // check in regular intervals if the tethering device disconnects.
   while (!loopThreadStop){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
-	std::cout<<"Checking if USB tethering device disconnected\n";
+	//std::cout<<"Checking if USB tethering device disconnected\n";
 	if(!OHDFilesystemUtil::exists(connectedDevice)){
 	  std::cout<<"USB Tether device disconnected\n";
 	  break;

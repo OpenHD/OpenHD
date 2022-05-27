@@ -51,6 +51,7 @@ std::string OHDInterface::createDebug() const {
 
 void OHDInterface::addExternalDeviceIpForwarding(std::string ip) {
   //TODO forwarding
+  std::cout<<"TODO forward data to:";
 }
 void OHDInterface::removeExternalDeviceIpForwarding(std::string ip) {
 	//TODO forwarding
