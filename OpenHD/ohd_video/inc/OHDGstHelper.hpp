@@ -63,13 +63,17 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
 
 /**
  * Create a encoded stream for rpicamsrc, which supports h264 only.
- * @param bus the camera number, aka 0, 1 ??!!
+ * @param camera_number use -1 to let rpicamsrc decide
  */
-static std::string createRpicamsrcStream(const std::string &bus, const int bitrate, const VideoFormat videoFormat) {
+static std::string createRpicamsrcStream(const int camera_number, const int bitrate, const VideoFormat videoFormat) {
   assert(videoFormat.isValid());
   assert(videoFormat.videoCodec == VideoCodecH264);
   std::stringstream ss;
-  ss << fmt::format("rpicamsrc camera-number={} bitrate={} preview=0 ! ", bus, bitrate);
+  if(camera_number==-1){
+	ss << fmt::format("rpicamsrc bitrate={} preview=0 ! ", bitrate);
+  }else{
+	ss << fmt::format("rpicamsrc camera-number={} bitrate={} preview=0 ! ", camera_number, bitrate);
+  }
   ss << fmt::format("video/x-h264, profile=constrained-baseline, width={}, height={}, framerate={}/1, level=3.0 ! ",
 					videoFormat.width, videoFormat.height, videoFormat.framerate);
   return ss.str();
