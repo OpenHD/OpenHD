@@ -46,8 +46,8 @@ class OHDTelemetry {
   // active when ground
   std::unique_ptr<GroundTelemetry> groundTelemetry;
   std::unique_ptr<std::thread> loopThread;
-  void debug()const{
-	//
+  [[nodiscard]] std::string createDebug()const{
+	return "Telemetry debug todo\n";
   }
  private:
   const OHDProfile &profile;

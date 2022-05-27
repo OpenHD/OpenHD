@@ -92,14 +92,16 @@ int main(int argc, char *argv[]) {
 	  // To make sure this is all tightly packed together, we write it to a stringstream first
 	  // and then to stdout in one big chunk. Otherwise, some other debug output might stand in between the OpenHD
 	  // state debug chunk.
-	  std::cout<< "---------------------------------OpenHD-state debug begin ---------------------------------\n";
-	  std::cout<<ohdInterface->createDebug();
-	  telemetry->debug();
+	  std::stringstream ss;
+	  ss<< "---------------------------------OpenHD-state debug begin ---------------------------------\n";
+	  ss<<ohdInterface->createDebug();
 	  if(ohdVideo){
 		ohdVideo->restartIfStopped();
-		std::cout<<ohdVideo->createDebug();
+		ss<<ohdVideo->createDebug();
 	  }
-	  std::cout << "---------------------------------OpenHD-state debug   end ---------------------------------\n";
+	  ss<<telemetry->createDebug();
+	  ss<<"---------------------------------OpenHD-state debug   end ---------------------------------\n";
+	  std::cout<<ss.str();
 	}
   } catch (std::exception &ex) {
 	std::cerr << "Error: " << ex.what() << std::endl;
