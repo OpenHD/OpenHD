@@ -24,7 +24,7 @@ class OHDInterface {
    * @param profile the (never-changing) profile we are running with.
    */
   explicit OHDInterface(const OHDProfile &profile);
-  std::unique_ptr<WifiCards> wifi;
+  std::unique_ptr<WifiCards> wifiCards;
   // temprarily removed
   //std::unique_ptr<EthernetCards> ethernet;
   std::unique_ptr<WBStreams> streams;

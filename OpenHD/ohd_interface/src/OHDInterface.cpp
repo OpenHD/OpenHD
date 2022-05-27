@@ -8,13 +8,13 @@
 
 OHDInterface::OHDInterface(const OHDProfile &profile) : profile(profile) {
   std::cout << "OHDInterface::OHDInterface()\n";
-  wifi = std::make_unique<WifiCards>(profile);
+  wifiCards = std::make_unique<WifiCards>(profile);
   //ethernet=std::make_unique<EthernetCards>(is_air, unit_id);
   streams = std::make_unique<WBStreams>(profile);
   try {
-	wifi->configure();
+	wifiCards->configure();
 	//ethernet->configure();
-	streams->set_broadcast_card_names(wifi->get_broadcast_card_names());
+	streams->set_broadcast_card_names(wifiCards->get_broadcast_card_names());
 	streams->configure();
 	//
 	usbTetherListener=std::make_unique<USBTetherListener>([this](bool removed,std::string ip){
@@ -38,8 +38,8 @@ OHDInterface::OHDInterface(const OHDProfile &profile) : profile(profile) {
 std::string OHDInterface::createDebug() const {
   std::stringstream ss;
   ss<<"OHDInterface::createDebug:begin\n";
-  if (wifi) {
-	ss<<wifi->createDebug();
+  if (wifiCards) {
+	ss << wifiCards->createDebug();
   }
   if (streams) {
 	ss<<streams->createDebug();
