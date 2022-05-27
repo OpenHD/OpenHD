@@ -69,7 +69,7 @@ static std::string createRpicamsrcStream(const int camera_number, const int bitr
   assert(videoFormat.isValid());
   assert(videoFormat.videoCodec == VideoCodecH264);
   std::stringstream ss;
-  // so for some reason, rpicamsrc seems to be in bit/s - I do not know if that is true, but the documentation is lacking
+  // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond=bitrateKBits*1024;
   if(camera_number==-1){
 	ss << fmt::format("rpicamsrc bitrate={} preview=0 ! ", bitrateBitsPerSecond);
