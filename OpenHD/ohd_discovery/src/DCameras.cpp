@@ -187,8 +187,8 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 	std::cerr << "Capability query failed: " << node << std::endl;
 	return false;
   }
-  std::string driver((char *)caps.driver);
-  std::cout<<"Driver is:"<<caps.driver<<"\n";
+  const std::string driver((char *)caps.driver);
+  std::cout<<"Driver is:"<<driver<<"\n";
   if (driver == "uvcvideo") {
 	camera.type = CameraTypeUVC;
 	std::cout << "Found UVC camera" << std::endl;
