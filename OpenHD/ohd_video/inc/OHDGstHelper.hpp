@@ -85,7 +85,7 @@ static std::string createRpicamsrcStream(const int camera_number, const int bitr
  * Create a encoded stream for the jetson, which is fully hardware accelerated for h264,h265 and mjpeg.
  * @param sensor_id sensor id, set to -1 to let nvarguscamerasrc figure it out
  */
-static std::string createJetsonStream(const int sensor_id, const int bitrate, const VideoFormat videoFormat) {
+static std::string createJetsonStream(const int sensor_id, const int bitrateKBits, const VideoFormat videoFormat) {
   assert(videoFormat.videoCodec != VideoCodecUnknown);
   std::stringstream ss;
   // possible to omit the sensor id, nvarguscamerasrc will then figure out the right sensor id.
@@ -98,9 +98,9 @@ static std::string createJetsonStream(const int sensor_id, const int bitrate, co
   ss << fmt::format("video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! ",
 					videoFormat.width, videoFormat.height, videoFormat.framerate);
   if (videoFormat.videoCodec == VideoCodecH265) {
-	ss << fmt::format("nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} ! ", bitrate);
+	ss << fmt::format("nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} ! ", bitrateKBits);
   } else if (videoFormat.videoCodec == VideoCodecH264) {
-	ss << fmt::format("nvv4l2h264enc name=nvenc control-rate=1 insert-sps-pps=1 bitrate={} ! ", bitrate);
+	ss << fmt::format("nvv4l2h264enc name=nvenc control-rate=1 insert-sps-pps=1 bitrate={} ! ", bitrateKBits);
   } else {
 	ss << fmt::format("nvjpegenc quality=50 ! ");
   }
@@ -113,7 +113,7 @@ static std::string createJetsonStream(const int sensor_id, const int bitrate, co
  */
 static std::string createV4l2SrcRawAndSwEncodeStream(const std::string &device_node,
 													 const VideoCodec videoCodec,
-													 const int bitrate) {
+													 const int bitrateKBits) {
   std::stringstream ss;
   assert(videoCodec != VideoCodecUnknown);
   ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
@@ -126,9 +126,11 @@ static std::string createV4l2SrcRawAndSwEncodeStream(const std::string &device_n
   ss << "queue ! ";
   assert(videoCodec != VideoCodecUnknown);
   if (videoCodec == VideoCodecH264) {
-	ss << fmt::format("x264enc name=encodectrl bitrate={} tune=zerolatency key-int-max=10 ! ", bitrate);
+	// https://gstreamer.freedesktop.org/documentation/x264/index.html?gi-language=c
+	ss << fmt::format("x264enc name=encodectrl bitrate={} tune=zerolatency key-int-max=10 ! ", bitrateKBits);
   } else if (videoCodec == VideoCodecH265) {
-	ss << fmt::format("x265enc name=encodectrl bitrate={} ! ", bitrate);
+	// https://gstreamer.freedesktop.org/documentation/x265/index.html?gi-language=c
+	ss << fmt::format("x265enc name=encodectrl bitrate={} ! ", bitrateKBits);
   } else {
 	std::cerr << "no sw encoder for MJPEG\n";
   }
@@ -158,16 +160,19 @@ static std::string createV4l2SrcAlreadyEncodedStream(const std::string &device_n
 
 // These are not tested
 static std::string createUVCH264Stream(const std::string &device_node,
-									   const int bitrate,
+									   const int bitrateKBits,
 									   const VideoFormat videoFormat) {
   assert(videoFormat.videoCodec == VideoCodecH264);
+  // https://gstreamer.freedesktop.org/documentation/uvch264/uvch264src.html?gi-language=c#uvch264src:average-bitrate
+  // bitrate in bits per second
+  const int bitrateBitsPerSecond=bitrateKBits*1024;
   std::stringstream ss;
   ss << fmt::format(
 	  "uvch264src device={} peak-bitrate={} initial-bitrate={} average-bitrate={} rate-control=1 iframe-period=1000 name=encodectrl auto-start=true encodectrl.vidsrc ! ",
 	  device_node,
-	  bitrate,
-	  bitrate,
-	  bitrate);
+	  bitrateBitsPerSecond,
+	  bitrateBitsPerSecond,
+	  bitrateBitsPerSecond);
   ss << fmt::format("video/x-h264,width={}, height={}, framerate={}/1 ! ",
 					videoFormat.width, videoFormat.height, videoFormat.framerate);
   return ss.str();
