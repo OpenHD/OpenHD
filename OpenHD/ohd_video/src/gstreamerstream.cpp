@@ -80,7 +80,6 @@ void GStreamerStream::setup() {
   if(m_camera.settings.enableAirRecordingToFile){
 	std::cout<<"Air recording active\n";
 	m_pipeline<<" tee name=t ! queue ! ";
-
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
