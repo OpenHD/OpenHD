@@ -220,5 +220,23 @@ static std::string createRtpForVideoCodec(const VideoCodec videoCodec) {
 static std::string createOutputUdpLocalhost(const int udpOutPort) {
   return fmt::format(" udpsink host=127.0.0.1 port={} ", udpOutPort);
 }
+
+// Assumes there is a tee command named "t" somewhere in the pipeline right after the encoding step,
+// so we can get the raw encoded data out.
+static std::string createRecordingForVideoCodec(const VideoCodec videoCodec){
+  assert(videoCodec != VideoCodecUnknown);
+  std::stringstream ss;
+  ss<<"t. ! queue ! ";
+  if(videoCodec==VideoCodecH264){
+	ss<<"h264parse ! ";
+  }else if(videoCodec==VideoCodecH265){
+	ss<<"h265parse ! ";
+  }else{
+	assert(videoCodec==VideoCodecMJPEG);
+	ss << "jpegparse ! ";
+  }
+  ss << "mp4mux ! filesink location=file.mp4";
+  return ss.str();
+}
 }
 #endif //OPENHD_OHDGSTHELPER_H
