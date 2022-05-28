@@ -131,6 +131,7 @@ struct WiFiCard {
   bool supports_injection = false;
   bool supports_hotspot = false;
   bool supports_rts = false;
+  // These are values that can change dynamically at run time.
   WifiCardSettings settings;
 };
 
