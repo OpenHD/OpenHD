@@ -66,7 +66,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Now this is kinda stupid - we write json's during the discovery, then we read them back in
-	// merged stupidly with some fragments that resemble settings.
 	// Note that interface, telemetry and video might also read the or update the jsons
 	const auto platform = platform_from_manifest();
 	const auto profile = profile_from_manifest();
@@ -75,7 +74,7 @@ int main(int argc, char *argv[]) {
 	auto ohdInterface = std::make_unique<OHDInterface>(profile);
 
 	// then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
-	auto telemetry = std::make_unique<OHDTelemetry>(platform, profile);
+	auto ohdTelemetry = std::make_unique<OHDTelemetry>(platform, profile);
 
 	// and start ohdVideo if we are on the air pi
 	std::unique_ptr<OHDVideo> ohdVideo;
@@ -99,7 +98,7 @@ int main(int argc, char *argv[]) {
 		ohdVideo->restartIfStopped();
 		ss<<ohdVideo->createDebug();
 	  }
-	  ss<<telemetry->createDebug();
+	  ss << ohdTelemetry->createDebug();
 	  ss<<"---------------------------------OpenHD-state debug   end ---------------------------------\n";
 	  std::cout<<ss.str();
 	}
