@@ -16,15 +16,17 @@ OHDInterface::OHDInterface(const OHDProfile &profile) : profile(profile) {
 	//ethernet->configure();
 	wbStreams->set_broadcast_card_names(wifiCards->get_broadcast_card_names());
 	wbStreams->configure();
-	//
-	usbTetherListener=std::make_unique<USBTetherListener>([this](bool removed,std::string ip){
-	  if(removed){
-		removeExternalDeviceIpForwarding(ip);
-	  }else{
-		addExternalDeviceIpForwarding(ip);
-	  }
-	});
-	usbTetherListener->startLooping();
+	// usb tethering is only active on ground
+	if(profile.is_air){
+	  usbTetherListener=std::make_unique<USBTetherListener>([this](bool removed,std::string ip){
+		if(removed){
+		  removeExternalDeviceIpForwarding(ip);
+		}else{
+		  addExternalDeviceIpForwarding(ip);
+		}
+	  });
+	  usbTetherListener->startLooping();
+	}
   } catch (std::exception &ex) {
 	std::cerr << "Error: " << ex.what() << std::endl;
 	exit(1);
