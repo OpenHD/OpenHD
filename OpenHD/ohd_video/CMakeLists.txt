@@ -25,7 +25,6 @@ pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
         gstreamer-video-1.0>=1.4
         gstreamer-app-1.0>=1.4)
 # FUCKING GSTREAMER !! end
-find_package(fmt REQUIRED)
 SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} fmt::fmt)
 
 SET(ALL_VIDEO_SOURCE_FILES
