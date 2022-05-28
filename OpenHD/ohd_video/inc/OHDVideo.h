@@ -55,9 +55,8 @@ class OHDVideo {
   std::vector<std::unique_ptr<CameraStream>> m_camera_streams;
   // each camera stream already links camera, is this duplicated ??!
   std::vector<Camera> m_cameras;
-  // these methods are from camera microservice
-  void setup();
   void process_manifest();
+  void setup();
   void configure(Camera &camera);
 };
 

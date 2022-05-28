@@ -38,6 +38,17 @@ std::string OHDVideo::createDebug() const {
   return ss.str();
 }
 
+void OHDVideo::process_manifest() {
+  m_cameras = cameras_from_manifest();
+  if (m_cameras.empty()) {
+	std::cerr << "Started as air but no camera(s) have been found from json.Adding dummy camera\n";
+	// If there is no camera, but we are running as air, create and start a dummy camera:
+	Camera camera{};
+	camera.type = CameraTypeDummy;
+	m_cameras.push_back(camera);
+  }
+}
+
 void OHDVideo::setup() {
   std::cout << "OHDVideo::setup()" << std::endl;
   process_manifest();
@@ -47,25 +58,9 @@ void OHDVideo::setup() {
 	if (!check_bitrate_sane(camera.settings.bitrateKBits)) {
 	  camera.settings.bitrateKBits = DEFAULT_BITRATE_KBITS;
 	}
-	// check to see if the video codec is messed up.
-	//if (camera.codec == VideoCodecUnknown) {
-	//    std::cout<<"Fixing VideoCodecUnknown to VideoCodecH264\n";
-	//    camera.codec = VideoCodecH264;
-	//}
   }
   for (auto &camera: m_cameras) {
 	configure(camera);
-  }
-}
-
-void OHDVideo::process_manifest() {
-  m_cameras = cameras_from_manifest();
-  if (m_cameras.empty()) {
-	std::cerr << "Started as air but no camera(s) have been found from json.Adding dummy camera\n";
-	// If there is no camera, but we are running as air, create and start a dummy camera:
-	Camera camera{};
-	camera.type = CameraTypeDummy;
-	m_cameras.push_back(camera);
   }
 }
 
