@@ -208,7 +208,7 @@ struct Camera {
   std::string pid;
   // for USB this is the bus number, for CSI it's the connector number
   std::string bus;
-  // Unique index of this camera, should start at 0. The index number depends on the order the cameras were picked
+  // Unique index of this camera, should start at 0. The index number depends on the order the cameras were picked up
   // during the discovery step.
   int index = 0;
   // All the endpoints supported by this camera.

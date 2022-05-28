@@ -54,7 +54,7 @@ void DCameras::detect_raspberrypi_csi() {
 	std::cout << "Cameras::detect_raspberrypi_csi() vcgencmd not found" << std::endl;
 	return;
   }
-  const auto raw_value=vcgencmd_result.value();
+  const auto& raw_value=vcgencmd_result.value();
   std::smatch result;
   // example "supported=2 detected=2"
   const std::regex r{R"(supported=([\d]+)\s+detected=([\d]+))"};
@@ -90,7 +90,7 @@ void DCameras::detect_raspberrypi_csi() {
 	camera.bus = "1";
 	camera.index = m_discover_index;
 	m_discover_index++;
-	CameraEndpoint endpoint=DRPICamerasHelper::createCameraEndpointRpi(false);
+	CameraEndpoint endpoint=DRPICamerasHelper::createCameraEndpointRpi(true);
 	m_camera_endpoints.push_back(endpoint);
 	m_cameras.push_back(camera);
   }
