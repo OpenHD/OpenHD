@@ -56,7 +56,7 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
   } else if (videoFormat.videoCodec == VideoCodecH265) {
 	ss << fmt::format("x265enc bitrate={} tune=zerolatency key-int-max=10 ! ", DEFAULT_BITRATE_KBITS);
   } else {
-	ss << "jpegenc !";
+	ss << "jpegenc ! ";
   }
   return ss.str();
 }

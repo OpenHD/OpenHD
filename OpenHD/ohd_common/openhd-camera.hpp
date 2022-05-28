@@ -189,6 +189,8 @@ struct CameraSettings{
   std::string url;
   // optional, if not empty we should always use the manual pipeline and discard everything else.
   std::string manual_pipeline;
+  // enable/disable recording to file
+  bool enableAirRecordingToFile= false;
   // todo they are simple for the most part, but rn not implemented yet.
   std::string brightness;
   std::string contrast;

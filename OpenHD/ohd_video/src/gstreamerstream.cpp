@@ -72,6 +72,14 @@ void GStreamerStream::setup() {
 	  return;
 	}
   }
+  // quick check,here the pipeline should end with a "! ";
+  if(!OHDUtil::endsWith(m_pipeline.str(),"! ")){
+	std::cerr<<"Probably ill-formatted pipeline:"<<m_pipeline.str()<<"\n";
+  }
+  if(m_camera.settings.enableAirRecordingToFile){
+	std::cout<<"Air recording active\n";
+	m_pipeline<<" tee name=t ! queue ! "
+  }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
   m_pipeline << OHDGstHelper::createRtpForVideoCodec(m_camera.settings.userSelectedVideoFormat.videoCodec);

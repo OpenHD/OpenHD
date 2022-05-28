@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 #include <optional>
+#include <string>
 
 namespace OHDUtil {
 
@@ -17,6 +18,15 @@ static std::string to_uppercase(std::string input) {
   }
   return input;
 }
+
+// from https://stackoverflow.com/questions/874134/find-out-if-string-ends-with-another-string-in-c
+static bool endsWith(const std::string& str, const std::string& suffix){
+  return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
+}
+static bool startsWith(const std::string& str, const std::string& prefix){
+  return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
+}
+
 /**
  * Utility to execute a command on the command line.
  * Blocks until the command has been executed, and returns its result.
