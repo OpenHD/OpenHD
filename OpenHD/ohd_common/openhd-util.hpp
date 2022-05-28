@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <regex>
 
 namespace OHDUtil {
 
@@ -79,6 +80,16 @@ static std::optional<std::string> run_command_out(const char* command){
   }
   return raw_value;
 }
+
+// Tries to extract a valid ip from the given input string.
+// Returns std::nullopt on error, otherwise a always "valid" ip in string from
+/*static bool createValidIp(const std::string input){
+  // Regex expression for validating IPv4
+  std::regex regex_ipv4("(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])");
+  if (regex_match(input, regex_ipv4))
+	return true;
+  return false;
+}*/
 
 }
 
