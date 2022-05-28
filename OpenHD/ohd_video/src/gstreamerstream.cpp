@@ -76,7 +76,8 @@ void GStreamerStream::setup() {
   if(!OHDUtil::endsWith(m_pipeline.str(),"! ")){
 	std::cerr<<"Probably ill-formatted pipeline:"<<m_pipeline.str()<<"\n";
   }
-  m_camera.settings.enableAirRecordingToFile= true;
+  // TODO: ground recording is not working yet, since we cannot properly close the file at the time.
+  m_camera.settings.enableAirRecordingToFile= false;
   // for lower latency we only add the tee command at the right place if recording is enabled.
   if(m_camera.settings.enableAirRecordingToFile){
 	std::cout<<"Air recording active\n";
@@ -92,7 +93,6 @@ void GStreamerStream::setup() {
   }
   // add udp out part
   m_pipeline << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
-  // XXX
   if(m_camera.settings.enableAirRecordingToFile){
 	m_pipeline<<OHDGstHelper::createRecordingForVideoCodec(m_camera.settings.userSelectedVideoFormat.videoCodec);
   }
