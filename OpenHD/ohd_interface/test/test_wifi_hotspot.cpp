@@ -16,7 +16,6 @@ int main(int argc, char *argv[]) {
 
   WifiHotspot wifiHotspot{wifiCard};
   wifiHotspot.start();
-  std::cout<<"Wifi hotspot started\n";
   static bool quit=false;
   signal(SIGTERM, [](int sig){ quit= true;});
   while (!quit){

@@ -128,16 +128,18 @@ void WifiHotspot::start() {
   _config << m_hostapd_config_file_content;
   _config.close();
   // disable hostapd if it is running
-  OHDUtil::run_command("systemctl",{"disable hostapd"});
+  //OHDUtil::run_command("systemctl",{"disable hostapd"});
   // then start hostapd with the created config file. Now the wifi AP is running.
   // -B means run in the background.
   OHDUtil::run_command("hostapd",{"-B -d /tmp/hostapd.conf"});
   // and we re-start the hostapd service
-  OHDUtil::run_command("systemctl",{"enable hostapd"});
+  //OHDUtil::run_command("systemctl",{"enable hostapd"});
   // Configure the detected USB tether device (not sure if needed)
   OHDUtil::run_command("dhclient",{wifiCard.interface_name});
+  std::cout<<"Wifi hotspot started\n";
 }
 
 void WifiHotspot::stop() {
   OHDUtil::run_command("systemctl",{"disable hostapd"});
+  std::cout<<"Wifi hotspot stopped\n";
 }
