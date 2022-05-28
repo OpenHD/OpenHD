@@ -97,10 +97,13 @@ static std::string createJetsonStream(const int sensor_id, const int bitrateKBit
   }
   ss << fmt::format("video/x-raw(memory:NVMM), width={}, height={}, format=NV12, framerate={}/1 ! ",
 					videoFormat.width, videoFormat.height, videoFormat.framerate);
+  // https://developer.download.nvidia.com/embedded/L4T/r31_Release_v1.0/Docs/Accelerated_GStreamer_User_Guide.pdf?E_vSS50FKrZaJBjDtnCBmtaY8hWM1QCYlMHtXBqvZ_Jeuw0GXuLNaQwMBWUDABSnWCD-p8ABlBpBpP-kb2ADgWugbW8mgGPxUWJG_C4DWaL1yKjUVMy1AxH1RTaGOW82yFJ549mea--FBPuZUH3TT1MoEd4-sgdrZal5qr1J0McEFeFaVUc&t=eyJscyI6InJlZiIsImxzZCI6IlJFRi1kb2NzLm52aWRpYS5jb21cLyJ9
+  // jetson is also bits per second
+  const auto bitrateBitsPerSecond=bitrateKBits*1024;
   if (videoFormat.videoCodec == VideoCodecH265) {
-	ss << fmt::format("nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} ! ", bitrateKBits);
+	ss << fmt::format("nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} ! ", bitrateBitsPerSecond);
   } else if (videoFormat.videoCodec == VideoCodecH264) {
-	ss << fmt::format("nvv4l2h264enc name=nvenc control-rate=1 insert-sps-pps=1 bitrate={} ! ", bitrateKBits);
+	ss << fmt::format("nvv4l2h264enc name=nvenc control-rate=1 insert-sps-pps=1 bitrate={} ! ", bitrateBitsPerSecond);
   } else {
 	ss << fmt::format("nvjpegenc quality=50 ! ");
   }
