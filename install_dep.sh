@@ -18,3 +18,4 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
 
 
 gem install fpm
+pip install --upgrade cloudsmith-cli
