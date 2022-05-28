@@ -235,7 +235,7 @@ static std::string createRecordingForVideoCodec(const VideoCodec videoCodec){
 	assert(videoCodec==VideoCodecMJPEG);
 	ss << "jpegparse ! ";
   }
-  ss << "mp4mux ! filesink location=file.mp4";
+  ss << "mp4mux ! filesink location=/tmp/file.mp4";
   return ss.str();
 }
 }
