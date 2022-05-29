@@ -21,7 +21,8 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
 gem install fpm
 pip install --upgrade cloudsmith-cli
 
- sudo apt purge cmake
+   sudo snap install core
+   sudo apt purge -y cmake
     sudo snap install cmake --classic
     wget https://codeload.github.com/fmtlib/fmt/zip/refs/tags/7.1.3
     unzip 7.1.3
