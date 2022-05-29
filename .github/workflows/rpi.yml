@@ -37,6 +37,8 @@ jobs:
             cd /opt
             cd Open.HD
             apt update
+            echo CLOUDSMITH_API_KEY
+            mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
             sudo ./install_dep.sh
             sudo ./package.sh armhf raspbian bullseye
