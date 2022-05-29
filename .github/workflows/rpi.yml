@@ -28,7 +28,6 @@ jobs:
         base_image: raspios_lite:latest
         image_additional_mb: 40000
         commands: |
-            sudo rm -Rf *
             ls -a
             sudo apt install tree
             tree
