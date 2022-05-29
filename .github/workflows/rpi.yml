@@ -26,9 +26,12 @@ jobs:
       id: build_image
       with:
         base_image: raspios_lite:latest
+        image_additional_mb: 40000
         commands: |
-            df -h
             sudo rm -Rf *
+            ls -a
+            sudo apt install tree
+            tree
             sudo ./install_dep.sh
             sudo ./package.sh armhf raspbian bullseye
 
