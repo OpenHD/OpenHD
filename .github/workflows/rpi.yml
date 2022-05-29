@@ -16,8 +16,6 @@ jobs:
         base_image: raspios_lite:2022-04-04
         commands: |
 
-    - name: Compress the release image
-    
     - name: Clean UP
       run: |
         sudo rm -Rf *
