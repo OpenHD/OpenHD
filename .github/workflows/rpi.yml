@@ -13,7 +13,7 @@ jobs:
     - uses: pguyot/arm-runner-action@v2
       id: build_image
       with:
-        base_image: raspios_lite:2022-04-04
+        base_image: raspbian_lite:latest
         commands: |
 
     - name: Clean UP
