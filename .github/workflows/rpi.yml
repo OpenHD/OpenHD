@@ -10,28 +10,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
     - uses: pguyot/arm-runner-action@v2.3.1 
       id: build_image
       with:
         base_image: raspios_lite:latest
         commands: |
-
-    - name: Clean UP
-      run: |
-        sudo rm -Rf *
-
-    - name: Checkout repository and submodules
-      uses: actions/checkout@v3
-      with:
-        submodules: recursive
-          
-    - name: Install Dependencies
-      run: |
-        sudo ./install_dep.sh
-
-    - name: Build with make
-      run: |
-        sudo ./package.sh armhf raspbian bullseye
+            sudo rm -Rf *
+            sudo ./install_dep.sh
+            sudo ./package.sh armhf raspbian bullseye
 
     - name: Upload to Github
       uses: 'actions/upload-artifact@v2'
