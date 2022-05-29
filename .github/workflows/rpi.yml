@@ -10,39 +10,39 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: pguyot/arm-runner-action@v2.3.1
+    - uses: pguyot/arm-runner-action@v2
       id: build_image
       with:
         base_image: raspios_lite:2022-04-04
         commands: |
-            echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
-            echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
 
-      - name: Clean UP
-        run: |
-          sudo rm -Rf *
+    - name: Compress the release image
+    
+    - name: Clean UP
+      run: |
+        sudo rm -Rf *
 
-      - name: Checkout repository and submodules
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
+    - name: Checkout repository and submodules
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
           
-      - name: Install Dependencies
-        run: |
-          sudo ./install_dep.sh
+    - name: Install Dependencies
+      run: |
+        sudo ./install_dep.sh
 
-      - name: Build with make
-        run: |
-          sudo ./package.sh armhf raspbian bullseye
+    - name: Build with make
+      run: |
+        sudo ./package.sh armhf raspbian bullseye
 
-      - name: Upload to Github
-        uses: 'actions/upload-artifact@v2'
-        with:
-          name: "Open.HD"
-          path: |
-            *.deb
-            *.log
-          if-no-files-found: error
+    - name: Upload to Github
+      uses: 'actions/upload-artifact@v2'
+      with:
+        name: "Open.HD"
+        path: |
+          *.deb
+          *.log
+        if-no-files-found: error
           
       #- name: Install
       #  run: |
