@@ -10,6 +10,8 @@
 #include <optional>
 #include <string>
 #include <regex>
+#include <csignal>
+#include <thread>
 
 namespace OHDUtil {
 
@@ -81,6 +83,16 @@ static std::optional<std::string> run_command_out(const char* command){
   return raw_value;
 }
 
+// i use this one during testing a lot, when a module's functionality uses a start() / stop()
+// pattern with its own thread. This keeps the current thread alive, until a sigterm (CTR+X) happens
+static void keep_alive_until_sigterm(){
+  static bool quit=false;
+  signal(SIGTERM, [](int sig){ quit= true;});
+  while (!quit){
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::cout<<"X\n";
+  }
+}
 // Tries to extract a valid ip from the given input string.
 // Returns std::nullopt on error, otherwise a always "valid" ip in string from
 /*static bool createValidIp(const std::string input){

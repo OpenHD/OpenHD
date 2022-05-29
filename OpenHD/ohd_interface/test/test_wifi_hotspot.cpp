@@ -16,12 +16,7 @@ int main(int argc, char *argv[]) {
 
   WifiHotspot wifiHotspot{wifiCard};
   wifiHotspot.start();
-  static bool quit=false;
-  signal(SIGTERM, [](int sig){ quit= true;});
-  while (!quit){
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-	std::cout<<"X\n";
-  }
+  OHDUtil::keep_alive_until_sigterm();
   std::cout<<"test end\n";
   wifiHotspot.stop();
   return 0;
