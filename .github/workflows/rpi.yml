@@ -26,6 +26,7 @@ jobs:
         image_additional_mb: 40000
         commands: |
             apt install -y git
+            ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
             git clone https://github.com/OpenHD/Open.HD
             cd Open.HD
             git checkout consti-builder
