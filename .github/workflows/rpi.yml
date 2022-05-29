@@ -31,7 +31,7 @@ jobs:
         commands: |
             ls -a
             cd /opt
-            ls -a
+            cd Open.HD
             apt update
             sudo ./install_dep.sh
             sudo ./package.sh armhf raspbian bullseye
