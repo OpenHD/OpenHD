@@ -29,6 +29,7 @@ jobs:
             git clone --recursive https://github.com/OpenHD/Open.HD
             cd Open.HD
             git checkout consti-builder
+            apt update
             sudo ./install_dep.sh
             sudo ./package.sh armhf raspbian bullseye
 
