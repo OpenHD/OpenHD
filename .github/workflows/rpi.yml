@@ -16,8 +16,8 @@ jobs:
       with:
         base_image: raspios_lite:2022-04-04
         commands: |
-          echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
-          echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
+            echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
+            echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
 
       - name: Clean UP
         run: |
