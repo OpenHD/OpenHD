@@ -25,6 +25,7 @@ jobs:
         base_image: raspios_lite:latest
         image_additional_mb: 40000
         commands: |
+            apt install git
             git clone --recursive https://github.com/OpenHD/Open.HD
             cd Open.HD
             git checkout consti-builder
