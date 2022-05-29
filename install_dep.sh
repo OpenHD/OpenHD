@@ -2,14 +2,11 @@
 
 # Install all the dependencies needed to build OpenHD from source.
 # TODO do we need libgstreamer1.0-dev and libgstreamer-plugins-base1.0-dev ?
-    echo "update gcc and libboost to something usable"
-    sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-    sudo add-apt-repository ppa:mhier/libboost-latest -y
-    sudo add-apt-repository ppa:git-core/ppa -y
+   
 
 apt -y install build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libsodium-dev \
-            libboost1.74-dev libasio-dev \
+            libboost-all-dev libasio-dev \
             libgstreamer-plugins-base1.0-dev \
             libusb-1.0-0-dev \
             libv4l-dev \
