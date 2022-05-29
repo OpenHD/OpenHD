@@ -9,6 +9,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
     steps:
     - name: Maximize build space
       uses: easimon/maximize-build-space@master
@@ -28,11 +30,14 @@ jobs:
         base_image: raspios_lite:latest
         image_additional_mb: 40000
         copy_repository_path: /opt
+        copy_artifact_path: Open.HD
+        import_github_env: true
         commands: |
             ls -a
             cd /opt
             cd Open.HD
             apt update
+            touch /usr/local/share/openhd/joyconfig.txt
             sudo ./install_dep.sh
             sudo ./package.sh armhf raspbian bullseye
 
