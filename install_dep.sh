@@ -23,6 +23,8 @@ pip install --upgrade cloudsmith-cli
 
    sudo snap install core
    sudo apt purge -y cmake
+   systemctl start snapd
+   
     sudo snap install cmake --classic
     wget https://codeload.github.com/fmtlib/fmt/zip/refs/tags/7.1.3
     unzip 7.1.3
