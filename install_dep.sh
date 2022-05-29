@@ -13,8 +13,21 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
             curl \
             ruby-dev \
             python3-pip \
-            libnl-3-dev libnl-genl-3-dev \
+            libnl-3-dev cmake snapd libboost-all-dev libnl-genl-3-dev \
             libnl-route-3-dev || exit 1
 
 
 gem install fpm
+pip install --upgrade cloudsmith-cli
+
+ sudo apt purge cmake
+    sudo snap install cmake --classic
+    wget https://codeload.github.com/fmtlib/fmt/zip/refs/tags/7.1.3
+    unzip 7.1.3
+    cd fmt*
+    mkdir build 
+    cd build
+    cmake ..
+    sudo make -j4 install
+    cd ../../
+

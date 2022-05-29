@@ -83,7 +83,7 @@ max_framebuffers=2
 # Enable audio (loads snd_bcm2835)
 dtparam=audio=on
 
-gpu_mem=160
+gpu_mem=400
 
 # force gpu to run in turbo mode for less latency and jitter
 force_turbo=1
@@ -124,11 +124,19 @@ usb_mdio=0x7000
 # uncomment for I2C
 #dtparam=i2c1=on
 dtparam=i2c_arm=on
-#uncomment below if using veye innomaker imx219 cam or HAT
+
+#uncomment below if using veye camera
 #dtparam=i2c_vc=on
-#
+
+#uncomment below for IMX327, IMX462 or IMX385
+#dtoverlay=veyecam2m,media-controller=0
+
+#uncomment below for IMX307
+#dtoverlay=csimx307,media-controller=0
 # uncomment for SPI
 #dtparam=spi=on
+
+#camera_auto_detect=1
 
 start_x=1
 
