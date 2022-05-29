@@ -27,6 +27,7 @@ jobs:
       with:
         base_image: raspios_lite:latest
         commands: |
+            df -h
             sudo rm -Rf *
             sudo ./install_dep.sh
             sudo ./package.sh armhf raspbian bullseye
