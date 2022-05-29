@@ -19,19 +19,19 @@ jobs:
         remove-android: 'true'
         remove-haskell: 'true'
         overprovision-lvm: 'true'
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - uses: pguyot/arm-runner-action@v2.3.1 
       id: build_image
       with:
         base_image: raspios_lite:latest
         image_additional_mb: 40000
+        copy_repository_path: /opt
         commands: |
-            apt install -y git
-            mkdir /root/.ssh && chmod 0700 /root/.ssh 
-            ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-            git clone https://github.com/OpenHD/Open.HD
-            cd Open.HD
-            git checkout consti-builder
-            git submodule update --init --recursive || exit 1
+            ls -a
+            cd /opt
+            ls -a
             apt update
             sudo ./install_dep.sh
             sudo ./package.sh armhf raspbian bullseye
