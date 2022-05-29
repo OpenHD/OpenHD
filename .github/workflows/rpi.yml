@@ -8,10 +8,14 @@ env:
 
 jobs:
   build:
-    runs-on: [self-hosted, linux, ARM]
+    runs-on: ubuntu-latest
     steps:
-      - name: test
-        run: |
+    - uses: actions/checkout@v2
+    - uses: pguyot/arm-runner-action@v2
+      id: build_image
+      with:
+        base_image: raspios_lite:2022-04-04
+        commands: |
           echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
 
