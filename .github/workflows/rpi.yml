@@ -26,9 +26,10 @@ jobs:
         image_additional_mb: 40000
         commands: |
             apt install -y git
-            git clone --recursive https://github.com/OpenHD/Open.HD
+            git clone https://github.com/OpenHD/Open.HD
             cd Open.HD
             git checkout consti-builder
+            git submodule update --init --recursive || exit 1
             apt update
             sudo ./install_dep.sh
             sudo ./package.sh armhf raspbian bullseye
