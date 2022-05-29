@@ -10,9 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
     - uses: pguyot/arm-runner-action@v2.3.1
       id: build_image
       with:
