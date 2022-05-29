@@ -10,9 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
     - name: Maximize build space
       uses: easimon/maximize-build-space@master
       with:
@@ -28,9 +25,9 @@ jobs:
         base_image: raspios_lite:latest
         image_additional_mb: 40000
         commands: |
-            ls -a
-            sudo apt install tree
-            tree
+            git clone --recursive https://github.com/OpenHD/Open.HD
+            cd Open.HD
+            git checkout consti-builder
             sudo ./install_dep.sh
             sudo ./package.sh armhf raspbian bullseye
 
