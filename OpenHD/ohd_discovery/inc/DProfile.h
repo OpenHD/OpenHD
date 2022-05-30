@@ -6,8 +6,6 @@
 
 #include "DPlatform.h"
 
-#include "json.hpp"
-
 #include "openhd-platform.hpp"
 #include "openhd-discoverable.hpp"
 

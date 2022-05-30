@@ -11,8 +11,6 @@
 
 #include <utility>
 
-#include "json.hpp"
-
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 #include "openhd-wifi.hpp"

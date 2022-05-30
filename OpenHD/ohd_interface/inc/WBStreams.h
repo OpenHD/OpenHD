@@ -6,7 +6,6 @@
 #include <vector>
 #include <utility>
 
-#include "json.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-profile.hpp"
 

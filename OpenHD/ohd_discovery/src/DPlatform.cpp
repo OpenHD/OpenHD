@@ -9,8 +9,6 @@
 
 #include <regex>
 
-#include "json.hpp"
-
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"

@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-#include "json.hpp"
-#include "inja.hpp"
 #include "openhd-log.hpp"
 #include "openhd-settings.hpp"
 #include "openhd-wifi.hpp"

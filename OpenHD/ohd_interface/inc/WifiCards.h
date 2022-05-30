@@ -5,7 +5,6 @@
 #include <chrono>
 #include <vector>
 
-#include "json.hpp"
 
 #include "openhd-wifi.hpp"
 #include "openhd-profile.hpp"

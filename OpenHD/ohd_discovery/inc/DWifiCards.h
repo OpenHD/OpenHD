@@ -7,8 +7,6 @@
 
 #include "DPlatform.h"
 
-#include "json.hpp"
-
 #include "openhd-wifi.hpp"
 #include "openhd-platform.hpp"
 

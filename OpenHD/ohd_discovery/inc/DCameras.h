@@ -7,8 +7,6 @@
 
 #include "DPlatform.h"
 
-#include "json.hpp"
-
 #include "openhd-camera.hpp"
 #include "openhd-discoverable.hpp"
 

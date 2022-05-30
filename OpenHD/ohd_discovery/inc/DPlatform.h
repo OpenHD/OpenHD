@@ -4,8 +4,6 @@
 #include <array>
 #include <chrono>
 
-#include "json.hpp"
-
 #include "openhd-platform.hpp"
 #include "openhd-discoverable.hpp"
 

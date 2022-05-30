@@ -14,8 +14,6 @@
 #include <sstream>
 #include <regex>
 
-#include "json.hpp"
-
 #include "openhd-camera.hpp"
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"

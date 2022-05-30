@@ -12,7 +12,6 @@
 #include <iostream>
 #include <boost/algorithm/string/trim.hpp>
 
-#include "json.hpp"
 
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
