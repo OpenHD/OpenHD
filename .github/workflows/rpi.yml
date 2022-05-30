@@ -41,6 +41,7 @@ jobs:
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
             sudo ./install_dep.sh
+            export CLOUDSMITH_API_KEY=$CLOUDSMITH_API_KEY
             sudo ./package.sh armhf raspbian bullseye
             ls -a
 
