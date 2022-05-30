@@ -43,7 +43,7 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir,bool forceGround) {
 	_t.close();*/
 
 	// When we write the profile we need to reason weather this is an air or ground pi.
-	const int camera_count = cameras.count();
+	const int camera_count = cameras.getCameraCount();
 	bool is_air = camera_count > 0;
 	if (forceAir) {
 	  is_air = true;

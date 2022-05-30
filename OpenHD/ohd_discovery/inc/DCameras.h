@@ -25,7 +25,7 @@ class DCameras : public OHD::IDiscoverable {
 
   void write_manifest() override;
 
-  [[nodiscard]] int count() const {
+  [[nodiscard]] int getCameraCount() const {
 	return (int)m_cameras.size();
   }
  private:
