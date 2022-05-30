@@ -20,13 +20,5 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
 
 gem install fpm
 pip install --upgrade cloudsmith-cli
-cmake --version
-    wget https://codeload.github.com/fmtlib/fmt/zip/refs/tags/7.1.3
-    unzip 7.1.3
-    cd fmt*
-    mkdir build 
-    cd build
-    cmake ..
-    sudo make -j4 install
-    cd ../../
 
+curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash
