@@ -41,7 +41,7 @@ class WBStreams {
   void removeExternalDeviceIpForwarding(std::string ip);
  private:
   const OHDProfile &profile;
-  const int m_mcs = 3;
+  const int DEFAULT_MCS_INDEX = 3;
   std::vector<std::string> m_broadcast_cards_names={};
  private:
   // For telemetry, bidirectional in opposite directions

@@ -87,7 +87,7 @@ void WBStreams::configure_video() {
 }
 
 std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port)const {
-  RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, m_mcs};
+  RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, DEFAULT_MCS_INDEX};
   RadiotapHeader radiotapHeader{wifiParams};
   TOptions options{};
   // We log them all manually together
