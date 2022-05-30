@@ -22,3 +22,4 @@ gem install fpm
 pip install --upgrade cloudsmith-cli
 
 curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash
+apt -y install fmt
