@@ -28,7 +28,7 @@ jobs:
       id: build_image
       with:
         base_image: raspios_lite:latest
-        image_additional_mb: 40000
+        image_additional_mb: 4000
         copy_repository_path: /opt
         copy_artifact_path: Open.HD
         import_github_env: true
@@ -42,12 +42,14 @@ jobs:
             touch /usr/local/share/openhd/joyconfig.txt
             sudo ./install_dep.sh
             sudo ./package.sh armhf raspbian bullseye
+            ls -a
 
     - name: Upload to Github
       uses: 'actions/upload-artifact@v2'
       with:
         name: "Open.HD"
         path: |
+          Open.HD/*.deb
           *.deb
           *.log
         if-no-files-found: error

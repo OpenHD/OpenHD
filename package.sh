@@ -127,10 +127,6 @@ cp *.deb ../../
 
 git describe --exact-match HEAD >/dev/null 2>&1
 
-pip install --upgrade cloudsmith-cli
-cloudsmith -k $CLOUDSMITH_API_KEY
-
-
 if [[ "${DISTRO}" == "bullseye" ]]; then
             cloudsmith push deb openhd/openhd-2-1-alpha/raspbian/${DISTRO} ${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb
 fi
