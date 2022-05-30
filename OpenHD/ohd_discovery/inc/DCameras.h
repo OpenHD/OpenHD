@@ -17,7 +17,7 @@
  */
 class DCameras : public OHD::IDiscoverable {
  public:
-  DCameras(PlatformType platform_type, BoardType board_type);
+  explicit DCameras(const OHDPlatform& ohdPlatform);
 
   virtual ~DCameras() = default;
 
@@ -63,8 +63,7 @@ class DCameras : public OHD::IDiscoverable {
 
   int m_discover_index = 0;
 
-  PlatformType m_platform_type;
-  BoardType m_board_type;
+  const OHDPlatform& ohdPlatform;
 };
 
 #endif

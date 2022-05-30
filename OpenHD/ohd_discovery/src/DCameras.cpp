@@ -24,9 +24,8 @@
 
 #include "DCameras.h"
 
-DCameras::DCameras(PlatformType platform_type, BoardType board_type) :
-	m_platform_type(platform_type),
-	m_board_type(board_type){}
+DCameras::DCameras(const OHDPlatform& ohdPlatform) :
+	ohdPlatform(ohdPlatform){}
 
 void DCameras::discover() {
   std::cout << "Cameras::discover()" << std::endl;
@@ -35,7 +34,7 @@ void DCameras::discover() {
   // On all other platforms (for example jetson) the CSI camera is exposed as a normal V4l2 linux device,and we cah
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
-  if(m_platform_type==PlatformTypeRaspberryPi){
+  if(ohdPlatform.platform_type==PlatformTypeRaspberryPi){
 	detect_raspberrypi_csi();
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!

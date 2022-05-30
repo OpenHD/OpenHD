@@ -27,9 +27,8 @@ extern "C" {
 #include "nl.h"
 }
 
-DWifiCards::DWifiCards(PlatformType platform_type, BoardType board_type) :
-	m_platform_type(platform_type),
-	m_board_type(board_type) {}
+DWifiCards::DWifiCards(const OHDPlatform& ohdPlatform) :
+	ohdPlatform(ohdPlatform){}
 
 void DWifiCards::discover() {
   std::cout << "WiFi::discover()\n";

@@ -17,7 +17,7 @@
  */
 class DWifiCards : public OHD::IDiscoverable {
  public:
-  DWifiCards(PlatformType platform_type, BoardType board_type);
+  explicit DWifiCards(const OHDPlatform& ohdPlatform);
   virtual ~DWifiCards() = default;
   void discover() override;
   void write_manifest() override;
@@ -25,8 +25,7 @@ class DWifiCards : public OHD::IDiscoverable {
   void process_card(const std::string &interface_name);
  private:
   std::vector<WiFiCard> m_wifi_cards;
-  const PlatformType m_platform_type;
-  const BoardType m_board_type;
+  const OHDPlatform& ohdPlatform;
 };
 
 #endif
