@@ -35,7 +35,11 @@ add_library(OHDTelemetryLib
 target_link_libraries(OHDTelemetryLib PRIVATE ${OHD_TELEMETRY_USED_BOOST_LIBS})
 target_include_directories(OHDTelemetryLib PUBLIC src/)
 # include mavlink (header-only)
-target_include_directories(OHDTelemetryLib PUBLIC ../lib/c_library_v2_openhd)
+add_library(mavlink INTERFACE)
+target_include_directories(mavlink INTERFACE ../lib/c_library_v2_openhd/)
+target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
+#target_include_directories(OHDTelemetryLib PUBLIC ../lib/c_library_v2_openhd)
+
 # Note: We do not need wifibroadcast as a whole here, we can get the header-only files.
 target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
 
