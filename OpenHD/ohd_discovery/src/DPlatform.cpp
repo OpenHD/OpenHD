@@ -113,7 +113,6 @@ void DPlatform::detect_pc() {
 }
 
 void DPlatform::write_manifest() {
-  const OHDPlatform ohdPlatform{m_platform_type, m_board_type};
-  write_platform_manifest(ohdPlatform);
+  write_platform_manifest(getOHDPlatform());
 }
 

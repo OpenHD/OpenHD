@@ -22,13 +22,9 @@ class DPlatform : public OHD::IDiscoverable {
   void discover() override;
 
   void write_manifest() override;
-
-  PlatformType platform_type() {
-	return m_platform_type;
-  }
-
-  BoardType board_type() {
-	return m_board_type;
+  // call only after performing the discovery
+  [[nodiscard]] OHDPlatform getOHDPlatform()const{
+	return OHDPlatform{m_platform_type,m_board_type};
   }
  private:
   void detect_raspberrypi();
