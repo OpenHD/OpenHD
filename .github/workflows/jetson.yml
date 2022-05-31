@@ -30,7 +30,12 @@ jobs:
 
       - name: Build with make
         run: |
-          sudo ./package.sh arm64 ubuntu bionic
+          sudo mkdir -p /usr/local/share/openhd/
+          sudo touch /usr/local/share/openhd/joyconfig.txt
+          sudo chmod +x install_dep_jetson.sh
+          sudo ./install_dep_jetson.sh
+          sudo ./package.sh armhf raspbian bullseye
+          ls -a
 
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
@@ -40,6 +45,20 @@ jobs:
             *.deb
             *.log
           if-no-files-found: error
+    
+      - name: Push
+        id: push
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: "push"
+          format: "deb"
+          owner: "openhd"
+          repo: "openhd-2-1-alpha"
+          distro: "ubuntu"
+          release: "bionic"
+          republish: "true" # needed ONLY if version is not changing
+          file: "Open.HD/*.deb"
           
       #- name: Install
       #  run: |
