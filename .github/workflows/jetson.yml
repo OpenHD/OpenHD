@@ -34,7 +34,7 @@ jobs:
           sudo touch /usr/local/share/openhd/joyconfig.txt
           sudo chmod +x install_dep_jetson.sh
           sudo ./install_dep_jetson.sh
-          sudo ./package.sh armhf raspbian bullseye
+          sudo ./package.sh arm64 ubuntu bionic
           ls -a
 
       - name: Upload to Github
