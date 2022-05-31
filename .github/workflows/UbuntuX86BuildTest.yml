@@ -58,4 +58,4 @@ jobs:
           distro: "ubuntu"
           release: "bionic"
           republish: "true" # needed ONLY if version is not changing
-          file: "Open.HD/*.deb"
+          file: "*.deb"
