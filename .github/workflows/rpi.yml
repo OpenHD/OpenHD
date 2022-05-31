@@ -49,8 +49,6 @@ jobs:
         name: "Open.HD"
         path: |
           Open.HD/*.deb
-          *.deb
-          *.log
         if-no-files-found: error
 
     - name: Push
@@ -65,7 +63,7 @@ jobs:
         distro: "raspbian"
         release: "bullseye"
         republish: "true" # needed ONLY if version is not changing
-        file: "*.deb"
+        file: "Open.HD/*.deb"
           
       #- name: Install
       #  run: |
