@@ -25,8 +25,6 @@ class OHDInterface {
    */
   explicit OHDInterface(const OHDProfile &profile);
   std::unique_ptr<WifiCards> wifiCards;
-  // temprarily removed
-  //std::unique_ptr<EthernetCards> ethernet;
   std::unique_ptr<WBStreams> wbStreams;
   std::unique_ptr<USBTetherListener> usbTetherListener;
   // Verbose string about the current state.

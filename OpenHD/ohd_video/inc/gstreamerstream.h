@@ -40,8 +40,6 @@ class GStreamerStream : public CameraStream {
   void set_format(VideoFormat videoFormat) override;
  private:
   GstElement *gst_pipeline = nullptr;
-
-  GMainLoop *mainLoop = nullptr;
   // The pipeline that is started in the end
   std::stringstream m_pipeline;
 };
