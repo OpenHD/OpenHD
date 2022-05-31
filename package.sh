@@ -126,11 +126,3 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PK
 cp *.deb ../../
 
 git describe --exact-match HEAD >/dev/null 2>&1
-
-if [[ "${DISTRO}" == "bullseye" ]]; then
-            cloudsmith push deb openhd/openhd-2-1-alpha/raspbian/${DISTRO} ${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb
-fi
-
-if [[ "${DISTRO}" == "bionic" ]]; then
-            cloudsmith push deb openhd/openhd-2-1-alpha/ubuntu/${DISTRO} ${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb
-fi
