@@ -15,3 +15,4 @@ apt -y install cmake build-essential autotools-dev automake libtool autoconf \
             libfmt-dev || exit 1
             
 gem install fpm
+pip install --upgrade cloudsmith-cli
