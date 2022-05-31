@@ -8,38 +8,62 @@ env:
 
 jobs:
   build:
-    runs-on: [self-hosted, linux, ARM]
+    runs-on: ubuntu-latest
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
     steps:
-      - name: test
-        run: |
-          echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
-          echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
+    - name: Maximize build space
+      uses: easimon/maximize-build-space@master
+      with:
+        root-reserve-mb: 512
+        swap-size-mb: 1024
+        remove-dotnet: 'true'
+        remove-android: 'true'
+        remove-haskell: 'true'
+        overprovision-lvm: 'true'
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - uses: pguyot/arm-runner-action@v2.3.1 
+      id: build_image
+      with:
+        base_image: raspios_lite:latest
+        image_additional_mb: 4000
+        copy_repository_path: /opt
+        copy_artifact_path: Open.HD
+        import_github_env: true
+        commands: |
+            ls -a
+            cd /opt
+            cd Open.HD
+            apt update
+            mkdir -p /usr/local/share/openhd/
+            touch /usr/local/share/openhd/joyconfig.txt
+            sudo ./install_dep.sh
+            sudo ./package.sh armhf raspbian bullseye
+            ls -a
 
-      - name: Clean UP
-        run: |
-          sudo rm -Rf *
+    - name: Upload to Github
+      uses: 'actions/upload-artifact@v2'
+      with:
+        name: "Open.HD"
+        path: |
+          Open.HD/*.deb
+        if-no-files-found: error
 
-      - name: Checkout repository and submodules
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-          
-      - name: Install Dependencies
-        run: |
-          sudo ./install_dep.sh
-
-      - name: Build with make
-        run: |
-          sudo ./package.sh armhf raspbian bullseye
-
-      - name: Upload to Github
-        uses: 'actions/upload-artifact@v2'
-        with:
-          name: "Open.HD"
-          path: |
-            *.deb
-            *.log
-          if-no-files-found: error
+    - name: Push
+      id: push
+      uses: cloudsmith-io/action@master
+      with:
+        api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+        command: "push"
+        format: "deb"
+        owner: "openhd"
+        repo: "openhd-2-1-alpha"
+        distro: "raspbian"
+        release: "bullseye"
+        republish: "true" # needed ONLY if version is not changing
+        file: "Open.HD/*.deb"
           
       #- name: Install
       #  run: |
