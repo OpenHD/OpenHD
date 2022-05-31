@@ -2,11 +2,10 @@
 
 # Install all the dependencies needed to build OpenHD from source.
 # TODO do we need libgstreamer1.0-dev and libgstreamer-plugins-base1.0-dev ?
-   
 
 apt -y install build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libsodium-dev \
-            libboost-all-dev libasio-dev \
+            libboost1.74-dev libasio-dev \
             libgstreamer-plugins-base1.0-dev \
             libusb-1.0-0-dev \
             libv4l-dev \
@@ -21,5 +20,14 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
 gem install fpm
 pip install --upgrade cloudsmith-cli
 
-curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash
-apt -y install fmt
+ sudo apt purge cmake
+    sudo snap install cmake --classic
+    wget https://codeload.github.com/fmtlib/fmt/zip/refs/tags/7.1.3
+    unzip 7.1.3
+    cd fmt*
+    mkdir build 
+    cd build
+    cmake ..
+    sudo make -j4 install
+    cd ../../
+
