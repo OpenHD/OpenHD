@@ -65,7 +65,7 @@ jobs:
         distro: "raspbian"
         release: "bullseye"
         republish: "true" # needed ONLY if version is not changing
-        file: "OpenHD_fmt/*.deb"
+        file: "*.deb"
           
       #- name: Install
       #  run: |
