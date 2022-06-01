@@ -28,7 +28,7 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 60 --slave /usr/bin/g++ g++ /usr/bin/g++-8 --slave /usr/bin/gcov gcov /usr/bin/gcov-8
 
     
-    sudo apt purge cmake
+    sudo apt -y purge cmake
     sudo snap install cmake --classic
 
 curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash
