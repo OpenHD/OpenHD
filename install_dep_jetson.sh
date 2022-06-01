@@ -28,18 +28,11 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 60 --slave /usr/bin/g++ g++ /usr/bin/g++-8 --slave /usr/bin/gcov gcov /usr/bin/gcov-8
 
     
-    echo "--------------install fmt--------------- "
     sudo apt purge cmake
     sudo snap install cmake --classic
-    wget https://codeload.github.com/fmtlib/fmt/zip/refs/tags/7.1.3
-    unzip 7.1.3
-    cd fmt*
-    mkdir build 
-    cd build
-    cmake ..
-    sudo make -j4 install
-    cd ../../
+
+curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash
+apt -y install fmt
 
 
-  
 gem install fpm
