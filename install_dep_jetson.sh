@@ -27,7 +27,7 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 80 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 60 --slave /usr/bin/g++ g++ /usr/bin/g++-8 --slave /usr/bin/gcov gcov /usr/bin/gcov-8
 
-    
+    sudo apt -y -o Dpkg::Options::="--force-overwrite" install libboost1.74-dev
     sudo apt -y purge cmake
     sudo snap install cmake --classic
 
