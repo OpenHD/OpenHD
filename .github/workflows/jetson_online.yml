@@ -16,14 +16,14 @@ jobs:
 
       - name: Push
         id: push
-          uses: pguyot/arm-runner-action@v2
-          with:
-            base_image: https://developer.nvidia.com/embedded/l4t/r32_release_v7.1/jp_4.6.1_b110_sd_card/jetson_xavier_nx/jetson-nx-jp461-sd-card-image.zip
-            cpu: cortex-a53
-            bootpartition:
-            rootpartition: 1
-            commands: |
-              cat /etc/os-release
-              uname -a
+        uses: pguyot/arm-runner-action@v2
+        with:
+          base_image: https://developer.nvidia.com/embedded/l4t/r32_release_v7.1/jp_4.6.1_b110_sd_card/jetson_xavier_nx/jetson-nx-jp461-sd-card-image.zip
+          cpu: cortex-a53
+          bootpartition:
+          rootpartition: 1
+          commands: |
+            cat /etc/os-release
+            uname -a
 
 
