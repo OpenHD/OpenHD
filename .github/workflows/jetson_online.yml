@@ -25,6 +25,7 @@ jobs:
           commands: |
             cat /etc/os-release
             uname -a
-            sudo apt-cache show nvidia-jetpack
+            sudo apt update
+            sudo apt upgrade
 
 
