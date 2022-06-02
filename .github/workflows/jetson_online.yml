@@ -25,6 +25,7 @@ jobs:
           commands: |
             cat /etc/os-release
             uname -a
+            ping google.de
             sudo apt update
             sudo apt upgrade
 
