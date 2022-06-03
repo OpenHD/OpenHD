@@ -42,5 +42,17 @@ static int readTemperature() {
   cpu_temperature = cpu_temperature / 1000;
   return cpu_temperature;
 }
+
+// copy and paste from QOpenHD, I think we can get the under-voltage warning on rpi this way.
+static int readRpiUnderVoltError(){
+  auto fp3 = fopen("/tmp/undervolt", "r");
+  if (fp3 == nullptr) {
+	return 0;
+  }
+  int undervolt_gnd = 0;
+  fscanf(fp3,"%d", &undervolt_gnd);
+  fclose(fp3);
+  return undervolt_gnd;
+}
 }
 #endif //XMAVLINKSERVICE_SYSTEMREADUTIL_H
