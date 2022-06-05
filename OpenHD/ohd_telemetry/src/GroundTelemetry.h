@@ -36,7 +36,7 @@ class GroundTelemetry {
   std::unique_ptr<UDPEndpoint> udpGroundClient = nullptr;
   // We rely on another service for starting the rx/tx links
   std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;
-  InternalTelemetry ohdTelemetryGenerator{true};
+  InternalTelemetry ohdTelemetryGenerator{false};
 };
 
 #endif //OPENHD_TELEMETRY_GROUNDTELEMETRY_H

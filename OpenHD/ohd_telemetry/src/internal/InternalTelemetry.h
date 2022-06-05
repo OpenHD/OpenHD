@@ -41,7 +41,8 @@ class InternalTelemetry {
   const bool RUNS_ON_AIR;
   // by the sys id QGroundControl knows if this message is telemetry data from the air pi or ground pi.
   // just for convenience, the RUNS_ON_AIR variable determines the sys id.
-  const uint8_t SYS_ID;
+  const uint8_t mSysId;
+  const uint8_t mCompId=0;
   // Here all the wb rx instance(s) send their statistics to.
   std::unique_ptr<SocketHelper::UDPReceiver> wifibroadcastStatisticsUdpReceiver;
   // for each unique stream ID, store the last received statistics message.
@@ -54,6 +55,7 @@ class InternalTelemetry {
   void processWifibroadcastStatisticsData(const uint8_t *payload, std::size_t payloadSize);
   MavlinkMessage generateSystemTelemetry() const;
   MavlinkMessage generateWifibroadcastStatistics() const;
+  MavlinkMessage generateOpenHDVersion()const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
   // here all the log messages are sent to - not in their mavlink form yet.

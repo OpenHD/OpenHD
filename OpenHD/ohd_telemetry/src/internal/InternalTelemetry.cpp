@@ -8,7 +8,7 @@
 #include "WBStatisticsConverter.hpp"
 
 InternalTelemetry::InternalTelemetry(bool runsOnAir) : RUNS_ON_AIR(runsOnAir),
-													   SYS_ID(runsOnAir ? OHD_SYS_ID_AIR : OHD_SYS_ID_GROUND) {
+													   mSysId(runsOnAir ? OHD_SYS_ID_AIR : OHD_SYS_ID_GROUND) {
   wifibroadcastStatisticsUdpReceiver = std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
 																				   OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT,
 																				   [this](const uint8_t *payload,
@@ -31,6 +31,7 @@ std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   std::vector<MavlinkMessage> ret;
   ret.push_back(generateSystemTelemetry());
   ret.push_back(generateWifibroadcastStatistics());
+  ret.push_back(generateOpenHDVersion());
   auto logs = generateLogMessages();
   ret.insert(ret.end(), logs.begin(), logs.end());
   return ret;
@@ -58,8 +59,8 @@ void InternalTelemetry::processWifibroadcastStatisticsData(const uint8_t *payloa
 
 MavlinkMessage InternalTelemetry::generateSystemTelemetry() const {
   MavlinkMessage msg;
-  mavlink_msg_openhd_system_telemetry_pack(SYS_ID,
-										   MAV_COMP_ID_ALL,
+  mavlink_msg_openhd_system_telemetry_pack(mSysId,
+										   mCompId,
 										   &msg.m,
 										   SystemReadUtil::readCpuLoad(),
 										   SystemReadUtil::readTemperature(),
@@ -73,7 +74,7 @@ MavlinkMessage InternalTelemetry::generateWifibroadcastStatistics() const {
   data.radio_port = 0;
   data.count_p_all = 3;
   data.count_p_dec_err = 4;
-  auto msg = WBStatisticsConverter::convertWbStatisticsToMavlink(data, SYS_ID);
+  auto msg = WBStatisticsConverter::convertWbStatisticsToMavlink(data, mSysId, mCompId);
   return msg;
 }
 
@@ -88,8 +89,8 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
 	  MavlinkMessage mavMsg;
 	  const uint64_t timestamp =
 		  std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-	  mavlink_msg_openhd_log_message_pack(SYS_ID,
-										  MAV_COMP_ID_ALL,
+	  mavlink_msg_openhd_log_message_pack(mSysId,
+										  mCompId,
 										  &mavMsg.m,
 										  msg.level,
 										  (const char *)&msg.message,
@@ -103,6 +104,12 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
 	bufferedLogMessages.pop();
   }
   return ret;
+}
+
+MavlinkMessage InternalTelemetry::generateOpenHDVersion() const {
+  MavlinkMessage msg;
+  mavlink_msg_openhd_version_message_pack(mSysId, mCompId, &msg.m, "2.1");
+  return msg;
 }
 
 void InternalTelemetry::processLogMessageData(const uint8_t *data, std::size_t dataLen) {

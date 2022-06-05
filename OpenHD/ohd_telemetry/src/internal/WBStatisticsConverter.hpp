@@ -18,10 +18,10 @@ namespace WBStatisticsConverter {
  * @param sys_id this way the receiver knows if this data was generated on the air or ground pi
  * @return message containing the statistics data
  */
-static MavlinkMessage convertWbStatisticsToMavlink(const OpenHDStatisticsWriter::Data &data, const uint8_t sys_id) {
+static MavlinkMessage convertWbStatisticsToMavlink(const OpenHDStatisticsWriter::Data &data, const uint8_t sys_id,const uint8_t comp_id) {
   MavlinkMessage msg;
   mavlink_msg_openhd_wifibroadcast_statistics_pack(sys_id,
-												   MAV_COMP_ID_ALL,
+												   comp_id,
 												   &msg.m,
 												   data.radio_port,
 												   data.count_p_all,

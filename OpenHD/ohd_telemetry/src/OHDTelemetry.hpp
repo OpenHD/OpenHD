@@ -9,12 +9,13 @@
 #include "GroundTelemetry.h"
 #include <memory>
 #include <thread>
+#include <utility>
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 
 class OHDTelemetry {
  public:
-  OHDTelemetry(const OHDPlatform &platform, const OHDProfile &profile) : profile(profile) {
+  OHDTelemetry(OHDPlatform platform1,OHDProfile profile1) : platform(std::move(platform1)),profile(std::move(profile1)) {
 	if (this->profile.is_air) {
 	  airTelemetry = std::make_unique<AirTelemetry>(OHDTelemetry::uartForPlatformType(platform.platform_type));
 	  assert(airTelemetry);
@@ -47,10 +48,15 @@ class OHDTelemetry {
   std::unique_ptr<GroundTelemetry> groundTelemetry;
   std::unique_ptr<std::thread> loopThread;
   [[nodiscard]] std::string createDebug()const{
-	return "Telemetry debug todo\n";
+	if(profile.is_air){
+	  return "Telemetry A debug todo\n";
+	}else{
+	  return "Telemetry G debug todo\n";
+	}
   }
  private:
-  const OHDProfile &profile;
+  const OHDPlatform platform;
+  const OHDProfile profile;
   /**
   * Return the name of the default UART for the different platforms OpenHD is running on.
   * @param platformType the platform we are running on
