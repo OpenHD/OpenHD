@@ -28,6 +28,7 @@ void AirTelemetry::onMessageFC(MavlinkMessage &message) {
 }
 
 void AirTelemetry::sendMessageGroundPi(MavlinkMessage &message) {
+  debugMavlinkMessage(message.m,"AirTelemetry::sendMessageGroundPi");
   // broadcast the mavlink message via wifibroadcast
   wifibroadcastEndpoint->sendMessage(message);
 }
@@ -46,7 +47,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
 
 void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
   while (true) {
-	std::cout << "AirTelemetry::loopInfinite()\n";
+	//std::cout << "AirTelemetry::loopInfinite()\n";
 	// for debugging, check if any of the endpoints is not alive
 	if (enableExtendedLogging && wifibroadcastEndpoint) {
 	  wifibroadcastEndpoint->debugIfAlive();
@@ -55,10 +56,12 @@ void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
 	  serialEndpoint->debugIfAlive();
 	}
 	// send heartbeat to the ground pi - everything else is handled by the callbacks and their threads
-	auto heartbeat = OHDMessages::createHeartbeat(true);
+	auto heartbeat = OHDMessages::createHeartbeat(M_SYS_ID,0);
 	sendMessageGroundPi(heartbeat);
+	std::this_thread::sleep_for(std::chrono::seconds(1));
 	auto ohdTelemetryMessages = ohdTelemetryGenerator.generateUpdates();
 	for (auto &msg: ohdTelemetryMessages) {
+	  std::this_thread::sleep_for(std::chrono::seconds(1));
 	  sendMessageGroundPi(msg);
 	}
 	// send out in X second intervals

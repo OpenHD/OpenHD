@@ -32,7 +32,7 @@ class SerialEndpoint : public MEndpoint {
   /**
    * @param serial_port the serial port linux name (dev/.. ) for this serial port
    */
-  explicit SerialEndpoint(std::string TAG, HWOptions options);
+  explicit SerialEndpoint(std::string TAG, HWOptions options,bool enableDebug=false);
   void sendMessage(const MavlinkMessage &message) override;
   //
   static constexpr auto USB_SERIAL_PORT = "/dev/ttyUSB0";
@@ -57,6 +57,7 @@ class SerialEndpoint : public MEndpoint {
  private:
   std::unique_ptr<boost::thread> mIoThread;
   std::unique_ptr<boost::thread> mOpenSerialPortThread;
+  const bool m_enable_debug;
 };
 
 #endif //XMAVLINKSERVICE_SERIALENDPOINT_H

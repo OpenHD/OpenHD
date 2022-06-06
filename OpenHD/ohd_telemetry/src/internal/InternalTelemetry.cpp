@@ -32,6 +32,8 @@ std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   ret.push_back(generateSystemTelemetry());
   ret.push_back(generateWifibroadcastStatistics());
   ret.push_back(generateOpenHDVersion());
+  // TODO remove for release
+  ret.push_back(WBStatisticsConverter::createDummyMessage(mSysId,mCompId));
   auto logs = generateLogMessages();
   ret.insert(ret.end(), logs.begin(), logs.end());
   return ret;

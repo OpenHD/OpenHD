@@ -27,7 +27,7 @@ GroundTelemetry::GroundTelemetry() {
 }
 
 void GroundTelemetry::onMessageAirPi(MavlinkMessage &message) {
-  //debugMavlinkMessage(message.m,"GroundTelemetry::onMessageAirPi");
+  debugMavlinkMessage(message.m,"GroundTelemetry::onMessageAirPi");
   const mavlink_message_t &m = message.m;
   // we do not need to forward heartbeat messages coming from the air telemetry service
   if (m.msgid == MAVLINK_MSG_ID_HEARTBEAT && m.sysid == OHD_SYS_ID_AIR) {
@@ -71,7 +71,7 @@ void GroundTelemetry::sendMessageAirPi(MavlinkMessage &message) {
 
 void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
   while (true) {
-	std::cout << "GroundTelemetry::loopInfinite()\n";
+	//std::cout << "GroundTelemetry::loopInfinite()\n";
 	// for debugging, check if any of the endpoints is not alive
 	if (enableExtendedLogging && udpWifibroadcastEndpoint) {
 	  udpWifibroadcastEndpoint->debugIfAlive();
@@ -81,14 +81,14 @@ void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
 	}
 	// Broadcast existence of OpenHD ground station to all connected clients
 	// (for example QOpenHD)
-	auto heartbeat = OHDMessages::createHeartbeat(false);
+	/*auto heartbeat = OHDMessages::createHeartbeat(M_SYS_ID,0);
 	sendMessageGroundStationClients(heartbeat);
 	// We also broadcast a heartbeat to the air pi, such that it knows the ground service is alive
 	sendMessageAirPi(heartbeat);
 	auto ohdTelemetryMessages = ohdTelemetryGenerator.generateUpdates();
 	for (auto &msg: ohdTelemetryMessages) {
 	  sendMessageGroundStationClients(msg);
-	}
+	}*/
 	std::this_thread::sleep_for(std::chrono::seconds(3));
   }
 }

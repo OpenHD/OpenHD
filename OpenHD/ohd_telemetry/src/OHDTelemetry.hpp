@@ -13,9 +13,12 @@
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 
+/**
+ * This class holds either a Air telemetry or Ground Telemetry instance.
+ */
 class OHDTelemetry {
  public:
-  OHDTelemetry(OHDPlatform platform1,OHDProfile profile1) : platform(std::move(platform1)),profile(std::move(profile1)) {
+  OHDTelemetry(OHDPlatform platform1,OHDProfile profile1) : platform(platform1),profile(std::move(profile1)) {
 	if (this->profile.is_air) {
 	  airTelemetry = std::make_unique<AirTelemetry>(OHDTelemetry::uartForPlatformType(platform.platform_type));
 	  assert(airTelemetry);
@@ -31,15 +34,6 @@ class OHDTelemetry {
 		groundTelemetry->loopInfinite();
 	  });
 	}
-	/*loopThread=std::make_unique<std::thread>([this]{
-		if(this->profile.is_air){
-			assert(airTelemetry);
-			airTelemetry->loopInfinite();
-		}else{
-			assert(groundTelemetry);
-			groundTelemetry->loopInfinite();
-		}
-	});*/
   }
   // only either one of them both is active at a time.
   // active when air

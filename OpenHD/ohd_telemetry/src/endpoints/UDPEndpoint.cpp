@@ -22,13 +22,14 @@ UDPEndpoint::UDPEndpoint(std::string TAG, const int senderPort, const int receiv
 	receiver = std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST, RECV_PORT, cb);
 	receiver->runInBackground();
   }
-  std::cout << "UDPEndpoint created send:" << senderPort << " recv:" << receiverPort << "\n";
+  std::cout <<TAG<< " UDPEndpoint created send:" << senderPort << " recv:" << receiverPort << "\n";
 }
 
 void UDPEndpoint::sendMessage(const MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"UDPEndpoint::sendMessage");
   if (transmitter != nullptr) {
 	const auto data = message.pack();
+	std::cout<<"XSend:"<<data.size()<<"\n";
 	transmitter->forwardPacketViaUDP(data.data(), data.size());
   } else {
 	std::cerr << "UDPEndpoint::sendMessage with no transmitter\n";

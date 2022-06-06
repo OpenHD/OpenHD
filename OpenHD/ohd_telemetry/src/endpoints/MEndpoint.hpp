@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <chrono>
+#include <utility>
 
 // Mavlink Endpoint
 // A Mavlink endpoint hides away the underlying connection - e.g. UART, TCP, UDP.
@@ -27,7 +28,7 @@ class MEndpoint {
    * And re-establish the connection when disconnected.
    * @param tag a tag for debugging.
    */
-  explicit MEndpoint(std::string tag) : TAG(tag) {};
+  explicit MEndpoint(std::string tag) : TAG(std::move(tag)) {};
   /**
    * send a message via this endpoint.
    * If the endpoint is silently disconnected, this MUST NOT FAIL/CRASH
@@ -66,15 +67,17 @@ class MEndpoint {
  protected:
   MAV_MSG_CALLBACK callback = nullptr;
   // parse new data as it comes in, extract mavlink messages and forward them on the registered callback (if it has been registered)
-  void parseNewData(const uint8_t *data, int data_len) {
-	//std::cout<<TAG<<"parseNewData\n";
+  void parseNewData(const uint8_t *data,const int data_len) {
+	std::cout<<TAG<<" received data:"<<data_len<<"\n";
+	int nMessages=0;
 	mavlink_message_t msg;
 	for (int i = 0; i < data_len; i++) {
 	  uint8_t res = mavlink_parse_char(MAVLINK_COMM_0, (uint8_t)data[i], &msg, &receiveMavlinkStatus);
 	  if (res) {
 		lastMessage = std::chrono::steady_clock::now();
 		MavlinkMessage message{msg};
-		//debugMavlinkMessage(message.m,TAG.c_str());
+		debugMavlinkMessage(message.m,TAG.c_str());
+		nMessages++;
 		if (callback != nullptr) {
 		  callback(message);
 		} else {
@@ -82,6 +85,7 @@ class MEndpoint {
 		}
 	  }
 	}
+	std::cout<<TAG<<" N messages:"<<nMessages<<"\n";
   }
  private:
   mavlink_status_t receiveMavlinkStatus{};

@@ -32,5 +32,11 @@ static MavlinkMessage convertWbStatisticsToMavlink(const OpenHDStatisticsWriter:
 												   data.count_p_lost);
   return msg;
 }
+
+static MavlinkMessage createDummyMessage(const uint8_t sys_id,const uint8_t comp_id){
+  OpenHDStatisticsWriter::Data dummyData;
+  dummyData.count_p_all=22;
+  return convertWbStatisticsToMavlink(dummyData,sys_id,comp_id);
+}
 }
 #endif //XMAVLINKSERVICE_WBSTATISTICSCONVERTER_HPP

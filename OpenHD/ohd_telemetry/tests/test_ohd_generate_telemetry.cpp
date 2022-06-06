@@ -1,6 +1,5 @@
 //
-// Created by consti10 on 24.04.22.
-// Test the OHD telemetry generation - this just prints the generated data to stdout.
+// Test the OHD fire and forget telemetry generator - this just prints the generated data to stdout.
 //
 #include "../src/internal/InternalTelemetry.h"
 #include "../src/internal/LogCustomOHDMessages.hpp"

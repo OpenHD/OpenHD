@@ -49,7 +49,7 @@ struct MavlinkMessage {
 static void debugMavlinkMessage(const mavlink_message_t &msg, const char *TAG) {
   printf("%s message with ID %d, sequence: %d from component %d of system %d\n",
 		 TAG,
-		 msg.msgid,
+		 (int)msg.msgid,
 		 msg.seq,
 		 msg.compid,
 		 msg.sysid);
