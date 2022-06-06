@@ -35,11 +35,13 @@ jobs:
             echo "deb https://repo.download.nvidia.com/jetson/t210 r32.6 main" > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
             sudo cat /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
             apt update
+            apt upgrade -y
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
-            sudo ./install_dep.sh
-            sudo ./package.sh arm64 ubuntu bionic
             ls -a  
+            sudo chmod +x install_dep_jetson.sh 
+            sudo ./install_dep_jetson.sh
+            sudo ./package.sh arm64 ubuntu bionic
 
 
       - name: Push
