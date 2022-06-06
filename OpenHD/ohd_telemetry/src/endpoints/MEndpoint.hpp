@@ -6,9 +6,11 @@
 #define XMAVLINKSERVICE_MENDPOINT_H
 
 #include "../mav_include.h"
+#include "../mav_helper.h"
 #include <iostream>
 #include <sstream>
 #include <chrono>
+#include <mutex>
 #include <utility>
 
 // Mavlink Endpoint
@@ -27,8 +29,11 @@ class MEndpoint {
    * The implementation-specific constructor SHOULD try and establish a connection as soon as possible
    * And re-establish the connection when disconnected.
    * @param tag a tag for debugging.
+   * @param mavlink_channel the mavlink channel to use for parsing.
    */
-  explicit MEndpoint(std::string tag) : TAG(std::move(tag)) {};
+  explicit MEndpoint(std::string tag) : TAG(std::move(tag)),m_mavlink_channel(checkoutFreeChannel()) {
+	std::cout<<TAG<<" using channel:"<<(int)m_mavlink_channel<<"\n";
+  };
   /**
    * send a message via this endpoint.
    * If the endpoint is silently disconnected, this MUST NOT FAIL/CRASH
@@ -72,7 +77,7 @@ class MEndpoint {
 	int nMessages=0;
 	mavlink_message_t msg;
 	for (int i = 0; i < data_len; i++) {
-	  uint8_t res = mavlink_parse_char(MAVLINK_COMM_0, (uint8_t)data[i], &msg, &receiveMavlinkStatus);
+	  uint8_t res = mavlink_parse_char(m_mavlink_channel, (uint8_t)data[i], &msg, &receiveMavlinkStatus);
 	  if (res) {
 		lastMessage = std::chrono::steady_clock::now();
 		MavlinkMessage message{msg};
@@ -86,10 +91,23 @@ class MEndpoint {
 	  }
 	}
 	std::cout<<TAG<<" N messages:"<<nMessages<<"\n";
+	std::cout<<TAG<<MavlinkHelpers::mavlink_status_to_string(receiveMavlinkStatus)<<"\n";
   }
  private:
   mavlink_status_t receiveMavlinkStatus{};
+  const uint8_t m_mavlink_channel;
   std::chrono::steady_clock::time_point lastMessage{};
+  // I think mavlink channels are static, so each endpoint should use his own channel.
+  // Based on mavsdk::mavlink_channels
+  // It is not clear what the limit of the number of channels is, except UINT8_MAX.
+  static int checkoutFreeChannel(){
+	static std::mutex _channels_used_mutex;
+	static int channel_idx=0;
+	std::lock_guard<std::mutex> lock(_channels_used_mutex);
+	int ret=channel_idx;
+	channel_idx++;
+	return ret;
+  }
 };
 
 #endif //XMAVLINKSERVICE_MENDPOINT_H

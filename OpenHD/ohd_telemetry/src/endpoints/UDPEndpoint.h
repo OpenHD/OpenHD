@@ -19,15 +19,15 @@ class UDPEndpoint : public MEndpoint {
    * @param senderPort port for sending data to, or -1 to disable.
    * @param receiverPort port for receiving data, or -1 to disable.
    */
-  UDPEndpoint(std::string TAG,int senderPort, int receiverPort);
+  UDPEndpoint(const std::string& TAG,int senderPort, int receiverPort);
   void sendMessage(const MavlinkMessage &message) override;
   // Makes it easy to not mess up the "what is UDP tx port on air unit is UDP rx port on ground unit" paradigm
   static std::unique_ptr<UDPEndpoint> createEndpointForOHDWifibroadcast(bool isAir);
  private:
-  std::unique_ptr<SocketHelper::UDPReceiver> receiver;
-  std::unique_ptr<SocketHelper::UDPForwarder> transmitter;
   const int SEND_PORT;
   const int RECV_PORT;
+  std::unique_ptr<SocketHelper::UDPReceiver> receiver;
+  std::unique_ptr<SocketHelper::UDPForwarder> transmitter;
 };
 
 #endif //XMAVLINKSERVICE_UDPENDPOINT_H

@@ -7,6 +7,7 @@
 
 #include "mav_include.h"
 #include <chrono>
+#include <sstream>
 
 namespace MExampleMessage {
 // mostly from https://github.com/mavlink/mavlink/blob/master/examples/linux/mavlink_udp.c
@@ -58,6 +59,25 @@ static MavlinkMessage createHeartbeat(const int sys_id,const int comp_id) {
 							 0,
 							 MAV_STATE_ACTIVE);
   return heartbeat;
+}
+
+}
+
+namespace MavlinkHelpers{
+
+static std::string mavlink_status_to_string(const mavlink_status_t& mavlink_status){
+  std::stringstream ss;
+  ss<<"MavlinkStatus{";
+  ss<<"msg_received:"<<(int)mavlink_status.msg_received<<",";
+  ss<<"buffer_overrun:"<<(int)mavlink_status.buffer_overrun<<",";
+  ss<<"parse_error:"<<(int)mavlink_status.parse_error<<",";
+  ss<<"packet_idx:"<<(int)mavlink_status.packet_idx<<",";
+  ss<<"current_rx_seq:"<<(int)mavlink_status.current_rx_seq<<",";
+  ss<<"current_tx_seq:"<<(int)mavlink_status.current_tx_seq<<",";
+  ss<<"packet_rx_success_count:"<<(int)mavlink_status.packet_rx_success_count<<",";
+  ss<<" packet_rx_drop_count:"<<(int)mavlink_status. packet_rx_drop_count<<",";
+  //ss<<":"<<(int)mavlink_status.<<",";
+  return ss.str();
 }
 }
 

@@ -4,9 +4,9 @@
 
 #include "UDPEndpoint.h"
 #include "openhd-global-constants.h"
-
 #include <utility>
-UDPEndpoint::UDPEndpoint(std::string TAG, const int senderPort, const int receiverPort) :
+
+UDPEndpoint::UDPEndpoint(const std::string& TAG, const int senderPort, const int receiverPort) :
 	MEndpoint(TAG),
 	SEND_PORT(senderPort), RECV_PORT(receiverPort) {
   if (senderPort == receiverPort) {
