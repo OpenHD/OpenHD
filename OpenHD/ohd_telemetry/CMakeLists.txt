@@ -62,6 +62,9 @@ target_link_libraries(test_generate_log_message OHDTelemetryLib)
 add_executable(test_ground_locally tests/test_ground_locally.cpp)
 target_link_libraries(test_ground_locally OHDTelemetryLib)
 
+add_executable(test_air_locally tests/test_air_locally.cpp)
+target_link_libraries(test_air_locally OHDTelemetryLib)
+
 add_executable(test_ground_and_air_locally tests/test_ground_and_air_locally.cpp)
 target_link_libraries(test_ground_and_air_locally OHDTelemetryLib)
 #####
