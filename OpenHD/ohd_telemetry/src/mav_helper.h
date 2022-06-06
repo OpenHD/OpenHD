@@ -79,6 +79,16 @@ static std::string mavlink_status_to_string(const mavlink_status_t& mavlink_stat
   //ss<<":"<<(int)mavlink_status.<<",";
   return ss.str();
 }
+
+static std::string raw_content(const uint8_t* data,int data_len){
+  std::stringstream ss;
+  ss<<"[";
+  for(int i=0;i<data_len;i++){
+	ss<<(int)data[i]<<",";
+  }
+  ss<<"]";
+  return ss.str();
+}
 }
 
 

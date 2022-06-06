@@ -29,6 +29,7 @@ InternalTelemetry::InternalTelemetry(bool runsOnAir) : RUNS_ON_AIR(runsOnAir),
 
 std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   std::vector<MavlinkMessage> ret;
+  ret.push_back(OHDMessages::createHeartbeat(mSysId,mCompId));
   ret.push_back(generateSystemTelemetry());
   ret.push_back(generateWifibroadcastStatistics());
   ret.push_back(generateOpenHDVersion());

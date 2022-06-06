@@ -73,7 +73,7 @@ class MEndpoint {
   MAV_MSG_CALLBACK callback = nullptr;
   // parse new data as it comes in, extract mavlink messages and forward them on the registered callback (if it has been registered)
   void parseNewData(const uint8_t *data,const int data_len) {
-	std::cout<<TAG<<" received data:"<<data_len<<"\n";
+	//std::cout<<TAG<<" received data:"<<data_len<<" "<<MavlinkHelpers::raw_content(data,data_len)<<"\n";
 	int nMessages=0;
 	mavlink_message_t msg;
 	for (int i = 0; i < data_len; i++) {

@@ -79,14 +79,9 @@ void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
 	if (enableExtendedLogging && udpGroundClient) {
 	  udpGroundClient->debugIfAlive();
 	}
-	// Broadcast existence of OpenHD ground station to all connected clients
-	// (for example QOpenHD)
-	//TODO temporarily removed for testing
-	/*auto heartbeat = OHDMessages::createHeartbeat(M_SYS_ID,0);
-	sendMessageGroundStationClients(heartbeat);
-	// We also broadcast a heartbeat to the air pi, such that it knows the ground service is alive
-	sendMessageAirPi(heartbeat);
-	auto ohdTelemetryMessages = ohdTelemetryGenerator.generateUpdates();
+	// send messages to the ground station in regular intervals, includes heartbeat.
+	// everything else is handled by the callbacks and their threads
+	/*auto ohdTelemetryMessages = ohdTelemetryGenerator.generateUpdates();
 	for (auto &msg: ohdTelemetryMessages) {
 	  sendMessageGroundStationClients(msg);
 	}*/

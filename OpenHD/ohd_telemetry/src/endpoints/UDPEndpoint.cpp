@@ -29,7 +29,7 @@ void UDPEndpoint::sendMessage(const MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"UDPEndpoint::sendMessage");
   if (transmitter != nullptr) {
 	const auto data = message.pack();
-	std::cout<<"XSend:"<<data.size()<<"\n";
+	//std::cout<<"XSend:"<<data.size()<<" "<<MavlinkHelpers::raw_content(data.data(),data.size())<<"\n";
 	transmitter->forwardPacketViaUDP(data.data(), data.size());
   } else {
 	std::cerr << "UDPEndpoint::sendMessage with no transmitter\n";

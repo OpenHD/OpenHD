@@ -55,10 +55,9 @@ void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
 	if (enableExtendedLogging && serialEndpoint) {
 	  serialEndpoint->debugIfAlive();
 	}
-	// send heartbeat to the ground pi - everything else is handled by the callbacks and their threads
-	auto heartbeat = OHDMessages::createHeartbeat(M_SYS_ID,0);
-	sendMessageGroundPi(heartbeat);
 	std::this_thread::sleep_for(std::chrono::seconds(1));
+	// send messages to the ground pi in regular intervals, includes heartbeat.
+	// everything else is handled by the callbacks and their threads
 	auto ohdTelemetryMessages = ohdTelemetryGenerator.generateUpdates();
 	for (auto &msg: ohdTelemetryMessages) {
 	  std::this_thread::sleep_for(std::chrono::seconds(1));
