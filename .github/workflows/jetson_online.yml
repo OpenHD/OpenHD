@@ -30,6 +30,10 @@ jobs:
             ls -a
             cd /opt
             cd Open.HD
+            rm /etc/apt/sources.list.d/nvidia-l4t-apt-source.list || true
+            echo "deb https://repo.download.nvidia.com/jetson/common r32.6 main" > /etc/apt/sources.list.d/nvidia-l4t-apt-source2.list
+            echo "deb https://repo.download.nvidia.com/jetson/t210 r32.6 main" > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
+            sudo cat /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
             apt update
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
