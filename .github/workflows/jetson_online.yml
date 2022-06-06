@@ -15,19 +15,39 @@ jobs:
           echo "Hello World"
 
       - name: Emulating Jetson
-        id: push
-        uses: pguyot/arm-runner-action@f204b58258d5b01e297eec6db036a14b11dc9ffa
+        id: qemu
+        uses: pguyot/arm-runner-action@284a45c9d5983239745b7ceba40187cc81d316e4
         with:
           base_image: https://developer.download.nvidia.com/embedded/L4T/r32_Release_v6.1/Jetson_Nano_2GB/jetson-nano-2gb-jp46-sd-card-image.zip
           cpu: cortex-a53
           bootpartition:
           rootpartition: 1
+          image_additional_mb: 4000
+          copy_repository_path: /opt
+          copy_artifact_path: Open.HD
+          import_github_env: true
           commands: |
-            cat /etc/os-release
-            uname -a
-            tunctl -t tap0
-            ifconfig tap0 up
-            brctl addif virbr0 tap0
+            ls -a
+            cd /opt
+            cd Open.HD
             apt update
+            mkdir -p /usr/local/share/openhd/
+            touch /usr/local/share/openhd/joyconfig.txt
+            sudo ./install_dep.sh
+            sudo ./package.sh arm64 ubuntu bionic
+            ls -a  
 
 
+      - name: Push
+        id: push
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: "push"
+          format: "deb"
+          owner: "openhd"
+          repo: "openhd-2-1-alpha"
+          distro: "ubuntu"
+          release: "bionic"
+          republish: "true" # needed ONLY if version is not changing
+          file: "Open.HD/*.deb"
