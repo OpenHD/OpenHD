@@ -25,9 +25,6 @@ jobs:
           commands: |
             cat /etc/os-release
             uname -a
-            ifconfig 
-            iwconfig
-            sudo apt update
-            sudo apt upgrade
+            ifconfig -a
 
 
