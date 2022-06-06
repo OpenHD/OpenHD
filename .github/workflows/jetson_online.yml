@@ -25,6 +25,9 @@ jobs:
           commands: |
             cat /etc/os-release
             uname -a
-            ifconfig -a
+            tunctl -t tap0
+            ifconfig tap0 up
+            brctl addif virbr0 tap0
+            apt update
 
 
