@@ -20,7 +20,8 @@
 // in a fire and forget manner, as well as handling commands without side effects.
 // For example, to report the CPU usage on the air station,
 // one can read out the cpu usage in regular intervals and send it out (perhaps together with other
-// telemetry values)
+// telemetry values).
+// Both air an ground have an instance of this class, for example to broadcast statistics like CPU load
 // TODO please add more documented ! code here for usefully telemetry data.
 class InternalTelemetry {
  public:
