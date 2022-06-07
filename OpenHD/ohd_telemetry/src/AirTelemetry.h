@@ -21,7 +21,7 @@ class AirTelemetry {
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.
    */
-  void loopInfinite(const bool enableExtendedLogging = false);
+  void loopInfinite(bool enableExtendedLogging = false);
  private:
   // send a mavlink message to the flight controller connected to the air unit via UART
   void sendMessageFC(MavlinkMessage &message);
