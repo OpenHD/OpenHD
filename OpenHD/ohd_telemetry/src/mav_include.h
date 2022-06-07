@@ -40,15 +40,6 @@ struct MavlinkMessage {
   }
 };
 
-static void debugMavlinkMessage(const mavlink_message_t &msg, const char *TAG) {
-  printf("%s message with ID %d, sequence: %d from component %d of system %d\n",
-		 TAG,
-		 (int)msg.msgid,
-		 msg.seq,
-		 msg.compid,
-		 msg.sysid);
-}
-
 // For registering a callback that is called every time component X receives a new Mavlink Message
 typedef std::function<void(MavlinkMessage &mavlinkMessage)> MAV_MSG_CALLBACK;
 

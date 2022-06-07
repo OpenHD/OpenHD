@@ -106,9 +106,16 @@ static void parseAndLog(const uint8_t* data,int data_len,const uint8_t m_mavlink
   std::cout<<"parseAndLog:"<<" N messages:"<<nMessages<<"\n";
 }
 
-
 }
 
+static void debugMavlinkMessage(const mavlink_message_t &msg, const char *TAG) {
+  printf("%s message with ID %d, sequence: %d from component %d of system %d\n",
+		 TAG,
+		 (int)msg.msgid,
+		 msg.seq,
+		 msg.compid,
+		 msg.sysid);
+}
 
 
 
