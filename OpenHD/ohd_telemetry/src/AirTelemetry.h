@@ -23,12 +23,12 @@ class AirTelemetry {
    */
   void loopInfinite(bool enableExtendedLogging = false);
  private:
-  // send a mavlink message to the flight controller connected to the air unit via UART
+  // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
   void sendMessageFC(MavlinkMessage &message);
-  // called every time a message from the flight controller bus is received
-  void onMessageFC(MavlinkMessage &message);
-  // send a message to the ground pi
+  // send a mavlink message to the ground pi, system cannot know if this message actually makes it.
   void sendMessageGroundPi(MavlinkMessage &message);
+  // called every time a message from the flight controller is received
+  void onMessageFC(MavlinkMessage &message);
   // called every time a message from the ground pi is received
   void onMessageGroundPi(MavlinkMessage &message);
  private:

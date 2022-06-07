@@ -22,15 +22,15 @@ void AirTelemetry::sendMessageFC(MavlinkMessage &message) {
   serialEndpoint->sendMessage(message);
 }
 
-void AirTelemetry::onMessageFC(MavlinkMessage &message) {
-  // forward everything to the ground pi
-  sendMessageGroundPi(message);
-}
-
 void AirTelemetry::sendMessageGroundPi(MavlinkMessage &message) {
   debugMavlinkMessage(message.m,"AirTelemetry::sendMessageGroundPi");
   // broadcast the mavlink message via wifibroadcast
   wifibroadcastEndpoint->sendMessage(message);
+}
+
+void AirTelemetry::onMessageFC(MavlinkMessage &message) {
+  // handling a message from the FC is really easy - we just forward it to the ground pi.
+  sendMessageGroundPi(message);
 }
 
 void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
