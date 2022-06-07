@@ -138,4 +138,29 @@ void InternalTelemetry::processLogMessage(OHDLocalLogMessage msg) {
   bufferedLogMessages.push(msg);
 }
 
+std::optional<MavlinkMessage> InternalTelemetry::handlePingMessage(const MavlinkMessage &message) const {
+  const auto msg=message.m;
+  assert(msg.msgid==MAVLINK_MSG_ID_PING);
+  mavlink_ping_t ping;
+  mavlink_msg_ping_decode(&msg, &ping);
+  // see https://mavlink.io/en/services/ping.html
+  if(ping.target_system==0 && ping.target_component==0){
+	// Response to ping request.
+	mavlink_message_t response_message;
+	mavlink_msg_ping_pack(
+		mSysId,
+		mCompId,
+		&response_message,
+		ping.time_usec,
+		ping.seq,
+		msg.sysid,
+		msg.compid);
+	return MavlinkMessage{response_message};
+  }else{
+	// answer from ping request
+	return std::nullopt;
+  }
+}
+
+
 

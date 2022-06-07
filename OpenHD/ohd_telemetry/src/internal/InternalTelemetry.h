@@ -14,6 +14,7 @@
 #include <vector>
 #include <queue>
 #include <mutex>
+#include <optional>
 
 // The purpose of this class is to generate all the OpenHD specific telemetry that can be sent
 // in a fire and forget manner, as well as handling commands without side effects.
@@ -37,6 +38,7 @@ class InternalTelemetry {
    * @return true if the command has been consumed, false otherwise
    */
   bool handleMavlinkCommandIfPossible(const MavlinkMessage &msg);
+  std::optional<MavlinkMessage> handlePingMessage(const MavlinkMessage &message) const;
  private:
   const bool RUNS_ON_AIR;
   // by the sys id QGroundControl knows if this message is telemetry data from the air pi or ground pi.

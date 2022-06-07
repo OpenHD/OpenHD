@@ -43,6 +43,13 @@ void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
   const auto &msg = message.m;
   // for now, forward everything
   sendMessageAirPi(message);
+  // temporarily, handle ping messages
+  if(msg.msgid==MAVLINK_MSG_ID_PING){
+	auto response=ohdTelemetryGenerator.handlePingMessage(message);
+	if(response.has_value()){
+	  sendMessageGroundStationClients(response.value());
+	}
+  }
 }
 
 void GroundTelemetry::sendMessageGroundStationClients(MavlinkMessage &message) {
@@ -82,4 +89,5 @@ void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
 	std::this_thread::sleep_for(std::chrono::seconds(3));
   }
 }
+
 

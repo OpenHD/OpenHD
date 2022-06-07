@@ -118,5 +118,4 @@ static void debugMavlinkMessage(const mavlink_message_t &msg, const char *TAG) {
 }
 
 
-
 #endif //XMAVLINKSERVICE_MAV_HELPER_H
