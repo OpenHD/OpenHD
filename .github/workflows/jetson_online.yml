@@ -21,6 +21,7 @@ jobs:
         remove-android: 'true'
         remove-haskell: 'true'
         overprovision-lvm: 'true'
+   
     - uses: actions/checkout@v2
       with:
         submodules: recursive
@@ -39,8 +40,7 @@ jobs:
         import_github_env: true
         commands: |
           ls -a
-          cd /opt
-          cd Open.HD
+          cd /opt/Open.HD
           apt update
           apt upgrade -y
           mkdir -p /usr/local/share/openhd/
