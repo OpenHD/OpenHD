@@ -49,26 +49,14 @@ bool InternalTelemetry::handleMavlinkCommandIfPossible(const MavlinkMessage &msg
 
 void InternalTelemetry::processWifibroadcastStatisticsData(const uint8_t *payload, const std::size_t payloadSize) {
   //std::cout << "OHDTelemetryGenerator::processNewWifibroadcastStatisticsMessage: " << payloadSize << "\n";
-  const auto MSG_SIZE = sizeof(OpenHDStatisticsWriter::Data);
-  if (payloadSize >= MSG_SIZE && (payloadSize % MSG_SIZE == 0)) {
-	// we got new properly aligned data
-	OpenHDStatisticsWriter::Data data;
-	memcpy((uint8_t *)&data, payload, MSG_SIZE);
-	lastWbStatisticsMessage[data.radio_port] = data;
-  } else {
-	std::cerr << "Cannot parse WB statistics due to size mismatch\n";
+  const auto msges=WBStatisticsConverter::parseRawDataSafe(payload,payloadSize);
+  for(const auto msg:msges){
+	lastWbStatisticsMessage[msg.radio_port] = msg;
   }
 }
 
 MavlinkMessage InternalTelemetry::generateSystemTelemetry() const {
-  MavlinkMessage msg;
-  mavlink_msg_openhd_system_telemetry_pack(mSysId,
-										   mCompId,
-										   &msg.m,
-										   SystemReadUtil::readCpuLoad(),
-										   SystemReadUtil::readTemperature(),
-										   8);
-  return msg;
+  return SystemReadUtil::createSystemTelemetryPacket(mSysId,mCompId);
 }
 
 MavlinkMessage InternalTelemetry::generateWifibroadcastStatistics() const {

@@ -5,6 +5,8 @@
 #ifndef XMAVLINKSERVICE_SYSTEMREADUTIL_H
 #define XMAVLINKSERVICE_SYSTEMREADUTIL_H
 
+#include "mav_include.h"
+
 namespace SystemReadUtil {
 // from https://github.com/OpenHD/Open.HD/blob/35b6b10fbeda43cd06bbfbd90e2daf29629c2f8a/openhd-status/src/statusmicroservice.cpp#L173
 // Return the CPU load of the system the generator is running on
@@ -53,6 +55,17 @@ static int readRpiUnderVoltError(){
   fscanf(fp3,"%d", &undervolt_gnd);
   fclose(fp3);
   return undervolt_gnd;
+}
+
+static MavlinkMessage createSystemTelemetryPacket(const uint8_t sys_id,const uint8_t comp_id){
+  MavlinkMessage msg;
+  mavlink_msg_openhd_system_telemetry_pack(sys_id,
+										   comp_id,
+										   &msg.m,
+										   SystemReadUtil::readCpuLoad(),
+										   SystemReadUtil::readTemperature(),
+										   8);
+  return msg;
 }
 }
 #endif //XMAVLINKSERVICE_SYSTEMREADUTIL_H
