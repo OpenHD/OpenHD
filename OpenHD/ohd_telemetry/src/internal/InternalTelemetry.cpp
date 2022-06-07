@@ -30,11 +30,10 @@ InternalTelemetry::InternalTelemetry(bool runsOnAir) : RUNS_ON_AIR(runsOnAir),
 std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   std::vector<MavlinkMessage> ret;
   ret.push_back(OHDMessages::createHeartbeat(mSysId,mCompId));
-  /*ret.push_back(generateSystemTelemetry());
+  ret.push_back(generateSystemTelemetry());
   ret.push_back(generateWifibroadcastStatistics());
-  ret.push_back(generateOpenHDVersion());*/
+  ret.push_back(generateOpenHDVersion());
   // TODO remove for release
-  ret.push_back(WBStatisticsConverter::createDummyMessage(mSysId,mCompId));
   ret.push_back(MExampleMessage::position(mSysId,mCompId));
   auto logs = generateLogMessages();
   ret.insert(ret.end(), logs.begin(), logs.end());
