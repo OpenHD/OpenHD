@@ -81,7 +81,7 @@ class MEndpoint {
 	  if (res) {
 		lastMessage = std::chrono::steady_clock::now();
 		MavlinkMessage message{msg};
-		debugMavlinkMessage(message.m,TAG.c_str());
+		//debugMavlinkMessage(message.m,TAG.c_str());
 		nMessages++;
 		if (callback != nullptr) {
 		  callback(message);
@@ -90,8 +90,8 @@ class MEndpoint {
 		}
 	  }
 	}
-	std::cout<<TAG<<" N messages:"<<nMessages<<"\n";
-	std::cout<<TAG<<MavlinkHelpers::mavlink_status_to_string(receiveMavlinkStatus)<<"\n";
+	//std::cout<<TAG<<" N messages:"<<nMessages<<"\n";
+	//std::cout<<TAG<<MavlinkHelpers::mavlink_status_to_string(receiveMavlinkStatus)<<"\n";
   }
  private:
   mavlink_status_t receiveMavlinkStatus{};

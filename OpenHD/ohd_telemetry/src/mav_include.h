@@ -9,14 +9,8 @@
 extern "C" {
 #endif
 
-#include <common/mavlink.h>
-#include <protocol.h>
-#include <mavlink_types.h>
+  //NOTE: Make sure to include the openhd mavlink flavour, otherwise the custom messages won't bw parsed.
 #include <openhd/mavlink.h>
-#include <openhd/mavlink_msg_openhd_system_telemetry.h>
-#include <openhd/mavlink_msg_openhd_version_message.h>
-#include <openhd/mavlink_msg_openhd_wifibroadcast_statistics.h>
-#include <openhd/mavlink_msg_openhd_log_message.h>
 
 #ifdef __cplusplus
 }

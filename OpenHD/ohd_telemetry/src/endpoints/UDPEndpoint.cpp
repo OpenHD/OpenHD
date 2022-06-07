@@ -31,6 +31,8 @@ void UDPEndpoint::sendMessage(const MavlinkMessage &message) {
 	const auto data = message.pack();
 	//std::cout<<"XSend:"<<data.size()<<" "<<MavlinkHelpers::raw_content(data.data(),data.size())<<"\n";
 	transmitter->forwardPacketViaUDP(data.data(), data.size());
+	//std::cout<<"AAA\n";
+	//parseNewData(data.data(),data.size());
   } else {
 	std::cerr << "UDPEndpoint::sendMessage with no transmitter\n";
   }
@@ -50,6 +52,7 @@ std::unique_ptr<UDPEndpoint> UDPEndpoint::createEndpointForOHDWifibroadcast(cons
   }
   return std::make_unique<UDPEndpoint>(tag, txp, rxp);
 }
+
 
 
 

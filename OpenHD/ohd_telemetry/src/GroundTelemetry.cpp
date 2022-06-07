@@ -81,10 +81,10 @@ void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
 	}
 	// send messages to the ground station in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
-	/*auto ohdTelemetryMessages = ohdTelemetryGenerator.generateUpdates();
+	auto ohdTelemetryMessages = ohdTelemetryGenerator.generateUpdates();
 	for (auto &msg: ohdTelemetryMessages) {
 	  sendMessageGroundStationClients(msg);
-	}*/
+	}
 	std::this_thread::sleep_for(std::chrono::seconds(3));
   }
 }

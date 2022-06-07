@@ -12,8 +12,6 @@ class MavlinkComponent{
    * @return true when the message can be handled by this component, false otherwise.
    */
   virtual bool processMavlinkMessage();
-
-
  private:
   const int component_id=0;
 
