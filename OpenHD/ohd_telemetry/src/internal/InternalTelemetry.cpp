@@ -145,6 +145,7 @@ std::optional<MavlinkMessage> InternalTelemetry::handlePingMessage(const Mavlink
   mavlink_msg_ping_decode(&msg, &ping);
   // see https://mavlink.io/en/services/ping.html
   if(ping.target_system==0 && ping.target_component==0){
+	std::cout<<"Got ping request\n";
 	// Response to ping request.
 	mavlink_message_t response_message;
 	mavlink_msg_ping_pack(

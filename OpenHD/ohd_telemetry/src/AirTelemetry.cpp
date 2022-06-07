@@ -43,6 +43,13 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   }
   // for now, do it as simple as possible
   sendMessageFC(message);
+  // temporarily, handle ping messages
+  if(m.msgid==MAVLINK_MSG_ID_PING){
+	auto response=ohdTelemetryGenerator.handlePingMessage(message);
+	if(response.has_value()){
+	  sendMessageGroundPi(response.value());
+	}
+  }
 }
 
 void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
