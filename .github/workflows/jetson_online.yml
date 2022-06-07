@@ -27,9 +27,9 @@ jobs:
         
     - name: Emulating Jetson
       id: qemu
-      uses: pguyot/arm-runner-action@284a45c9d5983239745b7ceba40187cc81d316e4
+      uses: pguyot/arm-runner-action@2.4.0
       with:
-        base_image: https://developer.download.nvidia.com/embedded/L4T/r32_Release_v6.1/Jetson_Nano_2GB/jetson-nano-2gb-jp46-sd-card-image.zip
+        base_image: http://openhdfpv.org/wp-content/BaseImages/Open.HD-2.1-05221841-jetson-nano-4gb-bionic.img.zip
         cpu: cortex-a53
         bootpartition:
         rootpartition: 1
@@ -41,10 +41,6 @@ jobs:
           ls -a
           cd /opt
           cd Open.HD
-          rm /etc/apt/sources.list.d/nvidia-l4t-apt-source.list || true
-          echo "deb https://repo.download.nvidia.com/jetson/common r32.6 main" > /etc/apt/sources.list.d/nvidia-l4t-apt-source2.list
-          echo "deb https://repo.download.nvidia.com/jetson/t210 r32.6 main" > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
-          sudo cat /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
           apt update
           apt upgrade -y
           mkdir -p /usr/local/share/openhd/
