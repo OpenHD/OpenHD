@@ -38,6 +38,12 @@ class InternalTelemetry {
    * @return true if the command has been consumed, false otherwise
    */
   bool handleMavlinkCommandIfPossible(const MavlinkMessage &msg);
+  /**
+   * Handle a ping message. Ping is a bit complicated in mavlink, since sys and comp id of 0 have special meaning.
+   * This implementation is similar to the one from mavsdk.
+   * @param message the ping message to handle
+   * @return a ping response message if needed, no message otherwise. (not every ping needs a response)
+   */
   [[nodiscard]] std::optional<MavlinkMessage> handlePingMessage(const MavlinkMessage &message) const;
  private:
   const bool RUNS_ON_AIR;
