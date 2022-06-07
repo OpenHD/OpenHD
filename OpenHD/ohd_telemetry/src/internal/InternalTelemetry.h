@@ -38,7 +38,7 @@ class InternalTelemetry {
    * @return true if the command has been consumed, false otherwise
    */
   bool handleMavlinkCommandIfPossible(const MavlinkMessage &msg);
-  std::optional<MavlinkMessage> handlePingMessage(const MavlinkMessage &message) const;
+  [[nodiscard]] std::optional<MavlinkMessage> handlePingMessage(const MavlinkMessage &message) const;
  private:
   const bool RUNS_ON_AIR;
   // by the sys id QGroundControl knows if this message is telemetry data from the air pi or ground pi.
@@ -55,9 +55,9 @@ class InternalTelemetry {
    * Called with the raw Wifibroadcast statistics data from UDP
    */
   void processWifibroadcastStatisticsData(const uint8_t *payload, std::size_t payloadSize);
-  MavlinkMessage generateSystemTelemetry() const;
-  MavlinkMessage generateWifibroadcastStatistics() const;
-  MavlinkMessage generateOpenHDVersion()const;
+  [[nodiscard]] MavlinkMessage generateSystemTelemetry() const;
+  [[nodiscard]] MavlinkMessage generateWifibroadcastStatistics() const;
+  [[nodiscard]] MavlinkMessage generateOpenHDVersion()const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
   // here all the log messages are sent to - not in their mavlink form yet.
