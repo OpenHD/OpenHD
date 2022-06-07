@@ -41,12 +41,6 @@ void GroundTelemetry::onMessageAirPi(MavlinkMessage &message) {
 void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
   debugMavlinkMessage(message.m, "GroundTelemetry::onMessageGroundStationClients");
   const auto &msg = message.m;
-  /*if(msg.sysid==OHD_SYS_ID_GROUND){
-	  // handle locally
-  }else{
-	  // forward to the air pi, which in turn might handle it himself or forward it to the flight controller
-	  sendMessageAirPi(message);
-  }*/
   // for now, forward everything
   sendMessageAirPi(message);
 }
