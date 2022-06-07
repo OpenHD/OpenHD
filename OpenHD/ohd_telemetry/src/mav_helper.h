@@ -92,7 +92,7 @@ static std::string raw_content(const uint8_t* data,int data_len){
 }
 
 
-static void parseAndLog(const uint8_t* data,int data_len,const uint8_t m_mavlink_channel,mavlink_status_t receiveMavlinkStatus){
+static void parseAndLog(const uint8_t* data,int data_len,const uint8_t m_mavlink_channel,mavlink_status_t& receiveMavlinkStatus){
   int nMessages=0;
   mavlink_message_t msg;
   for (int i = 0; i < data_len; i++) {
