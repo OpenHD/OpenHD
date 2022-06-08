@@ -7,6 +7,9 @@
 
 #include "mav_include.h"
 
+// https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS
+// used to be a custom message for a short amount of time.
+
 namespace OnboardComputerStatus {
 // from https://github.com/OpenHD/Open.HD/blob/35b6b10fbeda43cd06bbfbd90e2daf29629c2f8a/openhd-status/src/statusmicroservice.cpp#L173
 // Return the CPU load of the system the generator is running on
@@ -57,8 +60,6 @@ static int readRpiUnderVoltError(){
   return undervolt_gnd;
 }
 
-// https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS
-// used to be a custom message for a short amount of time.
 static MavlinkMessage createOnboardComputerStatus(const uint8_t sys_id,const uint8_t comp_id){
   MavlinkMessage msg;
   const uint8_t cpu_load=OnboardComputerStatus::readCpuLoad();
