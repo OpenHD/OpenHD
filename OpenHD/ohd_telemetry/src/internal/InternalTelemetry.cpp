@@ -30,7 +30,7 @@ InternalTelemetry::InternalTelemetry(bool runsOnAir) : RUNS_ON_AIR(runsOnAir),
 std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   std::vector<MavlinkMessage> ret;
   ret.push_back(OHDMessages::createHeartbeat(mSysId,mCompId));
-  ret.push_back(generateSystemTelemetry());
+  ret.push_back(SystemReadUtil::createOnboardComputerStatus(mSysId,mCompId));
   ret.push_back(generateWifibroadcastStatistics());
   ret.push_back(generateOpenHDVersion());
   // TODO remove for release
@@ -53,10 +53,6 @@ void InternalTelemetry::processWifibroadcastStatisticsData(const uint8_t *payloa
   for(const auto msg:msges){
 	lastWbStatisticsMessage[msg.radio_port] = msg;
   }
-}
-
-MavlinkMessage InternalTelemetry::generateSystemTelemetry() const {
-  return SystemReadUtil::createSystemTelemetryPacket(mSysId,mCompId);
 }
 
 MavlinkMessage InternalTelemetry::generateWifibroadcastStatistics() const {

@@ -57,16 +57,19 @@ static int readRpiUnderVoltError(){
   return undervolt_gnd;
 }
 
-// aargh https://mavlink.io/en/messages/common.html
-static MavlinkMessage createSystemTelemetryPacket(const uint8_t sys_id,const uint8_t comp_id){
+// https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS
+// used to be a custom message for a short amount of time.
+static MavlinkMessage createOnboardComputerStatus(const uint8_t sys_id,const uint8_t comp_id){
   MavlinkMessage msg;
-  mavlink_msg_openhd_system_telemetry_pack(sys_id,
-										   comp_id,
-										   &msg.m,
-										   SystemReadUtil::readCpuLoad(),
-										   SystemReadUtil::readTemperature(),
-										   8);
+  const uint8_t cpu_load=SystemReadUtil::readCpuLoad();
+  const auto cpu_temp=(int8_t)SystemReadUtil::readTemperature();
+  mavlink_onboard_computer_status_t mavlink_onboard_computer_status;
+  mavlink_onboard_computer_status.cpu_cores[0]=cpu_load;
+  mavlink_onboard_computer_status.temperature_core[0]=cpu_temp;
+  mavlink_msg_onboard_computer_status_encode(sys_id,comp_id,&msg.m,&mavlink_onboard_computer_status);
   return msg;
 }
+
+
 }
 #endif //XMAVLINKSERVICE_SYSTEMREADUTIL_H
