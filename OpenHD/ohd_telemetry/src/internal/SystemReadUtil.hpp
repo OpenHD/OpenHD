@@ -57,6 +57,7 @@ static int readRpiUnderVoltError(){
   return undervolt_gnd;
 }
 
+// aargh https://mavlink.io/en/messages/common.html
 static MavlinkMessage createSystemTelemetryPacket(const uint8_t sys_id,const uint8_t comp_id){
   MavlinkMessage msg;
   mavlink_msg_openhd_system_telemetry_pack(sys_id,
