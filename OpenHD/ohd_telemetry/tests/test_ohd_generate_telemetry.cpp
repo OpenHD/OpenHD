@@ -13,7 +13,7 @@ int main() {
   const auto start = std::chrono::steady_clock::now();
   while ((std::chrono::steady_clock::now() - start) < std::chrono::minutes(5)) {
 	const auto msges = ohdTelemetryGenerator.generateUpdates();
-	LogCustomOHDMessages::logMessages(msges);
+	LogCustomOHDMessages::logOpenHDMessages(msges);
 	std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   std::cout << "OHDTelemetryGeneratorTest::end" << std::endl;

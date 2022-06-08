@@ -37,7 +37,7 @@ static void logLogMessage(const mavlink_message_t &msg) {
   ss << "LOG:" << decoded.severity << ":" << decoded.text << "\n";
   std::cout << ss.str();
 }
-static void logMessages(const std::vector<MavlinkMessage> &msges) {
+static void logOpenHDMessages(const std::vector<MavlinkMessage> &msges) {
   for (const auto &msg: msges) {
 	if (msg.m.msgid == MAVLINK_MSG_ID_OPENHD_SYSTEM_TELEMETRY) {
 	  logSystem(msg.m);
@@ -46,7 +46,7 @@ static void logMessages(const std::vector<MavlinkMessage> &msges) {
 	} else if (msg.m.msgid == MAVLINK_MSG_ID_OPENHD_LOG_MESSAGE) {
 	  logLogMessage(msg.m);
 	} else {
-	  std::cerr << "unknown ohd msg\n";
+	  std::cerr << "unknown ohd msg with msgid:"<<msg.m.msgid<<"\n";
 	}
   }
 }
