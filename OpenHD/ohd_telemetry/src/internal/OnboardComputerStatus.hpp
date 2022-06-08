@@ -7,7 +7,7 @@
 
 #include "mav_include.h"
 
-namespace SystemReadUtil {
+namespace OnboardComputerStatus {
 // from https://github.com/OpenHD/Open.HD/blob/35b6b10fbeda43cd06bbfbd90e2daf29629c2f8a/openhd-status/src/statusmicroservice.cpp#L173
 // Return the CPU load of the system the generator is running on
 // Unit: Percentage ?
@@ -61,8 +61,8 @@ static int readRpiUnderVoltError(){
 // used to be a custom message for a short amount of time.
 static MavlinkMessage createOnboardComputerStatus(const uint8_t sys_id,const uint8_t comp_id){
   MavlinkMessage msg;
-  const uint8_t cpu_load=SystemReadUtil::readCpuLoad();
-  const auto cpu_temp=(int8_t)SystemReadUtil::readTemperature();
+  const uint8_t cpu_load=OnboardComputerStatus::readCpuLoad();
+  const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
   mavlink_onboard_computer_status_t mavlink_onboard_computer_status;
   mavlink_onboard_computer_status.cpu_cores[0]=cpu_load;
   mavlink_onboard_computer_status.temperature_core[0]=cpu_temp;

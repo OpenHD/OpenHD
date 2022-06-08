@@ -4,7 +4,7 @@
 
 #include "InternalTelemetry.h"
 #include <iostream>
-#include "SystemReadUtil.hpp"
+#include "OnboardComputerStatus.hpp"
 #include "WBStatisticsConverter.hpp"
 
 InternalTelemetry::InternalTelemetry(bool runsOnAir) : RUNS_ON_AIR(runsOnAir),
@@ -30,7 +30,7 @@ InternalTelemetry::InternalTelemetry(bool runsOnAir) : RUNS_ON_AIR(runsOnAir),
 std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   std::vector<MavlinkMessage> ret;
   ret.push_back(OHDMessages::createHeartbeat(mSysId,mCompId));
-  ret.push_back(SystemReadUtil::createOnboardComputerStatus(mSysId,mCompId));
+  ret.push_back(OnboardComputerStatus::createOnboardComputerStatus(mSysId, mCompId));
   ret.push_back(generateWifibroadcastStatistics());
   ret.push_back(generateOpenHDVersion());
   // TODO remove for release
