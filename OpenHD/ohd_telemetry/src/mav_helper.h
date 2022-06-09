@@ -15,7 +15,7 @@ namespace MExampleMessage {
 static uint64_t microsSinceEpoch() {
   return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
-static MavlinkMessage heartbeat(const int sys_id,const int comp_id) {
+static MavlinkMessage heartbeat(const int sys_id=255,const int comp_id=0) {
   MavlinkMessage msg{};
   mavlink_msg_heartbeat_pack(sys_id,
 							 comp_id,
@@ -27,7 +27,7 @@ static MavlinkMessage heartbeat(const int sys_id,const int comp_id) {
 							 MAV_STATE_ACTIVE);
   return msg;
 }
-static MavlinkMessage position(const int sys_id,const int comp_id) {
+static MavlinkMessage position(const int sys_id=255,const int comp_id=0) {
   MavlinkMessage msg{};
   float position[6] = {};
   mavlink_msg_local_position_ned_pack(sys_id,comp_id, &msg.m, microsSinceEpoch(),
@@ -35,7 +35,7 @@ static MavlinkMessage position(const int sys_id,const int comp_id) {
 									  position[3], position[4], position[5]);
   return msg;
 }
-static MavlinkMessage attitude(const int sys_id,const int comp_id) {
+static MavlinkMessage attitude(const int sys_id=255,const int comp_id=0) {
   MavlinkMessage msg{};
   mavlink_msg_attitude_pack(sys_id, comp_id, &msg.m, microsSinceEpoch(), 1.2, 1.7, 3.14, 0.01, 0.02, 0.03);
   return msg;
