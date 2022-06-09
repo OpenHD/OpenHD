@@ -59,7 +59,7 @@ void WBStreams::configure_telemetry() {
   auto udpPort2 = profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX
 								 : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX;
   udpTelemetryRx = createUdpWbRx(radioPort1, udpPort1);
-  udpTelemetryTx = createUdpWbTx(radioPort2, udpPort2);
+  udpTelemetryTx = createUdpWbTx(radioPort2, udpPort2,false);
   udpTelemetryRx->runInBackground();
   udpTelemetryTx->runInBackground();
 }
@@ -68,9 +68,9 @@ void WBStreams::configure_video() {
   std::cout << "Streams::configure_video()" << std::endl;
   // Video is unidirectional, aka always goes from air pi to ground pi
   if (profile.is_air) {
-	auto primary = createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP);
+	auto primary = createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP,true);
 	primary->runInBackground();
-	auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP);
+	auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,true);
 	secondary->runInBackground();
 	udpVideoTxList.push_back(std::move(primary));
 	udpVideoTxList.push_back(std::move(secondary));
@@ -84,7 +84,7 @@ void WBStreams::configure_video() {
   }
 }
 
-std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port)const {
+std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec)const {
   RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, DEFAULT_MCS_INDEX};
   RadiotapHeader radiotapHeader{wifiParams};
   TOptions options{};
@@ -92,7 +92,13 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   options.enableLogAlive= false;
   options.radio_port = radio_port;
   options.keypair = std::nullopt;
-  options.fec_percentage=20; // Default to 20% fec overhead
+  if(enableFec){
+	options.fec_k=8;
+	options.fec_percentage=20; // Default to 20% fec overhead
+  }else{
+	options.fec_k=0;
+	options.fec_percentage=0;
+  }
   const auto cards = m_broadcast_cards_names;
   assert(!cards.empty());
   options.wlan = cards.at(0);

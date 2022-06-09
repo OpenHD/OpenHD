@@ -50,7 +50,7 @@ class WBStreams {
   std::vector<std::unique_ptr<UDPWBTransmitter>> udpVideoTxList;
   std::vector<std::unique_ptr<UDPWBReceiver>> udpVideoRxList;
   // TODO make more configurable
-  [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port)const;
+  [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec)const;
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port) const;
 };
 
