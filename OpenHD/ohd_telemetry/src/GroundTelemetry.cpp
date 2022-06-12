@@ -19,7 +19,7 @@ GroundTelemetry::GroundTelemetry() {
   });*/
   udpGroundClient =std::make_unique<UDPEndpoint2>("GroundStationUDP",
 												  OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
-												  "127.0.0.1","127.0.0.1");//127.0.0.1
+												  "127.0.0.1","127.0.0.1");
   udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
 	onMessageGroundStationClients(msg);
   });
