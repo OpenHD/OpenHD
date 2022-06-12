@@ -12,7 +12,7 @@
 
 int main() {
   std::cout << "SerialEndpointTest::start" << std::endl;
-  SerialEndpoint2 serialEndpoint("TestSerialPort", {"/dev/ttyACM0",115200}, true);
+  SerialEndpoint serialEndpoint("TestSerialPort", {"/dev/ttyACM0",115200}, true);
   serialEndpoint.registerCallback([](MavlinkMessage &msg) {
 	debugMavlinkMessage(msg.m, "SerialTest");
   });

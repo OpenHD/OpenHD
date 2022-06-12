@@ -11,8 +11,6 @@
 #include "openhd-platform.hpp"
 #include <string>
 
-#include <mavsdk/mavsdk.h>
-#include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
@@ -40,10 +38,6 @@ class AirTelemetry {
   //std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;
   std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
   InternalTelemetry ohdTelemetryGenerator{true};
-  //
-  std::shared_ptr<mavsdk::Mavsdk> mavsdk=nullptr;
-  std::shared_ptr<mavsdk::System> systemFc;
-  std::shared_ptr<mavsdk::MavlinkPassthrough> passtrougFC;
 };
 
 #endif //OPENHD_TELEMETRY_AIRTELEMETRY_H
