@@ -15,7 +15,8 @@ int main() {
   {
 	OHDProfile profile{true, "YY"};
 	OHDPlatform platform{};
-	air = std::make_unique<OHDTelemetry>(platform, profile);
+	platform.platform_type = PlatformTypePC;
+	air = std::make_unique<OHDTelemetry>(platform, profile,true);
   }
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(1));

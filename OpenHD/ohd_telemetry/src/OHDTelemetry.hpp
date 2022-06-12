@@ -18,20 +18,20 @@
  */
 class OHDTelemetry {
  public:
-  OHDTelemetry(OHDPlatform platform1,OHDProfile profile1) : platform(platform1),profile(std::move(profile1)) {
+  OHDTelemetry(OHDPlatform platform1,OHDProfile profile1,bool enableExtendedLogging=false) : platform(platform1),profile(std::move(profile1)),m_enableExtendedLogging(enableExtendedLogging) {
 	if (this->profile.is_air) {
 	  airTelemetry = std::make_unique<AirTelemetry>(OHDTelemetry::uartForPlatformType(platform.platform_type));
 	  assert(airTelemetry);
 	  loopThread = std::make_unique<std::thread>([this] {
 		assert(airTelemetry);
-		airTelemetry->loopInfinite();
+		airTelemetry->loopInfinite(this->m_enableExtendedLogging);
 	  });
 	} else {
 	  groundTelemetry = std::make_unique<GroundTelemetry>();
 	  assert(groundTelemetry);
 	  loopThread = std::make_unique<std::thread>([this] {
 		assert(groundTelemetry);
-		groundTelemetry->loopInfinite();
+		groundTelemetry->loopInfinite(this->m_enableExtendedLogging);
 	  });
 	}
   }
@@ -51,6 +51,7 @@ class OHDTelemetry {
  private:
   const OHDPlatform platform;
   const OHDProfile profile;
+  const bool m_enableExtendedLogging;
   /**
   * Return the name of the default UART for the different platforms OpenHD is running on.
   * @param platformType the platform we are running on
@@ -59,6 +60,7 @@ class OHDTelemetry {
   static std::string uartForPlatformType(const PlatformType &platformType) {
 	// we default to using a USB serial adapter on any other platform at the moment, some just need
 	// to be checked to see what the port is called, but PC will likely always be USB
+	// for testing, the serial shows up as this on my pc:
 	std::string platformSerialPort = "/dev/ttyUSB0";
 	switch (platformType) {
 	  case PlatformTypeRaspberryPi: {
@@ -67,6 +69,10 @@ class OHDTelemetry {
 	  }
 	  case PlatformTypeJetson: {
 		platformSerialPort = "/dev/ttyTHS1";
+		break;
+	  }
+	  case PlatformTypePC:{
+		platformSerialPort="/dev/ttyACM0";
 		break;
 	  }
 	  default: {

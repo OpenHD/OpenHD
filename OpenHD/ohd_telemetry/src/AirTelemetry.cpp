@@ -5,21 +5,50 @@
 #include "AirTelemetry.h"
 #include "mav_helper.h"
 
+
 AirTelemetry::AirTelemetry(std::string fcSerialPort) {
-  serialEndpoint = std::make_unique<SerialEndpoint>("FCSerial", SerialEndpoint::HWOptions{fcSerialPort, 115200});
+  /*serialEndpoint = std::make_unique<SerialEndpoint>("FCSerial", SerialEndpoint::HWOptions{fcSerialPort, 115200});
   serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	this->onMessageFC(msg);
-  });
+  });*/
   // any message coming in via wifibroadcast is a message from the ground pi
   wifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(true);
   wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	onMessageGroundPi(msg);
   });
   std::cout << "Created AirTelemetry\n";
+  mavsdk=std::make_shared<mavsdk::Mavsdk>();
+  mavsdk->add_serial_connection("/dev/ttyACM0",115200);
+  mavsdk->subscribe_on_new_system([this]() {
+	std::cout << "System found\n";
+	auto system = this->mavsdk->systems().back();
+	if (system->has_autopilot()) {
+	  std::cout<<"Found autopilot\n";
+	  passtrougFC=std::make_shared<mavsdk::MavlinkPassthrough>(system);
+	  passtrougFC->intercept_incoming_messages_async([this](mavlink_message_t& msg){
+		std::cout<<"Intercept:Got message:"<<msg.msgid<<"\n";
+		MavlinkMessage m2;
+		m2.m=msg;
+		this->onMessageFC(m2);
+		return true;
+	  });
+	  passtrougFC->intercept_outgoing_messages_async([](mavlink_message_t& msg){
+		std::cout<<"Intercept:send message:"<<msg.msgid<<"\n";
+		return true;
+	  });
+	}
+  });
+  //auto connection_result=mavsdk.add_udp_connection()
 }
 
 void AirTelemetry::sendMessageFC(MavlinkMessage &message) {
-  serialEndpoint->sendMessage(message);
+  //serialEndpoint->sendMessage(message);
+  if(passtrougFC){
+	passtrougFC->send_message(message.m);
+  }
+  if(message.m.msgid==MAVLINK_MSG_ID_PING){
+	std::cout<<"Sent ping to FC\n";
+  }
 }
 
 void AirTelemetry::sendMessageGroundPi(MavlinkMessage &message) {
@@ -29,8 +58,12 @@ void AirTelemetry::sendMessageGroundPi(MavlinkMessage &message) {
 }
 
 void AirTelemetry::onMessageFC(MavlinkMessage &message) {
-  // handling a message from the FC is really easy - we just forward it to the ground pi.
+  //debugMavlinkMessage(message.m,"AirTelemetry::onMessageFC");
   sendMessageGroundPi(message);
+  // handling a message from the FC is really easy - we just forward it to the ground pi.
+  if(message.m.msgid==MAVLINK_MSG_ID_PING){
+	std::cout<<"Got ping from FC\n";
+  }
 }
 
 void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {

@@ -90,6 +90,7 @@ class MEndpoint {
 		}
 	  }
 	}
+	m_n_messages_received+=nMessages;
 	//std::cout<<TAG<<" N messages:"<<nMessages<<"\n";
 	//std::cout<<TAG<<MavlinkHelpers::mavlink_status_to_string(receiveMavlinkStatus)<<"\n";
   }
@@ -97,6 +98,7 @@ class MEndpoint {
   mavlink_status_t receiveMavlinkStatus{};
   const uint8_t m_mavlink_channel;
   std::chrono::steady_clock::time_point lastMessage{};
+  int m_n_messages_received=0;
   // I think mavlink channels are static, so each endpoint should use his own channel.
   // Based on mavsdk::mavlink_channels
   // It is not clear what the limit of the number of channels is, except UINT8_MAX.

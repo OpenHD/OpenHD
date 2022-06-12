@@ -7,6 +7,7 @@
 
 #include "endpoints/TCPEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
+#include "endpoints/UDPEndpoint2.h"
 #include "endpoints/SerialEndpoint.h"
 #include "internal/InternalTelemetry.h"
 
@@ -33,7 +34,8 @@ class GroundTelemetry {
  private:
   static constexpr auto M_SYS_ID = OHD_SYS_ID_GROUND;
   std::unique_ptr<TCPEndpoint> tcpGroundCLient = nullptr;
-  std::unique_ptr<UDPEndpoint> udpGroundClient = nullptr;
+  //std::unique_ptr<UDPEndpoint> udpGroundClient = nullptr;
+  std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;
   // We rely on another service for starting the rx/tx links
   std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;
   InternalTelemetry ohdTelemetryGenerator{false};

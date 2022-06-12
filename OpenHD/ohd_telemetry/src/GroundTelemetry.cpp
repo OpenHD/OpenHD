@@ -11,12 +11,19 @@ GroundTelemetry::GroundTelemetry() {
   tcpGroundCLient->registerCallback([this](MavlinkMessage& msg){
 	  onMessageGroundStationClients(msg);
   });*/
-  udpGroundClient =
-	  std::make_unique<UDPEndpoint>("GroundStationUDP", OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN);
+  /*udpGroundClient =std::make_unique<UDPEndpoint>("GroundStationUDP",
+												 OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
+												 "127.0.0.1","127.0.0.1",true);//127.0.0.1
+  udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
+	onMessageGroundStationClients(msg);
+  });*/
+  udpGroundClient =std::make_unique<UDPEndpoint2>("GroundStationUDP",
+												  OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
+												  "127.0.0.1","127.0.0.1");//127.0.0.1
   udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
 	onMessageGroundStationClients(msg);
   });
-  // hacky, start breoadcasting the existence of the OHD ground station
+  // hacky, start broadcasting the existence of the OHD ground station
   // udpGroundClient->startHeartBeat(OHD_SYS_ID_GROUND,0);
   // any message coming in via wifibroadcast is a message from the air pi
   udpWifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(false);

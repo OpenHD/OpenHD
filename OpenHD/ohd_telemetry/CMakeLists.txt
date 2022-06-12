@@ -19,10 +19,13 @@ find_package(Boost REQUIRED COMPONENTS system thread regex filesystem)
 message(STATUS "Boost version: ${Boost_VERSION}")
 SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::system Boost::thread Boost::filesystem)
 
+find_package(MAVSDK REQUIRED)
+
 SET(ALL_TELEMETRY_SOURCE_FILES
         src/AirTelemetry.cpp
         src/GroundTelemetry.cpp
         src/endpoints/UDPEndpoint.cpp
+        src/endpoints/UDPEndpoint2.cpp
         src/endpoints/TCPEndpoint.cpp
         src/endpoints/SerialEndpoint.cpp
         #src/endpoints/WBEndpoint.cpp
@@ -32,7 +35,8 @@ SET(ALL_TELEMETRY_SOURCE_FILES
 add_library(OHDTelemetryLib
         STATIC
         ${ALL_TELEMETRY_SOURCE_FILES})
-target_link_libraries(OHDTelemetryLib PRIVATE ${OHD_TELEMETRY_USED_BOOST_LIBS})
+target_link_libraries(OHDTelemetryLib PRIVATE ${OHD_TELEMETRY_USED_BOOST_LIBS}
+        MAVSDK::mavsdk)
 target_include_directories(OHDTelemetryLib PUBLIC src/)
 # include mavlink (header-only)
 add_library(mavlink INTERFACE)
