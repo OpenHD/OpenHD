@@ -14,11 +14,11 @@ UDPEndpoint2::UDPEndpoint2(const std::string &TAG,
   const auto cb = [this](const uint8_t *payload, const std::size_t payloadSize)mutable {
 	this->parseNewData(payload, (int)payloadSize);
   };
-  receiver = std::make_unique<SocketHelper::UDPReceiver>(receiverIp, RECV_PORT, cb);
+  receiver = std::make_unique<SocketHelper::UDPReceiver>(RECV_IP, RECV_PORT, cb);
   receiver->runInBackground();
 }
 
 void UDPEndpoint2::sendMessage(const MavlinkMessage &message) {
   const auto data = message.pack();
-  receiver->XforwardPacketViaUDP(SENDER_IP,SEND_PORT,data.data(),data.size());
+  receiver->forwardPacketViaUDP(SENDER_IP,SEND_PORT,data.data(),data.size());
 }
