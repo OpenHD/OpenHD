@@ -12,6 +12,7 @@
 #include <chrono>
 #include <mutex>
 #include <utility>
+#include <atomic>
 
 // Mavlink Endpoint
 // A Mavlink endpoint hides away the underlying connection - e.g. UART, TCP, UDP.
@@ -37,7 +38,8 @@ class MEndpoint {
   /**
    * send a message via this endpoint.
    * If the endpoint is silently disconnected, this MUST NOT FAIL/CRASH.
-   * Increases the sent message count, then calls the underlying implementation's sendMessage() function.
+   * This calls the underlying implementation's sendMessage() function (pure virtual)
+   * and increases the sent message count
    * @param message the message to send
    */
   void sendMessage(const MavlinkMessage &message){
@@ -73,7 +75,7 @@ class MEndpoint {
   }
   [[nodiscard]] std::string createInfo()const{
 	std::stringstream ss;
-	ss<<TAG<<" sent:"<<0<<" recv:"<<m_n_messages_received<<" alive:"<<(isAlive() ? "Y" : "N") << "\n";
+	ss<<TAG<<" sent:"<<m_n_messages_sent<<" recv:"<<m_n_messages_received<<" alive:"<<(isAlive() ? "Y" : "N") << "\n";
 	return ss.str();
   }
   // can be public since immutable
@@ -117,7 +119,8 @@ class MEndpoint {
   const uint8_t m_mavlink_channel;
   std::chrono::steady_clock::time_point lastMessage{};
   int m_n_messages_received=0;
-  int m_n_messages_sent=0;
+  // sendMessage() might be called by different threads.
+  std::atomic<int> m_n_messages_sent=0;
   // I think mavlink channels are static, so each endpoint should use his own channel.
   // Based on mavsdk::mavlink_channels
   // It is not clear what the limit of the number of channels is, except UINT8_MAX.
