@@ -26,8 +26,10 @@ int main() {
   }
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(1));
-	const auto gLog=ohdTelemGround->createDebug();
-	const auto airLog=ohdTelemAir->createDebug();
+	std::stringstream ss;
+	ss<<ohdTelemGround->createDebug();
+	ss<<ohdTelemAir->createDebug();
+	std::cout<<ss.str();
   }
 }
 

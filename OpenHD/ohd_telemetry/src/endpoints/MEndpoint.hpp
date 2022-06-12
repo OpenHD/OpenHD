@@ -56,21 +56,25 @@ class MEndpoint {
    * If (for some reason) you need to reason if this endpoint is alive, just check if it has received any mavlink messages
    * in the last X seconds
    */
-  bool isAlive() {
+  [[nodiscard]] bool isAlive()const {
 	return (std::chrono::steady_clock::now() - lastMessage) < std::chrono::seconds(5);
   }
   /**
    * For debugging, print if this endpoint is alive (an endpoint is alive if it has received mavlink messages in the last X seconds).
    */
-  void debugIfAlive() {
+  void debugIfAlive()const {
 	std::stringstream ss;
 	ss << TAG << " alive:" << (isAlive() ? "Y" : "N") << "\n";
 	std::cout << ss.str();
   }
+  [[nodiscard]] std::string createInfo()const{
+	std::stringstream ss;
+	ss<<TAG<<" sent:"<<0<<" recv:"<<m_n_messages_received<<" alive:"<<(isAlive() ? "Y" : "N") << "\n";
+	return ss.str();
+  }
   // can be public since immutable
   const std::string TAG;
  protected:
-  MAV_MSG_CALLBACK callback = nullptr;
   // parse new data as it comes in, extract mavlink messages and forward them on the registered callback (if it has been registered)
   void parseNewData(const uint8_t *data,const int data_len) {
 	//std::cout<<TAG<<" received data:"<<data_len<<" "<<MavlinkHelpers::raw_content(data,data_len)<<"\n";
@@ -91,6 +95,7 @@ class MEndpoint {
 	onNewMavlinkMessage(msg);
   }
  private:
+  MAV_MSG_CALLBACK callback = nullptr;
   // increases message count and forwards the message via the callback if registered.
   void onNewMavlinkMessage(mavlink_message_t msg){
 	lastMessage = std::chrono::steady_clock::now();

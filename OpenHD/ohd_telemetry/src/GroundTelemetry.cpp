@@ -34,7 +34,7 @@ GroundTelemetry::GroundTelemetry() {
 }
 
 void GroundTelemetry::onMessageAirPi(MavlinkMessage &message) {
-  debugMavlinkMessage(message.m,"GroundTelemetry::onMessageAirPi");
+  //debugMavlinkMessage(message.m,"GroundTelemetry::onMessageAirPi");
   const mavlink_message_t &m = message.m;
   // we do not need to forward heartbeat messages coming from the air telemetry service
   if (m.msgid == MAVLINK_MSG_ID_HEARTBEAT && m.sysid == OHD_SYS_ID_AIR) {
@@ -46,7 +46,7 @@ void GroundTelemetry::onMessageAirPi(MavlinkMessage &message) {
 }
 
 void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
-  debugMavlinkMessage(message.m, "GroundTelemetry::onMessageGroundStationClients");
+  //debugMavlinkMessage(message.m, "GroundTelemetry::onMessageGroundStationClients");
   const auto &msg = message.m;
   // for now, forward everything
   sendMessageAirPi(message);
@@ -82,10 +82,10 @@ void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
 	//std::cout << "GroundTelemetry::loopInfinite()\n";
 	// for debugging, check if any of the endpoints is not alive
 	if (enableExtendedLogging && udpWifibroadcastEndpoint) {
-	  udpWifibroadcastEndpoint->debugIfAlive();
+	  std::cout<<udpWifibroadcastEndpoint->createInfo();
 	}
 	if (enableExtendedLogging && udpGroundClient) {
-	  udpGroundClient->debugIfAlive();
+	  std::cout<<udpGroundClient->createInfo();
 	}
 	// send messages to the ground station in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
@@ -95,6 +95,18 @@ void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
 	}
 	std::this_thread::sleep_for(std::chrono::seconds(3));
   }
+}
+
+std::string GroundTelemetry::createDebug() const {
+  std::stringstream ss;
+  //ss<<"GT:\n";
+  if (udpWifibroadcastEndpoint) {
+	std::cout<<udpWifibroadcastEndpoint->createInfo();
+  }
+  if (udpGroundClient) {
+	std::cout<<udpGroundClient->createInfo();
+  }
+  return ss.str();
 }
 
 

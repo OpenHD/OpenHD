@@ -22,6 +22,7 @@ class GroundTelemetry {
    * @param enableExtendedLogging be really verbose on logging.
    */
   void loopInfinite(bool enableExtendedLogging = false);
+  [[nodiscard]] std::string createDebug()const;
  private:
   // called every time a message from the air pi is received
   void onMessageAirPi(MavlinkMessage &message);

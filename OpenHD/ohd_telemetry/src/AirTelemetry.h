@@ -23,6 +23,7 @@ class AirTelemetry {
    * @param enableExtendedLogging be really verbose on logging.
    */
   void loopInfinite(bool enableExtendedLogging = false);
+  [[nodiscard]] std::string createDebug()const;
  private:
   // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
   void sendMessageFC(MavlinkMessage &message);

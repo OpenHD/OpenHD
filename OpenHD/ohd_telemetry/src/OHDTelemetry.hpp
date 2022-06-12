@@ -43,9 +43,9 @@ class OHDTelemetry {
   std::unique_ptr<std::thread> loopThread;
   [[nodiscard]] std::string createDebug()const{
 	if(profile.is_air){
-	  return "Telemetry A debug todo\n";
+	  return airTelemetry->createDebug();
 	}else{
-	  return "Telemetry G debug todo\n";
+	  return groundTelemetry->createDebug();
 	}
   }
  private:

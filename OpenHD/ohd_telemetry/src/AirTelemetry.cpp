@@ -28,7 +28,7 @@ void AirTelemetry::sendMessageFC(MavlinkMessage &message) {
 }
 
 void AirTelemetry::sendMessageGroundPi(MavlinkMessage &message) {
-  debugMavlinkMessage(message.m,"AirTelemetry::sendMessageGroundPi");
+  //debugMavlinkMessage(message.m,"AirTelemetry::sendMessageGroundPi");
   // broadcast the mavlink message via wifibroadcast
   wifibroadcastEndpoint->sendMessage(message);
 }
@@ -66,10 +66,10 @@ void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
 	//std::cout << "AirTelemetry::loopInfinite()\n";
 	// for debugging, check if any of the endpoints is not alive
 	if (enableExtendedLogging && wifibroadcastEndpoint) {
-	  wifibroadcastEndpoint->debugIfAlive();
+	  std::cout<<wifibroadcastEndpoint->createInfo();
 	}
 	if (enableExtendedLogging && serialEndpoint) {
-	  serialEndpoint->debugIfAlive();
+	  std::cout<<serialEndpoint->createInfo();
 	}
 	// send messages to the ground pi in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
@@ -80,4 +80,16 @@ void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
 	// send out in X second intervals
 	std::this_thread::sleep_for(std::chrono::seconds(3));
   }
+}
+
+std::string AirTelemetry::createDebug() const {
+  std::stringstream ss;
+  //ss<<"AT:\n";
+  if ( wifibroadcastEndpoint) {
+	ss<<wifibroadcastEndpoint->createInfo();
+  }
+  if (serialEndpoint) {
+	ss<<serialEndpoint->createInfo();
+  }
+  return ss.str();
 }
