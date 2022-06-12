@@ -65,10 +65,10 @@ void SerialEndpoint::safeRestart() {
 	opened = true;
 	mIoThread = std::make_unique<boost::thread>(boost::bind(&boost::asio::io_service::run, &io_service));
   }
-  // some implementations need a heartbeat before they start sending data.
-  auto msg = MExampleMessage::heartbeat();
-  sendMessage(msg);
   startReceive();
+  // some implementations need a heartbeat before they start sending data.
+  //auto msg = MExampleMessage::heartbeat();
+  //sendMessage(msg);
 }
 
 void SerialEndpoint::startReceive() {
