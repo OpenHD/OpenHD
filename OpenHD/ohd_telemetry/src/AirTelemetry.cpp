@@ -23,6 +23,7 @@ void AirTelemetry::sendMessageFC(MavlinkMessage &message) {
   serialEndpoint->sendMessage(message);
   if(message.m.msgid==MAVLINK_MSG_ID_PING){
 	std::cout<<"Sent ping to FC\n";
+	MavlinkHelpers::debugMavlinkPingMessage(message.m);
   }
 }
 
