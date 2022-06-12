@@ -19,8 +19,8 @@ SerialEndpoint::SerialEndpoint(std::string TAG, HWOptions options,bool enableDeb
 	m_options(std::move(options)),
 	m_serial(io_service),
 	m_enable_debug(enableDebug){
-  std::cout << "SerialEndpoint created " << m_options.linux_filename << "\n";
   mOpenSerialPortThread = std::make_unique<boost::thread>([this] { safeRestart(); });
+  std::cout << "SerialEndpoint created " << m_options.linux_filename <<":"<<m_options.baud_rate<< "\n";
 }
 
 void SerialEndpoint::safeCloseCleanup() {

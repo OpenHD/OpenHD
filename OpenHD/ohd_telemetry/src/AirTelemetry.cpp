@@ -38,7 +38,6 @@ AirTelemetry::AirTelemetry(std::string fcSerialPort) {
 	  });
 	}
   });
-  //auto connection_result=mavsdk.add_udp_connection()
 }
 
 void AirTelemetry::sendMessageFC(MavlinkMessage &message) {

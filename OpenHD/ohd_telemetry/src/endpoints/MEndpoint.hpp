@@ -79,22 +79,29 @@ class MEndpoint {
 	for (int i = 0; i < data_len; i++) {
 	  uint8_t res = mavlink_parse_char(m_mavlink_channel, (uint8_t)data[i], &msg, &receiveMavlinkStatus);
 	  if (res) {
-		lastMessage = std::chrono::steady_clock::now();
-		MavlinkMessage message{msg};
-		//debugMavlinkMessage(message.m,TAG.c_str());
 		nMessages++;
-		if (callback != nullptr) {
-		  callback(message);
-		} else {
-		  std::cerr << "No callback set,did you forget to add it ?\n";
-		}
+		onNewMavlinkMessage(msg);
 	  }
 	}
-	m_n_messages_received+=nMessages;
 	//std::cout<<TAG<<" N messages:"<<nMessages<<"\n";
 	//std::cout<<TAG<<MavlinkHelpers::mavlink_status_to_string(receiveMavlinkStatus)<<"\n";
   }
+  // this one is special, since mavsdk in this case has already done the message parsing
+  void parseNewDataEmulateForMavsdk(mavlink_message_t msg){
+	onNewMavlinkMessage(msg);
+  }
  private:
+  // increases message count and forwards the message via the callback if registered.
+  void onNewMavlinkMessage(mavlink_message_t msg){
+	lastMessage = std::chrono::steady_clock::now();
+	MavlinkMessage message{msg};
+	if (callback != nullptr) {
+	  callback(message);
+	} else {
+	  std::cerr << "No callback set,did you forget to add it ?\n";
+	}
+	m_n_messages_received++;
+  }
   mavlink_status_t receiveMavlinkStatus{};
   const uint8_t m_mavlink_channel;
   std::chrono::steady_clock::time_point lastMessage{};
