@@ -7,12 +7,12 @@
 #include <iostream>
 
 #include "../src/endpoints/SerialEndpoint.h"
+#include "../src/endpoints/SerialEndpoint2.h"
 #include "../src/mav_helper.h"
 
 int main() {
   std::cout << "SerialEndpointTest::start" << std::endl;
-  SerialEndpoint::HWOptions opt{SerialEndpoint::TEST_SERIAL_PORT};
-  SerialEndpoint serialEndpoint("TestSerialPort", opt, true);
+  SerialEndpoint2 serialEndpoint("TestSerialPort", {"/dev/ttyACM0",115200}, true);
   serialEndpoint.registerCallback([](MavlinkMessage &msg) {
 	debugMavlinkMessage(msg.m, "SerialTest");
   });

@@ -10,7 +10,7 @@ SerialEndpoint2::SerialEndpoint2(std::string TAG, HWOptions options, bool enable
 	m_enable_debug(enableDebug){
 
   mavsdk=std::make_shared<mavsdk::Mavsdk>();
-  mavsdk->add_serial_connection(options.linux_filename,options.baud_rate);
+  mavsdk->add_serial_connection(m_options.linux_filename,m_options.baud_rate);
   mavsdk->subscribe_on_new_system([this]() {
 	std::cout <<this->TAG<< " system found\n";
 	auto system = this->mavsdk->systems().back();
