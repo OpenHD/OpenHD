@@ -25,7 +25,7 @@ int main() {
 	ohdTelemAir = std::make_unique<OHDTelemetry>(platform, profile);
   }
   while (true) {
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::this_thread::sleep_for(std::chrono::seconds(5));
 	std::stringstream ss;
 	ss<<"G and air debug:\n";
 	ss<<ohdTelemGround->createDebug();
