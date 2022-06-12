@@ -36,10 +36,14 @@ class MEndpoint {
   };
   /**
    * send a message via this endpoint.
-   * If the endpoint is silently disconnected, this MUST NOT FAIL/CRASH
+   * If the endpoint is silently disconnected, this MUST NOT FAIL/CRASH.
+   * Increases the sent message count, then calls the underlying implementation's sendMessage() function.
    * @param message the message to send
    */
-  virtual void sendMessage(const MavlinkMessage &message) = 0;
+  void sendMessage(const MavlinkMessage &message){
+	sendMessageImpl(message);
+	m_n_messages_sent++;
+  }
   /**
    * register a callback that is called every time
    * this endpoint has received a new message
@@ -94,6 +98,8 @@ class MEndpoint {
   void parseNewDataEmulateForMavsdk(mavlink_message_t msg){
 	onNewMavlinkMessage(msg);
   }
+  // Must be overridden by the implementation
+  virtual void sendMessageImpl(const MavlinkMessage &message) = 0;
  private:
   MAV_MSG_CALLBACK callback = nullptr;
   // increases message count and forwards the message via the callback if registered.
@@ -111,6 +117,7 @@ class MEndpoint {
   const uint8_t m_mavlink_channel;
   std::chrono::steady_clock::time_point lastMessage{};
   int m_n_messages_received=0;
+  int m_n_messages_sent=0;
   // I think mavlink channels are static, so each endpoint should use his own channel.
   // Based on mavsdk::mavlink_channels
   // It is not clear what the limit of the number of channels is, except UINT8_MAX.

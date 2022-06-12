@@ -33,11 +33,11 @@ class SerialEndpoint : public MEndpoint {
    * @param serial_port the serial port linux name (dev/.. ) for this serial port
    */
   explicit SerialEndpoint(std::string TAG, HWOptions options,bool enableDebug=false);
-  void sendMessage(const MavlinkMessage &message) override;
   //
   static constexpr auto USB_SERIAL_PORT = "/dev/ttyUSB0";
   static constexpr auto TEST_SERIAL_PORT = "/dev/ttyACM0";
  private:
+  void sendMessageImpl(const MavlinkMessage &message) override;
   // If the serial port is still opened, close it
   // after that, it should be openable again
   void safeCloseCleanup();

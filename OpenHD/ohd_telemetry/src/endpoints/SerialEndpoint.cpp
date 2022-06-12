@@ -99,7 +99,7 @@ void SerialEndpoint::handleWrite(const boost::system::error_code &error,
   }
 }
 
-void SerialEndpoint::sendMessage(const MavlinkMessage &message) {
+void SerialEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   if (!m_serial.is_open()) {
 	std::cout << "SER: not open\n";
 	return;

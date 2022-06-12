@@ -29,7 +29,7 @@ UDPEndpoint::UDPEndpoint(const std::string& TAG, const int senderPort, const int
   }
 }
 
-void UDPEndpoint::sendMessage(const MavlinkMessage &message) {
+void UDPEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"UDPEndpoint::sendMessage");
   if (transmitter != nullptr) {
 	const auto data = message.pack();

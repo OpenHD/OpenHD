@@ -16,8 +16,8 @@ class UDPEndpoint2 : public MEndpoint {
  public:
   UDPEndpoint2(const std::string& TAG,int senderPort, int receiverPort,
 			  std::string senderIp=SocketHelper::ADDRESS_LOCALHOST,std::string receiverIp=SocketHelper::ADDRESS_LOCALHOST);
-  void sendMessage(const MavlinkMessage &message) override;
  private:
+  void sendMessageImpl(const MavlinkMessage &message) override;
   const std::string SENDER_IP;
   const int SEND_PORT;
   const std::string RECV_IP;

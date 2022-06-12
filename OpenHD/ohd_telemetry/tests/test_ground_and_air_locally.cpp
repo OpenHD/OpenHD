@@ -27,6 +27,7 @@ int main() {
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	std::stringstream ss;
+	ss<<"G and air debug:\n";
 	ss<<ohdTelemGround->createDebug();
 	ss<<ohdTelemAir->createDebug();
 	std::cout<<ss.str();

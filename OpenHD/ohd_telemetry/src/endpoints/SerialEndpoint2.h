@@ -26,8 +26,8 @@ class SerialEndpoint2 : public MEndpoint {
    * @param serial_port the serial port linux name (dev/.. ) for this serial port
    */
   explicit SerialEndpoint2(std::string TAG, HWOptions options,bool enableDebug=false);
-  void sendMessage(const MavlinkMessage &message) override;
  private:
+  void sendMessageImpl(const MavlinkMessage &message) override;
   const HWOptions m_options;
   const bool m_enable_debug;
  public:
