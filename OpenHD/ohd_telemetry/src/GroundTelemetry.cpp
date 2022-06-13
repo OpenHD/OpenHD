@@ -56,6 +56,8 @@ void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
 	if(response.has_value()){
 	  sendMessageGroundStationClients(response.value());
 	}
+  }else if(msg.msgid==MAVLINK_MSG_ID_PARAM_REQUEST_LIST){
+	std::cout<<"Got MAVLINK_MSG_ID_PARAM_REQUEST_LIST\n";
   }
 }
 
