@@ -7,7 +7,7 @@
 #include <iostream>
 
 #include "../src/endpoints/SerialEndpoint.h"
-#include "../src/endpoints/SerialEndpoint2.h"
+//#include "../src/endpoints/SerialEndpoint2.h"
 #include "../src/mav_helper.h"
 
 int main() {
