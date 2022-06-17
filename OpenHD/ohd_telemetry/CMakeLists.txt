@@ -28,7 +28,7 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         src/endpoints/UDPEndpoint2.cpp
         src/endpoints/TCPEndpoint.cpp
         src/endpoints/SerialEndpoint.cpp
-        src/endpoints/SerialEndpoint2.cpp
+        #src/endpoints/SerialEndpoint2.cpp
         #src/endpoints/WBEndpoint.cpp
         src/internal/InternalTelemetry.cpp
         src/internal/MavlinkParamExt.cpp)
