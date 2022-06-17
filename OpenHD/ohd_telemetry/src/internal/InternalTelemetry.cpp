@@ -147,5 +147,3 @@ std::optional<MavlinkMessage> InternalTelemetry::handlePingMessage(const Mavlink
   }
 }
 
-
-

@@ -125,5 +125,9 @@ static void debugMavlinkMessage(const mavlink_message_t &msg, const char *TAG) {
 		 msg.sysid);
 }
 
+static void lululululu(){
+  //mavlink_msg_param_request_list_pack
+  //mavlink_msg_param_ext_request_list_pack
+}
 
 #endif //XMAVLINKSERVICE_MAV_HELPER_H

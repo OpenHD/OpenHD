@@ -22,7 +22,7 @@ int main() {
 
   auto result = mavsdkServer->add_any_connection("udp://127.0.0.1:14550");
   if (result == mavsdk::ConnectionResult::Success) {
-	std::cout << "Connected autopilot server side!" << std::endl;
+	std::cout << "Connected server side!" << std::endl;
   }
 
   auto server_component =
@@ -39,7 +39,7 @@ int main() {
   paramServer.provide_param_int("OHD_UART_BAUD", 22);
   paramServer.provide_param_custom("OHD_UART_NAME","/dev/ttyUSB0");
 
-  auto result2=paramServer.retrieve_param_int("CAL_ACC0_ID");
+  //auto result2=paramServer.retrieve_param_int("CAL_ACC0_ID");
 
   while (true){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
