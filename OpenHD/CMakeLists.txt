@@ -3,6 +3,8 @@ project(OpenHD)
 
 set(CMAKE_CXX_STANDARD 17)
 
+link_libraries(stdc++fs)
+
 add_subdirectory(ohd_interface)
 add_subdirectory(ohd_discovery)
 add_subdirectory(ohd_telemetry)
