@@ -7,12 +7,15 @@
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 
+#include "DWifiCards.h"
+
 WifiCards::WifiCards(const OHDProfile &profile) : profile(profile) {}
 
 void WifiCards::configure() {
   std::cout << "WifiCards::configure()" << std::endl;
   //Find out which cards are connected first
-  process_manifest();
+  DWifiCards disover;
+  m_wifi_cards=disover.discover();
   // Consti10 - now do some sanity checks. No idea if and how the settings from stephen handle default values.
   for (auto &card: m_wifi_cards) {
 	if (card.settings.use_for == WifiUseForHotspot && profile.is_air) {
@@ -44,10 +47,6 @@ void WifiCards::configure() {
   for (const auto &card: m_wifi_cards) {
 	setup_card(card);
   }
-}
-
-void WifiCards::process_manifest() {
-  m_wifi_cards = wificards_from_manifest();
 }
 
 void WifiCards::setup_card(const WiFiCard &card) {

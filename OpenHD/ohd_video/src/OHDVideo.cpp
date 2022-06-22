@@ -5,6 +5,7 @@
 #include "gstreamerstream.h"
 #include "libcamerastream.h"
 #include "openhd-settings.hpp"
+#include "DCameras.h"
 
 #include "OHDVideo.h"
 
@@ -49,7 +50,9 @@ void OHDVideo::process_manifest() {
 
 void OHDVideo::setup() {
   std::cout << "OHDVideo::setup()" << std::endl;
-  process_manifest();
+  //process_manifest();
+  DCameras discover(platform);
+  m_cameras=discover.discover();
   // Consti10 sanity checks
   for (auto &camera: m_cameras) {
 	// check to see if we need to set a default bitrate.

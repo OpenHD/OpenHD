@@ -23,10 +23,7 @@ extern "C" {
 #include "nl.h"
 }
 
-DWifiCards::DWifiCards(const OHDPlatform& ohdPlatform) :
-	ohdPlatform(ohdPlatform){}
-
-void DWifiCards::discover() {
+std::vector<WiFiCard> DWifiCards::discover() {
   std::cout << "WiFi::discover()\n";
   // Find wifi cards, excluding specific kinds of interfaces.
   const std::vector<std::string> excluded_interfaces = {
@@ -62,6 +59,7 @@ void DWifiCards::discover() {
 	}
   }
   std::cout << "WiFi::discover done, n cards:" << m_wifi_cards.size() << "\n";
+  return m_wifi_cards;
 }
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
@@ -228,6 +226,3 @@ void DWifiCards::process_card(const std::string &interface_name) {
   m_wifi_cards.push_back(card);
 }
 
-void DWifiCards::write_manifest() {
-  write_wificards_manifest(m_wifi_cards);
-}

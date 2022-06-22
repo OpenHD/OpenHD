@@ -1,30 +1,27 @@
-#ifndef WIFI_H
-#define WIFI_H
+#ifndef OHD_DISCOVER_WiFI_CARDS
+#define OHD_DISCOVER_WiFI_CARDS
 
 #include <array>
 #include <chrono>
 #include <vector>
 
-#include "DPlatform.h"
-
 #include "openhd-wifi.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-discoverable.hpp"
 
 /**
  * Discover all connected wifi cards and write them to json.
  */
-class DWifiCards : public OHD::IDiscoverable {
+class DWifiCards {
  public:
-  explicit DWifiCards(const OHDPlatform& ohdPlatform);
+  explicit DWifiCards()=default;
   virtual ~DWifiCards() = default;
-  void discover() override;
-  void write_manifest() override;
-
+  std::vector<WiFiCard> discover();
+ private:
   void process_card(const std::string &interface_name);
  private:
   std::vector<WiFiCard> m_wifi_cards;
-  const OHDPlatform& ohdPlatform;
 };
 
-#endif
+#endif //OHD_DISCOVER_WiFI_CARDS
 

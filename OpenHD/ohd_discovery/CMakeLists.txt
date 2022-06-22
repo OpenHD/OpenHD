@@ -11,14 +11,10 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 include_directories(../ohd_common)
 
 SET(ALL_SYSTEM_SOURCE_FILES
-        src/DCameras.cpp
         #src/DEthernetCards.cpp
         src/DPlatform.cpp
         src/DProfile.cpp
-        src/DWifiCards.cpp
-        src/OHDDiscovery.cpp
-        lib/nl.c
-        lib/bcm2835.c)
+        src/OHDDiscovery.cpp)
 
 add_library(OHDDiscoveryLib
         STATIC
@@ -36,19 +32,6 @@ SET(Boost_USE_MULTITHREAD ON)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
 target_link_libraries(OHDDiscoveryLib PRIVATE Boost::filesystem)
 
-# find and include all the other libs
-include(cmake/FindLibNL.cmake)
-#find_package(LibNL REQUIRED)
-target_include_directories(OHDDiscoveryLib PRIVATE ${LibNL_INCLUDE_DIR})
-target_link_libraries(OHDDiscoveryLib PRIVATE ${LibNL_LIBRARIES})
-#
-include(cmake/FindLibUSB.cmake)
-target_include_directories(OHDDiscoveryLib PRIVATE ${LIBUSB_1_INCLUDE_DIRS})
-target_link_libraries(OHDDiscoveryLib PRIVATE ${LIBUSB_1_LIBRARIES})
-#
-include(cmake/FindV4L2.cmake)
-target_include_directories(OHDDiscoveryLib PRIVATE ${V4L2_INCLUDE_DIR})
-target_link_libraries(OHDDiscoveryLib PRIVATE ${V4L2_LIBRARY})
 
 # Test the discovery step on its own
 add_executable(test_discovery test/test_discovery.cpp)

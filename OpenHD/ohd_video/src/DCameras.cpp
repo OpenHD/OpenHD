@@ -19,7 +19,7 @@
 DCameras::DCameras(const OHDPlatform& ohdPlatform) :
 	ohdPlatform(ohdPlatform){}
 
-void DCameras::discover() {
+std::vector<Camera> DCameras::discover() {
   std::cout << "Cameras::discover()" << std::endl;
 
   // Only on raspberry pi with the old broadcom stack we need a special detection method for the rpi CSI camera.
@@ -36,6 +36,8 @@ void DCameras::discover() {
   // This will detect all cameras (CSI or not) that do it the proper way (linux v4l2)
   detect_v4l2();
   detect_ip();
+  argh_cleanup();
+  return m_cameras;
 }
 
 void DCameras::detect_raspberrypi_csi() {
@@ -272,7 +274,7 @@ void DCameras::detect_ip() {
   // Note: I don't think there is an easy way to detect ip cameras,it probably requires some manual user input.
 }
 
-void DCameras::write_manifest() {
+void DCameras::argh_cleanup() {
   // Fixup endpoints, would be better to seperate the discovery steps properly so that this is not needed
   for (auto &camera: m_cameras) {
 	std::vector<CameraEndpoint> endpointsForThisCamera;

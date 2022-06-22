@@ -11,9 +11,8 @@
 #include <exception>
 
 #include "DPlatform.h"
-#include "DCameras.h"
+//#include "DCameras.h"
 //#include "DEthernetCards.h"
-#include "DWifiCards.h"
 #include "DProfile.h"
 
 OHDHardware OHDDiscovery::runOnceOnStartup(bool forceAir,bool forceGround) {
@@ -28,13 +27,13 @@ OHDHardware OHDDiscovery::runOnceOnStartup(bool forceAir,bool forceGround) {
 	DPlatform platform;
 	discovered_hardware.platform=platform.discover();
 
-	DCameras cameras(*discovered_hardware.platform);
+	/*DCameras cameras(*discovered_hardware.platform);
 	cameras.discover();
-	cameras.write_manifest();
+	cameras.write_manifest();*/
 
-	DWifiCards wifi(*discovered_hardware.platform);
+	/*DWifiCards wifi(*discovered_hardware.platform);
 	wifi.discover();
-	wifi.write_manifest();
+	wifi.write_manifest();*/
 
 	/*DEthernetCards ethernet(platform.platform_type(), platform.board_type(), platform.carrier_type());
 	ethernet.discover();
@@ -44,7 +43,8 @@ OHDHardware OHDDiscovery::runOnceOnStartup(bool forceAir,bool forceGround) {
 	_t.close();*/
 
 	// When we write the profile we need to reason weather this is an air or ground pi.
-	const int camera_count = cameras.getCameraCount();
+	//const int camera_count = cameras.getCameraCount();
+	const int camera_count=0;
 	bool is_air = camera_count > 0;
 	if (forceAir) {
 	  is_air = true;
