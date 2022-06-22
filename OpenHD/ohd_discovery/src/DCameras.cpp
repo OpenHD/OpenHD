@@ -1,17 +1,11 @@
-#include <cstdio>
-
 #include <linux/videodev2.h>
 #include <libv4l2.h>
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <fcntl.h>
-#include <unistd.h>
 
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <regex>
 
 #include "openhd-camera.hpp"

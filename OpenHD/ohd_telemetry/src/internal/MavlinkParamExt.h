@@ -119,7 +119,7 @@ class ParamExtProvider{
   }
 
   // Send a parameter as a response to a request list or request read command
-  static mavlink_message_t send_param(const int target_sys_id,const int target_comp_id,const Parameter& param){
+  static void send_param(const int target_sys_id,const int target_comp_id,const Parameter& param){
 	mavlink_param_value_t l;
 	mavlink_param_set_t l2;
 	mavlink_param_ext_value_t l3;

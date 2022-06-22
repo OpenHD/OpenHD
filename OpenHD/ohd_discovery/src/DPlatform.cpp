@@ -1,16 +1,9 @@
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 #include <iostream>
-#include <fstream>
 #include <set>
 
 #include <regex>
 
 #include "openhd-platform.hpp"
-#include "openhd-log.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 

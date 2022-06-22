@@ -11,15 +11,12 @@
 
 #include <iostream>
 #include <boost/algorithm/string/trim.hpp>
-
-
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 
-#include "DPlatform.h"
 #include "DWifiCards.h"
 
 extern "C" {
