@@ -12,7 +12,7 @@
 /**
  * Discover the profile we are running on and write it to json.
  */
-class DProfile : public OHD::IDiscoverable {
+class DProfile{
  public:
   /**
    *
@@ -22,14 +22,11 @@ class DProfile : public OHD::IDiscoverable {
   explicit DProfile(bool is_air);
   virtual ~DProfile() = default;
 
-  void discover() override;
-
-  void write_manifest() override;
+  std::shared_ptr<OHDProfile> discover();
 
   std::string unit_id() {
 	return m_unit_id;
   }
-
  private:
   const bool m_is_air;
   std::string m_unit_id;

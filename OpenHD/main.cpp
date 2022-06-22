@@ -55,20 +55,26 @@ int main(int argc, char *argv[]) {
 	exit(1);
   }
   std::cout << "OpenHD START with " <<"\n"<<
-			"skip_discovery:" << (options.skip_discovery ? "Y" : "N") <<"\n"<<
+			//"skip_discovery:" << (options.skip_discovery ? "Y" : "N") <<"\n"<<
 			"force_air:" << (options.force_air ? "Y" : "N") <<"\n"<<
 			"force_ground:" << (options.force_ground ? "Y" : "N") <<"\n";
 
   try {
-	if (!options.skip_discovery) {
+	OHDHardware ohd_hardware = OHDDiscovery::runOnceOnStartup(options.force_air,options.force_ground);
+
+	/*if (!options.skip_discovery) {
 	  // Always needs to run first.
 	  OHDDiscovery::runOnceOnStartup(options.force_air,options.force_ground);
-	}
+	  discovery_result=OHDDiscovery::discover_all();
+	}else{
+	  discovery_result.platform=std::make_shared<OHDPlatform>();
+	  discovery_result.profile=std::make_shared<OHDProfile>();
+	}*/
 
 	// Now this is kinda stupid - we write json's during the discovery, then we read them back in
 	// Note that interface, telemetry and video might also read the or update the jsons
-	const auto platform = platform_from_manifest();
-	const auto profile = profile_from_manifest();
+	const auto platform =*ohd_hardware.platform;
+	const auto profile = *ohd_hardware.profile;
 
 	// First start ohdInterface, which does wifibroadcast and more
 	auto ohdInterface = std::make_unique<OHDInterface>(profile);

@@ -12,13 +12,12 @@
 DProfile::DProfile(bool is_air) :
 	m_is_air(is_air) {}
 
-void DProfile::discover() {
+std::shared_ptr<OHDProfile>  DProfile::discover() {
   std::cout << "Profile::discover()\n";
   // We read the unit id from the persistent storage, later write it to the tmp storage json
   m_unit_id = getOrCreateUnitId();
+  auto ret=std::make_shared<OHDProfile>(m_is_air,m_unit_id);
+  write_profile_manifest(*ret);
+  return ret;
 }
 
-void DProfile::write_manifest() {
-  OHDProfile ohdProfile{m_is_air, m_unit_id};
-  write_profile_manifest(ohdProfile);
-}

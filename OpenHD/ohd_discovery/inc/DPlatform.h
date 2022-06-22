@@ -12,24 +12,15 @@
  * Note: One should not use a instance of this class for anything else than discovery, to pass around the discovered
  * data use the struct from ohd_platform.
  */
-class DPlatform : public OHD::IDiscoverable {
+class DPlatform {
  public:
   DPlatform() = default;
   virtual ~DPlatform() = default;
-
-  void discover() override;
-
-  void write_manifest() override;
-  // call only after performing the discovery
-  [[nodiscard]] OHDPlatform getOHDPlatform()const{
-	return OHDPlatform{m_platform_type,m_board_type};
-  }
+  std::shared_ptr<OHDPlatform> discover();
  private:
   void detect_raspberrypi();
   void detect_jetson();
   void detect_pc();
-  // This data is written by this class as information is gathered.
-  //OHDPlatform ohdPlatform;
   PlatformType m_platform_type = PlatformTypeUnknown;
   BoardType m_board_type = BoardTypeUnknown;
 };

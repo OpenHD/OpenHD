@@ -2,6 +2,7 @@
 #define OPENHD_PROFILE_H
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <sstream>
 #include <fstream>
@@ -13,15 +14,23 @@
 /**
  * The profile is created on startup and then doesn't change during run time.
  * Note that while the unit id never changes between successive re-boots of OpenHD,
- * the is_air variable might change (aka a ground pi might become an air pi when the user switches things around, or opposite).
+ * the is_air variable might change, but not during run time
+ * (aka a ground pi might become an air pi when the user switches the SD card around).
  */
-struct OHDProfile {
+class OHDProfile {
+ public:
+  explicit OHDProfile(bool is_air=false,std::string unit_id1="0"):is_air(is_air),unit_id(std::move(unit_id1)){};
   // Weather we run on an air or ground "pi" (air or ground system).
   // R.n this is determined by checking if there is at least one camera connected to the system
   // or by using the force_air (development) variable.
-  bool is_air = false;
+  const bool is_air;
   // The unique id of this system, it is created once then never changed again.
-  std::string unit_id = "0";
+  const std::string unit_id;
+  [[nodiscard]] std::string to_string()const{
+	std::stringstream ss;
+	ss<<"OHDProfile{"<<(is_air ? "Air":"Ground")<<":"<<unit_id<<"}";
+	return ss.str();
+  }
 };
 
 static nlohmann::json profile_to_json(const OHDProfile &ohdProfile) {
@@ -45,9 +54,7 @@ static OHDProfile profile_from_manifest() {
 	std::ifstream f(PROFILE_MANIFEST_FILENAME);
 	nlohmann::json j;
 	f >> j;
-	OHDProfile profile;
-	profile.is_air = j["is-air"];
-	profile.unit_id = j["unit-id"];
+	OHDProfile profile{j["is-air"],j["unit-id"]};
 	return profile;
   } catch (std::exception &ex) {
 	std::stringstream ss;
@@ -56,6 +63,5 @@ static OHDProfile profile_from_manifest() {
 	throw std::runtime_error(ss.str());
   }
 }
-
 #endif
 

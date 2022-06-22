@@ -129,10 +129,18 @@ inline BoardType board_type_from_string(const std::string& s){
 
 // All these members must not change during run time once they have been discovered !
 struct OHDPlatform {
+ public:
+  explicit OHDPlatform(PlatformType platform_type = PlatformTypeUnknown,BoardType board_type = BoardTypeUnknown):
+	  platform_type(platform_type),board_type(board_type){}
   // The platform we are running on, for example rpi, jetson
-  PlatformType platform_type = PlatformTypeUnknown;
+  const PlatformType platform_type;
   // The board type we are running on, for example rpi 3B+
-  BoardType board_type = BoardTypeUnknown;
+  const BoardType board_type;
+  [[nodiscard]] std::string to_string()const{
+	std::stringstream ss;
+	ss<<"OHDPlatform{"<<platform_type_to_string(platform_type)<<":"<<board_type_to_string(board_type)<<"}";
+	return ss.str();
+  }
 };
 
 // Writes the detected platform data to a json.
@@ -145,9 +153,8 @@ static nlohmann::json platform_to_json(const OHDPlatform &ohdPlatform) {
 }
 // same for reading
 static OHDPlatform platform_from_json(const nlohmann::json& j){
-  OHDPlatform ohdPlatform;
-  ohdPlatform.platform_type = string_to_platform_type(j["platform"]);
-  ohdPlatform.board_type= board_type_from_string(j["board"]);
+  OHDPlatform ohdPlatform{string_to_platform_type(j["platform"]),
+						  board_type_from_string(j["board"])};
   return ohdPlatform;
 }
 

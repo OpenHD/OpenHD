@@ -16,22 +16,23 @@
 #include "DWifiCards.h"
 #include "DProfile.h"
 
-void OHDDiscovery::runOnceOnStartup(bool forceAir,bool forceGround) {
+OHDHardware OHDDiscovery::runOnceOnStartup(bool forceAir,bool forceGround) {
   if(forceAir && forceGround){
 	std::cerr << "Cannot force air and ground at the same time\n";
 	exit(1);
   }
+  OHDHardware discovered_hardware;
+
   std::cout << "OHDDiscovery::runOnceOnStartup\n";
   try {
 	DPlatform platform;
-	platform.discover();
-	platform.write_manifest();
+	discovered_hardware.platform=platform.discover();
 
-	DCameras cameras(platform.getOHDPlatform());
+	DCameras cameras(*discovered_hardware.platform);
 	cameras.discover();
 	cameras.write_manifest();
 
-	DWifiCards wifi(platform.getOHDPlatform());
+	DWifiCards wifi(*discovered_hardware.platform);
 	wifi.discover();
 	wifi.write_manifest();
 
@@ -52,8 +53,7 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir,bool forceGround) {
 	  is_air = false;
 	}
 	DProfile profile(is_air);
-	profile.discover();
-	profile.write_manifest();
+	discovered_hardware.profile=profile.discover();
 
 	// Note: Here stephen wrote all the small sub-manifests into one big manifest.
 	// In my opinion, there is an apparent issue with that: The data is suddenly duplicated,
@@ -68,4 +68,7 @@ void OHDDiscovery::runOnceOnStartup(bool forceAir,bool forceGround) {
 	std::cerr << "Unknown exception occurred" << std::endl;
 	exit(1);
   }
+
+  return discovered_hardware;
 }
+

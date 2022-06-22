@@ -18,12 +18,14 @@
 
 static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
 
-void DPlatform::discover() {
+std::shared_ptr<OHDPlatform> DPlatform::discover() {
   std::cout << "Platform::discover()" << std::endl;
-
   detect_raspberrypi();
   detect_jetson();
   detect_pc();
+  auto ret=std::make_shared<OHDPlatform>(m_platform_type,m_board_type);
+  write_platform_manifest(*ret);
+  return ret;
 }
 
 void DPlatform::detect_raspberrypi() {
@@ -110,7 +112,4 @@ void DPlatform::detect_pc() {
   m_board_type = BoardTypeGenericPC;
 }
 
-void DPlatform::write_manifest() {
-  write_platform_manifest(getOHDPlatform());
-}
 
