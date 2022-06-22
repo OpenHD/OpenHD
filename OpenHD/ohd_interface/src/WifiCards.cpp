@@ -15,6 +15,11 @@ void WifiCards::configure() {
   std::cout << "WifiCards::configure()" << std::endl;
   //Find out which cards are connected first
   m_wifi_cards=DWifiCards::discover();
+  for(const auto& card: m_wifi_cards){
+	std::stringstream message;
+	message << "Detected wifi (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name << std::endl;
+	ohd_log(STATUS_LEVEL_INFO, message.str());
+  }
   // Consti10 - now do some sanity checks. No idea if and how the settings from stephen handle default values.
   for (auto &card: m_wifi_cards) {
 	if (card.settings.use_for == WifiUseForHotspot && profile.is_air) {

@@ -1,18 +1,7 @@
-#include <cstdio>
-#include <stdio.h>
-
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sstream>
 #include <regex>
 
 #include <iostream>
 #include <boost/algorithm/string/trim.hpp>
-#include "openhd-platform.hpp"
-#include "openhd-log.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
@@ -224,9 +213,6 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   if(card.type==WiFiCardTypeBroadcom){
 	card.supports_hotspot= true;
   }
-  std::stringstream message;
-  message << "Detected wifi (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name << std::endl;
-  ohd_log(STATUS_LEVEL_INFO, message.str());
   return card;
 }
 
