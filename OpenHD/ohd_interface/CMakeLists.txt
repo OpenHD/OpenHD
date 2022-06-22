@@ -21,6 +21,11 @@ add_library(OHDInterfaceLib
         STATIC
         ${ALL_INTERFACE_SOURCE_FILES})
 
+# --- does that speed up compilation ?
+target_precompile_headers(OHDInterfaceLib
+        PUBLIC
+        ../ohd_common/json.hpp)
+
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
 # Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
