@@ -124,6 +124,7 @@ class ParamExtProvider{
 	mavlink_param_set_t l2;
 	mavlink_param_ext_value_t l3;
 	mavlink_param_ext_set_t l4;
+	mavlink_param_ext_request_list_t x;
 	//mavlink_msg_param_set_pack()
   }
 

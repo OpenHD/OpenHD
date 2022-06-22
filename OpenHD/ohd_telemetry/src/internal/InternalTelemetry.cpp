@@ -90,6 +90,11 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
 	}
 	bufferedLogMessages.pop();
   }
+  {
+	// TODO remove for release
+	MavlinkMessage mavMsg=OHDMessages::createLog(mSysId,mCompId,"lol",0);
+	ret.push_back(mavMsg);
+  }
   return ret;
 }
 
