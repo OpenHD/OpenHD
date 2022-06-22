@@ -14,8 +14,7 @@ WifiCards::WifiCards(const OHDProfile &profile) : profile(profile) {}
 void WifiCards::configure() {
   std::cout << "WifiCards::configure()" << std::endl;
   //Find out which cards are connected first
-  DWifiCards disover;
-  m_wifi_cards=disover.discover();
+  m_wifi_cards=DWifiCards::discover();
   // Consti10 - now do some sanity checks. No idea if and how the settings from stephen handle default values.
   for (auto &card: m_wifi_cards) {
 	if (card.settings.use_for == WifiUseForHotspot && profile.is_air) {

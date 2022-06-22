@@ -23,45 +23,6 @@ extern "C" {
 #include "nl.h"
 }
 
-std::vector<WiFiCard> DWifiCards::discover() {
-  std::cout << "WiFi::discover()\n";
-  // Find wifi cards, excluding specific kinds of interfaces.
-  const std::vector<std::string> excluded_interfaces = {
-	  "usb",
-	  "lo",
-	  "eth",
-	  "enp2s0" // Consti10 added
-  };
-  const auto netFilenames=OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory("/sys/class/net");
-  for(const auto& filename:netFilenames){
-	auto excluded = false;
-	for (const auto &excluded_interface: excluded_interfaces) {
-	  if (filename.find(excluded_interface)!=std::string::npos) {
-		excluded = true;
-		break;
-	  }
-	}
-	if (!excluded) {
-	  process_card(filename);
-	}
-  }
-  // Now that we have all the connected cards, we need to figure out what to use them for.
-  // Fo now, just go with what we used to do in EZ-Wifibroadcast.
-  for (auto &card: m_wifi_cards) {
-	if (card.supports_injection) {
-	  card.settings.use_for = WifiUseForMonitorMode;
-	} else if (card.supports_hotspot) {
-	  // if a card does not support injection, we use it for hotspot
-	  card.settings.use_for = WifiUseForHotspot;
-	} else {
-	  // and if a card supports neither hotspot nor injection, we use it for nothing
-	  card.settings.use_for = WifiUseForUnknown;
-	}
-  }
-  std::cout << "WiFi::discover done, n cards:" << m_wifi_cards.size() << "\n";
-  return m_wifi_cards;
-}
-
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
 	return WiFiCardTypeAtheros9khtc;
@@ -85,7 +46,50 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   return WiFiCardTypeUnknown;
 }
 
-void DWifiCards::process_card(const std::string &interface_name) {
+std::vector<WiFiCard> DWifiCards::discover() {
+  std::cout << "WiFi::discover()\n";
+  std::vector<WiFiCard> m_wifi_cards;
+  // Find wifi cards, excluding specific kinds of interfaces.
+  const std::vector<std::string> excluded_interfaces = {
+	  "usb",
+	  "lo",
+	  "eth",
+	  "enp2s0" // Consti10 added
+  };
+  const auto netFilenames=OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory("/sys/class/net");
+  for(const auto& filename:netFilenames){
+	auto excluded = false;
+	for (const auto &excluded_interface: excluded_interfaces) {
+	  if (filename.find(excluded_interface)!=std::string::npos) {
+		excluded = true;
+		break;
+	  }
+	}
+	if (!excluded) {
+	  auto card= process_card(filename);
+	  if(card.has_value()){
+		m_wifi_cards.push_back(card.value());
+	  }
+	}
+  }
+  // Now that we have all the connected cards, we need to figure out what to use them for.
+  // Fo now, just go with what we used to do in EZ-Wifibroadcast.
+  for (auto &card: m_wifi_cards) {
+	if (card.supports_injection) {
+	  card.settings.use_for = WifiUseForMonitorMode;
+	} else if (card.supports_hotspot) {
+	  // if a card does not support injection, we use it for hotspot
+	  card.settings.use_for = WifiUseForHotspot;
+	} else {
+	  // and if a card supports neither hotspot nor injection, we use it for nothing
+	  card.settings.use_for = WifiUseForUnknown;
+	}
+  }
+  std::cout << "WiFi::discover done, n cards:" << m_wifi_cards.size() << "\n";
+  return m_wifi_cards;
+}
+
+std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_name) {
   std::stringstream device_file;
   device_file << "/sys/class/net/";
   device_file << interface_name.c_str();
@@ -100,12 +104,12 @@ void DWifiCards::process_card(const std::string &interface_name) {
 
   if (!std::regex_search(raw_value, result, r)) {
 	std::cerr << "no result" << std::endl;
-	return;
+	return {};
   }
 
   if (result.size() != 2) {
 	std::cerr << "result doesnt match" << std::endl;
-	return;
+	return {};
   }
 
   std::string driver_name = result[1];
@@ -223,6 +227,6 @@ void DWifiCards::process_card(const std::string &interface_name) {
   std::stringstream message;
   message << "Detected wifi (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name << std::endl;
   ohd_log(STATUS_LEVEL_INFO, message.str());
-  m_wifi_cards.push_back(card);
+  return card;
 }
 
