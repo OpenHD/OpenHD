@@ -17,7 +17,6 @@ class WifiCards {
  public:
   explicit WifiCards(const OHDProfile &profile);
   virtual ~WifiCards() = default;
-  void process_manifest();
   void configure();
   void setup_hotspot(const WiFiCard &card);
   // Verbose string about the current state.
