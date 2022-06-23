@@ -12,11 +12,11 @@
 DProfile::DProfile(bool is_air) :
 	m_is_air(is_air) {}
 
-std::shared_ptr<OHDProfile>  DProfile::discover() {
+std::shared_ptr<OHDProfile>  DProfile::discover(int camera_count) {
   std::cout << "Profile::discover()\n";
   // We read the unit id from the persistent storage, later write it to the tmp storage json
-  m_unit_id = getOrCreateUnitId();
-  auto ret=std::make_shared<OHDProfile>(m_is_air,m_unit_id);
+  auto unit_id = getOrCreateUnitId();
+  auto ret=std::make_shared<OHDProfile>(camera_count > 0);
   write_profile_manifest(*ret);
   return ret;
 }

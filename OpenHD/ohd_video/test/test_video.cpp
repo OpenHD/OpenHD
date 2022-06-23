@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
   const OHDProfile profile{true,"0"};
   const OHDPlatform platform{};
 
-  OHDVideo ohdVideo(platform, profile);
+  OHDVideo ohdVideo(platform, profile,{createDummyCamera()});
   std::cout << "OHDVideo started\n";
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(5));

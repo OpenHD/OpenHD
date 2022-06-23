@@ -11,7 +11,8 @@
 
 #include <utility>
 
-OHDVideo::OHDVideo(const OHDPlatform &platform, const OHDProfile &profile) : platform(platform), profile(profile) {
+OHDVideo::OHDVideo(const OHDPlatform &platform, const OHDProfile &profile,DiscoveredCameraList cameras) :
+	platform(platform), profile(profile),m_cameras(cameras) {
   assert(("This module must only run on the air pi !", profile.is_air == true));
   std::cout << "OHDVideo::OHDVideo()\n";
   try {
@@ -50,9 +51,6 @@ void OHDVideo::process_manifest() {
 
 void OHDVideo::setup() {
   std::cout << "OHDVideo::setup()" << std::endl;
-  //process_manifest();
-  DCameras discover(platform);
-  m_cameras=discover.discover();
   // Consti10 sanity checks
   for (auto &camera: m_cameras) {
 	// check to see if we need to set a default bitrate.

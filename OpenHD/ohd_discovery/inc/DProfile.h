@@ -22,7 +22,7 @@ class DProfile{
   explicit DProfile(bool is_air);
   virtual ~DProfile() = default;
 
-  std::shared_ptr<OHDProfile> discover();
+  static std::shared_ptr<OHDProfile> discover(int camera_count);
 
   std::string unit_id() {
 	return m_unit_id;

@@ -344,4 +344,16 @@ static bool check_bitrate_sane(const int bitrateKBits) {
   return true;
 }
 
+static Camera createDummyCamera(){
+  Camera camera;
+  camera.type = CameraTypeDummy;
+  // Depending on what you selected here, you will have to use the proper main_stream_display_XXX.sh if you want to see the video.
+  camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecH264;
+  //camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecH265;
+  //camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecMJPEG;
+  return camera;
+}
+
+using DiscoveredCameraList=std::vector<Camera>;
+
 #endif

@@ -9,7 +9,9 @@
 #include "ohd_common/openhd-platform.hpp"
 #include "ohd_common/openhd-profile.hpp"
 
-#include <OHDDiscovery.h>
+#include <DPlatform.h>
+#include <DProfile.h>
+#include <DCameras.h>
 #include <OHDInterface.h>
 #include <OHDVideo.h>
 #include <OHDTelemetry.hpp>
@@ -24,7 +26,7 @@ static const struct option long_options[] = {
 };
 
 struct OHDRunOptions {
-  bool skip_discovery = false;
+  //bool skip_discovery = false;
   bool force_air = false;
   bool force_ground=false;
 };
@@ -36,8 +38,8 @@ int main(int argc, char *argv[]) {
   while ((c = getopt_long(argc, argv, optstr, long_options, NULL)) != -1) {
 	const char *tmp_optarg = optarg;
 	switch (c) {
-	  case 'd':options.skip_discovery = true;
-		break;
+	  //case 'd':options.skip_discovery = true;
+	  //	break;
 	  case 'a':options.force_air = true;
 		break;
 	  case 'g':options.force_ground = true;
@@ -60,34 +62,33 @@ int main(int argc, char *argv[]) {
 			"force_ground:" << (options.force_ground ? "Y" : "N") <<"\n";
 
   try {
-	OHDHardware ohd_hardware = OHDDiscovery::runOnceOnStartup(options.force_air,options.force_ground);
+	// First discover the platform:
+	const auto platform = DPlatform::discover();
 
-	/*if (!options.skip_discovery) {
-	  // Always needs to run first.
-	  OHDDiscovery::runOnceOnStartup(options.force_air,options.force_ground);
-	  discovery_result=OHDDiscovery::discover_all();
-	}else{
-	  discovery_result.platform=std::make_shared<OHDPlatform>();
-	  discovery_result.profile=std::make_shared<OHDProfile>();
-	}*/
+	// Now we need to discover detected cameras, to determine the n of cameras and then
+	// decide if we are air or ground unit
+	std::vector<Camera> cameras{};
+	if (!options.force_ground){
+	  cameras = DCameras::discover(*platform);
+  	}
+	// by just adding a dummy camera we automatically become air
+  	if(options.force_air && cameras.empty()) {
+		cameras.emplace_back(createDummyCamera());
+	}
+	// Now e can crate the immutable profile
+	const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
 
-	// Now this is kinda stupid - we write json's during the discovery, then we read them back in
-	// Note that interface, telemetry and video might also read the or update the jsons
-	const auto platform =*ohd_hardware.platform;
-	const auto profile = *ohd_hardware.profile;
-
-	// First start ohdInterface, which does wifibroadcast and more
-	auto ohdInterface = std::make_unique<OHDInterface>(profile);
+	// Then start ohdInterface, which discovers detected wifi cards and more.
+	auto ohdInterface = std::make_unique<OHDInterface>(*profile);
 
 	// then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
-	auto ohdTelemetry = std::make_unique<OHDTelemetry>(platform, profile);
+	auto ohdTelemetry = std::make_unique<OHDTelemetry>(*platform,* profile);
 
 	// and start ohdVideo if we are on the air pi
 	std::unique_ptr<OHDVideo> ohdVideo;
-	if (profile.is_air) {
-	  ohdVideo = std::make_unique<OHDVideo>(platform, profile);
+	if (profile->is_air) {
+	  ohdVideo = std::make_unique<OHDVideo>(*platform,*profile,cameras);
 	}
-
 	std::cout << "All OpenHD modules running\n";
 
 	// run forever, everything has its own threads. Note that the only way to break out basically

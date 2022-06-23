@@ -16,11 +16,11 @@ class DPlatform {
  public:
   DPlatform() = default;
   virtual ~DPlatform() = default;
-  std::shared_ptr<OHDPlatform> discover();
+  static std::shared_ptr<OHDPlatform> discover();
  private:
-  void detect_raspberrypi();
-  void detect_jetson();
-  void detect_pc();
+  static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi();
+  static std::optional<std::pair<PlatformType,BoardType>> detect_jetson();
+  static std::pair<PlatformType,BoardType> detect_pc();
   PlatformType m_platform_type = PlatformTypeUnknown;
   BoardType m_board_type = BoardTypeUnknown;
 };

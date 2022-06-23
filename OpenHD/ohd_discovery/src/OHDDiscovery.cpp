@@ -53,7 +53,7 @@ OHDHardware OHDDiscovery::runOnceOnStartup(bool forceAir,bool forceGround) {
 	  is_air = false;
 	}
 	DProfile profile(is_air);
-	discovered_hardware.profile=profile.discover();
+	discovered_hardware.profile=profile.discover(camera_count);
 
 	// Note: Here stephen wrote all the small sub-manifests into one big manifest.
 	// In my opinion, there is an apparent issue with that: The data is suddenly duplicated,
