@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 	cameras.emplace_back(createDummyCamera());
   }
 
-  OHDVideo ohdVideo(platform, profile,);
+  OHDVideo ohdVideo(platform, profile,cameras);
   std::cout << "OHDVideo started\n";
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(5));
