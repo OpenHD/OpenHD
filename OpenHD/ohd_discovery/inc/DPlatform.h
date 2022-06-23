@@ -8,7 +8,7 @@
 #include "openhd-discoverable.hpp"
 
 /**
- * Discover the platform we are running on and write it to json.
+ * Discover the platform we are running on.
  * Note: One should not use a instance of this class for anything else than discovery, to pass around the discovered
  * data use the struct from ohd_platform.
  */
@@ -21,8 +21,6 @@ class DPlatform {
   static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi();
   static std::optional<std::pair<PlatformType,BoardType>> detect_jetson();
   static std::pair<PlatformType,BoardType> detect_pc();
-  PlatformType m_platform_type = PlatformTypeUnknown;
-  BoardType m_board_type = BoardTypeUnknown;
 };
 
 #endif
