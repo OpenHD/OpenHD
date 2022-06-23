@@ -8,7 +8,8 @@
 #include "openhd-platform.hpp"
 #include "openhd-discoverable.hpp"
 
-namespace DProfile{
+class DProfile{
+ public:
   static std::shared_ptr<OHDProfile> discover(int camera_count);
 };
 
