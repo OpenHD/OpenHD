@@ -11,7 +11,6 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 include_directories(../ohd_common)
 
 SET(ALL_SYSTEM_SOURCE_FILES
-        #src/DEthernetCards.cpp
         src/DPlatform.cpp
         src/DProfile.cpp
         src/OHDDiscovery.cpp)
