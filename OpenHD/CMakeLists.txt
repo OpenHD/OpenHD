@@ -4,7 +4,6 @@ project(OpenHD)
 set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(ohd_interface)
-add_subdirectory(ohd_discovery)
 add_subdirectory(ohd_telemetry)
 add_subdirectory(ohd_video)
 

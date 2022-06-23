@@ -8,9 +8,8 @@
 
 #include "ohd_common/openhd-platform.hpp"
 #include "ohd_common/openhd-profile.hpp"
+#include "ohd_common/openhd-platform-discover.hpp"
 
-#include <DPlatform.h>
-#include <DProfile.h>
 #include <DCameras.h>
 #include <OHDInterface.h>
 #include <OHDVideo.h>

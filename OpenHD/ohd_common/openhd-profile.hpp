@@ -10,6 +10,7 @@
 #include "json.hpp"
 #include "openhd-util.hpp"
 #include "openhd-log.hpp"
+#include "openhd-settings.hpp"
 
 /**
  * The profile is created on startup and then doesn't change during run time.
@@ -62,6 +63,19 @@ static OHDProfile profile_from_manifest() {
 	std::cerr<<ss.str();
 	throw std::runtime_error(ss.str());
   }
+}
+
+namespace DProfile{
+
+static std::shared_ptr<OHDProfile>  discover(int camera_count) {
+  std::cout << "Profile::discover()\n";
+  // We read the unit id from the persistent storage, later write it to the tmp storage json
+  auto unit_id = getOrCreateUnitId();
+  // We are air pi if there is at least one camera
+  auto ret=std::make_shared<OHDProfile>(camera_count > 0);
+  return ret;
+}
+
 }
 #endif
 
