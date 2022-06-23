@@ -46,13 +46,27 @@ class OHDVideo {
    * if it has unexpectedly stopped.
    */
   void restartIfStopped();
+  // Experimental for now
+  bool set_video_format(int stream_idx,const std::string& id,const VideoFormat video_format){
+    auto stream= get_stream_by_index(stream_idx);
+    if(!stream)return false;
+     stream->set_format(video_format);
+    return true;
+  }
+  std::shared_ptr<CameraStream> get_stream_by_index(int idx){
+    if(idx<m_cameras.size()){
+      return m_camera_streams[idx];
+    }
+    return nullptr;
+  }
+ public:
  private:
   const OHDPlatform &platform;
   const OHDProfile &profile;
  private:
   // These members are what used to be in camera microservice
   // All the created camera streams
-  std::vector<std::unique_ptr<CameraStream>> m_camera_streams;
+  std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
   // each camera stream already links camera, is this duplicated ??!
   std::vector<Camera> m_cameras;
   void process_manifest();
