@@ -227,6 +227,11 @@ struct Camera {
 	ss<<name<<"|"<<camera_type_to_string(type);
 	return ss.str();
   }
+  [[nodiscard]] std::string to_string()const{
+	std::stringstream ss;
+	ss<<"Camera"<<index<<"{"<<camera_type_to_string(type)<<""<<"}";
+	return ss.str();
+  }
 };
 
 // TODO: Why the heck did stephen not use the endpoints member variable here ?

@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
   try {
 	// First discover the platform:
 	const auto platform = DPlatform::discover();
+	std::cout<<platform->to_string()<<"\n";
 
 	// Now we need to discover detected cameras, to determine the n of cameras and then
 	// decide if we are air or ground unit
@@ -74,6 +75,9 @@ int main(int argc, char *argv[]) {
 	// by just adding a dummy camera we automatically become air
   	if(options.force_air && cameras.empty()) {
 		cameras.emplace_back(createDummyCamera());
+	}
+	for(const auto& camera:cameras){
+	  std::cout<<camera.to_string()<<"\n";
 	}
 	// Now e can crate the immutable profile
 	const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
