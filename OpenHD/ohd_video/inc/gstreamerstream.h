@@ -25,6 +25,7 @@ class GStreamerStream : public CameraStream {
   void setup_usb_uvch264();
   void setup_ip_camera();
   void restartIfStopped() override;
+  void restart_after_new_setting();
  public:
   void start() override;
   void stop() override;

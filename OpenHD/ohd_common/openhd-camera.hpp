@@ -356,6 +356,8 @@ static Camera createDummyCamera(){
   camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecH264;
   //camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecH265;
   //camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecMJPEG;
+  camera.settings.userSelectedVideoFormat.width=640;
+  camera.settings.userSelectedVideoFormat.height=480;
   return camera;
 }
 
