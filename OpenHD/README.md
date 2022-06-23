@@ -16,3 +16,12 @@ mode or similar falls into this category.
     in the "find UART linux filename for platform" method.
 
 
+## Note about connected Hardware:
+While it is nice for the user to Hotplug new Hardware, this is not always feasible. For example,
+to find out if we should run as air or ground pi, we use the n of connected cameras and then never
+change this configuration. Similar to interface, where we detect the connected wifi cards at startup.
+This can be generally described by having a discovery step at startup - once the discovery step has
+been performed, we cannot check for changes on this discovered hardware. However, hardware that needs
+to be hot-pluggable (for example the FC) in general uses a different pattern - check in regular
+intervals if the HW configuration has changed, then react to these changes
+
