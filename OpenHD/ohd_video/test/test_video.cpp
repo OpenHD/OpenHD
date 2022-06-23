@@ -2,6 +2,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <DCameras.h>
 
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
@@ -12,7 +13,12 @@ int main(int argc, char *argv[]) {
   const OHDProfile profile{true,"0"};
   const OHDPlatform platform{};
 
-  OHDVideo ohdVideo(platform, profile,{createDummyCamera()});
+  auto cameras=DCameras::discover(platform);
+  if(cameras.empty()){
+	cameras.emplace_back(createDummyCamera());
+  }
+
+  OHDVideo ohdVideo(platform, profile,);
   std::cout << "OHDVideo started\n";
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(5));
