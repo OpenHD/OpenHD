@@ -1,5 +1,5 @@
-#ifndef OPENHD_STATUS_H
-#define OPENHD_STATUS_H
+#ifndef OPENHD_LOG_MESSAGES_H
+#define OPENHD_LOG_MESSAGES_H
 
 #include <cstdio>
 #include <unistd.h>
@@ -175,4 +175,4 @@ OpenHDLogger& operator<<(OpenHDLogger&& record, T&& t) {
 // macro for logging like std::cerr in OpenHD
 #define LOGE OpenHDLogger(STATUS_LEVEL_ERROR,"")
 
-#endif
+#endif //OPENHD_LOG_MESSAGES_H
