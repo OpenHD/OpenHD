@@ -1,5 +1,6 @@
 This module is responsible for starting and configuring all the OpenHD
-interfaces - aka all OpenHD links like wifibroadcast (between aur and ground), ground hotspot, ...
+interfaces - aka all OpenHD links like wifibroadcast (communication between air and ground),
+ground hotspot, ...
 
 For now, it requires at least one wifi card connected to the system - this might change in the 
 future when we add other hardware types for data communication between ground and air pi
