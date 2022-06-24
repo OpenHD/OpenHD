@@ -5,7 +5,7 @@
 #ifndef OPENHD_TESTS_H
 #define OPENHD_TESTS_H
 
-#include "openhd-camera.hpp"
+//#include "openhd-camera.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-wifi.hpp"
@@ -16,7 +16,7 @@
 namespace OHDCommonTests {
 
 // Simple test for to and from string
-static void test_video_format_regex() {
+/*static void test_video_format_regex() {
   const VideoFormat source{VideoCodecH264, 1280, 720, 30};
   const auto serialized = source.toString();
   const auto from = VideoFormat::fromString(serialized);
@@ -24,7 +24,7 @@ static void test_video_format_regex() {
 	throw std::runtime_error("Error VideoFormat from/to\n");
   }
   assert(source == from);
-}
+}*/
 
 static void test_execute_commands(){
   // We do echo 1, but the method should return "0" which stands for
