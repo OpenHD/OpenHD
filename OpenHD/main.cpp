@@ -50,6 +50,12 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         exit(1);
     }
   }
+  if(OHDFilesystemUtil::exists("/boot/air.txt")){
+    ret.force_air=true;
+  }
+  if(OHDFilesystemUtil::exists("/boot/ground.txt")){
+    ret.force_air=true;
+  }
   if(ret.force_air && ret.force_ground){
     std::cerr << "Cannot force air and ground at the same time\n";
     exit(1);
