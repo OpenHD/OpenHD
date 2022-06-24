@@ -217,7 +217,9 @@ VideoFormat GStreamerStream::get_format() {
 }
 
 void GStreamerStream::set_format(VideoFormat videoFormat) {
-  std::cout << "GStreamerStream::set_format(" << videoFormat.toString() << ")" << std::endl;
+  std::stringstream ss;
+  ss<< "GStreamerStream::set_format(" << videoFormat.toString() << ")" << std::endl;
+  ohd_log(STATUS_LEVEL_INFO,ss.str());
   m_camera.settings.userSelectedVideoFormat = videoFormat;
   restart_after_new_setting();
 }

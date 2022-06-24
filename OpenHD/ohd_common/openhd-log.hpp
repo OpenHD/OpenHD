@@ -117,4 +117,46 @@ inline void ohd_log_debug(const std::string &message) {
   ohd_log(STATUS_LEVEL_DEBUG, message);
 }
 
+class OpenHDLogger{
+ public:
+  explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL_DEBUG,const std::string& tag=""):
+    _status_level(level),_tag(tag) {}
+  explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL_DEBUG,std::string_view tag=""):
+    _status_level(level),_tag(tag){}
+  ~OpenHDLogger() {
+    const auto tmp=stream.str();
+    if(!tmp.empty()){
+      std::cout<<tmp;
+    }
+  }
+  OpenHDLogger(const OpenHDLogger& other)=delete;
+  void message_appended(){
+    const auto tmp=stream.str();
+    if(!tmp.empty() && tmp.back()=='\n'){
+      std::cout<<tmp;
+      stream.str("");
+    }
+  }
+  // the non-member function operator<< will now have access to private members
+  template <typename T>
+  friend OpenHDLogger& operator<<(OpenHDLogger& record, T&& t);
+ private:
+  const STATUS_LEVEL _status_level;
+  const std::string_view _tag;
+  std::stringstream stream;
+};
+
+template <typename T>
+OpenHDLogger& operator<<(OpenHDLogger& record, T&& t) {
+  record.stream << std::forward<T>(t);
+  record.message_appended();
+  return record;
+}
+template <typename T>
+OpenHDLogger& operator<<(OpenHDLogger&& record, T&& t) {
+  record << std::forward<T>(t);
+  record.message_appended();
+  return record;
+}
+
 #endif
