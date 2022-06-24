@@ -15,7 +15,6 @@ int main(int argc, char *argv[]) {
   // run forever, OHDInterface runs in its own threads
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(2));
-
 	std::cout<<"XInterface\n";
 	std::cout<<ohdInterface.createDebug();
   }
