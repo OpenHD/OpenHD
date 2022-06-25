@@ -7,12 +7,12 @@
 #include <iostream>
 
 #include "../src/endpoints/SerialEndpoint.h"
+//#include "../src/endpoints/SerialEndpoint2.h"
 #include "../src/mav_helper.h"
 
 int main() {
   std::cout << "SerialEndpointTest::start" << std::endl;
-  SerialEndpoint::HWOptions opt{SerialEndpoint::TEST_SERIAL_PORT};
-  SerialEndpoint serialEndpoint("TestSerialPort", opt);
+  SerialEndpoint serialEndpoint("TestSerialPort", {"/dev/ttyACM0",0}, true); //115200
   serialEndpoint.registerCallback([](MavlinkMessage &msg) {
 	debugMavlinkMessage(msg.m, "SerialTest");
   });
@@ -20,8 +20,9 @@ int main() {
   const auto start = std::chrono::steady_clock::now();
   while ((std::chrono::steady_clock::now() - start) < std::chrono::minutes(5)) {
 	serialEndpoint.debugIfAlive();
-	auto msg = MExampleMessage::heartbeat();
-	serialEndpoint.sendMessage(msg);
+	// some implementations need a heartbeat before they start sending data.
+	//auto msg = MExampleMessage::heartbeat();
+	//serialEndpoint.sendMessage(msg);
 	std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   std::cout << "SerialEndpointTest::end" << std::endl;

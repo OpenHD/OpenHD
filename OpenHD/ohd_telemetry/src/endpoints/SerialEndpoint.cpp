@@ -14,12 +14,13 @@
 
 #include "../mav_include.h"
 
-SerialEndpoint::SerialEndpoint(std::string TAG, HWOptions options) :
+SerialEndpoint::SerialEndpoint(std::string TAG, HWOptions options,bool enableDebug) :
 	MEndpoint(std::move(TAG)),
 	m_options(std::move(options)),
-	m_serial(io_service) {
-  std::cout << "SerialEndpoint created " << m_options.linux_filename << "\n";
+	m_serial(io_service),
+	m_enable_debug(enableDebug){
   mOpenSerialPortThread = std::make_unique<boost::thread>([this] { safeRestart(); });
+  std::cout << "SerialEndpoint created " << m_options.linux_filename <<":"<<m_options.baud_rate<< "\n";
 }
 
 void SerialEndpoint::safeCloseCleanup() {
@@ -32,10 +33,16 @@ void SerialEndpoint::safeRestart() {
   bool opened = false;
   while (!opened) {
 	try {
-	  std::cout << "Opening serial port: " << m_options.linux_filename << "\n";
+	  if(m_enable_debug){
+		std::cout <<TAG<< " opening serial port: " << m_options.linux_filename << "\n";
+	  }
 	  m_serial.open(m_options.linux_filename);
 	} catch (boost::system::system_error::exception &e) {
-	  std::cerr << "Failed to open serial port \n";
+	  // since we check every second, if there is no UART connected, we will get this error once a second.
+	  // So only print it if we have debug enabled.
+	  if(m_enable_debug){
+		std::cerr <<TAG<<"Failed to open serial port \n";
+	  }
 	  std::this_thread::sleep_for(RECONNECT_DELAY);
 	  continue;
 	}
@@ -59,6 +66,9 @@ void SerialEndpoint::safeRestart() {
 	mIoThread = std::make_unique<boost::thread>(boost::bind(&boost::asio::io_service::run, &io_service));
   }
   startReceive();
+  // some implementations need a heartbeat before they start sending data.
+  //auto msg = MExampleMessage::heartbeat();
+  //sendMessage(msg);
 }
 
 void SerialEndpoint::startReceive() {
@@ -74,7 +84,7 @@ void SerialEndpoint::handleRead(const boost::system::error_code &error,
 								size_t bytes_transferred) {
   if (!error) {
 	//std::cout<<"SerialEndpoint::handleRead\n";
-	MEndpoint::parseNewData(readBuffer.data(), bytes_transferred);
+	MEndpoint::parseNewData(readBuffer.data(), (int)bytes_transferred);
 	startReceive();
   } else {
 	std::cerr << "SerialEndpoint::handleRead" << error.message() << "\n";
@@ -92,7 +102,7 @@ void SerialEndpoint::handleWrite(const boost::system::error_code &error,
   }
 }
 
-void SerialEndpoint::sendMessage(const MavlinkMessage &message) {
+void SerialEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   if (!m_serial.is_open()) {
 	std::cout << "SER: not open\n";
 	return;

@@ -6,7 +6,6 @@
 #include <vector>
 #include <utility>
 
-#include "json.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-profile.hpp"
 
@@ -36,9 +35,12 @@ class WBStreams {
   void configure_video();
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
+  // see interface
+  void addExternalDeviceIpForwarding(std::string ip);
+  void removeExternalDeviceIpForwarding(std::string ip);
  private:
   const OHDProfile &profile;
-  const int m_mcs = 3;
+  const int DEFAULT_MCS_INDEX = 3;
   std::vector<std::string> m_broadcast_cards_names={};
  private:
   // For telemetry, bidirectional in opposite directions
@@ -48,7 +50,7 @@ class WBStreams {
   std::vector<std::unique_ptr<UDPWBTransmitter>> udpVideoTxList;
   std::vector<std::unique_ptr<UDPWBReceiver>> udpVideoRxList;
   // TODO make more configurable
-  [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port)const;
+  [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec)const;
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port) const;
 };
 

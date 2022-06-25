@@ -7,9 +7,7 @@
 
 int main(int argc, char *argv[]) {
 
-  const auto profile = profile_from_manifest();
-  const auto platform = platform_from_manifest();
-
+  const OHDProfile profile{false,"0"};
   OHDInterface ohdInterface(profile);
 
   std::cerr << "OHDInterface started\n";

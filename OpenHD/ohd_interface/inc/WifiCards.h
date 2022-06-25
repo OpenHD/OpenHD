@@ -5,7 +5,6 @@
 #include <chrono>
 #include <vector>
 
-#include "json.hpp"
 
 #include "openhd-wifi.hpp"
 #include "openhd-profile.hpp"
@@ -18,7 +17,6 @@ class WifiCards {
  public:
   explicit WifiCards(const OHDProfile &profile);
   virtual ~WifiCards() = default;
-  void process_manifest();
   void configure();
   void setup_hotspot(const WiFiCard &card);
   // Verbose string about the current state.
@@ -43,10 +41,8 @@ class WifiCards {
   const OHDProfile &profile;
   std::vector<WiFiCard> m_wifi_cards;
   // todo: read from settings file once new settings system merged
-  std::string m_wifi_hotspot_address = "192.168.2.1";
-  std::string m_wifi_hotspot_txpower = "3100";
-  std::string m_default_5ghz_frequency = "5180";
-  std::string m_default_2ghz_frequency = "2412";
+  static constexpr auto m_default_5ghz_frequency = "5180";
+  static constexpr auto m_default_2ghz_frequency = "2412";
 };
 
 #endif

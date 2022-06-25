@@ -3,8 +3,10 @@
 Relies on two unidirectional links (direction: air pi to ground pi) setup by openhd-interface.
 (One link for primary video down, one link for secondary video down).
 
-This module uses the generated .json by openhd_discovery to start a camera stream for each of the discovered cameras.
-Resolution and format as well as other params are fixed for now, we will add settings via mavlink here.
+This module exposes utils for detecting the cameras connected to the system and then starts
+a camera stream for each of the discovered cameras.
+Resolution and format as well as other params are fixed for now,
+we will add settings via mavlink here.
 
 Note that code in this module should follow the following paradigm:
 
@@ -13,4 +15,6 @@ Note that code in this module should follow the following paradigm:
 2) It never runs on the ground pi, only on the air pi.
 3) There are no code dependencies to other modules like ohd_interface.
 
-BIG TODO: Introduce settings in a sensible manner.
+## List of TODO's
+1) introduce settings
+2) add recording to sd card

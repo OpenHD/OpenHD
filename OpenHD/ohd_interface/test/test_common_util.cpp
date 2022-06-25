@@ -9,6 +9,6 @@ int main(int argc, char *argv[]) {
 
   OHDCommonTests::test_execute_commands();
 
-  OHDCommonTests::test_video_format_regex();
+  //OHDCommonTests::test_video_format_regex();
 }
 

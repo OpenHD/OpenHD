@@ -8,6 +8,10 @@
 #include <vector>
 #include <memory>
 #include <optional>
+#include <string>
+#include <regex>
+#include <csignal>
+#include <thread>
 
 namespace OHDUtil {
 
@@ -17,6 +21,15 @@ static std::string to_uppercase(std::string input) {
   }
   return input;
 }
+
+// from https://stackoverflow.com/questions/874134/find-out-if-string-ends-with-another-string-in-c
+static bool endsWith(const std::string& str, const std::string& suffix){
+  return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
+}
+static bool startsWith(const std::string& str, const std::string& prefix){
+  return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
+}
+
 /**
  * Utility to execute a command on the command line.
  * Blocks until the command has been executed, and returns its result.
@@ -69,6 +82,26 @@ static std::optional<std::string> run_command_out(const char* command){
   }
   return raw_value;
 }
+
+// i use this one during testing a lot, when a module's functionality uses a start() / stop()
+// pattern with its own thread. This keeps the current thread alive, until a sigterm (CTR+X) happens
+static void keep_alive_until_sigterm(){
+  static bool quit=false;
+  signal(SIGTERM, [](int sig){ quit= true;});
+  while (!quit){
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::cout<<"X\n";
+  }
+}
+// Tries to extract a valid ip from the given input string.
+// Returns std::nullopt on error, otherwise a always "valid" ip in string from
+/*static bool createValidIp(const std::string input){
+  // Regex expression for validating IPv4
+  std::regex regex_ipv4("(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])");
+  if (regex_match(input, regex_ipv4))
+	return true;
+  return false;
+}*/
 
 }
 

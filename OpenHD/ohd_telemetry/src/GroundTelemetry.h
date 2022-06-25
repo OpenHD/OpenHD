@@ -7,6 +7,7 @@
 
 #include "endpoints/TCPEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
+#include "endpoints/UDPEndpoint2.h"
 #include "endpoints/SerialEndpoint.h"
 #include "internal/InternalTelemetry.h"
 
@@ -20,7 +21,8 @@ class GroundTelemetry {
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.
    */
-  void loopInfinite(const bool enableExtendedLogging = false);
+  void loopInfinite(bool enableExtendedLogging = false);
+  [[nodiscard]] std::string createDebug()const;
  private:
   // called every time a message from the air pi is received
   void onMessageAirPi(MavlinkMessage &message);
@@ -33,10 +35,11 @@ class GroundTelemetry {
  private:
   static constexpr auto M_SYS_ID = OHD_SYS_ID_GROUND;
   std::unique_ptr<TCPEndpoint> tcpGroundCLient = nullptr;
-  std::unique_ptr<UDPEndpoint> udpGroundClient = nullptr;
+  //std::unique_ptr<UDPEndpoint> udpGroundClient = nullptr;
+  std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;
   // We rely on another service for starting the rx/tx links
   std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;
-  InternalTelemetry ohdTelemetryGenerator{true};
+  InternalTelemetry ohdTelemetryGenerator{false};
 };
 
 #endif //OPENHD_TELEMETRY_GROUNDTELEMETRY_H

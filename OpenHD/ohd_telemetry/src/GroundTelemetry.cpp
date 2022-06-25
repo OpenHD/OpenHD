@@ -11,12 +11,19 @@ GroundTelemetry::GroundTelemetry() {
   tcpGroundCLient->registerCallback([this](MavlinkMessage& msg){
 	  onMessageGroundStationClients(msg);
   });*/
-  udpGroundClient =
-	  std::make_unique<UDPEndpoint>("GroundStationUDP", OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN);
+  /*udpGroundClient =std::make_unique<UDPEndpoint>("GroundStationUDP",
+												 OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
+												 "127.0.0.1","127.0.0.1",true);//127.0.0.1
+  udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
+	onMessageGroundStationClients(msg);
+  });*/
+  udpGroundClient =std::make_unique<UDPEndpoint2>("GroundStationUDP",
+												  OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
+												  "127.0.0.1","127.0.0.1");
   udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
 	onMessageGroundStationClients(msg);
   });
-  // hacky, start breoadcasting the existence of the OHD ground station
+  // hacky, start broadcasting the existence of the OHD ground station
   // udpGroundClient->startHeartBeat(OHD_SYS_ID_GROUND,0);
   // any message coming in via wifibroadcast is a message from the air pi
   udpWifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(false);
@@ -39,19 +46,23 @@ void GroundTelemetry::onMessageAirPi(MavlinkMessage &message) {
 }
 
 void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
-  debugMavlinkMessage(message.m, "GroundTelemetry::onMessageGroundStationClients");
+  //debugMavlinkMessage(message.m, "GroundTelemetry::onMessageGroundStationClients");
   const auto &msg = message.m;
-  /*if(msg.sysid==OHD_SYS_ID_GROUND){
-	  // handle locally
-  }else{
-	  // forward to the air pi, which in turn might handle it himself or forward it to the flight controller
-	  sendMessageAirPi(message);
-  }*/
   // for now, forward everything
   sendMessageAirPi(message);
+  // temporarily, handle ping messages
+  if(msg.msgid==MAVLINK_MSG_ID_PING){
+	auto response=ohdTelemetryGenerator.handlePingMessage(message);
+	if(response.has_value()){
+	  sendMessageGroundStationClients(response.value());
+	}
+  }else if(msg.msgid==MAVLINK_MSG_ID_PARAM_REQUEST_LIST){
+	std::cout<<"Got MAVLINK_MSG_ID_PARAM_REQUEST_LIST\n";
+  }
 }
 
 void GroundTelemetry::sendMessageGroundStationClients(MavlinkMessage &message) {
+  //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageGroundStationClients");
   // forward via TCP or UDP
   if (tcpGroundCLient) {
 	tcpGroundCLient->sendMessage(message);
@@ -70,20 +81,16 @@ void GroundTelemetry::sendMessageAirPi(MavlinkMessage &message) {
 
 void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
   while (true) {
-	std::cout << "GroundTelemetry::loopInfinite()\n";
+	//std::cout << "GroundTelemetry::loopInfinite()\n";
 	// for debugging, check if any of the endpoints is not alive
 	if (enableExtendedLogging && udpWifibroadcastEndpoint) {
-	  udpWifibroadcastEndpoint->debugIfAlive();
+	  std::cout<<udpWifibroadcastEndpoint->createInfo();
 	}
 	if (enableExtendedLogging && udpGroundClient) {
-	  udpGroundClient->debugIfAlive();
+	  std::cout<<udpGroundClient->createInfo();
 	}
-	// Broadcast existence of OpenHD ground station to all connected clients
-	// (for example QOpenHD)
-	auto heartbeat = OHDMessages::createHeartbeat(false);
-	sendMessageGroundStationClients(heartbeat);
-	// We also broadcast a heartbeat to the air pi, such that it knows the ground service is alive
-	sendMessageAirPi(heartbeat);
+	// send messages to the ground station in regular intervals, includes heartbeat.
+	// everything else is handled by the callbacks and their threads
 	auto ohdTelemetryMessages = ohdTelemetryGenerator.generateUpdates();
 	for (auto &msg: ohdTelemetryMessages) {
 	  sendMessageGroundStationClients(msg);
@@ -91,4 +98,17 @@ void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
 	std::this_thread::sleep_for(std::chrono::seconds(3));
   }
 }
+
+std::string GroundTelemetry::createDebug() const {
+  std::stringstream ss;
+  //ss<<"GT:\n";
+  if (udpWifibroadcastEndpoint) {
+	std::cout<<udpWifibroadcastEndpoint->createInfo();
+  }
+  if (udpGroundClient) {
+	std::cout<<udpGroundClient->createInfo();
+  }
+  return ss.str();
+}
+
 

@@ -19,23 +19,34 @@ find_package(Boost REQUIRED COMPONENTS system thread regex filesystem)
 message(STATUS "Boost version: ${Boost_VERSION}")
 SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::system Boost::thread Boost::filesystem)
 
+#find_package(MAVSDK REQUIRED)
+
 SET(ALL_TELEMETRY_SOURCE_FILES
         src/AirTelemetry.cpp
         src/GroundTelemetry.cpp
         src/endpoints/UDPEndpoint.cpp
+        src/endpoints/UDPEndpoint2.cpp
         src/endpoints/TCPEndpoint.cpp
         src/endpoints/SerialEndpoint.cpp
+        #src/endpoints/SerialEndpoint2.cpp
         #src/endpoints/WBEndpoint.cpp
-        src/internal/InternalTelemetry.cpp)
+        src/internal/InternalTelemetry.cpp
+        src/internal/MavlinkParamExt.cpp)
 
 # Build it as a library
 add_library(OHDTelemetryLib
         STATIC
         ${ALL_TELEMETRY_SOURCE_FILES})
-target_link_libraries(OHDTelemetryLib PRIVATE ${OHD_TELEMETRY_USED_BOOST_LIBS})
+target_link_libraries(OHDTelemetryLib PRIVATE ${OHD_TELEMETRY_USED_BOOST_LIBS}
+        #MAVSDK::mavsdk
+        )
 target_include_directories(OHDTelemetryLib PUBLIC src/)
 # include mavlink (header-only)
-target_include_directories(OHDTelemetryLib PUBLIC ../lib/c_library_v2_openhd)
+add_library(mavlink INTERFACE)
+target_include_directories(mavlink INTERFACE ../lib/c_library_v2_openhd/)
+target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
+#target_include_directories(OHDTelemetryLib PUBLIC ../lib/c_library_v2_openhd)
+
 # Note: We do not need wifibroadcast as a whole here, we can get the header-only files.
 target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
 
@@ -55,6 +66,15 @@ target_link_libraries(test_ohd_reboot OHDTelemetryLib)
 add_executable(test_generate_log_message tests/test_generate_log_message.cpp)
 target_link_libraries(test_generate_log_message OHDTelemetryLib)
 
-add_executable(test_services_locally tests/test_services_locally.cpp)
-target_link_libraries(test_services_locally OHDTelemetryLib)
+add_executable(test_ground_locally tests/test_ground_locally.cpp)
+target_link_libraries(test_ground_locally OHDTelemetryLib)
+
+add_executable(test_air_locally tests/test_air_locally.cpp)
+target_link_libraries(test_air_locally OHDTelemetryLib)
+
+add_executable(test_ground_and_air_locally tests/test_ground_and_air_locally.cpp)
+target_link_libraries(test_ground_and_air_locally OHDTelemetryLib)
+
+#add_executable(test_mavsdk tests/test_mavsdk.cpp)
+#target_link_libraries(test_mavsdk OHDTelemetryLib)
 #####

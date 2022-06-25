@@ -12,6 +12,7 @@
  */
 static std::string createHostapdConfigFile(const std::string& interface_name){
   std::stringstream ss;
+  ss<<"#OpenHD wifi hotspot hostapd config file\n";
   // the interface used by the AP
   ss<<"interface="<<interface_name<<"\n";
   // set this to "a" for 5Ghz, to "g" for 2.4Ghz
@@ -113,26 +114,64 @@ static std::string createHostapdConfigFile(const std::string& interface_name){
   return ss.str();
 }
 
+static std::string createDHClientConfigFile(const std::string& interface_name){
+  std::stringstream ss;
+  // from https://gist.github.com/Semant1ka/ee087c2bd1fbf6b0287c3307b8d4f291
+  ss<<"ddns-update-style none;\n";
+  ss<<"authoritative;\n";
+  ss<<"subnet 192.168.0.0 netmask 255.255.255.0 {\n";
+  ss<<"	interface "<<interface_name<<";\n";
+  //ss<<"	interface wlan0; # your interface name here\n";
+  ss<<"	range 192.168.0.5 192.168.0.8; # desired ip range\n";
+  ss<<"	option routers 192.168.0.1;\n";
+  ss<<"	option subnet-mask 255.255.255.0;\n";
+  ss<<"	option broadcast-address 192.168.0.255;\n";
+  ss<<"}\n";
+  return ss.str();
+}
 
 WifiHotspot::WifiHotspot(WiFiCard wifiCard):
 wifiCard(std::move(wifiCard)) {
 }
 
 void WifiHotspot::start() {
-  std::cout<<"Starting WIFI hotspot on card:"<<wifiCard.interface_name<<"\n";
-  // first, we create the content for the config file
-  m_hostapd_config_file_content=createHostapdConfigFile(wifiCard.interface_name);
-  // then we write it out to /tmp
-  std::ofstream _config("/tmp/hostapd.conf");
-  _config << m_hostapd_config_file_content;
-  _config.close();
+  std::cerr<<"Starting WIFI hotspot on card:"<<wifiCard.interface_name<<"\n";
   // disable hostapd if it is running
-  OHDUtil::run_command("systemctl",{"disable hostapd"});
+  //OHDUtil::run_command("systemctl",{"unmask hostapd"});
+  //OHDUtil::run_command("systemctl",{"disable hostapd"});
+  {
+	// first, we create the content for the config file
+	const auto hostapd_conf_content=createHostapdConfigFile(wifiCard.interface_name);
+	// then we write it out to a file
+	//std::ofstream _config("/tmp/hostapd.conf");
+	std::ofstream hostapd_conf("/etc/hostapd/hostapd.conf");
+	hostapd_conf << hostapd_conf_content;
+	hostapd_conf.close();
+  }
+  // then start hostapd again
+  //OHDUtil::run_command("systemctl",{"enable hostapd"});
+  OHDUtil::run_command("systemctl",{"start hostapd"});
+
+  // disable hostapd if it is running
+  //OHDUtil::run_command("systemctl",{"disable hostapd"});
   // then start hostapd with the created config file. Now the wifi AP is running.
   // -B means run in the background.
-  OHDUtil::run_command("hostapd",{"-B -d /tmp/hostapd.conf"});
+  //OHDUtil::run_command("hostapd",{"-B -d /tmp/hostapd.conf"});
+  // and we re-start the hostapd service
+  //OHDUtil::run_command("systemctl",{"enable hostapd"});
+  // Configure the detected USB tether device (not sure if needed)
+  //OHDUtil::run_command("dhclient",{wifiCard.interface_name});
+
+  // now we need to start a dhcp server -similar to before
+  const auto dhcpd_conf_content=createDHClientConfigFile(wifiCard.interface_name);
+  std::ofstream  dhcpd_conf("/etc/dhcp/dhcpd.conf");
+  dhcpd_conf << dhcpd_conf_content;
+  dhcpd_conf.close();
+
+  std::cerr<<"Wifi hotspot started\n";
 }
 
 void WifiHotspot::stop() {
   OHDUtil::run_command("systemctl",{"disable hostapd"});
+  std::cout<<"Wifi hotspot stopped\n";
 }

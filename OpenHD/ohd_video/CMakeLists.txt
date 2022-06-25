@@ -32,16 +32,28 @@ SET(ALL_VIDEO_SOURCE_FILES
         src/camerastream.cpp
         src/gstreamerstream.cpp
         src/libcamerastream.cpp
-        src/OHDVideo.cpp)
+        src/OHDVideo.cpp
+        src/DCameras.cpp
+        lib/bcm2835.c)
 
 add_library(OHDVideoLib
         STATIC
         ${ALL_VIDEO_SOURCE_FILES})
 target_include_directories(OHDVideoLib PUBLIC inc/)
+target_include_directories(OHDVideoLib PUBLIC lib/include)
 target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})
 # link and include gstreamer
 target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
 target_link_libraries(OHDVideoLib PUBLIC ${GST_LIBRARIES})
+# find and include all the other libs
+#
+include(cmake/FindLibUSB.cmake)
+target_include_directories(OHDVideoLib PRIVATE ${LIBUSB_1_INCLUDE_DIRS})
+target_link_libraries(OHDVideoLib PRIVATE ${LIBUSB_1_LIBRARIES})
+#
+include(cmake/FindV4L2.cmake)
+target_include_directories(OHDVideoLib PRIVATE ${V4L2_INCLUDE_DIR})
+target_link_libraries(OHDVideoLib PRIVATE ${V4L2_LIBRARY})
 
 # Executables for testing manually, note that some might need to run after discovery
 add_executable(test_video test/test_video.cpp)

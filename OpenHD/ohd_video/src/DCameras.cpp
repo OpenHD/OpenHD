@@ -1,20 +1,12 @@
-#include <cstdio>
-
 #include <linux/videodev2.h>
 #include <libv4l2.h>
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <fcntl.h>
-#include <unistd.h>
 
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <regex>
-
-#include "json.hpp"
 
 #include "openhd-camera.hpp"
 #include "openhd-log.hpp"
@@ -24,18 +16,17 @@
 
 #include "DCameras.h"
 
-DCameras::DCameras(PlatformType platform_type, BoardType board_type) :
-	m_platform_type(platform_type),
-	m_board_type(board_type){}
+DCameras::DCameras(const OHDPlatform& ohdPlatform) :
+	ohdPlatform(ohdPlatform){}
 
-void DCameras::discover() {
+std::vector<Camera> DCameras::discover_internal() {
   std::cout << "Cameras::discover()" << std::endl;
 
   // Only on raspberry pi with the old broadcom stack we need a special detection method for the rpi CSI camera.
   // On all other platforms (for example jetson) the CSI camera is exposed as a normal V4l2 linux device,and we cah
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
-  if(m_platform_type==PlatformTypeRaspberryPi){
+  if(ohdPlatform.platform_type==PlatformTypeRaspberryPi){
 	detect_raspberrypi_csi();
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
@@ -45,6 +36,8 @@ void DCameras::discover() {
   // This will detect all cameras (CSI or not) that do it the proper way (linux v4l2)
   detect_v4l2();
   detect_ip();
+  argh_cleanup();
+  return m_cameras;
 }
 
 void DCameras::detect_raspberrypi_csi() {
@@ -54,7 +47,7 @@ void DCameras::detect_raspberrypi_csi() {
 	std::cout << "Cameras::detect_raspberrypi_csi() vcgencmd not found" << std::endl;
 	return;
   }
-  const auto raw_value=vcgencmd_result.value();
+  const auto& raw_value=vcgencmd_result.value();
   std::smatch result;
   // example "supported=2 detected=2"
   const std::regex r{R"(supported=([\d]+)\s+detected=([\d]+))"};
@@ -90,7 +83,7 @@ void DCameras::detect_raspberrypi_csi() {
 	camera.bus = "1";
 	camera.index = m_discover_index;
 	m_discover_index++;
-	CameraEndpoint endpoint=DRPICamerasHelper::createCameraEndpointRpi(false);
+	CameraEndpoint endpoint=DRPICamerasHelper::createCameraEndpointRpi(true);
 	m_camera_endpoints.push_back(endpoint);
 	m_cameras.push_back(camera);
   }
@@ -119,7 +112,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
   Camera camera;
   // check for device name
   std::smatch model_result;
-  std::regex model_regex{"ID_MODEL=([\\w]+)"};
+  const std::regex model_regex{"ID_MODEL=([\\w]+)"};
   if (std::regex_search(udev_info, model_result, model_regex)) {
 	if (model_result.size() == 2) {
 	  camera.name = model_result[1];
@@ -127,7 +120,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
   }
   // check for device vendor
   std::smatch vendor_result;
-  std::regex vendor_regex{"ID_VENDOR=([\\w]+)"};
+  const std::regex vendor_regex{"ID_VENDOR=([\\w]+)"};
   if (std::regex_search(udev_info, vendor_result, vendor_regex)) {
 	if (vendor_result.size() == 2) {
 	  camera.vendor = vendor_result[1];
@@ -135,7 +128,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
   }
   // check for vid
   std::smatch vid_result;
-  std::regex vid_regex{"ID_VENDOR_ID=([\\w]+)"};
+  const std::regex vid_regex{"ID_VENDOR_ID=([\\w]+)"};
   if (std::regex_search(udev_info, vid_result, vid_regex)) {
 	if (vid_result.size() == 2) {
 	  camera.vid = vid_result[1];
@@ -143,7 +136,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
   }
   // check for pid
   std::smatch pid_result;
-  std::regex pid_regex{"ID_MODEL_ID=([\\w]+)"};
+  const std::regex pid_regex{"ID_MODEL_ID=([\\w]+)"};
   if (std::regex_search(udev_info, pid_result, pid_regex)) {
 	if (pid_result.size() == 2) {
 	  camera.pid = pid_result[1];
@@ -173,7 +166,7 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
   // fucking hell, on jetson v4l2_open seems to be bugged
   // https://forums.developer.nvidia.com/t/v4l2-open-create-core-with-jetpack-4-5-or-later/170624/6
   int fd;
-  if(m_platform_type==PlatformTypeJetson){
+  if(ohdPlatform.platform_type==PlatformTypeJetson){
 	fd = open(node.c_str(), O_RDWR | O_NONBLOCK, 0);
   }else{
 	fd = v4l2_open(node.c_str(), O_RDWR);
@@ -187,8 +180,8 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 	std::cerr << "Capability query failed: " << node << std::endl;
 	return false;
   }
-  std::string driver((char *)caps.driver);
-  std::cout<<"Driver is:"<<caps.driver<<"\n";
+  const std::string driver((char *)caps.driver);
+  std::cout<<"Driver is:"<<driver<<"\n";
   if (driver == "uvcvideo") {
 	camera.type = CameraTypeUVC;
 	std::cout << "Found UVC camera" << std::endl;
@@ -281,7 +274,7 @@ void DCameras::detect_ip() {
   // Note: I don't think there is an easy way to detect ip cameras,it probably requires some manual user input.
 }
 
-void DCameras::write_manifest() {
+void DCameras::argh_cleanup() {
   // Fixup endpoints, would be better to seperate the discovery steps properly so that this is not needed
   for (auto &camera: m_cameras) {
 	std::vector<CameraEndpoint> endpointsForThisCamera;
@@ -314,6 +307,11 @@ void DCameras::write_manifest() {
 	camIdx++;
   }
   write_camera_manifest(m_cameras);
+}
+
+std::vector<Camera> DCameras::discover(const OHDPlatform& ohdPlatform) {
+  auto discover=DCameras{ohdPlatform};
+  return discover.discover_internal();
 }
 
 

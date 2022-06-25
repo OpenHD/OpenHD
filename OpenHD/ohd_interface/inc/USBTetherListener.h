@@ -11,6 +11,7 @@
 #include <chrono>
 #include <utility>
 #include <mutex>
+#include <atomic>
 
 
 /**
@@ -39,9 +40,18 @@ class USBTetherListener{
   explicit USBTetherListener(IP_CALLBACK ip_callback):ip_callback(std::move(ip_callback)){}
   /**
    * Continuously checks for connected or disconnected USB tether devices.
-   * Does not return as long as there is no fatal error, and blocks the calling thread.
+   * Does not return as long as there is no fatal error or a stop is requested.
+   * Use startLooping() to not block the calling thread.
    */
-  [[noreturn]] void loopInfinite();
+  void loopInfinite();
+  /**
+   * start looping in a new thread.
+   */
+  void startLooping();
+  /**
+   * stop looping.
+   */
+   void stopLooping();
   /**
    * Can be called safely from any thread.
    * @return the valid ip address of the connected USB tether device if there is one. Empty if there is currently no device deteced.
@@ -52,6 +62,8 @@ class USBTetherListener{
   // protects against simultaneous read/write of the device_ip variable.
   std::mutex device_ip_mutex;
   std::string device_ip;
+  std::unique_ptr<std::thread> loopThread;
+  std::atomic<bool> loopThreadStop=false;
   // write the device ip, protected by mutex.
   void setDeviceIpLocked(std::string newDeviceIp);
   /**

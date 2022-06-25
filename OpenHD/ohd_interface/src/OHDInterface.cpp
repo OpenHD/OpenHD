@@ -4,16 +4,28 @@
 
 #include "OHDInterface.h"
 
-OHDInterface::OHDInterface(const OHDProfile &profile) : profile(profile) {
+#include <utility>
+
+OHDInterface::OHDInterface(const OHDProfile &profile1) : profile(profile1) {
   std::cout << "OHDInterface::OHDInterface()\n";
-  wifi = std::make_unique<WifiCards>(profile);
-  //ethernet=std::make_unique<EthernetCards>(is_air, unit_id);
-  streams = std::make_unique<WBStreams>(profile);
+  wifiCards = std::make_unique<WifiCards>(profile);
+  wbStreams = std::make_unique<WBStreams>(profile);
   try {
-	wifi->configure();
+	wifiCards->configure();
 	//ethernet->configure();
-	streams->set_broadcast_card_names(wifi->get_broadcast_card_names());
-	streams->configure();
+	wbStreams->set_broadcast_card_names(wifiCards->get_broadcast_card_names());
+	wbStreams->configure();
+	// usb tethering is only active on ground
+	if(profile.is_air){
+	  usbTetherListener=std::make_unique<USBTetherListener>([this](bool removed,std::string ip){
+		if(removed){
+		  removeExternalDeviceIpForwarding(ip);
+		}else{
+		  addExternalDeviceIpForwarding(ip);
+		}
+	  });
+	  usbTetherListener->startLooping();
+	}
   } catch (std::exception &ex) {
 	std::cerr << "Error: " << ex.what() << std::endl;
 	exit(1);
@@ -27,15 +39,23 @@ OHDInterface::OHDInterface(const OHDProfile &profile) : profile(profile) {
 std::string OHDInterface::createDebug() const {
   std::stringstream ss;
   ss<<"OHDInterface::createDebug:begin\n";
-  if (wifi) {
-	ss<<wifi->createDebug();
+  if (wifiCards) {
+	ss << wifiCards->createDebug();
   }
-  if (streams) {
-	ss<<streams->createDebug();
+  if (wbStreams) {
+	ss << wbStreams->createDebug();
   }
   //if(ethernet){
   //    ethernet->debug();
   //}
   ss<<"OHDInterface::createDebug:end\n";
   return ss.str();
+}
+
+void OHDInterface::addExternalDeviceIpForwarding(std::string ip) {
+  wbStreams->addExternalDeviceIpForwarding(std::move(ip));
+}
+
+void OHDInterface::removeExternalDeviceIpForwarding(std::string ip) {
+	wbStreams->removeExternalDeviceIpForwarding(std::move(ip));
 }

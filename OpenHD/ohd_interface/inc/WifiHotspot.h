@@ -14,6 +14,8 @@
  * External clients like QOpenHD running on a tablet can then connect to the hotspot.
  * Note that video and telemetry has to be forwarded to clients connected to the wifi hotspot.
  * For that, you can register a callback here.
+ * NOTE: Needs
+ * hostapd and isc-dhcp-server
  */
 class WifiHotspot {
  public:
@@ -35,7 +37,6 @@ class WifiHotspot {
   // In this case the apropriate callbacks have to be called.
   std::vector<std::string> connectedClientsIps;
   WiFiCard wifiCard;
-  std::string m_hostapd_config_file_content;
 };
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_

@@ -21,18 +21,18 @@ class AirTelemetry {
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.
    */
-  void loopInfinite(const bool enableExtendedLogging = false);
+  void loopInfinite(bool enableExtendedLogging = false);
+  [[nodiscard]] std::string createDebug()const;
  private:
-  // send a mavlink message to the flight controller connected to the air unit via UART
+  // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
   void sendMessageFC(MavlinkMessage &message);
-  // called every time a message from the flight controller bus is received
-  void onMessageFC(MavlinkMessage &message);
-  // send a message to the ground pi
+  // send a mavlink message to the ground pi, system cannot know if this message actually makes it.
   void sendMessageGroundPi(MavlinkMessage &message);
+  // called every time a message from the flight controller is received
+  void onMessageFC(MavlinkMessage &message);
   // called every time a message from the ground pi is received
   void onMessageGroundPi(MavlinkMessage &message);
  private:
-  static constexpr auto M_SYS_ID = OHD_SYS_ID_AIR;
   std::unique_ptr<SerialEndpoint> serialEndpoint;
   // For now, use UDP endpoint and rely on another service for starting the rx/tx links
   //std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;

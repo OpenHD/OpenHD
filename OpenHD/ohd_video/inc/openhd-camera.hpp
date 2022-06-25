@@ -17,7 +17,7 @@ typedef enum CameraType {
   CameraTypeRaspberryPiVEYE,
   CameraTypeJetsonCSI, //Any CSI camera on jetson
   CameraTypeRockchipCSI, //Any CSI camera on rockchip
-  // I think this is a 44l2 camera so to say, too.
+  // I think this is a V4l2 camera so to say, too.
   CameraTypeUVC,
   // this is not just a UVC camera that happens to support h264, it's the standard UVC H264 that only a few cameras
   // support, like the older models of the Logitech C920. Other UVC cameras may support h264, but they do it in a
@@ -171,25 +171,8 @@ struct CameraEndpoint {
 
 static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
 
-struct Camera {
-  CameraType type = CameraTypeUnknown;
-  std::string name = "unknown";
-  std::string vendor = "unknown";
-  std::string vid;
-  std::string pid;
-  // for USB this is the bus number, for CSI it's the connector number
-  std::string bus;
-  // Unique index of this camera, should start at 0. The index number depends on the order the cameras were picked
-  // during the discovery step.
-  int index = 0;
-  // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar form
-  std::string url;
-  // optional, if not empty we should always use the manual pipeline and discard everything else.
-  std::string manual_pipeline;
-  // All the endpoints supported by this camera.
-  std::vector<CameraEndpoint> endpoints;
-  // These values are settings that can change dynamically at run time (non-deterministic)
-  // --------------------------------------- non-deterministic begin ---------------------------------------
+// User-selectable camera options
+struct CameraSettings{
   // The video format selected by the user. If the user sets a video format that isn't supported
   // (for example, he might select h264|1920x1080@120 but the camera can only do 60fps)
   // The stream should default to the first available video format.
@@ -202,6 +185,13 @@ struct Camera {
   // The bitrate the generated stream should have. Note that not all cameras / encoder support a constant bitrate,
   // and not all encoders support all bitrates, especially really low ones.
   int bitrateKBits = DEFAULT_BITRATE_KBITS;
+  // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar form
+  std::string url;
+  // optional, if not empty we should always use the manual pipeline and discard everything else.
+  std::string manual_pipeline;
+  // enable/disable recording to file
+  bool enableAirRecordingToFile= false;
+  // todo they are simple for the most part, but rn not implemented yet.
   std::string brightness;
   std::string contrast;
   std::string sharpness;
@@ -210,7 +200,23 @@ struct Camera {
   std::string denoise;
   std::string thermal_palette;
   std::string thermal_span;
-  // --------------------------------------- end ---------------------------------------
+};
+
+struct Camera {
+  CameraType type = CameraTypeUnknown;
+  std::string name = "unknown";
+  std::string vendor = "unknown";
+  std::string vid;
+  std::string pid;
+  // for USB this is the bus number, for CSI it's the connector number
+  std::string bus;
+  // Unique index of this camera, should start at 0. The index number depends on the order the cameras were picked up
+  // during the discovery step.
+  int index = 0;
+  // All the endpoints supported by this camera.
+  std::vector<CameraEndpoint> endpoints;
+  // These values are settings that can change dynamically at run time (non-deterministic)
+  CameraSettings settings;
   /**
    * For logging, create a quick name string that gives developers enough info such that they can figure out
    * what this camera is.
@@ -219,6 +225,11 @@ struct Camera {
   [[nodiscard]] std::string debugName()const{
 	std::stringstream ss;
 	ss<<name<<"|"<<camera_type_to_string(type);
+	return ss.str();
+  }
+  [[nodiscard]] std::string to_string()const{
+	std::stringstream ss;
+	ss<<"Camera"<<index<<"{"<<camera_type_to_string(type)<<""<<"}";
 	return ss.str();
   }
 };
@@ -257,11 +268,11 @@ static nlohmann::json cameras_to_json(const std::vector<Camera> &cameras) {
 		  {"pid", camera.pid},
 		  {"bus", camera.bus},
 		  {"index", camera.index},
-		  {"url", camera.url},
-		  {"manual_pipeline", camera.manual_pipeline},
+		  {"url", camera.settings.url},
+		  {"manual_pipeline", camera.settings.manual_pipeline},
 		  {"endpoints", endpoints},
-		  {"userSelectedVideoFormat", camera.userSelectedVideoFormat.toString()},
-		  {"bitrateKBits", std::to_string(camera.bitrateKBits)}
+		  {"userSelectedVideoFormat", camera.settings.userSelectedVideoFormat.toString()},
+		  {"bitrateKBits", std::to_string(camera.settings.bitrateKBits)}
 	  };
 	  std::stringstream message;
 	  message << "Detected camera: " << camera.name << std::endl;
@@ -301,8 +312,8 @@ static std::vector<Camera> cameras_from_manifest() {
 	  camera.pid = _camera["pid"];
 	  camera.bus = _camera["bus"];
 	  camera.index = _camera["index"];
-	  camera.url = _camera["url"];
-	  camera.manual_pipeline = _camera["manual_pipeline"];
+	  camera.settings.url = _camera["url"];
+	  camera.settings.manual_pipeline = _camera["manual_pipeline"];
 	  auto _endpoints = _camera["endpoints"];
 	  for (auto _endpoint: _endpoints) {
 		CameraEndpoint endpoint;
@@ -317,9 +328,9 @@ static std::vector<Camera> cameras_from_manifest() {
 		}
 		camera.endpoints.push_back(endpoint);
 	  }
-	  camera.userSelectedVideoFormat = VideoFormat::fromString(_camera["userSelectedVideoFormat"]);
+	  camera.settings.userSelectedVideoFormat = VideoFormat::fromString(_camera["userSelectedVideoFormat"]);
 	  const std::string bitrateKBits = _camera["bitrateKBits"];
-	  camera.bitrateKBits = atoi(bitrateKBits.c_str());
+	  camera.settings.bitrateKBits = atoi(bitrateKBits.c_str());
 	  ret.push_back(camera);
 	}
   } catch (std::exception &ex) {
@@ -337,5 +348,19 @@ static bool check_bitrate_sane(const int bitrateKBits) {
   }
   return true;
 }
+
+static Camera createDummyCamera(){
+  Camera camera;
+  camera.type = CameraTypeDummy;
+  // Depending on what you selected here, you will have to use the proper main_stream_display_XXX.sh if you want to see the video.
+  camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecH264;
+  //camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecH265;
+  //camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecMJPEG;
+  camera.settings.userSelectedVideoFormat.width=640;
+  camera.settings.userSelectedVideoFormat.height=480;
+  return camera;
+}
+
+using DiscoveredCameraList=std::vector<Camera>;
 
 #endif

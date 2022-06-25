@@ -14,9 +14,9 @@
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-log.hpp"
+#include "openhd-camera.hpp"
 
 #include "camerastream.h"
-#include "openhd-camera.hpp"
 
 #include <string>
 
@@ -34,7 +34,7 @@ class OHDVideo {
    * @param unit_id stephen
    * @param platform_type the platform we are running on.
    */
-  OHDVideo(const OHDPlatform &platform, const OHDProfile &profile);
+  OHDVideo(const OHDPlatform &platform, const OHDProfile &profile,DiscoveredCameraList cameras);
   /**
    * Create a verbose debug string about the current state of OHDVideo, doesn't
    * print to stdout.
@@ -46,18 +46,21 @@ class OHDVideo {
    * if it has unexpectedly stopped.
    */
   void restartIfStopped();
+  // Experimental for now
+  bool set_video_format(int stream_idx,const VideoFormat video_format);
+  std::shared_ptr<CameraStream> get_stream_by_index(int idx);
+ public:
  private:
   const OHDPlatform &platform;
   const OHDProfile &profile;
  private:
   // These members are what used to be in camera microservice
   // All the created camera streams
-  std::vector<std::unique_ptr<CameraStream>> m_camera_streams;
+  std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
   // each camera stream already links camera, is this duplicated ??!
   std::vector<Camera> m_cameras;
-  // these methods are from camera microservice
-  void setup();
   void process_manifest();
+  void setup();
   void configure(Camera &camera);
 };
 

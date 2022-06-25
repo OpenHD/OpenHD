@@ -10,16 +10,20 @@
 #include "../mav_helper.h"
 #include <iostream>
 
+/**
+ * Helper for converting ohd custom messages to mavlink and printing them to stdout
+ */
 namespace LogCustomOHDMessages {
-static void logSystem(const mavlink_message_t &msg) {
-  assert(msg.msgid == MAVLINK_MSG_ID_OPENHD_SYSTEM_TELEMETRY);
-  mavlink_openhd_system_telemetry_t decoded;
-  mavlink_msg_openhd_system_telemetry_decode(&msg, &decoded);
+
+static void logOnboardComputerStatus(const mavlink_message_t &msg){
+  assert(msg.msgid == MAVLINK_MSG_ID_ONBOARD_COMPUTER_STATUS);
+  mavlink_onboard_computer_status_t decoded;
+  mavlink_msg_onboard_computer_status_decode(&msg,&decoded);
   std::stringstream ss;
-  ss << "MAVLINK_MSG_ID_OPENHD_SYSTEM_TELEMETRY:cpuload:" << (int)decoded.cpuload << "temp:" << (int)decoded.temperature
-	 << "\n";
-  std::cout << ss.str();
+  ss<<"MAVLINK_MSG_ID_ONBOARD_COMPUTER_STATUS: cpu_usage:"<<decoded.cpu_cores[0]<<" temp:"<<decoded.temperature_core[0]<<"\n";
+  std::cout<<ss.str();
 }
+
 static void logWifiBroadcast(const mavlink_message_t &msg) {
   assert(msg.msgid == MAVLINK_MSG_ID_OPENHD_WIFIBROADCAST_STATISTICS);
   mavlink_openhd_wifibroadcast_statistics_t decoded;
@@ -37,16 +41,17 @@ static void logLogMessage(const mavlink_message_t &msg) {
   ss << "LOG:" << decoded.severity << ":" << decoded.text << "\n";
   std::cout << ss.str();
 }
-static void logMessages(const std::vector<MavlinkMessage> &msges) {
+
+static void logOpenHDMessages(const std::vector<MavlinkMessage> &msges) {
   for (const auto &msg: msges) {
-	if (msg.m.msgid == MAVLINK_MSG_ID_OPENHD_SYSTEM_TELEMETRY) {
-	  logSystem(msg.m);
+	if (msg.m.msgid == MAVLINK_MSG_ID_ONBOARD_COMPUTER_STATUS) {
+	  logOnboardComputerStatus(msg.m);
 	} else if (msg.m.msgid == MAVLINK_MSG_ID_OPENHD_WIFIBROADCAST_STATISTICS) {
 	  logWifiBroadcast(msg.m);
 	} else if (msg.m.msgid == MAVLINK_MSG_ID_OPENHD_LOG_MESSAGE) {
 	  logLogMessage(msg.m);
 	} else {
-	  std::cerr << "unknown ohd msg\n";
+	  std::cerr << "unknown ohd msg with msgid:"<<msg.m.msgid<<"\n";
 	}
   }
 }

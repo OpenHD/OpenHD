@@ -4,11 +4,11 @@
 
 #include "InternalTelemetry.h"
 #include <iostream>
-#include "SystemReadUtil.hpp"
+#include "OnboardComputerStatus.hpp"
 #include "WBStatisticsConverter.hpp"
 
 InternalTelemetry::InternalTelemetry(bool runsOnAir) : RUNS_ON_AIR(runsOnAir),
-													   SYS_ID(runsOnAir ? OHD_SYS_ID_AIR : OHD_SYS_ID_GROUND) {
+													   mSysId(runsOnAir ? OHD_SYS_ID_AIR : OHD_SYS_ID_GROUND) {
   wifibroadcastStatisticsUdpReceiver = std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
 																				   OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT,
 																				   [this](const uint8_t *payload,
@@ -29,8 +29,12 @@ InternalTelemetry::InternalTelemetry(bool runsOnAir) : RUNS_ON_AIR(runsOnAir),
 
 std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   std::vector<MavlinkMessage> ret;
-  ret.push_back(generateSystemTelemetry());
+  ret.push_back(OHDMessages::createHeartbeat(mSysId,mCompId));
+  ret.push_back(OnboardComputerStatus::createOnboardComputerStatus(mSysId, mCompId));
   ret.push_back(generateWifibroadcastStatistics());
+  ret.push_back(generateOpenHDVersion());
+  // TODO remove for release
+  //ret.push_back(MExampleMessage::position(mSysId,mCompId));
   auto logs = generateLogMessages();
   ret.insert(ret.end(), logs.begin(), logs.end());
   return ret;
@@ -45,26 +49,10 @@ bool InternalTelemetry::handleMavlinkCommandIfPossible(const MavlinkMessage &msg
 
 void InternalTelemetry::processWifibroadcastStatisticsData(const uint8_t *payload, const std::size_t payloadSize) {
   //std::cout << "OHDTelemetryGenerator::processNewWifibroadcastStatisticsMessage: " << payloadSize << "\n";
-  const auto MSG_SIZE = sizeof(OpenHDStatisticsWriter::Data);
-  if (payloadSize >= MSG_SIZE && (payloadSize % MSG_SIZE == 0)) {
-	// we got new properly aligned data
-	OpenHDStatisticsWriter::Data data;
-	memcpy((uint8_t *)&data, payload, MSG_SIZE);
-	lastWbStatisticsMessage[data.radio_port] = data;
-  } else {
-	std::cerr << "Cannot parse WB statistics due to size mismatch\n";
+  const auto msges=WBStatisticsConverter::parseRawDataSafe(payload,payloadSize);
+  for(const auto msg:msges){
+	lastWbStatisticsMessage[msg.radio_port] = msg;
   }
-}
-
-MavlinkMessage InternalTelemetry::generateSystemTelemetry() const {
-  MavlinkMessage msg;
-  mavlink_msg_openhd_system_telemetry_pack(SYS_ID,
-										   MAV_COMP_ID_ALL,
-										   &msg.m,
-										   SystemReadUtil::readCpuLoad(),
-										   SystemReadUtil::readTemperature(),
-										   8);
-  return msg;
 }
 
 MavlinkMessage InternalTelemetry::generateWifibroadcastStatistics() const {
@@ -73,7 +61,7 @@ MavlinkMessage InternalTelemetry::generateWifibroadcastStatistics() const {
   data.radio_port = 0;
   data.count_p_all = 3;
   data.count_p_dec_err = 4;
-  auto msg = WBStatisticsConverter::convertWbStatisticsToMavlink(data, SYS_ID);
+  auto msg = WBStatisticsConverter::convertWbStatisticsToMavlink(data, mSysId, mCompId);
   return msg;
 }
 
@@ -88,8 +76,8 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
 	  MavlinkMessage mavMsg;
 	  const uint64_t timestamp =
 		  std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-	  mavlink_msg_openhd_log_message_pack(SYS_ID,
-										  MAV_COMP_ID_ALL,
+	  mavlink_msg_openhd_log_message_pack(mSysId,
+										  mCompId,
 										  &mavMsg.m,
 										  msg.level,
 										  (const char *)&msg.message,
@@ -102,12 +90,23 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
 	}
 	bufferedLogMessages.pop();
   }
+  {
+	// TODO remove for release
+	//MavlinkMessage mavMsg=OHDMessages::createLog(mSysId,mCompId,"lol",0);
+	//ret.push_back(mavMsg);
+  }
   return ret;
+}
+
+MavlinkMessage InternalTelemetry::generateOpenHDVersion() const {
+  MavlinkMessage msg;
+  mavlink_msg_openhd_version_message_pack(mSysId, mCompId, &msg.m, "2.1");
+  return msg;
 }
 
 void InternalTelemetry::processLogMessageData(const uint8_t *data, std::size_t dataLen) {
   //std::cout << "XX" << dataLen << "\n";
-  //TODO fix safety
+  //TODO this might discard messages
   if (dataLen == sizeof(OHDLocalLogMessage)) {
 	OHDLocalLogMessage local_message{};
 	memcpy((uint8_t *)&local_message, data, dataLen);
@@ -128,4 +127,28 @@ void InternalTelemetry::processLogMessage(OHDLocalLogMessage msg) {
   bufferedLogMessages.push(msg);
 }
 
+std::optional<MavlinkMessage> InternalTelemetry::handlePingMessage(const MavlinkMessage &message) const {
+  const auto msg=message.m;
+  assert(msg.msgid==MAVLINK_MSG_ID_PING);
+  mavlink_ping_t ping;
+  mavlink_msg_ping_decode(&msg, &ping);
+  // see https://mavlink.io/en/services/ping.html
+  if(ping.target_system==0 && ping.target_component==0){
+	//std::cout<<"Got ping request\n";
+	// Response to ping request.
+	mavlink_message_t response_message;
+	mavlink_msg_ping_pack(
+		mSysId,
+		mCompId,
+		&response_message,
+		ping.time_usec,
+		ping.seq,
+		msg.sysid,
+		msg.compid);
+	return MavlinkMessage{response_message};
+  }else{
+	// answer from ping request
+	return std::nullopt;
+  }
+}
 

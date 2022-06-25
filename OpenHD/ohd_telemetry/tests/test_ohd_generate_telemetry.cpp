@@ -1,6 +1,5 @@
 //
-// Created by consti10 on 24.04.22.
-// Test the OHD telemetry generation - this just prints the generated data to stdout.
+// Test the OHD fire and forget telemetry generator - this just prints the generated data to stdout.
 //
 #include "../src/internal/InternalTelemetry.h"
 #include "../src/internal/LogCustomOHDMessages.hpp"
@@ -14,7 +13,7 @@ int main() {
   const auto start = std::chrono::steady_clock::now();
   while ((std::chrono::steady_clock::now() - start) < std::chrono::minutes(5)) {
 	const auto msges = ohdTelemetryGenerator.generateUpdates();
-	LogCustomOHDMessages::logMessages(msges);
+	LogCustomOHDMessages::logOpenHDMessages(msges);
 	std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   std::cout << "OHDTelemetryGeneratorTest::end" << std::endl;

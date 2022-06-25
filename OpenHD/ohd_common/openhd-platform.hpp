@@ -129,10 +129,18 @@ inline BoardType board_type_from_string(const std::string& s){
 
 // All these members must not change during run time once they have been discovered !
 struct OHDPlatform {
+ public:
+  explicit OHDPlatform(PlatformType platform_type = PlatformTypeUnknown,BoardType board_type = BoardTypeUnknown):
+	  platform_type(platform_type),board_type(board_type){}
   // The platform we are running on, for example rpi, jetson
-  PlatformType platform_type = PlatformTypeUnknown;
+  const PlatformType platform_type;
   // The board type we are running on, for example rpi 3B+
-  BoardType board_type = BoardTypeUnknown;
+  const BoardType board_type;
+  [[nodiscard]] std::string to_string()const{
+	std::stringstream ss;
+	ss<<"OHDPlatform{"<<platform_type_to_string(platform_type)<<":"<<board_type_to_string(board_type)<<"}";
+	return ss.str();
+  }
 };
 
 // Writes the detected platform data to a json.
@@ -142,6 +150,12 @@ static nlohmann::json platform_to_json(const OHDPlatform &ohdPlatform) {
   j["platform"] = platform_type_to_string(ohdPlatform.platform_type);
   j["board"] = board_type_to_string(ohdPlatform.board_type);
   return j;
+}
+// same for reading
+static OHDPlatform platform_from_json(const nlohmann::json& j){
+  OHDPlatform ohdPlatform{string_to_platform_type(j["platform"]),
+						  board_type_from_string(j["board"])};
+  return ohdPlatform;
 }
 
 static constexpr auto PLATFORM_MANIFEST_FILENAME = "/tmp/platform_manifest";
@@ -155,19 +169,16 @@ static void write_platform_manifest(const OHDPlatform &ohdPlatform) {
 
 // NOTE: It is only safe to call this method after the discovery step.
 static OHDPlatform platform_from_manifest() {
-  OHDPlatform ohdPlatform;
   try {
 	std::ifstream f(PLATFORM_MANIFEST_FILENAME);
 	nlohmann::json j;
 	f >> j;
-	ohdPlatform.platform_type = string_to_platform_type(j["platform"]);
-	ohdPlatform.board_type= board_type_from_string(j["board"]);
+	return platform_from_json(j);
   } catch (std::exception &ex) {
 	std::cerr << "Platform manifest processing failed: " << ex.what() << std::endl;
 	ohd_log(STATUS_LEVEL_EMERGENCY, "Platform manifest processing failed");
 	exit(1);
   }
-  return ohdPlatform;
 }
 
 #endif

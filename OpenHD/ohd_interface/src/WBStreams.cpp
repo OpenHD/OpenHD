@@ -11,8 +11,6 @@
 
 #include <utility>
 
-#include "json.hpp"
-
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 #include "openhd-wifi.hpp"
@@ -20,15 +18,7 @@
 
 #include "WBStreams.h"
 
-/*
- * This file is likely temporary, there are some unresolved questions over whether stream settings should be global
- * and therefore part of the system.conf settings file, or per-camera, in which case it might make more sense for
- * the video service to be starting the video streams.
- *
- * That's why the telemetry and video stream functions, which are somewhat duplicated, are separate. They may not end up
- * in the same place.
- *
- */
+
 WBStreams::WBStreams(const OHDProfile &profile1) :
 	profile(profile1) {}
 
@@ -69,7 +59,7 @@ void WBStreams::configure_telemetry() {
   auto udpPort2 = profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX
 								 : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX;
   udpTelemetryRx = createUdpWbRx(radioPort1, udpPort1);
-  udpTelemetryTx = createUdpWbTx(radioPort2, udpPort2);
+  udpTelemetryTx = createUdpWbTx(radioPort2, udpPort2,false);
   udpTelemetryRx->runInBackground();
   udpTelemetryTx->runInBackground();
 }
@@ -78,9 +68,9 @@ void WBStreams::configure_video() {
   std::cout << "Streams::configure_video()" << std::endl;
   // Video is unidirectional, aka always goes from air pi to ground pi
   if (profile.is_air) {
-	auto primary = createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP);
+	auto primary = createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP,true);
 	primary->runInBackground();
-	auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP);
+	auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,true);
 	secondary->runInBackground();
 	udpVideoTxList.push_back(std::move(primary));
 	udpVideoTxList.push_back(std::move(secondary));
@@ -94,15 +84,21 @@ void WBStreams::configure_video() {
   }
 }
 
-std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port)const {
-  RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, m_mcs};
+std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec)const {
+  RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, DEFAULT_MCS_INDEX};
   RadiotapHeader radiotapHeader{wifiParams};
   TOptions options{};
   // We log them all manually together
   options.enableLogAlive= false;
   options.radio_port = radio_port;
   options.keypair = std::nullopt;
-  options.fec_percentage=20; // Default to 20% fec overhead
+  if(enableFec){
+	options.fec_k=8;
+	options.fec_percentage=20; // Default to 20% fec overhead
+  }else{
+	options.fec_k=0;
+	options.fec_percentage=0;
+  }
   const auto cards = m_broadcast_cards_names;
   assert(!cards.empty());
   options.wlan = cards.at(0);
@@ -112,7 +108,7 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
 std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int udp_port) const {
   ROptions options{};
   // We log them all manually together
-  options.enableLogAlive=false;
+  options.enableLogAlive= false;
   options.radio_port = radio_port;
   options.keypair = std::nullopt;
   const auto cards = m_broadcast_cards_names;
@@ -136,4 +132,23 @@ std::string WBStreams::createDebug() const {
 	ss<<"VidRx:"<<rxvid->createDebug();
   }
   return ss.str();
+}
+
+void WBStreams::addExternalDeviceIpForwarding(std::string ip) {
+  bool first= true;
+  assert(udpVideoRxList.size()==2);
+  for(auto& rxVid:udpVideoRxList){
+	const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
+	first= false;
+	rxVid->addForwarder(ip,udpPort);
+  }
+}
+void WBStreams::removeExternalDeviceIpForwarding(std::string ip) {
+  bool first= true;
+  assert(udpVideoRxList.size()==2);
+  for(auto& rxVid:udpVideoRxList){
+	const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
+	first= false;
+	rxVid->removeForwarder(ip,udpPort);
+  }
 }

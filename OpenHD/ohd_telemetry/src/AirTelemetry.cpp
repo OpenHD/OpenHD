@@ -5,8 +5,9 @@
 #include "AirTelemetry.h"
 #include "mav_helper.h"
 
+
 AirTelemetry::AirTelemetry(std::string fcSerialPort) {
-  serialEndpoint = std::make_unique<SerialEndpoint>("FCSerial", SerialEndpoint::HWOptions{fcSerialPort, 115200});
+  serialEndpoint = std::make_unique<SerialEndpoint>("FCSerial",SerialEndpoint::HWOptions{fcSerialPort, 115200});
   serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	this->onMessageFC(msg);
   });
@@ -20,16 +21,25 @@ AirTelemetry::AirTelemetry(std::string fcSerialPort) {
 
 void AirTelemetry::sendMessageFC(MavlinkMessage &message) {
   serialEndpoint->sendMessage(message);
-}
-
-void AirTelemetry::onMessageFC(MavlinkMessage &message) {
-  // forward everything to the ground pi
-  sendMessageGroundPi(message);
+  if(message.m.msgid==MAVLINK_MSG_ID_PING){
+	std::cout<<"Sent ping to FC\n";
+	MavlinkHelpers::debugMavlinkPingMessage(message.m);
+  }
 }
 
 void AirTelemetry::sendMessageGroundPi(MavlinkMessage &message) {
+  //debugMavlinkMessage(message.m,"AirTelemetry::sendMessageGroundPi");
   // broadcast the mavlink message via wifibroadcast
   wifibroadcastEndpoint->sendMessage(message);
+}
+
+void AirTelemetry::onMessageFC(MavlinkMessage &message) {
+  //debugMavlinkMessage(message.m,"AirTelemetry::onMessageFC");
+  sendMessageGroundPi(message);
+  // handling a message from the FC is really easy - we just forward it to the ground pi.
+  if(message.m.msgid==MAVLINK_MSG_ID_PING){
+	std::cout<<"Got ping from FC\n";
+  }
 }
 
 void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
@@ -42,21 +52,27 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   }
   // for now, do it as simple as possible
   sendMessageFC(message);
+  // temporarily, handle ping messages
+  if(m.msgid==MAVLINK_MSG_ID_PING){
+	auto response=ohdTelemetryGenerator.handlePingMessage(message);
+	if(response.has_value()){
+	  sendMessageGroundPi(response.value());
+	}
+  }
 }
 
 void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
   while (true) {
-	std::cout << "AirTelemetry::loopInfinite()\n";
+	//std::cout << "AirTelemetry::loopInfinite()\n";
 	// for debugging, check if any of the endpoints is not alive
 	if (enableExtendedLogging && wifibroadcastEndpoint) {
-	  wifibroadcastEndpoint->debugIfAlive();
+	  std::cout<<wifibroadcastEndpoint->createInfo();
 	}
 	if (enableExtendedLogging && serialEndpoint) {
-	  serialEndpoint->debugIfAlive();
+	  std::cout<<serialEndpoint->createInfo();
 	}
-	// send heartbeat to the ground pi - everything else is handled by the callbacks and their threads
-	auto heartbeat = OHDMessages::createHeartbeat(true);
-	sendMessageGroundPi(heartbeat);
+	// send messages to the ground pi in regular intervals, includes heartbeat.
+	// everything else is handled by the callbacks and their threads
 	auto ohdTelemetryMessages = ohdTelemetryGenerator.generateUpdates();
 	for (auto &msg: ohdTelemetryMessages) {
 	  sendMessageGroundPi(msg);
@@ -64,4 +80,16 @@ void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
 	// send out in X second intervals
 	std::this_thread::sleep_for(std::chrono::seconds(3));
   }
+}
+
+std::string AirTelemetry::createDebug() const {
+  std::stringstream ss;
+  //ss<<"AT:\n";
+  if ( wifibroadcastEndpoint) {
+	ss<<wifibroadcastEndpoint->createInfo();
+  }
+  if (serialEndpoint) {
+	ss<<serialEndpoint->createInfo();
+  }
+  return ss.str();
 }
