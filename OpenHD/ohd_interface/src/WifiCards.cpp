@@ -55,6 +55,7 @@ void WifiCards::configure() {
 
 void WifiCards::setup_card(const WiFiCard &card) {
   std::cerr << "Setup card: " << card.interface_name << std::endl;
+  std::cout<<"Setup card:"<<wificard_to_json(card)<<"\n";
   switch (card.settings.use_for) {
 	case WifiUseForMonitorMode:
 	  set_card_state(card, false);

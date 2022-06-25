@@ -175,9 +175,11 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  break;
 	}
 	case WiFiCardTypeRealtek8812au: {
-	  card.supports_5ghz = supports_5ghz;
-	  card.supports_2ghz =
-		  false; // quirk, the driver doesn't support it for injection, we should allow it for hotspot though
+	  //card.supports_5ghz = supports_5ghz;
+      // Fuck fuck ???!!
+      card.supports_5ghz=true;
+      // quirk, the driver doesn't support it for injection, we should allow it for hotspot though
+	  card.supports_2ghz =false;
 	  card.supports_rts = true;
 	  card.supports_injection = true;
 	  card.supports_hotspot = true;
