@@ -69,7 +69,8 @@ void WifiCards::setup_card(const WiFiCard &card) {
 	  setup_hotspot(card);
 	  break;
 	case WifiUseForUnknown:
-	default:std::cerr << "Card " << card.interface_name << " unknown use for\n";
+	default:
+      std::cerr << "Card " << card.interface_name << " unknown use for\n";
 	  return;
   }
 }
