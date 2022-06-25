@@ -105,6 +105,12 @@ int main(int argc, char *argv[]) {
 	if (profile->is_air) {
 	  ohdVideo = std::make_unique<OHDVideo>(*platform,*profile,cameras);
 	}
+    // we need to start QOpenHD when we are running as ground
+    if(!profile->is_air){
+      OHDUtil::run_command("systemctl",{" start qopenhd"});
+    }else{
+      OHDUtil::run_command("systemctl",{" stop qopenhd"});
+    }
 	std::cout << "All OpenHD modules running\n";
 
 	// run forever, everything has its own threads. Note that the only way to break out basically
