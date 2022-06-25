@@ -22,7 +22,7 @@ class UDPEndpoint2 : public MEndpoint {
   const int SEND_PORT;
   const std::string RECV_IP;
   const int RECV_PORT;
-  std::unique_ptr<SocketHelper::UDPReceiver> receiver;
+  std::unique_ptr<SocketHelper::UDPReceiver> receiver_sender;
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_UDPENDPOINT2_H_

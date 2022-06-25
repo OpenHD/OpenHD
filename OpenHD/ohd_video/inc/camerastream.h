@@ -28,7 +28,7 @@ class CameraStream {
    * After a camera stream is constructed, it won't start streaming until setup() and start() are called
    * @param platform the platform we are running on
    * @param camera the camera to create the stream with
-   * @param video_udp_port the udp port where rtp data is forwarded to, picked up by interface.
+   * @param video_udp_port the udp port where rtp data is forwarded to, must match with interface in OpenHD
    */
   CameraStream(PlatformType platform, Camera &camera, uint16_t video_udp_port);
   /**

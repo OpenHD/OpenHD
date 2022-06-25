@@ -20,8 +20,7 @@ int main() {
   }
   {
 	OHDProfile profile{true, "XX"};
-	OHDPlatform platform{};
-	platform.platform_type=PlatformTypePC;
+	OHDPlatform platform{PlatformTypePC};
 	ohdTelemAir = std::make_unique<OHDTelemetry>(platform, profile);
   }
   while (true) {

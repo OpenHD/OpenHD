@@ -1,70 +1,15 @@
-#include <cstdio>
-#include <stdio.h>
-
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sstream>
 #include <regex>
 
 #include <iostream>
 #include <boost/algorithm/string/trim.hpp>
-
-
-#include "openhd-platform.hpp"
-#include "openhd-log.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 
-#include "DPlatform.h"
 #include "DWifiCards.h"
 
 extern "C" {
 #include "nl.h"
-}
-
-DWifiCards::DWifiCards(const OHDPlatform& ohdPlatform) :
-	ohdPlatform(ohdPlatform){}
-
-void DWifiCards::discover() {
-  std::cout << "WiFi::discover()\n";
-  // Find wifi cards, excluding specific kinds of interfaces.
-  const std::vector<std::string> excluded_interfaces = {
-	  "usb",
-	  "lo",
-	  "eth",
-	  "enp2s0" // Consti10 added
-  };
-  const auto netFilenames=OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory("/sys/class/net");
-  for(const auto& filename:netFilenames){
-	auto excluded = false;
-	for (const auto &excluded_interface: excluded_interfaces) {
-	  if (filename.find(excluded_interface)!=std::string::npos) {
-		excluded = true;
-		break;
-	  }
-	}
-	if (!excluded) {
-	  process_card(filename);
-	}
-  }
-  // Now that we have all the connected cards, we need to figure out what to use them for.
-  // Fo now, just go with what we used to do in EZ-Wifibroadcast.
-  for (auto &card: m_wifi_cards) {
-	if (card.supports_injection) {
-	  card.settings.use_for = WifiUseForMonitorMode;
-	} else if (card.supports_hotspot) {
-	  // if a card does not support injection, we use it for hotspot
-	  card.settings.use_for = WifiUseForHotspot;
-	} else {
-	  // and if a card supports neither hotspot nor injection, we use it for nothing
-	  card.settings.use_for = WifiUseForUnknown;
-	}
-  }
-  std::cout << "WiFi::discover done, n cards:" << m_wifi_cards.size() << "\n";
 }
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
@@ -90,7 +35,50 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   return WiFiCardTypeUnknown;
 }
 
-void DWifiCards::process_card(const std::string &interface_name) {
+std::vector<WiFiCard> DWifiCards::discover() {
+  std::cout << "WiFi::discover()\n";
+  std::vector<WiFiCard> m_wifi_cards;
+  // Find wifi cards, excluding specific kinds of interfaces.
+  const std::vector<std::string> excluded_interfaces = {
+	  "usb",
+	  "lo",
+	  "eth",
+	  "enp2s0" // Consti10 added
+  };
+  const auto netFilenames=OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory("/sys/class/net");
+  for(const auto& filename:netFilenames){
+	auto excluded = false;
+	for (const auto &excluded_interface: excluded_interfaces) {
+	  if (filename.find(excluded_interface)!=std::string::npos) {
+		excluded = true;
+		break;
+	  }
+	}
+	if (!excluded) {
+	  auto card= process_card(filename);
+	  if(card.has_value()){
+		m_wifi_cards.push_back(card.value());
+	  }
+	}
+  }
+  // Now that we have all the connected cards, we need to figure out what to use them for.
+  // Fo now, just go with what we used to do in EZ-Wifibroadcast.
+  for (auto &card: m_wifi_cards) {
+	if (card.supports_injection) {
+	  card.settings.use_for = WifiUseForMonitorMode;
+	} else if (card.supports_hotspot) {
+	  // if a card does not support injection, we use it for hotspot
+	  card.settings.use_for = WifiUseForHotspot;
+	} else {
+	  // and if a card supports neither hotspot nor injection, we use it for nothing
+	  card.settings.use_for = WifiUseForUnknown;
+	}
+  }
+  std::cout << "WiFi::discover done, n cards:" << m_wifi_cards.size() << "\n";
+  return m_wifi_cards;
+}
+
+std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_name) {
   std::stringstream device_file;
   device_file << "/sys/class/net/";
   device_file << interface_name.c_str();
@@ -105,12 +93,12 @@ void DWifiCards::process_card(const std::string &interface_name) {
 
   if (!std::regex_search(raw_value, result, r)) {
 	std::cerr << "no result" << std::endl;
-	return;
+	return {};
   }
 
   if (result.size() != 2) {
 	std::cerr << "result doesnt match" << std::endl;
-	return;
+	return {};
   }
 
   std::string driver_name = result[1];
@@ -187,9 +175,11 @@ void DWifiCards::process_card(const std::string &interface_name) {
 	  break;
 	}
 	case WiFiCardTypeRealtek8812au: {
-	  card.supports_5ghz = supports_5ghz;
-	  card.supports_2ghz =
-		  false; // quirk, the driver doesn't support it for injection, we should allow it for hotspot though
+	  //card.supports_5ghz = supports_5ghz;
+      // For some reason, phy_lookup seems to not work when 2x RTL8812au are connected on the second card.
+      card.supports_5ghz=true;
+      // quirk, the driver doesn't support it for injection, we should allow it for hotspot though
+	  card.supports_2ghz =false;
 	  card.supports_rts = true;
 	  card.supports_injection = true;
 	  card.supports_hotspot = true;
@@ -225,12 +215,6 @@ void DWifiCards::process_card(const std::string &interface_name) {
   if(card.type==WiFiCardTypeBroadcom){
 	card.supports_hotspot= true;
   }
-  std::stringstream message;
-  message << "Detected wifi (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name << std::endl;
-  ohd_log(STATUS_LEVEL_INFO, message.str());
-  m_wifi_cards.push_back(card);
+  return card;
 }
 
-void DWifiCards::write_manifest() {
-  write_wificards_manifest(m_wifi_cards);
-}

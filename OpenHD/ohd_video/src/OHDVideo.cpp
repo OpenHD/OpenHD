@@ -5,12 +5,14 @@
 #include "gstreamerstream.h"
 #include "libcamerastream.h"
 #include "openhd-settings.hpp"
+#include "DCameras.h"
 
 #include "OHDVideo.h"
 
 #include <utility>
 
-OHDVideo::OHDVideo(const OHDPlatform &platform, const OHDProfile &profile) : platform(platform), profile(profile) {
+OHDVideo::OHDVideo(const OHDPlatform &platform, const OHDProfile &profile,DiscoveredCameraList cameras) :
+	platform(platform), profile(profile),m_cameras(cameras) {
   assert(("This module must only run on the air pi !", profile.is_air == true));
   std::cout << "OHDVideo::OHDVideo()\n";
   try {
@@ -49,7 +51,6 @@ void OHDVideo::process_manifest() {
 
 void OHDVideo::setup() {
   std::cout << "OHDVideo::setup()" << std::endl;
-  process_manifest();
   // Consti10 sanity checks
   for (auto &camera: m_cameras) {
 	// check to see if we need to set a default bitrate.
@@ -75,10 +76,10 @@ void OHDVideo::configure(Camera &camera) {
 	case CameraTypeDummy: {
 	  std::cout << "Camera index:" << camera.index << "\n";
 	  const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-	  auto stream = std::make_unique<GStreamerStream>(platform.platform_type, camera, udp_port);
+	  auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera, udp_port);
 	  stream->setup();
 	  stream->start();
-	  m_camera_streams.push_back(std::move(stream));
+	  m_camera_streams.push_back(stream);
 	  break;
 	}
 	default: {
@@ -91,6 +92,19 @@ void OHDVideo::restartIfStopped() {
   for(auto& stream:m_camera_streams){
 	stream->restartIfStopped();
   }
+}
+
+bool OHDVideo::set_video_format(int stream_idx, const VideoFormat video_format) {
+  auto stream= get_stream_by_index(stream_idx);
+  if(!stream)return false;
+  stream->set_format(video_format);
+  return true;
+}
+std::shared_ptr<CameraStream> OHDVideo::get_stream_by_index(int idx) {
+  if(idx<m_cameras.size()){
+    return m_camera_streams[idx];
+  }
+  return nullptr;
 }
 
 

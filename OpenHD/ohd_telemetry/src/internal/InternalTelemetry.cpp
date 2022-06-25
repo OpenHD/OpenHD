@@ -34,7 +34,7 @@ std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   ret.push_back(generateWifibroadcastStatistics());
   ret.push_back(generateOpenHDVersion());
   // TODO remove for release
-  ret.push_back(MExampleMessage::position(mSysId,mCompId));
+  //ret.push_back(MExampleMessage::position(mSysId,mCompId));
   auto logs = generateLogMessages();
   ret.insert(ret.end(), logs.begin(), logs.end());
   return ret;
@@ -92,8 +92,8 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
   }
   {
 	// TODO remove for release
-	MavlinkMessage mavMsg=OHDMessages::createLog(mSysId,mCompId,"lol",0);
-	ret.push_back(mavMsg);
+	//MavlinkMessage mavMsg=OHDMessages::createLog(mSysId,mCompId,"lol",0);
+	//ret.push_back(mavMsg);
   }
   return ret;
 }
@@ -106,7 +106,7 @@ MavlinkMessage InternalTelemetry::generateOpenHDVersion() const {
 
 void InternalTelemetry::processLogMessageData(const uint8_t *data, std::size_t dataLen) {
   //std::cout << "XX" << dataLen << "\n";
-  //TODO fix safety
+  //TODO this might discard messages
   if (dataLen == sizeof(OHDLocalLogMessage)) {
 	OHDLocalLogMessage local_message{};
 	memcpy((uint8_t *)&local_message, data, dataLen);

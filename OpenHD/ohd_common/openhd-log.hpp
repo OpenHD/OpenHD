@@ -1,5 +1,5 @@
-#ifndef OPENHD_STATUS_H
-#define OPENHD_STATUS_H
+#ifndef OPENHD_LOG_MESSAGES_H
+#define OPENHD_LOG_MESSAGES_H
 
 #include <cstdio>
 #include <unistd.h>
@@ -15,6 +15,7 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <cassert>
 
 #include "openhd-global-constants.h"
@@ -49,7 +50,7 @@ struct OHDLocalLogMessage{
 
 // these match the mavlink SEVERITY_LEVEL enum, but this code should not depend on
 // the mavlink headers
-// See https://mavlink.io/en/messages/common.html - MAV_SEVERITY
+// See https://mavlink.io/en/messages/common.html#MAV_SEVERITY
 typedef enum STATUS_LEVEL {
   STATUS_LEVEL_EMERGENCY = 0,
   STATUS_LEVEL_ALERT,
@@ -117,4 +118,61 @@ inline void ohd_log_debug(const std::string &message) {
   ohd_log(STATUS_LEVEL_DEBUG, message);
 }
 
-#endif
+class OpenHDLogger{
+ public:
+  //explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL_DEBUG,const std::string& tag=""):
+  //  _status_level(level),_tag(tag) {}
+  explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL_DEBUG,std::string_view tag=""):
+    _status_level(level),_tag(tag){}
+  ~OpenHDLogger() {
+    const auto tmp=stream.str();
+    log_message(tmp);
+  }
+  OpenHDLogger(const OpenHDLogger& other)=delete;
+  // the non-member function operator<< will now have access to private members
+  template <typename T>
+  friend OpenHDLogger& operator<<(OpenHDLogger& record, T&& t);
+ private:
+  const STATUS_LEVEL _status_level;
+  const std::string_view _tag;
+  std::stringstream stream;
+  // Checks for a newline, and if detected logs the message immediately and then clears it.
+  void log_immediately_on_newline(){
+    const auto tmp=stream.str();
+    if(!tmp.empty() && tmp.back()=='\n') {
+      log_message(tmp);
+      stream.str("");
+    }
+  }
+  void log_message(const std::string& message){
+    if(message.empty())return;
+    // mavlink log messages are in ascending order for higher priorities
+    if(_status_level<=STATUS_LEVEL_ERROR){
+      std::cout<<message;
+    }else{
+      std::cerr<<message;
+    }
+  }
+};
+
+template <typename T>
+OpenHDLogger& operator<<(OpenHDLogger& record, T&& t) {
+  record.stream << std::forward<T>(t);
+  // If we detect a newline, log immediately, not delayed when going out of scope to mimic std::cout behaviour
+  record.log_immediately_on_newline();
+  return record;
+}
+template <typename T>
+OpenHDLogger& operator<<(OpenHDLogger&& record, T&& t) {
+  // This just uses the operator declared above.
+  record << std::forward<T>(t);
+  return record;
+}
+
+// macro for logging like std::cout in OpenHD
+#define LOGD OpenHDLogger(STATUS_LEVEL_DEBUG,"")
+
+// macro for logging like std::cerr in OpenHD
+#define LOGE OpenHDLogger(STATUS_LEVEL_ERROR,"")
+
+#endif //OPENHD_LOG_MESSAGES_H

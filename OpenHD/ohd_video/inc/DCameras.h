@@ -4,8 +4,7 @@
 #include <array>
 #include <chrono>
 #include <vector>
-
-#include "DPlatform.h"
+#include "openhd-platform.hpp"
 
 #include "openhd-camera.hpp"
 #include "openhd-discoverable.hpp"
@@ -13,16 +12,14 @@
 /**
  * Discover all connected cameras and write them to json.
  */
-class DCameras : public OHD::IDiscoverable {
+class DCameras{
  public:
   explicit DCameras(const OHDPlatform& ohdPlatform);
-
   virtual ~DCameras() = default;
-
-  void discover() override;
-
-  void write_manifest() override;
-
+  static std::vector<Camera> discover(const OHDPlatform& ohdPlatform);
+ private:
+  std::vector<Camera> discover_internal();
+  void argh_cleanup();
   [[nodiscard]] int getCameraCount() const {
 	return (int)m_cameras.size();
   }

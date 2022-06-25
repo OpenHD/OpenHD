@@ -11,7 +11,6 @@
 #include "openhd-platform.hpp"
 #include <string>
 
-
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
  */

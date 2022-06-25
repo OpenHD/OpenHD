@@ -7,12 +7,19 @@
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 
+#include "DWifiCards.h"
+
 WifiCards::WifiCards(const OHDProfile &profile) : profile(profile) {}
 
 void WifiCards::configure() {
   std::cout << "WifiCards::configure()" << std::endl;
   //Find out which cards are connected first
-  process_manifest();
+  m_wifi_cards=DWifiCards::discover();
+  for(const auto& card: m_wifi_cards){
+	std::stringstream message;
+	message << "Detected wifi (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name << std::endl;
+	ohd_log(STATUS_LEVEL_INFO, message.str());
+  }
   // Consti10 - now do some sanity checks. No idea if and how the settings from stephen handle default values.
   for (auto &card: m_wifi_cards) {
 	if (card.settings.use_for == WifiUseForHotspot && profile.is_air) {
@@ -46,12 +53,9 @@ void WifiCards::configure() {
   }
 }
 
-void WifiCards::process_manifest() {
-  m_wifi_cards = wificards_from_manifest();
-}
-
 void WifiCards::setup_card(const WiFiCard &card) {
   std::cerr << "Setup card: " << card.interface_name << std::endl;
+  std::cout<<"Setup card:"<<wificard_to_json(card)<<"\n";
   switch (card.settings.use_for) {
 	case WifiUseForMonitorMode:
 	  set_card_state(card, false);
@@ -65,7 +69,8 @@ void WifiCards::setup_card(const WiFiCard &card) {
 	  setup_hotspot(card);
 	  break;
 	case WifiUseForUnknown:
-	default:std::cerr << "Card " << card.interface_name << " unknown use for\n";
+	default:
+      std::cerr << "Card " << card.interface_name << " unknown use for\n";
 	  return;
   }
 }

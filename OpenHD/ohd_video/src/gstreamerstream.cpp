@@ -18,24 +18,25 @@ GStreamerStream::GStreamerStream(PlatformType platform,
   std::cout << "GStreamerStream::GStreamerStream()\n";
   // Since the dummy camera is SW, we generally cannot do more than 640x480@30 anyways.
   // (640x48@30 might already be too much on embedded devices).
-  if (camera.type == CameraTypeDummy) {
-	camera.settings.userSelectedVideoFormat.width = 640;
-	camera.settings.userSelectedVideoFormat.height = 480;
-	camera.settings.userSelectedVideoFormat.framerate=30;
-	std::cout << "Configured dummy for:" << m_camera.settings.userSelectedVideoFormat.toString() << "\n";
+  if (camera.type == CameraTypeDummy &&
+      camera.settings.userSelectedVideoFormat.width > 640 ||
+      camera.settings.userSelectedVideoFormat.height > 480 ||
+      camera.settings.userSelectedVideoFormat.framerate > 30) {
+    std::cout<<"Warning- Dummy camera is done in sw, high resolution/framerate might not work\n";
+	std::cout<<"Configured dummy for:" << m_camera.settings.userSelectedVideoFormat.toString() << "\n";
   }
+  // sanity checks
+  if(!check_bitrate_sane(m_camera.settings.bitrateKBits)){
+    std::cerr << "manually fixing insane camera bitrate" << m_camera.settings.bitrateKBits << "\n";
+    m_camera.settings.bitrateKBits=DEFAULT_BITRATE_KBITS;
+  }
+  assert(m_camera.settings.userSelectedVideoFormat.isValid());
 }
 
 void GStreamerStream::setup() {
   std::cout << "GStreamerStream::setup()" << std::endl;
   OHDGstHelper::initGstreamerOrThrow();
   std::cout << "Creating GStreamer pipeline" << std::endl;
-  // sanity checks
-  if(!check_bitrate_sane(m_camera.settings.bitrateKBits)){
-	std::cerr << "manually fixing insane camera bitrate" << m_camera.settings.bitrateKBits << "\n";
-	m_camera.settings.bitrateKBits=DEFAULT_BITRATE_KBITS;
-  }
-  assert(m_camera.settings.userSelectedVideoFormat.isValid());
   m_pipeline.str("");
   m_pipeline.clear();
   switch (m_camera.type) {
@@ -216,8 +217,11 @@ VideoFormat GStreamerStream::get_format() {
 }
 
 void GStreamerStream::set_format(VideoFormat videoFormat) {
-  std::cout << "GStreamerStream::set_format(" << videoFormat.toString() << ")" << std::endl;
+  std::stringstream ss;
+  ss<< "GStreamerStream::set_format(" << videoFormat.toString() << ")" << std::endl;
+  ohd_log(STATUS_LEVEL_INFO,ss.str());
   m_camera.settings.userSelectedVideoFormat = videoFormat;
+  restart_after_new_setting();
 }
 
 void GStreamerStream::restartIfStopped() {
@@ -230,6 +234,13 @@ void GStreamerStream::restartIfStopped() {
 	sleep(3);
 	start();
   }
+}
+
+// Restart after a new settings value has been applied
+void GStreamerStream::restart_after_new_setting() {
+  stop();
+  setup();
+  start();
 }
 
 

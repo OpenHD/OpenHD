@@ -5,14 +5,9 @@
 #ifndef XMAVLINKSERVICE_MAV_INCLUDE_H
 #define XMAVLINKSERVICE_MAV_INCLUDE_H
 
-#ifdef __cplusplus
 extern "C" {
-#endif
-
-  //NOTE: Make sure to include the openhd mavlink flavour, otherwise the custom messages won't bw parsed.
+//NOTE: Make sure to include the openhd mavlink flavour, otherwise the custom messages won't bw parsed.
 #include <openhd/mavlink.h>
-
-#ifdef __cplusplus
 }
 
 #include <vector>
@@ -43,5 +38,4 @@ struct MavlinkMessage {
 // For registering a callback that is called every time component X receives a new Mavlink Message
 typedef std::function<void(MavlinkMessage &mavlinkMessage)> MAV_MSG_CALLBACK;
 
-#endif // __cplusplus
 #endif //XMAVLINKSERVICE_MAV_INCLUDE_H

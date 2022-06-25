@@ -15,16 +15,13 @@ SET(ALL_INTERFACE_SOURCE_FILES
         src/WBStreams.cpp
         src/WifiHotspot.cpp
         src/USBTetherListener.cpp
-        src/OHDInterface.cpp)
+        src/OHDInterface.cpp
+        src/DWifiCards.cpp
+        lib/nl.c)
 
 add_library(OHDInterfaceLib
         STATIC
         ${ALL_INTERFACE_SOURCE_FILES})
-
-# --- does that speed up compilation ?
-target_precompile_headers(OHDInterfaceLib
-        PUBLIC
-        ../ohd_common/json.hpp)
 
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
@@ -34,7 +31,14 @@ SET(Boost_USE_MULTITHREAD ON)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
 target_link_libraries(OHDInterfaceLib PUBLIC Boost::filesystem)
 
+# find and include all the other libs
+include(cmake/FindLibNL.cmake)
+#find_package(LibNL REQUIRED)
+target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
+target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
+
 target_include_directories(OHDInterfaceLib PUBLIC inc/)
+target_include_directories(OHDInterfaceLib PUBLIC lib/include)
 target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
 #target_include_directories(OHDInterfaceLib PUBLIC ${WB_INCLUDE_DIRECTORES})
 

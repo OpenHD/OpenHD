@@ -6,10 +6,9 @@
 
 #include <utility>
 
-OHDInterface::OHDInterface(const OHDProfile &profile) : profile(profile) {
+OHDInterface::OHDInterface(const OHDProfile &profile1) : profile(profile1) {
   std::cout << "OHDInterface::OHDInterface()\n";
   wifiCards = std::make_unique<WifiCards>(profile);
-  //ethernet=std::make_unique<EthernetCards>(is_air, unit_id);
   wbStreams = std::make_unique<WBStreams>(profile);
   try {
 	wifiCards->configure();

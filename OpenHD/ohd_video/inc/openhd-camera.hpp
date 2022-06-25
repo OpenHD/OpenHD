@@ -227,6 +227,11 @@ struct Camera {
 	ss<<name<<"|"<<camera_type_to_string(type);
 	return ss.str();
   }
+  [[nodiscard]] std::string to_string()const{
+	std::stringstream ss;
+	ss<<"Camera"<<index<<"{"<<camera_type_to_string(type)<<""<<"}";
+	return ss.str();
+  }
 };
 
 // TODO: Why the heck did stephen not use the endpoints member variable here ?
@@ -343,5 +348,19 @@ static bool check_bitrate_sane(const int bitrateKBits) {
   }
   return true;
 }
+
+static Camera createDummyCamera(){
+  Camera camera;
+  camera.type = CameraTypeDummy;
+  // Depending on what you selected here, you will have to use the proper main_stream_display_XXX.sh if you want to see the video.
+  camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecH264;
+  //camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecH265;
+  //camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecMJPEG;
+  camera.settings.userSelectedVideoFormat.width=640;
+  camera.settings.userSelectedVideoFormat.height=480;
+  return camera;
+}
+
+using DiscoveredCameraList=std::vector<Camera>;
 
 #endif
