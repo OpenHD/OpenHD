@@ -176,7 +176,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	}
 	case WiFiCardTypeRealtek8812au: {
 	  //card.supports_5ghz = supports_5ghz;
-      // Fuck fuck ???!!
+      // For some reason, phy_lookup seems to not work when 2x RTL8812au are connected on the second card.
       card.supports_5ghz=true;
       // quirk, the driver doesn't support it for injection, we should allow it for hotspot though
 	  card.supports_2ghz =false;
