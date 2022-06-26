@@ -24,6 +24,13 @@ class DPlatform {
   virtual ~DPlatform() = default;
   static std::shared_ptr<OHDPlatform> discover(){
     std::cout << "Platform::discover()" << std::endl;
+    auto platform=internal_discover();
+    write_platform_manifest(*platform);
+    return platform;
+  }
+ private:
+  static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
+  static std::shared_ptr<OHDPlatform> internal_discover(){
     const auto res=detect_raspberrypi();
     if(res.has_value()){
       return std::make_shared<OHDPlatform>(res.value().first,res.value().second);
@@ -35,8 +42,6 @@ class DPlatform {
     const auto res3=detect_pc();
     return std::make_shared<OHDPlatform>(res3.first,res3.second);
   }
- private:
-  static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
   static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi(){
     std::ifstream t("/proc/cpuinfo");
     std::string raw_value((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());

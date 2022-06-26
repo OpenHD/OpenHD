@@ -75,6 +75,7 @@ std::vector<WiFiCard> DWifiCards::discover() {
 	}
   }
   std::cout << "WiFi::discover done, n cards:" << m_wifi_cards.size() << "\n";
+  write_wificards_manifest(m_wifi_cards);
   return m_wifi_cards;
 }
 

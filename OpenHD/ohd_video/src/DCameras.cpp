@@ -37,6 +37,8 @@ std::vector<Camera> DCameras::discover_internal() {
   detect_v4l2();
   detect_ip();
   argh_cleanup();
+  // write to json for debugging
+  write_camera_manifest(m_cameras);
   return m_cameras;
 }
 

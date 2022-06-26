@@ -73,6 +73,7 @@ static std::shared_ptr<OHDProfile>  discover(int camera_count) {
   auto unit_id = getOrCreateUnitId();
   // We are air pi if there is at least one camera
   auto ret=std::make_shared<OHDProfile>(camera_count > 0);
+  write_profile_manifest(*ret);
   return ret;
 }
 
