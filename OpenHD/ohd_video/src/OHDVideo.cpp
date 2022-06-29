@@ -83,12 +83,13 @@ void OHDVideo::restartIfStopped() {
   }
 }
 
-bool OHDVideo::set_video_format(int stream_idx, const VideoFormat video_format) {
+bool OHDVideo::set_video_format(int stream_idx, const VideoFormat& video_format) {
   auto stream= get_stream_by_index(stream_idx);
   if(!stream)return false;
   stream->set_format(video_format);
   return true;
 }
+
 std::shared_ptr<CameraStream> OHDVideo::get_stream_by_index(int idx) {
   if(idx<m_cameras.size()){
     return m_camera_streams[idx];
