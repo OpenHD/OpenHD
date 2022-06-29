@@ -50,21 +50,6 @@ static void write_profile_manifest(const OHDProfile &ohdProfile) {
   _t.close();
 }
 
-static OHDProfile profile_from_manifest() {
-  try {
-	std::ifstream f(PROFILE_MANIFEST_FILENAME);
-	nlohmann::json j;
-	f >> j;
-	OHDProfile profile{j["is-air"],j["unit-id"]};
-	return profile;
-  } catch (std::exception &ex) {
-	std::stringstream ss;
-	ss<< "Profile manifest processing failed: " << ex.what() << std::endl;
-	std::cerr<<ss.str();
-	throw std::runtime_error(ss.str());
-  }
-}
-
 namespace DProfile{
 
 static std::shared_ptr<OHDProfile>  discover(int camera_count) {

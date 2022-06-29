@@ -151,12 +151,6 @@ static nlohmann::json platform_to_json(const OHDPlatform &ohdPlatform) {
   j["board"] = board_type_to_string(ohdPlatform.board_type);
   return j;
 }
-// same for reading
-static OHDPlatform platform_from_json(const nlohmann::json& j){
-  OHDPlatform ohdPlatform{string_to_platform_type(j["platform"]),
-						  board_type_from_string(j["board"])};
-  return ohdPlatform;
-}
 
 static constexpr auto PLATFORM_MANIFEST_FILENAME = "/tmp/platform_manifest";
 
@@ -167,18 +161,5 @@ static void write_platform_manifest(const OHDPlatform &ohdPlatform) {
   _t.close();
 }
 
-// NOTE: It is only safe to call this method after the discovery step.
-static OHDPlatform platform_from_manifest() {
-  try {
-	std::ifstream f(PLATFORM_MANIFEST_FILENAME);
-	nlohmann::json j;
-	f >> j;
-	return platform_from_json(j);
-  } catch (std::exception &ex) {
-	std::cerr << "Platform manifest processing failed: " << ex.what() << std::endl;
-	ohd_log(STATUS_LEVEL_EMERGENCY, "Platform manifest processing failed");
-	exit(1);
-  }
-}
 
 #endif
