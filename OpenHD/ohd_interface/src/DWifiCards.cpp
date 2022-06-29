@@ -14,25 +14,25 @@ extern "C" {
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
-	return WiFiCardTypeAtheros9khtc;
+	return WiFiCardType::Atheros9khtc;
   } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k")) != std::string::npos) {
-	return WiFiCardTypeAtheros9k;
+	return WiFiCardType::Atheros9k;
   } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("rt2800usb")) != std::string::npos) {
-	return WiFiCardTypeRalink;
+	return WiFiCardType::Ralink;
   } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("iwlwifi")) != std::string::npos) {
-	return WiFiCardTypeIntel;
+	return WiFiCardType::Intel;
   } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("brcmfmac")) != std::string::npos) {
-	return WiFiCardTypeBroadcom;
+	return WiFiCardType::Broadcom;
   } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("88xxau")) != std::string::npos) {
-	return WiFiCardTypeRealtek8812au;
+	return WiFiCardType::Realtek8812au;
   } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8812au")) != std::string::npos) {
-	return WiFiCardTypeRealtek8812au;
+	return WiFiCardType::Realtek8812au;
   } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("88x2bu")) != std::string::npos) {
-	return WiFiCardTypeRealtek88x2bu;
+	return WiFiCardType::Realtek88x2bu;
   } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8188eu")) != std::string::npos) {
-	return WiFiCardTypeRealtek8188eu;
+	return WiFiCardType::Realtek8188eu;
   }
-  return WiFiCardTypeUnknown;
+  return WiFiCardType::Unknown;
 }
 
 std::vector<WiFiCard> DWifiCards::discover() {
@@ -65,13 +65,13 @@ std::vector<WiFiCard> DWifiCards::discover() {
   // Fo now, just go with what we used to do in EZ-Wifibroadcast.
   for (auto &card: m_wifi_cards) {
 	if (card.supports_injection) {
-	  card.settings.use_for = WifiUseForMonitorMode;
+	  card.settings.use_for = WifiUseFor::MonitorMode;
 	} else if (card.supports_hotspot) {
 	  // if a card does not support injection, we use it for hotspot
-	  card.settings.use_for = WifiUseForHotspot;
+	  card.settings.use_for = WifiUseFor::Hotspot;
 	} else {
 	  // and if a card supports neither hotspot nor injection, we use it for nothing
-	  card.settings.use_for = WifiUseForUnknown;
+	  card.settings.use_for = WifiUseFor::Unknown;
 	}
   }
   std::cout << "WiFi::discover done, n cards:" << m_wifi_cards.size() << "\n";
@@ -135,7 +135,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   card.mac = mac;
 
   switch (card.type) {
-	case WiFiCardTypeAtheros9k: {
+    case WiFiCardType::Atheros9k: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = true;
@@ -143,7 +143,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-	case WiFiCardTypeAtheros9khtc: {
+        case WiFiCardType::Atheros9khtc: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = true;
@@ -151,7 +151,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-	case WiFiCardTypeRalink: {
+        case WiFiCardType::Ralink: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
@@ -159,7 +159,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-	case WiFiCardTypeIntel: {
+        case WiFiCardType::Intel: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
@@ -167,7 +167,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-	case WiFiCardTypeBroadcom: {
+        case WiFiCardType::Broadcom: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
@@ -175,7 +175,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-	case WiFiCardTypeRealtek8812au: {
+        case WiFiCardType::Realtek8812au: {
 	  //card.supports_5ghz = supports_5ghz;
       // For some reason, phy_lookup seems to not work when 2x RTL8812au are connected on the second card.
       card.supports_5ghz=true;
@@ -186,7 +186,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-	case WiFiCardTypeRealtek88x2bu: {
+        case WiFiCardType::Realtek88x2bu: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
@@ -194,7 +194,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-	case WiFiCardTypeRealtek8188eu: {
+        case WiFiCardType::Realtek8188eu: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
@@ -213,7 +213,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   }
   // rn we only support hotspot on the rpi integrated wifi adapter
   card.supports_hotspot=false;
-  if(card.type==WiFiCardTypeBroadcom){
+  if(card.type==WiFiCardType::Broadcom){
 	card.supports_hotspot= true;
   }
   return card;

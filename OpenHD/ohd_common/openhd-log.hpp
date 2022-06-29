@@ -51,21 +51,21 @@ struct OHDLocalLogMessage{
 // these match the mavlink SEVERITY_LEVEL enum, but this code should not depend on
 // the mavlink headers
 // See https://mavlink.io/en/messages/common.html#MAV_SEVERITY
-typedef enum STATUS_LEVEL {
-  STATUS_LEVEL_EMERGENCY = 0,
-  STATUS_LEVEL_ALERT,
-  STATUS_LEVEL_CRITICAL,
-  STATUS_LEVEL_ERROR,
-  STATUS_LEVEL_WARNING,
-  STATUS_LEVEL_INFO,
-  STATUS_LEVEL_NOTICE,
-  STATUS_LEVEL_DEBUG
-} STATUS_LEVEL;
+enum class STATUS_LEVEL {
+  EMERGENCY = 0,
+  ALERT,
+  CRITICAL,
+  ERROR,
+  WARNING,
+  INFO,
+  NOTICE,
+  DEBUG
+};
 
 static void print_log_by_level(const STATUS_LEVEL level, std::string message) {
   // Each message is logged with a newline at the end, add a new line at the end if non-existing.
   const auto messageN = message.back() == '\n' ? message : (message + "\n");
-  if (level == STATUS_LEVEL_INFO || level == STATUS_LEVEL_NOTICE || level == STATUS_LEVEL_DEBUG) {
+  if (level == STATUS_LEVEL::INFO || level == STATUS_LEVEL::NOTICE || level == STATUS_LEVEL::DEBUG) {
 	std::cout << messageN;
   } else {
 	std::cerr << messageN;
@@ -111,7 +111,7 @@ class OpenHDLogger{
  public:
   //explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL_DEBUG,const std::string& tag=""):
   //  _status_level(level),_tag(tag) {}
-  explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL_DEBUG,std::string_view tag=""):
+  explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL::DEBUG,std::string_view tag=""):
     _status_level(level),_tag(tag){}
   ~OpenHDLogger() {
     const auto tmp=stream.str();

@@ -26,7 +26,7 @@ DiscoveredCameraList DCameras::discover_internal() {
   // On all other platforms (for example jetson) the CSI camera is exposed as a normal V4l2 linux device,and we cah
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
-  if(ohdPlatform.platform_type==PlatformTypeRaspberryPi){
+  if(ohdPlatform.platform_type==PlatformType::RaspberryPi){
 	detect_raspberrypi_csi();
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
@@ -168,7 +168,7 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
   // fucking hell, on jetson v4l2_open seems to be bugged
   // https://forums.developer.nvidia.com/t/v4l2-open-create-core-with-jetpack-4-5-or-later/170624/6
   int fd;
-  if(ohdPlatform.platform_type==PlatformTypeJetson){
+  if(ohdPlatform.platform_type==PlatformType::Jetson){
 	fd = open(node.c_str(), O_RDWR | O_NONBLOCK, 0);
   }else{
 	fd = v4l2_open(node.c_str(), O_RDWR);

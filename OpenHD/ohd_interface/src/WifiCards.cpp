@@ -18,18 +18,18 @@ void WifiCards::configure() {
   for(const auto& card: m_wifi_cards){
 	std::stringstream message;
 	message << "Detected wifi (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name << std::endl;
-	ohd_log(STATUS_LEVEL_INFO, message.str());
+	ohd_log(STATUS_LEVEL::INFO, message.str());
   }
   // Consti10 - now do some sanity checks. No idea if and how the settings from stephen handle default values.
   for (auto &card: m_wifi_cards) {
-	if (card.settings.use_for == WifiUseForHotspot && profile.is_air) {
+	if (card.settings.use_for == WifiUseFor::Hotspot && profile.is_air) {
 	  // There is no wifi hotspot created on the air pi
 	  std::cerr << "No hotspot on air\n";
-	  card.settings.use_for = WifiUseForUnknown;
+	  card.settings.use_for = WifiUseFor::Unknown;
 	}
-	if (card.settings.use_for == WifiUseForMonitorMode && !card.supports_injection) {
+	if (card.settings.use_for == WifiUseFor::MonitorMode && !card.supports_injection) {
 	  std::cerr << "Cannot use monitor mode on card that cannot inject\n";
-	  card.settings.use_for = WifiUseForUnknown;
+	  card.settings.use_for = WifiUseFor::Unknown;
 	}
 	// Set the default frequency if not set yet.
 	// If the card supports 5ghz, prefer the 5ghz band
@@ -57,7 +57,7 @@ void WifiCards::setup_card(const WiFiCard &card) {
   std::cerr << "Setup card: " << card.interface_name << std::endl;
   std::cout<<"Setup card:"<<wificard_to_json(card)<<"\n";
   switch (card.settings.use_for) {
-	case WifiUseForMonitorMode:
+    case WifiUseFor::MonitorMode:
 	  set_card_state(card, false);
 	  enable_monitor_mode(card);
 	  set_card_state(card, true);
@@ -65,10 +65,10 @@ void WifiCards::setup_card(const WiFiCard &card) {
 	  set_txpower(card, card.settings.txpower);
 	  //m_broadcast_cards.push_back(card);
 	  break;
-	case WifiUseForHotspot:
+    case WifiUseFor::Hotspot:
 	  setup_hotspot(card);
 	  break;
-	case WifiUseForUnknown:
+    case WifiUseFor::Unknown:
 	default:
       std::cerr << "Card " << card.interface_name << " unknown use for\n";
 	  return;
@@ -115,7 +115,7 @@ void WifiCards::save_settings(const std::vector<WiFiCard> &cards, const std::str
 std::vector<std::string> WifiCards::get_broadcast_card_names() const {
   std::vector<std::string> names;
   for (const auto &card: m_wifi_cards) {
-	if (card.settings.use_for == WifiUseForMonitorMode) {
+	if (card.settings.use_for == WifiUseFor::MonitorMode) {
 	  names.push_back(card.interface_name);
 	}
   }

@@ -63,15 +63,15 @@ class OHDTelemetry {
 	// for testing, the serial shows up as this on my pc:
 	std::string platformSerialPort = "/dev/ttyUSB0";
 	switch (platformType) {
-	  case PlatformTypeRaspberryPi: {
+	  case PlatformType::RaspberryPi: {
 		platformSerialPort = "/dev/serial0";
 		break;
 	  }
-	  case PlatformTypeJetson: {
+	  case PlatformType::Jetson: {
 		platformSerialPort = "/dev/ttyTHS1";
 		break;
 	  }
-	  case PlatformTypePC:{
+	  case PlatformType::PC:{
 		platformSerialPort="/dev/ttyACM0";
 		break;
 	  }

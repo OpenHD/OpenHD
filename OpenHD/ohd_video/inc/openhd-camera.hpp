@@ -279,7 +279,7 @@ static nlohmann::json cameras_to_json(const DiscoveredCameraList &cameras) {
       };
       std::stringstream message;
       message << "Detected camera: " << camera.name << std::endl;
-      ohd_log(STATUS_LEVEL_INFO, message.str());
+      ohd_log(STATUS_LEVEL::INFO, message.str());
       j.push_back(_camera);
     } catch (std::exception &ex) {
       std::cerr << "exception: " << ex.what() << std::endl;
