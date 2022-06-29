@@ -11,90 +11,58 @@
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 
-typedef enum CameraType {
-  CameraTypeRaspberryPiCSI,  // Rpi foundation CSI camera
-  CameraTypeRaspberryPiVEYE,
-  CameraTypeJetsonCSI,    // Any CSI camera on jetson
-  CameraTypeRockchipCSI,  // Any CSI camera on rockchip
+enum class CameraType {
+  RaspberryPiCSI,  // Rpi foundation CSI camera
+  RaspberryPiVEYE,
+  JetsonCSI,    // Any CSI camera on jetson
+  RockchipCSI,  // Any CSI camera on rockchip
   // I think this is a V4l2 camera so to say, too.
-  CameraTypeUVC,
+  UVC,
   // this is not just a UVC camera that happens to support h264, it's the
   // standard UVC H264 that only a few cameras support, like the older models of
   // the Logitech C920. Other UVC cameras may support h264, but they do it in a
   // completely different way so we keep them separate
-  CameraTypeUVCH264,
-  CameraTypeIP,     // IP camera that connects via ethernet and provides a video
-                    // feet at special network address
-  CameraTypeDummy,  // Dummy camera, is created fully in sw, for debugging
-                    // purposes.
-  CameraTypeUnknown
-} CameraType;
+  UVCH264,
+  IP,     // IP camera that connects via ethernet and provides a video feet at special network address
+  Dummy,  // Dummy camera, is created fully in sw, for debugging ppurposes.
+  Unknown
+};
 static std::string camera_type_to_string(const CameraType &camera_type) {
   switch (camera_type) {
-    case CameraTypeRaspberryPiCSI:
+    case CameraType::RaspberryPiCSI:
       return "pi-csi";
-    case CameraTypeRaspberryPiVEYE:
+    case CameraType::RaspberryPiVEYE:
       return "pi-veye";
-    case CameraTypeJetsonCSI:
+    case CameraType::JetsonCSI:
       return "jetson-csi";
-    case CameraTypeRockchipCSI:
+    case CameraType::RockchipCSI:
       return "rockchip-csi";
-    case CameraTypeUVC:
+    case CameraType::UVC:
       return "uvc";
-    case CameraTypeUVCH264:
+    case CameraType::UVCH264:
       return "uvch264";
-    case CameraTypeIP:
+    case CameraType::IP:
       return "ip";
-    case CameraTypeDummy:
+    case CameraType::Dummy:
       return "dummy";
     default:
       return "unknown";
   }
 }
-static CameraType string_to_camera_type(const std::string &camera_type) {
-  if (OHDUtil::to_uppercase(camera_type)
-          .find(OHDUtil::to_uppercase("pi-csi")) != std::string::npos) {
-    return CameraTypeRaspberryPiCSI;
-  } else if (OHDUtil::to_uppercase(camera_type)
-                 .find(OHDUtil::to_uppercase("pi-veye")) != std::string::npos) {
-    return CameraTypeRaspberryPiVEYE;
-  } else if (OHDUtil::to_uppercase(camera_type)
-                 .find(OHDUtil::to_uppercase("jetson-csi")) !=
-             std::string::npos) {
-    return CameraTypeJetsonCSI;
-  } else if (OHDUtil::to_uppercase(camera_type)
-                 .find(OHDUtil::to_uppercase("rockchip-csi")) !=
-             std::string::npos) {
-    return CameraTypeRockchipCSI;
-  } else if (OHDUtil::to_uppercase(camera_type)
-                 .find(OHDUtil::to_uppercase("uvc")) != std::string::npos) {
-    return CameraTypeUVC;
-  } else if (OHDUtil::to_uppercase(camera_type)
-                 .find(OHDUtil::to_uppercase("uvch264")) != std::string::npos) {
-    return CameraTypeUVCH264;
-  } else if (OHDUtil::to_uppercase(camera_type)
-                 .find(OHDUtil::to_uppercase("ip")) != std::string::npos) {
-    return CameraTypeIP;
-  } else if (OHDUtil::to_uppercase(camera_type)
-                 .find(OHDUtil::to_uppercase("dummy")) != std::string::npos) {
-    return CameraTypeDummy;
-  }
-  return CameraTypeUnknown;
-}
 
-typedef enum VideoCodec {
-  VideoCodecH264,
-  VideoCodecH265,
-  VideoCodecMJPEG,
-  VideoCodecUnknown
-} VideoCodec;
+enum class VideoCodec {
+  H264,
+  H265,
+  MJPEG,
+  Unknown
+};
 inline std::string video_codec_to_string(VideoCodec codec) {
   switch (codec) {
-    case VideoCodecH264:
+    case VideoCodec::H264:
       return "h264";
-    case VideoCodecH265:
+    case VideoCodec::H265:
       return "h265";
-    case VideoCodecMJPEG:
+    case VideoCodec::MJPEG:
       return "mjpeg";
     default:
       return "unknown";
@@ -103,15 +71,15 @@ inline std::string video_codec_to_string(VideoCodec codec) {
 inline VideoCodec string_to_video_codec(const std::string &codec) {
   if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h264")) !=
       std::string::npos) {
-    return VideoCodecH264;
+    return VideoCodec::H264;
   } else if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h265")) !=
              std::string::npos) {
-    return VideoCodecH265;
+    return VideoCodec::H265;
   } else if (OHDUtil::to_uppercase(codec).find(
                  OHDUtil::to_uppercase("mjpeg")) != std::string::npos) {
-    return VideoCodecMJPEG;
+    return VideoCodec::MJPEG;
   }
-  return VideoCodecUnknown;
+  return VideoCodec::Unknown;
 }
 
 // A video format refers to a selected configuration supported by OpenHD.
@@ -123,7 +91,7 @@ inline VideoCodec string_to_video_codec(const std::string &codec) {
 // behaviour is undefined.
 struct VideoFormat {
   // The video codec, we default to h264
-  VideoCodec videoCodec = VideoCodecH264;
+  VideoCodec videoCodec = VideoCodec::H264;
   // The width of this stream, in pixels
   int width = 640;
   // The height of this stream, in pixels
@@ -139,7 +107,7 @@ struct VideoFormat {
   // values <=0 mean something went wrong during parsing or similar. And for
   // simplicity, I go with 4k and 240fps max here.
   [[nodiscard]] bool isValid() const {
-    return videoCodec != VideoCodecUnknown && width > 0 && height > 0 &&
+    return videoCodec != VideoCodec::Unknown && width > 0 && height > 0 &&
            framerate > 0 && width <= 4096 && height <= 2160 && framerate <= 240;
   }
   /**
@@ -212,7 +180,7 @@ struct CameraSettings {
   // camera can only do 60fps) The stream should default to the first available
   // video format. If no video format is available, it should default to
   // h264|640x480@30.
-  VideoFormat userSelectedVideoFormat{VideoCodecH264, 640, 480, 30};
+  VideoFormat userSelectedVideoFormat{VideoCodec::H264, 640, 480, 30};
   // All these are for the future, and probably implemented on a best effort
   // approach- e.g. changing them does not neccessarly mean the camera supports
   // changing them, and they are too many to do it in a "check if supported"
@@ -225,9 +193,6 @@ struct CameraSettings {
   // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar
   // form
   std::string url;
-  // optional, if not empty we should always use the manual pipeline and discard
-  // everything else.
-  std::string manual_pipeline;
   // enable/disable recording to file
   bool enableAirRecordingToFile = false;
   // todo they are simple for the most part, but rn not implemented yet.
@@ -242,7 +207,7 @@ struct CameraSettings {
 };
 
 struct Camera {
-  CameraType type = CameraTypeUnknown;
+  CameraType type = CameraType::Unknown;
   std::string name = "unknown";
   std::string vendor = "unknown";
   std::string vid;
@@ -310,12 +275,8 @@ static nlohmann::json cameras_to_json(const DiscoveredCameraList &cameras) {
           {"pid", camera.pid},
           {"bus", camera.bus},
           {"index", camera.index},
-          {"url", camera.settings.url},
-          {"manual_pipeline", camera.settings.manual_pipeline},
-          {"endpoints", endpoints},
-          {"userSelectedVideoFormat",
-           camera.settings.userSelectedVideoFormat.toString()},
-          {"bitrateKBits", std::to_string(camera.settings.bitrateKBits)}};
+          {"endpoints", endpoints}
+      };
       std::stringstream message;
       message << "Detected camera: " << camera.name << std::endl;
       ohd_log(STATUS_LEVEL_INFO, message.str());
@@ -349,10 +310,10 @@ static Camera createDummyCamera() {
   camera.name = "DummyCamera";
   camera.index = 0;
   camera.vendor = "dummy";
-  camera.type = CameraTypeDummy;
+  camera.type = CameraType::Dummy;
   // Depending on what you selected here, you will have to use the proper
   // main_stream_display_XXX.sh if you want to see the video.
-  camera.settings.userSelectedVideoFormat.videoCodec = VideoCodecH264;
+  camera.settings.userSelectedVideoFormat.videoCodec = VideoCodec::H264;
   // camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecH265;
   // camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecMJPEG;
   camera.settings.userSelectedVideoFormat.width = 640;

@@ -10,7 +10,9 @@
 #include "openhd-platform.hpp"
 
 /**
- * Discover all connected cameras and write them to json.
+ * Discover all connected cameras and expose their hardware capabilities to OpenHD.
+ * Note that his class does not handle camera settings (like video width, height) - camera capabilities
+ * and user set / default camera settings are seperated.
  */
 class DCameras {
  public:
@@ -21,7 +23,6 @@ class DCameras {
  private:
   DiscoveredCameraList discover_internal();
   void argh_cleanup();
-
  private:
   /*
    * These are for platform-specific camera access methods, most can also be

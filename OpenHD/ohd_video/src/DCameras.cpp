@@ -69,7 +69,7 @@ void DCameras::detect_raspberrypi_csi() {
 	Camera camera;
 	camera.name = "Pi CSI 0";
 	camera.vendor = "Raspberry Pi";
-	camera.type = CameraTypeRaspberryPiCSI;
+	camera.type = CameraType::RaspberryPiCSI;
 	camera.bus = "0";
 	camera.index = m_discover_index;
 	m_discover_index++;
@@ -81,7 +81,7 @@ void DCameras::detect_raspberrypi_csi() {
 	Camera camera;
 	camera.name = "Pi CSI 1";
 	camera.vendor = "Raspberry Pi";
-	camera.type = CameraTypeRaspberryPiCSI;
+	camera.type = CameraType::RaspberryPiCSI;
 	camera.bus = "1";
 	camera.index = m_discover_index;
 	m_discover_index++;
@@ -185,10 +185,10 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
   const std::string driver((char *)caps.driver);
   std::cout<<"Driver is:"<<driver<<"\n";
   if (driver == "uvcvideo") {
-	camera.type = CameraTypeUVC;
+	camera.type = CameraType::UVC;
 	std::cout << "Found UVC camera" << std::endl;
   } else if (driver == "tegra-video") {
-	camera.type = CameraTypeJetsonCSI;
+	camera.type = CameraType::JetsonCSI;
 	std::cout << "Found Jetson CSI camera" << std::endl;
   } else if (driver == "v4l2 loopback") {
 	// this is temporary, we are not going to use v4l2loopback for thermal cameras they'll be directly

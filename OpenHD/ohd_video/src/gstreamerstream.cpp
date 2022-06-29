@@ -18,7 +18,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,
   std::cout << "GStreamerStream::GStreamerStream()\n";
   // Since the dummy camera is SW, we generally cannot do more than 640x480@30 anyways.
   // (640x48@30 might already be too much on embedded devices).
-  if (camera.type == CameraTypeDummy &&
+  if (camera.type == CameraType::Dummy &&
       camera.settings.userSelectedVideoFormat.width > 640 ||
       camera.settings.userSelectedVideoFormat.height > 480 ||
       camera.settings.userSelectedVideoFormat.framerate > 30) {
@@ -40,35 +40,35 @@ void GStreamerStream::setup() {
   m_pipeline.str("");
   m_pipeline.clear();
   switch (m_camera.type) {
-	case CameraTypeRaspberryPiCSI: {
+    case CameraType::RaspberryPiCSI: {
 	  setup_raspberrypi_csi();
 	  break;
 	}
-	case CameraTypeJetsonCSI: {
+        case CameraType::JetsonCSI: {
 	  setup_jetson_csi();
 	  break;
 	}
-	case CameraTypeUVC: {
+        case CameraType::UVC: {
 	  setup_usb_uvc();
 	  break;
 	}
-	case CameraTypeUVCH264: {
+        case CameraType::UVCH264: {
 	  setup_usb_uvch264();
 	  break;
 	}
-	case CameraTypeIP: {
+        case CameraType::IP: {
 	  setup_ip_camera();
 	  break;
 	}
-	case CameraTypeDummy: {
+        case CameraType::Dummy: {
 	  m_pipeline << OHDGstHelper::createDummyStream(m_camera.settings.userSelectedVideoFormat);
 	  break;
 	}
-	case CameraTypeRaspberryPiVEYE:
-	case CameraTypeRockchipCSI:
+        case CameraType::RaspberryPiVEYE:
+        case CameraType::RockchipCSI:
 	  std::cerr << "Veye and rockchip are unsupported at the time\n";
 	  return;
-	case CameraTypeUnknown: {
+        case CameraType::Unknown: {
 	  std::cerr << "Unknown camera type" << std::endl;
 	  return;
 	}
@@ -88,10 +88,10 @@ void GStreamerStream::setup() {
   // add rtp part
   m_pipeline << OHDGstHelper::createRtpForVideoCodec(m_camera.settings.userSelectedVideoFormat.videoCodec);
   // Allows users to fully write a manual pipeline, this must be used carefully.
-  if (!m_camera.settings.manual_pipeline.empty()) {
+  /*if (!m_camera.settings.manual_pipeline.empty()) {
 	m_pipeline.str("");
 	m_pipeline << m_camera.settings.manual_pipeline;
-  }
+  }*/
   // add udp out part
   m_pipeline << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
   if(m_camera.settings.enableAirRecordingToFile){
@@ -122,16 +122,16 @@ void GStreamerStream::setup_jetson_csi() {
 }
 
 void GStreamerStream::setup_usb_uvc() {
-  std::cout << "Setting up usb UVC camera Name:" << m_camera.name << " type:" << m_camera.type << std::endl;
+  std::cout << "Setting up usb UVC camera Name:" << m_camera.name << " type:" << camera_type_to_string(m_camera.type) << std::endl;
   // First we try and start a hw encoded path, where v4l2src directly provides encoded video buffers
   for (const auto &endpoint: m_camera.endpoints) {
-	if (m_camera.settings.userSelectedVideoFormat.videoCodec == VideoCodecH264 && endpoint.support_h264) {
+	if (m_camera.settings.userSelectedVideoFormat.videoCodec == VideoCodec::H264 && endpoint.support_h264) {
 	  std::cerr << "h264" << std::endl;
 	  const auto device_node = endpoint.device_node;
 	  m_pipeline << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, m_camera.settings.userSelectedVideoFormat);
 	  return;
 	}
-	if (m_camera.settings.userSelectedVideoFormat.videoCodec == VideoCodecMJPEG && endpoint.support_mjpeg) {
+	if (m_camera.settings.userSelectedVideoFormat.videoCodec == VideoCodec::MJPEG && endpoint.support_mjpeg) {
 	  std::cerr << "MJPEG" << std::endl;
 	  const auto device_node = endpoint.device_node;
 	  m_pipeline << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, m_camera.settings.userSelectedVideoFormat);

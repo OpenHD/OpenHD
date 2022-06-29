@@ -53,10 +53,10 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
       videoFormat.width, videoFormat.height, videoFormat.framerate);
   // since the primary purpose here is testing, use a fixed low key frame
   // intervall.
-  if (videoFormat.videoCodec == VideoCodecH264) {
+  if (videoFormat.videoCodec == VideoCodec::H264) {
     ss << fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",
                       DEFAULT_BITRATE_KBITS);
-  } else if (videoFormat.videoCodec == VideoCodecH265) {
+  } else if (videoFormat.videoCodec == VideoCodec::H265) {
     ss << fmt::format("x265enc bitrate={} tune=zerolatency key-int-max=10 ! ",
                       DEFAULT_BITRATE_KBITS);
   } else {
@@ -73,7 +73,7 @@ static std::string createRpicamsrcStream(const int camera_number,
                                          const int bitrateKBits,
                                          const VideoFormat videoFormat) {
   assert(videoFormat.isValid());
-  assert(videoFormat.videoCodec == VideoCodecH264);
+  assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond = bitrateKBits * 1024;
@@ -99,7 +99,7 @@ static std::string createRpicamsrcStream(const int camera_number,
 static std::string createJetsonStream(const int sensor_id,
                                       const int bitrateKBits,
                                       const VideoFormat videoFormat) {
-  assert(videoFormat.videoCodec != VideoCodecUnknown);
+  assert(videoFormat.videoCodec != VideoCodec::Unknown);
   std::stringstream ss;
   // possible to omit the sensor id, nvarguscamerasrc will then figure out the
   // right sensor id. This only works with one csi camera though.
@@ -116,15 +116,13 @@ static std::string createJetsonStream(const int sensor_id,
   // https://developer.download.nvidia.com/embedded/L4T/r31_Release_v1.0/Docs/Accelerated_GStreamer_User_Guide.pdf?E_vSS50FKrZaJBjDtnCBmtaY8hWM1QCYlMHtXBqvZ_Jeuw0GXuLNaQwMBWUDABSnWCD-p8ABlBpBpP-kb2ADgWugbW8mgGPxUWJG_C4DWaL1yKjUVMy1AxH1RTaGOW82yFJ549mea--FBPuZUH3TT1MoEd4-sgdrZal5qr1J0McEFeFaVUc&t=eyJscyI6InJlZiIsImxzZCI6IlJFRi1kb2NzLm52aWRpYS5jb21cLyJ9
   // jetson is also bits per second
   const auto bitrateBitsPerSecond = bitrateKBits * 1024;
-  if (videoFormat.videoCodec == VideoCodecH265) {
+  if (videoFormat.videoCodec == VideoCodec::H265) {
     ss << fmt::format(
-        "nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} "
-        "! ",
+        "nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} ! ",
         bitrateBitsPerSecond);
-  } else if (videoFormat.videoCodec == VideoCodecH264) {
+  } else if (videoFormat.videoCodec == VideoCodec::H264) {
     ss << fmt::format(
-        "nvv4l2h264enc name=nvenc control-rate=1 insert-sps-pps=1 bitrate={} "
-        "! ",
+        "nvv4l2h264enc name=nvenc control-rate=1 insert-sps-pps=1 bitrate={} ! ",
         bitrateBitsPerSecond);
   } else {
     ss << fmt::format("nvjpegenc quality=50 ! ");
@@ -140,7 +138,7 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
     const std::string &device_node, const VideoCodec videoCodec,
     const int bitrateKBits) {
   std::stringstream ss;
-  assert(videoCodec != VideoCodecUnknown);
+  assert(videoCodec != VideoCodec::Unknown);
   ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
   // rn we omit the set resolution/framerate here and let gstreamer figure it
   // out.
@@ -150,13 +148,13 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   ss << "videoconvert ! ";
   // Add a queue here. With sw we are not low latency anyways.
   ss << "queue ! ";
-  assert(videoCodec != VideoCodecUnknown);
-  if (videoCodec == VideoCodecH264) {
+  assert(videoCodec != VideoCodec::Unknown);
+  if (videoCodec == VideoCodec::H264) {
     // https://gstreamer.freedesktop.org/documentation/x264/index.html?gi-language=c
     ss << fmt::format(
         "x264enc name=encodectrl bitrate={} tune=zerolatency key-int-max=10 ! ",
         bitrateKBits);
-  } else if (videoCodec == VideoCodecH265) {
+  } else if (videoCodec == VideoCodec::H265) {
     // https://gstreamer.freedesktop.org/documentation/x265/index.html?gi-language=c
     ss << fmt::format("x265enc name=encodectrl bitrate={} ! ", bitrateKBits);
   } else {
@@ -171,18 +169,18 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
 static std::string createV4l2SrcAlreadyEncodedStream(
     const std::string &device_node, const VideoFormat videoFormat) {
   std::stringstream ss;
-  assert(videoFormat.videoCodec != VideoCodecUnknown);
+  assert(videoFormat.videoCodec != VideoCodec::Unknown);
   ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
-  if (videoFormat.videoCodec == VideoCodecH264) {
+  if (videoFormat.videoCodec == VideoCodec::H264) {
     ss << fmt::format("video/x-h264, width={}, height={}, framerate={}/1 ! ",
                       videoFormat.width, videoFormat.height,
                       videoFormat.framerate);
-  } else if (videoFormat.videoCodec == VideoCodecH265) {
+  } else if (videoFormat.videoCodec == VideoCodec::H265) {
     ss << fmt::format("video/x-h265, width={}, height={}, framerate={}/1 ! ",
                       videoFormat.width, videoFormat.height,
                       videoFormat.framerate);
   } else {
-    assert(videoFormat.videoCodec == VideoCodecMJPEG);
+    assert(videoFormat.videoCodec == VideoCodec::MJPEG);
     ss << fmt::format("image/jpeg, width={}, height={}, framerate={}/1 ! ",
                       videoFormat.width, videoFormat.height,
                       videoFormat.framerate);
@@ -194,7 +192,7 @@ static std::string createV4l2SrcAlreadyEncodedStream(
 static std::string createUVCH264Stream(const std::string &device_node,
                                        const int bitrateKBits,
                                        const VideoFormat videoFormat) {
-  assert(videoFormat.videoCodec == VideoCodecH264);
+  assert(videoFormat.videoCodec == VideoCodec::H264);
   // https://gstreamer.freedesktop.org/documentation/uvch264/uvch264src.html?gi-language=c#uvch264src:average-bitrate
   // bitrate in bits per second
   const int bitrateBitsPerSecond = bitrateKBits * 1024;
@@ -229,15 +227,15 @@ static std::string createIpCameraStream(const std::string &url) {
  */
 static std::string createRtpForVideoCodec(const VideoCodec videoCodec) {
   std::stringstream ss;
-  assert(videoCodec != VideoCodecUnknown);
-  if (videoCodec == VideoCodecH264) {
+  assert(videoCodec != VideoCodec::Unknown);
+  if (videoCodec == VideoCodec::H264) {
     ss << "h264parse config-interval=-1 ! ";
     ss << "rtph264pay mtu=1024 ! ";
-  } else if (videoCodec == VideoCodecH265) {
+  } else if (videoCodec == VideoCodec::H265) {
     ss << "h265parse config-interval=-1 ! ";
     ss << "rtph265pay mtu=1024 ! ";
   } else {
-    assert(videoCodec == VideoCodecMJPEG);
+    assert(videoCodec == VideoCodec::MJPEG);
     // mjpeg has no config-interval
     ss << "jpegparse ! ";
     ss << "rtpjpegpay mtu=1024 ! ";
@@ -258,15 +256,15 @@ static std::string createOutputUdpLocalhost(const int udpOutPort) {
 // Assumes there is a tee command named "t" somewhere in the pipeline right
 // after the encoding step, so we can get the raw encoded data out.
 static std::string createRecordingForVideoCodec(const VideoCodec videoCodec) {
-  assert(videoCodec != VideoCodecUnknown);
+  assert(videoCodec != VideoCodec::Unknown);
   std::stringstream ss;
   ss << "t. ! queue ! ";
-  if (videoCodec == VideoCodecH264) {
+  if (videoCodec == VideoCodec::H264) {
     ss << "h264parse ! ";
-  } else if (videoCodec == VideoCodecH265) {
+  } else if (videoCodec == VideoCodec::H265) {
     ss << "h265parse ! ";
   } else {
-    assert(videoCodec == VideoCodecMJPEG);
+    assert(videoCodec == VideoCodec::MJPEG);
     ss << "jpegparse ! ";
   }
   ss << "mp4mux ! filesink location=/tmp/file.mp4";

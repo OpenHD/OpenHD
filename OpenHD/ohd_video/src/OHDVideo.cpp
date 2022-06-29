@@ -56,24 +56,24 @@ void OHDVideo::configure(Camera &camera) {
   std::cerr << "Configuring camera: " << camera_type_to_string(camera.type) << std::endl;
   // these are all using gstreamer at the moment, but that may not be the case forever
   switch (camera.type) {
-	case CameraTypeRaspberryPiCSI:
-	case CameraTypeRaspberryPiVEYE:
-	case CameraTypeJetsonCSI:
-	case CameraTypeIP:
-	case CameraTypeRockchipCSI:
-	case CameraTypeUVC:
-	case CameraTypeDummy: {
-	  std::cout << "Camera index:" << camera.index << "\n";
-	  const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-	  auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera, udp_port);
-	  stream->setup();
-	  stream->start();
-	  m_camera_streams.push_back(stream);
-	  break;
-	}
-	default: {
-	  std::cerr << "Unknown camera type, skipping" << std::endl;
-	}
+    case CameraType::RaspberryPiCSI:
+    case CameraType::RaspberryPiVEYE:
+    case CameraType::JetsonCSI:
+    case CameraType::IP:
+    case CameraType::RockchipCSI:
+    case CameraType::UVC:
+    case CameraType::Dummy: {
+      std::cout << "Camera index:" << camera.index << "\n";
+      const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
+      auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera, udp_port);
+      stream->setup();
+      stream->start();
+      m_camera_streams.push_back(stream);
+      break;
+    }
+    default: {
+      std::cerr << "Unknown camera type, skipping" << std::endl;
+    }
   }
 }
 
