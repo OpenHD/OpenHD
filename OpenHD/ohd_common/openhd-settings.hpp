@@ -19,13 +19,14 @@
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/lexical_cast.hpp>
+#include <string_view>
 
 // from https://superuser.com/questions/631859/preferred-place-to-store-configuration-files-that-change-often
 // All persistent settings are written into this directory.
 //static constexpr auto BASE_PATH="/etc/openhd/";
 static constexpr auto BASE_PATH="/home/consti10/openhd/";
 // for example, the unique id
-static const auto UNIT_ID_FILE = std::string(BASE_PATH) + "unit.id";
+static constexpr auto UNIT_ID_FILE = "/home/consti10/openhd/unit.id";
 
 /**
  * If the directory does not exist yet,
@@ -65,8 +66,7 @@ static std::string getOrCreateUnitId() {
 	of.close();
   } else {
 	//std::cout<<"Unit id exists, reading\n";
-	unit_id = std::string((std::istreambuf_iterator<char>(unit_id_file)),
-						  std::istreambuf_iterator<char>());
+	unit_id = std::string((std::istreambuf_iterator<char>(unit_id_file)),std::istreambuf_iterator<char>());
 	std::cout << "Read unit id:[" << unit_id << "]\n";
 	return unit_id;
   }

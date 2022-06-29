@@ -20,9 +20,6 @@ class DCameras{
  private:
   DiscoveredCameraList discover_internal();
   void argh_cleanup();
-  [[nodiscard]] int getCameraCount() const {
-	return (int)m_cameras.size();
-  }
  private:
   /*
    * These are for platform-specific camera access methods, most can also be accessed through v4l2

@@ -31,11 +31,11 @@ GStreamerStream::GStreamerStream(PlatformType platform,
     m_camera.settings.bitrateKBits=DEFAULT_BITRATE_KBITS;
   }
   assert(m_camera.settings.userSelectedVideoFormat.isValid());
+  OHDGstHelper::initGstreamerOrThrow();
 }
 
 void GStreamerStream::setup() {
   std::cout << "GStreamerStream::setup()" << std::endl;
-  OHDGstHelper::initGstreamerOrThrow();
   std::cout << "Creating GStreamer pipeline" << std::endl;
   m_pipeline.str("");
   m_pipeline.clear();
@@ -143,10 +143,10 @@ void GStreamerStream::setup_usb_uvc() {
 	std::cout << "empty" << std::endl;
 	if (endpoint.support_raw) {
 	  const auto device_node = endpoint.device_node;
-	  m_pipeline << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,
-																	m_camera.settings.userSelectedVideoFormat.videoCodec,
-																	m_camera.settings.bitrateKBits);
-	  return;
+          m_pipeline << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,
+                                                                        m_camera.settings.userSelectedVideoFormat.videoCodec,
+                                                                        m_camera.settings.bitrateKBits);
+          return;
 	}
   }
   // If we land here, we couldn't create a stream for this camera.
@@ -158,8 +158,8 @@ void GStreamerStream::setup_usb_uvch264() {
   const auto endpoint = m_camera.endpoints.front();
   // uvch265 cameras don't seem to exist, codec setting is ignored
   m_pipeline << OHDGstHelper::createUVCH264Stream(endpoint.device_node,
-												  m_camera.settings.bitrateKBits,
-												  m_camera.settings.userSelectedVideoFormat);
+                                                  m_camera.settings.bitrateKBits,
+                                                  m_camera.settings.userSelectedVideoFormat);
 }
 
 void GStreamerStream::setup_ip_camera() {

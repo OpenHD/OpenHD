@@ -33,15 +33,17 @@ class MSettingsComponent {
   _sys_id(sys_id),_comp_id(comp_id),_send_mavlink_message(cb){
 
   }
+  }
 
   bool process_mavlink_message(const mavlink_message_t& msg){
     return false;
   }
 
   void provide_param(Setting setting,SettingChangedListener changed_listener){
+
   }
  private:
-  std::vector<int> settings;
+  std::vector<Setting> settings;
 };
 
 #endif  // OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_MSETTINGSCOMPONENT_H_

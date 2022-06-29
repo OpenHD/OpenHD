@@ -31,13 +31,6 @@ class CameraStream {
    * @param video_udp_port the udp port where rtp data is forwarded to, must match with interface in OpenHD
    */
   CameraStream(PlatformType platform, Camera &camera, uint16_t video_udp_port);
-  /**
-   * Get a reference to the camera that has been assigned to this stream. Each camera in the system is assigned to exactly
-   * one camera stream.
-   */
-  Camera& getCamera(){
-	return m_camera;
-  }
 
   // It is a good common programming practice to make them pure virtual
   // setup everything needed to start streaming
