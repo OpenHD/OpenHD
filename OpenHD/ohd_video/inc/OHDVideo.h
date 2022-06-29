@@ -5,12 +5,6 @@
 #ifndef OPENHD_VIDEO_OHDVIDEO_H
 #define OPENHD_VIDEO_OHDVIDEO_H
 
-#include <fstream>
-
-#include <iostream>
-#include <iterator>
-#include <exception>
-
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-log.hpp"
@@ -18,6 +12,10 @@
 
 #include "camerastream.h"
 
+#include <fstream>
+#include <iostream>
+#include <iterator>
+#include <exception>
 #include <string>
 
 /**

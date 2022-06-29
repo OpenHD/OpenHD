@@ -50,10 +50,10 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         exit(1);
     }
   }
-  if(OHDFilesystemUtil::exists("/boot/air.txt")){
+  if(OHDFilesystemUtil::exists("/boot/air.txt") || OHDFilesystemUtil::exists("/boot/Air.txt")){
     ret.force_air=true;
   }
-  if(OHDFilesystemUtil::exists("/boot/ground.txt")){
+  if(OHDFilesystemUtil::exists("/boot/ground.txt") || OHDFilesystemUtil::exists("/boot/Ground.txt")){
     ret.force_ground=true;
   }
   if(ret.force_air && ret.force_ground){
