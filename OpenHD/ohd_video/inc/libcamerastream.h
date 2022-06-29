@@ -7,12 +7,11 @@
 
 #include "camerastream.h"
 
-//TODO
-// rpi might need libcamera
+// TODO
+//  rpi might need libcamera
 
 class LibcameraStream : public CameraStream {
  public:
-
 };
 
-#endif //OPENHD_LIBCAMERASTREAM_H
+#endif  // OPENHD_LIBCAMERASTREAM_H
