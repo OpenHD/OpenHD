@@ -44,22 +44,4 @@ class MSettingsComponent {
   std::vector<int> settings;
 };
 
-namespace ohdtest{
-
-using SettingChangedListener=std::function<void(const Setting& setting)>;
-
-template<class T>
-struct Setting{
-  const std::string id;
-  T value;
-};
-
-class XUserSettingsManager{};
-  public:
-  private:
-
-}
-
-}
-
 #endif  // OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_MSETTINGSCOMPONENT_H_

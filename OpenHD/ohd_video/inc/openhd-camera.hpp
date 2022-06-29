@@ -306,6 +306,9 @@ static bool check_bitrate_sane(const int bitrateKBits) {
 
 static Camera createDummyCamera(){
   Camera camera;
+  camera.name="DummyCamera";
+  camera.index=0;
+  camera.vendor="dummy";
   camera.type = CameraTypeDummy;
   // Depending on what you selected here, you will have to use the proper main_stream_display_XXX.sh if you want to see the video.
   camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecH264;
