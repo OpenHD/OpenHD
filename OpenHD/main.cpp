@@ -18,14 +18,12 @@
 //TODO fix the cmake crap and then we can build a single executable.
 static const char optstr[] = "?:da";
 static const struct option long_options[] = {
-    {"skip_discovery", no_argument, nullptr, 'd'},
     {"force_air", no_argument, nullptr, 'a'},
     {"force_ground", no_argument, nullptr, 'g'},
     {nullptr, 0, nullptr, 0},
 };
 
 struct OHDRunOptions {
-  //bool skip_discovery = false;
   bool force_air = false;
   bool force_ground=false;
 };
@@ -36,15 +34,13 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   while ((c = getopt_long(argc, argv, optstr, long_options, NULL)) != -1) {
     const char *tmp_optarg = optarg;
     switch (c) {
-      //case 'd':options.skip_discovery = true;
-      //	break;
       case 'a':ret.force_air = true;
         break;
       case 'g':ret.force_ground = true;
         break;
       case '?':
       default:
-        std::cout << "Usage: --skip_detection [Skip detection step, usefully for changing things in json manually] \n" <<
+        std::cout << "Usage: \n" <<
             "force_air [Force to boot as air pi, even when no camera is detected] \n" <<
             "force_ground [Force to boot as ground pi,even though one or more cameras are connected] \n";
         exit(1);
@@ -68,7 +64,6 @@ int main(int argc, char *argv[]) {
   const OHDRunOptions options=parse_run_parameters(argc,argv);
 
   std::cout << "OpenHD START with " <<"\n"<<
-      //"skip_discovery:" << (options.skip_discovery ? "Y" : "N") <<"\n"<<
       "force_air:" << (options.force_air ? "Y" : "N") <<"\n"<<
       "force_ground:" << (options.force_ground ? "Y" : "N") <<"\n";
 
