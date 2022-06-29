@@ -56,8 +56,7 @@ class OHDVideo {
   // All the created camera streams
   std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
   // each camera stream already links camera, is this duplicated ??!
-  std::vector<Camera> m_cameras;
-  void process_manifest();
+  DiscoveredCameraList m_cameras;
   void setup();
   void configure(Camera &camera);
 };

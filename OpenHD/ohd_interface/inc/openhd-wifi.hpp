@@ -153,21 +153,6 @@ static nlohmann::json wificard_to_json(const WiFiCard &p) {
   return j;
 }
 
-static WiFiCard wificard_from_json(const nlohmann::json &j) {
-  WiFiCard p;
-  j.at("driver_name").get_to(p.driver_name);
-  p.type= wifi_card_type_from_string(j.at("type"));
-  j.at("interface_name").get_to(p.interface_name);
-  j.at("mac").get_to(p.mac);
-  j.at("supports_5ghz").get_to(p.supports_5ghz);
-  j.at("supports_2ghz").get_to(p.supports_2ghz);
-  j.at("supports_injection").get_to(p.supports_injection);
-  j.at("supports_hotspot").get_to(p.supports_hotspot);
-  j.at("supports_rts").get_to(p.supports_rts);
-  j.at("txpower").get_to(p.settings.txpower);
-  p.settings.use_for= wifi_use_for_from_string(j.at("use_for"));
-  return p;
-}
 
 static nlohmann::json wificards_to_json(const std::vector<WiFiCard> &cards) {
   nlohmann::json j;
@@ -189,22 +174,5 @@ static void write_wificards_manifest(const std::vector<WiFiCard> &cards) {
   _t.close();
 }
 
-static std::vector<WiFiCard> wificards_from_manifest() {
-  std::vector<WiFiCard> ret;
-  try {
-	std::ifstream f(WIFI_MANIFEST_FILENAME);
-	nlohmann::json j;
-	f >> j;
-	for (const auto &_card: j["cards"]) {
-	  WiFiCard card = wificard_from_json(_card);
-	  ret.push_back(card);
-	}
-  } catch (std::exception &ex) {
-	ohd_log(STATUS_LEVEL_EMERGENCY, "WiFi manifest processing failed");
-	std::cerr << "WiFi::process_manifest: " << ex.what() << std::endl;
-	return ret;
-  }
-  return ret;
-}
 
 #endif

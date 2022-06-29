@@ -19,7 +19,7 @@
 DCameras::DCameras(const OHDPlatform& ohdPlatform) :
 	ohdPlatform(ohdPlatform){}
 
-std::vector<Camera> DCameras::discover_internal() {
+DiscoveredCameraList DCameras::discover_internal() {
   std::cout << "Cameras::discover()" << std::endl;
 
   // Only on raspberry pi with the old broadcom stack we need a special detection method for the rpi CSI camera.
@@ -311,7 +311,7 @@ void DCameras::argh_cleanup() {
   write_camera_manifest(m_cameras);
 }
 
-std::vector<Camera> DCameras::discover(const OHDPlatform& ohdPlatform) {
+DiscoveredCameraList DCameras::discover(const OHDPlatform& ohdPlatform) {
   auto discover=DCameras{ohdPlatform};
   return discover.discover_internal();
 }

@@ -234,8 +234,10 @@ struct Camera {
   }
 };
 
+using DiscoveredCameraList=std::vector<Camera>;
+
 // TODO: Why the heck did stephen not use the endpoints member variable here ?
-static nlohmann::json cameras_to_json(const std::vector<Camera> &cameras) {
+static nlohmann::json cameras_to_json(const DiscoveredCameraList &cameras) {
   nlohmann::json j;
   for (const auto &camera: cameras) {
 	try {
@@ -287,58 +289,11 @@ static nlohmann::json cameras_to_json(const std::vector<Camera> &cameras) {
 
 static constexpr auto CAMERA_MANIFEST_FILENAME = "/tmp/camera_manifest";
 
-static void write_camera_manifest(const std::vector<Camera> &cameras) {
+static void write_camera_manifest(const DiscoveredCameraList &cameras) {
   auto manifest = cameras_to_json(cameras);
   std::ofstream _t(CAMERA_MANIFEST_FILENAME);
   _t << manifest.dump(4);
   _t.close();
-}
-
-static std::vector<Camera> cameras_from_manifest() {
-  std::vector<Camera> ret;
-  std::cout << "Processing camera_manifest" << std::endl;
-  try {
-	std::ifstream f(CAMERA_MANIFEST_FILENAME);
-	nlohmann::json j;
-	f >> j;
-	for (auto _camera: j) {
-	  Camera camera;
-	  std::string camera_type = _camera["type"];
-	  camera.type = string_to_camera_type(camera_type);
-	  camera.name = _camera["name"];
-	  std::cout << camera.name << std::endl;
-	  camera.vendor = _camera["vendor"];
-	  camera.vid = _camera["vid"];
-	  camera.pid = _camera["pid"];
-	  camera.bus = _camera["bus"];
-	  camera.index = _camera["index"];
-	  camera.settings.url = _camera["url"];
-	  camera.settings.manual_pipeline = _camera["manual_pipeline"];
-	  auto _endpoints = _camera["endpoints"];
-	  for (auto _endpoint: _endpoints) {
-		CameraEndpoint endpoint;
-		endpoint.device_node = _endpoint["device_node"];
-		endpoint.support_h264 = _endpoint["support_h264"];
-		endpoint.support_h265 = _endpoint["support_h265"];
-		endpoint.support_mjpeg = _endpoint["support_mjpeg"];
-		endpoint.support_raw = _endpoint["support_raw"];
-		for (auto &format: _endpoint["formats"]) {
-		  endpoint.formats.push_back(format);
-		  std::cout << format << std::endl;
-		}
-		camera.endpoints.push_back(endpoint);
-	  }
-	  camera.settings.userSelectedVideoFormat = VideoFormat::fromString(_camera["userSelectedVideoFormat"]);
-	  const std::string bitrateKBits = _camera["bitrateKBits"];
-	  camera.settings.bitrateKBits = atoi(bitrateKBits.c_str());
-	  ret.push_back(camera);
-	}
-  } catch (std::exception &ex) {
-	// don't do anything, but send an error message to the user through the status service
-	std::cerr << "Camera error: " << ex.what() << std::endl;
-  }
-  std::cout << "Done processing camera manifest\n";
-  return ret;
 }
 
 // Return true if the bitrate is considered sane, false otherwise
@@ -360,7 +315,5 @@ static Camera createDummyCamera(){
   camera.settings.userSelectedVideoFormat.height=480;
   return camera;
 }
-
-using DiscoveredCameraList=std::vector<Camera>;
 
 #endif

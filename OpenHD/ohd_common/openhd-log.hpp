@@ -107,17 +107,6 @@ static void ohd_log(STATUS_LEVEL level, const std::string &message) {
   sendLocalLogMessageUDP(lmessage);
 }
 
-// Direct implementations for the 3 most common used log types
-inline void ohd_log_emergency(const std::string &message) {
-  ohd_log(STATUS_LEVEL_EMERGENCY, message);
-}
-inline void ohd_log_info(const std::string &message) {
-  ohd_log(STATUS_LEVEL_INFO, message);
-}
-inline void ohd_log_debug(const std::string &message) {
-  ohd_log(STATUS_LEVEL_DEBUG, message);
-}
-
 class OpenHDLogger{
  public:
   //explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL_DEBUG,const std::string& tag=""):
@@ -146,12 +135,7 @@ class OpenHDLogger{
   }
   void log_message(const std::string& message){
     if(message.empty())return;
-    // mavlink log messages are in ascending order for higher priorities
-    if(_status_level<=STATUS_LEVEL_ERROR){
-      std::cout<<message;
-    }else{
-      std::cerr<<message;
-    }
+    ohd_log(_status_level,message);
   }
 };
 
@@ -174,5 +158,7 @@ OpenHDLogger& operator<<(OpenHDLogger&& record, T&& t) {
 
 // macro for logging like std::cerr in OpenHD
 #define LOGE OpenHDLogger(STATUS_LEVEL_ERROR,"")
+
+#define LOGI OpenHDLogger(STATUS_LEVEL_INFO,"")
 
 #endif //OPENHD_LOG_MESSAGES_H

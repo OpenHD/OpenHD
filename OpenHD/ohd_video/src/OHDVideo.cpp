@@ -38,17 +38,6 @@ std::string OHDVideo::createDebug() const {
   return ss.str();
 }
 
-void OHDVideo::process_manifest() {
-  m_cameras = cameras_from_manifest();
-  if (m_cameras.empty()) {
-	std::cerr << "Started as air but no camera(s) have been found from json.Adding dummy camera\n";
-	// If there is no camera, but we are running as air, create and start a dummy camera:
-	Camera camera{};
-	camera.type = CameraTypeDummy;
-	m_cameras.push_back(camera);
-  }
-}
-
 void OHDVideo::setup() {
   std::cout << "OHDVideo::setup()" << std::endl;
   // Consti10 sanity checks

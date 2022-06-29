@@ -16,9 +16,9 @@ class DCameras{
  public:
   explicit DCameras(const OHDPlatform& ohdPlatform);
   virtual ~DCameras() = default;
-  static std::vector<Camera> discover(const OHDPlatform& ohdPlatform);
+  static DiscoveredCameraList discover(const OHDPlatform& ohdPlatform);
  private:
-  std::vector<Camera> discover_internal();
+  DiscoveredCameraList discover_internal();
   void argh_cleanup();
   [[nodiscard]] int getCameraCount() const {
 	return (int)m_cameras.size();
