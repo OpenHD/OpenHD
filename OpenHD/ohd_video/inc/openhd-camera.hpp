@@ -173,6 +173,14 @@ struct CameraEndpoint {
 
 static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
 
+// Return true if the bitrate is considered sane, false otherwise
+static bool check_bitrate_sane(const int bitrateKBits) {
+  if (bitrateKBits <= 100 || bitrateKBits > (1024 * 1024 * 50)) {
+    return false;
+  }
+  return true;
+}
+
 // User-selectable camera options
 struct CameraSettings {
   // The video format selected by the user. If the user sets a video format that
@@ -295,14 +303,6 @@ static void write_camera_manifest(const DiscoveredCameraList &cameras) {
   std::ofstream _t(CAMERA_MANIFEST_FILENAME);
   _t << manifest.dump(4);
   _t.close();
-}
-
-// Return true if the bitrate is considered sane, false otherwise
-static bool check_bitrate_sane(const int bitrateKBits) {
-  if (bitrateKBits <= 100 || bitrateKBits > (1024 * 1024 * 50)) {
-    return false;
-  }
-  return true;
 }
 
 static Camera createDummyCamera() {
