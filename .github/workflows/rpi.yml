@@ -24,7 +24,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-    - uses: pguyot/arm-runner-action@171180e87bf8992852d10e321a246616c58df2e0
+    - uses: pguyot/arm-runner-action@v2
       id: build_image
       with:
         base_image: raspios_lite:latest
