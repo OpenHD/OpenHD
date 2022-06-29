@@ -36,7 +36,9 @@ jobs:
             ls -a
             cd /opt
             cd Open.HD
-            ping google.de
+            rm /etc/apt/sources.list
+            touch /etc/apt/sources.list
+            echo "deb http://mirror.netcologne.de/raspbian/raspbian/ bullseye main contrib non-free" > /etc/apt/sources.list
             sudo apt update
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
