@@ -36,7 +36,6 @@ GStreamerStream::GStreamerStream(PlatformType platform,
 
 void GStreamerStream::setup() {
   std::cout << "GStreamerStream::setup()" << std::endl;
-  std::cout << "Creating GStreamer pipeline" << std::endl;
   m_pipeline.str("");
   m_pipeline.clear();
   switch (m_camera.type) {
