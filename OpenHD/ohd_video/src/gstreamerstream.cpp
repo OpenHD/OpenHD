@@ -11,19 +11,17 @@
 #include "OHDGstHelper.hpp"
 #include "gstreamerstream.h"
 
-GStreamerStream::GStreamerStream(PlatformType platform,
-								 Camera &camera,
-								 uint16_t video_udp_port)
-	: CameraStream(platform, camera, video_udp_port) {
+GStreamerStream::GStreamerStream(PlatformType platform,Camera &camera,uint16_t video_udp_port)
+    : CameraStream(platform, camera, video_udp_port) {
   std::cout << "GStreamerStream::GStreamerStream()\n";
   // Since the dummy camera is SW, we generally cannot do more than 640x480@30 anyways.
   // (640x48@30 might already be too much on embedded devices).
   if (camera.type == CameraType::Dummy &&
-      camera.settings.userSelectedVideoFormat.width > 640 ||
+          camera.settings.userSelectedVideoFormat.width > 640 ||
       camera.settings.userSelectedVideoFormat.height > 480 ||
       camera.settings.userSelectedVideoFormat.framerate > 30) {
     std::cout<<"Warning- Dummy camera is done in sw, high resolution/framerate might not work\n";
-	std::cout<<"Configured dummy for:" << m_camera.settings.userSelectedVideoFormat.toString() << "\n";
+    std::cout<<"Configured dummy for:" << m_camera.settings.userSelectedVideoFormat.toString() << "\n";
   }
   // sanity checks
   if(!check_bitrate_sane(m_camera.settings.bitrateKBits)){
