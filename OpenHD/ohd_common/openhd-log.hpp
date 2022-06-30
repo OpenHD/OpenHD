@@ -154,11 +154,11 @@ OpenHDLogger& operator<<(OpenHDLogger&& record, T&& t) {
 }
 
 // macro for logging like std::cout in OpenHD
-#define LOGD OpenHDLogger(STATUS_LEVEL_DEBUG,"")
+#define LOGD OpenHDLogger(STATUS_LEVEL::DEBUG,"")
 
 // macro for logging like std::cerr in OpenHD
-#define LOGE OpenHDLogger(STATUS_LEVEL_ERROR,"")
+#define LOGE OpenHDLogger(STATUS_LEVEL::ERROR,"")
 
-#define LOGI OpenHDLogger(STATUS_LEVEL_INFO,"")
+#define LOGI OpenHDLogger(STATUS_LEVEL::INFO,"")
 
 #endif //OPENHD_LOG_MESSAGES_H
