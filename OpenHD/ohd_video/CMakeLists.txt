@@ -33,14 +33,12 @@ SET(ALL_VIDEO_SOURCE_FILES
         src/gstreamerstream.cpp
         src/libcamerastream.cpp
         src/OHDVideo.cpp
-        src/DCameras.cpp
-        lib/bcm2835.c)
+        src/DCameras.cpp)
 
 add_library(OHDVideoLib
         STATIC
         ${ALL_VIDEO_SOURCE_FILES})
 target_include_directories(OHDVideoLib PUBLIC inc/)
-target_include_directories(OHDVideoLib PUBLIC lib/include)
 target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})
 # link and include gstreamer
 target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
