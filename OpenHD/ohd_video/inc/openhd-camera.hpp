@@ -41,6 +41,8 @@ static bool check_bitrate_sane(const int bitrateKBits) {
 }
 
 // User-selectable camera options
+// These values are settings that can change dynamically at run time
+// (non-deterministic)
 struct CameraSettings {
   // The video format selected by the user. If the user sets a video format that
   // isn't supported (for example, he might select h264|1920x1080@120 but the
@@ -71,6 +73,21 @@ struct CameraSettings {
   std::string denoise;
   std::string thermal_palette;
   std::string thermal_span;*/
+  [[nodiscard]] nlohmann::json to_json()const{
+    nlohmann::json j{{"userSelectedVideoFormat",userSelectedVideoFormat.to_json()},{"bitrateKBits",bitrateKBits},
+                     {"url",url},"enableAirRecordingToFile",enableAirRecordingToFile};
+    return j;
+  }
+  static CameraSettings from_json(const nlohmann::json& j){
+    CameraSettings ret;
+    nlohmann::json tmp;
+    j.at("userSelectedVideoFormat").get_to(tmp);
+    ret.userSelectedVideoFormat=VideoFormat::from_json(tmp);
+    j.at("bitrateKBits").get_to(ret.bitrateKBits);
+    j.at("url").get_to(ret.url);
+    j.at("enableAirRecordingToFile").get_to(ret.enableAirRecordingToFile);
+    return ret;
+  }
 };
 
 struct Camera {
@@ -86,9 +103,6 @@ struct Camera {
   int index = 0;
   // All the endpoints supported by this camera.
   std::vector<CameraEndpoint> endpoints;
-  // These values are settings that can change dynamically at run time
-  // (non-deterministic)
-  CameraSettings settings;
   /**
    * For logging, create a quick name string that gives developers enough info
    * such that they can figure out what this camera is.
@@ -111,27 +125,60 @@ static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::st
 
 class CameraHolder{
  public:
-  explicit CameraHolder(const Camera& camera):_camera{std::make_unique<Camera>(camera)}{
+  explicit CameraHolder(Camera camera):_camera(std::move(camera)){
     if(!OHDFilesystemUtil::exists(VIDEO_SETTINGS_DIRECTORY.c_str())){
       OHDFilesystemUtil::create_directory(VIDEO_SETTINGS_DIRECTORY);
     }
-    const auto hash=_camera->name;
-    const auto filename=VIDEO_SETTINGS_DIRECTORY+hash;
-    if(OHDFilesystemUtil::exists(filename.c_str())){
-      std::cout<<"Reading local video settings\n";
-      // read settings from file
+    const auto last_settings_opt=read_last_settings();
+    if(last_settings_opt.has_value()){
+      _settings=std::make_unique<CameraSettings>(last_settings_opt.value());
+      std::cout<<"Found settings\n";
     }else{
-      // create default settings
+      std::cout<<"Creating default settings\n";
+      // create default settings and persist them for the next reboot
       _settings=std::make_unique<CameraSettings>();
+      persist_settings();
     }
   }
-  void updateSetting(const CameraSettings& settings){
-
+  [[nodiscard]] const Camera& get_camera()const{
+    return _camera;
+  }
+  [[nodiscard]] CameraSettings& get_settings()const{
+    assert(_settings);
+    return *_settings;
   }
  private:
-  const std::shared_ptr<Camera> _camera;
+  // Camera info is immutable
+  const Camera _camera;
   std::mutex _settings_mutex;
   std::unique_ptr<CameraSettings> _settings;
+  [[nodiscard]] std::string create_uniqe_hash()const{
+    return _camera.name;
+  }
+  [[nodiscard]] std::string create_unique_filename()const{
+    return VIDEO_SETTINGS_DIRECTORY+create_uniqe_hash();
+  }
+  // write settings locally for persistence
+  void persist_settings()const{
+    assert(_settings);
+    const auto filename=create_unique_filename();
+    const auto tmp=_settings->to_json();
+    // and write them locally for persistence
+    std::ofstream t(filename);
+    t << tmp.dump(4);
+    t.close();
+  }
+  // read last settings, if they are available
+  [[nodiscard]] std::optional<CameraSettings> read_last_settings()const{
+    const auto filename=create_unique_filename();
+    if(!OHDFilesystemUtil::exists(filename.c_str())){
+      return std::nullopt;
+    }
+    std::ifstream f(filename);
+    nlohmann::json j;
+    f >> j;
+    return CameraSettings::from_json(j);
+  }
 };
 
 using DiscoveredCameraList = std::vector<Camera>;
@@ -197,14 +244,11 @@ static Camera createDummyCamera() {
   camera.index = 0;
   camera.vendor = "dummy";
   camera.type = CameraType::Dummy;
-  // Depending on what you selected here, you will have to use the proper
-  // main_stream_display_XXX.sh if you want to see the video.
-  camera.settings.userSelectedVideoFormat.videoCodec = VideoCodec::H264;
-  // camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecH265;
-  // camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecMJPEG;
-  camera.settings.userSelectedVideoFormat.width = 640;
-  camera.settings.userSelectedVideoFormat.height = 480;
   return camera;
+}
+
+static std::shared_ptr<CameraHolder> createDummyCamera2(){
+  return std::make_shared<CameraHolder>(createDummyCamera());
 }
 
 #endif

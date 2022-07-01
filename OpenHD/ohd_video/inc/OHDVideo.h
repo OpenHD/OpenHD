@@ -51,20 +51,14 @@ class OHDVideo {
   // Experimental for now
   bool set_video_format(int stream_idx, const VideoFormat &video_format);
   std::shared_ptr<CameraStream> get_stream_by_index(int idx);
-
- public:
  private:
   const OHDPlatform &platform;
   const OHDProfile &profile;
-
  private:
   // These members are what used to be in camera microservice
   // All the created camera streams
   std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
-  // each camera stream already links camera, is this duplicated ??!
-  DiscoveredCameraList m_cameras;
-  void setup();
-  void configure(Camera &camera);
+  void configure(std::shared_ptr<CameraHolder> camera);
 };
 
 #endif  // OPENHD_VIDEO_OHDVIDEO_H

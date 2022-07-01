@@ -19,7 +19,7 @@ class DCameras {
   explicit DCameras(const OHDPlatform &ohdPlatform);
   virtual ~DCameras() = default;
   static DiscoveredCameraList discover(const OHDPlatform &ohdPlatform);
-
+  static std::vector<std::shared_ptr<CameraHolder>> discover2(const OHDPlatform &ohdPlatform);
  private:
   DiscoveredCameraList discover_internal();
   void argh_cleanup();

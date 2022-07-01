@@ -5,6 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_
 
+#include "json.hpp"
 #include "openhd-util.hpp"
 
 enum class CameraType {
@@ -117,6 +118,19 @@ struct VideoFormat {
     ss << video_codec_to_string(videoCodec) << "|" << width << "x" << height
        << "@" << framerate;
     return ss.str();
+  }
+  [[nodiscard]] nlohmann::json to_json()const{
+    return nlohmann::json{ {"videoCodec", video_codec_to_string(videoCodec)},
+        {"width", width}, {"height", height},{"framerate", framerate}, };
+  }
+  static VideoFormat from_json(const nlohmann::json& j){
+    VideoFormat ret;
+    const std::string tmp=j.at("videoCodec");
+    ret.videoCodec= string_to_video_codec(tmp);
+    j.at("width").get_to(ret.width);
+    j.at("height").get_to(ret.height);
+    j.at("framerate").get_to(ret.framerate);
+    return ret;
   }
 };
 
