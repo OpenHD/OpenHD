@@ -7,80 +7,13 @@
 #include <string>
 #include <vector>
 
+#include "openhd-camera-enums.hpp"
 #include "json.hpp"
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
+#include "openhd-util-filesystem.hpp"
+#include "openhd-settings.hpp"
 
-enum class CameraType {
-  RaspberryPiCSI,  // Rpi foundation CSI camera
-  RaspberryPiVEYE,
-  JetsonCSI,    // Any CSI camera on jetson
-  RockchipCSI,  // Any CSI camera on rockchip
-  // I think this is a V4l2 camera so to say, too.
-  UVC,
-  // this is not just a UVC camera that happens to support h264, it's the
-  // standard UVC H264 that only a few cameras support, like the older models of
-  // the Logitech C920. Other UVC cameras may support h264, but they do it in a
-  // completely different way so we keep them separate
-  UVCH264,
-  IP,     // IP camera that connects via ethernet and provides a video feet at special network address
-  Dummy,  // Dummy camera, is created fully in sw, for debugging ppurposes.
-  Unknown
-};
-static std::string camera_type_to_string(const CameraType &camera_type) {
-  switch (camera_type) {
-    case CameraType::RaspberryPiCSI:
-      return "pi-csi";
-    case CameraType::RaspberryPiVEYE:
-      return "pi-veye";
-    case CameraType::JetsonCSI:
-      return "jetson-csi";
-    case CameraType::RockchipCSI:
-      return "rockchip-csi";
-    case CameraType::UVC:
-      return "uvc";
-    case CameraType::UVCH264:
-      return "uvch264";
-    case CameraType::IP:
-      return "ip";
-    case CameraType::Dummy:
-      return "dummy";
-    default:
-      return "unknown";
-  }
-}
-
-enum class VideoCodec {
-  H264,
-  H265,
-  MJPEG,
-  Unknown
-};
-inline std::string video_codec_to_string(VideoCodec codec) {
-  switch (codec) {
-    case VideoCodec::H264:
-      return "h264";
-    case VideoCodec::H265:
-      return "h265";
-    case VideoCodec::MJPEG:
-      return "mjpeg";
-    default:
-      return "unknown";
-  }
-}
-inline VideoCodec string_to_video_codec(const std::string &codec) {
-  if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h264")) !=
-      std::string::npos) {
-    return VideoCodec::H264;
-  } else if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h265")) !=
-             std::string::npos) {
-    return VideoCodec::H265;
-  } else if (OHDUtil::to_uppercase(codec).find(
-                 OHDUtil::to_uppercase("mjpeg")) != std::string::npos) {
-    return VideoCodec::MJPEG;
-  }
-  return VideoCodec::Unknown;
-}
 
 // A video format refers to a selected configuration supported by OpenHD.
 // It is possible that a camera cannot do the selected configuration in HW,
@@ -204,14 +137,14 @@ struct CameraSettings {
   // enable/disable recording to file
   bool enableAirRecordingToFile = false;
   // todo they are simple for the most part, but rn not implemented yet.
-  std::string brightness;
+  /*std::string brightness;
   std::string contrast;
   std::string sharpness;
   std::string rotate;
   std::string wdr;
   std::string denoise;
   std::string thermal_palette;
-  std::string thermal_span;
+  std::string thermal_span;*/
 };
 
 struct Camera {
@@ -248,9 +181,33 @@ struct Camera {
   }
 };
 
+static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("video/");
+
+class CameraHolder{
+ public:
+  explicit CameraHolder(const Camera& camera):_camera{std::make_unique<Camera>(camera)}{
+    if(!OHDFilesystemUtil::exists(VIDEO_SETTINGS_DIRECTORY.c_str())){
+      OHDFilesystemUtil::create_directory(VIDEO_SETTINGS_DIRECTORY);
+    }
+    const auto hash=_camera->name;
+    const auto filename=VIDEO_SETTINGS_DIRECTORY+hash;
+    if(OHDFilesystemUtil::exists(filename.c_str())){
+      std::cout<<"Reading local video settings\n";
+      // read settings from file
+    }else{
+      // create default settings
+      _settings=std::make_unique<CameraSettings>();
+    }
+  }
+ private:
+  const std::shared_ptr<Camera> _camera;
+  std::mutex _settings_mutex;
+  std::unique_ptr<CameraSettings> _settings;
+};
+
 using DiscoveredCameraList = std::vector<Camera>;
 
-// TODO: Why the heck did stephen not use the endpoints member variable here ?
+
 static nlohmann::json cameras_to_json(const DiscoveredCameraList &cameras) {
   nlohmann::json j;
   for (const auto &camera : cameras) {

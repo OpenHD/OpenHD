@@ -14,7 +14,7 @@ int main() {
   std::unique_ptr<OHDTelemetry> air;
   {
 	OHDProfile profile{true, "YY"};
-	OHDPlatform platform{PlatformTypePC};
+	OHDPlatform platform{PlatformType::PC};
 	air = std::make_unique<OHDTelemetry>(platform, profile,true);
   }
   while (true) {

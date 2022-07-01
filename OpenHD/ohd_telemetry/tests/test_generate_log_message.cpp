@@ -9,5 +9,5 @@ int main() {
   LOGD<<"Test log message1\n";
   LOGE<<"Test log message2\n";
   LOGE<<"Test log message3";
-  ohd_log(STATUS_LEVEL_EMERGENCY, "Test log message\n");
+  ohd_log(STATUS_LEVEL::EMERGENCY, "Test log message\n");
 }
