@@ -75,7 +75,7 @@ struct CameraSettings {
   std::string thermal_span;*/
   [[nodiscard]] nlohmann::json to_json()const{
     nlohmann::json j{{"userSelectedVideoFormat",userSelectedVideoFormat.to_json()},{"bitrateKBits",bitrateKBits},
-                     {"url",url},"enableAirRecordingToFile",enableAirRecordingToFile};
+                     {"url",url},{"enableAirRecordingToFile",enableAirRecordingToFile}};
     return j;
   }
   static CameraSettings from_json(const nlohmann::json& j){
@@ -156,6 +156,7 @@ class CameraHolder{
   const Camera _camera;
   std::mutex _settings_mutex;
   std::unique_ptr<CameraSettings> _settings;
+  // TODO this one is not unique enough yet.
   [[nodiscard]] std::string create_uniqe_hash()const{
     return _camera.name;
   }
