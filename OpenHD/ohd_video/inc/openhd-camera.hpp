@@ -54,39 +54,6 @@ struct VideoFormat {
        << "@" << framerate;
     return ss.str();
   }
-  /**
-   * Convert a readable video format string into a type-safe video format.
-   * @param input the string, for example as generated above.
-   * @return the video format, with the parsed values from above. On failure,
-   * behaviour is undefined.
-   * Note: For debugging, I use https://regex101.com/
-   */
-  static VideoFormat fromString(const std::string &input) {
-    // We default to values that are most likely going to work, in case parsing
-    // fails.
-    VideoFormat ret{};
-    std::smatch result;
-    const std::regex reg{R"(([\w\d\s\-\:\/]*)\|(\d*)x(\d*)\@(\d*))"};
-    std::cout << "Parsing:" << input << std::endl;
-    if (std::regex_search(input, result, reg)) {
-      if (result.size() == 5) {
-        ret.videoCodec = string_to_video_codec(result[1]);
-        ret.width = atoi(result[2].str().c_str());
-        ret.height = atoi(result[3].str().c_str());
-        ret.framerate = atoi(result[4].str().c_str());
-        std::cout << "Parsed:" << ret.toString() << "\n";
-      } else {
-        std::cout << "Video format missmatch " << result.size();
-        for (int a = 0; a < result.size(); a++) {
-          std::cout << " " << a << " " << result[a] << ".";
-        }
-        std::cout << std::endl;
-      }
-    } else {
-      std::cerr << "Video regex format failed " << input << "\n";
-    }
-    return ret;
-  }
 };
 
 struct CameraEndpoint {
@@ -198,6 +165,9 @@ class CameraHolder{
       // create default settings
       _settings=std::make_unique<CameraSettings>();
     }
+  }
+  void updateSetting(const CameraSettings& settings){
+
   }
  private:
   const std::shared_ptr<Camera> _camera;
