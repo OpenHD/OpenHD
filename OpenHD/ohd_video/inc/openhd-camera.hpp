@@ -123,6 +123,10 @@ struct Camera {
 
 static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("video/");
 
+// Camera Holder is used to
+// 1) Differentiate between immutable information (camera) and
+// 2) mutable camera settings.
+// Changes in the camera settings are propagated through this class.
 class CameraHolder{
  public:
   explicit CameraHolder(Camera camera):_camera(std::move(camera)){
