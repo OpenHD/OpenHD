@@ -139,7 +139,20 @@ class CameraHolder{
     assert(_settings);
     return *_settings;
   }
+  typedef std::function<void(const CameraSettings& settings)> SETTINGS_CHANGED_CALLBACK;
+  void register_listener(SETTINGS_CHANGED_CALLBACK callback){
+    assert(!_settings_changed_callback);
+    _settings_changed_callback=callback;
+  }
+  void update_settings(const CameraSettings& new_settings){
+    _settings=std::make_unique<CameraSettings>(new_settings);
+    persist_settings();
+    if(_settings_changed_callback){
+      _settings_changed_callback(*_settings);
+    }
+  }
  private:
+  SETTINGS_CHANGED_CALLBACK _settings_changed_callback;
   // Camera info is immutable
   const Camera _camera;
   std::mutex _settings_mutex;
