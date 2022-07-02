@@ -173,7 +173,6 @@ class CameraHolder{
     nlohmann::json j;
     f >> j;
     return j.get<CameraSettings>();
-    //return CameraSettings::from_json(j);
   }
 };
 
