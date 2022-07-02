@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
     // and start ohdVideo if we are on the air pi
     std::unique_ptr<OHDVideo> ohdVideo;
     if (profile->is_air) {
-      ohdVideo = std::make_unique<OHDVideo>(*platform,*profile,cameras);
+      ohdVideo = std::make_unique<OHDVideo>(*platform,cameras);
     }
     // we need to start QOpenHD when we are running as ground
     if(!profile->is_air){
