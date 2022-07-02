@@ -57,26 +57,13 @@ class CameraStream {
    */
   virtual void restartIfStopped() = 0;
 
-  // expected as bits per second
-  virtual bool supports_bitrate() = 0;
-  virtual void set_bitrate(int bitrate) = 0;
-
-  // not supported by every encoder, some USB cameras can do it but only with
-  // custom commands
-  virtual bool supports_cbr() = 0;
-  virtual void set_cbr(bool enable) = 0;
-
-  // Change/set the video format selected by the user.
-  virtual VideoFormat get_format() = 0;
-  virtual void set_format(VideoFormat newVideoFormat) = 0;
-
  protected:
-  const PlatformType m_platform_type;
+  const PlatformType _platform_type;
   std::shared_ptr<CameraHolder> _camera_holder;
   // This is the UDP port the video (for now rtp) stream is send to.
   // It then needs to be picked up, most likely by a wfb instance created by
   // ohd-interface
-  const uint16_t m_video_udp_port;
+  const uint16_t _video_udp_port;
 };
 
 #endif
