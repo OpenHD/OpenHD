@@ -24,6 +24,17 @@ enum class CameraType {
   Dummy,  // Dummy camera, is created fully in sw, for debugging ppurposes.
   Unknown
 };
+NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
+     {CameraType::Unknown, nullptr},
+     {CameraType::RaspberryPiCSI, "RaspberryPiCSI"},
+     {CameraType::RaspberryPiVEYE, "RaspberryPiVEYE"},
+     {CameraType::JetsonCSI, "JetsonCSI"},
+     {CameraType::RockchipCSI, "RockchipCSI"},
+     {CameraType::UVC, "UVC"},
+     {CameraType::UVCH264, "UVCH264"},
+     {CameraType::IP, "IP"},
+     {CameraType::Dummy, "Dummy"},
+ });
 
 static std::string camera_type_to_string(const CameraType &camera_type) {
   switch (camera_type) {
@@ -79,6 +90,12 @@ static VideoCodec string_to_video_codec(const std::string &codec) {
   }
   return VideoCodec::Unknown;
 }
+NLOHMANN_JSON_SERIALIZE_ENUM( VideoCodec, {
+  {VideoCodec::Unknown, nullptr},
+  {VideoCodec::H264, "h264"},
+  {VideoCodec::H265, "h265"},
+  {VideoCodec::MJPEG, "mjpeg"},
+});
 
 // A video format refers to a selected configuration supported by OpenHD.
 // It is possible that a camera cannot do the selected configuration in HW,
@@ -119,19 +136,8 @@ struct VideoFormat {
        << "@" << framerate;
     return ss.str();
   }
-  [[nodiscard]] nlohmann::json to_json()const{
-    return nlohmann::json{ {"videoCodec", video_codec_to_string(videoCodec)},
-        {"width", width}, {"height", height},{"framerate", framerate}, };
-  }
-  static VideoFormat from_json(const nlohmann::json& j){
-    VideoFormat ret;
-    const std::string tmp=j.at("videoCodec");
-    ret.videoCodec= string_to_video_codec(tmp);
-    j.at("width").get_to(ret.width);
-    j.at("height").get_to(ret.height);
-    j.at("framerate").get_to(ret.framerate);
-    return ret;
-  }
 };
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat,videoCodec,width,height,framerate)
+
 
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_

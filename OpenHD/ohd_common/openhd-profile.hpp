@@ -33,18 +33,15 @@ class OHDProfile {
 	return ss.str();
   }
 };
-
-static nlohmann::json profile_to_json(const OHDProfile &ohdProfile) {
-  nlohmann::json j;
-  j["unit-id"] = ohdProfile.unit_id;
-  j["is-air"] = ohdProfile.is_air;
-  return j;
+// Thw write out here is only for debugging
+static void to_json(nlohmann::json& j, const OHDProfile& p) {
+  j = nlohmann::json{ {"is_air", p.is_air}, {"unit_id", p.unit_id}};
 }
 
 static constexpr auto PROFILE_MANIFEST_FILENAME = "/tmp/profile_manifest";
 
 static void write_profile_manifest(const OHDProfile &ohdProfile) {
-  auto manifest = profile_to_json(ohdProfile);
+  nlohmann::json manifest = ohdProfile;
   std::ofstream _t(PROFILE_MANIFEST_FILENAME);
   _t << manifest.dump(4);
   _t.close();
@@ -55,9 +52,9 @@ namespace DProfile{
 static std::shared_ptr<OHDProfile>  discover(int camera_count) {
   std::cout << "Profile::discover()\n";
   // We read the unit id from the persistent storage, later write it to the tmp storage json
-  auto unit_id = getOrCreateUnitId();
+  const auto unit_id = getOrCreateUnitId();
   // We are air pi if there is at least one camera
-  auto ret=std::make_shared<OHDProfile>(camera_count > 0);
+  auto ret=std::make_shared<OHDProfile>(camera_count > 0,unit_id);
   write_profile_manifest(*ret);
   return ret;
 }

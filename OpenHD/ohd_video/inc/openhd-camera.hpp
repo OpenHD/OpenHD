@@ -14,6 +14,15 @@
 #include "openhd-util-filesystem.hpp"
 #include "openhd-settings.hpp"
 
+static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
+
+// Return true if the bitrate is considered sane, false otherwise
+static bool check_bitrate_sane(const int bitrateKBits) {
+  if (bitrateKBits <= 100 || bitrateKBits > (1024 * 1024 * 50)) {
+    return false;
+  }
+  return true;
+}
 
 struct CameraEndpoint {
   std::string device_node;
@@ -29,16 +38,7 @@ struct CameraEndpoint {
     return (support_h264 || support_h265 || support_mjpeg || support_raw);
   }
 };
-
-static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
-
-// Return true if the bitrate is considered sane, false otherwise
-static bool check_bitrate_sane(const int bitrateKBits) {
-  if (bitrateKBits <= 100 || bitrateKBits > (1024 * 1024 * 50)) {
-    return false;
-  }
-  return true;
-}
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraEndpoint,device_node,bus,support_h264,support_h265,support_mjpeg,support_raw,formats)
 
 // User-selectable camera options
 // These values are settings that can change dynamically at run time
@@ -73,22 +73,8 @@ struct CameraSettings {
   std::string denoise;
   std::string thermal_palette;
   std::string thermal_span;*/
-  [[nodiscard]] nlohmann::json to_json()const{
-    nlohmann::json j{{"userSelectedVideoFormat",userSelectedVideoFormat.to_json()},{"bitrateKBits",bitrateKBits},
-                     {"url",url},{"enableAirRecordingToFile",enableAirRecordingToFile}};
-    return j;
-  }
-  static CameraSettings from_json(const nlohmann::json& j){
-    CameraSettings ret;
-    nlohmann::json tmp;
-    j.at("userSelectedVideoFormat").get_to(tmp);
-    ret.userSelectedVideoFormat=VideoFormat::from_json(tmp);
-    j.at("bitrateKBits").get_to(ret.bitrateKBits);
-    j.at("url").get_to(ret.url);
-    j.at("enableAirRecordingToFile").get_to(ret.enableAirRecordingToFile);
-    return ret;
-  }
 };
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,userSelectedVideoFormat,bitrateKBits,url,enableAirRecordingToFile)
 
 struct Camera {
   CameraType type = CameraType::Unknown;
@@ -120,6 +106,8 @@ struct Camera {
     return ss.str();
   }
 };
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,vid,pid,bus,index,endpoints)
+
 
 static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("video/");
 
@@ -167,7 +155,7 @@ class CameraHolder{
   void persist_settings()const{
     assert(_settings);
     const auto filename=create_unique_filename();
-    const auto tmp=_settings->to_json();
+    const nlohmann::json tmp=*_settings;
     // and write them locally for persistence
     std::ofstream t(filename);
     t << tmp.dump(4);
@@ -182,7 +170,8 @@ class CameraHolder{
     std::ifstream f(filename);
     nlohmann::json j;
     f >> j;
-    return CameraSettings::from_json(j);
+    return j.get<CameraSettings>();
+    //return CameraSettings::from_json(j);
   }
 };
 
@@ -192,44 +181,8 @@ using DiscoveredCameraList = std::vector<Camera>;
 static nlohmann::json cameras_to_json(const DiscoveredCameraList &cameras) {
   nlohmann::json j;
   for (const auto &camera : cameras) {
-    try {
-      nlohmann::json endpoints = nlohmann::json::array();
-      int endpoint_index = 0;
-      for (const auto &_endpoint : camera.endpoints) {
-        // Now this is for safety, the code by stephen was buggy in this regard
-        // Aka why the heck should a camera have endpoints that are not even
-        // related to it ???!! If this assertion fails, we need to check the
-        // discovery step.
-        assert(camera.bus == _endpoint.bus);
-        // also, a camera without a endpoint - what the heck should that be
-        if (camera.endpoints.empty()) {
-          std::cerr << "to json Warning Camera without endpoints\n";
-        }
-        endpoints[endpoint_index] = {{"device_node", _endpoint.device_node},
-                                     {"support_h264", _endpoint.support_h264},
-                                     {"support_h265", _endpoint.support_h265},
-                                     {"support_mjpeg", _endpoint.support_mjpeg},
-                                     {"support_raw", _endpoint.support_raw},
-                                     {"formats", _endpoint.formats}};
-        endpoint_index++;
-      }
-      nlohmann::json _camera = {
-          {"type", camera_type_to_string(camera.type)},
-          {"name", camera.name},
-          {"vendor", camera.vendor},
-          {"vid", camera.vid},
-          {"pid", camera.pid},
-          {"bus", camera.bus},
-          {"index", camera.index},
-          {"endpoints", endpoints}
-      };
-      std::stringstream message;
-      message << "Detected camera: " << camera.name << std::endl;
-      ohd_log(STATUS_LEVEL::INFO, message.str());
-      j.push_back(_camera);
-    } catch (std::exception &ex) {
-      std::cerr << "exception: " << ex.what() << std::endl;
-    }
+    nlohmann::json _camera = camera;
+    j.push_back(_camera);
   }
   return j;
 }

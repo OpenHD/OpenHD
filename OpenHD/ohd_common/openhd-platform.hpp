@@ -99,20 +99,16 @@ struct OHDPlatform {
 	return ss.str();
   }
 };
-
-// Writes the detected platform data to a json.
-// This can be used for debugging, mostly a microservices artifact.
-static nlohmann::json platform_to_json(const OHDPlatform &ohdPlatform) {
-  nlohmann::ordered_json j;
-  j["platform"] = platform_type_to_string(ohdPlatform.platform_type);
-  j["board"] = board_type_to_string(ohdPlatform.board_type);
-  return j;
+// Thw write out here is only for debugging
+static void to_json(nlohmann::json& j,const OHDPlatform &ohdPlatform) {
+  j = nlohmann::json{{"platform_type", platform_type_to_string(ohdPlatform.platform_type)},
+                     {"board_type", board_type_to_string(ohdPlatform.board_type)}};
 }
 
 static constexpr auto PLATFORM_MANIFEST_FILENAME = "/tmp/platform_manifest";
 
 static void write_platform_manifest(const OHDPlatform &ohdPlatform) {
-  auto manifest = platform_to_json(ohdPlatform);
+  nlohmann::json manifest = ohdPlatform;
   std::ofstream _t(PLATFORM_MANIFEST_FILENAME);
   _t << manifest.dump(4);
   _t.close();
