@@ -24,6 +24,9 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
     std::cout<<"Configured dummy for:" << setting.userSelectedVideoFormat.toString() << "\n";
   }
   _camera_holder->register_listener([this](){
+    // right now, every time the settings for this camera change, we just re-start the whole stream.
+    // That is not ideal, since some cameras support changing for example the bitrate or white balance during operation.
+    // But wiring that up is not that easy.
     this->restart_after_new_setting();
   });
   // sanity checks
