@@ -30,6 +30,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   }
   assert(setting.userSelectedVideoFormat.isValid());
   OHDGstHelper::initGstreamerOrThrow();
+  std::cout << "GStreamerStream::GStreamerStream done\n";
 }
 
 void GStreamerStream::setup() {
