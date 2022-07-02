@@ -146,7 +146,9 @@ class CameraHolder{
   std::unique_ptr<CameraSettings> _settings;
   // TODO this one is not unique enough yet.
   [[nodiscard]] std::string create_uniqe_hash()const{
-    return _camera.name;
+    std::stringstream ss;
+    ss<<camera_type_to_string(_camera.type)<<"_"<<_camera.name;
+    return ss.str();
   }
   [[nodiscard]] std::string create_unique_filename()const{
     return VIDEO_SETTINGS_DIRECTORY+create_uniqe_hash();
