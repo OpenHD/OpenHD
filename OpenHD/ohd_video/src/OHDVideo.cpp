@@ -11,9 +11,10 @@
 
 #include <utility>
 
-OHDVideo::OHDVideo(const OHDPlatform &platform, const OHDProfile &profile,DiscoveredCameraList cameras) :
-	platform(platform), profile(profile) {
-  assert(("This module must only run on the air pi !", profile.is_air == true));
+OHDVideo::OHDVideo(const OHDPlatform &platform,DiscoveredCameraList cameras) :
+	platform(platform) {
+  //assert(("This module must only run on the air pi !", profile.is_air == true));
+  assert(!cameras.empty());
   std::cout << "OHDVideo::OHDVideo()\n";
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
   for(const auto& camera:cameras){

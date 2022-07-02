@@ -35,8 +35,7 @@ class OHDVideo {
    * @param unit_id stephen
    * @param platform_type the platform we are running on.
    */
-  OHDVideo(const OHDPlatform &platform, const OHDProfile &profile,
-           DiscoveredCameraList cameras);
+  OHDVideo(const OHDPlatform &platform,DiscoveredCameraList cameras);
   /**
    * Create a verbose debug string about the current state of OHDVideo, doesn't
    * print to stdout.
@@ -53,7 +52,6 @@ class OHDVideo {
   std::shared_ptr<CameraStream> get_stream_by_index(int idx);
  private:
   const OHDPlatform &platform;
-  const OHDProfile &profile;
  private:
   // These members are what used to be in camera microservice
   // All the created camera streams
