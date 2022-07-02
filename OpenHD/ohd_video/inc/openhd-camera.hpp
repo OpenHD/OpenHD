@@ -5,6 +5,7 @@
 #include <regex>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "openhd-camera-enums.hpp"
@@ -142,7 +143,7 @@ class CameraHolder{
   typedef std::function<void()> SETTINGS_CHANGED_CALLBACK;
   void register_listener(SETTINGS_CHANGED_CALLBACK callback){
     assert(!_settings_changed_callback);
-    _settings_changed_callback=callback;
+    _settings_changed_callback=std::move(callback);
   }
   void update_settings(const CameraSettings& new_settings){
     _settings=std::make_unique<CameraSettings>(new_settings);
