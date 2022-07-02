@@ -93,7 +93,7 @@ void GStreamerStream::setup() {
 	m_pipeline << m_camera.settings.manual_pipeline;
   }*/
   // add udp out part
-  m_pipeline << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
+  m_pipeline << OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
   if(setting.enableAirRecordingToFile){
 	m_pipeline<<OHDGstHelper::createRecordingForVideoCodec(setting.userSelectedVideoFormat.videoCodec);
   }
@@ -201,36 +201,13 @@ void GStreamerStream::stop() {
   gst_element_set_state(gst_pipeline, GST_STATE_PAUSED);
 }
 
-bool GStreamerStream::supports_bitrate() {
-  std::cout << "GStreamerStream::supports_bitrate()" << std::endl;
-  return false;
-}
-
-void GStreamerStream::set_bitrate(int bitrate) {
-  std::cout << "Unmplemented GStreamerStream::set_bitrate(" << bitrate << ")" << std::endl;
-}
-
-bool GStreamerStream::supports_cbr() {
-  std::cout << "GStreamerStream::supports_cbr()" << std::endl;
-  return false;
-}
-
-void GStreamerStream::set_cbr(bool enable) {
-  std::cout << "Unsupported GStreamerStream::set_cbr(" << enable << ")" << std::endl;
-}
-
-VideoFormat GStreamerStream::get_format() {
-  std::cout << "GStreamerStream::get_format()" << std::endl;
-  return _camera_holder->get_settings().userSelectedVideoFormat;
-}
-
-void GStreamerStream::set_format(VideoFormat videoFormat) {
+/*void GStreamerStream::set_format(VideoFormat videoFormat) {
   std::stringstream ss;
   ss<< "GStreamerStream::set_format(" << videoFormat.toString() << ")" << std::endl;
   ohd_log(STATUS_LEVEL::INFO,ss.str());
   _camera_holder->get_settings().userSelectedVideoFormat = videoFormat;
   restart_after_new_setting();
-}
+}*/
 
 void GStreamerStream::restartIfStopped() {
   GstState state;

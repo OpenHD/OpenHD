@@ -49,7 +49,7 @@ class OHDVideo {
    */
   void restartIfStopped();
   // Experimental for now
-  bool set_video_format(int stream_idx, const VideoFormat &video_format);
+  //bool set_video_format(int stream_idx, const VideoFormat &video_format);
   std::shared_ptr<CameraStream> get_stream_by_index(int idx);
  private:
   const OHDPlatform &platform;

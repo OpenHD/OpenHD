@@ -28,21 +28,10 @@ class GStreamerStream : public CameraStream {
   void setup_ip_camera();
   void restartIfStopped() override;
   void restart_after_new_setting();
-
  public:
   void start() override;
   void stop() override;
   std::string createDebug() const override;
-
-  bool supports_cbr() override;
-  void set_cbr(bool enable) override;
-
-  bool supports_bitrate() override;
-  void set_bitrate(int bitrate) override;
-
-  VideoFormat get_format() override;
-  void set_format(VideoFormat videoFormat) override;
-
  private:
   GstElement *gst_pipeline = nullptr;
   // The pipeline that is started in the end
