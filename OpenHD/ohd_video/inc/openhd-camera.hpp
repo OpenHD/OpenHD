@@ -25,22 +25,6 @@ static bool check_bitrate_sane(const int bitrateKBits) {
   return true;
 }
 
-struct CameraEndpoint {
-  std::string device_node;
-  std::string bus;
-  bool support_h264 = false;
-  bool support_h265 = false;
-  bool support_mjpeg = false;
-  bool support_raw = false;
-  std::vector<std::string> formats;
-  // Consti10: cleanup- an endpoint that supports nothing, what the heck should
-  // we do with that ;)
-  [[nodiscard]] bool supports_anything() const {
-    return (support_h264 || support_h265 || support_mjpeg || support_raw);
-  }
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraEndpoint,device_node,bus,support_h264,support_h265,support_mjpeg,support_raw,formats)
-
 // User-selectable camera options
 // These values are settings that can change dynamically at run time
 // (non-deterministic)
@@ -76,6 +60,22 @@ struct CameraSettings {
   std::string thermal_span;*/
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,userSelectedVideoFormat,bitrateKBits,url,enableAirRecordingToFile)
+
+struct CameraEndpoint {
+  std::string device_node;
+  std::string bus;
+  bool support_h264 = false;
+  bool support_h265 = false;
+  bool support_mjpeg = false;
+  bool support_raw = false;
+  std::vector<std::string> formats;
+  // Consti10: cleanup- an endpoint that supports nothing, what the heck should
+  // we do with that ;)
+  [[nodiscard]] bool supports_anything() const {
+    return (support_h264 || support_h265 || support_mjpeg || support_raw);
+  }
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraEndpoint,device_node,bus,support_h264,support_h265,support_mjpeg,support_raw,formats)
 
 struct Camera {
   CameraType type = CameraType::Unknown;
