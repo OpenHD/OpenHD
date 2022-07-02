@@ -9,22 +9,21 @@
 // Which rn is implemented in gstreamer.
 
 static void update_settings(int index,CameraHolder& camera_holder){
+  auto current=camera_holder.get_settings();
+  // Depending on what you selected here, you will have to use the proper main_stream_display_XXX.sh if you want to see the video.
   if(index==0){
-    camera_holder.get_settings().userSelectedVideoFormat.videoCodec=VideoCodec::H264;
+    current.userSelectedVideoFormat.videoCodec=VideoCodec::H264;
   }else if(index==1){
-    camera_holder.get_settings().userSelectedVideoFormat.videoCodec=VideoCodec::H265;
+    current.userSelectedVideoFormat.videoCodec=VideoCodec::H265;
   }else{
-    camera_holder.get_settings().userSelectedVideoFormat.videoCodec=VideoCodec::MJPEG;
+    current.userSelectedVideoFormat.videoCodec=VideoCodec::MJPEG;
   }
+  camera_holder.update_settings(current);
 }
 
 int main(int argc, char *argv[]) {
   //
   auto camera_holder=createDummyCamera2();
-  // Depending on what you selected here, you will have to use the proper main_stream_display_XXX.sh if you want to see the video.
-  camera_holder->get_settings().userSelectedVideoFormat.videoCodec=VideoCodec::H264;
-  //camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecH265;
-  //camera.settings.userSelectedVideoFormat.videoCodec=VideoCodecMJPEG;
   PlatformType platformType{};
   uint16_t video_port = OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP;
   auto stream = std::make_unique<GStreamerStream>(platformType, camera_holder, video_port);

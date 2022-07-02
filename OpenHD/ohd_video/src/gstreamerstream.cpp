@@ -23,6 +23,9 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
     std::cout<<"Warning- Dummy camera is done in sw, high resolution/framerate might not work\n";
     std::cout<<"Configured dummy for:" << setting.userSelectedVideoFormat.toString() << "\n";
   }
+  _camera_holder->register_listener([this](){
+    this->restart_after_new_setting();
+  });
   // sanity checks
   if(!check_bitrate_sane(setting.bitrateKBits)){
     //std::cerr << "manually fixing insane camera bitrate" << m_camera.settings.bitrateKBits << "\n";

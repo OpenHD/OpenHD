@@ -135,11 +135,11 @@ class CameraHolder{
   [[nodiscard]] const Camera& get_camera()const{
     return _camera;
   }
-  [[nodiscard]] CameraSettings& get_settings()const{
+  [[nodiscard]] const CameraSettings& get_settings()const{
     assert(_settings);
     return *_settings;
   }
-  typedef std::function<void(const CameraSettings& settings)> SETTINGS_CHANGED_CALLBACK;
+  typedef std::function<void()> SETTINGS_CHANGED_CALLBACK;
   void register_listener(SETTINGS_CHANGED_CALLBACK callback){
     assert(!_settings_changed_callback);
     _settings_changed_callback=callback;
@@ -148,7 +148,7 @@ class CameraHolder{
     _settings=std::make_unique<CameraSettings>(new_settings);
     persist_settings();
     if(_settings_changed_callback){
-      _settings_changed_callback(*_settings);
+      _settings_changed_callback();
     }
   }
  private:
