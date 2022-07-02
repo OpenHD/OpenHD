@@ -179,7 +179,6 @@ class CameraHolder{
 
 using DiscoveredCameraList = std::vector<Camera>;
 
-
 static nlohmann::json cameras_to_json(const DiscoveredCameraList &cameras) {
   nlohmann::json j;
   for (const auto &camera : cameras) {
