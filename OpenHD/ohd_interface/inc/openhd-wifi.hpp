@@ -20,6 +20,19 @@ enum class WiFiCardType {
   Intel,
   Broadcom,
 };
+NLOHMANN_JSON_SERIALIZE_ENUM( WiFiCardType, {
+   {WiFiCardType::Unknown, nullptr},
+   {WiFiCardType::Realtek8188eu, "Realtek8188eu"},
+   {WiFiCardType::Realtek8814au, "Realtek8814au"},
+   {WiFiCardType::Realtek88x2bu, "Realtek88x2bu"},
+   {WiFiCardType::Realtek8188eu, "Realtek8188eu"},
+   {WiFiCardType::Atheros9khtc, "Atheros9khtc"},
+   {WiFiCardType::Atheros9k, "Atheros9k"},
+   {WiFiCardType::Ralink, "Ralink"},
+   {WiFiCardType::Intel, "Intel"},
+   {WiFiCardType::Broadcom, "Broadcom"},
+});
+
 static std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
   switch (card_type) {
     case WiFiCardType::Atheros9k:  return "ath9k";
@@ -72,6 +85,11 @@ enum class WifiUseFor {
   MonitorMode, //Use for wifibroadcast, aka set to monitor mode.
   Hotspot, //Use for hotspot, aka start a wifi hotspot with it.
 };
+NLOHMANN_JSON_SERIALIZE_ENUM( WifiUseFor, {
+   {WifiUseFor::Unknown, nullptr},
+   {WifiUseFor::MonitorMode, "MonitorMode"},
+   {WifiUseFor::Hotspot, "Hotspot"},
+});
 static WifiUseFor wifi_use_for_from_string(const std::string s){
   if(OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("monitor_mode"))!=std::string::npos){
 	return WifiUseFor::MonitorMode;
@@ -101,6 +119,7 @@ struct WifiCardSettings{
   // transmission power for this card
   std::string txpower=DEFAULT_WIFI_TX_POWER;
 };
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WifiCardSettings,use_for,frequency,txpower)
 
 struct WiFiCard {
   std::string driver_name; // Name of the driver that runs this card.
@@ -115,34 +134,15 @@ struct WiFiCard {
   // These are values that can change dynamically at run time.
   WifiCardSettings settings;
 };
-
-
-static nlohmann::json wificard_to_json(const WiFiCard &p) {
-  auto j = nlohmann::json{
-	  {"driver_name", p.driver_name},
-	  {"type", wifi_card_type_to_string(p.type)},
-	  {"interface_name", p.interface_name},
-	  {"mac", p.mac},
-	  {"supports_5ghz", p.supports_5ghz},
-	  {"supports_2ghz", p.supports_2ghz},
-	  {"supports_injection", p.supports_injection},
-	  {"supports_hotspot", p.supports_hotspot},
-	  {"supports_rts", p.supports_rts},
-	  {"use_for", wifi_use_for_to_string(p.settings.use_for)},
-	  {"txpower",p.settings.txpower}
-  };
-  return j;
-}
-
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,driver_name,type,interface_name,mac,supports_5ghz,supports_2ghz,
+                                   supports_injection,supports_hotspot,supports_rts,settings)
 
 static nlohmann::json wificards_to_json(const std::vector<WiFiCard> &cards) {
   nlohmann::json j;
-  auto wifi_cards_json = nlohmann::json::array();
   for (auto &_card: cards) {
-	auto cardJson = wificard_to_json(_card);
-	wifi_cards_json.push_back(cardJson);
+	nlohmann::json cardJson = _card;
+	j.push_back(cardJson);
   }
-  j["cards"] = wifi_cards_json;
   return j;
 }
 

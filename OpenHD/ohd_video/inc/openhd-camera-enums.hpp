@@ -77,19 +77,6 @@ static std::string video_codec_to_string(VideoCodec codec) {
       return "unknown";
   }
 }
-static VideoCodec string_to_video_codec(const std::string &codec) {
-  if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h264")) !=
-      std::string::npos) {
-    return VideoCodec::H264;
-  } else if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h265")) !=
-             std::string::npos) {
-    return VideoCodec::H265;
-  } else if (OHDUtil::to_uppercase(codec).find(
-                 OHDUtil::to_uppercase("mjpeg")) != std::string::npos) {
-    return VideoCodec::MJPEG;
-  }
-  return VideoCodec::Unknown;
-}
 NLOHMANN_JSON_SERIALIZE_ENUM( VideoCodec, {
   {VideoCodec::Unknown, nullptr},
   {VideoCodec::H264, "h264"},
