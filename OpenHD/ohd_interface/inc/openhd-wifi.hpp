@@ -65,18 +65,6 @@ static std::string wifi_hotspot_type_to_string(const WiFiHotspotType &wifi_hotsp
       return "none";
   }
 }
-static WiFiHotspotType string_to_wifi_hotspot_type(const std::string &hotspot_type) {
-  if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("internal2g")) != std::string::npos) {
-	return WiFiHotspotType::Internal2GBand;
-  } else if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("internal5g")) != std::string::npos) {
-	return WiFiHotspotType::Internal5GBand;
-  } else if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("internaldualband")) != std::string::npos) {
-	return WiFiHotspotType::InternalDualBand;
-  } else if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("external")) != std::string::npos) {
-	return WiFiHotspotType::External;
-  }
-  return WiFiHotspotType::None;
-}
 
 // What to use a discovered wifi card for. R.n We support hotspot or monitor mode (wifibroadcast),
 // I doubt that will change.
@@ -90,15 +78,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM( WifiUseFor, {
    {WifiUseFor::MonitorMode, "MonitorMode"},
    {WifiUseFor::Hotspot, "Hotspot"},
 });
-static WifiUseFor wifi_use_for_from_string(const std::string s){
-  if(OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("monitor_mode"))!=std::string::npos){
-	return WifiUseFor::MonitorMode;
-  }else if(OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("hotspot"))!=std::string::npos){
-	return WifiUseFor::Hotspot;
-  }else{
-	return WifiUseFor::Unknown;
-  }
-}
 static std::string wifi_use_for_to_string(const WifiUseFor wifi_use_for){
   switch (wifi_use_for) {
     case WifiUseFor::Hotspot:return "hotspot";
