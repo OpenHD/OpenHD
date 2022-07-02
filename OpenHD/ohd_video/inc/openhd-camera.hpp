@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "openhd-camera-enums.hpp"
-#include "json.hpp"
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
