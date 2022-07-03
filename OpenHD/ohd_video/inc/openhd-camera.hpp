@@ -158,18 +158,18 @@ class CameraHolder{
   std::mutex _settings_mutex;
   std::unique_ptr<CameraSettings> _settings;
   // TODO this one is not unique enough yet.
-  [[nodiscard]] std::string create_uniqe_hash()const{
+  [[nodiscard]] std::string get_uniqe_hash()const{
     std::stringstream ss;
-    ss<<camera_type_to_string(_camera.type)<<"_"<<_camera.name;
+    ss<<(static_cast<int>(_camera.index))<<"_"<<camera_type_to_string(_camera.type)<<"_"<<_camera.name;
     return ss.str();
   }
-  [[nodiscard]] std::string create_unique_filename()const{
-    return VIDEO_SETTINGS_DIRECTORY+create_uniqe_hash();
+  [[nodiscard]] std::string get_unique_filename()const{
+    return VIDEO_SETTINGS_DIRECTORY+ get_uniqe_hash();
   }
   // write settings locally for persistence
   void persist_settings()const{
     assert(_settings);
-    const auto filename=create_unique_filename();
+    const auto filename= get_unique_filename();
     const nlohmann::json tmp=*_settings;
     // and write them locally for persistence
     std::ofstream t(filename);
@@ -178,7 +178,7 @@ class CameraHolder{
   }
   // read last settings, if they are available
   [[nodiscard]] std::optional<CameraSettings> read_last_settings()const{
-    const auto filename=create_unique_filename();
+    const auto filename= get_unique_filename();
     if(!OHDFilesystemUtil::exists(filename.c_str())){
       return std::nullopt;
     }
