@@ -132,6 +132,9 @@ class CameraHolder{
       persist_settings();
     }
   }
+  // delete copy and move constructor
+  CameraHolder(const CameraHolder&)=delete;
+  CameraHolder(const CameraHolder&&)=delete;
   [[nodiscard]] const Camera& get_camera()const{
     return _camera;
   }
