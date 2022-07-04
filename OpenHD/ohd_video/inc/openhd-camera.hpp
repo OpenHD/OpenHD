@@ -126,7 +126,7 @@ class CameraHolder{
       _settings=std::make_unique<CameraSettings>(last_settings_opt.value());
       std::cout<<"Found settings\n";
     }else{
-      std::cout<<"Creating default settings\n";
+      std::cout<<"Creating default settings:"<<get_unique_filename()<<"\n";
       // create default settings and persist them for the next reboot
       _settings=std::make_unique<CameraSettings>();
       persist_settings();
