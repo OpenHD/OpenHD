@@ -1,18 +1,11 @@
 //
 // Created by consti10 on 03.05.22.
 //
-
-#include "gstreamerstream.h"
-#include "libcamerastream.h"
-#include "openhd-settings.hpp"
-#include "DCameras.h"
-
 #include "OHDVideo.h"
+#include "gstreamerstream.h"
 
-#include <utility>
-
-OHDVideo::OHDVideo(const OHDPlatform &platform,DiscoveredCameraList cameras) :
-	platform(platform) {
+OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras) :
+	platform(platform1) {
   //assert(("This module must only run on the air pi !", profile.is_air == true));
   assert(!cameras.empty());
   std::cout << "OHDVideo::OHDVideo()\n";
