@@ -26,15 +26,6 @@
  */
 class OHDVideo {
  public:
-  /**
-   * Reads the detected cameras (from ohd_system & json) then creates an
-   * according stream for each of them.
-   * @param is_air MUST ALWAYS RUN ON AIR ONLY, there are no cameras on the
-   * ground pi and the transmission (and optionally forwarding) of the generated
-   * video stream(s) is done by ohd_interface.
-   * @param unit_id stephen
-   * @param platform_type the platform we are running on.
-   */
   OHDVideo(const OHDPlatform &platform,DiscoveredCameraList cameras);
   /**
    * Create a verbose debug string about the current state of OHDVideo, doesn't
@@ -47,8 +38,6 @@ class OHDVideo {
    * restart any camera stream if it has unexpectedly stopped.
    */
   void restartIfStopped();
-  // Experimental for now
-  //bool set_video_format(int stream_idx, const VideoFormat &video_format);
   std::shared_ptr<CameraStream> get_stream_by_index(int idx);
  private:
   const OHDPlatform &platform;
