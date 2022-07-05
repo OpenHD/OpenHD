@@ -35,7 +35,15 @@ class OHDVideo {
    * restart any camera stream if it has unexpectedly stopped.
    */
   void restartIfStopped();
+  // can return an empty pointer if stream does not exist
   std::shared_ptr<CameraStream> get_stream_by_index(int idx);
+
+  // This performs the following steps:
+  // 1) Discover all the connected camera(s)
+  // 2) If no cameras are detected and add_dummy=true, add a dummy camera
+  // 3) Create a OHDVideo instance if there are any detected cameras, otherwise, return nullptr
+  //static std::shared_ptr<OHDVideo> discover_and_create(const bool add_dummy){
+  //}
  private:
   const OHDPlatform platform;
  private:

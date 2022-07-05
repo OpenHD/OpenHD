@@ -4,6 +4,7 @@
 
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/param_server/param_server.h>
+#include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
 #include <iostream>
 #include <thread>
 

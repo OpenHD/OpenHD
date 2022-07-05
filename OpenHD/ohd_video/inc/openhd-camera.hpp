@@ -14,6 +14,8 @@
 #include "openhd-util-filesystem.hpp"
 #include "openhd-settings.hpp"
 
+#include "mavlink_settings/XSettingsComponent.h"
+
 static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
 
 // Return true if the bitrate is considered sane, false otherwise
@@ -115,7 +117,7 @@ static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::st
 // 1) Differentiate between immutable information (camera) and
 // 2) mutable camera settings.
 // Changes in the camera settings are propagated through this class.
-class CameraHolder{
+class CameraHolder : public openhd::XSettingsComponent {
  public:
   explicit CameraHolder(Camera camera):_camera(std::move(camera)){
     if(!OHDFilesystemUtil::exists(VIDEO_SETTINGS_DIRECTORY.c_str())){
@@ -135,6 +137,38 @@ class CameraHolder{
   // delete copy and move constructor
   CameraHolder(const CameraHolder&)=delete;
   CameraHolder(const CameraHolder&&)=delete;
+ public:
+  // Settings hacky begin
+  std::vector<openhd::Setting> get_all_settings() override{
+    std::vector<openhd::Setting> ret={
+      openhd::Setting{"VIDEO_WIDTH",_settings->userSelectedVideoFormat.width},
+      openhd::Setting{"VIDEO_HEIGHT",_settings->userSelectedVideoFormat.height},
+      openhd::Setting{"VIDEO_FPS",_settings->userSelectedVideoFormat.framerate},
+      openhd::Setting{"VIDEO_FORMAT",video_codec_to_string(_settings->userSelectedVideoFormat.videoCodec)}
+    };
+    return ret;
+  }
+  void process_setting_changed(const openhd::Setting& changed_setting) override{
+    bool changed=false;
+    if(changed_setting.id=="VIDEO_WIDTH"){
+      _settings->userSelectedVideoFormat.width=std::get<int>(changed_setting.value);
+      changed= true;
+    }else if(changed_setting.id=="VIDEO_HEIGHT"){
+      _settings->userSelectedVideoFormat.height=std::get<int>(changed_setting.value);
+      changed= true;
+    }else if(changed_setting.id=="VIDEO_FPS"){
+      _settings->userSelectedVideoFormat.framerate=std::get<int>(changed_setting.value);
+      changed= true;
+    }else if(changed_setting.id=="VIDEO_FORMAT"){
+      _settings->userSelectedVideoFormat.videoCodec=string_to_video_codec(std::get<std::string>(changed_setting.value));
+      changed= true;
+    }
+    if(changed){
+      update_settings(*_settings);
+    }
+  }
+  // Settings hacky end
+ public:
   [[nodiscard]] const Camera& get_camera()const{
     return _camera;
   }

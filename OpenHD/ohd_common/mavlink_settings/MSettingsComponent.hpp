@@ -19,6 +19,16 @@ struct Setting{
   SettingsVariant value;
 };
 
+
+class XSettingsComponent{
+ public:
+  // all the settings this component param server provides
+  virtual std::vector<Setting> get_settings()=0;
+  // perform required steps when a setting value changes.
+  virtual void process_setting_changed(const Setting& changed_setting);
+};
+
+
 struct mavlink_message_t{
   int lol=3;
 };
