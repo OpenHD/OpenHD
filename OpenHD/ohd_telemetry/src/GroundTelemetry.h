@@ -21,7 +21,7 @@ class GroundTelemetry {
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.
    */
-  void loopInfinite(bool enableExtendedLogging = false);
+  [[noreturn]] void loopInfinite(bool enableExtendedLogging = false);
   [[nodiscard]] std::string createDebug()const;
  private:
   // called every time a message from the air pi is received

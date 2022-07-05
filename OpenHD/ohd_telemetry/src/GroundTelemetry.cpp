@@ -9,26 +9,26 @@
 GroundTelemetry::GroundTelemetry() {
   /*tcpGroundCLient=std::make_unique<TCPEndpoint>(OHD_GROUND_CLIENT_TCP_PORT);
   tcpGroundCLient->registerCallback([this](MavlinkMessage& msg){
-	  onMessageGroundStationClients(msg);
+          onMessageGroundStationClients(msg);
   });*/
   /*udpGroundClient =std::make_unique<UDPEndpoint>("GroundStationUDP",
-												 OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
-												 "127.0.0.1","127.0.0.1",true);//127.0.0.1
+                                                                                                 OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
+                                                                                                 "127.0.0.1","127.0.0.1",true);//127.0.0.1
   udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
-	onMessageGroundStationClients(msg);
+        onMessageGroundStationClients(msg);
   });*/
   udpGroundClient =std::make_unique<UDPEndpoint2>("GroundStationUDP",
-												  OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
-												  "127.0.0.1","127.0.0.1");
+                                                   OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
+                                                   "127.0.0.1","127.0.0.1");
   udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
-	onMessageGroundStationClients(msg);
+    onMessageGroundStationClients(msg);
   });
   // hacky, start broadcasting the existence of the OHD ground station
   // udpGroundClient->startHeartBeat(OHD_SYS_ID_GROUND,0);
   // any message coming in via wifibroadcast is a message from the air pi
   udpWifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(false);
   udpWifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
-	onMessageAirPi(msg);
+    onMessageAirPi(msg);
   });
   std::cout << "Created GroundTelemetry\n";
 }
@@ -79,7 +79,7 @@ void GroundTelemetry::sendMessageAirPi(MavlinkMessage &message) {
   }
 }
 
-void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
+[[noreturn]] void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
   while (true) {
 	//std::cout << "GroundTelemetry::loopInfinite()\n";
 	// for debugging, check if any of the endpoints is not alive

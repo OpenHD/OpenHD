@@ -61,7 +61,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   }
 }
 
-void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
+[[noreturn]] void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
   while (true) {
 	//std::cout << "AirTelemetry::loopInfinite()\n";
 	// for debugging, check if any of the endpoints is not alive
@@ -92,4 +92,9 @@ std::string AirTelemetry::createDebug() const {
 	ss<<serialEndpoint->createInfo();
   }
   return ss.str();
+}
+
+void AirTelemetry::add_settings_component(
+    const int comp_id, std::shared_ptr<openhd::XSettingsComponent> glue) {
+  std::cout<<"Added parameter component\n";
 }

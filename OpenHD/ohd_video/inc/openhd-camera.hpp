@@ -151,17 +151,15 @@ class CameraHolder : public openhd::XSettingsComponent {
   void process_setting_changed(const openhd::Setting& changed_setting) override{
     bool changed=false;
     if(changed_setting.id=="VIDEO_WIDTH"){
-      _settings->userSelectedVideoFormat.width=std::get<int>(changed_setting.value);
-      changed= true;
+      changed=openhd::safe_to(_settings->userSelectedVideoFormat.width,changed_setting.value);
     }else if(changed_setting.id=="VIDEO_HEIGHT"){
-      _settings->userSelectedVideoFormat.height=std::get<int>(changed_setting.value);
-      changed= true;
+      changed=openhd::safe_to(_settings->userSelectedVideoFormat.height,changed_setting.value);
     }else if(changed_setting.id=="VIDEO_FPS"){
-      _settings->userSelectedVideoFormat.framerate=std::get<int>(changed_setting.value);
-      changed= true;
+      changed=openhd::safe_to(_settings->userSelectedVideoFormat.framerate,changed_setting.value);
     }else if(changed_setting.id=="VIDEO_FORMAT"){
-      _settings->userSelectedVideoFormat.videoCodec=string_to_video_codec(std::get<std::string>(changed_setting.value));
-      changed= true;
+      std::string value=video_codec_to_string(_settings->userSelectedVideoFormat.videoCodec);
+      changed=openhd::safe_to(value,changed_setting.value);
+      _settings->userSelectedVideoFormat.videoCodec= string_to_video_codec(value);
     }
     if(changed){
       update_settings(*_settings);

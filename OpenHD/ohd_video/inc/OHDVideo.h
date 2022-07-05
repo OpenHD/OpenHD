@@ -44,9 +44,12 @@ class OHDVideo {
   // 3) Create a OHDVideo instance if there are any detected cameras, otherwise, return nullptr
   //static std::shared_ptr<OHDVideo> discover_and_create(const bool add_dummy){
   //}
-
   std::vector<std::shared_ptr<openhd::XSettingsComponent>> get_setting_components(){
-    return {};
+    std::vector<std::shared_ptr<openhd::XSettingsComponent>> ret;
+    for(auto& stream: m_camera_streams){
+      ret.push_back(stream->_camera_holder);
+    }
+    return ret;
   }
  private:
   const OHDPlatform platform;

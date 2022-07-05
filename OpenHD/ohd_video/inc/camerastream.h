@@ -56,10 +56,10 @@ class CameraStream {
    * restart a camera stream if it has stopped / crashed for some reason.
    */
   virtual void restartIfStopped() = 0;
-
+ public:
+  std::shared_ptr<CameraHolder> _camera_holder;
  protected:
   const PlatformType _platform_type;
-  std::shared_ptr<CameraHolder> _camera_holder;
   // This is the UDP port the video (for now rtp) stream is send to.
   // It then needs to be picked up, most likely by a wfb instance created by
   // ohd-interface

@@ -24,12 +24,10 @@ class AirTelemetry {
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.
    */
-  void loopInfinite(bool enableExtendedLogging = false);
+  [[noreturn]] void loopInfinite(bool enableExtendedLogging = false);
   [[nodiscard]] std::string createDebug()const;
-  //
-  void add_settings_component(const int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue){
-
-  }
+  // add a mavlink parameter server that allows the user to change parameters
+  void add_settings_component(int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue);
  private:
   // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
   void sendMessageFC(MavlinkMessage &message);
