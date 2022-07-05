@@ -7,6 +7,8 @@
 
 #include <utility>
 #include <variant>
+#include <string>
+#include <vector>
 
 namespace openhd{
 

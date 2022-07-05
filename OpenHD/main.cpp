@@ -99,6 +99,10 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<OHDVideo> ohdVideo;
     if (profile->is_air) {
       ohdVideo = std::make_unique<OHDVideo>(*platform,cameras);
+      auto settings_components=ohdVideo->get_setting_components();
+      if(!settings_components.empty()){
+        ohdTelemetry->add_settings_component(0,settings_components.at(0));
+      }
     }
     // we need to start QOpenHD when we are running as ground
     if(!profile->is_air){

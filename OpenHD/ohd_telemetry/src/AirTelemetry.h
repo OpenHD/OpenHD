@@ -5,11 +5,14 @@
 #ifndef OPENHD_TELEMETRY_AIRTELEMETRY_H
 #define OPENHD_TELEMETRY_AIRTELEMETRY_H
 
+#include "mavlink_settings/XSettingsComponent.h"
+
+#include <string>
+
 #include "endpoints/SerialEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
 #include "internal/InternalTelemetry.h"
 #include "openhd-platform.hpp"
-#include <string>
 
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
@@ -23,6 +26,10 @@ class AirTelemetry {
    */
   void loopInfinite(bool enableExtendedLogging = false);
   [[nodiscard]] std::string createDebug()const;
+  //
+  void add_settings_component(const int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue){
+
+  }
  private:
   // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
   void sendMessageFC(MavlinkMessage &message);

@@ -48,6 +48,11 @@ class OHDTelemetry {
 	  return groundTelemetry->createDebug();
 	}
   }
+  void add_settings_component(const int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue){
+    if(profile.is_air){
+      airTelemetry->add_settings_component(comp_id,glue);
+    }
+  }
  private:
   const OHDPlatform platform;
   const OHDProfile profile;
