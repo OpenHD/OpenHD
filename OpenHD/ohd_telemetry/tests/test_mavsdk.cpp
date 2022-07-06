@@ -18,7 +18,7 @@ int main() {
   });
 
   mavsdk::Mavsdk::Configuration configuration(
-	  100,190, true);
+	  100,1, true);
   mavsdkServer->set_configuration(configuration);
 
   auto result = mavsdkServer->add_any_connection("udp://127.0.0.1:14550");
@@ -27,7 +27,8 @@ int main() {
   }
 
   auto server_component =
-	  mavsdkServer->server_component_by_type(mavsdk::Mavsdk::ServerComponentType::CompanionComputer);
+	  //mavsdkServer->server_component_by_type(mavsdk::Mavsdk::ServerComponentType::CompanionComputer);
+          mavsdkServer->server_component_by_id(1);
 
   // Create server plugins
   auto paramServer = mavsdk::ParamServer{server_component};
