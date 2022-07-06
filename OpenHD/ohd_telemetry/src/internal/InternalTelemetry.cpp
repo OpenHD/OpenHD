@@ -39,7 +39,7 @@ std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   // TODO remove for release
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
   // TODO remove for release
-  _status_text_accumulator.add_hello_message();
+  //_status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
   const auto logs = generateLogMessages();
   ret.insert(ret.end(), logs.begin(), logs.end());
   return ret;

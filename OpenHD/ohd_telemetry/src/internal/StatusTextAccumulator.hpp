@@ -43,10 +43,10 @@ class StatusTextAccumulator{
     }
     return ret;
   }
-  void add_hello_message(){
+  void manually_add_message(const std::string& text){
     OHDLocalLogMessage msg{};
-    msg.level=0;
-    std::strncpy((char *)msg.message,"Hello",50);
+    msg.level=static_cast<uint8_t>(STATUS_LEVEL::DEBUG);
+    std::strncpy((char *)msg.message,text.c_str(),50);
     processLogMessage(msg);
   }
   static void convert(mavlink_message_t& mavlink_message,const OHDLocalLogMessage& msg,uint8_t sys_id,uint8_t comp_id){
