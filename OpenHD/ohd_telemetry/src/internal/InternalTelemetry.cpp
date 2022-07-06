@@ -24,12 +24,13 @@ InternalTelemetry::InternalTelemetry(bool runsOnAir) :RUNS_ON_AIR(runsOnAir),
                                                   OHD_LOCAL_LOG_MESSAGES_UDP_PORT,
                                                   [this](const uint8_t *payload,
                                                          const std::size_t payloadSize) {
-                                                    processLogMessageData(payload, payloadSize);
+                                                    this->_status_text_accumulator.processLogMessageData(payload, payloadSize);
                                                   });
   logMessagesReceiver->runInBackground();
 }
 
 std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
+  std::cout<<"InternalTelemetry::generateUpdates()\n";
   std::vector<MavlinkMessage> ret;
   ret.push_back(OHDMessages::createHeartbeat(_sys_id,_comp_id));
   ret.push_back(OnboardComputerStatus::createOnboardComputerStatus(_sys_id,_comp_id));
@@ -37,7 +38,9 @@ std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   ret.push_back(generateOpenHDVersion());
   // TODO remove for release
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
-  auto logs = generateLogMessages();
+  // TODO remove for release
+  _status_text_accumulator.add_hello_message();
+  const auto logs = generateLogMessages();
   ret.insert(ret.end(), logs.begin(), logs.end());
   return ret;
 }
@@ -68,33 +71,20 @@ MavlinkMessage InternalTelemetry::generateWifibroadcastStatistics() const {
 }
 
 std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
+  const auto messages=_status_text_accumulator.get_messages();
   std::vector<MavlinkMessage> ret;
-  std::lock_guard<std::mutex> guard(bufferedLogMessagesLock);
-  while (!bufferedLogMessages.empty()) {
-    const auto msg = bufferedLogMessages.front();
-    // for additional safety, we do not create more than 5 log messages per iteration, the rest is dropped
-    // Otherwise we might run into bandwidth issues I suppose
+  // limit to 5 to save bandwidth
+  for(const auto& msg:messages){
     if (ret.size() < 5) {
+      //std::cout<<"Msg:"<<msg.message<<"\n";
       MavlinkMessage mavMsg;
-      const uint64_t timestamp =
-          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-      mavlink_msg_openhd_log_message_pack(_sys_id,_comp_id,
-                                          &mavMsg.m,
-                                          msg.level,
-                                          (const char *)&msg.message,
-                                          timestamp);
+      StatusTextAccumulator::convert(mavMsg.m,msg,_sys_id,_comp_id);
       ret.push_back(mavMsg);
     } else {
       std::stringstream ss;
       ss << "Dropping log message " << msg.message << "\n";
       std::cout << ss.str();
     }
-    bufferedLogMessages.pop();
-  }
-  {
-    // TODO remove for release
-    //MavlinkMessage mavMsg=OHDMessages::createLog(mSysId,mCompId,"lol",0);
-    //ret.push_back(mavMsg);
   }
   return ret;
 }
@@ -103,29 +93,6 @@ MavlinkMessage InternalTelemetry::generateOpenHDVersion() const {
   MavlinkMessage msg;
   mavlink_msg_openhd_version_message_pack(_sys_id,_comp_id, &msg.m, "2.1");
   return msg;
-}
-
-void InternalTelemetry::processLogMessageData(const uint8_t *data, std::size_t dataLen) {
-  //std::cout << "XX" << dataLen << "\n";
-  //TODO this might discard messages
-  if (dataLen == sizeof(OHDLocalLogMessage)) {
-    OHDLocalLogMessage local_message{};
-    memcpy((uint8_t *)&local_message, data, dataLen);
-    const auto nullTerminatorFound = local_message.hasNullTerminator();
-    if (!nullTerminatorFound) {
-      std::cerr << "Log message without null terminator\n";
-      return;
-    }
-    processLogMessage(local_message);
-  } else {
-    std::cerr << "Invalid size for local log message" << dataLen << " wanted:" << sizeof(OHDLocalLogMessage) << "\n";
-  }
-}
-
-void InternalTelemetry::processLogMessage(OHDLocalLogMessage msg) {
-  //std::cout<<"Log message:"<<msg.message<<"\n";
-  std::lock_guard<std::mutex> guard(bufferedLogMessagesLock);
-  bufferedLogMessages.push(msg);
 }
 
 std::optional<MavlinkMessage> InternalTelemetry::handlePingMessage(const MavlinkMessage &message) const {

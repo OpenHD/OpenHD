@@ -81,7 +81,7 @@ void GroundTelemetry::sendMessageAirPi(MavlinkMessage &message) {
 
 [[noreturn]] void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
   while (true) {
-	//std::cout << "GroundTelemetry::loopInfinite()\n";
+	std::cout << "GroundTelemetry::loopInfinite()\n";
 	// for debugging, check if any of the endpoints is not alive
 	if (enableExtendedLogging && udpWifibroadcastEndpoint) {
 	  std::cout<<udpWifibroadcastEndpoint->createInfo();

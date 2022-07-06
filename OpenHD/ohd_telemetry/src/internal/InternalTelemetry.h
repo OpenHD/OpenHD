@@ -9,14 +9,16 @@
 #include "routing/MavlinkComponent.hpp"
 #include "routing/MavlinkSystem.hpp"
 // wifibroadcast header-only
-#include "OpenHDStatisticsWriter.hpp"
-#include "HelperSources/SocketHelper.hpp"
-#include "openhd-log.hpp"
 #include <map>
-#include <vector>
-#include <queue>
 #include <mutex>
 #include <optional>
+#include <queue>
+#include <vector>
+
+#include "HelperSources/SocketHelper.hpp"
+#include "OpenHDStatisticsWriter.hpp"
+#include "StatusTextAccumulator.hpp"
+#include "openhd-log.hpp"
 
 // The purpose of this class is to generate all the OpenHD specific telemetry that can be sent
 // in a fire and forget manner, as well as handling commands without side effects.
@@ -70,13 +72,7 @@ class InternalTelemetry : public MavlinkComponent{
   std::vector<MavlinkMessage> generateLogMessages();
   // here all the log messages are sent to - not in their mavlink form yet.
   std::unique_ptr<SocketHelper::UDPReceiver> logMessagesReceiver;
-  // process the incoming log messages. This one is a bit dangerous, it must handle the character
-  // limit imposed by mavlink and the null terminator
-  void processLogMessageData(const uint8_t *data, std::size_t dataLen);
-  void processLogMessage(OHDLocalLogMessage msg);
-  std::queue<OHDLocalLogMessage> bufferedLogMessages;
-  // one thread writes the queue, another one reads the queue
-  std::mutex bufferedLogMessagesLock;
+  StatusTextAccumulator _status_text_accumulator;
 };
 
 #endif //XMAVLINKSERVICE_INTERNALTELEMETRY_H
