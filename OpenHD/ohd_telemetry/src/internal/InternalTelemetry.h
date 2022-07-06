@@ -7,6 +7,7 @@
 
 #include "../mav_helper.h"
 #include "routing/MavlinkComponent.hpp"
+#include "routing/MavlinkSystem.hpp"
 // wifibroadcast header-only
 #include "OpenHDStatisticsWriter.hpp"
 #include "HelperSources/SocketHelper.hpp"
@@ -24,7 +25,7 @@
 // telemetry values).
 // Both air an ground have an instance of this class, for example to broadcast statistics like CPU load
 // TODO please add more documented ! code here for usefully telemetry data.
-class InternalTelemetry {
+class InternalTelemetry : public MavlinkComponent{
  public:
   explicit InternalTelemetry(bool runsOnAir = false);
   /**
@@ -51,8 +52,8 @@ class InternalTelemetry {
   const bool RUNS_ON_AIR;
   // by the sys id QGroundControl knows if this message is telemetry data from the air pi or ground pi.
   // just for convenience, the RUNS_ON_AIR variable determines the sys id.
-  const uint8_t mSysId;
-  const uint8_t mCompId=0;
+  //const uint8_t mSysId;
+  //const uint8_t mCompId=0;
   // Here all the wb rx instance(s) send their statistics to.
   std::unique_ptr<SocketHelper::UDPReceiver> wifibroadcastStatisticsUdpReceiver;
   // for each unique stream ID, store the last received statistics message.

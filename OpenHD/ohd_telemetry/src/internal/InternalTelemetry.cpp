@@ -7,30 +7,32 @@
 #include "OnboardComputerStatus.hpp"
 #include "WBStatisticsConverter.hpp"
 
-InternalTelemetry::InternalTelemetry(bool runsOnAir) : RUNS_ON_AIR(runsOnAir),
-                                                       mSysId(runsOnAir ? OHD_SYS_ID_AIR : OHD_SYS_ID_GROUND) {
-  wifibroadcastStatisticsUdpReceiver = std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
-                                                                                   OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT,
-                                                                                   [this](const uint8_t *payload,
-                                                                                          const std::size_t payloadSize) {
-                                                                                     processWifibroadcastStatisticsData(
-                                                                                         payload,
-                                                                                         payloadSize);
-                                                                                   });
+InternalTelemetry::InternalTelemetry(bool runsOnAir) :RUNS_ON_AIR(runsOnAir),
+                                                       MavlinkComponent(runsOnAir ? OHD_SYS_ID_AIR : OHD_SYS_ID_GROUND,0) {
+  wifibroadcastStatisticsUdpReceiver =
+      std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
+                                                  OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT,
+                                                  [this](const uint8_t *payload,
+                                                         const std::size_t payloadSize) {
+                                                    processWifibroadcastStatisticsData(
+                                                        payload,
+                                                        payloadSize);
+                                                  });
   wifibroadcastStatisticsUdpReceiver->runInBackground();
-  logMessagesReceiver = std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
-                                                                    OHD_LOCAL_LOG_MESSAGES_UDP_PORT,
-                                                                    [this](const uint8_t *payload,
-                                                                           const std::size_t payloadSize) {
-                                                                      processLogMessageData(payload, payloadSize);
-                                                                    });
+  logMessagesReceiver =
+      std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
+                                                  OHD_LOCAL_LOG_MESSAGES_UDP_PORT,
+                                                  [this](const uint8_t *payload,
+                                                         const std::size_t payloadSize) {
+                                                    processLogMessageData(payload, payloadSize);
+                                                  });
   logMessagesReceiver->runInBackground();
 }
 
 std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   std::vector<MavlinkMessage> ret;
-  ret.push_back(OHDMessages::createHeartbeat(mSysId,mCompId));
-  ret.push_back(OnboardComputerStatus::createOnboardComputerStatus(mSysId, mCompId));
+  ret.push_back(OHDMessages::createHeartbeat(_sys_id,_comp_id));
+  ret.push_back(OnboardComputerStatus::createOnboardComputerStatus(_sys_id,_comp_id));
   ret.push_back(generateWifibroadcastStatistics());
   ret.push_back(generateOpenHDVersion());
   // TODO remove for release
@@ -61,7 +63,7 @@ MavlinkMessage InternalTelemetry::generateWifibroadcastStatistics() const {
   data.radio_port = 0;
   data.count_p_all = 3;
   data.count_p_dec_err = 4;
-  auto msg = WBStatisticsConverter::convertWbStatisticsToMavlink(data, mSysId, mCompId);
+  auto msg = WBStatisticsConverter::convertWbStatisticsToMavlink(data,_sys_id,_comp_id);
   return msg;
 }
 
@@ -76,8 +78,7 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
       MavlinkMessage mavMsg;
       const uint64_t timestamp =
           std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-      mavlink_msg_openhd_log_message_pack(mSysId,
-                                          mCompId,
+      mavlink_msg_openhd_log_message_pack(_sys_id,_comp_id,
                                           &mavMsg.m,
                                           msg.level,
                                           (const char *)&msg.message,
@@ -100,7 +101,7 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
 
 MavlinkMessage InternalTelemetry::generateOpenHDVersion() const {
   MavlinkMessage msg;
-  mavlink_msg_openhd_version_message_pack(mSysId, mCompId, &msg.m, "2.1");
+  mavlink_msg_openhd_version_message_pack(_sys_id,_comp_id, &msg.m, "2.1");
   return msg;
 }
 
@@ -138,8 +139,7 @@ std::optional<MavlinkMessage> InternalTelemetry::handlePingMessage(const Mavlink
     // Response to ping request.
     mavlink_message_t response_message;
     mavlink_msg_ping_pack(
-        mSysId,
-        mCompId,
+        _sys_id,_comp_id,
         &response_message,
         ping.time_usec,
         ping.seq,
