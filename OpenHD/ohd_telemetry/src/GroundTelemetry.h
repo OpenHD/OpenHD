@@ -5,11 +5,11 @@
 #ifndef OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 #define OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 
+#include "endpoints/SerialEndpoint.h"
 #include "endpoints/TCPEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
 #include "endpoints/UDPEndpoint2.h"
-#include "endpoints/SerialEndpoint.h"
-#include "internal/InternalTelemetry.h"
+#include "internal/OHDMainComponent.h"
 #include "mavlink_settings/XSettingsComponent.h"
 
 /**
@@ -42,7 +42,7 @@ class GroundTelemetry :public MavlinkSystem{
   std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;
   // We rely on another service for starting the rx/tx links
   std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;
-  std::shared_ptr<InternalTelemetry> _internal_telemetry;
+  std::shared_ptr<OHDMainComponent> _ohd_main_component;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
 };
 

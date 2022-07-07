@@ -2,13 +2,14 @@
 // Created by consti10 on 19.04.22.
 //
 
-#include "InternalTelemetry.h"
 #include <iostream>
+
+#include "OHDMainComponent.h"
 #include "OnboardComputerStatus.hpp"
 #include "RebootUtil.hpp"
 #include "WBStatisticsConverter.hpp"
 
-InternalTelemetry::InternalTelemetry(MavlinkSystem& parent,bool runsOnAir) :
+OHDMainComponent::OHDMainComponent(MavlinkSystem& parent,bool runsOnAir) :
                   RUNS_ON_AIR(runsOnAir),
                   MavlinkComponent(parent,MAV_COMP_ID_ONBOARD_COMPUTER) {
   wifibroadcastStatisticsUdpReceiver =
@@ -31,7 +32,7 @@ InternalTelemetry::InternalTelemetry(MavlinkSystem& parent,bool runsOnAir) :
   logMessagesReceiver->runInBackground();
 }
 
-std::vector<MavlinkMessage> InternalTelemetry::generate_mavlink_messages() {
+std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   std::cout<<"InternalTelemetry::generate_mavlink_messages()\n";
   std::vector<MavlinkMessage> ret;
   ret.push_back(MavlinkComponent::create_heartbeat());
@@ -48,7 +49,7 @@ std::vector<MavlinkMessage> InternalTelemetry::generate_mavlink_messages() {
   return ret;
 }
 
-std::vector<MavlinkMessage> InternalTelemetry::process_mavlink_message(const MavlinkMessage &msg) {
+std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const MavlinkMessage &msg) {
   std::vector<MavlinkMessage> ret{};
   switch (msg.m.msgid) { // NOLINT(cppcoreguidelines-narrowing-conversions)
     case MAVLINK_MSG_ID_PING:{
@@ -74,7 +75,7 @@ std::vector<MavlinkMessage> InternalTelemetry::process_mavlink_message(const Mav
   return ret;
 }
 
-void InternalTelemetry::processWifibroadcastStatisticsData(const uint8_t *payload, const std::size_t payloadSize) {
+void OHDMainComponent::processWifibroadcastStatisticsData(const uint8_t *payload, const std::size_t payloadSize) {
   //std::cout << "OHDTelemetryGenerator::processNewWifibroadcastStatisticsMessage: " << payloadSize << "\n";
   const auto msges=WBStatisticsConverter::parseRawDataSafe(payload,payloadSize);
   for(const auto msg:msges){
@@ -82,7 +83,7 @@ void InternalTelemetry::processWifibroadcastStatisticsData(const uint8_t *payloa
   }
 }
 
-MavlinkMessage InternalTelemetry::generateWifibroadcastStatistics() const {
+MavlinkMessage OHDMainComponent::generateWifibroadcastStatistics() const {
   OpenHDStatisticsWriter::Data data;
   // for now, write some crap
   data.radio_port = 0;
@@ -92,7 +93,7 @@ MavlinkMessage InternalTelemetry::generateWifibroadcastStatistics() const {
   return msg;
 }
 
-std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
+std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
   const auto messages=_status_text_accumulator.get_messages();
   std::vector<MavlinkMessage> ret;
   // limit to 5 to save bandwidth
@@ -111,7 +112,7 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
   return ret;
 }
 
-MavlinkMessage InternalTelemetry::generateOpenHDVersion() const {
+MavlinkMessage OHDMainComponent::generateOpenHDVersion() const {
   MavlinkMessage msg;
   char bufferBigEnough[30]={};
   std::strncpy((char *)bufferBigEnough,"Dev-2.1",30);

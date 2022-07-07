@@ -30,8 +30,8 @@ GroundTelemetry::GroundTelemetry(): MavlinkSystem(OHD_SYS_ID_GROUND) {
   udpWifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
     onMessageAirPi(msg);
   });
-  _internal_telemetry=std::make_shared<InternalTelemetry>(*this,false);
-  components.push_back(_internal_telemetry);
+  _ohd_main_component=std::make_shared<OHDMainComponent>(*this,false);
+  components.push_back(_ohd_main_component);
   std::cout << "Created GroundTelemetry\n";
 }
 
@@ -53,7 +53,7 @@ void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
   // for now, forward everything
   sendMessageAirPi(message);
   //
-  const auto responses=_internal_telemetry->process_mavlink_message(message);
+  const auto responses=_ohd_main_component->process_mavlink_message(message);
   for(const auto& response:responses){
     // for now, send to the ground station clients only
     sendMessageGroundStationClients(response);
@@ -90,7 +90,7 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 	}
 	// send messages to the ground station in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
-	const auto ohdTelemetryMessages = _internal_telemetry->generate_mavlink_messages();
+	const auto ohdTelemetryMessages = _ohd_main_component->generate_mavlink_messages();
 	for (const auto &msg: ohdTelemetryMessages) {
 	  sendMessageGroundStationClients(msg);
 	}

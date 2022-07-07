@@ -5,13 +5,12 @@
 #ifndef OPENHD_TELEMETRY_AIRTELEMETRY_H
 #define OPENHD_TELEMETRY_AIRTELEMETRY_H
 
-#include "mavlink_settings/XSettingsComponent.h"
-
 #include <string>
 
 #include "endpoints/SerialEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
-#include "internal/InternalTelemetry.h"
+#include "internal/OHDMainComponent.h"
+#include "mavlink_settings/XSettingsComponent.h"
 #include "openhd-platform.hpp"
 #include "routing/MavlinkSystem.hpp"
 
@@ -43,7 +42,7 @@ class AirTelemetry : public MavlinkSystem{
   // For now, use UDP endpoint and rely on another service for starting the rx/tx links
   //std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;
   std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
-  std::shared_ptr<InternalTelemetry> _internal_telemetry;
+  std::shared_ptr<OHDMainComponent> _ohd_main_component;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
 };
 

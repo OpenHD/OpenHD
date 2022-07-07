@@ -17,8 +17,8 @@ AirTelemetry::AirTelemetry(std::string fcSerialPort): MavlinkSystem(OHD_SYS_ID_A
   wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	onMessageGroundPi(msg);
   });
-  _internal_telemetry=std::make_shared<InternalTelemetry>(*this,true);
-  components.push_back(_internal_telemetry);
+  _ohd_main_component=std::make_shared<OHDMainComponent>(*this,true);
+  components.push_back(_ohd_main_component);
   std::cout << "Created AirTelemetry\n";
 }
 
@@ -60,7 +60,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   // for now, do it as simple as possible
   sendMessageFC(message);
 
-  const auto responses=_internal_telemetry->process_mavlink_message(message);
+  const auto responses=_ohd_main_component->process_mavlink_message(message);
   for(const auto& response:responses){
     // any data created by OpenHD on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
     sendMessageGroundPi(response);
@@ -79,7 +79,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
 	}
 	// send messages to the ground pi in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
-	const auto ohdTelemetryMessages = _internal_telemetry->generate_mavlink_messages();
+	const auto ohdTelemetryMessages = _ohd_main_component->generate_mavlink_messages();
 	for (const auto &msg: ohdTelemetryMessages) {
 	  sendMessageGroundPi(msg);
 	}
@@ -102,7 +102,8 @@ std::string AirTelemetry::createDebug() const {
 
 void AirTelemetry::add_settings_component(
     const int comp_id, std::shared_ptr<openhd::XSettingsComponent> glue) {
-  //auto param_server=std::make_shared<XMavlinkParamProvider>(OHD_SYS_ID_AIR,comp_id,glue);
+  auto param_server=std::make_shared<XMavlinkParamProvider>(*this,comp_id,glue);
+  components.push_back(param_server);
   std::cout<<"Added parameter component\n";
 
 }

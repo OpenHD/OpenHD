@@ -24,9 +24,9 @@
 // "fire and forget" messages as possible. For example, it broadcast the CPU load and other statistics, and responds to ping messages.
 // However, external OpenHD libraries might create their own component(s), for example
 // Video creates a component for each camera and handles commands itself, but then uses OpenHD Telemetry to receive / send messages.
-class InternalTelemetry : public MavlinkComponent{
+class OHDMainComponent : public MavlinkComponent{
  public:
-  explicit InternalTelemetry(MavlinkSystem& parent,bool runsOnAir);
+  explicit OHDMainComponent(MavlinkSystem& parent,bool runsOnAir);
   // override from component
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
   // override from component

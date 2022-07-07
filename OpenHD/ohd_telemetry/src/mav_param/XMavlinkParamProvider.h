@@ -16,7 +16,10 @@ class XMavlinkParamProvider :public MavlinkComponent{
   explicit XMavlinkParamProvider(MavlinkSystem& parent,uint8_t comp_id,std::shared_ptr<openhd::XSettingsComponent> handler):
       MavlinkComponent(parent,comp_id),_handler(std::move(handler)){
   }
-
+  // override from component
+  std::vector<MavlinkMessage> generate_mavlink_messages() override;
+  // override from component
+  std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage &msg)override;
  private:
   std::shared_ptr<openhd::XSettingsComponent> _handler;
 };
