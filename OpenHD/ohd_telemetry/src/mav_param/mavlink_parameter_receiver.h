@@ -2,8 +2,6 @@
 
 #include "sender.h"
 #include "mavlink_message_handler.h"
-#include "timeout_handler.h"
-#include "timeout_s_callback.h"
 #include "param_value.h"
 #include "locked_queue.h"
 #include "mavlink_parameter_subscription.h"
@@ -38,10 +36,6 @@ public:
     explicit MavlinkParameterReceiver(
         Sender& parent,
         MavlinkMessageHandler& message_handler,
-        // Here until it can be safely deleted
-        TimeoutHandler& timeout_handler_unused,
-        // Here until it can be safely deleted
-        TimeoutSCallback timeout_s_callback_unused,
         // by providing all the parameters on construction you can populate the parameter set
         // before the server starts reacting to clients, removing this issue:
         // https://mavlink.io/en/services/parameter.html#parameters_invariant

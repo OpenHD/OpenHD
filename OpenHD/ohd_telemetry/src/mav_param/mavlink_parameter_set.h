@@ -3,6 +3,7 @@
 #include "param_value.h"
 #include <map>
 #include <mutex>
+#include <vector>
 
 namespace mavsdk{
 

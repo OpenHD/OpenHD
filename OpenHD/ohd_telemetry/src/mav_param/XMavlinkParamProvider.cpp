@@ -4,6 +4,8 @@
 
 #include "XMavlinkParamProvider.h"
 
+#include "mavlink_parameter_receiver.h"
+
 std::vector<MavlinkMessage> XMavlinkParamProvider::process_mavlink_message(
     const MavlinkMessage& msg) {
   return std::vector<MavlinkMessage>();

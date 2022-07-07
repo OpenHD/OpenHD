@@ -6,8 +6,6 @@ namespace mavsdk {
 MavlinkParameterReceiver::MavlinkParameterReceiver(
     Sender& sender,
     MavlinkMessageHandler& message_handler,
-    TimeoutHandler& timeout_handler_unused,
-    TimeoutSCallback timeout_s_callback_unused,
     std::optional<std::map<std::string,ParamValue>> optional_param_values) :
     _sender(sender),
     _message_handler(message_handler)
