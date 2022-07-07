@@ -58,9 +58,6 @@ target_link_libraries(test_serial_endpoint OHDTelemetryLib)
 add_executable(test_udp_endpoint tests/test_udp_endpoint.cpp)
 target_link_libraries(test_udp_endpoint OHDTelemetryLib)
 
-add_executable(test_ohd_generate_telemetry tests/test_ohd_generate_telemetry.cpp)
-target_link_libraries(test_ohd_generate_telemetry OHDTelemetryLib)
-
 add_executable(test_ohd_reboot tests/test_ohd_reboot.cpp)
 target_link_libraries(test_ohd_reboot OHDTelemetryLib)
 
