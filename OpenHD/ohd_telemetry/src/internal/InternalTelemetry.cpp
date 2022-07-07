@@ -39,7 +39,7 @@ std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   // TODO remove for release
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
   // TODO remove for release
-  //_status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
+  _status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
   const auto logs = generateLogMessages();
   ret.insert(ret.end(), logs.begin(), logs.end());
   return ret;
@@ -91,7 +91,10 @@ std::vector<MavlinkMessage> InternalTelemetry::generateLogMessages() {
 
 MavlinkMessage InternalTelemetry::generateOpenHDVersion() const {
   MavlinkMessage msg;
-  mavlink_msg_openhd_version_message_pack(_sys_id,_comp_id, &msg.m, "2.1");
+  char bufferBigEnough[30]={};
+  std::strncpy((char *)bufferBigEnough,"Dev-2.1",30);
+  mavlink_msg_openhd_version_message_pack(_sys_id,_comp_id, &msg.m, bufferBigEnough);
+  //mavlink_component_information_t x;
   return msg;
 }
 
