@@ -10,6 +10,7 @@
 #include "endpoints/UDPEndpoint2.h"
 #include "endpoints/SerialEndpoint.h"
 #include "internal/InternalTelemetry.h"
+#include "mavlink_settings/XSettingsComponent.h"
 
 /**
  * OpenHD Ground telemetry. Assumes a air instance running on the air pi.
@@ -23,6 +24,8 @@ class GroundTelemetry {
    */
   [[noreturn]] void loopInfinite(bool enableExtendedLogging = false);
   [[nodiscard]] std::string createDebug()const;
+  // add a mavlink parameter server that allows the user to change parameters
+  void add_settings_component(int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue);
  private:
   // called every time a message from the air pi is received
   void onMessageAirPi(MavlinkMessage &message);
@@ -39,7 +42,8 @@ class GroundTelemetry {
   std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;
   // We rely on another service for starting the rx/tx links
   std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;
-  InternalTelemetry ohdTelemetryGenerator{false};
+  std::shared_ptr<InternalTelemetry> _internal_telemetry;
+  std::vector<std::shared_ptr<MavlinkComponent>> components;
 };
 
 #endif //OPENHD_TELEMETRY_GROUNDTELEMETRY_H

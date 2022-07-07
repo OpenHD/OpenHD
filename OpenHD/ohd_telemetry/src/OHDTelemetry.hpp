@@ -50,7 +50,9 @@ class OHDTelemetry {
   }
   void add_settings_component(const int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue){
     if(profile.is_air){
-      airTelemetry->add_settings_component(comp_id,glue);
+      airTelemetry->add_settings_component(comp_id,std::move(glue));
+    }else{
+      groundTelemetry->add_settings_component(comp_id,std::move(glue));
     }
   }
  private:

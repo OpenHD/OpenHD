@@ -42,7 +42,8 @@ class AirTelemetry {
   // For now, use UDP endpoint and rely on another service for starting the rx/tx links
   //std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;
   std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
-  InternalTelemetry ohdTelemetryGenerator{true};
+  std::shared_ptr<InternalTelemetry> _internal_telemetry;
+  std::vector<std::shared_ptr<MavlinkComponent>> components;
 };
 
 #endif //OPENHD_TELEMETRY_AIRTELEMETRY_H

@@ -68,5 +68,23 @@ static bool safe_to(std::string& value,const SettingsVariant& settings_variant){
   return false;
 }
 
+// For testing
+class DummyXSettingsComponent:public XSettingsComponent{
+ public:
+  std::vector<Setting> get_all_settings() override{
+    std::vector<openhd::Setting> ret={
+        openhd::Setting{"VIDEO_WIDTH",11},
+        openhd::Setting{"VIDEO_HEIGHT",12},
+        openhd::Setting{"VIDEO_FPS",13},
+        openhd::Setting{"VIDEO_FORMAT","some"}
+    };
+    return ret;
+  }
+  void process_setting_changed(const Setting& changed_setting) override{
+    std::cout<<"Setting: "<<changed_setting.id<<" changed\n";
+  }
+};
+
+
 }
 #endif  // OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_XSETTINGSCOMPONENT_H_
