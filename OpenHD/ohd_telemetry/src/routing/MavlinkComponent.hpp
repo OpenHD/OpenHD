@@ -62,6 +62,19 @@ class MavlinkComponent{
       return std::nullopt;
     }
   }
+  // Convenient method to create a heartbeat, for use in the implementation
+  [[nodiscard]] MavlinkMessage create_heartbeat()const{
+    MavlinkMessage heartbeat;
+    mavlink_msg_heartbeat_pack(_sys_id,
+                               _comp_id,
+                               &heartbeat.m,
+                               MAV_TYPE_GENERIC,
+                               MAV_AUTOPILOT_INVALID,
+                               0,
+                               0,
+                               MAV_STATE_ACTIVE);
+    return heartbeat;
+  }
  public:
   template <class T>
   static void vec_append(std::vector<T>& dest,const std::vector<T>& src){

@@ -34,7 +34,7 @@ InternalTelemetry::InternalTelemetry(MavlinkSystem& parent,bool runsOnAir) :
 std::vector<MavlinkMessage> InternalTelemetry::generate_mavlink_messages() {
   std::cout<<"InternalTelemetry::generate_mavlink_messages()\n";
   std::vector<MavlinkMessage> ret;
-  ret.push_back(OHDMessages::createHeartbeat(_sys_id,_comp_id));
+  ret.push_back(MavlinkComponent::create_heartbeat());
   ret.push_back(OnboardComputerStatus::createOnboardComputerStatus(_sys_id,_comp_id));
   ret.push_back(generateWifibroadcastStatistics());
   ret.push_back(generateOpenHDVersion());
