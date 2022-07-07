@@ -31,7 +31,6 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         #src/endpoints/SerialEndpoint2.cpp
         #src/endpoints/WBEndpoint.cpp
         src/internal/OHDMainComponent.cpp
-        src/internal/MavlinkParamExt.cpp
         src/mav_param/XMavlinkParamProvider.cpp
         # temporarily until mavsdk becomes usable
         src/mav_param/mavlink_parameter_set.cpp
