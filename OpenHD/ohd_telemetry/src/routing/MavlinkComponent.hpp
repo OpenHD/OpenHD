@@ -18,8 +18,8 @@ class MavlinkComponent{
   /**
    * Call this with any mavlink message received, the component can then decide if he
    * can use this message or not.
-   * @return a list of mavlink messages that were created as a response, if the given messages needs a response.
-   * can be empty.
+   * @return a list of mavlink messages that were created as a response, if the given message needs a response.
+   * otherwise, it will be empty.
    */
   virtual std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage& msg)=0;
   /**
