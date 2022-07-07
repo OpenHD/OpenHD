@@ -6,6 +6,12 @@
 
 #include "mavlink_parameter_receiver.h"
 
+XMavlinkParamProvider::XMavlinkParamProvider(MavlinkSystem& parent, uint8_t comp_id,
+    std::shared_ptr<openhd::XSettingsComponent> handler):
+      MavlinkComponent(parent,comp_id),_handler(std::move(handler)){
+
+}
+
 std::vector<MavlinkMessage> XMavlinkParamProvider::process_mavlink_message(
     const MavlinkMessage& msg) {
   return std::vector<MavlinkMessage>();
