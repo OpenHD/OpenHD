@@ -20,10 +20,10 @@
 #include "StatusTextAccumulator.hpp"
 #include "openhd-log.hpp"
 
-// Both air and ground have an instance of this class, for example to broadcast statistics like CPU load
 // This Component runs on both the air and ground unit and should handle as many messages / commands / create as many
-// "fire and forget" messages as possible. However, external OpenHD libraries might create their own component(s), for example
-// Video creates a component for each camera and handles commands itself.
+// "fire and forget" messages as possible. For example, it broadcast the CPU load and other statistics, and responds to ping messages.
+// However, external OpenHD libraries might create their own component(s), for example
+// Video creates a component for each camera and handles commands itself, but then uses OpenHD Telemetry to receive / send messages.
 class InternalTelemetry : public MavlinkComponent{
  public:
   explicit InternalTelemetry(bool runsOnAir = false);
