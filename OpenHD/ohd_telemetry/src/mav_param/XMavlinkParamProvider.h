@@ -7,11 +7,13 @@
 
 #include "mavlink_settings/XSettingsComponent.h"
 #include "routing/MavlinkComponent.hpp"
-
 #include <memory>
 #include <utility>
 
-class MavlinkParameterReceiver;
+// mavsdk
+#include "mavlink_parameter_receiver.h"
+#include "mavlink_message_handler.h"
+#include "sender_wrapper.h"
 
 class XMavlinkParamProvider :public MavlinkComponent{
  public:
@@ -22,7 +24,10 @@ class XMavlinkParamProvider :public MavlinkComponent{
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
  private:
   std::shared_ptr<openhd::XSettingsComponent> _handler;
-  std::shared_ptr<MavlinkParameterReceiver> _mavlink_parameter_receiver;
+  // mavsdk
+  std::shared_ptr<mavsdk::SenderWrapper> _sender;
+  std::shared_ptr<mavsdk::MavlinkMessageHandler> _mavlink_message_handler;
+  std::shared_ptr<mavsdk::MavlinkParameterReceiver> _mavlink_parameter_receiver;
 };
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_MAV_PARAM_XMAVLINKPARAMPROVIDER_H_

@@ -3,7 +3,11 @@
 //
 
 #include "GroundTelemetry.h"
+
+#include "mav_param/XMavlinkParamProvider.h"
+
 #include <iostream>
+
 #include "mav_helper.h"
 
 GroundTelemetry::GroundTelemetry(): MavlinkSystem(OHD_SYS_ID_GROUND) {
@@ -110,7 +114,10 @@ std::string GroundTelemetry::createDebug() const {
   return ss.str();
 }
 
+
 void GroundTelemetry::add_settings_component(
     int comp_id, std::shared_ptr<openhd::XSettingsComponent> glue) {
-
+  auto param_server=std::make_shared<XMavlinkParamProvider>(*this,comp_id,std::move(glue));
+  components.push_back(param_server);
+  std::cout<<"Added parameter component\n";
 }
