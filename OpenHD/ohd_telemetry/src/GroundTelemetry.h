@@ -15,7 +15,7 @@
 /**
  * OpenHD Ground telemetry. Assumes a air instance running on the air pi.
  */
-class GroundTelemetry {
+class GroundTelemetry :public MavlinkSystem{
  public:
   GroundTelemetry();
   /**

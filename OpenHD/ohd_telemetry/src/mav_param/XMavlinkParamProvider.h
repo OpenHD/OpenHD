@@ -13,8 +13,8 @@
 
 class XMavlinkParamProvider :public MavlinkComponent{
  public:
-  explicit XMavlinkParamProvider(uint8_t sys_id,uint8_t comp_id,std::shared_ptr<openhd::XSettingsComponent> handler):
-      MavlinkComponent(sys_id,comp_id),_handler(std::move(handler)){
+  explicit XMavlinkParamProvider(MavlinkSystem& parent,uint8_t comp_id,std::shared_ptr<openhd::XSettingsComponent> handler):
+      MavlinkComponent(parent,comp_id),_handler(std::move(handler)){
   }
 
  private:

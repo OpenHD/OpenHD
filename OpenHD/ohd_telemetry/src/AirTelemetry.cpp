@@ -7,7 +7,7 @@
 #include "mav_param/XMavlinkParamProvider.h"
 
 
-AirTelemetry::AirTelemetry(std::string fcSerialPort) {
+AirTelemetry::AirTelemetry(std::string fcSerialPort): MavlinkSystem(OHD_SYS_ID_AIR) {
   /*serialEndpoint = std::make_unique<SerialEndpoint>("FCSerial",SerialEndpoint::HWOptions{fcSerialPort, 115200});
   serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	this->onMessageFC(msg);
@@ -17,7 +17,7 @@ AirTelemetry::AirTelemetry(std::string fcSerialPort) {
   wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	onMessageGroundPi(msg);
   });
-  _internal_telemetry=std::make_shared<InternalTelemetry>(true);
+  _internal_telemetry=std::make_shared<InternalTelemetry>(*this,true);
   components.push_back(_internal_telemetry);
   std::cout << "Created AirTelemetry\n";
 }

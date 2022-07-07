@@ -26,7 +26,7 @@
 // Video creates a component for each camera and handles commands itself, but then uses OpenHD Telemetry to receive / send messages.
 class InternalTelemetry : public MavlinkComponent{
  public:
-  explicit InternalTelemetry(bool runsOnAir);
+  explicit InternalTelemetry(MavlinkSystem& parent,bool runsOnAir);
   // override from component
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
   // override from component

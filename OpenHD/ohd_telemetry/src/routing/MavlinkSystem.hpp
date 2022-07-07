@@ -5,7 +5,6 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_ROUTING_MAVLINKSYSTEM_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_ROUTING_MAVLINKSYSTEM_H_
 
-#include "MavlinkComponent.hpp"
 #include <memory>
 #include <vector>
 #include <map>

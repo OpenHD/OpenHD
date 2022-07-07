@@ -5,21 +5,24 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_ROUTING_MAVLINKCOMPONENT_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_ROUTING_MAVLINKCOMPONENT_H_
 
+#include "MavlinkSystem.hpp"
 #include "mav_include.h"
 #include <cassert>
+#include <utility>
 
 // A component has a (parent) sys id and its own component id (unique per system).
 // It processes and/or creates mavlink messages.
 class MavlinkComponent{
  public:
-  MavlinkComponent(uint8_t sys_id,uint8_t comp_id):_sys_id(sys_id),_comp_id(comp_id){}
+  MavlinkComponent(MavlinkSystem& parent,uint8_t comp_id):
+       _parent(parent),_sys_id(_parent._sys_id),_comp_id(comp_id){}
+  MavlinkSystem& _parent;
   const uint8_t _sys_id;
   const uint8_t _comp_id;
   /**
    * Call this with any mavlink message received, the component can then decide if he
    * can use this message or not.
-   * @return a list of mavlink messages that were created as a response, if the given message needs a response.
-   * otherwise, it will be empty.
+   * @return a list of mavlink messages that were created as a response.Empty unless the given message needs a response.
    */
   virtual std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage& msg)=0;
   /**

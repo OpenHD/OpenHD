@@ -13,11 +13,12 @@
 #include "endpoints/UDPEndpoint.h"
 #include "internal/InternalTelemetry.h"
 #include "openhd-platform.hpp"
+#include "routing/MavlinkSystem.hpp"
 
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
  */
-class AirTelemetry {
+class AirTelemetry : public MavlinkSystem{
  public:
   explicit AirTelemetry(std::string fcSerialPort);
   /**
