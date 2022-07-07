@@ -57,10 +57,12 @@ void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
   // for now, forward everything
   sendMessageAirPi(message);
   //
-  const auto responses=_ohd_main_component->process_mavlink_message(message);
-  for(const auto& response:responses){
-    // for now, send to the ground station clients only
-    sendMessageGroundStationClients(response);
+  for(auto component:components){
+    const auto responses=component->process_mavlink_message(message);
+    for(const auto& response:responses){
+      // for now, send to the ground station clients only
+      sendMessageGroundStationClients(response);
+    }
   }
 }
 

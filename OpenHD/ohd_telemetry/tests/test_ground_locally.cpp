@@ -19,7 +19,7 @@ int main() {
 	OHDPlatform platform{};
 	ground = std::make_unique<OHDTelemetry>(platform, profile);
         auto example_comp=std::make_shared<openhd::DummyXSettingsComponent>();
-        ground->add_settings_component(0,example_comp);
+        ground->add_settings_component(1,example_comp);
 
   }
   while (true) {
