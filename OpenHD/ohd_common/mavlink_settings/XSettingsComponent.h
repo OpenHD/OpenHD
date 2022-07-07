@@ -9,6 +9,7 @@
 #include <variant>
 #include <string>
 #include <vector>
+#include <iostream>
 
 namespace openhd{
 
