@@ -25,7 +25,7 @@ class XSettingsComponent{
   // all the settings this component uses
   virtual std::vector<Setting> get_all_settings()=0;
   // perform required steps when a setting value changes.
-  virtual void process_setting_changed(const Setting& changed_setting)=0;
+  virtual void process_setting_changed(Setting changed_setting)=0;
 };
 
 /*bool safe_to(std::bool& value,const SettingsVariant& settings_variant){
@@ -81,7 +81,7 @@ class DummyXSettingsComponent:public XSettingsComponent{
     };
     return ret;
   }
-  void process_setting_changed(const Setting& changed_setting) override{
+  void process_setting_changed(Setting changed_setting) override{
     std::cout<<"Setting: "<<changed_setting.id<<" changed\n";
   }
 };

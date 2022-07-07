@@ -148,7 +148,7 @@ class CameraHolder : public openhd::XSettingsComponent {
     };
     return ret;
   }
-  void process_setting_changed(const openhd::Setting& changed_setting) override{
+  void process_setting_changed(openhd::Setting changed_setting) override{
     bool changed=false;
     if(changed_setting.id=="VIDEO_WIDTH"){
       changed=openhd::safe_to(_settings->userSelectedVideoFormat.width,changed_setting.value);
