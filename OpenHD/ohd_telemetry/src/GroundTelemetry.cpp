@@ -50,14 +50,11 @@ void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
   const auto &msg = message.m;
   // for now, forward everything
   sendMessageAirPi(message);
-  // temporarily, handle ping messages
-  if(msg.msgid==MAVLINK_MSG_ID_PING){
-	auto response=ohdTelemetryGenerator.handlePingMessage(message);
-	if(response.has_value()){
-	  sendMessageGroundStationClients(response.value());
-	}
-  }else if(msg.msgid==MAVLINK_MSG_ID_PARAM_REQUEST_LIST){
-	std::cout<<"Got MAVLINK_MSG_ID_PARAM_REQUEST_LIST\n";
+  //
+  auto responses=ohdTelemetryGenerator.process_mavlink_message(message);
+  for(auto& response:responses){
+    // for now, send to the ground station clients only
+    sendMessageGroundStationClients(response);
   }
 }
 
@@ -91,7 +88,7 @@ void GroundTelemetry::sendMessageAirPi(MavlinkMessage &message) {
 	}
 	// send messages to the ground station in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
-	auto ohdTelemetryMessages = ohdTelemetryGenerator.generateUpdates();
+	auto ohdTelemetryMessages = ohdTelemetryGenerator.generate_mavlink_messages();
 	for (auto &msg: ohdTelemetryMessages) {
 	  sendMessageGroundStationClients(msg);
 	}

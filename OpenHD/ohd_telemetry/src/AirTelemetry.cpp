@@ -52,12 +52,11 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   }
   // for now, do it as simple as possible
   sendMessageFC(message);
-  // temporarily, handle ping messages
-  if(m.msgid==MAVLINK_MSG_ID_PING){
-	auto response=ohdTelemetryGenerator.handlePingMessage(message);
-	if(response.has_value()){
-	  sendMessageGroundPi(response.value());
-	}
+
+  auto responses=ohdTelemetryGenerator.process_mavlink_message(message);
+  for(auto& response:responses){
+    // any data created by OpenHD on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
+    sendMessageGroundPi(response);
   }
 }
 
@@ -73,7 +72,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
 	}
 	// send messages to the ground pi in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
-	auto ohdTelemetryMessages = ohdTelemetryGenerator.generateUpdates();
+	auto ohdTelemetryMessages = ohdTelemetryGenerator.generate_mavlink_messages();
 	for (auto &msg: ohdTelemetryMessages) {
 	  sendMessageGroundPi(msg);
 	}

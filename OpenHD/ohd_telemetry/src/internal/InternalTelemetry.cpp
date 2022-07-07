@@ -29,8 +29,8 @@ InternalTelemetry::InternalTelemetry(bool runsOnAir) :RUNS_ON_AIR(runsOnAir),
   logMessagesReceiver->runInBackground();
 }
 
-std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
-  std::cout<<"InternalTelemetry::generateUpdates()\n";
+std::vector<MavlinkMessage> InternalTelemetry::generate_mavlink_messages() {
+  std::cout<<"InternalTelemetry::generate_mavlink_messages()\n";
   std::vector<MavlinkMessage> ret;
   ret.push_back(OHDMessages::createHeartbeat(_sys_id,_comp_id));
   ret.push_back(OnboardComputerStatus::createOnboardComputerStatus(_sys_id,_comp_id));
@@ -45,11 +45,18 @@ std::vector<MavlinkMessage> InternalTelemetry::generateUpdates() {
   return ret;
 }
 
-bool InternalTelemetry::handleMavlinkCommandIfPossible(const MavlinkMessage &msg) {
+std::vector<MavlinkMessage> InternalTelemetry::process_mavlink_message(const MavlinkMessage &msg) {
   // regarding reboot: https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
   //if(msg.m.msgid==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
   //}
-  return false;
+  std::vector<MavlinkMessage> ret{};
+  if(msg.m.msgid==MAVLINK_MSG_ID_PING){
+    auto response=handlePingMessage(msg);
+    if(response.has_value()){
+      ret.push_back(response.value());
+    }
+  }
+  return ret;
 }
 
 void InternalTelemetry::processWifibroadcastStatisticsData(const uint8_t *payload, const std::size_t payloadSize) {
@@ -98,27 +105,4 @@ MavlinkMessage InternalTelemetry::generateOpenHDVersion() const {
   return msg;
 }
 
-std::optional<MavlinkMessage> InternalTelemetry::handlePingMessage(const MavlinkMessage &message) const {
-  const auto msg=message.m;
-  assert(msg.msgid==MAVLINK_MSG_ID_PING);
-  mavlink_ping_t ping;
-  mavlink_msg_ping_decode(&msg, &ping);
-  // see https://mavlink.io/en/services/ping.html
-  if(ping.target_system==0 && ping.target_component==0){
-    //std::cout<<"Got ping request\n";
-    // Response to ping request.
-    mavlink_message_t response_message;
-    mavlink_msg_ping_pack(
-        _sys_id,_comp_id,
-        &response_message,
-        ping.time_usec,
-        ping.seq,
-        msg.sysid,
-        msg.compid);
-    return MavlinkMessage{response_message};
-  }else{
-    // answer from ping request
-    return std::nullopt;
-  }
-}
 

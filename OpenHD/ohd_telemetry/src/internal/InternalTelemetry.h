@@ -20,36 +20,17 @@
 #include "StatusTextAccumulator.hpp"
 #include "openhd-log.hpp"
 
-// The purpose of this class is to generate all the OpenHD specific telemetry that can be sent
-// in a fire and forget manner, as well as handling commands without side effects.
-// For example, to report the CPU usage on the air station,
-// one can read out the cpu usage in regular intervals and send it out (perhaps together with other
-// telemetry values).
-// Both air an ground have an instance of this class, for example to broadcast statistics like CPU load
-// TODO please add more documented ! code here for usefully telemetry data.
+// Both air and ground have an instance of this class, for example to broadcast statistics like CPU load
+// This Component runs on both the air and ground unit and should handle as many messages / commands / create as many
+// "fire and forget" messages as possible. However, external OpenHD libraries might create their own component(s), for example
+// Video creates a component for each camera and handles commands itself.
 class InternalTelemetry : public MavlinkComponent{
  public:
   explicit InternalTelemetry(bool runsOnAir = false);
-  /**
-   * generate all the OHD fire and forget telemetry data
-   * should be called in regular intervals.
-   * @return all the generated OHD mavlink messages
-   */
-  std::vector<MavlinkMessage> generateUpdates();
-  /**
-   * Check if the mavlink command can be handled by this module,
-   * if yes, consume the command and return true
-   * otherwise, return false - the command must then be for another module.
-   * @return true if the command has been consumed, false otherwise
-   */
-  bool handleMavlinkCommandIfPossible(const MavlinkMessage &msg);
-  /**
-   * Handle a ping message. Ping is a bit complicated in mavlink, since sys and comp id of 0 have special meaning.
-   * This implementation is similar to the one from mavsdk.
-   * @param message the ping message to handle
-   * @return a ping response message if needed, no message otherwise. (not every ping needs a response)
-   */
-  [[nodiscard]] std::optional<MavlinkMessage> handlePingMessage(const MavlinkMessage &message) const;
+  // override from component
+  std::vector<MavlinkMessage> generate_mavlink_messages() override;
+  // override from component
+  std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage &msg)override;
  private:
   const bool RUNS_ON_AIR;
   // by the sys id QGroundControl knows if this message is telemetry data from the air pi or ground pi.
