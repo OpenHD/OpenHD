@@ -9,9 +9,9 @@
 #include "RebootUtil.hpp"
 #include "WBStatisticsConverter.hpp"
 
-OHDMainComponent::OHDMainComponent(MavlinkSystem& parent,bool runsOnAir) :
-                                                                            RUNS_ON_AIR(runsOnAir),
-                                                                            MavlinkComponent(parent,MAV_COMP_ID_ONBOARD_COMPUTER) {
+OHDMainComponent::OHDMainComponent(
+    MavlinkSystem& parent,
+    bool runsOnAir) : RUNS_ON_AIR(runsOnAir),MavlinkComponent(parent._sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
   wifibroadcastStatisticsUdpReceiver =
       std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
                                                   OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT,

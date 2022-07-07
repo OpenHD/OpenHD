@@ -14,9 +14,11 @@
 // It processes and/or creates mavlink messages.
 class MavlinkComponent{
  public:
-  MavlinkComponent(MavlinkSystem& parent,uint8_t comp_id):
-       _parent(parent),_sys_id(_parent._sys_id),_comp_id(comp_id){}
-  MavlinkSystem& _parent;
+  MavlinkComponent(uint8_t sys_id,uint8_t comp_id):
+      _sys_id(sys_id),_comp_id(comp_id){}
+  //MavlinkComponent(MavlinkSystem& parent,uint8_t comp_id):
+  //     _parent(parent),_sys_id(_parent._sys_id),_comp_id(comp_id){}
+  //MavlinkSystem& _parent;
   const uint8_t _sys_id;
   const uint8_t _comp_id;
   /**
