@@ -21,7 +21,7 @@ struct Setting{
 
 class XSettingsComponent{
  public:
-  // all the settings this component param server provides
+  // all the settings this component uses
   virtual std::vector<Setting> get_all_settings()=0;
   // perform required steps when a setting value changes.
   virtual void process_setting_changed(const Setting& changed_setting)=0;
