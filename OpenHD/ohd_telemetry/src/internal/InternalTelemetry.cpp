@@ -5,6 +5,7 @@
 #include "InternalTelemetry.h"
 #include <iostream>
 #include "OnboardComputerStatus.hpp"
+#include "RebootUtil.hpp"
 #include "WBStatisticsConverter.hpp"
 
 InternalTelemetry::InternalTelemetry(bool runsOnAir) :RUNS_ON_AIR(runsOnAir),
@@ -50,11 +51,25 @@ std::vector<MavlinkMessage> InternalTelemetry::process_mavlink_message(const Mav
   //if(msg.m.msgid==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
   //}
   std::vector<MavlinkMessage> ret{};
-  if(msg.m.msgid==MAVLINK_MSG_ID_PING){
-    auto response=handlePingMessage(msg);
-    if(response.has_value()){
-      ret.push_back(response.value());
-    }
+  switch (msg.m.msgid) {
+    case MAVLINK_MSG_ID_PING:{
+      // We respond to ping messages
+      auto response=handlePingMessage(msg);
+      if(response.has_value()){
+        ret.push_back(response.value());
+      }
+    }break;
+    case MAVLINK_MSG_ID_COMMAND_LONG:{
+      mavlink_command_long_t command;
+      mavlink_msg_command_long_decode(&msg.m,&command);
+      if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
+        std::cout<<"Got shutdown command";
+        RebootUtil::handlePowerCommand(false);
+      }
+      // TODO have an ack response.
+    }break;
+    default:
+      break;
   }
   return ret;
 }
