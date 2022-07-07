@@ -48,11 +48,8 @@ std::vector<MavlinkMessage> InternalTelemetry::generate_mavlink_messages() {
 }
 
 std::vector<MavlinkMessage> InternalTelemetry::process_mavlink_message(const MavlinkMessage &msg) {
-  // regarding reboot: https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
-  //if(msg.m.msgid==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
-  //}
   std::vector<MavlinkMessage> ret{};
-  switch (msg.m.msgid) {
+  switch (msg.m.msgid) { // NOLINT(cppcoreguidelines-narrowing-conversions)
     case MAVLINK_MSG_ID_PING:{
       // We respond to ping messages
       auto response=handlePingMessage(msg);
@@ -61,6 +58,7 @@ std::vector<MavlinkMessage> InternalTelemetry::process_mavlink_message(const Mav
       }
     }break;
     case MAVLINK_MSG_ID_COMMAND_LONG:{
+      //https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
       mavlink_command_long_t command;
       mavlink_msg_command_long_decode(&msg.m,&command);
       if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){

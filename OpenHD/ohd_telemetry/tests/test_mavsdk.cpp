@@ -13,8 +13,24 @@ int main() {
 
   auto mavsdkServer=std::make_shared<mavsdk::Mavsdk>();
 
-  mavsdkServer->subscribe_on_new_system([]() {
-	std::cout << "System found\n";
+  int drop=0;
+  std::shared_ptr<mavsdk::System> system;
+  std::shared_ptr<mavsdk::MavlinkPassthrough> passthrough;
+
+  mavsdkServer->subscribe_on_new_system([&mavsdkServer,&system,&passthrough]() {
+    system = mavsdkServer->systems().back();
+    std::cout << "System found"<<(int)system->get_system_id()<<"\n";
+    /*passthrough=std::make_shared<mavsdk::MavlinkPassthrough>(system);
+    passthrough->intercept_incoming_messages_async([](mavlink_message_t& msg){
+      //std::cout<<"Intercept:Got message"<<msg.msgid;
+      static int drop=0;
+      drop++;
+      if(drop % 2==0){
+        //std::cout<<"drop";
+        return true;
+      }
+      return false;
+    });*/
   });
 
   mavsdk::Mavsdk::Configuration configuration(
