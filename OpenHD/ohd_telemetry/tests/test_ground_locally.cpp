@@ -6,6 +6,7 @@
 #include "../src/OHDTelemetry.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
+#include "mavlink_settings/XSettingsComponent.h"
 #include <thread>
 #include <memory>
 
@@ -17,6 +18,9 @@ int main() {
 	OHDProfile profile{false, "XX"};
 	OHDPlatform platform{};
 	ground = std::make_unique<OHDTelemetry>(platform, profile);
+        auto example_comp=std::make_shared<openhd::DummyXSettingsComponent>();
+        ground->add_settings_component(0,example_comp);
+
   }
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(1));

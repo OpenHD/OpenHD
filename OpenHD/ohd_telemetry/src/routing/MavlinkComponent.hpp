@@ -59,7 +59,6 @@ class MavlinkComponent{
       return std::nullopt;
     }
   }
-
  public:
   template <class T>
   static void vec_append(std::vector<T>& dest,const std::vector<T>& src){

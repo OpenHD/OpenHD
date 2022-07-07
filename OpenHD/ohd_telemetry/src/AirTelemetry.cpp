@@ -4,6 +4,7 @@
 
 #include "AirTelemetry.h"
 #include "mav_helper.h"
+#include "mav_param/XMavlinkParamProvider.h"
 
 
 AirTelemetry::AirTelemetry(std::string fcSerialPort) {
@@ -101,5 +102,7 @@ std::string AirTelemetry::createDebug() const {
 
 void AirTelemetry::add_settings_component(
     const int comp_id, std::shared_ptr<openhd::XSettingsComponent> glue) {
+  //auto param_server=std::make_shared<XMavlinkParamProvider>(OHD_SYS_ID_AIR,comp_id,glue);
   std::cout<<"Added parameter component\n";
+
 }

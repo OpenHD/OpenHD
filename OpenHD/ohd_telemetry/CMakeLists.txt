@@ -31,7 +31,8 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         #src/endpoints/SerialEndpoint2.cpp
         #src/endpoints/WBEndpoint.cpp
         src/internal/InternalTelemetry.cpp
-        src/internal/MavlinkParamExt.cpp)
+        src/internal/MavlinkParamExt.cpp
+        src/mav_param/XMavlinkParamProvider.cpp)
 
 # Build it as a library
 add_library(OHDTelemetryLib
