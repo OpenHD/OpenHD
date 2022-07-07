@@ -9,6 +9,7 @@
 #include "../mav_include.h"
 #include "../mav_helper.h"
 #include <iostream>
+#include <cassert>
 
 /**
  * Helper for converting ohd custom messages to mavlink and printing them to stdout
