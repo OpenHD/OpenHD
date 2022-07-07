@@ -31,7 +31,7 @@ static void logWifiBroadcast(const mavlink_message_t &msg) {
   mavlink_msg_openhd_wifibroadcast_statistics_decode(&msg, &decoded);
   std::stringstream ss;
   ss << "MAVLINK_MSG_ID_OPENHD_WIFIBROADCAST_STATISTICS:count_p_all:" << (int)decoded.count_p_all << "count_p_lost:"
-	 << (int)decoded.count_p_lost << "\n";
+     << (int)decoded.count_p_lost << "\n";
   std::cout << ss.str();
 }
 static void logLogMessage(const mavlink_message_t &msg) {
@@ -45,15 +45,15 @@ static void logLogMessage(const mavlink_message_t &msg) {
 
 static void logOpenHDMessages(const std::vector<MavlinkMessage> &msges) {
   for (const auto &msg: msges) {
-	if (msg.m.msgid == MAVLINK_MSG_ID_ONBOARD_COMPUTER_STATUS) {
-	  logOnboardComputerStatus(msg.m);
-	} else if (msg.m.msgid == MAVLINK_MSG_ID_OPENHD_WIFIBROADCAST_STATISTICS) {
-	  logWifiBroadcast(msg.m);
-	} else if (msg.m.msgid == MAVLINK_MSG_ID_OPENHD_LOG_MESSAGE) {
-	  logLogMessage(msg.m);
-	} else {
-	  std::cerr << "unknown ohd msg with msgid:"<<msg.m.msgid<<"\n";
-	}
+    if (msg.m.msgid == MAVLINK_MSG_ID_ONBOARD_COMPUTER_STATUS) {
+      logOnboardComputerStatus(msg.m);
+    } else if (msg.m.msgid == MAVLINK_MSG_ID_OPENHD_WIFIBROADCAST_STATISTICS) {
+      logWifiBroadcast(msg.m);
+    } else if (msg.m.msgid == MAVLINK_MSG_ID_OPENHD_LOG_MESSAGE) {
+      logLogMessage(msg.m);
+    } else {
+      std::cerr << "unknown ohd msg with msgid:"<<msg.m.msgid<<"\n";
+    }
   }
 }
 }

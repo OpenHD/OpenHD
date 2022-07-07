@@ -18,11 +18,11 @@ static int readCpuLoad() {
   long double a[4];
   FILE *fp;
   try {
-	fp = fopen("/proc/stat", "r");
-	fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
+    fp = fopen("/proc/stat", "r");
+    fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
   } catch (...) {
-	std::cerr << "ERROR: proc reading1" << std::endl;
-	return -1;
+    std::cerr << "ERROR: proc reading1" << std::endl;
+    return -1;
   }
   fclose(fp);
   cpuload_gnd = (a[0] + a[1] + a[2]) / (a[0] + a[1] + a[2] + a[3]) * 100;
@@ -36,11 +36,11 @@ static int readTemperature() {
   int cpu_temperature = 0;
   FILE *fp;
   try {
-	fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
-	fscanf(fp, "%d", &cpu_temperature);
+    fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
+    fscanf(fp, "%d", &cpu_temperature);
   } catch (...) {
-	std::cerr << "ERROR: thermal reading" << std::endl;
-	return -1;
+    std::cerr << "ERROR: thermal reading" << std::endl;
+    return -1;
   }
   fclose(fp);
   cpu_temperature = cpu_temperature / 1000;
@@ -51,7 +51,7 @@ static int readTemperature() {
 static int readRpiUnderVoltError(){
   auto fp3 = fopen("/tmp/undervolt", "r");
   if (fp3 == nullptr) {
-	return 0;
+    return 0;
   }
   int undervolt_gnd = 0;
   fscanf(fp3,"%d", &undervolt_gnd);
