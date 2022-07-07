@@ -30,9 +30,9 @@ class AirTelemetry {
   void add_settings_component(int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue);
  private:
   // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
-  void sendMessageFC(MavlinkMessage &message);
+  void sendMessageFC(const MavlinkMessage &message);
   // send a mavlink message to the ground pi, system cannot know if this message actually makes it.
-  void sendMessageGroundPi(MavlinkMessage &message);
+  void sendMessageGroundPi(const MavlinkMessage &message);
   // called every time a message from the flight controller is received
   void onMessageFC(MavlinkMessage &message);
   // called every time a message from the ground pi is received

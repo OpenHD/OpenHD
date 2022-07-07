@@ -7,10 +7,10 @@
 
 
 AirTelemetry::AirTelemetry(std::string fcSerialPort) {
-  serialEndpoint = std::make_unique<SerialEndpoint>("FCSerial",SerialEndpoint::HWOptions{fcSerialPort, 115200});
+  /*serialEndpoint = std::make_unique<SerialEndpoint>("FCSerial",SerialEndpoint::HWOptions{fcSerialPort, 115200});
   serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	this->onMessageFC(msg);
-  });
+  });*/
   // any message coming in via wifibroadcast is a message from the ground pi
   wifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(true);
   wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
@@ -19,15 +19,19 @@ AirTelemetry::AirTelemetry(std::string fcSerialPort) {
   std::cout << "Created AirTelemetry\n";
 }
 
-void AirTelemetry::sendMessageFC(MavlinkMessage &message) {
-  serialEndpoint->sendMessage(message);
+void AirTelemetry::sendMessageFC(const MavlinkMessage &message) {
+  if(serialEndpoint){
+    serialEndpoint->sendMessage(message);
+  }else{
+    std::cout<<"Cannot send message to FC\n";
+  }
   if(message.m.msgid==MAVLINK_MSG_ID_PING){
-	std::cout<<"Sent ping to FC\n";
-	MavlinkHelpers::debugMavlinkPingMessage(message.m);
+    std::cout<<"Sent ping to FC\n";
+    MavlinkHelpers::debugMavlinkPingMessage(message.m);
   }
 }
 
-void AirTelemetry::sendMessageGroundPi(MavlinkMessage &message) {
+void AirTelemetry::sendMessageGroundPi(const MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"AirTelemetry::sendMessageGroundPi");
   // broadcast the mavlink message via wifibroadcast
   wifibroadcastEndpoint->sendMessage(message);
@@ -53,8 +57,8 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   // for now, do it as simple as possible
   sendMessageFC(message);
 
-  auto responses=ohdTelemetryGenerator.process_mavlink_message(message);
-  for(auto& response:responses){
+  const auto responses=ohdTelemetryGenerator.process_mavlink_message(message);
+  for(const auto& response:responses){
     // any data created by OpenHD on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
     sendMessageGroundPi(response);
   }
@@ -62,7 +66,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
 
 [[noreturn]] void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
   while (true) {
-	//std::cout << "AirTelemetry::loopInfinite()\n";
+	std::cout << "AirTelemetry::loopInfinite()\n";
 	// for debugging, check if any of the endpoints is not alive
 	if (enableExtendedLogging && wifibroadcastEndpoint) {
 	  std::cout<<wifibroadcastEndpoint->createInfo();

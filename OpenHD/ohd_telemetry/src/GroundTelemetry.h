@@ -27,11 +27,11 @@ class GroundTelemetry {
   // called every time a message from the air pi is received
   void onMessageAirPi(MavlinkMessage &message);
   // send a message to the air pi
-  void sendMessageAirPi(MavlinkMessage &message);
+  void sendMessageAirPi(const MavlinkMessage &message);
   // called every time a message is received from any of the clients connected to the Ground Station (For Example QOpenHD)
   void onMessageGroundStationClients(MavlinkMessage &message);
   // send a message to all clients connected to the ground station, for example QOpenHD
-  void sendMessageGroundStationClients(MavlinkMessage &message);
+  void sendMessageGroundStationClients(const MavlinkMessage &message);
  private:
   static constexpr auto M_SYS_ID = OHD_SYS_ID_GROUND;
   std::unique_ptr<TCPEndpoint> tcpGroundCLient = nullptr;

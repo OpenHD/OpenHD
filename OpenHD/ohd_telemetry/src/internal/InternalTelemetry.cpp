@@ -9,7 +9,7 @@
 #include "WBStatisticsConverter.hpp"
 
 InternalTelemetry::InternalTelemetry(bool runsOnAir) :RUNS_ON_AIR(runsOnAir),
-                                                       MavlinkComponent(runsOnAir ? OHD_SYS_ID_AIR : OHD_SYS_ID_GROUND,0) {
+                                                       MavlinkComponent(runsOnAir ? OHD_SYS_ID_AIR : OHD_SYS_ID_GROUND,MAV_COMP_ID_ONBOARD_COMPUTER) {
   wifibroadcastStatisticsUdpReceiver =
       std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
                                                   OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT,
@@ -40,7 +40,7 @@ std::vector<MavlinkMessage> InternalTelemetry::generate_mavlink_messages() {
   // TODO remove for release
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
   // TODO remove for release
-  _status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
+  //_status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
   const auto logs = generateLogMessages();
   ret.insert(ret.end(), logs.begin(), logs.end());
   return ret;

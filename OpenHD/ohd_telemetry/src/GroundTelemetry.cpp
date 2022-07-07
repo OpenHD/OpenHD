@@ -51,14 +51,14 @@ void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
   // for now, forward everything
   sendMessageAirPi(message);
   //
-  auto responses=ohdTelemetryGenerator.process_mavlink_message(message);
-  for(auto& response:responses){
+  const auto responses=ohdTelemetryGenerator.process_mavlink_message(message);
+  for(const auto& response:responses){
     // for now, send to the ground station clients only
     sendMessageGroundStationClients(response);
   }
 }
 
-void GroundTelemetry::sendMessageGroundStationClients(MavlinkMessage &message) {
+void GroundTelemetry::sendMessageGroundStationClients(const MavlinkMessage &message) {
   //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageGroundStationClients");
   // forward via TCP or UDP
   if (tcpGroundCLient) {
@@ -69,7 +69,7 @@ void GroundTelemetry::sendMessageGroundStationClients(MavlinkMessage &message) {
   }
 }
 
-void GroundTelemetry::sendMessageAirPi(MavlinkMessage &message) {
+void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
   // transmit via wifibroadcast
   if (udpWifibroadcastEndpoint) {
 	udpWifibroadcastEndpoint->sendMessage(message);
