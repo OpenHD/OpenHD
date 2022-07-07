@@ -42,7 +42,8 @@ std::vector<MavlinkMessage> InternalTelemetry::generate_mavlink_messages() {
   // TODO remove for release
   //_status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
   const auto logs = generateLogMessages();
-  ret.insert(ret.end(), logs.begin(), logs.end());
+  MavlinkComponent::vec_append(ret,logs);
+  //ret.insert(ret.end(), logs.begin(), logs.end());
   return ret;
 }
 

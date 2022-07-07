@@ -22,6 +22,8 @@ int main() {
   mavsdkServer->set_configuration(configuration);
 
   auto result = mavsdkServer->add_any_connection("udp://127.0.0.1:14550");
+
+
   if (result == mavsdk::ConnectionResult::Success) {
 	std::cout << "Connected server side!" << std::endl;
   }
@@ -29,6 +31,8 @@ int main() {
   auto server_component =
 	  //mavsdkServer->server_component_by_type(mavsdk::Mavsdk::ServerComponentType::CompanionComputer);
           mavsdkServer->server_component_by_id(1);
+
+  //auto passtrough=mavsdk::MavlinkPassthrough(sys)
 
   // Create server plugins
   auto paramServer = mavsdk::ParamServer{server_component};

@@ -88,8 +88,8 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 	}
 	// send messages to the ground station in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
-	auto ohdTelemetryMessages = ohdTelemetryGenerator.generate_mavlink_messages();
-	for (auto &msg: ohdTelemetryMessages) {
+	const auto ohdTelemetryMessages = ohdTelemetryGenerator.generate_mavlink_messages();
+	for (const auto &msg: ohdTelemetryMessages) {
 	  sendMessageGroundStationClients(msg);
 	}
 	std::this_thread::sleep_for(std::chrono::seconds(3));
