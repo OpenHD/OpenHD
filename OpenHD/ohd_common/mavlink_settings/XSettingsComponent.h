@@ -77,7 +77,10 @@ class DummyXSettingsComponent:public XSettingsComponent{
         openhd::Setting{"VIDEO_WIDTH",640},
         openhd::Setting{"VIDEO_HEIGHT",480},
         openhd::Setting{"VIDEO_FPS",30},
-        openhd::Setting{"VIDEO_FORMAT","some"}
+        openhd::Setting{"VIDEO_FORMAT",0},
+        /*openhd::Setting{"SOME_INT",0},
+        openhd::Setting{"SOME_FLOAT",0.0f},
+        openhd::Setting{"SOME_STRING",std::string("hello")}*/
     };
     return ret;
   }

@@ -94,7 +94,7 @@ static VideoCodec video_codec_from_int(const int video_codec){
   if(video_codec==0)return VideoCodec::H264;
   if(video_codec==1)return VideoCodec::H265;
   if(video_codec==2)return VideoCodec::MJPEG;
-  return VideoCodec::Unknown;
+  return VideoCodec::H264; // default to h264 here
 }
 static int video_codec_to_int(const VideoCodec video_codec){
     return static_cast<int>(video_codec);
