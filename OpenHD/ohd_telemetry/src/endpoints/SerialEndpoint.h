@@ -6,6 +6,7 @@
 #define XMAVLINKSERVICE_SERIALENDPOINT_H
 
 #include <utility>
+#include <cstdint>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <chrono>

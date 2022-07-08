@@ -10,9 +10,37 @@
 //#include "../src/endpoints/SerialEndpoint2.h"
 #include "../src/mav_helper.h"
 
-int main() {
-  std::cout << "SerialEndpointTest::start" << std::endl;
-  SerialEndpoint serialEndpoint("TestSerialPort", {"/dev/ttyACM0",0}, true); //115200
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+
+static const char optstr[] = "?s:";
+static const struct option long_options[] = {
+    {"serial", required_argument, nullptr, 's'},
+    {nullptr, 0, nullptr, 0},
+};
+
+
+int main(int argc, char *argv[]) {
+  int c;
+  std::string serial_port_filename="/dev/ttyACM0";
+  while ((c = getopt_long(argc, argv, optstr, long_options, NULL)) != -1) {
+    const char *tmp_optarg = optarg;
+    switch (c) {
+      case 's':
+        serial_port_filename=std::string(tmp_optarg);
+        break;
+      case '?':
+      default:
+        std::cout << "Usage: \n" <<
+            "--serial -s [serial port string filename, e.g. /dev/ttyACMO]\n";
+        break;
+    }
+  }
+
+  std::cout << "SerialEndpointTest::start with ["<<serial_port_filename<<"]\n";
+
+  SerialEndpoint serialEndpoint("TestSerialPort", {serial_port_filename,0}, true); //115200
   serialEndpoint.registerCallback([](MavlinkMessage &msg) {
 	debugMavlinkMessage(msg.m, "SerialTest");
   });
