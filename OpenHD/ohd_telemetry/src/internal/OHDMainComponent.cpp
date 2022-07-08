@@ -38,7 +38,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   ret.push_back(MavlinkComponent::create_heartbeat());
   ret.push_back(OnboardComputerStatus::createOnboardComputerStatus(_sys_id,_comp_id));
   ret.push_back(generateWifibroadcastStatistics());
-  ret.push_back(generateOpenHDVersion());
+  //ret.push_back(generateOpenHDVersion());
   // TODO remove for release
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
   // TODO remove for release
@@ -60,20 +60,20 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
       }
     }break;
     case MAVLINK_MSG_ID_COMMAND_LONG:{
-      //https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
       mavlink_command_long_t command;
       mavlink_msg_command_long_decode(&msg.m,&command);
+      std::cout<<"Got MAVLINK_MSG_ID_COMMAND_LONG:"<<command.command<<" "<<static_cast<uint32_t>(command.param1)<<"\n";
       if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
+        //https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
         std::cout<<"Got shutdown command";
         RebootUtil::handlePowerCommand(false);
       }else if(command.command==MAV_CMD_REQUEST_MESSAGE){
         const auto requested_message_id=static_cast<uint32_t>(command.param1);
-        /*if(requested_message_id==MAVLINK_MSG_ID_AUTOPILOT_VERSION){
-          // we are not an autopilot, but we use this msg id to broadcast the version of OpenHD itself.
-          mavlink_autopilot_version_t version;
-          version.
-        }*/
-        std::cout<<"OHDMainComponent: Requested message wth id:"<<requested_message_id;
+        std::cout<<"Someone requested a specific message: "<<requested_message_id<<"\n";
+        if(requested_message_id==MAVLINK_MSG_ID_OPENHD_VERSION_MESSAGE){
+          std::cout<<"Sent OpenHD version\n";
+          ret.push_back(generateOpenHDVersion());
+        }
       }
       // TODO have an ack response.
     }break;
