@@ -42,19 +42,19 @@ int main(int argc, char *argv[]) {
   auto mavsdk=std::make_shared<mavsdk::Mavsdk>();
   std::shared_ptr<mavsdk::System> system;
   std::shared_ptr<mavsdk::MavlinkPassthrough> passthrough;
-  mavsdk->subscribe_on_new_system([&mavsdkServer,&system,&passthrough]() {
-    system = mavsdkServer->systems().back();
+  mavsdk->subscribe_on_new_system([&mavsdk,&system,&passthrough]() {
+    system = mavsdk->systems().back();
     std::cout << "System found"<<(int)system->get_system_id()<<"\n";
-    passthrough=std::make_shared<mavsdk::MavlinkPassthrough>(system);
+    /*passthrough=std::make_shared<mavsdk::MavlinkPassthrough>(system);
     passthrough->intercept_incoming_messages_async([](mavlink_message_t& msg){
       std::cout<<"Got message\n";
-    });
+    });*/
   });
-
-  ConnectionResult connection_result = mavsdk->add_serial_connection(serial_port_filename,baud_rate);
-  if (connection_result != ConnectionResult::Success) {
-    std::cout << "Adding connection failed: " << connection_result << '\n';
-    return;
+  mavsdk::ConnectionResult connection_result=mavsdk::ConnectionResult::ConnectionError;
+  while (connection_result!= mavsdk::ConnectionResult::Success){
+    std::cout<<"try adding serial";
+    connection_result = mavsdk->add_serial_connection(serial_port_filename,baud_rate);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   while (true){
     std::cout<<"Running\n";
