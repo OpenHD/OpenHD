@@ -78,7 +78,12 @@ add_executable(test_ground_and_air_locally tests/test_ground_and_air_locally.cpp
 target_link_libraries(test_ground_and_air_locally OHDTelemetryLib)
 
 ###
-find_package(MAVSDK REQUIRED)
-add_executable(test_mavsdk_serial tests/test_mavsdk_serial.cpp)
-target_link_libraries(test_mavsdk_serial OHDTelemetryLib MAVSDK::mavsdk)
+find_package(MAVSDK)
+if(MAVSDK_FOUND)
+    add_executable(test_mavsdk_serial tests/test_mavsdk_serial.cpp)
+    target_link_libraries(test_mavsdk_serial OHDTelemetryLib MAVSDK::mavsdk)
+
+    add_executable(test_mavsdk_param tests/test_mavsdk_param.cpp)
+    target_link_libraries(test_mavsdk_param OHDTelemetryLib MAVSDK::mavsdk)
+endif()
 #####
