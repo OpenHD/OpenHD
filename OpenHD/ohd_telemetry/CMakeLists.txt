@@ -37,6 +37,7 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         src/mav_param/mavlink_parameter_subscription.cpp
         src/mav_param/param_value.cpp
         src/mav_param/mavlink_parameter_receiver.cpp
+        src/mav_param/mavlink_message_handler.cpp
         )
 
 # Build it as a library
