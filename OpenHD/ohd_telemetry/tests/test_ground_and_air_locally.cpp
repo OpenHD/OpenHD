@@ -17,8 +17,8 @@ int main() {
 	OHDProfile profile{false, "XX"};
 	OHDPlatform platform{};
 	ohdTelemGround = std::make_unique<OHDTelemetry>(platform, profile);
-        auto example_comp=std::make_shared<openhd::DummyXSettingsComponent>();
-        ohdTelemGround->add_settings_component(100,example_comp);
+        //auto example_comp=std::make_shared<openhd::DummyXSettingsComponent>();
+        //ohdTelemGround->add_settings_component(100,example_comp);
   }
   {
 	OHDProfile profile{true, "XX"};

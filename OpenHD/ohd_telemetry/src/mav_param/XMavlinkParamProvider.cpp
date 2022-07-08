@@ -18,9 +18,9 @@ static mavsdk::ParamValue convert_to_mavsd(const openhd::SettingsVariant& settin
   return param_value;
 }
 
-XMavlinkParamProvider::XMavlinkParamProvider(MavlinkSystem& parent, uint8_t comp_id,
+XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id,
     std::shared_ptr<openhd::XSettingsComponent> handler):
-      MavlinkComponent(parent._sys_id,comp_id),_handler(std::move(handler)){
+      MavlinkComponent(sys_id,comp_id),_handler(std::move(handler)){
     _sender=std::make_shared<mavsdk::SenderWrapper>(*this);
     _mavlink_message_handler=std::make_shared<mavsdk::MavlinkMessageHandler>();
     _mavlink_parameter_receiver=
