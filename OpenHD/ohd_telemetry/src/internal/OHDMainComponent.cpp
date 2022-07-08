@@ -33,7 +33,7 @@ OHDMainComponent::OHDMainComponent(
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
-  std::cout<<"InternalTelemetry::generate_mavlink_messages()\n";
+  //std::cout<<"InternalTelemetry::generate_mavlink_messages()\n";
   std::vector<MavlinkMessage> ret;
   ret.push_back(MavlinkComponent::create_heartbeat());
   ret.push_back(OnboardComputerStatus::createOnboardComputerStatus(_sys_id,_comp_id));
