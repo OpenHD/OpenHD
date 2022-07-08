@@ -4,7 +4,7 @@
 
 #include "GroundTelemetry.h"
 
-#include "mav_param/XMavlinkParamProvider.h"
+#include "mavsdk_param/XMavlinkParamProvider.h"
 
 #include <iostream>
 

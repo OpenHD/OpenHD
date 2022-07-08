@@ -120,6 +120,10 @@ static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::st
 class CameraHolder : public openhd::XSettingsComponent {
  public:
   explicit CameraHolder(Camera camera):_camera(std::move(camera)){
+    // on construction, check if we can find any previously persisted settings
+    // (by using the deterministic hash from the immutable, deterministic detection data)
+    // if we cannot find any previously persisted settings, create default ones and persist them
+    // for the first time
     if(!OHDFilesystemUtil::exists(VIDEO_SETTINGS_DIRECTORY.c_str())){
       OHDFilesystemUtil::create_directory(VIDEO_SETTINGS_DIRECTORY);
     }
@@ -182,7 +186,9 @@ class CameraHolder : public openhd::XSettingsComponent {
     assert(!_settings_changed_callback);
     _settings_changed_callback=std::move(callback);
   }
+  // Persist then new settings, then call the callback to propagate the change
   void update_settings(const CameraSettings& new_settings){
+    std::cout<<"Got new Camera Settings\n";
     _settings=std::make_unique<CameraSettings>(new_settings);
     persist_settings();
     if(_settings_changed_callback){

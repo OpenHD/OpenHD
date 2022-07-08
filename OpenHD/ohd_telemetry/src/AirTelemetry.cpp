@@ -4,7 +4,7 @@
 
 #include "AirTelemetry.h"
 #include "mav_helper.h"
-#include "mav_param/XMavlinkParamProvider.h"
+#include "mavsdk_param/XMavlinkParamProvider.h"
 
 
 AirTelemetry::AirTelemetry(std::string fcSerialPort): MavlinkSystem(OHD_SYS_ID_AIR) {
