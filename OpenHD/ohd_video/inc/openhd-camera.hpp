@@ -157,9 +157,12 @@ class CameraHolder : public openhd::XSettingsComponent {
     }else if(changed_setting.id=="VIDEO_FPS"){
       changed=openhd::safe_to(_settings->userSelectedVideoFormat.framerate,changed_setting.value);
     }else if(changed_setting.id=="VIDEO_FORMAT"){
-      std::string value=video_codec_to_string(_settings->userSelectedVideoFormat.videoCodec);
+      int value= video_codec_to_int(_settings->userSelectedVideoFormat.videoCodec);
       changed=openhd::safe_to(value,changed_setting.value);
-      _settings->userSelectedVideoFormat.videoCodec= string_to_video_codec(value);
+      _settings->userSelectedVideoFormat.videoCodec=video_codec_from_int(value);
+      /*std::string value=video_codec_to_string(_settings->userSelectedVideoFormat.videoCodec);
+      changed=openhd::safe_to(value,changed_setting.value);
+      _settings->userSelectedVideoFormat.videoCodec= string_to_video_codec(value);*/
     }
     if(changed){
       update_settings(*_settings);

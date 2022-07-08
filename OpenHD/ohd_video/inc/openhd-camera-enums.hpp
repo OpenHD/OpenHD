@@ -60,7 +60,7 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
 }
 
 enum class VideoCodec {
-  H264,
+  H264=0,
   H265,
   MJPEG,
   Unknown
@@ -90,6 +90,16 @@ static VideoCodec string_to_video_codec(const std::string &codec) {
   }
   return VideoCodec::Unknown;
 }
+static VideoCodec video_codec_from_int(const int video_codec){
+  if(video_codec==0)return VideoCodec::H264;
+  if(video_codec==1)return VideoCodec::H265;
+  if(video_codec==2)return VideoCodec::MJPEG;
+  return VideoCodec::Unknown;
+}
+static int video_codec_to_int(const VideoCodec video_codec){
+    return static_cast<int>(video_codec);
+}
+
 NLOHMANN_JSON_SERIALIZE_ENUM( VideoCodec, {
   {VideoCodec::Unknown, nullptr},
   {VideoCodec::H264, "h264"},
