@@ -20,7 +20,9 @@ SerialEndpoint::SerialEndpoint(std::string TAG, HWOptions options,bool enableDeb
 	m_serial(io_service),
 	m_enable_debug(enableDebug){
   mOpenSerialPortThread = std::make_unique<boost::thread>([this] { safeRestart(); });
-  std::cout << "SerialEndpoint created " << m_options.linux_filename <<":"<<m_options.baud_rate<< "\n";
+  std::stringstream ss;
+  ss<<"SerialEndpoint created: {" << m_options.linux_filename <<":"<<m_options.baud_rate<<"}\n";
+  std::cout << ss.str();
 }
 
 void SerialEndpoint::safeCloseCleanup() {
@@ -47,8 +49,8 @@ void SerialEndpoint::safeRestart() {
 	  continue;
 	}
 	try {
-	  if (m_options.baud_rate != 0) {
-		std::cout << "Setting baud rate to:" << m_options.baud_rate << "\n";
+	  if (m_options.baud_rate>0) {
+		std::cout << "Setting baud rate to:" << m_options.baud_rate<< "\n";
 		m_serial.set_option(boost::asio::serial_port_base::baud_rate(m_options.baud_rate));
 	  }
 	  /*m_serial.set_option(boost::asio::serial_port_base::character_size(8));
@@ -56,7 +58,7 @@ void SerialEndpoint::safeRestart() {
 	  m_serial.set_option(boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none));
 	  m_serial.set_option(boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one));*/
 	} catch (boost::system::system_error::exception &e) {
-	  std::cerr << "Faild to set serial port baud rate" << m_options.baud_rate << "\n";
+	  std::cerr << "Faild on serial port set baud rate\n";
 	  m_serial.close();
 	  std::this_thread::sleep_for(RECONNECT_DELAY);
 	  continue;

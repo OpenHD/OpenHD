@@ -10,6 +10,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <chrono>
+#include <optional>
 
 #include "MEndpoint.hpp"
 
@@ -27,7 +28,7 @@ class SerialEndpoint : public MEndpoint {
  public:
   struct HWOptions {
 	std::string linux_filename; // the linux file name,for example /dev/tty..
-	int baud_rate = 0; // manual baud rate, set to 0 to leave untouched
+	int baud_rate = -1; // manual baud rate, set to <=0 to leave untouched
   };
  public:
   /**
