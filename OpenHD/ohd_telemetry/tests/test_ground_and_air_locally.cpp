@@ -17,11 +17,15 @@ int main() {
 	OHDProfile profile{false, "XX"};
 	OHDPlatform platform{};
 	ohdTelemGround = std::make_unique<OHDTelemetry>(platform, profile);
+        auto example_comp=std::make_shared<openhd::DummyXSettingsComponent>();
+        ohdTelemGround->add_settings_component(1,example_comp);
   }
   {
 	OHDProfile profile{true, "XX"};
 	OHDPlatform platform{PlatformType::PC};
 	ohdTelemAir = std::make_unique<OHDTelemetry>(platform, profile);
+        auto example_comp=std::make_shared<openhd::DummyXSettingsComponent>();
+        ohdTelemAir->add_settings_component(1,example_comp);
   }
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(5));
