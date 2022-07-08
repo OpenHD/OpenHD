@@ -24,7 +24,8 @@ class GroundTelemetry :public MavlinkSystem{
    */
   [[noreturn]] void loopInfinite(bool enableExtendedLogging = false);
   [[nodiscard]] std::string createDebug()const;
-  // add a mavlink parameter server that allows the user to change parameters
+  // add a mavlink parameter server that allows the user to change parameters.
+  // changes in the parameter set are propagated back up by the "glue".
   void add_settings_component(int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue);
  private:
   // called every time a message from the air pi is received
@@ -36,7 +37,6 @@ class GroundTelemetry :public MavlinkSystem{
   // send a message to all clients connected to the ground station, for example QOpenHD
   void sendMessageGroundStationClients(const MavlinkMessage &message);
  private:
-  static constexpr auto M_SYS_ID = OHD_SYS_ID_GROUND;
   std::unique_ptr<TCPEndpoint> tcpGroundCLient = nullptr;
   //std::unique_ptr<UDPEndpoint> udpGroundClient = nullptr;
   std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;

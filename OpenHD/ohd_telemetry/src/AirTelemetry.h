@@ -26,7 +26,8 @@ class AirTelemetry : public MavlinkSystem{
    */
   [[noreturn]] void loopInfinite(bool enableExtendedLogging = false);
   [[nodiscard]] std::string createDebug()const;
-  // add a mavlink parameter server that allows the user to change parameters
+  // add a mavlink parameter server that allows the user to change parameters.
+  // changes in the parameter set are propagated back up by the "glue".
   void add_settings_component(int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue);
  private:
   // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
