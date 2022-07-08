@@ -1,3 +1,4 @@
+#include "gstreamerstream.h"
 
 #include <unistd.h>
 #include <iostream>
@@ -9,7 +10,7 @@
 
 #include "openhd-log.hpp"
 #include "OHDGstHelper.hpp"
-#include "gstreamerstream.h"
+#include "ffmpeg_videosamples.hpp"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,uint16_t video_udp_port)
     : CameraStream(platform, camera_holder, video_udp_port) {
