@@ -54,8 +54,8 @@ void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
   const auto &msg = message.m;
   // for now, forward everything
   sendMessageAirPi(message);
-  //
-  for(auto component:components){
+  // OpenHD components running on the ground station don't need to talk to the air unit.
+  for(auto& component:components){
     const auto responses=component->process_mavlink_message(message);
     for(const auto& response:responses){
       // for now, send to the ground station clients only
