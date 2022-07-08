@@ -32,7 +32,7 @@ GroundTelemetry::GroundTelemetry(): MavlinkSystem(OHD_SYS_ID_GROUND) {
   udpWifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
     onMessageAirPi(msg);
   });
-  _ohd_main_component=std::make_shared<OHDMainComponent>(*this,false);
+  _ohd_main_component=std::make_shared<OHDMainComponent>(_sys_id,false);
   components.push_back(_ohd_main_component);
   std::cout << "Created GroundTelemetry\n";
 }

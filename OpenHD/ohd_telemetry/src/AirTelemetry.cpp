@@ -17,7 +17,7 @@ AirTelemetry::AirTelemetry(std::string fcSerialPort): MavlinkSystem(OHD_SYS_ID_A
   wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	onMessageGroundPi(msg);
   });
-  _ohd_main_component=std::make_shared<OHDMainComponent>(*this,true);
+  _ohd_main_component=std::make_shared<OHDMainComponent>(_sys_id,true);
   components.push_back(_ohd_main_component);
   std::cout << "Created AirTelemetry\n";
 }

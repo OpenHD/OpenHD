@@ -24,9 +24,16 @@
 // "fire and forget" messages as possible. For example, it broadcast the CPU load and other statistics, and responds to ping messages.
 // However, external OpenHD libraries might create their own component(s), for example
 // Video creates a component for each camera and handles commands itself, but then uses OpenHD Telemetry to receive / send messages.
+// Quick list of things this component does: (might be more if someone forgets to update the documentation here)
+// 1) Send Heartbeats
+// 2) Sends out onboard computer status statistics (CPU usage, ...)
+// 3) accumulate and send out log messages
+// 4) accumulate and send out wifibroadcast stats
+// 5) send out OpenHD version (version of this OpenHD release / build )
+// Note: Sending in this context means they are returned by generate_mavlink_messages() and then send out in the upper level.
 class OHDMainComponent : public MavlinkComponent{
  public:
-  explicit OHDMainComponent(MavlinkSystem& parent,bool runsOnAir);
+  explicit OHDMainComponent(uint8_t parent_sys_id,bool runsOnAir);
   // override from component
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
   // override from component
