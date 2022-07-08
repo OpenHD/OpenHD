@@ -69,15 +69,21 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
 }
 
 [[noreturn]] void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
+  const auto log_intervall=std::chrono::seconds(5);
+  const auto loop_intervall=std::chrono::milliseconds(500);
+  auto last_log=std::chrono::steady_clock::now();
   while (true) {
-	std::cout << "AirTelemetry::loopInfinite()\n";
-	// for debugging, check if any of the endpoints is not alive
-	if (enableExtendedLogging && wifibroadcastEndpoint) {
-	  std::cout<<wifibroadcastEndpoint->createInfo();
-	}
-	if (enableExtendedLogging && serialEndpoint) {
-	  std::cout<<serialEndpoint->createInfo();
-	}
+        if(std::chrono::steady_clock::now()-last_log>=log_intervall){
+          last_log=std::chrono::steady_clock::now();
+          std::cout << "AirTelemetry::loopInfinite()\n";
+          // for debugging, check if any of the endpoints is not alive
+          if (enableExtendedLogging && wifibroadcastEndpoint) {
+            std::cout<<wifibroadcastEndpoint->createInfo();
+          }
+          if (enableExtendedLogging && serialEndpoint) {
+            std::cout<<serialEndpoint->createInfo();
+          }
+        }
 	// send messages to the ground pi in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
         for(auto& component:components){
@@ -87,7 +93,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
           }
         }
 	// send out in X second intervals
-	std::this_thread::sleep_for(std::chrono::seconds(3));
+	std::this_thread::sleep_for(loop_intervall);
   }
 }
 

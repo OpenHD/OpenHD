@@ -83,24 +83,30 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 }
 
 [[noreturn]] void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
+  const auto log_intervall=std::chrono::seconds(5);
+  const auto loop_intervall=std::chrono::milliseconds(500);
+  auto last_log=std::chrono::steady_clock::now();
   while (true) {
-	std::cout << "GroundTelemetry::loopInfinite()\n";
-	// for debugging, check if any of the endpoints is not alive
-	if (enableExtendedLogging && udpWifibroadcastEndpoint) {
-	  std::cout<<udpWifibroadcastEndpoint->createInfo();
-	}
-	if (enableExtendedLogging && udpGroundClient) {
-	  std::cout<<udpGroundClient->createInfo();
-	}
-	// send messages to the ground station in regular intervals, includes heartbeat.
-	// everything else is handled by the callbacks and their threads
-        for(auto& component:components){
-          const auto messages=component->generate_mavlink_messages();
-          for(const auto& msg:messages){
-            sendMessageGroundStationClients(msg);
-          }
-        }
-	std::this_thread::sleep_for(std::chrono::seconds(3));
+    if(std::chrono::steady_clock::now()-last_log>=log_intervall) {
+      last_log = std::chrono::steady_clock::now();
+      std::cout << "GroundTelemetry::loopInfinite()\n";
+      // for debugging, check if any of the endpoints is not alive
+      if (enableExtendedLogging && udpWifibroadcastEndpoint) {
+        std::cout<<udpWifibroadcastEndpoint->createInfo();
+      }
+      if (enableExtendedLogging && udpGroundClient) {
+        std::cout<<udpGroundClient->createInfo();
+      }
+    }
+    // send messages to the ground station in regular intervals, includes heartbeat.
+    // everything else is handled by the callbacks and their threads
+    for(auto& component:components){
+      const auto messages=component->generate_mavlink_messages();
+      for(const auto& msg:messages){
+        sendMessageGroundStationClients(msg);
+      }
+    }
+    std::this_thread::sleep_for(loop_intervall);
   }
 }
 
