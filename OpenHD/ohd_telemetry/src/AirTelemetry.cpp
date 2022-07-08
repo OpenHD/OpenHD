@@ -59,11 +59,12 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   }
   // for now, do it as simple as possible
   sendMessageFC(message);
-
-  const auto responses=_ohd_main_component->process_mavlink_message(message);
-  for(const auto& response:responses){
-    // any data created by OpenHD on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
-    sendMessageGroundPi(response);
+  // any data created by an OpenHD component on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
+  for(auto& component: components){
+    const auto responses=component->process_mavlink_message(message);
+    for(const auto& response:responses){
+      sendMessageGroundPi(response);
+    }
   }
 }
 
@@ -85,10 +86,6 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
             sendMessageGroundPi(msg);
           }
         }
-	/*const auto ohdTelemetryMessages = _ohd_main_component->generate_mavlink_messages();
-	for (const auto &msg: ohdTelemetryMessages) {
-	  sendMessageGroundPi(msg);
-	}*/
 	// send out in X second intervals
 	std::this_thread::sleep_for(std::chrono::seconds(3));
   }
