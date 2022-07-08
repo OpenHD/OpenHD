@@ -55,6 +55,13 @@ class OHDTelemetry {
       groundTelemetry->add_settings_component(comp_id,std::move(glue));
     }
   }
+  void add_camera_component(const int camera_index,std::shared_ptr<openhd::XSettingsComponent> glue){
+    // we only have cameras on the air telemetry unit
+    assert(profile.is_air);
+    // only 2 cameras suported for now.
+    assert(camera_index>=0 && camera_index<2);
+    airTelemetry->add_settings_component(MAV_COMP_ID_CAMERA+camera_index,std::move(glue));
+  }
  private:
   const OHDPlatform platform;
   const OHDProfile profile;

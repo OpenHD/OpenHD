@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
       ohdVideo = std::make_unique<OHDVideo>(*platform,cameras);
       auto settings_components=ohdVideo->get_setting_components();
       if(!settings_components.empty()){
-        ohdTelemetry->add_settings_component(0,settings_components.at(0));
+        ohdTelemetry->add_camera_component(0,settings_components.at(0));
       }
     }
     // we need to start QOpenHD when we are running as ground
