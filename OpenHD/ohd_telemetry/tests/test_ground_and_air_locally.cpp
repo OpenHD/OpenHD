@@ -17,14 +17,15 @@ int main() {
 	OHDProfile profile{false, "XX"};
 	OHDPlatform platform{};
 	ohdTelemGround = std::make_unique<OHDTelemetry>(platform, profile);
-        //auto example_comp=std::make_shared<openhd::DummyXSettingsComponent>();
-        //ohdTelemGround->add_settings_component(100,example_comp);
+        auto example_comp=std::make_shared<openhd::testing::DummyGroundXSettingsComponent>();
+        // MAV_COMP_ID_ONBOARD_COMPUTER2=192
+        ohdTelemGround->add_settings_component(192,example_comp);
   }
   {
 	OHDProfile profile{true, "XX"};
 	OHDPlatform platform{PlatformType::PC};
 	ohdTelemAir = std::make_unique<OHDTelemetry>(platform, profile);
-        auto example_comp=std::make_shared<openhd::DummyXSettingsComponent>();
+        auto example_comp=std::make_shared<openhd::testing::DummyCameraXSettingsComponent>();
         ohdTelemAir->add_camera_component(0,example_comp);
   }
   while (true) {

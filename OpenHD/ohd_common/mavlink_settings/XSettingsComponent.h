@@ -70,7 +70,8 @@ static bool safe_to(std::string& value,const SettingsVariant& settings_variant){
 }
 
 // For testing
-class DummyXSettingsComponent:public XSettingsComponent{
+namespace testing{
+class DummyCameraXSettingsComponent:public XSettingsComponent{
  public:
   std::vector<Setting> get_all_settings() override{
     std::vector<openhd::Setting> ret={
@@ -85,9 +86,27 @@ class DummyXSettingsComponent:public XSettingsComponent{
     return ret;
   }
   void process_setting_changed(Setting changed_setting) override{
-    std::cout<<"Setting: "<<changed_setting.id<<" changed\n";
+    std::cout<<"DummyCameraXSettingsComponent Setting: "<<changed_setting.id<<" changed\n";
   }
 };
+
+class DummyGroundXSettingsComponent:public XSettingsComponent{
+ public:
+  std::vector<Setting> get_all_settings() override{
+    std::vector<openhd::Setting> ret={
+        openhd::Setting{"GROUND_X",10},
+        openhd::Setting{"GROUND_Y",1},
+        /*openhd::Setting{"SOME_INT",0},
+        openhd::Setting{"SOME_FLOAT",0.0f},
+        openhd::Setting{"SOME_STRING",std::string("hello")}*/
+    };
+    return ret;
+  }
+  void process_setting_changed(Setting changed_setting) override{
+    std::cout<<"DummyGroundXSettingsComponent Setting: "<<changed_setting.id<<" changed\n";
+  }
+};
+}
 
 
 }
