@@ -66,6 +66,14 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
       if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
         std::cout<<"Got shutdown command";
         RebootUtil::handlePowerCommand(false);
+      }else if(command.command==MAV_CMD_REQUEST_MESSAGE){
+        const auto requested_message_id=static_cast<uint32_t>(command.param1);
+        /*if(requested_message_id==MAVLINK_MSG_ID_AUTOPILOT_VERSION){
+          // we are not an autopilot, but we use this msg id to broadcast the version of OpenHD itself.
+          mavlink_autopilot_version_t version;
+          version.
+        }*/
+        std::cout<<"OHDMainComponent: Requested message wth id:"<<requested_message_id;
       }
       // TODO have an ack response.
     }break;
