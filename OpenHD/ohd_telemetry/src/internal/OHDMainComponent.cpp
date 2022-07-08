@@ -115,7 +115,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
 MavlinkMessage OHDMainComponent::generateOpenHDVersion() const {
   MavlinkMessage msg;
   char bufferBigEnough[30]={};
-  std::strncpy((char *)bufferBigEnough,"Dev-2.1",30);
+  std::strncpy((char *)bufferBigEnough,OHD_VERSION_NUMBER_STRING,30);
   mavlink_msg_openhd_version_message_pack(_sys_id,_comp_id, &msg.m, bufferBigEnough);
   //mavlink_component_information_t x;
   return msg;

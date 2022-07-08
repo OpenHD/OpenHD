@@ -57,11 +57,13 @@ std::vector<MavlinkMessage> XMavlinkParamProvider::process_mavlink_message(
     _mavlink_parameter_receiver->do_work();
   }
   auto msges=_sender->messages;
-  std::cout<<"XMavlinkParamProvider::process_mavlink_message:"<<msges.size()<<"\n";
+  //std::cout<<"XMavlinkParamProvider::process_mavlink_message:"<<msges.size()<<"\n";
   _sender->messages.clear();
   return msges;
 }
 
 std::vector<MavlinkMessage> XMavlinkParamProvider::generate_mavlink_messages() {
-  return std::vector<MavlinkMessage>();
+  std::vector<MavlinkMessage> ret;
+  ret.push_back(MavlinkComponent::create_heartbeat());
+  return ret;
 }

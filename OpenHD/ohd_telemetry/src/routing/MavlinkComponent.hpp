@@ -29,7 +29,7 @@ class MavlinkComponent{
   virtual std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage& msg)=0;
   /**
    * The parent should call this method in regular intervals and send out the generated mavlink messages.
-   * This is for fire and forget messages.
+   * This is for fire and forget messages. For example, a component might return the heartbeat(s) here.
    */
   virtual std::vector<MavlinkMessage> generate_mavlink_messages()=0;
  protected:
