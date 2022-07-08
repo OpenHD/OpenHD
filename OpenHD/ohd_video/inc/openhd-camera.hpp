@@ -144,7 +144,7 @@ class CameraHolder : public openhd::XSettingsComponent {
       openhd::Setting{"VIDEO_WIDTH",_settings->userSelectedVideoFormat.width},
       openhd::Setting{"VIDEO_HEIGHT",_settings->userSelectedVideoFormat.height},
       openhd::Setting{"VIDEO_FPS",_settings->userSelectedVideoFormat.framerate},
-      openhd::Setting{"VIDEO_FORMAT",video_codec_to_string(_settings->userSelectedVideoFormat.videoCodec)}
+      openhd::Setting{"VIDEO_FORMAT",video_codec_to_int(_settings->userSelectedVideoFormat.videoCodec)}
     };
     return ret;
   }
