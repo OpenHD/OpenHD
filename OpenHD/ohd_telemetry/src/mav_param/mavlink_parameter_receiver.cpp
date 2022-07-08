@@ -152,60 +152,62 @@ MavlinkParameterReceiver::retrieve_server_param_int(const std::string& name)
 
 void MavlinkParameterReceiver::process_param_set_internally(const std::string& param_id,const ParamValue& value_to_set,bool extended)
 {
-    LogDebug() << "Param set request "<<(extended ? "Ext" : "")<<": " << param_id << " with "<<value_to_set;
-    std::lock_guard<std::mutex> lock(_all_params_mutex);
-    const auto result=_param_set.update_existing_parameter(param_id,value_to_set);
-    const auto param_count=_param_set.get_current_parameters_count(extended);
-    LogDebug()<<result;
-    switch (result) {
-        case MavlinkParameterSet::UpdateExistingParamResult::MISSING_PARAM:{
-            // We do not allow clients to add a new parameter to the parameter set, only to update existing parameters.
-            // In this case, we cannot even respond with anything, since this parameter simply does not exist.
-            LogWarn() << "Got param_set for non-existing parameter:"<<param_id;
-            // TODO it is ambiguous if we should send a PARAM_ACK_VALUE_UNSUPPORTED for the extended protocol only in this case.
-            // However, I don't think that is a good idea - since we then basically need to construct a valid parameter
-            // with this param_id and hope the client ignores it.
-            return;
-        }
-        case MavlinkParameterSet::UpdateExistingParamResult::WRONG_PARAM_TYPE:{
-            // We broadcast the un-changed parameter type and value, non-extended and extended work differently here
-            const auto curr_param=_param_set.lookup_parameter(param_id,extended).value();
-            assert(curr_param.param_index<param_count);
-            LogWarn() << "Got param_set for existing value, but wrong type. registered param: "<<curr_param;
-            if(extended){
-                auto new_work = std::make_shared<WorkItem>(curr_param.param_id,curr_param.value,
-                                                           WorkItemAck{PARAM_ACK_FAILED});
-                _work_queue.push_back(new_work);
-            }else{
-                auto new_work = std::make_shared<WorkItem>(curr_param.param_id,curr_param.value,
-                                                           WorkItemValue{curr_param.param_index,param_count,extended});
-                _work_queue.push_back(new_work);
-            }
-            return;
-        }
-        case MavlinkParameterSet::UpdateExistingParamResult::SUCCESS:{
-            const auto updated_parameter=_param_set.lookup_parameter(param_id,extended).value();
-            assert(updated_parameter.param_index<param_count);
-            // the param set doesn't differentiate between an update that actually changed the value
-            // (aka for example from int=0 to int=1) and an update that had no effect (for example from int=0 to int=0).
-            if(value_to_set!=updated_parameter.value){
-                LogDebug()<<"Updated param to :"<<updated_parameter;
-                find_and_call_subscriptions_value_changed(updated_parameter.param_id,updated_parameter.value);
-            }else{
-                LogDebug()<<"Update had no effect"<<updated_parameter;
-            }
-            if(extended){
-                auto new_work = std::make_shared<WorkItem>(updated_parameter.param_id,updated_parameter.value,
-                                                           WorkItemAck{PARAM_ACK_ACCEPTED});
-                _work_queue.push_back(new_work);
-            }else{
-                auto new_work = std::make_shared<WorkItem>(updated_parameter.param_id,updated_parameter.value,
-                                                           WorkItemValue{updated_parameter.param_index,param_count,extended});
-                _work_queue.push_back(new_work);
-            }
-        }
-        break;
+  LogDebug() << "Param set request "<<(extended ? "Ext" : "")<<": " << param_id << " with "<<value_to_set;
+  std::lock_guard<std::mutex> lock(_all_params_mutex);
+  // for checking if the update actually changed the value
+  const auto opt_before_update=_param_set.lookup_parameter(param_id,extended);
+  const auto result=_param_set.update_existing_parameter(param_id,value_to_set);
+  const auto param_count=_param_set.get_current_parameters_count(extended);
+  LogDebug()<<result;
+  switch (result) {
+    case MavlinkParameterSet::UpdateExistingParamResult::MISSING_PARAM:{
+      // We do not allow clients to add a new parameter to the parameter set, only to update existing parameters.
+      // In this case, we cannot even respond with anything, since this parameter simply does not exist.
+      LogWarn() << "Got param_set for non-existing parameter:"<<param_id;
+      // TODO it is ambiguous if we should send a PARAM_ACK_VALUE_UNSUPPORTED for the extended protocol only in this case.
+      // However, I don't think that is a good idea - since we then basically need to construct a valid parameter
+      // with this param_id and hope the client ignores it.
+      return;
     }
+    case MavlinkParameterSet::UpdateExistingParamResult::WRONG_PARAM_TYPE:{
+      // We broadcast the un-changed parameter type and value, non-extended and extended work differently here
+      const auto curr_param=_param_set.lookup_parameter(param_id,extended).value();
+      assert(curr_param.param_index<param_count);
+      LogWarn() << "Got param_set for existing value, but wrong type. registered param: "<<curr_param;
+      if(extended){
+        auto new_work = std::make_shared<WorkItem>(curr_param.param_id,curr_param.value,
+                                                   WorkItemAck{PARAM_ACK_FAILED});
+        _work_queue.push_back(new_work);
+      }else{
+        auto new_work = std::make_shared<WorkItem>(curr_param.param_id,curr_param.value,
+                                                   WorkItemValue{curr_param.param_index,param_count,extended});
+        _work_queue.push_back(new_work);
+      }
+      return;
+    }
+    case MavlinkParameterSet::UpdateExistingParamResult::SUCCESS:{
+      const auto updated_parameter=_param_set.lookup_parameter(param_id,extended).value();
+      assert(updated_parameter.param_index<param_count);
+      // the param set doesn't differentiate between an update that actually changed the value
+      // (aka for example from int=0 to int=1) and an update that had no effect (for example from int=0 to int=0).
+      if(opt_before_update.has_value() && opt_before_update.value().value==updated_parameter.value){
+        LogDebug()<<"Update had no effect: "<<updated_parameter;
+      }else{
+        LogDebug()<<"Updated param to :"<<updated_parameter;
+        find_and_call_subscriptions_value_changed(updated_parameter.param_id,updated_parameter.value);
+      }
+      if(extended){
+        auto new_work = std::make_shared<WorkItem>(updated_parameter.param_id,updated_parameter.value,
+                                                   WorkItemAck{PARAM_ACK_ACCEPTED});
+        _work_queue.push_back(new_work);
+      }else{
+        auto new_work = std::make_shared<WorkItem>(updated_parameter.param_id,updated_parameter.value,
+                                                   WorkItemValue{updated_parameter.param_index,param_count,extended});
+        _work_queue.push_back(new_work);
+      }
+    }
+    break;
+  }
 }
 
 void MavlinkParameterReceiver::process_param_set(const mavlink_message_t& message)

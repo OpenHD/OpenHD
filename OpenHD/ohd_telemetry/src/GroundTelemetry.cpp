@@ -21,14 +21,12 @@ GroundTelemetry::GroundTelemetry(): MavlinkSystem(OHD_SYS_ID_GROUND) {
   udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
         onMessageGroundStationClients(msg);
   });*/
-  udpGroundClient =std::make_unique<UDPEndpoint2>("GroundStationUDP",
-                                                   OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
-                                                   "127.0.0.1","127.0.0.1");
+  udpGroundClient =
+      std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
+                                     "127.0.0.1","127.0.0.1");
   udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
     onMessageGroundStationClients(msg);
   });
-  // hacky, start broadcasting the existence of the OHD ground station
-  // udpGroundClient->startHeartBeat(OHD_SYS_ID_GROUND,0);
   // any message coming in via wifibroadcast is a message from the air pi
   udpWifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(false);
   udpWifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
@@ -43,10 +41,10 @@ void GroundTelemetry::onMessageAirPi(MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"GroundTelemetry::onMessageAirPi");
   const mavlink_message_t &m = message.m;
   // we do not need to forward heartbeat messages coming from the air telemetry service
-  if (m.msgid == MAVLINK_MSG_ID_HEARTBEAT && m.sysid == OHD_SYS_ID_AIR) {
+  /*if (m.msgid == MAVLINK_MSG_ID_HEARTBEAT && m.sysid == OHD_SYS_ID_AIR) {
 	// heartbeat coming from the air service
 	return;
-  }
+  }*/
   // for now, forward everything
   sendMessageGroundStationClients(message);
 }

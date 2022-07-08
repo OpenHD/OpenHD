@@ -74,9 +74,9 @@ class DummyXSettingsComponent:public XSettingsComponent{
  public:
   std::vector<Setting> get_all_settings() override{
     std::vector<openhd::Setting> ret={
-        openhd::Setting{"VIDEO_WIDTH",11},
-        openhd::Setting{"VIDEO_HEIGHT",12},
-        openhd::Setting{"VIDEO_FPS",13},
+        openhd::Setting{"VIDEO_WIDTH",640},
+        openhd::Setting{"VIDEO_HEIGHT",480},
+        openhd::Setting{"VIDEO_FPS",30},
         openhd::Setting{"VIDEO_FORMAT","some"}
     };
     return ret;
