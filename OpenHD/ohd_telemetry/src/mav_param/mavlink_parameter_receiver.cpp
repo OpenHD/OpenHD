@@ -454,7 +454,7 @@ MavlinkParameterReceiver::extract_request_read_param_identifier(
     }else{
         // if index is not -1, it should be a valid parameter index (>=0)
         if(param_index>=0){
-            return param_index;
+            return static_cast<uint16_t>(param_index);
         }
         LogWarn()<<"Param_index "<<param_index<<" cannot be a valid param index";
     }
