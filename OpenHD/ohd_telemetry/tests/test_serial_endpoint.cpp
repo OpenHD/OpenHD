@@ -49,8 +49,8 @@ int main(int argc, char *argv[]) {
   while ((std::chrono::steady_clock::now() - start) < std::chrono::minutes(5)) {
 	serialEndpoint.debugIfAlive();
 	// some implementations need a heartbeat before they start sending data.
-	//auto msg = MExampleMessage::heartbeat();
-	//serialEndpoint.sendMessage(msg);
+	auto msg = MExampleMessage::heartbeat();
+	serialEndpoint.sendMessage(msg);
 	std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   std::cout << "SerialEndpointTest::end" << std::endl;
