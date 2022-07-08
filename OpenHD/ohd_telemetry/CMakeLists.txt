@@ -19,7 +19,7 @@ find_package(Boost REQUIRED COMPONENTS system thread regex filesystem)
 message(STATUS "Boost version: ${Boost_VERSION}")
 SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::system Boost::thread Boost::filesystem)
 
-find_package(MAVSDK REQUIRED)
+#find_package(MAVSDK REQUIRED)
 
 SET(ALL_TELEMETRY_SOURCE_FILES
         src/AirTelemetry.cpp
@@ -44,7 +44,7 @@ add_library(OHDTelemetryLib
         STATIC
         ${ALL_TELEMETRY_SOURCE_FILES})
 target_link_libraries(OHDTelemetryLib PRIVATE ${OHD_TELEMETRY_USED_BOOST_LIBS}
-        MAVSDK::mavsdk
+        #MAVSDK::mavsdk
         )
 target_include_directories(OHDTelemetryLib PUBLIC src/)
 # include mavlink (header-only)
@@ -78,6 +78,6 @@ target_link_libraries(test_air_locally OHDTelemetryLib)
 add_executable(test_ground_and_air_locally tests/test_ground_and_air_locally.cpp)
 target_link_libraries(test_ground_and_air_locally OHDTelemetryLib)
 
-add_executable(test_mavsdk tests/test_mavsdk.cpp)
-target_link_libraries(test_mavsdk OHDTelemetryLib)
+#add_executable(test_mavsdk tests/test_mavsdk.cpp)
+#target_link_libraries(test_mavsdk OHDTelemetryLib)
 #####
