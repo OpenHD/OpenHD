@@ -31,6 +31,7 @@ class GStreamerStream : public CameraStream {
  public:
   void start() override;
   void stop() override;
+  void cleanup_pipe();
   std::string createDebug() const override;
  private:
   GstElement *gst_pipeline = nullptr;

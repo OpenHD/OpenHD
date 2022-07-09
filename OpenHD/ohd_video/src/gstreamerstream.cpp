@@ -105,6 +105,8 @@ void GStreamerStream::setup() {
 	m_pipeline<<OHDGstHelper::createRecordingForVideoCodec(setting.userSelectedVideoFormat.videoCodec);
   }
   std::cout << "Starting pipeline:" << m_pipeline.str() << std::endl;
+  // Protect against unwanted use - stop and free the pipeline first
+  assert(gst_pipeline== nullptr);
   GError *error = nullptr;
   gst_pipeline = gst_parse_launch(m_pipeline.str().c_str(), &error);
   if (error) {
@@ -208,13 +210,13 @@ void GStreamerStream::stop() {
   gst_element_set_state(gst_pipeline, GST_STATE_PAUSED);
 }
 
-/*void GStreamerStream::set_format(VideoFormat videoFormat) {
-  std::stringstream ss;
-  ss<< "GStreamerStream::set_format(" << videoFormat.toString() << ")" << std::endl;
-  ohd_log(STATUS_LEVEL::INFO,ss.str());
-  _camera_holder->get_settings().userSelectedVideoFormat = videoFormat;
-  restart_after_new_setting();
-}*/
+void GStreamerStream::cleanup_pipe() {
+  std::cout<<"GStreamerStream::cleanup_pipe() begin\n";
+  gst_element_set_state (gst_pipeline, GST_STATE_NULL);
+  gst_object_unref (gst_pipeline);
+  gst_pipeline=nullptr;
+  std::cout<<"GStreamerStream::cleanup_pipe() end\n";
+}
 
 void GStreamerStream::restartIfStopped() {
   GstState state;
@@ -230,13 +232,11 @@ void GStreamerStream::restartIfStopped() {
 
 // Restart after a new settings value has been applied
 void GStreamerStream::restart_after_new_setting() {
+  std::cout<<"GStreamerStream::restart_after_new_setting() begin\n";
   stop();
+  // R.N we need to fully re-set the pipeline if any camera setting has changed
+  cleanup_pipe();
   setup();
   start();
+  std::cout<<"GStreamerStream::restart_after_new_setting() end\n";
 }
-
-
-
-
-
-
