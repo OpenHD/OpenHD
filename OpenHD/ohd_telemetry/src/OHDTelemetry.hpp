@@ -72,13 +72,16 @@ class OHDTelemetry {
   * @return the uart name string (linux file)
    */
   static std::string uartForPlatformType(const PlatformType &platformType) {
+    // hacky for now, this works on rpi when connecting the USB of my FC
+    return "/dev/ttyACM0";
+
     // we default to using a USB serial adapter on any other platform at the moment, some just need
     // to be checked to see what the port is called, but PC will likely always be USB
     // for testing, the serial shows up as this on my pc:
-    std::string platformSerialPort = "/dev/ttyUSB0";
+    /*std::string platformSerialPort = "/dev/ttyUSB0";
     switch (platformType) {
       case PlatformType::RaspberryPi: {
-        platformSerialPort = "/dev/serial0";
+        //platformSerialPort = "/dev/serial0";
         break;
       }
       case PlatformType::Jetson: {
@@ -94,7 +97,7 @@ class OHDTelemetry {
         break;
       }
     }
-    return platformSerialPort;
+    return platformSerialPort;*/
   }
 };
 #endif //OPENHD_OHDTELEMETRY_H

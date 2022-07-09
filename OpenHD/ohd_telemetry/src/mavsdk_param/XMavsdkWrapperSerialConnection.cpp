@@ -31,7 +31,7 @@ void XMavsdkWrapperSerialConnection::constantConnect() {
     if(result==mavsdk::ConnectionResult::Success){
       return;
     }
-    std::cout<<"XMavsdkWrapperSerialConnection:"<<result;
+    std::cout<<"XMavsdkWrapperSerialConnection:"<<result<<"\n";
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 }
