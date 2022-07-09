@@ -29,6 +29,8 @@ class StatusTextAccumulator{
       std::cerr << "Invalid size for local log message" << dataLen << " wanted:" << sizeof(OHDLocalLogMessage) << "\n";
     }
   }
+  // Get all the currently buffered messages, removes the returned messages from the message queue.
+  // Thread-safe
   std::vector<OHDLocalLogMessage> get_messages(){
     std::vector<OHDLocalLogMessage> ret;
     std::lock_guard<std::mutex> guard(bufferedLogMessagesLock);
@@ -58,6 +60,7 @@ class StatusTextAccumulator{
     mavlink_msg_statustext_encode(sys_id,comp_id,&mavlink_message,&mavlink_statustext);
   }
  private:
+  // add a new message to the message queue.
   void processLogMessage(OHDLocalLogMessage msg){
     //std::cout<<"Log message:"<<msg.message<<"\n";
     assert(msg.hasNullTerminator());

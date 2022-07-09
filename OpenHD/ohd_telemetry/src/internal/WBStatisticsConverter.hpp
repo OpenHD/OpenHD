@@ -61,11 +61,5 @@ static std::vector<OpenHDStatisticsWriter::Data> parseRawDataSafe(const uint8_t 
   return ret;
 }
 
-/*struct LinkStatistics{
-  int radio_port; // can be for one of the video links or for telemetry or ...
-  int n_injected_packets;
-  int n_received_packets_ok;
-  int n_received_packets_bad;
-};*/
 }
 #endif //XMAVLINKSERVICE_WBSTATISTICSCONVERTER_HPP
