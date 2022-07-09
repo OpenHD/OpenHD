@@ -26,6 +26,7 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
     std::cerr << "Without at least one wifi card, the stream(s) cannot be started\n";
     exit(1);
   }
+  // sanity checking
   for(const auto& card: broadcast_cards){
     assert(card->get_settings().use_for==WifiUseFor::MonitorMode);
   }
@@ -130,6 +131,7 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
 
 std::string WBStreams::createDebug() const {
   std::stringstream ss;
+  // we use telemetry data only here
   bool any_data_received=false;
   if(udpTelemetryRx && udpTelemetryRx->anyDataReceived()){
     any_data_received=true;

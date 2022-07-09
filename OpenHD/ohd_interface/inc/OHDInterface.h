@@ -24,7 +24,6 @@ class OHDInterface {
    * @param profile the (never-changing) profile we are running with.
    */
   explicit OHDInterface(const OHDProfile &profile);
-  std::unique_ptr<WifiCards> wifiCards;
   std::unique_ptr<WBStreams> wbStreams;
   std::unique_ptr<USBTetherListener> usbTetherListener;
   // Verbose string about the current state.
