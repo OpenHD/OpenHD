@@ -5,6 +5,7 @@
 #include "AirTelemetry.h"
 #include "mav_helper.h"
 #include "mavsdk_param/XMavlinkParamProvider.h"
+#include "mavsdk_param/XMavsdkWrapperSerialConnection.h"
 #include <chrono>
 
 AirTelemetry::AirTelemetry(std::string fcSerialPort): MavlinkSystem(OHD_SYS_ID_AIR) {
@@ -12,6 +13,8 @@ AirTelemetry::AirTelemetry(std::string fcSerialPort): MavlinkSystem(OHD_SYS_ID_A
   serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	this->onMessageFC(msg);
   });*/
+  serialEndpoint = std::make_unique<mavsdk::XMavsdkWrapperSerialConnection>(fcSerialPort,115200);
+
   // any message coming in via wifibroadcast is a message from the ground pi
   wifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(true);
   wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
