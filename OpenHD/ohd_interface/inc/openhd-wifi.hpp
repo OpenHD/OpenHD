@@ -116,6 +116,23 @@ struct WiFiCard {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,driver_name,type,interface_name,mac,supports_5ghz,supports_2ghz,
                                    supports_injection,supports_hotspot,supports_rts,settings)
 
+// WifiCardHolder is used to
+// 1) Differentiate between immutable information (like mac address) and
+// 2) mutable WiFi card settings.
+// Setting changes are propagated through this class.
+class WifiCardHolder{
+ public:
+  explicit WifiCardHolder(WiFiCard card):_card(std::move(card)){
+
+  }
+  // delete copy and move constructor
+  WifiCardHolder(const WifiCardHolder&)=delete;
+  WifiCardHolder(const WifiCardHolder&&)=delete;
+ public:
+  const WiFiCard _card;
+};
+
+
 static nlohmann::json wificards_to_json(const std::vector<WiFiCard> &cards) {
   nlohmann::json j;
   for (auto &_card: cards) {
