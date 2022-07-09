@@ -11,13 +11,21 @@
 OHDInterface::OHDInterface(const OHDProfile &profile1) : profile(profile1) {
   std::cout << "OHDInterface::OHDInterface()\n";
   //wifiCards = std::make_unique<WifiCards>(profile);
-
   //Find out which cards are connected first
   auto discovered_wifi_cards=DWifiCards::discover();
   // Find / create settings for each discovered card
   std::vector<std::shared_ptr<WifiCardHolder>> wifi_cards{};
   for(const auto& card:discovered_wifi_cards){
     wifi_cards.push_back(std::make_shared<WifiCardHolder>(card));
+    std::stringstream message;
+    message << "OHDInterface:: found wifi card: (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name << std::endl;
+    std::cout<<message.str();
+  }
+  // now check if any settings are messed up
+  for(const auto& card : wifi_cards){
+    if (card->get_settings().use_for == WifiUseFor::MonitorMode && !card->_wifi_card.supports_injection) {
+      std::cerr << "Cannot use monitor mode on card that cannot inject\n";
+    }
   }
   // now decide what to use the card(s) for
   std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards{};
@@ -50,9 +58,6 @@ OHDInterface::OHDInterface(const OHDProfile &profile1) : profile(profile1) {
 std::string OHDInterface::createDebug() const {
   std::stringstream ss;
   ss<<"OHDInterface::createDebug:begin\n";
-  if (wifiCards) {
-    ss << wifiCards->createDebug();
-  }
   if (wbStreams) {
     ss << wbStreams->createDebug();
   }

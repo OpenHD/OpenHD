@@ -55,23 +55,10 @@ std::vector<WiFiCard> DWifiCards::discover() {
 	  }
 	}
 	if (!excluded) {
-	  auto card= process_card(filename);
-	  if(card.has_value()){
-		m_wifi_cards.push_back(card.value());
+	  auto card_opt= process_card(filename);
+	  if(card_opt.has_value()){
+		m_wifi_cards.push_back(card_opt.value());
 	  }
-	}
-  }
-  // Now that we have all the connected cards, we need to figure out what to use them for.
-  // Fo now, just go with what we used to do in EZ-Wifibroadcast.
-  for (auto &card: m_wifi_cards) {
-	if (card.supports_injection) {
-	  card.settings.use_for = WifiUseFor::MonitorMode;
-	} else if (card.supports_hotspot) {
-	  // if a card does not support injection, we use it for hotspot
-	  card.settings.use_for = WifiUseFor::Hotspot;
-	} else {
-	  // and if a card supports neither hotspot nor injection, we use it for nothing
-	  card.settings.use_for = WifiUseFor::Unknown;
 	}
   }
   std::cout << "WiFi::discover done, n cards:" << m_wifi_cards.size() << "\n";

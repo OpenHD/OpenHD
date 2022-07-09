@@ -114,11 +114,9 @@ struct WiFiCard {
   bool supports_injection = false;
   bool supports_hotspot = false;
   bool supports_rts = false;
-  // These are values that can change dynamically at run time.
-  WifiCardSettings settings;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,driver_name,type,interface_name,mac,supports_5ghz,supports_2ghz,
-                                   supports_injection,supports_hotspot,supports_rts,settings)
+                                   supports_injection,supports_hotspot,supports_rts)
 
 static WifiCardSettings create_default_settings(const WiFiCard& wifi_card){
   WifiCardSettings settings;
