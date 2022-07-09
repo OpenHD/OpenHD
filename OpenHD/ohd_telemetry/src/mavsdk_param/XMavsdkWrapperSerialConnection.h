@@ -8,6 +8,7 @@
 #include "../endpoints/MEndpoint.hpp"
 #include "serial_connection.h"
 #include <memory>
+#include <thread>
 
 namespace mavsdk{
 
@@ -22,6 +23,7 @@ class XMavsdkWrapperSerialConnection : public MEndpoint{
  private:
   Connection::receiver_callback_t _for_mavsdk_receiver_callback;
   std::unique_ptr<SerialConnection> _serial_connection;
+  std::thread establish_connection_thread;
 };
 
 }

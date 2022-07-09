@@ -13,6 +13,8 @@ XMavsdkWrapperSerialConnection::XMavsdkWrapperSerialConnection(
     MEndpoint::parseNewDataEmulateForMavsdk(message);
   };
   _serial_connection=std::make_unique<SerialConnection>(_for_mavsdk_receiver_callback,path,baudrate,flow_control);
+
+
 }
 
 void XMavsdkWrapperSerialConnection::sendMessageImpl(
