@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-#include "../src/endpoints/SerialEndpoint.h"
+#include "../src/mavsdk_param/XMavsdkWrapperSerialConnection.h"
 
 #include "serial_endpoint_test_helper.h"
 
@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
 
   std::cout << "SerialEndpointTest::start with "<<serial_endpoint_test_helper::options_to_string(serial_options);
 
-  SerialEndpoint serialEndpoint("TestSerialPort", {serial_options.filename,serial_options.baud_rate}, true); //115200
+  mavsdk::XMavsdkWrapperSerialConnection serialEndpoint(serial_options.filename,serial_options.baud_rate, true); //115200
   serialEndpoint.registerCallback([](MavlinkMessage &msg) {
     debugMavlinkMessage(msg.m, "SerialTest");
   });
