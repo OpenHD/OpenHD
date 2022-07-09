@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-#include "../src/mavsdk_param/XMavsdkWrapperSerialConnection.h"
+#include "../src/mavsdk_temporary/XMavsdkWrapperSerialConnection.h"
 
 #include "serial_endpoint_test_helper.h"
 

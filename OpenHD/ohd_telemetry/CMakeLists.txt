@@ -29,21 +29,21 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         #src/endpoints/SerialEndpoint2.cpp
         #src/endpoints/WBEndpoint.cpp
         src/internal/OHDMainComponent.cpp
-        src/mavsdk_param/XMavlinkParamProvider.cpp
+        src/mavsdk_temporary/XMavlinkParamProvider.cpp
         # temporarily until mavsdk becomes usable
-        src/mavsdk_param/mavlink_parameter_set.cpp
-        src/mavsdk_param/mavlink_parameter_subscription.cpp
-        src/mavsdk_param/param_value.cpp
-        src/mavsdk_param/mavlink_parameter_receiver.cpp
-        src/mavsdk_param/mavlink_message_handler.cpp
+        src/mavsdk_temporary/mavlink_parameter_set.cpp
+        src/mavsdk_temporary/mavlink_parameter_subscription.cpp
+        src/mavsdk_temporary/param_value.cpp
+        src/mavsdk_temporary/mavlink_parameter_receiver.cpp
+        src/mavsdk_temporary/mavlink_message_handler.cpp
         ## end param
-        src/mavsdk_param/connection.cpp
-        src/mavsdk_param/connection_result.cpp
-        src/mavsdk_param/serial_connection.cpp
-        src/mavsdk_param/mavlink_receiver.cpp
-        src/mavsdk_param/mavsdk_time.cpp
-        src/mavsdk_param/mavlink_channels.cpp
-        src/mavsdk_param/XMavsdkWrapperSerialConnection.cpp
+        src/mavsdk_temporary/connection.cpp
+        src/mavsdk_temporary/connection_result.cpp
+        src/mavsdk_temporary/serial_connection.cpp
+        src/mavsdk_temporary/mavlink_receiver.cpp
+        src/mavsdk_temporary/mavsdk_time.cpp
+        src/mavsdk_temporary/mavlink_channels.cpp
+        src/mavsdk_temporary/XMavsdkWrapperSerialConnection.cpp
         )
 
 # Build it as a library
