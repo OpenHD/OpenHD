@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
       }
       ss << ohdTelemetry->createDebug();
       ss<<"---------------------------------OpenHD-state debug   end ---------------------------------\n";
-      std::cout<<ss.str();
+      //std::cout<<ss.str();
     }
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
