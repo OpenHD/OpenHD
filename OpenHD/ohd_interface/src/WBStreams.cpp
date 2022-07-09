@@ -130,6 +130,11 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
 
 std::string WBStreams::createDebug() const {
   std::stringstream ss;
+  bool any_data_received=false;
+  if(udpTelemetryRx && udpTelemetryRx->anyDataReceived()){
+    any_data_received=true;
+  }
+  ss<<"Any data received: "<<(any_data_received ? "Y":"N");
   if (udpTelemetryRx) {
 	ss<<"TeleRx:"<<udpTelemetryRx->createDebug();
   }

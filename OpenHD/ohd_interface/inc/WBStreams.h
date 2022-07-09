@@ -12,14 +12,13 @@
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
 
 /**
- * This class takes a list of discovered wifi cards (and their settings9
- * This class is responsible for setting up all the Wifibroadcast streams needed for OpenHD.
- * There should only be one instance of this class in the whole project.
+ * This class takes a list of discovered wifi cards (and their settings) and
+ * is responsible for configuring the given cards and then setting up all the Wifi-broadcast streams needed for OpenHD.
+ * This class assumes a corresponding instance on the air or ground unit, respective.
  */
 class WBStreams {
  public:
   explicit WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards);
-
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
   // see interface
