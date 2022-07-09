@@ -36,6 +36,13 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         src/mavsdk_param/param_value.cpp
         src/mavsdk_param/mavlink_parameter_receiver.cpp
         src/mavsdk_param/mavlink_message_handler.cpp
+        ## end param
+        src/mavsdk_param/connection.cpp
+        src/mavsdk_param/connection_result.cpp
+        src/mavsdk_param/serial_connection.cpp
+        src/mavsdk_param/mavlink_receiver.cpp
+        src/mavsdk_param/mavsdk_time.cpp
+        src/mavsdk_param/mavlink_channels.cpp
         )
 
 # Build it as a library
