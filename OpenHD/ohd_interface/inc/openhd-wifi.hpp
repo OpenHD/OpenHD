@@ -91,6 +91,8 @@ static std::string wifi_use_for_to_string(const WifiUseFor wifi_use_for){
 }
 
 static constexpr auto DEFAULT_WIFI_TX_POWER="3100";
+static constexpr auto DEFAULT_5GHZ_FREQUENCY = "5180";
+static constexpr auto DEFAULT_2GHZ_FREQUENCY = "2412";
 
 struct WifiCardSettings{
   // This one needs to be set for the card to then be used for something.Otherwise, it is not used for anything
@@ -118,6 +120,29 @@ struct WiFiCard {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,driver_name,type,interface_name,mac,supports_5ghz,supports_2ghz,
                                    supports_injection,supports_hotspot,supports_rts,settings)
 
+static WifiCardSettings create_default_settings(const WiFiCard& wifi_card){
+  WifiCardSettings settings;
+  if(wifi_card.supports_injection){
+    settings.use_for=WifiUseFor::MonitorMode;
+  }else if(wifi_card.supports_hotspot){
+    // cannot do monitor mode, so we do hotspot with it
+    settings.use_for=WifiUseFor::Hotspot;
+  }else{
+    settings.use_for=WifiUseFor::Unknown;
+  }
+  // if a card is not functional, Discovery should not make it available.
+  // ( a card either has to do 2.4 or 5 ghz, otherise - what the heck ;)
+  assert(wifi_card.supports_5ghz || wifi_card.supports_2ghz);
+  if(wifi_card.supports_5ghz){
+    // by default, prefer 5Ghz
+    settings.frequency=DEFAULT_5GHZ_FREQUENCY;
+  }else{
+    settings.frequency=DEFAULT_2GHZ_FREQUENCY;
+  }
+  settings.txpower=DEFAULT_WIFI_TX_POWER;
+  return settings;
+}
+
 static const std::string WIFI_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("interface/");
 // WifiCardHolder is used to
 // 1) Differentiate between immutable information (like mac address) and
@@ -136,7 +161,7 @@ class WifiCardHolder{
     }else{
       std::cout<<"Creating default settings:"<<get_unique_filename()<<"\n";
       // create default settings and persist them for the next reboot
-      _settings=std::make_unique<WifiCardSettings>();
+      _settings=std::make_unique<WifiCardSettings>(create_default_settings(_wifi_card));
       persist_settings();
     }
   }
@@ -153,7 +178,7 @@ class WifiCardHolder{
   std::unique_ptr<WifiCardSettings> _settings;
   [[nodiscard]] std::string get_uniqe_hash()const{
     std::stringstream ss;
-    ss<<wifi_card_type_to_string(_wifi_card.type)<<"_"<<_wifi_card.mac;
+    ss<<wifi_card_type_to_string(_wifi_card.type)<<"_"<<_wifi_card.interface_name;
     return ss.str();
   }
   [[nodiscard]] std::string get_unique_filename()const{

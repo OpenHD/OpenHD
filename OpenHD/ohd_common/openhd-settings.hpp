@@ -15,6 +15,7 @@
 
 //#include <boost/filesystem.hpp>
 #include <filesystem>
+#include "openhd-util-filesystem.hpp"
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -94,6 +95,12 @@ static std::string findOrCreateSettingsDirectory(bool is_air) {
   }
   assert(std::filesystem::exists(str.c_str()));
   return str;
+}
+
+// Clean up the directory where OpenHD persistent settings are stored
+static void clean_all_settings(){
+  OHDFilesystemUtil::safe_delete_directory(BASE_PATH);
+  generateSettingsDirectoryIfNonExists();
 }
 
 #endif

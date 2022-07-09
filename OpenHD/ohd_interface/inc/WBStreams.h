@@ -12,37 +12,27 @@
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
 
 /**
+ * This class takes a list of discovered wifi cards (and their settings9
  * This class is responsible for setting up all the Wifibroadcast streams needed for OpenHD.
  * There should only be one instance of this class in the whole project.
- * Note that this class does not set the cards to monitor mode, it assumes they provided cards are
- * already in monitor mode.
  */
 class WBStreams {
  public:
-  explicit WBStreams(const OHDProfile &profile);
-  /**
-   * Set the names of all wifi cards for broadcasting found on the system, needs to be called before configure().
-   * Note that this class expects these cards to be configured for wifibroadcast aka monitor mode with
-   * injection.
-   * @param broadcast_cards_names the names of all broadcast wifi cards on the system.
-   */
-  void set_broadcast_card_names(const std::vector<std::string> &broadcast_cards_names);
-  /*
-   * Call this after setting the broadcast cards to start the wifibroadcast instances.
-   */
-  void configure();
-  void configure_telemetry();
-  void configure_video();
+  explicit WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards);
+
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
   // see interface
-  void addExternalDeviceIpForwarding(std::string ip);
-  void removeExternalDeviceIpForwarding(std::string ip);
+  void addExternalDeviceIpForwarding(const std::string& ip);
+  void removeExternalDeviceIpForwarding(const std::string& ip);
  private:
-  const OHDProfile &profile;
+  const OHDProfile _profile;
   const int DEFAULT_MCS_INDEX = 3;
-  std::vector<std::string> m_broadcast_cards_names={};
+  std::vector<std::shared_ptr<WifiCardHolder>> _broadcast_cards;
  private:
+  void configure();
+  void configure_telemetry();
+  void configure_video();
   // For telemetry, bidirectional in opposite directions
   std::unique_ptr<UDPWBTransmitter> udpTelemetryTx;
   std::unique_ptr<UDPWBReceiver> udpTelemetryRx;
@@ -52,6 +42,7 @@ class WBStreams {
   // TODO make more configurable
   [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec)const;
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port) const;
+  [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
 };
 
 #endif

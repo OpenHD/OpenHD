@@ -216,6 +216,15 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   if(card.type==WiFiCardType::Broadcom){
 	card.supports_hotspot= true;
   }
+  // hacky there is something wron with phy-lookup
+  if(!(card.supports_2ghz  || card.supports_5ghz)){
+    card.supports_2ghz=true;
+  }
   return card;
+  // A wifi card should at least one of them both.
+  //if(card.supports_2ghz || card.supports_5ghz){
+  //  return card;
+  //}
+  //return std::nullopt;
 }
 

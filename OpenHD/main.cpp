@@ -20,12 +20,14 @@ static const char optstr[] = "?:da";
 static const struct option long_options[] = {
     {"force_air", no_argument, nullptr, 'a'},
     {"force_ground", no_argument, nullptr, 'g'},
+    {"clean_start", no_argument, nullptr, 'c'},
     {nullptr, 0, nullptr, 0},
 };
 
 struct OHDRunOptions {
   bool force_air = false;
   bool force_ground=false;
+  bool clean_start=false;
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
@@ -38,11 +40,14 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         break;
       case 'g':ret.force_ground = true;
         break;
+      case 'c':ret.clean_start = true;
+        break;
       case '?':
       default:
         std::cout << "Usage: \n" <<
             "force_air [Force to boot as air pi, even when no camera is detected] \n" <<
-            "force_ground [Force to boot as ground pi,even though one or more cameras are connected] \n";
+            "force_ground [Force to boot as ground pi,even though one or more cameras are connected] \n"<<
+            "clean_start [Wipe all persistent settings OpenHD has written, can fix any boot issues when switching hw around] \n";
         exit(1);
     }
   }
@@ -51,6 +56,9 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   }
   if(OHDFilesystemUtil::exists("/boot/ground.txt") || OHDFilesystemUtil::exists("/boot/Ground.txt")){
     ret.force_ground=true;
+  }
+  if(OHDFilesystemUtil::exists("/boot/ohd_clean.txt")){
+    ret.clean_start=true;
   }
   if(ret.force_air && ret.force_ground){
     std::cerr << "Cannot force air and ground at the same time\n";
@@ -68,6 +76,10 @@ int main(int argc, char *argv[]) {
       "force_ground:" << (options.force_ground ? "Y" : "N") <<"\n";
 
   try {
+    if(options.clean_start){
+      clean_all_settings();
+    }
+
     // First discover the platform:
     const auto platform = DPlatform::discover();
     std::cout<<platform->to_string()<<"\n";
