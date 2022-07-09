@@ -7,14 +7,15 @@
 namespace mavsdk {
 
 XMavsdkWrapperSerialConnection::XMavsdkWrapperSerialConnection(
-    std::string path, int baudrate, bool flow_control)
+    const std::string& path, int baudrate, bool flow_control)
     : MEndpoint("SerialFC") {
   _for_mavsdk_receiver_callback=[this](mavlink_message_t& message, Connection* connection){
     MEndpoint::parseNewDataEmulateForMavsdk(message);
   };
   _serial_connection=std::make_unique<SerialConnection>(_for_mavsdk_receiver_callback,path,baudrate,flow_control);
 
-
+  const auto result=_serial_connection->start();
+  std::cout<<"XMavsdkWrapperSerialConnection:"<<result;
 }
 
 void XMavsdkWrapperSerialConnection::sendMessageImpl(

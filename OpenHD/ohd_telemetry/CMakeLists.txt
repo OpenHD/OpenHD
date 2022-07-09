@@ -66,6 +66,8 @@ target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
 # All the test files for development
 add_executable(test_serial_endpoint tests/test_serial_endpoint.cpp)
 target_link_libraries(test_serial_endpoint OHDTelemetryLib)
+add_executable(test_serial_endpoint2 tests/test_serial_endpoint2.cpp)
+target_link_libraries(test_serial_endpoint2 OHDTelemetryLib)
 
 add_executable(test_udp_endpoint tests/test_udp_endpoint.cpp)
 target_link_libraries(test_udp_endpoint OHDTelemetryLib)
