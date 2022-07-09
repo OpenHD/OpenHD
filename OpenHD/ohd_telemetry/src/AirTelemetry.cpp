@@ -10,10 +10,10 @@
 
 AirTelemetry::AirTelemetry(std::string fcSerialPort): MavlinkSystem(OHD_SYS_ID_AIR) {
   //serialEndpoint = std::make_unique<SerialEndpoint>("FCSerial",SerialEndpoint::HWOptions{fcSerialPort, 115200});
-  serialEndpoint = std::make_unique<mavsdk::XMavsdkWrapperSerialConnection>(fcSerialPort,115200);
+  /*serialEndpoint = std::make_unique<mavsdk::XMavsdkWrapperSerialConnection>(fcSerialPort,115200);
   serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
     this->onMessageFC(msg);
-  });
+  });*/
 
   // any message coming in via wifibroadcast is a message from the ground pi
   wifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(true);
