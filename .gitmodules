@@ -1,7 +1,3 @@
-[submodule "OpenHD/lib/wifibroadcast"]
-	path = OpenHD/lib/wifibroadcast
-	url = git@github.com:Consti10/wifibroadcast.git
-	branch = XTelemetryTest
 [submodule "OpenHD/lib/mavlink"]
 	path = OpenHD/lib/mavlink
 	url = git@github.com:OpenHD/mavlink.git
