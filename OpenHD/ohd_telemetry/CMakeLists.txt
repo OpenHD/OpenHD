@@ -43,6 +43,7 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         src/mavsdk_param/mavlink_receiver.cpp
         src/mavsdk_param/mavsdk_time.cpp
         src/mavsdk_param/mavlink_channels.cpp
+        src/mavsdk_param/XMavsdkWrapperSerialConnection.cpp
         )
 
 # Build it as a library

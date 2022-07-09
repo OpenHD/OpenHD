@@ -13,6 +13,8 @@
 #include "mavlink_settings/XSettingsComponent.h"
 #include "openhd-platform.hpp"
 #include "routing/MavlinkSystem.hpp"
+//
+#include "mavsdk_param/XMavsdkWrapperSerialConnection.h"
 
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
