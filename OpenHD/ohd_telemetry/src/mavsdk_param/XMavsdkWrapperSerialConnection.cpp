@@ -13,9 +13,7 @@ XMavsdkWrapperSerialConnection::XMavsdkWrapperSerialConnection(
     MEndpoint::parseNewDataEmulateForMavsdk(message);
   };
   _serial_connection=std::make_unique<SerialConnection>(_for_mavsdk_receiver_callback,path,baudrate,flow_control);
-
-  const auto result=_serial_connection->start();
-  std::cout<<"XMavsdkWrapperSerialConnection:"<<result;
+  establish_connection_thread = std::make_unique<std::thread>(&XMavsdkWrapperSerialConnection::constantConnect, this);
 }
 
 void XMavsdkWrapperSerialConnection::sendMessageImpl(
@@ -27,4 +25,11 @@ void XMavsdkWrapperSerialConnection::sendMessageImpl(
 
 }
 
+void XMavsdkWrapperSerialConnection::constantConnect() {
+  while (true){
+    const auto result=_serial_connection->start();
+    std::cout<<"XMavsdkWrapperSerialConnection:"<<result;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+}
 }

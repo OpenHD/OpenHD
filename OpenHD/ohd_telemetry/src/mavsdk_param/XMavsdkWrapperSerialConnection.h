@@ -17,13 +17,14 @@ class XMavsdkWrapperSerialConnection : public MEndpoint{
   explicit XMavsdkWrapperSerialConnection(
       const std::string& path,
       int baudrate,
-      bool flow_control);
+      bool flow_control=false);
  private:
   void sendMessageImpl(const MavlinkMessage &message) override;
  private:
+  void constantConnect();
   Connection::receiver_callback_t _for_mavsdk_receiver_callback;
   std::unique_ptr<SerialConnection> _serial_connection;
-  std::thread establish_connection_thread;
+  std::unique_ptr<std::thread> establish_connection_thread = nullptr;
 };
 
 }

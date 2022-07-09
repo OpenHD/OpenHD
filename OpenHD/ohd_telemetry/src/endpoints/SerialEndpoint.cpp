@@ -53,6 +53,8 @@ void SerialEndpoint::safeRestart() {
 		std::cout << "Setting baud rate to:" << m_options.baud_rate<< "\n";
 		m_serial.set_option(boost::asio::serial_port_base::baud_rate(m_options.baud_rate));
 	  }
+          // always no flow controll
+          m_serial.set_option(boost::asio::serial_port_base::flow_control(boost::asio::serial_port_base::flow_control::none));
 	  /*m_serial.set_option(boost::asio::serial_port_base::character_size(8));
 	  m_serial.set_option(boost::asio::serial_port_base::flow_control(boost::asio::serial_port_base::flow_control::none));
 	  m_serial.set_option(boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none));
