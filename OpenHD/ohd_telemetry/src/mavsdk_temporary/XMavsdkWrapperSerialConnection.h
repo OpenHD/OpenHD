@@ -25,6 +25,7 @@ class XMavsdkWrapperSerialConnection : public MEndpoint{
   Connection::receiver_callback_t _for_mavsdk_receiver_callback;
   std::unique_ptr<SerialConnection> _serial_connection;
   std::unique_ptr<std::thread> establish_connection_thread = nullptr;
+  std::mutex _mutex{};
 };
 
 }

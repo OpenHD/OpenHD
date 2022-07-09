@@ -28,6 +28,8 @@ class XMavlinkParamProvider :public MavlinkComponent{
   std::shared_ptr<mavsdk::SenderWrapper> _sender;
   std::shared_ptr<mavsdk::MavlinkMessageHandler> _mavlink_message_handler;
   std::shared_ptr<mavsdk::MavlinkParameterReceiver> _mavlink_parameter_receiver;
+ private:
+  std::mutex _mutex{};
 };
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_MAV_PARAM_XMAVLINKPARAMPROVIDER_H_

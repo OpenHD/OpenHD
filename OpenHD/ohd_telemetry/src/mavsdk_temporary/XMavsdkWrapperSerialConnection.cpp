@@ -18,13 +18,13 @@ XMavsdkWrapperSerialConnection::XMavsdkWrapperSerialConnection(
 
 void XMavsdkWrapperSerialConnection::sendMessageImpl(
     const MavlinkMessage& message) {
+  std::lock_guard<std::mutex> lock(_mutex);
   const auto result=_serial_connection->send_message(message.m);
   if(!result){
     // cannot send - probably disconnected
   }
 
 }
-
 void XMavsdkWrapperSerialConnection::constantConnect() {
   while (true){
     const auto result=_serial_connection->start();

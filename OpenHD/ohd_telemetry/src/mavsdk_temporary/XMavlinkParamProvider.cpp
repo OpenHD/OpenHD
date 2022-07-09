@@ -52,6 +52,7 @@ XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id,
 
 std::vector<MavlinkMessage> XMavlinkParamProvider::process_mavlink_message(
     const MavlinkMessage& msg) {
+  std::lock_guard<std::mutex> lock(_mutex);
   _mavlink_message_handler->process_message(msg.m);
   for(int i=0;i<100;i++){
     _mavlink_parameter_receiver->do_work();
