@@ -28,6 +28,9 @@ void XMavsdkWrapperSerialConnection::sendMessageImpl(
 void XMavsdkWrapperSerialConnection::constantConnect() {
   while (true){
     const auto result=_serial_connection->start();
+    if(result==mavsdk::ConnectionResult::Success){
+      return;
+    }
     std::cout<<"XMavsdkWrapperSerialConnection:"<<result;
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
