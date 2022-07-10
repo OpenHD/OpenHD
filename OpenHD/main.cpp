@@ -18,9 +18,9 @@
 //TODO fix the cmake crap and then we can build a single executable.
 static const char optstr[] = "?:da";
 static const struct option long_options[] = {
-    {"force_air", no_argument, nullptr, 'a'},
-    {"force_ground", no_argument, nullptr, 'g'},
-    {"clean_start", no_argument, nullptr, 'c'},
+    {"force-air", no_argument, nullptr, 'a'},
+    {"force-ground", no_argument, nullptr, 'g'},
+    {"clean-start", no_argument, nullptr, 'c'},
     {nullptr, 0, nullptr, 0},
 };
 
@@ -45,9 +45,9 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
       case '?':
       default:
         std::cout << "Usage: \n" <<
-            "force_air [Force to boot as air pi, even when no camera is detected] \n" <<
-            "force_ground [Force to boot as ground pi,even though one or more cameras are connected] \n"<<
-            "clean_start [Wipe all persistent settings OpenHD has written, can fix any boot issues when switching hw around] \n";
+            "force-air [Force to boot as air pi, even when no camera is detected] \n" <<
+            "force-ground [Force to boot as ground pi,even though one or more cameras are connected] \n"<<
+            "clean-start [Wipe all persistent settings OpenHD has written, can fix any boot issues when switching hw around] \n";
         exit(1);
     }
   }
@@ -72,8 +72,9 @@ int main(int argc, char *argv[]) {
   const OHDRunOptions options=parse_run_parameters(argc,argv);
 
   std::cout << "OpenHD START with " <<"\n"<<
-      "force_air:" << (options.force_air ? "Y" : "N") <<"\n"<<
-      "force_ground:" << (options.force_ground ? "Y" : "N") <<"\n";
+      "force-air:" << (options.force_air ? "Y" : "N") <<"\n"<<
+      "force-ground:" << (options.force_ground ? "Y" : "N") <<"\n"<<
+      "clean-start:" << (options.clean_start ? "Y" : "N") <<"\n";
 
   try {
     if(options.clean_start){
