@@ -12,6 +12,7 @@
 #include "WifiCards.h"
 #include "WifiHotspot.h"
 #include "openhd-profile.hpp"
+#include "openhd-platform.hpp"
 
 class OHDInterface {
  public:
@@ -24,7 +25,7 @@ class OHDInterface {
    * a setting that affects the ground pi.
    * @param profile the (never-changing) profile we are running with.
    */
-  explicit OHDInterface(const OHDProfile &profile);
+  explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1);
   std::unique_ptr<WBStreams> wbStreams;
   std::unique_ptr<USBTetherListener> usbTetherListener;
   // Verbose string about the current state.
@@ -41,7 +42,8 @@ class OHDInterface {
    */
   void removeExternalDeviceIpForwarding(std::string ip) const;
  private:
-  const OHDProfile &profile;
+  const OHDProfile profile;
+  const OHDPlatform platform;
   std::unique_ptr<WifiHotspot> _wifi_hotspot;
 };
 

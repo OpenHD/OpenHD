@@ -8,7 +8,7 @@
 
 #include <utility>
 
-OHDInterface::OHDInterface(const OHDProfile &profile1) : profile(profile1) {
+OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) : platform(platform1),profile(profile1) {
   std::cout << "OHDInterface::OHDInterface()\n";
   //wifiCards = std::make_unique<WifiCards>(profile);
   //Find out which cards are connected first
@@ -58,7 +58,8 @@ OHDInterface::OHDInterface(const OHDProfile &profile1) : profile(profile1) {
     usbTetherListener->startLooping();
   }
   // wifi hotspot - normally only on ground, but for now on both
-  const bool enable_wifi_hotspot=OHDFilesystemUtil::exists("/boot/enable_hotspot.txt");
+  const bool enable_wifi_hotspot=OHDFilesystemUtil::exists("/boot/enable_hotspot.txt")
+                                   && platform.platform_type==PlatformType::RaspberryPi; // For now only supported on rpi
   if(enable_wifi_hotspot){
     if(optional_hotspot_card != nullptr){
       // Enable hotspot for this card
