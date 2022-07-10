@@ -139,16 +139,16 @@ std::string WBStreams::createDebug() const {
   }
   ss<<"Any data received: "<<(any_data_received ? "Y":"N")<<"\n";
   if (udpTelemetryRx) {
-	ss<<"TeleRx:"<<udpTelemetryRx->createDebug();
+	ss<<"TeleRx: "<<udpTelemetryRx->createDebug();
   }
   if (udpTelemetryTx) {
-	ss<<"TeleTx:"<<udpTelemetryTx->createDebug();
+	ss<<"TeleTx: "<<udpTelemetryTx->createDebug();
   }
   for (const auto &txvid: udpVideoTxList) {
-	ss<<"VidTx:"<<txvid->createDebug();
+	ss<<"VidTx: "<<txvid->createDebug();
   }
   for (const auto &rxvid: udpVideoRxList) {
-	ss<<"VidRx:"<<rxvid->createDebug();
+	ss<<"VidRx :"<<rxvid->createDebug();
   }
   return ss.str();
 }
