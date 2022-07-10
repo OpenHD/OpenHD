@@ -7,10 +7,11 @@
 
 #include <memory>
 
+#include "USBTetherListener.h"
 #include "WBStreams.h"
 #include "WifiCards.h"
+#include "WifiHotspot.h"
 #include "openhd-profile.hpp"
-#include "USBTetherListener.h"
 
 class OHDInterface {
  public:
@@ -41,6 +42,7 @@ class OHDInterface {
   void removeExternalDeviceIpForwarding(std::string ip) const;
  private:
   const OHDProfile &profile;
+  std::unique_ptr<WifiHotspot> _wifi_hotspot;
 };
 
 #endif //OPENHD_OPENHD_INTERFACE_H

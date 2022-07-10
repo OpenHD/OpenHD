@@ -62,7 +62,9 @@ OHDInterface::OHDInterface(const OHDProfile &profile1) : profile(profile1) {
   if(enable_wifi_hotspot){
     if(optional_hotspot_card != nullptr){
       // Enable hotspot for this card
-      std::cout<<"TODO enable hotspot for: "<<optional_hotspot_card->_wifi_card.interface_name<<"\n";
+      //std::cout<<"TODO enable hotspot for: "<<optional_hotspot_card->_wifi_card.interface_name<<"\n";
+      _wifi_hotspot=std::make_unique<WifiHotspot>(optional_hotspot_card->_wifi_card);
+      _wifi_hotspot->start();
     }
   }
 
