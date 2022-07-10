@@ -78,7 +78,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   while (true) {
         if(std::chrono::steady_clock::now()-last_log>=log_intervall){
           last_log=std::chrono::steady_clock::now();
-          std::cout << "AirTelemetry::loopInfinite()\n";
+          //std::cout << "AirTelemetry::loopInfinite()\n";
           // for debugging, check if any of the endpoints is not alive
           if (enableExtendedLogging && wifibroadcastEndpoint) {
             std::cout<<wifibroadcastEndpoint->createInfo();
