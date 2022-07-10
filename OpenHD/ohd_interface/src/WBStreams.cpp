@@ -23,7 +23,7 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
    _profile(std::move(profile)),_broadcast_cards(broadcast_cards) {
   std::cout<<"WBStreams::WBStreams:"<<broadcast_cards.size()<<"\n";
   // sanity checks
-  if (_broadcast_cards.empty()) {
+  if(_broadcast_cards.empty()) {
     std::cerr << "Without at least one wifi card, the stream(s) cannot be started\n";
     exit(1);
   }
@@ -41,7 +41,7 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
   // However, with the image set up by raphael they should be free from any (OS) prcoesses already
   for(const auto& card: _broadcast_cards){
     //TODO we might not need this one
-    OHDUtil::run_command("rfkill",{"unblock",card->_wifi_card.interface_name});
+    //OHDUtil::run_command("rfkill",{"unblock",card->_wifi_card.interface_name});
     WifiCards::set_card_state(card->_wifi_card, false);
     WifiCards::enable_monitor_mode(card->_wifi_card);
     WifiCards::set_card_state(card->_wifi_card, true);
