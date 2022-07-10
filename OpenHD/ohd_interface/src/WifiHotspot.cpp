@@ -30,7 +30,7 @@ static std::string createHostapdConfigFile(const std::string& interface_name){
         "#80211n - Change GB to your WiFi country code\n"
         "country_code=GB\n"
         "ieee80211n=1\n"
-        "ieee80211d=1";
+        "ieee80211d=1\n";
   return ss.str();
 }
 
@@ -44,7 +44,7 @@ static std::string createDnsmasqConfFile(const std::string& interface_name){
         "server=8.8.8.8\n"
         "domain-needed\n"
         "bogus-priv\n"
-        "dhcp-range=192.168.50.150,192.168.50.200,12h";
+        "dhcp-range=192.168.50.150,192.168.50.200,12h\n";
   return ss.str();
 }
 
