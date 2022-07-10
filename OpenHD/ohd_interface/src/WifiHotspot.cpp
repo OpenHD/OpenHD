@@ -22,7 +22,7 @@ static std::string createHostapdConfigFile(const std::string& interface_name){
         "auth_algs=1\n"
         "ignore_broadcast_ssid=0\n"
         "wpa=2\n"
-        "wpa_passphrase=openhd\n"
+        "wpa_passphrase=openhdopenhd\n"
         "wpa_key_mgmt=WPA-PSK\n"
         "wpa_pairwise=CCMP TKIP\n"
         "rsn_pairwise=CCMP\n"
