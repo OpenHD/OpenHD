@@ -155,11 +155,13 @@ std::string WBStreams::createDebug() const {
 void WBStreams::addExternalDeviceIpForwarding(const std::string& ip) {
   bool first= true;
   assert(udpVideoRxList.size()==2);
+  // forward video
   for(auto& rxVid:udpVideoRxList){
 	const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
 	first= false;
 	rxVid->addForwarder(ip,udpPort);
   }
+  // TODO how do we deal with telemetry
 }
 void WBStreams::removeExternalDeviceIpForwarding(const std::string& ip) {
   bool first= true;
