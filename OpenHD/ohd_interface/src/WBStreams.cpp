@@ -20,14 +20,15 @@
 #include "WifiCards.h"
 
 WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards) :
-   _profile(std::move(profile)),_broadcast_cards(std::move(broadcast_cards)) {
+   _profile(std::move(profile)),_broadcast_cards(broadcast_cards) {
+  std::cout<<"WBStreams::WBStreams:"<<broadcast_cards.size()<<"\n";
   // sanity checks
   if (_broadcast_cards.empty()) {
     std::cerr << "Without at least one wifi card, the stream(s) cannot be started\n";
     exit(1);
   }
   // sanity checking
-  for(const auto& card: broadcast_cards){
+  for(const auto& card: _broadcast_cards){
     assert(card->get_settings().use_for==WifiUseFor::MonitorMode);
   }
   if (_profile.is_air && _broadcast_cards.size() > 1) {
@@ -38,7 +39,7 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
   }
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // However, with the image set up by raphael they should be free from any (OS) prcoesses already
-  for(const auto& card: broadcast_cards){
+  for(const auto& card: _broadcast_cards){
     //TODO we might not need this one
     OHDUtil::run_command("rfkill",{"unblock",card->_wifi_card.interface_name});
     WifiCards::set_card_state(card->_wifi_card, false);
