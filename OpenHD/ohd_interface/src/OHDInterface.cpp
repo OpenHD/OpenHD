@@ -29,9 +29,14 @@ OHDInterface::OHDInterface(const OHDProfile &profile1) : profile(profile1) {
   }
   // now decide what to use the card(s) for
   std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards{};
+  std::shared_ptr<WifiCardHolder> optional_hotspot_card=nullptr;
   for(auto& card:wifi_cards){
     if(card->get_settings().use_for==WifiUseFor::MonitorMode){
       broadcast_cards.push_back(card);
+    }else if(card->_wifi_card.supports_hotspot){
+      if(optional_hotspot_card== nullptr){
+        optional_hotspot_card=card;
+      }
     }
   }
   // We don't have at least one card for monitor mode, which is a hard requirement for OpenHD
@@ -52,6 +57,15 @@ OHDInterface::OHDInterface(const OHDProfile &profile1) : profile(profile1) {
     });
     usbTetherListener->startLooping();
   }
+  // wifi hotspot - normally only on ground, but for now on both
+  const bool enable_wifi_hotspot=OHDFilesystemUtil::exists("/boot/enable_hotspot.txt");
+  if(enable_wifi_hotspot){
+    if(optional_hotspot_card != nullptr){
+      // Enable hotspot for this card
+      std::cout<<"TODO enable hotspot for: "<<optional_hotspot_card->_wifi_card.interface_name<<"\n";
+    }
+  }
+
   std::cout << "OHDInterface::created\n";
 }
 
