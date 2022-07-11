@@ -169,7 +169,7 @@ static void mavlink_test_openhd_fec_link_rx_statistics(uint8_t system_id, uint8_
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
     mavlink_openhd_fec_link_rx_statistics_t packet_in = {
-        963497464,963497672,963497880,963498088,53
+        963497464,963497672,963497880,963498088,963498296,963498504,77
     };
     mavlink_openhd_fec_link_rx_statistics_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
@@ -177,6 +177,8 @@ static void mavlink_test_openhd_fec_link_rx_statistics(uint8_t system_id, uint8_
         packet1.count_blocks_lost = packet_in.count_blocks_lost;
         packet1.count_blocks_recovered = packet_in.count_blocks_recovered;
         packet1.count_fragments_recovered = packet_in.count_fragments_recovered;
+        packet1.opt_count_packets_total = packet_in.opt_count_packets_total;
+        packet1.opt_count_packets_lost = packet_in.opt_count_packets_lost;
         packet1.link_index = packet_in.link_index;
         
         
@@ -192,12 +194,12 @@ static void mavlink_test_openhd_fec_link_rx_statistics(uint8_t system_id, uint8_
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_openhd_fec_link_rx_statistics_pack(system_id, component_id, &msg , packet1.link_index , packet1.count_blocks_total , packet1.count_blocks_lost , packet1.count_blocks_recovered , packet1.count_fragments_recovered );
+    mavlink_msg_openhd_fec_link_rx_statistics_pack(system_id, component_id, &msg , packet1.link_index , packet1.count_blocks_total , packet1.count_blocks_lost , packet1.count_blocks_recovered , packet1.count_fragments_recovered , packet1.opt_count_packets_total , packet1.opt_count_packets_lost );
     mavlink_msg_openhd_fec_link_rx_statistics_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_openhd_fec_link_rx_statistics_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.link_index , packet1.count_blocks_total , packet1.count_blocks_lost , packet1.count_blocks_recovered , packet1.count_fragments_recovered );
+    mavlink_msg_openhd_fec_link_rx_statistics_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.link_index , packet1.count_blocks_total , packet1.count_blocks_lost , packet1.count_blocks_recovered , packet1.count_fragments_recovered , packet1.opt_count_packets_total , packet1.opt_count_packets_lost );
     mavlink_msg_openhd_fec_link_rx_statistics_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
@@ -210,7 +212,7 @@ static void mavlink_test_openhd_fec_link_rx_statistics(uint8_t system_id, uint8_
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_openhd_fec_link_rx_statistics_send(MAVLINK_COMM_1 , packet1.link_index , packet1.count_blocks_total , packet1.count_blocks_lost , packet1.count_blocks_recovered , packet1.count_fragments_recovered );
+    mavlink_msg_openhd_fec_link_rx_statistics_send(MAVLINK_COMM_1 , packet1.link_index , packet1.count_blocks_total , packet1.count_blocks_lost , packet1.count_blocks_recovered , packet1.count_fragments_recovered , packet1.opt_count_packets_total , packet1.opt_count_packets_lost );
     mavlink_msg_openhd_fec_link_rx_statistics_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
