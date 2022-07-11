@@ -48,7 +48,8 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
     assert(!card->get_settings().frequency.empty());
     WifiCards::set_frequency(card->_wifi_card, card->get_settings().frequency);
     assert(!card->get_settings().txpower.empty());
-    WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
+    // For now, I have this removed - to protect against frying cards by accident.
+    //WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
   }
   configure();
 }
