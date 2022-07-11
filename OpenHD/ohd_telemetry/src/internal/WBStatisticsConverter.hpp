@@ -71,7 +71,7 @@ static MavlinkMessage create_dummy(const uint8_t sys_id,const uint8_t comp_id,co
                                     comp_id,
                                     &msg.m,
                                     card_index,
-                                    11,12,13,14,15
+                                    11+card_index,12,13,14,15
   );
   return msg;
 }
