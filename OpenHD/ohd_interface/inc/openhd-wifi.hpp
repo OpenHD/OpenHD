@@ -90,7 +90,10 @@ static std::string wifi_use_for_to_string(const WifiUseFor wifi_use_for){
   }
 }
 
-static constexpr auto DEFAULT_WIFI_TX_POWER="3100";
+// Consti10: Stephen used a default tx power of 3100 somewhere (not sure if that ever made it trough though)
+// This value seems a bit high to me, so I am going with a default of "1800" (which should be 18.0 dBm )
+//static constexpr auto DEFAULT_WIFI_TX_POWER="3100";
+static constexpr auto DEFAULT_WIFI_TX_POWER="1800";
 static constexpr auto DEFAULT_5GHZ_FREQUENCY = "5180";
 static constexpr auto DEFAULT_2GHZ_FREQUENCY = "2412";
 

@@ -28,6 +28,7 @@ bool WifiCards::set_frequency(const WiFiCard &card, const std::string &frequency
   return success;
 }
 
+// Consti10: this at least changes what then iw dev displays. If it internally has an effect is not yet tested.
 bool WifiCards::set_txpower(const WiFiCard &card, const std::string &txpower) {
   std::cout << "WifiCards::set_txpower(" << txpower << ") for " << card.interface_name << ")" << std::endl;
   std::vector<std::string> args{"dev", card.interface_name, "set", "txpower", "fixed", txpower};
