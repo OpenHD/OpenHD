@@ -78,7 +78,7 @@ static MavlinkMessage create_dummy_ohd_wifi_card(const uint8_t sys_id,const uint
 
 static MavlinkMessage create_dummy_openhd_fec_link_rx_statistics_pack(const uint8_t sys_id,const uint8_t comp_id,const uint8_t link_idx){
   MavlinkMessage msg;
-  mavlink_msg_openhd_fec_link_rx_statistics_pack(sys_id,comp_id,&msg.m,link_idx,13,3,4,5);
+  mavlink_msg_openhd_fec_link_rx_statistics_pack(sys_id,comp_id,&msg.m,link_idx,13,3,4,5,99,99);
   return msg;
 }
 
