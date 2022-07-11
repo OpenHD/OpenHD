@@ -44,10 +44,13 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   // TODO remove for release
   //_status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
   if(RUNS_ON_AIR){
-    ret.push_back(MonitorModeCardStats::create_dummy(_sys_id,_comp_id,0));
+    ret.push_back(
+        MonitorModeCardStats::create_dummy_ohd_wifi_card(_sys_id, _comp_id, 0));
   }else{
-    ret.push_back(MonitorModeCardStats::create_dummy(_sys_id,_comp_id,0));
-    ret.push_back(MonitorModeCardStats::create_dummy(_sys_id,_comp_id,1));
+    ret.push_back(
+        MonitorModeCardStats::create_dummy_ohd_wifi_card(_sys_id, _comp_id, 0));
+    ret.push_back(
+        MonitorModeCardStats::create_dummy_ohd_wifi_card(_sys_id, _comp_id, 1));
   }
   const auto logs = generateLogMessages();
   MavlinkComponent::vec_append(ret,logs);

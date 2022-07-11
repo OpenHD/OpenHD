@@ -65,7 +65,7 @@ static std::vector<OpenHDStatisticsWriter::Data> parseRawDataSafe(const uint8_t 
 
 namespace MonitorModeCardStats{
 
-static MavlinkMessage create_dummy(const uint8_t sys_id,const uint8_t comp_id,const uint8_t card_index){
+static MavlinkMessage create_dummy_ohd_wifi_card(const uint8_t sys_id,const uint8_t comp_id,const uint8_t card_index){
   MavlinkMessage msg;
   mavlink_msg_openhd_wifi_card_pack(sys_id,
                                     comp_id,
@@ -73,6 +73,11 @@ static MavlinkMessage create_dummy(const uint8_t sys_id,const uint8_t comp_id,co
                                     card_index,
                                     11+card_index,12,13,14,15
   );
+  return msg;
+}
+
+static MavlinkMessage create_dummy_ohd_x1(const uint8_t sys_id,const uint8_t comp_id,const uint8_t stream_idx){
+  MavlinkMessage msg;
   return msg;
 }
 

@@ -152,7 +152,8 @@ class MEndpoint {
   // https://stackoverflow.com/questions/12657962/how-do-i-generate-a-random-number-between-two-variables-that-i-have-stored
   static int random_number(int min,int max){
     srand(time(NULL)); // Seed the time
-    int finalNum = rand()%(max-min+1)+min;
+    const int num= rand()%(max-min+1)+min;
+    return num;
   }
 };
 
