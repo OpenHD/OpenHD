@@ -105,7 +105,7 @@ static void mavlink_test_openhd_wifi_card(uint8_t system_id, uint8_t component_i
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
     mavlink_openhd_wifi_card_t packet_in = {
-        963497464,963497672,963497880,963498088,963498296
+        963497464,963497672,963497880,963498088,963498296,65
     };
     mavlink_openhd_wifi_card_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
@@ -114,6 +114,7 @@ static void mavlink_test_openhd_wifi_card(uint8_t system_id, uint8_t component_i
         packet1.count_p_injected = packet_in.count_p_injected;
         packet1.count_p_tx_err = packet_in.count_p_tx_err;
         packet1.count_p_rx_err = packet_in.count_p_rx_err;
+        packet1.card_index = packet_in.card_index;
         
         
 #ifdef MAVLINK_STATUS_FLAG_OUT_MAVLINK1
@@ -128,12 +129,12 @@ static void mavlink_test_openhd_wifi_card(uint8_t system_id, uint8_t component_i
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_openhd_wifi_card_pack(system_id, component_id, &msg , packet1.signal_millidBm , packet1.count_p_received , packet1.count_p_injected , packet1.count_p_tx_err , packet1.count_p_rx_err );
+    mavlink_msg_openhd_wifi_card_pack(system_id, component_id, &msg , packet1.card_index , packet1.signal_millidBm , packet1.count_p_received , packet1.count_p_injected , packet1.count_p_tx_err , packet1.count_p_rx_err );
     mavlink_msg_openhd_wifi_card_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_openhd_wifi_card_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.signal_millidBm , packet1.count_p_received , packet1.count_p_injected , packet1.count_p_tx_err , packet1.count_p_rx_err );
+    mavlink_msg_openhd_wifi_card_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.card_index , packet1.signal_millidBm , packet1.count_p_received , packet1.count_p_injected , packet1.count_p_tx_err , packet1.count_p_rx_err );
     mavlink_msg_openhd_wifi_card_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
@@ -146,7 +147,7 @@ static void mavlink_test_openhd_wifi_card(uint8_t system_id, uint8_t component_i
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_openhd_wifi_card_send(MAVLINK_COMM_1 , packet1.signal_millidBm , packet1.count_p_received , packet1.count_p_injected , packet1.count_p_tx_err , packet1.count_p_rx_err );
+    mavlink_msg_openhd_wifi_card_send(MAVLINK_COMM_1 , packet1.card_index , packet1.signal_millidBm , packet1.count_p_received , packet1.count_p_injected , packet1.count_p_tx_err , packet1.count_p_rx_err );
     mavlink_msg_openhd_wifi_card_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
