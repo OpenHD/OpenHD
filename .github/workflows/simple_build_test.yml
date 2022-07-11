@@ -1,0 +1,29 @@
+name: simple_build_test
+
+# NOTE: This test only checks if the code in the repository builds under ubuntu x86 (dependencies installed)
+# Which is - simply put - the most basic test. If this test fails, there is something wrong with the code.
+
+on: [push]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    #runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          sudo ./install_dep.sh
+      - name: Build with make
+        run: |
+          cd OpenHD
+          ./build_cmake.sh
