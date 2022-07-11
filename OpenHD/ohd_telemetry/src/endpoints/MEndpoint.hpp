@@ -14,6 +14,9 @@
 #include <utility>
 #include <atomic>
 
+// WARNING BE CAREFULL TO REMOVE ON RELEASE
+//#define OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
+
 // Mavlink Endpoint
 // A Mavlink endpoint hides away the underlying connection - e.g. UART, TCP, UDP.
 // It has a (implementation-specific) method to send a message (sendMessage) and (implementation-specific)
@@ -43,6 +46,13 @@ class MEndpoint {
    * @param message the message to send
    */
   void sendMessage(const MavlinkMessage &message){
+#ifdef OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
+    const auto rand= random_number(0,100);
+    if(rand>50){
+      std::cout<<"Emulate packet loss - dropped packet\n";
+      return;
+    }
+#endif
 	sendMessageImpl(message);
 	m_n_messages_sent++;
   }
@@ -106,6 +116,13 @@ class MEndpoint {
   MAV_MSG_CALLBACK callback = nullptr;
   // increases message count and forwards the message via the callback if registered.
   void onNewMavlinkMessage(mavlink_message_t msg){
+#ifdef OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
+    const auto rand= random_number(0,100);
+    if(rand>50){
+      std::cout<<"Emulate packet loss - dropped packet\n";
+      return;
+    }
+#endif
 	lastMessage = std::chrono::steady_clock::now();
 	MavlinkMessage message{msg};
 	if (callback != nullptr) {
@@ -131,6 +148,11 @@ class MEndpoint {
 	int ret=channel_idx;
 	channel_idx++;
 	return ret;
+  }
+  // https://stackoverflow.com/questions/12657962/how-do-i-generate-a-random-number-between-two-variables-that-i-have-stored
+  static int random_number(int min,int max){
+    srand(time(NULL)); // Seed the time
+    int finalNum = rand()%(max-min+1)+min;
   }
 };
 
