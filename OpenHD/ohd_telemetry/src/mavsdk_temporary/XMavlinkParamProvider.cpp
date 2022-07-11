@@ -46,7 +46,8 @@ XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id,
     }else{
       assert(true);
     }
-    _mavlink_parameter_receiver->provide_server_param(setting.id,param_value);
+    const auto result=_mavlink_parameter_receiver->provide_server_param(setting.id,param_value);
+    assert(result==mavsdk::MavlinkParameterReceiver::Result::Success);
   }
 }
 
