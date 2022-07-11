@@ -145,10 +145,11 @@ class CameraHolder : public openhd::XSettingsComponent {
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings() override{
     std::vector<openhd::Setting> ret={
-      openhd::Setting{"VIDEO_WIDTH",_settings->userSelectedVideoFormat.width},
-      openhd::Setting{"VIDEO_HEIGHT",_settings->userSelectedVideoFormat.height},
-      openhd::Setting{"VIDEO_FPS",_settings->userSelectedVideoFormat.framerate},
-      openhd::Setting{"VIDEO_FORMAT",video_codec_to_int(_settings->userSelectedVideoFormat.videoCodec)}
+        openhd::Setting{"VIDEO_WIDTH",_settings->userSelectedVideoFormat.width},
+        openhd::Setting{"VIDEO_HEIGHT",_settings->userSelectedVideoFormat.height},
+        openhd::Setting{"VIDEO_FPS",_settings->userSelectedVideoFormat.framerate},
+        openhd::Setting{"VIDEO_FORMAT",video_codec_to_int(_settings->userSelectedVideoFormat.videoCodec)},
+        openhd::Setting{"V_BITRATE_MBITS",static_cast<int>(_settings->bitrateKBits / 1000)}
     };
     return ret;
   }
@@ -167,6 +168,10 @@ class CameraHolder : public openhd::XSettingsComponent {
       /*std::string value=video_codec_to_string(_settings->userSelectedVideoFormat.videoCodec);
       changed=openhd::safe_to(value,changed_setting.value);
       _settings->userSelectedVideoFormat.videoCodec= string_to_video_codec(value);*/
+    }else if(changed_setting.id=="V_BITRATE_MBITS"){
+      int value=_settings->bitrateKBits/1000;
+      changed=openhd::safe_to(value,changed_setting.value);
+      _settings->bitrateKBits=value*1000;
     }
     if(changed){
       update_settings(*_settings);
