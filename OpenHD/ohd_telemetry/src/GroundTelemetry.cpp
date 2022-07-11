@@ -41,21 +41,18 @@ GroundTelemetry::GroundTelemetry(): MavlinkSystem(OHD_SYS_ID_GROUND) {
 void GroundTelemetry::onMessageAirPi(MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"GroundTelemetry::onMessageAirPi");
   const mavlink_message_t &m = message.m;
-  // we do not need to forward heartbeat messages coming from the air telemetry service
-  /*if (m.msgid == MAVLINK_MSG_ID_HEARTBEAT && m.sysid == OHD_SYS_ID_AIR) {
-	// heartbeat coming from the air service
-	return;
-  }*/
-  // for now, forward everything
+  // All messages we get from the Air pi (they might come from the AirPi itself or the FC connected to the air pi)
+  // get forwarded straight to all the client(s) connected to the ground station.
   sendMessageGroundStationClients(message);
 }
 
 void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
   //debugMavlinkMessage(message.m, "GroundTelemetry::onMessageGroundStationClients");
   const auto &msg = message.m;
-  // for now, forward everything
+  // All messages from the ground station(s) are forwarded to the air unit.
   sendMessageAirPi(message);
   // OpenHD components running on the ground station don't need to talk to the air unit.
+  // This is not exactly following the mavlink routing standard, but saves a lot of bandwidth.
   for(auto& component:components){
     const auto responses=component->process_mavlink_message(message);
     for(const auto& response:responses){
