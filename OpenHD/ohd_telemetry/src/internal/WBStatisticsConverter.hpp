@@ -76,8 +76,15 @@ static MavlinkMessage create_dummy_ohd_wifi_card(const uint8_t sys_id,const uint
   return msg;
 }
 
-static MavlinkMessage create_dummy_ohd_x1(const uint8_t sys_id,const uint8_t comp_id,const uint8_t stream_idx){
+static MavlinkMessage create_dummy_openhd_fec_link_rx_statistics_pack(const uint8_t sys_id,const uint8_t comp_id,const uint8_t link_idx){
   MavlinkMessage msg;
+  mavlink_msg_openhd_fec_link_rx_statistics_pack(sys_id,comp_id,&msg.m,link_idx,13,3,4,5);
+  return msg;
+}
+
+static MavlinkMessage create_dummy_ohd_standard_link_rx_statistics(const uint8_t sys_id,const uint8_t comp_id,const uint8_t link_idx){
+  MavlinkMessage msg;
+  mavlink_msg_openhd_standard_link_rx_statistics_pack(sys_id,comp_id,&msg.m,link_idx,13,10);
   return msg;
 }
 
