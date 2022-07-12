@@ -2,13 +2,15 @@
 
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
+#include "openhd-platform-discover.hpp"
 
 #include "OHDInterface.h"
 
 int main(int argc, char *argv[]) {
 
+  const auto platform=DPlatform::discover();
   const OHDProfile profile{false,"0"};
-  OHDInterface ohdInterface(profile);
+  OHDInterface ohdInterface(*platform,profile);
 
   std::cerr << "OHDInterface started\n";
 

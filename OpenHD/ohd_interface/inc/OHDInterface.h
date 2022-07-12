@@ -7,10 +7,12 @@
 
 #include <memory>
 
+#include "USBTetherListener.h"
 #include "WBStreams.h"
 #include "WifiCards.h"
+#include "WifiHotspot.h"
 #include "openhd-profile.hpp"
-#include "USBTetherListener.h"
+#include "openhd-platform.hpp"
 
 class OHDInterface {
  public:
@@ -23,8 +25,7 @@ class OHDInterface {
    * a setting that affects the ground pi.
    * @param profile the (never-changing) profile we are running with.
    */
-  explicit OHDInterface(const OHDProfile &profile);
-  std::unique_ptr<WifiCards> wifiCards;
+  explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1);
   std::unique_ptr<WBStreams> wbStreams;
   std::unique_ptr<USBTetherListener> usbTetherListener;
   // Verbose string about the current state.
@@ -34,14 +35,16 @@ class OHDInterface {
    * (for example an externally connected tablet) data will be forwarded to the device's ip address.
    * It is safe to call this method multiple times with the same IP address, since we internally keep track here.
    */
-  void addExternalDeviceIpForwarding(std::string ip);
+  void addExternalDeviceIpForwarding(std::string ip) const;
   /**
    * stop forwarding data to the device's ip address.
    * Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
    */
-  void removeExternalDeviceIpForwarding(std::string ip);
+  void removeExternalDeviceIpForwarding(std::string ip) const;
  private:
-  const OHDProfile &profile;
+  const OHDProfile profile;
+  const OHDPlatform platform;
+  std::unique_ptr<WifiHotspot> _wifi_hotspot;
 };
 
 #endif //OPENHD_OPENHD_INTERFACE_H

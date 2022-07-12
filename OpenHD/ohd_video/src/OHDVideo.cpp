@@ -1,28 +1,28 @@
 //
 // Created by consti10 on 03.05.22.
 //
-
-#include "gstreamerstream.h"
-#include "libcamerastream.h"
-#include "openhd-settings.hpp"
-#include "DCameras.h"
-
 #include "OHDVideo.h"
+#include "gstreamerstream.h"
 
-#include <utility>
-
-OHDVideo::OHDVideo(const OHDPlatform &platform, const OHDProfile &profile,DiscoveredCameraList cameras) :
-	platform(platform), profile(profile),m_cameras(cameras) {
-  assert(("This module must only run on the air pi !", profile.is_air == true));
+OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras) :
+	platform(platform1) {
+  //assert(("This module must only run on the air pi !", profile.is_air == true));
+  assert(!cameras.empty());
   std::cout << "OHDVideo::OHDVideo()\n";
+  std::vector<std::shared_ptr<CameraHolder>> camera_holders;
+  for(const auto& camera:cameras){
+    camera_holders.emplace_back(std::make_unique<CameraHolder>(camera));
+  }
   try {
-	setup();
+    for (auto &camera: camera_holders) {
+      configure(camera);
+    }
   } catch (std::exception &ex) {
-	std::cerr << "Error: " << ex.what() << std::endl;
-	exit(1);
+    std::cerr << "Error: " << ex.what() << std::endl;
+    exit(1);
   } catch (...) {
-	std::cerr << "Unknown exception occurred" << std::endl;
-	exit(1);
+    std::cerr << "Unknown exception occurred" << std::endl;
+    exit(1);
   }
   std::cout << "OHDVideo::running\n";
 }
@@ -38,53 +38,29 @@ std::string OHDVideo::createDebug() const {
   return ss.str();
 }
 
-void OHDVideo::process_manifest() {
-  m_cameras = cameras_from_manifest();
-  if (m_cameras.empty()) {
-	std::cerr << "Started as air but no camera(s) have been found from json.Adding dummy camera\n";
-	// If there is no camera, but we are running as air, create and start a dummy camera:
-	Camera camera{};
-	camera.type = CameraTypeDummy;
-	m_cameras.push_back(camera);
-  }
-}
-
-void OHDVideo::setup() {
-  std::cout << "OHDVideo::setup()" << std::endl;
-  // Consti10 sanity checks
-  for (auto &camera: m_cameras) {
-	// check to see if we need to set a default bitrate.
-	if (!check_bitrate_sane(camera.settings.bitrateKBits)) {
-	  camera.settings.bitrateKBits = DEFAULT_BITRATE_KBITS;
-	}
-  }
-  for (auto &camera: m_cameras) {
-	configure(camera);
-  }
-}
-
-void OHDVideo::configure(Camera &camera) {
+void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
+  const auto camera=camera_holder->get_camera();
   std::cerr << "Configuring camera: " << camera_type_to_string(camera.type) << std::endl;
   // these are all using gstreamer at the moment, but that may not be the case forever
   switch (camera.type) {
-	case CameraTypeRaspberryPiCSI:
-	case CameraTypeRaspberryPiVEYE:
-	case CameraTypeJetsonCSI:
-	case CameraTypeIP:
-	case CameraTypeRockchipCSI:
-	case CameraTypeUVC:
-	case CameraTypeDummy: {
-	  std::cout << "Camera index:" << camera.index << "\n";
-	  const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-	  auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera, udp_port);
-	  stream->setup();
-	  stream->start();
-	  m_camera_streams.push_back(stream);
-	  break;
-	}
-	default: {
-	  std::cerr << "Unknown camera type, skipping" << std::endl;
-	}
+    case CameraType::RaspberryPiCSI:
+    case CameraType::RaspberryPiVEYE:
+    case CameraType::JetsonCSI:
+    case CameraType::IP:
+    case CameraType::RockchipCSI:
+    case CameraType::UVC:
+    case CameraType::Dummy: {
+      std::cout << "Camera index:" << camera.index << "\n";
+      const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
+      auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera_holder, udp_port);
+      stream->setup();
+      stream->start();
+      m_camera_streams.push_back(stream);
+      break;
+    }
+    default: {
+      std::cerr << "Unknown camera type, skipping" << std::endl;
+    }
   }
 }
 
@@ -94,14 +70,8 @@ void OHDVideo::restartIfStopped() {
   }
 }
 
-bool OHDVideo::set_video_format(int stream_idx, const VideoFormat video_format) {
-  auto stream= get_stream_by_index(stream_idx);
-  if(!stream)return false;
-  stream->set_format(video_format);
-  return true;
-}
 std::shared_ptr<CameraStream> OHDVideo::get_stream_by_index(int idx) {
-  if(idx<m_cameras.size()){
+  if(idx<m_camera_streams.size()){
     return m_camera_streams[idx];
   }
   return nullptr;

@@ -7,123 +7,109 @@
 #include "json.hpp"
 #include "openhd-util.hpp"
 #include "openhd-log.hpp"
+#include "openhd-settings.hpp"
+#include "openhd-util-filesystem.hpp"
 
-typedef enum WiFiCardType {
-  WiFiCardTypeUnknown = 0,
-  WiFiCardTypeRealtek8812au,
-  WiFiCardTypeRealtek8814au,
-  WiFiCardTypeRealtek88x2bu,
-  WiFiCardTypeRealtek8188eu,
-  WiFiCardTypeAtheros9khtc,
-  WiFiCardTypeAtheros9k,
-  WiFiCardTypeRalink,
-  WiFiCardTypeIntel,
-  WiFiCardTypeBroadcom,
-} WiFiCardType;
-inline std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
+enum class WiFiCardType {
+  Unknown = 0,
+  Realtek8812au,
+  Realtek8814au,
+  Realtek88x2bu,
+  Realtek8188eu,
+  Atheros9khtc,
+  Atheros9k,
+  Ralink,
+  Intel,
+  Broadcom,
+};
+NLOHMANN_JSON_SERIALIZE_ENUM( WiFiCardType, {
+   {WiFiCardType::Unknown, nullptr},
+   {WiFiCardType::Realtek8188eu, "Realtek8188eu"},
+   {WiFiCardType::Realtek8814au, "Realtek8814au"},
+   {WiFiCardType::Realtek88x2bu, "Realtek88x2bu"},
+   {WiFiCardType::Realtek8188eu, "Realtek8188eu"},
+   {WiFiCardType::Atheros9khtc, "Atheros9khtc"},
+   {WiFiCardType::Atheros9k, "Atheros9k"},
+   {WiFiCardType::Ralink, "Ralink"},
+   {WiFiCardType::Intel, "Intel"},
+   {WiFiCardType::Broadcom, "Broadcom"},
+});
+
+static std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
   switch (card_type) {
-	case WiFiCardTypeAtheros9k:  return "ath9k";
-	case WiFiCardTypeAtheros9khtc: return "ath9k_htc";
-	case WiFiCardTypeRealtek8812au: return "88xxau";
-	case WiFiCardTypeRealtek88x2bu: return "88x2bu";
-	case WiFiCardTypeRealtek8188eu: return "8188eu";
-	case WiFiCardTypeRalink: return "rt2800usb";
-	case WiFiCardTypeIntel: return "iwlwifi";
-	case WiFiCardTypeBroadcom: return "brcmfmac";
-	default: return "unknown";
-  }
-}
-inline WiFiCardType wifi_card_type_from_string(const std::string& s){
-  if (OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("ath9k")) != std::string::npos) {
-	return WiFiCardTypeAtheros9k;
-  }else if (OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
-	return WiFiCardTypeAtheros9khtc;
-  }else if (OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("88xxau")) != std::string::npos) {
-	return WiFiCardTypeRealtek8812au;
-  }else if (OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("88x2bu")) != std::string::npos) {
-	return WiFiCardTypeRealtek88x2bu;
-  }else if (OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("8188eu")) != std::string::npos) {
-	return WiFiCardTypeRealtek8188eu;
-  }else if (OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("rt2800usb")) != std::string::npos) {
-	return WiFiCardTypeRalink;
-  }else if (OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("iwlwifi")) != std::string::npos) {
-	return WiFiCardTypeIntel;
-  }else if (OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("brcmfmac")) != std::string::npos) {
-	return WiFiCardTypeBroadcom;
-  }else{
-	return WiFiCardTypeUnknown;
+    case WiFiCardType::Atheros9k:  return "ath9k";
+    case WiFiCardType::Atheros9khtc: return "ath9k_htc";
+    case WiFiCardType::Realtek8812au: return "88xxau";
+    case WiFiCardType::Realtek88x2bu: return "88x2bu";
+    case WiFiCardType::Realtek8188eu: return "8188eu";
+    case WiFiCardType::Ralink: return "rt2800usb";
+    case WiFiCardType::Intel: return "iwlwifi";
+    case WiFiCardType::Broadcom: return "brcmfmac";
+    default: return "unknown";
   }
 }
 
-typedef enum WiFiHotspotType {
-  WiFiHotspotTypeNone = 0,
-  WiFiHotspotTypeInternal2GBand,
-  WiFiHotspotTypeInternal5GBand,
-  WiFiHotspotTypeInternalDualBand,
-  WiFiHotspotTypeExternal,
-} WiFiHotspotType;
+enum class WiFiHotspotType {
+  None = 0,
+  Internal2GBand,
+  Internal5GBand,
+  InternalDualBand,
+  External,
+};
 static std::string wifi_hotspot_type_to_string(const WiFiHotspotType &wifi_hotspot_type) {
   switch (wifi_hotspot_type) {
-	case WiFiHotspotTypeInternal2GBand:return "internal2g";
-	case WiFiHotspotTypeInternal5GBand:  return "internal5g";
-	case WiFiHotspotTypeInternalDualBand:  return "internaldualband";
-	case WiFiHotspotTypeExternal:  return "external";
-	default: return "none";
+    case WiFiHotspotType::Internal2GBand:return "internal2g";
+    case WiFiHotspotType::Internal5GBand:  return "internal5g";
+    case WiFiHotspotType::InternalDualBand:  return "internaldualband";
+    case WiFiHotspotType::External:  return "external";
+    case WiFiHotspotType::None:
+    default:
+      return "none";
   }
-}
-static WiFiHotspotType string_to_wifi_hotspot_type(const std::string &hotspot_type) {
-  if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("internal2g")) != std::string::npos) {
-	return WiFiHotspotTypeInternal2GBand;
-  } else if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("internal5g")) != std::string::npos) {
-	return WiFiHotspotTypeInternal5GBand;
-  } else if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("internaldualband")) != std::string::npos) {
-	return WiFiHotspotTypeInternalDualBand;
-  } else if (OHDUtil::to_uppercase(hotspot_type).find(OHDUtil::to_uppercase("external")) != std::string::npos) {
-	return WiFiHotspotTypeExternal;
-  }
-  return WiFiHotspotTypeNone;
 }
 
 // What to use a discovered wifi card for. R.n We support hotspot or monitor mode (wifibroadcast),
 // I doubt that will change.
-typedef enum WifiUseFor {
-  WifiUseForUnknown = 0, // Not sure what to use this wifi card for, aka unused.
-  WifiUseForMonitorMode, //Use for wifibroadcast, aka set to monitor mode.
-  WifiUseForHotspot, //Use for hotspot, aka start a wifi hotspot with it.
-} WifiUseFor;
-static WifiUseFor wifi_use_for_from_string(const std::string s){
-  if(OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("monitor_mode"))!=std::string::npos){
-	return WifiUseForMonitorMode;
-  }else if(OHDUtil::to_uppercase(s).find(OHDUtil::to_uppercase("hotspot"))!=std::string::npos){
-	return WifiUseForHotspot;
-  }else{
-	return WifiUseForUnknown;
-  }
-}
+enum class WifiUseFor {
+  Unknown = 0, // Not sure what to use this wifi card for, aka unused.
+  MonitorMode, //Use for wifibroadcast, aka set to monitor mode.
+  Hotspot, //Use for hotspot, aka start a wifi hotspot with it.
+};
+NLOHMANN_JSON_SERIALIZE_ENUM( WifiUseFor, {
+   {WifiUseFor::Unknown, nullptr},
+   {WifiUseFor::MonitorMode, "MonitorMode"},
+   {WifiUseFor::Hotspot, "Hotspot"},
+});
 static std::string wifi_use_for_to_string(const WifiUseFor wifi_use_for){
   switch (wifi_use_for) {
-	case WifiUseForHotspot:return "hotspot";
-	case WifiUseForMonitorMode:return "monitor_mode";
-	case WifiUseForUnknown:
-	default:
-	  return "unknown";
+    case WifiUseFor::Hotspot:return "hotspot";
+    case WifiUseFor::MonitorMode:return "monitor_mode";
+    case WifiUseFor::Unknown:
+    default:
+      return "unknown";
   }
 }
 
-static constexpr auto DEFAULT_WIFI_TX_POWER="3100";
+// Consti10: Stephen used a default tx power of 3100 somewhere (not sure if that ever made it trough though)
+// This value seems a bit high to me, so I am going with a default of "1800" (which should be 18.0 dBm )
+//static constexpr auto DEFAULT_WIFI_TX_POWER="3100";
+static constexpr auto DEFAULT_WIFI_TX_POWER="1800";
+static constexpr auto DEFAULT_5GHZ_FREQUENCY = "5180";
+static constexpr auto DEFAULT_2GHZ_FREQUENCY = "2412";
 
 struct WifiCardSettings{
   // This one needs to be set for the card to then be used for something.Otherwise, it is not used for anything
-  WifiUseFor use_for = WifiUseForUnknown;
+  WifiUseFor use_for = WifiUseFor::Unknown;
   // frequency for this card
   std::string frequency;
   // transmission power for this card
   std::string txpower=DEFAULT_WIFI_TX_POWER;
 };
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WifiCardSettings,use_for,frequency,txpower)
 
 struct WiFiCard {
   std::string driver_name; // Name of the driver that runs this card.
-  WiFiCardType type = WiFiCardTypeUnknown; // Detected wifi card type, generated by checking known drivers.
+  WiFiCardType type = WiFiCardType::Unknown; // Detected wifi card type, generated by checking known drivers.
   std::string interface_name;
   std::string mac;
   bool supports_5ghz = false;
@@ -131,52 +117,104 @@ struct WiFiCard {
   bool supports_injection = false;
   bool supports_hotspot = false;
   bool supports_rts = false;
-  // These are values that can change dynamically at run time.
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,driver_name,type,interface_name,mac,supports_5ghz,supports_2ghz,
+                                   supports_injection,supports_hotspot,supports_rts)
+
+static WifiCardSettings create_default_settings(const WiFiCard& wifi_card){
   WifiCardSettings settings;
+  if(wifi_card.supports_injection){
+    settings.use_for=WifiUseFor::MonitorMode;
+  }else if(wifi_card.supports_hotspot){
+    // cannot do monitor mode, so we do hotspot with it
+    settings.use_for=WifiUseFor::Hotspot;
+  }else{
+    settings.use_for=WifiUseFor::Unknown;
+  }
+  // if a card is not functional, Discovery should not make it available.
+  // ( a card either has to do 2.4 or 5 ghz, otherise - what the heck ;)
+  assert(wifi_card.supports_5ghz || wifi_card.supports_2ghz);
+  if(wifi_card.supports_5ghz){
+    // by default, prefer 5Ghz
+    settings.frequency=DEFAULT_5GHZ_FREQUENCY;
+  }else{
+    settings.frequency=DEFAULT_2GHZ_FREQUENCY;
+  }
+  settings.txpower=DEFAULT_WIFI_TX_POWER;
+  return settings;
+}
+
+static const std::string WIFI_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("interface/");
+// WifiCardHolder is used to
+// 1) Differentiate between immutable information (like mac address) and
+// 2) mutable WiFi card settings.
+// Setting changes are propagated through this class.
+class WifiCardHolder{
+ public:
+  explicit WifiCardHolder(WiFiCard wifi_card):_wifi_card(std::move(wifi_card)){
+    if(!OHDFilesystemUtil::exists(WIFI_SETTINGS_DIRECTORY.c_str())){
+      OHDFilesystemUtil::create_directory(WIFI_SETTINGS_DIRECTORY);
+    }
+    const auto last_settings_opt=read_last_settings();
+    if(last_settings_opt.has_value()){
+      _settings=std::make_unique<WifiCardSettings>(last_settings_opt.value());
+      std::cout<<"Found settings in:"<<get_unique_filename()<<"\n";
+    }else{
+      std::cout<<"Creating default settings:"<<get_unique_filename()<<"\n";
+      // create default settings and persist them for the next reboot
+      _settings=std::make_unique<WifiCardSettings>(create_default_settings(_wifi_card));
+      persist_settings();
+    }
+  }
+  // delete copy and move constructor
+  WifiCardHolder(const WifiCardHolder&)=delete;
+  WifiCardHolder(const WifiCardHolder&&)=delete;
+ public:
+  const WiFiCard _wifi_card;
+  [[nodiscard]] const WifiCardSettings& get_settings()const{
+    assert(_settings);
+    return *_settings;
+  }
+ private:
+  std::unique_ptr<WifiCardSettings> _settings;
+  [[nodiscard]] std::string get_uniqe_hash()const{
+    std::stringstream ss;
+    ss<<wifi_card_type_to_string(_wifi_card.type)<<"_"<<_wifi_card.interface_name;
+    return ss.str();
+  }
+  [[nodiscard]] std::string get_unique_filename()const{
+    return WIFI_SETTINGS_DIRECTORY+get_uniqe_hash();
+  }
+  // write settings locally for persistence
+  void persist_settings()const{
+    assert(_settings);
+    const auto filename= get_unique_filename();
+    const nlohmann::json tmp=*_settings;
+    // and write them locally for persistence
+    std::ofstream t(filename);
+    t << tmp.dump(4);
+    t.close();
+  }
+  // read last settings, if they are available
+  [[nodiscard]] std::optional<WifiCardSettings> read_last_settings()const{
+    const auto filename= get_unique_filename();
+    if(!OHDFilesystemUtil::exists(filename.c_str())){
+      return std::nullopt;
+    }
+    std::ifstream f(filename);
+    nlohmann::json j;
+    f >> j;
+    return j.get<WifiCardSettings>();
+  }
 };
 
 
-static nlohmann::json wificard_to_json(const WiFiCard &p) {
-  auto j = nlohmann::json{
-	  {"driver_name", p.driver_name},
-	  {"type", wifi_card_type_to_string(p.type)},
-	  {"interface_name", p.interface_name},
-	  {"mac", p.mac},
-	  {"supports_5ghz", p.supports_5ghz},
-	  {"supports_2ghz", p.supports_2ghz},
-	  {"supports_injection", p.supports_injection},
-	  {"supports_hotspot", p.supports_hotspot},
-	  {"supports_rts", p.supports_rts},
-	  {"use_for", wifi_use_for_to_string(p.settings.use_for)},
-	  {"txpower",p.settings.txpower}
-  };
-  return j;
-}
-
-static WiFiCard wificard_from_json(const nlohmann::json &j) {
-  WiFiCard p;
-  j.at("driver_name").get_to(p.driver_name);
-  p.type= wifi_card_type_from_string(j.at("type"));
-  j.at("interface_name").get_to(p.interface_name);
-  j.at("mac").get_to(p.mac);
-  j.at("supports_5ghz").get_to(p.supports_5ghz);
-  j.at("supports_2ghz").get_to(p.supports_2ghz);
-  j.at("supports_injection").get_to(p.supports_injection);
-  j.at("supports_hotspot").get_to(p.supports_hotspot);
-  j.at("supports_rts").get_to(p.supports_rts);
-  j.at("txpower").get_to(p.settings.txpower);
-  p.settings.use_for= wifi_use_for_from_string(j.at("use_for"));
-  return p;
-}
-
 static nlohmann::json wificards_to_json(const std::vector<WiFiCard> &cards) {
   nlohmann::json j;
-  auto wifi_cards_json = nlohmann::json::array();
   for (auto &_card: cards) {
-	auto cardJson = wificard_to_json(_card);
-	wifi_cards_json.push_back(cardJson);
+	nlohmann::json cardJson = _card;
+	j.push_back(cardJson);
   }
-  j["cards"] = wifi_cards_json;
   return j;
 }
 
@@ -189,22 +227,5 @@ static void write_wificards_manifest(const std::vector<WiFiCard> &cards) {
   _t.close();
 }
 
-static std::vector<WiFiCard> wificards_from_manifest() {
-  std::vector<WiFiCard> ret;
-  try {
-	std::ifstream f(WIFI_MANIFEST_FILENAME);
-	nlohmann::json j;
-	f >> j;
-	for (const auto &_card: j["cards"]) {
-	  WiFiCard card = wificard_from_json(_card);
-	  ret.push_back(card);
-	}
-  } catch (std::exception &ex) {
-	ohd_log(STATUS_LEVEL_EMERGENCY, "WiFi manifest processing failed");
-	std::cerr << "WiFi::process_manifest: " << ex.what() << std::endl;
-	return ret;
-  }
-  return ret;
-}
 
 #endif

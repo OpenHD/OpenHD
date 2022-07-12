@@ -1,8 +1,12 @@
 
 #include "camerastream.h"
 
-CameraStream::CameraStream(PlatformType platform, Camera &camera, uint16_t video_udp_port) :
-	m_platform_type(platform),
-	m_camera(camera),
-	m_video_udp_port(video_udp_port) {}
+#include <utility>
+
+CameraStream::CameraStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder, uint16_t video_udp_port) :
+    _platform_type(platform),
+    _camera_holder(std::move(camera_holder)),
+    _video_udp_port(video_udp_port) {
+
+}
 

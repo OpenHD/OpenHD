@@ -36,7 +36,7 @@ class WifiHotspot {
   // A client might dynamically connect or disconnect from the AP at run time,
   // In this case the apropriate callbacks have to be called.
   std::vector<std::string> connectedClientsIps;
-  WiFiCard wifiCard;
+  const WiFiCard wifiCard;
 };
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_

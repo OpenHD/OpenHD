@@ -51,21 +51,21 @@ struct OHDLocalLogMessage{
 // these match the mavlink SEVERITY_LEVEL enum, but this code should not depend on
 // the mavlink headers
 // See https://mavlink.io/en/messages/common.html#MAV_SEVERITY
-typedef enum STATUS_LEVEL {
-  STATUS_LEVEL_EMERGENCY = 0,
-  STATUS_LEVEL_ALERT,
-  STATUS_LEVEL_CRITICAL,
-  STATUS_LEVEL_ERROR,
-  STATUS_LEVEL_WARNING,
-  STATUS_LEVEL_INFO,
-  STATUS_LEVEL_NOTICE,
-  STATUS_LEVEL_DEBUG
-} STATUS_LEVEL;
+enum class STATUS_LEVEL {
+  EMERGENCY = 0,
+  ALERT,
+  CRITICAL,
+  ERROR,
+  WARNING,
+  INFO,
+  NOTICE,
+  DEBUG
+};
 
 static void print_log_by_level(const STATUS_LEVEL level, std::string message) {
   // Each message is logged with a newline at the end, add a new line at the end if non-existing.
   const auto messageN = message.back() == '\n' ? message : (message + "\n");
-  if (level == STATUS_LEVEL_INFO || level == STATUS_LEVEL_NOTICE || level == STATUS_LEVEL_DEBUG) {
+  if (level == STATUS_LEVEL::INFO || level == STATUS_LEVEL::NOTICE || level == STATUS_LEVEL::DEBUG) {
 	std::cout << messageN;
   } else {
 	std::cerr << messageN;
@@ -107,22 +107,11 @@ static void ohd_log(STATUS_LEVEL level, const std::string &message) {
   sendLocalLogMessageUDP(lmessage);
 }
 
-// Direct implementations for the 3 most common used log types
-inline void ohd_log_emergency(const std::string &message) {
-  ohd_log(STATUS_LEVEL_EMERGENCY, message);
-}
-inline void ohd_log_info(const std::string &message) {
-  ohd_log(STATUS_LEVEL_INFO, message);
-}
-inline void ohd_log_debug(const std::string &message) {
-  ohd_log(STATUS_LEVEL_DEBUG, message);
-}
-
 class OpenHDLogger{
  public:
   //explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL_DEBUG,const std::string& tag=""):
   //  _status_level(level),_tag(tag) {}
-  explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL_DEBUG,std::string_view tag=""):
+  explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL::DEBUG,std::string_view tag=""):
     _status_level(level),_tag(tag){}
   ~OpenHDLogger() {
     const auto tmp=stream.str();
@@ -146,12 +135,7 @@ class OpenHDLogger{
   }
   void log_message(const std::string& message){
     if(message.empty())return;
-    // mavlink log messages are in ascending order for higher priorities
-    if(_status_level<=STATUS_LEVEL_ERROR){
-      std::cout<<message;
-    }else{
-      std::cerr<<message;
-    }
+    ohd_log(_status_level,message);
   }
 };
 
@@ -170,9 +154,11 @@ OpenHDLogger& operator<<(OpenHDLogger&& record, T&& t) {
 }
 
 // macro for logging like std::cout in OpenHD
-#define LOGD OpenHDLogger(STATUS_LEVEL_DEBUG,"")
+#define LOGD OpenHDLogger(STATUS_LEVEL::DEBUG,"")
 
 // macro for logging like std::cerr in OpenHD
-#define LOGE OpenHDLogger(STATUS_LEVEL_ERROR,"")
+#define LOGE OpenHDLogger(STATUS_LEVEL::ERROR,"")
+
+#define LOGI OpenHDLogger(STATUS_LEVEL::INFO,"")
 
 #endif //OPENHD_LOG_MESSAGES_H

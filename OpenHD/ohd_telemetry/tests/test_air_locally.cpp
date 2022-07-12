@@ -6,6 +6,7 @@
 #include "../src/OHDTelemetry.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-platform-discover.hpp"
 #include <thread>
 #include <memory>
 
@@ -14,8 +15,8 @@ int main() {
   std::unique_ptr<OHDTelemetry> air;
   {
 	OHDProfile profile{true, "YY"};
-	OHDPlatform platform{PlatformTypePC};
-	air = std::make_unique<OHDTelemetry>(platform, profile,true);
+        const auto platform=DPlatform::discover();
+	air = std::make_unique<OHDTelemetry>(*platform, profile,true);
   }
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(1));

@@ -24,6 +24,13 @@ class DPlatform {
   virtual ~DPlatform() = default;
   static std::shared_ptr<OHDPlatform> discover(){
     std::cout << "Platform::discover()" << std::endl;
+    auto platform=internal_discover();
+    write_platform_manifest(*platform);
+    return platform;
+  }
+ private:
+  static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
+  static std::shared_ptr<OHDPlatform> internal_discover(){
     const auto res=detect_raspberrypi();
     if(res.has_value()){
       return std::make_shared<OHDPlatform>(res.value().first,res.value().second);
@@ -35,8 +42,6 @@ class DPlatform {
     const auto res3=detect_pc();
     return std::make_shared<OHDPlatform>(res3.first,res3.second);
   }
- private:
-  static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
   static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi(){
     std::ifstream t("/proc/cpuinfo");
     std::string raw_value((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
@@ -55,47 +60,47 @@ class DPlatform {
       return {};
     }
 
-    const PlatformType platform_type = PlatformTypeRaspberryPi;
-    BoardType board_type=BoardTypeUnknown;
+    const PlatformType platform_type = PlatformType::RaspberryPi;
+    BoardType board_type=BoardType::Unknown;
 
     std::string raspberry_identifier = result[1];
 
     std::set<std::string> pi4b_identifiers = {"a03111", "b03111", "b03112", "c03111", "c03112", "d03114"};
     if (pi4b_identifiers.find(raspberry_identifier) != pi4b_identifiers.end()) {
-      board_type = BoardTypeRaspberryPi4B;
+      board_type = BoardType::RaspberryPi4B;
     }
 
     std::set<std::string> pi3b_identifiers = {"2a02082", "2a22082", "2a32082", "2a52082"};
     if (pi3b_identifiers.find(raspberry_identifier) != pi3b_identifiers.end()) {
-      board_type = BoardTypeRaspberryPi3B;
+      board_type = BoardType::RaspberryPi3B;
     }
 
     std::set<std::string> pizero_identifiers = {"2900092", "2900093", "2920092", "2920093"};
     if (pizero_identifiers.find(raspberry_identifier) != pizero_identifiers.end()) {
-      board_type = BoardTypeRaspberryPiZero;
+      board_type = BoardType::RaspberryPiZero;
     }
 
     std::set<std::string> pi2b_identifiers = {"2a22042", "2a21041", "2a01041", "2a01040"};
     if (pi2b_identifiers.find(raspberry_identifier) != pi2b_identifiers.end()) {
-      board_type = BoardTypeRaspberryPi2B;
+      board_type = BoardType::RaspberryPi2B;
     }
 
     if (raspberry_identifier == "29020e0") {
-      board_type = BoardTypeRaspberryPi3APlus;
+      board_type = BoardType::RaspberryPi3APlus;
     }
 
     if (raspberry_identifier == "2a020d3") {
-      board_type = BoardTypeRaspberryPi3BPlus;
+      board_type = BoardType::RaspberryPi3BPlus;
     }
 
     if (raspberry_identifier == "29000c1") {
-      board_type = BoardTypeRaspberryPiZeroW;
+      board_type = BoardType::RaspberryPiZeroW;
     }
     return std::make_pair(platform_type,board_type);
   }
   static std::optional<std::pair<PlatformType,BoardType>> detect_jetson(){
     if (OHDFilesystemUtil::exists(JETSON_BOARDID_PATH)) {
-      return std::make_pair(PlatformTypeJetson,BoardTypeJetsonNano);
+      return std::make_pair(PlatformType::Jetson,BoardType::JetsonNano);
     }
     return {};
   }
@@ -103,7 +108,7 @@ class DPlatform {
     const auto arch_opt=OHDUtil::run_command_out("arch");
     if(arch_opt==std::nullopt){
       std::cerr<<"Arch not found\n";
-      return {PlatformTypeUnknown,BoardTypeUnknown};
+      return {PlatformType::Unknown,BoardType::Unknown};
     }
     const auto arch=arch_opt.value();
     std::smatch result;
@@ -114,9 +119,9 @@ class DPlatform {
     auto res2 = std::regex_search(arch, result, r2);
 
     if (!res1 && !res2) {
-      return {PlatformTypeUnknown,BoardTypeUnknown};
+      return {PlatformType::Unknown,BoardType::Unknown};
     }
-    return std::make_pair(PlatformTypePC, BoardTypeGenericPC);
+    return std::make_pair(PlatformType::PC, BoardType::GenericPC);
   }
 };
 

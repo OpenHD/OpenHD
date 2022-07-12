@@ -45,6 +45,20 @@ static std::vector<std::string> getAllEntriesFilenameOnlyInDirectory(const char*
 static bool exists(const char* file){
   return boost::filesystem::exists(file);
 }
+
+static void create_directory(const char* directory){
+  boost::filesystem::create_directory(directory);
+}
+static void create_directory(const std::string& directory){
+  create_directory(directory.c_str());
+}
+
+static void safe_delete_directory(const char* directory){
+  if(exists(directory)){
+    boost::filesystem::remove_all(directory);
+  }
+}
+
 }
 
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_UTIL_FILESYSTEM_H_

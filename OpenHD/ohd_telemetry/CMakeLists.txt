@@ -19,8 +19,6 @@ find_package(Boost REQUIRED COMPONENTS system thread regex filesystem)
 message(STATUS "Boost version: ${Boost_VERSION}")
 SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::system Boost::thread Boost::filesystem)
 
-#find_package(MAVSDK REQUIRED)
-
 SET(ALL_TELEMETRY_SOURCE_FILES
         src/AirTelemetry.cpp
         src/GroundTelemetry.cpp
@@ -30,8 +28,23 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         src/endpoints/SerialEndpoint.cpp
         #src/endpoints/SerialEndpoint2.cpp
         #src/endpoints/WBEndpoint.cpp
-        src/internal/InternalTelemetry.cpp
-        src/internal/MavlinkParamExt.cpp)
+        src/internal/OHDMainComponent.cpp
+        src/mavsdk_temporary/XMavlinkParamProvider.cpp
+        # temporarily until mavsdk becomes usable
+        src/mavsdk_temporary/mavlink_parameter_set.cpp
+        src/mavsdk_temporary/mavlink_parameter_subscription.cpp
+        src/mavsdk_temporary/param_value.cpp
+        src/mavsdk_temporary/mavlink_parameter_receiver.cpp
+        src/mavsdk_temporary/mavlink_message_handler.cpp
+        ## end param
+        src/mavsdk_temporary/connection.cpp
+        src/mavsdk_temporary/connection_result.cpp
+        src/mavsdk_temporary/serial_connection.cpp
+        src/mavsdk_temporary/mavlink_receiver.cpp
+        src/mavsdk_temporary/mavsdk_time.cpp
+        src/mavsdk_temporary/mavlink_channels.cpp
+        src/mavsdk_temporary/XMavsdkWrapperSerialConnection.cpp
+        )
 
 # Build it as a library
 add_library(OHDTelemetryLib
@@ -53,12 +66,11 @@ target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
 # All the test files for development
 add_executable(test_serial_endpoint tests/test_serial_endpoint.cpp)
 target_link_libraries(test_serial_endpoint OHDTelemetryLib)
+add_executable(test_serial_endpoint2 tests/test_serial_endpoint2.cpp)
+target_link_libraries(test_serial_endpoint2 OHDTelemetryLib)
 
 add_executable(test_udp_endpoint tests/test_udp_endpoint.cpp)
 target_link_libraries(test_udp_endpoint OHDTelemetryLib)
-
-add_executable(test_ohd_generate_telemetry tests/test_ohd_generate_telemetry.cpp)
-target_link_libraries(test_ohd_generate_telemetry OHDTelemetryLib)
 
 add_executable(test_ohd_reboot tests/test_ohd_reboot.cpp)
 target_link_libraries(test_ohd_reboot OHDTelemetryLib)
@@ -75,6 +87,16 @@ target_link_libraries(test_air_locally OHDTelemetryLib)
 add_executable(test_ground_and_air_locally tests/test_ground_and_air_locally.cpp)
 target_link_libraries(test_ground_and_air_locally OHDTelemetryLib)
 
-#add_executable(test_mavsdk tests/test_mavsdk.cpp)
-#target_link_libraries(test_mavsdk OHDTelemetryLib)
+add_executable(test_onboard_computer_status_read_stuff tests/test_onboard_computer_status_read_stuff.cpp)
+target_link_libraries(test_onboard_computer_status_read_stuff OHDTelemetryLib)
+
+###
+find_package(MAVSDK)
+if(MAVSDK_FOUND)
+    add_executable(test_mavsdk_serial tests/test_mavsdk_serial.cpp)
+    target_link_libraries(test_mavsdk_serial OHDTelemetryLib MAVSDK::mavsdk)
+
+    add_executable(test_mavsdk_param tests/test_mavsdk_param.cpp)
+    target_link_libraries(test_mavsdk_param OHDTelemetryLib MAVSDK::mavsdk)
+endif()
 #####

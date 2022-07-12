@@ -19,14 +19,14 @@
 DCameras::DCameras(const OHDPlatform& ohdPlatform) :
 	ohdPlatform(ohdPlatform){}
 
-std::vector<Camera> DCameras::discover_internal() {
+DiscoveredCameraList DCameras::discover_internal() {
   std::cout << "Cameras::discover()" << std::endl;
 
   // Only on raspberry pi with the old broadcom stack we need a special detection method for the rpi CSI camera.
   // On all other platforms (for example jetson) the CSI camera is exposed as a normal V4l2 linux device,and we cah
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
-  if(ohdPlatform.platform_type==PlatformTypeRaspberryPi){
+  if(ohdPlatform.platform_type==PlatformType::RaspberryPi){
 	detect_raspberrypi_csi();
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
@@ -37,6 +37,8 @@ std::vector<Camera> DCameras::discover_internal() {
   detect_v4l2();
   detect_ip();
   argh_cleanup();
+  // write to json for debugging
+  write_camera_manifest(m_cameras);
   return m_cameras;
 }
 
@@ -67,7 +69,7 @@ void DCameras::detect_raspberrypi_csi() {
 	Camera camera;
 	camera.name = "Pi CSI 0";
 	camera.vendor = "Raspberry Pi";
-	camera.type = CameraTypeRaspberryPiCSI;
+	camera.type = CameraType::RaspberryPiCSI;
 	camera.bus = "0";
 	camera.index = m_discover_index;
 	m_discover_index++;
@@ -79,7 +81,7 @@ void DCameras::detect_raspberrypi_csi() {
 	Camera camera;
 	camera.name = "Pi CSI 1";
 	camera.vendor = "Raspberry Pi";
-	camera.type = CameraTypeRaspberryPiCSI;
+	camera.type = CameraType::RaspberryPiCSI;
 	camera.bus = "1";
 	camera.index = m_discover_index;
 	m_discover_index++;
@@ -166,7 +168,7 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
   // fucking hell, on jetson v4l2_open seems to be bugged
   // https://forums.developer.nvidia.com/t/v4l2-open-create-core-with-jetpack-4-5-or-later/170624/6
   int fd;
-  if(ohdPlatform.platform_type==PlatformTypeJetson){
+  if(ohdPlatform.platform_type==PlatformType::Jetson){
 	fd = open(node.c_str(), O_RDWR | O_NONBLOCK, 0);
   }else{
 	fd = v4l2_open(node.c_str(), O_RDWR);
@@ -183,10 +185,10 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
   const std::string driver((char *)caps.driver);
   std::cout<<"Driver is:"<<driver<<"\n";
   if (driver == "uvcvideo") {
-	camera.type = CameraTypeUVC;
+	camera.type = CameraType::UVC;
 	std::cout << "Found UVC camera" << std::endl;
   } else if (driver == "tegra-video") {
-	camera.type = CameraTypeJetsonCSI;
+	camera.type = CameraType::JetsonCSI;
 	std::cout << "Found Jetson CSI camera" << std::endl;
   } else if (driver == "v4l2 loopback") {
 	// this is temporary, we are not going to use v4l2loopback for thermal cameras they'll be directly
@@ -309,9 +311,16 @@ void DCameras::argh_cleanup() {
   write_camera_manifest(m_cameras);
 }
 
-std::vector<Camera> DCameras::discover(const OHDPlatform& ohdPlatform) {
+DiscoveredCameraList DCameras::discover(const OHDPlatform& ohdPlatform) {
   auto discover=DCameras{ohdPlatform};
   return discover.discover_internal();
 }
 
-
+std::vector<std::shared_ptr<CameraHolder>> DCameras::discover2(const OHDPlatform& ohdPlatform) {
+  auto discovered_cameras= discover(ohdPlatform);
+  std::vector<std::shared_ptr<CameraHolder>> ret;
+  for(const auto& camera:discovered_cameras){
+    ret.emplace_back(std::make_unique<CameraHolder>(camera));
+  }
+  return ret;
+}
