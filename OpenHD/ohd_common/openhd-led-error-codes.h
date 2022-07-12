@@ -19,19 +19,33 @@ namespace openhd::rpi{
             OHDUtil::run_command("echo 0 > /sys/class/leds/led1/brightness",{});
         }
     }
+    // I think the green led only supports on/off on the 4th generation pis
+    static void toggle_green_led(const bool on){
+        int ret;
+        if(on){
+            OHDUtil::run_command("echo 1 > /sys/class/leds/led0/brightness",{});
+        }else{
+            OHDUtil::run_command("echo 0 > /sys/class/leds/led0/brightness",{});
+        }
+    }
 
     // R.N only to show no connected wifi card, which requires a reboot to fix.
     class LEDBlinker{
     public:
-        // blink red led in 1 second intervalls, runs for duration seconds. Defaults to infinity (note the calling thread will be blocked then)
+        // toggle red led off, wait for delay, then toggle it on,wait for delay
+        static void red_led_on_off_delayed(const std::chrono::milliseconds& delay){
+            toggle_red_led(false);
+            std::this_thread::sleep_for(delay);
+            toggle_red_led(true);
+            std::this_thread::sleep_for(delay);
+        }
+        // One on / off sequence is often not enough signal for the user, repeat the sequence for a given amount of time
+        // blink red led in X second intervalls, runs for duration seconds. Defaults to infinity (note the calling thread will be blocked then)
         static void blink_red_led(const std::string& message,const std::chrono::seconds duration=DURATION_INFINITY){
             const auto start=std::chrono::steady_clock::now();
             while ((std::chrono::steady_clock::now()-start)<=duration){
                 std::cout<<message<<"\n";
-                toggle_red_led(false);
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-                toggle_red_led(true);
-                std::this_thread::sleep_for(std::chrono::seconds(1));
+                red_led_on_off_delayed(std::chrono::seconds(1));
             }
         }
         // For running in its own thread
