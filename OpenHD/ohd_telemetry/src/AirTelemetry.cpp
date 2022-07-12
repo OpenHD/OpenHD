@@ -8,7 +8,7 @@
 #include "mavsdk_temporary/XMavsdkWrapperSerialConnection.h"
 #include <chrono>
 
-AirTelemetry::AirTelemetry(std::string fcSerialPort): MavlinkSystem(OHD_SYS_ID_AIR) {
+AirTelemetry::AirTelemetry(OHDPlatform platform,std::string fcSerialPort): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   //serialEndpoint = std::make_unique<SerialEndpoint>("FCSerial",SerialEndpoint::HWOptions{fcSerialPort, 115200});
   /*serialEndpoint = std::make_unique<mavsdk::XMavsdkWrapperSerialConnection>(fcSerialPort,115200);
   serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
@@ -20,7 +20,7 @@ AirTelemetry::AirTelemetry(std::string fcSerialPort): MavlinkSystem(OHD_SYS_ID_A
   wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	onMessageGroundPi(msg);
   });
-  _ohd_main_component=std::make_shared<OHDMainComponent>(_sys_id,true);
+  _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,true);
   components.push_back(_ohd_main_component);
   std::cout << "Created AirTelemetry\n";
 }

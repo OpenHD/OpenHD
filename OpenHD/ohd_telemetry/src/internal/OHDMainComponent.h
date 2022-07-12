@@ -19,6 +19,7 @@
 #include "OpenHDStatisticsWriter.hpp"
 #include "StatusTextAccumulator.hpp"
 #include "openhd-log.hpp"
+#include "openhd-platform.hpp"
 
 // This Component runs on both the air and ground unit and should handle as many messages / commands / create as many
 // "fire and forget" messages as possible. For example, it broadcast the CPU load and other statistics, and responds to ping messages.
@@ -33,13 +34,14 @@
 // Note: Sending in this context means they are returned by generate_mavlink_messages() and then send out in the upper level.
 class OHDMainComponent : public MavlinkComponent{
  public:
-  explicit OHDMainComponent(uint8_t parent_sys_id,bool runsOnAir);
+  explicit OHDMainComponent(OHDPlatform platform,uint8_t parent_sys_id,bool runsOnAir);
   // override from component
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
   // override from component
   std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage &msg)override;
  private:
   const bool RUNS_ON_AIR;
+  const OHDPlatform platform;
   // by the sys id QGroundControl knows if this message is telemetry data from the air pi or ground pi.
   // just for convenience, the RUNS_ON_AIR variable determines the sys id.
   //const uint8_t mSysId;

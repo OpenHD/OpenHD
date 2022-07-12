@@ -10,8 +10,8 @@
 #include "WBStatisticsConverter.hpp"
 
 OHDMainComponent::OHDMainComponent(
-    uint8_t parent_sys_id,
-    bool runsOnAir) : RUNS_ON_AIR(runsOnAir),MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
+    OHDPlatform platform1,uint8_t parent_sys_id,
+    bool runsOnAir) : platform(platform1),RUNS_ON_AIR(runsOnAir),MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
   wifibroadcastStatisticsUdpReceiver =
       std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
                                                   OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT,
@@ -36,7 +36,8 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   //std::cout<<"InternalTelemetry::generate_mavlink_messages()\n";
   std::vector<MavlinkMessage> ret;
   ret.push_back(MavlinkComponent::create_heartbeat());
-  ret.push_back(OnboardComputerStatus::createOnboardComputerStatus(_sys_id,_comp_id));
+  const bool is_platform_rpi=platform.platform_type==PlatformType::RaspberryPi;
+  ret.push_back(OnboardComputerStatus::createOnboardComputerStatus(_sys_id,_comp_id,is_platform_rpi));
   ret.push_back(generateWifibroadcastStatistics());
   //ret.push_back(generateOpenHDVersion());
   // TODO remove for release

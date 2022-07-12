@@ -17,7 +17,7 @@
  */
 class GroundTelemetry :public MavlinkSystem{
  public:
-  GroundTelemetry();
+  GroundTelemetry(OHDPlatform platform);
   /**
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.
@@ -28,6 +28,7 @@ class GroundTelemetry :public MavlinkSystem{
   // changes in the parameter set are propagated back up by the "glue".
   void add_settings_component(int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue);
  private:
+  const OHDPlatform _platform;
   // called every time a message from the air pi is received
   void onMessageAirPi(MavlinkMessage &message);
   // send a message to the air pi

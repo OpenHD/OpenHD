@@ -21,7 +21,7 @@
  */
 class AirTelemetry : public MavlinkSystem{
  public:
-  explicit AirTelemetry(std::string fcSerialPort);
+  explicit AirTelemetry(OHDPlatform platform,std::string fcSerialPort);
   /**
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.
@@ -32,6 +32,7 @@ class AirTelemetry : public MavlinkSystem{
   // changes in the parameter set are propagated back up by the "glue".
   void add_settings_component(int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue);
  private:
+  const OHDPlatform _platform;
   // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
   void sendMessageFC(const MavlinkMessage &message);
   // send a mavlink message to the ground pi, system cannot know if this message actually makes it.

@@ -11,7 +11,7 @@
 
 #include "mav_helper.h"
 
-GroundTelemetry::GroundTelemetry(): MavlinkSystem(OHD_SYS_ID_GROUND) {
+GroundTelemetry::GroundTelemetry(OHDPlatform platform): _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
   /*tcpGroundCLient=std::make_unique<TCPEndpoint>(OHD_GROUND_CLIENT_TCP_PORT);
   tcpGroundCLient->registerCallback([this](MavlinkMessage& msg){
           onMessageGroundStationClients(msg);
@@ -33,7 +33,7 @@ GroundTelemetry::GroundTelemetry(): MavlinkSystem(OHD_SYS_ID_GROUND) {
   udpWifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
     onMessageAirPi(msg);
   });
-  _ohd_main_component=std::make_shared<OHDMainComponent>(_sys_id,false);
+  _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false);
   components.push_back(_ohd_main_component);
   std::cout << "Created GroundTelemetry\n";
 }

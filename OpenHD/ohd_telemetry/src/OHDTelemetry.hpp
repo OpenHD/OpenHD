@@ -20,14 +20,14 @@ class OHDTelemetry {
  public:
   OHDTelemetry(OHDPlatform platform1,OHDProfile profile1,bool enableExtendedLogging=false) : platform(platform1),profile(std::move(profile1)),m_enableExtendedLogging(enableExtendedLogging) {
     if (this->profile.is_air) {
-      airTelemetry = std::make_unique<AirTelemetry>(OHDTelemetry::uartForPlatformType(platform.platform_type));
+      airTelemetry = std::make_unique<AirTelemetry>(platform,OHDTelemetry::uartForPlatformType(platform.platform_type));
       assert(airTelemetry);
       loopThread = std::make_unique<std::thread>([this] {
         assert(airTelemetry);
         airTelemetry->loopInfinite(this->m_enableExtendedLogging);
       });
     } else {
-      groundTelemetry = std::make_unique<GroundTelemetry>();
+      groundTelemetry = std::make_unique<GroundTelemetry>(platform);
       assert(groundTelemetry);
       loopThread = std::make_unique<std::thread>([this] {
         assert(groundTelemetry);

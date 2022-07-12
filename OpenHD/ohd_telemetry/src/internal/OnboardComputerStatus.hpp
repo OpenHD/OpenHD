@@ -102,7 +102,7 @@ static int8_t read_temperature_soc_degree(){
 }
 }
 
-static MavlinkMessage createOnboardComputerStatus(const bool is_platform_rpi,const uint8_t sys_id,const uint8_t comp_id){
+static MavlinkMessage createOnboardComputerStatus(const uint8_t sys_id,const uint8_t comp_id,const bool is_platform_rpi=false){
   MavlinkMessage msg;
   mavlink_onboard_computer_status_t mavlink_onboard_computer_status;
   mavlink_onboard_computer_status.cpu_cores[0]=OnboardComputerStatus::readCpuLoad();
