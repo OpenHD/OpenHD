@@ -20,10 +20,11 @@ namespace openhd::rpi{
         }
     }
 
+    // R.N only to show no connected wifi card, which requires a reboot to fix.
     class LEDBlinker{
     public:
         // blink red led in 1 second intervalls, runs for duration seconds. Defaults to infinity (note the calling thread will be blocked then)
-        static void blink_red_led(const std::string message,const std::chrono::seconds duration=DURATION_INFINITY){
+        static void blink_red_led(const std::string& message,const std::chrono::seconds duration=DURATION_INFINITY){
             const auto start=std::chrono::steady_clock::now();
             while ((std::chrono::steady_clock::now()-start)<=duration){
                 std::cout<<message<<"\n";
@@ -36,17 +37,17 @@ namespace openhd::rpi{
         // For running in its own thread
         // Make sure to store a reference to this class, otherwise destruct will fail since thread is still running.
         explicit LEDBlinker(const std::string message,const std::chrono::seconds duration=DURATION_INFINITY):
-        _duration(duration),_message(message){
+                _message(message),_duration(duration){
             _blink_thread=std::make_unique<std::thread>(&LEDBlinker::run, this);
         }
+        static constexpr auto DURATION_INFINITY=std::chrono::seconds(100*100*100*100);
     private:
         void run(){
             blink_red_led(_message,_duration);
         }
-        std::unique_ptr<std::thread> _blink_thread= nullptr;
-        const std::chrono::seconds _duration;
         const std::string _message;
-        static constexpr auto DURATION_INFINITY=std::chrono::seconds(100*100*100*100);
+        const std::chrono::seconds _duration;
+        std::unique_ptr<std::thread> _blink_thread= nullptr;
     };
 }
 
