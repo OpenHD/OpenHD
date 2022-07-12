@@ -102,13 +102,16 @@ static int8_t read_temperature_soc_degree(){
 }
 }
 
-static MavlinkMessage createOnboardComputerStatus(const uint8_t sys_id,const uint8_t comp_id){
+static MavlinkMessage createOnboardComputerStatus(const bool is_platform_rpi,const uint8_t sys_id,const uint8_t comp_id){
   MavlinkMessage msg;
-  const uint8_t cpu_load=OnboardComputerStatus::readCpuLoad();
-  const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
   mavlink_onboard_computer_status_t mavlink_onboard_computer_status;
-  mavlink_onboard_computer_status.cpu_cores[0]=cpu_load;
-  mavlink_onboard_computer_status.temperature_core[0]=cpu_temp;
+  mavlink_onboard_computer_status.cpu_cores[0]=OnboardComputerStatus::readCpuLoad();
+  if(is_platform_rpi){
+    mavlink_onboard_computer_status.temperature_core[0]=rpi::read_temperature_soc_degree();
+  }else{
+    const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
+    mavlink_onboard_computer_status.temperature_core[0]=cpu_temp;
+  }
   mavlink_msg_onboard_computer_status_encode(sys_id,comp_id,&msg.m,&mavlink_onboard_computer_status);
   return msg;
 }
