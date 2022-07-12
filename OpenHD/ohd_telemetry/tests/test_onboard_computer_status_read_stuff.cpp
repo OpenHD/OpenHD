@@ -12,9 +12,8 @@ int main() {
   std::cout<<""<<OnboardComputerStatus::readCpuLoad()<<"\n";
   std::cout<<""<<OnboardComputerStatus::readTemperature()<<"\n";
 
-  if(platform->platform_type==PlatformType::RaspberryPi){
+  if(platform->platform_type==PlatformType::RaspberryPi || true){
     std::cout<<"Rpi:\n";
-    std::cout<<""<<OnboardComputerStatus::rpi::read_temperature_soc_degree()<<"\n";
-    std::cout<<""<<OnboardComputerStatus::rpi::read_voltage_core_volts()<<"\n";
+    std::cout<<""<<(int)OnboardComputerStatus::rpi::read_temperature_soc_degree()<<"\n";
   }
 }

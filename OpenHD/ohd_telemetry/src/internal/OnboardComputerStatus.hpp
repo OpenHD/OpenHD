@@ -65,15 +65,40 @@ static int readRpiUnderVoltError(){
 namespace rpi{
 
 // https://www.elinux.org/RPI_vcgencmd_usage
-static float read_voltage_core_volts(){
+/*static float read_voltage_core_volts(){
   const auto vcgencmd_measure_volts_opt=OHDUtil::run_command_out("vcgencmd measure_volts core");
+  if(!vcgencmd_measure_volts_opt.has_value()){
+    return -1;
+  }
+  const auto vcgencmd_measure_volts=vcgencmd_measure_volts_opt.value();
+  const std::regex r{"temp=([\\w]+)"};
+  std::smatch result;
+  if (!std::regex_search(vcgencmd_measure_volts, result, r)) {
+    return -1;
+  }
   std::cout<<"!:"<<vcgencmd_measure_volts_opt.value()<<"\n";
   return 0;
-}
-static float read_temperature_soc_degree(){
+}*/
+static int8_t read_temperature_soc_degree(){
+  int8_t ret=-1;
   const auto vcgencmd_measure_temp_opt=OHDUtil::run_command_out("vcgencmd measure_temp");
-  std::cout<<"!:"<<vcgencmd_measure_temp_opt.value()<<"\n";
-  return 0;
+  //const auto vcgencmd_measure_temp_opt=std::optional<std::string>("temp=47.2'C");
+  if(!vcgencmd_measure_temp_opt.has_value()){
+    return ret;
+  }
+  const auto& vcgencmd_measure_temp=vcgencmd_measure_temp_opt.value();
+  const std::regex r{"([[+-]?([0-9]*[.])?[0-9]+)"};
+  std::smatch result;
+  if (!std::regex_search(vcgencmd_measure_temp, result, r)) {
+    return ret;
+  }
+  if (result.size() >=1) {
+    const auto float_as_string=result[0];
+    const auto temp_degree=std::stof(float_as_string);
+    //std::cout<<"Result:"<<temp_degree<<"\n";
+    return static_cast<int8_t>(temp_degree);
+  }
+  return ret;
 }
 }
 
@@ -89,7 +114,7 @@ static MavlinkMessage createOnboardComputerStatus(const uint8_t sys_id,const uin
 }
 
 // TODO more telemetry here
-static MavlinkMessage createOnboardComputerStatusExtension(const bool IS_PLATFORM_RPI,const uint8_t sys_id,const uint8_t comp_id){
+/*static MavlinkMessage createOnboardComputerStatusExtension(const bool IS_PLATFORM_RPI,const uint8_t sys_id,const uint8_t comp_id){
   MavlinkMessage msg;
   mavlink_openhd_onboard_computer_status_extension_t values{};
   if(IS_PLATFORM_RPI){
@@ -97,7 +122,7 @@ static MavlinkMessage createOnboardComputerStatusExtension(const bool IS_PLATFOR
   }
   mavlink_msg_openhd_onboard_computer_status_extension_encode(sys_id,comp_id,&msg.m,&values);
   return msg;
-}
+}*/
 
 
 }
