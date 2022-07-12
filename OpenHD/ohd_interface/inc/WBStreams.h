@@ -24,6 +24,9 @@ class WBStreams {
   // see interface
   void addExternalDeviceIpForwarding(const std::string& ip);
   void removeExternalDeviceIpForwarding(const std::string& ip);
+  // Returns true if this WBStream has ever received any data. If no data has been ever received after X seconds,
+  // there most likely was an unsuccessful frequency change.
+  [[nodiscard]] bool ever_received_any_data()const;
  private:
   const OHDProfile _profile;
   const int DEFAULT_MCS_INDEX = 3;

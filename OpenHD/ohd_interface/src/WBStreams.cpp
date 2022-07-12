@@ -182,3 +182,25 @@ std::vector<std::string> WBStreams::get_rx_card_names() const {
   }
   return ret;
 }
+
+bool WBStreams::ever_received_any_data() const {
+    if(_profile.is_air){
+        // check if we got any telemetry data, we never receive video data
+        assert(udpTelemetryRx);
+        return udpTelemetryRx->anyDataReceived();
+    }
+    // ground
+    bool any_data_received=false;
+    // any telemetry data
+    assert(udpTelemetryRx);
+    if(udpTelemetryRx->anyDataReceived()){
+        any_data_received=true;
+    }
+    // or any video data
+    for(const auto& vidrx:udpVideoRxList){
+        if(vidrx->anyDataReceived()){
+            any_data_received=true;
+        }
+    }
+    return any_data_received;
+}
