@@ -1,12 +1,12 @@
-#include <regex>
+#include "DWifiCards.h"
 
-#include <iostream>
-#include <boost/algorithm/string/trim.hpp>
 #include "openhd-wifi.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 
-#include "DWifiCards.h"
+#include <regex>
+#include <iostream>
+#include <boost/algorithm/string/trim.hpp>
 
 extern "C" {
 #include "nl.h"

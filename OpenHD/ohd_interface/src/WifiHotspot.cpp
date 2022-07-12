@@ -6,7 +6,6 @@
 
 #include <utility>
 
-
 // From https://www.raspberryconnect.com/projects/65-raspberrypi-hotspot-accesspoints/157-raspberry-pi-auto-wifi-hotspot-switch-internet,
 // Works on raspberry pi 4
 static std::string createHostapdConfigFile(const std::string& interface_name){

@@ -1,29 +1,28 @@
-#include <cstdio>
-#include <stdio.h>
-
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-#include <iostream>
-
-#include <utility>
+#include "WBStreams.h"
+#include "WifiCards.h"
 
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-global-constants.h"
 
-#include "WBStreams.h"
-#include "WifiCards.h"
+#include <cstdio>
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <iostream>
+#include <utility>
 
 WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards) :
    _profile(std::move(profile)),_broadcast_cards(broadcast_cards) {
   std::cout<<"WBStreams::WBStreams:"<<broadcast_cards.size()<<"\n";
   // sanity checks
   if(_broadcast_cards.empty()) {
+    // NOTE: Here we crash, since it would be a programmer(s) error to create a WBStreams instance without at least 1 wifi card.
+    // In OHDInterface, we handle it more gracefully with an error code.
     std::cerr << "Without at least one wifi card, the stream(s) cannot be started\n";
     exit(1);
   }
