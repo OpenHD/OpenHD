@@ -36,7 +36,7 @@ namespace openhd::rpi{
         }
         // For running in its own thread
         // Make sure to store a reference to this class, otherwise destruct will fail since thread is still running.
-        explicit LEDBlinker(const std::string message,const std::chrono::seconds duration=DURATION_INFINITY):
+        explicit LEDBlinker(const std::string& message,const std::chrono::seconds duration=DURATION_INFINITY):
                 _message(message),_duration(duration){
             _blink_thread=std::make_unique<std::thread>(&LEDBlinker::run, this);
         }
