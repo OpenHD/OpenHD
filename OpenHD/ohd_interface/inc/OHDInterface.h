@@ -9,7 +9,6 @@
 
 #include "USBTetherListener.h"
 #include "WBStreams.h"
-#include "WifiCards.h"
 #include "WifiHotspot.h"
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"

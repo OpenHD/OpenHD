@@ -1,5 +1,5 @@
 #include "WBStreams.h"
-#include "WifiCards.h"
+#include "WifiCardCommandHelper.hpp"
 
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
@@ -41,14 +41,14 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
   for(const auto& card: _broadcast_cards){
     //TODO we might not need this one
     //OHDUtil::run_command("rfkill",{"unblock",card->_wifi_card.interface_name});
-    WifiCards::set_card_state(card->_wifi_card, false);
-    WifiCards::enable_monitor_mode(card->_wifi_card);
-    WifiCards::set_card_state(card->_wifi_card, true);
+    WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
+    WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
+    WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
     assert(!card->get_settings().frequency.empty());
-    WifiCards::set_frequency(card->_wifi_card, card->get_settings().frequency);
+    WifiCardCommandHelper::set_frequency(card->_wifi_card, card->get_settings().frequency);
     assert(!card->get_settings().txpower.empty());
     // TODO check if this works - on rtl8812au, the displayed value at least changes
-    WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
+    WifiCardCommandHelper::set_txpower(card->_wifi_card, card->get_settings().txpower);
     //WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
   }
   configure();
