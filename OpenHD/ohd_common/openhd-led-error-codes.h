@@ -8,6 +8,7 @@
 #include "openhd-util.hpp"
 #include <chrono>
 #include <thread>
+#include <utility>
 
 namespace openhd::rpi{
     // so far, I have only tested this on the RPI 4 and CM4
@@ -40,7 +41,7 @@ namespace openhd::rpi{
             std::this_thread::sleep_for(delay);
         }
         // One on / off sequence is often not enough signal for the user, repeat the sequence for a given amount of time
-        // blink red led in X second intervalls, runs for duration seconds. Defaults to infinity (note the calling thread will be blocked then)
+        // blink red led in X second intervals, runs for duration seconds. Defaults to infinity (note the calling thread will be blocked then)
         static void blink_red_led(const std::string& message,const std::chrono::seconds duration=DURATION_INFINITY){
             const auto start=std::chrono::steady_clock::now();
             while ((std::chrono::steady_clock::now()-start)<=duration){
@@ -50,8 +51,8 @@ namespace openhd::rpi{
         }
         // For running in its own thread
         // Make sure to store a reference to this class, otherwise destruct will fail since thread is still running.
-        explicit LEDBlinker(const std::string& message,const std::chrono::seconds duration=DURATION_INFINITY):
-                _message(message),_duration(duration){
+        explicit LEDBlinker(std::string  message,const std::chrono::seconds duration=DURATION_INFINITY):
+                _message(std::move(message)),_duration(duration){
             _blink_thread=std::make_unique<std::thread>(&LEDBlinker::run, this);
         }
         static constexpr auto DURATION_INFINITY=std::chrono::seconds(100*100*100*100);
