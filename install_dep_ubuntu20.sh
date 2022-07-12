@@ -4,7 +4,7 @@
 # This is for the simple_build_test.yml github CI or when setting up a development environment
 # PLEASE KEEP THIS FILE AS CLEAN AS POSSIBLE, Ubuntu20 is the baseline - for other platforms / OS versions, create their own files
 
-apt -y install cmake build-essential autotools-dev automake libtool autoconf \
+sudo apt -y install cmake build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libsodium-dev \
             libboost-dev libboost-system-dev libasio-dev libboost-filesystem-dev libboost-thread-dev libboost-regex-dev \
             libgstreamer-plugins-base1.0-dev \
