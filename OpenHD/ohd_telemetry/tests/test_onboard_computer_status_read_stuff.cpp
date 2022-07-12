@@ -16,4 +16,5 @@ int main() {
     std::cout<<"Rpi:\n";
     std::cout<<""<<(int)OnboardComputerStatus::rpi::read_temperature_soc_degree()<<"\n";
   }
+  return 0;
 }

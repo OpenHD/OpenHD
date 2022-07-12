@@ -15,7 +15,7 @@ int main() {
   std::unique_ptr<OHDTelemetry> ohdTelemAir;
   {
 	OHDProfile profile{false, "XX"};
-	OHDPlatform platform{};
+        OHDPlatform platform{PlatformType::PC};
 	ohdTelemGround = std::make_unique<OHDTelemetry>(platform, profile);
         auto example_comp=std::make_shared<openhd::testing::DummyGroundXSettingsComponent>();
         // MAV_COMP_ID_ONBOARD_COMPUTER2=192
