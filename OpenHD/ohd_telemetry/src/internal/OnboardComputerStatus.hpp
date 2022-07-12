@@ -6,10 +6,12 @@
 #define XMAVLINKSERVICE_SYSTEMREADUTIL_H
 
 #include "mav_include.h"
+#include "openhd-util.hpp"
 
 // https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS
 // used to be a custom message for a short amount of time.
 namespace OnboardComputerStatus {
+
 // from https://github.com/OpenHD/Open.HD/blob/35b6b10fbeda43cd06bbfbd90e2daf29629c2f8a/openhd-status/src/statusmicroservice.cpp#L173
 // Return the CPU load of the system the generator is running on
 // Unit: Percentage ?
@@ -59,6 +61,22 @@ static int readRpiUnderVoltError(){
   return undervolt_gnd;
 }
 
+// Stuff that works only on rpi
+namespace rpi{
+
+// https://www.elinux.org/RPI_vcgencmd_usage
+static float read_voltage_core_volts(){
+  const auto vcgencmd_measure_volts_opt=OHDUtil::run_command_out("vcgencmd measure_volts core");
+  std::cout<<"!:"<<vcgencmd_measure_volts_opt.value()<<"\n";
+  return 0;
+}
+static float read_temperature_soc_degree(){
+  const auto vcgencmd_measure_temp_opt=OHDUtil::run_command_out("vcgencmd measure_temp");
+  std::cout<<"!:"<<vcgencmd_measure_temp_opt.value()<<"\n";
+  return 0;
+}
+}
+
 static MavlinkMessage createOnboardComputerStatus(const uint8_t sys_id,const uint8_t comp_id){
   MavlinkMessage msg;
   const uint8_t cpu_load=OnboardComputerStatus::readCpuLoad();
@@ -67,6 +85,17 @@ static MavlinkMessage createOnboardComputerStatus(const uint8_t sys_id,const uin
   mavlink_onboard_computer_status.cpu_cores[0]=cpu_load;
   mavlink_onboard_computer_status.temperature_core[0]=cpu_temp;
   mavlink_msg_onboard_computer_status_encode(sys_id,comp_id,&msg.m,&mavlink_onboard_computer_status);
+  return msg;
+}
+
+// TODO more telemetry here
+static MavlinkMessage createOnboardComputerStatusExtension(const bool IS_PLATFORM_RPI,const uint8_t sys_id,const uint8_t comp_id){
+  MavlinkMessage msg;
+  mavlink_openhd_onboard_computer_status_extension_t values{};
+  if(IS_PLATFORM_RPI){
+    //
+  }
+  mavlink_msg_openhd_onboard_computer_status_extension_encode(sys_id,comp_id,&msg.m,&values);
   return msg;
 }
 

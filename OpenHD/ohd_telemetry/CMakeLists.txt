@@ -87,6 +87,9 @@ target_link_libraries(test_air_locally OHDTelemetryLib)
 add_executable(test_ground_and_air_locally tests/test_ground_and_air_locally.cpp)
 target_link_libraries(test_ground_and_air_locally OHDTelemetryLib)
 
+add_executable(test_onboard_computer_status_read_stuff tests/test_onboard_computer_status_read_stuff.cpp)
+target_link_libraries(test_onboard_computer_status_read_stuff OHDTelemetryLib)
+
 ###
 find_package(MAVSDK)
 if(MAVSDK_FOUND)
