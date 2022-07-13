@@ -5,13 +5,20 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_LINK_STATISTICS_HPP_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_LINK_STATISTICS_HPP_
 
+#include <string>
+#include <sstream>
+
 namespace openhd::link_statistics{
 
 // Data from all RX instances
 struct StatsTotalRxStreams{
   uint64_t count_p_all=0; // accumulate all packets from all streams
   uint64_t count_p_bad_all=0; // bad p
-
+  [[nodiscard]] std::string to_string()const{
+	std::stringstream ss;
+	ss<<"StatsTotalRxStreams"<<"{"<<count_p_all<<", "<<count_p_bad_all<<"}";
+	return ss.str();
+  }
 };
 
 struct StatsPerCard{
