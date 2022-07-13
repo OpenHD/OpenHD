@@ -113,7 +113,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
 	}
 	mavlink_msg_openhd_wifi_card_pack(_sys_id,_comp_id,&msg.m,i,card_stats.rx_rssi,
 									  card_stats.count_p_received,card_stats.count_p_injected,0,0);
-	std::cout << i << " has " << (int)card_stats.rx_rssi << " " << card_stats.count_p_injected << "\n";
+	std::cout << card_stats.to_string(i)<<"\n";
 	ret.push_back(msg);
   }
   // stats per ling
@@ -150,7 +150,7 @@ MavlinkMessage OHDMainComponent::generateOpenHDVersion() const {
 }
 
 void OHDMainComponent::set_link_statistics(openhd::link_statistics::AllStats stats){
-  std::cout<<"OHDMainComponent::set_link_statistics\n";
+  //std::cout<<"OHDMainComponent::set_link_statistics\n";
   std::lock_guard<std::mutex> guard(_last_link_stats_mutex);
   _last_link_stats=stats;
 }

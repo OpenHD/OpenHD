@@ -223,7 +223,7 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	std::cerr<<"Unknown radio port on stats"<<(int)data.radio_port<<"\n";
 	return;
   }
-  std::cout<<"XGot stats "<<data<<"\n";
+  //std::cout<<"XGot stats "<<data<<"\n";
   // dBm is per card, not per stream
   assert(_stats_all_cards.size()>=4);
   // only populate actually used cards
