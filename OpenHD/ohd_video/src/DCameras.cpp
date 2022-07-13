@@ -1,20 +1,17 @@
-#include <linux/videodev2.h>
-#include <libv4l2.h>
-
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-#include <iostream>
-#include <regex>
-
+#include "DCameras.h"
 #include "openhd-camera.hpp"
 #include "openhd-log.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "DCamerasHelper.hpp"
 
-#include "DCameras.h"
+#include <linux/videodev2.h>
+#include <libv4l2.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <iostream>
+#include <regex>
 
 DCameras::DCameras(const OHDPlatform& ohdPlatform) :
 	ohdPlatform(ohdPlatform){}

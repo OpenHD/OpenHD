@@ -10,7 +10,6 @@ include_directories(../ohd_common)
 include(../lib/wifibroadcast/WBLib.cmake)
 
 SET(ALL_INTERFACE_SOURCE_FILES
-        src/WifiCards.cpp
         #src/EthernetCards.cpp
         src/WBStreams.cpp
         src/WifiHotspot.cpp

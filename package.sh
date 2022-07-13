@@ -8,13 +8,6 @@ OS=$2
 DISTRO=$3
 BUILD_TYPE=$4
 
-
-
-if [[ "${DISTRO}" == "buster" ]]; then
-    PLATFORM_PACKAGES="-d wiringpi -d veye-raspberrypi -d lifepoweredpi -d gstreamer1.0-omx-rpi-config -d gst-rpicamsrc -d openhd-linux-pi -d libjpeg62-turbo"
-    PLATFORM_CONFIGS="--config-files /boot/cmdline.txt --config-files /boot/config.txt --config-files /usr/local/share/openhd/joyconfig.txt"
-fi
-
 if [[ "${DISTRO}" == "bullseye" ]]; then
     PLATFORM_PACKAGES="-d lifepoweredpi -d gst-rpicamsrc -d openhd-linux-pi -d libjpeg62-turbo"
     PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"

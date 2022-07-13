@@ -1,6 +1,0 @@
-auto lo
-iface lo inet loopback
-auto eth1
-allow-hotplug eth1
-iface eth1 inet dhcp
-

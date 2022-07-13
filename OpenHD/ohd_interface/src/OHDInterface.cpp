@@ -6,8 +6,6 @@
 
 #include <DWifiCards.h>
 
-#include <utility>
-
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) : platform(platform1),profile(profile1) {
   std::cout << "OHDInterface::OHDInterface()\n";
   //wifiCards = std::make_unique<WifiCards>(profile);
@@ -42,9 +40,17 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) : platform
   // We don't have at least one card for monitor mode, which is a hard requirement for OpenHD
   if(broadcast_cards.empty()){
     std::cerr<<"Cannot start ohd_interface, no wifi card for monitor mode\n";
-    exit(1);
+    const std::string message_for_user="No WiFi card found, please reboot\n";
+    LOGE<<message_for_user;
+    // TODO reason what to do. We do not support dynamically adding wifi cards at run time, so somehow
+    // we need to signal to the user that something is completely wrong. However, as an grund pi, we can still
+    // run QOpenHD and OpenHD, just it will never connect to an air pi
+    _error_blinker=std::make_unique<openhd::rpi::LEDBlinker>(message_for_user);
+    // we just continue as nothing happened, but OHD won't be usable until a reboot.
+    //exit(1);
+  }else{
+      wbStreams=std::make_unique<WBStreams>(profile,broadcast_cards);
   }
-  wbStreams=std::make_unique<WBStreams>(profile,broadcast_cards);
 
   // USB tethering - only on ground
   if(!profile.is_air){
@@ -86,9 +92,13 @@ std::string OHDInterface::createDebug() const {
 }
 
 void OHDInterface::addExternalDeviceIpForwarding(std::string ip) const {
-  wbStreams->addExternalDeviceIpForwarding(ip);
+    if(wbStreams){
+        wbStreams->addExternalDeviceIpForwarding(ip);
+    }
 }
 
 void OHDInterface::removeExternalDeviceIpForwarding(std::string ip) const {
-  wbStreams->removeExternalDeviceIpForwarding(ip);
+    if(wbStreams){
+        wbStreams->removeExternalDeviceIpForwarding(ip);
+    }
 }

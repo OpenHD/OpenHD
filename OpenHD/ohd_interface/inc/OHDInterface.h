@@ -9,10 +9,10 @@
 
 #include "USBTetherListener.h"
 #include "WBStreams.h"
-#include "WifiCards.h"
 #include "WifiHotspot.h"
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-led-error-codes.h"
 
 class OHDInterface {
  public:
@@ -45,6 +45,7 @@ class OHDInterface {
   const OHDProfile profile;
   const OHDPlatform platform;
   std::unique_ptr<WifiHotspot> _wifi_hotspot;
+  std::unique_ptr<openhd::rpi::LEDBlinker> _error_blinker;
 };
 
 #endif //OPENHD_OPENHD_INTERFACE_H

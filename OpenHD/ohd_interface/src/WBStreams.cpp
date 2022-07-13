@@ -1,29 +1,28 @@
-#include <cstdio>
-#include <stdio.h>
-
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-#include <iostream>
-
-#include <utility>
+#include "WBStreams.h"
+#include "WifiCardCommandHelper.hpp"
 
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 #include "openhd-wifi.hpp"
 #include "openhd-global-constants.h"
 
-#include "WBStreams.h"
-#include "WifiCards.h"
+#include <cstdio>
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <iostream>
+#include <utility>
 
 WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards) :
    _profile(std::move(profile)),_broadcast_cards(broadcast_cards) {
   std::cout<<"WBStreams::WBStreams:"<<broadcast_cards.size()<<"\n";
   // sanity checks
   if(_broadcast_cards.empty()) {
+    // NOTE: Here we crash, since it would be a programmer(s) error to create a WBStreams instance without at least 1 wifi card.
+    // In OHDInterface, we handle it more gracefully with an error code.
     std::cerr << "Without at least one wifi card, the stream(s) cannot be started\n";
     exit(1);
   }
@@ -42,14 +41,14 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
   for(const auto& card: _broadcast_cards){
     //TODO we might not need this one
     //OHDUtil::run_command("rfkill",{"unblock",card->_wifi_card.interface_name});
-    WifiCards::set_card_state(card->_wifi_card, false);
-    WifiCards::enable_monitor_mode(card->_wifi_card);
-    WifiCards::set_card_state(card->_wifi_card, true);
+    WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
+    WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
+    WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
     assert(!card->get_settings().frequency.empty());
-    WifiCards::set_frequency(card->_wifi_card, card->get_settings().frequency);
+    WifiCardCommandHelper::set_frequency(card->_wifi_card, card->get_settings().frequency);
     assert(!card->get_settings().txpower.empty());
     // TODO check if this works - on rtl8812au, the displayed value at least changes
-    WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
+    WifiCardCommandHelper::set_txpower(card->_wifi_card, card->get_settings().txpower);
     //WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
   }
   configure();
@@ -182,4 +181,26 @@ std::vector<std::string> WBStreams::get_rx_card_names() const {
     ret.push_back(card->_wifi_card.interface_name);
   }
   return ret;
+}
+
+bool WBStreams::ever_received_any_data() const {
+    if(_profile.is_air){
+        // check if we got any telemetry data, we never receive video data
+        assert(udpTelemetryRx);
+        return udpTelemetryRx->anyDataReceived();
+    }
+    // ground
+    bool any_data_received=false;
+    // any telemetry data
+    assert(udpTelemetryRx);
+    if(udpTelemetryRx->anyDataReceived()){
+        any_data_received=true;
+    }
+    // or any video data
+    for(const auto& vidrx:udpVideoRxList){
+        if(vidrx->anyDataReceived()){
+            any_data_received=true;
+        }
+    }
+    return any_data_received;
 }
