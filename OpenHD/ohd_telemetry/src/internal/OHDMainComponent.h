@@ -59,7 +59,7 @@ class OHDMainComponent : public MavlinkComponent{
    * Called with the raw Wifibroadcast statistics data from UDP
    */
   void processWifibroadcastStatisticsData(const uint8_t *payload, std::size_t payloadSize);
-  [[nodiscard]] MavlinkMessage generateWifibroadcastStatistics() const;
+  [[nodiscard]] std::vector<MavlinkMessage> generateWifibroadcastStatistics();
   [[nodiscard]] MavlinkMessage generateOpenHDVersion()const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
