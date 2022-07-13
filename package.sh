@@ -35,8 +35,10 @@ PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
 cd OpenHD
-git rev-parse --short HEAD
 VER2= git rev-parse --short HEAD
+echo ${VER2}
+
+
 rm -rf build
 
 mkdir build
