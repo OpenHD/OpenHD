@@ -16,8 +16,9 @@
 #include <iostream>
 #include <utility>
 
-WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards) :
-   _profile(std::move(profile)),_broadcast_cards(broadcast_cards) {
+WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards,
+					 openhd::link_statistics::STATS_CALLBACK stats_callback) :
+   _profile(std::move(profile)),_broadcast_cards(broadcast_cards),_stats_callback(std::move(stats_callback)) {
   std::cout<<"WBStreams::WBStreams:"<<broadcast_cards.size()<<"\n";
   // sanity checks
   if(_broadcast_cards.empty()) {
@@ -238,4 +239,17 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   }
   _stats_all_streams.count_p_all=count_p_all;
   _stats_all_streams.count_p_bad_all=count_p_bad_all;
+  if(_stats_callback){
+	_stats_callback({_stats_all_streams,_stats_all_cards});
+  }
+}
+
+openhd::link_statistics::StatsTotalRxStreams WBStreams::get_stats_all_rx_streams() {
+  std::lock_guard<std::mutex> guard(_statisticsDataLock);
+  return _stats_all_streams;
+}
+
+openhd::link_statistics::StatsAllCards WBStreams::get_stats_all_cards() {
+  std::lock_guard<std::mutex> guard(_statisticsDataLock);
+  return _stats_all_cards;
 }

@@ -21,5 +21,12 @@ struct StatsPerCard{
 // Stats per connected card
 using StatsAllCards=std::array<StatsPerCard,4>;
 
+struct AllStats{
+  openhd::link_statistics::StatsTotalRxStreams stats_total_rx_streams{};
+  openhd::link_statistics::StatsAllCards stats_all_cards{};
+};
+
+typedef std::function<void(AllStats all_stats)> STATS_CALLBACK;
+
 }
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_LINK_STATISTICS_H_

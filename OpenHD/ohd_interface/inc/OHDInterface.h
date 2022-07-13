@@ -25,7 +25,7 @@ class OHDInterface {
    * a setting that affects the ground pi.
    * @param profile the (never-changing) profile we are running with.
    */
-  explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1);
+  explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1,openhd::link_statistics::STATS_CALLBACK stats_callback=nullptr);
   std::unique_ptr<WBStreams> wbStreams;
   std::unique_ptr<USBTetherListener> usbTetherListener;
   // Verbose string about the current state.

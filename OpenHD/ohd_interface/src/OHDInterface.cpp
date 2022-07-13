@@ -6,7 +6,10 @@
 
 #include <DWifiCards.h>
 
-OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) : platform(platform1),profile(profile1) {
+#include <utility>
+
+OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,openhd::link_statistics::STATS_CALLBACK stats_callback) :
+platform(platform1),profile(std::move(profile1)) {
   std::cout << "OHDInterface::OHDInterface()\n";
   //wifiCards = std::make_unique<WifiCards>(profile);
   //Find out which cards are connected first
@@ -49,7 +52,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) : platform
     // we just continue as nothing happened, but OHD won't be usable until a reboot.
     //exit(1);
   }else{
-      wbStreams=std::make_unique<WBStreams>(profile,broadcast_cards);
+      wbStreams=std::make_unique<WBStreams>(profile,broadcast_cards,stats_callback);
   }
 
   // USB tethering - only on ground

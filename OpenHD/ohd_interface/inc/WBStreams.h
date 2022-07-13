@@ -19,7 +19,8 @@
  */
 class WBStreams {
  public:
-  explicit WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards);
+  explicit WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards,
+					 openhd::link_statistics::STATS_CALLBACK stats_callback=nullptr);
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
   // see interface
@@ -28,6 +29,8 @@ class WBStreams {
   // Returns true if this WBStream has ever received any data. If no data has been ever received after X seconds,
   // there most likely was an unsuccessful frequency change.
   [[nodiscard]] bool ever_received_any_data()const;
+  openhd::link_statistics::StatsTotalRxStreams get_stats_all_rx_streams();
+  openhd::link_statistics::StatsAllCards get_stats_all_cards();
  private:
   const OHDProfile _profile;
   const int DEFAULT_MCS_INDEX = 3;
@@ -57,6 +60,7 @@ class WBStreams {
   openhd::link_statistics::StatsTotalRxStreams _stats_all_streams{};
   // dBm / rssi for all connected cards that are doing wifibroadcast
   openhd::link_statistics::StatsAllCards _stats_all_cards{};
+  openhd::link_statistics::STATS_CALLBACK _stats_callback=nullptr;
 };
 
 #endif
