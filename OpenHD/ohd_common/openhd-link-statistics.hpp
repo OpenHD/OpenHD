@@ -14,7 +14,7 @@ struct StatsTotalRxStreams{
 };
 
 struct StatsPerCard{
-  bool exists=true; // We have place for up to X wifi cards, but they might be unused - don't waste any telemetry bandwidth on these cards
+  bool exists_in_openhd=false; // We have place for up to X wifi cards, but they might be unused - don't waste any telemetry bandwidth on these cards
   uint32_t count_p_received=0;
   uint32_t count_p_injected=0;
   int8_t rssi=INT8_MAX; // dBm / rssi, mavlink also defaults to INT8_MAX - makes sense if in dbm

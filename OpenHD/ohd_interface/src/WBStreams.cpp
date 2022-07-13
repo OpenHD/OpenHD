@@ -226,8 +226,12 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   std::cout<<"XGot stats "<<data<<"\n";
   // dBm is per card, not per stream
   assert(_stats_all_cards.size()>=4);
-  for(int i=0;i<4;i++){
-	_stats_all_cards.at(i).rssi=data.rssiPerCard.at(i).getAverage();
+  // only populate actually used cards
+  assert(_broadcast_cards.size()<=_stats_all_cards.size());
+  for(int i=0;i<_broadcast_cards.size();i++){
+	auto& card = _stats_all_cards.at(i);
+	card.rssi=data.rssiPerCard.at(i).getAverage();
+	card.exists_in_openhd= true;
   }
   // other stuff is per stream / accumulated
   uint64_t count_p_all=0;

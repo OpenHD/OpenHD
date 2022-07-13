@@ -113,11 +113,16 @@ std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
   std::lock_guard<std::mutex> guard(_last_link_stats_mutex);
   std::vector<MavlinkMessage> ret;
   // stats for all the wifi card(s)
-  for(int i=0;i<4;i++){
+  for(int i=0;i<_last_link_stats.stats_all_cards.size();i++){
 	MavlinkMessage msg;
 	const auto card_stats=_last_link_stats.stats_all_cards.at(i);
+	if(!card_stats.exists_in_openhd){
+	  // skip non active cards
+	  continue;
+	}
 	mavlink_msg_openhd_wifi_card_pack(_sys_id,_comp_id,&msg.m,i,card_stats.rssi,
 									  card_stats.count_p_received,card_stats.count_p_injected,0,0);
+	std::cout<<i<<" has "<<(int)card_stats.rssi<<" "<<card_stats.count_p_injected<<"\n";
 	ret.push_back(msg);
   }
   // stats per ling
