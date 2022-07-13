@@ -8,6 +8,7 @@
 
 #include "openhd-wifi.hpp"
 #include "openhd-profile.hpp"
+#include "openhd-link-statistics.h"
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
 
@@ -43,8 +44,19 @@ class WBStreams {
   std::vector<std::unique_ptr<UDPWBReceiver>> udpVideoRxList;
   // TODO make more configurable
   [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec)const;
-  [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port) const;
+  [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port);
   [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
+  // called from the wifibroadcast instance(s), which have their own threads.
+  std::mutex _statisticsDataLock;
+  void onNewStatisticsData(const OpenHDStatisticsWriter::Data& data);
+  // hacky, we accumulate the stats for all RX streams, which are 1 on the air (telemetry rx) and
+  // 3 on the ground (telemetry and 2x video rx)
+  // first is always telemetry, second and third are video if on ground
+  std::array<OpenHDStatisticsWriter::Data,3> _last_stats_per_stream{};
+  // OpenHD
+  openhd::link_statistics::StatsTotalRxStreams _stats_all_streams{};
+  // dBm / rssi for all connected cards that are doing wifibroadcast
+  openhd::link_statistics::StatsAllCards _stats_all_cards{};
 };
 
 #endif

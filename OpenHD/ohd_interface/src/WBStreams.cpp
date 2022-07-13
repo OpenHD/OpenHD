@@ -26,6 +26,8 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
     std::cerr << "Without at least one wifi card, the stream(s) cannot be started\n";
     exit(1);
   }
+  // more than 4 cards would be completely insane, most likely a programming error
+  assert(_broadcast_cards.size()<=4);
   // sanity checking
   for(const auto& card: _broadcast_cards){
     assert(card->get_settings().use_for==WifiUseFor::MonitorMode);
@@ -119,7 +121,7 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   return std::make_unique<UDPWBTransmitter>(radiotapHeader, options, "127.0.0.1", udp_port);
 }
 
-std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int udp_port) const {
+std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int udp_port){
   ROptions options{};
   // We log them all manually together
   options.enableLogAlive= false;
@@ -128,9 +130,9 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
   const auto cards = get_rx_card_names();
   assert(!cards.empty());
   options.rxInterfaces = cards;
-  return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port/*,[this](OpenHDStatisticsWriter::Data stats){
-
-  }*/);
+  return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port,[this](OpenHDStatisticsWriter::Data stats){
+	this->onNewStatisticsData(stats);
+  });
 }
 
 std::string WBStreams::createDebug() const {
@@ -205,4 +207,35 @@ bool WBStreams::ever_received_any_data() const {
         }
     }
     return any_data_received;
+}
+
+void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
+  std::lock_guard<std::mutex> guard(_statisticsDataLock);
+  // TODO make more understandable, but tele rx or tele tx is correct here
+  if(data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT
+  || data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT){
+	_last_stats_per_stream.at(0)=data;
+  }else if(data.radio_port==OHD_VIDEO_PRIMARY_RADIO_PORT){
+	_last_stats_per_stream.at(1)=data;
+  }else if(data.radio_port==OHD_VIDEO_SECONDARY_RADIO_PORT){
+	_last_stats_per_stream.at(2)=data;
+  }else{
+	std::cerr<<"Unknown radio port on stats"<<(int)data.radio_port<<"\n";
+	return;
+  }
+  std::cout<<"XGot stats "<<data<<"\n";
+  // dBm is per card, not per stream
+  assert(_stats_all_cards.size()>=4);
+  for(int i=0;i<4;i++){
+	_stats_all_cards.at(i).rssi=data.rssiPerCard.at(i).getAverage();
+  }
+  // other stuff is per stream / accumulated
+  uint64_t count_p_all=0;
+  uint64_t count_p_bad_all=0;
+  for(int i=0;i<3;i++){
+	count_p_all+=_last_stats_per_stream.at(i).count_p_all;
+	count_p_bad_all+=_last_stats_per_stream.at(i).count_p_bad;
+  }
+  _stats_all_streams.count_p_all=count_p_all;
+  _stats_all_streams.count_p_bad_all=count_p_bad_all;
 }
