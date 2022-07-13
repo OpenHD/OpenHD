@@ -35,7 +35,7 @@ PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
 cd OpenHD
-VER2= git rev-parse --short HEAD
+VER2=$(git rev-parse --short HEAD)
 echo ${VER2}
 
 
