@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 
+// NOTE: CURRENTLY MESSED UP / HACKY, NEEDS CARE
 namespace openhd::link_statistics{
 
 // Data from all RX instances

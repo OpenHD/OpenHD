@@ -224,6 +224,21 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	return;
   }
   //std::cout<<"XGot stats "<<data<<"\n";
+  // other stuff is per stream / accumulated
+  uint64_t count_p_all=0;
+  uint64_t count_p_bad_all=0;
+  for(int i=0;i<3;i++){
+	count_p_all+=_last_stats_per_rx_stream.at(i).count_p_all;
+	count_p_bad_all+=_last_stats_per_rx_stream.at(i).count_p_bad;
+  }
+  // injection temporary
+  uint64_t n_total_injected_packets=0;
+  if(udpTelemetryTx){
+	n_total_injected_packets+=udpTelemetryTx->get_n_injected_packets();
+  }
+  for(const auto& tx:udpVideoTxList){
+	n_total_injected_packets+=tx->get_n_injected_packets();
+  }
   // dBm is per card, not per stream
   assert(_stats_all_cards.size()>=4);
   // only populate actually used cards
@@ -232,14 +247,11 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	auto& card = _stats_all_cards.at(i);
 	card.rx_rssi=data.rssiPerCard.at(i).getAverage();
 	card.exists_in_openhd= true;
+	// not correct
+	card.count_p_injected=n_total_injected_packets;
   }
-  // other stuff is per stream / accumulated
-  uint64_t count_p_all=0;
-  uint64_t count_p_bad_all=0;
-  for(int i=0;i<3;i++){
-	count_p_all+=_last_stats_per_rx_stream.at(i).count_p_all;
-	count_p_bad_all+=_last_stats_per_rx_stream.at(i).count_p_bad;
-  }
+
+  //
   _stats_all_rx_streams.count_p_all=count_p_all;
   _stats_all_rx_streams.count_p_bad_all=count_p_bad_all;
   if(_stats_callback){
