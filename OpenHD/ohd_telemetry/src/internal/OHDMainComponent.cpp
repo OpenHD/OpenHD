@@ -97,6 +97,7 @@ void OHDMainComponent::processWifibroadcastStatisticsData(const uint8_t *payload
   //std::cout << "OHDTelemetryGenerator::processNewWifibroadcastStatisticsMessage: " << payloadSize << "\n";
   const auto msges=WBStatisticsConverter::parseRawDataSafe(payload,payloadSize);
   for(const auto msg:msges){
+	std::cout<<"Got statistics\n";
     lastWbStatisticsMessage[msg.radio_port] = msg;
   }
 }

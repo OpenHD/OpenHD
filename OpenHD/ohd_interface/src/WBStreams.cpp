@@ -128,7 +128,9 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
   const auto cards = get_rx_card_names();
   assert(!cards.empty());
   options.rxInterfaces = cards;
-  return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port);
+  return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port/*,[this](OpenHDStatisticsWriter::Data stats){
+
+  }*/);
 }
 
 std::string WBStreams::createDebug() const {
