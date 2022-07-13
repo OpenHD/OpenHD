@@ -141,7 +141,9 @@ MavlinkMessage OHDMainComponent::generateOpenHDVersion() const {
 }
 
 void OHDMainComponent::set_link_statistics(openhd::link_statistics::AllStats stats){
-
+  std::cout<<"OHDMainComponent::set_link_statistics\n";
+  std::lock_guard<std::mutex> guard(_last_link_stats_mutex);
+  _last_link_stats=stats;
 }
 
 

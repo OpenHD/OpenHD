@@ -66,6 +66,8 @@ class OHDMainComponent : public MavlinkComponent{
   // here all the log messages are sent to - not in their mavlink form yet.
   std::unique_ptr<SocketHelper::UDPReceiver> logMessagesReceiver;
   StatusTextAccumulator _status_text_accumulator;
+  std::mutex _last_link_stats_mutex;
+  openhd::link_statistics::AllStats _last_link_stats{};
 };
 
 #endif //XMAVLINKSERVICE_INTERNALTELEMETRY_H
