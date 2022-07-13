@@ -140,4 +140,8 @@ MavlinkMessage OHDMainComponent::generateOpenHDVersion() const {
   return msg;
 }
 
+void OHDMainComponent::set_link_statistics(openhd::link_statistics::AllStats stats){
+
+}
+
 
