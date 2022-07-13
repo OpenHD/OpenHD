@@ -49,6 +49,6 @@ static constexpr auto OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP = 5620;
 static constexpr auto OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP = 5621;
 static_assert(OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP != OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP, "Must be different");
 
-static constexpr auto OHD_VERSION_NUMBER_STRING="Dev-2.1-alpha";
+static constexpr auto OHD_VERSION_NUMBER_STRING="Dev-2.2.0-alpha";
 
 #endif //OPEN_HD_OPNHD_GLOBAL_CONSTANTS_H
