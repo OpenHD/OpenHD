@@ -9,6 +9,7 @@
 #include "ohd_common/openhd-platform.hpp"
 #include "ohd_common/openhd-profile.hpp"
 #include "ohd_common/openhd-platform-discover.hpp"
+#include "ohd_common/openhd-global-constants.h"
 
 #include <DCameras.h>
 #include <OHDInterface.h>
@@ -75,6 +76,7 @@ int main(int argc, char *argv[]) {
       "force-air:" << (options.force_air ? "Y" : "N") <<"\n"<<
       "force-ground:" << (options.force_ground ? "Y" : "N") <<"\n"<<
       "clean-start:" << (options.clean_start ? "Y" : "N") <<"\n";
+  std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
 
   try {
     if(options.clean_start){
