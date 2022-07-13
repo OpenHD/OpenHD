@@ -117,6 +117,10 @@ int main(int argc, char *argv[]) {
 
     // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
     auto ohdTelemetry = std::make_unique<OHDTelemetry>(*platform,* profile);
+	// link stats from ohdInterface with telemetry
+	ohdInterface->set_stats_callback([&ohdTelemetry](openhd::link_statistics::AllStats stats){
+	  ohdTelemetry->set_link_statistics(stats);
+	});
 
     // and start ohdVideo if we are on the air pi
     std::unique_ptr<OHDVideo> ohdVideo;

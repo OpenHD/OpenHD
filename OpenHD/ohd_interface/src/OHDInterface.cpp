@@ -8,7 +8,7 @@
 
 #include <utility>
 
-OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,openhd::link_statistics::STATS_CALLBACK stats_callback) :
+OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) :
 platform(platform1),profile(std::move(profile1)) {
   std::cout << "OHDInterface::OHDInterface()\n";
   //wifiCards = std::make_unique<WifiCards>(profile);
@@ -52,7 +52,7 @@ platform(platform1),profile(std::move(profile1)) {
     // we just continue as nothing happened, but OHD won't be usable until a reboot.
     //exit(1);
   }else{
-      wbStreams=std::make_unique<WBStreams>(profile,broadcast_cards,stats_callback);
+      wbStreams=std::make_unique<WBStreams>(profile,broadcast_cards);
   }
 
   // USB tethering - only on ground
@@ -104,4 +104,12 @@ void OHDInterface::removeExternalDeviceIpForwarding(std::string ip) const {
     if(wbStreams){
         wbStreams->removeExternalDeviceIpForwarding(ip);
     }
+}
+
+void OHDInterface::set_stats_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) const {
+  if(wbStreams){
+	wbStreams->set_callback(std::move(stats_callback));
+  }else{
+	std::cerr<<"Cannot ste stats callback, no wb streams instance\n";
+  }
 }

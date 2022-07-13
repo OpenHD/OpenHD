@@ -3,12 +3,13 @@
 
 #include <array>
 #include <chrono>
+#include <utility>
 #include <vector>
 #include <utility>
 
 #include "openhd-wifi.hpp"
 #include "openhd-profile.hpp"
-#include "openhd-link-statistics.h"
+#include "openhd-link-statistics.hpp"
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
 
@@ -19,8 +20,11 @@
  */
 class WBStreams {
  public:
-  explicit WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards,
-					 openhd::link_statistics::STATS_CALLBACK stats_callback=nullptr);
+  explicit WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards);
+  // register callback that is called in regular intervals with link statistics
+  void set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback){
+	_stats_callback=std::move(stats_callback);
+  }
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
   // see interface

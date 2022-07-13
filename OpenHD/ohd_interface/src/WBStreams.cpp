@@ -16,9 +16,8 @@
 #include <iostream>
 #include <utility>
 
-WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards,
-					 openhd::link_statistics::STATS_CALLBACK stats_callback) :
-   _profile(std::move(profile)),_broadcast_cards(broadcast_cards),_stats_callback(std::move(stats_callback)) {
+WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards) :
+   _profile(std::move(profile)),_broadcast_cards(broadcast_cards) {
   std::cout<<"WBStreams::WBStreams:"<<broadcast_cards.size()<<"\n";
   // sanity checks
   if(_broadcast_cards.empty()) {
