@@ -11,13 +11,20 @@ namespace openhd::link_statistics{
 struct StatsTotalRxStreams{
   uint64_t count_p_all=0; // accumulate all packets from all streams
   uint64_t count_p_bad_all=0; // bad p
+
 };
 
 struct StatsPerCard{
   bool exists_in_openhd=false; // We have place for up to X wifi cards, but they might be unused - don't waste any telemetry bandwidth on these cards
+  int8_t rx_rssi=INT8_MAX; // dBm / rssi, mavlink also defaults to INT8_MAX - makes sense if in dbm
   uint32_t count_p_received=0;
   uint32_t count_p_injected=0;
-  int8_t rssi=INT8_MAX; // dBm / rssi, mavlink also defaults to INT8_MAX - makes sense if in dbm
+  [[nodiscard]] std::string to_string(const int index)const{
+	std::stringstream ss;
+	ss << "StatsPerCard"<<index<<"{exists:" << (exists_in_openhd ? "Y":"N") << ", rssi:" << (int)rx_rssi <<
+	   ", count_p_received:" << count_p_received << ", count_p_injected:" << count_p_injected << "}";
+	return ss.str();
+  }
 };
 // Stats per connected card
 using StatsAllCards=std::array<StatsPerCard,4>;

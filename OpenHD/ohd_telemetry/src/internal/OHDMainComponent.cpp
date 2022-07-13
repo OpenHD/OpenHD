@@ -111,9 +111,9 @@ std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
 	  // skip non active cards
 	  continue;
 	}
-	mavlink_msg_openhd_wifi_card_pack(_sys_id,_comp_id,&msg.m,i,card_stats.rssi,
+	mavlink_msg_openhd_wifi_card_pack(_sys_id,_comp_id,&msg.m,i,card_stats.rx_rssi,
 									  card_stats.count_p_received,card_stats.count_p_injected,0,0);
-	std::cout<<i<<" has "<<(int)card_stats.rssi<<" "<<card_stats.count_p_injected<<"\n";
+	std::cout << i << " has " << (int)card_stats.rx_rssi << " " << card_stats.count_p_injected << "\n";
 	ret.push_back(msg);
   }
   // stats per ling
