@@ -214,11 +214,11 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   // TODO make more understandable, but tele rx or tele tx is correct here
   if(data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT
   || data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT){
-	_last_stats_per_stream.at(0)=data;
+	_last_stats_per_rx_stream.at(0)=data;
   }else if(data.radio_port==OHD_VIDEO_PRIMARY_RADIO_PORT){
-	_last_stats_per_stream.at(1)=data;
+	_last_stats_per_rx_stream.at(1)=data;
   }else if(data.radio_port==OHD_VIDEO_SECONDARY_RADIO_PORT){
-	_last_stats_per_stream.at(2)=data;
+	_last_stats_per_rx_stream.at(2)=data;
   }else{
 	std::cerr<<"Unknown radio port on stats"<<(int)data.radio_port<<"\n";
 	return;
@@ -237,19 +237,19 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   uint64_t count_p_all=0;
   uint64_t count_p_bad_all=0;
   for(int i=0;i<3;i++){
-	count_p_all+=_last_stats_per_stream.at(i).count_p_all;
-	count_p_bad_all+=_last_stats_per_stream.at(i).count_p_bad;
+	count_p_all+=_last_stats_per_rx_stream.at(i).count_p_all;
+	count_p_bad_all+=_last_stats_per_rx_stream.at(i).count_p_bad;
   }
-  _stats_all_streams.count_p_all=count_p_all;
-  _stats_all_streams.count_p_bad_all=count_p_bad_all;
+  _stats_all_rx_streams.count_p_all=count_p_all;
+  _stats_all_rx_streams.count_p_bad_all=count_p_bad_all;
   if(_stats_callback){
-	_stats_callback({_stats_all_streams,_stats_all_cards});
+	_stats_callback({_stats_all_rx_streams, _stats_all_cards});
   }
 }
 
 openhd::link_statistics::StatsTotalRxStreams WBStreams::get_stats_all_rx_streams() {
   std::lock_guard<std::mutex> guard(_statisticsDataLock);
-  return _stats_all_streams;
+  return _stats_all_rx_streams;
 }
 
 openhd::link_statistics::StatsAllCards WBStreams::get_stats_all_cards() {
