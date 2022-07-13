@@ -225,11 +225,11 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   }
   //std::cout<<"XGot stats "<<data<<"\n";
   // other stuff is per stream / accumulated
-  uint64_t count_p_all=0;
-  uint64_t count_p_bad_all=0;
+  uint64_t count_all_rx_packets=0;
+  uint64_t count_all_rx_packets_bad=0;
   for(int i=0;i<3;i++){
-	count_p_all+=_last_stats_per_rx_stream.at(i).count_p_all;
-	count_p_bad_all+=_last_stats_per_rx_stream.at(i).count_p_bad;
+	count_all_rx_packets+=_last_stats_per_rx_stream.at(i).count_p_all;
+	count_all_rx_packets_bad+=_last_stats_per_rx_stream.at(i).count_p_bad;
   }
   // injection temporary
   uint64_t n_total_injected_packets=0;
@@ -249,11 +249,11 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	card.exists_in_openhd= true;
 	// not correct
 	card.count_p_injected=n_total_injected_packets;
+	card.count_p_received=count_all_rx_packets;
   }
-
   //
-  _stats_all_rx_streams.count_p_all=count_p_all;
-  _stats_all_rx_streams.count_p_bad_all=count_p_bad_all;
+  _stats_all_rx_streams.count_p_all=count_all_rx_packets;
+  _stats_all_rx_streams.count_p_bad_all=count_all_rx_packets_bad;
   if(_stats_callback){
 	_stats_callback({_stats_all_rx_streams, _stats_all_cards});
   }
