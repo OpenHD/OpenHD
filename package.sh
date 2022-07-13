@@ -58,7 +58,7 @@ cp ../../openhd.service  ${PKGDIR}/etc/systemd/system/
 echo "copied files"
 echo ${PKGDIR}
 
-VERSION="2.1-$(date '+%m%d%H%M')"
+VERSION="2.1-$(date '+%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 rm ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
 
