@@ -40,10 +40,12 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) : platform
   // We don't have at least one card for monitor mode, which is a hard requirement for OpenHD
   if(broadcast_cards.empty()){
     std::cerr<<"Cannot start ohd_interface, no wifi card for monitor mode\n";
+    const std::string message_for_user="No WiFi card found, please reboot\n";
+    LOGE<<message_for_user;
     // TODO reason what to do. We do not support dynamically adding wifi cards at run time, so somehow
     // we need to signal to the user that something is completely wrong. However, as an grund pi, we can still
     // run QOpenHD and OpenHD, just it will never connect to an air pi
-    _error_blinker=std::make_unique<openhd::rpi::LEDBlinker>("No Wifi card found");
+    _error_blinker=std::make_unique<openhd::rpi::LEDBlinker>(message_for_user);
     // we just continue as nothing happened, but OHD won't be usable until a reboot.
     //exit(1);
   }else{

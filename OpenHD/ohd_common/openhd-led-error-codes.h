@@ -45,7 +45,7 @@ namespace openhd::rpi{
         static void blink_red_led(const std::string& message,const std::chrono::seconds duration=DURATION_INFINITY){
             const auto start=std::chrono::steady_clock::now();
             while ((std::chrono::steady_clock::now()-start)<=duration){
-                std::cout<<message<<"\n";
+                LOGE<<message;
                 red_led_on_off_delayed(std::chrono::seconds(1));
             }
         }
