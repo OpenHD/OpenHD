@@ -22,6 +22,14 @@ struct StatsTotalRxStreams{
   }
 };
 
+// Data from all RX and all TX instances on either ground or air, accumulated.
+struct StatsTotalAllStreams{
+  uint64_t count_wifi_packets_received=0; // current count of all received Wi-Fi packets
+  uint64_t count_bytes_received=0; // current count of all received bytes, does not include IEE802 header or similar, but does include FEC overhead
+  uint64_t count_wifi_packets_injected=0; // current count of all injected Wi-Fi packets
+  uint64_t count_bytes_injected=0;  // current count of all outgoing bytes, does not include IEE802 header or similar, but does include FEC overhead
+};
+
 struct StatsPerCard{
   bool exists_in_openhd=false; // We have place for up to X wifi cards, but they might be unused - don't waste any telemetry bandwidth on these cards
   int8_t rx_rssi=INT8_MAX; // dBm / rssi, mavlink also defaults to INT8_MAX - makes sense if in dbm
@@ -38,8 +46,9 @@ struct StatsPerCard{
 using StatsAllCards=std::array<StatsPerCard,4>;
 
 struct AllStats{
-  openhd::link_statistics::StatsTotalRxStreams stats_total_rx_streams{};
+  //openhd::link_statistics::StatsTotalRxStreams stats_total_rx_streams{};
   openhd::link_statistics::StatsAllCards stats_all_cards{};
+  openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
 };
 
 typedef std::function<void(AllStats all_stats)> STATS_CALLBACK;
