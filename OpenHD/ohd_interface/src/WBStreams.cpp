@@ -26,6 +26,8 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
     std::cerr << "Without at least one wifi card, the stream(s) cannot be started\n";
     exit(1);
   }
+  // more than 4 cards would be completely insane, most likely a programming error
+  assert(_broadcast_cards.size()<=4);
   // sanity checking
   for(const auto& card: _broadcast_cards){
     assert(card->get_settings().use_for==WifiUseFor::MonitorMode);
@@ -119,7 +121,7 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   return std::make_unique<UDPWBTransmitter>(radiotapHeader, options, "127.0.0.1", udp_port);
 }
 
-std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int udp_port) const {
+std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int udp_port){
   ROptions options{};
   // We log them all manually together
   options.enableLogAlive= false;
@@ -128,7 +130,9 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
   const auto cards = get_rx_card_names();
   assert(!cards.empty());
   options.rxInterfaces = cards;
-  return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port);
+  return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port,[this](OpenHDStatisticsWriter::Data stats){
+	this->onNewStatisticsData(stats);
+  });
 }
 
 std::string WBStreams::createDebug() const {
@@ -204,3 +208,67 @@ bool WBStreams::ever_received_any_data() const {
     }
     return any_data_received;
 }
+
+void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
+  std::lock_guard<std::mutex> guard(_statisticsDataLock);
+  // TODO make more understandable, but tele rx or tele tx is correct here
+  if(data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT
+  || data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT){
+	_last_stats_per_rx_stream.at(0)=data;
+  }else if(data.radio_port==OHD_VIDEO_PRIMARY_RADIO_PORT){
+	_last_stats_per_rx_stream.at(1)=data;
+  }else if(data.radio_port==OHD_VIDEO_SECONDARY_RADIO_PORT){
+	_last_stats_per_rx_stream.at(2)=data;
+  }else{
+	std::cerr<<"Unknown radio port on stats"<<(int)data.radio_port<<"\n";
+	return;
+  }
+  //std::cout<<"XGot stats "<<data<<"\n";
+  // other stuff is per stream / accumulated
+  uint64_t count_all_wifi_rx_packets=0;
+  uint64_t count_all_bytes_received=0;
+  for(int i=0;i<3;i++){
+	const auto& stats_per_rx_stream=_last_stats_per_rx_stream.at(i);
+	count_all_wifi_rx_packets+=stats_per_rx_stream.count_p_all;
+	count_all_bytes_received+=stats_per_rx_stream.count_bytes_received;
+	count_all_bytes_received+=0;
+  }
+  // injection temporary
+  uint64_t count_all_wifi_tx_packets=0;
+  if(udpTelemetryTx){
+	count_all_wifi_tx_packets+=udpTelemetryTx->get_n_injected_packets();
+  }
+  for(const auto& tx:udpVideoTxList){
+	count_all_wifi_tx_packets+=tx->get_n_injected_packets();
+  }
+  // dBm is per card, not per stream
+  assert(_stats_all_cards.size()>=4);
+  // only populate actually used cards
+  assert(_broadcast_cards.size()<=_stats_all_cards.size());
+  for(int i=0;i<_broadcast_cards.size();i++){
+	auto& card = _stats_all_cards.at(i);
+	card.rx_rssi=data.rssiPerCard.at(i).getAverage();
+	card.exists_in_openhd= true;
+	// not yet supported
+	card.count_p_injected=0;
+	card.count_p_received=0;
+  }
+  _stats_total_all_streams.count_wifi_packets_received=count_all_wifi_rx_packets;
+  _stats_total_all_streams.count_bytes_received=count_all_bytes_received;
+  _stats_total_all_streams.count_wifi_packets_injected=count_all_wifi_tx_packets;
+  _stats_total_all_streams.count_bytes_injected=0; // unsupported r.n
+  //
+  if(_stats_callback){
+	_stats_callback({_stats_total_all_streams, _stats_all_cards});
+  }
+}
+
+/*openhd::link_statistics::StatsTotalRxStreams WBStreams::get_stats_all_rx_streams() {
+  std::lock_guard<std::mutex> guard(_statisticsDataLock);
+  return _stats_all_rx_streams;
+}
+
+openhd::link_statistics::StatsAllCards WBStreams::get_stats_all_cards() {
+  std::lock_guard<std::mutex> guard(_statisticsDataLock);
+  return _stats_all_cards;
+}*/

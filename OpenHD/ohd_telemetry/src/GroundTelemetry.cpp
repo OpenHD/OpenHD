@@ -35,6 +35,12 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform): _platform(platform),Mavl
   });
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false);
   components.push_back(_ohd_main_component);
+  // TODO remove
+  {
+	auto example_comp=std::make_shared<openhd::testing::DummyGroundXSettingsComponent>();
+	// MAV_COMP_ID_ONBOARD_COMPUTER2=192
+	add_settings_component(192,example_comp);
+  }
   std::cout << "Created GroundTelemetry\n";
 }
 
@@ -120,10 +126,15 @@ std::string GroundTelemetry::createDebug() const {
   return ss.str();
 }
 
-
 void GroundTelemetry::add_settings_component(
     int comp_id, std::shared_ptr<openhd::XSettingsComponent> glue) {
   auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,comp_id,std::move(glue));
   components.push_back(param_server);
   std::cout<<"Added parameter component\n";
+}
+
+void GroundTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) {
+  if(_ohd_main_component){
+	_ohd_main_component->set_link_statistics(stats);
+  }
 }

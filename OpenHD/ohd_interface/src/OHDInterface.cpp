@@ -6,7 +6,10 @@
 
 #include <DWifiCards.h>
 
-OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) : platform(platform1),profile(profile1) {
+#include <utility>
+
+OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) :
+platform(platform1),profile(std::move(profile1)) {
   std::cout << "OHDInterface::OHDInterface()\n";
   //wifiCards = std::make_unique<WifiCards>(profile);
   //Find out which cards are connected first
@@ -101,4 +104,12 @@ void OHDInterface::removeExternalDeviceIpForwarding(std::string ip) const {
     if(wbStreams){
         wbStreams->removeExternalDeviceIpForwarding(ip);
     }
+}
+
+void OHDInterface::set_stats_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) const {
+  if(wbStreams){
+	wbStreams->set_callback(std::move(stats_callback));
+  }else{
+	std::cerr<<"Cannot ste stats callback, no wb streams instance\n";
+  }
 }

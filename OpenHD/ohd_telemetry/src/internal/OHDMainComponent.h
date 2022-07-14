@@ -20,6 +20,7 @@
 #include "StatusTextAccumulator.hpp"
 #include "openhd-log.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-link-statistics.hpp"
 
 // This Component runs on both the air and ground unit and should handle as many messages / commands / create as many
 // "fire and forget" messages as possible. For example, it broadcast the CPU load and other statistics, and responds to ping messages.
@@ -39,6 +40,8 @@ class OHDMainComponent : public MavlinkComponent{
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
   // override from component
   std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage &msg)override;
+  // update stats from ohd_interface
+  void set_link_statistics(openhd::link_statistics::AllStats stats);
  private:
   const bool RUNS_ON_AIR;
   const OHDPlatform platform;
@@ -56,13 +59,15 @@ class OHDMainComponent : public MavlinkComponent{
    * Called with the raw Wifibroadcast statistics data from UDP
    */
   void processWifibroadcastStatisticsData(const uint8_t *payload, std::size_t payloadSize);
-  [[nodiscard]] MavlinkMessage generateWifibroadcastStatistics() const;
+  [[nodiscard]] std::vector<MavlinkMessage> generateWifibroadcastStatistics();
   [[nodiscard]] MavlinkMessage generateOpenHDVersion()const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
   // here all the log messages are sent to - not in their mavlink form yet.
   std::unique_ptr<SocketHelper::UDPReceiver> logMessagesReceiver;
   StatusTextAccumulator _status_text_accumulator;
+  std::mutex _last_link_stats_mutex;
+  openhd::link_statistics::AllStats _last_link_stats{};
 };
 
 #endif //XMAVLINKSERVICE_INTERNALTELEMETRY_H

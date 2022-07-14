@@ -62,6 +62,13 @@ class OHDTelemetry {
     assert(camera_index>=0 && camera_index<2);
     airTelemetry->add_settings_component(MAV_COMP_ID_CAMERA+camera_index,std::move(glue));
   }
+  void set_link_statistics(openhd::link_statistics::AllStats stats) const{
+	if(profile.is_air){
+	  airTelemetry->set_link_statistics(stats);
+	}else{
+	  groundTelemetry->set_link_statistics(stats);
+	}
+  }
  private:
   const OHDPlatform platform;
   const OHDProfile profile;

@@ -118,3 +118,8 @@ void AirTelemetry::add_settings_component(
   components.push_back(param_server);
   std::cout<<"Added parameter component\n";
 }
+void AirTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) {
+  if(_ohd_main_component){
+	_ohd_main_component->set_link_statistics(stats);
+  }
+}

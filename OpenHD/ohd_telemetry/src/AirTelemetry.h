@@ -12,6 +12,7 @@
 #include "internal/OHDMainComponent.h"
 #include "mavlink_settings/XSettingsComponent.h"
 #include "openhd-platform.hpp"
+#include "openhd-link-statistics.hpp"
 #include "routing/MavlinkSystem.hpp"
 //
 #include "mavsdk_temporary//XMavsdkWrapperSerialConnection.h"
@@ -31,6 +32,7 @@ class AirTelemetry : public MavlinkSystem{
   // add a mavlink parameter server that allows the user to change parameters.
   // changes in the parameter set are propagated back up by the "glue".
   void add_settings_component(int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue);
+  void set_link_statistics(openhd::link_statistics::AllStats stats);
  private:
   const OHDPlatform _platform;
   // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
