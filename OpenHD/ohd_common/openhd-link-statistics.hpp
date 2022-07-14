@@ -33,8 +33,8 @@ struct StatsTotalAllStreams{
 struct StatsPerCard{
   bool exists_in_openhd=false; // We have place for up to X wifi cards, but they might be unused - don't waste any telemetry bandwidth on these cards
   int8_t rx_rssi=INT8_MAX; // dBm / rssi, mavlink also defaults to INT8_MAX - makes sense if in dbm
-  uint32_t count_p_received=0;
-  uint32_t count_p_injected=0;
+  uint64_t count_p_received=0; //TODO
+  uint64_t count_p_injected=0; //TODO
   [[nodiscard]] std::string to_string(const int index)const{
 	std::stringstream ss;
 	ss << "StatsPerCard"<<index<<"{exists:" << (exists_in_openhd ? "Y":"N") << ", rssi:" << (int)rx_rssi <<
@@ -47,8 +47,8 @@ using StatsAllCards=std::array<StatsPerCard,4>;
 
 struct AllStats{
   //openhd::link_statistics::StatsTotalRxStreams stats_total_rx_streams{};
-  openhd::link_statistics::StatsAllCards stats_all_cards{};
   openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
+  openhd::link_statistics::StatsAllCards stats_all_cards{};
 };
 
 typedef std::function<void(AllStats all_stats)> STATS_CALLBACK;

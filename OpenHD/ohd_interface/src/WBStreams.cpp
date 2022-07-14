@@ -225,19 +225,21 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   }
   //std::cout<<"XGot stats "<<data<<"\n";
   // other stuff is per stream / accumulated
-  uint64_t count_all_rx_packets=0;
-  uint64_t count_all_rx_packets_bad=0;
+  uint64_t count_all_wifi_rx_packets=0;
+  uint64_t count_all_bytes_received=0;
   for(int i=0;i<3;i++){
-	count_all_rx_packets+=_last_stats_per_rx_stream.at(i).count_p_all;
-	count_all_rx_packets_bad+=_last_stats_per_rx_stream.at(i).count_p_bad;
+	const auto& stats_per_rx_stream=_last_stats_per_rx_stream.at(i);
+	count_all_wifi_rx_packets+=stats_per_rx_stream.count_p_all;
+	count_all_bytes_received+=stats_per_rx_stream.count_bytes_received;
+	count_all_bytes_received+=0;
   }
   // injection temporary
-  uint64_t n_total_injected_packets=0;
+  uint64_t count_all_wifi_tx_packets=0;
   if(udpTelemetryTx){
-	n_total_injected_packets+=udpTelemetryTx->get_n_injected_packets();
+	count_all_wifi_tx_packets+=udpTelemetryTx->get_n_injected_packets();
   }
   for(const auto& tx:udpVideoTxList){
-	n_total_injected_packets+=tx->get_n_injected_packets();
+	count_all_wifi_tx_packets+=tx->get_n_injected_packets();
   }
   // dBm is per card, not per stream
   assert(_stats_all_cards.size()>=4);
@@ -248,18 +250,20 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	card.rx_rssi=data.rssiPerCard.at(i).getAverage();
 	card.exists_in_openhd= true;
 	// not correct
-	card.count_p_injected=n_total_injected_packets;
-	card.count_p_received=count_all_rx_packets;
+	card.count_p_injected=0;
+	card.count_p_received=0;
   }
+  _stats_total_all_streams.count_wifi_packets_received=count_all_wifi_rx_packets;
+  _stats_total_all_streams.count_bytes_received=0;
+  _stats_total_all_streams.count_wifi_packets_injected=count_all_wifi_tx_packets;
+  _stats_total_all_streams.count_bytes_injected=0; // unsupported r.n
   //
-  _stats_all_rx_streams.count_p_all=count_all_rx_packets;
-  _stats_all_rx_streams.count_p_bad_all=count_all_rx_packets_bad;
   if(_stats_callback){
-	_stats_callback({_stats_all_rx_streams, _stats_all_cards});
+	_stats_callback({_stats_total_all_streams, _stats_all_cards});
   }
 }
 
-openhd::link_statistics::StatsTotalRxStreams WBStreams::get_stats_all_rx_streams() {
+/*openhd::link_statistics::StatsTotalRxStreams WBStreams::get_stats_all_rx_streams() {
   std::lock_guard<std::mutex> guard(_statisticsDataLock);
   return _stats_all_rx_streams;
 }
@@ -267,4 +271,4 @@ openhd::link_statistics::StatsTotalRxStreams WBStreams::get_stats_all_rx_streams
 openhd::link_statistics::StatsAllCards WBStreams::get_stats_all_cards() {
   std::lock_guard<std::mutex> guard(_statisticsDataLock);
   return _stats_all_cards;
-}
+}*/
