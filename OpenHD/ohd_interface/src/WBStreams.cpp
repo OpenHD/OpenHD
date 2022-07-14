@@ -254,7 +254,7 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	card.count_p_received=0;
   }
   _stats_total_all_streams.count_wifi_packets_received=count_all_wifi_rx_packets;
-  _stats_total_all_streams.count_bytes_received=0;
+  _stats_total_all_streams.count_bytes_received=count_all_bytes_received;
   _stats_total_all_streams.count_wifi_packets_injected=count_all_wifi_tx_packets;
   _stats_total_all_streams.count_bytes_injected=0; // unsupported r.n
   //
