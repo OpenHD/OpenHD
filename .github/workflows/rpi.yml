@@ -40,6 +40,7 @@ jobs:
             touch /etc/apt/sources.list
             echo "deb http://mirror.netcologne.de/raspbian/raspbian/ bullseye main contrib non-free" > /etc/apt/sources.list
             sudo apt update
+            curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
             sudo ./install_dep.sh

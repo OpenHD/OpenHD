@@ -35,6 +35,9 @@ PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
 cd OpenHD
+VER2=$(git rev-parse --short HEAD)
+echo ${VER2}
+
 
 rm -rf build
 
@@ -58,7 +61,7 @@ cp ../../openhd.service  ${PKGDIR}/etc/systemd/system/
 echo "copied files"
 echo ${PKGDIR}
 
-VERSION="2.1-$(date '+%m%d%H%M')"
+VERSION="2.1-$(date '+%m%d%H%M')-${VER2}"
 
 rm ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
 
