@@ -249,7 +249,7 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	auto& card = _stats_all_cards.at(i);
 	card.rx_rssi=data.rssiPerCard.at(i).getAverage();
 	card.exists_in_openhd= true;
-	// not correct
+	// not yet supported
 	card.count_p_injected=0;
 	card.count_p_received=0;
   }
