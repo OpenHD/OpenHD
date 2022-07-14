@@ -24,6 +24,7 @@ static void update_settings(int index,CameraHolder& camera_holder){
 int main(int argc, char *argv[]) {
   //
   auto camera_holder=createDummyCamera2();
+  update_settings(0,*camera_holder);
   PlatformType platformType{};
   uint16_t video_port = OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP;
   auto stream = std::make_unique<GStreamerStream>(platformType, camera_holder, video_port);
@@ -36,8 +37,8 @@ int main(int argc, char *argv[]) {
 	std::this_thread::sleep_for(std::chrono::seconds(10));
 	std::cout<<"XOHDVid\n";
 	std::cout << stream->createDebug() << "\n";
-        update_settings(index,*camera_holder);
-        index++;
+        //update_settings(index,*camera_holder);
+        //index++;
   }
 
   std::cerr << "OHDVideo stopped\n";
