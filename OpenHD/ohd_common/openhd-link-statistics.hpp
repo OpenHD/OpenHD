@@ -28,6 +28,12 @@ struct StatsTotalAllStreams{
   uint64_t count_bytes_received=0; // current count of all received bytes, does not include IEE802 header or similar, but does include FEC overhead
   uint64_t count_wifi_packets_injected=0; // current count of all injected Wi-Fi packets
   uint64_t count_bytes_injected=0;  // current count of all outgoing bytes, does not include IEE802 header or similar, but does include FEC overhead
+  [[nodiscard]] std::string to_string()const{
+	std::stringstream ss;
+	ss << "StatsTotalAllStreams"<<"{count_wifi_packets_received:" << count_wifi_packets_received << ", count_bytes_received:" << (int)count_bytes_received <<
+	   ", count_wifi_packets_injected:" << count_wifi_packets_injected << ", count_bytes_injected:" << count_bytes_injected << "}";
+	return ss.str();
+  }
 };
 
 struct StatsPerCard{
