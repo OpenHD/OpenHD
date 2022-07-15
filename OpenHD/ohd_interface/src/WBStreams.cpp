@@ -242,7 +242,8 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   assert(_broadcast_cards.size()<=_stats_all_cards.size());
   for(int i=0;i<_broadcast_cards.size();i++){
 	auto& card = _stats_all_cards.at(i);
-	card.rx_rssi=data.rssiPerCard.at(i).getAverage();
+	std::cout<<data.rssiPerCard.at(i)<<"\n";
+	card.rx_rssi=data.rssiPerCard.at(i).last_rssi;
 	card.exists_in_openhd= true;
 	// not yet supported
 	card.count_p_injected=0;
