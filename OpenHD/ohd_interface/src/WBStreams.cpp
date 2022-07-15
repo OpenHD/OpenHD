@@ -210,7 +210,7 @@ bool WBStreams::ever_received_any_data() const {
 }
 
 void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
-  std::lock_guard<std::mutex> guard(_statisticsDataLock);
+  /*std::lock_guard<std::mutex> guard(_statisticsDataLock);
   // TODO make more understandable, but tele rx or tele tx is correct here
   if(data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT
   || data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT){
@@ -270,7 +270,7 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   //
   if(_stats_callback){
 	_stats_callback({_stats_total_all_streams, _stats_all_cards,stats_video_stream_rx});
-  }
+  }*/
 }
 
 /*openhd::link_statistics::StatsTotalRxStreams WBStreams::get_stats_all_rx_streams() {

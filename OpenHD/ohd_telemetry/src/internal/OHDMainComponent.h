@@ -49,16 +49,6 @@ class OHDMainComponent : public MavlinkComponent{
   // just for convenience, the RUNS_ON_AIR variable determines the sys id.
   //const uint8_t mSysId;
   //const uint8_t mCompId=0;
-  // Here all the wb rx instance(s) send their statistics to.
-  std::unique_ptr<SocketHelper::UDPReceiver> wifibroadcastStatisticsUdpReceiver;
-  // for each unique stream ID, store the last received statistics message.
-  // Probably best to go for a write - read, since we don't want to perform any
-  // dangerous work on the main service thread.
-  std::map<uint8_t, OpenHDStatisticsWriter::Data> lastWbStatisticsMessage;
-  /**
-   * Called with the raw Wifibroadcast statistics data from UDP
-   */
-  void processWifibroadcastStatisticsData(const uint8_t *payload, std::size_t payloadSize);
   [[nodiscard]] std::vector<MavlinkMessage> generateWifibroadcastStatistics();
   [[nodiscard]] MavlinkMessage generateOpenHDVersion()const;
   // pack all the buffered log messages

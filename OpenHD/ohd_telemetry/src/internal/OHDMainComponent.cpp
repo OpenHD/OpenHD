@@ -7,21 +7,10 @@
 #include "OHDMainComponent.h"
 #include "OnboardComputerStatus.hpp"
 #include "RebootUtil.hpp"
-#include "WBStatisticsConverter.hpp"
 
 OHDMainComponent::OHDMainComponent(
     OHDPlatform platform1,uint8_t parent_sys_id,
     bool runsOnAir) : platform(platform1),RUNS_ON_AIR(runsOnAir),MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
-  wifibroadcastStatisticsUdpReceiver =
-      std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
-                                                  OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT,
-                                                  [this](const uint8_t *payload,
-                                                         const std::size_t payloadSize) {
-                                                    processWifibroadcastStatisticsData(
-                                                        payload,
-                                                        payloadSize);
-                                                  });
-  wifibroadcastStatisticsUdpReceiver->runInBackground();
   logMessagesReceiver =
       std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
                                                   OHD_LOCAL_LOG_MESSAGES_UDP_PORT,
@@ -82,15 +71,6 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
       break;
   }
   return ret;
-}
-
-void OHDMainComponent::processWifibroadcastStatisticsData(const uint8_t *payload, const std::size_t payloadSize) {
-  //std::cout << "OHDTelemetryGenerator::processNewWifibroadcastStatisticsMessage: " << payloadSize << "\n";
-  const auto msges=WBStatisticsConverter::parseRawDataSafe(payload,payloadSize);
-  for(const auto msg:msges){
-	std::cout<<"Got statistics\n";
-    lastWbStatisticsMessage[msg.radio_port] = msg;
-  }
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
