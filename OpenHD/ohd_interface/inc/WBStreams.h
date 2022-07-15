@@ -37,7 +37,7 @@ class WBStreams {
   openhd::link_statistics::StatsAllCards get_stats_all_cards();*/
  private:
   const OHDProfile _profile;
-  const int DEFAULT_MCS_INDEX = 3;
+  const int DEFAULT_MCS_INDEX = 5;
   std::vector<std::shared_ptr<WifiCardHolder>> _broadcast_cards;
  private:
   void configure();
