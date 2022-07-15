@@ -211,13 +211,14 @@ bool WBStreams::ever_received_any_data() const {
 
 void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   std::lock_guard<std::mutex> guard(_statisticsDataLock);
-  std::cout<<data;
   // TODO make more understandable, but tele rx or tele tx is correct here
   if(data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT
   || data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT){
 	_last_stats_per_rx_stream.at(0)=data;
+	std::cout<<data;
   }else if(data.radio_port==OHD_VIDEO_PRIMARY_RADIO_PORT){
 	_last_stats_per_rx_stream.at(1)=data;
+	std::cout<<data;
   }else if(data.radio_port==OHD_VIDEO_SECONDARY_RADIO_PORT){
 	_last_stats_per_rx_stream.at(2)=data;
   }else{
