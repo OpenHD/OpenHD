@@ -258,8 +258,18 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   _stats_total_all_streams.count_wifi_packets_injected=count_all_wifi_tx_packets;
   _stats_total_all_streams.count_bytes_injected=0; // unsupported r.n
   //
+  std::optional<openhd::link_statistics::StatsVideoStreamRx> stats_video_stream_rx=std::nullopt;
+  if(!_profile.is_air){
+	// only on ground
+	if(udpVideoRxList.size()>=2){
+	  const auto& videoStats=_last_stats_per_rx_stream.at(1);
+	  //openhd::link_statistics::StatsVideoStreamRx tmp;
+	  //tmp.count_blocks_lost=videoStats.
+	}
+  }
+  //
   if(_stats_callback){
-	_stats_callback({_stats_total_all_streams, _stats_all_cards});
+	_stats_callback({_stats_total_all_streams, _stats_all_cards,stats_video_stream_rx});
   }
 }
 

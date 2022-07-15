@@ -7,6 +7,7 @@
 
 #include <string>
 #include <sstream>
+#include <optional>
 
 // NOTE: CURRENTLY MESSED UP / HACKY, NEEDS CARE
 namespace openhd::link_statistics{
@@ -51,10 +52,20 @@ struct StatsPerCard{
 // Stats per connected card
 using StatsAllCards=std::array<StatsPerCard,4>;
 
+// stats for the video stream, only generated on the video rx, and therefore only produced on the ground station
+struct StatsVideoStreamRx{
+  uint64_t count_blocks_total;
+  uint64_t count_blocks_lost;
+  uint64_t count_blocks_recovered;
+  uint64_t count_fragments_recovered;
+};
+
 struct AllStats{
   //openhd::link_statistics::StatsTotalRxStreams stats_total_rx_streams{};
   openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
   openhd::link_statistics::StatsAllCards stats_all_cards{};
+  // optional, since this is only generated on the ground pi (where the video rx-es are)
+  std::optional<StatsVideoStreamRx> stats_video_stream_rx;
 };
 
 typedef std::function<void(AllStats all_stats)> STATS_CALLBACK;
