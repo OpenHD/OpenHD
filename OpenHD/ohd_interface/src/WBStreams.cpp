@@ -6,13 +6,6 @@
 #include "openhd-wifi.hpp"
 #include "openhd-global-constants.h"
 
-#include <cstdio>
-#include <stdio.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <iostream>
 #include <utility>
 
