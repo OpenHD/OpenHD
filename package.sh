@@ -70,7 +70,7 @@ echo $PACKAGE_NAME
 echo $VERSION
 echo $PKGDIR
 
-fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION//v} -C ${PKGDIR} \
+fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDIR} \
   $PLATFORM_CONFIGS \
   -p ${PACKAGE_NAME}_VERSION_ARCH.deb \
   --after-install ../../after-install.sh \
