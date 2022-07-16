@@ -22,6 +22,7 @@ static std::string bitrate_to_string(uint64_t bits_per_second){
   return std::to_string(kBits_per_second)+"kBit/s";
 }
 
+// Matches OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS
 // Data from all RX and all TX instances on either ground or air, accumulated.
 struct StatsTotalAllStreams{
   uint64_t count_wifi_packets_received=0; // current count of all received Wi-Fi packets
@@ -46,6 +47,7 @@ struct StatsTotalAllStreams{
   }
 };
 
+// matches OPENHD_WIFIBROADCAST_WIFI_CARD
 struct StatsPerCard{
   bool exists_in_openhd=false; // We have place for up to X wifi cards, but they might be unused - don't waste any telemetry bandwidth on these cards
   int8_t rx_rssi=INT8_MAX; // dBm / rssi, mavlink also defaults to INT8_MAX - makes sense if in dbm
@@ -61,6 +63,7 @@ struct StatsPerCard{
 // Stats per connected card
 using StatsAllCards=std::array<StatsPerCard,4>;
 
+// Matches OPENHD_FEC_LINK_RX_STATISTICS
 // stats for the video stream, only generated on the video rx, and therefore only produced on the ground station
 struct StatsFECVideoStreamRx{
   // total block count
