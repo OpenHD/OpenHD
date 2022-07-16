@@ -303,7 +303,6 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	  convert(stats_video_stream1_rx.value(),_last_stats_per_rx_stream.at(2).fec_stream_stats.value());
 	}
   }
-  std::cout<<stats_total_all_streams.to_string()<<"\n\n";
   //
   if(_stats_callback){
 	_stats_callback({stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx});
