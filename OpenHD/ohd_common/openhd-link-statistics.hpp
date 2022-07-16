@@ -37,7 +37,7 @@ struct StatsTotalAllStreams{
   [[nodiscard]] std::string to_string()const{
 	std::stringstream ss;
 	ss << "StatsTotalAllStreams"<<"{count_wifi_packets_received:" << count_wifi_packets_received << ", count_bytes_received:" << (int)count_bytes_received <<
-	   ", count_wifi_packets_injected:" << count_wifi_packets_injected << ", count_bytes_injected:" << count_bytes_injected<<"\n"
+	   ", count_wifi_packets_injected:" << count_wifi_packets_injected<< ", count_bytes_injected:" << count_bytes_injected<<",tx_err_hint:"<<count_tx_injections_error_hint<<"\n"
 	   <<",video0:"<<bitrate_to_string(curr_video0_bps)<<",video1:"<<bitrate_to_string(curr_video1_bps)
 	   <<",tele_rx:"<<bitrate_to_string(curr_telemetry_rx_bps)<<",tele_tx:"<<bitrate_to_string(curr_telemetry_tx_bps)<< "}";
 	return ss.str();
