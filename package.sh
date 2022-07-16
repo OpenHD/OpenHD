@@ -62,8 +62,9 @@ echo "copied files"
 echo ${PKGDIR}
 
 VERSION="2.2-evo-$(date '+%m%d%H%M')-${VER2}"
+echo ${VERSION}
 
-rm ${PACKAGE_NAME}_${VERSION//v}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
+rm ${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
 
 echo $PACKAGE_ARCH
 echo $PACKAGE_NAME
