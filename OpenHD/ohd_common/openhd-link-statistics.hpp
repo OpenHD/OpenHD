@@ -59,20 +59,26 @@ struct StatsPerCard{
 using StatsAllCards=std::array<StatsPerCard,4>;
 
 // stats for the video stream, only generated on the video rx, and therefore only produced on the ground station
-struct StatsVideoStreamRx{
-  uint64_t count_blocks_total;
-  uint64_t count_blocks_lost;
-  uint64_t count_blocks_recovered;
-  uint64_t count_fragments_recovered;
+struct StatsFECVideoStreamRx{
+  // total block count
+  uint64_t count_blocks_total = 0;
+  // a block counts as "lost" if it was removed before being fully received or recovered
+  uint64_t count_blocks_lost = 0;
+  // a block counts as "recovered" if it was recovered using FEC packets
+  uint64_t count_blocks_recovered = 0;
+  // n of primary fragments that were reconstructed during the recovery process of a block
+  uint64_t count_fragments_recovered = 0;
+  // n of forwarded bytes
+  uint64_t count_bytes_forwarded=0;
 };
-
 
 struct AllStats{
   //openhd::link_statistics::StatsTotalRxStreams stats_total_rx_streams{};
   openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
   openhd::link_statistics::StatsAllCards stats_all_cards{};
   // optional, since this is only generated on the ground pi (where the video rx-es are)
-  std::optional<StatsVideoStreamRx> stats_video_stream_rx;
+  std::optional<StatsFECVideoStreamRx> stats_video_stream0_rx;
+  std::optional<StatsFECVideoStreamRx> stats_video_stream1_rx;
   //
 };
 
