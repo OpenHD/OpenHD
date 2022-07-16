@@ -28,6 +28,7 @@ struct StatsTotalAllStreams{
   uint64_t count_bytes_received=0; // current count of all received bytes, does not include IEE802 header or similar, but does include FEC overhead
   uint64_t count_wifi_packets_injected=0; // current count of all injected Wi-Fi packets
   uint64_t count_bytes_injected=0;  // current count of all outgoing bytes, does not include IEE802 header or similar, but does include FEC overhead
+  uint64_t count_tx_injections_error_hint=0;   // see wb transmitter
   uint64_t curr_video0_bps=0; // current video bps, when on air this is the bitrate of the video encoder (what's injected), when on ground
   uint64_t curr_video1_bps=0;// this is the bitrate received. For both primary and secondary video stream.
   // telemetry is both rx and tx on both air and ground
