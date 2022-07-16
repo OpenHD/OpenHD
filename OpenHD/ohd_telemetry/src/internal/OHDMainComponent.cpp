@@ -94,7 +94,6 @@ std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
 	}
 	mavlink_msg_openhd_wifi_card_pack(_sys_id,_comp_id,&msg.m,i,card_stats.rx_rssi,
 									  card_stats.count_p_received,card_stats.count_p_injected,0,0);
-	std::cout << card_stats.to_string(i)<<"\n";
 	ret.push_back(msg);
   }
   {

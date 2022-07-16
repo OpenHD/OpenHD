@@ -257,7 +257,6 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	  stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_current_injected_bits_per_second();
 	}
   }else{
-	std::cout<<"argh"<<_last_stats_per_rx_stream.at(1).wb_rx_stats.curr_bits_per_second<<"\n";
 	stats_total_all_streams.curr_video0_bps=_last_stats_per_rx_stream.at(1).wb_rx_stats.curr_bits_per_second;
 	stats_total_all_streams.curr_video1_bps=_last_stats_per_rx_stream.at(2).wb_rx_stats.curr_bits_per_second;
   }
