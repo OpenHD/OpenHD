@@ -268,12 +268,12 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   assert(_broadcast_cards.size()<=stats_all_cards.size());
   for(int i=0;i<_broadcast_cards.size();i++){
 	auto& card = stats_all_cards.at(i);
-	std::cout<<data.rssiPerCard.at(i)<<"\n";
+	//std::cout<<data.rssiPerCard.at(i)<<"\n";
 	if(_profile.is_air){
 	  // on air, we use the dbm reported by the telemetry stream
 	  card.rx_rssi= _last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
 	}else{
-	  // on ground, we use the dBm reported by the telemetry stream, too
+	  // on ground, we use the dBm reported by the telemetry stream or video stream
 	  // TODO use video if available
 	  const auto rssi_telemetry=_last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
 	  const auto rssi_video0=_last_stats_per_rx_stream.at(1).rssiPerCard.at(i).last_rssi;
