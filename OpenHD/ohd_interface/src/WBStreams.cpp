@@ -256,10 +256,10 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   }
   if(_profile.is_air){
 	if(!udpVideoTxList.empty()){
-	  stats_total_all_streams.curr_video0_bps=udpVideoTxList.at(0)->get_current_injected_bits_per_second();
+	  stats_total_all_streams.curr_video0_bps=udpVideoTxList.at(0)->get_current_provided_bits_per_second();
 	}
 	if(udpVideoTxList.size()>=2){
-	  stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_current_injected_bits_per_second();
+	  stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_current_provided_bits_per_second();
 	}
   }else{
 	stats_total_all_streams.curr_video0_bps=_last_stats_per_rx_stream.at(1).wb_rx_stats.curr_bits_per_second;
