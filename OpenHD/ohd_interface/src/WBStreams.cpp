@@ -218,10 +218,10 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   if(data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT
   || data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT){
 	_last_stats_per_rx_stream.at(0)=data;
-	std::cout<<data;
+	//std::cout<<data;
   }else if(data.radio_port==OHD_VIDEO_PRIMARY_RADIO_PORT){
 	_last_stats_per_rx_stream.at(1)=data;
-	std::cout<<data;
+	//std::cout<<data;
   }else if(data.radio_port==OHD_VIDEO_SECONDARY_RADIO_PORT){
 	_last_stats_per_rx_stream.at(2)=data;
   }else{
@@ -241,7 +241,7 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   if(udpTelemetryTx){
 	stats_total_all_streams.count_wifi_packets_injected+=udpTelemetryTx->get_n_injected_packets();
 	stats_total_all_streams.count_bytes_injected+=0; // TODO
-	stats_total_all_streams.curr_telemetry_tx_bps=0;//TODO
+	stats_total_all_streams.curr_telemetry_tx_bps=udpTelemetryTx->get_current_injected_bits_per_second();
   }
   stats_total_all_streams.curr_telemetry_rx_bps=_last_stats_per_rx_stream.at(0).wb_rx_stats.curr_bits_per_second;
 
@@ -251,10 +251,10 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   }
   if(_profile.is_air){
 	if(!udpVideoTxList.empty()){
-	  stats_total_all_streams.curr_video0_bps=udpVideoTxList.at(0)->get_n_injected_packets();
+	  stats_total_all_streams.curr_video0_bps=udpVideoTxList.at(0)->get_current_injected_bits_per_second();
 	}
 	if(udpVideoTxList.size()>=2){
-	  stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_n_injected_packets();
+	  stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_current_injected_bits_per_second();
 	}
   }else{
 	std::cout<<"argh"<<_last_stats_per_rx_stream.at(1).wb_rx_stats.curr_bits_per_second<<"\n";
