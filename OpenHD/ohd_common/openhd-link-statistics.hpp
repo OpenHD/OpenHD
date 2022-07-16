@@ -28,7 +28,8 @@ struct StatsTotalAllStreams{
   uint64_t count_bytes_received=0; // current count of all received bytes, does not include IEE802 header or similar, but does include FEC overhead
   uint64_t count_wifi_packets_injected=0; // current count of all injected Wi-Fi packets
   uint64_t count_bytes_injected=0;  // current count of all outgoing bytes, does not include IEE802 header or similar, but does include FEC overhead
-  uint64_t count_tx_injections_error_hint=0;   // see wb transmitter
+  uint64_t count_telemetry_tx_injections_error_hint=0;   // see wb transmitter
+  uint64_t count_video_tx_injections_error_hint=0; // see wb transmitter, accumulated primary and secondary video stream
   uint64_t curr_video0_bps=0; // current video bps, when on air this is the bitrate of the video encoder (what's injected), when on ground
   uint64_t curr_video1_bps=0;// this is the bitrate received. For both primary and secondary video stream.
   // telemetry is both rx and tx on both air and ground
@@ -37,7 +38,8 @@ struct StatsTotalAllStreams{
   [[nodiscard]] std::string to_string()const{
 	std::stringstream ss;
 	ss << "StatsTotalAllStreams"<<"{count_wifi_packets_received:" << count_wifi_packets_received << ", count_bytes_received:" << (int)count_bytes_received <<
-	   ", count_wifi_packets_injected:" << count_wifi_packets_injected<< ", count_bytes_injected:" << count_bytes_injected<<",tx_err_hint:"<<count_tx_injections_error_hint<<"\n"
+	   ", count_wifi_packets_injected:" << count_wifi_packets_injected<< ", count_bytes_injected:" << count_bytes_injected
+	   <<",tele_tx_err_hint:"<<count_telemetry_tx_injections_error_hint<<",vid_tx_err_hint:"<<count_video_tx_injections_error_hint<<"\n"
 	   <<",video0:"<<bitrate_to_string(curr_video0_bps)<<",video1:"<<bitrate_to_string(curr_video1_bps)
 	   <<",tele_rx:"<<bitrate_to_string(curr_telemetry_rx_bps)<<",tele_tx:"<<bitrate_to_string(curr_telemetry_tx_bps)<< "}";
 	return ss.str();
@@ -88,6 +90,7 @@ struct AllStats{
   std::optional<StatsFECVideoStreamRx> stats_video_stream0_rx;
   std::optional<StatsFECVideoStreamRx> stats_video_stream1_rx;
 };
+
 static std::ostream& operator<<(std::ostream& strm, const AllStats& obj){
   std::stringstream ss;
   ss<<obj.stats_total_all_streams.to_string()<<"\n";

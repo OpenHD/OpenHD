@@ -244,7 +244,7 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	// these ones are accumulated
 	stats_total_all_streams.count_wifi_packets_injected+=udpTelemetryTx->get_n_injected_packets();
 	stats_total_all_streams.count_bytes_injected+=0; // TODO
-	stats_total_all_streams.count_tx_injections_error_hint+=udpTelemetryTx->get_count_tx_injections_error_hint();
+	stats_total_all_streams.count_telemetry_tx_injections_error_hint+=udpTelemetryTx->get_count_tx_injections_error_hint();
   }
   stats_total_all_streams.curr_telemetry_rx_bps=_last_stats_per_rx_stream.at(0).wb_rx_stats.curr_bits_per_second;
 
@@ -252,7 +252,7 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	// accumulated
 	stats_total_all_streams.count_wifi_packets_injected+=videoTx->get_n_injected_packets();
 	stats_total_all_streams.count_bytes_injected+=0; // TODO
-	stats_total_all_streams.count_tx_injections_error_hint+=udpTelemetryTx->get_count_tx_injections_error_hint();
+	stats_total_all_streams.count_video_tx_injections_error_hint+=videoTx->get_count_tx_injections_error_hint();
   }
   if(_profile.is_air){
 	if(!udpVideoTxList.empty()){
