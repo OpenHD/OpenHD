@@ -71,6 +71,13 @@ struct StatsFECVideoStreamRx{
   // n of forwarded bytes
   uint64_t count_bytes_forwarded=0;
 };
+static std::ostream& operator<<(std::ostream& strm, const StatsFECVideoStreamRx& obj){
+  std::stringstream ss;
+  ss<<"StatsFECVideoStreamRx{blocks_total:"<<obj.count_blocks_lost<<",blocks_lost:"<<obj.count_blocks_lost<<",blocks_recovered:"<<obj.count_blocks_recovered
+	<<",fragments_recovered:"<<obj.count_fragments_recovered<<"bytes_forwarded:"<<obj.count_bytes_forwarded<<"}";
+  strm<<ss.str();
+  return strm;
+}
 
 struct AllStats{
   //openhd::link_statistics::StatsTotalRxStreams stats_total_rx_streams{};
@@ -79,8 +86,26 @@ struct AllStats{
   // optional, since this is only generated on the ground pi (where the video rx-es are)
   std::optional<StatsFECVideoStreamRx> stats_video_stream0_rx;
   std::optional<StatsFECVideoStreamRx> stats_video_stream1_rx;
-  //
 };
+static std::ostream& operator<<(std::ostream& strm, const AllStats& obj){
+  std::stringstream ss;
+  ss<<obj.stats_total_all_streams.to_string()<<"\n";
+  int idx=0;
+  for(const auto& card:obj.stats_all_cards){
+	if(card.exists_in_openhd){
+	  ss<<card.to_string(idx)<<"\n";
+	  idx++;
+	}
+  }
+  if(obj.stats_video_stream0_rx.has_value()){
+	ss<<obj.stats_video_stream0_rx.value()<<"\n";
+  }
+  if(obj.stats_video_stream1_rx.has_value()){
+	ss<<obj.stats_video_stream1_rx.value()<<"\n";
+  }
+  strm<<ss.str();
+  return strm;
+}
 
 typedef std::function<void(AllStats all_stats)> STATS_CALLBACK;
 

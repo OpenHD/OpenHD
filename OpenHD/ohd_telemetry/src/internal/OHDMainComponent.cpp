@@ -82,6 +82,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
   auto msg = WBStatisticsConverter::convertWbStatisticsToMavlink(data,_sys_id,_comp_id);
   return msg;*/
   std::lock_guard<std::mutex> guard(_last_link_stats_mutex);
+  std::cout<<_last_link_stats<<"\n";
   std::vector<MavlinkMessage> ret;
   // stats for all the wifi card(s)
   for(int i=0;i<_last_link_stats.stats_all_cards.size();i++){
@@ -99,7 +100,6 @@ std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
   {
 	MavlinkMessage msg;
 	const auto& all_stats=_last_link_stats.stats_total_all_streams;
-	std::cout<<all_stats.to_string()<<"\n";
 	mavlink_msg_openhd_stats_total_all_streams_pack(_sys_id,_comp_id,&msg.m,all_stats.count_wifi_packets_received,all_stats.count_bytes_received,
 													all_stats.count_wifi_packets_injected,all_stats.count_bytes_injected);
 	ret.push_back(msg);
