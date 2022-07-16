@@ -7,6 +7,7 @@
 #include "OHDMainComponent.h"
 #include "OnboardComputerStatus.hpp"
 #include "RebootUtil.hpp"
+#include "OHDLinkStatisticsHelper.h"
 
 OHDMainComponent::OHDMainComponent(
     OHDPlatform platform1,uint8_t parent_sys_id,
@@ -86,22 +87,17 @@ std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
   std::vector<MavlinkMessage> ret;
   // stats for all the wifi card(s)
   for(int i=0;i<_last_link_stats.stats_all_cards.size();i++){
-	MavlinkMessage msg;
 	const auto card_stats=_last_link_stats.stats_all_cards.at(i);
 	if(!card_stats.exists_in_openhd){
 	  // skip non active cards
 	  continue;
 	}
-	mavlink_msg_openhd_wifibroadcast_wifi_card_pack(_sys_id,_comp_id,&msg.m,i,card_stats.rx_rssi,
-									  card_stats.count_p_received,card_stats.count_p_injected,0,0);
+	MavlinkMessage msg=openhd::LinkStatisticsHelper::wifibroadcast_wifi_card_pack(_sys_id,_comp_id,0,card_stats);
 	ret.push_back(msg);
   }
   {
-	MavlinkMessage msg;
 	const auto& all_stats=_last_link_stats.stats_total_all_streams;
-	mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_pack(_sys_id,_comp_id,&msg.m,all_stats.count_wifi_packets_received,all_stats.count_bytes_received,all_stats.count_wifi_packets_injected,all_stats.count_bytes_injected,
-	  all_stats.count_telemetry_tx_injections_error_hint,all_stats.count_video_tx_injections_error_hint,all_stats.curr_video0_bps,all_stats.curr_video1_bps
-	  ,all_stats.curr_telemetry_rx_bps,all_stats.curr_telemetry_tx_bps);
+	MavlinkMessage msg=openhd::LinkStatisticsHelper::stats_total_all_wifibroadcast_streams_pack(_sys_id,_comp_id,all_stats);
 	ret.push_back(msg);
   }
   {
@@ -109,8 +105,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
 	  // Video fex rx stats only on ground
 	  if(_last_link_stats.stats_video_stream0_rx.has_value()){
 		const auto& stats_video_stream_rx=_last_link_stats.stats_video_stream0_rx.value();
-		MavlinkMessage msg;
-		mavlink_msg_openhd_fec_link_rx_statistics_pack(_sys_id,_comp_id,&msg.m,0,stats_video_stream_rx.count_blocks_total,stats_video_stream_rx.count_blocks_lost,stats_video_stream_rx.count_blocks_recovered,stats_video_stream_rx.count_fragments_recovered,stats_video_stream_rx.count_bytes_forwarded);
+		MavlinkMessage msg=openhd::LinkStatisticsHelper::fec_link_rx_statistics_pack(_sys_id,_comp_id,0,stats_video_stream_rx);
 		ret.push_back(msg);
 	  }
 	}
