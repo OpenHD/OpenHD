@@ -12,16 +12,15 @@
 // NOTE: CURRENTLY MESSED UP / HACKY, NEEDS CARE
 namespace openhd::link_statistics{
 
-// Data from all RX instances
-struct StatsTotalRxStreams{
-  uint64_t count_p_all=0; // accumulate all packets from all streams
-  uint64_t count_p_bad_all=0; // bad packets
-  [[nodiscard]] std::string to_string()const{
-	std::stringstream ss;
-	ss<<"StatsTotalRxStreams"<<"{"<<count_p_all<<", "<<count_p_bad_all<<"}";
-	return ss.str();
+// for debugging
+static std::string bitrate_to_string(uint64_t bits_per_second){
+  const double mBits_per_second=static_cast<double>(bits_per_second)/(1000*1000);
+  if(mBits_per_second>1){
+	return std::to_string(mBits_per_second)+"mBit/s";
   }
-};
+  const double kBits_per_second=static_cast<double>(bits_per_second)/1000;
+  return std::to_string(kBits_per_second)+"kBit/s";
+}
 
 // Data from all RX and all TX instances on either ground or air, accumulated.
 struct StatsTotalAllStreams{
@@ -29,10 +28,17 @@ struct StatsTotalAllStreams{
   uint64_t count_bytes_received=0; // current count of all received bytes, does not include IEE802 header or similar, but does include FEC overhead
   uint64_t count_wifi_packets_injected=0; // current count of all injected Wi-Fi packets
   uint64_t count_bytes_injected=0;  // current count of all outgoing bytes, does not include IEE802 header or similar, but does include FEC overhead
+  uint64_t curr_video0_bps=0; // current video bps, when on air this is the bitrate of the video encoder (what's injected), when on ground
+  uint64_t curr_video1_bps=0;// this is the bitrate received. For both primary and secondary video stream.
+  // telemetry is both rx and tx on both air and ground
+  uint64_t curr_telemetry_rx_bps=0; // curr ingoing telemetry, in bps
+  uint64_t curr_telemetry_tx_bps=0; // curr outgoing telemetry in bps
   [[nodiscard]] std::string to_string()const{
 	std::stringstream ss;
 	ss << "StatsTotalAllStreams"<<"{count_wifi_packets_received:" << count_wifi_packets_received << ", count_bytes_received:" << (int)count_bytes_received <<
-	   ", count_wifi_packets_injected:" << count_wifi_packets_injected << ", count_bytes_injected:" << count_bytes_injected << "}";
+	   ", count_wifi_packets_injected:" << count_wifi_packets_injected << ", count_bytes_injected:" << count_bytes_injected<<"\n"
+	   <<",video0:"<<bitrate_to_string(curr_video0_bps)<<", video1:"<<bitrate_to_string(curr_video1_bps)
+	   <<"tele_rx:"<<bitrate_to_string(curr_telemetry_rx_bps)<<", tele_tx:"<<bitrate_to_string(curr_telemetry_tx_bps)<< "}";
 	return ss.str();
   }
 };
@@ -60,12 +66,14 @@ struct StatsVideoStreamRx{
   uint64_t count_fragments_recovered;
 };
 
+
 struct AllStats{
   //openhd::link_statistics::StatsTotalRxStreams stats_total_rx_streams{};
   openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
   openhd::link_statistics::StatsAllCards stats_all_cards{};
   // optional, since this is only generated on the ground pi (where the video rx-es are)
   std::optional<StatsVideoStreamRx> stats_video_stream_rx;
+  //
 };
 
 typedef std::function<void(AllStats all_stats)> STATS_CALLBACK;
