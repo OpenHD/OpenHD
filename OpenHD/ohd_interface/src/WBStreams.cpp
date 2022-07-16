@@ -241,7 +241,10 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   if(udpTelemetryTx){
 	stats_total_all_streams.count_wifi_packets_injected+=udpTelemetryTx->get_n_injected_packets();
 	stats_total_all_streams.count_bytes_injected+=0; // TODO
+	stats_total_all_streams.curr_telemetry_tx_bps=0;//TODO
   }
+  stats_total_all_streams.curr_telemetry_rx_bps=_last_stats_per_rx_stream.at(0).wb_rx_stats.curr_bits_per_second;
+
   for(const auto& videoTx:udpVideoTxList){
 	stats_total_all_streams.count_wifi_packets_injected+=videoTx->get_n_injected_packets();
 	stats_total_all_streams.count_bytes_injected+=0; // TODO
@@ -254,16 +257,18 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	  stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_n_injected_packets();
 	}
   }else{
+	std::cout<<"argh"<<_last_stats_per_rx_stream.at(1).wb_rx_stats.curr_bits_per_second<<"\n";
 	stats_total_all_streams.curr_video0_bps=_last_stats_per_rx_stream.at(1).wb_rx_stats.curr_bits_per_second;
 	stats_total_all_streams.curr_video1_bps=_last_stats_per_rx_stream.at(2).wb_rx_stats.curr_bits_per_second;
   }
-
+  // dBm / rssi for all connected cards that are doing wifibroadcast
+  openhd::link_statistics::StatsAllCards stats_all_cards{};
   // dBm is per card, not per stream
-  assert(_stats_all_cards.size()>=4);
+  assert(stats_all_cards.size()>=4);
   // only populate actually used cards
-  assert(_broadcast_cards.size()<=_stats_all_cards.size());
+  assert(_broadcast_cards.size()<=stats_all_cards.size());
   for(int i=0;i<_broadcast_cards.size();i++){
-	auto& card = _stats_all_cards.at(i);
+	auto& card = stats_all_cards.at(i);
 	std::cout<<data.rssiPerCard.at(i)<<"\n";
 	if(_profile.is_air){
 	  // on air, we use the dbm reported by the telemetry stream
@@ -289,8 +294,6 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   std::optional<openhd::link_statistics::StatsFECVideoStreamRx> stats_video_stream0_rx=std::nullopt;
   std::optional<openhd::link_statistics::StatsFECVideoStreamRx> stats_video_stream1_rx=std::nullopt;
   if(!_profile.is_air){
-	openhd::link_statistics::StatsFECVideoStreamRx tmp1;
-	openhd::link_statistics::StatsFECVideoStreamRx tmp2;
 	if(_last_stats_per_rx_stream.at(1).fec_stream_stats.has_value()){
 	  stats_video_stream0_rx=openhd::link_statistics::StatsFECVideoStreamRx{};
 	  convert(stats_video_stream0_rx.value(),_last_stats_per_rx_stream.at(1).fec_stream_stats.value());
@@ -300,8 +303,9 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	  convert(stats_video_stream1_rx.value(),_last_stats_per_rx_stream.at(2).fec_stream_stats.value());
 	}
   }
+  std::cout<<stats_total_all_streams.to_string()<<"\n\n";
   //
   if(_stats_callback){
-	_stats_callback({_stats_total_all_streams, _stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx});
+	_stats_callback({stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx});
   }
 }

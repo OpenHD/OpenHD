@@ -61,9 +61,6 @@ class WBStreams {
   // first is always telemetry, second and third are video if on ground
   std::array<OpenHDStatisticsWriter::Data,3> _last_stats_per_rx_stream{};
   // OpenHD
-  // dBm / rssi for all connected cards that are doing wifibroadcast
-  openhd::link_statistics::StatsAllCards _stats_all_cards{};
-  openhd::link_statistics::StatsTotalAllStreams _stats_total_all_streams{};
   openhd::link_statistics::STATS_CALLBACK _stats_callback=nullptr;
 };
 
