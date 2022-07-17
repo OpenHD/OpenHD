@@ -63,7 +63,7 @@ jobs:
         command: "push"
         format: "deb"
         owner: "openhd"
-        repo: "openhd-2-2-1-evo"
+        repo: "openhd-2-2-0-evo"
         distro: "raspbian"
         release: "bullseye"
         republish: "true" # needed ONLY if version is not changing
