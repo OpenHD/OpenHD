@@ -34,10 +34,24 @@ PACKAGE_NAME=openhd
 PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
-cd OpenHD
-VER2=$(git rev-parse --short HEAD)
+echo "getting hash"
+cd /opt/Open.HD
+ls -a
+VER2=$(git rev-parse --short HEAD) 
 echo ${VER2}
+cd OpenHD
 
+if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
+cd /opt
+mkdir temp
+cd temp
+git clone -b 2.1-milestones https://github.com/OpenHD/Open.HD
+cd Open.HD
+git rev-parse --short HEAD ||exit
+VER2=$(git rev-parse --short HEAD) 
+echo ${VER2}
+cd /opt/Open.HD/OpenHD
+fi
 
 rm -rf build
 
@@ -61,7 +75,9 @@ cp ../../openhd.service  ${PKGDIR}/etc/systemd/system/
 echo "copied files"
 echo ${PKGDIR}
 
-VERSION="2.2.1-evo-$(date '+%m%d%H%M')-${VER2}"
+
+VERSION="2.2.0-evo-$(date '+%m%d%H%M')-${VER2}"
+echo ${VERSION}
 
 rm ${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
 
@@ -77,10 +93,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   --before-install ../../before-install.sh \
   $PLATFORM_PACKAGES \
   -d "libasio-dev >= 1.10" \
-  -d "libseek-thermal >= 20201118.1" \
-  -d "flirone-driver >= 20200704.3" \
-  -d "wifibroadcast >= 20200930.1" \
-  -d "openhd-dump1090-mutability >= 20201122.2" \
   -d "gnuplot-nox" \
   -d "hostapd" \
   -d "iw" \
