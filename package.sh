@@ -34,7 +34,9 @@ PACKAGE_NAME=openhd
 PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
-VER2=$(git rev-parse --short HEAD)
+git config --global --add safe.directory /opt/Open.HD
+cd /opt/Open.HD
+VER2=$(git rev-parse --short HEAD) ||exit
 echo ${VER2}
 cd OpenHD
 
@@ -60,6 +62,7 @@ cp ../../openhd.service  ${PKGDIR}/etc/systemd/system/
 echo "copied files"
 echo ${PKGDIR}
 
+git config --global --add safe.directory /opt/Open.HDz
 VERSION="2.2.0-evo-$(date '+%m%d%H%M')-${VER2}"
 echo ${VERSION}
 
