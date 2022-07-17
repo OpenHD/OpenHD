@@ -36,7 +36,8 @@ sudo rm -rf ${PKGDIR}/*
 
 echo "getting hash"
 chown -R openhd:openhd /opt/Open.HD
-touch /home/runner/.gitconfig
+sudo touch /home/runner/.gitconfig
+chmod +777 /home/runner/.gitconfig
 git config --global --add safe.directory /opt/Open.HD ||exit
 cd /opt/Open.HD
 ls -a
