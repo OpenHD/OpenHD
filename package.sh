@@ -35,16 +35,23 @@ PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
 echo "getting hash"
-chown -R openhd:openhd /opt/Open.HD
-sudo touch /home/runner/.gitconfig
-chmod +777 /home/runner/.gitconfig
-git config --global --add safe.directory /opt/Open.HD ||exit
 cd /opt/Open.HD
 ls -a
-git rev-parse --short HEAD ||exit
 VER2=$(git rev-parse --short HEAD) 
 echo ${VER2}
 cd OpenHD
+
+if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
+cd /opt
+mkdir temp
+cd temp
+git clone -b 2.1-milestones https://github.com/OpenHD/Open.HD
+cd Open.HD
+git rev-parse --short HEAD ||exit
+VER2=$(git rev-parse --short HEAD) 
+echo ${VER2}
+cd /opt/Open.HD/OpenHD
+fi
 
 rm -rf build
 
