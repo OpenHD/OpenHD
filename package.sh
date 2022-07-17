@@ -34,7 +34,9 @@ PACKAGE_NAME=openhd
 PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
+echo "getting hash"
 chown -R openhd:openhd /opt/Open.HD
+touch /home/runner/.gitconfig
 git config --global --add safe.directory /opt/Open.HD ||exit
 cd /opt/Open.HD
 ls -a
