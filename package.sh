@@ -34,6 +34,8 @@ PACKAGE_NAME=openhd
 PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
+echo "testing git-versioning"
+git config --global --add safe.directory /opt/Open.HD
 cd OpenHD
 VER2=$(git rev-parse --short HEAD)
 echo ${VER2}
