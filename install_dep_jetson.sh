@@ -11,6 +11,7 @@ sudo apt -y install build-essential autotools-dev automake libtool autoconf \
             libv4l-dev \
             ruby-dev \
             python3-pip \
+            git \
             apt-transport-https \
             curl \
             git \

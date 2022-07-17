@@ -6,13 +6,6 @@
 #include "openhd-wifi.hpp"
 #include "openhd-global-constants.h"
 
-#include <cstdio>
-#include <stdio.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <iostream>
 #include <utility>
 
@@ -209,14 +202,26 @@ bool WBStreams::ever_received_any_data() const {
     return any_data_received;
 }
 
+static void convert(openhd::link_statistics::StatsFECVideoStreamRx& dest,const FECStreamStats& src){
+  dest.count_fragments_recovered=src.count_fragments_recovered;
+  dest.count_blocks_recovered=src.count_blocks_recovered;
+  dest.count_blocks_lost=src.count_blocks_lost;
+  dest.count_blocks_total=src.count_blocks_total;
+  dest.count_bytes_forwarded=src.count_bytes_forwarded;
+}
+
+// TDOO fixme
+// This is completely not understandable, but I needed to quickly make it work for testing.
 void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   std::lock_guard<std::mutex> guard(_statisticsDataLock);
   // TODO make more understandable, but tele rx or tele tx is correct here
   if(data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT
   || data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT){
 	_last_stats_per_rx_stream.at(0)=data;
+	//std::cout<<data;
   }else if(data.radio_port==OHD_VIDEO_PRIMARY_RADIO_PORT){
 	_last_stats_per_rx_stream.at(1)=data;
+	//std::cout<<data;
   }else if(data.radio_port==OHD_VIDEO_SECONDARY_RADIO_PORT){
 	_last_stats_per_rx_stream.at(2)=data;
   }else{
@@ -225,50 +230,84 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   }
   //std::cout<<"XGot stats "<<data<<"\n";
   // other stuff is per stream / accumulated
-  uint64_t count_all_wifi_rx_packets=0;
-  uint64_t count_all_bytes_received=0;
-  for(int i=0;i<3;i++){
-	const auto& stats_per_rx_stream=_last_stats_per_rx_stream.at(i);
-	count_all_wifi_rx_packets+=stats_per_rx_stream.count_p_all;
-	count_all_bytes_received+=stats_per_rx_stream.count_bytes_received;
-	count_all_bytes_received+=0;
+  openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
+  // accumulate all RX data
+  for(const auto& rx_stat:_last_stats_per_rx_stream){
+	stats_total_all_streams.count_wifi_packets_received+=rx_stat.wb_rx_stats.count_p_all;
+	//count_all_bytes_received+=stats_per_rx_stream.wb_rx_stats.count_bytes_received;
+	stats_total_all_streams.count_bytes_received+=rx_stat.wb_rx_stats.count_bytes_data_received;
   }
-  // injection temporary
-  uint64_t count_all_wifi_tx_packets=0;
+  // tx-es are a bit different
   if(udpTelemetryTx){
-	count_all_wifi_tx_packets+=udpTelemetryTx->get_n_injected_packets();
+	// this one is total
+	stats_total_all_streams.curr_telemetry_tx_bps=udpTelemetryTx->get_current_injected_bits_per_second();
+	// these ones are accumulated
+	stats_total_all_streams.count_wifi_packets_injected+=udpTelemetryTx->get_n_injected_packets();
+	stats_total_all_streams.count_bytes_injected+=0; // TODO
+	stats_total_all_streams.count_telemetry_tx_injections_error_hint+=udpTelemetryTx->get_count_tx_injections_error_hint();
   }
-  for(const auto& tx:udpVideoTxList){
-	count_all_wifi_tx_packets+=tx->get_n_injected_packets();
+  stats_total_all_streams.curr_telemetry_rx_bps=_last_stats_per_rx_stream.at(0).wb_rx_stats.curr_bits_per_second;
+
+  for(const auto& videoTx:udpVideoTxList){
+	// accumulated
+	stats_total_all_streams.count_wifi_packets_injected+=videoTx->get_n_injected_packets();
+	stats_total_all_streams.count_bytes_injected+=0; // TODO
+	stats_total_all_streams.count_video_tx_injections_error_hint+=videoTx->get_count_tx_injections_error_hint();
   }
+  if(_profile.is_air){
+	if(!udpVideoTxList.empty()){
+	  stats_total_all_streams.curr_video0_bps=udpVideoTxList.at(0)->get_current_provided_bits_per_second();
+	}
+	if(udpVideoTxList.size()>=2){
+	  stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_current_provided_bits_per_second();
+	}
+  }else{
+	stats_total_all_streams.curr_video0_bps=_last_stats_per_rx_stream.at(1).wb_rx_stats.curr_bits_per_second;
+	stats_total_all_streams.curr_video1_bps=_last_stats_per_rx_stream.at(2).wb_rx_stats.curr_bits_per_second;
+  }
+  // dBm / rssi for all connected cards that are doing wifibroadcast
+  openhd::link_statistics::StatsAllCards stats_all_cards{};
   // dBm is per card, not per stream
-  assert(_stats_all_cards.size()>=4);
+  assert(stats_all_cards.size()>=4);
   // only populate actually used cards
-  assert(_broadcast_cards.size()<=_stats_all_cards.size());
+  assert(_broadcast_cards.size()<=stats_all_cards.size());
   for(int i=0;i<_broadcast_cards.size();i++){
-	auto& card = _stats_all_cards.at(i);
-	card.rx_rssi=data.rssiPerCard.at(i).getAverage();
+	auto& card = stats_all_cards.at(i);
+	//std::cout<<data.rssiPerCard.at(i)<<"\n";
+	if(_profile.is_air){
+	  // on air, we use the dbm reported by the telemetry stream
+	  card.rx_rssi= _last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
+	}else{
+	  // on ground, we use the dBm reported by the telemetry stream or video stream
+	  const auto rssi_telemetry=_last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
+	  const auto rssi_video0=_last_stats_per_rx_stream.at(1).rssiPerCard.at(i).last_rssi;
+	  if(rssi_video0==0){
+		// use telemetry
+		card.rx_rssi=rssi_telemetry;
+	  }else{
+		card.rx_rssi=rssi_video0;
+	  }
+	}
 	card.exists_in_openhd= true;
 	// not yet supported
 	card.count_p_injected=0;
 	card.count_p_received=0;
   }
-  _stats_total_all_streams.count_wifi_packets_received=count_all_wifi_rx_packets;
-  _stats_total_all_streams.count_bytes_received=count_all_bytes_received;
-  _stats_total_all_streams.count_wifi_packets_injected=count_all_wifi_tx_packets;
-  _stats_total_all_streams.count_bytes_injected=0; // unsupported r.n
+  //
+  std::optional<openhd::link_statistics::StatsFECVideoStreamRx> stats_video_stream0_rx=std::nullopt;
+  std::optional<openhd::link_statistics::StatsFECVideoStreamRx> stats_video_stream1_rx=std::nullopt;
+  if(!_profile.is_air){
+	if(_last_stats_per_rx_stream.at(1).fec_stream_stats.has_value()){
+	  stats_video_stream0_rx=openhd::link_statistics::StatsFECVideoStreamRx{};
+	  convert(stats_video_stream0_rx.value(),_last_stats_per_rx_stream.at(1).fec_stream_stats.value());
+	}
+	if(_last_stats_per_rx_stream.at(2).fec_stream_stats.has_value()){
+	  stats_video_stream1_rx=openhd::link_statistics::StatsFECVideoStreamRx{};
+	  convert(stats_video_stream1_rx.value(),_last_stats_per_rx_stream.at(2).fec_stream_stats.value());
+	}
+  }
   //
   if(_stats_callback){
-	_stats_callback({_stats_total_all_streams, _stats_all_cards});
+	_stats_callback({stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx});
   }
 }
-
-/*openhd::link_statistics::StatsTotalRxStreams WBStreams::get_stats_all_rx_streams() {
-  std::lock_guard<std::mutex> guard(_statisticsDataLock);
-  return _stats_all_rx_streams;
-}
-
-openhd::link_statistics::StatsAllCards WBStreams::get_stats_all_cards() {
-  std::lock_guard<std::mutex> guard(_statisticsDataLock);
-  return _stats_all_cards;
-}*/

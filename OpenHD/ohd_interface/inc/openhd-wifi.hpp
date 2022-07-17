@@ -9,6 +9,7 @@
 #include "openhd-log.hpp"
 #include "openhd-settings.hpp"
 #include "openhd-util-filesystem.hpp"
+#include "mavlink_settings/XSettingsComponent.h"
 
 enum class WiFiCardType {
   Unknown = 0,
@@ -226,6 +227,21 @@ static void write_wificards_manifest(const std::vector<WiFiCard> &cards) {
   _t << manifest.dump(4);
   _t.close();
 }
+
+class WBStreamsSettings:public openhd::XSettingsComponent{
+ public:
+  std::vector<openhd::Setting> get_all_settings() override{
+	std::vector<openhd::Setting> ret={
+		openhd::Setting{"MCS_INDEX",5},
+		openhd::Setting{"FREQUENCY",5180},
+		openhd::Setting{"BANDWIDTH",20},
+	};
+	return ret;
+  }
+  void process_setting_changed(openhd::Setting changed_setting) override{
+	std::cout<<"WBStreamsSettings Setting: "<<changed_setting.id<<" changed\n";
+  }
+};
 
 
 #endif

@@ -7,21 +7,11 @@
 #include "OHDMainComponent.h"
 #include "OnboardComputerStatus.hpp"
 #include "RebootUtil.hpp"
-#include "WBStatisticsConverter.hpp"
+#include "OHDLinkStatisticsHelper.h"
 
 OHDMainComponent::OHDMainComponent(
     OHDPlatform platform1,uint8_t parent_sys_id,
     bool runsOnAir) : platform(platform1),RUNS_ON_AIR(runsOnAir),MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
-  wifibroadcastStatisticsUdpReceiver =
-      std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
-                                                  OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT,
-                                                  [this](const uint8_t *payload,
-                                                         const std::size_t payloadSize) {
-                                                    processWifibroadcastStatisticsData(
-                                                        payload,
-                                                        payloadSize);
-                                                  });
-  wifibroadcastStatisticsUdpReceiver->runInBackground();
   logMessagesReceiver =
       std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
                                                   OHD_LOCAL_LOG_MESSAGES_UDP_PORT,
@@ -84,15 +74,6 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
   return ret;
 }
 
-void OHDMainComponent::processWifibroadcastStatisticsData(const uint8_t *payload, const std::size_t payloadSize) {
-  //std::cout << "OHDTelemetryGenerator::processNewWifibroadcastStatisticsMessage: " << payloadSize << "\n";
-  const auto msges=WBStatisticsConverter::parseRawDataSafe(payload,payloadSize);
-  for(const auto msg:msges){
-	std::cout<<"Got statistics\n";
-    lastWbStatisticsMessage[msg.radio_port] = msg;
-  }
-}
-
 std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
   /*OpenHDStatisticsWriter::Data data;
   // for now, write some crap
@@ -102,27 +83,32 @@ std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
   auto msg = WBStatisticsConverter::convertWbStatisticsToMavlink(data,_sys_id,_comp_id);
   return msg;*/
   std::lock_guard<std::mutex> guard(_last_link_stats_mutex);
+  std::cout<<_last_link_stats<<"\n";
   std::vector<MavlinkMessage> ret;
   // stats for all the wifi card(s)
   for(int i=0;i<_last_link_stats.stats_all_cards.size();i++){
-	MavlinkMessage msg;
 	const auto card_stats=_last_link_stats.stats_all_cards.at(i);
 	if(!card_stats.exists_in_openhd){
 	  // skip non active cards
 	  continue;
 	}
-	mavlink_msg_openhd_wifi_card_pack(_sys_id,_comp_id,&msg.m,i,card_stats.rx_rssi,
-									  card_stats.count_p_received,card_stats.count_p_injected,0,0);
-	std::cout << card_stats.to_string(i)<<"\n";
+	MavlinkMessage msg=openhd::LinkStatisticsHelper::wifibroadcast_wifi_card_pack(_sys_id,_comp_id,0,card_stats);
 	ret.push_back(msg);
   }
   {
-	MavlinkMessage msg;
 	const auto& all_stats=_last_link_stats.stats_total_all_streams;
-	std::cout<<all_stats.to_string()<<"\n";
-	mavlink_msg_openhd_stats_total_all_streams_pack(_sys_id,_comp_id,&msg.m,all_stats.count_wifi_packets_received,all_stats.count_bytes_received,
-													all_stats.count_wifi_packets_injected,all_stats.count_bytes_injected);
+	MavlinkMessage msg=openhd::LinkStatisticsHelper::stats_total_all_wifibroadcast_streams_pack(_sys_id,_comp_id,all_stats);
 	ret.push_back(msg);
+  }
+  {
+	if(!RUNS_ON_AIR){
+	  // Video fex rx stats only on ground
+	  if(_last_link_stats.stats_video_stream0_rx.has_value()){
+		const auto& stats_video_stream_rx=_last_link_stats.stats_video_stream0_rx.value();
+		MavlinkMessage msg=openhd::LinkStatisticsHelper::fec_link_rx_statistics_pack(_sys_id,_comp_id,0,stats_video_stream_rx);
+		ret.push_back(msg);
+	  }
+	}
   }
   // stats per ling
   //mavlink_msg_openhd_fec_link_rx_statistics_pack()

@@ -10,6 +10,7 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
             libgstreamer-plugins-base1.0-dev \
             libusb-1.0-0-dev \
             libv4l-dev \
+            git \
             apt-transport-https \
             curl \
             git \

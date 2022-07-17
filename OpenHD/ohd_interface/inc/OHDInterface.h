@@ -18,13 +18,7 @@
 class OHDInterface {
  public:
   /**
-   * Note: due to json, needs to be crated after OHDSystem has been run once.
-   * The constructor reads the generated json by OHDSystem and tries to initialize all its members.
-   * NOTE: We need to wire link - related settings into here.
-   * For example, changing the wifi frequency (needs to be synced between air and ground) but also
-   * settings that can be unsinced (like enable / disable wifi hotspot, which - as an example - is only
-   * a setting that affects the ground pi.
-   * @param profile the (never-changing) profile we are running with.
+   * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
    */
   explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1);
   // register callback that is called in regular intervals with link statistics
