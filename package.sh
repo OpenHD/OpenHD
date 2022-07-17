@@ -36,7 +36,7 @@ sudo rm -rf ${PKGDIR}/*
 
 echo "testing git-versioning"
 git config --global --add safe.directory /opt/Open.HD
-cd OpenHD
+cd /opt/Open.HD
 VER2=$(git rev-parse --short HEAD)
 echo ${VER2}
 
