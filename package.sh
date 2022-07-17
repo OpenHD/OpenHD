@@ -92,10 +92,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   --before-install ../../before-install.sh \
   $PLATFORM_PACKAGES \
   -d "libasio-dev >= 1.10" \
-  -d "libseek-thermal >= 20201118.1" \
-  -d "flirone-driver >= 20200704.3" \
-  -d "wifibroadcast >= 20200930.1" \
-  -d "openhd-dump1090-mutability >= 20201122.2" \
   -d "gnuplot-nox" \
   -d "hostapd" \
   -d "iw" \
