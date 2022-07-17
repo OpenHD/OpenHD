@@ -61,7 +61,7 @@ cp ../../openhd.service  ${PKGDIR}/etc/systemd/system/
 echo "copied files"
 echo ${PKGDIR}
 
-VERSION="2.2-evo-$(date '+%m%d%H%M')-${VER2}"
+VERSION="2.2.0-evo-$(date '+%m%d%H%M')-${VER2}"
 echo ${VERSION}
 
 rm ${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
