@@ -94,17 +94,17 @@ static std::string wifi_use_for_to_string(const WifiUseFor wifi_use_for){
 // Consti10: Stephen used a default tx power of 3100 somewhere (not sure if that ever made it trough though)
 // This value seems a bit high to me, so I am going with a default of "1800" (which should be 18.0 dBm )
 //static constexpr auto DEFAULT_WIFI_TX_POWER="3100";
-static constexpr auto DEFAULT_WIFI_TX_POWER="1800";
-static constexpr auto DEFAULT_5GHZ_FREQUENCY = "5180";
-static constexpr auto DEFAULT_2GHZ_FREQUENCY = "2412";
+static constexpr auto DEFAULT_WIFI_TX_POWER=1800;
+static constexpr auto DEFAULT_5GHZ_FREQUENCY = 5180;
+static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412;
 
 struct WifiCardSettings{
   // This one needs to be set for the card to then be used for something.Otherwise, it is not used for anything
   WifiUseFor use_for = WifiUseFor::Unknown;
   // frequency for this card
-  std::string frequency;
+  uint32_t frequency;
   // transmission power for this card
-  std::string txpower=DEFAULT_WIFI_TX_POWER;
+  uint32_t txpower=DEFAULT_WIFI_TX_POWER;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WifiCardSettings,use_for,frequency,txpower)
 
@@ -227,21 +227,6 @@ static void write_wificards_manifest(const std::vector<WiFiCard> &cards) {
   _t << manifest.dump(4);
   _t.close();
 }
-
-class WBStreamsSettings:public openhd::XSettingsComponent{
- public:
-  std::vector<openhd::Setting> get_all_settings() override{
-	std::vector<openhd::Setting> ret={
-		openhd::Setting{"MCS_INDEX",5},
-		openhd::Setting{"FREQUENCY",5180},
-		openhd::Setting{"BANDWIDTH",20},
-	};
-	return ret;
-  }
-  void process_setting_changed(openhd::Setting changed_setting) override{
-	std::cout<<"WBStreamsSettings Setting: "<<changed_setting.id<<" changed\n";
-  }
-};
 
 
 #endif

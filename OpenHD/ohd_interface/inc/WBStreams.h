@@ -10,6 +10,7 @@
 #include "openhd-wifi.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-link-statistics.hpp"
+#include "OHDInterfaceSettings.h"
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
 
@@ -33,8 +34,14 @@ class WBStreams {
   // Returns true if this WBStream has ever received any data. If no data has been ever received after X seconds,
   // there most likely was an unsuccessful frequency change.
   [[nodiscard]] bool ever_received_any_data()const;
-  /*openhd::link_statistics::StatsTotalRxStreams get_stats_all_rx_streams();
-  openhd::link_statistics::StatsAllCards get_stats_all_cards();*/
+  // Some settings need a full restart of the tx / rx instances to apply
+  void restart(const openhd::WBStreamsSettings& settings);
+  // set the frequency (wifi channel) of all wifibroadcast cards
+  bool set_frequency(uint32_t frequency);
+  // set the tx power of all wifibroadcast cards
+  bool set_txpower(uint32_t tx_power);
+  // set the mcs index for all wifibroadcast cards
+  bool set_mcs_index(uint32_t mcs_index);
  private:
   const OHDProfile _profile;
   const int DEFAULT_MCS_INDEX = 3;
@@ -43,6 +50,7 @@ class WBStreams {
   void configure();
   void configure_telemetry();
   void configure_video();
+  openhd::WBStreamsSettings _last_settings;
   // For telemetry, bidirectional in opposite directions
   std::unique_ptr<UDPWBTransmitter> udpTelemetryTx;
   std::unique_ptr<UDPWBReceiver> udpTelemetryRx;

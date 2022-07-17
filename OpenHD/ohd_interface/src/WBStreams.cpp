@@ -39,9 +39,9 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
     WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
     WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
     WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
-    assert(!card->get_settings().frequency.empty());
+    assert(card->get_settings().frequency>0);
     WifiCardCommandHelper::set_frequency(card->_wifi_card, card->get_settings().frequency);
-    assert(!card->get_settings().txpower.empty());
+    assert(card->get_settings().txpower>0);
     // TODO check if this works - on rtl8812au, the displayed value at least changes
     WifiCardCommandHelper::set_txpower(card->_wifi_card, card->get_settings().txpower);
     //WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
@@ -55,6 +55,7 @@ void WBStreams::configure() {
   configure_telemetry();
   configure_video();
   std::cout << "Streams::configure() end\n";
+  restart({});
 }
 
 void WBStreams::configure_telemetry() {
@@ -310,4 +311,49 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   if(_stats_callback){
 	_stats_callback({stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx});
   }
+}
+
+void WBStreams::restart(const openhd::WBStreamsSettings &settings) {
+  std::cout << "WBStreams::restart() begin\n";
+  if(udpTelemetryRx){
+	udpTelemetryRx->stop_looping();
+	udpTelemetryRx.reset();
+  }
+  if(udpTelemetryTx){
+	udpTelemetryTx->stopBackground();
+	udpTelemetryTx.reset();
+  }
+  for(auto& videoTx:udpVideoTxList){
+	videoTx->stopBackground();
+	videoTx.reset();
+  }
+  udpVideoTxList.resize(0);
+  for(auto& videoRx:udpVideoRxList){
+	videoRx->stop_looping();
+	videoRx.reset();
+  }
+  udpVideoRxList.resize(0);
+  _last_settings=settings;
+  configure_telemetry();
+  configure_video();
+  std::cout << "WBStreams::restart() end\n";
+}
+
+bool WBStreams::set_frequency(uint32_t frequency) {
+  for(const auto& holder:_broadcast_cards){
+	const auto& card=holder->_wifi_card;
+	WifiCardCommandHelper::set_frequency(card,frequency);
+  }
+  return true;
+}
+bool WBStreams::set_txpower(uint32_t tx_power) {
+  for(const auto& holder:_broadcast_cards){
+	const auto& card=holder->_wifi_card;
+	WifiCardCommandHelper::set_txpower(card,tx_power);
+  }
+  return true;
+}
+bool WBStreams::set_mcs_index(uint32_t mcs_index) {
+  _last_settings.wb_mcs_index=mcs_index;
+  restart(_last_settings);
 }
