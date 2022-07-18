@@ -9,6 +9,7 @@
 
 #include "openhd-wifi.hpp"
 #include "openhd-profile.hpp"
+#include "openhd-platform.hpp"
 #include "openhd-link-statistics.hpp"
 #include "WBStreamsSettings.h"
 
@@ -21,7 +22,7 @@
  */
 class WBStreams {
  public:
-  explicit WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards);
+  explicit WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards);
   // register callback that is called in regular intervals with link statistics
   void set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback){
 	_stats_callback=std::move(stats_callback);
@@ -47,6 +48,7 @@ class WBStreams {
   bool set_channel_width(uint32_t channel_width);
  private:
   const OHDProfile _profile;
+  const OHDPlatform _platform;
   const int DEFAULT_MCS_INDEX = 3;
   std::vector<std::shared_ptr<WifiCardHolder>> _broadcast_cards;
  private:

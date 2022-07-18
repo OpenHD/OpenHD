@@ -53,7 +53,7 @@ platform(platform1),profile(std::move(profile1)) {
     // we just continue as nothing happened, but OHD won't be usable until a reboot.
     //exit(1);
   }else{
-      wbStreams=std::make_unique<WBStreams>(profile,broadcast_cards);
+      wbStreams=std::make_unique<WBStreams>(profile,platform,broadcast_cards);
   }
   std::this_thread::sleep_for(std::chrono::seconds(3));
   if(wbStreams){

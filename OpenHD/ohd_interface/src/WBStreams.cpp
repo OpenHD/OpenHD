@@ -9,8 +9,8 @@
 #include <iostream>
 #include <utility>
 
-WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards) :
-   _profile(std::move(profile)),_broadcast_cards(broadcast_cards) {
+WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards) :
+   _profile(std::move(profile)),_platform(platform),_broadcast_cards(broadcast_cards) {
   std::cout<<"WBStreams::WBStreams:"<<broadcast_cards.size()<<"\n";
   // sanity checks
   if(_broadcast_cards.empty()) {
@@ -71,6 +71,9 @@ void WBStreams::configure_cards() {
   std::cout << "WBStreams::configure_cards() begin\n";
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // However, with the image set up by raphael they should be free from any (OS) prcoesses already
+  if(_platform.platform_type==PlatformType::PC){
+	OHDUtil::run_command("rfkill",{"unblock","all"});
+  }
   for(const auto& card: _broadcast_cards){
 	//TODO we might not need this one
 	//OHDUtil::run_command("rfkill",{"unblock",card->_wifi_card.interface_name});
