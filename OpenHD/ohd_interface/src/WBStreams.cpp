@@ -169,6 +169,7 @@ void WBStreams::addExternalDeviceIpForwarding(const std::string& ip) {
   }
   // TODO how do we deal with telemetry
 }
+
 void WBStreams::removeExternalDeviceIpForwarding(const std::string& ip) {
   bool first= true;
   assert(udpVideoRxList.size()==2);
