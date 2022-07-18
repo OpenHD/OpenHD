@@ -120,3 +120,23 @@ void OHDInterface::set_stats_callback(openhd::link_statistics::STATS_CALLBACK st
 	std::cerr<<"Cannot ste stats callback, no wb streams instance\n";
   }
 }
+
+std::vector<openhd::Setting> OHDInterface::get_all_settings(){
+  std::vector<openhd::Setting> ret;
+  if(wbStreams){
+	 auto settings=wbStreams->get_all_settings();
+	 for(const auto& setting:settings){
+	   ret.emplace_back(setting);
+	 }
+	 //ret.insert(ret.end(),settings.begin(),settings.end());
+  }
+  openhd::validate_provided_ids(ret);
+  return ret;
+}
+
+void OHDInterface::process_setting_changed(openhd::Setting changed_setting) {
+  std::lock_guard<std::mutex> guard(settings_mutex);
+  if(wbStreams){
+	wbStreams->process_new_setting(changed_setting);
+  }
+}

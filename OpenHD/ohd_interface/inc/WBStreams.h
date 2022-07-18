@@ -51,6 +51,7 @@ class WBStreams {
   // settings hacky begin
   std::vector<openhd::Setting> get_all_settings()const;
   void process_new_setting(openhd::Setting changed_setting);
+  // settings hacky end
  private:
   const OHDProfile _profile;
   const OHDPlatform _platform;

@@ -14,8 +14,9 @@
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-led-error-codes.h"
+#include "mavlink_settings/XSettingsComponent.h"
 
-class OHDInterface {
+ class OHDInterface :public openhd::XSettingsComponent{
  public:
   /**
    * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
@@ -36,9 +37,14 @@ class OHDInterface {
    * Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
    */
   void removeExternalDeviceIpForwarding(std::string ip) const;
+  // settings hacky begin
+  std::vector<openhd::Setting> get_all_settings()override;
+  void process_setting_changed(openhd::Setting changed_setting) override;
+  // settings hacky end
  private:
   const OHDProfile profile;
   const OHDPlatform platform;
+  std::mutex settings_mutex;
   std::unique_ptr<WBStreams> wbStreams;
   std::unique_ptr<USBTetherListener> usbTetherListener;
   std::unique_ptr<WifiHotspot> _wifi_hotspot;
