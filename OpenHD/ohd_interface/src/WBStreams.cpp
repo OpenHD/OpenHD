@@ -463,9 +463,13 @@ std::vector<openhd::Setting> WBStreams::get_all_settings() const {
   ret.push_back(openhd::Setting{WB_FREQUENCY,(int)_settings->get_settings().wb_frequency});
   ret.push_back(openhd::Setting{WB_CHANNEL_WIDTH,(int)_settings->get_settings().wb_channel_width});
   ret.push_back(openhd::Setting{WB_MCS_INDEX,(int)_settings->get_settings().wb_mcs_index});
-  ret.push_back(openhd::Setting{WB_VIDEO_FEC_BLOCK_LENGTH,(int)_settings->get_settings().wb_video_fec_block_length});
-  ret.push_back(openhd::Setting{WB_VIDEO_FEC_PERCENTAGE,(int)_settings->get_settings().wb_video_fec_percentage});
+  if(_profile.is_air){
+	// these params only need to be changed on the air side
+	ret.push_back(openhd::Setting{WB_VIDEO_FEC_BLOCK_LENGTH,(int)_settings->get_settings().wb_video_fec_block_length});
+	ret.push_back(openhd::Setting{WB_VIDEO_FEC_PERCENTAGE,(int)_settings->get_settings().wb_video_fec_percentage});
+  }
   ret.push_back(openhd::Setting{WB_TX_POWER_MILLI_DBM,(int)_settings->get_settings().wb_tx_power_milli_dbm});
+  openhd::validate_provided_ids(ret);
   return ret;
 }
 
