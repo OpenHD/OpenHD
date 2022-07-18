@@ -6,6 +6,7 @@
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_OHDINTERFACESETTINGS_H_
 
 #include "openhd-wifi.hpp"
+#include "openhd-settings2.hpp"
 
 namespace openhd{
 
@@ -43,72 +44,29 @@ static std::vector<WiFiCard> tmp_convert(const std::vector<std::shared_ptr<WifiC
 }
 
 static const std::string INTERFACE_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("interface/");
-class WBStreamsSettingsHolder{
+
+ class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBStreamsSettings>{
  public:
   explicit WBStreamsSettingsHolder(std::vector<WiFiCard> wifibroadcast_cards1):
+  	  openhd::settings::PersistentSettings<WBStreamsSettings>(INTERFACE_SETTINGS_DIRECTORY),
 	  wifibroadcast_cards(std::move(wifibroadcast_cards1)){
-	if(!OHDFilesystemUtil::exists(WIFI_SETTINGS_DIRECTORY.c_str())){
-	  OHDFilesystemUtil::create_directory(WIFI_SETTINGS_DIRECTORY);
-	}
-	const auto last_settings_opt=read_last_settings();
-	if(last_settings_opt.has_value()){
-	  _settings=std::make_unique<WBStreamsSettings>(last_settings_opt.value());
-	  std::cout<<"Found settings in:"<<get_unique_filename()<<"\n";
-	}else{
-	  std::cout<<"Creating default settings:"<<get_unique_filename()<<"\n";
-	  // create default settings and persist them for the next reboot
-	  _settings=std::make_unique<WBStreamsSettings>(create_default_settings1(wifibroadcast_cards));
-	  persist_settings();
-	}
+	init();
   }
   // delete copy and move constructor
   WBStreamsSettingsHolder(const WifiCardHolder&)=delete;
   WBStreamsSettingsHolder(const WifiCardHolder&&)=delete;
  public:
   const std::vector<WiFiCard> wifibroadcast_cards;
-  [[nodiscard]] const WBStreamsSettings& get_settings()const{
-	assert(_settings);
-	return *_settings;
-  }
-  // unsafe becasue you then have to remember to persist the settings.
-  WBStreamsSettings& unsafe_get_settings(){
-	assert(_settings);
-	return *_settings;
-  }
-  void persist(){
-	persist_settings();
-  }
  private:
   std::unique_ptr<WBStreamsSettings> _settings;
-  [[nodiscard]] static std::string get_uniqe_hash(){
+   [[nodiscard]] std::string get_unique_filename()const override{
 	std::stringstream ss;
 	ss<<"wifibroadcast_settings.json";
 	return ss.str();
   }
-  [[nodiscard]] static std::string get_unique_filename(){
-	return INTERFACE_SETTINGS_DIRECTORY+get_uniqe_hash();
-  }
-  // write settings locally for persistence
-  void persist_settings()const{
-	assert(_settings);
-	const auto filename= get_unique_filename();
-	const nlohmann::json tmp=*_settings;
-	// and write them locally for persistence
-	std::ofstream t(filename);
-	t << tmp.dump(4);
-	t.close();
-  }
-  // read last settings, if they are available
-  [[nodiscard]] std::optional<WBStreamsSettings> read_last_settings()const{
-	const auto filename= get_unique_filename();
-	if(!OHDFilesystemUtil::exists(filename.c_str())){
-	  return std::nullopt;
-	}
-	std::ifstream f(filename);
-	nlohmann::json j;
-	f >> j;
-	return j.get<WBStreamsSettings>();
-  }
+   [[nodiscard]] WBStreamsSettings create_default()const override{
+	 return create_default_settings1(wifibroadcast_cards);
+   }
 };
 
 }

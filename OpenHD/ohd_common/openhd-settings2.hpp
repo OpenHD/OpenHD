@@ -34,7 +34,7 @@ class PersistentSettings{
 	return *_settings;
   }
   // Don't forget to call persist once done
-  [[nodiscard]] T& change_settings()const{
+  [[nodiscard]] T& unsafe_get_settings()const{
 	assert(_settings);
 	return *_settings;
   }
