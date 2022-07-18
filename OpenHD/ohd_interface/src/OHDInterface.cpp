@@ -55,6 +55,12 @@ platform(platform1),profile(std::move(profile1)) {
   }else{
       wbStreams=std::make_unique<WBStreams>(profile,broadcast_cards);
   }
+  std::this_thread::sleep_for(std::chrono::seconds(3));
+  if(wbStreams){
+	wbStreams->set_txpower(1900);
+	wbStreams->set_frequency(DEFAULT_5GHZ_FREQUENCY);
+	wbStreams->set_mcs_index(3);
+  }
 
   // USB tethering - only on ground
   if(!profile.is_air){

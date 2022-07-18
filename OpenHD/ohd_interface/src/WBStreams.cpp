@@ -386,6 +386,7 @@ bool WBStreams::set_frequency(uint32_t frequency) {
   }
   _settings->unsafe_get_settings().wb_frequency=frequency;
   _settings->persist();
+  // We can update the frequency without restarting the streams
   for(const auto& holder:_broadcast_cards){
 	const auto& card=holder->_wifi_card;
 	WifiCardCommandHelper::set_frequency(card,frequency);
@@ -396,6 +397,7 @@ bool WBStreams::set_frequency(uint32_t frequency) {
 bool WBStreams::set_txpower(uint32_t tx_power) {
   _settings->unsafe_get_settings().wb_tx_power_milli_dbm=tx_power;
   _settings->persist();
+  // We can update the tx power without restarting the streams
   for(const auto& holder:_broadcast_cards){
 	const auto& card=holder->_wifi_card;
 	WifiCardCommandHelper::set_txpower(card,tx_power);
@@ -409,6 +411,17 @@ bool WBStreams::set_mcs_index(uint32_t mcs_index) {
 	return false;
   }
   _settings->unsafe_get_settings().wb_mcs_index=mcs_index;
+  _settings->persist();
+  // To set the mcs index, r.n we have to restart the tx instances
+  restart();
+  return true;
+}
+bool WBStreams::set_channel_width(uint32_t channel_width) {
+  if(!openhd::is_valid_channel_width(channel_width)){
+	std::cerr<<"Invalid channel width"<<channel_width<<"\n";
+	return false;
+  }
+  _settings->unsafe_get_settings().wb_channel_width=channel_width;
   _settings->persist();
   restart();
   return true;

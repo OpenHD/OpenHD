@@ -42,6 +42,9 @@ class WBStreams {
   bool set_txpower(uint32_t tx_power);
   // set the mcs index for all wifibroadcast cards
   bool set_mcs_index(uint32_t mcs_index);
+  // set the channel width
+  // TODO doesn't work yet, aparently we need more than only the pcap header.
+  bool set_channel_width(uint32_t channel_width);
  private:
   const OHDProfile _profile;
   const int DEFAULT_MCS_INDEX = 3;
