@@ -366,6 +366,7 @@ void WBStreams::restart() {
 	videoRx.reset();
   }
   udpVideoRxList.resize(0);
+  configure_cards();
   configure_telemetry();
   configure_video();
   std::cout << "WBStreams::restart() end\n";
@@ -393,7 +394,7 @@ bool WBStreams::set_frequency(uint32_t frequency) {
 }
 
 bool WBStreams::set_txpower(uint32_t tx_power) {
-  _settings->unsafe_get_settings().wb_tx_power=tx_power;
+  _settings->unsafe_get_settings().wb_tx_power_milli_dbm=tx_power;
   _settings->persist();
   for(const auto& holder:_broadcast_cards){
 	const auto& card=holder->_wifi_card;
