@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
     const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
-    auto ohdInterface = std::make_unique<OHDInterface>(*platform,*profile);
+    auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile);
 
     // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
     auto ohdTelemetry = std::make_unique<OHDTelemetry>(*platform,* profile);
@@ -124,6 +124,8 @@ int main(int argc, char *argv[]) {
 	ohdInterface->set_stats_callback([&ohdTelemetry](openhd::link_statistics::AllStats stats){
 	  ohdTelemetry->set_link_statistics(stats);
 	});
+	// link interface settings to ohd telemetry
+	ohdTelemetry->add_settings_component(192,ohdInterface);
 
     // and start ohdVideo if we are on the air pi
     std::unique_ptr<OHDVideo> ohdVideo;
