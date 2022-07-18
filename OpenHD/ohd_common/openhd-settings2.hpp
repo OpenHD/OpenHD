@@ -15,7 +15,7 @@ namespace openhd::settings{
 
 /**
  * Helper class to persist settings during reboots using json.
- * @tparam T the settings class to persist, needs to have to and from json(s)
+ * @tparam T the settings struct to persist, needs to have to and from json(s)
  */
 template<class T>
 class PersistentSettings{
@@ -39,9 +39,12 @@ class PersistentSettings{
 	assert(_settings);
 	return *_settings;
   }
-  // save changes by writing them out to the file.
+  // save changes by writing them out to the file, and notifying the listener(s)
   void persist()const{
 	persist_settings();
+	if(_settings_changed_callback){
+	  _settings_changed_callback();
+	}
   }
   // Persist then new settings, then call the callback to propagate the change
   void update_settings(const T& new_settings){
