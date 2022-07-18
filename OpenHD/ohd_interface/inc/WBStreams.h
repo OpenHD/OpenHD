@@ -49,7 +49,7 @@ class WBStreams {
  private:
   // set cards to monitor mode and set the right frequency, tx power
   void configure_cards();
-  void configure();
+  void configure_streams();
   void configure_telemetry();
   void configure_video();
   //openhd::WBStreamsSettings _last_settings;

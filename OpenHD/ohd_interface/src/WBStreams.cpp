@@ -24,6 +24,7 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
   // sanity checking
   for(const auto& card: _broadcast_cards){
     assert(card->get_settings().use_for==WifiUseFor::MonitorMode);
+	assert(card->_wifi_card.supports_2ghz || card->_wifi_card.supports_5ghz);
   }
   if (_profile.is_air && _broadcast_cards.size() > 1) {
     // We cannot use more than 1 wifi card for injection
@@ -54,10 +55,10 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
 	}
   }
   configure_cards();
-  configure();
+  configure_streams();
 }
 
-void WBStreams::configure() {
+void WBStreams::configure_streams() {
   std::cout << "Streams::configure() begin\n";
   // Static for the moment
   configure_telemetry();
@@ -67,6 +68,7 @@ void WBStreams::configure() {
 }
 
 void WBStreams::configure_cards() {
+  std::cout << "WBStreams::configure_cards() begin\n";
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // However, with the image set up by raphael they should be free from any (OS) prcoesses already
   for(const auto& card: _broadcast_cards){
@@ -82,6 +84,7 @@ void WBStreams::configure_cards() {
 	WifiCardCommandHelper::set_txpower(card->_wifi_card, card->get_settings().txpower);
 	//WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
   }
+  std::cout << "WBStreams::configure_cards() end\n";
 }
 
 void WBStreams::configure_telemetry() {
