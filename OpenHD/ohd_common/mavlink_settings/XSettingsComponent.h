@@ -26,6 +26,11 @@ class XSettingsComponent{
   virtual std::vector<Setting> get_all_settings()=0;
   // perform required steps when a setting value changes.
   virtual void process_setting_changed(Setting changed_setting)=0;
+ public:
+  XSettingsComponent()=default;
+  // delete copy and move constructor
+  XSettingsComponent(const XSettingsComponent&)=delete;
+  XSettingsComponent(const XSettingsComponent&&)=delete;
 };
 
 /*bool safe_to(std::bool& value,const SettingsVariant& settings_variant){
