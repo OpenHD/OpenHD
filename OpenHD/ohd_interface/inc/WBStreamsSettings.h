@@ -21,9 +21,7 @@ struct WBStreamsSettings{
   uint32_t wb_video_fec_percentage=20;
   uint32_t wb_tx_power_milli_dbm=1800;
   [[nodiscard]] bool configured_for_2G()const{
-	if(openhd::is_valid_frequency_2G(wb_frequency))return true;
-	assert(openhd::is_valid_frequency_5G(wb_frequency));
-	return false;
+	return is_2G_and_assert(wb_frequency);
   }
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBStreamsSettings, wb_frequency, wb_channel_width, wb_mcs_index,

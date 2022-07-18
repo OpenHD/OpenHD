@@ -87,6 +87,15 @@ static bool is_valid_frequency_5G(uint32_t frequency){
   return false;
 }
 
+// returns true if the frequency is a 2.4G frequency, otherwise it returns false
+// AND also quarantees the freqeuncy set is a valid 5G frequency (aka wifi cards can have a 2G or 5G frequency set,
+// but should never have a frequency that is neither 2G nor 5G
+static bool is_2G_and_assert(uint32_t frequency){
+  if(openhd::is_valid_frequency_2G(frequency))return true;
+  assert(openhd::is_valid_frequency_5G(frequency));
+  return false;
+}
+
 static bool is_valid_channel_width(uint32_t channel_width){
   return channel_width==20 || channel_width==40;
 }
