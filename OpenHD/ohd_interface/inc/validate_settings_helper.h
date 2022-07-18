@@ -95,6 +95,11 @@ static bool is_valid_mcs_index(uint32_t mcs_index){
   return mcs_index<=7;
 }
 
+// think it is always in milli dbm
+static bool validate_tx_power(uint32_t tx_power){
+  return tx_power < 4000;
+}
+
 }
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_INC_VALIDATE_SETTINGS_HELPER_H_
