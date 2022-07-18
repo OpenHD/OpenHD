@@ -34,7 +34,7 @@ jobs:
 
       - name: Build with make
         run: |
-          sudo ./package.sh x86 ubuntu bionic
+          sudo ./package.sh x86_64 ubuntu bionic
           ls -a
 
       - name: Upload to Github
