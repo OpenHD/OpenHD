@@ -82,7 +82,7 @@ class WBStreamsSettingsHolder{
   std::unique_ptr<WBStreamsSettings> _settings;
   [[nodiscard]] static std::string get_uniqe_hash(){
 	std::stringstream ss;
-	ss<<"interface_settings.json";
+	ss<<"wifibroadcast_settings.json";
 	return ss.str();
   }
   [[nodiscard]] static std::string get_unique_filename(){
