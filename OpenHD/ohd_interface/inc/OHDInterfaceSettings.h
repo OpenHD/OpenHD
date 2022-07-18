@@ -45,24 +45,24 @@ static std::vector<WiFiCard> tmp_convert(const std::vector<std::shared_ptr<WifiC
 
 static const std::string INTERFACE_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("interface/");
 
- class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBStreamsSettings>{
+class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBStreamsSettings>{
  public:
   explicit WBStreamsSettingsHolder(std::vector<WiFiCard> wifibroadcast_cards1):
-  	  openhd::settings::PersistentSettings<WBStreamsSettings>(INTERFACE_SETTINGS_DIRECTORY),
+	  openhd::settings::PersistentSettings<WBStreamsSettings>(INTERFACE_SETTINGS_DIRECTORY),
 	  wifibroadcast_cards(std::move(wifibroadcast_cards1)){
 	init();
   }
  public:
   const std::vector<WiFiCard> wifibroadcast_cards;
  private:
-   [[nodiscard]] std::string get_unique_filename()const override{
+  [[nodiscard]] std::string get_unique_filename()const override{
 	std::stringstream ss;
 	ss<<"wifibroadcast_settings.json";
 	return ss.str();
   }
-   [[nodiscard]] WBStreamsSettings create_default()const override{
-	 return create_default_settings1(wifibroadcast_cards);
-   }
+  [[nodiscard]] WBStreamsSettings create_default()const override{
+	return create_default_settings1(wifibroadcast_cards);
+  }
 };
 
 }
