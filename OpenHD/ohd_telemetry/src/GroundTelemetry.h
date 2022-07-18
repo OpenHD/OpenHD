@@ -11,6 +11,7 @@
 #include "endpoints/UDPEndpoint2.h"
 #include "internal/OHDMainComponent.h"
 #include "mavlink_settings/XSettingsComponent.h"
+#include "mavsdk_temporary//XMavlinkParamProvider.h"
 
 /**
  * OpenHD Ground telemetry. Assumes a air instance running on the air pi.
@@ -45,6 +46,7 @@ class GroundTelemetry :public MavlinkSystem{
   // We rely on another service for starting the rx/tx links
   std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;
   std::shared_ptr<OHDMainComponent> _ohd_main_component;
+  std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
 };
 

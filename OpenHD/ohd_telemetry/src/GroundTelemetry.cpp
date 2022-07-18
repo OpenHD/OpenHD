@@ -35,12 +35,6 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform): _platform(platform),Mavl
   });
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false);
   components.push_back(_ohd_main_component);
-  // TODO remove
-  {
-	auto example_comp=std::make_shared<openhd::testing::DummyGroundXSettingsComponent>();
-	// MAV_COMP_ID_ONBOARD_COMPUTER2=192
-	add_settings_component(192,example_comp);
-  }
   std::cout << "Created GroundTelemetry\n";
 }
 
@@ -59,6 +53,7 @@ void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
   sendMessageAirPi(message);
   // OpenHD components running on the ground station don't need to talk to the air unit.
   // This is not exactly following the mavlink routing standard, but saves a lot of bandwidth.
+  std::lock_guard<std::mutex> guard(components_lock);
   for(auto& component:components){
     const auto responses=component->process_mavlink_message(message);
     for(const auto& response:responses){
@@ -104,12 +99,16 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
     }
     // send messages to the ground station in regular intervals, includes heartbeat.
     // everything else is handled by the callbacks and their threads
-    for(auto& component:components){
-      const auto messages=component->generate_mavlink_messages();
-      for(const auto& msg:messages){
-        sendMessageGroundStationClients(msg);
-      }
-    }
+	{
+	  std::lock_guard<std::mutex> guard(components_lock);
+	  for(auto& component:components){
+		assert(component);
+		const auto messages=component->generate_mavlink_messages();
+		for(const auto& msg:messages){
+		  sendMessageGroundStationClients(msg);
+		}
+	  }
+	}
     std::this_thread::sleep_for(loop_intervall);
   }
 }
@@ -129,6 +128,7 @@ std::string GroundTelemetry::createDebug() const {
 void GroundTelemetry::add_settings_component(
     int comp_id, std::shared_ptr<openhd::XSettingsComponent> glue) {
   auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,comp_id,std::move(glue));
+  std::lock_guard<std::mutex> guard(components_lock);
   components.push_back(param_server);
   std::cout<<"Added parameter component\n";
 }

@@ -49,6 +49,7 @@ class AirTelemetry : public MavlinkSystem{
   //std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;
   std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
   std::shared_ptr<OHDMainComponent> _ohd_main_component;
+  std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
 };
 

@@ -63,11 +63,12 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   // for now, do it as simple as possible
   sendMessageFC(message);
   // any data created by an OpenHD component on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
+  std::lock_guard<std::mutex> guard(components_lock);
   for(auto& component: components){
-    const auto responses=component->process_mavlink_message(message);
-    for(const auto& response:responses){
-      sendMessageGroundPi(response);
-    }
+	const auto responses=component->process_mavlink_message(message);
+	for(const auto& response:responses){
+	  sendMessageGroundPi(response);
+	}
   }
 }
 
@@ -89,12 +90,15 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
         }
 	// send messages to the ground pi in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
-        for(auto& component:components){
-          const auto messages=component->generate_mavlink_messages();
-          for(const auto& msg:messages){
-            sendMessageGroundPi(msg);
-          }
-        }
+	{
+	  std::lock_guard<std::mutex> guard(components_lock);
+	  for(auto& component:components){
+		const auto messages=component->generate_mavlink_messages();
+		for(const auto& msg:messages){
+		  sendMessageGroundPi(msg);
+		}
+	  }
+	}
 	// send out in X second intervals
 	std::this_thread::sleep_for(loop_intervall);
   }
@@ -115,6 +119,7 @@ std::string AirTelemetry::createDebug() const {
 void AirTelemetry::add_settings_component(
     const int comp_id, std::shared_ptr<openhd::XSettingsComponent> glue) {
   auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,comp_id,std::move(glue));
+  std::lock_guard<std::mutex> guard(components_lock);
   components.push_back(param_server);
   std::cout<<"Added parameter component\n";
 }
