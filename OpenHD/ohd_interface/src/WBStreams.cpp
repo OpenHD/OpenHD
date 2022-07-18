@@ -140,7 +140,7 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   options.radio_port = radio_port;
   options.keypair = std::nullopt;
   if(enableFec){
-	options.fec_k=_settings->get_settings().wb_video_fec_block_length;
+	options.fec_k=static_cast<int>(_settings->get_settings().wb_video_fec_block_length);
 	options.fec_percentage=static_cast<int>(_settings->get_settings().wb_video_fec_percentage); // Default to 20% fec overhead
   }else{
 	options.fec_k=0;
