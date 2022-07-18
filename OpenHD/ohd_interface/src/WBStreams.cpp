@@ -346,6 +346,17 @@ void WBStreams::restart() {
 }
 
 bool WBStreams::set_frequency(uint32_t frequency) {
+  if(_settings->get_settings().wb_in_2G){
+	if(!openhd::is_valid_frequency_2G(frequency)){
+	  std::cerr<<"Invalid 2.4G frequency "<<frequency<<"\n";
+	  return false;
+	}
+  }else{
+	if(!openhd::is_valid_frequency_5G(frequency)){
+	  std::cerr<<"Invalid 5G frequency "<<frequency<<"\n";
+	  return false;
+	}
+  }
   _settings->unsafe_get_settings().wb_frequency=frequency;
   _settings->persist();
   for(const auto& holder:_broadcast_cards){
@@ -366,6 +377,10 @@ bool WBStreams::set_txpower(uint32_t tx_power) {
 }
 
 bool WBStreams::set_mcs_index(uint32_t mcs_index) {
+  if(!openhd::is_valid_mcs_index(mcs_index)){
+	std::cerr<<"Invalid mcs index"<<mcs_index<<"\n";
+	return false;
+  }
   _settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   _settings->persist();
   restart();

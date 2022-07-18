@@ -11,6 +11,7 @@
 namespace openhd{
 
 struct WBStreamsSettings{
+  bool wb_in_2G=false; // weather we are in the 2.4 or 5.8ghz band
   uint32_t wb_frequency=5180;
   uint32_t wb_channel_bandwidth=20; // 20 or 40 mhz bandwidth
   uint32_t wb_mcs_index=5;
@@ -18,7 +19,7 @@ struct WBStreamsSettings{
   uint32_t wb_video_fec_percentage=20;
   uint32_t wb_tx_power=1800;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBStreamsSettings,wb_frequency,wb_channel_bandwidth,wb_mcs_index,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBStreamsSettings,wb_in_2G,wb_frequency,wb_channel_bandwidth,wb_mcs_index,
 								   wb_video_fec_block_length,wb_video_fec_percentage,wb_tx_power);
 
 static WBStreamsSettings create_default_settings1(const std::vector<WiFiCard>& wifibroadcast_cards){
