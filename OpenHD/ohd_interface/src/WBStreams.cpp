@@ -34,21 +34,7 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
   // this fetches the last settings, otherwise creates default ones
   _settings=std::make_unique<openhd::WBStreamsSettingsHolder>(openhd::tmp_convert(_broadcast_cards));
 
-  // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
-  // However, with the image set up by raphael they should be free from any (OS) prcoesses already
-  for(const auto& card: _broadcast_cards){
-    //TODO we might not need this one
-    //OHDUtil::run_command("rfkill",{"unblock",card->_wifi_card.interface_name});
-    WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
-    WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
-    WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
-    assert(card->get_settings().frequency>0);
-    WifiCardCommandHelper::set_frequency(card->_wifi_card, card->get_settings().frequency);
-    assert(card->get_settings().txpower>0);
-    // TODO check if this works - on rtl8812au, the displayed value at least changes
-    WifiCardCommandHelper::set_txpower(card->_wifi_card, card->get_settings().txpower);
-    //WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
-  }
+  configure_cards();
   configure();
 }
 
@@ -59,6 +45,24 @@ void WBStreams::configure() {
   configure_video();
   std::cout << "Streams::configure() end\n";
   restart();
+}
+
+void WBStreams::configure_cards() {
+  // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
+  // However, with the image set up by raphael they should be free from any (OS) prcoesses already
+  for(const auto& card: _broadcast_cards){
+	//TODO we might not need this one
+	//OHDUtil::run_command("rfkill",{"unblock",card->_wifi_card.interface_name});
+	WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
+	WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
+	WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
+	assert(card->get_settings().frequency>0);
+	WifiCardCommandHelper::set_frequency(card->_wifi_card, card->get_settings().frequency);
+	assert(card->get_settings().txpower>0);
+	// TODO check if this works - on rtl8812au, the displayed value at least changes
+	WifiCardCommandHelper::set_txpower(card->_wifi_card, card->get_settings().txpower);
+	//WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
+  }
 }
 
 void WBStreams::configure_telemetry() {
