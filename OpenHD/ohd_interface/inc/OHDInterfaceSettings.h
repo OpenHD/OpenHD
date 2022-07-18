@@ -14,15 +14,19 @@ static constexpr auto DEFAULT_MCS_INDEX=3;
 static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
 
 struct WBStreamsSettings{
-  bool wb_in_2G=false; // weather we are in the 2.4 or 5.8ghz band
   uint32_t wb_frequency; // writen once 2.4 or 5 is known
   uint32_t wb_channel_width=DEFAULT_CHANNEL_WIDTH; // 20 or 40 mhz bandwidth
   uint32_t wb_mcs_index=DEFAULT_MCS_INDEX;
   uint32_t wb_video_fec_block_length=8;
   uint32_t wb_video_fec_percentage=20;
   uint32_t wb_tx_power=1800;
+  [[nodiscard]] bool configured_for_2G()const{
+	if(openhd::is_valid_frequency_2G(wb_frequency))return true;
+	assert(openhd::is_valid_frequency_5G(wb_frequency));
+	return false;
+  }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBStreamsSettings,wb_in_2G,wb_frequency,wb_channel_width,wb_mcs_index,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBStreamsSettings,wb_frequency,wb_channel_width,wb_mcs_index,
 								   wb_video_fec_block_length,wb_video_fec_percentage,wb_tx_power);
 
 static WBStreamsSettings create_default_settings1(const std::vector<WiFiCard>& wifibroadcast_cards){
@@ -31,7 +35,6 @@ static WBStreamsSettings create_default_settings1(const std::vector<WiFiCard>& w
   assert(first_card.supports_5ghz || first_card.supports_2ghz);
   const bool use_5ghz= wifibroadcast_cards.at(0).supports_5ghz;
   WBStreamsSettings settings{};
-  settings.wb_in_2G=!use_5ghz;
   if(use_5ghz){
 	settings.wb_frequency=DEFAULT_5GHZ_FREQUENCY;
   }else{

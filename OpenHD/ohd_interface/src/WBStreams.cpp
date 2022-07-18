@@ -33,6 +33,26 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
   }
   // this fetches the last settings, otherwise creates default ones
   _settings=std::make_unique<openhd::WBStreamsSettingsHolder>(openhd::tmp_convert(_broadcast_cards));
+  // check if the cards connected match the previous settings.
+  // For now, we check if the first wb card can do 2 / 4 ghz, and assume the rest can do the same
+  const auto first_card=_broadcast_cards.at(0)->_wifi_card;
+  if(_settings->get_settings().configured_for_2G()){
+	if(! first_card.supports_2ghz){
+	  // we need to switch to 5ghz, since the connected card cannot do 2ghz
+	  std::cerr<<"WB configured for 2G but card can only do 5G\n";
+	  _settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
+	  _settings->unsafe_get_settings().wb_frequency=DEFAULT_5GHZ_FREQUENCY;
+	  _settings->persist();
+	}
+  }else{
+	if(!first_card.supports_5ghz){
+	  // similar, we need to switch to 2G
+	  std::cerr<<"WB configured for %G but card can only do 2G\n";
+	  _settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
+	  _settings->unsafe_get_settings().wb_frequency=DEFAULT_2GHZ_FREQUENCY;
+	  _settings->persist();
+	}
+  }
   configure_cards();
   configure();
 }
@@ -349,7 +369,7 @@ void WBStreams::restart() {
 }
 
 bool WBStreams::set_frequency(uint32_t frequency) {
-  if(_settings->get_settings().wb_in_2G){
+  if(_settings->get_settings().configured_for_2G()){
 	if(!openhd::is_valid_frequency_2G(frequency)){
 	  std::cerr<<"Invalid 2.4G frequency "<<frequency<<"\n";
 	  return false;
