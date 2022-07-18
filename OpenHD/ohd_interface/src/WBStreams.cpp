@@ -9,9 +9,9 @@
 #include <iostream>
 #include <utility>
 
-WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards) :
-   _profile(std::move(profile)),_platform(platform),_broadcast_cards(broadcast_cards) {
-  std::cout<<"WBStreams::WBStreams:"<<broadcast_cards.size()<<"\n";
+WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards1) :
+   _profile(std::move(profile)),_platform(platform),_broadcast_cards(std::move(broadcast_cards1)) {
+  std::cout<<"WBStreams::WBStreams:"<<_broadcast_cards.size()<<"\n";
   // sanity checks
   if(_broadcast_cards.empty()) {
     // NOTE: Here we crash, since it would be a programmer(s) error to create a WBStreams instance without at least 1 wifi card.
