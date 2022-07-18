@@ -34,6 +34,14 @@ static WBStreamsSettings create_default_settings1(const std::vector<WiFiCard>& w
   return settings;
 }
 
+static std::vector<WiFiCard> tmp_convert(const std::vector<std::shared_ptr<WifiCardHolder>>& broadcast_cards){
+  std::vector<WiFiCard> ret;
+  for(const auto& holder:broadcast_cards){
+	ret.push_back(holder->_wifi_card);
+  }
+  return ret;
+}
+
 static const std::string INTERFACE_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("interface/");
 class WBStreamsSettingsHolder{
  public:
@@ -61,6 +69,14 @@ class WBStreamsSettingsHolder{
   [[nodiscard]] const WBStreamsSettings& get_settings()const{
 	assert(_settings);
 	return *_settings;
+  }
+  // unsafe becasue you then have to remember to persist the settings.
+  WBStreamsSettings& unsafe_get_settings(){
+	assert(_settings);
+	return *_settings;
+  }
+  void persist(){
+	persist_settings();
   }
  private:
   std::unique_ptr<WBStreamsSettings> _settings;

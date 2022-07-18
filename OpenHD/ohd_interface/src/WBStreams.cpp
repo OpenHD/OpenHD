@@ -31,6 +31,9 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
     // We just use the first one, this points to a upper level programming error or something weird.
     _broadcast_cards.resize(1);
   }
+  // this fetches the last settings, otherwise creates default ones
+  _settings=std::make_unique<openhd::WBStreamsSettingsHolder>(openhd::tmp_convert(_broadcast_cards));
+
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // However, with the image set up by raphael they should be free from any (OS) prcoesses already
   for(const auto& card: _broadcast_cards){
@@ -55,7 +58,7 @@ void WBStreams::configure() {
   configure_telemetry();
   configure_video();
   std::cout << "Streams::configure() end\n";
-  restart({});
+  restart();
 }
 
 void WBStreams::configure_telemetry() {
@@ -97,7 +100,10 @@ void WBStreams::configure_video() {
 }
 
 std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec)const {
-  RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, DEFAULT_MCS_INDEX};
+  //const auto mcs_index=DEFAULT_MCS_INDEX;
+  const auto mcs_index=static_cast<int>(_settings->get_settings().wb_mcs_index);
+  const auto bandwidth=static_cast<int>(_settings->get_settings().wb_channel_bandwidth);
+  RadiotapHeader::UserSelectableParams wifiParams{bandwidth, false, 0, false, mcs_index};
   RadiotapHeader radiotapHeader{wifiParams};
   TOptions options{};
   // We log them all manually together
@@ -105,8 +111,8 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   options.radio_port = radio_port;
   options.keypair = std::nullopt;
   if(enableFec){
-	options.fec_k=8;
-	options.fec_percentage=20; // Default to 20% fec overhead
+	options.fec_k=_settings->get_settings().wb_video_fec_block_length;
+	options.fec_percentage=static_cast<int>(_settings->get_settings().wb_video_fec_percentage); // Default to 20% fec overhead
   }else{
 	options.fec_k=0;
 	options.fec_percentage=0;
@@ -313,7 +319,7 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   }
 }
 
-void WBStreams::restart(const openhd::WBStreamsSettings &settings) {
+void WBStreams::restart() {
   std::cout << "WBStreams::restart() begin\n";
   if(udpTelemetryRx){
 	udpTelemetryRx->stop_looping();
@@ -333,13 +339,14 @@ void WBStreams::restart(const openhd::WBStreamsSettings &settings) {
 	videoRx.reset();
   }
   udpVideoRxList.resize(0);
-  _last_settings=settings;
   configure_telemetry();
   configure_video();
   std::cout << "WBStreams::restart() end\n";
 }
 
 bool WBStreams::set_frequency(uint32_t frequency) {
+  _settings->unsafe_get_settings().wb_frequency=frequency;
+  _settings->persist();
   for(const auto& holder:_broadcast_cards){
 	const auto& card=holder->_wifi_card;
 	WifiCardCommandHelper::set_frequency(card,frequency);
@@ -347,6 +354,8 @@ bool WBStreams::set_frequency(uint32_t frequency) {
   return true;
 }
 bool WBStreams::set_txpower(uint32_t tx_power) {
+  _settings->unsafe_get_settings().wb_tx_power=tx_power;
+  _settings->persist();
   for(const auto& holder:_broadcast_cards){
 	const auto& card=holder->_wifi_card;
 	WifiCardCommandHelper::set_txpower(card,tx_power);
@@ -354,6 +363,8 @@ bool WBStreams::set_txpower(uint32_t tx_power) {
   return true;
 }
 bool WBStreams::set_mcs_index(uint32_t mcs_index) {
-  _last_settings.wb_mcs_index=mcs_index;
-  restart(_last_settings);
+  _settings->unsafe_get_settings().wb_mcs_index=mcs_index;
+  _settings->persist();
+  restart();
+  return true;
 }

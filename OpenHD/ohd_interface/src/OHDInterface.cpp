@@ -55,7 +55,6 @@ platform(platform1),profile(std::move(profile1)) {
   }else{
       wbStreams=std::make_unique<WBStreams>(profile,broadcast_cards);
   }
-  auto tmp=std::make_shared<openhd::WBStreamsSettingsHolder>(discovered_wifi_cards);
 
   // USB tethering - only on ground
   if(!profile.is_air){

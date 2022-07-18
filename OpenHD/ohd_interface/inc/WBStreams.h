@@ -35,7 +35,7 @@ class WBStreams {
   // there most likely was an unsuccessful frequency change.
   [[nodiscard]] bool ever_received_any_data()const;
   // Some settings need a full restart of the tx / rx instances to apply
-  void restart(const openhd::WBStreamsSettings& settings);
+  void restart();
   // set the frequency (wifi channel) of all wifibroadcast cards
   bool set_frequency(uint32_t frequency);
   // set the tx power of all wifibroadcast cards
@@ -50,7 +50,8 @@ class WBStreams {
   void configure();
   void configure_telemetry();
   void configure_video();
-  openhd::WBStreamsSettings _last_settings;
+  //openhd::WBStreamsSettings _last_settings;
+  std::unique_ptr<openhd::WBStreamsSettingsHolder> _settings;
   // For telemetry, bidirectional in opposite directions
   std::unique_ptr<UDPWBTransmitter> udpTelemetryTx;
   std::unique_ptr<UDPWBReceiver> udpTelemetryRx;
