@@ -47,6 +47,7 @@ class WBStreams {
   const int DEFAULT_MCS_INDEX = 3;
   std::vector<std::shared_ptr<WifiCardHolder>> _broadcast_cards;
  private:
+  // set cards to monitor mode and set the right frequency, tx power
   void configure_cards();
   void configure();
   void configure_telemetry();

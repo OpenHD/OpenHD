@@ -33,7 +33,6 @@ WBStreams::WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHold
   }
   // this fetches the last settings, otherwise creates default ones
   _settings=std::make_unique<openhd::WBStreamsSettingsHolder>(openhd::tmp_convert(_broadcast_cards));
-
   configure_cards();
   configure();
 }
