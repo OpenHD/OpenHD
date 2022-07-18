@@ -354,6 +354,7 @@ bool WBStreams::set_frequency(uint32_t frequency) {
   }
   return true;
 }
+
 bool WBStreams::set_txpower(uint32_t tx_power) {
   _settings->unsafe_get_settings().wb_tx_power=tx_power;
   _settings->persist();
@@ -363,6 +364,7 @@ bool WBStreams::set_txpower(uint32_t tx_power) {
   }
   return true;
 }
+
 bool WBStreams::set_mcs_index(uint32_t mcs_index) {
   _settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   _settings->persist();
