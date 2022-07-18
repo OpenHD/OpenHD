@@ -82,6 +82,7 @@ int main(int argc, char *argv[]) {
     if(options.clean_start){
       clean_all_settings();
     }
+	generateSettingsDirectoryIfNonExists();
 
     // First discover the platform:
     const auto platform = DPlatform::discover();

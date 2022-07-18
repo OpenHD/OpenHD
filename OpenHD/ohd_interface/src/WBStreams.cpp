@@ -102,8 +102,8 @@ void WBStreams::configure_video() {
 std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec)const {
   //const auto mcs_index=DEFAULT_MCS_INDEX;
   const auto mcs_index=static_cast<int>(_settings->get_settings().wb_mcs_index);
-  const auto bandwidth=static_cast<int>(_settings->get_settings().wb_channel_bandwidth);
-  RadiotapHeader::UserSelectableParams wifiParams{bandwidth, false, 0, false, mcs_index};
+  const auto channel_width=static_cast<int>(_settings->get_settings().wb_channel_width);
+  RadiotapHeader::UserSelectableParams wifiParams{channel_width, false, 0, false, mcs_index};
   RadiotapHeader radiotapHeader{wifiParams};
   TOptions options{};
   // We log them all manually together
