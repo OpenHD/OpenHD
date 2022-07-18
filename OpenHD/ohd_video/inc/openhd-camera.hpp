@@ -13,6 +13,7 @@
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "openhd-settings.hpp"
+#include "openhd-settings2.hpp"
 
 #include "mavlink_settings/XSettingsComponent.h"
 
@@ -117,126 +118,68 @@ static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::st
 // 1) Differentiate between immutable information (camera) and
 // 2) mutable camera settings.
 // Changes in the camera settings are propagated through this class.
-class CameraHolder : public openhd::XSettingsComponent {
+class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
+	    public openhd::XSettingsComponent{
  public:
-  explicit CameraHolder(Camera camera):_camera(std::move(camera)){
-    // on construction, check if we can find any previously persisted settings
-    // (by using the deterministic hash from the immutable, deterministic detection data)
-    // if we cannot find any previously persisted settings, create default ones and persist them
-    // for the first time
-    if(!OHDFilesystemUtil::exists(VIDEO_SETTINGS_DIRECTORY.c_str())){
-      OHDFilesystemUtil::create_directory(VIDEO_SETTINGS_DIRECTORY);
-    }
-    const auto last_settings_opt=read_last_settings();
-    if(last_settings_opt.has_value()){
-      _settings=std::make_unique<CameraSettings>(last_settings_opt.value());
-      std::cout<<"Found settings\n";
-    }else{
-      std::cout<<"Creating default settings:"<<get_unique_filename()<<"\n";
-      // create default settings and persist them for the next reboot
-      _settings=std::make_unique<CameraSettings>();
-      persist_settings();
-    }
+  explicit CameraHolder(Camera camera):
+	  _camera(std::move(camera)),
+	  openhd::settings::PersistentSettings<CameraSettings>(VIDEO_SETTINGS_DIRECTORY){
+	init();
   }
-  // delete copy and move constructor
-  CameraHolder(const CameraHolder&)=delete;
-  CameraHolder(const CameraHolder&&)=delete;
- public:
+  [[nodiscard]] const Camera& get_camera()const{
+	return _camera;
+  }
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings() override{
-    std::vector<openhd::Setting> ret={
-        openhd::Setting{"VIDEO_WIDTH",_settings->userSelectedVideoFormat.width},
-        openhd::Setting{"VIDEO_HEIGHT",_settings->userSelectedVideoFormat.height},
-        openhd::Setting{"VIDEO_FPS",_settings->userSelectedVideoFormat.framerate},
-        openhd::Setting{"VIDEO_FORMAT",video_codec_to_int(_settings->userSelectedVideoFormat.videoCodec)},
-        openhd::Setting{"V_BITRATE_MBITS",static_cast<int>(_settings->bitrateKBits / 1000)}
-    };
-    return ret;
+	std::vector<openhd::Setting> ret={
+		openhd::Setting{"VIDEO_WIDTH",get_settings().userSelectedVideoFormat.width},
+		openhd::Setting{"VIDEO_HEIGHT",get_settings().userSelectedVideoFormat.height},
+		openhd::Setting{"VIDEO_FPS",get_settings().userSelectedVideoFormat.framerate},
+		openhd::Setting{"VIDEO_FORMAT",video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec)},
+		openhd::Setting{"V_BITRATE_MBITS",static_cast<int>(get_settings().bitrateKBits / 1000)}
+	};
+	return ret;
   }
   void process_setting_changed(openhd::Setting changed_setting) override{
-    bool changed=false;
-    if(changed_setting.id=="VIDEO_WIDTH"){
-      changed=openhd::safe_to(_settings->userSelectedVideoFormat.width,changed_setting.value);
-    }else if(changed_setting.id=="VIDEO_HEIGHT"){
-      changed=openhd::safe_to(_settings->userSelectedVideoFormat.height,changed_setting.value);
-    }else if(changed_setting.id=="VIDEO_FPS"){
-      changed=openhd::safe_to(_settings->userSelectedVideoFormat.framerate,changed_setting.value);
-    }else if(changed_setting.id=="VIDEO_FORMAT"){
-      int value= video_codec_to_int(_settings->userSelectedVideoFormat.videoCodec);
-      changed=openhd::safe_to(value,changed_setting.value);
-      _settings->userSelectedVideoFormat.videoCodec=video_codec_from_int(value);
-      /*std::string value=video_codec_to_string(_settings->userSelectedVideoFormat.videoCodec);
-      changed=openhd::safe_to(value,changed_setting.value);
-      _settings->userSelectedVideoFormat.videoCodec= string_to_video_codec(value);*/
-    }else if(changed_setting.id=="V_BITRATE_MBITS"){
-      int value=_settings->bitrateKBits/1000;
-      changed=openhd::safe_to(value,changed_setting.value);
-      _settings->bitrateKBits=value*1000;
-    }
-    if(changed){
-      update_settings(*_settings);
-    }
+	CameraSettings settings_copy=get_settings();
+	bool changed=false;
+	if(changed_setting.id=="VIDEO_WIDTH"){
+	  changed=openhd::safe_to(settings_copy.userSelectedVideoFormat.width,changed_setting.value);
+	}else if(changed_setting.id=="VIDEO_HEIGHT"){
+	  changed=openhd::safe_to(settings_copy.userSelectedVideoFormat.height,changed_setting.value);
+	}else if(changed_setting.id=="VIDEO_FPS"){
+	  changed=openhd::safe_to(settings_copy.userSelectedVideoFormat.framerate,changed_setting.value);
+	}else if(changed_setting.id=="VIDEO_FORMAT"){
+	  int value= video_codec_to_int(settings_copy.userSelectedVideoFormat.videoCodec);
+	  changed=openhd::safe_to(value,changed_setting.value);
+	  settings_copy.userSelectedVideoFormat.videoCodec=video_codec_from_int(value);
+	  /*std::string value=video_codec_to_string(_settings->userSelectedVideoFormat.videoCodec);
+	  changed=openhd::safe_to(value,changed_setting.value);
+	  _settings->userSelectedVideoFormat.videoCodec= string_to_video_codec(value);*/
+	}else if(changed_setting.id=="V_BITRATE_MBITS"){
+	  int value=settings_copy.bitrateKBits/1000;
+	  changed=openhd::safe_to(value,changed_setting.value);
+	  settings_copy.bitrateKBits=value*1000;
+	}
+	if(changed){
+	  update_settings(settings_copy);
+	}
   }
   // Settings hacky end
- public:
-  [[nodiscard]] const Camera& get_camera()const{
-    return _camera;
-  }
-  [[nodiscard]] const CameraSettings& get_settings()const{
-    assert(_settings);
-    return *_settings;
-  }
-  typedef std::function<void()> SETTINGS_CHANGED_CALLBACK;
-  void register_listener(SETTINGS_CHANGED_CALLBACK callback){
-    assert(!_settings_changed_callback);
-    _settings_changed_callback=std::move(callback);
-  }
-  // Persist then new settings, then call the callback to propagate the change
-  void update_settings(const CameraSettings& new_settings){
-    std::cout<<"Got new Camera Settings\n";
-    _settings=std::make_unique<CameraSettings>(new_settings);
-    persist_settings();
-    if(_settings_changed_callback){
-      _settings_changed_callback();
-    }
-  }
  private:
-  SETTINGS_CHANGED_CALLBACK _settings_changed_callback;
   // Camera info is immutable
   const Camera _camera;
-  std::mutex _settings_mutex;
-  std::unique_ptr<CameraSettings> _settings;
-  // TODO this one is not unique enough yet.
-  [[nodiscard]] std::string get_uniqe_hash()const{
-    std::stringstream ss;
-    ss<<(static_cast<int>(_camera.index))<<"_"<<camera_type_to_string(_camera.type)<<"_"<<_camera.name;
-    return ss.str();
+ private:
+  [[nodiscard]] std::string get_unique_filename()const override{
+	std::stringstream ss;
+	ss<<(static_cast<int>(_camera.index))<<"_"<<camera_type_to_string(_camera.type)<<"_"<<_camera.name;
+	return ss.str();
   }
-  [[nodiscard]] std::string get_unique_filename()const{
-    return VIDEO_SETTINGS_DIRECTORY+ get_uniqe_hash();
-  }
-  // write settings locally for persistence
-  void persist_settings()const{
-    assert(_settings);
-    const auto filename= get_unique_filename();
-    const nlohmann::json tmp=*_settings;
-    // and write them locally for persistence
-    std::ofstream t(filename);
-    t << tmp.dump(4);
-    t.close();
-  }
-  // read last settings, if they are available
-  [[nodiscard]] std::optional<CameraSettings> read_last_settings()const{
-    const auto filename= get_unique_filename();
-    if(!OHDFilesystemUtil::exists(filename.c_str())){
-      return std::nullopt;
-    }
-    std::ifstream f(filename);
-    nlohmann::json j;
-    f >> j;
-    return j.get<CameraSettings>();
+  [[nodiscard]] CameraSettings create_default()const override{
+	return CameraSettings{};
   }
 };
+
 
 using DiscoveredCameraList = std::vector<Camera>;
 
