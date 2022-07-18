@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <map>
 
 namespace openhd{
 
@@ -32,6 +33,16 @@ class XSettingsComponent{
   XSettingsComponent(const XSettingsComponent&)=delete;
   XSettingsComponent(const XSettingsComponent&&)=delete;
 };
+
+static void validate_provided_ids(const std::vector<Setting>& settings){
+  // we need to have unique setting string ids. If there is a duplicate, this would be a programmers error,
+  // and when used correctly should be found during debugging by this method.
+  std::map<std::string,void*> test;
+  for(const auto& setting:settings){
+	assert(test.find(setting.id)==test.end());
+	test[setting.id]=nullptr;
+  }
+}
 
 /*bool safe_to(std::bool& value,const SettingsVariant& settings_variant){
   if(std::holds_alternative<bool>(settings_variant)){
