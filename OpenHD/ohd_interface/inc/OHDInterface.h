@@ -23,8 +23,6 @@ class OHDInterface {
   explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1);
   // register callback that is called in regular intervals with link statistics
   void set_stats_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) const;
-  std::unique_ptr<WBStreams> wbStreams;
-  std::unique_ptr<USBTetherListener> usbTetherListener;
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
   /**
@@ -41,6 +39,8 @@ class OHDInterface {
  private:
   const OHDProfile profile;
   const OHDPlatform platform;
+  std::unique_ptr<WBStreams> wbStreams;
+  std::unique_ptr<USBTetherListener> usbTetherListener;
   std::unique_ptr<WifiHotspot> _wifi_hotspot;
   std::unique_ptr<openhd::rpi::LEDBlinker> _error_blinker;
 };
