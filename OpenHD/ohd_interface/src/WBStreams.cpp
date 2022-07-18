@@ -159,6 +159,7 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
   const auto cards = get_rx_card_names();
   assert(!cards.empty());
   options.rxInterfaces = cards;
+  options.rx_queue_depth = 10;//_broadcast_cards.size() > 1 ? 10 : 2;
   return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port,[this](OpenHDStatisticsWriter::Data stats){
 	this->onNewStatisticsData(stats);
   });
