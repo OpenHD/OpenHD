@@ -9,6 +9,7 @@
 #include "openhd-log.hpp"
 #include "openhd-settings.hpp"
 #include "openhd-util-filesystem.hpp"
+#include "openhd-settings2.hpp"
 #include "mavlink_settings/XSettingsComponent.h"
 
 enum class WiFiCardType {
@@ -150,63 +151,24 @@ static const std::string WIFI_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::str
 // 1) Differentiate between immutable information (like mac address) and
 // 2) mutable WiFi card settings.
 // Setting changes are propagated through this class.
-class WifiCardHolder{
+ class WifiCardHolder : public openhd::settings::PersistentSettings<WifiCardSettings>{
  public:
-  explicit WifiCardHolder(WiFiCard wifi_card):_wifi_card(std::move(wifi_card)){
-    if(!OHDFilesystemUtil::exists(WIFI_SETTINGS_DIRECTORY.c_str())){
-      OHDFilesystemUtil::create_directory(WIFI_SETTINGS_DIRECTORY);
-    }
-    const auto last_settings_opt=read_last_settings();
-    if(last_settings_opt.has_value()){
-      _settings=std::make_unique<WifiCardSettings>(last_settings_opt.value());
-      std::cout<<"Found settings in:"<<get_unique_filename()<<"\n";
-    }else{
-      std::cout<<"Creating default settings:"<<get_unique_filename()<<"\n";
-      // create default settings and persist them for the next reboot
-      _settings=std::make_unique<WifiCardSettings>(create_default_settings(_wifi_card));
-      persist_settings();
-    }
+  explicit WifiCardHolder(WiFiCard wifi_card):
+	  openhd::settings::PersistentSettings<WifiCardSettings>(WIFI_SETTINGS_DIRECTORY),
+	  _wifi_card(std::move(wifi_card)){
+    init();
   }
-  // delete copy and move constructor
-  WifiCardHolder(const WifiCardHolder&)=delete;
-  WifiCardHolder(const WifiCardHolder&&)=delete;
  public:
   const WiFiCard _wifi_card;
-  [[nodiscard]] const WifiCardSettings& get_settings()const{
-    assert(_settings);
-    return *_settings;
-  }
  private:
-  std::unique_ptr<WifiCardSettings> _settings;
-  [[nodiscard]] std::string get_uniqe_hash()const{
+   [[nodiscard]] std::string get_unique_filename()const override{
     std::stringstream ss;
     ss<<wifi_card_type_to_string(_wifi_card.type)<<"_"<<_wifi_card.interface_name;
     return ss.str();
   }
-  [[nodiscard]] std::string get_unique_filename()const{
-    return WIFI_SETTINGS_DIRECTORY+get_uniqe_hash();
-  }
-  // write settings locally for persistence
-  void persist_settings()const{
-    assert(_settings);
-    const auto filename= get_unique_filename();
-    const nlohmann::json tmp=*_settings;
-    // and write them locally for persistence
-    std::ofstream t(filename);
-    t << tmp.dump(4);
-    t.close();
-  }
-  // read last settings, if they are available
-  [[nodiscard]] std::optional<WifiCardSettings> read_last_settings()const{
-    const auto filename= get_unique_filename();
-    if(!OHDFilesystemUtil::exists(filename.c_str())){
-      return std::nullopt;
-    }
-    std::ifstream f(filename);
-    nlohmann::json j;
-    f >> j;
-    return j.get<WifiCardSettings>();
-  }
+   [[nodiscard]] WifiCardSettings create_default()const override{
+	 return create_default_settings(_wifi_card);
+   }
 };
 
 
