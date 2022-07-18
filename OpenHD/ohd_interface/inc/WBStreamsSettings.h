@@ -71,6 +71,14 @@ class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBStre
   }
 };
 
+// Note: max 16 char for id limit
+static constexpr auto WB_FREQUENCY="WB_FREQUENCY";
+static constexpr auto WB_CHANNEL_WIDTH="WB_CHANNEL_W";
+static constexpr auto WB_MCS_INDEX="WB_MCS_INDEX";
+static constexpr auto WB_VIDEO_FEC_BLOCK_LENGTH="WB_V_FEC_BLK_L";
+static constexpr auto WB_VIDEO_FEC_PERCENTAGE="WB_V_FEC_PERC";
+static constexpr auto WB_TX_POWER_MILLI_DBM="WB_TX_POWER";
+
 }
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_INC_WBSTREAMSSETTINGS_H_

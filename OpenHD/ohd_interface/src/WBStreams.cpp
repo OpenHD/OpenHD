@@ -399,6 +399,10 @@ bool WBStreams::set_frequency(uint32_t frequency) {
 }
 
 bool WBStreams::set_txpower(uint32_t tx_power) {
+  if(!openhd::is_valid_tx_power(tx_power)){
+	std::cerr<<"Invalid tx power:"<<tx_power<<"\n";
+	return false;
+  }
   _settings->unsafe_get_settings().wb_tx_power_milli_dbm=tx_power;
   _settings->persist();
   // We can update the tx power without restarting the streams
@@ -429,4 +433,56 @@ bool WBStreams::set_channel_width(uint32_t channel_width) {
   _settings->persist();
   restart();
   return true;
+}
+
+bool WBStreams::set_fec_block_length(int block_length) {
+  if(!openhd::is_valid_fec_block_length(block_length)){
+	std::cerr<<"Invalid fec block length:"<<block_length<<"\n";
+	return false;
+  }
+  _settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
+  _settings->persist();
+  restart();
+  return true;
+}
+
+bool WBStreams::set_fec_percentage(int fec_percentage) {
+  if(!openhd::is_valid_fec_block_length(fec_percentage)){
+	std::cerr<<"Invalid fec percentage:"<<fec_percentage<<"\n";
+	return false;
+  }
+  _settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
+  _settings->persist();
+  restart();
+  return true;
+}
+
+std::vector<openhd::Setting> WBStreams::get_all_settings() const {
+  using namespace openhd;
+  std::vector<openhd::Setting> ret{};
+  ret.push_back(openhd::Setting{WB_FREQUENCY,(int)_settings->get_settings().wb_frequency});
+  ret.push_back(openhd::Setting{WB_CHANNEL_WIDTH,(int)_settings->get_settings().wb_channel_width});
+  ret.push_back(openhd::Setting{WB_MCS_INDEX,(int)_settings->get_settings().wb_mcs_index});
+  ret.push_back(openhd::Setting{WB_VIDEO_FEC_BLOCK_LENGTH,(int)_settings->get_settings().wb_video_fec_block_length});
+  ret.push_back(openhd::Setting{WB_VIDEO_FEC_PERCENTAGE,(int)_settings->get_settings().wb_video_fec_percentage});
+  ret.push_back(openhd::Setting{WB_TX_POWER_MILLI_DBM,(int)_settings->get_settings().wb_tx_power_milli_dbm});
+  return ret;
+}
+
+void WBStreams::process_new_setting(openhd::Setting changed_setting) {
+  using namespace openhd;
+  const auto id=changed_setting.id;
+  if(id==WB_FREQUENCY){
+	set_frequency(std::get<int>(changed_setting.value));
+  }else if(id==WB_CHANNEL_WIDTH){
+	set_channel_width(std::get<int>(changed_setting.value));
+  }else if(id==WB_MCS_INDEX){
+	set_mcs_index(std::get<int>(changed_setting.value));
+  }else if(id==WB_VIDEO_FEC_BLOCK_LENGTH){
+	set_fec_block_length(std::get<int>(changed_setting.value));
+  }else if(id==openhd::WB_VIDEO_FEC_PERCENTAGE){
+	set_fec_percentage(std::get<int>(changed_setting.value));
+  }else if(id==WB_TX_POWER_MILLI_DBM){
+	set_txpower(std::get<int>(changed_setting.value));
+  }
 }

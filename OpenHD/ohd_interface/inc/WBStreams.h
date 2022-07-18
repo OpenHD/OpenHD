@@ -43,9 +43,14 @@ class WBStreams {
   bool set_txpower(uint32_t tx_power);
   // set the mcs index for all wifibroadcast cards
   bool set_mcs_index(uint32_t mcs_index);
+  bool set_fec_block_length(int block_length);
+  bool set_fec_percentage(int fec_percentage);
   // set the channel width
   // TODO doesn't work yet, aparently we need more than only the pcap header.
   bool set_channel_width(uint32_t channel_width);
+  // settings hacky begin
+  std::vector<openhd::Setting> get_all_settings()const;
+  void process_new_setting(openhd::Setting changed_setting);
  private:
   const OHDProfile _profile;
   const OHDPlatform _platform;

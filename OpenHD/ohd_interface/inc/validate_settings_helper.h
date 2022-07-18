@@ -105,8 +105,16 @@ static bool is_valid_mcs_index(uint32_t mcs_index){
 }
 
 // think it is always in milli dbm
-static bool validate_tx_power(uint32_t tx_power){
+static bool is_valid_tx_power(uint32_t tx_power){
   return tx_power < 4000;
+}
+
+static bool is_valid_fec_block_length(int block_length){
+  return block_length>=1 && block_length <100;
+}
+// max 100% fec (2x the amount of data), this is already too much
+static bool is_valid_fec_percentage(int fec_perc){
+  return fec_perc>0 && fec_perc<100;
 }
 
 }
