@@ -10,7 +10,7 @@
 #include "openhd-wifi.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-link-statistics.hpp"
-#include "OHDInterfaceSettings.h"
+#include "WBStreamsSettings.h"
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
 
@@ -49,6 +49,7 @@ class WBStreams {
  private:
   // set cards to monitor mode and set the right frequency, tx power
   void configure_cards();
+  // start telemetry and video rx/tx stream(s)
   void configure_streams();
   void configure_telemetry();
   void configure_video();
