@@ -52,13 +52,9 @@ static const std::string INTERFACE_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std
 	  wifibroadcast_cards(std::move(wifibroadcast_cards1)){
 	init();
   }
-  // delete copy and move constructor
-  WBStreamsSettingsHolder(const WifiCardHolder&)=delete;
-  WBStreamsSettingsHolder(const WifiCardHolder&&)=delete;
  public:
   const std::vector<WiFiCard> wifibroadcast_cards;
  private:
-  std::unique_ptr<WBStreamsSettings> _settings;
    [[nodiscard]] std::string get_unique_filename()const override{
 	std::stringstream ss;
 	ss<<"wifibroadcast_settings.json";
