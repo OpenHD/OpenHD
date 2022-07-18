@@ -44,7 +44,9 @@ class PersistentSettings{
   }
   // Persist then new settings, then call the callback to propagate the change
   void update_settings(const T& new_settings){
-	std::cout<<"Got new settings\n";
+	std::stringstream ss;
+	ss<<"Got new settings"<<get_unique_filename()<<"\n";
+	std::cout<<ss.str();
 	_settings=std::make_unique<T>(new_settings);
 	persist_settings();
 	if(_settings_changed_callback){
