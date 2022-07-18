@@ -49,6 +49,8 @@ class OHDTelemetry {
     }
   }
   void add_settings_component(const int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue){
+	assert(_already_added_settings_components.find(comp_id)==_already_added_settings_components.end());
+	_already_added_settings_components[comp_id]=nullptr;
     if(profile.is_air){
       airTelemetry->add_settings_component(comp_id,std::move(glue));
     }else{
@@ -73,6 +75,7 @@ class OHDTelemetry {
   const OHDPlatform platform;
   const OHDProfile profile;
   const bool m_enableExtendedLogging;
+  std::map<uint8_t,void*> _already_added_settings_components;
   /**
   * Return the name of the default UART for the different platforms OpenHD is running on.
   * @param platformType the platform we are running on
