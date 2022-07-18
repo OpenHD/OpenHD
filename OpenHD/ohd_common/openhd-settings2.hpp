@@ -13,14 +13,15 @@
 
 namespace openhd::settings{
 
+/**
+ * Helper class to persist settings during reboots using json.
+ * @tparam T the settings class to persist, needs to have to and from json(s)
+ */
 template<class T>
 class PersistentSettings{
  public:
   /**
-   * Helper class to persist settings during reboots using json.
-   * The constructor first looks for a previosly written file (base_path+unique filename).
-   * If this file exists, create settings from it - otherwise, create settings from the default helper and persist.
-   * @param base_path the directory into which the settings file is then written.
+   * @param base_path the directory into which the settings file is then written. (filename: base_path+unique filename).
    */
   explicit PersistentSettings(std::string base_path):_base_path(std::move(base_path)){
 	assert(_base_path.back()=='/');
@@ -61,6 +62,10 @@ class PersistentSettings{
  protected:
   [[nodiscard]] virtual std::string get_unique_filename()const=0;
   virtual T create_default()const=0;
+  /*
+   * looks for a previosly written file (base_path+unique filename).
+   * If this file exists, create settings from it - otherwise, create default and persist.
+   */
   void init(){
 	if(!OHDFilesystemUtil::exists(_base_path.c_str())){
 	  OHDFilesystemUtil::create_directory(_base_path);
