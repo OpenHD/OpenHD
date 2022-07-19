@@ -71,6 +71,11 @@ class OHDTelemetry {
 	  groundTelemetry->set_link_statistics(stats);
 	}
   }
+  // Add the IP of another Ground station client
+  void add_ground_station_ip(std::string ip) const{
+	assert(!profile.is_air);
+	groundTelemetry->add_ground_station_ip(std::move(ip));
+  }
  private:
   const OHDPlatform platform;
   const OHDProfile profile;
@@ -110,4 +115,5 @@ class OHDTelemetry {
     return platformSerialPort;*/
   }
 };
+
 #endif //OPENHD_OHDTELEMETRY_H

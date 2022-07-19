@@ -191,6 +191,7 @@ std::string WBStreams::createDebug() const {
 void WBStreams::addExternalDeviceIpForwarding(const std::string& ip) {
   bool first= true;
   assert(udpVideoRxList.size()==2);
+  std::cout<<"WBStreams::addExternalDeviceIpForwarding:"<<ip<<"\n";
   // forward video
   for(auto& rxVid:udpVideoRxList){
 	const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;

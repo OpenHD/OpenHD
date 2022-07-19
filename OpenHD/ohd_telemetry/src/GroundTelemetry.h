@@ -29,6 +29,8 @@ class GroundTelemetry :public MavlinkSystem{
   // changes in the parameter set are propagated back up by the "glue".
   void add_settings_component(int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue);
   void set_link_statistics(openhd::link_statistics::AllStats stats);
+  // Add the IP of another Ground station client, to start forwarding telemetry data there
+  void add_ground_station_ip(std::string ip);
  private:
   const OHDPlatform _platform;
   // called every time a message from the air pi is received

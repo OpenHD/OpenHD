@@ -36,7 +36,7 @@ void USBTetherListener::connectOnce() {
 	}
   }
   // Configure the detected USB tether device (not sure if needed)
-  OHDUtil::run_command("dhclient",{"usb0"});
+  //OHDUtil::run_command("dhclient",{"usb0"});
 
   // now we find the IP of the connected device so we can forward video and more to it.
   // bit more complicated than needed.
