@@ -72,6 +72,10 @@ void GroundTelemetry::sendMessageGroundStationClients(const MavlinkMessage &mess
   if (udpGroundClient) {
 	udpGroundClient->sendMessage(message);
   }
+  std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
+  for(const auto& other_client:other_udp_ground_stations){
+	other_client->sendMessage(message);
+  }
 }
 
 void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
@@ -139,11 +143,12 @@ void GroundTelemetry::set_link_statistics(openhd::link_statistics::AllStats stat
   }
 }
 
-void GroundTelemetry::add_external_ground_station_ip(std::string ip) {
+void GroundTelemetry::add_external_ground_station_ip(std::string ip_openhd,std::string ip_dest_device) {
   std::stringstream ss;
-  ss<<"GroundTelemetry::add_external_ground_station_ip:["<<ip<<"]\n";
+  ss<<"GroundTelemetry::add_external_ground_station_ip:ip_openhd:["<<ip_openhd<<",ip_dest_device:"<<ip_dest_device<<"]\n";
   std::cout<<ss.str();
-  if(udpGroundClient){
-	udpGroundClient->addAnotherDestIpAddress(ip);
-  }
+  std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
+  /*auto tmp=std::make_shared<UDPEndpoint2>("GroundStationUDPX",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
+										  ip_openhd,ip_dest_device);
+  other_udp_ground_stations.emplace_back(tmp);*/
 }

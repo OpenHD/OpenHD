@@ -23,6 +23,8 @@
 class AirTelemetry : public MavlinkSystem{
  public:
   explicit AirTelemetry(OHDPlatform platform,std::string fcSerialPort);
+  AirTelemetry(const AirTelemetry&)=delete;
+  AirTelemetry(const AirTelemetry&&)=delete;
   /**
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.

@@ -72,9 +72,9 @@ class OHDTelemetry {
 	}
   }
   // Add the IP of another Ground station client
-  void add_ground_station_ip(std::string ip) const{
+  void add_external_ground_station_ip(std::string ip_openhd,std::string ip_dest_device)const{
 	assert(!profile.is_air);
-	groundTelemetry->add_external_ground_station_ip(std::move(ip));
+	groundTelemetry->add_external_ground_station_ip(std::move(ip_openhd),std::move(ip_dest_device));
   }
  private:
   const OHDPlatform platform;

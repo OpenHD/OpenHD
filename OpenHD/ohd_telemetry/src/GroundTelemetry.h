@@ -18,7 +18,9 @@
  */
 class GroundTelemetry :public MavlinkSystem{
  public:
-  GroundTelemetry(OHDPlatform platform);
+  explicit GroundTelemetry(OHDPlatform platform);
+  GroundTelemetry(const GroundTelemetry&)=delete;
+  GroundTelemetry(const GroundTelemetry&&)=delete;
   /**
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.
@@ -30,7 +32,7 @@ class GroundTelemetry :public MavlinkSystem{
   void add_settings_component(int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue);
   void set_link_statistics(openhd::link_statistics::AllStats stats);
   // Add the IP of another Ground station client, to start forwarding telemetry data there
-  void add_external_ground_station_ip(std::string ip);
+  void add_external_ground_station_ip(std::string ip_openhd,std::string ip_dest_device);
  private:
   const OHDPlatform _platform;
   // called every time a message from the air pi is received
@@ -50,6 +52,9 @@ class GroundTelemetry :public MavlinkSystem{
   std::shared_ptr<OHDMainComponent> _ohd_main_component;
   std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
+  // extra
+  std::mutex other_udp_ground_stations_lock;
+  std::vector<std::shared_ptr<UDPEndpoint2>> other_udp_ground_stations{};
 };
 
 #endif //OPENHD_TELEMETRY_GROUNDTELEMETRY_H
