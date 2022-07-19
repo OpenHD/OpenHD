@@ -425,8 +425,12 @@ bool WBStreams::set_mcs_index(uint32_t mcs_index) {
   _settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   _settings->persist();
   // To set the mcs index, r.n we have to restart the tx instances
+  std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
   if(udpTelemetryTx){
 	udpTelemetryTx->update_mcs_index(mcs_index);
+  }
+  for(auto& tx:udpVideoTxList){
+	tx->update_mcs_index(mcs_index);
   }
   return true;
 }
