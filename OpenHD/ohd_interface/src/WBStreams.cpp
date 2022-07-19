@@ -132,7 +132,6 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   const auto mcs_index=static_cast<int>(_settings->get_settings().wb_mcs_index);
   const auto channel_width=static_cast<int>(_settings->get_settings().wb_channel_width);
   RadiotapHeader::UserSelectableParams wifiParams{channel_width, false, 0, false, mcs_index};
-  RadiotapHeader radiotapHeader{wifiParams};
   TOptions options{};
   // We log them all manually together
   options.enableLogAlive= false;
@@ -146,7 +145,7 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
 	options.fec_percentage=0;
   }
   options.wlan = _broadcast_cards.at(0)->_wifi_card.interface_name;
-  return std::make_unique<UDPWBTransmitter>(radiotapHeader, options, "127.0.0.1", udp_port);
+  return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port);
 }
 
 std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int udp_port){
@@ -426,7 +425,9 @@ bool WBStreams::set_mcs_index(uint32_t mcs_index) {
   _settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   _settings->persist();
   // To set the mcs index, r.n we have to restart the tx instances
-  restart();
+  if(udpTelemetryTx){
+	udpTelemetryTx->update_mcs_index(mcs_index);
+  }
   return true;
 }
 bool WBStreams::set_channel_width(uint32_t channel_width) {
