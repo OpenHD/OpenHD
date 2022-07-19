@@ -11,10 +11,10 @@ static constexpr auto OHD_INTERFACE_ENABLE_WIFI_HOTSPOT="I_WFI_HOTSPOT_E";
 
 struct OHDInterfaceSettings{
   bool enable_wifi_hotspot=false;
-  uint32_t wifi_channel=8;
+  uint32_t hotspot_wifi_channel=8;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OHDInterfaceSettings,enable_wifi_hotspot);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OHDInterfaceSettings,enable_wifi_hotspot,hotspot_wifi_channel);
 
 class OHDInterfaceSettingsHolder:public openhd::settings::PersistentSettings<OHDInterfaceSettings>{
  public:
