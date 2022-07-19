@@ -3,6 +3,7 @@
 //
 
 #include "USBTetherListener.h"
+#include <arpa/inet.h>
 
 void USBTetherListener::setDeviceIpLocked(std::string newDeviceIp) {
   std::lock_guard<std::mutex> guard(device_ip_mutex);
@@ -44,6 +45,13 @@ void USBTetherListener::connectOnce() {
 	auto ip=ip_opt.value();
 	if(OHDUtil::endsWith(ip,"\n")){
 	  ip.resize(ip.length()-1);
+	}
+	//int inet_pton(int af, const char *restrict src, void *restrict dst);
+	if(!OHDUtil::is_valid_ip(ip)){
+	  std::stringstream ss;
+	  ss<<"USBTetherListener: not a valid IP:["<<ip<<"]\n";
+	  std::cerr<<ss.str();
+	  return;
 	}
 	setDeviceIpLocked(ip);
 	std::cout<<"Found ip:["<<device_ip<<"]\n";

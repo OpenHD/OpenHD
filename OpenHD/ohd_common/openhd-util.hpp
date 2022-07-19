@@ -12,6 +12,7 @@
 #include <regex>
 #include <csignal>
 #include <thread>
+#include <arpa/inet.h>
 
 namespace OHDUtil {
 
@@ -90,7 +91,7 @@ static void keep_alive_until_sigterm(){
   signal(SIGTERM, [](int sig){ quit= true;});
   while (!quit){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
-	std::cout<<"X\n";
+	std::cout<<"keep_alive_until_sigterm\n";
   }
 }
 // Tries to extract a valid ip from the given input string.
@@ -102,6 +103,12 @@ static void keep_alive_until_sigterm(){
 	return true;
   return false;
 }*/
+// based on https://man7.org/linux/man-pages/man3/inet_pton.3.html
+static bool is_valid_ip(const std::string& ip){
+  unsigned char buf[sizeof(struct in6_addr)];
+  auto result= inet_pton(AF_INET,ip.c_str(), buf);
+  return result==1;
+}
 
 }
 
