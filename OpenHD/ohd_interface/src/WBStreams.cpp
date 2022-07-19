@@ -64,7 +64,6 @@ void WBStreams::configure_streams() {
   configure_telemetry();
   configure_video();
   std::cout << "Streams::configure() end\n";
-  restart();
 }
 
 void WBStreams::configure_cards() {
@@ -165,7 +164,8 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
   });
 }
 
-std::string WBStreams::createDebug() const {
+std::string WBStreams::createDebug(){
+  std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
   std::stringstream ss;
   // we use telemetry data only here
   bool any_data_received=false;
@@ -189,6 +189,7 @@ std::string WBStreams::createDebug() const {
 }
 
 void WBStreams::addExternalDeviceIpForwarding(const std::string& ip) {
+  std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
   bool first= true;
   assert(udpVideoRxList.size()==2);
   std::cout<<"WBStreams::addExternalDeviceIpForwarding:"<<ip<<"\n";
@@ -202,6 +203,7 @@ void WBStreams::addExternalDeviceIpForwarding(const std::string& ip) {
 }
 
 void WBStreams::removeExternalDeviceIpForwarding(const std::string& ip) {
+  std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
   bool first= true;
   assert(udpVideoRxList.size()==2);
   for(auto& rxVid:udpVideoRxList){
@@ -219,7 +221,8 @@ std::vector<std::string> WBStreams::get_rx_card_names() const {
   return ret;
 }
 
-bool WBStreams::ever_received_any_data() const {
+bool WBStreams::ever_received_any_data(){
+  std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
     if(_profile.is_air){
         // check if we got any telemetry data, we never receive video data
         assert(udpTelemetryRx);
@@ -352,6 +355,7 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 }
 
 void WBStreams::restart() {
+  std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
   std::cout << "WBStreams::restart() begin\n";
   if(udpTelemetryRx){
 	udpTelemetryRx->stop_looping();

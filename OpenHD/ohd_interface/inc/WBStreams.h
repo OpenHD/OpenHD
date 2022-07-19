@@ -28,13 +28,14 @@ class WBStreams {
 	_stats_callback=std::move(stats_callback);
   }
   // Verbose string about the current state.
-  [[nodiscard]] std::string createDebug() const;
+  // could be const if there wasn't the mutex
+  [[nodiscard]] std::string createDebug();
   // see interface
   void addExternalDeviceIpForwarding(const std::string& ip);
   void removeExternalDeviceIpForwarding(const std::string& ip);
   // Returns true if this WBStream has ever received any data. If no data has been ever received after X seconds,
   // there most likely was an unsuccessful frequency change.
-  [[nodiscard]] bool ever_received_any_data()const;
+  [[nodiscard]] bool ever_received_any_data();
   // Some settings need a full restart of the tx / rx instances to apply
   void restart();
   // set the frequency (wifi channel) of all wifibroadcast cards
@@ -65,6 +66,8 @@ class WBStreams {
   void configure_telemetry();
   void configure_video();
   //openhd::WBStreamsSettings _last_settings;
+  // Protects all the tx / rx instances, since we have the restart() from the settings.
+  std::mutex _wbRxTxInstancesLock;
   std::unique_ptr<openhd::WBStreamsSettingsHolder> _settings;
   // For telemetry, bidirectional in opposite directions
   std::unique_ptr<UDPWBTransmitter> udpTelemetryTx;
