@@ -11,6 +11,8 @@
 
 /**
  * Special, for communicating with MAVSDK.
+ * Quick: MAVSK wants a TCP-like communication - if it receives data from a sender::port tuple, it will send the responses there,too.
+ * This actually makes sense, it is just different to how OpenHD used to do telemetry forwarding all the time.
  */
 class UDPEndpoint2 : public MEndpoint {
  public:

@@ -126,6 +126,7 @@ int main(int argc, char *argv[]) {
 	});
 	// link interface settings to ohd telemetry
 	ohdTelemetry->add_settings_component(192,ohdInterface);
+	ohdTelemetry->add_ground_station_ip("192.168.237.55");
 
     // and start ohdVideo if we are on the air pi
     std::unique_ptr<OHDVideo> ohdVideo;
