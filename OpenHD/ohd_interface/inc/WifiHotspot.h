@@ -27,6 +27,10 @@ class WifiHotspot {
    * initialize and start the hotspot.
    */
   void start();
+  // since starting the wifi hotspot can be quite a long operation, this calls start() in a new thread.
+  // TODO stop safe in regards to concurrency.
+  void start_async();
+  void stop_async();
   /**
    * stop,de-init and cleanup hotspot.
    */
@@ -37,6 +41,9 @@ class WifiHotspot {
   // In this case the apropriate callbacks have to be called.
   std::vector<std::string> connectedClientsIps;
   const WiFiCard wifiCard;
+  bool started=false;
+  std::unique_ptr<std::thread> _start_async_thread= nullptr;
+  std::unique_ptr<std::thread> _stop_async_thread= nullptr;
 };
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_

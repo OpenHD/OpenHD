@@ -27,6 +27,9 @@ class OHDProfile {
   const bool is_air;
   // The unique id of this system, it is created once then never changed again.
   const std::string unit_id;
+  [[nodiscard]] bool is_ground()const{
+    return !is_air;
+  }
   [[nodiscard]] std::string to_string()const{
 	std::stringstream ss;
 	ss<<"OHDProfile{"<<(is_air ? "Air":"Ground")<<":"<<unit_id<<"}";

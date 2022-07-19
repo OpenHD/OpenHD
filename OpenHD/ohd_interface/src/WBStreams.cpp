@@ -80,10 +80,12 @@ void WBStreams::configure_cards() {
 	WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
 	WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
 	assert(card->get_settings().frequency>0);
-	WifiCardCommandHelper::set_frequency(card->_wifi_card, card->get_settings().frequency);
+	//WifiCardCommandHelper::set_frequency(card->_wifi_card, card->get_settings().frequency);
+	WifiCardCommandHelper::set_frequency(card->_wifi_card, _settings->get_settings().wb_frequency);
 	assert(card->get_settings().txpower>0);
 	// TODO check if this works - on rtl8812au, the displayed value at least changes
-	WifiCardCommandHelper::set_txpower(card->_wifi_card, card->get_settings().txpower);
+	//WifiCardCommandHelper::set_txpower(card->_wifi_card, card->get_settings().txpower);
+	WifiCardCommandHelper::set_txpower(card->_wifi_card, _settings->get_settings().wb_tx_power_milli_dbm);
 	//WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
   }
   std::cout << "WBStreams::configure_cards() end\n";

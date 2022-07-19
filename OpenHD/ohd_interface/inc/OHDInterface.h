@@ -15,6 +15,7 @@
 #include "openhd-platform.hpp"
 #include "openhd-led-error-codes.h"
 #include "mavlink_settings/XSettingsComponent.h"
+#include "OHDInterfaceSettings.h"
 
  class OHDInterface :public openhd::XSettingsComponent{
  public:
@@ -49,6 +50,7 @@
   std::unique_ptr<USBTetherListener> usbTetherListener;
   std::unique_ptr<WifiHotspot> _wifi_hotspot;
   std::unique_ptr<openhd::rpi::LEDBlinker> _error_blinker;
+  std::shared_ptr<openhd::OHDInterfaceSettingsHolder> _interface_settings_holder;
 };
 
 #endif //OPENHD_OPENHD_INTERFACE_H
