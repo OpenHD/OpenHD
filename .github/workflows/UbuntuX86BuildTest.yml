@@ -34,7 +34,7 @@ jobs:
 
       - name: Build with make
         run: |
-          sudo ./package.sh x86_64 ubuntu bionic
+          sudo ./package.sh x86_64 ubuntu focal
           ls -a
 
       - name: Upload to Github
@@ -56,6 +56,6 @@ jobs:
           owner: "openhd"
           repo: "openhd-2-2-evo"
           distro: "ubuntu"
-          release: "bionic"
+          release: "focal"
           republish: "true" # needed ONLY if version is not changing
           file: "*.deb"
