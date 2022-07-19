@@ -10,79 +10,81 @@
 // Helper for validating user-selectable settings
 namespace openhd{
 
-static std::vector<uint32_t> get_frequencies_2G() {
-  return std::vector<uint32_t>{
-	  2412,
-	  2417,
-	  2422,
-	  2427,
-	  2432,
-	  2437,
-	  2442,
-	  2447,
-	  2452,
-	  2457,
-	  2462,
-	  2467,
-	  2472,
-	  2484,
+// Wifi channel and the corresponding frequency, in mHz
+struct WifiChannel{
+  const uint32_t frequency;
+  const uint32_t channel;
+};
+
+static std::vector<WifiChannel> get_channels_2G() {
+  return std::vector<WifiChannel>{
+	  WifiChannel{2412,1},
+	  WifiChannel{2417,2},
+	  WifiChannel{2422,3},
+	  WifiChannel{2427,4},
+	  WifiChannel{2432,5},
+	  WifiChannel{2437,6},
+	  WifiChannel{2442,7},
+	  WifiChannel{2447,8},
+	  WifiChannel{2452,9},
+	  WifiChannel{2457,10},
+	  WifiChannel{2462,11},
+	  WifiChannel{2467,12},
+	  WifiChannel{2472,13},
+	  // until here it is consistent (5Mhz increments)
+	  // this one is neither allowed in EU nor USA
+	  // (only japan under 11b)
+	  WifiChannel{2484,14},
   };
 };
 
-static std::vector<uint32_t> get_frequencies_5G() {
-  return std::vector<uint32_t>{
-	  5180,
-	  5200,
-	  5220,
-	  5240,
-	  5260,
-	  5280,
-	  5300,
-	  5320,
-	  5340,
-	  5360,
-	  5380,
-	  5400,
-	  5420,
-	  5440,
-	  5460,
-	  5480,
-	  5500,
-	  5520,
-	  5540,
-	  5560,
-	  5580,
-	  5600,
-	  5620,
-	  5640,
-	  5660,
-	  5680,
-	  5700,
-	  5720,
-	  5745,
-	  5765,
-	  5785,
-	  5805,
-	  5825,
-	  5845,
-	  5865,
-	  5885,
-	  5905
+
+// https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/j/n/ac/ax)
+// These are what iw list lists for rtl8812au
+static std::vector<WifiChannel> get_channels_5G_rtl8812au() {
+  return std::vector<WifiChannel>{
+	  {5180,36},
+	  {5200,40},
+	  {5220,44},
+	  {5240,48},
+	  {5260,52},
+	  {5280,56},
+	  {5300,60},
+	  {5320,64},
+	  {5500,100},
+	  {5520,104},
+	  {5540,108},
+	  {5560,112},
+	  {5580,116},
+	  {5600,120},
+	  {5620,124},
+	  {5640,128},
+	  {5660,132},
+	  {5680,136},
+	  {5700,140},
+	  {5720,144},
+	  {5745,149},
+	  {5765,153},
+	  {5785,157},
+	  {5805,161},
+	  {5825,165},
+	  {5845,169},
+	  {5865,173},
+	  {5885,177},
   };
 };
-
 
 static bool is_valid_frequency_2G(uint32_t frequency){
-  const auto supported=get_frequencies_2G();
+  const auto supported=get_channels_2G();
   for(const auto& value:supported){
-	if(value==frequency)return true;
+	if(value.frequency==frequency)return true;
   }
   return false;
 }
 static bool is_valid_frequency_5G(uint32_t frequency){
-  const auto supported=get_frequencies_5G();
+  const auto supported=get_channels_5G_rtl8812au();
   for(const auto& value:supported){
-	if(value==frequency)return true;
+	if(value.frequency==frequency)return true;
   }
   return false;
 }
