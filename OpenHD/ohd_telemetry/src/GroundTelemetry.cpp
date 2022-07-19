@@ -139,8 +139,11 @@ void GroundTelemetry::set_link_statistics(openhd::link_statistics::AllStats stat
   }
 }
 
-void GroundTelemetry::add_ground_station_ip(std::string ip) {
+void GroundTelemetry::add_external_ground_station_ip(std::string ip) {
   std::stringstream ss;
-  ss<<"GroundTelemetry::add_ground_station_ip:["<<ip<<"]\n";
+  ss<<"GroundTelemetry::add_external_ground_station_ip:["<<ip<<"]\n";
   std::cout<<ss.str();
+  if(udpGroundClient){
+	udpGroundClient->addAnotherDestIpAddress(ip);
+  }
 }
