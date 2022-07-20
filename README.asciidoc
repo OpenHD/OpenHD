@@ -54,6 +54,8 @@ image:https://img.shields.io/github/commit-activity/m/OpenHD/Open.HD?style=flat-
 image:https://img.shields.io/github/issues-raw/OpenHD/Open.HD?style=flat-square[title="GitHub issues", link="https://github.com/OpenHD/Open.HD/issues"]
 image:https://img.shields.io/github/downloads/OpenHD/Open.HD/total?style=flat-square[title="GitHub All Releases", link=""]
 image:https://img.shields.io/github/repo-size/OpenHD/Open.HD?style=flat-square[title="GitHub repo size", link=""]
+image:https://https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=flat-square[title="Cloudsmith", link="https://cloudsmith.io"]
+image:https://img.shields.io/github/license/OpenHD/Open.HD?style=flat-square[title="GitHub License", link="LICENSE"]
 image:https://img.shields.io/github/license/OpenHD/Open.HD?style=flat-square[title="GitHub License", link="LICENSE"]
 
 ---
