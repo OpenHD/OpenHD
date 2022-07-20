@@ -514,9 +514,10 @@ void WBStreams::restart_async(std::chrono::milliseconds delay){
 	_restart_async_thread=nullptr;
   }
   _restart_async_thread=
-	  std::make_unique<std::thread>([this,delay]{
-									  std::this_thread::sleep_for(delay);
-									  this->restart();
-									}
+	  std::make_unique<std::thread>(
+		  [this,delay]{
+			std::this_thread::sleep_for(delay);
+			this->restart();
+		  }
 	  );
 }
