@@ -443,7 +443,7 @@ bool WBStreams::set_channel_width(uint32_t channel_width) {
   }
   _settings->unsafe_get_settings().wb_channel_width=channel_width;
   _settings->persist();
-  restart();
+  restart_async();
   return true;
 }
 
@@ -454,7 +454,7 @@ bool WBStreams::set_fec_block_length(int block_length) {
   }
   _settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
   _settings->persist();
-  restart();
+  restart_async();
   return true;
 }
 
@@ -465,7 +465,7 @@ bool WBStreams::set_fec_percentage(int fec_percentage) {
   }
   _settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
   _settings->persist();
-  restart();
+  restart_async();
   return true;
 }
 

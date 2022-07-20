@@ -39,7 +39,7 @@ class WBStreams {
   // Some settings need a full restart of the tx / rx instances to apply
   void restart();
   // schedule a asynchronous restart. if there is already a restart scheduled, return immediately
-  void restart_async(const std::chrono::milliseconds delay);
+  void restart_async(const std::chrono::milliseconds delay=std::chrono::milliseconds(0));
   // set the frequency (wifi channel) of all wifibroadcast cards
   bool set_frequency(uint32_t frequency);
   // set the tx power of all wifibroadcast cards
