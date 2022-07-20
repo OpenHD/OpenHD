@@ -97,7 +97,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   -d "hostapd" \
   -d "iw" \
   -d "isc-dhcp-common" \
-  -d "pump" \
   -d "dnsmasq" \
   -d "aircrack-ng" \
   -d "ser2net" \
