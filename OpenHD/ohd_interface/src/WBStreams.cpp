@@ -165,7 +165,9 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
 }
 
 std::string WBStreams::createDebug(){
-  std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
+  if(!_wbRxTxInstancesLock.try_lock()){
+	return "restarting";
+  }
   std::stringstream ss;
   // we use telemetry data only here
   bool any_data_received=false;
@@ -185,6 +187,7 @@ std::string WBStreams::createDebug(){
   for (const auto &rxvid: udpVideoRxList) {
 	ss<<"VidRx :"<<rxvid->createDebug();
   }
+  _wbRxTxInstancesLock.unlock();
   return ss.str();
 }
 

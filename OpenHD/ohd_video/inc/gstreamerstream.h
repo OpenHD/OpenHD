@@ -19,7 +19,6 @@ class GStreamerStream : public CameraStream {
   GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
                   uint16_t video_udp_port);
   void setup() override;
-
  private:
   void setup_raspberrypi_csi();
   void setup_jetson_csi();
@@ -34,6 +33,7 @@ class GStreamerStream : public CameraStream {
   void cleanup_pipe();
   std::string createDebug() override;
  private:
+  // We cannot create the debug state while performing a restart
   std::mutex _pipeline_mutex;
   GstElement *gst_pipeline = nullptr;
   // The pipeline that is started in the end
