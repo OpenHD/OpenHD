@@ -479,8 +479,8 @@ std::vector<openhd::Setting> WBStreams::get_all_settings() const {
   using namespace openhd;
   std::vector<openhd::Setting> ret{};
   ret.push_back(openhd::Setting{WB_FREQUENCY,(int)_settings->get_settings().wb_frequency});
-  // This is a TODO
-  //ret.push_back(openhd::Setting{WB_CHANNEL_WIDTH,(int)_settings->get_settings().wb_channel_width});
+  // TODO not well tested yet.
+  ret.push_back(openhd::Setting{WB_CHANNEL_WIDTH,(int)_settings->get_settings().wb_channel_width});
   ret.push_back(openhd::Setting{WB_MCS_INDEX,(int)_settings->get_settings().wb_mcs_index});
   if(_profile.is_air){
 	// these params only need to be changed on the air side

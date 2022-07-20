@@ -38,7 +38,7 @@ class WBStreams {
   [[nodiscard]] bool ever_received_any_data();
   // Some settings need a full restart of the tx / rx instances to apply
   void restart();
-  // schedule a asynchronous restart. if there is already a restart scheduled, return immediately
+  // schedule an asynchronous restart. if there is already a restart scheduled, return immediately
   void restart_async(std::chrono::milliseconds delay=std::chrono::milliseconds(0));
   // set the frequency (wifi channel) of all wifibroadcast cards
   bool set_frequency(uint32_t frequency);
