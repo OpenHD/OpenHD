@@ -16,6 +16,7 @@
 #include "openhd-settings2.hpp"
 
 #include "mavlink_settings/XSettingsComponent.h"
+#include "v_validate_settings.h"
 
 static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
 
@@ -131,40 +132,70 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
   }
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings() override{
+	auto c_width=[this](std::string,int value) {
+	  return set_video_width(value);
+	};
+	auto c_height=[this](std::string,int value) {
+	  return set_video_height(value);
+	};
+	auto c_fps=[this](std::string,int value) {
+	  return set_video_fps(value);
+	};
+	auto c_format=[this](std::string,int value) {
+	  return set_video_format(value);
+	};
+	auto c_bitrate=[this](std::string,int value) {
+	  return set_video_bitrate(value);
+	};
 	std::vector<openhd::Setting> ret={
-		openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,nullptr}},
-		openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{get_settings().userSelectedVideoFormat.height,nullptr}},
-		openhd::Setting{"VIDEO_FPS",openhd::IntSetting{get_settings().userSelectedVideoFormat.framerate,nullptr}},
-		openhd::Setting{"VIDEO_FORMAT",openhd::IntSetting{video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec),nullptr}},
-		openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),nullptr}}
+		openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,c_width}},
+		openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{get_settings().userSelectedVideoFormat.height,c_height}},
+		openhd::Setting{"VIDEO_FPS",openhd::IntSetting{get_settings().userSelectedVideoFormat.framerate,c_fps}},
+		openhd::Setting{"VIDEO_FORMAT",openhd::IntSetting{video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec),c_format}},
+		openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}}
 	};
 	return ret;
   }
-  /*void process_setting_changed(openhd::Setting changed_setting) override{
-	CameraSettings settings_copy=get_settings();
-	bool changed=false;
-	if(changed_setting.id=="VIDEO_WIDTH"){
-	  changed=openhd::safe_to(settings_copy.userSelectedVideoFormat.width,changed_setting.value);
-	}else if(changed_setting.id=="VIDEO_HEIGHT"){
-	  changed=openhd::safe_to(settings_copy.userSelectedVideoFormat.height,changed_setting.value);
-	}else if(changed_setting.id=="VIDEO_FPS"){
-	  changed=openhd::safe_to(settings_copy.userSelectedVideoFormat.framerate,changed_setting.value);
-	}else if(changed_setting.id=="VIDEO_FORMAT"){
-	  int value= video_codec_to_int(settings_copy.userSelectedVideoFormat.videoCodec);
-	  changed=openhd::safe_to(value,changed_setting.value);
-	  settings_copy.userSelectedVideoFormat.videoCodec=video_codec_from_int(value);
-	  /*std::string value=video_codec_to_string(_settings->userSelectedVideoFormat.videoCodec);
-	  changed=openhd::safe_to(value,changed_setting.value);
-	  _settings->userSelectedVideoFormat.videoCodec= string_to_video_codec(value);*/
-	/*}else if(changed_setting.id=="V_BITRATE_MBITS"){
-	  int value=settings_copy.bitrateKBits/1000;
-	  changed=openhd::safe_to(value,changed_setting.value);
-	  settings_copy.bitrateKBits=value*1000;
+  bool set_video_width(int video_width){
+	if(!openhd::validate_video_with(video_width)){
+	  return false;
 	}
-	if(changed){
-	  update_settings(settings_copy);
+	unsafe_get_settings().userSelectedVideoFormat.width=video_width;
+	persist();
+	return true;
+  }
+  bool set_video_height(int video_height){
+	if(!openhd::validate_video_height(video_height)){
+	  return false;
 	}
-  }*/
+	unsafe_get_settings().userSelectedVideoFormat.height=video_height;
+	persist();
+	return true;
+  }
+  bool set_video_fps(int fps){
+	if(!openhd::validate_video_fps(fps)){
+	  return false;
+	}
+	unsafe_get_settings().userSelectedVideoFormat.framerate=fps;
+	persist();
+	return true;
+  }
+  bool set_video_format(int format){
+	if(!openhd::validate_video_format(format)){
+	  return false;
+	}
+	unsafe_get_settings().userSelectedVideoFormat.videoCodec=video_codec_from_int(format);
+	persist();
+	return true;
+  }
+  bool set_video_bitrate(int bitrate_mbits){
+	if(!openhd::validate_bitrate_mbits(bitrate_mbits)){
+	  return false;
+	}
+	unsafe_get_settings().bitrateKBits=bitrate_mbits*1000;
+	persist();
+	return true;
+  }
   // Settings hacky end
  private:
   // Camera info is immutable
