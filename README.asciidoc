@@ -41,7 +41,6 @@ endif::[]
 :raspbian: link:https://www.raspberrypi.org/documentation/[Raspbian]
 :linux-kernel: link:https://www.kernel.org/doc/html/v4.16/process/license-rules.html[Linux Kernel]
 :gnu-gplv2: link:https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html[GPLv2]
-[![Hosted By: Cloudsmith](https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=flat-square)](https://cloudsmith.com)
 
 // === BEGIN OF CONTENT === \\
 
