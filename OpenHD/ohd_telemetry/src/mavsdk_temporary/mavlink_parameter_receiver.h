@@ -30,16 +30,16 @@ namespace mavsdk {
  * but hides the string parameter values from non-extended protocol clients. Therefore, if the server has std:.string parameters but is
  * talking to a non-extended client, param_index and param_count are different compared to talking to a client who doesn't speak extended.
  */
-class MavlinkParameterReceiver : public MavlinkParameterSubscription{
+class MavlinkParameterReceiver{
 public:
     MavlinkParameterReceiver() = delete;
     explicit MavlinkParameterReceiver(
         Sender& parent,
-        MavlinkMessageHandler& message_handler,
+        MavlinkMessageHandler& message_handler);//,
         // by providing all the parameters on construction you can populate the parameter set
         // before the server starts reacting to clients, removing this issue:
         // https://mavlink.io/en/services/parameter.html#parameters_invariant
-        std::optional<std::map<std::string,ParamValue>> optional_param_values=std::nullopt);
+        //std::optional<std::map<std::string,ParamValue>> optional_param_values=std::nullopt);
     ~MavlinkParameterReceiver();
 
     enum class Result {
@@ -62,11 +62,14 @@ public:
      * the extended protocol allows and
      * Result::Success otherwise.
      */
-    Result provide_server_param(const std::string& name,const ParamValue& param_value);
-    // convenient implementations for the 3 most commonly used types
-    Result provide_server_param_float(const std::string& name, float value);
-    Result provide_server_param_int(const std::string& name, int32_t value);
-    Result provide_server_param_custom(const std::string& name, const std::string& value);
+    //Result provide_server_param(const std::string& name,const ParamValue& param_value);
+  	template<class T>
+	Result provide_server_param(const std::string& name,const T& param_value,
+								 std::function<bool(std::string id,T requested_value)> change_callback=nullptr);
+	// convenient implementations for the 3 most commonly used types
+	Result provide_server_param_float(const std::string& name, float value);
+	Result provide_server_param_int(const std::string& name, int32_t value);
+	Result provide_server_param_custom(const std::string& name, const std::string& value);
     /**
      * @return a copy of the current parameter set of the server.
      */
@@ -95,7 +98,10 @@ public:
     MavlinkParameterReceiver(const MavlinkParameterReceiver&) = delete;
     const MavlinkParameterReceiver& operator=(const MavlinkParameterReceiver&) = delete;
 
+	void ready_for_communication();
+
 private:
+  bool ready=false;
     /**
      * internally process a param set, coming from either the extended or non-extended protocol.
      * This checks and properly handles the following conditions:

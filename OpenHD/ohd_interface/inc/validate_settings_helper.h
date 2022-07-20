@@ -74,14 +74,14 @@ static std::vector<WifiChannel> get_channels_5G_rtl8812au() {
   };
 };
 
-static bool is_valid_frequency_2G(uint32_t frequency){
+static bool is_valid_frequency_2G(int frequency){
   const auto supported=get_channels_2G();
   for(const auto& value:supported){
 	if(value.frequency==frequency)return true;
   }
   return false;
 }
-static bool is_valid_frequency_5G(uint32_t frequency){
+static bool is_valid_frequency_5G(int frequency){
   const auto supported=get_channels_5G_rtl8812au();
   for(const auto& value:supported){
 	if(value.frequency==frequency)return true;
@@ -98,17 +98,17 @@ static bool is_2G_and_assert(uint32_t frequency){
   return false;
 }
 
-static bool is_valid_channel_width(uint32_t channel_width){
+static bool is_valid_channel_width(int channel_width){
   return channel_width==20 || channel_width==40;
 }
 
-static bool is_valid_mcs_index(uint32_t mcs_index){
-  return mcs_index<=7;
+static bool is_valid_mcs_index(int mcs_index){
+  return mcs_index>=1 && mcs_index<=7;
 }
 
 // think it is always in milli dbm
-static bool is_valid_tx_power(uint32_t tx_power){
-  return tx_power < 4000;
+static bool is_valid_tx_power(int tx_power){
+  return tx_power> 1000 && tx_power < 4000;
 }
 
 static bool is_valid_fec_block_length(int block_length){

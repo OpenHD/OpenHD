@@ -4,19 +4,6 @@
 
 #include "XMavlinkParamProvider.h"
 
-static mavsdk::ParamValue convert_to_mavsd(const openhd::SettingsVariant& setting){
-  mavsdk::ParamValue param_value;
-  if(std::holds_alternative<int>(setting)){
-    param_value.set(std::get<int>(setting));
-  }else if(std::holds_alternative<float>(setting)){
-    param_value.set(std::get<float>(setting));
-  }else if(std::holds_alternative<std::string>(setting)){
-    param_value.set(std::get<std::string>(setting));
-  }else{
-    assert(true);
-  }
-  return param_value;
-}
 
 XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id,std::shared_ptr<openhd::XSettingsComponent> handler):
 MavlinkComponent(sys_id,comp_id),_handler(std::move(handler)){
@@ -25,29 +12,24 @@ MavlinkComponent(sys_id,comp_id),_handler(std::move(handler)){
   _mavlink_parameter_receiver=
       std::make_shared<mavsdk::MavlinkParameterReceiver>(*_sender,*_mavlink_message_handler);
   const auto settings=_handler->get_all_settings();
-  for(const auto setting:settings){
-    mavsdk::ParamValue param_value;
-    if(std::holds_alternative<int>(setting.value)){
-      param_value.set(std::get<int>(setting.value));
-      _mavlink_parameter_receiver->subscribe_param_int_changed(setting.id,[this,setting](int value){
-            this->_handler->process_setting_changed({setting.id,value});
-          },this);
-    }else if(std::holds_alternative<float>(setting.value)){
-      param_value.set(std::get<float>(setting.value));
-      _mavlink_parameter_receiver->subscribe_param_float_changed(setting.id,[this,setting](float value){
-            this->_handler->process_setting_changed({setting.id,value});
-          },this);
-    }else if(std::holds_alternative<std::string>(setting.value)){
-      param_value.set(std::get<std::string>(setting.value));
-      _mavlink_parameter_receiver->subscribe_param_custom_changed(setting.id,[this,setting](std::string value){
-            this->_handler->process_setting_changed({setting.id,value});
-          },this);
-    }else{
-      assert(true);
-    }
-    const auto result=_mavlink_parameter_receiver->provide_server_param(setting.id,param_value);
-    assert(result==mavsdk::MavlinkParameterReceiver::Result::Success);
+  for(const auto& setting:settings) {
+	if (std::holds_alternative<openhd::IntSetting>(setting.setting)) {
+	  const auto intSetting=std::get<openhd::IntSetting>(setting.setting);
+	  const auto result = _mavlink_parameter_receiver->provide_server_param<int>(setting.id,intSetting.value,intSetting.change_callback);
+	  assert(result == mavsdk::MavlinkParameterReceiver::Result::Success);
+	} else if (std::holds_alternative<openhd::FloatSetting>(setting.setting)) {
+	  const auto floatSetting=std::get<openhd::FloatSetting>(setting.setting);
+	  const auto result = _mavlink_parameter_receiver->provide_server_param<float>(setting.id,floatSetting.value,floatSetting.change_callback);
+	  assert(result == mavsdk::MavlinkParameterReceiver::Result::Success);
+	} else if (std::holds_alternative<openhd::StringSetting>(setting.setting)) {
+	  const auto stringSetting=std::get<openhd::StringSetting>(setting.setting);
+	  const auto result = _mavlink_parameter_receiver->provide_server_param<std::string>(setting.id,stringSetting.value,stringSetting.change_callback);
+	  assert(result == mavsdk::MavlinkParameterReceiver::Result::Success);
+	} else {
+	  assert(true);
+	}
   }
+  _mavlink_parameter_receiver->ready_for_communication();
 }
 
 std::vector<MavlinkMessage> XMavlinkParamProvider::process_mavlink_message(

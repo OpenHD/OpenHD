@@ -143,28 +143,20 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   if(_wifi_hotspot != nullptr){
 	// we can disable / enable wifi hotspot.
 	int enabled=_interface_settings_holder->get_settings().enable_wifi_hotspot;
-	ret.emplace_back(openhd::Setting{OHD_INTERFACE_ENABLE_WIFI_HOTSPOT,enabled});
+	auto change_wifi_hotspot=openhd::IntSetting{enabled,[this](std::string,int value){
+	  if(value== 0 || value== 1){
+		const bool enableX=value;
+		if(enableX){
+		  _wifi_hotspot->start_async();
+		}else{
+		  _wifi_hotspot->stop_async();
+		}
+		return true;
+	  }
+	  return false;
+	}};
+	ret.emplace_back(openhd::Setting{OHD_INTERFACE_ENABLE_WIFI_HOTSPOT,change_wifi_hotspot});
   }
   openhd::validate_provided_ids(ret);
   return ret;
-}
-
-void OHDInterface::process_setting_changed(openhd::Setting changed_setting) {
-  std::lock_guard<std::mutex> guard(settings_mutex);
-  if(wbStreams){
-	wbStreams->process_new_setting(changed_setting);
-  }
-  if(changed_setting.id==openhd::OHD_INTERFACE_ENABLE_WIFI_HOTSPOT){
-	if(_wifi_hotspot){
-	  auto value=std::get<int>(changed_setting.value);
-	  _interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot=(bool)value;
-	  _interface_settings_holder->persist();
-	  if(_interface_settings_holder->get_settings().enable_wifi_hotspot){
-		_wifi_hotspot->start_async();
-	  }else{
-		_wifi_hotspot->stop_async();
-	  }
-	}
-  }
-
 }

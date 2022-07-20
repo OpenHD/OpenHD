@@ -384,7 +384,7 @@ void WBStreams::restart() {
   std::cout << "WBStreams::restart() end\n";
 }
 
-bool WBStreams::set_frequency(uint32_t frequency) {
+bool WBStreams::set_frequency(int frequency) {
   if(_settings->get_settings().configured_for_2G()){
 	if(!openhd::is_valid_frequency_2G(frequency)){
 	  std::cerr<<"Invalid 2.4G frequency "<<frequency<<"\n";
@@ -407,7 +407,7 @@ bool WBStreams::set_frequency(uint32_t frequency) {
   return true;
 }
 
-bool WBStreams::set_txpower(uint32_t tx_power) {
+bool WBStreams::set_txpower(int tx_power) {
   if(!openhd::is_valid_tx_power(tx_power)){
 	std::cerr<<"Invalid tx power:"<<tx_power<<"\n";
 	return false;
@@ -422,7 +422,7 @@ bool WBStreams::set_txpower(uint32_t tx_power) {
   return true;
 }
 
-bool WBStreams::set_mcs_index(uint32_t mcs_index) {
+bool WBStreams::set_mcs_index(int mcs_index) {
   if(!openhd::is_valid_mcs_index(mcs_index)){
 	std::cerr<<"Invalid mcs index"<<mcs_index<<"\n";
 	return false;
@@ -439,7 +439,7 @@ bool WBStreams::set_mcs_index(uint32_t mcs_index) {
   }
   return true;
 }
-bool WBStreams::set_channel_width(uint32_t channel_width) {
+bool WBStreams::set_channel_width(int channel_width) {
   if(!openhd::is_valid_channel_width(channel_width)){
 	std::cerr<<"Invalid channel width"<<channel_width<<"\n";
 	return false;
@@ -478,40 +478,6 @@ bool WBStreams::set_fec_percentage(int fec_percentage) {
   return true;
 }
 
-std::vector<openhd::Setting> WBStreams::get_all_settings() const {
-  using namespace openhd;
-  std::vector<openhd::Setting> ret{};
-  ret.push_back(openhd::Setting{WB_FREQUENCY,(int)_settings->get_settings().wb_frequency});
-  // TODO not well tested yet.
-  ret.push_back(openhd::Setting{WB_CHANNEL_WIDTH,(int)_settings->get_settings().wb_channel_width});
-  ret.push_back(openhd::Setting{WB_MCS_INDEX,(int)_settings->get_settings().wb_mcs_index});
-  if(_profile.is_air){
-	// these params only need to be changed on the air side
-	ret.push_back(openhd::Setting{WB_VIDEO_FEC_BLOCK_LENGTH,(int)_settings->get_settings().wb_video_fec_block_length});
-	ret.push_back(openhd::Setting{WB_VIDEO_FEC_PERCENTAGE,(int)_settings->get_settings().wb_video_fec_percentage});
-  }
-  ret.push_back(openhd::Setting{WB_TX_POWER_MILLI_DBM,(int)_settings->get_settings().wb_tx_power_milli_dbm});
-  openhd::validate_provided_ids(ret);
-  return ret;
-}
-
-void WBStreams::process_new_setting(openhd::Setting changed_setting) {
-  using namespace openhd;
-  const auto id=changed_setting.id;
-  if(id==WB_FREQUENCY){
-	set_frequency(std::get<int>(changed_setting.value));
-  }else if(id==WB_CHANNEL_WIDTH){
-	set_channel_width(std::get<int>(changed_setting.value));
-  }else if(id==WB_MCS_INDEX){
-	set_mcs_index(std::get<int>(changed_setting.value));
-  }else if(id==WB_VIDEO_FEC_BLOCK_LENGTH){
-	set_fec_block_length(std::get<int>(changed_setting.value));
-  }else if(id==openhd::WB_VIDEO_FEC_PERCENTAGE){
-	set_fec_percentage(std::get<int>(changed_setting.value));
-  }else if(id==WB_TX_POWER_MILLI_DBM){
-	set_txpower(std::get<int>(changed_setting.value));
-  }
-}
 
 void WBStreams::restart_async(std::chrono::milliseconds delay){
   std::lock_guard<std::mutex> guard(_restart_async_lock);
@@ -529,4 +495,38 @@ void WBStreams::restart_async(std::chrono::milliseconds delay){
 			this->restart();
 		  }
 	  );
+}
+
+std::vector<openhd::Setting> WBStreams::get_all_settings(){
+  using namespace openhd;
+  std::vector<openhd::Setting> ret{};
+  auto change_freq=openhd::IntSetting{(int)_settings->get_settings().wb_frequency,[this](std::string,int value){
+	return set_frequency(value);
+  }};
+  auto change_wb_channel_width=openhd::IntSetting{(int)_settings->get_settings().wb_channel_width,[this](std::string,int value){
+	return set_channel_width(value);
+  }};
+  auto change_wb_mcs_index=openhd::IntSetting{(int)_settings->get_settings().wb_mcs_index,[this](std::string,int value){
+	return set_mcs_index(value);
+  }};
+  auto change_tx_power=openhd::IntSetting{(int)_settings->get_settings().wb_tx_power_milli_dbm,[this](std::string,int value){
+	return set_txpower(value);
+  }};
+  ret.push_back(Setting{WB_FREQUENCY,change_freq});
+  ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
+  ret.push_back(Setting{WB_MCS_INDEX,change_wb_mcs_index});
+  ret.push_back(Setting{WB_TX_POWER_MILLI_DBM,change_tx_power});
+
+  if(_profile.is_air){
+	auto change_video_fec_block_length=openhd::IntSetting{(int)_settings->get_settings().wb_video_fec_block_length,[this](std::string,int value){
+	  return set_fec_block_length(value);
+	}};
+	ret.push_back(Setting{WB_VIDEO_FEC_BLOCK_LENGTH,change_video_fec_block_length});
+	auto change_video_fec_percentage=openhd::IntSetting{(int)_settings->get_settings().wb_video_fec_percentage,[this](std::string,int value){
+	  return set_fec_percentage(value);
+	}};
+	ret.push_back(Setting{WB_VIDEO_FEC_PERCENTAGE,change_video_fec_percentage});
+  }
+  openhd::validate_provided_ids(ret);
+  return ret;
 }

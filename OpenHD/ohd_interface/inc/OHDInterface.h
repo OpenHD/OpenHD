@@ -40,7 +40,6 @@
   void removeExternalDeviceIpForwarding(std::string ip) const;
   // settings hacky begin
   std::vector<openhd::Setting> get_all_settings()override;
-  void process_setting_changed(openhd::Setting changed_setting) override;
   // settings hacky end
  private:
   const OHDProfile profile;

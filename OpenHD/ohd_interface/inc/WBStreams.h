@@ -41,19 +41,19 @@ class WBStreams {
   // schedule an asynchronous restart. if there is already a restart scheduled, return immediately
   void restart_async(std::chrono::milliseconds delay=std::chrono::milliseconds(0));
   // set the frequency (wifi channel) of all wifibroadcast cards
-  bool set_frequency(uint32_t frequency);
+  bool set_frequency(int frequency);
   // set the tx power of all wifibroadcast cards
-  bool set_txpower(uint32_t tx_power);
+  bool set_txpower(int tx_power);
   // set the mcs index for all wifibroadcast cards
-  bool set_mcs_index(uint32_t mcs_index);
+  bool set_mcs_index(int mcs_index);
   bool set_fec_block_length(int block_length);
   bool set_fec_percentage(int fec_percentage);
   // set the channel width
   // TODO doesn't work yet, aparently we need more than only the pcap header.
-  bool set_channel_width(uint32_t channel_width);
+  bool set_channel_width(int channel_width);
   // settings hacky begin
-  std::vector<openhd::Setting> get_all_settings()const;
-  void process_new_setting(openhd::Setting changed_setting);
+  std::vector<openhd::Setting> get_all_settings();
+  //void process_new_setting(openhd::Setting changed_setting);
   // settings hacky end
  private:
   const OHDProfile _profile;

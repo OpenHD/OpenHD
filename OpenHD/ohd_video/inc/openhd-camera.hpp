@@ -132,15 +132,15 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings() override{
 	std::vector<openhd::Setting> ret={
-		openhd::Setting{"VIDEO_WIDTH",get_settings().userSelectedVideoFormat.width},
-		openhd::Setting{"VIDEO_HEIGHT",get_settings().userSelectedVideoFormat.height},
-		openhd::Setting{"VIDEO_FPS",get_settings().userSelectedVideoFormat.framerate},
-		openhd::Setting{"VIDEO_FORMAT",video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec)},
-		openhd::Setting{"V_BITRATE_MBITS",static_cast<int>(get_settings().bitrateKBits / 1000)}
+		openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,nullptr}},
+		openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{get_settings().userSelectedVideoFormat.height,nullptr}},
+		openhd::Setting{"VIDEO_FPS",openhd::IntSetting{get_settings().userSelectedVideoFormat.framerate,nullptr}},
+		openhd::Setting{"VIDEO_FORMAT",openhd::IntSetting{video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec),nullptr}},
+		openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),nullptr}}
 	};
 	return ret;
   }
-  void process_setting_changed(openhd::Setting changed_setting) override{
+  /*void process_setting_changed(openhd::Setting changed_setting) override{
 	CameraSettings settings_copy=get_settings();
 	bool changed=false;
 	if(changed_setting.id=="VIDEO_WIDTH"){
@@ -156,7 +156,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  /*std::string value=video_codec_to_string(_settings->userSelectedVideoFormat.videoCodec);
 	  changed=openhd::safe_to(value,changed_setting.value);
 	  _settings->userSelectedVideoFormat.videoCodec= string_to_video_codec(value);*/
-	}else if(changed_setting.id=="V_BITRATE_MBITS"){
+	/*}else if(changed_setting.id=="V_BITRATE_MBITS"){
 	  int value=settings_copy.bitrateKBits/1000;
 	  changed=openhd::safe_to(value,changed_setting.value);
 	  settings_copy.bitrateKBits=value*1000;
@@ -164,7 +164,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	if(changed){
 	  update_settings(settings_copy);
 	}
-  }
+  }*/
   // Settings hacky end
  private:
   // Camera info is immutable
