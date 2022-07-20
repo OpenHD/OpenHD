@@ -116,6 +116,10 @@ OpenHD is licensed under {gnu-gplv2}, and you can find its contents in this link
 
 Befinitiv - original wifibroadcast, Rangarid - OSD, Rodizio - EZ-WifiBroadcast, SVP-COM, Dino.de, Jelle, Vitaliy, and many others.
 
+== Special Thanks
+
+link:https://cloudsmith.io/[Cloudsmith] for supporting our Projekt.
+
 == Logotype
 
 OpenHD logo was designed by link:https://kurtzgraphics.com/[KURTZ]
