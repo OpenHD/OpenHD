@@ -16,6 +16,7 @@
 // https://github.com/OpenHD/Open.HD/blob/4dc8d09b3f8067a2f44eea3f7b1079acef842412/openhd-power/src/powermicroservice.cpp
 namespace RebootUtil {
 // either shut down or reboot
+
 static void handlePowerCommand(bool shutdownOnly) {
   boost::asio::io_service m_io_service;
   if (shutdownOnly) {
@@ -33,6 +34,14 @@ static void handlePowerCommand(bool shutdownOnly) {
 		m_io_service);
 	c_systemctl_reboot.detach();
   }
+}
+
+static void handle_power_command_async(std::chrono::milliseconds delay, bool shutdownOnly){
+  // This is okay, since we will restart anyways
+  static auto handle=std::thread([delay,shutdownOnly]{
+	std::this_thread::sleep_for(delay);
+	handlePowerCommand(shutdownOnly);
+  });
 }
 
 }

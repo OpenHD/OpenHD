@@ -57,7 +57,14 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
       if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
         //https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
         std::cout<<"Got shutdown command";
-        RebootUtil::handlePowerCommand(false);
+		if(command.target_system==_sys_id){
+		  // we are a companion computer, so we use param2 to get the actual action
+		  const auto action_for_companion=command.param2;
+		  if(action_for_companion>0){
+			const bool shutdownOnly=action_for_companion==2;
+			RebootUtil::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
+		  }
+		}
       }else if(command.command==MAV_CMD_REQUEST_MESSAGE){
         const auto requested_message_id=static_cast<uint32_t>(command.param1);
         std::cout<<"Someone requested a specific message: "<<requested_message_id<<"\n";
