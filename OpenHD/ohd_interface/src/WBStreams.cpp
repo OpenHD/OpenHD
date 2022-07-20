@@ -79,10 +79,9 @@ void WBStreams::configure_cards() {
 	WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
 	WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
 	WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
-	assert(card->get_settings().frequency>0);
-	//WifiCardCommandHelper::set_frequency(card->_wifi_card, card->get_settings().frequency);
-	WifiCardCommandHelper::set_frequency(card->_wifi_card, _settings->get_settings().wb_frequency);
-	assert(card->get_settings().txpower>0);
+	const bool width_40=_settings->get_settings().wb_channel_width==40;
+	//WifiCardCommandHelper::set_frequency(card->_wifi_card, _settings->get_settings().wb_frequency);
+	WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card, _settings->get_settings().wb_frequency,width_40);
 	// TODO check if this works - on rtl8812au, the displayed value at least changes
 	//WifiCardCommandHelper::set_txpower(card->_wifi_card, card->get_settings().txpower);
 	WifiCardCommandHelper::set_txpower(card->_wifi_card, _settings->get_settings().wb_tx_power_milli_dbm);
@@ -399,7 +398,8 @@ bool WBStreams::set_frequency(uint32_t frequency) {
   // We can update the frequency without restarting the streams
   for(const auto& holder:_broadcast_cards){
 	const auto& card=holder->_wifi_card;
-	WifiCardCommandHelper::set_frequency(card,frequency);
+	const bool width_40=_settings->get_settings().wb_channel_width==40;
+	WifiCardCommandHelper::set_frequency_and_channel_width(card,frequency,width_40);
   }
   return true;
 }
@@ -443,6 +443,12 @@ bool WBStreams::set_channel_width(uint32_t channel_width) {
   }
   _settings->unsafe_get_settings().wb_channel_width=channel_width;
   _settings->persist();
+  for(const auto& holder:_broadcast_cards){
+	const auto& card=holder->_wifi_card;
+	const bool width_40=_settings->get_settings().wb_channel_width==40;
+	const auto frequency=_settings->get_settings().wb_frequency;
+	WifiCardCommandHelper::set_frequency_and_channel_width(card,frequency,width_40);
+  }
   restart_async();
   return true;
 }

@@ -28,6 +28,14 @@ static bool set_frequency(const WiFiCard &card, const uint32_t frequency) {
   return success;
 }
 
+static bool set_frequency_and_channel_width(const WiFiCard &card, const uint32_t frequency,bool width_40) {
+  std::cout << "WifiCards::set_frequency(" << frequency << ") for " << card.interface_name << ")" << std::endl;
+  const std::string channel_width=width_40 ? "HT40+" : "HT20";
+  std::vector<std::string> args{"dev", card.interface_name, "set", "freq", std::to_string(frequency), channel_width};
+  bool success = OHDUtil::run_command("iw", args);
+  return success;
+}
+
 // Consti10: this at least changes what then iw dev displays. If it internally has an effect is not yet tested.
 // I think txpower is in milli dbm
 static bool set_txpower(const WiFiCard &card, const uint32_t txpower) {
