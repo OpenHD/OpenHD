@@ -118,7 +118,7 @@ Befinitiv - original wifibroadcast, Rangarid - OSD, Rodizio - EZ-WifiBroadcast, 
 
 == Special Thanks
 
-[![Hosted By: Cloudsmith](https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=for-the-badge)](https://cloudsmith.com)
+image:https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=for-the-badge[title="GitHub License", link="https://cloudsmith.com"]
 
 Package repository hosting is graciously provided by  [Cloudsmith](https://cloudsmith.com).
 Cloudsmith is the only fully hosted, cloud-native, universal package management solution, that
