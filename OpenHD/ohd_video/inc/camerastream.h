@@ -49,7 +49,7 @@ class CameraStream {
    * Create a verbose debug string about the current state of the stream.
    * @return a string, can be printed to stdout or similar.
    */
-  [[nodiscard]] virtual std::string createDebug() const = 0;
+  [[nodiscard]] virtual std::string createDebug() = 0;
 
   /**
    * This can be called in regular intervals by the main OpenHD thread to

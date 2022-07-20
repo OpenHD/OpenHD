@@ -28,7 +28,8 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
     // right now, every time the settings for this camera change, we just re-start the whole stream.
     // That is not ideal, since some cameras support changing for example the bitrate or white balance during operation.
     // But wiring that up is not that easy.
-    this->restart_after_new_setting();
+    //this->restart_after_new_setting();
+	this->restart_async();
   });
   // sanity checks
   if(!check_bitrate_sane(setting.bitrateKBits)){
@@ -187,7 +188,8 @@ void GStreamerStream::setup_ip_camera() {
   m_pipeline << OHDGstHelper::createIpCameraStream(setting.url);
 }
 
-std::string GStreamerStream::createDebug()const {
+std::string GStreamerStream::createDebug(){
+  std::lock_guard<std::mutex> guard(_pipeline_mutex);
   std::stringstream ss;
   GstState state;
   GstState pending;
@@ -219,6 +221,7 @@ void GStreamerStream::cleanup_pipe() {
 }
 
 void GStreamerStream::restartIfStopped() {
+  std::lock_guard<std::mutex> guard(_pipeline_mutex);
   GstState state;
   GstState pending;
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
@@ -232,6 +235,7 @@ void GStreamerStream::restartIfStopped() {
 
 // Restart after a new settings value has been applied
 void GStreamerStream::restart_after_new_setting() {
+  std::lock_guard<std::mutex> guard(_pipeline_mutex);
   std::cout<<"GStreamerStream::restart_after_new_setting() begin\n";
   stop();
   // R.N we need to fully re-set the pipeline if any camera setting has changed
@@ -239,4 +243,16 @@ void GStreamerStream::restart_after_new_setting() {
   setup();
   start();
   std::cout<<"GStreamerStream::restart_after_new_setting() end\n";
+}
+void GStreamerStream::restart_async() {
+  std::lock_guard<std::mutex> guard(_async_thread_mutex);
+  // If there is already an async operation running, we need to wait for it to complete.
+  // If the user was to change parameters to quickly, this would be a problem.
+  if(_async_thread!= nullptr){
+	if(_async_thread->joinable()){
+	  _async_thread->join();
+	}
+	_async_thread=nullptr;
+  }
+  _async_thread=std::make_unique<std::thread>(&GStreamerStream::restart_after_new_setting,this);
 }

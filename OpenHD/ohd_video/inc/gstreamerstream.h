@@ -32,11 +32,16 @@ class GStreamerStream : public CameraStream {
   void start() override;
   void stop() override;
   void cleanup_pipe();
-  std::string createDebug() const override;
+  std::string createDebug() override;
  private:
+  std::mutex _pipeline_mutex;
   GstElement *gst_pipeline = nullptr;
   // The pipeline that is started in the end
   std::stringstream m_pipeline;
+  // To reduce the time on the param callback(s) - they need to return immediately to not block the param server
+  void restart_async();
+  std::mutex _async_thread_mutex;
+  std::unique_ptr<std::thread> _async_thread=nullptr;
 };
 
 #endif
