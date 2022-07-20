@@ -503,3 +503,19 @@ void WBStreams::process_new_setting(openhd::Setting changed_setting) {
 	set_txpower(std::get<int>(changed_setting.value));
   }
 }
+
+void WBStreams::restart_async(std::chrono::milliseconds delay){
+  std::lock_guard<std::mutex> guard(_restart_async_lock);
+ if(_restart_async_thread!= nullptr){
+   std::cerr<<"WBStreams::restart_async - settings changed too quickly\n";
+   if(_restart_async_thread->joinable()){
+	 _restart_async_thread->join();
+   }
+   _restart_async_thread=nullptr;
+ }
+ _restart_async_thread=std::make_unique<std::thread>([this,delay]{
+   std::this_thread::sleep_for(delay);
+   this->restart();
+ }
+ );
+}

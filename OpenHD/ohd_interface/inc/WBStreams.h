@@ -38,6 +38,8 @@ class WBStreams {
   [[nodiscard]] bool ever_received_any_data();
   // Some settings need a full restart of the tx / rx instances to apply
   void restart();
+  // schedule a asynchronous restart. if there is already a restart scheduled, return immediately
+  void restart_async(const std::chrono::milliseconds delay);
   // set the frequency (wifi channel) of all wifibroadcast cards
   bool set_frequency(uint32_t frequency);
   // set the tx power of all wifibroadcast cards
@@ -88,6 +90,9 @@ class WBStreams {
   std::array<OpenHDStatisticsWriter::Data,3> _last_stats_per_rx_stream{};
   // OpenHD
   openhd::link_statistics::STATS_CALLBACK _stats_callback=nullptr;
+  //
+  std::mutex _restart_async_lock;
+  std::unique_ptr<std::thread> _restart_async_thread=nullptr;
 };
 
 #endif
