@@ -61,6 +61,7 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
 		  // we are a companion computer, so we use param2 to get the actual action
 		  const auto action_for_companion=command.param2;
 		  if(action_for_companion>0){
+			ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
 			const bool shutdownOnly=action_for_companion==2;
 			RebootUtil::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
 		  }
@@ -154,6 +155,12 @@ void OHDMainComponent::set_link_statistics(openhd::link_statistics::AllStats sta
   //std::cout<<"OHDMainComponent::set_link_statistics\n";
   std::lock_guard<std::mutex> guard(_last_link_stats_mutex);
   _last_link_stats=stats;
+}
+
+MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,const uint8_t source_comp_id,uint16_t command_id) {
+  MavlinkMessage ret{};
+  mavlink_msg_command_ack_pack(_sys_id,_comp_id,&ret.m,command_id,MAV_RESULT_ACCEPTED,255,0,source_sys_id,source_comp_id);
+  return ret;
 }
 
 

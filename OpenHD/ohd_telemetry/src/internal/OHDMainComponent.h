@@ -58,6 +58,7 @@ class OHDMainComponent : public MavlinkComponent{
   StatusTextAccumulator _status_text_accumulator;
   std::mutex _last_link_stats_mutex;
   openhd::link_statistics::AllStats _last_link_stats{};
+  MavlinkMessage ack_command(const uint8_t source_sys_id,const uint8_t source_comp_id,uint16_t command_id);
 };
 
 #endif //XMAVLINKSERVICE_INTERNALTELEMETRY_H
