@@ -28,6 +28,8 @@ pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
 find_package(fmt REQUIRED)
 SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} fmt::fmt)
 
+find_package(Threads REQUIRED)
+
 SET(ALL_VIDEO_SOURCE_FILES
         src/camerastream.cpp
         src/gstreamerstream.cpp
@@ -43,6 +45,7 @@ target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})
 # link and include gstreamer
 target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
 target_link_libraries(OHDVideoLib PUBLIC ${GST_LIBRARIES})
+target_link_libraries(OHDVideoLib PUBLIC Threads::Threads)
 # find and include all the other libs
 #
 include(cmake/FindLibUSB.cmake)
