@@ -91,7 +91,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
   auto msg = WBStatisticsConverter::convertWbStatisticsToMavlink(data,_sys_id,_comp_id);
   return msg;*/
   std::lock_guard<std::mutex> guard(_last_link_stats_mutex);
-  std::cout<<_last_link_stats<<"\n";
+  //std::cout<<_last_link_stats<<"\n";
   std::vector<MavlinkMessage> ret;
   // stats for all the wifi card(s)
   for(int i=0;i<_last_link_stats.stats_all_cards.size();i++){

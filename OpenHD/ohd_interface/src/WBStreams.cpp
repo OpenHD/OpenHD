@@ -189,6 +189,7 @@ std::string WBStreams::createDebug(){
   for (const auto &rxvid: udpVideoRxList) {
 	ss<<"VidRx :"<<rxvid->createDebug();
   }
+  ss<<_last_all_stats<<"\n";
   return ss.str();
 }
 
@@ -358,9 +359,9 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	  convert(stats_video_stream1_rx.value(),_last_stats_per_rx_stream.at(2).fec_stream_stats.value());
 	}
   }
-  //
+  _last_all_stats=openhd::link_statistics::AllStats{stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx};
   if(_stats_callback){
-	_stats_callback({stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx});
+	_stats_callback(_last_all_stats);
   }
 }
 

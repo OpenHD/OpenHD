@@ -168,18 +168,24 @@ int main(int argc, char *argv[]) {
 	const bool any_debug_enabled=(options.enable_interface_debugging || options.enable_telemetry_debugging || options.enable_video_debugging);
     while (true) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
+	  if(ohdVideo){
+		ohdVideo->restartIfStopped();
+	  }
       // To make sure this is all tightly packed together, we write it to a stringstream first
       // and then to stdout in one big chunk. Otherwise, some other debug output might stand in between the OpenHD
       // state debug chunk.
 	  if(any_debug_enabled){
 		std::stringstream ss;
 		ss<< "-----------OpenHD-state debug begin-----------\n";
-		ss<<ohdInterface->createDebug();
-		if(ohdVideo){
-		  ohdVideo->restartIfStopped();
+		if(options.enable_interface_debugging){
+		  ss<<ohdInterface->createDebug();
+		}
+		if(options.enable_video_debugging && ohdVideo){
 		  ss<<ohdVideo->createDebug();
 		}
-		ss << ohdTelemetry->createDebug();
+		if(options.enable_telemetry_debugging){
+		  ss << ohdTelemetry->createDebug();
+		}
 		ss<<"-------------OpenHD-state debug end-------------\n";
 		std::cout<<ss.str();
 	  }

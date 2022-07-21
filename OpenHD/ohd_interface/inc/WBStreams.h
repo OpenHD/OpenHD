@@ -93,6 +93,8 @@ class WBStreams {
   //
   std::mutex _restart_async_lock;
   std::unique_ptr<std::thread> _restart_async_thread=nullptr;
+  // last calculated "All stats".
+  openhd::link_statistics::AllStats _last_all_stats;
 };
 
 #endif
