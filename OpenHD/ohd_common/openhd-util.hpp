@@ -110,6 +110,10 @@ static bool is_valid_ip(const std::string& ip){
   return result==1;
 }
 
+static std::string yes_or_no(bool yes){
+  return (yes ? "Y" : "N");
+}
+
 }
 
 #endif

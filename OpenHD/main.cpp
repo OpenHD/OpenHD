@@ -22,6 +22,9 @@ static const struct option long_options[] = {
     {"force-air", no_argument, nullptr, 'a'},
     {"force-ground", no_argument, nullptr, 'g'},
     {"clean-start", no_argument, nullptr, 'c'},
+	{"debug-interface", no_argument, nullptr, 'x'}, // just use the long options
+	{"debug-telemetry", no_argument, nullptr, 'y'},
+	{"debug-video", no_argument, nullptr, 'z'},
     {nullptr, 0, nullptr, 0},
 };
 
@@ -29,6 +32,9 @@ struct OHDRunOptions {
   bool force_air = false;
   bool force_ground=false;
   bool clean_start=false;
+  bool enable_interface_debugging=false;
+  bool enable_telemetry_debugging=false;
+  bool enable_video_debugging=false;
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
@@ -43,12 +49,21 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         break;
       case 'c':ret.clean_start = true;
         break;
+	  case 'x':ret.enable_interface_debugging = true;
+		break;
+	  case 'y':ret.enable_telemetry_debugging = true;
+		break;
+	  case 'z':ret.enable_video_debugging = true;
+		break;
       case '?':
       default:
         std::cout << "Usage: \n" <<
             "force-air [Force to boot as air pi, even when no camera is detected] \n" <<
             "force-ground [Force to boot as ground pi,even though one or more cameras are connected] \n"<<
-            "clean-start [Wipe all persistent settings OpenHD has written, can fix any boot issues when switching hw around] \n";
+            "clean-start [Wipe all persistent settings OpenHD has written, can fix any boot issues when switching hw around] \n"<<
+			"debug-interface [enable interface debugging] \n"<<
+			"debug-telemetry [enable telemetry debugging] \n"<<
+			"debug-video     [enable video debugging] \n";
         exit(1);
     }
   }
@@ -73,9 +88,12 @@ int main(int argc, char *argv[]) {
   const OHDRunOptions options=parse_run_parameters(argc,argv);
 
   std::cout << "OpenHD START with " <<"\n"<<
-      "force-air:" << (options.force_air ? "Y" : "N") <<"\n"<<
-      "force-ground:" << (options.force_ground ? "Y" : "N") <<"\n"<<
-      "clean-start:" << (options.clean_start ? "Y" : "N") <<"\n";
+      "force-air:" << OHDUtil::yes_or_no(options.force_air) <<"\n"<<
+      "force-ground:" << OHDUtil::yes_or_no(options.force_ground) <<"\n"<<
+      "clean-start:" << OHDUtil::yes_or_no(options.clean_start) <<"\n"<<
+	  "debug-interface:"<<OHDUtil::yes_or_no(options.enable_interface_debugging) <<"\n"<<
+	  "debug-telemetry:"<<OHDUtil::yes_or_no(options.enable_telemetry_debugging) <<"\n"<<
+	  "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n";
   std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
 
   try {
@@ -147,21 +165,24 @@ int main(int argc, char *argv[]) {
 
     // run forever, everything has its own threads. Note that the only way to break out basically
     // is when one of the modules encounters an exception.
+	const bool any_debug_enabled=(options.enable_interface_debugging || options.enable_telemetry_debugging || options.enable_video_debugging);
     while (true) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
       // To make sure this is all tightly packed together, we write it to a stringstream first
       // and then to stdout in one big chunk. Otherwise, some other debug output might stand in between the OpenHD
       // state debug chunk.
-      std::stringstream ss;
-      ss<< "-----------OpenHD-state debug begin-----------\n";
-      ss<<ohdInterface->createDebug();
-      if(ohdVideo){
-        ohdVideo->restartIfStopped();
-        ss<<ohdVideo->createDebug();
-      }
-      ss << ohdTelemetry->createDebug();
-      ss<<"-------------OpenHD-state debug end-------------\n";
-      std::cout<<ss.str();
+	  if(any_debug_enabled){
+		std::stringstream ss;
+		ss<< "-----------OpenHD-state debug begin-----------\n";
+		ss<<ohdInterface->createDebug();
+		if(ohdVideo){
+		  ohdVideo->restartIfStopped();
+		  ss<<ohdVideo->createDebug();
+		}
+		ss << ohdTelemetry->createDebug();
+		ss<<"-------------OpenHD-state debug end-------------\n";
+		std::cout<<ss.str();
+	  }
     }
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
