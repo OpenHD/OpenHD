@@ -407,11 +407,12 @@ bool WBStreams::set_frequency(int frequency) {
   _settings->unsafe_get_settings().wb_frequency=frequency;
   _settings->persist();
   // We can update the frequency without restarting the streams
-  for(const auto& holder:_broadcast_cards){
+  // Only save, need restart to apply
+  /*for(const auto& holder:_broadcast_cards){
 	const auto& card=holder->_wifi_card;
 	const bool width_40=_settings->get_settings().wb_channel_width==40;
 	WifiCardCommandHelper::set_frequency_and_channel_width(card,frequency,width_40);
-  }
+  }*/
   return true;
 }
 
@@ -437,14 +438,15 @@ bool WBStreams::set_mcs_index(int mcs_index) {
   }
   _settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   _settings->persist();
+  // Only save, need restart to apply
   // To set the mcs index, r.n we have to restart the tx instances
-  std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
+  /*std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
   if(udpTelemetryTx){
 	udpTelemetryTx->update_mcs_index(mcs_index);
   }
   for(auto& tx:udpVideoTxList){
 	tx->update_mcs_index(mcs_index);
-  }
+  }*/
   return true;
 }
 bool WBStreams::set_channel_width(int channel_width) {
@@ -454,13 +456,14 @@ bool WBStreams::set_channel_width(int channel_width) {
   }
   _settings->unsafe_get_settings().wb_channel_width=channel_width;
   _settings->persist();
-  for(const auto& holder:_broadcast_cards){
+  // Only save, need restart to apply
+  /*for(const auto& holder:_broadcast_cards){
 	const auto& card=holder->_wifi_card;
 	const bool width_40=_settings->get_settings().wb_channel_width==40;
 	const auto frequency=_settings->get_settings().wb_frequency;
 	WifiCardCommandHelper::set_frequency_and_channel_width(card,frequency,width_40);
   }
-  restart_async();
+  restart_async();*/
   return true;
 }
 
