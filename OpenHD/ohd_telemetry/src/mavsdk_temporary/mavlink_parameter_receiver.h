@@ -178,6 +178,7 @@ private:
     // https://mavlink.io/en/messages/common.html#PARAM_EXT_REQUEST_READ
     static std::optional<std::variant<std::string,std::uint16_t>>
     extract_request_read_param_identifier(int16_t param_index,const char* param_id);
+	const bool enable_log_target_mismatch=false;
 };
 
 } // namespace mavsdk
