@@ -31,17 +31,17 @@ endif::[]
 // SETTINGS END \\
 
 // Variables \\
-:telegram: link:https://t.me/OpenHD_User[Telegram]
-:discord: link:https://discord.gg/Uz3RBMmRya[Discord]
-:wiki: link:https://openhd.gitbook.io/open-hd/v/2.1[Wiki]
-:openhd: link:https://github.com/HD-Fpv/Open.HD[OpenHD]
-:imageBuilder: link:https://github.com/HD-Fpv/Open.HD_Image_Builder[Image Builder]
-:settingsApp: link:https://github.com/HD-Fpv/Open.HD_AndroidApp[App Settings]
-:forum: link:https://forum.openhdfpv.org[OpenHD Forum]
-:raspbian: link:https://www.raspberrypi.org/documentation/[Raspbian]
-:linux-kernel: link:https://www.kernel.org/doc/html/v4.16/process/license-rules.html[Linux Kernel]
-:gnu-gplv2: link:https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html[GPLv2]
-:cloudsmith: link:https://cloudsmith.com[Cloudsmith]
+:telegram: link:https://t.me/OpenHD_User[Telegram^]
+:discord: link:https://discord.gg/Uz3RBMmRya[Discord^]
+:wiki: link:https://openhd.gitbook.io/open-hd/v/2.1[Wiki^]
+:openhd: link:https://github.com/HD-Fpv/Open.HD[OpenHD^]
+:imageBuilder: link:https://github.com/HD-Fpv/Open.HD_Image_Builder[Image Builder^]
+:settingsApp: link:https://github.com/HD-Fpv/Open.HD_AndroidApp[App Settings^]
+:forum: link:https://forum.openhdfpv.org[OpenHD Forum^]
+:raspbian: link:https://www.raspberrypi.org/documentation/[Raspbian^]
+:linux-kernel: link:https://www.kernel.org/doc/html/v4.16/process/license-rules.html[Linux Kernel^]
+:gnu-gplv2: link:https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html[GPLv2^]
+:cloudsmith: link:https://cloudsmith.com[Cloudsmith^]
 
 // === BEGIN OF CONTENT === \\
 
@@ -49,17 +49,16 @@ endif::[]
 image:wiki-content/Open.HD Logo Splashscreen/Plain_OpenHD_Logo.jpg[OpenHD Logo]
 
 // Badges
-image:https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&style=flat-square[title="Telegram", link="https://t.me/OpenHD_User"]
-image:https://img.shields.io/badge/Discord-Join_us!-informational?logo=Discord&style=flat-square[title="Discord", link="https://discord.gg/Uz3RBMmRya"]
+image:https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&style=flat-square[title="Telegram^", link="https://t.me/OpenHD_User"]
+image:https://img.shields.io/badge/Discord-Join_us!-informational?logo=Discord&style=flat-square[title="Discord^", link="https://discord.gg/Uz3RBMmRya"]
 image:https://img.shields.io/github/commit-activity/m/OpenHD/Open.HD?style=flat-square[title="GitHub commit activity", link=""]
 image:https://img.shields.io/github/issues-raw/OpenHD/Open.HD?style=flat-square[title="GitHub issues", link="https://github.com/OpenHD/Open.HD/issues"]
 image:https://img.shields.io/github/downloads/OpenHD/Open.HD/total?style=flat-square[title="GitHub All Releases", link=""]
 image:https://img.shields.io/github/repo-size/OpenHD/Open.HD?style=flat-square[title="GitHub repo size", link=""]
 image:https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=flat-square[title="Cloudsmith", link="https://cloudsmith.io"]
-image:https://img.shields.io/github/license/OpenHD/Open.HD?style=flat-square[title="GitHub License", link="LICENSE"]
-image:https://img.shields.io/github/license/OpenHD/Open.HD?style=flat-square[title="GitHub License", link="LICENSE"]
-image:https://img.shields.io/opencollective/tier/openhd/18297?label=%5Bopencollective%5D%20mothly%20bakers&style=flat-square[title="Open Collective members by tier", link="https://opencollective.com/openhd"]
-image:https://img.shields.io/opencollective/sponsors/openhd?label=%5Bopencollective%5D%20sponsors&style=flat-square[title="Open Collective sponsors", link="https://opencollective.com/openhd"]
+image:https://img.shields.io/github/license/OpenHD/Open.HD?style=flat-square[title="GitHub License^", link="LICENSE"]
+image:https://img.shields.io/opencollective/tier/openhd/18297?label=%5Bopencollective%5D%20mothly%20bakers&style=flat-square[title="Open Collective members by tier^", link="https://opencollective.com/openhd"]
+image:https://img.shields.io/opencollective/sponsors/openhd?label=%5Bopencollective%5D%20sponsors&style=flat-square[title="Open Collective sponsors^", link="https://opencollective.com/openhd"]
 
 
 ---
