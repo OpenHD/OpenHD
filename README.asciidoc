@@ -1,6 +1,7 @@
 // SETTINGS \\
 
 :doctype: book
+:use-link-attrs:
 
 // -- Table of Contents
 
