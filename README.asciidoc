@@ -59,6 +59,8 @@ image:https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloud
 image:https://img.shields.io/github/license/OpenHD/Open.HD?style=flat-square[title="GitHub License", link="LICENSE"]
 image:https://img.shields.io/github/license/OpenHD/Open.HD?style=flat-square[title="GitHub License", link="LICENSE"]
 image:https://img.shields.io/opencollective/tier/openhd/18297?label=%5Bopencollective%5D%20mothly%20bakers&style=flat-square[title="Open Collective members by tier", link="https://opencollective.com/openhd"]
+image:https://img.shields.io/opencollective/sponsors/openhd?label=%5Bopencollective%5D%20sponsors&style=flat-square[title="Open Collective sponsors", link="https://opencollective.com/openhd"]
+
 
 ---
 
