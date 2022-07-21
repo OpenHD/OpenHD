@@ -31,7 +31,7 @@ endif::[]
 // SETTINGS END \\
 
 // Variables \\
-:telegram: link:https://t.me/OpenHD_User[Telegram^]
+:telegram: link:https://t.me/OpenHD_User[Telegram,role=external,window=_blank]
 :discord: link:https://discord.gg/Uz3RBMmRya[Discord^]
 :wiki: link:https://openhd.gitbook.io/open-hd/v/2.1[Wiki^]
 :openhd: link:https://github.com/HD-Fpv/Open.HD[OpenHD^]
