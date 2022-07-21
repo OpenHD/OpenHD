@@ -393,6 +393,7 @@ void WBStreams::restart() {
 }
 
 bool WBStreams::set_frequency(int frequency) {
+  std::cout<<"WBStreams::set_frequency"<<frequency<<"\n";
   if(_settings->get_settings().configured_for_2G()){
 	if(!openhd::is_valid_frequency_2G(frequency)){
 	  std::cerr<<"Invalid 2.4G frequency "<<frequency<<"\n";
@@ -417,6 +418,7 @@ bool WBStreams::set_frequency(int frequency) {
 }
 
 bool WBStreams::set_txpower(int tx_power) {
+  std::cout<<"WBStreams::set_txpower"<<tx_power<<"\n";
   if(!openhd::is_valid_tx_power(tx_power)){
 	std::cerr<<"Invalid tx power:"<<tx_power<<"\n";
 	return false;
@@ -432,6 +434,7 @@ bool WBStreams::set_txpower(int tx_power) {
 }
 
 bool WBStreams::set_mcs_index(int mcs_index) {
+  std::cout<<"WBStreams::set_mcs_index"<<mcs_index<<"\n";
   if(!openhd::is_valid_mcs_index(mcs_index)){
 	std::cerr<<"Invalid mcs index"<<mcs_index<<"\n";
 	return false;
@@ -450,6 +453,7 @@ bool WBStreams::set_mcs_index(int mcs_index) {
   return true;
 }
 bool WBStreams::set_channel_width(int channel_width) {
+  std::cout<<"WBStreams::set_channel_width"<<channel_width<<"\n";
   if(!openhd::is_valid_channel_width(channel_width)){
 	std::cerr<<"Invalid channel width"<<channel_width<<"\n";
 	return false;
@@ -468,6 +472,7 @@ bool WBStreams::set_channel_width(int channel_width) {
 }
 
 bool WBStreams::set_fec_block_length(int block_length) {
+  std::cout<<"WBStreams::set_fec_block_length"<<block_length<<"\n";
   if(!openhd::is_valid_fec_block_length(block_length)){
 	std::cerr<<"Invalid fec block length:"<<block_length<<"\n";
 	return false;
@@ -479,6 +484,7 @@ bool WBStreams::set_fec_block_length(int block_length) {
 }
 
 bool WBStreams::set_fec_percentage(int fec_percentage) {
+  std::cout<<"WBStreams::set_fec_percentage"<<fec_percentage<<"\n";
   if(!openhd::is_valid_fec_block_length(fec_percentage)){
 	std::cerr<<"Invalid fec percentage:"<<fec_percentage<<"\n";
 	return false;
