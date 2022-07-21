@@ -189,15 +189,16 @@ void GStreamerStream::setup_ip_camera() {
 }
 
 std::string GStreamerStream::createDebug(){
-  if(!_pipeline_mutex.try_lock()){
-	return "restarting";
+  std::unique_lock<std::mutex> lock(_pipeline_mutex, std::try_to_lock);
+  if(!lock.owns_lock()){
+	// We can just discard statistics data during a re-start
+	return "GStreamerStream::No debug during restart\n";
   }
   std::stringstream ss;
   GstState state;
   GstState pending;
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
   ss << "GStreamerStream for camera:"<<_camera_holder->get_camera().debugName()<<" State:"<< returnValue << "." << state << "." << pending << ".";
-  _pipeline_mutex.unlock();
   return ss.str();
 }
 

@@ -165,8 +165,10 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
 }
 
 std::string WBStreams::createDebug(){
-  if(!_wbRxTxInstancesLock.try_lock()){
-	return "restarting";
+  std::unique_lock<std::mutex> lock(_wbRxTxInstancesLock, std::try_to_lock);
+  if(!lock.owns_lock()){
+	// We can just discard statistics data during a re-start
+	return "WBStreams::No debug during restart\n";
   }
   std::stringstream ss;
   // we use telemetry data only here
@@ -187,7 +189,6 @@ std::string WBStreams::createDebug(){
   for (const auto &rxvid: udpVideoRxList) {
 	ss<<"VidRx :"<<rxvid->createDebug();
   }
-  _wbRxTxInstancesLock.unlock();
   return ss.str();
 }
 
@@ -259,6 +260,12 @@ static void convert(openhd::link_statistics::StatsFECVideoStreamRx& dest,const F
 // This is completely not understandable, but I needed to quickly make it work for testing.
 void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   std::lock_guard<std::mutex> guard(_statisticsDataLock);
+  std::unique_lock<std::mutex> lock(_wbRxTxInstancesLock, std::try_to_lock);
+  if(!lock.owns_lock()){
+	// We can just discard statistics data during a re-start
+	std::cout<<"WBStreams::No statistics during restart\n";
+	return;
+  }
   // TODO make more understandable, but tele rx or tele tx is correct here
   if(data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT
   || data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT){
@@ -288,7 +295,7 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
 	stats_total_all_streams.curr_telemetry_tx_bps=udpTelemetryTx->get_current_injected_bits_per_second();
 	// these ones are accumulated
 	stats_total_all_streams.count_wifi_packets_injected+=udpTelemetryTx->get_n_injected_packets();
-	stats_total_all_streams.count_bytes_injected+=0; // TODO
+	stats_total_all_streams.count_bytes_injected+=udpTelemetryTx->get_n_injected_bytes();
 	stats_total_all_streams.count_telemetry_tx_injections_error_hint+=udpTelemetryTx->get_count_tx_injections_error_hint();
   }
   stats_total_all_streams.curr_telemetry_rx_bps=_last_stats_per_rx_stream.at(0).wb_rx_stats.curr_bits_per_second;
@@ -296,7 +303,7 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   for(const auto& videoTx:udpVideoTxList){
 	// accumulated
 	stats_total_all_streams.count_wifi_packets_injected+=videoTx->get_n_injected_packets();
-	stats_total_all_streams.count_bytes_injected+=0; // TODO
+	stats_total_all_streams.count_bytes_injected+=videoTx->get_n_injected_bytes();
 	stats_total_all_streams.count_video_tx_injections_error_hint+=videoTx->get_count_tx_injections_error_hint();
   }
   if(_profile.is_air){
