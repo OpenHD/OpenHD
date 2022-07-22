@@ -49,7 +49,6 @@ jobs:
           echo "$HOME/.sonar/build-wrapper-linux-x86" >> $GITHUB_PATH
       - name: Run build-wrapper
         run: |
-          cd OpenHD
           mkdir -p OpenHD/build
           cmake -S ./OpenHD -B build
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build OpenHD/build/
