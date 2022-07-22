@@ -50,7 +50,10 @@ jobs:
       - name: Run build-wrapper
         run: |
           cd OpenHD
-          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./build_cmake.sh
+          mkdir build
+          cd build
+          cmake ..
+          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} make -j$(nproc)
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
