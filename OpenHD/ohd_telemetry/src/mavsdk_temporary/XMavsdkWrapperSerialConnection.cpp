@@ -32,6 +32,7 @@ void XMavsdkWrapperSerialConnection::constantConnect() {
   while (true){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	if(!OHDFilesystemUtil::exists(_path.c_str())){
+	  std::cout<<"UART file does not exist\n";
 	  continue;
 	}
     const auto result=_serial_connection->start();
