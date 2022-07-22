@@ -113,7 +113,7 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 		  sendMessageGroundStationClients(msg);
 		  if(msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT && msg.m.compid==MAV_COMP_ID_ONBOARD_COMPUTER){
 			// but we send heartbeats to the air pi anyways, just to keep the link active.
-			std::cout<<"Heartbeat sent to air unit\n";
+			//std::cout<<"Heartbeat sent to air unit\n";
 			sendMessageAirPi(msg);
 		  }
 		}
