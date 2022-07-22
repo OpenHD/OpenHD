@@ -26,6 +26,8 @@ class XMavsdkWrapperSerialConnection : public MEndpoint{
   std::unique_ptr<SerialConnection> _serial_connection;
   std::unique_ptr<std::thread> establish_connection_thread = nullptr;
   std::mutex _mutex{};
+  const std::string _path;
+  bool _started=false;
 };
 
 }
