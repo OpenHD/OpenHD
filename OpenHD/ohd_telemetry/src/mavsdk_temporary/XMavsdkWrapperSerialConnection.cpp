@@ -9,7 +9,7 @@ namespace mavsdk {
 
 XMavsdkWrapperSerialConnection::XMavsdkWrapperSerialConnection(
     const std::string& path, int baudrate, bool flow_control)
-    : MEndpoint("SerialFC"),_path() {
+    : MEndpoint("SerialFC"),_path(path) {
   _for_mavsdk_receiver_callback=[this](mavlink_message_t& message, Connection* connection){
     MEndpoint::parseNewDataEmulateForMavsdk(message);
   };
