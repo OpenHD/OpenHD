@@ -104,11 +104,11 @@ struct WifiCardSettings{
   // This one needs to be set for the card to then be used for something.Otherwise, it is not used for anything
   WifiUseFor use_for = WifiUseFor::Unknown;
   // frequency for this card
-  uint32_t frequency;
+  //uint32_t frequency;
   // transmission power for this card
-  uint32_t txpower=DEFAULT_WIFI_TX_POWER;
+  //uint32_t txpower=DEFAULT_WIFI_TX_POWER;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WifiCardSettings,use_for,frequency,txpower)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WifiCardSettings,use_for)//,frequency,txpower)
 
 struct WiFiCard {
   std::string driver_name; // Name of the driver that runs this card.
@@ -139,11 +139,11 @@ static WifiCardSettings create_default_settings(const WiFiCard& wifi_card){
   assert(wifi_card.supports_5ghz || wifi_card.supports_2ghz);
   if(wifi_card.supports_5ghz){
     // by default, prefer 5Ghz
-    settings.frequency=DEFAULT_5GHZ_FREQUENCY;
+    //settings.frequency=DEFAULT_5GHZ_FREQUENCY;
   }else{
-    settings.frequency=DEFAULT_2GHZ_FREQUENCY;
+    //settings.frequency=DEFAULT_2GHZ_FREQUENCY;
   }
-  settings.txpower=DEFAULT_WIFI_TX_POWER;
+  //settings.txpower=DEFAULT_WIFI_TX_POWER;
   return settings;
 }
 

@@ -119,6 +119,14 @@ static bool is_valid_fec_percentage(int fec_perc){
   return fec_perc>0 && fec_perc<100;
 }
 
+// https://www.rapidtables.com/convert/power/dBm_to_mW.html
+// P(mW) = 1mW ⋅ 10(P(dBm)/ 10)
+static float milli_dbm_to_milli_watt(float milli_dbm){
+  double exponent=milli_dbm / 1000.0 / 10.0;
+  auto ret= std::pow(10.0,exponent);
+  return static_cast<float>(ret);
+}
+
 }
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_INC_VALIDATE_SETTINGS_HELPER_H_
