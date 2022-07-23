@@ -48,7 +48,7 @@ class OHDTelemetry {
       return groundTelemetry->createDebug();
     }
   }
-  void add_settings_component(const int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue){
+  void add_settings_component(const int comp_id,std::shared_ptr<openhd::ISettingsComponent> glue){
 	assert(_already_added_settings_components.find(comp_id)==_already_added_settings_components.end());
 	_already_added_settings_components[comp_id]=nullptr;
     if(profile.is_air){
@@ -57,7 +57,7 @@ class OHDTelemetry {
       groundTelemetry->add_settings_component(comp_id,std::move(glue));
     }
   }
-  void add_camera_component(const int camera_index,std::shared_ptr<openhd::XSettingsComponent> glue){
+  void add_camera_component(const int camera_index,std::shared_ptr<openhd::ISettingsComponent> glue){
     // we only have cameras on the air telemetry unit
     assert(profile.is_air);
     // only 2 cameras suported for now.

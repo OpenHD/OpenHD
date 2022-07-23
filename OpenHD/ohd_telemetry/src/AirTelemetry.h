@@ -10,7 +10,7 @@
 #include "endpoints/SerialEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
 #include "internal/OHDMainComponent.h"
-#include "mavlink_settings/XSettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.h"
 #include "openhd-platform.hpp"
 #include "openhd-link-statistics.hpp"
 #include "routing/MavlinkSystem.hpp"
@@ -33,7 +33,7 @@ class AirTelemetry : public MavlinkSystem{
   [[nodiscard]] std::string createDebug()const;
   // add a mavlink parameter server that allows the user to change parameters.
   // changes in the parameter set are propagated back up by the "glue".
-  void add_settings_component(int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue);
+  void add_settings_component(int comp_id,std::shared_ptr<openhd::ISettingsComponent> glue);
   void set_link_statistics(openhd::link_statistics::AllStats stats);
  private:
   const OHDPlatform _platform;

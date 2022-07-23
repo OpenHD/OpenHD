@@ -15,7 +15,7 @@
 #include "openhd-settings.hpp"
 #include "openhd-settings2.hpp"
 
-#include "mavlink_settings/XSettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.h"
 #include "v_validate_settings.h"
 
 static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
@@ -120,7 +120,7 @@ static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::st
 // 2) mutable camera settings.
 // Changes in the camera settings are propagated through this class.
 class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
-	    public openhd::XSettingsComponent{
+	    public openhd::ISettingsComponent{
  public:
   explicit CameraHolder(Camera camera):
 	  _camera(std::move(camera)),

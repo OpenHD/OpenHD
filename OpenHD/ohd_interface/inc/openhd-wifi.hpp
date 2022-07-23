@@ -11,7 +11,7 @@
 #include "openhd-util-filesystem.hpp"
 #include "openhd-settings2.hpp"
 #include "validate_settings_helper.h"
-#include "mavlink_settings/XSettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.h"
 
 enum class WiFiCardType {
   Unknown = 0,

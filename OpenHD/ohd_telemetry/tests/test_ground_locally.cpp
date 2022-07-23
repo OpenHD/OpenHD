@@ -7,7 +7,7 @@
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-platform-discover.hpp"
-#include "mavlink_settings/XSettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.h"
 #include <thread>
 #include <memory>
 

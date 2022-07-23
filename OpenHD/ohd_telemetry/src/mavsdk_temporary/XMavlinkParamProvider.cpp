@@ -5,7 +5,7 @@
 #include "XMavlinkParamProvider.h"
 
 
-XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id,std::shared_ptr<openhd::XSettingsComponent> handler):
+XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id,std::shared_ptr<openhd::ISettingsComponent> handler):
 MavlinkComponent(sys_id,comp_id),_handler(std::move(handler)){
   _sender=std::make_shared<mavsdk::SenderWrapper>(*this);
   _mavlink_message_handler=std::make_shared<mavsdk::MavlinkMessageHandler>();

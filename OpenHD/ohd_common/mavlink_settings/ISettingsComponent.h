@@ -2,8 +2,8 @@
 // Created by consti10 on 05.07.22.
 //
 
-#ifndef OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_XSETTINGSCOMPONENT_H_
-#define OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_XSETTINGSCOMPONENT_H_
+#ifndef OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_ISETTINGSCOMPONENT_H_
+#define OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_ISETTINGSCOMPONENT_H_
 
 #include <utility>
 #include <variant>
@@ -35,15 +35,15 @@ struct Setting{
   std::variant<IntSetting,FloatSetting,StringSetting> setting;
 };
 
-class XSettingsComponent{
+class ISettingsComponent{
  public:
   // all the settings this component uses
   virtual std::vector<Setting> get_all_settings()=0;
  public:
-  XSettingsComponent()=default;
+  ISettingsComponent()=default;
   // delete copy and move constructor
-  XSettingsComponent(const XSettingsComponent&)=delete;
-  XSettingsComponent(const XSettingsComponent&&)=delete;
+  ISettingsComponent(const ISettingsComponent&)=delete;
+  ISettingsComponent(const ISettingsComponent&&)=delete;
 };
 
 
@@ -119,7 +119,7 @@ static bool safe_to(std::string& value,const SettingsVariant& settings_variant){
 
 // For testing
 namespace testing{
-class DummyCameraXSettingsComponent:public XSettingsComponent{
+class DummyCameraXSettingsComponent:public ISettingsComponent{
  public:
   std::vector<Setting> get_all_settings() override{
     std::vector<openhd::Setting> ret={
@@ -133,7 +133,7 @@ class DummyCameraXSettingsComponent:public XSettingsComponent{
   }
 };
 
-class DummyGroundXSettingsComponent:public XSettingsComponent{
+class DummyGroundXSettingsComponent:public ISettingsComponent{
  public:
   std::vector<Setting> get_all_settings() override{
     std::vector<openhd::Setting> ret={
@@ -150,4 +150,4 @@ class DummyGroundXSettingsComponent:public XSettingsComponent{
 
 
 }
-#endif  // OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_XSETTINGSCOMPONENT_H_
+#endif  // OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_ISETTINGSCOMPONENT_H_

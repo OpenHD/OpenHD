@@ -14,10 +14,10 @@
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-led-error-codes.h"
-#include "mavlink_settings/XSettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.h"
 #include "OHDInterfaceSettings.h"
 
- class OHDInterface :public openhd::XSettingsComponent{
+ class OHDInterface :public openhd::ISettingsComponent{
  public:
   /**
    * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
