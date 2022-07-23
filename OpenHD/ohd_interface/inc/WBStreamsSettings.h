@@ -12,14 +12,16 @@ namespace openhd{
 
 static constexpr auto DEFAULT_MCS_INDEX=3;
 static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
+static constexpr auto DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH=8;
+static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE=20;
 
 struct WBStreamsSettings{
   uint32_t wb_frequency; // writen once 2.4 or 5 is known
   uint32_t wb_channel_width=DEFAULT_CHANNEL_WIDTH; // 20 or 40 mhz bandwidth
   uint32_t wb_mcs_index=DEFAULT_MCS_INDEX;
-  uint32_t wb_video_fec_block_length=8;
-  uint32_t wb_video_fec_percentage=20;
-  uint32_t wb_tx_power_milli_dbm=1800;
+  uint32_t wb_video_fec_block_length=DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH;
+  uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
+  uint32_t wb_tx_power_milli_dbm=DEFAULT_WIFI_TX_POWER;
   [[nodiscard]] bool configured_for_2G()const{
 	return is_2G_and_assert(wb_frequency);
   }
