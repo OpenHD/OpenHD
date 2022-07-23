@@ -8,7 +8,6 @@
 
 #include "openhd-wifi.hpp"
 #include "openhd-platform.hpp"
-#include "openhd-discoverable.hpp"
 
 /**
  * Discover all connected wifi cards.

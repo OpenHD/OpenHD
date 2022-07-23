@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "openhd-camera.hpp"
-#include "openhd-discoverable.hpp"
 #include "openhd-platform.hpp"
 
 /**
