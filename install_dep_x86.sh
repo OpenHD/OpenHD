@@ -11,7 +11,6 @@ apt -y install cmake build-essential autotools-dev automake libtool autoconf \
             libv4l-dev \
             apt-transport-https \
             curl \
-            libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
             libfmt-dev || exit 1
             
 gem install fpm
