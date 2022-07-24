@@ -51,7 +51,7 @@ struct CameraSettings {
   // form
   std::string url;
   // enable/disable recording to file
-  bool enableAirRecordingToFile = false;
+  Recording air_recording=Recording::DISABLED;
   // todo they are simple for the most part, but rn not implemented yet.
   /*std::string brightness;
   std::string contrast;
@@ -62,7 +62,7 @@ struct CameraSettings {
   std::string thermal_palette;
   std::string thermal_span;*/
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,userSelectedVideoFormat,bitrateKBits,url,enableAirRecordingToFile)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,userSelectedVideoFormat,bitrateKBits,url,air_recording)
 
 struct CameraEndpoint {
   std::string device_node;
@@ -147,12 +147,16 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	auto c_bitrate=[this](std::string,int value) {
 	  return set_video_bitrate(value);
 	};
+	auto c_recording=[this](std::string,int value) {
+	  return set_air_recording(value);
+	};
 	std::vector<openhd::Setting> ret={
 		openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,c_width}},
 		openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{get_settings().userSelectedVideoFormat.height,c_height}},
 		openhd::Setting{"VIDEO_FPS",openhd::IntSetting{get_settings().userSelectedVideoFormat.framerate,c_fps}},
 		openhd::Setting{"VIDEO_FORMAT",openhd::IntSetting{video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec),c_format}},
-		openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}}
+		openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}},
+		openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
 	};
 	return ret;
   }
@@ -195,6 +199,15 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	unsafe_get_settings().bitrateKBits=bitrate_mbits*1000;
 	persist();
 	return true;
+  }
+  bool set_air_recording(int recording_enable){
+	if(recording_enable==0 || recording_enable==1){
+	  const auto wanted_recording= recording_from_int(recording_enable);
+	  unsafe_get_settings().air_recording=wanted_recording;
+	  persist();
+	  return true;
+	}
+	return false;
   }
   // Settings hacky end
  private:
