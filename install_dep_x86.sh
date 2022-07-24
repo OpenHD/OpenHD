@@ -5,7 +5,7 @@
 
 apt -y install cmake build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libsodium-dev \
-            libgstreamer-plugins-base1.0-dev \
+            libboost-dev libboost-system-dev libasio-dev libboost-filesystem-dev libboost-thread-dev libboost-regex-dev \
             libusb-1.0-0-dev \
             libv4l-dev \
             apt-transport-https \
