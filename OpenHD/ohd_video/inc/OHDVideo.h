@@ -24,6 +24,8 @@
 class OHDVideo {
  public:
   OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras);
+  OHDVideo(const OHDVideo&)=delete;
+  OHDVideo(const OHDVideo&&)=delete;
   /**
    * Create a verbose debug string about the current state of OHDVideo, doesn't
    * print to stdout.
