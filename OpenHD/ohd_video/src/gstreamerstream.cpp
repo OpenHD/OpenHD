@@ -90,7 +90,7 @@ void GStreamerStream::setup() {
   // for lower latency we only add the tee command at the right place if recording is enabled.
   if(setting.air_recording==Recording::ENABLED){
 	std::cout<<"Air recording active\n";
-	m_pipeline<<"tee name=t ! queue ! ";
+	//m_pipeline<<"tee name=t ! queue ! ";
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
@@ -103,7 +103,7 @@ void GStreamerStream::setup() {
   // add udp out part
   m_pipeline << OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
   if(setting.air_recording==Recording::ENABLED){
-	m_pipeline<<OHDGstHelper::createRecordingForVideoCodec(setting.userSelectedVideoFormat.videoCodec);
+	//m_pipeline<<OHDGstHelper::createRecordingForVideoCodec(setting.userSelectedVideoFormat.videoCodec);
   }
   std::cout << "Starting pipeline:" << m_pipeline.str() << std::endl;
   // Protect against unwanted use - stop and free the pipeline first
