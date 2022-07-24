@@ -35,6 +35,8 @@ class OHDTelemetry {
       });
     }
   }
+  OHDTelemetry(const OHDTelemetry&)=delete;
+  OHDTelemetry(const OHDTelemetry&&)=delete;
   // only either one of them both is active at a time.
   // active when air
   std::unique_ptr<AirTelemetry> airTelemetry;
