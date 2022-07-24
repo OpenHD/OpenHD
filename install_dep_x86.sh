@@ -9,7 +9,7 @@ apt -y install cmake build-essential autotools-dev automake libtool autoconf \
             libusb-1.0-0-dev \
             libv4l-dev \
             apt-transport-https \
-            curl \
+            curl libgstreamer1.0-dev \
             libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
             libfmt-dev || exit 1
             
