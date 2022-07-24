@@ -20,7 +20,7 @@ class UDPEndpoint : public MEndpoint {
    * @param receiverPort port for receiving data, or -1 to disable.
    */
   UDPEndpoint(const std::string& TAG,int senderPort, int receiverPort,
-			  std::string senderIp=SocketHelper::ADDRESS_LOCALHOST,std::string receiverIp=SocketHelper::ADDRESS_LOCALHOST,bool extra=false);
+			  std::string senderIp=SocketHelper::ADDRESS_LOCALHOST,std::string receiverIp=SocketHelper::ADDRESS_LOCALHOST);
   // Makes it easy to not mess up the "what is UDP tx port on air unit is UDP rx port on ground unit" paradigm
   static std::unique_ptr<UDPEndpoint> createEndpointForOHDWifibroadcast(bool isAir);
  private:
