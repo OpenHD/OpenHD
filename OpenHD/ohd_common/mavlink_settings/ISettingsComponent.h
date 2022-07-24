@@ -52,6 +52,7 @@ static void validate_provided_ids(const std::vector<Setting>& settings){
   // and when used correctly should be found during debugging by this method.
   std::map<std::string,void*> test;
   for(const auto& setting:settings){
+	assert(setting.id.length()<=16);
 	assert(test.find(setting.id)==test.end());
 	test[setting.id]=nullptr;
   }

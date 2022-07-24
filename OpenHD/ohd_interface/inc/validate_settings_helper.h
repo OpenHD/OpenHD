@@ -106,9 +106,9 @@ static bool is_valid_mcs_index(int mcs_index){
   return mcs_index>=1 && mcs_index<=7;
 }
 
-// think it is always in milli dbm
-static bool is_valid_tx_power(int tx_power){
-  return tx_power> 1000 && tx_power < 4000;
+// Internally, OpenHD uses milli watt (mW)
+static bool is_valid_tx_power_milli_watt(int tx_power_mw){
+  return tx_power_mw>=10 && tx_power_mw<= 2000;
 }
 
 static bool is_valid_fec_block_length(int block_length){
@@ -125,6 +125,13 @@ static float milli_dbm_to_milli_watt(float milli_dbm){
   double exponent=milli_dbm / 1000.0 / 10.0;
   auto ret= std::pow(10.0,exponent);
   return static_cast<float>(ret);
+}
+
+// P(dBm) = 10 ⋅ log10( P(mW) / 1mW)
+static uint32_t milli_watt_to_milli_dbm(uint32_t milli_watt){
+  const double tmp=std::log10(static_cast<double>(milli_watt)/1.0);
+  const double milli_dbm=tmp*10*100;
+  return static_cast<uint32_t>(milli_dbm);
 }
 
 }

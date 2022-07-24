@@ -21,13 +21,13 @@ struct WBStreamsSettings{
   uint32_t wb_mcs_index=DEFAULT_MCS_INDEX;
   uint32_t wb_video_fec_block_length=DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH;
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
-  uint32_t wb_tx_power_milli_dbm=DEFAULT_WIFI_TX_POWER;
+  uint32_t wb_tx_power_milli_watt=DEFAULT_WIFI_TX_POWER_MILLI_WATT;
   [[nodiscard]] bool configured_for_2G()const{
 	return is_2G_and_assert(wb_frequency);
   }
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBStreamsSettings, wb_frequency, wb_channel_width, wb_mcs_index,
-								   wb_video_fec_block_length, wb_video_fec_percentage, wb_tx_power_milli_dbm);
+								   wb_video_fec_block_length, wb_video_fec_percentage, wb_tx_power_milli_watt);
 
 static WBStreamsSettings create_default_settings1(const std::vector<WiFiCard>& wifibroadcast_cards){
   assert(!wifibroadcast_cards.empty());
@@ -79,7 +79,7 @@ static constexpr auto WB_CHANNEL_WIDTH="WB_CHANNEL_W";
 static constexpr auto WB_MCS_INDEX="WB_MCS_INDEX";
 static constexpr auto WB_VIDEO_FEC_BLOCK_LENGTH="WB_V_FEC_BLK_L";
 static constexpr auto WB_VIDEO_FEC_PERCENTAGE="WB_V_FEC_PERC";
-static constexpr auto WB_TX_POWER_MILLI_DBM="WB_TX_POWER";
+static constexpr auto WB_TX_POWER_MILLI_WATT="WB_TX_POWER_MW";
 
 }
 

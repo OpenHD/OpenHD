@@ -88,7 +88,7 @@ void WBStreams::configure_cards() {
 	WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card, _settings->get_settings().wb_frequency,width_40);
 	// TODO check if this works - on rtl8812au, the displayed value at least changes
 	//WifiCardCommandHelper::set_txpower(card->_wifi_card, card->get_settings().txpower);
-	WifiCardCommandHelper::set_txpower(card->_wifi_card, _settings->get_settings().wb_tx_power_milli_dbm);
+	WifiCardCommandHelper::set_txpower(card->_wifi_card, _settings->get_settings().wb_tx_power_milli_watt);
 	//WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
   }
   std::cout << "WBStreams::configure_cards() end\n";
@@ -423,11 +423,11 @@ bool WBStreams::set_frequency(int frequency) {
 
 bool WBStreams::set_txpower(int tx_power) {
   std::cout<<"WBStreams::set_txpower"<<tx_power<<"\n";
-  if(!openhd::is_valid_tx_power(tx_power)){
+  if(!openhd::is_valid_tx_power_milli_watt(tx_power)){
 	std::cerr<<"Invalid tx power:"<<tx_power<<"\n";
 	return false;
   }
-  _settings->unsafe_get_settings().wb_tx_power_milli_dbm=tx_power;
+  _settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power;
   _settings->persist();
   // We can update the tx power without restarting the streams
   for(const auto& holder:_broadcast_cards){
@@ -530,13 +530,13 @@ std::vector<openhd::Setting> WBStreams::get_all_settings(){
   auto change_wb_mcs_index=openhd::IntSetting{(int)_settings->get_settings().wb_mcs_index,[this](std::string,int value){
 	return set_mcs_index(value);
   }};
-  auto change_tx_power=openhd::IntSetting{(int)_settings->get_settings().wb_tx_power_milli_dbm,[this](std::string,int value){
+  auto change_tx_power=openhd::IntSetting{(int)_settings->get_settings().wb_tx_power_milli_watt,[this](std::string,int value){
 	return set_txpower(value);
   }};
   ret.push_back(Setting{WB_FREQUENCY,change_freq});
   ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
   ret.push_back(Setting{WB_MCS_INDEX,change_wb_mcs_index});
-  ret.push_back(Setting{WB_TX_POWER_MILLI_DBM,change_tx_power});
+  ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
 
   if(_profile.is_air){
 	auto change_video_fec_block_length=openhd::IntSetting{(int)_settings->get_settings().wb_video_fec_block_length,[this](std::string,int value){
