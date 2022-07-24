@@ -15,3 +15,6 @@ apt -y install cmake build-essential autotools-dev automake libtool autoconf \
             
 gem install fpm
 pip install --upgrade cloudsmith-cli
+
+
+# fails            libgstreamer-plugins-base1.0-dev \
