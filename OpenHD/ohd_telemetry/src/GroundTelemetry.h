@@ -55,8 +55,8 @@ class GroundTelemetry :public MavlinkSystem{
   // extra
   std::mutex other_udp_ground_stations_lock;
   // temporary, only forwarding of data but we don't get commands
-  std::vector<std::shared_ptr<UDPEndpoint>> other_udp_ground_stations{};
-  //std::vector<std::shared_ptr<UDPEndpoint2>> other_udp_ground_stations{};
+  //std::vector<std::shared_ptr<UDPEndpoint>> other_udp_ground_stations{};
+  std::vector<std::shared_ptr<UDPEndpoint2>> other_udp_ground_stations{};
 };
 
 #endif //OPENHD_TELEMETRY_GROUNDTELEMETRY_H
