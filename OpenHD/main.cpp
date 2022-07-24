@@ -137,14 +137,14 @@ int main(int argc, char *argv[]) {
     auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile);
 
     // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
-    auto ohdTelemetry = std::make_unique<OHDTelemetry>(*platform,* profile);
+    auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile);
 	// link stats from ohdInterface with telemetry
 	ohdInterface->set_stats_callback([&ohdTelemetry](openhd::link_statistics::AllStats stats){
 	  ohdTelemetry->set_link_statistics(stats);
 	});
 	// link interface settings to ohd telemetry
 	ohdTelemetry->add_settings_component(192,ohdInterface);
-	//ohdTelemetry->add_external_ground_station_ip("192.168.237.22","192.168.237.55");
+	ohdTelemetry->add_external_ground_station_ip(" 192.168.0.101","192.168.167.20");
 
     // and start ohdVideo if we are on the air pi
     std::unique_ptr<OHDVideo> ohdVideo;

@@ -154,12 +154,12 @@ void GroundTelemetry::add_external_ground_station_ip(std::string ip_openhd,std::
   ss<<"GroundTelemetry::add_external_ground_station_ip:ip_openhd:["<<ip_openhd<<",ip_dest_device:"<<ip_dest_device<<"]\n";
   std::cout<<ss.str();
   std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
-  auto tmp=std::make_shared<UDPEndpoint2>("GroundStationUDPX",OHD_GROUND_CLIENT_UDP_PORT_OUT+10, OHD_GROUND_CLIENT_UDP_PORT_IN+10,
+  /*auto tmp=std::make_shared<UDPEndpoint2>("GroundStationUDPX",OHD_GROUND_CLIENT_UDP_PORT_OUT+10, OHD_GROUND_CLIENT_UDP_PORT_IN+10,
 										  ip_dest_device,ip_openhd);
   tmp->registerCallback([this](MavlinkMessage &mavlinkMessage){
 	onMessageGroundStationClients(mavlinkMessage);
   });
+  other_udp_ground_stations.emplace_back(tmp);*/
+  auto tmp=std::make_shared<UDPEndpoint>("XUDPE",14550,-1,ip_dest_device,"");
   other_udp_ground_stations.emplace_back(tmp);
-  //auto tmp=std::make_shared<UDPEndpoint>("XUDPE",14550,-1,ip_dest_device,"");
-  //other_udp_ground_stations.emplace_back(tmp);
 }
