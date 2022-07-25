@@ -23,6 +23,8 @@
    * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
    */
   explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1);
+   OHDInterface(const OHDInterface&)=delete;
+   OHDInterface(const OHDInterface&&)=delete;
   // register callback that is called in regular intervals with link statistics
   void set_stats_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) const;
   // Verbose string about the current state.
