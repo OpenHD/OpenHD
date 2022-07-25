@@ -87,8 +87,8 @@ void WBStreams::configure_cards() {
 	//WifiCardCommandHelper::set_frequency(card->_wifi_card, _settings->get_settings().wb_frequency);
 	WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card, _settings->get_settings().wb_frequency,width_40);
 	// TODO check if this works - on rtl8812au, the displayed value at least changes
-	//WifiCardCommandHelper::set_txpower(card->_wifi_card, card->get_settings().txpower);
-	WifiCardCommandHelper::set_txpower(card->_wifi_card, _settings->get_settings().wb_tx_power_milli_watt);
+	// Not sure which is better, iw dev or iwconfig. However, iwconfig eats it in mW
+	WifiCardCommandHelper::set_txpower2(card->_wifi_card, _settings->get_settings().wb_tx_power_milli_watt);
 	//WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
   }
   std::cout << "WBStreams::configure_cards() end\n";
