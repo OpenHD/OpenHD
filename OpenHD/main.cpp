@@ -25,6 +25,7 @@ static const struct option long_options[] = {
 	{"debug-interface", no_argument, nullptr, 'x'}, // just use the long options
 	{"debug-telemetry", no_argument, nullptr, 'y'},
 	{"debug-video", no_argument, nullptr, 'z'},
+	{"no-qt-autostart", no_argument, nullptr, 'w'},
     {nullptr, 0, nullptr, 0},
 };
 
@@ -35,6 +36,7 @@ struct OHDRunOptions {
   bool enable_interface_debugging=false;
   bool enable_telemetry_debugging=false;
   bool enable_video_debugging=false;
+  bool no_qt_autostart=false;
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
@@ -55,6 +57,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
 		break;
 	  case 'z':ret.enable_video_debugging = true;
 		break;
+	  case 'w':ret.no_qt_autostart = true;
+		break;
       case '?':
       default:
         std::cout << "Usage: \n" <<
@@ -63,7 +67,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
             "clean-start [Wipe all persistent settings OpenHD has written, can fix any boot issues when switching hw around] \n"<<
 			"debug-interface [enable interface debugging] \n"<<
 			"debug-telemetry [enable telemetry debugging] \n"<<
-			"debug-video     [enable video debugging] \n";
+			"debug-video     [enable video debugging] \n"<<
+			"no-qt-autostart [disable auto start of QOpenHD on ground] \n";
         exit(1);
     }
   }
@@ -93,7 +98,8 @@ int main(int argc, char *argv[]) {
       "clean-start:" << OHDUtil::yes_or_no(options.clean_start) <<"\n"<<
 	  "debug-interface:"<<OHDUtil::yes_or_no(options.enable_interface_debugging) <<"\n"<<
 	  "debug-telemetry:"<<OHDUtil::yes_or_no(options.enable_telemetry_debugging) <<"\n"<<
-	  "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n";
+	  "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n"<<
+      "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n";
   std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
 
   try {
@@ -156,11 +162,13 @@ int main(int argc, char *argv[]) {
       }
     }
     // we need to start QOpenHD when we are running as ground
-    if(!profile->is_air){
-      OHDUtil::run_command("systemctl",{" start qopenhd"});
-    }else{
-      OHDUtil::run_command("systemctl",{" stop qopenhd"});
-    }
+	if(!options.no_qt_autostart){
+	  if(!profile->is_air){
+		OHDUtil::run_command("systemctl",{" start qopenhd"});
+	  }else{
+		OHDUtil::run_command("systemctl",{" stop qopenhd"});
+	  }
+	}
     std::cout << "All OpenHD modules running\n";
 
     // run forever, everything has its own threads. Note that the only way to break out basically
