@@ -71,7 +71,7 @@ std::optional<std::string> XMavsdkWrapperSerialConnection::check_serial_file_han
 		continue;
 	  }
 	}else{
-	  std::cout<<"Cannot find valid UART file handle\n";
+	  //std::cout<<"Cannot find valid UART file handle\n";
 	}
   }
 }
