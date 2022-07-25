@@ -133,6 +133,9 @@ static uint32_t milli_watt_to_milli_dbm(uint32_t milli_watt){
   const double milli_dbm=tmp*10*100;
   return static_cast<uint32_t>(milli_dbm);
 }
+// However, this is weird:
+// https://linux.die.net/man/8/iwconfig
+// the power in dBm is P = 30 + 10.log(W)
 
 }
 

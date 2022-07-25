@@ -42,10 +42,21 @@ static bool set_frequency_and_channel_width(const WiFiCard &card, const uint32_t
 static bool set_txpower(const WiFiCard &card, const uint32_t txpower_milli_watt) {
   auto tx_power_milli_dbm=openhd::milli_watt_to_milli_dbm(txpower_milli_watt);
   std::stringstream ss;
-  ss<<"WifiCards::set_txpower("<<txpower_milli_watt<<" mW | "<<tx_power_milli_dbm<<" milli dBm\n";
+  ss<<"WifiCards::set_txpower("<<txpower_milli_watt<<" mW | "<<tx_power_milli_dbm<<" milli dBm)\n";
   std::cout<<ss.str();
   std::vector<std::string> args{"dev", card.interface_name, "set", "txpower", "fixed", std::to_string(tx_power_milli_dbm)};
   bool success = OHDUtil::run_command("iw", args);
+  return success;
+}
+// Not sure which one is better
+// https://linux.die.net/man/8/iwconfig
+// https://askubuntu.com/questions/597546/iwconfig-wlan0-txpower-30mw-not-working
+static bool set_txpower2(const WiFiCard& card,const uint32_t txpower_milli_watt){
+  std::stringstream ss;
+  ss<<"WifiCards::set_txpower2("<<txpower_milli_watt<<" mW)\n";
+  std::cout<<ss.str();
+  std::vector<std::string> args{ card.interface_name, "txpower", (std::to_string(txpower_milli_watt)+"mW")};
+  bool success = OHDUtil::run_command("iwconfig", args);
   return success;
 }
 
