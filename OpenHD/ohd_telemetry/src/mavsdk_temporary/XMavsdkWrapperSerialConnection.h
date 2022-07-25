@@ -16,7 +16,7 @@ namespace mavsdk{
 class XMavsdkWrapperSerialConnection : public MEndpoint{
  public:
   explicit XMavsdkWrapperSerialConnection(
-      const std::optional<std::string> path,
+      std::optional<std::string> path,
       int baudrate,
       bool flow_control=false);
  private:

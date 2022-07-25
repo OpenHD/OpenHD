@@ -3,13 +3,15 @@
 //
 
 #include "XMavsdkWrapperSerialConnection.h"
+
+#include <utility>
 #include "openhd-util-filesystem.hpp"
 
 namespace mavsdk {
 
 XMavsdkWrapperSerialConnection::XMavsdkWrapperSerialConnection(
-    const std::optional<std::string> path, int baudrate, bool flow_control)
-    : MEndpoint("SerialFC"),_path(path),_baudrate(baudrate),_flow_control(flow_control) {
+    std::optional<std::string> path, int baudrate, bool flow_control)
+    : MEndpoint("SerialFC"),_path(std::move(path)),_baudrate(baudrate),_flow_control(flow_control) {
   _for_mavsdk_receiver_callback=[this](mavlink_message_t& message, Connection* connection){
     MEndpoint::parseNewDataEmulateForMavsdk(message);
   };
