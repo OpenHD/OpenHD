@@ -10,25 +10,43 @@
 #include <memory>
 #include <cstdlib>
 #include <cmath>
+#include <regex>
 
 namespace openhd{
+
+
 
 // really stupid, but for now the best solution I came up with
 // loosely based on https://stackoverflow.com/questions/9229333/how-to-get-overall-cpu-usage-e-g-57-on-linux
 // NOTE: top -v returns procps-ng on both pi4 and my ubuntu laptop
 // Also note, we want the CPU usage from all processes - not only -p 1
 static std::optional<int> read_cpuload_once_blocking(){
-  //auto res=OHDUtil::run_command_out(R"lit(top -b -n1  | fgrep "Cpu(s)" | tail -1 | awk -F'id,' -v prefix="$prefix" '{ split($1, vs, ","); v=vs[length(vs)]; sub("%", "", v); printf "%s%.1f\n", prefix, 100 - v }')lit");
-  auto res=OHDUtil::run_command_out(R"lit(top -bn2 | grep "Cpu(s)" |  sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1"%"}')lit");
-  if(res.has_value()){
-	std::cout<<"read_cpuload_once_blocking:"<<res.value()<<"\n";
-	const auto value=std::atof(res.value().c_str());
-	// we don't care about the decimals
-	const int value_as_int=static_cast<int>(lround(value));
-	std::cout<<"read_cpuload_once_blocking: "<<value_as_int<<" %";
-	return value_as_int;
+  auto res_opt=OHDUtil::run_command_out(R"lit(top -bn1 | grep "Cpu(s)")lit");
+  // The result from that should look like this: %Cpu(s): 31,0 us,  2,0 sy,  0,0 ni, 67,0 id,  0,0 wa,  0,0 hi,  0,0 si,  0,0 st
+  // Where "67.0 id" is what we are after - "time spent in the kernel idle handler"std::cout<<"Intermediate:{"<<intermediate1<<"}\n";
+  // from that, we can deduce the usage
+  if(!res_opt.has_value()){
+	return std::nullopt;
   }
-  return std::nullopt;
+  const std::string res=res_opt.value();
+  std::smatch result;
+  const std::regex r1{"ni,(.*) id"};
+  auto res1 = std::regex_search(res, result, r1);
+  if(!res1 || result.size()<1){
+	return std::nullopt;
+  }
+  const std::string intermediate1=result[0];
+  std::cout<<"Intermediate:{"<<intermediate1<<"}\n";
+  if(intermediate1.length()<3){
+	return std::nullopt;
+  }
+  std::regex begin("ni,");
+  const auto intermediate2=std::regex_replace(intermediate1, begin, "");
+  std::cout<<"Intermediate2:{"<<intermediate2<<"}\n";
+  const auto cpu_idle_perc=std::atof(intermediate2.c_str());
+  std::cout<<"cpu_idle_perc:{"<<cpu_idle_perc<<"}\n";
+  const auto cpu_idle_perc_int=static_cast<int>(lround(cpu_idle_perc));
+  return 100-cpu_idle_perc_int;
 }
 
 
@@ -50,7 +68,7 @@ class CPUUsageCalculator{
 	  if(value.has_value()){
 		last_cpu_usage_percent=value.value();
 	  }
-	  //std::cout<<"Took:"<<std::chrono::duration_cast<std::chrono::milliseconds>(read_time).count()<<"\n";
+	  std::cout<<"Took:"<<std::chrono::duration_cast<std::chrono::milliseconds>(read_time).count()<<"\n";
 	  // top should block for around 3 seconds, but in case it doesn't make sure we don't neccessarily waste cpu here
 	  if(read_time<=std::chrono::seconds(3)){
 		const auto duration=std::chrono::seconds(3)-read_time;
