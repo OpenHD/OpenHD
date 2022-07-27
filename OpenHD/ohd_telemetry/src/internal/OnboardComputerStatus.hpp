@@ -102,7 +102,9 @@ static int8_t read_temperature_soc_degree(){
 }
 }
 
-static MavlinkMessage createOnboardComputerStatus(const uint8_t sys_id,const uint8_t comp_id,const bool is_platform_rpi){
+// For rpi, we have 2 messages - the generic mavlink one (which unfortunately doesn't match the pi well)
+// and a custom openhd onboard computer status extension one
+static std::vector<MavlinkMessage> createOnboardComputerStatus(const uint8_t sys_id,const uint8_t comp_id,const bool is_platform_rpi){
   MavlinkMessage msg;
   mavlink_onboard_computer_status_t mavlink_onboard_computer_status;
   mavlink_onboard_computer_status.cpu_cores[0]=OnboardComputerStatus::readCpuLoad();
@@ -113,7 +115,12 @@ static MavlinkMessage createOnboardComputerStatus(const uint8_t sys_id,const uin
     mavlink_onboard_computer_status.temperature_core[0]=cpu_temp;
   }
   mavlink_msg_onboard_computer_status_encode(sys_id,comp_id,&msg.m,&mavlink_onboard_computer_status);
-  return msg;
+  std::vector<MavlinkMessage> ret;
+  ret.push_back(msg);
+  if(is_platform_rpi){
+	//TODO
+  }
+  return ret;
 }
 
 // TODO more telemetry here

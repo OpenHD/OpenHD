@@ -27,7 +27,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   std::vector<MavlinkMessage> ret;
   ret.push_back(MavlinkComponent::create_heartbeat());
   const bool is_platform_rpi=platform.platform_type==PlatformType::RaspberryPi;
-  ret.push_back(OnboardComputerStatus::createOnboardComputerStatus(_sys_id,_comp_id,is_platform_rpi));
+  MavlinkComponent::vec_append(ret,OnboardComputerStatus::createOnboardComputerStatus(_sys_id,_comp_id,is_platform_rpi));
   MavlinkComponent::vec_append(ret,generateWifibroadcastStatistics());
   //ret.push_back(generateOpenHDVersion());
   // TODO remove for release
