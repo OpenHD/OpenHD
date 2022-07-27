@@ -20,6 +20,7 @@ OHDMainComponent::OHDMainComponent(
                                                     this->_status_text_accumulator.processLogMessageData(payload, payloadSize);
                                                   });
   logMessagesReceiver->runInBackground();
+  cpu_usage_calculator=std::make_unique<openhd::CPUUsageCalculator>();
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
@@ -27,7 +28,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   std::vector<MavlinkMessage> ret;
   ret.push_back(MavlinkComponent::create_heartbeat());
   const bool is_platform_rpi=platform.platform_type==PlatformType::RaspberryPi;
-  MavlinkComponent::vec_append(ret,OnboardComputerStatus::createOnboardComputerStatus(_sys_id,_comp_id,is_platform_rpi));
+  MavlinkComponent::vec_append(ret,OnboardComputerStatus::createOnboardComputerStatus(_sys_id,_comp_id,is_platform_rpi,cpu_usage_calculator->get_last_cpu_usage()));
   MavlinkComponent::vec_append(ret,generateWifibroadcastStatistics());
   //ret.push_back(generateOpenHDVersion());
   // TODO remove for release

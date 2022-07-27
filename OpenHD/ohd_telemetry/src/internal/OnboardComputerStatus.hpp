@@ -5,6 +5,7 @@
 #ifndef XMAVLINKSERVICE_SYSTEMREADUTIL_H
 #define XMAVLINKSERVICE_SYSTEMREADUTIL_H
 
+#include "OnboardComputerStatusHelper.h"
 #include "mav_include.h"
 #include "openhd-util.hpp"
 
@@ -104,10 +105,10 @@ static int8_t read_temperature_soc_degree(){
 
 // For rpi, we have 2 messages - the generic mavlink one (which unfortunately doesn't match the pi well)
 // and a custom openhd onboard computer status extension one
-static std::vector<MavlinkMessage> createOnboardComputerStatus(const uint8_t sys_id,const uint8_t comp_id,const bool is_platform_rpi){
+static std::vector<MavlinkMessage> createOnboardComputerStatus(const uint8_t sys_id,const uint8_t comp_id,const bool is_platform_rpi,const int cpu_usage){
   MavlinkMessage msg;
   mavlink_onboard_computer_status_t mavlink_onboard_computer_status;
-  mavlink_onboard_computer_status.cpu_cores[0]=OnboardComputerStatus::readCpuLoad();
+  mavlink_onboard_computer_status.cpu_cores[0]=cpu_usage;
   if(is_platform_rpi){
     mavlink_onboard_computer_status.temperature_core[0]=rpi::read_temperature_soc_degree();
   }else{
