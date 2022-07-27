@@ -83,13 +83,6 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
-  /*OpenHDStatisticsWriter::Data data;
-  // for now, write some crap
-  data.radio_port = 0;
-  data.count_p_all = 3;
-  data.count_p_dec_err = 4;
-  auto msg = WBStatisticsConverter::convertWbStatisticsToMavlink(data,_sys_id,_comp_id);
-  return msg;*/
   std::lock_guard<std::mutex> guard(_last_link_stats_mutex);
   //std::cout<<_last_link_stats<<"\n";
   std::vector<MavlinkMessage> ret;
