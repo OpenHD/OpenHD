@@ -136,6 +136,8 @@ static uint32_t milli_watt_to_milli_dbm(uint32_t milli_watt){
 // However, this is weird:
 // https://linux.die.net/man/8/iwconfig
 // the power in dBm is P = 30 + 10.log(W)
+// log10(x/1)==log(x) / log(10) = ~2.3
+
 
 }
 
