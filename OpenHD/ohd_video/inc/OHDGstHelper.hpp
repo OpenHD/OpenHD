@@ -19,6 +19,12 @@
  * with '! '. This way we avoid syntax errors.
  */
 namespace OHDGstHelper {
+
+// some encoders take bits per second instead of kbits per second
+static int kbits_to_bits_per_second(int kbit_per_second){
+  return kbit_per_second*1024;
+}
+
 /**
  * Check if we can find gstreamer at run time, throw a runtime error if not.
  */
@@ -86,7 +92,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   //assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
-  const int bitrateBitsPerSecond = bitrateKBits * 1024;
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrateKBits);
   if (camera_number == -1) {
     ss << fmt::format("rpicamsrc bitrate={} preview=0 ! ",
                       bitrateBitsPerSecond);
@@ -133,7 +139,7 @@ static std::string createJetsonStream(const int sensor_id,
       videoFormat.width, videoFormat.height, videoFormat.framerate);
   // https://developer.download.nvidia.com/embedded/L4T/r31_Release_v1.0/Docs/Accelerated_GStreamer_User_Guide.pdf?E_vSS50FKrZaJBjDtnCBmtaY8hWM1QCYlMHtXBqvZ_Jeuw0GXuLNaQwMBWUDABSnWCD-p8ABlBpBpP-kb2ADgWugbW8mgGPxUWJG_C4DWaL1yKjUVMy1AxH1RTaGOW82yFJ549mea--FBPuZUH3TT1MoEd4-sgdrZal5qr1J0McEFeFaVUc&t=eyJscyI6InJlZiIsImxzZCI6IlJFRi1kb2NzLm52aWRpYS5jb21cLyJ9
   // jetson is also bits per second
-  const auto bitrateBitsPerSecond = bitrateKBits * 1024;
+  const auto bitrateBitsPerSecond =kbits_to_bits_per_second(bitrateKBits);
   if (videoFormat.videoCodec == VideoCodec::H265) {
     ss << fmt::format(
         "nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} ! ",
@@ -203,7 +209,7 @@ static std::string createUVCH264Stream(const std::string &device_node,
   assert(videoFormat.videoCodec == VideoCodec::H264);
   // https://gstreamer.freedesktop.org/documentation/uvch264/uvch264src.html?gi-language=c#uvch264src:average-bitrate
   // bitrate in bits per second
-  const int bitrateBitsPerSecond = bitrateKBits * 1024;
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrateKBits);
   std::stringstream ss;
   ss << fmt::format(
       "uvch264src device={} peak-bitrate={} initial-bitrate={} "
