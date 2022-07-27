@@ -71,9 +71,10 @@ void WBStreams::configure_cards() {
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // However, with the image set up by raphael they should be free from any (OS) prcoesses already
   if(_platform.platform_type==PlatformType::PC){
-	// nmcli device set wlx244bfeb71c05 managed no
+	// This is only needed if NetworkManager was not disabled (we might move onto leaving it enabled on all platforms, though)
+	// TODO: does this return immediately or only after the change has been applied ?
 	for(const auto& card: _broadcast_cards){
-	  OHDUtil::run_command("nmcli",{"device","set",card->_wifi_card.interface_name,"managed","no"});
+	  WifiCardCommandHelper::set_card_unmanaged(card->_wifi_card);
 	}
 	OHDUtil::run_command("rfkill",{"unblock","all"});
   }

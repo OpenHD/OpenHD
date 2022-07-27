@@ -66,5 +66,13 @@ static bool enable_monitor_mode(const WiFiCard &card) {
   bool success = OHDUtil::run_command("iw", args);
   return success;
 }
+
+// example: nmcli device set wlx244bfeb71c05 managed no
+// blacklist the card from network manager (so we can safely do our own thing, aka wifibroadcast) with it
+static bool set_card_unmanaged(const WiFiCard &card){
+  std::cout<<"Set card "<<card.interface_name<<" to unmanaged by NetworkManager\n";
+  bool success = OHDUtil::run_command("nmcli",{"device","set",card.interface_name,"managed","no"});
+  return success;
+}
 }
 #endif //OPENHD_WIFICARDSCOMMANDSHELPER_H
