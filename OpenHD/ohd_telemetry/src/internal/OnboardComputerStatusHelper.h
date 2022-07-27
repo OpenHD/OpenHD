@@ -69,8 +69,8 @@ class CPUUsageCalculator{
 		last_cpu_usage_percent=value.value();
 	  }
 	  std::cout<<"Took:"<<std::chrono::duration_cast<std::chrono::milliseconds>(read_time).count()<<"\n";
-	  // top should block for around 3 seconds, but in case it doesn't make sure we don't neccessarily waste cpu here
-	  if(read_time<=std::chrono::seconds(3)){
+	  // top can block up to X seconds, but in case it doesn't make sure we don't neccessarily waste cpu here
+	  if(read_time<=std::chrono::seconds(1)){
 		const auto duration=std::chrono::seconds(3)-read_time;
 		std::this_thread::sleep_for(duration);
 	  }
