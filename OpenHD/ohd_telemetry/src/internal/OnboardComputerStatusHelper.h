@@ -20,6 +20,8 @@ namespace openhd{
 // loosely based on https://stackoverflow.com/questions/9229333/how-to-get-overall-cpu-usage-e-g-57-on-linux
 // NOTE: top -v returns procps-ng on both pi4 and my ubuntu laptop
 // Also note, we want the CPU usage from all processes - not only -p 1
+// 28.July 2022: This seems to work on both rpi4 and my ubuntu pc.
+// Also, I am pretty sure we can use -bn1 - top should report from "the last refresh."
 static std::optional<int> read_cpuload_once_blocking(){
   auto res_opt=OHDUtil::run_command_out(R"lit(top -bn1 | grep "Cpu(s)")lit");
   // The result from that should look like this: %Cpu(s): 31,0 us,  2,0 sy,  0,0 ni, 67,0 id,  0,0 wa,  0,0 hi,  0,0 si,  0,0 st
