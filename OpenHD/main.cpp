@@ -130,9 +130,15 @@ int main(int argc, char *argv[]) {
       cameras = DCameras::discover(*platform);
     }
     // and by just adding a dummy camera we automatically become air
-    if(options.force_air && cameras.empty()) {
+    /*if(options.force_air && cameras.empty()) {
       cameras.emplace_back(createDummyCamera());
-    }
+    }*/
+	// TODO what should be the default behaviour on force-air - this way, we always have a sw test camera,
+	// which would then still work even if the system detects a camera but for some reason cannot stream from this camera
+	if(options.force_air){
+	  cameras.resize(0);
+	  cameras.emplace_back(createDummyCamera());
+	}
     for(const auto& camera:cameras){
       std::cout<<camera.to_string()<<"\n";
     }
