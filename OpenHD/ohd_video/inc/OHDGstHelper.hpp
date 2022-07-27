@@ -31,6 +31,22 @@ static void initGstreamerOrThrow() {
   }
 }
 
+// SW encoding is slow, but should work on all platforms (at least for low resolutions/framerate(s) )
+static std::string createSwEncoder(const VideoCodec videoCodec,const int bitrateKBits){
+  std::stringstream ss;
+  if(videoCodec==VideoCodec::H264){
+	ss << fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",
+					  bitrateKBits);
+  }else if(videoCodec==VideoCodec::H265){
+	ss << fmt::format("x265enc bitrate={} tune=zerolatency key-int-max=10 ! ",
+					  bitrateKBits);
+  }else{
+	assert(videoCodec==VideoCodec::MJPEG);
+	ss<<"jpegenc ! ";
+  }
+  return ss.str();
+}
+
 // a createXXXStream function always ends wth an encoded "h164,h265 or mjpeg
 // stream ! " aka after that, onc can add a rtp encoder or similar. All these
 // methods also start from zero - aka have a source like videotestsrc,
@@ -53,7 +69,8 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
       videoFormat.width, videoFormat.height, videoFormat.framerate);
   // since the primary purpose here is testing, use a fixed low key frame
   // intervall.
-  if (videoFormat.videoCodec == VideoCodec::H264) {
+  ss << createSwEncoder(videoFormat.videoCodec,DEFAULT_BITRATE_KBITS);
+  /*if (videoFormat.videoCodec == VideoCodec::H264) {
     ss << fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",
                       DEFAULT_BITRATE_KBITS);
   } else if (videoFormat.videoCodec == VideoCodec::H265) {
@@ -61,7 +78,7 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
                       DEFAULT_BITRATE_KBITS);
   } else {
     ss << "jpegenc ! ";
-  }
+  }*/
   return ss.str();
 }
 
@@ -73,7 +90,7 @@ static std::string createRpicamsrcStream(const int camera_number,
                                          const int bitrateKBits,
                                          const VideoFormat videoFormat) {
   assert(videoFormat.isValid());
-  assert(videoFormat.videoCodec == VideoCodec::H264);
+  //assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond = bitrateKBits * 1024;
@@ -84,10 +101,18 @@ static std::string createRpicamsrcStream(const int camera_number,
     ss << fmt::format("rpicamsrc camera-number={} bitrate={} preview=0 ! ",
                       camera_number, bitrateBitsPerSecond);
   }
-  ss << fmt::format(
-      "video/x-h264, profile=constrained-baseline, width={}, height={}, "
-      "framerate={}/1, level=3.0 ! ",
-      videoFormat.width, videoFormat.height, videoFormat.framerate);
+  if(videoFormat.videoCodec==VideoCodec::H264){
+	ss << fmt::format(
+		"video/x-h264, profile=constrained-baseline, width={}, height={}, "
+		"framerate={}/1, level=3.0 ! ",
+		videoFormat.width, videoFormat.height, videoFormat.framerate);
+  }else{
+	std::cout<<"No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues)\n";
+	ss<<fmt::format(
+		"video/x-raw,format=RGB, width={}, height={}, framerate={}/1 ! ",
+		videoFormat.width, videoFormat.height, videoFormat.framerate);
+	ss<<createSwEncoder(videoFormat.videoCodec,bitrateKBits);
+  }
   return ss.str();
 }
 
