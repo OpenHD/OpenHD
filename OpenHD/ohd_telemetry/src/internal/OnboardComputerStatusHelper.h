@@ -23,12 +23,13 @@ namespace openhd{
 static std::optional<int> read_cpuload_once_blocking(){
   auto res_opt=OHDUtil::run_command_out(R"lit(top -bn1 | grep "Cpu(s)")lit");
   // The result from that should look like this: %Cpu(s): 31,0 us,  2,0 sy,  0,0 ni, 67,0 id,  0,0 wa,  0,0 hi,  0,0 si,  0,0 st
-  // Where "67.0 id" is what we are after - "time spent in the kernel idle handler"std::cout<<"Intermediate:{"<<intermediate1<<"}\n";
+  // Where "67.0 id" is what we are after - "time spent in the kernel idle handler"
   // from that, we can deduce the usage
   if(!res_opt.has_value()){
 	return std::nullopt;
   }
   const std::string res=res_opt.value();
+  //std::cout<<"read_cpuload_once_blocking res:{"<<res<<"}\n";
   std::smatch result;
   const std::regex r1{"ni,(.*) id"};
   auto res1 = std::regex_search(res, result, r1);
