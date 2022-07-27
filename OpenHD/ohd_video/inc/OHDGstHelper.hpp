@@ -32,6 +32,7 @@ static void initGstreamerOrThrow() {
 }
 
 // SW encoding is slow, but should work on all platforms (at least for low resolutions/framerate(s) )
+// Note that not every sw encoder accepts every type of input format !
 static std::string createSwEncoder(const VideoCodec videoCodec,const int bitrateKBits){
   std::stringstream ss;
   if(videoCodec==VideoCodec::H264){
@@ -42,6 +43,7 @@ static std::string createSwEncoder(const VideoCodec videoCodec,const int bitrate
 					  bitrateKBits);
   }else{
 	assert(videoCodec==VideoCodec::MJPEG);
+	//NOTE jpegenc doesn't have a bitrate controll
 	ss<<"jpegenc ! ";
   }
   return ss.str();
@@ -100,7 +102,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   }else{
 	std::cout<<"No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues)\n";
 	ss<<fmt::format(
-		"video/x-raw,format=RGB, width={}, height={}, framerate={}/1 ! ",
+		"video/x-raw, width={}, height={}, framerate={}/1 ! ",
 		videoFormat.width, videoFormat.height, videoFormat.framerate);
 	ss<<createSwEncoder(videoFormat.videoCodec,bitrateKBits);
   }
