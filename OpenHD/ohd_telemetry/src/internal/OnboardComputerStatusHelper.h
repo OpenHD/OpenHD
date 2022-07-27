@@ -36,15 +36,15 @@ static std::optional<int> read_cpuload_once_blocking(){
 	return std::nullopt;
   }
   const std::string intermediate1=result[0];
-  std::cout<<"Intermediate:{"<<intermediate1<<"}\n";
+  //std::cout<<"Intermediate:{"<<intermediate1<<"}\n";
   if(intermediate1.length()<3){
 	return std::nullopt;
   }
   std::regex begin("ni,");
   const auto intermediate2=std::regex_replace(intermediate1, begin, "");
-  std::cout<<"Intermediate2:{"<<intermediate2<<"}\n";
+  //std::cout<<"Intermediate2:{"<<intermediate2<<"}\n";
   const auto cpu_idle_perc=std::atof(intermediate2.c_str());
-  std::cout<<"cpu_idle_perc:{"<<cpu_idle_perc<<"}\n";
+  //std::cout<<"cpu_idle_perc:{"<<cpu_idle_perc<<"}\n";
   const auto cpu_idle_perc_int=static_cast<int>(lround(cpu_idle_perc));
   return 100-cpu_idle_perc_int;
 }
@@ -68,7 +68,7 @@ class CPUUsageCalculator{
 	  if(value.has_value()){
 		last_cpu_usage_percent=value.value();
 	  }
-	  std::cout<<"Took:"<<std::chrono::duration_cast<std::chrono::milliseconds>(read_time).count()<<"\n";
+	  //std::cout<<"Took:"<<std::chrono::duration_cast<std::chrono::milliseconds>(read_time).count()<<"\n";
 	  // top can block up to X seconds, but in case it doesn't make sure we don't neccessarily waste cpu here
 	  if(read_time<=std::chrono::seconds(1)){
 		const auto duration=std::chrono::seconds(3)-read_time;
