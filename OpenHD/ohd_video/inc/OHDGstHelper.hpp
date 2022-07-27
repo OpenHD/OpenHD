@@ -70,15 +70,6 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
   // since the primary purpose here is testing, use a fixed low key frame
   // intervall.
   ss << createSwEncoder(videoFormat.videoCodec,DEFAULT_BITRATE_KBITS);
-  /*if (videoFormat.videoCodec == VideoCodec::H264) {
-    ss << fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",
-                      DEFAULT_BITRATE_KBITS);
-  } else if (videoFormat.videoCodec == VideoCodec::H265) {
-    ss << fmt::format("x265enc bitrate={} tune=zerolatency key-int-max=10 ! ",
-                      DEFAULT_BITRATE_KBITS);
-  } else {
-    ss << "jpegenc ! ";
-  }*/
   return ss.str();
 }
 
@@ -174,17 +165,7 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   // Add a queue here. With sw we are not low latency anyways.
   ss << "queue ! ";
   assert(videoCodec != VideoCodec::Unknown);
-  if (videoCodec == VideoCodec::H264) {
-    // https://gstreamer.freedesktop.org/documentation/x264/index.html?gi-language=c
-    ss << fmt::format(
-        "x264enc name=encodectrl bitrate={} tune=zerolatency key-int-max=10 ! ",
-        bitrateKBits);
-  } else if (videoCodec == VideoCodec::H265) {
-    // https://gstreamer.freedesktop.org/documentation/x265/index.html?gi-language=c
-    ss << fmt::format("x265enc name=encodectrl bitrate={} ! ", bitrateKBits);
-  } else {
-    std::cerr << "no sw encoder for MJPEG\n";
-  }
+  ss<<createSwEncoder(videoCodec,bitrateKBits);
   return ss.str();
 }
 
