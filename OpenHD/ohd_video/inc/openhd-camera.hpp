@@ -60,17 +60,12 @@ struct CameraSettings {
   // 270° to the right
   // Note that r.n only rpi camera supports rotation(s), where the degrees are mapped to the corresponding h/v flip(s)
   int camera_rotation_degree=0;
-
-  /*std::string brightness;
-  std::string contrast;
-  std::string sharpness;
-  std::string rotate;
-  std::string wdr;
-  std::string denoise;
-  std::string thermal_palette;
-  std::string thermal_span;*/
+  // R.n only for rpi camera, see https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c
+  int awb_mode=0;
+  int exposure_mode=0;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,userSelectedVideoFormat,bitrateKBits,url,air_recording)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,userSelectedVideoFormat,bitrateKBits,url,air_recording,camera_rotation_degree,
+								   awb_mode,exposure_mode)
 
 struct CameraEndpoint {
   std::string device_node;
@@ -117,6 +112,15 @@ struct Camera {
        << "}";
     return ss.str();
   }
+  [[nodiscard]] bool supports_rotation()const{
+	return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
+  }
+  [[nodiscard]] bool supports_awb()const{
+	return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
+  }
+  [[nodiscard]] bool supports_exp()const{
+	return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
+  }
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,vid,pid,bus,index,endpoints)
 
@@ -158,9 +162,6 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	auto c_recording=[this](std::string,int value) {
 	  return set_air_recording(value);
 	};
-	auto c_rotation=[this](std::string,int value) {
-	  return set_camera_rotation(value);
-	};
 	std::vector<openhd::Setting> ret={
 		openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,c_width}},
 		openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{get_settings().userSelectedVideoFormat.height,c_height}},
@@ -169,8 +170,23 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 		openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}},
 		openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
 	};
-	if(_camera.type==CameraType::RaspberryPiCSI || _camera.type==CameraType::RaspberryPiVEYE){
+	if(_camera.supports_rotation()){
+	  auto c_rotation=[this](std::string,int value) {
+		return set_camera_rotation(value);
+	  };
 	  ret.push_back(openhd::Setting{"V_CAM_ROT_DEG",openhd::IntSetting{get_settings().camera_rotation_degree,c_rotation}});
+	}
+	if(_camera.supports_awb()){
+	  auto cb=[this](std::string,int value) {
+		return set_camera_awb(value);
+	  };
+	  ret.push_back(openhd::Setting{"V_AWB_MODE",openhd::IntSetting{get_settings().awb_mode,cb}});
+	}
+	if(_camera.supports_exp()){
+	  auto cb=[this](std::string,int value) {
+		return set_camera_exposure(value);
+	  };
+	  ret.push_back(openhd::Setting{"V_EXP_MODE",openhd::IntSetting{get_settings().exposure_mode,cb}});
 	}
 	return ret;
   }
@@ -224,6 +240,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	return false;
   }
   bool set_camera_rotation(int value){
+	if(!_camera.supports_rotation())return false;
 	if(!openhd::validate_camera_rotation(value)){
 	  return false;
 	}
@@ -231,6 +248,26 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	persist();
 	return true;
   }
+  //
+  bool set_camera_awb(int value){
+	if(!_camera.supports_awb())return false;
+	if(!openhd::validate_rpi_awb_mode(value)){
+	  return false;
+	}
+	unsafe_get_settings().awb_mode=value;
+	persist();
+	return true;
+  }
+  bool set_camera_exposure(int value){
+	if(!_camera.supports_exp())return false;
+	if(!openhd::validate_rpi_exp_mode(value)){
+	  return false;
+	}
+	unsafe_get_settings().exposure_mode=value;
+	persist();
+	return true;
+  }
+
   // Settings hacky end
  private:
   // Camera info is immutable

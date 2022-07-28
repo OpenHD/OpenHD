@@ -36,6 +36,13 @@ static bool validate_camera_rotation(int value){
   return value==0 || value==90 || value==180 || value==270;
 }
 
+static bool validate_rpi_awb_mode(int value){
+  return value >=0 && value<=9;
+}
+static bool validate_rpi_exp_mode(int value){
+  return value >=0 && value<=12;
+}
+
 static bool needs_horizontal_flip(int rotation_value){
   return false;
 }

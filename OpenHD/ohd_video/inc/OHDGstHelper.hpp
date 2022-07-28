@@ -84,22 +84,30 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
 /**
  * Create a encoded stream for rpicamsrc, which supports h264 only.
  * @param camera_number use -1 to let rpicamsrc decide
+ * See https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c#GstRpiCamSrcAWBMode for more complicated params
  */
 static std::string createRpicamsrcStream(const int camera_number,
                                          const int bitrateKBits,
-                                         const VideoFormat videoFormat,int rotation) {
+                                         const VideoFormat videoFormat,int rotation=0,int awb_mode=0,int exp_mode=0) {
   assert(videoFormat.isValid());
   //assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrateKBits);
   if (camera_number == -1) {
-    ss << fmt::format("rpicamsrc bitrate={} preview=0 ! ",
+    ss << fmt::format("rpicamsrc bitrate={} preview=0 ",
                       bitrateBitsPerSecond);
   } else {
-    ss << fmt::format("rpicamsrc camera-number={} bitrate={} preview=0 ! ",
+    ss << fmt::format("rpicamsrc camera-number={} bitrate={} preview=0 ",
                       camera_number, bitrateBitsPerSecond);
   }
+  if(openhd::needs_horizontal_flip(rotation)){
+	ss<<"hflip=1 ";
+  }
+  if(openhd::needs_vertical_flip(rotation)){
+	ss<<"vflip=1 ";
+  }
+  ss<<" ! ";
   if(videoFormat.videoCodec==VideoCodec::H264){
 	ss << fmt::format(
 		"video/x-h264, profile=constrained-baseline, width={}, height={}, "
