@@ -21,11 +21,11 @@ static int readCpuLoad() {
   long double a[4];
   FILE *fp;
   try {
-    fp = fopen("/proc/stat", "r");
-    fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
+	fp = fopen("/proc/stat", "r");
+	fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
   } catch (...) {
-    std::cerr << "ERROR: proc reading1" << std::endl;
-    return -1;
+	std::cerr << "ERROR: proc reading1" << std::endl;
+	return -1;
   }
   fclose(fp);
   cpuload_gnd = (a[0] + a[1] + a[2]) / (a[0] + a[1] + a[2] + a[3]) * 100;
@@ -39,11 +39,11 @@ static int readTemperature() {
   int cpu_temperature = 0;
   FILE *fp;
   try {
-    fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
-    fscanf(fp, "%d", &cpu_temperature);
+	fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
+	fscanf(fp, "%d", &cpu_temperature);
   } catch (...) {
-    std::cerr << "ERROR: thermal reading" << std::endl;
-    return -1;
+	std::cerr << "ERROR: thermal reading" << std::endl;
+	return -1;
   }
   fclose(fp);
   cpu_temperature = cpu_temperature / 1000;
@@ -51,55 +51,59 @@ static int readTemperature() {
 }
 
 // copy and paste from QOpenHD, I think we can get the under-voltage warning on rpi this way.
-static int readRpiUnderVoltError(){
+static int readRpiUnderVoltError() {
   auto fp3 = fopen("/tmp/undervolt", "r");
   if (fp3 == nullptr) {
-    return 0;
+	return 0;
   }
   int undervolt_gnd = 0;
-  fscanf(fp3,"%d", &undervolt_gnd);
+  fscanf(fp3, "%d", &undervolt_gnd);
   fclose(fp3);
   return undervolt_gnd;
 }
 
 // Stuff that works only on rpi
-namespace rpi{
+namespace rpi {
 
 // https://www.elinux.org/RPI_vcgencmd_usage
-/*static float read_voltage_core_volts(){
-  const auto vcgencmd_measure_volts_opt=OHDUtil::run_command_out("vcgencmd measure_volts core");
-  if(!vcgencmd_measure_volts_opt.has_value()){
-    return -1;
+
+// most vcgen commands return "blablabla=wanted"
+// where wanted is what we are acutally after
+static std::string everything_after_equal(const std::string &unparsed) {
+  //x.substr(x.find(":") + 1);
+  const auto npos = unparsed.find("=");
+  if (npos != std::string::npos) {
+	return unparsed.substr(npos + 1);
   }
-  const auto vcgencmd_measure_volts=vcgencmd_measure_volts_opt.value();
-  const std::regex r{"temp=([\\w]+)"};
-  std::smatch result;
-  if (!std::regex_search(vcgencmd_measure_volts, result, r)) {
-    return -1;
-  }
-  std::cout<<"!:"<<vcgencmd_measure_volts_opt.value()<<"\n";
-  return 0;
-}*/
-static int8_t read_temperature_soc_degree(){
-  int8_t ret=-1;
-  const auto vcgencmd_measure_temp_opt=OHDUtil::run_command_out("vcgencmd measure_temp");
+  std::cout << "everything_after_equal - no equal sign found\n";
+  return unparsed;
+}
+
+static int8_t read_temperature_soc_degree() {
+  int8_t ret = -1;
+  const auto vcgencmd_measure_temp_opt = OHDUtil::run_command_out("vcgencmd measure_temp");
   //const auto vcgencmd_measure_temp_opt=std::optional<std::string>("temp=47.2'C");
-  if(!vcgencmd_measure_temp_opt.has_value()){
-    return ret;
+  if (!vcgencmd_measure_temp_opt.has_value()) {
+	return ret;
   }
-  const auto& vcgencmd_measure_temp=vcgencmd_measure_temp_opt.value();
-  const std::regex r{"([[+-]?([0-9]*[.])?[0-9]+)"};
-  std::smatch result;
-  if (!std::regex_search(vcgencmd_measure_temp, result, r)) {
-    return ret;
+  const auto tmp = rpi::everything_after_equal(vcgencmd_measure_temp_opt.value());
+  const auto tmp_float = std::atof(tmp.c_str());
+  std::cout << "soc_degree():{" << tmp_float << "}\n";
+  return static_cast<int8_t>(lround(tmp_float));
+}
+
+static int read_curr_cpu_frequency() {
+  int ret = -1;
+  const auto vcgencmd_result = OHDUtil::run_command_out("vcgencmd measure_clock arm");
+  //const auto vcgencmd_measure_temp_opt=std::optional<std::string>("temp=47.2'C");
+  if (!vcgencmd_result.has_value()) {
+	return ret;
   }
-  if (result.size() >=1) {
-    const auto float_as_string=result[0];
-    const auto temp_degree=std::stof(float_as_string);
-    //std::cout<<"Result:"<<temp_degree<<"\n";
-    return static_cast<int8_t>(temp_degree);
-  }
-  return ret;
+  const auto tmp = rpi::everything_after_equal(vcgencmd_result.value());
+  const auto tmp2 = std::atol(tmp.c_str());
+  std::cout << "cpu_frequency:{" << tmp2 << "}\n";
+  return static_cast<int>(tmp2);
+
 }
 }
 
@@ -111,6 +115,7 @@ static std::vector<MavlinkMessage> createOnboardComputerStatus(const uint8_t sys
   mavlink_onboard_computer_status.cpu_cores[0]=cpu_usage;
   if(is_platform_rpi){
     mavlink_onboard_computer_status.temperature_core[0]=rpi::read_temperature_soc_degree();
+	rpi::read_curr_cpu_frequency();
   }else{
     const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
     mavlink_onboard_computer_status.temperature_core[0]=cpu_temp;
