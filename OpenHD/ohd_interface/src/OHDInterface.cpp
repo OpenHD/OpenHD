@@ -50,7 +50,7 @@ platform(platform1),profile(std::move(profile1)) {
     // TODO reason what to do. We do not support dynamically adding wifi cards at run time, so somehow
     // we need to signal to the user that something is completely wrong. However, as an grund pi, we can still
     // run QOpenHD and OpenHD, just it will never connect to an air pi
-    _error_blinker=std::make_unique<openhd::rpi::LEDBlinker>(message_for_user);
+    _error_blinker=std::make_unique<openhd::rpi::LEDBlinker>(platform,message_for_user);
     // we just continue as nothing happened, but OHD won't be usable until a reboot.
     //exit(1);
   }else{
