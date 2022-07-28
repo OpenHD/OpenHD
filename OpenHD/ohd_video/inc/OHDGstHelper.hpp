@@ -88,7 +88,7 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
  */
 static std::string createRpicamsrcStream(const int camera_number,
                                          const int bitrateKBits,
-                                         const VideoFormat videoFormat,int rotation=0,int awb_mode=0,int exp_mode=0) {
+                                         const VideoFormat videoFormat,int rotation,int awb_mode,int exp_mode) {
   assert(videoFormat.isValid());
   //assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;
@@ -111,7 +111,7 @@ static std::string createRpicamsrcStream(const int camera_number,
 	ss<<"awb-mode="<<awb_mode<<" ";
   }
   if(exp_mode!=0){
-	ss<<"exp-mode="<<exp_mode<<" ";
+	ss<<"exposure-mode="<<exp_mode<<" ";
   }
   ss<<" ! ";
   if(videoFormat.videoCodec==VideoCodec::H264){
