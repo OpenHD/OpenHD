@@ -13,25 +13,6 @@
 // used to be a custom message for a short amount of time.
 namespace OnboardComputerStatus {
 
-// from https://github.com/OpenHD/Open.HD/blob/35b6b10fbeda43cd06bbfbd90e2daf29629c2f8a/openhd-status/src/statusmicroservice.cpp#L173
-// Return the CPU load of the system the generator is running on
-// Unit: Percentage ?
-static int readCpuLoad() {
-  int cpuload_gnd = 0;
-  long double a[4];
-  FILE *fp;
-  try {
-	fp = fopen("/proc/stat", "r");
-	fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
-  } catch (...) {
-	std::cerr << "ERROR: proc reading1" << std::endl;
-	return -1;
-  }
-  fclose(fp);
-  cpuload_gnd = (a[0] + a[1] + a[2]) / (a[0] + a[1] + a[2] + a[3]) * 100;
-  return cpuload_gnd;
-}
-
 // from https://github.com/OpenHD/Open.HD/blob/35b6b10fbeda43cd06bbfbd90e2daf29629c2f8a/openhd-status/src/statusmicroservice.cpp#L165
 // Return the CPU/SOC temperature of the system the generator is running on
 // Unit: Degree ?
@@ -87,6 +68,7 @@ static int8_t read_temperature_soc_degree() {
 	return ret;
   }
   const auto tmp = rpi::everything_after_equal(vcgencmd_measure_temp_opt.value());
+  // atof cuts away the 'C' for us (everything not a number)
   const auto tmp_float = std::atof(tmp.c_str());
   //std::cout << "soc_degree():{" << tmp_float << "}\n";
   return static_cast<int8_t>(lround(tmp_float));
