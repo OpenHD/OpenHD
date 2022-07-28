@@ -94,7 +94,7 @@ static uint16_t read_curr_cpu_freq_mhz(){
 // and a custom openhd onboard computer status extension one
 static std::vector<MavlinkMessage> createOnboardComputerStatus(const uint8_t sys_id,const uint8_t comp_id,const bool is_platform_rpi,const int cpu_usage){
   MavlinkMessage msg;
-  mavlink_onboard_computer_status_t mavlink_onboard_computer_status;
+  mavlink_onboard_computer_status_t mavlink_onboard_computer_status{};
   mavlink_onboard_computer_status.cpu_cores[0]=cpu_usage;
   if(is_platform_rpi){
     mavlink_onboard_computer_status.temperature_core[0]=rpi::read_temperature_soc_degree();
