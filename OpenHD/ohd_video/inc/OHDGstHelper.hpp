@@ -107,6 +107,12 @@ static std::string createRpicamsrcStream(const int camera_number,
   if(openhd::needs_vertical_flip(rotation)){
 	ss<<"vflip=1 ";
   }
+  if(awb_mode!=0){
+	ss<<"awb-mode="<<awb_mode<<" ";
+  }
+  if(exp_mode!=0){
+	ss<<"exp-mode="<<exp_mode<<" ";
+  }
   ss<<" ! ";
   if(videoFormat.videoCodec==VideoCodec::H264){
 	ss << fmt::format(
