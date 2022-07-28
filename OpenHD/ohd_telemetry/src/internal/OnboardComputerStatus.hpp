@@ -88,22 +88,23 @@ static int8_t read_temperature_soc_degree() {
   }
   const auto tmp = rpi::everything_after_equal(vcgencmd_measure_temp_opt.value());
   const auto tmp_float = std::atof(tmp.c_str());
-  std::cout << "soc_degree():{" << tmp_float << "}\n";
+  //std::cout << "soc_degree():{" << tmp_float << "}\n";
   return static_cast<int8_t>(lround(tmp_float));
 }
 
-static int read_curr_cpu_frequency() {
+static int read_curr_cpu_frequency_hz() {
   int ret = -1;
   const auto vcgencmd_result = OHDUtil::run_command_out("vcgencmd measure_clock arm");
-  //const auto vcgencmd_measure_temp_opt=std::optional<std::string>("temp=47.2'C");
   if (!vcgencmd_result.has_value()) {
 	return ret;
   }
   const auto tmp = rpi::everything_after_equal(vcgencmd_result.value());
   const auto tmp2 = std::atol(tmp.c_str());
-  std::cout << "cpu_frequency:{" << tmp2 << "}\n";
+  //std::cout << "cpu_frequency:{" << tmp2 << "}\n";
   return static_cast<int>(tmp2);
-
+}
+static uint16_t read_curr_cpu_freq_mhz(){
+  return static_cast<uint16_t>(read_curr_cpu_frequency_hz()/1000/1000);
 }
 }
 
@@ -115,7 +116,8 @@ static std::vector<MavlinkMessage> createOnboardComputerStatus(const uint8_t sys
   mavlink_onboard_computer_status.cpu_cores[0]=cpu_usage;
   if(is_platform_rpi){
     mavlink_onboard_computer_status.temperature_core[0]=rpi::read_temperature_soc_degree();
-	rpi::read_curr_cpu_frequency();
+	// temporary, until we have our own message
+	mavlink_onboard_computer_status.storage_type[0]=rpi::read_curr_cpu_freq_mhz();
   }else{
     const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
     mavlink_onboard_computer_status.temperature_core[0]=cpu_temp;
