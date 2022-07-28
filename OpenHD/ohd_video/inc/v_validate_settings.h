@@ -48,6 +48,7 @@ static bool needs_horizontal_flip(int rotation_value){
   return false;
 }
 static bool needs_vertical_flip(int rotation_value){
+  if(rotation_value==180)return true;
   return false;
 }
 
