@@ -59,7 +59,7 @@ class CPUUsageCalculator{
   CPUUsageCalculator(){
 	calculate_thread=std::make_unique<std::thread>(&CPUUsageCalculator::calculateInfinite, this);
   }
-  int get_last_cpu_usage()const{
+  [[nodiscard]] int get_last_cpu_usage()const{
 	return last_cpu_usage_percent;
   }
  private:
@@ -73,9 +73,9 @@ class CPUUsageCalculator{
 	  }
 	  //std::cout<<"Took:"<<std::chrono::duration_cast<std::chrono::milliseconds>(read_time).count()<<"\n";
 	  // top can block up to X seconds, but in case it doesn't make sure we don't neccessarily waste cpu here
-	  if(read_time<=std::chrono::seconds(1)){
-		const auto duration=std::chrono::seconds(3)-read_time;
-		std::this_thread::sleep_for(duration);
+	  const auto minimum_delay=std::chrono::seconds(1);
+	  if(read_time<minimum_delay){
+		std::this_thread::sleep_for((minimum_delay-read_time));
 	  }
 	}
   }
