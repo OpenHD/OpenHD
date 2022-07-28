@@ -87,7 +87,7 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
  */
 static std::string createRpicamsrcStream(const int camera_number,
                                          const int bitrateKBits,
-                                         const VideoFormat videoFormat) {
+                                         const VideoFormat videoFormat,int rotation) {
   assert(videoFormat.isValid());
   //assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;

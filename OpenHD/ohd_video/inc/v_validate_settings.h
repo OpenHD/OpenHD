@@ -32,5 +32,16 @@ static bool validate_bitrate_mbits(int bitrate_mbits){
   return bitrate_mbits>=1 && bitrate_mbits <=50;
 }
 
+static bool validate_camera_rotation(int value){
+  return value==0 || value==90 || value==180 || value==270;
+}
+
+static bool needs_horizontal_flip(int rotation_value){
+  return false;
+}
+static bool needs_vertical_flip(int rotation_value){
+  return false;
+}
+
 }
 #endif //OPENHD_OPENHD_OHD_VIDEO_INC_V_VALIDATE_SETTINGS_H_

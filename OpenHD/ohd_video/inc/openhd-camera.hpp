@@ -53,6 +53,14 @@ struct CameraSettings {
   // enable/disable recording to file
   Recording air_recording=Recording::DISABLED;
   // todo they are simple for the most part, but rn not implemented yet.
+  // camera rotation, allowed values:
+  // 0 nothing
+  // 90° to the right
+  // 180° to the right
+  // 270° to the right
+  // Note that r.n only rpi camera supports rotation(s), where the degrees are mapped to the corresponding h/v flip(s)
+  int camera_rotation_degree=0;
+
   /*std::string brightness;
   std::string contrast;
   std::string sharpness;
@@ -150,6 +158,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	auto c_recording=[this](std::string,int value) {
 	  return set_air_recording(value);
 	};
+	auto c_rotation=[this](std::string,int value) {
+	  return set_camera_rotation(value);
+	};
 	std::vector<openhd::Setting> ret={
 		openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,c_width}},
 		openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{get_settings().userSelectedVideoFormat.height,c_height}},
@@ -158,6 +169,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 		openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}},
 		openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
 	};
+	if(_camera.type==CameraType::RaspberryPiCSI || _camera.type==CameraType::RaspberryPiVEYE){
+	  ret.push_back(openhd::Setting{"V_CAM_ROT_DEG",openhd::IntSetting{get_settings().camera_rotation_degree,c_rotation}});
+	}
 	return ret;
   }
   bool set_video_width(int video_width){
@@ -208,6 +222,14 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  return true;
 	}
 	return false;
+  }
+  bool set_camera_rotation(int value){
+	if(!openhd::validate_camera_rotation(value)){
+	  return false;
+	}
+	unsafe_get_settings().camera_rotation_degree=value;
+	persist();
+	return true;
   }
   // Settings hacky end
  private:
