@@ -10,11 +10,13 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
             libgstreamer-plugins-base1.0-dev \
             libusb-1.0-0-dev \
             libv4l-dev \
+            cmake \
             git \
             apt-transport-https \
             curl \
             git \
             ruby-dev \
+            libboost1.73-dev \
             python3-pip \
             libnl-3-dev cmake snapd libnl-genl-3-dev \
             libnl-route-3-dev || exit 1
