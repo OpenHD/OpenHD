@@ -16,7 +16,7 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
             curl \
             git \
             ruby-dev \
-            libboost1.73-dev \
+            libboost-filesystem-dev \
             python3-pip \
             libnl-3-dev cmake snapd libnl-genl-3-dev \
             libnl-route-3-dev || exit 1
