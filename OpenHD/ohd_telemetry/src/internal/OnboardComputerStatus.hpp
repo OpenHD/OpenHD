@@ -84,6 +84,10 @@ static int8_t read_temperature_soc_degree() {
   //std::cout << "soc_degree():{" << tmp_float << "}\n";
   return static_cast<int8_t>(lround(tmp_float));
 }
+static constexpr auto VCGENCMD_CLOCK_CPU="arm";
+static constexpr auto VCGENCMD_CLOCK_ISP="isp";
+static constexpr auto VCGENCMD_CLOCK_H264="h264";
+static constexpr auto VCGENCMD_CLOCK_CORE="core";
 // See https://elinux.org/RPI_vcgencmd_usage
 // Shows clock frequency, clock can be one of arm, core, h264, isp, v3d, uart, pwm, emmc, pixel, vec, hdmi, dpi.
 // NOTE: vcgencmd returns values in hertz, use the "mhz" util for more easy to read values.
@@ -99,11 +103,6 @@ static int vcgencmd_measure_clock(const std::string& which){
   //std::cout << "clock for "<<which<<" :{" << tmp2 << "}\n";
   return static_cast<int>(tmp2);
 }
-static constexpr auto VCGENCMD_CLOCK_CPU="arm";
-static constexpr auto VCGENCMD_CLOCK_ISP="isp";
-static constexpr auto VCGENCMD_CLOCK_H264="h264";
-static constexpr auto VCGENCMD_CLOCK_CORE="core";
-
 static int read_curr_frequency_mhz(const std::string& which){
   return static_cast<uint16_t>(vcgencmd_measure_clock(which)/1000/1000);
 }

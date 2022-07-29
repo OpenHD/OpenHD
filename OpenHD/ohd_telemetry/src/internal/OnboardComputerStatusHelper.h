@@ -14,8 +14,6 @@
 
 namespace openhd{
 
-
-
 // really stupid, but for now the best solution I came up with
 // loosely based on https://stackoverflow.com/questions/9229333/how-to-get-overall-cpu-usage-e-g-57-on-linux
 // NOTE: top -v returns procps-ng on both pi4 and my ubuntu laptop
@@ -51,7 +49,6 @@ static std::optional<int> read_cpuload_once_blocking(){
   const auto cpu_idle_perc_int=static_cast<int>(lround(cpu_idle_perc));
   return 100-cpu_idle_perc_int;
 }
-
 
 // Note: we need to run this in its own thread, such that "top" can do its magic over a longer duration
 class CPUUsageCalculator{
