@@ -16,9 +16,10 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
             git \
             ruby-dev \
             python3-pip \
+            libnl-3-dev cmake snapd libnl-genl-3-dev \
             libnl-route-3-dev || exit 1
 
-            # libnl-3-dev cmake snapd libnl-genl-3-dev \
+            # 
 
 
 gem install fpm
