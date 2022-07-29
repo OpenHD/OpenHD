@@ -43,7 +43,7 @@ jobs:
             curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
-            sudo ./install_dep.sh
+            sudo bash ./install_dep_legacy.sh
             sudo ./package.sh armhf raspbian buster
             ls -a
 
