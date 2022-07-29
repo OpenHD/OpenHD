@@ -62,6 +62,17 @@ static std::string everything_after_equal(const std::string &unparsed) {
   return unparsed;
 }
 
+static float vcgencmd_result_parse_float(const std::string& result){
+  const auto tmp = rpi::everything_after_equal(result);
+  // atof cuts away the part after the number for us (everything not a number)
+  return std::atof(tmp.c_str());
+}
+static long vcgencmd_result_parse_long(const std::string& result){
+  const auto tmp = rpi::everything_after_equal(result);
+  // atol cuts away the part after rhe number for us (everything not a number)
+  return std::atol(tmp.c_str());
+}
+
 static int8_t read_temperature_soc_degree() {
   int8_t ret = -1;
   const auto vcgencmd_measure_temp_opt = OHDUtil::run_command_out("vcgencmd measure_temp");
@@ -69,9 +80,7 @@ static int8_t read_temperature_soc_degree() {
   if (!vcgencmd_measure_temp_opt.has_value()) {
 	return ret;
   }
-  const auto tmp = rpi::everything_after_equal(vcgencmd_measure_temp_opt.value());
-  // atof cuts away the 'C' for us (everything not a number)
-  const auto tmp_float = std::atof(tmp.c_str());
+  const auto tmp_float = vcgencmd_result_parse_float(vcgencmd_measure_temp_opt.value());
   //std::cout << "soc_degree():{" << tmp_float << "}\n";
   return static_cast<int8_t>(lround(tmp_float));
 }
@@ -86,8 +95,7 @@ static int vcgencmd_measure_clock(const std::string& which){
   if (!vcgencmd_result.has_value()) {
 	return ret;
   }
-  const auto tmp = rpi::everything_after_equal(vcgencmd_result.value());
-  const auto tmp2 = std::atol(tmp.c_str());
+  const auto tmp2 = vcgencmd_result_parse_long(vcgencmd_result.value());
   //std::cout << "clock for "<<which<<" :{" << tmp2 << "}\n";
   return static_cast<int>(tmp2);
 }
