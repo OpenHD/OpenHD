@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <sstream>
 #include <map>
 #include <cassert>
 #include <functional>
@@ -22,7 +23,9 @@ struct SettingImpl{
   // This callback is called every time the user wants to change the parameter from value x to value y (via mavlink)
   // return true to accept the value, otherwise return false.
   std::function<bool(std::string id,T requested_value)> change_callback=[](std::string id,T requested_value){
-	std::cout<<id<<"change to "<<std::to_string(requested_value)<<"\n";
+	std::stringstream ss;
+	ss<<"Requested change "<<id<<" to "<<std::to_string(requested_value)<<"\n";
+	std::cout<<ss.str();
 	return true;
   };
 };
