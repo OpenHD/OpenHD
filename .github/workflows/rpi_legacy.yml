@@ -1,4 +1,4 @@
-name: Build RPI
+name: Build RPI Legacy
 
 on: [push]
 
