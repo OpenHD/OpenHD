@@ -6,7 +6,7 @@
 echo "deb http://deb.debian.org/debian buster-backports main" >> /etc/apt/sources.list.d/backports.list
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E98404D386FA1D9
 apt update 
-apt install -t buster-backports libboost-filesystem1.74-dev 
+apt install -t buster-backports libboost-filesystem1.74-dev cmake -y
 
 apt -y install build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libsodium-dev \
