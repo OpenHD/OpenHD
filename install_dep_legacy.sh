@@ -10,7 +10,7 @@ apt install -t buster-backports libboost-filesystem1.74-dev cmake -y
 
 apt -y install build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libsodium-dev \
-            libboost-all-dev libasio-dev \
+            libasio-dev \
             libgstreamer-plugins-base1.0-dev \
             libusb-1.0-0-dev \
             libv4l-dev \
