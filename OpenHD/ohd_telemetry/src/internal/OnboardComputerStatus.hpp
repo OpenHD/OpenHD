@@ -106,6 +106,7 @@ static std::vector<MavlinkMessage> createOnboardComputerStatus(const uint8_t sys
   MavlinkMessage msg;
   mavlink_onboard_computer_status_t mavlink_onboard_computer_status{};
   mavlink_onboard_computer_status.cpu_cores[0]=cpu_usage;
+  const auto before=std::chrono::steady_clock::now();
   if(is_platform_rpi){
     mavlink_onboard_computer_status.temperature_core[0]=rpi::read_temperature_soc_degree();
 	// temporary, until we have our own message
@@ -117,6 +118,10 @@ static std::vector<MavlinkMessage> createOnboardComputerStatus(const uint8_t sys
   }else{
     const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
     mavlink_onboard_computer_status.temperature_core[0]=cpu_temp;
+  }
+  const auto processing_time=std::chrono::steady_clock::now()-before;
+  if(processing_time>std::chrono::milliseconds(100)){
+	std::cout<<"Warning: measuring stats took unexpected long:"<<std::chrono::duration_cast<std::chrono::milliseconds>(processing_time).count()<<" ms\n";
   }
   mavlink_msg_onboard_computer_status_encode(sys_id,comp_id,&msg.m,&mavlink_onboard_computer_status);
   std::vector<MavlinkMessage> ret;
