@@ -73,10 +73,14 @@ static int8_t read_temperature_soc_degree() {
   //std::cout << "soc_degree():{" << tmp_float << "}\n";
   return static_cast<int8_t>(lround(tmp_float));
 }
-
-static int read_curr_cpu_frequency_hz() {
+// See https://elinux.org/RPI_vcgencmd_usage
+// Shows clock frequency, clock can be one of arm, core, h264, isp, v3d, uart, pwm, emmc, pixel, vec, hdmi, dpi.
+// NOTE: vcgencmd returns values in hertz, use the "mhz" util for more easy to read values.
+static int vcgencmd_measure_clock(const std::string& which){
   int ret = -1;
-  const auto vcgencmd_result = OHDUtil::run_command_out("vcgencmd measure_clock arm");
+  std::stringstream command;
+  command<<"vcgencmd measure_clock "<<which;
+  const auto vcgencmd_result = OHDUtil::run_command_out(command.str().c_str());
   if (!vcgencmd_result.has_value()) {
 	return ret;
   }
@@ -85,9 +89,15 @@ static int read_curr_cpu_frequency_hz() {
   //std::cout << "cpu_frequency:{" << tmp2 << "}\n";
   return static_cast<int>(tmp2);
 }
-static uint16_t read_curr_cpu_freq_mhz(){
-  return static_cast<uint16_t>(read_curr_cpu_frequency_hz()/1000/1000);
+static constexpr auto VCGENCMD_CLOCK_CPU="arm";
+static constexpr auto VCGENCMD_CLOCK_ISP="isp";
+static constexpr auto VCGENCMD_CLOCK_H264="h264";
+static constexpr auto VCGENCMD_CLOCK_CORE="core";
+
+static int read_curr_frequency_mhz(const std::string& which){
+  return static_cast<uint16_t>(vcgencmd_measure_clock(which)/1000/1000);
 }
+
 }
 
 // For rpi, we have 2 messages - the generic mavlink one (which unfortunately doesn't match the pi well)
@@ -99,7 +109,11 @@ static std::vector<MavlinkMessage> createOnboardComputerStatus(const uint8_t sys
   if(is_platform_rpi){
     mavlink_onboard_computer_status.temperature_core[0]=rpi::read_temperature_soc_degree();
 	// temporary, until we have our own message
-	mavlink_onboard_computer_status.storage_type[0]=rpi::read_curr_cpu_freq_mhz();
+	mavlink_onboard_computer_status.storage_type[0]=rpi::read_curr_frequency_mhz(rpi::VCGENCMD_CLOCK_CPU);
+	mavlink_onboard_computer_status.storage_type[1]=rpi::read_curr_frequency_mhz(rpi::VCGENCMD_CLOCK_ISP);
+	mavlink_onboard_computer_status.storage_type[2]=rpi::read_curr_frequency_mhz(rpi::VCGENCMD_CLOCK_H264);
+	mavlink_onboard_computer_status.storage_type[3]=rpi::read_curr_frequency_mhz(rpi::VCGENCMD_CLOCK_CORE);
+
   }else{
     const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
     mavlink_onboard_computer_status.temperature_core[0]=cpu_temp;
