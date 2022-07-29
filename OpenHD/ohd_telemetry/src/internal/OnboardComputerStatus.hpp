@@ -8,6 +8,8 @@
 #include "OnboardComputerStatusHelper.h"
 #include "mav_include.h"
 #include "openhd-util.hpp"
+#include <sstream>
+#include <chrono>
 
 // https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS
 // used to be a custom message for a short amount of time.
@@ -86,7 +88,7 @@ static int vcgencmd_measure_clock(const std::string& which){
   }
   const auto tmp = rpi::everything_after_equal(vcgencmd_result.value());
   const auto tmp2 = std::atol(tmp.c_str());
-  //std::cout << "cpu_frequency:{" << tmp2 << "}\n";
+  //std::cout << "clock for "<<which<<" :{" << tmp2 << "}\n";
   return static_cast<int>(tmp2);
 }
 static constexpr auto VCGENCMD_CLOCK_CPU="arm";
