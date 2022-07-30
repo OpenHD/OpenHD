@@ -167,7 +167,7 @@ MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,const u
 
 std::optional<MavlinkMessage> OHDMainComponent::handleTimeSyncMessage(const MavlinkMessage &message) {
   const auto msg=message.m;
-  assert(msg.msgid==MAVLINK_MSG_ID_PING);
+  assert(msg.msgid==MAVLINK_MSG_ID_TIMESYNC);
   mavlink_timesync_t tsync;
   mavlink_msg_timesync_decode(&msg, &tsync);
   if(tsync.tc1==0){
