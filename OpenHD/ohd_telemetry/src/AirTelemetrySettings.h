@@ -54,6 +54,20 @@ static bool validate_uart_connection_type(int type){
   return type >=0 && type <=4;
 }
 
+static std::string uart_fd_from_connection_type(int connection_type){
+  assert(validate_uart_connection_type(connection_type));
+  switch (connection_type) {
+	case 0:return "/dev/serial0";
+	case 1:return "/dev/serial1";
+	case 2:return "/dev/ttyUSB0";
+	case 3:return "/dev/ttyACM0";
+	case 4:return "/dev/ttyACM1";
+	default:
+	  assert(true);
+	  return "dummy";
+  }
+}
+
 // based on mavsdk and what linux allows setting
 // if a value is in the map, we allow the user to set it
 static std::map<int,void*> valid_uart_baudrates(){
