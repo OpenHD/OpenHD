@@ -17,13 +17,19 @@
 
 class XMavlinkParamProvider :public MavlinkComponent{
  public:
-  explicit XMavlinkParamProvider(uint8_t sys_id,uint8_t comp_id,std::shared_ptr<openhd::ISettingsComponent> handler);
+  // Note : only with manually_call_set_ready==true you can create the param provider,
+  // then add settings on the fly and finally - when all settings are added - call "ready for c0mmunication".
+  explicit XMavlinkParamProvider(uint8_t sys_id,uint8_t comp_id,std::shared_ptr<openhd::ISettingsComponent> handler,
+								 bool manually_call_set_ready=false);
+  void add_param(const openhd::Setting& setting);
+  // only usable when manually_set_ready is true
+  void add_params(const std::vector<openhd::Setting>& settings);
+  void set_ready();
   // override from component
   std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage &msg)override;
   // override from component
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
  private:
-  std::shared_ptr<openhd::ISettingsComponent> _handler;
   // mavsdk
   std::shared_ptr<mavsdk::SenderWrapper> _sender;
   std::shared_ptr<mavsdk::MavlinkMessageHandler> _mavlink_message_handler;
