@@ -15,6 +15,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::string fcSerialPort): _plat
   serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
     this->onMessageFC(msg);
   });*/
+  _airTelemetrySettings=std::make_unique<openhd::AirTelemetrySettingsHolder>();
   const bool enable_fc_simple=!OHDFilesystemUtil::exists("/boot/no_fc.txt");
   if(enable_fc_simple){
 	serialEndpoint = std::make_unique<mavsdk::XMavsdkWrapperSerialConnection>(std::nullopt,115200);

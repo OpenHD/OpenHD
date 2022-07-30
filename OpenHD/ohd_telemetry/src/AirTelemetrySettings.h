@@ -9,10 +9,14 @@
 
 #include "openhd-settings.hpp"
 #include "openhd-settings2.hpp"
+#include <map>
 
 namespace openhd{
 
 static const std::string TELEMETRY_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("telemetry/");
+
+// Default for ardupilot and more
+static constexpr int DEFAULT_UART_BAUDRATE=115200;
 
 struct AirTelemetrySettings{
   // 0: RPI UART0 (/dev/serial0)
@@ -23,7 +27,7 @@ struct AirTelemetrySettings{
   // 3: /dev/ttyACM0
   // 4: /dev/ttyACM1
   int uart_connection_type=0;
-  int uart_baudrate=0;
+  int uart_baudrate=DEFAULT_UART_BAUDRATE;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirTelemetrySettings,uart_connection_type,uart_baudrate);
@@ -44,6 +48,37 @@ class AirTelemetrySettingsHolder:public openhd::settings::PersistentSettings<Air
 	return AirTelemetrySettings{};
   }
 };
+
+static bool validate_uart_connection_type(int type){
+  return type >=0 && type <=4;
+}
+
+// based on mavsdk and what linux allows setting
+// if a value is in the map, we allow the user to set it
+static std::map<int,void*> valid_uart_baudrates(){
+  std::map<int,void*> ret;
+  ret[9600]=nullptr;
+  ret[19200]=nullptr;
+  ret[38400]=nullptr;
+  ret[57600]=nullptr;
+  ret[115200]=nullptr;
+  ret[230400]=nullptr;
+  ret[460800]=nullptr;
+  ret[500000]=nullptr;
+  ret[576000]=nullptr;
+  ret[921600]=nullptr;
+  ret[1000000]=nullptr;
+  // I think it is sane to stop here, I doubt anything higher makes sense
+  return ret;
+}
+
+static bool validate_uart_baudrate(int baudrate){
+  const auto supported=valid_uart_baudrates();
+  if(supported.find(baudrate)!=supported.end()){
+	return true;
+  }
+  return false;
+}
 
 }
 
