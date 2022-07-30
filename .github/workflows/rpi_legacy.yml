@@ -32,6 +32,7 @@ jobs:
         copy_repository_path: /opt
         copy_artifact_path: Open.HD
         import_github_env: true
+        cpu: cortex-a7
         commands: |
             ls -a
             cd /opt
