@@ -173,7 +173,7 @@ std::optional<MavlinkMessage> OHDMainComponent::handleTimeSyncMessage(const Mavl
   if(tsync.tc1==0){
 	// request, pack response
 	mavlink_timesync_t rsync;
-	rsync.tc1 = 10 * 1000;
+	rsync.tc1 = get_time_microseconds() * 1000;
 	rsync.ts1 = tsync.ts1;
 	mavlink_message_t response_message;
 	mavlink_msg_timesync_encode(_sys_id,_comp_id,&response_message,&rsync);
