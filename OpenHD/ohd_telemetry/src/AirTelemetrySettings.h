@@ -19,6 +19,7 @@ static const std::string TELEMETRY_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std
 static constexpr int DEFAULT_UART_BAUDRATE=115200;
 
 struct AirTelemetrySettings{
+  bool fc_uart_enable=true;
   // 0: RPI UART0 (/dev/serial0)
   // 1: RPI UART1 (/dev/serial1)
   // 2: UART USB ADAPTER (/dev/ttyUSB0)
@@ -26,11 +27,11 @@ struct AirTelemetrySettings{
   // usb cable (micro usb on FC to rpi USB port)
   // 3: /dev/ttyACM0
   // 4: /dev/ttyACM1
-  int uart_connection_type=0;
-  int uart_baudrate=DEFAULT_UART_BAUDRATE;
+  int fc_uart_connection_type=0;
+  int fc_uart_baudrate=DEFAULT_UART_BAUDRATE;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirTelemetrySettings,uart_connection_type,uart_baudrate);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirTelemetrySettings,fc_uart_enable,fc_uart_connection_type,fc_uart_baudrate);
 
 class AirTelemetrySettingsHolder:public openhd::settings::PersistentSettings<AirTelemetrySettings>{
  public:
