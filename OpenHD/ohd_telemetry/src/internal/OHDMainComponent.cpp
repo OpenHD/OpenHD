@@ -51,6 +51,14 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
         ret.push_back(response.value());
       }
     }break;
+	case MAVLINK_MSG_ID_TIMESYNC:{
+	  // makes ping obsolete
+	  auto response=handleTimeSyncMessage(msg);
+	  if(response.has_value()){
+		ret.push_back(response.value());
+	  }
+	}break;
+
     case MAVLINK_MSG_ID_COMMAND_LONG:{
       mavlink_command_long_t command;
       mavlink_msg_command_long_decode(&msg.m,&command);
@@ -155,6 +163,23 @@ MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,const u
   MavlinkMessage ret{};
   mavlink_msg_command_ack_pack(_sys_id,_comp_id,&ret.m,command_id,MAV_RESULT_ACCEPTED,255,0,source_sys_id,source_comp_id);
   return ret;
+}
+
+std::optional<MavlinkMessage> OHDMainComponent::handleTimeSyncMessage(const MavlinkMessage &message) {
+  const auto msg=message.m;
+  assert(msg.msgid==MAVLINK_MSG_ID_PING);
+  mavlink_timesync_t tsync;
+  mavlink_msg_timesync_decode(&msg, &tsync);
+  if(tsync.tc1==0){
+	// request, pack response
+	mavlink_timesync_t rsync;
+	rsync.tc1 = 10 * 1000;
+	rsync.ts1 = tsync.ts1;
+	mavlink_message_t response_message;
+	mavlink_msg_timesync_encode(_sys_id,_comp_id,&response_message,&rsync);
+	return MavlinkMessage{response_message};
+  }
+  return std::nullopt;
 }
 
 

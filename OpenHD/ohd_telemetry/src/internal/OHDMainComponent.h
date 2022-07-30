@@ -50,6 +50,8 @@ class OHDMainComponent : public MavlinkComponent{
   // just for convenience, the RUNS_ON_AIR variable determines the sys id.
   //const uint8_t mSysId;
   //const uint8_t mCompId=0;
+  // similar to ping
+  [[nodiscard]] std::optional<MavlinkMessage> handleTimeSyncMessage(const MavlinkMessage &message);
   [[nodiscard]] std::vector<MavlinkMessage> generateWifibroadcastStatistics();
   [[nodiscard]] MavlinkMessage generateOpenHDVersion()const;
   // pack all the buffered log messages
