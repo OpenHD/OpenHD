@@ -41,8 +41,10 @@ class MavlinkComponent{
    * This implementation is similar to the one from mavsdk.
    * @param message the ping message to handle
    * @return a ping response message if needed, no message otherwise. (not every ping needs a response)
+   * NOTE: Replaced by timesync, see discussion here: https://github.com/ArduPilot/ardupilot/issues/21311
+   * Timesync can do ping + even more (if wanted)
    */
-  [[nodiscard]] std::optional<MavlinkMessage> handlePingMessage(const MavlinkMessage &message) const {
+  /*[[nodiscard]] std::optional<MavlinkMessage> handlePingMessage(const MavlinkMessage &message) const {
     const auto msg=message.m;
     assert(msg.msgid==MAVLINK_MSG_ID_PING);
     mavlink_ping_t ping;
@@ -64,7 +66,7 @@ class MavlinkComponent{
       // answer from ping request
       return std::nullopt;
     }
-  }
+  }*/
   // Convenient method to create a heartbeat, for use in the implementation
   [[nodiscard]] MavlinkMessage create_heartbeat()const{
     MavlinkMessage heartbeat;

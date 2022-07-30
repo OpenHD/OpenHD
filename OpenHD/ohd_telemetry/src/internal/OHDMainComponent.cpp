@@ -44,13 +44,14 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
 std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const MavlinkMessage &msg) {
   std::vector<MavlinkMessage> ret{};
   switch (msg.m.msgid) { // NOLINT(cppcoreguidelines-narrowing-conversions)
-    case MAVLINK_MSG_ID_PING:{
+	// Obsolete
+    /*case MAVLINK_MSG_ID_PING:{
       // We respond to ping messages
       auto response=handlePingMessage(msg);
       if(response.has_value()){
         ret.push_back(response.value());
       }
-    }break;
+    }break;*/
 	case MAVLINK_MSG_ID_TIMESYNC:{
 	  // makes ping obsolete
 	  auto response=handleTimeSyncMessage(msg);
