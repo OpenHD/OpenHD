@@ -44,6 +44,8 @@ void GroundTelemetry::onMessageAirPi(MavlinkMessage &message) {
   // All messages we get from the Air pi (they might come from the AirPi itself or the FC connected to the air pi)
   // get forwarded straight to all the client(s) connected to the ground station.
   sendMessageGroundStationClients(message);
+  // Note: No OpenHD component ever talks to another OpenHD component or the FC, so we do not
+  // need to do anything else here.
 }
 
 void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {

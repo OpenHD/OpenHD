@@ -53,11 +53,8 @@ void AirTelemetry::sendMessageGroundPi(const MavlinkMessage &message) {
 
 void AirTelemetry::onMessageFC(MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"AirTelemetry::onMessageFC");
+  // Note: No OpenHD component ever talks to the FC, FC is completely passed through
   sendMessageGroundPi(message);
-  // handling a message from the FC is really easy - we just forward it to the ground pi.
-  if(message.m.msgid==MAVLINK_MSG_ID_PING){
-	std::cout<<"Got ping from FC\n";
-  }
 }
 
 void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
