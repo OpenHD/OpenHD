@@ -95,6 +95,11 @@ static bool validate_uart_baudrate(int baudrate){
   return false;
 }
 
+// 16 chars limit !
+static constexpr auto FC_UART_ENABLE="FC_UART_ENABLE";
+static constexpr auto FC_UART_CONNECTION_TYPE="FC_UART_CONN";
+static constexpr auto FC_UART_BAUD_RATE="FC_UART_BAUD";
+
 }
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_AIRTELEMETRYSETTINGS_H_
