@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
 	  ohdTelemetry->set_link_statistics(stats);
 	});
 	// link interface settings to ohd telemetry
-	ohdTelemetry->add_settings_component(192,ohdInterface);
+	ohdTelemetry->add_settings_component(192,ohdInterface->get_all_settings());
 	//ohdTelemetry->add_external_ground_station_ip(" 192.168.0.101","192.168.167.20");
 
     // and start ohdVideo if we are on the air pi
@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
       ohdVideo = std::make_unique<OHDVideo>(*platform,cameras);
       auto settings_components=ohdVideo->get_setting_components();
       if(!settings_components.empty()){
-        ohdTelemetry->add_camera_component(0,settings_components.at(0));
+        ohdTelemetry->add_camera_component(0,settings_components.at(0)->get_all_settings());
       }
     }
     // we need to start QOpenHD when we are running as ground

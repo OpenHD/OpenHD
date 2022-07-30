@@ -123,8 +123,8 @@ std::string AirTelemetry::createDebug() const {
 }
 
 void AirTelemetry::add_settings_component(
-    const int comp_id, std::shared_ptr<openhd::ISettingsComponent> glue) {
-  auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,comp_id,std::move(glue));
+    const int comp_id, const std::vector<openhd::Setting>& settings) {
+  auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,comp_id,settings);
   std::lock_guard<std::mutex> guard(components_lock);
   components.push_back(param_server);
   std::cout<<"Added parameter component\n";

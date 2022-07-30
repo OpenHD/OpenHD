@@ -5,14 +5,13 @@
 #include "XMavlinkParamProvider.h"
 
 
-XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id,std::shared_ptr<openhd::ISettingsComponent> handler,
+XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id,const std::vector<openhd::Setting>& settings,
 											 bool manually_call_set_ready):
 MavlinkComponent(sys_id,comp_id){
   _sender=std::make_shared<mavsdk::SenderWrapper>(*this);
   _mavlink_message_handler=std::make_shared<mavsdk::MavlinkMessageHandler>();
   _mavlink_parameter_receiver=
       std::make_shared<mavsdk::MavlinkParameterReceiver>(*_sender,*_mavlink_message_handler);
-  const auto settings=handler->get_all_settings();
   add_params(settings);
   if(!manually_call_set_ready){
 	_mavlink_parameter_receiver->ready_for_communication();

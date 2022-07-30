@@ -50,21 +50,21 @@ class OHDTelemetry {
       return groundTelemetry->createDebug();
     }
   }
-  void add_settings_component(const int comp_id,std::shared_ptr<openhd::ISettingsComponent> glue){
+  void add_settings_component(const int comp_id,const std::vector<openhd::Setting>& settings){
 	assert(_already_added_settings_components.find(comp_id)==_already_added_settings_components.end());
 	_already_added_settings_components[comp_id]=nullptr;
     if(profile.is_air){
-      airTelemetry->add_settings_component(comp_id,std::move(glue));
+      airTelemetry->add_settings_component(comp_id,settings);
     }else{
-      groundTelemetry->add_settings_component(comp_id,std::move(glue));
+      groundTelemetry->add_settings_component(comp_id,settings);
     }
   }
-  void add_camera_component(const int camera_index,std::shared_ptr<openhd::ISettingsComponent> glue){
+  void add_camera_component(const int camera_index,const std::vector<openhd::Setting>& settings){
     // we only have cameras on the air telemetry unit
     assert(profile.is_air);
     // only 2 cameras suported for now.
     assert(camera_index>=0 && camera_index<2);
-    airTelemetry->add_settings_component(MAV_COMP_ID_CAMERA+camera_index,std::move(glue));
+    airTelemetry->add_settings_component(MAV_COMP_ID_CAMERA+camera_index,settings);
   }
   void set_link_statistics(openhd::link_statistics::AllStats stats) const{
 	if(profile.is_air){

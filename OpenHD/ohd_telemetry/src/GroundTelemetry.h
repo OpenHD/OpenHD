@@ -29,7 +29,7 @@ class GroundTelemetry :public MavlinkSystem{
   [[nodiscard]] std::string createDebug()const;
   // add a mavlink parameter server that allows the user to change parameters.
   // changes in the parameter set are propagated back up by the "glue".
-  void add_settings_component(int comp_id,std::shared_ptr<openhd::ISettingsComponent> glue);
+  void add_settings_component(int comp_id,const std::vector<openhd::Setting>& settings);
   void set_link_statistics(openhd::link_statistics::AllStats stats);
   // Add the IP of another Ground station client, to start forwarding telemetry data there
   void add_external_ground_station_ip(std::string ip_openhd,std::string ip_dest_device);
