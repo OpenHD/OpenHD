@@ -23,12 +23,16 @@ SerialEndpoint3::SerialEndpoint3(std::string TAG1,SerialEndpoint3::HWOptions opt
 }
 
 void SerialEndpoint3::sendMessageImpl(const MavlinkMessage &message) {
-  /*if(_fd==-1){
+  const auto data = message.pack();
+  write_data_serial(data);
+}
+
+void SerialEndpoint3::write_data_serial(const std::vector<uint8_t> &data) const {
+  if(_fd==-1){
 	// cannot send data at the time, UART not setup / doesn't exist.
 	std::cout<<"Cannot send data, no fd\n";
 	return;
-  }*/
-  const auto data = message.pack();
+  }
   const auto send_len = static_cast<int>(write(_fd,data.data(), data.size()));
   if (send_len != data.size()) {
 	std::stringstream ss;
