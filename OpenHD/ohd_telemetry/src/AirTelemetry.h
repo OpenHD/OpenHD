@@ -6,7 +6,6 @@
 #define OPENHD_TELEMETRY_AIRTELEMETRY_H
 
 #include <string>
-
 #include "endpoints/SerialEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
 #include "internal/OHDMainComponent.h"
@@ -16,6 +15,7 @@
 #include "routing/MavlinkSystem.hpp"
 //
 #include "mavsdk_temporary//XMavsdkWrapperSerialConnection.h"
+#include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "AirTelemetrySettings.h"
 
 /**
@@ -34,7 +34,9 @@ class AirTelemetry : public MavlinkSystem{
   [[nodiscard]] std::string createDebug()const;
   // add a mavlink parameter server that allows the user to change parameters.
   // changes in the parameter set are propagated back up by the "glue".
-  void add_settings_component(int comp_id,const std::vector<openhd::Setting>& settings);
+  void add_settings_generic(const std::vector<openhd::Setting>& settings);
+  void settings_generic_ready();
+  void add_camera_component(const int camera_index,const std::vector<openhd::Setting>& settings);
   void set_link_statistics(openhd::link_statistics::AllStats stats);
  private:
   const OHDPlatform _platform;
@@ -55,6 +57,7 @@ class AirTelemetry : public MavlinkSystem{
   std::shared_ptr<OHDMainComponent> _ohd_main_component;
   std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
+  std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
 };
 
 #endif //OPENHD_TELEMETRY_AIRTELEMETRY_H

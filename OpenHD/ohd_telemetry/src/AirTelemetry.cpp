@@ -31,6 +31,10 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::string fcSerialPort): _plat
   });
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,true);
   components.push_back(_ohd_main_component);
+  //
+  std::vector<openhd::Setting> empty{};
+  generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,192, empty,true);
+  components.push_back(generic_mavlink_param_provider);
   std::cout << "Created AirTelemetry\n";
 }
 
@@ -122,15 +126,27 @@ std::string AirTelemetry::createDebug() const {
   return ss.str();
 }
 
-void AirTelemetry::add_settings_component(
-    const int comp_id, const std::vector<openhd::Setting>& settings) {
-  auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,comp_id,settings);
+void AirTelemetry::add_settings_generic(const std::vector<openhd::Setting>& settings) {
   std::lock_guard<std::mutex> guard(components_lock);
-  components.push_back(param_server);
+  generic_mavlink_param_provider->add_params(settings);
   std::cout<<"Added parameter component\n";
 }
+
 void AirTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) {
   if(_ohd_main_component){
 	_ohd_main_component->set_link_statistics(stats);
   }
+}
+
+void AirTelemetry::settings_generic_ready() {
+  generic_mavlink_param_provider->set_ready();
+}
+
+void AirTelemetry::add_camera_component(const int camera_index, const std::vector<openhd::Setting> &settings) {
+  assert(camera_index>=0 && camera_index<2);
+  const auto cam_comp_id=MAV_COMP_ID_CAMERA+camera_index;
+  auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,cam_comp_id,settings);
+  std::lock_guard<std::mutex> guard(components_lock);
+  components.push_back(param_server);
+  std::cout<<"Added camera component\n";
 }

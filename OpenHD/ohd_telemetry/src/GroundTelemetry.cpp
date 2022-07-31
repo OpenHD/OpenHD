@@ -35,6 +35,10 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform): _platform(platform),Mavl
   });
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false);
   components.push_back(_ohd_main_component);
+  //
+  std::vector<openhd::Setting> empty{};
+  generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,192, empty,true);
+  components.push_back(generic_mavlink_param_provider);
   std::cout << "Created GroundTelemetry\n";
 }
 
@@ -137,11 +141,9 @@ std::string GroundTelemetry::createDebug() const {
   return ss.str();
 }
 
-void GroundTelemetry::add_settings_component(
-    int comp_id, const std::vector<openhd::Setting>& settings) {
-  auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,comp_id,settings);
+void GroundTelemetry::add_settings_generic(const std::vector<openhd::Setting>& settings) {
   std::lock_guard<std::mutex> guard(components_lock);
-  components.push_back(param_server);
+  generic_mavlink_param_provider->add_params(settings);
   std::cout<<"Added parameter component\n";
 }
 
@@ -164,4 +166,8 @@ void GroundTelemetry::add_external_ground_station_ip(std::string ip_openhd,std::
   other_udp_ground_stations.emplace_back(tmp);
   /*auto tmp=std::make_shared<UDPEndpoint>("XUDPE",14550,-1,ip_dest_device,"");
   other_udp_ground_stations.emplace_back(tmp);*/
+}
+
+void GroundTelemetry::settings_generic_ready() {
+  generic_mavlink_param_provider->set_ready();
 }

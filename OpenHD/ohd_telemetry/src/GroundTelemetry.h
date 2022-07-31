@@ -29,7 +29,8 @@ class GroundTelemetry :public MavlinkSystem{
   [[nodiscard]] std::string createDebug()const;
   // add a mavlink parameter server that allows the user to change parameters.
   // changes in the parameter set are propagated back up by the "glue".
-  void add_settings_component(int comp_id,const std::vector<openhd::Setting>& settings);
+  void add_settings_generic(const std::vector<openhd::Setting>& settings);
+  void settings_generic_ready();
   void set_link_statistics(openhd::link_statistics::AllStats stats);
   // Add the IP of another Ground station client, to start forwarding telemetry data there
   void add_external_ground_station_ip(std::string ip_openhd,std::string ip_dest_device);
@@ -52,6 +53,7 @@ class GroundTelemetry :public MavlinkSystem{
   std::shared_ptr<OHDMainComponent> _ohd_main_component;
   std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
+  std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
   // extra
   std::mutex other_udp_ground_stations_lock;
   // temporary, only forwarding of data but we don't get commands
