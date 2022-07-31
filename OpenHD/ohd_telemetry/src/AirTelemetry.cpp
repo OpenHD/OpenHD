@@ -27,6 +27,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::string fcSerialPort): _plat
 	serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	  this->onMessageFC(msg);
 	});
+	serialEndpoint->start();
   }
 
   // any message coming in via wifibroadcast is a message from the ground pi
