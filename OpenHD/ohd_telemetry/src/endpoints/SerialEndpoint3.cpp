@@ -23,11 +23,11 @@ SerialEndpoint3::SerialEndpoint3(std::string TAG1,SerialEndpoint3::HWOptions opt
 }
 
 void SerialEndpoint3::sendMessageImpl(const MavlinkMessage &message) {
-  if(_fd==-1){
+  /*if(_fd==-1){
 	// cannot send data at the time, UART not setup / doesn't exist.
 	std::cout<<"Cannot send data, no fd\n";
 	return;
-  }
+  }*/
   const auto data = message.pack();
   const auto send_len = static_cast<int>(write(_fd,data.data(), data.size()));
   if (send_len != data.size()) {
@@ -140,7 +140,7 @@ int SerialEndpoint3::setup_port(const SerialEndpoint3::HWOptions &options) {
 }
 
 void SerialEndpoint3::connect_and_read_loop() {
-  while (true){
+  while (!_stop_requested){
 	if(!OHDFilesystemUtil::exists(_options.linux_filename.c_str())){
 	  std::cout<<"UART file does not exist\n";
 	  std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -170,9 +170,8 @@ void SerialEndpoint3::receive_data_until_error() {
   struct pollfd fds[1];
   fds[0].fd = _fd;
   fds[0].events = POLLIN;
-  bool should_exit=false;
 
-  while (!should_exit) {
+  while (!_stop_requested) {
 	int recv_len;
 	int pollrc = poll(fds, 1, 1000);
 	if (pollrc == 0 || !(fds[0].revents & POLLIN)) {
@@ -180,7 +179,7 @@ void SerialEndpoint3::receive_data_until_error() {
 	} else if (pollrc == -1) {
 	  std::cerr<< "read poll failure: " << GET_ERROR();
 	  // The UART most likely disconnected.
-	  should_exit= true;
+	  return;
 	}
 	// We enter here if (fds[0].revents & POLLIN) == true
 	recv_len = static_cast<int>(read(_fd, buffer, sizeof(buffer)));
@@ -208,6 +207,7 @@ void SerialEndpoint3::start() {
 
 void SerialEndpoint3::stop() {
   std::lock_guard<std::mutex> lock(_connectReceiveThreadMutex);
+  _stop_requested=true;
   if (_connectReceiveThread && _connectReceiveThread->joinable()) {
 	_connectReceiveThread->join();
   }

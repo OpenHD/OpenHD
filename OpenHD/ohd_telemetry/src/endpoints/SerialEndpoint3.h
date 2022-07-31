@@ -46,6 +46,7 @@ class SerialEndpoint3 : public MEndpoint{
   int _fd=-1;
   std::mutex _connectReceiveThreadMutex;
   std::unique_ptr<std::thread> _connectReceiveThread = nullptr;
+  bool _stop_requested=false;
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT3_H_
