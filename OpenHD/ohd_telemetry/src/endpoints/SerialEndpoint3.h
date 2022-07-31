@@ -34,6 +34,13 @@ class SerialEndpoint3 : public MEndpoint{
    * @param serial_port the serial port linux name (dev/.. ) for this serial port
    */
   explicit SerialEndpoint3(std::string TAG1, HWOptions options1);
+  // No copy and move
+  SerialEndpoint3(const SerialEndpoint3&)=delete;
+  SerialEndpoint3(const SerialEndpoint3&&)=delete;
+  ~SerialEndpoint3(){
+	stop();
+  }
+
   void start();
   void stop();
  private:
