@@ -49,7 +49,7 @@ class SerialEndpoint3 : public MEndpoint{
   static int setup_port(const HWOptions& options);
   void connect_and_read_loop();
   void receive_data_until_error();
-  void write_data_serial(const std::vector<uint8_t>& data) const;
+  bool write_data_serial(const std::vector<uint8_t>& data) const;
  private:
   const HWOptions _options;
   int _fd=-1;

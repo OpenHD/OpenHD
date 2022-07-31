@@ -28,19 +28,20 @@ void SerialEndpoint3::sendMessageImpl(const MavlinkMessage &message) {
   write_data_serial(data);
 }
 
-void SerialEndpoint3::write_data_serial(const std::vector<uint8_t> &data) const {
+bool SerialEndpoint3::write_data_serial(const std::vector<uint8_t> &data) const {
   if(_fd==-1){
 	// cannot send data at the time, UART not setup / doesn't exist.
-	std::cout<<"Cannot send data, no fd\n";
-	return;
+	//std::cout<<"Cannot send data, no fd\n";
+	return false;
   }
   const auto send_len = static_cast<int>(write(_fd,data.data(), data.size()));
   if (send_len != data.size()) {
 	std::stringstream ss;
 	ss<<" Failure to write uart data: "<<data.size()<<" actual: "<<send_len<<GET_ERROR()<<"\n";
 	std::cerr << ss.str();
-	return;
+	return false;
   }
+  return true;
 }
 
 int SerialEndpoint3::define_from_baudrate(int baudrate) {
@@ -196,7 +197,7 @@ void SerialEndpoint3::receive_data_until_error() {
 	  // probably timeout
 	  continue;
 	}
-	std::cout<<"UART got data\n";
+	//std::cout<<"UART got data\n";
 	MEndpoint::parseNewData(buffer,recv_len);
   }
   std::cout<<"SerialEndpoint3::receive_data_until_error() end\n";
