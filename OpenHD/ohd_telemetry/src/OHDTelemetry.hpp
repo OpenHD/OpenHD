@@ -50,6 +50,7 @@ class OHDTelemetry {
       return groundTelemetry->createDebug();
     }
   }
+  // All modules other than camera share the same settings component for now.
   void add_settings_generic(const std::vector<openhd::Setting>& settings){
     if(profile.is_air){
       airTelemetry->add_settings_generic(settings);
