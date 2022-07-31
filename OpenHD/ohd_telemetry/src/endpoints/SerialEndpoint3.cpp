@@ -31,7 +31,9 @@ void SerialEndpoint3::sendMessageImpl(const MavlinkMessage &message) {
   const auto data = message.pack();
   const auto send_len = static_cast<int>(write(_fd,data.data(), data.size()));
   if (send_len != data.size()) {
-	std::cerr << "write failure: " << GET_ERROR();
+	std::stringstream ss;
+	ss<<" Failure to write uart data: "<<data.size()<<" actual: "<<send_len<<GET_ERROR()<<"\n";
+	std::cerr << ss.str();
 	return;
   }
 }
@@ -84,8 +86,7 @@ int SerialEndpoint3::define_from_baudrate(int baudrate) {
 
 int SerialEndpoint3::setup_port(const SerialEndpoint3::HWOptions &options) {
   // open() hangs on macOS or Linux devices(e.g. pocket beagle) unless you give it O_NONBLOCK
-  int fd=-1;
-  fd = open(options.linux_filename.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
+  int fd = open(options.linux_filename.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (fd == -1) {
 	std::cerr << "open failed: " << GET_ERROR();
 	return -1;
