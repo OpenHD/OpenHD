@@ -7,6 +7,7 @@
 
 #include <string>
 #include "endpoints/SerialEndpoint.h"
+#include "endpoints/SerialEndpoint3.h"
 #include "endpoints/UDPEndpoint.h"
 #include "internal/OHDMainComponent.h"
 #include "mavlink_settings/ISettingsComponent.h"
