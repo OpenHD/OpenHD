@@ -20,6 +20,7 @@ SerialEndpoint3::SerialEndpoint3(std::string TAG1,SerialEndpoint3::HWOptions opt
 	MEndpoint(std::move(TAG1)),
 	_options(std::move(options1)){
   std::cout<<"SerialEndpoint3: created with "<<_options.to_string()<<"\n";
+  start();
 }
 
 void SerialEndpoint3::sendMessageImpl(const MavlinkMessage &message) {

@@ -45,10 +45,10 @@ class SerialEndpoint3 : public MEndpoint{
   void write_data_serial(const std::vector<uint8_t>& data) const;
  private:
   const HWOptions _options;
-  std::atomic<int> _fd=-1;
+  int _fd=-1;
   std::mutex _connectReceiveThreadMutex;
   std::unique_ptr<std::thread> _connectReceiveThread = nullptr;
-  std::atomic<bool> _stop_requested=false;
+  bool _stop_requested=false;
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT3_H_
