@@ -12,6 +12,7 @@
 #include <thread>
 #include <chrono>
 #include <memory>
+#include <atomic>
 
 // At some point, I decided there is no way around it than to write our own UART receiver program.
 // Mostly based on MAVSDK. Doesn't use boost.
@@ -44,10 +45,10 @@ class SerialEndpoint3 : public MEndpoint{
   void write_data_serial(const std::vector<uint8_t>& data) const;
  private:
   const HWOptions _options;
-  int _fd=-1;
+  std::atomic<int> _fd=-1;
   std::mutex _connectReceiveThreadMutex;
   std::unique_ptr<std::thread> _connectReceiveThread = nullptr;
-  bool _stop_requested=false;
+  std::atomic<bool> _stop_requested=false;
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT3_H_
