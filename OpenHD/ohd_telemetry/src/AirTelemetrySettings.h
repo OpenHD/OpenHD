@@ -17,37 +17,41 @@ static const std::string TELEMETRY_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std
 
 // Default for ardupilot and more
 static constexpr int DEFAULT_UART_BAUDRATE=115200;
+static constexpr int DEFAULT_UART_CONNECTION=0; // Default to UART disabled (FC)
 
 struct AirTelemetrySettings{
-  bool fc_uart_enable=true;
-  // 0: RPI UART0 (/dev/serial0)
-  // 1: RPI UART1 (/dev/serial1)
-  // 2: UART USB ADAPTER (/dev/ttyUSB0)
+  // 0: Disable
+  // 1: RPI UART0 (/dev/serial0)
+  // 2: RPI UART1 (/dev/serial1)
+  // 3: UART USB ADAPTER (/dev/ttyUSB0)
   //  My ardupilot shows up as either /dev/ttyACM0 or /dev/ttyACM1 if I connect it via
   // usb cable (micro usb on FC to rpi USB port)
-  // 3: /dev/ttyACM0
-  // 4: /dev/ttyACM1
-  int fc_uart_connection_type=0;
+  // 4: /dev/ttyACM0
+  // 5: /dev/ttyACM1
+  int fc_uart_connection_type=DEFAULT_UART_CONNECTION;
   int fc_uart_baudrate=DEFAULT_UART_BAUDRATE;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirTelemetrySettings,fc_uart_enable,fc_uart_connection_type,fc_uart_baudrate);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirTelemetrySettings,fc_uart_connection_type,fc_uart_baudrate);
 
 static bool validate_uart_connection_type(int type){
-  return type >=0 && type <=4;
+  return type >=0 && type <=5;
 }
 
-static std::string uart_fd_from_connection_type(int connection_type){
+// If disabled, return nullopt
+// If enabled, return the linux fd string for this (UART) connection type
+static std::optional<std::string> uart_fd_from_connection_type(int connection_type){
   assert(validate_uart_connection_type(connection_type));
   switch (connection_type) {
-	case 0:return "/dev/serial0";
-	case 1:return "/dev/serial1";
-	case 2:return "/dev/ttyUSB0";
-	case 3:return "/dev/ttyACM0";
-	case 4:return "/dev/ttyACM1";
+	case 0: return std::nullopt;
+	case 1:return "/dev/serial0";
+	case 2:return "/dev/serial1";
+	case 3:return "/dev/ttyUSB0";
+	case 4:return "/dev/ttyACM0";
+	case 5:return "/dev/ttyACM1";
 	default:
 	  assert(true);
-	  return "dummy";
+	  return std::nullopt;
   }
 }
 
@@ -79,7 +83,6 @@ static bool validate_uart_baudrate(int baudrate){
 }
 
 // 16 chars limit !
-static constexpr auto FC_UART_ENABLE="FC_UART_ENABLE";
 static constexpr auto FC_UART_CONNECTION_TYPE="FC_UART_CONN";
 static constexpr auto FC_UART_BAUD_RATE="FC_UART_BAUD";
 
@@ -91,18 +94,12 @@ class AirTelemetrySettingsHolder:public openhd::settings::PersistentSettings<Air
   }
   std::vector<openhd::Setting> get_all_settings(){
 	std::vector<openhd::Setting> ret{};
-	auto c_enable_uart=[this](std::string,int value) {
-	  return value==0 || value==1;
-	};
 	auto c_fc_uart_connection_type=[this](std::string,int value) {
 	  return validate_uart_connection_type(value);
 	};
 	auto c_fc_uart_baudrate=[this](std::string,int value) {
 	  return validate_uart_baudrate(value);
 	};
-	ret.push_back(openhd::Setting{FC_UART_ENABLE,openhd::IntSetting{static_cast<int>(get_settings().fc_uart_enable),
-																	c_enable_uart}});
-
 	ret.push_back(openhd::Setting{FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(get_settings().fc_uart_connection_type),
 																	c_fc_uart_connection_type}});
 	ret.push_back(openhd::Setting{FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(get_settings().fc_uart_baudrate),
