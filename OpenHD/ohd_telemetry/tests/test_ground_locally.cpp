@@ -21,7 +21,7 @@ int main() {
 	ground = std::make_unique<OHDTelemetry>(*platform, profile);
 	auto example_comp=std::make_shared<openhd::testing::DummyGroundXSettingsComponent>();
 	// MAV_COMP_ID_ONBOARD_COMPUTER2=192
-	ground->add_settings_component(192,example_comp);
+	ground->add_settings_generic(example_comp->get_all_settings());
 	//ground->add_external_ground_station_ip("192.168.237.22","192.168.237.55");
   }
   while (true) {
