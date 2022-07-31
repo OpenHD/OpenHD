@@ -33,23 +33,6 @@ struct AirTelemetrySettings{
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirTelemetrySettings,fc_uart_enable,fc_uart_connection_type,fc_uart_baudrate);
 
-class AirTelemetrySettingsHolder:public openhd::settings::PersistentSettings<AirTelemetrySettings>{
- public:
-  AirTelemetrySettingsHolder():
-	  openhd::settings::PersistentSettings<AirTelemetrySettings>(TELEMETRY_SETTINGS_DIRECTORY){
-	init();
-  }
- private:
-  [[nodiscard]] std::string get_unique_filename()const override{
-	std::stringstream ss;
-	ss<<"fc_uart.json";
-	return ss.str();
-  }
-  [[nodiscard]] AirTelemetrySettings create_default()const override{
-	return AirTelemetrySettings{};
-  }
-};
-
 static bool validate_uart_connection_type(int type){
   return type >=0 && type <=4;
 }
@@ -99,6 +82,44 @@ static bool validate_uart_baudrate(int baudrate){
 static constexpr auto FC_UART_ENABLE="FC_UART_ENABLE";
 static constexpr auto FC_UART_CONNECTION_TYPE="FC_UART_CONN";
 static constexpr auto FC_UART_BAUD_RATE="FC_UART_BAUD";
+
+class AirTelemetrySettingsHolder:public openhd::settings::PersistentSettings<AirTelemetrySettings>{
+ public:
+  AirTelemetrySettingsHolder():
+	  openhd::settings::PersistentSettings<AirTelemetrySettings>(TELEMETRY_SETTINGS_DIRECTORY){
+	init();
+  }
+  std::vector<openhd::Setting> get_all_settings(){
+	std::vector<openhd::Setting> ret{};
+	auto c_enable_uart=[this](std::string,int value) {
+	  return value==0 || value==1;
+	};
+	auto c_fc_uart_connection_type=[this](std::string,int value) {
+	  return validate_uart_connection_type(value);
+	};
+	auto c_fc_uart_baudrate=[this](std::string,int value) {
+	  return validate_uart_baudrate(value);
+	};
+	ret.push_back(openhd::Setting{FC_UART_ENABLE,openhd::IntSetting{static_cast<int>(get_settings().fc_uart_enable),
+																	c_enable_uart}});
+
+	ret.push_back(openhd::Setting{FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(get_settings().fc_uart_connection_type),
+																	c_fc_uart_connection_type}});
+	ret.push_back(openhd::Setting{FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(get_settings().fc_uart_baudrate),
+																	c_fc_uart_baudrate}});
+	return ret;
+  }
+ private:
+  [[nodiscard]] std::string get_unique_filename()const override{
+	std::stringstream ss;
+	ss<<"fc_uart.json";
+	return ss.str();
+  }
+  [[nodiscard]] AirTelemetrySettings create_default()const override{
+	return AirTelemetrySettings{};
+  }
+};
+
 
 }
 

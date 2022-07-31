@@ -35,6 +35,9 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::string fcSerialPort): _plat
   std::vector<openhd::Setting> empty{};
   generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,192, empty,true);
   components.push_back(generic_mavlink_param_provider);
+  {
+	generic_mavlink_param_provider->add_params(_airTelemetrySettings->get_all_settings());
+  }
   std::cout << "Created AirTelemetry\n";
 }
 
