@@ -17,10 +17,9 @@
 
 class XMavlinkParamProvider :public MavlinkComponent{
  public:
-  // Note : only with manually_call_set_ready==true you can create the param provider,
-  // then add settings on the fly and finally - when all settings are added - call "ready for c0mmunication".
-  explicit XMavlinkParamProvider(uint8_t sys_id,uint8_t comp_id,const std::vector<openhd::Setting>& settings,
-								 bool manually_call_set_ready=false);
+  // !!!! Note : no params are active until set_ready() is called
+  // This way, there is no parameter invariance, but it is easy to forget to call set_read() !!!
+  explicit XMavlinkParamProvider(uint8_t sys_id,uint8_t comp_id);
   void add_param(const openhd::Setting& setting);
   // only usable when manually_set_ready is true
   void add_params(const std::vector<openhd::Setting>& settings);
