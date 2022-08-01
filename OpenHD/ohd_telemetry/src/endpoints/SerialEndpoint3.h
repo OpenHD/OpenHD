@@ -37,10 +37,7 @@ class SerialEndpoint3 : public MEndpoint{
   // No copy and move
   SerialEndpoint3(const SerialEndpoint3&)=delete;
   SerialEndpoint3(const SerialEndpoint3&&)=delete;
-  ~SerialEndpoint3(){
-	stop();
-  }
-
+  ~SerialEndpoint3();
   void start();
   void stop();
  private:
@@ -48,8 +45,11 @@ class SerialEndpoint3 : public MEndpoint{
   static int define_from_baudrate(int baudrate);
   static int setup_port(const HWOptions& options);
   void connect_and_read_loop();
+  // Receive data until either an error occurs (in this case, the UART most likely disconnected)
+  // Or a stop was requested.
   void receive_data_until_error();
-  bool write_data_serial(const std::vector<uint8_t>& data) const;
+  // Write serial data, returns true on success, false otherwise.
+  [[nodiscard]] bool write_data_serial(const std::vector<uint8_t>& data) const;
  private:
   const HWOptions _options;
   int _fd=-1;

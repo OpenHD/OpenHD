@@ -37,7 +37,7 @@ class AirTelemetry : public MavlinkSystem{
   // changes in the parameter set are propagated back up by the "glue".
   void add_settings_generic(const std::vector<openhd::Setting>& settings);
   void settings_generic_ready();
-  void add_camera_component(const int camera_index,const std::vector<openhd::Setting>& settings);
+  void add_camera_component(int camera_index,const std::vector<openhd::Setting>& settings);
   void set_link_statistics(openhd::link_statistics::AllStats stats);
  private:
   const OHDPlatform _platform;
@@ -51,7 +51,7 @@ class AirTelemetry : public MavlinkSystem{
   // called every time a message from the ground pi is received
   void onMessageGroundPi(MavlinkMessage &message);
  private:
-  std::unique_ptr<MEndpoint> serialEndpoint;
+  std::unique_ptr<SerialEndpoint3> serialEndpoint;
   // For now, use UDP endpoint and rely on another service for starting the rx/tx links
   //std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;
   std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
@@ -59,6 +59,9 @@ class AirTelemetry : public MavlinkSystem{
   std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
   std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
+  // R.N only on air, and only FC uart settings
+  std::vector<openhd::Setting> get_all_settings();
+  void setup_uart();
 };
 
 #endif //OPENHD_TELEMETRY_AIRTELEMETRY_H

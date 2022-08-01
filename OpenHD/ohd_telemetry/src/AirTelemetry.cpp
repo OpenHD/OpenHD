@@ -16,19 +16,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::string fcSerialPort): _plat
     this->onMessageFC(msg);
   });*/
   _airTelemetrySettings=std::make_unique<openhd::AirTelemetrySettingsHolder>();
-  const bool enable_fc_simple=!OHDFilesystemUtil::exists("/boot/no_fc.txt");
-  if(enable_fc_simple){
-	//serialEndpoint = std::make_unique<mavsdk::XMavsdkWrapperSerialConnection>(std::nullopt,115200);
-	SerialEndpoint3::HWOptions options{};
-	options.linux_filename="/dev/ttyACM0";
-	options.baud_rate=115200;
-	options.flow_control= false;
-	serialEndpoint=std::make_unique<SerialEndpoint3>("SerialEndpointUARTFC",options);
-	serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
-	  this->onMessageFC(msg);
-	});
-  }
-
+  setup_uart();
   // any message coming in via wifibroadcast is a message from the ground pi
   wifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(true);
   wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
@@ -41,7 +29,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::string fcSerialPort): _plat
   generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,192);
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their paramters.
-  generic_mavlink_param_provider->add_params(_airTelemetrySettings->get_all_settings());
+  generic_mavlink_param_provider->add_params(get_all_settings());
   components.push_back(generic_mavlink_param_provider);
   std::cout << "Created AirTelemetry\n";
 }
@@ -159,4 +147,60 @@ void AirTelemetry::add_camera_component(const int camera_index, const std::vecto
   std::lock_guard<std::mutex> guard(components_lock);
   components.push_back(param_server);
   std::cout<<"Added camera component\n";
+}
+
+std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
+  std::vector<openhd::Setting> ret{};
+  auto c_fc_uart_connection_type=[this](std::string,int value) {
+	if(!openhd::validate_uart_connection_type(value)){
+	  return false;
+	}
+	_airTelemetrySettings->unsafe_get_settings().fc_uart_connection_type=value;
+	_airTelemetrySettings->persist();
+	setup_uart();
+  };
+  auto c_fc_uart_baudrate=[this](std::string,int value) {
+	if(!openhd::validate_uart_baudrate(value)){
+	  return false;
+	}
+	_airTelemetrySettings->unsafe_get_settings().fc_uart_baudrate=value;
+	_airTelemetrySettings->persist();
+	setup_uart();
+  };
+  ret.push_back(openhd::Setting{openhd::FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_connection_type),
+																		   c_fc_uart_connection_type}});
+  ret.push_back(openhd::Setting{openhd::FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_baudrate),
+																	 c_fc_uart_baudrate}});
+  return ret;
+}
+
+// Every time the UART configuration changes, we just re-start the UART (if it was already started)
+// This properly handles all the cases, e.g cleaning up an existing uart connection if set.
+void AirTelemetry::setup_uart() {
+  const auto fc_uart_connection_type=_airTelemetrySettings->get_settings().fc_uart_connection_type;
+  const auto fc_uart_baudrate=_airTelemetrySettings->get_settings().fc_uart_baudrate;
+  assert(openhd::validate_uart_connection_type(fc_uart_connection_type));
+  // Disable the currently running uart configuration, if there is any
+  if(serialEndpoint!=nullptr) {
+	std::cout<<"Stopping already existing FC UART\n";
+	serialEndpoint->stop();
+	serialEndpoint.reset();
+	serialEndpoint=nullptr;
+  }
+  if(fc_uart_connection_type==0){
+	// No uart enabled, disable if enabled
+	std::cout<<"FC UART disabled\n";
+	return;
+  }else{
+	std::cout<<"FC UART enable - begin\n";
+	SerialEndpoint3::HWOptions options{};
+	options.linux_filename=openhd::uart_fd_from_connection_type(fc_uart_connection_type).value();
+	options.baud_rate=fc_uart_baudrate;
+	options.flow_control= false;
+	serialEndpoint=std::make_unique<SerialEndpoint3>("SerialEndpointUARTFC",options);
+	serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
+	  this->onMessageFC(msg);
+	});
+	std::cout<<"FC UART enable - end\n";
+  }
 }

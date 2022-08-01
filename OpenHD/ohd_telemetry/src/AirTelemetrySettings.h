@@ -92,20 +92,6 @@ class AirTelemetrySettingsHolder:public openhd::settings::PersistentSettings<Air
 	  openhd::settings::PersistentSettings<AirTelemetrySettings>(TELEMETRY_SETTINGS_DIRECTORY){
 	init();
   }
-  std::vector<openhd::Setting> get_all_settings(){
-	std::vector<openhd::Setting> ret{};
-	auto c_fc_uart_connection_type=[this](std::string,int value) {
-	  return validate_uart_connection_type(value);
-	};
-	auto c_fc_uart_baudrate=[this](std::string,int value) {
-	  return validate_uart_baudrate(value);
-	};
-	ret.push_back(openhd::Setting{FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(get_settings().fc_uart_connection_type),
-																	c_fc_uart_connection_type}});
-	ret.push_back(openhd::Setting{FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(get_settings().fc_uart_baudrate),
-																	c_fc_uart_baudrate}});
-	return ret;
-  }
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
 	std::stringstream ss;

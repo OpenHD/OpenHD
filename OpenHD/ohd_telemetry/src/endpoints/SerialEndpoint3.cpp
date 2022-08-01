@@ -23,6 +23,10 @@ SerialEndpoint3::SerialEndpoint3(std::string TAG1,SerialEndpoint3::HWOptions opt
   start();
 }
 
+SerialEndpoint3::~SerialEndpoint3() {
+  stop();
+}
+
 void SerialEndpoint3::sendMessageImpl(const MavlinkMessage &message) {
   const auto data = message.pack();
   write_data_serial(data);
@@ -220,3 +224,4 @@ void SerialEndpoint3::stop() {
   }
   _connectReceiveThread = nullptr;
 }
+
