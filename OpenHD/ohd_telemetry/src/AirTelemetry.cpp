@@ -158,6 +158,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 	_airTelemetrySettings->unsafe_get_settings().fc_uart_connection_type=value;
 	_airTelemetrySettings->persist();
 	setup_uart();
+	return true;
   };
   auto c_fc_uart_baudrate=[this](std::string,int value) {
 	if(!openhd::validate_uart_baudrate(value)){
@@ -166,6 +167,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 	_airTelemetrySettings->unsafe_get_settings().fc_uart_baudrate=value;
 	_airTelemetrySettings->persist();
 	setup_uart();
+	return true;
   };
   ret.push_back(openhd::Setting{openhd::FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_connection_type),
 																		   c_fc_uart_connection_type}});
@@ -177,6 +179,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 // Every time the UART configuration changes, we just re-start the UART (if it was already started)
 // This properly handles all the cases, e.g cleaning up an existing uart connection if set.
 void AirTelemetry::setup_uart() {
+  assert(_airTelemetrySettings);
   const auto fc_uart_connection_type=_airTelemetrySettings->get_settings().fc_uart_connection_type;
   const auto fc_uart_baudrate=_airTelemetrySettings->get_settings().fc_uart_baudrate;
   assert(openhd::validate_uart_connection_type(fc_uart_connection_type));
@@ -188,7 +191,7 @@ void AirTelemetry::setup_uart() {
 	serialEndpoint=nullptr;
   }
   if(fc_uart_connection_type==openhd::UART_CONNECTION_TYPE_DISABLE){
-	// No uart enabled, disable if enabled
+	// No uart enabled, we've already cleaned it up though
 	std::cout<<"FC UART disabled\n";
 	return;
   }else{
