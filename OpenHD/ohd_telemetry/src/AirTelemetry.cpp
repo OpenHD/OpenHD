@@ -187,7 +187,7 @@ void AirTelemetry::setup_uart() {
 	serialEndpoint.reset();
 	serialEndpoint=nullptr;
   }
-  if(fc_uart_connection_type==0){
+  if(fc_uart_connection_type==openhd::UART_CONNECTION_TYPE_DISABLE){
 	// No uart enabled, disable if enabled
 	std::cout<<"FC UART disabled\n";
 	return;

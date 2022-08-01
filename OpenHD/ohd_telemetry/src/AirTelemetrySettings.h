@@ -17,7 +17,8 @@ static const std::string TELEMETRY_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std
 
 // Default for ardupilot and more
 static constexpr int DEFAULT_UART_BAUDRATE=115200;
-static constexpr int DEFAULT_UART_CONNECTION=0; // Default to UART disabled (FC)
+static constexpr int UART_CONNECTION_TYPE_DISABLE=0;
+static constexpr int DEFAULT_UART_CONNECTION=UART_CONNECTION_TYPE_DISABLE; // Default to UART disabled (FC)
 
 struct AirTelemetrySettings{
   // 0: Disable
