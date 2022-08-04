@@ -16,15 +16,19 @@ static const char* GET_ERROR(){
   return strerror(errno);
 }
 static void debug_poll_fd(const struct pollfd& poll_fd){
+  std::stringstream ss;
+  ss<<"Poll:{";
   if(poll_fd.events & POLLERR){
-	std::cout<<"POLLERR\n";
+	ss<<"POLLERR,";
   }
   if(poll_fd.events & POLLHUP){
-	std::cout<<"POLLHUP\n";
+	ss<<"POLLHUP,";
   }
   if(poll_fd.events & POLLNVAL){
-	std::cout<<"POLLNVAL\n";
+	ss<<"POLLNVAL,";
   }
+  ss<<"}\n";
+  std::cout<<ss.str();
 }
 
 SerialEndpoint3::SerialEndpoint3(std::string TAG1,SerialEndpoint3::HWOptions options1):
