@@ -224,9 +224,9 @@ void SerialEndpoint3::receive_data_until_error() {
 	  std::cout<<"Exiting serial, not connected\n";
 	  return;
 	}
-	const auto delta=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-before).count();
-	std::cout<<"Poll res:"<<pollrc<<" took:"<<delta<<" ms\n";
-	debug_poll_fd(fds[0]);
+	//const auto delta=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-before).count();
+	//std::cout<<"Poll res:"<<pollrc<<" took:"<<delta<<" ms\n";
+	//debug_poll_fd(fds[0]);
 	if (pollrc == 0 || !(fds[0].revents & POLLIN)) {
 	  std::cout<<"poll probably timeout\n";
 	  continue;
