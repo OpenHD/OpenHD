@@ -212,19 +212,23 @@ void SerialEndpoint3::receive_data_until_error() {
 
 void SerialEndpoint3::start() {
   std::lock_guard<std::mutex> lock(_connectReceiveThreadMutex);
+  std::cout<<"SerialEndpoint3::start()-begin\n";
   if(_connectReceiveThread!= nullptr){
 	std::cout<<"Already started\n";
 	return;
   }
   _connectReceiveThread=std::make_unique<std::thread>(&SerialEndpoint3::connect_and_read_loop, this);
+  std::cout<<"SerialEndpoint3::start()-end\n";
 }
 
 void SerialEndpoint3::stop() {
   std::lock_guard<std::mutex> lock(_connectReceiveThreadMutex);
+  std::cout<<"SerialEndpoint3::stop()-begin\n";
   _stop_requested=true;
   if (_connectReceiveThread && _connectReceiveThread->joinable()) {
 	_connectReceiveThread->join();
   }
   _connectReceiveThread = nullptr;
+  std::cout<<"SerialEndpoint3::stop()-end\n";
 }
 
