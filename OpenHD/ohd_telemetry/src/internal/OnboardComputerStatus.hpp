@@ -33,8 +33,12 @@ static int readTemperature() {
   return cpu_temperature;
 }
 
+
+// Stuff that works only on rpi
+namespace rpi {
+
 // copy and paste from QOpenHD, I think we can get the under-voltage warning on rpi this way.
-static int readRpiUnderVoltError() {
+static int readUnderVoltError() {
   auto fp3 = fopen("/tmp/undervolt", "r");
   if (fp3 == nullptr) {
 	return 0;
@@ -45,11 +49,8 @@ static int readRpiUnderVoltError() {
   return undervolt_gnd;
 }
 
-// Stuff that works only on rpi
-namespace rpi {
-
 // https://www.elinux.org/RPI_vcgencmd_usage
-
+//
 // most vcgen commands return "blablabla=wanted"
 // where wanted is what we are acutally after
 static std::string everything_after_equal(const std::string &unparsed) {
