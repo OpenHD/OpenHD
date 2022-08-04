@@ -46,11 +46,18 @@ static bool exists(const char* file){
   return boost::filesystem::exists(file);
 }
 
+// These don't create top level directories recursively
 static void create_directory(const char* directory){
   boost::filesystem::create_directory(directory);
 }
 static void create_directory(const std::string& directory){
   create_directory(directory.c_str());
+}
+
+// creates top level directories recursively
+static void create_directories(const char* directory){
+  boost::filesystem::create_directories(directory);
+  assert(exists(directory));
 }
 
 static void safe_delete_directory(const char* directory){

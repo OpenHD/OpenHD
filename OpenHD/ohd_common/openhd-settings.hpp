@@ -34,13 +34,10 @@ static constexpr auto UNIT_ID_FILE = "/home/consti10/openhd/unit.id";
  * generate the directory where all persistent settings of OpenHD are stored.
  */
 static void generateSettingsDirectoryIfNonExists() {
-  if (!std::filesystem::exists(BASE_PATH)) {
-	std::cout << "Creating settings directory\n";
-	if (!std::filesystem::create_directory(BASE_PATH)) {
-	  std::cerr << "Cannot create settings directory\n";
-	}
+  if(!OHDFilesystemUtil::exists(BASE_PATH)){
+	OHDFilesystemUtil::create_directories(BASE_PATH);
   }
-  assert(std::filesystem::exists(BASE_PATH));
+  assert(OHDFilesystemUtil::exists(BASE_PATH));
 }
 
 /**
@@ -73,28 +70,6 @@ static std::string getOrCreateUnitId() {
   }
   assert(!unit_id.empty());
   return unit_id;
-}
-
-/**
- * The settings are stored in a directory called air_$unit_id or ground_$unit_id.
- * @return the settings directory, created newly if non existent. As an example, it will return a path like
- * this: BASE_PATH/air_8bfff348-c17e-4833-af66-cef83f90c208/
- */
-static std::string findOrCreateSettingsDirectory(bool is_air) {
-  generateSettingsDirectoryIfNonExists();
-  std::stringstream settingsPath;
-  settingsPath << BASE_PATH;
-  settingsPath << (is_air ? "air_" : "ground_");
-  const auto unit_id = getOrCreateUnitId();
-  settingsPath << unit_id;
-  auto str = settingsPath.str();
-  std::cout << "SettingsDirectory:[" << str << "]\n";
-  // create the directory if it is non existing
-  if (!std::filesystem::exists(str.c_str())) {
-	std::filesystem::create_directory(str.c_str());
-  }
-  assert(std::filesystem::exists(str.c_str()));
-  return str;
 }
 
 // Clean up the directory where OpenHD persistent settings are stored
