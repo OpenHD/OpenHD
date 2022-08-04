@@ -25,17 +25,17 @@ UDPEndpoint::UDPEndpoint(const std::string& TAG, const int senderPort, const int
   std::cout <<TAG<< " UDPEndpoint created send: "<<senderIp<<":" << senderPort << " recv: "<<receiverIp<<":" << receiverPort << "\n";
 }
 
-void UDPEndpoint::sendMessageImpl(const MavlinkMessage &message) {
+bool UDPEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"UDPEndpoint::sendMessage");
   if (transmitter != nullptr) {
 	const auto data = message.pack();
 	//std::cout<<"XSend:"<<data.size()<<" "<<MavlinkHelpers::raw_content(data.data(),data.size())<<"\n";
 	transmitter->forwardPacketViaUDP(data.data(), data.size());
-	//std::cout<<"AAA\n";
-	//parseNewData(data.data(),data.size());
+	return true;
   } else {
 	std::cerr << "UDPEndpoint::sendMessage with no transmitter\n";
   }
+  return false;
 }
 
 std::unique_ptr<UDPEndpoint> UDPEndpoint::createEndpointForOHDWifibroadcast(const bool isAir) {

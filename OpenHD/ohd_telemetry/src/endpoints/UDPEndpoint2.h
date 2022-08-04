@@ -23,7 +23,7 @@ class UDPEndpoint2 : public MEndpoint {
   UDPEndpoint2(const UDPEndpoint2&&)=delete;
   void addAnotherDestIpAddress(std::string ip);
  private:
-  void sendMessageImpl(const MavlinkMessage &message) override;
+  bool sendMessageImpl(const MavlinkMessage &message) override;
   const std::string SENDER_IP;
   const int SEND_PORT;
   const std::string RECV_IP;

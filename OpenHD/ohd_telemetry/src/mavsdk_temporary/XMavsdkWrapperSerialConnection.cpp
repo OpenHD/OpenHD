@@ -18,7 +18,7 @@ XMavsdkWrapperSerialConnection::XMavsdkWrapperSerialConnection(
   establish_connection_thread = std::make_unique<std::thread>(&XMavsdkWrapperSerialConnection::constantConnect, this);
 }
 
-void XMavsdkWrapperSerialConnection::sendMessageImpl(
+bool XMavsdkWrapperSerialConnection::sendMessageImpl(
     const MavlinkMessage& message) {
   std::lock_guard<std::mutex> lock(_mutex);
   if(_serial_connection){
@@ -30,6 +30,7 @@ void XMavsdkWrapperSerialConnection::sendMessageImpl(
 	  _serial_connection= nullptr;
 	}
   }
+  return true;
 }
 
 std::optional<std::string> XMavsdkWrapperSerialConnection::check_serial_file_handles() {

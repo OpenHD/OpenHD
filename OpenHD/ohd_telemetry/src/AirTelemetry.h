@@ -51,6 +51,7 @@ class AirTelemetry : public MavlinkSystem{
   // called every time a message from the ground pi is received
   void onMessageGroundPi(MavlinkMessage &message);
  private:
+  std::mutex _serialEndpointMutex;
   std::unique_ptr<SerialEndpoint3> serialEndpoint;
   // For now, use UDP endpoint and rely on another service for starting the rx/tx links
   //std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;

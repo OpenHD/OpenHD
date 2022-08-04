@@ -53,8 +53,9 @@ class MEndpoint {
       return;
     }
 #endif
-	sendMessageImpl(message);
+	const auto res=sendMessageImpl(message);
 	m_n_messages_sent++;
+	if(!res)m_n_messages_send_failed++;
   }
   /**
    * register a callback that is called every time
@@ -111,7 +112,9 @@ class MEndpoint {
 	onNewMavlinkMessage(msg);
   }
   // Must be overridden by the implementation
-  virtual void sendMessageImpl(const MavlinkMessage &message) = 0;
+  // Returns true if the message has been properly sent (e.g. a connection exists on connection-based endpoints)
+  // false otherwise
+  virtual bool sendMessageImpl(const MavlinkMessage &message) = 0;
  private:
   MAV_MSG_CALLBACK callback = nullptr;
   // increases message count and forwards the message via the callback if registered.
@@ -138,6 +141,7 @@ class MEndpoint {
   int m_n_messages_received=0;
   // sendMessage() might be called by different threads.
   std::atomic<int> m_n_messages_sent=0;
+  std::atomic<int> m_n_messages_send_failed=0;
   // I think mavlink channels are static, so each endpoint should use his own channel.
   // Based on mavsdk::mavlink_channels
   // It is not clear what the limit of the number of channels is, except UINT8_MAX.

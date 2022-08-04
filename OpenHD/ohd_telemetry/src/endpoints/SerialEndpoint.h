@@ -39,7 +39,7 @@ class SerialEndpoint : public MEndpoint {
   static constexpr auto USB_SERIAL_PORT = "/dev/ttyUSB0";
   static constexpr auto TEST_SERIAL_PORT = "/dev/ttyACM0";
  private:
-  void sendMessageImpl(const MavlinkMessage &message) override;
+  bool sendMessageImpl(const MavlinkMessage &message) override;
   // If the serial port is still opened, close it
   // after that, it should be openable again
   void safeCloseCleanup();

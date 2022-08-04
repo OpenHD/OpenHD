@@ -25,7 +25,7 @@ class TCPEndpoint : public MEndpoint {
    */
   explicit TCPEndpoint(std::string TAG, int Port);
  private:
-  void sendMessageImpl(const MavlinkMessage &message) override;
+  bool sendMessageImpl(const MavlinkMessage &message) override;
   // The port this server runs on
   const int PORT;
   std::array<uint8_t, 1024> readBuffer{};

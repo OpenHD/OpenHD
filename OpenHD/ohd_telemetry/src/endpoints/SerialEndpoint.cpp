@@ -106,10 +106,10 @@ void SerialEndpoint::handleWrite(const boost::system::error_code &error,
   }
 }
 
-void SerialEndpoint::sendMessageImpl(const MavlinkMessage &message) {
+bool SerialEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   if (!m_serial.is_open()) {
 	std::cout << "SER: not open\n";
-	return;
+	return false;
   }
   //std::cout<<"SerialEndpoint::sendMessage\n";
   const auto packed = message.pack();
@@ -119,6 +119,7 @@ void SerialEndpoint::sendMessageImpl(const MavlinkMessage &message) {
 									   this,
 									   boost::asio::placeholders::error,
 									   boost::asio::placeholders::bytes_transferred));
+  return true;
 }
 
 

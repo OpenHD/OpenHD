@@ -20,7 +20,7 @@ class XMavsdkWrapperSerialConnection : public MEndpoint{
       int baudrate,
       bool flow_control=false);
  private:
-  void sendMessageImpl(const MavlinkMessage &message) override;
+  bool sendMessageImpl(const MavlinkMessage &message) override;
   std::optional<std::string> check_serial_file_handles();
  private:
   [[noreturn]] void constantConnect();

@@ -38,10 +38,15 @@ class SerialEndpoint3 : public MEndpoint{
   SerialEndpoint3(const SerialEndpoint3&)=delete;
   SerialEndpoint3(const SerialEndpoint3&&)=delete;
   ~SerialEndpoint3();
+  // Start the UART (it'l read / write until infinity or another config)
+  // his properly handles all the cases, e.g cleaning up an existing uart connection if set.
+  void safeStartForConfig(SerialEndpoint3::HWOptions options1);
   void start();
+  // Stop any UART communication (read and write). Might block for up to 1 second.
+  // Does nothing if already stopped.
   void stop();
  private:
-  void sendMessageImpl(const MavlinkMessage &message) override;
+  bool sendMessageImpl(const MavlinkMessage &message) override;
   static int define_from_baudrate(int baudrate);
   static int setup_port(const HWOptions& options);
   void connect_and_read_loop();
@@ -51,7 +56,7 @@ class SerialEndpoint3 : public MEndpoint{
   // Write serial data, returns true on success, false otherwise.
   [[nodiscard]] bool write_data_serial(const std::vector<uint8_t>& data) const;
  private:
-  const HWOptions _options;
+  HWOptions _options;
   int _fd=-1;
   std::mutex _connectReceiveThreadMutex;
   std::unique_ptr<std::thread> _connectReceiveThread = nullptr;

@@ -27,9 +27,16 @@ SerialEndpoint3::~SerialEndpoint3() {
   stop();
 }
 
-void SerialEndpoint3::sendMessageImpl(const MavlinkMessage &message) {
+void SerialEndpoint3::safeStartForConfig(SerialEndpoint3::HWOptions options1) {
+  // stop any existing UART communication, might block for up to 1 second
+  stop();
+  _options=std::move(options1);
+  start();
+}
+
+bool SerialEndpoint3::sendMessageImpl(const MavlinkMessage &message) {
   const auto data = message.pack();
-  write_data_serial(data);
+  return write_data_serial(data);
 }
 
 bool SerialEndpoint3::write_data_serial(const std::vector<uint8_t> &data) const {
@@ -38,6 +45,8 @@ bool SerialEndpoint3::write_data_serial(const std::vector<uint8_t> &data) const 
 	//std::cout<<"Cannot send data, no fd\n";
 	return false;
   }
+  // If we have a fd, but the write fails, most likely the UART disconnected
+  // but the linux driver hasn't noticed it yet.
   const auto send_len = static_cast<int>(write(_fd,data.data(), data.size()));
   if (send_len != data.size()) {
 	std::stringstream ss;

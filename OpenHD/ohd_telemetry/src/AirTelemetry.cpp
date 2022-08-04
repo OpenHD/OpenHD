@@ -184,6 +184,7 @@ void AirTelemetry::setup_uart() {
   const auto fc_uart_baudrate=_airTelemetrySettings->get_settings().fc_uart_baudrate;
   assert(openhd::validate_uart_connection_type(fc_uart_connection_type));
   // Disable the currently running uart configuration, if there is any
+  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
   if(serialEndpoint!=nullptr) {
 	std::cout<<"Stopping already existing FC UART\n";
 	serialEndpoint->stop();

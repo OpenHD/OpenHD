@@ -36,11 +36,13 @@ SerialEndpoint2::SerialEndpoint2(std::string TAG, HWOptions options, bool enable
   std::cout <<TAG<< " SerialEndpoint2 created " << m_options.linux_filename << ":"<<m_options.baud_rate<<"\n";
 }
 
-void SerialEndpoint2::sendMessageImpl(const MavlinkMessage &message) {
+bool SerialEndpoint2::sendMessageImpl(const MavlinkMessage &message) {
   // if we have discovered the component (got messages from it)
   if(passtrougFC!= nullptr){
 	auto copy=message.m;
 	passtrougFC->send_message(copy);
+	return true;
   }
+  return false;
 }
 

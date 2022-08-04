@@ -27,7 +27,7 @@ class SerialEndpoint2 : public MEndpoint {
    */
   explicit SerialEndpoint2(std::string TAG, HWOptions options,bool enableDebug=false);
  private:
-  void sendMessageImpl(const MavlinkMessage &message) override;
+  bool sendMessageImpl(const MavlinkMessage &message) override;
   const HWOptions m_options;
   const bool m_enable_debug;
  public:
