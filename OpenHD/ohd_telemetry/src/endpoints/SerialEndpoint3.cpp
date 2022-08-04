@@ -188,6 +188,7 @@ void SerialEndpoint3::receive_data_until_error() {
 	int recv_len;
 	int pollrc = poll(fds, 1, 1000);
 	if (pollrc == 0 || !(fds[0].revents & POLLIN)) {
+	  std::cout<<"poll probably timeout\n";
 	  continue;
 	} else if (pollrc == -1) {
 	  std::cerr<< "read poll failure: " << GET_ERROR();
