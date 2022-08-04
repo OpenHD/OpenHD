@@ -24,7 +24,10 @@ int main(int argc, char *argv[]) {
   });
   // now mavlink messages should come in. Try disconnecting and reconnecting, and see if messages continue
   const auto start = std::chrono::steady_clock::now();
-  while ((std::chrono::steady_clock::now() - start) < std::chrono::minutes(5)) {
+  static bool quit=false;
+  signal(SIGTERM, [](int sig){ quit= true;});
+
+  while (((std::chrono::steady_clock::now() - start) < std::chrono::minutes(5)) && !quit) {
 	serialEndpoint.debugIfAlive();
 	// some implementations need a heartbeat before they start sending data.
 	auto msg = MExampleMessage::heartbeat();

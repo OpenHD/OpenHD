@@ -8,6 +8,7 @@
 #include "../src/endpoints/SerialEndpoint3.h"
 #include "serial_endpoint_test_helper.h"
 #include <memory>
+#include <csignal>
 
 int main(int argc, char *argv[]) {
 
@@ -27,7 +28,9 @@ int main(int argc, char *argv[]) {
   });
   // now mavlink messages should come in. Try disconnecting and reconnecting, and see if messages continue
   const auto start = std::chrono::steady_clock::now();
-  while ((std::chrono::steady_clock::now() - start) < std::chrono::seconds(10)) {
+  static bool quit=false;
+  signal(SIGTERM, [](int sig){ quit= true;});
+  while (((std::chrono::steady_clock::now() - start) < std::chrono::seconds(60))&& !quit) {
 	std::cout<<serial_endpoint->createInfo();
     // some implementations need a heartbeat before they start sending data.
     auto msg = MExampleMessage::heartbeat();
