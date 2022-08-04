@@ -27,6 +27,7 @@
 // This "send/receive data when possible, otherwise do nothing" behaviour fits well with the mavlink paradigm:
 // https://mavlink.io/en/services/heartbeat.html
 // "A component is considered to be connected to the network if its HEARTBEAT message is regularly received, and disconnected if a number of expected messages are not received."
+// => A endpoint is considered alive it has received any mavlink messages in the last X seconds.
 class MEndpoint {
  public:
   /**
