@@ -38,9 +38,8 @@ class SerialEndpoint3 : public MEndpoint{
   SerialEndpoint3(const SerialEndpoint3&)=delete;
   SerialEndpoint3(const SerialEndpoint3&&)=delete;
   ~SerialEndpoint3();
-  // Start the UART (it'l read / write until infinity or another config)
-  // his properly handles all the cases, e.g cleaning up an existing uart connection if set.
-  void safeStartForConfig(SerialEndpoint3::HWOptions options1);
+  // Start sending and receiving UART data.
+  // Does nothing if already started.
   void start();
   // Stop any UART communication (read and write). Might block for up to 1 second.
   // Does nothing if already stopped.
@@ -56,7 +55,7 @@ class SerialEndpoint3 : public MEndpoint{
   // Write serial data, returns true on success, false otherwise.
   [[nodiscard]] bool write_data_serial(const std::vector<uint8_t>& data) const;
  private:
-  HWOptions _options;
+  const HWOptions _options;
   int _fd=-1;
   std::mutex _connectReceiveThreadMutex;
   std::unique_ptr<std::thread> _connectReceiveThread = nullptr;

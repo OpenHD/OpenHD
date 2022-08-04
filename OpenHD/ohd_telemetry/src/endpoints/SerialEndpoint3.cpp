@@ -27,13 +27,6 @@ SerialEndpoint3::~SerialEndpoint3() {
   stop();
 }
 
-void SerialEndpoint3::safeStartForConfig(SerialEndpoint3::HWOptions options1) {
-  // stop any existing UART communication, might block for up to 1 second
-  stop();
-  _options=std::move(options1);
-  start();
-}
-
 bool SerialEndpoint3::sendMessageImpl(const MavlinkMessage &message) {
   const auto data = message.pack();
   return write_data_serial(data);
@@ -98,7 +91,7 @@ int SerialEndpoint3::define_from_baudrate(int baudrate) {
 	default: {
 	  std::cerr << "Unknown baudrate\n";
 	  assert(false);
-	  return -1;
+	  return B1152000;
 	}
   }
 }
