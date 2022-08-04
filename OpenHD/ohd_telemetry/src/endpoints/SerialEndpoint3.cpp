@@ -15,6 +15,17 @@
 static const char* GET_ERROR(){
   return strerror(errno);
 }
+static void debug_poll_fd(const struct pollfd& poll_fd){
+  if(poll_fd.events & POLLERR){
+	std::cout<<"POLLERR\n";
+  }
+  if(poll_fd.events & POLLHUP){
+	std::cout<<"POLLHUP\n";
+  }
+  if(poll_fd.events & POLLNVAL){
+	std::cout<<"POLLNVAL\n";
+  }
+}
 
 SerialEndpoint3::SerialEndpoint3(std::string TAG1,SerialEndpoint3::HWOptions options1):
 	MEndpoint(std::move(TAG1)),
@@ -190,12 +201,7 @@ void SerialEndpoint3::receive_data_until_error() {
 	int pollrc = poll(fds, 1, 1000);
 	const auto delta=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-before).count();
 	std::cout<<"Poll took "<<delta<<" ms\n";
-	if(fds[0].events & POLLERR){
-	  std::cout<<"POLLERR\n";
-	}
-	if(fds[0].events & POLLHUP){
-	  std::cout<<"POLLHUP\n";
-	}
+	debug_poll_fd(fds[0]);
 	if (pollrc == 0 || !(fds[0].revents & POLLIN)) {
 	  std::cout<<"poll probably timeout\n";
 	  continue;
