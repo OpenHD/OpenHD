@@ -61,38 +61,29 @@ static void validate_provided_ids(const std::vector<Setting>& settings){
   }
 }
 
-
+namespace testing {
 // For testing
-namespace testing{
-class DummyCameraXSettingsComponent:public ISettingsComponent{
- public:
-  std::vector<Setting> get_all_settings() override{
-    std::vector<openhd::Setting> ret={
-        openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{640, nullptr}},
-        openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{480, nullptr}},
-        openhd::Setting{"VIDEO_FPS",openhd::IntSetting{30, nullptr}},
-        openhd::Setting{"VIDEO_FORMAT",openhd::IntSetting{0, nullptr}},
-        openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{10, nullptr}},
-    };
-    return ret;
-  }
-};
-
-class DummyGroundXSettingsComponent:public ISettingsComponent{
- public:
-  std::vector<Setting> get_all_settings() override{
-    std::vector<openhd::Setting> ret={
-        openhd::Setting{"GROUND_X",openhd::IntSetting{10, nullptr}},
-        openhd::Setting{"GROUND_Y",openhd::IntSetting{1, nullptr}},
-        /*openhd::Setting{"SOME_INT",0},
-        openhd::Setting{"SOME_FLOAT",0.0f},
-        openhd::Setting{"SOME_STRING",std::string("hello")}*/
-    };
-    return ret;
-  }
-};
+static std::vector<Setting> create_dummy_camera_settings() {
+  std::vector<openhd::Setting> ret = {
+	  openhd::Setting{"VIDEO_WIDTH", openhd::IntSetting{640, nullptr}},
+	  openhd::Setting{"VIDEO_HEIGHT", openhd::IntSetting{480, nullptr}},
+	  openhd::Setting{"VIDEO_FPS", openhd::IntSetting{30, nullptr}},
+	  openhd::Setting{"VIDEO_FORMAT", openhd::IntSetting{0, nullptr}},
+	  openhd::Setting{"V_BITRATE_MBITS", openhd::IntSetting{10, nullptr}},
+  };
+  return ret;
 }
-
+static std::vector<Setting> create_dummy_ground_settings() {
+  std::vector<openhd::Setting> ret = {
+	  openhd::Setting{"GROUND_X", openhd::IntSetting{10, nullptr}},
+	  openhd::Setting{"GROUND_Y", openhd::IntSetting{1, nullptr}},
+	  /*openhd::Setting{"SOME_INT",0},
+	  openhd::Setting{"SOME_FLOAT",0.0f},
+	  openhd::Setting{"SOME_STRING",std::string("hello")}*/
+  };
+  return ret;
+}
+}
 
 }
 #endif  // OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_ISETTINGSCOMPONENT_H_
