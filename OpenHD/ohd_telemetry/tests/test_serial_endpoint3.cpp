@@ -23,17 +23,19 @@ int main(int argc, char *argv[]) {
 
   auto serial_endpoint=std::make_unique<SerialEndpoint3>("SerialEndpoint3Test",options);
   serial_endpoint->registerCallback([](MavlinkMessage &msg) {
-	debugMavlinkMessage(msg.m, "SerialTest3");
+	//debugMavlinkMessage(msg.m, "SerialTest3");
   });
   // now mavlink messages should come in. Try disconnecting and reconnecting, and see if messages continue
   const auto start = std::chrono::steady_clock::now();
-  while ((std::chrono::steady_clock::now() - start) < std::chrono::minutes(5)) {
+  while ((std::chrono::steady_clock::now() - start) < std::chrono::seconds(10)) {
 	std::cout<<serial_endpoint->createInfo();
     // some implementations need a heartbeat before they start sending data.
     auto msg = MExampleMessage::heartbeat();
     serial_endpoint->sendMessage(msg);
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+  serial_endpoint.reset();
+  serial_endpoint= nullptr;
   std::cout << "SerialEndpointTest3::end" << std::endl;
   return 0;
 }
