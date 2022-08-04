@@ -186,8 +186,10 @@ void SerialEndpoint3::receive_data_until_error() {
 
   while (!_stop_requested) {
 	int recv_len;
+	const auto before=std::chrono::steady_clock::now();
 	int pollrc = poll(fds, 1, 1000);
-	std::cout<<"After poll\n";
+	const auto delta=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-before).count();
+	std::cout<<"Poll took "<<delta<<" ms\n";
 	if (pollrc == 0 || !(fds[0].revents & POLLIN)) {
 	  std::cout<<"poll probably timeout\n";
 	  continue;
