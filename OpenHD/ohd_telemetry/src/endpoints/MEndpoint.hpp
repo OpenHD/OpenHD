@@ -87,7 +87,7 @@ class MEndpoint {
   }
   [[nodiscard]] std::string createInfo()const{
 	std::stringstream ss;
-	ss<<TAG<<" sent:"<<m_n_messages_sent<<" send_failed:"<<m_n_messages_send_failed<<" recv:"<<m_n_messages_received<<" alive:"<<(isAlive() ? "Y" : "N") << "\n";
+	ss<<TAG<<" {sent:"<<m_n_messages_sent<<" send_failed:"<<m_n_messages_send_failed<<" recv:"<<m_n_messages_received<<" alive:"<<(isAlive() ? "Y" : "N") << "}\n";
 	return ss.str();
   }
   // can be public since immutable
