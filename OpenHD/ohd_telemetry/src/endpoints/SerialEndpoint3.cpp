@@ -11,6 +11,7 @@
 #include <poll.h>
 #include <utility>
 #include <cassert>
+#include <sys/stat.h>
 
 static const char* GET_ERROR(){
   return strerror(errno);
@@ -29,6 +30,18 @@ static void debug_poll_fd(const struct pollfd& poll_fd){
   }
   ss<<"}\n";
   std::cout<<ss.str();
+}
+
+// https://stackoverflow.com/questions/12340695/how-to-check-if-a-given-file-descriptor-stored-in-a-variable-is-still-valid
+static bool is_serial_fd_still_connected(const int fd){
+  struct stat s{};
+  fstat(fd, &s);
+// struct stat::nlink_t   st_nlink;   ... number of hard links
+  if( s.st_nlink < 1 ){
+	// treat device disconnected case
+	return false;
+  }
+  return true;
 }
 
 SerialEndpoint3::SerialEndpoint3(std::string TAG1,SerialEndpoint3::HWOptions options1):
@@ -203,6 +216,14 @@ void SerialEndpoint3::receive_data_until_error() {
 	int recv_len;
 	const auto before=std::chrono::steady_clock::now();
 	int pollrc = poll(fds, 1, 1000);
+	// on my ubuntu laptop, with usb serial, if the device disconnects I don't get any error results,
+	// but poll suddenly never blocks anymore. Therefore, every time we time out we check if the fd is still valid
+	// and exit if not (which will lead to a re-start)
+	const auto valid= is_serial_fd_still_connected(_fd);
+	if(!valid){
+	  std::cout<<"Exiting serial, not connected\n";
+	  return;
+	}
 	const auto delta=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-before).count();
 	std::cout<<"Poll res:"<<pollrc<<" took:"<<delta<<" ms\n";
 	debug_poll_fd(fds[0]);
