@@ -5,16 +5,10 @@
 #include "AirTelemetry.h"
 #include "mav_helper.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
-#include "mavsdk_temporary/XMavsdkWrapperSerialConnection.h"
 #include <chrono>
 #include "openhd-util-filesystem.hpp"
 
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::string fcSerialPort): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
-  //serialEndpoint = std::make_unique<SerialEndpoint>("FCSerial",SerialEndpoint::HWOptions{fcSerialPort, 115200});
-  /*serialEndpoint = std::make_unique<mavsdk::XMavsdkWrapperSerialConnection>(fcSerialPort,115200);
-  serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
-    this->onMessageFC(msg);
-  });*/
   _airTelemetrySettings=std::make_unique<openhd::AirTelemetrySettingsHolder>();
   setup_uart();
   // any message coming in via wifibroadcast is a message from the ground pi
@@ -25,7 +19,6 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::string fcSerialPort): _plat
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,true);
   components.push_back(_ohd_main_component);
   //
-  std::vector<openhd::Setting> empty{};
   generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,192);
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their paramters.

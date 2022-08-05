@@ -27,9 +27,7 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         src/endpoints/UDPEndpoint.cpp
         src/endpoints/UDPEndpoint2.cpp
         src/endpoints/TCPEndpoint.cpp
-        src/endpoints/SerialEndpoint.cpp
         src/endpoints/SerialEndpoint3.cpp
-        #src/endpoints/SerialEndpoint2.cpp
         #src/endpoints/WBEndpoint.cpp
         src/internal/OHDMainComponent.cpp
         src/mavsdk_temporary/XMavlinkParamProvider.cpp
@@ -46,7 +44,6 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         src/mavsdk_temporary/mavlink_receiver.cpp
         src/mavsdk_temporary/mavsdk_time.cpp
         src/mavsdk_temporary/mavlink_channels.cpp
-        src/mavsdk_temporary/XMavsdkWrapperSerialConnection.cpp
         )
 
 # Build it as a library
@@ -68,10 +65,6 @@ target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
 target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
 
 # All the test files for development
-add_executable(test_serial_endpoint tests/test_serial_endpoint.cpp)
-target_link_libraries(test_serial_endpoint OHDTelemetryLib)
-add_executable(test_serial_endpoint2 tests/test_serial_endpoint2.cpp)
-target_link_libraries(test_serial_endpoint2 OHDTelemetryLib)
 add_executable(test_serial_endpoint3 tests/test_serial_endpoint3.cpp)
 target_link_libraries(test_serial_endpoint3 OHDTelemetryLib)
 
