@@ -9,7 +9,12 @@ DISTRO=$3
 BUILD_TYPE=$4
 
 if [[ "${DISTRO}" == "bullseye" ]]; then
-    PLATFORM_PACKAGES="-d lifepoweredpi -d gst-rpicamsrc -d openhd-linux-pi -d libjpeg62-turbo"
+    PLATFORM_PACKAGES="-d openhd-linux-pi"
+    PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
+fi
+
+if [[ "${DISTRO}" == "buster" ]]; then
+    PLATFORM_PACKAGES=""
     PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
 fi
 
@@ -97,7 +102,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   -d "hostapd" \
   -d "iw" \
   -d "isc-dhcp-common" \
-  -d "pump" \
   -d "dnsmasq" \
   -d "aircrack-ng" \
   -d "ser2net" \

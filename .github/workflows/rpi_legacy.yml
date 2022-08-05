@@ -1,4 +1,4 @@
-name: Build RPI
+name: Build RPI Legacy
 
 on: [push]
 
@@ -27,20 +27,22 @@ jobs:
     - uses: pguyot/arm-runner-action@v2
       id: build_image
       with:
-        base_image: raspios_lite:latest
+        base_image: https://downloads.raspberrypi.org/raspios_oldstable_armhf/images/raspios_oldstable_armhf-2022-04-07/2022-04-04-raspios-buster-armhf.img.xz
         image_additional_mb: 4000
         copy_repository_path: /opt
         copy_artifact_path: Open.HD
         import_github_env: true
+        cpu: cortex-a7
         commands: |
             ls -a
             cd /opt
             cd Open.HD
-            curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash
+            curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' | sudo -E bash
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
-            sudo ./install_dep.sh
-            sudo ./package.sh armhf raspbian bullseye
+            sudo chmod +x install_dep_legacy.sh
+            sudo ./install_dep_legacy.sh
+            sudo ./package.sh armhf raspbian buster
             ls -a
 
     - name: Upload to Github
@@ -61,7 +63,7 @@ jobs:
         owner: "openhd"
         repo: "openhd-2-2-evo"
         distro: "raspbian"
-        release: "bullseye"
+        release: "buster"
         republish: "true" # needed ONLY if version is not changing
         file: "Open.HD/*.deb"
           
