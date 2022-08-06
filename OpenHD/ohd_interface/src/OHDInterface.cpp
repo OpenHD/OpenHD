@@ -110,6 +110,9 @@ std::string OHDInterface::createDebug() const {
 }
 
 void OHDInterface::addExternalDeviceIpForwarding(std::string ip) const {
+    // video we can directly forward to the external device - but note that
+	// telemetry first needs to go through the ohd_telemetry module, and therefore is handled
+	// seperately ( a bit hacky, but no real way around if we want to keep the module separation)
     if(wbStreams){
         wbStreams->addExternalDeviceIpForwarding(ip);
     }

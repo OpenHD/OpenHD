@@ -29,20 +29,21 @@
   void set_stats_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) const;
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
-  /**
-   * after calling this method with a external device's ip address
-   * (for example an externally connected tablet) data will be forwarded to the device's ip address.
-   * It is safe to call this method multiple times with the same IP address, since we internally keep track here.
-   */
-  void addExternalDeviceIpForwarding(std::string ip) const;
-  /**
-   * stop forwarding data to the device's ip address.
-   * Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
-   */
-  void removeExternalDeviceIpForwarding(std::string ip) const;
   // settings hacky begin
   std::vector<openhd::Setting> get_all_settings()override;
   // settings hacky end
+  private:
+   /**
+	* after calling this method with a external device's ip address
+	* (for example an externally connected tablet) data will be forwarded to the device's ip address.
+	* It is safe to call this method multiple times with the same IP address, since we internally keep track here.
+	*/
+   void addExternalDeviceIpForwarding(std::string ip) const;
+   /**
+	* stop forwarding data to the device's ip address.
+	* Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
+	*/
+   void removeExternalDeviceIpForwarding(std::string ip) const;
  private:
   const OHDProfile profile;
   const OHDPlatform platform;
