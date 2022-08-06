@@ -105,6 +105,8 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   std::ifstream d(phy_file.str());
   std::string phy_val((std::istreambuf_iterator<char>(d)), std::istreambuf_iterator<char>());
 
+  // NOTE: phy-lookup doesn't seem to work all the time, especially with the modified wifi drivers.
+  // TODO I think the best way is just if we write the capabilities manually, depending on which card has been detected
   bool supports_2ghz = false;
   bool supports_5ghz = false;
 
@@ -122,7 +124,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   card.mac = mac;
 
   switch (card.type) {
-    case WiFiCardType::Atheros9k: {
+	case WiFiCardType::Atheros9k: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = true;
@@ -130,7 +132,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-        case WiFiCardType::Atheros9khtc: {
+	case WiFiCardType::Atheros9khtc: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = true;
@@ -138,7 +140,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-        case WiFiCardType::Ralink: {
+	case WiFiCardType::Ralink: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
@@ -146,7 +148,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-        case WiFiCardType::Intel: {
+	case WiFiCardType::Intel: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
@@ -154,7 +156,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-        case WiFiCardType::Broadcom: {
+	case WiFiCardType::Broadcom: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
@@ -162,18 +164,18 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-        case WiFiCardType::Realtek8812au: {
+	case WiFiCardType::Realtek8812au: {
 	  //card.supports_5ghz = supports_5ghz;
-      // For some reason, phy_lookup seems to not work when 2x RTL8812au are connected on the second card.
-      card.supports_5ghz=true;
-      // quirk, the driver doesn't support it for injection, we should allow it for hotspot though
+	  // For some reason, phy_lookup seems to not work when 2x RTL8812au are connected on the second card.
+	  card.supports_5ghz=true;
+	  // quirk, the driver doesn't support it for injection, we should allow it for hotspot though
 	  card.supports_2ghz =false;
 	  card.supports_rts = true;
 	  card.supports_injection = true;
 	  card.supports_hotspot = true;
 	  break;
 	}
-        case WiFiCardType::Realtek88x2bu: {
+	case WiFiCardType::Realtek88x2bu: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
@@ -181,7 +183,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_hotspot = true;
 	  break;
 	}
-        case WiFiCardType::Realtek8188eu: {
+	case WiFiCardType::Realtek8188eu: {
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
@@ -205,7 +207,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   }
   // hacky there is something wron with phy-lookup
   if(!(card.supports_2ghz  || card.supports_5ghz)){
-    card.supports_2ghz=true;
+	card.supports_2ghz=true;
   }
   return card;
   // A wifi card should at least one of them both.
