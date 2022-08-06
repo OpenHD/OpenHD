@@ -67,11 +67,12 @@ static bool enable_monitor_mode(const WiFiCard &card) {
   return success;
 }
 
+// https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_networking/configuring-networkmanager-to-ignore-certain-devices_configuring-and-managing-networking
 // example: nmcli device set wlx244bfeb71c05 managed no
 // blacklist the card from network manager (so we can safely do our own thing, aka wifibroadcast) with it
 // NOTE: this is not permament between restarts - but that is exactly what we want,
 // since on each restart we might do different things with the wifi card(s)
-static bool set_card_unmanaged(const WiFiCard &card){
+static bool network_manager_set_card_unmanaged(const WiFiCard &card){
   std::cout<<"Set card "<<card.interface_name<<" to unmanaged by NetworkManager\n";
   bool success = OHDUtil::run_command("nmcli",{"device","set",card.interface_name,"managed","no"});
   return success;

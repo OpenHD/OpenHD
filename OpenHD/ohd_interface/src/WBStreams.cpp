@@ -70,11 +70,14 @@ void WBStreams::configure_cards() {
   std::cout << "WBStreams::configure_cards() begin\n";
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // However, with the image set up by raphael they should be free from any (OS) prcoesses already
-  if(_platform.platform_type==PlatformType::PC){
+  // R.N we also try and blacklist the cards from NetworkManager - it is needed for RPI and Ubuntu
+  // (as of 6.8.2022, since we re-added NetworkManager on pi) but it won't hurt on systems that don't
+  // have network manager - there it just won't have any effect.
+  {
 	// This is only needed if NetworkManager was not disabled (we might move onto leaving it enabled on all platforms, though)
 	// TODO: does this return immediately or only after the change has been applied ?
 	for(const auto& card: _broadcast_cards){
-	  WifiCardCommandHelper::set_card_unmanaged(card->_wifi_card);
+	  WifiCardCommandHelper::network_manager_set_card_unmanaged(card->_wifi_card);
 	}
 	OHDUtil::run_command("rfkill",{"unblock","all"});
   }
