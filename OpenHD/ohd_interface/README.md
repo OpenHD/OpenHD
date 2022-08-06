@@ -1,3 +1,5 @@
+#Summary
+
 This module is responsible for starting and configuring all the OpenHD
 interfaces - aka all OpenHD links like wifibroadcast (communication between air and ground),
 ground hotspot, ...
@@ -5,6 +7,9 @@ ground hotspot, ...
 For now, it requires at least one wifi card connected to the system - this might change in the 
 future when we add other hardware types for data communication between ground and air pi
 like LTE cards.
+
+Note that some modules handle connection(s) themselves, for example telemetry also does the UART
+connection to the FC.
 
 ## Created WB links for openhd-telemetry and openhd-video:
 1) Bidirectional link made up of 2 wifibroadcast instances for telemetry up / down, both on air and ground
