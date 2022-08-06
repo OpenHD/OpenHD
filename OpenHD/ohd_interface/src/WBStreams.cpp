@@ -80,6 +80,9 @@ void WBStreams::configure_cards() {
 	  WifiCardCommandHelper::network_manager_set_card_unmanaged(card->_wifi_card);
 	}
 	OHDUtil::run_command("rfkill",{"unblock","all"});
+	// TODO: sometimes this happens:
+	// 1) Running openhd fist time: pcap_compile doesn't work (fatal error)
+	// 2) Running openhd second time: works
   }
   for(const auto& card: _broadcast_cards){
 	//TODO we might not need this one
