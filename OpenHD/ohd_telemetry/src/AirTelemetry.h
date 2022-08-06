@@ -6,7 +6,7 @@
 #define OPENHD_TELEMETRY_AIRTELEMETRY_H
 
 #include <string>
-#include "endpoints/SerialEndpoint3.h"
+#include "endpoints/SerialEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
 #include "internal/OHDMainComponent.h"
 #include "mavlink_settings/ISettingsComponent.h"
@@ -50,7 +50,7 @@ class AirTelemetry : public MavlinkSystem{
   void onMessageGroundPi(MavlinkMessage &message);
  private:
   std::mutex _serialEndpointMutex;
-  std::unique_ptr<SerialEndpoint3> serialEndpoint;
+  std::unique_ptr<SerialEndpoint> serialEndpoint;
   // For now, use UDP endpoint and rely on another service for starting the rx/tx links
   //std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;
   std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;

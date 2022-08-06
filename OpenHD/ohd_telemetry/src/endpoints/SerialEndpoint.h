@@ -2,8 +2,8 @@
 // Created by consti10 on 31.07.22.
 //
 
-#ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT3_H_
-#define OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT3_H_
+#ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_
+#define OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_
 
 #include "MEndpoint.hpp"
 #include <utility>
@@ -16,7 +16,7 @@
 
 // At some point, I decided there is no way around it than to write our own UART receiver program.
 // Mostly based on MAVSDK. Doesn't use boost.
-class SerialEndpoint3 : public MEndpoint{
+class SerialEndpoint : public MEndpoint{
  public:
   struct HWOptions {
 	std::string linux_filename; // the linux file name,for example /dev/tty..
@@ -33,11 +33,11 @@ class SerialEndpoint3 : public MEndpoint{
   /**
    * @param serial_port the serial port linux name (dev/.. ) for this serial port
    */
-  explicit SerialEndpoint3(std::string TAG1, HWOptions options1);
+  explicit SerialEndpoint(std::string TAG1, HWOptions options1);
   // No copy and move
-  SerialEndpoint3(const SerialEndpoint3&)=delete;
-  SerialEndpoint3(const SerialEndpoint3&&)=delete;
-  ~SerialEndpoint3();
+  SerialEndpoint(const SerialEndpoint&)=delete;
+  SerialEndpoint(const SerialEndpoint&&)=delete;
+  ~SerialEndpoint();
   // Start sending and receiving UART data.
   // Does nothing if already started.
   void start();
@@ -62,4 +62,4 @@ class SerialEndpoint3 : public MEndpoint{
   bool _stop_requested=false;
 };
 
-#endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT3_H_
+#endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_

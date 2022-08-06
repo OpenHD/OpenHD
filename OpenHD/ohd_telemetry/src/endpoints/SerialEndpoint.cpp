@@ -2,7 +2,7 @@
 // Created by consti10 on 31.07.22.
 //
 
-#include "SerialEndpoint3.h"
+#include "SerialEndpoint.h"
 #include "openhd-util-filesystem.hpp"
 
 #include <unistd.h>
@@ -44,23 +44,23 @@ static bool is_serial_fd_still_connected(const int fd){
   return true;
 }
 
-SerialEndpoint3::SerialEndpoint3(std::string TAG1,SerialEndpoint3::HWOptions options1):
+SerialEndpoint::SerialEndpoint(std::string TAG1,SerialEndpoint::HWOptions options1):
 	MEndpoint(std::move(TAG1)),
 	_options(std::move(options1)){
   std::cout<<"SerialEndpoint3: created with "<<_options.to_string()<<"\n";
   start();
 }
 
-SerialEndpoint3::~SerialEndpoint3() {
+SerialEndpoint::~SerialEndpoint() {
   stop();
 }
 
-bool SerialEndpoint3::sendMessageImpl(const MavlinkMessage &message) {
+bool SerialEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   const auto data = message.pack();
   return write_data_serial(data);
 }
 
-bool SerialEndpoint3::write_data_serial(const std::vector<uint8_t> &data) const {
+bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data) const {
   if(_fd==-1){
 	// cannot send data at the time, UART not setup / doesn't exist.
 	//std::cout<<"Cannot send data, no fd\n";
@@ -78,7 +78,7 @@ bool SerialEndpoint3::write_data_serial(const std::vector<uint8_t> &data) const 
   return true;
 }
 
-int SerialEndpoint3::define_from_baudrate(int baudrate) {
+int SerialEndpoint::define_from_baudrate(int baudrate) {
   switch (baudrate) {
 	case 9600:
 	  return B9600;
@@ -124,7 +124,7 @@ int SerialEndpoint3::define_from_baudrate(int baudrate) {
   }
 }
 
-int SerialEndpoint3::setup_port(const SerialEndpoint3::HWOptions &options) {
+int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options) {
   // open() hangs on macOS or Linux devices(e.g. pocket beagle) unless you give it O_NONBLOCK
   int fd = open(options.linux_filename.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (fd == -1) {
@@ -180,7 +180,7 @@ int SerialEndpoint3::setup_port(const SerialEndpoint3::HWOptions &options) {
   return fd;
 }
 
-void SerialEndpoint3::connect_and_read_loop() {
+void SerialEndpoint::connect_and_read_loop() {
   while (!_stop_requested){
 	if(!OHDFilesystemUtil::exists(_options.linux_filename.c_str())){
 	  std::cout<<"UART file does not exist\n";
@@ -203,7 +203,7 @@ void SerialEndpoint3::connect_and_read_loop() {
   }
 }
 
-void SerialEndpoint3::receive_data_until_error() {
+void SerialEndpoint::receive_data_until_error() {
   std::cout<<"SerialEndpoint3::receive_data_until_error() begin\n";
   // Enough for MTU 1500 bytes.
   uint8_t buffer[2048];
@@ -250,18 +250,18 @@ void SerialEndpoint3::receive_data_until_error() {
   std::cout<<"SerialEndpoint3::receive_data_until_error() end\n";
 }
 
-void SerialEndpoint3::start() {
+void SerialEndpoint::start() {
   std::lock_guard<std::mutex> lock(_connectReceiveThreadMutex);
   std::cout<<"SerialEndpoint3::start()-begin\n";
   if(_connectReceiveThread!= nullptr){
 	std::cout<<"Already started\n";
 	return;
   }
-  _connectReceiveThread=std::make_unique<std::thread>(&SerialEndpoint3::connect_and_read_loop, this);
+  _connectReceiveThread=std::make_unique<std::thread>(&SerialEndpoint::connect_and_read_loop, this);
   std::cout<<"SerialEndpoint3::start()-end\n";
 }
 
-void SerialEndpoint3::stop() {
+void SerialEndpoint::stop() {
   std::lock_guard<std::mutex> lock(_connectReceiveThreadMutex);
   std::cout<<"SerialEndpoint3::stop()-begin\n";
   _stop_requested=true;

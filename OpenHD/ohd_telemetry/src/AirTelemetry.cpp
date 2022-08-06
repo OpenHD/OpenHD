@@ -190,11 +190,11 @@ void AirTelemetry::setup_uart() {
 	return;
   }else{
 	std::cout<<"FC UART enable - begin\n";
-	SerialEndpoint3::HWOptions options{};
+	SerialEndpoint::HWOptions options{};
 	options.linux_filename=openhd::uart_fd_from_connection_type(fc_uart_connection_type).value();
 	options.baud_rate=fc_uart_baudrate;
 	options.flow_control= false;
-	serialEndpoint=std::make_unique<SerialEndpoint3>("SerialEndpointUARTFC",options);
+	serialEndpoint=std::make_unique<SerialEndpoint>("SerialEndpointUARTFC",options);
 	serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	  this->onMessageFC(msg);
 	});

@@ -5,7 +5,7 @@
 //
 
 #include <iostream>
-#include "../src/endpoints/SerialEndpoint3.h"
+#include "../src/endpoints/SerialEndpoint.h"
 #include "serial_endpoint_test_helper.h"
 #include <memory>
 #include <csignal>
@@ -16,13 +16,13 @@ int main(int argc, char *argv[]) {
 
   std::cout << "SerialEndpointTest::start with "<<serial_endpoint_test_helper::options_to_string(serial_options);
 
-  auto options=SerialEndpoint3::HWOptions{};
+  auto options=SerialEndpoint::HWOptions{};
   options.linux_filename=serial_options.filename;
   options.baud_rate=serial_options.baud_rate;
   options.flow_control=false;
   options.enable_debug=true;
 
-  auto serial_endpoint=std::make_unique<SerialEndpoint3>("SerialEndpoint3Test",options);
+  auto serial_endpoint=std::make_unique<SerialEndpoint>("SerialEndpoint3Test",options);
   serial_endpoint->registerCallback([](MavlinkMessage &msg) {
 	//debugMavlinkMessage(msg.m, "SerialTest3");
   });
