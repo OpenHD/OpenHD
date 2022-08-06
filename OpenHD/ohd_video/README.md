@@ -15,6 +15,5 @@ The code in this module must adhere to the following paradigms:
 3) There are no code dependencies to other modules like ohd_interface.
 
 ## List of TODO's
-1) introduce settings (Resolution and format as well as other params are fixed for now,
-   we will add settings via mavlink here).
+1) Introduce even more settings & validate settings depending on the detected camera(s)
 2) add recording to sd card
