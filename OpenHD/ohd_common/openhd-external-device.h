@@ -2,8 +2,8 @@
 // Created by consti10 on 07.08.22.
 //
 
-#ifndef OPENHD_OPENHD_OHD_COMMON_IEXTERNALDEVICEIP_H_
-#define OPENHD_OPENHD_OHD_COMMON_IEXTERNALDEVICEIP_H_
+#ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_EXTERNAL_DEVICE_H_
+#define OPENHD_OPENHD_OHD_COMMON_OPENHD_EXTERNAL_DEVICE_H_
 
 #include <string>
 #include "openhd-util.hpp"
@@ -47,4 +47,4 @@ struct ExternalDevice {
 typedef std::function<void(ExternalDevice external_device,bool connected)> EXTERNAL_DEVICE_CALLBACK;
 
 }
-#endif //OPENHD_OPENHD_OHD_COMMON_IEXTERNALDEVICEIP_H_
+#endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_EXTERNAL_DEVICE_H_

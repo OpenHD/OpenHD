@@ -12,7 +12,7 @@
 #include <utility>
 #include <mutex>
 #include <atomic>
-#include <IExternalDeviceIp.h>
+#include <openhd-external-device.h>
 
 
 /**

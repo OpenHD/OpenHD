@@ -16,7 +16,7 @@
 #include "openhd-led-error-codes.h"
 #include "mavlink_settings/ISettingsComponent.h"
 #include "OHDInterfaceSettings.h"
-#include "IExternalDeviceIp.h"
+#include "openhd-external-device.h"
 
  class OHDInterface :public openhd::ISettingsComponent{
  public:
