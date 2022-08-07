@@ -21,7 +21,7 @@ class MavlinkComponent{
   //MavlinkSystem& _parent;
   const uint8_t _sys_id;
   const uint8_t _comp_id;
-  const std::optional<MAV_TYPE> _mav_type;
+  const std::optional<MAV_TYPE> _mav_type=std::nullopt;
   /**
    * Call this with any mavlink message received, the component can then decide if he
    * can use this message or not.

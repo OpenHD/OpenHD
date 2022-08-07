@@ -40,7 +40,6 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         ## end param
         src/mavsdk_temporary/connection.cpp
         src/mavsdk_temporary/connection_result.cpp
-        src/mavsdk_temporary/serial_connection.cpp
         src/mavsdk_temporary/mavlink_receiver.cpp
         src/mavsdk_temporary/mavsdk_time.cpp
         src/mavsdk_temporary/mavlink_channels.cpp
