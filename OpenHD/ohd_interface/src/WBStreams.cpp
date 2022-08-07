@@ -204,11 +204,11 @@ std::string WBStreams::createDebug(){
   return ss.str();
 }
 
-void WBStreams::addExternalDeviceIpForwarding(const std::string& ip) {
+void WBStreams::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
   std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
   bool first= true;
   assert(udpVideoRxList.size()==2);
-  std::cout<<"WBStreams::addExternalDeviceIpForwarding:"<<ip<<"\n";
+  std::cout<<"WBStreams::addExternalDeviceIpForwardingVideoOnly:"<<ip<<"\n";
   // forward video
   for(auto& rxVid:udpVideoRxList){
 	const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
@@ -218,7 +218,7 @@ void WBStreams::addExternalDeviceIpForwarding(const std::string& ip) {
   // TODO how do we deal with telemetry
 }
 
-void WBStreams::removeExternalDeviceIpForwarding(const std::string& ip) {
+void WBStreams::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
   std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
   bool first= true;
   assert(udpVideoRxList.size()==2);

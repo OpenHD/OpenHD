@@ -32,9 +32,10 @@ class WBStreams {
   // Verbose string about the current state.
   // could be const if there wasn't the mutex
   [[nodiscard]] std::string createDebug();
-  // see interface
-  void addExternalDeviceIpForwarding(const std::string& ip);
-  void removeExternalDeviceIpForwarding(const std::string& ip);
+  // start or stop video data forwarding to another external device
+  // NOTE: Only for the ground unit, and only for video (see OHDInterface for more info)
+  void addExternalDeviceIpForwardingVideoOnly(const std::string& ip);
+  void removeExternalDeviceIpForwardingVideoOnly(const std::string& ip);
   // Returns true if this WBStream has ever received any data. If no data has been ever received after X seconds,
   // there most likely was an unsuccessful frequency change.
   [[nodiscard]] bool ever_received_any_data();

@@ -114,13 +114,13 @@ void OHDInterface::addExternalDeviceIpForwarding(std::string ip) const {
 	// telemetry first needs to go through the ohd_telemetry module, and therefore is handled
 	// seperately ( a bit hacky, but no real way around if we want to keep the module separation)
     if(wbStreams){
-        wbStreams->addExternalDeviceIpForwarding(ip);
+	  wbStreams->addExternalDeviceIpForwardingVideoOnly(ip);
     }
 }
 
 void OHDInterface::removeExternalDeviceIpForwarding(std::string ip) const {
     if(wbStreams){
-        wbStreams->removeExternalDeviceIpForwarding(ip);
+	  wbStreams->removeExternalDeviceIpForwardingVideoOnly(ip);
     }
 }
 
