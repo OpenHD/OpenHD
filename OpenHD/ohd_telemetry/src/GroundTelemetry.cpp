@@ -158,7 +158,7 @@ void GroundTelemetry::settings_generic_ready() {
   generic_mavlink_param_provider->set_ready();
 }
 
-void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openhd,std::string ip_dest_device) {
+void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device) {
   std::stringstream ss;
   ss<<"GroundTelemetry::add_external_ground_station_ip:ip_openhd:["<<ip_openhd<<",ip_dest_device:"<<ip_dest_device<<"]\n";
   std::cout<<ss.str();
@@ -178,7 +178,7 @@ void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openh
   _other_udp_ground_stations[identifier]=tmp;
 }
 
-void GroundTelemetry::remove_external_ground_station_ip(const std::string &ip_openhd, std::string ip_dest_device) {
+void GroundTelemetry::remove_external_ground_station_ip(const std::string &ip_openhd,const std::string& ip_dest_device) {
   std::stringstream ss;
   ss<<"GroundTelemetry::remove_external_ground_station_ip:ip_openhd:["<<ip_openhd<<",ip_dest_device:"<<ip_dest_device<<"]\n";
   std::cout<<ss.str();

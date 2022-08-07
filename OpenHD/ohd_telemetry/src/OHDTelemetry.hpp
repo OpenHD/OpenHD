@@ -51,14 +51,14 @@ class OHDTelemetry {
     }
   }
   // All modules other than camera share the same settings component for now.
-  void add_settings_generic(const std::vector<openhd::Setting>& settings){
+  void add_settings_generic(const std::vector<openhd::Setting>& settings) const{
     if(profile.is_air){
       airTelemetry->add_settings_generic(settings);
     }else{
       groundTelemetry->add_settings_generic(settings);
     }
   }
-  void settings_generic_ready(){
+  void settings_generic_ready() const{
 	if(profile.is_air){
 	  airTelemetry->settings_generic_ready();
 	}else{
@@ -82,14 +82,14 @@ class OHDTelemetry {
 	}
   }
   // Add the IP of another Ground station client
-  void add_external_ground_station_ip(std::string ip_openhd,std::string ip_dest_device)const{
+  void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const{
 	if(profile.is_air)return;
-	groundTelemetry->add_external_ground_station_ip(std::move(ip_openhd),std::move(ip_dest_device));
+	groundTelemetry->add_external_ground_station_ip(ip_openhd,ip_dest_device);
   }
   // Add the IP of another Ground station client
-  void remove_external_ground_station_ip(std::string ip_openhd,std::string ip_dest_device)const{
+  void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const{
 	if(profile.is_air)return;
-	groundTelemetry->remove_external_ground_station_ip(std::move(ip_openhd),std::move(ip_dest_device));
+	groundTelemetry->remove_external_ground_station_ip(ip_openhd,ip_dest_device);
   }
 
  private:
