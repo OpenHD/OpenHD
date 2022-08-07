@@ -83,6 +83,8 @@ void WBStreams::configure_cards() {
 	// TODO: sometimes this happens:
 	// 1) Running openhd fist time: pcap_compile doesn't work (fatal error)
 	// 2) Running openhd second time: works
+	// I cannot find what's causing the issue - a sleep here is the worst solution, but r.n the only one I can come up with
+	std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   for(const auto& card: _broadcast_cards){
 	//TODO we might not need this one

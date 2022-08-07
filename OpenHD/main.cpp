@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 	});
 	// link interface settings to ohd telemetry
 	ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
-	//ohdTelemetry->add_external_ground_station_ip(" 192.168.0.101","192.168.167.20");
+	//ohdTelemetry->add_external_ground_station_ip(" 127.0.0.1","192.168.18.229");
 	ohdTelemetry->settings_generic_ready();
 
     // and start ohdVideo if we are on the air pi
