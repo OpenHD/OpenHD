@@ -161,11 +161,11 @@ int main(int argc, char *argv[]) {
 	// Since telemetry handles the data stream(s) to external devices itself, we need to also react to
 	// changes to the external device(s) from ohd_interface
 	//ohdTelemetry->add_external_ground_station_ip(" 127.0.0.1","192.168.18.229");
-	ohdInterface->set_external_device_callback([&ohdTelemetry](std::string ip, bool connected){
-	  if(connected){
-		ohdTelemetry->add_external_ground_station_ip("127.0.0.1",ip);
+	ohdInterface->set_external_device_callback([&ohdTelemetry](const openhd::ExternalDevice& external_device){
+	  if(external_device.connected){
+		ohdTelemetry->add_external_ground_station_ip(external_device.local_network_ip,external_device.external_device_ip);
 	  }else{
-		ohdTelemetry->remove_external_ground_station_ip("127.0.0.1",ip);
+		ohdTelemetry->remove_external_ground_station_ip(external_device.local_network_ip,external_device.external_device_ip);
 	  }
 	});
 

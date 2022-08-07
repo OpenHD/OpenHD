@@ -164,6 +164,7 @@ void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openh
   std::cout<<ss.str();
   if(!OHDUtil::is_valid_ip(ip_openhd) || !OHDUtil::is_valid_ip(ip_dest_device)){
 	std::cerr<<"These are no valid IPs, skipping\n";
+	return;
   }
   std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
   assert(OHDUtil::is_valid_ip(ip_openhd));
@@ -184,6 +185,7 @@ void GroundTelemetry::remove_external_ground_station_ip(const std::string &ip_op
   std::cout<<ss.str();
   if(!OHDUtil::is_valid_ip(ip_openhd) || !OHDUtil::is_valid_ip(ip_dest_device)){
 	std::cerr<<"These are no valid IPs, skipping\n";
+	return;
   }
   std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
   assert(OHDUtil::is_valid_ip(ip_openhd));
