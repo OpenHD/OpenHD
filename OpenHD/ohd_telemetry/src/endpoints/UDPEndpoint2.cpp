@@ -21,6 +21,10 @@ UDPEndpoint2::UDPEndpoint2(const std::string &TAG,
   receiver_sender->runInBackground();
 }
 
+UDPEndpoint2::~UDPEndpoint2() {
+  receiver_sender->stopBackground();
+}
+
 bool UDPEndpoint2::sendMessageImpl(const MavlinkMessage &message) {
   const auto data = message.pack();
   receiver_sender->forwardPacketViaUDP(SENDER_IP,SEND_PORT,data.data(),data.size());

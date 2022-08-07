@@ -161,3 +161,37 @@ static void create_directory_if_not_existing(const char* directory){
 	create_directory(directory);
   }
 }
+
+ /**
+  * Return the name of the default UART for the different platforms OpenHD is running on.
+  * @param platformType the platform we are running on
+  * @return the uart name string (linux file)
+   */
+  static std::string uartForPlatformType(const PlatformType &platformType) {
+    // hacky for now, this works on rpi when connecting the USB of my FC
+    return "/dev/ttyACM0";
+
+    // we default to using a USB serial adapter on any other platform at the moment, some just need
+    // to be checked to see what the port is called, but PC will likely always be USB
+    // for testing, the serial shows up as this on my pc:
+    /*std::string platformSerialPort = "/dev/ttyUSB0";
+    switch (platformType) {
+      case PlatformType::RaspberryPi: {
+        //platformSerialPort = "/dev/serial0";
+        break;
+      }
+      case PlatformType::Jetson: {
+        platformSerialPort = "/dev/ttyTHS1";
+        break;
+      }
+      case PlatformType::PC:{
+        platformSerialPort="/dev/ttyACM0";
+        break;
+      }
+      default: {
+        std::cout << "Using default UART " << platformSerialPort << "\n";
+        break;
+      }
+    }
+    return platformSerialPort;*/
+  }

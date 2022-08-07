@@ -18,6 +18,7 @@ class UDPEndpoint2 : public MEndpoint {
  public:
   UDPEndpoint2(const std::string& TAG,int senderPort, int receiverPort,
 			  std::string senderIp=SocketHelper::ADDRESS_LOCALHOST,std::string receiverIp=SocketHelper::ADDRESS_LOCALHOST);
+  ~UDPEndpoint2();
   // Delete copy and move
   UDPEndpoint2(const UDPEndpoint2&)=delete;
   UDPEndpoint2(const UDPEndpoint2&&)=delete;
