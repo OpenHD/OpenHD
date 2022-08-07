@@ -153,8 +153,8 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	auto c_fps=[this](std::string,int value) {
 	  return set_video_fps(value);
 	};
-	auto c_format=[this](std::string,int value) {
-	  return set_video_format(value);
+	auto c_codec=[this](std::string, int value) {
+	  return set_video_codec(value);
 	};
 	auto c_bitrate=[this](std::string,int value) {
 	  return set_video_bitrate(value);
@@ -166,7 +166,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 		openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,c_width}},
 		openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{get_settings().userSelectedVideoFormat.height,c_height}},
 		openhd::Setting{"VIDEO_FPS",openhd::IntSetting{get_settings().userSelectedVideoFormat.framerate,c_fps}},
-		openhd::Setting{"VIDEO_FORMAT",openhd::IntSetting{video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec),c_format}},
+		openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec), c_codec}},
 		openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}},
 		openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
 	};
@@ -214,11 +214,11 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	persist();
 	return true;
   }
-  bool set_video_format(int format){
-	if(!openhd::validate_video_format(format)){
+  bool set_video_codec(int codec){
+	if(!openhd::validate_video_codec(codec)){
 	  return false;
 	}
-	unsafe_get_settings().userSelectedVideoFormat.videoCodec=video_codec_from_int(format);
+	unsafe_get_settings().userSelectedVideoFormat.videoCodec=video_codec_from_int(codec);
 	persist();
 	return true;
   }

@@ -68,7 +68,7 @@ static std::vector<Setting> create_dummy_camera_settings() {
 	  openhd::Setting{"VIDEO_WIDTH", openhd::IntSetting{640, nullptr}},
 	  openhd::Setting{"VIDEO_HEIGHT", openhd::IntSetting{480, nullptr}},
 	  openhd::Setting{"VIDEO_FPS", openhd::IntSetting{30, nullptr}},
-	  openhd::Setting{"VIDEO_FORMAT", openhd::IntSetting{0, nullptr}},
+	  openhd::Setting{"VIDEO_CODEC", openhd::IntSetting{0, nullptr}},
 	  openhd::Setting{"V_BITRATE_MBITS", openhd::IntSetting{10, nullptr}},
   };
   return ret;

@@ -23,9 +23,9 @@ static bool validate_video_fps(int fps){
   return fps>=1 && fps <= 200;
 }
 
-// 0,1 or 2
-static bool validate_video_format(int format){
-  return format==0 || format==1 || format==2;
+// 0,1 or 2 -> h264,h265 or mjpeg
+static bool validate_video_codec(int codec){
+  return codec==0 || codec==1 || codec==2;
 }
 
 static bool validate_bitrate_mbits(int bitrate_mbits){
