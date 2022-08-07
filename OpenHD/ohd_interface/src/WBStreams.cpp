@@ -203,6 +203,9 @@ std::string WBStreams::createDebug(){
 	ss<<"VidRx :"<<rxvid->createDebug();
   }
   ss<<_last_all_stats<<"\n";
+  if(udpTelemetryTx){
+	ss<<"PPS telemetry:"<<udpTelemetryTx->get_current_packets_per_second()<<"\n";
+  }
   return ss.str();
 }
 

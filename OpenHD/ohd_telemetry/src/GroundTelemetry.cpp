@@ -38,7 +38,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform): _platform(platform),Mavl
   //
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their parameters.
-  generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,192);
+  generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
   components.push_back(generic_mavlink_param_provider);
   std::cout << "Created GroundTelemetry\n";
 }

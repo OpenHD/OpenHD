@@ -5,8 +5,8 @@
 #include "XMavlinkParamProvider.h"
 
 
-XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id):
-	MavlinkComponent(sys_id,comp_id){
+XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id,bool create_heartbeats):
+	MavlinkComponent(sys_id,comp_id),_create_heartbeats(create_heartbeats){
   _sender=std::make_shared<mavsdk::SenderWrapper>(*this);
   _mavlink_message_handler=std::make_shared<mavsdk::MavlinkMessageHandler>();
   _mavlink_parameter_receiver=
@@ -56,7 +56,9 @@ std::vector<MavlinkMessage> XMavlinkParamProvider::process_mavlink_message(
 
 std::vector<MavlinkMessage> XMavlinkParamProvider::generate_mavlink_messages() {
   std::vector<MavlinkMessage> ret;
-  ret.push_back(MavlinkComponent::create_heartbeat());
+  if(_create_heartbeats){
+	ret.push_back(MavlinkComponent::create_heartbeat());
+  }
   return ret;
 }
 
