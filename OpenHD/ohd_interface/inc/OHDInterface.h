@@ -16,6 +16,7 @@
 #include "openhd-led-error-codes.h"
 #include "mavlink_settings/ISettingsComponent.h"
 #include "OHDInterfaceSettings.h"
+#include "IExternalDeviceIp.h"
 
  class OHDInterface :public openhd::ISettingsComponent{
  public:
@@ -29,6 +30,8 @@
   void set_stats_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) const;
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
+  // For telemetry
+  void set_external_device_callback(EXTERNAL_DEVICE_CALLBACK cb);
   // settings hacky begin
   std::vector<openhd::Setting> get_all_settings()override;
   // settings hacky end
@@ -53,6 +56,7 @@
   std::unique_ptr<WifiHotspot> _wifi_hotspot;
   std::unique_ptr<openhd::rpi::LEDBlinker> _error_blinker;
   std::shared_ptr<openhd::OHDInterfaceSettingsHolder> _interface_settings_holder;
+  EXTERNAL_DEVICE_CALLBACK _external_device_callback= nullptr;
 };
 
 #endif //OPENHD_OPENHD_INTERFACE_H

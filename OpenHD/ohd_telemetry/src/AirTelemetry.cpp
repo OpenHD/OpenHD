@@ -8,7 +8,7 @@
 #include <chrono>
 #include "openhd-util-filesystem.hpp"
 
-AirTelemetry::AirTelemetry(OHDPlatform platform,std::string fcSerialPort): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
+AirTelemetry::AirTelemetry(OHDPlatform platform): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   _airTelemetrySettings=std::make_unique<openhd::AirTelemetrySettingsHolder>();
   setup_uart();
   // any message coming in via wifibroadcast is a message from the ground pi

@@ -163,3 +163,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   openhd::validate_provided_ids(ret);
   return ret;
 }
+
+void OHDInterface::set_external_device_callback(EXTERNAL_DEVICE_CALLBACK cb) {
+  _external_device_callback=std::move(cb);
+}

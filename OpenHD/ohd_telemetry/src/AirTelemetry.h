@@ -22,7 +22,7 @@
  */
 class AirTelemetry : public MavlinkSystem{
  public:
-  explicit AirTelemetry(OHDPlatform platform,std::string fcSerialPort);
+  explicit AirTelemetry(OHDPlatform platform);
   AirTelemetry(const AirTelemetry&)=delete;
   AirTelemetry(const AirTelemetry&&)=delete;
   /**

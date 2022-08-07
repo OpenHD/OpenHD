@@ -80,8 +80,8 @@ void GroundTelemetry::sendMessageGroundStationClients(const MavlinkMessage &mess
 	udpGroundClient->sendMessage(message);
   }
   std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
-  for(const auto& other_client:other_udp_ground_stations){
-	other_client->sendMessage(message);
+  for (auto const& [key, val] : _other_udp_ground_stations){
+	val->sendMessage(message);
   }
 }
 
@@ -154,21 +154,42 @@ void GroundTelemetry::set_link_statistics(openhd::link_statistics::AllStats stat
   }
 }
 
-void GroundTelemetry::add_external_ground_station_ip(std::string ip_openhd,std::string ip_dest_device) {
+void GroundTelemetry::settings_generic_ready() {
+  generic_mavlink_param_provider->set_ready();
+}
+
+void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openhd,std::string ip_dest_device) {
   std::stringstream ss;
   ss<<"GroundTelemetry::add_external_ground_station_ip:ip_openhd:["<<ip_openhd<<",ip_dest_device:"<<ip_dest_device<<"]\n";
   std::cout<<ss.str();
+  if(!OHDUtil::is_valid_ip(ip_openhd) || !OHDUtil::is_valid_ip(ip_dest_device)){
+	std::cerr<<"These are no valid IPs, skipping\n";
+  }
   std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
-  auto tmp=std::make_shared<UDPEndpoint2>("GroundStationUDPX",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN+10,
+  assert(OHDUtil::is_valid_ip(ip_openhd));
+  assert(OHDUtil::is_valid_ip(ip_dest_device));
+  const std::string identifier=ip_openhd+"_"+ip_dest_device;
+  const auto port_offset=_other_udp_ground_stations.size()+1;
+  auto tmp=std::make_shared<UDPEndpoint2>("GroundStationUDPX",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN+port_offset,
 										  ip_dest_device,ip_openhd);
   tmp->registerCallback([this](MavlinkMessage &mavlinkMessage){
 	onMessageGroundStationClients(mavlinkMessage);
   });
-  other_udp_ground_stations.emplace_back(tmp);
-  /*auto tmp=std::make_shared<UDPEndpoint>("XUDPE",14550,-1,ip_dest_device,"");
-  other_udp_ground_stations.emplace_back(tmp);*/
+  _other_udp_ground_stations[identifier]=tmp;
 }
 
-void GroundTelemetry::settings_generic_ready() {
-  generic_mavlink_param_provider->set_ready();
+void GroundTelemetry::remove_external_ground_station_ip(const std::string &ip_openhd, std::string ip_dest_device) {
+  std::stringstream ss;
+  ss<<"GroundTelemetry::remove_external_ground_station_ip:ip_openhd:["<<ip_openhd<<",ip_dest_device:"<<ip_dest_device<<"]\n";
+  std::cout<<ss.str();
+  if(!OHDUtil::is_valid_ip(ip_openhd) || !OHDUtil::is_valid_ip(ip_dest_device)){
+	std::cerr<<"These are no valid IPs, skipping\n";
+  }
+  std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
+  assert(OHDUtil::is_valid_ip(ip_openhd));
+  assert(OHDUtil::is_valid_ip(ip_dest_device));
+  const std::string identifier=ip_openhd+"_"+ip_dest_device;
+  // shared pointer will clean up for us
+  _other_udp_ground_stations.erase(identifier);
 }
+

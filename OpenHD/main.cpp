@@ -156,8 +156,18 @@ int main(int argc, char *argv[]) {
 	});
 	// link interface settings to ohd telemetry
 	ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
-	//ohdTelemetry->add_external_ground_station_ip(" 127.0.0.1","192.168.18.229");
+	// Now we are done with generic settings, param set is now ready (we don't add any new params anymore)
 	ohdTelemetry->settings_generic_ready();
+	// Since telemetry handles the data stream(s) to external devices itself, we need to also react to
+	// changes to the external device(s) from ohd_interface
+	//ohdTelemetry->add_external_ground_station_ip(" 127.0.0.1","192.168.18.229");
+	ohdInterface->set_external_device_callback([&ohdTelemetry](std::string ip, bool connected){
+	  if(connected){
+		ohdTelemetry->add_external_ground_station_ip("127.0.0.1",ip);
+	  }else{
+		ohdTelemetry->remove_external_ground_station_ip("127.0.0.1",ip);
+	  }
+	});
 
     // and start ohdVideo if we are on the air pi
     std::unique_ptr<OHDVideo> ohdVideo;

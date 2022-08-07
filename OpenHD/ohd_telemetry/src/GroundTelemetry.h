@@ -32,7 +32,8 @@ class GroundTelemetry :public MavlinkSystem{
   void settings_generic_ready();
   void set_link_statistics(openhd::link_statistics::AllStats stats);
   // Add the IP of another Ground station client, to start forwarding telemetry data there
-  void add_external_ground_station_ip(std::string ip_openhd,std::string ip_dest_device);
+  void add_external_ground_station_ip(const std::string& ip_openhd,std::string ip_dest_device);
+  void remove_external_ground_station_ip(const std::string& ip_openhd,std::string ip_dest_device);
  private:
   const OHDPlatform _platform;
   // called every time a message from the air pi is received
@@ -53,11 +54,9 @@ class GroundTelemetry :public MavlinkSystem{
   std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
   std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
-  // extra
+  // telemetry to / from external ground stations (e.g. not the QOpenHD instance running on the device itself (localhost)
   std::mutex other_udp_ground_stations_lock;
-  // temporary, only forwarding of data but we don't get commands
-  //std::vector<std::shared_ptr<UDPEndpoint>> other_udp_ground_stations{};
-  std::vector<std::shared_ptr<UDPEndpoint2>> other_udp_ground_stations{};
+  std::map<std::string,std::shared_ptr<UDPEndpoint2>> _other_udp_ground_stations{};
 };
 
 #endif //OPENHD_TELEMETRY_GROUNDTELEMETRY_H

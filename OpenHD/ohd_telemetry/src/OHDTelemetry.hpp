@@ -20,7 +20,7 @@ class OHDTelemetry {
  public:
   OHDTelemetry(OHDPlatform platform1,OHDProfile profile1,bool enableExtendedLogging=false) : platform(platform1),profile(std::move(profile1)),m_enableExtendedLogging(enableExtendedLogging) {
     if (this->profile.is_air) {
-      airTelemetry = std::make_unique<AirTelemetry>(platform,OHDTelemetry::uartForPlatformType(platform.platform_type));
+      airTelemetry = std::make_unique<AirTelemetry>(platform);
       assert(airTelemetry);
       loopThread = std::make_unique<std::thread>([this] {
         assert(airTelemetry);
@@ -68,7 +68,7 @@ class OHDTelemetry {
   // Cameras get their own component ID, other than the "rest" which shares the same component id
   // for simplicity. Note, at some point it might make sense to also use its own component id
   // for OHD interface
-  void add_camera_component(const int camera_index,const std::vector<openhd::Setting>& settings){
+  void add_camera_component(const int camera_index,const std::vector<openhd::Setting>& settings) const{
     // we only have cameras on the air telemetry unit
     assert(profile.is_air);
     // only 2 cameras suported for now.
@@ -83,47 +83,19 @@ class OHDTelemetry {
   }
   // Add the IP of another Ground station client
   void add_external_ground_station_ip(std::string ip_openhd,std::string ip_dest_device)const{
-	assert(!profile.is_air);
+	if(profile.is_air)return;
 	groundTelemetry->add_external_ground_station_ip(std::move(ip_openhd),std::move(ip_dest_device));
   }
+  // Add the IP of another Ground station client
+  void remove_external_ground_station_ip(std::string ip_openhd,std::string ip_dest_device)const{
+	if(profile.is_air)return;
+	groundTelemetry->remove_external_ground_station_ip(std::move(ip_openhd),std::move(ip_dest_device));
+  }
+
  private:
   const OHDPlatform platform;
   const OHDProfile profile;
   const bool m_enableExtendedLogging;
-  std::map<uint8_t,void*> _already_added_settings_components;
-  /**
-  * Return the name of the default UART for the different platforms OpenHD is running on.
-  * @param platformType the platform we are running on
-  * @return the uart name string (linux file)
-   */
-  static std::string uartForPlatformType(const PlatformType &platformType) {
-    // hacky for now, this works on rpi when connecting the USB of my FC
-    return "/dev/ttyACM0";
-
-    // we default to using a USB serial adapter on any other platform at the moment, some just need
-    // to be checked to see what the port is called, but PC will likely always be USB
-    // for testing, the serial shows up as this on my pc:
-    /*std::string platformSerialPort = "/dev/ttyUSB0";
-    switch (platformType) {
-      case PlatformType::RaspberryPi: {
-        //platformSerialPort = "/dev/serial0";
-        break;
-      }
-      case PlatformType::Jetson: {
-        platformSerialPort = "/dev/ttyTHS1";
-        break;
-      }
-      case PlatformType::PC:{
-        platformSerialPort="/dev/ttyACM0";
-        break;
-      }
-      default: {
-        std::cout << "Using default UART " << platformSerialPort << "\n";
-        break;
-      }
-    }
-    return platformSerialPort;*/
-  }
 };
 
 #endif //OPENHD_OHDTELEMETRY_H
