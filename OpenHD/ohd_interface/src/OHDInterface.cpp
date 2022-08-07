@@ -117,7 +117,7 @@ void OHDInterface::addExternalDeviceIpForwarding(std::string ip) const {
 	  wbStreams->addExternalDeviceIpForwardingVideoOnly(ip);
     }
 	if(_external_device_callback){
-	  _external_device_callback(openhd::ExternalDevice{"127.0.0.1",ip,true});
+	  _external_device_callback(openhd::ExternalDevice{"192.168.18.81",ip,true});
 	}
 }
 
@@ -126,7 +126,7 @@ void OHDInterface::removeExternalDeviceIpForwarding(std::string ip) const {
 	  wbStreams->removeExternalDeviceIpForwardingVideoOnly(ip);
     }
 	if(_external_device_callback){
-	  _external_device_callback(openhd::ExternalDevice{"127.0.0.1",ip,false});
+	  _external_device_callback(openhd::ExternalDevice{"192.168.18.81",ip,false});
 	}
 }
 
