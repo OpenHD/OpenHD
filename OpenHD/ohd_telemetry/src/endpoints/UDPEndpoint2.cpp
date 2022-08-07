@@ -29,8 +29,8 @@ bool UDPEndpoint2::sendMessageImpl(const MavlinkMessage &message) {
   const auto data = message.pack();
   receiver_sender->forwardPacketViaUDP(SENDER_IP,SEND_PORT,data.data(),data.size());
   std::lock_guard<std::mutex> lock(_sender_mutex);
-  for(const auto& other_ip:_other_dest_ips){
-	receiver_sender->forwardPacketViaUDP(other_ip,SEND_PORT,data.data(),data.size());
+  for(const auto& [key,value]:_other_dest_ips){
+	receiver_sender->forwardPacketViaUDP(key,SEND_PORT,data.data(),data.size());
   }
   return true;
 }
@@ -40,5 +40,12 @@ void UDPEndpoint2::addAnotherDestIpAddress(std::string ip) {
   std::stringstream ss;
   ss<<"UDPEndpoint2::addAnotherDestIpAddress:["<<ip<<"]\n";
   std::cout<<ss.str();
-  _other_dest_ips.push_back(ip);
+  _other_dest_ips[ip]=nullptr;
+}
+void UDPEndpoint2::removeAnotherDestIpAddress(std::string ip) {
+  std::lock_guard<std::mutex> lock(_sender_mutex);
+  std::stringstream ss;
+  ss<<"UDPEndpoint2::removeAnotherDestIpAddress:["<<ip<<"]\n";
+  std::cout<<ss.str();
+  _other_dest_ips.erase(ip);
 }

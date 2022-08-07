@@ -12,6 +12,7 @@
 #include <utility>
 #include <mutex>
 #include <atomic>
+#include <IExternalDeviceIp.h>
 
 
 /**
@@ -27,17 +28,11 @@
 class USBTetherListener{
  public:
   /**
-   * Callback to be called when a new device has been connected/disconnected.
-   * @param removed: true if the device has been removed (upper level should stop formwarding)
-   * false if the device has been added (upper leved should start forwarding).
-   */
-  typedef std::function<void(bool removed,std::string ip)> IP_CALLBACK;
-  /**
    * Creates a new USB tether listener which notifies the upper level with the IP address of a connected or
    * disconnected USB tether device.
-   * @param ip_callback the callback to notify the upper level.
+   * @param external_device_callback the callback to notify the upper level.
    */
-  explicit USBTetherListener(IP_CALLBACK ip_callback):ip_callback(std::move(ip_callback)){}
+  explicit USBTetherListener(openhd::EXTERNAL_DEVICE_CALLBACK external_device_callback):_external_device_callback(std::move(external_device_callback)){}
   /**
    * Continuously checks for connected or disconnected USB tether devices.
    * Does not return as long as there is no fatal error or a stop is requested.
@@ -52,20 +47,15 @@ class USBTetherListener{
    * stop looping.
    */
    void stopLooping();
-  /**
-   * Can be called safely from any thread.
-   * @return the valid ip address of the connected USB tether device if there is one. Empty if there is currently no device deteced.
-   */
-  [[nodiscard]] std::vector<std::string> getConnectedTetherIPsLocked();
  private:
-  const IP_CALLBACK ip_callback;
+  const openhd::EXTERNAL_DEVICE_CALLBACK _external_device_callback;
   // protects against simultaneous read/write of the device_ip variable.
   std::mutex device_ip_mutex;
-  std::string device_ip;
+  openhd::ExternalDevice _externalDevice;
   std::unique_ptr<std::thread> loopThread;
   std::atomic<bool> loopThreadStop=false;
   // write the device ip, protected by mutex.
-  void setDeviceIpLocked(std::string newDeviceIp);
+  void setExternalDeviceLocked(openhd::ExternalDevice device);
   /**
    * @brief simple state-based method that performs the following sequential steps:
    * 1) Wait until a tethering device is connected

@@ -65,11 +65,11 @@ platform(platform1),profile(std::move(profile1)) {
 
   // USB tethering - only on ground
   if(!profile.is_air){
-    usbTetherListener=std::make_unique<USBTetherListener>([this](bool removed,std::string ip){
-      if(removed){
-        removeExternalDeviceIpForwarding(ip);
+    usbTetherListener=std::make_unique<USBTetherListener>([this](openhd::ExternalDevice external_device,bool connected){
+      if(connected){
+		addExternalDeviceIpForwarding(external_device);
       }else{
-        addExternalDeviceIpForwarding(ip);
+		removeExternalDeviceIpForwarding(external_device);
       }
     });
     usbTetherListener->startLooping();
@@ -109,26 +109,26 @@ std::string OHDInterface::createDebug() const {
   return ss.str();
 }
 
-void OHDInterface::addExternalDeviceIpForwarding(std::string ip){
+void OHDInterface::addExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device){
     // video we can directly forward to the external device - but note that
 	// telemetry first needs to go through the ohd_telemetry module, and therefore is handled
 	// seperately ( a bit hacky, but no real way around if we want to keep the module separation)
     if(wbStreams){
-	  wbStreams->addExternalDeviceIpForwardingVideoOnly(ip);
+	  wbStreams->addExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
     }
   	std::lock_guard<std::mutex> guard(_external_device_callback_mutex);
 	if(_external_device_callback){
-	  _external_device_callback(openhd::ExternalDevice{"192.168.18.81",ip,true});
+	  _external_device_callback(external_device, true);
 	}
 }
 
-void OHDInterface::removeExternalDeviceIpForwarding(std::string ip){
+void OHDInterface::removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device){
     if(wbStreams){
-	  wbStreams->removeExternalDeviceIpForwardingVideoOnly(ip);
+	  wbStreams->removeExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
     }
   std::lock_guard<std::mutex> guard(_external_device_callback_mutex);
 	if(_external_device_callback){
-	  _external_device_callback(openhd::ExternalDevice{"192.168.18.81",ip,false});
+	  _external_device_callback(external_device, false);
 	}
 }
 

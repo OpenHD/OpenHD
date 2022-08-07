@@ -8,6 +8,7 @@
 #include "MEndpoint.hpp"
 #include "HelperSources/SocketHelper.hpp"
 #include <thread>
+#include <map>
 
 /**
  * Special, for communicating with MAVSDK.
@@ -23,6 +24,7 @@ class UDPEndpoint2 : public MEndpoint {
   UDPEndpoint2(const UDPEndpoint2&)=delete;
   UDPEndpoint2(const UDPEndpoint2&&)=delete;
   void addAnotherDestIpAddress(std::string ip);
+  void removeAnotherDestIpAddress(std::string ip);
  private:
   bool sendMessageImpl(const MavlinkMessage &message) override;
   const std::string SENDER_IP;
@@ -32,7 +34,7 @@ class UDPEndpoint2 : public MEndpoint {
   std::unique_ptr<SocketHelper::UDPReceiver> receiver_sender;
   //
   std::mutex _sender_mutex;
-  std::vector<std::string> _other_dest_ips{};
+  std::map<std::string,void*> _other_dest_ips{};
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_UDPENDPOINT2_H_
