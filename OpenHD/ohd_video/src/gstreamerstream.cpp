@@ -232,9 +232,12 @@ void GStreamerStream::restartIfStopped() {
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
   if (returnValue == 0) {
 	std::cerr<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name<<"\n";
+	// We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
 	stop();
-	sleep(3);
+	cleanup_pipe();
+	setup();
 	start();
+	std::cerr<<"Restarted\n";
   }
 }
 
@@ -249,6 +252,7 @@ void GStreamerStream::restart_after_new_setting() {
   start();
   std::cout<<"GStreamerStream::restart_after_new_setting() end\n";
 }
+
 void GStreamerStream::restart_async() {
   std::lock_guard<std::mutex> guard(_async_thread_mutex);
   // If there is already an async operation running, we need to wait for it to complete.
