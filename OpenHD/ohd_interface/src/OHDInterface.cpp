@@ -109,22 +109,24 @@ std::string OHDInterface::createDebug() const {
   return ss.str();
 }
 
-void OHDInterface::addExternalDeviceIpForwarding(std::string ip) const {
+void OHDInterface::addExternalDeviceIpForwarding(std::string ip){
     // video we can directly forward to the external device - but note that
 	// telemetry first needs to go through the ohd_telemetry module, and therefore is handled
 	// seperately ( a bit hacky, but no real way around if we want to keep the module separation)
     if(wbStreams){
 	  wbStreams->addExternalDeviceIpForwardingVideoOnly(ip);
     }
+  	std::lock_guard<std::mutex> guard(_external_device_callback_mutex);
 	if(_external_device_callback){
 	  _external_device_callback(openhd::ExternalDevice{"192.168.18.81",ip,true});
 	}
 }
 
-void OHDInterface::removeExternalDeviceIpForwarding(std::string ip) const {
+void OHDInterface::removeExternalDeviceIpForwarding(std::string ip){
     if(wbStreams){
 	  wbStreams->removeExternalDeviceIpForwardingVideoOnly(ip);
     }
+  std::lock_guard<std::mutex> guard(_external_device_callback_mutex);
 	if(_external_device_callback){
 	  _external_device_callback(openhd::ExternalDevice{"192.168.18.81",ip,false});
 	}
@@ -171,5 +173,6 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
 }
 
 void OHDInterface::set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK cb) {
+  std::lock_guard<std::mutex> guard(_external_device_callback_mutex);
   _external_device_callback=std::move(cb);
 }

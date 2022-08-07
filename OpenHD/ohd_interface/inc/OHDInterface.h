@@ -41,21 +41,21 @@
 	* (for example an externally connected tablet) data will be forwarded to the device's ip address.
 	* It is safe to call this method multiple times with the same IP address, since we internally keep track here.
 	*/
-   void addExternalDeviceIpForwarding(std::string ip) const;
+   void addExternalDeviceIpForwarding(std::string ip);
    /**
 	* stop forwarding data to the device's ip address.
 	* Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
 	*/
-   void removeExternalDeviceIpForwarding(std::string ip) const;
+   void removeExternalDeviceIpForwarding(std::string ip);
  private:
   const OHDProfile profile;
   const OHDPlatform platform;
-  std::mutex settings_mutex;
   std::unique_ptr<WBStreams> wbStreams;
   std::unique_ptr<USBTetherListener> usbTetherListener;
   std::unique_ptr<WifiHotspot> _wifi_hotspot;
   std::unique_ptr<openhd::rpi::LEDBlinker> _error_blinker;
   std::shared_ptr<openhd::OHDInterfaceSettingsHolder> _interface_settings_holder;
+  std::mutex _external_device_callback_mutex;
   openhd::EXTERNAL_DEVICE_CALLBACK _external_device_callback= nullptr;
 };
 
