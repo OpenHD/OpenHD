@@ -28,16 +28,16 @@ jobs:
           submodules: recursive
       - name: Install Repository
         run: |
-          apt install -y curl
-          rm -Rf /etc/apt/sources.list.d/openhd*
-          apt-get clean
-          rm -rf /var/lib/apt/lists/*
-          curl -1sLf \
+          sudo apt install -y curl
+          sudo rm -Rf /etc/apt/sources.list.d/openhd*
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          sudo curl -1sLf \
           'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' \
           | sudo -E bash
-          apt update
-          apt -y install ruby-dev fmt
-          gem install fpm
+          sudo apt update
+          sudo apt -y install ruby-dev fmt
+          sudo gem install fpm
       - name: Install Dependencies
         run: |
           sudo chmod +x install_dep_ubuntu20.sh
