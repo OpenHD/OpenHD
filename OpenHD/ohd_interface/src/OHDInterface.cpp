@@ -168,6 +168,12 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
 	}};
 	ret.emplace_back(openhd::Setting{OHD_INTERFACE_ENABLE_WIFI_HOTSPOT,change_wifi_hotspot});
   }
+  /*{
+	auto test=openhd::StringSetting{"blabla",[this](std::string,std::string value){
+	  return false;
+	}};
+	ret.push_back(openhd::Setting{"TEST_X1",test});
+  }*/
   openhd::validate_provided_ids(ret);
   return ret;
 }
@@ -175,4 +181,10 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
 void OHDInterface::set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK cb) {
   std::lock_guard<std::mutex> guard(_external_device_callback_mutex);
   _external_device_callback=std::move(cb);
+}
+
+void OHDInterface::restart_wb_streams_async() {
+  if(wbStreams){
+	wbStreams->restart_async(std::chrono::seconds(2));
+  }
 }

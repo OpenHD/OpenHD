@@ -75,6 +75,10 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
 			const bool shutdownOnly=action_for_companion==2;
 			RebootUtil::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
 		  }
+		  // dirty, we don't have a custom message for that yet
+		  if(command.param3==1){
+			ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
+		  }
 		}
       }else if(command.command==MAV_CMD_REQUEST_MESSAGE){
         const auto requested_message_id=static_cast<uint32_t>(command.param1);

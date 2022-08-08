@@ -30,6 +30,8 @@
   void set_stats_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) const;
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
+  // hacky, temporary. applies changed frequency / mcs index / bandwidth
+  void restart_wb_streams_async();
   // For telemetry
   void set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK cb);
   // settings hacky begin
