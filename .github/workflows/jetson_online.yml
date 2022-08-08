@@ -40,13 +40,12 @@ jobs:
         import_github_env: true
         commands: |
           ls -a
-          apt update
-          apt install -y curl
-          rm -Rf /etc/apt/sources.list.d/openhd*
+          cd /opt
+          cd Open.HD
+          sudo apt update
+          sudo apt install curl
           curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' | sudo -E bash
-          cd /opt/Open.HD
-          apt update
-          apt upgrade -y
+          sudo apt upgrade -y
           mkdir -p /usr/local/share/openhd/
           touch /usr/local/share/openhd/joyconfig.txt
           ls -a  
