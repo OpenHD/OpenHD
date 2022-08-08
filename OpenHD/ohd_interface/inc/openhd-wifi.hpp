@@ -9,7 +9,9 @@
 #include "openhd-log.hpp"
 #include "openhd-settings.hpp"
 #include "openhd-util-filesystem.hpp"
-#include "mavlink_settings/XSettingsComponent.h"
+#include "openhd-settings2.hpp"
+#include "validate_settings_helper.h"
+#include "mavlink_settings/ISettingsComponent.h"
 
 enum class WiFiCardType {
   Unknown = 0,
@@ -93,20 +95,18 @@ static std::string wifi_use_for_to_string(const WifiUseFor wifi_use_for){
 
 // Consti10: Stephen used a default tx power of 3100 somewhere (not sure if that ever made it trough though)
 // This value seems a bit high to me, so I am going with a default of "1800" (which should be 18.0 dBm )
-//static constexpr auto DEFAULT_WIFI_TX_POWER="3100";
-static constexpr auto DEFAULT_WIFI_TX_POWER="1800";
-static constexpr auto DEFAULT_5GHZ_FREQUENCY = "5180";
-static constexpr auto DEFAULT_2GHZ_FREQUENCY = "2412";
+// Used to be in dBm, but mW really is more verbose to the user - we convert from mW to dBm when using the iw dev set command
+static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT=25;
+static constexpr auto DEFAULT_5GHZ_FREQUENCY = 5180;
+static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412;
 
 struct WifiCardSettings{
   // This one needs to be set for the card to then be used for something.Otherwise, it is not used for anything
   WifiUseFor use_for = WifiUseFor::Unknown;
   // frequency for this card
-  std::string frequency;
-  // transmission power for this card
-  std::string txpower=DEFAULT_WIFI_TX_POWER;
+  //uint32_t frequency;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WifiCardSettings,use_for,frequency,txpower)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WifiCardSettings,use_for)//,frequency,txpower)
 
 struct WiFiCard {
   std::string driver_name; // Name of the driver that runs this card.
@@ -137,11 +137,11 @@ static WifiCardSettings create_default_settings(const WiFiCard& wifi_card){
   assert(wifi_card.supports_5ghz || wifi_card.supports_2ghz);
   if(wifi_card.supports_5ghz){
     // by default, prefer 5Ghz
-    settings.frequency=DEFAULT_5GHZ_FREQUENCY;
+    //settings.frequency=DEFAULT_5GHZ_FREQUENCY;
   }else{
-    settings.frequency=DEFAULT_2GHZ_FREQUENCY;
+    //settings.frequency=DEFAULT_2GHZ_FREQUENCY;
   }
-  settings.txpower=DEFAULT_WIFI_TX_POWER;
+  //settings.txpower=DEFAULT_WIFI_TX_POWER;
   return settings;
 }
 
@@ -150,63 +150,24 @@ static const std::string WIFI_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::str
 // 1) Differentiate between immutable information (like mac address) and
 // 2) mutable WiFi card settings.
 // Setting changes are propagated through this class.
-class WifiCardHolder{
+ class WifiCardHolder : public openhd::settings::PersistentSettings<WifiCardSettings>{
  public:
-  explicit WifiCardHolder(WiFiCard wifi_card):_wifi_card(std::move(wifi_card)){
-    if(!OHDFilesystemUtil::exists(WIFI_SETTINGS_DIRECTORY.c_str())){
-      OHDFilesystemUtil::create_directory(WIFI_SETTINGS_DIRECTORY);
-    }
-    const auto last_settings_opt=read_last_settings();
-    if(last_settings_opt.has_value()){
-      _settings=std::make_unique<WifiCardSettings>(last_settings_opt.value());
-      std::cout<<"Found settings in:"<<get_unique_filename()<<"\n";
-    }else{
-      std::cout<<"Creating default settings:"<<get_unique_filename()<<"\n";
-      // create default settings and persist them for the next reboot
-      _settings=std::make_unique<WifiCardSettings>(create_default_settings(_wifi_card));
-      persist_settings();
-    }
+  explicit WifiCardHolder(WiFiCard wifi_card):
+	  openhd::settings::PersistentSettings<WifiCardSettings>(WIFI_SETTINGS_DIRECTORY),
+	  _wifi_card(std::move(wifi_card)){
+    init();
   }
-  // delete copy and move constructor
-  WifiCardHolder(const WifiCardHolder&)=delete;
-  WifiCardHolder(const WifiCardHolder&&)=delete;
  public:
   const WiFiCard _wifi_card;
-  [[nodiscard]] const WifiCardSettings& get_settings()const{
-    assert(_settings);
-    return *_settings;
-  }
  private:
-  std::unique_ptr<WifiCardSettings> _settings;
-  [[nodiscard]] std::string get_uniqe_hash()const{
+   [[nodiscard]] std::string get_unique_filename()const override{
     std::stringstream ss;
     ss<<wifi_card_type_to_string(_wifi_card.type)<<"_"<<_wifi_card.interface_name;
     return ss.str();
   }
-  [[nodiscard]] std::string get_unique_filename()const{
-    return WIFI_SETTINGS_DIRECTORY+get_uniqe_hash();
-  }
-  // write settings locally for persistence
-  void persist_settings()const{
-    assert(_settings);
-    const auto filename= get_unique_filename();
-    const nlohmann::json tmp=*_settings;
-    // and write them locally for persistence
-    std::ofstream t(filename);
-    t << tmp.dump(4);
-    t.close();
-  }
-  // read last settings, if they are available
-  [[nodiscard]] std::optional<WifiCardSettings> read_last_settings()const{
-    const auto filename= get_unique_filename();
-    if(!OHDFilesystemUtil::exists(filename.c_str())){
-      return std::nullopt;
-    }
-    std::ifstream f(filename);
-    nlohmann::json j;
-    f >> j;
-    return j.get<WifiCardSettings>();
-  }
+   [[nodiscard]] WifiCardSettings create_default()const override{
+	 return create_default_settings(_wifi_card);
+   }
 };
 
 
@@ -227,21 +188,6 @@ static void write_wificards_manifest(const std::vector<WiFiCard> &cards) {
   _t << manifest.dump(4);
   _t.close();
 }
-
-class WBStreamsSettings:public openhd::XSettingsComponent{
- public:
-  std::vector<openhd::Setting> get_all_settings() override{
-	std::vector<openhd::Setting> ret={
-		openhd::Setting{"MCS_INDEX",5},
-		openhd::Setting{"FREQUENCY",5180},
-		openhd::Setting{"BANDWIDTH",20},
-	};
-	return ret;
-  }
-  void process_setting_changed(openhd::Setting changed_setting) override{
-	std::cout<<"WBStreamsSettings Setting: "<<changed_setting.id<<" changed\n";
-  }
-};
 
 
 #endif

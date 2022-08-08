@@ -6,6 +6,8 @@
 #include <array>
 #include <stdexcept>
 #include <vector>
+#include <memory>
+#include <thread>
 
 #include "camerastream.h"
 #include "openhd-camera.hpp"
@@ -19,7 +21,6 @@ class GStreamerStream : public CameraStream {
   GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
                   uint16_t video_udp_port);
   void setup() override;
-
  private:
   void setup_raspberrypi_csi();
   void setup_jetson_csi();
@@ -32,11 +33,17 @@ class GStreamerStream : public CameraStream {
   void start() override;
   void stop() override;
   void cleanup_pipe();
-  std::string createDebug() const override;
+  std::string createDebug() override;
  private:
+  // We cannot create the debug state while performing a restart
+  std::mutex _pipeline_mutex;
   GstElement *gst_pipeline = nullptr;
   // The pipeline that is started in the end
   std::stringstream m_pipeline;
+  // To reduce the time on the param callback(s) - they need to return immediately to not block the param server
+  void restart_async();
+  std::mutex _async_thread_mutex;
+  std::unique_ptr<std::thread> _async_thread=nullptr;
 };
 
 #endif

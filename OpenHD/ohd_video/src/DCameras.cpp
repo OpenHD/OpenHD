@@ -25,6 +25,7 @@ DiscoveredCameraList DCameras::discover_internal() {
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
   if(ohdPlatform.platform_type==PlatformType::RaspberryPi){
 	detect_raspberrypi_csi();
+	detect_raspberrypi_veye();
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
   // Will need custom debugging before anything here is usable again though.
@@ -87,6 +88,44 @@ void DCameras::detect_raspberrypi_csi() {
 	m_cameras.push_back(camera);
   }
 }
+
+void DCameras::detect_raspberrypi_veye() {
+  std::cout << "DCameras::detect_raspberrypi_veye()\n";
+  const auto success=OHDUtil::run_command("./usr/local/share/veye-raspberrypi/camera_i2c_config",{});
+  if (!success) {
+	std::cout << "DCameras::cannot enable veye: camera_i2c_config failed\n";
+	return;
+  }
+  const auto i2cdetect_veye_result_opt=OHDUtil::run_command_out("i2cdetect -y 0 0x3b 0x3b | grep  '3b'");
+  if(!i2cdetect_veye_result_opt.has_value()){
+	std::cout << "DCameras::cannot enable veye: i2cdetect failed\n";
+	return;
+  }
+  const auto& i2cdetect_veye_result=i2cdetect_veye_result_opt.value();
+  std::cerr << "i2cdetect_veye_result: "<<i2cdetect_veye_result << std::endl;
+  std::smatch result;
+  std::regex r{ "30:                                  3b            "};
+  if (!std::regex_search(i2cdetect_veye_result, result, r)) {
+	std::cerr << "Cameras::detect_raspberrypi_veye() no regex match" << std::endl;
+	return;
+  }
+  Camera camera;
+  camera.name = "Pi VEYE 0";
+  camera.vendor = "VEYE";
+  camera.type = CameraType::RaspberryPiVEYE;
+  camera.bus = "0";
+  camera.index = m_discover_index;
+  m_discover_index++;
+  CameraEndpoint endpoint{};
+  endpoint.bus = "0";
+  endpoint.support_h264 = true;
+  endpoint.support_mjpeg = false;
+  endpoint.formats.emplace_back("H.264|1920x1080@25");
+  endpoint.formats.emplace_back("H.264|1920x1080@30");
+  m_camera_endpoints.push_back(endpoint);
+  m_cameras.push_back(camera);
+}
+
 
 void DCameras::detect_v4l2() {
   std::cout << "Cameras::detect_v4l2()" << std::endl;

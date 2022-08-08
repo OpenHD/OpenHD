@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "openhd-camera.hpp"
-#include "openhd-discoverable.hpp"
 #include "openhd-platform.hpp"
 
 /**
@@ -39,6 +38,8 @@ class DCameras {
    * from the openhd system manifest instead.
    */
   void detect_raspberrypi_csi();
+  // hacky
+  void detect_raspberrypi_veye();
   /*
    * Detect all v4l2 cameras, that is cameras that show up as a v4l2 device
    * (/dev/videoXX)

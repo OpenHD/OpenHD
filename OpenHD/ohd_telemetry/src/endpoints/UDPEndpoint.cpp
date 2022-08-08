@@ -6,8 +6,7 @@
 #include "openhd-global-constants.h"
 #include <utility>
 
-UDPEndpoint::UDPEndpoint(const std::string& TAG, const int senderPort, const int receiverPort,std::string senderIp,std::string receiverIp
-	,bool extra) :
+UDPEndpoint::UDPEndpoint(const std::string& TAG, const int senderPort, const int receiverPort,std::string senderIp,std::string receiverIp) :
 	MEndpoint(TAG),
 	SEND_PORT(senderPort), RECV_PORT(receiverPort) {
   /*if (senderPort == receiverPort) {
@@ -24,22 +23,19 @@ UDPEndpoint::UDPEndpoint(const std::string& TAG, const int senderPort, const int
 	receiver->runInBackground();
   }
   std::cout <<TAG<< " UDPEndpoint created send: "<<senderIp<<":" << senderPort << " recv: "<<receiverIp<<":" << receiverPort << "\n";
-  if(extra){
-	transmitter->lula("127.0.0.1",14551);
-  }
 }
 
-void UDPEndpoint::sendMessageImpl(const MavlinkMessage &message) {
+bool UDPEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"UDPEndpoint::sendMessage");
   if (transmitter != nullptr) {
 	const auto data = message.pack();
 	//std::cout<<"XSend:"<<data.size()<<" "<<MavlinkHelpers::raw_content(data.data(),data.size())<<"\n";
 	transmitter->forwardPacketViaUDP(data.data(), data.size());
-	//std::cout<<"AAA\n";
-	//parseNewData(data.data(),data.size());
+	return true;
   } else {
 	std::cerr << "UDPEndpoint::sendMessage with no transmitter\n";
   }
+  return false;
 }
 
 std::unique_ptr<UDPEndpoint> UDPEndpoint::createEndpointForOHDWifibroadcast(const bool isAir) {

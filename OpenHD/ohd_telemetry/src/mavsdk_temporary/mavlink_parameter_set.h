@@ -4,6 +4,7 @@
 #include <map>
 #include <mutex>
 #include <vector>
+#include <functional>
 
 namespace mavsdk{
 
@@ -21,14 +22,16 @@ public:
      * the param_id is not empty.
      * @return true on success, false otherwise.
      */
-    bool add_new_parameter(const std::string& param_id,ParamValue value);
+    bool add_new_parameter(const std::string& param_id,ParamValue value,std::function<bool(std::string id,ParamValue requested_value)> change_callback=nullptr);
     /**
      * Possible return codes for performing a update operation on an existing parameter.
      */
     enum class UpdateExistingParamResult{
         SUCCESS,
         MISSING_PARAM,
-        WRONG_PARAM_TYPE
+        WRONG_PARAM_TYPE,
+		NO_CHANGE,
+		REJECTED
     };
     friend std::ostream& operator<<(std::ostream& strm, const MavlinkParameterSet::UpdateExistingParamResult& obj);
     /**
@@ -83,6 +86,7 @@ private:
         const std::string param_id;
         // value of this parameter.
         ParamValue value;
+	  	std::function<bool(std::string id,ParamValue requested_value)> change_callback;
     };
     friend std::ostream& operator<<(std::ostream& strm, const MavlinkParameterSet::InternalParameter& obj);
     std::mutex _all_params_mutex{};
@@ -100,55 +104,5 @@ private:
 };
 std::ostream& operator<<(std::ostream& strm, const MavlinkParameterSet::Parameter& obj);
 
-
-// This class helps to build a complete parameter set with messages from a server.
-class ParamSetFromServer{
-public:
-    // Add a new parameter to the parameter set.
-    // returns true if the message is okay, false otherwise
-    // (we might get inconsistent data from a buggy param server, an "all param synchronization" is not possible in this case).
-    bool add_new_parameter(const std::string& safe_param_id,uint16_t param_index,uint16_t parameter_count,const ParamValue& value);
-    // returns true if we know how many parameters the server provides.
-    // (We've gotten at least one message).
-    [[nodiscard]] bool param_count_known()const{
-        return _server_all_param_ids.has_value();
-    }
-    // total number of parameters (once known)
-    [[nodiscard]] uint16_t total_param_count()const{
-        assert(_server_all_param_ids.has_value());
-        return _server_all_param_ids.value().size();
-    }
-    // total number of missing parameters
-    [[nodiscard]] uint16_t missing_param_count()const{
-        return get_missing_param_indices().size();
-    }
-    // returns true if the parameter set is complete.
-    [[nodiscard]] bool is_complete()const;
-    // get the indices for all the parameters that are still missing.
-    [[nodiscard]] std::vector<uint16_t> get_missing_param_indices()const;
-    // temporary, make sure to check for completeness first.
-    [[nodiscard]] std::map<std::string, ParamValue> get_all_params()const{
-        return _all_params;
-    }
-    // create a string representation of the current state, for debugging.
-    [[nodiscard]] std::string to_string()const;
-    // remove all cached parameters as well as the parameter count. This might be needed when dealing with a server
-    // that doesn't fully follow the recommended mavlink quidelines and has a invariant parameter set.
-    void clear(){
-        _all_params.clear();
-        _server_all_param_ids=std::nullopt;
-    }
-    // On the client side, we only need to lookup parameters by their string id.
-    std::optional<ParamValue> lookup_parameter(const std::string& param_id);
-private:
-    // filled as parameters come in
-    std::map<std::string, ParamValue> _all_params{};
-    // Once we got the first message with a parameter count, this becomes a valid vector
-    // of size == param count from server and filled with std::nullopt.
-    // Once no element in this vector is of type std::nullopt anymore, we know all the string param ids from the server.
-    // once the parameter count has been set, it should not change - but we cannot say for certain since
-    // the server might do whatever he wants.
-    std::optional<std::vector<std::optional<std::string>>> _server_all_param_ids=std::nullopt;
-};
 
 }

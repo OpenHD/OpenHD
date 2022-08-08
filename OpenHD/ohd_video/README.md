@@ -1,10 +1,10 @@
-## Quick summary:
+## Summary
 
 This library is responsible for detecting the cameras connected to the system 
 and then starts a encoded video stream for each of the discovered cameras.
 The functionalities it exposes to the public are simple:
-1) Send generated, encoded video stream(s) somewhere to be picked up by ohd-interface
-2) Expose a means to change camera / encoding specific settings (called by ohd-interface).
+1) Send generated, encoded video stream(s) somewhere to be picked up (e.g. by ohd-interface)
+2) Expose a means to change camera / encoding specific settings (called by ohd_telemetry / mavlink)
 
 
 ##Note 
@@ -15,6 +15,5 @@ The code in this module must adhere to the following paradigms:
 3) There are no code dependencies to other modules like ohd_interface.
 
 ## List of TODO's
-1) introduce settings (Resolution and format as well as other params are fixed for now,
-   we will add settings via mavlink here).
+1) Introduce even more settings & validate settings depending on the detected camera(s)
 2) add recording to sd card

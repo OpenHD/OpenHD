@@ -9,7 +9,9 @@
 
 #include "openhd-wifi.hpp"
 #include "openhd-profile.hpp"
+#include "openhd-platform.hpp"
 #include "openhd-link-statistics.hpp"
+#include "WBStreamsSettings.h"
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
 
@@ -20,29 +22,58 @@
  */
 class WBStreams {
  public:
-  explicit WBStreams(OHDProfile profile,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards);
+  explicit WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards);
+  WBStreams(const WBStreams&)=delete;
+  WBStreams(const WBStreams&&)=delete;
   // register callback that is called in regular intervals with link statistics
   void set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback){
 	_stats_callback=std::move(stats_callback);
   }
   // Verbose string about the current state.
-  [[nodiscard]] std::string createDebug() const;
-  // see interface
-  void addExternalDeviceIpForwarding(const std::string& ip);
-  void removeExternalDeviceIpForwarding(const std::string& ip);
+  // could be const if there wasn't the mutex
+  [[nodiscard]] std::string createDebug();
+  // start or stop video data forwarding to another external device
+  // NOTE: Only for the ground unit, and only for video (see OHDInterface for more info)
+  void addExternalDeviceIpForwardingVideoOnly(const std::string& ip);
+  void removeExternalDeviceIpForwardingVideoOnly(const std::string& ip);
   // Returns true if this WBStream has ever received any data. If no data has been ever received after X seconds,
   // there most likely was an unsuccessful frequency change.
-  [[nodiscard]] bool ever_received_any_data()const;
-  /*openhd::link_statistics::StatsTotalRxStreams get_stats_all_rx_streams();
-  openhd::link_statistics::StatsAllCards get_stats_all_cards();*/
+  [[nodiscard]] bool ever_received_any_data();
+  // Some settings need a full restart of the tx / rx instances to apply
+  void restart();
+  // schedule an asynchronous restart. if there is already a restart scheduled, return immediately
+  void restart_async(std::chrono::milliseconds delay=std::chrono::milliseconds(0));
+  // set the frequency (wifi channel) of all wifibroadcast cards
+  bool set_frequency(int frequency);
+  // set the tx power of all wifibroadcast cards
+  bool set_txpower(int tx_power);
+  // set the mcs index for all wifibroadcast cards
+  bool set_mcs_index(int mcs_index);
+  bool set_fec_block_length(int block_length);
+  bool set_fec_percentage(int fec_percentage);
+  // set the channel width
+  // TODO doesn't work yet, aparently we need more than only the pcap header.
+  bool set_channel_width(int channel_width);
+  // settings hacky begin
+  std::vector<openhd::Setting> get_all_settings();
+  //void process_new_setting(openhd::Setting changed_setting);
+  // settings hacky end
  private:
   const OHDProfile _profile;
+  const OHDPlatform _platform;
   const int DEFAULT_MCS_INDEX = 3;
   std::vector<std::shared_ptr<WifiCardHolder>> _broadcast_cards;
  private:
-  void configure();
+  // set cards to monitor mode and set the right frequency, tx power
+  void configure_cards();
+  // start telemetry and video rx/tx stream(s)
+  void configure_streams();
   void configure_telemetry();
   void configure_video();
+  //openhd::WBStreamsSettings _last_settings;
+  // Protects all the tx / rx instances, since we have the restart() from the settings.
+  std::mutex _wbRxTxInstancesLock;
+  std::unique_ptr<openhd::WBStreamsSettingsHolder> _settings;
   // For telemetry, bidirectional in opposite directions
   std::unique_ptr<UDPWBTransmitter> udpTelemetryTx;
   std::unique_ptr<UDPWBReceiver> udpTelemetryRx;
@@ -62,6 +93,11 @@ class WBStreams {
   std::array<OpenHDStatisticsWriter::Data,3> _last_stats_per_rx_stream{};
   // OpenHD
   openhd::link_statistics::STATS_CALLBACK _stats_callback=nullptr;
+  //
+  std::mutex _restart_async_lock;
+  std::unique_ptr<std::thread> _restart_async_thread=nullptr;
+  // last calculated "All stats".
+  openhd::link_statistics::AllStats _last_all_stats;
 };
 
 #endif

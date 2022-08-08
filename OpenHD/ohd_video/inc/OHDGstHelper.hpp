@@ -19,6 +19,12 @@
  * with '! '. This way we avoid syntax errors.
  */
 namespace OHDGstHelper {
+
+// some encoders take bits per second instead of kbits per second
+static int kbits_to_bits_per_second(int kbit_per_second){
+  return kbit_per_second*1024;
+}
+
 /**
  * Check if we can find gstreamer at run time, throw a runtime error if not.
  */
@@ -29,6 +35,24 @@ static void initGstreamerOrThrow() {
     g_error_free(error);
     throw std::runtime_error("GStreamer initialization failed");
   }
+}
+
+// SW encoding is slow, but should work on all platforms (at least for low resolutions/framerate(s) )
+// Note that not every sw encoder accepts every type of input format !
+static std::string createSwEncoder(const VideoCodec videoCodec,const int bitrateKBits){
+  std::stringstream ss;
+  if(videoCodec==VideoCodec::H264){
+	ss << fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",
+					  bitrateKBits);
+  }else if(videoCodec==VideoCodec::H265){
+	ss << fmt::format("x265enc bitrate={} tune=zerolatency key-int-max=10 ! ",
+					  bitrateKBits);
+  }else{
+	assert(videoCodec==VideoCodec::MJPEG);
+	//NOTE jpegenc doesn't have a bitrate controll
+	ss<<"jpegenc ! ";
+  }
+  return ss.str();
 }
 
 // a createXXXStream function always ends wth an encoded "h164,h265 or mjpeg
@@ -53,41 +77,55 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
       videoFormat.width, videoFormat.height, videoFormat.framerate);
   // since the primary purpose here is testing, use a fixed low key frame
   // intervall.
-  if (videoFormat.videoCodec == VideoCodec::H264) {
-    ss << fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",
-                      DEFAULT_BITRATE_KBITS);
-  } else if (videoFormat.videoCodec == VideoCodec::H265) {
-    ss << fmt::format("x265enc bitrate={} tune=zerolatency key-int-max=10 ! ",
-                      DEFAULT_BITRATE_KBITS);
-  } else {
-    ss << "jpegenc ! ";
-  }
+  ss << createSwEncoder(videoFormat.videoCodec,DEFAULT_BITRATE_KBITS);
   return ss.str();
 }
 
 /**
  * Create a encoded stream for rpicamsrc, which supports h264 only.
  * @param camera_number use -1 to let rpicamsrc decide
+ * See https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c#GstRpiCamSrcAWBMode for more complicated params
  */
 static std::string createRpicamsrcStream(const int camera_number,
                                          const int bitrateKBits,
-                                         const VideoFormat videoFormat) {
+                                         const VideoFormat videoFormat,int rotation,int awb_mode,int exp_mode) {
   assert(videoFormat.isValid());
-  assert(videoFormat.videoCodec == VideoCodec::H264);
+  //assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
-  const int bitrateBitsPerSecond = bitrateKBits * 1024;
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrateKBits);
   if (camera_number == -1) {
-    ss << fmt::format("rpicamsrc bitrate={} preview=0 ! ",
+    ss << fmt::format("rpicamsrc bitrate={} preview=0 ",
                       bitrateBitsPerSecond);
   } else {
-    ss << fmt::format("rpicamsrc camera-number={} bitrate={} preview=0 ! ",
+    ss << fmt::format("rpicamsrc camera-number={} bitrate={} preview=0 ",
                       camera_number, bitrateBitsPerSecond);
   }
-  ss << fmt::format(
-      "video/x-h264, profile=constrained-baseline, width={}, height={}, "
-      "framerate={}/1, level=3.0 ! ",
-      videoFormat.width, videoFormat.height, videoFormat.framerate);
+  if(openhd::needs_horizontal_flip(rotation)){
+	ss<<"hflip=1 ";
+  }
+  if(openhd::needs_vertical_flip(rotation)){
+	ss<<"vflip=1 ";
+  }
+  if(awb_mode!=0){
+	ss<<"awb-mode="<<awb_mode<<" ";
+  }
+  if(exp_mode!=0){
+	ss<<"exposure-mode="<<exp_mode<<" ";
+  }
+  ss<<" ! ";
+  if(videoFormat.videoCodec==VideoCodec::H264){
+	ss << fmt::format(
+		"video/x-h264, profile=constrained-baseline, width={}, height={}, "
+		"framerate={}/1, level=3.0 ! ",
+		videoFormat.width, videoFormat.height, videoFormat.framerate);
+  }else{
+	std::cout<<"No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues)\n";
+	ss<<fmt::format(
+		"video/x-raw, width={}, height={}, framerate={}/1 ! ",
+		videoFormat.width, videoFormat.height, videoFormat.framerate);
+	ss<<createSwEncoder(videoFormat.videoCodec,bitrateKBits);
+  }
   return ss.str();
 }
 
@@ -115,7 +153,7 @@ static std::string createJetsonStream(const int sensor_id,
       videoFormat.width, videoFormat.height, videoFormat.framerate);
   // https://developer.download.nvidia.com/embedded/L4T/r31_Release_v1.0/Docs/Accelerated_GStreamer_User_Guide.pdf?E_vSS50FKrZaJBjDtnCBmtaY8hWM1QCYlMHtXBqvZ_Jeuw0GXuLNaQwMBWUDABSnWCD-p8ABlBpBpP-kb2ADgWugbW8mgGPxUWJG_C4DWaL1yKjUVMy1AxH1RTaGOW82yFJ549mea--FBPuZUH3TT1MoEd4-sgdrZal5qr1J0McEFeFaVUc&t=eyJscyI6InJlZiIsImxzZCI6IlJFRi1kb2NzLm52aWRpYS5jb21cLyJ9
   // jetson is also bits per second
-  const auto bitrateBitsPerSecond = bitrateKBits * 1024;
+  const auto bitrateBitsPerSecond =kbits_to_bits_per_second(bitrateKBits);
   if (videoFormat.videoCodec == VideoCodec::H265) {
     ss << fmt::format(
         "nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} ! ",
@@ -149,17 +187,7 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   // Add a queue here. With sw we are not low latency anyways.
   ss << "queue ! ";
   assert(videoCodec != VideoCodec::Unknown);
-  if (videoCodec == VideoCodec::H264) {
-    // https://gstreamer.freedesktop.org/documentation/x264/index.html?gi-language=c
-    ss << fmt::format(
-        "x264enc name=encodectrl bitrate={} tune=zerolatency key-int-max=10 ! ",
-        bitrateKBits);
-  } else if (videoCodec == VideoCodec::H265) {
-    // https://gstreamer.freedesktop.org/documentation/x265/index.html?gi-language=c
-    ss << fmt::format("x265enc name=encodectrl bitrate={} ! ", bitrateKBits);
-  } else {
-    std::cerr << "no sw encoder for MJPEG\n";
-  }
+  ss<<createSwEncoder(videoCodec,bitrateKBits);
   return ss.str();
 }
 
@@ -195,7 +223,7 @@ static std::string createUVCH264Stream(const std::string &device_node,
   assert(videoFormat.videoCodec == VideoCodec::H264);
   // https://gstreamer.freedesktop.org/documentation/uvch264/uvch264src.html?gi-language=c#uvch264src:average-bitrate
   // bitrate in bits per second
-  const int bitrateBitsPerSecond = bitrateKBits * 1024;
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrateKBits);
   std::stringstream ss;
   ss << fmt::format(
       "uvch264src device={} peak-bitrate={} initial-bitrate={} "

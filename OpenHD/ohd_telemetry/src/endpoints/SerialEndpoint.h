@@ -1,65 +1,65 @@
 //
-// Created by consti10 on 13.04.22.
+// Created by consti10 on 31.07.22.
 //
 
-#ifndef XMAVLINKSERVICE_SERIALENDPOINT_H
-#define XMAVLINKSERVICE_SERIALENDPOINT_H
-
-#include <utility>
-#include <cstdint>
-#include <boost/asio.hpp>
-#include <boost/thread.hpp>
-#include <chrono>
-#include <optional>
+#ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_
+#define OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_
 
 #include "MEndpoint.hpp"
+#include <utility>
+#include <chrono>
+#include <mutex>
+#include <thread>
+#include <chrono>
+#include <memory>
+#include <atomic>
 
-// UART endpoint
-// Supports sending (mavlink) messages to the connected UART device (aka the flight controller)
-// and receiving (mavlink) messages from it
-
-// Should do's
-// 1) Handle a disconnecting flight controller: When the flight controller uart for some reason is disconnected,
-// try to reconnect
-// 2) Handle no flight controller at all: Simple, just do nothing until a flight controller is connected
-
-// TODO: Maybe replace all the boost stuff with https://github.com/mavlink/c_uart_interface_example/blob/master/serial_port.cpp
-class SerialEndpoint : public MEndpoint {
+// At some point, I decided there is no way around it than to write our own UART receiver program.
+// Mostly based on MAVSDK. Doesn't use boost.
+class SerialEndpoint : public MEndpoint{
  public:
   struct HWOptions {
 	std::string linux_filename; // the linux file name,for example /dev/tty..
-	int baud_rate = -1; // manual baud rate, set to <=0 to leave untouched
+	int baud_rate = 115200; // manual baud rate
+	bool flow_control=false; // not tested yet
+	bool enable_debug=false; //
+	[[nodiscard]] std::string to_string() const{
+	  std::stringstream ss;
+	  ss<<"HWOptions{"<<linux_filename<<", baud:"<<baud_rate<<", flow_control:"<<flow_control<<",  enable_debug:"<<enable_debug<<"}";
+	  return ss.str();
+	}
   };
  public:
   /**
    * @param serial_port the serial port linux name (dev/.. ) for this serial port
    */
-  explicit SerialEndpoint(std::string TAG, HWOptions options,bool enableDebug=false);
-  //
-  static constexpr auto USB_SERIAL_PORT = "/dev/ttyUSB0";
-  static constexpr auto TEST_SERIAL_PORT = "/dev/ttyACM0";
+  explicit SerialEndpoint(std::string TAG1, HWOptions options1);
+  // No copy and move
+  SerialEndpoint(const SerialEndpoint&)=delete;
+  SerialEndpoint(const SerialEndpoint&&)=delete;
+  ~SerialEndpoint();
+  // Start sending and receiving UART data.
+  // Does nothing if already started.
+  void start();
+  // Stop any UART communication (read and write). Might block for up to 1 second.
+  // Does nothing if already stopped.
+  void stop();
  private:
-  void sendMessageImpl(const MavlinkMessage &message) override;
-  // If the serial port is still opened, close it
-  // after that, it should be openable again
-  void safeCloseCleanup();
-  // loops until the serial port has been opened successfully, then calls read
-  void safeRestart();
-  // Async receive some data, when done (and no error occurred) this is called asynchronous again.
-  void startReceive();
-  void handleRead(const boost::system::error_code &error,
-				  size_t bytes_transferred);
-  void handleWrite(const boost::system::error_code &error,
-				   size_t bytes_transferred);
-  const HWOptions m_options;
-  boost::asio::io_service io_service;
-  boost::asio::serial_port m_serial;
-  std::array<uint8_t, 1024> readBuffer{};
-  static constexpr auto RECONNECT_DELAY = std::chrono::seconds(5);
+  bool sendMessageImpl(const MavlinkMessage &message) override;
+  static int define_from_baudrate(int baudrate);
+  static int setup_port(const HWOptions& options);
+  void connect_and_read_loop();
+  // Receive data until either an error occurs (in this case, the UART most likely disconnected)
+  // Or a stop was requested.
+  void receive_data_until_error();
+  // Write serial data, returns true on success, false otherwise.
+  [[nodiscard]] bool write_data_serial(const std::vector<uint8_t>& data) const;
  private:
-  std::unique_ptr<boost::thread> mIoThread;
-  std::unique_ptr<boost::thread> mOpenSerialPortThread;
-  const bool m_enable_debug;
+  const HWOptions _options;
+  int _fd=-1;
+  std::mutex _connectReceiveThreadMutex;
+  std::unique_ptr<std::thread> _connectReceiveThread = nullptr;
+  bool _stop_requested=false;
 };
 
-#endif //XMAVLINKSERVICE_SERIALENDPOINT_H
+#endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_

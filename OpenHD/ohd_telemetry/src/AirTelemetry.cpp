@@ -5,16 +5,12 @@
 #include "AirTelemetry.h"
 #include "mav_helper.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
-#include "mavsdk_temporary/XMavsdkWrapperSerialConnection.h"
 #include <chrono>
+#include "openhd-util-filesystem.hpp"
 
-AirTelemetry::AirTelemetry(OHDPlatform platform,std::string fcSerialPort): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
-  //serialEndpoint = std::make_unique<SerialEndpoint>("FCSerial",SerialEndpoint::HWOptions{fcSerialPort, 115200});
-  /*serialEndpoint = std::make_unique<mavsdk::XMavsdkWrapperSerialConnection>(fcSerialPort,115200);
-  serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
-    this->onMessageFC(msg);
-  });*/
-
+AirTelemetry::AirTelemetry(OHDPlatform platform): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
+  _airTelemetrySettings=std::make_unique<openhd::AirTelemetrySettingsHolder>();
+  setup_uart();
   // any message coming in via wifibroadcast is a message from the ground pi
   wifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(true);
   wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
@@ -22,6 +18,12 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::string fcSerialPort): _plat
   });
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,true);
   components.push_back(_ohd_main_component);
+  //
+  generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
+  // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
+  // all their paramters.
+  generic_mavlink_param_provider->add_params(get_all_settings());
+  components.push_back(generic_mavlink_param_provider);
   std::cout << "Created AirTelemetry\n";
 }
 
@@ -32,8 +34,8 @@ void AirTelemetry::sendMessageFC(const MavlinkMessage &message) {
     //std::cout<<"Cannot send message to FC\n";
   }
   if(message.m.msgid==MAVLINK_MSG_ID_PING){
-    std::cout<<"Sent ping to FC\n";
-    MavlinkHelpers::debugMavlinkPingMessage(message.m);
+    //std::cout<<"Sent ping to FC\n";
+    //MavlinkHelpers::debugMavlinkPingMessage(message.m);
   }
 }
 
@@ -45,11 +47,8 @@ void AirTelemetry::sendMessageGroundPi(const MavlinkMessage &message) {
 
 void AirTelemetry::onMessageFC(MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"AirTelemetry::onMessageFC");
+  // Note: No OpenHD component ever talks to the FC, FC is completely passed through
   sendMessageGroundPi(message);
-  // handling a message from the FC is really easy - we just forward it to the ground pi.
-  if(message.m.msgid==MAVLINK_MSG_ID_PING){
-	std::cout<<"Got ping from FC\n";
-  }
 }
 
 void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
@@ -63,11 +62,12 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   // for now, do it as simple as possible
   sendMessageFC(message);
   // any data created by an OpenHD component on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
+  std::lock_guard<std::mutex> guard(components_lock);
   for(auto& component: components){
-    const auto responses=component->process_mavlink_message(message);
-    for(const auto& response:responses){
-      sendMessageGroundPi(response);
-    }
+	const auto responses=component->process_mavlink_message(message);
+	for(const auto& response:responses){
+	  sendMessageGroundPi(response);
+	}
   }
 }
 
@@ -89,12 +89,15 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
         }
 	// send messages to the ground pi in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
-        for(auto& component:components){
-          const auto messages=component->generate_mavlink_messages();
-          for(const auto& msg:messages){
-            sendMessageGroundPi(msg);
-          }
-        }
+	{
+	  std::lock_guard<std::mutex> guard(components_lock);
+	  for(auto& component:components){
+		const auto messages=component->generate_mavlink_messages();
+		for(const auto& msg:messages){
+		  sendMessageGroundPi(msg);
+		}
+	  }
+	}
 	// send out in X second intervals
 	std::this_thread::sleep_for(loop_intervall);
   }
@@ -112,14 +115,89 @@ std::string AirTelemetry::createDebug() const {
   return ss.str();
 }
 
-void AirTelemetry::add_settings_component(
-    const int comp_id, std::shared_ptr<openhd::XSettingsComponent> glue) {
-  auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,comp_id,std::move(glue));
-  components.push_back(param_server);
+void AirTelemetry::add_settings_generic(const std::vector<openhd::Setting>& settings) {
+  std::lock_guard<std::mutex> guard(components_lock);
+  generic_mavlink_param_provider->add_params(settings);
   std::cout<<"Added parameter component\n";
 }
+
 void AirTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) {
   if(_ohd_main_component){
 	_ohd_main_component->set_link_statistics(stats);
+  }
+}
+
+void AirTelemetry::settings_generic_ready() {
+  generic_mavlink_param_provider->set_ready();
+}
+
+void AirTelemetry::add_camera_component(const int camera_index, const std::vector<openhd::Setting> &settings) {
+  assert(camera_index>=0 && camera_index<2);
+  const auto cam_comp_id=MAV_COMP_ID_CAMERA+camera_index;
+  auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,cam_comp_id,true);
+  param_server->add_params(settings);
+  param_server->set_ready();
+  std::lock_guard<std::mutex> guard(components_lock);
+  components.push_back(param_server);
+  std::cout<<"Added camera component\n";
+}
+
+std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
+  std::vector<openhd::Setting> ret{};
+  auto c_fc_uart_connection_type=[this](std::string,int value) {
+	if(!openhd::validate_uart_connection_type(value)){
+	  return false;
+	}
+	_airTelemetrySettings->unsafe_get_settings().fc_uart_connection_type=value;
+	_airTelemetrySettings->persist();
+	setup_uart();
+	return true;
+  };
+  auto c_fc_uart_baudrate=[this](std::string,int value) {
+	if(!openhd::validate_uart_baudrate(value)){
+	  return false;
+	}
+	_airTelemetrySettings->unsafe_get_settings().fc_uart_baudrate=value;
+	_airTelemetrySettings->persist();
+	setup_uart();
+	return true;
+  };
+  ret.push_back(openhd::Setting{openhd::FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_connection_type),
+																		   c_fc_uart_connection_type}});
+  ret.push_back(openhd::Setting{openhd::FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_baudrate),
+																	 c_fc_uart_baudrate}});
+  return ret;
+}
+
+// Every time the UART configuration changes, we just re-start the UART (if it was already started)
+// This properly handles all the cases, e.g cleaning up an existing uart connection if set.
+void AirTelemetry::setup_uart() {
+  assert(_airTelemetrySettings);
+  const auto fc_uart_connection_type=_airTelemetrySettings->get_settings().fc_uart_connection_type;
+  const auto fc_uart_baudrate=_airTelemetrySettings->get_settings().fc_uart_baudrate;
+  assert(openhd::validate_uart_connection_type(fc_uart_connection_type));
+  // Disable the currently running uart configuration, if there is any
+  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
+  if(serialEndpoint!=nullptr) {
+	std::cout<<"Stopping already existing FC UART\n";
+	serialEndpoint->stop();
+	serialEndpoint.reset();
+	serialEndpoint=nullptr;
+  }
+  if(fc_uart_connection_type==openhd::UART_CONNECTION_TYPE_DISABLE){
+	// No uart enabled, we've already cleaned it up though
+	std::cout<<"FC UART disabled\n";
+	return;
+  }else{
+	std::cout<<"FC UART enable - begin\n";
+	SerialEndpoint::HWOptions options{};
+	options.linux_filename=openhd::uart_fd_from_connection_type(fc_uart_connection_type).value();
+	options.baud_rate=fc_uart_baudrate;
+	options.flow_control= false;
+	serialEndpoint=std::make_unique<SerialEndpoint>("SerialEndpointUARTFC",options);
+	serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
+	  this->onMessageFC(msg);
+	});
+	std::cout<<"FC UART enable - end\n";
   }
 }

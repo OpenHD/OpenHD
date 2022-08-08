@@ -28,7 +28,8 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
     // right now, every time the settings for this camera change, we just re-start the whole stream.
     // That is not ideal, since some cameras support changing for example the bitrate or white balance during operation.
     // But wiring that up is not that easy.
-    this->restart_after_new_setting();
+    //this->restart_after_new_setting();
+	this->restart_async();
   });
   // sanity checks
   if(!check_bitrate_sane(setting.bitrateKBits)){
@@ -87,9 +88,9 @@ void GStreamerStream::setup() {
   // TODO: ground recording is not working yet, since we cannot properly close the file at the time.
   //setting.enableAirRecordingToFile = false;
   // for lower latency we only add the tee command at the right place if recording is enabled.
-  if(setting.enableAirRecordingToFile){
+  if(setting.air_recording==Recording::ENABLED){
 	std::cout<<"Air recording active\n";
-	m_pipeline<<"tee name=t ! queue ! ";
+	//m_pipeline<<"tee name=t ! queue ! ";
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
@@ -101,8 +102,8 @@ void GStreamerStream::setup() {
   }*/
   // add udp out part
   m_pipeline << OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
-  if(setting.enableAirRecordingToFile){
-	m_pipeline<<OHDGstHelper::createRecordingForVideoCodec(setting.userSelectedVideoFormat.videoCodec);
+  if(setting.air_recording==Recording::ENABLED){
+	//m_pipeline<<OHDGstHelper::createRecordingForVideoCodec(setting.userSelectedVideoFormat.videoCodec);
   }
   std::cout << "Starting pipeline:" << m_pipeline.str() << std::endl;
   // Protect against unwanted use - stop and free the pipeline first
@@ -119,7 +120,8 @@ void GStreamerStream::setup_raspberrypi_csi() {
   std::cout << "Setting up Raspberry Pi CSI camera" << std::endl;
   // similar to jetson, for now we assume there is only one CSI camera connected.
   const auto& setting=_camera_holder->get_settings();
-  m_pipeline<< OHDGstHelper::createRpicamsrcStream(-1, setting.bitrateKBits, setting.userSelectedVideoFormat);
+  m_pipeline<< OHDGstHelper::createRpicamsrcStream(-1, setting.bitrateKBits, setting.userSelectedVideoFormat,setting.camera_rotation_degree,
+												   setting.awb_mode,setting.exposure_mode);
 }
 
 void GStreamerStream::setup_jetson_csi() {
@@ -187,7 +189,12 @@ void GStreamerStream::setup_ip_camera() {
   m_pipeline << OHDGstHelper::createIpCameraStream(setting.url);
 }
 
-std::string GStreamerStream::createDebug()const {
+std::string GStreamerStream::createDebug(){
+  std::unique_lock<std::mutex> lock(_pipeline_mutex, std::try_to_lock);
+  if(!lock.owns_lock()){
+	// We can just discard statistics data during a re-start
+	return "GStreamerStream::No debug during restart\n";
+  }
   std::stringstream ss;
   GstState state;
   GstState pending;
@@ -219,19 +226,24 @@ void GStreamerStream::cleanup_pipe() {
 }
 
 void GStreamerStream::restartIfStopped() {
+  std::lock_guard<std::mutex> guard(_pipeline_mutex);
   GstState state;
   GstState pending;
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
   if (returnValue == 0) {
 	std::cerr<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name<<"\n";
+	// We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
 	stop();
-	sleep(3);
+	cleanup_pipe();
+	setup();
 	start();
+	std::cerr<<"Restarted\n";
   }
 }
 
 // Restart after a new settings value has been applied
 void GStreamerStream::restart_after_new_setting() {
+  std::lock_guard<std::mutex> guard(_pipeline_mutex);
   std::cout<<"GStreamerStream::restart_after_new_setting() begin\n";
   stop();
   // R.N we need to fully re-set the pipeline if any camera setting has changed
@@ -239,4 +251,17 @@ void GStreamerStream::restart_after_new_setting() {
   setup();
   start();
   std::cout<<"GStreamerStream::restart_after_new_setting() end\n";
+}
+
+void GStreamerStream::restart_async() {
+  std::lock_guard<std::mutex> guard(_async_thread_mutex);
+  // If there is already an async operation running, we need to wait for it to complete.
+  // If the user was to change parameters to quickly, this would be a problem.
+  if(_async_thread!= nullptr){
+	if(_async_thread->joinable()){
+	  _async_thread->join();
+	}
+	_async_thread=nullptr;
+  }
+  _async_thread=std::make_unique<std::thread>(&GStreamerStream::restart_after_new_setting,this);
 }

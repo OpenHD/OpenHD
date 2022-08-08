@@ -7,7 +7,7 @@
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-platform-discover.hpp"
-#include "mavlink_settings/XSettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.h"
 #include <thread>
 #include <memory>
 
@@ -19,9 +19,9 @@ int main() {
 	OHDProfile profile{false, "XX"};
 	const auto platform=DPlatform::discover();
 	ground = std::make_unique<OHDTelemetry>(*platform, profile);
-        auto example_comp=std::make_shared<openhd::testing::DummyGroundXSettingsComponent>();
-        // MAV_COMP_ID_ONBOARD_COMPUTER2=192
-        ground->add_settings_component(192,example_comp);
+	// MAV_COMP_ID_ONBOARD_COMPUTER2=192
+	ground->add_settings_generic(openhd::testing::create_dummy_ground_settings());
+	//ground->add_external_ground_station_ip("192.168.237.22","192.168.237.55");
   }
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(1));

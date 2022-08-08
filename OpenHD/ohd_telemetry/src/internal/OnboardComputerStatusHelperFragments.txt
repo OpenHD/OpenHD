@@ -1,0 +1,46 @@
+// How complicated, but this seems to be the best option - it blocks for X seconds,
+// Then returns the average cpu usage in these last X seconds
+/*static std::optional<int> read_cpuload_once_mpstat_blocking(){
+  auto res_opt=OHDUtil::run_command_out(R"lit(mpstat 3 1)lit");
+  if(!res_opt.has_value()){
+	return std::nullopt;
+  }
+  const auto res=res_opt.value();
+  // this is really unsafe, but works - lol
+  // Get the line that starts with average
+  std::smatch result;
+  std::regex r1{"[0-9]([,]([0-9])*)?"};
+  auto res1 = std::regex_search(res, result, r1);
+  if(!res1){
+	return std::nullopt;
+  }
+  if(result.size()<2){
+	return std::nullopt;
+  }
+  std::cout<<"Intermediate:{"<<result[1]<<"}\n";
+  return 0;
+}*/
+
+//auto res=OHDUtil::run_command_out(R"lit(top -b -n1  | fgrep "Cpu(s)" | tail -1 | awk -F'id,' -v prefix="$prefix" '{ split($1, vs, ","); v=vs[length(vs)]; sub("%", "", v); printf "%s%.1f\n", prefix, 100 - v }')lit");
+  //auto res=OHDUtil::run_command_out(R"lit(top -bn2 | grep "Cpu(s)" |  sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1"%"}')lit");
+
+
+// from stephen, doesnt work
+// from https://github.com/OpenHD/Open.HD/blob/35b6b10fbeda43cd06bbfbd90e2daf29629c2f8a/openhd-status/src/statusmicroservice.cpp#L173
+// Return the CPU load of the system the generator is running on
+// Unit: Percentage ?
+static int readCpuLoad() {
+  int cpuload_gnd = 0;
+  long double a[4];
+  FILE *fp;
+  try {
+	fp = fopen("/proc/stat", "r");
+	fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
+  } catch (...) {
+	std::cerr << "ERROR: proc reading1" << std::endl;
+	return -1;
+  }
+  fclose(fp);
+  cpuload_gnd = (a[0] + a[1] + a[2]) / (a[0] + a[1] + a[2] + a[3]) * 100;
+  return cpuload_gnd;
+}

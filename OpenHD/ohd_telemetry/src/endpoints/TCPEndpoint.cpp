@@ -33,12 +33,12 @@ void TCPEndpoint::loopAllowConnection() {
   //}
 }
 
-void TCPEndpoint::sendMessageImpl(const MavlinkMessage &message) {
+bool TCPEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   debugMavlinkMessage(message.m, "TCPEndpoint::send");
   try {
 	if (!_socket.is_open()) {
 	  std::cout << "Socket not open\n";
-	  return;
+	  return false;
 	}
 	const auto tmp = message.pack();
 	_socket.async_write_some(boost::asio::buffer(tmp.data(), tmp.size()),
@@ -48,6 +48,7 @@ void TCPEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   } catch (const std::exception &e) {
 	std::cerr << "TCP: catch handle_write error" << e.what() << std::endl;
   }
+  return true;
   //_socket.write_some(boost::asio::buffer(message.data(),message.data_len()));
 }
 

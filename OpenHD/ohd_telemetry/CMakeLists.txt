@@ -19,6 +19,8 @@ find_package(Boost REQUIRED COMPONENTS system thread regex filesystem)
 message(STATUS "Boost version: ${Boost_VERSION}")
 SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::system Boost::thread Boost::filesystem)
 
+find_package(Threads REQUIRED)
+
 SET(ALL_TELEMETRY_SOURCE_FILES
         src/AirTelemetry.cpp
         src/GroundTelemetry.cpp
@@ -26,7 +28,6 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         src/endpoints/UDPEndpoint2.cpp
         src/endpoints/TCPEndpoint.cpp
         src/endpoints/SerialEndpoint.cpp
-        #src/endpoints/SerialEndpoint2.cpp
         #src/endpoints/WBEndpoint.cpp
         src/internal/OHDMainComponent.cpp
         src/mavsdk_temporary/XMavlinkParamProvider.cpp
@@ -39,11 +40,9 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         ## end param
         src/mavsdk_temporary/connection.cpp
         src/mavsdk_temporary/connection_result.cpp
-        src/mavsdk_temporary/serial_connection.cpp
         src/mavsdk_temporary/mavlink_receiver.cpp
         src/mavsdk_temporary/mavsdk_time.cpp
         src/mavsdk_temporary/mavlink_channels.cpp
-        src/mavsdk_temporary/XMavsdkWrapperSerialConnection.cpp
         )
 
 # Build it as a library
@@ -53,6 +52,7 @@ add_library(OHDTelemetryLib
 target_link_libraries(OHDTelemetryLib PRIVATE ${OHD_TELEMETRY_USED_BOOST_LIBS}
         #MAVSDK::mavsdk
         )
+target_link_libraries(OHDTelemetryLib PUBLIC Threads::Threads)
 target_include_directories(OHDTelemetryLib PUBLIC src/)
 # include mavlink (header-only)
 add_library(mavlink INTERFACE)
@@ -66,8 +66,6 @@ target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
 # All the test files for development
 add_executable(test_serial_endpoint tests/test_serial_endpoint.cpp)
 target_link_libraries(test_serial_endpoint OHDTelemetryLib)
-add_executable(test_serial_endpoint2 tests/test_serial_endpoint2.cpp)
-target_link_libraries(test_serial_endpoint2 OHDTelemetryLib)
 
 add_executable(test_udp_endpoint tests/test_udp_endpoint.cpp)
 target_link_libraries(test_udp_endpoint OHDTelemetryLib)

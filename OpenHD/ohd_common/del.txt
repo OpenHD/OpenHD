@@ -134,3 +134,64 @@ static WifiUseFor wifi_use_for_from_string(const std::string s){
 	return WifiUseFor::Unknown;
   }
 }
+
+/**
+ * The settings are stored in a directory called air_$unit_id or ground_$unit_id.
+ * @return the settings directory, created newly if non existent. As an example, it will return a path like
+ * this: BASE_PATH/air_8bfff348-c17e-4833-af66-cef83f90c208/
+ */
+static std::string findOrCreateSettingsDirectory(bool is_air) {
+  generateSettingsDirectoryIfNonExists();
+  std::stringstream settingsPath;
+  settingsPath << BASE_PATH;
+  settingsPath << (is_air ? "air_" : "ground_");
+  const auto unit_id = getOrCreateUnitId();
+  settingsPath << unit_id;
+  auto str = settingsPath.str();
+  std::cout << "SettingsDirectory:[" << str << "]\n";
+  // create the directory if it is non existing
+  if (!std::filesystem::exists(str.c_str())) {
+	std::filesystem::create_directory(str.c_str());
+  }
+  assert(std::filesystem::exists(str.c_str()));
+  return str;
+}
+static void create_directory_if_not_existing(const char* directory){
+  if(!exists(directory)){
+	create_directory(directory);
+  }
+}
+
+ /**
+  * Return the name of the default UART for the different platforms OpenHD is running on.
+  * @param platformType the platform we are running on
+  * @return the uart name string (linux file)
+   */
+  static std::string uartForPlatformType(const PlatformType &platformType) {
+    // hacky for now, this works on rpi when connecting the USB of my FC
+    return "/dev/ttyACM0";
+
+    // we default to using a USB serial adapter on any other platform at the moment, some just need
+    // to be checked to see what the port is called, but PC will likely always be USB
+    // for testing, the serial shows up as this on my pc:
+    /*std::string platformSerialPort = "/dev/ttyUSB0";
+    switch (platformType) {
+      case PlatformType::RaspberryPi: {
+        //platformSerialPort = "/dev/serial0";
+        break;
+      }
+      case PlatformType::Jetson: {
+        platformSerialPort = "/dev/ttyTHS1";
+        break;
+      }
+      case PlatformType::PC:{
+        platformSerialPort="/dev/ttyACM0";
+        break;
+      }
+      default: {
+        std::cout << "Using default UART " << platformSerialPort << "\n";
+        break;
+      }
+    }
+    return platformSerialPort;*/
+  }

@@ -6,6 +6,7 @@
 #define OPENHD_OPENHD_LED_ERROR_CODES_H
 
 #include "openhd-util.hpp"
+#include "openhd-platform.hpp"
 #include <chrono>
 #include <thread>
 #include <utility>
@@ -42,17 +43,21 @@ namespace openhd::rpi{
         }
         // One on / off sequence is often not enough signal for the user, repeat the sequence for a given amount of time
         // blink red led in X second intervals, runs for duration seconds. Defaults to infinity (note the calling thread will be blocked then)
-        static void blink_red_led(const std::string& message,const std::chrono::seconds duration=DURATION_INFINITY){
+        void blink_red_led(const std::string& message,const std::chrono::seconds duration=DURATION_INFINITY) const{
             const auto start=std::chrono::steady_clock::now();
             while ((std::chrono::steady_clock::now()-start)<=duration){
                 LOGE<<message;
-                red_led_on_off_delayed(std::chrono::seconds(1));
+				if(_platform.platform_type==PlatformType::RaspberryPi){
+				  red_led_on_off_delayed(std::chrono::seconds(1));
+				}else{
+				  std::this_thread::sleep_for(std::chrono::seconds(1));
+				}
             }
         }
         // For running in its own thread
         // Make sure to store a reference to this class, otherwise destruct will fail since thread is still running.
-        explicit LEDBlinker(std::string  message,const std::chrono::seconds duration=DURATION_INFINITY):
-                _message(std::move(message)),_duration(duration){
+        explicit LEDBlinker(OHDPlatform platform,std::string  message,const std::chrono::seconds duration=DURATION_INFINITY):
+                _message(std::move(message)),_duration(duration), _platform(platform){
             _blink_thread=std::make_unique<std::thread>(&LEDBlinker::run, this);
         }
         static constexpr auto DURATION_INFINITY=std::chrono::seconds(100*100*100*100);
@@ -63,6 +68,7 @@ namespace openhd::rpi{
         const std::string _message;
         const std::chrono::seconds _duration;
         std::unique_ptr<std::thread> _blink_thread= nullptr;
+		const OHDPlatform _platform;
     };
 }
 

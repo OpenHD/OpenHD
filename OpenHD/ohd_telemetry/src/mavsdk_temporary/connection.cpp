@@ -13,7 +13,7 @@ std::atomic<unsigned> Connection::_forwarding_connections_count = 0;
 
 Connection::Connection(receiver_callback_t receiver_callback, ForwardingOption forwarding_option) :
     _receiver_callback(std::move(receiver_callback)),
-    _mavlink_receiver(),
+    _mavlink_receiver(nullptr),
     _forwarding_option(forwarding_option)
 {
     // Insert system ID 0 in all connections for broadcast.
@@ -33,6 +33,10 @@ Connection::~Connection()
 
 bool Connection::start_mavlink_receiver()
 {
+    if(_mavlink_receiver){
+	  // mavlink receiver already created
+	  return true;
+	}
     uint8_t channel;
     if (!MAVLinkChannels::Instance().checkout_free_channel(channel)) {
         return false;

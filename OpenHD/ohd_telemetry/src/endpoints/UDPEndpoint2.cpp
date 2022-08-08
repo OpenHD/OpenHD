@@ -21,7 +21,31 @@ UDPEndpoint2::UDPEndpoint2(const std::string &TAG,
   receiver_sender->runInBackground();
 }
 
-void UDPEndpoint2::sendMessageImpl(const MavlinkMessage &message) {
+UDPEndpoint2::~UDPEndpoint2() {
+  receiver_sender->stopBackground();
+}
+
+bool UDPEndpoint2::sendMessageImpl(const MavlinkMessage &message) {
   const auto data = message.pack();
   receiver_sender->forwardPacketViaUDP(SENDER_IP,SEND_PORT,data.data(),data.size());
+  std::lock_guard<std::mutex> lock(_sender_mutex);
+  for(const auto& [key,value]:_other_dest_ips){
+	receiver_sender->forwardPacketViaUDP(key,SEND_PORT,data.data(),data.size());
+  }
+  return true;
+}
+
+void UDPEndpoint2::addAnotherDestIpAddress(std::string ip) {
+  std::lock_guard<std::mutex> lock(_sender_mutex);
+  std::stringstream ss;
+  ss<<"UDPEndpoint2::addAnotherDestIpAddress:["<<ip<<"]\n";
+  std::cout<<ss.str();
+  _other_dest_ips[ip]=nullptr;
+}
+void UDPEndpoint2::removeAnotherDestIpAddress(std::string ip) {
+  std::lock_guard<std::mutex> lock(_sender_mutex);
+  std::stringstream ss;
+  ss<<"UDPEndpoint2::removeAnotherDestIpAddress:["<<ip<<"]\n";
+  std::cout<<ss.str();
+  _other_dest_ips.erase(ip);
 }

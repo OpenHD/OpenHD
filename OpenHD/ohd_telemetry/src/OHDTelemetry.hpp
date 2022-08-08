@@ -20,7 +20,7 @@ class OHDTelemetry {
  public:
   OHDTelemetry(OHDPlatform platform1,OHDProfile profile1,bool enableExtendedLogging=false) : platform(platform1),profile(std::move(profile1)),m_enableExtendedLogging(enableExtendedLogging) {
     if (this->profile.is_air) {
-      airTelemetry = std::make_unique<AirTelemetry>(platform,OHDTelemetry::uartForPlatformType(platform.platform_type));
+      airTelemetry = std::make_unique<AirTelemetry>(platform);
       assert(airTelemetry);
       loopThread = std::make_unique<std::thread>([this] {
         assert(airTelemetry);
@@ -35,6 +35,8 @@ class OHDTelemetry {
       });
     }
   }
+  OHDTelemetry(const OHDTelemetry&)=delete;
+  OHDTelemetry(const OHDTelemetry&&)=delete;
   // only either one of them both is active at a time.
   // active when air
   std::unique_ptr<AirTelemetry> airTelemetry;
@@ -48,19 +50,29 @@ class OHDTelemetry {
       return groundTelemetry->createDebug();
     }
   }
-  void add_settings_component(const int comp_id,std::shared_ptr<openhd::XSettingsComponent> glue){
+  // All modules other than camera share the same settings component for now.
+  void add_settings_generic(const std::vector<openhd::Setting>& settings) const{
     if(profile.is_air){
-      airTelemetry->add_settings_component(comp_id,std::move(glue));
+      airTelemetry->add_settings_generic(settings);
     }else{
-      groundTelemetry->add_settings_component(comp_id,std::move(glue));
+      groundTelemetry->add_settings_generic(settings);
     }
   }
-  void add_camera_component(const int camera_index,std::shared_ptr<openhd::XSettingsComponent> glue){
+  void settings_generic_ready() const{
+	if(profile.is_air){
+	  airTelemetry->settings_generic_ready();
+	}else{
+	  groundTelemetry->settings_generic_ready();
+	}
+  }
+  // Cameras get their own component ID, other than the "rest" which shares the same component id
+  // for simplicity. Note, at some point it might make sense to also use its own component id
+  // for OHD interface
+  void add_camera_component(const int camera_index,const std::vector<openhd::Setting>& settings) const{
     // we only have cameras on the air telemetry unit
     assert(profile.is_air);
     // only 2 cameras suported for now.
-    assert(camera_index>=0 && camera_index<2);
-    airTelemetry->add_settings_component(MAV_COMP_ID_CAMERA+camera_index,std::move(glue));
+    airTelemetry->add_camera_component(camera_index,settings);
   }
   void set_link_statistics(openhd::link_statistics::AllStats stats) const{
 	if(profile.is_air){
@@ -69,42 +81,21 @@ class OHDTelemetry {
 	  groundTelemetry->set_link_statistics(stats);
 	}
   }
+  // Add the IP of another Ground station client
+  void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const{
+	if(profile.is_air)return;
+	groundTelemetry->add_external_ground_station_ip(ip_openhd,ip_dest_device);
+  }
+  // Add the IP of another Ground station client
+  void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const{
+	if(profile.is_air)return;
+	groundTelemetry->remove_external_ground_station_ip(ip_openhd,ip_dest_device);
+  }
+
  private:
   const OHDPlatform platform;
   const OHDProfile profile;
   const bool m_enableExtendedLogging;
-  /**
-  * Return the name of the default UART for the different platforms OpenHD is running on.
-  * @param platformType the platform we are running on
-  * @return the uart name string (linux file)
-   */
-  static std::string uartForPlatformType(const PlatformType &platformType) {
-    // hacky for now, this works on rpi when connecting the USB of my FC
-    return "/dev/ttyACM0";
-
-    // we default to using a USB serial adapter on any other platform at the moment, some just need
-    // to be checked to see what the port is called, but PC will likely always be USB
-    // for testing, the serial shows up as this on my pc:
-    /*std::string platformSerialPort = "/dev/ttyUSB0";
-    switch (platformType) {
-      case PlatformType::RaspberryPi: {
-        //platformSerialPort = "/dev/serial0";
-        break;
-      }
-      case PlatformType::Jetson: {
-        platformSerialPort = "/dev/ttyTHS1";
-        break;
-      }
-      case PlatformType::PC:{
-        platformSerialPort="/dev/ttyACM0";
-        break;
-      }
-      default: {
-        std::cout << "Using default UART " << platformSerialPort << "\n";
-        break;
-      }
-    }
-    return platformSerialPort;*/
-  }
 };
+
 #endif //OPENHD_OHDTELEMETRY_H

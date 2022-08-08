@@ -102,17 +102,33 @@ void WifiHotspot::start() {
   std::ofstream  dhcpd_conf("/etc/dhcp/dhcpd.conf");
   dhcpd_conf << dhcpd_conf_content;
   dhcpd_conf.close();*/
-
+  started= true;
   std::cerr<<"Wifi hotspot started\n";
 }
 
 void WifiHotspot::stop() {
+  if(_start_async_thread){
+	if(_start_async_thread->joinable()){
+	  _start_async_thread->join();
+	}
+	_start_async_thread=nullptr;
+  }
+  if(!started)return;
   OHDUtil::run_command("systemctl",{"disable hostapd"});
   OHDUtil::run_command("systemctl",{"stop hostapd"});
 
   OHDUtil::run_command("systemctl",{"disable dnsmasq"});
   OHDUtil::run_command("systemctl",{"stop dnsmasq"});
   std::cout<<"Wifi hotspot stopped\n";
+}
+
+void WifiHotspot::start_async() {
+  if(_start_async_thread!= nullptr)return;
+  _start_async_thread=std::make_unique<std::thread>(&WifiHotspot::start, this);
+}
+void WifiHotspot::stop_async() {
+  if(_stop_async_thread!= nullptr)return;
+  _stop_async_thread=std::make_unique<std::thread>(&WifiHotspot::stop, this);
 }
 
 

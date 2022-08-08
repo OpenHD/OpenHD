@@ -12,6 +12,7 @@ extern "C" {
 
 #include <vector>
 #include <functional>
+#include <chrono>
 
 // OpenHD mavlink sys IDs
 static constexpr auto OHD_SYS_ID_GROUND = 100;
@@ -37,5 +38,10 @@ struct MavlinkMessage {
 
 // For registering a callback that is called every time component X receives a new Mavlink Message
 typedef std::function<void(MavlinkMessage &mavlinkMessage)> MAV_MSG_CALLBACK;
+
+static int64_t get_time_microseconds(){
+  const auto time=std::chrono::steady_clock::now().time_since_epoch();
+  return std::chrono::duration_cast<std::chrono::microseconds>(time).count();
+}
 
 #endif //XMAVLINKSERVICE_MAV_INCLUDE_H

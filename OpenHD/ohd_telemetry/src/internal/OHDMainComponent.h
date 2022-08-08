@@ -21,6 +21,7 @@
 #include "openhd-log.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-link-statistics.hpp"
+#include "OnboardComputerStatusHelper.h"
 
 // This Component runs on both the air and ground unit and should handle as many messages / commands / create as many
 // "fire and forget" messages as possible. For example, it broadcast the CPU load and other statistics, and responds to ping messages.
@@ -49,6 +50,8 @@ class OHDMainComponent : public MavlinkComponent{
   // just for convenience, the RUNS_ON_AIR variable determines the sys id.
   //const uint8_t mSysId;
   //const uint8_t mCompId=0;
+  // similar to ping
+  [[nodiscard]] std::optional<MavlinkMessage> handleTimeSyncMessage(const MavlinkMessage &message);
   [[nodiscard]] std::vector<MavlinkMessage> generateWifibroadcastStatistics();
   [[nodiscard]] MavlinkMessage generateOpenHDVersion()const;
   // pack all the buffered log messages
@@ -56,8 +59,10 @@ class OHDMainComponent : public MavlinkComponent{
   // here all the log messages are sent to - not in their mavlink form yet.
   std::unique_ptr<SocketHelper::UDPReceiver> logMessagesReceiver;
   StatusTextAccumulator _status_text_accumulator;
+  std::unique_ptr<openhd::CPUUsageCalculator> cpu_usage_calculator;
   std::mutex _last_link_stats_mutex;
   openhd::link_statistics::AllStats _last_link_stats{};
+  MavlinkMessage ack_command(const uint8_t source_sys_id,const uint8_t source_comp_id,uint16_t command_id);
 };
 
 #endif //XMAVLINKSERVICE_INTERNALTELEMETRY_H
