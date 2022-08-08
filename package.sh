@@ -81,7 +81,7 @@ echo "copied files"
 echo ${PKGDIR}
 
 
-VERSION="2.2.0-evo-$(date '+%m%d%H%M')-${VER2}"
+VERSION="2.2.1-evo-$(date '+%m%d%H%M')-${VER2}"
 echo ${VERSION}
 
 rm ${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb > /dev/null 2>&1
@@ -97,19 +97,11 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   --after-install ../../after-install.sh \
   --before-install ../../before-install.sh \
   $PLATFORM_PACKAGES \
-  -d "libasio-dev >= 1.10" \
-  -d "gnuplot-nox" \
-  -d "hostapd" \
   -d "iw" \
   -d "isc-dhcp-common" \
   -d "dnsmasq" \
   -d "aircrack-ng" \
-  -d "ser2net" \
   -d "i2c-tools" \
-  -d "dos2unix" \
-  -d "fuse" \
-  -d "socat" \
-  -d "ffmpeg" \
   -d "indent" \
   -d "libv4l-dev" \
   -d "libusb-1.0-0" \
@@ -121,7 +113,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   -d "libsdl1.2debian" \
   -d "libconfig++9v5" \
   -d "libreadline-dev" \
-  -d "libjpeg-dev" \
   -d "libsodium-dev" \
   -d "libfontconfig1" \
   -d "libfreetype6" \
