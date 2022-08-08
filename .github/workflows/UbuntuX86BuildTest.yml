@@ -1,4 +1,4 @@
-name: UbuntuX86BuildTest
+name: UbuntuX86Build
 
 on: [push]
 
@@ -29,8 +29,8 @@ jobs:
 
       - name: Install Dependencies
         run: |
-         sudo chmod +x install_dep_x86.sh
-         sudo ./install_dep_x86.sh
+         sudo chmod +x install_dep_ubuntu20.sh
+         sudo ./install_dep_ubuntu20.sh
 
       - name: Build with make
         run: |
