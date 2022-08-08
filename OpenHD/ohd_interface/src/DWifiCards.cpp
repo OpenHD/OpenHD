@@ -111,6 +111,9 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   bool supports_5ghz = false;
 
   int ret = phy_lookup((char *)interface_name.c_str(), atoi(phy_val.c_str()), &supports_2ghz, &supports_5ghz);
+  std::stringstream ss;
+  ss<<"Card"<<card.interface_name<<"Phy-lookup returned:{"<<"supports_2G:"<<OHDUtil::yes_or_no(supports_2ghz)<<" supports_5G:"<<OHDUtil::yes_or_no(supports_2ghz)<<"\n";
+  std::cout<<ss.str();
 
   std::stringstream address;
   address << "/sys/class/net/";
