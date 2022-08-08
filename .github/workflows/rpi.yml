@@ -36,7 +36,7 @@ jobs:
             ls -a
             cd /opt
             cd Open.HD
-            curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash
+            curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-2-alpha/setup.deb.sh' | sudo -E bash
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
             sudo ./install_dep.sh
