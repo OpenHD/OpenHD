@@ -34,7 +34,7 @@ jobs:
 
       - name: Build with make
         run: |
-          sudo ./package.sh x86_64 ubuntu jammy
+          sudo ./package.sh x86_64 ubuntu focal
           ls -a
 
       - name: Upload to Github
