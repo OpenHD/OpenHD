@@ -43,7 +43,7 @@ jobs:
           cd /opt
           cd Open.HD
           sudo apt update
-          sudo apt install curl
+          sudo apt install -y curl
           curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' | sudo -E bash
           sudo apt upgrade -y
           mkdir -p /usr/local/share/openhd/
