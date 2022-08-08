@@ -13,6 +13,7 @@
 #include <csignal>
 #include <thread>
 #include <arpa/inet.h>
+#include <regex>
 
 namespace OHDUtil {
 
@@ -113,6 +114,26 @@ static bool is_valid_ip(const std::string& ip){
 static std::string yes_or_no(bool yes){
   return (yes ? "Y" : "N");
 }
+
+// from https://stackoverflow.com/questions/3339200/get-string-between-2-strings
+static std::string string_in_between(const std::string& start,const std::string& end,const std::string& value){
+  std::regex base_regex(start + "(.*)" + end);
+  std::smatch base_match;
+  std::string matched;
+  if (std::regex_search(value, base_match, base_regex)) {
+	// The first sub_match is the whole string; the next
+	// sub_match is the first parenthesized expression.
+	if (base_match.size() == 2) {
+	  matched = base_match[1].str();
+	}
+  }
+  std::stringstream ss;
+  ss<<"Given:{"<<value<<"}\n";
+  ss<<"Result:{"<<matched<<"}\n";
+  std::cout <<ss.str();
+  return matched;
+}
+
 
 }
 

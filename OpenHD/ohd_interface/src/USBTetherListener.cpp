@@ -19,25 +19,6 @@ void USBTetherListener::loopInfinite() {
   }
 }
 
-// from https://stackoverflow.com/questions/3339200/get-string-between-2-strings
-static std::string string_in_between(const std::string& start,const std::string& end,const std::string& value){
-  std::regex base_regex(start + "(.*)" + end);
-  std::smatch base_match;
-  std::string matched;
-  if (std::regex_search(value, base_match, base_regex)) {
-	// The first sub_match is the whole string; the next
-	// sub_match is the first parenthesized expression.
-	if (base_match.size() == 2) {
-	  matched = base_match[1].str();
-	}
-  }
-  std::stringstream ss;
-  ss<<"Given:{"<<value<<"}\n";
-  ss<<"Result:{"<<matched<<"}\n";
-  std::cout <<ss.str();
-  return matched;
-}
-
 void USBTetherListener::connectOnce() {
   const char* connectedDevice="/sys/class/net/usb0";
   // in regular intervals, check if the device becomes available - if yes, the user connected an ethernet hotspot device.
@@ -65,8 +46,8 @@ void USBTetherListener::connectOnce() {
 	return;
   }
   const auto& run_command_result=run_command_result_opt.value();
-  const auto ip_external_device= string_in_between("default via "," proto",run_command_result);
-  const auto ip_self_network= string_in_between("src "," metric",run_command_result);
+  const auto ip_external_device= OHDUtil::string_in_between("default via "," proto",run_command_result);
+  const auto ip_self_network= OHDUtil::string_in_between("src "," metric",run_command_result);
 
   if(!OHDUtil::is_valid_ip(ip_external_device)){
 	std::stringstream ss;

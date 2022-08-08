@@ -27,7 +27,7 @@ enum class WiFiCardType {
 };
 NLOHMANN_JSON_SERIALIZE_ENUM( WiFiCardType, {
    {WiFiCardType::Unknown, nullptr},
-   {WiFiCardType::Realtek8188eu, "Realtek8188eu"},
+   {WiFiCardType::Realtek8812au, "Realtek8812au"},
    {WiFiCardType::Realtek8814au, "Realtek8814au"},
    {WiFiCardType::Realtek88x2bu, "Realtek88x2bu"},
    {WiFiCardType::Realtek8188eu, "Realtek8188eu"},
@@ -40,15 +40,16 @@ NLOHMANN_JSON_SERIALIZE_ENUM( WiFiCardType, {
 
 static std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
   switch (card_type) {
-    case WiFiCardType::Atheros9k:  return "ath9k";
-    case WiFiCardType::Atheros9khtc: return "ath9k_htc";
-    case WiFiCardType::Realtek8812au: return "88xxau";
-    case WiFiCardType::Realtek88x2bu: return "88x2bu";
-    case WiFiCardType::Realtek8188eu: return "8188eu";
-    case WiFiCardType::Ralink: return "rt2800usb";
-    case WiFiCardType::Intel: return "iwlwifi";
-    case WiFiCardType::Broadcom: return "brcmfmac";
-    default: return "unknown";
+	case WiFiCardType::Realtek8812au:return "Realtek8812au";
+	case WiFiCardType::Realtek8814au:return  "Realtek8814au";
+	case WiFiCardType::Realtek88x2bu:return  "Realtek88x2bu";
+	case WiFiCardType::Realtek8188eu:return  "Realtek8188eu";
+	case WiFiCardType::Atheros9khtc:return  "Atheros9khtc";
+	case WiFiCardType::Atheros9k:return  "Atheros9k";
+	case WiFiCardType::Ralink:return  "Ralink";
+	case WiFiCardType::Intel:return  "Intel";
+	case WiFiCardType::Broadcom:return  "Broadcom";
+	default: return "unknown";
   }
 }
 

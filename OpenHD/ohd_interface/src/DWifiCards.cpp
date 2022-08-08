@@ -7,6 +7,7 @@
 #include <regex>
 #include <iostream>
 #include <boost/algorithm/string/trim.hpp>
+#include <utility>
 
 extern "C" {
 #include "nl.h"
@@ -34,6 +35,37 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   }
   return WiFiCardType::Unknown;
 }
+
+// So stephen used phy-lookup to get the supported channels of a card - however, that doesn't work reliable.
+// This code uses "iwlist XXX frequency" which returns something the likes of:
+// openhd@openhd:~$ iwlist wlan1 frequency
+// wlan1     32 channels in total; available frequencies :
+//           Channel 01 : 2.412 GHz
+//                ...
+// So while annoying, let's just use iw dev and parse the result
+// For now, no seperation into which channel(s) are supported, just weather any 2.4G or 5G frequency is supported
+struct SupportedFrequency{
+  bool supports_2G=false;
+  bool supports_5G=false;
+};
+static SupportedFrequency supported_frequencies(const std::string& wifi_interface_name){
+  SupportedFrequency ret{false, false};
+  const std::string command="iwlist "+wifi_interface_name+" frequency";
+  const auto res_op=OHDUtil::run_command_out(command.c_str());
+  if(!res_op.has_value()){
+	std::cerr<<"get_supported_channels for "<<wifi_interface_name<<" failed\n";
+	return ret;
+  }
+  const auto& res=res_op.value();
+  if(res.find("5.")!= std::string::npos){
+	ret.supports_5G= true;
+  }
+  if(res.find("2.")!= std::string::npos){
+	ret.supports_2G= true;
+  }
+  return ret;
+}
+
 
 std::vector<WiFiCard> DWifiCards::discover() {
   std::cout << "WiFi::discover()\n";
@@ -105,12 +137,15 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   std::ifstream d(phy_file.str());
   std::string phy_val((std::istreambuf_iterator<char>(d)), std::istreambuf_iterator<char>());
 
-  // NOTE: phy-lookup doesn't seem to work all the time, especially with the modified wifi drivers.
-  // TODO I think the best way is just if we write the capabilities manually, depending on which card has been detected
-  bool supports_2ghz = false;
-  bool supports_5ghz = false;
+  // This reported value is right in most cases, so we use it as a default. However, for example the RTL8812AU reports
+  // both 2G and 5G but can only do 5G with the monitor mode driver.
+  const auto supported_freq= supported_frequencies(card.interface_name);
+  const bool supports_2ghz = supported_freq.supports_2G;
+  const bool supports_5ghz = supported_freq.supports_5G;
 
-  int ret = phy_lookup((char *)interface_name.c_str(), atoi(phy_val.c_str()), &supports_2ghz, &supports_5ghz);
+  std::stringstream ss;
+  ss<<"Card "<<card.interface_name<<" System reports:{"<<"supports_2G:"<<OHDUtil::yes_or_no(supports_2ghz)<<" supports_5G:"<<OHDUtil::yes_or_no(supports_2ghz)<<"\n";
+  std::cout<<ss.str();
 
   std::stringstream address;
   address << "/sys/class/net/";
@@ -129,7 +164,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = true;
 	  card.supports_injection = true;
-	  card.supports_hotspot = true;
+	  card.supports_hotspot = false;
 	  break;
 	}
 	case WiFiCardType::Atheros9khtc: {
@@ -137,7 +172,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = true;
 	  card.supports_injection = true;
-	  card.supports_hotspot = true;
+	  card.supports_hotspot = false;
 	  break;
 	}
 	case WiFiCardType::Ralink: {
@@ -145,7 +180,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
 	  card.supports_injection = true;
-	  card.supports_hotspot = true;
+	  card.supports_hotspot = false;
 	  break;
 	}
 	case WiFiCardType::Intel: {
@@ -153,7 +188,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
 	  card.supports_injection = false;
-	  card.supports_hotspot = true;
+	  card.supports_hotspot = false;
 	  break;
 	}
 	case WiFiCardType::Broadcom: {
@@ -165,14 +200,12 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  break;
 	}
 	case WiFiCardType::Realtek8812au: {
-	  //card.supports_5ghz = supports_5ghz;
-	  // For some reason, phy_lookup seems to not work when 2x RTL8812au are connected on the second card.
+	 // Known issue: Realtek8812au reports 2.4 and 5G, but only supports 5G in monitor mode
 	  card.supports_5ghz=true;
-	  // quirk, the driver doesn't support it for injection, we should allow it for hotspot though
 	  card.supports_2ghz =false;
 	  card.supports_rts = true;
 	  card.supports_injection = true;
-	  card.supports_hotspot = true;
+	  card.supports_hotspot = false;
 	  break;
 	}
 	case WiFiCardType::Realtek88x2bu: {
@@ -180,7 +213,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
 	  card.supports_injection = true;
-	  card.supports_hotspot = true;
+	  card.supports_hotspot = false;
 	  break;
 	}
 	case WiFiCardType::Realtek8188eu: {
@@ -188,15 +221,16 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
 	  card.supports_injection = true;
-	  card.supports_hotspot = true;
+	  card.supports_hotspot = false;
 	  break;
 	}
 	default: {
+	  std::cerr<<"Unknown card type for "<<card.interface_name<<"\n";
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
 	  card.supports_injection = false;
-	  card.supports_hotspot = true;
+	  card.supports_hotspot = false;
 	  break;
 	}
   }
@@ -207,6 +241,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   }
   // hacky there is something wron with phy-lookup
   if(!(card.supports_2ghz  || card.supports_5ghz)){
+	std::cerr<<"Card "<<card.interface_name<<" reports neither 2G nor 5G, default to 2G capable \n";
 	card.supports_2ghz=true;
   }
   return card;

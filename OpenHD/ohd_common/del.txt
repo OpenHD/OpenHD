@@ -195,3 +195,14 @@ static void create_directory_if_not_existing(const char* directory){
     }
     return platformSerialPort;*/
   }
+
+  // Return: A vector with the supported channel numbers
+  static std::vector<int> get_supported_channels(const std::string& wifi_interface_name){
+    const std::string command="iwlist "+wifi_interface_name+" frequency";
+    const auto res_op=OHDUtil::run_command_out(command.c_str());
+    if(!res_op.has_value()){
+  	std::cerr<<"get_supported_channels for "<<wifi_interface_name<<" failed\n";
+  	return {};
+    }
+    const auto res=res_op;
+  }
