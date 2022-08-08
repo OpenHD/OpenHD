@@ -1,4 +1,4 @@
-name: UbuntuX86BuildTest
+name: UbuntuX86Build
 
 on: [push]
 
@@ -9,7 +9,7 @@ env:
 jobs:
   build:
     #runs-on: ubuntu-18.04
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
     steps:
@@ -26,15 +26,26 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
-
+      - name: Install Repository
+        run: |
+          sudo apt install -y curl
+          sudo rm -Rf /etc/apt/sources.list.d/openhd*
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          sudo curl -1sLf \
+          'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' \
+          | sudo -E bash
+          sudo apt update
+          sudo apt -y install ruby-dev libfmt-dev
+          sudo gem install fpm
       - name: Install Dependencies
         run: |
-         sudo chmod +x install_dep_x86.sh
-         sudo ./install_dep_x86.sh
+          sudo chmod +x install_dep_ubuntu20.sh
+          sudo ./install_dep_ubuntu20.sh
 
       - name: Build with make
         run: |
-          sudo ./package.sh x86_64 ubuntu jammy
+          sudo ./package.sh x86_64 ubuntu focal
           ls -a
 
       - name: Upload to Github
@@ -56,6 +67,6 @@ jobs:
           owner: "openhd"
           repo: "openhd-2-2-evo"
           distro: "ubuntu"
-          release: "jammy"
+          release: "focal"
           republish: "true" # needed ONLY if version is not changing
           file: "*.deb"
