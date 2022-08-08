@@ -273,6 +273,11 @@ static void convert(openhd::link_statistics::StatsFECVideoStreamRx& dest,const F
   dest.count_bytes_forwarded=src.count_bytes_forwarded;
 }
 
+void WBStreams::set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) {
+  std::lock_guard<std::mutex> guard(_statisticsDataLock);
+  _stats_callback=std::move(stats_callback);
+}
+
 // TDOO fixme
 // This is completely not understandable, but I needed to quickly make it work for testing.
 void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
@@ -563,3 +568,4 @@ std::vector<openhd::Setting> WBStreams::get_all_settings(){
   openhd::validate_provided_ids(ret);
   return ret;
 }
+

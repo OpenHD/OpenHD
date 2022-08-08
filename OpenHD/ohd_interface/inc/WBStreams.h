@@ -26,9 +26,7 @@ class WBStreams {
   WBStreams(const WBStreams&)=delete;
   WBStreams(const WBStreams&&)=delete;
   // register callback that is called in regular intervals with link statistics
-  void set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback){
-	_stats_callback=std::move(stats_callback);
-  }
+  void set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback);
   // Verbose string about the current state.
   // could be const if there wasn't the mutex
   [[nodiscard]] std::string createDebug();
