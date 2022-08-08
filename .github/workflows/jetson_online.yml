@@ -43,11 +43,7 @@ jobs:
           apt update
           apt install -y curl
           rm -Rf /etc/apt/sources.list.d/openhd*
-          apt-get clean
-          rm -rf /var/lib/apt/lists/*
-          curl -1sLf \
-          'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' \
-          | sudo -E bash
+          curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' | sudo -E bash
           cd /opt/Open.HD
           apt update
           apt upgrade -y
