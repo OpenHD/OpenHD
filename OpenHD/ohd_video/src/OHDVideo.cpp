@@ -32,7 +32,7 @@ std::string OHDVideo::createDebug() const {
 
 void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
   const auto camera=camera_holder->get_camera();
-  std::cerr << "Configuring camera: " << camera_type_to_string(camera.type) << std::endl;
+  std::cout << "Configuring camera: " << camera_type_to_string(camera.type) << std::endl;
   // these are all using gstreamer at the moment, but that may not be the case forever
   switch (camera.type) {
     case CameraType::RaspberryPiCSI:
