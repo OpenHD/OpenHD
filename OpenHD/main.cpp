@@ -148,8 +148,13 @@ int main(int argc, char *argv[]) {
     // Then start ohdInterface, which discovers detected wifi cards and more.
     auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile);
 
+	auto ohd_action_handler=std::make_shared<openhd::ActionHandler>();
+	ohd_action_handler->action_restart_wb_streams_set([&ohdInterface](){
+	  ohdInterface->restart_wb_streams_async();
+	});
+
     // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
-    auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile);
+    auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile,ohd_action_handler);
 	// link stats from ohdInterface with telemetry
 	ohdInterface->set_stats_callback([&ohdTelemetry](openhd::link_statistics::AllStats stats){
 	  ohdTelemetry->set_link_statistics(stats);
