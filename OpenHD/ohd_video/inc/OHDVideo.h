@@ -18,8 +18,7 @@
  * Main entry point for OpenHD video streaming.
  * NOTE: This module only needs to be run on air pi, so to say it is a "Video
  * stream camera wrapper".
- * TODO: We need to feed mavlink commands coming from telemetry into here & send
- * them to the according streams.
+ * See the Readme.md for more information.
  */
 class OHDVideo {
  public:
@@ -39,13 +38,7 @@ class OHDVideo {
   void restartIfStopped();
   // can return an empty pointer if stream does not exist
   std::shared_ptr<CameraStream> get_stream_by_index(int idx);
-
-  // This performs the following steps:
-  // 1) Discover all the connected camera(s)
-  // 2) If no cameras are detected and add_dummy=true, add a dummy camera
-  // 3) Create a OHDVideo instance if there are any detected cameras, otherwise, return nullptr
-  //static std::shared_ptr<OHDVideo> discover_and_create(const bool add_dummy){
-  //}
+  // get all the settings for the discovered cameras
   std::vector<std::shared_ptr<openhd::ISettingsComponent>> get_setting_components(){
     std::vector<std::shared_ptr<openhd::ISettingsComponent>> ret;
     for(auto& stream: m_camera_streams){

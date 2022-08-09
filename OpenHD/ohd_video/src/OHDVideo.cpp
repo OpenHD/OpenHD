@@ -13,16 +13,8 @@ OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras) :
   for(const auto& camera:cameras){
     camera_holders.emplace_back(std::make_unique<CameraHolder>(camera));
   }
-  try {
-    for (auto &camera: camera_holders) {
-      configure(camera);
-    }
-  } catch (std::exception &ex) {
-    std::cerr << "Error: " << ex.what() << std::endl;
-    exit(1);
-  } catch (...) {
-    std::cerr << "Unknown exception occurred" << std::endl;
-    exit(1);
+  for (auto &camera: camera_holders) {
+	configure(camera);
   }
   std::cout << "OHDVideo::running\n";
 }
