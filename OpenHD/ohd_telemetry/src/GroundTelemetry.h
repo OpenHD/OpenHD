@@ -11,13 +11,14 @@
 #include "internal/OHDMainComponent.h"
 #include "mavlink_settings/ISettingsComponent.h"
 #include "mavsdk_temporary//XMavlinkParamProvider.h"
+#include "openhd-action-handler.hpp"
 
 /**
  * OpenHD Ground telemetry. Assumes a air instance running on the air pi.
  */
 class GroundTelemetry :public MavlinkSystem{
  public:
-  explicit GroundTelemetry(OHDPlatform platform);
+  explicit GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   GroundTelemetry(const GroundTelemetry&)=delete;
   GroundTelemetry(const GroundTelemetry&&)=delete;
   /**

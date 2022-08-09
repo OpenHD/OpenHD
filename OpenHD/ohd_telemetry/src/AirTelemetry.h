@@ -16,13 +16,14 @@
 //
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "AirTelemetrySettings.h"
+#include "openhd-action-handler.hpp"
 
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
  */
 class AirTelemetry : public MavlinkSystem{
  public:
-  explicit AirTelemetry(OHDPlatform platform);
+  explicit AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   AirTelemetry(const AirTelemetry&)=delete;
   AirTelemetry(const AirTelemetry&&)=delete;
   /**

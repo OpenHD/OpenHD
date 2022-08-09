@@ -12,22 +12,26 @@
 #include <utility>
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
+#include "openhd-action-handler.hpp"
 
 /**
  * This class holds either a Air telemetry or Ground Telemetry instance.
  */
 class OHDTelemetry {
  public:
-  OHDTelemetry(OHDPlatform platform1,OHDProfile profile1,bool enableExtendedLogging=false) : platform(platform1),profile(std::move(profile1)),m_enableExtendedLogging(enableExtendedLogging) {
+  OHDTelemetry(OHDPlatform platform1,OHDProfile profile1,
+			   std::shared_ptr<openhd::ActionHandler> action_handler=nullptr,
+			   bool enableExtendedLogging=false) :
+			   platform(platform1),profile(std::move(profile1)),m_enableExtendedLogging(enableExtendedLogging) {
     if (this->profile.is_air) {
-      airTelemetry = std::make_unique<AirTelemetry>(platform);
+      airTelemetry = std::make_unique<AirTelemetry>(platform,action_handler);
       assert(airTelemetry);
       loopThread = std::make_unique<std::thread>([this] {
         assert(airTelemetry);
         airTelemetry->loopInfinite(this->m_enableExtendedLogging);
       });
     } else {
-      groundTelemetry = std::make_unique<GroundTelemetry>(platform);
+      groundTelemetry = std::make_unique<GroundTelemetry>(platform,action_handler);
       assert(groundTelemetry);
       loopThread = std::make_unique<std::thread>([this] {
         assert(groundTelemetry);

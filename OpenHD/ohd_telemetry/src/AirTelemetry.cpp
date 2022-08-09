@@ -8,7 +8,7 @@
 #include <chrono>
 #include "openhd-util-filesystem.hpp"
 
-AirTelemetry::AirTelemetry(OHDPlatform platform): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
+AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   _airTelemetrySettings=std::make_unique<openhd::AirTelemetrySettingsHolder>();
   setup_uart();
   // any message coming in via wifibroadcast is a message from the ground pi
@@ -16,7 +16,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform): _platform(platform),MavlinkSys
   wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	onMessageGroundPi(msg);
   });
-  _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,true);
+  _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
   components.push_back(_ohd_main_component);
   //
   generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
