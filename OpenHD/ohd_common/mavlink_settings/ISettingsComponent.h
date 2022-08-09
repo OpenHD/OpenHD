@@ -24,7 +24,7 @@ struct SettingImpl{
   // return true to accept the value, otherwise return false.
   std::function<bool(std::string id,T requested_value)> change_callback=[](std::string id,T requested_value){
 	std::stringstream ss;
-	ss<<"Requested change "<<id<<" to "<<std::to_string(requested_value)<<"\n";
+	ss<<"Requested change "<<id<<" to "<<requested_value<<"\n";
 	std::cout<<ss.str();
 	return true;
   };
