@@ -4,7 +4,6 @@
 #include <gst/gst.h>
 
 #include <array>
-#include <stdexcept>
 #include <vector>
 #include <memory>
 #include <thread>

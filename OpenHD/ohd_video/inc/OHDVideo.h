@@ -8,7 +8,6 @@
 #include "camerastream.h"
 #include "openhd-platform.hpp"
 
-#include <exception>
 #include <fstream>
 #include <iostream>
 #include <iterator>

@@ -1,7 +1,6 @@
 #ifndef CAMERASTREAM_H
 #define CAMERASTREAM_H
 
-#include <stdexcept>
 #include <string>
 #include <vector>
 
