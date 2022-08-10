@@ -1,6 +1,8 @@
 name: Build RPI
 
 on: [push]
+branches:
+      - '2.1-milestones'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
