@@ -1,5 +1,6 @@
 name: simple_build_test
 
+# @Rapha please keep this one without any packaging or similar ;)
 # NOTE: This test only checks if the code in the repository builds under ubuntu x86 (dependencies installed)
 # Which is - simply put - the most basic test. If this test fails, there is something wrong with the code.
 
