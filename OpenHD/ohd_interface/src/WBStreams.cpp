@@ -555,11 +555,6 @@ std::vector<openhd::Setting> WBStreams::get_all_settings(){
   ret.push_back(Setting{WB_MCS_INDEX,change_wb_mcs_index});
   ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
 
-  // testing
-  /*if(!_profile.is_air){
-	openhd::testing::append_dummy_int_and_string(ret);
-  }*/
-
   if(_profile.is_air){
 	auto change_video_fec_block_length=openhd::IntSetting{(int)_settings->get_settings().wb_video_fec_block_length,[this](std::string,int value){
 	  return set_fec_block_length(value);
