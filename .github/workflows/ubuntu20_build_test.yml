@@ -23,6 +23,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          sudo apt-update
           sudo ./install_dep_ubuntu20.sh
       - name: Build with make
         run: |
