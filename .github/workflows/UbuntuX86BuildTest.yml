@@ -1,9 +1,8 @@
 name: UbuntuX86Build
 
-on: [push]
-  branches:
-    - 2.1-milestones
-
+on:
+  push:
+    branches: [ master, "2.0", "2.1-milestones" ]
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release

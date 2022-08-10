@@ -1,8 +1,8 @@
 name: Build Jetson ONLINE
 
-  on: [push]
-    branches:
-    - 2.1-milestones
+on:
+  push:
+    branches: [ master, "2.0", "2.1-milestones" ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
