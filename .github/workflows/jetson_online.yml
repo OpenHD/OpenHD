@@ -1,7 +1,7 @@
 name: Build Jetson ONLINE
 
-on: [push]
-  branches:
+  on: [push]
+    branches:
     - 2.1-milestones
 
 env:
