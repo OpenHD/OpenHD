@@ -49,6 +49,8 @@
 	* Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
 	*/
    void removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device);
+   // easy access without polluting the headers
+   static void print_internal_fec_optimization_method();
  private:
   const OHDProfile profile;
   const OHDPlatform platform;

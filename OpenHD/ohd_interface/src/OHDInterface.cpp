@@ -188,3 +188,6 @@ void OHDInterface::restart_wb_streams_async() {
 	wbStreams->restart_async(std::chrono::seconds(2));
   }
 }
+void OHDInterface::print_internal_fec_optimization_method() {
+  print_optimization_method();
+}

@@ -101,6 +101,7 @@ int main(int argc, char *argv[]) {
 	  "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n"<<
       "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n";
   std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
+  OHDInterface::print_internal_fec_optimization_method();
 
   try {
     if(options.clean_start){

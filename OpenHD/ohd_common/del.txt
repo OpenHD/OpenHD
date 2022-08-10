@@ -206,3 +206,41 @@ static void create_directory_if_not_existing(const char* directory){
     }
     const auto res=res_op;
   }
+
+// Makes it easier to dynamically disable / enable / change an uart endpoint
+class SerialEndpointHolder{
+ public:
+  SerialEndpointHolder() = default;
+
+  void setup(int fc_uart_connection_type,int fc_uart_baudrate){
+	assert(openhd::validate_uart_connection_type(fc_uart_connection_type));
+	// Disable the currently running uart configuration, if there is any
+	std::lock_guard<std::mutex> guard(_serialEndpointMutex);
+	if(serialEndpoint!=nullptr) {
+	  std::cout<<"Stopping already existing FC UART\n";
+	  serialEndpoint->stop();
+	  serialEndpoint.reset();
+	  serialEndpoint=nullptr;
+	}
+	if(fc_uart_connection_type==openhd::UART_CONNECTION_TYPE_DISABLE){
+	  // No uart enabled, we've already cleaned it up though
+	  std::cout<<"FC UART disabled\n";
+	  return;
+	}else{
+	  std::cout<<"FC UART enable - begin\n";
+	  SerialEndpoint::HWOptions options{};
+	  options.linux_filename=openhd::uart_fd_from_connection_type(fc_uart_connection_type).value();
+	  options.baud_rate=fc_uart_baudrate;
+	  options.flow_control= false;
+	  serialEndpoint=std::make_unique<SerialEndpoint>("SerialEndpointUARTFC",options);
+	  serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
+		//this->onMessageFC(msg);
+	  });
+	  std::cout<<"FC UART enable - end\n";
+	}
+  }
+
+ private:
+  std::mutex _serialEndpointMutex;
+  std::unique_ptr<SerialEndpoint> serialEndpoint=nullptr;
+};
