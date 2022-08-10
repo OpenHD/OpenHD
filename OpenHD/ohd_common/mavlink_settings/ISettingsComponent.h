@@ -83,6 +83,21 @@ static std::vector<Setting> create_dummy_ground_settings() {
   };
   return ret;
 }
+
+// takes a reference because openhd::Setting has no move/copy
+static void append_dummy_int_and_string(std::vector<Setting>& ret){
+  for(int i=0;i<5;i++){
+	auto tmp=openhd::IntSetting{i};
+	const std::string id="TEST_INT_"+std::to_string(i);
+	ret.push_back(Setting{id,tmp});
+  }
+  for(int i=0;i<2;i++){
+	const std::string value="val"+std::to_string(i);
+	auto tmp=openhd::StringSetting{value};
+	const std::string id="TEST_STRING_"+std::to_string(i);
+	ret.push_back(Setting{id,tmp});
+  }
+}
 }
 
 }

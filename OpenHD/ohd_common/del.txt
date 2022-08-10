@@ -206,18 +206,3 @@ static void create_directory_if_not_existing(const char* directory){
     }
     const auto res=res_op;
   }
-
-  // testing
-  if(!_profile.is_air){
-	for(int i=0;i<5;i++){
-	  auto tmp=openhd::IntSetting{i};
-	  const std::string id="TEST_INT_"+std::to_string(i);
-	  ret.push_back(Setting{id,tmp});
-	}
-	for(int i=0;i<2;i++){
-	  const std::string value="val"+std::to_string(i);
-	  auto tmp=openhd::StringSetting{value};
-	  const std::string id="TEST_STRING_"+std::to_string(i);
-	  ret.push_back(Setting{id,tmp});
-	}
-  }
