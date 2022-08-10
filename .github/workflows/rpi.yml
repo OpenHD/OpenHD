@@ -1,6 +1,8 @@
 name: Build RPI
 
-on: [push]
+on:
+  push:
+    branches: [ master, "2.0", "2.1-milestones" ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -36,9 +38,11 @@ jobs:
             ls -a
             cd /opt
             cd Open.HD
-            curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-1-alpha/setup.deb.sh' | sudo -E bash
+            sudo apt update
+            curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' | sudo -E bash
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
+            sudo apt update
             sudo ./install_dep.sh
             sudo ./package.sh armhf raspbian bullseye
             ls -a

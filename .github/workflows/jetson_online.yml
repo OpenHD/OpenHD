@@ -1,6 +1,8 @@
 name: Build Jetson ONLINE
 
-on: [push]
+on:
+  push:
+    branches: [ master, "2.0", "2.1-milestones" ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -40,9 +42,12 @@ jobs:
         import_github_env: true
         commands: |
           ls -a
-          cd /opt/Open.HD
-          apt update
-          apt upgrade -y
+          cd /opt
+          cd Open.HD
+          sudo apt update
+          sudo apt install -y curl
+          curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' | sudo -E bash
+          sudo apt upgrade -y
           mkdir -p /usr/local/share/openhd/
           touch /usr/local/share/openhd/joyconfig.txt
           ls -a  
