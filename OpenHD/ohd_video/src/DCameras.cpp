@@ -96,7 +96,7 @@ void DCameras::detect_raspberrypi_veye() {
 	std::cout << "DCameras::cannot enable veye: camera_i2c_config failed\n";
 	return;
   }
-  const auto i2cdetect_veye_result_opt=OHDUtil::run_command_out("i2cdetect -y 0 0x3b 0x3b | grep  '3b'");
+  const auto i2cdetect_veye_result_opt=OHDUtil::run_command_out("i2cdetect -y 10 0x3b 0x3b | grep  '3b'");
   if(!i2cdetect_veye_result_opt.has_value()){
 	std::cout << "DCameras::cannot enable veye: i2cdetect failed\n";
 	return;
