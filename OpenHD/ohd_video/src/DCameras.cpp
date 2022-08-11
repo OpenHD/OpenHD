@@ -91,7 +91,7 @@ void DCameras::detect_raspberrypi_csi() {
 
 void DCameras::detect_raspberrypi_veye() {
   std::cout << "DCameras::detect_raspberrypi_veye()\n";
-  const auto success=OHDUtil::run_command("bash /usr/local/share/veye-raspberrypi/camera_i2c_config",{});
+  const auto success=OHDUtil::run_command("/usr/local/share/veye-raspberrypi/camera_i2c_config",{});
   if (!success) {
 	std::cout << "DCameras::cannot enable veye: camera_i2c_config failed\n";
 	return;
