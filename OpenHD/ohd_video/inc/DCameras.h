@@ -39,7 +39,7 @@ class DCameras {
    */
   void detect_raspberrypi_csi();
   // hacky
-  void detect_raspberrypi_veye();
+  bool detect_raspberrypi_veye();
   /*
    * Detect all v4l2 cameras, that is cameras that show up as a v4l2 device
    * (/dev/videoXX)

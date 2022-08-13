@@ -24,8 +24,14 @@ DiscoveredCameraList DCameras::discover_internal() {
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
   if(ohdPlatform.platform_type==PlatformType::RaspberryPi){
-	detect_raspberrypi_csi();
-	detect_raspberrypi_veye();
+	// We need to detect the veye camera first - since once a veye camera is detected and
+	// ? eitehr run the veye_raspivid or do the initializing stuff) the "normal" rpi camera detection
+	// hangs infinite.
+	if(detect_raspberrypi_veye()){
+	  std::cerr<<"WARNING detected veye camera, skipping normal rpi camera detection\n";
+	}else{
+	  detect_raspberrypi_csi();
+	}
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
   // Will need custom debugging before anything here is usable again though.
@@ -89,17 +95,17 @@ void DCameras::detect_raspberrypi_csi() {
   }
 }
 
-void DCameras::detect_raspberrypi_veye() {
+bool DCameras::detect_raspberrypi_veye() {
   std::cout << "DCameras::detect_raspberrypi_veye()\n";
   // This script always fails, but works anyways ?
   const auto success=OHDUtil::run_command("/usr/local/share/veye-raspberrypi/camera_i2c_config",{});
   if (!success) {
 	std::cout << "Veye Enabled\n";
-	}
+  }
   const auto i2cdetect_veye_result_opt=OHDUtil::run_command_out("i2cdetect -y 10 0x3b 0x3b | grep  '3b'");
   if(!i2cdetect_veye_result_opt.has_value()){
-	std::cout << "DCameras::cannot enable veye: i2cdetect failed\n";
-	return;
+	std::cout << "i2cdetect run command failed, is it installed ?\n";
+	return false;
   }
   const auto& i2cdetect_veye_result=i2cdetect_veye_result_opt.value();
   std::cerr << "i2cdetect_veye_result: "<<i2cdetect_veye_result << std::endl;
@@ -107,7 +113,7 @@ void DCameras::detect_raspberrypi_veye() {
   std::regex r{ "30:                                  3b            "};
   if (!std::regex_search(i2cdetect_veye_result, result, r)) {
 	std::cerr << "Cameras::detect_raspberrypi_veye() no regex match" << std::endl;
-	return;
+	return false;
   }
   Camera camera;
   camera.name = "Pi VEYE 0";
@@ -124,6 +130,7 @@ void DCameras::detect_raspberrypi_veye() {
   endpoint.formats.emplace_back("H.264|1920x1080@30");
   m_camera_endpoints.push_back(endpoint);
   m_cameras.push_back(camera);
+  return true;
 }
 
 

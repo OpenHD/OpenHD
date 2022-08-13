@@ -55,7 +55,6 @@ void VEYEStream::restartIfStopped() {
 void VEYEStream::start() {
   std::cout<<"VEYEStream::start() begin\n";
   const auto res=OHDUtil::run_command(pipeline,{"&"});
-
   std::cout<<"VEYEStream::start() end\n";
 }
 
@@ -68,5 +67,7 @@ std::string VEYEStream::createDebug() {
 }
 
 void VEYEStream::restart_async() {
+  std::cout<<"VEYEStream::restart_async() begin\n";
 
+  std::cout<<"VEYEStream::restart_async() end\n";
 }

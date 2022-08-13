@@ -16,6 +16,11 @@
 
 // Unfortunately, we do not have an rpicamsrc equivalent for the veye -
 // This is a hacky (perhaps temporary) workaround
+// NOTE: The problem here is that we cannot just run a gstreamer pipe from c++ via gst_parse_launch() but rather
+// run veye_raspivid and pipe its output into a gstreamer instance.
+// R.n I have this one setup really similar to how video was done in EZ-WB and more, and honestly, i quite like it
+// Since it is that simple. A disadvantage though is that debugging is much more complicated, since you now don#t debug
+// a c++ application, but rather some processes started by a c++ application.
 class VEYEStream :public CameraStream {
  public:
   VEYEStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
