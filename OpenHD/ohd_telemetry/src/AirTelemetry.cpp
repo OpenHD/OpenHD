@@ -28,6 +28,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
 }
 
 void AirTelemetry::sendMessageFC(const MavlinkMessage &message) {
+  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
   if(serialEndpoint){
     serialEndpoint->sendMessage(message);
   }else{
@@ -79,6 +80,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
           if (enableExtendedLogging && wifibroadcastEndpoint) {
             std::cout<<wifibroadcastEndpoint->createInfo();
           }
+		  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
           if (enableExtendedLogging && serialEndpoint) {
             std::cout<<serialEndpoint->createInfo();
           }
@@ -105,6 +107,7 @@ std::string AirTelemetry::createDebug() const {
   if ( wifibroadcastEndpoint) {
 	ss<<wifibroadcastEndpoint->createInfo();
   }
+  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
   if (serialEndpoint) {
 	ss<<serialEndpoint->createInfo();
   }
