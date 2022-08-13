@@ -97,11 +97,7 @@ void DCameras::detect_raspberrypi_csi() {
 
 bool DCameras::detect_raspberrypi_veye() {
   std::cout << "DCameras::detect_raspberrypi_veye()\n";
-  // This script always fails, but works anyways ?
-  const auto success=OHDUtil::run_command("/usr/local/share/veye-raspberrypi/camera_i2c_config",{});
-  if (!success) {
-	std::cout << "Veye Enabled\n";
-  }
+  // First, we use i2cdetect to find out if there is a veye camera
   const auto i2cdetect_veye_result_opt=OHDUtil::run_command_out("i2cdetect -y 10 0x3b 0x3b | grep  '3b'");
   if(!i2cdetect_veye_result_opt.has_value()){
 	std::cout << "i2cdetect run command failed, is it installed ?\n";
@@ -112,9 +108,13 @@ bool DCameras::detect_raspberrypi_veye() {
   std::smatch result;
   std::regex r{ "30:                                  3b            "};
   if (!std::regex_search(i2cdetect_veye_result, result, r)) {
-	std::cerr << "Cameras::detect_raspberrypi_veye() no regex match" << std::endl;
+	std::cerr << "Cameras::detect_raspberrypi_veye() no regex match \n";
 	return false;
   }
+  std::cout<<"Found veye camera\n";
+  // R.n we are not sure if this script is needed, but for now, leave it in.
+  // This script always fails, but works anyways ?
+  const auto success=OHDUtil::run_command("/usr/local/share/veye-raspberrypi/camera_i2c_config",{});
   Camera camera;
   camera.name = "Pi VEYE 0";
   camera.vendor = "VEYE";
