@@ -30,6 +30,9 @@ void VEYEStream::setup() {
   ss<<"veye_raspivid ";
   const int bitrateBitsPerSecond = OHDGstHelper::kbits_to_bits_per_second(setting.bitrateKBits);
   ss<<"-b "<<bitrateBitsPerSecond<<" ";
+  ss<<"-w "<<setting.userSelectedVideoFormat.width<<" ";
+  ss<<"-h "<<setting.userSelectedVideoFormat.width<<" ";
+  ss<<"-fps "<<setting.userSelectedVideoFormat.framerate<<" ";
   ss<<"-t 0 -o - ";
   ss<<"| gst-launch-1.0 -v fdsrc ! ";
 
