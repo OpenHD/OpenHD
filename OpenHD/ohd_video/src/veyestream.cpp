@@ -70,26 +70,26 @@ void VEYEStream::start() {
 	std::cout<<"Streaming disabled\n";
 	return;
   }
-  assert(_veye_thread== nullptr);
+  /*assert(_veye_thread== nullptr);
   _veye_thread=std::make_unique<std::thread>( [this]{
 	auto res=OHDUtil::run_command_out(pipeline.c_str());
 	if(res.has_value()){
 	  std::cout<<"Veye thread returned with "<<res.value()<<"\n";
 	}
-  });
+  });*/
   // start streaming (process in the background)
   // run in background and pipe std::cout and std::cerr to file
-  //OHDUtil::run_command(pipeline,{"&> /tmp/veye.log &"});
+  OHDUtil::run_command(pipeline,{"&> /tmp/veye.log &"});
   std::cout<<"VEYEStream::start() end\n";
 }
 
 void VEYEStream::stop() {
   openhd::veye::kill_all_running_veye_instances();
-  if(_veye_thread->joinable()){
+  /*if(_veye_thread->joinable()){
 	std::cout<<"Joining veye thread\n";
 	_veye_thread->join();
   }
-  _veye_thread=nullptr;
+  _veye_thread=nullptr;*/
 }
 
 std::string VEYEStream::createDebug() {
