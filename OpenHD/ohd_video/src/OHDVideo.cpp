@@ -3,6 +3,7 @@
 //
 #include "OHDVideo.h"
 #include "gstreamerstream.h"
+#include "veyestream.h"
 
 OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras) :
 	platform(platform1) {

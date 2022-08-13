@@ -34,6 +34,7 @@ SET(ALL_VIDEO_SOURCE_FILES
         src/camerastream.cpp
         src/gstreamerstream.cpp
         src/libcamerastream.cpp
+        src/veyestream.cpp
         src/OHDVideo.cpp
         src/DCameras.cpp)
 
