@@ -45,6 +45,7 @@ void GStreamerStream::setup() {
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
   if(!setting.enable_streaming){
+	// When streaming is disabled, we just don't create the pipeline. We fully restart on all changes anyways.
 	std::cout<<"Streaming disabled\n";
 	return;
   }
