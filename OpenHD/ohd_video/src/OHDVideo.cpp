@@ -34,16 +34,25 @@ std::string OHDVideo::createDebug() const {
 void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
   const auto camera=camera_holder->get_camera();
   std::cout << "Configuring camera: " << camera_type_to_string(camera.type) << std::endl;
-  // these are all using gstreamer at the moment, but that may not be the case forever
+  // R.N we use gstreamer only for everything except veye
+  // (veye also uses gstreamer, but we do not launch it via gst-launch)
   switch (camera.type) {
+	case CameraType::RaspberryPiVEYE:{
+	  std::cout << "VEYE stream for Camera index:" << camera.index << "\n";
+	  const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
+	  auto stream = std::make_shared<VEYEStream>(platform.platform_type, camera_holder, udp_port);
+	  stream->setup();
+	  stream->start();
+	  m_camera_streams.push_back(stream);
+	  break;
+	}
     case CameraType::RaspberryPiCSI:
-    case CameraType::RaspberryPiVEYE:
     case CameraType::JetsonCSI:
     case CameraType::IP:
     case CameraType::RockchipCSI:
     case CameraType::UVC:
     case CameraType::Dummy: {
-      std::cout << "Camera index:" << camera.index << "\n";
+      std::cout << "GStreamerStream for Camera index:" << camera.index << "\n";
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
       auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera_holder, udp_port);
       stream->setup();
