@@ -39,21 +39,21 @@ NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
 static std::string camera_type_to_string(const CameraType &camera_type) {
   switch (camera_type) {
     case CameraType::RaspberryPiCSI:
-      return "pi-csi";
+      return "RaspberryPiCSI";
     case CameraType::RaspberryPiVEYE:
-      return "pi-veye";
+      return "RaspberryPiVEYE";
     case CameraType::JetsonCSI:
-      return "jetson-csi";
+      return "JetsonCSI";
     case CameraType::RockchipCSI:
-      return "rockchip-csi";
+      return "RockchipCSI";
     case CameraType::UVC:
-      return "uvc";
+      return "UVC";
     case CameraType::UVCH264:
-      return "uvch264";
+      return "UVCH264";
     case CameraType::IP:
-      return "ip";
+      return "IP";
     case CameraType::Dummy:
-      return "dummy";
+      return "Dummy";
     default:
       return "unknown";
   }
