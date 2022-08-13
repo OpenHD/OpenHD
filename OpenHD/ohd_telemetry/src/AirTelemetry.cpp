@@ -33,10 +33,6 @@ void AirTelemetry::sendMessageFC(const MavlinkMessage &message) {
   }else{
     //std::cout<<"Cannot send message to FC\n";
   }
-  if(message.m.msgid==MAVLINK_MSG_ID_PING){
-    //std::cout<<"Sent ping to FC\n";
-    //MavlinkHelpers::debugMavlinkPingMessage(message.m);
-  }
 }
 
 void AirTelemetry::sendMessageGroundPi(const MavlinkMessage &message) {
