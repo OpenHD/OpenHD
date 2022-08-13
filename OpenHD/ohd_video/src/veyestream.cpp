@@ -54,12 +54,12 @@ void VEYEStream::restartIfStopped() {
 
 void VEYEStream::start() {
   std::cout<<"VEYEStream::start() begin\n";
-  //const auto res=OHDUtil::run_command(pipeline,{"&"});
+  const auto res=OHDUtil::run_command(pipeline,{"&"});
   std::cout<<"VEYEStream::start() end\n";
 }
 
 void VEYEStream::stop() {
-  //OHDUtil::run_command("killall ",{"\"/usr/local/share/veye-raspberrypi/veye_raspivid\""});
+  OHDUtil::run_command("killall ",{"\"/usr/local/share/veye-raspberrypi/veye_raspivid\""});
 }
 
 std::string VEYEStream::createDebug() {
