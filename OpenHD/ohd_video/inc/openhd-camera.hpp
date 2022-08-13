@@ -32,6 +32,10 @@ static bool check_bitrate_sane(const int bitrateKBits) {
 // These values are settings that can change dynamically at run time
 // (non-deterministic)
 struct CameraSettings {
+  // Enable / Disable streaming for this camera
+  // This can be usefully for debugging, but also when the there is suddenly a really high interference,
+  // and the user wants to fly home without video, using only telemetry / HUD
+  bool enable_streaming=true;
   // The video format selected by the user. If the user sets a video format that
   // isn't supported (for example, he might select h264|1920x1080@120 but the
   // camera can only do 60fps) The stream should default to the first available
@@ -64,7 +68,7 @@ struct CameraSettings {
   int awb_mode=0;
   int exposure_mode=0;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,userSelectedVideoFormat,bitrateKBits,url,air_recording,camera_rotation_degree,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,userSelectedVideoFormat,bitrateKBits,url,air_recording,camera_rotation_degree,
 								   awb_mode,exposure_mode)
 
 struct CameraEndpoint {
@@ -144,6 +148,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
   }
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings() override{
+	auto c_enable_streaming=[this](std::string,int value) {
+	  return set_enable_streaming(value);
+	};
 	auto c_width=[this](std::string,int value) {
 	  return set_video_width(value);
 	};
@@ -163,6 +170,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  return set_air_recording(value);
 	};
 	std::vector<openhd::Setting> ret={
+		openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
 		openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,c_width}},
 		openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{get_settings().userSelectedVideoFormat.height,c_height}},
 		openhd::Setting{"VIDEO_FPS",openhd::IntSetting{get_settings().userSelectedVideoFormat.framerate,c_fps}},
@@ -189,6 +197,14 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  ret.push_back(openhd::Setting{"V_EXP_MODE",openhd::IntSetting{get_settings().exposure_mode,cb}});
 	}
 	return ret;
+  }
+  bool set_enable_streaming(int enable){
+	if(!(enable==0 || enable==1)){
+	  return false;
+	}
+	unsafe_get_settings().enable_streaming=static_cast<bool>(enable);
+	persist();
+	return true;
   }
   bool set_video_width(int video_width){
 	if(!openhd::validate_video_with(video_width)){
