@@ -14,6 +14,7 @@
 namespace openhd::veye{
 
 // TODO: does this also kill OpenHD, since it is started from OpenHD ?!
+// Answer: I am pretty sure it doesn't.
 static void kill_all_running_veye_instances(){
   std::stringstream command;
   command<<"killall "<<"\"/usr/local/share/veye-raspberrypi/veye_raspivid\"";

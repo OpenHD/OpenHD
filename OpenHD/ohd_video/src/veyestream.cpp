@@ -71,7 +71,8 @@ void VEYEStream::start() {
 	return;
   }
   // start streaming (process in the background)
-  const auto res=OHDUtil::run_command(pipeline,{"&"});
+  // run in background and pipe std::cout and std::cerr to file
+  OHDUtil::run_command(pipeline,{"&> /tmp/veye.log &"});
   std::cout<<"VEYEStream::start() end\n";
 }
 
