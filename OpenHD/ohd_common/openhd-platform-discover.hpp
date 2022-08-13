@@ -63,24 +63,27 @@ class DPlatform {
     const PlatformType platform_type = PlatformType::RaspberryPi;
     BoardType board_type=BoardType::Unknown;
 
-    std::string raspberry_identifier = result[1];
+    const std::string raspberry_identifier = result[1];
+	std::cout<<"Pi identifier:{"<<raspberry_identifier<<"}\n";
 
-    std::set<std::string> pi4b_identifiers = {"a03111", "b03111", "b03112", "c03111", "c03112", "d03114"};
+    //const std::set<std::string> pi4b_identifiers = {"a03111", "b03111", "b03112", "c03111", "c03112", "d03114"};
+	// Not sure
+	const std::set<std::string> pi4b_identifiers = {"a03111", "b03111", "b03112", "c03111", "c03112", "d03114","b03115"};
     if (pi4b_identifiers.find(raspberry_identifier) != pi4b_identifiers.end()) {
       board_type = BoardType::RaspberryPi4B;
     }
 
-    std::set<std::string> pi3b_identifiers = {"2a02082", "2a22082", "2a32082", "2a52082"};
+    const std::set<std::string> pi3b_identifiers = {"2a02082", "2a22082", "2a32082", "2a52082"};
     if (pi3b_identifiers.find(raspberry_identifier) != pi3b_identifiers.end()) {
       board_type = BoardType::RaspberryPi3B;
     }
 
-    std::set<std::string> pizero_identifiers = {"2900092", "2900093", "2920092", "2920093"};
+    const std::set<std::string> pizero_identifiers = {"2900092", "2900093", "2920092", "2920093"};
     if (pizero_identifiers.find(raspberry_identifier) != pizero_identifiers.end()) {
       board_type = BoardType::RaspberryPiZero;
     }
 
-    std::set<std::string> pi2b_identifiers = {"2a22042", "2a21041", "2a01041", "2a01040"};
+    const std::set<std::string> pi2b_identifiers = {"2a22042", "2a21041", "2a01041", "2a01040"};
     if (pi2b_identifiers.find(raspberry_identifier) != pi2b_identifiers.end()) {
       board_type = BoardType::RaspberryPi2B;
     }
