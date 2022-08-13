@@ -42,6 +42,8 @@ void VEYEStream::setup() {
   ss<<"-h "<<setting.userSelectedVideoFormat.width<<" ";
   ss<<"-fps "<<setting.userSelectedVideoFormat.framerate<<" ";
   ss<<"--profile constrained-baseline ";
+  // no preview
+  ss<<"-n ";
   //ss<<"--level 3 ";
   ss<<"-t 0 -o - ";
   //ss<<"| gst-launch-1.0 -v fdsrc ! ";
