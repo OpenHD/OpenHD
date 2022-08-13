@@ -230,8 +230,11 @@ void GStreamerStream::restartIfStopped() {
   GstState pending;
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
   if (returnValue == 0) {
-	std::cerr<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name<<"\n";
+	std::stringstream message;
+	message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name<<"\n";
 	// We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
+	// Log such that it shows up in QOpenHD
+	LOGE<<message.str();
 	stop();
 	cleanup_pipe();
 	setup();
