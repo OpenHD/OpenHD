@@ -66,8 +66,8 @@ void DCameras::detect_raspberrypi_csi() {
 	std::cout << "Cameras::detect_raspberrypi_csi() regex unexpected result" << std::endl;
 	return;
   }
-  std::string supported = result[1];
-  std::string detected = result[2];
+  const std::string supported = result[1];
+  const std::string detected = result[2];
   std::cout << "Cameras::detect_raspberrypi_csi() supported=" + supported + " detected=" + detected << std::endl;
   const auto camera_count = atoi(detected.c_str());
   if (camera_count >= 1) {
