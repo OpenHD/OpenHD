@@ -105,7 +105,7 @@ bool DCameras::detect_raspberrypi_veye() {
 	return false;
   }
   const auto& i2cdetect_veye_result=i2cdetect_veye_result_opt.value();
-  std::cerr << "i2cdetect_veye_result: "<<i2cdetect_veye_result << std::endl;
+  std::cerr << "i2cdetect_veye_result:{"<<i2cdetect_veye_result << "}\n";
   std::smatch result;
   std::regex r{ "30:                                  3b            "};
   if (!std::regex_search(i2cdetect_veye_result, result, r)) {
