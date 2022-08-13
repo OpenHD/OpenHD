@@ -41,9 +41,13 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
 }
 
 void GStreamerStream::setup() {
-  std::cout << "GStreamerStream::setup()" << std::endl;
+  std::cout << "GStreamerStream::setup() begin\n";
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
+  if(!setting.enable_streaming){
+	std::cout<<"Streaming disabled\n";
+	return;
+  }
   m_pipeline.str("");
   m_pipeline.clear();
   switch (camera.type) {
@@ -109,6 +113,7 @@ void GStreamerStream::setup() {
   assert(gst_pipeline== nullptr);
   GError *error = nullptr;
   gst_pipeline = gst_parse_launch(m_pipeline.str().c_str(), &error);
+  std::cout << "GStreamerStream::setup() end\n";
   if (error) {
 	std::cerr << "Failed to create pipeline: " << error->message << std::endl;
 	return;
@@ -194,6 +199,11 @@ std::string GStreamerStream::createDebug(){
 	// We can just discard statistics data during a re-start
 	return "GStreamerStream::No debug during restart\n";
   }
+  if(!_camera_holder->get_settings().enable_streaming){
+	std::stringstream ss;
+	ss << "GStreamerStream for camera:"<<_camera_holder->get_camera().debugName()<<" disabled";
+	return ss.str();
+  }
   std::stringstream ss;
   GstState state;
   GstState pending;
@@ -203,7 +213,11 @@ std::string GStreamerStream::createDebug(){
 }
 
 void GStreamerStream::start() {
-  std::cout << "GStreamerStream::start()" << std::endl;
+  std::cout << "GStreamerStream::start()\n";
+  if(!gst_pipeline){
+	std::cout<<"gst_pipeline==null\n";
+	return;
+  }
   gst_element_set_state(gst_pipeline, GST_STATE_PLAYING);
   GstState state;
   GstState pending;
@@ -212,12 +226,20 @@ void GStreamerStream::start() {
 }
 
 void GStreamerStream::stop() {
-  std::cout << "GStreamerStream::stop()" << std::endl;
+  std::cout << "GStreamerStream::stop()\n";
+  if(!gst_pipeline){
+	std::cout<<"gst_pipeline==null\n";
+	return;
+  }
   gst_element_set_state(gst_pipeline, GST_STATE_PAUSED);
 }
 
 void GStreamerStream::cleanup_pipe() {
   std::cout<<"GStreamerStream::cleanup_pipe() begin\n";
+  if(!gst_pipeline){
+	std::cout<<"gst_pipeline==null\n";
+	return;
+  }
   gst_element_set_state (gst_pipeline, GST_STATE_NULL);
   gst_object_unref (gst_pipeline);
   gst_pipeline=nullptr;
@@ -226,6 +248,10 @@ void GStreamerStream::cleanup_pipe() {
 
 void GStreamerStream::restartIfStopped() {
   std::lock_guard<std::mutex> guard(_pipeline_mutex);
+  if(!gst_pipeline){
+	std::cout<<"gst_pipeline==null\n";
+	return;
+  }
   GstState state;
   GstState pending;
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
