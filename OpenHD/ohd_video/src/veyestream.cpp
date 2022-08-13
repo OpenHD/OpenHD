@@ -68,6 +68,8 @@ std::string VEYEStream::createDebug() {
 
 void VEYEStream::restart_async() {
   std::cout<<"VEYEStream::restart_async() begin\n";
-
+  stop();
+  setup();
+  start();
   std::cout<<"VEYEStream::restart_async() end\n";
 }
