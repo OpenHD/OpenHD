@@ -17,7 +17,6 @@ VEYEStream::VEYEStream(PlatformType platform, std::shared_ptr<CameraHolder> came
 	// right now, every time the settings for this camera change, we just re-start the whole stream.
 	// That is not ideal, since some cameras support changing for example the bitrate or white balance during operation.
 	// But wiring that up is not that easy.
-	//this->restart_after_new_setting();
 	this->restart_async();
   });
   // sanity checks
