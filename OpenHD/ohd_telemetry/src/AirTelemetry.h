@@ -31,7 +31,7 @@ class AirTelemetry : public MavlinkSystem{
    * @param enableExtendedLogging be really verbose on logging.
    */
   [[noreturn]] void loopInfinite(bool enableExtendedLogging = false);
-  [[nodiscard]] std::string createDebug()const;
+  [[nodiscard]] std::string createDebug();
   // add settings to the generic mavlink parameter server
   // changes are propagated back through the settings instances
   void add_settings_generic(const std::vector<openhd::Setting>& settings);

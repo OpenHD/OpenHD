@@ -101,7 +101,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   }
 }
 
-std::string AirTelemetry::createDebug() const {
+std::string AirTelemetry::createDebug(){
   std::stringstream ss;
   //ss<<"AT:\n";
   if ( wifibroadcastEndpoint) {
