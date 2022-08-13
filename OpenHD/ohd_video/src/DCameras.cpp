@@ -14,7 +14,7 @@
 #include <iostream>
 #include <regex>
 
-DCameras::DCameras(const OHDPlatform& ohdPlatform) :
+DCameras::DCameras(const OHDPlatform ohdPlatform) :
 	ohdPlatform(ohdPlatform){}
 
 DiscoveredCameraList DCameras::discover_internal() {
@@ -357,12 +357,12 @@ void DCameras::argh_cleanup() {
   write_camera_manifest(m_cameras);
 }
 
-DiscoveredCameraList DCameras::discover(const OHDPlatform& ohdPlatform) {
+DiscoveredCameraList DCameras::discover(const OHDPlatform ohdPlatform) {
   auto discover=DCameras{ohdPlatform};
   return discover.discover_internal();
 }
 
-std::vector<std::shared_ptr<CameraHolder>> DCameras::discover2(const OHDPlatform& ohdPlatform) {
+std::vector<std::shared_ptr<CameraHolder>> DCameras::discover2(const OHDPlatform ohdPlatform) {
   auto discovered_cameras= discover(ohdPlatform);
   std::vector<std::shared_ptr<CameraHolder>> ret;
   for(const auto& camera:discovered_cameras){

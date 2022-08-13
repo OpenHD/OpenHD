@@ -15,10 +15,10 @@
  */
 class DCameras {
  public:
-  explicit DCameras(const OHDPlatform &ohdPlatform);
+  explicit DCameras(const OHDPlatform ohdPlatform);
   virtual ~DCameras() = default;
-  static DiscoveredCameraList discover(const OHDPlatform &ohdPlatform);
-  static std::vector<std::shared_ptr<CameraHolder>> discover2(const OHDPlatform &ohdPlatform);
+  static DiscoveredCameraList discover(OHDPlatform ohdPlatform);
+  static std::vector<std::shared_ptr<CameraHolder>> discover2(OHDPlatform ohdPlatform);
  private:
   DiscoveredCameraList discover_internal();
   void argh_cleanup();
@@ -33,9 +33,7 @@ class DCameras {
    */
   /**
    * This is used when the gpu firmware is in charge of the camera, we have to
-   * ask it. This should be the only place in the entire system that uses
-   * vcgencmd for this purpose, anything else that needs to know should read
-   * from the openhd system manifest instead.
+   * ask it.
    */
   void detect_raspberrypi_csi();
   // hacky
@@ -64,7 +62,7 @@ class DCameras {
 
   int m_discover_index = 0;
 
-  const OHDPlatform &ohdPlatform;
+  const OHDPlatform ohdPlatform;
 };
 
 #endif
