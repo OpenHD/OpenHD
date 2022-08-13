@@ -35,6 +35,7 @@ class VEYEStream :public CameraStream {
   void restart_async();
  private:
   std::string pipeline="";
+  std::unique_ptr<std::thread> _veye_thread=nullptr;
 };
 
 #endif //OPENHD_OPENHD_OHD_VIDEO_INC_VEYESTREAM_H_
