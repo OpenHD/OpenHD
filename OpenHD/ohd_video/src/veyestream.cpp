@@ -70,7 +70,7 @@ void VEYEStream::start() {
 	std::cout<<"Streaming disabled\n";
 	return;
   }
-  assert(_veye_thread= nullptr);
+  assert(_veye_thread== nullptr);
   _veye_thread=std::make_unique<std::thread>( [this]{
 	auto res=OHDUtil::run_command_out(pipeline.c_str());
 	if(res.has_value()){

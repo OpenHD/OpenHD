@@ -20,7 +20,9 @@ static void kill_all_running_veye_instances(){
   command<<"killall "<<"\"/usr/local/share/veye-raspberrypi/veye_raspivid\"";
   auto res=OHDUtil::run_command_out(command.str().c_str());
   if(res.has_value()){
-	std::cout<<"Killall veye returned:{"<<res.value()<<"\n";
+	std::stringstream ss;
+	ss<<"Killall veye returned:{"<<res.value()<<"}\n";
+	std::cout<<ss.str();
   }
 }
 
