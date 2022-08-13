@@ -3,7 +3,7 @@
 //
 #include <iostream>
 
-#include "../src/OHDTelemetry.hpp"
+#include "../src/OHDTelemetry.h"
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-platform-discover.hpp"

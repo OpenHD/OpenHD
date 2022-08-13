@@ -14,7 +14,7 @@
 #include <DCameras.h>
 #include <OHDInterface.h>
 #include <OHDVideo.h>
-#include <OHDTelemetry.hpp>
+#include <OHDTelemetry.h>
 
 //TODO fix the cmake crap and then we can build a single executable.
 static const char optstr[] = "?:da";

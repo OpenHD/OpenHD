@@ -24,6 +24,7 @@ find_package(Threads REQUIRED)
 SET(ALL_TELEMETRY_SOURCE_FILES
         src/AirTelemetry.cpp
         src/GroundTelemetry.cpp
+        src/OHDTelemetry.cpp
         src/endpoints/UDPEndpoint.cpp
         src/endpoints/UDPEndpoint2.cpp
         src/endpoints/TCPEndpoint.cpp
