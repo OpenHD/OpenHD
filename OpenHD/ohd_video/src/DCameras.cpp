@@ -4,6 +4,7 @@
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "DCamerasHelper.hpp"
+#include "veye-helper.h"
 
 #include <linux/videodev2.h>
 #include <libv4l2.h>
@@ -112,6 +113,8 @@ bool DCameras::detect_raspberrypi_veye() {
 	return false;
   }
   std::cout<<"Found veye camera\n";
+  // In case there are some veye instance(s) still running from previous OHD run(s)
+  openhd::veye::kill_all_running_veye_instances();
   // R.n we are not sure if this script is needed, but for now, leave it in.
   // This script always fails, but works anyways ?
   const auto success=OHDUtil::run_command("/usr/local/share/veye-raspberrypi/camera_i2c_config",{});

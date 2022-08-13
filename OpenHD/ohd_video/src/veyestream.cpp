@@ -72,7 +72,7 @@ void VEYEStream::start() {
 }
 
 void VEYEStream::stop() {
-  OHDUtil::run_command("killall ",{"\"/usr/local/share/veye-raspberrypi/veye_raspivid\""});
+  openhd::veye::kill_all_running_veye_instances();
 }
 
 std::string VEYEStream::createDebug() {
