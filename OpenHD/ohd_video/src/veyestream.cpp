@@ -55,7 +55,6 @@ void VEYEStream::setup() {
   ss<<"-t 0 -o - ";
   //ss<<"| gst-launch-1.0 -v fdsrc ! ";
   ss<<"| gst-launch-1.0 fdsrc ! ";
-
   ss<<OHDGstHelper::createRtpForVideoCodec(setting.userSelectedVideoFormat.videoCodec);
   ss<<OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
   pipeline=ss.str();
