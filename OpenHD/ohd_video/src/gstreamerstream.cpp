@@ -234,7 +234,7 @@ void GStreamerStream::restartIfStopped() {
 	message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name<<"\n";
 	// We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
 	// Log such that it shows up in QOpenHD
-	LOGE<<message.str();
+	LOGE<<"Restarting camera, check your parameters / connection";
 	stop();
 	cleanup_pipe();
 	setup();
