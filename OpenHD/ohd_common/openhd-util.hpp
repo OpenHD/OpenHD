@@ -37,16 +37,21 @@ static bool startsWith(const std::string& str, const std::string& prefix){
  * Blocks until the command has been executed, and returns its result.
  * @param command the command to run
  * @param args the args for the command to run
+ * @param print_debug print debug to std::cout, really usefully for debugging. true by default.
  * @return the command result
  * NOTE: Used to use boost, there were issues with that, I changed it to use c standard library.
  */
-static bool run_command(const std::string &command, const std::vector<std::string> &args) {
+static bool run_command(const std::string &command, const std::vector<std::string> &args,bool print_debug=true) {
   std::stringstream ss;
   ss << command;
   for (const auto &arg: args) {
 	ss << " " << arg;
   }
-  std::cout << "run command begin [" << ss.str() << "]\n";
+  if(print_debug){
+	std::stringstream log;
+	log<< "run command begin [" << ss.str() << "]\n";
+	std::cout<<log.str();
+  }
   // Some weird locale issue ?!
   // https://man7.org/linux/man-pages/man3/system.3.html
   auto ret = system(ss.str().c_str());
@@ -55,7 +60,9 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   c.wait();
   std::cout<<"Run command end\n";
   return c.exit_code() == 0;*/
-  std::cout << "Run command end\n";
+  if(print_debug){
+	std::cout << "Run command end\n";
+  }
   return ret;
 }
 
