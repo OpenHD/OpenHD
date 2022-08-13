@@ -16,7 +16,6 @@
 #include <OHDVideo.h>
 #include <OHDTelemetry.h>
 
-//TODO fix the cmake crap and then we can build a single executable.
 static const char optstr[] = "?:da";
 static const struct option long_options[] = {
     {"force-air", no_argument, nullptr, 'a'},
