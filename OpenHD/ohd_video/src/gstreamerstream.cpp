@@ -47,35 +47,35 @@ void GStreamerStream::setup() {
   m_pipeline.str("");
   m_pipeline.clear();
   switch (camera.type) {
-    case CameraType::RaspberryPiCSI: {
+	case CameraType::RaspberryPiCSI: {
 	  setup_raspberrypi_csi();
 	  break;
 	}
-        case CameraType::JetsonCSI: {
+	case CameraType::JetsonCSI: {
 	  setup_jetson_csi();
 	  break;
 	}
-        case CameraType::UVC: {
+	case CameraType::UVC: {
 	  setup_usb_uvc();
 	  break;
 	}
-        case CameraType::UVCH264: {
+	case CameraType::UVCH264: {
 	  setup_usb_uvch264();
 	  break;
 	}
-        case CameraType::IP: {
+	case CameraType::IP: {
 	  setup_ip_camera();
 	  break;
 	}
-        case CameraType::Dummy: {
+	case CameraType::Dummy: {
 	  m_pipeline << OHDGstHelper::createDummyStream(setting.userSelectedVideoFormat);
 	  break;
 	}
-        case CameraType::RaspberryPiVEYE:
-        case CameraType::RockchipCSI:
+	case CameraType::RaspberryPiVEYE:
+	case CameraType::RockchipCSI:
 	  std::cerr << "Veye and rockchip are unsupported at the time\n";
 	  return;
-        case CameraType::Unknown: {
+	case CameraType::Unknown: {
 	  std::cerr << "Unknown camera type" << std::endl;
 	  return;
 	}
