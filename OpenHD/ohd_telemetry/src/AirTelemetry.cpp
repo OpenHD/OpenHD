@@ -73,18 +73,18 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   const auto loop_intervall=std::chrono::milliseconds(500);
   auto last_log=std::chrono::steady_clock::now();
   while (true) {
-        if(std::chrono::steady_clock::now()-last_log>=log_intervall){
-          last_log=std::chrono::steady_clock::now();
-          //std::cout << "AirTelemetry::loopInfinite()\n";
-          // for debugging, check if any of the endpoints is not alive
-          if (enableExtendedLogging && wifibroadcastEndpoint) {
-            std::cout<<wifibroadcastEndpoint->createInfo();
-          }
-		  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
-          if (enableExtendedLogging && serialEndpoint) {
-            std::cout<<serialEndpoint->createInfo();
-          }
-        }
+	if(std::chrono::steady_clock::now()-last_log>=log_intervall){
+	  last_log=std::chrono::steady_clock::now();
+	  //std::cout << "AirTelemetry::loopInfinite()\n";
+	  // for debugging, check if any of the endpoints is not alive
+	  if (enableExtendedLogging && wifibroadcastEndpoint) {
+		std::cout<<wifibroadcastEndpoint->createInfo();
+	  }
+	  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
+	  if (enableExtendedLogging && serialEndpoint) {
+		std::cout<<serialEndpoint->createInfo();
+	  }
+	}
 	// send messages to the ground pi in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
 	{

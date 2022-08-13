@@ -97,19 +97,19 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
   const auto loop_intervall=std::chrono::milliseconds(500);
   auto last_log=std::chrono::steady_clock::now();
   while (true) {
-    if(std::chrono::steady_clock::now()-last_log>=log_intervall) {
-      last_log = std::chrono::steady_clock::now();
-      std::cout << "GroundTelemetry::loopInfinite()\n";
-      // for debugging, check if any of the endpoints is not alive
-      if (enableExtendedLogging && udpWifibroadcastEndpoint) {
-        std::cout<<udpWifibroadcastEndpoint->createInfo();
-      }
-      if (enableExtendedLogging && udpGroundClient) {
-        std::cout<<udpGroundClient->createInfo();
-      }
-    }
-    // send messages to the ground station in regular intervals, includes heartbeat.
-    // everything else is handled by the callbacks and their threads
+	if(std::chrono::steady_clock::now()-last_log>=log_intervall) {
+	  last_log = std::chrono::steady_clock::now();
+	  std::cout << "GroundTelemetry::loopInfinite()\n";
+	  // for debugging, check if any of the endpoints is not alive
+	  if (enableExtendedLogging && udpWifibroadcastEndpoint) {
+		std::cout<<udpWifibroadcastEndpoint->createInfo();
+	  }
+	  if (enableExtendedLogging && udpGroundClient) {
+		std::cout<<udpGroundClient->createInfo();
+	  }
+	}
+	// send messages to the ground station in regular intervals, includes heartbeat.
+	// everything else is handled by the callbacks and their threads
 	{
 	  std::lock_guard<std::mutex> guard(components_lock);
 	  for(auto& component:components){
@@ -126,7 +126,7 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 		}
 	  }
 	}
-    std::this_thread::sleep_for(loop_intervall);
+	std::this_thread::sleep_for(loop_intervall);
   }
 }
 
