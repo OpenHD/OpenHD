@@ -60,6 +60,10 @@ void VEYEStream::restartIfStopped() {
 
 void VEYEStream::start() {
   std::cout<<"VEYEStream::start() begin\n";
+  if(!_camera_holder->get_settings().enable_streaming){
+	std::cout<<"Streaming disabled\n";
+	return;
+  }
   const auto res=OHDUtil::run_command(pipeline,{"&"});
   std::cout<<"VEYEStream::start() end\n";
 }
