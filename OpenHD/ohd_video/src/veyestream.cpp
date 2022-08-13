@@ -63,10 +63,14 @@ void VEYEStream::restartIfStopped() {
 
 void VEYEStream::start() {
   std::cout<<"VEYEStream::start() begin\n";
+  // cleanup if existing
+  openhd::veye::kill_all_running_veye_instances();
+  // don't stream unless enabled
   if(!_camera_holder->get_settings().enable_streaming){
 	std::cout<<"Streaming disabled\n";
 	return;
   }
+  // start streaming (process in the background)
   const auto res=OHDUtil::run_command(pipeline,{"&"});
   std::cout<<"VEYEStream::start() end\n";
 }
