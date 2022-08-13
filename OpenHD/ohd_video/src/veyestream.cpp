@@ -5,6 +5,7 @@
 #include "veyestream.h"
 #include "OHDGstHelper.hpp"
 #include "openhd-util.hpp"
+#include "veye-helper.h"
 
 VEYEStream::VEYEStream(PlatformType platform, std::shared_ptr<CameraHolder> camera_holder, uint16_t video_udp_port)
 	: CameraStream(platform, camera_holder, video_udp_port) {
@@ -25,6 +26,11 @@ VEYEStream::VEYEStream(PlatformType platform, std::shared_ptr<CameraHolder> came
 }
 
 void VEYEStream::setup() {
+  std::cout<<"VEYEStream::setup() begin\n";
+  // kill any already running veye instances
+  std::cout<<"kill any already running veye instances\n";
+  openhd::veye::kill_all_running_veye_instances();
+  // create the pipeline
   const auto& setting=_camera_holder->get_settings();
   std::stringstream ss;
   // http://wiki.veye.cc/index.php/VEYE-MIPI-290/327_for_Raspberry_Pi
@@ -42,10 +48,10 @@ void VEYEStream::setup() {
 
   ss<<OHDGstHelper::createRtpForVideoCodec(setting.userSelectedVideoFormat.videoCodec);
   ss<<OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
-
   pipeline=ss.str();
-
+  // NOTE: We do not execute the pipeline until start() is called
   std::cout<<"Veye Pipeline:{"<<pipeline<<"}\n";
+  std::cout<<"VEYEStream::setup() end\n";
 }
 
 void VEYEStream::restartIfStopped() {
