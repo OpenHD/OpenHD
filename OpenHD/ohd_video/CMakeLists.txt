@@ -18,6 +18,20 @@ SET(Boost_USE_MULTITHREAD ON)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
 SET(OHD_VIDEO_USED_LIBS Boost::filesystem)
 
+# From libcamera-apps !! begin
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBCAMERA QUIET libcamera)
+if(LIBCAMERA_FOUND)
+    message(STATUS "libcamera library found:")
+    message(STATUS "    version: ${LIBCAMERA_VERSION}")
+    message(STATUS "    libraries: ${LIBCAMERA_LINK_LIBRARIES}")
+    message(STATUS "    include path: ${LIBCAMERA_INCLUDE_DIRS}")
+    include_directories(${CMAKE_SOURCE_DIR} ${LIBCAMERA_INCLUDE_DIRS})
+else()
+    message(STATUS "LIBCAMERA features will be unavailable!")
+endif()
+# From libcamera-apps !! end
+
 # FUCKING GSTREAMER !! begin
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
