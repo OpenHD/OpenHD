@@ -38,7 +38,7 @@ void VEYEStream::setup() {
   const int bitrateBitsPerSecond = OHDGstHelper::kbits_to_bits_per_second(setting.bitrateKBits);
   ss<<"-b "<<bitrateBitsPerSecond<<" ";
   ss<<"-w "<<setting.userSelectedVideoFormat.width<<" ";
-  ss<<"-h "<<setting.userSelectedVideoFormat.width<<" ";
+  ss<<"-h "<<setting.userSelectedVideoFormat.height<<" ";
   ss<<"-fps "<<setting.userSelectedVideoFormat.framerate<<" ";
   if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::H264){
 	ss<<"--codec H264 ";
