@@ -298,8 +298,8 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	auto ret=CameraSettings{};
 	if(_camera.type==CameraType::RaspberryPiVEYE){
 	  // Veye cannot do 640x480@30 by default, 720p is the next lower possible
-	  ret.userSelectedVideoFormat.width=1280;
-	  ret.userSelectedVideoFormat.height=720;
+	  ret.userSelectedVideoFormat.width=1920;
+	  ret.userSelectedVideoFormat.height=1080;
 	  ret.userSelectedVideoFormat.framerate=30;
 	}
 	return ret;
