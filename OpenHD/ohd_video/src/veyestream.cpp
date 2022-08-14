@@ -35,9 +35,10 @@ void VEYEStream::setup() {
   // http://wiki.veye.cc/index.php/VEYE-MIPI-290/327_for_Raspberry_Pi
   // Not ideal, needs full path, but veye is hacky anyways
   ss<<"/usr/local/share/veye-raspberrypi/veye_raspivid ";
-  const int bitrateBitsPerSecond = OHDGstHelper::kbits_to_bits_per_second(setting.bitrateKBits);
+  //const int bitrateBitsPerSecond = OHDGstHelper::kbits_to_bits_per_second(setting.bitrateKBits);
+  const int bitrateBitsPerSecond=4000000;
   ss<<"-b "<<bitrateBitsPerSecond<<" ";
-  ss<<"-w "<<setting.userSelectedVideoFormat.width<<" ";
+ /* ss<<"-w "<<setting.userSelectedVideoFormat.width<<" ";
   ss<<"-h "<<setting.userSelectedVideoFormat.height<<" ";
   ss<<"-fps "<<setting.userSelectedVideoFormat.framerate<<" ";
   if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::H264){
@@ -48,10 +49,11 @@ void VEYEStream::setup() {
   }else{
 	std::cerr<<"Veye only supports h264 and MJPEG\n";
   }
+   // flush to decrease latency
+  ss<<"--flush ";*/
   // no preview
   ss<<"-n ";
-  // flush to decrease latency
-  ss<<"--flush ";
+  // forever
   ss<<"-t 0 -o - ";
   //ss<<"| gst-launch-1.0 -v fdsrc ! ";
   ss<<"| gst-launch-1.0 fdsrc ! ";
