@@ -47,7 +47,7 @@ void VEYEStream::setup() {
   ss<<"-w "<<setting.userSelectedVideoFormat.width<<" ";
   ss<<"-h "<<setting.userSelectedVideoFormat.height<<" ";
   ss<<"-fps "<<setting.userSelectedVideoFormat.framerate<<" ";
-  if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::H264){
+  /*if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::H264){
 	ss<<"--codec H264 ";
 	ss<<"--profile baseline ";
   }else if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::MJPEG){
@@ -56,7 +56,7 @@ void VEYEStream::setup() {
 	std::cerr<<"Veye only supports h264 and MJPEG\n";
   }
    // flush to decrease latency
-  ss<<"--flush ";
+  ss<<"--flush ";*/
   // no preview
   ss<<"-n ";
   // forever
