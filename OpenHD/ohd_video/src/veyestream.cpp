@@ -31,7 +31,7 @@ void VEYEStream::setup() {
   openhd::veye::kill_all_running_veye_instances();
 
   _camera_holder->unsafe_get_settings().userSelectedVideoFormat.width=1920;
-  _camera_holder->unsafe_get_settings().userSelectedVideoFormat.width=1080;
+  _camera_holder->unsafe_get_settings().userSelectedVideoFormat.height=1080;
   _camera_holder->unsafe_get_settings().userSelectedVideoFormat.framerate=30;
 
   // create the pipeline
