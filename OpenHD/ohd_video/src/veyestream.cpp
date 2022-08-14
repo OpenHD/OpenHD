@@ -24,18 +24,16 @@ VEYEStream::VEYEStream(PlatformType platform, std::shared_ptr<CameraHolder> came
   std::cout << "VEYEStream::VEYEStream\n";
 }
 
-// WARNING: Changing anything camera-related is r.n not supprted / buged on veye,
-// Even though the QOpenHD elements allow it.
+// WARNING: Changing anything camera-related is r.n is really
 void VEYEStream::setup() {
   std::cout<<"VEYEStream::setup() begin\n";
   // kill any already running veye instances
   std::cout<<"kill any already running veye instances\n";
   openhd::veye::kill_all_running_veye_instances();
-  std::cout<<"Warning veye - resolution, framerate and bitrate is not changeable, even though QOpenHD reports different\n";
 
-  _camera_holder->unsafe_get_settings().userSelectedVideoFormat.width=1920;
+  /*_camera_holder->unsafe_get_settings().userSelectedVideoFormat.width=1920;
   _camera_holder->unsafe_get_settings().userSelectedVideoFormat.height=1080;
-  _camera_holder->unsafe_get_settings().userSelectedVideoFormat.framerate=30;
+  _camera_holder->unsafe_get_settings().userSelectedVideoFormat.framerate=30;*/
 
   // create the pipeline
   const auto& setting=_camera_holder->get_settings();
@@ -50,7 +48,7 @@ void VEYEStream::setup() {
   ss<<"-w "<<setting.userSelectedVideoFormat.width<<" ";
   ss<<"-h "<<setting.userSelectedVideoFormat.height<<" ";
   ss<<"-fps "<<setting.userSelectedVideoFormat.framerate<<" ";
-  /*if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::H264){
+  if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::H264){
 	ss<<"--codec H264 ";
 	ss<<"--profile baseline ";
   }else if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::MJPEG){
@@ -59,7 +57,8 @@ void VEYEStream::setup() {
 	std::cerr<<"Veye only supports h264 and MJPEG\n";
   }
    // flush to decrease latency
-  ss<<"--flush ";*/
+   // NOTE: flush seems to cause issues on VEYE, it is bugged / doesn't work.
+  //ss<<"--flush ";
   // no preview
   ss<<"-n ";
   // forever
