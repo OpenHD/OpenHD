@@ -24,11 +24,14 @@ VEYEStream::VEYEStream(PlatformType platform, std::shared_ptr<CameraHolder> came
   std::cout << "VEYEStream::VEYEStream\n";
 }
 
+// WARNING: Changing anything camera-related is r.n not supprted / buged on veye,
+// Even though the QOpenHD elements allow it.
 void VEYEStream::setup() {
   std::cout<<"VEYEStream::setup() begin\n";
   // kill any already running veye instances
   std::cout<<"kill any already running veye instances\n";
   openhd::veye::kill_all_running_veye_instances();
+  std::cout<<"Warning veye - resolution, framerate and bitrate is not changeable, even though QOpenHD reports different\n";
 
   _camera_holder->unsafe_get_settings().userSelectedVideoFormat.width=1920;
   _camera_holder->unsafe_get_settings().userSelectedVideoFormat.height=1080;
