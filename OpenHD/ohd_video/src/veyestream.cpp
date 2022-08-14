@@ -29,16 +29,22 @@ void VEYEStream::setup() {
   // kill any already running veye instances
   std::cout<<"kill any already running veye instances\n";
   openhd::veye::kill_all_running_veye_instances();
+
+  _camera_holder->unsafe_get_settings().userSelectedVideoFormat.width=1920;
+  _camera_holder->unsafe_get_settings().userSelectedVideoFormat.width=1080;
+  _camera_holder->unsafe_get_settings().userSelectedVideoFormat.framerate=30;
+
   // create the pipeline
   const auto& setting=_camera_holder->get_settings();
   std::stringstream ss;
   // http://wiki.veye.cc/index.php/VEYE-MIPI-290/327_for_Raspberry_Pi
   // Not ideal, needs full path, but veye is hacky anyways
   ss<<"/usr/local/share/veye-raspberrypi/veye_raspivid ";
-  //const int bitrateBitsPerSecond = OHDGstHelper::kbits_to_bits_per_second(setting.bitrateKBits);
-  const int bitrateBitsPerSecond=4000000;
+  const int bitrateBitsPerSecond = OHDGstHelper::kbits_to_bits_per_second(setting.bitrateKBits);
+  //const int bitrateBitsPerSecond=4000000;
+
   ss<<"-b "<<bitrateBitsPerSecond<<" ";
- /* ss<<"-w "<<setting.userSelectedVideoFormat.width<<" ";
+  ss<<"-w "<<setting.userSelectedVideoFormat.width<<" ";
   ss<<"-h "<<setting.userSelectedVideoFormat.height<<" ";
   ss<<"-fps "<<setting.userSelectedVideoFormat.framerate<<" ";
   if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::H264){
@@ -50,7 +56,7 @@ void VEYEStream::setup() {
 	std::cerr<<"Veye only supports h264 and MJPEG\n";
   }
    // flush to decrease latency
-  ss<<"--flush ";*/
+  ss<<"--flush ";
   // no preview
   ss<<"-n ";
   // forever
