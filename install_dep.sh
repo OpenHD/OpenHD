@@ -13,7 +13,6 @@ apt -y install build-essential autotools-dev automake libtool autoconf \
             git \
             apt-transport-https \
             curl \
-            git \
             ruby-dev \
             python3-pip \
             libnl-3-dev cmake snapd libnl-genl-3-dev \
