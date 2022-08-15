@@ -148,6 +148,8 @@ int main(int argc, char *argv[]) {
     }
     // Now e can crate the immutable profile
     const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
+	// And start the blinker
+	auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
     auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile);
