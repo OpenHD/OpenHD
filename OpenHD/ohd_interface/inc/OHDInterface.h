@@ -13,7 +13,7 @@
 #include "WifiHotspot.h"
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
-#include "openhd-led-error-codes.h"
+#include "openhd-led-codes.hpp"
 #include "mavlink_settings/ISettingsComponent.h"
 #include "OHDInterfaceSettings.h"
 #include "openhd-external-device.h"
@@ -57,7 +57,7 @@
   std::unique_ptr<WBStreams> wbStreams;
   std::unique_ptr<USBTetherListener> usbTetherListener;
   std::unique_ptr<WifiHotspot> _wifi_hotspot;
-  std::unique_ptr<openhd::rpi::LEDBlinker> _error_blinker;
+  std::unique_ptr<openhd::LEDBlinker> _error_blinker;
   std::shared_ptr<openhd::OHDInterfaceSettingsHolder> _interface_settings_holder;
   std::mutex _external_device_callback_mutex;
   openhd::EXTERNAL_DEVICE_CALLBACK _external_device_callback= nullptr;

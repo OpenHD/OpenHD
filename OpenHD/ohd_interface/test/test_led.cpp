@@ -2,7 +2,7 @@
 // Created by consti10 on 15.08.22.
 //
 
-#include "openhd-led-error-codes.h"
+#include "openhd-led-codes.hpp"
 #include "openhd-util.hpp"
 #include <thread>
 #include <chrono>
