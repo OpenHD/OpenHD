@@ -1,3 +1,5 @@
+# July 23: Everything here is obsolete
+
 ## Description
 
 Here all files should be placed that are required by the OpenHD executable.
