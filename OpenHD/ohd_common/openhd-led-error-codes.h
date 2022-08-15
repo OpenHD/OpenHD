@@ -6,6 +6,7 @@
 #define OPENHD_OPENHD_LED_ERROR_CODES_H
 
 #include "openhd-util.hpp"
+#include "openhd-util-filesystem.hpp"
 #include "openhd-platform.hpp"
 #include <chrono>
 #include <thread>
