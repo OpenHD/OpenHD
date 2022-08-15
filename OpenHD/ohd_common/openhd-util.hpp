@@ -14,6 +14,7 @@
 #include <thread>
 #include <arpa/inet.h>
 #include <regex>
+#include <unistd.h>
 
 namespace OHDUtil {
 
@@ -141,6 +142,23 @@ static std::string string_in_between(const std::string& start,const std::string&
   return matched;
 }
 
+// From https://stackoverflow.com/questions/3214297/how-can-my-c-c-application-determine-if-the-root-user-is-executing-the-command
+// Returns true if the caller is running as root.
+static bool check_root(){
+  const auto uid=getuid();
+  const bool root= uid ? false:true;
+  std::stringstream ss;
+  ss<<"UID is:["<<uid<<"] root:"<<OHDUtil::yes_or_no(root)<<"\n";
+  std::cout<<ss.str();
+  return root;
+}
+
+static void terminate_if_not_root(){
+  if(!check_root()){
+	std::cout<<"ERROR not root,terminating. Run OpenHD with root privileges.\n";
+	exit(EXIT_FAILURE);
+  }
+}
 
 }
 

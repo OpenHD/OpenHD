@@ -7,6 +7,8 @@
 
 int main(int argc, char *argv[]) {
 
+  OHDUtil::terminate_if_not_root();
+
   auto cb=[](openhd::ExternalDevice external_device,bool connected){
 	std::cout<<"Callback called with "<<external_device.to_string()<<" connected:"<<OHDUtil::yes_or_no(connected)<<"\n";
   };
