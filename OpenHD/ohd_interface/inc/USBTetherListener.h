@@ -32,13 +32,8 @@ class USBTetherListener{
    * disconnected USB tether device.
    * @param external_device_callback the callback to notify the upper level.
    */
-  explicit USBTetherListener(openhd::EXTERNAL_DEVICE_CALLBACK external_device_callback):_external_device_callback(std::move(external_device_callback)){}
-  /**
-   * Continuously checks for connected or disconnected USB tether devices.
-   * Does not return as long as there is no fatal error or a stop is requested.
-   * Use startLooping() to not block the calling thread.
-   */
-  void loopInfinite();
+  explicit USBTetherListener(openhd::EXTERNAL_DEVICE_CALLBACK external_device_callback);
+  ~USBTetherListener();
   /**
    * start looping in a new thread.
    */
@@ -51,6 +46,12 @@ class USBTetherListener{
   const openhd::EXTERNAL_DEVICE_CALLBACK _external_device_callback;
   std::unique_ptr<std::thread> loopThread;
   std::atomic<bool> loopThreadStop=false;
+  /**
+   * Continuously checks for connected or disconnected USB tether devices.
+   * Does not return as long as there is no fatal error or a stop is requested.
+   * Use startLooping() to not block the calling thread.
+   */
+  void loopInfinite();
   /**
    * @brief simple state-based method that performs the following sequential steps:
    * 1) Wait until a tethering device is connected

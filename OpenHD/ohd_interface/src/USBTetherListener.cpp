@@ -7,6 +7,28 @@
 
 #include <utility>
 
+USBTetherListener::USBTetherListener(openhd::EXTERNAL_DEVICE_CALLBACK external_device_callback) :
+_external_device_callback(std::move(external_device_callback)){
+
+}
+
+USBTetherListener::~USBTetherListener() {
+  stopLooping();
+}
+
+void USBTetherListener::startLooping() {
+  loopThreadStop=false;
+  assert(loopThread== nullptr);
+  loopThread=std::make_unique<std::thread>([this](){loopInfinite();});
+}
+
+void USBTetherListener::stopLooping() {
+  loopThreadStop=true;
+  if(loopThread->joinable()){
+	loopThread->join();
+  }
+  loopThread.reset();
+}
 
 void USBTetherListener::loopInfinite() {
   while (!loopThreadStop){
@@ -72,17 +94,4 @@ void USBTetherListener::connectOnce() {
   }
 }
 
-void USBTetherListener::startLooping() {
-  loopThreadStop=false;
-  assert(loopThread== nullptr);
-  loopThread=std::make_unique<std::thread>([this](){loopInfinite();});
-}
-
-void USBTetherListener::stopLooping() {
-  loopThreadStop=true;
-  if(loopThread->joinable()){
-	loopThread->join();
-  }
-  loopThread.reset();
-}
 
