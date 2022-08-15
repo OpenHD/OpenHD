@@ -46,7 +46,7 @@ static std::string createSwEncoder(const VideoCodec videoCodec,const int bitrate
   if(videoCodec==VideoCodec::H264){
 	ss<<"x264enc bitrate="<<bitrateKBits<<" tune=zerolatency key-int-max="<<keyframe_interval<<" ! ";
   }else if(videoCodec==VideoCodec::H265){
-	ss<<"x265enc "<<bitrateKBits<<" tune=zerolatency key-int-max="<<keyframe_interval<<" ! ";
+	ss<<"x265enc bitrate="<<bitrateKBits<<" tune=zerolatency key-int-max="<<keyframe_interval<<" ! ";
   }else{
 	assert(videoCodec==VideoCodec::MJPEG);
 	//NOTE jpegenc doesn't have a bitrate controll
