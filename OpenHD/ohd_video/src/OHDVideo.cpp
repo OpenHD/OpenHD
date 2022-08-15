@@ -7,7 +7,6 @@
 
 OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras) :
 	platform(platform1) {
-  //assert(("This module must only run on the air pi !", profile.is_air == true));
   assert(!cameras.empty());
   std::cout << "OHDVideo::OHDVideo()\n";
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
