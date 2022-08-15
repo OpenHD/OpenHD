@@ -49,7 +49,7 @@ class PersistentSettings{
   // Persist then new settings, then call the callback to propagate the change
   void update_settings(const T& new_settings){
 	std::stringstream ss;
-	ss<<"Got new settings"<<get_unique_filename()<<"\n";
+	ss<<"Got new settings in["<<get_unique_filename()<<"]\n";
 	std::cout<<ss.str();
 	_settings=std::make_unique<T>(new_settings);
 	persist_settings();
@@ -76,7 +76,9 @@ class PersistentSettings{
 	const auto last_settings_opt=read_last_settings();
 	if(last_settings_opt.has_value()){
 	  _settings=std::make_unique<T>(last_settings_opt.value());
-	  std::cout<<"Found settings\n";
+	  std::stringstream ss;
+	  ss<<"Using settings in ["<<get_file_path()<<"]\n";
+	  std::cout<<ss.str();
 	}else{
 	  std::cout<<"Creating default settings:"<<get_file_path()<<"\n";
 	  // create default settings and persist them for the next reboot
@@ -103,9 +105,6 @@ class PersistentSettings{
   // read last settings, if they are available
   [[nodiscard]] std::optional<T> read_last_settings()const{
 	const auto file_path=get_file_path();
-	std::stringstream ss;
-	ss<<"File path:["<<file_path<<"]\n";
-	std::cout<<ss.str();
 	if(!OHDFilesystemUtil::exists(file_path.c_str())){
 	  return std::nullopt;
 	}

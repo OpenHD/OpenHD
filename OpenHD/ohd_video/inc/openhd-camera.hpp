@@ -291,7 +291,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
 	std::stringstream ss;
-	ss<<(static_cast<int>(_camera.index))<<"_"<<camera_type_to_string(_camera.type)<<"_"<<_camera.name;
+	// TODO: r.n not unique enough, we need to be unique per model,too - e.g. a user
+	// might connect a different USB camera, where we'd need a different unique ID for
+	ss<<(static_cast<int>(_camera.index))<<"_"<<camera_type_to_string(_camera.type);
 	return ss.str();
   }
   [[nodiscard]] CameraSettings create_default()const override{
