@@ -36,6 +36,7 @@ class USBTetherListener{
   ~USBTetherListener();
   /**
    * start looping in a new thread.
+   * Do not call multiple times without stopLooping() in between.
    */
   void startLooping();
   /**
