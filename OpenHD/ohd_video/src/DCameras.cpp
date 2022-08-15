@@ -156,7 +156,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
 	std::cerr<<"udev_info no result\n";
 	return;
   }
-  const auto udev_info=udev_info_opt.value();
+  const auto& udev_info=udev_info_opt.value();
   Camera camera;
   // check for device name
   std::smatch model_result;
@@ -255,7 +255,7 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 	std::cerr << "Found V4l2 device with unknown driver:" << driver << "\n";
 	return false;
   }
-  std::string bus((char *)caps.bus_info);
+  const std::string bus((char *)caps.bus_info);
   camera.bus = bus;
   endpoint.bus = bus;
   if (!(caps.capabilities & V4L2_BUF_TYPE_VIDEO_CAPTURE)) {
