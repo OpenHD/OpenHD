@@ -103,6 +103,9 @@ class PersistentSettings{
   // read last settings, if they are available
   [[nodiscard]] std::optional<T> read_last_settings()const{
 	const auto file_path=get_file_path();
+	std::stringstream ss;
+	ss<<"File path:["<<file_path<<"]\n";
+	std::cout<<ss.str();
 	if(!OHDFilesystemUtil::exists(file_path.c_str())){
 	  return std::nullopt;
 	}
