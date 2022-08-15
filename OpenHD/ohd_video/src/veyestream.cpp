@@ -48,7 +48,7 @@ void VEYEStream::setup() {
   ss<<"-w "<<setting.userSelectedVideoFormat.width<<" ";
   ss<<"-h "<<setting.userSelectedVideoFormat.height<<" ";
   // -fps, --framerate	: Specify the frames per second to record
-  ss<<"-fps "<<setting.userSelectedVideoFormat.framerate<<" ";
+  ss<<"--framerate "<<setting.userSelectedVideoFormat.framerate<<" ";
   if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::H264){
 	ss<<"--codec H264 ";
 	ss<<"--profile baseline ";
