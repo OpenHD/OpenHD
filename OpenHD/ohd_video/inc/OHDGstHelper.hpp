@@ -40,6 +40,7 @@ static void initGstreamerOrThrow() {
 // SW encoding is slow, but should work on all platforms (at least for low resolutions/framerate(s) )
 // Note that not every sw encoder accepts every type of input format !
 // Use 10 for keyframe interval if in doubt.
+// Note that the keyframe interval is only for h264 / h265, mjpeg doesn't have a keyframe interval (or rather it is always 1)
 static std::string createSwEncoder(const VideoCodec videoCodec,const int bitrateKBits,int keyframe_interval){
   std::stringstream ss;
   if(videoCodec==VideoCodec::H264){
@@ -104,7 +105,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   }
   // keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
   if(keyframe_interval>= -1 && keyframe_interval < 1000){
-	ss << "keyframe-interval "<<keyframe_interval<<" ";
+	ss << "keyframe-interval="<<keyframe_interval<<" ";
   }else{
 	std::cerr<<"Invalid keyframe intervall: "<<keyframe_interval<<"\n";
   }
