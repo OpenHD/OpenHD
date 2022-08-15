@@ -45,7 +45,11 @@ target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
 find_package(Threads REQUIRED)
 target_link_libraries(OHDInterfaceLib PUBLIC Threads::Threads)
 
-# Custom testing, requires written jsons from discovery
+# this one is here but not really part of interface
+add_executable(test_led test/test_led.cpp)
+target_link_libraries(test_led OHDInterfaceLib)
+
+# Custom testing
 add_executable(test_interface test/test_interface.cpp)
 target_link_libraries(test_interface OHDInterfaceLib)
 
