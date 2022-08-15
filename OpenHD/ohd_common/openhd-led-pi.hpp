@@ -47,17 +47,17 @@ static void toggle_green_led(const bool on,const bool debug=true){
 }
 // toggle red led off, wait for delay, then toggle it on,wait for delay
 static void red_led_on_off_delayed(const std::chrono::milliseconds &delay1,const std::chrono::milliseconds &delay2,const bool debug=true) {
-  rpi::toggle_red_led(false);
+  rpi::toggle_red_led(false,debug);
   std::this_thread::sleep_for(delay1);
-  rpi::toggle_red_led(true);
+  rpi::toggle_red_led(true,debug);
   std::this_thread::sleep_for(delay2);
 }
 
 // toggle green led off, wait for delay1, then toggle it on, wait for delay2
 static void green_led_on_off_delayed(const std::chrono::milliseconds &delay1,const std::chrono::milliseconds &delay2,const bool debug=true){
-  rpi::toggle_green_led(false);
+  rpi::toggle_green_led(false,debug);
   std::this_thread::sleep_for(delay1);
-  rpi::toggle_green_led(true);
+  rpi::toggle_green_led(true,debug);
   std::this_thread::sleep_for(delay2);
 }
 
