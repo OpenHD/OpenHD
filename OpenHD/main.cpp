@@ -61,8 +61,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
       case '?':
       default:
         std::cout << "Usage: \n" <<
-            "force-air [Force to boot as air pi, even when no camera is detected] \n" <<
-            "force-ground [Force to boot as ground pi,even though one or more cameras are connected] \n"<<
+            "force-air [Create a sw-only test camera, and therefore boot as air] \n" <<
+            "force-ground [Skips the camera discovery step, and therefore (without any detected cameras) OpenHD runs as ground] \n"<<
             "clean-start [Wipe all persistent settings OpenHD has written, can fix any boot issues when switching hw around] \n"<<
 			"debug-interface [enable interface debugging] \n"<<
 			"debug-telemetry [enable telemetry debugging] \n"<<
