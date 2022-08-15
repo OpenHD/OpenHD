@@ -18,9 +18,11 @@
 
 namespace OHDUtil {
 
+// Converts all letters in the given string to uppercase
 static std::string to_uppercase(std::string input) {
   for (char &it: input) {
-	it = toupper((unsigned char)it);
+	// https://cplusplus.com/reference/cctype/toupper/
+	it = toupper((unsigned char)it); // NOLINT(cppcoreguidelines-narrowing-conversions)
   }
   return input;
 }
@@ -31,6 +33,15 @@ static bool endsWith(const std::string& str, const std::string& suffix){
 }
 static bool startsWith(const std::string& str, const std::string& prefix){
   return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
+}
+
+// Converts both strings to uppercase, then checks if
+// s1 contains s2 (we can find s2 in s1).
+// Returns true if (after uppercase) s1 contains s2, false otherwise
+static bool contains_after_uppercase(const std::string& s1,const std::string& s2){
+  const auto s1_upper=OHDUtil::to_uppercase(s1);
+  const auto s2_upper=OHDUtil::to_uppercase(s2);
+  return s1_upper.find(s2_upper)!= std::string::npos;
 }
 
 /**
