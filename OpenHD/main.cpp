@@ -88,6 +88,10 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
 }
 
 int main(int argc, char *argv[]) {
+  // OpenHD needs to be run as root, otherwise we cannot access/ modify the Wi-Fi cards for example
+  // (And there are also many other places where we just need to be root).
+  OHDUtil::terminate_if_not_root();
+
   // parse some arguments usefully for debugging
   const OHDRunOptions options=parse_run_parameters(argc,argv);
 
