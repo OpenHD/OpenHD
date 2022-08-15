@@ -72,8 +72,8 @@ void DCameras::detect_raspberrypi_csi() {
   const auto camera_count = atoi(detected.c_str());
   if (camera_count >= 1) {
 	Camera camera;
-	camera.name = "Pi CSI 0";
-	camera.vendor = "Raspberry Pi";
+	camera.name = "Pi_CSI_0";
+	camera.vendor = "RaspberryPi";
 	camera.type = CameraType::RaspberryPiCSI;
 	camera.bus = "0";
 	camera.index = m_discover_index;
@@ -84,8 +84,8 @@ void DCameras::detect_raspberrypi_csi() {
   }
   if (camera_count >= 2) {
 	Camera camera;
-	camera.name = "Pi CSI 1";
-	camera.vendor = "Raspberry Pi";
+	camera.name = "Pi_CSI_1";
+	camera.vendor = "RaspberryPi";
 	camera.type = CameraType::RaspberryPiCSI;
 	camera.bus = "1";
 	camera.index = m_discover_index;
@@ -119,7 +119,7 @@ bool DCameras::detect_raspberrypi_veye() {
   // This script always fails, but works anyways ?
   const auto success=OHDUtil::run_command("/usr/local/share/veye-raspberrypi/camera_i2c_config",{});
   Camera camera;
-  camera.name = "Pi VEYE 0";
+  camera.name = "Pi_VEYE_0";
   camera.vendor = "VEYE";
   camera.type = CameraType::RaspberryPiVEYE;
   camera.bus = "0";
