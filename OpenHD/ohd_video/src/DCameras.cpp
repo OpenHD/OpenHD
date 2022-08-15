@@ -14,8 +14,8 @@
 #include <iostream>
 #include <regex>
 
-DCameras::DCameras(const OHDPlatform ohdPlatform) :
-	ohdPlatform(ohdPlatform){}
+DCameras::DCameras(const OHDPlatform ohdPlatform,const bool enable_debug) :
+	ohdPlatform(ohdPlatform),m_enable_debug(enable_debug){}
 
 DiscoveredCameraList DCameras::discover_internal() {
   std::cout << "Cameras::discover()" << std::endl;
@@ -138,7 +138,9 @@ bool DCameras::detect_raspberrypi_veye() {
 
 
 void DCameras::detect_v4l2() {
-  std::cout << "Cameras::detect_v4l2()" << std::endl;
+  if(m_enable_debug){
+	std::cout << "Cameras::detect_v4l2()\n";
+  }
   // Get all the devices to take into consideration.
   const auto devices = DV4l2DevicesHelper::findV4l2VideoDevices();
   for (const auto &device: devices) {
@@ -147,7 +149,9 @@ void DCameras::detect_v4l2() {
 }
 
 void DCameras::probe_v4l2_device(const std::string &device) {
-  std::cout << "Cameras::probe_v4l2_device()" << device << "\n";
+  if(m_enable_debug){
+	std::cout << "Cameras::probe_v4l2_device()" << device << "\n";
+  }
   std::stringstream command;
   command << "udevadm info ";
   command << device.c_str();
@@ -229,20 +233,28 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 	return false;
   }
   const std::string driver((char *)caps.driver);
-  std::cout<<"Driver is:"<<driver<<"\n";
+  if(m_enable_debug){
+	std::cout<<"Driver is:"<<driver<<"\n";
+  }
   if (driver == "uvcvideo") {
 	camera.type = CameraType::UVC;
-	std::cout << "Found UVC camera" << std::endl;
+	if(m_enable_debug){
+	  std::cout << "Found UVC camera" << std::endl;
+	}
   } else if (driver == "tegra-video") {
 	camera.type = CameraType::JetsonCSI;
-	std::cout << "Found Jetson CSI camera" << std::endl;
+	if(m_enable_debug){
+	  std::cout << "Found Jetson CSI camera" << std::endl;
+	}
   } else if (driver == "v4l2 loopback") {
 	// this is temporary, we are not going to use v4l2loopback for thermal cameras they'll be directly
 	// handled by the camera service instead work anyways
 	// Consti10: Removed for this release, won't
 	//camera.type = CameraTypeV4L2Loopback;
-	std::cout << "Found v4l2 loopback camera (likely a thermal camera)" << std::endl;
-	std::cerr << "Loopback is unimplemented rn\n";
+	if(m_enable_debug){
+	  std::cout << "Found v4l2 loopback camera (likely a thermal camera)" << std::endl;
+	  std::cerr << "Loopback is unimplemented rn\n";
+	}
 	return false;
   } else {
 	/*
@@ -252,7 +264,9 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 	 * advantage over the mmal interface and doesn't offer the same image controls. Once libcamera is
 	 * being widely used this will be the way to support those cameras, but not yet.
 	 */
-	std::cerr << "Found V4l2 device with unknown driver:" << driver << "\n";
+	if(m_enable_debug){
+	  std::cerr << "Found V4l2 device with unknown driver:" << driver << "\n";
+	}
 	return false;
   }
   const std::string bus((char *)caps.bus_info);
