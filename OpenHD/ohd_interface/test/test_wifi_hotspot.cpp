@@ -5,8 +5,11 @@
 #include "WifiHotspot.h"
 #include <thread>
 #include <csignal>
+#include "openhd-util.hpp"
 
 int main(int argc, char *argv[]) {
+
+  OHDUtil::terminate_if_not_root();
 
   WiFiCard wifiCard;
   // need to manually paste the stuff in here
