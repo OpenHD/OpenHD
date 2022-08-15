@@ -19,6 +19,7 @@
 #include "v_validate_settings.h"
 
 static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
+static constexpr auto DEFAULT_KEYFRAME_INTERVAL=30;
 
 // Return true if the bitrate is considered sane, false otherwise
 static bool check_bitrate_sane(const int bitrateKBits) {
@@ -51,6 +52,8 @@ struct CameraSettings {
   // encoder support a constant bitrate, and not all encoders support all
   // bitrates, especially really low ones.
   int bitrateKBits = DEFAULT_BITRATE_KBITS;
+  // r.n use rpicamrs as reference. Not supported by all cameras
+  int keyframe_interval=DEFAULT_KEYFRAME_INTERVAL;
   // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar
   // form
   std::string url;
@@ -68,7 +71,7 @@ struct CameraSettings {
   int awb_mode=0;
   int exposure_mode=0;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,userSelectedVideoFormat,bitrateKBits,url,air_recording,camera_rotation_degree,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,userSelectedVideoFormat,bitrateKBits,keyframe_interval,url,air_recording,camera_rotation_degree,
 								   awb_mode,exposure_mode)
 
 struct CameraEndpoint {
@@ -166,6 +169,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	auto c_bitrate=[this](std::string,int value) {
 	  return set_video_bitrate(value);
 	};
+	auto c_keyframe_interval=[this](std::string,int value) {
+	  return set_keyframe_interval(value);
+	};
 	auto c_recording=[this](std::string,int value) {
 	  return set_air_recording(value);
 	};
@@ -176,6 +182,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 		openhd::Setting{"VIDEO_FPS",openhd::IntSetting{get_settings().userSelectedVideoFormat.framerate,c_fps}},
 		openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec), c_codec}},
 		openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}},
+		openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().keyframe_interval,c_keyframe_interval}},
 		openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
 	};
 	if(_camera.supports_rotation()){
@@ -261,6 +268,12 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  return false;
 	}
 	unsafe_get_settings().camera_rotation_degree=value;
+	persist();
+	return true;
+  }
+  bool set_keyframe_interval(int value){
+	if(!openhd::validate_rpi_keyframe_interval(value))return false;
+	unsafe_get_settings().keyframe_interval=value;
 	persist();
 	return true;
   }

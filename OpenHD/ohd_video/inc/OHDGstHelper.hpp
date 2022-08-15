@@ -39,14 +39,13 @@ static void initGstreamerOrThrow() {
 
 // SW encoding is slow, but should work on all platforms (at least for low resolutions/framerate(s) )
 // Note that not every sw encoder accepts every type of input format !
-static std::string createSwEncoder(const VideoCodec videoCodec,const int bitrateKBits){
+// Use 10 for keyframe interval if in doubt.
+static std::string createSwEncoder(const VideoCodec videoCodec,const int bitrateKBits,int keyframe_interval){
   std::stringstream ss;
   if(videoCodec==VideoCodec::H264){
-	ss << fmt::format("x264enc bitrate={} tune=zerolatency key-int-max=10 ! ",
-					  bitrateKBits);
+	ss<<"x264enc bitrate="<<bitrateKBits<<" tune=zerolatency key-int-max="<<keyframe_interval<<" ! ";
   }else if(videoCodec==VideoCodec::H265){
-	ss << fmt::format("x265enc bitrate={} tune=zerolatency key-int-max=10 ! ",
-					  bitrateKBits);
+	ss<<"x265enc "<<bitrateKBits<<" tune=zerolatency key-int-max="<<keyframe_interval<<" ! ";
   }else{
 	assert(videoCodec==VideoCodec::MJPEG);
 	//NOTE jpegenc doesn't have a bitrate controll
@@ -77,7 +76,7 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
       videoFormat.width, videoFormat.height, videoFormat.framerate);
   // since the primary purpose here is testing, use a fixed low key frame
   // intervall.
-  ss << createSwEncoder(videoFormat.videoCodec,DEFAULT_BITRATE_KBITS);
+  ss << createSwEncoder(videoFormat.videoCodec,DEFAULT_BITRATE_KBITS,10);
   return ss.str();
 }
 
@@ -88,7 +87,9 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
  */
 static std::string createRpicamsrcStream(const int camera_number,
                                          const int bitrateKBits,
-                                         const VideoFormat videoFormat,int rotation,int awb_mode,int exp_mode) {
+                                         const VideoFormat videoFormat,
+										 int keyframe_interval,
+										 int rotation,int awb_mode,int exp_mode) {
   assert(videoFormat.isValid());
   //assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;
@@ -100,6 +101,12 @@ static std::string createRpicamsrcStream(const int camera_number,
   } else {
     ss << fmt::format("rpicamsrc camera-number={} bitrate={} preview=0 ",
                       camera_number, bitrateBitsPerSecond);
+  }
+  // keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
+  if(keyframe_interval>= -1 && keyframe_interval < 1000){
+	ss << "keyframe-interval "<<keyframe_interval<<" ";
+  }else{
+	std::cerr<<"Invalid keyframe intervall: "<<keyframe_interval<<"\n";
   }
   if(openhd::needs_horizontal_flip(rotation)){
 	ss<<"hflip=1 ";
@@ -124,7 +131,7 @@ static std::string createRpicamsrcStream(const int camera_number,
 	ss<<fmt::format(
 		"video/x-raw, width={}, height={}, framerate={}/1 ! ",
 		videoFormat.width, videoFormat.height, videoFormat.framerate);
-	ss<<createSwEncoder(videoFormat.videoCodec,bitrateKBits);
+	ss<<createSwEncoder(videoFormat.videoCodec,bitrateKBits,keyframe_interval);
   }
   return ss.str();
 }
@@ -174,7 +181,7 @@ static std::string createJetsonStream(const int sensor_id,
  */
 static std::string createV4l2SrcRawAndSwEncodeStream(
     const std::string &device_node, const VideoCodec videoCodec,
-    const int bitrateKBits) {
+    const int bitrateKBits,const int keyframe_interval) {
   std::stringstream ss;
   assert(videoCodec != VideoCodec::Unknown);
   ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
@@ -187,7 +194,7 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   // Add a queue here. With sw we are not low latency anyways.
   ss << "queue ! ";
   assert(videoCodec != VideoCodec::Unknown);
-  ss<<createSwEncoder(videoCodec,bitrateKBits);
+  ss<<createSwEncoder(videoCodec,bitrateKBits,keyframe_interval);
   return ss.str();
 }
 

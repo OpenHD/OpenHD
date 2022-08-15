@@ -125,7 +125,8 @@ void GStreamerStream::setup_raspberrypi_csi() {
   std::cout << "Setting up Raspberry Pi CSI camera" << std::endl;
   // similar to jetson, for now we assume there is only one CSI camera connected.
   const auto& setting=_camera_holder->get_settings();
-  m_pipeline<< OHDGstHelper::createRpicamsrcStream(-1, setting.bitrateKBits, setting.userSelectedVideoFormat,setting.camera_rotation_degree,
+  m_pipeline<< OHDGstHelper::createRpicamsrcStream(-1, setting.bitrateKBits, setting.userSelectedVideoFormat,setting.keyframe_interval,
+												   setting.camera_rotation_degree,
 												   setting.awb_mode,setting.exposure_mode);
 }
 
@@ -165,7 +166,7 @@ void GStreamerStream::setup_usb_uvc() {
 	  const auto device_node = endpoint.device_node;
           m_pipeline << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,
                                                                         setting.userSelectedVideoFormat.videoCodec,
-                                                                        setting.bitrateKBits);
+                                                                        setting.bitrateKBits,setting.keyframe_interval);
           return;
 	}
   }
