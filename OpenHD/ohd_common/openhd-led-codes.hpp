@@ -9,16 +9,37 @@
 
 namespace openhd {
 
+// We use the green LED to show if OpenHD is alive (has not crashed) and weather running as air or ground
+// When the application crashes, this thread will stop and therefore the blinking also stops
+class GreenLedAliveBlinker{
+ public:
+  GreenLedAliveBlinker(OHDPlatform platform,bool is_air):m_platform(platform),m_is_air(is_air){
+	m_blink_thread = std::make_unique<std::thread>(&GreenLedAliveBlinker::run_infinite, this);
+  }
+  ~GreenLedAliveBlinker(){
+	run= false;
+	if(m_blink_thread->joinable())m_blink_thread->join();
+	m_blink_thread= nullptr;
+  }
+ private:
+  void run_infinite() const{
+	while (run){
+	  if(m_platform.platform_type==PlatformType::RaspberryPi){
+		openhd::rpi::green_led_on_off_delayed(std::chrono::seconds(1),std::chrono::seconds(m_is_air ? 1: 2));
+	  }else{
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	  }
+	}
+  }
+  std::unique_ptr<std::thread> m_blink_thread = nullptr;
+  bool run= true;
+  const bool m_is_air;
+  const OHDPlatform m_platform;
+};
+
 // R.N only to show no connected wifi card, which requires a reboot to fix.
 class LEDBlinker {
  public:
-  // toggle red led off, wait for delay, then toggle it on,wait for delay
-  static void rpi_red_led_on_off_delayed(const std::chrono::milliseconds &delay) {
-	rpi::toggle_red_led(false);
-	std::this_thread::sleep_for(delay);
-	rpi::toggle_red_led(true);
-	std::this_thread::sleep_for(delay);
-  }
   // One on / off sequence is often not enough signal for the user, repeat the sequence for a given amount of time
   // blink red led in X second intervals, runs for duration seconds. Defaults to infinity (note the calling thread will be blocked then)
   void blink_red_led(const std::string &message, const std::chrono::seconds duration = DURATION_INFINITY) const {
@@ -26,7 +47,7 @@ class LEDBlinker {
 	while ((std::chrono::steady_clock::now() - start) <= duration) {
 	  LOGE << message;
 	  if (_platform.platform_type == PlatformType::RaspberryPi) {
-		rpi_red_led_on_off_delayed(std::chrono::seconds(1));
+		rpi::red_led_on_off_delayed(std::chrono::seconds(1),std::chrono::seconds(1));
 	  } else {
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	  }
