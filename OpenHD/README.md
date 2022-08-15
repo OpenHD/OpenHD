@@ -6,7 +6,9 @@ Note that this executable assumes that some modifications have been applied to t
 like patched wifi drivers and directories to write files into.
 
 ## List of Assumptions about the linux system we are running on that are non-standard:
+(This might be incomplete)
 1) Wifi drivers are patched to support monitor mode for all WiFi cards OpenHD supports
+(Or at least the wifi card you then connect to the system and that is used by OpenHD for wifibroadcast)
 This sounds simple, but it is not. Also, stuff like disabling weird services that would interfer with monitor
 mode or similar falls into this category.
 2) The directory /tmp for writing temporary files exists
