@@ -65,7 +65,7 @@ static std::string createSwEncoder(const VideoCodec videoCodec,const int bitrate
  * stream that takes raw data coming from a videotestsrc and encodes it in
  * either h264, h265 or mjpeg.
  */
-static std::string createDummyStream(const VideoFormat videoFormat) {
+static std::string createDummyStream(const VideoFormat videoFormat,int bitrateKBits,int keyframe_interval) {
   std::stringstream ss;
   ss << "videotestsrc ! ";
   // h265 cannot do NV12, but I420.
@@ -75,8 +75,8 @@ static std::string createDummyStream(const VideoFormat videoFormat) {
       "video/x-raw, format=I420,width={},height={},framerate={}/1 ! ",
       videoFormat.width, videoFormat.height, videoFormat.framerate);
   // since the primary purpose here is testing, use a fixed low key frame
-  // intervall.
-  ss << createSwEncoder(videoFormat.videoCodec,DEFAULT_BITRATE_KBITS,10);
+  // interval.
+  ss << createSwEncoder(videoFormat.videoCodec,bitrateKBits,keyframe_interval);
   return ss.str();
 }
 

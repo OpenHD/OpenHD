@@ -73,7 +73,7 @@ void GStreamerStream::setup() {
 	  break;
 	}
 	case CameraType::Dummy: {
-	  m_pipeline << OHDGstHelper::createDummyStream(setting.userSelectedVideoFormat);
+	  setup_sw_dummy_camera();
 	  break;
 	}
 	case CameraType::RaspberryPiVEYE:
@@ -195,6 +195,13 @@ void GStreamerStream::setup_ip_camera() {
   m_pipeline << OHDGstHelper::createIpCameraStream(setting.url);
 }
 
+void GStreamerStream::setup_sw_dummy_camera() {
+  std::cout << "Setting up SW dummy camera\n";
+  const auto& camera=_camera_holder->get_camera();
+  const auto& setting=_camera_holder->get_settings();
+  m_pipeline << OHDGstHelper::createDummyStream(setting.userSelectedVideoFormat,setting.bitrateKBits,setting.keyframe_interval);
+}
+
 std::string GStreamerStream::createDebug(){
   std::unique_lock<std::mutex> lock(_pipeline_mutex, std::try_to_lock);
   if(!lock.owns_lock()){
@@ -295,3 +302,4 @@ void GStreamerStream::restart_async() {
   }
   _async_thread=std::make_unique<std::thread>(&GStreamerStream::restart_after_new_setting,this);
 }
+
