@@ -49,13 +49,8 @@ class USBTetherListener{
    void stopLooping();
  private:
   const openhd::EXTERNAL_DEVICE_CALLBACK _external_device_callback;
-  // protects against simultaneous read/write of the device_ip variable.
-  std::mutex device_ip_mutex;
-  openhd::ExternalDevice _externalDevice;
   std::unique_ptr<std::thread> loopThread;
   std::atomic<bool> loopThreadStop=false;
-  // write the device ip, protected by mutex.
-  void setExternalDeviceLocked(openhd::ExternalDevice device);
   /**
    * @brief simple state-based method that performs the following sequential steps:
    * 1) Wait until a tethering device is connected

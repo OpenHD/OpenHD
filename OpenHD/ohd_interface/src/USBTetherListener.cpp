@@ -8,11 +8,6 @@
 #include <utility>
 
 
-void USBTetherListener::setExternalDeviceLocked(openhd::ExternalDevice device) {
-  std::lock_guard<std::mutex> guard(device_ip_mutex);
-  _externalDevice=std::move(device);
-}
-
 void USBTetherListener::loopInfinite() {
   while (!loopThreadStop){
 	connectOnce();
@@ -49,19 +44,18 @@ void USBTetherListener::connectOnce() {
   const auto ip_external_device= OHDUtil::string_in_between("default via "," proto",run_command_result);
   const auto ip_self_network= OHDUtil::string_in_between("src "," metric",run_command_result);
 
-  const auto externalDevice=openhd::ExternalDevice{ip_self_network,ip_external_device};
+  const auto external_device=openhd::ExternalDevice{ip_self_network,ip_external_device};
   // Check if both are valid IPs (otherwise, perhaps the parsing got fucked up)
-  if(!externalDevice.is_valid()){
+  if(!external_device.is_valid()){
 	std::stringstream ss;
-	ss<<"USBTetherListener: "<<externalDevice.to_string()<<" not valid\n";
+	ss<<"USBTetherListener: "<<external_device.to_string()<<" not valid\n";
 	std::cerr<<ss.str();
 	return;
   }
 
-  setExternalDeviceLocked(externalDevice);
-  std::cout<<"USBTetherListener::found device:"<<_externalDevice.to_string()<<"\n";
+  std::cout<<"USBTetherListener::found device:"<<external_device.to_string()<<"\n";
   if(_external_device_callback){
-	_external_device_callback(_externalDevice, true);
+	_external_device_callback(external_device, true);
   }
 
   // check in regular intervals if the tethering device disconnects.
@@ -74,7 +68,7 @@ void USBTetherListener::connectOnce() {
 	}
   }
   if(_external_device_callback){
-	_external_device_callback(_externalDevice, false);
+	_external_device_callback(external_device, false);
   }
 }
 
