@@ -15,7 +15,7 @@ namespace openhd {
 //    the ground unit
 // 2) How are these device(s) handled: Once detected (e.g. when a USB tethering connection is detected), find their IP adress,
 //    then call the callback function with the ip and connected==true when new device connected, as well as connected==false
-// when this device disconnects
+//    when this device disconnects
 
 struct ExternalDevice {
   // TODO I don't know exactly how to call this
@@ -33,6 +33,7 @@ struct ExternalDevice {
   }
   // For when using a map of external device(s)
   [[nodiscard]] std::string create_identifier() const {
+	assert(is_valid());
 	return local_network_ip + "_" + external_device_ip;
   }
   [[nodiscard]] std::string to_string()const{
