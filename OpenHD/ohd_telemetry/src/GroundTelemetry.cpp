@@ -97,6 +97,7 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
   const auto loop_intervall=std::chrono::milliseconds(500);
   auto last_log=std::chrono::steady_clock::now();
   while (true) {
+	const auto loopBegin=std::chrono::steady_clock::now();
 	if(std::chrono::steady_clock::now()-last_log>=log_intervall) {
 	  last_log = std::chrono::steady_clock::now();
 	  std::cout << "GroundTelemetry::loopInfinite()\n";
@@ -126,7 +127,18 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 		}
 	  }
 	}
-	std::this_thread::sleep_for(loop_intervall);
+	const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
+	if(loopDelta>loop_intervall){
+	  // We can't keep up with the wanted loop interval
+	  std::stringstream ss;
+	  ss<<"Warning GroundTelemetry cannot keep up with the wanted loop interval. Took:"
+		<<std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count()<<"ms\n";
+	  std::cout<<ss.str();
+	}else{
+	  const auto sleepTime=loop_intervall-loopDelta;
+	  // send out in X second intervals
+	  std::this_thread::sleep_for(loop_intervall);
+	}
   }
 }
 
