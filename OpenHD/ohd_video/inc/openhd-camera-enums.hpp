@@ -22,6 +22,7 @@ enum class CameraType {
   UVCH264,
   IP,     // IP camera that connects via ethernet and provides a video feet at special network address
   Dummy,  // Dummy camera, is created fully in sw, for debugging ppurposes.
+  Libcamera,
   Unknown
 };
 NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
@@ -33,6 +34,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
      {CameraType::UVC, "UVC"},
      {CameraType::UVCH264, "UVCH264"},
      {CameraType::IP, "IP"},
+     {CameraType::Libcamera, "Libcamera"},
      {CameraType::Dummy, "Dummy"},
  });
 
