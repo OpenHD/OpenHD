@@ -13,7 +13,7 @@
 
 class LibcameraProvider {
  public:
-  LibcameraProvider();
+
   constexpr bool is_libcamera_available() {
     return libcamera_available_;
   }
@@ -23,7 +23,6 @@ class LibcameraProvider {
  private:
 #ifdef LIBCAMERA_PRESENT
   const bool libcamera_available_ = true;
-  std::unique_ptr<libcamera::CameraManager> camera_manager_ = nullptr;
 #else
   const bool libcamera_available_ = false;
 #endif
