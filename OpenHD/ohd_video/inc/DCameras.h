@@ -5,6 +5,7 @@
 #include <chrono>
 #include <vector>
 
+#include "libcamera_provider.h"
 #include "openhd-camera.hpp"
 #include "openhd-platform.hpp"
 
@@ -15,10 +16,14 @@
  */
 class DCameras {
  public:
-  explicit DCameras(const OHDPlatform &ohdPlatform);
+  explicit DCameras(const OHDPlatform &ohdPlatform, std::shared_ptr<LibcameraProvider> libcameraProvider);
   virtual ~DCameras() = default;
-  static DiscoveredCameraList discover(const OHDPlatform &ohdPlatform);
-  static std::vector<std::shared_ptr<CameraHolder>> discover2(const OHDPlatform &ohdPlatform);
+  static DiscoveredCameraList discover(
+      const OHDPlatform &ohdPlatform,
+      std::shared_ptr<LibcameraProvider> libcameraProvider);
+  static std::vector<std::shared_ptr<CameraHolder>> discover2(
+      const OHDPlatform &ohdPlatform,
+      std::shared_ptr<LibcameraProvider> libcameraProvider);
  private:
   DiscoveredCameraList discover_internal();
   void argh_cleanup();
@@ -40,6 +45,15 @@ class DCameras {
   void detect_raspberrypi_csi();
   // hacky
   void detect_raspberrypi_veye();
+
+  /*
+   * Detecting via libcamera.
+   * Actually all cameras in system available via libcamera.
+   * Moreover libcamera cameras is v4l devices and can be used as usual.
+   * But here we are using libcamera only for undetected cameras for compatability
+   */
+  void detect_raspberry_libcamera();
+
   /*
    * Detect all v4l2 cameras, that is cameras that show up as a v4l2 device
    * (/dev/videoXX)
@@ -65,6 +79,7 @@ class DCameras {
   int m_discover_index = 0;
 
   const OHDPlatform &ohdPlatform;
+  std::shared_ptr<LibcameraProvider> libcamera_provider_;
 };
 
 #endif

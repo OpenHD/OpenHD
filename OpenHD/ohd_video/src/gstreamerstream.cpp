@@ -52,7 +52,11 @@ void GStreamerStream::setup() {
 	  setup_raspberrypi_csi();
 	  break;
 	}
-        case CameraType::JetsonCSI: {
+    case CameraType::Libcamera: {
+      setup_libcamera();
+      break;
+    }
+    case CameraType::JetsonCSI: {
 	  setup_jetson_csi();
 	  break;
 	}
@@ -111,7 +115,7 @@ void GStreamerStream::setup() {
   GError *error = nullptr;
   gst_pipeline = gst_parse_launch(m_pipeline.str().c_str(), &error);
   if (error) {
-	std::cerr << "Failed to create pipeline: " << error->message << std::endl;
+    std::cerr << "Failed to create pipeline: " << error->message << std::endl;
 	return;
   }
 }
@@ -122,6 +126,17 @@ void GStreamerStream::setup_raspberrypi_csi() {
   const auto& setting=_camera_holder->get_settings();
   m_pipeline<< OHDGstHelper::createRpicamsrcStream(-1, setting.bitrateKBits, setting.userSelectedVideoFormat,setting.camera_rotation_degree,
 												   setting.awb_mode,setting.exposure_mode);
+}
+
+void GStreamerStream::setup_libcamera() {
+  std::cout << "Setting up Raspberry Pi CSI camera" << std::endl;
+  // similar to jetson, for now we assume there is only one CSI camera
+  // connected.
+  const auto& setting = _camera_holder->get_settings();
+  m_pipeline << OHDGstHelper::createLibcamerasrcStream(
+      _camera_holder->get_camera().name, setting.bitrateKBits,
+      setting.userSelectedVideoFormat,
+      setting.camera_rotation_degree, setting.awb_mode, setting.exposure_mode);
 }
 
 void GStreamerStream::setup_jetson_csi() {

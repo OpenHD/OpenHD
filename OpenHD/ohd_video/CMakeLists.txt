@@ -18,6 +18,21 @@ SET(Boost_USE_MULTITHREAD ON)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
 SET(OHD_VIDEO_USED_LIBS Boost::filesystem)
 
+# From libcamera-apps !! begin
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBCAMERA QUIET libcamera)
+if(LIBCAMERA_FOUND)
+    message(STATUS "libcamera library found:")
+    message(STATUS "    version: ${LIBCAMERA_VERSION}")
+    message(STATUS "    libraries: ${LIBCAMERA_LINK_LIBRARIES}")
+    message(STATUS "    include path: ${LIBCAMERA_INCLUDE_DIRS}")
+    set(LIBCAMERA_FOUND 1)
+else()
+    message(STATUS "LIBCAMERA features will be unavailable!")
+endif()
+
+# From libcamera-apps !! end
+
 # FUCKING GSTREAMER !! begin
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
@@ -37,10 +52,22 @@ SET(ALL_VIDEO_SOURCE_FILES
         src/OHDVideo.cpp
         src/DCameras.cpp)
 
+if(LIBCAMERA_FOUND)
+    set(ALL_VIDEO_SOURCE_FILES ${ALL_VIDEO_SOURCE_FILES} src/libcamera_provider.cpp)
+else()
+    set(ALL_VIDEO_SOURCE_FILES ${ALL_VIDEO_SOURCE_FILES} src/libcamera_provider_stub.cpp)
+endif()
+
 add_library(OHDVideoLib
         STATIC
         ${ALL_VIDEO_SOURCE_FILES})
 target_include_directories(OHDVideoLib PUBLIC inc/)
+
+if(LIBCAMERA_FOUND)
+    target_include_directories(OHDVideoLib PUBLIC ${LIBCAMERA_INCLUDE_DIRS})
+    target_link_libraries(OHDVideoLib PUBLIC ${LIBCAMERA_LINK_LIBRARIES})
+endif()
+
 target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})
 # link and include gstreamer
 target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
@@ -61,3 +88,5 @@ add_executable(test_video test/test_video.cpp)
 target_link_libraries(test_video OHDVideoLib)
 add_executable(test_dummy_gstreamer test/test_dummy_gstreamer.cpp)
 target_link_libraries(test_dummy_gstreamer OHDVideoLib)
+
+target_compile_definitions(OHDVideoLib PUBLIC LIBCAMERA_PRESENT=${LIBCAMERA_FOUND})

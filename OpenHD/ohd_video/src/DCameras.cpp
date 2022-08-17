@@ -13,8 +13,9 @@
 #include <iostream>
 #include <regex>
 
-DCameras::DCameras(const OHDPlatform& ohdPlatform) :
-	ohdPlatform(ohdPlatform){}
+DCameras::DCameras(const OHDPlatform &ohdPlatform,
+                   std::shared_ptr<LibcameraProvider> libcameraProvider)
+    : ohdPlatform(ohdPlatform), libcamera_provider_(libcameraProvider) {}
 
 DiscoveredCameraList DCameras::discover_internal() {
   std::cout << "Cameras::discover()" << std::endl;
@@ -23,9 +24,9 @@ DiscoveredCameraList DCameras::discover_internal() {
   // On all other platforms (for example jetson) the CSI camera is exposed as a normal V4l2 linux device,and we cah
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
-  if(ohdPlatform.platform_type==PlatformType::RaspberryPi){
-	detect_raspberrypi_csi();
-	detect_raspberrypi_veye();
+  if (ohdPlatform.platform_type == PlatformType::RaspberryPi) {
+    detect_raspberrypi_csi();
+    detect_raspberrypi_veye();
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
   // Will need custom debugging before anything here is usable again though.
@@ -34,6 +35,9 @@ DiscoveredCameraList DCameras::discover_internal() {
   // This will detect all cameras (CSI or not) that do it the proper way (linux v4l2)
   detect_v4l2();
   detect_ip();
+  if (ohdPlatform.platform_type == PlatformType::RaspberryPi) {
+    detect_raspberry_libcamera();
+  }
   argh_cleanup();
   // write to json for debugging
   write_camera_manifest(m_cameras);
@@ -126,6 +130,17 @@ void DCameras::detect_raspberrypi_veye() {
   m_cameras.push_back(camera);
 }
 
+void DCameras::detect_raspberry_libcamera() {
+
+  if (libcamera_provider_->is_libcamera_available() == false) {
+    return;
+  }
+  auto cameras = libcamera_provider_->get_cameras();
+  for (auto camera : cameras) {
+    // TODO: filter out other cameras
+    m_cameras.push_back(camera);
+  }
+}
 
 void DCameras::detect_v4l2() {
   std::cout << "Cameras::detect_v4l2()" << std::endl;
@@ -347,13 +362,17 @@ void DCameras::argh_cleanup() {
   write_camera_manifest(m_cameras);
 }
 
-DiscoveredCameraList DCameras::discover(const OHDPlatform& ohdPlatform) {
-  auto discover=DCameras{ohdPlatform};
+DiscoveredCameraList DCameras::discover(
+    const OHDPlatform &ohdPlatform,
+    std::shared_ptr<LibcameraProvider> libcameraProvider) {
+  auto discover=DCameras{ohdPlatform, libcameraProvider};
   return discover.discover_internal();
 }
 
-std::vector<std::shared_ptr<CameraHolder>> DCameras::discover2(const OHDPlatform& ohdPlatform) {
-  auto discovered_cameras= discover(ohdPlatform);
+std::vector<std::shared_ptr<CameraHolder>> DCameras::discover2(
+    const OHDPlatform &ohdPlatform,
+    std::shared_ptr<LibcameraProvider> libcameraProvider) {
+  auto discovered_cameras= discover(ohdPlatform, libcameraProvider);
   std::vector<std::shared_ptr<CameraHolder>> ret;
   for(const auto& camera:discovered_cameras){
     ret.emplace_back(std::make_unique<CameraHolder>(camera));
