@@ -126,11 +126,9 @@ int main(int argc, char *argv[]) {
     // Now we need to discover detected cameras, to determine the n of cameras and then
     // decide if we are air or ground unit
     std::vector<Camera> cameras{};
-    std::shared_ptr<LibcameraProvider> libcameraProvider = nullptr;
     // To force ground, we just skip the discovery step (0 cameras means ground automatically)
     if (!options.force_ground){
-      libcameraProvider = std::make_shared<LibcameraProvider>();
-      cameras = DCameras::discover(*platform, libcameraProvider);
+      cameras = DCameras::discover(*platform);
     }
     // and by just adding a dummy camera we automatically become air
     /*if(options.force_air && cameras.empty()) {

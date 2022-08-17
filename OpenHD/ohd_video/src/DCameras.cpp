@@ -13,9 +13,8 @@
 #include <iostream>
 #include <regex>
 
-DCameras::DCameras(const OHDPlatform &ohdPlatform,
-                   std::shared_ptr<LibcameraProvider> libcameraProvider)
-    : ohdPlatform(ohdPlatform), libcamera_provider_(libcameraProvider) {}
+DCameras::DCameras(const OHDPlatform &ohdPlatform)
+    : ohdPlatform(ohdPlatform) {}
 
 DiscoveredCameraList DCameras::discover_internal() {
   std::cout << "Cameras::discover()" << std::endl;
@@ -130,17 +129,19 @@ void DCameras::detect_raspberrypi_veye() {
   m_cameras.push_back(camera);
 }
 
+#ifdef LIBCAMERA_PRESENT
 void DCameras::detect_raspberry_libcamera() {
-
-  if (libcamera_provider_->is_libcamera_available() == false) {
-    return;
-  }
-  auto cameras = libcamera_provider_->get_cameras();
-  for (auto camera : cameras) {
+  auto cameras = LibcameraProvider::get_cameras();
+  for (const auto& camera : cameras) {
     // TODO: filter out other cameras
     m_cameras.push_back(camera);
   }
 }
+#else
+void DCameras::detect_raspberry_libcamera() {
+  std::cerr<<"DCameras::detect_raspberry_libcamera()- no libcamera found at compile time";
+}
+#endif
 
 void DCameras::detect_v4l2() {
   std::cout << "Cameras::detect_v4l2()" << std::endl;
@@ -363,16 +364,14 @@ void DCameras::argh_cleanup() {
 }
 
 DiscoveredCameraList DCameras::discover(
-    const OHDPlatform &ohdPlatform,
-    std::shared_ptr<LibcameraProvider> libcameraProvider) {
-  auto discover=DCameras{ohdPlatform, libcameraProvider};
+    const OHDPlatform &ohdPlatform) {
+  auto discover=DCameras{ohdPlatform};
   return discover.discover_internal();
 }
 
 std::vector<std::shared_ptr<CameraHolder>> DCameras::discover2(
-    const OHDPlatform &ohdPlatform,
-    std::shared_ptr<LibcameraProvider> libcameraProvider) {
-  auto discovered_cameras= discover(ohdPlatform, libcameraProvider);
+    const OHDPlatform &ohdPlatform) {
+  auto discovered_cameras= discover(ohdPlatform);
   std::vector<std::shared_ptr<CameraHolder>> ret;
   for(const auto& camera:discovered_cameras){
     ret.emplace_back(std::make_unique<CameraHolder>(camera));
