@@ -5,6 +5,7 @@
 #include "openhd-util-filesystem.hpp"
 #include "DCamerasHelper.hpp"
 #include "veye-helper.h"
+#include "libcamera_provider.hpp"
 
 #include <linux/videodev2.h>
 #include <libv4l2.h>
