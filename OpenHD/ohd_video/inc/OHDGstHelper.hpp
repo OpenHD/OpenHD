@@ -140,6 +140,7 @@ static std::string createRpicamsrcStream(const int camera_number,
 static std::string createLibcamerasrcStream(const std::string& camera_name,
                                          const int bitrateKBits,
                                          const VideoFormat videoFormat,
+										 int keyframe_interval,
                                          int rotation, int awb_mode,
                                          int exp_mode) {
   assert(videoFormat.isValid());
@@ -164,7 +165,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
                       videoFormat.width, videoFormat.height,
                       videoFormat.framerate);
-    ss << createSwEncoder(videoFormat.videoCodec, bitrateKBits);
+    ss << createSwEncoder(videoFormat.videoCodec, bitrateKBits,keyframe_interval);
   }
   return ss.str();
 }

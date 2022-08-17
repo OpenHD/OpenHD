@@ -141,7 +141,7 @@ void GStreamerStream::setup_libcamera() {
   const auto& setting = _camera_holder->get_settings();
   m_pipeline << OHDGstHelper::createLibcamerasrcStream(
       _camera_holder->get_camera().name, setting.bitrateKBits,
-      setting.userSelectedVideoFormat,
+      setting.userSelectedVideoFormat,setting.keyframe_interval,
       setting.camera_rotation_degree, setting.awb_mode, setting.exposure_mode);
 }
 
