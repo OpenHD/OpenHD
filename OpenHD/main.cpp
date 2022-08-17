@@ -84,6 +84,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     std::cerr << "Cannot force air and ground at the same time\n";
     exit(1);
   }
+
   return ret;
 }
 

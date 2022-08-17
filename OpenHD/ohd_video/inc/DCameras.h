@@ -38,6 +38,15 @@ class DCameras {
   void detect_raspberrypi_csi();
   // hacky
   bool detect_raspberrypi_veye();
+
+  /*
+   * Detecting via libcamera.
+   * Actually all cameras in system available via libcamera.
+   * Moreover libcamera cameras is v4l devices and can be used as usual.
+   * But here we are using libcamera only for undetected cameras for compatability
+   */
+  void detect_raspberry_libcamera();
+
   /*
    * Detect all v4l2 cameras, that is cameras that show up as a v4l2 device
    * (/dev/videoXX)

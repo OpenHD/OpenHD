@@ -41,6 +41,9 @@ DiscoveredCameraList DCameras::discover_internal() {
   // This will detect all cameras (CSI or not) that do it the proper way (linux v4l2)
   detect_v4l2();
   detect_ip();
+  if (ohdPlatform.platform_type == PlatformType::RaspberryPi) {
+    detect_raspberry_libcamera();
+  }
   argh_cleanup();
   // write to json for debugging
   write_camera_manifest(m_cameras);
@@ -136,6 +139,19 @@ bool DCameras::detect_raspberrypi_veye() {
   return true;
 }
 
+#ifdef LIBCAMERA_PRESENT
+void DCameras::detect_raspberry_libcamera() {
+  auto cameras = LibcameraProvider::get_cameras();
+  for (const auto& camera : cameras) {
+    // TODO: filter out other cameras
+    m_cameras.push_back(camera);
+  }
+}
+#else
+void DCameras::detect_raspberry_libcamera() {
+  std::cerr<<"DCameras::detect_raspberry_libcamera()- no libcamera found at compile time";
+}
+#endif
 
 void DCameras::detect_v4l2() {
   if(m_enable_debug){

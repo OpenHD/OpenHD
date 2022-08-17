@@ -59,6 +59,15 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
       m_camera_streams.push_back(stream);
       break;
     }
+	case CameraType::Libcamera: {
+	  std::cout << "Camera index:" << camera.index << "\n";
+	  const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
+	  auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera_holder, udp_port);
+	  stream->setup();
+	  stream->start();
+	  m_camera_streams.push_back(stream);
+	  break;
+	}
     default: {
       std::cerr << "Unknown camera type, skipping" << std::endl;
     }

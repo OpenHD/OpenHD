@@ -137,6 +137,38 @@ static std::string createRpicamsrcStream(const int camera_number,
   return ss.str();
 }
 
+static std::string createLibcamerasrcStream(const std::string& camera_name,
+                                         const int bitrateKBits,
+                                         const VideoFormat videoFormat,
+                                         int rotation, int awb_mode,
+                                         int exp_mode) {
+  assert(videoFormat.isValid());
+  std::stringstream ss;
+  // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrateKBits);
+
+  ss << fmt::format("libcamerasrc camera-name={}",
+                      camera_name, bitrateBitsPerSecond);
+
+  ss << " ! ";
+  if (videoFormat.videoCodec == VideoCodec::H264) {
+    ss << fmt::format(
+        "capsfilter caps=video/x-raw,width={},height={},format=NV12 ! "
+        "v4l2convert ! "
+        "v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={}\" ! "
+        "video/x-h264,level=(string)4 ! ",
+        videoFormat.width, videoFormat.height, bitrateBitsPerSecond);
+  } else {
+    std::cout << "No h265 / MJPEG encoder on rpi, using SW encode (might "
+                 "result in frame drops/performance issues)\n";
+    ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
+                      videoFormat.width, videoFormat.height,
+                      videoFormat.framerate);
+    ss << createSwEncoder(videoFormat.videoCodec, bitrateKBits);
+  }
+  return ss.str();
+}
+
 /**
  * Create a encoded stream for the jetson, which is fully hardware accelerated
  * for h264,h265 and mjpeg.
