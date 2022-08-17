@@ -35,9 +35,9 @@ class DCameras {
    * This is used when the gpu firmware is in charge of the camera, we have to
    * ask it.
    */
-  void detect_raspberrypi_csi();
+  void detect_raspberrypi_broadcom_csi();
   // hacky
-  bool detect_raspberrypi_veye();
+  bool detect_raspberrypi_broadcom_veye();
 
   /*
    * Detecting via libcamera.

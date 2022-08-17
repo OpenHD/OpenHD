@@ -29,10 +29,10 @@ DiscoveredCameraList DCameras::discover_internal() {
 	// We need to detect the veye camera first - since once a veye camera is detected and
 	// ? eitehr run the veye_raspivid or do the initializing stuff) the "normal" rpi camera detection
 	// hangs infinite.
-	if(detect_raspberrypi_veye()){
+	if(detect_raspberrypi_broadcom_veye()){
 	  std::cerr<<"WARNING detected veye camera, skipping normal rpi camera detection\n";
 	}else{
-	  detect_raspberrypi_csi();
+	  detect_raspberrypi_broadcom_csi();
 	}
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
@@ -51,11 +51,11 @@ DiscoveredCameraList DCameras::discover_internal() {
   return m_cameras;
 }
 
-void DCameras::detect_raspberrypi_csi() {
-  std::cout << "Cameras::detect_raspberrypi_csi()" << std::endl;
+void DCameras::detect_raspberrypi_broadcom_csi() {
+  std::cout << "Cameras::detect_raspberrypi_broadcom_csi()" << std::endl;
   const auto vcgencmd_result=OHDUtil::run_command_out("vcgencmd get_camera");
   if(vcgencmd_result==std::nullopt){
-	std::cout << "Cameras::detect_raspberrypi_csi() vcgencmd not found" << std::endl;
+	std::cout << "Cameras::detect_raspberrypi_broadcom_csi() vcgencmd not found" << std::endl;
 	return;
   }
   const auto& raw_value=vcgencmd_result.value();
@@ -63,16 +63,16 @@ void DCameras::detect_raspberrypi_csi() {
   // example "supported=2 detected=2"
   const std::regex r{R"(supported=([\d]+)\s+detected=([\d]+))"};
   if (!std::regex_search(raw_value, result, r)) {
-	std::cout << "Cameras::detect_raspberrypi_csi() no regex match" << std::endl;
+	std::cout << "Cameras::detect_raspberrypi_broadcom_csi() no regex match" << std::endl;
 	return;
   }
   if (result.size() != 3) {
-	std::cout << "Cameras::detect_raspberrypi_csi() regex unexpected result" << std::endl;
+	std::cout << "Cameras::detect_raspberrypi_broadcom_csi() regex unexpected result" << std::endl;
 	return;
   }
   const std::string supported = result[1];
   const std::string detected = result[2];
-  std::cout << "Cameras::detect_raspberrypi_csi() supported=" + supported + " detected=" + detected << std::endl;
+  std::cout << "Cameras::detect_raspberrypi_broadcom_csi() supported=" + supported + " detected=" + detected << std::endl;
   const auto camera_count = atoi(detected.c_str());
   if (camera_count >= 1) {
 	Camera camera;
@@ -100,8 +100,8 @@ void DCameras::detect_raspberrypi_csi() {
   }
 }
 
-bool DCameras::detect_raspberrypi_veye() {
-  std::cout << "DCameras::detect_raspberrypi_veye()\n";
+bool DCameras::detect_raspberrypi_broadcom_veye() {
+  std::cout << "DCameras::detect_raspberrypi_broadcom_veye()\n";
   // First, we use i2cdetect to find out if there is a veye camera
   const auto i2cdetect_veye_result_opt=OHDUtil::run_command_out("i2cdetect -y 10 0x3b 0x3b | grep  '3b'");
   if(!i2cdetect_veye_result_opt.has_value()){
@@ -113,7 +113,7 @@ bool DCameras::detect_raspberrypi_veye() {
   std::smatch result;
   std::regex r{ "30:                                  3b            "};
   if (!std::regex_search(i2cdetect_veye_result, result, r)) {
-	std::cerr << "Cameras::detect_raspberrypi_veye() no regex match \n";
+	std::cerr << "Cameras::detect_raspberrypi_broadcom_veye() no regex match \n";
 	return false;
   }
   std::cout<<"Found veye camera\n";
@@ -142,7 +142,13 @@ bool DCameras::detect_raspberrypi_veye() {
 
 #ifdef LIBCAMERA_PRESENT
 void DCameras::detect_raspberry_libcamera() {
+  if(m_enable_debug){
+	std::cout<<"DCameras::detect_raspberry_libcamera()\n";
+  }
   auto cameras = LibcameraProvider::get_cameras();
+  if(m_enable_debug){
+	std::cout<<"Libcamera:discovered "<<cameras.size()<<" cameras\n";
+  }
   for (const auto& camera : cameras) {
     // TODO: filter out other cameras
     m_cameras.push_back(camera);
