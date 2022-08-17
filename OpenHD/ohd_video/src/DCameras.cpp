@@ -140,7 +140,7 @@ bool DCameras::detect_raspberrypi_broadcom_veye() {
   return true;
 }
 
-#ifdef LIBCAMERA_PRESENT
+#ifdef OPENHD_LIBCAMERA_PRESENT
 void DCameras::detect_raspberry_libcamera() {
   if(m_enable_debug){
 	std::cout<<"DCameras::detect_raspberry_libcamera()\n";
