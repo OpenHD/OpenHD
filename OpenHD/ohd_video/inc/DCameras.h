@@ -5,7 +5,7 @@
 #include <chrono>
 #include <vector>
 
-#include "libcamera_provider.h"
+#include "libcamera_provider.hpp"
 #include "openhd-camera.hpp"
 #include "openhd-platform.hpp"
 
@@ -16,14 +16,12 @@
  */
 class DCameras {
  public:
-  explicit DCameras(const OHDPlatform &ohdPlatform, std::shared_ptr<LibcameraProvider> libcameraProvider);
+  explicit DCameras(const OHDPlatform &ohdPlatform);
   virtual ~DCameras() = default;
   static DiscoveredCameraList discover(
-      const OHDPlatform &ohdPlatform,
-      std::shared_ptr<LibcameraProvider> libcameraProvider);
+      const OHDPlatform &ohdPlatform);
   static std::vector<std::shared_ptr<CameraHolder>> discover2(
-      const OHDPlatform &ohdPlatform,
-      std::shared_ptr<LibcameraProvider> libcameraProvider);
+      const OHDPlatform &ohdPlatform);
  private:
   DiscoveredCameraList discover_internal();
   void argh_cleanup();
@@ -79,7 +77,6 @@ class DCameras {
   int m_discover_index = 0;
 
   const OHDPlatform &ohdPlatform;
-  std::shared_ptr<LibcameraProvider> libcamera_provider_;
 };
 
 #endif

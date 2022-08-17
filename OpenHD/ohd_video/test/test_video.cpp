@@ -12,9 +12,8 @@
 
 int main(int argc, char *argv[]) {
   const auto platform=DPlatform::discover();
-  auto libcameraProvider = std::make_shared<LibcameraProvider>();
 
-  auto cameras=DCameras::discover(*platform, libcameraProvider);
+  auto cameras=DCameras::discover(*platform);
   if(cameras.empty()){
     cameras.emplace_back(createDummyCamera());
   }
