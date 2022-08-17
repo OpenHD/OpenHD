@@ -48,7 +48,6 @@ find_package(Threads REQUIRED)
 SET(ALL_VIDEO_SOURCE_FILES
         src/camerastream.cpp
         src/gstreamerstream.cpp
-        src/libcamerastream.cpp
         src/OHDVideo.cpp
         src/DCameras.cpp)
 
