@@ -15,8 +15,7 @@ SET(ALL_INTERFACE_SOURCE_FILES
         src/WifiHotspot.cpp
         src/USBTetherListener.cpp
         src/OHDInterface.cpp
-        src/DWifiCards.cpp
-        lib/nl.c)
+        src/DWifiCards.cpp)
 
 add_library(OHDInterfaceLib
         STATIC
@@ -31,10 +30,10 @@ FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
 target_link_libraries(OHDInterfaceLib PUBLIC Boost::filesystem)
 
 # find and include all the other libs
-include(cmake/FindLibNL.cmake)
+#include(cmake/FindLibNL.cmake)
 #find_package(LibNL REQUIRED)
-target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
-target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
+#target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
+#target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
 
 target_include_directories(OHDInterfaceLib PUBLIC inc/)
 target_include_directories(OHDInterfaceLib PUBLIC lib/include)

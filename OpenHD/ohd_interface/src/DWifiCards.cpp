@@ -9,9 +9,6 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <utility>
 
-extern "C" {
-#include "nl.h"
-}
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
