@@ -152,7 +152,7 @@ void GStreamerStream::setup_jetson_csi() {
   // Therefore, for now, we just default to no camera index rn and let nvarguscamerasrc figure out the camera index.
   // This will work as long as there is no more than 1 CSI camera.
   const auto& setting=_camera_holder->get_settings();
-  m_pipeline << OHDGstHelper::createJetsonStream(-1,setting.bitrateKBits, setting.userSelectedVideoFormat);
+  m_pipeline << OHDGstHelper::createJetsonStream(-1,setting.bitrateKBits, setting.userSelectedVideoFormat,setting.keyframe_interval);
 }
 
 void GStreamerStream::setup_usb_uvc() {

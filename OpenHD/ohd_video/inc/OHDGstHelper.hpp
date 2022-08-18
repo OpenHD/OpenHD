@@ -177,7 +177,8 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
  */
 static std::string createJetsonStream(const int sensor_id,
                                       const int bitrateKBits,
-                                      const VideoFormat videoFormat) {
+                                      const VideoFormat videoFormat,
+									  const int keyframe_interval) {
   assert(videoFormat.videoCodec != VideoCodec::Unknown);
   std::stringstream ss;
   // possible to omit the sensor id, nvarguscamerasrc will then figure out the
@@ -195,6 +196,7 @@ static std::string createJetsonStream(const int sensor_id,
   // https://developer.download.nvidia.com/embedded/L4T/r31_Release_v1.0/Docs/Accelerated_GStreamer_User_Guide.pdf?E_vSS50FKrZaJBjDtnCBmtaY8hWM1QCYlMHtXBqvZ_Jeuw0GXuLNaQwMBWUDABSnWCD-p8ABlBpBpP-kb2ADgWugbW8mgGPxUWJG_C4DWaL1yKjUVMy1AxH1RTaGOW82yFJ549mea--FBPuZUH3TT1MoEd4-sgdrZal5qr1J0McEFeFaVUc&t=eyJscyI6InJlZiIsImxzZCI6IlJFRi1kb2NzLm52aWRpYS5jb21cLyJ9
   // jetson is also bits per second
   const auto bitrateBitsPerSecond =kbits_to_bits_per_second(bitrateKBits);
+  // TODO: how do we specify the keyframe interval on jetson ?
   if (videoFormat.videoCodec == VideoCodec::H265) {
     ss << fmt::format(
         "nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} ! ",
