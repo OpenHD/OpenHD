@@ -15,7 +15,7 @@
  */
 class DCameras {
  public:
-  explicit DCameras(OHDPlatform ohdPlatform,bool enable_debug=false);
+  explicit DCameras(OHDPlatform ohdPlatform);
   virtual ~DCameras() = default;
   static DiscoveredCameraList discover(OHDPlatform ohdPlatform);
   static std::vector<std::shared_ptr<CameraHolder>> discover2(OHDPlatform ohdPlatform);
@@ -72,7 +72,7 @@ class DCameras {
   int m_discover_index = 0;
 
   const OHDPlatform ohdPlatform;
-  const bool m_enable_debug;
+  bool m_enable_debug;
 };
 
 #endif

@@ -15,8 +15,10 @@
 #include <iostream>
 #include <regex>
 
-DCameras::DCameras(const OHDPlatform ohdPlatform,const bool enable_debug) :
-	ohdPlatform(ohdPlatform),m_enable_debug(enable_debug){}
+DCameras::DCameras(const OHDPlatform ohdPlatform) :
+	ohdPlatform(ohdPlatform){
+  m_enable_debug=OHDUtil::get_ohd_env_variable_bool("OHD_DISCOVER_CAMERAS_DEBUG");
+}
 
 DiscoveredCameraList DCameras::discover_internal() {
   std::cout << "Cameras::discover()" << std::endl;

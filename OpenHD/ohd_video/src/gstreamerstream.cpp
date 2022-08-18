@@ -278,7 +278,7 @@ void GStreamerStream::restartIfStopped() {
   }
   GstState state;
   GstState pending;
-  auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
+  auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000); // timeout in ns
   if (returnValue == 0) {
 	std::stringstream message;
 	message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name<<"\n";

@@ -173,6 +173,22 @@ static void terminate_if_not_root(){
   }
 }
 
+static bool get_ohd_env_variable_bool(const char* name){
+  if (const char* env_p = std::getenv(name)) {
+	if (std::string(env_p) == "1") {
+	  return true;
+	}
+  }
+  return false;
+}
+
+static bool get_ohd_env_variable_bool(const std::string& name){
+  if(OHDUtil::contains_after_uppercase(name,"OHD_")){
+	std::cout<<"Please prefix OpenHD env variables with {OHD_}\n";
+  }
+  return get_ohd_env_variable_bool(name.c_str());
+}
+
 }
 
 #endif
