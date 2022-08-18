@@ -56,6 +56,8 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
       return "IP";
     case CameraType::Dummy:
       return "Dummy";
+	case CameraType::Libcamera:
+	  return "Libcamera";
     default:
       return "unknown";
   }
