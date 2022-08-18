@@ -154,11 +154,11 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   ss << " ! ";
   if (videoFormat.videoCodec == VideoCodec::H264) {
     ss << fmt::format(
-        "capsfilter caps=video/x-raw,width={},height={},format=NV12 ! "
+        "capsfilter caps=video/x-raw,width={},height={},format=NV12,framerate={}/1 ! "
         "v4l2convert ! "
         "v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={}\" ! "
         "video/x-h264,level=(string)4 ! ",
-        videoFormat.width, videoFormat.height, bitrateBitsPerSecond);
+        videoFormat.width, videoFormat.height, videoFormat.framerate, bitrateBitsPerSecond);
   } else {
     std::cout << "No h265 / MJPEG encoder on rpi, using SW encode (might "
                  "result in frame drops/performance issues)\n";
