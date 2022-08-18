@@ -18,6 +18,9 @@
 DCameras::DCameras(const OHDPlatform ohdPlatform) :
 	ohdPlatform(ohdPlatform){
   m_enable_debug=OHDUtil::get_ohd_env_variable_bool("OHD_DISCOVER_CAMERAS_DEBUG");
+  if(m_enable_debug){
+	std::cout<<"DCameras::m_enable_debug=true\n";
+  }
 }
 
 DiscoveredCameraList DCameras::discover_internal() {

@@ -173,7 +173,7 @@ static void terminate_if_not_root(){
   }
 }
 
-// Example: export OHD_DISCOVER_CAMERAS_DEBUG=1
+// Example: "export OHD_DISCOVER_CAMERAS_DEBUG=1"
 // -> then this method will return true if you query "OHD_DISCOVER_CAMERAS_DEBUG"
 static bool get_ohd_env_variable_bool(const char* name){
   if (const char* env_p = std::getenv(name)) {
