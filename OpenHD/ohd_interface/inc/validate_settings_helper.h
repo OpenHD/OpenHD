@@ -43,6 +43,7 @@ static std::vector<WifiChannel> get_channels_2G() {
 // These are what iw list lists for rtl8812au
 static std::vector<WifiChannel> get_channels_5G_rtl8812au() {
   return std::vector<WifiChannel>{
+	  //TODO {5170,34},
 	  {5180,36},
 	  {5200,40},
 	  {5220,44},
