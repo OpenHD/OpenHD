@@ -244,3 +244,12 @@ class SerialEndpointHolder{
   std::mutex _serialEndpointMutex;
   std::unique_ptr<SerialEndpoint> serialEndpoint=nullptr;
 };
+
+nlohmann::json j = nlohmann::json::parse(f, nullptr, false);
+	if (j.is_discarded()) {
+	  std::stringstream ss;
+	  ss<<"PersistentSettings::read_last_settings json parse error on{"<<file_path<<"}\n";
+	  std::cerr<<ss.str();
+	  // this means the default settings will be created
+	  return std::nullopt;
+	}

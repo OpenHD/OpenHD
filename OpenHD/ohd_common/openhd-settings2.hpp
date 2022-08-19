@@ -102,15 +102,34 @@ class PersistentSettings{
 	t.close();
   }
   // read last settings, if they are available
+  // Read the last persistent settings for this instance.
+  // Return std::nullopt if
+  // 1) The file does not exist
+  // 2) The json parse encountered an error
+  // 3) The json conversion encountered an error
+  // In case of 1 this is most likely new hw, and default settings will be created.
+  // In case of 2,3 it was most likely a user that modified the json incorrectly
+  // Also, default settings will be created in this case.
   [[nodiscard]] std::optional<T> read_last_settings()const{
 	const auto file_path=get_file_path();
 	if(!OHDFilesystemUtil::exists(file_path.c_str())){
 	  return std::nullopt;
 	}
 	std::ifstream f(file_path);
-	nlohmann::json j;
-	f >> j;
-	return j.get<T>();
+	try{
+	  nlohmann::json j;
+	  f >> j;
+	  auto tmp=j.get<T>();
+	  return tmp;
+	}catch(nlohmann::json::exception& ex){
+	  std::stringstream ss;
+	  ss<<"PersistentSettings::read_last_settings json exception on {"<<file_path<<"} ";
+	  ss<<ex.what()<<"\n";
+	  std::cerr<<ss.str();
+	  // this means the default settings will be created
+	  return std::nullopt;
+	}
+	return  std::nullopt;
   }
 };
 
