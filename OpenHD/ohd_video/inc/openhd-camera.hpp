@@ -20,6 +20,7 @@
 
 static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
 static constexpr auto DEFAULT_KEYFRAME_INTERVAL=30;
+static constexpr auto DEFAULT_MJPEG_QUALITY_PERCENT=50;
 
 // Return true if the bitrate is considered sane, false otherwise
 static bool check_bitrate_sane(const int bitrateKBits) {
@@ -54,8 +55,10 @@ struct CameraSettings {
   int bitrateKBits = DEFAULT_BITRATE_KBITS;
   // r.n use rpicamrs as reference. Not supported by all cameras
   int keyframe_interval=DEFAULT_KEYFRAME_INTERVAL;
+  // MJPEG has no bitrate parameter, only a "quality" param. This value is only used if the
+  // user selected MJPEG as its video codec
+  int mjpeg_quality_percent=DEFAULT_MJPEG_QUALITY_PERCENT;
   // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar
-  // form
   std::string url;
   // enable/disable recording to file
   Recording air_recording=Recording::DISABLED;
@@ -71,7 +74,7 @@ struct CameraSettings {
   int awb_mode=0;
   int exposure_mode=0;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,userSelectedVideoFormat,bitrateKBits,keyframe_interval,url,air_recording,camera_rotation_degree,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,userSelectedVideoFormat,bitrateKBits,keyframe_interval,mjpeg_quality_percent,url,air_recording,camera_rotation_degree,
 								   awb_mode,exposure_mode)
 
 struct CameraEndpoint {
@@ -175,6 +178,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	auto c_recording=[this](std::string,int value) {
 	  return set_air_recording(value);
 	};
+	auto c_mjpeg_quality_percent=[this](std::string,int value) {
+	  return set_mjpeg_quality_percent(value);
+	};
 	std::vector<openhd::Setting> ret={
 		openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
 		openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,c_width}},
@@ -184,6 +190,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 		openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}},
 		openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().keyframe_interval,c_keyframe_interval}},
 		openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
+		openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
 	};
 	if(_camera.supports_rotation()){
 	  auto c_rotation=[this](std::string,int value) {
@@ -296,7 +303,14 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	persist();
 	return true;
   }
-
+  bool set_mjpeg_quality_percent(int value){
+	if(!openhd::validate_mjpeg_quality_percent(value)){
+	  return false;
+	}
+	unsafe_get_settings().mjpeg_quality_percent=value;
+	persist();
+	return true;
+  }
   // Settings hacky end
  private:
   // Camera info is immutable

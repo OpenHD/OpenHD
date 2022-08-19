@@ -57,5 +57,9 @@ static bool needs_vertical_flip(int rotation_value){
   return false;
 }
 
+static bool validate_mjpeg_quality_percent(int value){
+  return value<=100 && value>=1;
+}
+
 }
 #endif //OPENHD_OPENHD_OHD_VIDEO_INC_V_VALIDATE_SETTINGS_H_
