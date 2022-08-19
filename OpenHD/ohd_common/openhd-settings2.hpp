@@ -126,7 +126,6 @@ class PersistentSettings{
 	  ss<<"PersistentSettings::read_last_settings json exception on {"<<file_path<<"} ";
 	  ss<<ex.what()<<"\n";
 	  std::cerr<<ss.str();
-	  std::cout<<"Using default settings\n";
 	  // this means the default settings will be created
 	  return std::nullopt;
 	}
