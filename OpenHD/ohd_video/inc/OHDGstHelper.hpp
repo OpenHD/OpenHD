@@ -41,16 +41,16 @@ static void initGstreamerOrThrow() {
 // Note that not every sw encoder accepts every type of input format !
 // Use 10 for keyframe interval if in doubt.
 // Note that the keyframe interval is only for h264 / h265, mjpeg doesn't have a keyframe interval (or rather it is always 1)
-static std::string createSwEncoder(const VideoCodec videoCodec,const int bitrateKBits,int keyframe_interval){
+static std::string createSwEncoder(const VideoCodec videoCodec, const int h26X_bitrate_kbits, int h26X_keyframe_interval,int mjpeg_quality_percent=50){
   std::stringstream ss;
   if(videoCodec==VideoCodec::H264){
-	ss<<"x264enc bitrate="<<bitrateKBits<<" tune=zerolatency key-int-max="<<keyframe_interval<<" ! ";
+	ss << "x264enc bitrate=" << h26X_bitrate_kbits << " tune=zerolatency key-int-max=" << h26X_keyframe_interval << " ! ";
   }else if(videoCodec==VideoCodec::H265){
-	ss<<"x265enc bitrate="<<bitrateKBits<<" tune=zerolatency key-int-max="<<keyframe_interval<<" ! ";
+	ss << "x265enc bitrate=" << h26X_bitrate_kbits << " tune=zerolatency key-int-max=" << h26X_keyframe_interval << " ! ";
   }else{
 	assert(videoCodec==VideoCodec::MJPEG);
 	//NOTE jpegenc doesn't have a bitrate controll
-	ss<<"jpegenc ! ";
+	ss<<"jpegenc quality="<<mjpeg_quality_percent<< " ! ";
   }
   return ss.str();
 }
