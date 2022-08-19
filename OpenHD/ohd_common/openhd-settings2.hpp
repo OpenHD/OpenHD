@@ -7,7 +7,6 @@
 
 #include <utility>
 
-#include "openhd-settings.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 

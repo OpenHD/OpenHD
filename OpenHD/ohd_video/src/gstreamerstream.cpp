@@ -135,7 +135,7 @@ void GStreamerStream::setup_raspberrypi_csi() {
 }
 
 void GStreamerStream::setup_libcamera() {
-  std::cout << "Setting up Raspberry Pi CSI camera" << std::endl;
+  std::cout << "Setting up Raspberry Pi libcamera camera" << std::endl;
   // similar to jetson, for now we assume there is only one CSI camera
   // connected.
   const auto& setting = _camera_holder->get_settings();
