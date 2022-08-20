@@ -11,7 +11,6 @@
 #include "openhd-util-filesystem.hpp"
 #include "openhd-settings2.hpp"
 #include "validate_settings_helper.h"
-#include "mavlink_settings/ISettingsComponent.h"
 
 // R.n (20.08) this class can be summarized as following:
 // 1) WifiCard: Capabilities of a detected wifi card, no persistent settings
