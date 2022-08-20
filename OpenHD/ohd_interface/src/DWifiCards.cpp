@@ -1,6 +1,6 @@
 #include "DWifiCards.h"
 
-#include "openhd-wifi.hpp"
+#include "OHDWifiCard.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 

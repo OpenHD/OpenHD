@@ -7,7 +7,7 @@
 #include <vector>
 #include <utility>
 
-#include "openhd-wifi.hpp"
+#include "OHDWifiCard.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-link-statistics.hpp"

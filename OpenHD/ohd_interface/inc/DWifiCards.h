@@ -6,7 +6,7 @@
 #include <vector>
 #include <optional>
 
-#include "openhd-wifi.hpp"
+#include "OHDWifiCard.hpp"
 #include "openhd-platform.hpp"
 
 /**
