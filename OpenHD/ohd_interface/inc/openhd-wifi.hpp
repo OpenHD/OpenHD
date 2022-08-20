@@ -94,18 +94,11 @@ static std::string wifi_use_for_to_string(const WifiUseFor wifi_use_for){
   }
 }
 
-// Consti10: Stephen used a default tx power of 3100 somewhere (not sure if that ever made it trough though)
-// This value seems a bit high to me, so I am going with a default of "1800" (which should be 18.0 dBm )
-// Used to be in dBm, but mW really is more verbose to the user - we convert from mW to dBm when using the iw dev set command
-static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT=25;
-static constexpr auto DEFAULT_5GHZ_FREQUENCY = 5180;
-static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412;
-
+// NOTE: Frequency is not a "card" param, it is set in the WB stream settings for WB and
+// In the hotpspot settings for wifi hotspot.
 struct WifiCardSettings{
   // This one needs to be set for the card to then be used for something.Otherwise, it is not used for anything
   WifiUseFor use_for = WifiUseFor::Unknown;
-  // frequency for this card
-  //uint32_t frequency;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WifiCardSettings,use_for)//,frequency,txpower)
 
@@ -136,13 +129,6 @@ static WifiCardSettings create_default_settings(const WiFiCard& wifi_card){
   // if a card is not functional, Discovery should not make it available.
   // ( a card either has to do 2.4 or 5 ghz, otherise - what the heck ;)
   assert(wifi_card.supports_5ghz || wifi_card.supports_2ghz);
-  if(wifi_card.supports_5ghz){
-    // by default, prefer 5Ghz
-    //settings.frequency=DEFAULT_5GHZ_FREQUENCY;
-  }else{
-    //settings.frequency=DEFAULT_2GHZ_FREQUENCY;
-  }
-  //settings.txpower=DEFAULT_WIFI_TX_POWER;
   return settings;
 }
 
