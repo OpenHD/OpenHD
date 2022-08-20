@@ -40,7 +40,7 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
   if(_settings->get_settings().configured_for_2G()){
 	if(! first_card.supports_2ghz){
 	  // we need to switch to 5ghz, since the connected card cannot do 2ghz
-	  std::cerr<<"WB configured for 2G but card can only do 5G\n";
+	  std::cerr<<"WB configured for 2G but card can only do 5G - overwriting old settings\n";
 	  _settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
 	  _settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_5GHZ_FREQUENCY;
 	  _settings->persist();
@@ -48,7 +48,7 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
   }else{
 	if(!first_card.supports_5ghz){
 	  // similar, we need to switch to 2G
-	  std::cerr<<"WB configured for %G but card can only do 2G\n";
+	  std::cerr<<"WB configured for 5G but card can only do 2G - overwriting old settings\n";
 	  _settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
 	  _settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_2GHZ_FREQUENCY;
 	  _settings->persist();
