@@ -7,7 +7,7 @@
 #include <DWifiCards.h>
 
 #include <utility>
-#include "WBStreamsSettings.h"
+#include "WBStreamsSettings.hpp"
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) :
 platform(platform1),profile(std::move(profile1)) {

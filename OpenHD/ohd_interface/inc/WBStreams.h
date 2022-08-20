@@ -11,7 +11,7 @@
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-link-statistics.hpp"
-#include "WBStreamsSettings.h"
+#include "WBStreamsSettings.hpp"
 #include "mavlink_settings/ISettingsComponent.h"
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
