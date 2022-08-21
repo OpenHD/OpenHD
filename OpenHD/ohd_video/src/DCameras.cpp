@@ -24,7 +24,7 @@ DCameras::DCameras(const OHDPlatform ohdPlatform) :
 }
 
 DiscoveredCameraList DCameras::discover_internal() {
-  std::cout << "Cameras::discover()" << std::endl;
+  std::cout << "DCameras::discover()" << std::endl;
 
   // Only on raspberry pi with the old broadcom stack we need a special detection method for the rpi CSI camera.
   // On all other platforms (for example jetson) the CSI camera is exposed as a normal V4l2 linux device,and we cah
@@ -57,10 +57,10 @@ DiscoveredCameraList DCameras::discover_internal() {
 }
 
 void DCameras::detect_raspberrypi_broadcom_csi() {
-  std::cout << "Cameras::detect_raspberrypi_broadcom_csi()" << std::endl;
+  std::cout << "DCameras::detect_raspberrypi_broadcom_csi()" << std::endl;
   const auto vcgencmd_result=OHDUtil::run_command_out("vcgencmd get_camera");
   if(vcgencmd_result==std::nullopt){
-	std::cout << "Cameras::detect_raspberrypi_broadcom_csi() vcgencmd not found" << std::endl;
+	std::cout << "DCameras::detect_raspberrypi_broadcom_csi() vcgencmd not found" << std::endl;
 	return;
   }
   const auto& raw_value=vcgencmd_result.value();
@@ -68,16 +68,16 @@ void DCameras::detect_raspberrypi_broadcom_csi() {
   // example "supported=2 detected=2"
   const std::regex r{R"(supported=([\d]+)\s+detected=([\d]+))"};
   if (!std::regex_search(raw_value, result, r)) {
-	std::cout << "Cameras::detect_raspberrypi_broadcom_csi() no regex match" << std::endl;
+	std::cout << "DCameras::detect_raspberrypi_broadcom_csi() no regex match" << std::endl;
 	return;
   }
   if (result.size() != 3) {
-	std::cout << "Cameras::detect_raspberrypi_broadcom_csi() regex unexpected result" << std::endl;
+	std::cout << "DCameras::detect_raspberrypi_broadcom_csi() regex unexpected result" << std::endl;
 	return;
   }
   const std::string supported = result[1];
   const std::string detected = result[2];
-  std::cout << "Cameras::detect_raspberrypi_broadcom_csi() supported=" + supported + " detected=" + detected << std::endl;
+  std::cout << "DCameras::detect_raspberrypi_broadcom_csi() supported=" + supported + " detected=" + detected << std::endl;
   const auto camera_count = atoi(detected.c_str());
   if (camera_count >= 1) {
 	Camera camera;
@@ -118,7 +118,7 @@ bool DCameras::detect_raspberrypi_broadcom_veye() {
   std::smatch result;
   std::regex r{ "30:                                  3b            "};
   if (!std::regex_search(i2cdetect_veye_result, result, r)) {
-	std::cerr << "Cameras::detect_raspberrypi_broadcom_veye() no regex match \n";
+	std::cerr << "DCameras::detect_raspberrypi_broadcom_veye() no regex match \n";
 	return false;
   }
   std::cout<<"Found veye camera\n";
@@ -167,7 +167,7 @@ void DCameras::detect_raspberry_libcamera() {
 
 void DCameras::detect_v4l2() {
   if(m_enable_debug){
-	std::cout << "Cameras::detect_v4l2()\n";
+	std::cout << "DCameras::detect_v4l2()\n";
   }
   // Get all the devices to take into consideration.
   const auto devices = DV4l2DevicesHelper::findV4l2VideoDevices();
@@ -178,7 +178,7 @@ void DCameras::detect_v4l2() {
 
 void DCameras::probe_v4l2_device(const std::string &device) {
   if(m_enable_debug){
-	std::cout << "Cameras::probe_v4l2_device()" << device << "\n";
+	std::cout << "DCameras::probe_v4l2_device()" << device << "\n";
   }
   std::stringstream command;
   command << "udevadm info ";
