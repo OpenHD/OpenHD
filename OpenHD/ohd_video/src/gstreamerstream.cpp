@@ -311,6 +311,7 @@ void GStreamerStream::restart_async() {
   // If the user was to change parameters to quickly, this would be a problem.
   if(_async_thread!= nullptr){
 	if(_async_thread->joinable()){
+	  std::cout<<"restart_async: waiting for previous operation to finish\n";
 	  _async_thread->join();
 	}
 	_async_thread=nullptr;
