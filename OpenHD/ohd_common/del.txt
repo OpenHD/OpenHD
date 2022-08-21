@@ -253,3 +253,31 @@ nlohmann::json j = nlohmann::json::parse(f, nullptr, false);
 	  // this means the default settings will be created
 	  return std::nullopt;
 	}
+
+// OpenHD transmits h264,h265 and mjpeg.
+// A (USB) camera might output either an already encoded data stream (e.g. h24,h265,mjpeg) or
+// a raw, uncompressed data stream - in which code OpenHD always tries to use a hw encoder first,
+// or falls back to SW encoding. That's why we have a extra class here, to handle all the output formats / capabilities
+// of a camera.
+// Note that it is quite common for a cmaera to support specific resolution@framerate - configs only for specific formats.
+// E.g. a USB camera might only do 1080p already encoded, but for raw formats, maxes out at a different resolution.
+struct CameraOutputFormat{
+  uint32_t v4l2_pixel_format;
+  int width;
+  int height;
+  int framerate;
+};
+
+static VideoCodec string_to_video_codec(const std::string &codec) {
+  if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h264")) !=
+      std::string::npos) {
+    return VideoCodec::H264;
+  } else if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h265")) !=
+             std::string::npos) {
+    return VideoCodec::H265;
+  } else if (OHDUtil::to_uppercase(codec).find(
+                 OHDUtil::to_uppercase("mjpeg")) != std::string::npos) {
+    return VideoCodec::MJPEG;
+  }
+  return VideoCodec::H264;
+}

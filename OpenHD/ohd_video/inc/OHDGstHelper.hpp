@@ -186,7 +186,6 @@ static std::string createJetsonStream(const int sensor_id,
                                       const int bitrateKBits,
                                       const VideoFormat videoFormat,
 									  const int keyframe_interval) {
-  assert(videoFormat.videoCodec != VideoCodec::Unknown);
   std::stringstream ss;
   // possible to omit the sensor id, nvarguscamerasrc will then figure out the
   // right sensor id. This only works with one csi camera though.
@@ -226,7 +225,6 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
     const std::string &device_node, const VideoCodec videoCodec,
     const int bitrateKBits,const int keyframe_interval) {
   std::stringstream ss;
-  assert(videoCodec != VideoCodec::Unknown);
   ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
   // rn we omit the set resolution/framerate here and let gstreamer figure it
   // out.
@@ -236,7 +234,6 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   ss << "videoconvert ! ";
   // Add a queue here. With sw we are not low latency anyways.
   ss << "queue ! ";
-  assert(videoCodec != VideoCodec::Unknown);
   ss<<createSwEncoder(videoCodec,bitrateKBits,keyframe_interval);
   return ss.str();
 }
@@ -247,7 +244,6 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
 static std::string createV4l2SrcAlreadyEncodedStream(
     const std::string &device_node, const VideoFormat videoFormat) {
   std::stringstream ss;
-  assert(videoFormat.videoCodec != VideoCodec::Unknown);
   ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
   if (videoFormat.videoCodec == VideoCodec::H264) {
     ss << fmt::format("video/x-h264, width={}, height={}, framerate={}/1 ! ",
@@ -305,7 +301,6 @@ static std::string createIpCameraStream(const std::string &url) {
  */
 static std::string createRtpForVideoCodec(const VideoCodec videoCodec) {
   std::stringstream ss;
-  assert(videoCodec != VideoCodec::Unknown);
   if (videoCodec == VideoCodec::H264) {
     ss << "h264parse config-interval=-1 ! ";
     ss << "rtph264pay mtu=1024 ! ";
@@ -334,7 +329,6 @@ static std::string createOutputUdpLocalhost(const int udpOutPort) {
 // Assumes there is a tee command named "t" somewhere in the pipeline right
 // after the encoding step, so we can get the raw encoded data out.
 static std::string createRecordingForVideoCodec(const VideoCodec videoCodec) {
-  assert(videoCodec != VideoCodec::Unknown);
   std::stringstream ss;
   ss << "t. ! queue ! ";
   if (videoCodec == VideoCodec::H264) {
