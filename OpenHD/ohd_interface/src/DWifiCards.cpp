@@ -140,9 +140,12 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   const bool supports_2ghz = supported_freq.supports_2G;
   const bool supports_5ghz = supported_freq.supports_5G;
 
-  std::stringstream ss;
-  ss<<"Card "<<card.interface_name<<" System reports:{"<<"supports_2G:"<<OHDUtil::yes_or_no(supports_2ghz)<<" supports_5G:"<<OHDUtil::yes_or_no(supports_2ghz)<<"\n";
-  std::cout<<ss.str();
+  {
+	// Note that this does not neccessarily mean this info is right, rtl8812au driver "lies" in this reagrd.
+	std::stringstream ss;
+	ss<<"Card "<<card.interface_name<<" reports:{"<<"supports_2G:"<<OHDUtil::yes_or_no(supports_2ghz)<<" supports_5G:"<<OHDUtil::yes_or_no(supports_2ghz)<<"}\n";
+	std::cout<<ss.str();
+  }
 
   std::stringstream address;
   address << "/sys/class/net/";

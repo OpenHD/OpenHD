@@ -379,12 +379,12 @@ void DCameras::argh_cleanup() {
 		// an endpoint who cannot do anything is just a waste and added complexity for later modules
 		if (endpoint.formats.empty()) {
 		  // not really an error, since it is an implementation issue during detection that is negated here
-		  std::cout << "Discarding endpoint due to no formats\n";
+		  std::cout << "Discarding endpoint"<<endpoint.device_node<<" due to no formats\n";
 		  continue;
 		}
 		if (!endpoint.supports_anything()) {
 		  // not really an error, since it is an implementation issue during detection that is negated here
-		  std::cout << "Discarding endpoint due to no capabilities\n";
+		  std::cout << "Discarding endpoint "<<endpoint.device_node<<" due to no capabilities\n";
 		  continue;
 		}
 		endpointsForThisCamera.push_back(endpoint);
