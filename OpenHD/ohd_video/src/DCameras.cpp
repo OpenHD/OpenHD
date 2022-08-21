@@ -347,7 +347,9 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 			new_format << "@";
 			new_format << frmival.discrete.denominator;
 			endpoint.formats.push_back(new_format.str());
-			std::cout << "Found format: " << new_format.str() << std::endl;
+			if(m_enable_debug){
+			  std::cout << "Found format: " << new_format.str() << std::endl;
+			}
 		  }
 		  frmival.index++;
 		}
@@ -357,7 +359,9 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 	fmtdesc.index++;
   }
   v4l2_close(fd);
-  std::cout<<"process_v4l2_node done\n";
+  if(m_enable_debug){
+	std::cout<<"DCameras::process_v4l2_node done\n";
+  }
   return true;
 }
 
