@@ -20,6 +20,17 @@
  */
 namespace OHDGstHelper {
 
+// These most basic params are supported on pretty much any platform / every good encoder implementation
+struct CommonEncoderParams{
+  VideoCodec videoCodec;
+  // For h264/h265 only. MJPEG in general only supports a "quality" param, not bitrate(s)
+  int h26X_bitrate_kbits;
+  // For h264/h265 only, often also called key-int-max or similar.
+  int h26X_keyframe_interval;
+  // for MJPEG only, usually in a [0,100] range
+  int mjpeg_quality_percent;
+};
+
 // some encoders take bits per second instead of kbits per second
 static int kbits_to_bits_per_second(int kbit_per_second){
   return kbit_per_second*1024;
@@ -38,19 +49,19 @@ static void initGstreamerOrThrow() {
 }
 
 // SW encoding is slow, but should work on all platforms (at least for low resolutions/framerate(s) )
-// Note that not every sw encoder accepts every type of input format !
-// Use 10 for keyframe interval if in doubt.
-// Note that the keyframe interval is only for h264 / h265, mjpeg doesn't have a keyframe interval (or rather it is always 1)
-static std::string createSwEncoder(const VideoCodec videoCodec, const int h26X_bitrate_kbits, int h26X_keyframe_interval,int mjpeg_quality_percent=50){
+// Note that not every sw encoder accepts every type of input format - I420 seems to work for all of them though.
+static std::string createSwEncoder(const CommonEncoderParams& common_encoder_params){
   std::stringstream ss;
-  if(videoCodec==VideoCodec::H264){
-	ss << "x264enc bitrate=" << h26X_bitrate_kbits << " tune=zerolatency key-int-max=" << h26X_keyframe_interval << " ! ";
-  }else if(videoCodec==VideoCodec::H265){
-	ss << "x265enc bitrate=" << h26X_bitrate_kbits << " tune=zerolatency key-int-max=" << h26X_keyframe_interval << " ! ";
+  if(common_encoder_params.videoCodec==VideoCodec::H264){
+	ss << "x264enc bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
+	" tune=zerolatency key-int-max=" << common_encoder_params.h26X_keyframe_interval << " ! ";
+  }else if(common_encoder_params.videoCodec==VideoCodec::H265){
+	ss << "x265enc bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
+	" tune=zerolatency key-int-max=" << common_encoder_params.h26X_keyframe_interval << " ! ";
   }else{
-	assert(videoCodec==VideoCodec::MJPEG);
+	assert(common_encoder_params.videoCodec==VideoCodec::MJPEG);
 	//NOTE jpegenc doesn't have a bitrate controll
-	ss<<"jpegenc quality="<<mjpeg_quality_percent<< " ! ";
+	ss<<"jpegenc quality="<<common_encoder_params.mjpeg_quality_percent<< " ! ";
   }
   return ss.str();
 }
@@ -66,7 +77,7 @@ static std::string createSwEncoder(const VideoCodec videoCodec, const int h26X_b
  * stream that takes raw data coming from a videotestsrc and encodes it in
  * either h264, h265 or mjpeg.
  */
-static std::string createDummyStream(const VideoFormat videoFormat,int bitrateKBits,int keyframe_interval) {
+static std::string createDummyStream(const VideoFormat videoFormat,int bitrateKBits,int keyframe_interval,int mjpeg_quality_percent) {
   std::stringstream ss;
   ss << "videotestsrc ! ";
   // h265 cannot do NV12, but I420.
@@ -77,7 +88,7 @@ static std::string createDummyStream(const VideoFormat videoFormat,int bitrateKB
       videoFormat.width, videoFormat.height, videoFormat.framerate);
   // since the primary purpose here is testing, use a fixed low key frame
   // interval.
-  ss << createSwEncoder(videoFormat.videoCodec,bitrateKBits,keyframe_interval);
+  ss << createSwEncoder({videoFormat.videoCodec,bitrateKBits,keyframe_interval,mjpeg_quality_percent});
   return ss.str();
 }
 
@@ -132,7 +143,7 @@ static std::string createRpicamsrcStream(const int camera_number,
 	ss<<fmt::format(
 		"video/x-raw, width={}, height={}, framerate={}/1 ! ",
 		videoFormat.width, videoFormat.height, videoFormat.framerate);
-	ss<<createSwEncoder(videoFormat.videoCodec,bitrateKBits,keyframe_interval);
+	ss<<createSwEncoder({videoFormat.videoCodec,bitrateKBits,keyframe_interval,50});
   }
   return ss.str();
 }
@@ -172,11 +183,36 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
                       videoFormat.width, videoFormat.height,
                       videoFormat.framerate);
-    ss << createSwEncoder(videoFormat.videoCodec, bitrateKBits,keyframe_interval);
+    ss << createSwEncoder({videoFormat.videoCodec, bitrateKBits,keyframe_interval,50});
   }
   return ss.str();
 }
 
+// For jetson we have a nice separation between camera / ISP and encoder
+static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common_encoder_params){
+  std::stringstream ss;
+  // https://developer.download.nvidia.com/embedded/L4T/r31_Release_v1.0/Docs/Accelerated_GStreamer_User_Guide.pdf?E_vSS50FKrZaJBjDtnCBmtaY8hWM1QCYlMHtXBqvZ_Jeuw0GXuLNaQwMBWUDABSnWCD-p8ABlBpBpP-kb2ADgWugbW8mgGPxUWJG_C4DWaL1yKjUVMy1AxH1RTaGOW82yFJ549mea--FBPuZUH3TT1MoEd4-sgdrZal5qr1J0McEFeFaVUc&t=eyJscyI6InJlZiIsImxzZCI6IlJFRi1kb2NzLm52aWRpYS5jb21cLyJ9
+  // jetson is also bits per second
+  const auto bitrateBitsPerSecond =kbits_to_bits_per_second(common_encoder_params.h26X_bitrate_kbits);
+  if(common_encoder_params.videoCodec==VideoCodec::H264){
+	ss<<"nvv4l2h264enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate="<<bitrateBitsPerSecond<<" ";
+	ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+	// https://forums.developer.nvidia.com/t/high-decoding-latency-for-stream-produced-by-nvv4l2h264enc-compared-to-omxh264enc/159517
+	// https://forums.developer.nvidia.com/t/parameter-poc-type-missing-on-jetson-though-mentioned-in-the-documentation/164545
+	ss<<"poc-type=2 ";
+	// TODO should we make max-perf-enable on by default ?
+	ss<<"! ";
+  }else if(common_encoder_params.videoCodec==VideoCodec::H265){
+	ss<<"nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate="<<bitrateBitsPerSecond<<" ";
+	ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+	ss<<"! ";
+  }else{
+	assert(common_encoder_params.videoCodec==VideoCodec::MJPEG);
+	ss<<"nvjpegenc quality="<<common_encoder_params.mjpeg_quality_percent<<" ";
+	ss<<"! ";
+  }
+  return ss.str();
+}
 /**
  * Create a encoded stream for the jetson, which is fully hardware accelerated
  * for h264,h265 and mjpeg.
@@ -199,21 +235,7 @@ static std::string createJetsonStream(const int sensor_id,
       "video/x-raw(memory:NVMM), width={}, height={}, format=NV12, "
       "framerate={}/1 ! ",
       videoFormat.width, videoFormat.height, videoFormat.framerate);
-  // https://developer.download.nvidia.com/embedded/L4T/r31_Release_v1.0/Docs/Accelerated_GStreamer_User_Guide.pdf?E_vSS50FKrZaJBjDtnCBmtaY8hWM1QCYlMHtXBqvZ_Jeuw0GXuLNaQwMBWUDABSnWCD-p8ABlBpBpP-kb2ADgWugbW8mgGPxUWJG_C4DWaL1yKjUVMy1AxH1RTaGOW82yFJ549mea--FBPuZUH3TT1MoEd4-sgdrZal5qr1J0McEFeFaVUc&t=eyJscyI6InJlZiIsImxzZCI6IlJFRi1kb2NzLm52aWRpYS5jb21cLyJ9
-  // jetson is also bits per second
-  const auto bitrateBitsPerSecond =kbits_to_bits_per_second(bitrateKBits);
-  // TODO: how do we specify the keyframe interval on jetson ?
-  if (videoFormat.videoCodec == VideoCodec::H265) {
-    ss << fmt::format(
-        "nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate={} ! ",
-        bitrateBitsPerSecond);
-  } else if (videoFormat.videoCodec == VideoCodec::H264) {
-    ss << fmt::format(
-        "nvv4l2h264enc name=nvenc control-rate=1 insert-sps-pps=1 bitrate={} ! ",
-        bitrateBitsPerSecond);
-  } else {
-    ss << fmt::format("nvjpegenc quality=50 ! ");
-  }
+  ss<<createJetsonEncoderPipeline({videoFormat.videoCodec,bitrateKBits,keyframe_interval,50});
   return ss.str();
 }
 
@@ -234,7 +256,7 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   ss << "videoconvert ! ";
   // Add a queue here. With sw we are not low latency anyways.
   ss << "queue ! ";
-  ss<<createSwEncoder(videoCodec,bitrateKBits,keyframe_interval);
+  ss<<createSwEncoder({videoCodec,bitrateKBits,keyframe_interval,50});
   return ss.str();
 }
 

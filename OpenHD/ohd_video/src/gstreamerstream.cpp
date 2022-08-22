@@ -214,7 +214,7 @@ void GStreamerStream::setup_sw_dummy_camera() {
   std::cout << "Setting up SW dummy camera\n";
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
-  m_pipeline << OHDGstHelper::createDummyStream(setting.userSelectedVideoFormat,setting.bitrateKBits,setting.keyframe_interval);
+  m_pipeline << OHDGstHelper::createDummyStream(setting.userSelectedVideoFormat,setting.bitrateKBits,setting.keyframe_interval,setting.mjpeg_quality_percent);
 }
 
 std::string GStreamerStream::createDebug(){
