@@ -15,9 +15,9 @@ include_directories(../ohd_common)
 # Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
 SET(Boost_USE_STATIC_LIBS OFF)
 SET(Boost_USE_MULTITHREAD ON)
-find_package(Boost REQUIRED COMPONENTS system thread regex filesystem)
+find_package(Boost REQUIRED COMPONENTS filesystem)
 message(STATUS "Boost version: ${Boost_VERSION}")
-SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::system Boost::thread Boost::filesystem)
+SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::filesystem)
 
 find_package(Threads REQUIRED)
 
