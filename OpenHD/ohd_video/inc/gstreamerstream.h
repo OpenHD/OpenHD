@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <thread>
+#include <mutex>
 
 #include "camerastream.h"
 #include "openhd-camera.hpp"
