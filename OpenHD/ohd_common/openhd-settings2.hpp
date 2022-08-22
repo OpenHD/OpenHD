@@ -94,6 +94,7 @@ class PersistentSettings{
   }
   // write settings locally for persistence
   void persist_settings()const{
+	assert(_settings);
 	const auto file_path=get_file_path();
 	const nlohmann::json tmp=*_settings;
 	// and write them locally for persistence
