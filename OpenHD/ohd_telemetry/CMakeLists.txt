@@ -27,7 +27,6 @@ SET(ALL_TELEMETRY_SOURCE_FILES
         src/OHDTelemetry.cpp
         src/endpoints/UDPEndpoint.cpp
         src/endpoints/UDPEndpoint2.cpp
-        src/endpoints/TCPEndpoint.cpp
         src/endpoints/SerialEndpoint.cpp
         #src/endpoints/WBEndpoint.cpp
         src/internal/OHDMainComponent.cpp

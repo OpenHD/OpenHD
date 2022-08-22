@@ -12,10 +12,6 @@
 #include "mav_helper.h"
 
 GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
-  /*tcpGroundCLient=std::make_unique<TCPEndpoint>(OHD_GROUND_CLIENT_TCP_PORT);
-  tcpGroundCLient->registerCallback([this](MavlinkMessage& msg){
-          onMessageGroundStationClients(msg);
-  });*/
   /*udpGroundClient =std::make_unique<UDPEndpoint>("GroundStationUDP",
                                                                                                  OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
                                                                                                  "127.0.0.1","127.0.0.1",true);//127.0.0.1
@@ -73,9 +69,9 @@ void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
 void GroundTelemetry::sendMessageGroundStationClients(const MavlinkMessage &message) {
   //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageGroundStationClients");
   // forward via TCP or UDP
-  if (tcpGroundCLient) {
-	tcpGroundCLient->sendMessage(message);
-  }
+  //if (tcpGroundCLient) {
+  //	tcpGroundCLient->sendMessage(message);
+  //}
   if (udpGroundClient) {
 	udpGroundClient->sendMessage(message);
   }
