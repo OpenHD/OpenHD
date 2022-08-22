@@ -201,10 +201,12 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
 	// https://forums.developer.nvidia.com/t/parameter-poc-type-missing-on-jetson-though-mentioned-in-the-documentation/164545
 	ss<<"poc-type=2 ";
 	// TODO should we make max-perf-enable on by default ?
+	ss<<"maxperf-enable=true ";
 	ss<<"! ";
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
 	ss<<"nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate="<<bitrateBitsPerSecond<<" ";
 	ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+	ss<<"maxperf-enable=true ";
 	ss<<"! ";
   }else{
 	assert(common_encoder_params.videoCodec==VideoCodec::MJPEG);
