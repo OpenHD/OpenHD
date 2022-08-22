@@ -189,6 +189,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
 }
 
 // For jetson we have a nice separation between camera / ISP and encoder
+// This creates the encoding part of the gstreamer pipeline
 static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common_encoder_params){
   std::stringstream ss;
   // https://developer.download.nvidia.com/embedded/L4T/r31_Release_v1.0/Docs/Accelerated_GStreamer_User_Guide.pdf?E_vSS50FKrZaJBjDtnCBmtaY8hWM1QCYlMHtXBqvZ_Jeuw0GXuLNaQwMBWUDABSnWCD-p8ABlBpBpP-kb2ADgWugbW8mgGPxUWJG_C4DWaL1yKjUVMy1AxH1RTaGOW82yFJ549mea--FBPuZUH3TT1MoEd4-sgdrZal5qr1J0McEFeFaVUc&t=eyJscyI6InJlZiIsImxzZCI6IlJFRi1kb2NzLm52aWRpYS5jb21cLyJ9
@@ -216,27 +217,34 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
   return ss.str();
 }
 /**
+ * This creates the sensor/ISP (nvarguscamerasrc) part of the gstreamer pipeline.
+ * @param sensor_id sensor id, set to -1 to let nvarguscamerasrc figure it out
+ */
+static std::string createJetsonSensorPipeline(const int sensor_id,const int width,const int height,const int framerate){
+  std::stringstream ss;
+  // possible to omit the sensor id, nvarguscamerasrc will then figure out the
+  // right sensor id. This only works with one csi camera though.
+  if (sensor_id == -1) {
+	ss << "nvarguscamerasrc do-timestamp=true ! ";
+  } else {
+	ss<<"nvarguscamerasrc do-timestamp=true sensor-id="<<sensor_id<<" ! ";
+  }
+  ss<<"video/x-raw(memory:NVMM), format=NV12, ";
+  ss<<"width="<<width<<", ";
+  ss<<"height="<<height<<", ";
+  ss<<"framerate="<<framerate<<"/1 ! ";
+  return ss.str();
+}
+/**
  * Create a encoded stream for the jetson, which is fully hardware accelerated
  * for h264,h265 and mjpeg.
- * @param sensor_id sensor id, set to -1 to let nvarguscamerasrc figure it out
  */
 static std::string createJetsonStream(const int sensor_id,
                                       const int bitrateKBits,
                                       const VideoFormat videoFormat,
 									  const int keyframe_interval) {
   std::stringstream ss;
-  // possible to omit the sensor id, nvarguscamerasrc will then figure out the
-  // right sensor id. This only works with one csi camera though.
-  if (sensor_id == -1) {
-    ss << fmt::format("nvarguscamerasrc do-timestamp=true ! ");
-  } else {
-    ss << fmt::format("nvarguscamerasrc do-timestamp=true sensor-id={} ! ",
-                      sensor_id);
-  }
-  ss << fmt::format(
-      "video/x-raw(memory:NVMM), width={}, height={}, format=NV12, "
-      "framerate={}/1 ! ",
-      videoFormat.width, videoFormat.height, videoFormat.framerate);
+  ss<<createJetsonSensorPipeline(sensor_id,videoFormat.width,videoFormat.height,videoFormat.framerate);
   ss<<createJetsonEncoderPipeline({videoFormat.videoCodec,bitrateKBits,keyframe_interval,50});
   return ss.str();
 }
