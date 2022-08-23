@@ -281,7 +281,7 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
     const std::string &device_node, const VideoCodec videoCodec,
     const int bitrateKBits,const int keyframe_interval) {
   std::stringstream ss;
-  ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
+  ss << fmt::format("v4l2src device={} ! ", device_node);
   // rn we omit the set resolution/framerate here and let gstreamer figure it
   // out.
   // TODO: do it better ;)
@@ -300,7 +300,7 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
 static std::string createV4l2SrcAlreadyEncodedStream(
     const std::string &device_node, const VideoFormat videoFormat) {
   std::stringstream ss;
-  ss << fmt::format("v4l2src name=picturectrl device={} ! ", device_node);
+  ss << fmt::format("v4l2src device={} ! ", device_node);
   if (videoFormat.videoCodec == VideoCodec::H264) {
     ss << fmt::format("video/x-h264, width={}, height={}, framerate={}/1 ! ",
                       videoFormat.width, videoFormat.height,
@@ -329,7 +329,7 @@ static std::string createUVCH264Stream(const std::string &device_node,
   std::stringstream ss;
   ss << fmt::format(
       "uvch264src device={} peak-bitrate={} initial-bitrate={} "
-      "average-bitrate={} rate-control=1 iframe-period=1000 name=encodectrl "
+      "average-bitrate={} rate-control=1 iframe-period=1000 "
       "auto-start=true encodectrl.vidsrc ! ",
       device_node, bitrateBitsPerSecond, bitrateBitsPerSecond,
       bitrateBitsPerSecond);
