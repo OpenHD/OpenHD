@@ -5,6 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_V_VALIDATE_SETTINGS_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_V_VALIDATE_SETTINGS_H_
 
+#include <optional>
 
 // For now, only basic sanity checking on video settings
 namespace openhd{
@@ -60,6 +61,41 @@ static bool needs_vertical_flip(int rotation_value){
 static bool validate_mjpeg_quality_percent(int value){
   return value<=100 && value>=1;
 }
+
+struct TmpVideoFormat{
+  int width_px;
+  int height_px;
+  int framerate;
+};
+// Takes a string in the from {width}x{height}@{framerate}
+// e.g. 1280x720@30
+static std::optional<TmpVideoFormat> parse_video_format(const std::string& videoFormat){
+  if(videoFormat.size()<=5){
+	return std::nullopt;
+  }
+  std::cout<<"Parsing:{"<<videoFormat<<"}\n";
+  TmpVideoFormat tmp_video_format{0,0,0};
+  const std::regex reg{R"((\d*)x(\d*)\@(\d*))"};
+  std::smatch result;
+  if (std::regex_search(videoFormat, result, reg)) {
+	if (result.size() == 3) {
+	  tmp_video_format.width_px=atoi(result[0].str().c_str());
+	  tmp_video_format.height_px=atoi(result[1].str().c_str());
+	  tmp_video_format.framerate=atoi(result[2].str().c_str());
+	  if(validate_video_with(tmp_video_format.width_px) &&
+	  	validate_video_height(tmp_video_format.height_px)&& validate_video_fps(tmp_video_format.framerate)){
+		return tmp_video_format;
+	  }
+	}
+  }
+  return std::nullopt;
+}
+static std::string video_format_from_int_values(int width,int height,int framerate){
+  std::stringstream ss;
+  ss<<width<<"x"<<height<<"@"<<framerate;
+  return ss.str();
+}
+
 
 }
 #endif //OPENHD_OPENHD_OHD_VIDEO_INC_V_VALIDATE_SETTINGS_H_

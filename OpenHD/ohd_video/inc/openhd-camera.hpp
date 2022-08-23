@@ -181,6 +181,14 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	auto c_mjpeg_quality_percent=[this](std::string,int value) {
 	  return set_mjpeg_quality_percent(value);
 	};
+	auto c_width_height_framerate=[this](std::string,std::string value){
+	  auto tmp_opt=openhd::parse_video_format(value);
+	  if(tmp_opt.has_value()){
+		const auto& tmp=tmp_opt.value();
+		return set_video_width_height_framerate(tmp.width_px,tmp.height_px,tmp.framerate);
+	  }
+	  return false;
+	};
 	std::vector<openhd::Setting> ret={
 		openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
 		openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,c_width}},
@@ -191,6 +199,13 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 		openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().keyframe_interval,c_keyframe_interval}},
 		openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
 		openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
+		// experimental
+		openhd::Setting{"V_FORMAT",openhd::StringSetting{
+		  openhd::video_format_from_int_values(get_settings().userSelectedVideoFormat.width,
+											   get_settings().userSelectedVideoFormat.height,
+											   get_settings().userSelectedVideoFormat.framerate),
+		  c_width_height_framerate
+		}},
 	};
 	if(_camera.supports_rotation()){
 	  auto c_rotation=[this](std::string,int value) {
@@ -308,6 +323,13 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  return false;
 	}
 	unsafe_get_settings().mjpeg_quality_percent=value;
+	persist();
+	return true;
+  }
+  bool set_video_width_height_framerate(int width,int height,int framerate){
+	unsafe_get_settings().userSelectedVideoFormat.width=width;
+	unsafe_get_settings().userSelectedVideoFormat.height=height;
+	unsafe_get_settings().userSelectedVideoFormat.framerate=framerate;
 	persist();
 	return true;
   }
