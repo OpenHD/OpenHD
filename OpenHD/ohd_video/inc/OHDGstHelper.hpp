@@ -195,11 +195,13 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
   // Consti10: I would like to use the nvv4l2h264/5encoder, but r.n it looks to me as if
   // the stream created by it cannot be decoded properly by multiple platform(s). With the omxh26Xdec equivalents,
   // this issue does not exist.
-  const bool use_omx_encoder= true;
+  // UPDATE: It is even more complicated. For h264, we need to use omx encode and nvv4 decode
+  // For h265, we need to use nvv4 encode and nvv4 decode
   // https://developer.download.nvidia.com/embedded/L4T/r31_Release_v1.0/Docs/Accelerated_GStreamer_User_Guide.pdf?E_vSS50FKrZaJBjDtnCBmtaY8hWM1QCYlMHtXBqvZ_Jeuw0GXuLNaQwMBWUDABSnWCD-p8ABlBpBpP-kb2ADgWugbW8mgGPxUWJG_C4DWaL1yKjUVMy1AxH1RTaGOW82yFJ549mea--FBPuZUH3TT1MoEd4-sgdrZal5qr1J0McEFeFaVUc&t=eyJscyI6InJlZiIsImxzZCI6IlJFRi1kb2NzLm52aWRpYS5jb21cLyJ9
   // jetson is also bits per second
   const auto bitrateBitsPerSecond =kbits_to_bits_per_second(common_encoder_params.h26X_bitrate_kbits);
   if(common_encoder_params.videoCodec==VideoCodec::H264){
+	const bool use_omx_encoder= true;
 	if(use_omx_encoder){
 	  // for omx control-rate=2 means constant, in constrast to nvv4l2h264enc
 	  ss<<"omxh264enc control-rate=2 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
@@ -218,6 +220,7 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
 	  ss<<"! ";
 	}
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
+	const bool use_omx_encoder= false;
 	if(use_omx_encoder){
 	  // for omx control-rate=2 means constant, in constrast to nvv4l2h264enc
 	  ss<<"omxh265enc control-rate=2 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
