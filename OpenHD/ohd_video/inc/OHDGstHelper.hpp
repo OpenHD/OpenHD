@@ -228,6 +228,7 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
 	  ss<<"! ";
 	}else{
 	  ss<<"nvv4l2h265enc control-rate=1 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
+	  // TODO what is the difference between iframeinterval and idrinterval
 	  ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
 	  ss<<"maxperf-enable=true ";
 	  ss<<"! ";
