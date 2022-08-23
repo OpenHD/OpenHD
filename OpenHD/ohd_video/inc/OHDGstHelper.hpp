@@ -290,6 +290,8 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   ss << "videoconvert ! ";
   // Add a queue here. With sw we are not low latency anyways.
   ss << "queue ! ";
+  // For some reason gstreamer can't automatically figure things out here
+  ss<<"video/x-raw, format=I420 ! ";
   ss<<createSwEncoder({videoCodec,bitrateKBits,keyframe_interval,50});
   return ss.str();
 }
