@@ -207,6 +207,8 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
 	  // for omx control-rate=2 means constant, in constrast to nvv4l2h264enc
 	  ss<<"omxh264enc control-rate=2 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
 	  ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+	  // this was added to test if it fixes issues when decoding jetson h264 on rpi
+	  ss<<"insert-vui=true ";
 	  ss<<"! ";
 	}else{
 	  ss<<"nvv4l2h264enc control-rate=1 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
