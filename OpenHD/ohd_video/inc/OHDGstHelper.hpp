@@ -223,7 +223,7 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
 	const bool use_omx_encoder= false;
 	if(use_omx_encoder){
-	  // for omx control-rate=2 means constant, in constrast to nvv4l2h264enc
+	  // for omx control-rate=2 means constant, in contrast to nvv4l2h264enc
 	  ss<<"omxh265enc control-rate=2 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
 	  ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
 	  ss<<"! ";
@@ -231,6 +231,7 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
 	  ss<<"nvv4l2h265enc control-rate=1 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
 	  // TODO what is the difference between iframeinterval and idrinterval
 	  ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+	  ss<<"idrinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
 	  ss<<"maxperf-enable=true ";
 	  ss<<"! ";
 	}
