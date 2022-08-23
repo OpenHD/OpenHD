@@ -192,23 +192,41 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
 // This creates the encoding part of the gstreamer pipeline
 static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common_encoder_params){
   std::stringstream ss;
+  // Consti10: I would like to use the nvv4l2h264/5encoder, but r.n it looks to me as if
+  // the stream created by it cannot be decoded properly by multiple platform(s). With the omxh26Xdec equivalents,
+  // this issue does not exist.
+  const bool use_omx_encoder= true;
   // https://developer.download.nvidia.com/embedded/L4T/r31_Release_v1.0/Docs/Accelerated_GStreamer_User_Guide.pdf?E_vSS50FKrZaJBjDtnCBmtaY8hWM1QCYlMHtXBqvZ_Jeuw0GXuLNaQwMBWUDABSnWCD-p8ABlBpBpP-kb2ADgWugbW8mgGPxUWJG_C4DWaL1yKjUVMy1AxH1RTaGOW82yFJ549mea--FBPuZUH3TT1MoEd4-sgdrZal5qr1J0McEFeFaVUc&t=eyJscyI6InJlZiIsImxzZCI6IlJFRi1kb2NzLm52aWRpYS5jb21cLyJ9
   // jetson is also bits per second
   const auto bitrateBitsPerSecond =kbits_to_bits_per_second(common_encoder_params.h26X_bitrate_kbits);
   if(common_encoder_params.videoCodec==VideoCodec::H264){
-	ss<<"nvv4l2h264enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate="<<bitrateBitsPerSecond<<" ";
-	ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
-	// https://forums.developer.nvidia.com/t/high-decoding-latency-for-stream-produced-by-nvv4l2h264enc-compared-to-omxh264enc/159517
-	// https://forums.developer.nvidia.com/t/parameter-poc-type-missing-on-jetson-though-mentioned-in-the-documentation/164545
-	ss<<"poc-type=2 ";
-	// TODO should we make max-perf-enable on by default ?
-	ss<<"maxperf-enable=true ";
-	ss<<"! ";
+	if(use_omx_encoder){
+	  // for omx control-rate=2 means constant, in constrast to nvv4l2h264enc
+	  ss<<"omxh264enc control-rate=2 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
+	  ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+	}else{
+	  ss<<"nvv4l2h264enc control-rate=1 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
+	  ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+	  // https://forums.developer.nvidia.com/t/high-decoding-latency-for-stream-produced-by-nvv4l2h264enc-compared-to-omxh264enc/159517
+	  // https://forums.developer.nvidia.com/t/parameter-poc-type-missing-on-jetson-though-mentioned-in-the-documentation/164545
+	  // NOTE: This is quite important, without it jetson nvv4l2decoder cannot properly decode (confirmed) (WTF nvidia you cannot encode your own data haha ;) )
+	  // As well as a lot of phones (confirmed) and perhaps the rpi,too (not confirmed).
+	  ss<<"poc-type=2 ";
+	  // TODO should we make max-perf-enable on by default ?
+	  ss<<"maxperf-enable=true ";
+	  ss<<"! ";
+	}
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
-	ss<<"nvv4l2h265enc name=vnenc control-rate=1 insert-sps-pps=1 bitrate="<<bitrateBitsPerSecond<<" ";
-	ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
-	ss<<"maxperf-enable=true ";
-	ss<<"! ";
+	if(use_omx_encoder){
+	  // for omx control-rate=2 means constant, in constrast to nvv4l2h264enc
+	  ss<<"omxh265enc control-rate=2 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
+	  ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+	}else{
+	  ss<<"nvv4l2h265enc control-rate=1 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
+	  ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+	  ss<<"maxperf-enable=true ";
+	  ss<<"! ";
+	}
   }else{
 	assert(common_encoder_params.videoCodec==VideoCodec::MJPEG);
 	ss<<"nvjpegenc quality="<<common_encoder_params.mjpeg_quality_percent<<" ";
