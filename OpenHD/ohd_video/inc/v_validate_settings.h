@@ -12,16 +12,15 @@ namespace openhd{
 
 // max: 3840×2160 (4K)
 // min: 320x240
-
 static bool validate_video_with(int video_w){
   return video_w >= 320 && video_w<=3840;
 }
 static bool validate_video_height(int video_h){
   return video_h >= 240 && video_h<=2160;
 }
-
+// min: 1 fps max: 240 fps
 static bool validate_video_fps(int fps){
-  return fps>=1 && fps <= 200;
+  return fps>=1 && fps <= 240;
 }
 
 // 0,1 or 2 -> h264,h265 or mjpeg
