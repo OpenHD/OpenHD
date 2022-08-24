@@ -67,6 +67,11 @@ struct TmpVideoFormat{
   int height_px;
   int framerate;
 };
+static std::string video_format_from_int_values(int width,int height,int framerate){
+  std::stringstream ss;
+  ss<<width<<"x"<<height<<"@"<<framerate;
+  return ss.str();
+}
 // Takes a string in the from {width}x{height}@{framerate}
 // e.g. 1280x720@30
 static std::optional<TmpVideoFormat> parse_video_format(const std::string& videoFormat){
@@ -78,22 +83,23 @@ static std::optional<TmpVideoFormat> parse_video_format(const std::string& video
   const std::regex reg{R"((\d*)x(\d*)\@(\d*))"};
   std::smatch result;
   if (std::regex_search(videoFormat, result, reg)) {
-	if (result.size() == 3) {
-	  tmp_video_format.width_px=atoi(result[0].str().c_str());
-	  tmp_video_format.height_px=atoi(result[1].str().c_str());
-	  tmp_video_format.framerate=atoi(result[2].str().c_str());
+	//std::cout<<"Got regex size:"<<result.size();
+	if (result.size() == 4) {
+	  std::cout<<"result[0]={"<<result[0].str()<<"}\n";
+	  tmp_video_format.width_px=atoi(result[1].str().c_str());
+	  tmp_video_format.height_px=atoi(result[2].str().c_str());
+	  tmp_video_format.framerate=atoi(result[3].str().c_str());
 	  if(validate_video_with(tmp_video_format.width_px) &&
 	  	validate_video_height(tmp_video_format.height_px)&& validate_video_fps(tmp_video_format.framerate)){
+		std::stringstream log;
+		log<<"Final result:{"<<video_format_from_int_values(tmp_video_format.width_px,tmp_video_format.height_px,tmp_video_format.framerate);
+		log<<"}\n";
+		std::cout<<log.str();
 		return tmp_video_format;
 	  }
 	}
   }
   return std::nullopt;
-}
-static std::string video_format_from_int_values(int width,int height,int framerate){
-  std::stringstream ss;
-  ss<<width<<"x"<<height<<"@"<<framerate;
-  return ss.str();
 }
 
 
