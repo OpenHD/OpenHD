@@ -5,11 +5,12 @@
 #ifndef XMAVLINKSERVICE_HANDLEPOWERCOMMANDS_H
 #define XMAVLINKSERVICE_HANDLEPOWERCOMMANDS_H
 
-#include <boost/asio.hpp>
+/*#include <boost/asio.hpp>
 #include <boost/thread.hpp>
-#include <boost/process.hpp>
+#include <boost/process.hpp>*/
 #include <chrono>
 #include <iostream>
+#include "openhd-util.hpp"
 
 // convenient utils to handle the shutdown or reboot commands for OpenHD.
 // based on
@@ -21,18 +22,21 @@ static void handlePowerCommand(bool shutdownOnly) {
   boost::asio::io_service m_io_service;
   if (shutdownOnly) {
 	std::cout << "handlePowerCommand()-shutdown\n";
+	OHDUtil::run_command("systemctl",{"start", "poweroff.target"});
+	/*std::cout << "handlePowerCommand()-shutdown\n";
 	boost::process::child c_systemctl_shutdown(
 		boost::process::search_path("systemctl"),
 		std::vector<std::string>{"start", "poweroff.target"},
 		m_io_service);
-	c_systemctl_shutdown.detach();
+	c_systemctl_shutdown.detach();*/
   } else {
 	std::cout << "handlePowerCommand()-reboot\n";
-	boost::process::child c_systemctl_reboot(
+	OHDUtil::run_command("systemctl",{"start", "reboot.target"});
+	/*boost::process::child c_systemctl_reboot(
 		boost::process::search_path("systemctl"),
 		std::vector<std::string>{"start", "reboot.target"},
 		m_io_service);
-	c_systemctl_reboot.detach();
+	c_systemctl_reboot.detach();*/
   }
 }
 
