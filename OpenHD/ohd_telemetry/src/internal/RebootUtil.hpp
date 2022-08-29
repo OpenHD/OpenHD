@@ -19,7 +19,7 @@ namespace RebootUtil {
 // either shut down or reboot
 
 static void handlePowerCommand(bool shutdownOnly) {
-  boost::asio::io_service m_io_service;
+  //boost::asio::io_service m_io_service;
   if (shutdownOnly) {
 	std::cout << "handlePowerCommand()-shutdown\n";
 	OHDUtil::run_command("systemctl",{"start", "poweroff.target"});
