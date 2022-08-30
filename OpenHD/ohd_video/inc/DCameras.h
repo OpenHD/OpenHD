@@ -10,7 +10,7 @@
 
 /**
  * Discover all connected cameras and expose their hardware capabilities to OpenHD.
- * Note that his class does not handle camera settings (like video width, height) - camera capabilities
+ * Note that this class does not handle camera settings (like video width, height) - camera capabilities
  * and user set / default camera settings are seperated.
  */
 class DCameras {
