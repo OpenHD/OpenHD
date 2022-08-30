@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
     for(const auto& camera:cameras){
       std::cout<<camera.to_string()<<"\n";
     }
-    // Now e can crate the immutable profile
+    // Now we can crate the immutable profile
     const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
 	// And start the blinker
 	auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);
