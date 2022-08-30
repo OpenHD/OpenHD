@@ -27,7 +27,9 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
     // right now, every time the settings for this camera change, we just re-start the whole stream.
     // That is not ideal, since some cameras support changing for example the bitrate or white balance during operation.
     // But wiring that up is not that easy.
-    //this->restart_after_new_setting();
+    // We call restart_async() to make sure to not perform heavy operation(s) on the mavlink settings callback, since we need to send the
+	// acknowledging response in time. Also, gstreamer and camera(s) are sometimes buggy, so in the worst case gstreamer can become unresponsive
+	// and block on the restart operation(s) which would be fatal for telemetry.
 	this->restart_async();
   });
   // sanity checks
