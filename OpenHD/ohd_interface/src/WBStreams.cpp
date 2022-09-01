@@ -68,6 +68,13 @@ void WBStreams::configure_streams() {
 
 void WBStreams::configure_cards() {
   std::cout << "WBStreams::configure_cards() begin\n";
+  if(OHDUtil::get_ohd_env_variable_bool("OHD_SKIP_WB_CONFIGURE_CARDS")){
+	// This is for debugging / testing new wifi drivers that need a special startup method.
+	// Note that here the developer has to configure the cards right before starting openhd, which
+	// needs knowledge of wifibroadcast and its quirks.
+	std::cout << "WBStreams::configure_cards() skipping\n";
+	return;
+  }
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // However, with the image set up by raphael they should be free from any (OS) prcoesses already
   // R.N we also try and blacklist the cards from NetworkManager - it is needed for RPI and Ubuntu
