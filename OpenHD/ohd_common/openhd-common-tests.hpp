@@ -15,17 +15,6 @@
  */
 namespace OHDCommonTests {
 
-// Simple test for to and from string
-/*static void test_video_format_regex() {
-  const VideoFormat source{VideoCodecH264, 1280, 720, 30};
-  const auto serialized = source.toString();
-  const auto from = VideoFormat::fromString(serialized);
-  if(!(from == source)){
-	throw std::runtime_error("Error VideoFormat from/to\n");
-  }
-  assert(source == from);
-}*/
-
 static void test_execute_commands(){
   // We do echo 1, but the method should return "0" which stands for
   // command succesfully executed
