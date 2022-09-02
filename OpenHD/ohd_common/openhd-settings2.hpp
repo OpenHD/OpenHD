@@ -10,10 +10,17 @@
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 
+/**
+ * In general, all OpenHD modules (e.g. video, telemetry, interface) handle their settings completely independently by writing
+ * and reading json files.
+ */
 namespace openhd::settings{
 
 /**
- * Helper class to persist settings during reboots using json.
+ * Helper class to persist settings during reboots using json. Properly handles the typical edge cases, e.g.
+ * a) No settings have been stored for the given unique hash (e.g. for camera of type X) => create default settings.
+ * b) The user/developer manually wrote values of the wrong type into the json file => delete invalid settings, create default.
+ * This class is a bit hard to understand, I'd recommend just looking up one of the implementations to understand it.
  * @tparam T the settings struct to persist, needs to have to and from json(s)
  */
 template<class T>

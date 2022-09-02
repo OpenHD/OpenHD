@@ -17,11 +17,19 @@
 
 namespace openhd{
 
+// These extra settings implementations exist to avoid a direct dependency on mavlink on any modules that are configurable.
+// They are using templates to be type safe, e.g. we let the c++ compiler make sure for us the following cannot happen (example):
+// A module creates an int settings, but the callback is called with a float or similar. Or in other words:
+// If you have an (int, float, string) setting you do not need to perform any type checking in the callback.
 template<class T>
 struct SettingImpl{
+  // The value which the ground station (e.g. the user) can modify via mavlink after passing the implemented sanity checks
+  // (e.g. the value that is changed by the mavlink parameter provider when OpenHD returned true in the change_callback).
   T value;
-  // This callback is called every time the user wants to change the parameter from value x to value y (via mavlink)
+  // This callback is called every time the user wants to change the parameter (T value) from value x to value y (via mavlink)
   // return true to accept the value, otherwise return false.
+  // We have a default implementation that just prints the change request and always returns true, mostly for debugging / testing.
+  // But in general, all OpenHD modules that are configurable overwrite this callback with their own proper implementation.
   std::function<bool(std::string id,T requested_value)> change_callback=[](std::string id,T requested_value){
 	std::stringstream ss;
 	ss<<"Requested change "<<id<<" to "<<requested_value<<"\n";
@@ -49,10 +57,9 @@ class ISettingsComponent{
   ISettingsComponent(const ISettingsComponent&&)=delete;
 };
 
-
+// we need to have unique setting string ids. Creating duplicates by accident is not uncommon when adding new settings, and when
+// this function is used properly we can catch those mistakes at run time.
 static void validate_provided_ids(const std::vector<Setting>& settings){
-  // we need to have unique setting string ids. If there is a duplicate, this would be a programmers error,
-  // and when used correctly should be found during debugging by this method.
   std::map<std::string,void*> test;
   for(const auto& setting:settings){
 	assert(setting.id.length()<=16);
