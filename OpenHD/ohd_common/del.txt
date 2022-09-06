@@ -291,3 +291,12 @@ static VideoCodec string_to_video_codec(const std::string &codec) {
   }
   assert(source == from);
 }*/
+
+// can return an empty pointer if stream does not exist
+  std::shared_ptr<CameraStream> get_stream_by_index(int idx);
+std::shared_ptr<CameraStream> OHDVideo::get_stream_by_index(int idx) {
+  if(idx<m_camera_streams.size()){
+    return m_camera_streams[idx];
+  }
+  return nullptr;
+}

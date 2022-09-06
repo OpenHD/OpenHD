@@ -80,11 +80,12 @@ void OHDVideo::restartIfStopped() {
   }
 }
 
-std::shared_ptr<CameraStream> OHDVideo::get_stream_by_index(int idx) {
-  if(idx<m_camera_streams.size()){
-    return m_camera_streams[idx];
+std::vector<std::shared_ptr<openhd::ISettingsComponent>> OHDVideo::get_setting_components() {
+  std::vector<std::shared_ptr<openhd::ISettingsComponent>> ret;
+  for(auto& stream: m_camera_streams){
+	ret.push_back(stream->_camera_holder);
   }
-  return nullptr;
+  return ret;
 }
 
 

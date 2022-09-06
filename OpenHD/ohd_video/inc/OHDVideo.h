@@ -32,22 +32,16 @@ class OHDVideo {
    * restart any camera stream if it has unexpectedly stopped.
    */
   void restartIfStopped();
-  // can return an empty pointer if stream does not exist
-  std::shared_ptr<CameraStream> get_stream_by_index(int idx);
-  // get all the settings for the discovered cameras
-  std::vector<std::shared_ptr<openhd::ISettingsComponent>> get_setting_components(){
-    std::vector<std::shared_ptr<openhd::ISettingsComponent>> ret;
-    for(auto& stream: m_camera_streams){
-      ret.push_back(stream->_camera_holder);
-    }
-    return ret;
-  }
+  /**
+   * Get all the settings for the discovered cameras. Settings for Camera0 are the first element, other cameras
+   * (if existing) follow.
+   */
+  std::vector<std::shared_ptr<openhd::ISettingsComponent>> get_setting_components();
  private:
   const OHDPlatform platform;
- private:
-  // These members are what used to be in camera microservice
   // All the created camera streams
   std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
+  // Add a CameraStream for a discovered camera.
   void configure(std::shared_ptr<CameraHolder> camera);
 };
 
