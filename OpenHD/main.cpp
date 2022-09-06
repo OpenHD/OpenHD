@@ -71,6 +71,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         exit(1);
     }
   }
+  // Some "launch params" can also be set by creating dummy files.
   if(OHDFilesystemUtil::exists("/boot/air.txt") || OHDFilesystemUtil::exists("/boot/Air.txt")){
     ret.force_air=true;
   }
@@ -84,7 +85,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     std::cerr << "Cannot force air and ground at the same time\n";
     exit(1);
   }
-
   return ret;
 }
 
@@ -96,6 +96,7 @@ int main(int argc, char *argv[]) {
   // parse some arguments usefully for debugging
   const OHDRunOptions options=parse_run_parameters(argc,argv);
 
+  // Log what arguments the OHD main executable is started with.
   std::cout << "OpenHD START with " <<"\n"<<
       "force-air:" << OHDUtil::yes_or_no(options.force_air) <<"\n"<<
       "force-ground:" << OHDUtil::yes_or_no(options.force_ground) <<"\n"<<
@@ -107,7 +108,9 @@ int main(int argc, char *argv[]) {
   std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
   OHDInterface::print_internal_fec_optimization_method();
 
+  // Create and link all the OpenHD modules.
   try {
+	// This results in fresh default values for all modules (e.g. interface, telemetry, video)
     if(options.clean_start){
       clean_all_settings();
     }
@@ -141,15 +144,18 @@ int main(int argc, char *argv[]) {
 	// TODO what should be the default behaviour on force-air - this way, we always have a sw test camera,
 	// which would then still work even if the system detects a camera but for some reason cannot stream from this camera
 	if(options.force_air){
+	  // remove all detected cameras
 	  cameras.resize(0);
+	  // and create the dummy sw camera, which always works. (as long as gstreamer was installed properly on the image).
 	  cameras.emplace_back(createDummyCamera());
 	}
+	// Now print the actual cameras used by OHD. Of course, this prints nothing on ground (where we have no cameras connected).
     for(const auto& camera:cameras){
       std::cout<<camera.to_string()<<"\n";
     }
-    // Now we can crate the immutable profile
+    // Now we can crate the immutable profile. Note that from now on, we are either air or ground, and cannot change this configuration anymore !
     const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
-	// And start the blinker
+	// And start the blinker (TODO LED output is really dirty right now).
 	auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
@@ -190,7 +196,7 @@ int main(int argc, char *argv[]) {
         ohdTelemetry->add_camera_component(0,settings_components.at(0)->get_all_settings());
       }
     }
-    // we need to start QOpenHD when we are running as ground
+    // we need to start QOpenHD when we are running as ground, just to be safe, stop it when we are running as air.
 	if(!options.no_qt_autostart){
 	  if(!profile->is_air){
 		OHDUtil::run_command("systemctl",{" start qopenhd"});
