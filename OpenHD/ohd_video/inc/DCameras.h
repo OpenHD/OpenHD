@@ -17,7 +17,15 @@ class DCameras {
  public:
   explicit DCameras(OHDPlatform ohdPlatform);
   virtual ~DCameras() = default;
-  static DiscoveredCameraList discover(OHDPlatform ohdPlatform);
+  /**
+   * Discover all cameras connected to this system.
+   * @returns A list of detected cameras, or an empty vector if no cameras have been found.
+   * Note that at this point, we haven't performed the settings lookup for the Camera(s) - this just exposes the available cameras
+   * and their capabilities.
+   * @param ohdPlatform the platform we are running on, detection depends on the platform type.
+   */
+  static std::vector<Camera> discover(OHDPlatform ohdPlatform);
+  // Legacy, unused.
   static std::vector<std::shared_ptr<CameraHolder>> discover2(OHDPlatform ohdPlatform);
  private:
   DiscoveredCameraList discover_internal();
