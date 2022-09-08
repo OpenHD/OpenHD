@@ -6,17 +6,36 @@ set(CMAKE_CXX_STANDARD 17)
 # Build and include wifibroadcast
 include(../lib/wifibroadcast/WBLib.cmake)
 
-SET(ALL_INTERFACE_SOURCE_FILES
-        #src/EthernetCards.cpp
-        src/WBStreams.cpp
-        src/WifiHotspot.cpp
-        src/USBTetherListener.cpp
-        src/OHDInterface.cpp
-        src/DWifiCards.cpp)
+add_library(OHDInterfaceLib STATIC) # initialized below
+add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 
-add_library(OHDInterfaceLib
-        STATIC
-        ${ALL_INTERFACE_SOURCE_FILES})
+set(sources
+    "inc/DWifiCards.h"
+    "inc/OHDInterface.h"
+    "inc/OHDInterfaceSettings.h"
+    "inc/OHDWifiCard.hpp"
+    "inc/USBTetherListener.h"
+    "inc/validate_settings_helper.h"
+    "inc/WBStreams.h"
+    "inc/WBStreamsSettings.hpp"
+    "inc/WifiHotspot.h"
+
+    "src/DWifiCards.cpp"
+    "src/OHDInterface.cpp"
+    "src/USBTetherListener.cpp"
+    "src/WBStreams.cpp"
+    "src/WifiCardCommandHelper.hpp"
+    "src/WifiHotspot.cpp"
+)
+
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
+
+include(CMakePackageConfigHelpers)
+target_sources(OHDInterfaceLib PRIVATE ${sources})
+
+target_include_directories(OHDInterfaceLib
+    PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
 
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
