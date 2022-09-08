@@ -3,9 +3,6 @@ project(OpenHD-Interface)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# include the general openhd stuff
-include_directories(../ohd_common)
-
 # Build and include wifibroadcast
 include(../lib/wifibroadcast/WBLib.cmake)
 

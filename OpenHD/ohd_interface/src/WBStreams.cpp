@@ -4,7 +4,7 @@
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
 #include "OHDWifiCard.hpp"
-#include "openhd-global-constants.h"
+#include "openhd-global-constants.hpp"
 
 #include <iostream>
 #include <utility>

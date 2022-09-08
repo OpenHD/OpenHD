@@ -12,7 +12,7 @@
 #include "openhd-platform.hpp"
 #include "openhd-link-statistics.hpp"
 #include "WBStreamsSettings.hpp"
-#include "mavlink_settings/ISettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.hpp"
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
 

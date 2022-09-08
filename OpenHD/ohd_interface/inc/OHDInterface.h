@@ -14,9 +14,9 @@
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-led-codes.hpp"
-#include "mavlink_settings/ISettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.hpp"
 #include "OHDInterfaceSettings.h"
-#include "openhd-external-device.h"
+#include "openhd-external-device.hpp"
 
  class OHDInterface :public openhd::ISettingsComponent{
  public:

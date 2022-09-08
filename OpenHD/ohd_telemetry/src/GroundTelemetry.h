@@ -8,7 +8,7 @@
 #include "endpoints/UDPEndpoint.h"
 #include "endpoints/UDPEndpoint2.h"
 #include "internal/OHDMainComponent.h"
-#include "mavlink_settings/ISettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.hpp"
 #include "mavsdk_temporary//XMavlinkParamProvider.h"
 #include "openhd-action-handler.hpp"
 
