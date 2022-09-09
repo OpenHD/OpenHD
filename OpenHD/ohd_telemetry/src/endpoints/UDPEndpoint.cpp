@@ -3,7 +3,7 @@
 //
 
 #include "UDPEndpoint.h"
-#include "openhd-global-constants.h"
+#include "openhd-global-constants.hpp"
 #include <utility>
 
 UDPEndpoint::UDPEndpoint(const std::string& TAG, const int senderPort, const int receiverPort,std::string senderIp,std::string receiverIp) :

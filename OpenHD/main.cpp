@@ -9,7 +9,7 @@
 #include "ohd_common/openhd-platform.hpp"
 #include "ohd_common/openhd-profile.hpp"
 #include "ohd_common/openhd-platform-discover.hpp"
-#include "ohd_common/openhd-global-constants.h"
+#include "ohd_common/openhd-global-constants.hpp"
 
 #include <DCameras.h>
 #include <OHDInterface.h>

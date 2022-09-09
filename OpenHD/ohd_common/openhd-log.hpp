@@ -18,7 +18,7 @@
 #include <sstream>
 #include <cassert>
 
-#include "openhd-global-constants.h"
+#include "openhd-global-constants.hpp"
 
 /**
  * This provides convenient methods to send log messages from any service running on the air or ground unit to a final output deice,

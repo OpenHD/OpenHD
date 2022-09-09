@@ -12,7 +12,7 @@
 #include <utility>
 #include <mutex>
 #include <atomic>
-#include <openhd-external-device.h>
+#include <openhd-external-device.hpp>
 
 
 /**

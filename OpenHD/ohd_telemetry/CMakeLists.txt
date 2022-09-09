@@ -7,9 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 #You can supress the warnings in CMake using
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
-# include the general openhd stuff
-include_directories(../ohd_common)
-
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
 # Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html

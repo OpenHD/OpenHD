@@ -15,7 +15,7 @@
 #include "openhd-settings.hpp"
 #include "openhd-settings2.hpp"
 
-#include "mavlink_settings/ISettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.hpp"
 #include "v_validate_settings.h"
 
 static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
