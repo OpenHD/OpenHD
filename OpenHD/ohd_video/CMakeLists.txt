@@ -41,17 +41,36 @@ SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} fmt::fmt)
 
 find_package(Threads REQUIRED)
 
-SET(ALL_VIDEO_SOURCE_FILES
-        src/camerastream.cpp
-        src/gstreamerstream.cpp
-        src/veyestream.cpp
-        src/OHDVideo.cpp
-        src/DCameras.cpp)
+add_library(OHDVideoLib STATIC) # initialized below
+add_library(OHDVideoLib::OHDVideoLib ALIAS OHDVideoLib)
 
-add_library(OHDVideoLib
-        STATIC
-        ${ALL_VIDEO_SOURCE_FILES})
-target_include_directories(OHDVideoLib PUBLIC inc/)
+set(sources
+    "inc/camerastream.h"
+    "inc/DCameras.h"
+    "inc/gstreamerstream.h"
+    "inc/libcamera_provider.hpp"
+    "inc/OHDGstHelper.hpp"
+    "inc/OHDVideo.h"
+    "inc/openhd-camera.hpp"
+    "inc/openhd-camera-enums.hpp"
+    "inc/v_validate_settings.h"
+    "inc/veyestream.h"
+
+    "src/camerastream.cpp"
+    "src/DCameras.cpp"
+    "src/DCamerasHelper.hpp"
+    "src/ffmpeg_videosamples.hpp"
+    "src/gstreamerstream.cpp"
+    "src/OHDVideo.cpp"
+    "src/veyestream.cpp"
+)
+
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
+
+target_sources(OHDVideoLib PRIVATE ${sources})
+target_include_directories(OHDInterfaceLib
+    PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
 
 if(LIBCAMERA_FOUND)
     target_include_directories(OHDVideoLib PUBLIC ${LIBCAMERA_INCLUDE_DIRS})

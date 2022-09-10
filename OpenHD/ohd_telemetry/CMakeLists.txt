@@ -18,39 +18,84 @@ SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::filesystem)
 
 find_package(Threads REQUIRED)
 
-SET(ALL_TELEMETRY_SOURCE_FILES
-        src/AirTelemetry.cpp
-        src/GroundTelemetry.cpp
-        src/OHDTelemetry.cpp
-        src/endpoints/UDPEndpoint.cpp
-        src/endpoints/UDPEndpoint2.cpp
-        src/endpoints/SerialEndpoint.cpp
-        #src/endpoints/WBEndpoint.cpp
-        src/internal/OHDMainComponent.cpp
-        src/mavsdk_temporary/XMavlinkParamProvider.cpp
-        # temporarily until mavsdk becomes usable
-        src/mavsdk_temporary/mavlink_parameter_set.cpp
-        src/mavsdk_temporary/mavlink_parameter_subscription.cpp
-        src/mavsdk_temporary/param_value.cpp
-        src/mavsdk_temporary/mavlink_parameter_receiver.cpp
-        src/mavsdk_temporary/mavlink_message_handler.cpp
-        ## end param
-        src/mavsdk_temporary/connection.cpp
-        src/mavsdk_temporary/connection_result.cpp
-        src/mavsdk_temporary/mavlink_receiver.cpp
-        src/mavsdk_temporary/mavsdk_time.cpp
-        src/mavsdk_temporary/mavlink_channels.cpp
-        )
+add_library(OHDTelemetryLib STATIC) # initialized below
+add_library(OHDTelemetryLib::OHDTelemetryLib ALIAS OHDTelemetryLib)
 
-# Build it as a library
-add_library(OHDTelemetryLib
-        STATIC
-        ${ALL_TELEMETRY_SOURCE_FILES})
+set(sources
+    "src/endpoints/MEndpoint.hpp"
+    "src/endpoints/SerialEndpoint.cpp"
+    "src/endpoints/SerialEndpoint.h"
+    "src/endpoints/UDPEndpoint.cpp"
+    "src/endpoints/UDPEndpoint.h"
+    "src/endpoints/UDPEndpoint2.cpp"
+    "src/endpoints/UDPEndpoint2.h"
+
+    "src/internal/LogCustomOHDMessages.hpp"
+    "src/internal/OHDLinkStatisticsHelper.h"
+    "src/internal/OHDMainComponent.cpp"
+    "src/internal/OHDMainComponent.h"
+    "src/internal/OnboardComputerStatus.hpp"
+    "src/internal/OnboardComputerStatusHelper.h"
+    "src/internal/RebootUtil.hpp"
+    "src/internal/StatusTextAccumulator.hpp"
+
+    "src/mavsdk_temporary/connection.cpp"
+    "src/mavsdk_temporary/connection.h"
+    "src/mavsdk_temporary/connection_result.cpp"
+    "src/mavsdk_temporary/connection_result.h"
+    "src/mavsdk_temporary/locked_queue.h"
+    "src/mavsdk_temporary/log.h"
+    "src/mavsdk_temporary/mavlink_channels.cpp"
+    "src/mavsdk_temporary/mavlink_channels.h"
+    "src/mavsdk_temporary/mavlink_include.h"
+    "src/mavsdk_temporary/mavlink_message_handler.cpp"
+    "src/mavsdk_temporary/mavlink_message_handler.h"
+    "src/mavsdk_temporary/mavlink_parameter_receiver.cpp"
+    "src/mavsdk_temporary/mavlink_parameter_receiver.h"
+    "src/mavsdk_temporary/mavlink_parameter_set.cpp"
+    "src/mavsdk_temporary/mavlink_parameter_set.h"
+    "src/mavsdk_temporary/mavlink_parameter_subscription.cpp"
+    "src/mavsdk_temporary/mavlink_parameter_subscription.h"
+    "src/mavsdk_temporary/mavlink_receiver.cpp"
+    "src/mavsdk_temporary/mavlink_receiver.h"
+    "src/mavsdk_temporary/mavsdk_time.cpp"
+    "src/mavsdk_temporary/mavsdk_time.h"
+    "src/mavsdk_temporary/param_value.cpp"
+    "src/mavsdk_temporary/param_value.h"
+    "src/mavsdk_temporary/sender.h"
+    "src/mavsdk_temporary/sender_wrapper.h"
+    "src/mavsdk_temporary/XMavlinkParamProvider.cpp"
+    "src/mavsdk_temporary/XMavlinkParamProvider.h"
+
+    "src/rc/JoystickReader.cpp"
+    "src/rc/JoystickReader.h"
+
+    "src/routing/MavlinkComponent.hpp"
+    "src/routing/MavlinkSystem.hpp"
+
+    "src/AirTelemetry.cpp"
+    "src/AirTelemetry.h"
+    "src/AirTelemetrySettings.h"
+    "src/GroundTelemetry.cpp"
+    "src/GroundTelemetry.h"
+    "src/mav_helper.h"
+    "src/mav_include.h"
+    "src/MavlinkComponent.h"
+    "src/OHDTelemetry.cpp"
+    "src/OHDTelemetry.h"
+)
+
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
+target_sources(OHDTelemetryLib PRIVATE ${sources})
+
+target_include_directories(OHDTelemetryLib
+    PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>")
+
 target_link_libraries(OHDTelemetryLib PRIVATE ${OHD_TELEMETRY_USED_BOOST_LIBS}
         #MAVSDK::mavsdk
         )
 target_link_libraries(OHDTelemetryLib PUBLIC Threads::Threads)
-target_include_directories(OHDTelemetryLib PUBLIC src/)
 # include mavlink (header-only)
 add_library(mavlink INTERFACE)
 target_include_directories(mavlink INTERFACE ../lib/c_library_v2_openhd/)
