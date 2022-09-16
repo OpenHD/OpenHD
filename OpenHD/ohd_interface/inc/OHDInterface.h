@@ -41,7 +41,7 @@
   static void print_internal_fec_optimization_method();
   private:
    /**
-	* after calling this method with a external device's ip address
+	* after calling this method with an external device's ip address
 	* (for example an externally connected tablet) data will be forwarded to the device's ip address.
 	* It is safe to call this method multiple times with the same IP address, since we internally keep track here.
 	*/
