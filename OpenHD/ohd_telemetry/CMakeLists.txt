@@ -7,26 +7,23 @@ set(CMAKE_CXX_STANDARD 17)
 #You can supress the warnings in CMake using
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
-# include the general openhd stuff
-include_directories(../ohd_common)
-
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
 # Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
 SET(Boost_USE_STATIC_LIBS OFF)
 SET(Boost_USE_MULTITHREAD ON)
-find_package(Boost REQUIRED COMPONENTS system thread regex filesystem)
+find_package(Boost REQUIRED COMPONENTS filesystem)
 message(STATUS "Boost version: ${Boost_VERSION}")
-SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::system Boost::thread Boost::filesystem)
+SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::filesystem)
 
 find_package(Threads REQUIRED)
 
 SET(ALL_TELEMETRY_SOURCE_FILES
         src/AirTelemetry.cpp
         src/GroundTelemetry.cpp
+        src/OHDTelemetry.cpp
         src/endpoints/UDPEndpoint.cpp
         src/endpoints/UDPEndpoint2.cpp
-        src/endpoints/TCPEndpoint.cpp
         src/endpoints/SerialEndpoint.cpp
         #src/endpoints/WBEndpoint.cpp
         src/internal/OHDMainComponent.cpp

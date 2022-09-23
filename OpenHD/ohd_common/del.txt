@@ -206,3 +206,97 @@ static void create_directory_if_not_existing(const char* directory){
     }
     const auto res=res_op;
   }
+
+// Makes it easier to dynamically disable / enable / change an uart endpoint
+class SerialEndpointHolder{
+ public:
+  SerialEndpointHolder() = default;
+
+  void setup(int fc_uart_connection_type,int fc_uart_baudrate){
+	assert(openhd::validate_uart_connection_type(fc_uart_connection_type));
+	// Disable the currently running uart configuration, if there is any
+	std::lock_guard<std::mutex> guard(_serialEndpointMutex);
+	if(serialEndpoint!=nullptr) {
+	  std::cout<<"Stopping already existing FC UART\n";
+	  serialEndpoint->stop();
+	  serialEndpoint.reset();
+	  serialEndpoint=nullptr;
+	}
+	if(fc_uart_connection_type==openhd::UART_CONNECTION_TYPE_DISABLE){
+	  // No uart enabled, we've already cleaned it up though
+	  std::cout<<"FC UART disabled\n";
+	  return;
+	}else{
+	  std::cout<<"FC UART enable - begin\n";
+	  SerialEndpoint::HWOptions options{};
+	  options.linux_filename=openhd::uart_fd_from_connection_type(fc_uart_connection_type).value();
+	  options.baud_rate=fc_uart_baudrate;
+	  options.flow_control= false;
+	  serialEndpoint=std::make_unique<SerialEndpoint>("SerialEndpointUARTFC",options);
+	  serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
+		//this->onMessageFC(msg);
+	  });
+	  std::cout<<"FC UART enable - end\n";
+	}
+  }
+
+ private:
+  std::mutex _serialEndpointMutex;
+  std::unique_ptr<SerialEndpoint> serialEndpoint=nullptr;
+};
+
+nlohmann::json j = nlohmann::json::parse(f, nullptr, false);
+	if (j.is_discarded()) {
+	  std::stringstream ss;
+	  ss<<"PersistentSettings::read_last_settings json parse error on{"<<file_path<<"}\n";
+	  std::cerr<<ss.str();
+	  // this means the default settings will be created
+	  return std::nullopt;
+	}
+
+// OpenHD transmits h264,h265 and mjpeg.
+// A (USB) camera might output either an already encoded data stream (e.g. h24,h265,mjpeg) or
+// a raw, uncompressed data stream - in which code OpenHD always tries to use a hw encoder first,
+// or falls back to SW encoding. That's why we have a extra class here, to handle all the output formats / capabilities
+// of a camera.
+// Note that it is quite common for a cmaera to support specific resolution@framerate - configs only for specific formats.
+// E.g. a USB camera might only do 1080p already encoded, but for raw formats, maxes out at a different resolution.
+struct CameraOutputFormat{
+  uint32_t v4l2_pixel_format;
+  int width;
+  int height;
+  int framerate;
+};
+
+static VideoCodec string_to_video_codec(const std::string &codec) {
+  if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h264")) !=
+      std::string::npos) {
+    return VideoCodec::H264;
+  } else if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h265")) !=
+             std::string::npos) {
+    return VideoCodec::H265;
+  } else if (OHDUtil::to_uppercase(codec).find(
+                 OHDUtil::to_uppercase("mjpeg")) != std::string::npos) {
+    return VideoCodec::MJPEG;
+  }
+  return VideoCodec::H264;
+}
+// Simple test for to and from string
+/*static void test_video_format_regex() {
+  const VideoFormat source{VideoCodecH264, 1280, 720, 30};
+  const auto serialized = source.toString();
+  const auto from = VideoFormat::fromString(serialized);
+  if(!(from == source)){
+	throw std::runtime_error("Error VideoFormat from/to\n");
+  }
+  assert(source == from);
+}*/
+
+// can return an empty pointer if stream does not exist
+  std::shared_ptr<CameraStream> get_stream_by_index(int idx);
+std::shared_ptr<CameraStream> OHDVideo::get_stream_by_index(int idx) {
+  if(idx<m_camera_streams.size()){
+    return m_camera_streams[idx];
+  }
+  return nullptr;
+}

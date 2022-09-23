@@ -14,12 +14,15 @@
 #include <thread>
 #include <arpa/inet.h>
 #include <regex>
+#include <unistd.h>
 
 namespace OHDUtil {
 
+// Converts all letters in the given string to uppercase
 static std::string to_uppercase(std::string input) {
   for (char &it: input) {
-	it = toupper((unsigned char)it);
+	// https://cplusplus.com/reference/cctype/toupper/
+	it = toupper((unsigned char)it); // NOLINT(cppcoreguidelines-narrowing-conversions)
   }
   return input;
 }
@@ -32,21 +35,35 @@ static bool startsWith(const std::string& str, const std::string& prefix){
   return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
 }
 
+// Converts both strings to uppercase, then checks if
+// s1 contains s2 (we can find s2 in s1).
+// Returns true if (after uppercase) s1 contains s2, false otherwise
+static bool contains_after_uppercase(const std::string& s1,const std::string& s2){
+  const auto s1_upper=OHDUtil::to_uppercase(s1);
+  const auto s2_upper=OHDUtil::to_uppercase(s2);
+  return s1_upper.find(s2_upper)!= std::string::npos;
+}
+
 /**
  * Utility to execute a command on the command line.
  * Blocks until the command has been executed, and returns its result.
  * @param command the command to run
  * @param args the args for the command to run
+ * @param print_debug print debug to std::cout, really usefully for debugging. true by default.
  * @return the command result
  * NOTE: Used to use boost, there were issues with that, I changed it to use c standard library.
  */
-static bool run_command(const std::string &command, const std::vector<std::string> &args) {
+static bool run_command(const std::string &command, const std::vector<std::string> &args,bool print_debug=true) {
   std::stringstream ss;
   ss << command;
   for (const auto &arg: args) {
 	ss << " " << arg;
   }
-  std::cout << "run command begin [" << ss.str() << "]\n";
+  if(print_debug){
+	std::stringstream log;
+	log<< "run command begin [" << ss.str() << "]\n";
+	std::cout<<log.str();
+  }
   // Some weird locale issue ?!
   // https://man7.org/linux/man-pages/man3/system.3.html
   auto ret = system(ss.str().c_str());
@@ -55,7 +72,9 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   c.wait();
   std::cout<<"Run command end\n";
   return c.exit_code() == 0;*/
-  std::cout << "Run command end\n";
+  if(print_debug){
+	std::cout << "Run command end\n";
+  }
   return ret;
 }
 
@@ -134,6 +153,43 @@ static std::string string_in_between(const std::string& start,const std::string&
   return matched;
 }
 
+// From https://stackoverflow.com/questions/3214297/how-can-my-c-c-application-determine-if-the-root-user-is-executing-the-command
+// Returns true if the caller is running as root.
+static bool check_root(const bool print_debug=true){
+  const auto uid=getuid();
+  const bool root= uid ? false:true;
+  std::stringstream ss;
+  if(print_debug){
+	ss<<"UID is:["<<uid<<"] root:"<<OHDUtil::yes_or_no(root)<<"\n";
+  }
+  std::cout<<ss.str();
+  return root;
+}
+
+static void terminate_if_not_root(){
+  if(!check_root(false)){
+	std::cout<<"ERROR not root,terminating. Run OpenHD with root privileges.\n";
+	exit(EXIT_FAILURE);
+  }
+}
+
+// Example: "export OHD_DISCOVER_CAMERAS_DEBUG=1"
+// -> then this method will return true if you query "OHD_DISCOVER_CAMERAS_DEBUG"
+static bool get_ohd_env_variable_bool(const char* name){
+  if (const char* env_p = std::getenv(name)) {
+	if (std::string(env_p) == "1") {
+	  return true;
+	}
+  }
+  return false;
+}
+
+static bool get_ohd_env_variable_bool(const std::string& name){
+  if(OHDUtil::contains_after_uppercase(name,"OHD_")){
+	std::cout<<"Please prefix OpenHD env variables with {OHD_}\n";
+  }
+  return get_ohd_env_variable_bool(name.c_str());
+}
 
 }
 

@@ -7,14 +7,20 @@
 
 #include <utility>
 
-#include "openhd-settings.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 
+/**
+ * In general, all OpenHD modules (e.g. video, telemetry, interface) handle their settings completely independently by writing
+ * and reading json files.
+ */
 namespace openhd::settings{
 
 /**
- * Helper class to persist settings during reboots using json.
+ * Helper class to persist settings during reboots using json. Properly handles the typical edge cases, e.g.
+ * a) No settings have been stored for the given unique hash (e.g. for camera of type X) => create default settings.
+ * b) The user/developer manually wrote values of the wrong type into the json file => delete invalid settings, create default.
+ * This class is a bit hard to understand, I'd recommend just looking up one of the implementations to understand it.
  * @tparam T the settings struct to persist, needs to have to and from json(s)
  */
 template<class T>
@@ -49,7 +55,7 @@ class PersistentSettings{
   // Persist then new settings, then call the callback to propagate the change
   void update_settings(const T& new_settings){
 	std::stringstream ss;
-	ss<<"Got new settings"<<get_unique_filename()<<"\n";
+	ss<<"Got new settings in["<<get_unique_filename()<<"]\n";
 	std::cout<<ss.str();
 	_settings=std::make_unique<T>(new_settings);
 	persist_settings();
@@ -76,7 +82,9 @@ class PersistentSettings{
 	const auto last_settings_opt=read_last_settings();
 	if(last_settings_opt.has_value()){
 	  _settings=std::make_unique<T>(last_settings_opt.value());
-	  std::cout<<"Found settings\n";
+	  std::stringstream ss;
+	  ss<<"Using settings in ["<<get_file_path()<<"]\n";
+	  std::cout<<ss.str();
 	}else{
 	  std::cout<<"Creating default settings:"<<get_file_path()<<"\n";
 	  // create default settings and persist them for the next reboot
@@ -93,6 +101,7 @@ class PersistentSettings{
   }
   // write settings locally for persistence
   void persist_settings()const{
+	assert(_settings);
 	const auto file_path=get_file_path();
 	const nlohmann::json tmp=*_settings;
 	// and write them locally for persistence
@@ -101,15 +110,34 @@ class PersistentSettings{
 	t.close();
   }
   // read last settings, if they are available
+  // Read the last persistent settings for this instance.
+  // Return std::nullopt if
+  // 1) The file does not exist
+  // 2) The json parse encountered an error
+  // 3) The json conversion encountered an error
+  // In case of 1 this is most likely new hw, and default settings will be created.
+  // In case of 2,3 it was most likely a user that modified the json incorrectly
+  // Also, default settings will be created in this case.
   [[nodiscard]] std::optional<T> read_last_settings()const{
 	const auto file_path=get_file_path();
 	if(!OHDFilesystemUtil::exists(file_path.c_str())){
 	  return std::nullopt;
 	}
 	std::ifstream f(file_path);
-	nlohmann::json j;
-	f >> j;
-	return j.get<T>();
+	try{
+	  nlohmann::json j;
+	  f >> j;
+	  auto tmp=j.get<T>();
+	  return tmp;
+	}catch(nlohmann::json::exception& ex){
+	  std::stringstream ss;
+	  ss<<"PersistentSettings::read_last_settings json exception on {"<<file_path<<"} ";
+	  ss<<ex.what()<<"\n";
+	  std::cerr<<ss.str();
+	  // this means the default settings will be created
+	  return std::nullopt;
+	}
+	return  std::nullopt;
   }
 };
 

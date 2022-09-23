@@ -13,8 +13,6 @@
 #include <iostream>
 #include <fstream>
 
-//#include <boost/filesystem.hpp>
-#include <filesystem>
 #include "openhd-util-filesystem.hpp"
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/random_generator.hpp>
@@ -73,6 +71,8 @@ static std::string getOrCreateUnitId() {
 }
 
 // Clean up the directory where OpenHD persistent settings are stored
+// Which in turn means that all modules that follow the "create default settings when no settings are found by (HW)-id"
+// will create full new default settings.
 static void clean_all_settings(){
   OHDFilesystemUtil::safe_delete_directory(BASE_PATH);
   generateSettingsDirectoryIfNonExists();

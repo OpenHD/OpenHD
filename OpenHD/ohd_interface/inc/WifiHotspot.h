@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <string>
-#include "openhd-wifi.hpp"
+#include "OHDWifiCard.hpp"
 
 /**
  * Wifi hotspot refers to creating a WiFi Access point on the device we are running on.

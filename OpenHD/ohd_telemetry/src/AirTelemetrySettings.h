@@ -5,12 +5,12 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_AIRTELEMETRYSETTINGS_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_AIRTELEMETRYSETTINGS_H_
 
-// Settings for telemetry, only valid on an air pi (since only on the air pi we connect the FC)
-
 #include "openhd-settings.hpp"
 #include "openhd-settings2.hpp"
 #include <map>
 
+// Settings for telemetry, only valid on an air pi (since only on the air pi we connect the FC)
+// Note that we do not have any telemetry settings r.n for the ground (since forwarding is a task ov ohd_interface, not ohd_telemetry)
 namespace openhd{
 
 static const std::string TELEMETRY_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("telemetry/");

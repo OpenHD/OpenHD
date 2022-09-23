@@ -11,7 +11,9 @@
 
 OHDMainComponent::OHDMainComponent(
     OHDPlatform platform1,uint8_t parent_sys_id,
-    bool runsOnAir) : platform(platform1),RUNS_ON_AIR(runsOnAir),MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
+    bool runsOnAir,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
+	platform(platform1),RUNS_ON_AIR(runsOnAir),_opt_action_handler(opt_action_handler),
+	MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
   logMessagesReceiver =
       std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
                                                   OHD_LOCAL_LOG_MESSAGES_UDP_PORT,
@@ -74,6 +76,13 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
 			ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
 			const bool shutdownOnly=action_for_companion==2;
 			RebootUtil::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
+		  }
+		  // dirty, we don't have a custom message for that yet
+		  if(command.param3==1){
+			ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
+			if(_opt_action_handler){
+			  _opt_action_handler->action_restart_wb_streams_handle();
+			}
 		  }
 		}
       }else if(command.command==MAV_CMD_REQUEST_MESSAGE){

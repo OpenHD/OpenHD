@@ -9,20 +9,21 @@
 #include "endpoints/SerialEndpoint.h"
 #include "endpoints/UDPEndpoint.h"
 #include "internal/OHDMainComponent.h"
-#include "mavlink_settings/ISettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-link-statistics.hpp"
 #include "routing/MavlinkSystem.hpp"
 //
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "AirTelemetrySettings.h"
+#include "openhd-action-handler.hpp"
 
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
  */
 class AirTelemetry : public MavlinkSystem{
  public:
-  explicit AirTelemetry(OHDPlatform platform);
+  explicit AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   AirTelemetry(const AirTelemetry&)=delete;
   AirTelemetry(const AirTelemetry&&)=delete;
   /**
@@ -30,7 +31,7 @@ class AirTelemetry : public MavlinkSystem{
    * @param enableExtendedLogging be really verbose on logging.
    */
   [[noreturn]] void loopInfinite(bool enableExtendedLogging = false);
-  [[nodiscard]] std::string createDebug()const;
+  [[nodiscard]] std::string createDebug();
   // add settings to the generic mavlink parameter server
   // changes are propagated back through the settings instances
   void add_settings_generic(const std::vector<openhd::Setting>& settings);

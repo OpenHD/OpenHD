@@ -8,7 +8,7 @@
 #include <chrono>
 #include "openhd-util-filesystem.hpp"
 
-AirTelemetry::AirTelemetry(OHDPlatform platform): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
+AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   _airTelemetrySettings=std::make_unique<openhd::AirTelemetrySettingsHolder>();
   setup_uart();
   // any message coming in via wifibroadcast is a message from the ground pi
@@ -16,7 +16,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform): _platform(platform),MavlinkSys
   wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	onMessageGroundPi(msg);
   });
-  _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,true);
+  _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
   components.push_back(_ohd_main_component);
   //
   generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
@@ -28,14 +28,11 @@ AirTelemetry::AirTelemetry(OHDPlatform platform): _platform(platform),MavlinkSys
 }
 
 void AirTelemetry::sendMessageFC(const MavlinkMessage &message) {
+  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
   if(serialEndpoint){
     serialEndpoint->sendMessage(message);
   }else{
     //std::cout<<"Cannot send message to FC\n";
-  }
-  if(message.m.msgid==MAVLINK_MSG_ID_PING){
-    //std::cout<<"Sent ping to FC\n";
-    //MavlinkHelpers::debugMavlinkPingMessage(message.m);
   }
 }
 
@@ -76,17 +73,20 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   const auto loop_intervall=std::chrono::milliseconds(500);
   auto last_log=std::chrono::steady_clock::now();
   while (true) {
-        if(std::chrono::steady_clock::now()-last_log>=log_intervall){
-          last_log=std::chrono::steady_clock::now();
-          //std::cout << "AirTelemetry::loopInfinite()\n";
-          // for debugging, check if any of the endpoints is not alive
-          if (enableExtendedLogging && wifibroadcastEndpoint) {
-            std::cout<<wifibroadcastEndpoint->createInfo();
-          }
-          if (enableExtendedLogging && serialEndpoint) {
-            std::cout<<serialEndpoint->createInfo();
-          }
-        }
+	const auto loopBegin=std::chrono::steady_clock::now();
+	if(std::chrono::steady_clock::now()-last_log>=log_intervall){
+	  // State debug logging
+	  last_log=std::chrono::steady_clock::now();
+	  //std::cout << "AirTelemetry::loopInfinite()\n";
+	  // for debugging, check if any of the endpoints is not alive
+	  if (enableExtendedLogging && wifibroadcastEndpoint) {
+		std::cout<<wifibroadcastEndpoint->createInfo();
+	  }
+	  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
+	  if (enableExtendedLogging && serialEndpoint) {
+		std::cout<<serialEndpoint->createInfo();
+	  }
+	}
 	// send messages to the ground pi in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
 	{
@@ -98,17 +98,28 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
 		}
 	  }
 	}
-	// send out in X second intervals
-	std::this_thread::sleep_for(loop_intervall);
+	const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
+	if(loopDelta>loop_intervall){
+	  // We can't keep up with the wanted loop interval
+	  std::stringstream ss;
+	  ss<<"Warning AirTelemetry cannot keep up with the wanted loop interval. Took:"
+	  <<std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count()<<"ms\n";
+	  std::cout<<ss.str();
+	}else{
+	  const auto sleepTime=loop_intervall-loopDelta;
+	  // send out in X second intervals
+	  std::this_thread::sleep_for(loop_intervall);
+	}
   }
 }
 
-std::string AirTelemetry::createDebug() const {
+std::string AirTelemetry::createDebug(){
   std::stringstream ss;
   //ss<<"AT:\n";
   if ( wifibroadcastEndpoint) {
 	ss<<wifibroadcastEndpoint->createInfo();
   }
+  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
   if (serialEndpoint) {
 	ss<<serialEndpoint->createInfo();
   }

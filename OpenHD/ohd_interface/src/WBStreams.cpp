@@ -3,8 +3,8 @@
 
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
-#include "openhd-wifi.hpp"
-#include "openhd-global-constants.h"
+#include "OHDWifiCard.hpp"
+#include "openhd-global-constants.hpp"
 
 #include <iostream>
 #include <utility>
@@ -40,17 +40,17 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
   if(_settings->get_settings().configured_for_2G()){
 	if(! first_card.supports_2ghz){
 	  // we need to switch to 5ghz, since the connected card cannot do 2ghz
-	  std::cerr<<"WB configured for 2G but card can only do 5G\n";
+	  std::cerr<<"WB configured for 2G but card can only do 5G - overwriting old settings\n";
 	  _settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
-	  _settings->unsafe_get_settings().wb_frequency=DEFAULT_5GHZ_FREQUENCY;
+	  _settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_5GHZ_FREQUENCY;
 	  _settings->persist();
 	}
   }else{
 	if(!first_card.supports_5ghz){
 	  // similar, we need to switch to 2G
-	  std::cerr<<"WB configured for %G but card can only do 2G\n";
+	  std::cerr<<"WB configured for 5G but card can only do 2G - overwriting old settings\n";
 	  _settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
-	  _settings->unsafe_get_settings().wb_frequency=DEFAULT_2GHZ_FREQUENCY;
+	  _settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_2GHZ_FREQUENCY;
 	  _settings->persist();
 	}
   }
@@ -68,6 +68,13 @@ void WBStreams::configure_streams() {
 
 void WBStreams::configure_cards() {
   std::cout << "WBStreams::configure_cards() begin\n";
+  if(OHDUtil::get_ohd_env_variable_bool("OHD_SKIP_WB_CONFIGURE_CARDS")){
+	// This is for debugging / testing new wifi drivers that need a special startup method.
+	// Note that here the developer has to configure the cards right before starting openhd, which
+	// needs knowledge of wifibroadcast and its quirks.
+	std::cout << "WBStreams::configure_cards() skipping\n";
+	return;
+  }
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // However, with the image set up by raphael they should be free from any (OS) prcoesses already
   // R.N we also try and blacklist the cards from NetworkManager - it is needed for RPI and Ubuntu
@@ -271,6 +278,11 @@ static void convert(openhd::link_statistics::StatsFECVideoStreamRx& dest,const F
   dest.count_blocks_lost=src.count_blocks_lost;
   dest.count_blocks_total=src.count_blocks_total;
   dest.count_bytes_forwarded=src.count_bytes_forwarded;
+}
+
+void WBStreams::set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) {
+  std::lock_guard<std::mutex> guard(_statisticsDataLock);
+  _stats_callback=std::move(stats_callback);
 }
 
 // TDOO fixme
@@ -563,3 +575,4 @@ std::vector<openhd::Setting> WBStreams::get_all_settings(){
   openhd::validate_provided_ids(ret);
   return ret;
 }
+

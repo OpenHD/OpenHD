@@ -1,6 +1,6 @@
 #include "DWifiCards.h"
 
-#include "openhd-wifi.hpp"
+#include "OHDWifiCard.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 
@@ -9,9 +9,6 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <utility>
 
-extern "C" {
-#include "nl.h"
-}
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
@@ -43,7 +40,7 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
 //           Channel 01 : 2.412 GHz
 //                ...
 // So while annoying, let's just use iw dev and parse the result
-// For now, no seperation into which channel(s) are supported, just weather any 2.4G or 5G frequency is supported
+// For now, no separation into which channel(s) are supported, just weather any 2.4G or 5G frequency is supported
 struct SupportedFrequency{
   bool supports_2G=false;
   bool supports_5G=false;
@@ -143,9 +140,12 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   const bool supports_2ghz = supported_freq.supports_2G;
   const bool supports_5ghz = supported_freq.supports_5G;
 
-  std::stringstream ss;
-  ss<<"Card "<<card.interface_name<<" System reports:{"<<"supports_2G:"<<OHDUtil::yes_or_no(supports_2ghz)<<" supports_5G:"<<OHDUtil::yes_or_no(supports_2ghz)<<"\n";
-  std::cout<<ss.str();
+  {
+	// Note that this does not neccessarily mean this info is right, rtl8812au driver "lies" in this reagrd.
+	std::stringstream ss;
+	ss<<"Card "<<card.interface_name<<" reports:{"<<"supports_2G:"<<OHDUtil::yes_or_no(supports_2ghz)<<" supports_5G:"<<OHDUtil::yes_or_no(supports_2ghz)<<"}\n";
+	std::cout<<ss.str();
+  }
 
   std::stringstream address;
   address << "/sys/class/net/";

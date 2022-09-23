@@ -4,10 +4,10 @@
 #include <gst/gst.h>
 
 #include <array>
-#include <stdexcept>
 #include <vector>
 #include <memory>
 #include <thread>
+#include <mutex>
 
 #include "camerastream.h"
 #include "openhd-camera.hpp"
@@ -23,10 +23,12 @@ class GStreamerStream : public CameraStream {
   void setup() override;
  private:
   void setup_raspberrypi_csi();
+  void setup_libcamera();
   void setup_jetson_csi();
   void setup_usb_uvc();
   void setup_usb_uvch264();
   void setup_ip_camera();
+  void setup_sw_dummy_camera();
   void restartIfStopped() override;
   void restart_after_new_setting();
  public:

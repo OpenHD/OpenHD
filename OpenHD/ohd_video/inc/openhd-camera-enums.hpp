@@ -22,6 +22,7 @@ enum class CameraType {
   UVCH264,
   IP,     // IP camera that connects via ethernet and provides a video feet at special network address
   Dummy,  // Dummy camera, is created fully in sw, for debugging ppurposes.
+  Libcamera,
   Unknown
 };
 NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
@@ -33,27 +34,30 @@ NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
      {CameraType::UVC, "UVC"},
      {CameraType::UVCH264, "UVCH264"},
      {CameraType::IP, "IP"},
+     {CameraType::Libcamera, "Libcamera"},
      {CameraType::Dummy, "Dummy"},
  });
 
 static std::string camera_type_to_string(const CameraType &camera_type) {
   switch (camera_type) {
     case CameraType::RaspberryPiCSI:
-      return "pi-csi";
+      return "RaspberryPiCSI";
     case CameraType::RaspberryPiVEYE:
-      return "pi-veye";
+      return "RaspberryPiVEYE";
     case CameraType::JetsonCSI:
-      return "jetson-csi";
+      return "JetsonCSI";
     case CameraType::RockchipCSI:
-      return "rockchip-csi";
+      return "RockchipCSI";
     case CameraType::UVC:
-      return "uvc";
+      return "UVC";
     case CameraType::UVCH264:
-      return "uvch264";
+      return "UVCH264";
     case CameraType::IP:
-      return "ip";
+      return "IP";
     case CameraType::Dummy:
-      return "dummy";
+      return "Dummy";
+	case CameraType::Libcamera:
+	  return "Libcamera";
     default:
       return "unknown";
   }
@@ -62,8 +66,7 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
 enum class VideoCodec {
   H264=0,
   H265,
-  MJPEG,
-  Unknown
+  MJPEG
 };
 static std::string video_codec_to_string(VideoCodec codec) {
   switch (codec) {
@@ -73,22 +76,8 @@ static std::string video_codec_to_string(VideoCodec codec) {
       return "h265";
     case VideoCodec::MJPEG:
       return "mjpeg";
-    default:
-      return "unknown";
   }
-}
-static VideoCodec string_to_video_codec(const std::string &codec) {
-  if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h264")) !=
-      std::string::npos) {
-    return VideoCodec::H264;
-  } else if (OHDUtil::to_uppercase(codec).find(OHDUtil::to_uppercase("h265")) !=
-             std::string::npos) {
-    return VideoCodec::H265;
-  } else if (OHDUtil::to_uppercase(codec).find(
-                 OHDUtil::to_uppercase("mjpeg")) != std::string::npos) {
-    return VideoCodec::MJPEG;
-  }
-  return VideoCodec::Unknown;
+  return "h264";
 }
 static VideoCodec video_codec_from_int(const int video_codec){
   if(video_codec==0)return VideoCodec::H264;
@@ -101,7 +90,6 @@ static int video_codec_to_int(const VideoCodec video_codec){
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM( VideoCodec, {
-  {VideoCodec::Unknown, nullptr},
   {VideoCodec::H264, "h264"},
   {VideoCodec::H265, "h265"},
   {VideoCodec::MJPEG, "mjpeg"},
@@ -132,7 +120,7 @@ struct VideoFormat {
   // values <=0 mean something went wrong during parsing or similar. And for
   // simplicity, I go with 4k and 240fps max here.
   [[nodiscard]] bool isValid() const {
-    return videoCodec != VideoCodec::Unknown && width > 0 && height > 0 &&
+    return width > 0 && height > 0 &&
            framerate > 0 && width <= 4096 && height <= 2160 && framerate <= 240;
   }
   /**

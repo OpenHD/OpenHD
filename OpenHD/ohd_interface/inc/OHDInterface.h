@@ -13,10 +13,10 @@
 #include "WifiHotspot.h"
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
-#include "openhd-led-error-codes.h"
-#include "mavlink_settings/ISettingsComponent.h"
+#include "openhd-led-codes.hpp"
+#include "mavlink_settings/ISettingsComponent.hpp"
 #include "OHDInterfaceSettings.h"
-#include "openhd-external-device.h"
+#include "openhd-external-device.hpp"
 
  class OHDInterface :public openhd::ISettingsComponent{
  public:
@@ -30,14 +30,18 @@
   void set_stats_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) const;
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
+  // hacky, temporary. applies changed frequency / mcs index / bandwidth
+  void restart_wb_streams_async();
   // For telemetry
   void set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK cb);
   // settings hacky begin
   std::vector<openhd::Setting> get_all_settings()override;
   // settings hacky end
+  // easy access without polluting the headers
+  static void print_internal_fec_optimization_method();
   private:
    /**
-	* after calling this method with a external device's ip address
+	* after calling this method with an external device's ip address
 	* (for example an externally connected tablet) data will be forwarded to the device's ip address.
 	* It is safe to call this method multiple times with the same IP address, since we internally keep track here.
 	*/
@@ -53,7 +57,7 @@
   std::unique_ptr<WBStreams> wbStreams;
   std::unique_ptr<USBTetherListener> usbTetherListener;
   std::unique_ptr<WifiHotspot> _wifi_hotspot;
-  std::unique_ptr<openhd::rpi::LEDBlinker> _error_blinker;
+  std::unique_ptr<openhd::LEDBlinker> _error_blinker;
   std::shared_ptr<openhd::OHDInterfaceSettingsHolder> _interface_settings_holder;
   std::mutex _external_device_callback_mutex;
   openhd::EXTERNAL_DEVICE_CALLBACK _external_device_callback= nullptr;

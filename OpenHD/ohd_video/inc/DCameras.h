@@ -10,15 +10,23 @@
 
 /**
  * Discover all connected cameras and expose their hardware capabilities to OpenHD.
- * Note that his class does not handle camera settings (like video width, height) - camera capabilities
+ * Note that this class does not handle camera settings (like video width, height) - camera capabilities
  * and user set / default camera settings are seperated.
  */
 class DCameras {
  public:
-  explicit DCameras(const OHDPlatform &ohdPlatform);
+  explicit DCameras(OHDPlatform ohdPlatform);
   virtual ~DCameras() = default;
-  static DiscoveredCameraList discover(const OHDPlatform &ohdPlatform);
-  static std::vector<std::shared_ptr<CameraHolder>> discover2(const OHDPlatform &ohdPlatform);
+  /**
+   * Discover all cameras connected to this system.
+   * @returns A list of detected cameras, or an empty vector if no cameras have been found.
+   * Note that at this point, we haven't performed the settings lookup for the Camera(s) - this just exposes the available cameras
+   * and their capabilities.
+   * @param ohdPlatform the platform we are running on, detection depends on the platform type.
+   */
+  static std::vector<Camera> discover(OHDPlatform ohdPlatform);
+  // Legacy, unused.
+  static std::vector<std::shared_ptr<CameraHolder>> discover2(OHDPlatform ohdPlatform);
  private:
   DiscoveredCameraList discover_internal();
   void argh_cleanup();
@@ -33,13 +41,20 @@ class DCameras {
    */
   /**
    * This is used when the gpu firmware is in charge of the camera, we have to
-   * ask it. This should be the only place in the entire system that uses
-   * vcgencmd for this purpose, anything else that needs to know should read
-   * from the openhd system manifest instead.
+   * ask it.
    */
-  void detect_raspberrypi_csi();
+  void detect_raspberrypi_broadcom_csi();
   // hacky
-  void detect_raspberrypi_veye();
+  bool detect_raspberrypi_broadcom_veye();
+
+  /*
+   * Detecting via libcamera.
+   * Actually all cameras in system available via libcamera.
+   * Moreover libcamera cameras is v4l devices and can be used as usual.
+   * But here we are using libcamera only for undetected cameras for compatability
+   */
+  void detect_raspberry_libcamera();
+
   /*
    * Detect all v4l2 cameras, that is cameras that show up as a v4l2 device
    * (/dev/videoXX)
@@ -64,7 +79,8 @@ class DCameras {
 
   int m_discover_index = 0;
 
-  const OHDPlatform &ohdPlatform;
+  const OHDPlatform ohdPlatform;
+  bool m_enable_debug;
 };
 
 #endif

@@ -3,24 +3,39 @@ project(OpenHD-Interface)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# include the general openhd stuff
-include_directories(../ohd_common)
-
 # Build and include wifibroadcast
 include(../lib/wifibroadcast/WBLib.cmake)
 
-SET(ALL_INTERFACE_SOURCE_FILES
-        #src/EthernetCards.cpp
-        src/WBStreams.cpp
-        src/WifiHotspot.cpp
-        src/USBTetherListener.cpp
-        src/OHDInterface.cpp
-        src/DWifiCards.cpp
-        lib/nl.c)
+add_library(OHDInterfaceLib STATIC) # initialized below
+add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 
-add_library(OHDInterfaceLib
-        STATIC
-        ${ALL_INTERFACE_SOURCE_FILES})
+set(sources
+    "inc/DWifiCards.h"
+    "inc/OHDInterface.h"
+    "inc/OHDInterfaceSettings.h"
+    "inc/OHDWifiCard.hpp"
+    "inc/USBTetherListener.h"
+    "inc/validate_settings_helper.h"
+    "inc/WBStreams.h"
+    "inc/WBStreamsSettings.hpp"
+    "inc/WifiHotspot.h"
+
+    "src/DWifiCards.cpp"
+    "src/OHDInterface.cpp"
+    "src/USBTetherListener.cpp"
+    "src/WBStreams.cpp"
+    "src/WifiCardCommandHelper.hpp"
+    "src/WifiHotspot.cpp"
+)
+
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
+
+include(CMakePackageConfigHelpers)
+target_sources(OHDInterfaceLib PRIVATE ${sources})
+
+target_include_directories(OHDInterfaceLib
+    PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
 
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
@@ -31,10 +46,10 @@ FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
 target_link_libraries(OHDInterfaceLib PUBLIC Boost::filesystem)
 
 # find and include all the other libs
-include(cmake/FindLibNL.cmake)
+#include(cmake/FindLibNL.cmake)
 #find_package(LibNL REQUIRED)
-target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
-target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
+#target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
+#target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
 
 target_include_directories(OHDInterfaceLib PUBLIC inc/)
 target_include_directories(OHDInterfaceLib PUBLIC lib/include)
@@ -45,7 +60,11 @@ target_link_libraries(OHDInterfaceLib PUBLIC ${WB_TARGET_LINK_LIBRARIES})
 find_package(Threads REQUIRED)
 target_link_libraries(OHDInterfaceLib PUBLIC Threads::Threads)
 
-# Custom testing, requires written jsons from discovery
+# this one is here but not really part of interface
+add_executable(test_led test/test_led.cpp)
+target_link_libraries(test_led OHDInterfaceLib)
+
+# Custom testing
 add_executable(test_interface test/test_interface.cpp)
 target_link_libraries(test_interface OHDInterfaceLib)
 

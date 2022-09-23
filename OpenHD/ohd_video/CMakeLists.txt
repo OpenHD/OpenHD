@@ -7,9 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 #You can supress the warnings in CMake using
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
-# include the general openhd stuff
-include_directories(../ohd_common)
-
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
 # Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
@@ -17,6 +14,20 @@ SET(Boost_USE_STATIC_LIBS OFF)
 SET(Boost_USE_MULTITHREAD ON)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
 SET(OHD_VIDEO_USED_LIBS Boost::filesystem)
+
+# From libcamera-apps !! begin
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBCAMERA QUIET libcamera)
+if(LIBCAMERA_FOUND)
+    message(STATUS "libcamera library found:")
+    message(STATUS "    version: ${LIBCAMERA_VERSION}")
+    message(STATUS "    libraries: ${LIBCAMERA_LINK_LIBRARIES}")
+    message(STATUS "    include path: ${LIBCAMERA_INCLUDE_DIRS}")
+else()
+    message(STATUS "LIBCAMERA features will be unavailable!")
+endif()
+
+# From libcamera-apps !! end
 
 # FUCKING GSTREAMER !! begin
 find_package(PkgConfig REQUIRED)
@@ -33,7 +44,7 @@ find_package(Threads REQUIRED)
 SET(ALL_VIDEO_SOURCE_FILES
         src/camerastream.cpp
         src/gstreamerstream.cpp
-        src/libcamerastream.cpp
+        src/veyestream.cpp
         src/OHDVideo.cpp
         src/DCameras.cpp)
 
@@ -41,6 +52,13 @@ add_library(OHDVideoLib
         STATIC
         ${ALL_VIDEO_SOURCE_FILES})
 target_include_directories(OHDVideoLib PUBLIC inc/)
+
+if(LIBCAMERA_FOUND)
+    target_include_directories(OHDVideoLib PUBLIC ${LIBCAMERA_INCLUDE_DIRS})
+    target_link_libraries(OHDVideoLib PUBLIC ${LIBCAMERA_LINK_LIBRARIES})
+    target_compile_definitions(OHDVideoLib PUBLIC OPENHD_LIBCAMERA_PRESENT)
+endif()
+
 target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})
 # link and include gstreamer
 target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})

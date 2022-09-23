@@ -7,11 +7,12 @@
 #include <vector>
 #include <utility>
 
-#include "openhd-wifi.hpp"
+#include "OHDWifiCard.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-link-statistics.hpp"
-#include "WBStreamsSettings.h"
+#include "WBStreamsSettings.hpp"
+#include "mavlink_settings/ISettingsComponent.hpp"
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
 
@@ -26,9 +27,7 @@ class WBStreams {
   WBStreams(const WBStreams&)=delete;
   WBStreams(const WBStreams&&)=delete;
   // register callback that is called in regular intervals with link statistics
-  void set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback){
-	_stats_callback=std::move(stats_callback);
-  }
+  void set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback);
   // Verbose string about the current state.
   // could be const if there wasn't the mutex
   [[nodiscard]] std::string createDebug();

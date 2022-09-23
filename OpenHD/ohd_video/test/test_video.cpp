@@ -13,6 +13,8 @@
 int main(int argc, char *argv[]) {
   const auto platform=DPlatform::discover();
 
+  auto tmp_opt=openhd::parse_video_format("1280x720@30");
+
   auto cameras=DCameras::discover(*platform);
   if(cameras.empty()){
     cameras.emplace_back(createDummyCamera());

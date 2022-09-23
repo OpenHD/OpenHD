@@ -2,13 +2,20 @@
 // Created by consti10 on 17.07.22.
 //
 
-#ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WBSTREAMSSETTINGS_H_
-#define OPENHD_OPENHD_OHD_INTERFACE_INC_WBSTREAMSSETTINGS_H_
+#ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WBSTREAMSSETTINGS_HPP_
+#define OPENHD_OPENHD_OHD_INTERFACE_INC_WBSTREAMSSETTINGS_HPP_
 
-#include "openhd-wifi.hpp"
+#include "OHDWifiCard.hpp"
 #include "openhd-settings2.hpp"
 
 namespace openhd{
+
+// Consti10: Stephen used a default tx power of 3100 somewhere (not sure if that ever made it trough though)
+// This value seems a bit high to me, so I am going with a default of "1800" (which should be 18.0 dBm )
+// Used to be in dBm, but mW really is more verbose to the user - we convert from mW to dBm when using the iw dev set command
+static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT=25;
+static constexpr auto DEFAULT_5GHZ_FREQUENCY = 5180;
+static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412;
 
 static constexpr auto DEFAULT_MCS_INDEX=3;
 static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
@@ -83,4 +90,4 @@ static constexpr auto WB_TX_POWER_MILLI_WATT="WB_TX_POWER_MW";
 
 }
 
-#endif //OPENHD_OPENHD_OHD_INTERFACE_INC_WBSTREAMSSETTINGS_H_
+#endif //OPENHD_OPENHD_OHD_INTERFACE_INC_WBSTREAMSSETTINGS_HPP_

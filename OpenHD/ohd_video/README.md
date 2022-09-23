@@ -3,9 +3,11 @@
 This library is responsible for detecting the cameras connected to the system 
 and then starts a encoded video stream for each of the discovered cameras.
 The functionalities it exposes to the public are simple:
-1) Send generated, encoded video stream(s) somewhere to be picked up (e.g. by ohd-interface)
+1) Send generated, encoded video stream(s) via UDP (localhost) somewhere to be picked up (e.g. by ohd-interface)
 2) Expose a means to change camera / encoding specific settings (called by ohd_telemetry / mavlink)
 
+Camera settings are stored in /usr/local/share/openhd/video
+The Camera manifest (list of discovered cameras) can be found under /tmp for debugging.
 
 ##Note 
 The code in this module must adhere to the following paradigms:

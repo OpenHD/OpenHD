@@ -11,11 +11,7 @@
 
 #include "mav_helper.h"
 
-GroundTelemetry::GroundTelemetry(OHDPlatform platform): _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
-  /*tcpGroundCLient=std::make_unique<TCPEndpoint>(OHD_GROUND_CLIENT_TCP_PORT);
-  tcpGroundCLient->registerCallback([this](MavlinkMessage& msg){
-          onMessageGroundStationClients(msg);
-  });*/
+GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
   /*udpGroundClient =std::make_unique<UDPEndpoint>("GroundStationUDP",
                                                                                                  OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
                                                                                                  "127.0.0.1","127.0.0.1",true);//127.0.0.1
@@ -33,7 +29,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform): _platform(platform),Mavl
   udpWifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
     onMessageAirPi(msg);
   });
-  _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false);
+  _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
   components.push_back(_ohd_main_component);
   //
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
@@ -73,9 +69,9 @@ void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
 void GroundTelemetry::sendMessageGroundStationClients(const MavlinkMessage &message) {
   //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageGroundStationClients");
   // forward via TCP or UDP
-  if (tcpGroundCLient) {
-	tcpGroundCLient->sendMessage(message);
-  }
+  //if (tcpGroundCLient) {
+  //	tcpGroundCLient->sendMessage(message);
+  //}
   if (udpGroundClient) {
 	udpGroundClient->sendMessage(message);
   }
@@ -97,19 +93,20 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
   const auto loop_intervall=std::chrono::milliseconds(500);
   auto last_log=std::chrono::steady_clock::now();
   while (true) {
-    if(std::chrono::steady_clock::now()-last_log>=log_intervall) {
-      last_log = std::chrono::steady_clock::now();
-      std::cout << "GroundTelemetry::loopInfinite()\n";
-      // for debugging, check if any of the endpoints is not alive
-      if (enableExtendedLogging && udpWifibroadcastEndpoint) {
-        std::cout<<udpWifibroadcastEndpoint->createInfo();
-      }
-      if (enableExtendedLogging && udpGroundClient) {
-        std::cout<<udpGroundClient->createInfo();
-      }
-    }
-    // send messages to the ground station in regular intervals, includes heartbeat.
-    // everything else is handled by the callbacks and their threads
+	const auto loopBegin=std::chrono::steady_clock::now();
+	if(std::chrono::steady_clock::now()-last_log>=log_intervall) {
+	  last_log = std::chrono::steady_clock::now();
+	  std::cout << "GroundTelemetry::loopInfinite()\n";
+	  // for debugging, check if any of the endpoints is not alive
+	  if (enableExtendedLogging && udpWifibroadcastEndpoint) {
+		std::cout<<udpWifibroadcastEndpoint->createInfo();
+	  }
+	  if (enableExtendedLogging && udpGroundClient) {
+		std::cout<<udpGroundClient->createInfo();
+	  }
+	}
+	// send messages to the ground station in regular intervals, includes heartbeat.
+	// everything else is handled by the callbacks and their threads
 	{
 	  std::lock_guard<std::mutex> guard(components_lock);
 	  for(auto& component:components){
@@ -126,7 +123,18 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 		}
 	  }
 	}
-    std::this_thread::sleep_for(loop_intervall);
+	const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
+	if(loopDelta>loop_intervall){
+	  // We can't keep up with the wanted loop interval
+	  std::stringstream ss;
+	  ss<<"Warning GroundTelemetry cannot keep up with the wanted loop interval. Took:"
+		<<std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count()<<"ms\n";
+	  std::cout<<ss.str();
+	}else{
+	  const auto sleepTime=loop_intervall-loopDelta;
+	  // send out in X second intervals
+	  std::this_thread::sleep_for(loop_intervall);
+	}
   }
 }
 

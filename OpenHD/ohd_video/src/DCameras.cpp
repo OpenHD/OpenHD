@@ -4,6 +4,8 @@
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "DCamerasHelper.hpp"
+#include "veye-helper.hpp"
+#include "libcamera_provider.hpp"
 
 #include <linux/videodev2.h>
 #include <libv4l2.h>
@@ -13,19 +15,30 @@
 #include <iostream>
 #include <regex>
 
-DCameras::DCameras(const OHDPlatform& ohdPlatform) :
-	ohdPlatform(ohdPlatform){}
+DCameras::DCameras(const OHDPlatform ohdPlatform) :
+	ohdPlatform(ohdPlatform){
+  m_enable_debug=OHDUtil::get_ohd_env_variable_bool("OHD_DISCOVER_CAMERAS_DEBUG");
+  if(m_enable_debug){
+	std::cout<<"DCameras::m_enable_debug=true\n";
+  }
+}
 
 DiscoveredCameraList DCameras::discover_internal() {
-  std::cout << "Cameras::discover()" << std::endl;
+  std::cout << "DCameras::discover()" << std::endl;
 
   // Only on raspberry pi with the old broadcom stack we need a special detection method for the rpi CSI camera.
   // On all other platforms (for example jetson) the CSI camera is exposed as a normal V4l2 linux device,and we cah
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
   if(ohdPlatform.platform_type==PlatformType::RaspberryPi){
-	detect_raspberrypi_csi();
-	detect_raspberrypi_veye();
+	// We need to detect the veye camera first - since once a veye camera is detected and
+	// ? eitehr run the veye_raspivid or do the initializing stuff) the "normal" rpi camera detection
+	// hangs infinite.
+	if(detect_raspberrypi_broadcom_veye()){
+	  std::cerr<<"WARNING detected veye camera, skipping normal rpi camera detection\n";
+	}else{
+	  detect_raspberrypi_broadcom_csi();
+	}
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
   // Will need custom debugging before anything here is usable again though.
@@ -34,17 +47,20 @@ DiscoveredCameraList DCameras::discover_internal() {
   // This will detect all cameras (CSI or not) that do it the proper way (linux v4l2)
   detect_v4l2();
   detect_ip();
+  if (ohdPlatform.platform_type == PlatformType::RaspberryPi) {
+    detect_raspberry_libcamera();
+  }
   argh_cleanup();
   // write to json for debugging
   write_camera_manifest(m_cameras);
   return m_cameras;
 }
 
-void DCameras::detect_raspberrypi_csi() {
-  std::cout << "Cameras::detect_raspberrypi_csi()" << std::endl;
+void DCameras::detect_raspberrypi_broadcom_csi() {
+  std::cout << "DCameras::detect_raspberrypi_broadcom_csi()" << std::endl;
   const auto vcgencmd_result=OHDUtil::run_command_out("vcgencmd get_camera");
   if(vcgencmd_result==std::nullopt){
-	std::cout << "Cameras::detect_raspberrypi_csi() vcgencmd not found" << std::endl;
+	std::cout << "DCameras::detect_raspberrypi_broadcom_csi() vcgencmd not found" << std::endl;
 	return;
   }
   const auto& raw_value=vcgencmd_result.value();
@@ -52,21 +68,21 @@ void DCameras::detect_raspberrypi_csi() {
   // example "supported=2 detected=2"
   const std::regex r{R"(supported=([\d]+)\s+detected=([\d]+))"};
   if (!std::regex_search(raw_value, result, r)) {
-	std::cout << "Cameras::detect_raspberrypi_csi() no regex match" << std::endl;
+	std::cout << "DCameras::detect_raspberrypi_broadcom_csi() no regex match" << std::endl;
 	return;
   }
   if (result.size() != 3) {
-	std::cout << "Cameras::detect_raspberrypi_csi() regex unexpected result" << std::endl;
+	std::cout << "DCameras::detect_raspberrypi_broadcom_csi() regex unexpected result" << std::endl;
 	return;
   }
-  std::string supported = result[1];
-  std::string detected = result[2];
-  std::cout << "Cameras::detect_raspberrypi_csi() supported=" + supported + " detected=" + detected << std::endl;
+  const std::string supported = result[1];
+  const std::string detected = result[2];
+  std::cout << "DCameras::detect_raspberrypi_broadcom_csi() supported=" + supported + " detected=" + detected << std::endl;
   const auto camera_count = atoi(detected.c_str());
   if (camera_count >= 1) {
 	Camera camera;
-	camera.name = "Pi CSI 0";
-	camera.vendor = "Raspberry Pi";
+	camera.name = "Pi_CSI_0";
+	camera.vendor = "RaspberryPi";
 	camera.type = CameraType::RaspberryPiCSI;
 	camera.bus = "0";
 	camera.index = m_discover_index;
@@ -77,8 +93,8 @@ void DCameras::detect_raspberrypi_csi() {
   }
   if (camera_count >= 2) {
 	Camera camera;
-	camera.name = "Pi CSI 1";
-	camera.vendor = "Raspberry Pi";
+	camera.name = "Pi_CSI_1";
+	camera.vendor = "RaspberryPi";
 	camera.type = CameraType::RaspberryPiCSI;
 	camera.bus = "1";
 	camera.index = m_discover_index;
@@ -89,28 +105,30 @@ void DCameras::detect_raspberrypi_csi() {
   }
 }
 
-void DCameras::detect_raspberrypi_veye() {
-  std::cout << "DCameras::detect_raspberrypi_veye()\n";
-  const auto success=OHDUtil::run_command("./usr/local/share/veye-raspberrypi/camera_i2c_config",{});
-  if (!success) {
-	std::cout << "DCameras::cannot enable veye: camera_i2c_config failed\n";
-	return;
-  }
-  const auto i2cdetect_veye_result_opt=OHDUtil::run_command_out("i2cdetect -y 0 0x3b 0x3b | grep  '3b'");
+bool DCameras::detect_raspberrypi_broadcom_veye() {
+  std::cout << "DCameras::detect_raspberrypi_broadcom_veye()\n";
+  // First, we use i2cdetect to find out if there is a veye camera
+  const auto i2cdetect_veye_result_opt=OHDUtil::run_command_out("i2cdetect -y 10 0x3b 0x3b | grep  '3b'");
   if(!i2cdetect_veye_result_opt.has_value()){
-	std::cout << "DCameras::cannot enable veye: i2cdetect failed\n";
-	return;
+	std::cout << "i2cdetect run command failed, is it installed ?\n";
+	return false;
   }
   const auto& i2cdetect_veye_result=i2cdetect_veye_result_opt.value();
-  std::cerr << "i2cdetect_veye_result: "<<i2cdetect_veye_result << std::endl;
+  std::cerr << "i2cdetect_veye_result:{"<<i2cdetect_veye_result << "}\n";
   std::smatch result;
   std::regex r{ "30:                                  3b            "};
   if (!std::regex_search(i2cdetect_veye_result, result, r)) {
-	std::cerr << "Cameras::detect_raspberrypi_veye() no regex match" << std::endl;
-	return;
+	std::cerr << "DCameras::detect_raspberrypi_broadcom_veye() no regex match \n";
+	return false;
   }
+  std::cout<<"Found veye camera\n";
+  // In case there are some veye instance(s) still running from previous OHD run(s)
+  openhd::veye::kill_all_running_veye_instances();
+  // R.n we are not sure if this script is needed, but for now, leave it in.
+  // This script always fails, but works anyways ?
+  const auto success=OHDUtil::run_command("/usr/local/share/veye-raspberrypi/camera_i2c_config",{});
   Camera camera;
-  camera.name = "Pi VEYE 0";
+  camera.name = "Pi_VEYE_0";
   camera.vendor = "VEYE";
   camera.type = CameraType::RaspberryPiVEYE;
   camera.bus = "0";
@@ -124,11 +142,33 @@ void DCameras::detect_raspberrypi_veye() {
   endpoint.formats.emplace_back("H.264|1920x1080@30");
   m_camera_endpoints.push_back(endpoint);
   m_cameras.push_back(camera);
+  return true;
 }
 
+#ifdef OPENHD_LIBCAMERA_PRESENT
+void DCameras::detect_raspberry_libcamera() {
+  if(m_enable_debug){
+	std::cout<<"DCameras::detect_raspberry_libcamera()\n";
+  }
+  auto cameras = LibcameraProvider::get_cameras();
+  if(m_enable_debug){
+	std::cout<<"Libcamera:discovered "<<cameras.size()<<" cameras\n";
+  }
+  for (const auto& camera : cameras) {
+    // TODO: filter out other cameras
+    m_cameras.push_back(camera);
+  }
+}
+#else
+void DCameras::detect_raspberry_libcamera() {
+  std::cerr<<"DCameras::detect_raspberry_libcamera()- no libcamera found at compile time";
+}
+#endif
 
 void DCameras::detect_v4l2() {
-  std::cout << "Cameras::detect_v4l2()" << std::endl;
+  if(m_enable_debug){
+	std::cout << "DCameras::detect_v4l2()\n";
+  }
   // Get all the devices to take into consideration.
   const auto devices = DV4l2DevicesHelper::findV4l2VideoDevices();
   for (const auto &device: devices) {
@@ -137,7 +177,9 @@ void DCameras::detect_v4l2() {
 }
 
 void DCameras::probe_v4l2_device(const std::string &device) {
-  std::cout << "Cameras::probe_v4l2_device()" << device << "\n";
+  if(m_enable_debug){
+	std::cout << "DCameras::probe_v4l2_device()" << device << "\n";
+  }
   std::stringstream command;
   command << "udevadm info ";
   command << device.c_str();
@@ -146,7 +188,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
 	std::cerr<<"udev_info no result\n";
 	return;
   }
-  const auto udev_info=udev_info_opt.value();
+  const auto& udev_info=udev_info_opt.value();
   Camera camera;
   // check for device name
   std::smatch model_result;
@@ -200,7 +242,9 @@ void DCameras::probe_v4l2_device(const std::string &device) {
 }
 
 bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, CameraEndpoint &endpoint) {
-  std::cout << "Cameras::process_v4l2_node(" << node << ")" << std::endl;
+  if(m_enable_debug){
+	std::cout << "DCameras::process_v4l2_node(" << node << ")\n";
+  }
   // fucking hell, on jetson v4l2_open seems to be bugged
   // https://forums.developer.nvidia.com/t/v4l2-open-create-core-with-jetpack-4-5-or-later/170624/6
   int fd;
@@ -219,20 +263,28 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 	return false;
   }
   const std::string driver((char *)caps.driver);
-  std::cout<<"Driver is:"<<driver<<"\n";
+  if(m_enable_debug){
+	std::cout<<"Driver is:"<<driver<<"\n";
+  }
   if (driver == "uvcvideo") {
 	camera.type = CameraType::UVC;
-	std::cout << "Found UVC camera" << std::endl;
+	if(m_enable_debug){
+	  std::cout << "Found UVC camera" << std::endl;
+	}
   } else if (driver == "tegra-video") {
 	camera.type = CameraType::JetsonCSI;
-	std::cout << "Found Jetson CSI camera" << std::endl;
+	if(m_enable_debug){
+	  std::cout << "Found Jetson CSI camera" << std::endl;
+	}
   } else if (driver == "v4l2 loopback") {
 	// this is temporary, we are not going to use v4l2loopback for thermal cameras they'll be directly
 	// handled by the camera service instead work anyways
 	// Consti10: Removed for this release, won't
 	//camera.type = CameraTypeV4L2Loopback;
-	std::cout << "Found v4l2 loopback camera (likely a thermal camera)" << std::endl;
-	std::cerr << "Loopback is unimplemented rn\n";
+	if(m_enable_debug){
+	  std::cout << "Found v4l2 loopback camera (likely a thermal camera)" << std::endl;
+	  std::cerr << "Loopback is unimplemented rn\n";
+	}
 	return false;
   } else {
 	/*
@@ -242,10 +294,12 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 	 * advantage over the mmal interface and doesn't offer the same image controls. Once libcamera is
 	 * being widely used this will be the way to support those cameras, but not yet.
 	 */
-	std::cerr << "Found V4l2 device with unknown driver:" << driver << "\n";
+	if(m_enable_debug){
+	  std::cerr << "Found V4l2 device with unknown driver:" << driver << "\n";
+	}
 	return false;
   }
-  std::string bus((char *)caps.bus_info);
+  const std::string bus((char *)caps.bus_info);
   camera.bus = bus;
   endpoint.bus = bus;
   if (!(caps.capabilities & V4L2_BUF_TYPE_VIDEO_CAPTURE)) {
@@ -293,7 +347,9 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 			new_format << "@";
 			new_format << frmival.discrete.denominator;
 			endpoint.formats.push_back(new_format.str());
-			std::cout << "Found format: " << new_format.str() << std::endl;
+			if(m_enable_debug){
+			  std::cout << "Found format: " << new_format.str() << std::endl;
+			}
 		  }
 		  frmival.index++;
 		}
@@ -303,7 +359,9 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
 	fmtdesc.index++;
   }
   v4l2_close(fd);
-  std::cout<<"process_v4l2_node done\n";
+  if(m_enable_debug){
+	std::cout<<"DCameras::process_v4l2_node done\n";
+  }
   return true;
 }
 
@@ -321,12 +379,12 @@ void DCameras::argh_cleanup() {
 		// an endpoint who cannot do anything is just a waste and added complexity for later modules
 		if (endpoint.formats.empty()) {
 		  // not really an error, since it is an implementation issue during detection that is negated here
-		  std::cout << "Discarding endpoint due to no formats\n";
+		  std::cout << "Discarding endpoint"<<endpoint.device_node<<" due to no formats\n";
 		  continue;
 		}
 		if (!endpoint.supports_anything()) {
 		  // not really an error, since it is an implementation issue during detection that is negated here
-		  std::cout << "Discarding endpoint due to no capabilities\n";
+		  std::cout << "Discarding endpoint "<<endpoint.device_node<<" due to no capabilities\n";
 		  continue;
 		}
 		endpointsForThisCamera.push_back(endpoint);
@@ -347,12 +405,12 @@ void DCameras::argh_cleanup() {
   write_camera_manifest(m_cameras);
 }
 
-DiscoveredCameraList DCameras::discover(const OHDPlatform& ohdPlatform) {
+DiscoveredCameraList DCameras::discover(const OHDPlatform ohdPlatform) {
   auto discover=DCameras{ohdPlatform};
   return discover.discover_internal();
 }
 
-std::vector<std::shared_ptr<CameraHolder>> DCameras::discover2(const OHDPlatform& ohdPlatform) {
+std::vector<std::shared_ptr<CameraHolder>> DCameras::discover2(const OHDPlatform ohdPlatform) {
   auto discovered_cameras= discover(ohdPlatform);
   std::vector<std::shared_ptr<CameraHolder>> ret;
   for(const auto& camera:discovered_cameras){

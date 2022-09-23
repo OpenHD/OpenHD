@@ -15,10 +15,12 @@
 #include "openhd-settings.hpp"
 #include "openhd-settings2.hpp"
 
-#include "mavlink_settings/ISettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.hpp"
 #include "v_validate_settings.h"
 
 static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
+static constexpr auto DEFAULT_KEYFRAME_INTERVAL=30;
+static constexpr auto DEFAULT_MJPEG_QUALITY_PERCENT=50;
 
 // Return true if the bitrate is considered sane, false otherwise
 static bool check_bitrate_sane(const int bitrateKBits) {
@@ -32,6 +34,10 @@ static bool check_bitrate_sane(const int bitrateKBits) {
 // These values are settings that can change dynamically at run time
 // (non-deterministic)
 struct CameraSettings {
+  // Enable / Disable streaming for this camera
+  // This can be usefully for debugging, but also when the there is suddenly a really high interference,
+  // and the user wants to fly home without video, using only telemetry / HUD
+  bool enable_streaming=true;
   // The video format selected by the user. If the user sets a video format that
   // isn't supported (for example, he might select h264|1920x1080@120 but the
   // camera can only do 60fps) The stream should default to the first available
@@ -47,8 +53,12 @@ struct CameraSettings {
   // encoder support a constant bitrate, and not all encoders support all
   // bitrates, especially really low ones.
   int bitrateKBits = DEFAULT_BITRATE_KBITS;
+  // r.n use rpicamrs as reference. Not supported by all cameras
+  int keyframe_interval=DEFAULT_KEYFRAME_INTERVAL;
+  // MJPEG has no bitrate parameter, only a "quality" param. This value is only used if the
+  // user selected MJPEG as its video codec
+  int mjpeg_quality_percent=DEFAULT_MJPEG_QUALITY_PERCENT;
   // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar
-  // form
   std::string url;
   // enable/disable recording to file
   Recording air_recording=Recording::DISABLED;
@@ -64,7 +74,7 @@ struct CameraSettings {
   int awb_mode=0;
   int exposure_mode=0;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,userSelectedVideoFormat,bitrateKBits,url,air_recording,camera_rotation_degree,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,userSelectedVideoFormat,bitrateKBits,keyframe_interval,mjpeg_quality_percent,url,air_recording,camera_rotation_degree,
 								   awb_mode,exposure_mode)
 
 struct CameraEndpoint {
@@ -144,6 +154,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
   }
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings() override{
+	auto c_enable_streaming=[this](std::string,int value) {
+	  return set_enable_streaming(value);
+	};
 	auto c_width=[this](std::string,int value) {
 	  return set_video_width(value);
 	};
@@ -159,16 +172,40 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	auto c_bitrate=[this](std::string,int value) {
 	  return set_video_bitrate(value);
 	};
+	auto c_keyframe_interval=[this](std::string,int value) {
+	  return set_keyframe_interval(value);
+	};
 	auto c_recording=[this](std::string,int value) {
 	  return set_air_recording(value);
 	};
+	auto c_mjpeg_quality_percent=[this](std::string,int value) {
+	  return set_mjpeg_quality_percent(value);
+	};
+	auto c_width_height_framerate=[this](std::string,std::string value){
+	  auto tmp_opt=openhd::parse_video_format(value);
+	  if(tmp_opt.has_value()){
+		const auto& tmp=tmp_opt.value();
+		return set_video_width_height_framerate(tmp.width_px,tmp.height_px,tmp.framerate);
+	  }
+	  return false;
+	};
 	std::vector<openhd::Setting> ret={
+		openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
 		openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,c_width}},
 		openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{get_settings().userSelectedVideoFormat.height,c_height}},
 		openhd::Setting{"VIDEO_FPS",openhd::IntSetting{get_settings().userSelectedVideoFormat.framerate,c_fps}},
 		openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec), c_codec}},
 		openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}},
+		openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().keyframe_interval,c_keyframe_interval}},
 		openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
+		openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
+		// experimental
+		openhd::Setting{"V_FORMAT",openhd::StringSetting{
+		  openhd::video_format_from_int_values(get_settings().userSelectedVideoFormat.width,
+											   get_settings().userSelectedVideoFormat.height,
+											   get_settings().userSelectedVideoFormat.framerate),
+		  c_width_height_framerate
+		}},
 	};
 	if(_camera.supports_rotation()){
 	  auto c_rotation=[this](std::string,int value) {
@@ -189,6 +226,14 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  ret.push_back(openhd::Setting{"V_EXP_MODE",openhd::IntSetting{get_settings().exposure_mode,cb}});
 	}
 	return ret;
+  }
+  bool set_enable_streaming(int enable){
+	if(!(enable==0 || enable==1)){
+	  return false;
+	}
+	unsafe_get_settings().enable_streaming=static_cast<bool>(enable);
+	persist();
+	return true;
   }
   bool set_video_width(int video_width){
 	if(!openhd::validate_video_with(video_width)){
@@ -248,6 +293,12 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	persist();
 	return true;
   }
+  bool set_keyframe_interval(int value){
+	if(!openhd::validate_rpi_keyframe_interval(value))return false;
+	unsafe_get_settings().keyframe_interval=value;
+	persist();
+	return true;
+  }
   //
   bool set_camera_awb(int value){
 	if(!_camera.supports_awb())return false;
@@ -267,7 +318,21 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	persist();
 	return true;
   }
-
+  bool set_mjpeg_quality_percent(int value){
+	if(!openhd::validate_mjpeg_quality_percent(value)){
+	  return false;
+	}
+	unsafe_get_settings().mjpeg_quality_percent=value;
+	persist();
+	return true;
+  }
+  bool set_video_width_height_framerate(int width,int height,int framerate){
+	unsafe_get_settings().userSelectedVideoFormat.width=width;
+	unsafe_get_settings().userSelectedVideoFormat.height=height;
+	unsafe_get_settings().userSelectedVideoFormat.framerate=framerate;
+	persist();
+	return true;
+  }
   // Settings hacky end
  private:
   // Camera info is immutable
@@ -275,11 +340,21 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
 	std::stringstream ss;
-	ss<<(static_cast<int>(_camera.index))<<"_"<<camera_type_to_string(_camera.type)<<"_"<<_camera.name;
+	// TODO: r.n not unique enough, we need to be unique per model,too - e.g. a user
+	// might connect a different USB camera, where we'd need a different unique ID for
+	ss<<(static_cast<int>(_camera.index))<<"_"<<camera_type_to_string(_camera.type);
 	return ss.str();
   }
   [[nodiscard]] CameraSettings create_default()const override{
-	return CameraSettings{};
+	auto ret=CameraSettings{};
+	if(_camera.type==CameraType::RaspberryPiVEYE){
+	  // Veye cannot do 640x480@30 by default, this is the next lower possible
+	  // (TODO it should do 720p but for some reason doesn't)
+	  ret.userSelectedVideoFormat.width=1920;
+	  ret.userSelectedVideoFormat.height=1080;
+	  ret.userSelectedVideoFormat.framerate=30;
+	}
+	return ret;
   }
 };
 

@@ -7,7 +7,7 @@
 #include <DWifiCards.h>
 
 #include <utility>
-#include "WBStreamsSettings.h"
+#include "WBStreamsSettings.hpp"
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) :
 platform(platform1),profile(std::move(profile1)) {
@@ -50,7 +50,7 @@ platform(platform1),profile(std::move(profile1)) {
     // TODO reason what to do. We do not support dynamically adding wifi cards at run time, so somehow
     // we need to signal to the user that something is completely wrong. However, as an grund pi, we can still
     // run QOpenHD and OpenHD, just it will never connect to an air pi
-    _error_blinker=std::make_unique<openhd::rpi::LEDBlinker>(platform,message_for_user);
+    _error_blinker=std::make_unique<openhd::LEDBlinker>(platform,message_for_user);
     // we just continue as nothing happened, but OHD won't be usable until a reboot.
     //exit(1);
   }else{
@@ -168,6 +168,9 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
 	}};
 	ret.emplace_back(openhd::Setting{OHD_INTERFACE_ENABLE_WIFI_HOTSPOT,change_wifi_hotspot});
   }
+  if(!profile.is_air){
+	openhd::testing::append_dummy_int_and_string(ret);
+  }
   openhd::validate_provided_ids(ret);
   return ret;
 }
@@ -175,4 +178,13 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
 void OHDInterface::set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK cb) {
   std::lock_guard<std::mutex> guard(_external_device_callback_mutex);
   _external_device_callback=std::move(cb);
+}
+
+void OHDInterface::restart_wb_streams_async() {
+  if(wbStreams){
+	wbStreams->restart_async(std::chrono::seconds(2));
+  }
+}
+void OHDInterface::print_internal_fec_optimization_method() {
+  print_optimization_method();
 }

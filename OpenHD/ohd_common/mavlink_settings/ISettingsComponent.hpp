@@ -17,14 +17,22 @@
 
 namespace openhd{
 
+// These extra settings implementations exist to avoid a direct dependency on mavlink on any modules that are configurable.
+// They are using templates to be type safe, e.g. we let the c++ compiler make sure for us the following cannot happen (example):
+// A module creates an int settings, but the callback is called with a float or similar. Or in other words:
+// If you have an (int, float, string) setting you do not need to perform any type checking in the callback.
 template<class T>
 struct SettingImpl{
+  // The value which the ground station (e.g. the user) can modify via mavlink after passing the implemented sanity checks
+  // (e.g. the value that is changed by the mavlink parameter provider when OpenHD returned true in the change_callback).
   T value;
-  // This callback is called every time the user wants to change the parameter from value x to value y (via mavlink)
+  // This callback is called every time the user wants to change the parameter (T value) from value x to value y (via mavlink)
   // return true to accept the value, otherwise return false.
+  // We have a default implementation that just prints the change request and always returns true, mostly for debugging / testing.
+  // But in general, all OpenHD modules that are configurable overwrite this callback with their own proper implementation.
   std::function<bool(std::string id,T requested_value)> change_callback=[](std::string id,T requested_value){
 	std::stringstream ss;
-	ss<<"Requested change "<<id<<" to "<<std::to_string(requested_value)<<"\n";
+	ss<<"Requested change "<<id<<" to "<<requested_value<<"\n";
 	std::cout<<ss.str();
 	return true;
   };
@@ -49,10 +57,9 @@ class ISettingsComponent{
   ISettingsComponent(const ISettingsComponent&&)=delete;
 };
 
-
+// we need to have unique setting string ids. Creating duplicates by accident is not uncommon when adding new settings, and when
+// this function is used properly we can catch those mistakes at run time.
 static void validate_provided_ids(const std::vector<Setting>& settings){
-  // we need to have unique setting string ids. If there is a duplicate, this would be a programmers error,
-  // and when used correctly should be found during debugging by this method.
   std::map<std::string,void*> test;
   for(const auto& setting:settings){
 	assert(setting.id.length()<=16);
@@ -82,6 +89,21 @@ static std::vector<Setting> create_dummy_ground_settings() {
 	  openhd::Setting{"SOME_STRING",std::string("hello")}*/
   };
   return ret;
+}
+
+// takes a reference because openhd::Setting has no move/copy
+static void append_dummy_int_and_string(std::vector<Setting>& ret){
+  for(int i=0;i<5;i++){
+	auto tmp=openhd::IntSetting{i};
+	const std::string id="TEST_INT_"+std::to_string(i);
+	ret.push_back(Setting{id,tmp});
+  }
+  for(int i=0;i<2;i++){
+	const std::string value="val"+std::to_string(i);
+	auto tmp=openhd::StringSetting{value};
+	const std::string id="TEST_STRING_"+std::to_string(i);
+	ret.push_back(Setting{id,tmp});
+  }
 }
 }
 

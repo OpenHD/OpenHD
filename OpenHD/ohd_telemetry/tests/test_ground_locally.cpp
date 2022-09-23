@@ -3,11 +3,11 @@
 //
 #include <iostream>
 
-#include "../src/OHDTelemetry.hpp"
+#include "../src/OHDTelemetry.h"
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-platform-discover.hpp"
-#include "mavlink_settings/ISettingsComponent.h"
+#include "mavlink_settings/ISettingsComponent.hpp"
 #include <thread>
 #include <memory>
 
