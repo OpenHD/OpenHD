@@ -16,7 +16,7 @@ sudo apt -y install build-essential autotools-dev automake libtool autoconf \
             curl \
             libavcodec-dev \
             git \
-            libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
+            libnl-3-dev libnl-genl-3-dev libnl-route-3-dev || exit 1
 
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo add-apt-repository ppa:mhier/libboost-latest -y
