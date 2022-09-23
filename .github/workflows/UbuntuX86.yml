@@ -2,7 +2,7 @@ name: UbuntuX86Build
 
 on:
   push:
-    branches: [ master, "2.0", "2.1-milestones" ]
+    branches: [ master, "2.0", "2.2.3-evo" ]
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
@@ -10,7 +10,7 @@ env:
 jobs:
   build:
     #runs-on: ubuntu-18.04
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
     steps:
