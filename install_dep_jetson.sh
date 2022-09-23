@@ -33,4 +33,5 @@ sudo apt -y install build-essential autotools-dev automake libtool autoconf \
     sudo apt -y -o Dpkg::Options::="--force-overwrite" install libboost1.74-dev
     
 apt -y install fmt cmake
+gem install public_suffix -v 4.0.7
 gem install fpm
