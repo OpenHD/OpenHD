@@ -1,4 +1,4 @@
-name: ubuntu20_build_test
+name: ubuntu22_build_test
 
 # @Rapha please keep this one without any packaging or similar ;)
 # NOTE: This test only checks if the code in the repository builds under ubuntu x86 (dependencies installed)
@@ -13,7 +13,8 @@ env:
 jobs:
   build:
     #runs-on: ubuntu-18.04
-    runs-on: ubuntu-20.04
+    #runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository and submodules
@@ -24,7 +25,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
-          sudo ./install_dep_ubuntu20.sh
+          sudo ./install_dep_ubuntu22.sh
       - name: Build with make
         run: |
           cd OpenHD
