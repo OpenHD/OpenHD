@@ -25,7 +25,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
-          sudo ./install_dep_ubuntu20.sh
+          sudo ./install_dep_ubuntu22.sh
       - name: Build with make
         run: |
           cd OpenHD
