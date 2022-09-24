@@ -86,12 +86,12 @@ add_executable(test_onboard_computer_status_read_stuff tests/test_onboard_comput
 target_link_libraries(test_onboard_computer_status_read_stuff OHDTelemetryLib)
 
 ###
-find_package(MAVSDK)
-if(MAVSDK_FOUND)
-    add_executable(test_mavsdk_serial tests/test_mavsdk_serial.cpp)
-    target_link_libraries(test_mavsdk_serial OHDTelemetryLib MAVSDK::mavsdk)
-
-    add_executable(test_mavsdk_param tests/test_mavsdk_param.cpp)
-    target_link_libraries(test_mavsdk_param OHDTelemetryLib MAVSDK::mavsdk)
-endif()
+#find_package(MAVSDK)
+#if(MAVSDK_FOUND)
+#    add_executable(test_mavsdk_serial tests/test_mavsdk_serial.cpp)
+#    target_link_libraries(test_mavsdk_serial OHDTelemetryLib MAVSDK::mavsdk)
+#
+#    add_executable(test_mavsdk_param tests/test_mavsdk_param.cpp)
+#    target_link_libraries(test_mavsdk_param OHDTelemetryLib MAVSDK::mavsdk)
+#endif()
 #####
