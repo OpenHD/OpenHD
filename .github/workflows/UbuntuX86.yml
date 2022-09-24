@@ -37,6 +37,7 @@ jobs:
           'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' \
           | sudo -E bash
           sudo apt update
+          sudo apt upgrade
           sudo apt -y install ruby-dev libfmt-dev
           sudo gem install fpm
       - name: Install Dependencies
