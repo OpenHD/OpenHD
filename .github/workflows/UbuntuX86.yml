@@ -41,8 +41,6 @@ jobs:
           sudo gem install fpm
       - name: Install Dependencies
         run: |
-          sudo add-apt-repository ppa:beineri/opt-qt-5.15.4-focal
-          sudo apt update 
           sudo chmod +x install_dep_ubuntu20.sh
           sudo ./install_dep_ubuntu20.sh
 
