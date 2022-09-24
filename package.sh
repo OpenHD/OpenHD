@@ -49,7 +49,7 @@ if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_AR
 cd /opt
 mkdir temp
 cd temp
-git clone -b 2.1-milestones https://github.com/OpenHD/Open.HD
+git clone -b 2.2.3-evo https://github.com/OpenHD/Open.HD
 cd Open.HD
 git rev-parse --short HEAD ||exit
 VER2=$(git rev-parse --short HEAD) 
