@@ -10,7 +10,7 @@ env:
 jobs:
   build:
     #runs-on: ubuntu-18.04
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     env:
       CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
     steps:
@@ -37,11 +37,12 @@ jobs:
           'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' \
           | sudo -E bash
           sudo apt update
-          sudo apt upgrade
           sudo apt -y install ruby-dev libfmt-dev
           sudo gem install fpm
       - name: Install Dependencies
         run: |
+          sudo add-apt-repository ppa:beineri/opt-qt-5.15.4-focal
+          sudo apt update 
           sudo chmod +x install_dep_ubuntu20.sh
           sudo ./install_dep_ubuntu20.sh
 
