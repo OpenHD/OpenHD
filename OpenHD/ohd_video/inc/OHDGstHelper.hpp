@@ -55,7 +55,9 @@ static std::string createSwEncoder(const CommonEncoderParams& common_encoder_par
   if(common_encoder_params.videoCodec==VideoCodec::H264){
 	ss << "x264enc bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
 	" speed-preset=ultrafast"<<
-	" tune=zerolatency key-int-max=" << common_encoder_params.h26X_keyframe_interval << " ! ";
+	" tune=zerolatency key-int-max=" << common_encoder_params.h26X_keyframe_interval <<
+        " sliced-threads=0"<< //Note: Sliced threads has some advantages, but r.n it is incompatible with QOpenHD on a pi (decode)
+        " ! ";
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
 	//TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param
 	ss << "x265enc bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
