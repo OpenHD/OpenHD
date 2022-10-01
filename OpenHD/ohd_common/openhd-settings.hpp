@@ -38,6 +38,11 @@ static void generateSettingsDirectoryIfNonExists() {
   assert(OHDFilesystemUtil::exists(BASE_PATH));
 }
 
+// fucking boost, random bugged on allwinner. This is a temporary solution
+static std::string create_unit_it_temporary(){
+  return "01234566789";
+}
+
 /**
  * If no unit id file exists, this is the first boot of this OpenHD image on the platform.
  * In this case, generate a new random unit id, and store it persistently.
@@ -53,8 +58,9 @@ static std::string getOrCreateUnitId() {
 	//std::cout<<"Generating new unit id\n";
 	// generate new unit id
 	// See https://www.boost.org/doc/libs/1_62_0/libs/uuid/uuid.html
-	const boost::uuids::uuid _uuid = boost::uuids::random_generator()();
-	unit_id = to_string(_uuid);
+	//const boost::uuids::uuid _uuid = boost::uuids::random_generator()();
+	//unit_id = to_string(_uuid);
+        unit_id = create_unit_it_temporary();
 	std::cout << "Created new unit id:[" << unit_id << "]\n";
 	// and write it ot to the right file
 	std::ofstream of(UNIT_ID_FILE);
