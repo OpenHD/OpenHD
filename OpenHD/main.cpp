@@ -86,8 +86,21 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     exit(1);
   }
   // Including some rpi-specific functions
-  if(OHDFilesystemUtil::exists("/boot/OpenHD/kms.txt") || OHDFilesystemUtil::exists("/boot/OpenHD/Kms.txt")){
-    OHDUtil::run_command("echo",{"Hello World"});  }
+  if(OHDFilesystemUtil::exists("/boot/OpenHD/libcamera.txt") && OHDFilesystemUtil::exists("/boot/OpenHD/rpi.txt")){
+   // Cleaning config.txt, removing settings if applied earlier
+    OHDUtil::run_command("sed -i '/.all./d' /boot/config.txt");
+    OHDUtil::run_command("sed -i '/camera_auto_detect=1/d' /boot/config.txt");
+    OHDUtil::run_command("sed -i '/dtoverlay=vc4-kms-v3d/d' /boot/config.txt");
+    OHDUtil::run_command("sed -i '/dtoverlay=vc4-fkms-v3d/d' /boot/config.txt");
+    OHDUtil::run_command("sed -i '/start_x=1/d' /boot/config.txt");
+    OHDUtil::run_command("sed -i '/enable_uart=1/d' /boot/config.txt");
+    // Add libcamera configs
+    OHDUtil::run_command("echo"{"[all]"} >> /boot/config.txt");
+    OHDUtil::run_command("echo {"camera_auto_detect=1"} >> /boot/config.txt");
+    OHDUtil::run_command("echo {"dtoverlay=vc4-kms-v3d"} >> /boot/config.txt");
+    OHDUtil::run_command("echo {"enable_uart=1"} >> /boot/config.txt");
+
+  }
   return ret;
 }
 
