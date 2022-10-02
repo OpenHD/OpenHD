@@ -72,13 +72,13 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     }
   }
   // Some "launch params" can also be set by creating dummy files.
-  if(OHDFilesystemUtil::exists("/boot/air.txt") || OHDFilesystemUtil::exists("/boot/Air.txt")){
+  if(OHDFilesystemUtil::exists("/boot/OpenHD/air.txt") || OHDFilesystemUtil::exists("/boot/OpenHD/Air.txt")){
     ret.force_air=true;
   }
-  if(OHDFilesystemUtil::exists("/boot/ground.txt") || OHDFilesystemUtil::exists("/boot/Ground.txt")){
+  if(OHDFilesystemUtil::exists("/boot/OpenHD/ground.txt") || OHDFilesystemUtil::exists("/boot/OpenHD/Ground.txt")){
     ret.force_ground=true;
   }
-  if(OHDFilesystemUtil::exists("/boot/ohd_clean.txt")){
+  if(OHDFilesystemUtil::exists("/boot/OpenHD/ohd_clean.txt")){
     ret.clean_start=true;
   }
   if(ret.force_air && ret.force_ground){
