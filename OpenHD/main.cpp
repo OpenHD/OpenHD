@@ -85,6 +85,9 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     std::cerr << "Cannot force air and ground at the same time\n";
     exit(1);
   }
+  // Including some rpi-specific functions
+  if(OHDFilesystemUtil::exists("/boot/OpenHD/kms.txt") || OHDFilesystemUtil::exists("/boot/OpenHD/Kms.txt")){
+    OHDUtil::run_command("echo",{"Hello World"});  }
   return ret;
 }
 
