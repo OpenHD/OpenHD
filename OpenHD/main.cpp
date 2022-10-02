@@ -118,7 +118,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
       // Remove config File and reboot
       OHDUtil::run_command("rm -Rf /boot/OpenHD/raspicam.txt");
       OHDUtil::run_command("echo",{"This device will now reboot to enable configs"});
-      OHDUtil::run_command("reboot");
+      OHDUtil::run_command("shutdown -r now");
       }
 
     } 
