@@ -14,7 +14,7 @@ jobs:
   build:
     #runs-on: ubuntu-18.04
     #runs-on: ubuntu-20.04
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout repository and submodules
@@ -25,7 +25,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
-          sudo ./install_dep_ubuntu20.sh
+          sudo ./install_dep_ubuntu22.sh
       - name: Build with make
         run: |
           cd OpenHD
