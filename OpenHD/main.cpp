@@ -116,7 +116,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
       OHDUtil::run_command("sed -i '$ a dtoverlay=vc4-fkms-v3d' /boot/config.txt",{});
       OHDUtil::run_command("sed -i '$ a enable_uart=1' /boot/config.txt",{});
       // Remove config File and reboot
-      OHDUtil::run_command("rm -Rf /boot/OpenHD/raspicam.txt",{});
+      OHDUtil::run_command("rm -Rf /boot/OpenHD/raspicamsrc.txt",{});
       OHDUtil::run_command("echo",{"This device will now reboot to enable configs"});
       OHDUtil::run_command("shutdown -r now",{});
       }
