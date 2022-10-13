@@ -145,4 +145,24 @@ static void lululululu(){
   //mavlink_msg_param_ext_request_list_pack
 }
 
+static MavlinkMessage pack_rc_message(const int sys_id,const int comp_id,
+                                           const std::array<uint16_t,16>& rc_data,
+                                           const uint8_t target_system,
+                                           const uint8_t target_component){
+  MavlinkMessage ret{};
+  mavlink_rc_channels_override_t mavlink_rc_channels_override;
+  mavlink_rc_channels_override.target_system=target_system;
+  mavlink_rc_channels_override.target_component=target_component;
+  mavlink_rc_channels_override.chan1_raw=rc_data[0];
+  mavlink_rc_channels_override.chan2_raw=rc_data[1];
+  mavlink_rc_channels_override.chan3_raw=rc_data[2];
+  mavlink_rc_channels_override.chan4_raw=rc_data[3];
+  mavlink_rc_channels_override.chan5_raw=rc_data[4];
+  mavlink_rc_channels_override.chan6_raw=rc_data[5];
+  mavlink_rc_channels_override.chan7_raw=rc_data[6];
+  mavlink_rc_channels_override.chan8_raw=rc_data[7];
+  mavlink_msg_rc_channels_override_encode(sys_id,comp_id,&ret.m,&mavlink_rc_channels_override);
+  return ret;
+}
+
 #endif //XMAVLINKSERVICE_MAV_HELPER_H

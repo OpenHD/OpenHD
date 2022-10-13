@@ -9,6 +9,7 @@
 #include "mav_include.h"
 #include <cassert>
 #include <utility>
+#include <optional>
 
 // A component has a (parent) sys id and its own component id (unique per system).
 // It processes and/or creates mavlink messages.
