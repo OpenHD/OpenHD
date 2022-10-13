@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16.3)
 project(OpenHD)
 
 set(CMAKE_CXX_STANDARD 17)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 link_libraries(stdc++fs)
 

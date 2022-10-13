@@ -2,7 +2,7 @@ name: Build RPI
 
 on:
   push:
-    branches: [ master,"rapha-test", "2.0", "2.2.3-evo" ]
+    branches: [ master,"rapha-test", "2.0", "2.2.3-evo", "2.2.3-evo-rapha" ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -63,7 +63,7 @@ jobs:
         command: "push"
         format: "deb"
         owner: "openhd"
-        repo: "openhd-2-2-2-evo"
+        repo: "openhd-2-2-dev"
         distro: "raspbian"
         release: "bullseye"
         republish: "true" # needed ONLY if version is not changing

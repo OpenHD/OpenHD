@@ -72,20 +72,57 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     }
   }
   // Some "launch params" can also be set by creating dummy files.
-  if(OHDFilesystemUtil::exists("/boot/air.txt") || OHDFilesystemUtil::exists("/boot/Air.txt")){
+  if(OHDFilesystemUtil::exists("/boot/OpenHD/air.txt") || OHDFilesystemUtil::exists("/boot/OpenHD/Air.txt")){
     ret.force_air=true;
   }
-  if(OHDFilesystemUtil::exists("/boot/ground.txt") || OHDFilesystemUtil::exists("/boot/Ground.txt")){
+  if(OHDFilesystemUtil::exists("/boot/OpenHD/ground.txt") || OHDFilesystemUtil::exists("/boot/OpenHD/Ground.txt")){
     ret.force_ground=true;
   }
-  if(OHDFilesystemUtil::exists("/boot/ohd_clean.txt")){
+  if(OHDFilesystemUtil::exists("/boot/OpenHD/ohd_clean.txt")){
     ret.clean_start=true;
   }
   if(ret.force_air && ret.force_ground){
     std::cerr << "Cannot force air and ground at the same time\n";
     exit(1);
   }
-  return ret;
+  // Including some rpi-specific functions
+  if(OHDFilesystemUtil::exists("/boot/OpenHD/rpi.txt"))
+    {
+      if(OHDFilesystemUtil::exists("/boot/OpenHD/libcamera.txt"))
+      {
+      OHDUtil::run_command("sed -i '/camera_auto_detect=1/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/dtoverlay=vc4-kms-v3d/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/dtoverlay=vc4-fkms-v3d/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/start_x=1/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/enable_uart=1/d' /boot/config.txt",{});
+      // Add libcamera configs
+      OHDUtil::run_command("sed -i '$ a camera_auto_detect=1' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '$ a dtoverlay=vc4-kms-v3d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '$ a enable_uart=1' /boot/config.txt",{});
+      // Remove config File and reboot
+      OHDUtil::run_command("rm -Rf /boot/OpenHD/libcamera.txt",{});
+      OHDUtil::run_command("echo",{"This device will now reboot to enable configs"});
+      OHDUtil::run_command("reboot",{});
+      }
+      if(OHDFilesystemUtil::exists("/boot/OpenHD/raspicamsrc.txt"))
+      {
+      OHDUtil::run_command("sed -i '/camera_auto_detect=1/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/dtoverlay=vc4-kms-v3d/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/dtoverlay=vc4-fkms-v3d/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/start_x=1/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/enable_uart=1/d' /boot/config.txt",{});
+      // Add raspicamsrc configs
+      OHDUtil::run_command("sed -i '$ a start_x=1' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '$ a dtoverlay=vc4-fkms-v3d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '$ a enable_uart=1' /boot/config.txt",{});
+      // Remove config File and reboot
+      OHDUtil::run_command("rm -Rf /boot/OpenHD/raspicamsrc.txt",{});
+      OHDUtil::run_command("echo",{"This device will now reboot to enable configs"});
+      OHDUtil::run_command("shutdown -r now",{});
+      }
+
+    } 
+ return ret;
 }
 
 int main(int argc, char *argv[]) {
