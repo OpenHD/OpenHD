@@ -67,8 +67,8 @@ SET(sources
     "src/mavsdk_temporary/XMavlinkParamProvider.cpp"
     "src/mavsdk_temporary/XMavlinkParamProvider.h"
     
-    "src/rc/JoystickReader.cpp"
-    "src/rc/JoystickReader.h"
+    #"src/rc/JoystickReader.cpp"
+    #"src/rc/JoystickReader.h"
 
     "src/routing/MavlinkComponent.hpp"
     "src/routing/MavlinkSystem.hpp"
