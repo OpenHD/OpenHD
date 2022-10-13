@@ -10,6 +10,7 @@
 #include <thread>
 #include <array>
 #include <functional>
+#include <optional>
 
 /**
  * The Paradigma of this class is similar to how for example external devices are handled in general in OpenHD:
@@ -20,6 +21,8 @@ class JoystickReader {
  public:
   // Called every time there is new joystick data
   typedef std::function<void(std::array<uint16_t,16> data)> NEW_JOYSTICK_DATA_CB;
+  // thread-safe. Fetch new updated joystick values if there is any.
+  std::optional<std::array<uint16_t,16>> get_new_data_if_available();
  public:
   explicit JoystickReader(NEW_JOYSTICK_DATA_CB cb= nullptr);
   ~JoystickReader();

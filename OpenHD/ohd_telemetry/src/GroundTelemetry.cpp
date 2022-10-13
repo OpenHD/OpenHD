@@ -37,7 +37,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
   components.push_back(generic_mavlink_param_provider);
   // temporary
-  m_joystick_reader=std::make_unique<JoystickReader>();
+  //m_joystick_reader=std::make_unique<JoystickReader>();
   std::cout << "Created GroundTelemetry\n";
 }
 
