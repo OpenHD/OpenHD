@@ -140,7 +140,7 @@ void JoystickReader::connect_once_and_read_until_error() {
   // either joystick disconnected or somethings wrong.
 }
 
-std::optional<std::array<uint16_t, 16>>
+/*std::optional<std::array<uint16_t, 16>>
 JoystickReader::get_new_data_if_available() {
   return std::optional<std::array<uint16_t, 16>>();
-}
+}*/
