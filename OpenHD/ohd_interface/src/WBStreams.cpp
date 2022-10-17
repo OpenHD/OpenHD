@@ -161,6 +161,7 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   if(enableFec){
 	options.fec_k=static_cast<int>(_settings->get_settings().wb_video_fec_block_length);
 	options.fec_percentage=static_cast<int>(_settings->get_settings().wb_video_fec_percentage); // Default to 20% fec overhead
+        //options.fec_k="h264";
   }else{
 	options.fec_k=0;
 	options.fec_percentage=0;
@@ -179,6 +180,7 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
   assert(!cards.empty());
   options.rxInterfaces = cards;
   options.rx_queue_depth = 10;//_broadcast_cards.size() > 1 ? 10 : 2;
+  //options.rx_queue_depth = 1;
   return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port,[this](OpenHDStatisticsWriter::Data stats){
 	this->onNewStatisticsData(stats);
   });
