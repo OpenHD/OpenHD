@@ -149,7 +149,6 @@ void WBStreams::configure_video() {
 }
 
 std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec)const {
-  //const auto mcs_index=DEFAULT_MCS_INDEX;
   const auto mcs_index=static_cast<int>(_settings->get_settings().wb_mcs_index);
   const auto channel_width=static_cast<int>(_settings->get_settings().wb_channel_width);
   RadiotapHeader::UserSelectableParams wifiParams{channel_width, false, 0, false, mcs_index};
@@ -167,6 +166,9 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
 	options.fec_percentage=0;
   }
   options.wlan = _broadcast_cards.at(0)->_wifi_card.interface_name;
+  std::stringstream ss;
+  ss<<"Starting WFB_TX with MCS:"<<mcs_index<<"\n";
+  std::cout<<ss.str();
   return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port);
 }
 
