@@ -31,14 +31,6 @@ class OHDTelemetry {
 			   bool enableExtendedLogging=false);
   OHDTelemetry(const OHDTelemetry&)=delete;
   OHDTelemetry(const OHDTelemetry&&)=delete;
-  // only either one of them both is active at a time.
-  // active when air
-  std::unique_ptr<AirTelemetry> airTelemetry;
-  // active when ground
-  std::unique_ptr<GroundTelemetry> groundTelemetry;
-  // Main telemetry thread. Note that the endpoints also might have their own
-  // Receive threads
-  std::unique_ptr<std::thread> loopThread;
   [[nodiscard]] std::string createDebug()const;
   // Settings and statistics. Other modules (e.g. video, interface) use the mavlink settings
   // provided by OHD Telemetry. However, we do not have code dependencies directly between these modules,
@@ -63,6 +55,14 @@ class OHDTelemetry {
   void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const;
   void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const;
  private:
+  // only either one of them both is active at a time.
+  // active when air
+  std::unique_ptr<AirTelemetry> airTelemetry;
+  // active when ground
+  std::unique_ptr<GroundTelemetry> groundTelemetry;
+  // Main telemetry thread. Note that the endpoints also might have their own
+  // Receive threads
+  std::unique_ptr<std::thread> loopThread;
   const OHDPlatform platform;
   const OHDProfile profile;
   const bool m_enableExtendedLogging;
