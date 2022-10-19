@@ -175,6 +175,7 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
 std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int udp_port){
   ROptions options{};
   // We log them all manually together
+  // REMOVE ME
   options.enableLogAlive= true;
   options.radio_port = radio_port;
   options.keypair = std::nullopt;
