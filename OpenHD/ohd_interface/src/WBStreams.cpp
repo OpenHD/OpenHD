@@ -184,7 +184,8 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
   // use rx queue depth of 1 for now, this should at least reduce the problem of the burst /
   // high latency when blocks are lost.
   // Multiple rx wifi card's won't provide a benefit with this parameter set though.
-  options.rx_queue_depth = 1;//_broadcast_cards.size() > 1 ? 10 : 2;
+  // WTF why is a rx queue of 1 not working properly
+  options.rx_queue_depth = 10;//_broadcast_cards.size() > 1 ? 10 : 2;
   //options.rx_queue_depth = 1;
   return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port,[this](OpenHDStatisticsWriter::Data stats){
 	this->onNewStatisticsData(stats);
