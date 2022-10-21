@@ -29,7 +29,7 @@ static int16_t parsetoMultiWii(Sint16 value) {
 }
 
 static void readAxis(SDL_Event *event) {
-  SDL_Event myevent = (SDL_Event)*event;
+  auto myevent = (SDL_Event)*event;
   if ( myevent.jaxis.axis == ROLL_AXIS)
     rcData[0]=parsetoMultiWii(myevent.jaxis.value);
 
@@ -115,9 +115,6 @@ void JoystickReader::loop() {
     connect_once_and_read_until_error();
     // Error / no joystick found, try again later
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    if(m_cb){
-      m_cb(m_curr_joystick_data);
-    }
   }
 }
 
@@ -151,7 +148,6 @@ void JoystickReader::connect_once_and_read_until_error() {
   std::cerr<<ss.str();
   while (!terminate){
     //std::cout<<"Read joystick\n";
-    //eventloop_joystick_test();
     eventloop_joystick();
   }
   // either joystick disconnected or somethings wrong.
