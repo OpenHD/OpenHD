@@ -368,14 +368,17 @@ static std::string createIpCameraStream(const std::string &url) {
 static std::string createRtpForVideoCodec(const VideoCodec videoCodec) {
   std::stringstream ss;
   if (videoCodec == VideoCodec::H264) {
+    ss << "queue ! ";
     ss << "h264parse config-interval=-1 ! ";
     ss << "rtph264pay mtu=1024 ! ";
   } else if (videoCodec == VideoCodec::H265) {
+    ss << "queue ! ";
     ss << "h265parse config-interval=-1 ! ";
     ss << "rtph265pay mtu=1024 ! ";
   } else {
     assert(videoCodec == VideoCodec::MJPEG);
     // mjpeg has no config-interval
+    ss << "queue ! ";
     ss << "jpegparse ! ";
     ss << "rtpjpegpay mtu=1024 ! ";
   }

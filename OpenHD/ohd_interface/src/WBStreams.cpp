@@ -92,6 +92,10 @@ void WBStreams::configure_cards() {
 	// 2) Running openhd second time: works
 	// I cannot find what's causing the issue - a sleep here is the worst solution, but r.n the only one I can come up with
 	std::this_thread::sleep_for(std::chrono::seconds(1));
+        // for now limited to the pi, since it breaks other kinds of connectivity
+        if(_platform.platform_type==PlatformType::RaspberryPi){
+          OHDUtil::run_command("airmon-ng",{"check","kill"});
+        }
   }
   for(const auto& card: _broadcast_cards){
 	//TODO we might not need this one
@@ -132,9 +136,9 @@ void WBStreams::configure_video() {
   std::cout << "Streams::configure_video()" << std::endl;
   // Video is unidirectional, aka always goes from air pi to ground pi
   if (_profile.is_air) {
-	auto primary = createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP,true);
+	auto primary = createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP,true,1024*1024*25);
 	primary->runInBackground();
-	auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,true);
+	auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,1024*1024*25);
 	secondary->runInBackground();
 	udpVideoTxList.push_back(std::move(primary));
 	udpVideoTxList.push_back(std::move(secondary));
@@ -148,8 +152,8 @@ void WBStreams::configure_video() {
   }
 }
 
-std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec)const {
-  //const auto mcs_index=DEFAULT_MCS_INDEX;
+std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,
+                                                           std::optional<int> udp_recv_buff_size)const {
   const auto mcs_index=static_cast<int>(_settings->get_settings().wb_mcs_index);
   const auto channel_width=static_cast<int>(_settings->get_settings().wb_channel_width);
   RadiotapHeader::UserSelectableParams wifiParams{channel_width, false, 0, false, mcs_index};
@@ -161,24 +165,33 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   if(enableFec){
 	options.fec_k=static_cast<int>(_settings->get_settings().wb_video_fec_block_length);
 	options.fec_percentage=static_cast<int>(_settings->get_settings().wb_video_fec_percentage); // Default to 20% fec overhead
+        //options.fec_k="h264";
   }else{
 	options.fec_k=0;
 	options.fec_percentage=0;
   }
   options.wlan = _broadcast_cards.at(0)->_wifi_card.interface_name;
-  return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port);
+  std::stringstream ss;
+  ss<<"Starting WFB_TX with MCS:"<<mcs_index<<"\n";
+  std::cout<<ss.str();
+  return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port,udp_recv_buff_size);
 }
 
 std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int udp_port){
   ROptions options{};
   // We log them all manually together
   options.enableLogAlive= false;
+  // TODO REMOVE ME FOR TESTING
+  //options.enableLogAlive = udp_port==5600;
   options.radio_port = radio_port;
   options.keypair = std::nullopt;
   const auto cards = get_rx_card_names();
   assert(!cards.empty());
   options.rxInterfaces = cards;
-  options.rx_queue_depth = 10;//_broadcast_cards.size() > 1 ? 10 : 2;
+  // use rx queue depth of 1 for now, this should at least reduce the problem of the burst /
+  // high latency when blocks are lost.
+  // Multiple rx wifi card's won't provide a benefit with this parameter set though.
+  options.rx_queue_depth = 1;//_broadcast_cards.size() > 1 ? 10 : 2;
   return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port,[this](OpenHDStatisticsWriter::Data stats){
 	this->onNewStatisticsData(stats);
   });
@@ -513,7 +526,7 @@ bool WBStreams::set_fec_block_length(int block_length) {
 
 bool WBStreams::set_fec_percentage(int fec_percentage) {
   std::cout<<"WBStreams::set_fec_percentage"<<fec_percentage<<"\n";
-  if(!openhd::is_valid_fec_block_length(fec_percentage)){
+  if(!openhd::is_valid_fec_percentage(fec_percentage)){
 	std::cerr<<"Invalid fec percentage:"<<fec_percentage<<"\n";
 	return false;
   }

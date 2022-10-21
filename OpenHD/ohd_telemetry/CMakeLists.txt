@@ -105,6 +105,10 @@ add_library(mavlink INTERFACE)
 target_include_directories(mavlink INTERFACE ../lib/c_library_v2_openhd/)
 target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
 #target_include_directories(OHDTelemetryLib PUBLIC ../lib/c_library_v2_openhd)
+# for joystick
+#find_package(SDL2 REQUIRED)
+#target_include_directories(OHDTelemetryLib PRIVATE ${SDL2_INCLUDE_DIRS})
+#target_link_libraries(OHDTelemetryLib PRIVATE ${SDL2_LIBRARIES})
 
 # Note: We do not need wifibroadcast as a whole here, we can get the header-only files.
 target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)

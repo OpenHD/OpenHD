@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 #include <utility>
+#include <optional>
 
 #include "OHDWifiCard.hpp"
 #include "openhd-profile.hpp"
@@ -80,7 +81,7 @@ class WBStreams {
   std::vector<std::unique_ptr<UDPWBTransmitter>> udpVideoTxList;
   std::vector<std::unique_ptr<UDPWBReceiver>> udpVideoRxList;
   // TODO make more configurable
-  [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec)const;
+  [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,std::optional<int> udp_recv_buff_size=std::nullopt)const;
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port);
   [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
   // called from the wifibroadcast instance(s), which have their own threads.

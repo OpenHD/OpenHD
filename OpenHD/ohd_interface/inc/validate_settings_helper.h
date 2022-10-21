@@ -116,8 +116,9 @@ static bool is_valid_fec_block_length(int block_length){
   return block_length>=1 && block_length <100;
 }
 // max 100% fec (2x the amount of data), this is already too much
+// 21.10: Using more than 2x for FEC can be usefully for testing
 static bool is_valid_fec_percentage(int fec_perc){
-  return fec_perc>0 && fec_perc<100;
+  return fec_perc>0 && fec_perc<=400;
 }
 
 // https://www.rapidtables.com/convert/power/dBm_to_mW.html
