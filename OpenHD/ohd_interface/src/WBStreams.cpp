@@ -92,6 +92,10 @@ void WBStreams::configure_cards() {
 	// 2) Running openhd second time: works
 	// I cannot find what's causing the issue - a sleep here is the worst solution, but r.n the only one I can come up with
 	std::this_thread::sleep_for(std::chrono::seconds(1));
+        // for now limited to the pi, since it breaks other kinds of connectivity
+        if(_platform.platform_type==PlatformType::RaspberryPi){
+          OHDUtil::run_command("airmon-ng",{"check","kill"});
+        }
   }
   for(const auto& card: _broadcast_cards){
 	//TODO we might not need this one
