@@ -8,8 +8,8 @@
 #include <unistd.h>
 #include <sstream>
 
-#define JOYSTICK_N 0
-#define JOY_DEV "/sys/class/input/js0"
+static constexpr auto JOYSTICK_N=0;
+static constexpr auto JOY_DEV="/sys/class/input/js0";
 
 int ROLL_AXIS = 0;
 int PITCH_AXIS =  1;
@@ -55,7 +55,9 @@ static void readAxis(SDL_Event *event) {
     rcData[7]=parsetoMultiWii(myevent.jaxis.value);
 }
 
-static int eventloop_joystick () {
+// Reads all queued SDL events until there are none remaining
+// We are only interested in the Joystick events
+static int read_events_until_empty() {
   //std::cerr<<"eventloop_joystick\n";
   SDL_Event event;
   while (SDL_PollEvent (&event)) {
@@ -87,7 +89,6 @@ static int eventloop_joystick () {
         std::cout<<"X2\n";
         return 0;
     }
-    std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
   return 0;
 }
@@ -134,7 +135,7 @@ void JoystickReader::connect_once_and_read_until_error() {
     SDL_Quit();
     return;
   }
-  auto name=SDL_JoystickName(JOYSTICK_N);
+  auto name=SDL_JoystickName(js);
   std::stringstream ss;
   if(name!= nullptr){
     ss<<"Name:"<<name<<"\n";
@@ -148,8 +149,15 @@ void JoystickReader::connect_once_and_read_until_error() {
   std::cerr<<ss.str();
   while (!terminate){
     //std::cout<<"Read joystick\n";
-    eventloop_joystick();
+    read_events_until_empty();
+    std::this_thread::sleep_for(std::chrono::milliseconds (1));
+    /*if(!check_if_joystick_is_connected_via_fd()){
+      // When the joystick is re-connected, SDL won't resume working again.
+      std::cerr<<"Joystick not connected, restarting\n";
+      break;
+    }*/
   }
+  SDL_Quit();
   // either joystick disconnected or somethings wrong.
 }
 
