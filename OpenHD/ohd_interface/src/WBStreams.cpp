@@ -148,7 +148,8 @@ void WBStreams::configure_video() {
   }
 }
 
-std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec)const {
+std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,
+                                                           std::optional<int> udp_recv_buff_size)const {
   const auto mcs_index=static_cast<int>(_settings->get_settings().wb_mcs_index);
   const auto channel_width=static_cast<int>(_settings->get_settings().wb_channel_width);
   RadiotapHeader::UserSelectableParams wifiParams{channel_width, false, 0, false, mcs_index};
@@ -169,13 +170,15 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   std::stringstream ss;
   ss<<"Starting WFB_TX with MCS:"<<mcs_index<<"\n";
   std::cout<<ss.str();
-  return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port);
+  return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port,udp_recv_buff_size);
 }
 
 std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int udp_port){
   ROptions options{};
   // We log them all manually together
-  options.enableLogAlive= false;
+  //options.enableLogAlive= false;
+  // TODO REMOVE ME FOR TESTING
+  options.enableLogAlive = udp_port==5600;
   options.radio_port = radio_port;
   options.keypair = std::nullopt;
   const auto cards = get_rx_card_names();
