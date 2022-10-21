@@ -13,3 +13,5 @@ sudo apt -y install cmake build-essential autotools-dev automake libtool autocon
             libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
             libfmt-dev  || exit 1
 sudo apt -y install libgstreamer-plugins-base1.0-dev libunwind-14-dev-
+
+sudo apt -y install libsdl2-dev
