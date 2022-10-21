@@ -519,7 +519,7 @@ bool WBStreams::set_fec_block_length(int block_length) {
 
 bool WBStreams::set_fec_percentage(int fec_percentage) {
   std::cout<<"WBStreams::set_fec_percentage"<<fec_percentage<<"\n";
-  if(!openhd::is_valid_fec_block_length(fec_percentage)){
+  if(!openhd::is_valid_fec_percentage(fec_percentage)){
 	std::cerr<<"Invalid fec percentage:"<<fec_percentage<<"\n";
 	return false;
   }
