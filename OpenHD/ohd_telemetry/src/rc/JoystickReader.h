@@ -5,7 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_RC_JOYSTICKREADER_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_RC_JOYSTICKREADER_H_
 
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 
 #include <thread>
 #include <array>

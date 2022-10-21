@@ -192,4 +192,10 @@ std::optional<MavlinkMessage> OHDMainComponent::handleTimeSyncMessage(const Mavl
   return std::nullopt;
 }
 
-
+MavlinkMessage OHDMainComponent::generateRcControlMessage() const {
+  MavlinkMessage ret{};
+  mavlink_rc_channels_override_t mavlink_rc_channels_override{};
+  mavlink_rc_channels_override.chan1_raw=0;
+  mavlink_msg_rc_channels_override_encode(_sys_id,_comp_id,&ret.m,&mavlink_rc_channels_override);
+  return ret;
+}

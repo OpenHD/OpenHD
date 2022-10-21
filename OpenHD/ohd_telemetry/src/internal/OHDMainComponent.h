@@ -8,7 +8,6 @@
 #include "../mav_helper.h"
 #include "routing/MavlinkComponent.hpp"
 #include "routing/MavlinkSystem.hpp"
-// wifibroadcast header-only
 #include <map>
 #include <mutex>
 #include <optional>
@@ -56,6 +55,7 @@ class OHDMainComponent : public MavlinkComponent{
   [[nodiscard]] std::optional<MavlinkMessage> handleTimeSyncMessage(const MavlinkMessage &message);
   [[nodiscard]] std::vector<MavlinkMessage> generateWifibroadcastStatistics();
   [[nodiscard]] MavlinkMessage generateOpenHDVersion()const;
+  [[nodiscard]] MavlinkMessage generateRcControlMessage()const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
   // here all the log messages are sent to - not in their mavlink form yet.

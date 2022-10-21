@@ -84,7 +84,7 @@ void GroundTelemetry::sendMessageGroundStationClients(const MavlinkMessage &mess
 }
 
 void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
-  debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageAirPi");
+  //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageAirPi");
   // transmit via wifibroadcast
   if (udpWifibroadcastEndpoint) {
 	udpWifibroadcastEndpoint->sendMessage(message);
@@ -99,7 +99,7 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 	const auto loopBegin=std::chrono::steady_clock::now();
 	if(std::chrono::steady_clock::now()-last_log>=log_intervall) {
 	  last_log = std::chrono::steady_clock::now();
-	  std::cout << "GroundTelemetry::loopInfinite()\n";
+	  //std::cout << "GroundTelemetry::loopInfinite()\n";
 	  // for debugging, check if any of the endpoints is not alive
 	  if (enableExtendedLogging && udpWifibroadcastEndpoint) {
 		std::cout<<udpWifibroadcastEndpoint->createInfo();
