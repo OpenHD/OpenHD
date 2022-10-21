@@ -11,7 +11,7 @@
 #include "mavlink_settings/ISettingsComponent.hpp"
 #include "mavsdk_temporary//XMavlinkParamProvider.h"
 #include "openhd-action-handler.hpp"
-//#include "rc/JoystickReader.h"
+#include "rc/JoystickReader.h"
 
 /**
  * OpenHD Ground telemetry. Assumes a air instance running on the air pi.
@@ -59,7 +59,7 @@ class GroundTelemetry :public MavlinkSystem{
   std::mutex other_udp_ground_stations_lock;
   std::map<std::string,std::shared_ptr<UDPEndpoint2>> _other_udp_ground_stations{};
   //
-  //std::unique_ptr<JoystickReader> m_joystick_reader;
+  std::unique_ptr<JoystickReader> m_joystick_reader;
 };
 
 #endif //OPENHD_TELEMETRY_GROUNDTELEMETRY_H

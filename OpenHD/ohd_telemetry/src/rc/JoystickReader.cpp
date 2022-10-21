@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <sstream>
 
 #define JOYSTICK_N 0
 #define JOY_DEV "/sys/class/input/js0"
@@ -54,33 +55,41 @@ static void readAxis(SDL_Event *event) {
     rcData[7]=parsetoMultiWii(myevent.jaxis.value);
 }
 
-static int eventloop_joystick (void) {
+static int eventloop_joystick () {
+  //std::cerr<<"eventloop_joystick\n";
   SDL_Event event;
   while (SDL_PollEvent (&event)) {
+    //std::cerr<<"X:"<<(int)event.type<<"\n";
     switch (event.type) {
       case SDL_JOYAXISMOTION:
-        //printf ("Joystick %d, Axis %d moved to %d\n", event.jaxis.which, event.jaxis.axis, event.jaxis.value);
+        fprintf (stderr,"Joystick %d, Axis %d moved to %d\n", event.jaxis.which, event.jaxis.axis, event.jaxis.value);
         readAxis(&event);
         return 2;
         break;
       case SDL_JOYBUTTONDOWN:
+        std::cerr<<"Button down\n";
         if (event.jbutton.button < SWITCH_COUNT) { // newer Taranis software can send 24 buttons - we use 16
           rcData[8] |= 1 << event.jbutton.button;
         }
         return 5;
         break;
       case SDL_JOYBUTTONUP:
+        std::cerr<<"Button up\n";
         if (event.jbutton.button < SWITCH_COUNT) {
           rcData[8] &= ~(1 << event.jbutton.button);
         }
         return 4;
         break;
       case SDL_QUIT:
+        std::cout<<"X1\n";
+        return 0;
+      default:
+        std::cout<<"X2\n";
         return 0;
     }
     std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
-  return 1;
+  return 0;
 }
 
 static bool check_if_joystick_is_connected_via_fd(){
@@ -122,19 +131,27 @@ void JoystickReader::connect_once_and_read_until_error() {
     printf ("ERROR: %s\n", SDL_GetError ());
     return;
   }
-  js = SDL_JoystickOpen (JOYSTICK_N);
+  js = SDL_JoystickOpen(JOYSTICK_N);
   if (js == nullptr){
     printf("Couldn't open desired Joystick: %s\n",SDL_GetError());
     SDL_Quit();
     return;
   }
-  printf ("\tName:       %s\n", SDL_JoystickName(JOYSTICK_N));
-  printf ("\tAxis:       %i\n", SDL_JoystickNumAxes(js));
-  printf ("\tTrackballs: %i\n", SDL_JoystickNumBalls(js));
-  printf ("\tButtons:   %i\n",SDL_JoystickNumButtons(js));
-  printf ("\tHats: %i\n",SDL_JoystickNumHats(js));
+  auto name=SDL_JoystickName(JOYSTICK_N);
+  std::stringstream ss;
+  if(name!= nullptr){
+    ss<<"Name:"<<name<<"\n";
+  }else{
+    ss<<"Name: nullptr\n";
+  }
+  ss<<"Axis:"<<SDL_JoystickNumAxes(js)<<"\n";
+  ss<<"Trackballs::"<<SDL_JoystickNumBalls(js)<<"\n";
+  ss<<"Buttons:"<<SDL_JoystickNumButtons(js)<<"\n";
+  ss<<"Hats:"<<SDL_JoystickNumHats(js)<<"\n";
+  std::cerr<<ss.str();
   while (!terminate){
-    std::cout<<"Read joystick\n";
+    //std::cout<<"Read joystick\n";
+    //eventloop_joystick_test();
     eventloop_joystick();
   }
   // either joystick disconnected or somethings wrong.
