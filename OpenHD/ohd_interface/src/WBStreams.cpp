@@ -132,9 +132,9 @@ void WBStreams::configure_video() {
   std::cout << "Streams::configure_video()" << std::endl;
   // Video is unidirectional, aka always goes from air pi to ground pi
   if (_profile.is_air) {
-	auto primary = createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP,true);
+	auto primary = createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP,true,1024*1024*25);
 	primary->runInBackground();
-	auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,true);
+	auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,1024*1024*25);
 	secondary->runInBackground();
 	udpVideoTxList.push_back(std::move(primary));
 	udpVideoTxList.push_back(std::move(secondary));
