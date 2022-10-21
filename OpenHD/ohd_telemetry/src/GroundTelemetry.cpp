@@ -84,7 +84,7 @@ void GroundTelemetry::sendMessageGroundStationClients(const MavlinkMessage &mess
 }
 
 void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
-  debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageAirPi");
+  //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageAirPi");
   // transmit via wifibroadcast
   if (udpWifibroadcastEndpoint) {
 	udpWifibroadcastEndpoint->sendMessage(message);
