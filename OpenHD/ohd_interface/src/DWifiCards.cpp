@@ -41,6 +41,8 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
 //                ...
 // So while annoying, let's just use iw dev and parse the result
 // For now, no separation into which channel(s) are supported, just weather any 2.4G or 5G frequency is supported
+// NOTE: The ASUS CARD (for examle) reports being both 2.4 and 5G capable, but the wifibroadcast driver for sure
+// is only capable of 5G. so this output is not that meaningfully.
 struct SupportedFrequency{
   bool supports_2G=false;
   bool supports_5G=false;
