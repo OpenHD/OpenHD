@@ -19,8 +19,8 @@ static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412;
 
 static constexpr auto DEFAULT_MCS_INDEX=3;
 static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
-static constexpr auto DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH=8;
-static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE=20;
+static constexpr auto DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH=10;
+static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE=40;
 
 struct WBStreamsSettings{
   uint32_t wb_frequency; // writen once 2.4 or 5 is known
