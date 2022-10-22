@@ -60,6 +60,9 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
 
 void WBStreams::configure_streams() {
   std::cout << "Streams::configure() begin\n";
+  // Increase the OS max UDP buffer size (only works as root) such that the wb video UDP receiver
+  // doesn't fail when requesting a bigger UDP buffer size
+  OHDUtil::run_command("sysctl ",{"-w","net.core.rmem_max=26214400"});
   // Static for the moment
   configure_telemetry();
   configure_video();
