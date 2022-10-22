@@ -49,6 +49,8 @@ jobs:
             cd Arducam-Pivariety-V4L2-Driver
             cd Release
             ./install_driver.sh
+            cd /opt
+            cd Open.HD
             sudo ./package.sh armhf raspbian bullseye
             ls -a
 
