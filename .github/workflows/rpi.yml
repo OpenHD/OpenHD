@@ -44,6 +44,11 @@ jobs:
             touch /usr/local/share/openhd/joyconfig.txt
             sudo apt update
             sudo ./install_dep.sh
+            cd /opt
+            git clone https://github.com/OpenHD/Arducam-Pivariety-V4L2-Driver
+            cd Arducam-Pivariety-V4L2-Driver
+            cd Release
+            ./install_driver.sh
             sudo ./package.sh armhf raspbian bullseye
             ls -a
 
