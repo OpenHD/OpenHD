@@ -189,24 +189,24 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  }
 	  return false;
 	};
-	std::vector<openhd::Setting> ret={
-		openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
-		openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,c_width}},
-		openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{get_settings().userSelectedVideoFormat.height,c_height}},
-		openhd::Setting{"VIDEO_FPS",openhd::IntSetting{get_settings().userSelectedVideoFormat.framerate,c_fps}},
-		openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec), c_codec}},
-		openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}},
-		openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().keyframe_interval,c_keyframe_interval}},
-		openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
-		openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
-		// experimental
-		openhd::Setting{"V_FORMAT",openhd::StringSetting{
-		  openhd::video_format_from_int_values(get_settings().userSelectedVideoFormat.width,
-											   get_settings().userSelectedVideoFormat.height,
-											   get_settings().userSelectedVideoFormat.framerate),
-		  c_width_height_framerate
-		}},
-	};
+        std::vector<openhd::Setting> ret={
+            openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
+            // Width, height and FPS are done together now (V_FORMAT)
+            /*openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,c_width}},
+            openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{get_settings().userSelectedVideoFormat.height,c_height}},
+            openhd::Setting{"VIDEO_FPS",openhd::IntSetting{get_settings().userSelectedVideoFormat.framerate,c_fps}},*/
+            openhd::Setting{"V_FORMAT",openhd::StringSetting{
+                                            openhd::video_format_from_int_values(get_settings().userSelectedVideoFormat.width,
+                                                                                 get_settings().userSelectedVideoFormat.height,
+                                                                                 get_settings().userSelectedVideoFormat.framerate),
+                                            c_width_height_framerate
+                                        }},
+            openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec), c_codec}},
+            openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}},
+            openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().keyframe_interval,c_keyframe_interval}},
+            openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
+            openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}}
+        };
 	if(_camera.supports_rotation()){
 	  auto c_rotation=[this](std::string,int value) {
 		return set_camera_rotation(value);
@@ -327,6 +327,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	return true;
   }
   bool set_video_width_height_framerate(int width,int height,int framerate){
+        if(!openhd::validate_video_width_height_fps(width,height,framerate)){
+          return false;
+        }
 	unsafe_get_settings().userSelectedVideoFormat.width=width;
 	unsafe_get_settings().userSelectedVideoFormat.height=height;
 	unsafe_get_settings().userSelectedVideoFormat.framerate=framerate;
