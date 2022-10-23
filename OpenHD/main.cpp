@@ -199,6 +199,7 @@ int main(int argc, char *argv[]) {
   // Log what arguments the OHD main executable is started with.
   std::cout << "OpenHD START with " <<"\n"<<
       "air:"<<  OHDUtil::yes_or_no(options.run_as_air)<<"\n"<<
+      "force_dummy_camera:"<<  OHDUtil::yes_or_no(options.force_dummy_camera)<<"\n"<<
       "clean-start:" << OHDUtil::yes_or_no(options.clean_start) <<"\n"<<
       "debug-interface:"<<OHDUtil::yes_or_no(options.enable_interface_debugging) <<"\n"<<
       "debug-telemetry:"<<OHDUtil::yes_or_no(options.enable_telemetry_debugging) <<"\n"<<
