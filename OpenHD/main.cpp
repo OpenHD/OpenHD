@@ -106,7 +106,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
             "--debug-telemetry [enable telemetry debugging] \n"<<
             "--debug-video     [enable video debugging] \n"<<
             "--no-qt-autostart [disable auto start of QOpenHD on ground] \n"<<
-            "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found] \n";
+            "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n";
         exit(1);
     }
   }
