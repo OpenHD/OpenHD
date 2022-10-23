@@ -12,7 +12,7 @@
 
 /**
  * Special, for communicating with QGroundControl..
- * Quick: QGroundControl wants a TCP-like communication -
+ * Quick: QGroundControl wants a TCP-like communication - even in UDP
  * if it receives data from a UDP sender::port tuple, the responses are sent there,too.
  * This actually makes sense, it is just different to how EZ-WB / OpenHD used to do telemetry forwarding all the time.
  * But it means that we have to listen and send from the same UDP port.
