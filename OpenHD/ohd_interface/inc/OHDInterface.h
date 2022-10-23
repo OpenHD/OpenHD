@@ -41,15 +41,15 @@
   static void print_internal_fec_optimization_method();
   private:
    /**
-	* after calling this method with an external device's ip address
-	* (for example an externally connected tablet) data will be forwarded to the device's ip address.
-	* It is safe to call this method multiple times with the same IP address, since we internally keep track here.
-	*/
+    * after calling this method with an external device's ip address
+    * (for example an externally connected tablet) data will be forwarded to the device's ip address.
+    * It is safe to call this method multiple times with the same IP address, since we internally keep track here.
+    */
    void addExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device);
    /**
-	* stop forwarding data to the device's ip address.
-	* Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
-	*/
+    * stop forwarding data to the device's ip address.
+    * Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
+    */
    void removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device);
  private:
   const OHDProfile profile;
