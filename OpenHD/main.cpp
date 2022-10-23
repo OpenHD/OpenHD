@@ -182,6 +182,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     }else{
       ret.run_as_air= true;
     }
+    ret.force_dummy_camera=commandline_force_dummy_camera;
   }
   if(OHDFilesystemUtil::exists("/boot/OpenHD/ohd_clean.txt")){
     ret.clean_start=true;
