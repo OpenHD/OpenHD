@@ -189,6 +189,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  }
 	  return false;
 	};
+        auto c_read_only_param=[this](std::string,std::string value){
+          return false;
+        };
         std::vector<openhd::Setting> ret={
             openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
             // Width, height and FPS are done together now (V_FORMAT)
@@ -205,7 +208,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
             openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}},
             openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().keyframe_interval,c_keyframe_interval}},
             openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
-            openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}}
+            openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
+            // This is not a setting (cannot be changed) but rather a read-only param, but repurposing the settings here was the easiest
+            openhd::Setting{"V_CAM_TYPE",openhd::StringSetting { get_short_name(),c_read_only_param}},
         };
 	if(_camera.supports_rotation()){
 	  auto c_rotation=[this](std::string,int value) {
@@ -358,6 +363,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  ret.userSelectedVideoFormat.framerate=30;
 	}
 	return ret;
+  }
+  [[nodiscard]] std::string get_short_name()const{
+    return camera_type_to_string(_camera.type);
   }
 };
 
