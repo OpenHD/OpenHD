@@ -59,6 +59,44 @@ struct OHDRunOptions {
   bool no_qt_autostart=false;
 };
 
+void OHDRpiConfigClear()
+  {
+      OHDUtil::run_command("sed -i '/camera_auto_detect=1/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/dtoverlay=vc4-kms-v3d/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/dtoverlay=vc4-fkms-v3d/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/start_x=1/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/enable_uart=1/d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '/dtoverlay=arducam-pivariety/d' /boot/config.txt",{});
+  };
+
+void OHDRpiConfigExecute()
+  {
+      OHDUtil::run_command("rm -Rf /boot/OpenHD/libcamera.txt",{});
+      OHDUtil::run_command("rm -Rf /boot/OpenHD/raspicamsrc.txt",{});
+      OHDUtil::run_command("rm -Rf /boot/OpenHD/arducam.txt",{});
+      OHDUtil::run_command("echo",{"This device will now reboot to enable configs"});
+      OHDUtil::run_command("reboot",{});   
+  };
+
+void OHDRpiConfigLibcamera()
+  {
+      OHDUtil::run_command("sed -i '$ a camera_auto_detect=1' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '$ a dtoverlay=vc4-kms-v3d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '$ a enable_uart=1' /boot/config.txt",{});
+  };  
+
+void OHDRpiConfigRaspicam()
+  {
+      OHDUtil::run_command("sed -i '$ a start_x=1' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '$ a dtoverlay=vc4-fkms-v3d' /boot/config.txt",{});
+      OHDUtil::run_command("sed -i '$ a enable_uart=1' /boot/config.txt",{});
+  }; 
+  
+void OHDRpiConfigArducam()
+  {
+      OHDUtil::run_command("sed -i '$ a dtoverlay=arducam-pivariety' /boot/config.txt",{});
+  }; 
+
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   OHDRunOptions ret{};
   int c;
@@ -152,38 +190,24 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   if(OHDFilesystemUtil::exists("/boot/OpenHD/rpi.txt"))
   {
     if(OHDFilesystemUtil::exists("/boot/OpenHD/libcamera.txt"))
-    {
-      OHDUtil::run_command("sed -i '/camera_auto_detect=1/d' /boot/config.txt",{});
-      OHDUtil::run_command("sed -i '/dtoverlay=vc4-kms-v3d/d' /boot/config.txt",{});
-      OHDUtil::run_command("sed -i '/dtoverlay=vc4-fkms-v3d/d' /boot/config.txt",{});
-      OHDUtil::run_command("sed -i '/start_x=1/d' /boot/config.txt",{});
-      OHDUtil::run_command("sed -i '/enable_uart=1/d' /boot/config.txt",{});
-      // Add libcamera configs
-      OHDUtil::run_command("sed -i '$ a camera_auto_detect=1' /boot/config.txt",{});
-      OHDUtil::run_command("sed -i '$ a dtoverlay=vc4-kms-v3d' /boot/config.txt",{});
-      OHDUtil::run_command("sed -i '$ a enable_uart=1' /boot/config.txt",{});
-      // Remove config File and reboot
-      OHDUtil::run_command("rm -Rf /boot/OpenHD/libcamera.txt",{});
-      OHDUtil::run_command("echo",{"This device will now reboot to enable configs"});
-      OHDUtil::run_command("reboot",{});
-    }
-    if(OHDFilesystemUtil::exists("/boot/OpenHD/raspicamsrc.txt"))
-    {
-      OHDUtil::run_command("sed -i '/camera_auto_detect=1/d' /boot/config.txt",{});
-      OHDUtil::run_command("sed -i '/dtoverlay=vc4-kms-v3d/d' /boot/config.txt",{});
-      OHDUtil::run_command("sed -i '/dtoverlay=vc4-fkms-v3d/d' /boot/config.txt",{});
-      OHDUtil::run_command("sed -i '/start_x=1/d' /boot/config.txt",{});
-      OHDUtil::run_command("sed -i '/enable_uart=1/d' /boot/config.txt",{});
-      // Add raspicamsrc configs
-      OHDUtil::run_command("sed -i '$ a start_x=1' /boot/config.txt",{});
-      OHDUtil::run_command("sed -i '$ a dtoverlay=vc4-fkms-v3d' /boot/config.txt",{});
-      OHDUtil::run_command("sed -i '$ a enable_uart=1' /boot/config.txt",{});
-      // Remove config File and reboot
-      OHDUtil::run_command("rm -Rf /boot/OpenHD/raspicamsrc.txt",{});
-      OHDUtil::run_command("echo",{"This device will now reboot to enable configs"});
-      OHDUtil::run_command("shutdown -r now",{});
-    }
-
+      {
+      OHDRpiConfigClear();
+      OHDRpiConfigLibcamera();
+      OHDRpiConfigExecute();
+      }
+      if(OHDFilesystemUtil::exists("/boot/OpenHD/raspicamsrc.txt"))
+      {
+      OHDRpiConfigClear();
+      OHDRpiConfigRaspicam();
+      OHDRpiConfigExecute(); 
+      }
+      if(OHDFilesystemUtil::exists("/boot/OpenHD/arducam.txt"))
+      {
+      OHDRpiConfigClear();
+      OHDRpiConfigLibcamera();
+      OHDRpiConfigArducam();
+      OHDRpiConfigExecute(); 
+      }
   }
   return ret;
 }
