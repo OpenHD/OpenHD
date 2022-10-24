@@ -66,6 +66,18 @@ static void safe_delete_directory(const char* directory){
   }
 }
 
+static void write_file(const std::string& path,const std::string& content){
+  std::ofstream t(path);
+  t << content;
+  t.close();
+}
+static std::string read_file(const std::string& path){
+  std::ifstream f(path);
+  std::string ret;
+  f >> ret;
+  return ret;
+}
+
 }
 
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_UTIL_FILESYSTEM_H_

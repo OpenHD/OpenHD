@@ -44,6 +44,14 @@ static bool contains_after_uppercase(const std::string& s1,const std::string& s2
   return s1_upper.find(s2_upper)!= std::string::npos;
 }
 
+// Converts both strings to uppercase, then checks if
+// s1 has exactly the same content as s2
+static bool equal_after_uppercase(const std::string& s1,const std::string& s2){
+  const auto s1_upper=OHDUtil::to_uppercase(s1);
+  const auto s2_upper=OHDUtil::to_uppercase(s2);
+  return s1_upper==s2_upper;
+}
+
 /**
  * Utility to execute a command on the command line.
  * Blocks until the command has been executed, and returns its result.

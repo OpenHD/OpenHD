@@ -7,6 +7,7 @@
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include <chrono>
 #include "openhd-util-filesystem.hpp"
+#include "openhd-rpi-os-configure-vendor-cam.hpp"
 
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   _airTelemetrySettings=std::make_unique<openhd::AirTelemetrySettingsHolder>();
@@ -173,10 +174,30 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 	setup_uart();
 	return true;
   };
+  auto c_rpi_os_camera_configuration=[this](std::string,std::string value){
+    if(!openhd::rpi::os::validate_cam_config_settings_string(value)){
+      // reject, not a valid value
+      return false;
+    }
+    const auto curr_value=openhd::rpi::os::get_current_cam_config();
+    const auto new_value=openhd::rpi::os::cam_config_from_string(value);
+    if(curr_value!=new_value){
+      // TODO apply
+      std::cerr<<"TODO change cam config from "<<openhd::rpi::os::cam_config_to_string(curr_value)
+                <<" to "<<openhd::rpi::os::cam_config_to_string(new_value)<<"\n";
+    }
+    return true;
+  };
   ret.push_back(openhd::Setting{openhd::FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_connection_type),
 																		   c_fc_uart_connection_type}});
   ret.push_back(openhd::Setting{openhd::FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_baudrate),
 																	 c_fc_uart_baudrate}});
+  // This way one can switch between different OS configuration(s) that then provide access to different
+  // vendor-specific camera(s) - hacky/dirty I know ;/
+  if(_platform.platform_type==PlatformType::RaspberryPi){
+    ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::StringSetting {openhd::rpi::os::cam_config_to_string(penhd::rpi::os::get_current_cam_config()),
+                                                                        c_rpi_os_camera_configuration}});
+  }
   return ret;
 }
 

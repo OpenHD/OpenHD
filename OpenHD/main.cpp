@@ -11,12 +11,12 @@
 #include "ohd_common/openhd-platform-discover.hpp"
 #include "ohd_common/openhd-global-constants.hpp"
 // we might move this one around
-#include "ohd_common/openhd-rpi-os-configure-vendor-cam.h"
-
 #include <DCameras.h>
 #include <OHDInterface.h>
-#include <OHDVideo.h>
 #include <OHDTelemetry.h>
+#include <OHDVideo.h>
+
+#include "ohd_common/openhd-rpi-os-configure-vendor-cam.hpp"
 
 ///Regarding AIR / GROUND detection: Previous OpenHD releases would detect weather this system is an air pi
 // or ground pi by checking weather it has a connected camera. However, this pattern has 2 problems:
