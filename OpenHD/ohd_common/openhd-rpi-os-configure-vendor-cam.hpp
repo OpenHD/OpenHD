@@ -132,21 +132,24 @@ class ConfigChangeHandler{
       return false;
     }
     // this change requires a reboot, so only allow changing once at run time
-    if(changed_once)return false;
-    changed_once= true;
+    if(m_changed_once)return false;
+    m_changed_once= true;
     const auto new_value=openhd::rpi::os::cam_config_from_string(new_value_as_string);
+    // This will apply the changes asynchronous, even though we are "not done yet"
+    // We assume nothing will fail on this command and return true already,such that we can
+    // send the ack.
     apply_async(new_value);
     return true;
   }
  private:
   std::mutex m_mutex;
-  bool changed_once=false;
+  bool m_changed_once=false;
   std::unique_ptr<std::thread> m_handle_thread;
   void apply_async(CamConfig new_value){
     // This is okay, since we will restart anyways
     m_handle_thread=std::make_unique<std::thread>([new_value]{
       openhd::rpi::os::apply_new_cam_config_and_save_if_changed(new_value);
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+      std::this_thread::sleep_for(std::chrono::seconds(3));
       OHDUtil::run_command("systemctl",{"start", "reboot.target"});
     });
   }
