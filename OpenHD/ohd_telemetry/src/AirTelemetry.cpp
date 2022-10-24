@@ -20,6 +20,9 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   components.push_back(_ohd_main_component);
   //
   generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
+  if(_platform.platform_type==PlatformType::RaspberryPi){
+    m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>();
+  }
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their paramters.
   generic_mavlink_param_provider->add_params(get_all_settings());
@@ -173,10 +176,19 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 	setup_uart();
 	return true;
   };
+  auto c_rpi_os_camera_configuration=[this](std::string,int value){
+    return m_rpi_os_change_config_handler->change_rpi_os_camera_configuration(value);
+  };
   ret.push_back(openhd::Setting{openhd::FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_connection_type),
 																		   c_fc_uart_connection_type}});
   ret.push_back(openhd::Setting{openhd::FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_baudrate),
 																	 c_fc_uart_baudrate}});
+  // This way one can switch between different OS configuration(s) that then provide access to different
+  // vendor-specific camera(s) - hacky/dirty I know ;/
+  if(_platform.platform_type==PlatformType::RaspberryPi && m_rpi_os_change_config_handler!= nullptr){
+    ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::IntSetting {openhd::rpi::os::cam_config_to_int(openhd::rpi::os::get_current_cam_config_from_file()),
+                                                                        c_rpi_os_camera_configuration}});
+  }
   return ret;
 }
 
