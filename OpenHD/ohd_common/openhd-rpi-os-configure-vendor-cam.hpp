@@ -6,6 +6,7 @@
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_RPI_OS_CONFIGURE_VENDOR_CAM_HPP_
 
 #include "openhd-util.hpp"
+#include "openhd-util-filesystem.hpp"
 
 // Helper to reconfigure the rpi os for the different camera types
 namespace openhd::rpi::os{
