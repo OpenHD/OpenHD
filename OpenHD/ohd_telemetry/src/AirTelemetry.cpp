@@ -176,7 +176,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 	setup_uart();
 	return true;
   };
-  auto c_rpi_os_camera_configuration=[this](std::string,std::string value){
+  auto c_rpi_os_camera_configuration=[this](std::string,int value){
     return m_rpi_os_change_config_handler->change_rpi_os_camera_configuration(value);
   };
   ret.push_back(openhd::Setting{openhd::FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_connection_type),
@@ -186,7 +186,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   // This way one can switch between different OS configuration(s) that then provide access to different
   // vendor-specific camera(s) - hacky/dirty I know ;/
   if(_platform.platform_type==PlatformType::RaspberryPi && m_rpi_os_change_config_handler!= nullptr){
-    ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::StringSetting {openhd::rpi::os::cam_config_to_string(openhd::rpi::os::get_current_cam_config_from_file()),
+    ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::IntSetting {openhd::rpi::os::cam_config_to_int(openhd::rpi::os::get_current_cam_config_from_file()),
                                                                         c_rpi_os_camera_configuration}});
   }
   return ret;

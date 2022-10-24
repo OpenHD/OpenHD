@@ -68,9 +68,27 @@ static std::string cam_config_to_string(const CamConfig& cam_config){
   }
   return "libcamera_arducam";
 }
+static CamConfig cam_config_from_int(int val){
+  if(val==0)return CamConfig::MMAL;
+  if(val==1)return CamConfig::LIBCAMERA;
+  if(val==2)return CamConfig::LIBCAMERA_ARDUCAM;
+  std::cerr<<"cam_config_from_int\n";
+  return CamConfig::MMAL;
+}
+static int cam_config_to_int(CamConfig cam_config){
+  if(cam_config==CamConfig::MMAL){
+    return 0;
+  }else if(cam_config==CamConfig::LIBCAMERA){
+    return 1;
+  }
+  return 2;
+}
 
 static bool validate_cam_config_settings_string(const std::string s){
   return s=="mmal" || s=="libcamera" || s=="libcamera_arducam";
+}
+static bool validate_cam_config_settings_int(int val){
+  return val==0 || val==1 || val==2;
 }
 
 static constexpr auto CAM_CONFIG_FILENAME="/boot/OpenHD/rpi_cam_config.txt";
@@ -125,16 +143,16 @@ static void apply_new_cam_config_and_save_if_changed(CamConfig new_cam_config){
 class ConfigChangeHandler{
  public:
   // Returns true if checks passed, false otherise (param rejected)
-  bool change_rpi_os_camera_configuration(std::string new_value_as_string){
+  bool change_rpi_os_camera_configuration(int new_value_as_int){
     std::lock_guard<std::mutex> lock(m_mutex);
-    if(!validate_cam_config_settings_string(new_value_as_string)){
+    if(!validate_cam_config_settings_int(new_value_as_int)){
       // reject, not a valid value
       return false;
     }
     // this change requires a reboot, so only allow changing once at run time
     if(m_changed_once)return false;
     m_changed_once= true;
-    const auto new_value=openhd::rpi::os::cam_config_from_string(new_value_as_string);
+    const auto new_value=openhd::rpi::os::cam_config_from_int(new_value_as_int);
     // This will apply the changes asynchronous, even though we are "not done yet"
     // We assume nothing will fail on this command and return true already,such that we can
     // send the ack.
