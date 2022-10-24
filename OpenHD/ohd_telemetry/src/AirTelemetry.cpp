@@ -179,14 +179,8 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
       // reject, not a valid value
       return false;
     }
-    const auto curr_value=openhd::rpi::os::get_current_cam_config();
     const auto new_value=openhd::rpi::os::cam_config_from_string(value);
-    if(curr_value!=new_value){
-      // TODO apply
-      std::cerr<<"TODO change cam config from "<<openhd::rpi::os::cam_config_to_string(curr_value)
-                <<" to "<<openhd::rpi::os::cam_config_to_string(new_value)<<"\n";
-      openhd::rpi::os::update_current_cam_config(new_value);
-    }
+    openhd::rpi::os::apply_new_cam_config_and_save_if_changed(new_value);
     return true;
   };
   ret.push_back(openhd::Setting{openhd::FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_connection_type),

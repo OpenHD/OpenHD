@@ -75,7 +75,7 @@ static bool validate_cam_config_settings_string(const std::string s){
 
 static constexpr auto CAM_CONFIG_FILENAME="/boot/OpenHD/rpi_cam_config.txt";
 
-static CamConfig get_current_cam_config(){
+static CamConfig get_current_cam_config_from_file(){
   OHDFilesystemUtil::create_directories("/boot/OpenHD/");
   if(!OHDFilesystemUtil::exists(CAM_CONFIG_FILENAME)){
     // The OHD image builder defaults to mmal, NOTE this is in contrast to the default rpi os release.
@@ -86,9 +86,36 @@ static CamConfig get_current_cam_config(){
   return cam_config_from_string(content);
 }
 
-static void update_current_cam_config(CamConfig new_cam_config){
+static void save_cam_config_to_file(CamConfig new_cam_config){
   OHDFilesystemUtil::create_directories("/boot/OpenHD/");
   OHDFilesystemUtil::write_file(CAM_CONFIG_FILENAME, cam_config_to_string(new_cam_config));
+}
+
+// Applies the new cam config (rewrites the /boot/config.txt file)
+// Then writes the type corresponding to the current configuration into the settings file.
+static void apply_new_cam_config_and_save(CamConfig new_cam_config){
+  if(new_cam_config==CamConfig::MMAL){
+    openhd::rpi::os::OHDRpiConfigClear();
+    openhd::rpi::os::OHDRpiConfigRaspicam();
+  }else if(new_cam_config==CamConfig::LIBCAMERA){
+    openhd::rpi::os::OHDRpiConfigClear();
+    openhd::rpi::os::OHDRpiConfigLibcamera();
+  }else{
+    assert(new_cam_config==CamConfig::LIBCAMERA_ARDUCAM);
+    openhd::rpi::os::OHDRpiConfigClear();
+    openhd::rpi::os::OHDRpiConfigArducam();
+  }
+  save_cam_config_to_file(new_cam_config);
+}
+
+// only apply if it has actually changed
+static void apply_new_cam_config_and_save_if_changed(CamConfig new_cam_config){
+  const auto curr_value=openhd::rpi::os::get_current_cam_config_from_file();
+  if(curr_value!=new_cam_config){
+    std::cerr<<"Changing cam config from "<<openhd::rpi::os::cam_config_to_string(curr_value)
+              <<" to "<<openhd::rpi::os::cam_config_to_string(new_cam_config)<<"\n";
+    openhd::rpi::os::apply_new_cam_config_and_save(new_cam_config);
+  }
 }
 
 
