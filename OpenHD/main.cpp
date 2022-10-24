@@ -10,13 +10,10 @@
 #include "ohd_common/openhd-profile.hpp"
 #include "ohd_common/openhd-platform-discover.hpp"
 #include "ohd_common/openhd-global-constants.hpp"
-// we might move this one around
 #include <DCameras.h>
 #include <OHDInterface.h>
 #include <OHDTelemetry.h>
 #include <OHDVideo.h>
-
-#include "ohd_common/openhd-rpi-os-configure-vendor-cam.hpp"
 
 ///Regarding AIR / GROUND detection: Previous OpenHD releases would detect weather this system is an air pi
 // or ground pi by checking weather it has a connected camera. However, this pattern has 2 problems:
@@ -37,6 +34,7 @@
 // There is one more thing that is usefully during development: It is possible that a camera is detectable but the pipeline
 // is bugged - for this, you can use the --force-dummy-camera parameter, which also sets OpenHD into air mode and always
 // uses the dummy camera, no matter if a camera is detected or not.
+// NOTE: If you neither pass in the argument in the command line and no file exists, OpenHD will always boot as ground.
 
 static const char optstr[] = "?:agfc";
 static const struct option long_options[] = {
@@ -121,19 +119,25 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
                                         || OHDFilesystemUtil::exists("/boot/OpenHD/Ground.txt");
     const bool file_run_as_air_exists = OHDFilesystemUtil::exists("/boot/OpenHD/air.txt")
                                            || OHDFilesystemUtil::exists("/boot/OpenHD/Air.txt");
+    bool error=false;
     if(file_run_as_air_exists && file_run_as_ground_exists){ // both files exist
       std::cerr<<"Both air and ground files exist,unknown what you want - either use the command line param or delete one of them\n";
-      exit(1);
+      // Just run as ground
+      ret.run_as_air= false;
+      error= true;
     }
     if(!file_run_as_air_exists && !file_run_as_ground_exists){ // no file exists
       std::cerr<<"No file air or ground exists,unknown what you want - either use the command line param or create a file\n";
-      exit(1);
+      // Just run as ground
+      ret.run_as_air= false;
+      error= true;
     }
-    assert(file_run_as_air_exists || file_run_as_ground_exists);
-    if (!file_run_as_air_exists) {
-      ret.run_as_air = false;
-    } else {
-      ret.run_as_air = true;
+    if(!error){
+      if (!file_run_as_air_exists) {
+        ret.run_as_air = false;
+      } else {
+        ret.run_as_air = true;
+      }
     }
   }else{
     // command line parameters used, just validate they are not mis-configured
@@ -150,25 +154,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   }
   if(OHDFilesystemUtil::exists("/boot/OpenHD/ohd_clean.txt")){
     ret.clean_start=true;
-  }
-  // Including some rpi-specific functions
-  if(OHDFilesystemUtil::exists("/boot/OpenHD/rpi.txt")){
-    if(OHDFilesystemUtil::exists("/boot/OpenHD/libcamera.txt")){
-      openhd::rpi::os::OHDRpiConfigClear();
-      openhd::rpi::os::OHDRpiConfigLibcamera();
-      openhd::rpi::os::OHDRpiConfigExecute();
-    }
-    if(OHDFilesystemUtil::exists("/boot/OpenHD/raspicamsrc.txt")){
-      openhd::rpi::os::OHDRpiConfigClear();
-      openhd::rpi::os::OHDRpiConfigRaspicam();
-      openhd::rpi::os::OHDRpiConfigExecute();
-    }
-    if(OHDFilesystemUtil::exists("/boot/OpenHD/arducam.txt")){
-      openhd::rpi::os::OHDRpiConfigClear();
-      openhd::rpi::os::OHDRpiConfigLibcamera();
-      openhd::rpi::os::OHDRpiConfigArducam();
-      openhd::rpi::os::OHDRpiConfigExecute();
-    }
   }
   return ret;
 }
