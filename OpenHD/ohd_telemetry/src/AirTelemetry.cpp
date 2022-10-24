@@ -185,6 +185,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
       // TODO apply
       std::cerr<<"TODO change cam config from "<<openhd::rpi::os::cam_config_to_string(curr_value)
                 <<" to "<<openhd::rpi::os::cam_config_to_string(new_value)<<"\n";
+      openhd::rpi::os::update_current_cam_config(new_value);
     }
     return true;
   };
