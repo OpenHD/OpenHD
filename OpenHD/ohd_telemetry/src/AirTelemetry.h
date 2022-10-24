@@ -17,6 +17,8 @@
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "AirTelemetrySettings.h"
 #include "openhd-action-handler.hpp"
+// Dirty
+#include "openhd-rpi-os-configure-vendor-cam.hpp"
 
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
@@ -64,6 +66,7 @@ class AirTelemetry : public MavlinkSystem{
   // R.N only on air, and only FC uart settings
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
+  std::unique_ptr<openhd::rpi::os::ConfigChangeHandler> m_rpi_os_change_config_handler=nullptr;
 };
 
 #endif //OPENHD_TELEMETRY_AIRTELEMETRY_H

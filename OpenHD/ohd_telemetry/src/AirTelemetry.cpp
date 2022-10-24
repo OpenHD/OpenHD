@@ -7,7 +7,6 @@
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include <chrono>
 #include "openhd-util-filesystem.hpp"
-#include "openhd-rpi-os-configure-vendor-cam.hpp"
 
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   _airTelemetrySettings=std::make_unique<openhd::AirTelemetrySettingsHolder>();
@@ -25,6 +24,9 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   // all their paramters.
   generic_mavlink_param_provider->add_params(get_all_settings());
   components.push_back(generic_mavlink_param_provider);
+  if(_platform.platform_type==PlatformType::RaspberryPi){
+    m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>();
+  }
   std::cout << "Created AirTelemetry\n";
 }
 
@@ -175,13 +177,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 	return true;
   };
   auto c_rpi_os_camera_configuration=[this](std::string,std::string value){
-    if(!openhd::rpi::os::validate_cam_config_settings_string(value)){
-      // reject, not a valid value
-      return false;
-    }
-    const auto new_value=openhd::rpi::os::cam_config_from_string(value);
-    openhd::rpi::os::apply_new_cam_config_and_save_if_changed(new_value);
-    return true;
+    return m_rpi_os_change_config_handler->change_rpi_os_camera_configuration(value);
   };
   ret.push_back(openhd::Setting{openhd::FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_connection_type),
 																		   c_fc_uart_connection_type}});
@@ -189,7 +185,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 																	 c_fc_uart_baudrate}});
   // This way one can switch between different OS configuration(s) that then provide access to different
   // vendor-specific camera(s) - hacky/dirty I know ;/
-  if(_platform.platform_type==PlatformType::RaspberryPi){
+  if(_platform.platform_type==PlatformType::RaspberryPi && m_rpi_os_change_config_handler!= nullptr){
     ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::StringSetting {openhd::rpi::os::cam_config_to_string(openhd::rpi::os::get_current_cam_config_from_file()),
                                                                         c_rpi_os_camera_configuration}});
   }

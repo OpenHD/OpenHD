@@ -115,8 +115,34 @@ static void apply_new_cam_config_and_save_if_changed(CamConfig new_cam_config){
     std::cerr<<"Changing cam config from "<<openhd::rpi::os::cam_config_to_string(curr_value)
               <<" to "<<openhd::rpi::os::cam_config_to_string(new_cam_config)<<"\n";
     openhd::rpi::os::apply_new_cam_config_and_save(new_cam_config);
+    std::cerr<<"Done changing cam config\n";
   }
 }
+
+// Unfortunately complicated, since we need to perform the action asynchronously and then reboot
+// but also have to make sure a eager user doesn't change the config multiple times and then the pi
+// "reboots in between" a change
+class ConfigChangeHandler{
+ public:
+  // Returns true if checks passed, false otherise (param rejected)
+  bool change_rpi_os_camera_configuration(std::string new_value_as_string){
+    std::lock_guard<std::mutex> lock(m_mutex);
+    // this change requires a reboot, so only allow changing once at run time
+    if(changed_once)return false;
+    changed_once= true;
+    if(!validate_cam_config_settings_string(new_value_as_string)){
+      // reject, not a valid value
+      return false;
+    }
+    const auto new_value=openhd::rpi::os::cam_config_from_string(new_value_as_string);
+    openhd::rpi::os::apply_new_cam_config_and_save_if_changed(new_value);
+    return true;
+  }
+
+ private:
+  std::mutex m_mutex;
+  bool changed_once=false;
+};
 
 
 }
