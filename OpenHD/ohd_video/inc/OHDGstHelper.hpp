@@ -156,7 +156,7 @@ static std::string createRpicamsrcStream(const int camera_number,
 static std::string createLibcamerasrcStream(const std::string& camera_name,
                                          const int bitrateKBits,
                                          const VideoFormat videoFormat,
-										 int keyframe_interval,
+					 int keyframe_interval,
                                          int rotation, int awb_mode,
                                          int exp_mode) {
   assert(videoFormat.isValid());
@@ -171,10 +171,12 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   if (videoFormat.videoCodec == VideoCodec::H264) {
     // We want constant bitrate (e.g. what the user has set) as long as we don't dynamcially adjust anything
     // in this regard (video_bitrate_mode)
+    // 24.10.22: something seems t be buged on the rpi v4l2 encoder, setting constant bitrate doesn't work and
+    // somehow increases latency (,video_bitrate_mode=1)
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=NV12,framerate={}/1 ! "
         "v4l2convert ! "
-        "v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},video_bitrate_mode=1\" ! "
+        "v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={}\" ! "
         "video/x-h264,level=(string)4 ! ",
         videoFormat.width, videoFormat.height, videoFormat.framerate, bitrateBitsPerSecond);
   } else if (videoFormat.videoCodec == VideoCodec::MJPEG) {
