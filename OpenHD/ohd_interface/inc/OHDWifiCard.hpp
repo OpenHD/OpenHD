@@ -120,6 +120,14 @@ struct WiFiCard {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,driver_name,type,interface_name,mac,supports_5ghz,supports_2ghz,
                                    supports_injection,supports_hotspot,supports_rts)
 
+// Only Atheros AR9271 doesn't support setting the mcs index
+static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
+  if(wifi_card.type==WiFiCardType::Atheros9k){
+    return false;
+  }
+  return true;
+}
+
 static WifiCardSettings create_default_settings(const WiFiCard& wifi_card){
   WifiCardSettings settings;
   if(wifi_card.supports_injection){

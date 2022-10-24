@@ -483,6 +483,10 @@ bool WBStreams::set_mcs_index(int mcs_index) {
 	std::cerr<<"Invalid mcs index"<<mcs_index<<"\n";
 	return false;
   }
+  if(!validate_cards_support_setting_mcs_index()){
+    std::cerr<<"Cannot change mcs index, it is fixed for at least one of the used cards\n";
+    return false;
+  }
   _settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   _settings->persist();
   // Only save, need restart to apply
@@ -592,3 +596,11 @@ std::vector<openhd::Setting> WBStreams::get_all_settings(){
   return ret;
 }
 
+bool WBStreams::validate_cards_support_setting_mcs_index() {
+  for(const auto& card_handle:_broadcast_cards){
+    if(!wifi_card_supports_variable_mcs(card_handle->_wifi_card)){
+      return false;
+    }
+  }
+  return true;
+}
