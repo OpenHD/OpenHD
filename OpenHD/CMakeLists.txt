@@ -6,10 +6,15 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 link_libraries(stdc++fs)
 
+# https://stackoverflow.com/questions/58903269/cmake-prevent-building-test-executable-target-in-subdirectory-library-project
+# Some of these subdirectories have a couple of test executables. They can be usefully for development,
+# But if you only want to build OpenHD compiling them all is a huge hit on compile time.
+# By using "EXCLUDE_FROM_ALL", if you invoke this CMakeLists.txt only the OpenHD main executable is built,
+# and the test executables are skipped.
 add_subdirectory(ohd_common)
-add_subdirectory(ohd_interface)
-add_subdirectory(ohd_telemetry)
-add_subdirectory(ohd_video)
+add_subdirectory(ohd_interface EXCLUDE_FROM_ALL)
+add_subdirectory(ohd_telemetry EXCLUDE_FROM_ALL)
+add_subdirectory(ohd_video EXCLUDE_FROM_ALL)
 
 # from https://mavlink.io/en/mavgen_c/
 #You can supress the warnings in CMake using
