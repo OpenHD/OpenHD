@@ -63,7 +63,6 @@ class WBStreams {
  private:
   const OHDProfile _profile;
   const OHDPlatform _platform;
-  const int DEFAULT_MCS_INDEX = 3;
   std::vector<std::shared_ptr<WifiCardHolder>> _broadcast_cards;
  private:
   // set cards to monitor mode and set the right frequency, tx power
