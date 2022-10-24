@@ -122,7 +122,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,driver_name,type,interface_name,mac,
 
 // Only Atheros AR9271 doesn't support setting the mcs index
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
-  if(wifi_card.type==WiFiCardType::Atheros9k){
+  if(wifi_card.type==WiFiCardType::Atheros9khtc){
     return false;
   }
   return true;
