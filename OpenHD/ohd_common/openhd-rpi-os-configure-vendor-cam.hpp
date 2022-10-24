@@ -127,21 +127,29 @@ class ConfigChangeHandler{
   // Returns true if checks passed, false otherise (param rejected)
   bool change_rpi_os_camera_configuration(std::string new_value_as_string){
     std::lock_guard<std::mutex> lock(m_mutex);
-    // this change requires a reboot, so only allow changing once at run time
-    if(changed_once)return false;
-    changed_once= true;
     if(!validate_cam_config_settings_string(new_value_as_string)){
       // reject, not a valid value
       return false;
     }
+    // this change requires a reboot, so only allow changing once at run time
+    if(changed_once)return false;
+    changed_once= true;
     const auto new_value=openhd::rpi::os::cam_config_from_string(new_value_as_string);
-    openhd::rpi::os::apply_new_cam_config_and_save_if_changed(new_value);
+    apply_async(new_value);
     return true;
   }
-
  private:
   std::mutex m_mutex;
   bool changed_once=false;
+  std::unique_ptr<std::thread> m_handle_thread;
+  void apply_async(CamConfig new_value){
+    // This is okay, since we will restart anyways
+    m_handle_thread=std::make_unique<std::thread>([new_value]{
+      openhd::rpi::os::apply_new_cam_config_and_save_if_changed(new_value);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      OHDUtil::run_command("systemctl",{"start", "reboot.target"});
+    });
+  }
 };
 
 
