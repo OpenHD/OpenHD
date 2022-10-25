@@ -169,6 +169,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	auto c_codec=[this](std::string, int value) {
 	  return set_video_codec(value);
 	};
+    // NOTE: OpenHD stores the bitrate in kbit/s, but for now we use MBit/s for the setting
+    // (Since that is something a normal user can make more sense of)
+    // and just multiply the value by 1024 in the callback
 	auto c_bitrate=[this](std::string,int value) {
 	  return set_video_bitrate(value);
 	};
@@ -276,7 +279,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	if(!openhd::validate_bitrate_mbits(bitrate_mbits)){
 	  return false;
 	}
-	unsafe_get_settings().bitrateKBits=bitrate_mbits*1000;
+	unsafe_get_settings().bitrateKBits=bitrate_mbits*1024;
 	persist();
 	return true;
   }
