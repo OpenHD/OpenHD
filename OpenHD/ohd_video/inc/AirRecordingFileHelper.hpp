@@ -12,24 +12,29 @@
 
 namespace openhd::video{
 
+static constexpr auto RECORDINGS_PATH="/home/openhd/videos/";
+
 /**
  * Creates a new not yet used filename (aka the file does not yet exists) to be used for air recording.
  * @param suffix the suffix of the filename,e.g. ".avi" or ".mp4"
  */
 static std::string create_unused_recording_filename(const std::string& suffix){
-  if(!OHDFilesystemUtil::exists("/home/openhd/videos")){
-    OHDFilesystemUtil::create_directories("/home/openhd/videos");
+  if(!OHDFilesystemUtil::exists(RECORDINGS_PATH)){
+    OHDFilesystemUtil::create_directories(RECORDINGS_PATH);
   }
   for(int i=0;i<10000;i++){
     std::stringstream filename;
-    filename<<"/home/openhd/videos/recording";
-    filename<<i<<suffix;
+    filename<<RECORDINGS_PATH;
+    filename<<"recording"<<i<<suffix;
     if(!OHDFilesystemUtil::exists(filename.str().c_str())){
       return filename.str();
     }
   }
   std::cerr<<"Cannot create new filename, overwriting already existing\n";
-  return "/home/openhd/videos/recording0"+suffix;
+  std::stringstream filename;
+  filename<<RECORDINGS_PATH;
+  filename<<"recording"<<0<<suffix;
+  return filename.str();
 }
 
 }
