@@ -22,9 +22,21 @@ static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
 static constexpr auto DEFAULT_KEYFRAME_INTERVAL=30;
 static constexpr auto DEFAULT_MJPEG_QUALITY_PERCENT=50;
 
+// NOTE: I am not completely sure, but the more common approach seems to multiply / divide by 1000
+// When converting mBit/s to kBit/s or the other way arund
+// some encoders take bits per second instead of kbits per second
+static int kbits_to_bits_per_second(int kbit_per_second){
+  return kbit_per_second*1000;
+}
+static int kbits_to_mbits_per_second(int kbits_per_second){
+  return kbits_per_second/1000;
+}
+static int mbits_to_kbits_per_second(int mbits_per_second){
+  return mbits_per_second*1000;
+}
 // Return true if the bitrate is considered sane, false otherwise
 static bool check_bitrate_sane(const int bitrateKBits) {
-  if (bitrateKBits <= 100 || bitrateKBits > (1024 * 1024 * 50)) {
+  if (bitrateKBits <= 100 || bitrateKBits > (1000 * 1000 * 50)) {
     return false;
   }
   return true;
@@ -171,7 +183,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	};
     // NOTE: OpenHD stores the bitrate in kbit/s, but for now we use MBit/s for the setting
     // (Since that is something a normal user can make more sense of)
-    // and just multiply the value by 1024 in the callback
+    // and just multiply the value in the callback
 	auto c_bitrate=[this](std::string,int value) {
 	  return set_video_bitrate(value);
 	};
@@ -279,7 +291,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	if(!openhd::validate_bitrate_mbits(bitrate_mbits)){
 	  return false;
 	}
-	unsafe_get_settings().bitrateKBits=bitrate_mbits*1024;
+	unsafe_get_settings().bitrateKBits= mbits_to_kbits_per_second(bitrate_mbits);
 	persist();
 	return true;
   }

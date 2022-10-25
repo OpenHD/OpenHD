@@ -31,11 +31,6 @@ struct CommonEncoderParams{
   int mjpeg_quality_percent;
 };
 
-// some encoders take bits per second instead of kbits per second
-static int kbits_to_bits_per_second(int kbit_per_second){
-  return kbit_per_second*1024;
-}
-
 /**
  * Check if we can find gstreamer at run time, throw a runtime error if not.
  */
