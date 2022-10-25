@@ -114,7 +114,8 @@ void GStreamerStream::setup() {
   // add udp out part
   m_pipeline << OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
   if(setting.air_recording==Recording::ENABLED){
-        const auto recording_filename=openhd::video::create_unused_recording_filename(".avi");
+        const auto recording_filename=openhd::video::create_unused_recording_filename(
+        OHDGstHelper::file_suffix_for_video_codec(setting.userSelectedVideoFormat.videoCodec));
         {
           std::stringstream ss;
           ss<<"Using ["<<recording_filename<<"] for recording\n";

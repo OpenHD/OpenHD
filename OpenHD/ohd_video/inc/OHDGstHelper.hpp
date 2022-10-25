@@ -394,8 +394,19 @@ static std::string createOutputUdpLocalhost(const int udpOutPort) {
   return fmt::format(" udpsink host=127.0.0.1 port={} ", udpOutPort);
 }
 
+// Needs to match below
+static std::string file_suffix_for_video_codec(const VideoCodec videoCodec){
+  if(videoCodec==VideoCodec::H264 || videoCodec==VideoCodec::MJPEG){
+    return ".avi";
+  }else{
+    return ".mp4";
+  }
+}
 // Assumes there is a tee command named "t" somewhere in the pipeline right
 // after the encoding step, so we can get the raw encoded data out.
+// .avi supports h264 and mjpeg, and works even in case the stream would crash
+// doesn't support h265 though, so for h265 we default to .mp4 (which is worse, since it creates a corrupt file
+// in case the gst pipeline is not stopped properly
 static std::string createRecordingForVideoCodec(const VideoCodec videoCodec,const std::string& out_filename) {
   std::stringstream ss;
   ss << "t. ! queue ! ";
@@ -407,12 +418,11 @@ static std::string createRecordingForVideoCodec(const VideoCodec videoCodec,cons
     assert(videoCodec == VideoCodec::MJPEG);
     ss << "jpegparse ! ";
   }
-  ss <<"avimux ! filesink location="<<out_filename;
-  /*if(videoCodec==VideoCodec::MJPEG){
-    ss <<"avimux ! filesink location=/tmp/file.avi";
+  if(videoCodec==VideoCodec::H264 || videoCodec==VideoCodec::MJPEG){
+    ss <<"avimux ! filesink location="<<out_filename;
   }else{
-    ss << "mp4mux ! filesink location=/tmp/file.mp4";
-  }*/
+    ss <<"mp4mux ! filesink location="<<out_filename;
+  }
   return ss.str();
 }
 }  // namespace OHDGstHelper
