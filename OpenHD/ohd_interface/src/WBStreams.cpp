@@ -54,19 +54,35 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
 	  _settings->persist();
 	}
   }
+  unblock_cards();
   configure_cards();
   configure_streams();
 }
 
-void WBStreams::configure_streams() {
-  std::cout << "Streams::configure() begin\n";
-  // Increase the OS max UDP buffer size (only works as root) such that the wb video UDP receiver
-  // doesn't fail when requesting a bigger UDP buffer size
-  OHDUtil::run_command("sysctl ",{"-w","net.core.rmem_max=26214400"});
-  // Static for the moment
-  configure_telemetry();
-  configure_video();
-  std::cout << "Streams::configure() end\n";
+void WBStreams::unblock_cards() {
+  std::cout << "WBStreams::unblock_cards() begin\n";
+  // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
+  // However, with the image set up by raphael they should be free from any (OS) prcoesses already
+  // R.N we also try and blacklist the cards from NetworkManager - it is needed for RPI and Ubuntu
+  // (as of 6.8.2022, since we re-added NetworkManager on pi) but it won't hurt on systems that don't
+  // have network manager - there it just won't have any effect.
+  // --
+  // This is only needed if NetworkManager was not disabled (we might move onto leaving it enabled on all platforms, though)
+  // TODO: does this return immediately or only after the change has been applied ?
+  for(const auto& card: _broadcast_cards){
+    WifiCardCommandHelper::network_manager_set_card_unmanaged(card->_wifi_card);
+  }
+  OHDUtil::run_command("rfkill",{"unblock","all"});
+  // TODO: sometimes this happens:
+  // 1) Running openhd fist time: pcap_compile doesn't work (fatal error)
+  // 2) Running openhd second time: works
+  // I cannot find what's causing the issue - a sleep here is the worst solution, but r.n the only one I can come up with
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  // for now limited to the pi, since it breaks other kinds of connectivity
+  if(_platform.platform_type==PlatformType::RaspberryPi){
+    OHDUtil::run_command("airmon-ng",{"check","kill"});
+  }
+  std::cout << "WBStreams::unblock_cards() end\n";
 }
 
 void WBStreams::configure_cards() {
@@ -77,28 +93,6 @@ void WBStreams::configure_cards() {
 	// needs knowledge of wifibroadcast and its quirks.
 	std::cout << "WBStreams::configure_cards() skipping\n";
 	return;
-  }
-  // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
-  // However, with the image set up by raphael they should be free from any (OS) prcoesses already
-  // R.N we also try and blacklist the cards from NetworkManager - it is needed for RPI and Ubuntu
-  // (as of 6.8.2022, since we re-added NetworkManager on pi) but it won't hurt on systems that don't
-  // have network manager - there it just won't have any effect.
-  {
-	// This is only needed if NetworkManager was not disabled (we might move onto leaving it enabled on all platforms, though)
-	// TODO: does this return immediately or only after the change has been applied ?
-	for(const auto& card: _broadcast_cards){
-	  WifiCardCommandHelper::network_manager_set_card_unmanaged(card->_wifi_card);
-	}
-	OHDUtil::run_command("rfkill",{"unblock","all"});
-	// TODO: sometimes this happens:
-	// 1) Running openhd fist time: pcap_compile doesn't work (fatal error)
-	// 2) Running openhd second time: works
-	// I cannot find what's causing the issue - a sleep here is the worst solution, but r.n the only one I can come up with
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-        // for now limited to the pi, since it breaks other kinds of connectivity
-        if(_platform.platform_type==PlatformType::RaspberryPi){
-          OHDUtil::run_command("airmon-ng",{"check","kill"});
-        }
   }
   for(const auto& card: _broadcast_cards){
 	//TODO we might not need this one
@@ -115,6 +109,17 @@ void WBStreams::configure_cards() {
 	//WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
   }
   std::cout << "WBStreams::configure_cards() end\n";
+}
+
+void WBStreams::configure_streams() {
+  std::cout << "Streams::configure() begin\n";
+  // Increase the OS max UDP buffer size (only works as root) such that the wb video UDP receiver
+  // doesn't fail when requesting a bigger UDP buffer size
+  OHDUtil::run_command("sysctl ",{"-w","net.core.rmem_max=26214400"});
+  // Static for the moment
+  configure_telemetry();
+  configure_video();
+  std::cout << "Streams::configure() end\n";
 }
 
 void WBStreams::configure_telemetry() {
@@ -483,6 +488,10 @@ bool WBStreams::set_mcs_index(int mcs_index) {
 	std::cerr<<"Invalid mcs index"<<mcs_index<<"\n";
 	return false;
   }
+  if(!validate_cards_support_setting_mcs_index()){
+    std::cerr<<"Cannot change mcs index, it is fixed for at least one of the used cards\n";
+    return false;
+  }
   _settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   _settings->persist();
   // Only save, need restart to apply
@@ -501,6 +510,10 @@ bool WBStreams::set_channel_width(int channel_width) {
   if(!openhd::is_valid_channel_width(channel_width)){
 	std::cerr<<"Invalid channel width"<<channel_width<<"\n";
 	return false;
+  }
+  if(!validate_cards_support_setting_channel_width()){
+    std::cerr<<"Cannot change channel width, at least one card doesn't support it\n";
+    return false;
   }
   _settings->unsafe_get_settings().wb_channel_width=channel_width;
   _settings->persist();
@@ -592,3 +605,20 @@ std::vector<openhd::Setting> WBStreams::get_all_settings(){
   return ret;
 }
 
+bool WBStreams::validate_cards_support_setting_mcs_index() {
+  for(const auto& card_handle:_broadcast_cards){
+    if(!wifi_card_supports_variable_mcs(card_handle->_wifi_card)){
+      return false;
+    }
+  }
+  return true;
+}
+
+bool WBStreams::validate_cards_support_setting_channel_width() {
+  for(const auto& card_handle:_broadcast_cards){
+    if(!wifi_card_supports_40Mhz_channel_width(card_handle->_wifi_card)){
+      return false;
+    }
+  }
+  return true;
+}

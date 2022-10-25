@@ -31,11 +31,6 @@ struct CommonEncoderParams{
   int mjpeg_quality_percent;
 };
 
-// some encoders take bits per second instead of kbits per second
-static int kbits_to_bits_per_second(int kbit_per_second){
-  return kbit_per_second*1024;
-}
-
 /**
  * Check if we can find gstreamer at run time, throw a runtime error if not.
  */
@@ -399,9 +394,23 @@ static std::string createOutputUdpLocalhost(const int udpOutPort) {
   return fmt::format(" udpsink host=127.0.0.1 port={} ", udpOutPort);
 }
 
+// Needs to match below
+static std::string file_suffix_for_video_codec(const VideoCodec videoCodec){
+  if(videoCodec==VideoCodec::H264 || videoCodec==VideoCodec::H265){
+    return ".mkv";
+  }else{
+    return ".avi";
+  }
+}
 // Assumes there is a tee command named "t" somewhere in the pipeline right
 // after the encoding step, so we can get the raw encoded data out.
-static std::string createRecordingForVideoCodec(const VideoCodec videoCodec) {
+// .avi supports h264 and mjpeg, and works even in case the stream would crash
+// doesn't support h265 though
+// .mp4 is always corrupted on crash
+// .mkv supports h264 and h265, but no mjpeg. It is the default in OBS though, so we decided to use .mkv
+// for h264 and h265 and .avi for mjpeg
+// in case the gst pipeline is not stopped properly
+static std::string createRecordingForVideoCodec(const VideoCodec videoCodec,const std::string& out_filename) {
   std::stringstream ss;
   ss << "t. ! queue ! ";
   if (videoCodec == VideoCodec::H264) {
@@ -412,7 +421,12 @@ static std::string createRecordingForVideoCodec(const VideoCodec videoCodec) {
     assert(videoCodec == VideoCodec::MJPEG);
     ss << "jpegparse ! ";
   }
-  ss << "mp4mux ! filesink location=/tmp/file.mp4";
+  //ss <<"mp4mux ! filesink location="<<out_filename;
+  if(videoCodec==VideoCodec::H264 || videoCodec==VideoCodec::H265){
+    ss <<"matroskamux ! filesink location="<<out_filename;
+  }else{
+    ss <<"avimux ! filesink location="<<out_filename;
+  }
   return ss.str();
 }
 }  // namespace OHDGstHelper
