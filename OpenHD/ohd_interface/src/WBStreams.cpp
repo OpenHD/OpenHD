@@ -511,6 +511,10 @@ bool WBStreams::set_channel_width(int channel_width) {
 	std::cerr<<"Invalid channel width"<<channel_width<<"\n";
 	return false;
   }
+  if(!validate_cards_support_setting_channel_width()){
+    std::cerr<<"Cannot change channel width, at least one card doesn't support it\n";
+    return false;
+  }
   _settings->unsafe_get_settings().wb_channel_width=channel_width;
   _settings->persist();
   // Only save, need restart to apply
@@ -604,6 +608,15 @@ std::vector<openhd::Setting> WBStreams::get_all_settings(){
 bool WBStreams::validate_cards_support_setting_mcs_index() {
   for(const auto& card_handle:_broadcast_cards){
     if(!wifi_card_supports_variable_mcs(card_handle->_wifi_card)){
+      return false;
+    }
+  }
+  return true;
+}
+
+bool WBStreams::validate_cards_support_setting_channel_width() {
+  for(const auto& card_handle:_broadcast_cards){
+    if(!wifi_card_supports_40Mhz_channel_width(card_handle->_wifi_card)){
       return false;
     }
   }

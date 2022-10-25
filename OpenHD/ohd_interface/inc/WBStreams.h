@@ -58,8 +58,10 @@ class WBStreams {
   std::vector<openhd::Setting> get_all_settings();
   //void process_new_setting(openhd::Setting changed_setting);
   // settings hacky end
-  // Not all wifi card(s) support setting the MCS index
+  // Check if all cards support changing the mcs index
   bool validate_cards_support_setting_mcs_index();
+  // Check if all cards support changing the channel width
+  bool validate_cards_support_setting_channel_width();
  private:
   const OHDProfile _profile;
   const OHDPlatform _platform;
