@@ -59,17 +59,6 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
   configure_streams();
 }
 
-void WBStreams::configure_streams() {
-  std::cout << "Streams::configure() begin\n";
-  // Increase the OS max UDP buffer size (only works as root) such that the wb video UDP receiver
-  // doesn't fail when requesting a bigger UDP buffer size
-  OHDUtil::run_command("sysctl ",{"-w","net.core.rmem_max=26214400"});
-  // Static for the moment
-  configure_telemetry();
-  configure_video();
-  std::cout << "Streams::configure() end\n";
-}
-
 void WBStreams::unblock_cards() {
   std::cout << "WBStreams::unblock_cards() begin\n";
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
@@ -120,6 +109,17 @@ void WBStreams::configure_cards() {
 	//WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
   }
   std::cout << "WBStreams::configure_cards() end\n";
+}
+
+void WBStreams::configure_streams() {
+  std::cout << "Streams::configure() begin\n";
+  // Increase the OS max UDP buffer size (only works as root) such that the wb video UDP receiver
+  // doesn't fail when requesting a bigger UDP buffer size
+  OHDUtil::run_command("sysctl ",{"-w","net.core.rmem_max=26214400"});
+  // Static for the moment
+  configure_telemetry();
+  configure_video();
+  std::cout << "Streams::configure() end\n";
 }
 
 void WBStreams::configure_telemetry() {
