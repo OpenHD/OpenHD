@@ -12,7 +12,7 @@
 
 namespace openhd::video{
 
-static constexpr auto RECORDINGS_PATH="/home/openhd/videos/";
+static constexpr auto RECORDINGS_PATH="/home/openhd/Videos/";
 
 /**
  * Creates a new not yet used filename (aka the file does not yet exists) to be used for air recording.
