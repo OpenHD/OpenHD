@@ -401,7 +401,7 @@ static std::string createOutputUdpLocalhost(const int udpOutPort) {
 
 // Assumes there is a tee command named "t" somewhere in the pipeline right
 // after the encoding step, so we can get the raw encoded data out.
-static std::string createRecordingForVideoCodec(const VideoCodec videoCodec) {
+static std::string createRecordingForVideoCodec(const VideoCodec videoCodec,const std::string& out_filename) {
   std::stringstream ss;
   ss << "t. ! queue ! ";
   if (videoCodec == VideoCodec::H264) {
@@ -412,7 +412,11 @@ static std::string createRecordingForVideoCodec(const VideoCodec videoCodec) {
     assert(videoCodec == VideoCodec::MJPEG);
     ss << "jpegparse ! ";
   }
-  ss << "mp4mux ! filesink location=/tmp/file.mp4";
+  if(videoCodec!=VideoCodec::MJPEG){
+    ss <<"avimux ! filesink location=/tmp/file.avi";
+  }else{
+    ss << "mp4mux ! filesink location=/tmp/file.mp4";
+  }
   return ss.str();
 }
 }  // namespace OHDGstHelper
