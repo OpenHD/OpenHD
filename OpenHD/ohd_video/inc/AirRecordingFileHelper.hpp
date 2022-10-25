@@ -21,8 +21,9 @@ static std::string create_unused_recording_filename(const std::string& suffix){
     OHDFilesystemUtil::create_directories("/home/openhd/videos");
   }
   for(int i=0;i<10000;i++){
-    std::stringstream filename="/home/openhd/videos/";
-    filename<<"recording"<<i<<suffix;
+    std::stringstream filename;
+    filename<<"/home/openhd/videos/recording";
+    filename<<i<<suffix;
     if(!OHDFilesystemUtil::exists(filename.str().c_str())){
       return filename.str();
     }
