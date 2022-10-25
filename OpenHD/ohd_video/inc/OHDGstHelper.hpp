@@ -397,7 +397,7 @@ static std::string createOutputUdpLocalhost(const int udpOutPort) {
 // Needs to match below
 static std::string file_suffix_for_video_codec(const VideoCodec videoCodec){
   if(videoCodec==VideoCodec::H264 || videoCodec==VideoCodec::H265){
-    return ".mka";
+    return ".mkv";
   }else{
     return ".avi";
   }
