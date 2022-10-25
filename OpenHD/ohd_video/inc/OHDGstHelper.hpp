@@ -412,11 +412,12 @@ static std::string createRecordingForVideoCodec(const VideoCodec videoCodec,cons
     assert(videoCodec == VideoCodec::MJPEG);
     ss << "jpegparse ! ";
   }
-  if(videoCodec!=VideoCodec::MJPEG){
+  ss <<"avimux ! filesink location="<<out_filename;
+  /*if(videoCodec==VideoCodec::MJPEG){
     ss <<"avimux ! filesink location=/tmp/file.avi";
   }else{
     ss << "mp4mux ! filesink location=/tmp/file.mp4";
-  }
+  }*/
   return ss.str();
 }
 }  // namespace OHDGstHelper

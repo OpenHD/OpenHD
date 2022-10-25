@@ -1,15 +1,16 @@
 #include "gstreamerstream.h"
 
-#include <unistd.h>
-#include <iostream>
-#include <vector>
-#include <regex>
-
 #include <gst/gst.h>
+#include <unistd.h>
 
-#include "openhd-log.hpp"
+#include <iostream>
+#include <regex>
+#include <vector>
+
+#include "AirRecordingFileHelper.hpp"
 #include "OHDGstHelper.hpp"
 #include "ffmpeg_videosamples.hpp"
+#include "openhd-log.hpp"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,uint16_t video_udp_port)
     : CameraStream(platform, camera_holder, video_udp_port) {
@@ -113,7 +114,13 @@ void GStreamerStream::setup() {
   // add udp out part
   m_pipeline << OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
   if(setting.air_recording==Recording::ENABLED){
-	m_pipeline<<OHDGstHelper::createRecordingForVideoCodec(setting.userSelectedVideoFormat.videoCodec,"");
+        const auto recording_filename=openhd::video::create_unused_recording_filename(".avi");
+        {
+          std::stringstream ss;
+          ss<<"Using ["<<recording_filename<<"] for recording\n";
+          std::cout<<ss.str();
+        }
+	m_pipeline<<OHDGstHelper::createRecordingForVideoCodec(setting.userSelectedVideoFormat.videoCodec,recording_filename);
   }
   std::cout << "Starting pipeline:" << m_pipeline.str() << std::endl;
   // Protect against unwanted use - stop and free the pipeline first
