@@ -396,16 +396,19 @@ static std::string createOutputUdpLocalhost(const int udpOutPort) {
 
 // Needs to match below
 static std::string file_suffix_for_video_codec(const VideoCodec videoCodec){
-  if(videoCodec==VideoCodec::H264 || videoCodec==VideoCodec::MJPEG){
-    return ".avi";
+  if(videoCodec==VideoCodec::H264 || videoCodec==VideoCodec::H265){
+    return ".mka";
   }else{
-    return ".mp4";
+    return ".avi";
   }
 }
 // Assumes there is a tee command named "t" somewhere in the pipeline right
 // after the encoding step, so we can get the raw encoded data out.
 // .avi supports h264 and mjpeg, and works even in case the stream would crash
-// doesn't support h265 though, so for h265 we default to .mp4 (which is worse, since it creates a corrupt file
+// doesn't support h265 though
+// .mp4 is always corrupted on crash
+// .mkv supports h264 and h265, but no mjpeg. It is the default in OBS though, so we decided to use .mkv
+// for h264 and h265 and .avi for mjpeg
 // in case the gst pipeline is not stopped properly
 static std::string createRecordingForVideoCodec(const VideoCodec videoCodec,const std::string& out_filename) {
   std::stringstream ss;
@@ -418,10 +421,11 @@ static std::string createRecordingForVideoCodec(const VideoCodec videoCodec,cons
     assert(videoCodec == VideoCodec::MJPEG);
     ss << "jpegparse ! ";
   }
-  if(videoCodec==VideoCodec::H264 || videoCodec==VideoCodec::MJPEG){
-    ss <<"avimux ! filesink location="<<out_filename;
+  //ss <<"mp4mux ! filesink location="<<out_filename;
+  if(videoCodec==VideoCodec::H264 || videoCodec==VideoCodec::H265){
+    ss <<"matroskamux ! filesink location="<<out_filename;
   }else{
-    ss <<"mp4mux ! filesink location="<<out_filename;
+    ss <<"avimux ! filesink location="<<out_filename;
   }
   return ss.str();
 }
