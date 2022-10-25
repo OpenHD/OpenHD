@@ -54,6 +54,7 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
 	  _settings->persist();
 	}
   }
+  unblock_cards();
   configure_cards();
   configure_streams();
 }
@@ -69,6 +70,32 @@ void WBStreams::configure_streams() {
   std::cout << "Streams::configure() end\n";
 }
 
+void WBStreams::unblock_cards() {
+  std::cout << "WBStreams::unblock_cards() begin\n";
+  // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
+  // However, with the image set up by raphael they should be free from any (OS) prcoesses already
+  // R.N we also try and blacklist the cards from NetworkManager - it is needed for RPI and Ubuntu
+  // (as of 6.8.2022, since we re-added NetworkManager on pi) but it won't hurt on systems that don't
+  // have network manager - there it just won't have any effect.
+  // --
+  // This is only needed if NetworkManager was not disabled (we might move onto leaving it enabled on all platforms, though)
+  // TODO: does this return immediately or only after the change has been applied ?
+  for(const auto& card: _broadcast_cards){
+    WifiCardCommandHelper::network_manager_set_card_unmanaged(card->_wifi_card);
+  }
+  OHDUtil::run_command("rfkill",{"unblock","all"});
+  // TODO: sometimes this happens:
+  // 1) Running openhd fist time: pcap_compile doesn't work (fatal error)
+  // 2) Running openhd second time: works
+  // I cannot find what's causing the issue - a sleep here is the worst solution, but r.n the only one I can come up with
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  // for now limited to the pi, since it breaks other kinds of connectivity
+  if(_platform.platform_type==PlatformType::RaspberryPi){
+    OHDUtil::run_command("airmon-ng",{"check","kill"});
+  }
+  std::cout << "WBStreams::unblock_cards() end\n";
+}
+
 void WBStreams::configure_cards() {
   std::cout << "WBStreams::configure_cards() begin\n";
   if(OHDUtil::get_ohd_env_variable_bool("OHD_SKIP_WB_CONFIGURE_CARDS")){
@@ -77,28 +104,6 @@ void WBStreams::configure_cards() {
 	// needs knowledge of wifibroadcast and its quirks.
 	std::cout << "WBStreams::configure_cards() skipping\n";
 	return;
-  }
-  // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
-  // However, with the image set up by raphael they should be free from any (OS) prcoesses already
-  // R.N we also try and blacklist the cards from NetworkManager - it is needed for RPI and Ubuntu
-  // (as of 6.8.2022, since we re-added NetworkManager on pi) but it won't hurt on systems that don't
-  // have network manager - there it just won't have any effect.
-  {
-	// This is only needed if NetworkManager was not disabled (we might move onto leaving it enabled on all platforms, though)
-	// TODO: does this return immediately or only after the change has been applied ?
-	for(const auto& card: _broadcast_cards){
-	  WifiCardCommandHelper::network_manager_set_card_unmanaged(card->_wifi_card);
-	}
-	OHDUtil::run_command("rfkill",{"unblock","all"});
-	// TODO: sometimes this happens:
-	// 1) Running openhd fist time: pcap_compile doesn't work (fatal error)
-	// 2) Running openhd second time: works
-	// I cannot find what's causing the issue - a sleep here is the worst solution, but r.n the only one I can come up with
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-        // for now limited to the pi, since it breaks other kinds of connectivity
-        if(_platform.platform_type==PlatformType::RaspberryPi){
-          OHDUtil::run_command("airmon-ng",{"check","kill"});
-        }
   }
   for(const auto& card: _broadcast_cards){
 	//TODO we might not need this one

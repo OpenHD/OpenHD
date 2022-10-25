@@ -65,6 +65,8 @@ class WBStreams {
   const OHDPlatform _platform;
   std::vector<std::shared_ptr<WifiCardHolder>> _broadcast_cards;
  private:
+  // This needs some proper investigation !
+  void unblock_cards();
   // set cards to monitor mode and set the right frequency, tx power
   void configure_cards();
   // start telemetry and video rx/tx stream(s)
