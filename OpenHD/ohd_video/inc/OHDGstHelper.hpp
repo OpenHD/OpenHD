@@ -160,7 +160,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrateKBits);
 
   ss << fmt::format("libcamerasrc camera-name={}",
-                      camera_name, bitrateBitsPerSecond);
+                      camera_name);
 
   ss << " ! ";
   if (videoFormat.videoCodec == VideoCodec::H264) {
@@ -171,15 +171,15 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=NV12,framerate={}/1 ! "
         "v4l2convert ! "
-        "v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={}\" ! "
+        "v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_minimum_qp_value={}\" ! "
         "video/x-h264,level=(string)4 ! ",
-        videoFormat.width, videoFormat.height, videoFormat.framerate, bitrateBitsPerSecond);
+        videoFormat.width, videoFormat.height, videoFormat.framerate, bitrateBitsPerSecond,10);
   } else if (videoFormat.videoCodec == VideoCodec::MJPEG) {
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1 ! "
         "v4l2convert ! "
-        "v4l2jpegenc extra-controls=\"controls,compression_quality=80\" ! ",
-        videoFormat.width, videoFormat.height, videoFormat.framerate);
+        "v4l2jpegenc extra-controls=\"controls,compression_quality={}\" ! ",
+        videoFormat.width, videoFormat.height, videoFormat.framerate,50);
   }
   else {
     std::cout << "No h265 encoder on rpi, using SW encode (might "
