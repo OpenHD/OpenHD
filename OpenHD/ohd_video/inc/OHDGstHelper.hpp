@@ -160,7 +160,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrateKBits);
 
   ss << fmt::format("libcamerasrc camera-name={}",
-                      camera_name, bitrateBitsPerSecond);
+                      camera_name);
 
   ss << " ! ";
   if (videoFormat.videoCodec == VideoCodec::H264) {
