@@ -45,6 +45,9 @@ SET(Boost_USE_MULTITHREAD ON)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
 target_link_libraries(OHDInterfaceLib PUBLIC Boost::filesystem)
 
+find_package(spdlog REQUIRED)
+target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
+
 # find and include all the other libs
 #include(cmake/FindLibNL.cmake)
 #find_package(LibNL REQUIRED)
