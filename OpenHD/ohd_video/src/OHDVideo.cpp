@@ -35,7 +35,7 @@ std::string OHDVideo::createDebug() const {
 
 void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
   const auto camera=camera_holder->get_camera();
-  m_console->debug("Configuring camera:{}\n",camera_type_to_string(camera.type));
+  m_console->debug("Configuring camera:"+camera_type_to_string(camera.type));
   // R.N we use gstreamer only for everything except veye
   // (veye also uses gstreamer, but we do not launch it via gst-launch)
   switch (camera.type) {
@@ -54,7 +54,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
     case CameraType::RockchipCSI:
     case CameraType::UVC:
     case CameraType::Dummy: {
-      m_console->debug("GStreamerStream for Camera index:[}\n",camera.index);
+      m_console->debug("GStreamerStream for Camera index:{}\n",camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
       auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera_holder, udp_port);
       stream->setup();
