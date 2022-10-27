@@ -8,6 +8,8 @@
 #include "openhd-camera.hpp"
 #include "openhd-platform.hpp"
 
+#include "openhd-spdlog.hpp"
+
 /**
  * Discover all connected cameras and expose their hardware capabilities to OpenHD.
  * Note that this class does not handle camera settings (like video width, height) - camera capabilities
@@ -81,6 +83,9 @@ class DCameras {
 
   const OHDPlatform ohdPlatform;
   bool m_enable_debug;
+
+ private:
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif
