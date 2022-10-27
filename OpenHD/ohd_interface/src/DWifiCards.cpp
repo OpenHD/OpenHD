@@ -68,7 +68,7 @@ static SupportedFrequency supported_frequencies(const std::string& wifi_interfac
 
 
 std::vector<WiFiCard> DWifiCards::discover() {
-  std::cout << "WiFi::discover()\n";
+  openhd::loggers::get_default()->debug("WiFi::discover()");
   std::vector<WiFiCard> m_wifi_cards;
   // Find wifi cards, excluding specific kinds of interfaces.
   const std::vector<std::string> excluded_interfaces = {
@@ -93,7 +93,7 @@ std::vector<WiFiCard> DWifiCards::discover() {
 	  }
 	}
   }
-  std::cout << "WiFi::discover done, n cards:" << m_wifi_cards.size() << "\n";
+  openhd::loggers::get_default()->info("WiFi::discover done, n cards: {}",m_wifi_cards.size());
   write_wificards_manifest(m_wifi_cards);
   return m_wifi_cards;
 }
@@ -146,8 +146,8 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   {
 	// Note that this does not neccessarily mean this info is right, rtl8812au driver "lies" in this reagrd.
 	std::stringstream ss;
-	ss<<"Card "<<card.interface_name<<" reports:{"<<"supports_2G:"<<OHDUtil::yes_or_no(supports_2ghz)<<" supports_5G:"<<OHDUtil::yes_or_no(supports_2ghz)<<"}\n";
-	std::cout<<ss.str();
+	ss<<"Card "<<card.interface_name<<" reports:{"<<"supports_2G:"<<OHDUtil::yes_or_no(supports_2ghz)<<" supports_5G:"<<OHDUtil::yes_or_no(supports_2ghz)<<"}";
+	openhd::loggers::get_default()->info(ss.str());
   }
 
   std::stringstream address;

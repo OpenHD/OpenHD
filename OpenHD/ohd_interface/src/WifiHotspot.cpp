@@ -121,7 +121,7 @@ void WifiHotspot::stop() {
 
   OHDUtil::run_command("systemctl",{"disable dnsmasq"});
   OHDUtil::run_command("systemctl",{"stop dnsmasq"});
-  std::cout<<"Wifi hotspot stopped\n";
+  openhd::loggers::get_default()->info("Wifi hotspot stopped");
 }
 
 void WifiHotspot::start_async() {

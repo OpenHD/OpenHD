@@ -321,17 +321,14 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   if(data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT
   || data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT){
 	_last_stats_per_rx_stream.at(0)=data;
-	//std::cout<<data;
   }else if(data.radio_port==OHD_VIDEO_PRIMARY_RADIO_PORT){
 	_last_stats_per_rx_stream.at(1)=data;
-	//std::cout<<data;
   }else if(data.radio_port==OHD_VIDEO_SECONDARY_RADIO_PORT){
 	_last_stats_per_rx_stream.at(2)=data;
   }else{
 	m_console->warn("Unknown radio port on stats {}",(int)data.radio_port);
 	return;
   }
-  //std::cout<<"XGot stats "<<data<<"\n";
   // other stuff is per stream / accumulated
   openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
   // accumulate all RX data
@@ -376,7 +373,6 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   assert(_broadcast_cards.size()<=stats_all_cards.size());
   for(int i=0;i<_broadcast_cards.size();i++){
 	auto& card = stats_all_cards.at(i);
-	//std::cout<<data.rssiPerCard.at(i)<<"\n";
 	if(_profile.is_air){
 	  // on air, we use the dbm reported by the telemetry stream
 	  card.rx_rssi= _last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
