@@ -47,7 +47,7 @@ static void enableFlirIfFound() {
   libusb_context *context = nullptr;
   int result = libusb_init(&context);
   if (result) {
-    std::cerr << "Failed to initialize libusb" << std::endl;
+    openhd::loggers::get_default()->warn("Failed to initialize libusb");
     return;
   }
   libusb_device_handle *handle = libusb_open_device_with_vid_pid(
@@ -81,7 +81,7 @@ static void enableSeekIfFound() {
   libusb_context *context = nullptr;
   int result = libusb_init(&context);
   if (result) {
-    std::cerr << "Failed to initialize libusb" << std::endl;
+   openhd::loggers::get_default()->warn("Failed to initialize libusb");
     return;
   }
 
