@@ -10,6 +10,10 @@
 
 #include <string>
 
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
+namespace spd = spdlog;
+
 /**
  * Main entry point for OpenHD video streaming.
  * NOTE: This module only needs to be run on air pi, so to say it is a "Video
@@ -43,6 +47,7 @@ class OHDVideo {
   std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
   // Add a CameraStream for a discovered camera.
   void configure(std::shared_ptr<CameraHolder> camera);
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif  // OPENHD_VIDEO_OHDVIDEO_H

@@ -42,6 +42,9 @@ pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
 find_package(fmt REQUIRED)
 SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} fmt::fmt)
 
+find_package(spdlog REQUIRED)
+SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} spdlog::spdlog)
+
 find_package(Threads REQUIRED)
 
 set(sources 
