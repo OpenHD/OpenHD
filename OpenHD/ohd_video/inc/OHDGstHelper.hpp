@@ -185,8 +185,8 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
         videoFormat.width, videoFormat.height, videoFormat.framerate,50);
   }
   else {
-    std::cout << "No h265 encoder on rpi, using SW encode (might "
-                 "result in frame drops/performance issues)\n";
+    openhd::loggers::get_default()->warn("No h265 encoder on rpi, using SW encode (might "
+                 "result in frame drops/performance issues)");
     ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
                       videoFormat.width, videoFormat.height,
                       videoFormat.framerate);

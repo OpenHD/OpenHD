@@ -76,7 +76,7 @@ void VEYEStream::setup() {
   ss<<OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
   pipeline=ss.str();
   // NOTE: We do not execute the pipeline until start() is called
-  m_console->debug("Veye Pipeline:{"+pipeline+"}");
+  m_console->debug("Veye Pipeline:["+pipeline+"]");
   m_console->debug("VEYEStream::setup() end");
 }
 
