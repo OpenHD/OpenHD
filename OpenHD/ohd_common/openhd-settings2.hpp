@@ -83,7 +83,7 @@ class PersistentSettings{
 	if(last_settings_opt.has_value()){
 	  _settings=std::make_unique<T>(last_settings_opt.value());
 	  std::stringstream ss;
-	  ss<<"Using settings in ["<<get_file_path()<<"]\n";
+	  ss<<"Using settings in ["<<get_file_path()<<"]";
 	  openhd::loggers::get_default()->debug(ss.str());
 	}else{
 	  openhd::loggers::get_default()->debug("Creating default settings:"+get_file_path());

@@ -19,7 +19,7 @@ OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras) :
   for (auto &camera: camera_holders) {
 	configure(camera);
   }
-  m_console->debug( "OHDVideo::running\n");
+  m_console->debug( "OHDVideo::running");
 }
 
 std::string OHDVideo::createDebug() const {
