@@ -71,13 +71,10 @@ void USBTetherListener::connectOnce() {
   const auto external_device=openhd::ExternalDevice{ip_self_network,ip_external_device};
   // Check if both are valid IPs (otherwise, perhaps the parsing got fucked up)
   if(!external_device.is_valid()){
-	std::stringstream ss;
-	ss<<"USBTetherListener: "<<external_device.to_string()<<" not valid\n";
-	std::cerr<<ss.str();
+        openhd::loggers::get_default()->warn("USBTetherListener: "+external_device.to_string()+" not valid");
 	return;
   }
-
-  std::cout<<"USBTetherListener::found device:"<<external_device.to_string()<<"\n";
+  openhd::loggers::get_default()->debug("USBTetherListener::found device:"+external_device.to_string());
   if(_external_device_callback){
 	_external_device_callback(external_device, true);
   }
