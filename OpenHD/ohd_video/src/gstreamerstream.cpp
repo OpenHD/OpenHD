@@ -39,8 +39,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   });
   // sanity checks
   if(!check_bitrate_sane(setting.bitrateKBits)){
-    //std::cerr << "manually fixing insane camera bitrate" << m_camera.settings.bitrateKBits << "\n";
-    //m_camera.settings.bitrateKBits=DEFAULT_BITRATE_KBITS;
+    // not really needed
   }
   assert(setting.userSelectedVideoFormat.isValid());
   OHDGstHelper::initGstreamerOrThrow();

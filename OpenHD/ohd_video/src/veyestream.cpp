@@ -9,7 +9,10 @@
 
 VEYEStream::VEYEStream(PlatformType platform, std::shared_ptr<CameraHolder> camera_holder, uint16_t video_udp_port)
 	: CameraStream(platform, camera_holder, video_udp_port) {
-  std::cout << "VEYEStream::VEYEStream()\n";
+  m_console = spd::stdout_color_mt("ohd_video");
+  assert(m_console);
+  m_console->set_level(spd::level::debug);
+  m_console->debug("VEYEStream::VEYEStream()");
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
   assert(camera.type==CameraType::RaspberryPiVEYE);
@@ -21,14 +24,14 @@ VEYEStream::VEYEStream(PlatformType platform, std::shared_ptr<CameraHolder> came
   });
   // sanity checks
   assert(setting.userSelectedVideoFormat.isValid());
-  std::cout << "VEYEStream::VEYEStream\n";
+  m_console->debug("VEYEStream::VEYEStream");
 }
 
 // WARNING: Changing anything camera-related is r.n is really
 void VEYEStream::setup() {
-  std::cout<<"VEYEStream::setup() begin\n";
+  m_console->debug("VEYEStream::setup() begin");
   // kill any already running veye instances
-  std::cout<<"kill any already running veye instances\n";
+  m_console->debug("kill any already running veye instances");
   openhd::veye::kill_all_running_veye_instances();
 
   /*_camera_holder->unsafe_get_settings().userSelectedVideoFormat.width=1920;
@@ -58,7 +61,7 @@ void VEYEStream::setup() {
   }else if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::MJPEG){
 	ss<<"--codec MJPEG ";
   }else{
-	std::cerr<<"Veye only supports h264 and MJPEG\n";
+	m_console->warn("Veye only supports h264 and MJPEG");
   }
    // flush to decrease latency
    // NOTE: flush seems to cause issues on VEYE, it is bugged / doesn't work.
@@ -73,8 +76,8 @@ void VEYEStream::setup() {
   ss<<OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
   pipeline=ss.str();
   // NOTE: We do not execute the pipeline until start() is called
-  std::cout<<"Veye Pipeline:{"<<pipeline<<"}\n";
-  std::cout<<"VEYEStream::setup() end\n";
+  m_console->debug("Veye Pipeline:{"+pipeline+"}");
+  m_console->debug("VEYEStream::setup() end");
 }
 
 void VEYEStream::restartIfStopped() {
@@ -82,34 +85,22 @@ void VEYEStream::restartIfStopped() {
 }
 
 void VEYEStream::start() {
-  std::cout<<"VEYEStream::start() begin\n";
+  m_console->debug("VEYEStream::start() begin");
   // cleanup if existing
   openhd::veye::kill_all_running_veye_instances();
   // don't stream unless enabled
   if(!_camera_holder->get_settings().enable_streaming){
-	std::cout<<"Streaming disabled\n";
+	m_console->debug("Streaming disabled");
 	return;
   }
-  /*assert(_veye_thread== nullptr);
-  _veye_thread=std::make_unique<std::thread>( [this]{
-	auto res=OHDUtil::run_command_out(pipeline.c_str());
-	if(res.has_value()){
-	  std::cout<<"Veye thread returned with "<<res.value()<<"\n";
-	}
-  });*/
   // start streaming (process in the background)
   // run in background and pipe std::cout and std::cerr to file
   OHDUtil::run_command(pipeline,{"&> /tmp/veye.log &"});
-  std::cout<<"VEYEStream::start() end\n";
+  m_console->debug("VEYEStream::start() end");
 }
 
 void VEYEStream::stop() {
   openhd::veye::kill_all_running_veye_instances();
-  /*if(_veye_thread->joinable()){
-	std::cout<<"Joining veye thread\n";
-	_veye_thread->join();
-  }
-  _veye_thread=nullptr;*/
 }
 
 std::string VEYEStream::createDebug() {
@@ -117,9 +108,9 @@ std::string VEYEStream::createDebug() {
 }
 
 void VEYEStream::restart_async() {
-  std::cout<<"VEYEStream::restart_async() begin\n";
+  m_console->debug("VEYEStream::restart_async() begin");
   stop();
   setup();
   start();
-  std::cout<<"VEYEStream::restart_async() end\n";
+  m_console->debug("VEYEStream::restart_async() end");
 }

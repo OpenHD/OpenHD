@@ -13,6 +13,7 @@
 #include "camerastream.h"
 #include "openhd-camera.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-spdlog.hpp"
 
 // Unfortunately, we do not have an rpicamsrc equivalent for the veye -
 // This is a hacky (perhaps temporary) workaround
@@ -36,6 +37,7 @@ class VEYEStream :public CameraStream {
  private:
   std::string pipeline="";
   //std::unique_ptr<std::thread> _veye_thread=nullptr;
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif //OPENHD_OPENHD_OHD_VIDEO_INC_VEYESTREAM_H_
