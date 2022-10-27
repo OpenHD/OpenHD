@@ -19,7 +19,7 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
   if(_broadcast_cards.empty()) {
     // NOTE: Here we crash, since it would be a programmer(s) error to create a WBStreams instance without at least 1 wifi card.
     // In OHDInterface, we handle it more gracefully with an error code.
-    std::cerr << "Without at least one wifi card, the stream(s) cannot be started\n";
+    m_console->warn("Without at least one wifi card, the stream(s) cannot be started");
     exit(1);
   }
   // more than 4 cards would be completely insane, most likely a programming error
@@ -31,7 +31,7 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
   }
   if (_profile.is_air && _broadcast_cards.size() > 1) {
     // We cannot use more than 1 wifi card for injection
-    std::cerr << "dangerous, the air unit should not have more than 1 wifi card for wifibroadcast\n";
+    m_console->warn("dangerous, the air unit should not have more than 1 wifi card for wifibroadcast");
     // We just use the first one, this points to a upper level programming error or something weird.
     _broadcast_cards.resize(1);
   }
@@ -43,7 +43,7 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
   if(_settings->get_settings().configured_for_2G()){
 	if(! first_card.supports_2ghz){
 	  // we need to switch to 5ghz, since the connected card cannot do 2ghz
-	  std::cerr<<"WB configured for 2G but card can only do 5G - overwriting old settings\n";
+	  m_console->warn("WB configured for 2G but card can only do 5G - overwriting old settings");
 	  _settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
 	  _settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_5GHZ_FREQUENCY;
 	  _settings->persist();
@@ -51,7 +51,7 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
   }else{
 	if(!first_card.supports_5ghz){
 	  // similar, we need to switch to 2G
-	  std::cerr<<"WB configured for 5G but card can only do 2G - overwriting old settings\n";
+	  m_console->warn("WB configured for 5G but card can only do 2G - overwriting old settings");
 	  _settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
 	  _settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_2GHZ_FREQUENCY;
 	  _settings->persist();
@@ -182,9 +182,7 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
 	options.fec_percentage=0;
   }
   options.wlan = _broadcast_cards.at(0)->_wifi_card.interface_name;
-  std::stringstream ss;
-  ss<<"Starting WFB_TX with MCS:"<<mcs_index<<"\n";
-  m_console->debug(ss.str());
+  m_console->debug("Starting WFB_TX with MCS:{}",mcs_index);
   return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port,udp_recv_buff_size);
 }
 
@@ -330,7 +328,7 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   }else if(data.radio_port==OHD_VIDEO_SECONDARY_RADIO_PORT){
 	_last_stats_per_rx_stream.at(2)=data;
   }else{
-	std::cerr<<"Unknown radio port on stats"<<(int)data.radio_port<<"\n";
+	m_console->warn("Unknown radio port on stats {}",(int)data.radio_port);
 	return;
   }
   //std::cout<<"XGot stats "<<data<<"\n";
@@ -448,12 +446,12 @@ bool WBStreams::set_frequency(int frequency) {
   m_console->debug("WBStreams::set_frequency {}",frequency);
   if(_settings->get_settings().configured_for_2G()){
 	if(!openhd::is_valid_frequency_2G(frequency)){
-	  std::cerr<<"Invalid 2.4G frequency "<<frequency<<"\n";
+	  m_console->warn("Invalid 2.4G frequency {}",frequency);
 	  return false;
 	}
   }else{
 	if(!openhd::is_valid_frequency_5G(frequency)){
-	  std::cerr<<"Invalid 5G frequency "<<frequency<<"\n";
+	  m_console->warn("Invalid 5G frequency {}",frequency);
 	  return false;
 	}
   }
@@ -472,7 +470,7 @@ bool WBStreams::set_frequency(int frequency) {
 bool WBStreams::set_txpower(int tx_power) {
   m_console->debug("WBStreams::set_txpower {}",tx_power);
   if(!openhd::is_valid_tx_power_milli_watt(tx_power)){
-	std::cerr<<"Invalid tx power:"<<tx_power<<"\n";
+	m_console->warn("Invalid tx power:{}",tx_power);
 	return false;
   }
   _settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power;
@@ -488,11 +486,11 @@ bool WBStreams::set_txpower(int tx_power) {
 bool WBStreams::set_mcs_index(int mcs_index) {
   m_console->debug("WBStreams::set_mcs_index {}",mcs_index);
   if(!openhd::is_valid_mcs_index(mcs_index)){
-	std::cerr<<"Invalid mcs index"<<mcs_index<<"\n";
+	m_console->warn("Invalid mcs index{}",mcs_index);
 	return false;
   }
   if(!validate_cards_support_setting_mcs_index()){
-    std::cerr<<"Cannot change mcs index, it is fixed for at least one of the used cards\n";
+    m_console->warn("Cannot change mcs index, it is fixed for at least one of the used cards");
     return false;
   }
   _settings->unsafe_get_settings().wb_mcs_index=mcs_index;
@@ -511,11 +509,11 @@ bool WBStreams::set_mcs_index(int mcs_index) {
 bool WBStreams::set_channel_width(int channel_width) {
   m_console->debug("WBStreams::set_channel_width {}",channel_width);
   if(!openhd::is_valid_channel_width(channel_width)){
-	std::cerr<<"Invalid channel width"<<channel_width<<"\n";
+	m_console->warn("Invalid channel width {}",channel_width);
 	return false;
   }
   if(!validate_cards_support_setting_channel_width()){
-    std::cerr<<"Cannot change channel width, at least one card doesn't support it\n";
+    m_console->warn("Cannot change channel width, at least one card doesn't support it");
     return false;
   }
   _settings->unsafe_get_settings().wb_channel_width=channel_width;
@@ -534,7 +532,7 @@ bool WBStreams::set_channel_width(int channel_width) {
 bool WBStreams::set_fec_block_length(int block_length) {
   m_console->debug("WBStreams::set_fec_block_length {}",block_length);
   if(!openhd::is_valid_fec_block_length(block_length)){
-	std::cerr<<"Invalid fec block length:"<<block_length<<"\n";
+	m_console->warn("Invalid fec block length:{}",block_length);
 	return false;
   }
   _settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
@@ -546,7 +544,7 @@ bool WBStreams::set_fec_block_length(int block_length) {
 bool WBStreams::set_fec_percentage(int fec_percentage) {
   m_console->debug("WBStreams::set_fec_percentage {}",fec_percentage);
   if(!openhd::is_valid_fec_percentage(fec_percentage)){
-	std::cerr<<"Invalid fec percentage:"<<fec_percentage<<"\n";
+	m_console->warn("Invalid fec percentage:{}",fec_percentage);
 	return false;
   }
   _settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
@@ -559,7 +557,7 @@ bool WBStreams::set_fec_percentage(int fec_percentage) {
 void WBStreams::restart_async(std::chrono::milliseconds delay){
   std::lock_guard<std::mutex> guard(_restart_async_lock);
   if(_restart_async_thread!= nullptr){
-	std::cerr<<"WBStreams::restart_async - settings changed too quickly\n";
+	m_console->warn("WBStreams::restart_async - settings changed too quickly");
 	if(_restart_async_thread->joinable()){
 	  _restart_async_thread->join();
 	}

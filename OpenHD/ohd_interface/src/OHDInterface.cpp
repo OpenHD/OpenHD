@@ -23,7 +23,7 @@ platform(platform1),profile(std::move(profile1)) {
   for(const auto& card:discovered_wifi_cards){
     wifi_cards.push_back(std::make_shared<WifiCardHolder>(card));
     std::stringstream message;
-    message << "OHDInterface:: found wifi card: (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name << std::endl;
+    message << "OHDInterface:: found wifi card: (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name;
     m_console->debug(message.str());
   }
   // now check if any settings are messed up

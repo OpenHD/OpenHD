@@ -3,8 +3,10 @@
 //
 
 #include "USBTetherListener.h"
+
 #include <arpa/inet.h>
 
+#include "openhd-spdlog.hpp"
 #include <utility>
 
 USBTetherListener::USBTetherListener(openhd::EXTERNAL_DEVICE_CALLBACK external_device_callback) :
@@ -59,7 +61,7 @@ void USBTetherListener::connectOnce() {
   //const auto run_command_result_opt=OHDUtil::run_command_out("ip route show 0.0.0.0/0 dev usb0 | cut -d\\  -f3");
   const auto run_command_result_opt=OHDUtil::run_command_out("ip route list dev usb0");
   if(run_command_result_opt==std::nullopt){
-	std::cerr<<"USBHotspot run command out no result\n";
+	openhd::loggers::get_default()->warn("USBHotspot run command out no result");
 	return;
   }
   const auto& run_command_result=run_command_result_opt.value();

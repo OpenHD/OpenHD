@@ -5,6 +5,8 @@
 #ifndef OPENHD_OHDGSTHELPER_H
 #define OPENHD_OHDGSTHELPER_H
 
+// NOTE: Spdlog uses format internally, when pulling in fmt first and then spdlog we can have compiler issues
+#include "openhd-spdlog.hpp"
 #include <fmt/format.h>
 #include <gst/gst.h>
 
@@ -12,6 +14,7 @@
 #include <string>
 
 #include "openhd-camera.hpp"
+//#include "openhd-spdlog.hpp"
 
 /**
  * Helper methods to create parts of gstreamer pipes.
@@ -37,7 +40,7 @@ struct CommonEncoderParams{
 static void initGstreamerOrThrow() {
   GError *error = nullptr;
   if (!gst_init_check(nullptr, nullptr, &error)) {
-    std::cerr << "gst_init_check() failed: " << error->message << std::endl;
+    openhd::loggers::get_default()->error("gst_init_check() failed: {}",error->message);
     g_error_free(error);
     throw std::runtime_error("GStreamer initialization failed");
   }
@@ -118,7 +121,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   if(keyframe_interval>= -1 && keyframe_interval < 1000){
 	ss << "keyframe-interval="<<keyframe_interval<<" ";
   }else{
-	std::cerr<<"Invalid keyframe intervall: "<<keyframe_interval<<"\n";
+	openhd::loggers::get_default()->error("Invalid keyframe intervall: {}",keyframe_interval);
   }
   if(openhd::needs_horizontal_flip(rotation)){
 	ss<<"hflip=1 ";
@@ -139,7 +142,7 @@ static std::string createRpicamsrcStream(const int camera_number,
 		"framerate={}/1, level=3.0 ! ",
 		videoFormat.width, videoFormat.height, videoFormat.framerate);
   }else{
-	std::cout<<"No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues)\n";
+	openhd::loggers::get_default()->warn("No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues");
 	ss<<fmt::format(
 		"video/x-raw, width={}, height={}, framerate={}/1 ! ",
 		videoFormat.width, videoFormat.height, videoFormat.framerate);
@@ -292,7 +295,7 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   // rn we omit the set resolution/framerate here and let gstreamer figure it
   // out.
   // TODO: do it better ;)
-  std::cout << "Allowing gstreamer to choose UVC format" << std::endl;
+  //openhd::loggers::get_default()->warn("Allowing gstreamer to choose UVC format");
   ss << fmt::format("video/x-raw ! ");
   ss << "videoconvert ! ";
   // Add a queue here. With sw we are not low latency anyways.

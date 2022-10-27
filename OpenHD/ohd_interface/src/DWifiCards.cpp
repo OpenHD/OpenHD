@@ -9,6 +9,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <utility>
 
+#include "openhd-spdlog.hpp"
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
@@ -52,7 +53,7 @@ static SupportedFrequency supported_frequencies(const std::string& wifi_interfac
   const std::string command="iwlist "+wifi_interface_name+" frequency";
   const auto res_op=OHDUtil::run_command_out(command.c_str());
   if(!res_op.has_value()){
-	std::cerr<<"get_supported_channels for "<<wifi_interface_name<<" failed\n";
+	openhd::loggers::get_default()->warn("get_supported_channels for "+wifi_interface_name+" failed");
 	return ret;
   }
   const auto& res=res_op.value();
@@ -111,12 +112,12 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   std::regex r{"DRIVER=([\\w]+)"};
 
   if (!std::regex_search(raw_value, result, r)) {
-	std::cerr << "no result" << std::endl;
+	openhd::loggers::get_default()->warn("no result");
 	return {};
   }
 
   if (result.size() != 2) {
-	std::cerr << "result doesnt match" << std::endl;
+	openhd::loggers::get_default()->warn("result doesnt match");
 	return {};
   }
 
@@ -227,7 +228,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  break;
 	}
 	default: {
-	  std::cerr<<"Unknown card type for "<<card.interface_name<<"\n";
+	  openhd::loggers::get_default()->warn("Unknown card type for "+card.interface_name);
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
@@ -243,7 +244,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   }
   // hacky there is something wron with phy-lookup
   if(!(card.supports_2ghz  || card.supports_5ghz)){
-	std::cerr<<"Card "<<card.interface_name<<" reports neither 2G nor 5G, default to 2G capable \n";
+	openhd::loggers::get_default()->warn("Card "+card.interface_name+" reports neither 2G nor 5G, default to 2G capable");
 	card.supports_2ghz=true;
   }
   return card;
