@@ -4,7 +4,7 @@
 
 #include "WifiHotspot.h"
 
-#include <openhd-spdlog.hpp>
+#include "openhd-spdlog.hpp"
 #include <utility>
 
 // From
@@ -105,7 +105,7 @@ void WifiHotspot::start() {
   dhcpd_conf << dhcpd_conf_content;
   dhcpd_conf.close();*/
   started= true;
-  std::cerr<<"Wifi hotspot started\n";
+  openhd::loggers::get_default()->info("Wifi hotspot started");
 }
 
 void WifiHotspot::stop() {
