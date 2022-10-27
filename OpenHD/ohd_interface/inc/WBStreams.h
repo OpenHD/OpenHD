@@ -12,6 +12,7 @@
 #include "openhd-profile.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-link-statistics.hpp"
+#include "openhd-spdlog.hpp"
 #include "WBStreamsSettings.hpp"
 #include "mavlink_settings/ISettingsComponent.hpp"
 
@@ -103,6 +104,7 @@ class WBStreams {
   std::unique_ptr<std::thread> _restart_async_thread=nullptr;
   // last calculated "All stats".
   openhd::link_statistics::AllStats _last_all_stats;
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif

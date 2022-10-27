@@ -10,9 +10,7 @@
 
 #include <string>
 
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
-namespace spd = spdlog;
+#include "openhd-spdlog.hpp"
 
 /**
  * Main entry point for OpenHD video streaming.
