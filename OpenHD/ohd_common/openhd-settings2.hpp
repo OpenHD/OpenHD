@@ -56,7 +56,7 @@ class PersistentSettings{
   void update_settings(const T& new_settings){
 	std::stringstream ss;
 	ss<<"Got new settings in["<<get_unique_filename()<<"]\n";
-	std::cout<<ss.str();
+	openhd::loggers::get_default()->debug(ss.str());
 	_settings=std::make_unique<T>(new_settings);
 	persist_settings();
 	if(_settings_changed_callback){
@@ -84,9 +84,9 @@ class PersistentSettings{
 	  _settings=std::make_unique<T>(last_settings_opt.value());
 	  std::stringstream ss;
 	  ss<<"Using settings in ["<<get_file_path()<<"]\n";
-	  std::cout<<ss.str();
+	  openhd::loggers::get_default()->debug(ss.str());
 	}else{
-	  std::cout<<"Creating default settings:"<<get_file_path()<<"\n";
+	  openhd::loggers::get_default()->debug("Creating default settings:"+get_file_path());
 	  // create default settings and persist them for the next reboot
 	  _settings=std::make_unique<T>(create_default());
 	  persist_settings();
@@ -132,8 +132,8 @@ class PersistentSettings{
 	}catch(nlohmann::json::exception& ex){
 	  std::stringstream ss;
 	  ss<<"PersistentSettings::read_last_settings json exception on {"<<file_path<<"} ";
-	  ss<<ex.what()<<"\n";
-	  std::cerr<<ss.str();
+	  ss<<ex.what();
+	  openhd::loggers::get_default()->debug(ss.str());
 	  // this means the default settings will be created
 	  return std::nullopt;
 	}

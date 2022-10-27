@@ -1,20 +1,22 @@
 #ifndef OPENHD_UTIL_H
 #define OPENHD_UTIL_H
 
-#include <sstream>
-#include <iostream>
+#include <arpa/inet.h>
+#include <unistd.h>
+
 #include <cctype>
+#include <csignal>
 #include <cstdlib>
-#include <vector>
+#include <iostream>
 #include <memory>
 #include <optional>
+#include <regex>
+#include <sstream>
 #include <string>
-#include <regex>
-#include <csignal>
 #include <thread>
-#include <arpa/inet.h>
-#include <regex>
-#include <unistd.h>
+#include <vector>
+
+#include "openhd-spdlog.hpp"
 
 namespace OHDUtil {
 
@@ -69,8 +71,8 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   }
   if(print_debug){
 	std::stringstream log;
-	log<< "run command begin [" << ss.str() << "]\n";
-	std::cout<<log.str();
+	log<< "run command begin [" << ss.str() << "]";
+	openhd::loggers::get_default()->debug(log.str());
   }
   // Some weird locale issue ?!
   // https://man7.org/linux/man-pages/man3/system.3.html
@@ -81,7 +83,7 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   std::cout<<"Run command end\n";
   return c.exit_code() == 0;*/
   if(print_debug){
-	std::cout << "Run command end\n";
+	openhd::loggers::get_default()->debug("Run command end");
   }
   return ret;
 }
@@ -119,7 +121,7 @@ static void keep_alive_until_sigterm(){
   signal(SIGTERM, [](int sig){ quit= true;});
   while (!quit){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
-	std::cout<<"keep_alive_until_sigterm\n";
+	openhd::loggers::get_default()->debug("keep_alive_until_sigterm");
   }
 }
 // Tries to extract a valid ip from the given input string.
@@ -155,9 +157,9 @@ static std::string string_in_between(const std::string& start,const std::string&
 	}
   }
   std::stringstream ss;
-  ss<<"Given:{"<<value<<"}\n";
-  ss<<"Result:{"<<matched<<"}\n";
-  std::cout <<ss.str();
+  ss<<"Given:["<<value<<"]\n";
+  ss<<"Result:["<<matched<<"]";
+  openhd::loggers::get_default()->debug(ss.str());
   return matched;
 }
 
@@ -170,7 +172,7 @@ static bool check_root(const bool print_debug=true){
   if(print_debug){
 	ss<<"UID is:["<<uid<<"] root:"<<OHDUtil::yes_or_no(root)<<"\n";
   }
-  std::cout<<ss.str();
+  openhd::loggers::get_default()->debug(ss.str());
   return root;
 }
 
