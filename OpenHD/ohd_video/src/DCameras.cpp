@@ -239,7 +239,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
 }
 
 bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, CameraEndpoint &endpoint) {
-  m_console->debug( "DCameras::process_v4l2_node("+node+")\n");
+  m_console->debug( "DCameras::process_v4l2_node("+node+")");
   // fucking hell, on jetson v4l2_open seems to be bugged
   // https://forums.developer.nvidia.com/t/v4l2-open-create-core-with-jetpack-4-5-or-later/170624/6
   int fd;
