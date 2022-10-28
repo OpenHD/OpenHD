@@ -28,8 +28,8 @@
 // One needs to explicitly tell the OpenHD executable weather to start as air or ground. This can be done in multiple ways
 // a) during development, just pass in the required parameter (this overrides any check if a file exists,see below)
 // b) For normal users, they can select weather they want to create an air or ground unit in the flashing tool -
-//    it'l create a file called air.txt or ground.txt under /boot/OpenHD/
-// c) You can also rename the file under /boot/OpenHD/ and restart OpenHD during development
+//    it'l create a file called air.txt or ground.txt under /boot/openhd/
+// c) You can also rename the file under /boot/openhd/ and restart OpenHD during development
 ///As a result, we have the following behaviour:
 // If we run as air - check if we can find a connected camera, if there is none, create the "dummy" camera instead
 // If we run as ground - easy, just don't check for connected camera(s)
@@ -149,7 +149,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     ret.run_as_air=commandline_air.value();
     ret.force_dummy_camera=commandline_force_dummy_camera;
   }
-  if(OHDFilesystemUtil::exists("/boot/OpenHD/ohd_clean.txt")){
+  if(OHDFilesystemUtil::exists("/boot/openhd/ohd_clean.txt")){
     ret.clean_start=true;
   }
   return ret;

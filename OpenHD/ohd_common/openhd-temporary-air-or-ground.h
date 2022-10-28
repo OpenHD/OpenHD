@@ -11,8 +11,8 @@
 namespace openhd::tmp{
 
 // Note: case sensitive
-static constexpr auto FILENAME_AIR="/boot/OpenHD/air.txt";
-static constexpr auto FILENAME_GROUND="/boot/OpenHD/ground.txt";
+static constexpr auto FILENAME_AIR="/boot/openhd/air.txt";
+static constexpr auto FILENAME_GROUND="/boot/openhd/ground.txt";
 
 static bool file_air_exists(){
   return OHDFilesystemUtil::exists(FILENAME_AIR);
@@ -31,12 +31,12 @@ static void delete_any_file_air_or_ground(){
 }
 
 static void write_file_air(){
-  OHDFilesystemUtil::create_directories("/boot/OpenHD/");
+  OHDFilesystemUtil::create_directories("/boot/openhd/");
   OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_AIR," ");
 }
 
 static void write_file_ground(){
-  OHDFilesystemUtil::create_directories("/boot/OpenHD/");
+  OHDFilesystemUtil::create_directories("/boot/openhd/");
   OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_GROUND," ");
 }
 

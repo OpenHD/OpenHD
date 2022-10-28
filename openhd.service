@@ -3,7 +3,7 @@ Description=OpenHD
 
 [Service]
 User=root
-ExecStart=/usr/local/bin/OpenHD
+ExecStart=/usr/local/bin/openhd
 Restart=always
 
 

@@ -20,9 +20,9 @@ static void OHDRpiConfigClear(){
 };
 
 static void OHDRpiConfigExecute(){
-  OHDUtil::run_command("rm -Rf /boot/OpenHD/libcamera.txt",{});
-  OHDUtil::run_command("rm -Rf /boot/OpenHD/raspicamsrc.txt",{});
-  OHDUtil::run_command("rm -Rf /boot/OpenHD/arducam.txt",{});
+  OHDUtil::run_command("rm -Rf /boot/openhd/libcamera.txt",{});
+  OHDUtil::run_command("rm -Rf /boot/openhd/raspicamsrc.txt",{});
+  OHDUtil::run_command("rm -Rf /boot/openhd/arducam.txt",{});
   OHDUtil::run_command("echo",{"This device will now reboot to enable configs"});
   OHDUtil::run_command("reboot",{});
 };
@@ -91,10 +91,10 @@ static bool validate_cam_config_settings_int(int val){
   return val==0 || val==1 || val==2;
 }
 
-static constexpr auto CAM_CONFIG_FILENAME="/boot/OpenHD/rpi_cam_config.txt";
+static constexpr auto CAM_CONFIG_FILENAME="/boot/openhd/rpi_cam_config.txt";
 
 static CamConfig get_current_cam_config_from_file(){
-  OHDFilesystemUtil::create_directories("/boot/OpenHD/");
+  OHDFilesystemUtil::create_directories("/boot/openhd/");
   if(!OHDFilesystemUtil::exists(CAM_CONFIG_FILENAME)){
     // The OHD image builder defaults to mmal, NOTE this is in contrast to the default rpi os release.
     OHDFilesystemUtil::write_file(CAM_CONFIG_FILENAME, cam_config_to_string(CamConfig::MMAL));
@@ -105,7 +105,7 @@ static CamConfig get_current_cam_config_from_file(){
 }
 
 static void save_cam_config_to_file(CamConfig new_cam_config){
-  OHDFilesystemUtil::create_directories("/boot/OpenHD/");
+  OHDFilesystemUtil::create_directories("/boot/openhd/");
   OHDFilesystemUtil::write_file(CAM_CONFIG_FILENAME, cam_config_to_string(new_cam_config));
 }
 
