@@ -14,7 +14,6 @@
 #include <string>
 
 #include "openhd-camera.hpp"
-//#include "openhd-spdlog.hpp"
 
 /**
  * Helper methods to create parts of gstreamer pipes.
