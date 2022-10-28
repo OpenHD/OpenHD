@@ -17,6 +17,7 @@
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "AirTelemetrySettings.h"
 #include "openhd-action-handler.hpp"
+#include "openhd-spdlog.hpp"
 // Dirty
 #include "openhd-rpi-os-configure-vendor-cam.hpp"
 
@@ -67,6 +68,7 @@ class AirTelemetry : public MavlinkSystem{
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
   std::unique_ptr<openhd::rpi::os::ConfigChangeHandler> m_rpi_os_change_config_handler=nullptr;
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif //OPENHD_TELEMETRY_AIRTELEMETRY_H

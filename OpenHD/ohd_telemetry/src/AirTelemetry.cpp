@@ -9,6 +9,9 @@
 #include "openhd-util-filesystem.hpp"
 
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
+  m_console = spd::stdout_color_mt("ohd_air_tele");
+  assert(m_console);
+  m_console->set_level(spd::level::debug);
   _airTelemetrySettings=std::make_unique<openhd::AirTelemetrySettingsHolder>();
   setup_uart();
   // any message coming in via wifibroadcast is a message from the ground pi
