@@ -208,7 +208,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   }
   // and this allows an advanced user to change its air unit to a ground unit
   // only expose this setting if OpenHD uses the file workaround to figure out air or ground.
-  if(openhd::tmp::any_file_air_or_ground_exists()){
+  if(openhd::tmp::file_air_or_ground_exists()){
     ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",openhd::IntSetting {1,c_config_boot_as_air}});
   }
   return ret;

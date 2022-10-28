@@ -26,8 +26,8 @@ static bool file_air_or_ground_exists(){
 }
 
 static void delete_any_file_air_or_ground(){
-  OHDFilesystemUtil::remove_if_existing(FILENAME_AIR_1);
-  OHDFilesystemUtil::remove_if_existing(FILENAME_GROUND_1);
+  OHDFilesystemUtil::remove_if_existing(FILENAME_AIR);
+  OHDFilesystemUtil::remove_if_existing(FILENAME_GROUND);
 }
 
 static void write_file_air(){
