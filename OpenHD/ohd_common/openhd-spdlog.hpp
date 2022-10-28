@@ -21,18 +21,6 @@ namespace openhd::loggers {
 // For some reason there is no helper for that in spdlog / i haven't found it yet
 
 // Thread-safe but recommended to store result in an intermediate variable
-static std::shared_ptr<spdlog::logger> get_video() {
-  static std::mutex logger_mutex{};
-  std::lock_guard<std::mutex> guard(logger_mutex);
-  auto ret = spdlog::get("ohd_video");
-  if (ret == nullptr) {
-    auto created = spdlog::stdout_color_mt("ohd_video");
-    assert(created);
-    return created;
-  }
-  return ret;
-}
-
 static std::shared_ptr<spdlog::logger> get_default() {
   static std::mutex logger_mutex{};
   std::lock_guard<std::mutex> guard(logger_mutex);
