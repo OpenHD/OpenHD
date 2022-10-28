@@ -62,6 +62,7 @@ class GroundTelemetry :public MavlinkSystem{
   //
   //std::unique_ptr<JoystickReader> m_joystick_reader;
   std::shared_ptr<spdlog::logger> m_console;
+  std::vector<openhd::Setting> get_all_settings();
 };
 
 #endif //OPENHD_TELEMETRY_GROUNDTELEMETRY_H

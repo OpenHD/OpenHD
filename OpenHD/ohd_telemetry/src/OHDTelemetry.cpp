@@ -57,6 +57,7 @@ void OHDTelemetry::add_camera_component(const int camera_index, const std::vecto
   // only 2 cameras suported for now.
   airTelemetry->add_camera_component(camera_index,settings);
 }
+
 void OHDTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) const {
   if(profile.is_air){
 	airTelemetry->set_link_statistics(stats);
@@ -66,11 +67,13 @@ void OHDTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) 
 }
 
 void OHDTelemetry::add_external_ground_station_ip(const std::string &ip_openhd, const std::string &ip_dest_device) const {
+  // We only support external ground station(s) connecting to the ground unit
   if(profile.is_air)return;
   groundTelemetry->add_external_ground_station_ip(ip_openhd,ip_dest_device);
 }
-void OHDTelemetry::remove_external_ground_station_ip(const std::string &ip_openhd,
-													 const std::string &ip_dest_device) const {
+
+void OHDTelemetry::remove_external_ground_station_ip(const std::string &ip_openhd,const std::string &ip_dest_device) const {
+  // We only support external ground station(s) connecting to the ground unit
   if(profile.is_air)return;
   groundTelemetry->remove_external_ground_station_ip(ip_openhd,ip_dest_device);
 }

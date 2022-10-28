@@ -7,6 +7,7 @@
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include <chrono>
 #include "openhd-util-filesystem.hpp"
+#include "openhd-temporary-air-or-ground.h"
 
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   m_console = spd::stdout_color_mt("ohd_air_tele");
@@ -179,6 +180,9 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 	setup_uart();
 	return true;
   };
+  auto c_config_boot_as_air=[](std::string,int value){
+    return openhd::tmp::handle_telemetry_change(value);
+  };
   auto c_rpi_os_camera_configuration=[this](std::string,int value){
     return m_rpi_os_change_config_handler->change_rpi_os_camera_configuration(value);
   };
@@ -191,6 +195,11 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   if(_platform.platform_type==PlatformType::RaspberryPi && m_rpi_os_change_config_handler!= nullptr){
     ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::IntSetting {openhd::rpi::os::cam_config_to_int(openhd::rpi::os::get_current_cam_config_from_file()),
                                                                         c_rpi_os_camera_configuration}});
+  }
+  // and this allows an advanced user to change its air unit to a ground unit
+  // only expose this setting if OpenHD uses the file workaround to figure out air or ground.
+  if(openhd::tmp::file_air_or_ground_exists()){
+    ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",openhd::IntSetting {1,c_config_boot_as_air}});
   }
   return ret;
 }

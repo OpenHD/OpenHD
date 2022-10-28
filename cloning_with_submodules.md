@@ -1,1 +1,1 @@
-git clone --recurse-submodules -b consti-test git@github.com:OpenHD/Open.HD.git
+git clone --recurse-submodules -b 2.2.3-evo git@github.com:OpenHD/Open.HD.git

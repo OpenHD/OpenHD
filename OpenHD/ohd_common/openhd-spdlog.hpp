@@ -17,7 +17,7 @@ namespace spd = spdlog;
 
 namespace openhd::loggers {
 
-// Note: the _mt loggers are threadsafe by design already, but we need to make sure to cretae the instance only once
+// Note: the _mt loggers are threadsafe by design already, but we need to make sure to crete the instance only once
 // For some reason there is no helper for that in spdlog / i haven't found it yet
 
 // Thread-safe but recommended to store result in an intermediate variable
