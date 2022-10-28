@@ -10,6 +10,7 @@
 #include "ohd_common/openhd-profile.hpp"
 #include "ohd_common/openhd-platform-discover.hpp"
 #include "ohd_common/openhd-global-constants.hpp"
+#include "ohd_common/openhd-spdlog.hpp"
 #include <DCameras.h>
 #include <OHDInterface.h>
 #include <OHDTelemetry.h>
@@ -176,6 +177,9 @@ int main(int argc, char *argv[]) {
   std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
   OHDInterface::print_internal_fec_optimization_method();
 
+  std::shared_ptr<spdlog::logger> m_console=spdlog::stdout_color_mt("main");
+  assert(m_console);
+  m_console->set_level(spd::level::debug);
   // Create and link all the OpenHD modules.
   try {
     // This results in fresh default values for all modules (e.g. interface, telemetry, video)
@@ -186,7 +190,7 @@ int main(int argc, char *argv[]) {
 
     // First discover the platform:
     const auto platform = DPlatform::discover();
-    std::cout<<platform->to_string()<<"\n";
+    m_console->debug(platform->to_string());
 
     // These are temporary and depend on how the image builder does stuff
     if(platform->platform_type==PlatformType::RaspberryPi){
@@ -212,7 +216,7 @@ int main(int argc, char *argv[]) {
     }
     // Now print the actual cameras used by OHD. Of course, this prints nothing on ground (where we have no cameras connected).
     for(const auto& camera:cameras){
-      std::cout<<camera.to_string()<<"\n";
+      m_console->debug(camera.to_string());
     }
     // Now we can crate the immutable profile
     const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
@@ -265,7 +269,7 @@ int main(int argc, char *argv[]) {
         OHDUtil::run_command("systemctl",{" stop qopenhd"});
       }
     }
-    std::cout << "All OpenHD modules running\n";
+    m_console->debug("All OpenHD modules running");
 
     // run forever, everything has its own threads. Note that the only way to break out basically
     // is when one of the modules encounters an exception.
@@ -290,8 +294,8 @@ int main(int argc, char *argv[]) {
         if(options.enable_telemetry_debugging){
           ss << ohdTelemetry->createDebug();
         }
-        ss<<"-------------OpenHD-state debug end-------------\n";
-        std::cout<<ss.str();
+        ss<<"-------------OpenHD-state debug end-------------";
+        m_console->debug(ss.str());
       }
     }
   } catch (std::exception &ex) {

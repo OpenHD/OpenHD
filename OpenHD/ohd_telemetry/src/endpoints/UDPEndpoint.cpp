@@ -9,6 +9,9 @@
 UDPEndpoint::UDPEndpoint(const std::string& TAG, const int senderPort, const int receiverPort,std::string senderIp,std::string receiverIp) :
 	MEndpoint(TAG),
 	SEND_PORT(senderPort), RECV_PORT(receiverPort) {
+  m_console = spd::stdout_color_mt(TAG);
+  assert(m_console);
+  m_console->set_level(spd::level::debug);
   /*if (senderPort == receiverPort) {
 	throw std::invalid_argument("UDPEndpoint - cannot send and receive on same UDP port\n");
   }*/
@@ -22,18 +25,19 @@ UDPEndpoint::UDPEndpoint(const std::string& TAG, const int senderPort, const int
 	receiver = std::make_unique<SocketHelper::UDPReceiver>(receiverIp, RECV_PORT, cb);
 	receiver->runInBackground();
   }
-  std::cout <<TAG<< " UDPEndpoint created send: "<<senderIp<<":" << senderPort << " recv: "<<receiverIp<<":" << receiverPort << "\n";
+  std::stringstream ss;
+  ss<<" UDPEndpoint created send: "<<senderIp<<":" << senderPort << " recv: "<<receiverIp<<":" << receiverPort;
+  m_console->info(ss.str());
 }
 
 bool UDPEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"UDPEndpoint::sendMessage");
   if (transmitter != nullptr) {
 	const auto data = message.pack();
-	//std::cout<<"XSend:"<<data.size()<<" "<<MavlinkHelpers::raw_content(data.data(),data.size())<<"\n";
 	transmitter->forwardPacketViaUDP(data.data(), data.size());
 	return true;
   } else {
-	std::cerr << "UDPEndpoint::sendMessage with no transmitter\n";
+	m_console->debug("UDPEndpoint::sendMessage with no transmitter");
   }
   return false;
 }
