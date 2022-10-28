@@ -27,7 +27,7 @@ add_executable(openhd main.cpp)
 target_link_libraries(OHDInterfaceLib PUBLIC OHDCommonLib)
 target_link_libraries(OHDTelemetryLib PUBLIC OHDCommonLib)
 target_link_libraries(OHDVideoLib PUBLIC OHDCommonLib)
-target_link_libraries(OpenHD OHDInterfaceLib OHDVideoLib OHDTelemetryLib OHDCommonLib)
+target_link_libraries(openhd OHDInterfaceLib OHDVideoLib OHDTelemetryLib OHDCommonLib)
 
 # NOTE: We only install the OpenHD executable, the test_xxx execuatables are omitted
 # For development, just clone and build OpenHD on the pi / platform itself
