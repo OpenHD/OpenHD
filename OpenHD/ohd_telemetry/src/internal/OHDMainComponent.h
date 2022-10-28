@@ -22,6 +22,7 @@
 #include "openhd-link-statistics.hpp"
 #include "OnboardComputerStatusHelper.h"
 #include "openhd-action-handler.hpp"
+#include "openhd-spdlog.hpp"
 
 // This Component runs on both the air and ground unit and should handle as many messages / commands / create as many
 // "fire and forget" messages as possible. For example, it broadcast the CPU load and other statistics, and responds to ping messages.
@@ -65,6 +66,7 @@ class OHDMainComponent : public MavlinkComponent{
   std::mutex _last_link_stats_mutex;
   openhd::link_statistics::AllStats _last_link_stats{};
   MavlinkMessage ack_command(const uint8_t source_sys_id,const uint8_t source_comp_id,uint16_t command_id);
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif //XMAVLINKSERVICE_INTERNALTELEMETRY_H

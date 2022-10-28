@@ -30,7 +30,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   // all their paramters.
   generic_mavlink_param_provider->add_params(get_all_settings());
   components.push_back(generic_mavlink_param_provider);
-  std::cout << "Created AirTelemetry\n";
+  m_console->debug("Created AirTelemetry");
 }
 
 void AirTelemetry::sendMessageFC(const MavlinkMessage &message) {
@@ -38,7 +38,7 @@ void AirTelemetry::sendMessageFC(const MavlinkMessage &message) {
   if(serialEndpoint){
     serialEndpoint->sendMessage(message);
   }else{
-    //std::cout<<"Cannot send message to FC\n";
+    //m_console->warn("Cannot send message to FC");
   }
 }
 
@@ -83,14 +83,14 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
 	if(std::chrono::steady_clock::now()-last_log>=log_intervall){
 	  // State debug logging
 	  last_log=std::chrono::steady_clock::now();
-	  //std::cout << "AirTelemetry::loopInfinite()\n";
+	  //m_console->debug("AirTelemetry::loopInfinite()");
 	  // for debugging, check if any of the endpoints is not alive
 	  if (enableExtendedLogging && wifibroadcastEndpoint) {
-		std::cout<<wifibroadcastEndpoint->createInfo();
+		m_console->debug(wifibroadcastEndpoint->createInfo());
 	  }
 	  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
 	  if (enableExtendedLogging && serialEndpoint) {
-		std::cout<<serialEndpoint->createInfo();
+		m_console->debug(serialEndpoint->createInfo());
 	  }
 	}
 	// send messages to the ground pi in regular intervals, includes heartbeat.
@@ -109,8 +109,8 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
 	  // We can't keep up with the wanted loop interval
 	  std::stringstream ss;
 	  ss<<"Warning AirTelemetry cannot keep up with the wanted loop interval. Took:"
-	  <<std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count()<<"ms\n";
-	  std::cout<<ss.str();
+	  <<std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count()<<"ms";
+          m_console->debug(ss.str());
 	}else{
 	  const auto sleepTime=loop_intervall-loopDelta;
 	  // send out in X second intervals
@@ -135,7 +135,7 @@ std::string AirTelemetry::createDebug(){
 void AirTelemetry::add_settings_generic(const std::vector<openhd::Setting>& settings) {
   std::lock_guard<std::mutex> guard(components_lock);
   generic_mavlink_param_provider->add_params(settings);
-  std::cout<<"Added parameter component\n";
+  m_console->debug("Added parameter component");
 }
 
 void AirTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) {
@@ -156,7 +156,7 @@ void AirTelemetry::add_camera_component(const int camera_index, const std::vecto
   param_server->set_ready();
   std::lock_guard<std::mutex> guard(components_lock);
   components.push_back(param_server);
-  std::cout<<"Added camera component\n";
+  m_console->debug("Added camera component");
 }
 
 std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
@@ -205,17 +205,17 @@ void AirTelemetry::setup_uart() {
   // Disable the currently running uart configuration, if there is any
   std::lock_guard<std::mutex> guard(_serialEndpointMutex);
   if(serialEndpoint!=nullptr) {
-	std::cout<<"Stopping already existing FC UART\n";
+	m_console->info("Stopping already existing FC UART");
 	serialEndpoint->stop();
 	serialEndpoint.reset();
 	serialEndpoint=nullptr;
   }
   if(fc_uart_connection_type==openhd::UART_CONNECTION_TYPE_DISABLE){
 	// No uart enabled, we've already cleaned it up though
-	std::cout<<"FC UART disabled\n";
+	m_console->info("FC UART disabled");
 	return;
   }else{
-	std::cout<<"FC UART enable - begin\n";
+	m_console->debug("FC UART enable - begin");
 	SerialEndpoint::HWOptions options{};
 	options.linux_filename=openhd::uart_fd_from_connection_type(fc_uart_connection_type).value();
 	options.baud_rate=fc_uart_baudrate;
@@ -224,6 +224,6 @@ void AirTelemetry::setup_uart() {
 	serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	  this->onMessageFC(msg);
 	});
-	std::cout<<"FC UART enable - end\n";
+	m_console->debug("FC UART enable - end");
   }
 }
