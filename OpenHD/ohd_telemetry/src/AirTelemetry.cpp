@@ -185,11 +185,11 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     if(value==0){
       // change to ground mode. Remove any existing file(s) if there are any
       openhd::tmp::delete_any_file_air_or_ground();
-      OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_GROUND_1," ");
+      openhd::tmp::write_file_ground();
     }else{
       // change to air mode. Remove any existing file(s) if there are any
       openhd::tmp::delete_any_file_air_or_ground();
-      OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_AIR_1," ");
+      openhd::tmp::write_file_air();
     }
     return true;
   };
