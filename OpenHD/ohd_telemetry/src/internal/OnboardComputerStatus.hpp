@@ -8,6 +8,7 @@
 #include "OnboardComputerStatusHelper.h"
 #include "mav_include.h"
 #include "openhd-util.hpp"
+#include "openhd-spdlog.hpp"
 #include <sstream>
 #include <chrono>
 
@@ -25,7 +26,7 @@ static int readTemperature() {
 	fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
 	fscanf(fp, "%d", &cpu_temperature);
   } catch (...) {
-	std::cerr << "ERROR: thermal reading" << std::endl;
+	openhd::loggers::get_default()->warn("ERROR: thermal reading");
 	return -1;
   }
   fclose(fp);
@@ -59,7 +60,7 @@ static std::string everything_after_equal(const std::string &unparsed) {
   if (npos != std::string::npos) {
 	return unparsed.substr(npos + 1);
   }
-  std::cout << "everything_after_equal - no equal sign found\n";
+  openhd::loggers::get_default()->warn("everything_after_equal - no equal sign found");
   return unparsed;
 }
 
@@ -82,7 +83,6 @@ static int8_t read_temperature_soc_degree() {
 	return ret;
   }
   const auto tmp_float = vcgencmd_result_parse_float(vcgencmd_measure_temp_opt.value());
-  //std::cout << "soc_degree():{" << tmp_float << "}\n";
   return static_cast<int8_t>(lround(tmp_float));
 }
 static constexpr auto VCGENCMD_CLOCK_CPU="arm";
@@ -101,7 +101,6 @@ static int vcgencmd_measure_clock(const std::string& which){
 	return ret;
   }
   const auto tmp2 = vcgencmd_result_parse_long(vcgencmd_result.value());
-  //std::cout << "clock for "<<which<<" :{" << tmp2 << "}\n";
   return static_cast<int>(tmp2);
 }
 static int read_curr_frequency_mhz(const std::string& which){
@@ -131,7 +130,7 @@ static std::vector<MavlinkMessage> createOnboardComputerStatus(const uint8_t sys
   }
   const auto processing_time=std::chrono::steady_clock::now()-before;
   if(processing_time>std::chrono::milliseconds(100)){
-	std::cout<<"Warning: measuring stats took unexpected long:"<<std::chrono::duration_cast<std::chrono::milliseconds>(processing_time).count()<<" ms\n";
+        openhd::loggers::get_default()->debug("Warning: measuring stats took unexpected long: {}ms",std::chrono::duration_cast<std::chrono::milliseconds>(processing_time).count());
   }
   mavlink_msg_onboard_computer_status_encode(sys_id,comp_id,&msg.m,&mavlink_onboard_computer_status);
   std::vector<MavlinkMessage> ret;

@@ -6,6 +6,7 @@
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_
 
 #include "MEndpoint.hpp"
+#include "openhd-spdlog.hpp"
 #include <utility>
 #include <chrono>
 #include <mutex>
@@ -60,6 +61,7 @@ class SerialEndpoint : public MEndpoint{
   std::mutex _connectReceiveThreadMutex;
   std::unique_ptr<std::thread> _connectReceiveThread = nullptr;
   bool _stop_requested=false;
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_

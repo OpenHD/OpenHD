@@ -47,7 +47,10 @@ static bool is_serial_fd_still_connected(const int fd){
 SerialEndpoint::SerialEndpoint(std::string TAG1,SerialEndpoint::HWOptions options1):
 	MEndpoint(std::move(TAG1)),
 	_options(std::move(options1)){
-  std::cout<<"SerialEndpoint3: created with "<<_options.to_string()<<"\n";
+  m_console = spd::stdout_color_mt("ohd_t_serial_endp");
+  assert(m_console);
+  m_console->set_level(spd::level::debug);
+  m_console->info("SerialEndpoint: created with "+_options.to_string());
   start();
 }
 
@@ -63,7 +66,7 @@ bool SerialEndpoint::sendMessageImpl(const MavlinkMessage &message) {
 bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data) const {
   if(_fd==-1){
 	// cannot send data at the time, UART not setup / doesn't exist.
-	//std::cout<<"Cannot send data, no fd\n";
+	//m_console->warn("Cannot send data, no fd");
 	return false;
   }
   // If we have a fd, but the write fails, most likely the UART disconnected
@@ -72,7 +75,7 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data) const {
   if (send_len != data.size()) {
 	std::stringstream ss;
 	ss<<" Failure to write uart data: "<<data.size()<<" actual: "<<send_len<<GET_ERROR()<<"\n";
-	std::cerr << ss.str();
+	m_console->warn(ss.str());
 	return false;
   }
   return true;
@@ -183,7 +186,7 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options) {
 void SerialEndpoint::connect_and_read_loop() {
   while (!_stop_requested){
 	if(!OHDFilesystemUtil::exists(_options.linux_filename.c_str())){
-	  std::cout<<"UART file does not exist\n";
+	  m_console->warn("UART file does not exist");
 	  std::this_thread::sleep_for(std::chrono::seconds(1));
 	  continue;
 	}
@@ -191,7 +194,7 @@ void SerialEndpoint::connect_and_read_loop() {
 	_fd=setup_port(_options);
 	if(_fd==-1){
 	  // But if it fails, we start over again, checking if at least the linux fd exists
-	  std::cerr<<"Cannot create uart fd "<<_options.to_string()<<"\n";
+	  m_console->warn("Cannot create uart fd "+_options.to_string());
 	  std::this_thread::sleep_for(std::chrono::seconds(1));
 	  continue;
 	}
@@ -204,7 +207,7 @@ void SerialEndpoint::connect_and_read_loop() {
 }
 
 void SerialEndpoint::receive_data_until_error() {
-  std::cout<<"SerialEndpoint3::receive_data_until_error() begin\n";
+  m_console->debug("SerialEndpoint3::receive_data_until_error() begin");
   // Enough for MTU 1500 bytes.
   uint8_t buffer[2048];
 
@@ -221,14 +224,14 @@ void SerialEndpoint::receive_data_until_error() {
 	// and exit if not (which will lead to a re-start)
 	const auto valid= is_serial_fd_still_connected(_fd);
 	if(!valid){
-	  std::cout<<"Exiting serial, not connected\n";
+	  m_console->debug("Exiting serial, not connected");
 	  return;
 	}
 	//const auto delta=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-before).count();
 	//std::cout<<"Poll res:"<<pollrc<<" took:"<<delta<<" ms\n";
 	//debug_poll_fd(fds[0]);
 	if (pollrc == 0 || !(fds[0].revents & POLLIN)) {
-	  std::cout<<"poll probably timeout\n";
+	  m_console->debug("poll probably timeout");
 	  continue;
 	} else if (pollrc == -1) {
 	  std::cerr<< "read poll failure: " << GET_ERROR();
@@ -247,28 +250,28 @@ void SerialEndpoint::receive_data_until_error() {
 	//std::cout<<"UART got data\n";
 	MEndpoint::parseNewData(buffer,recv_len);
   }
-  std::cout<<"SerialEndpoint3::receive_data_until_error() end\n";
+  m_console->debug("SerialEndpoint3::receive_data_until_error() end");
 }
 
 void SerialEndpoint::start() {
   std::lock_guard<std::mutex> lock(_connectReceiveThreadMutex);
-  std::cout<<"SerialEndpoint3::start()-begin\n";
+  m_console->debug("SerialEndpoint::start()-begin");
   if(_connectReceiveThread!= nullptr){
-	std::cout<<"Already started\n";
+	m_console->debug("Already started");
 	return;
   }
   _connectReceiveThread=std::make_unique<std::thread>(&SerialEndpoint::connect_and_read_loop, this);
-  std::cout<<"SerialEndpoint3::start()-end\n";
+  m_console->debug("SerialEndpoint::start()-end");
 }
 
 void SerialEndpoint::stop() {
   std::lock_guard<std::mutex> lock(_connectReceiveThreadMutex);
-  std::cout<<"SerialEndpoint3::stop()-begin\n";
+  m_console->debug("SerialEndpoint3::stop()-begin");
   _stop_requested=true;
   if (_connectReceiveThread && _connectReceiveThread->joinable()) {
 	_connectReceiveThread->join();
   }
   _connectReceiveThread = nullptr;
-  std::cout<<"SerialEndpoint3::stop()-end\n";
+  m_console->debug("SerialEndpoint3::stop()-end");
 }
 
