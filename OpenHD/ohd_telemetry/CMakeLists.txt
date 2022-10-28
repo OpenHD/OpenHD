@@ -100,6 +100,9 @@ target_link_libraries(OHDTelemetryLib PRIVATE ${OHD_TELEMETRY_USED_BOOST_LIBS}
         )
 target_link_libraries(OHDTelemetryLib PUBLIC Threads::Threads)
 
+find_package(spdlog REQUIRED)
+target_link_libraries(OHDTelemetryLib PRIVATE spdlog::spdlog)
+
 # include mavlink (header-only)
 add_library(mavlink INTERFACE)
 target_include_directories(mavlink INTERFACE ../lib/c_library_v2_openhd/)

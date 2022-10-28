@@ -8,6 +8,7 @@
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-spdlog.hpp"
 #include <chrono>
 #include <thread>
 #include <utility>
@@ -19,9 +20,7 @@ namespace openhd::rpi{
 static void toggle_red_led(const bool on,const bool debug=true){
   int ret;
   if(!OHDFilesystemUtil::exists("/sys/class/leds/led1/brightness")){
-	if(debug){
-	  std::cout<<"RPI LED1 brightness does not exist\n";
-	}
+        openhd::loggers::get_default()->debug("RPI LED1 brightness does not exist\n");
 	return;
   }
   if(on){
@@ -34,9 +33,7 @@ static void toggle_red_led(const bool on,const bool debug=true){
 static void toggle_green_led(const bool on,const bool debug=true){
   int ret;
   if(!OHDFilesystemUtil::exists("/sys/class/leds/led0/brightness")){
-	if(debug){
-	  std::cout<<"RPI LED0 brightness does not exist\n";
-	}
+	openhd::loggers::get_default()->debug("RPI LED0 brightness does not exist");
 	return;
   }
   if(on){

@@ -4,6 +4,10 @@ project(OpenHD-Common
     DESCRIPTION "OpenHD common heades"
     LANGUAGES CXX)
 
+# from https://mavlink.io/en/mavgen_c/
+#You can supress the warnings in CMake using
+add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
+
 #----------------------------------------------------------------------------------------------------------------------
 # general settings and options
 #----------------------------------------------------------------------------------------------------------------------
@@ -18,6 +22,9 @@ endif()
 
 add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
+
+find_package(spdlog REQUIRED)
+target_link_libraries(OHDCommonLib PRIVATE spdlog::spdlog)
 
 #----------------------------------------------------------------------------------------------------------------------
 # sources

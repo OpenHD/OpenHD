@@ -12,4 +12,5 @@ sudo apt -y install cmake build-essential autotools-dev automake libtool autocon
             libv4l-dev \
             libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
             libsdl2-dev \
-            libfmt-dev || exit 1
+            libfmt-dev \
+            libspdlog-dev || exit 1

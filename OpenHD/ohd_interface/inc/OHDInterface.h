@@ -17,6 +17,7 @@
 #include "mavlink_settings/ISettingsComponent.hpp"
 #include "OHDInterfaceSettings.h"
 #include "openhd-external-device.hpp"
+#include "openhd-spdlog.hpp"
 
  class OHDInterface :public openhd::ISettingsComponent{
  public:
@@ -61,6 +62,7 @@
   std::shared_ptr<openhd::OHDInterfaceSettingsHolder> _interface_settings_holder;
   std::mutex _external_device_callback_mutex;
   openhd::EXTERNAL_DEVICE_CALLBACK _external_device_callback= nullptr;
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif //OPENHD_OPENHD_INTERFACE_H

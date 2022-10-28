@@ -15,6 +15,8 @@
 #include <cassert>
 #include <functional>
 
+#include "../openhd-spdlog.hpp"
+
 namespace openhd{
 
 // These extra settings implementations exist to avoid a direct dependency on mavlink on any modules that are configurable.
@@ -32,8 +34,8 @@ struct SettingImpl{
   // But in general, all OpenHD modules that are configurable overwrite this callback with their own proper implementation.
   std::function<bool(std::string id,T requested_value)> change_callback=[](std::string id,T requested_value){
 	std::stringstream ss;
-	ss<<"Requested change "<<id<<" to "<<requested_value<<"\n";
-	std::cout<<ss.str();
+	ss<<"Requested change "<<id<<" to "<<requested_value;
+	openhd::loggers::get_default()->debug(ss.str());
 	return true;
   };
 };

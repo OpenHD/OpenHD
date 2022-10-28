@@ -14,6 +14,8 @@
 #include <utility>
 #include <atomic>
 
+#include "openhd-spdlog.hpp"
+
 // WARNING BE CAREFULL TO REMOVE ON RELEASE
 //#define OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
 
@@ -37,7 +39,7 @@ class MEndpoint {
    * @param mavlink_channel the mavlink channel to use for parsing.
    */
   explicit MEndpoint(std::string tag) : TAG(std::move(tag)),m_mavlink_channel(checkoutFreeChannel()) {
-	std::cout<<TAG<<" using channel:"<<(int)m_mavlink_channel<<"\n";
+        openhd::loggers::get_default()->debug(TAG+" using channel:{}",m_mavlink_channel);
   };
   /**
    * send a message via this endpoint.
@@ -50,7 +52,7 @@ class MEndpoint {
 #ifdef OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
     const auto rand= random_number(0,100);
     if(rand>50){
-      std::cout<<"Emulate packet loss - dropped packet\n";
+      openhd::loggers::get_default()->debug("Emulate packet loss - dropped packet");
       return;
     }
 #endif
@@ -66,7 +68,7 @@ class MEndpoint {
   void registerCallback(MAV_MSG_CALLBACK cb) {
 	if (callback != nullptr) {
 	  // this might be a common programming mistake - you can only register one callback here
-	  std::cerr << "Overwriting already existing callback\n";
+	  openhd::loggers::get_default()->warn("Overwriting already existing callback");
 	}
 	callback = std::move(cb);
   }
@@ -82,8 +84,8 @@ class MEndpoint {
    */
   void debugIfAlive()const {
 	std::stringstream ss;
-	ss << TAG << " alive:" << (isAlive() ? "Y" : "N") << "\n";
-	std::cout << ss.str();
+	ss << TAG << " alive:" << (isAlive() ? "Y" : "N");
+        openhd::loggers::get_default()->debug(ss.str());
   }
   [[nodiscard]] std::string createInfo()const{
 	std::stringstream ss;
@@ -95,7 +97,7 @@ class MEndpoint {
  protected:
   // parse new data as it comes in, extract mavlink messages and forward them on the registered callback (if it has been registered)
   void parseNewData(const uint8_t *data,const int data_len) {
-	//std::cout<<TAG<<" received data:"<<data_len<<" "<<MavlinkHelpers::raw_content(data,data_len)<<"\n";
+	//<<TAG<<" received data:"<<data_len<<" "<<MavlinkHelpers::raw_content(data,data_len)<<"\n";
 	int nMessages=0;
 	mavlink_message_t msg;
 	for (int i = 0; i < data_len; i++) {
@@ -105,8 +107,8 @@ class MEndpoint {
 		onNewMavlinkMessage(msg);
 	  }
 	}
-	//std::cout<<TAG<<" N messages:"<<nMessages<<"\n";
-	//std::cout<<TAG<<MavlinkHelpers::mavlink_status_to_string(receiveMavlinkStatus)<<"\n";
+	//<<TAG<<" N messages:"<<nMessages<<"\n";
+	//<<TAG<<MavlinkHelpers::mavlink_status_to_string(receiveMavlinkStatus)<<"\n";
   }
   // this one is special, since mavsdk in this case has already done the message parsing
   void parseNewDataEmulateForMavsdk(mavlink_message_t msg){
@@ -123,8 +125,8 @@ class MEndpoint {
 #ifdef OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
     const auto rand= random_number(0,100);
     if(rand>50){
-      std::cout<<"Emulate packet loss - dropped packet\n";
-      return;
+      openhd::loggers::get_default()->debug("Emulate packet loss - dropped packet");
+      return;1
     }
 #endif
 	lastMessage = std::chrono::steady_clock::now();
@@ -132,7 +134,7 @@ class MEndpoint {
 	if (callback != nullptr) {
 	  callback(message);
 	} else {
-	  std::cerr << "No callback set,did you forget to add it ?\n";
+	  openhd::loggers::get_default()->warn("No callback set,did you forget to add it ?");
 	}
 	m_n_messages_received++;
   }

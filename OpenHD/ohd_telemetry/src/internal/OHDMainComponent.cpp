@@ -14,6 +14,9 @@ OHDMainComponent::OHDMainComponent(
     bool runsOnAir,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
 	platform(platform1),RUNS_ON_AIR(runsOnAir),_opt_action_handler(opt_action_handler),
 	MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
+  m_console = spd::stdout_color_mt("tele_main_comp");
+  assert(m_console);
+  m_console->set_level(spd::level::debug);
   logMessagesReceiver =
       std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
                                                   OHD_LOCAL_LOG_MESSAGES_UDP_PORT,
@@ -26,7 +29,7 @@ OHDMainComponent::OHDMainComponent(
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
-  //std::cout<<"InternalTelemetry::generate_mavlink_messages()\n";
+  //m_console->debug("InternalTelemetry::generate_mavlink_messages()\n";
   std::vector<MavlinkMessage> ret;
   ret.push_back(MavlinkComponent::create_heartbeat());
   const bool is_platform_rpi=platform.platform_type==PlatformType::RaspberryPi;
@@ -65,10 +68,10 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
     case MAVLINK_MSG_ID_COMMAND_LONG:{
       mavlink_command_long_t command;
       mavlink_msg_command_long_decode(&msg.m,&command);
-      std::cout<<"Got MAVLINK_MSG_ID_COMMAND_LONG:"<<command.command<<" "<<static_cast<uint32_t>(command.param1)<<"\n";
+      m_console->debug("Got MAVLINK_MSG_ID_COMMAND_LONG: {} {}",command.command,static_cast<uint32_t>(command.param1));
       if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
         //https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
-        std::cout<<"Got shutdown command";
+        m_console->debug("Got shutdown command");
 		if(command.target_system==_sys_id){
 		  // we are a companion computer, so we use param2 to get the actual action
 		  const auto action_for_companion=command.param2;
@@ -87,9 +90,9 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
 		}
       }else if(command.command==MAV_CMD_REQUEST_MESSAGE){
         const auto requested_message_id=static_cast<uint32_t>(command.param1);
-        std::cout<<"Someone requested a specific message: "<<requested_message_id<<"\n";
+        m_console->debug("Someone requested a specific message: {}",requested_message_id);
         if(requested_message_id==MAVLINK_MSG_ID_OPENHD_VERSION_MESSAGE){
-          std::cout<<"Sent OpenHD version\n";
+          m_console->info("Sent OpenHD version");
           ret.push_back(generateOpenHDVersion());
         }
       }
@@ -103,7 +106,6 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
 
 std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
   std::lock_guard<std::mutex> guard(_last_link_stats_mutex);
-  //std::cout<<_last_link_stats<<"\n";
   std::vector<MavlinkMessage> ret;
   // stats for all the wifi card(s)
   for(int i=0;i<_last_link_stats.stats_all_cards.size();i++){
@@ -141,14 +143,13 @@ std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
   // limit to 5 to save bandwidth
   for(const auto& msg:messages){
     if (ret.size() < 5) {
-      //std::cout<<"Msg:"<<msg.message<<"\n";
       MavlinkMessage mavMsg;
       StatusTextAccumulator::convert(mavMsg.m,msg,_sys_id,_comp_id);
       ret.push_back(mavMsg);
     } else {
       std::stringstream ss;
-      ss << "Dropping log message " << msg.message << "\n";
-      std::cout << ss.str();
+      ss << "Dropping log message " << msg.message;
+      m_console->debug(ss.str());
     }
   }
   return ret;
@@ -164,7 +165,7 @@ MavlinkMessage OHDMainComponent::generateOpenHDVersion() const {
 }
 
 void OHDMainComponent::set_link_statistics(openhd::link_statistics::AllStats stats){
-  //std::cout<<"OHDMainComponent::set_link_statistics\n";
+  //m_console->debug("OHDMainComponent::set_link_statistics");
   std::lock_guard<std::mutex> guard(_last_link_stats_mutex);
   _last_link_stats=stats;
 }

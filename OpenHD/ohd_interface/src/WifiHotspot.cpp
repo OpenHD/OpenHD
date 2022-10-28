@@ -4,9 +4,11 @@
 
 #include "WifiHotspot.h"
 
+#include "openhd-spdlog.hpp"
 #include <utility>
 
-// From https://www.raspberryconnect.com/projects/65-raspberrypi-hotspot-accesspoints/157-raspberry-pi-auto-wifi-hotspot-switch-internet,
+// From
+// https://www.raspberryconnect.com/projects/65-raspberrypi-hotspot-accesspoints/157-raspberry-pi-auto-wifi-hotspot-switch-internet,
 // Works on raspberry pi 4
 static std::string createHostapdConfigFile(const std::string& interface_name){
   std::stringstream ss;
@@ -52,7 +54,7 @@ wifiCard(std::move(wifiCard)) {
 }
 
 void WifiHotspot::start() {
-  std::cerr<<"Starting WIFI hotspot on card:"<<wifiCard.interface_name<<"\n";
+  openhd::loggers::get_default()->debug("Starting WIFI hotspot on card:"+wifiCard.interface_name);
 
   // First, we make sure the pi gives out IP addresses on the hotspot interface
   // First, cleanup already existing
@@ -103,7 +105,7 @@ void WifiHotspot::start() {
   dhcpd_conf << dhcpd_conf_content;
   dhcpd_conf.close();*/
   started= true;
-  std::cerr<<"Wifi hotspot started\n";
+  openhd::loggers::get_default()->info("Wifi hotspot started");
 }
 
 void WifiHotspot::stop() {
@@ -119,7 +121,7 @@ void WifiHotspot::stop() {
 
   OHDUtil::run_command("systemctl",{"disable dnsmasq"});
   OHDUtil::run_command("systemctl",{"stop dnsmasq"});
-  std::cout<<"Wifi hotspot stopped\n";
+  openhd::loggers::get_default()->info("Wifi hotspot stopped");
 }
 
 void WifiHotspot::start_async() {

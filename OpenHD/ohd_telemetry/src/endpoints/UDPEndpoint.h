@@ -7,6 +7,7 @@
 
 #include "MEndpoint.hpp"
 #include "HelperSources/SocketHelper.hpp"
+#include "openhd-spdlog.hpp"
 #include <thread>
 
 // Wraps two UDP ports, one for sending and one for receiving data
@@ -29,6 +30,7 @@ class UDPEndpoint : public MEndpoint {
   const int RECV_PORT;
   std::unique_ptr<SocketHelper::UDPReceiver> receiver;
   std::unique_ptr<SocketHelper::UDPForwarder> transmitter;
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif //XMAVLINKSERVICE_UDPENDPOINT_H

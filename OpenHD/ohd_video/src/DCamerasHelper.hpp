@@ -47,7 +47,7 @@ static void enableFlirIfFound() {
   libusb_context *context = nullptr;
   int result = libusb_init(&context);
   if (result) {
-    std::cerr << "Failed to initialize libusb" << std::endl;
+    openhd::loggers::get_default()->warn("Failed to initialize libusb");
     return;
   }
   libusb_device_handle *handle = libusb_open_device_with_vid_pid(
@@ -81,7 +81,7 @@ static void enableSeekIfFound() {
   libusb_context *context = nullptr;
   int result = libusb_init(&context);
   if (result) {
-    std::cerr << "Failed to initialize libusb" << std::endl;
+   openhd::loggers::get_default()->warn("Failed to initialize libusb");
     return;
   }
 
@@ -98,13 +98,13 @@ static void enableSeekIfFound() {
   std::string fps;
 
   if (handle_compact) {
-    std::cout << "Found seek" << std::endl;
+    openhd::loggers::get_default()->debug("Found seek");
     model = "seek";
     fps = "7";
   }
 
   if (handle_compact_pro) {
-    std::cout << "Found seekpro" << std::endl;
+    openhd::loggers::get_default()->debug("Found seekpro");
     model = "seekpro";
     // todo: this is not necessarily accurate, not all compact pro models are
     // 15hz
@@ -112,7 +112,7 @@ static void enableSeekIfFound() {
   }
 
   if (handle_compact_pro || handle_compact) {
-    std::cout << "Found seek thermal camera" << std::endl;
+    openhd::loggers::get_default()->debug("Found seek thermal camera");
 
     std::ofstream _u("/etc/openhd/seekthermal.conf",
                      std::ios::binary | std::ios::out);

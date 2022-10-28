@@ -14,15 +14,19 @@
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,uint16_t video_udp_port)
     : CameraStream(platform, camera_holder, video_udp_port) {
-  std::cout << "GStreamerStream::GStreamerStream()\n";
+  m_console=spdlog::stdout_color_mt("ohd_video_gststream");
+  assert(m_console);
+  // TODO fixme
+  m_console->set_level(spd::level::debug);
+  m_console->debug("GStreamerStream::GStreamerStream()");
   // Since the dummy camera is SW, we generally cannot do more than 640x480@30 anyways.
   // (640x48@30 might already be too much on embedded devices).
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
   if (camera.type == CameraType::Dummy && setting.userSelectedVideoFormat.width > 640 ||
       setting.userSelectedVideoFormat.height > 480 || setting.userSelectedVideoFormat.framerate > 30) {
-    std::cout<<"Warning- Dummy camera is done in sw, high resolution/framerate might not work\n";
-    std::cout<<"Configured dummy for:" << setting.userSelectedVideoFormat.toString() << "\n";
+    m_console->warn("Warning- Dummy camera is done in sw, high resolution/framerate might not work");
+    m_console->warn("Configured dummy for:"+setting.userSelectedVideoFormat.toString());
   }
   _camera_holder->register_listener([this](){
     // right now, every time the settings for this camera change, we just re-start the whole stream.
@@ -35,21 +39,20 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   });
   // sanity checks
   if(!check_bitrate_sane(setting.bitrateKBits)){
-    //std::cerr << "manually fixing insane camera bitrate" << m_camera.settings.bitrateKBits << "\n";
-    //m_camera.settings.bitrateKBits=DEFAULT_BITRATE_KBITS;
+    // not really needed
   }
   assert(setting.userSelectedVideoFormat.isValid());
   OHDGstHelper::initGstreamerOrThrow();
-  std::cout << "GStreamerStream::GStreamerStream done\n";
+  m_console->debug("GStreamerStream::GStreamerStream done");
 }
 
 void GStreamerStream::setup() {
-  std::cout << "GStreamerStream::setup() begin\n";
+  m_console->debug("GStreamerStream::setup() begin");
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
   if(!setting.enable_streaming){
 	// When streaming is disabled, we just don't create the pipeline. We fully restart on all changes anyways.
-	std::cout<<"Streaming disabled\n";
+	m_console->info("Streaming disabled");
 	return;
   }
   m_pipeline.str("");
@@ -85,22 +88,22 @@ void GStreamerStream::setup() {
 	}
 	case CameraType::RaspberryPiVEYE:
 	case CameraType::RockchipCSI:
-	  std::cerr << "Veye and rockchip are unsupported at the time\n";
+          m_console->error("Veye and rockchip are unsupported at the time");
 	  return;
 	case CameraType::Unknown: {
-	  std::cerr << "Unknown camera type" << std::endl;
+	  m_console->warn( "Unknown camera type");
 	  return;
 	}
   }
   // quick check,here the pipeline should end with a "! ";
   if(!OHDUtil::endsWith(m_pipeline.str(),"! ")){
-	std::cerr<<"Probably ill-formatted pipeline:"<<m_pipeline.str()<<"\n";
+	m_console->error("Probably ill-formatted pipeline:"+m_pipeline.str());
   }
   // TODO: ground recording is not working yet, since we cannot properly close the file at the time.
   //setting.enableAirRecordingToFile = false;
   // for lower latency we only add the tee command at the right place if recording is enabled.
   if(setting.air_recording==Recording::ENABLED){
-	std::cout<<"Air recording active\n";
+	m_console->info("Air recording active");
 	m_pipeline<<"tee name=t ! ";
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
@@ -119,24 +122,24 @@ void GStreamerStream::setup() {
         {
           std::stringstream ss;
           ss<<"Using ["<<recording_filename<<"] for recording\n";
-          std::cout<<ss.str();
+          m_console->debug(ss.str());
         }
 	m_pipeline<<OHDGstHelper::createRecordingForVideoCodec(setting.userSelectedVideoFormat.videoCodec,recording_filename);
   }
-  std::cout << "Starting pipeline:" << m_pipeline.str() << std::endl;
+  m_console->debug("Starting pipeline:"+m_pipeline.str());
   // Protect against unwanted use - stop and free the pipeline first
   assert(gst_pipeline== nullptr);
   GError *error = nullptr;
   gst_pipeline = gst_parse_launch(m_pipeline.str().c_str(), &error);
-  std::cout << "GStreamerStream::setup() end\n";
+  m_console->debug("GStreamerStream::setup() end");
   if (error) {
-	std::cerr << "Failed to create pipeline: " << error->message << std::endl;
+	m_console->error( "Failed to create pipeline: {}",error->message);
 	return;
   }
 }
 
 void GStreamerStream::setup_raspberrypi_csi() {
-  std::cout << "Setting up Raspberry Pi CSI camera" << std::endl;
+  m_console->debug("Setting up Raspberry Pi CSI camera");
   // similar to jetson, for now we assume there is only one CSI camera connected.
   const auto& setting=_camera_holder->get_settings();
   m_pipeline<< OHDGstHelper::createRpicamsrcStream(-1, setting.bitrateKBits, setting.userSelectedVideoFormat,setting.keyframe_interval,
@@ -145,7 +148,7 @@ void GStreamerStream::setup_raspberrypi_csi() {
 }
 
 void GStreamerStream::setup_libcamera() {
-  std::cout << "Setting up Raspberry Pi libcamera camera" << std::endl;
+  m_console->debug("Setting up Raspberry Pi libcamera camera");
   // similar to jetson, for now we assume there is only one CSI camera
   // connected.
   const auto& setting = _camera_holder->get_settings();
@@ -156,7 +159,7 @@ void GStreamerStream::setup_libcamera() {
 }
 
 void GStreamerStream::setup_jetson_csi() {
-  std::cout << "Setting up Jetson CSI camera" << std::endl;
+  m_console->debug("Setting up Jetson CSI camera");
   // Well, i fixed the bug in the detection, with v4l2_open.
   // But still, /dev/video1 can be camera index 0 on jetson.
   // Therefore, for now, we just default to no camera index rn and let nvarguscamerasrc figure out the camera index.
@@ -168,17 +171,17 @@ void GStreamerStream::setup_jetson_csi() {
 void GStreamerStream::setup_usb_uvc() {
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
-  std::cout << "Setting up usb UVC camera Name:" << camera.name << " type:" << camera_type_to_string(camera.type) << std::endl;
+  m_console->debug("Setting up usb UVC camera Name:"+camera.name+" type:"+camera_type_to_string(camera.type));
   // First we try and start a hw encoded path, where v4l2src directly provides encoded video buffers
   for (const auto &endpoint: camera.endpoints) {
 	if (setting.userSelectedVideoFormat.videoCodec == VideoCodec::H264 && endpoint.support_h264) {
-	  std::cerr << "h264" << std::endl;
+	  m_console->debug("h264");
 	  const auto device_node = endpoint.device_node;
 	  m_pipeline << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting.userSelectedVideoFormat);
 	  return;
 	}
 	if (setting.userSelectedVideoFormat.videoCodec == VideoCodec::MJPEG && endpoint.support_mjpeg) {
-	  std::cerr << "MJPEG" << std::endl;
+	  m_console->debug("MJPEG");
 	  const auto device_node = endpoint.device_node;
 	  m_pipeline << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting.userSelectedVideoFormat);
 	  return;
@@ -186,7 +189,7 @@ void GStreamerStream::setup_usb_uvc() {
   }
   // If we land here, we need to do SW encoding, the v4l2src can only do raw video formats like YUV
   for (const auto &endpoint: camera.endpoints) {
-	std::cout << "empty" << std::endl;
+	m_console->debug("empty");
 	if (endpoint.support_raw) {
 	  const auto device_node = endpoint.device_node;
           m_pipeline << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,
@@ -196,11 +199,11 @@ void GStreamerStream::setup_usb_uvc() {
 	}
   }
   // If we land here, we couldn't create a stream for this camera.
-  std::cerr << "Setup USB UVC failed\n";
+  m_console->error("Setup USB UVC failed");
 }
 
 void GStreamerStream::setup_usb_uvch264() {
-  std::cout << "Setting up UVC H264 camera" << std::endl;
+  m_console->debug("Setting up UVC H264 camera");
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
   const auto endpoint = camera.endpoints.front();
@@ -211,7 +214,7 @@ void GStreamerStream::setup_usb_uvch264() {
 }
 
 void GStreamerStream::setup_ip_camera() {
-  std::cout << "Setting up IP camera" << std::endl;
+  m_console->debug("Setting up IP camera");
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
   if (setting.url.empty()) {
@@ -221,7 +224,7 @@ void GStreamerStream::setup_ip_camera() {
 }
 
 void GStreamerStream::setup_sw_dummy_camera() {
-  std::cout << "Setting up SW dummy camera\n";
+  m_console->debug("Setting up SW dummy camera");
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
   m_pipeline << OHDGstHelper::createDummyStream(setting.userSelectedVideoFormat,setting.bitrateKBits,setting.keyframe_interval,setting.mjpeg_quality_percent);
@@ -247,43 +250,43 @@ std::string GStreamerStream::createDebug(){
 }
 
 void GStreamerStream::start() {
-  std::cout << "GStreamerStream::start()\n";
+  m_console->debug("GStreamerStream::start()");
   if(!gst_pipeline){
-	std::cout<<"gst_pipeline==null\n";
+	m_console->warn("gst_pipeline==null");
 	return;
   }
   gst_element_set_state(gst_pipeline, GST_STATE_PLAYING);
   GstState state;
   GstState pending;
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
-  std::cout << "Gst state:" << returnValue << "." << state << "." << pending << "." << std::endl;
+  m_console->debug("Gst state: {} {}.{}",returnValue,state,pending);
 }
 
 void GStreamerStream::stop() {
-  std::cout << "GStreamerStream::stop()\n";
+  m_console->debug("GStreamerStream::stop()");
   if(!gst_pipeline){
-	std::cout<<"gst_pipeline==null\n";
+	m_console->debug("gst_pipeline==null");
 	return;
   }
   gst_element_set_state(gst_pipeline, GST_STATE_PAUSED);
 }
 
 void GStreamerStream::cleanup_pipe() {
-  std::cout<<"GStreamerStream::cleanup_pipe() begin\n";
+  m_console->debug("GStreamerStream::cleanup_pipe() begin");
   if(!gst_pipeline){
-	std::cout<<"gst_pipeline==null\n";
+	m_console->debug("gst_pipeline==null");
 	return;
   }
   gst_element_set_state (gst_pipeline, GST_STATE_NULL);
   gst_object_unref (gst_pipeline);
   gst_pipeline=nullptr;
-  std::cout<<"GStreamerStream::cleanup_pipe() end\n";
+  m_console->debug("GStreamerStream::cleanup_pipe() end");
 }
 
 void GStreamerStream::restartIfStopped() {
   std::lock_guard<std::mutex> guard(_pipeline_mutex);
   if(!gst_pipeline){
-	std::cout<<"gst_pipeline==null\n";
+	m_console->debug("gst_pipeline==null");
 	return;
   }
   GstState state;
@@ -299,20 +302,20 @@ void GStreamerStream::restartIfStopped() {
 	cleanup_pipe();
 	setup();
 	start();
-	std::cerr<<"Restarted\n";
+	m_console->debug("Restarted");
   }
 }
 
 // Restart after a new settings value has been applied
 void GStreamerStream::restart_after_new_setting() {
   std::lock_guard<std::mutex> guard(_pipeline_mutex);
-  std::cout<<"GStreamerStream::restart_after_new_setting() begin\n";
+  m_console->debug("GStreamerStream::restart_after_new_setting() begin");
   stop();
   // R.N we need to fully re-set the pipeline if any camera setting has changed
   cleanup_pipe();
   setup();
   start();
-  std::cout<<"GStreamerStream::restart_after_new_setting() end\n";
+  m_console->debug("GStreamerStream::restart_after_new_setting() end");
 }
 
 void GStreamerStream::restart_async() {
@@ -321,7 +324,7 @@ void GStreamerStream::restart_async() {
   // If the user was to change parameters to quickly, this would be a problem.
   if(_async_thread!= nullptr){
 	if(_async_thread->joinable()){
-	  std::cout<<"restart_async: waiting for previous operation to finish\n";
+	  m_console->debug("restart_async: waiting for previous operation to finish");
 	  _async_thread->join();
 	}
 	_async_thread=nullptr;

@@ -12,6 +12,9 @@
 #include "mav_helper.h"
 
 GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
+  m_console = spd::stdout_color_mt("ohd_ground_tele");
+  assert(m_console);
+  m_console->set_level(spd::level::debug);
   /*udpGroundClient =std::make_unique<UDPEndpoint>("GroundStationUDP",
                                                                                                  OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
                                                                                                  "127.0.0.1","127.0.0.1",true);//127.0.0.1
@@ -38,7 +41,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   components.push_back(generic_mavlink_param_provider);
   // temporary
   //m_joystick_reader=std::make_unique<JoystickReader>();
-  std::cout << "Created GroundTelemetry\n";
+  m_console->debug("Created GroundTelemetry");
 }
 
 void GroundTelemetry::onMessageAirPi(MavlinkMessage &message) {
@@ -99,13 +102,13 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 	const auto loopBegin=std::chrono::steady_clock::now();
 	if(std::chrono::steady_clock::now()-last_log>=log_intervall) {
 	  last_log = std::chrono::steady_clock::now();
-	  //std::cout << "GroundTelemetry::loopInfinite()\n";
+	  //m_console->debug("GroundTelemetry::loopInfinite()");
 	  // for debugging, check if any of the endpoints is not alive
 	  if (enableExtendedLogging && udpWifibroadcastEndpoint) {
-		std::cout<<udpWifibroadcastEndpoint->createInfo();
+		m_console->debug(udpWifibroadcastEndpoint->createInfo());
 	  }
 	  if (enableExtendedLogging && udpGroundClient) {
-		std::cout<<udpGroundClient->createInfo();
+		m_console->debug(udpGroundClient->createInfo());
 	  }
 	}
 	// send messages to the ground station in regular intervals, includes heartbeat.
@@ -120,7 +123,7 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 		  sendMessageGroundStationClients(msg);
 		  if(msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT && msg.m.compid==MAV_COMP_ID_ONBOARD_COMPUTER){
 			// but we send heartbeats to the air pi anyways, just to keep the link active.
-			//std::cout<<"Heartbeat sent to air unit\n";
+			//m_console->debug("Heartbeat sent to air unit");
 			sendMessageAirPi(msg);
 		  }
 		}
@@ -131,8 +134,8 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 	  // We can't keep up with the wanted loop interval
 	  std::stringstream ss;
 	  ss<<"Warning GroundTelemetry cannot keep up with the wanted loop interval. Took:"
-		<<std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count()<<"ms\n";
-	  std::cout<<ss.str();
+		<<std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count()<<"ms";
+	  m_console->debug(ss.str());
 	}else{
 	  const auto sleepTime=loop_intervall-loopDelta;
 	  // send out in X second intervals
@@ -145,10 +148,10 @@ std::string GroundTelemetry::createDebug() const {
   std::stringstream ss;
   //ss<<"GT:\n";
   if (udpWifibroadcastEndpoint) {
-	std::cout<<udpWifibroadcastEndpoint->createInfo();
+	ss<<udpWifibroadcastEndpoint->createInfo();
   }
   if (udpGroundClient) {
-	std::cout<<udpGroundClient->createInfo();
+	ss<<udpGroundClient->createInfo();
   }
   return ss.str();
 }
@@ -156,7 +159,7 @@ std::string GroundTelemetry::createDebug() const {
 void GroundTelemetry::add_settings_generic(const std::vector<openhd::Setting>& settings) {
   std::lock_guard<std::mutex> guard(components_lock);
   generic_mavlink_param_provider->add_params(settings);
-  std::cout<<"Added parameter component\n";
+  m_console->debug("Added parameter component");
 }
 
 void GroundTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) {
@@ -172,9 +175,9 @@ void GroundTelemetry::settings_generic_ready() {
 void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device) {
   std::stringstream ss;
   ss<<"GroundTelemetry::add_external_ground_station_ip:ip_openhd:["<<ip_openhd<<",ip_dest_device:"<<ip_dest_device<<"]\n";
-  std::cout<<ss.str();
+  m_console->debug(ss.str());
   if(!OHDUtil::is_valid_ip(ip_openhd) || !OHDUtil::is_valid_ip(ip_dest_device)){
-	std::cerr<<"These are no valid IPs, skipping\n";
+	m_console->warn("These are no valid IPs, skipping");
 	return;
   }
   std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
@@ -191,7 +194,7 @@ void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openh
 	const bool is_from_ground_controll=mavlinkMessage.m.sysid==255 || mavlinkMessage.m.sysid==225;
 	if(!is_from_ground_controll){
 	  // This can't really be a message from a ground controll application
-	  //std::cout<<"Dropping message\n";
+	  //m_console->debug("Dropping message");
 	  return;
 	}
 	//debugMavlinkMessage(mavlinkMessage.m, "GroundTelemetry::external GCS message");
@@ -203,9 +206,9 @@ void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openh
 void GroundTelemetry::remove_external_ground_station_ip(const std::string &ip_openhd,const std::string& ip_dest_device) {
   std::stringstream ss;
   ss<<"GroundTelemetry::remove_external_ground_station_ip:ip_openhd:["<<ip_openhd<<",ip_dest_device:"<<ip_dest_device<<"]\n";
-  std::cout<<ss.str();
+  m_console->debug(ss.str());
   if(!OHDUtil::is_valid_ip(ip_openhd) || !OHDUtil::is_valid_ip(ip_dest_device)){
-	std::cerr<<"These are no valid IPs, skipping\n";
+	m_console->debug("These are no valid IPs, skipping");
 	return;
   }
   std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);

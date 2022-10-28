@@ -11,7 +11,10 @@
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) :
 platform(platform1),profile(std::move(profile1)) {
-  std::cout << "OHDInterface::OHDInterface()\n";
+  m_console = spd::stdout_color_mt("ohd_interface_x");
+  assert(m_console);
+  m_console->set_level(spd::level::debug);
+  m_console->debug("OHDInterface::OHDInterface()");
   //wifiCards = std::make_unique<WifiCards>(profile);
   //Find out which cards are connected first
   auto discovered_wifi_cards=DWifiCards::discover();
@@ -20,13 +23,13 @@ platform(platform1),profile(std::move(profile1)) {
   for(const auto& card:discovered_wifi_cards){
     wifi_cards.push_back(std::make_shared<WifiCardHolder>(card));
     std::stringstream message;
-    message << "OHDInterface:: found wifi card: (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name << std::endl;
-    std::cout<<message.str();
+    message << "OHDInterface:: found wifi card: (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name;
+    m_console->debug(message.str());
   }
   // now check if any settings are messed up
   for(const auto& card : wifi_cards){
     if (card->get_settings().use_for == WifiUseFor::MonitorMode && !card->_wifi_card.supports_injection) {
-      std::cerr << "Cannot use monitor mode on card that cannot inject\n";
+      m_console->warn("Cannot use monitor mode on card that cannot inject");
     }
   }
   _interface_settings_holder=std::make_shared<openhd::OHDInterfaceSettingsHolder>();
@@ -44,7 +47,7 @@ platform(platform1),profile(std::move(profile1)) {
   }
   // We don't have at least one card for monitor mode, which is a hard requirement for OpenHD
   if(broadcast_cards.empty()){
-    std::cerr<<"Cannot start ohd_interface, no wifi card for monitor mode\n";
+    m_console->warn("Cannot start ohd_interface, no wifi card for monitor mode");
     const std::string message_for_user="No WiFi card found, please reboot\n";
     LOGE<<message_for_user;
     // TODO reason what to do. We do not support dynamically adding wifi cards at run time, so somehow
@@ -93,7 +96,7 @@ platform(platform1),profile(std::move(profile1)) {
 	  _wifi_hotspot->start_async();
 	}
   }
-  std::cout << "OHDInterface::created\n";
+  m_console->debug("OHDInterface::created");
 }
 
 std::string OHDInterface::createDebug() const {
@@ -136,7 +139,7 @@ void OHDInterface::set_stats_callback(openhd::link_statistics::STATS_CALLBACK st
   if(wbStreams){
 	wbStreams->set_callback(std::move(stats_callback));
   }else{
-	std::cerr<<"Cannot ste stats callback, no wb streams instance\n";
+	m_console->warn("Cannot ste stats callback, no wb streams instance");
   }
 }
 

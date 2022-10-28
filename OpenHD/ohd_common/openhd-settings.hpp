@@ -3,21 +3,20 @@
 #define OPENHD_SETTINGS_H
 
 #include <exception>
-#include <stdexcept>
-#include <optional>
-#include <string>
 #include <fstream>
-#include <streambuf>
-#include <utility>
-#include <optional>
 #include <iostream>
-#include <fstream>
+#include <optional>
+#include <stdexcept>
+#include <streambuf>
+#include <string>
+#include <utility>
 
+#include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
 /*#include <boost/uuid/uuid.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <boost/lexical_cast.hpp>
 #include <string_view>*/
 
 // from https://superuser.com/questions/631859/preferred-place-to-store-configuration-files-that-change-often
@@ -55,21 +54,19 @@ static std::string getOrCreateUnitId() {
   std::ifstream unit_id_file(UNIT_ID_FILE);
   std::string unit_id;
   if (!unit_id_file.is_open()) {
-	//std::cout<<"Generating new unit id\n";
 	// generate new unit id
 	// See https://www.boost.org/doc/libs/1_62_0/libs/uuid/uuid.html
 	//const boost::uuids::uuid _uuid = boost::uuids::random_generator()();
 	//unit_id = to_string(_uuid);
         unit_id = create_unit_it_temporary();
-	std::cout << "Created new unit id:[" << unit_id << "]\n";
+	openhd::loggers::get_default()->info("Created new unit id:{}",unit_id);
 	// and write it ot to the right file
 	std::ofstream of(UNIT_ID_FILE);
 	of << unit_id;
 	of.close();
   } else {
-	//std::cout<<"Unit id exists, reading\n";
 	unit_id = std::string((std::istreambuf_iterator<char>(unit_id_file)),std::istreambuf_iterator<char>());
-	std::cout << "Read unit id:[" << unit_id << "]\n";
+	openhd::loggers::get_default()->debug("Read unit id:{}",unit_id);
 	return unit_id;
   }
   assert(!unit_id.empty());

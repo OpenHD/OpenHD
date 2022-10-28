@@ -13,6 +13,8 @@
 #include "openhd-camera.hpp"
 #include "openhd-platform.hpp"
 
+#include "openhd-spdlog.hpp"
+
 // Implementation of OHD CameraStream for pretty much everything, using
 // gstreamer.
 
@@ -46,6 +48,7 @@ class GStreamerStream : public CameraStream {
   void restart_async();
   std::mutex _async_thread_mutex;
   std::unique_ptr<std::thread> _async_thread=nullptr;
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif

@@ -7,8 +7,11 @@
 
 OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras) :
 	platform(platform1) {
+  m_console = spd::stdout_color_mt("ohd_video");
+  assert(m_console);
+  m_console->set_level(spd::level::debug);
   assert(!cameras.empty());
-  std::cout << "OHDVideo::OHDVideo()\n";
+  m_console->debug("OHDVideo::OHDVideo()");
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
   for(const auto& camera:cameras){
     camera_holders.emplace_back(std::make_unique<CameraHolder>(camera));
@@ -16,7 +19,7 @@ OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras) :
   for (auto &camera: camera_holders) {
 	configure(camera);
   }
-  std::cout << "OHDVideo::running\n";
+  m_console->debug( "OHDVideo::running");
 }
 
 std::string OHDVideo::createDebug() const {
@@ -32,12 +35,12 @@ std::string OHDVideo::createDebug() const {
 
 void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
   const auto camera=camera_holder->get_camera();
-  std::cout << "Configuring camera: " << camera_type_to_string(camera.type) << std::endl;
+  m_console->debug("Configuring camera:"+camera_type_to_string(camera.type));
   // R.N we use gstreamer only for everything except veye
   // (veye also uses gstreamer, but we do not launch it via gst-launch)
   switch (camera.type) {
 	case CameraType::RaspberryPiVEYE:{
-	  std::cout << "VEYE stream for Camera index:" << camera.index << "\n";
+	  m_console->debug("VEYE stream for Camera index:{}\n",camera.index);
 	  const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
 	  auto stream = std::make_shared<VEYEStream>(platform.platform_type, camera_holder, udp_port);
 	  stream->setup();
@@ -51,7 +54,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
     case CameraType::RockchipCSI:
     case CameraType::UVC:
     case CameraType::Dummy: {
-      std::cout << "GStreamerStream for Camera index:" << camera.index << "\n";
+      m_console->debug("GStreamerStream for Camera index:{}",camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
       auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera_holder, udp_port);
       stream->setup();
@@ -60,7 +63,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
       break;
     }
 	case CameraType::Libcamera: {
-	  std::cout << "Camera index:" << camera.index << "\n";
+	  m_console->debug("LibCamera index:{}\n", camera.index);
 	  const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
 	  auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera_holder, udp_port);
 	  stream->setup();
@@ -69,7 +72,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
 	  break;
 	}
     default: {
-      std::cerr << "Unknown camera type, skipping" << std::endl;
+      m_console->error("Unknown camera type, skipping\n");
     }
   }
 }

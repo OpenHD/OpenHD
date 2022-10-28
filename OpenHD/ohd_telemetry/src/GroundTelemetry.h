@@ -11,6 +11,7 @@
 #include "mavlink_settings/ISettingsComponent.hpp"
 #include "mavsdk_temporary//XMavlinkParamProvider.h"
 #include "openhd-action-handler.hpp"
+#include "openhd-spdlog.hpp"
 //#include "rc/JoystickReader.h"
 
 /**
@@ -60,6 +61,7 @@ class GroundTelemetry :public MavlinkSystem{
   std::map<std::string,std::shared_ptr<UDPEndpoint2>> _other_udp_ground_stations{};
   //
   //std::unique_ptr<JoystickReader> m_joystick_reader;
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif //OPENHD_TELEMETRY_GROUNDTELEMETRY_H
