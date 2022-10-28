@@ -16,7 +16,7 @@
 namespace WifiCardCommandHelper{
 
 static bool set_card_state(const WiFiCard &card, bool up) {
-  openhd::loggers::get_default()->info("WifiCards::set_card_state up"+OHDUtil::yes_or_no(up)+") for "+card.interface_name+")");
+  openhd::loggers::get_default()->info("WifiCards::set_card_state up "+OHDUtil::yes_or_no(up)+" for "+card.interface_name+")");
   std::vector<std::string> args{"link", "set", "dev", card.interface_name, up ? "up" : "down"};
   bool success = OHDUtil::run_command("ip", args);
   return success;
