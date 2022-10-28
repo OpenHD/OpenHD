@@ -78,6 +78,12 @@ static std::string read_file(const std::string& path){
   return ret;
 }
 
+static void remove_if_existing(const std::string& filename){
+  if(exists(filename.c_str())){
+    boost::filesystem::remove(filename);
+  }
+}
+
 }
 
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_UTIL_FILESYSTEM_H_

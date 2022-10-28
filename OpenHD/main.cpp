@@ -11,6 +11,7 @@
 #include "ohd_common/openhd-platform-discover.hpp"
 #include "ohd_common/openhd-global-constants.hpp"
 #include "ohd_common/openhd-spdlog.hpp"
+#include "ohd_common/openhd-temporary-air-or-ground.h"
 #include <DCameras.h>
 #include <OHDInterface.h>
 #include <OHDTelemetry.h>
@@ -116,10 +117,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     // The logs/checks here are just to help developer(s) avoid common misconfigurations
     std::cout<<"Using files to detect air or ground\n";
     // We allow users to write the file with a big or small first letter
-    const bool file_run_as_ground_exists= OHDFilesystemUtil::exists("/boot/OpenHD/ground.txt")
-                                        || OHDFilesystemUtil::exists("/boot/OpenHD/Ground.txt");
-    const bool file_run_as_air_exists = OHDFilesystemUtil::exists("/boot/OpenHD/air.txt")
-                                           || OHDFilesystemUtil::exists("/boot/OpenHD/Air.txt");
+    const bool file_run_as_ground_exists= openhd::tmp::any_file_ground_exists();
+    const bool file_run_as_air_exists = openhd::tmp::any_file_air_exists();
     bool error=false;
     if(file_run_as_air_exists && file_run_as_ground_exists){ // both files exist
       std::cerr<<"Both air and ground files exist,unknown what you want - either use the command line param or delete one of them\n";
