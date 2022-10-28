@@ -68,7 +68,7 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
     case MAVLINK_MSG_ID_COMMAND_LONG:{
       mavlink_command_long_t command;
       mavlink_msg_command_long_decode(&msg.m,&command);
-      m_console->debug("Got MAVLINK_MSG_ID_COMMAND_LONG:"<<command.command<<" "<<static_cast<uint32_t>(command.param1)<<"\n";
+      m_console->debug("Got MAVLINK_MSG_ID_COMMAND_LONG: {} {}",command.command,static_cast<uint32_t>(command.param1));
       if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
         //https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
         m_console->debug("Got shutdown command");
