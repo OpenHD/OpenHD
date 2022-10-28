@@ -40,6 +40,21 @@ static void write_file_ground(){
   OHDFilesystemUtil::write_file(openhd::tmp::FILENAME_GROUND," ");
 }
 
+static bool handle_telemetry_change(int value){
+  //0==ground, 1==air, other: undefined (rejected)
+  if(!(value==0 || value==1))return false;
+  if(value==0){
+    // change to ground mode. Remove any existing file(s) if there are any
+    openhd::tmp::delete_any_file_air_or_ground();
+    openhd::tmp::write_file_ground();
+  }else{
+    // change to air mode. Remove any existing file(s) if there are any
+    openhd::tmp::delete_any_file_air_or_ground();
+    openhd::tmp::write_file_air();
+  }
+  return true;
+}
+
 
 }
 #endif  // OPENHD_OPENHD_OHD_COMMON_OPENHD_TEMPORARY_AIR_OR_GROUND_H_

@@ -181,17 +181,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 	return true;
   };
   auto c_config_boot_as_air=[](std::string,int value){
-    if(!(value==0 || value==1))return false;
-    if(value==0){
-      // change to ground mode. Remove any existing file(s) if there are any
-      openhd::tmp::delete_any_file_air_or_ground();
-      openhd::tmp::write_file_ground();
-    }else{
-      // change to air mode. Remove any existing file(s) if there are any
-      openhd::tmp::delete_any_file_air_or_ground();
-      openhd::tmp::write_file_air();
-    }
-    return true;
+    return openhd::tmp::handle_telemetry_change(value);
   };
   auto c_rpi_os_camera_configuration=[this](std::string,int value){
     return m_rpi_os_change_config_handler->change_rpi_os_camera_configuration(value);
