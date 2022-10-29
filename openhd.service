@@ -3,6 +3,7 @@ Description=OpenHD
 
 [Service]
 User=root
+ExecStartPre=/bin/sleep 5
 ExecStart=/usr/local/bin/openhd
 Restart=always
 
