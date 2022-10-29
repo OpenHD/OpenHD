@@ -5,6 +5,7 @@
 #include "OHDInterface.h"
 
 #include <DWifiCards.h>
+#include "WifiCardCommandHelper.hpp"
 
 #include <utility>
 #include "WBStreamsSettings.hpp"
@@ -18,6 +19,25 @@ platform(platform1),profile(std::move(profile1)) {
   //wifiCards = std::make_unique<WifiCards>(profile);
   //Find out which cards are connected first
   auto discovered_wifi_cards=DWifiCards::discover();
+  // Issue on rpi with Atheros: For some reason, openhd is sometime started before the card
+  // finishes some initialization steps ?! and is therefore not discovered.
+  // On a rpi, we block for up to 10 seconds here until we have at least one wifi card that does wifibroadcast
+  if(platform.platform_type==PlatformType::RaspberryPi){
+    const auto begin=std::chrono::steady_clock::now();
+    while (std::chrono::steady_clock::now()-begin<std::chrono::seconds(10)){
+      if(DWifiCards::any_wifi_card_supporting_monitor(discovered_wifi_cards))break;
+      m_console->debug("rpi-waiting up to 10 seconds until at least one wifi card supporting monitor mode is found");
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      discovered_wifi_cards=DWifiCards::discover();
+    }
+  }
+  // Just to be sure, turn off all detected wifi cards here - they will be re-enabled when needed anyways
+  // I don't do that on x86 though, since it would disrupt development
+  /*if(platform.platform_type!=PlatformType::PC){
+    for(const auto& card:discovered_wifi_cards){
+      WifiCardCommandHelper::set_card_state(card, false);
+    }
+  }*/
   // Find / create settings for each discovered card
   std::vector<std::shared_ptr<WifiCardHolder>> wifi_cards{};
   for(const auto& card:discovered_wifi_cards){
