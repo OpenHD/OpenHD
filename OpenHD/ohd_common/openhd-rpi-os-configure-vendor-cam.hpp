@@ -77,9 +77,6 @@ static int cam_config_to_int(CamConfig cam_config){
   return 2;
 }
 
-static bool validate_cam_config_settings_string(const std::string s){
-  return s=="mmal" || s=="libcamera" || s=="libcamera_arducam";
-}
 static bool validate_cam_config_settings_int(int val){
   return val==0 || val==1 || val==2;
 }
