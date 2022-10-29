@@ -44,7 +44,7 @@ enum class CamConfig {
 static CamConfig cam_config_from_string(const std::string& config){
   if(OHDUtil::equal_after_uppercase(config,"mmal")){
     return CamConfig::MMAL;
-  }else if(OHDUtil::startsWith(config,"libcamera")){
+  }else if(OHDUtil::equal_after_uppercase(config,"libcamera")){
     return CamConfig::LIBCAMERA;
   }else if(OHDUtil::equal_after_uppercase(config,"libcamera_arducam")){
     return CamConfig::LIBCAMERA_ARDUCAM;
