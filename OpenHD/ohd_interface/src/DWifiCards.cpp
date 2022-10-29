@@ -254,4 +254,9 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   //}
   //return std::nullopt;
 }
-
+bool DWifiCards::any_wifi_card_supporting_monitor(const std::vector<WiFiCard>& cards) {
+  for(const auto& card:cards){
+    if(card.supports_injection)return true;
+  }
+  return false;
+}
