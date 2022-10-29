@@ -10,6 +10,7 @@
 
 // Helper to reconfigure the rpi os for the different camera types
 namespace openhd::rpi::os{
+
 static void OHDRpiConfigClear(){
   OHDUtil::run_command("sed -i '/camera_auto_detect=1/d' /boot/config.txt",{});
   OHDUtil::run_command("sed -i '/dtoverlay=vc4-kms-v3d/d' /boot/config.txt",{});
@@ -17,14 +18,6 @@ static void OHDRpiConfigClear(){
   OHDUtil::run_command("sed -i '/start_x=1/d' /boot/config.txt",{});
   OHDUtil::run_command("sed -i '/enable_uart=1/d' /boot/config.txt",{});
   OHDUtil::run_command("sed -i '/dtoverlay=arducam-pivariety/d' /boot/config.txt",{});
-};
-
-static void OHDRpiConfigExecute(){
-  OHDUtil::run_command("rm -Rf /boot/openhd/libcamera.txt",{});
-  OHDUtil::run_command("rm -Rf /boot/openhd/raspicamsrc.txt",{});
-  OHDUtil::run_command("rm -Rf /boot/openhd/arducam.txt",{});
-  OHDUtil::run_command("echo",{"This device will now reboot to enable configs"});
-  OHDUtil::run_command("reboot",{});
 };
 
 static void OHDRpiConfigLibcamera(){
@@ -51,7 +44,7 @@ enum class CamConfig {
 static CamConfig cam_config_from_string(const std::string& config){
   if(OHDUtil::equal_after_uppercase(config,"mmal")){
     return CamConfig::MMAL;
-  }else if(OHDUtil::startsWith(config,"libcamera")){
+  }else if(OHDUtil::equal_after_uppercase(config,"libcamera")){
     return CamConfig::LIBCAMERA;
   }else if(OHDUtil::equal_after_uppercase(config,"libcamera_arducam")){
     return CamConfig::LIBCAMERA_ARDUCAM;
@@ -84,9 +77,6 @@ static int cam_config_to_int(CamConfig cam_config){
   return 2;
 }
 
-static bool validate_cam_config_settings_string(const std::string s){
-  return s=="mmal" || s=="libcamera" || s=="libcamera_arducam";
-}
 static bool validate_cam_config_settings_int(int val){
   return val==0 || val==1 || val==2;
 }
