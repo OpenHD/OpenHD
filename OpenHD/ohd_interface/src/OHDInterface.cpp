@@ -5,6 +5,7 @@
 #include "OHDInterface.h"
 
 #include <DWifiCards.h>
+#include "WifiCardCommandHelper.hpp"
 
 #include <utility>
 #include "WBStreamsSettings.hpp"
@@ -18,6 +19,13 @@ platform(platform1),profile(std::move(profile1)) {
   //wifiCards = std::make_unique<WifiCards>(profile);
   //Find out which cards are connected first
   auto discovered_wifi_cards=DWifiCards::discover();
+  // Just to be sure, turn off all detected wifi cards here - they will be re-enabled when needed anyways
+  // I don't do that on x86 though, since it would disrupt development
+  if(platform.platform_type!=PlatformType::PC){
+    for(const auto& card:discovered_wifi_cards){
+      WifiCardCommandHelper::set_card_state(card, false);
+    }
+  }
   // Find / create settings for each discovered card
   std::vector<std::shared_ptr<WifiCardHolder>> wifi_cards{};
   for(const auto& card:discovered_wifi_cards){
