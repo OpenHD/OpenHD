@@ -1,9 +1,9 @@
 [Unit]
-Description=OpenHD 
+Description=OpenHD
+After=NertworkManager.service
 
 [Service]
 User=root
-ExecStartPre=/bin/sleep 5
 ExecStart=/usr/local/bin/openhd
 Restart=always
 
