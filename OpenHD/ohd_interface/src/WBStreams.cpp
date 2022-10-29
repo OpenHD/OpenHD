@@ -149,7 +149,7 @@ void WBStreams::configure_video() {
   if (_profile.is_air) {
 	auto primary = createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP,true,1024*1024*25);
 	primary->runInBackground();
-	auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,1024*1024*25);
+	auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,true,1024*1024*10);
 	secondary->runInBackground();
 	udpVideoTxList.push_back(std::move(primary));
 	udpVideoTxList.push_back(std::move(secondary));
