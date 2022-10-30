@@ -83,7 +83,7 @@ void WBStreams::unblock_cards() {
   std::this_thread::sleep_for(std::chrono::seconds(1));
   // for now limited to the pi, since it breaks other kinds of connectivity
   if(_platform.platform_type==PlatformType::RaspberryPi){
-    OHDUtil::run_command("airmon-ng",{"check","kill"});
+    //OHDUtil::run_command("airmon-ng",{"check","kill"});
   }
   m_console->debug("WBStreams::unblock_cards() end");
 }
