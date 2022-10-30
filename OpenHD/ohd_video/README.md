@@ -1,7 +1,7 @@
 ## Summary
 
 This library is responsible for detecting the cameras connected to the system 
-and then starts a encoded video stream for each of the discovered cameras.
+and then starts an encoded video stream for each of the discovered cameras.
 The functionalities it exposes to the public are simple:
 1) Detect connected camera(s)
 2) Send generated, encoded video stream(s) via UDP (localhost) somewhere to be picked up (e.g. by ohd-interface)
