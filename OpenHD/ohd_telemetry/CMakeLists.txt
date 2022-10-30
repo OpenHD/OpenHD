@@ -35,7 +35,8 @@ SET(sources
     "src/internal/OHDMainComponent.cpp"
     "src/internal/OHDMainComponent.h"
     "src/internal/OnboardComputerStatus.hpp"
-    "src/internal/OnboardComputerStatusHelper.h"
+    "src/internal/OnboardComputerStatusProvider.cpp"
+    "src/internal/OnboardComputerStatusProvider.h"
     "src/internal/RebootUtil.hpp"
     "src/internal/StatusTextAccumulator.hpp"
 

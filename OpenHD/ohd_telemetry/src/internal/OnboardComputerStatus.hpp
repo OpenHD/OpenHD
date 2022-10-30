@@ -5,7 +5,6 @@
 #ifndef XMAVLINKSERVICE_SYSTEMREADUTIL_H
 #define XMAVLINKSERVICE_SYSTEMREADUTIL_H
 
-#include "OnboardComputerStatusHelper.h"
 #include "mav_include.h"
 #include "openhd-util.hpp"
 #include "openhd-spdlog.hpp"
@@ -109,48 +108,41 @@ static int read_curr_frequency_mhz(const std::string& which){
 
 }
 
-// For rpi, we have 2 messages - the generic mavlink one (which unfortunately doesn't match the pi well)
-// and a custom openhd onboard computer status extension one
-static std::vector<MavlinkMessage> createOnboardComputerStatus(const uint8_t sys_id,const uint8_t comp_id,const bool is_platform_rpi,const int cpu_usage){
-  MavlinkMessage msg;
-  mavlink_onboard_computer_status_t mavlink_onboard_computer_status{};
-  mavlink_onboard_computer_status.cpu_cores[0]=cpu_usage;
-  const auto before=std::chrono::steady_clock::now();
-  if(is_platform_rpi){
-    mavlink_onboard_computer_status.temperature_core[0]=rpi::read_temperature_soc_degree();
-	// temporary, until we have our own message
-	mavlink_onboard_computer_status.storage_type[0]=rpi::read_curr_frequency_mhz(rpi::VCGENCMD_CLOCK_CPU);
-	mavlink_onboard_computer_status.storage_type[1]=rpi::read_curr_frequency_mhz(rpi::VCGENCMD_CLOCK_ISP);
-	mavlink_onboard_computer_status.storage_type[2]=rpi::read_curr_frequency_mhz(rpi::VCGENCMD_CLOCK_H264);
-	mavlink_onboard_computer_status.storage_type[3]=rpi::read_curr_frequency_mhz(rpi::VCGENCMD_CLOCK_CORE);
-
-  }else{
-    const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
-    mavlink_onboard_computer_status.temperature_core[0]=cpu_temp;
+// really stupid, but for now the best solution I came up with
+// loosely based on https://stackoverflow.com/questions/9229333/how-to-get-overall-cpu-usage-e-g-57-on-linux
+// NOTE: top -v returns procps-ng on both pi4 and my ubuntu laptop
+// Also note, we want the CPU usage from all processes - not only -p 1
+// 28.July 2022: This seems to work on both rpi4 and my ubuntu pc.
+// Also, I am pretty sure we can use -bn1 - top should report from "the last refresh."
+static std::optional<int> read_cpuload_once_blocking(){
+  auto res_opt=OHDUtil::run_command_out(R"lit(top -bn1 | grep "Cpu(s)")lit");
+  // The result from that should look like this: %Cpu(s): 31,0 us,  2,0 sy,  0,0 ni, 67,0 id,  0,0 wa,  0,0 hi,  0,0 si,  0,0 st
+  // Where "67.0 id" is what we are after - "time spent in the kernel idle handler"
+  // from that, we can deduce the usage
+  if(!res_opt.has_value()){
+    return std::nullopt;
   }
-  const auto processing_time=std::chrono::steady_clock::now()-before;
-  if(processing_time>std::chrono::milliseconds(100)){
-        openhd::loggers::get_default()->debug("Warning: measuring stats took unexpected long: {}ms",std::chrono::duration_cast<std::chrono::milliseconds>(processing_time).count());
+  const std::string res=res_opt.value();
+  //std::cout<<"read_cpuload_once_blocking res:{"<<res<<"}\n";
+  std::smatch result;
+  const std::regex r1{"ni,(.*) id"};
+  auto res1 = std::regex_search(res, result, r1);
+  if(!res1 || result.size()<1){
+    return std::nullopt;
   }
-  mavlink_msg_onboard_computer_status_encode(sys_id,comp_id,&msg.m,&mavlink_onboard_computer_status);
-  std::vector<MavlinkMessage> ret;
-  ret.push_back(msg);
-  if(is_platform_rpi){
-	//TODO
+  const std::string intermediate1=result[0];
+  //std::cout<<"Intermediate:{"<<intermediate1<<"}\n";
+  if(intermediate1.length()<3){
+    return std::nullopt;
   }
-  return ret;
+  std::regex begin("ni,");
+  const auto intermediate2=std::regex_replace(intermediate1, begin, "");
+  //std::cout<<"Intermediate2:{"<<intermediate2<<"}\n";
+  const auto cpu_idle_perc=std::atof(intermediate2.c_str());
+  //std::cout<<"cpu_idle_perc:{"<<cpu_idle_perc<<"}\n";
+  const auto cpu_idle_perc_int=static_cast<int>(lround(cpu_idle_perc));
+  return 100-cpu_idle_perc_int;
 }
-
-// TODO more telemetry here
-/*static MavlinkMessage createOnboardComputerStatusExtension(const bool IS_PLATFORM_RPI,const uint8_t sys_id,const uint8_t comp_id){
-  MavlinkMessage msg;
-  mavlink_openhd_onboard_computer_status_extension_t values{};
-  if(IS_PLATFORM_RPI){
-    //
-  }
-  mavlink_msg_openhd_onboard_computer_status_extension_encode(sys_id,comp_id,&msg.m,&values);
-  return msg;
-}*/
 
 
 }
