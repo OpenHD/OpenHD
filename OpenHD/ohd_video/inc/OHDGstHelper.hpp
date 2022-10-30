@@ -102,8 +102,8 @@ static std::string createDummyStream(const VideoFormat videoFormat,int bitrateKB
 static std::string createRpicamsrcStream(const int camera_number,
                                          const int bitrateKBits,
                                          const VideoFormat videoFormat,
-										 int keyframe_interval,
-										 int rotation,int awb_mode,int exp_mode) {
+                                         int keyframe_interval,
+					 int rotation,int awb_mode,int exp_mode) {
   assert(videoFormat.isValid());
   //assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;
@@ -185,7 +185,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1 ! ",videoFormat.width, videoFormat.height, videoFormat.framerate);
     ss << fmt::format("v4l2convert ! "
-        "v4l2jpegenc extra-controls=\"controls,compression_quality={}\" ! ",50);
+        "v4l2jpegenc extra-controls=\"controls,compression_quality={}\" ! ",50); //mjpeg has a compression quality not bitrate
   }
   else {
     openhd::loggers::get_default()->warn("No h265 encoder on rpi, using SW encode (will almost 100% result in frame drops/performance issues)");
