@@ -23,8 +23,8 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   // (640x48@30 might already be too much on embedded devices).
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
-  if (camera.type == CameraType::Dummy && setting.userSelectedVideoFormat.width > 640 ||
-      setting.userSelectedVideoFormat.height > 480 || setting.userSelectedVideoFormat.framerate > 30) {
+  if (camera.type == CameraType::Dummy && (setting.userSelectedVideoFormat.width > 640 ||
+      setting.userSelectedVideoFormat.height > 480 || setting.userSelectedVideoFormat.framerate > 30)) {
     m_console->warn("Warning- Dummy camera is done in sw, high resolution/framerate might not work");
     m_console->warn("Configured dummy for:"+setting.userSelectedVideoFormat.toString());
   }
