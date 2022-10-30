@@ -179,8 +179,8 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     // on scenes with less change
     static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
     ss << fmt::format("v4l2convert ! "
-        "v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_minimum_qp_value={}\" ! "
-        "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,OPENHD_H264_MIN_QP_VALUE);
+        "v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
+        "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
   } else if (videoFormat.videoCodec == VideoCodec::MJPEG) {
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1 ! ",videoFormat.width, videoFormat.height, videoFormat.framerate);
