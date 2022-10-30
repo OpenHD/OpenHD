@@ -9,11 +9,13 @@
 #ifdef OPENHD_LIBCAMERA_PRESENT
 #include <libcamera/libcamera.h>
 #include "openhd-camera.hpp"
+#include "openhd-spdlog.hpp"
 
 class LibcameraProvider {
  public:
   static std::vector<Camera> get_cameras(){
 	const auto cameraManager = std::make_unique<libcamera::CameraManager>();
+        openhd::loggers::get_default()->debug("Libcamera reports version:"+cameraManager->version());
 	cameraManager->start();
 	auto lcCameras = cameraManager->cameras();
 
