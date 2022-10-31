@@ -3,11 +3,15 @@
 
 #include "openhd-platform.hpp"
 #include "openhd-log.hpp"
+#include "openhd-util-filesystem.hpp"
 #include "OHDWifiCard.hpp"
 #include "openhd-global-constants.hpp"
 
 #include <iostream>
 #include <utility>
+
+static const char *KEYPAIR_FILE_DRONE = "/usr/local/share/openhd/drone.key";
+static const char *KEYPAIR_FILE_GROUND = "/usr/local/share/openhd/gs.key";
 
 WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards1) :
    _profile(std::move(profile)),_platform(platform),_broadcast_cards(std::move(broadcast_cards1)) {
@@ -172,7 +176,13 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   // We log them all manually together
   options.enableLogAlive= false;
   options.radio_port = radio_port;
-  options.keypair = std::nullopt;
+  const char *keypair_file = _profile.is_air ? KEYPAIR_FILE_DRONE : KEYPAIR_FILE_GROUND;
+  if(OHDFilesystemUtil::exists(keypair_file)){
+    options.keypair = std::optional<std::string>(keypair_file);
+    std::cout << "Found key file: "<<options.keypair->c_str()<<"\n";
+  }else{
+    options.keypair = std::nullopt;
+  }
   if(enableFec){
 	options.fec_k=static_cast<int>(_settings->get_settings().wb_video_fec_block_length);
 	options.fec_percentage=static_cast<int>(_settings->get_settings().wb_video_fec_percentage); // Default to 20% fec overhead
@@ -193,7 +203,13 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
   // TODO REMOVE ME FOR TESTING
   //options.enableLogAlive = udp_port==5600;
   options.radio_port = radio_port;
-  options.keypair = std::nullopt;
+  const char *keypair_file = _profile.is_air ? KEYPAIR_FILE_DRONE : KEYPAIR_FILE_GROUND;
+  if(OHDFilesystemUtil::exists(keypair_file)){
+    options.keypair = std::optional<std::string>(keypair_file);
+    std::cout << "Found key file: "<<options.keypair->c_str()<<"\n";
+  }else{
+    options.keypair = std::nullopt;
+  }
   const auto cards = get_rx_card_names();
   assert(!cards.empty());
   options.rxInterfaces = cards;
