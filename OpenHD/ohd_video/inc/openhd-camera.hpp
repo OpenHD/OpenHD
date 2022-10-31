@@ -109,6 +109,7 @@ struct Camera {
   CameraType type = CameraType::Unknown;
   std::string name = "unknown";
   std::string vendor = "unknown";
+  std::string sensor_name="unknwn";
   std::string vid;
   std::string pid;
   // for USB this is the bus number, for CSI it's the connector number
@@ -144,7 +145,7 @@ struct Camera {
 	return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
   }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,vid,pid,bus,index,endpoints)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,vid,pid,bus,index,endpoints)
 
 
 static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("video/");
@@ -226,7 +227,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
             openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
             // This is not a setting (cannot be changed) but rather a read-only param, but repurposing the settings here was the easiest
             openhd::Setting{"V_CAM_TYPE",openhd::StringSetting { get_short_name(),c_read_only_param}},
+            openhd::Setting{"V_CAM_SENSOR",openhd::StringSetting{ _camera.sensor_name,c_read_only_param}},
         };
+
 	if(_camera.supports_rotation()){
 	  auto c_rotation=[this](std::string,int value) {
 		return set_camera_rotation(value);

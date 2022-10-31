@@ -21,11 +21,17 @@ class LibcameraProvider {
 
 	std::vector<Camera> ohdCameras{};
 	for (const auto& cam : lcCameras) {
+          const auto cam_id=cam->id();
           // We do not want usb cameras from libcamera
-          if(cam->id().find("/usb") == std::string::npos){
+          if(cam_id.find("/usb") == std::string::npos){
             Camera camera{};
-            camera.name = cam->id();
+            camera.name = cam_id;
             camera.type = CameraType::Libcamera;
+            if(OHDUtil::contains(cam_id,"imx477")){
+              camera.sensor_name="imx477";
+            }else if(OHDUtil::contains(cam_id,"imx415")){
+              camera.sensor_name="imx415";
+            }
             ohdCameras.push_back(camera);
           }
 	}
