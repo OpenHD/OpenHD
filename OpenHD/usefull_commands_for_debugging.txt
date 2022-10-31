@@ -1,2 +1,8 @@
 // Show full log when started as service - only for current boot (without -b : all boots)
 sudo journalctl -u openhd.service -b
+
+// stop the openhd service
+sudo systemctl stop openhd
+
+// disable the openhd service (persistent also on reboots)
+sudo systemctl disable openhd
