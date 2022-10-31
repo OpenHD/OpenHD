@@ -10,14 +10,14 @@
 #include "json.hpp"
 
 enum class PlatformType {
+  Unknown,
+  PC,
   RaspberryPi,
   Jetson,
   NanoPi,
   iMX6,
   Rockchip,
   Zynq,
-  PC,
-  Unknown
 };
 inline std::string platform_type_to_string(PlatformType platform_type) {
   switch (platform_type) {
@@ -27,11 +27,14 @@ inline std::string platform_type_to_string(PlatformType platform_type) {
     case PlatformType::iMX6: return "imx6";
     case PlatformType::Zynq: return "zynq";
     case PlatformType::PC: return "pc";
+    case PlatformType::Rockchip: return "rockchip";
     default: return "unknown";
   }
 }
 
 enum class BoardType {
+  Unknown,
+  GenericPC,
   RaspberryPiZero,
   RaspberryPiZeroW,
   RaspberryPi2B,
@@ -53,11 +56,11 @@ enum class BoardType {
   PynqZ1,
   PynqZ2,
   X3DRSolo,
-  GenericPC,
-  Unknown
+  RK3588
 };
 inline std::string board_type_to_string(BoardType board_type) {
   switch (board_type) {
+    case BoardType::GenericPC: return "generic-pc";
     case BoardType::RaspberryPiZero: return "pizero";
     case BoardType::RaspberryPiZeroW: return "pizerow";
     case BoardType::RaspberryPi2B: return "pi2b";
@@ -79,7 +82,7 @@ inline std::string board_type_to_string(BoardType board_type) {
     case BoardType::PynqZ1: return "pynqz1";
     case BoardType::PynqZ2: return "pynqz2";
     case BoardType::X3DRSolo: return "3dr-solo";
-    case BoardType::GenericPC: return "generic-pc";
+    case BoardType::RK3588: return "rk3588";
     default: return "unknown";
   }
 }

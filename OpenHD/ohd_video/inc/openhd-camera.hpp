@@ -18,9 +18,13 @@
 #include "mavlink_settings/ISettingsComponent.hpp"
 #include "v_validate_settings.h"
 
-static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
-static constexpr auto DEFAULT_KEYFRAME_INTERVAL=30;
-static constexpr auto DEFAULT_MJPEG_QUALITY_PERCENT=50;
+static constexpr int DEFAULT_BITRATE_KBITS = 5000;
+static constexpr int DEFAULT_KEYFRAME_INTERVAL = 30;
+static constexpr int DEFAULT_MJPEG_QUALITY_PERCENT = 50;
+
+static constexpr int DEFAULT_RECORDING_KBITS = 10000;
+static constexpr int DEFAULT_RECORDING_QP = 26;
+static constexpr RateControlMode DEFAULT_RC_MODE = RC_CBR;
 
 // NOTE: I am not completely sure, but the more common approach seems to multiply / divide by 1000
 // When converting mBit/s to kBit/s or the other way arund
@@ -74,6 +78,13 @@ struct CameraSettings {
   std::string url;
   // enable/disable recording to file
   Recording air_recording=Recording::DISABLED;
+
+  // only used on RK3588
+  VideoFormat recordingFormat{VideoCodec::H264, 0, 0, 0}; // 0 means copy
+  int recordingKBits = DEFAULT_RECORDING_KBITS;
+  int recordingQP = DEFAULT_RECORDING_QP;
+  RateControlMode recordingRCMode = DEFAULT_RC_MODE;
+
   // todo they are simple for the most part, but rn not implemented yet.
   // camera rotation, allowed values:
   // 0 nothing

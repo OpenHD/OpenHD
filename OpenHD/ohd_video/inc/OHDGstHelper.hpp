@@ -210,45 +210,45 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
   // jetson is also bits per second
   const auto bitrateBitsPerSecond =kbits_to_bits_per_second(common_encoder_params.h26X_bitrate_kbits);
   if(common_encoder_params.videoCodec==VideoCodec::H264){
-	const bool use_omx_encoder= true;
-	if(use_omx_encoder){
-	  // for omx control-rate=2 means constant, in constrast to nvv4l2h264enc
-	  ss<<"omxh264enc control-rate=2 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
-	  ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
-	  // this was added to test if it fixes issues when decoding jetson h264 on rpi
-	  ss<<"insert-vui=true ";
-	  ss<<"! ";
-	}else{
-	  ss<<"nvv4l2h264enc control-rate=1 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
-	  ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
-	  // https://forums.developer.nvidia.com/t/high-decoding-latency-for-stream-produced-by-nvv4l2h264enc-compared-to-omxh264enc/159517
-	  // https://forums.developer.nvidia.com/t/parameter-poc-type-missing-on-jetson-though-mentioned-in-the-documentation/164545
-	  // NOTE: This is quite important, without it jetson nvv4l2decoder cannot properly decode (confirmed) (WTF nvidia you cannot encode your own data haha ;) )
-	  // As well as a lot of phones (confirmed) and perhaps the rpi,too (not confirmed).
-	  ss<<"poc-type=2 ";
-	  // TODO should we make max-perf-enable on by default ?
-	  ss<<"maxperf-enable=true ";
-	  ss<<"! ";
-	}
+    const bool use_omx_encoder= true;
+    if(use_omx_encoder){
+      // for omx control-rate=2 means constant, in constrast to nvv4l2h264enc
+      ss<<"omxh264enc control-rate=2 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
+      ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+      // this was added to test if it fixes issues when decoding jetson h264 on rpi
+      ss<<"insert-vui=true ";
+      ss<<"! ";
+    }else{
+      ss<<"nvv4l2h264enc control-rate=1 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
+      ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+      // https://forums.developer.nvidia.com/t/high-decoding-latency-for-stream-produced-by-nvv4l2h264enc-compared-to-omxh264enc/159517
+      // https://forums.developer.nvidia.com/t/parameter-poc-type-missing-on-jetson-though-mentioned-in-the-documentation/164545
+      // NOTE: This is quite important, without it jetson nvv4l2decoder cannot properly decode (confirmed) (WTF nvidia you cannot encode your own data haha ;) )
+      // As well as a lot of phones (confirmed) and perhaps the rpi,too (not confirmed).
+      ss<<"poc-type=2 ";
+      // TODO should we make max-perf-enable on by default ?
+      ss<<"maxperf-enable=true ";
+      ss<<"! ";
+    }
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
-	const bool use_omx_encoder= false;
-	if(use_omx_encoder){
-	  // for omx control-rate=2 means constant, in contrast to nvv4l2h264enc
-	  ss<<"omxh265enc control-rate=2 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
-	  ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
-	  ss<<"! ";
-	}else{
-	  ss<<"nvv4l2h265enc control-rate=1 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
-	  // TODO what is the difference between iframeinterval and idrinterval
-	  ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
-	  ss<<"idrinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
-	  ss<<"maxperf-enable=true ";
-	  ss<<"! ";
-	}
+	  const bool use_omx_encoder= false;
+    if(use_omx_encoder){
+      // for omx control-rate=2 means constant, in contrast to nvv4l2h264enc
+      ss<<"omxh265enc control-rate=2 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
+      ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+      ss<<"! ";
+    }else{
+      ss<<"nvv4l2h265enc control-rate=1 insert-sps-pps=true bitrate="<<bitrateBitsPerSecond<<" ";
+      // TODO what is the difference between iframeinterval and idrinterval
+      ss<<"iframeinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+      ss<<"idrinterval="<<common_encoder_params.h26X_keyframe_interval<<" ";
+      ss<<"maxperf-enable=true ";
+      ss<<"! ";
+    }
   }else{
-	assert(common_encoder_params.videoCodec==VideoCodec::MJPEG);
-	ss<<"nvjpegenc quality="<<common_encoder_params.mjpeg_quality_percent<<" ";
-	ss<<"! ";
+    assert(common_encoder_params.videoCodec==VideoCodec::MJPEG);
+    ss<<"nvjpegenc quality="<<common_encoder_params.mjpeg_quality_percent<<" ";
+    ss<<"! ";
   }
   return ss.str();
 }
@@ -261,9 +261,9 @@ static std::string createJetsonSensorPipeline(const int sensor_id,const int widt
   // possible to omit the sensor id, nvarguscamerasrc will then figure out the
   // right sensor id. This only works with one csi camera though.
   if (sensor_id == -1) {
-	ss << "nvarguscamerasrc do-timestamp=true ! ";
+	  ss << "nvarguscamerasrc do-timestamp=true ! ";
   } else {
-	ss<<"nvarguscamerasrc do-timestamp=true sensor-id="<<sensor_id<<" ! ";
+	  ss<<"nvarguscamerasrc do-timestamp=true sensor-id="<<sensor_id<<" ! ";
   }
   ss<<"video/x-raw(memory:NVMM), format=NV12, ";
   ss<<"width="<<width<<", ";
@@ -282,6 +282,72 @@ static std::string createJetsonStream(const int sensor_id,
   std::stringstream ss;
   ss<<createJetsonSensorPipeline(sensor_id,videoFormat.width,videoFormat.height,videoFormat.framerate);
   ss<<createJetsonEncoderPipeline({videoFormat.videoCodec,bitrateKBits,keyframe_interval,50});
+  return ss.str();
+}
+
+static std::string createRockchipEncoderPipeline(const int width, const int height, const CommonEncoderParams& encoder_params){
+  std::stringstream ss;
+  const int bps = kbits_to_bits_per_second(encoder_params.h26X_bitrate_kbits);
+  if(encoder_params.videoCodec==VideoCodec::H264){
+    ss<<"mpph264enc rc-mode=cbr bps="<<bps;
+    ss<<" width="<<width;
+    ss<<" height="<<height;
+    ss<<" gop="<<encoder_params.h26X_keyframe_interval<<" ! ";
+  }else if(encoder_params.videoCodec==VideoCodec::H265){
+    ss<<"mpph264enc rc-mode=cbr bps="<<bps;
+    ss<<" width="<<width;
+    ss<<" height="<<height;
+    ss<<" gop="<<encoder_params.h26X_keyframe_interval<<" ! ";
+  }else{
+    assert(encoder_params.videoCodec==VideoCodec::MJPEG);
+    ss<<"mppjpegenc rc-mode=fixqp quant="<<(encoder_params.mjpeg_quality_percent/10);
+    ss<<" width="<<width;
+    ss<<" height="<<height;
+    ss<<" ! ";
+  }
+  return ss.str();
+}
+
+static std::string createRockchipRecordingPipeline(const int width, const int height, const CommonEncoderParams& encoder_params){
+  std::stringstream ss;
+  const int bps = kbits_to_bits_per_second(encoder_params.h26X_bitrate_kbits);
+  ss<<"tee name=o ! ";
+  if(encoder_params.videoCodec==VideoCodec::H264){
+    ss<<"mpph264enc rc-mode=cbr bps="<<bps;
+    ss<<" width="<<width;
+    ss<<" height="<<height;
+  }else if(encoder_params.videoCodec==VideoCodec::H265){
+    ss<<"mpph264enc rc-mode=cbr bps="<<bps;
+    ss<<" width="<<width;
+    ss<<" height="<<height;
+  }else{
+    assert(encoder_params.videoCodec==VideoCodec::MJPEG);
+    ss<<"mppjpegenc rc-mode=fixqp quant="<<(encoder_params.mjpeg_quality_percent/10);
+    ss<<" width="<<width;
+    ss<<" height="<<height;
+  }
+  ss<<" name=t o. ! ";
+  return ss.str();
+}
+
+static std::string createRockchipV4L2Pipeline(const int video_dev, const int framerate){
+  std::stringstream ss;
+  ss<<"v4l2src device=/dev/video"<<video_dev<<" io-mode=auto do-timestamp=true ! video/x-raw,";
+  ss<<"framerate="<<framerate<<"/1 ! ";
+  return ss.str();
+}
+
+static std::string createRockchipHDMIStream(
+  bool recording,
+  const int bitrateKBits,
+  const VideoFormat videoFormat,
+  const VideoFormat recordingFormat,
+  const int keyframe_interval
+) {
+  std::stringstream ss;
+  ss<<createRockchipV4L2Pipeline(0, videoFormat.framerate);
+  if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval,50});
+  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
   return ss.str();
 }
 

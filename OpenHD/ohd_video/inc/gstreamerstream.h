@@ -27,6 +27,7 @@ class GStreamerStream : public CameraStream {
   void setup_raspberrypi_csi();
   void setup_libcamera();
   void setup_jetson_csi();
+  void setup_rockchip_hdmi();
   void setup_usb_uvc();
   void setup_usb_uvch264();
   void setup_ip_camera();

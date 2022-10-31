@@ -30,6 +30,7 @@ class DPlatform {
   }
  private:
   static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
+  static constexpr auto ROCKCHIP_PATH = "/proc/device-tree/rockchip-suspend/compatible";
   static std::shared_ptr<OHDPlatform> internal_discover(){
     const auto res=detect_raspberrypi();
     if(res.has_value()){
@@ -39,8 +40,12 @@ class DPlatform {
     if(res2.has_value()){
       return std::make_shared<OHDPlatform>(res2.value().first,res2.value().second);
     }
-    const auto res3=detect_pc();
-    return std::make_shared<OHDPlatform>(res3.first,res3.second);
+    const auto res3 = detect_rockchip();
+    if(res3.has_value()){
+      return std::make_shared<OHDPlatform>(res3.value().first,res3.value().second);
+    }
+    const auto res4=detect_pc();
+    return std::make_shared<OHDPlatform>(res4.first,res4.second);
   }
   static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi(){
     std::ifstream t("/proc/cpuinfo");
@@ -104,6 +109,18 @@ class DPlatform {
   static std::optional<std::pair<PlatformType,BoardType>> detect_jetson(){
     if (OHDFilesystemUtil::exists(JETSON_BOARDID_PATH)) {
       return std::make_pair(PlatformType::Jetson,BoardType::JetsonNano);
+    }
+    return {};
+  }
+  static std::optional<std::pair<PlatformType,BoardType>> detect_rockchip(){
+    if (OHDFilesystemUtil::exists(ROCKCHIP_PATH)) {
+      std::string rockchip_compatible = OHDFilesystemUtil::read_file(ROCKCHIP_PATH);
+
+      if(rockchip_compatible.find("rk3588") != std::string::npos){
+        return std::make_pair(PlatformType::Rockchip,BoardType::RK3588);
+      }else{
+        return std::make_pair(PlatformType::Rockchip,BoardType::Unknown);
+      }      
     }
     return {};
   }
