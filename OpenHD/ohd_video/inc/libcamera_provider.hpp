@@ -27,6 +27,7 @@ class LibcameraProvider {
             Camera camera{};
             camera.name = cam_id;
             camera.type = CameraType::Libcamera;
+            // TODO check more sensor here or use a regex / better method
             if(OHDUtil::contains(cam_id,"imx477")){
               camera.sensor_name="imx477";
             }else if(OHDUtil::contains(cam_id,"imx415")){

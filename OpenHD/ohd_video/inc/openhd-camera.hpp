@@ -83,8 +83,8 @@ struct CameraSettings {
   // Note that r.n only rpi camera supports rotation(s), where the degrees are mapped to the corresponding h/v flip(s)
   int camera_rotation_degree=0;
   // R.n only for rpi camera, see https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c
-  int awb_mode=0;
-  int exposure_mode=0;
+  int awb_mode=1; //default 1 (auto)
+  int exposure_mode=1; //default 1 (auto)
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,userSelectedVideoFormat,bitrateKBits,keyframe_interval,mjpeg_quality_percent,url,air_recording,camera_rotation_degree,
 								   awb_mode,exposure_mode)
