@@ -14,7 +14,7 @@
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,uint16_t video_udp_port)
     : CameraStream(platform, camera_holder, video_udp_port) {
-  m_console=spdlog::stdout_color_mt("ohd_video_gststream");
+  m_console=openhd::loggers::create_or_get("ohd_video_gststream");
   assert(m_console);
   // TODO fixme
   m_console->set_level(spd::level::debug);
