@@ -30,7 +30,7 @@ class DPlatform {
   }
  private:
   static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
-  static constexpr auto ROCKCHIP_PATH = "/proc/device-tree/rockchip-suspend/compatible";
+  static constexpr auto DEVICE_TREE_COMPATIBLE_PATH = "/proc/device-tree/compatible";
   static std::shared_ptr<OHDPlatform> internal_discover(){
     const auto res=detect_raspberrypi();
     if(res.has_value()){
@@ -113,14 +113,24 @@ class DPlatform {
     return {};
   }
   static std::optional<std::pair<PlatformType,BoardType>> detect_rockchip(){
-    if (OHDFilesystemUtil::exists(ROCKCHIP_PATH)) {
-      std::string rockchip_compatible = OHDFilesystemUtil::read_file(ROCKCHIP_PATH);
+    if (OHDFilesystemUtil::exists(DEVICE_TREE_COMPATIBLE_PATH)) {
+      std::string compatible_content = OHDFilesystemUtil::read_file(DEVICE_TREE_COMPATIBLE_PATH);
 
-      if(rockchip_compatible.find("rk3588") != std::string::npos){
-        return std::make_pair(PlatformType::Rockchip,BoardType::RK3588);
-      }else{
-        return std::make_pair(PlatformType::Rockchip,BoardType::Unknown);
-      }      
+      std::regex r("rockchip,(r[kv][0-9]+)");
+      std::smatch sm;
+
+      if (regex_search(compatible_content, sm, r)) {
+        const std::string chip = sm[1];
+        if(chip == "rk3588"){
+          return std::make_pair(PlatformType::Rockchip, BoardType::RK3588);
+        }else if(chip == "rv1109"){
+          return std::make_pair(PlatformType::Rockchip, BoardType::RV1109);
+        }else if(chip == "rv1126"){
+          return std::make_pair(PlatformType::Rockchip, BoardType::RV1126);
+        }else{
+          return std::make_pair(PlatformType::Rockchip, BoardType::Unknown);
+        }
+      }
     }
     return {};
   }

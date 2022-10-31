@@ -56,7 +56,9 @@ enum class BoardType {
   PynqZ1,
   PynqZ2,
   X3DRSolo,
-  RK3588
+  RK3588,
+  RV1109,
+  RV1126
 };
 inline std::string board_type_to_string(BoardType board_type) {
   switch (board_type) {
@@ -83,6 +85,8 @@ inline std::string board_type_to_string(BoardType board_type) {
     case BoardType::PynqZ2: return "pynqz2";
     case BoardType::X3DRSolo: return "3dr-solo";
     case BoardType::RK3588: return "rk3588";
+    case BoardType::RV1109: return "rv1109";
+    case BoardType::RV1126: return "rv1126";
     default: return "unknown";
   }
 }
