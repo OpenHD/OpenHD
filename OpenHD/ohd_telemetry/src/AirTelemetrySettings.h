@@ -20,6 +20,33 @@ static constexpr int DEFAULT_UART_BAUDRATE=115200;
 static constexpr int UART_CONNECTION_TYPE_DISABLE=0;
 static constexpr int DEFAULT_UART_CONNECTION=UART_CONNECTION_TYPE_DISABLE; // Default to UART disabled (FC)
 
+/*enum class SerialBaudRate{
+  RATE_9600,
+  RATE_19200,
+  RATE_38400,
+  RATE_57600,
+  RATE_115200,
+  RATE_230400,
+  RATE_460800,
+  RATE_500000,
+  RATE_576000,
+  RATE_921600,
+  RATE_1000000,
+};
+NLOHMANN_JSON_SERIALIZE_ENUM( SerialBaudRate, {
+     {SerialBaudRate::RATE_9600, "9600"},
+     {SerialBaudRate::RATE_19200, "19200"},
+     {SerialBaudRate::RATE_38400, "38400"},
+     {SerialBaudRate::RATE_57600, "57600"},
+     {SerialBaudRate::RATE_115200, "115200"},
+     {SerialBaudRate::RATE_230400, "230400"},
+     {SerialBaudRate::RATE_460800, "460800"},
+     {SerialBaudRate::RATE_500000, "500000"},
+     {SerialBaudRate::RATE_576000, "576000"},
+     {SerialBaudRate::RATE_921600, "921600"},
+     {SerialBaudRate::RATE_1000000, "1000000"},
+});*/
+
 struct AirTelemetrySettings{
   // 0: Disable
   // 1: RPI UART0 (/dev/serial0)
