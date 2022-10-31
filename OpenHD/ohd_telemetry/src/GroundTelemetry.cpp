@@ -13,7 +13,7 @@
 #include "openhd-temporary-air-or-ground.h"
 
 GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
-  m_console = spd::stdout_color_mt("ohd_ground_tele");
+  m_console = openhd::loggers::create_or_get("ohd_ground_tele");
   assert(m_console);
   m_console->set_level(spd::level::debug);
   /*udpGroundClient =std::make_unique<UDPEndpoint>("GroundStationUDP",

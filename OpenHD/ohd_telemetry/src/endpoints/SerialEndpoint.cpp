@@ -47,7 +47,7 @@ static bool is_serial_fd_still_connected(const int fd){
 SerialEndpoint::SerialEndpoint(std::string TAG1,SerialEndpoint::HWOptions options1):
 	MEndpoint(std::move(TAG1)),
 	_options(std::move(options1)){
-  m_console = spd::stdout_color_mt("ohd_t_serial_endp");
+  m_console = openhd::loggers::create_or_get("ohd_t_serial_endp");
   assert(m_console);
   m_console->set_level(spd::level::debug);
   m_console->info("SerialEndpoint: created with "+_options.to_string());

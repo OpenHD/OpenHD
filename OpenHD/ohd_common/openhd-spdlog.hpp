@@ -33,6 +33,19 @@ static std::shared_ptr<spdlog::logger> get_default() {
   }
   return ret;
 }
+
+static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_name){
+  static std::mutex logger_mutex2{};
+  std::lock_guard<std::mutex> guard(logger_mutex2);
+  auto ret = spdlog::get(logger_name);
+  if (ret == nullptr) {
+    auto created = spdlog::stdout_color_mt(logger_name);
+    assert(created);
+    return created;
+  }
+  return ret;
+}
+
 }
 
 
