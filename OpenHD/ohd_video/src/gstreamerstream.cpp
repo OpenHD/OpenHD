@@ -99,9 +99,7 @@ void GStreamerStream::setup() {
   if(!OHDUtil::endsWith(m_pipeline.str(),"! ")){
 	m_console->error("Probably ill-formatted pipeline:"+m_pipeline.str());
   }
-  // TODO: ground recording is not working yet, since we cannot properly close the file at the time.
-  //setting.enableAirRecordingToFile = false;
-  // for lower latency we only add the tee command at the right place if recording is enabled.
+  // for safety we only add the tee command at the right place if recording is enabled.
   if(setting.air_recording==Recording::ENABLED){
 	m_console->info("Air recording active");
 	m_pipeline<<"tee name=t ! ";
