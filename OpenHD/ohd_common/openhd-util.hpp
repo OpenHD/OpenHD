@@ -37,6 +37,10 @@ static bool startsWith(const std::string& str, const std::string& prefix){
   return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
 }
 
+static bool contains(const std::string& s1,const std::string& s2){
+  return s1.find(s2)!= std::string::npos;;
+}
+
 // Converts both strings to uppercase, then checks if
 // s1 contains s2 (we can find s2 in s1).
 // Returns true if (after uppercase) s1 contains s2, false otherwise

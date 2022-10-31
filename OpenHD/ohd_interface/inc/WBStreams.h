@@ -25,6 +25,10 @@
  */
 class WBStreams {
  public:
+  /**
+   * @param broadcast_cards list of discovered wifi card(s) that support monitor mode & are injection capable. Needs to be at least
+   * one card, and only one card on an air unit.
+   */
   explicit WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards);
   WBStreams(const WBStreams&)=delete;
   WBStreams(const WBStreams&&)=delete;

@@ -19,7 +19,7 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
   if(_broadcast_cards.empty()) {
     // NOTE: Here we crash, since it would be a programmer(s) error to create a WBStreams instance without at least 1 wifi card.
     // In OHDInterface, we handle it more gracefully with an error code.
-    m_console->warn("Without at least one wifi card, the stream(s) cannot be started");
+    m_console->error("Without at least one wifi card, the stream(s) cannot be started");
     exit(1);
   }
   // more than 4 cards would be completely insane, most likely a programming error

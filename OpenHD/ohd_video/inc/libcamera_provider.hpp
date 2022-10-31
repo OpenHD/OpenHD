@@ -21,19 +21,27 @@ class LibcameraProvider {
 
 	std::vector<Camera> ohdCameras{};
 	for (const auto& cam : lcCameras) {
+          const auto cam_id=cam->id();
           // We do not want usb cameras from libcamera
-          if(cam->id().find("/usb") == std::string::npos){
+          if(cam_id.find("/usb") == std::string::npos){
             Camera camera{};
-            camera.name = cam->id();
+            camera.name = cam_id;
             camera.type = CameraType::Libcamera;
+            // TODO check more sensor here or use a regex / better method
+            if(OHDUtil::contains(cam_id,"imx477")){
+              camera.sensor_name="imx477";
+            }else if(OHDUtil::contains(cam_id,"imx415")){
+              camera.sensor_name="imx415";
+            }
             ohdCameras.push_back(camera);
           }
 	}
         // This should free all the shared pointers we might still have, such that hopefully
-        // we can call stop() later without erros. The documentation is a bit dubios here -
+        // we can call stop() later without errors. The documentation is a bit dubios here -
         // https://libcamera.org/api-html/classlibcamera_1_1CameraManager.html
         // Before stopping the camera manager the caller is responsible for making sure all cameras provided by the manager are returned to the manager.
         // well, I don't think we call get so to say but we kept the shared pointer(s) around before calling stop() previously
+        // Here we get rid of all the shared pointers we still hold
         lcCameras.resize(0);
 
 	// We need to stop camera manager because it can be only one run manager in process.

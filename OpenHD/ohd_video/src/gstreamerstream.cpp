@@ -23,8 +23,8 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   // (640x48@30 might already be too much on embedded devices).
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
-  if (camera.type == CameraType::Dummy && setting.userSelectedVideoFormat.width > 640 ||
-      setting.userSelectedVideoFormat.height > 480 || setting.userSelectedVideoFormat.framerate > 30) {
+  if (camera.type == CameraType::Dummy && (setting.userSelectedVideoFormat.width > 640 ||
+      setting.userSelectedVideoFormat.height > 480 || setting.userSelectedVideoFormat.framerate > 30)) {
     m_console->warn("Warning- Dummy camera is done in sw, high resolution/framerate might not work");
     m_console->warn("Configured dummy for:"+setting.userSelectedVideoFormat.toString());
   }
@@ -99,9 +99,7 @@ void GStreamerStream::setup() {
   if(!OHDUtil::endsWith(m_pipeline.str(),"! ")){
 	m_console->error("Probably ill-formatted pipeline:"+m_pipeline.str());
   }
-  // TODO: ground recording is not working yet, since we cannot properly close the file at the time.
-  //setting.enableAirRecordingToFile = false;
-  // for lower latency we only add the tee command at the right place if recording is enabled.
+  // for safety we only add the tee command at the right place if recording is enabled.
   if(setting.air_recording==Recording::ENABLED){
 	m_console->info("Air recording active");
 	m_pipeline<<"tee name=t ! ";
