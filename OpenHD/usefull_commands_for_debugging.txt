@@ -1,2 +1,2 @@
-// Show log when started as service
-sudo journalctl -u openhd.service
+// Show full log when started as service - only for current boot (without -b : all boots)
+sudo journalctl -u openhd.service -b
