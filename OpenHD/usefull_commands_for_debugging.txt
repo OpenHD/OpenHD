@@ -1,0 +1,2 @@
+// Show log when started as service
+sudo journalctl -u openhd.service
