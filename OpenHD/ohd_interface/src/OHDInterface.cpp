@@ -99,15 +99,17 @@ platform(platform1),profile(std::move(profile1)) {
     });
     usbTetherListener->startLooping();
   }
-  if(_interface_settings_holder->get_settings().enable_wifi_hotspot && optional_hotspot_card==nullptr){
-    // we cannot do wifi hotspot
-    _interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot=false;
+  // This way one could try and recover an air pi
+  const bool enable_hotspot_file_exists=OHDFilesystemUtil::exists("/boot/enable_wifi_hotspot.txt");
+  if(!_interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot && enable_hotspot_file_exists){
+    m_console->info("Changing enable wifi hotspot to true due to file forcing it");
+    _interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot= true;
     _interface_settings_holder->persist();
   }
-  // This way one could try and recover an air pi
-  const bool enable_hotspot_file_exists=OHDFilesystemUtil::exists("/boot/enable_hotspot.txt");
-  if(optional_hotspot_card!= nullptr && enable_hotspot_file_exists){
-    _interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot=true;
+  if(_interface_settings_holder->get_settings().enable_wifi_hotspot && optional_hotspot_card==nullptr){
+    m_console->warn("Wifi hotspot enabled, but no card to start it with found");
+    // we cannot do wifi hotspot
+    _interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot=false;
     _interface_settings_holder->persist();
   }
   // wifi hotspot - normally only on ground, but for now on both
