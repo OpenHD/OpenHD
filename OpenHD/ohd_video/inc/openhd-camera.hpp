@@ -109,7 +109,7 @@ struct Camera {
   CameraType type = CameraType::Unknown;
   std::string name = "unknown";
   std::string vendor = "unknown";
-  std::string sensor_name="unknwn";
+  std::string sensor_name="unknown";
   std::string vid;
   std::string pid;
   // for USB this is the bus number, for CSI it's the connector number
@@ -205,6 +205,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  }
 	  return false;
 	};
+        // This is not a setting (cannot be changed) but rather a read-only param, but repurposing the settings here was the easiest
         auto c_read_only_param=[this](std::string,std::string value){
           return false;
         };
@@ -225,11 +226,13 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
             openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().keyframe_interval,c_keyframe_interval}},
             openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
             openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
-            // This is not a setting (cannot be changed) but rather a read-only param, but repurposing the settings here was the easiest
+            // for debugging
             openhd::Setting{"V_CAM_TYPE",openhd::StringSetting { get_short_name(),c_read_only_param}},
-            openhd::Setting{"V_CAM_SENSOR",openhd::StringSetting{ _camera.sensor_name,c_read_only_param}},
         };
-
+        if(_camera.type==CameraType::Libcamera){
+          // r.n we only write the sensor name for cameras detected via libcamera
+          ret.push_back(openhd::Setting{"V_CAM_SENSOR",openhd::StringSetting{_camera.sensor_name,c_read_only_param}});
+        }
 	if(_camera.supports_rotation()){
 	  auto c_rotation=[this](std::string,int value) {
 		return set_camera_rotation(value);
