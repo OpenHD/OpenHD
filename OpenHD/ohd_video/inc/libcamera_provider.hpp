@@ -42,6 +42,10 @@ class LibcameraProvider {
         // Before stopping the camera manager the caller is responsible for making sure all cameras provided by the manager are returned to the manager.
         // well, I don't think we call get so to say but we kept the shared pointer(s) around before calling stop() previously
         // Here we get rid of all the shared pointers we still hold
+        // From CameraManager.c (not the public doc):
+        // Once the application has released all the
+        // * references it held to cameras, the camera manager can be stopped with
+        // * stop().
         lcCameras.resize(0);
 
 	// We need to stop camera manager because it can be only one run manager in process.
