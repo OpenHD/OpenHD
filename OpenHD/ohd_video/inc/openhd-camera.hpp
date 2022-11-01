@@ -109,7 +109,7 @@ struct Camera {
   CameraType type = CameraType::Unknown;
   std::string name = "unknown";
   std::string vendor = "unknown";
-  std::string sensor_name="unknwn";
+  std::string sensor_name="unknown";
   std::string vid;
   std::string pid;
   // for USB this is the bus number, for CSI it's the connector number
