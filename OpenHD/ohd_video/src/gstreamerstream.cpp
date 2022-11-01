@@ -14,7 +14,7 @@
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,uint16_t video_udp_port)
     : CameraStream(platform, camera_holder, video_udp_port) {
-  m_console=spdlog::stdout_color_mt("ohd_video_gststream");
+  m_console=openhd::loggers::create_or_get("ohd_video_gststream");
   assert(m_console);
   // TODO fixme
   m_console->set_level(spd::level::debug);
@@ -275,6 +275,7 @@ void GStreamerStream::cleanup_pipe() {
 	m_console->debug("gst_pipeline==null");
 	return;
   }
+  // TODO according to @Alex W we need a EOS signal here to properly shut down the pipeline
   gst_element_set_state (gst_pipeline, GST_STATE_NULL);
   gst_object_unref (gst_pipeline);
   gst_pipeline=nullptr;

@@ -206,8 +206,23 @@ int main(int argc, char *argv[]) {
         // skip camera detection, we want the dummy camera regardless weather a camera is connected or not.
         cameras.emplace_back(createDummyCamera());
       }else{
+        // Issue on rpi: The openhd service is often started before ? (most likely the OS needs to do some internal setup stuff)
+        // and then the cameras discovery step is run before the camera is available, and therefore not found. Block up to
+        // X seconds here, to give the OS time until the camera is available, only then continue with the dummy camera
+        // Since the jetson is also an embedded platform, just like the rpi, I am doing it for it too, even though I never
+        // checked if that's actually an issue there
         cameras = DCameras::discover(*platform);
+        if(platform->platform_type==PlatformType::RaspberryPi || platform->platform_type==PlatformType::Jetson){
+          const auto begin=std::chrono::steady_clock::now();
+          while (std::chrono::steady_clock::now()-begin<std::chrono::seconds(10)){
+            if(!cameras.empty())break; // break as soon as we have at least one camera
+            m_console->debug("Re-running camera discovery step, until camera is found/timeout");
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            cameras=DCameras::discover(*platform);
+          }
+        }
         if(cameras.empty()){
+          m_console->warn("No camera found after X seconds, using dummy camera instead");
           cameras.emplace_back(createDummyCamera());
         }
       }

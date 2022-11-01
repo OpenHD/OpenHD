@@ -17,7 +17,7 @@
 
 DCameras::DCameras(const OHDPlatform ohdPlatform) :
 	ohdPlatform(ohdPlatform){
-  m_console=spdlog::stdout_color_mt("ohd_video_dcameras");
+  m_console=openhd::loggers::create_or_get("ohd_video_dcameras");
   assert(m_console);
   m_enable_debug=OHDUtil::get_ohd_env_variable_bool("OHD_DISCOVER_CAMERAS_DEBUG");
   // always enable for now
