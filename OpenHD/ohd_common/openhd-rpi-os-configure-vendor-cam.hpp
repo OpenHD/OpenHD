@@ -59,6 +59,7 @@ static CamConfig get_current_cam_config_from_file(){
   OHDFilesystemUtil::create_directories("/boot/openhd/");
   if(!OHDFilesystemUtil::exists(CAM_CONFIG_FILENAME)){
     // The OHD image builder defaults to mmal, NOTE this is in contrast to the default rpi os release.
+    openhd::loggers::get_default()->error("EHM");
     OHDFilesystemUtil::write_file(CAM_CONFIG_FILENAME, std::to_string(cam_config_to_int(CamConfig::MMAL)));
     return CamConfig::MMAL;
   }
