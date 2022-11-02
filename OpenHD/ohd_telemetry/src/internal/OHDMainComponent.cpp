@@ -154,11 +154,13 @@ std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
   return ret;
 }
 
-MavlinkMessage OHDMainComponent::generateOpenHDVersion() const {
+MavlinkMessage OHDMainComponent::generateOpenHDVersion(const std::string& commit_hash) const {
   MavlinkMessage msg;
   char bufferBigEnough[30]={};
   std::strncpy((char *)bufferBigEnough,OHD_VERSION_NUMBER_STRING,30);
-  mavlink_msg_openhd_version_message_pack(_sys_id,_comp_id, &msg.m, bufferBigEnough);
+  char bufferBigEnough2[30]={};
+  std::strncpy((char *)bufferBigEnough2,commit_hash.c_str(),30);
+  mavlink_msg_openhd_version_message_pack(_sys_id,_comp_id, &msg.m, bufferBigEnough,bufferBigEnough2);
   //mavlink_component_information_t x;
   return msg;
 }
