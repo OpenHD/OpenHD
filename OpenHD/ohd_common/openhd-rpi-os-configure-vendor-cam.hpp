@@ -109,6 +109,7 @@ static void save_cam_config_to_file(CamConfig new_cam_config){
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
 static void apply_new_cam_config_and_save(CamConfig new_cam_config){
+  openhd::loggers::get_default()->warn("Begin apply cam config"+ cam_config_to_string(new_cam_config));
   if(new_cam_config==CamConfig::MMAL){
     openhd::rpi::os::OHDRpiConfigClear();
     openhd::rpi::os::OHDRpiConfigRaspicam();
@@ -121,17 +122,7 @@ static void apply_new_cam_config_and_save(CamConfig new_cam_config){
     openhd::rpi::os::OHDRpiConfigArducam();
   }
   save_cam_config_to_file(new_cam_config);
-}
-
-// only apply if it has actually changed
-static void apply_new_cam_config_and_save_if_changed(CamConfig new_cam_config){
-  const auto curr_value=openhd::rpi::os::get_current_cam_config_from_file();
-  if(curr_value!=new_cam_config){
-    std::cerr<<"Changing cam config from "<<openhd::rpi::os::cam_config_to_string(curr_value)
-              <<" to "<<openhd::rpi::os::cam_config_to_string(new_cam_config)<<"\n";
-    openhd::rpi::os::apply_new_cam_config_and_save(new_cam_config);
-    std::cerr<<"Done changing cam config\n";
-  }
+  openhd::loggers::get_default()->warn("End apply cam config"+ cam_config_to_string(new_cam_config));
 }
 
 // Unfortunately complicated, since we need to perform the action asynchronously and then reboot
@@ -146,14 +137,19 @@ class ConfigChangeHandler{
       // reject, not a valid value
       return false;
     }
+    const auto current_configuration=get_current_cam_config_from_file();
+    const auto new_configuration=openhd::rpi::os::cam_config_from_int(new_value_as_int);
+    if(current_configuration==new_configuration){
+      openhd::loggers::get_default()->warn("Not changing cam config,already at "+ cam_config_to_string(current_configuration));
+      return true;
+    }
     // this change requires a reboot, so only allow changing once at run time
     if(m_changed_once)return false;
     m_changed_once= true;
-    const auto new_value=openhd::rpi::os::cam_config_from_int(new_value_as_int);
     // This will apply the changes asynchronous, even though we are "not done yet"
     // We assume nothing will fail on this command and return true already,such that we can
     // send the ack.
-    apply_async(new_value);
+    apply_async(new_configuration);
     return true;
   }
  private:
@@ -163,7 +159,7 @@ class ConfigChangeHandler{
   void apply_async(CamConfig new_value){
     // This is okay, since we will restart anyways
     m_handle_thread=std::make_unique<std::thread>([new_value]{
-      openhd::rpi::os::apply_new_cam_config_and_save_if_changed(new_value);
+      openhd::rpi::os::apply_new_cam_config_and_save(new_value);
       std::this_thread::sleep_for(std::chrono::seconds(3));
       OHDUtil::run_command("systemctl",{"start", "reboot.target"});
     });
