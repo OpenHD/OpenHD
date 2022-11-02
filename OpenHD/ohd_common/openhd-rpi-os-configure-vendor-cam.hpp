@@ -130,7 +130,7 @@ static void apply_new_cam_config_and_save(CamConfig new_cam_config){
 // "reboots in between" a change
 class ConfigChangeHandler{
  public:
-  // Returns true if checks passed, false otherise (param rejected)
+  // Returns true if checks passed, false otherwise (param rejected)
   bool change_rpi_os_camera_configuration(int new_value_as_int){
     std::lock_guard<std::mutex> lock(m_mutex);
     if(!validate_cam_config_settings_int(new_value_as_int)){
