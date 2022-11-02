@@ -56,7 +56,7 @@ class OHDMainComponent : public MavlinkComponent{
   // similar to ping
   [[nodiscard]] std::optional<MavlinkMessage> handleTimeSyncMessage(const MavlinkMessage &message);
   [[nodiscard]] std::vector<MavlinkMessage> generateWifibroadcastStatistics();
-  [[nodiscard]] MavlinkMessage generateOpenHDVersion()const;
+  [[nodiscard]] MavlinkMessage generateOpenHDVersion(const std::string& commit_hash="unknown")const;
   [[nodiscard]] MavlinkMessage generateRcControlMessage()const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
