@@ -73,7 +73,8 @@ class WBStreams {
   std::vector<std::shared_ptr<WifiCardHolder>> _broadcast_cards;
  private:
   // This needs some proper investigation !
-  void unblock_cards();
+  // In short: Make sure no OS service(s) that could interfere with monitor mode run on the cards used for wifibroadcast
+  void takeover_cards();
   // set cards to monitor mode and set the right frequency, tx power
   void configure_cards();
   // start telemetry and video rx/tx stream(s)
