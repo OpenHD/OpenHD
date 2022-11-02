@@ -201,6 +201,13 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   if(openhd::tmp::file_air_or_ground_exists()){
     ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",openhd::IntSetting {1,c_config_boot_as_air}});
   }
+  if(_platform.platform_type==PlatformType::RaspberryPi){
+    auto c_read_only_param=[](std::string,std::string value){
+      return false;
+    };
+    auto tmp=board_type_to_string(_platform.board_type);
+    ret.push_back(openhd::Setting{"BOARD_TYPE",openhd::StringSetting {tmp,c_read_only_param}});
+  }
   return ret;
 }
 
