@@ -5,6 +5,8 @@
 
 #include <boost/filesystem.hpp>
 
+#include "openhd-spdlog.hpp"
+
 // boost::filesystem or std::filesystem, what a pain
 // If possible, one should not use boost::filesystem or anything from boost::
 // inside the project, but quickly write a wrapper here.
