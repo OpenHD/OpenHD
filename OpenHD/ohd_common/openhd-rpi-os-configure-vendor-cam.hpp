@@ -111,15 +111,15 @@ static void save_cam_config_to_file(CamConfig new_cam_config){
 static void apply_new_cam_config_and_save(CamConfig new_cam_config){
   openhd::loggers::get_default()->warn("Begin apply cam config"+ cam_config_to_string(new_cam_config));
   if(new_cam_config==CamConfig::MMAL){
-    openhd::rpi::os::OHDRpiConfigClear();
-    openhd::rpi::os::OHDRpiConfigRaspicam();
+    OHDRpiConfigClear();
+    OHDRpiConfigRaspicam();
   }else if(new_cam_config==CamConfig::LIBCAMERA){
-    openhd::rpi::os::OHDRpiConfigClear();
-    openhd::rpi::os::OHDRpiConfigLibcamera();
+    OHDRpiConfigClear();
+    OHDRpiConfigLibcamera();
   }else{
     assert(new_cam_config==CamConfig::LIBCAMERA_ARDUCAM);
-    openhd::rpi::os::OHDRpiConfigClear();
-    openhd::rpi::os::OHDRpiConfigArducam();
+    OHDRpiConfigClear();
+    OHDRpiConfigArducam();
   }
   save_cam_config_to_file(new_cam_config);
   openhd::loggers::get_default()->warn("End apply cam config"+ cam_config_to_string(new_cam_config));
@@ -138,7 +138,7 @@ class ConfigChangeHandler{
       return false;
     }
     const auto current_configuration=get_current_cam_config_from_file();
-    const auto new_configuration=openhd::rpi::os::cam_config_from_int(new_value_as_int);
+    const auto new_configuration=cam_config_from_int(new_value_as_int);
     if(current_configuration==new_configuration){
       openhd::loggers::get_default()->warn("Not changing cam config,already at "+ cam_config_to_string(current_configuration));
       return true;
@@ -159,7 +159,7 @@ class ConfigChangeHandler{
   void apply_async(CamConfig new_value){
     // This is okay, since we will restart anyways
     m_handle_thread=std::make_unique<std::thread>([new_value]{
-      openhd::rpi::os::apply_new_cam_config_and_save(new_value);
+      apply_new_cam_config_and_save(new_value);
       std::this_thread::sleep_for(std::chrono::seconds(3));
       OHDUtil::run_command("systemctl",{"start", "reboot.target"});
     });
