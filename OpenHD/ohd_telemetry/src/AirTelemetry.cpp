@@ -25,7 +25,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   //
   generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
   if(_platform.platform_type==PlatformType::RaspberryPi){
-    m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>();
+    m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(_platform);
   }
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their paramters.
@@ -200,6 +200,13 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   // only expose this setting if OpenHD uses the file workaround to figure out air or ground.
   if(openhd::tmp::file_air_or_ground_exists()){
     ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",openhd::IntSetting {1,c_config_boot_as_air}});
+  }
+  if(_platform.platform_type==PlatformType::RaspberryPi){
+    auto c_read_only_param=[](std::string,std::string value){
+      return false;
+    };
+    auto tmp=board_type_to_string(_platform.board_type);
+    ret.push_back(openhd::Setting{"BOARD_TYPE",openhd::StringSetting {tmp,c_read_only_param}});
   }
   return ret;
 }
