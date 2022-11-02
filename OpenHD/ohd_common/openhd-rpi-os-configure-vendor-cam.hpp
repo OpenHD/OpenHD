@@ -56,7 +56,7 @@ static CamConfig cam_config_from_string(const std::string& config){
   }else if(OHDUtil::equal_after_uppercase(config,"libcamera_arducam")){
     return CamConfig::LIBCAMERA_ARDUCAM;
   }
-  std::cerr<<"cam_config_from_string error\n";
+  openhd::loggers::get_default()->warn("cam_config_from_string error");
   // return default
   return CamConfig::MMAL;
 }
@@ -72,7 +72,7 @@ static CamConfig cam_config_from_int(int val){
   if(val==0)return CamConfig::MMAL;
   if(val==1)return CamConfig::LIBCAMERA;
   if(val==2)return CamConfig::LIBCAMERA_ARDUCAM;
-  std::cerr<<"cam_config_from_int\n";
+  openhd::loggers::get_default()->warn("Error cam_config_from_int");
   return CamConfig::MMAL;
 }
 static int cam_config_to_int(CamConfig cam_config){
