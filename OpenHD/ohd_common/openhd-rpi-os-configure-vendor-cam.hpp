@@ -7,6 +7,7 @@
 
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
+#include "openhd-spdlog.hpp"
 
 // Helper to reconfigure the rpi os for the different camera types
 namespace openhd::rpi::os{
