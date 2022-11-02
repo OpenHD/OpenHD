@@ -57,13 +57,13 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
 	  _settings->persist();
 	}
   }
-  unblock_cards();
+  takeover_cards();
   configure_cards();
   configure_streams();
 }
 
-void WBStreams::unblock_cards() {
-  m_console->debug( "WBStreams::unblock_cards() begin");
+void WBStreams::takeover_cards() {
+  m_console->debug( "WBStreams::takeover_cards() begin");
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // However, with the image set up by raphael they should be free from any (OS) prcoesses already
   // R.N we also try and blacklist the cards from NetworkManager - it is needed for RPI and Ubuntu
@@ -85,7 +85,7 @@ void WBStreams::unblock_cards() {
   if(_platform.platform_type==PlatformType::RaspberryPi){
     //OHDUtil::run_command("airmon-ng",{"check","kill"});
   }
-  m_console->debug("WBStreams::unblock_cards() end");
+  m_console->debug("WBStreams::takeover_cards() end");
 }
 
 void WBStreams::configure_cards() {
