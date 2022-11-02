@@ -8,85 +8,49 @@
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "openhd-spdlog.hpp"
+#include "openhd-platform.hpp"
 
 // Helper to reconfigure the rpi os for the different camera types
 namespace openhd::rpi::os{
 
-static void OHDRpiConfigClear(){
-  OHDUtil::run_command("sed -i '/camera_auto_detect=1/d' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '/camera_auto_detect=0/d' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '/dtoverlay=vc4-kms-v3d,cma-128/d' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '/dtoverlay=vc4-fkms-v3d,cma-128/d' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '/dtoverlay=imx477/d' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '/start_x=1/d' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '/enable_uart=1/d' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '/dtoverlay=arducam-pivariety/d' /boot/config.txt",{});
-};
-
-static void OHDRpiConfigLibcamera(){
-  OHDUtil::run_command("sed -i '$ a camera_auto_detect=1' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '$ a dtoverlay=vc4-kms-v3d,cma-128' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '$ a enable_uart=1' /boot/config.txt",{});
-};
-
-static void OHDRpiConfigRaspicam(){
-  OHDUtil::run_command("sed -i '$ a start_x=1' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '$ a dtoverlay=vc4-fkms-v3d,cma-128' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '$ a enable_uart=1' /boot/config.txt",{});
-};
-
-static void OHDRpiConfigArducam(){
-  OHDUtil::run_command("sed -i '$ a dtoverlay=arducam-pivariety' /boot/config.txt",{});
-};
-static void OHDRpiConfigArducamImx477(){
-  OHDUtil::run_command("sed -i '$ a dtoverlay=vc4-kms-v3d,cma-128' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '$ a camera_auto_detect=0' /boot/config.txt",{});
-  OHDUtil::run_command("sed -i '$ a dtoverlay=imx477' /boot/config.txt",{});
-};
-
 enum class CamConfig {
   MMAL = 0, // raspivid / gst-rpicamsrc
-  LIBCAMERA, // "normal" libcamera
-  LIBCAMERA_ARDUCAM, // pivariety libcamera (arducam special)
+  LIBCAMERA, // "normal" libcamera (autodetect)
+  LIBCAMERA_IMX477 // "normal" libcamera, explicitly set to imx477 detection only
+  //LIBCAMERA_ARDUCAM, // pivariety libcamera (arducam special)
 };
-static CamConfig cam_config_from_string(const std::string& config){
-  if(OHDUtil::equal_after_uppercase(config,"mmal")){
-    return CamConfig::MMAL;
-  }else if(OHDUtil::equal_after_uppercase(config,"libcamera")){
-    return CamConfig::LIBCAMERA;
-  }else if(OHDUtil::equal_after_uppercase(config,"libcamera_arducam")){
-    return CamConfig::LIBCAMERA_ARDUCAM;
-  }
-  openhd::loggers::get_default()->warn("cam_config_from_string error");
-  // return default
-  return CamConfig::MMAL;
-}
 static std::string cam_config_to_string(const CamConfig& cam_config){
-  if(cam_config==CamConfig::MMAL){
-    return "mmal";
-  }else if(cam_config==CamConfig::LIBCAMERA){
-    return "libcamera";
+  switch (cam_config) {
+    case CamConfig::MMAL: return "mmal";
+    case CamConfig::LIBCAMERA: return "libcamera";
+    case CamConfig::LIBCAMERA_IMX477: return "libcamera_imx477";
   }
-  return "libcamera_arducam";
+  openhd::loggers::get_default()->warn("Error cam_config_to_string");
+  assert(true);
+  return "mmal";
 }
+
 static CamConfig cam_config_from_int(int val){
   if(val==0)return CamConfig::MMAL;
   if(val==1)return CamConfig::LIBCAMERA;
-  if(val==2)return CamConfig::LIBCAMERA_ARDUCAM;
+  if(val==2)return CamConfig::LIBCAMERA_IMX477;
   openhd::loggers::get_default()->warn("Error cam_config_from_int");
+  assert(true);
   return CamConfig::MMAL;
 }
 static int cam_config_to_int(CamConfig cam_config){
-  if(cam_config==CamConfig::MMAL){
-    return 0;
-  }else if(cam_config==CamConfig::LIBCAMERA){
-    return 1;
+  switch (cam_config) {
+    case CamConfig::MMAL: return 0;
+    case CamConfig::LIBCAMERA: return 1;
+    case CamConfig::LIBCAMERA_IMX477: return 2;
   }
-  return 2;
+  openhd::loggers::get_default()->warn("Error cam_config_to_int");
+  assert(true);
+  return 0;
 }
 
 static bool validate_cam_config_settings_int(int val){
-  return val==0 || val==1 || val==2;
+  return val<=0 && val<3;
 }
 
 static constexpr auto CAM_CONFIG_FILENAME="/boot/openhd/rpi_cam_config.txt";
@@ -95,33 +59,55 @@ static CamConfig get_current_cam_config_from_file(){
   OHDFilesystemUtil::create_directories("/boot/openhd/");
   if(!OHDFilesystemUtil::exists(CAM_CONFIG_FILENAME)){
     // The OHD image builder defaults to mmal, NOTE this is in contrast to the default rpi os release.
-    OHDFilesystemUtil::write_file(CAM_CONFIG_FILENAME, cam_config_to_string(CamConfig::MMAL));
+    OHDFilesystemUtil::write_file(CAM_CONFIG_FILENAME, std::to_string(cam_config_to_int(CamConfig::MMAL)));
     return CamConfig::MMAL;
   }
   auto content=OHDFilesystemUtil::read_file(CAM_CONFIG_FILENAME);
-  return cam_config_from_string(content);
+  auto content_as_int=std::stoi(content);
+  return cam_config_from_int(content_as_int);
 }
 
 static void save_cam_config_to_file(CamConfig new_cam_config){
   OHDFilesystemUtil::create_directories("/boot/openhd/");
-  OHDFilesystemUtil::write_file(CAM_CONFIG_FILENAME, cam_config_to_string(new_cam_config));
+  OHDFilesystemUtil::write_file(CAM_CONFIG_FILENAME,std::to_string(cam_config_to_int(new_cam_config)));
 }
 
+static std::string get_file_name_for_cam_config(const OHDPlatform& platform,const CamConfig& cam_config){
+  const bool is_rpi4=platform.board_type==BoardType::RaspberryPi4B || platform.board_type==BoardType::RaspberryPiCM4;
+  std::string base_filename="/boot/openhd/configs/";
+  if(cam_config==CamConfig::MMAL){
+    return base_filename+"rpi_raspicam.txt";
+  }else if(cam_config==CamConfig::LIBCAMERA){
+    if(is_rpi4){
+      return base_filename+"rpi_4_libcamera.txt";
+    }else{
+      return base_filename+"rpi_3_libcamera.txt";
+    }
+  }else if(cam_config==CamConfig::LIBCAMERA_IMX477){
+    if(is_rpi4){
+      return base_filename+"rpi_4_libcamera_imx477.txt";
+    }else{
+      return base_filename+"rpi_3_libcamera_imx477.txt";
+    }
+  }
+  assert(true);
+  return "";
+}
+
+const auto rpi_config_file_path="/boot/config.txt";
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
-static void apply_new_cam_config_and_save(CamConfig new_cam_config){
+static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig new_cam_config){
   openhd::loggers::get_default()->warn("Begin apply cam config"+ cam_config_to_string(new_cam_config));
-  if(new_cam_config==CamConfig::MMAL){
-    OHDRpiConfigClear();
-    OHDRpiConfigRaspicam();
-  }else if(new_cam_config==CamConfig::LIBCAMERA){
-    OHDRpiConfigClear();
-    OHDRpiConfigLibcamera();
-  }else{
-    assert(new_cam_config==CamConfig::LIBCAMERA_ARDUCAM);
-    OHDRpiConfigClear();
-    OHDRpiConfigArducam();
+  const auto filename= get_file_name_for_cam_config(platform,new_cam_config);
+  if(!OHDFilesystemUtil::exists(filename.c_str())){
+    openhd::loggers::get_default()->warn("Cannot apply new cam config, corresponding config.txt ["+filename+"] not found");
+    return;
   }
+  // move current config.txt to a backup file
+  OHDUtil::run_command("mv",{rpi_config_file_path,"/boot/config_bup.txt"});
+  // and copy over the new one
+  OHDUtil::run_command("cp",{filename,rpi_config_file_path});
   save_cam_config_to_file(new_cam_config);
   openhd::loggers::get_default()->warn("End apply cam config"+ cam_config_to_string(new_cam_config));
 }
@@ -131,6 +117,9 @@ static void apply_new_cam_config_and_save(CamConfig new_cam_config){
 // "reboots in between" a change
 class ConfigChangeHandler{
  public:
+  explicit ConfigChangeHandler(OHDPlatform platform): m_platform(platform){
+    assert(m_platform.platform_type==PlatformType::PC);
+  }
   // Returns true if checks passed, false otherwise (param rejected)
   bool change_rpi_os_camera_configuration(int new_value_as_int){
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -157,10 +146,11 @@ class ConfigChangeHandler{
   std::mutex m_mutex;
   bool m_changed_once=false;
   std::unique_ptr<std::thread> m_handle_thread;
+  const OHDPlatform m_platform;
   void apply_async(CamConfig new_value){
     // This is okay, since we will restart anyways
-    m_handle_thread=std::make_unique<std::thread>([new_value]{
-      apply_new_cam_config_and_save(new_value);
+    m_handle_thread=std::make_unique<std::thread>([new_value,this]{
+      apply_new_cam_config_and_save(m_platform,new_value);
       std::this_thread::sleep_for(std::chrono::seconds(3));
       OHDUtil::run_command("systemctl",{"start", "reboot.target"});
     });
