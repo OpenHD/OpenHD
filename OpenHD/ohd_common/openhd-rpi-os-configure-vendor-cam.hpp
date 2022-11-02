@@ -118,7 +118,7 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
 class ConfigChangeHandler{
  public:
   explicit ConfigChangeHandler(OHDPlatform platform): m_platform(platform){
-    assert(m_platform.platform_type==PlatformType::PC);
+    assert(m_platform.platform_type==PlatformType::RaspberryPi);
   }
   // Returns true if checks passed, false otherwise (param rejected)
   bool change_rpi_os_camera_configuration(int new_value_as_int){
