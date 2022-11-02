@@ -13,17 +13,24 @@ typedef struct __mavlink_openhd_stats_total_all_wifibroadcast_streams_t {
  uint64_t count_video_tx_injections_error_hint; /*<  count_video_tx_injections_error_hint*/
  uint64_t curr_video0_bps; /*<  curr_video0_bps*/
  uint64_t curr_video1_bps; /*<  curr_video1_bps*/
+ uint64_t curr_video0_tx_pps; /*<  curr_video0_tx_pps*/
+ uint64_t curr_video1_tx_pps; /*<  curr_video1_tx_pps*/
+ uint64_t curr_telemetry_tx_pps; /*<  curr_telemetry_tx_pps*/
  uint64_t curr_telemetry_rx_bps; /*<  curr_telemetry_rx_bps*/
  uint64_t curr_telemetry_tx_bps; /*<  curr_telemetry_tx_bps*/
+ uint64_t unused_0; /*<  unused_0*/
+ uint64_t unused_1; /*<  unused_1*/
+ uint64_t unused_2; /*<  unused_2*/
+ uint64_t unused_3; /*<  unused_3*/
 } mavlink_openhd_stats_total_all_wifibroadcast_streams_t;
 
-#define MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN 80
-#define MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_MIN_LEN 80
-#define MAVLINK_MSG_ID_1212_LEN 80
-#define MAVLINK_MSG_ID_1212_MIN_LEN 80
+#define MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN 136
+#define MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_MIN_LEN 136
+#define MAVLINK_MSG_ID_1212_LEN 136
+#define MAVLINK_MSG_ID_1212_MIN_LEN 136
 
-#define MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_CRC 73
-#define MAVLINK_MSG_ID_1212_CRC 73
+#define MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_CRC 117
+#define MAVLINK_MSG_ID_1212_CRC 117
 
 
 
@@ -31,7 +38,7 @@ typedef struct __mavlink_openhd_stats_total_all_wifibroadcast_streams_t {
 #define MAVLINK_MESSAGE_INFO_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS { \
     1212, \
     "OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS", \
-    10, \
+    17, \
     {  { "count_wifi_packets_received", NULL, MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, count_wifi_packets_received) }, \
          { "count_bytes_received", NULL, MAVLINK_TYPE_UINT64_T, 0, 8, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, count_bytes_received) }, \
          { "count_wifi_packets_injected", NULL, MAVLINK_TYPE_UINT64_T, 0, 16, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, count_wifi_packets_injected) }, \
@@ -40,14 +47,21 @@ typedef struct __mavlink_openhd_stats_total_all_wifibroadcast_streams_t {
          { "count_video_tx_injections_error_hint", NULL, MAVLINK_TYPE_UINT64_T, 0, 40, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, count_video_tx_injections_error_hint) }, \
          { "curr_video0_bps", NULL, MAVLINK_TYPE_UINT64_T, 0, 48, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_video0_bps) }, \
          { "curr_video1_bps", NULL, MAVLINK_TYPE_UINT64_T, 0, 56, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_video1_bps) }, \
-         { "curr_telemetry_rx_bps", NULL, MAVLINK_TYPE_UINT64_T, 0, 64, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_telemetry_rx_bps) }, \
-         { "curr_telemetry_tx_bps", NULL, MAVLINK_TYPE_UINT64_T, 0, 72, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_telemetry_tx_bps) }, \
+         { "curr_video0_tx_pps", NULL, MAVLINK_TYPE_UINT64_T, 0, 64, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_video0_tx_pps) }, \
+         { "curr_video1_tx_pps", NULL, MAVLINK_TYPE_UINT64_T, 0, 72, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_video1_tx_pps) }, \
+         { "curr_telemetry_tx_pps", NULL, MAVLINK_TYPE_UINT64_T, 0, 80, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_telemetry_tx_pps) }, \
+         { "curr_telemetry_rx_bps", NULL, MAVLINK_TYPE_UINT64_T, 0, 88, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_telemetry_rx_bps) }, \
+         { "curr_telemetry_tx_bps", NULL, MAVLINK_TYPE_UINT64_T, 0, 96, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_telemetry_tx_bps) }, \
+         { "unused_0", NULL, MAVLINK_TYPE_UINT64_T, 0, 104, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, unused_0) }, \
+         { "unused_1", NULL, MAVLINK_TYPE_UINT64_T, 0, 112, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, unused_1) }, \
+         { "unused_2", NULL, MAVLINK_TYPE_UINT64_T, 0, 120, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, unused_2) }, \
+         { "unused_3", NULL, MAVLINK_TYPE_UINT64_T, 0, 128, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, unused_3) }, \
          } \
 }
 #else
 #define MAVLINK_MESSAGE_INFO_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS { \
     "OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS", \
-    10, \
+    17, \
     {  { "count_wifi_packets_received", NULL, MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, count_wifi_packets_received) }, \
          { "count_bytes_received", NULL, MAVLINK_TYPE_UINT64_T, 0, 8, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, count_bytes_received) }, \
          { "count_wifi_packets_injected", NULL, MAVLINK_TYPE_UINT64_T, 0, 16, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, count_wifi_packets_injected) }, \
@@ -56,8 +70,15 @@ typedef struct __mavlink_openhd_stats_total_all_wifibroadcast_streams_t {
          { "count_video_tx_injections_error_hint", NULL, MAVLINK_TYPE_UINT64_T, 0, 40, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, count_video_tx_injections_error_hint) }, \
          { "curr_video0_bps", NULL, MAVLINK_TYPE_UINT64_T, 0, 48, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_video0_bps) }, \
          { "curr_video1_bps", NULL, MAVLINK_TYPE_UINT64_T, 0, 56, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_video1_bps) }, \
-         { "curr_telemetry_rx_bps", NULL, MAVLINK_TYPE_UINT64_T, 0, 64, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_telemetry_rx_bps) }, \
-         { "curr_telemetry_tx_bps", NULL, MAVLINK_TYPE_UINT64_T, 0, 72, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_telemetry_tx_bps) }, \
+         { "curr_video0_tx_pps", NULL, MAVLINK_TYPE_UINT64_T, 0, 64, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_video0_tx_pps) }, \
+         { "curr_video1_tx_pps", NULL, MAVLINK_TYPE_UINT64_T, 0, 72, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_video1_tx_pps) }, \
+         { "curr_telemetry_tx_pps", NULL, MAVLINK_TYPE_UINT64_T, 0, 80, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_telemetry_tx_pps) }, \
+         { "curr_telemetry_rx_bps", NULL, MAVLINK_TYPE_UINT64_T, 0, 88, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_telemetry_rx_bps) }, \
+         { "curr_telemetry_tx_bps", NULL, MAVLINK_TYPE_UINT64_T, 0, 96, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, curr_telemetry_tx_bps) }, \
+         { "unused_0", NULL, MAVLINK_TYPE_UINT64_T, 0, 104, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, unused_0) }, \
+         { "unused_1", NULL, MAVLINK_TYPE_UINT64_T, 0, 112, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, unused_1) }, \
+         { "unused_2", NULL, MAVLINK_TYPE_UINT64_T, 0, 120, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, unused_2) }, \
+         { "unused_3", NULL, MAVLINK_TYPE_UINT64_T, 0, 128, offsetof(mavlink_openhd_stats_total_all_wifibroadcast_streams_t, unused_3) }, \
          } \
 }
 #endif
@@ -76,12 +97,19 @@ typedef struct __mavlink_openhd_stats_total_all_wifibroadcast_streams_t {
  * @param count_video_tx_injections_error_hint  count_video_tx_injections_error_hint
  * @param curr_video0_bps  curr_video0_bps
  * @param curr_video1_bps  curr_video1_bps
+ * @param curr_video0_tx_pps  curr_video0_tx_pps
+ * @param curr_video1_tx_pps  curr_video1_tx_pps
+ * @param curr_telemetry_tx_pps  curr_telemetry_tx_pps
  * @param curr_telemetry_rx_bps  curr_telemetry_rx_bps
  * @param curr_telemetry_tx_bps  curr_telemetry_tx_bps
+ * @param unused_0  unused_0
+ * @param unused_1  unused_1
+ * @param unused_2  unused_2
+ * @param unused_3  unused_3
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
-                               uint64_t count_wifi_packets_received, uint64_t count_bytes_received, uint64_t count_wifi_packets_injected, uint64_t count_bytes_injected, uint64_t count_telemetry_tx_injections_error_hint, uint64_t count_video_tx_injections_error_hint, uint64_t curr_video0_bps, uint64_t curr_video1_bps, uint64_t curr_telemetry_rx_bps, uint64_t curr_telemetry_tx_bps)
+                               uint64_t count_wifi_packets_received, uint64_t count_bytes_received, uint64_t count_wifi_packets_injected, uint64_t count_bytes_injected, uint64_t count_telemetry_tx_injections_error_hint, uint64_t count_video_tx_injections_error_hint, uint64_t curr_video0_bps, uint64_t curr_video1_bps, uint64_t curr_video0_tx_pps, uint64_t curr_video1_tx_pps, uint64_t curr_telemetry_tx_pps, uint64_t curr_telemetry_rx_bps, uint64_t curr_telemetry_tx_bps, uint64_t unused_0, uint64_t unused_1, uint64_t unused_2, uint64_t unused_3)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char buf[MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN];
@@ -93,8 +121,15 @@ static inline uint16_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_
     _mav_put_uint64_t(buf, 40, count_video_tx_injections_error_hint);
     _mav_put_uint64_t(buf, 48, curr_video0_bps);
     _mav_put_uint64_t(buf, 56, curr_video1_bps);
-    _mav_put_uint64_t(buf, 64, curr_telemetry_rx_bps);
-    _mav_put_uint64_t(buf, 72, curr_telemetry_tx_bps);
+    _mav_put_uint64_t(buf, 64, curr_video0_tx_pps);
+    _mav_put_uint64_t(buf, 72, curr_video1_tx_pps);
+    _mav_put_uint64_t(buf, 80, curr_telemetry_tx_pps);
+    _mav_put_uint64_t(buf, 88, curr_telemetry_rx_bps);
+    _mav_put_uint64_t(buf, 96, curr_telemetry_tx_bps);
+    _mav_put_uint64_t(buf, 104, unused_0);
+    _mav_put_uint64_t(buf, 112, unused_1);
+    _mav_put_uint64_t(buf, 120, unused_2);
+    _mav_put_uint64_t(buf, 128, unused_3);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN);
 #else
@@ -107,8 +142,15 @@ static inline uint16_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_
     packet.count_video_tx_injections_error_hint = count_video_tx_injections_error_hint;
     packet.curr_video0_bps = curr_video0_bps;
     packet.curr_video1_bps = curr_video1_bps;
+    packet.curr_video0_tx_pps = curr_video0_tx_pps;
+    packet.curr_video1_tx_pps = curr_video1_tx_pps;
+    packet.curr_telemetry_tx_pps = curr_telemetry_tx_pps;
     packet.curr_telemetry_rx_bps = curr_telemetry_rx_bps;
     packet.curr_telemetry_tx_bps = curr_telemetry_tx_bps;
+    packet.unused_0 = unused_0;
+    packet.unused_1 = unused_1;
+    packet.unused_2 = unused_2;
+    packet.unused_3 = unused_3;
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN);
 #endif
@@ -131,13 +173,20 @@ static inline uint16_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_
  * @param count_video_tx_injections_error_hint  count_video_tx_injections_error_hint
  * @param curr_video0_bps  curr_video0_bps
  * @param curr_video1_bps  curr_video1_bps
+ * @param curr_video0_tx_pps  curr_video0_tx_pps
+ * @param curr_video1_tx_pps  curr_video1_tx_pps
+ * @param curr_telemetry_tx_pps  curr_telemetry_tx_pps
  * @param curr_telemetry_rx_bps  curr_telemetry_rx_bps
  * @param curr_telemetry_tx_bps  curr_telemetry_tx_bps
+ * @param unused_0  unused_0
+ * @param unused_1  unused_1
+ * @param unused_2  unused_2
+ * @param unused_3  unused_3
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
                                mavlink_message_t* msg,
-                                   uint64_t count_wifi_packets_received,uint64_t count_bytes_received,uint64_t count_wifi_packets_injected,uint64_t count_bytes_injected,uint64_t count_telemetry_tx_injections_error_hint,uint64_t count_video_tx_injections_error_hint,uint64_t curr_video0_bps,uint64_t curr_video1_bps,uint64_t curr_telemetry_rx_bps,uint64_t curr_telemetry_tx_bps)
+                                   uint64_t count_wifi_packets_received,uint64_t count_bytes_received,uint64_t count_wifi_packets_injected,uint64_t count_bytes_injected,uint64_t count_telemetry_tx_injections_error_hint,uint64_t count_video_tx_injections_error_hint,uint64_t curr_video0_bps,uint64_t curr_video1_bps,uint64_t curr_video0_tx_pps,uint64_t curr_video1_tx_pps,uint64_t curr_telemetry_tx_pps,uint64_t curr_telemetry_rx_bps,uint64_t curr_telemetry_tx_bps,uint64_t unused_0,uint64_t unused_1,uint64_t unused_2,uint64_t unused_3)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char buf[MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN];
@@ -149,8 +198,15 @@ static inline uint16_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_
     _mav_put_uint64_t(buf, 40, count_video_tx_injections_error_hint);
     _mav_put_uint64_t(buf, 48, curr_video0_bps);
     _mav_put_uint64_t(buf, 56, curr_video1_bps);
-    _mav_put_uint64_t(buf, 64, curr_telemetry_rx_bps);
-    _mav_put_uint64_t(buf, 72, curr_telemetry_tx_bps);
+    _mav_put_uint64_t(buf, 64, curr_video0_tx_pps);
+    _mav_put_uint64_t(buf, 72, curr_video1_tx_pps);
+    _mav_put_uint64_t(buf, 80, curr_telemetry_tx_pps);
+    _mav_put_uint64_t(buf, 88, curr_telemetry_rx_bps);
+    _mav_put_uint64_t(buf, 96, curr_telemetry_tx_bps);
+    _mav_put_uint64_t(buf, 104, unused_0);
+    _mav_put_uint64_t(buf, 112, unused_1);
+    _mav_put_uint64_t(buf, 120, unused_2);
+    _mav_put_uint64_t(buf, 128, unused_3);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN);
 #else
@@ -163,8 +219,15 @@ static inline uint16_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_
     packet.count_video_tx_injections_error_hint = count_video_tx_injections_error_hint;
     packet.curr_video0_bps = curr_video0_bps;
     packet.curr_video1_bps = curr_video1_bps;
+    packet.curr_video0_tx_pps = curr_video0_tx_pps;
+    packet.curr_video1_tx_pps = curr_video1_tx_pps;
+    packet.curr_telemetry_tx_pps = curr_telemetry_tx_pps;
     packet.curr_telemetry_rx_bps = curr_telemetry_rx_bps;
     packet.curr_telemetry_tx_bps = curr_telemetry_tx_bps;
+    packet.unused_0 = unused_0;
+    packet.unused_1 = unused_1;
+    packet.unused_2 = unused_2;
+    packet.unused_3 = unused_3;
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN);
 #endif
@@ -183,7 +246,7 @@ static inline uint16_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_
  */
 static inline uint16_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_openhd_stats_total_all_wifibroadcast_streams_t* openhd_stats_total_all_wifibroadcast_streams)
 {
-    return mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_pack(system_id, component_id, msg, openhd_stats_total_all_wifibroadcast_streams->count_wifi_packets_received, openhd_stats_total_all_wifibroadcast_streams->count_bytes_received, openhd_stats_total_all_wifibroadcast_streams->count_wifi_packets_injected, openhd_stats_total_all_wifibroadcast_streams->count_bytes_injected, openhd_stats_total_all_wifibroadcast_streams->count_telemetry_tx_injections_error_hint, openhd_stats_total_all_wifibroadcast_streams->count_video_tx_injections_error_hint, openhd_stats_total_all_wifibroadcast_streams->curr_video0_bps, openhd_stats_total_all_wifibroadcast_streams->curr_video1_bps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_rx_bps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_tx_bps);
+    return mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_pack(system_id, component_id, msg, openhd_stats_total_all_wifibroadcast_streams->count_wifi_packets_received, openhd_stats_total_all_wifibroadcast_streams->count_bytes_received, openhd_stats_total_all_wifibroadcast_streams->count_wifi_packets_injected, openhd_stats_total_all_wifibroadcast_streams->count_bytes_injected, openhd_stats_total_all_wifibroadcast_streams->count_telemetry_tx_injections_error_hint, openhd_stats_total_all_wifibroadcast_streams->count_video_tx_injections_error_hint, openhd_stats_total_all_wifibroadcast_streams->curr_video0_bps, openhd_stats_total_all_wifibroadcast_streams->curr_video1_bps, openhd_stats_total_all_wifibroadcast_streams->curr_video0_tx_pps, openhd_stats_total_all_wifibroadcast_streams->curr_video1_tx_pps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_tx_pps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_rx_bps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_tx_bps, openhd_stats_total_all_wifibroadcast_streams->unused_0, openhd_stats_total_all_wifibroadcast_streams->unused_1, openhd_stats_total_all_wifibroadcast_streams->unused_2, openhd_stats_total_all_wifibroadcast_streams->unused_3);
 }
 
 /**
@@ -197,7 +260,7 @@ static inline uint16_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_
  */
 static inline uint16_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_encode_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, const mavlink_openhd_stats_total_all_wifibroadcast_streams_t* openhd_stats_total_all_wifibroadcast_streams)
 {
-    return mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_pack_chan(system_id, component_id, chan, msg, openhd_stats_total_all_wifibroadcast_streams->count_wifi_packets_received, openhd_stats_total_all_wifibroadcast_streams->count_bytes_received, openhd_stats_total_all_wifibroadcast_streams->count_wifi_packets_injected, openhd_stats_total_all_wifibroadcast_streams->count_bytes_injected, openhd_stats_total_all_wifibroadcast_streams->count_telemetry_tx_injections_error_hint, openhd_stats_total_all_wifibroadcast_streams->count_video_tx_injections_error_hint, openhd_stats_total_all_wifibroadcast_streams->curr_video0_bps, openhd_stats_total_all_wifibroadcast_streams->curr_video1_bps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_rx_bps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_tx_bps);
+    return mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_pack_chan(system_id, component_id, chan, msg, openhd_stats_total_all_wifibroadcast_streams->count_wifi_packets_received, openhd_stats_total_all_wifibroadcast_streams->count_bytes_received, openhd_stats_total_all_wifibroadcast_streams->count_wifi_packets_injected, openhd_stats_total_all_wifibroadcast_streams->count_bytes_injected, openhd_stats_total_all_wifibroadcast_streams->count_telemetry_tx_injections_error_hint, openhd_stats_total_all_wifibroadcast_streams->count_video_tx_injections_error_hint, openhd_stats_total_all_wifibroadcast_streams->curr_video0_bps, openhd_stats_total_all_wifibroadcast_streams->curr_video1_bps, openhd_stats_total_all_wifibroadcast_streams->curr_video0_tx_pps, openhd_stats_total_all_wifibroadcast_streams->curr_video1_tx_pps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_tx_pps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_rx_bps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_tx_bps, openhd_stats_total_all_wifibroadcast_streams->unused_0, openhd_stats_total_all_wifibroadcast_streams->unused_1, openhd_stats_total_all_wifibroadcast_streams->unused_2, openhd_stats_total_all_wifibroadcast_streams->unused_3);
 }
 
 /**
@@ -212,12 +275,19 @@ static inline uint16_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_
  * @param count_video_tx_injections_error_hint  count_video_tx_injections_error_hint
  * @param curr_video0_bps  curr_video0_bps
  * @param curr_video1_bps  curr_video1_bps
+ * @param curr_video0_tx_pps  curr_video0_tx_pps
+ * @param curr_video1_tx_pps  curr_video1_tx_pps
+ * @param curr_telemetry_tx_pps  curr_telemetry_tx_pps
  * @param curr_telemetry_rx_bps  curr_telemetry_rx_bps
  * @param curr_telemetry_tx_bps  curr_telemetry_tx_bps
+ * @param unused_0  unused_0
+ * @param unused_1  unused_1
+ * @param unused_2  unused_2
+ * @param unused_3  unused_3
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send(mavlink_channel_t chan, uint64_t count_wifi_packets_received, uint64_t count_bytes_received, uint64_t count_wifi_packets_injected, uint64_t count_bytes_injected, uint64_t count_telemetry_tx_injections_error_hint, uint64_t count_video_tx_injections_error_hint, uint64_t curr_video0_bps, uint64_t curr_video1_bps, uint64_t curr_telemetry_rx_bps, uint64_t curr_telemetry_tx_bps)
+static inline void mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send(mavlink_channel_t chan, uint64_t count_wifi_packets_received, uint64_t count_bytes_received, uint64_t count_wifi_packets_injected, uint64_t count_bytes_injected, uint64_t count_telemetry_tx_injections_error_hint, uint64_t count_video_tx_injections_error_hint, uint64_t curr_video0_bps, uint64_t curr_video1_bps, uint64_t curr_video0_tx_pps, uint64_t curr_video1_tx_pps, uint64_t curr_telemetry_tx_pps, uint64_t curr_telemetry_rx_bps, uint64_t curr_telemetry_tx_bps, uint64_t unused_0, uint64_t unused_1, uint64_t unused_2, uint64_t unused_3)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char buf[MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN];
@@ -229,8 +299,15 @@ static inline void mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send
     _mav_put_uint64_t(buf, 40, count_video_tx_injections_error_hint);
     _mav_put_uint64_t(buf, 48, curr_video0_bps);
     _mav_put_uint64_t(buf, 56, curr_video1_bps);
-    _mav_put_uint64_t(buf, 64, curr_telemetry_rx_bps);
-    _mav_put_uint64_t(buf, 72, curr_telemetry_tx_bps);
+    _mav_put_uint64_t(buf, 64, curr_video0_tx_pps);
+    _mav_put_uint64_t(buf, 72, curr_video1_tx_pps);
+    _mav_put_uint64_t(buf, 80, curr_telemetry_tx_pps);
+    _mav_put_uint64_t(buf, 88, curr_telemetry_rx_bps);
+    _mav_put_uint64_t(buf, 96, curr_telemetry_tx_bps);
+    _mav_put_uint64_t(buf, 104, unused_0);
+    _mav_put_uint64_t(buf, 112, unused_1);
+    _mav_put_uint64_t(buf, 120, unused_2);
+    _mav_put_uint64_t(buf, 128, unused_3);
 
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS, buf, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_MIN_LEN, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_CRC);
 #else
@@ -243,8 +320,15 @@ static inline void mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send
     packet.count_video_tx_injections_error_hint = count_video_tx_injections_error_hint;
     packet.curr_video0_bps = curr_video0_bps;
     packet.curr_video1_bps = curr_video1_bps;
+    packet.curr_video0_tx_pps = curr_video0_tx_pps;
+    packet.curr_video1_tx_pps = curr_video1_tx_pps;
+    packet.curr_telemetry_tx_pps = curr_telemetry_tx_pps;
     packet.curr_telemetry_rx_bps = curr_telemetry_rx_bps;
     packet.curr_telemetry_tx_bps = curr_telemetry_tx_bps;
+    packet.unused_0 = unused_0;
+    packet.unused_1 = unused_1;
+    packet.unused_2 = unused_2;
+    packet.unused_3 = unused_3;
 
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS, (const char *)&packet, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_MIN_LEN, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_CRC);
 #endif
@@ -258,7 +342,7 @@ static inline void mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send
 static inline void mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send_struct(mavlink_channel_t chan, const mavlink_openhd_stats_total_all_wifibroadcast_streams_t* openhd_stats_total_all_wifibroadcast_streams)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-    mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send(chan, openhd_stats_total_all_wifibroadcast_streams->count_wifi_packets_received, openhd_stats_total_all_wifibroadcast_streams->count_bytes_received, openhd_stats_total_all_wifibroadcast_streams->count_wifi_packets_injected, openhd_stats_total_all_wifibroadcast_streams->count_bytes_injected, openhd_stats_total_all_wifibroadcast_streams->count_telemetry_tx_injections_error_hint, openhd_stats_total_all_wifibroadcast_streams->count_video_tx_injections_error_hint, openhd_stats_total_all_wifibroadcast_streams->curr_video0_bps, openhd_stats_total_all_wifibroadcast_streams->curr_video1_bps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_rx_bps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_tx_bps);
+    mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send(chan, openhd_stats_total_all_wifibroadcast_streams->count_wifi_packets_received, openhd_stats_total_all_wifibroadcast_streams->count_bytes_received, openhd_stats_total_all_wifibroadcast_streams->count_wifi_packets_injected, openhd_stats_total_all_wifibroadcast_streams->count_bytes_injected, openhd_stats_total_all_wifibroadcast_streams->count_telemetry_tx_injections_error_hint, openhd_stats_total_all_wifibroadcast_streams->count_video_tx_injections_error_hint, openhd_stats_total_all_wifibroadcast_streams->curr_video0_bps, openhd_stats_total_all_wifibroadcast_streams->curr_video1_bps, openhd_stats_total_all_wifibroadcast_streams->curr_video0_tx_pps, openhd_stats_total_all_wifibroadcast_streams->curr_video1_tx_pps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_tx_pps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_rx_bps, openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_tx_bps, openhd_stats_total_all_wifibroadcast_streams->unused_0, openhd_stats_total_all_wifibroadcast_streams->unused_1, openhd_stats_total_all_wifibroadcast_streams->unused_2, openhd_stats_total_all_wifibroadcast_streams->unused_3);
 #else
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS, (const char *)openhd_stats_total_all_wifibroadcast_streams, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_MIN_LEN, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_CRC);
 #endif
@@ -272,7 +356,7 @@ static inline void mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send
   is usually the receive buffer for the channel, and allows a reply to an
   incoming message with minimum stack space usage.
  */
-static inline void mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  uint64_t count_wifi_packets_received, uint64_t count_bytes_received, uint64_t count_wifi_packets_injected, uint64_t count_bytes_injected, uint64_t count_telemetry_tx_injections_error_hint, uint64_t count_video_tx_injections_error_hint, uint64_t curr_video0_bps, uint64_t curr_video1_bps, uint64_t curr_telemetry_rx_bps, uint64_t curr_telemetry_tx_bps)
+static inline void mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  uint64_t count_wifi_packets_received, uint64_t count_bytes_received, uint64_t count_wifi_packets_injected, uint64_t count_bytes_injected, uint64_t count_telemetry_tx_injections_error_hint, uint64_t count_video_tx_injections_error_hint, uint64_t curr_video0_bps, uint64_t curr_video1_bps, uint64_t curr_video0_tx_pps, uint64_t curr_video1_tx_pps, uint64_t curr_telemetry_tx_pps, uint64_t curr_telemetry_rx_bps, uint64_t curr_telemetry_tx_bps, uint64_t unused_0, uint64_t unused_1, uint64_t unused_2, uint64_t unused_3)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char *buf = (char *)msgbuf;
@@ -284,8 +368,15 @@ static inline void mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send
     _mav_put_uint64_t(buf, 40, count_video_tx_injections_error_hint);
     _mav_put_uint64_t(buf, 48, curr_video0_bps);
     _mav_put_uint64_t(buf, 56, curr_video1_bps);
-    _mav_put_uint64_t(buf, 64, curr_telemetry_rx_bps);
-    _mav_put_uint64_t(buf, 72, curr_telemetry_tx_bps);
+    _mav_put_uint64_t(buf, 64, curr_video0_tx_pps);
+    _mav_put_uint64_t(buf, 72, curr_video1_tx_pps);
+    _mav_put_uint64_t(buf, 80, curr_telemetry_tx_pps);
+    _mav_put_uint64_t(buf, 88, curr_telemetry_rx_bps);
+    _mav_put_uint64_t(buf, 96, curr_telemetry_tx_bps);
+    _mav_put_uint64_t(buf, 104, unused_0);
+    _mav_put_uint64_t(buf, 112, unused_1);
+    _mav_put_uint64_t(buf, 120, unused_2);
+    _mav_put_uint64_t(buf, 128, unused_3);
 
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS, buf, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_MIN_LEN, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_CRC);
 #else
@@ -298,8 +389,15 @@ static inline void mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_send
     packet->count_video_tx_injections_error_hint = count_video_tx_injections_error_hint;
     packet->curr_video0_bps = curr_video0_bps;
     packet->curr_video1_bps = curr_video1_bps;
+    packet->curr_video0_tx_pps = curr_video0_tx_pps;
+    packet->curr_video1_tx_pps = curr_video1_tx_pps;
+    packet->curr_telemetry_tx_pps = curr_telemetry_tx_pps;
     packet->curr_telemetry_rx_bps = curr_telemetry_rx_bps;
     packet->curr_telemetry_tx_bps = curr_telemetry_tx_bps;
+    packet->unused_0 = unused_0;
+    packet->unused_1 = unused_1;
+    packet->unused_2 = unused_2;
+    packet->unused_3 = unused_3;
 
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS, (const char *)packet, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_MIN_LEN, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_CRC);
 #endif
@@ -392,13 +490,43 @@ static inline uint64_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_
 }
 
 /**
+ * @brief Get field curr_video0_tx_pps from openhd_stats_total_all_wifibroadcast_streams message
+ *
+ * @return  curr_video0_tx_pps
+ */
+static inline uint64_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_curr_video0_tx_pps(const mavlink_message_t* msg)
+{
+    return _MAV_RETURN_uint64_t(msg,  64);
+}
+
+/**
+ * @brief Get field curr_video1_tx_pps from openhd_stats_total_all_wifibroadcast_streams message
+ *
+ * @return  curr_video1_tx_pps
+ */
+static inline uint64_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_curr_video1_tx_pps(const mavlink_message_t* msg)
+{
+    return _MAV_RETURN_uint64_t(msg,  72);
+}
+
+/**
+ * @brief Get field curr_telemetry_tx_pps from openhd_stats_total_all_wifibroadcast_streams message
+ *
+ * @return  curr_telemetry_tx_pps
+ */
+static inline uint64_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_curr_telemetry_tx_pps(const mavlink_message_t* msg)
+{
+    return _MAV_RETURN_uint64_t(msg,  80);
+}
+
+/**
  * @brief Get field curr_telemetry_rx_bps from openhd_stats_total_all_wifibroadcast_streams message
  *
  * @return  curr_telemetry_rx_bps
  */
 static inline uint64_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_curr_telemetry_rx_bps(const mavlink_message_t* msg)
 {
-    return _MAV_RETURN_uint64_t(msg,  64);
+    return _MAV_RETURN_uint64_t(msg,  88);
 }
 
 /**
@@ -408,7 +536,47 @@ static inline uint64_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_
  */
 static inline uint64_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_curr_telemetry_tx_bps(const mavlink_message_t* msg)
 {
-    return _MAV_RETURN_uint64_t(msg,  72);
+    return _MAV_RETURN_uint64_t(msg,  96);
+}
+
+/**
+ * @brief Get field unused_0 from openhd_stats_total_all_wifibroadcast_streams message
+ *
+ * @return  unused_0
+ */
+static inline uint64_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_unused_0(const mavlink_message_t* msg)
+{
+    return _MAV_RETURN_uint64_t(msg,  104);
+}
+
+/**
+ * @brief Get field unused_1 from openhd_stats_total_all_wifibroadcast_streams message
+ *
+ * @return  unused_1
+ */
+static inline uint64_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_unused_1(const mavlink_message_t* msg)
+{
+    return _MAV_RETURN_uint64_t(msg,  112);
+}
+
+/**
+ * @brief Get field unused_2 from openhd_stats_total_all_wifibroadcast_streams message
+ *
+ * @return  unused_2
+ */
+static inline uint64_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_unused_2(const mavlink_message_t* msg)
+{
+    return _MAV_RETURN_uint64_t(msg,  120);
+}
+
+/**
+ * @brief Get field unused_3 from openhd_stats_total_all_wifibroadcast_streams message
+ *
+ * @return  unused_3
+ */
+static inline uint64_t mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_unused_3(const mavlink_message_t* msg)
+{
+    return _MAV_RETURN_uint64_t(msg,  128);
 }
 
 /**
@@ -428,8 +596,15 @@ static inline void mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_deco
     openhd_stats_total_all_wifibroadcast_streams->count_video_tx_injections_error_hint = mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_count_video_tx_injections_error_hint(msg);
     openhd_stats_total_all_wifibroadcast_streams->curr_video0_bps = mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_curr_video0_bps(msg);
     openhd_stats_total_all_wifibroadcast_streams->curr_video1_bps = mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_curr_video1_bps(msg);
+    openhd_stats_total_all_wifibroadcast_streams->curr_video0_tx_pps = mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_curr_video0_tx_pps(msg);
+    openhd_stats_total_all_wifibroadcast_streams->curr_video1_tx_pps = mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_curr_video1_tx_pps(msg);
+    openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_tx_pps = mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_curr_telemetry_tx_pps(msg);
     openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_rx_bps = mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_curr_telemetry_rx_bps(msg);
     openhd_stats_total_all_wifibroadcast_streams->curr_telemetry_tx_bps = mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_curr_telemetry_tx_bps(msg);
+    openhd_stats_total_all_wifibroadcast_streams->unused_0 = mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_unused_0(msg);
+    openhd_stats_total_all_wifibroadcast_streams->unused_1 = mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_unused_1(msg);
+    openhd_stats_total_all_wifibroadcast_streams->unused_2 = mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_unused_2(msg);
+    openhd_stats_total_all_wifibroadcast_streams->unused_3 = mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_get_unused_3(msg);
 #else
         uint8_t len = msg->len < MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN? msg->len : MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN;
         memset(openhd_stats_total_all_wifibroadcast_streams, 0, MAVLINK_MSG_ID_OPENHD_STATS_TOTAL_ALL_WIFIBROADCAST_STREAMS_LEN);

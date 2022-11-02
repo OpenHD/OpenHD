@@ -357,13 +357,20 @@ void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
   if(_profile.is_air){
 	if(!udpVideoTxList.empty()){
 	  stats_total_all_streams.curr_video0_bps=udpVideoTxList.at(0)->get_current_provided_bits_per_second();
+          stats_total_all_streams.curr_video0_tx_pps=udpVideoTxList.at(0)->get_current_packets_per_second();
 	}
 	if(udpVideoTxList.size()>=2){
 	  stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_current_provided_bits_per_second();
+          stats_total_all_streams.curr_video1_tx_pps=udpVideoTxList.at(1)->get_current_packets_per_second();
 	}
   }else{
 	stats_total_all_streams.curr_video0_bps=_last_stats_per_rx_stream.at(1).wb_rx_stats.curr_bits_per_second;
 	stats_total_all_streams.curr_video1_bps=_last_stats_per_rx_stream.at(2).wb_rx_stats.curr_bits_per_second;
+        stats_total_all_streams.curr_video0_tx_pps=0;
+        stats_total_all_streams.curr_video1_tx_pps=0;
+        if(udpTelemetryTx){
+          stats_total_all_streams.curr_telemetry_tx_pps=udpTelemetryTx->get_current_packets_per_second();
+        }
   }
   // dBm / rssi for all connected cards that are doing wifibroadcast
   openhd::link_statistics::StatsAllCards stats_all_cards{};
