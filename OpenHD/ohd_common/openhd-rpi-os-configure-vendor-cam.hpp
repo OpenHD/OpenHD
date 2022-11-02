@@ -50,7 +50,7 @@ static int cam_config_to_int(CamConfig cam_config){
 }
 
 static bool validate_cam_config_settings_int(int val){
-  return val<=0 && val<3;
+  return val>=0 && val<3;
 }
 
 static constexpr auto CAM_CONFIG_FILENAME="/boot/openhd/rpi_cam_config.txt";
@@ -126,7 +126,6 @@ class ConfigChangeHandler{
   // Returns true if checks passed, false otherwise (param rejected)
   bool change_rpi_os_camera_configuration(int new_value_as_int){
     std::lock_guard<std::mutex> lock(m_mutex);
-    openhd::loggers::get_default()->debug("Cam config request change to {}",new_value_as_int);
     if(!validate_cam_config_settings_int(new_value_as_int)){
       // reject, not a valid value
       return false;
