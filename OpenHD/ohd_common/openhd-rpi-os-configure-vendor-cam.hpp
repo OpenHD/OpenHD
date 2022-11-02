@@ -63,7 +63,9 @@ static CamConfig get_current_cam_config_from_file(){
     OHDFilesystemUtil::write_file(CAM_CONFIG_FILENAME, std::to_string(cam_config_to_int(CamConfig::MMAL)));
     return CamConfig::MMAL;
   }
+  openhd::loggers::get_default()->error("hello");
   auto content=OHDFilesystemUtil::read_file(CAM_CONFIG_FILENAME);
+  openhd::loggers::get_default()->error("content:["+content+"]");
   auto content_as_int=std::stoi(content);
   return cam_config_from_int(content_as_int);
 }
