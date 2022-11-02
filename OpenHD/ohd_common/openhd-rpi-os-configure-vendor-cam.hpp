@@ -53,7 +53,7 @@ static bool validate_cam_config_settings_int(int val){
   return val>=0 && val<3;
 }
 
-static constexpr auto CAM_CONFIG_FILENAME="/boot/openhd/rpi_cam_config.txt";
+static constexpr auto CAM_CONFIG_FILENAME="/boot/openhd/curr_rpi_cam_config.txt";
 
 static CamConfig get_current_cam_config_from_file(){
   OHDFilesystemUtil::create_directories("/boot/openhd/");
