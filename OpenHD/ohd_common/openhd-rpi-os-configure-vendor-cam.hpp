@@ -50,10 +50,10 @@ static int cam_config_to_int(CamConfig cam_config){
 }
 
 static bool validate_cam_config_settings_int(int val){
-  return val<=0 && val<3;
+  return val>=0 && val<3;
 }
 
-static constexpr auto CAM_CONFIG_FILENAME="/boot/openhd/rpi_cam_config.txt";
+static constexpr auto CAM_CONFIG_FILENAME="/boot/openhd/curr_rpi_cam_config.txt";
 
 static CamConfig get_current_cam_config_from_file(){
   OHDFilesystemUtil::create_directories("/boot/openhd/");
@@ -98,7 +98,7 @@ const auto rpi_config_file_path="/boot/config.txt";
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
 static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig new_cam_config){
-  openhd::loggers::get_default()->warn("Begin apply cam config"+ cam_config_to_string(new_cam_config));
+  openhd::loggers::get_default()->debug("Begin apply cam config"+ cam_config_to_string(new_cam_config));
   const auto filename= get_file_name_for_cam_config(platform,new_cam_config);
   if(!OHDFilesystemUtil::exists(filename.c_str())){
     openhd::loggers::get_default()->warn("Cannot apply new cam config, corresponding config.txt ["+filename+"] not found");
@@ -109,7 +109,7 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   // and copy over the new one
   OHDUtil::run_command("cp",{filename,rpi_config_file_path});
   save_cam_config_to_file(new_cam_config);
-  openhd::loggers::get_default()->warn("End apply cam config"+ cam_config_to_string(new_cam_config));
+  openhd::loggers::get_default()->debug("End apply cam config"+ cam_config_to_string(new_cam_config));
 }
 
 // Unfortunately complicated, since we need to perform the action asynchronously and then reboot
@@ -118,7 +118,7 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
 class ConfigChangeHandler{
  public:
   explicit ConfigChangeHandler(OHDPlatform platform): m_platform(platform){
-    assert(m_platform.platform_type==PlatformType::PC);
+    assert(m_platform.platform_type==PlatformType::RaspberryPi);
   }
   // Returns true if checks passed, false otherwise (param rejected)
   bool change_rpi_os_camera_configuration(int new_value_as_int){
