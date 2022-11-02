@@ -25,7 +25,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   //
   generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
   if(_platform.platform_type==PlatformType::RaspberryPi){
-    m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(_platform);
+    //m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(_platform);
   }
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their paramters.
