@@ -59,13 +59,10 @@ static CamConfig get_current_cam_config_from_file(){
   OHDFilesystemUtil::create_directories("/boot/openhd/");
   if(!OHDFilesystemUtil::exists(CAM_CONFIG_FILENAME)){
     // The OHD image builder defaults to mmal, NOTE this is in contrast to the default rpi os release.
-    openhd::loggers::get_default()->error("EHM");
     OHDFilesystemUtil::write_file(CAM_CONFIG_FILENAME, std::to_string(cam_config_to_int(CamConfig::MMAL)));
     return CamConfig::MMAL;
   }
-  openhd::loggers::get_default()->error("hello");
   auto content=OHDFilesystemUtil::read_file(CAM_CONFIG_FILENAME);
-  openhd::loggers::get_default()->error("content:["+content+"]");
   auto content_as_int=std::stoi(content);
   return cam_config_from_int(content_as_int);
 }
@@ -101,7 +98,7 @@ const auto rpi_config_file_path="/boot/config.txt";
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
 static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig new_cam_config){
-  openhd::loggers::get_default()->warn("Begin apply cam config"+ cam_config_to_string(new_cam_config));
+  openhd::loggers::get_default()->debug("Begin apply cam config"+ cam_config_to_string(new_cam_config));
   const auto filename= get_file_name_for_cam_config(platform,new_cam_config);
   if(!OHDFilesystemUtil::exists(filename.c_str())){
     openhd::loggers::get_default()->warn("Cannot apply new cam config, corresponding config.txt ["+filename+"] not found");
@@ -112,7 +109,7 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   // and copy over the new one
   OHDUtil::run_command("cp",{filename,rpi_config_file_path});
   save_cam_config_to_file(new_cam_config);
-  openhd::loggers::get_default()->warn("End apply cam config"+ cam_config_to_string(new_cam_config));
+  openhd::loggers::get_default()->debug("End apply cam config"+ cam_config_to_string(new_cam_config));
 }
 
 // Unfortunately complicated, since we need to perform the action asynchronously and then reboot
