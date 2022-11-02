@@ -16,6 +16,8 @@
 #include <OHDInterface.h>
 #include <OHDTelemetry.h>
 #include <OHDVideo.h>
+// For logging the commit hash and more
+#include "git.h"
 
 ///Regarding AIR / GROUND detection: Previous OpenHD releases would detect weather this system is an air pi
 // or ground pi by checking weather it has a connected camera. However, this pattern has 2 problems:
@@ -173,6 +175,7 @@ int main(int argc, char *argv[]) {
       "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n"<<
       "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n";
   std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
+  std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
   OHDInterface::print_internal_fec_optimization_method();
 
   std::shared_ptr<spdlog::logger> m_console=spdlog::stdout_color_mt("main");
