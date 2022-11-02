@@ -6,3 +6,7 @@ sudo systemctl stop openhd
 
 // disable the openhd service (persistent also on reboots)
 sudo systemctl disable openhd
+
+gst-launch-1.0 --gst-version
+show caps:
+-vvv
