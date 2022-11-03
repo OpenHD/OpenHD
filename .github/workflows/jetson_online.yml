@@ -55,6 +55,10 @@ jobs:
           sudo chmod +x install_dep_jetson.sh 
           sudo ./install_dep_jetson.sh
           chown -R root:root /opt
+          git clone https://github.com/gabime/spdlog.git
+          cd spdlog && mkdir build && cd build
+          cmake .. && make -j
+          cd ../../
           sudo ./package.sh arm64 ubuntu bionic
 
 
