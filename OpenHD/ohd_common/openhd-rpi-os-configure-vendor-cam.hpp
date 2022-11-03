@@ -16,6 +16,8 @@
 // They are also slight differences between the RPI4/CM4 and RPI3 or older
 // R.n the aproach here is to just copy over the appropriate config.txt file
 // according to what the user selected
+// Note that the action(s) here are required for the OS to detect and configure the camera -
+// only a camera detected by the OS can then be detected by the OHD camera(s) discovery
 namespace openhd::rpi::os{
 
 enum class CamConfig {

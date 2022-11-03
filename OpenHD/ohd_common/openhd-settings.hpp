@@ -21,7 +21,6 @@
 
 // from https://superuser.com/questions/631859/preferred-place-to-store-configuration-files-that-change-often
 // All persistent settings are written into this directory.
-//static constexpr auto BASE_PATH="/etc/openhd/";
 static constexpr auto BASE_PATH="/usr/local/share/openhd/";
 // for example, the unique id
 static constexpr auto UNIT_ID_FILE = "/usr/local/share/openhd/unit.id";
