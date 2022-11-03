@@ -53,6 +53,7 @@ jobs:
           ls -a  
           sudo chmod +x install_dep_jetson.sh 
           sudo ./install_dep_jetson.sh
+          git config --global --add safe.directory /opt/Open.HD
           sudo ./package.sh arm64 ubuntu bionic
 
 
