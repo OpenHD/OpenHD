@@ -42,7 +42,7 @@ jobs:
         import_github_env: true
         commands: |
           ls -a
-          git config --global --add safe.directory '*'
+          mkdir -p /home/runner/work/_temp/_github_home && printf "[safe]\n\tdirectory = /github/workspace" > /home/runner/work/_temp/_github_home/.gitconfig
           cd /opt
           cd Open.HD
           sudo apt update
