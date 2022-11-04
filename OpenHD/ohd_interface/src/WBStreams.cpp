@@ -10,11 +10,12 @@
 #include <utility>
 
 WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards1) :
-   _profile(std::move(profile)),_platform(platform),_broadcast_cards(std::move(broadcast_cards1)) {
+   _profile(std::move(profile)),_platform(platform),_broadcast_cards(std::move(broadcast_cards1)),m_disable_all_frequency_checks(OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS)) {
   m_console = openhd::loggers::create_or_get("ohd_wb_streams");
   assert(m_console);
   m_console->set_level(spd::level::debug);
   m_console->debug("WBStreams::WBStreams: {}",_broadcast_cards.size());
+  m_console->debug("WBStreams::m_disable_all_frequency_checks:"+OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks
   if(_broadcast_cards.empty()) {
     // NOTE: Here we crash, since it would be a programmer(s) error to create a WBStreams instance without at least 1 wifi card.
@@ -447,16 +448,20 @@ void WBStreams::restart() {
 
 bool WBStreams::set_frequency(int frequency) {
   m_console->debug("WBStreams::set_frequency {}",frequency);
-  if(_settings->get_settings().configured_for_2G()){
-	if(!openhd::is_valid_frequency_2G(frequency)){
-	  m_console->warn("Invalid 2.4G frequency {}",frequency);
-	  return false;
-	}
+  if(m_disable_all_frequency_checks){
+    m_console->warn("Not sanity checking frequency");
   }else{
-	if(!openhd::is_valid_frequency_5G(frequency)){
-	  m_console->warn("Invalid 5G frequency {}",frequency);
-	  return false;
-	}
+    if(_settings->get_settings().configured_for_2G()){
+      if(!openhd::is_valid_frequency_2G(frequency)){
+        m_console->warn("Invalid 2.4G frequency {}",frequency);
+        return false;
+      }
+    }else{
+      if(!openhd::is_valid_frequency_5G(frequency)){
+        m_console->warn("Invalid 5G frequency {}",frequency);
+        return false;
+      }
+    }
   }
   _settings->unsafe_get_settings().wb_frequency=frequency;
   _settings->persist();

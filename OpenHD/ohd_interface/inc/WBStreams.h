@@ -110,6 +110,11 @@ class WBStreams {
   // last calculated "All stats".
   openhd::link_statistics::AllStats _last_all_stats;
   std::shared_ptr<spdlog::logger> m_console;
+  // disable all openhd frequency checking - note that openhd just uses the proper iw command to set a frequency - if setting
+  // the frequency actually had an effect, it doesn't know (cannot really know) and therefore QOpenHD can then report a different wifi freq,
+  // even though the frequency actually hasn't changed
+  static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS="/boot/openhd/disable_all_frequency_checks.txt";
+  const bool m_disable_all_frequency_checks;
 };
 
 #endif
