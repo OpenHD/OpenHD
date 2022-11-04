@@ -10,7 +10,8 @@
 // Helper for validating user-selectable settings
 namespace openhd{
 
-// Wifi channel and the corresponding frequency, in mHz
+// Wifi channel and the corresponding frequency, in mHz.
+// "standard" : listed under wikipedia or not.
 struct WifiChannel{
   const uint32_t frequency;
   const uint32_t channel;
@@ -30,7 +31,7 @@ static std::vector<WifiChannel> get_channels_below_standard_2G_wifi(){
       WifiChannel{2332, 38,false}, /* Channel XX */
       WifiChannel{2337, 39,false}, /* Channel XX */
       WifiChannel{2342, 40,false}, /* Channel XX */
-      WifiChannel{2347, 41,false},/* Channel XX */
+      WifiChannel{2347, 41,false}, /* Channel XX */
       WifiChannel{2352, 42,false}, /* Channel XX */
       WifiChannel{2357, 43,false}, /* Channel XX */
       WifiChannel{2362, 44,false}, /* Channel XX */
@@ -70,7 +71,7 @@ static std::vector<WifiChannel> get_channels_2G() {
   };
 };
 
-// These are not valid 2.4G wifi channel(s) but some cards aparently can do them, too
+// These are not valid 2.4G wifi channel(s) but some cards apparently can do them, too
 // From https://github.com/OpenHD/linux/blob/092115ae6a980feaa09722690891d99da3afb55c/drivers/net/wireless/ath/ath9k/common-init.c#L39
 // NOTE: channel and frequency seem to be off by one
 static std::vector<WifiChannel> get_channels_above_standard_2G_wifi(){
