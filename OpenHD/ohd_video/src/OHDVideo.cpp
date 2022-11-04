@@ -40,7 +40,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
   // (veye also uses gstreamer, but we do not launch it via gst-launch)
   switch (camera.type) {
 	case CameraType::RaspberryPiVEYE:{
-	  m_console->debug("VEYE stream for Camera index:{}\n",camera.index);
+	  m_console->debug("VEYE stream for Camera index:{}",camera.index);
 	  const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
 	  auto stream = std::make_shared<VEYEStream>(platform.platform_type, camera_holder, udp_port);
 	  stream->setup();
@@ -63,7 +63,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
       break;
     }
 	case CameraType::Libcamera: {
-	  m_console->debug("LibCamera index:{}\n", camera.index);
+	  m_console->debug("LibCamera index:{}", camera.index);
 	  const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
 	  auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera_holder, udp_port);
 	  stream->setup();
@@ -72,7 +72,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
 	  break;
 	}
     default: {
-      m_console->error("Unknown camera type, skipping\n");
+      m_console->error("Unknown camera type, skipping");
     }
   }
 }

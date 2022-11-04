@@ -76,18 +76,11 @@ platform(platform1),profile(std::move(profile1)) {
     // we need to signal to the user that something is completely wrong. However, as an grund pi, we can still
     // run QOpenHD and OpenHD, just it will never connect to an air pi
     _error_blinker=std::make_unique<openhd::LEDBlinker>(platform,message_for_user);
-    // we just continue as nothing happened, but OHD won't be usable until a reboot.
+    // we just continue as nothing happened, but OHD won't have any wifibroadcast connectivity
     //exit(1);
   }else{
     wbStreams=std::make_unique<WBStreams>(profile,platform,broadcast_cards);
   }
-  /*std::this_thread::sleep_for(std::chrono::seconds(3));
-  if(wbStreams){
-        wbStreams->set_txpower(1900);
-        wbStreams->set_frequency(DEFAULT_5GHZ_FREQUENCY);
-        wbStreams->set_mcs_index(4);
-  }*/
-
   // USB tethering - only on ground
   if(!profile.is_air){
     usbTetherListener=std::make_unique<USBTetherListener>([this](openhd::ExternalDevice external_device,bool connected){

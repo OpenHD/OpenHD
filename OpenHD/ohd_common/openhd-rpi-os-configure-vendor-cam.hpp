@@ -11,6 +11,13 @@
 #include "openhd-platform.hpp"
 
 // Helper to reconfigure the rpi os for the different camera types
+// This really is exhausting - some camera(s) are auto-detected, some are not,
+// And also gst-rpicamsrc (mmal) and libcamera need different config.txt files.
+// They are also slight differences between the RPI4/CM4 and RPI3 or older
+// R.n the aproach here is to just copy over the appropriate config.txt file
+// according to what the user selected
+// Note that the action(s) here are required for the OS to detect and configure the camera -
+// only a camera detected by the OS can then be detected by the OHD camera(s) discovery
 namespace openhd::rpi::os{
 
 enum class CamConfig {
@@ -108,7 +115,9 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   OHDUtil::run_command("mv",{rpi_config_file_path,"/boot/config_bup.txt"});
   // and copy over the new one
   OHDUtil::run_command("cp",{filename,rpi_config_file_path});
+  // save the current selection (persistent setting)
   save_cam_config_to_file(new_cam_config);
+  // Now we just need to reboot
   openhd::loggers::get_default()->debug("End apply cam config"+ cam_config_to_string(new_cam_config));
 }
 
