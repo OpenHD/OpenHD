@@ -30,8 +30,8 @@ static std::vector<WifiChannel> get_channels_2G() {
 	  WifiChannel{2457,10},
 	  WifiChannel{2462,11},
           // Temporary disabled - they won't work unil we patch this shit in the kernel
-	  //WifiChannel{2467,12},
-	  //WifiChannel{2472,13},
+	  WifiChannel{2467,12},
+	  WifiChannel{2472,13},
 	  // until here it is consistent (5Mhz increments)
 	  // this one is neither allowed in EU nor USA
 	  // (only japan under 11b)
