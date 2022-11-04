@@ -181,6 +181,9 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     // we can disable / enable wifi hotspot.
     int enabled=_interface_settings_holder->get_settings().enable_wifi_hotspot;
     auto change_wifi_hotspot=openhd::IntSetting{enabled,[this](std::string,int value){
+                                                    // temporarily disable wifi hotspot (do not allow an user to turn it on)
+                                                    // until we've fixed the OS
+                                                    return false;
                                                     if(value== 0 || value== 1){
                                                       const bool enableX=value;
                                                       if(enableX){
