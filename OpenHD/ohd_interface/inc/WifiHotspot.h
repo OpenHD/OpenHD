@@ -27,14 +27,14 @@ class WifiHotspot {
    * initialize and start the hotspot.
    */
   void start();
-  // since starting the wifi hotspot can be quite a long operation, this calls start() in a new thread.
-  // TODO stop safe in regards to concurrency.
-  void start_async();
-  void stop_async();
   /**
    * stop,de-init and cleanup hotspot.
    */
   void stop();
+  // since starting the wifi hotspot can be quite a long operation, this calls start() in a new thread.
+  // TODO stop safe in regards to concurrency.
+  void start_async();
+  void stop_async();
  private:
   // Ip addresses of all connected clients.
   // A client might dynamically connect or disconnect from the AP at run time,
