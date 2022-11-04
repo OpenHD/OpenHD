@@ -13,9 +13,9 @@
  * Wifi hotspot refers to creating a WiFi Access point on the device we are running on.
  * External clients like QOpenHD running on a tablet can then connect to the hotspot.
  * Note that video and telemetry has to be forwarded to clients connected to the wifi hotspot.
- * For that, you can register a callback here.
- * NOTE: Needs
- * hostapd and isc-dhcp-server
+ * To get those clients, you can register a callback here.
+ * Change Nov4 2022: Uses network manager - we already have network manager installed and enabled by default on the rpi on the openhd images,
+ * but the default raspbian images from pi foundation have it only installed, but disabled by default (they'l use it eventually)
  */
 class WifiHotspot {
  public:
