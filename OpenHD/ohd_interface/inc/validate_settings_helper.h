@@ -14,24 +14,55 @@ namespace openhd{
 struct WifiChannel{
   const uint32_t frequency;
   const uint32_t channel;
+  bool is_standard;
 };
 
+
+// These are not valid 2.4G wifi channel(s) but some cards aparently can do them, too
+// From https://github.com/OpenHD/linux/blob/092115ae6a980feaa09722690891d99da3afb55c/drivers/net/wireless/ath/ath9k/common-init.c#L39
+// NOTE: channel and frequency seem to be off by one
+static std::vector<WifiChannel> get_channels_below_standard_2G_wifi(){
+  return std::vector<WifiChannel>{
+      WifiChannel{2312, 34,false}, /* Channel XX */
+      WifiChannel{2317, 35,false}, /* Channel XX */
+      WifiChannel{2322, 36,false}, /* Channel XX */
+      WifiChannel{2327, 37,false}, /* Channel XX */
+      WifiChannel{2332, 38,false}, /* Channel XX */
+      WifiChannel{2337, 39,false}, /* Channel XX */
+      WifiChannel{2342, 40,false}, /* Channel XX */
+      WifiChannel{2347, 41,false},/* Channel XX */
+      WifiChannel{2352, 42,false}, /* Channel XX */
+      WifiChannel{2357, 43,false}, /* Channel XX */
+      WifiChannel{2362, 44,false}, /* Channel XX */
+      WifiChannel{2367, 45,false}, /* Channel XX */
+      WifiChannel{2372, 46,false}, /* Channel XX */
+      WifiChannel{2377, 47,false}, /* Channel XX */
+      WifiChannel{2382, 48,false}, /* Channel XX */
+      WifiChannel{2387, 49,false}, /* Channel XX */
+      WifiChannel{2392, 50,false}, /* Channel XX */
+      WifiChannel{2397, 51,false}, /* Channel XX */
+      WifiChannel{2402, 52,false}, /* Channel XX */
+      WifiChannel{2407, 53,false}, /* Channel XX */
+  };
+}
+
+// https://en.wikipedia.org/wiki/List_of_WLAN_channels#2.4_GHz_(802.11b/g/n/ax)
 static std::vector<WifiChannel> get_channels_2G() {
   return std::vector<WifiChannel>{
-	  WifiChannel{2412,1},
-	  WifiChannel{2417,2},
-	  WifiChannel{2422,3},
-	  WifiChannel{2427,4},
-	  WifiChannel{2432,5},
-	  WifiChannel{2437,6},
-	  WifiChannel{2442,7},
-	  WifiChannel{2447,8},
-	  WifiChannel{2452,9},
-	  WifiChannel{2457,10},
-	  WifiChannel{2462,11},
+	  WifiChannel{2412,1,true},
+	  WifiChannel{2417,2,true},
+	  WifiChannel{2422,3,true},
+	  WifiChannel{2427,4,true},
+	  WifiChannel{2432,5,true},
+	  WifiChannel{2437,6,true},
+	  WifiChannel{2442,7,true},
+	  WifiChannel{2447,8,true},
+	  WifiChannel{2452,9,true},
+	  WifiChannel{2457,10,true},
+	  WifiChannel{2462,11,true},
           // Temporary disabled - they won't work unil we patch this shit in the kernel
-	  WifiChannel{2467,12},
-	  WifiChannel{2472,13},
+	  WifiChannel{2467,12,true},
+	  WifiChannel{2472,13,true},
 	  // until here it is consistent (5Mhz increments)
 	  // this one is neither allowed in EU nor USA
 	  // (only japan under 11b)
@@ -39,40 +70,79 @@ static std::vector<WifiChannel> get_channels_2G() {
   };
 };
 
+// These are not valid 2.4G wifi channel(s) but some cards aparently can do them, too
+// From https://github.com/OpenHD/linux/blob/092115ae6a980feaa09722690891d99da3afb55c/drivers/net/wireless/ath/ath9k/common-init.c#L39
+// NOTE: channel and frequency seem to be off by one
+static std::vector<WifiChannel> get_channels_above_standard_2G_wifi(){
+  return std::vector<WifiChannel>{
+      WifiChannel{2478, 15,false}, /* Channel XX */
+      WifiChannel{2482, 16,false}, /* Channel XX */
+      WifiChannel{2484, 17,false}, /* Channel 14 */
+      WifiChannel{2487, 18,false}, /* Channel XX */
+      WifiChannel{2489, 19,false}, /* Channel XX */
+      WifiChannel{2492, 20,false}, /* Channel XX */
+      WifiChannel{2494, 21,false}, /* Channel XX */
+      WifiChannel{2497, 22,false}, /* Channel XX */
+      WifiChannel{2499, 23,false}, /* Channel XX */
+      WifiChannel{2512, 24,false}, /* Channel XX */
+      WifiChannel{2532, 25,false}, /* Channel XX */
+      WifiChannel{2572, 26,false}, /* Channel XX */
+      WifiChannel{2592, 27,false}, /* Channel XX */
+      WifiChannel{2612, 28,false}, /* Channel XX */
+      WifiChannel{2632, 29,false}, /* Channel XX */
+      WifiChannel{2652, 30,false}, /* Channel XX */
+      WifiChannel{2672, 31,false}, /* Channel XX */
+      WifiChannel{2692, 32,false}, /* Channel XX */
+      WifiChannel{2712, 33,false}, /* Channel XX */
+      WifiChannel{2732, 34,false}, /* Channel XX */
+  };
+}
+
+// These are not valid 2.4G wifi channel(s) but some cards aparently can do them, too
+// From https://github.com/OpenHD/linux/blob/092115ae6a980feaa09722690891d99da3afb55c/drivers/net/wireless/ath/ath9k/common-init.c#L39
+// NOTE: channel and frequency seem to be off by one
+static std::vector<WifiChannel> get_channels_5G_below(){
+  return std::vector<WifiChannel>{
+      WifiChannel{4920, 54,false}, /* Channel XX */
+      WifiChannel{4940, 55,false}, /* Channel XX */
+      WifiChannel{4960, 56,false}, /* Channel XX */
+      WifiChannel{4980, 57,false}, /* Channel XX */
+  };
+}
 
 // https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/j/n/ac/ax)
 // These are what iw list lists for rtl8812au
 static std::vector<WifiChannel> get_channels_5G_rtl8812au() {
   return std::vector<WifiChannel>{
 	  //TODO {5170,34},
-	  {5180,36},
-	  {5200,40},
-	  {5220,44},
-	  {5240,48},
-	  {5260,52},
-	  {5280,56},
-	  {5300,60},
-	  {5320,64},
-	  {5500,100},
-	  {5520,104},
-	  {5540,108},
-	  {5560,112},
-	  {5580,116},
-	  {5600,120},
-	  {5620,124},
-	  {5640,128},
-	  {5660,132},
-	  {5680,136},
-	  {5700,140},
-	  {5720,144},
-	  {5745,149},
-	  {5765,153},
-	  {5785,157},
-	  {5805,161},
-	  {5825,165},
-	  {5845,169},
-	  {5865,173},
-	  {5885,177},
+	  {5180,36,true},
+	  {5200,40,true},
+	  {5220,44,true},
+	  {5240,48,true},
+	  {5260,52,true},
+	  {5280,56,true},
+	  {5300,60,true},
+	  {5320,64,true},
+	  {5500,100,true},
+	  {5520,104,true},
+	  {5540,108,true},
+	  {5560,112,true},
+	  {5580,116,true},
+	  {5600,120,true},
+	  {5620,124,true},
+	  {5640,128,true},
+	  {5660,132,true},
+	  {5680,136,true},
+	  {5700,140,true},
+	  {5720,144,true},
+	  {5745,149,true},
+	  {5765,153,true},
+	  {5785,157,true},
+	  {5805,161,true},
+	  {5825,165,true},
+	  {5845,169,true},
+	  {5865,173,true},
+	  {5885,177,true},
   };
 };
 
