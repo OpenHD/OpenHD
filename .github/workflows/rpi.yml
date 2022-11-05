@@ -51,7 +51,6 @@ jobs:
             cd /opt
             cd Open.HD
             sudo ./package.sh armhf raspbian bullseye
-            ls -a
 
     - name: Upload to Github
       uses: 'actions/upload-artifact@v2'
