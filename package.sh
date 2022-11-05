@@ -98,6 +98,8 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   -d "gstreamer1.0-alsa" \
   -d "gstreamer1.0-pulseaudio" || exit 1
 
+  ls -a
+
 cp *.deb ../../
 
 git describe --exact-match HEAD >/dev/null 2>&1
