@@ -42,6 +42,7 @@ jobs:
         import_github_env: true
         commands: |
           ls -a
+          mkdir -p /home/runner/work/_temp/_github_home && printf "[safe]\n\tdirectory = /github/workspace" > /home/runner/work/_temp/_github_home/.gitconfig
           cd /opt
           cd Open.HD
           sudo apt update
@@ -53,6 +54,12 @@ jobs:
           ls -a  
           sudo chmod +x install_dep_jetson.sh 
           sudo ./install_dep_jetson.sh
+          chown -R root:root /opt
+          git clone https://github.com/gabime/spdlog.git
+          cd spdlog && mkdir build && cd build
+          cmake .. && make -j
+          make install
+          cd ../../
           sudo ./package.sh arm64 ubuntu bionic
 
 
