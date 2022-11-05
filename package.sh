@@ -8,29 +8,6 @@ OS=$2
 DISTRO=$3
 BUILD_TYPE=$4
 
-if [[ "${DISTRO}" == "bullseye" ]]; then
-    PLATFORM_PACKAGES="-d openhd-linux-pi"
-    PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
-fi
-
-if [[ "${DISTRO}" == "buster" ]]; then
-    PLATFORM_PACKAGES=""
-    PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
-fi
-
-if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
-    echo "--------------ADDING nvidia-l4t-gstreamer to package list--------------- "
-    PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
- fi
-
-if [ "${BUILD_TYPE}" == "docker" ]; then
-    cat << EOF > /etc/resolv.conf
-options rotate
-options timeout:1
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-EOF
-fi
 
 PACKAGE_NAME=openhd
 
@@ -101,7 +78,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   -d "dnsmasq" \
   -d "aircrack-ng" \
   -d "i2c-tools" \
-  -d "indent" \
   -d "libv4l-dev" \
   -d "libusb-1.0-0" \
   -d "libpcap-dev" \
@@ -128,11 +104,3 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
 cp *.deb ../../
 
 git describe --exact-match HEAD >/dev/null 2>&1
-
-if [[ "${DISTRO}" == "bullseye" ]]; then
-            echo "raspberry"
-fi
-
-if [[ "${DISTRO}" == "bionic" ]]; then
-            echo "ubuntu"
-fi 
