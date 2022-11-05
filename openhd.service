@@ -1,6 +1,6 @@
 [Unit]
 Description=OpenHD
-After=NertworkManager.service
+After=NetworkManager.service
 
 [Service]
 User=root
