@@ -101,5 +101,3 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   ls -a
 
 cp *.deb ../../
-
-git describe --exact-match HEAD >/dev/null 2>&1
