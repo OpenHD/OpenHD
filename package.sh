@@ -89,9 +89,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   -d "libconfig++9v5" \
   -d "libreadline-dev" \
   -d "libsodium-dev" \
-  -d "libfontconfig1" \
-  -d "libfreetype6" \
-  -d "libgles2-mesa-dev" \
   -d "gstreamer1.0-plugins-base" \
   -d "gstreamer1.0-plugins-good" \
   -d "gstreamer1.0-plugins-bad" \
