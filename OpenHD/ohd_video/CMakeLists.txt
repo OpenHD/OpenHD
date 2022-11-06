@@ -79,8 +79,8 @@ target_include_directories(OHDVideoLib
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>)
 
 if(LIBCAMERA_FOUND)
-    target_include_directories(OHDVideoLib PUBLIC ${LIBCAMERA_INCLUDE_DIRS})
-    target_link_libraries(OHDVideoLib PUBLIC ${LIBCAMERA_LINK_LIBRARIES})
+    target_include_directories(OHDVideoLib PRIVATE ${LIBCAMERA_INCLUDE_DIRS})
+    target_link_libraries(OHDVideoLib PRIVATE ${LIBCAMERA_LINK_LIBRARIES})
     target_compile_definitions(OHDVideoLib PUBLIC OPENHD_LIBCAMERA_PRESENT)
 endif()
 

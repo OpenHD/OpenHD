@@ -4,7 +4,7 @@
 #include <string>
 #include <fstream>
 
-#include "json.hpp"
+#include "include_json.hpp"
 #include "openhd-util.hpp"
 #include "openhd-log.hpp"
 #include "openhd-settings.hpp"
