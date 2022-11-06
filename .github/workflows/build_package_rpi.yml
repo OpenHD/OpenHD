@@ -43,7 +43,7 @@ jobs:
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
             sudo apt update
-            sudo ./install_dep_rpi.sh
+            sudo bash ./install_dep_rpi.sh
             cd /opt
             git clone https://github.com/OpenHD/Arducam-Pivariety-V4L2-Driver
             cd Arducam-Pivariety-V4L2-Driver
