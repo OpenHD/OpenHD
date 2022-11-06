@@ -33,6 +33,7 @@ target_link_libraries(OHDCommonLib PRIVATE spdlog::spdlog)
 set(sources
     "mavlink_settings/ISettingsComponent.hpp"
     "json.hpp"
+    "include_json.hpp"
     "openhd-action-handler.hpp"
     "openhd-common-tests.hpp"
     "openhd-external-device.hpp"

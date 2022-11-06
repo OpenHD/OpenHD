@@ -5,7 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_
 
-#include "json.hpp"
+#include "include_json.hpp"
 #include "openhd-util.hpp"
 
 enum class CameraType {

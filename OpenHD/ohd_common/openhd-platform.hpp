@@ -7,7 +7,7 @@
 
 #include "openhd-util.hpp"
 #include "openhd-log.hpp"
-#include "json.hpp"
+#include "include_json.hpp"
 
 enum class PlatformType {
   RaspberryPi,
