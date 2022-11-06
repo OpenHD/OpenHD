@@ -1,4 +1,4 @@
-name: build_packlage_rpi
+name: build_package_rpi
 
 on:
   push:

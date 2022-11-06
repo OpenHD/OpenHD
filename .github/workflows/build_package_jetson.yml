@@ -1,4 +1,4 @@
-name: build_packlage_jetson
+name: build_package_jetson
 
 on:
   push:
