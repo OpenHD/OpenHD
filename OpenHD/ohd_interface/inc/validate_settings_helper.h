@@ -13,8 +13,8 @@ namespace openhd{
 // Wifi channel and the corresponding frequency, in mHz.
 // "standard" : listed under wikipedia or not.
 struct WifiChannel{
-  const uint32_t frequency;
-  const uint32_t channel;
+  uint32_t frequency;
+  uint32_t channel;
   bool is_standard;
 };
 
@@ -48,7 +48,7 @@ static std::vector<WifiChannel> get_channels_below_standard_2G_wifi(){
 }
 
 // https://en.wikipedia.org/wiki/List_of_WLAN_channels#2.4_GHz_(802.11b/g/n/ax)
-static std::vector<WifiChannel> get_channels_2G() {
+static std::vector<WifiChannel> get_channels_2G_standard() {
   return std::vector<WifiChannel>{
 	  WifiChannel{2412,1,true},
 	  WifiChannel{2417,2,true},
@@ -99,6 +99,17 @@ static std::vector<WifiChannel> get_channels_above_standard_2G_wifi(){
   };
 }
 
+static std::vector<WifiChannel> get_channels_2G(const bool include_nonstandard_channels){
+  auto ret= get_channels_2G_standard();
+  if(include_nonstandard_channels){
+    auto below=get_channels_below_standard_2G_wifi();
+    ret.insert(ret.end(),below.begin(),below.end());
+    auto above=get_channels_above_standard_2G_wifi();
+    ret.insert(ret.end(),above.begin(),above.end());
+  }
+  return ret;
+}
+
 // These are not valid 2.4G wifi channel(s) but some cards aparently can do them, too
 // From https://github.com/OpenHD/linux/blob/092115ae6a980feaa09722690891d99da3afb55c/drivers/net/wireless/ath/ath9k/common-init.c#L39
 // NOTE: channel and frequency seem to be off by one
@@ -147,15 +158,24 @@ static std::vector<WifiChannel> get_channels_5G_rtl8812au() {
   };
 };
 
-static bool is_valid_frequency_2G(int frequency){
-  const auto supported=get_channels_2G();
+static std::vector<WifiChannel> get_channels_5G(const bool include_nonstandard_channels){
+  auto ret= get_channels_5G_rtl8812au();
+  if(include_nonstandard_channels){
+    auto below=get_channels_5G_below();
+    ret.insert(ret.end(),below.begin(),below.end());
+  }
+  return ret;
+}
+
+static bool is_valid_frequency_2G(int frequency,bool include_nonstandard_channels=false){
+  const auto supported=get_channels_2G(include_nonstandard_channels);
   for(const auto& value:supported){
 	if(value.frequency==frequency)return true;
   }
   return false;
 }
-static bool is_valid_frequency_5G(int frequency){
-  const auto supported=get_channels_5G_rtl8812au();
+static bool is_valid_frequency_5G(int frequency,bool include_nonstandard_channels=false){
+  const auto supported=get_channels_5G(include_nonstandard_channels);
   for(const auto& value:supported){
 	if(value.frequency==frequency)return true;
   }
@@ -166,7 +186,7 @@ static bool is_valid_frequency_5G(int frequency){
 // AND also guarantees the frequency set is a valid 5G frequency (aka Wi-Fi cards can have a 2G or 5G frequency set,
 // but should never have a frequency that is neither 2G nor 5G
 static bool is_2G_and_assert(uint32_t frequency){
-  if(openhd::is_valid_frequency_2G(frequency))return true;
+  if(openhd::is_valid_frequency_2G(frequency,true))return true;
   assert(openhd::is_valid_frequency_5G(frequency));
   return false;
 }
