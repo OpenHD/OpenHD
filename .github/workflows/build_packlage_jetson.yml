@@ -1,4 +1,4 @@
-name: Build Jetson ONLINE
+name: build_packlage_jetson
 
 on:
   push:

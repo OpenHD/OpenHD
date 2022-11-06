@@ -1,4 +1,4 @@
-name: Build RPI
+name: build_packlage_rpi
 
 on:
   push:
@@ -43,7 +43,7 @@ jobs:
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
             sudo apt update
-            sudo ./install_dep.sh
+            sudo ./install_dep_rpi.sh
             cd /opt
             git clone https://github.com/OpenHD/Arducam-Pivariety-V4L2-Driver
             cd Arducam-Pivariety-V4L2-Driver
