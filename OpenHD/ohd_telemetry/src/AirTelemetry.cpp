@@ -57,13 +57,16 @@ void AirTelemetry::onMessageFC(MavlinkMessage &message) {
 
 void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   const mavlink_message_t &m = message.m;
-  // we do not need to forward heartbeat messages coming from the ground telemetry service,
-  // They solely have a debugging purpose such that one knows the other service is alive.
+  // we do not need to forward heartbeat messages coming from the ground station,
+  // They solely have a debugging purpose such that one knows the other station is alive.
   if (m.msgid == MAVLINK_MSG_ID_HEARTBEAT && m.sysid == OHD_SYS_ID_GROUND) {
-	// heartbeat coming from the ground service
+	// heartbeat coming from the ground station
 	return;
   }
-  // for now, do it as simple as possiblegenerate
+  if(message.m.msgid==MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE){
+    m_console->debug("Sending rc channels override to FC");
+  }
+  // for now, do it as simple as possible
   sendMessageFC(message);
   // any data created by an OpenHD component on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
   std::lock_guard<std::mutex> guard(components_lock);

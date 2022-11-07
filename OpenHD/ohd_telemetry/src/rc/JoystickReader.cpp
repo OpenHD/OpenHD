@@ -71,7 +71,7 @@ static bool check_if_joystick_is_connected_via_fd(){
 JoystickReader::JoystickReader() {
   m_console = openhd::loggers::create_or_get("joystick_reader");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
+  m_console->set_level(spd::level::warn);
   m_console->debug("JoystickReader::JoystickReader");
   reset_curr_values();
   m_read_joystick_thread=std::make_unique<std::thread>([this] {
