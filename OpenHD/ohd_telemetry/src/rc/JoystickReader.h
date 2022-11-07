@@ -30,7 +30,7 @@ class JoystickReader {
   ~JoystickReader();
   struct CurrChannelValues{
     // See mavlink RC override
-    std::array<uint16_t,16> values{UINT16_MAX};
+    std::array<uint16_t,16> values{0};
     // Time point when we received the last update to at least one of the channel(s)
     std::chrono::steady_clock::time_point last_update;
     bool considered_connected=false;
@@ -56,6 +56,7 @@ class JoystickReader {
   void loop();
   void connect_once_and_read_until_error();
   int read_events_until_empty();
+  int process_event(void* event,std::array<uint16_t,16>& values);
   void reset_curr_values();
   std::unique_ptr<std::thread> m_read_joystick_thread;
   const NEW_JOYSTICK_DATA_CB m_cb;
