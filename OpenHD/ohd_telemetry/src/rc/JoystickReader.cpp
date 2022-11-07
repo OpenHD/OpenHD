@@ -90,7 +90,7 @@ void JoystickReader::loop() {
   while (!terminate){
     connect_once_and_read_until_error();
     // Error / no joystick found, try again later
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(3));
   }
 }
 
@@ -147,17 +147,18 @@ void JoystickReader::connect_once_and_read_until_error() {
     m_curr_values.last_update=std::chrono::steady_clock::now();
     m_curr_values.joystick_name=name;
   }
-  while (!terminate){
+  bool disconnected=false;
+  while (!disconnected && !terminate){
     wait_for_events(100);
     const int curr_num_joysticks=SDL_NumJoysticks();
     if(curr_num_joysticks<1){
       // This one seems to work just find
       m_console->warn("Joystick disconnected, SDL_NumJoysticks:{}",curr_num_joysticks);
-      terminate= true;
+      disconnected= true;
     }
     if(!SDL_JoystickGetAttached(js)){
       m_console->warn("Joystick disconnected, SDL_JoystickGetAttached() reports false");
-      terminate= true;
+      disconnected= true;
     }
     /*if(!check_if_joystick_is_connected_via_fd()){
       // When the joystick is re-connected, SDL won't resume working again.

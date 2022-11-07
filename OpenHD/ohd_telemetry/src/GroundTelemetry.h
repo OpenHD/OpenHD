@@ -5,6 +5,8 @@
 #ifndef OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 #define OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 
+#define OPENHD_SDL_FOR_JOYSTICK_FOUND
+
 #include "endpoints/UDPEndpoint.h"
 #include "endpoints/UDPEndpoint2.h"
 #include "internal/OHDMainComponent.h"
@@ -12,7 +14,9 @@
 #include "mavsdk_temporary//XMavlinkParamProvider.h"
 #include "openhd-action-handler.hpp"
 #include "openhd-spdlog.hpp"
-//#include "rc/JoystickReader.h"
+#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+#include "rc/JoystickReader.h"
+#endif
 
 /**
  * OpenHD Ground telemetry. Assumes a air instance running on the air pi.
@@ -60,7 +64,9 @@ class GroundTelemetry :public MavlinkSystem{
   std::mutex other_udp_ground_stations_lock;
   std::map<std::string,std::shared_ptr<UDPEndpoint2>> _other_udp_ground_stations{};
   //
-  //std::unique_ptr<JoystickReader> m_joystick_reader;
+#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+  std::unique_ptr<JoystickReader> m_joystick_reader;
+#endif
   std::shared_ptr<spdlog::logger> m_console;
   std::vector<openhd::Setting> get_all_settings();
 };

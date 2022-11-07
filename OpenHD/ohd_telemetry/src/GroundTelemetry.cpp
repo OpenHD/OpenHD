@@ -41,8 +41,9 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
   generic_mavlink_param_provider->add_params(get_all_settings());
   components.push_back(generic_mavlink_param_provider);
-  // temporary
-  //m_joystick_reader=std::make_unique<JoystickReader>();
+#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+  m_joystick_reader=std::make_unique<JoystickReader>();
+#endif
   m_console->debug("Created GroundTelemetry");
 }
 
@@ -131,6 +132,15 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 		}
 	  }
 	}
+#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+        if(m_joystick_reader!= nullptr){
+          auto curr=m_joystick_reader->get_current_state();
+          if(curr.considered_connected){
+            auto msg= pack_rc_message(_sys_id,0,curr.values,0,0);
+            sendMessageAirPi(msg);
+          }
+        }
+#endif
 	const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
 	if(loopDelta>loop_intervall){
 	  // We can't keep up with the wanted loop interval
