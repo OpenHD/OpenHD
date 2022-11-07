@@ -116,13 +116,13 @@ void JoystickReader::connect_once_and_read_until_error() {
     SDL_Quit();
     return;
   }
-  auto name=SDL_JoystickName(js);
-  std::stringstream ss;
-  if(name!= nullptr){
-    ss<<"Name:"<<name<<"\n";
-  }else{
-    ss<<"Name: nullptr\n";
+  auto name_pointer=SDL_JoystickName(js);
+  std::string name="unknown";
+  if(name_pointer!= nullptr){
+    name=std::string(name_pointer);
   }
+  std::stringstream ss;
+  ss<<"Name:"<<name<<"\n";
   ss<<"N Axis:"<<SDL_JoystickNumAxes(js)<<"\n";
   ss<<"Trackballs::"<<SDL_JoystickNumBalls(js)<<"\n";
   ss<<"Buttons:"<<SDL_JoystickNumButtons(js)<<"\n";
@@ -145,6 +145,7 @@ void JoystickReader::connect_once_and_read_until_error() {
     m_curr_values=copy;
     m_curr_values.considered_connected= true;
     m_curr_values.last_update=std::chrono::steady_clock::now();
+    m_curr_values.joystick_name=name;
   }
   while (!terminate){
     wait_for_events(100);
@@ -176,7 +177,7 @@ void JoystickReader::wait_for_events(const int timeout_ms) {
   bool any_new_data=false;
   // wait for at least one event with a timeut
   if(!SDL_WaitEventTimeout(&event,100)){
-    m_console->debug("Got no event after 100ms");
+    //m_console->debug("Got no event after 100ms");
     return;
   }
   // process this event
@@ -225,11 +226,11 @@ int JoystickReader::process_event(void *event1,std::array<uint16_t,16>& current)
       ret=4;
       break;
     case SDL_QUIT:
-      m_console->warn("Got SDL_QUIT");
+      m_console->debug("Got SDL_QUIT");
       ret=0;
       break;
     default:
-      m_console->warn("Got Unknown SDL event type");
+      m_console->debug("Got Unknown SDL event type");
       ret=0;
       break;
   }
@@ -247,12 +248,14 @@ void JoystickReader::reset_curr_values() {
   for(auto& el:m_curr_values.values){
     el=DEFAULT_RC_CHANNELS_VALUE;
   }
+  m_curr_values.joystick_name="unknown";
 }
 
 std::string JoystickReader::curr_state_to_string(
     const JoystickReader::CurrChannelValues& curr_channel_values) {
   std::stringstream ss;
   ss<<"Connected:"<<(curr_channel_values.considered_connected ? "Y":"N")<<"\n";
+  ss<<"Name:"<<curr_channel_values.joystick_name<<"\n";
   ss<<"Values:[";
   for(int i=0;i<curr_channel_values.values.size();i++){
     ss<<(int)curr_channel_values.values[i];

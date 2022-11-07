@@ -38,6 +38,8 @@ class JoystickReader {
     std::chrono::steady_clock::time_point last_update;
     // Weather we think the RC (joystick) is currently connected or not.
     bool considered_connected=false;
+    // the name of the joystick
+    std::string joystick_name="unknown";
   };
   // Get the current "state", thread-safe
   CurrChannelValues get_current_state();
