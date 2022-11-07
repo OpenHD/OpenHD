@@ -24,37 +24,36 @@ int AUX4_AXIS = 7;
 static constexpr int SWITCH_COUNT=6;
 
 static SDL_Joystick *js;
-uint16_t rcData[16];
 
 static int16_t parsetoMultiWii(Sint16 value) {
   return (int16_t)(((((double)value)+32768.0)/65.536)+1000);
 }
 
-static void readAxis(SDL_Event *event) {
+static void readAxis(std::array<uint16_t,16>&rc_data,SDL_Event *event) {
   auto myevent = (SDL_Event)*event;
   if ( myevent.jaxis.axis == ROLL_AXIS)
-    rcData[0]=parsetoMultiWii(myevent.jaxis.value);
+    rc_data[0]=parsetoMultiWii(myevent.jaxis.value);
 
   if ( myevent.jaxis.axis == PITCH_AXIS)
-    rcData[1]=parsetoMultiWii(myevent.jaxis.value);
+    rc_data[1]=parsetoMultiWii(myevent.jaxis.value);
 
   if ( myevent.jaxis.axis == THROTTLE_AXIS)
-    rcData[2]=parsetoMultiWii(myevent.jaxis.value);
+    rc_data[2]=parsetoMultiWii(myevent.jaxis.value);
 
   if ( myevent.jaxis.axis == YAW_AXIS)
-    rcData[3]=parsetoMultiWii(myevent.jaxis.value);
+    rc_data[3]=parsetoMultiWii(myevent.jaxis.value);
 
   if ( myevent.jaxis.axis ==  AUX1_AXIS)
-    rcData[4]=parsetoMultiWii(myevent.jaxis.value);
+    rc_data[4]=parsetoMultiWii(myevent.jaxis.value);
 
   if ( myevent.jaxis.axis == AUX2_AXIS)
-    rcData[5]=parsetoMultiWii(myevent.jaxis.value);
+    rc_data[5]=parsetoMultiWii(myevent.jaxis.value);
 
   if ( myevent.jaxis.axis == AUX3_AXIS)
-    rcData[6]=parsetoMultiWii(myevent.jaxis.value);
+    rc_data[6]=parsetoMultiWii(myevent.jaxis.value);
 
   if ( myevent.jaxis.axis == AUX4_AXIS)
-    rcData[7]=parsetoMultiWii(myevent.jaxis.value);
+    rc_data[7]=parsetoMultiWii(myevent.jaxis.value);
 }
 
 static bool check_if_joystick_is_connected_via_fd(){
@@ -137,20 +136,21 @@ void JoystickReader::connect_once_and_read_until_error() {
 // Reads all queued SDL events until there are none remaining
 // We are only interested in the Joystick events
 int JoystickReader::read_events_until_empty() {
+  auto current=m_curr_values.values;
   SDL_Event event;
   bool any_new_data=false;
   while (SDL_PollEvent (&event)) {
     switch (event.type) {
       case SDL_JOYAXISMOTION:
         m_console->debug("Joystick {}, Axis {} moved to {}", event.jaxis.which, event.jaxis.axis, event.jaxis.value);
-        readAxis(&event);
+        readAxis(current,&event);
         any_new_data= true;
         //return 2;
         break;
       case SDL_JOYBUTTONDOWN:
         m_console->debug("Button down");
         if (event.jbutton.button < SWITCH_COUNT) { // newer Taranis software can send 24 buttons - we use 16
-          rcData[8] |= 1 << event.jbutton.button;
+          current[8] |= 1 << event.jbutton.button;
         }
         any_new_data= true;
         //return 5;
@@ -158,7 +158,7 @@ int JoystickReader::read_events_until_empty() {
       case SDL_JOYBUTTONUP:
         m_console->debug("Button up");
         if (event.jbutton.button < SWITCH_COUNT) {
-          rcData[8] &= ~(1 << event.jbutton.button);
+          current[8] &= ~(1 << event.jbutton.button);
         }
         any_new_data= true;
         //return 4;
@@ -174,7 +174,7 @@ int JoystickReader::read_events_until_empty() {
   if(any_new_data){
     std::lock_guard<std::mutex> guard(m_curr_values_mutex);
     for(int i=0;i<m_curr_values.values.size();i++){
-      m_curr_values.values[i]=rcData[i];
+      m_curr_values.values[i]=current[i];
     }
     m_curr_values.last_update=std::chrono::steady_clock::now();
     m_curr_values.considered_connected= true;
