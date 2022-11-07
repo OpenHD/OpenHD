@@ -58,6 +58,13 @@ static bool equal_after_uppercase(const std::string& s1,const std::string& s2){
   return s1_upper==s2_upper;
 }
 
+// From https://stackoverflow.com/questions/216823/how-to-trim-an-stdstring
+static void rtrim(std::string &s) {
+  s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+            return !std::isspace(ch);
+          }).base(), s.end());
+}
+
 /**
  * Utility to execute a command on the command line.
  * Blocks until the command has been executed, and returns its result.
