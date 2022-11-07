@@ -43,6 +43,8 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   components.push_back(generic_mavlink_param_provider);
 #ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
   m_joystick_reader=std::make_unique<JoystickReader>();
+#else
+  m_console->info("No Joystick support");
 #endif
   m_console->debug("Created GroundTelemetry");
 }

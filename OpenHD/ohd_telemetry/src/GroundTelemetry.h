@@ -9,7 +9,8 @@
 #include "endpoints/UDPEndpoint2.h"
 #include "internal/OHDMainComponent.h"
 #include "mavlink_settings/ISettingsComponent.hpp"
-#include "mavsdk_temporary//XMavlinkParamProvider.h"
+#include "mavsdk_temporary/XMavlinkParamProvider.h"
+#include "GroundTelemetrySettings.h"
 #include "openhd-action-handler.hpp"
 #include "openhd-spdlog.hpp"
 #ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND

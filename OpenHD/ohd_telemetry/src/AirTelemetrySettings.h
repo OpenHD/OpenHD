@@ -11,9 +11,9 @@
 
 // Settings for telemetry, only valid on an air pi (since only on the air pi we connect the FC)
 // Note that we do not have any telemetry settings r.n for the ground (since forwarding is a task ov ohd_interface, not ohd_telemetry)
-namespace openhd{
+namespace openhd::telemetry::air{
 
-static const std::string TELEMETRY_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("telemetry/");
+static const std::string SETTINGS_DIRECTORY =std::string(BASE_PATH)+std::string("air_telemetry/");
 
 // Default for ardupilot and more
 static constexpr int DEFAULT_UART_BAUDRATE=115200;
@@ -47,7 +47,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM( SerialBaudRate, {
      {SerialBaudRate::RATE_1000000, "1000000"},
 });*/
 
-struct AirTelemetrySettings{
+struct Settings{
   // 0: Disable
   // 1: RPI UART0 (/dev/serial0)
   // 2: RPI UART1 (/dev/serial1)
@@ -60,7 +60,7 @@ struct AirTelemetrySettings{
   int fc_uart_baudrate=DEFAULT_UART_BAUDRATE;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirTelemetrySettings,fc_uart_connection_type,fc_uart_baudrate);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,fc_uart_connection_type,fc_uart_baudrate);
 
 static bool validate_uart_connection_type(int type){
   return type >=0 && type <=5;
@@ -114,10 +114,11 @@ static bool validate_uart_baudrate(int baudrate){
 static constexpr auto FC_UART_CONNECTION_TYPE="FC_UART_CONN";
 static constexpr auto FC_UART_BAUD_RATE="FC_UART_BAUD";
 
-class AirTelemetrySettingsHolder:public openhd::settings::PersistentSettings<AirTelemetrySettings>{
+class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
  public:
-  AirTelemetrySettingsHolder():
-	  openhd::settings::PersistentSettings<AirTelemetrySettings>(TELEMETRY_SETTINGS_DIRECTORY){
+  SettingsHolder():
+	  openhd::settings::PersistentSettings<Settings>(
+            SETTINGS_DIRECTORY){
 	init();
   }
  private:
@@ -126,8 +127,8 @@ class AirTelemetrySettingsHolder:public openhd::settings::PersistentSettings<Air
 	ss<<"fc_uart.json";
 	return ss.str();
   }
-  [[nodiscard]] AirTelemetrySettings create_default()const override{
-	return AirTelemetrySettings{};
+  [[nodiscard]] Settings create_default()const override{
+	return Settings{};
   }
 };
 

@@ -13,7 +13,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   m_console = openhd::loggers::create_or_get("ohd_air_tele");
   assert(m_console);
   m_console->set_level(spd::level::debug);
-  _airTelemetrySettings=std::make_unique<openhd::AirTelemetrySettingsHolder>();
+  _airTelemetrySettings=std::make_unique<openhd::telemetry::air::SettingsHolder>();
   setup_uart();
   // any message coming in via wifibroadcast is a message from the ground pi
   wifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(true);
@@ -165,8 +165,9 @@ void AirTelemetry::add_camera_component(const int camera_index, const std::vecto
 
 std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   std::vector<openhd::Setting> ret{};
+  using namespace openhd::telemetry;
   auto c_fc_uart_connection_type=[this](std::string,int value) {
-	if(!openhd::validate_uart_connection_type(value)){
+	if(!air::validate_uart_connection_type(value)){
 	  return false;
 	}
 	_airTelemetrySettings->unsafe_get_settings().fc_uart_connection_type=value;
@@ -175,7 +176,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 	return true;
   };
   auto c_fc_uart_baudrate=[this](std::string,int value) {
-	if(!openhd::validate_uart_baudrate(value)){
+	if(!air::validate_uart_baudrate(value)){
 	  return false;
 	}
 	_airTelemetrySettings->unsafe_get_settings().fc_uart_baudrate=value;
@@ -189,9 +190,9 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   auto c_rpi_os_camera_configuration=[this](std::string,int value){
     return m_rpi_os_change_config_handler->change_rpi_os_camera_configuration(value);
   };
-  ret.push_back(openhd::Setting{openhd::FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_connection_type),
+  ret.push_back(openhd::Setting{air::FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_connection_type),
 																		   c_fc_uart_connection_type}});
-  ret.push_back(openhd::Setting{openhd::FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_baudrate),
+  ret.push_back(openhd::Setting{air::FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_baudrate),
 																	 c_fc_uart_baudrate}});
   // This way one can switch between different OS configuration(s) that then provide access to different
   // vendor-specific camera(s) - hacky/dirty I know ;/
@@ -218,9 +219,10 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 // This properly handles all the cases, e.g cleaning up an existing uart connection if set.
 void AirTelemetry::setup_uart() {
   assert(_airTelemetrySettings);
+  using namespace openhd::telemetry;
   const auto fc_uart_connection_type=_airTelemetrySettings->get_settings().fc_uart_connection_type;
   const auto fc_uart_baudrate=_airTelemetrySettings->get_settings().fc_uart_baudrate;
-  assert(openhd::validate_uart_connection_type(fc_uart_connection_type));
+  assert(air::validate_uart_connection_type(fc_uart_connection_type));
   // Disable the currently running uart configuration, if there is any
   std::lock_guard<std::mutex> guard(_serialEndpointMutex);
   if(serialEndpoint!=nullptr) {
@@ -229,14 +231,14 @@ void AirTelemetry::setup_uart() {
 	serialEndpoint.reset();
 	serialEndpoint=nullptr;
   }
-  if(fc_uart_connection_type==openhd::UART_CONNECTION_TYPE_DISABLE){
+  if(fc_uart_connection_type==air::UART_CONNECTION_TYPE_DISABLE){
 	// No uart enabled, we've already cleaned it up though
 	m_console->info("FC UART disabled");
 	return;
   }else{
 	m_console->debug("FC UART enable - begin");
 	SerialEndpoint::HWOptions options{};
-	options.linux_filename=openhd::uart_fd_from_connection_type(fc_uart_connection_type).value();
+	options.linux_filename=air::uart_fd_from_connection_type(fc_uart_connection_type).value();
 	options.baud_rate=fc_uart_baudrate;
 	options.flow_control= false;
 	serialEndpoint=std::make_unique<SerialEndpoint>("SerialEndpointUARTFC",options);
