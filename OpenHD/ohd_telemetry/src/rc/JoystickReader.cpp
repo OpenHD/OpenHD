@@ -147,8 +147,7 @@ void JoystickReader::connect_once_and_read_until_error() {
     m_curr_values.last_update=std::chrono::steady_clock::now();
   }
   while (!terminate){
-    read_events_until_empty();
-    std::this_thread::sleep_for(std::chrono::milliseconds (1));
+    wait_for_events(100);
     const int curr_num_joysticks=SDL_NumJoysticks();
     if(curr_num_joysticks<1){
       // This one seems to work just find
@@ -170,15 +169,25 @@ void JoystickReader::connect_once_and_read_until_error() {
   // either joystick disconnected or something else went wrong.
 }
 
-// Reads all queued SDL events until there are none remaining
-// We are only interested in the Joystick events
-int JoystickReader::read_events_until_empty() {
+void JoystickReader::wait_for_events(const int timeout_ms) {
   auto current=m_curr_values.values;
   int n_polled_events=0;
   SDL_Event event;
   bool any_new_data=false;
+  // wait for at least one event with a timeut
+  if(!SDL_WaitEventTimeout(&event,100)){
+    m_console->debug("Got no event after 100ms");
+    return;
+  }
+  // process this event
+  auto ret= process_event(&event,current);
+  if(ret==2 || ret==5 || ret==4){
+    any_new_data= true;
+    n_polled_events++;
+  }
+  // and then get as many more events as we can get (we already spun up the cpu anyways)
   while (SDL_PollEvent (&event)) {
-    const auto ret= process_event(&event,current);
+    ret= process_event(&event,current);
     if(ret==2 || ret==5 || ret==4){
       any_new_data= true;
       n_polled_events++;
@@ -193,7 +202,6 @@ int JoystickReader::read_events_until_empty() {
     m_curr_values.last_update=std::chrono::steady_clock::now();
     m_curr_values.considered_connected= true;
   }
-  return 0;
 }
 
 

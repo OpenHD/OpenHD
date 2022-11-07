@@ -46,7 +46,9 @@ class JoystickReader {
  private:
   void loop();
   void connect_once_and_read_until_error();
-  int read_events_until_empty();
+  // Wait up to timeout_ms for an event, and then read as many events as there are available
+  // We are only interested in the Joystick events
+  void wait_for_events(int timeout_ms);
   int process_event(void* event,std::array<uint16_t,16>& values);
   void reset_curr_values();
   std::unique_ptr<std::thread> m_read_joystick_thread;
