@@ -85,7 +85,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   -d "libnl-3-dev" \
   -d "libnl-genl-3-dev" \
   -d "libsdl2-2.0-0" \
-  -d "libsdl1.2debian" \
   -d "libconfig++9v5" \
   -d "libreadline-dev" \
   -d "libsodium-dev" \

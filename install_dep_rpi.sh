@@ -9,5 +9,8 @@ apt -y install libasio-dev libgstreamer-plugins-base1.0-dev libusb-1.0-0-dev lib
 apt -y install ruby-dev python3-pip libnl-3-dev cmake snapd libnl-genl-3-dev libnl-route-3-dev libcamera-dev
 apt -y install libspdlog-dev
 
+# Needed for RC, optional
+apt-y install libsdl2-dev
+
 gem install fpm
 
