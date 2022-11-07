@@ -63,7 +63,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
 	// heartbeat coming from the ground service
 	return;
   }
-  // for now, do it as simple as possible
+  // for now, do it as simple as possiblegenerate
   sendMessageFC(message);
   // any data created by an OpenHD component on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
   std::lock_guard<std::mutex> guard(components_lock);
