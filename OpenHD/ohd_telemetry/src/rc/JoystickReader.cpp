@@ -55,11 +55,20 @@ static void write_matching_axis(std::array<uint16_t,16>&rc_data,Uint8 axis_index
     rc_data[7]=parsetoMultiWii(value);
 }
 
+static void write_matching_button(std::array<uint16_t,16>&rc_data,const Uint8 button,bool up){
+  // The mavlink rc channels override message has more than enough "channels" anyways.
+  //However, we could optimize here putting multiple buttons (aka bool) into one channel
+  const int channel_index=7+button;
+  if(channel_index<rc_data.size()){
+    rc_data[channel_index] = up ? 2000 : 1000;
+  }
+}
+
 static bool check_if_joystick_is_connected_via_fd(){
     return access(JOY_DEV, F_OK);
 }
 
-JoystickReader::JoystickReader(NEW_JOYSTICK_DATA_CB cb):m_cb(cb) {
+JoystickReader::JoystickReader() {
   m_console = openhd::loggers::create_or_get("joystick_reader");
   assert(m_console);
   m_console->set_level(spd::level::debug);
@@ -119,7 +128,7 @@ void JoystickReader::connect_once_and_read_until_error() {
   ss<<"Buttons:"<<SDL_JoystickNumButtons(js)<<"\n";
   ss<<"Hats:"<<SDL_JoystickNumHats(js)<<"\n";
   m_console->debug(ss.str());
-  // Populate the data once by querying everything (after that, we just get the events from SDL
+  // Populate the data once by querying everything (after that, we just get the events from SDL)
   {
     // make a copy
     auto copy=m_curr_values;
@@ -129,6 +138,7 @@ void JoystickReader::connect_once_and_read_until_error() {
     }
     for(int i=0;i< SDL_JoystickNumButtons(js);i++){
       const auto curr= SDL_JoystickGetButton(js,i);
+      write_matching_button(copy.values,i,curr==0);
     }
     // write out the results
     std::lock_guard<std::mutex> guard(m_curr_values_mutex);
@@ -198,16 +208,12 @@ int JoystickReader::process_event(void *event1,std::array<uint16_t,16>& current)
       break;
     case SDL_JOYBUTTONDOWN:
       m_console->debug("Button down");
-      if (event->jbutton.button < SWITCH_COUNT) { // newer Taranis software can send 24 buttons - we use 16
-        current[8] |= 1 << event->jbutton.button;
-      }
+      write_matching_button(current,event->jbutton.button, false);
       ret=5;
       break;
     case SDL_JOYBUTTONUP:
       m_console->debug("Button up");
-      if (event->jbutton.button < SWITCH_COUNT) {
-        current[8] &= ~(1 << event->jbutton.button);
-      }
+      write_matching_button(current,event->jbutton.button, true);
       ret=4;
       break;
     case SDL_QUIT:

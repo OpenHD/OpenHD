@@ -28,7 +28,7 @@ class JoystickReader {
   // thread-safe. Fetch new updated joystick values if there is any.
   //std::optional<std::array<uint16_t,16>> get_new_data_if_available();
  public:
-  explicit JoystickReader(NEW_JOYSTICK_DATA_CB cb= nullptr);
+  explicit JoystickReader();
   ~JoystickReader();
   static constexpr uint16_t DEFAULT_RC_CHANNELS_VALUE=UINT16_MAX;
   struct CurrChannelValues{
@@ -50,7 +50,6 @@ class JoystickReader {
   int process_event(void* event,std::array<uint16_t,16>& values);
   void reset_curr_values();
   std::unique_ptr<std::thread> m_read_joystick_thread;
-  const NEW_JOYSTICK_DATA_CB m_cb;
   bool terminate=false;
   std::mutex m_curr_values_mutex;
   CurrChannelValues m_curr_values;
