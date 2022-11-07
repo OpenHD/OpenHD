@@ -15,10 +15,14 @@ static const std::string SETTINGS_DIRECTORY =std::string(BASE_PATH)+std::string(
 
 struct Settings{
   bool enable_rc_over_joystick=false;
-  int dummy=0;
+  int rc_over_joystick_update_rate_hz=10;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,enable_rc_over_joystick,dummy);
+static bool valid_joystick_update_rate(int value){
+    return value<=1 && value<=150;
+}
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,enable_rc_over_joystick,rc_over_joystick_update_rate_hz);
 
 class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
  public:

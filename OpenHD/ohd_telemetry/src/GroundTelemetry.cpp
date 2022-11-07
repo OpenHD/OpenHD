@@ -245,13 +245,21 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   }
 #ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
   auto c_config_enable_joystick=[this](std::string,int value){
-    if(!(value==0 || value==1))return false;
+    if(!openhd::validate_yes_or_no(value))return false;
     m_groundTelemetrySettings->unsafe_get_settings().enable_rc_over_joystick=value;
+    m_groundTelemetrySettings->persist();
+    return true;
+  };
+  auto c_rc_over_joystick_update_rate_hz=[this](std::string,int value){
+    if(!openhd::telemetry::ground::valid_joystick_update_rate(value))return false;
+    m_groundTelemetrySettings->unsafe_get_settings().rc_over_joystick_update_rate_hz=value;
     m_groundTelemetrySettings->persist();
     return true;
   };
   ret.push_back(openhd::Setting{"ENABLE_JOY_RC",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick),
                                                                     c_config_enable_joystick}});
+  ret.push_back(openhd::Setting{"RC_UPDATE_HZ",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz),
+                                                                    c_rc_over_joystick_update_rate_hz}});
 #endif
   openhd::testing::append_dummy_if_empty(ret);
   return ret;

@@ -70,6 +70,10 @@ static void validate_provided_ids(const std::vector<Setting>& settings){
   }
 }
 
+static bool validate_yes_or_no(int value){
+  return value==0 || value==1;
+}
+
 namespace testing {
 // For testing
 static std::vector<Setting> create_dummy_camera_settings() {
