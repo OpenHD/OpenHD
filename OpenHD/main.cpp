@@ -194,15 +194,6 @@ int main(int argc, char *argv[]) {
     const auto platform = DPlatform::discover();
     m_console->debug(platform->to_string());
 
-    // These are temporary and depend on how the image builder does stuff
-    if(platform->platform_type==PlatformType::RaspberryPi){
-      if(OHDFilesystemUtil::exists("/boot/ohd_dhclient.txt")){
-        // this way pi connects to ethernet hub / router via ethernet.
-        OHDUtil::run_command("dhclient eth0",{});
-      }
-    }else if(platform->platform_type==PlatformType::PC){
-      //OHDUtil::run_command("rfkill unblock all",{});
-    }
     // Now we need to discover camera(s) if we are on the air
     std::vector<Camera> cameras{};
     if(options.run_as_air){
