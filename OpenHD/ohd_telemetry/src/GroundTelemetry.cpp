@@ -242,6 +242,7 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
     if(!openhd::validate_yes_or_no(value))return false;
     m_groundTelemetrySettings->unsafe_get_settings().enable_rc_over_joystick=value;
     m_groundTelemetrySettings->persist();
+    // Enabling requires reboot
     return true;
   };
   auto c_rc_over_joystick_update_rate_hz=[this](std::string,int value){

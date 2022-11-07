@@ -17,6 +17,8 @@ m_cb(std::move(cb)),m_delay_in_milliseconds(1000/update_rate_hz) {
 void RcJoystickSender::send_data_until_terminate() {
   while (!terminate){
     const auto curr=m_joystick_reader->get_current_state();
+    // We only send data if the joystick is in the connected state
+    // Otherwise, we just stop sending data, which should result in a failsafe at the FC.
     if(curr.considered_connected){
       auto msg= pack_rc_message(OHD_SYS_ID_GROUND,0,curr.values,0,0);
       m_cb(msg);
