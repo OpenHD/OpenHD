@@ -51,7 +51,7 @@ class GroundTelemetry :public MavlinkSystem{
   // send a message to all clients connected to the ground station, for example QOpenHD
   void sendMessageGroundStationClients(const MavlinkMessage &message);
  private:
-  //std::unique_ptr<UDPEndpoint> udpGroundClient = nullptr;
+  std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_groundTelemetrySettings;
   std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;
   // We rely on another service for starting the rx/tx links
   std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;

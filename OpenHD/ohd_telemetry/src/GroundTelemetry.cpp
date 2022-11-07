@@ -16,12 +16,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   m_console = openhd::loggers::create_or_get("ohd_ground_tele");
   assert(m_console);
   m_console->set_level(spd::level::debug);
-  /*udpGroundClient =std::make_unique<UDPEndpoint>("GroundStationUDP",
-                                                                                                 OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
-                                                                                                 "127.0.0.1","127.0.0.1",true);//127.0.0.1
-  udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
-        onMessageGroundStationClients(msg);
-  });*/
+  m_groundTelemetrySettings=std::make_unique<openhd::telemetry::ground::SettingsHolder>();
   udpGroundClient =
       std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
                                      "127.0.0.1","127.0.0.1");
@@ -243,5 +238,17 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   if(openhd::tmp::file_air_or_ground_exists()){
     ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",openhd::IntSetting {0,c_config_boot_as_air}});
   }
+#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+  if(m_joystick_reader){
+    auto c_config_enable_joystick=[this](std::string,int value){
+      if(!(value==0 || value==1))return false;
+      m_groundTelemetrySettings->unsafe_get_settings().enable_rc_over_joystick=value;
+      m_groundTelemetrySettings->persist();
+      return true;
+    };
+    ret.push_back(openhd::Setting{"ENABLE_JOY_RC",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick),
+                                                                      c_config_enable_joystick}});
+  }
+#endif
   return ret;
 }
