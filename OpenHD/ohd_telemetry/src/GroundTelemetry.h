@@ -5,8 +5,6 @@
 #ifndef OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 #define OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 
-#define OPENHD_SDL_FOR_JOYSTICK_FOUND
-
 #include "endpoints/UDPEndpoint.h"
 #include "endpoints/UDPEndpoint2.h"
 #include "internal/OHDMainComponent.h"

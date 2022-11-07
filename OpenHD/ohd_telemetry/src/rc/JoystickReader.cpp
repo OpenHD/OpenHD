@@ -1,7 +1,7 @@
 //
 // Created by consti10 on 22.08.22.
 //
-
+#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
 #include "JoystickReader.h"
 
 #include <SDL2/SDL.h>
@@ -270,3 +270,4 @@ std::string JoystickReader::curr_state_to_string(
   ss<<"Delay since last update:"<<std::chrono::duration_cast<std::chrono::milliseconds>(delay_since_last_update).count()<<"ms";
   return ss.str();
 }
+#endif //OPENHD_SDL_FOR_JOYSTICK_FOUND
