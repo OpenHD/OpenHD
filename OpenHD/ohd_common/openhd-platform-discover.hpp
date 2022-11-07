@@ -6,6 +6,7 @@
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_PLATFORM_DISCOVER_HPP_
 
 #include "openhd-platform.hpp"
+#include "openhd-platform-json.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 

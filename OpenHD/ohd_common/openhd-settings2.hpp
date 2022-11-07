@@ -9,6 +9,7 @@
 
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
+#include "include_json.hpp"
 
 /**
  * In general, all OpenHD modules (e.g. video, telemetry, interface) handle their settings completely independently by writing
