@@ -19,7 +19,7 @@ struct Settings{
 };
 
 static bool valid_joystick_update_rate(int value){
-    return value<=1 && value<=150;
+    return value>=1 && value<=150;
 }
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,enable_rc_over_joystick,rc_over_joystick_update_rate_hz);
