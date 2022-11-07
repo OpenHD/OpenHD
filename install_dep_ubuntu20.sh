@@ -13,3 +13,7 @@ sudo apt -y install cmake build-essential autotools-dev automake libtool autocon
             libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
             libsdl2-dev \
             libspdlog-dev || exit 1
+
+# Needed for RC, optional
+sudo apt-y install libsdl2-dev
+
