@@ -253,6 +253,6 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   ret.push_back(openhd::Setting{"ENABLE_JOY_RC",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick),
                                                                     c_config_enable_joystick}});
 #endif
-  openhd::testing::append_dummy_int_and_string(ret);
+  openhd::testing::append_dummy_if_empty(ret);
   return ret;
 }

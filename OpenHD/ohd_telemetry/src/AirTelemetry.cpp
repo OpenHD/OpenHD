@@ -212,6 +212,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     auto tmp=board_type_to_string(_platform.board_type);
     ret.push_back(openhd::Setting{"BOARD_TYPE",openhd::StringSetting{tmp,c_read_only_param}});
   }
+  openhd::testing::append_dummy_if_empty(ret);
   return ret;
 }
 
