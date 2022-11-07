@@ -14,7 +14,7 @@
 #include "openhd-spdlog.hpp"
 
 /**
- * The Paradigma of this class is similar to how for example external devices
+ * The Paradigm of this class is similar to how for example external devices
  * are handled in general in OpenHD: If the user says he wants RC joystick
  * control, try to open the joystick and read data, re-connect if anything goes
  * wrong during run time.
@@ -29,6 +29,7 @@ class JoystickReader {
   explicit JoystickReader(NEW_JOYSTICK_DATA_CB cb= nullptr);
   ~JoystickReader();
   struct CurrChannelValues{
+    // See mavlink RC override
     std::array<uint16_t,16> values{UINT16_MAX};
     // Time point when we received the last update to at least one of the channel(s)
     std::chrono::steady_clock::time_point last_update;
