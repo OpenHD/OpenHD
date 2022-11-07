@@ -121,14 +121,18 @@ void JoystickReader::connect_once_and_read_until_error() {
   m_console->debug(ss.str());
   // Populate the data once by querying everything (after that, we just get the events from SDL
   {
-    std::lock_guard<std::mutex> guard(m_curr_values_mutex);
+    // make a copy
+    auto copy=m_curr_values;
     for(int i=0;i< SDL_JoystickNumAxes(js);i++){
       const auto curr= SDL_JoystickGetAxis(js,i);
-      write_matching_axis(m_curr_values.values,i,curr);
+      write_matching_axis(copy.values,i,curr);
     }
     for(int i=0;i< SDL_JoystickNumButtons(js);i++){
       const auto curr= SDL_JoystickGetButton(js,i);
     }
+    // write out the results
+    std::lock_guard<std::mutex> guard(m_curr_values_mutex);
+    m_curr_values=copy;
     m_curr_values.considered_connected= true;
     m_curr_values.last_update=std::chrono::steady_clock::now();
   }

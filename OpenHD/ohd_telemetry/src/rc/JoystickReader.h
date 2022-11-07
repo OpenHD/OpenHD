@@ -17,7 +17,9 @@
  * The Paradigm of this class is similar to how for example external devices
  * are handled in general in OpenHD: If the user says he wants RC joystick
  * control, try to open the joystick and read data, re-connect if anything goes
- * wrong during run time.
+ * wrong during run time. This class reads does all the connecting, handle disconnecting
+ * and reading values in its own thread - you can query a "state" from any thread at any
+ * time though.
  */
 class JoystickReader {
  public:
