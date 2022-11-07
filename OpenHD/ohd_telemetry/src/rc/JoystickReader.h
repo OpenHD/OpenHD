@@ -23,17 +23,14 @@
  */
 class JoystickReader {
  public:
-  // Called every time there is new joystick data
-  typedef std::function<void(std::array<uint16_t,16> data)> NEW_JOYSTICK_DATA_CB;
-  // thread-safe. Fetch new updated joystick values if there is any.
-  //std::optional<std::array<uint16_t,16>> get_new_data_if_available();
- public:
   explicit JoystickReader();
   ~JoystickReader();
+  // See mavlink RC override https://mavlink.io/en/messages/common.html#RC_CHANNELS_OVERRIDE
   static constexpr uint16_t DEFAULT_RC_CHANNELS_VALUE=UINT16_MAX;
+  // the rc channel override message(s) support 18 values, so we do so, too
+  static constexpr auto N_CHANNELS=18;
   struct CurrChannelValues{
-    // See mavlink RC override https://mavlink.io/en/messages/common.html#RC_CHANNELS_OVERRIDE
-    std::array<uint16_t,16> values{DEFAULT_RC_CHANNELS_VALUE};
+    std::array<uint16_t,N_CHANNELS> values{DEFAULT_RC_CHANNELS_VALUE};
     // Time point when we received the last update to at least one of the channel(s)
     std::chrono::steady_clock::time_point last_update;
     // Weather we think the RC (joystick) is currently connected or not.
@@ -51,7 +48,7 @@ class JoystickReader {
   // Wait up to timeout_ms for an event, and then read as many events as there are available
   // We are only interested in the Joystick events
   void wait_for_events(int timeout_ms);
-  int process_event(void* event,std::array<uint16_t,16>& values);
+  int process_event(void* event,std::array<uint16_t,N_CHANNELS>& values);
   void reset_curr_values();
   std::unique_ptr<std::thread> m_read_joystick_thread;
   bool terminate=false;

@@ -146,7 +146,7 @@ static void lululululu(){
 }
 
 static MavlinkMessage pack_rc_message(const int sys_id,const int comp_id,
-                                           const std::array<uint16_t,16>& rc_data,
+                                           const std::array<uint16_t,18>& rc_data,
                                            const uint8_t target_system,
                                            const uint8_t target_component){
   MavlinkMessage ret{};
@@ -169,8 +169,8 @@ static MavlinkMessage pack_rc_message(const int sys_id,const int comp_id,
   mavlink_rc_channels_override.chan14_raw=rc_data[13];
   mavlink_rc_channels_override.chan15_raw=rc_data[14];
   mavlink_rc_channels_override.chan16_raw=rc_data[15];
-  mavlink_rc_channels_override.chan17_raw=UINT16_MAX;
-  mavlink_rc_channels_override.chan18_raw=UINT16_MAX;
+  mavlink_rc_channels_override.chan17_raw=rc_data[16];
+  mavlink_rc_channels_override.chan18_raw=rc_data[17];
   mavlink_msg_rc_channels_override_encode(sys_id,comp_id,&ret.m,&mavlink_rc_channels_override);
   return ret;
 }
