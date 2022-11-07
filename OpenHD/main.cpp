@@ -12,6 +12,7 @@
 #include "ohd_common/openhd-global-constants.hpp"
 #include "ohd_common/openhd-spdlog.hpp"
 #include "ohd_common/openhd-temporary-air-or-ground.h"
+#include "ohd_common/openhd-profile-json.hpp"
 #include <DCameras.h>
 #include <OHDInterface.h>
 #include <OHDTelemetry.h>
@@ -236,6 +237,7 @@ int main(int argc, char *argv[]) {
     }
     // Now we can crate the immutable profile
     const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
+    write_profile_manifest(*profile);
     // And start the blinker (TODO LED output is really dirty right now).
     auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);
 
