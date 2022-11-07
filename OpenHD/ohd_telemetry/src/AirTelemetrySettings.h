@@ -13,7 +13,7 @@
 // Note that we do not have any telemetry settings r.n for the ground (since forwarding is a task ov ohd_interface, not ohd_telemetry)
 namespace openhd::telemetry::air{
 
-static const std::string SETTINGS_DIRECTORY =std::string(BASE_PATH)+std::string("air_telemetry/");
+static const std::string SETTINGS_DIRECTORY =std::string(BASE_PATH)+std::string("telemetry/");
 
 // Default for ardupilot and more
 static constexpr int DEFAULT_UART_BAUDRATE=115200;
@@ -124,7 +124,7 @@ class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
 	std::stringstream ss;
-	ss<<"fc_uart.json";
+	ss<<"air_settings.json";
 	return ss.str();
   }
   [[nodiscard]] Settings create_default()const override{

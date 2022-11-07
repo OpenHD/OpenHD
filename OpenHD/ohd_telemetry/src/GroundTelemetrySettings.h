@@ -11,13 +11,14 @@
 
 namespace openhd::telemetry::ground{
 
-static const std::string SETTINGS_DIRECTORY =std::string(BASE_PATH)+std::string("ground_telemetry/");
+static const std::string SETTINGS_DIRECTORY =std::string(BASE_PATH)+std::string("telemetry/");
 
 struct Settings{
   bool enable_rc_over_joystick=false;
+  int dummy=0;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,enable_rc_over_joystick);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,enable_rc_over_joystick,dummy);
 
 class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
  public:
@@ -29,7 +30,7 @@ class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
     std::stringstream ss;
-    ss<<"fc_uart.json";
+    ss<<"ground_settings.json";
     return ss.str();
   }
   [[nodiscard]] Settings create_default()const override{
