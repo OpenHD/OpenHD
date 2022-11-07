@@ -16,4 +16,4 @@ sudo apt -y install cmake build-essential autotools-dev automake libtool autocon
 sudo apt -y install libgstreamer-plugins-base1.0-dev libunwind-14-dev
 
 # Needed for RC, optional
-sudo apt-y install libsdl2-dev
+sudo apt -y install libsdl2-dev
