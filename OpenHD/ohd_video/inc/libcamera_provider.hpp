@@ -69,6 +69,14 @@ class LibcameraProvider {
     }else if(OHDUtil::contains(cam_id,"imx230")){
       // arducam
       ret="imx230";
+    }else if(OHDUtil::contains_after_uppercase(cam_id,"AR0234")){
+      ret="AR0234";
+    }else if(OHDUtil::contains_after_uppercase(cam_id,"AR1820HS")){
+      // arducam https://www.uctronics.com/arducam-18mp-ar1820hs-camera-module-for-raspberry-pi-pivariety.html
+      ret="AR1820HS";
+    }else if(OHDUtil::contains_after_uppercase(cam_id,"OV2311")){
+      // arducam https://www.uctronics.com/2mp-global-shutter-ov2311-mono-camera-modules-pivariety.html
+      ret="OV2311";
     }
     return ret;
   }
