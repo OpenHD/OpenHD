@@ -30,12 +30,6 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   });
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
   components.push_back(_ohd_main_component);
-  //
-  // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
-  // all their parameters.
-  generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
-  generic_mavlink_param_provider->add_params(get_all_settings());
-  components.push_back(generic_mavlink_param_provider);
 #ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
   if(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick){
     //m_joystick_reader=std::make_unique<JoystickReader>();
@@ -49,6 +43,12 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
 #else
   m_console->info("No Joystick support");
 #endif
+  //
+  // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
+  // all their parameters.
+  generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
+  generic_mavlink_param_provider->add_params(get_all_settings());
+  components.push_back(generic_mavlink_param_provider);
   m_console->debug("Created GroundTelemetry");
 }
 
