@@ -21,8 +21,8 @@ SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::filesystem)
 
 find_package(Threads REQUIRED)
 
-# For joystick
-find_package(SDL2)
+# For joystick, optional (but if SDL2 is not found at compile time, RC won't be available at run time)
+find_package(SDL2 QUIET)
 if(SDL2_FOUND)
     message(STATUS "SDL2 found")
     target_compile_definitions(OHDTelemetryLib PRIVATE OPENHD_SDL_FOR_JOYSTICK_FOUND)
