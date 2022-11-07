@@ -29,10 +29,11 @@ class JoystickReader {
   explicit JoystickReader(NEW_JOYSTICK_DATA_CB cb= nullptr);
   ~JoystickReader();
   struct CurrChannelValues{
-    // See mavlink RC override
+    // See mavlink RC override https://mavlink.io/en/messages/common.html#RC_CHANNELS_OVERRIDE
     std::array<uint16_t,16> values{0};
     // Time point when we received the last update to at least one of the channel(s)
     std::chrono::steady_clock::time_point last_update;
+    // Weather we think the RC (joystick) is currently connected or not.
     bool considered_connected=false;
   };
   CurrChannelValues get_current_state();
