@@ -29,7 +29,7 @@ class JoystickReader {
   explicit JoystickReader(NEW_JOYSTICK_DATA_CB cb= nullptr);
   ~JoystickReader();
   struct CurrChannelValues{
-    std::array<uint16_t,16> values;
+    std::array<uint16_t,16> values{UINT16_MAX};
     // Time point when we received the last update to at least one of the channel(s)
     std::chrono::steady_clock::time_point last_update;
     bool considered_connected=false;
@@ -55,9 +55,8 @@ class JoystickReader {
   void loop();
   void connect_once_and_read_until_error();
   int read_events_until_empty();
+  void reset_curr_values();
   std::unique_ptr<std::thread> m_read_joystick_thread;
-  // stores actual joystick data
-  std::array<uint16_t,16> m_curr_joystick_data;
   const NEW_JOYSTICK_DATA_CB m_cb;
   bool terminate=false;
   std::mutex m_curr_values_mutex;

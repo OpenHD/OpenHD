@@ -120,15 +120,21 @@ void JoystickReader::connect_once_and_read_until_error() {
   ss<<"Hats:"<<SDL_JoystickNumHats(js)<<"\n";
   m_console->debug(ss.str());
   while (!terminate){
+    m_curr_values.considered_connected= true;
     //std::cout<<"Read joystick\n";
     read_events_until_empty();
     std::this_thread::sleep_for(std::chrono::milliseconds (1));
+    if(SDL_NumJoysticks()<1){
+      m_console->warn("Joystick disconnected");
+      terminate= true;
+    }
     /*if(!check_if_joystick_is_connected_via_fd()){
       // When the joystick is re-connected, SDL won't resume working again.
       std::cerr<<"Joystick not connected, restarting\n";
       break;
     }*/
   }
+  reset_curr_values();
   SDL_Quit();
   // either joystick disconnected or somethings wrong.
 }
@@ -185,6 +191,14 @@ int JoystickReader::read_events_until_empty() {
 JoystickReader::CurrChannelValues JoystickReader::get_current_state() {
   std::lock_guard<std::mutex> guard(m_curr_values_mutex);
   return m_curr_values;
+}
+
+void JoystickReader::reset_curr_values() {
+  std::lock_guard<std::mutex> guard(m_curr_values_mutex);
+  m_curr_values.considered_connected=false;
+  for(auto& el:m_curr_values.values){
+    el=UINT16_MAX;
+  }
 }
 
 /*std::optional<std::array<uint16_t, 16>>
