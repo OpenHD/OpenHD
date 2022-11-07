@@ -245,19 +245,20 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
     // Enabling requires reboot
     return true;
   };
-  auto c_rc_over_joystick_update_rate_hz=[this](std::string,int value){
-    if(!openhd::telemetry::ground::valid_joystick_update_rate(value))return false;
-    m_groundTelemetrySettings->unsafe_get_settings().rc_over_joystick_update_rate_hz=value;
-    m_groundTelemetrySettings->persist();
-    if(m_rc_joystick_sender){
-      m_rc_joystick_sender->change_update_rate(value);
-    }
-    return true;
-  };
   ret.push_back(openhd::Setting{"ENABLE_JOY_RC",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick),
                                                                     c_config_enable_joystick}});
-  ret.push_back(openhd::Setting{"RC_UPDATE_HZ",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz),
-                                                                    c_rc_over_joystick_update_rate_hz}});
+  if(m_rc_joystick_sender){
+    auto c_rc_over_joystick_update_rate_hz=[this](std::string,int value){
+      if(!openhd::telemetry::ground::valid_joystick_update_rate(value))return false;
+      m_groundTelemetrySettings->unsafe_get_settings().rc_over_joystick_update_rate_hz=value;
+      m_groundTelemetrySettings->persist();
+      assert(m_rc_joystick_sender);
+      m_rc_joystick_sender->change_update_rate(value);
+      return true;
+    };
+    ret.push_back(openhd::Setting{"RC_UPDATE_HZ",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz),
+                                                                     c_rc_over_joystick_update_rate_hz}});
+  }
 #endif
   openhd::testing::append_dummy_if_empty(ret);
   return ret;
