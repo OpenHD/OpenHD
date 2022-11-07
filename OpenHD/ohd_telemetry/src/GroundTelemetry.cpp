@@ -30,15 +30,12 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   });
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
   components.push_back(_ohd_main_component);
-  //
-  // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
-  // all their parameters.
-  generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
-  generic_mavlink_param_provider->add_params(get_all_settings());
-  components.push_back(generic_mavlink_param_provider);
 #ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
   if(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick){
-    m_joystick_reader=std::make_unique<JoystickReader>();
+    //m_joystick_reader=std::make_unique<JoystickReader>();
+    m_rc_joystick_sender=std::make_unique<RcJoystickSender>([this](const MavlinkMessage &msg){
+      sendMessageAirPi(msg);
+    },m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz);
     m_console->info("Joystick enabled");
   }else{
     m_console->info("Joystick disabled");
@@ -46,6 +43,12 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
 #else
   m_console->info("No Joystick support");
 #endif
+  //
+  // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
+  // all their parameters.
+  generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
+  generic_mavlink_param_provider->add_params(get_all_settings());
+  components.push_back(generic_mavlink_param_provider);
   m_console->debug("Created GroundTelemetry");
 }
 
@@ -134,15 +137,6 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
 		}
 	  }
 	}
-#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
-        if(m_joystick_reader!= nullptr){
-          auto curr=m_joystick_reader->get_current_state();
-          if(curr.considered_connected){
-            auto msg= pack_rc_message(_sys_id,0,curr.values,0,0);
-            sendMessageAirPi(msg);
-          }
-        }
-#endif
 	const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
 	if(loopDelta>loop_intervall){
 	  // We can't keep up with the wanted loop interval
@@ -245,13 +239,26 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   }
 #ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
   auto c_config_enable_joystick=[this](std::string,int value){
-    if(!(value==0 || value==1))return false;
+    if(!openhd::validate_yes_or_no(value))return false;
     m_groundTelemetrySettings->unsafe_get_settings().enable_rc_over_joystick=value;
     m_groundTelemetrySettings->persist();
+    // Enabling requires reboot
     return true;
   };
   ret.push_back(openhd::Setting{"ENABLE_JOY_RC",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick),
                                                                     c_config_enable_joystick}});
+  if(m_rc_joystick_sender){
+    auto c_rc_over_joystick_update_rate_hz=[this](std::string,int value){
+      if(!openhd::telemetry::ground::valid_joystick_update_rate(value))return false;
+      m_groundTelemetrySettings->unsafe_get_settings().rc_over_joystick_update_rate_hz=value;
+      m_groundTelemetrySettings->persist();
+      assert(m_rc_joystick_sender);
+      m_rc_joystick_sender->change_update_rate(value);
+      return true;
+    };
+    ret.push_back(openhd::Setting{"RC_UPDATE_HZ",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz),
+                                                                     c_rc_over_joystick_update_rate_hz}});
+  }
 #endif
   openhd::testing::append_dummy_if_empty(ret);
   return ret;

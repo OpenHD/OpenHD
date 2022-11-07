@@ -81,6 +81,8 @@ SET(sources
     
     "src/rc/JoystickReader.cpp"
     "src/rc/JoystickReader.h"
+    "src/rc/RcJoystickSender.cpp"
+    "src/rc/RcJoystickSender.h"
 
     "src/routing/MavlinkComponent.hpp"
     "src/routing/MavlinkSystem.hpp"

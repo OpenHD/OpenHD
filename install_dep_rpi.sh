@@ -10,7 +10,7 @@ apt -y install ruby-dev python3-pip libnl-3-dev cmake snapd libnl-genl-3-dev lib
 apt -y install libspdlog-dev
 
 # Needed for RC, optional
-apt-y install libsdl2-dev
+apt -y install libsdl2-dev
 
 gem install fpm
 
