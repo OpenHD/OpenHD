@@ -126,7 +126,11 @@ void JoystickReader::connect_once_and_read_until_error() {
       const auto curr= SDL_JoystickGetAxis(js,i);
       write_matching_axis(m_curr_values.values,i,curr);
     }
+    for(int i=0;i< SDL_JoystickNumButtons(js);i++){
+      const auto curr= SDL_JoystickGetButton(js,i);
+    }
     m_curr_values.considered_connected= true;
+    m_curr_values.last_update=std::chrono::steady_clock::now();
   }
   while (!terminate){
     read_events_until_empty();
