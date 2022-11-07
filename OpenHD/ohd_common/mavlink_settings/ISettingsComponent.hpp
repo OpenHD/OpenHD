@@ -107,6 +107,15 @@ static void append_dummy_int_and_string(std::vector<Setting>& ret){
 	ret.push_back(Setting{id,tmp});
   }
 }
+// A size of 0 creates issues with the param server, but it is possible we don't have any params if
+// none were addable during run time due
+static void append_dummy_if_empty(std::vector<Setting>& ret){
+  if(ret.empty()){
+    auto tmp=openhd::IntSetting{0};
+    const std::string id="DUMMY";
+    ret.push_back(Setting{id,tmp});
+  }
+}
 }
 
 }

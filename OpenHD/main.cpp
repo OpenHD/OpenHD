@@ -12,6 +12,7 @@
 #include "ohd_common/openhd-global-constants.hpp"
 #include "ohd_common/openhd-spdlog.hpp"
 #include "ohd_common/openhd-temporary-air-or-ground.h"
+#include "ohd_common/openhd-profile-json.hpp"
 #include <DCameras.h>
 #include <OHDInterface.h>
 #include <OHDTelemetry.h>
@@ -193,15 +194,6 @@ int main(int argc, char *argv[]) {
     const auto platform = DPlatform::discover();
     m_console->debug(platform->to_string());
 
-    // These are temporary and depend on how the image builder does stuff
-    if(platform->platform_type==PlatformType::RaspberryPi){
-      if(OHDFilesystemUtil::exists("/boot/ohd_dhclient.txt")){
-        // this way pi connects to ethernet hub / router via ethernet.
-        OHDUtil::run_command("dhclient eth0",{});
-      }
-    }else if(platform->platform_type==PlatformType::PC){
-      //OHDUtil::run_command("rfkill unblock all",{});
-    }
     // Now we need to discover camera(s) if we are on the air
     std::vector<Camera> cameras{};
     if(options.run_as_air){
@@ -236,6 +228,7 @@ int main(int argc, char *argv[]) {
     }
     // Now we can crate the immutable profile
     const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
+    write_profile_manifest(*profile);
     // And start the blinker (TODO LED output is really dirty right now).
     auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);
 
@@ -290,7 +283,12 @@ int main(int argc, char *argv[]) {
     // run forever, everything has its own threads. Note that the only way to break out basically
     // is when one of the modules encounters an exception.
     const bool any_debug_enabled=(options.enable_interface_debugging || options.enable_telemetry_debugging || options.enable_video_debugging);
-    while (true) {
+    static bool quit=false;
+    signal(SIGTERM, [](int sig){
+      std::cerr<<"Got SIGTERM, exiting";
+      quit= true;
+    });
+    while (!quit) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
       if(ohdVideo){
         ohdVideo->restartIfStopped();

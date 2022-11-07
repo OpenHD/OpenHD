@@ -9,10 +9,13 @@
 #include "endpoints/UDPEndpoint2.h"
 #include "internal/OHDMainComponent.h"
 #include "mavlink_settings/ISettingsComponent.hpp"
-#include "mavsdk_temporary//XMavlinkParamProvider.h"
+#include "mavsdk_temporary/XMavlinkParamProvider.h"
+#include "GroundTelemetrySettings.h"
 #include "openhd-action-handler.hpp"
 #include "openhd-spdlog.hpp"
-//#include "rc/JoystickReader.h"
+#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+#include "rc/JoystickReader.h"
+#endif
 
 /**
  * OpenHD Ground telemetry. Assumes a air instance running on the air pi.
@@ -48,7 +51,7 @@ class GroundTelemetry :public MavlinkSystem{
   // send a message to all clients connected to the ground station, for example QOpenHD
   void sendMessageGroundStationClients(const MavlinkMessage &message);
  private:
-  //std::unique_ptr<UDPEndpoint> udpGroundClient = nullptr;
+  std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_groundTelemetrySettings;
   std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;
   // We rely on another service for starting the rx/tx links
   std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;
@@ -60,7 +63,9 @@ class GroundTelemetry :public MavlinkSystem{
   std::mutex other_udp_ground_stations_lock;
   std::map<std::string,std::shared_ptr<UDPEndpoint2>> _other_udp_ground_stations{};
   //
-  //std::unique_ptr<JoystickReader> m_joystick_reader;
+#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+  std::unique_ptr<JoystickReader> m_joystick_reader;
+#endif
   std::shared_ptr<spdlog::logger> m_console;
   std::vector<openhd::Setting> get_all_settings();
 };

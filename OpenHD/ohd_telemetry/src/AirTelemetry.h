@@ -45,7 +45,7 @@ class AirTelemetry : public MavlinkSystem{
   void set_link_statistics(openhd::link_statistics::AllStats stats);
  private:
   const OHDPlatform _platform;
-  std::unique_ptr<openhd::AirTelemetrySettingsHolder> _airTelemetrySettings;
+  std::unique_ptr<openhd::telemetry::air::SettingsHolder> _airTelemetrySettings;
   // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
   void sendMessageFC(const MavlinkMessage &message);
   // send a mavlink message to the ground pi, system cannot know if this message actually makes it.
