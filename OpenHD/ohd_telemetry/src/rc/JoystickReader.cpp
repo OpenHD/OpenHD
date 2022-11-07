@@ -4,6 +4,8 @@
 
 #include "JoystickReader.h"
 
+#include <SDL2/SDL.h>
+
 #include <iostream>
 #include <unistd.h>
 #include <sstream>
@@ -55,57 +57,22 @@ static void readAxis(SDL_Event *event) {
     rcData[7]=parsetoMultiWii(myevent.jaxis.value);
 }
 
-// Reads all queued SDL events until there are none remaining
-// We are only interested in the Joystick events
-static int read_events_until_empty() {
-  //std::cerr<<"eventloop_joystick\n";
-  SDL_Event event;
-  while (SDL_PollEvent (&event)) {
-    //std::cerr<<"X:"<<(int)event.type<<"\n";
-    switch (event.type) {
-      case SDL_JOYAXISMOTION:
-        fprintf (stderr,"Joystick %d, Axis %d moved to %d\n", event.jaxis.which, event.jaxis.axis, event.jaxis.value);
-        readAxis(&event);
-        return 2;
-        break;
-      case SDL_JOYBUTTONDOWN:
-        std::cerr<<"Button down\n";
-        if (event.jbutton.button < SWITCH_COUNT) { // newer Taranis software can send 24 buttons - we use 16
-          rcData[8] |= 1 << event.jbutton.button;
-        }
-        return 5;
-        break;
-      case SDL_JOYBUTTONUP:
-        std::cerr<<"Button up\n";
-        if (event.jbutton.button < SWITCH_COUNT) {
-          rcData[8] &= ~(1 << event.jbutton.button);
-        }
-        return 4;
-        break;
-      case SDL_QUIT:
-        std::cout<<"X1\n";
-        return 0;
-      default:
-        std::cout<<"X2\n";
-        return 0;
-    }
-  }
-  return 0;
-}
-
 static bool check_if_joystick_is_connected_via_fd(){
     return access(JOY_DEV, F_OK);
 }
 
-
 JoystickReader::JoystickReader(NEW_JOYSTICK_DATA_CB cb):m_cb(cb) {
-  std::cout<<"Joystick init\n";
+  m_console = openhd::loggers::create_or_get("joystick_reader");
+  assert(m_console);
+  m_console->set_level(spd::level::debug);
+  m_console->debug("JoystickReader::JoystickReader");
   m_read_joystick_thread=std::make_unique<std::thread>([this] {
     loop();
   });
 }
 
 JoystickReader::~JoystickReader() {
+  m_console->debug("JoystickReader::~JoystickReader()");
   terminate= true;
   m_read_joystick_thread->join();
   m_read_joystick_thread= nullptr;
@@ -129,6 +96,12 @@ void JoystickReader::connect_once_and_read_until_error() {
     printf ("ERROR: %s\n", SDL_GetError ());
     return;
   }
+  const auto n_joysticks=SDL_NumJoysticks();
+  if(n_joysticks<1){
+    printf("No joysticks, num:%d\n",SDL_NumJoysticks());
+    SDL_Quit();
+    return;
+  }
   js = SDL_JoystickOpen(JOYSTICK_N);
   if (js == nullptr){
     printf("Couldn't open desired Joystick: %s\n",SDL_GetError());
@@ -142,11 +115,11 @@ void JoystickReader::connect_once_and_read_until_error() {
   }else{
     ss<<"Name: nullptr\n";
   }
-  ss<<"Axis:"<<SDL_JoystickNumAxes(js)<<"\n";
+  ss<<"N Axis:"<<SDL_JoystickNumAxes(js)<<"\n";
   ss<<"Trackballs::"<<SDL_JoystickNumBalls(js)<<"\n";
   ss<<"Buttons:"<<SDL_JoystickNumButtons(js)<<"\n";
   ss<<"Hats:"<<SDL_JoystickNumHats(js)<<"\n";
-  std::cerr<<ss.str();
+  m_console->debug(ss.str());
   while (!terminate){
     //std::cout<<"Read joystick\n";
     read_events_until_empty();
@@ -159,6 +132,59 @@ void JoystickReader::connect_once_and_read_until_error() {
   }
   SDL_Quit();
   // either joystick disconnected or somethings wrong.
+}
+
+// Reads all queued SDL events until there are none remaining
+// We are only interested in the Joystick events
+int JoystickReader::read_events_until_empty() {
+  SDL_Event event;
+  bool any_new_data=false;
+  while (SDL_PollEvent (&event)) {
+    switch (event.type) {
+      case SDL_JOYAXISMOTION:
+        m_console->debug("Joystick {}, Axis {} moved to {}", event.jaxis.which, event.jaxis.axis, event.jaxis.value);
+        readAxis(&event);
+        any_new_data= true;
+        //return 2;
+        break;
+      case SDL_JOYBUTTONDOWN:
+        m_console->debug("Button down");
+        if (event.jbutton.button < SWITCH_COUNT) { // newer Taranis software can send 24 buttons - we use 16
+          rcData[8] |= 1 << event.jbutton.button;
+        }
+        any_new_data= true;
+        //return 5;
+        break;
+      case SDL_JOYBUTTONUP:
+        m_console->debug("Button up");
+        if (event.jbutton.button < SWITCH_COUNT) {
+          rcData[8] &= ~(1 << event.jbutton.button);
+        }
+        any_new_data= true;
+        //return 4;
+        break;
+      case SDL_QUIT:
+        std::cout<<"X1\n";
+        return 0;
+      default:
+        std::cout<<"X2\n";
+        return 0;
+    }
+  }
+  if(any_new_data){
+    std::lock_guard<std::mutex> guard(m_curr_values_mutex);
+    for(int i=0;i<m_curr_values.values.size();i++){
+      m_curr_values.values[i]=rcData[i];
+    }
+    m_curr_values.last_update=std::chrono::steady_clock::now();
+    m_curr_values.considered_connected= true;
+  }
+  return 0;
+}
+
+JoystickReader::CurrChannelValues JoystickReader::get_current_state() {
+  std::lock_guard<std::mutex> guard(m_curr_values_mutex);
+  return m_curr_values;
 }
 
 /*std::optional<std::array<uint16_t, 16>>

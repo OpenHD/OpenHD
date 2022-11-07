@@ -68,8 +68,8 @@ SET(sources
     "src/mavsdk_temporary/XMavlinkParamProvider.cpp"
     "src/mavsdk_temporary/XMavlinkParamProvider.h"
     
-    #"src/rc/JoystickReader.cpp"
-    #"src/rc/JoystickReader.h"
+    "src/rc/JoystickReader.cpp"
+    "src/rc/JoystickReader.h"
 
     "src/routing/MavlinkComponent.hpp"
     "src/routing/MavlinkSystem.hpp"
@@ -110,9 +110,9 @@ target_include_directories(mavlink INTERFACE ../lib/c_library_v2_openhd/)
 target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
 #target_include_directories(OHDTelemetryLib PUBLIC ../lib/c_library_v2_openhd)
 # for joystick
-#find_package(SDL2 REQUIRED)
-#target_include_directories(OHDTelemetryLib PRIVATE ${SDL2_INCLUDE_DIRS})
-#target_link_libraries(OHDTelemetryLib PRIVATE ${SDL2_LIBRARIES})
+find_package(SDL2 REQUIRED)
+target_include_directories(OHDTelemetryLib PRIVATE ${SDL2_INCLUDE_DIRS})
+target_link_libraries(OHDTelemetryLib PRIVATE ${SDL2_LIBRARIES})
 
 # Note: We do not need wifibroadcast as a whole here, we can get the header-only files.
 target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
@@ -141,6 +141,9 @@ target_link_libraries(test_ground_and_air_locally OHDTelemetryLib)
 
 add_executable(test_onboard_computer_status_read_stuff tests/test_onboard_computer_status_read_stuff.cpp)
 target_link_libraries(test_onboard_computer_status_read_stuff OHDTelemetryLib)
+
+add_executable(test_joystick_reader tests/test_joystick_reader.cpp)
+target_link_libraries(test_joystick_reader OHDTelemetryLib)
 
 ###
 find_package(MAVSDK)
