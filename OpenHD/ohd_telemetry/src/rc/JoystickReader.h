@@ -28,31 +28,19 @@ class JoystickReader {
  public:
   explicit JoystickReader(NEW_JOYSTICK_DATA_CB cb= nullptr);
   ~JoystickReader();
+  static constexpr uint16_t DEFAULT_RC_CHANNELS_VALUE=UINT16_MAX;
   struct CurrChannelValues{
     // See mavlink RC override https://mavlink.io/en/messages/common.html#RC_CHANNELS_OVERRIDE
-    std::array<uint16_t,16> values{0};
+    std::array<uint16_t,16> values{DEFAULT_RC_CHANNELS_VALUE};
     // Time point when we received the last update to at least one of the channel(s)
     std::chrono::steady_clock::time_point last_update;
     // Weather we think the RC (joystick) is currently connected or not.
     bool considered_connected=false;
   };
+  // Get the current "state", thread-safe
   CurrChannelValues get_current_state();
-  static std::string curr_state_to_string(const CurrChannelValues& curr_channel_values){
-    std::stringstream ss;
-    ss<<"Connected:"<<(curr_channel_values.considered_connected ? "Y":"N")<<"\n";
-    ss<<"Values:[";
-    for(int i=0;i<curr_channel_values.values.size();i++){
-      ss<<(int)curr_channel_values.values[i];
-      if(i==curr_channel_values.values.size()-1){
-        ss<<"]\n";
-      }else{
-        ss<<",";
-      }
-    }
-    const auto delay_since_last_update=std::chrono::steady_clock::now()-curr_channel_values.last_update;
-    ss<<"Delay since last update:"<<std::chrono::duration_cast<std::chrono::milliseconds>(delay_since_last_update).count()<<"ms";
-    return ss.str();
-  }
+  // For debugging
+  static std::string curr_state_to_string(const CurrChannelValues& curr_channel_values);
  private:
   void loop();
   void connect_once_and_read_until_error();
