@@ -71,7 +71,7 @@ static bool check_if_joystick_is_connected_via_fd(){
 JoystickReader::JoystickReader() {
   m_console = openhd::loggers::create_or_get("joystick_reader");
   assert(m_console);
-  m_console->set_level(spd::level::warn);
+  m_console->set_level(spd::level::debug);
   m_console->debug("JoystickReader::JoystickReader");
   reset_curr_values();
   m_read_joystick_thread=std::make_unique<std::thread>([this] {
@@ -122,12 +122,13 @@ void JoystickReader::connect_once_and_read_until_error() {
     name=std::string(name_pointer);
   }
   std::stringstream ss;
+  ss<<"Found joystick:\n";
   ss<<"Name:"<<name<<"\n";
   ss<<"N Axis:"<<SDL_JoystickNumAxes(js)<<"\n";
   ss<<"Trackballs::"<<SDL_JoystickNumBalls(js)<<"\n";
   ss<<"Buttons:"<<SDL_JoystickNumButtons(js)<<"\n";
   ss<<"Hats:"<<SDL_JoystickNumHats(js)<<"\n";
-  m_console->debug(ss.str());
+  m_console->info(ss.str());
   // Populate the data once by querying everything (after that, we just get the events from SDL)
   {
     // make a copy
@@ -149,7 +150,7 @@ void JoystickReader::connect_once_and_read_until_error() {
   }
   bool disconnected=false;
   while (!disconnected && !terminate){
-    wait_for_events(100);
+    wait_for_events(200);
     const int curr_num_joysticks=SDL_NumJoysticks();
     if(curr_num_joysticks<1){
       // This one seems to work just find
@@ -166,6 +167,7 @@ void JoystickReader::connect_once_and_read_until_error() {
       break;
     }*/
   }
+  m_console->info("Joystick disconnected");
   reset_curr_values();
   SDL_Quit();
   // either joystick disconnected or something else went wrong.
@@ -177,7 +179,7 @@ void JoystickReader::wait_for_events(const int timeout_ms) {
   SDL_Event event;
   bool any_new_data=false;
   // wait for at least one event with a timeut
-  if(!SDL_WaitEventTimeout(&event,100)){
+  if(!SDL_WaitEventTimeout(&event,timeout_ms)){
     //m_console->debug("Got no event after 100ms");
     return;
   }

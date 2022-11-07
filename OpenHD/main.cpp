@@ -283,7 +283,12 @@ int main(int argc, char *argv[]) {
     // run forever, everything has its own threads. Note that the only way to break out basically
     // is when one of the modules encounters an exception.
     const bool any_debug_enabled=(options.enable_interface_debugging || options.enable_telemetry_debugging || options.enable_video_debugging);
-    while (true) {
+    static bool quit=false;
+    signal(SIGTERM, [](int sig){
+      std::cerr<<"Got SIGTERM, exiting";
+      quit= true;
+    });
+    while (!quit) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
       if(ohdVideo){
         ohdVideo->restartIfStopped();
