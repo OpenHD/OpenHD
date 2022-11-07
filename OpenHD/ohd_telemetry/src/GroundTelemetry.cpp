@@ -39,6 +39,9 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
 #ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
   if(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick){
     m_joystick_reader=std::make_unique<JoystickReader>();
+    m_console->info("Joystick enabled");
+  }else{
+    m_console->info("Joystick disabled");
   }
 #else
   m_console->info("No Joystick support");
