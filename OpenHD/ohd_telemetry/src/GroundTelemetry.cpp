@@ -260,6 +260,12 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
     };
     ret.push_back(openhd::Setting{"RC_UPDATE_HZ",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz),
                                                                      c_rc_over_joystick_update_rate_hz}});
+    auto c_rc_over_joystick_channel_mapping=[this](std::string,std::string value){
+      m_console->debug("Change channel mapping");
+      return true;
+    };
+    ret.push_back(openhd::Setting{"RC_CHAN_MAP",openhd::StringSetting {"0,1,2,3,4,5,6,7",
+                                                                     c_rc_over_joystick_channel_mapping}});
   }
 #endif
   openhd::testing::append_dummy_if_empty(ret);

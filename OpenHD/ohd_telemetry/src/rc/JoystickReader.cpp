@@ -13,55 +13,17 @@
 static constexpr auto JOYSTICK_N=0;
 static constexpr auto JOY_DEV="/sys/class/input/js0";
 
-int ROLL_AXIS = 0;
-int PITCH_AXIS =  1;
-int YAW_AXIS = 3;
-int THROTTLE_AXIS = 2;
-int AUX1_AXIS = 4;
-int AUX2_AXIS = 5;
-int AUX3_AXIS = 6;
-int AUX4_AXIS = 7;
+static constexpr int CHAN0_AXIS_A = 0;
+static constexpr int CHAN1_AXIS_E =  1;
+static constexpr int CHAN2_AXIS_T = 3;
+static constexpr int CHAN3_AXIS_R = 2;
+static constexpr int CHAN4_AUX1_AXIS = 4;
+static constexpr int CHAN5_AUX2_AXIS = 5;
+static constexpr int CHAN6_AUX3_AXIS = 6;
+static constexpr int CHAN7_AUX4_AXIS = 7;
 
 static SDL_Joystick *js;
 
-static int16_t parsetoMultiWii(Sint16 value) {
-  return (int16_t)(((((double)value)+32768.0)/65.536)+1000);
-}
-
-static void write_matching_axis(std::array<uint16_t,JoystickReader::N_CHANNELS>&rc_data,Uint8 axis_index,const Sint16 value) {
-  if ( axis_index == ROLL_AXIS)
-    rc_data[0]=parsetoMultiWii(value);
-
-  if ( axis_index  == PITCH_AXIS)
-    rc_data[1]=parsetoMultiWii(value);
-
-  if ( axis_index == THROTTLE_AXIS)
-    rc_data[2]=parsetoMultiWii(value);
-
-  if ( axis_index  == YAW_AXIS)
-    rc_data[3]=parsetoMultiWii(value);
-
-  if ( axis_index  ==  AUX1_AXIS)
-    rc_data[4]=parsetoMultiWii(value);
-
-  if ( axis_index  == AUX2_AXIS)
-    rc_data[5]=parsetoMultiWii(value);
-
-  if (axis_index  == AUX3_AXIS)
-    rc_data[6]=parsetoMultiWii(value);
-
-  if ( axis_index  == AUX4_AXIS)
-    rc_data[7]=parsetoMultiWii(value);
-}
-
-static void write_matching_button(std::array<uint16_t,18>&rc_data,const Uint8 button,bool up){
-  // The mavlink rc channels override message has more than enough "channels" anyways.
-  //However, we could optimize here putting multiple buttons (aka bool) into one channel
-  const int channel_index=7+button;
-  if(channel_index<rc_data.size()){
-    rc_data[channel_index] = up ? 2000 : 1000;
-  }
-}
 
 static bool check_if_joystick_is_connected_via_fd(){
     return access(JOY_DEV, F_OK);
@@ -271,4 +233,45 @@ std::string JoystickReader::curr_state_to_string(
   ss<<"Delay since last update:"<<std::chrono::duration_cast<std::chrono::milliseconds>(delay_since_last_update).count()<<"ms";
   return ss.str();
 }
+
+uint16_t JoystickReader::parsetoMultiWii(int16_t value) {
+  return (int16_t)(((((double)value)+32768.0)/65.536)+1000);
+}
+
+void JoystickReader::write_matching_axis(std::array<uint16_t, JoystickReader::N_CHANNELS>& rc_data,const uint8_t axis_index, const Sint16 value) {
+  if ( axis_index == CHAN0_AXIS_A)
+    rc_data[0]=parsetoMultiWii(value);
+
+  if ( axis_index  == CHAN1_AXIS_E)
+    rc_data[1]=parsetoMultiWii(value);
+
+  if ( axis_index == CHAN3_AXIS_R)
+    rc_data[2]=parsetoMultiWii(value);
+
+  if ( axis_index  == CHAN2_AXIS_T)
+    rc_data[3]=parsetoMultiWii(value);
+
+  if ( axis_index  == CHAN4_AUX1_AXIS)
+    rc_data[4]=parsetoMultiWii(value);
+
+  if ( axis_index  == CHAN5_AUX2_AXIS)
+    rc_data[5]=parsetoMultiWii(value);
+
+  if (axis_index  == CHAN6_AUX3_AXIS)
+    rc_data[6]=parsetoMultiWii(value);
+
+  if ( axis_index  == CHAN7_AUX4_AXIS)
+    rc_data[7]=parsetoMultiWii(value);
+
+}
+
+void JoystickReader::write_matching_button(std::array<uint16_t, 18>& rc_data,const Uint8 button, bool up) {
+  // The mavlink rc channels override message has more than enough "channels" anyways.
+  //However, we could optimize here putting multiple buttons (aka bool) into one channel
+  const int channel_index=JoystickReader::N_CHANNELS_RESERVED_FOR_AXES+button;
+  if(channel_index<rc_data.size()){
+    rc_data[channel_index] = up ? JoystickReader::VALUE_BUTTON_UP : JoystickReader::VALUE_BUTTON_DOWN;
+  }
+}
+
 #endif //OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

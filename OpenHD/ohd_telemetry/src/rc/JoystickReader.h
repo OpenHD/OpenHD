@@ -32,6 +32,9 @@ class JoystickReader {
   static constexpr uint16_t DEFAULT_RC_CHANNELS_VALUE=UINT16_MAX;
   // the rc channel override message(s) support 18 values, so we do so, too
   static constexpr auto N_CHANNELS=18;
+  static constexpr auto N_CHANNELS_RESERVED_FOR_AXES=8;
+  static constexpr uint16_t VALUE_BUTTON_UP=2000;
+  static constexpr uint16_t VALUE_BUTTON_DOWN=1000;
   struct CurrChannelValues{
     std::array<uint16_t,N_CHANNELS> values{DEFAULT_RC_CHANNELS_VALUE};
     // Time point when we received the last update to at least one of the channel(s)
@@ -58,6 +61,11 @@ class JoystickReader {
   std::mutex m_curr_values_mutex;
   CurrChannelValues m_curr_values;
   std::shared_ptr<spdlog::logger> m_console;
+ private:
+  // just taken from previous openhd
+  static uint16_t parsetoMultiWii(int16_t value);
+  static void write_matching_axis(std::array<uint16_t,JoystickReader::N_CHANNELS>& rc_data,uint8_t axis_index,int16_t value);
+  static void write_matching_button(std::array<uint16_t,18>&rc_data,const uint8_t button,bool up);
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_RC_JOYSTICKREADER_H_
