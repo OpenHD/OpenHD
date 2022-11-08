@@ -35,6 +35,8 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
     //m_joystick_reader=std::make_unique<JoystickReader>();
     m_rc_joystick_sender=std::make_unique<RcJoystickSender>([this](const MavlinkMessage &msg){
       sendMessageAirPi(msg);
+      // temporary / hacky: Send the messages to QOpenHD, such that we can display it in the UI
+      sendMessageGroundStationClients(msg);
     },m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz);
     m_console->info("Joystick enabled");
   }else{
