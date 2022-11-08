@@ -184,8 +184,19 @@ static std::optional<int> string_to_int(const std::string& s){
   }
 }
 
+// Example: split "hello,world" int "hello" and "world" by ","
 static std::vector<std::string> split_into_substrings(const std::string& input,const std::string& separator){
-  return {};
+  std::vector<std::string> ret;
+  std::string remaining=input;
+  while (true){
+    const auto pos=remaining.find(separator);
+    if(pos==std::string::npos)break;
+    const auto tmp=remaining.substr(0,pos);
+    remaining=remaining.substr(pos,remaining.size());
+    ret.push_back(tmp);
+  }
+  if(!remaining.empty())ret.push_back(remaining);
+  return ret;
 }
 
 // From https://stackoverflow.com/questions/3214297/how-can-my-c-c-application-determine-if-the-root-user-is-executing-the-command
