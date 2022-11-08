@@ -13,11 +13,6 @@
 
 #include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
-/*#include <boost/uuid/uuid.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <string_view>*/
 
 // from https://superuser.com/questions/631859/preferred-place-to-store-configuration-files-that-change-often
 // All persistent settings are written into this directory.

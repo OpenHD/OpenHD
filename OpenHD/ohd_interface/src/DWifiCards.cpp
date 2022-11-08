@@ -6,8 +6,6 @@
 
 #include <regex>
 #include <iostream>
-#include <boost/algorithm/string/trim.hpp>
-#include <utility>
 
 #include "openhd-spdlog.hpp"
 
@@ -157,7 +155,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 
   std::ifstream f(address.str());
   std::string mac((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-  boost::trim_right(mac);
+  OHDUtil::rtrim(mac);
 
   card.mac = mac;
 

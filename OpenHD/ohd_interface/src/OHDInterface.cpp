@@ -166,7 +166,7 @@ void OHDInterface::set_stats_callback(openhd::link_statistics::STATS_CALLBACK st
   }
 }
 
-static constexpr auto OHD_INTERFACE_ENABLE_WIFI_HOTSPOT="I_WFI_HOTSPOT_E";
+static constexpr auto OHD_INTERFACE_ENABLE_WIFI_HOTSPOT="I_WIFI_HOTSPOT_E";
 
 std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   std::vector<openhd::Setting> ret;
