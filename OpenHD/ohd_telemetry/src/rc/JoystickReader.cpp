@@ -276,7 +276,7 @@ void JoystickReader::write_matching_button(std::array<uint16_t, 18>& rc_data,con
 
 std::optional<JoystickReader::CHAN_MAP>
 JoystickReader::convert_string_to_channel_mapping(const std::string& input) {
-  auto split_into_substrings=OHDUtil::split_into_substrings(input,",");
+  auto split_into_substrings=OHDUtil::split_into_substrings(input,',');
   if(split_into_substrings.size()!=N_CHANNELS_RESERVED_FOR_AXES)return std::nullopt;
   CHAN_MAP parsed_as_int{};
   for(int i=0;i<N_CHANNELS_RESERVED_FOR_AXES;i++){

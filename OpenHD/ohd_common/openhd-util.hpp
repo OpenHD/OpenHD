@@ -185,17 +185,18 @@ static std::optional<int> string_to_int(const std::string& s){
 }
 
 // Example: split "hello,world" int "hello" and "world" by ","
-static std::vector<std::string> split_into_substrings(const std::string& input,const std::string& separator){
+static std::vector<std::string> split_into_substrings(const std::string& input,const char separator){
   std::vector<std::string> ret;
-  std::string remaining=input;
-  while (true){
-    const auto pos=remaining.find(separator);
-    if(pos==std::string::npos)break;
-    const auto tmp=remaining.substr(0,pos);
-    remaining=remaining.substr(pos,remaining.size());
-    ret.push_back(tmp);
+  std::string buff;
+  for(int i=0;i<buff.size();i++){
+    if(buff.at(i)==separator){
+      if(!buff.empty())ret.push_back(buff);
+      buff="";
+    } else{
+      buff+=separator;
+    }
   }
-  if(!remaining.empty())ret.push_back(remaining);
+  if(!buff.empty())ret.push_back(buff);
   return ret;
 }
 
