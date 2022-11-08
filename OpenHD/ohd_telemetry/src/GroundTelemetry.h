@@ -13,7 +13,7 @@
 #include "GroundTelemetrySettings.h"
 #include "openhd-action-handler.hpp"
 #include "openhd-spdlog.hpp"
-#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+#ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 #include "rc/JoystickReader.h"
 #include "rc/RcJoystickSender.h"
 #endif
@@ -64,7 +64,7 @@ class GroundTelemetry :public MavlinkSystem{
   std::mutex other_udp_ground_stations_lock;
   std::map<std::string,std::shared_ptr<UDPEndpoint2>> _other_udp_ground_stations{};
   //
-#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+#ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   //std::unique_ptr<JoystickReader> m_joystick_reader;
   std::unique_ptr<RcJoystickSender> m_rc_joystick_sender;
 #endif

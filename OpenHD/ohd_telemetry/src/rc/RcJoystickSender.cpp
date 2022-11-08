@@ -1,7 +1,7 @@
 //
 // Created by consti10 on 07.11.22.
 //
-#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+#ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 #include "RcJoystickSender.h"
 
 #include <utility>
@@ -43,4 +43,4 @@ void RcJoystickSender::change_update_rate(int update_rate_hz) {
   }
 }
 
-#endif //OPENHD_SDL_FOR_JOYSTICK_FOUND
+#endif //OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

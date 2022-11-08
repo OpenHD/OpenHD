@@ -30,7 +30,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   });
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
   components.push_back(_ohd_main_component);
-#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+#ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   if(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick){
     //m_joystick_reader=std::make_unique<JoystickReader>();
     m_rc_joystick_sender=std::make_unique<RcJoystickSender>([this](const MavlinkMessage &msg){
@@ -237,7 +237,7 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   if(openhd::tmp::file_air_or_ground_exists()){
     ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",openhd::IntSetting {0,c_config_boot_as_air}});
   }
-#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+#ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   auto c_config_enable_joystick=[this](std::string,int value){
     if(!openhd::validate_yes_or_no(value))return false;
     m_groundTelemetrySettings->unsafe_get_settings().enable_rc_over_joystick=value;
