@@ -174,6 +174,16 @@ static std::string string_in_between(const std::string& start,const std::string&
   return matched;
 }
 
+static std::optional<int> string_to_int(const std::string& s){
+  try{
+    auto ret=std::stoi(s);
+    return ret;
+  }catch (...){
+    openhd::loggers::get_default()->warn("Cannot convert ["+s+"] to int");
+    return std::nullopt;
+  }
+}
+
 static std::vector<std::string> split_into_substrings(const std::string& input,const std::string& separator){
   return {};
 }

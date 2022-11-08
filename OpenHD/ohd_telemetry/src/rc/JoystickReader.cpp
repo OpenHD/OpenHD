@@ -280,11 +280,9 @@ JoystickReader::convert_string_to_channel_mapping(const std::string& input) {
   if(split_into_substrings.size()!=N_CHANNELS_RESERVED_FOR_AXES)return std::nullopt;
   CHAN_MAP parsed_as_int{};
   for(int i=0;i<N_CHANNELS_RESERVED_FOR_AXES;i++){
-    try{
-      parsed_as_int[i]=std::stoi(split_into_substrings[i]);
-    }catch (...){
-      return std::nullopt;
-    }
+    const auto as_int=OHDUtil::string_to_int(split_into_substrings[i]);
+    if(!as_int.has_value())return std::nullopt;
+    parsed_as_int[i]=as_int.value();
   }
   if(!validate_channel_mapping(parsed_as_int))return std::nullopt;
   return parsed_as_int;
