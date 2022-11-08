@@ -21,6 +21,9 @@
  * and reading values in its own thread - you can query a "state" from any thread at any
  * time though.
  */
+// 1) channel mapping
+// 2) channel reverse
+// 3) QOpenHD feedback about channels
 class JoystickReader {
  public:
   explicit JoystickReader();

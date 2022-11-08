@@ -21,7 +21,6 @@ int AUX1_AXIS = 4;
 int AUX2_AXIS = 5;
 int AUX3_AXIS = 6;
 int AUX4_AXIS = 7;
-static constexpr int SWITCH_COUNT=6;
 
 static SDL_Joystick *js;
 
