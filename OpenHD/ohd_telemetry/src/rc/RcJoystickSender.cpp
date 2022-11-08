@@ -6,9 +6,9 @@
 
 #include <utility>
 
-RcJoystickSender::RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz):
+RcJoystickSender::RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz,JoystickReader::CHAN_MAP chan_map):
 m_cb(std::move(cb)),m_delay_in_milliseconds(1000/update_rate_hz) {
-  m_joystick_reader=std::make_unique<JoystickReader>();
+  m_joystick_reader=std::make_unique<JoystickReader>(chan_map);
   m_send_data_thread=std::make_unique<std::thread>([this] {
     send_data_until_terminate();
   });

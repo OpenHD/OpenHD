@@ -14,7 +14,7 @@
 class RcJoystickSender {
  public:
   typedef std::function<void(const MavlinkMessage& msg)> SEND_MESSAGE_CB;
-  RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz);
+  RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz,JoystickReader::CHAN_MAP chan_map);
   void change_update_rate(int update_rate_hz);
   ~RcJoystickSender();
  private:

@@ -27,8 +27,6 @@
 // 3) QOpenHD feedback about channels
 class JoystickReader {
  public:
-  explicit JoystickReader();
-  ~JoystickReader();
   // See mavlink RC override https://mavlink.io/en/messages/common.html#RC_CHANNELS_OVERRIDE
   static constexpr uint16_t DEFAULT_RC_CHANNELS_VALUE=UINT16_MAX;
   // the rc channel override message(s) support 18 values, so we do so, too
@@ -45,12 +43,14 @@ class JoystickReader {
     // the name of the joystick
     std::string joystick_name="unknown";
   };
+  // Channel mapping: just look at the default to understand ;)
+  using CHAN_MAP=std::array<int,N_CHANNELS_RESERVED_FOR_AXES>;
+  explicit JoystickReader(CHAN_MAP chan_map);
+  ~JoystickReader();
   // Get the current "state", thread-safe
   CurrChannelValues get_current_state();
   // For debugging
   static std::string curr_state_to_string(const CurrChannelValues& curr_channel_values);
-  // Channel mapping: just look at the default to understand ;)
-  using CHAN_MAP=std::array<int,N_CHANNELS_RESERVED_FOR_AXES>;
   static std::optional<CHAN_MAP> convert_string_to_channel_mapping(const std::string& input);
   static bool validate_channel_mapping(const CHAN_MAP& chan_map);
   static std::array<int,N_CHANNELS_RESERVED_FOR_AXES> get_default_channel_mapping();
@@ -67,10 +67,11 @@ class JoystickReader {
   std::mutex m_curr_values_mutex;
   CurrChannelValues m_curr_values;
   std::shared_ptr<spdlog::logger> m_console;
+  CHAN_MAP m_chan_map{};
  private:
   // just taken from previous openhd
   static uint16_t parsetoMultiWii(int16_t value);
-  static void write_matching_axis(std::array<uint16_t,JoystickReader::N_CHANNELS>& rc_data,uint8_t axis_index,int16_t value);
+  void write_matching_axis(std::array<uint16_t,JoystickReader::N_CHANNELS>& rc_data,uint8_t axis_index,int16_t value);
   static void write_matching_button(std::array<uint16_t,18>&rc_data,uint8_t button,bool up);
 };
 

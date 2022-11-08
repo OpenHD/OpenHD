@@ -13,28 +13,23 @@
 static constexpr auto JOYSTICK_N=0;
 static constexpr auto JOY_DEV="/sys/class/input/js0";
 
-static constexpr int CHAN0_AXIS_A = 0;
-static constexpr int CHAN1_AXIS_E =  1;
-static constexpr int CHAN2_AXIS_T = 3;
-static constexpr int CHAN3_AXIS_R = 2;
-static constexpr int CHAN4_AUX1_AXIS = 4;
-static constexpr int CHAN5_AUX2_AXIS = 5;
-static constexpr int CHAN6_AUX3_AXIS = 6;
-static constexpr int CHAN7_AUX4_AXIS = 7;
-
 static SDL_Joystick *js;
-
 
 static bool check_if_joystick_is_connected_via_fd(){
     return access(JOY_DEV, F_OK);
 }
 
-JoystickReader::JoystickReader() {
+JoystickReader::JoystickReader(CHAN_MAP chan_map) {
   m_console = openhd::loggers::create_or_get("joystick_reader");
   assert(m_console);
   m_console->set_level(spd::level::debug);
   m_console->debug("JoystickReader::JoystickReader");
   reset_curr_values();
+  m_chan_map=chan_map;
+  if(!validate_channel_mapping(m_chan_map)){
+    m_console->warn("Not a valid channel mapping, using default");
+    m_chan_map=get_default_channel_mapping();
+  }
   m_read_joystick_thread=std::make_unique<std::thread>([this] {
     loop();
   });
@@ -239,30 +234,16 @@ uint16_t JoystickReader::parsetoMultiWii(int16_t value) {
 }
 
 void JoystickReader::write_matching_axis(std::array<uint16_t, JoystickReader::N_CHANNELS>& rc_data,const uint8_t axis_index, const Sint16 value) {
-  if ( axis_index == CHAN0_AXIS_A)
-    rc_data[0]=parsetoMultiWii(value);
-
-  if ( axis_index  == CHAN1_AXIS_E)
-    rc_data[1]=parsetoMultiWii(value);
-
-  if ( axis_index == CHAN3_AXIS_R)
-    rc_data[2]=parsetoMultiWii(value);
-
-  if ( axis_index  == CHAN2_AXIS_T)
-    rc_data[3]=parsetoMultiWii(value);
-
-  if ( axis_index  == CHAN4_AUX1_AXIS)
-    rc_data[4]=parsetoMultiWii(value);
-
-  if ( axis_index  == CHAN5_AUX2_AXIS)
-    rc_data[5]=parsetoMultiWii(value);
-
-  if (axis_index  == CHAN6_AUX3_AXIS)
-    rc_data[6]=parsetoMultiWii(value);
-
-  if ( axis_index  == CHAN7_AUX4_AXIS)
-    rc_data[7]=parsetoMultiWii(value);
-
+  if(axis_index>=m_chan_map.size()){
+    m_console->warn("Axis {} not mapped",axis_index);
+    return;
+  }
+  const auto index=m_chan_map[axis_index];
+  if(index>=N_CHANNELS_RESERVED_FOR_AXES){
+    m_console->warn("only {} channels reserved for axis, wanted {}",N_CHANNELS_RESERVED_FOR_AXES,index);
+    return;
+  }
+  rc_data[index]=parsetoMultiWii(value);
 }
 
 void JoystickReader::write_matching_button(std::array<uint16_t, 18>& rc_data,const Uint8 button, bool up) {

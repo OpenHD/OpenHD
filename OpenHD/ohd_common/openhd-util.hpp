@@ -189,11 +189,12 @@ static std::vector<std::string> split_into_substrings(const std::string& input,c
   std::vector<std::string> ret;
   std::string buff;
   for(int i=0;i<input.size();i++){
-    if(buff.at(i)==separator){
+    const auto curr_char=input.at(i);
+    if(curr_char==separator){
       if(!buff.empty())ret.push_back(buff);
       buff="";
     } else{
-      buff+=input[i];
+      buff+=curr_char;
     }
   }
   if(!buff.empty())ret.push_back(buff);

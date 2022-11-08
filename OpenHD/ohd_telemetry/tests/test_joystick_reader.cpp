@@ -15,7 +15,7 @@ int main() {
 
   m_console->debug("test_joystick_reader");
 
-  auto joystick_reader=std::make_unique<JoystickReader>();
+  auto joystick_reader=std::make_unique<JoystickReader>(JoystickReader::get_default_channel_mapping());
 
   static bool quit=false;
   signal(SIGTERM, [](int sig){ quit= true;});
