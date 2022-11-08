@@ -174,6 +174,10 @@ static std::string string_in_between(const std::string& start,const std::string&
   return matched;
 }
 
+static std::vector<std::string> split_into_substrings(const std::string& input,const std::string& separator){
+  return {};
+}
+
 // From https://stackoverflow.com/questions/3214297/how-can-my-c-c-application-determine-if-the-root-user-is-executing-the-command
 // Returns true if the caller is running as root.
 static bool check_root(const bool print_debug=true){

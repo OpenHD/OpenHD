@@ -12,6 +12,7 @@
 #include <sstream>
 #include <thread>
 #include "openhd-spdlog.hpp"
+#include "openhd-util.hpp"
 
 /**
  * The Paradigm of this class is similar to how for example external devices
@@ -48,6 +49,11 @@ class JoystickReader {
   CurrChannelValues get_current_state();
   // For debugging
   static std::string curr_state_to_string(const CurrChannelValues& curr_channel_values);
+  // Channel mapping: just look at the default to understand ;)
+  using CHAN_MAP=std::array<int,N_CHANNELS_RESERVED_FOR_AXES>;
+  static std::optional<CHAN_MAP> convert_string_to_channel_mapping(const std::string& input);
+  static bool validate_channel_mapping(const CHAN_MAP& chan_map);
+  static std::array<int,N_CHANNELS_RESERVED_FOR_AXES> get_default_channel_mapping();
  private:
   void loop();
   void connect_once_and_read_until_error();
@@ -65,7 +71,7 @@ class JoystickReader {
   // just taken from previous openhd
   static uint16_t parsetoMultiWii(int16_t value);
   static void write_matching_axis(std::array<uint16_t,JoystickReader::N_CHANNELS>& rc_data,uint8_t axis_index,int16_t value);
-  static void write_matching_button(std::array<uint16_t,18>&rc_data,const uint8_t button,bool up);
+  static void write_matching_button(std::array<uint16_t,18>&rc_data,uint8_t button,bool up);
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_RC_JOYSTICKREADER_H_

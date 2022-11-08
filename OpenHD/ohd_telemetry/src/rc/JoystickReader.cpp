@@ -274,4 +274,36 @@ void JoystickReader::write_matching_button(std::array<uint16_t, 18>& rc_data,con
   }
 }
 
+std::optional<JoystickReader::CHAN_MAP>
+JoystickReader::convert_string_to_channel_mapping(const std::string& input) {
+  auto split_into_substrings=OHDUtil::split_into_substrings(input,",");
+  if(split_into_substrings.size()!=N_CHANNELS_RESERVED_FOR_AXES)return std::nullopt;
+  CHAN_MAP parsed_as_int{};
+  for(int i=0;i<N_CHANNELS_RESERVED_FOR_AXES;i++){
+    try{
+      parsed_as_int[i]=std::stoi(split_into_substrings[i]);
+    }catch (...){
+      return std::nullopt;
+    }
+  }
+  if(!validate_channel_mapping(parsed_as_int))return std::nullopt;
+  return parsed_as_int;
+}
+
+bool JoystickReader::validate_channel_mapping(const CHAN_MAP& chan_map) {
+  for(const auto& el:chan_map){ // NOLINT(readability-use-anyofallof)
+    if(el<0 || el>N_CHANNELS_RESERVED_FOR_AXES-1)return false;
+  }
+  return true;
+}
+
+JoystickReader::CHAN_MAP
+JoystickReader::get_default_channel_mapping() {
+  JoystickReader::CHAN_MAP ret{};
+  for(int i=0;i<N_CHANNELS_RESERVED_FOR_AXES;i++){
+    ret[i]=i;
+  }
+  return ret;
+}
+
 #endif //OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
