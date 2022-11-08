@@ -45,10 +45,6 @@ jobs:
             sudo apt update
             sudo bash ./install_dep_rpi.sh
             cd /opt
-            git clone https://github.com/OpenHD/Arducam-Pivariety-V4L2-Driver
-            cd Arducam-Pivariety-V4L2-Driver
-            cd Release
-            cd /opt
             cd Open.HD
             sudo ./package.sh armhf raspbian bullseye
 
