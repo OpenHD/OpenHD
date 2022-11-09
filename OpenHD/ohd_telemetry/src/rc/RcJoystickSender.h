@@ -1,7 +1,7 @@
 //
 // Created by consti10 on 07.11.22.
 //
-#ifdef OPENHD_SDL_FOR_JOYSTICK_FOUND
+#ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_RC_RCJOYSTICKSENDER_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_RC_RCJOYSTICKSENDER_H_
 
@@ -14,8 +14,10 @@
 class RcJoystickSender {
  public:
   typedef std::function<void(const MavlinkMessage& msg)> SEND_MESSAGE_CB;
-  RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz);
+  RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz,JoystickReader::CHAN_MAP chan_map);
   void change_update_rate(int update_rate_hz);
+  // update the channel mapping, thread-safe
+  void update_channel_maping(const JoystickReader::CHAN_MAP& new_chan_map);
   ~RcJoystickSender();
  private:
   void send_data_until_terminate();
@@ -27,4 +29,4 @@ class RcJoystickSender {
 };
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_RC_RCJOYSTICKSENDER_H_
-#endif //OPENHD_SDL_FOR_JOYSTICK_FOUND
+#endif //OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

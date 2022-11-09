@@ -36,14 +36,14 @@ DiscoveredCameraList DCameras::discover_internal() {
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
   if(ohdPlatform.platform_type==PlatformType::RaspberryPi){
-	// We need to detect the veye camera first - since once a veye camera is detected and
-	// ? eitehr run the veye_raspivid or do the initializing stuff) the "normal" rpi camera detection
-	// hangs infinite.
-	if(detect_raspberrypi_broadcom_veye()){
-          m_console->warn("WARNING detected veye camera, skipping normal rpi camera detection");
-	}else{
-	  detect_raspberrypi_broadcom_csi();
-	}
+    // We need to detect the veye camera first - since once a veye camera is detected and
+    // ? we either run the veye_raspivid or do the initializing stuff ? the "normal" rpi camera detection
+    // hangs infinite.
+    if(detect_raspberrypi_broadcom_veye()){
+      m_console->warn("WARNING detected veye camera, skipping normal rpi camera detection");
+    }else{
+      detect_raspberrypi_broadcom_csi();
+    }
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
   // Will need custom debugging before anything here is usable again though.

@@ -174,6 +174,33 @@ static std::string string_in_between(const std::string& start,const std::string&
   return matched;
 }
 
+static std::optional<int> string_to_int(const std::string& s){
+  try{
+    auto ret=std::stoi(s);
+    return ret;
+  }catch (...){
+    openhd::loggers::get_default()->warn("Cannot convert ["+s+"] to int");
+    return std::nullopt;
+  }
+}
+
+// Example: split "hello,world" int "hello" and "world" by ","
+static std::vector<std::string> split_into_substrings(const std::string& input,const char separator){
+  std::vector<std::string> ret;
+  std::string buff;
+  for(int i=0;i<input.size();i++){
+    const auto curr_char=input.at(i);
+    if(curr_char==separator){
+      if(!buff.empty())ret.push_back(buff);
+      buff="";
+    } else{
+      buff+=curr_char;
+    }
+  }
+  if(!buff.empty())ret.push_back(buff);
+  return ret;
+}
+
 // From https://stackoverflow.com/questions/3214297/how-can-my-c-c-application-determine-if-the-root-user-is-executing-the-command
 // Returns true if the caller is running as root.
 static bool check_root(const bool print_debug=true){
