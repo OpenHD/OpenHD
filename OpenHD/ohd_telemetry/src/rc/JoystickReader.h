@@ -18,13 +18,12 @@
  * The Paradigm of this class is similar to how for example external devices
  * are handled in general in OpenHD: If the user says he wants RC joystick
  * control, try to open the joystick and read data, re-connect if anything goes
- * wrong during run time. This class reads does all the connecting, handle disconnecting
+ * wrong during run time. This class does all the connecting and handles disconnecting
  * and reading values in its own thread - you can query a "state" from any thread at any
  * time though.
+ * Theoretically, we could just use this thread also for sending the RC data via mavlink - but this
+ * is a bit dangerous, since I don't completely trust SDL yet (in regards to disconnecting joysticks).
  */
-// 1) channel mapping
-// 2) channel reverse
-// 3) QOpenHD feedback about channels
 class JoystickReader {
  public:
   // See mavlink RC override https://mavlink.io/en/messages/common.html#RC_CHANNELS_OVERRIDE
@@ -51,6 +50,7 @@ class JoystickReader {
   CurrChannelValues get_current_state();
   // For debugging
   static std::string curr_state_to_string(const CurrChannelValues& curr_channel_values);
+  // (custom) channel mapping - rudimentary, since one can do that just as well on the FC
   static std::optional<CHAN_MAP> convert_string_to_channel_mapping(const std::string& input);
   static bool validate_channel_mapping(const CHAN_MAP& chan_map);
   static std::array<int,N_CHANNELS_RESERVED_FOR_AXES> get_default_channel_mapping();
