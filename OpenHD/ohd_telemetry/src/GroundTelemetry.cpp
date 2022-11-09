@@ -38,6 +38,12 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
       // temporary / hacky: Send the messages to QOpenHD, such that we can display it in the UI
       sendMessageGroundStationClients(msg);
     },m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz,JoystickReader::get_default_channel_mapping());
+    const auto parsed=JoystickReader::convert_string_to_channel_mapping(m_groundTelemetrySettings->get_settings().rc_channel_mapping);
+    if(parsed==std::nullopt){
+      m_console->warn("Not a valid channel mapping,using default");
+    }else{
+      m_rc_joystick_sender->update_channel_maping(parsed.value());
+    }
     m_console->info("Joystick enabled");
   }else{
     m_console->info("Joystick disabled");
@@ -267,6 +273,7 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
         m_console->warn("Not a valid channel mapping");
         return false;
       }
+      m_rc_joystick_sender->update_channel_maping(parsed.value());
       m_groundTelemetrySettings->unsafe_get_settings().rc_channel_mapping=value;
       m_groundTelemetrySettings->persist();
       return true;

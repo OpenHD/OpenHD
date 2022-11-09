@@ -43,4 +43,8 @@ void RcJoystickSender::change_update_rate(int update_rate_hz) {
   }
 }
 
+void RcJoystickSender::update_channel_maping(const JoystickReader::CHAN_MAP& new_chan_map) {
+  m_joystick_reader->update_channel_maping(new_chan_map);
+}
+
 #endif //OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

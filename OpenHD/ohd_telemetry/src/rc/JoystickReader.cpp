@@ -234,11 +234,11 @@ uint16_t JoystickReader::parsetoMultiWii(int16_t value) {
 }
 
 void JoystickReader::write_matching_axis(std::array<uint16_t, JoystickReader::N_CHANNELS>& rc_data,const uint8_t axis_index, const Sint16 value) {
-  if(axis_index>=m_chan_map.size()){
-    m_console->warn("Axis {} not mapped",axis_index);
+  const auto index_opt= get_mapped_axis(axis_index);
+  if(index_opt==std::nullopt){
     return;
   }
-  const auto index=m_chan_map[axis_index];
+  const auto index=index_opt.value();
   if(index>=N_CHANNELS_RESERVED_FOR_AXES){
     m_console->warn("only {} channels reserved for axis, wanted {}",N_CHANNELS_RESERVED_FOR_AXES,index);
     return;
@@ -289,6 +289,24 @@ JoystickReader::get_default_channel_mapping() {
     ret[i]=i;
   }
   return ret;
+}
+
+void JoystickReader::update_channel_maping(
+    const JoystickReader::CHAN_MAP& new_chan_map) {
+  std::lock_guard<std::mutex> guard(m_chan_map_mutex);
+  if(!validate_channel_mapping(new_chan_map)){
+    return;
+  }
+  m_chan_map=new_chan_map;
+}
+
+std::optional<int> JoystickReader::get_mapped_axis(int axis_index) {
+  std::lock_guard<std::mutex> guard(m_chan_map_mutex);
+  if(axis_index>=m_chan_map.size()){
+    m_console->warn("Axis {} not mapped",axis_index);
+    return std::nullopt;
+  }
+  return m_chan_map[axis_index];
 }
 
 #endif //OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

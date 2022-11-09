@@ -16,6 +16,8 @@ class RcJoystickSender {
   typedef std::function<void(const MavlinkMessage& msg)> SEND_MESSAGE_CB;
   RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz,JoystickReader::CHAN_MAP chan_map);
   void change_update_rate(int update_rate_hz);
+  // update the channel mapping, thread-safe
+  void update_channel_maping(const JoystickReader::CHAN_MAP& new_chan_map);
   ~RcJoystickSender();
  private:
   void send_data_until_terminate();
