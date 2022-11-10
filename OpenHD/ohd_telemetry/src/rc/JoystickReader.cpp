@@ -22,7 +22,7 @@ static bool check_if_joystick_is_connected_via_fd(){
 JoystickReader::JoystickReader(CHAN_MAP chan_map) {
   m_console = openhd::loggers::create_or_get("joystick_reader");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
+  m_console->set_level(spd::level::warn);
   m_console->debug("JoystickReader::JoystickReader");
   reset_curr_values();
   m_chan_map=chan_map;
@@ -145,6 +145,11 @@ void JoystickReader::wait_for_events(const int timeout_ms) {
     any_new_data= true;
     n_polled_events++;
   }
+  if(ret==-1){
+    // Terminate the Joystick reader, such that SDL is terminated
+    m_console->warn("Terminating joystick reader, it won't restart until openhd is restarted");
+    terminate=true;
+  }
   // and then get as many more events as we can get (we already spun up the cpu anyways)
   while (SDL_PollEvent (&event)) {
     ret= process_event(&event,current);
@@ -186,9 +191,10 @@ int JoystickReader::process_event(void *event1,std::array<uint16_t,N_CHANNELS>& 
       break;
     case SDL_QUIT:
       m_console->debug("Got SDL_QUIT");
-      ret=0;
+      ret=-1;
       break;
     default:
+      // aparently we sometimes also get mouse / keyboard events from SDL, this is not an issue
       m_console->debug("Got Unknown SDL event type");
       ret=0;
       break;
