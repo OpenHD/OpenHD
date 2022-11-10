@@ -1,7 +1,7 @@
 [submodule "OpenHD/lib/mavlink"]
 	path = OpenHD/lib/mavlink
 	url = https://github.com/OpenHD/mavlink.git
-	branch = 2.1-milestones
+	branch = 2.2.3-evo
 [submodule "OpenHD/lib/wifibroadcast"]
 	path = OpenHD/lib/wifibroadcast
 	url = https://github.com/OpenHD/wifibroadcast.git
