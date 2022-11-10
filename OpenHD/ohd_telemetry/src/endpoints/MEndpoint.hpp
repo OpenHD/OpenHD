@@ -5,6 +5,7 @@
 #ifndef XMAVLINKSERVICE_MENDPOINT_H
 #define XMAVLINKSERVICE_MENDPOINT_H
 
+#include "openhd-spdlog.hpp"
 #include "../mav_include.h"
 #include "../mav_helper.h"
 #include <iostream>
@@ -13,8 +14,6 @@
 #include <mutex>
 #include <utility>
 #include <atomic>
-
-#include "openhd-spdlog.hpp"
 
 // WARNING BE CAREFULL TO REMOVE ON RELEASE
 //#define OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
@@ -44,7 +43,7 @@ class MEndpoint {
   /**
    * send a message via this endpoint.
    * If the endpoint is silently disconnected, this MUST NOT FAIL/CRASH.
-   * This calls the underlying implementation's sendMessage() function (pure virtual)
+   * This calls the underlying implementation's sendMessageImpl() function (pure virtual)
    * and increases the sent message count
    * @param message the message to send
    */
