@@ -22,7 +22,7 @@ static bool check_if_joystick_is_connected_via_fd(){
 JoystickReader::JoystickReader(CHAN_MAP chan_map) {
   m_console = openhd::loggers::create_or_get("joystick_reader");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
+  m_console->set_level(spd::level::warn);
   m_console->debug("JoystickReader::JoystickReader");
   reset_curr_values();
   m_chan_map=chan_map;
@@ -194,6 +194,7 @@ int JoystickReader::process_event(void *event1,std::array<uint16_t,N_CHANNELS>& 
       ret=-1;
       break;
     default:
+      // aparently we sometimes also get mouse / keyboard events from SDL, this is not an issue
       m_console->debug("Got Unknown SDL event type");
       ret=0;
       break;
