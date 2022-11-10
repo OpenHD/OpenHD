@@ -21,18 +21,6 @@ namespace openhd::loggers {
 // For some reason there is no helper for that in spdlog / i haven't found it yet
 
 // Thread-safe but recommended to store result in an intermediate variable
-static std::shared_ptr<spdlog::logger> get_default() {
-  static std::mutex logger_mutex{};
-  std::lock_guard<std::mutex> guard(logger_mutex);
-  auto ret = spdlog::get("ohd_default");
-  if (ret == nullptr) {
-    auto created = spdlog::stdout_color_mt("ohd_default");
-    assert(created);
-    created->set_level(spd::level::debug);
-    return created;
-  }
-  return ret;
-}
 
 static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_name){
   static std::mutex logger_mutex2{};
@@ -44,6 +32,10 @@ static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_n
     return created;
   }
   return ret;
+}
+
+static std::shared_ptr<spdlog::logger> get_default() {
+  return create_or_get("ohd_default");
 }
 
 }
