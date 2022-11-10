@@ -6,7 +6,6 @@
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_ONBOARDCOMPUTERSTATUSPROVIDER_H_
 
 #include "../mav_include.h"
-#include "OnboardComputerStatus.hpp"
 #include "../ohd_common/openhd-platform.hpp"
 
 #include <thread>

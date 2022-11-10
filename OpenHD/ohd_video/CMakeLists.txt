@@ -86,15 +86,16 @@ endif()
 
 target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})
 # link and include gstreamer
-target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
-target_link_libraries(OHDVideoLib PUBLIC ${GST_LIBRARIES})
-target_link_libraries(OHDVideoLib PUBLIC Threads::Threads)
+target_include_directories(OHDVideoLib PRIVATE ${GST_INCLUDE_DIRS})
+target_link_libraries(OHDVideoLib PRIVATE ${GST_LIBRARIES})
 # find and include all the other libs
-#
+
+target_link_libraries(OHDVideoLib PUBLIC Threads::Threads)
+
 include(cmake/FindLibUSB.cmake)
 target_include_directories(OHDVideoLib PRIVATE ${LIBUSB_1_INCLUDE_DIRS})
 target_link_libraries(OHDVideoLib PRIVATE ${LIBUSB_1_LIBRARIES})
-#
+
 include(cmake/FindV4L2.cmake)
 target_include_directories(OHDVideoLib PRIVATE ${V4L2_INCLUDE_DIR})
 target_link_libraries(OHDVideoLib PRIVATE ${V4L2_LIBRARY})
