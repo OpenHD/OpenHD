@@ -178,7 +178,7 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
 	options.fec_k=static_cast<int>(_settings->get_settings().wb_video_fec_block_length);
 	options.fec_percentage=static_cast<int>(_settings->get_settings().wb_video_fec_percentage); // Default to 20% fec overhead
         //options.fec_k="h264";
-        if(_settings->get_settings().wb_fec_block_length_auto_enable){
+        if(_settings->get_settings().wb_video_fec_block_length_auto_enable){
           if(m_curr_video_codec==0){
             options.fec_k="h264";
           }else if(m_curr_video_codec==1){
@@ -572,7 +572,7 @@ bool WBStreams::set_fec_percentage(int fec_percentage) {
 bool WBStreams::set_wb_fec_block_length_auto_enable(int value) {
   if(!(value==0 || value==1))return false;
    // needs reboot to be applied
-  _settings->unsafe_get_settings().wb_video_fec_percentage=value;
+  _settings->unsafe_get_settings().wb_video_fec_block_length_auto_enable=value;
   _settings->persist();
   return true;
 }
@@ -625,10 +625,10 @@ std::vector<openhd::Setting> WBStreams::get_all_settings(){
 	  return set_fec_percentage(value);
 	}};
 	ret.push_back(Setting{WB_VIDEO_FEC_PERCENTAGE,change_video_fec_percentage});
-        auto wb_fec_block_length_auto_enable=openhd::IntSetting{(int)_settings->get_settings().wb_fec_block_length_auto_enable,[this](std::string,int value){
+        auto cb_wb_video_fec_block_length_auto_enable=openhd::IntSetting{(int)_settings->get_settings().wb_video_fec_block_length_auto_enable,[this](std::string,int value){
           return set_wb_fec_block_length_auto_enable(value);
         }};
-        ret.push_back(Setting{WB_FEC_BLOCK_LENGTH_AUTO_ENABLE,wb_fec_block_length_auto_enable});
+        ret.push_back(Setting{WB_FEC_BLOCK_LENGTH_AUTO_ENABLE,cb_wb_video_fec_block_length_auto_enable});
   }
   openhd::validate_provided_ids(ret);
   return ret;

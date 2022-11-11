@@ -29,13 +29,13 @@ struct WBStreamsSettings{
   uint32_t wb_video_fec_block_length=DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH;
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
   uint32_t wb_tx_power_milli_watt=DEFAULT_WIFI_TX_POWER_MILLI_WATT;
-  bool wb_fec_block_length_auto_enable=false; // Adjust block size(s) to size of fragmented rtp video frame
+  bool wb_video_fec_block_length_auto_enable=false; // Adjust block size(s) to size of fragmented rtp video frame
   [[nodiscard]] bool configured_for_2G()const{
 	return is_2G_and_assert(wb_frequency);
   }
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBStreamsSettings, wb_frequency, wb_channel_width, wb_mcs_index,
-								   wb_video_fec_block_length, wb_video_fec_percentage, wb_tx_power_milli_watt,wb_fec_block_length_auto_enable);
+								   wb_video_fec_block_length, wb_video_fec_percentage, wb_tx_power_milli_watt,wb_video_fec_block_length_auto_enable);
 
 static WBStreamsSettings create_default_wb_stream_settings(const std::vector<WiFiCard>& wifibroadcast_cards){
   assert(!wifibroadcast_cards.empty());
