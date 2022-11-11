@@ -628,7 +628,8 @@ std::vector<openhd::Setting> WBStreams::get_all_settings(){
         auto cb_wb_video_fec_block_length_auto_enable=openhd::IntSetting{(int)_settings->get_settings().wb_video_fec_block_length_auto_enable,[this](std::string,int value){
           return set_wb_fec_block_length_auto_enable(value);
         }};
-        ret.push_back(Setting{WB_FEC_BLOCK_LENGTH_AUTO_ENABLE,cb_wb_video_fec_block_length_auto_enable});
+        // Disabled for now
+        //ret.push_back(Setting{WB_FEC_BLOCK_LENGTH_AUTO_ENABLE,cb_wb_video_fec_block_length_auto_enable});
   }
   openhd::validate_provided_ids(ret);
   return ret;
