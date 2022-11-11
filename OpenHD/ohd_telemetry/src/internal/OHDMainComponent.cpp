@@ -2,13 +2,15 @@
 // Created by consti10 on 19.04.22.
 //
 
+#include "OHDMainComponent.h"
+
 #include <iostream>
+#include <openhd-global-constants.hpp>
 #include <utility>
 
-#include "OHDMainComponent.h"
+#include "OHDLinkStatisticsHelper.h"
 #include "OnboardComputerStatus.hpp"
 #include "RebootUtil.hpp"
-#include "OHDLinkStatisticsHelper.h"
 
 OHDMainComponent::OHDMainComponent(
     OHDPlatform platform1,uint8_t parent_sys_id,
@@ -19,14 +21,6 @@ OHDMainComponent::OHDMainComponent(
   assert(m_console);
   m_console->set_level(spd::level::debug);
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(platform);
-  /*logMessagesReceiver =
-      std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
-                                                  OHD_LOCAL_LOG_MESSAGES_UDP_PORT,
-                                                  [this](const uint8_t *payload,
-                                                         const std::size_t payloadSize) {
-                                                    this->_status_text_accumulator.processLogMessageData(payload, payloadSize);
-                                                  });
-  logMessagesReceiver->runInBackground();*/
   m_telemetry_forward_sink_handle=openhd::loggers::sink::instance();
 }
 

@@ -5,7 +5,6 @@
 #ifndef OPENHD_WIFICARDSCOMMANDSHELPER_H
 #define OPENHD_WIFICARDSCOMMANDSHELPER_H
 
-#include "openhd-log.hpp"
 #include "OHDWifiCard.hpp"
 #include "openhd-util.hpp"
 #include "validate_settings_helper.h"

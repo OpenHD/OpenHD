@@ -2,6 +2,9 @@
 // Created by consti10 on 03.05.22.
 //
 #include "OHDVideo.h"
+
+#include <openhd-global-constants.hpp>
+
 #include "gstreamerstream.h"
 #include "veyestream.h"
 

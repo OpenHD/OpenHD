@@ -9,7 +9,6 @@
 
 #include "include_json.hpp"
 #include "openhd-util.hpp"
-#include "openhd-log.hpp"
 #include "openhd-settings.hpp"
 #include "openhd-spdlog.hpp"
 
