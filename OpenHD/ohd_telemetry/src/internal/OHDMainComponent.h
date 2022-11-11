@@ -21,6 +21,7 @@
 #include "openhd-log.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-spdlog.hpp"
+#include "openhd-spdlog-tele-sink.h"
 #include "routing/MavlinkComponent.hpp"
 #include "routing/MavlinkSystem.hpp"
 
@@ -61,8 +62,9 @@ class OHDMainComponent : public MavlinkComponent{
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
   // here all the log messages are sent to - not in their mavlink form yet.
-  std::unique_ptr<SocketHelper::UDPReceiver> logMessagesReceiver;
-  StatusTextAccumulator _status_text_accumulator;
+  //std::unique_ptr<SocketHelper::UDPReceiver> logMessagesReceiver;
+  std::shared_ptr<openhd::loggers::sink::TelemetryForwardSink> m_telemetry_forward_sink_handle;
+  //StatusTextAccumulator _status_text_accumulator;
   std::unique_ptr<OnboardComputerStatusProvider> m_onboard_computer_status_provider;
   std::mutex _last_link_stats_mutex;
   openhd::link_statistics::AllStats _last_link_stats{};

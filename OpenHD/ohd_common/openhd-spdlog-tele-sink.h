@@ -25,13 +25,13 @@ class TelemetryForwardSink : public spdlog::sinks::base_sink<std::mutex>{
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
     const auto msg_string=fmt::to_string(formatted);
-    std::cout << "["<<msg_string<<"]";
+    //std::cout << "["<<msg_string<<"]";
     if(msg.level>=spdlog::level::warn){
       enqueue_message(level_spdlog_to_mavlink(msg.level),msg_string);
     }
   }
   void flush_() override{
-    std::cout << std::flush;
+    //std::cout << std::flush;
   }
  public:
   // these match the mavlink SEVERITY_LEVEL enum, but this code should not depend on
@@ -90,6 +90,7 @@ class TelemetryForwardSink : public spdlog::sinks::base_sink<std::mutex>{
     }
     m_stored_messages.push_back(std::make_shared<StoredLogMessage>(level,message));
   }
+ public:
   // Called by the telemetry thread, thread-safe
   std::vector<std::shared_ptr<StoredLogMessage>> dequeue_messages(){
     std::lock_guard<std::mutex> guard(m_stored_messages_mutex);
@@ -100,6 +101,7 @@ class TelemetryForwardSink : public spdlog::sinks::base_sink<std::mutex>{
     }
     return ret;
   }
+ private:
   static constexpr auto MAX_N_QUEUED_MESSAGES=10;
   std::mutex m_stored_messages_mutex;
   std::deque<std::shared_ptr<StoredLogMessage>> m_stored_messages{};
