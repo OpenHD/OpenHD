@@ -23,6 +23,7 @@ class UdpTelemetrySink : public spdlog::sinks::base_sink<std::mutex>{
     // msg.raw contains pre formatted log
     // If needed (very likely but not mandatory), the sink formats the message before sending it to its final destination:
     if(msg.level>=spdlog::level::warn){
+      // We do not use the formatter here, since we are limited by 50 chars (and the level, for example, is embedded already but not as a string).
       //spdlog::memory_buf_t formatted;
       //spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
       const auto msg_string=fmt::to_string(msg.payload);
