@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
 
     // First discover the platform:
     const auto platform = DPlatform::discover();
-    m_console->debug(platform->to_string());
+    m_console->info("Detected Platform:"+platform->to_string());
 
     // Now we need to discover camera(s) if we are on the air
     std::vector<Camera> cameras{};
@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
     }
     // Now print the actual cameras used by OHD. Of course, this prints nothing on ground (where we have no cameras connected).
     for(const auto& camera:cameras){
-      m_console->debug(camera.to_string());
+      m_console->info(camera.to_string());
     }
     // Now we can crate the immutable profile
     const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
@@ -281,7 +281,7 @@ int main(int argc, char *argv[]) {
         OHDUtil::run_command("systemctl",{" stop qopenhd"});
       }
     }
-    m_console->debug("All OpenHD modules running");
+    m_console->info("All OpenHD modules running");
 
     // run forever, everything has its own threads. Note that the only way to break out basically
     // is when one of the modules encounters an exception.
