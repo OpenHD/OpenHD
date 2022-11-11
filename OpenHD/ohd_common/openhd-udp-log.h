@@ -34,7 +34,7 @@
  */
 namespace openhd::log::udp{
 
-struct OHDLocalLogMessage{
+struct LogMessage {
   uint8_t level;
   uint8_t message[50];
   // returns true if the message has a proper null terminator.
@@ -97,7 +97,7 @@ static STATUS_LEVEL level_spdlog_to_mavlink(const spdlog::level::level_enum& lev
  * Send a log message out via udp to localhost, it wll be picked up by the telemetry service.
  * @param message the log message to send, has to have a valid null terminator.
  */
-static void sendLocalLogMessageUDP(const OHDLocalLogMessage& message){
+static void sendLocalLogMessageUDP(const LogMessage & message){
   assert(message.hasNullTerminator());
   int sockfd;
   struct sockaddr_in servaddr{};
@@ -118,7 +118,7 @@ static void sendLocalLogMessageUDP(const OHDLocalLogMessage& message){
  * mavlink for storage and review by qopenhd, the boot screen system, and other software.
  */
 static void ohd_log(STATUS_LEVEL level, const std::string &message) {
-  OHDLocalLogMessage lmessage{};
+  LogMessage lmessage{};
   lmessage.level = static_cast<uint8_t>(level);
   strncpy((char *)lmessage.message, message.c_str(), 50);
   if (lmessage.message[49] != '\0') {
