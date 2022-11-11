@@ -162,6 +162,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  _camera(std::move(camera)),m_opt_action_handler(std::move(opt_action_handler)),
 	  openhd::settings::PersistentSettings<CameraSettings>(VIDEO_SETTINGS_DIRECTORY){
 	init();
+        if(m_opt_action_handler){
+          m_opt_action_handler->action_set_video_codec_handle(video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec));
+        }
   }
   [[nodiscard]] const Camera& get_camera()const{
 	return _camera;
