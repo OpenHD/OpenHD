@@ -56,6 +56,7 @@ class WBStreams {
   bool set_mcs_index(int mcs_index);
   bool set_fec_block_length(int block_length);
   bool set_fec_percentage(int fec_percentage);
+  bool set_wb_fec_block_length_auto_enable(int value);
   // set the channel width
   // TODO doesn't work yet, aparently we need more than only the pcap header.
   bool set_channel_width(int channel_width);

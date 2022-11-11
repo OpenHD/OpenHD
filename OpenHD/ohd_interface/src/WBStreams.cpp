@@ -560,6 +560,13 @@ bool WBStreams::set_fec_percentage(int fec_percentage) {
   restart_async();
   return true;
 }
+bool WBStreams::set_wb_fec_block_length_auto_enable(int value) {
+  if(!(value==0 || value==1))return false;
+   // needs reboot to be applied
+  _settings->unsafe_get_settings().wb_video_fec_percentage=value;
+  _settings->persist();
+  return true;
+}
 
 
 void WBStreams::restart_async(std::chrono::milliseconds delay){
@@ -609,6 +616,10 @@ std::vector<openhd::Setting> WBStreams::get_all_settings(){
 	  return set_fec_percentage(value);
 	}};
 	ret.push_back(Setting{WB_VIDEO_FEC_PERCENTAGE,change_video_fec_percentage});
+        auto wb_fec_block_length_auto_enable=openhd::IntSetting{(int)_settings->get_settings().wb_fec_block_length_auto_enable,[this](std::string,int value){
+          return set_wb_fec_block_length_auto_enable(value);
+        }};
+        ret.push_back(Setting{WB_FEC_BLOCK_LENGTH_AUTO_ENABLE,wb_fec_block_length_auto_enable});
   }
   openhd::validate_provided_ids(ret);
   return ret;
@@ -631,3 +642,4 @@ bool WBStreams::validate_cards_support_setting_channel_width() {
   }
   return true;
 }
+
