@@ -66,7 +66,7 @@ class OHDMainComponent : public MavlinkComponent{
   std::unique_ptr<OnboardComputerStatusProvider> m_onboard_computer_status_provider;
   std::mutex _last_link_stats_mutex;
   openhd::link_statistics::AllStats _last_link_stats{};
-  MavlinkMessage ack_command(const uint8_t source_sys_id,const uint8_t source_comp_id,uint16_t command_id);
+  MavlinkMessage ack_command(uint8_t source_sys_id,uint8_t source_comp_id,uint16_t command_id);
   std::shared_ptr<spdlog::logger> m_console;
 };
 
