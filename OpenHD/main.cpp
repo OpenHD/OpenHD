@@ -179,9 +179,11 @@ int main(int argc, char *argv[]) {
   std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
   OHDInterface::print_internal_fec_optimization_method();
 
-  std::shared_ptr<spdlog::logger> m_console=spdlog::stdout_color_mt("main");
+  std::shared_ptr<spdlog::logger> m_console=openhd::loggers::create_or_get("main");
   assert(m_console);
   m_console->set_level(spd::level::debug);
+
+  m_console->warn("Hello");
   // Create and link all the OpenHD modules.
   try {
     // This results in fresh default values for all modules (e.g. interface, telemetry, video)
