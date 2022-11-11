@@ -85,8 +85,6 @@ static STATUS_LEVEL level_spdlog_to_mavlink(const spdlog::level::level_enum& lev
     case spdlog::level::critical:
       return STATUS_LEVEL::CRITICAL;
       break;
-    case spdlog::level::off:
-    case spdlog::level::n_levels:
     default:
       break;
   }
