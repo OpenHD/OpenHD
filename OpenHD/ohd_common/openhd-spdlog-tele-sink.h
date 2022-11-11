@@ -16,18 +16,18 @@
 // such that they can be picked up by the telemetry module
 namespace openhd::loggers::sink{
 
-
-class TelemetryForwardSink : public spdlog::sinks::base_sink<std::mutex>{
+class UdpTelemetrySink : public spdlog::sinks::base_sink<std::mutex>{
  protected:
   void sink_it_(const spdlog::details::log_msg& msg) override{
     // log_msg is a struct containing the log entry info like level, timestamp, thread id etc.
     // msg.raw contains pre formatted log
     // If needed (very likely but not mandatory), the sink formats the message before sending it to its final destination:
     if(msg.level>=spdlog::level::warn){
-      spdlog::memory_buf_t formatted;
-      spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
-      const auto msg_string=fmt::to_string(formatted);
-      openhd::log::udp::ohd_log(openhd::log::udp::level_spdlog_to_mavlink(msg.level),msg_string);
+      //spdlog::memory_buf_t formatted;
+      //spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
+      const auto msg_string=fmt::to_string(msg.payload);
+      const auto level=openhd::log::udp::level_spdlog_to_mavlink(msg.level);
+      openhd::log::udp::ohd_log(level,msg_string);
       //std::cout << "["<<msg_string<<"]";
     }
   }
@@ -35,20 +35,6 @@ class TelemetryForwardSink : public spdlog::sinks::base_sink<std::mutex>{
     //std::cout << std::flush;
   }
 };
-
-// Whichever thread calls this first instantiates the class
-// Thread-safe
-// https://stackoverflow.com/questions/33379162/singleton-class-implementation-using-shared-ptr
-static std::shared_ptr<TelemetryForwardSink> instance(){
-  static std::mutex _mutex{};
-  std::lock_guard<std::mutex> guard(_mutex);
-  static std::shared_ptr<TelemetryForwardSink> ret= nullptr;
-  if(ret== nullptr){
-    std::cerr<<"Creating instance\n";
-    ret=std::make_shared<TelemetryForwardSink>();
-  }
-  return ret;
-}
 
 }
 

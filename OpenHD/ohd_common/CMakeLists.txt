@@ -41,7 +41,7 @@ set(sources
     "openhd-led-codes.hpp"
     "openhd-led-pi.hpp"
     "openhd-link-statistics.hpp"
-        "openhd-platform.hpp"
+     "openhd-platform.hpp"
     "openhd-platform-discover.hpp"
     "openhd-platform-json.hpp"
     "openhd-profile.hpp"
@@ -51,6 +51,9 @@ set(sources
     "openhd-util.hpp"
     "openhd-util-filesystem.hpp"
     "veye-helper.hpp"
+    "openhd-spdlog.hpp"
+    "openhd-spdlog-tele-sink.h"
+    "openhd-udp-log.h"
     )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 
