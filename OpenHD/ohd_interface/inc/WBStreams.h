@@ -118,6 +118,7 @@ class WBStreams {
   // even though the frequency actually hasn't changed
   static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS="/boot/openhd/disable_all_frequency_checks.txt";
   const bool m_disable_all_frequency_checks;
+  int m_curr_video_codec=0;
 };
 
 #endif

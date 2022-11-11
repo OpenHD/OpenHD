@@ -179,7 +179,13 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
 	options.fec_percentage=static_cast<int>(_settings->get_settings().wb_video_fec_percentage); // Default to 20% fec overhead
         //options.fec_k="h264";
         if(_settings->get_settings().wb_fec_block_length_auto_enable){
-          options.fec_k="h264";
+          if(m_curr_video_codec==0){
+            options.fec_k="h264";
+          }else if(m_curr_video_codec==1){
+            options.fec_k="h265";
+          }else if(m_curr_video_codec==2){
+            options.fec_k="mjpeg";
+          }
         }
   }else{
 	options.fec_k=0;
@@ -648,4 +654,5 @@ bool WBStreams::validate_cards_support_setting_channel_width() {
 
 void WBStreams::set_video_codec(int codec) {
   m_console->debug("set_video_codec to {}",codec);
+  m_curr_video_codec=codec;
 }
