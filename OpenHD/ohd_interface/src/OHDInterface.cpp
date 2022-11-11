@@ -220,3 +220,9 @@ void OHDInterface::restart_wb_streams_async() {
 void OHDInterface::print_internal_fec_optimization_method() {
   print_optimization_method();
 }
+
+void OHDInterface::set_video_codec(int codec) {
+  if(m_wb_streams){
+    m_wb_streams->set_video_codec(codec);
+  }
+}

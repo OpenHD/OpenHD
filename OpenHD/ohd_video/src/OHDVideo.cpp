@@ -5,7 +5,7 @@
 #include "gstreamerstream.h"
 #include "veyestream.h"
 
-OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras) :
+OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
 	platform(platform1) {
   m_console = openhd::loggers::create_or_get("ohd_video");
   assert(m_console);
@@ -14,7 +14,7 @@ OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras) :
   m_console->debug("OHDVideo::OHDVideo()");
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
   for(const auto& camera:cameras){
-    camera_holders.emplace_back(std::make_unique<CameraHolder>(camera));
+    camera_holders.emplace_back(std::make_unique<CameraHolder>(camera,opt_action_handler));
   }
   for (auto &camera: camera_holders) {
 	configure(camera);

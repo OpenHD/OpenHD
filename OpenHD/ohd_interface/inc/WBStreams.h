@@ -48,6 +48,8 @@ class WBStreams {
   void restart();
   // schedule an asynchronous restart. if there is already a restart scheduled, return immediately
   void restart_async(std::chrono::milliseconds delay=std::chrono::milliseconds(0));
+  // needs to be set for FEC auto to work
+  void set_video_codec(int codec);
   // set the frequency (wifi channel) of all wifibroadcast cards
   bool set_frequency(int frequency);
   // set the tx power of all wifibroadcast cards
@@ -56,6 +58,7 @@ class WBStreams {
   bool set_mcs_index(int mcs_index);
   bool set_fec_block_length(int block_length);
   bool set_fec_percentage(int fec_percentage);
+  bool set_wb_fec_block_length_auto_enable(int value);
   // set the channel width
   // TODO doesn't work yet, aparently we need more than only the pcap header.
   bool set_channel_width(int channel_width);
@@ -115,6 +118,7 @@ class WBStreams {
   // even though the frequency actually hasn't changed
   static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS="/boot/openhd/disable_all_frequency_checks.txt";
   const bool m_disable_all_frequency_checks;
+  int m_curr_video_codec=0;
 };
 
 #endif

@@ -17,6 +17,7 @@
 
 #include "mavlink_settings/ISettingsComponent.hpp"
 #include "v_validate_settings.h"
+#include "openhd-action-handler.hpp"
 
 static constexpr auto DEFAULT_BITRATE_KBITS = 5000;
 static constexpr auto DEFAULT_KEYFRAME_INTERVAL=30;
@@ -157,10 +158,13 @@ static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::st
 class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	    public openhd::ISettingsComponent{
  public:
-  explicit CameraHolder(Camera camera):
-	  _camera(std::move(camera)),
+  explicit CameraHolder(Camera camera,std::shared_ptr<openhd::ActionHandler> opt_action_handler= nullptr):
+	  _camera(std::move(camera)),m_opt_action_handler(std::move(opt_action_handler)),
 	  openhd::settings::PersistentSettings<CameraSettings>(VIDEO_SETTINGS_DIRECTORY){
 	init();
+        if(m_opt_action_handler){
+          m_opt_action_handler->action_set_video_codec_handle(video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec));
+        }
   }
   [[nodiscard]] const Camera& get_camera()const{
 	return _camera;
@@ -291,6 +295,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	}
 	unsafe_get_settings().userSelectedVideoFormat.videoCodec=video_codec_from_int(codec);
 	persist();
+        if(m_opt_action_handler){
+          m_opt_action_handler->action_set_video_codec_handle(codec);
+        }
 	return true;
   }
   bool set_video_bitrate(int bitrate_mbits){
@@ -366,6 +373,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
  private:
   // Camera info is immutable
   const Camera _camera;
+  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
 	std::stringstream ss;

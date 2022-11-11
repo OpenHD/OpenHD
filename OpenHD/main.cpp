@@ -239,6 +239,9 @@ int main(int argc, char *argv[]) {
     ohd_action_handler->action_restart_wb_streams_set([&ohdInterface](){
       ohdInterface->restart_wb_streams_async();
     });
+    ohd_action_handler->action_set_video_codec_set([&ohdInterface](int codec){
+      ohdInterface->set_video_codec(codec);
+    });
 
     // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
     auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile,ohd_action_handler);
@@ -264,7 +267,7 @@ int main(int argc, char *argv[]) {
     // and start ohdVideo if we are on the air pi
     std::unique_ptr<OHDVideo> ohdVideo;
     if (profile->is_air) {
-      ohdVideo = std::make_unique<OHDVideo>(*platform,cameras);
+      ohdVideo = std::make_unique<OHDVideo>(*platform,cameras,ohd_action_handler);
       auto settings_components=ohdVideo->get_setting_components();
       if(!settings_components.empty()){
         ohdTelemetry->add_camera_component(0,settings_components.at(0)->get_all_settings());
