@@ -40,6 +40,7 @@ class OHDInterface :public openhd::ISettingsComponent{
   // settings hacky end
   // easy access without polluting the headers
   static void print_internal_fec_optimization_method();
+  void set_video_codec(int codec);
  private:
   /**
     * after calling this method with an external device's ip address

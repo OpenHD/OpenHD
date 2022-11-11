@@ -48,6 +48,8 @@ class WBStreams {
   void restart();
   // schedule an asynchronous restart. if there is already a restart scheduled, return immediately
   void restart_async(std::chrono::milliseconds delay=std::chrono::milliseconds(0));
+  // needs to be set for FEC auto to work
+  void set_video_codec(int codec);
   // set the frequency (wifi channel) of all wifibroadcast cards
   bool set_frequency(int frequency);
   // set the tx power of all wifibroadcast cards

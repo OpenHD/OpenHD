@@ -643,3 +643,6 @@ bool WBStreams::validate_cards_support_setting_channel_width() {
   return true;
 }
 
+void WBStreams::set_video_codec(int codec) {
+  m_console->debug("set_video_codec to {}",codec);
+}
