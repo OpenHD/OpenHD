@@ -654,5 +654,8 @@ bool WBStreams::validate_cards_support_setting_channel_width() {
 
 void WBStreams::set_video_codec(int codec) {
   m_console->debug("set_video_codec to {}",codec);
-  m_curr_video_codec=codec;
+  if(m_curr_video_codec!=codec){
+    m_curr_video_codec=codec;
+    restart_async();
+  }
 }
