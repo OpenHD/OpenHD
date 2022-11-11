@@ -21,7 +21,14 @@ OHDMainComponent::OHDMainComponent(
   assert(m_console);
   m_console->set_level(spd::level::debug);
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(platform);
-  m_telemetry_forward_sink_handle=openhd::loggers::sink::instance();
+  logMessagesReceiver =
+      std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
+                                                  OHD_LOCAL_LOG_MESSAGES_UDP_PORT,
+                                                  [this](const uint8_t *payload,
+                                                         const std::size_t payloadSize) {
+                                                    this->_status_text_accumulator.processLogMessageData(payload, payloadSize);
+                                                  });
+  logMessagesReceiver->runInBackground();
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
@@ -133,18 +140,17 @@ std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
-  //const auto messages=_status_text_accumulator.get_messages();
-  const auto messages=m_telemetry_forward_sink_handle->dequeue_messages();
+  const auto messages=_status_text_accumulator.get_messages();
   std::vector<MavlinkMessage> ret;
   // limit to 5 to save bandwidth
   for(const auto& msg:messages){
     if (ret.size() < 5) {
       MavlinkMessage mavMsg;
-      StatusTextAccumulator::convert(mavMsg.m,*msg,_sys_id,_comp_id);
+      StatusTextAccumulator::convert(mavMsg.m,msg,_sys_id,_comp_id);
       ret.push_back(mavMsg);
     } else {
       std::stringstream ss;
-      ss << "Dropping log message " << msg->m_message;
+      ss << "Dropping log message " << msg.message;
       m_console->debug(ss.str());
     }
   }

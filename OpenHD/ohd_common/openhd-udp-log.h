@@ -1,5 +1,9 @@
-#ifndef OPENHD_LOG_MESSAGES_H
-#define OPENHD_LOG_MESSAGES_H
+//
+// Created by consti10 on 11.11.22.
+//
+
+#ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_UDP_LOG_H_
+#define OPENHD_OPENHD_OHD_COMMON_OPENHD_UDP_LOG_H_
 
 #include <cstdio>
 #include <unistd.h>
@@ -28,6 +32,7 @@
  * The log messages is sent to a specific udp port on localhost and then picked up by the telemetry service,
  * which converts it to mavlink and forwards it accordingly.
  */
+namespace openhd::log::udp{
 
 struct OHDLocalLogMessage{
   uint8_t level;
@@ -35,18 +40,17 @@ struct OHDLocalLogMessage{
   // returns true if the message has a proper null terminator.
   // Only in this case we can treat the raw string array as a string.
   [[nodiscard]] bool hasNullTerminator() const {
-	// check if the string has a null-terminator
-	bool nullTerminatorFound = false;
-	for (const auto &i: message) {
-	  if (i == '\0') {
-		nullTerminatorFound = true;
-		break;
-	  }
-	}
-	return nullTerminatorFound;
+    // check if the string has a null-terminator
+    bool nullTerminatorFound = false;
+    for (const auto &i: message) {
+      if (i == '\0') {
+        nullTerminatorFound = true;
+        break;
+      }
+    }
+    return nullTerminatorFound;
   }
 } __attribute__((packed));
-
 
 // these match the mavlink SEVERITY_LEVEL enum, but this code should not depend on
 // the mavlink headers
@@ -62,14 +66,31 @@ enum class STATUS_LEVEL {
   DEBUG
 };
 
-static void print_log_by_level(const STATUS_LEVEL level, std::string message) {
-  // Each message is logged with a newline at the end, add a new line at the end if non-existing.
-  const auto messageN = message.back() == '\n' ? message : (message + "\n");
-  if (level == STATUS_LEVEL::INFO || level == STATUS_LEVEL::NOTICE || level == STATUS_LEVEL::DEBUG) {
-	std::cout << messageN;
-  } else {
-	std::cerr << messageN;
+static STATUS_LEVEL level_spdlog_to_mavlink(const spdlog::level::level_enum& level){
+  switch (level) {
+    case spdlog::level::trace:
+      return STATUS_LEVEL::DEBUG;
+      break;
+    case spdlog::level::debug:
+      return STATUS_LEVEL::DEBUG;
+      break;
+    case spdlog::level::info:
+      return STATUS_LEVEL::INFO;
+      break;
+    case spdlog::level::warn:
+      return STATUS_LEVEL::WARNING;
+    case spdlog::level::err:
+      return STATUS_LEVEL::ERROR;
+      break;
+    case spdlog::level::critical:
+      return STATUS_LEVEL::CRITICAL;
+      break;
+    case spdlog::level::off:
+    case spdlog::level::n_levels:
+    default:
+      break;
   }
+  return STATUS_LEVEL::DEBUG;
 }
 
 /**
@@ -81,8 +102,8 @@ static void sendLocalLogMessageUDP(const OHDLocalLogMessage& message){
   int sockfd;
   struct sockaddr_in servaddr{};
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-	perror("Socket create failed");
-	exit(EXIT_FAILURE);
+    perror("Socket create failed");
+    exit(EXIT_FAILURE);
   }
   memset(&servaddr, 0, sizeof(servaddr));
   servaddr.sin_family = AF_INET;
@@ -97,68 +118,15 @@ static void sendLocalLogMessageUDP(const OHDLocalLogMessage& message){
  * mavlink for storage and review by qopenhd, the boot screen system, and other software.
  */
 static void ohd_log(STATUS_LEVEL level, const std::string &message) {
-  print_log_by_level(level, message);
   OHDLocalLogMessage lmessage{};
   lmessage.level = static_cast<uint8_t>(level);
   strncpy((char *)lmessage.message, message.c_str(), 50);
   if (lmessage.message[49] != '\0') {
-	lmessage.message[49] = '\0';
+    lmessage.message[49] = '\0';
   }
   sendLocalLogMessageUDP(lmessage);
 }
 
-class OpenHDLogger{
- public:
-  //explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL_DEBUG,const std::string& tag=""):
-  //  _status_level(level),_tag(tag) {}
-  explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL::DEBUG,std::string_view tag=""):
-    _status_level(level),_tag(tag){}
-  ~OpenHDLogger() {
-    const auto tmp=stream.str();
-    log_message(tmp);
-  }
-  OpenHDLogger(const OpenHDLogger& other)=delete;
-  // the non-member function operator<< will now have access to private members
-  template <typename T>
-  friend OpenHDLogger& operator<<(OpenHDLogger& record, T&& t);
- private:
-  const STATUS_LEVEL _status_level;
-  const std::string_view _tag;
-  std::stringstream stream;
-  // Checks for a newline, and if detected logs the message immediately and then clears it.
-  void log_immediately_on_newline(){
-    const auto tmp=stream.str();
-    if(!tmp.empty() && tmp.back()=='\n') {
-      log_message(tmp);
-      stream.str("");
-    }
-  }
-  void log_message(const std::string& message){
-    if(message.empty())return;
-    ohd_log(_status_level,message);
-  }
-};
-
-template <typename T>
-OpenHDLogger& operator<<(OpenHDLogger& record, T&& t) {
-  record.stream << std::forward<T>(t);
-  // If we detect a newline, log immediately, not delayed when going out of scope to mimic std::cout behaviour
-  record.log_immediately_on_newline();
-  return record;
-}
-template <typename T>
-OpenHDLogger& operator<<(OpenHDLogger&& record, T&& t) {
-  // This just uses the operator declared above.
-  record << std::forward<T>(t);
-  return record;
 }
 
-// macro for logging like std::cout in OpenHD
-#define LOGD OpenHDLogger(STATUS_LEVEL::DEBUG,"")
-
-// macro for logging like std::cerr in OpenHD
-#define LOGE OpenHDLogger(STATUS_LEVEL::ERROR,"")
-
-#define LOGI OpenHDLogger(STATUS_LEVEL::INFO,"")
-
-#endif //OPENHD_LOG_MESSAGES_H
+#endif  // OPENHD_OPENHD_OHD_COMMON_OPENHD_UDP_LOG_H_
