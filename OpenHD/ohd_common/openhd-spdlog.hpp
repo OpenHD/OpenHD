@@ -31,6 +31,7 @@ static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_n
   if (ret == nullptr) {
     auto created = spdlog::stdout_color_mt(logger_name);
     assert(created);
+    // Add the sink that sends out warning or higher via UDP
     created->sinks().push_back(std::make_shared<openhd::loggers::sink::UdpTelemetrySink>());
     return created;
   }
