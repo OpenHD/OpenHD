@@ -83,7 +83,7 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   if(print_debug){
 	std::stringstream log;
 	log<< "run command begin [" << ss.str() << "]";
-	openhd::loggers::get_default()->debug(log.str());
+	openhd::log::get_default()->debug(log.str());
   }
   // Some weird locale issue ?!
   // https://man7.org/linux/man-pages/man3/system.3.html
@@ -94,7 +94,7 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   std::cout<<"Run command end\n";
   return c.exit_code() == 0;*/
   if(print_debug){
-	openhd::loggers::get_default()->debug("Run command end");
+	openhd::log::get_default()->debug("Run command end");
   }
   return ret;
 }
@@ -132,7 +132,7 @@ static void keep_alive_until_sigterm(){
   signal(SIGTERM, [](int sig){ quit= true;});
   while (!quit){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
-	openhd::loggers::get_default()->debug("keep_alive_until_sigterm");
+	openhd::log::get_default()->debug("keep_alive_until_sigterm");
   }
 }
 // Tries to extract a valid ip from the given input string.
@@ -170,7 +170,7 @@ static std::string string_in_between(const std::string& start,const std::string&
   std::stringstream ss;
   ss<<"Given:["<<value<<"]\n";
   ss<<"Result:["<<matched<<"]";
-  openhd::loggers::get_default()->debug(ss.str());
+  openhd::log::get_default()->debug(ss.str());
   return matched;
 }
 
@@ -179,7 +179,7 @@ static std::optional<int> string_to_int(const std::string& s){
     auto ret=std::stoi(s);
     return ret;
   }catch (...){
-    openhd::loggers::get_default()->warn("Cannot convert ["+s+"] to int");
+    openhd::log::get_default()->warn("Cannot convert ["+s+"] to int");
     return std::nullopt;
   }
 }
@@ -210,7 +210,7 @@ static bool check_root(const bool print_debug=true){
   if(print_debug){
 	ss<<"UID is:["<<uid<<"] root:"<<OHDUtil::yes_or_no(root)<<"\n";
   }
-  openhd::loggers::get_default()->debug(ss.str());
+  openhd::log::get_default()->debug(ss.str());
   return root;
 }
 

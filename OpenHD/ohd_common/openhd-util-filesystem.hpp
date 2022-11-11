@@ -74,7 +74,7 @@ static void write_file(const std::string& path,const std::string& content){
     t << content;
     t.close();
   }catch (std::exception& e){
-    openhd::loggers::get_default()->warn("Cannot write file ["+path+"]");
+    openhd::log::get_default()->warn("Cannot write file ["+path+"]");
   }
 }
 static std::string read_file(const std::string& path){
@@ -84,7 +84,7 @@ static std::string read_file(const std::string& path){
     f >> ret;
     return ret;
   }catch (std::exception& e){
-    openhd::loggers::get_default()->warn("Cannot read file ["+path+"]");
+    openhd::log::get_default()->warn("Cannot read file ["+path+"]");
     return "";
   }
 }

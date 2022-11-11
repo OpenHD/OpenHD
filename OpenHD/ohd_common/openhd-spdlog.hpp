@@ -17,7 +17,7 @@
 
 namespace spd = spdlog;
 
-namespace openhd::loggers {
+namespace openhd::log {
 
 // Note: the _mt loggers have threadsafety by design already, but we need to make sure to crete the instance only once
 // For some reason there is no helper for that in speeddlog / i haven't found it yet
@@ -31,7 +31,7 @@ static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_n
     auto created = spdlog::stdout_color_mt(logger_name);
     assert(created);
     // Add the sink that sends out warning or higher via UDP
-    created->sinks().push_back(std::make_shared<openhd::loggers::sink::UdpTelemetrySink>());
+    created->sinks().push_back(std::make_shared<openhd::log::sink::UdpTelemetrySink>());
     return created;
   }
   return ret;

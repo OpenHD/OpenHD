@@ -13,10 +13,10 @@ wifiCard(std::move(wifiCard)) {
 }
 
 void WifiHotspot::start() {
-  openhd::loggers::get_default()->debug("Starting WIFI hotspot on card:"+wifiCard.interface_name);
+  openhd::log::get_default()->debug("Starting WIFI hotspot on card:"+wifiCard.interface_name);
   OHDUtil::run_command("nmcli",{"dev wifi hotspot ifname",wifiCard.interface_name,"ssid openhd password \"openhdopenhd\""});
   started= true;
-  openhd::loggers::get_default()->info("Wifi hotspot started");
+  openhd::log::get_default()->info("Wifi hotspot started");
 }
 
 void WifiHotspot::stop() {

@@ -39,7 +39,7 @@ void RcJoystickSender::change_update_rate(int update_rate_hz) {
   if(val>=0){
     m_delay_in_milliseconds=val;
   }else{
-    openhd::loggers::get_default()->warn("Invalid update rate hz {]",update_rate_hz);
+    openhd::log::get_default()->warn("Invalid update rate hz {]",update_rate_hz);
   }
 }
 

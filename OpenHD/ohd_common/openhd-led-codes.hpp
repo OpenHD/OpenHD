@@ -45,7 +45,7 @@ class LEDBlinker {
   void blink_red_led(const std::string &message, const std::chrono::seconds duration = DURATION_INFINITY) const {
 	const auto start = std::chrono::steady_clock::now();
 	while ((std::chrono::steady_clock::now() - start) <= duration) {
-          openhd::loggers::get_default()->warn(message);
+          openhd::log::get_default()->warn(message);
 	  if (_platform.platform_type == PlatformType::RaspberryPi) {
 		rpi::red_led_on_off_delayed(std::chrono::seconds(1),std::chrono::seconds(1));
 	  } else {

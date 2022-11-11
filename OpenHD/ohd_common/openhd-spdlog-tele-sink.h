@@ -14,7 +14,7 @@
 // bridge between any logger and telemetry
 // We send logs higher or equal to the warning log level out via udp
 // such that they can be picked up by the telemetry module
-namespace openhd::loggers::sink{
+namespace openhd::log::sink{
 
 class UdpTelemetrySink : public spdlog::sinks::base_sink<std::mutex>{
  protected:

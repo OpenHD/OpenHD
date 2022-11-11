@@ -12,7 +12,7 @@
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) :
 platform(platform1),profile(std::move(profile1)) {
-  m_console = openhd::loggers::create_or_get("ohd_interface_x");
+  m_console = openhd::log::create_or_get("ohd_interface_x");
   assert(m_console);
   m_console->set_level(spd::level::debug);
   m_console->debug("OHDInterface::OHDInterface()");

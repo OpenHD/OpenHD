@@ -20,7 +20,7 @@ static bool check_if_joystick_is_connected_via_fd(){
 }
 
 JoystickReader::JoystickReader(CHAN_MAP chan_map) {
-  m_console = openhd::loggers::create_or_get("joystick_reader");
+  m_console = openhd::log::create_or_get("joystick_reader");
   assert(m_console);
   m_console->set_level(spd::level::warn);
   m_console->debug("JoystickReader::JoystickReader");
@@ -265,7 +265,7 @@ std::optional<JoystickReader::CHAN_MAP>
 JoystickReader::convert_string_to_channel_mapping(const std::string& input) {
   auto split_into_substrings=OHDUtil::split_into_substrings(input,',');
   if(split_into_substrings.size()!=N_CHANNELS_RESERVED_FOR_AXES){
-    openhd::loggers::get_default()->warn("Channel mapping wrong n channels:{}",split_into_substrings.size());
+    openhd::log::get_default()->warn("Channel mapping wrong n channels:{}",split_into_substrings.size());
     return std::nullopt;
   }
   CHAN_MAP parsed_as_int{};
@@ -281,7 +281,7 @@ JoystickReader::convert_string_to_channel_mapping(const std::string& input) {
 bool JoystickReader::validate_channel_mapping(const CHAN_MAP& chan_map) {
   for(const auto& el:chan_map){ // NOLINT(readability-use-anyofallof)
     if(el<0 || el>N_CHANNELS_RESERVED_FOR_AXES-1){
-      openhd::loggers::get_default()->warn("Channel mapping not a valid value{}",el);
+      openhd::log::get_default()->warn("Channel mapping not a valid value{}",el);
       return false;
     }
   }

@@ -30,7 +30,7 @@ static std::string create_unused_recording_filename(const std::string& suffix){
       return filename.str();
     }
   }
-  openhd::loggers::get_default()->warn("Cannot create new filename, overwriting already existing");
+  openhd::log::get_default()->warn("Cannot create new filename, overwriting already existing");
   std::stringstream filename;
   filename<<RECORDINGS_PATH;
   filename<<"recording"<<0<<suffix;

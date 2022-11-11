@@ -17,7 +17,7 @@ OHDMainComponent::OHDMainComponent(
     bool runsOnAir,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
 	platform(platform1),RUNS_ON_AIR(runsOnAir),_opt_action_handler(std::move(opt_action_handler)),
 	MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
-  m_console = openhd::loggers::create_or_get("tele_main_comp");
+  m_console = openhd::log::create_or_get("tele_main_comp");
   assert(m_console);
   m_console->set_level(spd::level::debug);
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(platform);

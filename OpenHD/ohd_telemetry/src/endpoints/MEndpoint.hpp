@@ -38,7 +38,7 @@ class MEndpoint {
    * @param mavlink_channel the mavlink channel to use for parsing.
    */
   explicit MEndpoint(std::string tag) : TAG(std::move(tag)),m_mavlink_channel(checkoutFreeChannel()) {
-        openhd::loggers::get_default()->debug(TAG+" using channel:{}",m_mavlink_channel);
+        openhd::log::get_default()->debug(TAG+" using channel:{}",m_mavlink_channel);
   };
   /**
    * send a message via this endpoint.
@@ -67,7 +67,7 @@ class MEndpoint {
   void registerCallback(MAV_MSG_CALLBACK cb) {
 	if (callback != nullptr) {
 	  // this might be a common programming mistake - you can only register one callback here
-	  openhd::loggers::get_default()->warn("Overwriting already existing callback");
+	  openhd::log::get_default()->warn("Overwriting already existing callback");
 	}
 	callback = std::move(cb);
   }
@@ -84,7 +84,7 @@ class MEndpoint {
   void debugIfAlive()const {
 	std::stringstream ss;
 	ss << TAG << " alive:" << (isAlive() ? "Y" : "N");
-        openhd::loggers::get_default()->debug(ss.str());
+        openhd::log::get_default()->debug(ss.str());
   }
   [[nodiscard]] std::string createInfo()const{
 	std::stringstream ss;
@@ -133,7 +133,7 @@ class MEndpoint {
 	if (callback != nullptr) {
 	  callback(message);
 	} else {
-	  openhd::loggers::get_default()->warn("No callback set,did you forget to add it ?");
+	  openhd::log::get_default()->warn("No callback set,did you forget to add it ?");
 	}
 	m_n_messages_received++;
   }

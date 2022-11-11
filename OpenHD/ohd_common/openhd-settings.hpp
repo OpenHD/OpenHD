@@ -53,14 +53,14 @@ static std::string getOrCreateUnitId() {
 	//const boost::uuids::uuid _uuid = boost::uuids::random_generator()();
 	//unit_id = to_string(_uuid);
         unit_id = create_unit_it_temporary();
-	openhd::loggers::get_default()->info("Created new unit id:{}",unit_id);
+	openhd::log::get_default()->info("Created new unit id:{}",unit_id);
 	// and write it ot to the right file
 	std::ofstream of(UNIT_ID_FILE);
 	of << unit_id;
 	of.close();
   } else {
 	unit_id = std::string((std::istreambuf_iterator<char>(unit_id_file)),std::istreambuf_iterator<char>());
-	openhd::loggers::get_default()->debug("Read unit id:{}",unit_id);
+	openhd::log::get_default()->debug("Read unit id:{}",unit_id);
 	return unit_id;
   }
   assert(!unit_id.empty());

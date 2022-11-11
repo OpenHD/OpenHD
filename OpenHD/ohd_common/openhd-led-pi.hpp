@@ -20,7 +20,7 @@ namespace openhd::rpi{
 static void toggle_red_led(const bool on,const bool debug=true){
   int ret;
   if(!OHDFilesystemUtil::exists("/sys/class/leds/led1/brightness")){
-        openhd::loggers::get_default()->debug("RPI LED1 brightness does not exist\n");
+        openhd::log::get_default()->debug("RPI LED1 brightness does not exist\n");
 	return;
   }
   if(on){
@@ -33,7 +33,7 @@ static void toggle_red_led(const bool on,const bool debug=true){
 static void toggle_green_led(const bool on,const bool debug=true){
   int ret;
   if(!OHDFilesystemUtil::exists("/sys/class/leds/led0/brightness")){
-	openhd::loggers::get_default()->debug("RPI LED0 brightness does not exist");
+	openhd::log::get_default()->debug("RPI LED0 brightness does not exist");
 	return;
   }
   if(on){
