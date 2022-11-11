@@ -19,11 +19,10 @@ namespace spd = spdlog;
 
 namespace openhd::loggers {
 
-// Note: the _mt loggers are threadsafe by design already, but we need to make sure to crete the instance only once
-// For some reason there is no helper for that in spdlog / i haven't found it yet
+// Note: the _mt loggers have threadsafety by design already, but we need to make sure to crete the instance only once
+// For some reason there is no helper for that in speeddlog / i haven't found it yet
 
 // Thread-safe but recommended to store result in an intermediate variable
-
 static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_name){
   static std::mutex logger_mutex2{};
   std::lock_guard<std::mutex> guard(logger_mutex2);
