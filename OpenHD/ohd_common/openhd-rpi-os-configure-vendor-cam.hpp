@@ -32,7 +32,7 @@ static std::string cam_config_to_string(const CamConfig& cam_config){
     case CamConfig::LIBCAMERA: return "libcamera";
     case CamConfig::LIBCAMERA_IMX477: return "libcamera_imx477";
   }
-  openhd::loggers::get_default()->warn("Error cam_config_to_string");
+  openhd::log::get_default()->warn("Error cam_config_to_string");
   assert(true);
   return "mmal";
 }
@@ -41,7 +41,7 @@ static CamConfig cam_config_from_int(int val){
   if(val==0)return CamConfig::MMAL;
   if(val==1)return CamConfig::LIBCAMERA;
   if(val==2)return CamConfig::LIBCAMERA_IMX477;
-  openhd::loggers::get_default()->warn("Error cam_config_from_int");
+  openhd::log::get_default()->warn("Error cam_config_from_int");
   assert(true);
   return CamConfig::MMAL;
 }
@@ -51,7 +51,7 @@ static int cam_config_to_int(CamConfig cam_config){
     case CamConfig::LIBCAMERA: return 1;
     case CamConfig::LIBCAMERA_IMX477: return 2;
   }
-  openhd::loggers::get_default()->warn("Error cam_config_to_int");
+  openhd::log::get_default()->warn("Error cam_config_to_int");
   assert(true);
   return 0;
 }
@@ -105,10 +105,10 @@ const auto rpi_config_file_path="/boot/config.txt";
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
 static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig new_cam_config){
-  openhd::loggers::get_default()->debug("Begin apply cam config"+ cam_config_to_string(new_cam_config));
+  openhd::log::get_default()->debug("Begin apply cam config"+ cam_config_to_string(new_cam_config));
   const auto filename= get_file_name_for_cam_config(platform,new_cam_config);
   if(!OHDFilesystemUtil::exists(filename.c_str())){
-    openhd::loggers::get_default()->warn("Cannot apply new cam config, corresponding config.txt ["+filename+"] not found");
+    openhd::log::get_default()->warn("Cannot apply new cam config, corresponding config.txt ["+filename+"] not found");
     return;
   }
   // move current config.txt to a backup file
@@ -118,7 +118,7 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   // save the current selection (persistent setting)
   save_cam_config_to_file(new_cam_config);
   // Now we just need to reboot
-  openhd::loggers::get_default()->debug("End apply cam config"+ cam_config_to_string(new_cam_config));
+  openhd::log::get_default()->debug("End apply cam config"+ cam_config_to_string(new_cam_config));
 }
 
 // Unfortunately complicated, since we need to perform the action asynchronously and then reboot
@@ -139,7 +139,7 @@ class ConfigChangeHandler{
     const auto current_configuration=get_current_cam_config_from_file();
     const auto new_configuration=cam_config_from_int(new_value_as_int);
     if(current_configuration==new_configuration){
-      openhd::loggers::get_default()->warn("Not changing cam config,already at "+ cam_config_to_string(current_configuration));
+      openhd::log::get_default()->warn("Not changing cam config,already at "+ cam_config_to_string(current_configuration));
       return true;
     }
     // this change requires a reboot, so only allow changing once at run time

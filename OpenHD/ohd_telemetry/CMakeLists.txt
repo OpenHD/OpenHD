@@ -136,9 +136,6 @@ target_link_libraries(test_udp_endpoint OHDTelemetryLib)
 add_executable(test_ohd_reboot tests/test_ohd_reboot.cpp)
 target_link_libraries(test_ohd_reboot OHDTelemetryLib)
 
-add_executable(test_generate_log_message tests/test_generate_log_message.cpp)
-target_link_libraries(test_generate_log_message OHDTelemetryLib)
-
 add_executable(test_ground_locally tests/test_ground_locally.cpp)
 target_link_libraries(test_ground_locally OHDTelemetryLib)
 

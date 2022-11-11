@@ -22,7 +22,7 @@ static void kill_all_running_veye_instances(){
   if(res.has_value()){
 	std::stringstream ss;
 	ss<<"Killall veye returned:{"<<res.value()<<"}\n";
-	openhd::loggers::get_default()->debug(ss.str());
+	openhd::log::get_default()->debug(ss.str());
   }
 }
 

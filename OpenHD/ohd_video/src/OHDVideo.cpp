@@ -2,12 +2,15 @@
 // Created by consti10 on 03.05.22.
 //
 #include "OHDVideo.h"
+
+#include <openhd-global-constants.hpp>
+
 #include "gstreamerstream.h"
 #include "veyestream.h"
 
 OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
 	platform(platform1) {
-  m_console = openhd::loggers::create_or_get("ohd_video");
+  m_console = openhd::log::create_or_get("ohd_video");
   assert(m_console);
   m_console->set_level(spd::level::debug);
   assert(!cameras.empty());

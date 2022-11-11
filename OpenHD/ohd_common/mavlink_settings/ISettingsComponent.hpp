@@ -35,7 +35,7 @@ struct SettingImpl{
   std::function<bool(std::string id,T requested_value)> change_callback=[](std::string id,T requested_value){
 	std::stringstream ss;
 	ss<<"Requested change "<<id<<" to "<<requested_value;
-	openhd::loggers::get_default()->debug(ss.str());
+	openhd::log::get_default()->debug(ss.str());
 	return true;
   };
 };

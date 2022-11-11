@@ -2,7 +2,6 @@
 #include "WifiCardCommandHelper.hpp"
 
 #include "openhd-platform.hpp"
-#include "openhd-log.hpp"
 #include "OHDWifiCard.hpp"
 #include "openhd-global-constants.hpp"
 
@@ -11,7 +10,7 @@
 
 WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards1) :
    _profile(std::move(profile)),_platform(platform),_broadcast_cards(std::move(broadcast_cards1)),m_disable_all_frequency_checks(OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS)) {
-  m_console = openhd::loggers::create_or_get("ohd_wb_streams");
+  m_console = openhd::log::create_or_get("ohd_wb_streams");
   assert(m_console);
   m_console->set_level(spd::level::debug);
   m_console->debug("WBStreams::WBStreams: {}",_broadcast_cards.size());

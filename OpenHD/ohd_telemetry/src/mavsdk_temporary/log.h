@@ -5,7 +5,10 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_MAV_PARAM_LOG_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_MAV_PARAM_LOG_H_
 
-#include "openhd-log.hpp"
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <cassert>
 
 namespace mavsdk{
 class YLogger{

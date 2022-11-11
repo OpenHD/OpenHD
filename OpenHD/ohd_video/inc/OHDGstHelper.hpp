@@ -39,7 +39,7 @@ struct CommonEncoderParams{
 static void initGstreamerOrThrow() {
   GError *error = nullptr;
   if (!gst_init_check(nullptr, nullptr, &error)) {
-    openhd::loggers::get_default()->error("gst_init_check() failed: {}",error->message);
+    openhd::log::get_default()->error("gst_init_check() failed: {}",error->message);
     g_error_free(error);
     throw std::runtime_error("GStreamer initialization failed");
   }
@@ -120,7 +120,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   if(keyframe_interval>= -1 && keyframe_interval < 1000){
 	ss << "keyframe-interval="<<keyframe_interval<<" ";
   }else{
-	openhd::loggers::get_default()->error("Invalid keyframe intervall: {}",keyframe_interval);
+	openhd::log::get_default()->error("Invalid keyframe intervall: {}",keyframe_interval);
   }
   if(openhd::needs_horizontal_flip(rotation)){
 	ss<<"hflip=1 ";
@@ -141,7 +141,7 @@ static std::string createRpicamsrcStream(const int camera_number,
 		"framerate={}/1, level=3.0 ! ",
 		videoFormat.width, videoFormat.height, videoFormat.framerate);
   }else{
-	openhd::loggers::get_default()->warn("No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues");
+	openhd::log::get_default()->warn("No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues");
 	ss<<fmt::format(
 		"video/x-raw, width={}, height={}, framerate={}/1 ! ",
 		videoFormat.width, videoFormat.height, videoFormat.framerate);
@@ -187,7 +187,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     ss << fmt::format("v4l2jpegenc extra-controls=\"controls,compression_quality={}\" ! ",50); //mjpeg has a compression quality not bitrate
   }
   else {
-    openhd::loggers::get_default()->warn("No h265 encoder on rpi, using SW encode (will almost 100% result in frame drops/performance issues)");
+    openhd::log::get_default()->warn("No h265 encoder on rpi, using SW encode (will almost 100% result in frame drops/performance issues)");
     ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
                       videoFormat.width, videoFormat.height,
                       videoFormat.framerate);

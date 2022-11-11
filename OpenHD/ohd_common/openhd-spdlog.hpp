@@ -13,15 +13,16 @@
 #include <spdlog/spdlog.h>
 #include <mutex>
 
+#include "openhd-spdlog-tele-sink.h"
+
 namespace spd = spdlog;
 
-namespace openhd::loggers {
+namespace openhd::log{
 
-// Note: the _mt loggers are threadsafe by design already, but we need to make sure to crete the instance only once
-// For some reason there is no helper for that in spdlog / i haven't found it yet
+// Note: the _mt loggers have threadsafety by design already, but we need to make sure to crete the instance only once
+// For some reason there is no helper for that in speeddlog / i haven't found it yet
 
 // Thread-safe but recommended to store result in an intermediate variable
-
 static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_name){
   static std::mutex logger_mutex2{};
   std::lock_guard<std::mutex> guard(logger_mutex2);
@@ -29,6 +30,8 @@ static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_n
   if (ret == nullptr) {
     auto created = spdlog::stdout_color_mt(logger_name);
     assert(created);
+    // Add the sink that sends out warning or higher via UDP
+    created->sinks().push_back(std::make_shared<openhd::log::sink::UdpTelemetrySink>());
     return created;
   }
   return ret;

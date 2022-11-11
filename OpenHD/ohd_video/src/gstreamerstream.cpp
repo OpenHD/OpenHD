@@ -10,11 +10,10 @@
 #include "AirRecordingFileHelper.hpp"
 #include "OHDGstHelper.hpp"
 #include "ffmpeg_videosamples.hpp"
-#include "openhd-log.hpp"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,uint16_t video_udp_port)
     : CameraStream(platform, camera_holder, video_udp_port) {
-  m_console=openhd::loggers::create_or_get("ohd_video_gststream");
+  m_console=openhd::log::create_or_get("ohd_video_gststream");
   assert(m_console);
   // TODO fixme
   m_console->set_level(spd::level::debug);
@@ -296,7 +295,7 @@ void GStreamerStream::restartIfStopped() {
 	message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name<<"\n";
 	// We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
 	// Log such that it shows up in QOpenHD
-	LOGE<<"Restarting camera, check your parameters / connection";
+        m_console->warn("Restarting camera, check your parameters / connection");
 	stop();
 	cleanup_pipe();
 	setup();

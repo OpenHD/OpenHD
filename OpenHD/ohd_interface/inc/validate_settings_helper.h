@@ -200,8 +200,10 @@ static bool is_valid_mcs_index(int mcs_index){
 }
 
 // Internally, OpenHD uses milli watt (mW)
+// No wifi card will ever do 10W, but some cards increase their tx power a bit more
+// when you set a higher value (I think)
 static bool is_valid_tx_power_milli_watt(int tx_power_mw){
-  return tx_power_mw>=10 && tx_power_mw<= 2000;
+  return tx_power_mw>=10 && tx_power_mw<= 10000;
 }
 
 static bool is_valid_fec_block_length(int block_length){
