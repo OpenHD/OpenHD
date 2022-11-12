@@ -16,7 +16,7 @@ PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
 echo "getting hash"
-cd /opt/Open.HD
+cd /opt/OpenHD
 ls -a
 VER2=$(git rev-parse --short HEAD) 
 echo ${VER2}
@@ -26,12 +26,12 @@ if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_AR
 cd /opt
 mkdir temp
 cd temp
-git clone -b 2.2.3-evo https://github.com/OpenHD/Open.HD
-cd Open.HD
+git clone -b 2.2.3-evo https://github.com/OpenHD/OpenHD
+cd OpenHD
 git rev-parse --short HEAD ||exit
 VER2=$(git rev-parse --short HEAD) 
 echo ${VER2}
-cd /opt/Open.HD/OpenHD
+cd /opt/OpenHD/OpenHD
 fi
 
 rm -rf build
