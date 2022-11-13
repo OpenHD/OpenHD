@@ -23,7 +23,7 @@ static MavlinkMessage
 stats_total_all_wifibroadcast_streams_pack(const uint8_t system_id,const uint8_t component_id,
 												const openhd::link_statistics::StatsTotalAllStreams& all_stats){
   MavlinkMessage msg;
-  mavlink_openhd_stats_total_all_wifibroadcast_streams_t tmp;
+  openhd::log::get_default()->debug("curr_video0_tx_pps {}",all_stats.curr_video0_tx_pps);
   mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_pack(system_id,component_id,&msg.m,all_stats.count_wifi_packets_received,all_stats.count_bytes_received,all_stats.count_wifi_packets_injected,all_stats.count_bytes_injected,
 	  all_stats.count_telemetry_tx_injections_error_hint,all_stats.count_video_tx_injections_error_hint,all_stats.curr_video0_bps,all_stats.curr_video1_bps
 	  ,all_stats.curr_video0_tx_pps,all_stats.curr_video1_tx_pps,all_stats.curr_telemetry_tx_pps,all_stats.curr_telemetry_rx_bps,all_stats.curr_telemetry_tx_bps,
