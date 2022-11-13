@@ -607,7 +607,6 @@ void WBStreams::loop_recalculate_stats() {
       if(!udpVideoTxList.empty()){
         stats_total_all_streams.curr_video0_bps=udpVideoTxList.at(0)->get_current_provided_bits_per_second();
         stats_total_all_streams.curr_video0_tx_pps=udpVideoTxList.at(0)->get_current_packets_per_second();
-        m_console->debug("curr_video0_tx_pps {}",stats_total_all_streams.curr_video0_tx_pps);
       }
       if(udpVideoTxList.size()>=2){
         stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_current_provided_bits_per_second();

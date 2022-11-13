@@ -29,7 +29,6 @@ static MavlinkMessage
 stats_total_all_wifibroadcast_streams_pack(const uint8_t system_id,const uint8_t component_id,
                                            const openhd::link_statistics::StatsTotalAllStreams& all_stats){
   MavlinkMessage msg;
-  openhd::log::get_default()->warn("curr_video0_tx_pps X{}",all_stats.curr_video0_tx_pps);
   mavlink_openhd_stats_total_all_wifibroadcast_streams_t tmp;
   tmp.count_wifi_packets_received=all_stats.count_wifi_packets_received;
   tmp.count_bytes_received=all_stats.count_bytes_received;
