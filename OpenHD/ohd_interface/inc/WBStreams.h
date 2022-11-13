@@ -98,10 +98,6 @@ class WBStreams {
   [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,std::optional<int> udp_recv_buff_size=std::nullopt)const;
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port);
   [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
-  // hacky, we accumulate the stats for all RX streams, which are 1 on the air (telemetry rx) and
-  // 3 on the ground (telemetry and 2x video rx)
-  // first is always telemetry, second and third are video if on ground
-  std::array<OpenHDStatisticsWriter::Data,3> _last_stats_per_rx_stream{};
   // OpenHD
   openhd::link_statistics::STATS_CALLBACK _stats_callback=nullptr;
   //
