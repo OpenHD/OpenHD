@@ -24,10 +24,25 @@ stats_total_all_wifibroadcast_streams_pack(const uint8_t system_id,const uint8_t
 												const openhd::link_statistics::StatsTotalAllStreams& all_stats){
   MavlinkMessage msg;
   openhd::log::get_default()->debug("curr_video0_tx_pps {}",all_stats.curr_video0_tx_pps);
-  mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_pack(system_id,component_id,&msg.m,all_stats.count_wifi_packets_received,all_stats.count_bytes_received,all_stats.count_wifi_packets_injected,all_stats.count_bytes_injected,
-	  all_stats.count_telemetry_tx_injections_error_hint,all_stats.count_video_tx_injections_error_hint,all_stats.curr_video0_bps,all_stats.curr_video1_bps
-	  ,all_stats.curr_video0_tx_pps,all_stats.curr_video1_tx_pps,all_stats.curr_telemetry_tx_pps,all_stats.curr_telemetry_rx_bps,all_stats.curr_telemetry_tx_bps,
-                                                                0,0,0,0);
+  mavlink_openhd_stats_total_all_wifibroadcast_streams_t tmp;
+  tmp.count_wifi_packets_received=all_stats.count_wifi_packets_received;
+  tmp.count_bytes_received=all_stats.count_bytes_received;
+  tmp.count_wifi_packets_injected=all_stats.count_wifi_packets_injected;
+  tmp.count_bytes_injected=all_stats.count_bytes_injected;
+  tmp.count_telemetry_tx_injections_error_hint=all_stats.count_telemetry_tx_injections_error_hint;
+  tmp.count_video_tx_injections_error_hint=all_stats.count_video_tx_injections_error_hint;
+  tmp.curr_video0_bps=all_stats.curr_video0_bps;
+  tmp.curr_video1_bps=all_stats.curr_video1_bps;
+  tmp.curr_video0_tx_pps=all_stats.curr_video0_tx_pps;
+  tmp.curr_video1_tx_pps=all_stats.curr_video1_tx_pps;
+  tmp.curr_telemetry_tx_pps=all_stats.curr_telemetry_tx_pps;
+  tmp.curr_telemetry_rx_bps=all_stats.curr_telemetry_rx_bps;
+  tmp.curr_telemetry_tx_bps=all_stats.curr_telemetry_tx_bps;
+  tmp.unused_0=0;
+  tmp.unused_1=0;
+  tmp.unused_2=0;
+  tmp.unused_3=0;
+  mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
 
