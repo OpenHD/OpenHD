@@ -570,7 +570,7 @@ void WBStreams::set_video_codec(int codec) {
 
 void WBStreams::loop_recalculate_stats() {
   while (m_recalculate_stats_thread_run){
-    m_console->debug("Recalculating stats");
+    //m_console->debug("Recalculating stats");
     std::array<OpenHDStatisticsWriter::Data,3> _last_stats_per_rx_stream{};
     if(udpTelemetryRx){
       _last_stats_per_rx_stream.at(0)=udpTelemetryRx->get_latest_stats();
