@@ -660,9 +660,9 @@ void WBStreams::loop_recalculate_stats() {
         convert(stats_video_stream1_rx.value(),_last_stats_per_rx_stream.at(2).fec_stream_stats.value());
       }
     }
-    m_last_all_stats =openhd::link_statistics::AllStats{stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx};
+    const auto final_stats=openhd::link_statistics::AllStats{stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx};
     if(m_stats_callback){
-      m_stats_callback(m_last_all_stats);
+      m_stats_callback(final_stats);
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
