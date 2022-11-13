@@ -12,16 +12,22 @@ namespace openhd::LinkStatisticsHelper{
 
 static MavlinkMessage
 wifibroadcast_wifi_card_pack(const uint8_t system_id,const uint8_t component_id,int card_index,
-												const openhd::link_statistics::StatsPerCard& card_stats){
+                             const openhd::link_statistics::StatsPerCard& card_stats){
   MavlinkMessage msg;
-  mavlink_msg_openhd_wifibroadcast_wifi_card_pack(system_id,component_id,&msg.m,card_index,card_stats.rx_rssi,
-												  card_stats.count_p_received,card_stats.count_p_injected,0,0);
+  mavlink_openhd_wifibroadcast_wifi_card_t tmp;
+  tmp.card_index=card_index;
+  tmp.rx_rssi=card_stats.rx_rssi;
+  tmp.count_p_received=card_stats.count_p_received;
+  tmp.count_p_injected=card_stats.count_p_injected;
+  tmp.dummy0=0;
+  tmp.dummy1=0;
+  mavlink_msg_openhd_wifibroadcast_wifi_card_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
 
 static MavlinkMessage
 stats_total_all_wifibroadcast_streams_pack(const uint8_t system_id,const uint8_t component_id,
-												const openhd::link_statistics::StatsTotalAllStreams& all_stats){
+                                           const openhd::link_statistics::StatsTotalAllStreams& all_stats){
   MavlinkMessage msg;
   openhd::log::get_default()->debug("curr_video0_tx_pps X{}",all_stats.curr_video0_tx_pps);
   mavlink_openhd_stats_total_all_wifibroadcast_streams_t tmp;
@@ -48,9 +54,18 @@ stats_total_all_wifibroadcast_streams_pack(const uint8_t system_id,const uint8_t
 
 static MavlinkMessage
 fec_link_rx_statistics_pack(const uint8_t system_id,const uint8_t component_id,int link_index,
-															  const openhd::link_statistics::StatsFECVideoStreamRx& stats_video_stream_rx){
+                            const openhd::link_statistics::StatsFECVideoStreamRx& stats_video_stream_rx){
   MavlinkMessage msg;
-  mavlink_msg_openhd_fec_link_rx_statistics_pack(system_id,component_id,&msg.m,link_index,stats_video_stream_rx.count_blocks_total,stats_video_stream_rx.count_blocks_lost,stats_video_stream_rx.count_blocks_recovered,stats_video_stream_rx.count_fragments_recovered,stats_video_stream_rx.count_bytes_forwarded,0,0);
+  mavlink_openhd_fec_link_rx_statistics_t tmp;
+  tmp.link_index=link_index;
+  tmp.count_blocks_total=stats_video_stream_rx.count_blocks_total;
+  tmp.count_blocks_lost=stats_video_stream_rx.count_blocks_lost;
+  tmp.count_blocks_recovered=stats_video_stream_rx.count_blocks_recovered;
+  tmp.count_fragments_recovered=stats_video_stream_rx.count_fragments_recovered;
+  tmp.count_bytes_forwarded=stats_video_stream_rx.count_bytes_forwarded;
+  tmp.unused_0=0;
+  tmp.unused_1=0;
+  mavlink_msg_openhd_fec_link_rx_statistics_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
 
