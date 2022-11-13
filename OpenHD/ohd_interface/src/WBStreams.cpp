@@ -570,6 +570,7 @@ void WBStreams::set_video_codec(int codec) {
 
 void WBStreams::loop_recalculate_stats() {
   while (m_recalculate_stats_thread_run){
+    m_console->debug("Recalculating stats");
     std::array<OpenHDStatisticsWriter::Data,3> _last_stats_per_rx_stream{};
     if(udpTelemetryRx){
       _last_stats_per_rx_stream.at(0)=udpTelemetryRx->get_latest_stats();
@@ -606,6 +607,7 @@ void WBStreams::loop_recalculate_stats() {
       if(!udpVideoTxList.empty()){
         stats_total_all_streams.curr_video0_bps=udpVideoTxList.at(0)->get_current_provided_bits_per_second();
         stats_total_all_streams.curr_video0_tx_pps=udpVideoTxList.at(0)->get_current_packets_per_second();
+        m_console->debug("curr_video0_tx_pps {}",stats_total_all_streams.curr_video0_tx_pps);
       }
       if(udpVideoTxList.size()>=2){
         stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_current_provided_bits_per_second();
@@ -632,7 +634,8 @@ void WBStreams::loop_recalculate_stats() {
         // on air, we use the dbm reported by the telemetry stream
         card.rx_rssi= _last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
       }else{
-        // on ground, we use the dBm reported by the telemetry stream or video stream
+        // on ground, we use the dBm reported by the video stream (if available), otherwise
+        // we use the dBm reported by the telemetry rx instance.
         const auto rssi_telemetry=_last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
         const auto rssi_video0=_last_stats_per_rx_stream.at(1).rssiPerCard.at(i).last_rssi;
         if(rssi_video0==0){
@@ -664,6 +667,6 @@ void WBStreams::loop_recalculate_stats() {
     if(m_stats_callback){
       m_stats_callback(final_stats);
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds (1000));
   }
 }
