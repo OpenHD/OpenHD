@@ -64,6 +64,16 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
   m_recalculate_stats_thread=std::make_unique<std::thread>(&WBStreams::loop_recalculate_stats, this);
 }
 
+WBStreams::~WBStreams() {
+  if(m_recalculate_stats_thread){
+    m_recalculate_stats_thread_run=false;
+    m_recalculate_stats_thread->join();
+  }
+  if(_restart_async_thread){
+    _restart_async_thread->join();
+  }
+}
+
 void WBStreams::takeover_cards() {
   m_console->debug( "WBStreams::takeover_cards() begin");
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.

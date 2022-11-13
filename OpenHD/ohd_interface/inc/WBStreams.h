@@ -32,6 +32,7 @@ class WBStreams {
   explicit WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards);
   WBStreams(const WBStreams&)=delete;
   WBStreams(const WBStreams&&)=delete;
+  ~WBStreams();
   // register callback that is called in regular intervals with link statistics
   void set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback);
   // Verbose string about the current state.
