@@ -231,6 +231,14 @@ int main(int argc, char *argv[]) {
     // Now we can crate the immutable profile
     const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
     write_profile_manifest(*profile);
+    // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as ground.
+    if(!options.no_qt_autostart){
+      if(!profile->is_air){
+        OHDUtil::run_command("systemctl",{" start qopenhd"});
+      }else{
+        OHDUtil::run_command("systemctl",{" stop qopenhd"});
+      }
+    }
     // And start the blinker (TODO LED output is really dirty right now).
     auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);
 
@@ -273,14 +281,6 @@ int main(int argc, char *argv[]) {
       auto settings_components=ohdVideo->get_setting_components();
       if(!settings_components.empty()){
         ohdTelemetry->add_camera_component(0,settings_components.at(0)->get_all_settings());
-      }
-    }
-    // we need to start QOpenHD when we are running as ground, just to be safe, stop it when we are running as air.
-    if(!options.no_qt_autostart){
-      if(!profile->is_air){
-        OHDUtil::run_command("systemctl",{" start qopenhd"});
-      }else{
-        OHDUtil::run_command("systemctl",{" stop qopenhd"});
       }
     }
     m_console->info("All OpenHD modules running");
