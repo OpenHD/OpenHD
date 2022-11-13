@@ -98,9 +98,6 @@ class WBStreams {
   [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,std::optional<int> udp_recv_buff_size=std::nullopt)const;
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port);
   [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
-  // called from the wifibroadcast instance(s), which have their own threads.
-  std::mutex _statisticsDataLock;
-  void onNewStatisticsData(const OpenHDStatisticsWriter::Data& data);
   // hacky, we accumulate the stats for all RX streams, which are 1 on the air (telemetry rx) and
   // 3 on the ground (telemetry and 2x video rx)
   // first is always telemetry, second and third are video if on ground
@@ -119,6 +116,10 @@ class WBStreams {
   static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS="/boot/openhd/disable_all_frequency_checks.txt";
   const bool m_disable_all_frequency_checks;
   int m_curr_video_codec=0;
+ private:
+  bool m_recalculate_stats_thread_run;
+  std::unique_ptr<std::thread> m_recalculate_stats_thread;
+  void loop_recalculate_stats();
 };
 
 #endif
