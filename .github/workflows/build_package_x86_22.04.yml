@@ -35,6 +35,8 @@ jobs:
           | sudo -E bash
           sudo apt update
           sudo apt upgrade -y
+          sudo apt remove libunwind-dev 
+          sudo apt install -y libunwind-13-dev 
           sudo apt -y install ruby-dev libfmt-dev mavsdk
           sudo gem install fpm
       - name: Install Dependencies
