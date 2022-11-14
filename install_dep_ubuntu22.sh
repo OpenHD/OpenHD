@@ -9,6 +9,7 @@ sudo apt -y install cmake build-essential autotools-dev automake libtool autocon
             libboost-dev libboost-filesystem-dev \
             libusb-1.0-0-dev \
             libv4l-dev \
+            gstreamer-1.0 \
             libavcodec-dev \
             libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
             libspdlog-dev || exit 1
