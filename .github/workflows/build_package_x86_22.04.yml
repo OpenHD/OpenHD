@@ -41,7 +41,7 @@ jobs:
           sudo gem install fpm
       - name: Install Dependencies
         run: |
-          sudo chmod +x install_dep_ubuntu20.sh
+          sudo chmod +x install_dep_ubuntu22.sh
           sudo ./install_dep_ubuntu22.sh
 
       - name: Build with make
