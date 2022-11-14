@@ -1,0 +1,73 @@
+name: build_package_x86_22.04
+
+on:
+  push:
+    branches: [ master, "2.0", "2.2.3-evo-rapha" ]
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    #runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
+    env:
+      CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+    steps:
+      - name: test
+        run: |
+          echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
+          echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
+
+      - name: Clean UP
+        run: |
+          sudo rm -Rf *
+              
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Install Repository
+        run: |
+          sudo apt install -y curl
+          sudo rm -Rf /etc/apt/sources.list.d/openhd*
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          sudo curl -1sLf \
+          'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' \
+          | sudo -E bash
+          sudo apt update
+          sudo apt -y install ruby-dev libfmt-dev mavsdk
+          sudo gem install fpm
+      - name: Install Dependencies
+        run: |
+          sudo chmod +x install_dep_ubuntu20.sh
+          sudo ./install_dep_ubuntu22.sh
+
+      - name: Build with make
+        run: |
+          sudo ./package.sh x86_64 ubuntu jammy
+          ls -a
+
+      - name: Upload to Github
+        uses: 'actions/upload-artifact@v2'
+        with:
+          name: "OpenHD"
+          path: |
+            *.deb
+            *.log
+          if-no-files-found: error
+
+      - name: Push
+        id: push
+        uses: cloudsmith-io/action@master
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          command: "push"
+          format: "deb"
+          owner: "openhd"
+          repo: "openhd-2-2-dev"
+          distro: "ubuntu"
+          release: "jammy"
+          republish: "true" # needed ONLY if version is not changing
+          file: "*.deb"
