@@ -127,26 +127,29 @@ int SerialEndpoint::define_from_baudrate(int baudrate) {
   }
 }
 
-int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options) {
+int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options,std::shared_ptr<spdlog::logger> m_console) {
+  if(!m_console){
+    m_console=openhd::log::get_default();
+  }
   // open() hangs on macOS or Linux devices(e.g. pocket beagle) unless you give it O_NONBLOCK
   int fd = open(options.linux_filename.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (fd == -1) {
-	std::cerr << "open failed: " << GET_ERROR();
-	return -1;
+    m_console->warn("open failed: {}",GET_ERROR());
+    return -1;
   }
   // We need to clear the O_NONBLOCK again because we can block while reading
   // as we do it in a separate thread.
   if (fcntl(fd, F_SETFL, 0) == -1) {
-	std::cerr << "fcntl failed: " << GET_ERROR();
-	close(fd);
-	return -1;
+    m_console->warn("fcntl failed: {}",GET_ERROR());
+    close(fd);
+    return -1;
   }
   struct termios tc{};
   bzero(&tc, sizeof(tc));
   if (tcgetattr(fd, &tc) != 0) {
-	std::cerr << "tcgetattr failed: " << GET_ERROR();
-	close(fd);
-	return -1;
+    m_console->warn("tcgetattr failed: {}",GET_ERROR());
+    close(fd);
+    return -1;
   }
   tc.c_iflag &= ~(IGNBRK | BRKINT | ICRNL | INLCR | PARMRK | INPCK | ISTRIP | IXON);
   tc.c_oflag &= ~(OCRNL | ONLCR | ONLRET | ONOCR | OFILL | OPOST);
@@ -166,17 +169,17 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options) {
 	return -1;
   }
   if (cfsetispeed(&tc, baudrate_or_define) != 0) {
-	std::cerr << "cfsetispeed failed: " << GET_ERROR();
+	m_console->warn("cfsetispeed failed: {}",GET_ERROR());
 	close(fd);
 	return -1;
   }
   if (cfsetospeed(&tc, baudrate_or_define) != 0) {
-	std::cerr << "cfsetospeed failed: " << GET_ERROR();
+	m_console->warn("cfsetospeed failed: {}",GET_ERROR());
 	close(fd);
 	return -1;
   }
   if (tcsetattr(fd, TCSANOW, &tc) != 0) {
-	std::cerr << "tcsetattr failed: " << GET_ERROR();
+	m_console->warn("tcsetattr failed: {}",GET_ERROR());
 	close(fd);
 	return -1;
   }
@@ -191,14 +194,14 @@ void SerialEndpoint::connect_and_read_loop() {
 	  continue;
 	}
 	// The file exists, so creating the FD should be no problem
-	_fd=setup_port(_options);
+	_fd=setup_port(_options,m_console);
 	if(_fd==-1){
 	  // But if it fails, we start over again, checking if at least the linux fd exists
 	  m_console->warn("Cannot create uart fd "+_options.to_string());
 	  std::this_thread::sleep_for(std::chrono::seconds(1));
 	  continue;
 	}
-	std::cout<<"Successfully created UART fd for:"<<_options.to_string()<<"\n";
+	m_console->debug("Successfully created UART fd for: {}",_options.to_string());
 	receive_data_until_error();
 	// cleanup and start over again
 	close(_fd);
@@ -234,14 +237,14 @@ void SerialEndpoint::receive_data_until_error() {
 	  m_console->debug("poll probably timeout");
 	  continue;
 	} else if (pollrc == -1) {
-	  std::cerr<< "read poll failure: " << GET_ERROR();
+	  m_console->warn("read poll failure: {}",GET_ERROR());
 	  // The UART most likely disconnected.
 	  return;
 	}
 	// We enter here if (fds[0].revents & POLLIN) == true
 	recv_len = static_cast<int>(read(_fd, buffer, sizeof(buffer)));
 	if (recv_len < -1) {
-	  std::cerr << "read failure: " << GET_ERROR();
+	  m_console->warn("read failure: {}",GET_ERROR());
 	}
 	if (recv_len > static_cast<int>(sizeof(buffer)) || recv_len == 0) {
 	  // probably timeout

@@ -48,7 +48,7 @@ class SerialEndpoint : public MEndpoint{
  private:
   bool sendMessageImpl(const MavlinkMessage &message) override;
   static int define_from_baudrate(int baudrate);
-  static int setup_port(const HWOptions& options);
+  static int setup_port(const HWOptions& options,std::shared_ptr<spdlog::logger> m_console);
   void connect_and_read_loop();
   // Receive data until either an error occurs (in this case, the UART most likely disconnected)
   // Or a stop was requested.
