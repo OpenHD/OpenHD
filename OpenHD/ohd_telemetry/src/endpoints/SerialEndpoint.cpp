@@ -59,7 +59,15 @@ SerialEndpoint::~SerialEndpoint() {
 
 bool SerialEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   const auto data = message.pack();
-  return write_data_serial(data);
+  const int ret=write_data_serial(data);
+  if(!ret){
+    n_failed_writes++;
+    if(n_failed_writes>100){
+      m_console->warn("More than {} failed writes",n_failed_writes);
+      n_failed_writes=0;
+    }
+  }
+  return ret;
 }
 
 bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data) const {

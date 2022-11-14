@@ -62,6 +62,7 @@ class SerialEndpoint : public MEndpoint{
   std::unique_ptr<std::thread> _connectReceiveThread = nullptr;
   bool _stop_requested=false;
   std::shared_ptr<spdlog::logger> m_console;
+  int n_failed_writes=0;
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_
