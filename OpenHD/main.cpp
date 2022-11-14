@@ -51,6 +51,7 @@ static const struct option long_options[] = {
     {"debug-telemetry", no_argument, nullptr, 'y'},
     {"debug-video", no_argument, nullptr, 'z'},
     {"no-qt-autostart", no_argument, nullptr, 'w'},
+    {"run-time_seconds", required_argument, nullptr, 'r'},
     {nullptr, 0, nullptr, 0},
 };
 
@@ -62,6 +63,7 @@ struct OHDRunOptions {
   bool enable_telemetry_debugging=false;
   bool enable_video_debugging=false;
   bool no_qt_autostart=false;
+  int run_time_seconds=-1; //-1= infinite, only usefully for debugging
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
@@ -101,6 +103,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         break;
       case 'f':commandline_force_dummy_camera= true;
         break;
+      case 'r':
+        ret.run_time_seconds= atoi(tmp_optarg);
       case '?':
       default:
         std::cout << "Usage: \n" <<
@@ -111,7 +115,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
             "--debug-telemetry [enable telemetry debugging] \n"<<
             "--debug-video     [enable video debugging] \n"<<
             "--no-qt-autostart [disable auto start of QOpenHD on ground] \n"<<
-            "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n";
+            "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n"<<
+            "--run-time_seconds -r [Manually specify run time (default infinite),for debugging] \n";
         exit(1);
     }
   }
@@ -174,7 +179,8 @@ int main(int argc, char *argv[]) {
       "debug-interface:"<<OHDUtil::yes_or_no(options.enable_interface_debugging) <<"\n"<<
       "debug-telemetry:"<<OHDUtil::yes_or_no(options.enable_telemetry_debugging) <<"\n"<<
       "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n"<<
-      "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n";
+      "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n"<<
+      "run_time_seconds:"<<options.run_time_seconds<<"\n";
   std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
   std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
   OHDInterface::print_internal_fec_optimization_method();
