@@ -215,7 +215,7 @@ void SerialEndpoint::receive_data_until_error() {
   while (!_stop_requested) {
     int recv_len;
     const auto before=std::chrono::steady_clock::now();
-    int pollrc = poll(fds, 1, 1000);
+    const int pollrc = poll(fds, 1, 1000);
     // on my ubuntu laptop, with usb serial, if the device disconnects I don't get any error results,
     // but poll suddenly never blocks anymore. Therefore, every time we time out we check if the fd is still valid
     // and exit if not (which will lead to a re-start)
@@ -257,6 +257,7 @@ void SerialEndpoint::start() {
     m_console->debug("Already started");
     return;
   }
+  _stop_requested= false;
   _connectReceiveThread=std::make_unique<std::thread>(&SerialEndpoint::connect_and_read_loop, this);
   m_console->debug("SerialEndpoint::start()-end");
 }
