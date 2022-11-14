@@ -212,6 +212,8 @@ void SerialEndpoint::receive_data_until_error() {
   fds[0].fd = _fd;
   fds[0].events = POLLIN;
 
+  int n_failed_polls=0;
+
   while (!_stop_requested) {
     int recv_len;
     const auto before=std::chrono::steady_clock::now();
@@ -228,7 +230,13 @@ void SerialEndpoint::receive_data_until_error() {
     //std::cout<<"Poll res:"<<pollrc<<" took:"<<delta<<" ms\n";
     //debug_poll_fd(fds[0]);
     if (pollrc == 0 || !(fds[0].revents & POLLIN)) {
-      m_console->debug("poll probably timeout");
+      n_failed_polls++;
+      if(n_failed_polls>10){
+        m_console->warn("{} failed polls,reset",n_failed_polls);
+        n_failed_polls=0;
+      }else{
+        m_console->debug("poll probably timeout {}",n_failed_polls);
+      }
       continue;
     } else if (pollrc == -1) {
       m_console->warn("read poll failure: {}",GET_ERROR());
