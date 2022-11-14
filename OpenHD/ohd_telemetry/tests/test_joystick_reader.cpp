@@ -11,7 +11,6 @@
 int main() {
   std::shared_ptr<spdlog::logger> m_console=spdlog::stdout_color_mt("main");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
 
   m_console->debug("test_joystick_reader");
 

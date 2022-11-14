@@ -11,7 +11,6 @@ VEYEStream::VEYEStream(PlatformType platform, std::shared_ptr<CameraHolder> came
 	: CameraStream(platform, camera_holder, video_udp_port) {
   m_console = openhd::log::create_or_get("ohd_veye");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
   m_console->debug("VEYEStream::VEYEStream()");
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();

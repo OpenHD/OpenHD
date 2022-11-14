@@ -12,7 +12,6 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
    _profile(std::move(profile)),_platform(platform),_broadcast_cards(std::move(broadcast_cards1)),m_disable_all_frequency_checks(OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS)) {
   m_console = openhd::log::create_or_get("ohd_wb_streams");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
   m_console->debug("WBStreams::WBStreams: {}",_broadcast_cards.size());
   m_console->debug("WBStreams::m_disable_all_frequency_checks:"+OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks

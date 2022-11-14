@@ -49,7 +49,6 @@ SerialEndpoint::SerialEndpoint(std::string TAG1,SerialEndpoint::HWOptions option
 	_options(std::move(options1)){
   m_console = openhd::log::create_or_get("ohd_t_serial_endp");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
   m_console->info("SerialEndpoint: created with "+_options.to_string());
   start();
 }

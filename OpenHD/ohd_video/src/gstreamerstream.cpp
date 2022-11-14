@@ -15,8 +15,6 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
     : CameraStream(platform, camera_holder, video_udp_port) {
   m_console=openhd::log::create_or_get("ohd_video_gststream");
   assert(m_console);
-  // TODO fixme
-  m_console->set_level(spd::level::debug);
   m_console->debug("GStreamerStream::GStreamerStream()");
   // Since the dummy camera is SW, we generally cannot do more than 640x480@30 anyways.
   // (640x48@30 might already be too much on embedded devices).

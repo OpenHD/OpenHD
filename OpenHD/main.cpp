@@ -187,7 +187,6 @@ int main(int argc, char *argv[]) {
 
   std::shared_ptr<spdlog::logger> m_console=openhd::log::create_or_get("main");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
 
   // Create and link all the OpenHD modules.
   try {

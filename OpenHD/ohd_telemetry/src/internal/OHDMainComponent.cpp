@@ -19,7 +19,6 @@ OHDMainComponent::OHDMainComponent(
 	MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
   m_console = openhd::log::create_or_get("tele_main_comp");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(platform);
   logMessagesReceiver =
       std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,

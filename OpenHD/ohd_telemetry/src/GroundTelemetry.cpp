@@ -15,7 +15,6 @@
 GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_console = openhd::log::create_or_get("ohd_ground_tele");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
   m_groundTelemetrySettings=std::make_unique<openhd::telemetry::ground::SettingsHolder>();
   udpGroundClient =
       std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,

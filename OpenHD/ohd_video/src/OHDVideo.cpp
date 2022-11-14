@@ -12,7 +12,6 @@ OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::share
 	platform(platform1) {
   m_console = openhd::log::create_or_get("ohd_video");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
   assert(!cameras.empty());
   m_console->debug("OHDVideo::OHDVideo()");
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
