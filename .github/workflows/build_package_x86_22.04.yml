@@ -30,9 +30,6 @@ jobs:
       - name: Install Repository
         run: |
           sudo apt install -y curl
-          sudo rm -Rf /etc/apt/sources.list.d/openhd*
-          sudo apt-get clean
-          sudo rm -rf /var/lib/apt/lists/*
           sudo curl -1sLf \
           'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' \
           | sudo -E bash
