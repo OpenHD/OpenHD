@@ -43,7 +43,7 @@ stats_total_all_wifibroadcast_streams_pack(const uint8_t system_id,const uint8_t
   tmp.curr_telemetry_tx_pps=all_stats.curr_telemetry_tx_pps;
   tmp.curr_telemetry_rx_bps=all_stats.curr_telemetry_rx_bps;
   tmp.curr_telemetry_tx_bps=all_stats.curr_telemetry_tx_bps;
-  tmp.unused_0=0;
+  tmp.unused_0=all_stats.curr_rx_packet_loss_perc;
   tmp.unused_1=0;
   tmp.unused_2=0;
   tmp.unused_3=0;

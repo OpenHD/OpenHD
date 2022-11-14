@@ -596,6 +596,13 @@ void WBStreams::loop_recalculate_stats() {
       stats_total_all_streams.count_telemetry_tx_injections_error_hint+=udpTelemetryTx->get_count_tx_injections_error_hint();
     }
     stats_total_all_streams.curr_telemetry_rx_bps=_last_stats_per_rx_stream.at(0).wb_rx_stats.curr_bits_per_second;
+    if(_profile.is_air){
+      stats_total_all_streams.curr_rx_packet_loss_perc=_last_stats_per_rx_stream.at(0).wb_rx_stats.curr_packet_loss_percentage;
+    }else{
+      if(!udpVideoRxList.empty()){
+        stats_total_all_streams.curr_rx_packet_loss_perc=_last_stats_per_rx_stream.at(1).wb_rx_stats.curr_packet_loss_percentage;
+      }
+    }
 
     for(const auto& videoTx:udpVideoTxList){
       // accumulated
