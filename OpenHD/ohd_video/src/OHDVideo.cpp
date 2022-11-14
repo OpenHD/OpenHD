@@ -10,7 +10,7 @@
 
 OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
 	platform(platform1) {
-  m_console = openhd::log::create_or_get("ohd_video");
+  m_console = openhd::log::create_or_get("video");
   assert(m_console);
   assert(!cameras.empty());
   m_console->debug("OHDVideo::OHDVideo()");

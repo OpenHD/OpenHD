@@ -39,7 +39,7 @@ static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_n
 }
 
 static std::shared_ptr<spdlog::logger> get_default() {
-  return create_or_get("ohd_default");
+  return create_or_get("default");
 }
 
 }
