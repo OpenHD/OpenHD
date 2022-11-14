@@ -189,7 +189,6 @@ int main(int argc, char *argv[]) {
   assert(m_console);
   m_console->set_level(spd::level::debug);
 
-  m_console->warn("Hello");
   // Create and link all the OpenHD modules.
   try {
     // This results in fresh default values for all modules (e.g. interface, telemetry, video)
