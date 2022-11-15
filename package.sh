@@ -51,7 +51,10 @@ mkdir -p ${PKGDIR}/settings
 mkdir -p ${PKGDIR}/etc/systemd/system
 
 cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
+
+if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
 cp ../../openhd.service  ${PKGDIR}/etc/systemd/system/
+fi
 
 echo "copied files"
 echo ${PKGDIR}
