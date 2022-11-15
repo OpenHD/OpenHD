@@ -32,6 +32,7 @@ class WBStreams {
   explicit WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards);
   WBStreams(const WBStreams&)=delete;
   WBStreams(const WBStreams&&)=delete;
+  ~WBStreams();
   // register callback that is called in regular intervals with link statistics
   void set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback);
   // Verbose string about the current state.
@@ -86,8 +87,8 @@ class WBStreams {
   void configure_video();
   //openhd::WBStreamsSettings _last_settings;
   // Protects all the tx / rx instances, since we have the restart() from the settings.
-  std::mutex _wbRxTxInstancesLock;
-  std::unique_ptr<openhd::WBStreamsSettingsHolder> _settings;
+  std::mutex m_wbRxTxInstancesLock;
+  std::unique_ptr<openhd::WBStreamsSettingsHolder> m_settings;
   // For telemetry, bidirectional in opposite directions
   std::unique_ptr<UDPWBTransmitter> udpTelemetryTx;
   std::unique_ptr<UDPWBReceiver> udpTelemetryRx;
@@ -98,20 +99,12 @@ class WBStreams {
   [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,std::optional<int> udp_recv_buff_size=std::nullopt)const;
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port);
   [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
-  // called from the wifibroadcast instance(s), which have their own threads.
-  std::mutex _statisticsDataLock;
-  void onNewStatisticsData(const OpenHDStatisticsWriter::Data& data);
-  // hacky, we accumulate the stats for all RX streams, which are 1 on the air (telemetry rx) and
-  // 3 on the ground (telemetry and 2x video rx)
-  // first is always telemetry, second and third are video if on ground
-  std::array<OpenHDStatisticsWriter::Data,3> _last_stats_per_rx_stream{};
-  // OpenHD
-  openhd::link_statistics::STATS_CALLBACK _stats_callback=nullptr;
-  //
-  std::mutex _restart_async_lock;
-  std::unique_ptr<std::thread> _restart_async_thread=nullptr;
+  // Set by the openhd telemetry module to get WB statistics in regular intervals
+  openhd::link_statistics::STATS_CALLBACK m_stats_callback =nullptr;
+  std::mutex m_restart_async_lock;
+  std::unique_ptr<std::thread> m_restart_async_thread =nullptr;
   // last calculated "All stats".
-  openhd::link_statistics::AllStats _last_all_stats;
+  openhd::link_statistics::AllStats m_last_all_stats;
   std::shared_ptr<spdlog::logger> m_console;
   // disable all openhd frequency checking - note that openhd just uses the proper iw command to set a frequency - if setting
   // the frequency actually had an effect, it doesn't know (cannot really know) and therefore QOpenHD can then report a different wifi freq,
@@ -119,6 +112,10 @@ class WBStreams {
   static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS="/boot/openhd/disable_all_frequency_checks.txt";
   const bool m_disable_all_frequency_checks;
   int m_curr_video_codec=0;
+ private:
+  bool m_recalculate_stats_thread_run;
+  std::unique_ptr<std::thread> m_recalculate_stats_thread;
+  void loop_recalculate_stats();
 };
 
 #endif

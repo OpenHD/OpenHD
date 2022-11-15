@@ -12,9 +12,8 @@
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) :
 platform(platform1),profile(std::move(profile1)) {
-  m_console = openhd::log::create_or_get("ohd_interface_x");
+  m_console = openhd::log::create_or_get("interface");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
   m_console->debug("OHDInterface::OHDInterface()");
   //wifiCards = std::make_unique<WifiCards>(profile);
   //Find out which cards are connected first

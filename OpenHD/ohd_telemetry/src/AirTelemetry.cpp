@@ -10,9 +10,8 @@
 #include "openhd-temporary-air-or-ground.h"
 
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
-  m_console = openhd::log::create_or_get("ohd_air_tele");
+  m_console = openhd::log::create_or_get("air_tele");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
   _airTelemetrySettings=std::make_unique<openhd::telemetry::air::SettingsHolder>();
   setup_uart();
   // any message coming in via wifibroadcast is a message from the ground pi

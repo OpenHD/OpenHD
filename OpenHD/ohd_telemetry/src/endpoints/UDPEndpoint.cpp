@@ -11,7 +11,6 @@ UDPEndpoint::UDPEndpoint(const std::string& TAG, const int senderPort, const int
 	SEND_PORT(senderPort), RECV_PORT(receiverPort) {
   m_console = openhd::log::create_or_get(TAG);
   assert(m_console);
-  m_console->set_level(spd::level::debug);
   /*if (senderPort == receiverPort) {
 	throw std::invalid_argument("UDPEndpoint - cannot send and receive on same UDP port\n");
   }*/

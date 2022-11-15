@@ -10,9 +10,8 @@
 
 OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
 	platform(platform1) {
-  m_console = openhd::log::create_or_get("ohd_video");
+  m_console = openhd::log::create_or_get("video");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
   assert(!cameras.empty());
   m_console->debug("OHDVideo::OHDVideo()");
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
@@ -56,6 +55,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
     case CameraType::IP:
     case CameraType::RockchipCSI:
     case CameraType::UVC:
+    case CameraType::RockchipHDMI:
     case CameraType::Dummy: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;

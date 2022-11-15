@@ -51,6 +51,7 @@ static const struct option long_options[] = {
     {"debug-telemetry", no_argument, nullptr, 'y'},
     {"debug-video", no_argument, nullptr, 'z'},
     {"no-qt-autostart", no_argument, nullptr, 'w'},
+    {"run-time_seconds", required_argument, nullptr, 'r'},
     {nullptr, 0, nullptr, 0},
 };
 
@@ -62,6 +63,7 @@ struct OHDRunOptions {
   bool enable_telemetry_debugging=false;
   bool enable_video_debugging=false;
   bool no_qt_autostart=false;
+  int run_time_seconds=-1; //-1= infinite, only usefully for debugging
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
@@ -101,6 +103,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         break;
       case 'f':commandline_force_dummy_camera= true;
         break;
+      case 'r':
+        ret.run_time_seconds= atoi(tmp_optarg);
       case '?':
       default:
         std::cout << "Usage: \n" <<
@@ -111,7 +115,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
             "--debug-telemetry [enable telemetry debugging] \n"<<
             "--debug-video     [enable video debugging] \n"<<
             "--no-qt-autostart [disable auto start of QOpenHD on ground] \n"<<
-            "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n";
+            "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n"<<
+            "--run-time_seconds -r [Manually specify run time (default infinite),for debugging] \n";
         exit(1);
     }
   }
@@ -174,16 +179,15 @@ int main(int argc, char *argv[]) {
       "debug-interface:"<<OHDUtil::yes_or_no(options.enable_interface_debugging) <<"\n"<<
       "debug-telemetry:"<<OHDUtil::yes_or_no(options.enable_telemetry_debugging) <<"\n"<<
       "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n"<<
-      "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n";
+      "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n"<<
+      "run_time_seconds:"<<options.run_time_seconds<<"\n";
   std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
   std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
   OHDInterface::print_internal_fec_optimization_method();
 
   std::shared_ptr<spdlog::logger> m_console=openhd::log::create_or_get("main");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
 
-  m_console->warn("Hello");
   // Create and link all the OpenHD modules.
   try {
     // This results in fresh default values for all modules (e.g. interface, telemetry, video)
@@ -231,6 +235,14 @@ int main(int argc, char *argv[]) {
     // Now we can crate the immutable profile
     const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
     write_profile_manifest(*profile);
+    // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as ground.
+    if(!options.no_qt_autostart){
+      if(!profile->is_air){
+        OHDUtil::run_command("systemctl",{" start qopenhd"});
+      }else{
+        OHDUtil::run_command("systemctl",{" stop qopenhd"});
+      }
+    }
     // And start the blinker (TODO LED output is really dirty right now).
     auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);
 
@@ -275,14 +287,6 @@ int main(int argc, char *argv[]) {
         ohdTelemetry->add_camera_component(0,settings_components.at(0)->get_all_settings());
       }
     }
-    // we need to start QOpenHD when we are running as ground, just to be safe, stop it when we are running as air.
-    if(!options.no_qt_autostart){
-      if(!profile->is_air){
-        OHDUtil::run_command("systemctl",{" start qopenhd"});
-      }else{
-        OHDUtil::run_command("systemctl",{" stop qopenhd"});
-      }
-    }
     m_console->info("All OpenHD modules running");
 
     // run forever, everything has its own threads. Note that the only way to break out basically
@@ -293,8 +297,16 @@ int main(int argc, char *argv[]) {
       std::cerr<<"Got SIGTERM, exiting";
       quit= true;
     });
+    const auto run_time_begin=std::chrono::steady_clock::now();
     while (!quit) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
+      if(options.run_time_seconds>=1){
+        if(std::chrono::steady_clock::now()-run_time_begin>=std::chrono::seconds(options.run_time_seconds)){
+          m_console->warn("Terminating, exceeded run time {}",options.run_time_seconds);
+          // we can just break out any time, usefully for checking memory leaks and more.
+          break;
+        }
+      }
       if(ohdVideo){
         ohdVideo->restartIfStopped();
       }
@@ -324,4 +336,5 @@ int main(int argc, char *argv[]) {
     std::cerr << "Unknown exception occurred" << std::endl;
     exit(1);
   }
+  return 0;
 }
