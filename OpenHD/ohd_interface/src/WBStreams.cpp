@@ -383,8 +383,15 @@ bool WBStreams::set_frequency(int frequency) {
   if(m_disable_all_frequency_checks){
     m_console->warn("Not sanity checking frequency");
   }else{
+    // channels below and above the normal channels, not allowed in most countries
+    bool cards_support_extra_channels=false;
+    if(_platform.platform_type==PlatformType::RaspberryPi || _platform.platform_type==PlatformType::Jetson){
+      // modified kernel
+      cards_support_extra_channels= all_cards_support_extra_channels_2G(_broadcast_cards);
+    }
+    m_console->debug("cards_support_extra_channels:"+OHDUtil::yes_or_no(cards_support_extra_channels));
     if(m_settings->get_settings().configured_for_2G()){
-      if(!openhd::is_valid_frequency_2G(frequency)){
+      if(!openhd::is_valid_frequency_2G(frequency,cards_support_extra_channels)){
         m_console->warn("Invalid 2.4G frequency {}",frequency);
         return false;
       }
