@@ -2,7 +2,7 @@
 #include "WifiCardCommandHelper.hpp"
 
 #include "openhd-platform.hpp"
-#include "openhd-log.hpp"
+#include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "OHDWifiCard.hpp"
 #include "openhd-global-constants.hpp"
