@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "openhd-camera-enums.hpp"
-#include "openhd-log.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "openhd-settings.hpp"
@@ -17,6 +16,7 @@
 
 #include "mavlink_settings/ISettingsComponent.hpp"
 #include "v_validate_settings.h"
+#include "openhd-action-handler.hpp"
 
 static constexpr int DEFAULT_BITRATE_KBITS = 5000;
 static constexpr int DEFAULT_KEYFRAME_INTERVAL = 30;
@@ -94,8 +94,8 @@ struct CameraSettings {
   // Note that r.n only rpi camera supports rotation(s), where the degrees are mapped to the corresponding h/v flip(s)
   int camera_rotation_degree=0;
   // R.n only for rpi camera, see https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c
-  int awb_mode=0;
-  int exposure_mode=0;
+  int awb_mode=1; //default 1 (auto)
+  int exposure_mode=1; //default 1 (auto)
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,userSelectedVideoFormat,bitrateKBits,keyframe_interval,mjpeg_quality_percent,url,air_recording,camera_rotation_degree,
 								   awb_mode,exposure_mode)
@@ -120,6 +120,7 @@ struct Camera {
   CameraType type = CameraType::Unknown;
   std::string name = "unknown";
   std::string vendor = "unknown";
+  std::string sensor_name="unknown";
   std::string vid;
   std::string pid;
   // for USB this is the bus number, for CSI it's the connector number
@@ -155,7 +156,7 @@ struct Camera {
 	return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
   }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,vid,pid,bus,index,endpoints)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,vid,pid,bus,index,endpoints)
 
 
 static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("video/");
@@ -167,10 +168,13 @@ static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::st
 class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	    public openhd::ISettingsComponent{
  public:
-  explicit CameraHolder(Camera camera):
-	  _camera(std::move(camera)),
+  explicit CameraHolder(Camera camera,std::shared_ptr<openhd::ActionHandler> opt_action_handler= nullptr):
+	  _camera(std::move(camera)),m_opt_action_handler(std::move(opt_action_handler)),
 	  openhd::settings::PersistentSettings<CameraSettings>(VIDEO_SETTINGS_DIRECTORY){
 	init();
+        if(m_opt_action_handler){
+          m_opt_action_handler->action_set_video_codec_handle(video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec));
+        }
   }
   [[nodiscard]] const Camera& get_camera()const{
 	return _camera;
@@ -215,6 +219,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	  }
 	  return false;
 	};
+        // This is not a setting (cannot be changed) but rather a read-only param, but repurposing the settings here was the easiest
         auto c_read_only_param=[this](std::string,std::string value){
           return false;
         };
@@ -235,9 +240,13 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
             openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().keyframe_interval,c_keyframe_interval}},
             openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
             openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
-            // This is not a setting (cannot be changed) but rather a read-only param, but repurposing the settings here was the easiest
+            // for debugging
             openhd::Setting{"V_CAM_TYPE",openhd::StringSetting { get_short_name(),c_read_only_param}},
         };
+        if(_camera.type==CameraType::Libcamera){
+          // r.n we only write the sensor name for cameras detected via libcamera
+          ret.push_back(openhd::Setting{"V_CAM_SENSOR",openhd::StringSetting{_camera.sensor_name,c_read_only_param}});
+        }
 	if(_camera.supports_rotation()){
 	  auto c_rotation=[this](std::string,int value) {
 		return set_camera_rotation(value);
@@ -296,6 +305,9 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
 	}
 	unsafe_get_settings().userSelectedVideoFormat.videoCodec=video_codec_from_int(codec);
 	persist();
+        if(m_opt_action_handler){
+          m_opt_action_handler->action_set_video_codec_handle(codec);
+        }
 	return true;
   }
   bool set_video_bitrate(int bitrate_mbits){
@@ -371,6 +383,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
  private:
   // Camera info is immutable
   const Camera _camera;
+  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
 	std::stringstream ss;

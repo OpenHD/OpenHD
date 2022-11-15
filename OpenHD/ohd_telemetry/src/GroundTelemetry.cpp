@@ -13,15 +13,9 @@
 #include "openhd-temporary-air-or-ground.h"
 
 GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
-  m_console = spd::stdout_color_mt("ohd_ground_tele");
+  m_console = openhd::log::create_or_get("ground_tele");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
-  /*udpGroundClient =std::make_unique<UDPEndpoint>("GroundStationUDP",
-                                                                                                 OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
-                                                                                                 "127.0.0.1","127.0.0.1",true);//127.0.0.1
-  udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
-        onMessageGroundStationClients(msg);
-  });*/
+  m_groundTelemetrySettings=std::make_unique<openhd::telemetry::ground::SettingsHolder>();
   udpGroundClient =
       std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
                                      "127.0.0.1","127.0.0.1");
@@ -35,14 +29,33 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   });
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
   components.push_back(_ohd_main_component);
+#ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
+  if(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick){
+    //m_joystick_reader=std::make_unique<JoystickReader>();
+    m_rc_joystick_sender=std::make_unique<RcJoystickSender>([this](const MavlinkMessage &msg){
+      sendMessageAirPi(msg);
+      // temporary / hacky: Send the messages to QOpenHD, such that we can display it in the UI
+      sendMessageGroundStationClients(msg);
+    },m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz,JoystickReader::get_default_channel_mapping());
+    const auto parsed=JoystickReader::convert_string_to_channel_mapping(m_groundTelemetrySettings->get_settings().rc_channel_mapping);
+    if(parsed==std::nullopt){
+      m_console->warn("Not a valid channel mapping,using default");
+    }else{
+      m_rc_joystick_sender->update_channel_maping(parsed.value());
+    }
+    m_console->info("Joystick enabled");
+  }else{
+    m_console->info("Joystick disabled");
+  }
+#else
+  m_console->info("No Joystick support");
+#endif
   //
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their parameters.
   generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
   generic_mavlink_param_provider->add_params(get_all_settings());
   components.push_back(generic_mavlink_param_provider);
-  // temporary
-  //m_joystick_reader=std::make_unique<JoystickReader>();
   m_console->debug("Created GroundTelemetry");
 }
 
@@ -231,5 +244,43 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   if(openhd::tmp::file_air_or_ground_exists()){
     ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",openhd::IntSetting {0,c_config_boot_as_air}});
   }
+#ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
+  auto c_config_enable_joystick=[this](std::string,int value){
+    if(!openhd::validate_yes_or_no(value))return false;
+    m_groundTelemetrySettings->unsafe_get_settings().enable_rc_over_joystick=value;
+    m_groundTelemetrySettings->persist();
+    // Enabling requires reboot
+    return true;
+  };
+  ret.push_back(openhd::Setting{"ENABLE_JOY_RC",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick),
+                                                                    c_config_enable_joystick}});
+  if(m_rc_joystick_sender){
+    auto c_rc_over_joystick_update_rate_hz=[this](std::string,int value){
+      if(!openhd::telemetry::ground::valid_joystick_update_rate(value))return false;
+      m_groundTelemetrySettings->unsafe_get_settings().rc_over_joystick_update_rate_hz=value;
+      m_groundTelemetrySettings->persist();
+      assert(m_rc_joystick_sender);
+      m_rc_joystick_sender->change_update_rate(value);
+      return true;
+    };
+    ret.push_back(openhd::Setting{"RC_UPDATE_HZ",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz),
+                                                                     c_rc_over_joystick_update_rate_hz}});
+    auto c_rc_over_joystick_channel_mapping=[this](std::string,std::string value){
+      m_console->debug("Change channel mapping {}",value);
+      const auto parsed=JoystickReader::convert_string_to_channel_mapping(value);
+      if(parsed==std::nullopt){
+        m_console->warn("Not a valid channel mapping");
+        return false;
+      }
+      m_rc_joystick_sender->update_channel_maping(parsed.value());
+      m_groundTelemetrySettings->unsafe_get_settings().rc_channel_mapping=value;
+      m_groundTelemetrySettings->persist();
+      return true;
+    };
+    ret.push_back(openhd::Setting{"RC_CHAN_MAP",openhd::StringSetting {m_groundTelemetrySettings->get_settings().rc_channel_mapping,
+                                                                     c_rc_over_joystick_channel_mapping}});
+  }
+#endif
+  openhd::testing::append_dummy_if_empty(ret);
   return ret;
 }

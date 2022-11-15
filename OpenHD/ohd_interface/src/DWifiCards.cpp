@@ -6,8 +6,6 @@
 
 #include <regex>
 #include <iostream>
-#include <boost/algorithm/string/trim.hpp>
-#include <utility>
 
 #include "openhd-spdlog.hpp"
 
@@ -53,7 +51,7 @@ static SupportedFrequency supported_frequencies(const std::string& wifi_interfac
   const std::string command="iwlist "+wifi_interface_name+" frequency";
   const auto res_op=OHDUtil::run_command_out(command.c_str());
   if(!res_op.has_value()){
-	openhd::loggers::get_default()->warn("get_supported_channels for "+wifi_interface_name+" failed");
+	openhd::log::get_default()->warn("get_supported_channels for "+wifi_interface_name+" failed");
 	return ret;
   }
   const auto& res=res_op.value();
@@ -68,7 +66,7 @@ static SupportedFrequency supported_frequencies(const std::string& wifi_interfac
 
 
 std::vector<WiFiCard> DWifiCards::discover() {
-  openhd::loggers::get_default()->debug("WiFi::discover()");
+  openhd::log::get_default()->debug("WiFi::discover()");
   std::vector<WiFiCard> m_wifi_cards;
   // Find wifi cards, excluding specific kinds of interfaces.
   const std::vector<std::string> excluded_interfaces = {
@@ -93,7 +91,7 @@ std::vector<WiFiCard> DWifiCards::discover() {
 	  }
 	}
   }
-  openhd::loggers::get_default()->info("WiFi::discover done, n cards: {}",m_wifi_cards.size());
+  openhd::log::get_default()->info("WiFi::discover done, n cards: {}",m_wifi_cards.size());
   write_wificards_manifest(m_wifi_cards);
   return m_wifi_cards;
 }
@@ -112,12 +110,12 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   std::regex r{"DRIVER=([\\w]+)"};
 
   if (!std::regex_search(raw_value, result, r)) {
-	openhd::loggers::get_default()->warn("no result");
+	openhd::log::get_default()->warn("no result");
 	return {};
   }
 
   if (result.size() != 2) {
-	openhd::loggers::get_default()->warn("result doesnt match");
+	openhd::log::get_default()->warn("result doesnt match");
 	return {};
   }
 
@@ -147,7 +145,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	// Note that this does not neccessarily mean this info is right, rtl8812au driver "lies" in this reagrd.
 	std::stringstream ss;
 	ss<<"Card "<<card.interface_name<<" reports:{"<<"supports_2G:"<<OHDUtil::yes_or_no(supports_2ghz)<<" supports_5G:"<<OHDUtil::yes_or_no(supports_2ghz)<<"}";
-	openhd::loggers::get_default()->info(ss.str());
+	openhd::log::get_default()->info(ss.str());
   }
 
   std::stringstream address;
@@ -157,7 +155,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 
   std::ifstream f(address.str());
   std::string mac((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-  boost::trim_right(mac);
+  OHDUtil::rtrim(mac);
 
   card.mac = mac;
 
@@ -228,7 +226,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  break;
 	}
 	default: {
-	  openhd::loggers::get_default()->warn("Unknown card type for "+card.interface_name);
+	  openhd::log::get_default()->warn("Unknown card type for "+card.interface_name);
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
@@ -244,7 +242,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   }
   // hacky there is something wron with phy-lookup
   if(!(card.supports_2ghz  || card.supports_5ghz)){
-	openhd::loggers::get_default()->warn("Card "+card.interface_name+" reports neither 2G nor 5G, default to 2G capable");
+	openhd::log::get_default()->warn("Card "+card.interface_name+" reports neither 2G nor 5G, default to 2G capable");
 	card.supports_2ghz=true;
   }
   return card;

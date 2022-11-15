@@ -20,7 +20,7 @@
  */
 class OHDVideo {
  public:
-  OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras);
+  OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler);
   OHDVideo(const OHDVideo&)=delete;
   OHDVideo(const OHDVideo&&)=delete;
   /**

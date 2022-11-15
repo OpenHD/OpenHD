@@ -11,16 +11,43 @@
 
 // Settings for telemetry, only valid on an air pi (since only on the air pi we connect the FC)
 // Note that we do not have any telemetry settings r.n for the ground (since forwarding is a task ov ohd_interface, not ohd_telemetry)
-namespace openhd{
+namespace openhd::telemetry::air{
 
-static const std::string TELEMETRY_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("telemetry/");
+static const std::string SETTINGS_DIRECTORY =std::string(BASE_PATH)+std::string("telemetry/");
 
 // Default for ardupilot and more
 static constexpr int DEFAULT_UART_BAUDRATE=115200;
 static constexpr int UART_CONNECTION_TYPE_DISABLE=0;
 static constexpr int DEFAULT_UART_CONNECTION=UART_CONNECTION_TYPE_DISABLE; // Default to UART disabled (FC)
 
-struct AirTelemetrySettings{
+/*enum class SerialBaudRate{
+  RATE_9600,
+  RATE_19200,
+  RATE_38400,
+  RATE_57600,
+  RATE_115200,
+  RATE_230400,
+  RATE_460800,
+  RATE_500000,
+  RATE_576000,
+  RATE_921600,
+  RATE_1000000,
+};
+NLOHMANN_JSON_SERIALIZE_ENUM( SerialBaudRate, {
+     {SerialBaudRate::RATE_9600, "9600"},
+     {SerialBaudRate::RATE_19200, "19200"},
+     {SerialBaudRate::RATE_38400, "38400"},
+     {SerialBaudRate::RATE_57600, "57600"},
+     {SerialBaudRate::RATE_115200, "115200"},
+     {SerialBaudRate::RATE_230400, "230400"},
+     {SerialBaudRate::RATE_460800, "460800"},
+     {SerialBaudRate::RATE_500000, "500000"},
+     {SerialBaudRate::RATE_576000, "576000"},
+     {SerialBaudRate::RATE_921600, "921600"},
+     {SerialBaudRate::RATE_1000000, "1000000"},
+});*/
+
+struct Settings{
   // 0: Disable
   // 1: RPI UART0 (/dev/serial0)
   // 2: RPI UART1 (/dev/serial1)
@@ -33,7 +60,7 @@ struct AirTelemetrySettings{
   int fc_uart_baudrate=DEFAULT_UART_BAUDRATE;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirTelemetrySettings,fc_uart_connection_type,fc_uart_baudrate);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,fc_uart_connection_type,fc_uart_baudrate);
 
 static bool validate_uart_connection_type(int type){
   return type >=0 && type <=5;
@@ -87,20 +114,21 @@ static bool validate_uart_baudrate(int baudrate){
 static constexpr auto FC_UART_CONNECTION_TYPE="FC_UART_CONN";
 static constexpr auto FC_UART_BAUD_RATE="FC_UART_BAUD";
 
-class AirTelemetrySettingsHolder:public openhd::settings::PersistentSettings<AirTelemetrySettings>{
+class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
  public:
-  AirTelemetrySettingsHolder():
-	  openhd::settings::PersistentSettings<AirTelemetrySettings>(TELEMETRY_SETTINGS_DIRECTORY){
+  SettingsHolder():
+	  openhd::settings::PersistentSettings<Settings>(
+            SETTINGS_DIRECTORY){
 	init();
   }
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
 	std::stringstream ss;
-	ss<<"fc_uart.json";
+	ss<<"air_settings.json";
 	return ss.str();
   }
-  [[nodiscard]] AirTelemetrySettings create_default()const override{
-	return AirTelemetrySettings{};
+  [[nodiscard]] Settings create_default()const override{
+	return Settings{};
   }
 };
 

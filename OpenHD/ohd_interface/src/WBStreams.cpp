@@ -14,16 +14,16 @@ static const char *KEYPAIR_FILE_DRONE = "/usr/local/share/openhd/drone.key";
 static const char *KEYPAIR_FILE_GROUND = "/usr/local/share/openhd/gs.key";
 
 WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards1) :
-   _profile(std::move(profile)),_platform(platform),_broadcast_cards(std::move(broadcast_cards1)) {
-  m_console = spd::stdout_color_mt("ohd_wb_streams");
+   _profile(std::move(profile)),_platform(platform),_broadcast_cards(std::move(broadcast_cards1)),m_disable_all_frequency_checks(OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS)) {
+  m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
   m_console->debug("WBStreams::WBStreams: {}",_broadcast_cards.size());
+  m_console->debug("WBStreams::m_disable_all_frequency_checks:"+OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks
   if(_broadcast_cards.empty()) {
     // NOTE: Here we crash, since it would be a programmer(s) error to create a WBStreams instance without at least 1 wifi card.
     // In OHDInterface, we handle it more gracefully with an error code.
-    m_console->warn("Without at least one wifi card, the stream(s) cannot be started");
+    m_console->error("Without at least one wifi card, the stream(s) cannot be started");
     exit(1);
   }
   // more than 4 cards would be completely insane, most likely a programming error
@@ -40,34 +40,46 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
     _broadcast_cards.resize(1);
   }
   // this fetches the last settings, otherwise creates default ones
-  _settings=std::make_unique<openhd::WBStreamsSettingsHolder>(openhd::tmp_convert(_broadcast_cards));
+  m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(openhd::tmp_convert(_broadcast_cards));
   // check if the cards connected match the previous settings.
   // For now, we check if the first wb card can do 2 / 4 ghz, and assume the rest can do the same
   const auto first_card=_broadcast_cards.at(0)->_wifi_card;
-  if(_settings->get_settings().configured_for_2G()){
+  if(m_settings->get_settings().configured_for_2G()){
 	if(! first_card.supports_2ghz){
 	  // we need to switch to 5ghz, since the connected card cannot do 2ghz
 	  m_console->warn("WB configured for 2G but card can only do 5G - overwriting old settings");
-	  _settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
-	  _settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_5GHZ_FREQUENCY;
-	  _settings->persist();
+          m_settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
+          m_settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_5GHZ_FREQUENCY;
+          m_settings->persist();
 	}
   }else{
 	if(!first_card.supports_5ghz){
 	  // similar, we need to switch to 2G
 	  m_console->warn("WB configured for 5G but card can only do 2G - overwriting old settings");
-	  _settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
-	  _settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_2GHZ_FREQUENCY;
-	  _settings->persist();
+          m_settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
+          m_settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_2GHZ_FREQUENCY;
+          m_settings->persist();
 	}
   }
-  unblock_cards();
+  takeover_cards();
   configure_cards();
   configure_streams();
+  m_recalculate_stats_thread_run= true;
+  m_recalculate_stats_thread=std::make_unique<std::thread>(&WBStreams::loop_recalculate_stats, this);
 }
 
-void WBStreams::unblock_cards() {
-  m_console->debug( "WBStreams::unblock_cards() begin");
+WBStreams::~WBStreams() {
+  if(m_recalculate_stats_thread){
+    m_recalculate_stats_thread_run=false;
+    m_recalculate_stats_thread->join();
+  }
+  if(m_restart_async_thread){
+    m_restart_async_thread->join();
+  }
+}
+
+void WBStreams::takeover_cards() {
+  m_console->debug( "WBStreams::takeover_cards() begin");
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // However, with the image set up by raphael they should be free from any (OS) prcoesses already
   // R.N we also try and blacklist the cards from NetworkManager - it is needed for RPI and Ubuntu
@@ -89,7 +101,7 @@ void WBStreams::unblock_cards() {
   if(_platform.platform_type==PlatformType::RaspberryPi){
     //OHDUtil::run_command("airmon-ng",{"check","kill"});
   }
-  m_console->debug("WBStreams::unblock_cards() end");
+  m_console->debug("WBStreams::takeover_cards() end");
 }
 
 void WBStreams::configure_cards() {
@@ -107,12 +119,13 @@ void WBStreams::configure_cards() {
 	WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
 	WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
 	WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
-	const bool width_40=_settings->get_settings().wb_channel_width==40;
+	const bool width_40= m_settings->get_settings().wb_channel_width==40;
 	//WifiCardCommandHelper::set_frequency(card->_wifi_card, _settings->get_settings().wb_frequency);
-	WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card, _settings->get_settings().wb_frequency,width_40);
+	WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card, m_settings->get_settings().wb_frequency,width_40);
 	// TODO check if this works - on rtl8812au, the displayed value at least changes
 	// Not sure which is better, iw dev or iwconfig. However, iwconfig eats it in mW
-	WifiCardCommandHelper::set_txpower2(card->_wifi_card, _settings->get_settings().wb_tx_power_milli_watt);
+	WifiCardCommandHelper::set_txpower2(card->_wifi_card,
+            m_settings->get_settings().wb_tx_power_milli_watt);
 	//WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
   }
   m_console->debug("WBStreams::configure_cards() end");
@@ -169,8 +182,8 @@ void WBStreams::configure_video() {
 
 std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,
                                                            std::optional<int> udp_recv_buff_size)const {
-  const auto mcs_index=static_cast<int>(_settings->get_settings().wb_mcs_index);
-  const auto channel_width=static_cast<int>(_settings->get_settings().wb_channel_width);
+  const auto mcs_index=static_cast<int>(m_settings->get_settings().wb_mcs_index);
+  const auto channel_width=static_cast<int>(m_settings->get_settings().wb_channel_width);
   RadiotapHeader::UserSelectableParams wifiParams{channel_width, false, 0, false, mcs_index};
   TOptions options{};
   // We log them all manually together
@@ -184,9 +197,19 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
     options.keypair = std::nullopt;
   }
   if(enableFec){
-	options.fec_k=static_cast<int>(_settings->get_settings().wb_video_fec_block_length);
-	options.fec_percentage=static_cast<int>(_settings->get_settings().wb_video_fec_percentage); // Default to 20% fec overhead
+	options.fec_k=static_cast<int>(m_settings->get_settings().wb_video_fec_block_length);
+	options.fec_percentage=static_cast<int>(
+            m_settings->get_settings().wb_video_fec_percentage); // Default to 20% fec overhead
         //options.fec_k="h264";
+        if(m_settings->get_settings().wb_video_fec_block_length_auto_enable){
+          if(m_curr_video_codec==0){
+            options.fec_k="h264";
+          }else if(m_curr_video_codec==1){
+            options.fec_k="h265";
+          }else if(m_curr_video_codec==2){
+            options.fec_k="mjpeg";
+          }
+        }
   }else{
 	options.fec_k=0;
 	options.fec_percentage=0;
@@ -217,13 +240,11 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
   // high latency when blocks are lost.
   // Multiple rx wifi card's won't provide a benefit with this parameter set though.
   options.rx_queue_depth = 1;//_broadcast_cards.size() > 1 ? 10 : 2;
-  return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port,[this](OpenHDStatisticsWriter::Data stats){
-	this->onNewStatisticsData(stats);
-  });
+  return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port);
 }
 
 std::string WBStreams::createDebug(){
-  std::unique_lock<std::mutex> lock(_wbRxTxInstancesLock, std::try_to_lock);
+  std::unique_lock<std::mutex> lock(m_wbRxTxInstancesLock, std::try_to_lock);
   if(!lock.owns_lock()){
 	// We can just discard statistics data during a re-start
 	return "WBStreams::No debug during restart\n";
@@ -247,7 +268,7 @@ std::string WBStreams::createDebug(){
   for (const auto &rxvid: udpVideoRxList) {
 	ss<<"VidRx :"<<rxvid->createDebug();
   }
-  ss<<_last_all_stats<<"\n";
+  ss<< m_last_all_stats <<"\n";
   /*if(udpTelemetryTx){
 	ss<<"PPS telemetry:"<<udpTelemetryTx->get_current_packets_per_second()<<"\n";
   }*/
@@ -255,7 +276,7 @@ std::string WBStreams::createDebug(){
 }
 
 void WBStreams::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
-  std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
+  std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
   bool first= true;
   assert(udpVideoRxList.size()==2);
   m_console->info("WBStreams::addExternalDeviceIpForwardingVideoOnly:"+ip);
@@ -269,7 +290,7 @@ void WBStreams::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
 }
 
 void WBStreams::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
-  std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
+  std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
   bool first= true;
   assert(udpVideoRxList.size()==2);
   for(auto& rxVid:udpVideoRxList){
@@ -288,7 +309,7 @@ std::vector<std::string> WBStreams::get_rx_card_names() const {
 }
 
 bool WBStreams::ever_received_any_data(){
-  std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
+  std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
     if(_profile.is_air){
         // check if we got any telemetry data, we never receive video data
         assert(udpTelemetryRx);
@@ -319,116 +340,16 @@ static void convert(openhd::link_statistics::StatsFECVideoStreamRx& dest,const F
 }
 
 void WBStreams::set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) {
-  std::lock_guard<std::mutex> guard(_statisticsDataLock);
-  _stats_callback=std::move(stats_callback);
+  m_stats_callback =std::move(stats_callback);
 }
 
-// TDOO fixme
-// This is completely not understandable, but I needed to quickly make it work for testing.
-void WBStreams::onNewStatisticsData(const OpenHDStatisticsWriter::Data& data) {
-  std::lock_guard<std::mutex> guard(_statisticsDataLock);
-  std::unique_lock<std::mutex> lock(_wbRxTxInstancesLock, std::try_to_lock);
-  if(!lock.owns_lock()){
-	// We can just discard statistics data during a re-start
-	m_console->debug("WBStreams::No statistics during restart");
-	return;
-  }
-  // TODO make more understandable, but tele rx or tele tx is correct here
-  if(data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT
-  || data.radio_port==OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT){
-	_last_stats_per_rx_stream.at(0)=data;
-  }else if(data.radio_port==OHD_VIDEO_PRIMARY_RADIO_PORT){
-	_last_stats_per_rx_stream.at(1)=data;
-  }else if(data.radio_port==OHD_VIDEO_SECONDARY_RADIO_PORT){
-	_last_stats_per_rx_stream.at(2)=data;
-  }else{
-	m_console->warn("Unknown radio port on stats {}",(int)data.radio_port);
-	return;
-  }
-  // other stuff is per stream / accumulated
-  openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
-  // accumulate all RX data
-  for(const auto& rx_stat:_last_stats_per_rx_stream){
-	stats_total_all_streams.count_wifi_packets_received+=rx_stat.wb_rx_stats.count_p_all;
-	//count_all_bytes_received+=stats_per_rx_stream.wb_rx_stats.count_bytes_received;
-	stats_total_all_streams.count_bytes_received+=rx_stat.wb_rx_stats.count_bytes_data_received;
-  }
-  // tx-es are a bit different
-  if(udpTelemetryTx){
-	// this one is total
-	stats_total_all_streams.curr_telemetry_tx_bps=udpTelemetryTx->get_current_injected_bits_per_second();
-	// these ones are accumulated
-	stats_total_all_streams.count_wifi_packets_injected+=udpTelemetryTx->get_n_injected_packets();
-	stats_total_all_streams.count_bytes_injected+=udpTelemetryTx->get_n_injected_bytes();
-	stats_total_all_streams.count_telemetry_tx_injections_error_hint+=udpTelemetryTx->get_count_tx_injections_error_hint();
-  }
-  stats_total_all_streams.curr_telemetry_rx_bps=_last_stats_per_rx_stream.at(0).wb_rx_stats.curr_bits_per_second;
-
-  for(const auto& videoTx:udpVideoTxList){
-	// accumulated
-	stats_total_all_streams.count_wifi_packets_injected+=videoTx->get_n_injected_packets();
-	stats_total_all_streams.count_bytes_injected+=videoTx->get_n_injected_bytes();
-	stats_total_all_streams.count_video_tx_injections_error_hint+=videoTx->get_count_tx_injections_error_hint();
-  }
-  if(_profile.is_air){
-	if(!udpVideoTxList.empty()){
-	  stats_total_all_streams.curr_video0_bps=udpVideoTxList.at(0)->get_current_provided_bits_per_second();
-	}
-	if(udpVideoTxList.size()>=2){
-	  stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_current_provided_bits_per_second();
-	}
-  }else{
-	stats_total_all_streams.curr_video0_bps=_last_stats_per_rx_stream.at(1).wb_rx_stats.curr_bits_per_second;
-	stats_total_all_streams.curr_video1_bps=_last_stats_per_rx_stream.at(2).wb_rx_stats.curr_bits_per_second;
-  }
-  // dBm / rssi for all connected cards that are doing wifibroadcast
-  openhd::link_statistics::StatsAllCards stats_all_cards{};
-  // dBm is per card, not per stream
-  assert(stats_all_cards.size()>=4);
-  // only populate actually used cards
-  assert(_broadcast_cards.size()<=stats_all_cards.size());
-  for(int i=0;i<_broadcast_cards.size();i++){
-	auto& card = stats_all_cards.at(i);
-	if(_profile.is_air){
-	  // on air, we use the dbm reported by the telemetry stream
-	  card.rx_rssi= _last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
-	}else{
-	  // on ground, we use the dBm reported by the telemetry stream or video stream
-	  const auto rssi_telemetry=_last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
-	  const auto rssi_video0=_last_stats_per_rx_stream.at(1).rssiPerCard.at(i).last_rssi;
-	  if(rssi_video0==0){
-		// use telemetry
-		card.rx_rssi=rssi_telemetry;
-	  }else{
-		card.rx_rssi=rssi_video0;
-	  }
-	}
-	card.exists_in_openhd= true;
-	// not yet supported
-	card.count_p_injected=0;
-	card.count_p_received=0;
-  }
-  //
-  std::optional<openhd::link_statistics::StatsFECVideoStreamRx> stats_video_stream0_rx=std::nullopt;
-  std::optional<openhd::link_statistics::StatsFECVideoStreamRx> stats_video_stream1_rx=std::nullopt;
-  if(!_profile.is_air){
-	if(_last_stats_per_rx_stream.at(1).fec_stream_stats.has_value()){
-	  stats_video_stream0_rx=openhd::link_statistics::StatsFECVideoStreamRx{};
-	  convert(stats_video_stream0_rx.value(),_last_stats_per_rx_stream.at(1).fec_stream_stats.value());
-	}
-	if(_last_stats_per_rx_stream.at(2).fec_stream_stats.has_value()){
-	  stats_video_stream1_rx=openhd::link_statistics::StatsFECVideoStreamRx{};
-	  convert(stats_video_stream1_rx.value(),_last_stats_per_rx_stream.at(2).fec_stream_stats.value());
-	}
-  }
-  _last_all_stats=openhd::link_statistics::AllStats{stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx};
-  if(_stats_callback){
-	_stats_callback(_last_all_stats);
-  }
-}
 
 void WBStreams::restart() {
-  std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
+  std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
+  // Stop the stats recalculation
+  m_recalculate_stats_thread_run= false;
+  m_recalculate_stats_thread->join();
+  m_recalculate_stats_thread=nullptr;
   m_console->info("WBStreams::restart() begin");
   if(udpTelemetryRx){
 	udpTelemetryRx->stop_looping();
@@ -451,24 +372,31 @@ void WBStreams::restart() {
   configure_cards();
   configure_telemetry();
   configure_video();
+  // restart the stats recalculation thread
+  m_recalculate_stats_thread_run= true;
+  m_recalculate_stats_thread=std::make_unique<std::thread>(&WBStreams::loop_recalculate_stats, this);
   m_console->info("WBStreams::restart() end");
 }
 
 bool WBStreams::set_frequency(int frequency) {
   m_console->debug("WBStreams::set_frequency {}",frequency);
-  if(_settings->get_settings().configured_for_2G()){
-	if(!openhd::is_valid_frequency_2G(frequency)){
-	  m_console->warn("Invalid 2.4G frequency {}",frequency);
-	  return false;
-	}
+  if(m_disable_all_frequency_checks){
+    m_console->warn("Not sanity checking frequency");
   }else{
-	if(!openhd::is_valid_frequency_5G(frequency)){
-	  m_console->warn("Invalid 5G frequency {}",frequency);
-	  return false;
-	}
+    if(m_settings->get_settings().configured_for_2G()){
+      if(!openhd::is_valid_frequency_2G(frequency)){
+        m_console->warn("Invalid 2.4G frequency {}",frequency);
+        return false;
+      }
+    }else{
+      if(!openhd::is_valid_frequency_5G(frequency)){
+        m_console->warn("Invalid 5G frequency {}",frequency);
+        return false;
+      }
+    }
   }
-  _settings->unsafe_get_settings().wb_frequency=frequency;
-  _settings->persist();
+  m_settings->unsafe_get_settings().wb_frequency=frequency;
+  m_settings->persist();
   // We can update the frequency without restarting the streams
   // Only save, need restart to apply
   /*for(const auto& holder:_broadcast_cards){
@@ -485,8 +413,8 @@ bool WBStreams::set_txpower(int tx_power) {
 	m_console->warn("Invalid tx power:{}",tx_power);
 	return false;
   }
-  _settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power;
-  _settings->persist();
+  m_settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power;
+  m_settings->persist();
   // We can update the tx power without restarting the streams
   for(const auto& holder:_broadcast_cards){
 	const auto& card=holder->_wifi_card;
@@ -505,8 +433,8 @@ bool WBStreams::set_mcs_index(int mcs_index) {
     m_console->warn("Cannot change mcs index, it is fixed for at least one of the used cards");
     return false;
   }
-  _settings->unsafe_get_settings().wb_mcs_index=mcs_index;
-  _settings->persist();
+  m_settings->unsafe_get_settings().wb_mcs_index=mcs_index;
+  m_settings->persist();
   // Only save, need restart to apply
   // To set the mcs index, r.n we have to restart the tx instances
   /*std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
@@ -528,8 +456,8 @@ bool WBStreams::set_channel_width(int channel_width) {
     m_console->warn("Cannot change channel width, at least one card doesn't support it");
     return false;
   }
-  _settings->unsafe_get_settings().wb_channel_width=channel_width;
-  _settings->persist();
+  m_settings->unsafe_get_settings().wb_channel_width=channel_width;
+  m_settings->persist();
   // Only save, need restart to apply
   /*for(const auto& holder:_broadcast_cards){
 	const auto& card=holder->_wifi_card;
@@ -547,8 +475,8 @@ bool WBStreams::set_fec_block_length(int block_length) {
 	m_console->warn("Invalid fec block length:{}",block_length);
 	return false;
   }
-  _settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
-  _settings->persist();
+  m_settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
+  m_settings->persist();
   restart_async();
   return true;
 }
@@ -559,23 +487,30 @@ bool WBStreams::set_fec_percentage(int fec_percentage) {
 	m_console->warn("Invalid fec percentage:{}",fec_percentage);
 	return false;
   }
-  _settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
-  _settings->persist();
+  m_settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
+  m_settings->persist();
   restart_async();
+  return true;
+}
+bool WBStreams::set_wb_fec_block_length_auto_enable(int value) {
+  if(!(value==0 || value==1))return false;
+   // needs reboot to be applied
+  m_settings->unsafe_get_settings().wb_video_fec_block_length_auto_enable=value;
+  m_settings->persist();
   return true;
 }
 
 
 void WBStreams::restart_async(std::chrono::milliseconds delay){
-  std::lock_guard<std::mutex> guard(_restart_async_lock);
-  if(_restart_async_thread!= nullptr){
+  std::lock_guard<std::mutex> guard(m_restart_async_lock);
+  if(m_restart_async_thread != nullptr){
 	m_console->warn("WBStreams::restart_async - settings changed too quickly");
-	if(_restart_async_thread->joinable()){
-	  _restart_async_thread->join();
+	if(m_restart_async_thread->joinable()){
+          m_restart_async_thread->join();
 	}
-	_restart_async_thread=nullptr;
+        m_restart_async_thread =nullptr;
   }
-  _restart_async_thread=
+  m_restart_async_thread =
 	  std::make_unique<std::thread>(
 		  [this,delay]{
 			std::this_thread::sleep_for(delay);
@@ -587,16 +522,16 @@ void WBStreams::restart_async(std::chrono::milliseconds delay){
 std::vector<openhd::Setting> WBStreams::get_all_settings(){
   using namespace openhd;
   std::vector<openhd::Setting> ret{};
-  auto change_freq=openhd::IntSetting{(int)_settings->get_settings().wb_frequency,[this](std::string,int value){
+  auto change_freq=openhd::IntSetting{(int)m_settings->get_settings().wb_frequency,[this](std::string,int value){
 	return set_frequency(value);
   }};
-  auto change_wb_channel_width=openhd::IntSetting{(int)_settings->get_settings().wb_channel_width,[this](std::string,int value){
+  auto change_wb_channel_width=openhd::IntSetting{(int)m_settings->get_settings().wb_channel_width,[this](std::string,int value){
 	return set_channel_width(value);
   }};
-  auto change_wb_mcs_index=openhd::IntSetting{(int)_settings->get_settings().wb_mcs_index,[this](std::string,int value){
+  auto change_wb_mcs_index=openhd::IntSetting{(int)m_settings->get_settings().wb_mcs_index,[this](std::string,int value){
 	return set_mcs_index(value);
   }};
-  auto change_tx_power=openhd::IntSetting{(int)_settings->get_settings().wb_tx_power_milli_watt,[this](std::string,int value){
+  auto change_tx_power=openhd::IntSetting{(int)m_settings->get_settings().wb_tx_power_milli_watt,[this](std::string,int value){
 	return set_txpower(value);
   }};
   ret.push_back(Setting{WB_FREQUENCY,change_freq});
@@ -605,14 +540,19 @@ std::vector<openhd::Setting> WBStreams::get_all_settings(){
   ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
 
   if(_profile.is_air){
-	auto change_video_fec_block_length=openhd::IntSetting{(int)_settings->get_settings().wb_video_fec_block_length,[this](std::string,int value){
+	auto change_video_fec_block_length=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_block_length,[this](std::string,int value){
 	  return set_fec_block_length(value);
 	}};
 	ret.push_back(Setting{WB_VIDEO_FEC_BLOCK_LENGTH,change_video_fec_block_length});
-	auto change_video_fec_percentage=openhd::IntSetting{(int)_settings->get_settings().wb_video_fec_percentage,[this](std::string,int value){
+	auto change_video_fec_percentage=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_percentage,[this](std::string,int value){
 	  return set_fec_percentage(value);
 	}};
 	ret.push_back(Setting{WB_VIDEO_FEC_PERCENTAGE,change_video_fec_percentage});
+        auto cb_wb_video_fec_block_length_auto_enable=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_block_length_auto_enable,[this](std::string,int value){
+          return set_wb_fec_block_length_auto_enable(value);
+        }};
+        // Disabled for now
+        //ret.push_back(Setting{WB_FEC_BLOCK_LENGTH_AUTO_ENABLE,cb_wb_video_fec_block_length_auto_enable});
   }
   openhd::validate_provided_ids(ret);
   return ret;
@@ -634,4 +574,121 @@ bool WBStreams::validate_cards_support_setting_channel_width() {
     }
   }
   return true;
+}
+
+void WBStreams::set_video_codec(int codec) {
+  m_console->debug("set_video_codec to {}",codec);
+  if(m_curr_video_codec!=codec){
+    m_curr_video_codec=codec;
+    restart_async();
+  }
+}
+
+void WBStreams::loop_recalculate_stats() {
+  while (m_recalculate_stats_thread_run){
+    //m_console->debug("Recalculating stats");
+    std::array<OpenHDStatisticsWriter::Data,3> _last_stats_per_rx_stream{};
+    if(udpTelemetryRx){
+      _last_stats_per_rx_stream.at(0)=udpTelemetryRx->get_latest_stats();
+    }
+    for(int i=0;i<udpVideoRxList.size();i++){
+      _last_stats_per_rx_stream.at(1+i)=udpVideoRxList.at(i)->get_latest_stats();
+    }
+    // other stuff is per stream / accumulated
+    openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
+    // accumulate all RX data
+    for(const auto& rx_stat:_last_stats_per_rx_stream){
+      stats_total_all_streams.count_wifi_packets_received+=rx_stat.wb_rx_stats.count_p_all;
+      //count_all_bytes_received+=stats_per_rx_stream.wb_rx_stats.count_bytes_received;
+      stats_total_all_streams.count_bytes_received+=rx_stat.wb_rx_stats.count_bytes_data_received;
+    }
+    // tx-es are a bit different
+    if(udpTelemetryTx){
+      // this one is total
+      stats_total_all_streams.curr_telemetry_tx_bps=udpTelemetryTx->get_current_injected_bits_per_second();
+      // these ones are accumulated
+      stats_total_all_streams.count_wifi_packets_injected+=udpTelemetryTx->get_n_injected_packets();
+      stats_total_all_streams.count_bytes_injected+=udpTelemetryTx->get_n_injected_bytes();
+      stats_total_all_streams.count_telemetry_tx_injections_error_hint+=udpTelemetryTx->get_count_tx_injections_error_hint();
+    }
+    stats_total_all_streams.curr_telemetry_rx_bps=_last_stats_per_rx_stream.at(0).wb_rx_stats.curr_bits_per_second;
+    if(_profile.is_air){
+      stats_total_all_streams.curr_rx_packet_loss_perc=_last_stats_per_rx_stream.at(0).wb_rx_stats.curr_packet_loss_percentage;
+    }else{
+      if(!udpVideoRxList.empty()){
+        stats_total_all_streams.curr_rx_packet_loss_perc=_last_stats_per_rx_stream.at(1).wb_rx_stats.curr_packet_loss_percentage;
+      }
+    }
+
+    for(const auto& videoTx:udpVideoTxList){
+      // accumulated
+      stats_total_all_streams.count_wifi_packets_injected+=videoTx->get_n_injected_packets();
+      stats_total_all_streams.count_bytes_injected+=videoTx->get_n_injected_bytes();
+      stats_total_all_streams.count_video_tx_injections_error_hint+=videoTx->get_count_tx_injections_error_hint();
+    }
+    if(_profile.is_air){
+      if(!udpVideoTxList.empty()){
+        stats_total_all_streams.curr_video0_bps=udpVideoTxList.at(0)->get_current_provided_bits_per_second();
+        stats_total_all_streams.curr_video0_tx_pps=udpVideoTxList.at(0)->get_current_packets_per_second();
+      }
+      if(udpVideoTxList.size()>=2){
+        stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_current_provided_bits_per_second();
+        stats_total_all_streams.curr_video1_tx_pps=udpVideoTxList.at(1)->get_current_packets_per_second();
+      }
+    }else{
+      stats_total_all_streams.curr_video0_bps=_last_stats_per_rx_stream.at(1).wb_rx_stats.curr_bits_per_second;
+      stats_total_all_streams.curr_video1_bps=_last_stats_per_rx_stream.at(2).wb_rx_stats.curr_bits_per_second;
+      stats_total_all_streams.curr_video0_tx_pps=0;
+      stats_total_all_streams.curr_video1_tx_pps=0;
+      if(udpTelemetryTx){
+        stats_total_all_streams.curr_telemetry_tx_pps=udpTelemetryTx->get_current_packets_per_second();
+      }
+    }
+    // dBm / rssi for all connected cards that are doing wifibroadcast
+    openhd::link_statistics::StatsAllCards stats_all_cards{};
+    // dBm is per card, not per stream
+    assert(stats_all_cards.size()>=4);
+    // only populate actually used cards
+    assert(_broadcast_cards.size()<=stats_all_cards.size());
+    for(int i=0;i<_broadcast_cards.size();i++){
+      auto& card = stats_all_cards.at(i);
+      if(_profile.is_air){
+        // on air, we use the dbm reported by the telemetry stream
+        card.rx_rssi= _last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
+      }else{
+        // on ground, we use the dBm reported by the video stream (if available), otherwise
+        // we use the dBm reported by the telemetry rx instance.
+        const auto rssi_telemetry=_last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
+        const auto rssi_video0=_last_stats_per_rx_stream.at(1).rssiPerCard.at(i).last_rssi;
+        if(rssi_video0==0){
+          // use telemetry
+          card.rx_rssi=rssi_telemetry;
+        }else{
+          card.rx_rssi=rssi_video0;
+        }
+      }
+      card.exists_in_openhd= true;
+      // not yet supported
+      card.count_p_injected=0;
+      card.count_p_received=0;
+    }
+    //
+    std::optional<openhd::link_statistics::StatsFECVideoStreamRx> stats_video_stream0_rx=std::nullopt;
+    std::optional<openhd::link_statistics::StatsFECVideoStreamRx> stats_video_stream1_rx=std::nullopt;
+    if(!_profile.is_air){
+      if(_last_stats_per_rx_stream.at(1).fec_stream_stats.has_value()){
+        stats_video_stream0_rx=openhd::link_statistics::StatsFECVideoStreamRx{};
+        convert(stats_video_stream0_rx.value(),_last_stats_per_rx_stream.at(1).fec_stream_stats.value());
+      }
+      if(_last_stats_per_rx_stream.at(2).fec_stream_stats.has_value()){
+        stats_video_stream1_rx=openhd::link_statistics::StatsFECVideoStreamRx{};
+        convert(stats_video_stream1_rx.value(),_last_stats_per_rx_stream.at(2).fec_stream_stats.value());
+      }
+    }
+    const auto final_stats=openhd::link_statistics::AllStats{stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx};
+    if(m_stats_callback){
+      m_stats_callback(final_stats);
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds (1000));
+  }
 }

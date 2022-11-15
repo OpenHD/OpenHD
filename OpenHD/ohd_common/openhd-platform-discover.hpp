@@ -6,6 +6,7 @@
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_PLATFORM_DISCOVER_HPP_
 
 #include "openhd-platform.hpp"
+#include "openhd-platform-json.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 
@@ -23,7 +24,7 @@ class DPlatform {
   DPlatform() = default;
   virtual ~DPlatform() = default;
   static std::shared_ptr<OHDPlatform> discover(){
-    openhd::loggers::get_default()->debug("Platform::discover()");
+    openhd::log::get_default()->debug("Platform::discover()");
     auto platform=internal_discover();
     write_platform_manifest(*platform);
     return platform;
@@ -56,12 +57,12 @@ class DPlatform {
     std::regex r{"Revision\\t*:\\s*([\\w]+)"};
 
     if (!std::regex_search(raw_value, result, r)) {
-      openhd::loggers::get_default()->debug("Detect rpi no result");
+      openhd::log::get_default()->debug("Detect rpi no result");
       return {};
     }
 
     if (result.size() != 2) {
-      openhd::loggers::get_default()->debug("Detect ri result doesnt match");
+      openhd::log::get_default()->debug("Detect ri result doesnt match");
       return {};
     }
 
@@ -69,7 +70,7 @@ class DPlatform {
     BoardType board_type=BoardType::Unknown;
 
     const std::string raspberry_identifier = result[1];
-    openhd::loggers::get_default()->debug("Pi identifier:{"+raspberry_identifier+"}");
+    openhd::log::get_default()->debug("Pi identifier:{"+raspberry_identifier+"}");
 
     //const std::set<std::string> pi4b_identifiers = {"a03111", "b03111", "b03112", "c03111", "c03112", "d03114"};
 	// Not sure
@@ -137,7 +138,7 @@ class DPlatform {
   static std::pair<PlatformType,BoardType> detect_pc(){
     const auto arch_opt=OHDUtil::run_command_out("arch");
     if(arch_opt==std::nullopt){
-      openhd::loggers::get_default()->warn("Arch not found");
+      openhd::log::get_default()->warn("Arch not found");
       return {PlatformType::Unknown,BoardType::Unknown};
     }
     const auto arch=arch_opt.value();

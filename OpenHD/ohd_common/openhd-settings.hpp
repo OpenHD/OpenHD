@@ -13,15 +13,9 @@
 
 #include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
-/*#include <boost/uuid/uuid.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <string_view>*/
 
 // from https://superuser.com/questions/631859/preferred-place-to-store-configuration-files-that-change-often
 // All persistent settings are written into this directory.
-//static constexpr auto BASE_PATH="/etc/openhd/";
 static constexpr auto BASE_PATH="/usr/local/share/openhd/";
 // for example, the unique id
 static constexpr auto UNIT_ID_FILE = "/usr/local/share/openhd/unit.id";
@@ -59,14 +53,14 @@ static std::string getOrCreateUnitId() {
 	//const boost::uuids::uuid _uuid = boost::uuids::random_generator()();
 	//unit_id = to_string(_uuid);
         unit_id = create_unit_it_temporary();
-	openhd::loggers::get_default()->info("Created new unit id:{}",unit_id);
+	openhd::log::get_default()->info("Created new unit id:{}",unit_id);
 	// and write it ot to the right file
 	std::ofstream of(UNIT_ID_FILE);
 	of << unit_id;
 	of.close();
   } else {
 	unit_id = std::string((std::istreambuf_iterator<char>(unit_id_file)),std::istreambuf_iterator<char>());
-	openhd::loggers::get_default()->debug("Read unit id:{}",unit_id);
+	openhd::log::get_default()->debug("Read unit id:{}",unit_id);
 	return unit_id;
   }
   assert(!unit_id.empty());

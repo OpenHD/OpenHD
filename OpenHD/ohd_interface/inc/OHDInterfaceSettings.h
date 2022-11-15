@@ -7,8 +7,6 @@
 
 namespace openhd{
 
-static constexpr auto OHD_INTERFACE_ENABLE_WIFI_HOTSPOT="I_WFI_HOTSPOT_E";
-
 struct OHDInterfaceSettings{
   bool enable_wifi_hotspot=false;
   uint32_t hotspot_wifi_channel=8;

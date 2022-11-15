@@ -5,7 +5,6 @@
 #ifndef OPENHD_WIFICARDSCOMMANDSHELPER_H
 #define OPENHD_WIFICARDSCOMMANDSHELPER_H
 
-#include "openhd-log.hpp"
 #include "OHDWifiCard.hpp"
 #include "openhd-util.hpp"
 #include "validate_settings_helper.h"
@@ -16,21 +15,21 @@
 namespace WifiCardCommandHelper{
 
 static bool set_card_state(const WiFiCard &card, bool up) {
-  openhd::loggers::get_default()->info("WifiCards::set_card_state up "+OHDUtil::yes_or_no(up)+" for "+card.interface_name+")");
+  openhd::log::get_default()->info("WifiCards::set_card_state up "+OHDUtil::yes_or_no(up)+" for "+card.interface_name+")");
   std::vector<std::string> args{"link", "set", "dev", card.interface_name, up ? "up" : "down"};
   bool success = OHDUtil::run_command("ip", args);
   return success;
 }
 
 static bool set_frequency(const WiFiCard &card, const uint32_t frequency) {
-  openhd::loggers::get_default()->info("WifiCards::set_frequency{} for {}",frequency,card.interface_name.c_str());
+  openhd::log::get_default()->info("WifiCards::set_frequency{} for {}",frequency,card.interface_name.c_str());
   std::vector<std::string> args{"dev", card.interface_name, "set", "freq", std::to_string(frequency)};
   bool success = OHDUtil::run_command("iw", args);
   return success;
 }
 
 static bool set_frequency_and_channel_width(const WiFiCard &card, const uint32_t frequency,bool width_40) {
-  openhd::loggers::get_default()->info("WifiCards::set_frequency{} for {} with channel width 40:"+OHDUtil::yes_or_no(width_40),frequency,card.interface_name.c_str());
+  openhd::log::get_default()->info("WifiCards::set_frequency{} for {} with channel width 40:"+OHDUtil::yes_or_no(width_40),frequency,card.interface_name.c_str());
   const std::string channel_width=width_40 ? "HT40+" : "HT20";
   std::vector<std::string> args{"dev", card.interface_name, "set", "freq", std::to_string(frequency), channel_width};
   bool success = OHDUtil::run_command("iw", args);
@@ -43,7 +42,7 @@ static bool set_txpower(const WiFiCard &card, const uint32_t txpower_milli_watt)
   auto tx_power_milli_dbm=openhd::milli_watt_to_milli_dbm(txpower_milli_watt);
   std::stringstream ss;
   ss<<"WifiCards::set_txpower("<<txpower_milli_watt<<" mW | "<<tx_power_milli_dbm<<" milli dBm)"<<" for " << card.interface_name;
-  openhd::loggers::get_default()->info(ss.str());
+  openhd::log::get_default()->info(ss.str());
   std::vector<std::string> args{"dev", card.interface_name, "set", "txpower", "fixed", std::to_string(tx_power_milli_dbm)};
   bool success = OHDUtil::run_command("iw", args);
   return success;
@@ -54,14 +53,14 @@ static bool set_txpower(const WiFiCard &card, const uint32_t txpower_milli_watt)
 static bool set_txpower2(const WiFiCard& card,const uint32_t txpower_milli_watt){
   std::stringstream ss;
   ss<<"WifiCards::set_txpower2("<<txpower_milli_watt<<" mW)"<<" for " << card.interface_name;
-  openhd::loggers::get_default()->info(ss.str());
+  openhd::log::get_default()->info(ss.str());
   std::vector<std::string> args{ card.interface_name, "txpower", (std::to_string(txpower_milli_watt)+"mW")};
   bool success = OHDUtil::run_command("iwconfig", args);
   return success;
 }
 
 static bool enable_monitor_mode(const WiFiCard &card) {
-  openhd::loggers::get_default()->info("WifiCards::enable_monitor_mode("+card.interface_name+")");
+  openhd::log::get_default()->info("WifiCards::enable_monitor_mode("+card.interface_name+")");
   std::vector<std::string> args{"dev", card.interface_name, "set", "monitor", "otherbss"};
   bool success = OHDUtil::run_command("iw", args);
   return success;
@@ -73,7 +72,7 @@ static bool enable_monitor_mode(const WiFiCard &card) {
 // NOTE: this is not permament between restarts - but that is exactly what we want,
 // since on each restart we might do different things with the wifi card(s)
 static bool network_manager_set_card_unmanaged(const WiFiCard &card){
-  openhd::loggers::get_default()->info("Set card "+card.interface_name+" to unmanaged by NetworkManager");
+  openhd::log::get_default()->info("Set card "+card.interface_name+" to unmanaged by NetworkManager");
   bool success = OHDUtil::run_command("nmcli",{"device","set",card.interface_name,"managed","no"});
   return success;
 }

@@ -33,16 +33,25 @@ struct StatsTotalAllStreams{
   uint64_t count_video_tx_injections_error_hint=0; // see wb transmitter, accumulated primary and secondary video stream
   uint64_t curr_video0_bps=0; // current video bps, when on air this is the bitrate of the video encoder (what's injected), when on ground
   uint64_t curr_video1_bps=0;// this is the bitrate received. For both primary and secondary video stream.
+  uint64_t curr_video0_tx_pps=0; // current video packets per second (important metric)
+  uint64_t curr_video1_tx_pps=0;
+  uint64_t curr_telemetry_tx_pps=0;
   // telemetry is both rx and tx on both air and ground
   uint64_t curr_telemetry_rx_bps=0; // curr ingoing telemetry, in bps
   uint64_t curr_telemetry_tx_bps=0; // curr outgoing telemetry in bps
+  // for ground, packet loss in percentage of the primary video stream receiver
+  // for air, packet loss of the telemetry receiver
+  // this will make more sense once we merge the wifibroadcast rx-es
+  int curr_rx_packet_loss_perc =-1;
   [[nodiscard]] std::string to_string()const{
 	std::stringstream ss;
 	ss << "StatsTotalAllStreams"<<"{count_wifi_packets_received:" << count_wifi_packets_received << ", count_bytes_received:" << (int)count_bytes_received <<
 	   ", count_wifi_packets_injected:" << count_wifi_packets_injected<< ", count_bytes_injected:" << count_bytes_injected
 	   <<",tele_tx_err_hint:"<<count_telemetry_tx_injections_error_hint<<",vid_tx_err_hint:"<<count_video_tx_injections_error_hint<<"\n"
-	   <<",video0:"<<bitrate_to_string(curr_video0_bps)<<",video1:"<<bitrate_to_string(curr_video1_bps)
-	   <<",tele_rx:"<<bitrate_to_string(curr_telemetry_rx_bps)<<",tele_tx:"<<bitrate_to_string(curr_telemetry_tx_bps)<< "}";
+	   <<",video0_tx_bps:"<<bitrate_to_string(curr_video0_bps)<<",video1_tx_bps:"<<bitrate_to_string(curr_video1_bps)<<"\n"
+           <<",video0_tx_pps"<<curr_video0_tx_pps<<"video1_tx_pps"<<curr_video1_tx_pps<<"tele_tx_pps"<<curr_telemetry_tx_pps<<"\n"
+	   <<",tele_rx:"<<bitrate_to_string(curr_telemetry_rx_bps)<<",tele_tx:"<<bitrate_to_string(curr_telemetry_tx_bps)<<"\n"
+           <<"curr_packet_loss_perc"<< curr_rx_packet_loss_perc <<"}";
 	return ss.str();
   }
 };

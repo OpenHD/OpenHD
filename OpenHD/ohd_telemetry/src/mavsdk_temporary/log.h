@@ -5,14 +5,20 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_MAV_PARAM_LOG_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_MAV_PARAM_LOG_H_
 
-#include "openhd-log.hpp"
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <cassert>
+#include "openhd-spdlog.hpp"
 
 namespace mavsdk{
 class YLogger{
  public:
   //explicit OpenHDLogger(const STATUS_LEVEL level=STATUS_LEVEL_DEBUG,const std::string& tag=""):
   //  _status_level(level),_tag(tag) {}
-  YLogger(){};
+  YLogger(){
+      m_console=openhd::log::create_or_get("mavsdk");
+  };
   ~ YLogger() {
     const auto tmp=stream.str();
     log_message(tmp);
@@ -23,6 +29,7 @@ class YLogger{
   friend  YLogger& operator<<( YLogger& record, T&& t);
  private:
   std::stringstream stream;
+  std::shared_ptr<spdlog::logger> m_console;
   // Checks for a newline, and if detected logs the message immediately and then clears it.
   void log_immediately_on_newline(){
     const auto tmp=stream.str();
@@ -33,8 +40,7 @@ class YLogger{
   }
   void log_message(const std::string& message){
     if(message.empty())return;
-    const auto lol=message+std::string("\n");
-    std::cout<<lol;
+    m_console->debug(message);
   }
 };
 

@@ -3,6 +3,7 @@
 # Install all the dependencies needed to build OpenHD from source.
 # TODO do we need libgstreamer1.0-dev and libgstreamer-plugins-base1.0-dev ?
 
+sudo apt -y -o Dpkg::Options::="--force-overwrite" install openhd-linux-jetson
 sudo apt -y install build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libsodium-dev \
             libasio-dev \
@@ -23,7 +24,7 @@ sudo apt -y install build-essential autotools-dev automake libtool autoconf \
         sudo add-apt-repository ppa:git-core/ppa -y
         apt update
         apt upgrade
-        sudo apt install libspdlog-dev build-essential -y
+        sudo apt install build-essential -y
         sudo apt install gcc-8 g++-8 gcc-9 g++-9 gcc-10 g++-10
 
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave /usr/bin/g++ g++ /usr/bin/g++-10 --slave /usr/bin/gcov gcov /usr/bin/gcov-10

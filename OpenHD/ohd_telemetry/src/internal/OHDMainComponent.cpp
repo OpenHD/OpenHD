@@ -2,21 +2,23 @@
 // Created by consti10 on 19.04.22.
 //
 
-#include <iostream>
-
 #include "OHDMainComponent.h"
+
+#include <iostream>
+#include <openhd-global-constants.hpp>
+#include <utility>
+
+#include "OHDLinkStatisticsHelper.h"
 #include "OnboardComputerStatus.hpp"
 #include "RebootUtil.hpp"
-#include "OHDLinkStatisticsHelper.h"
 
 OHDMainComponent::OHDMainComponent(
     OHDPlatform platform1,uint8_t parent_sys_id,
     bool runsOnAir,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
-	platform(platform1),RUNS_ON_AIR(runsOnAir),_opt_action_handler(opt_action_handler),
+	platform(platform1),RUNS_ON_AIR(runsOnAir),_opt_action_handler(std::move(opt_action_handler)),
 	MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
-  m_console = spd::stdout_color_mt("tele_main_comp");
+  m_console = openhd::log::create_or_get("t_main_c");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(platform);
   logMessagesReceiver =
       std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
@@ -154,11 +156,13 @@ std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
   return ret;
 }
 
-MavlinkMessage OHDMainComponent::generateOpenHDVersion() const {
+MavlinkMessage OHDMainComponent::generateOpenHDVersion(const std::string& commit_hash) const {
   MavlinkMessage msg;
   char bufferBigEnough[30]={};
   std::strncpy((char *)bufferBigEnough,OHD_VERSION_NUMBER_STRING,30);
-  mavlink_msg_openhd_version_message_pack(_sys_id,_comp_id, &msg.m, bufferBigEnough);
+  char bufferBigEnough2[30]={};
+  std::strncpy((char *)bufferBigEnough2,commit_hash.c_str(),30);
+  mavlink_msg_openhd_version_message_pack(_sys_id,_comp_id, &msg.m, bufferBigEnough,bufferBigEnough2);
   //mavlink_component_information_t x;
   return msg;
 }

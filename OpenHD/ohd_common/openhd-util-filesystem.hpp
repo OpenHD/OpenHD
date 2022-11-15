@@ -5,6 +5,8 @@
 
 #include <boost/filesystem.hpp>
 
+#include "openhd-spdlog.hpp"
+
 // boost::filesystem or std::filesystem, what a pain
 // If possible, one should not use boost::filesystem or anything from boost::
 // inside the project, but quickly write a wrapper here.
@@ -67,15 +69,24 @@ static void safe_delete_directory(const char* directory){
 }
 
 static void write_file(const std::string& path,const std::string& content){
-  std::ofstream t(path);
-  t << content;
-  t.close();
+  try{
+    std::ofstream t(path);
+    t << content;
+    t.close();
+  }catch (std::exception& e){
+    openhd::log::get_default()->warn("Cannot write file ["+path+"]");
+  }
 }
 static std::string read_file(const std::string& path){
-  std::ifstream f(path);
-  std::string ret;
-  f >> ret;
-  return ret;
+  try{
+    std::ifstream f(path);
+    std::string ret;
+    f >> ret;
+    return ret;
+  }catch (std::exception& e){
+    openhd::log::get_default()->warn("Cannot read file ["+path+"]");
+    return "";
+  }
 }
 
 static void remove_if_existing(const std::string& filename){

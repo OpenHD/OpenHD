@@ -1,4 +1,4 @@
-name: Build Jetson ONLINE
+name: build_package_jetson
 
 on:
   push:
@@ -38,21 +38,27 @@ jobs:
         rootpartition: 1
         image_additional_mb: 4000
         copy_repository_path: /opt
-        copy_artifact_path: Open.HD
+        copy_artifact_path: OpenHD
         import_github_env: true
         commands: |
           ls -a
+          mkdir -p /home/runner/work/_temp/_github_home && printf "[safe]\n\tdirectory = /github/workspace" > /home/runner/work/_temp/_github_home/.gitconfig
           cd /opt
-          cd Open.HD
+          cd OpenHD
           sudo apt update
           sudo apt install -y curl
           curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' | sudo -E bash
-          sudo apt upgrade -y
           mkdir -p /usr/local/share/openhd/
           touch /usr/local/share/openhd/joyconfig.txt
           ls -a  
           sudo chmod +x install_dep_jetson.sh 
           sudo ./install_dep_jetson.sh
+          chown -R root:root /opt
+          git clone https://github.com/gabime/spdlog.git
+          cd spdlog && mkdir build && cd build
+          cmake .. && make -j
+          make install
+          cd ../../
           sudo ./package.sh arm64 ubuntu bionic
 
 
@@ -68,4 +74,4 @@ jobs:
         distro: "ubuntu"
         release: "bionic"
         republish: "true" # needed ONLY if version is not changing
-        file: "Open.HD/*.deb"
+        file: "OpenHD/*.deb"

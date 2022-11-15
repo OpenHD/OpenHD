@@ -19,14 +19,14 @@
 #include "openhd-external-device.hpp"
 #include "openhd-spdlog.hpp"
 
- class OHDInterface :public openhd::ISettingsComponent{
+class OHDInterface :public openhd::ISettingsComponent{
  public:
   /**
    * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
    */
   explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1);
-   OHDInterface(const OHDInterface&)=delete;
-   OHDInterface(const OHDInterface&&)=delete;
+  OHDInterface(const OHDInterface&)=delete;
+  OHDInterface(const OHDInterface&&)=delete;
   // register callback that is called in regular intervals with link statistics
   void set_stats_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) const;
   // Verbose string about the current state.
@@ -40,28 +40,29 @@
   // settings hacky end
   // easy access without polluting the headers
   static void print_internal_fec_optimization_method();
-  private:
-   /**
+  void set_video_codec(int codec);
+ private:
+  /**
     * after calling this method with an external device's ip address
     * (for example an externally connected tablet) data will be forwarded to the device's ip address.
     * It is safe to call this method multiple times with the same IP address, since we internally keep track here.
-    */
-   void addExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device);
-   /**
+   */
+  void addExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device);
+  /**
     * stop forwarding data to the device's ip address.
     * Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
-    */
-   void removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device);
+   */
+  void removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device);
  private:
   const OHDProfile profile;
   const OHDPlatform platform;
-  std::unique_ptr<WBStreams> wbStreams;
-  std::unique_ptr<USBTetherListener> usbTetherListener;
-  std::unique_ptr<WifiHotspot> _wifi_hotspot;
-  std::unique_ptr<openhd::LEDBlinker> _error_blinker;
-  std::shared_ptr<openhd::OHDInterfaceSettingsHolder> _interface_settings_holder;
-  std::mutex _external_device_callback_mutex;
-  openhd::EXTERNAL_DEVICE_CALLBACK _external_device_callback= nullptr;
+  std::unique_ptr<WBStreams> m_wb_streams;
+  std::unique_ptr<USBTetherListener> m_usb_tether_listener;
+  std::unique_ptr<WifiHotspot> m_wifi_hotspot;
+  std::unique_ptr<openhd::LEDBlinker> m_error_blinker;
+  std::shared_ptr<openhd::OHDInterfaceSettingsHolder> m_interface_settings_holder;
+  std::mutex m_external_device_callback_mutex;
+  openhd::EXTERNAL_DEVICE_CALLBACK m_external_device_callback = nullptr;
   std::shared_ptr<spdlog::logger> m_console;
 };
 

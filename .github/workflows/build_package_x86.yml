@@ -1,4 +1,4 @@
-name: UbuntuX86Build
+name: build_package_x86
 
 on:
   push:
@@ -52,7 +52,7 @@ jobs:
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
         with:
-          name: "Open.HD"
+          name: "OpenHD"
           path: |
             *.deb
             *.log

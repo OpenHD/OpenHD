@@ -12,10 +12,13 @@
 #include "ohd_common/openhd-global-constants.hpp"
 #include "ohd_common/openhd-spdlog.hpp"
 #include "ohd_common/openhd-temporary-air-or-ground.h"
+#include "ohd_common/openhd-profile-json.hpp"
 #include <DCameras.h>
 #include <OHDInterface.h>
 #include <OHDTelemetry.h>
 #include <OHDVideo.h>
+// For logging the commit hash and more
+#include "git.h"
 
 ///Regarding AIR / GROUND detection: Previous OpenHD releases would detect weather this system is an air pi
 // or ground pi by checking weather it has a connected camera. However, this pattern has 2 problems:
@@ -48,6 +51,7 @@ static const struct option long_options[] = {
     {"debug-telemetry", no_argument, nullptr, 'y'},
     {"debug-video", no_argument, nullptr, 'z'},
     {"no-qt-autostart", no_argument, nullptr, 'w'},
+    {"run-time_seconds", required_argument, nullptr, 'r'},
     {nullptr, 0, nullptr, 0},
 };
 
@@ -59,6 +63,7 @@ struct OHDRunOptions {
   bool enable_telemetry_debugging=false;
   bool enable_video_debugging=false;
   bool no_qt_autostart=false;
+  int run_time_seconds=-1; //-1= infinite, only usefully for debugging
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
@@ -98,6 +103,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         break;
       case 'f':commandline_force_dummy_camera= true;
         break;
+      case 'r':
+        ret.run_time_seconds= atoi(tmp_optarg);
       case '?':
       default:
         std::cout << "Usage: \n" <<
@@ -108,7 +115,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
             "--debug-telemetry [enable telemetry debugging] \n"<<
             "--debug-video     [enable video debugging] \n"<<
             "--no-qt-autostart [disable auto start of QOpenHD on ground] \n"<<
-            "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n";
+            "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n"<<
+            "--run-time_seconds -r [Manually specify run time (default infinite),for debugging] \n";
         exit(1);
     }
   }
@@ -171,13 +179,15 @@ int main(int argc, char *argv[]) {
       "debug-interface:"<<OHDUtil::yes_or_no(options.enable_interface_debugging) <<"\n"<<
       "debug-telemetry:"<<OHDUtil::yes_or_no(options.enable_telemetry_debugging) <<"\n"<<
       "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n"<<
-      "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n";
+      "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n"<<
+      "run_time_seconds:"<<options.run_time_seconds<<"\n";
   std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
+  std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
   OHDInterface::print_internal_fec_optimization_method();
 
-  std::shared_ptr<spdlog::logger> m_console=spdlog::stdout_color_mt("main");
+  std::shared_ptr<spdlog::logger> m_console=openhd::log::create_or_get("main");
   assert(m_console);
-  m_console->set_level(spd::level::debug);
+
   // Create and link all the OpenHD modules.
   try {
     // This results in fresh default values for all modules (e.g. interface, telemetry, video)
@@ -188,17 +198,8 @@ int main(int argc, char *argv[]) {
 
     // First discover the platform:
     const auto platform = DPlatform::discover();
-    m_console->debug(platform->to_string());
+    m_console->info("Detected Platform:"+platform->to_string());
 
-    // These are temporary and depend on how the image builder does stuff
-    if(platform->platform_type==PlatformType::RaspberryPi){
-      if(OHDFilesystemUtil::exists("/boot/ohd_dhclient.txt")){
-        // this way pi connects to ethernet hub / router via ethernet.
-        OHDUtil::run_command("dhclient eth0",{});
-      }
-    }else if(platform->platform_type==PlatformType::PC){
-      //OHDUtil::run_command("rfkill unblock all",{});
-    }
     // Now we need to discover camera(s) if we are on the air
     std::vector<Camera> cameras{};
     if(options.run_as_air){
@@ -206,18 +207,42 @@ int main(int argc, char *argv[]) {
         // skip camera detection, we want the dummy camera regardless weather a camera is connected or not.
         cameras.emplace_back(createDummyCamera());
       }else{
+        // Issue on rpi: The openhd service is often started before ? (most likely the OS needs to do some internal setup stuff)
+        // and then the cameras discovery step is run before the camera is available, and therefore not found. Block up to
+        // X seconds here, to give the OS time until the camera is available, only then continue with the dummy camera
+        // Since the jetson is also an embedded platform, just like the rpi, I am doing it for it too, even though I never
+        // checked if that's actually an issue there
         cameras = DCameras::discover(*platform);
+        if(platform->platform_type==PlatformType::RaspberryPi || platform->platform_type==PlatformType::Jetson){
+          const auto begin=std::chrono::steady_clock::now();
+          while (std::chrono::steady_clock::now()-begin<std::chrono::seconds(10)){
+            if(!cameras.empty())break; // break as soon as we have at least one camera
+            m_console->debug("Re-running camera discovery step, until camera is found/timeout");
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            cameras=DCameras::discover(*platform);
+          }
+        }
         if(cameras.empty()){
+          m_console->warn("No camera found after X seconds, using dummy camera instead");
           cameras.emplace_back(createDummyCamera());
         }
       }
     }
     // Now print the actual cameras used by OHD. Of course, this prints nothing on ground (where we have no cameras connected).
     for(const auto& camera:cameras){
-      m_console->debug(camera.to_string());
+      m_console->info(camera.to_string());
     }
     // Now we can crate the immutable profile
     const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
+    write_profile_manifest(*profile);
+    // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as ground.
+    if(!options.no_qt_autostart){
+      if(!profile->is_air){
+        OHDUtil::run_command("systemctl",{" start qopenhd"});
+      }else{
+        OHDUtil::run_command("systemctl",{" stop qopenhd"});
+      }
+    }
     // And start the blinker (TODO LED output is really dirty right now).
     auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);
 
@@ -227,6 +252,9 @@ int main(int argc, char *argv[]) {
     auto ohd_action_handler=std::make_shared<openhd::ActionHandler>();
     ohd_action_handler->action_restart_wb_streams_set([&ohdInterface](){
       ohdInterface->restart_wb_streams_async();
+    });
+    ohd_action_handler->action_set_video_codec_set([&ohdInterface](int codec){
+      ohdInterface->set_video_codec(codec);
     });
 
     // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
@@ -253,26 +281,23 @@ int main(int argc, char *argv[]) {
     // and start ohdVideo if we are on the air pi
     std::unique_ptr<OHDVideo> ohdVideo;
     if (profile->is_air) {
-      ohdVideo = std::make_unique<OHDVideo>(*platform,cameras);
+      ohdVideo = std::make_unique<OHDVideo>(*platform,cameras,ohd_action_handler);
       auto settings_components=ohdVideo->get_setting_components();
       if(!settings_components.empty()){
         ohdTelemetry->add_camera_component(0,settings_components.at(0)->get_all_settings());
       }
     }
-    // we need to start QOpenHD when we are running as ground, just to be safe, stop it when we are running as air.
-    if(!options.no_qt_autostart){
-      if(!profile->is_air){
-        OHDUtil::run_command("systemctl",{" start qopenhd"});
-      }else{
-        OHDUtil::run_command("systemctl",{" stop qopenhd"});
-      }
-    }
-    m_console->debug("All OpenHD modules running");
+    m_console->info("All OpenHD modules running");
 
     // run forever, everything has its own threads. Note that the only way to break out basically
     // is when one of the modules encounters an exception.
     const bool any_debug_enabled=(options.enable_interface_debugging || options.enable_telemetry_debugging || options.enable_video_debugging);
-    while (true) {
+    static bool quit=false;
+    signal(SIGTERM, [](int sig){
+      std::cerr<<"Got SIGTERM, exiting";
+      quit= true;
+    });
+    while (!quit) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
       if(ohdVideo){
         ohdVideo->restartIfStopped();

@@ -37,6 +37,10 @@ static bool startsWith(const std::string& str, const std::string& prefix){
   return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
 }
 
+static bool contains(const std::string& s1,const std::string& s2){
+  return s1.find(s2)!= std::string::npos;;
+}
+
 // Converts both strings to uppercase, then checks if
 // s1 contains s2 (we can find s2 in s1).
 // Returns true if (after uppercase) s1 contains s2, false otherwise
@@ -52,6 +56,13 @@ static bool equal_after_uppercase(const std::string& s1,const std::string& s2){
   const auto s1_upper=OHDUtil::to_uppercase(s1);
   const auto s2_upper=OHDUtil::to_uppercase(s2);
   return s1_upper==s2_upper;
+}
+
+// From https://stackoverflow.com/questions/216823/how-to-trim-an-stdstring
+static void rtrim(std::string &s) {
+  s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+            return !std::isspace(ch);
+          }).base(), s.end());
 }
 
 /**
@@ -72,7 +83,7 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   if(print_debug){
 	std::stringstream log;
 	log<< "run command begin [" << ss.str() << "]";
-	openhd::loggers::get_default()->debug(log.str());
+	openhd::log::get_default()->debug(log.str());
   }
   // Some weird locale issue ?!
   // https://man7.org/linux/man-pages/man3/system.3.html
@@ -83,7 +94,7 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   std::cout<<"Run command end\n";
   return c.exit_code() == 0;*/
   if(print_debug){
-	openhd::loggers::get_default()->debug("Run command end");
+	openhd::log::get_default()->debug("Run command end");
   }
   return ret;
 }
@@ -121,7 +132,7 @@ static void keep_alive_until_sigterm(){
   signal(SIGTERM, [](int sig){ quit= true;});
   while (!quit){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
-	openhd::loggers::get_default()->debug("keep_alive_until_sigterm");
+	openhd::log::get_default()->debug("keep_alive_until_sigterm");
   }
 }
 // Tries to extract a valid ip from the given input string.
@@ -159,8 +170,35 @@ static std::string string_in_between(const std::string& start,const std::string&
   std::stringstream ss;
   ss<<"Given:["<<value<<"]\n";
   ss<<"Result:["<<matched<<"]";
-  openhd::loggers::get_default()->debug(ss.str());
+  openhd::log::get_default()->debug(ss.str());
   return matched;
+}
+
+static std::optional<int> string_to_int(const std::string& s){
+  try{
+    auto ret=std::stoi(s);
+    return ret;
+  }catch (...){
+    openhd::log::get_default()->warn("Cannot convert ["+s+"] to int");
+    return std::nullopt;
+  }
+}
+
+// Example: split "hello,world" int "hello" and "world" by ","
+static std::vector<std::string> split_into_substrings(const std::string& input,const char separator){
+  std::vector<std::string> ret;
+  std::string buff;
+  for(int i=0;i<input.size();i++){
+    const auto curr_char=input.at(i);
+    if(curr_char==separator){
+      if(!buff.empty())ret.push_back(buff);
+      buff="";
+    } else{
+      buff+=curr_char;
+    }
+  }
+  if(!buff.empty())ret.push_back(buff);
+  return ret;
 }
 
 // From https://stackoverflow.com/questions/3214297/how-can-my-c-c-application-determine-if-the-root-user-is-executing-the-command
@@ -172,7 +210,7 @@ static bool check_root(const bool print_debug=true){
   if(print_debug){
 	ss<<"UID is:["<<uid<<"] root:"<<OHDUtil::yes_or_no(root)<<"\n";
   }
-  openhd::loggers::get_default()->debug(ss.str());
+  openhd::log::get_default()->debug(ss.str());
   return root;
 }
 

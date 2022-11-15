@@ -1,6 +1,6 @@
 # Summary
 
-This module is responsible for starting and configuring all the OpenHD
+This submodule is responsible for starting and configuring all the OpenHD
 interfaces - aka all OpenHD links like wifibroadcast (communication between air and ground),
 ground hotspot, ...
 

@@ -18,9 +18,9 @@
 #include "StatusTextAccumulator.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-link-statistics.hpp"
-#include "openhd-log.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-spdlog.hpp"
+#include "openhd-spdlog-tele-sink.h"
 #include "routing/MavlinkComponent.hpp"
 #include "routing/MavlinkSystem.hpp"
 
@@ -56,7 +56,7 @@ class OHDMainComponent : public MavlinkComponent{
   // similar to ping
   [[nodiscard]] std::optional<MavlinkMessage> handleTimeSyncMessage(const MavlinkMessage &message);
   [[nodiscard]] std::vector<MavlinkMessage> generateWifibroadcastStatistics();
-  [[nodiscard]] MavlinkMessage generateOpenHDVersion()const;
+  [[nodiscard]] MavlinkMessage generateOpenHDVersion(const std::string& commit_hash="unknown")const;
   [[nodiscard]] MavlinkMessage generateRcControlMessage()const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
@@ -66,7 +66,7 @@ class OHDMainComponent : public MavlinkComponent{
   std::unique_ptr<OnboardComputerStatusProvider> m_onboard_computer_status_provider;
   std::mutex _last_link_stats_mutex;
   openhd::link_statistics::AllStats _last_link_stats{};
-  MavlinkMessage ack_command(const uint8_t source_sys_id,const uint8_t source_comp_id,uint16_t command_id);
+  MavlinkMessage ack_command(uint8_t source_sys_id,uint8_t source_comp_id,uint16_t command_id);
   std::shared_ptr<spdlog::logger> m_console;
 };
 

@@ -44,7 +44,7 @@ void USBTetherListener::connectOnce() {
   while (!loopThreadStop){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	if(OHDFilesystemUtil::exists(connectedDevice)) {
-	  openhd::loggers::get_default()->info("Found USB tethering device");
+	  openhd::log::get_default()->info("Found USB tethering device");
 	  break;
 	}
   }
@@ -60,7 +60,7 @@ void USBTetherListener::connectOnce() {
   //const auto run_command_result_opt=OHDUtil::run_command_out("ip route show 0.0.0.0/0 dev usb0 | cut -d\\  -f3");
   const auto run_command_result_opt=OHDUtil::run_command_out("ip route list dev usb0");
   if(run_command_result_opt==std::nullopt){
-	openhd::loggers::get_default()->warn("USBHotspot run command out no result");
+	openhd::log::get_default()->warn("USBHotspot run command out no result");
 	return;
   }
   const auto& run_command_result=run_command_result_opt.value();
@@ -70,10 +70,10 @@ void USBTetherListener::connectOnce() {
   const auto external_device=openhd::ExternalDevice{ip_self_network,ip_external_device};
   // Check if both are valid IPs (otherwise, perhaps the parsing got fucked up)
   if(!external_device.is_valid()){
-        openhd::loggers::get_default()->warn("USBTetherListener: "+external_device.to_string()+" not valid");
+        openhd::log::get_default()->warn("USBTetherListener: "+external_device.to_string()+" not valid");
 	return;
   }
-  openhd::loggers::get_default()->debug("USBTetherListener::found device:"+external_device.to_string());
+  openhd::log::get_default()->debug("USBTetherListener::found device:"+external_device.to_string());
   if(_external_device_callback){
 	_external_device_callback(external_device, true);
   }
@@ -82,7 +82,7 @@ void USBTetherListener::connectOnce() {
   while (!loopThreadStop){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	if(!OHDFilesystemUtil::exists(connectedDevice)){
-	  openhd::loggers::get_default()->info("USB Tether device disconnected");
+	  openhd::log::get_default()->info("USB Tether device disconnected");
 	  break;
 	}
   }

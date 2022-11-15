@@ -39,7 +39,7 @@ struct CommonEncoderParams{
 static void initGstreamerOrThrow() {
   GError *error = nullptr;
   if (!gst_init_check(nullptr, nullptr, &error)) {
-    openhd::loggers::get_default()->error("gst_init_check() failed: {}",error->message);
+    openhd::log::get_default()->error("gst_init_check() failed: {}",error->message);
     g_error_free(error);
     throw std::runtime_error("GStreamer initialization failed");
   }
@@ -120,7 +120,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   if(keyframe_interval>= -1 && keyframe_interval < 1000){
 	ss << "keyframe-interval="<<keyframe_interval<<" ";
   }else{
-	openhd::loggers::get_default()->error("Invalid keyframe intervall: {}",keyframe_interval);
+	openhd::log::get_default()->error("Invalid keyframe intervall: {}",keyframe_interval);
   }
   if(openhd::needs_horizontal_flip(rotation)){
 	ss<<"hflip=1 ";
@@ -128,10 +128,10 @@ static std::string createRpicamsrcStream(const int camera_number,
   if(openhd::needs_vertical_flip(rotation)){
 	ss<<"vflip=1 ";
   }
-  if(awb_mode!=0){
+  if(awb_mode>=0){
 	ss<<"awb-mode="<<awb_mode<<" ";
   }
-  if(exp_mode!=0){
+  if(exp_mode>=0){
 	ss<<"exposure-mode="<<exp_mode<<" ";
   }
   ss<<" ! ";
@@ -141,7 +141,7 @@ static std::string createRpicamsrcStream(const int camera_number,
 		"framerate={}/1, level=3.0 ! ",
 		videoFormat.width, videoFormat.height, videoFormat.framerate);
   }else{
-	openhd::loggers::get_default()->warn("No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues");
+	openhd::log::get_default()->warn("No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues");
 	ss<<fmt::format(
 		"video/x-raw, width={}, height={}, framerate={}/1 ! ",
 		videoFormat.width, videoFormat.height, videoFormat.framerate);
@@ -168,8 +168,9 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   if (videoFormat.videoCodec == VideoCodec::H264) {
     // First we set the caps filter(s) on libcamerasrc, this way we control the format (output by ISP), w,h and fps
     ss << fmt::format(
-        "capsfilter caps=video/x-raw,width={},height={},format=NV12,framerate={}/1 ! ",videoFormat.width, videoFormat.height, videoFormat.framerate);
-    // then we need a v4l2convert (TODO get rid of it)
+        "capsfilter caps=video/x-raw,width={},height={},format=NV12,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",videoFormat.width, videoFormat.height, videoFormat.framerate);
+    // We got rid of the v4l2convert - see
+    // https://github.com/raspberrypi/libcamera/issues/30
     // and configure the v4l2 h264 encoder by using the extra controls
     // We want constant bitrate (e.g. what the user has set) as long as we don't dynamcially adjust anything
     // in this regard (video_bitrate_mode)
@@ -178,17 +179,15 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     // The default for h264_minimum_qp_value seems to be 20 - we set it to something lower, so we can get a higher bitrate
     // on scenes with less change
     static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
-    ss << fmt::format("v4l2convert ! "
-        "v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
+    ss << fmt::format("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
         "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
   } else if (videoFormat.videoCodec == VideoCodec::MJPEG) {
     ss << fmt::format(
-        "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1 ! ",videoFormat.width, videoFormat.height, videoFormat.framerate);
-    ss << fmt::format("v4l2convert ! "
-        "v4l2jpegenc extra-controls=\"controls,compression_quality={}\" ! ",50); //mjpeg has a compression quality not bitrate
+        "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",videoFormat.width, videoFormat.height, videoFormat.framerate);
+    ss << fmt::format("v4l2jpegenc extra-controls=\"controls,compression_quality={}\" ! ",50); //mjpeg has a compression quality not bitrate
   }
   else {
-    openhd::loggers::get_default()->warn("No h265 encoder on rpi, using SW encode (will almost 100% result in frame drops/performance issues)");
+    openhd::log::get_default()->warn("No h265 encoder on rpi, using SW encode (will almost 100% result in frame drops/performance issues)");
     ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
                       videoFormat.width, videoFormat.height,
                       videoFormat.framerate);

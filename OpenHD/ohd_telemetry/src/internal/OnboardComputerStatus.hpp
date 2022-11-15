@@ -25,7 +25,7 @@ static int readTemperature() {
 	fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
 	fscanf(fp, "%d", &cpu_temperature);
   } catch (...) {
-	openhd::loggers::get_default()->warn("ERROR: thermal reading");
+	openhd::log::get_default()->warn("ERROR: thermal reading");
 	return -1;
   }
   fclose(fp);
@@ -59,7 +59,7 @@ static std::string everything_after_equal(const std::string &unparsed) {
   if (npos != std::string::npos) {
 	return unparsed.substr(npos + 1);
   }
-  openhd::loggers::get_default()->warn("everything_after_equal - no equal sign found");
+  openhd::log::get_default()->warn("everything_after_equal - no equal sign found");
   return unparsed;
 }
 

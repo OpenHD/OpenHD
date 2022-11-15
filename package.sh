@@ -8,29 +8,6 @@ OS=$2
 DISTRO=$3
 BUILD_TYPE=$4
 
-if [[ "${DISTRO}" == "bullseye" ]]; then
-    PLATFORM_PACKAGES="-d openhd-linux-pi"
-    PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
-fi
-
-if [[ "${DISTRO}" == "buster" ]]; then
-    PLATFORM_PACKAGES=""
-    PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
-fi
-
-if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
-    echo "--------------ADDING nvidia-l4t-gstreamer to package list--------------- "
-    PLATFORM_CONFIGS="--config-files /usr/local/share/openhd/joyconfig.txt"
- fi
-
-if [ "${BUILD_TYPE}" == "docker" ]; then
-    cat << EOF > /etc/resolv.conf
-options rotate
-options timeout:1
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-EOF
-fi
 
 PACKAGE_NAME=openhd
 
@@ -39,7 +16,7 @@ PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
 echo "getting hash"
-cd /opt/Open.HD
+cd /opt/OpenHD
 ls -a
 VER2=$(git rev-parse --short HEAD) 
 echo ${VER2}
@@ -49,12 +26,12 @@ if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_AR
 cd /opt
 mkdir temp
 cd temp
-git clone -b 2.2.3-evo https://github.com/OpenHD/Open.HD
-cd Open.HD
+git clone -b 2.2.3-evo https://github.com/OpenHD/OpenHD
+cd OpenHD
 git rev-parse --short HEAD ||exit
 VER2=$(git rev-parse --short HEAD) 
 echo ${VER2}
-cd /opt/Open.HD/OpenHD
+cd /opt/OpenHD/OpenHD
 fi
 
 rm -rf build
@@ -101,7 +78,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   -d "dnsmasq" \
   -d "aircrack-ng" \
   -d "i2c-tools" \
-  -d "indent" \
   -d "libv4l-dev" \
   -d "libusb-1.0-0" \
   -d "libpcap-dev" \
@@ -109,13 +85,9 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   -d "libnl-3-dev" \
   -d "libnl-genl-3-dev" \
   -d "libsdl2-2.0-0" \
-  -d "libsdl1.2debian" \
   -d "libconfig++9v5" \
   -d "libreadline-dev" \
   -d "libsodium-dev" \
-  -d "libfontconfig1" \
-  -d "libfreetype6" \
-  -d "libgles2-mesa-dev" \
   -d "gstreamer1.0-plugins-base" \
   -d "gstreamer1.0-plugins-good" \
   -d "gstreamer1.0-plugins-bad" \
@@ -125,14 +97,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   -d "gstreamer1.0-alsa" \
   -d "gstreamer1.0-pulseaudio" || exit 1
 
+  ls -a
+
 cp *.deb ../../
-
-git describe --exact-match HEAD >/dev/null 2>&1
-
-if [[ "${DISTRO}" == "bullseye" ]]; then
-            echo "raspberry"
-fi
-
-if [[ "${DISTRO}" == "bionic" ]]; then
-            echo "ubuntu"
-fi 

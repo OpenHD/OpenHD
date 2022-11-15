@@ -10,21 +10,18 @@
 #include "AirRecordingFileHelper.hpp"
 #include "OHDGstHelper.hpp"
 #include "ffmpeg_videosamples.hpp"
-#include "openhd-log.hpp"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,uint16_t video_udp_port)
     : CameraStream(platform, camera_holder, video_udp_port) {
-  m_console=spdlog::stdout_color_mt("ohd_video_gststream");
+  m_console=openhd::log::create_or_get("v_gststream");
   assert(m_console);
-  // TODO fixme
-  m_console->set_level(spd::level::debug);
   m_console->debug("GStreamerStream::GStreamerStream()");
   // Since the dummy camera is SW, we generally cannot do more than 640x480@30 anyways.
   // (640x48@30 might already be too much on embedded devices).
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
-  if (camera.type == CameraType::Dummy && setting.userSelectedVideoFormat.width > 640 ||
-      setting.userSelectedVideoFormat.height > 480 || setting.userSelectedVideoFormat.framerate > 30) {
+  if (camera.type == CameraType::Dummy && (setting.userSelectedVideoFormat.width > 640 ||
+      setting.userSelectedVideoFormat.height > 480 || setting.userSelectedVideoFormat.framerate > 30)) {
     m_console->warn("Warning- Dummy camera is done in sw, high resolution/framerate might not work");
     m_console->warn("Configured dummy for:"+setting.userSelectedVideoFormat.toString());
   }
@@ -103,9 +100,7 @@ void GStreamerStream::setup() {
   if(!OHDUtil::endsWith(m_pipeline.str(),"! ")){
 	  m_console->error("Probably ill-formatted pipeline:"+m_pipeline.str());
   }
-  // TODO: ground recording is not working yet, since we cannot properly close the file at the time.
-  //setting.enableAirRecordingToFile = false;
-  // for lower latency we only add the tee command at the right place if recording is enabled.
+  // for safety we only add the tee command at the right place if recording is enabled.
   if(setting.air_recording==Recording::ENABLED && camera.type != CameraType::RockchipHDMI){
     m_console->info("Air recording active");
     m_pipeline<<"tee name=t ! ";
@@ -287,6 +282,7 @@ void GStreamerStream::cleanup_pipe() {
 	m_console->debug("gst_pipeline==null");
 	return;
   }
+  // TODO according to @Alex W we need a EOS signal here to properly shut down the pipeline
   gst_element_set_state (gst_pipeline, GST_STATE_NULL);
   gst_object_unref (gst_pipeline);
   gst_pipeline=nullptr;
@@ -307,7 +303,7 @@ void GStreamerStream::restartIfStopped() {
 	message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name<<"\n";
 	// We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
 	// Log such that it shows up in QOpenHD
-	LOGE<<"Restarting camera, check your parameters / connection";
+        m_console->warn("Restarting camera, check your parameters / connection");
 	stop();
 	cleanup_pipe();
 	setup();

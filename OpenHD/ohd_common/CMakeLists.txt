@@ -33,6 +33,7 @@ target_link_libraries(OHDCommonLib PRIVATE spdlog::spdlog)
 set(sources
     "mavlink_settings/ISettingsComponent.hpp"
     "json.hpp"
+    "include_json.hpp"
     "openhd-action-handler.hpp"
     "openhd-common-tests.hpp"
     "openhd-external-device.hpp"
@@ -40,15 +41,19 @@ set(sources
     "openhd-led-codes.hpp"
     "openhd-led-pi.hpp"
     "openhd-link-statistics.hpp"
-    "openhd-log.hpp"
-    "openhd-platform.hpp"
+     "openhd-platform.hpp"
     "openhd-platform-discover.hpp"
+    "openhd-platform-json.hpp"
     "openhd-profile.hpp"
+    "openhd-profile-json.hpp"
     "openhd-settings.hpp"
     "openhd-settings2.hpp"
     "openhd-util.hpp"
     "openhd-util-filesystem.hpp"
     "veye-helper.hpp"
+    "openhd-spdlog.hpp"
+    "openhd-spdlog-tele-sink.h"
+    "openhd-udp-log.h"
     )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 

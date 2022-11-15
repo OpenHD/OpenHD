@@ -35,7 +35,7 @@ struct SettingImpl{
   std::function<bool(std::string id,T requested_value)> change_callback=[](std::string id,T requested_value){
 	std::stringstream ss;
 	ss<<"Requested change "<<id<<" to "<<requested_value;
-	openhd::loggers::get_default()->debug(ss.str());
+	openhd::log::get_default()->debug(ss.str());
 	return true;
   };
 };
@@ -68,6 +68,10 @@ static void validate_provided_ids(const std::vector<Setting>& settings){
 	assert(test.find(setting.id)==test.end());
 	test[setting.id]=nullptr;
   }
+}
+
+static bool validate_yes_or_no(int value){
+  return value==0 || value==1;
 }
 
 namespace testing {
@@ -105,6 +109,15 @@ static void append_dummy_int_and_string(std::vector<Setting>& ret){
 	auto tmp=openhd::StringSetting{value};
 	const std::string id="TEST_STRING_"+std::to_string(i);
 	ret.push_back(Setting{id,tmp});
+  }
+}
+// A size of 0 creates issues with the param server, but it is possible we don't have any params if
+// none were addable during run time due
+static void append_dummy_if_empty(std::vector<Setting>& ret){
+  if(ret.empty()){
+    auto tmp=openhd::IntSetting{0};
+    const std::string id="DUMMY";
+    ret.push_back(Setting{id,tmp});
   }
 }
 }

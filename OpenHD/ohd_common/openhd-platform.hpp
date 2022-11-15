@@ -6,8 +6,6 @@
 #include <fstream>
 
 #include "openhd-util.hpp"
-#include "openhd-log.hpp"
-#include "json.hpp"
 
 enum class PlatformType {
   Unknown,
@@ -106,20 +104,6 @@ struct OHDPlatform {
 	return ss.str();
   }
 };
-// Thw write out here is only for debugging
-static void to_json(nlohmann::json& j,const OHDPlatform &ohdPlatform) {
-  j = nlohmann::json{{"platform_type", platform_type_to_string(ohdPlatform.platform_type)},
-                     {"board_type", board_type_to_string(ohdPlatform.board_type)}};
-}
-
-static constexpr auto PLATFORM_MANIFEST_FILENAME = "/tmp/platform_manifest";
-
-static void write_platform_manifest(const OHDPlatform &ohdPlatform) {
-  nlohmann::json manifest = ohdPlatform;
-  std::ofstream _t(PLATFORM_MANIFEST_FILENAME);
-  _t << manifest.dump(4);
-  _t.close();
-}
 
 
 #endif

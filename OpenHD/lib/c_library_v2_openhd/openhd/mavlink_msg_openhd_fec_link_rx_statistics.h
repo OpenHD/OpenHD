@@ -10,16 +10,18 @@ typedef struct __mavlink_openhd_fec_link_rx_statistics_t {
  uint64_t count_blocks_recovered; /*<  count_blocks_recovered*/
  uint64_t count_fragments_recovered; /*<  count_fragments_recovered*/
  uint64_t count_bytes_forwarded; /*<  count_bytes_forwarded*/
+ uint64_t unused_0; /*<  unused_0*/
+ uint64_t unused_1; /*<  unused_1*/
  uint8_t link_index; /*<  link_index*/
 } mavlink_openhd_fec_link_rx_statistics_t;
 
-#define MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN 41
-#define MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_MIN_LEN 41
-#define MAVLINK_MSG_ID_1213_LEN 41
-#define MAVLINK_MSG_ID_1213_MIN_LEN 41
+#define MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN 57
+#define MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_MIN_LEN 57
+#define MAVLINK_MSG_ID_1213_LEN 57
+#define MAVLINK_MSG_ID_1213_MIN_LEN 57
 
-#define MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_CRC 250
-#define MAVLINK_MSG_ID_1213_CRC 250
+#define MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_CRC 88
+#define MAVLINK_MSG_ID_1213_CRC 88
 
 
 
@@ -27,25 +29,29 @@ typedef struct __mavlink_openhd_fec_link_rx_statistics_t {
 #define MAVLINK_MESSAGE_INFO_OPENHD_FEC_LINK_RX_STATISTICS { \
     1213, \
     "OPENHD_FEC_LINK_RX_STATISTICS", \
-    6, \
-    {  { "link_index", NULL, MAVLINK_TYPE_UINT8_T, 0, 40, offsetof(mavlink_openhd_fec_link_rx_statistics_t, link_index) }, \
+    8, \
+    {  { "link_index", NULL, MAVLINK_TYPE_UINT8_T, 0, 56, offsetof(mavlink_openhd_fec_link_rx_statistics_t, link_index) }, \
          { "count_blocks_total", NULL, MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_openhd_fec_link_rx_statistics_t, count_blocks_total) }, \
          { "count_blocks_lost", NULL, MAVLINK_TYPE_UINT64_T, 0, 8, offsetof(mavlink_openhd_fec_link_rx_statistics_t, count_blocks_lost) }, \
          { "count_blocks_recovered", NULL, MAVLINK_TYPE_UINT64_T, 0, 16, offsetof(mavlink_openhd_fec_link_rx_statistics_t, count_blocks_recovered) }, \
          { "count_fragments_recovered", NULL, MAVLINK_TYPE_UINT64_T, 0, 24, offsetof(mavlink_openhd_fec_link_rx_statistics_t, count_fragments_recovered) }, \
          { "count_bytes_forwarded", NULL, MAVLINK_TYPE_UINT64_T, 0, 32, offsetof(mavlink_openhd_fec_link_rx_statistics_t, count_bytes_forwarded) }, \
+         { "unused_0", NULL, MAVLINK_TYPE_UINT64_T, 0, 40, offsetof(mavlink_openhd_fec_link_rx_statistics_t, unused_0) }, \
+         { "unused_1", NULL, MAVLINK_TYPE_UINT64_T, 0, 48, offsetof(mavlink_openhd_fec_link_rx_statistics_t, unused_1) }, \
          } \
 }
 #else
 #define MAVLINK_MESSAGE_INFO_OPENHD_FEC_LINK_RX_STATISTICS { \
     "OPENHD_FEC_LINK_RX_STATISTICS", \
-    6, \
-    {  { "link_index", NULL, MAVLINK_TYPE_UINT8_T, 0, 40, offsetof(mavlink_openhd_fec_link_rx_statistics_t, link_index) }, \
+    8, \
+    {  { "link_index", NULL, MAVLINK_TYPE_UINT8_T, 0, 56, offsetof(mavlink_openhd_fec_link_rx_statistics_t, link_index) }, \
          { "count_blocks_total", NULL, MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_openhd_fec_link_rx_statistics_t, count_blocks_total) }, \
          { "count_blocks_lost", NULL, MAVLINK_TYPE_UINT64_T, 0, 8, offsetof(mavlink_openhd_fec_link_rx_statistics_t, count_blocks_lost) }, \
          { "count_blocks_recovered", NULL, MAVLINK_TYPE_UINT64_T, 0, 16, offsetof(mavlink_openhd_fec_link_rx_statistics_t, count_blocks_recovered) }, \
          { "count_fragments_recovered", NULL, MAVLINK_TYPE_UINT64_T, 0, 24, offsetof(mavlink_openhd_fec_link_rx_statistics_t, count_fragments_recovered) }, \
          { "count_bytes_forwarded", NULL, MAVLINK_TYPE_UINT64_T, 0, 32, offsetof(mavlink_openhd_fec_link_rx_statistics_t, count_bytes_forwarded) }, \
+         { "unused_0", NULL, MAVLINK_TYPE_UINT64_T, 0, 40, offsetof(mavlink_openhd_fec_link_rx_statistics_t, unused_0) }, \
+         { "unused_1", NULL, MAVLINK_TYPE_UINT64_T, 0, 48, offsetof(mavlink_openhd_fec_link_rx_statistics_t, unused_1) }, \
          } \
 }
 #endif
@@ -62,10 +68,12 @@ typedef struct __mavlink_openhd_fec_link_rx_statistics_t {
  * @param count_blocks_recovered  count_blocks_recovered
  * @param count_fragments_recovered  count_fragments_recovered
  * @param count_bytes_forwarded  count_bytes_forwarded
+ * @param unused_0  unused_0
+ * @param unused_1  unused_1
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_openhd_fec_link_rx_statistics_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
-                               uint8_t link_index, uint64_t count_blocks_total, uint64_t count_blocks_lost, uint64_t count_blocks_recovered, uint64_t count_fragments_recovered, uint64_t count_bytes_forwarded)
+                               uint8_t link_index, uint64_t count_blocks_total, uint64_t count_blocks_lost, uint64_t count_blocks_recovered, uint64_t count_fragments_recovered, uint64_t count_bytes_forwarded, uint64_t unused_0, uint64_t unused_1)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char buf[MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN];
@@ -74,7 +82,9 @@ static inline uint16_t mavlink_msg_openhd_fec_link_rx_statistics_pack(uint8_t sy
     _mav_put_uint64_t(buf, 16, count_blocks_recovered);
     _mav_put_uint64_t(buf, 24, count_fragments_recovered);
     _mav_put_uint64_t(buf, 32, count_bytes_forwarded);
-    _mav_put_uint8_t(buf, 40, link_index);
+    _mav_put_uint64_t(buf, 40, unused_0);
+    _mav_put_uint64_t(buf, 48, unused_1);
+    _mav_put_uint8_t(buf, 56, link_index);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN);
 #else
@@ -84,6 +94,8 @@ static inline uint16_t mavlink_msg_openhd_fec_link_rx_statistics_pack(uint8_t sy
     packet.count_blocks_recovered = count_blocks_recovered;
     packet.count_fragments_recovered = count_fragments_recovered;
     packet.count_bytes_forwarded = count_bytes_forwarded;
+    packet.unused_0 = unused_0;
+    packet.unused_1 = unused_1;
     packet.link_index = link_index;
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN);
@@ -105,11 +117,13 @@ static inline uint16_t mavlink_msg_openhd_fec_link_rx_statistics_pack(uint8_t sy
  * @param count_blocks_recovered  count_blocks_recovered
  * @param count_fragments_recovered  count_fragments_recovered
  * @param count_bytes_forwarded  count_bytes_forwarded
+ * @param unused_0  unused_0
+ * @param unused_1  unused_1
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_openhd_fec_link_rx_statistics_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
                                mavlink_message_t* msg,
-                                   uint8_t link_index,uint64_t count_blocks_total,uint64_t count_blocks_lost,uint64_t count_blocks_recovered,uint64_t count_fragments_recovered,uint64_t count_bytes_forwarded)
+                                   uint8_t link_index,uint64_t count_blocks_total,uint64_t count_blocks_lost,uint64_t count_blocks_recovered,uint64_t count_fragments_recovered,uint64_t count_bytes_forwarded,uint64_t unused_0,uint64_t unused_1)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char buf[MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN];
@@ -118,7 +132,9 @@ static inline uint16_t mavlink_msg_openhd_fec_link_rx_statistics_pack_chan(uint8
     _mav_put_uint64_t(buf, 16, count_blocks_recovered);
     _mav_put_uint64_t(buf, 24, count_fragments_recovered);
     _mav_put_uint64_t(buf, 32, count_bytes_forwarded);
-    _mav_put_uint8_t(buf, 40, link_index);
+    _mav_put_uint64_t(buf, 40, unused_0);
+    _mav_put_uint64_t(buf, 48, unused_1);
+    _mav_put_uint8_t(buf, 56, link_index);
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN);
 #else
@@ -128,6 +144,8 @@ static inline uint16_t mavlink_msg_openhd_fec_link_rx_statistics_pack_chan(uint8
     packet.count_blocks_recovered = count_blocks_recovered;
     packet.count_fragments_recovered = count_fragments_recovered;
     packet.count_bytes_forwarded = count_bytes_forwarded;
+    packet.unused_0 = unused_0;
+    packet.unused_1 = unused_1;
     packet.link_index = link_index;
 
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN);
@@ -147,7 +165,7 @@ static inline uint16_t mavlink_msg_openhd_fec_link_rx_statistics_pack_chan(uint8
  */
 static inline uint16_t mavlink_msg_openhd_fec_link_rx_statistics_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_openhd_fec_link_rx_statistics_t* openhd_fec_link_rx_statistics)
 {
-    return mavlink_msg_openhd_fec_link_rx_statistics_pack(system_id, component_id, msg, openhd_fec_link_rx_statistics->link_index, openhd_fec_link_rx_statistics->count_blocks_total, openhd_fec_link_rx_statistics->count_blocks_lost, openhd_fec_link_rx_statistics->count_blocks_recovered, openhd_fec_link_rx_statistics->count_fragments_recovered, openhd_fec_link_rx_statistics->count_bytes_forwarded);
+    return mavlink_msg_openhd_fec_link_rx_statistics_pack(system_id, component_id, msg, openhd_fec_link_rx_statistics->link_index, openhd_fec_link_rx_statistics->count_blocks_total, openhd_fec_link_rx_statistics->count_blocks_lost, openhd_fec_link_rx_statistics->count_blocks_recovered, openhd_fec_link_rx_statistics->count_fragments_recovered, openhd_fec_link_rx_statistics->count_bytes_forwarded, openhd_fec_link_rx_statistics->unused_0, openhd_fec_link_rx_statistics->unused_1);
 }
 
 /**
@@ -161,7 +179,7 @@ static inline uint16_t mavlink_msg_openhd_fec_link_rx_statistics_encode(uint8_t 
  */
 static inline uint16_t mavlink_msg_openhd_fec_link_rx_statistics_encode_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, const mavlink_openhd_fec_link_rx_statistics_t* openhd_fec_link_rx_statistics)
 {
-    return mavlink_msg_openhd_fec_link_rx_statistics_pack_chan(system_id, component_id, chan, msg, openhd_fec_link_rx_statistics->link_index, openhd_fec_link_rx_statistics->count_blocks_total, openhd_fec_link_rx_statistics->count_blocks_lost, openhd_fec_link_rx_statistics->count_blocks_recovered, openhd_fec_link_rx_statistics->count_fragments_recovered, openhd_fec_link_rx_statistics->count_bytes_forwarded);
+    return mavlink_msg_openhd_fec_link_rx_statistics_pack_chan(system_id, component_id, chan, msg, openhd_fec_link_rx_statistics->link_index, openhd_fec_link_rx_statistics->count_blocks_total, openhd_fec_link_rx_statistics->count_blocks_lost, openhd_fec_link_rx_statistics->count_blocks_recovered, openhd_fec_link_rx_statistics->count_fragments_recovered, openhd_fec_link_rx_statistics->count_bytes_forwarded, openhd_fec_link_rx_statistics->unused_0, openhd_fec_link_rx_statistics->unused_1);
 }
 
 /**
@@ -174,10 +192,12 @@ static inline uint16_t mavlink_msg_openhd_fec_link_rx_statistics_encode_chan(uin
  * @param count_blocks_recovered  count_blocks_recovered
  * @param count_fragments_recovered  count_fragments_recovered
  * @param count_bytes_forwarded  count_bytes_forwarded
+ * @param unused_0  unused_0
+ * @param unused_1  unused_1
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_openhd_fec_link_rx_statistics_send(mavlink_channel_t chan, uint8_t link_index, uint64_t count_blocks_total, uint64_t count_blocks_lost, uint64_t count_blocks_recovered, uint64_t count_fragments_recovered, uint64_t count_bytes_forwarded)
+static inline void mavlink_msg_openhd_fec_link_rx_statistics_send(mavlink_channel_t chan, uint8_t link_index, uint64_t count_blocks_total, uint64_t count_blocks_lost, uint64_t count_blocks_recovered, uint64_t count_fragments_recovered, uint64_t count_bytes_forwarded, uint64_t unused_0, uint64_t unused_1)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char buf[MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN];
@@ -186,7 +206,9 @@ static inline void mavlink_msg_openhd_fec_link_rx_statistics_send(mavlink_channe
     _mav_put_uint64_t(buf, 16, count_blocks_recovered);
     _mav_put_uint64_t(buf, 24, count_fragments_recovered);
     _mav_put_uint64_t(buf, 32, count_bytes_forwarded);
-    _mav_put_uint8_t(buf, 40, link_index);
+    _mav_put_uint64_t(buf, 40, unused_0);
+    _mav_put_uint64_t(buf, 48, unused_1);
+    _mav_put_uint8_t(buf, 56, link_index);
 
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS, buf, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_MIN_LEN, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_CRC);
 #else
@@ -196,6 +218,8 @@ static inline void mavlink_msg_openhd_fec_link_rx_statistics_send(mavlink_channe
     packet.count_blocks_recovered = count_blocks_recovered;
     packet.count_fragments_recovered = count_fragments_recovered;
     packet.count_bytes_forwarded = count_bytes_forwarded;
+    packet.unused_0 = unused_0;
+    packet.unused_1 = unused_1;
     packet.link_index = link_index;
 
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS, (const char *)&packet, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_MIN_LEN, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_CRC);
@@ -210,7 +234,7 @@ static inline void mavlink_msg_openhd_fec_link_rx_statistics_send(mavlink_channe
 static inline void mavlink_msg_openhd_fec_link_rx_statistics_send_struct(mavlink_channel_t chan, const mavlink_openhd_fec_link_rx_statistics_t* openhd_fec_link_rx_statistics)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-    mavlink_msg_openhd_fec_link_rx_statistics_send(chan, openhd_fec_link_rx_statistics->link_index, openhd_fec_link_rx_statistics->count_blocks_total, openhd_fec_link_rx_statistics->count_blocks_lost, openhd_fec_link_rx_statistics->count_blocks_recovered, openhd_fec_link_rx_statistics->count_fragments_recovered, openhd_fec_link_rx_statistics->count_bytes_forwarded);
+    mavlink_msg_openhd_fec_link_rx_statistics_send(chan, openhd_fec_link_rx_statistics->link_index, openhd_fec_link_rx_statistics->count_blocks_total, openhd_fec_link_rx_statistics->count_blocks_lost, openhd_fec_link_rx_statistics->count_blocks_recovered, openhd_fec_link_rx_statistics->count_fragments_recovered, openhd_fec_link_rx_statistics->count_bytes_forwarded, openhd_fec_link_rx_statistics->unused_0, openhd_fec_link_rx_statistics->unused_1);
 #else
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS, (const char *)openhd_fec_link_rx_statistics, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_MIN_LEN, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_CRC);
 #endif
@@ -224,7 +248,7 @@ static inline void mavlink_msg_openhd_fec_link_rx_statistics_send_struct(mavlink
   is usually the receive buffer for the channel, and allows a reply to an
   incoming message with minimum stack space usage.
  */
-static inline void mavlink_msg_openhd_fec_link_rx_statistics_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  uint8_t link_index, uint64_t count_blocks_total, uint64_t count_blocks_lost, uint64_t count_blocks_recovered, uint64_t count_fragments_recovered, uint64_t count_bytes_forwarded)
+static inline void mavlink_msg_openhd_fec_link_rx_statistics_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  uint8_t link_index, uint64_t count_blocks_total, uint64_t count_blocks_lost, uint64_t count_blocks_recovered, uint64_t count_fragments_recovered, uint64_t count_bytes_forwarded, uint64_t unused_0, uint64_t unused_1)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char *buf = (char *)msgbuf;
@@ -233,7 +257,9 @@ static inline void mavlink_msg_openhd_fec_link_rx_statistics_send_buf(mavlink_me
     _mav_put_uint64_t(buf, 16, count_blocks_recovered);
     _mav_put_uint64_t(buf, 24, count_fragments_recovered);
     _mav_put_uint64_t(buf, 32, count_bytes_forwarded);
-    _mav_put_uint8_t(buf, 40, link_index);
+    _mav_put_uint64_t(buf, 40, unused_0);
+    _mav_put_uint64_t(buf, 48, unused_1);
+    _mav_put_uint8_t(buf, 56, link_index);
 
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS, buf, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_MIN_LEN, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_CRC);
 #else
@@ -243,6 +269,8 @@ static inline void mavlink_msg_openhd_fec_link_rx_statistics_send_buf(mavlink_me
     packet->count_blocks_recovered = count_blocks_recovered;
     packet->count_fragments_recovered = count_fragments_recovered;
     packet->count_bytes_forwarded = count_bytes_forwarded;
+    packet->unused_0 = unused_0;
+    packet->unused_1 = unused_1;
     packet->link_index = link_index;
 
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS, (const char *)packet, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_MIN_LEN, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN, MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_CRC);
@@ -262,7 +290,7 @@ static inline void mavlink_msg_openhd_fec_link_rx_statistics_send_buf(mavlink_me
  */
 static inline uint8_t mavlink_msg_openhd_fec_link_rx_statistics_get_link_index(const mavlink_message_t* msg)
 {
-    return _MAV_RETURN_uint8_t(msg,  40);
+    return _MAV_RETURN_uint8_t(msg,  56);
 }
 
 /**
@@ -316,6 +344,26 @@ static inline uint64_t mavlink_msg_openhd_fec_link_rx_statistics_get_count_bytes
 }
 
 /**
+ * @brief Get field unused_0 from openhd_fec_link_rx_statistics message
+ *
+ * @return  unused_0
+ */
+static inline uint64_t mavlink_msg_openhd_fec_link_rx_statistics_get_unused_0(const mavlink_message_t* msg)
+{
+    return _MAV_RETURN_uint64_t(msg,  40);
+}
+
+/**
+ * @brief Get field unused_1 from openhd_fec_link_rx_statistics message
+ *
+ * @return  unused_1
+ */
+static inline uint64_t mavlink_msg_openhd_fec_link_rx_statistics_get_unused_1(const mavlink_message_t* msg)
+{
+    return _MAV_RETURN_uint64_t(msg,  48);
+}
+
+/**
  * @brief Decode a openhd_fec_link_rx_statistics message into a struct
  *
  * @param msg The message to decode
@@ -329,6 +377,8 @@ static inline void mavlink_msg_openhd_fec_link_rx_statistics_decode(const mavlin
     openhd_fec_link_rx_statistics->count_blocks_recovered = mavlink_msg_openhd_fec_link_rx_statistics_get_count_blocks_recovered(msg);
     openhd_fec_link_rx_statistics->count_fragments_recovered = mavlink_msg_openhd_fec_link_rx_statistics_get_count_fragments_recovered(msg);
     openhd_fec_link_rx_statistics->count_bytes_forwarded = mavlink_msg_openhd_fec_link_rx_statistics_get_count_bytes_forwarded(msg);
+    openhd_fec_link_rx_statistics->unused_0 = mavlink_msg_openhd_fec_link_rx_statistics_get_unused_0(msg);
+    openhd_fec_link_rx_statistics->unused_1 = mavlink_msg_openhd_fec_link_rx_statistics_get_unused_1(msg);
     openhd_fec_link_rx_statistics->link_index = mavlink_msg_openhd_fec_link_rx_statistics_get_link_index(msg);
 #else
         uint8_t len = msg->len < MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN? msg->len : MAVLINK_MSG_ID_OPENHD_FEC_LINK_RX_STATISTICS_LEN;

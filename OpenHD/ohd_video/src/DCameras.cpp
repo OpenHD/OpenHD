@@ -1,6 +1,5 @@
 #include "DCameras.h"
 #include "openhd-camera.hpp"
-#include "openhd-log.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "DCamerasHelper.hpp"
@@ -17,12 +16,11 @@
 
 DCameras::DCameras(const OHDPlatform ohdPlatform) :
 	ohdPlatform(ohdPlatform){
-  m_console=spdlog::stdout_color_mt("ohd_video_dcameras");
+  m_console=openhd::log::create_or_get("v_dcameras");
   assert(m_console);
   m_enable_debug=OHDUtil::get_ohd_env_variable_bool("OHD_DISCOVER_CAMERAS_DEBUG");
-  // always enable for now
+  // always enabled for now
   // TODO fixme
-  m_console->set_level(spd::level::debug);
   if(m_enable_debug){
     m_console->set_level(spd::level::debug);
     m_console->debug("DCameras::m_enable_debug=true");
@@ -36,14 +34,14 @@ DiscoveredCameraList DCameras::discover_internal() {
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
   if(ohdPlatform.platform_type==PlatformType::RaspberryPi){
-	// We need to detect the veye camera first - since once a veye camera is detected and
-	// ? eitehr run the veye_raspivid or do the initializing stuff) the "normal" rpi camera detection
-	// hangs infinite.
-	if(detect_raspberrypi_broadcom_veye()){
-          m_console->warn("WARNING detected veye camera, skipping normal rpi camera detection");
-	}else{
-	  detect_raspberrypi_broadcom_csi();
-	}
+    // We need to detect the veye camera first - since once a veye camera is detected and
+    // ? we either run the veye_raspivid or do the initializing stuff ? the "normal" rpi camera detection
+    // hangs infinite.
+    if(detect_raspberrypi_broadcom_veye()){
+      m_console->warn("WARNING detected veye camera, skipping normal rpi camera detection");
+    }else{
+      detect_raspberrypi_broadcom_csi();
+    }
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
   // Will need custom debugging before anything here is usable again though.
