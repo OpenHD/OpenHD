@@ -5,8 +5,13 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_STATUSTEXT_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_STATUSTEXT_H_
 
+#include "openhd-spdlog.hpp"
+
 class StatusTextAccumulator{
  public:
+  StatusTextAccumulator(){
+    m_console=openhd::log::create_or_get("l_acc");
+  }
   // process the incoming log messages. This one is a bit dangerous, it must handle the character
   // limit imposed by mavlink and the null terminator
   void processLogMessageData(const uint8_t *data, std::size_t dataLen){
@@ -17,12 +22,12 @@ class StatusTextAccumulator{
       memcpy((uint8_t *)&local_message, data, dataLen);
       const auto nullTerminatorFound = local_message.hasNullTerminator();
       if (!nullTerminatorFound) {
-        std::cerr << "Log message without null terminator\n";
+        m_console->warn("Log message without null terminator");
         return;
       }
       processLogMessage(local_message);
     } else {
-      std::cerr << "Invalid size for local log message" << dataLen << " wanted:" << sizeof(openhd::log::udp::LogMessage) << "\n";
+      m_console->warn("Invalid size for local log message {} wanted {}",dataLen,sizeof(openhd::log::udp::LogMessage));
     }
   }
   // Get all the currently buffered messages, removes the returned messages from the message queue.
@@ -33,7 +38,7 @@ class StatusTextAccumulator{
     while (!bufferedLogMessages.empty()) {
       const auto msg = bufferedLogMessages.front();
       if(!msg.hasNullTerminator()){
-        std::cerr<<"Somethings wrong with the log message";
+        m_console->warn("Somethings wrong with the log message");
       }else{
         ret.push_back(msg);
       }
@@ -66,6 +71,7 @@ class StatusTextAccumulator{
   // one thread writes the queue, another one reads the queue
   std::mutex bufferedLogMessagesLock;
   std::queue<openhd::log::udp::LogMessage> bufferedLogMessages;
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_STATUSTEXT_H_
