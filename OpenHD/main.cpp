@@ -297,8 +297,16 @@ int main(int argc, char *argv[]) {
       std::cerr<<"Got SIGTERM, exiting";
       quit= true;
     });
+    const auto run_time_begin=std::chrono::steady_clock::now();
     while (!quit) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
+      if(options.run_time_seconds>=1){
+        if(std::chrono::steady_clock::now()-run_time_begin>=std::chrono::seconds(options.run_time_seconds)){
+          m_console->warn("Terminating, exceeded run time {}",options.run_time_seconds);
+          // we can just break out any time, usefully for checking memory leaks and more.
+          break;
+        }
+      }
       if(ohdVideo){
         ohdVideo->restartIfStopped();
       }
@@ -328,4 +336,5 @@ int main(int argc, char *argv[]) {
     std::cerr << "Unknown exception occurred" << std::endl;
     exit(1);
   }
+  return 0;
 }
