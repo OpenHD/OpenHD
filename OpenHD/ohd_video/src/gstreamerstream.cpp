@@ -300,9 +300,10 @@ void GStreamerStream::restartIfStopped() {
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000); // timeout in ns
   if (returnValue == 0) {
 	std::stringstream message;
-	message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name<<"\n";
+	message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name;
+        m_console->debug(message.str());
 	// We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
-	// Log such that it shows up in QOpenHD
+	// This will also show up in QOpenHD (log level >= warn), but we are limited by the n of characters in mavlink
         m_console->warn("Restarting camera, check your parameters / connection");
 	stop();
 	cleanup_pipe();
