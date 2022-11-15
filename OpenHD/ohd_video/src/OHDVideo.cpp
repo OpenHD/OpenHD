@@ -55,6 +55,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
     case CameraType::IP:
     case CameraType::RockchipCSI:
     case CameraType::UVC:
+    case CameraType::RockchipHDMI:
     case CameraType::Dummy: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;

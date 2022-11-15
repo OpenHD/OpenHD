@@ -1,4 +1,4 @@
-#Summary
+# Summary
 
 This submodule is responsible for starting and configuring all the OpenHD
 interfaces - aka all OpenHD links like wifibroadcast (communication between air and ground),
@@ -18,3 +18,8 @@ connection to the FC.
    pi
 
 look at the code to find out the ports usw, they should come from openhd-constants.hpp
+
+## Keys
+If no keys are present, keys will be generated from a default seed (all zeros). This obviously isn't secure.
+
+Use the keygen in the [wifibroadcast repo](https://github.com/openhd/wifibroadcast) to generate a key pair. The keys should be placed in `/usr/local/share/openhd/`. Obviously `drone.key` goes on the air unit and `gs.key` on the ground unit.

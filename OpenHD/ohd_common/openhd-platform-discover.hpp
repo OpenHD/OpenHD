@@ -31,6 +31,7 @@ class DPlatform {
   }
  private:
   static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
+  static constexpr auto DEVICE_TREE_COMPATIBLE_PATH = "/proc/device-tree/compatible";
   static std::shared_ptr<OHDPlatform> internal_discover(){
     const auto res=detect_raspberrypi();
     if(res.has_value()){
@@ -40,8 +41,12 @@ class DPlatform {
     if(res2.has_value()){
       return std::make_shared<OHDPlatform>(res2.value().first,res2.value().second);
     }
-    const auto res3=detect_pc();
-    return std::make_shared<OHDPlatform>(res3.first,res3.second);
+    const auto res3 = detect_rockchip();
+    if(res3.has_value()){
+      return std::make_shared<OHDPlatform>(res3.value().first,res3.value().second);
+    }
+    const auto res4=detect_pc();
+    return std::make_shared<OHDPlatform>(res4.first,res4.second);
   }
   static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi(){
     std::ifstream t("/proc/cpuinfo");
@@ -105,6 +110,28 @@ class DPlatform {
   static std::optional<std::pair<PlatformType,BoardType>> detect_jetson(){
     if (OHDFilesystemUtil::exists(JETSON_BOARDID_PATH)) {
       return std::make_pair(PlatformType::Jetson,BoardType::JetsonNano);
+    }
+    return {};
+  }
+  static std::optional<std::pair<PlatformType,BoardType>> detect_rockchip(){
+    if (OHDFilesystemUtil::exists(DEVICE_TREE_COMPATIBLE_PATH)) {
+      std::string compatible_content = OHDFilesystemUtil::read_file(DEVICE_TREE_COMPATIBLE_PATH);
+
+      std::regex r("rockchip,(r[kv][0-9]+)");
+      std::smatch sm;
+
+      if (regex_search(compatible_content, sm, r)) {
+        const std::string chip = sm[1];
+        if(chip == "rk3588"){
+          return std::make_pair(PlatformType::Rockchip, BoardType::RK3588);
+        }else if(chip == "rv1109"){
+          return std::make_pair(PlatformType::Rockchip, BoardType::RV1109);
+        }else if(chip == "rv1126"){
+          return std::make_pair(PlatformType::Rockchip, BoardType::RV1126);
+        }else{
+          return std::make_pair(PlatformType::Rockchip, BoardType::Unknown);
+        }
+      }
     }
     return {};
   }

@@ -258,11 +258,14 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
   const std::string driver((char *)caps.driver);
   m_console->debug("Driver is:"+driver);
   if (driver == "uvcvideo") {
-	camera.type = CameraType::UVC;
-        m_console->debug("Found UVC camera");
+	  camera.type = CameraType::UVC;
+    m_console->debug("Found UVC camera");
   } else if (driver == "tegra-video") {
-	camera.type = CameraType::JetsonCSI;
-        m_console->debug("Found Jetson CSI camera");
+	  camera.type = CameraType::JetsonCSI;
+    m_console->debug("Found Jetson CSI camera");
+  } else if (driver == "rk_hdmirx") {
+    camera.type = CameraType::RockchipHDMI;
+    m_console->debug("Found Rockchip HDMI input");
   } else if (driver == "v4l2 loopback") {
 	// this is temporary, we are not going to use v4l2loopback for thermal cameras they'll be directly
 	// handled by the camera service instead work anyways
@@ -284,7 +287,7 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
   const std::string bus((char *)caps.bus_info);
   camera.bus = bus;
   endpoint.bus = bus;
-  if (!(caps.capabilities & V4L2_BUF_TYPE_VIDEO_CAPTURE)) {
+  if (!(caps.capabilities & V4L2_BUF_TYPE_VIDEO_CAPTURE) && driver != "rk_hdmirx") {
 	m_console->debug("Not a capture device: "+node);
 	return false;
   }

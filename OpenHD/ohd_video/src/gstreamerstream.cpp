@@ -55,51 +55,55 @@ void GStreamerStream::setup() {
   m_pipeline.str("");
   m_pipeline.clear();
   switch (camera.type) {
-	case CameraType::RaspberryPiCSI: {
-	  setup_raspberrypi_csi();
-	  break;
-	}
+    case CameraType::RaspberryPiCSI: {
+      setup_raspberrypi_csi();
+      break;
+    }
     case CameraType::Libcamera: {
       setup_libcamera();
       break;
     }
     case CameraType::JetsonCSI: {
-	  setup_jetson_csi();
-	  break;
-	}
-	case CameraType::UVC: {
-	  setup_usb_uvc();
-	  break;
-	}
-	case CameraType::UVCH264: {
-	  setup_usb_uvch264();
-	  break;
-	}
-	case CameraType::IP: {
-	  setup_ip_camera();
-	  break;
-	}
-	case CameraType::Dummy: {
-	  setup_sw_dummy_camera();
-	  break;
-	}
-	case CameraType::RaspberryPiVEYE:
-	case CameraType::RockchipCSI:
-          m_console->error("Veye and rockchip are unsupported at the time");
-	  return;
-	case CameraType::Unknown: {
-	  m_console->warn( "Unknown camera type");
-	  return;
-	}
+      setup_jetson_csi();
+      break;
+    }
+    case CameraType::UVC: {
+      setup_usb_uvc();
+      break;
+    }
+    case CameraType::UVCH264: {
+      setup_usb_uvch264();
+      break;
+    }
+    case CameraType::IP: {
+      setup_ip_camera();
+      break;
+    }
+    case CameraType::Dummy: {
+      setup_sw_dummy_camera();
+      break;
+    }
+    case CameraType::RaspberryPiVEYE:
+    case CameraType::RockchipCSI:
+            m_console->error("Veye and rockchip are unsupported at the time");
+      return;
+    case CameraType::RockchipHDMI: {
+      setup_rockchip_hdmi();
+      break;
+    }
+    case CameraType::Unknown: {
+      m_console->warn( "Unknown camera type");
+      return;
+    }
   }
   // quick check,here the pipeline should end with a "! ";
   if(!OHDUtil::endsWith(m_pipeline.str(),"! ")){
-	m_console->error("Probably ill-formatted pipeline:"+m_pipeline.str());
+	  m_console->error("Probably ill-formatted pipeline:"+m_pipeline.str());
   }
   // for safety we only add the tee command at the right place if recording is enabled.
-  if(setting.air_recording==Recording::ENABLED){
-	m_console->info("Air recording active");
-	m_pipeline<<"tee name=t ! ";
+  if(setting.air_recording==Recording::ENABLED && camera.type != CameraType::RockchipHDMI){
+    m_console->info("Air recording active");
+    m_pipeline<<"tee name=t ! ";
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
@@ -112,14 +116,14 @@ void GStreamerStream::setup() {
   // add udp out part
   m_pipeline << OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
   if(setting.air_recording==Recording::ENABLED){
-        const auto recording_filename=openhd::video::create_unused_recording_filename(
-        OHDGstHelper::file_suffix_for_video_codec(setting.userSelectedVideoFormat.videoCodec));
-        {
-          std::stringstream ss;
-          ss<<"Using ["<<recording_filename<<"] for recording\n";
-          m_console->debug(ss.str());
-        }
-	m_pipeline<<OHDGstHelper::createRecordingForVideoCodec(setting.userSelectedVideoFormat.videoCodec,recording_filename);
+    const auto recording_filename=openhd::video::create_unused_recording_filename(
+    OHDGstHelper::file_suffix_for_video_codec(setting.userSelectedVideoFormat.videoCodec));
+    {
+      std::stringstream ss;
+      ss<<"Using ["<<recording_filename<<"] for recording\n";
+      m_console->debug(ss.str());
+    }
+	  m_pipeline<<OHDGstHelper::createRecordingForVideoCodec(setting.userSelectedVideoFormat.videoCodec,recording_filename);
   }
   m_console->debug("Starting pipeline:"+m_pipeline.str());
   // Protect against unwanted use - stop and free the pipeline first
@@ -161,6 +165,12 @@ void GStreamerStream::setup_jetson_csi() {
   // This will work as long as there is no more than 1 CSI camera.
   const auto& setting=_camera_holder->get_settings();
   m_pipeline << OHDGstHelper::createJetsonStream(-1,setting.bitrateKBits, setting.userSelectedVideoFormat,setting.keyframe_interval);
+}
+
+void GStreamerStream::setup_rockchip_hdmi() {
+  m_console->debug("Setting up Rockchip HDMI");
+  const auto& setting=_camera_holder->get_settings();
+  m_pipeline << OHDGstHelper::createRockchipHDMIStream(setting.air_recording==Recording::ENABLED, setting.bitrateKBits, setting.userSelectedVideoFormat, setting.recordingFormat, setting.keyframe_interval);
 }
 
 void GStreamerStream::setup_usb_uvc() {

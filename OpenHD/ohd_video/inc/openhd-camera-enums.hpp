@@ -9,6 +9,8 @@
 #include "openhd-util.hpp"
 
 enum class CameraType {
+  Unknown,
+  Dummy,  // Dummy camera, is created fully in sw, for debugging ppurposes.
   RaspberryPiCSI,  // Rpi foundation CSI camera
   RaspberryPiVEYE,
   JetsonCSI,    // Any CSI camera on jetson
@@ -21,12 +23,12 @@ enum class CameraType {
   // completely different way so we keep them separate
   UVCH264,
   IP,     // IP camera that connects via ethernet and provides a video feet at special network address
-  Dummy,  // Dummy camera, is created fully in sw, for debugging ppurposes.
   Libcamera,
-  Unknown
+  RockchipHDMI
 };
 NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
      {CameraType::Unknown, nullptr},
+     {CameraType::Dummy, "Dummy"},
      {CameraType::RaspberryPiCSI, "RaspberryPiCSI"},
      {CameraType::RaspberryPiVEYE, "RaspberryPiVEYE"},
      {CameraType::JetsonCSI, "JetsonCSI"},
@@ -35,11 +37,13 @@ NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
      {CameraType::UVCH264, "UVCH264"},
      {CameraType::IP, "IP"},
      {CameraType::Libcamera, "Libcamera"},
-     {CameraType::Dummy, "Dummy"},
+     {CameraType::RockchipHDMI, "RockchipHDMI"}
  });
 
 static std::string camera_type_to_string(const CameraType &camera_type) {
   switch (camera_type) {
+    case CameraType::Dummy:
+      return "Dummy";
     case CameraType::RaspberryPiCSI:
       return "RaspberryPiCSI";
     case CameraType::RaspberryPiVEYE:
@@ -54,10 +58,10 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
       return "UVCH264";
     case CameraType::IP:
       return "IP";
-    case CameraType::Dummy:
-      return "Dummy";
-	case CameraType::Libcamera:
-	  return "Libcamera";
+    case CameraType::Libcamera:
+      return "Libcamera";
+    case CameraType::RockchipHDMI:
+      return "RockchipHDMI";
     default:
       return "unknown";
   }
@@ -68,6 +72,13 @@ enum class VideoCodec {
   H265,
   MJPEG
 };
+
+typedef enum {
+  RC_VBR, // variable bitrate
+  RC_CBR, // constant bitrate
+  RC_CRF  // constnat rate factor
+} RateControlMode;
+
 static std::string video_codec_to_string(VideoCodec codec) {
   switch (codec) {
     case VideoCodec::H264:
