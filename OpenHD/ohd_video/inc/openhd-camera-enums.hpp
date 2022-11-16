@@ -73,12 +73,6 @@ enum class VideoCodec {
   MJPEG
 };
 
-typedef enum {
-  RC_VBR, // variable bitrate
-  RC_CBR, // constant bitrate
-  RC_CRF  // constnat rate factor
-} RateControlMode;
-
 static std::string video_codec_to_string(VideoCodec codec) {
   switch (codec) {
     case VideoCodec::H264:
@@ -164,5 +158,11 @@ static int32_t recording_to_int(const Recording& recording){
   if(recording==Recording::ENABLED)return 1;
   return 0;
 }
+
+enum class RateControlMode {
+  RC_VBR, // variable bitrate
+  RC_CBR, // constant bitrate
+  RC_CRF  // constnat rate factor
+};
 
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_

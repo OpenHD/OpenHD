@@ -24,7 +24,7 @@ static constexpr int DEFAULT_MJPEG_QUALITY_PERCENT = 50;
 
 static constexpr int DEFAULT_RECORDING_KBITS = 10000;
 static constexpr int DEFAULT_RECORDING_QP = 26;
-static constexpr RateControlMode DEFAULT_RC_MODE = RC_CBR;
+static constexpr RateControlMode DEFAULT_RC_MODE = RateControlMode::RC_CBR;
 
 // NOTE: I am not completely sure, but the more common approach seems to multiply / divide by 1000
 // When converting mBit/s to kBit/s or the other way arund
@@ -96,9 +96,13 @@ struct CameraSettings {
   // R.n only for rpi camera, see https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c
   int awb_mode=1; //default 1 (auto)
   int exposure_mode=1; //default 1 (auto)
+  // see gst-rpicamsrc documentation
+  // NOTE: We do not like negative values in OpenHD, so we use a different mapping here than the enum from gst-rpicamsrc
+  // default to 0 (none)
+  int intra_refresh_type=0;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,userSelectedVideoFormat,bitrateKBits,keyframe_interval,mjpeg_quality_percent,url,air_recording,camera_rotation_degree,
-								   awb_mode,exposure_mode)
+                                   awb_mode,exposure_mode)
 
 struct CameraEndpoint {
   std::string device_node;
@@ -147,13 +151,13 @@ struct Camera {
     return ss.str();
   }
   [[nodiscard]] bool supports_rotation()const{
-	return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
+    return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
   }
   [[nodiscard]] bool supports_awb()const{
-	return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
+    return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
   }
   [[nodiscard]] bool supports_exp()const{
-	return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
+    return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
   }
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,vid,pid,bus,index,endpoints)
@@ -166,218 +170,206 @@ static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::st
 // 2) mutable camera settings.
 // Changes in the camera settings are propagated through this class.
 class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
-	    public openhd::ISettingsComponent{
+                     public openhd::ISettingsComponent{
  public:
   explicit CameraHolder(Camera camera,std::shared_ptr<openhd::ActionHandler> opt_action_handler= nullptr):
-	  _camera(std::move(camera)),m_opt_action_handler(std::move(opt_action_handler)),
-	  openhd::settings::PersistentSettings<CameraSettings>(VIDEO_SETTINGS_DIRECTORY){
-	init();
-        if(m_opt_action_handler){
-          m_opt_action_handler->action_set_video_codec_handle(video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec));
-        }
+                                                                                                              _camera(std::move(camera)),m_opt_action_handler(std::move(opt_action_handler)),
+                                                                                                              openhd::settings::PersistentSettings<CameraSettings>(VIDEO_SETTINGS_DIRECTORY){
+    init();
+    if(m_opt_action_handler){
+      m_opt_action_handler->action_set_video_codec_handle(video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec));
+    }
   }
   [[nodiscard]] const Camera& get_camera()const{
-	return _camera;
+    return _camera;
   }
   // Settings hacky begin
   std::vector<openhd::Setting> get_all_settings() override{
-	auto c_enable_streaming=[this](std::string,int value) {
-	  return set_enable_streaming(value);
-	};
-	auto c_width=[this](std::string,int value) {
-	  return set_video_width(value);
-	};
-	auto c_height=[this](std::string,int value) {
-	  return set_video_height(value);
-	};
-	auto c_fps=[this](std::string,int value) {
-	  return set_video_fps(value);
-	};
-	auto c_codec=[this](std::string, int value) {
-	  return set_video_codec(value);
-	};
+    auto c_enable_streaming=[this](std::string,int value) {
+      return set_enable_streaming(value);
+    };
+    auto c_codec=[this](std::string, int value) {
+      return set_video_codec(value);
+    };
     // NOTE: OpenHD stores the bitrate in kbit/s, but for now we use MBit/s for the setting
     // (Since that is something a normal user can make more sense of)
     // and just multiply the value in the callback
-	auto c_bitrate=[this](std::string,int value) {
-	  return set_video_bitrate(value);
-	};
-	auto c_keyframe_interval=[this](std::string,int value) {
-	  return set_keyframe_interval(value);
-	};
-	auto c_recording=[this](std::string,int value) {
-	  return set_air_recording(value);
-	};
-	auto c_mjpeg_quality_percent=[this](std::string,int value) {
-	  return set_mjpeg_quality_percent(value);
-	};
-	auto c_width_height_framerate=[this](std::string,std::string value){
-	  auto tmp_opt=openhd::parse_video_format(value);
-	  if(tmp_opt.has_value()){
-		const auto& tmp=tmp_opt.value();
-		return set_video_width_height_framerate(tmp.width_px,tmp.height_px,tmp.framerate);
-	  }
-	  return false;
-	};
-        // This is not a setting (cannot be changed) but rather a read-only param, but repurposing the settings here was the easiest
-        auto c_read_only_param=[this](std::string,std::string value){
-          return false;
-        };
-        std::vector<openhd::Setting> ret={
-            openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
-            // Width, height and FPS are done together now (V_FORMAT)
-            /*openhd::Setting{"VIDEO_WIDTH",openhd::IntSetting{get_settings().userSelectedVideoFormat.width,c_width}},
-            openhd::Setting{"VIDEO_HEIGHT",openhd::IntSetting{get_settings().userSelectedVideoFormat.height,c_height}},
-            openhd::Setting{"VIDEO_FPS",openhd::IntSetting{get_settings().userSelectedVideoFormat.framerate,c_fps}},*/
-            openhd::Setting{"V_FORMAT",openhd::StringSetting{
-                                            openhd::video_format_from_int_values(get_settings().userSelectedVideoFormat.width,
-                                                                                 get_settings().userSelectedVideoFormat.height,
-                                                                                 get_settings().userSelectedVideoFormat.framerate),
-                                            c_width_height_framerate
-                                        }},
-            openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec), c_codec}},
-            openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}},
-            openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().keyframe_interval,c_keyframe_interval}},
-            openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
-            openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
-            // for debugging
-            openhd::Setting{"V_CAM_TYPE",openhd::StringSetting { get_short_name(),c_read_only_param}},
-        };
-        if(_camera.type==CameraType::Libcamera){
-          // r.n we only write the sensor name for cameras detected via libcamera
-          ret.push_back(openhd::Setting{"V_CAM_SENSOR",openhd::StringSetting{_camera.sensor_name,c_read_only_param}});
-        }
-	if(_camera.supports_rotation()){
-	  auto c_rotation=[this](std::string,int value) {
-		return set_camera_rotation(value);
-	  };
-	  ret.push_back(openhd::Setting{"V_CAM_ROT_DEG",openhd::IntSetting{get_settings().camera_rotation_degree,c_rotation}});
-	}
-	if(_camera.supports_awb()){
-	  auto cb=[this](std::string,int value) {
-		return set_camera_awb(value);
-	  };
-	  ret.push_back(openhd::Setting{"V_AWB_MODE",openhd::IntSetting{get_settings().awb_mode,cb}});
-	}
-	if(_camera.supports_exp()){
-	  auto cb=[this](std::string,int value) {
-		return set_camera_exposure(value);
-	  };
-	  ret.push_back(openhd::Setting{"V_EXP_MODE",openhd::IntSetting{get_settings().exposure_mode,cb}});
-	}
-	return ret;
+    auto c_bitrate=[this](std::string,int value) {
+      return set_video_bitrate(value);
+    };
+    auto c_keyframe_interval=[this](std::string,int value) {
+      return set_keyframe_interval(value);
+    };
+    auto c_recording=[this](std::string,int value) {
+      return set_air_recording(value);
+    };
+    auto c_mjpeg_quality_percent=[this](std::string,int value) {
+      return set_mjpeg_quality_percent(value);
+    };
+    auto c_width_height_framerate=[this](std::string,std::string value){
+      auto tmp_opt=openhd::parse_video_format(value);
+      if(tmp_opt.has_value()){
+        const auto& tmp=tmp_opt.value();
+        return set_video_width_height_framerate(tmp.width_px,tmp.height_px,tmp.framerate);
+      }
+      return false;
+    };
+    // This is not a setting (cannot be changed) but rather a read-only param, but repurposing the settings here was the easiest
+    auto c_read_only_param=[this](std::string,std::string value){
+      return false;
+    };
+    std::vector<openhd::Setting> ret={
+        openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
+        // Width, height and FPS are done together now (V_FORMAT)
+        openhd::Setting{"V_FORMAT",openhd::StringSetting{
+                                        openhd::video_format_from_int_values(get_settings().userSelectedVideoFormat.width,
+                                                                             get_settings().userSelectedVideoFormat.height,
+                                                                             get_settings().userSelectedVideoFormat.framerate),
+                                        c_width_height_framerate
+                                    }},
+        openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().userSelectedVideoFormat.videoCodec), c_codec}},
+        openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrateKBits / 1000),c_bitrate}},
+        openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().keyframe_interval,c_keyframe_interval}},
+        openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
+        openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
+        // for debugging
+        openhd::Setting{"V_CAM_TYPE",openhd::StringSetting { get_short_name(),c_read_only_param}},
+    };
+    if(_camera.type==CameraType::Libcamera){
+      // r.n we only write the sensor name for cameras detected via libcamera
+      ret.push_back(openhd::Setting{"V_CAM_SENSOR",openhd::StringSetting{_camera.sensor_name,c_read_only_param}});
+    }
+    if(_camera.supports_rotation()){
+      auto c_rotation=[this](std::string,int value) {
+        return set_camera_rotation(value);
+      };
+      ret.push_back(openhd::Setting{"V_CAM_ROT_DEG",openhd::IntSetting{get_settings().camera_rotation_degree,c_rotation}});
+    }
+    if(_camera.supports_awb()){
+      auto cb=[this](std::string,int value) {
+        return set_camera_awb(value);
+      };
+      ret.push_back(openhd::Setting{"V_AWB_MODE",openhd::IntSetting{get_settings().awb_mode,cb}});
+    }
+    if(_camera.supports_exp()){
+      auto cb=[this](std::string,int value) {
+        return set_camera_exposure(value);
+      };
+      ret.push_back(openhd::Setting{"V_EXP_MODE",openhd::IntSetting{get_settings().exposure_mode,cb}});
+    }
+    return ret;
   }
   bool set_enable_streaming(int enable){
-	if(!(enable==0 || enable==1)){
-	  return false;
-	}
-	unsafe_get_settings().enable_streaming=static_cast<bool>(enable);
-	persist();
-	return true;
+    if(!(enable==0 || enable==1)){
+      return false;
+    }
+    unsafe_get_settings().enable_streaming=static_cast<bool>(enable);
+    persist();
+    return true;
   }
   bool set_video_width(int video_width){
-	if(!openhd::validate_video_with(video_width)){
-	  return false;
-	}
-	unsafe_get_settings().userSelectedVideoFormat.width=video_width;
-	persist();
-	return true;
+    if(!openhd::validate_video_with(video_width)){
+      return false;
+    }
+    unsafe_get_settings().userSelectedVideoFormat.width=video_width;
+    persist();
+    return true;
   }
   bool set_video_height(int video_height){
-	if(!openhd::validate_video_height(video_height)){
-	  return false;
-	}
-	unsafe_get_settings().userSelectedVideoFormat.height=video_height;
-	persist();
-	return true;
+    if(!openhd::validate_video_height(video_height)){
+      return false;
+    }
+    unsafe_get_settings().userSelectedVideoFormat.height=video_height;
+    persist();
+    return true;
   }
   bool set_video_fps(int fps){
-	if(!openhd::validate_video_fps(fps)){
-	  return false;
-	}
-	unsafe_get_settings().userSelectedVideoFormat.framerate=fps;
-	persist();
-	return true;
+    if(!openhd::validate_video_fps(fps)){
+      return false;
+    }
+    unsafe_get_settings().userSelectedVideoFormat.framerate=fps;
+    persist();
+    return true;
   }
   bool set_video_codec(int codec){
-	if(!openhd::validate_video_codec(codec)){
-	  return false;
-	}
-	unsafe_get_settings().userSelectedVideoFormat.videoCodec=video_codec_from_int(codec);
-	persist();
-        if(m_opt_action_handler){
-          m_opt_action_handler->action_set_video_codec_handle(codec);
-        }
-	return true;
+    if(!openhd::validate_video_codec(codec)){
+      return false;
+    }
+    unsafe_get_settings().userSelectedVideoFormat.videoCodec=video_codec_from_int(codec);
+    persist();
+    if(m_opt_action_handler){
+      m_opt_action_handler->action_set_video_codec_handle(codec);
+    }
+    return true;
   }
   bool set_video_bitrate(int bitrate_mbits){
-	if(!openhd::validate_bitrate_mbits(bitrate_mbits)){
-	  return false;
-	}
-	unsafe_get_settings().bitrateKBits= mbits_to_kbits_per_second(bitrate_mbits);
-	persist();
-	return true;
+    if(!openhd::validate_bitrate_mbits(bitrate_mbits)){
+      return false;
+    }
+    unsafe_get_settings().bitrateKBits= mbits_to_kbits_per_second(bitrate_mbits);
+    persist();
+    return true;
   }
   bool set_air_recording(int recording_enable){
-	if(recording_enable==0 || recording_enable==1){
-	  const auto wanted_recording= recording_from_int(recording_enable);
-	  unsafe_get_settings().air_recording=wanted_recording;
-	  persist();
-	  return true;
-	}
-	return false;
+    if(recording_enable==0 || recording_enable==1){
+      const auto wanted_recording= recording_from_int(recording_enable);
+      unsafe_get_settings().air_recording=wanted_recording;
+      persist();
+      return true;
+    }
+    return false;
   }
   bool set_camera_rotation(int value){
-	if(!_camera.supports_rotation())return false;
-	if(!openhd::validate_camera_rotation(value)){
-	  return false;
-	}
-	unsafe_get_settings().camera_rotation_degree=value;
-	persist();
-	return true;
+    if(!_camera.supports_rotation())return false;
+    if(!openhd::validate_camera_rotation(value)){
+      return false;
+    }
+    unsafe_get_settings().camera_rotation_degree=value;
+    persist();
+    return true;
   }
   bool set_keyframe_interval(int value){
-	if(!openhd::validate_rpi_keyframe_interval(value))return false;
-	unsafe_get_settings().keyframe_interval=value;
-	persist();
-	return true;
+    if(!openhd::validate_rpi_keyframe_interval(value))return false;
+    unsafe_get_settings().keyframe_interval=value;
+    persist();
+    return true;
   }
   //
   bool set_camera_awb(int value){
-	if(!_camera.supports_awb())return false;
-	if(!openhd::validate_rpi_awb_mode(value)){
-	  return false;
-	}
-	unsafe_get_settings().awb_mode=value;
-	persist();
-	return true;
+    if(!_camera.supports_awb())return false;
+    if(!openhd::validate_rpi_awb_mode(value)){
+      return false;
+    }
+    unsafe_get_settings().awb_mode=value;
+    persist();
+    return true;
   }
   bool set_camera_exposure(int value){
-	if(!_camera.supports_exp())return false;
-	if(!openhd::validate_rpi_exp_mode(value)){
-	  return false;
-	}
-	unsafe_get_settings().exposure_mode=value;
-	persist();
-	return true;
+    if(!_camera.supports_exp())return false;
+    if(!openhd::validate_rpi_exp_mode(value)){
+      return false;
+    }
+    unsafe_get_settings().exposure_mode=value;
+    persist();
+    return true;
   }
   bool set_mjpeg_quality_percent(int value){
-	if(!openhd::validate_mjpeg_quality_percent(value)){
-	  return false;
-	}
-	unsafe_get_settings().mjpeg_quality_percent=value;
-	persist();
-	return true;
+    if(!openhd::validate_mjpeg_quality_percent(value)){
+      return false;
+    }
+    unsafe_get_settings().mjpeg_quality_percent=value;
+    persist();
+    return true;
   }
   bool set_video_width_height_framerate(int width,int height,int framerate){
-        if(!openhd::validate_video_width_height_fps(width,height,framerate)){
-          return false;
-        }
-	unsafe_get_settings().userSelectedVideoFormat.width=width;
-	unsafe_get_settings().userSelectedVideoFormat.height=height;
-	unsafe_get_settings().userSelectedVideoFormat.framerate=framerate;
-	persist();
-	return true;
+    if(!openhd::validate_video_width_height_fps(width,height,framerate)){
+      return false;
+    }
+    unsafe_get_settings().userSelectedVideoFormat.width=width;
+    unsafe_get_settings().userSelectedVideoFormat.height=height;
+    unsafe_get_settings().userSelectedVideoFormat.framerate=framerate;
+    persist();
+    return true;
   }
   // Settings hacky end
  private:
@@ -386,22 +378,22 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
-	std::stringstream ss;
-	// TODO: r.n not unique enough, we need to be unique per model,too - e.g. a user
-	// might connect a different USB camera, where we'd need a different unique ID for
-	ss<<(static_cast<int>(_camera.index))<<"_"<<camera_type_to_string(_camera.type);
-	return ss.str();
+    std::stringstream ss;
+    // TODO: r.n not unique enough, we need to be unique per model,too - e.g. a user
+    // might connect a different USB camera, where we'd need a different unique ID for
+    ss<<(static_cast<int>(_camera.index))<<"_"<<camera_type_to_string(_camera.type);
+    return ss.str();
   }
   [[nodiscard]] CameraSettings create_default()const override{
-	auto ret=CameraSettings{};
-	if(_camera.type==CameraType::RaspberryPiVEYE){
-	  // Veye cannot do 640x480@30 by default, this is the next lower possible
-	  // (TODO it should do 720p but for some reason doesn't)
-	  ret.userSelectedVideoFormat.width=1920;
-	  ret.userSelectedVideoFormat.height=1080;
-	  ret.userSelectedVideoFormat.framerate=30;
-	}
-	return ret;
+    auto ret=CameraSettings{};
+    if(_camera.type==CameraType::RaspberryPiVEYE){
+      // Veye cannot do 640x480@30 by default, this is the next lower possible
+      // (TODO it should do 720p but for some reason doesn't)
+      ret.userSelectedVideoFormat.width=1920;
+      ret.userSelectedVideoFormat.height=1080;
+      ret.userSelectedVideoFormat.framerate=30;
+    }
+    return ret;
   }
   [[nodiscard]] std::string get_short_name()const{
     return camera_type_to_string(_camera.type);
