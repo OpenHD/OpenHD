@@ -183,7 +183,7 @@ static const std::string WIFI_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::str
 
 static bool all_cards_support_extra_channels_2G(const std::vector<std::shared_ptr<WifiCardHolder>>& cards){
   for(const auto& card_handle:cards){
-    if(!wifi_card_supports_variable_mcs(card_handle->_wifi_card)){
+    if(!wifi_card_supports_extra_channels_2G(card_handle->_wifi_card)){
       return false;
     }
   }
