@@ -122,6 +122,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   }else{
 	openhd::log::get_default()->error("Invalid keyframe intervall: {}",keyframe_interval);
   }
+  ss << "intra-refresh-type=0 ";
   if(openhd::needs_horizontal_flip(rotation)){
 	ss<<"hflip=1 ";
   }
@@ -143,7 +144,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   }else{
 	openhd::log::get_default()->warn("No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues");
 	ss<<fmt::format(
-		"video/x-raw, width={}, height={}, framerate={}/1 intra-refresh-type=0 ! ",
+		"video/x-raw, width={}, height={}, framerate={}/1 ! ",
 		videoFormat.width, videoFormat.height, videoFormat.framerate);
 	ss<<createSwEncoder({videoFormat.videoCodec,bitrateKBits,keyframe_interval,50});
   }
