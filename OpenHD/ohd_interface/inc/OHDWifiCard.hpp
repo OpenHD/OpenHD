@@ -133,6 +133,13 @@ static bool wifi_card_supports_40Mhz_channel_width(const WiFiCard& wifi_card){
   return false;
 }
 
+static bool wifi_card_supports_extra_channels_2G(const WiFiCard& wi_fi_card){
+  if(wi_fi_card.type==WiFiCardType::Atheros9khtc || wi_fi_card.type==WiFiCardType::Atheros9k){
+    return true;
+  }
+  return false;
+}
+
 static WifiCardSettings create_default_settings(const WiFiCard& wifi_card){
   WifiCardSettings settings;
   if(wifi_card.supports_injection){
@@ -174,6 +181,14 @@ static const std::string WIFI_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::str
    }
 };
 
+static bool all_cards_support_extra_channels_2G(const std::vector<std::shared_ptr<WifiCardHolder>>& cards){
+  for(const auto& card_handle:cards){
+    if(!wifi_card_supports_extra_channels_2G(card_handle->_wifi_card)){
+      return false;
+    }
+  }
+  return true;
+}
 
 static nlohmann::json wificards_to_json(const std::vector<WiFiCard> &cards) {
   nlohmann::json j;
