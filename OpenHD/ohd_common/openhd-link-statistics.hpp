@@ -43,6 +43,8 @@ struct StatsTotalAllStreams{
   // for air, packet loss of the telemetry receiver
   // this will make more sense once we merge the wifibroadcast rx-es
   int curr_rx_packet_loss_perc =-1;
+  // see wifibroadcast
+  int curr_n_of_big_gaps=-1;
   [[nodiscard]] std::string to_string()const{
 	std::stringstream ss;
 	ss << "StatsTotalAllStreams"<<"{count_wifi_packets_received:" << count_wifi_packets_received << ", count_bytes_received:" << (int)count_bytes_received <<
@@ -51,7 +53,7 @@ struct StatsTotalAllStreams{
 	   <<",video0_tx_bps:"<<bitrate_to_string(curr_video0_bps)<<",video1_tx_bps:"<<bitrate_to_string(curr_video1_bps)<<"\n"
            <<",video0_tx_pps"<<curr_video0_tx_pps<<"video1_tx_pps"<<curr_video1_tx_pps<<"tele_tx_pps"<<curr_telemetry_tx_pps<<"\n"
 	   <<",tele_rx:"<<bitrate_to_string(curr_telemetry_rx_bps)<<",tele_tx:"<<bitrate_to_string(curr_telemetry_tx_bps)<<"\n"
-           <<"curr_packet_loss_perc"<< curr_rx_packet_loss_perc <<"}";
+           <<"curr_packet_loss_perc:"<< curr_rx_packet_loss_perc <<",curr_n_of_big_gaps:"<<curr_n_of_big_gaps<<"}";
 	return ss.str();
   }
 };
