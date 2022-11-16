@@ -2,7 +2,7 @@ name: build_package_x86_22.04
 
 on:
   push:
-    branches: [ master, "2.0", "2.2.3-evo-rapha" ]
+    branches: [ master, "2.0", "2.2.3-evo" ]
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
