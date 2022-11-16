@@ -56,6 +56,7 @@ struct Settings{
   // usb cable (micro usb on FC to rpi USB port)
   // 4: /dev/ttyACM0
   // 5: /dev/ttyACM1
+  // 6: Rock5B UART7_M2 (/dev/ttyS7)
   int fc_uart_connection_type=DEFAULT_UART_CONNECTION;
   int fc_uart_baudrate=DEFAULT_UART_BAUDRATE;
 };
@@ -63,7 +64,7 @@ struct Settings{
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,fc_uart_connection_type,fc_uart_baudrate);
 
 static bool validate_uart_connection_type(int type){
-  return type >=0 && type <=5;
+  return type >=0 && type <=6;
 }
 
 // If disabled, return nullopt
@@ -77,6 +78,7 @@ static std::optional<std::string> uart_fd_from_connection_type(int connection_ty
 	case 3:return "/dev/ttyUSB0";
 	case 4:return "/dev/ttyACM0";
 	case 5:return "/dev/ttyACM1";
+	case 6:return "/dev/ttyS7";
 	default:
 	  assert(true);
 	  return std::nullopt;
