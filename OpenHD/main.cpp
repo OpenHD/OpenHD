@@ -157,8 +157,11 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     ret.run_as_air=commandline_air.value();
     ret.force_dummy_camera=commandline_force_dummy_camera;
   }
-  if(OHDFilesystemUtil::exists("/boot/openhd/ohd_clean.txt")){
+  static constexpr auto FILE_PATH_CLEAN_START="/boot/openhd/ohd_clean.txt";
+  if(OHDFilesystemUtil::exists(FILE_PATH_CLEAN_START)){
     ret.clean_start=true;
+    std::cerr<<"Deleting clean-start file\n";
+    OHDFilesystemUtil::remove_if_existing(FILE_PATH_CLEAN_START);
   }
   return ret;
 }
