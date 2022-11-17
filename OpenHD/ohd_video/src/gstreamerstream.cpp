@@ -143,9 +143,7 @@ void GStreamerStream::setup_raspberrypi_csi() {
   m_console->debug("Setting up Raspberry Pi CSI camera");
   // similar to jetson, for now we assume there is only one CSI camera connected.
   const auto& setting=_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createRpicamsrcStream(-1, setting.bitrate_kbits, setting.streamed_video_format,setting.keyframe_interval,
-												   setting.camera_rotation_degree,
-												   setting.awb_mode,setting.exposure_mode);
+  m_pipeline_content << OHDGstHelper::createRpicamsrcStream(-1, setting);
 }
 
 void GStreamerStream::setup_libcamera() {
@@ -154,9 +152,7 @@ void GStreamerStream::setup_libcamera() {
   // connected.
   const auto& setting = _camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createLibcamerasrcStream(
-      _camera_holder->get_camera().name, setting.bitrate_kbits,
-      setting.streamed_video_format,setting.keyframe_interval,
-      setting.camera_rotation_degree, setting.awb_mode, setting.exposure_mode);
+      _camera_holder->get_camera().name, setting);
 }
 
 void GStreamerStream::setup_jetson_csi() {
@@ -166,7 +162,7 @@ void GStreamerStream::setup_jetson_csi() {
   // Therefore, for now, we just default to no camera index rn and let nvarguscamerasrc figure out the camera index.
   // This will work as long as there is no more than 1 CSI camera.
   const auto& setting=_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createJetsonStream(-1,setting.bitrate_kbits, setting.streamed_video_format,setting.keyframe_interval);
+  m_pipeline_content << OHDGstHelper::createJetsonStream(-1,setting);
 }
 
 void GStreamerStream::setup_rockchip_hdmi() {
@@ -234,7 +230,7 @@ void GStreamerStream::setup_sw_dummy_camera() {
   m_console->debug("Setting up SW dummy camera");
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createDummyStream(setting.streamed_video_format,setting.bitrate_kbits,setting.keyframe_interval,setting.mjpeg_quality_percent);
+  m_pipeline_content << OHDGstHelper::createDummyStream(setting);
 }
 
 std::string GStreamerStream::createDebug(){

@@ -50,12 +50,20 @@ static bool validate_rpi_exp_mode(int value){
 
 // from gst-rpicamsrc: keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
 static bool validate_rpi_keyframe_interval(int value){
-  return value>=-1 && value < 2147483647;
+  const bool ret=value>=-1 && value < 2147483647;
+  if(!ret){
+    openhd::log::get_default()->warn("Invalid rpi_keyframe_interval: {}",value);
+  }
+  return ret;
 }
 
 // see gst-rpicamsrc documentation
 static bool validate_rpi_intra_refresh_type(int value){
-  return (value>-1 && value<=2) || value==2130706433;
+  const bool ret=(value>-1 && value<=2) || value==2130706433;
+  if(!ret){
+    openhd::log::get_default()->warn("Invalid intra_refresh_type: {}",value);
+  }
+  return ret;
 }
 
 static bool needs_horizontal_flip(int rotation_value){
