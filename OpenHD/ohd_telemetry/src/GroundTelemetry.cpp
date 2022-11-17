@@ -109,11 +109,11 @@ void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
   }
 }
 
-[[noreturn]] void GroundTelemetry::loopInfinite(const bool enableExtendedLogging) {
+void GroundTelemetry::loopInfinite(bool& terminate,const bool enableExtendedLogging) {
   const auto log_intervall=std::chrono::seconds(5);
   const auto loop_intervall=std::chrono::milliseconds(500);
   auto last_log=std::chrono::steady_clock::now();
-  while (true) {
+  while (!terminate) {
 	const auto loopBegin=std::chrono::steady_clock::now();
 	if(std::chrono::steady_clock::now()-last_log>=log_intervall) {
 	  last_log = std::chrono::steady_clock::now();

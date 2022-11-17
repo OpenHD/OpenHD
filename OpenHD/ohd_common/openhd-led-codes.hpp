@@ -44,7 +44,7 @@ class LEDBlinker {
   // blink red led in X second intervals, runs for duration seconds. Defaults to infinity (note the calling thread will be blocked then)
   void blink_red_led(const std::string &message, const std::chrono::seconds duration = DURATION_INFINITY) const {
 	const auto start = std::chrono::steady_clock::now();
-	while ((std::chrono::steady_clock::now() - start) <= duration) {
+	while (((std::chrono::steady_clock::now() - start) <= duration) && !terminate) {
           openhd::log::get_default()->warn(message);
 	  if (_platform.platform_type == PlatformType::RaspberryPi) {
 		rpi::red_led_on_off_delayed(std::chrono::seconds(1),std::chrono::seconds(1));
@@ -61,6 +61,10 @@ class LEDBlinker {
 	  _message(std::move(message)), _duration(duration), _platform(platform) {
 	_blink_thread = std::make_unique<std::thread>(&LEDBlinker::run, this);
   }
+  ~LEDBlinker(){
+    terminate= true;
+    _blink_thread->join();
+  }
   static constexpr auto DURATION_INFINITY = std::chrono::seconds(100 * 100 * 100 * 100);
  private:
   void run() {
@@ -70,6 +74,7 @@ class LEDBlinker {
   const std::chrono::seconds _duration;
   std::unique_ptr<std::thread> _blink_thread = nullptr;
   const OHDPlatform _platform;
+  bool terminate=false;
 };
 }
 

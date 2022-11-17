@@ -16,9 +16,13 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 SET(Boost_USE_STATIC_LIBS OFF)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 message(STATUS "Boost version: ${Boost_VERSION}")
-SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::filesystem)
+target_link_libraries(OHDTelemetryLib PRIVATE Boost::filesystem)
 
 find_package(Threads REQUIRED)
+target_link_libraries(OHDTelemetryLib PUBLIC Threads::Threads)
+
+find_package(spdlog REQUIRED)
+target_link_libraries(OHDTelemetryLib PRIVATE spdlog::spdlog)
 
 # For joystick, optional (but if SDL2 is not found at compile time, RC won't be available at run time)
 find_package(SDL2 QUIET)
@@ -107,17 +111,9 @@ target_include_directories(OHDTelemetryLib
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 
-
-target_link_libraries(OHDTelemetryLib PRIVATE ${OHD_TELEMETRY_USED_BOOST_LIBS}
-        #MAVSDK::mavsdk
-        )
-target_link_libraries(OHDTelemetryLib PUBLIC Threads::Threads)
-
-find_package(spdlog REQUIRED)
-target_link_libraries(OHDTelemetryLib PRIVATE spdlog::spdlog)
-
 # include mavlink (header-only)
 add_library(mavlink INTERFACE)
+target_compile_options(mavlink INTERFACE -Wno-address-of-packed-member -Wno-cast-align)
 target_include_directories(mavlink INTERFACE ../lib/c_library_v2_openhd/)
 target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
 #target_include_directories(OHDTelemetryLib PUBLIC ../lib/c_library_v2_openhd)

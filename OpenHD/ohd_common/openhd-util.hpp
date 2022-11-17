@@ -168,7 +168,7 @@ static std::string string_in_between(const std::string& start,const std::string&
 	}
   }
   std::stringstream ss;
-  ss<<"Given:["<<value<<"]\n";
+  ss<<"Given:["<<value<<"] ";
   ss<<"Result:["<<matched<<"]";
   openhd::log::get_default()->debug(ss.str());
   return matched;

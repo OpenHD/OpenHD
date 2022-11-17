@@ -19,8 +19,8 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	onMessageGroundPi(msg);
   });
-  _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
-  components.push_back(_ohd_main_component);
+  m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
+  components.push_back(m_ohd_main_component);
   //
   generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
   if(_platform.platform_type==PlatformType::RaspberryPi){
@@ -77,11 +77,11 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   }
 }
 
-[[noreturn]] void AirTelemetry::loopInfinite(const bool enableExtendedLogging) {
+void AirTelemetry::loopInfinite(bool& terminate,const bool enableExtendedLogging) {
   const auto log_intervall=std::chrono::seconds(5);
   const auto loop_intervall=std::chrono::milliseconds(500);
   auto last_log=std::chrono::steady_clock::now();
-  while (true) {
+  while (!terminate) {
 	const auto loopBegin=std::chrono::steady_clock::now();
 	if(std::chrono::steady_clock::now()-last_log>=log_intervall){
 	  // State debug logging
@@ -142,8 +142,8 @@ void AirTelemetry::add_settings_generic(const std::vector<openhd::Setting>& sett
 }
 
 void AirTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) {
-  if(_ohd_main_component){
-	_ohd_main_component->set_link_statistics(stats);
+  if(m_ohd_main_component){
+    m_ohd_main_component->set_link_statistics(stats);
   }
 }
 

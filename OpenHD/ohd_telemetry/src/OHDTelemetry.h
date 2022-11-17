@@ -31,6 +31,7 @@ class OHDTelemetry {
 			   bool enableExtendedLogging=false);
   OHDTelemetry(const OHDTelemetry&)=delete;
   OHDTelemetry(const OHDTelemetry&&)=delete;
+  ~OHDTelemetry();
   [[nodiscard]] std::string createDebug()const;
   // Settings and statistics. Other modules (e.g. video, interface) use the mavlink settings
   // provided by OHD Telemetry. However, we do not have code dependencies directly between these modules,
@@ -66,6 +67,7 @@ class OHDTelemetry {
   const OHDPlatform platform;
   const OHDProfile profile;
   const bool m_enableExtendedLogging;
+  bool terminate=false;
 };
 
 #endif //OPENHD_OHDTELEMETRY_H

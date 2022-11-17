@@ -22,6 +22,7 @@ class UDPEndpoint : public MEndpoint {
    */
   UDPEndpoint(const std::string& TAG,int senderPort, int receiverPort,
 			  std::string senderIp=SocketHelper::ADDRESS_LOCALHOST,std::string receiverIp=SocketHelper::ADDRESS_LOCALHOST);
+  ~UDPEndpoint();
   // Makes it easy to not mess up the "what is UDP tx port on air unit is UDP rx port on ground unit" paradigm
   static std::unique_ptr<UDPEndpoint> createEndpointForOHDWifibroadcast(bool isAir);
  private:
