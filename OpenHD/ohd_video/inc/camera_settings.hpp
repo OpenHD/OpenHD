@@ -81,12 +81,6 @@ struct CameraSettings {
   // enable/disable recording to file
   Recording air_recording=Recording::DISABLED;
 
-  // only used on RK3588, dirty, r.n not persistent
-  VideoFormat recordingFormat{VideoCodec::H264, 0, 0, 0}; // 0 means copy
-  int recordingKBits = DEFAULT_RECORDING_KBITS;
-  int recordingQP = DEFAULT_RECORDING_QP;
-  RateControlMode recordingRCMode = DEFAULT_RC_MODE;
-
   // Only supported on rpicamsrc at the moment
   // camera rotation, allowed values:
   // 0 nothing
@@ -100,6 +94,12 @@ struct CameraSettings {
   // R.n only for rpi camera, see https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c
   int awb_mode=1; //default 1 (auto)
   int exposure_mode=1; //default 1 (auto)
+
+  // only used on RK3588, dirty, r.n not persistent
+  VideoFormat recordingFormat{VideoCodec::H264, 0, 0, 0}; // 0 means copy
+  int recordingKBits = DEFAULT_RECORDING_KBITS;
+  int recordingQP = DEFAULT_RECORDING_QP;
+  RateControlMode recordingRCMode = DEFAULT_RC_MODE;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,
                                    streamed_video_format,bitrate_kbits,keyframe_interval,intra_refresh_type,mjpeg_quality_percent,url,air_recording,
