@@ -41,7 +41,7 @@
 // uses the dummy camera, no matter if a camera is detected or not.
 // NOTE: If you neither pass in the argument in the command line and no file exists, OpenHD will always boot as ground.
 
-static const char optstr[] = "?:agfc";
+static const char optstr[] = "?:agfcr:";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
@@ -105,6 +105,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         break;
       case 'r':
         ret.run_time_seconds= atoi(tmp_optarg);
+        break;
       case '?':
       default:
         std::cout << "Usage: \n" <<
