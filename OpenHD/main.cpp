@@ -265,7 +265,9 @@ int main(int argc, char *argv[]) {
     auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile,ohd_action_handler);
     // link stats from ohdInterface with telemetry
     ohdInterface->set_stats_callback([&ohdTelemetry](openhd::link_statistics::AllStats stats){
-      ohdTelemetry->set_link_statistics(stats);
+      if(ohdTelemetry){
+        ohdTelemetry->set_link_statistics(stats);
+      }
     });
     // link interface settings to ohd telemetry
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());

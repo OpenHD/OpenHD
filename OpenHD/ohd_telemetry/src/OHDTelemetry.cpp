@@ -65,9 +65,13 @@ void OHDTelemetry::add_camera_component(const int camera_index, const std::vecto
 
 void OHDTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) const {
   if(profile.is_air){
-	airTelemetry->set_link_statistics(stats);
+    if(airTelemetry){
+      airTelemetry->set_link_statistics(stats);
+    }
   }else{
-	groundTelemetry->set_link_statistics(stats);
+    if(groundTelemetry){
+      groundTelemetry->set_link_statistics(stats);
+    }
   }
 }
 
