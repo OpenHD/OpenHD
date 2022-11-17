@@ -22,7 +22,7 @@ VEYEStream::VEYEStream(PlatformType platform, std::shared_ptr<CameraHolder> came
 	this->restart_async();
   });
   // sanity checks
-  assert(setting.userSelectedVideoFormat.isValid());
+  assert(setting.streamed_video_format.isValid());
   m_console->debug("VEYEStream::VEYEStream");
 }
 
@@ -43,21 +43,21 @@ void VEYEStream::setup() {
   // http://wiki.veye.cc/index.php/VEYE-MIPI-290/327_for_Raspberry_Pi
   // Not ideal, needs full path, but veye is hacky anyways
   ss<<"/usr/local/share/veye-raspberrypi/veye_raspivid ";
-  const int bitrateBitsPerSecond = kbits_to_bits_per_second(setting.bitrateKBits);
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(setting.h26x_bitrate_kbits);
   //const int bitrateBitsPerSecond=4000000;
 
   ss<<"-b "<<bitrateBitsPerSecond<<" ";
-  ss<<"-w "<<setting.userSelectedVideoFormat.width<<" ";
-  ss<<"-h "<<setting.userSelectedVideoFormat.height<<" ";
+  ss<<"-w "<<setting.streamed_video_format.width<<" ";
+  ss<<"-h "<<setting.streamed_video_format.height<<" ";
   // -fps, --framerate	: Specify the frames per second to record
-  ss<<"--framerate "<<setting.userSelectedVideoFormat.framerate<<" ";
-  if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::H264){
+  ss<<"--framerate "<<setting.streamed_video_format.framerate<<" ";
+  if(setting.streamed_video_format.videoCodec==VideoCodec::H264){
 	ss<<"--codec H264 ";
 	ss<<"--profile baseline ";
 	// TODO check
 	// -g, --intra	: Specify the intra refresh period (key frame rate/GoP size). Zero to produce an initial I-frame and then just P-frames.
-	ss<<"--intra "<<setting.keyframe_interval<<" ";
-  }else if(setting.userSelectedVideoFormat.videoCodec==VideoCodec::MJPEG){
+	ss<<"--intra "<<setting.h26x_keyframe_interval <<" ";
+  }else if(setting.streamed_video_format.videoCodec==VideoCodec::MJPEG){
 	ss<<"--codec MJPEG ";
   }else{
 	m_console->warn("Veye only supports h264 and MJPEG");
@@ -71,7 +71,7 @@ void VEYEStream::setup() {
   ss<<"-t 0 -o - ";
   //ss<<"| gst-launch-1.0 -v fdsrc ! ";
   ss<<"| gst-launch-1.0 fdsrc ! ";
-  ss<<OHDGstHelper::createRtpForVideoCodec(setting.userSelectedVideoFormat.videoCodec);
+  ss<<OHDGstHelper::createRtpForVideoCodec(setting.streamed_video_format.videoCodec);
   ss<<OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
   pipeline=ss.str();
   // NOTE: We do not execute the pipeline until start() is called

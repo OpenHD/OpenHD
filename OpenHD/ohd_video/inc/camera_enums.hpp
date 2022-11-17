@@ -13,7 +13,7 @@
 enum class CameraType {
   Unknown,
   Dummy,  // Dummy camera, is created fully in sw, for debugging purposes.
-  RaspberryPiCSI,  // Rpi foundation CSI camera
+  RaspberryPiCSI,  // Rpi foundation CSI camera,old MMAL / BROADCOM
   RaspberryPiVEYE,
   JetsonCSI,    // Any CSI camera on jetson
   RockchipCSI,  // Any CSI camera on rockchip

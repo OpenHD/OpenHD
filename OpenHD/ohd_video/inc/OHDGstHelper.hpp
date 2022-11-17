@@ -33,6 +33,11 @@ struct CommonEncoderParams{
   int mjpeg_quality_percent;
 };
 
+static CommonEncoderParams extract_common_encoder_params(const CameraSettings& settings){
+  return {.videoCodec=settings.streamed_video_format.videoCodec,.h26X_bitrate_kbits=settings.h26x_bitrate_kbits,
+  .h26X_keyframe_interval=settings.h26x_keyframe_interval,.mjpeg_quality_percent=settings.mjpeg_quality_percent};
+}
+
 /**
  * Check if we can find gstreamer at run time, throw a runtime error if not.
  */
@@ -79,7 +84,7 @@ static std::string createSwEncoder(const CommonEncoderParams& common_encoder_par
  * stream that takes raw data coming from a videotestsrc and encodes it in
  * either h264, h265 or mjpeg.
  */
-static std::string createDummyStream(const VideoFormat videoFormat,int bitrateKBits,int keyframe_interval,int mjpeg_quality_percent) {
+static std::string createDummyStream(const CameraSettings& settings) {
   std::stringstream ss;
   ss << "videotestsrc ! ";
   // h265 cannot do NV12, but I420.
@@ -87,10 +92,10 @@ static std::string createDummyStream(const VideoFormat videoFormat,int bitrateKB
   // so we use I420 here since every SW encoder can do it.
   ss << fmt::format(
       "video/x-raw, format=I420,width={},height={},framerate={}/1 ! ",
-      videoFormat.width, videoFormat.height, videoFormat.framerate);
+      settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
   // since the primary purpose here is testing, use a fixed low key frame
   // interval.
-  ss << createSwEncoder({videoFormat.videoCodec,bitrateKBits,keyframe_interval,mjpeg_quality_percent});
+  ss << createSwEncoder(extract_common_encoder_params(settings));
   return ss.str();
 }
 
@@ -100,15 +105,12 @@ static std::string createDummyStream(const VideoFormat videoFormat,int bitrateKB
  * See https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c#GstRpiCamSrcAWBMode for more complicated params
  */
 static std::string createRpicamsrcStream(const int camera_number,
-                                         const int bitrateKBits,
-                                         const VideoFormat videoFormat,
-                                         int keyframe_interval,
-					 int rotation,int awb_mode,int exp_mode) {
-  assert(videoFormat.isValid());
+                                         const CameraSettings& settings) {
+  assert(settings.streamed_video_format.isValid());
   //assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
-  const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrateKBits);
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   if (camera_number == -1) {
     ss << fmt::format("rpicamsrc bitrate={} preview=0 ",
                       bitrateBitsPerSecond);
@@ -117,60 +119,57 @@ static std::string createRpicamsrcStream(const int camera_number,
                       camera_number, bitrateBitsPerSecond);
   }
   // keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
-  if(keyframe_interval>= -1 && keyframe_interval < 1000){
-	ss << "keyframe-interval="<<keyframe_interval<<" ";
-  }else{
-	openhd::log::get_default()->error("Invalid keyframe intervall: {}",keyframe_interval);
+  if(openhd::validate_rpi_keyframe_interval(settings.h26x_keyframe_interval)){
+    ss << "keyframe-interval="<<settings.h26x_keyframe_interval <<" ";
   }
-  // TODO investigate
-  ss << "intra-refresh-type=0 ";
-  if(openhd::needs_horizontal_flip(rotation)){
-	ss<<"hflip=1 ";
+  if(openhd::validate_rpi_intra_refresh_type(settings.h26x_intra_refresh_type)){
+    ss << "intra-refresh-type="<<settings.h26x_intra_refresh_type <<" ";
   }
-  if(openhd::needs_vertical_flip(rotation)){
-	ss<<"vflip=1 ";
+  if(openhd::validate_camera_rotation(settings.camera_rotation_degree)){
+    ss<<"rotation="<<settings.camera_rotation_degree<<" ";
   }
-  if(awb_mode>=0){
-	ss<<"awb-mode="<<awb_mode<<" ";
+  if(settings.horizontal_flip){
+    ss<<"hflip=1 ";
   }
-  if(exp_mode>=0){
-	ss<<"exposure-mode="<<exp_mode<<" ";
+  if(settings.vertical_flip){
+    ss<<"vflip=1 ";
+  }
+  if(openhd::validate_rpi_awb_mode(settings.awb_mode)){
+    ss<<"awb-mode="<<settings.awb_mode<<" ";
+  }
+  if(openhd::validate_rpi_exp_mode(settings.exposure_mode)){
+    ss<<"exposure-mode="<<settings.exposure_mode<<" ";
   }
   ss<<" ! ";
-  if(videoFormat.videoCodec==VideoCodec::H264){
+  if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
 	ss << fmt::format(
 		"video/x-h264, profile=constrained-baseline, width={}, height={}, "
 		"framerate={}/1, level=3.0 ! ",
-		videoFormat.width, videoFormat.height, videoFormat.framerate);
+        settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
   }else{
 	openhd::log::get_default()->warn("No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues");
 	ss<<fmt::format(
 		"video/x-raw, width={}, height={}, framerate={}/1 ! ",
-		videoFormat.width, videoFormat.height, videoFormat.framerate);
-	ss<<createSwEncoder({videoFormat.videoCodec,bitrateKBits,keyframe_interval,50});
+            settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
+	ss<<createSwEncoder(extract_common_encoder_params(settings));
   }
   return ss.str();
 }
 
 static std::string createLibcamerasrcStream(const std::string& camera_name,
-                                         const int bitrateKBits,
-                                         const VideoFormat videoFormat,
-					 int keyframe_interval,
-                                         int rotation, int awb_mode,
-                                         int exp_mode) {
-  assert(videoFormat.isValid());
+                                         const CameraSettings& settings) {
+  assert(settings.streamed_video_format.isValid());
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
-  const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrateKBits);
-
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   ss << fmt::format("libcamerasrc camera-name={}",
                       camera_name);
-
   ss << " ! ";
-  if (videoFormat.videoCodec == VideoCodec::H264) {
+  if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     // First we set the caps filter(s) on libcamerasrc, this way we control the format (output by ISP), w,h and fps
     ss << fmt::format(
-        "capsfilter caps=video/x-raw,width={},height={},format=NV12,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",videoFormat.width, videoFormat.height, videoFormat.framerate);
+        "capsfilter caps=video/x-raw,width={},height={},format=NV12,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",
+        settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
     // We got rid of the v4l2convert - see
     // https://github.com/raspberrypi/libcamera/issues/30
     // and configure the v4l2 h264 encoder by using the extra controls
@@ -182,18 +181,19 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     // on scenes with less change
     static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
     ss << fmt::format("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
-        "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
-  } else if (videoFormat.videoCodec == VideoCodec::MJPEG) {
+        "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
+  } else if (settings.streamed_video_format.videoCodec == VideoCodec::MJPEG) {
     ss << fmt::format(
-        "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",videoFormat.width, videoFormat.height, videoFormat.framerate);
+        "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",
+        settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
     ss << fmt::format("v4l2jpegenc extra-controls=\"controls,compression_quality={}\" ! ",50); //mjpeg has a compression quality not bitrate
   }
   else {
     openhd::log::get_default()->warn("No h265 encoder on rpi, using SW encode (will almost 100% result in frame drops/performance issues)");
     ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
-                      videoFormat.width, videoFormat.height,
-                      videoFormat.framerate);
-    ss << createSwEncoder({videoFormat.videoCodec, bitrateKBits,keyframe_interval,50});
+                      settings.streamed_video_format.width, settings.streamed_video_format.height,
+                      settings.streamed_video_format.framerate);
+    ss << createSwEncoder(extract_common_encoder_params(settings));
   }
   return ss.str();
 }
@@ -277,12 +277,10 @@ static std::string createJetsonSensorPipeline(const int sensor_id,const int widt
  * for h264,h265 and mjpeg.
  */
 static std::string createJetsonStream(const int sensor_id,
-                                      const int bitrateKBits,
-                                      const VideoFormat videoFormat,
-									  const int keyframe_interval) {
+                                      const CameraSettings& settings) {
   std::stringstream ss;
-  ss<<createJetsonSensorPipeline(sensor_id,videoFormat.width,videoFormat.height,videoFormat.framerate);
-  ss<<createJetsonEncoderPipeline({videoFormat.videoCodec,bitrateKBits,keyframe_interval,50});
+  ss<<createJetsonSensorPipeline(sensor_id,settings.streamed_video_format.width,settings.streamed_video_format.height,settings.streamed_video_format.framerate);
+  ss<<createJetsonEncoderPipeline(extract_common_encoder_params(settings));
   return ss.str();
 }
 

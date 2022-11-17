@@ -105,7 +105,7 @@ const auto rpi_config_file_path="/boot/config.txt";
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
 static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig new_cam_config){
-  openhd::log::get_default()->debug("Begin apply cam config"+ cam_config_to_string(new_cam_config));
+  openhd::log::get_default()->debug("Begin apply cam config "+ cam_config_to_string(new_cam_config));
   const auto filename= get_file_name_for_cam_config(platform,new_cam_config);
   if(!OHDFilesystemUtil::exists(filename.c_str())){
     openhd::log::get_default()->warn("Cannot apply new cam config, corresponding config.txt ["+filename+"] not found");
@@ -118,7 +118,7 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   // save the current selection (persistent setting)
   save_cam_config_to_file(new_cam_config);
   // Now we just need to reboot
-  openhd::log::get_default()->debug("End apply cam config"+ cam_config_to_string(new_cam_config));
+  openhd::log::get_default()->debug("End apply cam config "+ cam_config_to_string(new_cam_config));
 }
 
 // Unfortunately complicated, since we need to perform the action asynchronously and then reboot

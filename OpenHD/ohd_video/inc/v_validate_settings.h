@@ -34,11 +34,19 @@ static bool validate_video_codec(int codec){
 }
 
 static bool validate_bitrate_mbits(int bitrate_mbits){
-  return bitrate_mbits>=1 && bitrate_mbits <=50;
+  const bool ret=bitrate_mbits>=1 && bitrate_mbits <=50;
+  if(!ret){
+    openhd::log::get_default()->warn("Invalid bitrate_mbits: {}",bitrate_mbits);
+  }
+  return ret;
 }
 
 static bool validate_camera_rotation(int value){
-  return value==0 || value==90 || value==180 || value==270;
+  const bool ret= value==0 || value==90 || value==180 || value==270;
+  if(!ret){
+    openhd::log::get_default()->warn("Invalid camera_rotation: {}",value);
+  }
+  return ret;
 }
 
 static bool validate_rpi_awb_mode(int value){
@@ -50,20 +58,29 @@ static bool validate_rpi_exp_mode(int value){
 
 // from gst-rpicamsrc: keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
 static bool validate_rpi_keyframe_interval(int value){
-  return value>=-1 && value < 1000;
+  const bool ret=value>=-1 && value < 2147483647;
+  if(!ret){
+    openhd::log::get_default()->warn("Invalid rpi_keyframe_interval: {}",value);
+  }
+  return ret;
 }
 
-static bool needs_horizontal_flip(int rotation_value){
-  if(rotation_value==180)return true;
-  return false;
+// see gst-rpicamsrc documentation
+static bool validate_rpi_intra_refresh_type(int value){
+  const bool ret=(value>=-1 && value<=2) || value==2130706433;
+  if(!ret){
+    openhd::log::get_default()->warn("Invalid intra_refresh_type: {}",value);
+  }
+  return ret;
 }
-static bool needs_vertical_flip(int rotation_value){
-  if(rotation_value==180)return true;
-  return false;
-}
+
 
 static bool validate_mjpeg_quality_percent(int value){
-  return value<=100 && value>=1;
+  const bool ret=value<=100 && value>=1;
+  if(!ret){
+    openhd::log::get_default()->warn("Invalid mjpeg_quality_percent: {}",value);
+  }
+  return ret;
 }
 
 struct TmpVideoFormat{
