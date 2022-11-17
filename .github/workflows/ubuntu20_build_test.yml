@@ -31,9 +31,9 @@ jobs:
           cd OpenHD
           ./build_cmake.sh
 
-      #- name: Run as air, but limited to X seconds
-      #  run: |
-      #    sudo ./OpenHD/build/openhd -a -r 20
-      #- name: Run as ground, but limited to X seconds
-      #  run: |
-      #    sudo ./OpenHD/build/openhd -a -g 20
+      - name: Run as air, but limited to X seconds
+        run: |
+          sudo ./OpenHD/build/openhd -a -r 20
+      - name: Run as ground, but limited to X seconds
+        run: |
+          sudo ./OpenHD/build/openhd -a -g 20
