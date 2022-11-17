@@ -67,7 +67,7 @@ static bool validate_rpi_keyframe_interval(int value){
 
 // see gst-rpicamsrc documentation
 static bool validate_rpi_intra_refresh_type(int value){
-  const bool ret=(value>-1 && value<=2) || value==2130706433;
+  const bool ret=(value>=-1 && value<=2) || value==2130706433;
   if(!ret){
     openhd::log::get_default()->warn("Invalid intra_refresh_type: {}",value);
   }
