@@ -33,7 +33,7 @@ class AirTelemetry : public MavlinkSystem{
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.
    */
-  [[noreturn]] void loopInfinite(bool enableExtendedLogging = false);
+  void loopInfinite(bool& terminate,bool enableExtendedLogging = false);
   [[nodiscard]] std::string createDebug();
   // add settings to the generic mavlink parameter server
   // changes are propagated back through the settings instances
@@ -59,7 +59,8 @@ class AirTelemetry : public MavlinkSystem{
   std::unique_ptr<SerialEndpoint> serialEndpoint;
   // For now, use UDP endpoint and rely on another service for starting the rx/tx links
   std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
-  std::shared_ptr<OHDMainComponent> _ohd_main_component;
+  // shared because we also push it onto our components list
+  std::shared_ptr<OHDMainComponent> m_ohd_main_component;
   std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
   std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;

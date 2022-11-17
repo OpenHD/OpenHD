@@ -29,6 +29,12 @@ UDPEndpoint::UDPEndpoint(const std::string& TAG, const int senderPort, const int
   m_console->info(ss.str());
 }
 
+UDPEndpoint::~UDPEndpoint() {
+  if(receiver){
+    receiver->stopBackground();
+  }
+}
+
 bool UDPEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"UDPEndpoint::sendMessage");
   if (transmitter != nullptr) {
@@ -55,9 +61,3 @@ std::unique_ptr<UDPEndpoint> UDPEndpoint::createEndpointForOHDWifibroadcast(cons
   }
   return std::make_unique<UDPEndpoint>(tag, txp, rxp);
 }
-
-
-
-
-
-

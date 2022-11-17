@@ -17,16 +17,21 @@ OHDTelemetry::OHDTelemetry(OHDPlatform platform1,
 	assert(airTelemetry);
 	loopThread = std::make_unique<std::thread>([this] {
 	  assert(airTelemetry);
-	  airTelemetry->loopInfinite(this->m_enableExtendedLogging);
+	  airTelemetry->loopInfinite(terminate,this->m_enableExtendedLogging);
 	});
   } else {
 	groundTelemetry = std::make_unique<GroundTelemetry>(platform,action_handler);
 	assert(groundTelemetry);
 	loopThread = std::make_unique<std::thread>([this] {
 	  assert(groundTelemetry);
-	  groundTelemetry->loopInfinite(this->m_enableExtendedLogging);
+	  groundTelemetry->loopInfinite(terminate,this->m_enableExtendedLogging);
 	});
   }
+}
+
+OHDTelemetry::~OHDTelemetry() {
+  terminate= true;
+  loopThread->join();
 }
 
 std::string OHDTelemetry::createDebug() const {

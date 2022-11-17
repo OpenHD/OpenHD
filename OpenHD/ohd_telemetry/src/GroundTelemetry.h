@@ -30,7 +30,7 @@ class GroundTelemetry :public MavlinkSystem{
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.
    */
-  [[noreturn]] void loopInfinite(bool enableExtendedLogging = false);
+  void loopInfinite(bool& terminate,bool enableExtendedLogging = false);
   [[nodiscard]] std::string createDebug()const;
   // add settings to the generic mavlink parameter server
   // changes are propagated back through the settings instances
