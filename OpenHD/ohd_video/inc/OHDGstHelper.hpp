@@ -124,6 +124,9 @@ static std::string createRpicamsrcStream(const int camera_number,
   }
   // TODO investigate
   ss << "intra-refresh-type=0 ";
+  if(openhd::validate_camera_rotation(rotation)){
+    ss<<"rotation="<<rotation<<" ";
+  }
   if(openhd::needs_horizontal_flip(rotation)){
 	ss<<"hflip=1 ";
   }

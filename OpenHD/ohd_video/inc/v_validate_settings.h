@@ -50,7 +50,12 @@ static bool validate_rpi_exp_mode(int value){
 
 // from gst-rpicamsrc: keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
 static bool validate_rpi_keyframe_interval(int value){
-  return value>=-1 && value < 1000;
+  return value>=-1 && value < 2147483647;
+}
+
+// see gst-rpicamsrc documentation
+static bool validate_rpi_intra_refresh_type(int value){
+  return (value>-1 && value<=2) || value==2130706433;
 }
 
 static bool needs_horizontal_flip(int rotation_value){

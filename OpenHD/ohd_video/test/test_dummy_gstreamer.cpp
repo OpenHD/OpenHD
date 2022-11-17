@@ -12,11 +12,11 @@ static void update_settings(int index,CameraHolder& camera_holder){
   auto current=camera_holder.get_settings();
   // Depending on what you selected here, you will have to use the proper main_stream_display_XXX.sh if you want to see the video.
   if(index==0){
-    current.userSelectedVideoFormat.videoCodec=VideoCodec::H264;
+    current.streamed_video_format.videoCodec=VideoCodec::H264;
   }else if(index==1){
-    current.userSelectedVideoFormat.videoCodec=VideoCodec::H265;
+    current.streamed_video_format.videoCodec=VideoCodec::H265;
   }else{
-    current.userSelectedVideoFormat.videoCodec=VideoCodec::MJPEG;
+    current.streamed_video_format.videoCodec=VideoCodec::MJPEG;
   }
   camera_holder.update_settings(current);
 }
