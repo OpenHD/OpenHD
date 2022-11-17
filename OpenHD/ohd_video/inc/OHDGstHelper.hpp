@@ -13,7 +13,7 @@
 #include <sstream>
 #include <string>
 
-#include "openhd-camera.hpp"
+#include "camera_settings.hpp"
 
 /**
  * Helper methods to create parts of gstreamer pipes.
@@ -122,6 +122,8 @@ static std::string createRpicamsrcStream(const int camera_number,
   }else{
 	openhd::log::get_default()->error("Invalid keyframe intervall: {}",keyframe_interval);
   }
+  // TODO investigate
+  ss << "intra-refresh-type=0 ";
   if(openhd::needs_horizontal_flip(rotation)){
 	ss<<"hflip=1 ";
   }

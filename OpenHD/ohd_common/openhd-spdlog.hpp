@@ -33,6 +33,9 @@ static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_n
     created->set_level(spd::level::debug);
     // Add the sink that sends out warning or higher via UDP
     created->sinks().push_back(std::make_shared<openhd::log::sink::UdpTelemetrySink>());
+    //spdlog::set_error_handler([](const std::string& msg) {
+    //  std::cerr << "my err handler: " << msg << std::endl;
+    //});
     return created;
   }
   return ret;

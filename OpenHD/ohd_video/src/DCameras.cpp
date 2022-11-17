@@ -1,5 +1,5 @@
 #include "DCameras.h"
-#include "openhd-camera.hpp"
+#include "discovered_camera.hpp"
 #include "openhd-util.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "DCamerasHelper.hpp"

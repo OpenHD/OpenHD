@@ -14,7 +14,6 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 # Find and include boost
 # Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
 SET(Boost_USE_STATIC_LIBS OFF)
-SET(Boost_USE_MULTITHREAD ON)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 message(STATUS "Boost version: ${Boost_VERSION}")
 SET(OHD_TELEMETRY_USED_BOOST_LIBS Boost::filesystem)
