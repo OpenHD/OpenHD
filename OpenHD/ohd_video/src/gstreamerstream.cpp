@@ -168,7 +168,7 @@ void GStreamerStream::setup_jetson_csi() {
 void GStreamerStream::setup_rockchip_hdmi() {
   m_console->debug("Setting up Rockchip HDMI");
   const auto& setting=_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createRockchipHDMIStream(setting.air_recording==Recording::ENABLED, setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.recordingFormat, setting.keyframe_interval);
+  m_pipeline_content << OHDGstHelper::createRockchipHDMIStream(setting.air_recording==Recording::ENABLED, setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
 }
 
 void GStreamerStream::setup_usb_uvc() {
@@ -197,7 +197,7 @@ void GStreamerStream::setup_usb_uvc() {
 	  const auto device_node = endpoint.device_node;
           m_pipeline_content << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,
                                                                         setting.streamed_video_format.videoCodec,
-                                                                        setting.h26x_bitrate_kbits,setting.keyframe_interval);
+                                                                        setting.h26x_bitrate_kbits,setting.h26x_keyframe_interval);
           return;
 	}
   }

@@ -56,7 +56,7 @@ void VEYEStream::setup() {
 	ss<<"--profile baseline ";
 	// TODO check
 	// -g, --intra	: Specify the intra refresh period (key frame rate/GoP size). Zero to produce an initial I-frame and then just P-frames.
-	ss<<"--intra "<<setting.keyframe_interval<<" ";
+	ss<<"--intra "<<setting.h26x_keyframe_interval <<" ";
   }else if(setting.streamed_video_format.videoCodec==VideoCodec::MJPEG){
 	ss<<"--codec MJPEG ";
   }else{

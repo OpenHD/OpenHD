@@ -35,7 +35,7 @@ struct CommonEncoderParams{
 
 static CommonEncoderParams extract_common_encoder_params(const CameraSettings& settings){
   return {.videoCodec=settings.streamed_video_format.videoCodec,.h26X_bitrate_kbits=settings.h26x_bitrate_kbits,
-  .h26X_keyframe_interval=settings.keyframe_interval,.mjpeg_quality_percent=settings.mjpeg_quality_percent};
+  .h26X_keyframe_interval=settings.h26x_keyframe_interval,.mjpeg_quality_percent=settings.mjpeg_quality_percent};
 }
 
 /**
@@ -119,11 +119,11 @@ static std::string createRpicamsrcStream(const int camera_number,
                       camera_number, bitrateBitsPerSecond);
   }
   // keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
-  if(openhd::validate_rpi_keyframe_interval(settings.keyframe_interval)){
-    ss << "keyframe-interval="<<settings.keyframe_interval<<" ";
+  if(openhd::validate_rpi_keyframe_interval(settings.h26x_keyframe_interval)){
+    ss << "keyframe-interval="<<settings.h26x_keyframe_interval <<" ";
   }
-  if(openhd::validate_rpi_intra_refresh_type(settings.intra_refresh_type)){
-    ss << "intra-refresh-type="<<settings.intra_refresh_type<<" ";
+  if(openhd::validate_rpi_intra_refresh_type(settings.h26x_intra_refresh_type)){
+    ss << "intra-refresh-type="<<settings.h26x_intra_refresh_type <<" ";
   }
   if(openhd::validate_camera_rotation(settings.camera_rotation_degree)){
     ss<<"rotation="<<settings.camera_rotation_degree<<" ";
@@ -181,7 +181,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     // on scenes with less change
     static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
     ss << fmt::format("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
-        "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,settings.keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
+        "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
   } else if (settings.streamed_video_format.videoCodec == VideoCodec::MJPEG) {
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",

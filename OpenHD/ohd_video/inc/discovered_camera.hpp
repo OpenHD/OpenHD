@@ -68,4 +68,33 @@ struct Camera {
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,vid,pid,bus,index,endpoints)
 
+using DiscoveredCameraList = std::vector<Camera>;
+
+static nlohmann::json cameras_to_json(const DiscoveredCameraList &cameras) {
+  nlohmann::json j;
+  for (const auto &camera : cameras) {
+    nlohmann::json _camera = camera;
+    j.push_back(_camera);
+  }
+  return j;
+}
+
+static constexpr auto CAMERA_MANIFEST_FILENAME = "/tmp/camera_manifest";
+
+static void write_camera_manifest(const DiscoveredCameraList &cameras) {
+  auto manifest = cameras_to_json(cameras);
+  std::ofstream _t(CAMERA_MANIFEST_FILENAME);
+  _t << manifest.dump(4);
+  _t.close();
+}
+
+static Camera createDummyCamera() {
+  Camera camera;
+  camera.name = "DummyCamera";
+  camera.index = 0;
+  camera.vendor = "dummy";
+  camera.type = CameraType::Dummy;
+  return camera;
+}
+
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_DISCOVERED_CAMERA_H_
