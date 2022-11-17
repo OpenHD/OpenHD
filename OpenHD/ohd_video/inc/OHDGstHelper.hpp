@@ -13,7 +13,7 @@
 #include <sstream>
 #include <string>
 
-#include "openhd-camera.hpp"
+#include "camera_settings.hpp"
 
 /**
  * Helper methods to create parts of gstreamer pipes.

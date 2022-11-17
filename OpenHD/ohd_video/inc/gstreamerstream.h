@@ -10,7 +10,7 @@
 #include <mutex>
 
 #include "camerastream.h"
-#include "openhd-camera.hpp"
+#include "camera_settings.hpp"
 #include "openhd-platform.hpp"
 
 #include "openhd-spdlog.hpp"
