@@ -34,7 +34,7 @@ struct CommonEncoderParams{
 };
 
 static CommonEncoderParams extract_common_encoder_params(const CameraSettings& settings){
-  return {.videoCodec=settings.streamed_video_format.videoCodec,.h26X_bitrate_kbits=settings.bitrate_kbits,
+  return {.videoCodec=settings.streamed_video_format.videoCodec,.h26X_bitrate_kbits=settings.h26x_bitrate_kbits,
   .h26X_keyframe_interval=settings.keyframe_interval,.mjpeg_quality_percent=settings.mjpeg_quality_percent};
 }
 
@@ -110,7 +110,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   //assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
-  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.bitrate_kbits);
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   if (camera_number == -1) {
     ss << fmt::format("rpicamsrc bitrate={} preview=0 ",
                       bitrateBitsPerSecond);
@@ -161,7 +161,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   assert(settings.streamed_video_format.isValid());
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
-  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.bitrate_kbits);
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   ss << fmt::format("libcamerasrc camera-name={}",
                       camera_name);
   ss << " ! ";

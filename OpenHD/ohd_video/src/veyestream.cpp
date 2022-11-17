@@ -43,7 +43,7 @@ void VEYEStream::setup() {
   // http://wiki.veye.cc/index.php/VEYE-MIPI-290/327_for_Raspberry_Pi
   // Not ideal, needs full path, but veye is hacky anyways
   ss<<"/usr/local/share/veye-raspberrypi/veye_raspivid ";
-  const int bitrateBitsPerSecond = kbits_to_bits_per_second(setting.bitrate_kbits);
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(setting.h26x_bitrate_kbits);
   //const int bitrateBitsPerSecond=4000000;
 
   ss<<"-b "<<bitrateBitsPerSecond<<" ";

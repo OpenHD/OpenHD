@@ -35,7 +35,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
 	this->restart_async();
   });
   // sanity checks
-  if(!check_bitrate_sane(setting.bitrate_kbits)){
+  if(!check_bitrate_sane(setting.h26x_bitrate_kbits)){
     // not really needed
   }
   assert(setting.streamed_video_format.isValid());
@@ -168,7 +168,7 @@ void GStreamerStream::setup_jetson_csi() {
 void GStreamerStream::setup_rockchip_hdmi() {
   m_console->debug("Setting up Rockchip HDMI");
   const auto& setting=_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createRockchipHDMIStream(setting.air_recording==Recording::ENABLED, setting.bitrate_kbits, setting.streamed_video_format, setting.recordingFormat, setting.keyframe_interval);
+  m_pipeline_content << OHDGstHelper::createRockchipHDMIStream(setting.air_recording==Recording::ENABLED, setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.recordingFormat, setting.keyframe_interval);
 }
 
 void GStreamerStream::setup_usb_uvc() {
@@ -192,12 +192,12 @@ void GStreamerStream::setup_usb_uvc() {
   }
   // If we land here, we need to do SW encoding, the v4l2src can only do raw video formats like YUV
   for (const auto &endpoint: camera.endpoints) {
-	m_console->debug("empty");
+        m_console->warn("Cannot do HW encode for camera, fall back to RAW out and SW encode");
 	if (endpoint.support_raw) {
 	  const auto device_node = endpoint.device_node;
           m_pipeline_content << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,
                                                                         setting.streamed_video_format.videoCodec,
-                                                                        setting.bitrate_kbits,setting.keyframe_interval);
+                                                                        setting.h26x_bitrate_kbits,setting.keyframe_interval);
           return;
 	}
   }
@@ -212,7 +212,7 @@ void GStreamerStream::setup_usb_uvch264() {
   const auto endpoint = camera.endpoints.front();
   // uvch265 cameras don't seem to exist, codec setting is ignored
   m_pipeline_content << OHDGstHelper::createUVCH264Stream(endpoint.device_node,
-                                                  setting.bitrate_kbits,
+                                                  setting.h26x_bitrate_kbits,
                                                   setting.streamed_video_format);
 }
 
@@ -220,10 +220,10 @@ void GStreamerStream::setup_ip_camera() {
   m_console->debug("Setting up IP camera");
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
-  if (setting.url.empty()) {
+  if (setting.ip_cam_url.empty()) {
 	//setting.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
   }
-  m_pipeline_content << OHDGstHelper::createIpCameraStream(setting.url);
+  m_pipeline_content << OHDGstHelper::createIpCameraStream(setting.ip_cam_url);
 }
 
 void GStreamerStream::setup_sw_dummy_camera() {

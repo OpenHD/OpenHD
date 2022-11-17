@@ -52,7 +52,8 @@ static bool check_bitrate_sane(const int bitrateKBits) {
 struct CameraSettings {
   // Enable / Disable streaming for this camera
   // This can be usefully for debugging, but also when the there is suddenly a really high interference,
-  // and the user wants to fly home without video, using only telemetry / HUD
+  // and the user wants to fly home without video, using only telemetry / HUD.
+  // Default to true, otherwise we'd have conflicts with the "always a picture without changing any settings" paradigm.
   bool enable_streaming=true;
   // The video format selected by the user. If the user sets a video format that
   // isn't supported (for example, he might select h264|1920x1080@120 but the
@@ -60,24 +61,36 @@ struct CameraSettings {
   // video format. If no video format is available, it should default to
   // h264|640x480@30.
   VideoFormat streamed_video_format{VideoCodec::H264, 640, 480, 30};
-  // All these are for the future, and probably implemented on a best effort
-  // approach- e.g. changing them does not neccessarly mean the camera supports
-  // changing them, and they are too many to do it in a "check if supported"
-  // manner.
-  //--
+  // These settings can only be implemented on a "best effort" manner -
+  // changing them does not necessarily mean the camera supports changing them. Unsupported settings have to
+  // be ignored during pipeline construction
+  // In general, we only try to expose these values as mavlink parameters if the camera supports them, to not
+  // confuse the user.
+  //
+  // ----------------------------------------------------------------------------------------------------------
+  //
   // The bitrate the generated stream should have. Note that not all cameras /
-  // encoder support a constant bitrate, and not all encoders support all
-  // bitrates, especially really low ones.
-  int bitrate_kbits = DEFAULT_BITRATE_KBITS;
-  // r.n use rpicamrs as reference. Not supported by all cameras
+  // encoders support a constant bitrate, and not all encoders support all
+  // bitrates, especially really low ones. How an encoder handles a specific constant bitrate is vendor specific.
+  // Note that we always use a constant bitrate in OpenHD, since it is the only way to properly adjust the bitrate
+  // depending on the link quality (once we have that wired up).
+  // Also note that his param is for h264 and h265 - mjpeg normally does not have a bitrate param, only a quality param.
+  //
+  int h26x_bitrate_kbits = DEFAULT_BITRATE_KBITS;
+  // Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe , else positive values up to 2147483647
+  // note that with 0 and/or sometimes -1, you can create issues like no decoded image at all,
+  // since wifibroadcast relies on keyframes in regular intervals.
+  // Also, some camera(s) might use a different mapping in regard to the keyframe interval than what's defined here,
+  // supporting them needs different setting validation methods.
   int keyframe_interval=DEFAULT_KEYFRAME_INTERVAL;
-  // see gst-rpicamsrc documentation
+  // Type of Intra Refresh to use, -1 to disable intra refresh. R.n only supported on gst-rpicamsrc.
+  // see gst-rpicamsrc for more info.
   int intra_refresh_type=-1;
   // MJPEG has no bitrate parameter, only a "quality" param. This value is only used if the
   // user selected MJPEG as its video codec
   int mjpeg_quality_percent=DEFAULT_MJPEG_QUALITY_PERCENT;
   // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar
-  std::string url;
+  std::string ip_cam_url;
   // enable/disable recording to file
   Recording air_recording=Recording::DISABLED;
 
@@ -102,7 +115,7 @@ struct CameraSettings {
   RateControlMode recordingRCMode = DEFAULT_RC_MODE;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,
-                                   streamed_video_format,bitrate_kbits,keyframe_interval,intra_refresh_type,mjpeg_quality_percent,url,air_recording,
+                                   streamed_video_format, h26x_bitrate_kbits,keyframe_interval,intra_refresh_type,mjpeg_quality_percent, ip_cam_url,air_recording,
                                    camera_rotation_degree,horizontal_flip,vertical_flip,
                                    awb_mode,exposure_mode)
 
@@ -172,7 +185,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
                                         c_width_height_framerate
                                     }},
         openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}},
-        openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().bitrate_kbits / 1000),c_bitrate}},
+        openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().h26x_bitrate_kbits / 1000),c_bitrate}},
         openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().keyframe_interval,c_keyframe_interval}},
         openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
         openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
@@ -262,7 +275,7 @@ class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
     if(!openhd::validate_bitrate_mbits(bitrate_mbits)){
       return false;
     }
-    unsafe_get_settings().bitrate_kbits = mbits_to_kbits_per_second(bitrate_mbits);
+    unsafe_get_settings().h26x_bitrate_kbits = mbits_to_kbits_per_second(bitrate_mbits);
     persist();
     return true;
   }
