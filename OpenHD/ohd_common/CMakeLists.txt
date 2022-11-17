@@ -25,10 +25,6 @@ add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
 
 find_package(spdlog REQUIRED)
 target_link_libraries(OHDCommonLib PRIVATE spdlog::spdlog)
-# TODO build json only once
-set(JSON_Install OFF CACHE INTERNAL "")
-add_subdirectory(../lib/json json)
-target_link_libraries(OHDCommonLib PUBLIC nlohmann_json::nlohmann_json)
 
 #----------------------------------------------------------------------------------------------------------------------
 # sources
@@ -36,7 +32,7 @@ target_link_libraries(OHDCommonLib PUBLIC nlohmann_json::nlohmann_json)
 
 set(sources
     "mavlink_settings/ISettingsComponent.hpp"
-    #"json.hpp"
+    "json.hpp"
     "include_json.hpp"
     "openhd-action-handler.hpp"
     "openhd-common-tests.hpp"
