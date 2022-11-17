@@ -8,6 +8,8 @@
 #include "include_json.hpp"
 #include "openhd-util.hpp"
 
+// Helper for all this json bloat
+
 enum class CameraType {
   Unknown,
   Dummy,  // Dummy camera, is created fully in sw, for debugging purposes.

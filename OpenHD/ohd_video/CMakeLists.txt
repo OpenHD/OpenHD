@@ -56,7 +56,8 @@ set(sources
     "inc/OHDGstHelper.hpp"
     "inc/OHDVideo.h"
     "inc/openhd-camera.hpp"
-    "inc/openhd-camera-enums.hpp"
+    "inc/discovered_camera.hpp"
+    "inc/camera_enums.hpp"
     "inc/v_validate_settings.h"
     "inc/veyestream.h"
 
