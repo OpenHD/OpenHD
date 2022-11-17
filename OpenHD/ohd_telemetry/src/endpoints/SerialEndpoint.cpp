@@ -60,17 +60,10 @@ SerialEndpoint::~SerialEndpoint() {
 bool SerialEndpoint::sendMessageImpl(const MavlinkMessage &message) {
   const auto data = message.pack();
   const int ret=write_data_serial(data);
-  if(!ret){
-    n_failed_writes++;
-    if(n_failed_writes>100){
-      m_console->warn("More than {} failed writes",n_failed_writes);
-      n_failed_writes=0;
-    }
-  }
   return ret;
 }
 
-bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data) const {
+bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
   if(_fd==-1){
     // cannot send data at the time, UART not setup / doesn't exist.
     //m_console->warn("Cannot send data, no fd");
@@ -80,9 +73,13 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data) const {
   // but the linux driver hasn't noticed it yet.
   const auto send_len = static_cast<int>(write(_fd,data.data(), data.size()));
   if (send_len != data.size()) {
-    std::stringstream ss;
-    ss<<" Failure to write uart data: "<<data.size()<<" actual: "<<send_len<<GET_ERROR();
-    m_console->warn(ss.str());
+    n_failed_writes++;
+    if(std::chrono::steady_clock::now()-m_last_log_serial_write_failed>MIN_DELAY_BETWEEN_SERIAL_WRITE_FAILED_LOG_MESSAGES){
+      std::stringstream ss;
+      ss<<"F UART write:"<<data.size()<<" actual:"<<send_len<<","<<GET_ERROR()<<"tot:"<<n_failed_writes;
+      m_console->warn(ss.str());
+      m_last_log_serial_write_failed=std::chrono::steady_clock::now();
+    }
     return false;
   }
   return true;
