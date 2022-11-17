@@ -19,7 +19,11 @@
 #include "v_validate_settings.h"
 
 static constexpr int DEFAULT_BITRATE_KBITS = 5000;
-static constexpr int DEFAULT_KEYFRAME_INTERVAL = 30;
+// Quite low, at 30fps a keyframe interval of 15 means a single lost keyframe results in max. 500ms
+// of interruption (assuming the next keyframe is properly received).
+// Noe that if you double the FPS, you can also double the keyframe interval if you want to keep those interruptions
+// at roughly 500ms
+static constexpr int DEFAULT_KEYFRAME_INTERVAL = 15;
 static constexpr int DEFAULT_MJPEG_QUALITY_PERCENT = 50;
 
 static constexpr int DEFAULT_RECORDING_KBITS = 10000;
