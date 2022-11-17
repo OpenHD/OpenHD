@@ -93,8 +93,8 @@ struct CameraSettings {
   // 90° to the right
   // 180° to the right
   // 270° to the right
-  // Note that r.n only rpi camera supports rotation(s), where the degrees are mapped to the corresponding h/v flip(s)
   int camera_rotation_degree=0;
+  // horizontal / vertical flip, r.n only supported on rpicamsrc
   bool horizontal_flip= false;
   bool vertical_flip=false;
   // R.n only for rpi camera, see https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c
