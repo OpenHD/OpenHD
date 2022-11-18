@@ -5,6 +5,12 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 
+#include "openhd-settings2.hpp"
+#include "openhd-action-handler.hpp"
+#include "openhd-settings.hpp"
+#include "mavlink_settings/ISettingsComponent.hpp"
+
+#include "camera.hpp"
 #include "camera_settings.hpp"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about a camera
@@ -19,8 +25,9 @@ static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::st
 class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
                      public openhd::ISettingsComponent{
  public:
-  explicit CameraHolder(Camera camera,std::shared_ptr<openhd::ActionHandler> opt_action_handler= nullptr): m_camera(std::move(camera)),m_opt_action_handler(std::move(opt_action_handler)),
-                                                                                                              openhd::settings::PersistentSettings<CameraSettings>(VIDEO_SETTINGS_DIRECTORY){
+  explicit CameraHolder(Camera camera,std::shared_ptr<openhd::ActionHandler> opt_action_handler= nullptr):
+       m_camera(std::move(camera)),m_opt_action_handler(std::move(opt_action_handler)),
+       openhd::settings::PersistentSettings<CameraSettings>(VIDEO_SETTINGS_DIRECTORY){
     init();
     if(m_opt_action_handler){
       m_opt_action_handler->action_set_video_codec_handle(video_codec_to_int(get_settings().streamed_video_format.videoCodec));

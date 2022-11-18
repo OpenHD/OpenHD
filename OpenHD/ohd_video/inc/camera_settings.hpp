@@ -1,21 +1,7 @@
 #ifndef OPENHD_CAMERA_H
 #define OPENHD_CAMERA_H
 
-#include <fstream>
-#include <regex>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include "camera.hpp"
 #include "camera_enums.hpp"
-#include "mavlink_settings/ISettingsComponent.hpp"
-#include "openhd-action-handler.hpp"
-#include "openhd-settings.hpp"
-#include "openhd-settings2.hpp"
-#include "openhd-util-filesystem.hpp"
-#include "openhd-util.hpp"
 #include "v_validate_settings.h"
 
 // Mutable data for a discovered camera

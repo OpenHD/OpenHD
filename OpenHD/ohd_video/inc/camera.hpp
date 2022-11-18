@@ -45,7 +45,7 @@ struct Camera {
   // Unique index of this camera, should start at 0. The index number depends on
   // the order the cameras were picked up during the discovery step.
   int index = 0;
-  // All the endpoints supported by this camera.
+  // All the endpoints supported by this camera, can be unused (e.g. for CSI cameras)
   std::vector<CameraEndpoint> endpoints;
   /**
    * For logging, create a quick name string that gives developers enough info
