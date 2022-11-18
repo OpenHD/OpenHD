@@ -11,21 +11,20 @@
 #include <netlink/genl/ctrl.h>
 #include <linux/nl80211.h>
 #undef __USE_MISC
-#include <bits/ioctls.h>
 #include <linux/if.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 
-#include "openhd-spdlog.hpp"
+//#include "openhd-spdlog.hpp"
 
-static std::shared_ptr<spdlog::logger> get_logger(){
+/*static std::shared_ptr<spdlog::logger> get_logger(){
   return openhd::log::create_or_get("w_command_helper");
-}
+}*/
 
 static int error_handler(struct sockaddr_nl *nla, struct nlmsgerr *err, void *arg) {
   int *ret = reinterpret_cast<int*>(arg);
   *ret = err->error;
-  get_logger()->debug("error_handler {}",err->error);
+  //get_logger()->debug("error_handler {}",err->error);
   return NL_STOP;
 }
 
@@ -82,7 +81,7 @@ bool wifi::commandhelper2::set_wifi_monitor_mode(const std::string &device) {
   nl_send_auto_complete(sckt, mesg);
 
   /* Bring the device back up */
-  if (!set_wifi_up(device)) {
+  if (!set_wifi_up_down(device, true)) {
     goto nla_put_failure;
   }
 
