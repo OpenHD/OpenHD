@@ -10,9 +10,11 @@
 #include <cstdint>
 #include <string>
 
-namespace wifi::commandhelper{
+namespace wifi::commandhelper2{
 
 static bool set_wifi_frequency(const std::string &device, uint32_t freq_mhz);
+
+static bool set_wifi_txpower(const std::string &device, uint32_t power_mbm);
 
 }
 
