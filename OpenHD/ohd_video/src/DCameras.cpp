@@ -1,18 +1,20 @@
 #include "DCameras.h"
-#include "discovered_camera.hpp"
-#include "openhd-util.hpp"
-#include "openhd-util-filesystem.hpp"
-#include "DCamerasHelper.hpp"
-#include "veye-helper.hpp"
-#include "libcamera_provider.hpp"
 
-#include <linux/videodev2.h>
+#include <fcntl.h>
 #include <libv4l2.h>
+#include <linux/videodev2.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+
 #include <iostream>
 #include <regex>
+
+#include "DCamerasHelper.hpp"
+#include "camera.hpp"
+#include "libcamera_provider.hpp"
+#include "openhd-util-filesystem.hpp"
+#include "openhd-util.hpp"
+#include "veye-helper.hpp"
 
 DCameras::DCameras(const OHDPlatform ohdPlatform) :
 	ohdPlatform(ohdPlatform){

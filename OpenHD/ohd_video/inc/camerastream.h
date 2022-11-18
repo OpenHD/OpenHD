@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "camera_settings.hpp"
+#include "camera_holder.hpp"
 #include "openhd-platform.hpp"
 
 /**
