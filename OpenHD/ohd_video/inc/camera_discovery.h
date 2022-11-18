@@ -27,8 +27,6 @@ class DCameras {
    * @param ohdPlatform the platform we are running on, detection depends on the platform type.
    */
   static std::vector<Camera> discover(OHDPlatform ohdPlatform);
-  // Legacy, unused.
-  static std::vector<std::shared_ptr<CameraHolder>> discover2(OHDPlatform ohdPlatform);
  private:
   DiscoveredCameraList discover_internal();
   void argh_cleanup();

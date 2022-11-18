@@ -1,4 +1,4 @@
-#include "DCameras.h"
+#include "camera_discovery.h"
 
 #include <fcntl.h>
 #include <libv4l2.h>
@@ -9,8 +9,8 @@
 #include <iostream>
 #include <regex>
 
-#include "DCamerasHelper.hpp"
 #include "camera.hpp"
+#include "camera_discovery_helper.hpp"
 #include "libcamera_provider.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "openhd-util.hpp"
@@ -393,11 +393,3 @@ DiscoveredCameraList DCameras::discover(const OHDPlatform ohdPlatform) {
   return discover.discover_internal();
 }
 
-std::vector<std::shared_ptr<CameraHolder>> DCameras::discover2(const OHDPlatform ohdPlatform) {
-  auto discovered_cameras= discover(ohdPlatform);
-  std::vector<std::shared_ptr<CameraHolder>> ret;
-  for(const auto& camera:discovered_cameras){
-    ret.emplace_back(std::make_unique<CameraHolder>(camera));
-  }
-  return ret;
-}
