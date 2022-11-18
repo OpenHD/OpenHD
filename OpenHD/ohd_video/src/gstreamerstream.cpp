@@ -8,8 +8,8 @@
 #include <vector>
 
 #include "AirRecordingFileHelper.hpp"
-#include "OHDGstHelper.hpp"
 #include "ffmpeg_videosamples.hpp"
+#include "gst_helper.hpp"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,uint16_t video_udp_port)
     : CameraStream(platform, camera_holder, video_udp_port) {
