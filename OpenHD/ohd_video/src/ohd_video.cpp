@@ -1,11 +1,10 @@
 //
 // Created by consti10 on 03.05.22.
 //
-#include "OHDVideo.h"
-
 #include <openhd-global-constants.hpp>
 
 #include "gstreamerstream.h"
+#include "ohd_video.h"
 #include "veyestream.h"
 
 OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :

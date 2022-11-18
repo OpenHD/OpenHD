@@ -54,7 +54,7 @@ set(sources
     "inc/gstreamerstream.h"
     "inc/libcamera_provider.hpp"
     "inc/gst_helper.hpp"
-    "inc/OHDVideo.h"
+    "inc/ohd_video.h"
     "inc/camera.hpp"
     "inc/camera_enums.hpp"
     "inc/camera_holder.hpp"
@@ -69,7 +69,7 @@ set(sources
     "src/camerastream.cpp"
     "src/camera_discovery.cpp"
     "src/gstreamerstream.cpp"
-    "src/OHDVideo.cpp"
+    "src/ohd_video.cpp"
     "src/veyestream.cpp"
 )
 

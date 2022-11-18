@@ -5,7 +5,7 @@
 #include <iostream>
 #include <thread>
 
-#include "OHDVideo.h"
+#include "ohd_video.h"
 #include "openhd-platform-discover.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"

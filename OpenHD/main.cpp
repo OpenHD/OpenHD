@@ -4,8 +4,8 @@
 
 #include <OHDInterface.h>
 #include <OHDTelemetry.h>
-#include <OHDVideo.h>
 #include <camera_discovery.h>
+#include <ohd_video.h>
 
 #include <iostream>
 #include <memory>
