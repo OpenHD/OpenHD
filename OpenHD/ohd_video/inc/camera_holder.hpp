@@ -22,13 +22,18 @@ static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::st
 // 1) Differentiate between immutable information (camera) and
 // 2) mutable camera settings.
 // Changes in the camera settings are propagated through this class.
-class CameraHolder:public openhd::settings::PersistentSettings<CameraSettings>,
-                     public openhd::ISettingsComponent{
+class CameraHolder:
+    // persistence via JSON
+    public openhd::settings::PersistentSettings<CameraSettings>,
+    // changes requested by the mavlink parameter protocol are propagated through lambda callbacks
+    public openhd::ISettingsComponent{
  public:
   explicit CameraHolder(Camera camera,std::shared_ptr<openhd::ActionHandler> opt_action_handler= nullptr):
        m_camera(std::move(camera)),m_opt_action_handler(std::move(opt_action_handler)),
        openhd::settings::PersistentSettings<CameraSettings>(VIDEO_SETTINGS_DIRECTORY){
+    // read previous settings or create default ones
     init();
+    // dirty, propagate changes to the video codec back to the link (ohd_interface)
     if(m_opt_action_handler){
       m_opt_action_handler->action_set_video_codec_handle(video_codec_to_int(get_settings().streamed_video_format.videoCodec));
     }
