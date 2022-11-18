@@ -11,9 +11,9 @@
 #include "openhd-spdlog.hpp"
 
 /**
- * Discover all connected cameras and expose their hardware capabilities to OpenHD.
- * Note that this class does not handle camera settings (like video width, height) - camera capabilities
- * and user set / default camera settings are seperated.
+ * Discover all connected cameras and for some camera(s) (E.g. USB cameras and/or cameras that use v4l2)
+ * Figure out their capabilities. Written as a class r.n but actually should only be a namespace.
+ * The interesting bit is just the discover() method below.
  */
 class DCameras {
  public:
