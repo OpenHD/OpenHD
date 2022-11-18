@@ -12,6 +12,10 @@
 
 namespace wifi::commandhelper2{
 
+static bool set_wifi_up_down(const std::string &device, bool up);
+
+static bool set_wifi_monitor_mode(const std::string &device);
+
 static bool set_wifi_frequency(const std::string &device, uint32_t freq_mhz);
 
 static bool set_wifi_txpower(const std::string &device, uint32_t power_mbm);
