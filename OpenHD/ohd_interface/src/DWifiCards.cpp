@@ -145,7 +145,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	// Note that this does not neccessarily mean this info is right, rtl8812au driver "lies" in this reagrd.
 	std::stringstream ss;
 	ss<<"Card "<<card.interface_name<<" reports:{"<<"supports_2G:"<<OHDUtil::yes_or_no(supports_2ghz)<<" supports_5G:"<<OHDUtil::yes_or_no(supports_2ghz)<<"}";
-	openhd::log::get_default()->info(ss.str());
+	openhd::log::get_default()->debug(ss.str());
   }
 
   std::stringstream address;

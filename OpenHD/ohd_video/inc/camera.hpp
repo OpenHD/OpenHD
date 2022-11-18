@@ -5,11 +5,18 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_DISCOVERED_CAMERA_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_DISCOVERED_CAMERA_H_
 
+#include "camera_enums.hpp"
 #include "include_json.hpp"
 
-// Information about a discovered camera and its capabilities.
-// This does not include any (persistent) settings !
 
+// Information about a discovered camera and its capabilities.
+// NOTE: This does not include any (persistent) settings ! Immutable data (e.g. the discovered camera
+// and its capabilities) is seperated from the camera settings (see camera_settings.hpp)
+
+// NOTE: CameraEndpoint is only used for USB cameras and more that use the V4l2 interface. For anything else
+// (E.g. CSI Camera(s)) this separation is of no use, since generally there is a streaming pipeline for the different
+// formats each and we use the info which platform we are running on / which camera is connected to figure out
+// supported formats.
 struct CameraEndpoint {
   std::string device_node;
   std::string bus;
@@ -38,7 +45,7 @@ struct Camera {
   // Unique index of this camera, should start at 0. The index number depends on
   // the order the cameras were picked up during the discovery step.
   int index = 0;
-  // All the endpoints supported by this camera.
+  // All the endpoints supported by this camera, can be unused (e.g. for CSI cameras)
   std::vector<CameraEndpoint> endpoints;
   /**
    * For logging, create a quick name string that gives developers enough info

@@ -7,9 +7,9 @@
 #include <regex>
 #include <vector>
 
-#include "AirRecordingFileHelper.hpp"
-#include "OHDGstHelper.hpp"
+#include "air_recording_helper.hpp"
 #include "ffmpeg_videosamples.hpp"
+#include "gst_helper.hpp"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,uint16_t video_udp_port)
     : CameraStream(platform, camera_holder, video_udp_port) {
@@ -30,14 +30,10 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
     // That is not ideal, since some cameras support changing for example the bitrate or white balance during operation.
     // But wiring that up is not that easy.
     // We call restart_async() to make sure to not perform heavy operation(s) on the mavlink settings callback, since we need to send the
-	// acknowledging response in time. Also, gstreamer and camera(s) are sometimes buggy, so in the worst case gstreamer can become unresponsive
-	// and block on the restart operation(s) which would be fatal for telemetry.
-	this->restart_async();
+    // acknowledging response in time. Also, gstreamer and camera(s) are sometimes buggy, so in the worst case gstreamer can become unresponsive
+    // and block on the restart operation(s) which would be fatal for telemetry.
+    this->restart_async();
   });
-  // sanity checks
-  if(!check_bitrate_sane(setting.h26x_bitrate_kbits)){
-    // not really needed
-  }
   assert(setting.streamed_video_format.isValid());
   OHDGstHelper::initGstreamerOrThrow();
   m_console->debug("GStreamerStream::GStreamerStream done");
@@ -48,9 +44,9 @@ void GStreamerStream::setup() {
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
   if(!setting.enable_streaming){
-	// When streaming is disabled, we just don't create the pipeline. We fully restart on all changes anyways.
-	m_console->info("Streaming disabled");
-	return;
+    // When streaming is disabled, we just don't create the pipeline. We fully restart on all changes anyways.
+    m_console->info("Streaming disabled");
+    return;
   }
   m_pipeline_content.str("");
   m_pipeline_content.clear();
@@ -85,7 +81,7 @@ void GStreamerStream::setup() {
     }
     case CameraType::RaspberryPiVEYE:
     case CameraType::RockchipCSI:
-            m_console->error("Veye and rockchip are unsupported at the time");
+      m_console->error("Veye and rockchip are unsupported at the time");
       return;
     case CameraType::RockchipHDMI: {
       setup_rockchip_hdmi();
@@ -98,7 +94,7 @@ void GStreamerStream::setup() {
   }
   // quick check,here the pipeline should end with a "! ";
   if(!OHDUtil::endsWith(m_pipeline_content.str(),"! ")){
-	  m_console->error("Probably ill-formatted pipeline:"+
+    m_console->error("Probably ill-formatted pipeline:"+
                      m_pipeline_content.str());
   }
   // for safety we only add the tee command at the right place if recording is enabled.
@@ -111,14 +107,14 @@ void GStreamerStream::setup() {
   m_pipeline_content << OHDGstHelper::createRtpForVideoCodec(setting.streamed_video_format.videoCodec);
   // Allows users to fully write a manual pipeline, this must be used carefully.
   /*if (!m_camera.settings.manual_pipeline.empty()) {
-	m_pipeline.str("");
-	m_pipeline << m_camera.settings.manual_pipeline;
+        m_pipeline.str("");
+        m_pipeline << m_camera.settings.manual_pipeline;
   }*/
   // add udp out part
   m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
   if(setting.air_recording==Recording::ENABLED){
     const auto recording_filename=openhd::video::create_unused_recording_filename(
-    OHDGstHelper::file_suffix_for_video_codec(setting.streamed_video_format.videoCodec));
+        OHDGstHelper::file_suffix_for_video_codec(setting.streamed_video_format.videoCodec));
     {
       std::stringstream ss;
       ss<<"Using ["<<recording_filename<<"] for recording\n";
@@ -134,8 +130,8 @@ void GStreamerStream::setup() {
   gst_pipeline = gst_parse_launch(m_pipeline_content.str().c_str(), &error);
   m_console->debug("GStreamerStream::setup() end");
   if (error) {
-	m_console->error( "Failed to create pipeline: {}",error->message);
-	return;
+    m_console->error( "Failed to create pipeline: {}",error->message);
+    return;
   }
 }
 
@@ -177,29 +173,29 @@ void GStreamerStream::setup_usb_uvc() {
   m_console->debug("Setting up usb UVC camera Name:"+camera.name+" type:"+camera_type_to_string(camera.type));
   // First we try and start a hw encoded path, where v4l2src directly provides encoded video buffers
   for (const auto &endpoint: camera.endpoints) {
-	if (setting.streamed_video_format.videoCodec == VideoCodec::H264 && endpoint.support_h264) {
-	  m_console->debug("h264");
-	  const auto device_node = endpoint.device_node;
-          m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting.streamed_video_format);
-	  return;
-	}
-	if (setting.streamed_video_format.videoCodec == VideoCodec::MJPEG && endpoint.support_mjpeg) {
-	  m_console->debug("MJPEG");
-	  const auto device_node = endpoint.device_node;
-          m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting.streamed_video_format);
-	  return;
-	}
+    if (setting.streamed_video_format.videoCodec == VideoCodec::H264 && endpoint.support_h264) {
+      m_console->debug("h264");
+      const auto device_node = endpoint.device_node;
+      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting.streamed_video_format);
+      return;
+    }
+    if (setting.streamed_video_format.videoCodec == VideoCodec::MJPEG && endpoint.support_mjpeg) {
+      m_console->debug("MJPEG");
+      const auto device_node = endpoint.device_node;
+      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting.streamed_video_format);
+      return;
+    }
   }
   // If we land here, we need to do SW encoding, the v4l2src can only do raw video formats like YUV
   for (const auto &endpoint: camera.endpoints) {
-        m_console->warn("Cannot do HW encode for camera, fall back to RAW out and SW encode");
-	if (endpoint.support_raw) {
-	  const auto device_node = endpoint.device_node;
-          m_pipeline_content << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,
-                                                                        setting.streamed_video_format.videoCodec,
-                                                                        setting.h26x_bitrate_kbits,setting.h26x_keyframe_interval);
-          return;
-	}
+    m_console->warn("Cannot do HW encode for camera, fall back to RAW out and SW encode");
+    if (endpoint.support_raw) {
+      const auto device_node = endpoint.device_node;
+      m_pipeline_content << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,
+                                                                            setting.streamed_video_format.videoCodec,
+                                                                            setting.h26x_bitrate_kbits,setting.h26x_keyframe_interval);
+      return;
+    }
   }
   // If we land here, we couldn't create a stream for this camera.
   m_console->error("Setup USB UVC failed");
@@ -212,8 +208,8 @@ void GStreamerStream::setup_usb_uvch264() {
   const auto endpoint = camera.endpoints.front();
   // uvch265 cameras don't seem to exist, codec setting is ignored
   m_pipeline_content << OHDGstHelper::createUVCH264Stream(endpoint.device_node,
-                                                  setting.h26x_bitrate_kbits,
-                                                  setting.streamed_video_format);
+                                                          setting.h26x_bitrate_kbits,
+                                                          setting.streamed_video_format);
 }
 
 void GStreamerStream::setup_ip_camera() {
@@ -221,7 +217,7 @@ void GStreamerStream::setup_ip_camera() {
   const auto& camera=_camera_holder->get_camera();
   const auto& setting=_camera_holder->get_settings();
   if (setting.ip_cam_url.empty()) {
-	//setting.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
+    //setting.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
   }
   m_pipeline_content << OHDGstHelper::createIpCameraStream(setting.ip_cam_url);
 }
@@ -236,13 +232,13 @@ void GStreamerStream::setup_sw_dummy_camera() {
 std::string GStreamerStream::createDebug(){
   std::unique_lock<std::mutex> lock(m_pipeline_mutex, std::try_to_lock);
   if(!lock.owns_lock()){
-	// We can just discard statistics data during a re-start
-	return "GStreamerStream::No debug during restart\n";
+    // We can just discard statistics data during a re-start
+    return "GStreamerStream::No debug during restart\n";
   }
   if(!_camera_holder->get_settings().enable_streaming){
-	std::stringstream ss;
-	ss << "GStreamerStream for camera:"<<_camera_holder->get_camera().debugName()<<" disabled";
-	return ss.str();
+    std::stringstream ss;
+    ss << "GStreamerStream for camera:"<<_camera_holder->get_camera().debugName()<<" disabled";
+    return ss.str();
   }
   std::stringstream ss;
   GstState state;
@@ -255,8 +251,8 @@ std::string GStreamerStream::createDebug(){
 void GStreamerStream::start() {
   m_console->debug("GStreamerStream::start()");
   if(!gst_pipeline){
-	m_console->warn("gst_pipeline==null");
-	return;
+    m_console->warn("gst_pipeline==null");
+    return;
   }
   gst_element_set_state(gst_pipeline, GST_STATE_PLAYING);
   GstState state;
@@ -268,8 +264,8 @@ void GStreamerStream::start() {
 void GStreamerStream::stop() {
   m_console->debug("GStreamerStream::stop()");
   if(!gst_pipeline){
-	m_console->debug("gst_pipeline==null");
-	return;
+    m_console->debug("gst_pipeline==null");
+    return;
   }
   gst_element_set_state(gst_pipeline, GST_STATE_PAUSED);
 }
@@ -277,8 +273,8 @@ void GStreamerStream::stop() {
 void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() begin");
   if(!gst_pipeline){
-	m_console->debug("gst_pipeline==null");
-	return;
+    m_console->debug("gst_pipeline==null");
+    return;
   }
   // according to @Alex W we need a EOS signal here to properly shut down the pipeline
   gst_element_send_event (gst_pipeline, gst_event_new_eos());
@@ -292,24 +288,24 @@ void GStreamerStream::cleanup_pipe() {
 void GStreamerStream::restartIfStopped() {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   if(!gst_pipeline){
-	m_console->debug("gst_pipeline==null");
-	return;
+    m_console->debug("gst_pipeline==null");
+    return;
   }
   GstState state;
   GstState pending;
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000); // timeout in ns
   if (returnValue == 0) {
-	std::stringstream message;
-	message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name;
-        m_console->debug(message.str());
-	// We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
-	// This will also show up in QOpenHD (log level >= warn), but we are limited by the n of characters in mavlink
-        m_console->warn("Restarting camera, check your parameters / connection");
-	stop();
-	cleanup_pipe();
-	setup();
-	start();
-	m_console->debug("Restarted");
+    std::stringstream message;
+    message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name;
+    m_console->debug(message.str());
+    // We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
+    // This will also show up in QOpenHD (log level >= warn), but we are limited by the n of characters in mavlink
+    m_console->warn("Restarting camera, check your parameters / connection");
+    stop();
+    cleanup_pipe();
+    setup();
+    start();
+    m_console->debug("Restarted");
   }
 }
 
@@ -330,11 +326,11 @@ void GStreamerStream::restart_async() {
   // If there is already an async operation running, we need to wait for it to complete.
   // If the user was to change parameters to quickly, this would be a problem.
   if(m_async_thread != nullptr){
-	if(m_async_thread->joinable()){
-	  m_console->debug("restart_async: waiting for previous operation to finish");
-          m_async_thread->join();
-	}
-        m_async_thread =nullptr;
+    if(m_async_thread->joinable()){
+      m_console->debug("restart_async: waiting for previous operation to finish");
+      m_async_thread->join();
+    }
+    m_async_thread =nullptr;
   }
   m_async_thread =std::make_unique<std::thread>(&GStreamerStream::restart_after_new_setting,this);
 }

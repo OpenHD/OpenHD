@@ -9,7 +9,7 @@
 #include <iostream>
 #include <utility>
 #include <deque>
-#include <openhd-udp-log.h>
+#include "openhd-udp-log.h"
 
 // bridge between any logger and telemetry
 // We send logs higher or equal to the warning log level out via udp

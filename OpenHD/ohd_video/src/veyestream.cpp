@@ -3,7 +3,8 @@
 //
 
 #include "veyestream.h"
-#include "OHDGstHelper.hpp"
+
+#include "gst_helper.hpp"
 #include "openhd-util.hpp"
 #include "veye-helper.hpp"
 

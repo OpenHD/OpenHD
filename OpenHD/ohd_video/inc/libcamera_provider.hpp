@@ -8,7 +8,8 @@
 // NOTE: This header just hides away libcamera provider if library is not found at compile time.
 #ifdef OPENHD_LIBCAMERA_PRESENT
 #include <libcamera/libcamera.h>
-#include "discovered_camera.hpp"
+
+#include "camera.hpp"
 #include "openhd-spdlog.hpp"
 
 class LibcameraProvider {

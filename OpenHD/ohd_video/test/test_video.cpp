@@ -1,14 +1,14 @@
 
+#include <camera_discovery.h>
+
+#include <chrono>
 #include <iostream>
 #include <thread>
-#include <chrono>
-#include <DCameras.h>
 
-#include "openhd-profile.hpp"
-#include "openhd-platform.hpp"
+#include "ohd_video.h"
 #include "openhd-platform-discover.hpp"
-
-#include "OHDVideo.h"
+#include "openhd-platform.hpp"
+#include "openhd-profile.hpp"
 
 int main(int argc, char *argv[]) {
   const auto platform=DPlatform::discover();

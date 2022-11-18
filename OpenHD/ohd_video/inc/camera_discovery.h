@@ -5,15 +5,15 @@
 #include <chrono>
 #include <vector>
 
-#include "camera_settings.hpp"
+#include "camera_holder.hpp"
 #include "openhd-platform.hpp"
 
 #include "openhd-spdlog.hpp"
 
 /**
- * Discover all connected cameras and expose their hardware capabilities to OpenHD.
- * Note that this class does not handle camera settings (like video width, height) - camera capabilities
- * and user set / default camera settings are seperated.
+ * Discover all connected cameras and for some camera(s) (E.g. USB cameras and/or cameras that use v4l2)
+ * Figure out their capabilities. Written as a class r.n but actually should only be a namespace.
+ * The interesting bit is just the discover() method below.
  */
 class DCameras {
  public:
@@ -27,8 +27,6 @@ class DCameras {
    * @param ohdPlatform the platform we are running on, detection depends on the platform type.
    */
   static std::vector<Camera> discover(OHDPlatform ohdPlatform);
-  // Legacy, unused.
-  static std::vector<std::shared_ptr<CameraHolder>> discover2(OHDPlatform ohdPlatform);
  private:
   DiscoveredCameraList discover_internal();
   void argh_cleanup();

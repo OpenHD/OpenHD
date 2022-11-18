@@ -50,24 +50,26 @@ find_package(Threads REQUIRED)
 
 set(sources 
     "inc/camerastream.h"
-    "inc/DCameras.h"
+    "inc/camera_discovery.h"
     "inc/gstreamerstream.h"
     "inc/libcamera_provider.hpp"
-    "inc/OHDGstHelper.hpp"
-    "inc/OHDVideo.h"
-    "inc/camera_settings.hpp"
-    "inc/discovered_camera.hpp"
+    "inc/gst_helper.hpp"
+    "inc/ohd_video.h"
+    "inc/camera.hpp"
     "inc/camera_enums.hpp"
+    "inc/camera_holder.hpp"
+    "inc/camera_settings.hpp"
+
     "inc/v_validate_settings.h"
     "inc/veyestream.h"
 
-    "src/DCamerasHelper.hpp"
+    "src/camera_discovery_helper.hpp"
     "src/ffmpeg_videosamples.hpp"
 
     "src/camerastream.cpp"
-    "src/DCameras.cpp"
+    "src/camera_discovery.cpp"
     "src/gstreamerstream.cpp"
-    "src/OHDVideo.cpp"
+    "src/ohd_video.cpp"
     "src/veyestream.cpp"
 )
 

@@ -18,7 +18,9 @@ int main() {
         const auto platform=DPlatform::discover();
 	air = std::make_unique<OHDTelemetry>(*platform, profile,nullptr,true);
   }
-  while (true) {
+  static bool quit=false;
+  signal(SIGTERM, [](int sig){ quit= true;});
+  while (!quit){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	std::cout<<air->createDebug();
   }

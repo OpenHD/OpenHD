@@ -2,21 +2,22 @@
 // Created by consti10 on 02.05.22.
 //
 
+#include <OHDInterface.h>
+#include <OHDTelemetry.h>
+#include <camera_discovery.h>
+#include <ohd_video.h>
+
 #include <iostream>
 #include <memory>
 #include <sstream>
 
-#include "ohd_common/openhd-platform.hpp"
-#include "ohd_common/openhd-profile.hpp"
-#include "ohd_common/openhd-platform-discover.hpp"
 #include "ohd_common/openhd-global-constants.hpp"
+#include "ohd_common/openhd-platform-discover.hpp"
+#include "ohd_common/openhd-platform.hpp"
+#include "ohd_common/openhd-profile-json.hpp"
+#include "ohd_common/openhd-profile.hpp"
 #include "ohd_common/openhd-spdlog.hpp"
 #include "ohd_common/openhd-temporary-air-or-ground.h"
-#include "ohd_common/openhd-profile-json.hpp"
-#include <DCameras.h>
-#include <OHDInterface.h>
-#include <OHDTelemetry.h>
-#include <OHDVideo.h>
 // For logging the commit hash and more
 #include "git.h"
 
