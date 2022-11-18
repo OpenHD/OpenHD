@@ -30,7 +30,9 @@ int main() {
 	ohdTelemAir = std::make_unique<OHDTelemetry>(*platform, profile);
 	ohdTelemAir->add_settings_generic(openhd::testing::create_dummy_camera_settings());
   }
-  while (true) {
+  static bool quit=false;
+  signal(SIGTERM, [](int sig){ quit= true;});
+  while (!quit){
 	std::this_thread::sleep_for(std::chrono::seconds(5));
 	std::stringstream ss;
 	ss<<"G and air debug:\n";

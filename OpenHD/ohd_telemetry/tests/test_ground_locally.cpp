@@ -23,7 +23,9 @@ int main() {
 	ground->add_settings_generic(openhd::testing::create_dummy_ground_settings());
 	//ground->add_external_ground_station_ip("192.168.237.22","192.168.237.55");
   }
-  while (true) {
+  static bool quit=false;
+  signal(SIGTERM, [](int sig){ quit= true;});
+  while (!quit){
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	std::cout<<ground->createDebug();
   }
