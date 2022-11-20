@@ -15,10 +15,15 @@ OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::share
   m_console->debug("OHDVideo::OHDVideo()");
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
   for(const auto& camera:cameras){
-    camera_holders.emplace_back(std::make_unique<CameraHolder>(camera,opt_action_handler));
+    if(camera_holders.size()<MAX_N_CAMERAS){
+      camera_holders.emplace_back(std::make_unique<CameraHolder>(camera,opt_action_handler));
+    }else{
+      m_console->warn("Dropping camera {}, too many cameras",camera.to_string());
+    }
   }
+  assert(camera_holders.size()<=MAX_N_CAMERAS);
   for (auto &camera: camera_holders) {
-	configure(camera);
+    configure(camera);
   }
   m_console->debug( "OHDVideo::running");
 }

@@ -46,6 +46,8 @@ class OHDVideo {
   // Add a CameraStream for a discovered camera.
   void configure(std::shared_ptr<CameraHolder> camera);
   std::shared_ptr<spdlog::logger> m_console;
+  // r.n limited to primary and secondary camera
+  static constexpr auto MAX_N_CAMERAS=2;
 };
 
 #endif  // OPENHD_VIDEO_OHDVIDEO_H
