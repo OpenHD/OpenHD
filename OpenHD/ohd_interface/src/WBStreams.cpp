@@ -1,5 +1,6 @@
 #include "WBStreams.h"
 #include "WifiCardCommandHelper.hpp"
+#include "wifi_command_helper2.h"
 
 #include "openhd-platform.hpp"
 #include "openhd-spdlog.hpp"
@@ -114,13 +115,10 @@ void WBStreams::configure_cards() {
     return;
   }
   for(const auto& card: _broadcast_cards){
-    //TODO we might not need this one
-    //OHDUtil::run_command("rfkill",{"unblock",card->_wifi_card.interface_name});
     WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
     WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
     WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
     const bool width_40= m_settings->get_settings().wb_channel_width==40;
-    //WifiCardCommandHelper::set_frequency(card->_wifi_card, _settings->get_settings().wb_frequency);
     WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card, m_settings->get_settings().wb_frequency,width_40);
     // TODO check if this works - on rtl8812au, the displayed value at least changes
     // Not sure which is better, iw dev or iwconfig. However, iwconfig eats it in mW
