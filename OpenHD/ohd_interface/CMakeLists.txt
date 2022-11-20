@@ -19,7 +19,7 @@ set(sources
     "inc/WBStreams.h"
     "inc/WBStreamsSettings.hpp"
     "inc/WifiHotspot.h"
-    "inc/wifi_command_helper2.h"
+    #"inc/wifi_command_helper2.h"
 
     "src/DWifiCards.cpp"
     "src/OHDInterface.cpp"
@@ -27,7 +27,7 @@ set(sources
     "src/WBStreams.cpp"
     "src/WifiCardCommandHelper.hpp"
     "src/WifiHotspot.cpp"
-    "src/wifi_command_helper2.cpp"
+    #"src/wifi_command_helper2.cpp"
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
@@ -51,10 +51,10 @@ find_package(spdlog REQUIRED)
 target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
 
 # find and include all the other libs
-include(cmake/FindLibNL.cmake)
-#find_package(LibNL REQUIRED)
-target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
-target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
+#include(cmake/FindLibNL.cmake)
+##find_package(LibNL REQUIRED)
+#target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
+#target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
 
 
 target_include_directories(OHDInterfaceLib PUBLIC inc/)
