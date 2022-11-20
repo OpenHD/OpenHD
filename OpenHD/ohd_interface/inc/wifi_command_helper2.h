@@ -11,13 +11,13 @@
 // Pretty much taken from https://github.com/webbbn/wifibroadcast_bridge/blob/9220947fd01f6aaf58adc271037b550ce5385b1e/src/raw_socket.cc
 namespace wifi::commandhelper2{
 
-static bool set_wifi_up_down(const std::string &device, bool up);
+bool set_wifi_up_down(const std::string &device, bool up);
 
-static bool set_wifi_monitor_mode(const std::string &device);
+bool set_wifi_monitor_mode(const std::string &device);
 
-static bool set_wifi_frequency(const std::string &device, uint32_t freq_mhz);
+bool set_wifi_frequency(const std::string &device, uint32_t freq_mhz);
 
-static bool set_wifi_txpower(const std::string &device, uint32_t power_mbm);
+bool set_wifi_txpower(const std::string &device, uint32_t power_milli_watt);
 
 }
 

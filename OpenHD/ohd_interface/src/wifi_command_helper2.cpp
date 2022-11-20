@@ -4,6 +4,9 @@
 
 #include "wifi_command_helper2.h"
 
+#include "openhd-spdlog.hpp"
+#include "openhd-util.hpp"
+
 #include <algorithm>
 #include <cstdint>
 #include <netlink/netlink.h>
@@ -15,20 +18,19 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 
-//#include "openhd-spdlog.hpp"
-
-/*static std::shared_ptr<spdlog::logger> get_logger(){
-  return openhd::log::create_or_get("w_command_helper");
-}*/
+static std::shared_ptr<spdlog::logger> get_logger(){
+  return openhd::log::create_or_get("w_command_helper2");
+}
 
 static int error_handler(struct sockaddr_nl *nla, struct nlmsgerr *err, void *arg) {
   int *ret = reinterpret_cast<int*>(arg);
   *ret = err->error;
-  //get_logger()->debug("error_handler {}",err->error);
+  get_logger()->warn("error_handler {}",err->error);
   return NL_STOP;
 }
 
 bool wifi::commandhelper2::set_wifi_up_down(const std::string &device, bool up) {
+  get_logger()->debug("set_wifi_up_down {} up:{}",device,OHDUtil::yes_or_no(up));
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) {
     return false;
@@ -47,7 +49,7 @@ bool wifi::commandhelper2::set_wifi_up_down(const std::string &device, bool up) 
 
 
 bool wifi::commandhelper2::set_wifi_monitor_mode(const std::string &device) {
-
+  get_logger()->debug("set_wifi_monitor_mode {} ",device);
   //The device must be down to change the mode
   if (!set_wifi_up_down(device, false)) {
     return false;
@@ -97,6 +99,7 @@ nla_put_failure:
 
 bool wifi::commandhelper2::set_wifi_frequency(const std::string& device,
                                              uint32_t freq_mhz) {
+  get_logger()->debug("set_wifi_frequency {} {}Mhz",device,freq_mhz);
   int err = 1;
   struct nl_cb *cb = nl_cb_alloc(NL_CB_DEFAULT);
   int rc;
@@ -133,7 +136,9 @@ nla_put_failure:
   return false;
 }
 
-bool wifi::commandhelper2::set_wifi_txpower(const std::string &device, uint32_t power_mbm){
+bool wifi::commandhelper2::set_wifi_txpower(const std::string &device, uint32_t power_milli_watt){
+  auto power_mbm=power_milli_watt;
+  get_logger()->debug("set_wifi_txpower {} {}milli dBm",device,power_milli_watt);
   // Create the socket and connect to it.
   struct nl_sock *sckt = nl_socket_alloc();
   genl_connect(sckt);
