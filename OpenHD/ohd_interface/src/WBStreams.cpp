@@ -114,7 +114,7 @@ void WBStreams::configure_cards() {
     m_console->debug("WBStreams::configure_cards() skipping");
     return;
   }
-  for(const auto& card: _broadcast_cards){
+  /*for(const auto& card: _broadcast_cards){
     WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
     WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
     WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
@@ -125,6 +125,13 @@ void WBStreams::configure_cards() {
     WifiCardCommandHelper::set_txpower2(card->_wifi_card,
                                         m_settings->get_settings().wb_tx_power_milli_watt);
     //WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
+  }*/
+  for(const auto& card: _broadcast_cards){
+    wifi::commandhelper2::set_wifi_up_down(card->_wifi_card.interface_name,false);
+    wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
+    wifi::commandhelper2::set_wifi_up_down(card->_wifi_card.interface_name, true);
+    wifi::commandhelper2::set_wifi_frequency(card->_wifi_card.interface_name,m_settings->get_settings().wb_frequency);
+    wifi::commandhelper2::set_wifi_txpower(card->_wifi_card.interface_name,m_settings->get_settings().wb_tx_power_milli_watt);
   }
   m_console->debug("WBStreams::configure_cards() end");
 }
