@@ -20,6 +20,7 @@ bool set_wifi_monitor_mode(const std::string &device);
 // set frequency and optionally also the channel width
 bool set_wifi_frequency(const std::string &device, uint32_t freq_mhz,std::optional<uint32_t> channel_width=std::nullopt);
 
+// TODO mW or dBm or milli dBm
 bool set_wifi_txpower(const std::string &device, uint32_t power_milli_watt);
 
 }
