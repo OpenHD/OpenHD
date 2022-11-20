@@ -73,7 +73,7 @@ void VEYEStream::setup() {
   //ss<<"| gst-launch-1.0 -v fdsrc ! ";
   ss<<"| gst-launch-1.0 fdsrc ! ";
   ss<<OHDGstHelper::createRtpForVideoCodec(setting.streamed_video_format.videoCodec);
-  ss<<OHDGstHelper::createOutputUdpLocalhost(_video_udp_port);
+  ss<<OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
   pipeline=ss.str();
   // NOTE: We do not execute the pipeline until start() is called
   m_console->debug("Veye Pipeline:["+pipeline+"]");

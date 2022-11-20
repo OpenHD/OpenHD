@@ -58,11 +58,11 @@ class CameraStream {
  public:
   std::shared_ptr<CameraHolder> _camera_holder;
  protected:
-  const PlatformType _platform_type;
+  const PlatformType m_platform_type;
   // This is the UDP port the video (for now rtp) stream is send to.
   // It then needs to be picked up, most likely by a wfb instance created by
   // ohd-interface
-  const uint16_t _video_udp_port;
+  const uint16_t m_video_udp_port;
 };
 
 #endif
