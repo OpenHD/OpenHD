@@ -130,7 +130,8 @@ void WBStreams::configure_cards() {
     wifi::commandhelper2::set_wifi_up_down(card->_wifi_card.interface_name,false);
     wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
     wifi::commandhelper2::set_wifi_up_down(card->_wifi_card.interface_name, true);
-    wifi::commandhelper2::set_wifi_frequency(card->_wifi_card.interface_name,m_settings->get_settings().wb_frequency);
+    wifi::commandhelper2::set_wifi_frequency(card->_wifi_card.interface_name,
+                                             m_settings->get_settings().wb_frequency,m_settings->get_settings().wb_channel_width);
     //wifi::commandhelper2::set_wifi_txpower(card->_wifi_card.interface_name,m_settings->get_settings().wb_tx_power_milli_watt);
     WifiCardCommandHelper::set_txpower2(card->_wifi_card,
                                         m_settings->get_settings().wb_tx_power_milli_watt);
