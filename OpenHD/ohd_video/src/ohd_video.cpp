@@ -8,7 +8,7 @@
 #include "veyestream.h"
 
 OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
-	platform(platform1) {
+	m_platform(platform1) {
   m_console = openhd::log::create_or_get("video");
   assert(m_console);
   assert(!cameras.empty());
@@ -48,7 +48,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
     case CameraType::RaspberryPiVEYE:{
       m_console->debug("VEYE stream for Camera index:{}",camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-      auto stream = std::make_shared<VEYEStream>(platform.platform_type, camera_holder, udp_port);
+      auto stream = std::make_shared<VEYEStream>(m_platform.platform_type, camera_holder, udp_port);
       stream->setup();
       stream->start();
       m_camera_streams.push_back(stream);
@@ -63,7 +63,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
     case CameraType::Dummy: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-      auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera_holder, udp_port);
+      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, udp_port);
       stream->setup();
       stream->start();
       m_camera_streams.push_back(stream);
@@ -72,7 +72,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
     case CameraType::Libcamera: {
       m_console->debug("LibCamera index:{}", camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-      auto stream = std::make_shared<GStreamerStream>(platform.platform_type, camera_holder, udp_port);
+      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, udp_port);
       stream->setup();
       stream->start();
       m_camera_streams.push_back(stream);
@@ -93,7 +93,7 @@ void OHDVideo::restartIfStopped() {
 std::vector<std::shared_ptr<openhd::ISettingsComponent>> OHDVideo::get_setting_components() {
   std::vector<std::shared_ptr<openhd::ISettingsComponent>> ret;
   for(auto& stream: m_camera_streams){
-    ret.push_back(stream->_camera_holder);
+    ret.push_back(stream->m_camera_holder);
   }
   return ret;
 }
