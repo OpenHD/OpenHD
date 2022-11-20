@@ -4,7 +4,7 @@
 #include <utility>
 
 CameraStream::CameraStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder, uint16_t video_udp_port) : m_platform_type(platform),
-    _camera_holder(std::move(camera_holder)),
+      m_camera_holder(std::move(camera_holder)),
       m_video_udp_port(video_udp_port) {
 
 }

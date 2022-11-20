@@ -56,7 +56,7 @@ class CameraStream {
    */
   virtual void restartIfStopped() = 0;
  public:
-  std::shared_ptr<CameraHolder> _camera_holder;
+  std::shared_ptr<CameraHolder> m_camera_holder;
  protected:
   const PlatformType m_platform_type;
   // This is the UDP port the video (for now rtp) stream is send to.

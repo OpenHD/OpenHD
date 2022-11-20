@@ -13,10 +13,10 @@ VEYEStream::VEYEStream(PlatformType platform, std::shared_ptr<CameraHolder> came
   m_console = openhd::log::create_or_get("v_veye");
   assert(m_console);
   m_console->debug("VEYEStream::VEYEStream()");
-  const auto& camera=_camera_holder->get_camera();
-  const auto& setting=_camera_holder->get_settings();
+  const auto& camera= m_camera_holder->get_camera();
+  const auto& setting= m_camera_holder->get_settings();
   assert(camera.type==CameraType::RaspberryPiVEYE);
-  _camera_holder->register_listener([this](){
+  m_camera_holder->register_listener([this](){
 	// right now, every time the settings for this camera change, we just re-start the whole stream.
 	// That is not ideal, since some cameras support changing for example the bitrate or white balance during operation.
 	// But wiring that up is not that easy.
@@ -39,7 +39,7 @@ void VEYEStream::setup() {
   _camera_holder->unsafe_get_settings().userSelectedVideoFormat.framerate=30;*/
 
   // create the pipeline
-  const auto& setting=_camera_holder->get_settings();
+  const auto& setting= m_camera_holder->get_settings();
   std::stringstream ss;
   // http://wiki.veye.cc/index.php/VEYE-MIPI-290/327_for_Raspberry_Pi
   // Not ideal, needs full path, but veye is hacky anyways
@@ -89,7 +89,7 @@ void VEYEStream::start() {
   // cleanup if existing
   openhd::veye::kill_all_running_veye_instances();
   // don't stream unless enabled
-  if(!_camera_holder->get_settings().enable_streaming){
+  if(!m_camera_holder->get_settings().enable_streaming){
 	m_console->debug("Streaming disabled");
 	return;
   }

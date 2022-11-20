@@ -18,14 +18,14 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   m_console->debug("GStreamerStream::GStreamerStream()");
   // Since the dummy camera is SW, we generally cannot do more than 640x480@30 anyways.
   // (640x48@30 might already be too much on embedded devices).
-  const auto& camera=_camera_holder->get_camera();
-  const auto& setting=_camera_holder->get_settings();
+  const auto& camera= m_camera_holder->get_camera();
+  const auto& setting= m_camera_holder->get_settings();
   if (camera.type == CameraType::Dummy && (setting.streamed_video_format.width > 640 ||
       setting.streamed_video_format.height > 480 || setting.streamed_video_format.framerate > 30)) {
     m_console->warn("Warning- Dummy camera is done in sw, high resolution/framerate might not work");
     m_console->warn("Configured dummy for:"+setting.streamed_video_format.toString());
   }
-  _camera_holder->register_listener([this](){
+  m_camera_holder->register_listener([this](){
     // right now, every time the settings for this camera change, we just re-start the whole stream.
     // That is not ideal, since some cameras support changing for example the bitrate or white balance during operation.
     // But wiring that up is not that easy.
@@ -41,8 +41,8 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
 
 void GStreamerStream::setup() {
   m_console->debug("GStreamerStream::setup() begin");
-  const auto& camera=_camera_holder->get_camera();
-  const auto& setting=_camera_holder->get_settings();
+  const auto& camera= m_camera_holder->get_camera();
+  const auto& setting= m_camera_holder->get_settings();
   if(!setting.enable_streaming){
     // When streaming is disabled, we just don't create the pipeline. We fully restart on all changes anyways.
     m_console->info("Streaming disabled");
@@ -139,7 +139,7 @@ void GStreamerStream::setup() {
 void GStreamerStream::setup_raspberrypi_csi() {
   m_console->debug("Setting up Raspberry Pi CSI camera");
   // similar to jetson, for now we assume there is only one CSI camera connected.
-  const auto& setting=_camera_holder->get_settings();
+  const auto& setting= m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createRpicamsrcStream(-1, setting);
 }
 
@@ -147,9 +147,9 @@ void GStreamerStream::setup_libcamera() {
   m_console->debug("Setting up Raspberry Pi libcamera camera");
   // similar to jetson, for now we assume there is only one CSI camera
   // connected.
-  const auto& setting = _camera_holder->get_settings();
+  const auto& setting = m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createLibcamerasrcStream(
-      _camera_holder->get_camera().name, setting);
+      m_camera_holder->get_camera().name, setting);
 }
 
 void GStreamerStream::setup_jetson_csi() {
@@ -158,19 +158,19 @@ void GStreamerStream::setup_jetson_csi() {
   // But still, /dev/video1 can be camera index 0 on jetson.
   // Therefore, for now, we just default to no camera index rn and let nvarguscamerasrc figure out the camera index.
   // This will work as long as there is no more than 1 CSI camera.
-  const auto& setting=_camera_holder->get_settings();
+  const auto& setting= m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createJetsonStream(-1,setting);
 }
 
 void GStreamerStream::setup_rockchip_hdmi() {
   m_console->debug("Setting up Rockchip HDMI");
-  const auto& setting=_camera_holder->get_settings();
+  const auto& setting= m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createRockchipHDMIStream(setting.air_recording==Recording::ENABLED, setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
 }
 
 void GStreamerStream::setup_usb_uvc() {
-  const auto& camera=_camera_holder->get_camera();
-  const auto& setting=_camera_holder->get_settings();
+  const auto& camera= m_camera_holder->get_camera();
+  const auto& setting= m_camera_holder->get_settings();
   m_console->debug("Setting up usb UVC camera Name:"+camera.name+" type:"+camera_type_to_string(camera.type));
   // First we try and start a hw encoded path, where v4l2src directly provides encoded video buffers
   for (const auto &endpoint: camera.endpoints) {
@@ -204,8 +204,8 @@ void GStreamerStream::setup_usb_uvc() {
 
 void GStreamerStream::setup_usb_uvch264() {
   m_console->debug("Setting up UVC H264 camera");
-  const auto& camera=_camera_holder->get_camera();
-  const auto& setting=_camera_holder->get_settings();
+  const auto& camera= m_camera_holder->get_camera();
+  const auto& setting= m_camera_holder->get_settings();
   const auto endpoint = camera.endpoints.front();
   // uvch265 cameras don't seem to exist, codec setting is ignored
   m_pipeline_content << OHDGstHelper::createUVCH264Stream(endpoint.device_node,
@@ -215,8 +215,8 @@ void GStreamerStream::setup_usb_uvch264() {
 
 void GStreamerStream::setup_ip_camera() {
   m_console->debug("Setting up IP camera");
-  const auto& camera=_camera_holder->get_camera();
-  const auto& setting=_camera_holder->get_settings();
+  const auto& camera= m_camera_holder->get_camera();
+  const auto& setting= m_camera_holder->get_settings();
   if (setting.ip_cam_url.empty()) {
     //setting.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
   }
@@ -225,8 +225,8 @@ void GStreamerStream::setup_ip_camera() {
 
 void GStreamerStream::setup_sw_dummy_camera() {
   m_console->debug("Setting up SW dummy camera");
-  const auto& camera=_camera_holder->get_camera();
-  const auto& setting=_camera_holder->get_settings();
+  const auto& camera= m_camera_holder->get_camera();
+  const auto& setting= m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createDummyStream(setting);
 }
 
@@ -236,16 +236,16 @@ std::string GStreamerStream::createDebug(){
     // We can just discard statistics data during a re-start
     return "GStreamerStream::No debug during restart\n";
   }
-  if(!_camera_holder->get_settings().enable_streaming){
+  if(!m_camera_holder->get_settings().enable_streaming){
     std::stringstream ss;
-    ss << "GStreamerStream for camera:"<<_camera_holder->get_camera().debugName()<<" disabled";
+    ss << "GStreamerStream for camera:"<< m_camera_holder->get_camera().debugName()<<" disabled";
     return ss.str();
   }
   std::stringstream ss;
   GstState state;
   GstState pending;
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
-  ss << "GStreamerStream for camera:"<<_camera_holder->get_camera().debugName()<<" State:"<< returnValue << "." << state << "." << pending << ".";
+  ss << "GStreamerStream for camera:"<< m_camera_holder->get_camera().debugName()<<" State:"<< returnValue << "." << state << "." << pending << ".";
   return ss.str();
 }
 
@@ -297,7 +297,7 @@ void GStreamerStream::restartIfStopped() {
   auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000); // timeout in ns
   if (returnValue == 0) {
     std::stringstream message;
-    message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<<_camera_holder->get_camera().name;
+    message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<< m_camera_holder->get_camera().name;
     m_console->debug(message.str());
     // We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
     // This will also show up in QOpenHD (log level >= warn), but we are limited by the n of characters in mavlink
