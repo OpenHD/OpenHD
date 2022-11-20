@@ -40,7 +40,7 @@ class OHDVideo {
    */
   std::vector<std::shared_ptr<openhd::ISettingsComponent>> get_setting_components();
  private:
-  const OHDPlatform platform;
+  const OHDPlatform m_platform;
   // All the created camera streams
   std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
   // Add a CameraStream for a discovered camera.

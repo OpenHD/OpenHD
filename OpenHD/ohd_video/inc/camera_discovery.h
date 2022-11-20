@@ -79,7 +79,7 @@ class DCameras {
 
   int m_discover_index = 0;
 
-  const OHDPlatform ohdPlatform;
+  const OHDPlatform m_platform;
   bool m_enable_debug;
 
  private:

@@ -125,10 +125,10 @@ void GStreamerStream::setup() {
   }
   m_console->debug("Starting pipeline:"+ m_pipeline_content.str());
   // Protect against unwanted use - stop and free the pipeline first
-  assert(gst_pipeline== nullptr);
+  assert(m_gst_pipeline == nullptr);
   // Now start the (as a string) built pipeline
   GError *error = nullptr;
-  gst_pipeline = gst_parse_launch(m_pipeline_content.str().c_str(), &error);
+  m_gst_pipeline = gst_parse_launch(m_pipeline_content.str().c_str(), &error);
   m_console->debug("GStreamerStream::setup() end");
   if (error) {
     m_console->error( "Failed to create pipeline: {}",error->message);
@@ -244,57 +244,57 @@ std::string GStreamerStream::createDebug(){
   std::stringstream ss;
   GstState state;
   GstState pending;
-  auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
+  auto returnValue = gst_element_get_state(m_gst_pipeline, &state, &pending, 1000000000);
   ss << "GStreamerStream for camera:"<< m_camera_holder->get_camera().debugName()<<" State:"<< returnValue << "." << state << "." << pending << ".";
   return ss.str();
 }
 
 void GStreamerStream::start() {
   m_console->debug("GStreamerStream::start()");
-  if(!gst_pipeline){
+  if(!m_gst_pipeline){
     m_console->warn("gst_pipeline==null");
     return;
   }
-  gst_element_set_state(gst_pipeline, GST_STATE_PLAYING);
+  gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
   GstState state;
   GstState pending;
-  auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000);
+  auto returnValue = gst_element_get_state(m_gst_pipeline, &state, &pending, 1000000000);
   m_console->debug("Gst state: {} {}.{}",returnValue,state,pending);
 }
 
 void GStreamerStream::stop() {
   m_console->debug("GStreamerStream::stop()");
-  if(!gst_pipeline){
+  if(!m_gst_pipeline){
     m_console->debug("gst_pipeline==null");
     return;
   }
-  gst_element_set_state(gst_pipeline, GST_STATE_PAUSED);
+  gst_element_set_state(m_gst_pipeline, GST_STATE_PAUSED);
 }
 
 void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() begin");
-  if(!gst_pipeline){
+  if(!m_gst_pipeline){
     m_console->debug("gst_pipeline==null");
     return;
   }
   // according to @Alex W we need a EOS signal here to properly shut down the pipeline
-  gst_element_send_event (gst_pipeline, gst_event_new_eos());
+  gst_element_send_event (m_gst_pipeline, gst_event_new_eos());
   // TODO wait for the eos event to travel down the pipeline,but do it in a safe manner to not block for infinity
-  gst_element_set_state (gst_pipeline, GST_STATE_NULL);
-  gst_object_unref (gst_pipeline);
-  gst_pipeline=nullptr;
+  gst_element_set_state (m_gst_pipeline, GST_STATE_NULL);
+  gst_object_unref (m_gst_pipeline);
+  m_gst_pipeline =nullptr;
   m_console->debug("GStreamerStream::cleanup_pipe() end");
 }
 
 void GStreamerStream::restartIfStopped() {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
-  if(!gst_pipeline){
+  if(!m_gst_pipeline){
     m_console->debug("gst_pipeline==null");
     return;
   }
   GstState state;
   GstState pending;
-  auto returnValue = gst_element_get_state(gst_pipeline, &state, &pending, 1000000000); // timeout in ns
+  auto returnValue = gst_element_get_state(m_gst_pipeline, &state, &pending, 1000000000); // timeout in ns
   if (returnValue == 0) {
     std::stringstream message;
     message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<< m_camera_holder->get_camera().name;

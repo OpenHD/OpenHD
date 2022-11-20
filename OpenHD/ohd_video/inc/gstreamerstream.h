@@ -43,7 +43,7 @@ class GStreamerStream : public CameraStream {
   // We cannot create the debug state while performing a restart
   std::mutex m_pipeline_mutex;
   // points to a running gst pipeline instance (unless in stopped & cleaned up state)
-  GstElement *gst_pipeline = nullptr;
+  GstElement *m_gst_pipeline = nullptr;
   // The pipeline that is started in the end
   std::stringstream m_pipeline_content;
   // To reduce the time on the param callback(s) - they need to return immediately to not block the param server
