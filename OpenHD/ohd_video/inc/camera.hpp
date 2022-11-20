@@ -66,6 +66,9 @@ struct Camera {
   [[nodiscard]] bool supports_rotation()const{
     return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
   }
+  [[nodiscard]] bool supports_hflip_vflip()const{
+    return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
+  }
   [[nodiscard]] bool supports_awb()const{
     return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
   }

@@ -97,12 +97,6 @@ class CameraHolder:
       // r.n we only write the sensor name for cameras detected via libcamera
       ret.push_back(openhd::Setting{"V_CAM_SENSOR",openhd::StringSetting{m_camera.sensor_name,c_read_only_param}});
     }
-    if(m_camera.supports_rotation()){
-      auto c_rotation=[this](std::string,int value) {
-        return set_camera_rotation(value);
-      };
-      ret.push_back(openhd::Setting{"V_CAM_ROT_DEG",openhd::IntSetting{get_settings().camera_rotation_degree,c_rotation}});
-    }
     if(m_camera.supports_awb()){
       auto cb=[this](std::string,int value) {
         return set_camera_awb(value);
@@ -115,18 +109,26 @@ class CameraHolder:
       };
       ret.push_back(openhd::Setting{"V_EXP_MODE",openhd::IntSetting{get_settings().exposure_mode,cb}});
     }
-    if(m_camera.type==CameraType::RaspberryPiCSI){
-      auto c_vertical_flip=[this](std::string,int value) {
-        return set_vertical_flip(value);
+    if(m_camera.supports_rotation()){
+      auto c_rotation=[this](std::string,int value) {
+        return set_camera_rotation(value);
       };
+      ret.push_back(openhd::Setting{"V_CAM_ROT_DEG",openhd::IntSetting{get_settings().camera_rotation_degree,c_rotation}});
+    }
+    if(m_camera.supports_hflip_vflip()){
       auto c_horizontal_flip=[this](std::string,int value) {
         return set_horizontal_flip(value);
       };
-      auto c_intra_refresh_type=[this](std::string,int value) {
-        return set_intra_refresh_type(value);
+      auto c_vertical_flip=[this](std::string,int value) {
+        return set_vertical_flip(value);
       };
       ret.push_back(openhd::Setting{"V_VERT_FLIP",openhd::IntSetting{get_settings().vertical_flip,c_vertical_flip}});
       ret.push_back(openhd::Setting{"V_HORIZ_FLIP",openhd::IntSetting{get_settings().horizontal_flip,c_horizontal_flip}});
+    }
+    if(m_camera.type==CameraType::RaspberryPiCSI){
+      auto c_intra_refresh_type=[this](std::string,int value) {
+        return set_intra_refresh_type(value);
+      };
       ret.push_back(openhd::Setting{"V_INTRA_REFRESH",openhd::IntSetting{get_settings().h26x_intra_refresh_type,c_intra_refresh_type}});
     }
     return ret;
