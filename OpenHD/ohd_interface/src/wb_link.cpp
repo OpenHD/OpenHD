@@ -194,8 +194,6 @@ std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int 
   const auto channel_width=static_cast<int>(m_settings->get_settings().wb_channel_width);
   RadiotapHeader::UserSelectableParams wifiParams{channel_width, false, 0, false, mcs_index};
   TOptions options{};
-  // We log them all manually together
-  options.enableLogAlive= false;
   options.radio_port = radio_port;
   const char *keypair_file = _profile.is_air ? KEYPAIR_FILE_DRONE : KEYPAIR_FILE_GROUND;
   if(OHDFilesystemUtil::exists(keypair_file)){
