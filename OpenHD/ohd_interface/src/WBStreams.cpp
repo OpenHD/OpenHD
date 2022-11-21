@@ -724,7 +724,7 @@ void WBStreams::loop_recalculate_stats() {
       m_stats_callback(final_stats);
     }
     if(_profile.is_air){
-      const auto n_buffered_packets_estimate=udpVideoTxList.at(0)->estimate_buffered_packets();
+      const auto n_buffered_packets_estimate=udpVideoTxList.at(0)->get_estimate_buffered_packets();
       m_console->debug("Video estimates {} buffered packets",n_buffered_packets_estimate);
     }
     std::this_thread::sleep_for(std::chrono::milliseconds (1000));
