@@ -3,20 +3,19 @@
 
 #include <array>
 #include <chrono>
+#include <optional>
 #include <utility>
 #include <vector>
-#include <utility>
-#include <optional>
-
-#include "OHDWifiCard.hpp"
-#include "openhd-profile.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-link-statistics.hpp"
-#include "openhd-spdlog.hpp"
-#include "WBStreamsSettings.hpp"
-#include "mavlink_settings/ISettingsComponent.hpp"
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
+#include "OHDWifiCard.hpp"
+#include "WBStreamsSettings.hpp"
+#include "mavlink_settings/ISettingsComponent.hpp"
+#include "openhd-link-statistics.hpp"
+#include "openhd-platform.hpp"
+#include "openhd-profile.hpp"
+#include "openhd-spdlog.hpp"
+#include "openhd-action-handler.hpp"
 
 /**
  * This class takes a list of discovered wifi cards (and their settings) and
@@ -29,7 +28,8 @@ class WBStreams {
    * @param broadcast_cards list of discovered wifi card(s) that support monitor mode & are injection capable. Needs to be at least
    * one card, and only one card on an air unit.
    */
-  explicit WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards);
+  explicit WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards,
+                     std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   WBStreams(const WBStreams&)=delete;
   WBStreams(const WBStreams&&)=delete;
   ~WBStreams();
@@ -116,6 +116,7 @@ class WBStreams {
   bool m_recalculate_stats_thread_run;
   std::unique_ptr<std::thread> m_recalculate_stats_thread;
   void loop_recalculate_stats();
+  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
 };
 
 #endif

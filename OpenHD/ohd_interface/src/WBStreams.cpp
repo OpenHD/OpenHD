@@ -14,8 +14,12 @@
 static const char *KEYPAIR_FILE_DRONE = "/usr/local/share/openhd/drone.key";
 static const char *KEYPAIR_FILE_GROUND = "/usr/local/share/openhd/gs.key";
 
-WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards1) :
-   _profile(std::move(profile)),_platform(platform),_broadcast_cards(std::move(broadcast_cards1)),m_disable_all_frequency_checks(OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS)) {
+WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards1,
+                     std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
+   _profile(std::move(profile)),_platform(platform),_broadcast_cards(std::move(broadcast_cards1)),
+   m_disable_all_frequency_checks(OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS)),
+   m_opt_action_handler(opt_action_handler)
+{
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
   m_console->debug("WBStreams::WBStreams: {}",_broadcast_cards.size());
@@ -717,6 +721,13 @@ void WBStreams::loop_recalculate_stats() {
     const auto final_stats=openhd::link_statistics::AllStats{stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx};
     if(m_stats_callback){
       m_stats_callback(final_stats);
+    }
+    if(_profile.is_air){
+      if(udpVideoTxList.at(0)->has_more_packets_buffered_than(100)){
+        if(m_opt_action_handler){
+          m_opt_action_handler->action_request_less_bitrate_hanlde(0);
+        }
+      }
     }
     std::this_thread::sleep_for(std::chrono::milliseconds (1000));
   }

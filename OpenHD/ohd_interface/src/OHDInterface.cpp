@@ -10,7 +10,7 @@
 #include <utility>
 #include "WBStreamsSettings.hpp"
 
-OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1) :
+OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
 platform(platform1),profile(std::move(profile1)) {
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);

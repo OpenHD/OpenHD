@@ -8,23 +8,24 @@
 #include <memory>
 #include <utility>
 
+#include "OHDInterfaceSettings.h"
 #include "USBTetherListener.h"
 #include "WBStreams.h"
 #include "WifiHotspot.h"
-#include "openhd-profile.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-led-codes.hpp"
 #include "mavlink_settings/ISettingsComponent.hpp"
-#include "OHDInterfaceSettings.h"
 #include "openhd-external-device.hpp"
+#include "openhd-led-codes.hpp"
+#include "openhd-platform.hpp"
+#include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
+#include "openhd-action-handler.hpp"
 
 class OHDInterface :public openhd::ISettingsComponent{
  public:
   /**
    * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
    */
-  explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1);
+  explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   OHDInterface(const OHDInterface&)=delete;
   OHDInterface(const OHDInterface&&)=delete;
   // register callback that is called in regular intervals with link statistics
