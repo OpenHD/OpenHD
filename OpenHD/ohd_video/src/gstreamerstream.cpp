@@ -350,23 +350,18 @@ void GStreamerStream::restart_async() {
 
 void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
-  const auto value=lb.recommended_encoder_bitrate_kbits;
-  const double change_perc=(100.0+value)/100.0;
-  m_console->debug("handle_change_bitrate_request value:{} (*{})",
-                   value,change_perc);
   const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
-  if(m_curr_dynamic_bitrate_kbits ==-1){
-    m_curr_dynamic_bitrate_kbits =max_bitrate_kbits;
+  auto recommended_encoder_bitrate_kbits=lb.recommended_encoder_bitrate_kbits;
+  // pi encoder cannot do less than 1MBit/s anyways
+  if(recommended_encoder_bitrate_kbits<=1000){
+    recommended_encoder_bitrate_kbits=1000;
   }
-  const auto new_bitrate_kbits=static_cast<int>(std::roundl(m_curr_dynamic_bitrate_kbits *change_perc));
-  m_console->debug("calculated:{} kBit/s max:{} kBit/s",new_bitrate_kbits,max_bitrate_kbits);
-  if(new_bitrate_kbits>1000 && new_bitrate_kbits<=max_bitrate_kbits){
-    if(try_dynamically_change_bitrate(new_bitrate_kbits)){
-      m_curr_dynamic_bitrate_kbits =new_bitrate_kbits;
-    }
-  }else{
-    m_console->debug("Cannot change bitrate, min/max reached");
+  // and the bitrate set by the user has become the max upper level
+  if(recommended_encoder_bitrate_kbits>max_bitrate_kbits){
+    recommended_encoder_bitrate_kbits=max_bitrate_kbits;
   }
+  m_console->debug("Changing bitrate to {} kBit/s",recommended_encoder_bitrate_kbits);
+  try_dynamically_change_bitrate(recommended_encoder_bitrate_kbits);
 }
 
 bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {

@@ -121,6 +121,7 @@ class WBLink {
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
  private:
   int64_t last_tx_error_count=-1;
+  int64_t last_recommended_bitrate=-1;
 };
 
 #endif

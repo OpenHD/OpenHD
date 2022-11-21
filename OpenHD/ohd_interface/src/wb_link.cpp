@@ -717,6 +717,19 @@ void WBLink::loop_recalculate_stats() {
       m_stats_callback(final_stats);
     }
     if(_profile.is_air){
+      // stupid encoder rate control
+      // First, calculate the theoretical values
+      const auto settings=m_settings->get_settings();
+      const uint32_t max_rate_possible_kbits=openhd::get_max_rate_kbits(settings.wb_mcs_index);
+      m_console->debug("mcs index:{}",settings.wb_mcs_index);
+      // we assume 70% of the theoretical link bandwidth is available for the primary video stream
+      const uint32_t max_video_allocated_kbits=max_rate_possible_kbits * 80 / 100;
+      // and deduce the FEC overhead
+      const uint32_t max_video_after_fec_kbits=max_video_allocated_kbits * 100/(100+settings.wb_video_fec_percentage);
+      m_console->debug("max_rate_possible_kbits:{} max_video_after_fec_kbits:{}",max_rate_possible_kbits,max_video_after_fec_kbits);
+
+      // then check if there are tx errors since the last time we checked (1 second intervals)
+      bool bitrate_is_still_too_high=false;
       UDPWBTransmitter* primary_video_tx=udpVideoTxList.at(0).get();
       const auto curr_count_tx_injections_error_hint=static_cast<int64_t>(primary_video_tx->get_count_tx_injections_error_hint());
       if(last_tx_error_count<0){
@@ -725,28 +738,42 @@ void WBLink::loop_recalculate_stats() {
         const auto delta=curr_count_tx_injections_error_hint-last_tx_error_count;
         last_tx_error_count=curr_count_tx_injections_error_hint;
         if(delta>10){
-
+          bitrate_is_still_too_high= true;
         }
       }
-      // stupid encoder rate control
-      const auto settings=m_settings->get_settings();
-      const uint32_t max_rate_possible_kbits=openhd::get_max_rate_kbits(settings.wb_mcs_index);
-      // we assume 80% of the link is for video
-      const uint32_t max_video_allocated_kbits=max_rate_possible_kbits * 80 / 100;
-      // and deduce the FEC overhead
-      const uint32_t max_video_after_fec_kbits=max_video_allocated_kbits * 100/(100+settings.wb_video_fec_percentage);
-      m_console->debug("max_rate_possible_kbits:{} max_video_after_fec_kbits:{}",max_rate_possible_kbits,max_video_after_fec_kbits);
-      //
-
+      // or the tx queue is running full
       const auto n_buffered_packets_estimate=udpVideoTxList.at(0)->get_estimate_buffered_packets();
       m_console->debug("Video estimates {} buffered packets",n_buffered_packets_estimate);
-      // For now, be really agressive when we need to reduce bitrate, and cautious when we think there is more headroom.
-      if(m_opt_action_handler){
-        if(n_buffered_packets_estimate>=50){
-          //m_opt_action_handler->action_request_bitrate_change_handle(-50);
-        }else if(n_buffered_packets_estimate<=1){
-          //m_opt_action_handler->action_request_bitrate_change_handle(10);
+      if(n_buffered_packets_estimate>50){
+        bitrate_is_still_too_high= true;
+      }
+      // initialize with the theoretical default, since we do not know what the camera is doing, even though it probably is "too high".
+      if(last_recommended_bitrate<=0){
+        last_recommended_bitrate=max_video_after_fec_kbits;
+      }
+      if(bitrate_is_still_too_high){
+        m_console->warn("Bitrate probably too high");
+        // reduce bitrate slightly
+        last_recommended_bitrate=last_recommended_bitrate* 80 / 100;
+      }else{
+        if(last_recommended_bitrate<max_video_after_fec_kbits){
+          // otherwise, slowly increase bitrate
+          last_recommended_bitrate= last_recommended_bitrate* 120 / 100;
         }
+      }
+      // 1Mbit/s as lower limit
+      if(last_recommended_bitrate<1000){
+        last_recommended_bitrate=1000;
+      }
+      // theoreical max as upper limit
+      if(last_recommended_bitrate>max_video_after_fec_kbits){
+        last_recommended_bitrate=max_video_after_fec_kbits;
+      }
+      if(m_opt_action_handler){
+        openhd::ActionHandler::LinkBitrateInformation lb{};
+        lb.theoretical_max_link_bandwidth_kbits=max_video_after_fec_kbits;
+        lb.recommended_encoder_bitrate_kbits=last_recommended_bitrate;
+        m_opt_action_handler->action_request_bitrate_change_handle(lb);
       }
     }
     std::this_thread::sleep_for(std::chrono::milliseconds (1000));
