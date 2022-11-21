@@ -29,7 +29,8 @@ class WBLink {
   /**
    * @param broadcast_cards list of discovered wifi card(s) that support monitor mode & are injection capable. Needs to be at least
    * one card, and only one card on an air unit.
-   * @param opt_action_handler global openhd action handler, optional (can be nullptr)
+   * @param opt_action_handler global openhd action handler, optional (can be nullptr during testing of specific modules instead
+   * of testing a complete running openhd instance)
    */
   explicit WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards,
                      std::shared_ptr<openhd::ActionHandler> opt_action_handler);
@@ -73,11 +74,6 @@ class WBLink {
   bool validate_cards_support_setting_mcs_index();
   // Check if all cards support changing the channel width
   bool validate_cards_support_setting_channel_width();
- private:
-  const OHDProfile _profile;
-  const OHDPlatform _platform;
-  std::vector<std::shared_ptr<WifiCardHolder>> _broadcast_cards;
- private:
   // This needs some proper investigation !
   // In short: Make sure no OS service(s) that could interfere with monitor mode run on the cards used for wifibroadcast
   void takeover_cards();
@@ -101,6 +97,7 @@ class WBLink {
   [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,std::optional<int> udp_recv_buff_size=std::nullopt)const;
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port);
   [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
+ private:
   // Set by the openhd telemetry module to get WB statistics in regular intervals
   openhd::link_statistics::STATS_CALLBACK m_stats_callback =nullptr;
   std::mutex m_restart_async_lock;
@@ -115,6 +112,9 @@ class WBLink {
   const bool m_disable_all_frequency_checks;
   int m_curr_video_codec=0;
  private:
+  const OHDProfile _profile;
+  const OHDPlatform _platform;
+  std::vector<std::shared_ptr<WifiCardHolder>> _broadcast_cards;
   bool m_recalculate_stats_thread_run;
   std::unique_ptr<std::thread> m_recalculate_stats_thread;
   void loop_recalculate_stats();
