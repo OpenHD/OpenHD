@@ -21,7 +21,7 @@
 class OHDVideo {
  public:
   /**
-   * Creates a video stream for each of the dsicovered cameras given in @param cameras
+   * Creates a video stream for each of the discovered cameras given in @param cameras
    * @param opt_action_handler openhd global handler for communication between different ohd modules.
    */
   OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler);
