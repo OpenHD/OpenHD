@@ -342,29 +342,33 @@ void GStreamerStream::restart_async() {
 }
 
 void GStreamerStream::handle_change_bitrate_request(int value) {
-  m_console->debug("handle_change_bitrate_request {}",value);
   const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
-  m_console->debug("Curr bitrate:{}",max_bitrate_kbits);
+  m_console->debug("handle_change_bitrate_request max:{} request:{}",max_bitrate_kbits,value);
   if(value<0){
     const auto change_perc=(-value)/100;
     const auto new_bitrate_kbits=max_bitrate_kbits*change_perc;
     m_console->debug("new bitrate requested: {} kBit/s",new_bitrate_kbits);
-
+    try_dynamically_change_bitrate(new_bitrate_kbits);
   }else if(value>0){
     const auto change_perc=value/100;
     const auto new_bitrate_kbits=max_bitrate_kbits*change_perc;
     m_console->debug("new bitrate requested: {} kBit/s",new_bitrate_kbits);
+    try_dynamically_change_bitrate(new_bitrate_kbits);
   }
 }
 
 void GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   if(m_bitrate_ctrl_element!= nullptr){
-    g_object_set(m_bitrate_ctrl_element, "bitrate", bitrate_kbits, NULL);
-    gint actual;
-    g_object_get(m_bitrate_ctrl_element,"bitrate",&actual,NULL);
-    m_console->debug("try_dynamically_change_bitrate wanted:{} set:{}",bitrate_kbits,actual);
-  }else{
-    m_console->warn("try_dynamically_change_bitrate wanted:{} but no control element");
+    if(m_camera_holder->get_camera().type==CameraType::RaspberryPiCSI){
+      //rpicamsrc takes bit/s instead of kbit/s
+      const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrate_kbits);
+      g_object_set(m_bitrate_ctrl_element, "bitrate", bitrateBitsPerSecond, NULL);
+      gint actual;
+      g_object_get(m_bitrate_ctrl_element,"bitrate",&actual,NULL);
+      m_console->debug("try_dynamically_change_bitrate wanted:{} set:{}",bitrateBitsPerSecond,actual);
+      return;
+    }
   }
+  m_console->warn("try_dynamically_change_bitrate wanted: {} kBit/s but no control element",bitrate_kbits);
 }
