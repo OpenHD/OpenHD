@@ -138,7 +138,13 @@ void GStreamerStream::setup() {
   }
   if(camera.type==CameraType::RaspberryPiCSI){
     m_bitrate_ctrl_element= gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "rpicamsrc");
-    m_console->debug("Has element: {}",(m_bitrate_ctrl_element!=nullptr) ? "yes":"no");
+    m_console->debug("Has bitrate control element: {}",(m_bitrate_ctrl_element!=nullptr) ? "yes":"no");
+    m_bitrate_ctrl_element_takes_kbit=false;
+  }else if(camera.type==CameraType::Dummy){
+    m_bitrate_ctrl_element= gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "swencoder");
+    m_console->debug("Has bitrate control element: {}",(m_bitrate_ctrl_element!=nullptr) ? "yes":"no");
+    // sw encoder(s) take kbit/s
+    m_bitrate_ctrl_element_takes_kbit= true;
   }
 }
 
@@ -343,10 +349,10 @@ void GStreamerStream::restart_async() {
 }
 
 void GStreamerStream::handle_change_bitrate_request(int value) {
+  std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   const double change_perc=(100.0+value)/100.0;
   m_console->debug("handle_change_bitrate_request value:{} (*{})",
                    value,change_perc);
-  std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
   if(m_curr_dynamic_bitrate==-1){
     m_curr_dynamic_bitrate=max_bitrate_kbits;
@@ -364,13 +370,21 @@ void GStreamerStream::handle_change_bitrate_request(int value) {
 
 bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
   if(m_bitrate_ctrl_element!= nullptr){
-    if(m_camera_holder->get_camera().type==CameraType::RaspberryPiCSI){
-      //rpicamsrc takes bit/s instead of kbit/s
+    if( m_bitrate_ctrl_element_takes_kbit){
+      //rpicamsrc for example takes bit/s instead of kbit/s
       const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrate_kbits);
       g_object_set(m_bitrate_ctrl_element, "bitrate", bitrateBitsPerSecond, NULL);
       gint actual;
       g_object_get(m_bitrate_ctrl_element,"bitrate",&actual,NULL);
-      m_console->debug("try_dynamically_change_bitrate wanted:{} set:{}",bitrateBitsPerSecond,actual);
+      m_console->debug("try_dynamically_change_bitrate wanted:{}kBit/s set:{}kBit/s",
+                       bits_per_second_to_kbits_per_second(bitrateBitsPerSecond),
+                       bits_per_second_to_kbits_per_second(actual));
+      return true;
+    }else{
+      g_object_set(m_bitrate_ctrl_element, "bitrate", bitrate_kbits, NULL);
+      gint actual;
+      g_object_get(m_bitrate_ctrl_element,"bitrate",&actual,NULL);
+      m_console->debug("try_dynamically_change_bitrate wanted:{}kBit/s set:{}kBit/s",bitrate_kbits,actual);
       return true;
     }
   }

@@ -45,8 +45,11 @@ class GStreamerStream : public CameraStream {
   std::mutex m_pipeline_mutex;
   // points to a running gst pipeline instance (unless in stopped & cleaned up state)
   GstElement *m_gst_pipeline = nullptr;
-  // not supported by all camera(s)
+  // not supported by all camera(s). The element in the pipeline that has a bitrate property
+  // for dynamically changing the bitrate
   GstElement *m_bitrate_ctrl_element= nullptr;
+  // some encoders take the bitrate as kBit/s, some take it as bits per second
+  bool m_bitrate_ctrl_element_takes_kbit=false;
   // The pipeline that is started in the end
   std::stringstream m_pipeline_content;
   // To reduce the time on the param callback(s) - they need to return immediately to not block the param server
