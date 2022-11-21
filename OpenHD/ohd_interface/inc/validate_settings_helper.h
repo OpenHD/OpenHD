@@ -255,6 +255,27 @@ static uint32_t milli_watt_to_milli_dbm(uint32_t milli_watt){
   return 0;
 }*/
 
+// TODO improve me - R.n complete bollocks
+static uint32_t get_max_rate_kbits(uint32_t mcs_index){
+  switch (mcs_index) {
+    case 1:
+      return 5500;
+    case 2:
+      return 11000;
+    case 3:
+      return 12000;
+    case 4:
+      return 19500;
+    case 5:
+      return 24000;
+    case 6:
+      return 36000;
+    default:
+      break;
+  }
+  return 5500;
+}
+
 
 
 }

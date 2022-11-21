@@ -717,14 +717,20 @@ void WBLink::loop_recalculate_stats() {
       m_stats_callback(final_stats);
     }
     if(_profile.is_air){
+      // stupid encoder rate control
+      const auto settings=m_settings->get_settings();
+      uint32_t max_rate_possible_kbits=openhd::get_max_rate_kbits(settings.wb_mcs_index);
+      // we assume 80% of the link is for video
+      max_rate_possible_kbits=max_rate_possible_kbits * 80 / 100;
+      //
       const auto n_buffered_packets_estimate=udpVideoTxList.at(0)->get_estimate_buffered_packets();
       m_console->debug("Video estimates {} buffered packets",n_buffered_packets_estimate);
       // For now, be really agressive when we need to reduce bitrate, and cautious when we think there is more headroom.
       if(m_opt_action_handler){
         if(n_buffered_packets_estimate>=50){
-          m_opt_action_handler->action_request_bitrate_change_handle(-50);
+          //m_opt_action_handler->action_request_bitrate_change_handle(-50);
         }else if(n_buffered_packets_estimate<=1){
-          m_opt_action_handler->action_request_bitrate_change_handle(10);
+          //m_opt_action_handler->action_request_bitrate_change_handle(10);
         }
       }
     }
