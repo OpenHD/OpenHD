@@ -38,7 +38,8 @@ class MEndpoint {
    * @param mavlink_channel the mavlink channel to use for parsing.
    */
   explicit MEndpoint(std::string tag) : TAG(std::move(tag)),m_mavlink_channel(checkoutFreeChannel()) {
-        openhd::log::get_default()->debug(TAG+" using channel:{}",m_mavlink_channel);
+    //m_console=openhd::log::create_or_get(tag);
+    openhd::log::get_default()->debug(TAG+" using channel:{}",m_mavlink_channel);
   };
   /**
    * send a message via this endpoint.
@@ -167,6 +168,8 @@ class MEndpoint {
     const int num= rand()%(max-min+1)+min;
     return num;
   }
+ protected:
+  //std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif //XMAVLINKSERVICE_MENDPOINT_H
