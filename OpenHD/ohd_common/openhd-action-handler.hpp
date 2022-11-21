@@ -46,6 +46,10 @@ class ActionHandler{
       m_action_set_video_codec(value);
     }
   }
+  struct LinkBitrateInformation{
+    uint32_t theoretical_max_link_bandwidth;
+    uint32_t recommended_encoder_bitrate;
+  };
   // Bitrate change: A negative value means the link cannot keep up with the data produced,
   // and the camera should decrease its bitrate by that much percent
   // A positive value means the link thinks there is some headroom for more data, and the camera can
