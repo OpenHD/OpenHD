@@ -8,6 +8,7 @@
 #include "../src/endpoints/UDPEndpoint.h"
 #include "../src/mav_helper.h"
 #include "../src/mav_include.h"
+#include "openhd-util.hpp"
 
 // test if the connection to QOpenHD / QGroundControll can be sucesfully established.
 // Run this application on the same system QOpenHD is running on, and
@@ -23,7 +24,7 @@ int main() {
   // now mavlink messages should come in. Try disconnecting and reconnecting, and see if messages continue
   const auto start = std::chrono::steady_clock::now();
   while ((std::chrono::steady_clock::now() - start) < std::chrono::minutes(5)) {
-	udpEndpoint.debugIfAlive();
+        openhd::log::get_default()->debug("Alive:{}",OHDUtil::yes_or_no(udpEndpoint.isAlive()));
 	auto heartbeat = MExampleMessage::heartbeat();
 	udpEndpoint.sendMessage(heartbeat);
 	auto position = MExampleMessage::position();
