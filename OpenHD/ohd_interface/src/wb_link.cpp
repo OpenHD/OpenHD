@@ -737,7 +737,7 @@ void WBLink::loop_recalculate_stats() {
       }else{
         const auto delta=curr_count_tx_injections_error_hint-last_tx_error_count;
         last_tx_error_count=curr_count_tx_injections_error_hint;
-        if(delta>10){
+        if(delta>=1){
           bitrate_is_still_too_high= true;
         }
       }
