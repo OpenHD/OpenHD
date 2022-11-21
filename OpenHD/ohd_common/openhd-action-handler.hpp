@@ -46,14 +46,18 @@ class ActionHandler{
       m_action_set_video_codec(value);
     }
   }
-  void action_request_less_bitrate_register(std::function<void(int value)> action_request_less_bitrate){
+  // Bitrate change: A negative value means the link cannot keep up with the data produced,
+  // and the camera should decrease its bitrate by that much percent
+  // A positive value means the link thinks there is some headroom for more data, and the camera can
+  // go up to the bitrate set by the user.
+  void action_request_bitrate_change_register(std::function<void(int value)> action_request_bitrate_change){
     std::lock_guard<std::mutex> lock(_mutex);
-    m_action_request_less_bitrate=std::move(action_request_less_bitrate);
+    m_action_request_bitrate_change =std::move(action_request_bitrate_change);
   }
-  void action_request_less_bitrate_hanlde(int value){
+  void action_request_bitrate_change_handlde(int value){
     std::lock_guard<std::mutex> lock(_mutex);
-    if(m_action_request_less_bitrate){
-      m_action_request_less_bitrate(value);
+    if(m_action_request_bitrate_change){
+      m_action_request_bitrate_change(value);
     }
   }
  private:
@@ -61,7 +65,7 @@ class ActionHandler{
   std::function<void()> _action_restart_wb_streams=nullptr;
   std::function<void(int value)> m_action_set_video_codec=nullptr;
   //
-  std::function<void(int value)> m_action_request_less_bitrate=nullptr;
+  std::function<void(int value)> m_action_request_bitrate_change =nullptr;
 };
 
 }

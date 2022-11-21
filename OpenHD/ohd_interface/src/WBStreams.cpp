@@ -726,6 +726,14 @@ void WBStreams::loop_recalculate_stats() {
     if(_profile.is_air){
       const auto n_buffered_packets_estimate=udpVideoTxList.at(0)->get_estimate_buffered_packets();
       m_console->debug("Video estimates {} buffered packets",n_buffered_packets_estimate);
+      // For now, be really agressive when we need to reduce bitrate, and cautious when we think there is more headroom.
+      if(m_opt_action_handler){
+        if(n_buffered_packets_estimate>=50){
+          m_opt_action_handler->action_request_bitrate_change_handlde(-50);
+        }else if(n_buffered_packets_estimate<=1){
+          m_opt_action_handler->action_request_bitrate_change_handlde(10);
+        }
+      }
     }
     std::this_thread::sleep_for(std::chrono::milliseconds (1000));
   }
