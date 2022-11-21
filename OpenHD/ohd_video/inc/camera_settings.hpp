@@ -33,7 +33,7 @@ static int mbits_to_kbits_per_second(int mbits_per_second){
   return mbits_per_second*1000;
 }
 static int bits_per_second_to_kbits_per_second(int bits_per_second){
-  return bits_per_second/1000:
+  return bits_per_second/1000;
 }
 // Return true if the bitrate is considered sane, false otherwise
 static bool check_bitrate_sane(const int bitrateKBits) {
