@@ -13,15 +13,16 @@
 #include "openhd-spdlog.hpp"
 
 /**
- * Main entry point for OpenHD video streaming.
- * NOTE: This module only needs to be run on air pi, so to say it is a "Video
- * stream camera wrapper".
- * See the Readme.md for more information.
+ * Main entry point for OpenHD video streaming for discovered cameras.
+ * NOTE: Camera(s) and camera settings are local on the air unit, the ground unit does not need to know anything about that -
+ * it just "stupidly" forwards received video data. Therefore, we only create an instance of this class on the air unit.
+ * See the Readme.md and camerastream.h for more information.
  */
 class OHDVideo {
  public:
   /**
-   * Creates a video stream for each of the discovered cameras given in @param cameras
+   * Creates a video stream for each of the discovered cameras given in @param cameras. You have to provide at least one camera -
+   * if there is no camera found, use a dummy camera.
    * @param opt_action_handler openhd global handler for communication between different ohd modules.
    */
   OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler);
