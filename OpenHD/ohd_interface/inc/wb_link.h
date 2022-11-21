@@ -48,12 +48,15 @@ class WBLink {
   // Returns true if this WBStream has ever received any data. If no data has been ever received after X seconds,
   // there most likely was an unsuccessful frequency change.
   [[nodiscard]] bool ever_received_any_data();
-  // Some settings need a full restart of the tx / rx instances to apply
-  void restart();
+  // returns all mavlink settings, values might change depending on the used hardware
+  std::vector<openhd::Setting> get_all_settings();
   // schedule an asynchronous restart. if there is already a restart scheduled, return immediately
   void restart_async(std::chrono::milliseconds delay=std::chrono::milliseconds(0));
   // needs to be set for FEC auto to work
   void set_video_codec(int codec);
+ private:
+  // Some settings need a full restart of the tx / rx instances to apply
+  void restart();
   // set the frequency (wifi channel) of all wifibroadcast cards
   bool set_frequency(int frequency);
   // set the tx power of all wifibroadcast cards
@@ -66,10 +69,6 @@ class WBLink {
   // set the channel width
   // TODO doesn't work yet, aparently we need more than only the pcap header.
   bool set_channel_width(int channel_width);
-  // settings hacky begin
-  std::vector<openhd::Setting> get_all_settings();
-  //void process_new_setting(openhd::Setting changed_setting);
-  // settings hacky end
   // Check if all cards support changing the mcs index
   bool validate_cards_support_setting_mcs_index();
   // Check if all cards support changing the channel width
