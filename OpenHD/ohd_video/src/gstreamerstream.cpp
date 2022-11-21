@@ -346,11 +346,7 @@ void GStreamerStream::handle_change_bitrate_request(int value) {
   const double change_perc=(100.0+value)/100.0;
   m_console->debug("handle_change_bitrate_request value:{} (*{})",
                    value,change_perc);
-  std::unique_lock<std::mutex> lock(m_pipeline_mutex, std::try_to_lock);
-  if(!lock.owns_lock()){
-    m_console->debug("cannot change bitrate during startup");
-    return;
-  }
+  std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
   if(m_curr_dynamic_bitrate==-1){
     m_curr_dynamic_bitrate=max_bitrate_kbits;

@@ -55,6 +55,9 @@ class GStreamerStream : public CameraStream {
   std::unique_ptr<std::thread> m_async_thread =nullptr;
   std::shared_ptr<spdlog::logger> m_console;
  private:
+  // Change the bitrate without re-starting the whole pipeline if supported by the camera.
+  // This is needed for variable rf link bitrate(s)
+  // returns true on success, false otherwise
   bool try_dynamically_change_bitrate(uint32_t bitrate_kbits);
   uint32_t m_curr_dynamic_bitrate=-1;
 };
