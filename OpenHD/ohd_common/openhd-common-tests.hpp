@@ -8,7 +8,7 @@
 //#include "openhd-camera.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
-#include "OHDWifiCard.hpp"
+#include "wifi_card.hpp"
 
 /**
  * Tests for the ohd_common directory.

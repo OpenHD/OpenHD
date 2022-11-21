@@ -5,8 +5,8 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WBSTREAMSSETTINGS_HPP_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WBSTREAMSSETTINGS_HPP_
 
-#include "OHDWifiCard.hpp"
 #include "openhd-settings2.hpp"
+#include "wifi_card.hpp"
 
 namespace openhd{
 

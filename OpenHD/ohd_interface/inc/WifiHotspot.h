@@ -5,9 +5,10 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_
 #define OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_
 
-#include <vector>
 #include <string>
-#include "OHDWifiCard.hpp"
+#include <vector>
+
+#include "wifi_card.hpp"
 
 /**
  * Wifi hotspot refers to creating a WiFi Access point on the device we are running on.

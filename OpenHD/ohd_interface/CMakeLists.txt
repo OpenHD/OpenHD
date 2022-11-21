@@ -10,10 +10,10 @@ add_library(OHDInterfaceLib STATIC) # initialized below
 add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 
 set(sources
-    "inc/DWifiCards.h"
-    "inc/OHDInterface.h"
+    "inc/wifi_card_discovery.h"
+    "inc/ohd_interface.h"
     "inc/OHDInterfaceSettings.h"
-    "inc/OHDWifiCard.hpp"
+    "inc/wifi_card.hpp"
     "inc/USBTetherListener.h"
     "inc/validate_settings_helper.h"
     "inc/WBStreams.h"
@@ -21,8 +21,8 @@ set(sources
     "inc/WifiHotspot.h"
     #"inc/wifi_command_helper2.h"
 
-    "src/DWifiCards.cpp"
-    "src/OHDInterface.cpp"
+    "src/wifi_card_discovery.cpp"
+    "src/ohd_interface.cpp"
     "src/USBTetherListener.cpp"
     "src/WBStreams.cpp"
     "src/WifiCardCommandHelper.hpp"

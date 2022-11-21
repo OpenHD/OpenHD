@@ -2,14 +2,14 @@
 #include "WifiCardCommandHelper.hpp"
 //#include "wifi_command_helper2.h"
 
+#include <iostream>
+#include <utility>
+
+#include "openhd-global-constants.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
-#include "OHDWifiCard.hpp"
-#include "openhd-global-constants.hpp"
-
-#include <iostream>
-#include <utility>
+#include "wifi_card.hpp"
 
 static const char *KEYPAIR_FILE_DRONE = "/usr/local/share/openhd/drone.key";
 static const char *KEYPAIR_FILE_GROUND = "/usr/local/share/openhd/gs.key";

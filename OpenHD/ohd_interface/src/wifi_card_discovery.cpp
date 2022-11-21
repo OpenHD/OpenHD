@@ -1,13 +1,11 @@
-#include "DWifiCards.h"
-
-#include "OHDWifiCard.hpp"
-#include "openhd-util.hpp"
-#include "openhd-util-filesystem.hpp"
-
-#include <regex>
 #include <iostream>
+#include <regex>
 
 #include "openhd-spdlog.hpp"
+#include "openhd-util-filesystem.hpp"
+#include "openhd-util.hpp"
+#include "wifi_card.hpp"
+#include "wifi_card_discovery.h"
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {

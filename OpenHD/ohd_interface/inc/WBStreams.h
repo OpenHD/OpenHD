@@ -8,14 +8,14 @@
 #include <vector>
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
-#include "OHDWifiCard.hpp"
 #include "WBStreamsSettings.hpp"
 #include "mavlink_settings/ISettingsComponent.hpp"
+#include "openhd-action-handler.hpp"
 #include "openhd-link-statistics.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
-#include "openhd-action-handler.hpp"
+#include "wifi_card.hpp"
 
 /**
  * This class takes a list of discovered wifi cards (and their settings) and

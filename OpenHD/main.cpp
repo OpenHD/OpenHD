@@ -2,9 +2,9 @@
 // Created by consti10 on 02.05.22.
 //
 
-#include <OHDInterface.h>
 #include <OHDTelemetry.h>
 #include <camera_discovery.h>
+#include <ohd_interface.h>
 #include <ohd_video.h>
 
 #include <iostream>
