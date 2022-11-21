@@ -347,7 +347,7 @@ void GStreamerStream::handle_change_bitrate_request(int value) {
   const double change_perc=(100.0+value)/100.0;
   const auto last_dynamic_bitrate=m_curr_dynamic_bitrate>0 ? m_curr_dynamic_bitrate : max_bitrate_kbits;
   const auto new_bitrate_kbits=static_cast<int>(std::roundl(last_dynamic_bitrate*change_perc));
-  m_console->debug("handle_change_bitrate_request value:{}% last:{} new:{}",value,last_dynamic_bitrate,new_bitrate_kbits);
+  m_console->debug("handle_change_bitrate_request value:{} ({}%) last:{} new:{}",value,change_perc,last_dynamic_bitrate,new_bitrate_kbits);
   if(new_bitrate_kbits>1000 && new_bitrate_kbits<=max_bitrate_kbits){
     if(try_dynamically_change_bitrate(new_bitrate_kbits)){
       m_curr_dynamic_bitrate=new_bitrate_kbits;
