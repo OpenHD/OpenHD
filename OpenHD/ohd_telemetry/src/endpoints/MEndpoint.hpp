@@ -38,7 +38,6 @@ class MEndpoint {
    * @param mavlink_channel the mavlink channel to use for parsing.
    */
   explicit MEndpoint(std::string tag) : TAG(std::move(tag)),m_mavlink_channel(checkoutFreeChannel()) {
-    //m_console=openhd::log::create_or_get(tag);
     openhd::log::get_default()->debug(TAG+" using channel:{}",m_mavlink_channel);
   };
   /**
@@ -84,14 +83,6 @@ class MEndpoint {
    */
   [[nodiscard]] bool isAlive()const {
 	return (std::chrono::steady_clock::now() - lastMessage) < std::chrono::seconds(5);
-  }
-  /**
-   * For debugging, print if this endpoint is alive (an endpoint is alive if it has received mavlink messages in the last X seconds).
-   */
-  void debugIfAlive()const {
-	std::stringstream ss;
-	ss << TAG << " alive:" << (isAlive() ? "Y" : "N");
-        openhd::log::get_default()->debug(ss.str());
   }
   [[nodiscard]] std::string createInfo()const{
 	std::stringstream ss;
@@ -168,8 +159,6 @@ class MEndpoint {
     const int num= rand()%(max-min+1)+min;
     return num;
   }
- protected:
-  //std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif //XMAVLINKSERVICE_MENDPOINT_H
