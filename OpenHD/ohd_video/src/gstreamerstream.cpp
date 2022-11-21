@@ -343,18 +343,11 @@ void GStreamerStream::restart_async() {
 
 void GStreamerStream::handle_change_bitrate_request(int value) {
   const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
-  m_console->debug("handle_change_bitrate_request max:{} request:{}",max_bitrate_kbits,value);
-  if(value<0){
-    const auto change_perc=(-value)/100;
-    const auto new_bitrate_kbits=max_bitrate_kbits*change_perc;
-    m_console->debug("new bitrate requested: {} kBit/s",new_bitrate_kbits);
-    try_dynamically_change_bitrate(new_bitrate_kbits);
-  }else if(value>0){
-    const auto change_perc=value/100;
-    const auto new_bitrate_kbits=max_bitrate_kbits*change_perc;
-    m_console->debug("new bitrate requested: {} kBit/s",new_bitrate_kbits);
-    try_dynamically_change_bitrate(new_bitrate_kbits);
-  }
+  m_console->debug("handle_change_bitrate_request curr:{} request:{}",max_bitrate_kbits,value);
+  const double change_perc=(100.0+value)/100.0;
+  const auto new_bitrate_kbits=static_cast<int>(std::roundl(max_bitrate_kbits*change_perc));
+  m_console->debug("new bitrate requested: {} kBit/s",new_bitrate_kbits);
+  try_dynamically_change_bitrate(new_bitrate_kbits);
 }
 
 void GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
