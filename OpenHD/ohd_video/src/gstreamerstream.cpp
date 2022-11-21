@@ -336,3 +336,6 @@ void GStreamerStream::restart_async() {
   m_async_thread =std::make_unique<std::thread>(&GStreamerStream::restart_after_new_setting,this);
 }
 
+void GStreamerStream::handle_change_bitrate_request(int value) {
+
+}

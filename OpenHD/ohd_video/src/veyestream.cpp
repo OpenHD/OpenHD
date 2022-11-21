@@ -114,3 +114,7 @@ void VEYEStream::restart_async() {
   start();
   m_console->debug("VEYEStream::restart_async() end");
 }
+
+void VEYEStream::handle_change_bitrate_request(int value) {
+
+}
