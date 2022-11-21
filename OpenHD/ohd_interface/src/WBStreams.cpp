@@ -199,8 +199,8 @@ std::unique_ptr<UDPWBTransmitter> WBStreams::createUdpWbTx(uint8_t radio_port, i
   options.radio_port = radio_port;
   const char *keypair_file = _profile.is_air ? KEYPAIR_FILE_DRONE : KEYPAIR_FILE_GROUND;
   if(OHDFilesystemUtil::exists(keypair_file)){
-    options.keypair = std::optional<std::string>(keypair_file);
-    std::cout << "Found key file: "<<options.keypair->c_str()<<"\n";
+    options.keypair = std::string(keypair_file);
+    m_console->debug("Using key from file {}",options.keypair->c_str());
   }else{
     options.keypair = std::nullopt;
   }
@@ -236,8 +236,8 @@ std::unique_ptr<UDPWBReceiver> WBStreams::createUdpWbRx(uint8_t radio_port, int 
   options.radio_port = radio_port;
   const char *keypair_file = _profile.is_air ? KEYPAIR_FILE_DRONE : KEYPAIR_FILE_GROUND;
   if(OHDFilesystemUtil::exists(keypair_file)){
-    options.keypair = std::optional<std::string>(keypair_file);
-    std::cout << "Found key file: "<<options.keypair->c_str()<<"\n";
+    options.keypair = std::string(keypair_file);
+    m_console->debug("Using key from file {}",options.keypair->c_str());
   }else{
     options.keypair = std::nullopt;
   }
