@@ -25,6 +25,11 @@ OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::share
   for (auto &camera: camera_holders) {
     configure(camera);
   }
+  if(opt_action_handler){
+    opt_action_handler->action_request_bitrate_change_register([this](int value){
+      this->handle_change_bitrate_request(value);
+    });
+  }
   m_console->debug( "OHDVideo::running");
 }
 
@@ -98,4 +103,8 @@ std::vector<std::shared_ptr<openhd::ISettingsComponent>> OHDVideo::get_setting_c
   return ret;
 }
 
-
+void OHDVideo::handle_change_bitrate_request(int value) {
+  for(auto& stream:m_camera_streams){
+    stream->handle_change_bitrate_request(value);
+  }
+}

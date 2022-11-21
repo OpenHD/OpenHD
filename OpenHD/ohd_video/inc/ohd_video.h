@@ -48,6 +48,8 @@ class OHDVideo {
   std::shared_ptr<spdlog::logger> m_console;
   // r.n limited to primary and secondary camera
   static constexpr auto MAX_N_CAMERAS=2;
+ private:
+  void handle_change_bitrate_request(int value);
 };
 
 #endif  // OPENHD_VIDEO_OHDVIDEO_H
