@@ -337,5 +337,5 @@ void GStreamerStream::restart_async() {
 }
 
 void GStreamerStream::handle_change_bitrate_request(int value) {
-
+  m_console->debug("handle_change_bitrate_request {}",value);
 }
