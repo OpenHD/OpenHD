@@ -54,7 +54,8 @@ class ActionHandler{
     std::lock_guard<std::mutex> lock(_mutex);
     m_action_request_bitrate_change =std::move(action_request_bitrate_change);
   }
-  void action_request_bitrate_change_handlde(int value){
+  void action_request_bitrate_change_handle(int value){
+    openhd::log::get_default()->debug("action_request_bitrate_change_handle {}",value);
     std::lock_guard<std::mutex> lock(_mutex);
     if(m_action_request_bitrate_change){
       m_action_request_bitrate_change(value);

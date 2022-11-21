@@ -729,9 +729,9 @@ void WBStreams::loop_recalculate_stats() {
       // For now, be really agressive when we need to reduce bitrate, and cautious when we think there is more headroom.
       if(m_opt_action_handler){
         if(n_buffered_packets_estimate>=50){
-          m_opt_action_handler->action_request_bitrate_change_handlde(-50);
+          m_opt_action_handler->action_request_bitrate_change_handle(-50);
         }else if(n_buffered_packets_estimate<=1){
-          m_opt_action_handler->action_request_bitrate_change_handlde(10);
+          m_opt_action_handler->action_request_bitrate_change_handle(10);
         }
       }
     }
