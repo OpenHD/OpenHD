@@ -51,6 +51,7 @@ void GStreamerStream::setup() {
   m_pipeline_content.str("");
   m_pipeline_content.clear();
   m_bitrate_ctrl_element= nullptr;
+  m_curr_dynamic_bitrate=-1;
   switch (camera.type) {
     case CameraType::RaspberryPiCSI: {
       setup_raspberrypi_csi();
@@ -345,9 +346,13 @@ void GStreamerStream::handle_change_bitrate_request(int value) {
   const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
   m_console->debug("handle_change_bitrate_request curr:{} request:{}",max_bitrate_kbits,value);
   const double change_perc=(100.0+value)/100.0;
-  const auto new_bitrate_kbits=static_cast<int>(std::roundl(max_bitrate_kbits*change_perc));
-  m_console->debug("new bitrate requested: {} kBit/s",new_bitrate_kbits);
-  try_dynamically_change_bitrate(new_bitrate_kbits);
+
+  const auto last_dynamic_bitrate=m_curr_dynamic_bitrate>0 ? max_bitrate_kbits : m_curr_dynamic_bitrate;
+  const auto new_bitrate_kbits=static_cast<int>(std::roundl(last_dynamic_bitrate*change_perc));
+  if(new_bitrate_kbits>1000 && new_bitrate_kbits<=max_bitrate_kbits){
+    m_console->debug("Changing bitrate to: {} kBit/s",new_bitrate_kbits);
+    try_dynamically_change_bitrate(new_bitrate_kbits);
+  }
 }
 
 void GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
