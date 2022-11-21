@@ -56,7 +56,9 @@ class CameraStream {
    */
   virtual void restartIfStopped() = 0;
   /**
-   * Handle a change in the bitrate, most likely requested by the RF link. Not supported on all cameras
+   * Handle a change in the bitrate, most likely requested by the RF link.
+   * This is the only value an implementation should support changing without a complete restart of the pipeline /
+   * stream. It is okay to not implement this interface method properly, e.g leave it empty.
    */
    virtual void handle_change_bitrate_request(int value)=0;
  public:
