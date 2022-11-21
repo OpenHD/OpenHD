@@ -343,21 +343,30 @@ void GStreamerStream::restart_async() {
 }
 
 void GStreamerStream::handle_change_bitrate_request(int value) {
-  const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
   const double change_perc=(100.0+value)/100.0;
-  const auto last_dynamic_bitrate=m_curr_dynamic_bitrate>0 ? m_curr_dynamic_bitrate : max_bitrate_kbits;
-  const auto new_bitrate_kbits=static_cast<int>(std::roundl(last_dynamic_bitrate*change_perc));
-  m_console->debug("handle_change_bitrate_request value:{} (*{}) last:{} new:{} max:{}",
-                   value,change_perc,last_dynamic_bitrate,new_bitrate_kbits,max_bitrate_kbits);
+  m_console->debug("handle_change_bitrate_request value:{} (*{})",
+                   value,change_perc);
+  std::unique_lock<std::mutex> lock(m_pipeline_mutex, std::try_to_lock);
+  if(!lock.owns_lock()){
+    m_console->debug("cannot change bitrate during startup");
+    return;
+  }
+  const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
+  if(m_curr_dynamic_bitrate==-1){
+    m_curr_dynamic_bitrate=max_bitrate_kbits;
+  }
+  const auto new_bitrate_kbits=static_cast<int>(std::roundl(m_curr_dynamic_bitrate*change_perc));
+  m_console->debug("calculated:{} kBit/s",new_bitrate_kbits);
   if(new_bitrate_kbits>1000 && new_bitrate_kbits<=max_bitrate_kbits){
     if(try_dynamically_change_bitrate(new_bitrate_kbits)){
       m_curr_dynamic_bitrate=new_bitrate_kbits;
     }
+  }else{
+    m_console->debug("Cannot change bitrate, min/max reached");
   }
 }
 
 bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
-  std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   if(m_bitrate_ctrl_element!= nullptr){
     if(m_camera_holder->get_camera().type==CameraType::RaspberryPiCSI){
       //rpicamsrc takes bit/s instead of kbit/s
