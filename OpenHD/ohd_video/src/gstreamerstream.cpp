@@ -358,7 +358,7 @@ void GStreamerStream::handle_change_bitrate_request(int value) {
     m_curr_dynamic_bitrate_kbits =max_bitrate_kbits;
   }
   const auto new_bitrate_kbits=static_cast<int>(std::roundl(m_curr_dynamic_bitrate_kbits *change_perc));
-  m_console->debug("calculated:{} kBit/s",new_bitrate_kbits);
+  m_console->debug("calculated:{} kBit/s max:{} kBit/s",new_bitrate_kbits,max_bitrate_kbits);
   if(new_bitrate_kbits>1000 && new_bitrate_kbits<=max_bitrate_kbits){
     if(try_dynamically_change_bitrate(new_bitrate_kbits)){
       m_curr_dynamic_bitrate_kbits =new_bitrate_kbits;
