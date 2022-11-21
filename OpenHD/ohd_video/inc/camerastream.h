@@ -55,6 +55,10 @@ class CameraStream {
    * restart a camera stream if it has stopped / crashed for some reason.
    */
   virtual void restartIfStopped() = 0;
+  /**
+   * Handle a change in the bitrate, most likely requested by the RF link. Not supported on all cameras
+   */
+   virtual void handle_change_bitrate_request(int value)=0;
  public:
   std::shared_ptr<CameraHolder> m_camera_holder;
  protected:
