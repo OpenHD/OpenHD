@@ -384,6 +384,6 @@ bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
       return true;
     }
   }
-  m_console->warn("try_dynamically_change_bitrate wanted: {} kBit/s but no control element",bitrate_kbits);
+  m_console->warn("camera {} does not support dynamic bitrate control",m_camera_holder->get_camera().index);
   return false;
 }

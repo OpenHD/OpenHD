@@ -116,5 +116,5 @@ void VEYEStream::restart_async() {
 }
 
 void VEYEStream::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
-
+  m_console->warn("Veye does not support dynamic bitrate control");
 }
