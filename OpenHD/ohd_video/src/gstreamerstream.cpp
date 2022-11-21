@@ -348,8 +348,9 @@ void GStreamerStream::restart_async() {
   m_async_thread =std::make_unique<std::thread>(&GStreamerStream::restart_after_new_setting,this);
 }
 
-void GStreamerStream::handle_change_bitrate_request(int value) {
+void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
+  const auto value=lb.recommended_encoder_bitrate_kbits;
   const double change_perc=(100.0+value)/100.0;
   m_console->debug("handle_change_bitrate_request value:{} (*{})",
                    value,change_perc);

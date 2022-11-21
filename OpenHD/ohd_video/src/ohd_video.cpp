@@ -27,8 +27,8 @@ OHDVideo::OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,std:
     configure(camera);
   }
   if(m_opt_action_handler){
-    m_opt_action_handler->action_request_bitrate_change_register([this](int value){
-      this->handle_change_bitrate_request(value);
+    m_opt_action_handler->action_request_bitrate_change_register([this](openhd::ActionHandler::LinkBitrateInformation lb){
+      this->handle_change_bitrate_request(lb);
     });
   }
   m_console->debug( "OHDVideo::running");
@@ -104,8 +104,8 @@ std::vector<std::shared_ptr<openhd::ISettingsComponent>> OHDVideo::get_setting_c
   return ret;
 }
 
-void OHDVideo::handle_change_bitrate_request(int value) {
+void OHDVideo::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
   for(auto& stream:m_camera_streams){
-    stream->handle_change_bitrate_request(value);
+    stream->handle_change_bitrate_request(lb);
   }
 }

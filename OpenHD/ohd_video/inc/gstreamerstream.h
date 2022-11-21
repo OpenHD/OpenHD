@@ -34,7 +34,7 @@ class GStreamerStream : public CameraStream {
   void setup_sw_dummy_camera();
   void restart_after_new_setting();
   void restartIfStopped() override;
-  void handle_change_bitrate_request(int value) override;
+  void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) override;
  public:
   void start() override;
   void stop() override;

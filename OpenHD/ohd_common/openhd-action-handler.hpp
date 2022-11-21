@@ -47,22 +47,28 @@ class ActionHandler{
     }
   }
   struct LinkBitrateInformation{
-    uint32_t theoretical_max_link_bandwidth;
-    uint32_t recommended_encoder_bitrate;
+    uint32_t theoretical_max_link_bandwidth_kbits;
+    uint32_t recommended_encoder_bitrate_kbits;
   };
+  static std::string link_bitrate_info_to_string(const LinkBitrateInformation& lb){
+    std::stringstream ss;
+    ss<<"theoretical_max_link_bandwidth_kbits:"<<lb.theoretical_max_link_bandwidth_kbits;
+    ss<<" recommended_encoder_bitrate_kbits"<<lb.recommended_encoder_bitrate_kbits;
+    return ss.str();
+  }
   // Bitrate change: A negative value means the link cannot keep up with the data produced,
   // and the camera should decrease its bitrate by that much percent
   // A positive value means the link thinks there is some headroom for more data, and the camera can
   // go up to the bitrate set by the user.
-  void action_request_bitrate_change_register(std::function<void(int value)> action_request_bitrate_change){
+  void action_request_bitrate_change_register(std::function<void(LinkBitrateInformation link_bitrate_info)> action_request_bitrate_change){
     std::lock_guard<std::mutex> lock(_mutex);
     m_action_request_bitrate_change =std::move(action_request_bitrate_change);
   }
-  void action_request_bitrate_change_handle(int value){
-    openhd::log::get_default()->debug("action_request_bitrate_change_handle {}",value);
+  void action_request_bitrate_change_handle(LinkBitrateInformation link_bitrate_info){
+    openhd::log::get_default()->debug("action_request_bitrate_change_handle {}", link_bitrate_info_to_string(link_bitrate_info));
     std::lock_guard<std::mutex> lock(_mutex);
     if(m_action_request_bitrate_change){
-      m_action_request_bitrate_change(value);
+      m_action_request_bitrate_change(link_bitrate_info);
     }
   }
  private:
@@ -70,7 +76,7 @@ class ActionHandler{
   std::function<void()> _action_restart_wb_streams=nullptr;
   std::function<void(int value)> m_action_set_video_codec=nullptr;
   //
-  std::function<void(int value)> m_action_request_bitrate_change =nullptr;
+  std::function<void(LinkBitrateInformation link_bitrate_info)> m_action_request_bitrate_change =nullptr;
 };
 
 }

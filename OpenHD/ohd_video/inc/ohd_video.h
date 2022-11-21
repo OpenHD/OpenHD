@@ -54,7 +54,7 @@ class OHDVideo {
   static constexpr auto MAX_N_CAMERAS=2;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
  private:
-  void handle_change_bitrate_request(int value);
+  void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb);
 };
 
 #endif  // OPENHD_VIDEO_OHDVIDEO_H

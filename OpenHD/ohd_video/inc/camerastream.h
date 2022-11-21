@@ -6,6 +6,7 @@
 
 #include "camera_holder.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-action-handler.hpp"
 
 /**
  * Every camera stream should inherit from this class.
@@ -60,7 +61,7 @@ class CameraStream {
    * This is the only value an implementation should support changing without a complete restart of the pipeline /
    * stream. It is okay to not implement this interface method properly, e.g leave it empty.
    */
-   virtual void handle_change_bitrate_request(int value)=0;
+   virtual void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb)=0;
  public:
   std::shared_ptr<CameraHolder> m_camera_holder;
  protected:

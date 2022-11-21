@@ -115,6 +115,6 @@ void VEYEStream::restart_async() {
   m_console->debug("VEYEStream::restart_async() end");
 }
 
-void VEYEStream::handle_change_bitrate_request(int value) {
+void VEYEStream::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
 
 }
