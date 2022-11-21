@@ -20,12 +20,15 @@
  */
 class OHDVideo {
  public:
+  /**
+   * Creates a video stream for each of the dsicovered cameras given in @param cameras
+   * @param opt_action_handler openhd global handler for communication between different ohd modules.
+   */
   OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler);
   OHDVideo(const OHDVideo&)=delete;
   OHDVideo(const OHDVideo&&)=delete;
   /**
-   * Create a verbose debug string about the current state of OHDVideo, doesn't
-   * print to stdout.
+   * Create a verbose debug string about the current state of OHDVideo.
    * @return a verbose debug string.
    */
   [[nodiscard]] std::string createDebug() const;
