@@ -8,7 +8,6 @@
 #include <memory>
 #include <utility>
 
-#include "WBLink.h"
 #include "mavlink_settings/ISettingsComponent.hpp"
 #include "ohd_interface_settings.hpp"
 #include "openhd-action-handler.hpp"
@@ -18,6 +17,7 @@
 #include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
 #include "usb_tether_listener.h"
+#include "wb_link.h"
 #include "wifi_hotspot.h"
 
 class OHDInterface :public openhd::ISettingsComponent{

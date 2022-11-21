@@ -8,18 +8,20 @@
 #include <vector>
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
-#include "WBLinkSettings.hpp"
 #include "mavlink_settings/ISettingsComponent.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-link-statistics.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
+#include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
 
 /**
  * This class takes a list of discovered wifi cards (and their settings) and
  * is responsible for configuring the given cards and then setting up all the Wifi-broadcast streams needed for OpenHD.
+ * In the end, we have a link that has some broadcast characteristics for video (video is always broadcasted from air to ground)
+ * but also a bidirectional link (without re-transmission(s)) for telemetry.
  * This class assumes a corresponding instance on the air or ground unit, respective.
  */
 class WBLink {

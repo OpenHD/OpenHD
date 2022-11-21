@@ -8,7 +8,7 @@
 
 #include <utility>
 
-#include "WBLinkSettings.hpp"
+#include "wb_link_settings.hpp"
 #include "wifi_command_helper.hpp"
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
