@@ -251,10 +251,13 @@ int main(int argc, char *argv[]) {
     // And start the blinker (TODO LED output is really dirty right now).
     auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);
 
-    // Then start ohdInterface, which discovers detected wifi cards and more.
-    auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile);
-
+    // create the global action handler that allows openhd modules to communicate with each other
+    // e.g. when the rf link in ohd_interface needs to talk to the camera streams to reduce the bitrate
     auto ohd_action_handler=std::make_shared<openhd::ActionHandler>();
+
+    // Then start ohdInterface, which discovers detected wifi cards and more.
+    auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile,ohd_action_handler);
+
     ohd_action_handler->action_restart_wb_streams_set([&ohdInterface](){
       ohdInterface->restart_wb_streams_async();
     });
