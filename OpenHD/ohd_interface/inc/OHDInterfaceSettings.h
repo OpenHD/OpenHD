@@ -5,6 +5,9 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_OHDINTERFACESETTINGS_H_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_OHDINTERFACESETTINGS_H_
 
+#include "WBStreamsSettings.hpp"
+#include "openhd-settings2.hpp"
+
 namespace openhd{
 
 struct OHDInterfaceSettings{
