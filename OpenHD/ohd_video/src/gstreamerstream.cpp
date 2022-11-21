@@ -371,20 +371,20 @@ void GStreamerStream::handle_change_bitrate_request(int value) {
 bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
   if(m_bitrate_ctrl_element!= nullptr){
     if( m_bitrate_ctrl_element_takes_kbit){
-      //rpicamsrc for example takes bit/s instead of kbit/s
-      const int bitrateBitsPerSecond = kbits_to_bits_per_second(bitrate_kbits);
-      g_object_set(m_bitrate_ctrl_element, "bitrate", bitrateBitsPerSecond, NULL);
-      gint actual;
-      g_object_get(m_bitrate_ctrl_element,"bitrate",&actual,NULL);
-      m_console->debug("try_dynamically_change_bitrate wanted:{}kBit/s set:{}kBit/s",
-                       bits_per_second_to_kbits_per_second(bitrateBitsPerSecond),
-                       bits_per_second_to_kbits_per_second(actual));
-      return true;
-    }else{
       g_object_set(m_bitrate_ctrl_element, "bitrate", bitrate_kbits, NULL);
       gint actual;
       g_object_get(m_bitrate_ctrl_element,"bitrate",&actual,NULL);
-      m_console->debug("try_dynamically_change_bitrate wanted:{}kBit/s set:{}kBit/s",bitrate_kbits,actual);
+      m_console->debug("try_dynamically_change_bitrate wanted:{} kBit/s set:{} kBit/s",bitrate_kbits,actual);
+      return true;
+    }else{
+      //rpicamsrc for example takes bit/s instead of kbit/s
+      const int bitrate_bits_per_second = kbits_to_bits_per_second(bitrate_kbits);
+      g_object_set(m_bitrate_ctrl_element, "bitrate", bitrate_bits_per_second, NULL);
+      gint actual_bits_per_second;
+      g_object_get(m_bitrate_ctrl_element,"bitrate",&actual_bits_per_second,NULL);
+      m_console->debug("try_dynamically_change_bitrate wanted:{} kBit/s set:{} kBit/s",
+                       bits_per_second_to_kbits_per_second(bitrate_bits_per_second),
+                       bits_per_second_to_kbits_per_second(actual_bits_per_second));
       return true;
     }
   }
