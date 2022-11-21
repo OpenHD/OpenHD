@@ -24,7 +24,7 @@ class OHDVideo {
    * Creates a video stream for each of the dsicovered cameras given in @param cameras
    * @param opt_action_handler openhd global handler for communication between different ohd modules.
    */
-  OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler);
+  OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler);
   OHDVideo(const OHDVideo&)=delete;
   OHDVideo(const OHDVideo&&)=delete;
   /**
@@ -51,6 +51,7 @@ class OHDVideo {
   std::shared_ptr<spdlog::logger> m_console;
   // r.n limited to primary and secondary camera
   static constexpr auto MAX_N_CAMERAS=2;
+  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
  private:
   void handle_change_bitrate_request(int value);
 };

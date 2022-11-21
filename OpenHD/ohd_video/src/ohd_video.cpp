@@ -2,13 +2,14 @@
 // Created by consti10 on 03.05.22.
 //
 #include <openhd-global-constants.hpp>
+#include <utility>
 
 #include "gstreamerstream.h"
 #include "ohd_video.h"
 #include "veyestream.h"
 
-OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
-	m_platform(platform1) {
+OHDVideo::OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
+	m_platform(platform1),m_opt_action_handler(std::move(opt_action_handler)) {
   m_console = openhd::log::create_or_get("video");
   assert(m_console);
   assert(!cameras.empty());
@@ -16,7 +17,7 @@ OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::share
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
   for(const auto& camera:cameras){
     if(camera_holders.size()<MAX_N_CAMERAS){
-      camera_holders.emplace_back(std::make_unique<CameraHolder>(camera,opt_action_handler));
+      camera_holders.emplace_back(std::make_unique<CameraHolder>(camera,m_opt_action_handler));
     }else{
       m_console->warn("Dropping camera {}, too many cameras",camera.to_string());
     }
@@ -25,8 +26,8 @@ OHDVideo::OHDVideo(OHDPlatform platform1,DiscoveredCameraList cameras,std::share
   for (auto &camera: camera_holders) {
     configure(camera);
   }
-  if(opt_action_handler){
-    opt_action_handler->action_request_bitrate_change_register([this](int value){
+  if(m_opt_action_handler){
+    m_opt_action_handler->action_request_bitrate_change_register([this](int value){
       this->handle_change_bitrate_request(value);
     });
   }
