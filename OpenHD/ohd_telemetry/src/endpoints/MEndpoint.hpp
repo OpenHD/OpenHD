@@ -59,6 +59,12 @@ class MEndpoint {
 	m_n_messages_sent++;
 	if(!res)m_n_messages_send_failed++;
   }
+  // Helper to send multiple messages at once
+  void sendMessages(const std::vector<MavlinkMessage>& messages){
+    for(const auto& msg:messages){
+      sendMessage(msg);
+    }
+  }
   /**
    * register a callback that is called every time
    * this endpoint has received a new message
