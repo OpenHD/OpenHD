@@ -66,6 +66,11 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
       m_settings->persist();
     }
   }
+  if(!validate_cards_support_setting_mcs_index()){
+    // cards that do not support changing the mcs index are always fixed to mcs3 on openhd drivers
+    m_settings->unsafe_get_settings().wb_mcs_index=3;
+    m_settings->persist();
+  }
   takeover_cards();
   configure_cards();
   configure_streams();
