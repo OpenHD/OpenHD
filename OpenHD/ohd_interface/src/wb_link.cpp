@@ -770,7 +770,6 @@ void WBLink::loop_recalculate_stats() {
       }
       if(m_opt_action_handler){
         openhd::ActionHandler::LinkBitrateInformation lb{};
-        lb.theoretical_max_link_bandwidth_kbits=max_video_after_fec_kbits;
         lb.recommended_encoder_bitrate_kbits=last_recommended_bitrate;
         m_opt_action_handler->action_request_bitrate_change_handle(lb);
       }

@@ -47,13 +47,11 @@ class ActionHandler{
     }
   }
   struct LinkBitrateInformation{
-    uint32_t theoretical_max_link_bandwidth_kbits;
     uint32_t recommended_encoder_bitrate_kbits;
   };
   static std::string link_bitrate_info_to_string(const LinkBitrateInformation& lb){
     std::stringstream ss;
-    ss<<"theoretical_max_link_bandwidth_kbits:"<<lb.theoretical_max_link_bandwidth_kbits;
-    ss<<" recommended_encoder_bitrate_kbits"<<lb.recommended_encoder_bitrate_kbits;
+    ss<<"recommended_encoder_bitrate:"<<lb.recommended_encoder_bitrate_kbits<<" kBit/s";
     return ss.str();
   }
   // Bitrate change: A negative value means the link cannot keep up with the data produced,
