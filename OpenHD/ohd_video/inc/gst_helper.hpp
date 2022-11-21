@@ -112,10 +112,10 @@ static std::string createRpicamsrcStream(const int camera_number,
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   if (camera_number == -1) {
-    ss << fmt::format("rpicamsrc bitrate={} preview=0 ",
+    ss << fmt::format("rpicamsrc name=rpicamsrc bitrate={} preview=0 ",
                       bitrateBitsPerSecond);
   } else {
-    ss << fmt::format("rpicamsrc camera-number={} bitrate={} preview=0 ",
+    ss << fmt::format("rpicamsrc name=rpicamsrc camera-number={} bitrate={} preview=0 ",
                       camera_number, bitrateBitsPerSecond);
   }
   // keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
