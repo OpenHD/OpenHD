@@ -8,17 +8,17 @@
 #include <memory>
 #include <utility>
 
-#include "OHDInterfaceSettings.h"
 #include "USBTetherListener.h"
 #include "WBStreams.h"
 #include "WifiHotspot.h"
 #include "mavlink_settings/ISettingsComponent.hpp"
+#include "ohd_interface_settings.hpp"
+#include "openhd-action-handler.hpp"
 #include "openhd-external-device.hpp"
 #include "openhd-led-codes.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
-#include "openhd-action-handler.hpp"
 
 class OHDInterface :public openhd::ISettingsComponent{
  public:
