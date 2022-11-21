@@ -1,5 +1,6 @@
 #include "WBStreams.h"
-#include "WifiCardCommandHelper.hpp"
+
+#include "wifi_command_helper.hpp"
 //#include "wifi_command_helper2.h"
 
 #include <iostream>

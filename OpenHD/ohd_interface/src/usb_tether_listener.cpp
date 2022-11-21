@@ -2,12 +2,12 @@
 // Created by consti10 on 21.05.22.
 //
 
-#include "USBTetherListener.h"
-
 #include <arpa/inet.h>
 
-#include "openhd-spdlog.hpp"
 #include <utility>
+
+#include "openhd-spdlog.hpp"
+#include "usb_tether_listener.h"
 
 USBTetherListener::USBTetherListener(openhd::EXTERNAL_DEVICE_CALLBACK external_device_callback) :
 _external_device_callback(std::move(external_device_callback)){

@@ -2,13 +2,14 @@
 // Created by consti10 on 02.05.22.
 //
 
+#include "ohd_interface.h"
+
 #include <wifi_card_discovery.h>
 
 #include <utility>
 
 #include "WBStreamsSettings.hpp"
-#include "WifiCardCommandHelper.hpp"
-#include "ohd_interface.h"
+#include "wifi_command_helper.hpp"
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
 platform(platform1),profile(std::move(profile1)) {
