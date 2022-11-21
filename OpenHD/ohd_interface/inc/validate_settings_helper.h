@@ -242,6 +242,20 @@ static uint32_t milli_watt_to_milli_dbm(uint32_t milli_watt){
 // the power in dBm is P = 30 + 10.log(W)
 // log10(x/1)==log(x) / log(10) = ~2.3
 
+// TODO improve me -R.n I am really conservative here
+// Returns the maximum theoretical bitrate in bits per second for the given configuration
+/*static uint32_t get_max_rate_kbits_for_configuration(bool is_2g,uint32_t mcs_index,uint32_t channel_width){
+  if(is_2g){
+    // 2G is always 20Mhz channel width
+    switch (mcs_index) {
+      case 1:
+        break;
+    }
+  }
+  return 0;
+}*/
+
+
 
 }
 

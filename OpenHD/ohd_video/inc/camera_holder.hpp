@@ -8,6 +8,7 @@
 #include "openhd-settings2.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-settings.hpp"
+#include "openhd_bitrate_conversions.hpp"
 #include "mavlink_settings/ISettingsComponent.hpp"
 
 #include "camera.hpp"

@@ -20,21 +20,7 @@ static constexpr int DEFAULT_RECORDING_KBITS = 10000;
 static constexpr int DEFAULT_RECORDING_QP = 26;
 static constexpr RateControlMode DEFAULT_RC_MODE = RateControlMode::RC_CBR;
 
-// NOTE: I am not completely sure, but the more common approach seems to multiply / divide by 1000
-// When converting mBit/s to kBit/s or the other way arund
-// some encoders take bits per second instead of kbits per second
-static int kbits_to_bits_per_second(int kbit_per_second){
-  return kbit_per_second*1000;
-}
-static int kbits_to_mbits_per_second(int kbits_per_second){
-  return kbits_per_second/1000;
-}
-static int mbits_to_kbits_per_second(int mbits_per_second){
-  return mbits_per_second*1000;
-}
-static int bits_per_second_to_kbits_per_second(int bits_per_second){
-  return bits_per_second/1000;
-}
+
 // Return true if the bitrate is considered sane, false otherwise
 static bool check_bitrate_sane(const int bitrateKBits) {
   if (bitrateKBits <= 100 || bitrateKBits > (1000 * 1000 * 50)) {
