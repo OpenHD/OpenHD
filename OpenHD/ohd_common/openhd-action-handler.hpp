@@ -46,10 +46,22 @@ class ActionHandler{
       m_action_set_video_codec(value);
     }
   }
+  void action_request_less_bitrate_register(std::function<void(int value)> action_request_less_bitrate){
+    std::lock_guard<std::mutex> lock(_mutex);
+    m_action_request_less_bitrate=std::move(action_request_less_bitrate);
+  }
+  void action_request_less_bitrate_hanlde(int value){
+    std::lock_guard<std::mutex> lock(_mutex);
+    if(m_action_request_less_bitrate){
+      m_action_request_less_bitrate(value);
+    }
+  }
  private:
   std::mutex _mutex;
   std::function<void()> _action_restart_wb_streams=nullptr;
   std::function<void(int value)> m_action_set_video_codec=nullptr;
+  //
+  std::function<void(int value)> m_action_request_less_bitrate=nullptr;
 };
 
 }
