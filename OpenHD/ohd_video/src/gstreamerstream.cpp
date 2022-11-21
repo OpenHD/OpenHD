@@ -362,7 +362,7 @@ void GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
   if(m_bitrate_ctrl_element!= nullptr){
     g_object_set(m_bitrate_ctrl_element, "bitrate", bitrate_kbits, NULL);
     gint actual;
-    g_object_get(m_bitrate_ctrl_element,"bitrate",&actual);
+    g_object_get(m_bitrate_ctrl_element,"bitrate",&actual,NULL);
     m_console->debug("try_dynamically_change_bitrate wanted:{} set:{}",bitrate_kbits,actual);
   }else{
     m_console->warn("try_dynamically_change_bitrate wanted:{} but no control element");
