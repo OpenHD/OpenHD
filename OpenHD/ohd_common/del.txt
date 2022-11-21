@@ -300,3 +300,11 @@ std::shared_ptr<CameraStream> OHDVideo::get_stream_by_index(int idx) {
   }
   return nullptr;
 }
+
+if(OHDUtil::get_ohd_env_variable_bool("OHD_SKIP_WB_CONFIGURE_CARDS")){
+    // This is for debugging / testing new wifi drivers that need a special startup method.
+    // Note that here the developer has to configure the cards right before starting openhd, which
+    // needs knowledge of wifibroadcast and its quirks.
+    m_console->debug("WBStreams::configure_cards() skipping");
+    return;
+  }

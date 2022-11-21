@@ -71,7 +71,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
     m_settings->unsafe_get_settings().wb_mcs_index=3;
     m_settings->persist();
   }
-  takeover_cards();
+  takeover_cards_monitor_mode();
   configure_cards();
   configure_streams();
   m_recalculate_stats_thread_run= true;
@@ -88,14 +88,13 @@ WBLink::~WBLink() {
   }
 }
 
-void WBLink::takeover_cards() {
-  m_console->debug( "WBStreams::takeover_cards() begin");
+void WBLink::takeover_cards_monitor_mode() {
+  m_console->debug( "WBStreams::takeover_cards_monitor_mode() begin");
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // This can be different depending on the OS we are running on - in general, we try to go for the following with openhd:
   // Have network manager running on the host OS - the nice thing about network manager is that we can just tell it
   // to ignore the cards we are doing wifibroadcast with, instead of killing all processes that might interfere with
   // wifibroadcast and therefore making other networking increadibly hard.
-
   // Tell network manager to ignore the cards we want to do wifibroadcast on
   for(const auto& card: _broadcast_cards){
     WifiCardCommandHelper::network_manager_set_card_unmanaged(card->_wifi_card);
@@ -107,22 +106,20 @@ void WBLink::takeover_cards() {
   // I cannot find what's causing the issue - a sleep here is the worst solution, but r.n the only one I can come up with
   // perhaps we'd need to wait for network manager to finish switching to ignoring the monitor mode cards ?!
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  m_console->debug("WBStreams::takeover_cards() end");
+  // now we can enable monitor mode on the given cards.
+  for(const auto& card: _broadcast_cards) {
+    WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
+    WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
+    WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
+    //wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
+  }
+  m_console->debug("WBStreams::takeover_cards_monitor_mode() end");
 }
 
 void WBLink::configure_cards() {
   m_console->debug("WBStreams::configure_cards() begin");
-  if(OHDUtil::get_ohd_env_variable_bool("OHD_SKIP_WB_CONFIGURE_CARDS")){
-    // This is for debugging / testing new wifi drivers that need a special startup method.
-    // Note that here the developer has to configure the cards right before starting openhd, which
-    // needs knowledge of wifibroadcast and its quirks.
-    m_console->debug("WBStreams::configure_cards() skipping");
-    return;
-  }
+  // NOTE: Cards need to be in monitor mode
   for(const auto& card: _broadcast_cards){
-    WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
-    WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
-    WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
     const bool width_40= m_settings->get_settings().wb_channel_width==40;
     WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card, m_settings->get_settings().wb_frequency,width_40);
     // TODO check if this works - on rtl8812au, the displayed value at least changes
@@ -132,9 +129,6 @@ void WBLink::configure_cards() {
     //WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
   }
   /*for(const auto& card: _broadcast_cards){
-    wifi::commandhelper2::set_wifi_up_down(card->_wifi_card.interface_name,false);
-    wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
-    wifi::commandhelper2::set_wifi_up_down(card->_wifi_card.interface_name, true);
     wifi::commandhelper2::set_wifi_frequency(card->_wifi_card.interface_name,
                                              m_settings->get_settings().wb_frequency,m_settings->get_settings().wb_channel_width);
     //wifi::commandhelper2::set_wifi_txpower(card->_wifi_card.interface_name,m_settings->get_settings().wb_tx_power_milli_watt);

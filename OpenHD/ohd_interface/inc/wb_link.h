@@ -74,10 +74,10 @@ class WBLink {
   bool validate_cards_support_setting_mcs_index();
   // Check if all cards support changing the channel width
   bool validate_cards_support_setting_channel_width();
-  // This needs some proper investigation !
-  // In short: Make sure no OS service(s) that could interfere with monitor mode run on the cards used for wifibroadcast
-  void takeover_cards();
-  // set cards to monitor mode and set the right frequency, tx power
+  // Make sure no processes interfering with monitor mode run on the given cards,
+  // then sets them to monitor mode
+  void takeover_cards_monitor_mode();
+  // set the right frequency, channel width and tx power. Cards need to be in monitor mode already !
   void configure_cards();
   // start telemetry and video rx/tx stream(s)
   void configure_streams();
