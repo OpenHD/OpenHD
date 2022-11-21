@@ -19,7 +19,7 @@ WBStreams::WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::sh
                      std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
    _profile(std::move(profile)),_platform(platform),_broadcast_cards(std::move(broadcast_cards1)),
    m_disable_all_frequency_checks(OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS)),
-   m_opt_action_handler(opt_action_handler)
+   m_opt_action_handler(std::move(opt_action_handler))
 {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
