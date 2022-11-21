@@ -734,10 +734,10 @@ void WBLink::loop_recalculate_stats() {
       // we assume 80% of the link is for video
       const uint32_t max_video_allocated_kbits=max_rate_possible_kbits * 80 / 100;
       // and deduce the FEC overhead
-      const uint32_t max_video_after_fec=max_video_allocated_kbits * 100/(100+settings.wb_video_fec_percentage);
-      m_console->debug("max_rate_possible_kbits:{} max_video_after_fec:{}",max_rate_possible_kbits,max_video_after_fec);
-
+      const uint32_t max_video_after_fec_kbits=max_video_allocated_kbits * 100/(100+settings.wb_video_fec_percentage);
+      m_console->debug("max_rate_possible_kbits:{} max_video_after_fec_kbits:{}",max_rate_possible_kbits,max_video_after_fec_kbits);
       //
+
       const auto n_buffered_packets_estimate=udpVideoTxList.at(0)->get_estimate_buffered_packets();
       m_console->debug("Video estimates {} buffered packets",n_buffered_packets_estimate);
       // For now, be really agressive when we need to reduce bitrate, and cautious when we think there is more headroom.
