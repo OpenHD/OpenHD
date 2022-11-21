@@ -62,7 +62,7 @@ class GStreamerStream : public CameraStream {
   // This is needed for variable rf link bitrate(s)
   // returns true on success, false otherwise
   bool try_dynamically_change_bitrate(uint32_t bitrate_kbits);
-  uint32_t m_curr_dynamic_bitrate=-1;
+  uint32_t m_curr_dynamic_bitrate_kbits =-1;
 };
 
 #endif
