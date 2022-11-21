@@ -356,7 +356,7 @@ void GStreamerStream::handle_change_bitrate_request(int value) {
   }
 }
 
-void GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
+bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   if(m_bitrate_ctrl_element!= nullptr){
     if(m_camera_holder->get_camera().type==CameraType::RaspberryPiCSI){
@@ -366,8 +366,9 @@ void GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
       gint actual;
       g_object_get(m_bitrate_ctrl_element,"bitrate",&actual,NULL);
       m_console->debug("try_dynamically_change_bitrate wanted:{} set:{}",bitrateBitsPerSecond,actual);
-      return;
+      return true;
     }
   }
   m_console->warn("try_dynamically_change_bitrate wanted: {} kBit/s but no control element",bitrate_kbits);
+  return false;
 }
