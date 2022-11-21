@@ -119,6 +119,8 @@ class WBLink {
   std::unique_ptr<std::thread> m_recalculate_stats_thread;
   void loop_recalculate_stats();
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
+ private:
+  int64_t last_tx_error_count=-1;
 };
 
 #endif

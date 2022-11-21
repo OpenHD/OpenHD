@@ -717,11 +717,26 @@ void WBLink::loop_recalculate_stats() {
       m_stats_callback(final_stats);
     }
     if(_profile.is_air){
+      UDPWBTransmitter* primary_video_tx=udpVideoTxList.at(0).get();
+      const auto curr_count_tx_injections_error_hint=static_cast<int64_t>(primary_video_tx->get_count_tx_injections_error_hint());
+      if(last_tx_error_count<0){
+        last_tx_error_count=static_cast<int64_t>(primary_video_tx->get_count_tx_injections_error_hint());
+      }else{
+        const auto delta=curr_count_tx_injections_error_hint-last_tx_error_count;
+        last_tx_error_count=curr_count_tx_injections_error_hint;
+        if(delta>10){
+
+        }
+      }
       // stupid encoder rate control
       const auto settings=m_settings->get_settings();
-      uint32_t max_rate_possible_kbits=openhd::get_max_rate_kbits(settings.wb_mcs_index);
+      const uint32_t max_rate_possible_kbits=openhd::get_max_rate_kbits(settings.wb_mcs_index);
       // we assume 80% of the link is for video
-      max_rate_possible_kbits=max_rate_possible_kbits * 80 / 100;
+      const uint32_t max_video_allocated_kbits=max_rate_possible_kbits * 80 / 100;
+      // and deduce the FEC overhead
+      const uint32_t max_video_after_fec=max_video_allocated_kbits * 100/(100+settings.wb_video_fec_percentage);
+      m_console->debug("max_rate_possible_kbits:{} max_video_after_fec:{}",max_rate_possible_kbits,max_video_after_fec);
+
       //
       const auto n_buffered_packets_estimate=udpVideoTxList.at(0)->get_estimate_buffered_packets();
       m_console->debug("Video estimates {} buffered packets",n_buffered_packets_estimate);
