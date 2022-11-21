@@ -50,6 +50,7 @@ void GStreamerStream::setup() {
   }
   m_pipeline_content.str("");
   m_pipeline_content.clear();
+  m_bitrate_ctrl_element= nullptr;
   switch (camera.type) {
     case CameraType::RaspberryPiCSI: {
       setup_raspberrypi_csi();
@@ -133,6 +134,10 @@ void GStreamerStream::setup() {
   if (error) {
     m_console->error( "Failed to create pipeline: {}",error->message);
     return;
+  }
+  if(camera.type==CameraType::RaspberryPiCSI){
+    m_bitrate_ctrl_element= gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "rpicamsrc");
+    m_console->debug("Has element: {}",(m_bitrate_ctrl_element!=nullptr) ? "yes":"no");
   }
 }
 
@@ -338,4 +343,28 @@ void GStreamerStream::restart_async() {
 
 void GStreamerStream::handle_change_bitrate_request(int value) {
   m_console->debug("handle_change_bitrate_request {}",value);
+  const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
+  m_console->debug("Curr bitrate:{}",max_bitrate_kbits);
+  if(value<0){
+    const auto change_perc=(-value)/100;
+    const auto new_bitrate_kbits=max_bitrate_kbits*change_perc;
+    m_console->debug("new bitrate requested: {} kBit/s",new_bitrate_kbits);
+
+  }else if(value>0){
+    const auto change_perc=value/100;
+    const auto new_bitrate_kbits=max_bitrate_kbits*change_perc;
+    m_console->debug("new bitrate requested: {} kBit/s",new_bitrate_kbits);
+  }
+}
+
+void GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
+  std::lock_guard<std::mutex> guard(m_pipeline_mutex);
+  if(m_bitrate_ctrl_element!= nullptr){
+    g_object_set(m_bitrate_ctrl_element, "bitrate", bitrate_kbits, NULL);
+    gint actual;
+    g_object_get(m_bitrate_ctrl_element,"bitrate",&actual);
+    m_console->debug("try_dynamically_change_bitrate wanted:{} set:{}",bitrate_kbits,actual);
+  }else{
+    m_console->warn("try_dynamically_change_bitrate wanted:{} but no control element");
+  }
 }
