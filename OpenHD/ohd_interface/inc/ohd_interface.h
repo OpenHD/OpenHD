@@ -8,7 +8,7 @@
 #include <memory>
 #include <utility>
 
-#include "WBStreams.h"
+#include "WBLink.h"
 #include "mavlink_settings/ISettingsComponent.hpp"
 #include "ohd_interface_settings.hpp"
 #include "openhd-action-handler.hpp"
@@ -57,7 +57,7 @@ class OHDInterface :public openhd::ISettingsComponent{
  private:
   const OHDProfile profile;
   const OHDPlatform platform;
-  std::unique_ptr<WBStreams> m_wb_streams;
+  std::unique_ptr<WBLink> m_wb_link;
   std::unique_ptr<USBTetherListener> m_usb_tether_listener;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
   std::unique_ptr<openhd::LEDBlinker> m_error_blinker;

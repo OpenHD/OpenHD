@@ -8,7 +8,7 @@
 
 #include <utility>
 
-#include "WBStreamsSettings.hpp"
+#include "WBLinkSettings.hpp"
 #include "wifi_command_helper.hpp"
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
@@ -79,7 +79,7 @@ platform(platform1),profile(std::move(profile1)) {
     // we just continue as nothing happened, but OHD won't have any wifibroadcast connectivity
     //exit(1);
   }else{
-    m_wb_streams =std::make_unique<WBStreams>(profile,platform,broadcast_cards,opt_action_handler);
+    m_wb_link =std::make_unique<WBLink>(profile,platform,broadcast_cards,opt_action_handler);
   }
   // USB tethering - only on ground
   if(!profile.is_air){
@@ -125,8 +125,8 @@ platform(platform1),profile(std::move(profile1)) {
 std::string OHDInterface::createDebug() const {
   std::stringstream ss;
   ss<<"OHDInterface::createDebug:begin\n";
-  if (m_wb_streams) {
-    ss << m_wb_streams->createDebug();
+  if (m_wb_link) {
+    ss << m_wb_link->createDebug();
   }
   //if(ethernet){
   //    ethernet->debug();
@@ -139,8 +139,8 @@ void OHDInterface::addExternalDeviceIpForwarding(const openhd::ExternalDevice& e
   // video we can directly forward to the external device - but note that
   // telemetry first needs to go through the ohd_telemetry module, and therefore is handled
   // seperately ( a bit hacky, but no real way around if we want to keep the module separation)
-  if(m_wb_streams){
-    m_wb_streams->addExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
+  if(m_wb_link){
+    m_wb_link->addExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
   }
   std::lock_guard<std::mutex> guard(m_external_device_callback_mutex);
   if(m_external_device_callback){
@@ -149,8 +149,8 @@ void OHDInterface::addExternalDeviceIpForwarding(const openhd::ExternalDevice& e
 }
 
 void OHDInterface::removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device){
-  if(m_wb_streams){
-    m_wb_streams->removeExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
+  if(m_wb_link){
+    m_wb_link->removeExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
   }
   std::lock_guard<std::mutex> guard(m_external_device_callback_mutex);
   if(m_external_device_callback){
@@ -159,8 +159,8 @@ void OHDInterface::removeExternalDeviceIpForwarding(const openhd::ExternalDevice
 }
 
 void OHDInterface::set_stats_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) const {
-  if(m_wb_streams){
-    m_wb_streams->set_callback(std::move(stats_callback));
+  if(m_wb_link){
+    m_wb_link->set_callback(std::move(stats_callback));
   }else{
     m_console->warn("Cannot ste stats callback, no wb streams instance");
   }
@@ -170,8 +170,8 @@ static constexpr auto OHD_INTERFACE_ENABLE_WIFI_HOTSPOT="I_WIFI_HOTSPOT_E";
 
 std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   std::vector<openhd::Setting> ret;
-  if(m_wb_streams){
-    auto settings= m_wb_streams->get_all_settings();
+  if(m_wb_link){
+    auto settings= m_wb_link->get_all_settings();
     for(const auto& setting:settings){
       ret.emplace_back(setting);
     }
@@ -213,8 +213,8 @@ void OHDInterface::set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK
 }
 
 void OHDInterface::restart_wb_streams_async() {
-  if(m_wb_streams){
-    m_wb_streams->restart_async(std::chrono::seconds(2));
+  if(m_wb_link){
+    m_wb_link->restart_async(std::chrono::seconds(2));
   }
 }
 void OHDInterface::print_internal_fec_optimization_method() {
@@ -222,7 +222,7 @@ void OHDInterface::print_internal_fec_optimization_method() {
 }
 
 void OHDInterface::set_video_codec(int codec) {
-  if(m_wb_streams){
-    m_wb_streams->set_video_codec(codec);
+  if(m_wb_link){
+    m_wb_link->set_video_codec(codec);
   }
 }

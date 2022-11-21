@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
-#include "WBStreamsSettings.hpp"
+#include "WBLinkSettings.hpp"
 #include "mavlink_settings/ISettingsComponent.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-link-statistics.hpp"
@@ -22,18 +22,18 @@
  * is responsible for configuring the given cards and then setting up all the Wifi-broadcast streams needed for OpenHD.
  * This class assumes a corresponding instance on the air or ground unit, respective.
  */
-class WBStreams {
+class WBLink {
  public:
   /**
    * @param broadcast_cards list of discovered wifi card(s) that support monitor mode & are injection capable. Needs to be at least
    * one card, and only one card on an air unit.
    * @param opt_action_handler global openhd action handler, optional (can be nullptr)
    */
-  explicit WBStreams(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards,
+  explicit WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards,
                      std::shared_ptr<openhd::ActionHandler> opt_action_handler);
-  WBStreams(const WBStreams&)=delete;
-  WBStreams(const WBStreams&&)=delete;
-  ~WBStreams();
+  WBLink(const WBLink&)=delete;
+  WBLink(const WBLink&&)=delete;
+  ~WBLink();
   // register callback that is called in regular intervals with link statistics
   void set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback);
   // Verbose string about the current state.

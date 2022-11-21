@@ -5,7 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_OHD_INTERFACE_SETTINGS_HPP_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_OHD_INTERFACE_SETTINGS_HPP_
 
-#include "WBStreamsSettings.hpp"
+#include "WBLinkSettings.hpp"
 #include "openhd-settings2.hpp"
 
 namespace openhd{

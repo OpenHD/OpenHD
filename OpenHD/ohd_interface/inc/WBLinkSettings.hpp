@@ -2,8 +2,8 @@
 // Created by consti10 on 17.07.22.
 //
 
-#ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WBSTREAMSSETTINGS_HPP_
-#define OPENHD_OPENHD_OHD_INTERFACE_INC_WBSTREAMSSETTINGS_HPP_
+#ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WBLINKSETTINGS_HPP_
+#define OPENHD_OPENHD_OHD_INTERFACE_INC_WBLINKSETTINGS_HPP_
 
 #include "openhd-settings2.hpp"
 #include "wifi_card.hpp"
@@ -22,7 +22,7 @@ static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
 static constexpr auto DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH=12;
 static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE=50;
 
-struct WBStreamsSettings{
+struct WBLinkSettings {
   uint32_t wb_frequency; // writen once 2.4 or 5 is known
   uint32_t wb_channel_width=DEFAULT_CHANNEL_WIDTH; // 20 or 40 mhz bandwidth
   uint32_t wb_mcs_index=DEFAULT_MCS_INDEX;
@@ -34,15 +34,15 @@ struct WBStreamsSettings{
 	return is_2G_and_assert(wb_frequency);
   }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBStreamsSettings, wb_frequency, wb_channel_width, wb_mcs_index,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
 								   wb_video_fec_block_length, wb_video_fec_percentage, wb_tx_power_milli_watt,wb_video_fec_block_length_auto_enable);
 
-static WBStreamsSettings create_default_wb_stream_settings(const std::vector<WiFiCard>& wifibroadcast_cards){
+static WBLinkSettings create_default_wb_stream_settings(const std::vector<WiFiCard>& wifibroadcast_cards){
   assert(!wifibroadcast_cards.empty());
   const auto first_card=wifibroadcast_cards.at(0);
   assert(first_card.supports_5ghz || first_card.supports_2ghz);
   const bool use_5ghz= wifibroadcast_cards.at(0).supports_5ghz;
-  WBStreamsSettings settings{};
+  WBLinkSettings settings{};
   if(use_5ghz){
 	settings.wb_frequency=DEFAULT_5GHZ_FREQUENCY;
   }else{
@@ -61,10 +61,10 @@ static std::vector<WiFiCard> tmp_convert(const std::vector<std::shared_ptr<WifiC
 
 static const std::string INTERFACE_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("interface/");
 
-class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBStreamsSettings>{
+class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLinkSettings>{
  public:
   explicit WBStreamsSettingsHolder(std::vector<WiFiCard> wifibroadcast_cards1):
-	  openhd::settings::PersistentSettings<WBStreamsSettings>(INTERFACE_SETTINGS_DIRECTORY),
+	  openhd::settings::PersistentSettings<WBLinkSettings>(INTERFACE_SETTINGS_DIRECTORY),
 	  wifibroadcast_cards(std::move(wifibroadcast_cards1)){
 	init();
   }
@@ -76,7 +76,7 @@ class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBStre
 	ss<<"wifibroadcast_settings.json";
 	return ss.str();
   }
-  [[nodiscard]] WBStreamsSettings create_default()const override{
+  [[nodiscard]] WBLinkSettings create_default()const override{
 	return create_default_wb_stream_settings(wifibroadcast_cards);
   }
 };
@@ -92,4 +92,4 @@ static constexpr auto WB_FEC_BLOCK_LENGTH_AUTO_ENABLE="WB_FEC_BL_AUTO";
 
 }
 
-#endif //OPENHD_OPENHD_OHD_INTERFACE_INC_WBSTREAMSSETTINGS_HPP_
+#endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WBLINKSETTINGS_HPP_
