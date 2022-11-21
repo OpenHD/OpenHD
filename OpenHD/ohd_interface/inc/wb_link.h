@@ -28,7 +28,7 @@ class WBLink {
  public:
   /**
    * @param broadcast_cards list of discovered wifi card(s) that support monitor mode & are injection capable. Needs to be at least
-   * one card, and only one card on an air unit.
+   * one card, and only one card on an air unit. The given cards need to support monitor mode and either 2.4G or 5G wifi.
    * @param opt_action_handler global openhd action handler, optional (can be nullptr during testing of specific modules instead
    * of testing a complete running openhd instance)
    */

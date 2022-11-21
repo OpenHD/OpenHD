@@ -14,10 +14,6 @@
 #include "camera_settings.hpp"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about a camera
-
-// Where the settings (json) for each discovered camera are stored
-static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("video/");
-
 // Camera Holder is used to
 // 1) Differentiate between immutable information (camera) and
 // 2) mutable camera settings.
@@ -30,7 +26,7 @@ class CameraHolder:
  public:
   explicit CameraHolder(Camera camera,std::shared_ptr<openhd::ActionHandler> opt_action_handler= nullptr):
        m_camera(std::move(camera)),m_opt_action_handler(std::move(opt_action_handler)),
-       openhd::settings::PersistentSettings<CameraSettings>(VIDEO_SETTINGS_DIRECTORY){
+       openhd::settings::PersistentSettings<CameraSettings>(get_video_settings_directory()){
     // read previous settings or create default ones
     init();
     // dirty, propagate changes to the video codec back to the link (ohd_interface)
@@ -287,6 +283,10 @@ class CameraHolder:
   }
   [[nodiscard]] std::string get_short_name()const{
     return camera_type_to_string(m_camera.type);
+  }
+  // Where the settings (json) for each discovered camera are stored
+  static std::string get_video_settings_directory(){
+    return std::string(BASE_PATH)+std::string("video/");
   }
 };
 

@@ -36,7 +36,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   // sanity checking
   for(const auto& card: _broadcast_cards){
     assert(card->get_settings().use_for==WifiUseFor::MonitorMode);
-	assert(card->_wifi_card.supports_2ghz || card->_wifi_card.supports_5ghz);
+    assert(card->_wifi_card.supports_2ghz || card->_wifi_card.supports_5ghz);
   }
   if (_profile.is_air && _broadcast_cards.size() > 1) {
     // We cannot use more than 1 wifi card for injection
@@ -86,13 +86,12 @@ WBLink::~WBLink() {
 void WBLink::takeover_cards() {
   m_console->debug( "WBStreams::takeover_cards() begin");
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
-  // However, with the image set up by raphael they should be free from any (OS) prcoesses already
-  // R.N we also try and blacklist the cards from NetworkManager - it is needed for RPI and Ubuntu
-  // (as of 6.8.2022, since we re-added NetworkManager on pi) but it won't hurt on systems that don't
-  // have network manager - there it just won't have any effect.
-  // --
-  // This is only needed if NetworkManager was not disabled (we might move onto leaving it enabled on all platforms, though)
-  // TODO: does this return immediately or only after the change has been applied ?
+  // This can be different depending on the OS we are running on - in general, we try to go for the following with openhd:
+  // Have network manager running on the host OS - the nice thing about network manager is that we can just tell it
+  // to ignore the cards we are doing wifibroadcast with, instead of killing all processes that might interfere with
+  // wifibroadcast and therefore making other networking increadibly hard.
+
+  // Tell network manager to ignore the cards we want to do wifibroadcast on
   for(const auto& card: _broadcast_cards){
     WifiCardCommandHelper::network_manager_set_card_unmanaged(card->_wifi_card);
   }
@@ -101,11 +100,8 @@ void WBLink::takeover_cards() {
   // 1) Running openhd fist time: pcap_compile doesn't work (fatal error)
   // 2) Running openhd second time: works
   // I cannot find what's causing the issue - a sleep here is the worst solution, but r.n the only one I can come up with
+  // perhaps we'd need to wait for network manager to finish switching to ignoring the monitor mode cards ?!
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  // for now limited to the pi, since it breaks other kinds of connectivity
-  if(_platform.platform_type==PlatformType::RaspberryPi){
-    //OHDUtil::run_command("airmon-ng",{"check","kill"});
-  }
   m_console->debug("WBStreams::takeover_cards() end");
 }
 
