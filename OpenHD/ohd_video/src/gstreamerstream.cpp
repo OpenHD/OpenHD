@@ -352,6 +352,7 @@ void GStreamerStream::handle_change_bitrate_request(int value) {
   if(new_bitrate_kbits>1000 && new_bitrate_kbits<=max_bitrate_kbits){
     m_console->debug("Changing bitrate to: {} kBit/s",new_bitrate_kbits);
     try_dynamically_change_bitrate(new_bitrate_kbits);
+    m_curr_dynamic_bitrate=new_bitrate_kbits;
   }
 }
 
