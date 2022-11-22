@@ -717,6 +717,7 @@ void WBLink::loop_recalculate_stats() {
     }
     if(_profile.is_air){
       // stupid encoder rate control
+      // TODO improve me !
       // First, calculate the theoretical values
       const auto settings=m_settings->get_settings();
       const uint32_t max_rate_possible_kbits=openhd::get_max_rate_kbits(settings.wb_mcs_index);
