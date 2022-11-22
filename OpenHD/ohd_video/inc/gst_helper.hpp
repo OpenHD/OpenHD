@@ -55,14 +55,14 @@ static void initGstreamerOrThrow() {
 static std::string createSwEncoder(const CommonEncoderParams& common_encoder_params){
   std::stringstream ss;
   if(common_encoder_params.videoCodec==VideoCodec::H264){
-	ss << "x264enc bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
+	ss << "x264enc name=swencoder bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
 	" speed-preset=ultrafast"<<
 	" tune=zerolatency key-int-max=" << common_encoder_params.h26X_keyframe_interval <<
         " sliced-threads=0"<< //Note: Sliced threads has some advantages, but r.n it is incompatible with QOpenHD on a pi (decode)
         " ! ";
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
 	//TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param
-	ss << "x265enc bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
+	ss << "x265enc name=swencoder bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
 	" speed-preset=ultrafast"<<
 	" tune=zerolatency key-int-max=" << common_encoder_params.h26X_keyframe_interval << " ! ";
   }else{
@@ -112,10 +112,10 @@ static std::string createRpicamsrcStream(const int camera_number,
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   if (camera_number == -1) {
-    ss << fmt::format("rpicamsrc bitrate={} preview=0 ",
+    ss << fmt::format("rpicamsrc name=rpicamsrc bitrate={} preview=0 ",
                       bitrateBitsPerSecond);
   } else {
-    ss << fmt::format("rpicamsrc camera-number={} bitrate={} preview=0 ",
+    ss << fmt::format("rpicamsrc name=rpicamsrc camera-number={} bitrate={} preview=0 ",
                       camera_number, bitrateBitsPerSecond);
   }
   // keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe

@@ -31,11 +31,12 @@ class VEYEStream :public CameraStream {
   void start() override;
   void stop() override;
   std::string createDebug() override;
+  void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) override;
  private:
   void restartIfStopped() override;
   void restart_async();
  private:
-  std::string pipeline="";
+  std::string pipeline;
   //std::unique_ptr<std::thread> _veye_thread=nullptr;
   std::shared_ptr<spdlog::logger> m_console;
 };

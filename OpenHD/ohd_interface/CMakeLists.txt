@@ -10,23 +10,23 @@ add_library(OHDInterfaceLib STATIC) # initialized below
 add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 
 set(sources
-    "inc/DWifiCards.h"
-    "inc/OHDInterface.h"
-    "inc/OHDInterfaceSettings.h"
-    "inc/OHDWifiCard.hpp"
-    "inc/USBTetherListener.h"
+    "inc/wifi_card_discovery.h"
+    "inc/ohd_interface.h"
+    "inc/ohd_interface_settings.hpp"
+    "inc/wifi_card.hpp"
+    "inc/usb_tether_listener.h"
     "inc/validate_settings_helper.h"
-    "inc/WBStreams.h"
-    "inc/WBStreamsSettings.hpp"
-    "inc/WifiHotspot.h"
+    "inc/wb_link.h"
+    "inc/wb_link_settings.hpp"
+    "inc/wifi_hotspot.h"
     #"inc/wifi_command_helper2.h"
 
-    "src/DWifiCards.cpp"
-    "src/OHDInterface.cpp"
-    "src/USBTetherListener.cpp"
-    "src/WBStreams.cpp"
-    "src/WifiCardCommandHelper.hpp"
-    "src/WifiHotspot.cpp"
+    "src/wifi_card_discovery.cpp"
+    "src/ohd_interface.cpp"
+    "src/usb_tether_listener.cpp"
+    "src/wb_link.cpp"
+    "src/wifi_command_helper.hpp"
+    "src/wifi_hotspot.cpp"
     #"src/wifi_command_helper2.cpp"
 )
 
@@ -52,7 +52,7 @@ target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
 
 # find and include all the other libs
 #include(cmake/FindLibNL.cmake)
-#find_package(LibNL REQUIRED)
+##find_package(LibNL REQUIRED)
 #target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
 #target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
 

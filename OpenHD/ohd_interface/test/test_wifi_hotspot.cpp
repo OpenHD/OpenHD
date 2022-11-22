@@ -2,10 +2,11 @@
 // Created by consti10 on 21.05.22.
 //
 
-#include "WifiHotspot.h"
-#include <thread>
 #include <csignal>
+#include <thread>
+
 #include "openhd-util.hpp"
+#include "wifi_hotspot.h"
 
 int main(int argc, char *argv[]) {
 

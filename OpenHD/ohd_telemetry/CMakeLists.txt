@@ -6,10 +6,6 @@ set(CMAKE_CXX_STANDARD 17)
 add_library(OHDTelemetryLib STATIC) # initialized below
 add_library(OHDTelemetryLib::OHDTelemetryLib ALIAS OHDTelemetryLib)
 
-# from https://mavlink.io/en/mavgen_c/
-#You can supress the warnings in CMake using
-add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
-
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
 # Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
@@ -113,6 +109,8 @@ target_include_directories(OHDTelemetryLib
 
 # include mavlink (header-only)
 add_library(mavlink INTERFACE)
+# from https://mavlink.io/en/mavgen_c/
+#You can supress the warnings in CMake using
 target_compile_options(mavlink INTERFACE -Wno-address-of-packed-member -Wno-cast-align)
 target_include_directories(mavlink INTERFACE ../lib/c_library_v2_openhd/)
 target_link_libraries(OHDTelemetryLib PUBLIC mavlink)

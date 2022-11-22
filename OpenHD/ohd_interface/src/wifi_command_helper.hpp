@@ -5,9 +5,9 @@
 #ifndef OPENHD_WIFICARDSCOMMANDSHELPER_H
 #define OPENHD_WIFICARDSCOMMANDSHELPER_H
 
-#include "OHDWifiCard.hpp"
 #include "openhd-util.hpp"
 #include "validate_settings_helper.h"
+#include "wifi_card.hpp"
 
 // Helper for the commands we need to do stuff with a wifi card (like setting the frequency, txpower, monitor mode, ...)
 // In general, just a wrapper around the corresponding system commands.

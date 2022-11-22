@@ -8,16 +8,13 @@
 #include "openhd-settings2.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-settings.hpp"
+#include "openhd_bitrate_conversions.hpp"
 #include "mavlink_settings/ISettingsComponent.hpp"
 
 #include "camera.hpp"
 #include "camera_settings.hpp"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about a camera
-
-// Where the settings (json) for each discovered camera are stored
-static const std::string VIDEO_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("video/");
-
 // Camera Holder is used to
 // 1) Differentiate between immutable information (camera) and
 // 2) mutable camera settings.
@@ -30,7 +27,7 @@ class CameraHolder:
  public:
   explicit CameraHolder(Camera camera,std::shared_ptr<openhd::ActionHandler> opt_action_handler= nullptr):
        m_camera(std::move(camera)),m_opt_action_handler(std::move(opt_action_handler)),
-       openhd::settings::PersistentSettings<CameraSettings>(VIDEO_SETTINGS_DIRECTORY){
+       openhd::settings::PersistentSettings<CameraSettings>(get_video_settings_directory()){
     // read previous settings or create default ones
     init();
     // dirty, propagate changes to the video codec back to the link (ohd_interface)
@@ -97,12 +94,6 @@ class CameraHolder:
       // r.n we only write the sensor name for cameras detected via libcamera
       ret.push_back(openhd::Setting{"V_CAM_SENSOR",openhd::StringSetting{m_camera.sensor_name,c_read_only_param}});
     }
-    if(m_camera.supports_rotation()){
-      auto c_rotation=[this](std::string,int value) {
-        return set_camera_rotation(value);
-      };
-      ret.push_back(openhd::Setting{"V_CAM_ROT_DEG",openhd::IntSetting{get_settings().camera_rotation_degree,c_rotation}});
-    }
     if(m_camera.supports_awb()){
       auto cb=[this](std::string,int value) {
         return set_camera_awb(value);
@@ -115,18 +106,26 @@ class CameraHolder:
       };
       ret.push_back(openhd::Setting{"V_EXP_MODE",openhd::IntSetting{get_settings().exposure_mode,cb}});
     }
-    if(m_camera.type==CameraType::RaspberryPiCSI){
-      auto c_vertical_flip=[this](std::string,int value) {
-        return set_vertical_flip(value);
+    if(m_camera.supports_rotation()){
+      auto c_rotation=[this](std::string,int value) {
+        return set_camera_rotation(value);
       };
+      ret.push_back(openhd::Setting{"V_CAM_ROT_DEG",openhd::IntSetting{get_settings().camera_rotation_degree,c_rotation}});
+    }
+    if(m_camera.supports_hflip_vflip()){
       auto c_horizontal_flip=[this](std::string,int value) {
         return set_horizontal_flip(value);
       };
-      auto c_intra_refresh_type=[this](std::string,int value) {
-        return set_intra_refresh_type(value);
+      auto c_vertical_flip=[this](std::string,int value) {
+        return set_vertical_flip(value);
       };
       ret.push_back(openhd::Setting{"V_VERT_FLIP",openhd::IntSetting{get_settings().vertical_flip,c_vertical_flip}});
       ret.push_back(openhd::Setting{"V_HORIZ_FLIP",openhd::IntSetting{get_settings().horizontal_flip,c_horizontal_flip}});
+    }
+    if(m_camera.type==CameraType::RaspberryPiCSI){
+      auto c_intra_refresh_type=[this](std::string,int value) {
+        return set_intra_refresh_type(value);
+      };
       ret.push_back(openhd::Setting{"V_INTRA_REFRESH",openhd::IntSetting{get_settings().h26x_intra_refresh_type,c_intra_refresh_type}});
     }
     return ret;
@@ -285,6 +284,10 @@ class CameraHolder:
   }
   [[nodiscard]] std::string get_short_name()const{
     return camera_type_to_string(m_camera.type);
+  }
+  // Where the settings (json) for each discovered camera are stored
+  static std::string get_video_settings_directory(){
+    return std::string(BASE_PATH)+std::string("video/");
   }
 };
 

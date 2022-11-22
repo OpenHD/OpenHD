@@ -1,11 +1,10 @@
 #include <iostream>
 
+#include "ohd_interface.h"
+#include "openhd-platform-discover.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
-#include "openhd-platform-discover.hpp"
 #include "openhd-util.hpp"
-
-#include "OHDInterface.h"
 
 // Using test_interface:
 // 1) run it as "air" on whatever device you want to use as the air unit

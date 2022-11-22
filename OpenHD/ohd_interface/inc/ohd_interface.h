@@ -8,23 +8,24 @@
 #include <memory>
 #include <utility>
 
-#include "USBTetherListener.h"
-#include "WBStreams.h"
-#include "WifiHotspot.h"
-#include "openhd-profile.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-led-codes.hpp"
 #include "mavlink_settings/ISettingsComponent.hpp"
-#include "OHDInterfaceSettings.h"
+#include "ohd_interface_settings.hpp"
+#include "openhd-action-handler.hpp"
 #include "openhd-external-device.hpp"
+#include "openhd-led-codes.hpp"
+#include "openhd-platform.hpp"
+#include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
+#include "usb_tether_listener.h"
+#include "wb_link.h"
+#include "wifi_hotspot.h"
 
 class OHDInterface :public openhd::ISettingsComponent{
  public:
   /**
    * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
    */
-  explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1);
+  explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   OHDInterface(const OHDInterface&)=delete;
   OHDInterface(const OHDInterface&&)=delete;
   // register callback that is called in regular intervals with link statistics
@@ -56,7 +57,7 @@ class OHDInterface :public openhd::ISettingsComponent{
  private:
   const OHDProfile profile;
   const OHDPlatform platform;
-  std::unique_ptr<WBStreams> m_wb_streams;
+  std::unique_ptr<WBLink> m_wb_link;
   std::unique_ptr<USBTetherListener> m_usb_tether_listener;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
   std::unique_ptr<openhd::LEDBlinker> m_error_blinker;

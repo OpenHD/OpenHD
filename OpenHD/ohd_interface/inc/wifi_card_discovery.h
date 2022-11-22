@@ -3,11 +3,11 @@
 
 #include <array>
 #include <chrono>
-#include <vector>
 #include <optional>
+#include <vector>
 
-#include "OHDWifiCard.hpp"
 #include "openhd-platform.hpp"
+#include "wifi_card.hpp"
 
 /**
  * Discover all connected wifi cards.

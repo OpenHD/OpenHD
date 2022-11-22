@@ -2,12 +2,15 @@
 // Created by consti10 on 19.07.22.
 //
 
-#ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_OHDINTERFACESETTINGS_H_
-#define OPENHD_OPENHD_OHD_INTERFACE_INC_OHDINTERFACESETTINGS_H_
+#ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_OHD_INTERFACE_SETTINGS_HPP_
+#define OPENHD_OPENHD_OHD_INTERFACE_INC_OHD_INTERFACE_SETTINGS_HPP_
+
+#include "openhd-settings2.hpp"
+#include "wb_link_settings.hpp"
 
 namespace openhd{
 
-struct OHDInterfaceSettings{
+struct OHDInterfaceSettings {
   bool enable_wifi_hotspot=false;
   uint32_t hotspot_wifi_channel=8;
 };
@@ -32,4 +35,4 @@ class OHDInterfaceSettingsHolder:public openhd::settings::PersistentSettings<OHD
 };
 
 }
-#endif //OPENHD_OPENHD_OHD_INTERFACE_INC_OHDINTERFACESETTINGS_H_
+#endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_OHD_INTERFACE_SETTINGS_HPP_

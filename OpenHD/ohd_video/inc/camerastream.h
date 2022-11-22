@@ -6,6 +6,7 @@
 
 #include "camera_holder.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-action-handler.hpp"
 
 /**
  * Every camera stream should inherit from this class.
@@ -55,14 +56,20 @@ class CameraStream {
    * restart a camera stream if it has stopped / crashed for some reason.
    */
   virtual void restartIfStopped() = 0;
+  /**
+   * Handle a change in the bitrate, most likely requested by the RF link.
+   * This is the only value an implementation should support changing without a complete restart of the pipeline /
+   * stream. It is okay to not implement this interface method properly, e.g leave it empty.
+   */
+   virtual void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb)=0;
  public:
-  std::shared_ptr<CameraHolder> _camera_holder;
+  std::shared_ptr<CameraHolder> m_camera_holder;
  protected:
-  const PlatformType _platform_type;
+  const PlatformType m_platform_type;
   // This is the UDP port the video (for now rtp) stream is send to.
   // It then needs to be picked up, most likely by a wfb instance created by
   // ohd-interface
-  const uint16_t _video_udp_port;
+  const uint16_t m_video_udp_port;
 };
 
 #endif

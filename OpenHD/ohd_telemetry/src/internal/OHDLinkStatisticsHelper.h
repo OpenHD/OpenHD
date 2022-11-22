@@ -45,7 +45,7 @@ stats_total_all_wifibroadcast_streams_pack(const uint8_t system_id,const uint8_t
   tmp.curr_telemetry_tx_bps=all_stats.curr_telemetry_tx_bps;
   tmp.unused_0=all_stats.curr_rx_packet_loss_perc;
   tmp.unused_1=all_stats.curr_n_of_big_gaps;
-  tmp.unused_2=0;
+  tmp.unused_2=all_stats.count_video_tx_dropped_packets;
   tmp.unused_3=0;
   mavlink_msg_openhd_stats_total_all_wifibroadcast_streams_encode(system_id,component_id,&msg.m,&tmp);
   return msg;

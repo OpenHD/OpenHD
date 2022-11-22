@@ -48,7 +48,7 @@ bool UDPEndpoint::sendMessageImpl(const MavlinkMessage &message) {
 }
 
 std::unique_ptr<UDPEndpoint> UDPEndpoint::createEndpointForOHDWifibroadcast(const bool isAir) {
-  const std::string tag = std::string("WBUDPEndpoint").append(isAir ? "A" : "G");
+  const std::string tag = std::string("udp_endp").append(isAir ? "A" : "G");
   int txp;
   int rxp;
   // tx and rx is swapped on air and ground to debug this module locally.

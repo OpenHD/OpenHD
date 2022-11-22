@@ -13,15 +13,22 @@ namespace openhd{
 // Wifi channel and the corresponding frequency, in mHz.
 // "standard" : listed under wikipedia or not.
 struct WifiChannel{
+  // frequency in mhz, recommended to use
   uint32_t frequency;
-  uint32_t channel;
+  // channel corresponding to this frequency, error-prone compared to the frequency.
+  int channel;
+  // weather this channel is listed under wikipedia or not.
+  // Channels not listed under wikipedia might still work on some cards, given the driver has been modified.
+  // generally, they are not legally usable in most countries though.
   bool is_standard;
 };
 
 
 // These are not valid 2.4G wifi channel(s) but some cards aparently can do them, too
 // From https://github.com/OpenHD/linux/blob/092115ae6a980feaa09722690891d99da3afb55c/drivers/net/wireless/ath/ath9k/common-init.c#L39
-// NOTE: channel and frequency seem to be off by one
+// NOTE: channel and frequency seem to be off by one - it doesn't really matter though,
+// since in OpenHD we never use the channel number (since it is prone to errors, even in the linux kernel) but rather
+// use the frequency in mhz, which is well defined.
 static std::vector<WifiChannel> get_channels_below_standard_2G_wifi(){
   return std::vector<WifiChannel>{
       WifiChannel{2312, 34,false}, /* Channel XX */
@@ -50,24 +57,24 @@ static std::vector<WifiChannel> get_channels_below_standard_2G_wifi(){
 // https://en.wikipedia.org/wiki/List_of_WLAN_channels#2.4_GHz_(802.11b/g/n/ax)
 static std::vector<WifiChannel> get_channels_2G_standard() {
   return std::vector<WifiChannel>{
-	  WifiChannel{2412,1,true},
-	  WifiChannel{2417,2,true},
-	  WifiChannel{2422,3,true},
-	  WifiChannel{2427,4,true},
-	  WifiChannel{2432,5,true},
-	  WifiChannel{2437,6,true},
-	  WifiChannel{2442,7,true},
-	  WifiChannel{2447,8,true},
-	  WifiChannel{2452,9,true},
-	  WifiChannel{2457,10,true},
-	  WifiChannel{2462,11,true},
-          // Temporary disabled - they won't work unil we patch this shit in the kernel
-	  WifiChannel{2467,12,true},
-	  WifiChannel{2472,13,true},
-	  // until here it is consistent (5Mhz increments)
-	  // this one is neither allowed in EU nor USA
-	  // (only japan under 11b)
-	  //WifiChannel{2484,14},
+      WifiChannel{2412,1,true},
+      WifiChannel{2417,2,true},
+      WifiChannel{2422,3,true},
+      WifiChannel{2427,4,true},
+      WifiChannel{2432,5,true},
+      WifiChannel{2437,6,true},
+      WifiChannel{2442,7,true},
+      WifiChannel{2447,8,true},
+      WifiChannel{2452,9,true},
+      WifiChannel{2457,10,true},
+      WifiChannel{2462,11,true},
+      // Temporary disabled - they won't work unil we patch this shit in the kernel
+      WifiChannel{2467,12,true},
+      WifiChannel{2472,13,true},
+      // until here it is consistent (5Mhz increments)
+      // this one is neither allowed in EU nor USA
+      // (only japan under 11b)
+      //WifiChannel{2484,14},
   };
 };
 
@@ -126,35 +133,35 @@ static std::vector<WifiChannel> get_channels_5G_below(){
 // These are what iw list lists for rtl8812au
 static std::vector<WifiChannel> get_channels_5G_rtl8812au() {
   return std::vector<WifiChannel>{
-	  //TODO {5170,34},
-	  {5180,36,true},
-	  {5200,40,true},
-	  {5220,44,true},
-	  {5240,48,true},
-	  {5260,52,true},
-	  {5280,56,true},
-	  {5300,60,true},
-	  {5320,64,true},
-	  {5500,100,true},
-	  {5520,104,true},
-	  {5540,108,true},
-	  {5560,112,true},
-	  {5580,116,true},
-	  {5600,120,true},
-	  {5620,124,true},
-	  {5640,128,true},
-	  {5660,132,true},
-	  {5680,136,true},
-	  {5700,140,true},
-	  {5720,144,true},
-	  {5745,149,true},
-	  {5765,153,true},
-	  {5785,157,true},
-	  {5805,161,true},
-	  {5825,165,true},
-	  {5845,169,true},
-	  {5865,173,true},
-	  {5885,177,true},
+      //TODO {5170,34},
+      {5180,36,true},
+      {5200,40,true},
+      {5220,44,true},
+      {5240,48,true},
+      {5260,52,true},
+      {5280,56,true},
+      {5300,60,true},
+      {5320,64,true},
+      {5500,100,true},
+      {5520,104,true},
+      {5540,108,true},
+      {5560,112,true},
+      {5580,116,true},
+      {5600,120,true},
+      {5620,124,true},
+      {5640,128,true},
+      {5660,132,true},
+      {5680,136,true},
+      {5700,140,true},
+      {5720,144,true},
+      {5745,149,true},
+      {5765,153,true},
+      {5785,157,true},
+      {5805,161,true},
+      {5825,165,true},
+      {5845,169,true},
+      {5865,173,true},
+      {5885,177,true},
   };
 };
 
@@ -167,17 +174,17 @@ static std::vector<WifiChannel> get_channels_5G(const bool include_nonstandard_c
   return ret;
 }
 
-static bool is_valid_frequency_2G(int frequency,bool include_nonstandard_channels=false){
+static bool is_valid_frequency_2G(uint32_t frequency,bool include_nonstandard_channels=false){
   const auto supported=get_channels_2G(include_nonstandard_channels);
   for(const auto& value:supported){
-	if(value.frequency==frequency)return true;
+    if(value.frequency==frequency)return true;
   }
   return false;
 }
-static bool is_valid_frequency_5G(int frequency,bool include_nonstandard_channels=false){
+static bool is_valid_frequency_5G(uint32_t frequency,bool include_nonstandard_channels=false){
   const auto supported=get_channels_5G(include_nonstandard_channels);
   for(const auto& value:supported){
-	if(value.frequency==frequency)return true;
+    if(value.frequency==frequency)return true;
   }
   return false;
 }
@@ -191,11 +198,11 @@ static bool is_2G_and_assert(uint32_t frequency){
   return false;
 }
 
-static bool is_valid_channel_width(int channel_width){
+static bool is_valid_channel_width(uint32_t channel_width){
   return channel_width==20 || channel_width==40;
 }
 
-static bool is_valid_mcs_index(int mcs_index){
+static bool is_valid_mcs_index(uint32_t mcs_index){
   return mcs_index>=1 && mcs_index<=7;
 }
 
@@ -203,7 +210,7 @@ static bool is_valid_mcs_index(int mcs_index){
 // No wifi card will ever do 30W, but some cards increase their tx power a bit more
 // when you set a higher value (I think)
 static bool is_valid_tx_power_milli_watt(int tx_power_mw){
-  return tx_power_mw>=10 && tx_power_mw<= 30000;
+  return tx_power_mw>=10 && tx_power_mw<= 30*1000;
 }
 
 static bool is_valid_fec_block_length(int block_length){
@@ -227,12 +234,48 @@ static float milli_dbm_to_milli_watt(float milli_dbm){
 static uint32_t milli_watt_to_milli_dbm(uint32_t milli_watt){
   const double tmp=std::log10(static_cast<double>(milli_watt)/1.0);
   const double milli_dbm=tmp*10*100;
-  return static_cast<uint32_t>(milli_dbm);
+  //return static_cast<uint32_t>(milli_dbm);
+  return std::lround(milli_dbm);
 }
 // However, this is weird:
 // https://linux.die.net/man/8/iwconfig
 // the power in dBm is P = 30 + 10.log(W)
 // log10(x/1)==log(x) / log(10) = ~2.3
+
+// TODO improve me -R.n I am really conservative here
+// Returns the maximum theoretical bitrate in bits per second for the given configuration
+/*static uint32_t get_max_rate_kbits_for_configuration(bool is_2g,uint32_t mcs_index,uint32_t channel_width){
+  if(is_2g){
+    // 2G is always 20Mhz channel width
+    switch (mcs_index) {
+      case 1:
+        break;
+    }
+  }
+  return 0;
+}*/
+
+// TODO improve me - R.n complete bollocks
+static uint32_t get_max_rate_kbits(uint32_t mcs_index){
+  switch (mcs_index) {
+    case 1:
+      return 5500;
+    case 2:
+      return 11000;
+    case 3:
+      return 12000;
+    case 4:
+      return 19500;
+    case 5:
+      return 24000;
+    case 6:
+      return 36000;
+    default:
+      break;
+  }
+  return 5500;
+}
+
 
 
 }

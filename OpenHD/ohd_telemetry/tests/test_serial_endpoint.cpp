@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
   options.flow_control=false;
   options.enable_debug=true;
 
-  auto serial_endpoint=std::make_unique<SerialEndpoint>("SerialEndpoint3Test",options);
+  auto serial_endpoint=std::make_unique<SerialEndpoint>("ser_test",options);
   serial_endpoint->registerCallback([](MavlinkMessage &msg) {
 	//debugMavlinkMessage(msg.m, "SerialTest3");
   });
