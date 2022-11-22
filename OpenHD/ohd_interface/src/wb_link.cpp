@@ -392,7 +392,7 @@ bool WBLink::set_frequency(int frequency) {
       cards_support_extra_channels= all_cards_support_extra_channels_2G(m_broadcast_cards);
     }
     m_console->debug("cards_support_extra_channels:"+OHDUtil::yes_or_no(cards_support_extra_channels));
-    if(m_settings->get_settings().configured_for_2G()){
+    /*if(m_settings->get_settings().configured_for_2G()){
       if(!openhd::is_valid_frequency_2G(frequency,cards_support_extra_channels)){
         m_console->warn("Invalid 2.4G frequency {}",frequency);
         return false;
@@ -402,7 +402,7 @@ bool WBLink::set_frequency(int frequency) {
         m_console->warn("Invalid 5G frequency {}",frequency);
         return false;
       }
-    }
+    }*
   }
   m_settings->unsafe_get_settings().wb_frequency=frequency;
   m_settings->persist();
