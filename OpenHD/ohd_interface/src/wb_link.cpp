@@ -15,40 +15,41 @@ static const char *KEYPAIR_FILE_DRONE = "/usr/local/share/openhd/drone.key";
 static const char *KEYPAIR_FILE_GROUND = "/usr/local/share/openhd/gs.key";
 
 WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards1,
-                     std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
-   _profile(std::move(profile)),_platform(platform),_broadcast_cards(std::move(broadcast_cards1)),
+                     std::shared_ptr<openhd::ActionHandler> opt_action_handler) : m_profile(std::move(profile)),
+      m_platform(platform),
+      m_broadcast_cards(std::move(broadcast_cards1)),
    m_disable_all_frequency_checks(OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS)),
    m_opt_action_handler(std::move(opt_action_handler))
 {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
-  m_console->debug("WBStreams::WBStreams: {}",_broadcast_cards.size());
+  m_console->debug("WBStreams::WBStreams: {}", m_broadcast_cards.size());
   m_console->debug("WBStreams::m_disable_all_frequency_checks:"+OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks
-  if(_broadcast_cards.empty()) {
+  if(m_broadcast_cards.empty()) {
     // NOTE: Here we crash, since it would be a programmer(s) error to create a WBStreams instance without at least 1 wifi card.
     // In OHDInterface, we handle it more gracefully with an error code.
     m_console->error("Without at least one wifi card, the stream(s) cannot be started");
     exit(1);
   }
   // more than 4 cards would be completely insane, most likely a programming error
-  assert(_broadcast_cards.size()<=4);
+  assert(m_broadcast_cards.size()<=4);
   // sanity checking
-  for(const auto& card: _broadcast_cards){
+  for(const auto& card: m_broadcast_cards){
     assert(card->get_settings().use_for==WifiUseFor::MonitorMode);
     assert(card->_wifi_card.supports_2ghz || card->_wifi_card.supports_5ghz);
   }
-  if (_profile.is_air && _broadcast_cards.size() > 1) {
+  if (m_profile.is_air && m_broadcast_cards.size() > 1) {
     // We cannot use more than 1 wifi card for injection
     m_console->warn("dangerous, the air unit should not have more than 1 wifi card for wifibroadcast");
     // We just use the first one, this points to a upper level programming error or something weird.
-    _broadcast_cards.resize(1);
+    m_broadcast_cards.resize(1);
   }
   // this fetches the last settings, otherwise creates default ones
-  m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(openhd::tmp_convert(_broadcast_cards));
+  m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(openhd::tmp_convert(m_broadcast_cards));
   // check if the cards connected match the previous settings.
   // For now, we check if the first wb card can do 2 / 4 ghz, and assume the rest can do the same
-  const auto first_card=_broadcast_cards.at(0)->_wifi_card;
+  const auto first_card= m_broadcast_cards.at(0)->_wifi_card;
   if(m_settings->get_settings().configured_for_2G()){
     if(! first_card.supports_2ghz){
       // we need to switch to 5ghz, since the connected card cannot do 2ghz
@@ -96,7 +97,7 @@ void WBLink::takeover_cards_monitor_mode() {
   // to ignore the cards we are doing wifibroadcast with, instead of killing all processes that might interfere with
   // wifibroadcast and therefore making other networking increadibly hard.
   // Tell network manager to ignore the cards we want to do wifibroadcast on
-  for(const auto& card: _broadcast_cards){
+  for(const auto& card: m_broadcast_cards){
     WifiCardCommandHelper::network_manager_set_card_unmanaged(card->_wifi_card);
   }
   OHDUtil::run_command("rfkill",{"unblock","all"});
@@ -107,7 +108,7 @@ void WBLink::takeover_cards_monitor_mode() {
   // perhaps we'd need to wait for network manager to finish switching to ignoring the monitor mode cards ?!
   std::this_thread::sleep_for(std::chrono::seconds(1));
   // now we can enable monitor mode on the given cards.
-  for(const auto& card: _broadcast_cards) {
+  for(const auto& card: m_broadcast_cards) {
     WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
     WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
     WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
@@ -119,7 +120,7 @@ void WBLink::takeover_cards_monitor_mode() {
 void WBLink::configure_cards() {
   m_console->debug("WBStreams::configure_cards() begin");
   // NOTE: Cards need to be in monitor mode
-  for(const auto& card: _broadcast_cards){
+  for(const auto& card: m_broadcast_cards){
     const bool width_40= m_settings->get_settings().wb_channel_width==40;
     WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card, m_settings->get_settings().wb_frequency,width_40);
     // TODO check if this works - on rtl8812au, the displayed value at least changes
@@ -150,16 +151,14 @@ void WBLink::configure_streams() {
 }
 
 void WBLink::configure_telemetry() {
-  m_console->debug("Streams::configure_telemetry()isAir:"+OHDUtil::yes_or_no(_profile.is_air));
+  m_console->debug("Streams::configure_telemetry()isAir:"+OHDUtil::yes_or_no(m_profile.is_air));
   // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
   // uses 2 UDP streams in oposite directions.
-  auto radioPort1 =
-      _profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
-  auto radioPort2 =
-      _profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
-  auto udpPort1 = _profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX
+  auto radioPort1 = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
+  auto radioPort2 = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
+  auto udpPort1 = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX
                                   : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX;
-  auto udpPort2 = _profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX
+  auto udpPort2 = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX
                                   : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX;
   udpTelemetryRx = createUdpWbRx(radioPort1, udpPort1);
   udpTelemetryTx = createUdpWbTx(radioPort2, udpPort2,false);
@@ -170,7 +169,7 @@ void WBLink::configure_telemetry() {
 void WBLink::configure_video() {
   m_console->debug("Streams::configure_video()");
   // Video is unidirectional, aka always goes from air pi to ground pi
-  if (_profile.is_air) {
+  if (m_profile.is_air) {
     auto primary = createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP,true,1024*1024*25);
     primary->runInBackground();
     auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,true,1024*1024*10);
@@ -194,7 +193,8 @@ std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int 
   RadiotapHeader::UserSelectableParams wifiParams{channel_width, false, 0, false, mcs_index};
   TOptions options{};
   options.radio_port = radio_port;
-  const char *keypair_file = _profile.is_air ? KEYPAIR_FILE_DRONE : KEYPAIR_FILE_GROUND;
+  const char *keypair_file =
+      m_profile.is_air ? KEYPAIR_FILE_DRONE : KEYPAIR_FILE_GROUND;
   if(OHDFilesystemUtil::exists(keypair_file)){
     options.keypair = std::string(keypair_file);
     m_console->debug("Using key from file {}",options.keypair->c_str());
@@ -219,7 +219,7 @@ std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int 
     options.fec_k=0;
     options.fec_percentage=0;
   }
-  options.wlan = _broadcast_cards.at(0)->_wifi_card.interface_name;
+  options.wlan = m_broadcast_cards.at(0)->_wifi_card.interface_name;
   m_console->debug("Starting WFB_TX with MCS:{}",mcs_index);
   return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port,udp_recv_buff_size);
 }
@@ -231,7 +231,8 @@ std::unique_ptr<UDPWBReceiver> WBLink::createUdpWbRx(uint8_t radio_port, int udp
   // TODO REMOVE ME FOR TESTING
   //options.enableLogAlive = udp_port==5600;
   options.radio_port = radio_port;
-  const char *keypair_file = _profile.is_air ? KEYPAIR_FILE_DRONE : KEYPAIR_FILE_GROUND;
+  const char *keypair_file =
+      m_profile.is_air ? KEYPAIR_FILE_DRONE : KEYPAIR_FILE_GROUND;
   if(OHDFilesystemUtil::exists(keypair_file)){
     options.keypair = std::string(keypair_file);
     m_console->debug("Using key from file {}",options.keypair->c_str());
@@ -274,9 +275,6 @@ std::string WBLink::createDebug(){
     ss<<"VidRx :"<<rxvid->createDebug();
   }
   ss<< m_last_all_stats <<"\n";
-  /*if(udpTelemetryTx){
-        ss<<"PPS telemetry:"<<udpTelemetryTx->get_current_packets_per_second()<<"\n";
-  }*/
   return ss.str();
 }
 
@@ -307,7 +305,7 @@ void WBLink::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
 
 std::vector<std::string> WBLink::get_rx_card_names() const {
   std::vector<std::string> ret{};
-  for(const auto& card: _broadcast_cards){
+  for(const auto& card: m_broadcast_cards){
     ret.push_back(card->_wifi_card.interface_name);
   }
   return ret;
@@ -315,7 +313,7 @@ std::vector<std::string> WBLink::get_rx_card_names() const {
 
 bool WBLink::ever_received_any_data(){
   std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
-  if(_profile.is_air){
+  if(m_profile.is_air){
     // check if we got any telemetry data, we never receive video data
     assert(udpTelemetryRx);
     return udpTelemetryRx->anyDataReceived();
@@ -347,7 +345,6 @@ static void convert(openhd::link_statistics::StatsFECVideoStreamRx& dest,const F
 void WBLink::set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) {
   m_stats_callback =std::move(stats_callback);
 }
-
 
 void WBLink::restart() {
   std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
@@ -390,9 +387,10 @@ bool WBLink::set_frequency(int frequency) {
   }else{
     // channels below and above the normal channels, not allowed in most countries
     bool cards_support_extra_channels=false;
-    if(_platform.platform_type==PlatformType::RaspberryPi || _platform.platform_type==PlatformType::Jetson){
+    if(m_platform.platform_type==PlatformType::RaspberryPi ||
+        m_platform.platform_type==PlatformType::Jetson){
       // modified kernel
-      cards_support_extra_channels= all_cards_support_extra_channels_2G(_broadcast_cards);
+      cards_support_extra_channels= all_cards_support_extra_channels_2G(m_broadcast_cards);
     }
     m_console->debug("cards_support_extra_channels:"+OHDUtil::yes_or_no(cards_support_extra_channels));
     if(m_settings->get_settings().configured_for_2G()){
@@ -428,7 +426,7 @@ bool WBLink::set_txpower(int tx_power) {
   m_settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power;
   m_settings->persist();
   // We can update the tx power without restarting the streams
-  for(const auto& holder:_broadcast_cards){
+  for(const auto& holder: m_broadcast_cards){
     const auto& card=holder->_wifi_card;
     WifiCardCommandHelper::set_txpower(card,tx_power);
   }
@@ -551,7 +549,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   ret.push_back(Setting{WB_MCS_INDEX,change_wb_mcs_index});
   ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
 
-  if(_profile.is_air){
+  if(m_profile.is_air){
     auto change_video_fec_block_length=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_block_length,[this](std::string,int value){
                                                               return set_fec_block_length(value);
                                                             }};
@@ -571,7 +569,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 }
 
 bool WBLink::validate_cards_support_setting_mcs_index() {
-  for(const auto& card_handle:_broadcast_cards){
+  for(const auto& card_handle: m_broadcast_cards){
     if(!wifi_card_supports_variable_mcs(card_handle->_wifi_card)){
       return false;
     }
@@ -580,7 +578,7 @@ bool WBLink::validate_cards_support_setting_mcs_index() {
 }
 
 bool WBLink::validate_cards_support_setting_channel_width() {
-  for(const auto& card_handle:_broadcast_cards){
+  for(const auto& card_handle: m_broadcast_cards){
     if(!wifi_card_supports_40Mhz_channel_width(card_handle->_wifi_card)){
       return false;
     }
@@ -625,7 +623,7 @@ void WBLink::loop_recalculate_stats() {
     }
     stats_total_all_streams.curr_telemetry_rx_bps=
         last_stats_per_rx_stream.at(0).wb_rx_stats.curr_bits_per_second;
-    if(_profile.is_air){
+    if(m_profile.is_air){
       stats_total_all_streams.curr_rx_packet_loss_perc=
           last_stats_per_rx_stream.at(0).wb_rx_stats.curr_packet_loss_percentage;
       stats_total_all_streams.curr_n_of_big_gaps=
@@ -646,7 +644,7 @@ void WBLink::loop_recalculate_stats() {
       stats_total_all_streams.count_video_tx_injections_error_hint+=videoTx->get_count_tx_injections_error_hint();
       stats_total_all_streams.count_video_tx_dropped_packets+=videoTx->get_n_dropped_packets();
     }
-    if(_profile.is_air){
+    if(m_profile.is_air){
       if(!udpVideoTxList.empty()){
         stats_total_all_streams.curr_video0_bps=udpVideoTxList.at(0)->get_current_provided_bits_per_second();
         stats_total_all_streams.curr_video0_tx_pps=udpVideoTxList.at(0)->get_current_packets_per_second();
@@ -671,10 +669,10 @@ void WBLink::loop_recalculate_stats() {
     // dBm is per card, not per stream
     assert(stats_all_cards.size()>=4);
     // only populate actually used cards
-    assert(_broadcast_cards.size()<=stats_all_cards.size());
-    for(int i=0;i<_broadcast_cards.size();i++){
+    assert(m_broadcast_cards.size()<=stats_all_cards.size());
+    for(int i=0;i< m_broadcast_cards.size();i++){
       auto& card = stats_all_cards.at(i);
-      if(_profile.is_air){
+      if(m_profile.is_air){
         // on air, we use the dbm reported by the telemetry stream
         card.rx_rssi=
             last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
@@ -700,7 +698,7 @@ void WBLink::loop_recalculate_stats() {
     //
     std::optional<openhd::link_statistics::StatsFECVideoStreamRx> stats_video_stream0_rx=std::nullopt;
     std::optional<openhd::link_statistics::StatsFECVideoStreamRx> stats_video_stream1_rx=std::nullopt;
-    if(!_profile.is_air){
+    if(!m_profile.is_air){
       if(last_stats_per_rx_stream.at(1).fec_stream_stats.has_value()){
         stats_video_stream0_rx=openhd::link_statistics::StatsFECVideoStreamRx{};
         convert(stats_video_stream0_rx.value(),
@@ -716,7 +714,7 @@ void WBLink::loop_recalculate_stats() {
     if(m_stats_callback){
       m_stats_callback(final_stats);
     }
-    if(_profile.is_air){
+    if(m_profile.is_air){
       // stupid encoder rate control
       // TODO improve me !
       // First, calculate the theoretical values

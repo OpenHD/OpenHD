@@ -112,9 +112,9 @@ class WBLink {
   const bool m_disable_all_frequency_checks;
   int m_curr_video_codec=0;
  private:
-  const OHDProfile _profile;
-  const OHDPlatform _platform;
-  std::vector<std::shared_ptr<WifiCardHolder>> _broadcast_cards;
+  const OHDProfile m_profile;
+  const OHDPlatform m_platform;
+  std::vector<std::shared_ptr<WifiCardHolder>> m_broadcast_cards;
   bool m_recalculate_stats_thread_run;
   std::unique_ptr<std::thread> m_recalculate_stats_thread;
   void loop_recalculate_stats();
