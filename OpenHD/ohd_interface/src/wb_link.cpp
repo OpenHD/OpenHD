@@ -402,7 +402,7 @@ bool WBLink::set_frequency(int frequency) {
         m_console->warn("Invalid 5G frequency {}",frequency);
         return false;
       }
-    }*
+    }*/
   }
   m_settings->unsafe_get_settings().wb_frequency=frequency;
   m_settings->persist();
