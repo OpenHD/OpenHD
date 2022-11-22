@@ -723,7 +723,7 @@ void WBLink::loop_recalculate_stats() {
       // First, calculate the theoretical values
       const auto settings=m_settings->get_settings();
       const uint32_t max_rate_possible_kbits=openhd::get_max_rate_kbits(settings.wb_mcs_index);
-      m_console->debug("mcs index:{}",settings.wb_mcs_index);
+      //m_console->debug("mcs index:{}",settings.wb_mcs_index);
       // we assume X% of the theoretical link bandwidth is available for the primary video stream
       // 2.4G are almost always completely full of noise, which is why we go with a more conservative
       // perc. value for them. NOTE: It is stupid to reason about the RF environment of the user, but feedback from
