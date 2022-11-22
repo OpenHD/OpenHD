@@ -200,8 +200,9 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	}
 	case WiFiCardType::Realtek8812au: {
 	 // Known issue: Realtek8812au reports 2.4 and 5G, but only supports 5G in monitor mode
+         // 22.10.22: Actually, rtl8812au supports both 2.4G and 5G in monitor mode.
 	  card.supports_5ghz=true;
-	  card.supports_2ghz =false;
+	  card.supports_2ghz = true;
 	  card.supports_rts = true;
 	  card.supports_injection = true;
 	  card.supports_hotspot = false;
