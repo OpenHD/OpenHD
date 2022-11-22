@@ -360,8 +360,12 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
   if(recommended_encoder_bitrate_kbits>max_bitrate_kbits){
     recommended_encoder_bitrate_kbits=max_bitrate_kbits;
   }
-  m_console->debug("Changing bitrate to {} kBit/s",recommended_encoder_bitrate_kbits);
-  try_dynamically_change_bitrate(recommended_encoder_bitrate_kbits);
+  if(m_curr_dynamic_bitrate_kbits!=recommended_encoder_bitrate_kbits){
+    m_console->debug("Changing bitrate to {} kBit/s",recommended_encoder_bitrate_kbits);
+    if(try_dynamically_change_bitrate(recommended_encoder_bitrate_kbits)){
+      m_curr_dynamic_bitrate_kbits=recommended_encoder_bitrate_kbits;
+    }
+  }
 }
 
 bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
