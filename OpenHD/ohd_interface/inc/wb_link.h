@@ -67,6 +67,7 @@ class WBLink {
   bool set_fec_block_length(int block_length);
   bool set_fec_percentage(int fec_percentage);
   bool set_wb_fec_block_length_auto_enable(int value);
+  bool set_enable_wb_video_variable_bitrate(int value);
   // set the channel width
   // TODO doesn't work yet, aparently we need more than only the pcap header.
   bool set_channel_width(int channel_width);
@@ -98,12 +99,14 @@ class WBLink {
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port);
   [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
  private:
+  const OHDProfile m_profile;
+  const OHDPlatform m_platform;
+  std::vector<std::shared_ptr<WifiCardHolder>> m_broadcast_cards;
+  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
   // Set by the openhd telemetry module to get WB statistics in regular intervals
   openhd::link_statistics::STATS_CALLBACK m_stats_callback =nullptr;
   std::mutex m_restart_async_lock;
   std::unique_ptr<std::thread> m_restart_async_thread =nullptr;
-  // last calculated "All stats".
-  openhd::link_statistics::AllStats m_last_all_stats;
   std::shared_ptr<spdlog::logger> m_console;
   // disable all openhd frequency checking - note that openhd just uses the proper iw command to set a frequency - if setting
   // the frequency actually had an effect, it doesn't know (cannot really know) and therefore QOpenHD can then report a different wifi freq,
@@ -112,14 +115,9 @@ class WBLink {
   const bool m_disable_all_frequency_checks;
   int m_curr_video_codec=0;
  private:
-  const OHDProfile m_profile;
-  const OHDPlatform m_platform;
-  std::vector<std::shared_ptr<WifiCardHolder>> m_broadcast_cards;
   bool m_recalculate_stats_thread_run;
   std::unique_ptr<std::thread> m_recalculate_stats_thread;
   void loop_recalculate_stats();
-  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
- private:
   int64_t last_tx_error_count=-1;
   int64_t last_recommended_bitrate=-1;
 };

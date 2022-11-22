@@ -121,7 +121,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,driver_name,type,interface_name,mac,
 
 // Only Atheros AR9271 doesn't support setting the mcs index
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
-  if(wifi_card.type==WiFiCardType::Atheros9khtc){
+  if(wifi_card.type==WiFiCardType::Atheros9khtc || wifi_card.type==WiFiCardType::Atheros9k){
     return false;
   }
   return true;
@@ -151,7 +151,7 @@ static WifiCardSettings create_default_settings(const WiFiCard& wifi_card){
     settings.use_for=WifiUseFor::Unknown;
   }
   // if a card is not functional, Discovery should not make it available.
-  // ( a card either has to do 2.4 or 5 ghz, otherise - what the heck ;)
+  // ( a card either has to do 2.4 or 5 ghz, otherwise - what the heck ;)
   assert(wifi_card.supports_5ghz || wifi_card.supports_2ghz);
   return settings;
 }

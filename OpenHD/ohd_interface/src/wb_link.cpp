@@ -274,7 +274,6 @@ std::string WBLink::createDebug(){
   for (const auto &rxvid: udpVideoRxList) {
     ss<<"VidRx :"<<rxvid->createDebug();
   }
-  ss<< m_last_all_stats <<"\n";
   return ss.str();
 }
 
@@ -558,11 +557,15 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
                                                             return set_fec_percentage(value);
                                                           }};
     ret.push_back(Setting{WB_VIDEO_FEC_PERCENTAGE,change_video_fec_percentage});
-    auto cb_wb_video_fec_block_length_auto_enable=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_block_length_auto_enable,[this](std::string,int value){
+    // Disabled for now
+    /*auto cb_wb_video_fec_block_length_auto_enable=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_block_length_auto_enable,[this](std::string,int value){
                                                                          return set_wb_fec_block_length_auto_enable(value);
                                                                        }};
-    // Disabled for now
-    //ret.push_back(Setting{WB_FEC_BLOCK_LENGTH_AUTO_ENABLE,cb_wb_video_fec_block_length_auto_enable});
+    ret.push_back(Setting{WB_FEC_BLOCK_LENGTH_AUTO_ENABLE,cb_wb_video_fec_block_length_auto_enable});*/
+    auto cb_enable_wb_video_variable_bitrate=[this](std::string,int value){
+      return set_enable_wb_video_variable_bitrate(value);
+    };
+    ret.push_back(Setting{WB_VIDEO_VARIABLE_BITRATE,openhd::IntSetting{(int)m_settings->get_settings().enable_wb_video_variable_bitrate, cb_enable_wb_video_variable_bitrate}});
   }
   openhd::validate_provided_ids(ret);
   return ret;
@@ -714,7 +717,7 @@ void WBLink::loop_recalculate_stats() {
     if(m_stats_callback){
       m_stats_callback(final_stats);
     }
-    if(m_profile.is_air){
+    if(m_profile.is_air && m_settings->get_settings().enable_wb_video_variable_bitrate){
       // stupid encoder rate control
       // TODO improve me !
       // First, calculate the theoretical values
@@ -722,10 +725,15 @@ void WBLink::loop_recalculate_stats() {
       const uint32_t max_rate_possible_kbits=openhd::get_max_rate_kbits(settings.wb_mcs_index);
       m_console->debug("mcs index:{}",settings.wb_mcs_index);
       // we assume X% of the theoretical link bandwidth is available for the primary video stream
-      const uint32_t max_video_allocated_kbits=max_rate_possible_kbits * 70 / 100;
+      // 2.4G are almost always completely full of noise, which is why we go with a more conservative
+      // perc. value for them. NOTE: It is stupid to reason about the RF environment of the user, but feedback from
+      // the beta channel shows that this is kinda needed.
+      const bool is_2g_channel= openhd::is_valid_frequency_2G(settings.wb_frequency, true);
+      const uint32_t kFactorAvailablePerc=is_2g_channel ? 70 : 80;
+      const uint32_t max_video_allocated_kbits=max_rate_possible_kbits * kFactorAvailablePerc / 100;
       // and deduce the FEC overhead
       const uint32_t max_video_after_fec_kbits=max_video_allocated_kbits * 100/(100+settings.wb_video_fec_percentage);
-      m_console->debug("max_rate_possible_kbits:{} max_video_after_fec_kbits:{}",max_rate_possible_kbits,max_video_after_fec_kbits);
+      m_console->debug("max_rate_possible_kbits:{} kFactorAvailablePerc:{} max_video_after_fec_kbits:{}",max_rate_possible_kbits,kFactorAvailablePerc,max_video_after_fec_kbits);
 
       // then check if there are tx errors since the last time we checked (1 second intervals)
       bool bitrate_is_still_too_high=false;
@@ -764,7 +772,7 @@ void WBLink::loop_recalculate_stats() {
       if(last_recommended_bitrate<1000){
         last_recommended_bitrate=1000;
       }
-      // theoreical max as upper limit
+      // theoretical max as upper limit
       if(last_recommended_bitrate>max_video_after_fec_kbits){
         last_recommended_bitrate=max_video_after_fec_kbits;
       }
@@ -776,4 +784,13 @@ void WBLink::loop_recalculate_stats() {
     }
     std::this_thread::sleep_for(std::chrono::milliseconds (1000));
   }
+}
+
+bool WBLink::set_enable_wb_video_variable_bitrate(int value) {
+  if(openhd::validate_yes_or_no(value)){
+    // value is read in regular intervals.
+    m_settings->unsafe_get_settings().enable_wb_video_variable_bitrate=value;
+    return true;
+  }
+  return false;
 }
