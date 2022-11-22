@@ -31,6 +31,7 @@ struct StatsTotalAllStreams{
   uint64_t count_bytes_injected=0;  // current count of all outgoing bytes, does not include IEE802 header or similar, but does include FEC overhead
   uint64_t count_telemetry_tx_injections_error_hint=0;   // see wb transmitter
   uint64_t count_video_tx_injections_error_hint=0; // see wb transmitter, accumulated primary and secondary video stream
+  uint64_t count_video_tx_dropped_packets=0;
   uint64_t curr_video0_bps=0; // current video bps, when on air this is the bitrate of the video encoder (what's injected), when on ground
   uint64_t curr_video1_bps=0;// this is the bitrate received. For both primary and secondary video stream.
   uint64_t curr_video0_tx_pps=0; // current video packets per second (important metric)

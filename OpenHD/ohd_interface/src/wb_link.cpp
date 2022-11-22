@@ -644,6 +644,7 @@ void WBLink::loop_recalculate_stats() {
       stats_total_all_streams.count_wifi_packets_injected+=videoTx->get_n_injected_packets();
       stats_total_all_streams.count_bytes_injected+=videoTx->get_n_injected_bytes();
       stats_total_all_streams.count_video_tx_injections_error_hint+=videoTx->get_count_tx_injections_error_hint();
+      stats_total_all_streams.count_video_tx_dropped_packets+=videoTx->get_n_dropped_packets();
     }
     if(_profile.is_air){
       if(!udpVideoTxList.empty()){
@@ -744,7 +745,7 @@ void WBLink::loop_recalculate_stats() {
       // or the tx queue is running full
       const auto n_buffered_packets_estimate=udpVideoTxList.at(0)->get_estimate_buffered_packets();
       m_console->debug("Video estimates {} buffered packets",n_buffered_packets_estimate);
-      if(n_buffered_packets_estimate>50){
+      if(n_buffered_packets_estimate>50){ // half of the wifibroadcast extra tx queue
         bitrate_is_still_too_high= true;
       }
       // initialize with the theoretical default, since we do not know what the camera is doing, even though it probably is "too high".
