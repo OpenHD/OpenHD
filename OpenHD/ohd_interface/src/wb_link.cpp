@@ -205,7 +205,7 @@ std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int 
     options.fec_k=static_cast<int>(m_settings->get_settings().wb_video_fec_block_length);
     options.fec_percentage=static_cast<int>(
         m_settings->get_settings().wb_video_fec_percentage); // Default to 20% fec overhead
-   options.fec_k="h264";
+    //options.fec_k="h264";
     if(m_settings->get_settings().wb_video_fec_block_length_auto_enable){
       if(m_curr_video_codec==0){
         options.fec_k="h264";
