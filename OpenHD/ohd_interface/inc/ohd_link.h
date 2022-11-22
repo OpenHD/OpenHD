@@ -9,6 +9,7 @@
 #include "openhd-profile.hpp"
 
 /**
+ * TODO migrate
  * OHDLink refers to the "link that transmits data from/to the air unit to the ground unit".
  * It hides away the underlying implementation (e.g. wifibroadcast aka wifi cards in monitor mode or lte or ... )
  * However, r.n the only existing implementation is wifibroadcast.
