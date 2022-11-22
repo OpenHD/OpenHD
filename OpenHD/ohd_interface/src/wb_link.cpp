@@ -721,8 +721,8 @@ void WBLink::loop_recalculate_stats() {
       const auto settings=m_settings->get_settings();
       const uint32_t max_rate_possible_kbits=openhd::get_max_rate_kbits(settings.wb_mcs_index);
       m_console->debug("mcs index:{}",settings.wb_mcs_index);
-      // we assume 70% of the theoretical link bandwidth is available for the primary video stream
-      const uint32_t max_video_allocated_kbits=max_rate_possible_kbits * 80 / 100;
+      // we assume X% of the theoretical link bandwidth is available for the primary video stream
+      const uint32_t max_video_allocated_kbits=max_rate_possible_kbits * 70 / 100;
       // and deduce the FEC overhead
       const uint32_t max_video_after_fec_kbits=max_video_allocated_kbits * 100/(100+settings.wb_video_fec_percentage);
       m_console->debug("max_rate_possible_kbits:{} max_video_after_fec_kbits:{}",max_rate_possible_kbits,max_video_after_fec_kbits);
