@@ -59,9 +59,10 @@ struct Settings{
   // 6: Rock5B UART7_M2 (/dev/ttyS7)
   int fc_uart_connection_type=DEFAULT_UART_CONNECTION;
   int fc_uart_baudrate=DEFAULT_UART_BAUDRATE;
+  bool fc_uart_flow_control=false;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,fc_uart_connection_type,fc_uart_baudrate);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,fc_uart_connection_type,fc_uart_baudrate,fc_uart_flow_control);
 
 static bool validate_uart_connection_type(int type){
   return type >=0 && type <=6;
@@ -115,6 +116,7 @@ static bool validate_uart_baudrate(int baudrate){
 // 16 chars limit !
 static constexpr auto FC_UART_CONNECTION_TYPE="FC_UART_CONN";
 static constexpr auto FC_UART_BAUD_RATE="FC_UART_BAUD";
+static constexpr auto FC_UART_FLOW_CONTROL="FC_UART_FLWCTL";
 
 class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
  public:

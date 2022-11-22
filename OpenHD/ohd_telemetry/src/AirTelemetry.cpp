@@ -183,25 +183,38 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 	setup_uart();
 	return true;
   };
-  auto c_config_boot_as_air=[](std::string,int value){
-    return openhd::tmp::handle_telemetry_change(value);
-  };
-  auto c_rpi_os_camera_configuration=[this](std::string,int value){
-    return m_rpi_os_change_config_handler->change_rpi_os_camera_configuration(value);
+  auto c_fc_uart_flow_control=[this](std::string,int value) {
+    if(!openhd::validate_yes_or_no(value)){
+      return false;
+    }
+    _airTelemetrySettings->unsafe_get_settings().fc_uart_flow_control=value;
+    _airTelemetrySettings->persist();
+    setup_uart();
+    return true;
   };
   ret.push_back(openhd::Setting{air::FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_connection_type),
 																		   c_fc_uart_connection_type}});
   ret.push_back(openhd::Setting{air::FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_baudrate),
 																	 c_fc_uart_baudrate}});
+  ret.push_back(openhd::Setting{air::FC_UART_FLOW_CONTROL,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_flow_control),
+                                                                           c_fc_uart_flow_control}});
+
+
   // This way one can switch between different OS configuration(s) that then provide access to different
   // vendor-specific camera(s) - hacky/dirty I know ;/
   if(_platform.platform_type==PlatformType::RaspberryPi && m_rpi_os_change_config_handler!= nullptr){
+    auto c_rpi_os_camera_configuration=[this](std::string,int value){
+      return m_rpi_os_change_config_handler->change_rpi_os_camera_configuration(value);
+    };
     ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::IntSetting {openhd::rpi::os::cam_config_to_int(openhd::rpi::os::get_current_cam_config_from_file()),
                                                                         c_rpi_os_camera_configuration}});
   }
   // and this allows an advanced user to change its air unit to a ground unit
   // only expose this setting if OpenHD uses the file workaround to figure out air or ground.
   if(openhd::tmp::file_air_or_ground_exists()){
+    auto c_config_boot_as_air=[](std::string,int value){
+      return openhd::tmp::handle_telemetry_change(value);
+    };
     ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",openhd::IntSetting {1,c_config_boot_as_air}});
   }
   if(_platform.platform_type==PlatformType::RaspberryPi){
@@ -222,6 +235,7 @@ void AirTelemetry::setup_uart() {
   using namespace openhd::telemetry;
   const auto fc_uart_connection_type=_airTelemetrySettings->get_settings().fc_uart_connection_type;
   const auto fc_uart_baudrate=_airTelemetrySettings->get_settings().fc_uart_baudrate;
+  const auto fc_uart_flow_control=_airTelemetrySettings->get_settings().fc_uart_flow_control;
   assert(air::validate_uart_connection_type(fc_uart_connection_type));
   // Disable the currently running uart configuration, if there is any
   std::lock_guard<std::mutex> guard(_serialEndpointMutex);
@@ -240,7 +254,7 @@ void AirTelemetry::setup_uart() {
 	SerialEndpoint::HWOptions options{};
 	options.linux_filename=air::uart_fd_from_connection_type(fc_uart_connection_type).value();
 	options.baud_rate=fc_uart_baudrate;
-	options.flow_control= false;
+	options.flow_control= fc_uart_flow_control;
 	serialEndpoint=std::make_unique<SerialEndpoint>("ser_fc",options);
 	serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
 	  this->onMessageFC(msg);
