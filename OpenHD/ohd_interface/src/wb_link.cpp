@@ -385,24 +385,39 @@ bool WBLink::set_frequency(int frequency) {
     m_console->warn("Not sanity checking frequency");
   }else{
     // channels below and above the normal channels, not allowed in most countries
-    bool cards_support_extra_channels=false;
+    bool cards_support_extra_2G_channels=false;
     if(m_platform.platform_type==PlatformType::RaspberryPi ||
         m_platform.platform_type==PlatformType::Jetson){
       // modified kernel
-      cards_support_extra_channels= all_cards_support_extra_channels_2G(m_broadcast_cards);
+      cards_support_extra_2G_channels= all_cards_support_extra_channels_2G(m_broadcast_cards);
     }
-    m_console->debug("cards_support_extra_channels:"+OHDUtil::yes_or_no(cards_support_extra_channels));
-    /*if(m_settings->get_settings().configured_for_2G()){
-      if(!openhd::is_valid_frequency_2G(frequency,cards_support_extra_channels)){
-        m_console->warn("Invalid 2.4G frequency {}",frequency);
+    m_console->debug("cards_support_extra_2G_channels:"+OHDUtil::yes_or_no(cards_support_extra_2G_channels));
+    // check if the card supports both 2G and 5G
+    const bool cards_supports_both_frequencies = all_cards_support_2G(m_broadcast_cards) &&
+                                                 all_cards_support_5G(m_broadcast_cards);
+    m_console->debug("cards_supports_both_frequencies:"+OHDUtil::yes_or_no(cards_supports_both_frequencies));
+    if(cards_supports_both_frequencies){
+      // allow switching between 2G and 5G
+      const bool frequency_valid=openhd::is_valid_frequency_2G(frequency,cards_support_extra_2G_channels)
+                                   || openhd::is_valid_frequency_5G(frequency);
+      if(!frequency_valid){
+        m_console->debug("Not a valid 2G or 5G frequency {}",frequency);
         return false;
       }
     }else{
-      if(!openhd::is_valid_frequency_5G(frequency)){
-        m_console->warn("Invalid 5G frequency {}",frequency);
-        return false;
+      // do not allow switching between 2G and 5G
+      if(m_settings->get_settings().configured_for_2G()){
+        if(!openhd::is_valid_frequency_2G(frequency,cards_support_extra_2G_channels)){
+          m_console->warn("Invalid 2.4G frequency {}",frequency);
+          return false;
+        }
+      }else{
+        if(!openhd::is_valid_frequency_5G(frequency)){
+          m_console->warn("Invalid 5G frequency {}",frequency);
+          return false;
+        }
       }
-    }*/
+    }
   }
   m_settings->unsafe_get_settings().wb_frequency=frequency;
   m_settings->persist();
