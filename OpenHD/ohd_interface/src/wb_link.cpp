@@ -188,9 +188,12 @@ void WBLink::configure_video() {
 
 std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,
                                                            std::optional<int> udp_recv_buff_size)const {
-  const auto mcs_index=static_cast<int>(m_settings->get_settings().wb_mcs_index);
-  const auto channel_width=static_cast<int>(m_settings->get_settings().wb_channel_width);
-  RadiotapHeader::UserSelectableParams wifiParams{channel_width, false, 0, false, mcs_index};
+  const auto settings=m_settings->get_settings();
+  const auto mcs_index=static_cast<int>(settings.wb_mcs_index);
+  const auto channel_width=static_cast<int>(settings.wb_channel_width);
+  RadiotapHeader::UserSelectableParams wifiParams{
+      channel_width, settings.wb_enable_short_guard,settings.wb_enable_short_guard,
+      settings.wb_enable_ldpc, mcs_index};
   TOptions options{};
   options.radio_port = radio_port;
   const char *keypair_file =
@@ -546,6 +549,7 @@ void WBLink::restart_async(std::chrono::milliseconds delay){
 std::vector<openhd::Setting> WBLink::get_all_settings(){
   using namespace openhd;
   std::vector<openhd::Setting> ret{};
+  const auto settings=m_settings->get_settings();
   auto change_freq=openhd::IntSetting{(int)m_settings->get_settings().wb_frequency,[this](std::string,int value){
                                           return set_frequency(value);
                                         }};
@@ -582,6 +586,30 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     };
     ret.push_back(Setting{WB_VIDEO_VARIABLE_BITRATE,openhd::IntSetting{(int)m_settings->get_settings().enable_wb_video_variable_bitrate, cb_enable_wb_video_variable_bitrate}});
   }
+  if(true){
+    auto cb_wb_enable_stbc=[this](std::string,int value){
+      if(!validate_yes_or_no(value))return false;
+      m_settings->unsafe_get_settings().wb_enable_stbc=value;
+      m_settings->persist();
+      return true;
+    };
+    ret.push_back(openhd::Setting{WB_ENABLE_STBC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_stbc}});
+    auto cb_wb_enable_ldpc=[this](std::string,int value){
+      if(!validate_yes_or_no(value))return false;
+      m_settings->unsafe_get_settings().wb_enable_ldpc=value;
+      m_settings->persist();
+      return true;
+    };
+    ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_ldpc}});
+    auto cb_wb_enable_sg=[this](std::string,int value){
+      if(!validate_yes_or_no(value))return false;
+      m_settings->unsafe_get_settings().wb_enable_short_guard=value;
+      m_settings->persist();
+      return true;
+    };
+    ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
+  }
+
   openhd::validate_provided_ids(ret);
   return ret;
 }

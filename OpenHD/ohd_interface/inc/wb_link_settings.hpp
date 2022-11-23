@@ -26,6 +26,10 @@ struct WBLinkSettings {
   uint32_t wb_frequency; // writen once 2.4 or 5 is known
   uint32_t wb_channel_width=DEFAULT_CHANNEL_WIDTH; // 20 or 40 mhz bandwidth
   uint32_t wb_mcs_index=DEFAULT_MCS_INDEX;
+  bool wb_enable_stbc=false;
+  bool wb_enable_ldpc=false;
+  bool wb_enable_short_guard=false;
+  //
   uint32_t wb_video_fec_block_length=DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH;
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
   uint32_t wb_tx_power_milli_watt=DEFAULT_WIFI_TX_POWER_MILLI_WATT;
@@ -37,7 +41,8 @@ struct WBLinkSettings {
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
                                    wb_video_fec_block_length, wb_video_fec_percentage, wb_tx_power_milli_watt,
-                                   wb_video_fec_block_length_auto_enable,enable_wb_video_variable_bitrate);
+                                   wb_video_fec_block_length_auto_enable,enable_wb_video_variable_bitrate,
+                                   wb_enable_stbc,wb_enable_ldpc,wb_enable_short_guard);
 
 static WBLinkSettings create_default_wb_stream_settings(const std::vector<WiFiCard>& wifibroadcast_cards){
   assert(!wifibroadcast_cards.empty());
@@ -93,6 +98,10 @@ static constexpr auto WB_TX_POWER_MILLI_WATT="WB_TX_POWER_MW";
 static constexpr auto WB_FEC_BLOCK_LENGTH_AUTO_ENABLE="WB_FEC_BL_AUTO";
 //
 static constexpr auto WB_VIDEO_VARIABLE_BITRATE="VARIABLE_BITRATE";
+//
+static constexpr auto WB_ENABLE_STBC="WB_E_STBC";
+static constexpr auto WB_ENABLE_LDPC="WB_E_LDPC";
+static constexpr auto WB_ENABLE_SHORT_GUARD="WB_E_SHORT_GUARD";
 
 }
 
