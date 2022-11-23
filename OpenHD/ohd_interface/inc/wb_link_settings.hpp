@@ -19,6 +19,8 @@ static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412;
 
 static constexpr auto DEFAULT_MCS_INDEX=3;
 static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
+// Set to 0 for fec auto block length
+// Set to 1 or greater for fixed k fec
 static constexpr auto DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH=12;
 static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE=50;
 
@@ -95,7 +97,6 @@ static constexpr auto WB_MCS_INDEX="WB_MCS_INDEX";
 static constexpr auto WB_VIDEO_FEC_BLOCK_LENGTH="WB_V_FEC_BLK_L";
 static constexpr auto WB_VIDEO_FEC_PERCENTAGE="WB_V_FEC_PERC";
 static constexpr auto WB_TX_POWER_MILLI_WATT="WB_TX_POWER_MW";
-static constexpr auto WB_FEC_BLOCK_LENGTH_AUTO_ENABLE="WB_FEC_BL_AUTO";
 //
 static constexpr auto WB_VIDEO_VARIABLE_BITRATE="VARIABLE_BITRATE";
 //
