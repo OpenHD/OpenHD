@@ -38,6 +38,9 @@ static bool set_frequency_and_channel_width(const WiFiCard &card, const uint32_t
 
 // Consti10: this at least changes what then iw dev displays. If it internally has an effect is not yet tested.
 // I think txpower is in milli dbm
+// from iw documentation:
+// dev <devname> set txpower <auto|fixed|limit> [<tx power in mBm>]
+//		Specify transmit power level and setting type.
 static bool set_txpower(const WiFiCard &card, const uint32_t txpower_milli_watt) {
   auto tx_power_milli_dbm=openhd::milli_watt_to_milli_dbm(txpower_milli_watt);
   std::stringstream ss;
@@ -59,6 +62,17 @@ static bool set_txpower2(const WiFiCard& card,const uint32_t txpower_milli_watt)
   return success;
 }
 
+// from iw documentation:
+// dev <devname> set monitor <flag>*
+//		Set monitor flags. Valid flags are:
+//		none:     no special flags
+//		fcsfail:  show frames with FCS errors
+//		control:  show control frames
+//		otherbss: show frames from other BSSes
+//		cook:     use cooked mode
+//		active:   use active mode (ACK incoming unicast packets)
+//		mumimo-groupid <GROUP_ID>: use MUMIMO according to a group id
+//		mumimo-follow-mac <MAC_ADDRESS>: use MUMIMO according to a MAC address
 static bool enable_monitor_mode(const WiFiCard &card) {
   openhd::log::get_default()->info("WifiCards::enable_monitor_mode("+card.interface_name+")");
   std::vector<std::string> args{"dev", card.interface_name, "set", "monitor", "otherbss"};
