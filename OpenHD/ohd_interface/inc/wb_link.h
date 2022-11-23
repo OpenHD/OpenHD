@@ -7,7 +7,8 @@
 #include <utility>
 #include <vector>
 
-#include "../../lib/wifibroadcast/src/UDPWfibroadcastWrapper.hpp"
+#include "../../lib/wifibroadcast/src/UdpWBReceiver.hpp"
+#include "../../lib/wifibroadcast/src/UdpWBTransmitter.hpp"
 #include "mavlink_settings/ISettingsComponent.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-link-statistics.hpp"
