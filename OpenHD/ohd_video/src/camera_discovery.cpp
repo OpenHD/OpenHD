@@ -176,7 +176,7 @@ void DCameras::detect_v4l2() {
 }
 
 void DCameras::probe_v4l2_device(const std::string &device) {
-  //m_console->debug("DCameras::probe_v4l2_device()"+device);
+  m_console->trace("DCameras::probe_v4l2_device()"+device);
   std::stringstream command;
   command << "udevadm info ";
   command << device.c_str();
@@ -239,7 +239,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
 }
 
 bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, CameraEndpoint &endpoint) {
-  //m_console->debug( "DCameras::process_v4l2_node("+node+")");
+  m_console->trace( "DCameras::process_v4l2_node("+node+")");
   // fucking hell, on jetson v4l2_open seems to be bugged
   // https://forums.developer.nvidia.com/t/v4l2-open-create-core-with-jetpack-4-5-or-later/170624/6
   int fd;
@@ -258,7 +258,7 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
     return false;
   }
   const std::string driver((char *)caps.driver);
-  //m_console->debug("Driver is:"+driver);
+  m_console->trace("Driver is:"+driver);
   if (driver == "uvcvideo") {
     camera.type = CameraType::UVC;
     m_console->debug("Found UVC camera");
