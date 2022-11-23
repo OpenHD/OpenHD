@@ -288,7 +288,6 @@ void WBLink::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
     first= false;
     rxVid->addForwarder(ip,udpPort);
   }
-  // TODO how do we deal with telemetry
 }
 
 void WBLink::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
@@ -421,13 +420,7 @@ bool WBLink::set_frequency(int frequency) {
   }
   m_settings->unsafe_get_settings().wb_frequency=frequency;
   m_settings->persist();
-  // We can update the frequency without restarting the streams
-  // Only save, need restart to apply
-  /*for(const auto& holder:_broadcast_cards){
-        const auto& card=holder->_wifi_card;
-        const bool width_40=_settings->get_settings().wb_channel_width==40;
-        WifiCardCommandHelper::set_frequency_and_channel_width(card,frequency,width_40);
-  }*/
+  // TODO: r.n we rely on a restart to change the frequency, even though thats not needed
   return true;
 }
 
@@ -493,8 +486,8 @@ bool WBLink::set_channel_width(int channel_width) {
   return true;
 }
 
-bool WBLink::set_fec_block_length(int block_length) {
-  m_console->debug("WBStreams::set_fec_block_length {}",block_length);
+bool WBLink::set_video_fec_block_length(int block_length) {
+  m_console->debug("WBStreams::set_video_fec_block_length {}",block_length);
   if(!openhd::is_valid_fec_block_length(block_length)){
     m_console->warn("Invalid fec block length:{}",block_length);
     return false;
@@ -505,17 +498,22 @@ bool WBLink::set_fec_block_length(int block_length) {
   return true;
 }
 
-bool WBLink::set_fec_percentage(int fec_percentage) {
-  m_console->debug("WBStreams::set_fec_percentage {}",fec_percentage);
+bool WBLink::set_video_fec_percentage(int fec_percentage) {
+  m_console->debug("WBStreams::set_video_fec_percentage {}",fec_percentage);
   if(!openhd::is_valid_fec_percentage(fec_percentage)){
     m_console->warn("Invalid fec percentage:{}",fec_percentage);
     return false;
   }
   m_settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
   m_settings->persist();
-  restart_async();
+  std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
+  // we only use the fec percentage for video txes
+  for(auto& tx:udpVideoTxList){
+    tx->get_wb_tx().update_fec_percentage(fec_percentage);
+  }
   return true;
 }
+
 bool WBLink::set_wb_fec_block_length_auto_enable(int value) {
   if(!(value==0 || value==1))return false;
   // needs reboot to be applied
@@ -565,11 +563,11 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 
   if(m_profile.is_air){
     auto change_video_fec_block_length=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_block_length,[this](std::string,int value){
-                                                              return set_fec_block_length(value);
+                                                              return set_video_fec_block_length(value);
                                                             }};
     ret.push_back(Setting{WB_VIDEO_FEC_BLOCK_LENGTH,change_video_fec_block_length});
     auto change_video_fec_percentage=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_percentage,[this](std::string,int value){
-                                                            return set_fec_percentage(value);
+                                                            return set_video_fec_percentage(value);
                                                           }};
     ret.push_back(Setting{WB_VIDEO_FEC_PERCENTAGE,change_video_fec_percentage});
     // Disabled for now
