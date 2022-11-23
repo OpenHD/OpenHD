@@ -209,11 +209,11 @@ std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int 
     //options.fec_k="h264";
     if(m_settings->get_settings().wb_video_fec_block_length_auto_enable){
       if(m_curr_video_codec==0){
-        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::H264;
+        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::RTP_H264;
       }else if(m_curr_video_codec==1){
-        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::H265;
+        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::RTP_H265;
       }else if(m_curr_video_codec==2){
-        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::MJPEG;
+        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::RTP_MJPEG;
       }
     }
   }else{
