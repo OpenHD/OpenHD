@@ -202,25 +202,27 @@ std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int 
     options.keypair = std::nullopt;
   }
   if(enableFec){
-    options.fec_k=static_cast<int>(m_settings->get_settings().wb_video_fec_block_length);
-    options.fec_percentage=static_cast<int>(
+    options.enable_fec= true;
+    options.tx_fec_options.fixed_k=static_cast<int>(m_settings->get_settings().wb_video_fec_block_length);
+    options.tx_fec_options.overhead_percentage=static_cast<int>(
         m_settings->get_settings().wb_video_fec_percentage); // Default to 20% fec overhead
     //options.fec_k="h264";
     if(m_settings->get_settings().wb_video_fec_block_length_auto_enable){
       if(m_curr_video_codec==0){
-        options.fec_k="h264";
+        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::H264;
       }else if(m_curr_video_codec==1){
-        options.fec_k="h265";
+        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::H265;
       }else if(m_curr_video_codec==2){
-        options.fec_k="mjpeg";
+        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::MJPEG;
       }
     }
   }else{
-    options.fec_k=0;
-    options.fec_percentage=0;
+    options.enable_fec= false;
+    options.tx_fec_options.fixed_k=0;
+    options.tx_fec_options.overhead_percentage=0;
   }
   options.wlan = m_broadcast_cards.at(0)->_wifi_card.interface_name;
-  m_console->debug("Starting WFB_TX with MCS:{}",mcs_index);
+  //m_console->debug("Starting WFB_TX with MCS:{}",mcs_index);
   return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port,udp_recv_buff_size);
 }
 
