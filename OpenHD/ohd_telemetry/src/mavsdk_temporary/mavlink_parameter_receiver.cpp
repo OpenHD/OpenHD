@@ -176,7 +176,7 @@ void MavlinkParameterReceiver::process_param_set_internally(const std::string& p
       // We broadcast the un-changed parameter type and value, non-extended and extended work differently here
       const auto curr_param=_param_set.lookup_parameter(param_id,extended).value();
       assert(curr_param.param_index<param_count);
-      LogWarn() << "Got param_set for existing value, but wrong type. registered param: "<<curr_param;
+      LogWarn() << "Got param_set for existing value, but WRONG_PARAM_TYPE. registered param: "<<curr_param;
       if(extended){
         auto new_work = std::make_shared<WorkItem>(curr_param.param_id,curr_param.value,
                                                    WorkItemAck{PARAM_ACK_FAILED});
@@ -188,26 +188,27 @@ void MavlinkParameterReceiver::process_param_set_internally(const std::string& p
       }
       return;
     }
-	case MavlinkParameterSet::UpdateExistingParamResult::REJECTED:{
-	  // We broadcast the un-changed parameter type and value, non-extended and extended work differently here
-	  const auto curr_param=_param_set.lookup_parameter(param_id,extended).value();
-	  assert(curr_param.param_index<param_count);
-	  LogWarn() << "Got param_set for existing value, but wrong type. registered param: "<<curr_param;
-	  if(extended){
-		auto new_work = std::make_shared<WorkItem>(curr_param.param_id,curr_param.value,
-												   WorkItemAck{PARAM_ACK_VALUE_UNSUPPORTED});
-		_work_queue.push_back(new_work);
-	  }else{
-		auto new_work = std::make_shared<WorkItem>(curr_param.param_id,curr_param.value,
-												   WorkItemValue{curr_param.param_index,param_count,extended});
-		_work_queue.push_back(new_work);
-	  }
-	  return;
-	}
+    case MavlinkParameterSet::UpdateExistingParamResult::REJECTED:{
+      // We broadcast the un-changed parameter type and value, non-extended and extended work differently here
+      const auto curr_param=_param_set.lookup_parameter(param_id,extended).value();
+      assert(curr_param.param_index<param_count);
+      LogWarn() << "Got param_set for existing value, but REJECTED. registered param: "<<curr_param;
+      if(extended){
+        auto new_work = std::make_shared<WorkItem>(curr_param.param_id,curr_param.value,
+                                                   WorkItemAck{PARAM_ACK_VALUE_UNSUPPORTED});
+        _work_queue.push_back(new_work);
+      }else{
+        auto new_work = std::make_shared<WorkItem>(curr_param.param_id,curr_param.value,
+                                                   WorkItemValue{curr_param.param_index,param_count,extended});
+        _work_queue.push_back(new_work);
+      }
+      return;
+    }
     case MavlinkParameterSet::UpdateExistingParamResult::SUCCESS:
-	case MavlinkParameterSet::UpdateExistingParamResult::NO_CHANGE:
-	{
+    case MavlinkParameterSet::UpdateExistingParamResult::NO_CHANGE:
+    {
       const auto updated_parameter=_param_set.lookup_parameter(param_id,extended).value();
+      LogDebug() << "Got param_set SUCCESS or NO_CHANGE:"<<updated_parameter;
       if(extended){
         auto new_work = std::make_shared<WorkItem>(updated_parameter.param_id,updated_parameter.value,
                                                    WorkItemAck{PARAM_ACK_ACCEPTED});
