@@ -67,7 +67,6 @@ class WBLink {
   bool set_mcs_index(int mcs_index);
   bool set_video_fec_block_length(int block_length);
   bool set_video_fec_percentage(int fec_percentage);
-  bool set_wb_fec_block_length_auto_enable(int value);
   bool set_enable_wb_video_variable_bitrate(int value);
   // set the channel width
   // TODO doesn't work yet, aparently we need more than only the pcap header.

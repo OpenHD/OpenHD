@@ -491,7 +491,7 @@ bool WBLink::set_channel_width(int channel_width) {
   return true;
 }
 
-bool WBLink::set_video_fec_block_length(int block_length) {
+bool WBLink::set_video_fec_block_length(const int block_length) {
   m_console->debug("WBStreams::set_video_fec_block_length {}",block_length);
   if(!openhd::is_valid_fec_block_length(block_length)){
     m_console->warn("Invalid fec block length:{}",block_length);
@@ -499,7 +499,15 @@ bool WBLink::set_video_fec_block_length(int block_length) {
   }
   m_settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
   m_settings->persist();
-  restart_async();
+  std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
+  // we only use the fec percentage for video txes
+  for(auto& tx:udpVideoTxList){
+    if(block_length==0){
+      tx->get_wb_tx().update_fec_k(block_length,FEC_VARIABLE_INPUT_TYPE::RTP_H264);
+    }else{
+      tx->get_wb_tx().update_fec_k(block_length,std::nullopt);
+    }
+  }
   return true;
 }
 
@@ -518,15 +526,6 @@ bool WBLink::set_video_fec_percentage(int fec_percentage) {
   }
   return true;
 }
-
-bool WBLink::set_wb_fec_block_length_auto_enable(int value) {
-  if(!(value==0 || value==1))return false;
-  // needs reboot to be applied
-  m_settings->unsafe_get_settings().wb_video_fec_block_length_auto_enable=value;
-  m_settings->persist();
-  return true;
-}
-
 
 void WBLink::restart_async(std::chrono::milliseconds delay){
   std::lock_guard<std::mutex> guard(m_restart_async_lock);

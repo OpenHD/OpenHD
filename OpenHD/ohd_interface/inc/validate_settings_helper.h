@@ -213,8 +213,9 @@ static bool is_valid_tx_power_milli_watt(int tx_power_mw){
   return tx_power_mw>=10 && tx_power_mw<= 30*1000;
 }
 
+// NOTE: 0 means variable fec, video codec has to be set in this case
 static bool is_valid_fec_block_length(int block_length){
-  return block_length>=1 && block_length <100;
+  return block_length>=0 && block_length <100;
 }
 // max 100% fec (2x the amount of data), this is already too much
 // 21.10: Using more than 2x for FEC can be usefully for testing
