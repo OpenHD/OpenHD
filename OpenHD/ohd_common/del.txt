@@ -308,3 +308,9 @@ if(OHDUtil::get_ohd_env_variable_bool("OHD_SKIP_WB_CONFIGURE_CARDS")){
     m_console->debug("WBStreams::configure_cards() skipping");
     return;
   }
+
+float roi_w=0.5;
+float roi_h=0.8;
+float roi_x=1.0f-roi_w*0.5f;
+float roi_y=1.0f-roi_h*0.5f;
+ss<<fmt::format("roi_w={} roi_h={} roi_x={} roi_y={} ",roi_w,roi_h,roi_x,roi_y);

@@ -140,14 +140,8 @@ static std::string createRpicamsrcStream(const int camera_number,
   if(openhd::validate_rpi_exp_mode(settings.exposure_mode)){
     ss<<"exposure-mode="<<settings.exposure_mode<<" ";
   }
-  // Exp roi
-  if(true){
-    float roi_w=0.5;
-    float roi_h=0.8;
-    float roi_x=1.0f-roi_w*0.5f;
-    float roi_y=1.0f-roi_h*0.5f;
-    ss<<fmt::format("roi_w={} roi_h={} roi_x={} roi_y={} ",roi_w,roi_h,roi_x,roi_y);
-  }
+  // Note: ROI (Region of interest) on the rpi does not tell the encoder to allocate more bandwidth at a specific area,
+  // but rather zooms in on a specific area (which is not really of use to use)
   ss<<" ! ";
   if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
 	ss << fmt::format(
