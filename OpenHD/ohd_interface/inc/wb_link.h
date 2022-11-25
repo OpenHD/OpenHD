@@ -21,7 +21,7 @@
 /**
  * This class takes a list of discovered wifi cards (and their settings) and
  * is responsible for configuring the given cards and then setting up all the Wifi-broadcast streams needed for OpenHD.
- * In the end, we have a link that has some broadcast characteristics for video (video is always broadcasted from air to ground)
+ * In the end, we have a link that has some broadcast characteristics for video (video is always broadcast from air to ground)
  * but also a bidirectional link (without re-transmission(s)) for telemetry.
  * This class assumes a corresponding instance on the air or ground unit, respective.
  */

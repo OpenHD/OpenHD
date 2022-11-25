@@ -15,8 +15,8 @@
 #include "camera_settings.hpp"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about a camera
-// Camera Holder is used to
-// 1) Differentiate between immutable information (camera) and
+// Camera Holder is used to differentiate between
+// 1) immutable information (camera) and
 // 2) mutable camera settings.
 // Changes in the camera settings are propagated through this class.
 class CameraHolder:

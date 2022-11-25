@@ -8,6 +8,11 @@ project(OpenHD-Common
 #You can supress the warnings in CMake using
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
+if (TARGET OHDCommonLib)
+    message(STATUS "OHDCommonLib already built")
+    return()
+endif()
+
 #----------------------------------------------------------------------------------------------------------------------
 # general settings and options
 #----------------------------------------------------------------------------------------------------------------------
