@@ -5,3 +5,6 @@
 [submodule "OpenHD/lib/json"]
 	path = OpenHD/lib/json
 	url = https://github.com/nlohmann/json.git
+[submodule "OpenHD/lib/wifibroadcast"]
+	path = OpenHD/lib/wifibroadcast
+	url = https://github.com/OpenHD/wifibroadcast.git
