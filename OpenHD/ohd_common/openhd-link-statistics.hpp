@@ -25,6 +25,22 @@ static std::string bitrate_to_string(uint64_t bits_per_second){
 
 // These structs match the custom openhd mavlink messages, kinda annoying but
 // we do not have a mavlink dependency in ohd_interface so we need to duplicate that code
+
+struct StatsMonitorModeLink{
+  uint64_t curr_tx_pps;
+  uint64_t curr_rx_pps;
+  uint64_t curr_tx_bps;
+  uint64_t curr_rx_bps;
+  uint64_t curr_rx_packet_loss;
+  int32_t unused0;
+  int32_t unused1;
+  int32_t unused2;
+  int32_t unused3;
+  [[nodiscard]] std::string to_string()const{
+    return "TODO";
+  }
+};
+
 struct StatsTelemetry{
   uint64_t curr_tx_pps;
   uint64_t curr_rx_pps;
@@ -94,6 +110,7 @@ using StatsAllCards=std::array<StatsPerCard,4>;
 struct StatsAirGround{
   bool is_air=false;
   // air and ground
+  StatsMonitorModeLink monitor_mode_link;
   StatsTelemetry telemetry;
   StatsAllCards cards;
   // for air
