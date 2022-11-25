@@ -95,7 +95,7 @@ struct StatsAirGround{
   bool is_air=false;
   // air and ground
   StatsTelemetry telemetry;
-  StatsAllCards stats_all_cards;
+  StatsAllCards cards;
   // for air
   StatsWBVideoAir air_video0;
   StatsWBVideoAir air_video1;
@@ -105,7 +105,11 @@ struct StatsAirGround{
 };
 
 static std::ostream& operator<<(std::ostream& strm, const StatsAirGround& obj){
-  strm<< "StatsAirGround{}";
+  std::stringstream ss;
+  ss<<"StatsAirGround{\n";
+  ss<<obj.cards.at(0).to_string(0)<<"\n";
+  ss<<"}";
+  strm<<ss.str();
   return strm;
 }
 

@@ -9,18 +9,18 @@
 
 OHDTelemetry::OHDTelemetry(OHDPlatform platform1,
 						   OHDProfile profile1,
-						   std::shared_ptr<openhd::ActionHandler> action_handler,
+						   std::shared_ptr<openhd::ActionHandler> opt_action_handler,
 						   bool enableExtendedLogging) :
 	platform(platform1),profile(std::move(profile1)),m_enableExtendedLogging(enableExtendedLogging) {
   if (this->profile.is_air) {
-	airTelemetry = std::make_unique<AirTelemetry>(platform,action_handler);
+	airTelemetry = std::make_unique<AirTelemetry>(platform,opt_action_handler);
 	assert(airTelemetry);
 	loopThread = std::make_unique<std::thread>([this] {
 	  assert(airTelemetry);
 	  airTelemetry->loopInfinite(terminate,this->m_enableExtendedLogging);
 	});
   } else {
-	groundTelemetry = std::make_unique<GroundTelemetry>(platform,action_handler);
+	groundTelemetry = std::make_unique<GroundTelemetry>(platform,opt_action_handler);
 	assert(groundTelemetry);
 	loopThread = std::make_unique<std::thread>([this] {
 	  assert(groundTelemetry);

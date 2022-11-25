@@ -28,17 +28,19 @@ OHDMainComponent::OHDMainComponent(
                                                     this->m_status_text_accumulator.processLogMessageData(payload, payloadSize);
                                                   });
   m_log_messages_receiver->runInBackground();
-  m_opt_action_handler->action_wb_link_statistics_register([this](openhd::link_statistics::StatsAirGround stats_air_ground){
-    this->set_link_statistics(stats_air_ground);
-  });
+  if(m_opt_action_handler){
+    m_opt_action_handler->action_wb_link_statistics_register([this](openhd::link_statistics::StatsAirGround stats_air_ground){
+      this->set_link_statistics(stats_air_ground);
+    });
+  }
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
-  //m_console->debug("InternalTelemetry::generate_mavlink_messages()\n";
+  m_console->debug("InternalTelemetry::generate_mavlink_messages()");
   std::vector<MavlinkMessage> ret;
   ret.push_back(MavlinkComponent::create_heartbeat());
   MavlinkComponent::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(_sys_id,_comp_id));
-  MavlinkComponent::vec_append(ret,generateWifibroadcastStatistics());
+  MavlinkComponent::vec_append(ret, generate_mav_wb_stats());
   //ret.push_back(generateOpenHDVersion());
   // TODO remove for release
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
@@ -108,12 +110,13 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
   return ret;
 }
 
-std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
+std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
+  m_console->debug("OHDMainComponent::generate_mav_wb_stats");
   std::vector<MavlinkMessage> ret;
   const auto latest_stats=get_latest_link_statistics();
   // stats for all the wifi card(s)
-  for(int i=0;i<latest_stats.stats_all_cards.size();i++){
-    const auto card_stats=latest_stats.stats_all_cards.at(i);
+  for(int i=0;i<latest_stats.cards.size();i++){
+    const auto card_stats=latest_stats.cards.at(i);
     if(!card_stats.exists_in_openhd){
       // skip non active cards
       continue;
