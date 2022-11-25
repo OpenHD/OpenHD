@@ -121,15 +121,19 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
       // skip non active cards
       continue;
     }
-    MavlinkMessage msg=openhd::LinkStatisticsHelper::pack0(_sys_id,_comp_id,0,card_stats);
+    MavlinkMessage msg= openhd::LinkStatisticsHelper::pack_card(
+        _sys_id, _comp_id, 0, card_stats);
     ret.push_back(msg);
   }
-  ret.push_back(openhd::LinkStatisticsHelper::pack1(_sys_id,_comp_id,latest_stats.telemetry));
+  ret.push_back(openhd::LinkStatisticsHelper::pack_tele(
+      _sys_id, _comp_id, latest_stats.telemetry));
   if(RUNS_ON_AIR){
-    ret.push_back(openhd::LinkStatisticsHelper::pack2(_sys_id,_comp_id,latest_stats.air_video0));
+    ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air(
+        _sys_id, _comp_id, latest_stats.air_video0));
     //ret.push_back(openhd::LinkStatisticsHelper::pack2(_sys_id,_comp_id,latest_stats.air_video1));
   }else{
-    ret.push_back(openhd::LinkStatisticsHelper::pack3(_sys_id,_comp_id,latest_stats.ground_video0));
+    ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd(
+        _sys_id, _comp_id, latest_stats.ground_video0));
     //ret.push_back(openhd::LinkStatisticsHelper::pack3(_sys_id,_comp_id,latest_stats.ground_video0));
   }
   return ret;

@@ -10,8 +10,7 @@
 
 namespace openhd::LinkStatisticsHelper{
 
-static MavlinkMessage
-pack0(const uint8_t system_id,const uint8_t component_id,int card_index,
+static MavlinkMessage pack_card(const uint8_t system_id,const uint8_t component_id,int card_index,
                              const openhd::link_statistics::StatsPerCard& card_stats){
   MavlinkMessage msg;
   mavlink_openhd_stats_monitor_mode_wifi_card_t tmp;
@@ -26,8 +25,7 @@ pack0(const uint8_t system_id,const uint8_t component_id,int card_index,
   return msg;
 }
 
-static MavlinkMessage
-pack1(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsTelemetry& stats){
+static MavlinkMessage pack_tele(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsTelemetry& stats){
   MavlinkMessage msg;
   mavlink_openhd_stats_telemetry_t tmp{};
   tmp.curr_tx_pps=stats.curr_tx_pps;
@@ -41,8 +39,7 @@ pack1(const uint8_t system_id,const uint8_t component_id,const openhd::link_stat
   return msg;
 }
 
-static MavlinkMessage
-pack2(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsWBVideoAir& stats){
+static MavlinkMessage pack_vid_air(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsWBVideoAir& stats){
   MavlinkMessage msg;
   mavlink_openhd_stats_wb_video_air_t tmp;
   tmp.link_index=stats.link_index;
@@ -64,8 +61,7 @@ pack2(const uint8_t system_id,const uint8_t component_id,const openhd::link_stat
   return msg;
 }
 
-static MavlinkMessage
-pack3(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsWBVideoGround& stats){
+static MavlinkMessage pack_vid_gnd(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsWBVideoGround& stats){
   MavlinkMessage msg;
   mavlink_openhd_stats_wb_video_ground_t tmp;
   tmp.link_index=stats.link_index;
