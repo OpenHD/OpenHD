@@ -231,10 +231,6 @@ std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int 
 
 std::unique_ptr<UDPWBReceiver> WBLink::createUdpWbRx(uint8_t radio_port, int udp_port){
   ROptions options{};
-  // We log them all manually together
-  options.enableLogAlive= false;
-  // TODO REMOVE ME FOR TESTING
-  //options.enableLogAlive = udp_port==5600;
   options.radio_port = radio_port;
   const char *keypair_file =
       m_profile.is_air ? KEYPAIR_FILE_DRONE : KEYPAIR_FILE_GROUND;
