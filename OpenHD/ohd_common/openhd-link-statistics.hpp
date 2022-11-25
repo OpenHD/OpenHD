@@ -75,7 +75,7 @@ struct StatsPerCard{
 // Stats per connected card
 using StatsAllCards=std::array<StatsPerCard,4>;
 
-// Matches FECRxStats
+// Matches wifibroadcast FECRxStats
 // stats for the video stream, only generated on the video rx, and therefore only produced on the ground station
 struct OHDFECRxStats {
   // total block count
@@ -98,7 +98,6 @@ static std::ostream& operator<<(std::ostream& strm, const OHDFECRxStats& obj){
 }
 
 struct AllStats{
-  //openhd::link_statistics::StatsTotalRxStreams stats_total_rx_streams{};
   openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
   openhd::link_statistics::StatsAllCards stats_all_cards{};
   // optional, since this is only generated on the ground pi (where the video rx-es are)
