@@ -645,7 +645,7 @@ void WBLink::loop_recalculate_stats() {
     }else{
       // video on ground
       for(int i=0;i<udpVideoRxList.size();i++){
-        auto& wb_rx=udpVideoRxList.at(i)->get_wb_receiver();
+        auto& wb_rx=udpVideoRxList.at(i)->get_wb_rx();
         const auto wb_rx_stats=wb_rx.get_latest_stats();
         auto& ground_video= i==0 ? stats.ground_video0 : stats.ground_video1;
         //
