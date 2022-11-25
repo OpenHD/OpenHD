@@ -14,7 +14,7 @@
 #include "../mav_helper.h"
 #include "HelperSources/SocketHelper.hpp"
 #include "OnboardComputerStatusProvider.h"
-#include "OpenHDStatisticsWriter.hpp"
+#include "WBReceiverStats.hpp"
 #include "StatusTextAccumulator.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-link-statistics.hpp"

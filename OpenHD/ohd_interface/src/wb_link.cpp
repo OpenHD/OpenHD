@@ -630,7 +630,7 @@ void WBLink::set_video_codec(int codec) {
 void WBLink::loop_recalculate_stats() {
   while (m_recalculate_stats_thread_run){
     //m_console->debug("Recalculating stats");
-    std::array<OpenHDStatisticsWriter::Data,3> last_stats_per_rx_stream{};
+    std::array<WBReceiverStats,3> last_stats_per_rx_stream{};
     if(udpTelemetryRx){
       last_stats_per_rx_stream.at(0)=udpTelemetryRx->get_latest_stats();
     }
