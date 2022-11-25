@@ -207,8 +207,15 @@ void MavlinkParameterReceiver::process_param_set_internally(const std::string& p
     case MavlinkParameterSet::UpdateExistingParamResult::SUCCESS:
     case MavlinkParameterSet::UpdateExistingParamResult::NO_CHANGE:
     {
+      // Even if the param was not changed, the response from the server needs to be sent anyways,
+      // multiple ground station(s) changing params can result in out-of-date values
       const auto updated_parameter=_param_set.lookup_parameter(param_id,extended).value();
-      LogDebug() << "Got param_set SUCCESS or NO_CHANGE:"<<updated_parameter;
+      if(result==MavlinkParameterSet::UpdateExistingParamResult::SUCCESS){
+        LogDebug() << "Got param_set SUCCESS:"<<updated_parameter;
+      }else{
+        assert(result==MavlinkParameterSet::UpdateExistingParamResult::NO_CHANGE);
+        LogDebug() << "Got param_set NO_CHANGE:"<<updated_parameter;
+      }
       if(extended){
         auto new_work = std::make_shared<WorkItem>(updated_parameter.param_id,updated_parameter.value,
                                                    WorkItemAck{PARAM_ACK_ACCEPTED});
