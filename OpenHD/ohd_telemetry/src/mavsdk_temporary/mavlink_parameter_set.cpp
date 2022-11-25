@@ -64,6 +64,7 @@ MavlinkParameterSet::UpdateExistingParamResult MavlinkParameterSet::update_exist
 	  LogWarn()<<"Spent more than 1 second on param user callback for "<<param_id;
 	}
 	if (!result) {
+      // Param was rejected by returning false in the change callback
 	  return UpdateExistingParamResult::REJECTED;
 	}
   }
