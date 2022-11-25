@@ -48,8 +48,8 @@ class OHDMainComponent : public MavlinkComponent{
   openhd::link_statistics::StatsAirGround get_latest_link_statistics();
  private:
   const bool RUNS_ON_AIR;
-  const OHDPlatform platform;
-  std::shared_ptr<openhd::ActionHandler> _opt_action_handler;
+  const OHDPlatform m_platform;
+  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
   // by the sys id QGroundControl knows if this message is telemetry data from the air pi or ground pi.
   // just for convenience, the RUNS_ON_AIR variable determines the sys id.
   //const uint8_t mSysId;
@@ -62,8 +62,8 @@ class OHDMainComponent : public MavlinkComponent{
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
   // here all the log messages are sent to - not in their mavlink form yet.
-  std::unique_ptr<SocketHelper::UDPReceiver> logMessagesReceiver;
-  StatusTextAccumulator _status_text_accumulator;
+  std::unique_ptr<SocketHelper::UDPReceiver> m_log_messages_receiver;
+  StatusTextAccumulator m_status_text_accumulator;
   std::unique_ptr<OnboardComputerStatusProvider> m_onboard_computer_status_provider;
   std::mutex m_last_link_stats_mutex;
   openhd::link_statistics::StatsAirGround m_last_link_stats{};

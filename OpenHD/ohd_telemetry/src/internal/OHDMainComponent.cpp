@@ -14,21 +14,21 @@
 
 OHDMainComponent::OHDMainComponent(
     OHDPlatform platform1,uint8_t parent_sys_id,
-    bool runsOnAir,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
-	platform(platform1),RUNS_ON_AIR(runsOnAir),_opt_action_handler(std::move(opt_action_handler)),
+    bool runsOnAir,std::shared_ptr<openhd::ActionHandler> opt_action_handler) : m_platform(platform1),RUNS_ON_AIR(runsOnAir),
+      m_opt_action_handler(std::move(opt_action_handler)),
 	MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
   m_console = openhd::log::create_or_get("t_main_c");
   assert(m_console);
-  m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(platform);
-  logMessagesReceiver =
+  m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform);
+  m_log_messages_receiver =
       std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
                                                   OHD_LOCAL_LOG_MESSAGES_UDP_PORT,
                                                   [this](const uint8_t *payload,
                                                          const std::size_t payloadSize) {
-                                                    this->_status_text_accumulator.processLogMessageData(payload, payloadSize);
+                                                    this->m_status_text_accumulator.processLogMessageData(payload, payloadSize);
                                                   });
-  logMessagesReceiver->runInBackground();
-  _opt_action_handler->action_wb_link_statistics_register([this](openhd::link_statistics::StatsAirGround stats_air_ground){
+  m_log_messages_receiver->runInBackground();
+  m_opt_action_handler->action_wb_link_statistics_register([this](openhd::link_statistics::StatsAirGround stats_air_ground){
     this->set_link_statistics(stats_air_ground);
   });
 }
@@ -87,8 +87,8 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
           // dirty, we don't have a custom message for that yet
           if(command.param3==1){
             ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
-            if(_opt_action_handler){
-              _opt_action_handler->action_restart_wb_streams_handle();
+            if(m_opt_action_handler){
+              m_opt_action_handler->action_restart_wb_streams_handle();
             }
           }
         }
@@ -133,7 +133,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
-  const auto messages=_status_text_accumulator.get_messages();
+  const auto messages= m_status_text_accumulator.get_messages();
   std::vector<MavlinkMessage> ret;
   // limit to 5 to save bandwidth
   for(const auto& msg:messages){
