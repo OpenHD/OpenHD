@@ -339,6 +339,8 @@ int main(int argc, char *argv[]) {
         m_console->debug(ss.str());
       }
     }
+    // Stop any communication between modules, to ease up any issues created by threads during cleanup
+    ohd_action_handler->disable_all_callables();
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
     exit(1);
