@@ -466,6 +466,7 @@ bool WBLink::set_mcs_index(int mcs_index) {
   }*/
   return true;
 }
+
 bool WBLink::set_channel_width(int channel_width) {
   m_console->debug("WBStreams::set_channel_width {}",channel_width);
   if(!openhd::is_valid_channel_width(channel_width)){
@@ -498,7 +499,7 @@ bool WBLink::set_video_fec_block_length(const int block_length) {
   m_settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
   m_settings->persist();
   std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
-  // we only use the fec percentage for video txes
+  // we only use the fec percentage for video tx-es
   for(auto& tx:udpVideoTxList){
     if(block_length==0){
       tx->get_wb_tx().update_fec_k(block_length,FEC_VARIABLE_INPUT_TYPE::RTP_H264);
@@ -606,7 +607,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     };
     ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
   }
-
   openhd::validate_provided_ids(ret);
   return ret;
 }

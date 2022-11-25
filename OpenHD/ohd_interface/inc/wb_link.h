@@ -120,6 +120,8 @@ class WBLink {
   void loop_recalculate_stats();
   int64_t last_tx_error_count=-1;
   int64_t last_recommended_bitrate=-1;
+ private:
+
 };
 
 #endif
