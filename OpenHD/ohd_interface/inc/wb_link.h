@@ -38,8 +38,6 @@ class WBLink {
   WBLink(const WBLink&)=delete;
   WBLink(const WBLink&&)=delete;
   ~WBLink();
-  // register callback that is called in regular intervals with link statistics
-  void set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback);
   // Verbose string about the current state.
   // could be const if there wasn't the mutex
   [[nodiscard]] std::string createDebug();
@@ -69,7 +67,6 @@ class WBLink {
   bool set_video_fec_percentage(int fec_percentage);
   bool set_enable_wb_video_variable_bitrate(int value);
   // set the channel width
-  // TODO doesn't work yet, aparently we need more than only the pcap header.
   bool set_channel_width(int channel_width);
   // Check if all cards support changing the mcs index
   bool validate_cards_support_setting_mcs_index();
@@ -120,8 +117,6 @@ class WBLink {
   void loop_recalculate_stats();
   int64_t last_tx_error_count=-1;
   int64_t last_recommended_bitrate=-1;
- private:
-
 };
 
 #endif

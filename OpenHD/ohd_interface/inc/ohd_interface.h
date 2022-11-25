@@ -28,8 +28,6 @@ class OHDInterface :public openhd::ISettingsComponent{
   explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   OHDInterface(const OHDInterface&)=delete;
   OHDInterface(const OHDInterface&&)=delete;
-  // register callback that is called in regular intervals with link statistics
-  void set_stats_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) const;
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
   // hacky, temporary. applies changed frequency / mcs index / bandwidth

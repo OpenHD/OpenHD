@@ -268,7 +268,7 @@ int main(int argc, char *argv[]) {
     // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
     auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile,ohd_action_handler);
     // link stats from ohdInterface with telemetry
-    ohdInterface->set_stats_callback([&ohdTelemetry](openhd::link_statistics::AllStats stats){
+    ohd_action_handler->action_wb_link_statistics_register([&ohdTelemetry](openhd::link_statistics::AllStats stats){
       if(ohdTelemetry){
         ohdTelemetry->set_link_statistics(stats);
       }

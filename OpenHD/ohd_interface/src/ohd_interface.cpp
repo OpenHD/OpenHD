@@ -158,14 +158,6 @@ void OHDInterface::removeExternalDeviceIpForwarding(const openhd::ExternalDevice
   }
 }
 
-void OHDInterface::set_stats_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) const {
-  if(m_wb_link){
-    m_wb_link->set_callback(std::move(stats_callback));
-  }else{
-    m_console->warn("Cannot ste stats callback, no wb streams instance");
-  }
-}
-
 static constexpr auto OHD_INTERFACE_ENABLE_WIFI_HOTSPOT="I_WIFI_HOTSPOT_E";
 
 std::vector<openhd::Setting> OHDInterface::get_all_settings(){

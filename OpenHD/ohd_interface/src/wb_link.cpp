@@ -143,6 +143,8 @@ void WBLink::configure_streams() {
   m_console->debug("Streams::configure() begin");
   // Increase the OS max UDP buffer size (only works as root) such that the wb video UDP receiver
   // doesn't fail when requesting a bigger UDP buffer size
+  // NOTE: This value is quite high, but that doesn't matter - this is the max allowed, not what is set,
+  // and doesn't change the actual / default size
   OHDUtil::run_command("sysctl ",{"-w","net.core.rmem_max=26214400"});
   // Static for the moment
   configure_telemetry();
@@ -341,10 +343,6 @@ static void convert(openhd::link_statistics::StatsFECVideoStreamRx& dest,const F
   dest.count_blocks_lost=src.count_blocks_lost;
   dest.count_blocks_total=src.count_blocks_total;
   dest.count_bytes_forwarded=src.count_bytes_forwarded;
-}
-
-void WBLink::set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback) {
-  m_stats_callback =std::move(stats_callback);
 }
 
 void WBLink::restart() {
@@ -574,11 +572,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
                                                             return set_video_fec_percentage(value);
                                                           }};
     ret.push_back(Setting{WB_VIDEO_FEC_PERCENTAGE,change_video_fec_percentage});
-    // Disabled for now
-    /*auto cb_wb_video_fec_block_length_auto_enable=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_block_length_auto_enable,[this](std::string,int value){
-                                                                         return set_wb_fec_block_length_auto_enable(value);
-                                                                       }};
-    ret.push_back(Setting{WB_FEC_BLOCK_LENGTH_AUTO_ENABLE,cb_wb_video_fec_block_length_auto_enable});*/
     auto cb_enable_wb_video_variable_bitrate=[this](std::string,int value){
       return set_enable_wb_video_variable_bitrate(value);
     };
@@ -754,8 +747,8 @@ void WBLink::loop_recalculate_stats() {
       }
     }
     const auto final_stats=openhd::link_statistics::AllStats{stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx};
-    if(m_stats_callback){
-      m_stats_callback(final_stats);
+    if(m_opt_action_handler){
+      m_opt_action_handler->action_wb_link_statistcs_handle(final_stats);
     }
     if(m_profile.is_air && m_settings->get_settings().enable_wb_video_variable_bitrate){
       // stupid encoder rate control
