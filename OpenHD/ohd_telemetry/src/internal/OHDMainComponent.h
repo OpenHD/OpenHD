@@ -44,7 +44,8 @@ class OHDMainComponent : public MavlinkComponent{
   // override from component
   std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage &msg)override;
   // update stats from ohd_interface
-  void set_link_statistics(openhd::link_statistics::AllStats stats);
+  void set_link_statistics(openhd::link_statistics::StatsAirGround stats);
+  openhd::link_statistics::StatsAirGround get_latest_link_statistics();
  private:
   const bool RUNS_ON_AIR;
   const OHDPlatform platform;
@@ -64,8 +65,8 @@ class OHDMainComponent : public MavlinkComponent{
   std::unique_ptr<SocketHelper::UDPReceiver> logMessagesReceiver;
   StatusTextAccumulator _status_text_accumulator;
   std::unique_ptr<OnboardComputerStatusProvider> m_onboard_computer_status_provider;
-  std::mutex _last_link_stats_mutex;
-  openhd::link_statistics::AllStats _last_link_stats{};
+  std::mutex m_last_link_stats_mutex;
+  openhd::link_statistics::StatsAirGround m_last_link_stats{};
   MavlinkMessage ack_command(uint8_t source_sys_id,uint8_t source_comp_id,uint16_t command_id);
   std::shared_ptr<spdlog::logger> m_console;
 };

@@ -48,10 +48,6 @@ class OHDTelemetry {
   // for simplicity. Note, at some point it might make sense to also use its own component id
   // for OHD interface
   void add_camera_component(int camera_index,const std::vector<openhd::Setting>& settings) const;
-  // Called by ohd_interface, to update the mavlink link statistics that are generated here (since we have no dependency on mavlink
-  // in ohd_interface and for the previous mentioned separation reasons). Note that the then generated mavlink packets are transmitted via
-  // ohd_interface (WB) again, together with the other telemetry data.
-  void set_link_statistics(openhd::link_statistics::AllStats stats) const;
   // Add / remove the IP of another Ground station client. Buggy / not finished yet.
   void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const;
   void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const;

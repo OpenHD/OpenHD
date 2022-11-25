@@ -42,7 +42,6 @@ class AirTelemetry : public MavlinkSystem{
   void settings_generic_ready();
   // We have a unique component id / param server per camera
   void add_camera_component(int camera_index,const std::vector<openhd::Setting>& settings);
-  void set_link_statistics(openhd::link_statistics::AllStats stats);
  private:
   const OHDPlatform _platform;
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> _airTelemetrySettings;

@@ -28,6 +28,9 @@ OHDMainComponent::OHDMainComponent(
                                                     this->_status_text_accumulator.processLogMessageData(payload, payloadSize);
                                                   });
   logMessagesReceiver->runInBackground();
+  _opt_action_handler->action_wb_link_statistics_register([this](openhd::link_statistics::StatsAirGround stats_air_ground){
+    this->set_link_statistics(stats_air_ground);
+  });
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
@@ -50,21 +53,21 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
 std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const MavlinkMessage &msg) {
   std::vector<MavlinkMessage> ret{};
   switch (msg.m.msgid) { // NOLINT(cppcoreguidelines-narrowing-conversions)
-	// Obsolete
-    /*case MAVLINK_MSG_ID_PING:{
-      // We respond to ping messages
-      auto response=handlePingMessage(msg);
+      // Obsolete
+      /*case MAVLINK_MSG_ID_PING:{
+        // We respond to ping messages
+        auto response=handlePingMessage(msg);
+        if(response.has_value()){
+          ret.push_back(response.value());
+        }
+      }break;*/
+    case MAVLINK_MSG_ID_TIMESYNC:{
+      // makes ping obsolete
+      auto response=handleTimeSyncMessage(msg);
       if(response.has_value()){
         ret.push_back(response.value());
       }
-    }break;*/
-	case MAVLINK_MSG_ID_TIMESYNC:{
-	  // makes ping obsolete
-	  auto response=handleTimeSyncMessage(msg);
-	  if(response.has_value()){
-		ret.push_back(response.value());
-	  }
-	}break;
+    }break;
 
     case MAVLINK_MSG_ID_COMMAND_LONG:{
       mavlink_command_long_t command;
@@ -73,22 +76,22 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
       if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
         //https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
         m_console->debug("Got shutdown command");
-		if(command.target_system==_sys_id){
-		  // we are a companion computer, so we use param2 to get the actual action
-		  const auto action_for_companion=command.param2;
-		  if(action_for_companion>0){
-			ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
-			const bool shutdownOnly=action_for_companion==2;
-			RebootUtil::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
-		  }
-		  // dirty, we don't have a custom message for that yet
-		  if(command.param3==1){
-			ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
-			if(_opt_action_handler){
-			  _opt_action_handler->action_restart_wb_streams_handle();
-			}
-		  }
-		}
+        if(command.target_system==_sys_id){
+          // we are a companion computer, so we use param2 to get the actual action
+          const auto action_for_companion=command.param2;
+          if(action_for_companion>0){
+            ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
+            const bool shutdownOnly=action_for_companion==2;
+            RebootUtil::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
+          }
+          // dirty, we don't have a custom message for that yet
+          if(command.param3==1){
+            ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
+            if(_opt_action_handler){
+              _opt_action_handler->action_restart_wb_streams_handle();
+            }
+          }
+        }
       }else if(command.command==MAV_CMD_REQUEST_MESSAGE){
         const auto requested_message_id=static_cast<uint32_t>(command.param1);
         m_console->debug("Someone requested a specific message: {}",requested_message_id);
@@ -106,35 +109,26 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generateWifibroadcastStatistics(){
-  std::lock_guard<std::mutex> guard(_last_link_stats_mutex);
   std::vector<MavlinkMessage> ret;
+  const auto latest_stats=get_latest_link_statistics();
   // stats for all the wifi card(s)
-  for(int i=0;i<_last_link_stats.stats_all_cards.size();i++){
-	const auto card_stats=_last_link_stats.stats_all_cards.at(i);
-	if(!card_stats.exists_in_openhd){
-	  // skip non active cards
-	  continue;
-	}
-	MavlinkMessage msg=openhd::LinkStatisticsHelper::wifibroadcast_wifi_card_pack(_sys_id,_comp_id,0,card_stats);
-	ret.push_back(msg);
+  for(int i=0;i<latest_stats.stats_all_cards.size();i++){
+    const auto card_stats=latest_stats.stats_all_cards.at(i);
+    if(!card_stats.exists_in_openhd){
+      // skip non active cards
+      continue;
+    }
+    MavlinkMessage msg=openhd::LinkStatisticsHelper::pack0(_sys_id,_comp_id,0,card_stats);
+    ret.push_back(msg);
   }
-  {
-	const auto& all_stats=_last_link_stats.stats_total_all_streams;
-	MavlinkMessage msg=openhd::LinkStatisticsHelper::stats_total_all_wifibroadcast_streams_pack(_sys_id,_comp_id,all_stats);
-	ret.push_back(msg);
+  ret.push_back(openhd::LinkStatisticsHelper::pack1(_sys_id,_comp_id,latest_stats.telemetry));
+  if(RUNS_ON_AIR){
+    ret.push_back(openhd::LinkStatisticsHelper::pack2(_sys_id,_comp_id,latest_stats.air_video0));
+    //ret.push_back(openhd::LinkStatisticsHelper::pack2(_sys_id,_comp_id,latest_stats.air_video1));
+  }else{
+    ret.push_back(openhd::LinkStatisticsHelper::pack3(_sys_id,_comp_id,latest_stats.ground_video0));
+    //ret.push_back(openhd::LinkStatisticsHelper::pack3(_sys_id,_comp_id,latest_stats.ground_video0));
   }
-  {
-	if(!RUNS_ON_AIR){
-	  // Video fex rx stats only on ground
-	  if(_last_link_stats.stats_video_stream0_rx.has_value()){
-		const auto& stats_video_stream_rx=_last_link_stats.stats_video_stream0_rx.value();
-		MavlinkMessage msg=openhd::LinkStatisticsHelper::fec_link_rx_statistics_pack(_sys_id,_comp_id,0,stats_video_stream_rx);
-		ret.push_back(msg);
-	  }
-	}
-  }
-  // stats per ling
-  //mavlink_msg_openhd_fec_link_rx_statistics_pack()
   return ret;
 }
 
@@ -167,10 +161,14 @@ MavlinkMessage OHDMainComponent::generateOpenHDVersion(const std::string& commit
   return msg;
 }
 
-void OHDMainComponent::set_link_statistics(openhd::link_statistics::AllStats stats){
-  //m_console->debug("OHDMainComponent::set_link_statistics");
-  std::lock_guard<std::mutex> guard(_last_link_stats_mutex);
-  _last_link_stats=stats;
+void OHDMainComponent::set_link_statistics(openhd::link_statistics::StatsAirGround stats){
+  std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
+  m_last_link_stats=stats;
+}
+
+openhd::link_statistics::StatsAirGround OHDMainComponent::get_latest_link_statistics() {
+  std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
+  return m_last_link_stats;
 }
 
 MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,const uint8_t source_comp_id,uint16_t command_id) {

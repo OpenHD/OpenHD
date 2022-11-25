@@ -77,7 +77,7 @@ class ActionHandler{
     std::lock_guard<std::mutex> lock(_mutex);
     m_link_statistics_callback =std::move(stats_callback);
   }
-  void action_wb_link_statistcs_handle(openhd::link_statistics::AllStats all_stats){
+  void action_wb_link_statistcs_handle(openhd::link_statistics::StatsAirGround all_stats){
     std::lock_guard<std::mutex> lock(_mutex);
     if(m_link_statistics_callback){
       m_link_statistics_callback(all_stats);

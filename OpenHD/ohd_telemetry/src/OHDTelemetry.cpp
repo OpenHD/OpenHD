@@ -63,18 +63,6 @@ void OHDTelemetry::add_camera_component(const int camera_index, const std::vecto
   airTelemetry->add_camera_component(camera_index,settings);
 }
 
-void OHDTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) const {
-  if(profile.is_air){
-    if(airTelemetry){
-      airTelemetry->set_link_statistics(stats);
-    }
-  }else{
-    if(groundTelemetry){
-      groundTelemetry->set_link_statistics(stats);
-    }
-  }
-}
-
 void OHDTelemetry::add_external_ground_station_ip(const std::string &ip_openhd, const std::string &ip_dest_device) const {
   // We only support external ground station(s) connecting to the ground unit
   if(profile.is_air)return;

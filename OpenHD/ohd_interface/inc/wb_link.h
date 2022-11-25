@@ -100,8 +100,6 @@ class WBLink {
   const OHDPlatform m_platform;
   std::vector<std::shared_ptr<WifiCardHolder>> m_broadcast_cards;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
-  // Set by the openhd telemetry module to get WB statistics in regular intervals
-  openhd::link_statistics::STATS_CALLBACK m_stats_callback =nullptr;
   std::mutex m_restart_async_lock;
   std::unique_ptr<std::thread> m_restart_async_thread =nullptr;
   std::shared_ptr<spdlog::logger> m_console;

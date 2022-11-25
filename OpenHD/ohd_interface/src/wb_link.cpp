@@ -333,15 +333,6 @@ bool WBLink::ever_received_any_data(){
   return any_data_received;
 }
 
-static void convert(openhd::link_statistics::OHDFECRxStats& dest,const FECRxStats& src){
-  dest.count_blocks_total=src.count_blocks_total;
-  dest.count_blocks_lost=src.count_blocks_lost;
-  dest.count_blocks_lost=src.count_blocks_lost;
-  dest.count_blocks_recovered=src.count_blocks_recovered;
-  dest.count_fragments_recovered=src.count_fragments_recovered;
-  dest.count_bytes_forwarded=src.count_bytes_forwarded;
-}
-
 void WBLink::restart() {
   m_console->info("WBStreams::restart() begin");
   std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
@@ -629,74 +620,43 @@ void WBLink::set_video_codec(int codec) {
 
 void WBLink::loop_recalculate_stats() {
   while (m_recalculate_stats_thread_run){
-    //m_console->debug("Recalculating stats");
-    std::array<WBReceiverStats,3> wb_receiver_stats_latest{};
-    if(udpTelemetryRx){
-      wb_receiver_stats_latest.at(0)=udpTelemetryRx->get_latest_stats();
-    }
-    for(int i=0;i<udpVideoRxList.size();i++){
-      wb_receiver_stats_latest.at(1+i)=udpVideoRxList.at(i)->get_latest_stats();
-    }
-    // other stuff is per stream / accumulated
-    openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
-    // accumulate all RX data
-    for(const auto& rx_stat: wb_receiver_stats_latest){
-      stats_total_all_streams.count_wifi_packets_received+=rx_stat.wb_rx_stats.count_p_all;
-      //count_all_bytes_received+=stats_per_rx_stream.wb_rx_stats.count_bytes_received;
-      stats_total_all_streams.count_bytes_received+=rx_stat.wb_rx_stats.count_bytes_data_received;
-    }
-    // tx-es are a bit different
+    // telemetry is available on both air and ground
+    openhd::link_statistics::StatsAirGround stats{};
     if(udpTelemetryTx){
-      // this one is total
-      stats_total_all_streams.curr_telemetry_tx_bps=udpTelemetryTx->get_current_injected_bits_per_second();
-      // these ones are accumulated
-      stats_total_all_streams.count_wifi_packets_injected+=udpTelemetryTx->get_n_injected_packets();
-      stats_total_all_streams.count_bytes_injected+=udpTelemetryTx->get_n_injected_bytes();
-      stats_total_all_streams.count_telemetry_tx_injections_error_hint+=udpTelemetryTx->get_count_tx_injections_error_hint();
+      auto& wb_tx=udpTelemetryTx->get_wb_tx();
+      stats.telemetry.curr_tx_bps=wb_tx.get_current_provided_bits_per_second();
+      stats.telemetry.curr_tx_pps=wb_tx.get_current_packets_per_second();
     }
-    stats_total_all_streams.curr_telemetry_rx_bps=
-        wb_receiver_stats_latest.at(0).wb_rx_stats.curr_bits_per_second;
-    if(m_profile.is_air){
-      stats_total_all_streams.curr_rx_packet_loss_perc=
-          wb_receiver_stats_latest.at(0).wb_rx_stats.curr_packet_loss_percentage;
-      stats_total_all_streams.curr_n_of_big_gaps=
-          wb_receiver_stats_latest.at(0).wb_rx_stats.curr_n_of_big_gaps;
-    }else{
-      if(!udpVideoRxList.empty()){
-        stats_total_all_streams.curr_rx_packet_loss_perc=
-            wb_receiver_stats_latest.at(1).wb_rx_stats.curr_packet_loss_percentage;
-        stats_total_all_streams.curr_n_of_big_gaps=
-            wb_receiver_stats_latest.at(1).wb_rx_stats.curr_n_of_big_gaps;
-      }
-    }
-
-    for(const auto& videoTx:udpVideoTxList){
-      // accumulated
-      stats_total_all_streams.count_wifi_packets_injected+=videoTx->get_n_injected_packets();
-      stats_total_all_streams.count_bytes_injected+=videoTx->get_n_injected_bytes();
-      // TODO should we seperate here ?
-      stats_total_all_streams.count_video_tx_injections_error_hint+=videoTx->get_count_tx_injections_error_hint()
-                                                                      +videoTx->get_n_dropped_packets();
-      //stats_total_all_streams.count_video_tx_dropped_packets+=videoTx->get_n_dropped_packets();
+    if(udpTelemetryRx){
+      const auto rx_stats=udpTelemetryRx->get_latest_stats();
+      stats.telemetry.curr_rx_bps=rx_stats.wb_rx_stats.curr_bits_per_second;
     }
     if(m_profile.is_air){
-      if(!udpVideoTxList.empty()){
-        stats_total_all_streams.curr_video0_bps=udpVideoTxList.at(0)->get_current_provided_bits_per_second();
-        stats_total_all_streams.curr_video0_tx_pps=udpVideoTxList.at(0)->get_current_packets_per_second();
-      }
-      if(udpVideoTxList.size()>=2){
-        stats_total_all_streams.curr_video1_bps=udpVideoTxList.at(1)->get_current_provided_bits_per_second();
-        stats_total_all_streams.curr_video1_tx_pps=udpVideoTxList.at(1)->get_current_packets_per_second();
+      // video on air
+      for(int i=0;i<udpVideoTxList.size();i++){
+        auto& wb_tx=udpVideoTxList.at(i)->get_wb_tx();
+        auto& air_video=i==0 ? stats.air_video0 : stats.air_video1;
+        //
+        air_video.link_index=i;
+        air_video.curr_measured_encoder_bitrate=wb_tx.get_current_provided_bits_per_second();
+        air_video.curr_injected_bitrate=wb_tx.get_current_injected_bits_per_second();
+        air_video.curr_injected_pps=wb_tx.get_current_packets_per_second();
       }
     }else{
-      stats_total_all_streams.curr_video0_bps=
-          wb_receiver_stats_latest.at(1).wb_rx_stats.curr_bits_per_second;
-      stats_total_all_streams.curr_video1_bps=
-          wb_receiver_stats_latest.at(2).wb_rx_stats.curr_bits_per_second;
-      stats_total_all_streams.curr_video0_tx_pps=0;
-      stats_total_all_streams.curr_video1_tx_pps=0;
-      if(udpTelemetryTx){
-        stats_total_all_streams.curr_telemetry_tx_pps=udpTelemetryTx->get_current_packets_per_second();
+      // video on ground
+      for(int i=0;i<udpVideoRxList.size();i++){
+        auto& wb_rx=udpVideoRxList.at(i)->get_wb_receiver();
+        const auto wb_rx_stats=wb_rx.get_latest_stats();
+        auto& ground_video= i==0 ? stats.ground_video0 : stats.ground_video1;
+        //
+        ground_video.link_index=i;
+        ground_video.curr_incoming_bitrate=wb_rx_stats.wb_rx_stats.curr_bits_per_second;
+        if(wb_rx_stats.fec_rx_stats.has_value()){
+          ground_video.count_fragments_recovered=wb_rx_stats.fec_rx_stats.value().count_fragments_recovered;
+          ground_video.count_blocks_recovered=wb_rx_stats.fec_rx_stats.value().count_blocks_recovered;
+          ground_video.count_blocks_lost=wb_rx_stats.fec_rx_stats.value().count_blocks_lost;
+          ground_video.count_blocks_total=wb_rx_stats.fec_rx_stats.value().count_blocks_total;
+        }
       }
     }
     // dBm / rssi for all connected cards that are doing wifibroadcast
@@ -705,7 +665,7 @@ void WBLink::loop_recalculate_stats() {
     assert(stats_all_cards.size()>=4);
     // only populate actually used cards
     assert(m_broadcast_cards.size()<=stats_all_cards.size());
-    for(int i=0;i< m_broadcast_cards.size();i++){
+    /*for(int i=0;i< m_broadcast_cards.size();i++){
       auto& card = stats_all_cards.at(i);
       if(m_profile.is_air){
         // on air, we use the dbm reported by the telemetry stream
@@ -729,25 +689,10 @@ void WBLink::loop_recalculate_stats() {
       // not yet supported
       card.count_p_injected=0;
       card.count_p_received=0;
-    }
-    //
-    std::optional<openhd::link_statistics::OHDFECRxStats> stats_video_stream0_rx=std::nullopt;
-    std::optional<openhd::link_statistics::OHDFECRxStats> stats_video_stream1_rx=std::nullopt;
-    if(!m_profile.is_air){
-      if(wb_receiver_stats_latest.at(1).fec_rx_stats.has_value()){
-        stats_video_stream0_rx=openhd::link_statistics::OHDFECRxStats{};
-        convert(stats_video_stream0_rx.value(),
-                wb_receiver_stats_latest.at(1).fec_rx_stats.value());
-      }
-      if(wb_receiver_stats_latest.at(2).fec_rx_stats.has_value()){
-        stats_video_stream1_rx=openhd::link_statistics::OHDFECRxStats{};
-        convert(stats_video_stream1_rx.value(),
-                wb_receiver_stats_latest.at(2).fec_rx_stats.value());
-      }
-    }
-    const auto final_stats=openhd::link_statistics::AllStats{stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx};
+    }*/
+    stats.is_air=m_profile.is_air;
     if(m_opt_action_handler){
-      m_opt_action_handler->action_wb_link_statistcs_handle(final_stats);
+      m_opt_action_handler->action_wb_link_statistcs_handle(stats);
     }
     if(m_profile.is_air && m_settings->get_settings().enable_wb_video_variable_bitrate){
       // stupid encoder rate control
