@@ -136,27 +136,15 @@ class CameraHolder:
     persist();
     return true;
   }
-  bool set_video_width(int video_width){
-    if(!openhd::validate_video_with(video_width)){
+  // it is only possible to validate setting the video width,height and fps
+  // if we do them together
+  bool set_video_width_height_framerate(int width,int height,int framerate){
+    if(!openhd::validate_video_width_height_fps(width,height,framerate)){
       return false;
     }
-    unsafe_get_settings().streamed_video_format.width=video_width;
-    persist();
-    return true;
-  }
-  bool set_video_height(int video_height){
-    if(!openhd::validate_video_height(video_height)){
-      return false;
-    }
-    unsafe_get_settings().streamed_video_format.height=video_height;
-    persist();
-    return true;
-  }
-  bool set_video_fps(int fps){
-    if(!openhd::validate_video_fps(fps)){
-      return false;
-    }
-    unsafe_get_settings().streamed_video_format.framerate=fps;
+    unsafe_get_settings().streamed_video_format.width=width;
+    unsafe_get_settings().streamed_video_format.height=height;
+    unsafe_get_settings().streamed_video_format.framerate=framerate;
     persist();
     return true;
   }
@@ -233,16 +221,6 @@ class CameraHolder:
       return false;
     }
     unsafe_get_settings().mjpeg_quality_percent=value;
-    persist();
-    return true;
-  }
-  bool set_video_width_height_framerate(int width,int height,int framerate){
-    if(!openhd::validate_video_width_height_fps(width,height,framerate)){
-      return false;
-    }
-    unsafe_get_settings().streamed_video_format.width=width;
-    unsafe_get_settings().streamed_video_format.height=height;
-    unsafe_get_settings().streamed_video_format.framerate=framerate;
     persist();
     return true;
   }
