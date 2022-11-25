@@ -23,14 +23,17 @@ namespace openhd::rpi::os{
 enum class CamConfig {
   MMAL = 0, // raspivid / gst-rpicamsrc
   LIBCAMERA, // "normal" libcamera (autodetect)
-  LIBCAMERA_IMX477 // "normal" libcamera, explicitly set to imx477 detection only
-  //LIBCAMERA_ARDUCAM, // pivariety libcamera (arducam special)
+  LIBCAMERA_IMX477, // "normal" libcamera, explicitly set to imx477 detection only
+  LIBCAMERA_ARDUCAM, // pivariety libcamera (arducam special)
+  LIBCAMERA_IMX519
 };
 static std::string cam_config_to_string(const CamConfig& cam_config){
   switch (cam_config) {
     case CamConfig::MMAL: return "mmal";
     case CamConfig::LIBCAMERA: return "libcamera";
     case CamConfig::LIBCAMERA_IMX477: return "libcamera_imx477";
+    case CamConfig::LIBCAMERA_ARDUCAM: return "libcamera_arducam";
+    case CamConfig::LIBCAMERA_IMX519: return "libcamera_imx519";
   }
   openhd::log::get_default()->warn("Error cam_config_to_string");
   assert(true);
@@ -41,6 +44,8 @@ static CamConfig cam_config_from_int(int val){
   if(val==0)return CamConfig::MMAL;
   if(val==1)return CamConfig::LIBCAMERA;
   if(val==2)return CamConfig::LIBCAMERA_IMX477;
+  if(val==3)return CamConfig::LIBCAMERA_ARDUCAM;
+  if(val==4)return CamConfig::LIBCAMERA_IMX519;
   openhd::log::get_default()->warn("Error cam_config_from_int");
   assert(true);
   return CamConfig::MMAL;
@@ -50,6 +55,8 @@ static int cam_config_to_int(CamConfig cam_config){
     case CamConfig::MMAL: return 0;
     case CamConfig::LIBCAMERA: return 1;
     case CamConfig::LIBCAMERA_IMX477: return 2;
+    case CamConfig::LIBCAMERA_ARDUCAM: return 3;
+    case CamConfig::LIBCAMERA_IMX519: return 4;
   }
   openhd::log::get_default()->warn("Error cam_config_to_int");
   assert(true);
@@ -57,7 +64,7 @@ static int cam_config_to_int(CamConfig cam_config){
 }
 
 static bool validate_cam_config_settings_int(int val){
-  return val>=0 && val<3;
+  return val>=0 && val<4;
 }
 
 static constexpr auto CAM_CONFIG_FILENAME="/boot/openhd/curr_rpi_cam_config.txt";
@@ -95,6 +102,18 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
       return base_filename+"rpi_4_libcamera_imx477.txt";
     }else{
       return base_filename+"rpi_3_libcamera_imx477.txt";
+    }
+  }else if(cam_config==CamConfig::LIBCAMERA_ARDUCAM){
+    if(is_rpi4){
+      return base_filename+"rpi_4_libcamera_ardu.txt";
+    }else{
+      return base_filename+"rpi_3_libcamera_ardu.txt";
+    }
+  }else if(cam_config==CamConfig::LIBCAMERA_IMX519){
+    if(is_rpi4){
+      return base_filename+"rpi_4_libcamera_imx519.txt";
+    }else{
+      return base_filename+"rpi_3_libcamera_imx519.txt";
     }
   }
   assert(true);
