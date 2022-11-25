@@ -83,6 +83,13 @@ class ActionHandler{
       m_link_statistics_callback(all_stats);
     }
   }
+  // Cleanup, set all lambdas that handle things to 0
+  void disable_all_callables(){
+    action_wb_link_statistics_register(nullptr);
+    action_request_bitrate_change_register(nullptr);
+    action_set_video_codec_set(nullptr);
+    action_restart_wb_streams_set(nullptr);
+  }
  private:
   std::mutex _mutex;
   std::function<void()> _action_restart_wb_streams=nullptr;
@@ -90,7 +97,7 @@ class ActionHandler{
   //
   std::function<void(LinkBitrateInformation link_bitrate_info)> m_action_request_bitrate_change =nullptr;
   //
-  openhd::link_statistics::STATS_CALLBACK m_link_statistics_callback;
+  openhd::link_statistics::STATS_CALLBACK m_link_statistics_callback=nullptr;
 };
 
 }
