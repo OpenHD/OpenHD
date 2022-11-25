@@ -170,9 +170,9 @@ void WBLink::configure_video() {
   m_console->debug("Streams::configure_video()");
   // Video is unidirectional, aka always goes from air pi to ground pi
   if (m_profile.is_air) {
-    auto primary = createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP,true,1024*1024*25);
+    auto primary = createUdpWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP,true,1024*1024*5);
     primary->runInBackground();
-    auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,true,1024*1024*10);
+    auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,true,1024*1024*2);
     secondary->runInBackground();
     udpVideoTxList.push_back(std::move(primary));
     udpVideoTxList.push_back(std::move(secondary));
@@ -348,12 +348,12 @@ void WBLink::set_callback(openhd::link_statistics::STATS_CALLBACK stats_callback
 }
 
 void WBLink::restart() {
+  m_console->info("WBStreams::restart() begin");
   std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
   // Stop the stats recalculation
   m_recalculate_stats_thread_run= false;
   m_recalculate_stats_thread->join();
   m_recalculate_stats_thread=nullptr;
-  m_console->info("WBStreams::restart() begin");
   if(udpTelemetryRx){
     udpTelemetryRx->stop_looping();
     udpTelemetryRx.reset();
