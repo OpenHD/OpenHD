@@ -75,9 +75,9 @@ struct StatsPerCard{
 // Stats per connected card
 using StatsAllCards=std::array<StatsPerCard,4>;
 
-// Matches OPENHD_FEC_LINK_RX_STATISTICS
+// Matches FECRxStats
 // stats for the video stream, only generated on the video rx, and therefore only produced on the ground station
-struct StatsFECVideoStreamRx{
+struct OHDFECRxStats {
   // total block count
   uint64_t count_blocks_total = 0;
   // a block counts as "lost" if it was removed before being fully received or recovered
@@ -89,9 +89,9 @@ struct StatsFECVideoStreamRx{
   // n of forwarded bytes
   uint64_t count_bytes_forwarded=0;
 };
-static std::ostream& operator<<(std::ostream& strm, const StatsFECVideoStreamRx& obj){
+static std::ostream& operator<<(std::ostream& strm, const OHDFECRxStats& obj){
   std::stringstream ss;
-  ss<<"StatsFECVideoStreamRx{blocks_total:"<<obj.count_blocks_total<<",blocks_lost:"<<obj.count_blocks_lost<<",blocks_recovered:"<<obj.count_blocks_recovered
+  ss<<"OHDFECRxStats{blocks_total:"<<obj.count_blocks_total<<",blocks_lost:"<<obj.count_blocks_lost<<",blocks_recovered:"<<obj.count_blocks_recovered
 	<<",fragments_recovered:"<<obj.count_fragments_recovered<<",bytes_forwarded:"<<obj.count_bytes_forwarded<<"}";
   strm<<ss.str();
   return strm;
@@ -102,8 +102,8 @@ struct AllStats{
   openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
   openhd::link_statistics::StatsAllCards stats_all_cards{};
   // optional, since this is only generated on the ground pi (where the video rx-es are)
-  std::optional<StatsFECVideoStreamRx> stats_video_stream0_rx;
-  std::optional<StatsFECVideoStreamRx> stats_video_stream1_rx;
+  std::optional<OHDFECRxStats> stats_video_stream0_rx;
+  std::optional<OHDFECRxStats> stats_video_stream1_rx;
 };
 
 static std::ostream& operator<<(std::ostream& strm, const AllStats& obj){

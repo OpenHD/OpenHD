@@ -53,7 +53,7 @@ stats_total_all_wifibroadcast_streams_pack(const uint8_t system_id,const uint8_t
 
 static MavlinkMessage
 fec_link_rx_statistics_pack(const uint8_t system_id,const uint8_t component_id,int link_index,
-                            const openhd::link_statistics::StatsFECVideoStreamRx& stats_video_stream_rx){
+                            const openhd::link_statistics::OHDFECRxStats& stats_video_stream_rx){
   MavlinkMessage msg;
   mavlink_openhd_fec_link_rx_statistics_t tmp;
   tmp.link_index=link_index;

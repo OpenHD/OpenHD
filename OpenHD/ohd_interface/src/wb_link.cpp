@@ -333,11 +333,12 @@ bool WBLink::ever_received_any_data(){
   return any_data_received;
 }
 
-static void convert(openhd::link_statistics::StatsFECVideoStreamRx& dest,const FECStreamStats& src){
-  dest.count_fragments_recovered=src.count_fragments_recovered;
-  dest.count_blocks_recovered=src.count_blocks_recovered;
-  dest.count_blocks_lost=src.count_blocks_lost;
+static void convert(openhd::link_statistics::OHDFECRxStats& dest,const FECRxStats& src){
   dest.count_blocks_total=src.count_blocks_total;
+  dest.count_blocks_lost=src.count_blocks_lost;
+  dest.count_blocks_lost=src.count_blocks_lost;
+  dest.count_blocks_recovered=src.count_blocks_recovered;
+  dest.count_fragments_recovered=src.count_fragments_recovered;
   dest.count_bytes_forwarded=src.count_bytes_forwarded;
 }
 
@@ -730,18 +731,18 @@ void WBLink::loop_recalculate_stats() {
       card.count_p_received=0;
     }
     //
-    std::optional<openhd::link_statistics::StatsFECVideoStreamRx> stats_video_stream0_rx=std::nullopt;
-    std::optional<openhd::link_statistics::StatsFECVideoStreamRx> stats_video_stream1_rx=std::nullopt;
+    std::optional<openhd::link_statistics::OHDFECRxStats> stats_video_stream0_rx=std::nullopt;
+    std::optional<openhd::link_statistics::OHDFECRxStats> stats_video_stream1_rx=std::nullopt;
     if(!m_profile.is_air){
-      if(last_stats_per_rx_stream.at(1).fec_stream_stats.has_value()){
-        stats_video_stream0_rx=openhd::link_statistics::StatsFECVideoStreamRx{};
+      if(last_stats_per_rx_stream.at(1).fec_rx_stats.has_value()){
+        stats_video_stream0_rx=openhd::link_statistics::OHDFECRxStats{};
         convert(stats_video_stream0_rx.value(),
-                last_stats_per_rx_stream.at(1).fec_stream_stats.value());
+                last_stats_per_rx_stream.at(1).fec_rx_stats.value());
       }
-      if(last_stats_per_rx_stream.at(2).fec_stream_stats.has_value()){
-        stats_video_stream1_rx=openhd::link_statistics::StatsFECVideoStreamRx{};
+      if(last_stats_per_rx_stream.at(2).fec_rx_stats.has_value()){
+        stats_video_stream1_rx=openhd::link_statistics::OHDFECRxStats{};
         convert(stats_video_stream1_rx.value(),
-                last_stats_per_rx_stream.at(2).fec_stream_stats.value());
+                last_stats_per_rx_stream.at(2).fec_rx_stats.value());
       }
     }
     const auto final_stats=openhd::link_statistics::AllStats{stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx};
