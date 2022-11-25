@@ -677,8 +677,10 @@ void WBLink::loop_recalculate_stats() {
       // accumulated
       stats_total_all_streams.count_wifi_packets_injected+=videoTx->get_n_injected_packets();
       stats_total_all_streams.count_bytes_injected+=videoTx->get_n_injected_bytes();
-      stats_total_all_streams.count_video_tx_injections_error_hint+=videoTx->get_count_tx_injections_error_hint();
-      stats_total_all_streams.count_video_tx_dropped_packets+=videoTx->get_n_dropped_packets();
+      // TODO should we seperate here ?
+      stats_total_all_streams.count_video_tx_injections_error_hint+=videoTx->get_count_tx_injections_error_hint()
+                                                                      +videoTx->get_n_dropped_packets();
+      //stats_total_all_streams.count_video_tx_dropped_packets+=videoTx->get_n_dropped_packets();
     }
     if(m_profile.is_air){
       if(!udpVideoTxList.empty()){
@@ -771,9 +773,10 @@ void WBLink::loop_recalculate_stats() {
       // then check if there are tx errors since the last time we checked (1 second intervals)
       bool bitrate_is_still_too_high=false;
       UDPWBTransmitter* primary_video_tx=udpVideoTxList.at(0).get();
-      const auto curr_count_tx_injections_error_hint=static_cast<int64_t>(primary_video_tx->get_count_tx_injections_error_hint());
+      const auto curr_count_tx_injections_error_hint=static_cast<int64_t>(primary_video_tx->get_count_tx_injections_error_hint()
+                                                                            +primary_video_tx->get_n_dropped_packets());
       if(last_tx_error_count<0){
-        last_tx_error_count=static_cast<int64_t>(primary_video_tx->get_count_tx_injections_error_hint());
+        last_tx_error_count=curr_count_tx_injections_error_hint;
       }else{
         const auto delta=curr_count_tx_injections_error_hint-last_tx_error_count;
         last_tx_error_count=curr_count_tx_injections_error_hint;
