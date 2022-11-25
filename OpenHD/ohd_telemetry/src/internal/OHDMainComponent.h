@@ -55,10 +55,9 @@ class OHDMainComponent : public MavlinkComponent{
   //const uint8_t mSysId;
   //const uint8_t mCompId=0;
   // similar to ping
-  [[nodiscard]] std::optional<MavlinkMessage> handleTimeSyncMessage(const MavlinkMessage &message);
+  [[nodiscard]] std::optional<MavlinkMessage> handle_timesync_message(const MavlinkMessage &message);
   [[nodiscard]] std::vector<MavlinkMessage> generate_mav_wb_stats();
-  [[nodiscard]] MavlinkMessage generateOpenHDVersion(const std::string& commit_hash="unknown")const;
-  [[nodiscard]] MavlinkMessage generateRcControlMessage()const;
+  [[nodiscard]] MavlinkMessage generate_ohd_version(const std::string& commit_hash= "unknown")const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
   // here all the log messages are sent to - not in their mavlink form yet.

@@ -36,7 +36,7 @@ OHDMainComponent::OHDMainComponent(
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
-  m_console->debug("InternalTelemetry::generate_mavlink_messages()");
+  //m_console->debug("InternalTelemetry::generate_mavlink_messages()");
   std::vector<MavlinkMessage> ret;
   ret.push_back(MavlinkComponent::create_heartbeat());
   MavlinkComponent::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(_sys_id,_comp_id));
@@ -65,7 +65,7 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
       }break;*/
     case MAVLINK_MSG_ID_TIMESYNC:{
       // makes ping obsolete
-      auto response=handleTimeSyncMessage(msg);
+      auto response= handle_timesync_message(msg);
       if(response.has_value()){
         ret.push_back(response.value());
       }
@@ -99,7 +99,7 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
         m_console->debug("Someone requested a specific message: {}",requested_message_id);
         if(requested_message_id==MAVLINK_MSG_ID_OPENHD_VERSION_MESSAGE){
           m_console->info("Sent OpenHD version");
-          ret.push_back(generateOpenHDVersion());
+          ret.push_back(generate_ohd_version());
         }
       }
       // TODO have an ack response.
@@ -153,7 +153,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
   return ret;
 }
 
-MavlinkMessage OHDMainComponent::generateOpenHDVersion(const std::string& commit_hash) const {
+MavlinkMessage OHDMainComponent::generate_ohd_version(const std::string& commit_hash) const {
   MavlinkMessage msg;
   char bufferBigEnough[30]={};
   std::strncpy((char *)bufferBigEnough,OHD_VERSION_NUMBER_STRING,30);
@@ -180,27 +180,19 @@ MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,const u
   return ret;
 }
 
-std::optional<MavlinkMessage> OHDMainComponent::handleTimeSyncMessage(const MavlinkMessage &message) {
+std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(const MavlinkMessage &message) {
   const auto msg=message.m;
   assert(msg.msgid==MAVLINK_MSG_ID_TIMESYNC);
   mavlink_timesync_t tsync;
   mavlink_msg_timesync_decode(&msg, &tsync);
   if(tsync.tc1==0){
-	// request, pack response
-	mavlink_timesync_t rsync;
-	rsync.tc1 = get_time_microseconds() * 1000;
-	rsync.ts1 = tsync.ts1;
-	mavlink_message_t response_message;
-	mavlink_msg_timesync_encode(_sys_id,_comp_id,&response_message,&rsync);
-	return MavlinkMessage{response_message};
+    // request, pack response
+    mavlink_timesync_t rsync;
+    rsync.tc1 = get_time_microseconds() * 1000;
+    rsync.ts1 = tsync.ts1;
+    mavlink_message_t response_message;
+    mavlink_msg_timesync_encode(_sys_id,_comp_id,&response_message,&rsync);
+    return MavlinkMessage{response_message};
   }
   return std::nullopt;
-}
-
-MavlinkMessage OHDMainComponent::generateRcControlMessage() const {
-  MavlinkMessage ret{};
-  mavlink_rc_channels_override_t mavlink_rc_channels_override{};
-  mavlink_rc_channels_override.chan1_raw=0;
-  mavlink_msg_rc_channels_override_encode(_sys_id,_comp_id,&ret.m,&mavlink_rc_channels_override);
-  return ret;
 }
