@@ -630,17 +630,17 @@ void WBLink::set_video_codec(int codec) {
 void WBLink::loop_recalculate_stats() {
   while (m_recalculate_stats_thread_run){
     //m_console->debug("Recalculating stats");
-    std::array<WBReceiverStats,3> last_stats_per_rx_stream{};
+    std::array<WBReceiverStats,3> wb_receiver_stats_latest{};
     if(udpTelemetryRx){
-      last_stats_per_rx_stream.at(0)=udpTelemetryRx->get_latest_stats();
+      wb_receiver_stats_latest.at(0)=udpTelemetryRx->get_latest_stats();
     }
     for(int i=0;i<udpVideoRxList.size();i++){
-      last_stats_per_rx_stream.at(1+i)=udpVideoRxList.at(i)->get_latest_stats();
+      wb_receiver_stats_latest.at(1+i)=udpVideoRxList.at(i)->get_latest_stats();
     }
     // other stuff is per stream / accumulated
     openhd::link_statistics::StatsTotalAllStreams stats_total_all_streams{};
     // accumulate all RX data
-    for(const auto& rx_stat: last_stats_per_rx_stream){
+    for(const auto& rx_stat: wb_receiver_stats_latest){
       stats_total_all_streams.count_wifi_packets_received+=rx_stat.wb_rx_stats.count_p_all;
       //count_all_bytes_received+=stats_per_rx_stream.wb_rx_stats.count_bytes_received;
       stats_total_all_streams.count_bytes_received+=rx_stat.wb_rx_stats.count_bytes_data_received;
@@ -655,18 +655,18 @@ void WBLink::loop_recalculate_stats() {
       stats_total_all_streams.count_telemetry_tx_injections_error_hint+=udpTelemetryTx->get_count_tx_injections_error_hint();
     }
     stats_total_all_streams.curr_telemetry_rx_bps=
-        last_stats_per_rx_stream.at(0).wb_rx_stats.curr_bits_per_second;
+        wb_receiver_stats_latest.at(0).wb_rx_stats.curr_bits_per_second;
     if(m_profile.is_air){
       stats_total_all_streams.curr_rx_packet_loss_perc=
-          last_stats_per_rx_stream.at(0).wb_rx_stats.curr_packet_loss_percentage;
+          wb_receiver_stats_latest.at(0).wb_rx_stats.curr_packet_loss_percentage;
       stats_total_all_streams.curr_n_of_big_gaps=
-          last_stats_per_rx_stream.at(0).wb_rx_stats.curr_n_of_big_gaps;
+          wb_receiver_stats_latest.at(0).wb_rx_stats.curr_n_of_big_gaps;
     }else{
       if(!udpVideoRxList.empty()){
         stats_total_all_streams.curr_rx_packet_loss_perc=
-            last_stats_per_rx_stream.at(1).wb_rx_stats.curr_packet_loss_percentage;
+            wb_receiver_stats_latest.at(1).wb_rx_stats.curr_packet_loss_percentage;
         stats_total_all_streams.curr_n_of_big_gaps=
-            last_stats_per_rx_stream.at(1).wb_rx_stats.curr_n_of_big_gaps;
+            wb_receiver_stats_latest.at(1).wb_rx_stats.curr_n_of_big_gaps;
       }
     }
 
@@ -690,9 +690,9 @@ void WBLink::loop_recalculate_stats() {
       }
     }else{
       stats_total_all_streams.curr_video0_bps=
-          last_stats_per_rx_stream.at(1).wb_rx_stats.curr_bits_per_second;
+          wb_receiver_stats_latest.at(1).wb_rx_stats.curr_bits_per_second;
       stats_total_all_streams.curr_video1_bps=
-          last_stats_per_rx_stream.at(2).wb_rx_stats.curr_bits_per_second;
+          wb_receiver_stats_latest.at(2).wb_rx_stats.curr_bits_per_second;
       stats_total_all_streams.curr_video0_tx_pps=0;
       stats_total_all_streams.curr_video1_tx_pps=0;
       if(udpTelemetryTx){
@@ -710,14 +710,14 @@ void WBLink::loop_recalculate_stats() {
       if(m_profile.is_air){
         // on air, we use the dbm reported by the telemetry stream
         card.rx_rssi=
-            last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
+            wb_receiver_stats_latest.at(0).rssiPerCard.at(i).last_rssi;
       }else{
         // on ground, we use the dBm reported by the video stream (if available), otherwise
         // we use the dBm reported by the telemetry rx instance.
         const auto rssi_telemetry=
-            last_stats_per_rx_stream.at(0).rssiPerCard.at(i).last_rssi;
+            wb_receiver_stats_latest.at(0).rssiPerCard.at(i).last_rssi;
         const auto rssi_video0=
-            last_stats_per_rx_stream.at(1).rssiPerCard.at(i).last_rssi;
+            wb_receiver_stats_latest.at(1).rssiPerCard.at(i).last_rssi;
         if(rssi_video0==0){
           // use telemetry
           card.rx_rssi=rssi_telemetry;
@@ -734,15 +734,15 @@ void WBLink::loop_recalculate_stats() {
     std::optional<openhd::link_statistics::OHDFECRxStats> stats_video_stream0_rx=std::nullopt;
     std::optional<openhd::link_statistics::OHDFECRxStats> stats_video_stream1_rx=std::nullopt;
     if(!m_profile.is_air){
-      if(last_stats_per_rx_stream.at(1).fec_rx_stats.has_value()){
+      if(wb_receiver_stats_latest.at(1).fec_rx_stats.has_value()){
         stats_video_stream0_rx=openhd::link_statistics::OHDFECRxStats{};
         convert(stats_video_stream0_rx.value(),
-                last_stats_per_rx_stream.at(1).fec_rx_stats.value());
+                wb_receiver_stats_latest.at(1).fec_rx_stats.value());
       }
-      if(last_stats_per_rx_stream.at(2).fec_rx_stats.has_value()){
+      if(wb_receiver_stats_latest.at(2).fec_rx_stats.has_value()){
         stats_video_stream1_rx=openhd::link_statistics::OHDFECRxStats{};
         convert(stats_video_stream1_rx.value(),
-                last_stats_per_rx_stream.at(2).fec_rx_stats.value());
+                wb_receiver_stats_latest.at(2).fec_rx_stats.value());
       }
     }
     const auto final_stats=openhd::link_statistics::AllStats{stats_total_all_streams, stats_all_cards,stats_video_stream0_rx,stats_video_stream1_rx};
