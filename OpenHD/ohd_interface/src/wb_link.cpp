@@ -665,19 +665,25 @@ void WBLink::loop_recalculate_stats() {
     assert(stats_all_cards.size()>=4);
     // only populate actually used cards
     assert(m_broadcast_cards.size()<=stats_all_cards.size());
-    /*for(int i=0;i< m_broadcast_cards.size();i++){
+    for(int i=0;i< m_broadcast_cards.size();i++){
       auto& card = stats_all_cards.at(i);
       if(m_profile.is_air){
         // on air, we use the dbm reported by the telemetry stream
-        card.rx_rssi=
-            wb_receiver_stats_latest.at(0).rssiPerCard.at(i).last_rssi;
+        if(udpTelemetryRx){
+          card.rx_rssi=
+              udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
+        }
       }else{
         // on ground, we use the dBm reported by the video stream (if available), otherwise
         // we use the dBm reported by the telemetry rx instance.
-        const auto rssi_telemetry=
-            wb_receiver_stats_latest.at(0).rssiPerCard.at(i).last_rssi;
-        const auto rssi_video0=
-            wb_receiver_stats_latest.at(1).rssiPerCard.at(i).last_rssi;
+        int8_t rssi_telemetry=0;
+        if(udpTelemetryRx){
+          rssi_telemetry=udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
+        }
+        int8_t rssi_video0=0;
+        if(!udpVideoRxList.empty()){
+          rssi_video0=udpVideoRxList.at(0)->get_latest_stats().rssiPerCard.at(i).last_rssi;
+        }
         if(rssi_video0==0){
           // use telemetry
           card.rx_rssi=rssi_telemetry;
@@ -689,7 +695,7 @@ void WBLink::loop_recalculate_stats() {
       // not yet supported
       card.count_p_injected=0;
       card.count_p_received=0;
-    }*/
+    }
     stats.is_air=m_profile.is_air;
     if(m_opt_action_handler){
       m_opt_action_handler->action_wb_link_statistcs_handle(stats);
