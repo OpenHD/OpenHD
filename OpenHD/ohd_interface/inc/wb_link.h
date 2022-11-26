@@ -50,28 +50,26 @@ class WBLink {
   [[nodiscard]] bool ever_received_any_data();
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
-  // schedule an asynchronous restart. if there is already a restart scheduled, return immediately
-  void restart_async(std::chrono::milliseconds delay=std::chrono::milliseconds(0));
   // needs to be set for FEC auto to work
   void set_video_codec(int codec);
  private:
-  // Some settings need a full restart of the tx / rx instances to apply
-  void restart();
-  // set the frequency (wifi channel) of all wifibroadcast cards
+  // validate param, then schedule change
   bool set_frequency(int frequency);
-  //
+  // validate param, then schedule change
+  bool set_channel_width(int channel_width);
+  // apply the frequency (wifi channel) of all wifibroadcast cards
   void apply_frequency_and_channel_width();
-  // set the tx power of all wifibroadcast cards
+  // validate param, then schedule change
   bool set_txpower(int tx_power);
-  // set the mcs index for all wifibroadcast cards
+  // set the tx power of all wifibroadcast cards
+  void apply_txpower();
+  // validate param, then schedule change
   bool set_mcs_index(int mcs_index);
-  // called by the async pattern
+  // set the mcs index for all tx instances
   void apply_mcs_index();
   bool set_video_fec_block_length(int block_length);
   bool set_video_fec_percentage(int fec_percentage);
   bool set_enable_wb_video_variable_bitrate(int value);
-  // set the channel width
-  bool set_channel_width(int channel_width);
   // Check if all cards support changing the mcs index
   bool validate_cards_support_setting_mcs_index();
   // Check if all cards support changing the channel width
@@ -104,8 +102,6 @@ class WBLink {
   const OHDPlatform m_platform;
   std::vector<std::shared_ptr<WifiCardHolder>> m_broadcast_cards;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
-  std::mutex m_restart_async_lock;
-  std::unique_ptr<std::thread> m_restart_async_thread =nullptr;
   std::shared_ptr<spdlog::logger> m_console;
   // disable all openhd frequency checking - note that openhd just uses the proper iw command to set a frequency - if setting
   // the frequency actually had an effect, it doesn't know (cannot really know) and therefore QOpenHD can then report a different wifi freq,
@@ -119,7 +115,7 @@ class WBLink {
   void loop_recalculate_stats();
   int64_t last_tx_error_count=-1;
   int64_t last_recommended_bitrate=-1;
-  //
+  // A bit dirty, some settings need to be applied asynchronous
   class WorkItem{
    public:
     explicit WorkItem(std::function<void()> work,std::chrono::steady_clock::time_point earliest_execution_time):
@@ -129,12 +125,14 @@ class WBLink {
     void execute(){
       m_work();
     }
+    bool ready_to_be_executed(){
+      return std::chrono::steady_clock::now()>=m_earliest_execution_time;
+    }
    private:
     const std::chrono::steady_clock::time_point m_earliest_execution_time;
     const std::function<void()> m_work;
   };
   void schedule_work_item(std::shared_ptr<WorkItem> work_item);
-  std::shared_ptr<WorkItem> get_scheduled_work_item();
   // We limit changing specific params to one after anoher
   bool check_work_queue_empty();
   std::mutex m_work_item_queue_mutex;

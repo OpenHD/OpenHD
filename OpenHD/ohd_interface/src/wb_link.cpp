@@ -84,9 +84,6 @@ WBLink::~WBLink() {
     m_recalculate_stats_thread_run=false;
     m_recalculate_stats_thread->join();
   }
-  if(m_restart_async_thread){
-    m_restart_async_thread->join();
-  }
 }
 
 void WBLink::takeover_cards_monitor_mode() {
@@ -254,11 +251,6 @@ std::unique_ptr<UDPWBReceiver> WBLink::createUdpWbRx(uint8_t radio_port, int udp
 }
 
 std::string WBLink::createDebug(){
-  std::unique_lock<std::mutex> lock(m_wbRxTxInstancesLock, std::try_to_lock);
-  if(!lock.owns_lock()){
-    // We can just discard statistics data during a re-start
-    return "WBStreams::No debug during restart\n";
-  }
   std::stringstream ss;
   // we use telemetry data only here
   bool any_data_received=false;
@@ -282,7 +274,6 @@ std::string WBLink::createDebug(){
 }
 
 void WBLink::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
-  std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
   bool first= true;
   assert(udpVideoRxList.size()==2);
   m_console->info("WBStreams::addExternalDeviceIpForwardingVideoOnly:"+ip);
@@ -295,7 +286,6 @@ void WBLink::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
 }
 
 void WBLink::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
-  std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
   bool first= true;
   assert(udpVideoRxList.size()==2);
   for(auto& rxVid:udpVideoRxList){
@@ -314,7 +304,6 @@ std::vector<std::string> WBLink::get_rx_card_names() const {
 }
 
 bool WBLink::ever_received_any_data(){
-  std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
   if(m_profile.is_air){
     // check if we got any telemetry data, we never receive video data
     assert(udpTelemetryRx);
@@ -334,40 +323,6 @@ bool WBLink::ever_received_any_data(){
     }
   }
   return any_data_received;
-}
-
-void WBLink::restart() {
-  m_console->info("WBStreams::restart() begin");
-  std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
-  // Stop the stats recalculation
-  m_recalculate_stats_thread_run= false;
-  m_recalculate_stats_thread->join();
-  m_recalculate_stats_thread=nullptr;
-  if(udpTelemetryRx){
-    udpTelemetryRx->stop_looping();
-    udpTelemetryRx.reset();
-  }
-  if(udpTelemetryTx){
-    udpTelemetryTx->stopBackground();
-    udpTelemetryTx.reset();
-  }
-  for(auto& videoTx:udpVideoTxList){
-    videoTx->stopBackground();
-    videoTx.reset();
-  }
-  udpVideoTxList.resize(0);
-  for(auto& videoRx:udpVideoRxList){
-    videoRx->stop_looping();
-    videoRx.reset();
-  }
-  udpVideoRxList.resize(0);
-  configure_cards();
-  configure_telemetry();
-  configure_video();
-  // restart the stats recalculation thread
-  m_recalculate_stats_thread_run= true;
-  m_recalculate_stats_thread=std::make_unique<std::thread>(&WBLink::loop_recalculate_stats, this);
-  m_console->info("WBStreams::restart() end");
 }
 
 bool WBLink::set_frequency(int frequency) {
@@ -435,14 +390,23 @@ bool WBLink::set_txpower(int tx_power) {
     m_console->warn("Invalid tx power:{}",tx_power);
     return false;
   }
+  if(!check_work_queue_empty())return false;
   m_settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power;
   m_settings->persist();
-  // We can update the tx power without restarting the streams
+  // No need to delay the change, but perform it async anyways.
+  auto work_item=std::make_shared<WorkItem>([this](){
+    apply_txpower();
+  },std::chrono::steady_clock::now());
+  schedule_work_item(work_item);
+  return true;
+}
+
+void WBLink::apply_txpower() {
+  const auto settings=m_settings->get_settings();
   for(const auto& holder: m_broadcast_cards){
     const auto& card=holder->_wifi_card;
-    WifiCardCommandHelper::set_txpower(card,tx_power);
+    WifiCardCommandHelper::set_txpower(card,settings.wb_tx_power_milli_watt);
   }
-  return true;
 }
 
 bool WBLink::set_mcs_index(int mcs_index) {
@@ -534,23 +498,6 @@ bool WBLink::set_video_fec_percentage(int fec_percentage) {
   return true;
 }
 
-void WBLink::restart_async(std::chrono::milliseconds delay){
-  std::lock_guard<std::mutex> guard(m_restart_async_lock);
-  if(m_restart_async_thread != nullptr){
-    m_console->warn("WBStreams::restart_async - settings changed too quickly");
-    if(m_restart_async_thread->joinable()){
-      m_restart_async_thread->join();
-    }
-    m_restart_async_thread =nullptr;
-  }
-  m_restart_async_thread =
-      std::make_unique<std::thread>(
-          [this,delay]{
-            std::this_thread::sleep_for(delay);
-            this->restart();
-          }
-      );
-}
 
 std::vector<openhd::Setting> WBLink::get_all_settings(){
   using namespace openhd;
@@ -636,7 +583,8 @@ void WBLink::set_video_codec(int codec) {
   m_console->debug("set_video_codec to {}",codec);
   if(m_curr_video_codec!=codec){
     m_curr_video_codec=codec;
-    restart_async();
+    //TODO
+    //restart_async();
   }
 }
 
@@ -646,12 +594,18 @@ static uint32_t get_micros(std::chrono::nanoseconds ns){
 
 void WBLink::loop_recalculate_stats() {
   while (m_recalculate_stats_thread_run){
-
-    auto oldest_work_item=get_scheduled_work_item();
-    if(oldest_work_item){
-      oldest_work_item->execute();
+    // Perform any queued up work if it exists
+    {
+      m_work_item_queue_mutex.lock();
+      if(!m_work_item_queue.empty()){
+        auto front=m_work_item_queue.front();
+        if(front->ready_to_be_executed()){
+          front->execute();
+          m_work_item_queue.pop();
+        }
+      }
+      m_work_item_queue_mutex.unlock();
     }
-
     // telemetry is available on both air and ground
     openhd::link_statistics::StatsAirGround stats{};
     if(udpTelemetryTx){

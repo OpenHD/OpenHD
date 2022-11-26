@@ -205,9 +205,7 @@ void OHDInterface::set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK
 }
 
 void OHDInterface::restart_wb_streams_async() {
-  if(m_wb_link){
-    m_wb_link->restart_async(std::chrono::seconds(2));
-  }
+  //TODO
 }
 void OHDInterface::print_internal_fec_optimization_method() {
   print_optimization_method();
