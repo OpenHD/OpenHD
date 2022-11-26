@@ -108,9 +108,10 @@ class WBLink {
   const bool m_disable_all_frequency_checks;
   int m_curr_video_codec=0;
  private:
-  bool m_recalculate_stats_thread_run;
-  std::unique_ptr<std::thread> m_recalculate_stats_thread;
-  void loop_recalculate_stats();
+  bool m_work_thread_run;
+  std::unique_ptr<std::thread> m_work_thread;
+  // Recalculate stats, apply settings asynchronously and more
+  void loop_do_work();
   int64_t last_tx_error_count=-1;
   int64_t last_recommended_bitrate=-1;
   // A bit dirty, some settings need to be applied asynchronous

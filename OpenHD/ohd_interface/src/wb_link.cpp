@@ -75,14 +75,14 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   takeover_cards_monitor_mode();
   configure_cards();
   configure_streams();
-  m_recalculate_stats_thread_run= true;
-  m_recalculate_stats_thread=std::make_unique<std::thread>(&WBLink::loop_recalculate_stats, this);
+  m_work_thread_run = true;
+  m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
 }
 
 WBLink::~WBLink() {
-  if(m_recalculate_stats_thread){
-    m_recalculate_stats_thread_run=false;
-    m_recalculate_stats_thread->join();
+  if(m_work_thread){
+    m_work_thread_run =false;
+    m_work_thread->join();
   }
 }
 
@@ -116,23 +116,8 @@ void WBLink::takeover_cards_monitor_mode() {
 
 void WBLink::configure_cards() {
   m_console->debug("WBStreams::configure_cards() begin");
-  // NOTE: Cards need to be in monitor mode
-  for(const auto& card: m_broadcast_cards){
-    const bool width_40= m_settings->get_settings().wb_channel_width==40;
-    WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card, m_settings->get_settings().wb_frequency,width_40);
-    // TODO check if this works - on rtl8812au, the displayed value at least changes
-    // Not sure which is better, iw dev or iwconfig. However, iwconfig eats it in mW
-    WifiCardCommandHelper::set_txpower2(card->_wifi_card,
-                                        m_settings->get_settings().wb_tx_power_milli_watt);
-    //WifiCards::set_txpower(card->_wifi_card, card->get_settings().txpower);
-  }
-  /*for(const auto& card: _broadcast_cards){
-    wifi::commandhelper2::set_wifi_frequency(card->_wifi_card.interface_name,
-                                             m_settings->get_settings().wb_frequency,m_settings->get_settings().wb_channel_width);
-    //wifi::commandhelper2::set_wifi_txpower(card->_wifi_card.interface_name,m_settings->get_settings().wb_tx_power_milli_watt);
-    WifiCardCommandHelper::set_txpower2(card->_wifi_card,
-                                        m_settings->get_settings().wb_tx_power_milli_watt);
-  }*/
+  apply_frequency_and_channel_width();
+  apply_txpower();
   m_console->debug("WBStreams::configure_cards() end");
 }
 
@@ -143,7 +128,6 @@ void WBLink::configure_streams() {
   // NOTE: This value is quite high, but that doesn't matter - this is the max allowed, not what is set,
   // and doesn't change the actual / default size
   OHDUtil::run_command("sysctl ",{"-w","net.core.rmem_max=26214400"});
-  // Static for the moment
   configure_telemetry();
   configure_video();
   m_console->debug("Streams::configure() end");
@@ -470,7 +454,7 @@ bool WBLink::set_video_fec_block_length(const int block_length) {
   }
   m_settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
   m_settings->persist();
-  // we only use the fec percentage for video tx-es, and changing it is fast
+  // we only use the fec blk length for video tx-es, and changing it is fast
   for(auto& tx:udpVideoTxList){
     if(block_length==0){
       tx->get_wb_tx().update_fec_k(block_length,FEC_VARIABLE_INPUT_TYPE::RTP_H264);
@@ -590,8 +574,8 @@ static uint32_t get_micros(std::chrono::nanoseconds ns){
   return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::microseconds>(ns).count());
 }
 
-void WBLink::loop_recalculate_stats() {
-  while (m_recalculate_stats_thread_run){
+void WBLink::loop_do_work() {
+  while (m_work_thread_run){
     // Perform any queued up work if it exists
     {
       m_work_item_queue_mutex.lock();
@@ -604,6 +588,7 @@ void WBLink::loop_recalculate_stats() {
       }
       m_work_item_queue_mutex.unlock();
     }
+    const auto begin_calculate_stats=std::chrono::steady_clock::now();
     // telemetry is available on both air and ground
     openhd::link_statistics::StatsAirGround stats{};
     if(udpTelemetryTx){
@@ -707,6 +692,8 @@ void WBLink::loop_recalculate_stats() {
     if(m_opt_action_handler){
       m_opt_action_handler->action_wb_link_statistcs_handle(stats);
     }
+    const auto delta_calc_stats=std::chrono::steady_clock::now()-begin_calculate_stats;
+    m_console->debug("Calculating stats took:{} ms",std::chrono::duration_cast<std::chrono::microseconds>(delta_calc_stats).count()/1000.0f);
     if(m_profile.is_air && m_settings->get_settings().enable_wb_video_variable_bitrate){
       // stupid encoder rate control
       // TODO improve me !
