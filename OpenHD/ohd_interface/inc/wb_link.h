@@ -59,10 +59,14 @@ class WBLink {
   void restart();
   // set the frequency (wifi channel) of all wifibroadcast cards
   bool set_frequency(int frequency);
+  //
+  void apply_frequency_and_channel_width();
   // set the tx power of all wifibroadcast cards
   bool set_txpower(int tx_power);
   // set the mcs index for all wifibroadcast cards
   bool set_mcs_index(int mcs_index);
+  // called by the async pattern
+  void apply_mcs_index();
   bool set_video_fec_block_length(int block_length);
   bool set_video_fec_percentage(int fec_percentage);
   bool set_enable_wb_video_variable_bitrate(int value);
@@ -115,6 +119,24 @@ class WBLink {
   void loop_recalculate_stats();
   int64_t last_tx_error_count=-1;
   int64_t last_recommended_bitrate=-1;
+  //
+  class WorkItem{
+   public:
+    explicit WorkItem(std::function<void()> work,std::chrono::steady_clock::time_point earliest_execution_time):
+    m_earliest_execution_time(earliest_execution_time),m_work(std::move(work)){
+      //
+    }
+    void execute(){
+      m_work();
+    }
+   private:
+    const std::chrono::steady_clock::time_point m_earliest_execution_time;
+    const std::function<void()> m_work;
+  };
+  void schedule_work_item(std::shared_ptr<WorkItem> work_item);
+  std::shared_ptr<WorkItem> get_scheduled_work_item();
+  std::mutex m_work_item_queue_mutex;
+  std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
 };
 
 #endif

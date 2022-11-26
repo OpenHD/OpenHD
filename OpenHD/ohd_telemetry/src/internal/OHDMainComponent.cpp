@@ -115,6 +115,9 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
   //m_console->debug("OHDMainComponent::generate_mav_wb_stats");
   std::vector<MavlinkMessage> ret;
   const auto latest_stats=get_latest_link_statistics();
+  if(RUNS_ON_AIR!=latest_stats.is_air){
+    m_console->warn("Mismatch air/ground");
+  }
   // stats for all the wifi card(s)
   for(int i=0;i<latest_stats.cards.size();i++){
     const auto card_stats=latest_stats.cards.at(i);

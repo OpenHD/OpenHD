@@ -412,8 +412,20 @@ bool WBLink::set_frequency(int frequency) {
   }
   m_settings->unsafe_get_settings().wb_frequency=frequency;
   m_settings->persist();
-  // TODO: r.n we rely on a restart to change the frequency, even though thats not needed
+  // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
+  auto work_item=std::make_shared<WorkItem>([this](){
+    apply_frequency_and_channel_width();
+  },std::chrono::steady_clock::now()+std::chrono::seconds(3));
+  schedule_work_item(work_item);
   return true;
+}
+
+void WBLink::apply_frequency_and_channel_width() {
+  const auto settings=m_settings->get_settings();
+  const bool width_40= settings.wb_channel_width==40;
+  for(const auto& card: m_broadcast_cards){
+    WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card,settings.wb_frequency,width_40);
+  }
 }
 
 bool WBLink::set_txpower(int tx_power) {
@@ -444,16 +456,23 @@ bool WBLink::set_mcs_index(int mcs_index) {
   }
   m_settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   m_settings->persist();
-  // Only save, need restart to apply
-  // To set the mcs index, r.n we have to restart the tx instances
-  /*std::lock_guard<std::mutex> guard(_wbRxTxInstancesLock);
+  // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
+  auto work_item=std::make_shared<WorkItem>([this](){
+    apply_mcs_index();
+  },std::chrono::steady_clock::now()+std::chrono::seconds(3));
+  schedule_work_item(work_item);
+  return true;
+}
+
+void WBLink::apply_mcs_index() {
+  // we need to change the mcs index on all tx-es
+  const auto settings=m_settings->get_settings();
   if(udpTelemetryTx){
-        udpTelemetryTx->update_mcs_index(mcs_index);
+    udpTelemetryTx->update_mcs_index(settings.wb_mcs_index);
   }
   for(auto& tx:udpVideoTxList){
-        tx->update_mcs_index(mcs_index);
-  }*/
-  return true;
+    tx->update_mcs_index(settings.wb_mcs_index);
+  }
 }
 
 bool WBLink::set_channel_width(int channel_width) {
@@ -468,14 +487,11 @@ bool WBLink::set_channel_width(int channel_width) {
   }
   m_settings->unsafe_get_settings().wb_channel_width=channel_width;
   m_settings->persist();
-  // Only save, need restart to apply
-  /*for(const auto& holder:_broadcast_cards){
-        const auto& card=holder->_wifi_card;
-        const bool width_40=_settings->get_settings().wb_channel_width==40;
-        const auto frequency=_settings->get_settings().wb_frequency;
-        WifiCardCommandHelper::set_frequency_and_channel_width(card,frequency,width_40);
-  }
-  restart_async();*/
+  // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
+  auto work_item=std::make_shared<WorkItem>([this](){
+    apply_frequency_and_channel_width();
+  },std::chrono::steady_clock::now()+std::chrono::seconds(3));
+  schedule_work_item(work_item);
   return true;
 }
 
@@ -488,7 +504,7 @@ bool WBLink::set_video_fec_block_length(const int block_length) {
   m_settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
   m_settings->persist();
   std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
-  // we only use the fec percentage for video tx-es
+  // we only use the fec percentage for video tx-es, and changing it is fast
   for(auto& tx:udpVideoTxList){
     if(block_length==0){
       tx->get_wb_tx().update_fec_k(block_length,FEC_VARIABLE_INPUT_TYPE::RTP_H264);
@@ -508,7 +524,7 @@ bool WBLink::set_video_fec_percentage(int fec_percentage) {
   m_settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
   m_settings->persist();
   std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
-  // we only use the fec percentage for video txes
+  // we only use the fec percentage for video txes, and changing it is fast
   for(auto& tx:udpVideoTxList){
     tx->get_wb_tx().update_fec_percentage(fec_percentage);
   }
@@ -627,6 +643,12 @@ static uint32_t get_micros(std::chrono::nanoseconds ns){
 
 void WBLink::loop_recalculate_stats() {
   while (m_recalculate_stats_thread_run){
+
+    auto oldest_work_item=get_scheduled_work_item();
+    if(oldest_work_item){
+      oldest_work_item->execute();
+    }
+
     // telemetry is available on both air and ground
     openhd::link_statistics::StatsAirGround stats{};
     if(udpTelemetryTx){
@@ -808,4 +830,19 @@ bool WBLink::set_enable_wb_video_variable_bitrate(int value) {
     return true;
   }
   return false;
+}
+
+void WBLink::schedule_work_item(std::shared_ptr<WorkItem> work_item) {
+  std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
+  m_work_item_queue.push(work_item);
+}
+
+std::shared_ptr<WBLink::WorkItem> WBLink::get_scheduled_work_item() {
+  std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
+  if(!m_work_item_queue.empty()){
+    auto ret=m_work_item_queue.front();
+    m_work_item_queue.pop();
+    return ret;
+  }
+  return nullptr;
 }
