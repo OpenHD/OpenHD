@@ -676,19 +676,18 @@ void WBLink::loop_recalculate_stats() {
         }
       }
     }
-    // dBm / rssi for all connected cards that are doing wifibroadcast
-    openhd::link_statistics::StatsAllCards stats_all_cards{};
     // dBm is per card, not per stream
-    assert(stats_all_cards.size()>=4);
+    assert(stats.cards.size()>=4);
     // only populate actually used cards
-    assert(m_broadcast_cards.size()<=stats_all_cards.size());
+    assert(m_broadcast_cards.size()<=stats.cards.size());
     for(int i=0;i< m_broadcast_cards.size();i++){
-      auto& card = stats_all_cards.at(i);
+      auto& card = stats.cards.at(i);
       if(m_profile.is_air){
         // on air, we use the dbm reported by the telemetry stream
         if(udpTelemetryRx){
           card.rx_rssi=
               udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
+          m_console->debug("dBm {}",card.rx_rssi);
         }
       }else{
         // on ground, we use the dBm reported by the video stream (if available), otherwise
@@ -707,6 +706,7 @@ void WBLink::loop_recalculate_stats() {
         }else{
           card.rx_rssi=rssi_video0;
         }
+        m_console->debug("dBm {}",card.rx_rssi);
       }
       card.exists_in_openhd= true;
       // not yet supported
