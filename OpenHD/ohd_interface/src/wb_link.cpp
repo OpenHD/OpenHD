@@ -325,8 +325,8 @@ bool WBLink::ever_received_any_data(){
   return any_data_received;
 }
 
-bool WBLink::set_frequency(int frequency) {
-  m_console->debug("WBStreams::set_frequency {}",frequency);
+bool WBLink::request_set_frequency(int frequency) {
+  m_console->debug("WBStreams::request_set_frequency {}",frequency);
   if(m_disable_all_frequency_checks){
     m_console->warn("Not sanity checking frequency");
   }else{
@@ -384,8 +384,8 @@ void WBLink::apply_frequency_and_channel_width() {
   }
 }
 
-bool WBLink::set_txpower(int tx_power) {
-  m_console->debug("WBStreams::set_txpower {}",tx_power);
+bool WBLink::request_set_txpower(int tx_power) {
+  m_console->debug("WBStreams::request_set_txpower {}",tx_power);
   if(!openhd::is_valid_tx_power_milli_watt(tx_power)){
     m_console->warn("Invalid tx power:{}",tx_power);
     return false;
@@ -409,8 +409,8 @@ void WBLink::apply_txpower() {
   }
 }
 
-bool WBLink::set_mcs_index(int mcs_index) {
-  m_console->debug("WBStreams::set_mcs_index {}",mcs_index);
+bool WBLink::request_set_mcs_index(int mcs_index) {
+  m_console->debug("WBStreams::request_set_mcs_index {}",mcs_index);
   if(!openhd::is_valid_mcs_index(mcs_index)){
     m_console->warn("Invalid mcs index{}",mcs_index);
     return false;
@@ -441,8 +441,8 @@ void WBLink::apply_mcs_index() {
   }
 }
 
-bool WBLink::set_channel_width(int channel_width) {
-  m_console->debug("WBStreams::set_channel_width {}",channel_width);
+bool WBLink::request_set_channel_width(int channel_width) {
+  m_console->debug("WBStreams::request_set_channel_width {}",channel_width);
   if(!openhd::is_valid_channel_width(channel_width)){
     m_console->warn("Invalid channel width {}",channel_width);
     return false;
@@ -504,16 +504,16 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   std::vector<openhd::Setting> ret{};
   const auto settings=m_settings->get_settings();
   auto change_freq=openhd::IntSetting{(int)m_settings->get_settings().wb_frequency,[this](std::string,int value){
-                                          return set_frequency(value);
+                                          return request_set_frequency(value);
                                         }};
   auto change_wb_channel_width=openhd::IntSetting{(int)m_settings->get_settings().wb_channel_width,[this](std::string,int value){
-                                                      return set_channel_width(value);
+                                                      return request_set_channel_width(value);
                                                     }};
   auto change_wb_mcs_index=openhd::IntSetting{(int)m_settings->get_settings().wb_mcs_index,[this](std::string,int value){
-                                                  return set_mcs_index(value);
+                                                  return request_set_mcs_index(value);
                                                 }};
   auto change_tx_power=openhd::IntSetting{(int)m_settings->get_settings().wb_tx_power_milli_watt,[this](std::string,int value){
-                                              return set_txpower(value);
+                                              return request_set_txpower(value);
                                             }};
   ret.push_back(Setting{WB_FREQUENCY,change_freq});
   ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});

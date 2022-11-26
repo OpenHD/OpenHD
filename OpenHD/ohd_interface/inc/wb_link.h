@@ -54,19 +54,21 @@ class WBLink {
   void set_video_codec(int codec);
  private:
   // validate param, then schedule change
-  bool set_frequency(int frequency);
+  bool request_set_frequency(int frequency);
   // validate param, then schedule change
-  bool set_channel_width(int channel_width);
+  bool request_set_channel_width(int channel_width);
   // apply the frequency (wifi channel) of all wifibroadcast cards
   void apply_frequency_and_channel_width();
   // validate param, then schedule change
-  bool set_txpower(int tx_power);
+  bool request_set_txpower(int tx_power);
   // set the tx power of all wifibroadcast cards
   void apply_txpower();
   // validate param, then schedule change
-  bool set_mcs_index(int mcs_index);
+  bool request_set_mcs_index(int mcs_index);
   // set the mcs index for all tx instances
   void apply_mcs_index();
+  // These 3 do not "break" the bidirectional connectivity and therefore
+  // can be changed easily on the fly
   bool set_video_fec_block_length(int block_length);
   bool set_video_fec_percentage(int fec_percentage);
   bool set_enable_wb_video_variable_bitrate(int value);
@@ -133,7 +135,7 @@ class WBLink {
     const std::function<void()> m_work;
   };
   void schedule_work_item(std::shared_ptr<WorkItem> work_item);
-  // We limit changing specific params to one after anoher
+  // We limit changing specific params to one after another
   bool check_work_queue_empty();
   std::mutex m_work_item_queue_mutex;
   std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
