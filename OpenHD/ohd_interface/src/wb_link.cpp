@@ -785,7 +785,7 @@ bool WBLink::set_enable_wb_video_variable_bitrate(int value) {
   return false;
 }
 
-void WBLink::schedule_work_item(std::shared_ptr<WorkItem> work_item) {
+void WBLink::schedule_work_item(const std::shared_ptr<WorkItem>& work_item) {
   std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
   m_work_item_queue.push(work_item);
 }

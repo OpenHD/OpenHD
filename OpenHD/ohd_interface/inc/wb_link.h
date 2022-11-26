@@ -130,7 +130,7 @@ class WBLink {
     const std::chrono::steady_clock::time_point m_earliest_execution_time;
     const std::function<void()> m_work;
   };
-  void schedule_work_item(std::shared_ptr<WorkItem> work_item);
+  void schedule_work_item(const std::shared_ptr<WorkItem>& work_item);
   // We limit changing specific params to one after another
   bool check_work_queue_empty();
   std::mutex m_work_item_queue_mutex;
