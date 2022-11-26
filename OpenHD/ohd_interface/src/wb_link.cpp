@@ -371,7 +371,7 @@ bool WBLink::set_frequency(int frequency) {
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
   auto work_item=std::make_shared<WorkItem>([this](){
     apply_frequency_and_channel_width();
-  },std::chrono::steady_clock::now()+std::chrono::seconds(3));
+  },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
   schedule_work_item(work_item);
   return true;
 }
@@ -425,7 +425,7 @@ bool WBLink::set_mcs_index(int mcs_index) {
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
   auto work_item=std::make_shared<WorkItem>([this](){
     apply_mcs_index();
-  },std::chrono::steady_clock::now()+std::chrono::seconds(3));
+  },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
   schedule_work_item(work_item);
   return true;
 }
@@ -457,7 +457,7 @@ bool WBLink::set_channel_width(int channel_width) {
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
   auto work_item=std::make_shared<WorkItem>([this](){
     apply_frequency_and_channel_width();
-  },std::chrono::steady_clock::now()+std::chrono::seconds(3));
+  },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
   schedule_work_item(work_item);
   return true;
 }
@@ -792,16 +792,6 @@ bool WBLink::set_enable_wb_video_variable_bitrate(int value) {
 void WBLink::schedule_work_item(std::shared_ptr<WorkItem> work_item) {
   std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
   m_work_item_queue.push(work_item);
-}
-
-std::shared_ptr<WBLink::WorkItem> WBLink::get_scheduled_work_item() {
-  std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
-  if(!m_work_item_queue.empty()){
-    auto ret=m_work_item_queue.front();
-    m_work_item_queue.pop();
-    return ret;
-  }
-  return nullptr;
 }
 
 bool WBLink::check_work_queue_empty() {

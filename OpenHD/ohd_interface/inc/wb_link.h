@@ -137,6 +137,7 @@ class WBLink {
   bool check_work_queue_empty();
   std::mutex m_work_item_queue_mutex;
   std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
+  static constexpr auto DELAY_FOR_TRANSMIT_ACK =std::chrono::seconds(2);
 };
 
 #endif
