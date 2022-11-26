@@ -111,7 +111,7 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
-  m_console->debug("OHDMainComponent::generate_mav_wb_stats");
+  //m_console->debug("OHDMainComponent::generate_mav_wb_stats");
   std::vector<MavlinkMessage> ret;
   const auto latest_stats=get_latest_link_statistics();
   // stats for all the wifi card(s)
