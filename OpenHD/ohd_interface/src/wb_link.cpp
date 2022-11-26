@@ -625,6 +625,7 @@ void WBLink::update_statistics() {
       air_video.curr_measured_encoder_bitrate=curr_tx_stats.current_provided_bits_per_second;
       air_video.curr_injected_bitrate=curr_tx_stats.current_injected_bits_per_second;
       air_video.curr_injected_pps=curr_tx_stats.current_injected_packets_per_second;
+      air_video.curr_dropped_packets=curr_tx_stats.n_dropped_packets;
       //
       const auto curr_tx_fec_stats=wb_tx.get_latest_fec_stats();
       air_video.curr_fec_encode_time_avg_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
