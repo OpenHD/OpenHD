@@ -112,6 +112,14 @@ class WBLink {
   std::unique_ptr<std::thread> m_work_thread;
   // Recalculate stats, apply settings asynchronously and more
   void loop_do_work();
+  // update statistics, done in regular intervals, update data is given to the ohd_telemetry module via the action handler
+  void update_statistics();
+  static constexpr auto RECALCULATE_STATISTICS_INTERVAL=std::chrono::seconds(1);
+  std::chrono::steady_clock::time_point m_last_stats_recalculation=std::chrono::steady_clock::now();
+  // Do rate adjustments, does nothing if variable bitrate is disabled
+  void perform_rate_adjustment();
+  static constexpr auto RATE_ADJUSTMENT_INTERVAL=std::chrono::seconds(1);
+  std::chrono::steady_clock::time_point m_last_rate_adjustment=std::chrono::steady_clock::now();
   int64_t last_tx_error_count=-1;
   int64_t last_recommended_bitrate=-1;
   // A bit dirty, some settings need to be applied asynchronous
@@ -119,7 +127,7 @@ class WBLink {
    public:
     explicit WorkItem(std::function<void()> work,std::chrono::steady_clock::time_point earliest_execution_time):
     m_earliest_execution_time(earliest_execution_time),m_work(std::move(work)){
-      //
+
     }
     void execute(){
       m_work();

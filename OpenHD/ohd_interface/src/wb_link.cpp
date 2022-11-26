@@ -588,178 +588,206 @@ void WBLink::loop_do_work() {
       }
       m_work_item_queue_mutex.unlock();
     }
-    const auto begin_calculate_stats=std::chrono::steady_clock::now();
-    // telemetry is available on both air and ground
-    openhd::link_statistics::StatsAirGround stats{};
-    if(udpTelemetryTx){
-      const auto curr_tx_stats=udpTelemetryTx->get_latest_stats();
-      stats.telemetry.curr_tx_bps=curr_tx_stats.current_provided_bits_per_second;
-      stats.telemetry.curr_tx_pps=curr_tx_stats.current_injected_packets_per_second;
-    }
-    if(udpTelemetryRx){
-      const auto curr_rx_stats=udpTelemetryRx->get_latest_stats();
-      stats.telemetry.curr_rx_bps=curr_rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
-      //stats.telemetry.curr_rx_pps=curr_rx_stats.wb_rx_stats;
-    }
-    if(m_profile.is_air){
-      // video on air
-      for(int i=0;i<udpVideoTxList.size();i++){
-        auto& wb_tx=udpVideoTxList.at(i)->get_wb_tx();
-        auto& air_video=i==0 ? stats.air_video0 : stats.air_video1;
-        const auto curr_tx_stats=wb_tx.get_latest_stats();
-        //
-        air_video.link_index=i;
-        air_video.curr_measured_encoder_bitrate=curr_tx_stats.current_provided_bits_per_second;
-        air_video.curr_injected_bitrate=curr_tx_stats.current_injected_bits_per_second;
-        air_video.curr_injected_pps=curr_tx_stats.current_injected_packets_per_second;
-        //
-        const auto curr_tx_fec_stats=wb_tx.get_latest_fec_stats();
-        air_video.curr_fec_encode_time_avg_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
-        air_video.curr_fec_encode_time_min_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
-        air_video.curr_fec_encode_time_max_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.max);
-        air_video.curr_fec_block_size_min=curr_tx_fec_stats.curr_fec_block_length.min;
-        air_video.curr_fec_block_size_max=curr_tx_fec_stats.curr_fec_block_length.max;
-        air_video.curr_fec_block_size_avg=curr_tx_fec_stats.curr_fec_block_length.avg;
-      }
-    }else{
-      // video on ground
-      for(int i=0;i<udpVideoRxList.size();i++){
-        auto& wb_rx=udpVideoRxList.at(i)->get_wb_rx();
-        const auto wb_rx_stats=wb_rx.get_latest_stats();
-        auto& ground_video= i==0 ? stats.ground_video0 : stats.ground_video1;
-        //
-        ground_video.link_index=i;
-        ground_video.curr_incoming_bitrate=wb_rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
-        if(wb_rx_stats.fec_rx_stats.has_value()){
-          const auto fec_stats=wb_rx_stats.fec_rx_stats.value();
-          ground_video.count_fragments_recovered=fec_stats.count_fragments_recovered;
-          ground_video.count_blocks_recovered=fec_stats.count_blocks_recovered;
-          ground_video.count_blocks_lost=fec_stats.count_blocks_lost;
-          ground_video.count_blocks_total=fec_stats.count_blocks_total;
-          ground_video.curr_fec_decode_time_avg_us =get_micros(fec_stats.curr_fec_decode_time.avg);
-          ground_video.curr_fec_decode_time_min_us =get_micros(fec_stats.curr_fec_decode_time.min);
-          ground_video.curr_fec_decode_time_max_us =get_micros(fec_stats.curr_fec_decode_time.max);
-        }
-      }
-    }
-    // DIRTY: On air, we use the telemetry lost packets percentage, on ground,
-    // we use the video lost packets' percentage. Once we have one global rx, we can change that
-    if(m_profile.is_air){
-      if(udpTelemetryRx){
-        stats.monitor_mode_link.curr_rx_packet_loss=udpTelemetryRx->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
-      }
-    }else{
-      if(!udpVideoRxList.empty()){
-        stats.monitor_mode_link.curr_rx_packet_loss=udpVideoRxList.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
-      }
-    }
-    // dBm is per card, not per stream
-    assert(stats.cards.size()>=4);
-    // only populate actually used cards
-    assert(m_broadcast_cards.size()<=stats.cards.size());
-    for(int i=0;i< m_broadcast_cards.size();i++){
-      auto& card = stats.cards.at(i);
-      if(m_profile.is_air){
-        // on air, we use the dbm reported by the telemetry stream
-        if(udpTelemetryRx){
-          card.rx_rssi=
-              udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
-        }
-      }else{
-        // on ground, we use the dBm reported by the video stream (if available), otherwise
-        // we use the dBm reported by the telemetry rx instance.
-        int8_t rssi_telemetry=0;
-        if(udpTelemetryRx){
-          rssi_telemetry=udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
-        }
-        int8_t rssi_video0=0;
-        if(!udpVideoRxList.empty()){
-          rssi_video0=udpVideoRxList.at(0)->get_latest_stats().rssiPerCard.at(i).last_rssi;
-        }
-        if(rssi_video0==0){
-          // use telemetry
-          card.rx_rssi=rssi_telemetry;
-        }else{
-          card.rx_rssi=rssi_video0;
-        }
-      }
-      card.exists_in_openhd= true;
-      // not yet supported
-      card.count_p_injected=0;
-      card.count_p_received=0;
-    }
-    stats.is_air=m_profile.is_air;
-    if(m_opt_action_handler){
-      m_opt_action_handler->action_wb_link_statistcs_handle(stats);
-    }
-    const auto delta_calc_stats=std::chrono::steady_clock::now()-begin_calculate_stats;
-    m_console->debug("Calculating stats took:{} ms",std::chrono::duration_cast<std::chrono::microseconds>(delta_calc_stats).count()/1000.0f);
-    if(m_profile.is_air && m_settings->get_settings().enable_wb_video_variable_bitrate){
-      // stupid encoder rate control
-      // TODO improve me !
-      // First, calculate the theoretical values
-      const auto settings=m_settings->get_settings();
-      const uint32_t max_rate_possible_kbits=openhd::get_max_rate_kbits(settings.wb_mcs_index);
-      //m_console->debug("mcs index:{}",settings.wb_mcs_index);
-      // we assume X% of the theoretical link bandwidth is available for the primary video stream
-      // 2.4G are almost always completely full of noise, which is why we go with a more conservative
-      // perc. value for them. NOTE: It is stupid to reason about the RF environment of the user, but feedback from
-      // the beta channel shows that this is kinda needed.
-      const bool is_2g_channel= openhd::is_valid_frequency_2G(settings.wb_frequency, true);
-      const uint32_t kFactorAvailablePerc=is_2g_channel ? 70 : 80;
-      const uint32_t max_video_allocated_kbits=max_rate_possible_kbits * kFactorAvailablePerc / 100;
-      // and deduce the FEC overhead
-      const uint32_t max_video_after_fec_kbits=max_video_allocated_kbits * 100/(100+settings.wb_video_fec_percentage);
-      m_console->debug("max_rate_possible_kbits:{} kFactorAvailablePerc:{} max_video_after_fec_kbits:{}",max_rate_possible_kbits,kFactorAvailablePerc,max_video_after_fec_kbits);
+    update_statistics();
+    //const auto delta_calc_stats=std::chrono::steady_clock::now()-begin_calculate_stats;
+    //m_console->debug("Calculating stats took:{} ms",std::chrono::duration_cast<std::chrono::microseconds>(delta_calc_stats).count()/1000.0f);
+    perform_rate_adjustment();
+    std::this_thread::sleep_for(std::chrono::milliseconds (100));
+  }
+}
 
-      // then check if there are tx errors since the last time we checked (1 second intervals)
-      bool bitrate_is_still_too_high=false;
-      UDPWBTransmitter* primary_video_tx=udpVideoTxList.at(0).get();
-      const auto primary_video_tx_stats=primary_video_tx->get_latest_stats();
-      if(last_tx_error_count<0){
-        last_tx_error_count=static_cast<int64_t>(primary_video_tx_stats.count_tx_injections_error_hint);
-      }else{
-        const auto delta=primary_video_tx_stats.count_tx_injections_error_hint-last_tx_error_count;
-        last_tx_error_count=static_cast<int64_t>(primary_video_tx_stats.count_tx_injections_error_hint);
-        if(delta>=1){
-          bitrate_is_still_too_high= true;
-        }
-      }
-      // or the tx queue is running full
-      const auto n_buffered_packets_estimate=udpVideoTxList.at(0)->get_estimate_buffered_packets();
-      m_console->debug("Video estimates {} buffered packets",n_buffered_packets_estimate);
-      if(n_buffered_packets_estimate>50){ // half of the wifibroadcast extra tx queue
-        bitrate_is_still_too_high= true;
-      }
-      // initialize with the theoretical default, since we do not know what the camera is doing, even though it probably is "too high".
-      if(last_recommended_bitrate<=0){
-        last_recommended_bitrate=max_video_after_fec_kbits;
-      }
-      if(bitrate_is_still_too_high){
-        m_console->warn("Bitrate probably too high");
-        // reduce bitrate slightly
-        last_recommended_bitrate=last_recommended_bitrate* 80 / 100;
-      }else{
-        if(last_recommended_bitrate<max_video_after_fec_kbits){
-          // otherwise, slowly increase bitrate
-          last_recommended_bitrate= last_recommended_bitrate* 120 / 100;
-        }
-      }
-      // 1Mbit/s as lower limit
-      if(last_recommended_bitrate<1000){
-        last_recommended_bitrate=1000;
-      }
-      // theoretical max as upper limit
-      if(last_recommended_bitrate>max_video_after_fec_kbits){
-        last_recommended_bitrate=max_video_after_fec_kbits;
-      }
-      if(m_opt_action_handler){
-        openhd::ActionHandler::LinkBitrateInformation lb{};
-        lb.recommended_encoder_bitrate_kbits=last_recommended_bitrate;
-        m_opt_action_handler->action_request_bitrate_change_handle(lb);
+void WBLink::update_statistics() {
+  const auto elapsed_since_last=std::chrono::steady_clock::now()-m_last_stats_recalculation;
+  if(elapsed_since_last<RECALCULATE_STATISTICS_INTERVAL){
+    return;
+  }
+  m_last_stats_recalculation=std::chrono::steady_clock::now();
+  // telemetry is available on both air and ground
+  openhd::link_statistics::StatsAirGround stats{};
+  if(udpTelemetryTx){
+    const auto curr_tx_stats=udpTelemetryTx->get_latest_stats();
+    stats.telemetry.curr_tx_bps=curr_tx_stats.current_provided_bits_per_second;
+    stats.telemetry.curr_tx_pps=curr_tx_stats.current_injected_packets_per_second;
+  }
+  if(udpTelemetryRx){
+    const auto curr_rx_stats=udpTelemetryRx->get_latest_stats();
+    stats.telemetry.curr_rx_bps=curr_rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
+    //stats.telemetry.curr_rx_pps=curr_rx_stats.wb_rx_stats;
+  }
+  if(m_profile.is_air){
+    // video on air
+    for(int i=0;i<udpVideoTxList.size();i++){
+      auto& wb_tx=udpVideoTxList.at(i)->get_wb_tx();
+      auto& air_video=i==0 ? stats.air_video0 : stats.air_video1;
+      const auto curr_tx_stats=wb_tx.get_latest_stats();
+      //
+      air_video.link_index=i;
+      air_video.curr_measured_encoder_bitrate=curr_tx_stats.current_provided_bits_per_second;
+      air_video.curr_injected_bitrate=curr_tx_stats.current_injected_bits_per_second;
+      air_video.curr_injected_pps=curr_tx_stats.current_injected_packets_per_second;
+      //
+      const auto curr_tx_fec_stats=wb_tx.get_latest_fec_stats();
+      air_video.curr_fec_encode_time_avg_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
+      air_video.curr_fec_encode_time_min_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
+      air_video.curr_fec_encode_time_max_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.max);
+      air_video.curr_fec_block_size_min=curr_tx_fec_stats.curr_fec_block_length.min;
+      air_video.curr_fec_block_size_max=curr_tx_fec_stats.curr_fec_block_length.max;
+      air_video.curr_fec_block_size_avg=curr_tx_fec_stats.curr_fec_block_length.avg;
+    }
+  }else{
+    // video on ground
+    for(int i=0;i<udpVideoRxList.size();i++){
+      auto& wb_rx=udpVideoRxList.at(i)->get_wb_rx();
+      const auto wb_rx_stats=wb_rx.get_latest_stats();
+      auto& ground_video= i==0 ? stats.ground_video0 : stats.ground_video1;
+      //
+      ground_video.link_index=i;
+      ground_video.curr_incoming_bitrate=wb_rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
+      if(wb_rx_stats.fec_rx_stats.has_value()){
+        const auto fec_stats=wb_rx_stats.fec_rx_stats.value();
+        ground_video.count_fragments_recovered=fec_stats.count_fragments_recovered;
+        ground_video.count_blocks_recovered=fec_stats.count_blocks_recovered;
+        ground_video.count_blocks_lost=fec_stats.count_blocks_lost;
+        ground_video.count_blocks_total=fec_stats.count_blocks_total;
+        ground_video.curr_fec_decode_time_avg_us =get_micros(fec_stats.curr_fec_decode_time.avg);
+        ground_video.curr_fec_decode_time_min_us =get_micros(fec_stats.curr_fec_decode_time.min);
+        ground_video.curr_fec_decode_time_max_us =get_micros(fec_stats.curr_fec_decode_time.max);
       }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds (1000));
+  }
+  // DIRTY: On air, we use the telemetry lost packets percentage, on ground,
+  // we use the video lost packets' percentage. Once we have one global rx, we can change that
+  if(m_profile.is_air){
+    if(udpTelemetryRx){
+      stats.monitor_mode_link.curr_rx_packet_loss=udpTelemetryRx->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+    }
+  }else{
+    if(!udpVideoRxList.empty()){
+      stats.monitor_mode_link.curr_rx_packet_loss=udpVideoRxList.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+    }
+  }
+  // dBm is per card, not per stream
+  assert(stats.cards.size()>=4);
+  // only populate actually used cards
+  assert(m_broadcast_cards.size()<=stats.cards.size());
+  for(int i=0;i< m_broadcast_cards.size();i++){
+    auto& card = stats.cards.at(i);
+    if(m_profile.is_air){
+      // on air, we use the dbm reported by the telemetry stream
+      if(udpTelemetryRx){
+        card.rx_rssi=
+            udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
+      }
+    }else{
+      // on ground, we use the dBm reported by the video stream (if available), otherwise
+      // we use the dBm reported by the telemetry rx instance.
+      int8_t rssi_telemetry=0;
+      if(udpTelemetryRx){
+        rssi_telemetry=udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
+      }
+      int8_t rssi_video0=0;
+      if(!udpVideoRxList.empty()){
+        rssi_video0=udpVideoRxList.at(0)->get_latest_stats().rssiPerCard.at(i).last_rssi;
+      }
+      if(rssi_video0==0){
+        // use telemetry
+        card.rx_rssi=rssi_telemetry;
+      }else{
+        card.rx_rssi=rssi_video0;
+      }
+    }
+    card.exists_in_openhd= true;
+    // not yet supported
+    card.count_p_injected=0;
+    card.count_p_received=0;
+  }
+  stats.is_air=m_profile.is_air;
+  if(m_opt_action_handler){
+    m_opt_action_handler->action_wb_link_statistcs_handle(stats);
+  }
+}
+
+void WBLink::perform_rate_adjustment() {
+  if(m_profile.is_air && m_settings->get_settings().enable_wb_video_variable_bitrate) {
+    const auto elapsed_since_last=std::chrono::steady_clock::now()-m_last_rate_adjustment;
+    if(elapsed_since_last<RATE_ADJUSTMENT_INTERVAL){
+      return;
+    }
+    m_last_rate_adjustment=std::chrono::steady_clock::now();
+    // stupid encoder rate control
+    // TODO improve me !
+    // First, calculate the theoretical values
+    const auto settings = m_settings->get_settings();
+    const uint32_t max_rate_possible_kbits =
+        openhd::get_max_rate_kbits(settings.wb_mcs_index);
+    // m_console->debug("mcs index:{}",settings.wb_mcs_index);
+    //  we assume X% of the theoretical link bandwidth is available for the primary video stream 2.4G are almost always completely full of noise, which is why we go with a more conservative perc. value for them. NOTE: It is stupid to reason about the RF environment of the user, but feedback from the beta channel shows that this is kinda needed.
+    const bool is_2g_channel =
+        openhd::is_valid_frequency_2G(settings.wb_frequency, true);
+    const uint32_t kFactorAvailablePerc = is_2g_channel ? 70 : 80;
+    const uint32_t max_video_allocated_kbits =
+        max_rate_possible_kbits * kFactorAvailablePerc / 100;
+    // and deduce the FEC overhead
+    const uint32_t max_video_after_fec_kbits =
+        max_video_allocated_kbits * 100 /
+        (100 + settings.wb_video_fec_percentage);
+    m_console->debug(
+        "max_rate_possible_kbits:{} kFactorAvailablePerc:{} max_video_after_fec_kbits:{}",
+        max_rate_possible_kbits, kFactorAvailablePerc,
+        max_video_after_fec_kbits);
+
+    // then check if there are tx errors since the last time we checked (1 second intervals)
+    bool bitrate_is_still_too_high = false;
+    UDPWBTransmitter* primary_video_tx = udpVideoTxList.at(0).get();
+    const auto primary_video_tx_stats = primary_video_tx->get_latest_stats();
+    if (last_tx_error_count < 0) {
+      last_tx_error_count = static_cast<int64_t>(
+          primary_video_tx_stats.count_tx_injections_error_hint);
+    } else {
+      const auto delta = primary_video_tx_stats.count_tx_injections_error_hint -
+                         last_tx_error_count;
+      last_tx_error_count = static_cast<int64_t>(
+          primary_video_tx_stats.count_tx_injections_error_hint);
+      if (delta >= 1) {
+        bitrate_is_still_too_high = true;
+      }
+    }
+    // or the tx queue is running full
+    const auto n_buffered_packets_estimate =
+        udpVideoTxList.at(0)->get_estimate_buffered_packets();
+    m_console->debug("Video estimates {} buffered packets",
+                     n_buffered_packets_estimate);
+    if (n_buffered_packets_estimate >
+        50) {  // half of the wifibroadcast extra tx queue
+      bitrate_is_still_too_high = true;
+    }
+    // initialize with the theoretical default, since we do not know what the camera is doing, even though it probably is "too high".
+    if (last_recommended_bitrate <= 0) {
+      last_recommended_bitrate = max_video_after_fec_kbits;
+    }
+    if (bitrate_is_still_too_high) {
+      m_console->warn("Bitrate probably too high");
+      // reduce bitrate slightly
+      last_recommended_bitrate = last_recommended_bitrate * 80 / 100;
+    } else {
+      if (last_recommended_bitrate < max_video_after_fec_kbits) {
+        // otherwise, slowly increase bitrate
+        last_recommended_bitrate = last_recommended_bitrate * 120 / 100;
+      }
+    }
+    // 1Mbit/s as lower limit
+    if (last_recommended_bitrate < 1000) {
+      last_recommended_bitrate = 1000;
+    }
+    // theoretical max as upper limit
+    if (last_recommended_bitrate > max_video_after_fec_kbits) {
+      last_recommended_bitrate = max_video_after_fec_kbits;
+    }
+    if (m_opt_action_handler) {
+      openhd::ActionHandler::LinkBitrateInformation lb{};
+      lb.recommended_encoder_bitrate_kbits = last_recommended_bitrate;
+      m_opt_action_handler->action_request_bitrate_change_handle(lb);
+    }
   }
 }
 
