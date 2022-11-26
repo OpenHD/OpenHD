@@ -49,9 +49,9 @@ static MavlinkMessage pack_vid_air(const uint8_t system_id,const uint8_t compone
   tmp.curr_injected_bitrate=stats.curr_injected_bitrate;
   tmp.curr_injected_pps=stats.curr_injected_pps;
   tmp.curr_dropped_packets=stats.curr_dropped_packets;
-  tmp.curr_fec_encode_time_avg_ms=stats.curr_fec_encode_time_avg_ms;
-  tmp.curr_fec_encode_time_min_ms=stats.curr_fec_encode_time_min_ms;
-  tmp.curr_fec_encode_time_max_ms=stats.curr_fec_encode_time_max_ms;
+  tmp.curr_fec_encode_time_avg_us=stats.curr_fec_encode_time_avg_us;
+  tmp.curr_fec_encode_time_min_us=stats.curr_fec_encode_time_min_us;
+  tmp.curr_fec_encode_time_max_us=stats.curr_fec_encode_time_max_us;
   tmp.curr_fec_block_size_avg=stats.curr_fec_block_size_avg;
   tmp.curr_fec_block_size_min=stats.curr_fec_block_size_min;
   tmp.curr_fec_block_size_max=stats.curr_fec_block_size_max;
@@ -70,9 +70,9 @@ static MavlinkMessage pack_vid_gnd(const uint8_t system_id,const uint8_t compone
   tmp.count_blocks_lost=stats.count_blocks_lost;
   tmp.count_blocks_recovered=stats.count_blocks_recovered;
   tmp.count_fragments_recovered=stats.count_fragments_recovered;
-  tmp.curr_fec_decode_time_avg_ms=stats.curr_fec_decode_time_avg_ms;
-  tmp.curr_fec_decode_time_min_ms=stats.curr_fec_decode_time_min_ms;
-  tmp.curr_fec_decode_time_max_ms=stats.curr_fec_decode_time_max_ms;
+  tmp.curr_fec_decode_time_avg_us=stats.curr_fec_decode_time_avg_us;
+  tmp.curr_fec_decode_time_min_us=stats.curr_fec_decode_time_min_us;
+  tmp.curr_fec_decode_time_max_us=stats.curr_fec_decode_time_max_us;
   tmp.unused0=stats.unused0;
   tmp.unused1=stats.unused1;
   mavlink_msg_openhd_stats_wb_video_ground_encode(system_id,component_id,&msg.m,&tmp);

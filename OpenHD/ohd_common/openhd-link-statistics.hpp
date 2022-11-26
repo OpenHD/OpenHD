@@ -62,12 +62,12 @@ struct StatsWBVideoAir{
   int32_t curr_injected_bitrate;
   int32_t curr_injected_pps;
   int32_t curr_dropped_packets;
-  int32_t curr_fec_encode_time_avg_ms;
-  int32_t curr_fec_encode_time_min_ms;
-  int32_t curr_fec_encode_time_max_ms;
-  int16_t curr_fec_block_size_avg;
-  int16_t curr_fec_block_size_min;
-  int16_t curr_fec_block_size_max;
+  uint32_t curr_fec_encode_time_avg_us;
+  uint32_t curr_fec_encode_time_min_us;
+  uint32_t curr_fec_encode_time_max_us;
+  uint16_t curr_fec_block_size_avg;
+  uint16_t curr_fec_block_size_min;
+  uint16_t curr_fec_block_size_max;
   int32_t unused0;
   int32_t unused1;
   [[nodiscard]] std::string to_string()const{
@@ -82,9 +82,9 @@ struct StatsWBVideoGround{
   uint64_t count_blocks_lost;
   uint64_t count_blocks_recovered;
   uint64_t count_fragments_recovered;
-  int32_t curr_fec_decode_time_avg_ms;
-  int32_t curr_fec_decode_time_min_ms;
-  int32_t curr_fec_decode_time_max_ms;
+  uint32_t curr_fec_decode_time_avg_us;
+  uint32_t curr_fec_decode_time_min_us;
+  uint32_t curr_fec_decode_time_max_us;
   int32_t unused0;
   int32_t unused1;
   [[nodiscard]] std::string to_string()const{

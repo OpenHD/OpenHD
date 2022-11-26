@@ -10,9 +10,9 @@ typedef struct __mavlink_openhd_stats_wb_video_ground_t {
  uint64_t count_blocks_recovered; /*<  count_blocks_recovered*/
  uint64_t count_fragments_recovered; /*<  count_fragments_recovered*/
  int32_t curr_incoming_bitrate; /*<  todo*/
- int32_t curr_fec_decode_time_avg_ms; /*<  todo*/
- int32_t curr_fec_decode_time_min_ms; /*<  todo*/
- int32_t curr_fec_decode_time_max_ms; /*<  todo*/
+ uint32_t curr_fec_decode_time_avg_us; /*<  todo*/
+ uint32_t curr_fec_decode_time_min_us; /*<  todo*/
+ uint32_t curr_fec_decode_time_max_us; /*<  todo*/
  int32_t unused0; /*<  unused0*/
  int32_t unused1; /*<  unused1*/
  uint8_t link_index; /*<  link_index*/
@@ -23,8 +23,8 @@ typedef struct __mavlink_openhd_stats_wb_video_ground_t {
 #define MAVLINK_MSG_ID_1215_LEN 57
 #define MAVLINK_MSG_ID_1215_MIN_LEN 57
 
-#define MAVLINK_MSG_ID_OPENHD_STATS_WB_VIDEO_GROUND_CRC 61
-#define MAVLINK_MSG_ID_1215_CRC 61
+#define MAVLINK_MSG_ID_OPENHD_STATS_WB_VIDEO_GROUND_CRC 243
+#define MAVLINK_MSG_ID_1215_CRC 243
 
 
 
@@ -39,9 +39,9 @@ typedef struct __mavlink_openhd_stats_wb_video_ground_t {
          { "count_blocks_lost", NULL, MAVLINK_TYPE_UINT64_T, 0, 8, offsetof(mavlink_openhd_stats_wb_video_ground_t, count_blocks_lost) }, \
          { "count_blocks_recovered", NULL, MAVLINK_TYPE_UINT64_T, 0, 16, offsetof(mavlink_openhd_stats_wb_video_ground_t, count_blocks_recovered) }, \
          { "count_fragments_recovered", NULL, MAVLINK_TYPE_UINT64_T, 0, 24, offsetof(mavlink_openhd_stats_wb_video_ground_t, count_fragments_recovered) }, \
-         { "curr_fec_decode_time_avg_ms", NULL, MAVLINK_TYPE_INT32_T, 0, 36, offsetof(mavlink_openhd_stats_wb_video_ground_t, curr_fec_decode_time_avg_ms) }, \
-         { "curr_fec_decode_time_min_ms", NULL, MAVLINK_TYPE_INT32_T, 0, 40, offsetof(mavlink_openhd_stats_wb_video_ground_t, curr_fec_decode_time_min_ms) }, \
-         { "curr_fec_decode_time_max_ms", NULL, MAVLINK_TYPE_INT32_T, 0, 44, offsetof(mavlink_openhd_stats_wb_video_ground_t, curr_fec_decode_time_max_ms) }, \
+         { "curr_fec_decode_time_avg_us", NULL, MAVLINK_TYPE_UINT32_T, 0, 36, offsetof(mavlink_openhd_stats_wb_video_ground_t, curr_fec_decode_time_avg_us) }, \
+         { "curr_fec_decode_time_min_us", NULL, MAVLINK_TYPE_UINT32_T, 0, 40, offsetof(mavlink_openhd_stats_wb_video_ground_t, curr_fec_decode_time_min_us) }, \
+         { "curr_fec_decode_time_max_us", NULL, MAVLINK_TYPE_UINT32_T, 0, 44, offsetof(mavlink_openhd_stats_wb_video_ground_t, curr_fec_decode_time_max_us) }, \
          { "unused0", NULL, MAVLINK_TYPE_INT32_T, 0, 48, offsetof(mavlink_openhd_stats_wb_video_ground_t, unused0) }, \
          { "unused1", NULL, MAVLINK_TYPE_INT32_T, 0, 52, offsetof(mavlink_openhd_stats_wb_video_ground_t, unused1) }, \
          } \
@@ -56,9 +56,9 @@ typedef struct __mavlink_openhd_stats_wb_video_ground_t {
          { "count_blocks_lost", NULL, MAVLINK_TYPE_UINT64_T, 0, 8, offsetof(mavlink_openhd_stats_wb_video_ground_t, count_blocks_lost) }, \
          { "count_blocks_recovered", NULL, MAVLINK_TYPE_UINT64_T, 0, 16, offsetof(mavlink_openhd_stats_wb_video_ground_t, count_blocks_recovered) }, \
          { "count_fragments_recovered", NULL, MAVLINK_TYPE_UINT64_T, 0, 24, offsetof(mavlink_openhd_stats_wb_video_ground_t, count_fragments_recovered) }, \
-         { "curr_fec_decode_time_avg_ms", NULL, MAVLINK_TYPE_INT32_T, 0, 36, offsetof(mavlink_openhd_stats_wb_video_ground_t, curr_fec_decode_time_avg_ms) }, \
-         { "curr_fec_decode_time_min_ms", NULL, MAVLINK_TYPE_INT32_T, 0, 40, offsetof(mavlink_openhd_stats_wb_video_ground_t, curr_fec_decode_time_min_ms) }, \
-         { "curr_fec_decode_time_max_ms", NULL, MAVLINK_TYPE_INT32_T, 0, 44, offsetof(mavlink_openhd_stats_wb_video_ground_t, curr_fec_decode_time_max_ms) }, \
+         { "curr_fec_decode_time_avg_us", NULL, MAVLINK_TYPE_UINT32_T, 0, 36, offsetof(mavlink_openhd_stats_wb_video_ground_t, curr_fec_decode_time_avg_us) }, \
+         { "curr_fec_decode_time_min_us", NULL, MAVLINK_TYPE_UINT32_T, 0, 40, offsetof(mavlink_openhd_stats_wb_video_ground_t, curr_fec_decode_time_min_us) }, \
+         { "curr_fec_decode_time_max_us", NULL, MAVLINK_TYPE_UINT32_T, 0, 44, offsetof(mavlink_openhd_stats_wb_video_ground_t, curr_fec_decode_time_max_us) }, \
          { "unused0", NULL, MAVLINK_TYPE_INT32_T, 0, 48, offsetof(mavlink_openhd_stats_wb_video_ground_t, unused0) }, \
          { "unused1", NULL, MAVLINK_TYPE_INT32_T, 0, 52, offsetof(mavlink_openhd_stats_wb_video_ground_t, unused1) }, \
          } \
@@ -77,15 +77,15 @@ typedef struct __mavlink_openhd_stats_wb_video_ground_t {
  * @param count_blocks_lost  count_blocks_lost
  * @param count_blocks_recovered  count_blocks_recovered
  * @param count_fragments_recovered  count_fragments_recovered
- * @param curr_fec_decode_time_avg_ms  todo
- * @param curr_fec_decode_time_min_ms  todo
- * @param curr_fec_decode_time_max_ms  todo
+ * @param curr_fec_decode_time_avg_us  todo
+ * @param curr_fec_decode_time_min_us  todo
+ * @param curr_fec_decode_time_max_us  todo
  * @param unused0  unused0
  * @param unused1  unused1
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_openhd_stats_wb_video_ground_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
-                               uint8_t link_index, int32_t curr_incoming_bitrate, uint64_t count_blocks_total, uint64_t count_blocks_lost, uint64_t count_blocks_recovered, uint64_t count_fragments_recovered, int32_t curr_fec_decode_time_avg_ms, int32_t curr_fec_decode_time_min_ms, int32_t curr_fec_decode_time_max_ms, int32_t unused0, int32_t unused1)
+                               uint8_t link_index, int32_t curr_incoming_bitrate, uint64_t count_blocks_total, uint64_t count_blocks_lost, uint64_t count_blocks_recovered, uint64_t count_fragments_recovered, uint32_t curr_fec_decode_time_avg_us, uint32_t curr_fec_decode_time_min_us, uint32_t curr_fec_decode_time_max_us, int32_t unused0, int32_t unused1)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char buf[MAVLINK_MSG_ID_OPENHD_STATS_WB_VIDEO_GROUND_LEN];
@@ -94,9 +94,9 @@ static inline uint16_t mavlink_msg_openhd_stats_wb_video_ground_pack(uint8_t sys
     _mav_put_uint64_t(buf, 16, count_blocks_recovered);
     _mav_put_uint64_t(buf, 24, count_fragments_recovered);
     _mav_put_int32_t(buf, 32, curr_incoming_bitrate);
-    _mav_put_int32_t(buf, 36, curr_fec_decode_time_avg_ms);
-    _mav_put_int32_t(buf, 40, curr_fec_decode_time_min_ms);
-    _mav_put_int32_t(buf, 44, curr_fec_decode_time_max_ms);
+    _mav_put_uint32_t(buf, 36, curr_fec_decode_time_avg_us);
+    _mav_put_uint32_t(buf, 40, curr_fec_decode_time_min_us);
+    _mav_put_uint32_t(buf, 44, curr_fec_decode_time_max_us);
     _mav_put_int32_t(buf, 48, unused0);
     _mav_put_int32_t(buf, 52, unused1);
     _mav_put_uint8_t(buf, 56, link_index);
@@ -109,9 +109,9 @@ static inline uint16_t mavlink_msg_openhd_stats_wb_video_ground_pack(uint8_t sys
     packet.count_blocks_recovered = count_blocks_recovered;
     packet.count_fragments_recovered = count_fragments_recovered;
     packet.curr_incoming_bitrate = curr_incoming_bitrate;
-    packet.curr_fec_decode_time_avg_ms = curr_fec_decode_time_avg_ms;
-    packet.curr_fec_decode_time_min_ms = curr_fec_decode_time_min_ms;
-    packet.curr_fec_decode_time_max_ms = curr_fec_decode_time_max_ms;
+    packet.curr_fec_decode_time_avg_us = curr_fec_decode_time_avg_us;
+    packet.curr_fec_decode_time_min_us = curr_fec_decode_time_min_us;
+    packet.curr_fec_decode_time_max_us = curr_fec_decode_time_max_us;
     packet.unused0 = unused0;
     packet.unused1 = unused1;
     packet.link_index = link_index;
@@ -135,16 +135,16 @@ static inline uint16_t mavlink_msg_openhd_stats_wb_video_ground_pack(uint8_t sys
  * @param count_blocks_lost  count_blocks_lost
  * @param count_blocks_recovered  count_blocks_recovered
  * @param count_fragments_recovered  count_fragments_recovered
- * @param curr_fec_decode_time_avg_ms  todo
- * @param curr_fec_decode_time_min_ms  todo
- * @param curr_fec_decode_time_max_ms  todo
+ * @param curr_fec_decode_time_avg_us  todo
+ * @param curr_fec_decode_time_min_us  todo
+ * @param curr_fec_decode_time_max_us  todo
  * @param unused0  unused0
  * @param unused1  unused1
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_openhd_stats_wb_video_ground_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
                                mavlink_message_t* msg,
-                                   uint8_t link_index,int32_t curr_incoming_bitrate,uint64_t count_blocks_total,uint64_t count_blocks_lost,uint64_t count_blocks_recovered,uint64_t count_fragments_recovered,int32_t curr_fec_decode_time_avg_ms,int32_t curr_fec_decode_time_min_ms,int32_t curr_fec_decode_time_max_ms,int32_t unused0,int32_t unused1)
+                                   uint8_t link_index,int32_t curr_incoming_bitrate,uint64_t count_blocks_total,uint64_t count_blocks_lost,uint64_t count_blocks_recovered,uint64_t count_fragments_recovered,uint32_t curr_fec_decode_time_avg_us,uint32_t curr_fec_decode_time_min_us,uint32_t curr_fec_decode_time_max_us,int32_t unused0,int32_t unused1)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char buf[MAVLINK_MSG_ID_OPENHD_STATS_WB_VIDEO_GROUND_LEN];
@@ -153,9 +153,9 @@ static inline uint16_t mavlink_msg_openhd_stats_wb_video_ground_pack_chan(uint8_
     _mav_put_uint64_t(buf, 16, count_blocks_recovered);
     _mav_put_uint64_t(buf, 24, count_fragments_recovered);
     _mav_put_int32_t(buf, 32, curr_incoming_bitrate);
-    _mav_put_int32_t(buf, 36, curr_fec_decode_time_avg_ms);
-    _mav_put_int32_t(buf, 40, curr_fec_decode_time_min_ms);
-    _mav_put_int32_t(buf, 44, curr_fec_decode_time_max_ms);
+    _mav_put_uint32_t(buf, 36, curr_fec_decode_time_avg_us);
+    _mav_put_uint32_t(buf, 40, curr_fec_decode_time_min_us);
+    _mav_put_uint32_t(buf, 44, curr_fec_decode_time_max_us);
     _mav_put_int32_t(buf, 48, unused0);
     _mav_put_int32_t(buf, 52, unused1);
     _mav_put_uint8_t(buf, 56, link_index);
@@ -168,9 +168,9 @@ static inline uint16_t mavlink_msg_openhd_stats_wb_video_ground_pack_chan(uint8_
     packet.count_blocks_recovered = count_blocks_recovered;
     packet.count_fragments_recovered = count_fragments_recovered;
     packet.curr_incoming_bitrate = curr_incoming_bitrate;
-    packet.curr_fec_decode_time_avg_ms = curr_fec_decode_time_avg_ms;
-    packet.curr_fec_decode_time_min_ms = curr_fec_decode_time_min_ms;
-    packet.curr_fec_decode_time_max_ms = curr_fec_decode_time_max_ms;
+    packet.curr_fec_decode_time_avg_us = curr_fec_decode_time_avg_us;
+    packet.curr_fec_decode_time_min_us = curr_fec_decode_time_min_us;
+    packet.curr_fec_decode_time_max_us = curr_fec_decode_time_max_us;
     packet.unused0 = unused0;
     packet.unused1 = unused1;
     packet.link_index = link_index;
@@ -192,7 +192,7 @@ static inline uint16_t mavlink_msg_openhd_stats_wb_video_ground_pack_chan(uint8_
  */
 static inline uint16_t mavlink_msg_openhd_stats_wb_video_ground_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_openhd_stats_wb_video_ground_t* openhd_stats_wb_video_ground)
 {
-    return mavlink_msg_openhd_stats_wb_video_ground_pack(system_id, component_id, msg, openhd_stats_wb_video_ground->link_index, openhd_stats_wb_video_ground->curr_incoming_bitrate, openhd_stats_wb_video_ground->count_blocks_total, openhd_stats_wb_video_ground->count_blocks_lost, openhd_stats_wb_video_ground->count_blocks_recovered, openhd_stats_wb_video_ground->count_fragments_recovered, openhd_stats_wb_video_ground->curr_fec_decode_time_avg_ms, openhd_stats_wb_video_ground->curr_fec_decode_time_min_ms, openhd_stats_wb_video_ground->curr_fec_decode_time_max_ms, openhd_stats_wb_video_ground->unused0, openhd_stats_wb_video_ground->unused1);
+    return mavlink_msg_openhd_stats_wb_video_ground_pack(system_id, component_id, msg, openhd_stats_wb_video_ground->link_index, openhd_stats_wb_video_ground->curr_incoming_bitrate, openhd_stats_wb_video_ground->count_blocks_total, openhd_stats_wb_video_ground->count_blocks_lost, openhd_stats_wb_video_ground->count_blocks_recovered, openhd_stats_wb_video_ground->count_fragments_recovered, openhd_stats_wb_video_ground->curr_fec_decode_time_avg_us, openhd_stats_wb_video_ground->curr_fec_decode_time_min_us, openhd_stats_wb_video_ground->curr_fec_decode_time_max_us, openhd_stats_wb_video_ground->unused0, openhd_stats_wb_video_ground->unused1);
 }
 
 /**
@@ -206,7 +206,7 @@ static inline uint16_t mavlink_msg_openhd_stats_wb_video_ground_encode(uint8_t s
  */
 static inline uint16_t mavlink_msg_openhd_stats_wb_video_ground_encode_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, const mavlink_openhd_stats_wb_video_ground_t* openhd_stats_wb_video_ground)
 {
-    return mavlink_msg_openhd_stats_wb_video_ground_pack_chan(system_id, component_id, chan, msg, openhd_stats_wb_video_ground->link_index, openhd_stats_wb_video_ground->curr_incoming_bitrate, openhd_stats_wb_video_ground->count_blocks_total, openhd_stats_wb_video_ground->count_blocks_lost, openhd_stats_wb_video_ground->count_blocks_recovered, openhd_stats_wb_video_ground->count_fragments_recovered, openhd_stats_wb_video_ground->curr_fec_decode_time_avg_ms, openhd_stats_wb_video_ground->curr_fec_decode_time_min_ms, openhd_stats_wb_video_ground->curr_fec_decode_time_max_ms, openhd_stats_wb_video_ground->unused0, openhd_stats_wb_video_ground->unused1);
+    return mavlink_msg_openhd_stats_wb_video_ground_pack_chan(system_id, component_id, chan, msg, openhd_stats_wb_video_ground->link_index, openhd_stats_wb_video_ground->curr_incoming_bitrate, openhd_stats_wb_video_ground->count_blocks_total, openhd_stats_wb_video_ground->count_blocks_lost, openhd_stats_wb_video_ground->count_blocks_recovered, openhd_stats_wb_video_ground->count_fragments_recovered, openhd_stats_wb_video_ground->curr_fec_decode_time_avg_us, openhd_stats_wb_video_ground->curr_fec_decode_time_min_us, openhd_stats_wb_video_ground->curr_fec_decode_time_max_us, openhd_stats_wb_video_ground->unused0, openhd_stats_wb_video_ground->unused1);
 }
 
 /**
@@ -219,15 +219,15 @@ static inline uint16_t mavlink_msg_openhd_stats_wb_video_ground_encode_chan(uint
  * @param count_blocks_lost  count_blocks_lost
  * @param count_blocks_recovered  count_blocks_recovered
  * @param count_fragments_recovered  count_fragments_recovered
- * @param curr_fec_decode_time_avg_ms  todo
- * @param curr_fec_decode_time_min_ms  todo
- * @param curr_fec_decode_time_max_ms  todo
+ * @param curr_fec_decode_time_avg_us  todo
+ * @param curr_fec_decode_time_min_us  todo
+ * @param curr_fec_decode_time_max_us  todo
  * @param unused0  unused0
  * @param unused1  unused1
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_openhd_stats_wb_video_ground_send(mavlink_channel_t chan, uint8_t link_index, int32_t curr_incoming_bitrate, uint64_t count_blocks_total, uint64_t count_blocks_lost, uint64_t count_blocks_recovered, uint64_t count_fragments_recovered, int32_t curr_fec_decode_time_avg_ms, int32_t curr_fec_decode_time_min_ms, int32_t curr_fec_decode_time_max_ms, int32_t unused0, int32_t unused1)
+static inline void mavlink_msg_openhd_stats_wb_video_ground_send(mavlink_channel_t chan, uint8_t link_index, int32_t curr_incoming_bitrate, uint64_t count_blocks_total, uint64_t count_blocks_lost, uint64_t count_blocks_recovered, uint64_t count_fragments_recovered, uint32_t curr_fec_decode_time_avg_us, uint32_t curr_fec_decode_time_min_us, uint32_t curr_fec_decode_time_max_us, int32_t unused0, int32_t unused1)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char buf[MAVLINK_MSG_ID_OPENHD_STATS_WB_VIDEO_GROUND_LEN];
@@ -236,9 +236,9 @@ static inline void mavlink_msg_openhd_stats_wb_video_ground_send(mavlink_channel
     _mav_put_uint64_t(buf, 16, count_blocks_recovered);
     _mav_put_uint64_t(buf, 24, count_fragments_recovered);
     _mav_put_int32_t(buf, 32, curr_incoming_bitrate);
-    _mav_put_int32_t(buf, 36, curr_fec_decode_time_avg_ms);
-    _mav_put_int32_t(buf, 40, curr_fec_decode_time_min_ms);
-    _mav_put_int32_t(buf, 44, curr_fec_decode_time_max_ms);
+    _mav_put_uint32_t(buf, 36, curr_fec_decode_time_avg_us);
+    _mav_put_uint32_t(buf, 40, curr_fec_decode_time_min_us);
+    _mav_put_uint32_t(buf, 44, curr_fec_decode_time_max_us);
     _mav_put_int32_t(buf, 48, unused0);
     _mav_put_int32_t(buf, 52, unused1);
     _mav_put_uint8_t(buf, 56, link_index);
@@ -251,9 +251,9 @@ static inline void mavlink_msg_openhd_stats_wb_video_ground_send(mavlink_channel
     packet.count_blocks_recovered = count_blocks_recovered;
     packet.count_fragments_recovered = count_fragments_recovered;
     packet.curr_incoming_bitrate = curr_incoming_bitrate;
-    packet.curr_fec_decode_time_avg_ms = curr_fec_decode_time_avg_ms;
-    packet.curr_fec_decode_time_min_ms = curr_fec_decode_time_min_ms;
-    packet.curr_fec_decode_time_max_ms = curr_fec_decode_time_max_ms;
+    packet.curr_fec_decode_time_avg_us = curr_fec_decode_time_avg_us;
+    packet.curr_fec_decode_time_min_us = curr_fec_decode_time_min_us;
+    packet.curr_fec_decode_time_max_us = curr_fec_decode_time_max_us;
     packet.unused0 = unused0;
     packet.unused1 = unused1;
     packet.link_index = link_index;
@@ -270,7 +270,7 @@ static inline void mavlink_msg_openhd_stats_wb_video_ground_send(mavlink_channel
 static inline void mavlink_msg_openhd_stats_wb_video_ground_send_struct(mavlink_channel_t chan, const mavlink_openhd_stats_wb_video_ground_t* openhd_stats_wb_video_ground)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-    mavlink_msg_openhd_stats_wb_video_ground_send(chan, openhd_stats_wb_video_ground->link_index, openhd_stats_wb_video_ground->curr_incoming_bitrate, openhd_stats_wb_video_ground->count_blocks_total, openhd_stats_wb_video_ground->count_blocks_lost, openhd_stats_wb_video_ground->count_blocks_recovered, openhd_stats_wb_video_ground->count_fragments_recovered, openhd_stats_wb_video_ground->curr_fec_decode_time_avg_ms, openhd_stats_wb_video_ground->curr_fec_decode_time_min_ms, openhd_stats_wb_video_ground->curr_fec_decode_time_max_ms, openhd_stats_wb_video_ground->unused0, openhd_stats_wb_video_ground->unused1);
+    mavlink_msg_openhd_stats_wb_video_ground_send(chan, openhd_stats_wb_video_ground->link_index, openhd_stats_wb_video_ground->curr_incoming_bitrate, openhd_stats_wb_video_ground->count_blocks_total, openhd_stats_wb_video_ground->count_blocks_lost, openhd_stats_wb_video_ground->count_blocks_recovered, openhd_stats_wb_video_ground->count_fragments_recovered, openhd_stats_wb_video_ground->curr_fec_decode_time_avg_us, openhd_stats_wb_video_ground->curr_fec_decode_time_min_us, openhd_stats_wb_video_ground->curr_fec_decode_time_max_us, openhd_stats_wb_video_ground->unused0, openhd_stats_wb_video_ground->unused1);
 #else
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPENHD_STATS_WB_VIDEO_GROUND, (const char *)openhd_stats_wb_video_ground, MAVLINK_MSG_ID_OPENHD_STATS_WB_VIDEO_GROUND_MIN_LEN, MAVLINK_MSG_ID_OPENHD_STATS_WB_VIDEO_GROUND_LEN, MAVLINK_MSG_ID_OPENHD_STATS_WB_VIDEO_GROUND_CRC);
 #endif
@@ -284,7 +284,7 @@ static inline void mavlink_msg_openhd_stats_wb_video_ground_send_struct(mavlink_
   is usually the receive buffer for the channel, and allows a reply to an
   incoming message with minimum stack space usage.
  */
-static inline void mavlink_msg_openhd_stats_wb_video_ground_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  uint8_t link_index, int32_t curr_incoming_bitrate, uint64_t count_blocks_total, uint64_t count_blocks_lost, uint64_t count_blocks_recovered, uint64_t count_fragments_recovered, int32_t curr_fec_decode_time_avg_ms, int32_t curr_fec_decode_time_min_ms, int32_t curr_fec_decode_time_max_ms, int32_t unused0, int32_t unused1)
+static inline void mavlink_msg_openhd_stats_wb_video_ground_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  uint8_t link_index, int32_t curr_incoming_bitrate, uint64_t count_blocks_total, uint64_t count_blocks_lost, uint64_t count_blocks_recovered, uint64_t count_fragments_recovered, uint32_t curr_fec_decode_time_avg_us, uint32_t curr_fec_decode_time_min_us, uint32_t curr_fec_decode_time_max_us, int32_t unused0, int32_t unused1)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
     char *buf = (char *)msgbuf;
@@ -293,9 +293,9 @@ static inline void mavlink_msg_openhd_stats_wb_video_ground_send_buf(mavlink_mes
     _mav_put_uint64_t(buf, 16, count_blocks_recovered);
     _mav_put_uint64_t(buf, 24, count_fragments_recovered);
     _mav_put_int32_t(buf, 32, curr_incoming_bitrate);
-    _mav_put_int32_t(buf, 36, curr_fec_decode_time_avg_ms);
-    _mav_put_int32_t(buf, 40, curr_fec_decode_time_min_ms);
-    _mav_put_int32_t(buf, 44, curr_fec_decode_time_max_ms);
+    _mav_put_uint32_t(buf, 36, curr_fec_decode_time_avg_us);
+    _mav_put_uint32_t(buf, 40, curr_fec_decode_time_min_us);
+    _mav_put_uint32_t(buf, 44, curr_fec_decode_time_max_us);
     _mav_put_int32_t(buf, 48, unused0);
     _mav_put_int32_t(buf, 52, unused1);
     _mav_put_uint8_t(buf, 56, link_index);
@@ -308,9 +308,9 @@ static inline void mavlink_msg_openhd_stats_wb_video_ground_send_buf(mavlink_mes
     packet->count_blocks_recovered = count_blocks_recovered;
     packet->count_fragments_recovered = count_fragments_recovered;
     packet->curr_incoming_bitrate = curr_incoming_bitrate;
-    packet->curr_fec_decode_time_avg_ms = curr_fec_decode_time_avg_ms;
-    packet->curr_fec_decode_time_min_ms = curr_fec_decode_time_min_ms;
-    packet->curr_fec_decode_time_max_ms = curr_fec_decode_time_max_ms;
+    packet->curr_fec_decode_time_avg_us = curr_fec_decode_time_avg_us;
+    packet->curr_fec_decode_time_min_us = curr_fec_decode_time_min_us;
+    packet->curr_fec_decode_time_max_us = curr_fec_decode_time_max_us;
     packet->unused0 = unused0;
     packet->unused1 = unused1;
     packet->link_index = link_index;
@@ -386,33 +386,33 @@ static inline uint64_t mavlink_msg_openhd_stats_wb_video_ground_get_count_fragme
 }
 
 /**
- * @brief Get field curr_fec_decode_time_avg_ms from openhd_stats_wb_video_ground message
+ * @brief Get field curr_fec_decode_time_avg_us from openhd_stats_wb_video_ground message
  *
  * @return  todo
  */
-static inline int32_t mavlink_msg_openhd_stats_wb_video_ground_get_curr_fec_decode_time_avg_ms(const mavlink_message_t* msg)
+static inline uint32_t mavlink_msg_openhd_stats_wb_video_ground_get_curr_fec_decode_time_avg_us(const mavlink_message_t* msg)
 {
-    return _MAV_RETURN_int32_t(msg,  36);
+    return _MAV_RETURN_uint32_t(msg,  36);
 }
 
 /**
- * @brief Get field curr_fec_decode_time_min_ms from openhd_stats_wb_video_ground message
+ * @brief Get field curr_fec_decode_time_min_us from openhd_stats_wb_video_ground message
  *
  * @return  todo
  */
-static inline int32_t mavlink_msg_openhd_stats_wb_video_ground_get_curr_fec_decode_time_min_ms(const mavlink_message_t* msg)
+static inline uint32_t mavlink_msg_openhd_stats_wb_video_ground_get_curr_fec_decode_time_min_us(const mavlink_message_t* msg)
 {
-    return _MAV_RETURN_int32_t(msg,  40);
+    return _MAV_RETURN_uint32_t(msg,  40);
 }
 
 /**
- * @brief Get field curr_fec_decode_time_max_ms from openhd_stats_wb_video_ground message
+ * @brief Get field curr_fec_decode_time_max_us from openhd_stats_wb_video_ground message
  *
  * @return  todo
  */
-static inline int32_t mavlink_msg_openhd_stats_wb_video_ground_get_curr_fec_decode_time_max_ms(const mavlink_message_t* msg)
+static inline uint32_t mavlink_msg_openhd_stats_wb_video_ground_get_curr_fec_decode_time_max_us(const mavlink_message_t* msg)
 {
-    return _MAV_RETURN_int32_t(msg,  44);
+    return _MAV_RETURN_uint32_t(msg,  44);
 }
 
 /**
@@ -449,9 +449,9 @@ static inline void mavlink_msg_openhd_stats_wb_video_ground_decode(const mavlink
     openhd_stats_wb_video_ground->count_blocks_recovered = mavlink_msg_openhd_stats_wb_video_ground_get_count_blocks_recovered(msg);
     openhd_stats_wb_video_ground->count_fragments_recovered = mavlink_msg_openhd_stats_wb_video_ground_get_count_fragments_recovered(msg);
     openhd_stats_wb_video_ground->curr_incoming_bitrate = mavlink_msg_openhd_stats_wb_video_ground_get_curr_incoming_bitrate(msg);
-    openhd_stats_wb_video_ground->curr_fec_decode_time_avg_ms = mavlink_msg_openhd_stats_wb_video_ground_get_curr_fec_decode_time_avg_ms(msg);
-    openhd_stats_wb_video_ground->curr_fec_decode_time_min_ms = mavlink_msg_openhd_stats_wb_video_ground_get_curr_fec_decode_time_min_ms(msg);
-    openhd_stats_wb_video_ground->curr_fec_decode_time_max_ms = mavlink_msg_openhd_stats_wb_video_ground_get_curr_fec_decode_time_max_ms(msg);
+    openhd_stats_wb_video_ground->curr_fec_decode_time_avg_us = mavlink_msg_openhd_stats_wb_video_ground_get_curr_fec_decode_time_avg_us(msg);
+    openhd_stats_wb_video_ground->curr_fec_decode_time_min_us = mavlink_msg_openhd_stats_wb_video_ground_get_curr_fec_decode_time_min_us(msg);
+    openhd_stats_wb_video_ground->curr_fec_decode_time_max_us = mavlink_msg_openhd_stats_wb_video_ground_get_curr_fec_decode_time_max_us(msg);
     openhd_stats_wb_video_ground->unused0 = mavlink_msg_openhd_stats_wb_video_ground_get_unused0(msg);
     openhd_stats_wb_video_ground->unused1 = mavlink_msg_openhd_stats_wb_video_ground_get_unused1(msg);
     openhd_stats_wb_video_ground->link_index = mavlink_msg_openhd_stats_wb_video_ground_get_link_index(msg);

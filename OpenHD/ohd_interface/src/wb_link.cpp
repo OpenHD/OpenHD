@@ -657,9 +657,9 @@ void WBLink::loop_recalculate_stats() {
           ground_video.count_blocks_recovered=fec_stats.count_blocks_recovered;
           ground_video.count_blocks_lost=fec_stats.count_blocks_lost;
           ground_video.count_blocks_total=fec_stats.count_blocks_total;
-          ground_video.curr_fec_decode_time_avg_ms=(int32_t)std::chrono::duration_cast<std::chrono::milliseconds>(fec_stats.curr_fec_decode_time.avg).count();
-          ground_video.curr_fec_decode_time_min_ms=(int32_t)std::chrono::duration_cast<std::chrono::milliseconds>(fec_stats.curr_fec_decode_time.min).count();
-          ground_video.curr_fec_decode_time_max_ms=(int32_t)std::chrono::duration_cast<std::chrono::milliseconds>(fec_stats.curr_fec_decode_time.max).count();
+          ground_video.curr_fec_decode_time_avg_us =(uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(fec_stats.curr_fec_decode_time.avg).count();
+          ground_video.curr_fec_decode_time_min_us =(uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(fec_stats.curr_fec_decode_time.min).count();
+          ground_video.curr_fec_decode_time_max_us =(uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(fec_stats.curr_fec_decode_time.max).count();
         }
       }
     }
