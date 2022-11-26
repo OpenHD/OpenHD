@@ -15,13 +15,12 @@
 // It processes and/or creates mavlink messages.
 class MavlinkComponent{
  public:
-  MavlinkComponent(uint8_t sys_id,uint8_t comp_id,std::optional<MAV_TYPE> mav_type=std::nullopt):
-      _sys_id(sys_id),_comp_id(comp_id),_mav_type(mav_type){}
+  MavlinkComponent(uint8_t sys_id,uint8_t comp_id,std::optional<MAV_TYPE> mav_type=std::nullopt): m_sys_id(sys_id), m_comp_id(comp_id),_mav_type(mav_type){}
   //MavlinkComponent(MavlinkSystem& parent,uint8_t comp_id):
   //     _parent(parent),_sys_id(_parent._sys_id),_comp_id(comp_id){}
   //MavlinkSystem& _parent;
-  const uint8_t _sys_id;
-  const uint8_t _comp_id;
+  const uint8_t m_sys_id;
+  const uint8_t m_comp_id;
   const std::optional<MAV_TYPE> _mav_type=std::nullopt;
   /**
    * Call this with any mavlink message received, the component can then decide if he
@@ -72,8 +71,7 @@ class MavlinkComponent{
   [[nodiscard]] MavlinkMessage create_heartbeat()const{
     MavlinkMessage heartbeat;
     const MAV_TYPE mav_type=_mav_type.has_value() ? _mav_type.value() : MAV_TYPE_GENERIC;
-    mavlink_msg_heartbeat_pack(_sys_id,
-                               _comp_id,
+    mavlink_msg_heartbeat_pack(m_sys_id, m_comp_id,
                                &heartbeat.m,
                                mav_type,
                                MAV_AUTOPILOT_INVALID,

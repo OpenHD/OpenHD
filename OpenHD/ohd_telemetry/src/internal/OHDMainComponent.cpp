@@ -39,7 +39,8 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   //m_console->debug("InternalTelemetry::generate_mavlink_messages()");
   std::vector<MavlinkMessage> ret;
   ret.push_back(MavlinkComponent::create_heartbeat());
-  MavlinkComponent::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(_sys_id,_comp_id));
+  MavlinkComponent::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
+          m_sys_id, m_comp_id));
   MavlinkComponent::vec_append(ret, generate_mav_wb_stats());
   //ret.push_back(generateOpenHDVersion());
   // TODO remove for release
@@ -78,7 +79,7 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
       if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
         //https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
         m_console->debug("Got shutdown command");
-        if(command.target_system==_sys_id){
+        if(command.target_system== m_sys_id){
           // we are a companion computer, so we use param2 to get the actual action
           const auto action_for_companion=command.param2;
           if(action_for_companion>0){
@@ -122,18 +123,20 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
       continue;
     }
     MavlinkMessage msg= openhd::LinkStatisticsHelper::pack_card(
-        _sys_id, _comp_id, 0, card_stats);
+        m_sys_id, m_comp_id, 0, card_stats);
     ret.push_back(msg);
   }
+  ret.push_back(openhd::LinkStatisticsHelper::pack_link_general(
+      m_sys_id, m_comp_id,latest_stats.monitor_mode_link));
   ret.push_back(openhd::LinkStatisticsHelper::pack_tele(
-      _sys_id, _comp_id, latest_stats.telemetry));
+      m_sys_id, m_comp_id, latest_stats.telemetry));
   if(RUNS_ON_AIR){
     ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air(
-        _sys_id, _comp_id, latest_stats.air_video0));
+        m_sys_id, m_comp_id, latest_stats.air_video0));
     //ret.push_back(openhd::LinkStatisticsHelper::pack2(_sys_id,_comp_id,latest_stats.air_video1));
   }else{
     ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd(
-        _sys_id, _comp_id, latest_stats.ground_video0));
+        m_sys_id, m_comp_id, latest_stats.ground_video0));
     //ret.push_back(openhd::LinkStatisticsHelper::pack3(_sys_id,_comp_id,latest_stats.ground_video0));
   }
   return ret;
@@ -146,7 +149,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
   for(const auto& msg:messages){
     if (ret.size() < 5) {
       MavlinkMessage mavMsg;
-      StatusTextAccumulator::convert(mavMsg.m,msg,_sys_id,_comp_id);
+      StatusTextAccumulator::convert(mavMsg.m,msg, m_sys_id, m_comp_id);
       ret.push_back(mavMsg);
     } else {
       std::stringstream ss;
@@ -163,7 +166,7 @@ MavlinkMessage OHDMainComponent::generate_ohd_version(const std::string& commit_
   std::strncpy((char *)bufferBigEnough,OHD_VERSION_NUMBER_STRING,30);
   char bufferBigEnough2[30]={};
   std::strncpy((char *)bufferBigEnough2,commit_hash.c_str(),30);
-  mavlink_msg_openhd_version_message_pack(_sys_id,_comp_id, &msg.m, bufferBigEnough,bufferBigEnough2);
+  mavlink_msg_openhd_version_message_pack(m_sys_id, m_comp_id, &msg.m, bufferBigEnough,bufferBigEnough2);
   //mavlink_component_information_t x;
   return msg;
 }
@@ -180,7 +183,7 @@ openhd::link_statistics::StatsAirGround OHDMainComponent::get_latest_link_statis
 
 MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,const uint8_t source_comp_id,uint16_t command_id) {
   MavlinkMessage ret{};
-  mavlink_msg_command_ack_pack(_sys_id,_comp_id,&ret.m,command_id,MAV_RESULT_ACCEPTED,255,0,source_sys_id,source_comp_id);
+  mavlink_msg_command_ack_pack(m_sys_id, m_comp_id,&ret.m,command_id,MAV_RESULT_ACCEPTED,255,0,source_sys_id,source_comp_id);
   return ret;
 }
 
@@ -195,7 +198,7 @@ std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(const Ma
     rsync.tc1 = get_time_microseconds() * 1000;
     rsync.ts1 = tsync.ts1;
     mavlink_message_t response_message;
-    mavlink_msg_timesync_encode(_sys_id,_comp_id,&response_message,&rsync);
+    mavlink_msg_timesync_encode(m_sys_id, m_comp_id,&response_message,&rsync);
     return MavlinkMessage{response_message};
   }
   return std::nullopt;

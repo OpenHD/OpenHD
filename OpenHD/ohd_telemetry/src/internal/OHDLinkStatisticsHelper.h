@@ -25,6 +25,14 @@ static MavlinkMessage pack_card(const uint8_t system_id,const uint8_t component_
   return msg;
 }
 
+static MavlinkMessage pack_link_general(const uint8_t system_id,const uint8_t component_id,int card_index,
+                                        const openhd::link_statistics::StatsMonitorModeLink stats_monitor_mode_link){
+  MavlinkMessage msg;
+  mavlink_openhd_stats_monitor_mode_wifi_link_t tmp;
+  mavlink_msg_openhd_stats_monitor_mode_wifi_link_encode(system_id,component_id,&msg.m,&tmp);
+  return msg;
+}
+
 static MavlinkMessage pack_tele(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsTelemetry& stats){
   MavlinkMessage msg;
   mavlink_openhd_stats_telemetry_t tmp{};
