@@ -676,17 +676,13 @@ void WBLink::update_statistics() {
     auto& card = stats.cards.at(i);
     if(m_profile.is_air){
       // on air, we use the dbm reported by the telemetry stream
-      if(udpTelemetryRx){
-        card.rx_rssi=
-            udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
-      }
+      card.rx_rssi=
+          udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
     }else{
       // on ground, we use the dBm reported by the video stream (if available), otherwise
       // we use the dBm reported by the telemetry rx instance.
       int8_t rssi_telemetry=0;
-      if(udpTelemetryRx){
-        rssi_telemetry=udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
-      }
+      rssi_telemetry=udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
       int8_t rssi_video0=0;
       if(!udpVideoRxList.empty()){
         rssi_video0=udpVideoRxList.at(0)->get_latest_stats().rssiPerCard.at(i).last_rssi;
