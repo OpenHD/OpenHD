@@ -470,7 +470,6 @@ bool WBLink::set_video_fec_block_length(const int block_length) {
   }
   m_settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
   m_settings->persist();
-  std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
   // we only use the fec percentage for video tx-es, and changing it is fast
   for(auto& tx:udpVideoTxList){
     if(block_length==0){
@@ -490,7 +489,6 @@ bool WBLink::set_video_fec_percentage(int fec_percentage) {
   }
   m_settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
   m_settings->persist();
-  std::lock_guard<std::mutex> guard(m_wbRxTxInstancesLock);
   // we only use the fec percentage for video txes, and changing it is fast
   for(auto& tx:udpVideoTxList){
     tx->get_wb_tx().update_fec_percentage(fec_percentage);
