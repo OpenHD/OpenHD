@@ -677,7 +677,7 @@ void WBLink::loop_recalculate_stats() {
       }
     }
     // DIRTY: On air, we use the telemetry lost packets percentage, on ground,
-    // we use the video lost packets percentage
+    // we use the video lost packets' percentage. Once we have one global rx, we can change that
     if(m_profile.is_air){
       if(udpTelemetryRx){
         stats.monitor_mode_link.curr_rx_packet_loss=udpTelemetryRx->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
