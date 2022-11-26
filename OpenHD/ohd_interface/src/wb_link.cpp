@@ -676,6 +676,18 @@ void WBLink::loop_recalculate_stats() {
         }
       }
     }
+    // DIRTY: On air, we use the telemetry lost packets percentage, on ground,
+    // we use the video lost packets percentage
+    if(m_profile.is_air){
+      if(udpTelemetryRx){
+        stats.monitor_mode_link.curr_rx_packet_loss=udpTelemetryRx->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+      }
+    }else{
+      if(!udpVideoRxList.empty()){
+        stats.monitor_mode_link.curr_rx_packet_loss=udpVideoRxList.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+      }
+    }
+
     // dBm is per card, not per stream
     assert(stats.cards.size()>=4);
     // only populate actually used cards
