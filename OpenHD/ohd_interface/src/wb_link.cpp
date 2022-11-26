@@ -668,6 +668,18 @@ void WBLink::update_statistics() {
       stats.monitor_mode_link.curr_rx_packet_loss_perc=udpVideoRxList.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
     }
   }
+  // temporary, accumulate tx error(s) and dropped packets
+  uint64_t acc_tx_injections_error_hint=0;
+  uint64_t acc_tx_n_dropped_packets=0;
+  acc_tx_injections_error_hint+=udpTelemetryTx->get_latest_stats().count_tx_injections_error_hint;
+  acc_tx_n_dropped_packets+=udpTelemetryTx->get_latest_stats().count_tx_injections_error_hint;
+  for(const auto& videoTx:udpVideoTxList){
+    acc_tx_injections_error_hint+=videoTx->get_latest_stats().count_tx_injections_error_hint;
+    acc_tx_n_dropped_packets+=videoTx->get_latest_stats().n_dropped_packets;
+  }
+  stats.monitor_mode_link.count_tx_inj_error_hint=acc_tx_injections_error_hint;
+  stats.monitor_mode_link.count_tx_dropped_packets=acc_tx_n_dropped_packets;
+
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
   // only populate actually used cards
