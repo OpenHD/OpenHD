@@ -26,6 +26,7 @@ class GroundTelemetry :public MavlinkSystem{
   explicit GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   GroundTelemetry(const GroundTelemetry&)=delete;
   GroundTelemetry(const GroundTelemetry&&)=delete;
+  ~GroundTelemetry();
   /**
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.

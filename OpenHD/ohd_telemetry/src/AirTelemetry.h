@@ -29,6 +29,7 @@ class AirTelemetry : public MavlinkSystem{
   explicit AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   AirTelemetry(const AirTelemetry&)=delete;
   AirTelemetry(const AirTelemetry&&)=delete;
+  ~AirTelemetry();
   /**
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.

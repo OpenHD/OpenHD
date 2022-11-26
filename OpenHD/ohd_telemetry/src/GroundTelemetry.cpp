@@ -59,6 +59,12 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   m_console->debug("Created GroundTelemetry");
 }
 
+GroundTelemetry::~GroundTelemetry() {
+  // first, stop all the endpoints that have their own threads
+  udpWifibroadcastEndpoint= nullptr;
+  udpGroundClient= nullptr;
+}
+
 void GroundTelemetry::onMessageAirPi(MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"GroundTelemetry::onMessageAirPi");
   const mavlink_message_t &m = message.m;

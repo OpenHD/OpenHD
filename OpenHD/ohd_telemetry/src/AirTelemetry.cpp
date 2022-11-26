@@ -33,6 +33,10 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   m_console->debug("Created AirTelemetry");
 }
 
+AirTelemetry::~AirTelemetry() {
+
+}
+
 void AirTelemetry::sendMessageFC(const MavlinkMessage &message) {
   std::lock_guard<std::mutex> guard(_serialEndpointMutex);
   if(serialEndpoint){
