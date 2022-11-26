@@ -39,8 +39,7 @@ class WBLink {
   WBLink(const WBLink&&)=delete;
   ~WBLink();
   // Verbose string about the current state.
-  // could be const if there wasn't the mutex
-  [[nodiscard]] std::string createDebug();
+  [[nodiscard]] std::string createDebug()const;
   // start or stop video data forwarding to another external device
   // NOTE: Only for the ground unit, and only for video (see OHDInterface for more info)
   void addExternalDeviceIpForwardingVideoOnly(const std::string& ip);
@@ -85,9 +84,6 @@ class WBLink {
   void configure_streams();
   void configure_telemetry();
   void configure_video();
-  //openhd::WBStreamsSettings _last_settings;
-  // Protects all the tx / rx instances, since we have the restart() from the settings.
-  std::mutex m_wbRxTxInstancesLock;
   std::unique_ptr<openhd::WBStreamsSettingsHolder> m_settings;
   // For telemetry, bidirectional in opposite directions
   std::unique_ptr<UDPWBTransmitter> udpTelemetryTx;

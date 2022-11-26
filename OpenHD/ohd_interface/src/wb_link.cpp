@@ -250,7 +250,7 @@ std::unique_ptr<UDPWBReceiver> WBLink::createUdpWbRx(uint8_t radio_port, int udp
   return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port);
 }
 
-std::string WBLink::createDebug(){
+std::string WBLink::createDebug()const{
   std::stringstream ss;
   // we use telemetry data only here
   bool any_data_received=false;
