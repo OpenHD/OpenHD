@@ -27,28 +27,30 @@ static std::string bitrate_to_string(uint64_t bits_per_second){
 // we do not have a mavlink dependency in ohd_interface so we need to duplicate that code
 
 struct StatsMonitorModeLink{
-  uint64_t curr_tx_pps;
-  uint64_t curr_rx_pps;
-  uint64_t curr_tx_bps;
-  uint64_t curr_rx_bps;
-  uint64_t curr_rx_packet_loss;
-  int32_t unused0;
-  int32_t unused1;
-  int32_t unused2;
-  int32_t unused3;
+  uint64_t count_tx_inj_error_hint; /*<  count_tx_inj_error_hint*/
+  uint64_t count_tx_dropped_packets; /*<  count_tx_dropped_packets*/
+  uint64_t unused2; /*<  unused2*/
+  uint64_t unused3; /*<  unused3*/
+  int32_t curr_tx_pps; /*<  tx packets per second*/
+  int32_t curr_rx_pps; /*<  rx packets per second*/
+  int32_t curr_tx_bps; /*<  tx bits per second*/
+  int32_t curr_rx_bps; /*<  rx bits per second*/
+  int32_t unused0; /*<  unused0*/
+  int32_t unused1; /*<  unused1*/
+  int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss*/
   [[nodiscard]] std::string to_string()const{
     return "TODO";
   }
 };
 
 struct StatsTelemetry{
-  uint64_t curr_tx_pps;
-  uint64_t curr_rx_pps;
-  uint64_t curr_tx_bps;
-  uint64_t curr_rx_bps;
-  uint64_t curr_rx_packet_loss_perc;
-  uint64_t unused_0;
-  uint64_t unused_1;
+  uint64_t unused_0; /*<  unused_0*/
+  uint64_t unused_1; /*<  unused_1*/
+  int32_t curr_tx_pps; /*<  tx packets per second*/
+  int32_t curr_rx_pps; /*<  rx packets per second*/
+  int32_t curr_tx_bps; /*<  tx bits per second*/
+  int32_t curr_rx_bps; /*<  rx bits per second*/
+  int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss_perc*/
   [[nodiscard]] std::string to_string()const{
     return "TODO";
   }
