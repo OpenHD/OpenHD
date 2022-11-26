@@ -729,13 +729,11 @@ void WBLink::loop_recalculate_stats() {
       bool bitrate_is_still_too_high=false;
       UDPWBTransmitter* primary_video_tx=udpVideoTxList.at(0).get();
       const auto primary_video_tx_stats=primary_video_tx->get_latest_stats();
-      const auto curr_count_tx_injections_error_hint=static_cast<int64_t>(primary_video_tx->get_estimate_buffered_packets()
-                                                                            +primary_video_tx_stats.n_dropped_packets);
       if(last_tx_error_count<0){
-        last_tx_error_count=curr_count_tx_injections_error_hint;
+        last_tx_error_count=static_cast<int64_t>(primary_video_tx_stats.count_tx_injections_error_hint);
       }else{
-        const auto delta=curr_count_tx_injections_error_hint-last_tx_error_count;
-        last_tx_error_count=curr_count_tx_injections_error_hint;
+        const auto delta=primary_video_tx_stats.count_tx_injections_error_hint-last_tx_error_count;
+        last_tx_error_count=static_cast<int64_t>(primary_video_tx_stats.count_tx_injections_error_hint);
         if(delta>=1){
           bitrate_is_still_too_high= true;
         }
