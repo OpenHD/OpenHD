@@ -652,10 +652,14 @@ void WBLink::loop_recalculate_stats() {
         ground_video.link_index=i;
         ground_video.curr_incoming_bitrate=wb_rx_stats.wb_rx_stats.curr_bits_per_second;
         if(wb_rx_stats.fec_rx_stats.has_value()){
-          ground_video.count_fragments_recovered=wb_rx_stats.fec_rx_stats.value().count_fragments_recovered;
-          ground_video.count_blocks_recovered=wb_rx_stats.fec_rx_stats.value().count_blocks_recovered;
-          ground_video.count_blocks_lost=wb_rx_stats.fec_rx_stats.value().count_blocks_lost;
-          ground_video.count_blocks_total=wb_rx_stats.fec_rx_stats.value().count_blocks_total;
+          const auto fec_stats=wb_rx_stats.fec_rx_stats.value();
+          ground_video.count_fragments_recovered=fec_stats.count_fragments_recovered;
+          ground_video.count_blocks_recovered=fec_stats.count_blocks_recovered;
+          ground_video.count_blocks_lost=fec_stats.count_blocks_lost;
+          ground_video.count_blocks_total=fec_stats.count_blocks_total;
+          ground_video.curr_fec_decode_time_avg_ms=(int32_t)std::chrono::duration_cast<std::chrono::milliseconds>(fec_stats.curr_fec_decode_time.avg).count();
+          ground_video.curr_fec_decode_time_min_ms=(int32_t)std::chrono::duration_cast<std::chrono::milliseconds>(fec_stats.curr_fec_decode_time.min).count();
+          ground_video.curr_fec_decode_time_max_ms=(int32_t)std::chrono::duration_cast<std::chrono::milliseconds>(fec_stats.curr_fec_decode_time.max).count();
         }
       }
     }
