@@ -516,7 +516,8 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     };
     ret.push_back(Setting{WB_VIDEO_VARIABLE_BITRATE,openhd::IntSetting{(int)m_settings->get_settings().enable_wb_video_variable_bitrate, cb_enable_wb_video_variable_bitrate}});
   }
-  if(true){
+  // disabled for now, they are too complicated that a normal user can do something with them anyways
+  if(false){
     auto cb_wb_enable_stbc=[this](std::string,int value){
       if(!validate_yes_or_no(value))return false;
       m_settings->unsafe_get_settings().wb_enable_stbc=value;
