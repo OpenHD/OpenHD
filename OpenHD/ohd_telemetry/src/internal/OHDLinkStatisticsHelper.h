@@ -20,7 +20,7 @@ static MavlinkMessage pack_card(const uint8_t system_id,const uint8_t component_
   tmp.count_p_injected=card_stats.count_p_injected;
   tmp.dummy0=0;
   tmp.dummy1=0;
-  openhd::log::get_default()->debug("XX {}",card_stats.to_string(0));
+  //openhd::log::get_default()->debug("XX {}",card_stats.to_string(0));
   mavlink_msg_openhd_stats_monitor_mode_wifi_card_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }

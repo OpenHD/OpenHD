@@ -687,7 +687,6 @@ void WBLink::loop_recalculate_stats() {
         if(udpTelemetryRx){
           card.rx_rssi=
               udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
-          m_console->debug("dBm {}",card.rx_rssi);
         }
       }else{
         // on ground, we use the dBm reported by the video stream (if available), otherwise
@@ -706,7 +705,6 @@ void WBLink::loop_recalculate_stats() {
         }else{
           card.rx_rssi=rssi_video0;
         }
-        m_console->debug("dBm {}",card.rx_rssi);
       }
       card.exists_in_openhd= true;
       // not yet supported
