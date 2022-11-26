@@ -62,7 +62,7 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
 	// heartbeat coming from the ground station
 	return;
   }
-  if(message.m.msgid==MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE){
+  if(m.msgid==MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE){
     m_console->debug("Sending rc channels override to FC");
   }
   // for now, do it as simple as possible

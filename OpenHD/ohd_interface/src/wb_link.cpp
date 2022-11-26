@@ -629,7 +629,7 @@ void WBLink::loop_recalculate_stats() {
     }
     if(udpTelemetryRx){
       const auto rx_stats=udpTelemetryRx->get_latest_stats();
-      stats.telemetry.curr_rx_bps=rx_stats.wb_rx_stats.curr_bits_per_second;
+      stats.telemetry.curr_rx_bps=rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
     }
     if(m_profile.is_air){
       // video on air
@@ -650,7 +650,7 @@ void WBLink::loop_recalculate_stats() {
         auto& ground_video= i==0 ? stats.ground_video0 : stats.ground_video1;
         //
         ground_video.link_index=i;
-        ground_video.curr_incoming_bitrate=wb_rx_stats.wb_rx_stats.curr_bits_per_second;
+        ground_video.curr_incoming_bitrate=wb_rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
         if(wb_rx_stats.fec_rx_stats.has_value()){
           const auto fec_stats=wb_rx_stats.fec_rx_stats.value();
           ground_video.count_fragments_recovered=fec_stats.count_fragments_recovered;
