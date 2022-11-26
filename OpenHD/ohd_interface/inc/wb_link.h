@@ -135,6 +135,8 @@ class WBLink {
   };
   void schedule_work_item(std::shared_ptr<WorkItem> work_item);
   std::shared_ptr<WorkItem> get_scheduled_work_item();
+  // We limit changing specific params to one after anoher
+  bool check_work_queue_empty();
   std::mutex m_work_item_queue_mutex;
   std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
 };

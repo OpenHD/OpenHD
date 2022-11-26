@@ -410,6 +410,7 @@ bool WBLink::set_frequency(int frequency) {
       }
     }
   }
+  if(!check_work_queue_empty())return false;
   m_settings->unsafe_get_settings().wb_frequency=frequency;
   m_settings->persist();
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
@@ -454,6 +455,7 @@ bool WBLink::set_mcs_index(int mcs_index) {
     m_console->warn("Cannot change mcs index, it is fixed for at least one of the used cards");
     return false;
   }
+  if(!check_work_queue_empty())return false;
   m_settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   m_settings->persist();
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
@@ -485,6 +487,7 @@ bool WBLink::set_channel_width(int channel_width) {
     m_console->warn("Cannot change channel width, at least one card doesn't support it");
     return false;
   }
+  if(!check_work_queue_empty())return false;
   m_settings->unsafe_get_settings().wb_channel_width=channel_width;
   m_settings->persist();
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
@@ -845,4 +848,13 @@ std::shared_ptr<WBLink::WorkItem> WBLink::get_scheduled_work_item() {
     return ret;
   }
   return nullptr;
+}
+
+bool WBLink::check_work_queue_empty() {
+  std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
+  if(!m_work_item_queue.empty()){
+    m_console->info("Rejecting param, another change is still queued up");
+    return false;
+  }
+  return true;
 }
