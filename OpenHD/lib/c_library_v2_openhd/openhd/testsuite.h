@@ -104,19 +104,21 @@ static void mavlink_test_openhd_stats_monitor_mode_wifi_link(uint8_t system_id, 
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
     mavlink_openhd_stats_monitor_mode_wifi_link_t packet_in = {
-        93372036854775807ULL,93372036854776311ULL,93372036854776815ULL,93372036854777319ULL,93372036854777823ULL,963499544,963499752,963499960,963500168
+        93372036854775807ULL,93372036854776311ULL,93372036854776815ULL,93372036854777319ULL,963499128,963499336,963499544,963499752,963499960,963500168,20147
     };
     mavlink_openhd_stats_monitor_mode_wifi_link_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
+        packet1.count_tx_inj_error_hint = packet_in.count_tx_inj_error_hint;
+        packet1.count_tx_dropped_packets = packet_in.count_tx_dropped_packets;
+        packet1.unused2 = packet_in.unused2;
+        packet1.unused3 = packet_in.unused3;
         packet1.curr_tx_pps = packet_in.curr_tx_pps;
         packet1.curr_rx_pps = packet_in.curr_rx_pps;
         packet1.curr_tx_bps = packet_in.curr_tx_bps;
         packet1.curr_rx_bps = packet_in.curr_rx_bps;
-        packet1.curr_rx_packet_loss = packet_in.curr_rx_packet_loss;
         packet1.unused0 = packet_in.unused0;
         packet1.unused1 = packet_in.unused1;
-        packet1.unused2 = packet_in.unused2;
-        packet1.unused3 = packet_in.unused3;
+        packet1.curr_rx_packet_loss_perc = packet_in.curr_rx_packet_loss_perc;
         
         
 #ifdef MAVLINK_STATUS_FLAG_OUT_MAVLINK1
@@ -131,12 +133,12 @@ static void mavlink_test_openhd_stats_monitor_mode_wifi_link(uint8_t system_id, 
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_openhd_stats_monitor_mode_wifi_link_pack(system_id, component_id, &msg , packet1.curr_tx_pps , packet1.curr_rx_pps , packet1.curr_tx_bps , packet1.curr_rx_bps , packet1.curr_rx_packet_loss , packet1.unused0 , packet1.unused1 , packet1.unused2 , packet1.unused3 );
+    mavlink_msg_openhd_stats_monitor_mode_wifi_link_pack(system_id, component_id, &msg , packet1.curr_tx_pps , packet1.curr_rx_pps , packet1.curr_tx_bps , packet1.curr_rx_bps , packet1.curr_rx_packet_loss_perc , packet1.count_tx_inj_error_hint , packet1.count_tx_dropped_packets , packet1.unused0 , packet1.unused1 , packet1.unused2 , packet1.unused3 );
     mavlink_msg_openhd_stats_monitor_mode_wifi_link_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_openhd_stats_monitor_mode_wifi_link_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.curr_tx_pps , packet1.curr_rx_pps , packet1.curr_tx_bps , packet1.curr_rx_bps , packet1.curr_rx_packet_loss , packet1.unused0 , packet1.unused1 , packet1.unused2 , packet1.unused3 );
+    mavlink_msg_openhd_stats_monitor_mode_wifi_link_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.curr_tx_pps , packet1.curr_rx_pps , packet1.curr_tx_bps , packet1.curr_rx_bps , packet1.curr_rx_packet_loss_perc , packet1.count_tx_inj_error_hint , packet1.count_tx_dropped_packets , packet1.unused0 , packet1.unused1 , packet1.unused2 , packet1.unused3 );
     mavlink_msg_openhd_stats_monitor_mode_wifi_link_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
@@ -149,7 +151,7 @@ static void mavlink_test_openhd_stats_monitor_mode_wifi_link(uint8_t system_id, 
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_openhd_stats_monitor_mode_wifi_link_send(MAVLINK_COMM_1 , packet1.curr_tx_pps , packet1.curr_rx_pps , packet1.curr_tx_bps , packet1.curr_rx_bps , packet1.curr_rx_packet_loss , packet1.unused0 , packet1.unused1 , packet1.unused2 , packet1.unused3 );
+    mavlink_msg_openhd_stats_monitor_mode_wifi_link_send(MAVLINK_COMM_1 , packet1.curr_tx_pps , packet1.curr_rx_pps , packet1.curr_tx_bps , packet1.curr_rx_bps , packet1.curr_rx_packet_loss_perc , packet1.count_tx_inj_error_hint , packet1.count_tx_dropped_packets , packet1.unused0 , packet1.unused1 , packet1.unused2 , packet1.unused3 );
     mavlink_msg_openhd_stats_monitor_mode_wifi_link_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
@@ -171,17 +173,17 @@ static void mavlink_test_openhd_stats_telemetry(uint8_t system_id, uint8_t compo
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
     mavlink_openhd_stats_telemetry_t packet_in = {
-        93372036854775807ULL,93372036854776311ULL,93372036854776815ULL,93372036854777319ULL,93372036854777823ULL,93372036854778327ULL,93372036854778831ULL
+        93372036854775807ULL,93372036854776311ULL,963498296,963498504,963498712,963498920,18899
     };
     mavlink_openhd_stats_telemetry_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
+        packet1.unused_0 = packet_in.unused_0;
+        packet1.unused_1 = packet_in.unused_1;
         packet1.curr_tx_pps = packet_in.curr_tx_pps;
         packet1.curr_rx_pps = packet_in.curr_rx_pps;
         packet1.curr_tx_bps = packet_in.curr_tx_bps;
         packet1.curr_rx_bps = packet_in.curr_rx_bps;
         packet1.curr_rx_packet_loss_perc = packet_in.curr_rx_packet_loss_perc;
-        packet1.unused_0 = packet_in.unused_0;
-        packet1.unused_1 = packet_in.unused_1;
         
         
 #ifdef MAVLINK_STATUS_FLAG_OUT_MAVLINK1
