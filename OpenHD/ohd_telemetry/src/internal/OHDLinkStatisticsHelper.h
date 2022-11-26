@@ -29,6 +29,11 @@ static MavlinkMessage pack_link_general(const uint8_t system_id,const uint8_t co
                                         const openhd::link_statistics::StatsMonitorModeLink stats_monitor_mode_link){
   MavlinkMessage msg;
   mavlink_openhd_stats_monitor_mode_wifi_link_t tmp;
+  tmp.curr_tx_pps=stats_monitor_mode_link.curr_tx_pps;
+  tmp.curr_rx_pps=stats_monitor_mode_link.curr_rx_pps;
+  tmp.curr_tx_bps=stats_monitor_mode_link.curr_tx_bps;
+  tmp.curr_rx_bps=stats_monitor_mode_link.curr_rx_bps;
+  tmp.curr_rx_packet_loss=stats_monitor_mode_link.curr_rx_packet_loss;
   mavlink_msg_openhd_stats_monitor_mode_wifi_link_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }

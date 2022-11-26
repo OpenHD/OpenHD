@@ -210,13 +210,16 @@ std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int 
     options.enable_fec= true;
     options.tx_fec_options.fixed_k=static_cast<int>(settings.wb_video_fec_block_length);
     options.tx_fec_options.overhead_percentage=static_cast<int>(settings.wb_video_fec_percentage);
-    if(m_settings->get_settings().wb_video_fec_block_length_auto_enable){
+    if(settings.is_video_variable_block_length_enabled()){
       if(m_curr_video_codec==0){
         options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::RTP_H264;
       }else if(m_curr_video_codec==1){
         options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::RTP_H265;
       }else if(m_curr_video_codec==2){
         options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::RTP_MJPEG;
+      }else{
+        // default
+        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::RTP_H264;
       }
     }
   }else{
@@ -634,6 +637,7 @@ void WBLink::loop_recalculate_stats() {
     if(udpTelemetryRx){
       const auto curr_rx_stats=udpTelemetryRx->get_latest_stats();
       stats.telemetry.curr_rx_bps=curr_rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
+      //stats.telemetry.curr_rx_pps=curr_rx_stats.wb_rx_stats;
     }
     if(m_profile.is_air){
       // video on air
@@ -687,7 +691,6 @@ void WBLink::loop_recalculate_stats() {
         stats.monitor_mode_link.curr_rx_packet_loss=udpVideoRxList.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
       }
     }
-
     // dBm is per card, not per stream
     assert(stats.cards.size()>=4);
     // only populate actually used cards
