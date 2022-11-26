@@ -618,29 +618,39 @@ void WBLink::set_video_codec(int codec) {
   }
 }
 
+static uint32_t get_micros(std::chrono::nanoseconds ns){
+  return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::microseconds>(ns).count());
+}
+
 void WBLink::loop_recalculate_stats() {
   while (m_recalculate_stats_thread_run){
     // telemetry is available on both air and ground
     openhd::link_statistics::StatsAirGround stats{};
     if(udpTelemetryTx){
-      auto& wb_tx=udpTelemetryTx->get_wb_tx();
-      stats.telemetry.curr_tx_bps=wb_tx.get_current_provided_bits_per_second();
-      stats.telemetry.curr_tx_pps=wb_tx.get_current_packets_per_second();
+      const auto curr_tx_stats=udpTelemetryTx->get_latest_stats();
+      stats.telemetry.curr_tx_bps=curr_tx_stats.current_provided_bits_per_second;
+      stats.telemetry.curr_tx_pps=curr_tx_stats.current_injected_packets_per_second;
     }
     if(udpTelemetryRx){
-      const auto rx_stats=udpTelemetryRx->get_latest_stats();
-      stats.telemetry.curr_rx_bps=rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
+      const auto curr_rx_stats=udpTelemetryRx->get_latest_stats();
+      stats.telemetry.curr_rx_bps=curr_rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
     }
     if(m_profile.is_air){
       // video on air
       for(int i=0;i<udpVideoTxList.size();i++){
         auto& wb_tx=udpVideoTxList.at(i)->get_wb_tx();
         auto& air_video=i==0 ? stats.air_video0 : stats.air_video1;
+        const auto curr_tx_stats=wb_tx.get_latest_stats();
         //
         air_video.link_index=i;
-        air_video.curr_measured_encoder_bitrate=wb_tx.get_current_provided_bits_per_second();
-        air_video.curr_injected_bitrate=wb_tx.get_current_injected_bits_per_second();
-        air_video.curr_injected_pps=wb_tx.get_current_packets_per_second();
+        air_video.curr_measured_encoder_bitrate=curr_tx_stats.current_provided_bits_per_second;
+        air_video.curr_injected_bitrate=curr_tx_stats.current_injected_bits_per_second;
+        air_video.curr_injected_pps=curr_tx_stats.current_injected_packets_per_second;
+        //
+        const auto curr_tx_fec_stats=wb_tx.get_latest_fec_stats();
+        air_video.curr_fec_encode_time_avg_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
+        air_video.curr_fec_encode_time_min_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
+        air_video.curr_fec_encode_time_max_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.max);
       }
     }else{
       // video on ground
@@ -657,9 +667,9 @@ void WBLink::loop_recalculate_stats() {
           ground_video.count_blocks_recovered=fec_stats.count_blocks_recovered;
           ground_video.count_blocks_lost=fec_stats.count_blocks_lost;
           ground_video.count_blocks_total=fec_stats.count_blocks_total;
-          ground_video.curr_fec_decode_time_avg_us =(uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(fec_stats.curr_fec_decode_time.avg).count();
-          ground_video.curr_fec_decode_time_min_us =(uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(fec_stats.curr_fec_decode_time.min).count();
-          ground_video.curr_fec_decode_time_max_us =(uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(fec_stats.curr_fec_decode_time.max).count();
+          ground_video.curr_fec_decode_time_avg_us =get_micros(fec_stats.curr_fec_decode_time.avg);
+          ground_video.curr_fec_decode_time_min_us =get_micros(fec_stats.curr_fec_decode_time.min);
+          ground_video.curr_fec_decode_time_max_us =get_micros(fec_stats.curr_fec_decode_time.max);
         }
       }
     }
@@ -725,8 +735,9 @@ void WBLink::loop_recalculate_stats() {
       // then check if there are tx errors since the last time we checked (1 second intervals)
       bool bitrate_is_still_too_high=false;
       UDPWBTransmitter* primary_video_tx=udpVideoTxList.at(0).get();
-      const auto curr_count_tx_injections_error_hint=static_cast<int64_t>(primary_video_tx->get_count_tx_injections_error_hint()
-                                                                            +primary_video_tx->get_n_dropped_packets());
+      const auto primary_video_tx_stats=primary_video_tx->get_latest_stats();
+      const auto curr_count_tx_injections_error_hint=static_cast<int64_t>(primary_video_tx->get_estimate_buffered_packets()
+                                                                            +primary_video_tx_stats.n_dropped_packets);
       if(last_tx_error_count<0){
         last_tx_error_count=curr_count_tx_injections_error_hint;
       }else{
