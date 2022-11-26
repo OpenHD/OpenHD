@@ -651,6 +651,9 @@ void WBLink::loop_recalculate_stats() {
         air_video.curr_fec_encode_time_avg_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
         air_video.curr_fec_encode_time_min_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
         air_video.curr_fec_encode_time_max_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.max);
+        air_video.curr_fec_block_size_min=curr_tx_fec_stats.curr_fec_block_length.min;
+        air_video.curr_fec_block_size_max=curr_tx_fec_stats.curr_fec_block_length.max;
+        air_video.curr_fec_block_size_avg=curr_tx_fec_stats.curr_fec_block_length.avg;
       }
     }else{
       // video on ground
