@@ -19,4 +19,19 @@
 // 2) crashed / messed up wifi (driver ?!)
 // -> requires a complete re-boot of linux
 
+#include "openhd-spdlog.hpp"
+#include "openhd-util.hpp"
+
+namespace openhd::fatalerror{
+
+static void handle_needs_openhd_restart(){
+  openhd::log::get_default()->error("handle_needs_openhd_restart");
+}
+
+static void handle_needs_linux_reboot(){
+  openhd::log::get_default()->error("handle_needs_linux_reboot");
+}
+
+}
+
 #endif  // OPENHD_OPENHD_OHD_COMMON_OPENHD_DIRTY_IRRECOVERABLE_ERROR_H_
