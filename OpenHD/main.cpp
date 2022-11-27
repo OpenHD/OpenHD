@@ -205,6 +205,11 @@ int main(int argc, char *argv[]) {
     const auto platform = DPlatform::discover();
     m_console->info("Detected Platform:"+platform->to_string());
 
+    // Profile no longer depends on n discovered cameras,
+    // But if we are air, we have at least one camera, sw if no camera was found
+    const auto profile=DProfile::discover(options.run_as_air, true);
+    write_profile_manifest(*profile);
+
     // Now we need to discover camera(s) if we are on the air
     std::vector<Camera> cameras{};
     if(options.run_as_air){
@@ -237,9 +242,6 @@ int main(int argc, char *argv[]) {
     for(const auto& camera:cameras){
       m_console->info(camera.to_string());
     }
-    // Now we can crate the immutable profile
-    const auto profile=DProfile::discover(static_cast<int>(cameras.size()));
-    write_profile_manifest(*profile);
     // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as ground.
     if(!options.no_qt_autostart){
       if(!profile->is_air){
