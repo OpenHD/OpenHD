@@ -33,10 +33,15 @@ class OHDProfile {
   [[nodiscard]] bool is_ground()const{
     return !is_air;
   }
+  // Wait for at least one card that does wifi-broadcast on startup
+  [[nodiscard]] bool wait_for_wifi_cards()const{
+    return developer_mode;
+  }
+
   [[nodiscard]] std::string to_string()const{
 	std::stringstream ss;
 	ss<<"OHDProfile{"<<(is_air ? "Air":"Ground")<<":"<<unit_id<<
-            " started_from_service:"<<OHDUtil::yes_or_no(developer_mode)<<"}";
+            " developer_mode:"<<OHDUtil::yes_or_no(developer_mode)<<"}";
 	return ss.str();
   }
 };
