@@ -26,10 +26,13 @@ namespace openhd::fatalerror{
 
 static void handle_needs_openhd_restart(){
   openhd::log::get_default()->error("handle_needs_openhd_restart");
+  // let the system restart the openhd serice
+  exit(-1);
 }
 
 static void handle_needs_linux_reboot(){
   openhd::log::get_default()->error("handle_needs_linux_reboot");
+  //TODO
 }
 
 }
