@@ -64,16 +64,16 @@ struct Camera {
     return ss.str();
   }
   [[nodiscard]] bool supports_rotation()const{
-    return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
+    return type==CameraType::RaspberryPiCSI;
   }
   [[nodiscard]] bool supports_hflip_vflip()const{
-    return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
+    return type==CameraType::RaspberryPiCSI;
   }
   [[nodiscard]] bool supports_awb()const{
-    return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
+    return type==CameraType::RaspberryPiCSI;
   }
   [[nodiscard]] bool supports_exp()const{
-    return type==CameraType::RaspberryPiCSI || type==CameraType::RaspberryPiVEYE;
+    return type==CameraType::RaspberryPiCSI;
   }
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,vid,pid,bus,index,endpoints)

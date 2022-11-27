@@ -29,6 +29,7 @@ class AirTelemetry : public MavlinkSystem{
   explicit AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   AirTelemetry(const AirTelemetry&)=delete;
   AirTelemetry(const AirTelemetry&&)=delete;
+  ~AirTelemetry();
   /**
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.
@@ -42,7 +43,6 @@ class AirTelemetry : public MavlinkSystem{
   void settings_generic_ready();
   // We have a unique component id / param server per camera
   void add_camera_component(int camera_index,const std::vector<openhd::Setting>& settings);
-  void set_link_statistics(openhd::link_statistics::AllStats stats);
  private:
   const OHDPlatform _platform;
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> _airTelemetrySettings;

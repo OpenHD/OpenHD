@@ -9,8 +9,9 @@
 #include <mutex>
 #include <utility>
 
-// This way we can forward action(s) received from the mavlink telemetry module
-// To other OpenHD modules.
+#include "openhd-link-statistics.hpp"
+
+// This class exists to handle the rare case(s) when one openhd module needs to talk to another.
 // For example, action restart wb streams is obviously handled from ohd_interface but
 // received via ohd_telemetry. Since we can't have any dependencies between them,
 // we use this common file in both.
@@ -69,12 +70,34 @@ class ActionHandler{
       m_action_request_bitrate_change(link_bitrate_info);
     }
   }
+ public:
+  // Link statistics - for that the wb link (ohd_interface) needs to talk to ohd_telemetry
+  // register callback that is called in regular intervals with link statistics
+  void action_wb_link_statistics_register(openhd::link_statistics::STATS_CALLBACK stats_callback){
+    std::lock_guard<std::mutex> lock(_mutex);
+    m_link_statistics_callback =std::move(stats_callback);
+  }
+  void action_wb_link_statistcs_handle(openhd::link_statistics::StatsAirGround all_stats){
+    std::lock_guard<std::mutex> lock(_mutex);
+    if(m_link_statistics_callback){
+      m_link_statistics_callback(all_stats);
+    }
+  }
+  // Cleanup, set all lambdas that handle things to 0
+  void disable_all_callables(){
+    action_wb_link_statistics_register(nullptr);
+    action_request_bitrate_change_register(nullptr);
+    action_set_video_codec_set(nullptr);
+    action_restart_wb_streams_set(nullptr);
+  }
  private:
   std::mutex _mutex;
   std::function<void()> _action_restart_wb_streams=nullptr;
   std::function<void(int value)> m_action_set_video_codec=nullptr;
   //
   std::function<void(LinkBitrateInformation link_bitrate_info)> m_action_request_bitrate_change =nullptr;
+  //
+  openhd::link_statistics::STATS_CALLBACK m_link_statistics_callback=nullptr;
 };
 
 }

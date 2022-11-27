@@ -23,10 +23,10 @@ class SenderWrapper:public Sender{
     return true;
   }
   [[nodiscard]] uint8_t get_own_system_id() const override{
-    return _mavlink_component._sys_id;
+    return _mavlink_component.m_sys_id;
   }
   [[nodiscard]] uint8_t get_own_component_id() const override {
-    return _mavlink_component._comp_id;
+    return _mavlink_component.m_comp_id;
   }
   [[nodiscard]] uint8_t get_system_id() const override {
     assert(true);

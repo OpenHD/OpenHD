@@ -9,18 +9,18 @@
 
 OHDTelemetry::OHDTelemetry(OHDPlatform platform1,
 						   OHDProfile profile1,
-						   std::shared_ptr<openhd::ActionHandler> action_handler,
+						   std::shared_ptr<openhd::ActionHandler> opt_action_handler,
 						   bool enableExtendedLogging) :
 	platform(platform1),profile(std::move(profile1)),m_enableExtendedLogging(enableExtendedLogging) {
   if (this->profile.is_air) {
-	airTelemetry = std::make_unique<AirTelemetry>(platform,action_handler);
+	airTelemetry = std::make_unique<AirTelemetry>(platform,opt_action_handler);
 	assert(airTelemetry);
 	loopThread = std::make_unique<std::thread>([this] {
 	  assert(airTelemetry);
 	  airTelemetry->loopInfinite(terminate,this->m_enableExtendedLogging);
 	});
   } else {
-	groundTelemetry = std::make_unique<GroundTelemetry>(platform,action_handler);
+	groundTelemetry = std::make_unique<GroundTelemetry>(platform,opt_action_handler);
 	assert(groundTelemetry);
 	loopThread = std::make_unique<std::thread>([this] {
 	  assert(groundTelemetry);
@@ -61,18 +61,6 @@ void OHDTelemetry::add_camera_component(const int camera_index, const std::vecto
   assert(profile.is_air);
   // only 2 cameras suported for now.
   airTelemetry->add_camera_component(camera_index,settings);
-}
-
-void OHDTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) const {
-  if(profile.is_air){
-    if(airTelemetry){
-      airTelemetry->set_link_statistics(stats);
-    }
-  }else{
-    if(groundTelemetry){
-      groundTelemetry->set_link_statistics(stats);
-    }
-  }
 }
 
 void OHDTelemetry::add_external_ground_station_ip(const std::string &ip_openhd, const std::string &ip_dest_device) const {

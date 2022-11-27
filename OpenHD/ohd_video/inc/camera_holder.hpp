@@ -15,8 +15,8 @@
 #include "camera_settings.hpp"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about a camera
-// Camera Holder is used to
-// 1) Differentiate between immutable information (camera) and
+// Camera Holder is used to differentiate between
+// 1) immutable information (camera) and
 // 2) mutable camera settings.
 // Changes in the camera settings are propagated through this class.
 class CameraHolder:
@@ -136,27 +136,15 @@ class CameraHolder:
     persist();
     return true;
   }
-  bool set_video_width(int video_width){
-    if(!openhd::validate_video_with(video_width)){
+  // it is only possible to validate setting the video width,height and fps
+  // if we do them together
+  bool set_video_width_height_framerate(int width,int height,int framerate){
+    if(!openhd::validate_video_width_height_fps(width,height,framerate)){
       return false;
     }
-    unsafe_get_settings().streamed_video_format.width=video_width;
-    persist();
-    return true;
-  }
-  bool set_video_height(int video_height){
-    if(!openhd::validate_video_height(video_height)){
-      return false;
-    }
-    unsafe_get_settings().streamed_video_format.height=video_height;
-    persist();
-    return true;
-  }
-  bool set_video_fps(int fps){
-    if(!openhd::validate_video_fps(fps)){
-      return false;
-    }
-    unsafe_get_settings().streamed_video_format.framerate=fps;
+    unsafe_get_settings().streamed_video_format.width=width;
+    unsafe_get_settings().streamed_video_format.height=height;
+    unsafe_get_settings().streamed_video_format.framerate=framerate;
     persist();
     return true;
   }
@@ -209,7 +197,6 @@ class CameraHolder:
     persist();
     return true;
   }
-  //
   bool set_camera_awb(int value){
     if(!m_camera.supports_awb())return false;
     if(!openhd::validate_rpi_awb_mode(value)){
@@ -233,16 +220,6 @@ class CameraHolder:
       return false;
     }
     unsafe_get_settings().mjpeg_quality_percent=value;
-    persist();
-    return true;
-  }
-  bool set_video_width_height_framerate(int width,int height,int framerate){
-    if(!openhd::validate_video_width_height_fps(width,height,framerate)){
-      return false;
-    }
-    unsafe_get_settings().streamed_video_format.width=width;
-    unsafe_get_settings().streamed_video_format.height=height;
-    unsafe_get_settings().streamed_video_format.framerate=framerate;
     persist();
     return true;
   }

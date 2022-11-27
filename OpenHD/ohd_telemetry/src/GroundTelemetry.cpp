@@ -59,6 +59,12 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   m_console->debug("Created GroundTelemetry");
 }
 
+GroundTelemetry::~GroundTelemetry() {
+  // first, stop all the endpoints that have their own threads
+  udpWifibroadcastEndpoint= nullptr;
+  udpGroundClient= nullptr;
+}
+
 void GroundTelemetry::onMessageAirPi(MavlinkMessage &message) {
   //debugMavlinkMessage(message.m,"GroundTelemetry::onMessageAirPi");
   const mavlink_message_t &m = message.m;
@@ -177,11 +183,6 @@ void GroundTelemetry::add_settings_generic(const std::vector<openhd::Setting>& s
   m_console->debug("Added parameter component");
 }
 
-void GroundTelemetry::set_link_statistics(openhd::link_statistics::AllStats stats) {
-  if(_ohd_main_component){
-	_ohd_main_component->set_link_statistics(stats);
-  }
-}
 
 void GroundTelemetry::settings_generic_ready() {
   generic_mavlink_param_provider->set_ready();

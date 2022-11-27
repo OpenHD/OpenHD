@@ -12,6 +12,7 @@ add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 set(sources
     "inc/wifi_card_discovery.h"
     "inc/ohd_interface.h"
+    "inc/ohd_link.h"
     "inc/ohd_interface_settings.hpp"
     "inc/wifi_card.hpp"
     "inc/usb_tether_listener.h"
@@ -23,6 +24,7 @@ set(sources
 
     "src/wifi_card_discovery.cpp"
     "src/ohd_interface.cpp"
+    "src/ohd_link.cpp"
     "src/usb_tether_listener.cpp"
     "src/wb_link.cpp"
     "src/wifi_command_helper.hpp"

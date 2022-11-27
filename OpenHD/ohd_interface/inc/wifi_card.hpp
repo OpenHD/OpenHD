@@ -190,6 +190,24 @@ static bool all_cards_support_extra_channels_2G(const std::vector<std::shared_pt
   return true;
 }
 
+static bool all_cards_support_2G(const std::vector<std::shared_ptr<WifiCardHolder>>& cards){
+  for(const auto& card_handle:cards){
+    if(!card_handle->_wifi_card.supports_2ghz){
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool all_cards_support_5G(const std::vector<std::shared_ptr<WifiCardHolder>>& cards){
+  for(const auto& card_handle:cards){
+    if(!card_handle->_wifi_card.supports_5ghz){
+      return false;
+    }
+  }
+  return true;
+}
+
 static nlohmann::json wificards_to_json(const std::vector<WiFiCard> &cards) {
   nlohmann::json j;
   for (auto &_card: cards) {

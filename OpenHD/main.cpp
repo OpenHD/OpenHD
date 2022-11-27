@@ -267,12 +267,6 @@ int main(int argc, char *argv[]) {
 
     // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
     auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile,ohd_action_handler);
-    // link stats from ohdInterface with telemetry
-    ohdInterface->set_stats_callback([&ohdTelemetry](openhd::link_statistics::AllStats stats){
-      if(ohdTelemetry){
-        ohdTelemetry->set_link_statistics(stats);
-      }
-    });
     // link interface settings to ohd telemetry
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
     // Now we are done with generic settings, param set is now ready (we don't add any new params anymore)
@@ -339,6 +333,8 @@ int main(int argc, char *argv[]) {
         m_console->debug(ss.str());
       }
     }
+    // Stop any communication between modules, to eliminate any issues created by threads during cleanup
+    ohd_action_handler->disable_all_callables();
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
     exit(1);

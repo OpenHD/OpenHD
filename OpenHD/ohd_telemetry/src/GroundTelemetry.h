@@ -26,6 +26,7 @@ class GroundTelemetry :public MavlinkSystem{
   explicit GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   GroundTelemetry(const GroundTelemetry&)=delete;
   GroundTelemetry(const GroundTelemetry&&)=delete;
+  ~GroundTelemetry();
   /**
    * Telemetry will run infinite in its own threads until an error occurs.
    * @param enableExtendedLogging be really verbose on logging.
@@ -37,7 +38,6 @@ class GroundTelemetry :public MavlinkSystem{
   void add_settings_generic(const std::vector<openhd::Setting>& settings);
   // call once all settings have been added, this is needed to avoid an invariant parameter set
   void settings_generic_ready();
-  void set_link_statistics(openhd::link_statistics::AllStats stats);
   // Add the IP of another Ground station client, to start forwarding telemetry data there
   void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);
   void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);

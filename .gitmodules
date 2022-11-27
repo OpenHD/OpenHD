@@ -2,9 +2,9 @@
 	path = OpenHD/lib/mavlink
 	url = https://github.com/OpenHD/mavlink.git
 	branch = 2.2.3-evo
-[submodule "OpenHD/lib/wifibroadcast"]
-	path = OpenHD/lib/wifibroadcast
-	url = https://github.com/OpenHD/wifibroadcast.git
 [submodule "OpenHD/lib/json"]
 	path = OpenHD/lib/json
 	url = https://github.com/nlohmann/json.git
+[submodule "OpenHD/lib/wifibroadcast"]
+	path = OpenHD/lib/wifibroadcast
+	url = https://github.com/OpenHD/wifibroadcast.git

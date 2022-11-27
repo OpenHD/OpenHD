@@ -62,18 +62,13 @@ static MavlinkMessage createHeartbeat(const int sys_id,const int comp_id) {
   return heartbeat;
 }
 
-static MavlinkMessage createLog(const int sys_id,const int comp_id,std::string message,uint8_t severity=0,
+static MavlinkMessage createLog(const int sys_id,const int comp_id,std::string tag,std::string message,uint8_t severity=0,
 								uint64_t timestamp=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()){
   MavlinkMessage msg;
   if(message.length()>49){
-	message.resize(49);
+    message.resize(49);
   }
-  mavlink_msg_openhd_log_message_pack(sys_id,
-									  comp_id,
-									  &msg.m,
-									  0,
-									  (const char *)message.c_str(),
-									  timestamp);
+  mavlink_msg_openhd_log_message_pack(sys_id,comp_id,&msg.m,severity,(const char *)tag.c_str(),(const char *)message.c_str(),timestamp);
   return msg;
 }
 

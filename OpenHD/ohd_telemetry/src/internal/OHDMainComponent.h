@@ -14,7 +14,7 @@
 #include "../mav_helper.h"
 #include "HelperSources/SocketHelper.hpp"
 #include "OnboardComputerStatusProvider.h"
-#include "OpenHDStatisticsWriter.hpp"
+#include "WBReceiverStats.hpp"
 #include "StatusTextAccumulator.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-link-statistics.hpp"
@@ -44,28 +44,28 @@ class OHDMainComponent : public MavlinkComponent{
   // override from component
   std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage &msg)override;
   // update stats from ohd_interface
-  void set_link_statistics(openhd::link_statistics::AllStats stats);
+  void set_link_statistics(openhd::link_statistics::StatsAirGround stats);
+  openhd::link_statistics::StatsAirGround get_latest_link_statistics();
  private:
   const bool RUNS_ON_AIR;
-  const OHDPlatform platform;
-  std::shared_ptr<openhd::ActionHandler> _opt_action_handler;
+  const OHDPlatform m_platform;
+  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
   // by the sys id QGroundControl knows if this message is telemetry data from the air pi or ground pi.
   // just for convenience, the RUNS_ON_AIR variable determines the sys id.
   //const uint8_t mSysId;
   //const uint8_t mCompId=0;
   // similar to ping
-  [[nodiscard]] std::optional<MavlinkMessage> handleTimeSyncMessage(const MavlinkMessage &message);
-  [[nodiscard]] std::vector<MavlinkMessage> generateWifibroadcastStatistics();
-  [[nodiscard]] MavlinkMessage generateOpenHDVersion(const std::string& commit_hash="unknown")const;
-  [[nodiscard]] MavlinkMessage generateRcControlMessage()const;
+  [[nodiscard]] std::optional<MavlinkMessage> handle_timesync_message(const MavlinkMessage &message);
+  [[nodiscard]] std::vector<MavlinkMessage> generate_mav_wb_stats();
+  [[nodiscard]] MavlinkMessage generate_ohd_version(const std::string& commit_hash= "unknown")const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
   // here all the log messages are sent to - not in their mavlink form yet.
-  std::unique_ptr<SocketHelper::UDPReceiver> logMessagesReceiver;
-  StatusTextAccumulator _status_text_accumulator;
+  std::unique_ptr<SocketHelper::UDPReceiver> m_log_messages_receiver;
+  StatusTextAccumulator m_status_text_accumulator;
   std::unique_ptr<OnboardComputerStatusProvider> m_onboard_computer_status_provider;
-  std::mutex _last_link_stats_mutex;
-  openhd::link_statistics::AllStats _last_link_stats{};
+  std::mutex m_last_link_stats_mutex;
+  openhd::link_statistics::StatsAirGround m_last_link_stats{};
   MavlinkMessage ack_command(uint8_t source_sys_id,uint8_t source_comp_id,uint16_t command_id);
   std::shared_ptr<spdlog::logger> m_console;
 };
