@@ -213,12 +213,21 @@ int main(int argc, char *argv[]) {
 
     // Profile no longer depends on n discovered cameras,
     // But if we are air, we have at least one camera, sw if no camera was found
-    const auto profile=DProfile::discover(options.run_as_air, true);
+    const auto profile=DProfile::discover(options.run_as_air, options.developer_mode);
     write_profile_manifest(*profile);
+
+    // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as ground.
+    if(!options.no_qt_autostart){
+      if(!profile->is_air){
+        OHDUtil::run_command("systemctl",{" start qopenhd"});
+      }else{
+        OHDUtil::run_command("systemctl",{" stop qopenhd"});
+      }
+    }
 
     // Now we need to discover camera(s) if we are on the air
     std::vector<Camera> cameras{};
-    if(options.run_as_air){
+    if(profile->is_air){
       if(options.force_dummy_camera){
         // skip camera detection, we want the dummy camera regardless weather a camera is connected or not.
         cameras.emplace_back(createDummyCamera());
@@ -247,14 +256,6 @@ int main(int argc, char *argv[]) {
     // Now print the actual cameras used by OHD. Of course, this prints nothing on ground (where we have no cameras connected).
     for(const auto& camera:cameras){
       m_console->info(camera.to_string());
-    }
-    // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as ground.
-    if(!options.no_qt_autostart){
-      if(!profile->is_air){
-        OHDUtil::run_command("systemctl",{" start qopenhd"});
-      }else{
-        OHDUtil::run_command("systemctl",{" stop qopenhd"});
-      }
     }
     // And start the blinker (TODO LED output is really dirty right now).
     auto alive_blinker=std::make_unique<openhd::GreenLedAliveBlinker>(*platform,profile->is_air);
