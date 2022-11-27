@@ -601,9 +601,9 @@ void WBLink::loop_do_work() {
         any_rx_wifi_disconnected_errors= true;
       }
     }
-    if(any_rx_wifi_disconnected_errors){
-      openhd::fatalerror::handle_needs_openhd_restart("wifi disconnected");
-    }
+    //if(any_rx_wifi_disconnected_errors){
+    //  openhd::fatalerror::handle_needs_openhd_restart("wifi disconnected");
+    //}
     std::this_thread::sleep_for(std::chrono::milliseconds (100));
   }
 }
