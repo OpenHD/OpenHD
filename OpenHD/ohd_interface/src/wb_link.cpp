@@ -692,12 +692,12 @@ void WBLink::update_statistics() {
       // we use the dBm reported by the telemetry rx instance.
       int8_t rssi_telemetry=0;
       rssi_telemetry=udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
-      int8_t rssi_video0=0;
+      int8_t rssi_video0=INT8_MIN;
       if(!udpVideoRxList.empty()){
         rssi_video0=udpVideoRxList.at(0)->get_latest_stats().rssiPerCard.at(i).last_rssi;
       }
-      if(rssi_video0==0){
-        // use telemetry
+      if(rssi_video0==INT8_MIN){
+        // use telemetry, most likely no video data (yet)
         card.rx_rssi=rssi_telemetry;
       }else{
         card.rx_rssi=rssi_video0;
