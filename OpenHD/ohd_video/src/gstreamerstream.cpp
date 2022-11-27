@@ -41,8 +41,8 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
 
 GStreamerStream::~GStreamerStream() {
   // they are safe to call, regardless if we are already in cleaned up state or not
-  stop();
-  cleanup_pipe();
+  GStreamerStream::stop();
+  GStreamerStream::cleanup_pipe();
 }
 
 void GStreamerStream::setup() {
