@@ -79,6 +79,17 @@ class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLink
 	  wifibroadcast_cards(std::move(wifibroadcast_cards1)){
 	init();
   }
+  // set default 2G channel and channel width
+  void set_default_2G(){
+    unsafe_get_settings().wb_frequency=openhd::DEFAULT_2GHZ_FREQUENCY;
+    unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
+    persist();
+  }
+  void set_default_5G(){
+    unsafe_get_settings().wb_frequency=openhd::DEFAULT_5GHZ_FREQUENCY;
+    unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
+    persist();
+  }
  public:
   const std::vector<WiFiCard> wifibroadcast_cards;
  private:

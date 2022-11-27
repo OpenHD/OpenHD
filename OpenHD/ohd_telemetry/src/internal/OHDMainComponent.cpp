@@ -28,6 +28,8 @@ OHDMainComponent::OHDMainComponent(
                                                     this->m_status_text_accumulator.processLogMessageData(payload, payloadSize);
                                                   });
   m_log_messages_receiver->runInBackground();
+  // suppress the warning until we get the first actually updated stats
+  m_last_link_stats.is_air=RUNS_ON_AIR;
   if(m_opt_action_handler){
     m_opt_action_handler->action_wb_link_statistics_register([this](openhd::link_statistics::StatsAirGround stats_air_ground){
       this->set_link_statistics(stats_air_ground);
@@ -90,9 +92,7 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
           // dirty, we don't have a custom message for that yet
           if(command.param3==1){
             ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
-            if(m_opt_action_handler){
-              m_opt_action_handler->action_restart_wb_streams_handle();
-            }
+            m_console->debug("Unimplemented");
           }
         }
       }else if(command.command==MAV_CMD_REQUEST_MESSAGE){

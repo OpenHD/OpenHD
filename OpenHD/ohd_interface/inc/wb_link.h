@@ -127,7 +127,6 @@ class WBLink {
    public:
     explicit WorkItem(std::function<void()> work,std::chrono::steady_clock::time_point earliest_execution_time):
     m_earliest_execution_time(earliest_execution_time),m_work(std::move(work)){
-
     }
     void execute(){
       m_work();

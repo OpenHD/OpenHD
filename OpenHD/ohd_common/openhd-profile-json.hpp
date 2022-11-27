@@ -10,7 +10,7 @@
 
 // Thw write out here is only for debugging
 static void to_json(nlohmann::json& j, const OHDProfile& p) {
-  j = nlohmann::json{ {"is_air", p.is_air}, {"unit_id", p.unit_id}};
+  j = nlohmann::json{ {"is_air", p.is_air},{"developer_mode", p.developer_mode}, {"unit_id", p.unit_id}};
 }
 
 static constexpr auto PROFILE_MANIFEST_FILENAME = "/tmp/profile_manifest";

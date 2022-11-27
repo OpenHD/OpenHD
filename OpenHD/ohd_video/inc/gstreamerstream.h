@@ -22,6 +22,7 @@ class GStreamerStream : public CameraStream {
  public:
   GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
                   uint16_t video_udp_port);
+  ~GStreamerStream();
   void setup() override;
  private:
   void setup_raspberrypi_csi();
@@ -57,6 +58,7 @@ class GStreamerStream : public CameraStream {
   std::mutex m_async_thread_mutex;
   std::unique_ptr<std::thread> m_async_thread =nullptr;
   std::shared_ptr<spdlog::logger> m_console;
+  std::chrono::steady_clock::time_point m_stream_creation_time=std::chrono::steady_clock::now();
  private:
   // Change the bitrate without re-starting the whole pipeline if supported by the camera.
   // This is needed for variable rf link bitrate(s)

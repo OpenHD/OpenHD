@@ -52,7 +52,12 @@ struct StatsTelemetry{
   int32_t curr_rx_bps; /*<  rx bits per second*/
   int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss_perc*/
   [[nodiscard]] std::string to_string()const{
-    return "TODO";
+    std::stringstream ss;
+    ss<<"StatsTelemetry{";
+    ss<<"curr_tx_pps:"<<curr_tx_pps<<",curr_rx_pps:"<<curr_rx_pps<<",curr_tx_bps:"<<curr_tx_bps<<", curr_rx_bps:"<< curr_rx_bps;
+    ss<<", curr_rx_packet_loss_perc"<<curr_rx_packet_loss_perc;
+    ss<<"}";
+    return ss.str();
   }
 };
 
@@ -96,7 +101,7 @@ struct StatsWBVideoGround{
 
 struct StatsPerCard{
   bool exists_in_openhd=false; // We have place for up to X wifi cards, but they might be unused - don't waste any telemetry bandwidth on these cards
-  int8_t rx_rssi=INT8_MAX; // dBm / rssi, mavlink also defaults to INT8_MAX - makes sense if in dbm
+  int8_t rx_rssi=INT8_MIN; // dBm / rssi
   uint64_t count_p_received=0; //TODO
   uint64_t count_p_injected=0; //TODO
   [[nodiscard]] std::string to_string(const int index)const{

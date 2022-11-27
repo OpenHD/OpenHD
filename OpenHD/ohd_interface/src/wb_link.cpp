@@ -5,6 +5,7 @@
 #include <iostream>
 #include <utility>
 
+#include "openhd-dirty-fatal-error.hpp"
 #include "openhd-global-constants.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-spdlog.hpp"
@@ -54,17 +55,13 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
     if(! first_card.supports_2ghz){
       // we need to switch to 5ghz, since the connected card cannot do 2ghz
       m_console->warn("WB configured for 2G but card can only do 5G - overwriting old settings");
-      m_settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
-      m_settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_5GHZ_FREQUENCY;
-      m_settings->persist();
+      m_settings->set_default_5G();
     }
   }else{
     if(!first_card.supports_5ghz){
       // similar, we need to switch to 2G
       m_console->warn("WB configured for 5G but card can only do 2G - overwriting old settings");
-      m_settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
-      m_settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_2GHZ_FREQUENCY;
-      m_settings->persist();
+      m_settings->set_default_2G();
     }
   }
   if(!validate_cards_support_setting_mcs_index()){
@@ -593,6 +590,20 @@ void WBLink::loop_do_work() {
     //const auto delta_calc_stats=std::chrono::steady_clock::now()-begin_calculate_stats;
     //m_console->debug("Calculating stats took:{} ms",std::chrono::duration_cast<std::chrono::microseconds>(delta_calc_stats).count()/1000.0f);
     perform_rate_adjustment();
+    // Dirty - deliberately crash openhd and let the service restart it
+    // if we think a wi-fi card disconnected
+    bool any_rx_wifi_disconnected_errors=false;
+    if(udpTelemetryRx->get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
+      any_rx_wifi_disconnected_errors= true;
+    }
+    for(auto& rx:udpVideoRxList){
+      if(rx->get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
+        any_rx_wifi_disconnected_errors= true;
+      }
+    }
+    //if(any_rx_wifi_disconnected_errors){
+    //  openhd::fatalerror::handle_needs_openhd_restart("wifi disconnected");
+    //}
     std::this_thread::sleep_for(std::chrono::milliseconds (100));
   }
 }
@@ -695,12 +706,12 @@ void WBLink::update_statistics() {
       // we use the dBm reported by the telemetry rx instance.
       int8_t rssi_telemetry=0;
       rssi_telemetry=udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
-      int8_t rssi_video0=0;
+      int8_t rssi_video0=INT8_MIN;
       if(!udpVideoRxList.empty()){
         rssi_video0=udpVideoRxList.at(0)->get_latest_stats().rssiPerCard.at(i).last_rssi;
       }
-      if(rssi_video0==0){
-        // use telemetry
+      if(rssi_video0==INT8_MIN){
+        // use telemetry, most likely no video data (yet)
         card.rx_rssi=rssi_telemetry;
       }else{
         card.rx_rssi=rssi_video0;

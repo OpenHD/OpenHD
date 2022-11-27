@@ -39,6 +39,12 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   m_console->debug("GStreamerStream::GStreamerStream done");
 }
 
+GStreamerStream::~GStreamerStream() {
+  // they are safe to call, regardless if we are already in cleaned up state or not
+  GStreamerStream::stop();
+  GStreamerStream::cleanup_pipe();
+}
+
 void GStreamerStream::setup() {
   m_console->debug("GStreamerStream::setup() begin");
   const auto& camera= m_camera_holder->get_camera();
@@ -132,6 +138,7 @@ void GStreamerStream::setup() {
   GError *error = nullptr;
   m_gst_pipeline = gst_parse_launch(m_pipeline_content.str().c_str(), &error);
   m_console->debug("GStreamerStream::setup() end");
+  m_stream_creation_time=std::chrono::steady_clock::now();
   if (error) {
     m_console->error( "Failed to create pipeline: {}",error->message);
     return;
@@ -302,6 +309,11 @@ void GStreamerStream::restartIfStopped() {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   if(!m_gst_pipeline){
     m_console->debug("gst_pipeline==null");
+    return;
+  }
+  const auto elapsed_since_start=std::chrono::steady_clock::now()-m_stream_creation_time;
+  if(elapsed_since_start<std::chrono::seconds(5)){
+    // give the cam X seconds in the beginning to properly start before restarting
     return;
   }
   GstState state;
