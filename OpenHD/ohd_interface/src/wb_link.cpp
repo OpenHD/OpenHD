@@ -55,17 +55,13 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
     if(! first_card.supports_2ghz){
       // we need to switch to 5ghz, since the connected card cannot do 2ghz
       m_console->warn("WB configured for 2G but card can only do 5G - overwriting old settings");
-      m_settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
-      m_settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_5GHZ_FREQUENCY;
-      m_settings->persist();
+      m_settings->set_default_5G();
     }
   }else{
     if(!first_card.supports_5ghz){
       // similar, we need to switch to 2G
       m_console->warn("WB configured for 5G but card can only do 2G - overwriting old settings");
-      m_settings->unsafe_get_settings().wb_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
-      m_settings->unsafe_get_settings().wb_frequency=openhd::DEFAULT_2GHZ_FREQUENCY;
-      m_settings->persist();
+      m_settings->set_default_2G();
     }
   }
   if(!validate_cards_support_setting_mcs_index()){
