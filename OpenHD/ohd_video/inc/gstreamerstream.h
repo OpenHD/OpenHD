@@ -22,6 +22,7 @@ class GStreamerStream : public CameraStream {
  public:
   GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
                   uint16_t video_udp_port);
+  ~GStreamerStream();
   void setup() override;
  private:
   void setup_raspberrypi_csi();

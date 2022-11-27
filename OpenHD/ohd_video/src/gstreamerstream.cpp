@@ -39,6 +39,12 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   m_console->debug("GStreamerStream::GStreamerStream done");
 }
 
+GStreamerStream::~GStreamerStream() {
+  // they are safe to call, regardless if we are already in cleaned up state or not
+  stop();
+  cleanup_pipe();
+}
+
 void GStreamerStream::setup() {
   m_console->debug("GStreamerStream::setup() begin");
   const auto& camera= m_camera_holder->get_camera();
