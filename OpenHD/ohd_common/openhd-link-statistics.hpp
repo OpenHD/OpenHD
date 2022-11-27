@@ -52,7 +52,12 @@ struct StatsTelemetry{
   int32_t curr_rx_bps; /*<  rx bits per second*/
   int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss_perc*/
   [[nodiscard]] std::string to_string()const{
-    return "TODO";
+    std::stringstream ss;
+    ss<<"StatsTelemetry{";
+    ss<<"curr_tx_pps:"<<curr_tx_pps<<",curr_rx_pps:"<<curr_rx_pps<<",curr_tx_bps:"<<curr_tx_bps<<", curr_rx_bps:"<< curr_rx_bps;
+    ss<<", curr_rx_packet_loss_perc"<<curr_rx_packet_loss_perc;
+    ss<<"}";
+    return ss.str();
   }
 };
 
