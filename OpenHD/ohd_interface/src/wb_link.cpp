@@ -590,6 +590,20 @@ void WBLink::loop_do_work() {
     //const auto delta_calc_stats=std::chrono::steady_clock::now()-begin_calculate_stats;
     //m_console->debug("Calculating stats took:{} ms",std::chrono::duration_cast<std::chrono::microseconds>(delta_calc_stats).count()/1000.0f);
     perform_rate_adjustment();
+    // Dirty - deliberately crash openhd and let the service restart it
+    // if we think a wi-fi card disconnected
+    bool any_rx_wifi_disconnected_errors=false;
+    if(udpTelemetryRx->get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
+      any_rx_wifi_disconnected_errors= true;
+    }
+    for(auto& rx:udpVideoRxList){
+      if(rx->get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
+        any_rx_wifi_disconnected_errors= true;
+      }
+    }
+    if(any_rx_wifi_disconnected_errors){
+      openhd::fatalerror::handle_needs_openhd_restart("wifi disconnected");
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds (100));
   }
 }

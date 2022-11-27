@@ -24,8 +24,8 @@
 
 namespace openhd::fatalerror{
 
-static void handle_needs_openhd_restart(){
-  openhd::log::get_default()->error("handle_needs_openhd_restart");
+static void handle_needs_openhd_restart(const std::string& message){
+  openhd::log::get_default()->error("handle_needs_openhd_restart[{}]",message);
   // let the system restart the openhd serice
   exit(-1);
 }
