@@ -26,16 +26,6 @@ class ActionHandler{
   ActionHandler(const ActionHandler&&)=delete;
   // for all the actions we have xxx_set (set the callback)
   // and xxx_handle (handle the callback if set).
-  void action_restart_wb_streams_set(std::function<void()> action_restart_wb_streams){
-    std::lock_guard<std::mutex> lock(_mutex);
-    _action_restart_wb_streams=std::move(action_restart_wb_streams);
-  }
-  void action_restart_wb_streams_handle(){
-    std::lock_guard<std::mutex> lock(_mutex);
-    if(_action_restart_wb_streams){
-      _action_restart_wb_streams();
-    }
-  }
   // The video codec set is one of the few changes we need to propagate from video to the rf wifibroadcast link
   void action_set_video_codec_set(std::function<void(int value)> action_set_video_codec){
     std::lock_guard<std::mutex> lock(_mutex);
@@ -88,11 +78,9 @@ class ActionHandler{
     action_wb_link_statistics_register(nullptr);
     action_request_bitrate_change_register(nullptr);
     action_set_video_codec_set(nullptr);
-    action_restart_wb_streams_set(nullptr);
   }
  private:
   std::mutex _mutex;
-  std::function<void()> _action_restart_wb_streams=nullptr;
   std::function<void(int value)> m_action_set_video_codec=nullptr;
   //
   std::function<void(LinkBitrateInformation link_bitrate_info)> m_action_request_bitrate_change =nullptr;

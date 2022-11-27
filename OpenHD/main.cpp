@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
       "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n"<<
       "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n"<<
       "run_time_seconds:"<<options.run_time_seconds<<"\n"<<
-      "developer_mode:"<<options.developer_mode<<"\n";
+      "developer_mode:"<<OHDUtil::yes_or_no(options.developer_mode)<<"\n";
   std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
   std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
   OHDInterface::print_internal_fec_optimization_method();
@@ -267,9 +267,6 @@ int main(int argc, char *argv[]) {
     // Then start ohdInterface, which discovers detected wifi cards and more.
     auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile,ohd_action_handler);
 
-    ohd_action_handler->action_restart_wb_streams_set([&ohdInterface](){
-      ohdInterface->restart_wb_streams_async();
-    });
     ohd_action_handler->action_set_video_codec_set([&ohdInterface](int codec){
       ohdInterface->set_video_codec(codec);
     });

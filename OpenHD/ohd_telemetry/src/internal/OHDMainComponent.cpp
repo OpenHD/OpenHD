@@ -92,9 +92,7 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const Mavl
           // dirty, we don't have a custom message for that yet
           if(command.param3==1){
             ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
-            if(m_opt_action_handler){
-              m_opt_action_handler->action_restart_wb_streams_handle();
-            }
+            m_console->debug("Unimplemented");
           }
         }
       }else if(command.command==MAV_CMD_REQUEST_MESSAGE){
