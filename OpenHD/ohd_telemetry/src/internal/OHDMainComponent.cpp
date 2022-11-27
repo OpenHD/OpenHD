@@ -28,6 +28,8 @@ OHDMainComponent::OHDMainComponent(
                                                     this->m_status_text_accumulator.processLogMessageData(payload, payloadSize);
                                                   });
   m_log_messages_receiver->runInBackground();
+  // suppress the warning until we get the first actually updated stats
+  m_last_link_stats.is_air=RUNS_ON_AIR;
   if(m_opt_action_handler){
     m_opt_action_handler->action_wb_link_statistics_register([this](openhd::link_statistics::StatsAirGround stats_air_ground){
       this->set_link_statistics(stats_air_ground);
