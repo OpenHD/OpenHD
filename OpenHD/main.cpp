@@ -65,6 +65,9 @@ struct OHDRunOptions {
   bool enable_video_debugging=false;
   bool no_qt_autostart=false;
   int run_time_seconds=-1; //-1= infinite, only usefully for debugging
+  // used to detect if we are launched by a developer working on openhd or
+  // "normally" started as a service. TODO generalize / find a better approach here.
+  bool developer_mode=false;
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
@@ -83,6 +86,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
           exit(1);
         }
         commandline_air = true;
+        ret.developer_mode=true;
         break;
       case 'g':
         // Already set, e.g. --air is already used
@@ -91,6 +95,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
           exit(1);
         }
         commandline_air= false;
+        ret.developer_mode=true;
         break;
       case 'c':ret.clean_start = true;
         break;
@@ -185,7 +190,8 @@ int main(int argc, char *argv[]) {
       "debug-telemetry:"<<OHDUtil::yes_or_no(options.enable_telemetry_debugging) <<"\n"<<
       "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n"<<
       "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n"<<
-      "run_time_seconds:"<<options.run_time_seconds<<"\n";
+      "run_time_seconds:"<<options.run_time_seconds<<"\n"<<
+      "developer_mode:"<<options.developer_mode<<"\n";
   std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
   std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
   OHDInterface::print_internal_fec_optimization_method();
