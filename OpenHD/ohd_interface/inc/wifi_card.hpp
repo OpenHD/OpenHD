@@ -170,6 +170,9 @@ static const std::string WIFI_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::str
   }
  public:
   const WiFiCard _wifi_card;
+  const WiFiCard& get_wifi_card(){
+    return _wifi_card;
+  }
  private:
    [[nodiscard]] std::string get_unique_filename()const override{
     std::stringstream ss;

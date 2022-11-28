@@ -228,6 +228,8 @@ std::unique_ptr<UDPWBReceiver> WBLink::createUdpWbRx(uint8_t radio_port, int udp
   // high latency when blocks are lost.
   // Multiple rx wifi card's won't provide a benefit with this parameter set though.
   options.rx_queue_depth = 1;//_broadcast_cards.size() > 1 ? 10 : 2;
+  const auto wifi_card_type=m_broadcast_cards.at(0)->get_wifi_card().type;
+  options.rtl8812au_rssi_fixup=wifi_card_type==WiFiCardType::Realtek8812au;
   return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port);
 }
 
