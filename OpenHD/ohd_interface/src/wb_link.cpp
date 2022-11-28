@@ -228,6 +228,8 @@ std::unique_ptr<UDPWBReceiver> WBLink::createUdpWbRx(uint8_t radio_port, int udp
   // high latency when blocks are lost.
   // Multiple rx wifi card's won't provide a benefit with this parameter set though.
   options.rx_queue_depth = 1;//_broadcast_cards.size() > 1 ? 10 : 2;
+  const auto wifi_card_type=m_broadcast_cards.at(0)->get_wifi_card().type;
+  options.rtl8812au_rssi_fixup=wifi_card_type==WiFiCardType::Realtek8812au;
   return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port);
 }
 
@@ -704,13 +706,9 @@ void WBLink::update_statistics() {
     }else{
       // on ground, we use the dBm reported by the video stream (if available), otherwise
       // we use the dBm reported by the telemetry rx instance.
-      int8_t rssi_telemetry=0;
-      rssi_telemetry=udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
-      int8_t rssi_video0=INT8_MIN;
-      if(!udpVideoRxList.empty()){
-        rssi_video0=udpVideoRxList.at(0)->get_latest_stats().rssiPerCard.at(i).last_rssi;
-      }
-      if(rssi_video0==INT8_MIN){
+      const int8_t rssi_telemetry=udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
+      const int8_t rssi_video0=udpVideoRxList.at(0)->get_latest_stats().rssiPerCard.at(i).last_rssi;
+      if(rssi_video0<=-127){
         // use telemetry, most likely no video data (yet)
         card.rx_rssi=rssi_telemetry;
       }else{
