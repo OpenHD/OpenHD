@@ -27,8 +27,7 @@ static bool gpio26_user_wants_reset_frequencies(){
       }
     }
     return false;
-}
-}
+};
 
 }
 

@@ -73,11 +73,13 @@ static std::string getOrCreateUnitId() {
 // Which in turn means that all modules that follow the "create default settings when no settings are found by (HW)-id"
 // will create full new default settings.
 static void clean_all_settings(){
+  openhd::log::get_default()->debug("clean_all_settings()");
   OHDFilesystemUtil::safe_delete_directory(BASE_PATH);
   generateSettingsDirectoryIfNonExists();
 }
 
 static void clean_all_interface_settings(){
+  openhd::log::get_default()->debug("clean_all_interface_settings()");
   OHDFilesystemUtil::safe_delete_directory(INTERFACE_SETTINGS_DIRECTORY.c_str());
   generateSettingsDirectoryIfNonExists();
 }
