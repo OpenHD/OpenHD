@@ -539,6 +539,12 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     };
     ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
   }
+  if(has_rtl8812au()){
+    auto cb_wb_rtl8812au_tx_pwr_idx_override=[this](std::string,int value){
+      return rtl8812au_set_tx_pwr_idx_override(value);
+    };
+    ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override,cb_wb_rtl8812au_tx_pwr_idx_override}});
+  }
   openhd::validate_provided_ids(ret);
   return ret;
 }
@@ -831,4 +837,22 @@ bool WBLink::check_work_queue_empty() {
     return false;
   }
   return true;
+}
+
+bool WBLink::rtl8812au_set_tx_pwr_idx_override(int value) {
+  if(!openhd::validate_rtl8812au_wb_tx_pwr_idx(value))return false;
+  m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=value;
+  m_settings->persist();
+  openhd::write_modprobe_file_rtl8812au_wb(value);
+  // NOTE: Needs reboot to be applied
+  return true;
+}
+
+bool WBLink::has_rtl8812au() {
+  for(const auto& card_handle: m_broadcast_cards){
+    if(card_handle->get_wifi_card().type==WiFiCardType::Realtek8812au){
+      return true;
+    }
+  }
+  return false;
 }
