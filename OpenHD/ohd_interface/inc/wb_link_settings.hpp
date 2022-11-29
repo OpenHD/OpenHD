@@ -35,6 +35,10 @@ struct WBLinkSettings {
   uint32_t wb_video_fec_block_length=DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH;
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
   uint32_t wb_tx_power_milli_watt=DEFAULT_WIFI_TX_POWER_MILLI_WATT;
+  // rtl8812au driver does not support setting tx power by iw dev, but rather only by setting
+  // this stupid tx power idx override param
+  uint32_t wb_rtl8812au_tx_pwr_idx_override=0;
+
   bool enable_wb_video_variable_bitrate= false;// wb link recommends bitrate(s) to the encoder, can be helpfully for inexperienced users.
   [[nodiscard]] bool configured_for_2G()const{
 	return is_2G_and_assert(wb_frequency);
@@ -45,6 +49,7 @@ struct WBLinkSettings {
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
                                    wb_video_fec_block_length, wb_video_fec_percentage, wb_tx_power_milli_watt,
+                                   wb_rtl8812au_tx_pwr_idx_override,
                                    enable_wb_video_variable_bitrate,
                                    wb_enable_stbc,wb_enable_ldpc,wb_enable_short_guard);
 
@@ -61,6 +66,19 @@ static WBLinkSettings create_default_wb_stream_settings(const std::vector<WiFiCa
   }
   return settings;
 }
+
+static bool validate_rtl8812au_wb_tx_pwr_idx(int value){
+  if(value>=0 && value <= 63)return true;
+  openhd::log::get_default()->warn("Invalid wb_rtl8812au_tx_pwr_idx_override {}",value);
+  return false;
+}
+
+static void write_modprobe_file_rtl8812au_wb(int rtw_tx_pwr_idx_override){
+  std::stringstream ss;
+  ss<<"options 88XXau_wfb "<<"rtw_tx_pwr_idx_override="<<rtw_tx_pwr_idx_override<<"\n";
+  OHDFilesystemUtil::write_file("/etc/modprobe.d/88XXau_wfb.conf",ss.str());
+}
+
 
 static std::vector<WiFiCard> tmp_convert(const std::vector<std::shared_ptr<WifiCardHolder>>& broadcast_cards){
   std::vector<WiFiCard> ret;
@@ -108,6 +126,8 @@ static constexpr auto WB_MCS_INDEX="WB_MCS_INDEX";
 static constexpr auto WB_VIDEO_FEC_BLOCK_LENGTH="WB_V_FEC_BLK_L";
 static constexpr auto WB_VIDEO_FEC_PERCENTAGE="WB_V_FEC_PERC";
 static constexpr auto WB_TX_POWER_MILLI_WATT="WB_TX_POWER_MW";
+// annoying 16 char settings limit
+static constexpr auto WB_RTL8812AU_TX_PWR_IDX_OVERRIDE="RTL8812AU_PWR_I";
 //
 static constexpr auto WB_VIDEO_VARIABLE_BITRATE="VARIABLE_BITRATE";
 //
