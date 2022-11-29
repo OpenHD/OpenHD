@@ -294,7 +294,8 @@ int main(int argc, char *argv[]) {
       ohdVideo = std::make_unique<OHDVideo>(*platform,cameras,ohd_action_handler);
       auto settings_components=ohdVideo->get_setting_components();
       if(!settings_components.empty()){
-        ohdTelemetry->add_camera_component(0,settings_components.at(0)->get_all_settings());
+        ohdTelemetry->add_settings_camera_component(
+            0, settings_components.at(0)->get_all_settings());
       }
     }
     m_console->info("All OpenHD modules running");

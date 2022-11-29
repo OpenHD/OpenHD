@@ -56,11 +56,12 @@ void OHDTelemetry::settings_generic_ready() const {
 	groundTelemetry->settings_generic_ready();
   }
 }
-void OHDTelemetry::add_camera_component(const int camera_index, const std::vector<openhd::Setting> &settings) const {
+void OHDTelemetry::add_settings_camera_component(
+    int camera_index, const std::vector<openhd::Setting> &settings) const {
   // we only have cameras on the air telemetry unit
   assert(profile.is_air);
   // only 2 cameras suported for now.
-  airTelemetry->add_camera_component(camera_index,settings);
+  airTelemetry->add_settings_camera_component(camera_index, settings);
 }
 
 void OHDTelemetry::add_external_ground_station_ip(const std::string &ip_openhd, const std::string &ip_dest_device) const {

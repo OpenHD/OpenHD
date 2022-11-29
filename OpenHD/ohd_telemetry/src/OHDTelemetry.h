@@ -47,7 +47,7 @@ class OHDTelemetry {
   // Cameras get their own component ID, other than the "rest" which shares the same component id
   // for simplicity. Note, at some point it might make sense to also use its own component id
   // for OHD interface
-  void add_camera_component(int camera_index,const std::vector<openhd::Setting>& settings) const;
+  void add_settings_camera_component(int camera_index,const std::vector<openhd::Setting>& settings) const;
   // Add / remove the IP of another Ground station client. Buggy / not finished yet.
   void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const;
   void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const;

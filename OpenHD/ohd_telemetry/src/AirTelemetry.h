@@ -42,7 +42,7 @@ class AirTelemetry : public MavlinkSystem{
   // call once all settings have been added, this is needed to avoid an invariant parameter set
   void settings_generic_ready();
   // We have a unique component id / param server per camera
-  void add_camera_component(int camera_index,const std::vector<openhd::Setting>& settings);
+  void add_settings_camera_component(int camera_index,const std::vector<openhd::Setting>& settings);
  private:
   const OHDPlatform _platform;
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> _airTelemetrySettings;
