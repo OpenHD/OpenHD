@@ -18,6 +18,7 @@
 #include "ohd_common/openhd-profile.hpp"
 #include "ohd_common/openhd-spdlog.hpp"
 #include "ohd_common/openhd-temporary-air-or-ground.h"
+#include "ohd_common/openhd-rpi-gpio.h"
 // For logging the commit hash and more
 #include "git.h"
 
@@ -202,6 +203,10 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<spdlog::logger> m_console=openhd::log::create_or_get("main");
   assert(m_console);
 
+  // First discover the platform:
+  const auto platform = DPlatform::discover();
+  m_console->info("Detected Platform:"+platform->to_string());
+
   // Create and link all the OpenHD modules.
   try {
     // This results in fresh default values for all modules (e.g. interface, telemetry, video)
@@ -212,11 +217,17 @@ int main(int argc, char *argv[]) {
     if(options.reset_frequencies){
       clean_all_interface_settings();
     }
-    generateSettingsDirectoryIfNonExists();
+    // on rpi, we have the gpio input such that users don't have to create the reset frequencies file
+    if(platform->platform_type==PlatformType::RaspberryPi){
+      // Or input via rpi gpio 26
+      openhd::rpi::gpio26_configure();
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      if(openhd::rpi::gpio26_user_wants_reset_frequencies()){
+        clean_all_interface_settings();
+      }
+    }
 
-    // First discover the platform:
-    const auto platform = DPlatform::discover();
-    m_console->info("Detected Platform:"+platform->to_string());
+    generateSettingsDirectoryIfNonExists();
 
     // Profile no longer depends on n discovered cameras,
     // But if we are air, we have at least one camera, sw if no camera was found
