@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "openhd-spdlog.hpp"
+#include "openhd-util-filesystem.hpp"
 
 namespace OHDUtil {
 
@@ -237,6 +238,20 @@ static bool get_ohd_env_variable_bool(const std::string& name){
 	std::cout<<"Please prefix OpenHD env variables with {OHD_}\n";
   }
   return get_ohd_env_variable_bool(name.c_str());
+}
+
+// For some actions (e.g a reset) a user can create a plain text file, then reboot
+// when openhd is started, we check if this file exist, perform the appropriate action, and then
+// delete the file.
+// Aka a pattern of: If file exists, do action, then do not do the same action again on the next reboot
+static bool file_exists_and_delete(const char* filename){
+  bool ret=false;
+  if(OHDFilesystemUtil::exists(filename)){
+    ret= true;
+    openhd::log::get_default()->warn("Got action, deleting {}",filename);
+    OHDFilesystemUtil::remove_if_existing(filename);
+  }
+  return ret;
 }
 
 }

@@ -59,7 +59,8 @@ static const struct option long_options[] = {
 struct OHDRunOptions {
   bool run_as_air=false;
   bool force_dummy_camera=false;
-  bool clean_start=false;
+  bool reset_all_settings=false;
+  bool reset_frequencies=false;
   bool enable_interface_debugging=false;
   bool enable_telemetry_debugging=false;
   bool enable_video_debugging=false;
@@ -97,7 +98,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         commandline_air= false;
         ret.developer_mode=true;
         break;
-      case 'c':ret.clean_start = true;
+      case 'c':ret.reset_all_settings = true;
         break;
       case 'x':ret.enable_interface_debugging = true;
         break;
@@ -164,12 +165,13 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     ret.run_as_air=commandline_air.value();
     ret.force_dummy_camera=commandline_force_dummy_camera;
   }
-  static constexpr auto FILE_PATH_CLEAN_START="/boot/openhd/ohd_clean.txt";
-  if(OHDFilesystemUtil::exists(FILE_PATH_CLEAN_START)){
-    ret.clean_start=true;
-    std::cerr<<"Deleting clean-start file\n";
-    OHDFilesystemUtil::remove_if_existing(FILE_PATH_CLEAN_START);
-  }
+  // If this file exists, delete all openhd settings resulting in default value(s)
+  static constexpr auto FILE_PATH_RESET="/boot/openhd/reset.txt";
+  ret.reset_all_settings=OHDUtil::file_exists_and_delete(FILE_PATH_RESET);
+  // If this file exists, delete all openhd wb link / frequency values, which results in default frequencies
+  // and fixes issue(s) when user swap hardware around with the wrong frequencies.
+  static constexpr auto FILE_PATH_RESET_FREQUENCY="/boot/openhd/reset_freq.txt";
+  ret.reset_frequencies=OHDUtil::file_exists_and_delete(FILE_PATH_RESET_FREQUENCY);
   return ret;
 }
 
@@ -185,7 +187,8 @@ int main(int argc, char *argv[]) {
   std::cout << "OpenHD START with " <<"\n"<<
       "air:"<<  OHDUtil::yes_or_no(options.run_as_air)<<"\n"<<
       "force_dummy_camera:"<<  OHDUtil::yes_or_no(options.force_dummy_camera)<<"\n"<<
-      "clean-start:" << OHDUtil::yes_or_no(options.clean_start) <<"\n"<<
+      "reset_all_settings:" << OHDUtil::yes_or_no(options.reset_all_settings) <<"\n"<<
+      "reset_frequencies:" << OHDUtil::yes_or_no(options.reset_frequencies) <<"\n"<<
       "debug-interface:"<<OHDUtil::yes_or_no(options.enable_interface_debugging) <<"\n"<<
       "debug-telemetry:"<<OHDUtil::yes_or_no(options.enable_telemetry_debugging) <<"\n"<<
       "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n"<<
@@ -202,8 +205,12 @@ int main(int argc, char *argv[]) {
   // Create and link all the OpenHD modules.
   try {
     // This results in fresh default values for all modules (e.g. interface, telemetry, video)
-    if(options.clean_start){
+    if(options.reset_all_settings){
       clean_all_settings();
+    }
+    // or only the wb_link module
+    if(options.reset_frequencies){
+      clean_all_interface_settings();
     }
     generateSettingsDirectoryIfNonExists();
 

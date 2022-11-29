@@ -20,6 +20,8 @@ static constexpr auto BASE_PATH="/usr/local/share/openhd/";
 // for example, the unique id
 static constexpr auto UNIT_ID_FILE = "/usr/local/share/openhd/unit.id";
 
+static const std::string INTERFACE_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("interface/"); // NOLINT(cert-err58-cpp)
+
 /**
  * If the directory does not exist yet,
  * generate the directory where all persistent settings of OpenHD are stored.
@@ -72,6 +74,11 @@ static std::string getOrCreateUnitId() {
 // will create full new default settings.
 static void clean_all_settings(){
   OHDFilesystemUtil::safe_delete_directory(BASE_PATH);
+  generateSettingsDirectoryIfNonExists();
+}
+
+static void clean_all_interface_settings(){
+  OHDFilesystemUtil::safe_delete_directory(INTERFACE_SETTINGS_DIRECTORY.c_str());
   generateSettingsDirectoryIfNonExists();
 }
 

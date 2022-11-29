@@ -70,8 +70,6 @@ static std::vector<WiFiCard> tmp_convert(const std::vector<std::shared_ptr<WifiC
   return ret;
 }
 
-static const std::string INTERFACE_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("interface/");
-
 class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLinkSettings>{
  public:
   explicit WBStreamsSettingsHolder(std::vector<WiFiCard> wifibroadcast_cards1):
