@@ -168,11 +168,15 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   }
   // If this file exists, delete all openhd settings resulting in default value(s)
   static constexpr auto FILE_PATH_RESET="/boot/openhd/reset.txt";
-  ret.reset_all_settings=OHDUtil::file_exists_and_delete(FILE_PATH_RESET);
+  if(OHDUtil::file_exists_and_delete(FILE_PATH_RESET)){
+    ret.reset_all_settings= true;
+  }
   // If this file exists, delete all openhd wb link / frequency values, which results in default frequencies
   // and fixes issue(s) when user swap hardware around with the wrong frequencies.
   static constexpr auto FILE_PATH_RESET_FREQUENCY="/boot/openhd/reset_freq.txt";
-  ret.reset_frequencies=OHDUtil::file_exists_and_delete(FILE_PATH_RESET_FREQUENCY);
+  if(OHDUtil::file_exists_and_delete(FILE_PATH_RESET_FREQUENCY)){
+    ret.reset_frequencies=true;
+  }
   return ret;
 }
 
