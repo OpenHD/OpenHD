@@ -10,6 +10,7 @@
 
 namespace openhd{
 
+// NOTE: wb_link intentionally has its own settings
 struct OHDInterfaceSettings {
   bool enable_wifi_hotspot=false;
   uint32_t hotspot_wifi_channel=8;

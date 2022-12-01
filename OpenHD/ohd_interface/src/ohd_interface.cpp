@@ -172,6 +172,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   if(m_wifi_hotspot != nullptr){
     // we can disable / enable wifi hotspot.
     auto cb_wifi_hotspot=[this](std::string,int value){
+      if(true)return false; // wifi hotspot is temporarily disabled
       if(!openhd::validate_yes_or_no(value))return false;
       m_interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot=value;
       m_interface_settings_holder->persist();
