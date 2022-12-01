@@ -255,7 +255,7 @@ class V4l2FPHolder{
       v4l2_close(fd);
     }
   }
-  [[nodiscard]] bool open_successfull() const{
+  [[nodiscard]] bool opened_successfully() const{
     return fd!=-1;
   }
   int fd;
@@ -265,7 +265,7 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
   m_console->trace( "DCameras::process_v4l2_node("+node+")");
 
   auto v4l2_fp_holder=std::make_unique<V4l2FPHolder>(node,m_platform.platform_type);
-  if(!v4l2_fp_holder->open_successfull()){
+  if(!v4l2_fp_holder->opened_successfully()){
     m_console->debug("Can't open: "+node);
     return false;
   }
