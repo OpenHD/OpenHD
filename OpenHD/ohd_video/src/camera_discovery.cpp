@@ -11,7 +11,7 @@
 
 #include "camera.hpp"
 #include "camera_discovery_helper.hpp"
-#include "libcamera_provider.hpp"
+#include "libcamera_detect.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "openhd-util.hpp"
 #include "veye-helper.hpp"
@@ -153,7 +153,7 @@ bool DCameras::detect_raspberrypi_broadcom_veye() {
 #ifdef OPENHD_LIBCAMERA_PRESENT
 void DCameras::detect_raspberry_libcamera() {
   m_console->debug("DCameras::detect_raspberry_libcamera()");
-  auto cameras = LibcameraProvider::get_cameras();
+  auto cameras = openhd::libcameradetect::get_csi_cameras();
   m_console->debug("Libcamera:discovered {} cameras",cameras.size());
   for (const auto& camera : cameras) {
     // TODO: filter out other cameras
