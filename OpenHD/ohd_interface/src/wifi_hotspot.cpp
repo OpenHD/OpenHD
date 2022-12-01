@@ -20,10 +20,10 @@ void WifiHotspot::start() {
 
 void WifiHotspot::stop() {
   if(_start_async_thread){
-	if(_start_async_thread->joinable()){
-	  _start_async_thread->join();
-	}
-	_start_async_thread=nullptr;
+    if(_start_async_thread->joinable()){
+      _start_async_thread->join();
+    }
+    _start_async_thread=nullptr;
   }
   if(!started)return;
   // TODO: We turn wifi completely off in network manager here, but this should work / not interfere with the monitor mode card(s) since they are

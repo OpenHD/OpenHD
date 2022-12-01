@@ -19,7 +19,7 @@
 #include <sys/ioctl.h>
 
 static std::shared_ptr<spdlog::logger> get_logger(){
-  return openhd::log::create_or_get("w_command_helper2");
+  return openhd::log::create_or_get("w_helper2");
 }
 
 static int error_handler(struct sockaddr_nl *nla, struct nlmsgerr *err, void *arg) {
