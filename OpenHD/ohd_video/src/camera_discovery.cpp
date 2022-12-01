@@ -11,7 +11,7 @@
 
 #include "camera.hpp"
 #include "camera_discovery_helper.hpp"
-#include "libcamera_provider.hpp"
+#include "libcamera_detect.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "openhd-util.hpp"
 #include "veye-helper.hpp"
@@ -153,7 +153,7 @@ bool DCameras::detect_raspberrypi_broadcom_veye() {
 #ifdef OPENHD_LIBCAMERA_PRESENT
 void DCameras::detect_raspberry_libcamera() {
   m_console->debug("DCameras::detect_raspberry_libcamera()");
-  auto cameras = LibcameraProvider::get_cameras();
+  auto cameras = openhd::libcameradetect::get_csi_cameras();
   m_console->debug("Libcamera:discovered {} cameras",cameras.size());
   for (const auto& camera : cameras) {
     // TODO: filter out other cameras
@@ -162,7 +162,7 @@ void DCameras::detect_raspberry_libcamera() {
 }
 #else
 void DCameras::detect_raspberry_libcamera() {
-  m_console->info("DCameras::detect_raspberry_libcamera()- no libcamera found at compile time");
+  m_console->warn("DCameras::detect_raspberry_libcamera - built without libcamera, libcamera features unavailable");
 }
 #endif
 
@@ -238,22 +238,39 @@ void DCameras::probe_v4l2_device(const std::string &device) {
   m_camera_endpoints.push_back(endpoint);
 }
 
+// Util so we can't forget to clse the fd
+class V4l2FPHolder{
+ public:
+  V4l2FPHolder(const std::string &node,const PlatformType& platform_type){
+    // fucking hell, on jetson v4l2_open seems to be bugged
+    // https://forums.developer.nvidia.com/t/v4l2-open-create-core-with-jetpack-4-5-or-later/170624/6
+    if(platform_type==PlatformType::Jetson){
+      fd = open(node.c_str(), O_RDWR | O_NONBLOCK, 0);
+    }else{
+      fd = v4l2_open(node.c_str(), O_RDWR);
+    }
+  }
+  ~V4l2FPHolder(){
+    if(fd!=-1){
+      v4l2_close(fd);
+    }
+  }
+  [[nodiscard]] bool opened_successfully() const{
+    return fd!=-1;
+  }
+  int fd;
+};
+
 bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, CameraEndpoint &endpoint) {
   m_console->trace( "DCameras::process_v4l2_node("+node+")");
-  // fucking hell, on jetson v4l2_open seems to be bugged
-  // https://forums.developer.nvidia.com/t/v4l2-open-create-core-with-jetpack-4-5-or-later/170624/6
-  int fd;
-  if(m_platform.platform_type==PlatformType::Jetson){
-    fd = open(node.c_str(), O_RDWR | O_NONBLOCK, 0);
-  }else{
-    fd = v4l2_open(node.c_str(), O_RDWR);
-  }
-  if (fd == -1) {
+
+  auto v4l2_fp_holder=std::make_unique<V4l2FPHolder>(node,m_platform.platform_type);
+  if(!v4l2_fp_holder->opened_successfully()){
     m_console->debug("Can't open: "+node);
     return false;
   }
   struct v4l2_capability caps = {};
-  if (ioctl(fd, VIDIOC_QUERYCAP, &caps) == -1) {
+  if (ioctl(v4l2_fp_holder->fd, VIDIOC_QUERYCAP, &caps) == -1) {
     m_console->debug("Capability query failed: "+node);
     return false;
   }
@@ -296,11 +313,11 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
   struct v4l2_fmtdesc fmtdesc{};
   memset(&fmtdesc, 0, sizeof(fmtdesc));
   fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  while (ioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc) == 0) {
+  while (ioctl(v4l2_fp_holder->fd, VIDIOC_ENUM_FMT, &fmtdesc) == 0) {
     struct v4l2_frmsizeenum frmsize{};
     frmsize.pixel_format = fmtdesc.pixelformat;
     frmsize.index = 0;
-    while (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) == 0) {
+    while (ioctl(v4l2_fp_holder->fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) == 0) {
       struct v4l2_frmivalenum frmival{};
       if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
         frmival.index = 0;
@@ -308,7 +325,7 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
         frmival.width = frmsize.discrete.width;
         frmival.height = frmsize.discrete.height;
 
-        while (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) == 0) {
+        while (ioctl(v4l2_fp_holder->fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) == 0) {
           if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
             std::stringstream new_format;
             if (fmtdesc.pixelformat == V4L2_PIX_FMT_H264) {
@@ -343,7 +360,6 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
     }
     fmtdesc.index++;
   }
-  v4l2_close(fd);
   m_console->debug("DCameras::process_v4l2_node done");
   return true;
 }

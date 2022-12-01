@@ -52,7 +52,7 @@ set(sources
     "inc/camerastream.h"
     "inc/camera_discovery.h"
     "inc/gstreamerstream.h"
-    "inc/libcamera_provider.hpp"
+    "src/libcamera_detect.hpp"
     "inc/gst_helper.hpp"
     "inc/ohd_video.h"
     "inc/camera.hpp"
