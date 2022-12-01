@@ -24,11 +24,12 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
 {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
-  m_console->debug("WBStreams::WBStreams: {}", m_broadcast_cards.size());
-  m_console->debug("WBStreams::m_disable_all_frequency_checks:"+OHDUtil::yes_or_no(m_disable_all_frequency_checks));
+  m_console->info("Broadcast cards:{}",debug_cards(m_broadcast_cards));
+  m_console->debug("m_disable_all_frequency_checks:"+OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks
   if(m_broadcast_cards.empty()) {
-    // NOTE: Here we crash, since it would be a programmer(s) error to create a WBStreams instance without at least 1 wifi card.
+    // NOTE: Here we crash, since it would be a programmer(s) error to create a WBStreams instance without at least 1 wifi card
+    // (at least 1 card supporting monitor mode)
     // In OHDInterface, we handle it more gracefully with an error code.
     m_console->error("Without at least one wifi card, the stream(s) cannot be started");
     exit(1);
