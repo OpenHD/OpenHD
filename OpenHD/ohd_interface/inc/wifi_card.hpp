@@ -211,6 +211,17 @@ static bool all_cards_support_5G(const std::vector<std::shared_ptr<WifiCardHolde
   return true;
 }
 
+static std::string debug_cards(const std::vector<std::shared_ptr<WifiCardHolder>>& cards){
+  std::stringstream ss;
+  ss<<"size:"<<cards.size()<<"{";
+  for(const auto& card_handle:cards){
+    ss<<card_handle->get_wifi_card().interface_name<<",";
+  }
+  ss<<"}";
+  return ss.str();
+}
+
+
 static nlohmann::json wificards_to_json(const std::vector<WiFiCard> &cards) {
   nlohmann::json j;
   for (auto &_card: cards) {

@@ -171,26 +171,20 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   }
   if(m_wifi_hotspot != nullptr){
     // we can disable / enable wifi hotspot.
-    int enabled=
-        m_interface_settings_holder->get_settings().enable_wifi_hotspot;
-    auto change_wifi_hotspot=openhd::IntSetting{enabled,[this](std::string,int value){
-                                                    // temporarily disable wifi hotspot (do not allow an user to turn it on)
-                                                    // until we've fixed the OS
-                                                    return false;
-                                                    if(value== 0 || value== 1){
-                                                      const bool enableX=value;
-                                                      if(enableX){
-                                                        m_wifi_hotspot
-                                                            ->start_async();
-                                                      }else{
-                                                        m_wifi_hotspot
-                                                            ->stop_async();
-                                                      }
-                                                      return true;
-                                                    }
-                                                    return false;
-                                                  }};
-    ret.emplace_back(openhd::Setting{OHD_INTERFACE_ENABLE_WIFI_HOTSPOT,change_wifi_hotspot});
+    auto cb_wifi_hotspot=[this](std::string,int value){
+      if(true)return false; // wifi hotspot is temporarily disabled
+      if(!openhd::validate_yes_or_no(value))return false;
+      m_interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot=value;
+      m_interface_settings_holder->persist();
+      if(m_interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot){
+        m_wifi_hotspot->start_async();
+      }else{
+        m_wifi_hotspot->stop_async();
+      }
+      return true;
+    };
+    const int enabled=m_interface_settings_holder->get_settings().enable_wifi_hotspot;
+    ret.emplace_back(openhd::Setting{OHD_INTERFACE_ENABLE_WIFI_HOTSPOT,openhd::IntSetting{enabled,cb_wifi_hotspot}});
   }
   if(!profile.is_air){
     //openhd::testing::append_dummy_int_and_string(ret);
