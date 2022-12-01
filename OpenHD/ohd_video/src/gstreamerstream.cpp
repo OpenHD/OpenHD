@@ -297,7 +297,11 @@ void GStreamerStream::cleanup_pipe() {
     return;
   }
   // according to @Alex W we need a EOS signal here to properly shut down the pipeline
-  gst_element_send_event (m_gst_pipeline, gst_event_new_eos());
+  if(!gst_element_send_event (m_gst_pipeline, gst_event_new_eos())){
+    m_console->info("error gst_element_send_event eos"); // No idea what that means
+  }else{
+    m_console->info("success gst_element_send_event eos");
+  }
   // TODO wait for the eos event to travel down the pipeline,but do it in a safe manner to not block for infinity
   gst_element_set_state (m_gst_pipeline, GST_STATE_NULL);
   gst_object_unref (m_gst_pipeline);
@@ -320,9 +324,7 @@ void GStreamerStream::restartIfStopped() {
   GstState pending;
   auto returnValue = gst_element_get_state(m_gst_pipeline, &state, &pending, 1000000000); // timeout in ns
   if (returnValue == 0) {
-    std::stringstream message;
-    message<<"Panic gstreamer pipeline state is not running, restarting camera stream for camera:"<< m_camera_holder->get_camera().name;
-    m_console->debug(message.str());
+    m_console->debug("Panic gstreamer pipeline state is not running, restarting camera stream for camera:{}",m_camera_holder->get_camera().name);
     // We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
     // This will also show up in QOpenHD (log level >= warn), but we are limited by the n of characters in mavlink
     m_console->warn("Restarting camera, check your parameters / connection");
@@ -352,7 +354,7 @@ void GStreamerStream::restart_async() {
   // If the user was to change parameters to quickly, this would be a problem.
   if(m_async_thread != nullptr){
     if(m_async_thread->joinable()){
-      m_console->debug("restart_async: waiting for previous operation to finish");
+      m_console->info("restart_async: waiting for previous operation to finish");
       m_async_thread->join();
     }
     m_async_thread =nullptr;
