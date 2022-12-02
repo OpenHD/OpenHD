@@ -327,7 +327,7 @@ int main(int argc, char *argv[]) {
     const bool any_debug_enabled=(options.enable_interface_debugging || options.enable_telemetry_debugging || options.enable_video_debugging);
     static bool quit=false;
     signal(SIGTERM, [](int sig){
-      std::cerr<<"Got SIGTERM, exiting";
+      std::cerr<<"Got SIGTERM, exiting\n";
       quit= true;
     });
     const auto run_time_begin=std::chrono::steady_clock::now();

@@ -56,6 +56,14 @@ static bool validate_rpi_exp_mode(int value){
   return value >=0 && value<=12;
 }
 
+static bool validate_rpi_brightness(int value){
+  return value>=0 && value<=100;
+}
+
+static bool validate_rpi_rpicamsrc_iso(int value){
+  return value>=0 && value<=3200;
+}
+
 // from gst-rpicamsrc: keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
 static bool validate_rpi_keyframe_interval(int value){
   const bool ret=value>=-1 && value < 2147483647;

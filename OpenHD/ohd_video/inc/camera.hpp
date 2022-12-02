@@ -75,6 +75,12 @@ struct Camera {
   [[nodiscard]] bool supports_exp()const{
     return type==CameraType::RaspberryPiCSI;
   }
+  bool supports_brightness()const{
+    return type==CameraType::RaspberryPiCSI;
+  }
+  bool supports_iso()const{
+    return type==CameraType::RaspberryPiCSI;
+  }
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,vid,pid,bus,index,endpoints)
 

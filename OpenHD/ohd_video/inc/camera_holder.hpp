@@ -128,6 +128,18 @@ class CameraHolder:
       };
       ret.push_back(openhd::Setting{"V_INTRA_REFRESH",openhd::IntSetting{get_settings().h26x_intra_refresh_type,c_intra_refresh_type}});
     }
+    if(m_camera.supports_brightness()){
+      auto c_brightness=[this](std::string,int value) {
+        return set_brightness(value);
+      };
+      ret.push_back(openhd::Setting{"V_BRIGHTNESS",openhd::IntSetting{get_settings().brightness_percentage,c_brightness}});
+    }
+    if(m_camera.supports_iso()){
+      auto c_iso=[this](std::string,int value) {
+        return set_rpi_rpicamsrc_iso(value);
+      };
+      ret.push_back(openhd::Setting{"V_ISO",openhd::IntSetting{get_settings().rpi_rpicamsrc_iso,c_iso}});
+    }
     return ret;
   }
   bool set_enable_streaming(int enable){
@@ -232,6 +244,18 @@ class CameraHolder:
   bool set_horizontal_flip(int value){
     if(!openhd::validate_yes_or_no(value))return false;
     unsafe_get_settings().horizontal_flip=static_cast<bool>(value);
+    persist();
+    return true;
+  }
+  bool set_brightness(int value){
+    if(!openhd::validate_rpi_brightness(value))return false;
+    unsafe_get_settings().brightness_percentage=value;
+    persist();
+    return true;
+  }
+  bool set_rpi_rpicamsrc_iso(int value){
+    if(!openhd::validate_rpi_rpicamsrc_iso(value))return false;
+    unsafe_get_settings().rpi_rpicamsrc_iso=value;
     persist();
     return true;
   }
