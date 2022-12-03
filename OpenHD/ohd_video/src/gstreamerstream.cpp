@@ -97,6 +97,7 @@ void GStreamerStream::setup() {
     }
     case CameraType::CustomUnmanagedCamera:{
       setup_custom_unmanaged_camera();
+      break;
     }break;
     case CameraType::Unknown: {
       m_console->warn( "Unknown camera type");
