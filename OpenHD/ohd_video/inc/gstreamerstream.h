@@ -17,7 +17,10 @@
 
 // Implementation of OHD CameraStream for pretty much everything, using
 // gstreamer.
-
+// NOTE: What we are doing here essentially is creating a big gstreamer pipeline string and then
+// executing this pipeline. This makes development easy (since you can just test the pipeline(s) manually
+// using gst-launch and add settings and more this way) but you are encouraged to use other approach(es) if they
+// better fit your needs (see CameraStream.h)
 class GStreamerStream : public CameraStream {
  public:
   GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
