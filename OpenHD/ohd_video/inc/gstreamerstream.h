@@ -33,6 +33,7 @@ class GStreamerStream : public CameraStream {
   void setup_usb_uvch264();
   void setup_ip_camera();
   void setup_sw_dummy_camera();
+  void setup_custom_unmanaged_camera();
   void restart_after_new_setting();
   void restartIfStopped() override;
   void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) override;

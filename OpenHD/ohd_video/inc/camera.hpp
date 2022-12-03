@@ -113,4 +113,22 @@ static Camera createDummyCamera() {
   return camera;
 }
 
+static Camera createCustomUnmanagedCamera(){
+  Camera camera;
+  camera.name = "CustomUnmanagedCamera";
+  camera.index = 0;
+  camera.vendor = "unknown";
+  camera.type = CameraType::CustomUnmanagedCamera;
+  return camera;
+}
+
+static Camera createCustomIpCamera(){
+  Camera camera;
+  camera.name = "CustomIpCamera";
+  camera.index = 0;
+  camera.vendor = "unknown";
+  camera.type = CameraType::IP;
+  return camera;
+}
+
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_DISCOVERED_CAMERA_H_

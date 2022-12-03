@@ -95,6 +95,9 @@ void GStreamerStream::setup() {
       setup_rockchip_hdmi();
       break;
     }
+    case CameraType::CustomUnmanagedCamera:{
+      setup_custom_unmanaged_camera();
+    }break;
     case CameraType::Unknown: {
       m_console->warn( "Unknown camera type");
       return;
@@ -247,6 +250,13 @@ void GStreamerStream::setup_sw_dummy_camera() {
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createDummyStream(setting);
+}
+
+void GStreamerStream::setup_custom_unmanaged_camera() {
+  m_console->debug("Setting up custom unmanaged camera");
+  const auto& camera= m_camera_holder->get_camera();
+  const auto& setting= m_camera_holder->get_settings();
+  m_pipeline_content << OHDGstHelper::createInputFromCustomUdpPort(setting);
 }
 
 std::string GStreamerStream::createDebug(){
@@ -405,3 +415,4 @@ bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
   m_console->warn("camera {} does not support dynamic bitrate control",m_camera_holder->get_camera().index);
   return false;
 }
+

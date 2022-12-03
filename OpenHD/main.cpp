@@ -43,11 +43,13 @@
 // uses the dummy camera, no matter if a camera is detected or not.
 // NOTE: If you neither pass in the argument in the command line and no file exists, OpenHD will always boot as ground.
 
-static const char optstr[] = "?:agfcr:";
+static const char optstr[] = "?:agfcr:b";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
     {"force-dummy-camera", no_argument, nullptr, 'f'},
+    {"force-custom-unmanaged-camera", no_argument, nullptr, 'b'},
+    {"force_ip_camera", no_argument, nullptr, 'd'},
     {"clean-start", no_argument, nullptr, 'c'},
     {"debug-interface", no_argument, nullptr, 'x'}, // just use the long options
     {"debug-telemetry", no_argument, nullptr, 'y'},
@@ -60,6 +62,8 @@ static const struct option long_options[] = {
 struct OHDRunOptions {
   bool run_as_air=false;
   bool force_dummy_camera=false;
+  bool force_custom_unmanaged_camera=false;
+  bool force_ip_camera=false;
   bool reset_all_settings=false;
   bool reset_frequencies=false;
   bool enable_interface_debugging=false;
@@ -114,6 +118,12 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
       case 'r':
         ret.run_time_seconds= atoi(tmp_optarg);
         break;
+      case 'b':
+        ret.force_custom_unmanaged_camera=true;
+        break;
+      case 'd':
+        ret.force_ip_camera= true;
+        break;
       case '?':
       default:
         std::cout << "Usage: \n" <<
@@ -125,6 +135,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
             "--debug-video     [enable video debugging] \n"<<
             "--no-qt-autostart [disable auto start of QOpenHD on ground] \n"<<
             "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n"<<
+            "--force_custom_unmanaged_camera [only on air,custom unmanaged camera in openhd,cannot be autodetected] \n"<<
+            "--force_ip_camera [only on air, ip camera, cannot be autodetected] \n"<<
             "--run-time_seconds -r [Manually specify run time (default infinite),for debugging] \n";
         exit(1);
     }
@@ -177,6 +189,24 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   if(OHDUtil::file_exists_and_delete(FILE_PATH_RESET_FREQUENCY)){
     ret.reset_frequencies=true;
   }
+  if(OHDFilesystemUtil::exists("/boot/openhd/force_custom_unmanaged_camera.txt")){
+    ret.force_custom_unmanaged_camera= true;
+  }
+  if(OHDFilesystemUtil::exists("/boot/openhd/force_ip_camera.txt")){
+    ret.force_ip_camera= true;
+  }
+  if(ret.force_custom_unmanaged_camera && ret.force_dummy_camera){
+    openhd::log::get_default()->warn("Dummy camera overrides custom unmanaged camera");
+    ret.force_custom_unmanaged_camera= false;
+  }
+  if(ret.force_ip_camera && ret.force_dummy_camera){
+    openhd::log::get_default()->warn("Dummy camera overrides ip camera");
+    ret.force_ip_camera= false;
+  }
+  if(ret.force_ip_camera && ret.force_custom_unmanaged_camera){
+    openhd::log::get_default()->warn("Custom unmanaged camera overrides ip camera");
+    ret.force_ip_camera= false;
+  }
   return ret;
 }
 
@@ -192,6 +222,8 @@ int main(int argc, char *argv[]) {
   std::cout << "OpenHD START with " <<"\n"<<
       "air:"<<  OHDUtil::yes_or_no(options.run_as_air)<<"\n"<<
       "force_dummy_camera:"<<  OHDUtil::yes_or_no(options.force_dummy_camera)<<"\n"<<
+      "force_custom_unmanaged_camera:"<<  OHDUtil::yes_or_no(options.force_custom_unmanaged_camera)<<"\n"<<
+      "force_ip_camera:"<<  OHDUtil::yes_or_no(options.force_ip_camera)<<"\n"<<
       "reset_all_settings:" << OHDUtil::yes_or_no(options.reset_all_settings) <<"\n"<<
       "reset_frequencies:" << OHDUtil::yes_or_no(options.reset_frequencies) <<"\n"<<
       "debug-interface:"<<OHDUtil::yes_or_no(options.enable_interface_debugging) <<"\n"<<
@@ -253,6 +285,12 @@ int main(int argc, char *argv[]) {
       if(options.force_dummy_camera){
         // skip camera detection, we want the dummy camera regardless weather a camera is connected or not.
         cameras.emplace_back(createDummyCamera());
+      }else if(options.force_custom_unmanaged_camera) {
+        // these cameras cannot be autodetected and need to be manually forced/specified
+        cameras.emplace_back(createCustomUnmanagedCamera());
+      }else if(options.force_ip_camera){
+        // these cameras cannot be autodetected and need to be manually forced/specified
+        cameras.emplace_back(createCustomIpCamera());
       }else{
         // Issue on rpi: The openhd service is often started before ? (most likely the OS needs to do some internal setup stuff)
         // and then the cameras discovery step is run before the camera is available, and therefore not found. Block up to
