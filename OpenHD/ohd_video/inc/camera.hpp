@@ -68,6 +68,11 @@ struct Camera {
     const bool not_supported= type==CameraType::CustomUnmanagedCamera || type==CameraType::IP;
     return !not_supported;
   }
+  // also, pretty much a must have unless using ip camera
+  [[nodiscard]] bool supports_changing_format()const{
+    const bool not_supported= type==CameraType::CustomUnmanagedCamera || type==CameraType::IP;
+    return !not_supported;
+  }
   [[nodiscard]] bool supports_keyframe_interval()const{
     const bool not_supported= type==CameraType::CustomUnmanagedCamera || type==CameraType::IP;
     return !not_supported;
