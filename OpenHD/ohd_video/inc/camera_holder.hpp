@@ -75,6 +75,12 @@ class CameraHolder:
         // for debugging
         openhd::Setting{"V_CAM_TYPE",openhd::StringSetting { get_short_name(),c_read_only_param}},
     };
+    if(m_camera.type==CameraType::IP){
+      auto cb_ip_cam_url=[this](std::string,std::string value){
+        return set_ip_cam_url(value);
+      };
+      ret.push_back(openhd::Setting{"V_IP_CAM_URL",openhd::StringSetting {get_settings().ip_cam_url,cb_ip_cam_url}});
+    }
     if(m_camera.supports_bitrate()){
       // NOTE: OpenHD stores the bitrate in kbit/s, but for now we use MBit/s for the setting
       // (Since that is something a normal user can make more sense of)
@@ -260,6 +266,12 @@ class CameraHolder:
   bool set_rpi_rpicamsrc_iso(int value){
     if(!openhd::validate_rpi_rpicamsrc_iso(value))return false;
     unsafe_get_settings().rpi_rpicamsrc_iso=value;
+    persist();
+    return true;
+  }
+  bool set_ip_cam_url(std::string value){
+    if(value.size()>50)return false;
+    unsafe_get_settings().ip_cam_url=value;
     persist();
     return true;
   }
