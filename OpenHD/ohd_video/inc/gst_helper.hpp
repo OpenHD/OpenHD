@@ -512,7 +512,7 @@ static std::string createInputFromCustomUdpPort(const CameraSettings& settings) 
   static constexpr auto input_port=5500;
   static constexpr auto address="127.0.0.1";
   std::stringstream ss;
-  ss<<fmt::format("udpsrc address={} port={} ",address, input_port);
+  ss<<fmt::format("udpsrc address={} port={} ! ",address, input_port);
   if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
     ss<<" rtph264depay ! h264parse ! ";
   }else if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
