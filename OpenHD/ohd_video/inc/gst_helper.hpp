@@ -508,11 +508,22 @@ static std::string createRecordingForVideoCodec(const VideoCodec videoCodec,cons
   return ss.str();
 }
 
-static std::string createInputFromCustomUdpPort(const CameraSettings& settings) {
+static std::string gst_create_caps(const VideoCodec& videoCodec){
+  std::stringstream ss;
+  if(videoCodec==VideoCodec::H264){
+    ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)H264, payload=(int)96\"";
+  }else if(videoCodec==VideoCodec::H265){
+    ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)H265\"";
+  }else{
+    ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)mjpeg\"";
+  }
+  return ss.str();
+}
+static std::string create_input_custom_udp_rtp_port(const CameraSettings& settings) {
   static constexpr auto input_port=5500;
   static constexpr auto address="127.0.0.1";
   std::stringstream ss;
-  ss<<fmt::format("udpsrc address={} port={} ! ",address, input_port);
+  ss<<fmt::format("udpsrc address={} port={} {} ! ",address, input_port, gst_create_caps(settings.streamed_video_format.videoCodec));
   if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
     ss<<" rtph264depay ! h264parse ! ";
   }else if(settings.streamed_video_format.videoCodec==VideoCodec::H264){

@@ -257,7 +257,7 @@ void GStreamerStream::setup_custom_unmanaged_camera() {
   m_console->debug("Setting up custom unmanaged camera");
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createInputFromCustomUdpPort(setting);
+  m_pipeline_content << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
 }
 
 std::string GStreamerStream::createDebug(){
