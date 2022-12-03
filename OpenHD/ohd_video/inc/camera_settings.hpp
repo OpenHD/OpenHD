@@ -74,7 +74,7 @@ struct CameraSettings {
   // user selected MJPEG as its video codec
   int mjpeg_quality_percent=DEFAULT_MJPEG_QUALITY_PERCENT;
   // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar
-  std::string ip_cam_url;
+  std::string ip_cam_url="rtsp://admin:admin@192.168.1.168:554/0";
   // enable/disable recording to file
   Recording air_recording=Recording::DISABLED;
   //

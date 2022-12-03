@@ -24,9 +24,19 @@ enum class CameraType {
   // the Logitech C920. Other UVC cameras may support h264, but they do it in a
   // completely different way so we keep them separate
   UVCH264,
-  IP,     // IP camera that connects via ethernet and provides a video feet at special network address
+  IP,     // IP camera that connects via ethernet and provides a video feed at special network address
   Libcamera,
-  RockchipHDMI
+  RockchipHDMI,
+  // This camera is for developing purposes and/or for users that want to create more or less esoteric camera pipelines, e.g. by using
+  // a custom script. In this mode, ohd_video acts as a completely agnostic passthrough for a camera stream that is neither managed
+  // by openhd main executable nor created by openhd main executable (note: you'l loose any openhd-provided functionalities,e.g change camera settings and/or parameters
+  // by that).
+  // To keep this API somewhat stable we only define the following:
+  // Data needs to be provided by feeding rtp h264,h265 or mjpeg to port 5500
+  // Note: it might seem unnecessary to essentially take data from an udp port and then forward the data to another udp port, but this
+  // way we are prepared for when OpenHD is changed to take a raw data callback instead of UDP for getting data from openhd_video to
+  // ohd_interface
+  CustomUnmanagedCamera
 };
 NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
      {CameraType::Unknown, nullptr},
@@ -39,7 +49,8 @@ NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
      {CameraType::UVCH264, "UVCH264"},
      {CameraType::IP, "IP"},
      {CameraType::Libcamera, "Libcamera"},
-     {CameraType::RockchipHDMI, "RockchipHDMI"}
+     {CameraType::RockchipHDMI, "RockchipHDMI"},
+     {CameraType::CustomUnmanagedCamera, "CustomUnmanagedCamera"}
  });
 
 static std::string camera_type_to_string(const CameraType &camera_type) {
@@ -64,6 +75,8 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
       return "Libcamera";
     case CameraType::RockchipHDMI:
       return "RockchipHDMI";
+    case CameraType::CustomUnmanagedCamera:
+      return "CustomUnmanagedCamera";
     default:
       return "unknown";
   }

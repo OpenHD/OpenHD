@@ -63,6 +63,20 @@ struct Camera {
        << "}";
     return ss.str();
   }
+  // supported by pretty much any camera type (not supporting bitrate control is only the case for these exotic cases)
+  [[nodiscard]] bool supports_bitrate()const{
+    const bool not_supported= type==CameraType::CustomUnmanagedCamera || type==CameraType::IP;
+    return !not_supported;
+  }
+  // also, pretty much a must have unless using ip camera
+  [[nodiscard]] bool supports_changing_format()const{
+    const bool not_supported= type==CameraType::CustomUnmanagedCamera || type==CameraType::IP;
+    return !not_supported;
+  }
+  [[nodiscard]] bool supports_keyframe_interval()const{
+    const bool not_supported= type==CameraType::CustomUnmanagedCamera || type==CameraType::IP;
+    return !not_supported;
+  }
   [[nodiscard]] bool supports_rotation()const{
     return type==CameraType::RaspberryPiCSI;
   }
@@ -110,6 +124,24 @@ static Camera createDummyCamera() {
   camera.index = 0;
   camera.vendor = "dummy";
   camera.type = CameraType::Dummy;
+  return camera;
+}
+
+static Camera createCustomUnmanagedCamera(){
+  Camera camera;
+  camera.name = "CustomUnmanagedCamera";
+  camera.index = 0;
+  camera.vendor = "unknown";
+  camera.type = CameraType::CustomUnmanagedCamera;
+  return camera;
+}
+
+static Camera createCustomIpCamera(){
+  Camera camera;
+  camera.name = "CustomIpCamera";
+  camera.index = 0;
+  camera.vendor = "unknown";
+  camera.type = CameraType::IP;
   return camera;
 }
 

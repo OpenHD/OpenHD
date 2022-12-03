@@ -95,6 +95,10 @@ void GStreamerStream::setup() {
       setup_rockchip_hdmi();
       break;
     }
+    case CameraType::CustomUnmanagedCamera:{
+      setup_custom_unmanaged_camera();
+      break;
+    }break;
     case CameraType::Unknown: {
       m_console->warn( "Unknown camera type");
       return;
@@ -249,6 +253,13 @@ void GStreamerStream::setup_sw_dummy_camera() {
   m_pipeline_content << OHDGstHelper::createDummyStream(setting);
 }
 
+void GStreamerStream::setup_custom_unmanaged_camera() {
+  m_console->debug("Setting up custom unmanaged camera");
+  const auto& camera= m_camera_holder->get_camera();
+  const auto& setting= m_camera_holder->get_settings();
+  m_pipeline_content << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
+}
+
 std::string GStreamerStream::createDebug(){
   std::unique_lock<std::mutex> lock(m_pipeline_mutex, std::try_to_lock);
   if(!lock.owns_lock()){
@@ -313,6 +324,10 @@ void GStreamerStream::restartIfStopped() {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   if(!m_gst_pipeline){
     m_console->debug("gst_pipeline==null");
+    return;
+  }
+  if(m_camera_holder->get_camera().type==CameraType::CustomUnmanagedCamera){
+    // this pattern doesn't work here
     return;
   }
   const auto elapsed_since_start=std::chrono::steady_clock::now()-m_stream_creation_time;
@@ -405,3 +420,4 @@ bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
   m_console->warn("camera {} does not support dynamic bitrate control",m_camera_holder->get_camera().index);
   return false;
 }
+

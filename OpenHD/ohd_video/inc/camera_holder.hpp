@@ -46,28 +46,8 @@ class CameraHolder:
     auto c_codec=[this](std::string, int value) {
       return set_video_codec(value);
     };
-    // NOTE: OpenHD stores the bitrate in kbit/s, but for now we use MBit/s for the setting
-    // (Since that is something a normal user can make more sense of)
-    // and just multiply the value in the callback
-    auto c_bitrate=[this](std::string,int value) {
-      return set_video_bitrate(value);
-    };
-    auto c_keyframe_interval=[this](std::string,int value) {
-      return set_keyframe_interval(value);
-    };
     auto c_recording=[this](std::string,int value) {
       return set_air_recording(value);
-    };
-    auto c_mjpeg_quality_percent=[this](std::string,int value) {
-      return set_mjpeg_quality_percent(value);
-    };
-    auto c_width_height_framerate=[this](std::string,std::string value){
-      auto tmp_opt=openhd::parse_video_format(value);
-      if(tmp_opt.has_value()){
-        const auto& tmp=tmp_opt.value();
-        return set_video_width_height_framerate(tmp.width_px,tmp.height_px,tmp.framerate);
-      }
-      return false;
     };
     // This is not a setting (cannot be changed) but rather a read-only param, but repurposing the settings here was the easiest
     auto c_read_only_param=[this](std::string,std::string value){
@@ -75,21 +55,51 @@ class CameraHolder:
     };
     std::vector<openhd::Setting> ret={
         openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
-        // Width, height and FPS are done together now (V_FORMAT)
-        openhd::Setting{"V_FORMAT",openhd::StringSetting{
-                                        openhd::video_format_from_int_values(get_settings().streamed_video_format.width,
-                                                                             get_settings().streamed_video_format.height,
-                                                                             get_settings().streamed_video_format.framerate),
-                                        c_width_height_framerate
-                                    }},
         openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}},
-        openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().h26x_bitrate_kbits / 1000),c_bitrate}},
-        openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().h26x_keyframe_interval,c_keyframe_interval}},
         openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
-        openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
         // for debugging
         openhd::Setting{"V_CAM_TYPE",openhd::StringSetting { get_short_name(),c_read_only_param}},
     };
+    if(m_camera.type==CameraType::IP){
+      auto cb_ip_cam_url=[this](std::string,std::string value){
+        return set_ip_cam_url(value);
+      };
+      ret.push_back(openhd::Setting{"V_IP_CAM_URL",openhd::StringSetting {get_settings().ip_cam_url,cb_ip_cam_url}});
+    }
+    if(m_camera.supports_bitrate()){
+      // NOTE: OpenHD stores the bitrate in kbit/s, but for now we use MBit/s for the setting
+      // (Since that is something a normal user can make more sense of)
+      // and just multiply the value in the callback
+      auto c_bitrate=[this](std::string,int value) {
+        return set_video_bitrate(value);
+      };
+      auto c_mjpeg_quality_percent=[this](std::string,int value) {
+        return set_mjpeg_quality_percent(value);
+      };
+      ret.push_back(openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().h26x_bitrate_kbits / 1000),c_bitrate}});
+      ret.push_back(openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}});
+    }
+    if(m_camera.supports_changing_format()){
+      auto c_width_height_framerate=[this](std::string,std::string value){
+        auto tmp_opt=openhd::parse_video_format(value);
+        if(tmp_opt.has_value()){
+          const auto& tmp=tmp_opt.value();
+          return set_video_width_height_framerate(tmp.width_px,tmp.height_px,tmp.framerate);
+        }
+        return false;
+      };
+      // Width, height and FPS are done together now (V_FORMAT)
+      const auto format_string=openhd::video_format_from_int_values(get_settings().streamed_video_format.width,
+                                                                      get_settings().streamed_video_format.height,
+                                                                      get_settings().streamed_video_format.framerate);
+      ret.push_back(openhd::Setting{"V_FORMAT",openhd::StringSetting{format_string,c_width_height_framerate}});
+    }
+    if(m_camera.supports_keyframe_interval()){
+      auto c_keyframe_interval=[this](std::string,int value) {
+        return set_keyframe_interval(value);
+      };
+      ret.push_back(openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().h26x_keyframe_interval,c_keyframe_interval}});
+    }
     if(m_camera.type==CameraType::Libcamera){
       // r.n we only write the sensor name for cameras detected via libcamera
       ret.push_back(openhd::Setting{"V_CAM_SENSOR",openhd::StringSetting{m_camera.sensor_name,c_read_only_param}});
@@ -256,6 +266,12 @@ class CameraHolder:
   bool set_rpi_rpicamsrc_iso(int value){
     if(!openhd::validate_rpi_rpicamsrc_iso(value))return false;
     unsafe_get_settings().rpi_rpicamsrc_iso=value;
+    persist();
+    return true;
+  }
+  bool set_ip_cam_url(std::string value){
+    if(value.size()>50)return false;
+    unsafe_get_settings().ip_cam_url=value;
     persist();
     return true;
   }
