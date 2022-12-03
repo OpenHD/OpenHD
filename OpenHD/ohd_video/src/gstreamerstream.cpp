@@ -326,6 +326,10 @@ void GStreamerStream::restartIfStopped() {
     m_console->debug("gst_pipeline==null");
     return;
   }
+  if(m_camera_holder->get_camera().type==CameraType::CustomUnmanagedCamera){
+    // this pattern doesn't work here
+    return;
+  }
   const auto elapsed_since_start=std::chrono::steady_clock::now()-m_stream_creation_time;
   if(elapsed_since_start<std::chrono::seconds(5)){
     // give the cam X seconds in the beginning to properly start before restarting
