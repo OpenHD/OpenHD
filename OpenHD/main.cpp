@@ -135,8 +135,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
             "--debug-video     [enable video debugging] \n"<<
             "--no-qt-autostart [disable auto start of QOpenHD on ground] \n"<<
             "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n"<<
-            "--force_custom_unmanaged_camera [only on air,custom unmanaged camera in openhd,cannot be autodetected] \n"<<
-            "--force_ip_camera [only on air, ip camera, cannot be autodetected] \n"<<
+            "--force-custom-unmanaged-camera [only on air,custom unmanaged camera in openhd,cannot be autodetected] \n"<<
+            "--force-ip-camera [only on air, ip camera, cannot be autodetected] \n"<<
             "--run-time_seconds -r [Manually specify run time (default infinite),for debugging] \n";
         exit(1);
     }
