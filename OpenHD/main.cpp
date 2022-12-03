@@ -49,7 +49,7 @@ static const struct option long_options[] = {
     {"ground", no_argument, nullptr, 'g'},
     {"force-dummy-camera", no_argument, nullptr, 'f'},
     {"force-custom-unmanaged-camera", no_argument, nullptr, 'b'},
-    {"force_ip_camera", no_argument, nullptr, 'd'},
+    {"force-ip-camera", no_argument, nullptr, 'd'},
     {"clean-start", no_argument, nullptr, 'c'},
     {"debug-interface", no_argument, nullptr, 'x'}, // just use the long options
     {"debug-telemetry", no_argument, nullptr, 'y'},
