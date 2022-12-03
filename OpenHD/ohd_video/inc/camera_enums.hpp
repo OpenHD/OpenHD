@@ -75,6 +75,8 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
       return "Libcamera";
     case CameraType::RockchipHDMI:
       return "RockchipHDMI";
+    case CameraType::CustomUnmanagedCamera:
+      return "CustomUnmanagedCamera";
     default:
       return "unknown";
   }

@@ -46,20 +46,11 @@ class CameraHolder:
     auto c_codec=[this](std::string, int value) {
       return set_video_codec(value);
     };
-    // NOTE: OpenHD stores the bitrate in kbit/s, but for now we use MBit/s for the setting
-    // (Since that is something a normal user can make more sense of)
-    // and just multiply the value in the callback
-    auto c_bitrate=[this](std::string,int value) {
-      return set_video_bitrate(value);
-    };
     auto c_keyframe_interval=[this](std::string,int value) {
       return set_keyframe_interval(value);
     };
     auto c_recording=[this](std::string,int value) {
       return set_air_recording(value);
-    };
-    auto c_mjpeg_quality_percent=[this](std::string,int value) {
-      return set_mjpeg_quality_percent(value);
     };
     auto c_width_height_framerate=[this](std::string,std::string value){
       auto tmp_opt=openhd::parse_video_format(value);
@@ -83,13 +74,24 @@ class CameraHolder:
                                         c_width_height_framerate
                                     }},
         openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}},
-        openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().h26x_bitrate_kbits / 1000),c_bitrate}},
         openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().h26x_keyframe_interval,c_keyframe_interval}},
         openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
-        openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}},
         // for debugging
         openhd::Setting{"V_CAM_TYPE",openhd::StringSetting { get_short_name(),c_read_only_param}},
     };
+    if(m_camera.supports_bitrate()){
+      // NOTE: OpenHD stores the bitrate in kbit/s, but for now we use MBit/s for the setting
+      // (Since that is something a normal user can make more sense of)
+      // and just multiply the value in the callback
+      auto c_bitrate=[this](std::string,int value) {
+        return set_video_bitrate(value);
+      };
+      auto c_mjpeg_quality_percent=[this](std::string,int value) {
+        return set_mjpeg_quality_percent(value);
+      };
+      ret.push_back(openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().h26x_bitrate_kbits / 1000),c_bitrate}});
+      ret.push_back(openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}});
+    }
     if(m_camera.type==CameraType::Libcamera){
       // r.n we only write the sensor name for cameras detected via libcamera
       ret.push_back(openhd::Setting{"V_CAM_SENSOR",openhd::StringSetting{m_camera.sensor_name,c_read_only_param}});

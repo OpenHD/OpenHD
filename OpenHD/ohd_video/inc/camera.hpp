@@ -63,6 +63,11 @@ struct Camera {
        << "}";
     return ss.str();
   }
+  [[nodiscard]] bool supports_bitrate()const{
+    /*return type==CameraType::RaspberryPiCSI || type==CameraType::Libcamera || type==CameraType::JetsonCSI
+           || type==CameraType::Dummy || type==CameraType::UVC || type==CameraType::RaspberryPiVEYE;*/
+    return true;
+  }
   [[nodiscard]] bool supports_rotation()const{
     return type==CameraType::RaspberryPiCSI;
   }
