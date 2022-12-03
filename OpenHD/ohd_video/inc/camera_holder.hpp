@@ -46,9 +46,6 @@ class CameraHolder:
     auto c_codec=[this](std::string, int value) {
       return set_video_codec(value);
     };
-    auto c_keyframe_interval=[this](std::string,int value) {
-      return set_keyframe_interval(value);
-    };
     auto c_recording=[this](std::string,int value) {
       return set_air_recording(value);
     };
@@ -74,7 +71,6 @@ class CameraHolder:
                                         c_width_height_framerate
                                     }},
         openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}},
-        openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().h26x_keyframe_interval,c_keyframe_interval}},
         openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
         // for debugging
         openhd::Setting{"V_CAM_TYPE",openhd::StringSetting { get_short_name(),c_read_only_param}},
@@ -91,6 +87,12 @@ class CameraHolder:
       };
       ret.push_back(openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().h26x_bitrate_kbits / 1000),c_bitrate}});
       ret.push_back(openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}});
+    }
+    if(m_camera.supports_keyframe_interval()){
+      auto c_keyframe_interval=[this](std::string,int value) {
+        return set_keyframe_interval(value);
+      };
+      ret.push_back(openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().h26x_keyframe_interval,c_keyframe_interval}});
     }
     if(m_camera.type==CameraType::Libcamera){
       // r.n we only write the sensor name for cameras detected via libcamera

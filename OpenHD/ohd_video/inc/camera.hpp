@@ -63,10 +63,14 @@ struct Camera {
        << "}";
     return ss.str();
   }
+  // supported by pretty much any camera type (not supporting bitrate control is only the case for these exotic cases)
   [[nodiscard]] bool supports_bitrate()const{
-    /*return type==CameraType::RaspberryPiCSI || type==CameraType::Libcamera || type==CameraType::JetsonCSI
-           || type==CameraType::Dummy || type==CameraType::UVC || type==CameraType::RaspberryPiVEYE;*/
-    return true;
+    const bool not_supported= type==CameraType::CustomUnmanagedCamera || type==CameraType::IP;
+    return !not_supported;
+  }
+  [[nodiscard]] bool supports_keyframe_interval()const{
+    const bool not_supported= type==CameraType::CustomUnmanagedCamera || type==CameraType::IP;
+    return !not_supported;
   }
   [[nodiscard]] bool supports_rotation()const{
     return type==CameraType::RaspberryPiCSI;
