@@ -161,16 +161,16 @@ static constexpr auto WB_ENABLE_SHORT_GUARD="WB_E_SHORT_GUARD";
 static uint32_t tx_power_level_to_mBm_rtl8812au_only(const TxPowerLevel& tx_power_level){
   switch (tx_power_level) {
     case TxPowerLevel::LOW:
-      return 100;
+      return 19;
       break;
     case MEDIUM:
-      return 200;
+      return 35;
       break;
     case HIGH:
-      return 300;
+      return 58;
       break;
     case MAX:
-      return 400;
+      return 63;
       break;
   }
   openhd::log::get_default()->warn("Unknown tx_power_level");
