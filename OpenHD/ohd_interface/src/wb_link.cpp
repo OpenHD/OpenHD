@@ -396,7 +396,7 @@ void WBLink::apply_txpower() {
       WifiCardCommandHelper::iw_set_tx_power_mBm(card,tmp);
     }else{
       const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
-      WifiCardCommandHelper::iw_set_tx_power_mBm(tmp);
+      WifiCardCommandHelper::iw_set_tx_power_mBm(card,tmp);
       //WifiCardCommandHelper::iwconfig_set_txpower(card,settings.wb_tx_power_milli_watt);
     }
   }
