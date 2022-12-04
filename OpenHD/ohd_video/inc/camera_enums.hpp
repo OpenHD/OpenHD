@@ -11,20 +11,30 @@
 // Helper for all this json bloat
 
 enum class CameraType {
+  // only exists to have a default value, properly discovered cameras must not be of type unknown
   Unknown,
-  Dummy,  // Dummy camera, is created fully in sw, for debugging purposes.
-  RaspberryPiCSI,  // Rpi foundation CSI camera,old MMAL / BROADCOM
+  // Dummy camera, is created fully in sw, for debugging purposes.
+  Dummy,
+  // Rpi foundation CSI camera,old MMAL / BROADCOM
+  RaspberryPiCSI,
+  // dirty and might be completely removed in future release(s), rpi veye using the mmal stack (veye-raspivid)
   RaspberryPiVEYE,
-  JetsonCSI,    // Any CSI camera on jetson
-  RockchipCSI,  // Any CSI camera on rockchip
-  // I think this is a V4l2 camera so to say, too.
+  // Any CSI camera on jetson
+  JetsonCSI,
+  // Any CSI camera on rockchip
+  RockchipCSI,
+  // UVC / V4l2 USB Camera
   UVC,
   // this is not just a UVC camera that happens to support h264, it's the
   // standard UVC H264 that only a few cameras support, like the older models of
   // the Logitech C920. Other UVC cameras may support h264, but they do it in a
   // completely different way so we keep them separate
   UVCH264,
-  IP,     // IP camera that connects via ethernet and provides a video feed at special network address
+  // IP camera that connects via ethernet and provides a video feed at special network address
+  // Cannot be auto-detected, therefore needs to be forced manually by the user (and in general, IP camera(s) are really different
+  // compared to the other camera types and therefore do not integrate well in OpenHD/ohd_video)
+  IP,
+  // Raspberry pi only right now, a CSI camera that uses the modern libcamera stack
   Libcamera,
   RockchipHDMI,
   // This camera is for developing purposes and/or for users that want to create more or less esoteric camera pipelines, e.g. by using
@@ -32,7 +42,7 @@ enum class CameraType {
   // by openhd main executable nor created by openhd main executable (note: you'l loose any openhd-provided functionalities,e.g change camera settings and/or parameters
   // by that).
   // To keep this API somewhat stable we only define the following:
-  // Data needs to be provided by feeding rtp h264,h265 or mjpeg to port 5500
+  // Data needs to be provided by feeding rtp h264,h265 or mjpeg to udp port 5500 (localhost)
   // Note: it might seem unnecessary to essentially take data from an udp port and then forward the data to another udp port, but this
   // way we are prepared for when OpenHD is changed to take a raw data callback instead of UDP for getting data from openhd_video to
   // ohd_interface
