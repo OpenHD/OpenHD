@@ -145,8 +145,7 @@ class WBLink {
   std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
   static constexpr auto DELAY_FOR_TRANSMIT_ACK =std::chrono::seconds(2);
  private:
-  // dirty / extra
-  bool rtl8812au_set_tx_pwr_idx_override(int value);
+  //bool rtl8812au_set_tx_pwr_idx_override(int value);
   bool rtl8812au_set_tx_power_level(int value);
   bool has_rtl8812au();
 };

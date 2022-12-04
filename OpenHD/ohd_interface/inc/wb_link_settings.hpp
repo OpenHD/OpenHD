@@ -54,7 +54,7 @@ struct WBLinkSettings {
   uint32_t wb_tx_power_milli_watt=DEFAULT_WIFI_TX_POWER_MILLI_WATT;
   // rtl8812au driver does not support setting tx power by iw dev, but rather only by setting
   // this stupid tx power idx override param
-  uint32_t wb_rtl8812au_tx_pwr_idx_override=0;
+  //uint32_t wb_rtl8812au_tx_pwr_idx_override=0;
   // R.n only possible on RTL8812AU
   // See https://github.com/OpenHD/rtl8812au/blob/v5.2.20/os_dep/linux/ioctl_cfg80211.c#L3667
   TxPowerLevel wb_tx_power_level=TxPowerLevel::LOW;
@@ -69,7 +69,7 @@ struct WBLinkSettings {
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
                                    wb_video_fec_block_length, wb_video_fec_percentage, wb_tx_power_milli_watt,
-                                   wb_rtl8812au_tx_pwr_idx_override,
+                                   wb_tx_power_level,
                                    enable_wb_video_variable_bitrate,
                                    wb_enable_stbc,wb_enable_ldpc,wb_enable_short_guard);
 
