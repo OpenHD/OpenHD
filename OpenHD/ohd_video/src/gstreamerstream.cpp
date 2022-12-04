@@ -20,7 +20,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   // (640x48@30 might already be too much on embedded devices).
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
-  if (camera.type == CameraType::Dummy && (setting.streamed_video_format.width > 640 ||
+  if (camera.type == CameraType::DUMMY_SW && (setting.streamed_video_format.width > 640 ||
       setting.streamed_video_format.height > 480 || setting.streamed_video_format.framerate > 30)) {
     m_console->warn("Warning- Dummy camera is done in sw, high resolution/framerate might not work");
     m_console->warn("Configured dummy for:"+setting.streamed_video_format.toString());
@@ -59,15 +59,15 @@ void GStreamerStream::setup() {
   m_bitrate_ctrl_element= nullptr;
   m_curr_dynamic_bitrate_kbits =-1;
   switch (camera.type) {
-    case CameraType::RaspberryPiCSI: {
+    case CameraType::RPI_CSI_MMAL: {
       setup_raspberrypi_csi();
       break;
     }
-    case CameraType::Libcamera: {
+    case CameraType::RPI_CSI_LIBCAMERA: {
       setup_libcamera();
       break;
     }
-    case CameraType::JetsonCSI: {
+    case CameraType::JETSON_CSI: {
       setup_jetson_csi();
       break;
     }
@@ -75,7 +75,7 @@ void GStreamerStream::setup() {
       setup_usb_uvc();
       break;
     }
-    case CameraType::UVCH264: {
+    case CameraType::UVC_H264: {
       setup_usb_uvch264();
       break;
     }
@@ -83,23 +83,23 @@ void GStreamerStream::setup() {
       setup_ip_camera();
       break;
     }
-    case CameraType::Dummy: {
+    case CameraType::DUMMY_SW: {
       setup_sw_dummy_camera();
       break;
     }
-    case CameraType::RaspberryPiVEYE:
-    case CameraType::RockchipCSI:
+    case CameraType::RPI_VEYE_CSI_MMAL:
+    case CameraType::ROCKCHIP_CSI:
       m_console->error("Veye and rockchip are unsupported at the time");
       return;
-    case CameraType::RockchipHDMI: {
+    case CameraType::ROCKCHIP_HDMI: {
       setup_rockchip_hdmi();
       break;
     }
-    case CameraType::CustomUnmanagedCamera:{
+    case CameraType::CUSTOM_UNMANAGED_CAMERA:{
       setup_custom_unmanaged_camera();
       break;
     }break;
-    case CameraType::Unknown: {
+    case CameraType::UNKNOWN: {
       m_console->warn( "Unknown camera type");
       return;
     }
@@ -110,7 +110,7 @@ void GStreamerStream::setup() {
                      m_pipeline_content.str());
   }
   // for safety we only add the tee command at the right place if recording is enabled.
-  if(setting.air_recording==Recording::ENABLED && camera.type != CameraType::RockchipHDMI){
+  if(setting.air_recording==Recording::ENABLED && camera.type != CameraType::ROCKCHIP_HDMI){
     m_console->info("Air recording active");
     m_pipeline_content <<"tee name=t ! ";
   }
@@ -147,11 +147,11 @@ void GStreamerStream::setup() {
     m_console->error( "Failed to create pipeline: {}",error->message);
     return;
   }
-  if(camera.type==CameraType::RaspberryPiCSI){
+  if(camera.type==CameraType::RPI_CSI_MMAL){
     m_bitrate_ctrl_element= gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "rpicamsrc");
     m_console->debug("Has bitrate control element: {}",(m_bitrate_ctrl_element!=nullptr) ? "yes":"no");
     m_bitrate_ctrl_element_takes_kbit=false;
-  }else if(camera.type==CameraType::Dummy){
+  }else if(camera.type==CameraType::DUMMY_SW){
     m_bitrate_ctrl_element= gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "swencoder");
     m_console->debug("Has bitrate control element: {}",(m_bitrate_ctrl_element!=nullptr) ? "yes":"no");
     // sw encoder(s) take kbit/s
@@ -326,7 +326,7 @@ void GStreamerStream::restartIfStopped() {
     m_console->debug("gst_pipeline==null");
     return;
   }
-  if(m_camera_holder->get_camera().type==CameraType::CustomUnmanagedCamera){
+  if(m_camera_holder->get_camera().type==CameraType::CUSTOM_UNMANAGED_CAMERA){
     // this pattern doesn't work here
     return;
   }
