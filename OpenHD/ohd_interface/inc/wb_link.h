@@ -147,6 +147,7 @@ class WBLink {
  private:
   // dirty / extra
   bool rtl8812au_set_tx_pwr_idx_override(int value);
+  bool rtl8812au_set_tx_power_level(int value);
   bool has_rtl8812au();
 };
 

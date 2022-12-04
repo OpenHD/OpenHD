@@ -24,6 +24,23 @@ static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
 static constexpr auto DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH=12;
 static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE=50;
 
+enum TxPowerLevel{
+  // should be <=25mW, to be legal in all countries,
+  LOW=0,
+  // arbitrary medium level, rough target: 100mW
+  MEDIUM=1,
+  // arbitrary high level, rough target: slightly below max of card, to account for cases where max levels might have weird limitations
+  HIGH=2,
+  // arbitrary max level, rough target: maximum of card, does not take any limitations into account, e.g. might or might not work
+  MAX=3
+};
+NLOHMANN_JSON_SERIALIZE_ENUM( TxPowerLevel, {
+   {TxPowerLevel::LOW, "LOW"},
+   {TxPowerLevel::MEDIUM, "MEDIUM"},
+   {TxPowerLevel::HIGH, "HIGH"},
+   {TxPowerLevel::MAX, "MAX"},
+});
+
 struct WBLinkSettings {
   uint32_t wb_frequency; // writen once 2.4 or 5 is known
   uint32_t wb_channel_width=DEFAULT_CHANNEL_WIDTH; // 20 or 40 mhz bandwidth
@@ -39,7 +56,7 @@ struct WBLinkSettings {
   // this stupid tx power idx override param
   uint32_t wb_rtl8812au_tx_pwr_idx_override=0;
   // testing
-  uint32_t wb_tx_power_level=0;
+  TxPowerLevel wb_tx_power_level=TxPowerLevel::LOW;
 
   bool enable_wb_video_variable_bitrate= false;// wb link recommends bitrate(s) to the encoder, can be helpfully for inexperienced users.
   [[nodiscard]] bool configured_for_2G()const{
@@ -130,6 +147,7 @@ static constexpr auto WB_VIDEO_FEC_PERCENTAGE="WB_V_FEC_PERC";
 static constexpr auto WB_TX_POWER_MILLI_WATT="WB_TX_POWER_MW";
 // annoying 16 char settings limit
 static constexpr auto WB_RTL8812AU_TX_PWR_IDX_OVERRIDE="RTL8812AU_PWR_I";
+static constexpr auto WB_TX_POWER_LEVEL="WB_TX_PWR_LEVEL";
 //
 static constexpr auto WB_VIDEO_VARIABLE_BITRATE="VARIABLE_BITRATE";
 //
@@ -138,19 +156,30 @@ static constexpr auto WB_ENABLE_LDPC="WB_E_LDPC";
 static constexpr auto WB_ENABLE_SHORT_GUARD="WB_E_SHORT_GUARD";
 
 // requires rtl8812au openhd driver
-static uint32_t tx_power_level_to_milli_dbm_rtl8812au_only(uint32_t tx_power_level){
-  if(tx_power_level==0){
-    // low power
-    return 100;
+// NOTE: these values are the values that are passed to NL80211_ATTR_WIPHY_TX_POWER_LEVEL
+static uint32_t tx_power_level_to_mBm_rtl8812au_only(const TxPowerLevel& tx_power_level){
+  switch (tx_power_level) {
+    case TxPowerLevel::LOW:
+      return 100;
+      break;
+    case MEDIUM:
+      return 200;
+      break;
+    case HIGH:
+      return 300;
+      break;
+    case MAX:
+      return 400;
+      break;
   }
-  if(tx_power_level==1){
-    return 200;
-  }
-  if(tx_power_level==2){
-    return 300;
-  }
+  openhd::log::get_default()->warn("Unknown tx_power_level");
   return 100;
 }
+
+static bool validate_tx_power_level(int value){
+  return value>=TxPowerLevel::LOW && value<=TxPowerLevel::MAX;
+}
+
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_

@@ -143,9 +143,8 @@ nla_put_failure:
   return false;
 }
 
-bool wifi::commandhelper2::set_wifi_txpower(const std::string &device, uint32_t power_milli_watt){
-  auto power_mbm=power_milli_watt;
-  get_logger()->debug("set_wifi_txpower {} {}milli dBm",device,power_milli_watt);
+bool wifi::commandhelper2::set_wifi_txpower(const std::string &device,const uint32_t tx_power_mBm){
+  get_logger()->debug("set_wifi_txpower {} {} mBm",device,tx_power_mBm);
   // Create the socket and connect to it.
   struct nl_sock *sckt = nl_socket_alloc();
   genl_connect(sckt);
@@ -162,7 +161,7 @@ bool wifi::commandhelper2::set_wifi_txpower(const std::string &device, uint32_t 
   // Add specific attributes to change the frequency of the device.
   NLA_PUT_U32(mesg, NL80211_ATTR_IFINDEX, if_nametoindex(device.c_str()));
   NLA_PUT_U32(mesg, NL80211_ATTR_WIPHY_TX_POWER_SETTING, NL80211_TX_POWER_FIXED);
-  NLA_PUT_U32(mesg, NL80211_ATTR_WIPHY_TX_POWER_LEVEL, power_mbm);
+  NLA_PUT_U32(mesg, NL80211_ATTR_WIPHY_TX_POWER_LEVEL, tx_power_mBm);
 
   // Finally send it and receive the amount of bytes sent.
   nl_send_auto_complete(sckt, mesg);
