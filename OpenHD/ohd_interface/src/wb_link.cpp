@@ -389,7 +389,14 @@ void WBLink::apply_txpower() {
   const auto settings=m_settings->get_settings();
   for(const auto& holder: m_broadcast_cards){
     const auto& card=holder->_wifi_card;
-    WifiCardCommandHelper::set_txpower(card,settings.wb_tx_power_milli_watt);
+    if(card.type==WiFiCardType::Realtek8812au){
+      // corresponding driver workaround for dynamic tx power:
+      const auto tmp=openhd::tx_power_level_to_mBm_rtl8812au_only(settings.wb_tx_power_level);
+      m_console->debug("RTL8812AU power level: %d %d",settings.wb_tx_power_level,tmp);
+      WifiCardCommandHelper::iw_set_tx_power_mBm(card,tmp);
+    }else{
+      WifiCardCommandHelper::iwconfig_set_txpower(card,settings.wb_tx_power_milli_watt);
+    }
   }
 }
 
@@ -494,14 +501,9 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   auto change_wb_mcs_index=openhd::IntSetting{(int)m_settings->get_settings().wb_mcs_index,[this](std::string,int value){
                                                   return request_set_mcs_index(value);
                                                 }};
-  auto change_tx_power=openhd::IntSetting{(int)m_settings->get_settings().wb_tx_power_milli_watt,[this](std::string,int value){
-                                              return request_set_txpower(value);
-                                            }};
   ret.push_back(Setting{WB_FREQUENCY,change_freq});
   ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
   ret.push_back(Setting{WB_MCS_INDEX,change_wb_mcs_index});
-  ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
-
   if(m_profile.is_air){
     auto change_video_fec_block_length=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_block_length,[this](std::string,int value){
                                                               return set_video_fec_block_length(value);
@@ -540,11 +542,21 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     };
     ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
   }
+  // WIFI TX power depends on the used chips
   if(has_rtl8812au()){
-    auto cb_wb_rtl8812au_tx_pwr_idx_override=[this](std::string,int value){
+    /*auto cb_wb_rtl8812au_tx_pwr_idx_override=[this](std::string,int value){
       return rtl8812au_set_tx_pwr_idx_override(value);
     };
-    ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override,cb_wb_rtl8812au_tx_pwr_idx_override}});
+    ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override,cb_wb_rtl8812au_tx_pwr_idx_override}});*/
+    auto cb_tx_power_level=[this](std::string,int value){
+      return rtl8812au_set_tx_power_level(value);
+    };
+    ret.push_back(openhd::Setting{WB_TX_POWER_LEVEL,openhd::IntSetting{(int)settings.wb_tx_power_level,cb_tx_power_level}});
+  }else{
+    auto change_tx_power=openhd::IntSetting{(int)m_settings->get_settings().wb_tx_power_milli_watt,[this](std::string,int value){
+                                                return request_set_txpower(value);
+                                              }};
+    ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
   }
   openhd::validate_provided_ids(ret);
   return ret;
@@ -840,12 +852,25 @@ bool WBLink::check_work_queue_empty() {
   return true;
 }
 
-bool WBLink::rtl8812au_set_tx_pwr_idx_override(int value) {
+/*bool WBLink::rtl8812au_set_tx_pwr_idx_override(int value) {
   if(!openhd::validate_rtl8812au_wb_tx_pwr_idx(value))return false;
   m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=value;
   m_settings->persist();
   openhd::write_modprobe_file_rtl8812au_wb(value);
   // NOTE: Needs reboot to be applied
+  return true;
+}*/
+
+bool WBLink::rtl8812au_set_tx_power_level(int value) {
+  if(!openhd::validate_tx_power_level(value))return false;
+  if(!check_work_queue_empty())return false;
+  m_settings->unsafe_get_settings().wb_tx_power_level=static_cast<openhd::TxPowerLevel>(value);
+  m_settings->persist();
+  // No need to delay the change, but perform it async anyways.
+  auto work_item=std::make_shared<WorkItem>([this](){
+    apply_txpower();
+  },std::chrono::steady_clock::now());
+  schedule_work_item(work_item);
   return true;
 }
 
@@ -857,3 +882,4 @@ bool WBLink::has_rtl8812au() {
   }
   return false;
 }
+

@@ -439,7 +439,7 @@ static std::string createIpCameraStream(const std::string &url) {
 /**
  * Create the part of the pipeline that takes the raw h264/h265/mjpeg from
  * gstreamer and packs it into rtp.
- * @param videoCodec the video codec o create the rtp for.
+ * @param videoCodec the video codec to create the rtp for.
  * @return the gstreamer pipeline part.
  */
 static std::string createRtpForVideoCodec(const VideoCodec videoCodec) {

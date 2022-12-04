@@ -20,8 +20,9 @@ bool set_wifi_monitor_mode(const std::string &device);
 // set frequency and optionally also the channel width
 bool set_wifi_frequency(const std::string &device, uint32_t freq_mhz,std::optional<uint32_t> channel_width=std::nullopt);
 
-// TODO mW or dBm or milli dBm
-bool set_wifi_txpower(const std::string &device, uint32_t power_milli_watt);
+// See https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/nl80211.h#L1905
+// NOTE: even linux seems to have no idea what mBm means - rtl8812au interprets that not as milli(1000)dBm, but dBm/100
+bool set_wifi_txpower(const std::string &device, uint32_t tx_power_mBm);
 
 }
 

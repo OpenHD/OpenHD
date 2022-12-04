@@ -47,13 +47,14 @@ class OHDVideo {
   const OHDPlatform m_platform;
   // All the created camera streams
   std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
-  // Add a CameraStream for a discovered camera.
-  void configure(std::shared_ptr<CameraHolder> camera);
   std::shared_ptr<spdlog::logger> m_console;
   // r.n limited to primary and secondary camera
   static constexpr auto MAX_N_CAMERAS=2;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
  private:
+  // Add a CameraStream for a discovered camera.
+  void configure(std::shared_ptr<CameraHolder> camera);
+  // propagate a bitrate change request to the CameraStream implementation(s)
   void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb);
 };
 
