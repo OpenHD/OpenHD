@@ -156,15 +156,17 @@ static constexpr auto WB_ENABLE_STBC="WB_E_STBC";
 static constexpr auto WB_ENABLE_LDPC="WB_E_LDPC";
 static constexpr auto WB_ENABLE_SHORT_GUARD="WB_E_SHORT_GUARD";
 
-// requires rtl8812au openhd driver https://github.com/OpenHD/rtl8812au/blob/v5.2.20/os_dep/linux/ioctl_cfg80211.c#L3667
+// requires rtl8812au openhd driver https://github.com/OpenHD/rtl8812au/blob/v5.2.20/os_dep/linux/ioctl_cfg80211.c#L3664
 // NOTE: these values are the values that are passed to NL80211_ATTR_WIPHY_TX_POWER_LEVEL
+// this param is normally in mBm, but has been reworked to accept those rtl8812au specific tx power index override values
+// (under this name they were known already in previous openhd releases, but we now support changing them dynamcially at run time)
 static uint32_t tx_power_level_to_mBm_rtl8812au_only(const TxPowerLevel& tx_power_level){
   switch (tx_power_level) {
     case TxPowerLevel::LOW:
       return 19;
       break;
     case MEDIUM:
-      return 35;
+      return 37;
       break;
     case HIGH:
       return 58;
@@ -174,7 +176,7 @@ static uint32_t tx_power_level_to_mBm_rtl8812au_only(const TxPowerLevel& tx_powe
       break;
   }
   openhd::log::get_default()->warn("Unknown tx_power_level");
-  return 100;
+  return 19;
 }
 
 static bool validate_tx_power_level(int value){
