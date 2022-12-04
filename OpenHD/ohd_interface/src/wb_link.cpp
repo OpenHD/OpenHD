@@ -395,7 +395,9 @@ void WBLink::apply_txpower() {
       m_console->debug("RTL8812AU power level: {} {}",settings.wb_tx_power_level,tmp);
       WifiCardCommandHelper::iw_set_tx_power_mBm(card,tmp);
     }else{
-      WifiCardCommandHelper::iwconfig_set_txpower(card,settings.wb_tx_power_milli_watt);
+      const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
+      WifiCardCommandHelper::iw_set_tx_power_mBm(tmp);
+      //WifiCardCommandHelper::iwconfig_set_txpower(card,settings.wb_tx_power_milli_watt);
     }
   }
 }
