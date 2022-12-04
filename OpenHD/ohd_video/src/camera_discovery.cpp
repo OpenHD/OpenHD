@@ -88,7 +88,7 @@ void DCameras::detect_raspberrypi_broadcom_csi() {
     Camera camera;
     camera.name = "Pi_CSI_0";
     camera.vendor = "RaspberryPi";
-    camera.type = CameraType::RaspberryPiCSI;
+    camera.type = CameraType::RPI_CSI_MMAL;
     camera.bus = "0";
     camera.index = m_discover_index;
     m_discover_index++;
@@ -100,7 +100,7 @@ void DCameras::detect_raspberrypi_broadcom_csi() {
     Camera camera;
     camera.name = "Pi_CSI_1";
     camera.vendor = "RaspberryPi";
-    camera.type = CameraType::RaspberryPiCSI;
+    camera.type = CameraType::RPI_CSI_MMAL;
     camera.bus = "1";
     camera.index = m_discover_index;
     m_discover_index++;
@@ -135,7 +135,7 @@ bool DCameras::detect_raspberrypi_broadcom_veye() {
   Camera camera;
   camera.name = "Pi_VEYE_0";
   camera.vendor = "VEYE";
-  camera.type = CameraType::RaspberryPiVEYE;
+  camera.type = CameraType::RPI_VEYE_CSI_MMAL;
   camera.bus = "0";
   camera.index = m_discover_index;
   m_discover_index++;
@@ -280,10 +280,10 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
     camera.type = CameraType::UVC;
     m_console->debug("Found UVC camera");
   } else if (driver == "tegra-video") {
-    camera.type = CameraType::JetsonCSI;
+    camera.type = CameraType::JETSON_CSI;
     m_console->debug("Found Jetson CSI camera");
   } else if (driver == "rk_hdmirx") {
-    camera.type = CameraType::RockchipHDMI;
+    camera.type = CameraType::ROCKCHIP_HDMI;
     m_console->debug("Found Rockchip HDMI input");
   } else if (driver == "v4l2 loopback") {
     // this is temporary, we are not going to use v4l2loopback for thermal cameras they'll be directly

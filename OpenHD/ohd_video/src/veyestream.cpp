@@ -15,7 +15,7 @@ VEYEStream::VEYEStream(PlatformType platform, std::shared_ptr<CameraHolder> came
   m_console->debug("VEYEStream::VEYEStream()");
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
-  assert(camera.type==CameraType::RaspberryPiVEYE);
+  assert(camera.type==CameraType::RPI_VEYE_CSI_MMAL);
   m_camera_holder->register_listener([this](){
 	// right now, every time the settings for this camera change, we just re-start the whole stream.
 	// That is not ideal, since some cameras support changing for example the bitrate or white balance during operation.

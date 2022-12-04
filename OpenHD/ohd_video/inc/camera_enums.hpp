@@ -11,74 +11,85 @@
 // Helper for all this json bloat
 
 enum class CameraType {
-  Unknown,
-  Dummy,  // Dummy camera, is created fully in sw, for debugging purposes.
-  RaspberryPiCSI,  // Rpi foundation CSI camera,old MMAL / BROADCOM
-  RaspberryPiVEYE,
-  JetsonCSI,    // Any CSI camera on jetson
-  RockchipCSI,  // Any CSI camera on rockchip
-  // I think this is a V4l2 camera so to say, too.
+  // only exists to have a default value, properly discovered cameras must not be of type unknown
+  UNKNOWN,
+  // Dummy camera, is created fully in sw, for debugging purposes.
+  DUMMY_SW,
+  // Rpi foundation standard/original CSI cameras,old MMAL / BROADCOM stack
+  RPI_CSI_MMAL,
+  // dirty and might be completely removed in future release(s), rpi veye using the MMAL stack but customized (dirty veye-raspivid)
+  RPI_VEYE_CSI_MMAL,
+  // Any CSI camera on jetson
+  JETSON_CSI,
+  // Any CSI camera on rockchip
+  ROCKCHIP_CSI,
+  // UVC / V4l2 USB Camera
   UVC,
   // this is not just a UVC camera that happens to support h264, it's the
   // standard UVC H264 that only a few cameras support, like the older models of
   // the Logitech C920. Other UVC cameras may support h264, but they do it in a
   // completely different way so we keep them separate
-  UVCH264,
-  IP,     // IP camera that connects via ethernet and provides a video feed at special network address
-  Libcamera,
-  RockchipHDMI,
+  UVC_H264,
+  // IP camera that connects via ethernet and provides a video feed at special network address
+  // Cannot be auto-detected, therefore needs to be forced manually by the user (and in general, IP camera(s) are really different
+  // compared to the other camera types and therefore do not integrate well in OpenHD/ohd_video)
+  IP,
+  // Raspberry pi only right now, a CSI camera that uses the modern libcamera stack
+  RPI_CSI_LIBCAMERA,
+  // rk3588 specific, incomplete
+  ROCKCHIP_HDMI,
   // This camera is for developing purposes and/or for users that want to create more or less esoteric camera pipelines, e.g. by using
   // a custom script. In this mode, ohd_video acts as a completely agnostic passthrough for a camera stream that is neither managed
   // by openhd main executable nor created by openhd main executable (note: you'l loose any openhd-provided functionalities,e.g change camera settings and/or parameters
   // by that).
   // To keep this API somewhat stable we only define the following:
-  // Data needs to be provided by feeding rtp h264,h265 or mjpeg to port 5500
+  // Data needs to be provided by feeding rtp h264,h265 or mjpeg to udp port 5500 (localhost)
   // Note: it might seem unnecessary to essentially take data from an udp port and then forward the data to another udp port, but this
   // way we are prepared for when OpenHD is changed to take a raw data callback instead of UDP for getting data from openhd_video to
   // ohd_interface
-  CustomUnmanagedCamera
+  CUSTOM_UNMANAGED_CAMERA
 };
 NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
-     {CameraType::Unknown, nullptr},
-     {CameraType::Dummy, "Dummy"},
-     {CameraType::RaspberryPiCSI, "RaspberryPiCSI"},
-     {CameraType::RaspberryPiVEYE, "RaspberryPiVEYE"},
-     {CameraType::JetsonCSI, "JetsonCSI"},
-     {CameraType::RockchipCSI, "RockchipCSI"},
+     {CameraType::UNKNOWN, nullptr},
+     {CameraType::DUMMY_SW, "DUMMY_SW"},
+     {CameraType::RPI_CSI_MMAL, "RPI_CSI_MMAL"},
+     {CameraType::RPI_VEYE_CSI_MMAL, "RPI_VEYE_CSI_MMAL"},
+     {CameraType::JETSON_CSI, "JETSON_CSI"},
+     {CameraType::ROCKCHIP_CSI, "ROCKCHIP_CSI"},
      {CameraType::UVC, "UVC"},
-     {CameraType::UVCH264, "UVCH264"},
+     {CameraType::UVC_H264, "UVC_H264"},
      {CameraType::IP, "IP"},
-     {CameraType::Libcamera, "Libcamera"},
-     {CameraType::RockchipHDMI, "RockchipHDMI"},
-     {CameraType::CustomUnmanagedCamera, "CustomUnmanagedCamera"}
+     {CameraType::RPI_CSI_LIBCAMERA, "RPI_CSI_LIBCAMERA"},
+     {CameraType::ROCKCHIP_HDMI, "ROCKCHIP_HDMI"},
+     {CameraType::CUSTOM_UNMANAGED_CAMERA, "CUSTOM_UNMANAGED_CAMERA"}
  });
 
 static std::string camera_type_to_string(const CameraType &camera_type) {
   switch (camera_type) {
-    case CameraType::Dummy:
-      return "Dummy";
-    case CameraType::RaspberryPiCSI:
-      return "RaspberryPiCSI";
-    case CameraType::RaspberryPiVEYE:
-      return "RaspberryPiVEYE";
-    case CameraType::JetsonCSI:
-      return "JetsonCSI";
-    case CameraType::RockchipCSI:
-      return "RockchipCSI";
+    case CameraType::DUMMY_SW:
+      return "DUMMY_SW";
+    case CameraType::RPI_CSI_MMAL:
+      return "RPI_CSI_MMAL";
+    case CameraType::RPI_VEYE_CSI_MMAL:
+      return "RPI_VEYE_CSI_MMAL";
+    case CameraType::JETSON_CSI:
+      return "JETSON_CSI";
+    case CameraType::ROCKCHIP_CSI:
+      return "ROCKCHIP_CSI";
     case CameraType::UVC:
       return "UVC";
-    case CameraType::UVCH264:
-      return "UVCH264";
+    case CameraType::UVC_H264:
+      return "UVC_H264";
     case CameraType::IP:
       return "IP";
-    case CameraType::Libcamera:
-      return "Libcamera";
-    case CameraType::RockchipHDMI:
-      return "RockchipHDMI";
-    case CameraType::CustomUnmanagedCamera:
-      return "CustomUnmanagedCamera";
+    case CameraType::RPI_CSI_LIBCAMERA:
+      return "RPI_CSI_LIBCAMERA";
+    case CameraType::ROCKCHIP_HDMI:
+      return "ROCKCHIP_HDMI";
+    case CameraType::CUSTOM_UNMANAGED_CAMERA:
+      return "CUSTOM_UNMANAGED_CAMERA";
     default:
-      return "unknown";
+      return "UNKNOWN";
   }
 }
 

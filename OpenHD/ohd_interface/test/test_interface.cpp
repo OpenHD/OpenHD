@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
   std::cout<<"Test_interface run as air:"<<OHDUtil::yes_or_no(is_air)<<"\n";
 
   const auto platform=DPlatform::discover();
-  const OHDProfile profile{is_air,"0"};
+  const OHDProfile profile{is_air,false,"0"};
   OHDInterface ohdInterface(*platform,profile);
 
   std::cout << "OHDInterface started\n";

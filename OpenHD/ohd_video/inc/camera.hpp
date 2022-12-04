@@ -34,7 +34,7 @@ struct CameraEndpoint {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraEndpoint,device_node,bus,support_h264,support_h265,support_mjpeg,support_raw,formats)
 
 struct Camera {
-  CameraType type = CameraType::Unknown;
+  CameraType type = CameraType::UNKNOWN;
   std::string name = "unknown";
   std::string vendor = "unknown";
   std::string sensor_name="unknown";
@@ -65,35 +65,35 @@ struct Camera {
   }
   // supported by pretty much any camera type (not supporting bitrate control is only the case for these exotic cases)
   [[nodiscard]] bool supports_bitrate()const{
-    const bool not_supported= type==CameraType::CustomUnmanagedCamera || type==CameraType::IP;
+    const bool not_supported= type==CameraType::CUSTOM_UNMANAGED_CAMERA || type==CameraType::IP;
     return !not_supported;
   }
   // also, pretty much a must have unless using ip camera
   [[nodiscard]] bool supports_changing_format()const{
-    const bool not_supported= type==CameraType::CustomUnmanagedCamera || type==CameraType::IP;
+    const bool not_supported= type==CameraType::CUSTOM_UNMANAGED_CAMERA || type==CameraType::IP;
     return !not_supported;
   }
   [[nodiscard]] bool supports_keyframe_interval()const{
-    const bool not_supported= type==CameraType::CustomUnmanagedCamera || type==CameraType::IP;
+    const bool not_supported= type==CameraType::CUSTOM_UNMANAGED_CAMERA || type==CameraType::IP;
     return !not_supported;
   }
   [[nodiscard]] bool supports_rotation()const{
-    return type==CameraType::RaspberryPiCSI;
+    return type==CameraType::RPI_CSI_MMAL;
   }
   [[nodiscard]] bool supports_hflip_vflip()const{
-    return type==CameraType::RaspberryPiCSI;
+    return type==CameraType::RPI_CSI_MMAL;
   }
   [[nodiscard]] bool supports_awb()const{
-    return type==CameraType::RaspberryPiCSI;
+    return type==CameraType::RPI_CSI_MMAL;
   }
   [[nodiscard]] bool supports_exp()const{
-    return type==CameraType::RaspberryPiCSI;
+    return type==CameraType::RPI_CSI_MMAL;
   }
   bool supports_brightness()const{
-    return type==CameraType::RaspberryPiCSI;
+    return type==CameraType::RPI_CSI_MMAL;
   }
   bool supports_iso()const{
-    return type==CameraType::RaspberryPiCSI;
+    return type==CameraType::RPI_CSI_MMAL;
   }
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,vid,pid,bus,index,endpoints)
@@ -123,7 +123,7 @@ static Camera createDummyCamera() {
   camera.name = "DummyCamera";
   camera.index = 0;
   camera.vendor = "dummy";
-  camera.type = CameraType::Dummy;
+  camera.type = CameraType::DUMMY_SW;
   return camera;
 }
 
@@ -132,7 +132,7 @@ static Camera createCustomUnmanagedCamera(){
   camera.name = "CustomUnmanagedCamera";
   camera.index = 0;
   camera.vendor = "unknown";
-  camera.type = CameraType::CustomUnmanagedCamera;
+  camera.type = CameraType::CUSTOM_UNMANAGED_CAMERA;
   return camera;
 }
 

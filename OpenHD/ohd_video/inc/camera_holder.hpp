@@ -100,7 +100,7 @@ class CameraHolder:
       };
       ret.push_back(openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().h26x_keyframe_interval,c_keyframe_interval}});
     }
-    if(m_camera.type==CameraType::Libcamera){
+    if(m_camera.type==CameraType::RPI_CSI_LIBCAMERA){
       // r.n we only write the sensor name for cameras detected via libcamera
       ret.push_back(openhd::Setting{"V_CAM_SENSOR",openhd::StringSetting{m_camera.sensor_name,c_read_only_param}});
     }
@@ -132,7 +132,7 @@ class CameraHolder:
       ret.push_back(openhd::Setting{"V_VERT_FLIP",openhd::IntSetting{get_settings().vertical_flip,c_vertical_flip}});
       ret.push_back(openhd::Setting{"V_HORIZ_FLIP",openhd::IntSetting{get_settings().horizontal_flip,c_horizontal_flip}});
     }
-    if(m_camera.type==CameraType::RaspberryPiCSI){
+    if(m_camera.type==CameraType::RPI_CSI_MMAL){
       auto c_intra_refresh_type=[this](std::string,int value) {
         return set_intra_refresh_type(value);
       };
@@ -290,7 +290,7 @@ class CameraHolder:
   }
   [[nodiscard]] CameraSettings create_default()const override{
     auto ret=CameraSettings{};
-    if(m_camera.type==CameraType::RaspberryPiVEYE){
+    if(m_camera.type==CameraType::RPI_VEYE_CSI_MMAL){
       // Veye cannot do 640x480@30 by default, this is the next lower possible
       // (TODO it should do 720p but for some reason doesn't)
       ret.streamed_video_format.width=1920;

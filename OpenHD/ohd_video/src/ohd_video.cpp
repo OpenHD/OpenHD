@@ -51,7 +51,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
   // R.N we use gstreamer only for everything except veye
   // (veye also uses gstreamer, but we do not launch it via gst-launch)
   switch (camera.type) {
-    case CameraType::RaspberryPiVEYE:{
+    case CameraType::RPI_VEYE_CSI_MMAL:{
       m_console->debug("VEYE stream for Camera index:{}",camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
       auto stream = std::make_shared<VEYEStream>(m_platform.platform_type, camera_holder, udp_port);
@@ -60,14 +60,14 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
       m_camera_streams.push_back(stream);
       break;
     }
-    case CameraType::RaspberryPiCSI:
-    case CameraType::JetsonCSI:
+    case CameraType::RPI_CSI_MMAL:
+    case CameraType::JETSON_CSI:
     case CameraType::IP:
-    case CameraType::RockchipCSI:
+    case CameraType::ROCKCHIP_CSI:
     case CameraType::UVC:
-    case CameraType::RockchipHDMI:
-    case CameraType::CustomUnmanagedCamera:
-    case CameraType::Dummy: {
+    case CameraType::ROCKCHIP_HDMI:
+    case CameraType::CUSTOM_UNMANAGED_CAMERA:
+    case CameraType::DUMMY_SW: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
       auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, udp_port);
@@ -76,7 +76,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
       m_camera_streams.push_back(stream);
       break;
     }
-    case CameraType::Libcamera: {
+    case CameraType::RPI_CSI_LIBCAMERA: {
       m_console->debug("LibCamera index:{}", camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
       auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, udp_port);

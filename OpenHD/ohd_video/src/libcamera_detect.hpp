@@ -62,7 +62,7 @@ static std::vector<Camera> get_csi_cameras(){
       openhd::log::get_default()->info("Libcamera found:{}",cam_id);
       Camera camera{};
       camera.name = cam_id;
-      camera.type = CameraType::Libcamera;
+      camera.type = CameraType::RPI_CSI_LIBCAMERA;
       camera.sensor_name= get_sensor_name_from_cam_id(cam_id);
       ohdCameras.push_back(camera);
     }else{
