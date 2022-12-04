@@ -390,11 +390,9 @@ void WBLink::apply_txpower() {
   for(const auto& holder: m_broadcast_cards){
     const auto& card=holder->_wifi_card;
     if(card.type==WiFiCardType::Realtek8812au){
-      // corresponding driver workaround for dynamic tx power:
-      const auto tmp=
-          openhd::tx_power_level_to_rtl8812au_tx_power_index_override(
-              settings.wb_tx_power_level);
-      m_console->debug("RTL8812AU power level: %d %d",settings.wb_tx_power_level,tmp);
+      // requires corresponding driver workaround for dynamic tx power
+      const auto tmp=openhd::tx_power_level_to_rtl8812au_tx_power_index_override(settings.wb_tx_power_level);
+      m_console->debug("RTL8812AU power level: {} {}",settings.wb_tx_power_level,tmp);
       WifiCardCommandHelper::iw_set_tx_power_mBm(card,tmp);
     }else{
       WifiCardCommandHelper::iwconfig_set_txpower(card,settings.wb_tx_power_milli_watt);
