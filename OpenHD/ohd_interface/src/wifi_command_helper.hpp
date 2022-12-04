@@ -62,6 +62,15 @@ static bool set_txpower2(const WiFiCard& card,const uint32_t txpower_milli_watt)
   return success;
 }
 
+static bool set_txpower_milli_dbm(const WiFiCard &card, const uint32_t tx_power_milli_dbm) {
+  std::stringstream ss;
+  ss<<"WifiCards::set_txpower("<<tx_power_milli_dbm<<" milli dBm)"<<" for " << card.interface_name;
+  openhd::log::get_default()->info(ss.str());
+  std::vector<std::string> args{"dev", card.interface_name, "set", "txpower", "fixed", std::to_string(tx_power_milli_dbm)};
+  bool success = OHDUtil::run_command("iw", args);
+  return success;
+}
+
 // from iw documentation:
 // dev <devname> set monitor <flag>*
 //		Set monitor flags. Valid flags are:

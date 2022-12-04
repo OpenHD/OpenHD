@@ -389,7 +389,13 @@ void WBLink::apply_txpower() {
   const auto settings=m_settings->get_settings();
   for(const auto& holder: m_broadcast_cards){
     const auto& card=holder->_wifi_card;
-    WifiCardCommandHelper::set_txpower(card,settings.wb_tx_power_milli_watt);
+    if(card.type==WiFiCardType::Realtek8812au){
+      // corresponding driver workaround for dynamic tx power:
+      const auto tmp=openhd::tx_power_level_to_milli_dbm_rtl8812au_only(settings.wb_tx_power_level);
+      WifiCardCommandHelper::set_txpower_milli_dbm(card,tmp);
+    }else{
+      WifiCardCommandHelper::set_txpower(card,settings.wb_tx_power_milli_watt);
+    }
   }
 }
 
