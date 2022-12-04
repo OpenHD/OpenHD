@@ -501,14 +501,9 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   auto change_wb_mcs_index=openhd::IntSetting{(int)m_settings->get_settings().wb_mcs_index,[this](std::string,int value){
                                                   return request_set_mcs_index(value);
                                                 }};
-  auto change_tx_power=openhd::IntSetting{(int)m_settings->get_settings().wb_tx_power_milli_watt,[this](std::string,int value){
-                                              return request_set_txpower(value);
-                                            }};
   ret.push_back(Setting{WB_FREQUENCY,change_freq});
   ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
   ret.push_back(Setting{WB_MCS_INDEX,change_wb_mcs_index});
-  ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
-
   if(m_profile.is_air){
     auto change_video_fec_block_length=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_block_length,[this](std::string,int value){
                                                               return set_video_fec_block_length(value);
@@ -547,6 +542,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     };
     ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
   }
+  // WIFI TX power depends on the used chips
   if(has_rtl8812au()){
     /*auto cb_wb_rtl8812au_tx_pwr_idx_override=[this](std::string,int value){
       return rtl8812au_set_tx_pwr_idx_override(value);
@@ -556,6 +552,11 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       return rtl8812au_set_tx_power_level(value);
     };
     ret.push_back(openhd::Setting{WB_TX_POWER_LEVEL,openhd::IntSetting{(int)settings.wb_tx_power_level,cb_tx_power_level}});
+  }else{
+    auto change_tx_power=openhd::IntSetting{(int)m_settings->get_settings().wb_tx_power_milli_watt,[this](std::string,int value){
+                                                return request_set_txpower(value);
+                                              }};
+    ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
   }
   openhd::validate_provided_ids(ret);
   return ret;
