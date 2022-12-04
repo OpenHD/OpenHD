@@ -55,7 +55,8 @@ struct WBLinkSettings {
   // rtl8812au driver does not support setting tx power by iw dev, but rather only by setting
   // this stupid tx power idx override param
   uint32_t wb_rtl8812au_tx_pwr_idx_override=0;
-  // testing
+  // R.n only possible on RTL8812AU
+  // See https://github.com/OpenHD/rtl8812au/blob/v5.2.20/os_dep/linux/ioctl_cfg80211.c#L3667
   TxPowerLevel wb_tx_power_level=TxPowerLevel::LOW;
 
   bool enable_wb_video_variable_bitrate= false;// wb link recommends bitrate(s) to the encoder, can be helpfully for inexperienced users.
@@ -155,7 +156,7 @@ static constexpr auto WB_ENABLE_STBC="WB_E_STBC";
 static constexpr auto WB_ENABLE_LDPC="WB_E_LDPC";
 static constexpr auto WB_ENABLE_SHORT_GUARD="WB_E_SHORT_GUARD";
 
-// requires rtl8812au openhd driver
+// requires rtl8812au openhd driver https://github.com/OpenHD/rtl8812au/blob/v5.2.20/os_dep/linux/ioctl_cfg80211.c#L3667
 // NOTE: these values are the values that are passed to NL80211_ATTR_WIPHY_TX_POWER_LEVEL
 static uint32_t tx_power_level_to_mBm_rtl8812au_only(const TxPowerLevel& tx_power_level){
   switch (tx_power_level) {
