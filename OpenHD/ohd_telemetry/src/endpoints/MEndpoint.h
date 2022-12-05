@@ -72,7 +72,7 @@ class MEndpoint {
   // false otherwise
   virtual bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) = 0;
  private:
-  MAV_MSG_CALLBACK callback = nullptr;
+  MAV_MSG_CALLBACK m_callback = nullptr;
   // increases message count and forwards the messages via the callback if registered.
   void onNewMavlinkMessages(std::vector<MavlinkMessage> messages);
   mavlink_status_t receiveMavlinkStatus{};
