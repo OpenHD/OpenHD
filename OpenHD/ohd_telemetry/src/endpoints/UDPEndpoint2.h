@@ -5,10 +5,11 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_UDPENDPOINT2_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_UDPENDPOINT2_H_
 
-#include "MEndpoint.hpp"
-#include "HelperSources/SocketHelper.hpp"
-#include <thread>
 #include <map>
+#include <thread>
+
+#include "HelperSources/SocketHelper.hpp"
+#include "MEndpoint.h"
 
 /**
  * Special, for communicating with QGroundControl..

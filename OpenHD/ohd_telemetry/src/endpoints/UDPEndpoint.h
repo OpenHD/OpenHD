@@ -5,10 +5,11 @@
 #ifndef XMAVLINKSERVICE_UDPENDPOINT_H
 #define XMAVLINKSERVICE_UDPENDPOINT_H
 
-#include "MEndpoint.hpp"
-#include "HelperSources/SocketHelper.hpp"
-#include "openhd-spdlog.hpp"
 #include <thread>
+
+#include "HelperSources/SocketHelper.hpp"
+#include "MEndpoint.h"
+#include "openhd-spdlog.hpp"
 
 // Wraps two UDP ports, one for sending and one for receiving data
 // (since TCP and UART for example also allow sending and receiving).

@@ -32,7 +32,8 @@ else()
 endif()
 
 SET(sources
-    "src/endpoints/MEndpoint.hpp"
+    "src/endpoints/MEndpoint.cpp"
+    "src/endpoints/MEndpoint.h"
     "src/endpoints/SerialEndpoint.cpp"
     "src/endpoints/SerialEndpoint.h"
     "src/endpoints/UDPEndpoint.cpp"

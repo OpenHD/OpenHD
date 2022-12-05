@@ -5,15 +5,15 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_
 
-#include "MEndpoint.hpp"
-#include "openhd-spdlog.hpp"
-#include <utility>
-#include <chrono>
-#include <mutex>
-#include <thread>
+#include <atomic>
 #include <chrono>
 #include <memory>
-#include <atomic>
+#include <mutex>
+#include <thread>
+#include <utility>
+
+#include "MEndpoint.h"
+#include "openhd-spdlog.hpp"
 
 // At some point, I decided there is no way around it than to write our own UART receiver program.
 // Mostly based on MAVSDK. Doesn't use boost.
