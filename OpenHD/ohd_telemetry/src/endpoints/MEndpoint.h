@@ -15,9 +15,6 @@
 #include <utility>
 #include <atomic>
 
-// WARNING BE CAREFULL TO REMOVE ON RELEASE
-//#define OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
-
 // Mavlink Endpoint
 // A Mavlink endpoint hides away the underlying connection - e.g. UART, TCP, UDP.
 // It has a (implementation-specific) method to send a message (sendMessage) and (implementation-specific)
@@ -67,7 +64,7 @@ class MEndpoint {
   const std::string TAG;
  protected:
   // parse new data as it comes in, extract mavlink messages and forward them on the registered callback (if it has been registered)
-  void parseNewData(const uint8_t *data,const int data_len);
+  void parseNewData(const uint8_t *data,int data_len);
   // this one is special, since mavsdk in this case has already done the message parsing
   void parseNewDataEmulateForMavsdk(mavlink_message_t msg){
 	onNewMavlinkMessage(msg);

@@ -4,6 +4,9 @@
 
 #include "MEndpoint.h"
 
+// WARNING BE CAREFULL TO REMOVE ON RELEASE
+//#define OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
+
 MEndpoint::MEndpoint(std::string tag)
     : TAG(std::move(tag)),m_mavlink_channel(checkoutFreeChannel()) {
   openhd::log::get_default()->debug(TAG+" using channel:{}",m_mavlink_channel);
