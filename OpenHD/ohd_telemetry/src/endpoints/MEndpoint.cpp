@@ -12,22 +12,11 @@ MEndpoint::MEndpoint(std::string tag)
   openhd::log::get_default()->debug(TAG+" using channel:{}",m_mavlink_channel);
 }
 
-void MEndpoint::sendMessage(const MavlinkMessage& message) {
-#ifdef OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
-  const auto rand= random_number(0,100);
-    if(rand>50){
-      openhd::loggers::get_default()->debug("Emulate packet loss - dropped packet");
-      return;
-    }
-#endif
-  const auto res=sendMessageImpl(message);
-  m_n_messages_sent++;
-  if(!res)m_n_messages_send_failed++;
-}
-
-void MEndpoint::sendMessages(const std::vector<MavlinkMessage>& messages) {
+void MEndpoint::sendMessages(const std::vector<MavlinkMessage> messages) {
   for(const auto& msg:messages){
-    sendMessage(msg);
+    const auto res=sendMessageImpl(msg);
+    m_n_messages_sent++;
+    if(!res)m_n_messages_send_failed++;
   }
 }
 

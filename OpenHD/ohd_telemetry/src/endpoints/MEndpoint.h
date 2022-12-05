@@ -36,15 +36,14 @@ class MEndpoint {
    */
   explicit MEndpoint(std::string tag);;
   /**
-   * send a message via this endpoint.
+   * send one or more messages via this endpoint.
    * If the endpoint is silently disconnected, this MUST NOT FAIL/CRASH.
    * This calls the underlying implementation's sendMessageImpl() function (pure virtual)
    * and increases the sent message count
    * @param message the message to send
+   * TODO make sure we never exceed the wifi MTU
    */
-  void sendMessage(const MavlinkMessage &message);
-  // Helper to send multiple messages at once
-  void sendMessages(const std::vector<MavlinkMessage>& messages);
+  void sendMessages(const std::vector<MavlinkMessage> messages);
   /**
    * register a callback that is called every time
    * this endpoint has received a new message
