@@ -45,13 +45,10 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
           m_sys_id, m_comp_id));
   MavlinkComponent::vec_append(ret, generate_mav_wb_stats());
   //ret.push_back(generateOpenHDVersion());
-  // TODO remove for release
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
-  // TODO remove for release
   //_status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
   const auto logs = generateLogMessages();
   MavlinkComponent::vec_append(ret,logs);
-  //ret.insert(ret.end(), logs.begin(), logs.end());
   return ret;
 }
 

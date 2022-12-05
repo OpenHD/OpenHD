@@ -41,7 +41,6 @@ class MEndpoint {
    * This calls the underlying implementation's sendMessageImpl() function (pure virtual)
    * and increases the sent message count
    * @param message the message to send
-   * TODO make sure we never exceed the wifi MTU
    */
   void sendMessages(const std::vector<MavlinkMessage> messages);
   /**
