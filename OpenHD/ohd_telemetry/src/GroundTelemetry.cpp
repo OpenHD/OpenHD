@@ -113,7 +113,7 @@ void GroundTelemetry::send_messages_air_unit(const std::vector<MavlinkMessage>& 
   }
 }
 
-void GroundTelemetry::loopInfinite(bool& terminate,const bool enableExtendedLogging) {
+void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLogging) {
   const auto log_intervall=std::chrono::seconds(5);
   const auto loop_intervall=std::chrono::milliseconds(500);
   auto last_log=std::chrono::steady_clock::now();
@@ -164,7 +164,7 @@ void GroundTelemetry::loopInfinite(bool& terminate,const bool enableExtendedLogg
   }
 }
 
-std::string GroundTelemetry::createDebug() const {
+std::string GroundTelemetry::create_debug() const {
   std::stringstream ss;
   //ss<<"GT:\n";
   if (udpWifibroadcastEndpoint) {

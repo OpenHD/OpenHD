@@ -31,17 +31,29 @@ class AirTelemetry : public MavlinkSystem{
   AirTelemetry(const AirTelemetry&&)=delete;
   ~AirTelemetry();
   /**
-   * Telemetry will run infinite in its own threads until an error occurs.
+   * Telemetry will run infinite in its own threads until terminate is set to true
    * @param enableExtendedLogging be really verbose on logging.
    */
-  void loopInfinite(bool& terminate,bool enableExtendedLogging = false);
-  [[nodiscard]] std::string createDebug();
-  // add settings to the generic mavlink parameter server
-  // changes are propagated back through the settings instances
+  void loop_infinite(bool& terminate,bool enableExtendedLogging = false);
+  /**
+   * @return verbose string about the current state, for debugging
+   */
+  [[nodiscard]] std::string create_debug();
+  /**
+   * add settings to the generic mavlink parameter server
+   * changes are propagated back through the settings instances
+   * @param settings the settings to add
+   */
   void add_settings_generic(const std::vector<openhd::Setting>& settings);
-  // call once all settings have been added, this is needed to avoid an invariant parameter set
+  /**
+   * must be called once all settings have been added, this is needed to avoid an invariant parameter set
+   */
   void settings_generic_ready();
-  // We have a unique component id / param server per camera
+  /**
+   * On the air unit we use mavlink to change camera settings. We have exactly one mavlink param server per camera
+   * @param camera_index 0 for primary camera, 1 for secondary camera, ...
+   * @param settings the settings for this camera
+   */
   void add_settings_camera_component(int camera_index,const std::vector<openhd::Setting>& settings);
  private:
   const OHDPlatform _platform;

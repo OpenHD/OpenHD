@@ -17,14 +17,15 @@ OHDTelemetry::OHDTelemetry(OHDPlatform platform1,
 	assert(airTelemetry);
 	loopThread = std::make_unique<std::thread>([this] {
 	  assert(airTelemetry);
-	  airTelemetry->loopInfinite(terminate,this->m_enableExtendedLogging);
+          airTelemetry->loop_infinite(terminate, this->m_enableExtendedLogging);
 	});
   } else {
 	groundTelemetry = std::make_unique<GroundTelemetry>(platform,opt_action_handler);
 	assert(groundTelemetry);
 	loopThread = std::make_unique<std::thread>([this] {
 	  assert(groundTelemetry);
-	  groundTelemetry->loopInfinite(terminate,this->m_enableExtendedLogging);
+          groundTelemetry->loop_infinite(terminate,
+                                         this->m_enableExtendedLogging);
 	});
   }
 }
@@ -36,9 +37,9 @@ OHDTelemetry::~OHDTelemetry() {
 
 std::string OHDTelemetry::createDebug() const {
   if(profile.is_air){
-	return airTelemetry->createDebug();
+	return airTelemetry->create_debug();
   }else{
-	return groundTelemetry->createDebug();
+	return groundTelemetry->create_debug();
   }
 }
 
