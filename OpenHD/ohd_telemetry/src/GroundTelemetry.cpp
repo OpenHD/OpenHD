@@ -88,7 +88,7 @@ void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
   // This is not exactly following the mavlink routing standard, but saves a lot of bandwidth.
   std::lock_guard<std::mutex> guard(components_lock);
   for(auto& component:components){
-    const auto responses=component->process_mavlink_message(message);
+    const auto responses=component->process_mavlink_messages({message});
     for(const auto& response:responses){
       // for now, send to the ground station clients only
       sendMessageGroundStationClients(response);

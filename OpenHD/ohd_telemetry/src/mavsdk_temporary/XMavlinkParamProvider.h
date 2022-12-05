@@ -25,7 +25,7 @@ class XMavlinkParamProvider :public MavlinkComponent{
   void add_params(const std::vector<openhd::Setting>& settings);
   void set_ready();
   // override from component
-  std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage &msg)override;
+  std::vector<MavlinkMessage> process_mavlink_messages(std::vector<MavlinkMessage> messages)override;
   // override from component
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
  private:

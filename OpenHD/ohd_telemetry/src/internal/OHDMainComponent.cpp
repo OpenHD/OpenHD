@@ -55,58 +55,60 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   return ret;
 }
 
-std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_message(const MavlinkMessage &msg) {
+std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vector<MavlinkMessage> messages) {
   std::vector<MavlinkMessage> ret{};
-  switch (msg.m.msgid) { // NOLINT(cppcoreguidelines-narrowing-conversions)
-      // Obsolete
-      /*case MAVLINK_MSG_ID_PING:{
-        // We respond to ping messages
-        auto response=handlePingMessage(msg);
+  for(const auto& msg:messages){
+    switch (msg.m.msgid) { // NOLINT(cppcoreguidelines-narrowing-conversions)
+        // Obsolete
+        /*case MAVLINK_MSG_ID_PING:{
+          // We respond to ping messages
+          auto response=handlePingMessage(msg);
+          if(response.has_value()){
+            ret.push_back(response.value());
+          }
+        }break;*/
+      case MAVLINK_MSG_ID_TIMESYNC:{
+        // makes ping obsolete
+        auto response= handle_timesync_message(msg);
         if(response.has_value()){
           ret.push_back(response.value());
         }
-      }break;*/
-    case MAVLINK_MSG_ID_TIMESYNC:{
-      // makes ping obsolete
-      auto response= handle_timesync_message(msg);
-      if(response.has_value()){
-        ret.push_back(response.value());
-      }
-    }break;
+      }break;
 
-    case MAVLINK_MSG_ID_COMMAND_LONG:{
-      mavlink_command_long_t command;
-      mavlink_msg_command_long_decode(&msg.m,&command);
-      m_console->debug("Got MAVLINK_MSG_ID_COMMAND_LONG: {} {}",command.command,static_cast<uint32_t>(command.param1));
-      if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
-        //https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
-        m_console->debug("Got shutdown command");
-        if(command.target_system== m_sys_id){
-          // we are a companion computer, so we use param2 to get the actual action
-          const auto action_for_companion=command.param2;
-          if(action_for_companion>0){
-            ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
-            const bool shutdownOnly=action_for_companion==2;
-            RebootUtil::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
+      case MAVLINK_MSG_ID_COMMAND_LONG:{
+        mavlink_command_long_t command;
+        mavlink_msg_command_long_decode(&msg.m,&command);
+        m_console->debug("Got MAVLINK_MSG_ID_COMMAND_LONG: {} {}",command.command,static_cast<uint32_t>(command.param1));
+        if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
+          //https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
+          m_console->debug("Got shutdown command");
+          if(command.target_system== m_sys_id){
+            // we are a companion computer, so we use param2 to get the actual action
+            const auto action_for_companion=command.param2;
+            if(action_for_companion>0){
+              ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
+              const bool shutdownOnly=action_for_companion==2;
+              RebootUtil::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
+            }
+            // dirty, we don't have a custom message for that yet
+            if(command.param3==1){
+              ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
+              m_console->debug("Unimplemented");
+            }
           }
-          // dirty, we don't have a custom message for that yet
-          if(command.param3==1){
-            ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
-            m_console->debug("Unimplemented");
+        }else if(command.command==MAV_CMD_REQUEST_MESSAGE){
+          const auto requested_message_id=static_cast<uint32_t>(command.param1);
+          m_console->debug("Someone requested a specific message: {}",requested_message_id);
+          if(requested_message_id==MAVLINK_MSG_ID_OPENHD_VERSION_MESSAGE){
+            m_console->info("Sent OpenHD version");
+            ret.push_back(generate_ohd_version());
           }
         }
-      }else if(command.command==MAV_CMD_REQUEST_MESSAGE){
-        const auto requested_message_id=static_cast<uint32_t>(command.param1);
-        m_console->debug("Someone requested a specific message: {}",requested_message_id);
-        if(requested_message_id==MAVLINK_MSG_ID_OPENHD_VERSION_MESSAGE){
-          m_console->info("Sent OpenHD version");
-          ret.push_back(generate_ohd_version());
-        }
-      }
-      // TODO have an ack response.
-    }break;
-    default:
-      break;
+        // TODO have an ack response.
+      }break;
+      default:
+        break;
+    }
   }
   return ret;
 }

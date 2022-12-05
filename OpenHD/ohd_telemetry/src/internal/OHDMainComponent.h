@@ -42,7 +42,7 @@ class OHDMainComponent : public MavlinkComponent{
   // override from component
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
   // override from component
-  std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage &msg)override;
+  std::vector<MavlinkMessage> process_mavlink_messages(std::vector<MavlinkMessage> messages)override;
   // update stats from ohd_interface
   void set_link_statistics(openhd::link_statistics::StatsAirGround stats);
   openhd::link_statistics::StatsAirGround get_latest_link_statistics();

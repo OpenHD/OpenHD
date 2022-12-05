@@ -76,10 +76,9 @@ void AirTelemetry::on_messages_ground_unit(const std::vector<MavlinkMessage>& me
   // any data created by an OpenHD component on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
   std::lock_guard<std::mutex> guard(components_lock);
   for(auto& component: components){
-    for(const auto message:messages){
-      const auto responses=component->process_mavlink_message(message);
-      send_messages_ground_unit(responses);
-    }
+    std::vector<MavlinkMessage> responses{};
+    MavlinkComponent::vec_append(responses,component->process_mavlink_messages(messages));
+    send_messages_ground_unit(responses);
   }
 }
 
