@@ -12,7 +12,7 @@ MEndpoint::MEndpoint(std::string tag)
   openhd::log::get_default()->debug(TAG+" using channel:{}",m_mavlink_channel);
 }
 
-void MEndpoint::sendMessages(const std::vector<MavlinkMessage> messages) {
+void MEndpoint::sendMessages(const std::vector<MavlinkMessage>& messages) {
   if(messages.empty())return;
   //openhd::log::create_or_get(TAG)->debug("N messages send:{}",messages.size());
   const auto res= sendMessagesImpl(messages);

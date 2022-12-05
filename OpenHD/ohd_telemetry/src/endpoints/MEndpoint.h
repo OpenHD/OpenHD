@@ -42,7 +42,7 @@ class MEndpoint {
    * and increases the sent message count
    * @param message the message to send
    */
-  void sendMessages(const std::vector<MavlinkMessage> messages);
+  void sendMessages(const std::vector<MavlinkMessage>& messages);
   /**
    * register a callback that is called every time
    * this endpoint has received a new message
