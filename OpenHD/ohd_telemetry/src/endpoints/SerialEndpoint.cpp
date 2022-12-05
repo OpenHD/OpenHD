@@ -57,10 +57,15 @@ SerialEndpoint::~SerialEndpoint() {
   stop();
 }
 
-bool SerialEndpoint::sendMessageImpl(const MavlinkMessage &message) {
-  const auto data = message.pack();
-  const int ret=write_data_serial(data);
-  return ret;
+bool SerialEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
+  auto message_buffers= pack_messages(messages);
+  bool success= true;
+  for(const auto& message_buffer:message_buffers){
+    if(!write_data_serial(message_buffer)){
+      success= false;
+    }
+  }
+  return success;
 }
 
 bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){

@@ -69,9 +69,9 @@ class MEndpoint {
 	onNewMavlinkMessages({MavlinkMessage{msg}});
   }
   // Must be overridden by the implementation
-  // Returns true if the message has been properly sent (e.g. a connection exists on connection-based endpoints)
+  // Returns true if the message(s) have been properly sent (e.g. a connection exists on connection-based endpoints)
   // false otherwise
-  virtual bool sendMessageImpl(const MavlinkMessage &message) = 0;
+  virtual bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) = 0;
  private:
   MAV_MSG_CALLBACK callback = nullptr;
   // increases message count and forwards the messages via the callback if registered.

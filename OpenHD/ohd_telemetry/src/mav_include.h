@@ -36,6 +36,25 @@ struct MavlinkMessage {
   }
 };
 
+static std::vector<std::vector<uint8_t>> pack_messages(const std::vector<MavlinkMessage>& messages,uint32_t max_mtu=1024){
+  std::vector<std::vector<uint8_t>> ret;
+  for(const auto& msg:messages){
+    ret.emplace_back(msg.pack());
+  }
+  return ret;
+  /*std::vector<uint8_t> buff{};
+  buff.reserve(max_mtu);
+  for(const auto& msg:messages){
+    auto data=msg.pack();
+    if(buff.size()+data.size()<=max_mtu){
+      buff.insert(buff.end(), data.begin(), data.end());
+    }else{
+
+    }
+  }*/
+}
+
+
 // For registering a callback that is called every time component X receives one or more mavlink messages
 typedef std::function<void(const std::vector<MavlinkMessage> messages)> MAV_MSG_CALLBACK;
 

@@ -46,7 +46,7 @@ class SerialEndpoint : public MEndpoint{
   // Does nothing if already stopped.
   void stop();
  private:
-  bool sendMessageImpl(const MavlinkMessage &message) override;
+  bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;
   static int define_from_baudrate(int baudrate);
   static int setup_port(const HWOptions& options,std::shared_ptr<spdlog::logger> m_console);
   void connect_and_read_loop();

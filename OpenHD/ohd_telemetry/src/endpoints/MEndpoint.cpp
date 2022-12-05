@@ -14,10 +14,10 @@ MEndpoint::MEndpoint(std::string tag)
 
 void MEndpoint::sendMessages(const std::vector<MavlinkMessage> messages) {
   openhd::log::create_or_get(TAG)->debug("N messages send:{}",messages.size());
-  for(const auto& msg:messages){
-    const auto res=sendMessageImpl(msg);
-    m_n_messages_sent++;
-    if(!res)m_n_messages_send_failed++;
+  const auto res= sendMessagesImpl(messages);
+  m_n_messages_sent+=messages.size();
+  if(!res){
+    m_n_messages_send_failed++;
   }
 }
 
