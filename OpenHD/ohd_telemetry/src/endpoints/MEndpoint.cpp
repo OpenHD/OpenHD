@@ -13,6 +13,7 @@ MEndpoint::MEndpoint(std::string tag)
 }
 
 void MEndpoint::sendMessages(const std::vector<MavlinkMessage> messages) {
+  openhd::log::create_or_get(TAG)->debug("N messages send:{}",messages.size());
   for(const auto& msg:messages){
     const auto res=sendMessageImpl(msg);
     m_n_messages_sent++;
@@ -49,7 +50,7 @@ void MEndpoint::parseNewData(const uint8_t* data, const int data_len) {
     }
   }
   onNewMavlinkMessages(messages);
-  openhd::log::create_or_get(TAG)->debug("N messages:{}",messages.size());
+  openhd::log::create_or_get(TAG)->debug("N messages receive:{}",messages.size());
 }
 
 
