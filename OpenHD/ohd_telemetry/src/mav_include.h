@@ -36,8 +36,8 @@ struct MavlinkMessage {
   }
 };
 
-// For registering a callback that is called every time component X receives a new Mavlink Message
-typedef std::function<void(MavlinkMessage &mavlinkMessage)> MAV_MSG_CALLBACK;
+// For registering a callback that is called every time component X receives one or more mavlink messages
+typedef std::function<void(const std::vector<MavlinkMessage> messages)> MAV_MSG_CALLBACK;
 
 static int64_t get_time_microseconds(){
   const auto time=std::chrono::steady_clock::now().time_since_epoch();

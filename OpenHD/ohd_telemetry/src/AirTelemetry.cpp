@@ -16,8 +16,8 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   setup_uart();
   // any message coming in via wifibroadcast is a message from the ground pi
   wifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(true);
-  wifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
-	onMessageGroundPi(msg);
+  wifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+    on_messages_ground_unit(messages);
   });
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
   components.push_back(m_ohd_main_component);
@@ -37,29 +37,31 @@ AirTelemetry::~AirTelemetry() {
 
 }
 
-void AirTelemetry::sendMessageFC(const MavlinkMessage &message) {
+void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages) {
   std::lock_guard<std::mutex> guard(_serialEndpointMutex);
   if(serialEndpoint){
-    serialEndpoint->sendMessage(message);
+    serialEndpoint->sendMessages(messages);
   }else{
     //m_console->warn("Cannot send message to FC");
   }
 }
 
-void AirTelemetry::sendMessageGroundPi(const MavlinkMessage &message) {
-  //debugMavlinkMessage(message.m,"AirTelemetry::sendMessageGroundPi");
-  // broadcast the mavlink message via wifibroadcast
-  wifibroadcastEndpoint->sendMessage(message);
+void AirTelemetry::send_messages_ground_unit(const std::vector<MavlinkMessage>& messages) {
+  for(const auto& message:messages){
+    //debugMavlinkMessage(message.m,"AirTelemetry::sendMessageGroundPi");
+  }
+  wifibroadcastEndpoint->sendMessages(messages);
 }
 
-void AirTelemetry::onMessageFC(MavlinkMessage &message) {
+void AirTelemetry::on_messages_fc(const std::vector<MavlinkMessage>& messages) {
   //debugMavlinkMessage(message.m,"AirTelemetry::onMessageFC");
   // Note: No OpenHD component ever talks to the FC, FC is completely passed through
-  sendMessageGroundPi(message);
+  send_messages_ground_unit(messages);
 }
 
-void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
-  const mavlink_message_t &m = message.m;
+void AirTelemetry::on_messages_ground_unit(const std::vector<MavlinkMessage>& messages) {
+  // TODO FIXME
+  /*const mavlink_message_t &m = message.m;
   // we do not need to forward heartbeat messages coming from the ground station,
   // They solely have a debugging purpose such that one knows the other station is alive.
   if (m.msgid == MAVLINK_MSG_ID_HEARTBEAT && m.sysid == OHD_SYS_ID_GROUND) {
@@ -68,16 +70,16 @@ void AirTelemetry::onMessageGroundPi(MavlinkMessage &message) {
   }
   if(m.msgid==MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE){
     m_console->debug("Sending rc channels override to FC");
-  }
+  }*/
   // for now, do it as simple as possible
-  sendMessageFC(message);
+  send_messages_fc(messages);
   // any data created by an OpenHD component on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
   std::lock_guard<std::mutex> guard(components_lock);
   for(auto& component: components){
-	const auto responses=component->process_mavlink_message(message);
-	for(const auto& response:responses){
-	  sendMessageGroundPi(response);
-	}
+    for(const auto message:messages){
+      const auto responses=component->process_mavlink_message(message);
+      send_messages_ground_unit(responses);
+    }
   }
 }
 
@@ -96,20 +98,18 @@ void AirTelemetry::loopInfinite(bool& terminate,const bool enableExtendedLogging
 		m_console->debug(wifibroadcastEndpoint->createInfo());
 	  }
 	  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
-	  if (enableExtendedLogging && serialEndpoint) {
-		m_console->debug(serialEndpoint->createInfo());
-	  }
+          if (enableExtendedLogging && serialEndpoint) {
+            m_console->debug(serialEndpoint->createInfo());
+          }
 	}
 	// send messages to the ground pi in regular intervals, includes heartbeat.
 	// everything else is handled by the callbacks and their threads
 	{
-	  std::lock_guard<std::mutex> guard(components_lock);
-	  for(auto& component:components){
-		const auto messages=component->generate_mavlink_messages();
-		for(const auto& msg:messages){
-		  sendMessageGroundPi(msg);
-		}
-	  }
+          std::lock_guard<std::mutex> guard(components_lock);
+          for(auto& component:components){
+            const auto messages=component->generate_mavlink_messages();
+            send_messages_ground_unit(messages);
+          }
 	}
 	const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
 	if(loopDelta>loop_intervall){
@@ -255,8 +255,8 @@ void AirTelemetry::setup_uart() {
 	options.baud_rate=fc_uart_baudrate;
 	options.flow_control= fc_uart_flow_control;
 	serialEndpoint=std::make_unique<SerialEndpoint>("ser_fc",options);
-	serialEndpoint->registerCallback([this](MavlinkMessage &msg) {
-	  this->onMessageFC(msg);
+	serialEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+          this->on_messages_fc(messages);
 	});
 	m_console->debug("FC UART enable - end");
   }

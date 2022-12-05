@@ -67,7 +67,7 @@ class MEndpoint {
   void parseNewData(const uint8_t *data,int data_len);
   // this one is special, since mavsdk in this case has already done the message parsing
   void parseNewDataEmulateForMavsdk(mavlink_message_t msg){
-	onNewMavlinkMessage(msg);
+	onNewMavlinkMessages({MavlinkMessage{msg}});
   }
   // Must be overridden by the implementation
   // Returns true if the message has been properly sent (e.g. a connection exists on connection-based endpoints)
@@ -75,8 +75,8 @@ class MEndpoint {
   virtual bool sendMessageImpl(const MavlinkMessage &message) = 0;
  private:
   MAV_MSG_CALLBACK callback = nullptr;
-  // increases message count and forwards the message via the callback if registered.
-  void onNewMavlinkMessage(mavlink_message_t msg);
+  // increases message count and forwards the messages via the callback if registered.
+  void onNewMavlinkMessages(std::vector<MavlinkMessage> messages);
   mavlink_status_t receiveMavlinkStatus{};
   const uint8_t m_mavlink_channel;
   std::chrono::steady_clock::time_point lastMessage{};

@@ -51,32 +51,25 @@ std::string MEndpoint::createInfo() const {
 
 void MEndpoint::parseNewData(const uint8_t* data, const int data_len) {
   //<<TAG<<" received data:"<<data_len<<" "<<MavlinkHelpers::raw_content(data,data_len)<<"\n";
-  int nMessages=0;
+  std::vector<MavlinkMessage> messages;
   mavlink_message_t msg;
   for (int i = 0; i < data_len; i++) {
     uint8_t res = mavlink_parse_char(m_mavlink_channel, (uint8_t)data[i], &msg, &receiveMavlinkStatus);
     if (res) {
-      nMessages++;
-      onNewMavlinkMessage(msg);
+      messages.push_back(MavlinkMessage{msg});
     }
   }
-  openhd::log::create_or_get(TAG)->debug("N messages:{}",nMessages);
+  onNewMavlinkMessages(messages);
+  openhd::log::create_or_get(TAG)->debug("N messages:{}",messages.size());
 }
 
-void MEndpoint::onNewMavlinkMessage(mavlink_message_t msg) {
-#ifdef OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
-  const auto rand= random_number(0,100);
-    if(rand>50){
-      openhd::loggers::get_default()->debug("Emulate packet loss - dropped packet");
-      return;1
-    }
-#endif
+
+void MEndpoint::onNewMavlinkMessages(std::vector<MavlinkMessage> messages) {
   lastMessage = std::chrono::steady_clock::now();
-  MavlinkMessage message{msg};
+  m_n_messages_received+=messages.size();
   if (callback != nullptr) {
-    callback(message);
+    callback(messages);
   } else {
     openhd::log::get_default()->warn("No callback set,did you forget to add it ?");
   }
-  m_n_messages_received++;
 }

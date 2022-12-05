@@ -19,13 +19,17 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   udpGroundClient =
       std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
                                      "127.0.0.1","127.0.0.1");
-  udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
-    onMessageGroundStationClients(msg);
+  udpGroundClient->registerCallback([this](std::vector<MavlinkMessage> messages) {
+    for(auto msg:messages){
+      onMessageGroundStationClients(msg);
+    }
   });
   // any message coming in via wifibroadcast is a message from the air pi
   udpWifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(false);
-  udpWifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
-    onMessageAirPi(msg);
+  udpWifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+    for(auto msg:messages){
+      onMessageAirPi(msg);
+    }
   });
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
   components.push_back(_ohd_main_component);
@@ -203,18 +207,20 @@ void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openh
   const auto port_offset=_other_udp_ground_stations.size()+1;
   auto tmp=std::make_shared<UDPEndpoint2>("GroundStationUDPX",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN+port_offset,
 										  ip_dest_device,ip_openhd);
-  tmp->registerCallback([this](MavlinkMessage &mavlinkMessage){
-	// Now this is weird, but somehow we get a lot of junk from QGroundControll on android ??!!
-	// QGroundControll defaults to 255
-	// QOpenHD defaults to 225;
-	const bool is_from_ground_controll=mavlinkMessage.m.sysid==255 || mavlinkMessage.m.sysid==225;
-	if(!is_from_ground_controll){
-	  // This can't really be a message from a ground controll application
-	  //m_console->debug("Dropping message");
-	  return;
-	}
-	//debugMavlinkMessage(mavlinkMessage.m, "GroundTelemetry::external GCS message");
-	onMessageGroundStationClients(mavlinkMessage);
+  tmp->registerCallback([this](std::vector<MavlinkMessage> messages){
+    for(auto msg:messages){
+      // Now this is weird, but somehow we get a lot of junk from QGroundControll on android ??!!
+      // QGroundControll defaults to 255
+      // QOpenHD defaults to 225;
+      const bool is_from_ground_controll=msg.m.sysid==255 || msg.m.sysid==225;
+      if(!is_from_ground_controll){
+        // This can't really be a message from a ground controll application
+        //m_console->debug("Dropping message");
+        return;
+      }
+      //debugMavlinkMessage(mavlinkMessage.m, "GroundTelemetry::external GCS message");
+      onMessageGroundStationClients(msg);
+    }
   });
   _other_udp_ground_stations[identifier]=tmp;
 }
