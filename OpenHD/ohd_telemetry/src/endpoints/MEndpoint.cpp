@@ -60,8 +60,7 @@ void MEndpoint::parseNewData(const uint8_t* data, const int data_len) {
       onNewMavlinkMessage(msg);
     }
   }
-  //<<TAG<<" N messages:"<<nMessages<<"\n";
-  //<<TAG<<MavlinkHelpers::mavlink_status_to_string(receiveMavlinkStatus)<<"\n";
+  openhd::log::create_or_get(TAG)->debug("N messages:{}",nMessages);
 }
 
 void MEndpoint::onNewMavlinkMessage(mavlink_message_t msg) {
