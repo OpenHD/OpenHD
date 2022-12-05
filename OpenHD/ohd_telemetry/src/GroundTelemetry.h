@@ -43,14 +43,14 @@ class GroundTelemetry :public MavlinkSystem{
   void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);
  private:
   const OHDPlatform _platform;
-  // called every time a message from the air pi is received
-  void onMessageAirPi(MavlinkMessage &message);
-  // send a message to the air pi
-  void sendMessageAirPi(const MavlinkMessage &message);
-  // called every time a message is received from any of the clients connected to the Ground Station (For Example QOpenHD)
-  void onMessageGroundStationClients(MavlinkMessage &message);
-  // send a message to all clients connected to the ground station, for example QOpenHD
-  void sendMessageGroundStationClients(const MavlinkMessage &message);
+  // called every time one or more messages from the air unit are received
+  void on_messages_air_unit(const std::vector<MavlinkMessage>& messages);
+  // send messages to the air unit, lossy
+  void send_messages_air_unit(const std::vector<MavlinkMessage>& messages);
+  // called every time one or more messages are received from any of the clients connected to the Ground Station (For Example QOpenHD)
+  void on_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages);
+  // send one or more messages to all clients connected to the ground station, for example QOpenHD
+  void send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages);
  private:
   std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_groundTelemetrySettings;
   std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;

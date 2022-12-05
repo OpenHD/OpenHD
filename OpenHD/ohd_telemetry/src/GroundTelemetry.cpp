@@ -19,13 +19,13 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   udpGroundClient =
       std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
                                      "127.0.0.1","127.0.0.1");
-  udpGroundClient->registerCallback([this](MavlinkMessage &msg) {
-    onMessageGroundStationClients(msg);
+  udpGroundClient->registerCallback([this](std::vector<MavlinkMessage> messages) {
+    on_messages_ground_station_clients(messages);
   });
   // any message coming in via wifibroadcast is a message from the air pi
   udpWifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(false);
-  udpWifibroadcastEndpoint->registerCallback([this](MavlinkMessage &msg) {
-    onMessageAirPi(msg);
+  udpWifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+    on_messages_air_unit(messages);
   });
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
   components.push_back(_ohd_main_component);
@@ -33,9 +33,9 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   if(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick){
     //m_joystick_reader=std::make_unique<JoystickReader>();
     m_rc_joystick_sender=std::make_unique<RcJoystickSender>([this](const MavlinkMessage &msg){
-      sendMessageAirPi(msg);
+          send_messages_air_unit({msg});
       // temporary / hacky: Send the messages to QOpenHD, such that we can display it in the UI
-      sendMessageGroundStationClients(msg);
+          send_messages_ground_station_clients({msg});
     },m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz,JoystickReader::get_default_channel_mapping());
     const auto parsed=JoystickReader::convert_string_to_channel_mapping(m_groundTelemetrySettings->get_settings().rc_channel_mapping);
     if(parsed==std::nullopt){
@@ -65,53 +65,51 @@ GroundTelemetry::~GroundTelemetry() {
   udpGroundClient= nullptr;
 }
 
-void GroundTelemetry::onMessageAirPi(MavlinkMessage &message) {
+void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& messages) {
   //debugMavlinkMessage(message.m,"GroundTelemetry::onMessageAirPi");
-  const mavlink_message_t &m = message.m;
+  //const mavlink_message_t &m = message.m;
   // All messages we get from the Air pi (they might come from the AirPi itself or the FC connected to the air pi)
   // get forwarded straight to all the client(s) connected to the ground station.
-  sendMessageGroundStationClients(message);
+  send_messages_ground_station_clients(messages);
   // Note: No OpenHD component ever talks to another OpenHD component or the FC, so we do not
   // need to do anything else here.
 }
 
-void GroundTelemetry::onMessageGroundStationClients(MavlinkMessage &message) {
+void GroundTelemetry::on_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
   //debugMavlinkMessage(message.m, "GroundTelemetry::onMessageGroundStationClients");
-  const auto &msg = message.m;
+  //const auto &msg = message.m;
   // All messages from the ground station(s) are forwarded to the air unit.
-  sendMessageAirPi(message);
+  send_messages_air_unit(messages);
   // OpenHD components running on the ground station don't need to talk to the air unit.
   // This is not exactly following the mavlink routing standard, but saves a lot of bandwidth.
   std::lock_guard<std::mutex> guard(components_lock);
   for(auto& component:components){
-    const auto responses=component->process_mavlink_message(message);
-    for(const auto& response:responses){
-      // for now, send to the ground station clients only
-      sendMessageGroundStationClients(response);
-    }
+    const auto responses=component->process_mavlink_messages(messages);
+    // for now, send to the ground station clients only
+    send_messages_ground_station_clients(responses);
   }
 }
 
-void GroundTelemetry::sendMessageGroundStationClients(const MavlinkMessage &message) {
+void GroundTelemetry::send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
   //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageGroundStationClients");
   // forward via TCP or UDP
   //if (tcpGroundCLient) {
   //	tcpGroundCLient->sendMessage(message);
   //}
   if (udpGroundClient) {
-	udpGroundClient->sendMessage(message);
+	udpGroundClient->sendMessages(messages);
   }
   std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
   for (auto const& [key, val] : _other_udp_ground_stations){
-	val->sendMessage(message);
+	val->sendMessages(messages);
   }
 }
 
-void GroundTelemetry::sendMessageAirPi(const MavlinkMessage &message) {
+void GroundTelemetry::send_messages_air_unit(const std::vector<MavlinkMessage>& messages) {
   //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageAirPi");
   // transmit via wifibroadcast
   if (udpWifibroadcastEndpoint) {
-	udpWifibroadcastEndpoint->sendMessage(message);
+	udpWifibroadcastEndpoint->sendMessages(messages);
   }
 }
 
@@ -139,13 +137,14 @@ void GroundTelemetry::loopInfinite(bool& terminate,const bool enableExtendedLogg
 	  for(auto& component:components){
 		assert(component);
 		const auto messages=component->generate_mavlink_messages();
+                send_messages_ground_station_clients(messages);
 		for(const auto& msg:messages){
 		  // r.n no ground unit component needs to talk to the air unit directly.
-		  sendMessageGroundStationClients(msg);
+                  // but we send heartbeats to the air pi anyways, just to keep the link active.
 		  if(msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT && msg.m.compid==MAV_COMP_ID_ONBOARD_COMPUTER){
 			// but we send heartbeats to the air pi anyways, just to keep the link active.
 			//m_console->debug("Heartbeat sent to air unit");
-			sendMessageAirPi(msg);
+                        send_messages_air_unit({msg});
 		  }
 		}
 	  }
@@ -203,18 +202,20 @@ void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openh
   const auto port_offset=_other_udp_ground_stations.size()+1;
   auto tmp=std::make_shared<UDPEndpoint2>("GroundStationUDPX",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN+port_offset,
 										  ip_dest_device,ip_openhd);
-  tmp->registerCallback([this](MavlinkMessage &mavlinkMessage){
-	// Now this is weird, but somehow we get a lot of junk from QGroundControll on android ??!!
-	// QGroundControll defaults to 255
-	// QOpenHD defaults to 225;
-	const bool is_from_ground_controll=mavlinkMessage.m.sysid==255 || mavlinkMessage.m.sysid==225;
-	if(!is_from_ground_controll){
-	  // This can't really be a message from a ground controll application
-	  //m_console->debug("Dropping message");
-	  return;
-	}
-	//debugMavlinkMessage(mavlinkMessage.m, "GroundTelemetry::external GCS message");
-	onMessageGroundStationClients(mavlinkMessage);
+  tmp->registerCallback([this](std::vector<MavlinkMessage> messages){
+    for(auto msg:messages){
+      // Now this is weird, but somehow we get a lot of junk from QGroundControll on android ??!!
+      // QGroundControll defaults to 255
+      // QOpenHD defaults to 225;
+      const bool is_from_ground_controll=msg.m.sysid==255 || msg.m.sysid==225;
+      if(!is_from_ground_controll){
+        // This can't really be a message from a ground controll application
+        //m_console->debug("Dropping message");
+        return;
+      }
+      //debugMavlinkMessage(mavlinkMessage.m, "GroundTelemetry::external GCS message");
+      on_messages_ground_station_clients({msg});
+    }
   });
   _other_udp_ground_stations[identifier]=tmp;
 }

@@ -35,11 +35,13 @@ UDPEndpoint::~UDPEndpoint() {
   }
 }
 
-bool UDPEndpoint::sendMessageImpl(const MavlinkMessage &message) {
+bool UDPEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
   //debugMavlinkMessage(message.m,"UDPEndpoint::sendMessage");
   if (transmitter != nullptr) {
-    const auto data = message.pack();
-    transmitter->forwardPacketViaUDP(data.data(), data.size());
+    auto message_buffers= pack_messages(messages);
+    for(const auto& message_buffer:message_buffers){
+      transmitter->forwardPacketViaUDP(message_buffer.data(), message_buffer.size());
+    }
     return true;
   } else {
     m_console->debug("UDPEndpoint::sendMessage with no transmitter");

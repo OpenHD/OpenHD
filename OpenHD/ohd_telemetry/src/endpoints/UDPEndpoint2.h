@@ -5,10 +5,11 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_UDPENDPOINT2_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_UDPENDPOINT2_H_
 
-#include "MEndpoint.hpp"
-#include "HelperSources/SocketHelper.hpp"
-#include <thread>
 #include <map>
+#include <thread>
+
+#include "HelperSources/SocketHelper.hpp"
+#include "MEndpoint.h"
 
 /**
  * Special, for communicating with QGroundControl..
@@ -28,7 +29,7 @@ class UDPEndpoint2 : public MEndpoint {
   void addAnotherDestIpAddress(std::string ip);
   void removeAnotherDestIpAddress(std::string ip);
  private:
-  bool sendMessageImpl(const MavlinkMessage &message) override;
+  bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;
   const std::string SENDER_IP;
   const int SEND_PORT;
   const std::string RECV_IP;

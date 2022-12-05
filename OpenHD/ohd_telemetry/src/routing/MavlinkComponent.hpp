@@ -27,7 +27,7 @@ class MavlinkComponent{
    * can use this message or not.
    * @return a list of mavlink messages that were created as a response.Empty unless the given message needs a response.
    */
-  virtual std::vector<MavlinkMessage> process_mavlink_message(const MavlinkMessage& msg)=0;
+  virtual std::vector<MavlinkMessage> process_mavlink_messages(std::vector<MavlinkMessage> messages)=0;
   /**
    * The parent should call this method in regular intervals and send out the generated mavlink messages.
    * This is for fire and forget messages. For example, a component might return the heartbeat(s) here.

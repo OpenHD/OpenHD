@@ -47,13 +47,13 @@ class AirTelemetry : public MavlinkSystem{
   const OHDPlatform _platform;
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> _airTelemetrySettings;
   // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
-  void sendMessageFC(const MavlinkMessage &message);
-  // send a mavlink message to the ground pi, system cannot know if this message actually makes it.
-  void sendMessageGroundPi(const MavlinkMessage &message);
-  // called every time a message from the flight controller is received
-  void onMessageFC(MavlinkMessage &message);
-  // called every time a message from the ground pi is received
-  void onMessageGroundPi(MavlinkMessage &message);
+  void send_messages_fc(const std::vector<MavlinkMessage>& messages);
+  // send mavlink messages to the ground unit, lossy
+  void send_messages_ground_unit(const std::vector<MavlinkMessage>& messages);
+  // called every time one or more messages from the flight controller are received
+  void on_messages_fc(const std::vector<MavlinkMessage>& messages);
+  // called every time one or more messages from the ground unit are received
+  void on_messages_ground_unit(const std::vector<MavlinkMessage>& messages);
  private:
   std::mutex _serialEndpointMutex;
   std::unique_ptr<SerialEndpoint> serialEndpoint;

@@ -53,7 +53,8 @@ struct WBLinkSettings {
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
   uint32_t wb_tx_power_milli_watt=DEFAULT_WIFI_TX_POWER_MILLI_WATT;
   // rtl8812au driver does not support setting tx power by iw dev, but rather only by setting
-  // this stupid tx power idx override param
+  // a tx power index override param. With the most recent openhd rtl8812au driver,
+  // we can even change this parameter dynamically.
   //uint32_t wb_rtl8812au_tx_pwr_idx_override=0;
   // R.n only possible on RTL8812AU
   // See https://github.com/OpenHD/rtl8812au/blob/v5.2.20/os_dep/linux/ioctl_cfg80211.c#L3667
@@ -160,7 +161,7 @@ static constexpr auto WB_ENABLE_SHORT_GUARD="WB_E_SHORT_GUARD";
 // NOTE: these values are the values that are passed to NL80211_ATTR_WIPHY_TX_POWER_LEVEL
 // this param is normally in mBm, but has been reworked to accept those rtl8812au specific tx power index override values
 // (under this name they were known already in previous openhd releases, but we now support changing them dynamcially at run time)
-static uint32_t tx_power_level_to_mBm_rtl8812au_only(const TxPowerLevel& tx_power_level){
+static uint32_t tx_power_level_to_rtl8812au_tx_power_index_override(const TxPowerLevel& tx_power_level){
   switch (tx_power_level) {
     case TxPowerLevel::LOW:
       return 19;

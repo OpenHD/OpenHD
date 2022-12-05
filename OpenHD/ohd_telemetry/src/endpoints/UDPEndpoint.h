@@ -5,10 +5,11 @@
 #ifndef XMAVLINKSERVICE_UDPENDPOINT_H
 #define XMAVLINKSERVICE_UDPENDPOINT_H
 
-#include "MEndpoint.hpp"
-#include "HelperSources/SocketHelper.hpp"
-#include "openhd-spdlog.hpp"
 #include <thread>
+
+#include "HelperSources/SocketHelper.hpp"
+#include "MEndpoint.h"
+#include "openhd-spdlog.hpp"
 
 // Wraps two UDP ports, one for sending and one for receiving data
 // (since TCP and UART for example also allow sending and receiving).
@@ -26,7 +27,7 @@ class UDPEndpoint : public MEndpoint {
   // Makes it easy to not mess up the "what is UDP tx port on air unit is UDP rx port on ground unit" paradigm
   static std::unique_ptr<UDPEndpoint> createEndpointForOHDWifibroadcast(bool isAir);
  private:
-  bool sendMessageImpl(const MavlinkMessage &message) override;
+  bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;
   const int SEND_PORT;
   const int RECV_PORT;
   std::unique_ptr<SocketHelper::UDPReceiver> receiver;

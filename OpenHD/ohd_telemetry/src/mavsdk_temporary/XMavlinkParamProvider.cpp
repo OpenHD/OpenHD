@@ -41,10 +41,11 @@ void XMavlinkParamProvider::set_ready() {
   _mavlink_parameter_receiver->ready_for_communication();
 }
 
-std::vector<MavlinkMessage> XMavlinkParamProvider::process_mavlink_message(
-    const MavlinkMessage& msg) {
+std::vector<MavlinkMessage> XMavlinkParamProvider:: process_mavlink_messages(std::vector<MavlinkMessage> messages){
   std::lock_guard<std::mutex> lock(_mutex);
-  _mavlink_message_handler->process_message(msg.m);
+  for(const auto& msg:messages){
+    _mavlink_message_handler->process_message(msg.m);
+  }
   for(int i=0;i<100;i++){
     _mavlink_parameter_receiver->do_work();
   }
