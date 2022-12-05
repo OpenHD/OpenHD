@@ -38,20 +38,28 @@ struct MavlinkMessage {
 
 static std::vector<std::vector<uint8_t>> pack_messages(const std::vector<MavlinkMessage>& messages,uint32_t max_mtu=1024){
   std::vector<std::vector<uint8_t>> ret;
-  for(const auto& msg:messages){
+  /*for(const auto& msg:messages){
     ret.emplace_back(msg.pack());
   }
-  return ret;
-  /*std::vector<uint8_t> buff{};
+  return ret;*/
+  std::vector<uint8_t> buff{};
   buff.reserve(max_mtu);
   for(const auto& msg:messages){
     auto data=msg.pack();
     if(buff.size()+data.size()<=max_mtu){
       buff.insert(buff.end(), data.begin(), data.end());
     }else{
-
+      if(!buff.empty()){
+        ret.push_back(buff);
+        buff.resize(0);
+      }
+      buff.insert(buff.end(), data.begin(), data.end());
     }
-  }*/
+  }
+  if(!buff.empty()){
+    ret.push_back(buff);
+  }
+  return ret;
 }
 
 
