@@ -56,14 +56,6 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
   std::vector<MavlinkMessage> ret{};
   for(const auto& msg:messages){
     switch (msg.m.msgid) { // NOLINT(cppcoreguidelines-narrowing-conversions)
-        // Obsolete
-        /*case MAVLINK_MSG_ID_PING:{
-          // We respond to ping messages
-          auto response=handlePingMessage(msg);
-          if(response.has_value()){
-            ret.push_back(response.value());
-          }
-        }break;*/
       case MAVLINK_MSG_ID_TIMESYNC:{
         // makes ping obsolete
         auto response= handle_timesync_message(msg);
@@ -71,7 +63,6 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
           ret.push_back(response.value());
         }
       }break;
-
       case MAVLINK_MSG_ID_COMMAND_LONG:{
         mavlink_command_long_t command;
         mavlink_msg_command_long_decode(&msg.m,&command);
