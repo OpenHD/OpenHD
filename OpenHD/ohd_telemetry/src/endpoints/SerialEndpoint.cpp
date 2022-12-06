@@ -80,7 +80,8 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
   const auto send_len = static_cast<int>(write(_fd,data.data(), data.size()));
   if (send_len != data.size()) {
     n_failed_writes++;
-    if(std::chrono::steady_clock::now()-m_last_log_serial_write_failed>MIN_DELAY_BETWEEN_SERIAL_WRITE_FAILED_LOG_MESSAGES){
+    const auto elapsed_since_last_log=std::chrono::steady_clock::now()-m_last_log_serial_write_failed;
+    if(elapsed_since_last_log>MIN_DELAY_BETWEEN_SERIAL_WRITE_FAILED_LOG_MESSAGES){
       std::stringstream ss;
       ss<<"F UART write:"<<data.size()<<" actual:"<<send_len<<","<<GET_ERROR()<<"tot:"<<n_failed_writes;
       m_console->warn(ss.str());
@@ -242,9 +243,10 @@ void SerialEndpoint::receive_data_until_error() {
     //debug_poll_fd(fds[0]);
     if (pollrc == 0 || !(fds[0].revents & POLLIN)) {
       n_failed_polls++;
-      if(n_failed_polls>10){
-        m_console->warn("{} failed polls,reset",n_failed_polls);
-        n_failed_polls=0;
+      const auto elapsed_since_last_log=std::chrono::steady_clock::now()-m_last_log_serial_read_failed;
+      if(elapsed_since_last_log>MIN_DELAY_BETWEEN_SERIAL_READ_FAILED_LOG_MESSAGES){
+        m_last_log_serial_read_failed=std::chrono::steady_clock::now();
+        m_console->warn("{} failed polls(reads)",n_failed_polls);
       }else{
         m_console->debug("poll probably timeout {}",n_failed_polls);
       }

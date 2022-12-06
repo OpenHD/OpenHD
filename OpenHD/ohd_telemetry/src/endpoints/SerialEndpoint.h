@@ -64,7 +64,9 @@ class SerialEndpoint : public MEndpoint{
   std::shared_ptr<spdlog::logger> m_console;
   int n_failed_writes=0;
   static constexpr auto MIN_DELAY_BETWEEN_SERIAL_WRITE_FAILED_LOG_MESSAGES=std::chrono::seconds(3);
+  static constexpr auto MIN_DELAY_BETWEEN_SERIAL_READ_FAILED_LOG_MESSAGES=std::chrono::seconds(3);
   std::chrono::steady_clock::time_point m_last_log_serial_write_failed=std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point m_last_log_serial_read_failed=std::chrono::steady_clock::now();
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_
