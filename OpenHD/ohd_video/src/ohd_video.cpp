@@ -8,8 +8,12 @@
 #include "ohd_video.h"
 #include "veyestream.h"
 
-OHDVideo::OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
-	m_platform(platform1),m_opt_action_handler(std::move(opt_action_handler)) {
+OHDVideo::OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,
+                   std::shared_ptr<openhd::ActionHandler> opt_action_handler,
+                   std::shared_ptr<openhd::ITransmitVideo> interface_transmit_video) :
+	m_platform(platform1),m_opt_action_handler(std::move(opt_action_handler)),
+        m_interface_transmit_video(std::move(interface_transmit_video))
+{
   m_console = openhd::log::create_or_get("video");
   assert(m_console);
   assert(!cameras.empty());
@@ -70,7 +74,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
     case CameraType::DUMMY_SW: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, udp_port);
+      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,m_interface_transmit_video);
       stream->setup();
       stream->start();
       m_camera_streams.push_back(stream);
@@ -79,7 +83,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
     case CameraType::RPI_CSI_LIBCAMERA: {
       m_console->debug("LibCamera index:{}", camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, udp_port);
+      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, m_interface_transmit_video);
       stream->setup();
       stream->start();
       m_camera_streams.push_back(stream);

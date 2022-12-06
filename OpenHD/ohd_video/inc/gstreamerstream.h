@@ -24,7 +24,7 @@
 class GStreamerStream : public CameraStream {
  public:
   GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                  uint16_t video_udp_port);
+                  std::shared_ptr<openhd::ITransmitVideo> i_transmit_video);
   ~GStreamerStream();
   void setup() override;
  private:

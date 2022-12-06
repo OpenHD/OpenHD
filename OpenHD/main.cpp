@@ -351,7 +351,7 @@ int main(int argc, char *argv[]) {
     // and start ohdVideo if we are on the air pi
     std::unique_ptr<OHDVideo> ohdVideo= nullptr;
     if (profile->is_air) {
-      ohdVideo = std::make_unique<OHDVideo>(*platform,cameras,ohd_action_handler);
+      ohdVideo = std::make_unique<OHDVideo>(*platform,cameras,ohd_action_handler,ohdInterface->get_video_tx_interface());
       auto settings_components=ohdVideo->get_setting_components();
       if(!settings_components.empty()){
         ohdTelemetry->add_settings_camera_component(

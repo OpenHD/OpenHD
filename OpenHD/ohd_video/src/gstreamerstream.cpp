@@ -13,8 +13,10 @@
 
 #include "gst_appsink_helper.h"
 
-GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,uint16_t video_udp_port)
-    : CameraStream(platform, camera_holder, video_udp_port) {
+GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
+                                 std::shared_ptr<openhd::ITransmitVideo> i_transmit_video)
+    //: CameraStream(platform, camera_holder, video_udp_port) {
+    : CameraStream(platform,camera_holder,i_transmit_video){
   m_console=openhd::log::create_or_get("v_gststream");
   assert(m_console);
   m_console->debug("GStreamerStream::GStreamerStream()");
@@ -125,8 +127,8 @@ void GStreamerStream::setup() {
         m_pipeline << m_camera.settings.manual_pipeline;
   }*/
   // add udp out part
-  m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
-  //m_pipeline_content << OHDGstHelper::createOutputAppSink();
+  //m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
+  m_pipeline_content << OHDGstHelper::createOutputAppSink();
   if(setting.air_recording==Recording::ENABLED){
     const auto recording_filename=openhd::video::create_unused_recording_filename(
         OHDGstHelper::file_suffix_for_video_codec(setting.streamed_video_format.videoCodec));
@@ -159,7 +161,7 @@ void GStreamerStream::setup() {
     // sw encoder(s) take kbit/s
     m_bitrate_ctrl_element_takes_kbit= true;
   }
-  //test_add_data_listener();
+  test_add_data_listener();
 }
 
 void GStreamerStream::setup_raspberrypi_csi() {
@@ -469,6 +471,7 @@ void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<st
 }
 
 void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts) {
+  // Dirty: we use the dts to figure out where a new "frame" starts
   if(dts!=m_last_dts || m_frame_fragments.size()>1000){
     if(!m_frame_fragments.empty()){
       on_new_rtp_fragmented_frame(m_frame_fragments);
