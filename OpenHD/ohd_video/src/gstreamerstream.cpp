@@ -162,6 +162,8 @@ void GStreamerStream::setup() {
     m_bitrate_ctrl_element_takes_kbit= true;
   }
   //test_add_data_listener();
+  m_app_sink_element=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
+  assert(m_app_sink_element);
   m_pull_samples_run= true;
   m_pull_samples_thread=std::make_unique<std::thread>(&GStreamerStream::loop_pull_samples, this);
 }
