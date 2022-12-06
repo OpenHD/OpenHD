@@ -71,6 +71,7 @@ set(sources
     "inc/camera_enums.hpp"
     "inc/camera_holder.hpp"
     "inc/camera_settings.hpp"
+    "inc/rtp_eof_helper.h"
 
     "inc/v_validate_settings.h"
     #"inc/veyestream.h"
@@ -82,6 +83,7 @@ set(sources
     "src/camera_discovery.cpp"
     "src/gstreamerstream.cpp"
     "src/ohd_video.cpp"
+    "src/rtp_eof_helper.cpp"
     #"src/veyestream.cpp"
 )
 

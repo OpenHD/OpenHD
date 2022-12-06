@@ -12,6 +12,7 @@
 #include "gst_helper.hpp"
 
 #include "gst_appsink_helper.h"
+#include "rtp_eof_helper.h"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
                                  std::shared_ptr<openhd::ITransmitVideo> i_transmit_video)
@@ -490,8 +491,24 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
   m_last_dts=dts;
   m_frame_fragments.push_back(fragment);*/
   m_frame_fragments.push_back(fragment);
-  on_new_rtp_fragmented_frame(m_frame_fragments);
-  m_frame_fragments.resize(0);
+  bool is_last_fragment_of_frame=false;
+  const auto curr_video_codec=m_camera_holder->get_settings().streamed_video_format.videoCodec;
+  if(curr_video_codec==VideoCodec::H264){
+    if(openhd::rtp_eof_helper::h264_end_block(fragment->data(),fragment->size())){
+      is_last_fragment_of_frame= true;
+    }
+  }else if(curr_video_codec==VideoCodec::H265){
+    if(openhd::rtp_eof_helper::h265_end_block(fragment->data(),fragment->size())){
+      is_last_fragment_of_frame= true;
+    }
+  }else{
+    // Not supported yet
+    is_last_fragment_of_frame=m_frame_fragments.size()>=50;
+  }
+  if(is_last_fragment_of_frame || m_frame_fragments.size()>1000){
+    on_new_rtp_fragmented_frame(m_frame_fragments);
+    m_frame_fragments.resize(0);
+  }
 }
 
 void GStreamerStream::loop_pull_samples() {
