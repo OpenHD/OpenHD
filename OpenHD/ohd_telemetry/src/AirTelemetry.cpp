@@ -60,19 +60,14 @@ void AirTelemetry::on_messages_fc(const std::vector<MavlinkMessage>& messages) {
 }
 
 void AirTelemetry::on_messages_ground_unit(const std::vector<MavlinkMessage>& messages) {
-  // TODO FIXME
-  /*const mavlink_message_t &m = message.m;
-  // we do not need to forward heartbeat messages coming from the ground station,
-  // They solely have a debugging purpose such that one knows the other station is alive.
-  if (m.msgid == MAVLINK_MSG_ID_HEARTBEAT && m.sysid == OHD_SYS_ID_GROUND) {
-	// heartbeat coming from the ground station
-	return;
+  // filter out heartbeats from the openhd ground unit,we do not need to send them to the FC
+  std::vector<MavlinkMessage> filtered_messages_fc;
+  for(const auto& msg:messages){
+    const mavlink_message_t &m = msg.m;
+    if(static_cast<int>(m.msgid) == MAVLINK_MSG_ID_HEARTBEAT && m.sysid == OHD_SYS_ID_GROUND)continue;
+    filtered_messages_fc.push_back(msg);
   }
-  if(m.msgid==MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE){
-    m_console->debug("Sending rc channels override to FC");
-  }*/
-  // for now, do it as simple as possible
-  send_messages_fc(messages);
+  send_messages_fc(filtered_messages_fc);
   // any data created by an OpenHD component on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
   std::lock_guard<std::mutex> guard(components_lock);
   for(auto& component: components){
@@ -82,7 +77,7 @@ void AirTelemetry::on_messages_ground_unit(const std::vector<MavlinkMessage>& me
   }
 }
 
-void AirTelemetry::loopInfinite(bool& terminate,const bool enableExtendedLogging) {
+void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLogging) {
   const auto log_intervall=std::chrono::seconds(5);
   const auto loop_intervall=std::chrono::milliseconds(500);
   auto last_log=std::chrono::steady_clock::now();
@@ -125,7 +120,7 @@ void AirTelemetry::loopInfinite(bool& terminate,const bool enableExtendedLogging
   }
 }
 
-std::string AirTelemetry::createDebug(){
+std::string AirTelemetry::create_debug(){
   std::stringstream ss;
   //ss<<"AT:\n";
   if ( wifibroadcastEndpoint) {

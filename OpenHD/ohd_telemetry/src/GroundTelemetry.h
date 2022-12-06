@@ -28,15 +28,23 @@ class GroundTelemetry :public MavlinkSystem{
   GroundTelemetry(const GroundTelemetry&&)=delete;
   ~GroundTelemetry();
   /**
-   * Telemetry will run infinite in its own threads until an error occurs.
+   * Telemetry will run infinite in its own threads until terminate is set to true
    * @param enableExtendedLogging be really verbose on logging.
    */
-  void loopInfinite(bool& terminate,bool enableExtendedLogging = false);
-  [[nodiscard]] std::string createDebug()const;
-  // add settings to the generic mavlink parameter server
-  // changes are propagated back through the settings instances
+  void loop_infinite(bool& terminate,bool enableExtendedLogging = false);
+  /**
+   * @return verbose string about the current state, for debugging
+   */
+  [[nodiscard]] std::string create_debug()const;
+  /**
+   * add settings to the generic mavlink parameter server
+   * changes are propagated back through the settings instances
+   * @param settings the settings to add
+   */
   void add_settings_generic(const std::vector<openhd::Setting>& settings);
-  // call once all settings have been added, this is needed to avoid an invariant parameter set
+  /**
+   * must be called once all settings have been added, this is needed to avoid an invariant parameter set
+   */
   void settings_generic_ready();
   // Add the IP of another Ground station client, to start forwarding telemetry data there
   void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);

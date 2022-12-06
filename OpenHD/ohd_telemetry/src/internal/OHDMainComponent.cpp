@@ -45,13 +45,10 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
           m_sys_id, m_comp_id));
   MavlinkComponent::vec_append(ret, generate_mav_wb_stats());
   //ret.push_back(generateOpenHDVersion());
-  // TODO remove for release
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
-  // TODO remove for release
   //_status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
   const auto logs = generateLogMessages();
   MavlinkComponent::vec_append(ret,logs);
-  //ret.insert(ret.end(), logs.begin(), logs.end());
   return ret;
 }
 
@@ -59,14 +56,6 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
   std::vector<MavlinkMessage> ret{};
   for(const auto& msg:messages){
     switch (msg.m.msgid) { // NOLINT(cppcoreguidelines-narrowing-conversions)
-        // Obsolete
-        /*case MAVLINK_MSG_ID_PING:{
-          // We respond to ping messages
-          auto response=handlePingMessage(msg);
-          if(response.has_value()){
-            ret.push_back(response.value());
-          }
-        }break;*/
       case MAVLINK_MSG_ID_TIMESYNC:{
         // makes ping obsolete
         auto response= handle_timesync_message(msg);
@@ -74,7 +63,6 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
           ret.push_back(response.value());
         }
       }break;
-
       case MAVLINK_MSG_ID_COMMAND_LONG:{
         mavlink_command_long_t command;
         mavlink_msg_command_long_decode(&msg.m,&command);

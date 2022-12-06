@@ -41,9 +41,8 @@ class MEndpoint {
    * This calls the underlying implementation's sendMessageImpl() function (pure virtual)
    * and increases the sent message count
    * @param message the message to send
-   * TODO make sure we never exceed the wifi MTU
    */
-  void sendMessages(const std::vector<MavlinkMessage> messages);
+  void sendMessages(const std::vector<MavlinkMessage>& messages);
   /**
    * register a callback that is called every time
    * this endpoint has received a new message
@@ -73,7 +72,7 @@ class MEndpoint {
   // false otherwise
   virtual bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) = 0;
  private:
-  MAV_MSG_CALLBACK callback = nullptr;
+  MAV_MSG_CALLBACK m_callback = nullptr;
   // increases message count and forwards the messages via the callback if registered.
   void onNewMavlinkMessages(std::vector<MavlinkMessage> messages);
   mavlink_status_t receiveMavlinkStatus{};

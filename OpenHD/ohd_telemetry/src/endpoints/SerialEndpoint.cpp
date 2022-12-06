@@ -69,20 +69,21 @@ bool SerialEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& message
 }
 
 bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
+  //m_console->debug("Write data serial:{} bytes",data.size());
   if(_fd==-1){
     // cannot send data at the time, UART not setup / doesn't exist.
-    //m_console->warn("Cannot send data, no fd");
+    m_console->warn("Cannot send data, no fd");
     return false;
   }
   // If we have a fd, but the write fails, most likely the UART disconnected
   // but the linux driver hasn't noticed it yet.
   const auto send_len = static_cast<int>(write(_fd,data.data(), data.size()));
+  //m_console->debug("Written {} bytes",send_len);
   if (send_len != data.size()) {
-    n_failed_writes++;
-    if(std::chrono::steady_clock::now()-m_last_log_serial_write_failed>MIN_DELAY_BETWEEN_SERIAL_WRITE_FAILED_LOG_MESSAGES){
-      std::stringstream ss;
-      ss<<"F UART write:"<<data.size()<<" actual:"<<send_len<<","<<GET_ERROR()<<"tot:"<<n_failed_writes;
-      m_console->warn(ss.str());
+    m_n_failed_writes++;
+    const auto elapsed_since_last_log=std::chrono::steady_clock::now()-m_last_log_serial_write_failed;
+    if(elapsed_since_last_log>MIN_DELAY_BETWEEN_SERIAL_WRITE_FAILED_LOG_MESSAGES){
+      m_console->warn("wrote {} instead of {} bytes,n failed:{}",send_len,data.size(),m_n_failed_writes);
       m_last_log_serial_write_failed=std::chrono::steady_clock::now();
     }
     return false;
@@ -129,7 +130,7 @@ int SerialEndpoint::define_from_baudrate(int baudrate) {
     case 4000000:
       return B4000000;
     default: {
-      std::cerr << "Unknown baudrate\n";
+      openhd::log::get_default()->warn("Unknown baudrate");
       return B1152000;
     }
   }
@@ -221,8 +222,7 @@ void SerialEndpoint::receive_data_until_error() {
   struct pollfd fds[1];
   fds[0].fd = _fd;
   fds[0].events = POLLIN;
-
-  int n_failed_polls=0;
+  m_n_failed_reads=0;
 
   while (!_stop_requested) {
     int recv_len;
@@ -240,12 +240,15 @@ void SerialEndpoint::receive_data_until_error() {
     //std::cout<<"Poll res:"<<pollrc<<" took:"<<delta<<" ms\n";
     //debug_poll_fd(fds[0]);
     if (pollrc == 0 || !(fds[0].revents & POLLIN)) {
-      n_failed_polls++;
-      if(n_failed_polls>10){
-        m_console->warn("{} failed polls,reset",n_failed_polls);
-        n_failed_polls=0;
+      // if we land here, no data has become available after X ms. Not strictly an error,
+      // but on a FC which constantly provides a data stream it most likely is an error.
+      m_n_failed_reads++;
+      const auto elapsed_since_last_log=std::chrono::steady_clock::now()-m_last_log_serial_read_failed;
+      if(elapsed_since_last_log>=MIN_DELAY_BETWEEN_SERIAL_READ_FAILED_LOG_MESSAGES){
+        m_last_log_serial_read_failed=std::chrono::steady_clock::now();
+        m_console->warn("{} failed polls(reads)",m_n_failed_reads);
       }else{
-        m_console->debug("poll probably timeout {}",n_failed_polls);
+        //m_console->debug("poll probably timeout {}",m_n_failed_reads);
       }
       continue;
     } else if (pollrc == -1) {
@@ -262,7 +265,7 @@ void SerialEndpoint::receive_data_until_error() {
       // probably timeout
       continue;
     }
-    //std::cout<<"UART got data\n";
+    //m_console->debug("Got data {} bytes",recv_len);
     MEndpoint::parseNewData(buffer,recv_len);
   }
   m_console->debug("SerialEndpoint3::receive_data_until_error() end");

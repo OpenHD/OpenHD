@@ -12,23 +12,22 @@ MEndpoint::MEndpoint(std::string tag)
   openhd::log::get_default()->debug(TAG+" using channel:{}",m_mavlink_channel);
 }
 
-void MEndpoint::sendMessages(const std::vector<MavlinkMessage> messages) {
-  if(!messages.empty()){
-    //openhd::log::create_or_get(TAG)->debug("N messages send:{}",messages.size());
-  }
+void MEndpoint::sendMessages(const std::vector<MavlinkMessage>& messages) {
+  if(messages.empty())return;
+  //openhd::log::create_or_get(TAG)->debug("N messages send:{}",messages.size());
   const auto res= sendMessagesImpl(messages);
   m_n_messages_sent+=messages.size();
   if(!res){
-    m_n_messages_send_failed++;
+    m_n_messages_send_failed+=messages.size();
   }
 }
 
 void MEndpoint::registerCallback(MAV_MSG_CALLBACK cb) {
-  if (callback != nullptr) {
+  if (m_callback != nullptr) {
     // this might be a common programming mistake - you can only register one callback here
     openhd::log::get_default()->warn("Overwriting already existing callback");
   }
-  callback = std::move(cb);
+  m_callback = std::move(cb);
 }
 
 bool MEndpoint::isAlive() const {
@@ -52,17 +51,15 @@ void MEndpoint::parseNewData(const uint8_t* data, const int data_len) {
     }
   }
   onNewMavlinkMessages(messages);
-  if(!messages.empty()){
-    //openhd::log::create_or_get(TAG)->debug("N messages receive:{}",messages.size());
-  }
 }
 
-
 void MEndpoint::onNewMavlinkMessages(std::vector<MavlinkMessage> messages) {
+  if(messages.empty())return;
+  //openhd::log::create_or_get(TAG)->debug("N messages receive:{}",messages.size());
   lastMessage = std::chrono::steady_clock::now();
   m_n_messages_received+=messages.size();
-  if (callback != nullptr) {
-    callback(messages);
+  if (m_callback != nullptr) {
+    m_callback(messages);
   } else {
     openhd::log::get_default()->warn("No callback set,did you forget to add it ?");
   }
