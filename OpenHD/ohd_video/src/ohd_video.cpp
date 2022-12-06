@@ -6,7 +6,7 @@
 
 #include "gstreamerstream.h"
 #include "ohd_video.h"
-#include "veyestream.h"
+//#include "veyestream.h"
 
 OHDVideo::OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,
                    std::shared_ptr<openhd::ActionHandler> opt_action_handler,
@@ -56,12 +56,14 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
   // (veye also uses gstreamer, but we do not launch it via gst-launch)
   switch (camera.type) {
     case CameraType::RPI_VEYE_CSI_MMAL:{
-      m_console->debug("VEYE stream for Camera index:{}",camera.index);
+      /*m_console->debug("VEYE stream for Camera index:{}",camera.index);
       const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
       auto stream = std::make_shared<VEYEStream>(m_platform.platform_type, camera_holder, udp_port);
       stream->setup();
       stream->start();
       m_camera_streams.push_back(stream);
+      break;*/
+      m_console->error("Unimplemented");
       break;
     }
     case CameraType::RPI_CSI_MMAL:
