@@ -53,7 +53,7 @@ class OHDVideo {
   // r.n limited to primary and secondary camera
   static constexpr auto MAX_N_CAMERAS=2;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
-  std::shared_ptr<openhd::ITransmitVideo> m_interface_transmit_video= nullptr;
+  std::shared_ptr<openhd::ITransmitVideo> m_interface_transmit_video;
  private:
   // Add a CameraStream for a discovered camera.
   void configure(std::shared_ptr<CameraHolder> camera);
