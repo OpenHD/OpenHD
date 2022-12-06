@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
   options.enable_debug=true;
 
   auto serial_endpoint=std::make_unique<SerialEndpoint>("ser_test",options);
-  serial_endpoint->registerCallback([](MavlinkMessage &msg) {
+  serial_endpoint->registerCallback([](std::vector<MavlinkMessage> messages) {
 	//debugMavlinkMessage(msg.m, "SerialTest3");
   });
   // now mavlink messages should come in. Try disconnecting and reconnecting, and see if messages continue

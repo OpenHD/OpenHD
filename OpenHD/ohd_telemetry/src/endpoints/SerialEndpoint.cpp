@@ -69,7 +69,7 @@ bool SerialEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& message
 }
 
 bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
-  m_console->debug("Write data serial:{}",data.size());
+  m_console->debug("Write data serial:{} bytes",data.size());
   if(_fd==-1){
     // cannot send data at the time, UART not setup / doesn't exist.
     m_console->warn("Cannot send data, no fd");
@@ -78,6 +78,7 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
   // If we have a fd, but the write fails, most likely the UART disconnected
   // but the linux driver hasn't noticed it yet.
   const auto send_len = static_cast<int>(write(_fd,data.data(), data.size()));
+  m_console->debug("Written {} bytes",send_len);
   if (send_len != data.size()) {
     n_failed_writes++;
     const auto elapsed_since_last_log=std::chrono::steady_clock::now()-m_last_log_serial_write_failed;
