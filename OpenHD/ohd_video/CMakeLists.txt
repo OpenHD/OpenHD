@@ -38,6 +38,18 @@ pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
         gstreamer-sdp-1.0>=1.4
         gstreamer-video-1.0>=1.4
         gstreamer-app-1.0>=1.4)
+## xx
+# https://stackoverflow.com/questions/64078308/how-to-write-a-cmake-file-which-successfully-links-gstreamer-basic-tutorial-5
+pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
+pkg_search_module(gstreamer-sdp REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0>=1.4)
+pkg_search_module(gstreamer-app REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
+pkg_search_module(gstreamer-video REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=1.4)
+target_link_libraries(OHDVideoLib PRIVATE
+        PkgConfig::gstreamer
+        PkgConfig::gstreamer-sdp
+        PkgConfig::gstreamer-app
+        PkgConfig::gstreamer-video)
+## xx
 # FUCKING GSTREAMER !! end
 # We get fmt from speedlog
 #find_package(fmt REQUIRED)

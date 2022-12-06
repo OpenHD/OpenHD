@@ -472,6 +472,10 @@ static std::string createOutputUdpLocalhost(const int udpOutPort) {
   return fmt::format(" udpsink host=127.0.0.1 port={} ", udpOutPort);
 }
 
+static std::string createOutputAppSink(){
+  return " appsink drop=true name=out_appsink";
+}
+
 // Needs to match below
 static std::string file_suffix_for_video_codec(const VideoCodec videoCodec){
   if(videoCodec==VideoCodec::H264 || videoCodec==VideoCodec::H265){

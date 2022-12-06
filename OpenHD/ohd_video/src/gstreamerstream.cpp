@@ -11,6 +11,8 @@
 #include "ffmpeg_videosamples.hpp"
 #include "gst_helper.hpp"
 
+#include "gst_appsink_helper.h"
+
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,uint16_t video_udp_port)
     : CameraStream(platform, camera_holder, video_udp_port) {
   m_console=openhd::log::create_or_get("v_gststream");
@@ -123,8 +125,8 @@ void GStreamerStream::setup() {
         m_pipeline << m_camera.settings.manual_pipeline;
   }*/
   // add udp out part
-  m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(
-      m_video_udp_port);
+  //m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
+  m_pipeline_content << OHDGstHelper::createOutputAppSink();
   if(setting.air_recording==Recording::ENABLED){
     const auto recording_filename=openhd::video::create_unused_recording_filename(
         OHDGstHelper::file_suffix_for_video_codec(setting.streamed_video_format.videoCodec));
@@ -157,6 +159,7 @@ void GStreamerStream::setup() {
     // sw encoder(s) take kbit/s
     m_bitrate_ctrl_element_takes_kbit= true;
   }
+  test_add_data_listener();
 }
 
 void GStreamerStream::setup_raspberrypi_csi() {
@@ -421,3 +424,52 @@ bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
   return false;
 }
 
+
+// based on https://github.com/Samsung/kv2streamer/blob/master/kv2streamer-lib/gst-wrapper/GstAppSinkPipeline.cpp
+static GstFlowReturn m_new_sample_callback(GstAppSink* appsink, gpointer user_data){
+  //openhd::log::get_default()->debug("appsink-got data");
+  GstSample* sample = gst_app_sink_pull_sample(GST_APP_SINK(appsink));
+  if (sample) {
+    //openhd::log::get_default()->debug("Got sample");
+    //auto buffer_list=gst_sample_get_buffer_list(sample);
+    //openhd::log::get_default()->debug("Got sample {}", gst_buffer_list_length(buffer_list));
+    GstBuffer* buffer = gst_sample_get_buffer(sample);
+    if (buffer) {
+      //openhd::gst_debug_buffer(buffer);
+      auto buff_copy=openhd::gst_copy_buffer(buffer);
+      //openhd::log::get_default()->debug("Got buffer size {}", buff_copy->size());
+      ((GStreamerStream*)user_data)->on_new_rtp_frame_fragment(buff_copy,buffer->dts);
+    }
+    gst_sample_unref(sample);
+  }
+  return GST_FLOW_OK;
+}
+
+void GStreamerStream::test_add_data_listener() {
+  GstElement* appsink=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
+  if(appsink== nullptr){
+    openhd::log::get_default()->debug("Got no appsink");
+    return;
+  }
+  openhd::log::get_default()->debug("Got appsink");
+  GstAppSinkCallbacks appsinkCallbacks;
+  appsinkCallbacks.new_preroll	= nullptr;
+  appsinkCallbacks.new_sample	= m_new_sample_callback;
+  appsinkCallbacks.eos		= nullptr;
+  gst_app_sink_set_callbacks(GST_APP_SINK(appsink), &appsinkCallbacks,this,(GDestroyNotify)nullptr);
+}
+
+void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
+  m_console->debug("Got frame with {} fragments",frame_fragments.size());
+}
+
+void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts) {
+  if(dts!=m_last_dts || m_frame_fragments.size()>1000){
+    if(!m_frame_fragments.empty()){
+      on_new_rtp_fragmented_frame(m_frame_fragments);
+      m_frame_fragments.resize(0);
+    }
+  }
+  m_last_dts=dts;
+  m_frame_fragments.push_back(fragment);
+}
