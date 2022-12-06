@@ -161,7 +161,9 @@ void GStreamerStream::setup() {
     // sw encoder(s) take kbit/s
     m_bitrate_ctrl_element_takes_kbit= true;
   }
-  test_add_data_listener();
+  //test_add_data_listener();
+  m_pull_samples_run= true;
+  m_pull_samples_thread=std::make_unique<std::thread>(&GStreamerStream::loop_pull_samples, this);
 }
 
 void GStreamerStream::setup_raspberrypi_csi() {
@@ -308,6 +310,11 @@ void GStreamerStream::stop() {
 
 void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() begin");
+  if(m_pull_samples_thread){
+    m_pull_samples_run= false;
+    if(m_pull_samples_thread->joinable())m_pull_samples_thread->join();
+    m_pull_samples_thread= nullptr;
+  }
   if(!m_gst_pipeline){
     m_console->debug("gst_pipeline==null");
     return;
@@ -448,8 +455,8 @@ static GstFlowReturn m_new_sample_callback(GstAppSink* appsink, gpointer user_da
 }
 
 void GStreamerStream::test_add_data_listener() {
-  GstElement* appsink=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
-  if(appsink== nullptr){
+  m_app_sink_element=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
+  if(m_app_sink_element== nullptr){
     openhd::log::get_default()->debug("Got no appsink");
     return;
   }
@@ -458,7 +465,7 @@ void GStreamerStream::test_add_data_listener() {
   appsinkCallbacks.new_preroll	= nullptr;
   appsinkCallbacks.new_sample	= m_new_sample_callback;
   appsinkCallbacks.eos		= nullptr;
-  gst_app_sink_set_callbacks(GST_APP_SINK(appsink), &appsinkCallbacks,this,(GDestroyNotify)nullptr);
+  gst_app_sink_set_callbacks(GST_APP_SINK(m_app_sink_element), &appsinkCallbacks,this,(GDestroyNotify)nullptr);
 }
 
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
@@ -483,4 +490,23 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
   m_frame_fragments.push_back(fragment);
   on_new_rtp_fragmented_frame(m_frame_fragments);
   m_frame_fragments.resize(0);
+}
+
+void GStreamerStream::loop_pull_samples() {
+  assert(m_app_sink_element);
+  const uint64_t timeout_ns=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(100)).count();
+  GstSample* sample = gst_app_sink_try_pull_sample(GST_APP_SINK(m_app_sink_element),timeout_ns);
+  if (sample) {
+    //openhd::log::get_default()->debug("Got sample");
+    //auto buffer_list=gst_sample_get_buffer_list(sample);
+    //openhd::log::get_default()->debug("Got sample {}", gst_buffer_list_length(buffer_list));
+    GstBuffer* buffer = gst_sample_get_buffer(sample);
+    if (buffer) {
+      //openhd::gst_debug_buffer(buffer);
+      auto buff_copy=openhd::gst_copy_buffer(buffer);
+      //openhd::log::get_default()->debug("Got buffer size {}", buff_copy->size());
+      on_new_rtp_frame_fragment(buff_copy,buffer->dts);
+    }
+    gst_sample_unref(sample);
+  }
 }
