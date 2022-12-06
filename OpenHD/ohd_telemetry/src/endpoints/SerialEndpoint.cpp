@@ -224,8 +224,7 @@ void SerialEndpoint::receive_data_until_error() {
   struct pollfd fds[1];
   fds[0].fd = _fd;
   fds[0].events = POLLIN;
-
-  int n_failed_polls=0;
+  m_n_failed_reads=0;
 
   while (!_stop_requested) {
     int recv_len;
@@ -245,13 +244,13 @@ void SerialEndpoint::receive_data_until_error() {
     if (pollrc == 0 || !(fds[0].revents & POLLIN)) {
       // if we land here, no data has become available after X ms. Not strictly an error,
       // but on a FC which constantly provides a data stream it most likely is an error.
-      n_failed_polls++;
+      m_n_failed_reads++;
       const auto elapsed_since_last_log=std::chrono::steady_clock::now()-m_last_log_serial_read_failed;
       if(elapsed_since_last_log>=MIN_DELAY_BETWEEN_SERIAL_READ_FAILED_LOG_MESSAGES){
         m_last_log_serial_read_failed=std::chrono::steady_clock::now();
-        m_console->warn("{} failed polls(reads)",n_failed_polls);
+        m_console->warn("{} failed polls(reads)",m_n_failed_reads);
       }else{
-        m_console->debug("poll probably timeout {}",n_failed_polls);
+        m_console->debug("poll probably timeout {}",m_n_failed_reads);
       }
       continue;
     } else if (pollrc == -1) {
