@@ -32,7 +32,6 @@ static void gst_debug_buffer(GstBuffer* buffer){
       buffer->pts,buffer->dts);
 }
 
-// Helper t pull data out of a gstreamer pipeline
 /**
  * Helper to pull data out of a gstreamer pipeline
  * @param keep_looping if set to false, method returns after max timeout_ns
@@ -40,7 +39,7 @@ static void gst_debug_buffer(GstBuffer* buffer){
  * @param out_cb fragments are forwarded via this cb
  */
 static void loop_pull_appsink_samples(bool& keep_looping,GstElement *app_sink_element,
-                                      std::function<void(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts)> out_cb){
+                                      const std::function<void(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts)>& out_cb){
   assert(app_sink_element);
   assert(out_cb);
   const uint64_t timeout_ns=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(100)).count();

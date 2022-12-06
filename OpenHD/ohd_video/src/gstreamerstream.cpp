@@ -491,8 +491,8 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
   m_last_dts=dts;
   m_frame_fragments.push_back(fragment);*/
   m_frame_fragments.push_back(fragment);
-  bool is_last_fragment_of_frame=false;
   const auto curr_video_codec=m_camera_holder->get_settings().streamed_video_format.videoCodec;
+  bool is_last_fragment_of_frame=false;
   if(curr_video_codec==VideoCodec::H264){
     if(openhd::rtp_eof_helper::h264_end_block(fragment->data(),fragment->size())){
       is_last_fragment_of_frame= true;
