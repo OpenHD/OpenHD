@@ -37,7 +37,7 @@ class CameraStream {
    * @param video_udp_port the udp port where rtp data is forwarded to, must
    * match with interface in OpenHD
    */
-  CameraStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder, uint16_t video_udp_port);
+  //CameraStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder, uint16_t video_udp_port);
   CameraStream(PlatformType platform_type,std::shared_ptr<CameraHolder> camera_holder,std::shared_ptr<openhd::ITransmitVideo> itransmit);
 
   // It is a good common programming practice to make them pure virtual
@@ -71,7 +71,7 @@ class CameraStream {
   // This is the UDP port the video (for now rtp) stream is send to.
   // It then needs to be picked up, most likely by a wfb instance created by
   // ohd-interface
-  const uint16_t m_video_udp_port;
+  //const uint16_t m_video_udp_port;
   std::shared_ptr<openhd::ITransmitVideo> m_transmit_interface= nullptr;
 };
 
