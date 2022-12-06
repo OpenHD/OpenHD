@@ -79,7 +79,7 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
   // but the linux driver hasn't noticed it yet.
   const auto send_len = static_cast<int>(write(_fd,data.data(), data.size()));
   m_console->debug("Written {} bytes",send_len);
-  if (send_len != data.size()+1) {
+  if (send_len != data.size()) {
     m_n_failed_writes++;
     const auto elapsed_since_last_log=std::chrono::steady_clock::now()-m_last_log_serial_write_failed;
     if(elapsed_since_last_log>MIN_DELAY_BETWEEN_SERIAL_WRITE_FAILED_LOG_MESSAGES){
