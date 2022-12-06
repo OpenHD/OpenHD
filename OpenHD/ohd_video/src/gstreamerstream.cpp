@@ -496,21 +496,8 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
 
 void GStreamerStream::loop_pull_samples() {
   assert(m_app_sink_element);
-  const uint64_t timeout_ns=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(100)).count();
-  while (m_pull_samples_run){
-    GstSample* sample = gst_app_sink_try_pull_sample(GST_APP_SINK(m_app_sink_element),timeout_ns);
-    if (sample) {
-      //openhd::log::get_default()->debug("Got sample");
-      //auto buffer_list=gst_sample_get_buffer_list(sample);
-      //openhd::log::get_default()->debug("Got sample {}", gst_buffer_list_length(buffer_list));
-      GstBuffer* buffer = gst_sample_get_buffer(sample);
-      if (buffer) {
-        //openhd::gst_debug_buffer(buffer);
-        auto buff_copy=openhd::gst_copy_buffer(buffer);
-        //openhd::log::get_default()->debug("Got buffer size {}", buff_copy->size());
-        on_new_rtp_frame_fragment(buff_copy,buffer->dts);
-      }
-      gst_sample_unref(sample);
-    }
-  }
+  auto cb=[this](std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts){
+    on_new_rtp_frame_fragment(fragment,dts);
+  };
+  openhd::loop_pull_appsink_samples(m_pull_samples_run,m_app_sink_element,cb);
 }
