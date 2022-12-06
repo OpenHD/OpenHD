@@ -7,6 +7,7 @@
 #include "camera_holder.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-action-handler.hpp"
+#include "openhd-video-transmit-interface.h"
 
 /**
  * Every camera stream should inherit from this class.
@@ -37,6 +38,7 @@ class CameraStream {
    * match with interface in OpenHD
    */
   CameraStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder, uint16_t video_udp_port);
+  CameraStream(PlatformType platform_type,std::shared_ptr<CameraHolder> camera_holder,std::shared_ptr<openhd::ITransmitVideo> itransmit);
 
   // It is a good common programming practice to make them pure virtual
   // setup everything needed to start streaming
@@ -70,6 +72,7 @@ class CameraStream {
   // It then needs to be picked up, most likely by a wfb instance created by
   // ohd-interface
   const uint16_t m_video_udp_port;
+  std::shared_ptr<openhd::ITransmitVideo> m_transmit_interface= nullptr;
 };
 
 #endif
