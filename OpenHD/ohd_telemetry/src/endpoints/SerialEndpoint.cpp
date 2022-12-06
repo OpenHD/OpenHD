@@ -242,9 +242,11 @@ void SerialEndpoint::receive_data_until_error() {
     //std::cout<<"Poll res:"<<pollrc<<" took:"<<delta<<" ms\n";
     //debug_poll_fd(fds[0]);
     if (pollrc == 0 || !(fds[0].revents & POLLIN)) {
+      // if we land here, no data has become available after X ms. Not strictly an error,
+      // but on a FC which constantly provides a data stream it most likely is an error.
       n_failed_polls++;
       const auto elapsed_since_last_log=std::chrono::steady_clock::now()-m_last_log_serial_read_failed;
-      if(elapsed_since_last_log>MIN_DELAY_BETWEEN_SERIAL_READ_FAILED_LOG_MESSAGES){
+      if(elapsed_since_last_log>=MIN_DELAY_BETWEEN_SERIAL_READ_FAILED_LOG_MESSAGES){
         m_last_log_serial_read_failed=std::chrono::steady_clock::now();
         m_console->warn("{} failed polls(reads)",n_failed_polls);
       }else{
@@ -265,7 +267,7 @@ void SerialEndpoint::receive_data_until_error() {
       // probably timeout
       continue;
     }
-    //std::cout<<"UART got data\n";
+    m_console->debug("Got data {} bytes",recv_len);
     MEndpoint::parseNewData(buffer,recv_len);
   }
   m_console->debug("SerialEndpoint3::receive_data_until_error() end");
