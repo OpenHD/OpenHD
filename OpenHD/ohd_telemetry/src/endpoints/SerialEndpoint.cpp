@@ -130,7 +130,7 @@ int SerialEndpoint::define_from_baudrate(int baudrate) {
     case 4000000:
       return B4000000;
     default: {
-      std::cerr << "Unknown baudrate\n";
+      openhd::log::get_default()->warn("Unknown baudrate");
       return B1152000;
     }
   }
