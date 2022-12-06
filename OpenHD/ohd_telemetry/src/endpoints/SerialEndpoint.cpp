@@ -72,7 +72,7 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
   m_console->debug("Write data serial:{}",data.size());
   if(_fd==-1){
     // cannot send data at the time, UART not setup / doesn't exist.
-    //m_console->warn("Cannot send data, no fd");
+    m_console->warn("Cannot send data, no fd");
     return false;
   }
   // If we have a fd, but the write fails, most likely the UART disconnected
