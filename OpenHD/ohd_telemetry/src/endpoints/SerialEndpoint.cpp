@@ -248,7 +248,7 @@ void SerialEndpoint::receive_data_until_error() {
         m_last_log_serial_read_failed=std::chrono::steady_clock::now();
         m_console->warn("{} failed polls(reads)",m_n_failed_reads);
       }else{
-        m_console->debug("poll probably timeout {}",m_n_failed_reads);
+        //m_console->debug("poll probably timeout {}",m_n_failed_reads);
       }
       continue;
     } else if (pollrc == -1) {
