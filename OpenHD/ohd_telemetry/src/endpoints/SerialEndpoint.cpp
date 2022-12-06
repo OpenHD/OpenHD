@@ -160,7 +160,7 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options,std::sha
     close(fd);
     return -1;
   }
-  tc.c_iflag &= ~(IGNBRK | BRKINT | ICRNL | INLCR | PARMRK | INPCK | ISTRIP | IXON);
+  /*tc.c_iflag &= ~(IGNBRK | BRKINT | ICRNL | INLCR | PARMRK | INPCK | ISTRIP | IXON);
   tc.c_oflag &= ~(OCRNL | ONLCR | ONLRET | ONOCR | OFILL | OPOST);
   tc.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG | TOSTOP);
   tc.c_cflag &= ~(CSIZE | PARENB | CRTSCTS);
@@ -170,7 +170,7 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options,std::sha
   if (options.flow_control) {
     tc.c_cflag |= CRTSCTS;
   }
-  tc.c_cflag |= CLOCAL; // Without this a write() blocks indefinitely.
+  tc.c_cflag |= CLOCAL; // Without this a write() blocks indefinitely.*/
   //
   const int baudrate_or_define = define_from_baudrate(options.baud_rate);
   if (cfsetispeed(&tc, baudrate_or_define) != 0) {
