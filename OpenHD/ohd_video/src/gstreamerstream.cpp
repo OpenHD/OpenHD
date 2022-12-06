@@ -463,6 +463,8 @@ void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<st
   m_console->debug("Got frame with {} fragments",frame_fragments.size());
   if(m_transmit_interface){
     m_transmit_interface->transmit_video_data(0,openhd::FragmentedVideoFrame{frame_fragments});
+  }else{
+    m_console->debug("No transmit interface");
   }
 }
 
