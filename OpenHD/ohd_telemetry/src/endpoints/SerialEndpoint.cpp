@@ -80,11 +80,11 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
   const auto send_len = static_cast<int>(write(_fd,data.data(), data.size()));
   m_console->debug("Written {} bytes",send_len);
   if (send_len != data.size()) {
-    n_failed_writes++;
+    m_n_failed_writes++;
     const auto elapsed_since_last_log=std::chrono::steady_clock::now()-m_last_log_serial_write_failed;
     if(elapsed_since_last_log>MIN_DELAY_BETWEEN_SERIAL_WRITE_FAILED_LOG_MESSAGES){
       std::stringstream ss;
-      ss<<"F UART write:"<<data.size()<<" actual:"<<send_len<<","<<GET_ERROR()<<"tot:"<<n_failed_writes;
+      ss<<"F UART write:"<<data.size()<<" actual:"<<send_len<<","<<GET_ERROR()<<"tot:"<< m_n_failed_writes;
       m_console->warn(ss.str());
       m_last_log_serial_write_failed=std::chrono::steady_clock::now();
     }
