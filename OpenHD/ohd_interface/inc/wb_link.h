@@ -17,6 +17,7 @@
 #include "openhd-spdlog.hpp"
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
+#include "openhd-video-transmit-interface.h"
 
 /**
  * This class takes a list of discovered wifi cards (and their settings) and
@@ -25,7 +26,7 @@
  * but also a bidirectional link (without re-transmission(s)) for telemetry.
  * This class assumes a corresponding instance on the air or ground unit, respective.
  */
-class WBLink {
+class WBLink :public openhd::ITransmitVideo{
  public:
   /**
    * @param broadcast_cards list of discovered wifi card(s) that support monitor mode & are injection capable. Needs to be at least
@@ -148,6 +149,8 @@ class WBLink {
   //bool rtl8812au_set_tx_pwr_idx_override(int value);
   bool rtl8812au_set_tx_power_level(int value);
   bool has_rtl8812au();
+ public:
+  void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
 };
 
 #endif
