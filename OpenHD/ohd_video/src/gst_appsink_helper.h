@@ -33,6 +33,12 @@ static void gst_debug_buffer(GstBuffer* buffer){
 }
 
 // Helper t pull data out of a gstreamer pipeline
+/**
+ * Helper to pull data out of a gstreamer pipeline
+ * @param keep_looping if set to false, method returns after max timeout_ns
+ * @param app_sink_element the Gst App Sink to pull data from
+ * @param out_cb fragments are forwarded via this cb
+ */
 static void loop_pull_appsink_samples(bool& keep_looping,GstElement *app_sink_element,
                                       std::function<void(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts)> out_cb){
   assert(app_sink_element);
