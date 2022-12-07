@@ -5,6 +5,9 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_VIDEO_FRAME_H_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_VIDEO_FRAME_H_
 
+#include <vector>
+#include <memory>
+
 namespace openhd{
 
 // R.n this is the best name i can come up with

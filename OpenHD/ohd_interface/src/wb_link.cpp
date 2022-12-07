@@ -167,14 +167,18 @@ void WBLink::configure_video() {
   }
 }
 
-std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,
-                                                           std::optional<int> udp_recv_buff_size)const {
+RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
   const auto settings=m_settings->get_settings();
   const auto mcs_index=static_cast<int>(settings.wb_mcs_index);
   const auto channel_width=static_cast<int>(settings.wb_channel_width);
-  RadiotapHeader::UserSelectableParams wifiParams{
+  return RadiotapHeader::UserSelectableParams{
       channel_width, settings.wb_enable_short_guard,settings.wb_enable_short_guard,
       settings.wb_enable_ldpc, mcs_index};
+}
+
+std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,
+                                                           std::optional<int> udp_recv_buff_size)const {
+  const auto settings=m_settings->get_settings();
   TOptions options{};
   options.radio_port = radio_port;
   const char *keypair_file =
@@ -196,6 +200,7 @@ std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int 
   }
   options.wlan = m_broadcast_cards.at(0)->_wifi_card.interface_name;
   //m_console->debug("Starting WFB_TX with MCS:{}",mcs_index);
+  RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
   return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port,udp_recv_buff_size);
 }
 
@@ -875,4 +880,3 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
     udpVideoTxList[stream_index]->tmp_send_frame_fragments(fragmented_video_frame.frame_fragments);
   }
 }
-
