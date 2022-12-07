@@ -877,6 +877,8 @@ bool WBLink::has_rtl8812au() {
 void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
   assert(m_profile.is_air);
   if(stream_index>=0 && stream_index<udpVideoTxList.size()){
-    udpVideoTxList[stream_index]->tmp_send_frame_fragments(fragmented_video_frame.frame_fragments);
+    auto& tx=udpVideoTxList[stream_index]->get_wb_tx();
+    const bool use_fixed_fec_instead=!m_settings->get_settings().is_video_variable_block_length_enabled();
+    tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments,use_fixed_fec_instead);
   }
 }
