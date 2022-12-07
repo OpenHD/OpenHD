@@ -122,12 +122,7 @@ void GStreamerStream::setup() {
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
   m_pipeline_content << OHDGstHelper::createRtpForVideoCodec(setting.streamed_video_format.videoCodec);
-  // Allows users to fully write a manual pipeline, this must be used carefully.
-  /*if (!m_camera.settings.manual_pipeline.empty()) {
-        m_pipeline.str("");
-        m_pipeline << m_camera.settings.manual_pipeline;
-  }*/
-  // add udp out part
+  // forward data via udp localhost or using appsink and data callback
   //m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
   m_pipeline_content << OHDGstHelper::createOutputAppSink();
   if(setting.air_recording==Recording::ENABLED){
