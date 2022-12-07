@@ -58,15 +58,16 @@ bool openhd::rtp_eof_helper::h264_end_block(const uint8_t *payload,
       //std::cout<<"Got start or middle of fragmented NALU\n";
       return false;
     }
-  } else if (naluHeader.type > 0 && naluHeader.type < 24) {//full nalu
+  } /*else if (naluHeader.type > 0 && naluHeader.type < 24) {//full nalu
     // However, since a full frame never fits into a single rtp packet (at least with our MTUs)
     // it is safe to say this is an SPS/PPS
     //std::cout<<"Got full NALU\n";
-    return true;
+    return false;
   } else {
     std::cerr << "Unknown rtp h264 packet\n";
     return true;
-  }
+  }*/
+  return false;
 }
 
 bool openhd::rtp_eof_helper::h265_end_block(const uint8_t *payload,
@@ -91,10 +92,11 @@ bool openhd::rtp_eof_helper::h265_end_block(const uint8_t *payload,
       //std::cout<<"Got start or middle of fragmented NALU\n";
       return false;
     }
-  } else {
+  }/* else {
     //std::cout<<"Got h265 nalu that is not a fragmentation unit\n";
     return true;
-  }
+  }*/
+  return false;
 }
 
 bool openhd::rtp_eof_helper::mjpeg_end_block(const uint8_t *payload,
