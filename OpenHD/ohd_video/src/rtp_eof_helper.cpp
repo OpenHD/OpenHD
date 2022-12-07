@@ -59,6 +59,8 @@ bool openhd::rtp_eof_helper::h264_end_block(const uint8_t *payload,
       return false;
     }
   } else if (naluHeader.type > 0 && naluHeader.type < 24) {//full nalu
+    // However, since a full frame never fits into a single rtp packet (at least with our MTUs)
+    // it is safe to say this is an SPS/PPS
     //std::cout<<"Got full NALU\n";
     return true;
   } else {
