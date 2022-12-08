@@ -17,6 +17,7 @@
 #include "openhd-spdlog.hpp"
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
+#include "openhd-video-transmit-interface.h"
 
 /**
  * This class takes a list of discovered wifi cards (and their settings) and
@@ -25,7 +26,7 @@
  * but also a bidirectional link (without re-transmission(s)) for telemetry.
  * This class assumes a corresponding instance on the air or ground unit, respective.
  */
-class WBLink {
+class WBLink :public openhd::ITransmitVideo{
  public:
   /**
    * @param broadcast_cards list of discovered wifi card(s) that support monitor mode & are injection capable. Needs to be at least
@@ -49,8 +50,6 @@ class WBLink {
   [[nodiscard]] bool ever_received_any_data();
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
-  // needs to be set for FEC auto to work
-  void set_video_codec(int codec);
  private:
   // validate param, then schedule change
   bool request_set_frequency(int frequency);
@@ -91,7 +90,8 @@ class WBLink {
   // For video, on air there are only tx instances, on ground there are only rx instances.
   std::vector<std::unique_ptr<UDPWBTransmitter>> udpVideoTxList;
   std::vector<std::unique_ptr<UDPWBReceiver>> udpVideoRxList;
-  // TODO make more configurable
+  // Reads the current settings and creates the appropriate Radiotap Header params
+  [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
   [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,std::optional<int> udp_recv_buff_size=std::nullopt)const;
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port);
   [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
@@ -106,8 +106,9 @@ class WBLink {
   // even though the frequency actually hasn't changed
   static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS="/boot/openhd/disable_all_frequency_checks.txt";
   const bool m_disable_all_frequency_checks;
-  int m_curr_video_codec=0;
  private:
+  // We have one worker thread for asynchronously performing operation(s) like changing the frequency
+  // but also recalculating statistics that are then forwarded to openhd_telemetry for broadcast
   bool m_work_thread_run;
   std::unique_ptr<std::thread> m_work_thread;
   // Recalculate stats, apply settings asynchronously and more
@@ -145,9 +146,10 @@ class WBLink {
   std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
   static constexpr auto DELAY_FOR_TRANSMIT_ACK =std::chrono::seconds(2);
  private:
-  //bool rtl8812au_set_tx_pwr_idx_override(int value);
-  bool rtl8812au_set_tx_power_level(int value);
+  bool set_wb_rtl8812au_tx_pwr_idx_override(int value);
   bool has_rtl8812au();
+ public:
+  void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
 };
 
 #endif

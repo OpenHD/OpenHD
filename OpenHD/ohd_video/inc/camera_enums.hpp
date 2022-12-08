@@ -14,6 +14,8 @@ enum class CameraType {
   // only exists to have a default value, properly discovered cameras must not be of type unknown
   UNKNOWN,
   // Dummy camera, is created fully in sw, for debugging purposes.
+  // NOTE: The semi-static gstreamer test video is not ideal, but by using a file or similar we'd lose the option to test different
+  // resolutions, framerate(s), bitrate(s) usw.
   DUMMY_SW,
   // Rpi foundation standard/original CSI cameras,old MMAL / BROADCOM stack
   RPI_CSI_MMAL,
@@ -34,7 +36,7 @@ enum class CameraType {
   // Cannot be auto-detected, therefore needs to be forced manually by the user (and in general, IP camera(s) are really different
   // compared to the other camera types and therefore do not integrate well in OpenHD/ohd_video)
   IP,
-  // Raspberry pi only right now, a CSI camera that uses the modern libcamera stack
+  // Raspberry pi only right now, a CSI camera that uses the newer libcamera stack
   RPI_CSI_LIBCAMERA,
   // rk3588 specific, incomplete
   ROCKCHIP_HDMI,

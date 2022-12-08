@@ -1,14 +1,15 @@
 ## Summary
 
-This submodule is responsible for detecting the cameras connected to the system 
-and then starts an encoded video stream for each of the discovered cameras.
-The functionalities it exposes to the public are simple:
+This submodule is responsible for detecting the cameras connected to the system and then starts an encoded video stream for each of the discovered cameras.
+In short,the functionalities it exposes to the (main) openhd executable are:
 1) Detect connected camera(s)
-2) Send generated, encoded video stream(s) via UDP (localhost) somewhere to be picked up (e.g. by ohd-interface)
-3) Expose a means to change camera / encoding specific settings (called by ohd_telemetry / mavlink)
+2) Setup a pipeline that generates a continuous stream of encoded video data (h264,h265 or mjpeg) for a detected camera
+   This data is forwarded via a callback (previously udp port)
+3) Store and change camera/encoder-related settings
 
 Camera settings are stored in /usr/local/share/openhd/video
 The Camera manifest (list of discovered cameras) can be found under /tmp for debugging.
+
 
 ##Note 
 The code in this module must adhere to the following paradigms:
@@ -19,6 +20,3 @@ The code in this module must adhere to the following paradigms:
 4) to adhere with 1), for h264/h265 streaming, re-send the "configuration data" (aka SPS,PPS,key frame for h264, SPS,PPS,VPS,key frame for h265)
 in regular intervals. This way the decoding application can start the video decoding after max. 1 interval size, assuming a connection
 without packet drops
-
-## List of TODO's
-1) Introduce even more settings & validate settings depending on the detected camera(s)

@@ -48,7 +48,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
     m_broadcast_cards.resize(1);
   }
   // this fetches the last settings, otherwise creates default ones
-  m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(openhd::tmp_convert(m_broadcast_cards));
+  m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(platform,openhd::tmp_convert(m_broadcast_cards));
   // check if the cards connected match the previous settings.
   // For now, we check if the first wb card can do 2 / 4 ghz, and assume the rest can do the same
   const auto first_card= m_broadcast_cards.at(0)->_wifi_card;
@@ -167,14 +167,18 @@ void WBLink::configure_video() {
   }
 }
 
-std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,
-                                                           std::optional<int> udp_recv_buff_size)const {
+RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
   const auto settings=m_settings->get_settings();
   const auto mcs_index=static_cast<int>(settings.wb_mcs_index);
   const auto channel_width=static_cast<int>(settings.wb_channel_width);
-  RadiotapHeader::UserSelectableParams wifiParams{
+  return RadiotapHeader::UserSelectableParams{
       channel_width, settings.wb_enable_short_guard,settings.wb_enable_short_guard,
       settings.wb_enable_ldpc, mcs_index};
+}
+
+std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,
+                                                           std::optional<int> udp_recv_buff_size)const {
+  const auto settings=m_settings->get_settings();
   TOptions options{};
   options.radio_port = radio_port;
   const char *keypair_file =
@@ -189,18 +193,6 @@ std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int 
     options.enable_fec= true;
     options.tx_fec_options.fixed_k=static_cast<int>(settings.wb_video_fec_block_length);
     options.tx_fec_options.overhead_percentage=static_cast<int>(settings.wb_video_fec_percentage);
-    if(settings.is_video_variable_block_length_enabled()){
-      if(m_curr_video_codec==0){
-        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::RTP_H264;
-      }else if(m_curr_video_codec==1){
-        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::RTP_H265;
-      }else if(m_curr_video_codec==2){
-        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::RTP_MJPEG;
-      }else{
-        // default
-        options.tx_fec_options.variable_input_type=FEC_VARIABLE_INPUT_TYPE::RTP_H264;
-      }
-    }
   }else{
     options.enable_fec= false;
     options.tx_fec_options.fixed_k=0;
@@ -208,6 +200,7 @@ std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int 
   }
   options.wlan = m_broadcast_cards.at(0)->_wifi_card.interface_name;
   //m_console->debug("Starting WFB_TX with MCS:{}",mcs_index);
+  RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
   return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port,udp_recv_buff_size);
 }
 
@@ -391,8 +384,8 @@ void WBLink::apply_txpower() {
     const auto& card=holder->_wifi_card;
     if(card.type==WiFiCardType::Realtek8812au){
       // requires corresponding driver workaround for dynamic tx power
-      const auto tmp=openhd::tx_power_level_to_rtl8812au_tx_power_index_override(settings.wb_tx_power_level);
-      m_console->debug("RTL8812AU power level: {} {}",settings.wb_tx_power_level,tmp);
+      const auto tmp=settings.wb_rtl8812au_tx_pwr_idx_override;
+      m_console->debug("RTL8812AU tx_pwr_idx_override: {}",tmp);
       WifiCardCommandHelper::iw_set_tx_power_mBm(card,tmp);
     }else{
       const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
@@ -465,11 +458,7 @@ bool WBLink::set_video_fec_block_length(const int block_length) {
   m_settings->persist();
   // we only use the fec blk length for video tx-es, and changing it is fast
   for(auto& tx:udpVideoTxList){
-    if(block_length==0){
-      tx->get_wb_tx().update_fec_k(block_length,FEC_VARIABLE_INPUT_TYPE::RTP_H264);
-    }else{
-      tx->get_wb_tx().update_fec_k(block_length,std::nullopt);
-    }
+    tx->get_wb_tx().update_fec_k(block_length);
   }
   return true;
 }
@@ -546,18 +535,15 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   }
   // WIFI TX power depends on the used chips
   if(has_rtl8812au()){
-    /*auto cb_wb_rtl8812au_tx_pwr_idx_override=[this](std::string,int value){
-      return rtl8812au_set_tx_pwr_idx_override(value);
+    auto cb_wb_rtl8812au_tx_pwr_idx_override=[this](std::string,int value){
+      return set_wb_rtl8812au_tx_pwr_idx_override(value);
     };
-    ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override,cb_wb_rtl8812au_tx_pwr_idx_override}});*/
-    auto cb_tx_power_level=[this](std::string,int value){
-      return rtl8812au_set_tx_power_level(value);
-    };
-    ret.push_back(openhd::Setting{WB_TX_POWER_LEVEL,openhd::IntSetting{(int)settings.wb_tx_power_level,cb_tx_power_level}});
+    ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override,cb_wb_rtl8812au_tx_pwr_idx_override}});
   }else{
-    auto change_tx_power=openhd::IntSetting{(int)m_settings->get_settings().wb_tx_power_milli_watt,[this](std::string,int value){
-                                                return request_set_txpower(value);
-                                              }};
+    auto cb_wb_tx_power_milli_watt=[this](std::string,int value){
+      return request_set_txpower(value);
+    };
+    auto change_tx_power=openhd::IntSetting{(int)m_settings->get_settings().wb_tx_power_milli_watt,cb_wb_tx_power_milli_watt};
     ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
   }
   openhd::validate_provided_ids(ret);
@@ -580,15 +566,6 @@ bool WBLink::validate_cards_support_setting_channel_width() {
     }
   }
   return true;
-}
-
-void WBLink::set_video_codec(int codec) {
-  m_console->debug("set_video_codec to {}",codec);
-  if(m_curr_video_codec!=codec){
-    m_curr_video_codec=codec;
-    //TODO
-    //restart_async();
-  }
 }
 
 static uint32_t get_micros(std::chrono::nanoseconds ns){
@@ -854,19 +831,10 @@ bool WBLink::check_work_queue_empty() {
   return true;
 }
 
-/*bool WBLink::rtl8812au_set_tx_pwr_idx_override(int value) {
-  if(!openhd::validate_rtl8812au_wb_tx_pwr_idx(value))return false;
-  m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=value;
-  m_settings->persist();
-  openhd::write_modprobe_file_rtl8812au_wb(value);
-  // NOTE: Needs reboot to be applied
-  return true;
-}*/
-
-bool WBLink::rtl8812au_set_tx_power_level(int value) {
-  if(!openhd::validate_tx_power_level(value))return false;
+bool WBLink::set_wb_rtl8812au_tx_pwr_idx_override(int value) {
+  if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(value))return false;
   if(!check_work_queue_empty())return false;
-  m_settings->unsafe_get_settings().wb_tx_power_level=static_cast<openhd::TxPowerLevel>(value);
+  m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=value;
   m_settings->persist();
   // No need to delay the change, but perform it async anyways.
   auto work_item=std::make_shared<WorkItem>([this](){
@@ -885,3 +853,22 @@ bool WBLink::has_rtl8812au() {
   return false;
 }
 
+void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
+  assert(m_profile.is_air);
+  if(stream_index>=0 && stream_index<udpVideoTxList.size()){
+    auto& tx=udpVideoTxList[stream_index]->get_wb_tx();
+    const bool use_fixed_fec_instead=!m_settings->get_settings().is_video_variable_block_length_enabled();
+    //tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments,use_fixed_fec_instead);
+    uint32_t max_block_size_for_platform=m_settings->get_settings().wb_max_fec_block_size_for_platform;
+    //openhd::log::get_default()->debug("max_block_size_for_platform:{}",max_block_size_for_platform);
+    if(!openhd::valid_wb_max_fec_block_size_for_platform(max_block_size_for_platform)){
+      openhd::log::get_default()->warn("Invalid max_block_size_for_platform:{}",max_block_size_for_platform);
+      max_block_size_for_platform=openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
+    }
+    if(m_settings->get_settings().is_video_variable_block_length_enabled()){
+      tx.tmp_split_and_feed_frame_fragments(fragmented_video_frame.frame_fragments,max_block_size_for_platform);
+    }else{
+      tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments, true);
+    }
+  }
+}

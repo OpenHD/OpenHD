@@ -25,7 +25,9 @@ class OHDVideo {
    * if there is no camera found, use a dummy camera.
    * @param opt_action_handler openhd global handler for communication between different ohd modules.
    */
-  OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,std::shared_ptr<openhd::ActionHandler> opt_action_handler);
+  OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,
+           std::shared_ptr<openhd::ActionHandler> opt_action_handler,
+           std::shared_ptr<openhd::ITransmitVideo> interface_transmit_video);
   OHDVideo(const OHDVideo&)=delete;
   OHDVideo(const OHDVideo&&)=delete;
   /**
@@ -51,6 +53,7 @@ class OHDVideo {
   // r.n limited to primary and secondary camera
   static constexpr auto MAX_N_CAMERAS=2;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
+  std::shared_ptr<openhd::ITransmitVideo> m_interface_transmit_video;
  private:
   // Add a CameraStream for a discovered camera.
   void configure(std::shared_ptr<CameraHolder> camera);

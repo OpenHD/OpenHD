@@ -215,10 +215,10 @@ int main(int argc, char *argv[]) {
   // (And there are also many other places where we just need to be root).
   OHDUtil::terminate_if_not_root();
 
-  // parse some arguments usefully for debugging
+  // Parse the program arguments, also uses the "file exists" pattern for some params
   const OHDRunOptions options=parse_run_parameters(argc,argv);
 
-  // Log what arguments the OHD main executable is started with.
+  // Print all the arguments the OHD main executable is started with
   std::cout << "OpenHD START with " <<"\n"<<
       "air:"<<  OHDUtil::yes_or_no(options.run_as_air)<<"\n"<<
       "force_dummy_camera:"<<  OHDUtil::yes_or_no(options.force_dummy_camera)<<"\n"<<
@@ -236,6 +236,8 @@ int main(int argc, char *argv[]) {
   std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
   OHDInterface::print_internal_fec_optimization_method();
 
+  // This is the console we use inside main, in general different openhd modules/classes have their own loggers
+  // with different tags
   std::shared_ptr<spdlog::logger> m_console=openhd::log::create_or_get("main");
   assert(m_console);
 
@@ -271,6 +273,7 @@ int main(int argc, char *argv[]) {
     write_profile_manifest(*profile);
 
     // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as ground.
+    // can be disabled for development purposes.
     if(!options.no_qt_autostart){
       if(!profile->is_air){
         OHDUtil::run_command("systemctl",{" start qopenhd"});
@@ -327,10 +330,6 @@ int main(int argc, char *argv[]) {
     // Then start ohdInterface, which discovers detected wifi cards and more.
     auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile,ohd_action_handler);
 
-    ohd_action_handler->action_set_video_codec_set([&ohdInterface](int codec){
-      ohdInterface->set_video_codec(codec);
-    });
-
     // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
     auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile,ohd_action_handler);
     // Telemetry allows changing all settings (even from other modules)
@@ -351,7 +350,7 @@ int main(int argc, char *argv[]) {
     // and start ohdVideo if we are on the air pi
     std::unique_ptr<OHDVideo> ohdVideo= nullptr;
     if (profile->is_air) {
-      ohdVideo = std::make_unique<OHDVideo>(*platform,cameras,ohd_action_handler);
+      ohdVideo = std::make_unique<OHDVideo>(*platform,cameras,ohd_action_handler,ohdInterface->get_video_tx_interface());
       auto settings_components=ohdVideo->get_setting_components();
       if(!settings_components.empty()){
         ohdTelemetry->add_settings_camera_component(

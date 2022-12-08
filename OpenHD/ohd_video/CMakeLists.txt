@@ -38,6 +38,18 @@ pkg_search_module(GST REQUIRED gstreamer-1.0>=1.4
         gstreamer-sdp-1.0>=1.4
         gstreamer-video-1.0>=1.4
         gstreamer-app-1.0>=1.4)
+## xx
+# https://stackoverflow.com/questions/64078308/how-to-write-a-cmake-file-which-successfully-links-gstreamer-basic-tutorial-5
+pkg_search_module(gstreamer REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
+pkg_search_module(gstreamer-sdp REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0>=1.4)
+pkg_search_module(gstreamer-app REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
+pkg_search_module(gstreamer-video REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=1.4)
+target_link_libraries(OHDVideoLib PRIVATE
+        PkgConfig::gstreamer
+        PkgConfig::gstreamer-sdp
+        PkgConfig::gstreamer-app
+        PkgConfig::gstreamer-video)
+## xx
 # FUCKING GSTREAMER !! end
 # We get fmt from speedlog
 #find_package(fmt REQUIRED)
@@ -59,9 +71,10 @@ set(sources
     "inc/camera_enums.hpp"
     "inc/camera_holder.hpp"
     "inc/camera_settings.hpp"
+    "inc/rtp_eof_helper.h"
 
     "inc/v_validate_settings.h"
-    "inc/veyestream.h"
+    #"inc/veyestream.h"
 
     "src/camera_discovery_helper.hpp"
     "src/ffmpeg_videosamples.hpp"
@@ -70,7 +83,8 @@ set(sources
     "src/camera_discovery.cpp"
     "src/gstreamerstream.cpp"
     "src/ohd_video.cpp"
-    "src/veyestream.cpp"
+    "src/rtp_eof_helper.cpp"
+    #"src/veyestream.cpp"
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})

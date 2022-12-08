@@ -11,8 +11,13 @@
 #include "ffmpeg_videosamples.hpp"
 #include "gst_helper.hpp"
 
-GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,uint16_t video_udp_port)
-    : CameraStream(platform, camera_holder, video_udp_port) {
+#include "gst_appsink_helper.h"
+#include "rtp_eof_helper.h"
+
+GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
+                                 std::shared_ptr<openhd::ITransmitVideo> i_transmit_video)
+    //: CameraStream(platform, camera_holder, video_udp_port) {
+    : CameraStream(platform,camera_holder,i_transmit_video){
   m_console=openhd::log::create_or_get("v_gststream");
   assert(m_console);
   m_console->debug("GStreamerStream::GStreamerStream()");
@@ -117,14 +122,9 @@ void GStreamerStream::setup() {
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
   m_pipeline_content << OHDGstHelper::createRtpForVideoCodec(setting.streamed_video_format.videoCodec);
-  // Allows users to fully write a manual pipeline, this must be used carefully.
-  /*if (!m_camera.settings.manual_pipeline.empty()) {
-        m_pipeline.str("");
-        m_pipeline << m_camera.settings.manual_pipeline;
-  }*/
-  // add udp out part
-  m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(
-      m_video_udp_port);
+  // forward data via udp localhost or using appsink and data callback
+  //m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
+  m_pipeline_content << OHDGstHelper::createOutputAppSink();
   if(setting.air_recording==Recording::ENABLED){
     const auto recording_filename=openhd::video::create_unused_recording_filename(
         OHDGstHelper::file_suffix_for_video_codec(setting.streamed_video_format.videoCodec));
@@ -157,6 +157,11 @@ void GStreamerStream::setup() {
     // sw encoder(s) take kbit/s
     m_bitrate_ctrl_element_takes_kbit= true;
   }
+  //test_add_data_listener();
+  m_app_sink_element=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
+  assert(m_app_sink_element);
+  m_pull_samples_run= true;
+  m_pull_samples_thread=std::make_unique<std::thread>(&GStreamerStream::loop_pull_samples, this);
 }
 
 void GStreamerStream::setup_raspberrypi_csi() {
@@ -303,6 +308,11 @@ void GStreamerStream::stop() {
 
 void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() begin");
+  if(m_pull_samples_thread){
+    m_pull_samples_run= false;
+    if(m_pull_samples_thread->joinable())m_pull_samples_thread->join();
+    m_pull_samples_thread= nullptr;
+  }
   if(!m_gst_pipeline){
     m_console->debug("gst_pipeline==null");
     return;
@@ -421,3 +431,41 @@ bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
   return false;
 }
 
+void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
+  //m_console->debug("Got frame with {} fragments",frame_fragments.size());
+  if(m_transmit_interface){
+    m_transmit_interface->transmit_video_data(0,openhd::FragmentedVideoFrame{frame_fragments});
+  }else{
+    m_console->debug("No transmit interface");
+  }
+}
+
+void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts) {
+  m_frame_fragments.push_back(fragment);
+  const auto curr_video_codec=m_camera_holder->get_settings().streamed_video_format.videoCodec;
+  bool is_last_fragment_of_frame=false;
+  if(curr_video_codec==VideoCodec::H264){
+    if(openhd::rtp_eof_helper::h264_end_block(fragment->data(),fragment->size())){
+      is_last_fragment_of_frame= true;
+    }
+  }else if(curr_video_codec==VideoCodec::H265){
+    if(openhd::rtp_eof_helper::h265_end_block(fragment->data(),fragment->size())){
+      is_last_fragment_of_frame= true;
+    }
+  }else{
+    // Not supported yet, forward them in chuncks of 20 (NOTE: This workaround is not ideal, since it creates ~1 frame of latency).
+    is_last_fragment_of_frame=m_frame_fragments.size()>=20;
+  }
+  if(is_last_fragment_of_frame || m_frame_fragments.size()>1000){
+    on_new_rtp_fragmented_frame(m_frame_fragments);
+    m_frame_fragments.resize(0);
+  }
+}
+
+void GStreamerStream::loop_pull_samples() {
+  assert(m_app_sink_element);
+  auto cb=[this](std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts){
+    on_new_rtp_frame_fragment(fragment,dts);
+  };
+  openhd::loop_pull_appsink_samples(m_pull_samples_run,m_app_sink_element,cb);
+}

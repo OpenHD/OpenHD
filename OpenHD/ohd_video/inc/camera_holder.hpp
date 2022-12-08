@@ -26,14 +26,10 @@ class CameraHolder:
     public openhd::ISettingsComponent{
  public:
   explicit CameraHolder(Camera camera,std::shared_ptr<openhd::ActionHandler> opt_action_handler= nullptr):
-       m_camera(std::move(camera)),m_opt_action_handler(std::move(opt_action_handler)),
+       m_camera(std::move(camera)),
        openhd::settings::PersistentSettings<CameraSettings>(get_video_settings_directory()){
     // read previous settings or create default ones
     init();
-    // dirty, propagate changes to the video codec back to the link (ohd_interface)
-    if(m_opt_action_handler){
-      m_opt_action_handler->action_set_video_codec_handle(video_codec_to_int(get_settings().streamed_video_format.videoCodec));
-    }
   }
   [[nodiscard]] const Camera& get_camera()const{
     return m_camera;
@@ -176,9 +172,6 @@ class CameraHolder:
     }
     unsafe_get_settings().streamed_video_format.videoCodec=video_codec_from_int(codec);
     persist();
-    if(m_opt_action_handler){
-      m_opt_action_handler->action_set_video_codec_handle(codec);
-    }
     return true;
   }
   bool set_video_bitrate(int bitrate_mbits){
@@ -279,7 +272,6 @@ class CameraHolder:
  private:
   // Camera info is immutable
   const Camera m_camera;
-  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
     std::stringstream ss;

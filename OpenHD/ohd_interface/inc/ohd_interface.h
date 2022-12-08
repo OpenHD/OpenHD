@@ -19,6 +19,7 @@
 #include "usb_tether_listener.h"
 #include "wb_link.h"
 #include "wifi_hotspot.h"
+#include "openhd-video-transmit-interface.h"
 
 class OHDInterface :public openhd::ISettingsComponent{
  public:
@@ -39,7 +40,8 @@ class OHDInterface :public openhd::ISettingsComponent{
   // settings hacky end
   // easy access without polluting the headers
   static void print_internal_fec_optimization_method();
-  void set_video_codec(int codec);
+  // only valid on air
+  std::shared_ptr<openhd::ITransmitVideo> get_video_tx_interface();
  private:
   /**
     * after calling this method with an external device's ip address
@@ -55,7 +57,7 @@ class OHDInterface :public openhd::ISettingsComponent{
  private:
   const OHDProfile profile;
   const OHDPlatform platform;
-  std::unique_ptr<WBLink> m_wb_link;
+  std::shared_ptr<WBLink> m_wb_link;
   std::unique_ptr<USBTetherListener> m_usb_tether_listener;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
   std::unique_ptr<openhd::LEDBlinker> m_error_blinker;

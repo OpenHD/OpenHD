@@ -105,5 +105,14 @@ struct OHDPlatform {
   }
 };
 
+static bool platform_rpi_is_high_performance(const OHDPlatform& platform){
+  assert(platform.platform_type==PlatformType::RaspberryPi);
+  const auto rpi_board_type=platform.board_type;
+  if(rpi_board_type==BoardType::RaspberryPi4B || rpi_board_type==BoardType::RaspberryPiCM4){
+    return true;
+  }
+  return false;
+}
+
 
 #endif

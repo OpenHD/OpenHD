@@ -24,7 +24,7 @@
 class GStreamerStream : public CameraStream {
  public:
   GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                  uint16_t video_udp_port);
+                  std::shared_ptr<openhd::ITransmitVideo> i_transmit_video);
   ~GStreamerStream();
   void setup() override;
  private:
@@ -69,6 +69,16 @@ class GStreamerStream : public CameraStream {
   // returns true on success, false otherwise
   bool try_dynamically_change_bitrate(uint32_t bitrate_kbits);
   uint32_t m_curr_dynamic_bitrate_kbits =-1;
+ public:
+  void on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts);
+ private:
+  std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;
+  void on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments);
+  // pull samples (fragments) out of the gstreamer pipeline
+  GstElement *m_app_sink_element = nullptr;
+  bool m_pull_samples_run=false;
+  std::unique_ptr<std::thread> m_pull_samples_thread;
+  void loop_pull_samples();
 };
 
 #endif

@@ -3,6 +3,7 @@
 
 #include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
+#include "openhd-ignore-interfaces.h"
 #include "openhd-util.hpp"
 #include "wifi_card.hpp"
 #include "wifi_card_discovery.h"
@@ -38,8 +39,6 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
 //                ...
 // So while annoying, let's just use iw dev and parse the result
 // For now, no separation into which channel(s) are supported, just weather any 2.4G or 5G frequency is supported
-// NOTE: The ASUS CARD (for examle) reports being both 2.4 and 5G capable, but the wifibroadcast driver for sure
-// is only capable of 5G. so this output is not that meaningfully.
 struct SupportedFrequency{
   bool supports_2G=false;
   bool supports_5G=false;
@@ -200,7 +199,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	}
 	case WiFiCardType::Realtek8812au: {
 	 // Known issue: Realtek8812au reports 2.4 and 5G, but only supports 5G in monitor mode
-         // 22.10.22: Actually, rtl8812au supports both 2.4G and 5G in monitor mode.
+         // 22.10.22: Actually, rtl8812au supports both 2.4G and 5G in monitor mode, at least with our current driver branch
 	  card.supports_5ghz=true;
 	  card.supports_2ghz = true;
 	  card.supports_rts = true;
@@ -244,6 +243,11 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	openhd::log::get_default()->warn("Card "+card.interface_name+" reports neither 2G nor 5G, default to 2G capable");
 	card.supports_2ghz=true;
   }
+  if(openhd::ignore::should_be_ignored_interface(card.interface_name)
+      || openhd::ignore::should_be_ignored_mac(card.mac)){
+    openhd::log::get_default()->info("Ignoring card {} since whitelisted by developer",card.interface_name);
+    return std::nullopt;
+  }
   return card;
   // A wifi card should at least one of them both.
   //if(card.supports_2ghz || card.supports_5ghz){
@@ -251,6 +255,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   //}
   //return std::nullopt;
 }
+
 bool DWifiCards::any_wifi_card_supporting_monitor(const std::vector<WiFiCard>& cards) {
   for(const auto& card:cards){
     if(card.supports_injection)return true;
