@@ -52,7 +52,7 @@ static void loop_pull_appsink_samples(bool& keep_looping,GstElement *app_sink_el
       //openhd::log::get_default()->debug("Got sample {}", gst_buffer_list_length(buffer_list));
       GstBuffer* buffer = gst_sample_get_buffer(sample);
       if (buffer) {
-        //openhd::gst_debug_buffer(buffer);
+        openhd::gst_debug_buffer(buffer);
         auto buff_copy=openhd::gst_copy_buffer(buffer);
         //openhd::log::get_default()->debug("Got buffer size {}", buff_copy->size());
         out_cb(buff_copy,buffer->dts);
