@@ -13,6 +13,7 @@ namespace openhd{
 // R.n this is the best name i can come up with
 // This is not required to be exactly one frame, but should be
 // already packetized into rtp fragments
+// R.n it is always either h264,h265 or mjpeg fragmented using the RTP protocol
 struct FragmentedVideoFrame{
   std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments;
   // Time point of when this frame was produced, as early as possible.
