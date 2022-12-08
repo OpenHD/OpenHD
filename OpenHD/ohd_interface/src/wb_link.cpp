@@ -48,7 +48,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
     m_broadcast_cards.resize(1);
   }
   // this fetches the last settings, otherwise creates default ones
-  m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(openhd::tmp_convert(m_broadcast_cards));
+  m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(platform,openhd::tmp_convert(m_broadcast_cards));
   // check if the cards connected match the previous settings.
   // For now, we check if the first wb card can do 2 / 4 ghz, and assume the rest can do the same
   const auto first_card= m_broadcast_cards.at(0)->_wifi_card;
@@ -859,8 +859,13 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
     auto& tx=udpVideoTxList[stream_index]->get_wb_tx();
     const bool use_fixed_fec_instead=!m_settings->get_settings().is_video_variable_block_length_enabled();
     //tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments,use_fixed_fec_instead);
+    uint32_t max_block_size_for_platform=m_settings->get_settings().wb_max_fec_block_size_for_platform;
+    if(max_block_size_for_platform<=0 || max_block_size_for_platform>50){
+      openhd::log::get_default()->warn("Invalid max_block_size_for_platform:{}",max_block_size_for_platform);
+      max_block_size_for_platform=openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
+    }
     if(m_settings->get_settings().is_video_variable_block_length_enabled()){
-      tx.tmp_split_and_feed_frame_fragments(fragmented_video_frame.frame_fragments,10);
+      tx.tmp_split_and_feed_frame_fragments(fragmented_video_frame.frame_fragments,max_block_size_for_platform);
     }else{
       tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments, true);
     }

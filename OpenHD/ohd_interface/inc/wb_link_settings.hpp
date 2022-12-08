@@ -7,6 +7,7 @@
 
 #include "openhd-settings2.hpp"
 #include "wifi_card.hpp"
+#include "openhd-platform.hpp"
 
 namespace openhd{
 
@@ -25,6 +26,8 @@ static constexpr auto DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH=12;
 static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE=50;
 // Measured to be slightly below 25mW
 static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=19;
+//NOTE: Default depends on platform type and is therefore calculated below, then overwrites this default value
+static constexpr uint32_t DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM=20;
 
 struct WBLinkSettings {
   uint32_t wb_frequency; // writen once 2.4 or 5 is known
@@ -47,6 +50,8 @@ struct WBLinkSettings {
   uint32_t wb_rtl8812au_tx_pwr_idx_override=DEFAULT_RTL8812AU_TX_POWER_INDEX;
   // wb link recommends bitrate(s) to the encoder, can be helpfully for inexperienced users.
   bool enable_wb_video_variable_bitrate= false;
+  // NOTE: Default depends on platform type and is therefore calculated below, then overwrites this default value
+  uint32_t wb_max_fec_block_size_for_platform=DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
   // Helper
   [[nodiscard]] bool configured_for_2G()const{
 	return is_2G_and_assert(wb_frequency);
@@ -61,7 +66,29 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_widt
                                    enable_wb_video_variable_bitrate,
                                    wb_enable_stbc,wb_enable_ldpc,wb_enable_short_guard);
 
-static WBLinkSettings create_default_wb_stream_settings(const std::vector<WiFiCard>& wifibroadcast_cards){
+static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform){
+  switch (platform.platform_type) {
+    case PlatformType::RaspberryPi:{
+      if(platform_rpi_is_high_performance(platform)){
+        return 30;
+      }
+      return 20;
+    }
+      break;
+    case PlatformType::PC:
+    case PlatformType::Jetson:
+    case PlatformType::NanoPi:
+    case PlatformType::iMX6:
+    case PlatformType::Rockchip:
+    case PlatformType::Zynq:
+    case PlatformType::Unknown:
+    default:
+      return 20;
+  }
+  return 20;
+}
+
+static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platform,const std::vector<WiFiCard>& wifibroadcast_cards){
   assert(!wifibroadcast_cards.empty());
   const auto first_card=wifibroadcast_cards.at(0);
   assert(first_card.supports_5ghz || first_card.supports_2ghz);
@@ -72,6 +99,7 @@ static WBLinkSettings create_default_wb_stream_settings(const std::vector<WiFiCa
   }else{
 	settings.wb_frequency=DEFAULT_2GHZ_FREQUENCY;
   }
+  settings.wb_max_fec_block_size_for_platform= calculate_max_fec_block_size_for_platform(platform);
   return settings;
 }
 
@@ -98,9 +126,11 @@ static std::vector<WiFiCard> tmp_convert(const std::vector<std::shared_ptr<WifiC
 
 class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLinkSettings>{
  public:
-  explicit WBStreamsSettingsHolder(std::vector<WiFiCard> wifibroadcast_cards1):
+  explicit WBStreamsSettingsHolder(OHDPlatform platform,std::vector<WiFiCard> wifibroadcast_cards1):
 	  openhd::settings::PersistentSettings<WBLinkSettings>(INTERFACE_SETTINGS_DIRECTORY),
-	  wifibroadcast_cards(std::move(wifibroadcast_cards1)){
+	  wifibroadcast_cards(std::move(wifibroadcast_cards1)),
+          m_platform(platform)
+  {
 	init();
   }
   // set default 2G channel and channel width
@@ -115,6 +145,7 @@ class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLink
     persist();
   }
  public:
+  const OHDPlatform m_platform;
   const std::vector<WiFiCard> wifibroadcast_cards;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
@@ -123,7 +154,7 @@ class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLink
 	return ss.str();
   }
   [[nodiscard]] WBLinkSettings create_default()const override{
-	return create_default_wb_stream_settings(wifibroadcast_cards);
+	return create_default_wb_stream_settings(m_platform,wifibroadcast_cards);
   }
 };
 
