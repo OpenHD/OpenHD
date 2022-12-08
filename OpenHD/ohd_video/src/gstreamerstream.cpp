@@ -432,7 +432,7 @@ bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
 }
 
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
-  m_console->debug("Got frame with {} fragments",frame_fragments.size());
+  //m_console->debug("Got frame with {} fragments",frame_fragments.size());
   if(m_transmit_interface){
     m_transmit_interface->transmit_video_data(0,openhd::FragmentedVideoFrame{frame_fragments});
   }else{
