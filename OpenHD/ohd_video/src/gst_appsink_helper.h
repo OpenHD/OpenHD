@@ -26,10 +26,11 @@ static std::shared_ptr<std::vector<uint8_t>> gst_copy_buffer(GstBuffer* buffer){
 
 static void gst_debug_buffer(GstBuffer* buffer){
   assert(buffer);
+  const auto now=std::chrono::steady_clock::now().time_since_epoch().count();
   openhd::log::get_default()->debug(
-      "Buffer info[offset:{}, offset_end:{} duration:{} pts:{} dts:{}]",
+      "Buffer info[offset:{}, offset_end:{} duration:{} pts:{} dts:{} now:{}]",
       buffer->offset,buffer->offset_end,buffer->duration,
-      buffer->pts,buffer->dts);
+      buffer->pts,buffer->dts,now);
 }
 
 // based on https://github.com/Samsung/kv2streamer/blob/master/kv2streamer-lib/gst-wrapper/GstAppSinkPipeline.cpp
