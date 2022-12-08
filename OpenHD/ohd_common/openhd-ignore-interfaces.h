@@ -8,21 +8,30 @@
 #include "openhd-util.hpp"
 
 // For developers
-// By using the file specified here you can tell openhd to ignore certain interfaces
+// By using the file(s) specified here you can tell openhd to ignore certain interfaces
 // This can be usefully if you want to create some kind of custom networking or similar
 namespace openhd::ignore{
 
-static constexpr auto filename="/boot/openhd/ignore_cards.txt";
+static constexpr auto filename_ignore_interfaces="/boot/openhd/ignore_interfaces.txt";
+static constexpr auto filename_ignore_macs="/boot/openhd/ignore_macs.txt";
 
-static bool should_be_ignored(const std::string interface_name){
-  if(OHDFilesystemUtil::exists(filename)){
+static bool should_be_ignored(const char* file_name,const std::string& evaluated){
+  if(!OHDFilesystemUtil::exists(file_name)){
     return false;
   }
-  const auto content=OHDFilesystemUtil::read_file(filename);
-  if(content.find(interface_name) != std::string::npos){
+  const auto content=OHDFilesystemUtil::read_file(file_name);
+  if(content.find(evaluated) != std::string::npos){
     return true;
   }
   return false;
+}
+
+static bool should_be_ignored_interface(const std::string& interface_name){
+  return should_be_ignored(filename_ignore_interfaces,interface_name);
+}
+
+static bool should_be_ignored_mac(const std::string& mac){
+  return should_be_ignored(filename_ignore_macs,mac);
 }
 
 }

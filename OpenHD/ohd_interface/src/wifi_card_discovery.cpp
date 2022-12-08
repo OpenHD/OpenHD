@@ -3,6 +3,7 @@
 
 #include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
+#include "openhd-ignore-interfaces.h"
 #include "openhd-util.hpp"
 #include "wifi_card.hpp"
 #include "wifi_card_discovery.h"
@@ -244,6 +245,11 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	openhd::log::get_default()->warn("Card "+card.interface_name+" reports neither 2G nor 5G, default to 2G capable");
 	card.supports_2ghz=true;
   }
+  if(openhd::ignore::should_be_ignored_interface(card.interface_name)
+      || openhd::ignore::should_be_ignored_mac(card.mac)){
+    openhd::log::get_default()->info("Ignoring card {} since whitelisted by developer",card.interface_name);
+    return std::nullopt;
+  }
   return card;
   // A wifi card should at least one of them both.
   //if(card.supports_2ghz || card.supports_5ghz){
@@ -251,6 +257,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   //}
   //return std::nullopt;
 }
+
 bool DWifiCards::any_wifi_card_supporting_monitor(const std::vector<WiFiCard>& cards) {
   for(const auto& card:cards){
     if(card.supports_injection)return true;
