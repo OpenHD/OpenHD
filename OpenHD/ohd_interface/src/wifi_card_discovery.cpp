@@ -39,8 +39,6 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
 //                ...
 // So while annoying, let's just use iw dev and parse the result
 // For now, no separation into which channel(s) are supported, just weather any 2.4G or 5G frequency is supported
-// NOTE: The ASUS CARD (for examle) reports being both 2.4 and 5G capable, but the wifibroadcast driver for sure
-// is only capable of 5G. so this output is not that meaningfully.
 struct SupportedFrequency{
   bool supports_2G=false;
   bool supports_5G=false;
@@ -201,7 +199,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	}
 	case WiFiCardType::Realtek8812au: {
 	 // Known issue: Realtek8812au reports 2.4 and 5G, but only supports 5G in monitor mode
-         // 22.10.22: Actually, rtl8812au supports both 2.4G and 5G in monitor mode.
+         // 22.10.22: Actually, rtl8812au supports both 2.4G and 5G in monitor mode, at least with our current driver branch
 	  card.supports_5ghz=true;
 	  card.supports_2ghz = true;
 	  card.supports_rts = true;
