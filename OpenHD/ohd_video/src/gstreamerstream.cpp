@@ -453,8 +453,8 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
       is_last_fragment_of_frame= true;
     }
   }else{
-    // Not supported yet
-    is_last_fragment_of_frame=m_frame_fragments.size()>=50;
+    // Not supported yet, forward them in chuncks of 20 (NOTE: This workaround is not ideal, since it creates ~1 frame of latency).
+    is_last_fragment_of_frame=m_frame_fragments.size()>=20;
   }
   if(is_last_fragment_of_frame || m_frame_fragments.size()>1000){
     on_new_rtp_fragmented_frame(m_frame_fragments);
