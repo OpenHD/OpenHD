@@ -75,7 +75,6 @@ class GStreamerStream : public CameraStream {
   void on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts);
  private:
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_frame_fragments;
-  uint64_t m_last_dts=0;
   void on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments);
   // pull samples (fragments) out of the gstreamer pipeline
   GstElement *m_app_sink_element = nullptr;

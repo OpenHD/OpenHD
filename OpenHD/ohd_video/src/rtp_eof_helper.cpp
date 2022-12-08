@@ -4,6 +4,11 @@
 
 #include "rtp_eof_helper.h"
 
+#include <vector>
+#include <iostream>
+#include <cassert>
+#include <functional>
+
 // Look here for more details (or just look into the rtp rfc:
 // https://github.com/Consti10/LiveVideo10ms/tree/99e2c4ca31dd8c446952cd409ed51f798e29a137/VideoCore/src/main/cpp/Parser
 static constexpr auto RTP_HEADER_SIZE = 12;

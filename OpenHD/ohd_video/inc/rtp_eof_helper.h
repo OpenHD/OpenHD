@@ -5,34 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_RTP_EOF_HELPER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_RTP_EOF_HELPER_H_
 
-#include <cstdio>
-#include <cstdlib>
-#include <cerrno>
-#include <resolv.h>
-#include <cstring>
-#include <utime.h>
-#include <unistd.h>
-#include <getopt.h>
-#include <endian.h>
-#include <fcntl.h>
-#include <ctime>
-#include <sys/mman.h>
-#include <string>
-#include <vector>
-#include <chrono>
-#include <cstdarg>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netinet/ether.h>
-#include <netpacket/packet.h>
-#include <termio.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <iostream>
-#include <memory>
-#include <cassert>
-#include <functional>
+#include <cstdint>
 
 namespace openhd::rtp_eof_helper{
 

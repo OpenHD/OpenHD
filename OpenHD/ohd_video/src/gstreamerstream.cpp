@@ -476,15 +476,6 @@ void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<st
 }
 
 void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts) {
-  // Dirty: we use the dts to figure out where a new "frame" starts
-  /*if(dts!=m_last_dts || m_frame_fragments.size()>1000){
-    if(!m_frame_fragments.empty()){
-      on_new_rtp_fragmented_frame(m_frame_fragments);
-      m_frame_fragments.resize(0);
-    }
-  }
-  m_last_dts=dts;
-  m_frame_fragments.push_back(fragment);*/
   m_frame_fragments.push_back(fragment);
   const auto curr_video_codec=m_camera_holder->get_settings().streamed_video_format.videoCodec;
   bool is_last_fragment_of_frame=false;
