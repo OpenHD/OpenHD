@@ -106,8 +106,9 @@ class WBLink :public openhd::ITransmitVideo{
   // even though the frequency actually hasn't changed
   static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS="/boot/openhd/disable_all_frequency_checks.txt";
   const bool m_disable_all_frequency_checks;
-  int m_curr_video_codec=0;
  private:
+  // We have one worker thread for asynchronously performing operation(s) like changing the frequency
+  // but also recalculating statistics that are then forwarded to openhd_telemetry for broadcast
   bool m_work_thread_run;
   std::unique_ptr<std::thread> m_work_thread;
   // Recalculate stats, apply settings asynchronously and more
