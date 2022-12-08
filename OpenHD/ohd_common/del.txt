@@ -314,3 +314,51 @@ float roi_h=0.8;
 float roi_x=1.0f-roi_w*0.5f;
 float roi_y=1.0f-roi_h*0.5f;
 ss<<fmt::format("roi_w={} roi_h={} roi_x={} roi_y={} ",roi_w,roi_h,roi_x,roi_y);
+
+  // R.n only possible on RTL8812AU
+  // See https://github.com/OpenHD/rtl8812au/blob/v5.2.20/os_dep/linux/ioctl_cfg80211.c#L3667
+  TxPowerLevel wb_tx_power_level=TxPowerLevel::LOW;
+
+enum TxPowerLevel{
+  // should be <=25mW, to be legal in all countries,
+  LOW=0,
+  // arbitrary medium level, rough target: 100mW
+  MEDIUM=1,
+  // arbitrary high level, rough target: slightly below max of card, to account for cases where max levels might have weird limitations
+  HIGH=2,
+  // arbitrary max level, rough target: maximum of card, does not take any limitations into account, e.g. might or might not work
+  MAX=3
+};
+NLOHMANN_JSON_SERIALIZE_ENUM( TxPowerLevel, {
+   {TxPowerLevel::LOW, "LOW"},
+   {TxPowerLevel::MEDIUM, "MEDIUM"},
+   {TxPowerLevel::HIGH, "HIGH"},
+   {TxPowerLevel::MAX, "MAX"},
+});
+
+// requires rtl8812au openhd driver https://github.com/OpenHD/rtl8812au/blob/v5.2.20/os_dep/linux/ioctl_cfg80211.c#L3664
+// NOTE: these values are the values that are passed to NL80211_ATTR_WIPHY_TX_POWER_LEVEL
+// this param is normally in mBm, but has been reworked to accept those rtl8812au specific tx power index override values
+// (under this name they were known already in previous openhd releases, but we now support changing them dynamcially at run time)
+static uint32_t tx_power_level_to_rtl8812au_tx_power_index_override(const TxPowerLevel& tx_power_level){
+  switch (tx_power_level) {
+    case TxPowerLevel::LOW:
+      return 19;
+      break;
+    case MEDIUM:
+      return 37;
+      break;
+    case HIGH:
+      return 58;
+      break;
+    case MAX:
+      return 63;
+      break;
+  }
+  openhd::log::get_default()->warn("Unknown tx_power_level");
+  return 19;
+}
+
+static bool validate_tx_power_level(int value){
+  return value>=TxPowerLevel::LOW && value<=TxPowerLevel::MAX;
+}

@@ -146,8 +146,7 @@ class WBLink :public openhd::ITransmitVideo{
   std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
   static constexpr auto DELAY_FOR_TRANSMIT_ACK =std::chrono::seconds(2);
  private:
-  //bool rtl8812au_set_tx_pwr_idx_override(int value);
-  bool rtl8812au_set_tx_power_level(int value);
+  bool set_wb_rtl8812au_tx_pwr_idx_override(int value);
   bool has_rtl8812au();
  public:
   void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
