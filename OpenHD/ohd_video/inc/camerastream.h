@@ -34,11 +34,9 @@ class CameraStream {
    * setup() and start() are called
    * @param platform the platform we are running on
    * @param camera_holder the camera to create the stream with, camera_holder provides access to the camera (capabilities) and settings.
-   * @param video_udp_port the udp port where rtp data is forwarded to, must
-   * match with interface in OpenHD
+   * @param i_transmit abstract interface where encoded video data is forwarded to (was UDP port previously)
    */
-  //CameraStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder, uint16_t video_udp_port);
-  CameraStream(PlatformType platform_type,std::shared_ptr<CameraHolder> camera_holder,std::shared_ptr<openhd::ITransmitVideo> itransmit);
+  CameraStream(PlatformType platform_type,std::shared_ptr<CameraHolder> camera_holder,std::shared_ptr<openhd::ITransmitVideo> i_transmit);
 
   // It is a good common programming practice to make them pure virtual
   // setup everything needed to start streaming
