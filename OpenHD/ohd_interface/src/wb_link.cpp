@@ -571,15 +571,6 @@ bool WBLink::validate_cards_support_setting_channel_width() {
   return true;
 }
 
-void WBLink::set_video_codec(int codec) {
-  m_console->debug("set_video_codec to {}",codec);
-  if(m_curr_video_codec!=codec){
-    m_curr_video_codec=codec;
-    //TODO
-    //restart_async();
-  }
-}
-
 static uint32_t get_micros(std::chrono::nanoseconds ns){
   return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::microseconds>(ns).count());
 }

@@ -50,8 +50,6 @@ class WBLink :public openhd::ITransmitVideo{
   [[nodiscard]] bool ever_received_any_data();
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
-  // needs to be set for FEC auto to work
-  void set_video_codec(int codec);
  private:
   // validate param, then schedule change
   bool request_set_frequency(int frequency);

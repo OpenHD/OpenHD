@@ -327,10 +327,6 @@ int main(int argc, char *argv[]) {
     // Then start ohdInterface, which discovers detected wifi cards and more.
     auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile,ohd_action_handler);
 
-    ohd_action_handler->action_set_video_codec_set([&ohdInterface](int codec){
-      ohdInterface->set_video_codec(codec);
-    });
-
     // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
     auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile,ohd_action_handler);
     // Telemetry allows changing all settings (even from other modules)

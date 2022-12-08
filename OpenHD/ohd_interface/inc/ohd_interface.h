@@ -40,7 +40,6 @@ class OHDInterface :public openhd::ISettingsComponent{
   // settings hacky end
   // easy access without polluting the headers
   static void print_internal_fec_optimization_method();
-  void set_video_codec(int codec);
   // only valid on air
   std::shared_ptr<openhd::ITransmitVideo> get_video_tx_interface();
  private:

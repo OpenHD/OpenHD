@@ -205,12 +205,6 @@ void OHDInterface::print_internal_fec_optimization_method() {
   print_optimization_method();
 }
 
-void OHDInterface::set_video_codec(int codec) {
-  if(m_wb_link){
-    m_wb_link->set_video_codec(codec);
-  }
-}
-
 std::shared_ptr<openhd::ITransmitVideo> OHDInterface::get_video_tx_interface() {
   if(m_wb_link){
     return m_wb_link;
