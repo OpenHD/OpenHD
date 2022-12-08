@@ -831,15 +831,6 @@ bool WBLink::check_work_queue_empty() {
   return true;
 }
 
-/*bool WBLink::rtl8812au_set_tx_pwr_idx_override(int value) {
-  if(!openhd::validate_rtl8812au_wb_tx_pwr_idx(value))return false;
-  m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=value;
-  m_settings->persist();
-  openhd::write_modprobe_file_rtl8812au_wb(value);
-  // NOTE: Needs reboot to be applied
-  return true;
-}*/
-
 bool WBLink::set_wb_rtl8812au_tx_pwr_idx_override(int value) {
   if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(value))return false;
   if(!check_work_queue_empty())return false;
