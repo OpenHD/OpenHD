@@ -127,6 +127,10 @@ static std::vector<WiFiCard> tmp_convert(const std::vector<std::shared_ptr<WifiC
 
 class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLinkSettings>{
  public:
+  /**
+   * @param platform needed to figure out the proper default params
+   * @param wifibroadcast_cards1 needed to figure out the proper default params
+   */
   explicit WBStreamsSettingsHolder(OHDPlatform platform,std::vector<WiFiCard> wifibroadcast_cards1):
 	  openhd::settings::PersistentSettings<WBLinkSettings>(INTERFACE_SETTINGS_DIRECTORY),
 	  wifibroadcast_cards(std::move(wifibroadcast_cards1)),
