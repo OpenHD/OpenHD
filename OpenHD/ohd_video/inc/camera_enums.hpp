@@ -14,6 +14,8 @@ enum class CameraType {
   // only exists to have a default value, properly discovered cameras must not be of type unknown
   UNKNOWN,
   // Dummy camera, is created fully in sw, for debugging purposes.
+  // NOTE: The semi-static gstreamer test video is not ideal, but by using a file or similar we'd lose the option to test different
+  // resolutions, framerate(s), bitrate(s) usw.
   DUMMY_SW,
   // Rpi foundation standard/original CSI cameras,old MMAL / BROADCOM stack
   RPI_CSI_MMAL,
