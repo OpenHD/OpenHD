@@ -56,7 +56,7 @@ class OHDVideo {
   std::shared_ptr<openhd::ITransmitVideo> m_interface_transmit_video;
  private:
   // Add a CameraStream for a discovered camera.
-  void configure(std::shared_ptr<CameraHolder> camera);
+  void configure(const std::shared_ptr<CameraHolder>& camera);
   // propagate a bitrate change request to the CameraStream implementation(s)
   void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb);
 };

@@ -26,6 +26,7 @@ OHDVideo::OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,
       m_console->warn("Dropping camera {}, too many cameras",camera.to_string());
     }
   }
+  startup_fix_common_issues(camera_holders);
   assert(camera_holders.size()<=MAX_N_CAMERAS);
   for (auto &camera: camera_holders) {
     configure(camera);
@@ -49,7 +50,7 @@ std::string OHDVideo::createDebug() const {
   return ss.str();
 }
 
-void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
+void OHDVideo::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
   const auto camera=camera_holder->get_camera();
   m_console->debug("Configuring camera:"+camera_type_to_string(camera.type));
   // R.N we use gstreamer only for everything except veye
@@ -63,7 +64,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
       stream->start();
       m_camera_streams.push_back(stream);
       break;*/
-      m_console->error("Unimplemented");
+      m_console->error("Veye had to be dropped in 2.2.4");
       break;
     }
     case CameraType::RPI_CSI_MMAL:
