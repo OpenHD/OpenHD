@@ -116,6 +116,11 @@ static void write_modprobe_file_rtl8812au_wb(int rtw_tx_pwr_idx_override){
   OHDFilesystemUtil::write_file("/etc/modprobe.d/88XXau_wfb.conf",ss.str());
 }
 
+// We allow the user to overwrite defaults for his platform.
+// The FEC impl limit would be 128 - but anything above 50 is not computable on any platform
+static bool valid_wb_max_fec_block_size_for_platform(uint32_t wb_max_fec_block_size_for_platform){
+  return wb_max_fec_block_size_for_platform>0 && wb_max_fec_block_size_for_platform<50;
+}
 
 static std::vector<WiFiCard> tmp_convert(const std::vector<std::shared_ptr<WifiCardHolder>>& broadcast_cards){
   std::vector<WiFiCard> ret;
