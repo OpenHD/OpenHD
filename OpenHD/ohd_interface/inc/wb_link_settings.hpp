@@ -100,6 +100,7 @@ static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platf
 	settings.wb_frequency=DEFAULT_2GHZ_FREQUENCY;
   }
   settings.wb_max_fec_block_size_for_platform= calculate_max_fec_block_size_for_platform(platform);
+  openhd::log::get_default()->debug("Default wb_max_fec_block_size_for_platform:{}",settings.wb_max_fec_block_size_for_platform);
   return settings;
 }
 
