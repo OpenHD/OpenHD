@@ -858,6 +858,11 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
   if(stream_index>=0 && stream_index<udpVideoTxList.size()){
     auto& tx=udpVideoTxList[stream_index]->get_wb_tx();
     const bool use_fixed_fec_instead=!m_settings->get_settings().is_video_variable_block_length_enabled();
-    tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments,use_fixed_fec_instead);
+    //tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments,use_fixed_fec_instead);
+    if(m_settings->get_settings().is_video_variable_block_length_enabled()){
+      tx.tmp_split_and_feed_frame_fragments(fragmented_video_frame.frame_fragments,10);
+    }else{
+      tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments, true);
+    }
   }
 }
