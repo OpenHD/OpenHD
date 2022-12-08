@@ -69,8 +69,6 @@ class GStreamerStream : public CameraStream {
   // returns true on success, false otherwise
   bool try_dynamically_change_bitrate(uint32_t bitrate_kbits);
   uint32_t m_curr_dynamic_bitrate_kbits =-1;
- private:
-  void test_add_data_listener();
  public:
   void on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts);
  private:

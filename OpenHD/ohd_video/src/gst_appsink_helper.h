@@ -32,6 +32,7 @@ static void gst_debug_buffer(GstBuffer* buffer){
       buffer->pts,buffer->dts);
 }
 
+// based on https://github.com/Samsung/kv2streamer/blob/master/kv2streamer-lib/gst-wrapper/GstAppSinkPipeline.cpp
 /**
  * Helper to pull data out of a gstreamer pipeline
  * @param keep_looping if set to false, method returns after max timeout_ns

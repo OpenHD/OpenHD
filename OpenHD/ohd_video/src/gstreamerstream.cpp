@@ -431,41 +431,6 @@ bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
   return false;
 }
 
-
-// based on https://github.com/Samsung/kv2streamer/blob/master/kv2streamer-lib/gst-wrapper/GstAppSinkPipeline.cpp
-static GstFlowReturn m_new_sample_callback(GstAppSink* appsink, gpointer user_data){
-  //openhd::log::get_default()->debug("appsink-got data");
-  GstSample* sample = gst_app_sink_pull_sample(GST_APP_SINK(appsink));
-  if (sample) {
-    //openhd::log::get_default()->debug("Got sample");
-    //auto buffer_list=gst_sample_get_buffer_list(sample);
-    //openhd::log::get_default()->debug("Got sample {}", gst_buffer_list_length(buffer_list));
-    GstBuffer* buffer = gst_sample_get_buffer(sample);
-    if (buffer) {
-      //openhd::gst_debug_buffer(buffer);
-      auto buff_copy=openhd::gst_copy_buffer(buffer);
-      //openhd::log::get_default()->debug("Got buffer size {}", buff_copy->size());
-      ((GStreamerStream*)user_data)->on_new_rtp_frame_fragment(buff_copy,buffer->dts);
-    }
-    gst_sample_unref(sample);
-  }
-  return GST_FLOW_OK;
-}
-
-void GStreamerStream::test_add_data_listener() {
-  m_app_sink_element=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
-  if(m_app_sink_element== nullptr){
-    openhd::log::get_default()->debug("Got no appsink");
-    return;
-  }
-  openhd::log::get_default()->debug("Got appsink");
-  GstAppSinkCallbacks appsinkCallbacks;
-  appsinkCallbacks.new_preroll	= nullptr;
-  appsinkCallbacks.new_sample	= m_new_sample_callback;
-  appsinkCallbacks.eos		= nullptr;
-  gst_app_sink_set_callbacks(GST_APP_SINK(m_app_sink_element), &appsinkCallbacks,this,(GDestroyNotify)nullptr);
-}
-
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
   m_console->debug("Got frame with {} fragments",frame_fragments.size());
   if(m_transmit_interface){
