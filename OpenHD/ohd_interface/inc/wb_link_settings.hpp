@@ -19,8 +19,8 @@ static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
 // This value seems a bit high to me, so I am going with a default of "1800" (which should be 18.0 dBm )
 // Used to be in dBm, but mW really is more verbose to the user - we convert from mW to dBm when using the iw dev set command
 static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT=25;
-// Measured to be slightly below 25mW, RTL8812au only (or future cards who use the recommended power level index approach)
-static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=19;
+// Measured to be about /below 25mW, RTL8812au only (or future cards who use the recommended power level index approach)
+static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=22;
 
 // Set to 0 for fec auto block length
 // Set to 1 or greater for fixed k fec
