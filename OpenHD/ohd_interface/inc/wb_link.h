@@ -97,7 +97,6 @@ class WBLink :public openhd::ITransmitVideo{
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
   [[nodiscard]] TOptions create_tx_options(uint8_t radio_port,bool enableFec)const;
   [[nodiscard]] ROptions create_rx_options(uint8_t radio_port)const;
-  [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,std::optional<int> udp_recv_buff_size=std::nullopt)const;
   std::unique_ptr<WBTransmitter> createWbTx(uint8_t radio_port,bool enableFec);
   std::unique_ptr<AsyncWBReceiver> createWbRx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb);
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port);
