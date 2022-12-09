@@ -16,6 +16,7 @@ namespace openhd{
 // Telemetry communication between air and ground is lossy, but bidirectional
 // e.g both air and ground send and receive data (over wifibroadcast or perhaps something else in the future)
 // Re-transmissions are done by mavlink, not the link itself
+// Don't ask about those callbacks / naming please ;)
 class TxRxTelemetry {
   // Telemetry, bidirectional (receive and transmit each)
   // valid on both air and ground instance
