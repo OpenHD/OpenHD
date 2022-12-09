@@ -153,6 +153,7 @@ class WBLink :public openhd::ITransmitVideo{
   bool has_rtl8812au();
  public:
   void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
+  std::shared_ptr<openhd::ITransmitReceiveTelemetry> m_tx_rx_handle;
   //void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) override;
 };
 
