@@ -76,7 +76,6 @@ void OHDVideo::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
     case CameraType::CUSTOM_UNMANAGED_CAMERA:
     case CameraType::DUMMY_SW: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
-      const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
       auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,m_interface_transmit_video);
       stream->setup();
       stream->start();
@@ -85,7 +84,6 @@ void OHDVideo::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
     }
     case CameraType::RPI_CSI_LIBCAMERA: {
       m_console->debug("LibCamera index:{}", camera.index);
-      const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
       auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, m_interface_transmit_video);
       stream->setup();
       stream->start();

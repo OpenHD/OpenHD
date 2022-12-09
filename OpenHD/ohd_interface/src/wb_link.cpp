@@ -274,7 +274,7 @@ void WBLink::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
   m_console->info("WBStreams::addExternalDeviceIpForwardingVideoOnly:"+ip);
   // forward video
   for(auto& rxVid: m_wb_video_rx_list){
-    const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
+    const auto udpPort=first ? OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP : OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP;
     first= false;
     if(m_ground_video_forwarder){
       m_ground_video_forwarder->addForwarder(ip,udpPort);
@@ -286,7 +286,7 @@ void WBLink::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
   bool first= true;
   assert(m_wb_video_rx_list.size()==2);
   for(auto& rxVid: m_wb_video_rx_list){
-    const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
+    const auto udpPort=first ? OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP : OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP;
     first= false;
     if(m_ground_video_forwarder){
       m_ground_video_forwarder->removeForwarder(ip,udpPort);
