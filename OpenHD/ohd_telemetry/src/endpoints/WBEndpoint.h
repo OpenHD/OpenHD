@@ -8,7 +8,7 @@
 #include "MEndpoint.h"
 #include "openhd-telemetry-tx-rx.h"
 
-// Abstraction for sending / receiving data from the link between air and ground unit
+// Abstraction for sending / receiving data on/from the link between air and ground unit
 class WBEndpoint : public MEndpoint  {
  public:
   explicit WBEndpoint(std::shared_ptr<openhd::TxRxTelemetry> tx_rx_handle,std::string TAG);
