@@ -27,8 +27,8 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   udpWifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_air_unit(messages);
   });*/
-  _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
-  components.push_back(_ohd_main_component);
+  m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
+  components.push_back(m_ohd_main_component);
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   if(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick){
     //m_joystick_reader=std::make_unique<JoystickReader>();
@@ -61,7 +61,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
 
 GroundTelemetry::~GroundTelemetry() {
   // first, stop all the endpoints that have their own threads
-  udpWifibroadcastEndpoint= nullptr;
+  m_wb_endpoint = nullptr;
   udpGroundClient= nullptr;
 }
 
@@ -108,8 +108,8 @@ void GroundTelemetry::send_messages_ground_station_clients(const std::vector<Mav
 void GroundTelemetry::send_messages_air_unit(const std::vector<MavlinkMessage>& messages) {
   //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageAirPi");
   // transmit via wifibroadcast
-  if (udpWifibroadcastEndpoint) {
-	udpWifibroadcastEndpoint->sendMessages(messages);
+  if (m_wb_endpoint) {
+    m_wb_endpoint->sendMessages(messages);
   }
 }
 
@@ -123,8 +123,8 @@ void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLog
 	  last_log = std::chrono::steady_clock::now();
 	  //m_console->debug("GroundTelemetry::loopInfinite()");
 	  // for debugging, check if any of the endpoints is not alive
-	  if (enableExtendedLogging && udpWifibroadcastEndpoint) {
-		m_console->debug(udpWifibroadcastEndpoint->createInfo());
+	  if (enableExtendedLogging && m_wb_endpoint) {
+		m_console->debug(m_wb_endpoint->createInfo());
 	  }
 	  if (enableExtendedLogging && udpGroundClient) {
 		m_console->debug(udpGroundClient->createInfo());
@@ -167,8 +167,8 @@ void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLog
 std::string GroundTelemetry::create_debug() const {
   std::stringstream ss;
   //ss<<"GT:\n";
-  if (udpWifibroadcastEndpoint) {
-	ss<<udpWifibroadcastEndpoint->createInfo();
+  if (m_wb_endpoint) {
+	ss<< m_wb_endpoint->createInfo();
   }
   if (udpGroundClient) {
 	ss<<udpGroundClient->createInfo();
@@ -288,8 +288,8 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 }
 
 void GroundTelemetry::set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle) {
-  udpWifibroadcastEndpoint = std::make_unique<WBEndpoint>(handle,"wb_tx");
-  udpWifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+  m_wb_endpoint = std::make_unique<WBEndpoint>(handle,"wb_tx");
+  m_wb_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_air_unit(messages);
   });
 }

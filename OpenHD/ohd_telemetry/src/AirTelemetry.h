@@ -70,11 +70,11 @@ class AirTelemetry : public MavlinkSystem{
   // called every time one or more messages from the ground unit are received
   void on_messages_ground_unit(const std::vector<MavlinkMessage>& messages);
  private:
-  std::mutex _serialEndpointMutex;
-  std::unique_ptr<SerialEndpoint> serialEndpoint;
+  std::mutex m_serial_endpoint_mutex;
+  std::unique_ptr<SerialEndpoint> m_serial_endpoint;
   // For now, use UDP endpoint and rely on another service for starting the rx/tx links
   //std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
-  std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;
+  std::unique_ptr<WBEndpoint> m_wb_endpoint;
   // shared because we also push it onto our components list
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
   std::mutex components_lock;

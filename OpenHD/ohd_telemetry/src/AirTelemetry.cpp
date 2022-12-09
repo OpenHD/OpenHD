@@ -38,9 +38,9 @@ AirTelemetry::~AirTelemetry() {
 }
 
 void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages) {
-  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
-  if(serialEndpoint){
-    serialEndpoint->sendMessages(messages);
+  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
+  if(m_serial_endpoint){
+    m_serial_endpoint->sendMessages(messages);
   }else{
     //m_console->warn("Cannot send message to FC");
   }
@@ -50,8 +50,8 @@ void AirTelemetry::send_messages_ground_unit(const std::vector<MavlinkMessage>& 
   for(const auto& message:messages){
     //debugMavlinkMessage(message.m,"AirTelemetry::sendMessageGroundPi");
   }
-  if(wifibroadcastEndpoint){
-    wifibroadcastEndpoint->sendMessages(messages);
+  if(m_wb_endpoint){
+    m_wb_endpoint->sendMessages(messages);
   }
 }
 
@@ -90,12 +90,12 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
 	  last_log=std::chrono::steady_clock::now();
 	  //m_console->debug("AirTelemetry::loopInfinite()");
 	  // for debugging, check if any of the endpoints is not alive
-	  if (enableExtendedLogging && wifibroadcastEndpoint) {
-		m_console->debug(wifibroadcastEndpoint->createInfo());
+	  if (enableExtendedLogging && m_wb_endpoint) {
+		m_console->debug(m_wb_endpoint->createInfo());
 	  }
-	  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
-          if (enableExtendedLogging && serialEndpoint) {
-            m_console->debug(serialEndpoint->createInfo());
+	  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
+          if (enableExtendedLogging && m_serial_endpoint) {
+            m_console->debug(m_serial_endpoint->createInfo());
           }
 	}
 	// send messages to the ground pi in regular intervals, includes heartbeat.
@@ -125,12 +125,12 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
 std::string AirTelemetry::create_debug(){
   std::stringstream ss;
   //ss<<"AT:\n";
-  if ( wifibroadcastEndpoint) {
-	ss<<wifibroadcastEndpoint->createInfo();
+  if (m_wb_endpoint) {
+	ss<< m_wb_endpoint->createInfo();
   }
-  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
-  if (serialEndpoint) {
-	ss<<serialEndpoint->createInfo();
+  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
+  if (m_serial_endpoint) {
+	ss<< m_serial_endpoint->createInfo();
   }
   return ss.str();
 }
@@ -233,12 +233,12 @@ void AirTelemetry::setup_uart() {
   const auto fc_uart_flow_control=_airTelemetrySettings->get_settings().fc_uart_flow_control;
   assert(air::validate_uart_connection_type(fc_uart_connection_type));
   // Disable the currently running uart configuration, if there is any
-  std::lock_guard<std::mutex> guard(_serialEndpointMutex);
-  if(serialEndpoint!=nullptr) {
+  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
+  if(m_serial_endpoint !=nullptr) {
 	m_console->info("Stopping already existing FC UART");
-	serialEndpoint->stop();
-	serialEndpoint.reset();
-	serialEndpoint=nullptr;
+        m_serial_endpoint->stop();
+        m_serial_endpoint.reset();
+        m_serial_endpoint =nullptr;
   }
   if(fc_uart_connection_type==air::UART_CONNECTION_TYPE_DISABLE){
 	// No uart enabled, we've already cleaned it up though
@@ -250,8 +250,8 @@ void AirTelemetry::setup_uart() {
 	options.linux_filename=air::uart_fd_from_connection_type(fc_uart_connection_type).value();
 	options.baud_rate=fc_uart_baudrate;
 	options.flow_control= fc_uart_flow_control;
-	serialEndpoint=std::make_unique<SerialEndpoint>("ser_fc",options);
-	serialEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+        m_serial_endpoint =std::make_unique<SerialEndpoint>("ser_fc",options);
+        m_serial_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
           this->on_messages_fc(messages);
 	});
 	m_console->debug("FC UART enable - end");
@@ -259,8 +259,8 @@ void AirTelemetry::setup_uart() {
 }
 
 void AirTelemetry::set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle) {
-  wifibroadcastEndpoint = std::make_unique<WBEndpoint>(handle,"wb_tx");
-  wifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+  m_wb_endpoint = std::make_unique<WBEndpoint>(handle,"wb_tx");
+  m_wb_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_unit(messages);
   });
 }

@@ -68,8 +68,8 @@ class GroundTelemetry :public MavlinkSystem{
   std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;
   // We rely on another service for starting the rx/tx links
   //std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;
-  std::unique_ptr<WBEndpoint> udpWifibroadcastEndpoint;
-  std::shared_ptr<OHDMainComponent> _ohd_main_component;
+  std::unique_ptr<WBEndpoint> m_wb_endpoint;
+  std::shared_ptr<OHDMainComponent> m_ohd_main_component;
   std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
   std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
