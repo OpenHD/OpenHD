@@ -261,6 +261,7 @@ void AirTelemetry::setup_uart() {
 void AirTelemetry::set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle) {
   m_wb_endpoint = std::make_unique<WBEndpoint>(handle,"wb_tx");
   m_wb_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+    openhd::log::get_default()->debug("XX");
     on_messages_ground_unit(messages);
   });
 }
