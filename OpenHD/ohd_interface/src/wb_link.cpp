@@ -150,23 +150,25 @@ void WBLink::configure_telemetry() {
     auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
     m_tx_rx_handle->forward_to_on_receive_cb_if_set(shared);
   };
-  m_wb_tele_rx = createWbRx(radio_port_rx,cb);
+  m_wb_tele_rx = create_wb_rx(radio_port_rx, cb);
   m_wb_tele_rx->start_async();
-  m_wb_tele_tx = createWbTx(radio_port_tx,false);
+  m_wb_tele_tx = create_wb_tx(radio_port_tx, false);
 }
 
 void WBLink::configure_video() {
   m_console->debug("Streams::configure_video()");
   // Video is unidirectional, aka always goes from air pi to ground pi
   if (m_profile.is_air) {
-    auto primary = createWbTx(OHD_VIDEO_PRIMARY_RADIO_PORT,true);
-    auto secondary = createWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT,true);
+    auto primary = create_wb_tx(OHD_VIDEO_PRIMARY_RADIO_PORT, true);
+    auto secondary = create_wb_tx(OHD_VIDEO_SECONDARY_RADIO_PORT, true);
     m_wb_video_tx_list.push_back(std::move(primary));
     m_wb_video_tx_list.push_back(std::move(secondary));
   } else {
-    auto primary = createUdpWbRx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP);
+    auto primary = create_udp_wb_rx(OHD_VIDEO_PRIMARY_RADIO_PORT,
+                                    OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP);
     primary->runInBackground();
-    auto secondary = createUdpWbRx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP);
+    auto secondary = create_udp_wb_rx(OHD_VIDEO_SECONDARY_RADIO_PORT,
+                                      OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP);
     secondary->runInBackground();
     m_wb_video_rx_list.push_back(std::move(primary));
     m_wb_video_rx_list.push_back(std::move(secondary));
@@ -230,18 +232,18 @@ ROptions WBLink::create_rx_options(uint8_t radio_port)const {
   return options;
 }
 
-std::unique_ptr<WBTransmitter> WBLink::createWbTx(uint8_t radio_port,bool enableFec) {
+std::unique_ptr<WBTransmitter> WBLink::create_wb_tx(uint8_t radio_port,bool enableFec) {
   TOptions options= create_tx_options(radio_port,enableFec);
   RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
   return std::make_unique<WBTransmitter>(wifiParams, options);
 }
 
-std::unique_ptr<UDPWBReceiver> WBLink::createUdpWbRx(uint8_t radio_port, int udp_port){
+std::unique_ptr<UDPWBReceiver> WBLink::create_udp_wb_rx(uint8_t radio_port, int udp_port){
   ROptions options= create_rx_options(radio_port);
   return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port);
 }
 
-std::unique_ptr<AsyncWBReceiver> WBLink::createWbRx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb){
+std::unique_ptr<AsyncWBReceiver> WBLink::create_wb_rx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb){
   ROptions options= create_rx_options(radio_port);
   return std::make_unique<AsyncWBReceiver>(options,cb);
 }
