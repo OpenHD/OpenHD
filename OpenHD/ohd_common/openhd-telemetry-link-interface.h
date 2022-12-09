@@ -29,31 +29,34 @@ class TxRxTelemetry {
 
  public:
   void register_on_receive_callback(ON_DATA_CALLBACK cb){
-    std::lock_guard<std::mutex> guard(m_data_cb_mutex);
-    m_cb_on_receive =std::move(cb);
+    std::lock_guard<std::mutex> guard(m_cb_on_receive.mutex);
+    m_cb_on_receive.cb =std::move(cb);
   }
 
   void forward_to_on_receive_cb_if_set(std::shared_ptr<std::vector<uint8_t>> data){
-    std::lock_guard<std::mutex> guard(m_data_cb_mutex);
-    if(m_cb_on_receive){
-      m_cb_on_receive(std::move(data));
+    std::lock_guard<std::mutex> guard(m_cb_on_receive.mutex);
+    if(m_cb_on_receive.cb){
+      m_cb_on_receive.cb(std::move(data));
     }
   }
   void register_on_send_data_cb(ON_DATA_CALLBACK cb){
-    std::lock_guard<std::mutex> guard(m_data_cb_mutex);
-    m_cb_on_send =std::move(cb);
+    std::lock_guard<std::mutex> guard(m_cb_on_send.mutex);
+    m_cb_on_send.cb =std::move(cb);
   }
   void forward_to_send_data_cb(std::shared_ptr<std::vector<uint8_t>> data){
-    std::lock_guard<std::mutex> guard(m_data_cb_mutex);
+    std::lock_guard<std::mutex> guard(m_cb_on_send.mutex);
     //openhd::log::get_default()->debug("forward_to_send_data_cb {}",data->size());
-    if(m_cb_on_send){
-      m_cb_on_send(std::move(data));
+    if(m_cb_on_send.cb){
+      m_cb_on_send.cb(std::move(data));
     }
   }
  private:
-  std::mutex m_data_cb_mutex;
-  ON_DATA_CALLBACK m_cb_on_receive = nullptr;
-  ON_DATA_CALLBACK m_cb_on_send=nullptr;
+  struct ThreadSafeCb{
+    std::mutex mutex;
+    ON_DATA_CALLBACK cb = nullptr;
+  };
+  ThreadSafeCb m_cb_on_receive;
+  ThreadSafeCb m_cb_on_send;
 };
 }
 #endif  // OPENHD_OPENHD_OHD_COMMON_OPENHD_TELEMETRY_LINK_INTERFACE_H_
