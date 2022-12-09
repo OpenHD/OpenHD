@@ -165,7 +165,6 @@ class WBLink :public openhd::ITransmitVideo{
  private:
   void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data);
   std::shared_ptr<openhd::TxRxTelemetry> m_tx_rx_handle;
-  //void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) override;
  private:
   std::unique_ptr<GroundVideoForwarder> m_ground_video_forwarder;
 };
