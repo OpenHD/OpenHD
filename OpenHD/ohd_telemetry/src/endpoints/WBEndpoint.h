@@ -6,7 +6,7 @@
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_WBENDPOINT_H_
 
 #include "MEndpoint.h"
-#include "openhd-telemetry-link-interface.h"
+#include "openhd-telemetry-tx-rx.h"
 
 // Abstraction for sending / receiving data from the link between air and ground unit
 class WBEndpoint : public MEndpoint  {

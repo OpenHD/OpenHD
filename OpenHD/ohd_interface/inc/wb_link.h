@@ -15,10 +15,10 @@
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
+#include "openhd-telemetry-tx-rx.h"
+#include "openhd-video-transmit-interface.h"
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
-#include "openhd-video-transmit-interface.h"
-#include "openhd-telemetry-link-interface.h"
 
 /**
  * This class takes a list of discovered wifi cards (and their settings) and
