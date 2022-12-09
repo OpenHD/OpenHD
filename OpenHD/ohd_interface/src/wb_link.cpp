@@ -78,10 +78,10 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   };
   m_tx_rx_handle->register_on_send_data_cb(cb);
   configure_streams();
-  auto cb2=[this](std::shared_ptr<std::vector<uint8_t>> data){
+  /*auto cb2=[this](std::shared_ptr<std::vector<uint8_t>> data){
     m_tx_rx_handle->forward_to_on_receive_cb_if_set(data);
   };
-  m_wb_tele_rx->tmp_register_cb(cb2);
+  m_wb_tele_rx->tmp_register_cb(cb2);*/
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
 }
@@ -146,14 +146,12 @@ void WBLink::configure_telemetry() {
   // uses 2 UDP streams in oposite directions.
   auto radioPort1 = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
   auto radioPort2 = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
-  auto udpPort1 = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX
-                                  : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX;
-  auto udpPort2 = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_RX
-                                  : OHD_TELEMETRY_WIFIBROADCAST_LOCAL_UDP_PORT_GROUND_TX;
-  m_wb_tele_rx = createUdpWbRx(radioPort1, udpPort1);
-  m_wb_tele_tx = createUdpWbTx(radioPort2, udpPort2,false);
-  m_wb_tele_rx->runInBackground();
-  m_wb_tele_tx->runInBackground();
+  auto cb2=[this](const uint8_t* data, int data_len){
+    auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
+    m_tx_rx_handle->forward_to_on_receive_cb_if_set(shared);
+  };
+  m_wb_tele_rx = createWbRx(radioPort1,cb2);
+  m_wb_tele_tx = createWbTx(radioPort2,false);
 }
 
 void WBLink::configure_video() {
@@ -252,19 +250,24 @@ std::unique_ptr<UDPWBReceiver> WBLink::createUdpWbRx(uint8_t radio_port, int udp
   return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port);
 }
 
+std::unique_ptr<WBReceiver> WBLink::createWbRx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb){
+  ROptions options= create_rx_options(radio_port);
+  return std::make_unique<WBReceiver>(options,cb);
+}
+
 std::string WBLink::createDebug()const{
   std::stringstream ss;
   // we use telemetry data only here
   bool any_data_received=false;
-  if(m_wb_tele_rx && m_wb_tele_rx->anyDataReceived()){
-    any_data_received=true;
-  }
+  //if(m_wb_tele_rx && m_wb_tele_rx->anyDataReceived()){
+  //  any_data_received=true;
+  //}
   ss<<"Any data received: "<<(any_data_received ? "Y":"N")<<"\n";
   if (m_wb_tele_rx) {
-    ss<<"TeleRx: "<< m_wb_tele_rx->get_wb_rx().createDebugState();
+    ss<<"TeleRx: "<< m_wb_tele_rx->createDebugState();
   }
   if (m_wb_tele_tx) {
-    ss<<"TeleTx: "<< m_wb_tele_tx->get_wb_tx().createDebugState();
+    ss<<"TeleTx: "<< m_wb_tele_tx->createDebugState();
   }
   for (const auto &txvid: m_wb_video_tx_list) {
     ss<<"VidTx: "<<txvid->get_wb_tx().createDebugState();
@@ -309,15 +312,15 @@ bool WBLink::ever_received_any_data(){
   if(m_profile.is_air){
     // check if we got any telemetry data, we never receive video data
     assert(m_wb_tele_rx);
-    return m_wb_tele_rx->anyDataReceived();
+    //return m_wb_tele_rx->anyDataReceived();
   }
   // ground
   bool any_data_received=false;
   // any telemetry data
   assert(m_wb_tele_rx);
-  if(m_wb_tele_rx->anyDataReceived()){
-    any_data_received=true;
-  }
+  //if(m_wb_tele_rx->anyDataReceived()){
+  //  any_data_received=true;
+  //}
   // or any video data
   for(const auto& vidrx: m_wb_video_rx_list){
     if(vidrx->anyDataReceived()){
@@ -445,7 +448,7 @@ void WBLink::apply_mcs_index() {
   // we need to change the mcs index on all tx-es
   const auto settings=m_settings->get_settings();
   if(m_wb_tele_tx){
-    m_wb_tele_tx->get_wb_tx().update_mcs_index(settings.wb_mcs_index);
+    m_wb_tele_tx->update_mcs_index(settings.wb_mcs_index);
   }
   for(auto& tx: m_wb_video_tx_list){
     tx->get_wb_tx().update_mcs_index(settings.wb_mcs_index);
@@ -623,7 +626,7 @@ void WBLink::loop_do_work() {
     // Dirty - deliberately crash openhd and let the service restart it
     // if we think a wi-fi card disconnected
     bool any_rx_wifi_disconnected_errors=false;
-    if(m_wb_tele_rx->get_wb_rx().get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
+    if(m_wb_tele_rx->get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
       any_rx_wifi_disconnected_errors= true;
     }
     for(auto& rx: m_wb_video_rx_list){
@@ -647,12 +650,12 @@ void WBLink::update_statistics() {
   // telemetry is available on both air and ground
   openhd::link_statistics::StatsAirGround stats{};
   if(m_wb_tele_tx){
-    const auto curr_tx_stats= m_wb_tele_tx->get_wb_tx().get_latest_stats();
+    const auto curr_tx_stats= m_wb_tele_tx->get_latest_stats();
     stats.telemetry.curr_tx_bps=curr_tx_stats.current_provided_bits_per_second;
     stats.telemetry.curr_tx_pps=curr_tx_stats.current_injected_packets_per_second;
   }
   if(m_wb_tele_rx){
-    const auto curr_rx_stats= m_wb_tele_rx->get_wb_rx().get_latest_stats();
+    const auto curr_rx_stats= m_wb_tele_rx->get_latest_stats();
     stats.telemetry.curr_rx_bps=curr_rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
     //stats.telemetry.curr_rx_pps=curr_rx_stats.wb_rx_stats;
   }
@@ -703,7 +706,7 @@ void WBLink::update_statistics() {
   if(m_profile.is_air){
     if(m_wb_tele_rx){
       stats.monitor_mode_link.curr_rx_packet_loss_perc=
-          m_wb_tele_rx->get_wb_rx().get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+          m_wb_tele_rx->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
     }
   }else{
     if(!m_wb_video_rx_list.empty()){
@@ -714,8 +717,8 @@ void WBLink::update_statistics() {
   // temporary, accumulate tx error(s) and dropped packets
   uint64_t acc_tx_injections_error_hint=0;
   uint64_t acc_tx_n_dropped_packets=0;
-  acc_tx_injections_error_hint+= m_wb_tele_tx->get_wb_tx().get_latest_stats().count_tx_injections_error_hint;
-  acc_tx_n_dropped_packets+= m_wb_tele_tx->get_wb_tx().get_latest_stats().count_tx_injections_error_hint;
+  acc_tx_injections_error_hint+= m_wb_tele_tx->get_latest_stats().count_tx_injections_error_hint;
+  acc_tx_n_dropped_packets+= m_wb_tele_tx->get_latest_stats().count_tx_injections_error_hint;
   for(const auto& videoTx: m_wb_video_tx_list){
     acc_tx_injections_error_hint+=videoTx->get_wb_tx().get_latest_stats().count_tx_injections_error_hint;
     acc_tx_n_dropped_packets+=videoTx->get_wb_tx().get_latest_stats().n_dropped_packets;
@@ -731,11 +734,11 @@ void WBLink::update_statistics() {
     auto& card = stats.cards.at(i);
     if(m_profile.is_air){
       // on air, we use the dbm reported by the telemetry stream
-      card.rx_rssi= m_wb_tele_rx->get_wb_rx().get_latest_stats().rssiPerCard.at(i).last_rssi;
+      card.rx_rssi= m_wb_tele_rx->get_latest_stats().rssiPerCard.at(i).last_rssi;
     }else{
       // on ground, we use the dBm reported by the video stream (if available), otherwise
       // we use the dBm reported by the telemetry rx instance.
-      const int8_t rssi_telemetry= m_wb_tele_rx->get_wb_rx().get_latest_stats().rssiPerCard.at(i).last_rssi;
+      const int8_t rssi_telemetry= m_wb_tele_rx->get_latest_stats().rssiPerCard.at(i).last_rssi;
       const int8_t rssi_video0= m_wb_video_rx_list.at(0)->get_wb_rx().get_latest_stats().rssiPerCard.at(i).last_rssi;
       if(rssi_video0<=-127){
         // use telemetry, most likely no video data (yet)
@@ -918,8 +921,7 @@ std::shared_ptr<openhd::TxRxTelemetry> WBLink::get_telemetry_tx_rx_interface() {
 
 void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
   if(m_wb_tele_tx){
-    auto& tx= m_wb_tele_tx->get_wb_tx();
-    tx.feedPacket(data,std::nullopt);
+    m_wb_tele_tx->feedPacket(data,std::nullopt);
   }
 }
 
