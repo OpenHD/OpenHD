@@ -508,6 +508,11 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       return set_enable_wb_video_variable_bitrate(value);
     };
     ret.push_back(Setting{WB_VIDEO_VARIABLE_BITRATE,openhd::IntSetting{(int)m_settings->get_settings().enable_wb_video_variable_bitrate, cb_enable_wb_video_variable_bitrate}});
+    auto cb_wb_max_fec_block_size_for_platform=[this](std::string,int value){
+      return set_max_fec_block_size_for_platform(value);
+    };
+    ret.push_back(Setting{WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,openhd::IntSetting{(int)m_settings->get_settings().wb_max_fec_block_size_for_platform, cb_wb_max_fec_block_size_for_platform}});
+
   }
   // disabled for now, they are too complicated that a normal user can do something with them anyways
   if(false){
@@ -812,9 +817,17 @@ bool WBLink::set_enable_wb_video_variable_bitrate(int value) {
   if(openhd::validate_yes_or_no(value)){
     // value is read in regular intervals.
     m_settings->unsafe_get_settings().enable_wb_video_variable_bitrate=value;
+    m_settings->persist();
     return true;
   }
   return false;
+}
+
+bool WBLink::set_max_fec_block_size_for_platform(int value) {
+  if(!openhd::valid_wb_max_fec_block_size_for_platform(value))return false;
+  m_settings->unsafe_get_settings().wb_max_fec_block_size_for_platform=value;
+  m_settings->persist();
+  return true;
 }
 
 void WBLink::schedule_work_item(const std::shared_ptr<WorkItem>& work_item) {

@@ -65,11 +65,12 @@ class WBLink :public openhd::ITransmitVideo{
   bool request_set_mcs_index(int mcs_index);
   // set the mcs index for all tx instances
   void apply_mcs_index();
-  // These 3 do not "break" the bidirectional connectivity and therefore
+  // These do not "break" the bidirectional connectivity and therefore
   // can be changed easily on the fly
   bool set_video_fec_block_length(int block_length);
   bool set_video_fec_percentage(int fec_percentage);
   bool set_enable_wb_video_variable_bitrate(int value);
+  bool set_max_fec_block_size_for_platform(int value);
   // Check if all cards support changing the mcs index
   bool validate_cards_support_setting_mcs_index();
   // Check if all cards support changing the channel width
