@@ -78,9 +78,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   };
   m_tx_rx_handle->register_on_send_data_cb(cb);
   configure_streams();
-  auto cb2=[this](const uint8_t* data, int data_len){
-    auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
-    m_tx_rx_handle->forward_to_on_receive_cb_if_set(shared);
+  auto cb2=[this](std::shared_ptr<std::vector<uint8_t>> data){
+    m_tx_rx_handle->forward_to_on_receive_cb_if_set(data);
   };
   udpTelemetryRx->tmp_register_cb(cb2);
   m_work_thread_run = true;

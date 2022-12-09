@@ -45,6 +45,7 @@ class ITransmitReceiveTelemetry{
   }
   void forward_to_send_data_cb(std::shared_ptr<std::vector<uint8_t>> data){
     std::lock_guard<std::mutex> guard(m_data_cb_mutex);
+    openhd::log::get_default()->debug("forward_to_send_data_cb {}",data->size());
     if(m_cb_on_send){
       m_cb_on_send(std::move(data));
     }
