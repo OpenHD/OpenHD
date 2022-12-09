@@ -10,6 +10,7 @@
 #include "HelperSources/SocketHelper.hpp"
 #include "MEndpoint.h"
 #include "openhd-spdlog.hpp"
+#include "openhd-telemetry-link-interface.h"
 
 // Wraps two UDP ports, one for sending and one for receiving data
 // (since TCP and UART for example also allow sending and receiving).

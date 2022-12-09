@@ -885,3 +885,14 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
     }
   }
 }
+
+std::shared_ptr<openhd::ITransmitReceiveTelemetry> WBLink::get_telemetry_tx_rx_interface() {
+  return nullptr;
+}
+
+/*void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
+  if(udpTelemetryTx){
+    auto& tx=udpTelemetryTx->get_wb_tx();
+    tx.feedPacket(std::move(data),std::nullopt);
+  }
+}*/

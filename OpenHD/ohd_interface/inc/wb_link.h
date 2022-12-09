@@ -18,6 +18,7 @@
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
 #include "openhd-video-transmit-interface.h"
+#include "openhd-telemetry-link-interface.h"
 
 /**
  * This class takes a list of discovered wifi cards (and their settings) and
@@ -50,6 +51,7 @@ class WBLink :public openhd::ITransmitVideo{
   [[nodiscard]] bool ever_received_any_data();
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
+  std::shared_ptr<openhd::ITransmitReceiveTelemetry> get_telemetry_tx_rx_interface();
  private:
   // validate param, then schedule change
   bool request_set_frequency(int frequency);
@@ -151,6 +153,7 @@ class WBLink :public openhd::ITransmitVideo{
   bool has_rtl8812au();
  public:
   void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
+  //void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) override;
 };
 
 #endif

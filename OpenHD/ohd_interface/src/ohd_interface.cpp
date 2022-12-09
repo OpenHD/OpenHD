@@ -211,3 +211,10 @@ std::shared_ptr<openhd::ITransmitVideo> OHDInterface::get_video_tx_interface() {
   }
   return nullptr;
 }
+
+std::shared_ptr<openhd::ITransmitReceiveTelemetry> OHDInterface::get_telemetry_tx_rx_interface() {
+  if(m_wb_link){
+    return m_wb_link->get_telemetry_tx_rx_interface();
+  }
+  return nullptr;
+}
