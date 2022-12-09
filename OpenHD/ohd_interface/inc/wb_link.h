@@ -19,6 +19,7 @@
 #include "openhd-video-transmit-interface.h"
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
+#include "ground_video_forwarder.h"
 
 /**
  * This class takes a list of discovered wifi cards (and their settings) and
@@ -92,14 +93,13 @@ class WBLink :public openhd::ITransmitVideo{
   std::unique_ptr<AsyncWBReceiver> m_wb_tele_rx;
   // For video, on air there are only tx instances, on ground there are only rx instances.
   std::vector<std::unique_ptr<WBTransmitter>> m_wb_video_tx_list;
-  std::vector<std::unique_ptr<UDPWBReceiver>> m_wb_video_rx_list;
+  std::vector<std::unique_ptr<AsyncWBReceiver>> m_wb_video_rx_list;
   // Reads the current settings and creates the appropriate Radiotap Header params
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
   [[nodiscard]] TOptions create_tx_options(uint8_t radio_port,bool enableFec)const;
   [[nodiscard]] ROptions create_rx_options(uint8_t radio_port)const;
   std::unique_ptr<WBTransmitter> create_wb_tx(uint8_t radio_port,bool enableFec);
   std::unique_ptr<AsyncWBReceiver> create_wb_rx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb);
-  [[nodiscard]] std::unique_ptr<UDPWBReceiver> create_udp_wb_rx(uint8_t radio_port, int udp_port);
   [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
  private:
   const OHDProfile m_profile;
@@ -160,12 +160,14 @@ class WBLink :public openhd::ITransmitVideo{
   void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
   // Called by the wifibroadcast receiver on the ground unit only
   // Forward video data to the local udp port and/or external device(s) if they exist
-  void forward_video_data(int stream_index,const char* data, int data_len);
+  void forward_video_data(int stream_index,const uint8_t * data,int data_len);
   //
  private:
   void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data);
   std::shared_ptr<openhd::TxRxTelemetry> m_tx_rx_handle;
   //void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) override;
+ private:
+  std::unique_ptr<GroundVideoForwarder> m_ground_video_forwarder;
 };
 
 #endif

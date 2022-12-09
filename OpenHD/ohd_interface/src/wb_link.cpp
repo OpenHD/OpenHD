@@ -72,6 +72,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   }
   takeover_cards_monitor_mode();
   configure_cards();
+  m_ground_video_forwarder=std::make_unique<GroundVideoForwarder>();
   m_tx_rx_handle=std::make_shared<openhd::TxRxTelemetry>();
   auto cb=[this](std::shared_ptr<std::vector<uint8_t>> data){
     transmit_telemetry_data(std::move(data));
@@ -164,12 +165,13 @@ void WBLink::configure_video() {
     m_wb_video_tx_list.push_back(std::move(primary));
     m_wb_video_tx_list.push_back(std::move(secondary));
   } else {
-    auto primary = create_udp_wb_rx(OHD_VIDEO_PRIMARY_RADIO_PORT,
-                                    OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP);
-    primary->runInBackground();
-    auto secondary = create_udp_wb_rx(OHD_VIDEO_SECONDARY_RADIO_PORT,
-                                      OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP);
-    secondary->runInBackground();
+    auto cb=[this](const uint8_t* data,int data_len){
+      forward_video_data(0,data,data_len);
+    };
+    auto primary = create_wb_rx(OHD_VIDEO_PRIMARY_RADIO_PORT,cb);
+    primary->start_async();
+    auto secondary = create_wb_rx(OHD_VIDEO_SECONDARY_RADIO_PORT,cb);
+    secondary->start_async();
     m_wb_video_rx_list.push_back(std::move(primary));
     m_wb_video_rx_list.push_back(std::move(secondary));
   }
@@ -238,11 +240,6 @@ std::unique_ptr<WBTransmitter> WBLink::create_wb_tx(uint8_t radio_port,bool enab
   return std::make_unique<WBTransmitter>(wifiParams, options);
 }
 
-std::unique_ptr<UDPWBReceiver> WBLink::create_udp_wb_rx(uint8_t radio_port, int udp_port){
-  ROptions options= create_rx_options(radio_port);
-  return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port);
-}
-
 std::unique_ptr<AsyncWBReceiver> WBLink::create_wb_rx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb){
   ROptions options= create_rx_options(radio_port);
   return std::make_unique<AsyncWBReceiver>(options,cb);
@@ -266,7 +263,7 @@ std::string WBLink::createDebug()const{
     ss<<"VidTx: "<<txvid->createDebugState();
   }
   for (const auto &rxvid: m_wb_video_rx_list) {
-    ss<<"VidRx :"<<rxvid->get_wb_rx().createDebugState();
+    ss<<"VidRx :"<<rxvid->createDebugState();
   }
   return ss.str();
 }
@@ -279,7 +276,9 @@ void WBLink::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
   for(auto& rxVid: m_wb_video_rx_list){
     const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
     first= false;
-    rxVid->addForwarder(ip,udpPort);
+    if(m_ground_video_forwarder){
+      m_ground_video_forwarder->addForwarder(ip,udpPort);
+    }
   }
 }
 
@@ -289,7 +288,9 @@ void WBLink::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
   for(auto& rxVid: m_wb_video_rx_list){
     const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
     first= false;
-    rxVid->removeForwarder(ip,udpPort);
+    if(m_ground_video_forwarder){
+      m_ground_video_forwarder->removeForwarder(ip,udpPort);
+    }
   }
 }
 
@@ -316,9 +317,9 @@ bool WBLink::ever_received_any_data(){
   //}
   // or any video data
   for(const auto& vidrx: m_wb_video_rx_list){
-    if(vidrx->anyDataReceived()){
-      any_data_received=true;
-    }
+    //if(vidrx->anyDataReceived()){
+    //  any_data_received=true;
+    //}
   }
   return any_data_received;
 }
@@ -623,7 +624,7 @@ void WBLink::loop_do_work() {
       any_rx_wifi_disconnected_errors= true;
     }
     for(auto& rx: m_wb_video_rx_list){
-      if(rx->get_wb_rx().get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
+      if(rx->get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
         any_rx_wifi_disconnected_errors= true;
       }
     }
@@ -676,7 +677,7 @@ void WBLink::update_statistics() {
   }else{
     // video on ground
     for(int i=0;i< m_wb_video_rx_list.size();i++){
-      auto& wb_rx= m_wb_video_rx_list.at(i)->get_wb_rx();
+      auto& wb_rx= *m_wb_video_rx_list.at(i);
       const auto wb_rx_stats=wb_rx.get_latest_stats();
       auto& ground_video= i==0 ? stats.ground_video0 : stats.ground_video1;
       //
@@ -704,7 +705,7 @@ void WBLink::update_statistics() {
   }else{
     if(!m_wb_video_rx_list.empty()){
       stats.monitor_mode_link.curr_rx_packet_loss_perc=
-          m_wb_video_rx_list.at(0)->get_wb_rx().get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+          m_wb_video_rx_list.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
     }
   }
   // temporary, accumulate tx error(s) and dropped packets
@@ -732,7 +733,7 @@ void WBLink::update_statistics() {
       // on ground, we use the dBm reported by the video stream (if available), otherwise
       // we use the dBm reported by the telemetry rx instance.
       const int8_t rssi_telemetry= m_wb_tele_rx->get_latest_stats().rssiPerCard.at(i).last_rssi;
-      const int8_t rssi_video0= m_wb_video_rx_list.at(0)->get_wb_rx().get_latest_stats().rssiPerCard.at(i).last_rssi;
+      const int8_t rssi_video0= m_wb_video_rx_list.at(0)->get_latest_stats().rssiPerCard.at(i).last_rssi;
       if(rssi_video0<=-127){
         // use telemetry, most likely no video data (yet)
         card.rx_rssi=rssi_telemetry;
@@ -918,7 +919,9 @@ void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data)
   }
 }
 
-void WBLink::forward_video_data(int stream_index, const char* data,int data_len) {
-
+void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_len) {
+  if(m_ground_video_forwarder){
+    m_ground_video_forwarder->forward_data(data,data_len);
+  }
 }
 
