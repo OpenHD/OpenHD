@@ -9,13 +9,11 @@ GroundVideoForwarder::GroundVideoForwarder() {
   addForwarder("127.0.0.1",5600);
 }
 
-void GroundVideoForwarder::addForwarder(std::string client_addr,
-                                        int client_udp_port) {
+void GroundVideoForwarder::addForwarder(std::string client_addr,int client_udp_port) {
   udpMultiForwarder->addForwarder(client_addr, client_udp_port);
 }
 
-void GroundVideoForwarder::removeForwarder(std::string client_addr,
-                                           int client_udp_port) {
+void GroundVideoForwarder::removeForwarder(std::string client_addr,int client_udp_port) {
   udpMultiForwarder->removeForwarder(client_addr, client_udp_port);
 }
 
