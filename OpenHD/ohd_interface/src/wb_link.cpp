@@ -302,28 +302,6 @@ std::vector<std::string> WBLink::get_rx_card_names() const {
   return ret;
 }
 
-bool WBLink::ever_received_any_data(){
-  if(m_profile.is_air){
-    // check if we got any telemetry data, we never receive video data
-    assert(m_wb_tele_rx);
-    //return m_wb_tele_rx->anyDataReceived();
-  }
-  // ground
-  bool any_data_received=false;
-  // any telemetry data
-  assert(m_wb_tele_rx);
-  //if(m_wb_tele_rx->anyDataReceived()){
-  //  any_data_received=true;
-  //}
-  // or any video data
-  for(const auto& vidrx: m_wb_video_rx_list){
-    //if(vidrx->anyDataReceived()){
-    //  any_data_received=true;
-    //}
-  }
-  return any_data_received;
-}
-
 bool WBLink::request_set_frequency(int frequency) {
   m_console->debug("WBStreams::request_set_frequency {}",frequency);
   if(m_disable_all_frequency_checks){

@@ -47,9 +47,6 @@ class WBLink :public openhd::ITransmitVideo{
   // NOTE: Only for the ground unit, and only for video (see OHDInterface for more info)
   void addExternalDeviceIpForwardingVideoOnly(const std::string& ip);
   void removeExternalDeviceIpForwardingVideoOnly(const std::string& ip);
-  // Returns true if this WBStream has ever received any data. If no data has been ever received after X seconds,
-  // there most likely was an unsuccessful frequency change.
-  [[nodiscard]] bool ever_received_any_data();
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
   std::shared_ptr<openhd::TxRxTelemetry> get_telemetry_tx_rx_interface();
