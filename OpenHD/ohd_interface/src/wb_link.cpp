@@ -163,12 +163,15 @@ void WBLink::configure_video() {
     m_wb_video_tx_list.push_back(std::move(primary));
     m_wb_video_tx_list.push_back(std::move(secondary));
   } else {
-    auto cb=[this](const uint8_t* data,int data_len){
+    auto cb1=[this](const uint8_t* data,int data_len){
       forward_video_data(0,data,data_len);
     };
-    auto primary = create_wb_rx(OHD_VIDEO_PRIMARY_RADIO_PORT,cb);
+    auto cb2=[this](const uint8_t* data,int data_len){
+      forward_video_data(1,data,data_len);
+    };
+    auto primary = create_wb_rx(OHD_VIDEO_PRIMARY_RADIO_PORT,cb1);
     primary->start_async();
-    auto secondary = create_wb_rx(OHD_VIDEO_SECONDARY_RADIO_PORT,cb);
+    auto secondary = create_wb_rx(OHD_VIDEO_SECONDARY_RADIO_PORT,cb2);
     secondary->start_async();
     m_wb_video_rx_list.push_back(std::move(primary));
     m_wb_video_rx_list.push_back(std::move(secondary));
@@ -900,7 +903,7 @@ std::shared_ptr<openhd::TxRxTelemetry> WBLink::get_telemetry_tx_rx_interface() {
 }
 
 void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_len) {
-  if(m_ground_video_forwarder){
+  if(stream_index==0 && m_ground_video_forwarder){
     m_ground_video_forwarder->forward_data(data,data_len);
   }
 }
