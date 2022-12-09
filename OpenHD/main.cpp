@@ -357,6 +357,8 @@ int main(int argc, char *argv[]) {
             0, settings_components.at(0)->get_all_settings());
       }
     }
+    // tmp
+    ohdTelemetry->set_wb_tx_rx_handle(ohdInterface->get_telemetry_tx_rx_interface());
     m_console->info("All OpenHD modules running");
 
     // run forever, everything has its own threads. Note that the only way to break out basically

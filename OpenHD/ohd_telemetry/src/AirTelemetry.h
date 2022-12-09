@@ -20,6 +20,7 @@
 #include "openhd-spdlog.hpp"
 // Dirty
 #include "openhd-rpi-os-configure-vendor-cam.hpp"
+#include "endpoints/WBEndpoint.h"
 
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
@@ -55,6 +56,8 @@ class AirTelemetry : public MavlinkSystem{
    * @param settings the settings for this camera
    */
   void add_settings_camera_component(int camera_index,const std::vector<openhd::Setting>& settings);
+  //
+  void set_wb_tx_rx_handle(std::shared_ptr<openhd::ITransmitReceiveTelemetry> handle);
  private:
   const OHDPlatform _platform;
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> _airTelemetrySettings;
@@ -70,7 +73,8 @@ class AirTelemetry : public MavlinkSystem{
   std::mutex _serialEndpointMutex;
   std::unique_ptr<SerialEndpoint> serialEndpoint;
   // For now, use UDP endpoint and rely on another service for starting the rx/tx links
-  std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
+  //std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
+  std::unique_ptr<WBEndpoint> wifibroadcastEndpoint;
   // shared because we also push it onto our components list
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
   std::mutex components_lock;

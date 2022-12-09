@@ -23,10 +23,10 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
     on_messages_ground_station_clients(messages);
   });
   // any message coming in via wifibroadcast is a message from the air pi
-  udpWifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(false);
+  /*udpWifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(false);
   udpWifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_air_unit(messages);
-  });
+  });*/
   _ohd_main_component=std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
   components.push_back(_ohd_main_component);
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
@@ -285,4 +285,11 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 #endif
   openhd::testing::append_dummy_if_empty(ret);
   return ret;
+}
+
+void GroundTelemetry::set_wb_tx_rx_handle(std::shared_ptr<openhd::ITransmitReceiveTelemetry> handle) {
+  udpWifibroadcastEndpoint = std::make_unique<WBEndpoint>(handle,"wb_tx");
+  udpWifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+    on_messages_air_unit(messages);
+  });
 }

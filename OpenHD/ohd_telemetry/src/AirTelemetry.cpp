@@ -15,10 +15,10 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   _airTelemetrySettings=std::make_unique<openhd::telemetry::air::SettingsHolder>();
   setup_uart();
   // any message coming in via wifibroadcast is a message from the ground pi
-  wifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(true);
+  /*wifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(true);
   wifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_unit(messages);
-  });
+  });*/
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
   components.push_back(m_ohd_main_component);
   //
@@ -254,4 +254,11 @@ void AirTelemetry::setup_uart() {
 	});
 	m_console->debug("FC UART enable - end");
   }
+}
+
+void AirTelemetry::set_wb_tx_rx_handle(std::shared_ptr<openhd::ITransmitReceiveTelemetry> handle) {
+  wifibroadcastEndpoint = std::make_unique<WBEndpoint>(handle,"wb_tx");
+  wifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+    on_messages_ground_unit(messages);
+  });
 }
