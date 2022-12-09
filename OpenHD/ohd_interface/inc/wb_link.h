@@ -89,7 +89,7 @@ class WBLink :public openhd::ITransmitVideo{
   std::unique_ptr<openhd::WBStreamsSettingsHolder> m_settings;
   // For telemetry, bidirectional in opposite directions
   std::unique_ptr<WBTransmitter> m_wb_tele_tx;
-  std::unique_ptr<WBReceiver> m_wb_tele_rx;
+  std::unique_ptr<AsyncWBReceiver> m_wb_tele_rx;
   // For video, on air there are only tx instances, on ground there are only rx instances.
   std::vector<std::unique_ptr<UDPWBTransmitter>> m_wb_video_tx_list;
   std::vector<std::unique_ptr<UDPWBReceiver>> m_wb_video_rx_list;
@@ -99,7 +99,7 @@ class WBLink :public openhd::ITransmitVideo{
   [[nodiscard]] ROptions create_rx_options(uint8_t radio_port)const;
   [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,std::optional<int> udp_recv_buff_size=std::nullopt)const;
   std::unique_ptr<WBTransmitter> createWbTx(uint8_t radio_port,bool enableFec);
-  std::unique_ptr<WBReceiver> createWbRx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb);
+  std::unique_ptr<AsyncWBReceiver> createWbRx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb);
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port);
   [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
  private:

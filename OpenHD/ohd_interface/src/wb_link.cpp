@@ -146,11 +146,12 @@ void WBLink::configure_telemetry() {
   // uses 2 UDP streams in oposite directions.
   auto radioPort1 = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
   auto radioPort2 = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
-  auto cb2=[this](const uint8_t* data, int data_len){
+  auto cb=[this](const uint8_t* data, int data_len){
     auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
     m_tx_rx_handle->forward_to_on_receive_cb_if_set(shared);
   };
-  m_wb_tele_rx = createWbRx(radioPort1,cb2);
+  m_wb_tele_rx = createWbRx(radioPort1,cb);
+  m_wb_tele_rx->start_async();
   m_wb_tele_tx = createWbTx(radioPort2,false);
 }
 
@@ -250,9 +251,9 @@ std::unique_ptr<UDPWBReceiver> WBLink::createUdpWbRx(uint8_t radio_port, int udp
   return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port);
 }
 
-std::unique_ptr<WBReceiver> WBLink::createWbRx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb){
+std::unique_ptr<AsyncWBReceiver> WBLink::createWbRx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb){
   ROptions options= create_rx_options(radio_port);
-  return std::make_unique<WBReceiver>(options,cb);
+  return std::make_unique<AsyncWBReceiver>(options,cb);
 }
 
 std::string WBLink::createDebug()const{
