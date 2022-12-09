@@ -4,7 +4,7 @@
 #include <vector>
 
 #include <boost/filesystem.hpp>
-
+#include <fstream>
 #include "openhd-spdlog.hpp"
 
 // boost::filesystem or std::filesystem, what a pain
