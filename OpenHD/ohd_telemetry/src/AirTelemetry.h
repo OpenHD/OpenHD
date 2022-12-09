@@ -7,7 +7,6 @@
 
 #include <string>
 #include "endpoints/SerialEndpoint.h"
-#include "endpoints/UDPEndpoint.h"
 #include "internal/OHDMainComponent.h"
 #include "mavlink_settings/ISettingsComponent.hpp"
 #include "openhd-platform.hpp"
