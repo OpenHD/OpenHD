@@ -40,6 +40,8 @@ SET(sources
     "src/endpoints/UDPEndpoint.h"
     "src/endpoints/UDPEndpoint2.cpp"
     "src/endpoints/UDPEndpoint2.h"
+    "src/endpoints/WBEndpoint.cpp"
+    "src/endpoints/WBEndpoint.h"
 
     "src/internal/LogCustomOHDMessages.hpp"
     "src/internal/OHDLinkStatisticsHelper.h"
