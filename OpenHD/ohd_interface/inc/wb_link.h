@@ -88,11 +88,11 @@ class WBLink :public openhd::ITransmitVideo{
   void configure_video();
   std::unique_ptr<openhd::WBStreamsSettingsHolder> m_settings;
   // For telemetry, bidirectional in opposite directions
-  std::unique_ptr<UDPWBTransmitter> udpTelemetryTx;
-  std::unique_ptr<UDPWBReceiver> udpTelemetryRx;
+  std::unique_ptr<UDPWBTransmitter> m_wb_tele_tx;
+  std::unique_ptr<UDPWBReceiver> m_wb_tele_rx;
   // For video, on air there are only tx instances, on ground there are only rx instances.
-  std::vector<std::unique_ptr<UDPWBTransmitter>> udpVideoTxList;
-  std::vector<std::unique_ptr<UDPWBReceiver>> udpVideoRxList;
+  std::vector<std::unique_ptr<UDPWBTransmitter>> m_video_tx_list;
+  std::vector<std::unique_ptr<UDPWBReceiver>> m_video_rx_list;
   // Reads the current settings and creates the appropriate Radiotap Header params
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
   [[nodiscard]] TOptions create_tx_options(uint8_t radio_port,bool enableFec)const;
