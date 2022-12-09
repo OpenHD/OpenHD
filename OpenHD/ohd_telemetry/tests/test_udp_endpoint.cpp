@@ -3,6 +3,8 @@
 // For testing, run QOpenHD and look at the console logs
 //
 
+#include <endpoints/UDPEndpoint2.h>
+
 #include <iostream>
 
 #include "../src/mav_helper.h"
@@ -16,20 +18,23 @@
 
 int main() {
   std::cout << "UdpEndpointTest::start" << std::endl;
-  UDPEndpoint udpEndpoint("UdpEndpoint", OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN);
-  udpEndpoint.registerCallback([](MavlinkMessage &msg) {
-	debugMavlinkMessage(msg.m, "Udp");
-  });
+  UDPEndpoint2 udpEndpoint("UdpEndpoint", OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN);
+  auto cb=[](const std::vector<MavlinkMessage> messages){
+    for(const auto& msg:messages){
+      debugMavlinkMessage(msg.m, "Udp");
+    }
+  };
+  udpEndpoint.registerCallback(cb);
   // now mavlink messages should come in. Try disconnecting and reconnecting, and see if messages continue
   const auto start = std::chrono::steady_clock::now();
   while ((std::chrono::steady_clock::now() - start) < std::chrono::minutes(5)) {
         openhd::log::get_default()->debug("Alive:{}",OHDUtil::yes_or_no(udpEndpoint.isAlive()));
 	auto heartbeat = MExampleMessage::heartbeat();
-	udpEndpoint.sendMessage(heartbeat);
+	udpEndpoint.sendMessages({heartbeat});
 	auto position = MExampleMessage::position();
-	udpEndpoint.sendMessage(position);
+	udpEndpoint.sendMessages({position});
 	auto attitude = MExampleMessage::attitude();
-	udpEndpoint.sendMessage(attitude);
+	udpEndpoint.sendMessages({attitude});
 	std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   std::cout << "UdpEndpointTest::end" << std::endl;
