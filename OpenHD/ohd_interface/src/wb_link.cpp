@@ -164,15 +164,15 @@ void WBLink::configure_video() {
     primary->runInBackground();
     auto secondary = createUdpWbTx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP,true,1024*1024*2);
     secondary->runInBackground();
-    m_video_tx_list.push_back(std::move(primary));
-    m_video_tx_list.push_back(std::move(secondary));
+    m_wb_video_tx_list.push_back(std::move(primary));
+    m_wb_video_tx_list.push_back(std::move(secondary));
   } else {
     auto primary = createUdpWbRx(OHD_VIDEO_PRIMARY_RADIO_PORT, OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP);
     primary->runInBackground();
     auto secondary = createUdpWbRx(OHD_VIDEO_SECONDARY_RADIO_PORT, OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP);
     secondary->runInBackground();
-    m_video_rx_list.push_back(std::move(primary));
-    m_video_rx_list.push_back(std::move(secondary));
+    m_wb_video_rx_list.push_back(std::move(primary));
+    m_wb_video_rx_list.push_back(std::move(secondary));
   }
 }
 
@@ -266,10 +266,10 @@ std::string WBLink::createDebug()const{
   if (m_wb_tele_tx) {
     ss<<"TeleTx: "<< m_wb_tele_tx->get_wb_tx().createDebugState();
   }
-  for (const auto &txvid: m_video_tx_list) {
+  for (const auto &txvid: m_wb_video_tx_list) {
     ss<<"VidTx: "<<txvid->get_wb_tx().createDebugState();
   }
-  for (const auto &rxvid: m_video_rx_list) {
+  for (const auto &rxvid: m_wb_video_rx_list) {
     ss<<"VidRx :"<<rxvid->get_wb_rx().createDebugState();
   }
   return ss.str();
@@ -277,10 +277,10 @@ std::string WBLink::createDebug()const{
 
 void WBLink::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
   bool first= true;
-  assert(m_video_rx_list.size()==2);
+  assert(m_wb_video_rx_list.size()==2);
   m_console->info("WBStreams::addExternalDeviceIpForwardingVideoOnly:"+ip);
   // forward video
-  for(auto& rxVid: m_video_rx_list){
+  for(auto& rxVid: m_wb_video_rx_list){
     const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
     first= false;
     rxVid->addForwarder(ip,udpPort);
@@ -289,8 +289,8 @@ void WBLink::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
 
 void WBLink::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
   bool first= true;
-  assert(m_video_rx_list.size()==2);
-  for(auto& rxVid: m_video_rx_list){
+  assert(m_wb_video_rx_list.size()==2);
+  for(auto& rxVid: m_wb_video_rx_list){
     const auto udpPort=first ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
     first= false;
     rxVid->removeForwarder(ip,udpPort);
@@ -319,7 +319,7 @@ bool WBLink::ever_received_any_data(){
     any_data_received=true;
   }
   // or any video data
-  for(const auto& vidrx: m_video_rx_list){
+  for(const auto& vidrx: m_wb_video_rx_list){
     if(vidrx->anyDataReceived()){
       any_data_received=true;
     }
@@ -447,7 +447,7 @@ void WBLink::apply_mcs_index() {
   if(m_wb_tele_tx){
     m_wb_tele_tx->get_wb_tx().update_mcs_index(settings.wb_mcs_index);
   }
-  for(auto& tx: m_video_tx_list){
+  for(auto& tx: m_wb_video_tx_list){
     tx->get_wb_tx().update_mcs_index(settings.wb_mcs_index);
   }
 }
@@ -482,7 +482,7 @@ bool WBLink::set_video_fec_block_length(const int block_length) {
   m_settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
   m_settings->persist();
   // we only use the fec blk length for video tx-es, and changing it is fast
-  for(auto& tx: m_video_tx_list){
+  for(auto& tx: m_wb_video_tx_list){
     tx->get_wb_tx().update_fec_k(block_length);
   }
   return true;
@@ -497,7 +497,7 @@ bool WBLink::set_video_fec_percentage(int fec_percentage) {
   m_settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
   m_settings->persist();
   // we only use the fec percentage for video txes, and changing it is fast
-  for(auto& tx: m_video_tx_list){
+  for(auto& tx: m_wb_video_tx_list){
     tx->get_wb_tx().update_fec_percentage(fec_percentage);
   }
   return true;
@@ -626,7 +626,7 @@ void WBLink::loop_do_work() {
     if(m_wb_tele_rx->get_wb_rx().get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
       any_rx_wifi_disconnected_errors= true;
     }
-    for(auto& rx: m_video_rx_list){
+    for(auto& rx: m_wb_video_rx_list){
       if(rx->get_wb_rx().get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
         any_rx_wifi_disconnected_errors= true;
       }
@@ -658,8 +658,8 @@ void WBLink::update_statistics() {
   }
   if(m_profile.is_air){
     // video on air
-    for(int i=0;i< m_video_tx_list.size();i++){
-      auto& wb_tx= m_video_tx_list.at(i)->get_wb_tx();
+    for(int i=0;i< m_wb_video_tx_list.size();i++){
+      auto& wb_tx= m_wb_video_tx_list.at(i)->get_wb_tx();
       auto& air_video=i==0 ? stats.air_video0 : stats.air_video1;
       const auto curr_tx_stats=wb_tx.get_latest_stats();
       //
@@ -679,8 +679,8 @@ void WBLink::update_statistics() {
     }
   }else{
     // video on ground
-    for(int i=0;i< m_video_rx_list.size();i++){
-      auto& wb_rx= m_video_rx_list.at(i)->get_wb_rx();
+    for(int i=0;i< m_wb_video_rx_list.size();i++){
+      auto& wb_rx= m_wb_video_rx_list.at(i)->get_wb_rx();
       const auto wb_rx_stats=wb_rx.get_latest_stats();
       auto& ground_video= i==0 ? stats.ground_video0 : stats.ground_video1;
       //
@@ -706,9 +706,9 @@ void WBLink::update_statistics() {
           m_wb_tele_rx->get_wb_rx().get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
     }
   }else{
-    if(!m_video_rx_list.empty()){
+    if(!m_wb_video_rx_list.empty()){
       stats.monitor_mode_link.curr_rx_packet_loss_perc=
-          m_video_rx_list.at(0)->get_wb_rx().get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+          m_wb_video_rx_list.at(0)->get_wb_rx().get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
     }
   }
   // temporary, accumulate tx error(s) and dropped packets
@@ -716,7 +716,7 @@ void WBLink::update_statistics() {
   uint64_t acc_tx_n_dropped_packets=0;
   acc_tx_injections_error_hint+= m_wb_tele_tx->get_wb_tx().get_latest_stats().count_tx_injections_error_hint;
   acc_tx_n_dropped_packets+= m_wb_tele_tx->get_wb_tx().get_latest_stats().count_tx_injections_error_hint;
-  for(const auto& videoTx: m_video_tx_list){
+  for(const auto& videoTx: m_wb_video_tx_list){
     acc_tx_injections_error_hint+=videoTx->get_wb_tx().get_latest_stats().count_tx_injections_error_hint;
     acc_tx_n_dropped_packets+=videoTx->get_wb_tx().get_latest_stats().n_dropped_packets;
   }
@@ -736,7 +736,7 @@ void WBLink::update_statistics() {
       // on ground, we use the dBm reported by the video stream (if available), otherwise
       // we use the dBm reported by the telemetry rx instance.
       const int8_t rssi_telemetry= m_wb_tele_rx->get_wb_rx().get_latest_stats().rssiPerCard.at(i).last_rssi;
-      const int8_t rssi_video0= m_video_rx_list.at(0)->get_wb_rx().get_latest_stats().rssiPerCard.at(i).last_rssi;
+      const int8_t rssi_video0= m_wb_video_rx_list.at(0)->get_wb_rx().get_latest_stats().rssiPerCard.at(i).last_rssi;
       if(rssi_video0<=-127){
         // use telemetry, most likely no video data (yet)
         card.rx_rssi=rssi_telemetry;
@@ -786,7 +786,7 @@ void WBLink::perform_rate_adjustment() {
 
     // then check if there are tx errors since the last time we checked (1 second intervals)
     bool bitrate_is_still_too_high = false;
-    UDPWBTransmitter* primary_video_tx = m_video_tx_list.at(0).get();
+    UDPWBTransmitter* primary_video_tx = m_wb_video_tx_list.at(0).get();
     const auto primary_video_tx_stats = primary_video_tx->get_wb_tx().get_latest_stats();
     if (last_tx_error_count < 0) {
       last_tx_error_count = static_cast<int64_t>(
@@ -802,7 +802,7 @@ void WBLink::perform_rate_adjustment() {
     }
     // or the tx queue is running full
     const auto n_buffered_packets_estimate =
-        m_video_tx_list.at(0)->get_wb_tx().get_estimate_buffered_packets();
+        m_wb_video_tx_list.at(0)->get_wb_tx().get_estimate_buffered_packets();
     m_console->debug("Video estimates {} buffered packets",
                      n_buffered_packets_estimate);
     if (n_buffered_packets_estimate >
@@ -894,8 +894,8 @@ bool WBLink::has_rtl8812au() {
 
 void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
   assert(m_profile.is_air);
-  if(stream_index>=0 && stream_index< m_video_tx_list.size()){
-    auto& tx= m_video_tx_list[stream_index]->get_wb_tx();
+  if(stream_index>=0 && stream_index< m_wb_video_tx_list.size()){
+    auto& tx= m_wb_video_tx_list[stream_index]->get_wb_tx();
     const bool use_fixed_fec_instead=!m_settings->get_settings().is_video_variable_block_length_enabled();
     //tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments,use_fixed_fec_instead);
     uint32_t max_block_size_for_platform=m_settings->get_settings().wb_max_fec_block_size_for_platform;
