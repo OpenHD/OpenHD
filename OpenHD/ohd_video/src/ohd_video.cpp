@@ -26,6 +26,7 @@ OHDVideo::OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,
       m_console->warn("Dropping camera {}, too many cameras",camera.to_string());
     }
   }
+  startup_fix_common_issues(camera_holders);
   assert(camera_holders.size()<=MAX_N_CAMERAS);
   for (auto &camera: camera_holders) {
     configure(camera);
@@ -49,7 +50,7 @@ std::string OHDVideo::createDebug() const {
   return ss.str();
 }
 
-void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
+void OHDVideo::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
   const auto camera=camera_holder->get_camera();
   m_console->debug("Configuring camera:"+camera_type_to_string(camera.type));
   // R.N we use gstreamer only for everything except veye
@@ -63,7 +64,7 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
       stream->start();
       m_camera_streams.push_back(stream);
       break;*/
-      m_console->error("Unimplemented");
+      m_console->error("Veye had to be dropped in 2.2.4");
       break;
     }
     case CameraType::RPI_CSI_MMAL:
@@ -75,7 +76,6 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
     case CameraType::CUSTOM_UNMANAGED_CAMERA:
     case CameraType::DUMMY_SW: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
-      const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
       auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,m_interface_transmit_video);
       stream->setup();
       stream->start();
@@ -84,7 +84,6 @@ void OHDVideo::configure(std::shared_ptr<CameraHolder> camera_holder) {
     }
     case CameraType::RPI_CSI_LIBCAMERA: {
       m_console->debug("LibCamera index:{}", camera.index);
-      const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
       auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, m_interface_transmit_video);
       stream->setup();
       stream->start();

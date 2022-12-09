@@ -304,4 +304,19 @@ static std::shared_ptr<CameraHolder> createDummyCamera2(){
   return std::make_shared<CameraHolder>(createDummyCamera());
 }
 
+// On startup, the primary camera is always streaming such that the user always gets an image
+// while the rest of the camera(s) are disabled
+static void startup_fix_common_issues(std::vector<std::shared_ptr<CameraHolder>>& camera_holders){
+  if(camera_holders.empty()){
+    openhd::log::get_default()->warn("at least 1 camera is a hard requirement");
+    return;
+  }
+  camera_holders.at(0)->unsafe_get_settings().enable_streaming= true;
+  camera_holders.at(0)->persist();
+  for(int i=1;i<camera_holders.size();i++){
+    camera_holders.at(i)->unsafe_get_settings().enable_streaming = false;
+    camera_holders.at(i)->persist();
+  }
+}
+
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_

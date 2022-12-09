@@ -5,7 +5,6 @@
 #ifndef OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 #define OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 
-#include "endpoints/UDPEndpoint.h"
 #include "endpoints/UDPEndpoint2.h"
 #include "internal/OHDMainComponent.h"
 #include "mavlink_settings/ISettingsComponent.hpp"
@@ -13,6 +12,8 @@
 #include "GroundTelemetrySettings.h"
 #include "openhd-action-handler.hpp"
 #include "openhd-spdlog.hpp"
+#include "endpoints/WBEndpoint.h"
+
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 #include "rc/JoystickReader.h"
 #include "rc/RcJoystickSender.h"
@@ -49,6 +50,8 @@ class GroundTelemetry :public MavlinkSystem{
   // Add the IP of another Ground station client, to start forwarding telemetry data there
   void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);
   void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);
+  //
+  void set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle);
  private:
   const OHDPlatform _platform;
   // called every time one or more messages from the air unit are received
@@ -63,8 +66,9 @@ class GroundTelemetry :public MavlinkSystem{
   std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_groundTelemetrySettings;
   std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;
   // We rely on another service for starting the rx/tx links
-  std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;
-  std::shared_ptr<OHDMainComponent> _ohd_main_component;
+  //std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;
+  std::unique_ptr<WBEndpoint> m_wb_endpoint;
+  std::shared_ptr<OHDMainComponent> m_ohd_main_component;
   std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
   std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;

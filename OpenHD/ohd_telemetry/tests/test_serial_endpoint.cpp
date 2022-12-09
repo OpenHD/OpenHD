@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 	std::cout<<serial_endpoint->createInfo();
     // some implementations need a heartbeat before they start sending data.
     auto msg = MExampleMessage::heartbeat();
-    serial_endpoint->sendMessage(msg);
+    serial_endpoint->sendMessages({msg});
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   serial_endpoint.reset();

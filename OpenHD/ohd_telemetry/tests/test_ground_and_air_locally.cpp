@@ -15,7 +15,7 @@ int main() {
   std::unique_ptr<OHDTelemetry> ohdTelemGround;
   std::unique_ptr<OHDTelemetry> ohdTelemAir;
   {
-	OHDProfile profile{false, "XX"};
+	OHDProfile profile{false,false, "XX"};
 	//OHDPlatform platform{PlatformType::PC};
 	const auto platform=DPlatform::discover();
 	ohdTelemGround = std::make_unique<OHDTelemetry>(*platform, profile);
@@ -24,7 +24,7 @@ int main() {
 	ohdTelemGround->add_settings_generic(openhd::testing::create_dummy_ground_settings());
   }
   {
-	OHDProfile profile{true, "XX"};
+	OHDProfile profile{true,false, "XX"};
 	//OHDPlatform platform{PlatformType::PC};
 	const auto platform=DPlatform::discover();
 	ohdTelemAir = std::make_unique<OHDTelemetry>(*platform, profile);

@@ -16,7 +16,7 @@ int main() {
   std::unique_ptr<OHDTelemetry> ground;
   //std::this_thread::sleep_for(std::chrono::seconds(10));
   {
-	OHDProfile profile{false, "XX"};
+	OHDProfile profile{false,false, "XX"};
 	const auto platform=DPlatform::discover();
 	ground = std::make_unique<OHDTelemetry>(*platform, profile);
 	// MAV_COMP_ID_ONBOARD_COMPUTER2=192

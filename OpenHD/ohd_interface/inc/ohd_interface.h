@@ -16,10 +16,11 @@
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
+#include "openhd-telemetry-tx-rx.h"
+#include "openhd-video-transmit-interface.h"
 #include "usb_tether_listener.h"
 #include "wb_link.h"
 #include "wifi_hotspot.h"
-#include "openhd-video-transmit-interface.h"
 
 class OHDInterface :public openhd::ISettingsComponent{
  public:
@@ -42,6 +43,8 @@ class OHDInterface :public openhd::ISettingsComponent{
   static void print_internal_fec_optimization_method();
   // only valid on air
   std::shared_ptr<openhd::ITransmitVideo> get_video_tx_interface();
+  // valid on air and ground
+  std::shared_ptr<openhd::TxRxTelemetry> get_telemetry_tx_rx_interface();
  private:
   /**
     * after calling this method with an external device's ip address

@@ -76,3 +76,11 @@ void OHDTelemetry::remove_external_ground_station_ip(const std::string &ip_openh
   if(profile.is_air)return;
   groundTelemetry->remove_external_ground_station_ip(ip_openhd,ip_dest_device);
 }
+
+void OHDTelemetry::set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle) {
+  if(profile.is_air){
+    airTelemetry->set_wb_tx_rx_handle(handle);
+  }else{
+    groundTelemetry->set_wb_tx_rx_handle(handle);
+  }
+}

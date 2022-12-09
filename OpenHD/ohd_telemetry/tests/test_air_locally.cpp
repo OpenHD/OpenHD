@@ -14,7 +14,7 @@ int main() {
   std::cout<< "start\n";
   std::unique_ptr<OHDTelemetry> air;
   {
-	OHDProfile profile{true, "YY"};
+	OHDProfile profile{true,false, "YY"};
         const auto platform=DPlatform::discover();
 	air = std::make_unique<OHDTelemetry>(*platform, profile,nullptr,true);
   }
