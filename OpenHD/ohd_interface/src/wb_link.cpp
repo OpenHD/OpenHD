@@ -143,16 +143,16 @@ void WBLink::configure_streams() {
 void WBLink::configure_telemetry() {
   m_console->debug("Streams::configure_telemetry()isAir:"+OHDUtil::yes_or_no(m_profile.is_air));
   // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
-  // uses 2 UDP streams in oposite directions.
-  auto radioPort1 = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
-  auto radioPort2 = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
+  // tx radio port on air is the same as rx on ground and verse visa
+  const auto radio_port_rx = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
+  const auto radio_port_tx = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
   auto cb=[this](const uint8_t* data, int data_len){
     auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
     m_tx_rx_handle->forward_to_on_receive_cb_if_set(shared);
   };
-  m_wb_tele_rx = createWbRx(radioPort1,cb);
+  m_wb_tele_rx = createWbRx(radio_port_rx,cb);
   m_wb_tele_rx->start_async();
-  m_wb_tele_tx = createWbTx(radioPort2,false);
+  m_wb_tele_tx = createWbTx(radio_port_tx,false);
 }
 
 void WBLink::configure_video() {
