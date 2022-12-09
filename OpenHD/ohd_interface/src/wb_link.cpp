@@ -230,14 +230,6 @@ ROptions WBLink::create_rx_options(uint8_t radio_port)const {
   return options;
 }
 
-std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,
-                                                           std::optional<int> udp_recv_buff_size)const {
-  TOptions options= create_tx_options(radio_port,enableFec);
-  //m_console->debug("Starting WFB_TX with MCS:{}",mcs_index);
-  RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
-  return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port,udp_recv_buff_size);
-}
-
 std::unique_ptr<WBTransmitter> WBLink::createWbTx(uint8_t radio_port,bool enableFec) {
   TOptions options= create_tx_options(radio_port,enableFec);
   RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
