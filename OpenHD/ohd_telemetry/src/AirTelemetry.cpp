@@ -52,9 +52,6 @@ void AirTelemetry::send_messages_ground_unit(const std::vector<MavlinkMessage>& 
   }
   if(m_wb_endpoint){
     m_wb_endpoint->sendMessages(messages);
-    openhd::log::get_default()->debug("YY2");
-  }else{
-    openhd::log::get_default()->debug("YY1");
   }
 }
 
