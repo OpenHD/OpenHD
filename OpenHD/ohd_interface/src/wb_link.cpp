@@ -185,8 +185,7 @@ RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
       settings.wb_enable_ldpc, mcs_index};
 }
 
-std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,
-                                                           std::optional<int> udp_recv_buff_size)const {
+TOptions WBLink::create_tx_options(uint8_t radio_port,bool enableFec)const {
   const auto settings=m_settings->get_settings();
   TOptions options{};
   options.radio_port = radio_port;
@@ -208,12 +207,10 @@ std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int 
     options.tx_fec_options.overhead_percentage=0;
   }
   options.wlan = m_broadcast_cards.at(0)->_wifi_card.interface_name;
-  //m_console->debug("Starting WFB_TX with MCS:{}",mcs_index);
-  RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
-  return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port,udp_recv_buff_size);
+  return options;
 }
 
-std::unique_ptr<UDPWBReceiver> WBLink::createUdpWbRx(uint8_t radio_port, int udp_port){
+ROptions WBLink::create_rx_options(uint8_t radio_port)const {
   ROptions options{};
   options.radio_port = radio_port;
   const char *keypair_file =
@@ -233,6 +230,25 @@ std::unique_ptr<UDPWBReceiver> WBLink::createUdpWbRx(uint8_t radio_port, int udp
   options.rx_queue_depth = 1;//_broadcast_cards.size() > 1 ? 10 : 2;
   const auto wifi_card_type=m_broadcast_cards.at(0)->get_wifi_card().type;
   options.rtl8812au_rssi_fixup=wifi_card_type==WiFiCardType::Realtek8812au;
+  return options;
+}
+
+std::unique_ptr<UDPWBTransmitter> WBLink::createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,
+                                                           std::optional<int> udp_recv_buff_size)const {
+  TOptions options= create_tx_options(radio_port,enableFec);
+  //m_console->debug("Starting WFB_TX with MCS:{}",mcs_index);
+  RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
+  return std::make_unique<UDPWBTransmitter>(wifiParams, options, "127.0.0.1", udp_port,udp_recv_buff_size);
+}
+
+std::unique_ptr<WBTransmitter> WBLink::createWbTx(uint8_t radio_port,bool enableFec) {
+  TOptions options= create_tx_options(radio_port,enableFec);
+  RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
+  return std::make_unique<WBTransmitter>(wifiParams, options);
+}
+
+std::unique_ptr<UDPWBReceiver> WBLink::createUdpWbRx(uint8_t radio_port, int udp_port){
+  ROptions options= create_rx_options(radio_port);
   return std::make_unique<UDPWBReceiver>(options, "127.0.0.1", udp_port);
 }
 
@@ -905,3 +921,8 @@ void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data)
     tx.feedPacket(data,std::nullopt);
   }
 }
+
+void WBLink::forward_video_data(int stream_index, const char* data,int data_len) {
+
+}
+

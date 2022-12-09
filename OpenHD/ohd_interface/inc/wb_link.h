@@ -95,7 +95,10 @@ class WBLink :public openhd::ITransmitVideo{
   std::vector<std::unique_ptr<UDPWBReceiver>> udpVideoRxList;
   // Reads the current settings and creates the appropriate Radiotap Header params
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
+  [[nodiscard]] TOptions create_tx_options(uint8_t radio_port,bool enableFec)const;
+  [[nodiscard]] ROptions create_rx_options(uint8_t radio_port)const;
   [[nodiscard]] std::unique_ptr<UDPWBTransmitter> createUdpWbTx(uint8_t radio_port, int udp_port,bool enableFec,std::optional<int> udp_recv_buff_size=std::nullopt)const;
+  std::unique_ptr<WBTransmitter> createWbTx(uint8_t radio_port,bool enableFec);
   [[nodiscard]] std::unique_ptr<UDPWBReceiver> createUdpWbRx(uint8_t radio_port, int udp_port);
   [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
  private:
@@ -152,7 +155,12 @@ class WBLink :public openhd::ITransmitVideo{
   bool set_wb_rtl8812au_tx_pwr_idx_override(int value);
   bool has_rtl8812au();
  public:
+  // Called by the camera stream on the air unit only
+  // transmit video data via wifibradcast
   void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
+  // Called by the wifibroadcast receiver on the ground unit only
+  // Forward video data to the local udp port and/or external device(s) if they exist
+  void forward_video_data(int stream_index,const char* data, int data_len);
   //
  private:
   void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data);
