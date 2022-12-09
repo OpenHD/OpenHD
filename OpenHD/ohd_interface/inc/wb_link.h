@@ -91,7 +91,7 @@ class WBLink :public openhd::ITransmitVideo{
   std::unique_ptr<WBTransmitter> m_wb_tele_tx;
   std::unique_ptr<AsyncWBReceiver> m_wb_tele_rx;
   // For video, on air there are only tx instances, on ground there are only rx instances.
-  std::vector<std::unique_ptr<UDPWBTransmitter>> m_wb_video_tx_list;
+  std::vector<std::unique_ptr<WBTransmitter>> m_wb_video_tx_list;
   std::vector<std::unique_ptr<UDPWBReceiver>> m_wb_video_rx_list;
   // Reads the current settings and creates the appropriate Radiotap Header params
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
