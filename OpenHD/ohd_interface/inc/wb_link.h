@@ -49,6 +49,7 @@ class WBLink :public openhd::ITransmitVideo{
   void removeExternalDeviceIpForwardingVideoOnly(const std::string& ip);
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
+  // This handle is used by ohd_telemetry to get / sent telemetry (raw) data
   std::shared_ptr<openhd::TxRxTelemetry> get_telemetry_tx_rx_interface();
  private:
   // validate param, then schedule change
@@ -151,18 +152,15 @@ class WBLink :public openhd::ITransmitVideo{
  private:
   bool set_wb_rtl8812au_tx_pwr_idx_override(int value);
   bool has_rtl8812au();
- public:
+ private:
   // Called by the camera stream on the air unit only
   // transmit video data via wifibradcast
   void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
   // Called by the wifibroadcast receiver on the ground unit only
   // Forward video data to the local udp port and/or external device(s) if they exist
   void forward_video_data(int stream_index,const uint8_t * data,int data_len);
-  //
  private:
-  void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data);
   std::shared_ptr<openhd::TxRxTelemetry> m_tx_rx_handle;
- private:
   std::unique_ptr<GroundVideoForwarder> m_ground_video_forwarder;
 };
 

@@ -75,14 +75,12 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   m_ground_video_forwarder=std::make_unique<GroundVideoForwarder>();
   m_tx_rx_handle=std::make_shared<openhd::TxRxTelemetry>();
   auto cb=[this](std::shared_ptr<std::vector<uint8_t>> data){
-    transmit_telemetry_data(std::move(data));
+    if(m_wb_tele_tx){
+      m_wb_tele_tx->feedPacket(data,std::nullopt);
+    }
   };
   m_tx_rx_handle->register_on_send_data_cb(cb);
   configure_streams();
-  /*auto cb2=[this](std::shared_ptr<std::vector<uint8_t>> data){
-    m_tx_rx_handle->forward_to_on_receive_cb_if_set(data);
-  };
-  m_wb_tele_rx->tmp_register_cb(cb2);*/
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
 }
@@ -899,12 +897,6 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
 
 std::shared_ptr<openhd::TxRxTelemetry> WBLink::get_telemetry_tx_rx_interface() {
   return m_tx_rx_handle;
-}
-
-void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
-  if(m_wb_tele_tx){
-    m_wb_tele_tx->feedPacket(data,std::nullopt);
-  }
 }
 
 void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_len) {
