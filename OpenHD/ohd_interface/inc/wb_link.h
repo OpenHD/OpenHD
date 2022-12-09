@@ -51,7 +51,7 @@ class WBLink :public openhd::ITransmitVideo{
   [[nodiscard]] bool ever_received_any_data();
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
-  std::shared_ptr<openhd::ITransmitReceiveTelemetry> get_telemetry_tx_rx_interface();
+  std::shared_ptr<openhd::TxRxTelemetry> get_telemetry_tx_rx_interface();
  private:
   // validate param, then schedule change
   bool request_set_frequency(int frequency);
@@ -156,7 +156,7 @@ class WBLink :public openhd::ITransmitVideo{
   //
  private:
   void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data);
-  std::shared_ptr<openhd::ITransmitReceiveTelemetry> m_tx_rx_handle;
+  std::shared_ptr<openhd::TxRxTelemetry> m_tx_rx_handle;
   //void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) override;
 };
 

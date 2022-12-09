@@ -44,7 +44,7 @@ class OHDInterface :public openhd::ISettingsComponent{
   // only valid on air
   std::shared_ptr<openhd::ITransmitVideo> get_video_tx_interface();
   // valid on air and ground
-  std::shared_ptr<openhd::ITransmitReceiveTelemetry> get_telemetry_tx_rx_interface();
+  std::shared_ptr<openhd::TxRxTelemetry> get_telemetry_tx_rx_interface();
  private:
   /**
     * after calling this method with an external device's ip address

@@ -72,7 +72,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   }
   takeover_cards_monitor_mode();
   configure_cards();
-  m_tx_rx_handle=std::make_shared<openhd::ITransmitReceiveTelemetry>();
+  m_tx_rx_handle=std::make_shared<openhd::TxRxTelemetry>();
   auto cb=[this](std::shared_ptr<std::vector<uint8_t>> data){
     transmit_telemetry_data(std::move(data));
   };
@@ -895,7 +895,7 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
   }
 }
 
-std::shared_ptr<openhd::ITransmitReceiveTelemetry> WBLink::get_telemetry_tx_rx_interface() {
+std::shared_ptr<openhd::TxRxTelemetry> WBLink::get_telemetry_tx_rx_interface() {
   return m_tx_rx_handle;
 }
 

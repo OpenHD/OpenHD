@@ -52,7 +52,7 @@ class GroundTelemetry :public MavlinkSystem{
   void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);
   void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);
   //
-  void set_wb_tx_rx_handle(std::shared_ptr<openhd::ITransmitReceiveTelemetry> handle);
+  void set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle);
  private:
   const OHDPlatform _platform;
   // called every time one or more messages from the air unit are received

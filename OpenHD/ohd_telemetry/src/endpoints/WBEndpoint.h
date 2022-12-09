@@ -11,9 +11,9 @@
 // Abstraction for sending / receiving data from the link between air and ground unit
 class WBEndpoint : public MEndpoint  {
  public:
-  explicit WBEndpoint(std::shared_ptr<openhd::ITransmitReceiveTelemetry> tx_rx_handle,std::string TAG);
+  explicit WBEndpoint(std::shared_ptr<openhd::TxRxTelemetry> tx_rx_handle,std::string TAG);
  private:
-  std::shared_ptr<openhd::ITransmitReceiveTelemetry> m_tx_rx_handle;
+  std::shared_ptr<openhd::TxRxTelemetry> m_tx_rx_handle;
   bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;
 };
 

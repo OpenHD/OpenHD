@@ -6,7 +6,7 @@
 
 #include <utility>
 
-WBEndpoint::WBEndpoint(std::shared_ptr<openhd::ITransmitReceiveTelemetry> tx_rx_handle,std::string TAG)
+WBEndpoint::WBEndpoint(std::shared_ptr<openhd::TxRxTelemetry> tx_rx_handle,std::string TAG)
     : MEndpoint(std::move(TAG)),
       m_tx_rx_handle(std::move(tx_rx_handle)){
   assert(m_tx_rx_handle);

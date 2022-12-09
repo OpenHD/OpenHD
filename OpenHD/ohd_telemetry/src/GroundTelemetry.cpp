@@ -287,7 +287,7 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   return ret;
 }
 
-void GroundTelemetry::set_wb_tx_rx_handle(std::shared_ptr<openhd::ITransmitReceiveTelemetry> handle) {
+void GroundTelemetry::set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle) {
   udpWifibroadcastEndpoint = std::make_unique<WBEndpoint>(handle,"wb_tx");
   udpWifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_air_unit(messages);

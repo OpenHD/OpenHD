@@ -57,7 +57,7 @@ class AirTelemetry : public MavlinkSystem{
    */
   void add_settings_camera_component(int camera_index,const std::vector<openhd::Setting>& settings);
   //
-  void set_wb_tx_rx_handle(std::shared_ptr<openhd::ITransmitReceiveTelemetry> handle);
+  void set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle);
  private:
   const OHDPlatform _platform;
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> _airTelemetrySettings;
