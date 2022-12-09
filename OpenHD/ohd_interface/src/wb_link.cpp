@@ -895,9 +895,9 @@ std::shared_ptr<openhd::ITransmitReceiveTelemetry> WBLink::get_telemetry_tx_rx_i
   return m_tx_rx_handle;
 }
 
-/*void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
+void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
   if(udpTelemetryTx){
     auto& tx=udpTelemetryTx->get_wb_tx();
-    tx.feedPacket(std::move(data),std::nullopt);
+    tx.feedPacket(data,std::nullopt);
   }
-}*/
+}
