@@ -245,16 +245,16 @@ std::string WBLink::createDebug()const{
   }
   ss<<"Any data received: "<<(any_data_received ? "Y":"N")<<"\n";
   if (udpTelemetryRx) {
-    ss<<"TeleRx: "<<udpTelemetryRx->createDebug();
+    ss<<"TeleRx: "<<udpTelemetryRx->get_wb_rx().createDebugState();
   }
   if (udpTelemetryTx) {
-    ss<<"TeleTx: "<<udpTelemetryTx->createDebug();
+    ss<<"TeleTx: "<<udpTelemetryTx->get_wb_tx().createDebugState();
   }
   for (const auto &txvid: udpVideoTxList) {
-    ss<<"VidTx: "<<txvid->createDebug();
+    ss<<"VidTx: "<<txvid->get_wb_tx().createDebugState();
   }
   for (const auto &rxvid: udpVideoRxList) {
-    ss<<"VidRx :"<<rxvid->createDebug();
+    ss<<"VidRx :"<<rxvid->get_wb_rx().createDebugState();
   }
   return ss.str();
 }
@@ -429,10 +429,10 @@ void WBLink::apply_mcs_index() {
   // we need to change the mcs index on all tx-es
   const auto settings=m_settings->get_settings();
   if(udpTelemetryTx){
-    udpTelemetryTx->update_mcs_index(settings.wb_mcs_index);
+    udpTelemetryTx->get_wb_tx().update_mcs_index(settings.wb_mcs_index);
   }
   for(auto& tx:udpVideoTxList){
-    tx->update_mcs_index(settings.wb_mcs_index);
+    tx->get_wb_tx().update_mcs_index(settings.wb_mcs_index);
   }
 }
 
@@ -607,11 +607,11 @@ void WBLink::loop_do_work() {
     // Dirty - deliberately crash openhd and let the service restart it
     // if we think a wi-fi card disconnected
     bool any_rx_wifi_disconnected_errors=false;
-    if(udpTelemetryRx->get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
+    if(udpTelemetryRx->get_wb_rx().get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
       any_rx_wifi_disconnected_errors= true;
     }
     for(auto& rx:udpVideoRxList){
-      if(rx->get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
+      if(rx->get_wb_rx().get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
         any_rx_wifi_disconnected_errors= true;
       }
     }
@@ -631,12 +631,12 @@ void WBLink::update_statistics() {
   // telemetry is available on both air and ground
   openhd::link_statistics::StatsAirGround stats{};
   if(udpTelemetryTx){
-    const auto curr_tx_stats=udpTelemetryTx->get_latest_stats();
+    const auto curr_tx_stats=udpTelemetryTx->get_wb_tx().get_latest_stats();
     stats.telemetry.curr_tx_bps=curr_tx_stats.current_provided_bits_per_second;
     stats.telemetry.curr_tx_pps=curr_tx_stats.current_injected_packets_per_second;
   }
   if(udpTelemetryRx){
-    const auto curr_rx_stats=udpTelemetryRx->get_latest_stats();
+    const auto curr_rx_stats=udpTelemetryRx->get_wb_rx().get_latest_stats();
     stats.telemetry.curr_rx_bps=curr_rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
     //stats.telemetry.curr_rx_pps=curr_rx_stats.wb_rx_stats;
   }
@@ -686,21 +686,21 @@ void WBLink::update_statistics() {
   // we use the video lost packets' percentage. Once we have one global rx, we can change that
   if(m_profile.is_air){
     if(udpTelemetryRx){
-      stats.monitor_mode_link.curr_rx_packet_loss_perc=udpTelemetryRx->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+      stats.monitor_mode_link.curr_rx_packet_loss_perc=udpTelemetryRx->get_wb_rx().get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
     }
   }else{
     if(!udpVideoRxList.empty()){
-      stats.monitor_mode_link.curr_rx_packet_loss_perc=udpVideoRxList.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+      stats.monitor_mode_link.curr_rx_packet_loss_perc=udpVideoRxList.at(0)->get_wb_rx().get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
     }
   }
   // temporary, accumulate tx error(s) and dropped packets
   uint64_t acc_tx_injections_error_hint=0;
   uint64_t acc_tx_n_dropped_packets=0;
-  acc_tx_injections_error_hint+=udpTelemetryTx->get_latest_stats().count_tx_injections_error_hint;
-  acc_tx_n_dropped_packets+=udpTelemetryTx->get_latest_stats().count_tx_injections_error_hint;
+  acc_tx_injections_error_hint+=udpTelemetryTx->get_wb_tx().get_latest_stats().count_tx_injections_error_hint;
+  acc_tx_n_dropped_packets+=udpTelemetryTx->get_wb_tx().get_latest_stats().count_tx_injections_error_hint;
   for(const auto& videoTx:udpVideoTxList){
-    acc_tx_injections_error_hint+=videoTx->get_latest_stats().count_tx_injections_error_hint;
-    acc_tx_n_dropped_packets+=videoTx->get_latest_stats().n_dropped_packets;
+    acc_tx_injections_error_hint+=videoTx->get_wb_tx().get_latest_stats().count_tx_injections_error_hint;
+    acc_tx_n_dropped_packets+=videoTx->get_wb_tx().get_latest_stats().n_dropped_packets;
   }
   stats.monitor_mode_link.count_tx_inj_error_hint=acc_tx_injections_error_hint;
   stats.monitor_mode_link.count_tx_dropped_packets=acc_tx_n_dropped_packets;
@@ -714,12 +714,12 @@ void WBLink::update_statistics() {
     if(m_profile.is_air){
       // on air, we use the dbm reported by the telemetry stream
       card.rx_rssi=
-          udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
+          udpTelemetryRx->get_wb_rx().get_latest_stats().rssiPerCard.at(i).last_rssi;
     }else{
       // on ground, we use the dBm reported by the video stream (if available), otherwise
       // we use the dBm reported by the telemetry rx instance.
-      const int8_t rssi_telemetry=udpTelemetryRx->get_latest_stats().rssiPerCard.at(i).last_rssi;
-      const int8_t rssi_video0=udpVideoRxList.at(0)->get_latest_stats().rssiPerCard.at(i).last_rssi;
+      const int8_t rssi_telemetry=udpTelemetryRx->get_wb_rx().get_latest_stats().rssiPerCard.at(i).last_rssi;
+      const int8_t rssi_video0=udpVideoRxList.at(0)->get_wb_rx().get_latest_stats().rssiPerCard.at(i).last_rssi;
       if(rssi_video0<=-127){
         // use telemetry, most likely no video data (yet)
         card.rx_rssi=rssi_telemetry;
@@ -770,7 +770,7 @@ void WBLink::perform_rate_adjustment() {
     // then check if there are tx errors since the last time we checked (1 second intervals)
     bool bitrate_is_still_too_high = false;
     UDPWBTransmitter* primary_video_tx = udpVideoTxList.at(0).get();
-    const auto primary_video_tx_stats = primary_video_tx->get_latest_stats();
+    const auto primary_video_tx_stats = primary_video_tx->get_wb_tx().get_latest_stats();
     if (last_tx_error_count < 0) {
       last_tx_error_count = static_cast<int64_t>(
           primary_video_tx_stats.count_tx_injections_error_hint);
@@ -785,7 +785,7 @@ void WBLink::perform_rate_adjustment() {
     }
     // or the tx queue is running full
     const auto n_buffered_packets_estimate =
-        udpVideoTxList.at(0)->get_estimate_buffered_packets();
+        udpVideoTxList.at(0)->get_wb_tx().get_estimate_buffered_packets();
     m_console->debug("Video estimates {} buffered packets",
                      n_buffered_packets_estimate);
     if (n_buffered_packets_estimate >
