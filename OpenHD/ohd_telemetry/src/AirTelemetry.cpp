@@ -50,7 +50,9 @@ void AirTelemetry::send_messages_ground_unit(const std::vector<MavlinkMessage>& 
   for(const auto& message:messages){
     //debugMavlinkMessage(message.m,"AirTelemetry::sendMessageGroundPi");
   }
-  wifibroadcastEndpoint->sendMessages(messages);
+  if(wifibroadcastEndpoint){
+    wifibroadcastEndpoint->sendMessages(messages);
+  }
 }
 
 void AirTelemetry::on_messages_fc(const std::vector<MavlinkMessage>& messages) {
