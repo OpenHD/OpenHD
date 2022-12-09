@@ -512,7 +512,16 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       return set_max_fec_block_size_for_platform(value);
     };
     ret.push_back(Setting{WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,openhd::IntSetting{(int)m_settings->get_settings().wb_max_fec_block_size_for_platform, cb_wb_max_fec_block_size_for_platform}});
-
+  }
+  if(m_profile.is_air){
+    // We display the total n of detected RX cards such that users can validate their multi rx setup(s)
+    const int n_rx_cards=static_cast<int>(m_broadcast_cards.size());
+    if(n_rx_cards>1){
+      auto cb_read_only=[this](std::string,int value){
+        return false;
+      };
+      ret.push_back(Setting{"WB_N_RX_CARDS",openhd::IntSetting{n_rx_cards,cb_read_only}});
+    }
   }
   // disabled for now, they are too complicated that a normal user can do something with them anyways
   if(false){
