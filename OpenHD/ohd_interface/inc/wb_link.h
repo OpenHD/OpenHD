@@ -168,13 +168,13 @@ class WBLink :public openhd::ITransmitVideo{
     bool success=false;
     uint32_t wifi_channel=0;
   };
+  static constexpr std::chrono::seconds DEFAULT_SCAN_TIME{10};
   // checking both 2G and 5G channels would take too long
-  ScanResult scan_channels(std::chrono::nanoseconds duration,bool check_2g_channels=false);
+  ScanResult scan_channels(std::chrono::nanoseconds duration=DEFAULT_SCAN_TIME,bool check_2g_channels=false);
  private:
   std::atomic<bool> is_scanning=false;
   void reset_received_packets_count();
   int get_received_packets_count();
-  static constexpr std::chrono::seconds DEFAULT_SCAN_TIME{20};
  private:
   // We return false on all the change settings request(s) if there is already a change operation queued
   // up or we currently perform a channel scan

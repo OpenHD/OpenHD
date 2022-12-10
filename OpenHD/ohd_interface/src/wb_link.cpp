@@ -467,7 +467,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   }
   if(true){
     auto cb_read_only=[this](std::string,int value){
-      scan_channels(std::chrono::seconds(20));
+      scan_channels();
       return false;
     };
     ret.push_back(Setting{"XXXX",openhd::IntSetting{0,cb_read_only}});
