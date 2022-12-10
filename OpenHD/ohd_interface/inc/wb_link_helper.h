@@ -12,6 +12,9 @@
 
 namespace openhd::wb{
 
+// check if the disable all frequency checks file exists
+bool disable_all_frequency_checks();
+
 // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
 void fixup_unsupported_settings(openhd::WBStreamsSettingsHolder& settings,
                                 std::vector<std::shared_ptr<WifiCardHolder>> m_broadcast_cards,

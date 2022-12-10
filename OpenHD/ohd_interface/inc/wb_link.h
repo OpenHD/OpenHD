@@ -107,7 +107,6 @@ class WBLink :public openhd::ITransmitVideo{
   // disable all openhd frequency checking - note that openhd just uses the proper iw command to set a frequency - if setting
   // the frequency actually had an effect, it doesn't know (cannot really know) and therefore QOpenHD can then report a different wifi freq,
   // even though the frequency actually hasn't changed
-  static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS="/boot/openhd/disable_all_frequency_checks.txt";
   const bool m_disable_all_frequency_checks;
  private:
   // We have one worker thread for asynchronously performing operation(s) like changing the frequency

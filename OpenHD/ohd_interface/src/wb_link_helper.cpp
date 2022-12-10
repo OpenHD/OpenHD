@@ -4,6 +4,11 @@
 
 #include "wb_link_helper.h"
 
+bool openhd::wb::disable_all_frequency_checks() {
+  static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS="/boot/openhd/disable_all_frequency_checks.txt";
+  return OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS);
+}
+
 void openhd::wb::fixup_unsupported_settings(
     openhd::WBStreamsSettingsHolder& settings,
     std::vector<std::shared_ptr<WifiCardHolder>> m_broadcast_cards,
@@ -98,4 +103,3 @@ bool openhd::wb::cards_support_frequency(
 
   return true;
 }
-
