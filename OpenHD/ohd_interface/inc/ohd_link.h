@@ -17,7 +17,7 @@
  * 1) Send telemetry data from air to ground and vice versa
  *  => 1 bidirectional (aka air to ground and ground to air) but (recommended) lossy (since mavlink deals with packet loss / retransmissions /) link
  * 2) Send video data from air to ground, recommended 2 instances (primary and secondary video), at least 1 required
- *  => 2x unidirectional (recommended lossy) links for primary and secondary video from air to ground
+ *  => 2x unidirectional (recommended lossy, but FEC protected) links for primary and secondary video from air to ground
  *
  *  In general, there should be exactly one instance of ohd_link on the air unit and one on the ground unit.
  */
