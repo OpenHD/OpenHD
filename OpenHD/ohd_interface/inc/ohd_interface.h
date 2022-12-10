@@ -24,18 +24,21 @@
 
 #include "stupid_test_link.h"
 
+/**
+ * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
+ */
 class OHDInterface :public openhd::ISettingsComponent{
  public:
   /**
-   * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
+   * @param platform platform we are running on
+   * @param profile air or ground
+   * @param opt_action_handler r.n used to propagate rate control from wb_link to ohd_video
    */
-  explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
+  explicit OHDInterface(OHDPlatform platform,OHDProfile profile,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   OHDInterface(const OHDInterface&)=delete;
   OHDInterface(const OHDInterface&&)=delete;
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
-  // hacky, temporary. applies changed frequency / mcs index / bandwidth
-  void restart_wb_streams_async();
   // For telemetry
   void set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK cb);
   // settings hacky begin

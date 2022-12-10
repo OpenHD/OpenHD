@@ -198,9 +198,6 @@ void OHDInterface::set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK
   m_external_device_callback =std::move(cb);
 }
 
-void OHDInterface::restart_wb_streams_async() {
-  //TODO
-}
 void OHDInterface::print_internal_fec_optimization_method() {
   print_optimization_method();
 }
