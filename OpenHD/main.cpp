@@ -215,7 +215,7 @@ int main(int argc, char *argv[]) {
   // (And there are also many other places where we just need to be root).
   OHDUtil::terminate_if_not_root();
   // check description
-  check_currently_running_file_and_write():
+  check_currently_running_file_and_write();
 
   // Parse the program arguments, also uses the "file exists" pattern for some params
   const OHDRunOptions options=parse_run_parameters(argc,argv);
