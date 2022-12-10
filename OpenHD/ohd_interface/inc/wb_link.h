@@ -175,6 +175,11 @@ class WBLink :public openhd::ITransmitVideo{
   void reset_received_packets_count();
   int get_received_packets_count();
   static constexpr std::chrono::seconds DEFAULT_SCAN_TIME{20};
+ private:
+  // We return false on all the change settings request(s) if there is already a change operation queued
+  // up or we currently perform a channel scan
+  // Not completely "thread safe" so to say but good enough.
+  bool check_in_state_support_changing_settings();
 };
 
 #endif

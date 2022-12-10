@@ -283,7 +283,7 @@ bool WBLink::request_set_frequency(int frequency) {
       return false;
     }
   }
-  if(!check_work_queue_empty())return false;
+  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_frequency=frequency;
   m_settings->persist();
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
@@ -308,7 +308,7 @@ bool WBLink::request_set_txpower(int tx_power) {
     m_console->warn("Invalid tx power:{}",tx_power);
     return false;
   }
-  if(!check_work_queue_empty())return false;
+  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power;
   m_settings->persist();
   // No need to delay the change, but perform it async anyways.
@@ -346,7 +346,7 @@ bool WBLink::request_set_mcs_index(int mcs_index) {
     m_console->warn("Cannot change mcs index, it is fixed for at least one of the used cards");
     return false;
   }
-  if(!check_work_queue_empty())return false;
+  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   m_settings->persist();
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
@@ -378,7 +378,7 @@ bool WBLink::request_set_channel_width(int channel_width) {
     m_console->warn("Cannot change channel width, at least one card doesn't support it");
     return false;
   }
-  if(!check_work_queue_empty())return false;
+  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_channel_width=channel_width;
   m_settings->persist();
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
@@ -795,7 +795,7 @@ bool WBLink::check_work_queue_empty() {
 
 bool WBLink::set_wb_rtl8812au_tx_pwr_idx_override(int value) {
   if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(value))return false;
-  if(!check_work_queue_empty())return false;
+  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=value;
   m_settings->persist();
   // No need to delay the change, but perform it async anyways.
@@ -890,4 +890,8 @@ int WBLink::get_received_packets_count() {
     total += rx->get_latest_stats().wb_rx_stats.count_p_all;
   }
   return total;
+}
+
+bool WBLink::check_in_state_support_changing_settings(){
+  return check_work_queue_empty() && !is_scanning;
 }
