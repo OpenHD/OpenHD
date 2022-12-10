@@ -37,6 +37,12 @@ OHDMainComponent::OHDMainComponent(
   }
 }
 
+OHDMainComponent::~OHDMainComponent() {
+  if(m_opt_action_handler){
+    m_opt_action_handler->action_wb_link_statistics_register(nullptr);
+  }
+}
+
 std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   //m_console->debug("InternalTelemetry::generate_mavlink_messages()");
   std::vector<MavlinkMessage> ret;

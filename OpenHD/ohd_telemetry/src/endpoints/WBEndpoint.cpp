@@ -30,3 +30,9 @@ bool WBEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
   }
   return true;
 }
+
+WBEndpoint::~WBEndpoint() {
+  if(m_tx_rx_handle){
+    m_tx_rx_handle->register_on_receive_callback(nullptr);
+  }
+}

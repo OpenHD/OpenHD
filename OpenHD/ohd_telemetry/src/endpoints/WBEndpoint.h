@@ -12,6 +12,7 @@
 class WBEndpoint : public MEndpoint  {
  public:
   explicit WBEndpoint(std::shared_ptr<openhd::TxRxTelemetry> tx_rx_handle,std::string TAG);
+  ~WBEndpoint();
  private:
   std::shared_ptr<openhd::TxRxTelemetry> m_tx_rx_handle;
   bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;
