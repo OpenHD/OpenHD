@@ -352,7 +352,7 @@ void MavlinkParameterReceiver::process_param_ext_request_list(const mavlink_mess
 void MavlinkParameterReceiver::broadcast_all_parameters(const bool extended) {
     std::lock_guard<std::mutex> lock(_all_params_mutex);
     const auto elapsed=std::chrono::steady_clock::now()-m_last_broadcast_all_request;
-    if(elapsed<std::chrono::seconds(2)){
+    if(elapsed<std::chrono::seconds(1)){
       return;
     }
     m_last_broadcast_all_request=std::chrono::steady_clock::now();
