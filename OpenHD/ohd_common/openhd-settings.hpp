@@ -85,9 +85,10 @@ static void clean_all_interface_settings(){
 }
 
 // Helper for development - we catch 2 things with the following pattern:
-// When openhd is started - check if the file exists, in which case either a develoer started openhd twice
+// 1) When openhd is started - check if the file exists, in which case either a develoer started openhd twice
 // (which most likely was a mistake) or the previous openhd execution did not terminate properly
-// (which r.n can happen quite easily, since prperly terminating is a nice to have but not neccessarily required)
+// (which is only a soft error, since properly terminating is a nice to have but not necessarily required)
+// 2) When openhd is stopped (SIGTERM) - remove the file
 static const std::string OPENHD_IS_RUNNING_FILENAME=std::string(BASE_PATH)+std::string("openhd_is_running.txt"); // NOLINT(cert-err58-cpp)
 
 static void check_currently_running_file_and_write(){
