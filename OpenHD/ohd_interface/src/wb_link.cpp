@@ -465,6 +465,13 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       ret.push_back(Setting{"WB_N_RX_CARDS",openhd::IntSetting{n_rx_cards,cb_read_only}});
     }
   }
+  if(true){
+    auto cb_read_only=[this](std::string,int value){
+      scan_channels(std::chrono::seconds(20));
+      return false;
+    };
+    ret.push_back(Setting{"XXXX",openhd::IntSetting{0,cb_read_only}});
+  }
   // disabled for now, they are too complicated that a normal user can do something with them anyways
   if(false){
     auto cb_wb_enable_stbc=[this](std::string,int value){
@@ -838,14 +845,13 @@ void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_l
   }
 }
 
-WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration){
+WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration,const bool check_2g_channels){
   const auto& card=m_broadcast_cards.at(0)->get_wifi_card();
   std::vector<openhd::WifiChannel> channels_to_scan;
-  if(card.supports_2ghz){
+  if(check_2g_channels){
     auto tmp=openhd::get_channels_2G(true);
     channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
-  }
-  if(card.supports_5ghz){
+  }else{
     auto tmp=openhd::get_channels_5G(true);
     channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
   }
@@ -853,14 +859,16 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
   result.success=false;
   const auto n_channels=channels_to_scan.size();
   const auto time_per_channel=duration/n_channels;
+  m_console->debug("Channel scan, time per channel:{}ms",std::chrono::duration_cast<std::chrono::milliseconds>(time_per_channel).count());
   for(const auto& channel:channels_to_scan){
-    // set frequency
+    // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
     m_settings->unsafe_get_settings().wb_frequency=channel.frequency;
     m_settings->persist();
     apply_frequency_and_channel_width();
     reset_received_packets_count();
     std::this_thread::sleep_for(time_per_channel);
-    const int n_packets=get_count_p_dec_ok();
+    const int n_packets=get_received_packets_count();
+    m_console->debug("Got {} packets on frequency {}",n_packets,channel.frequency);
     if(n_packets>0){
       result.success= true;
       result.wifi_channel=channel.frequency;
@@ -872,14 +880,14 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
 
 void WBLink::reset_received_packets_count() {
   for(auto& rx:m_wb_video_rx_list){
-    rx->reset_count_p_decryption_ok();
+    rx->reset_count_p_all();
   }
 }
 
-int WBLink::get_count_p_dec_ok() {
+int WBLink::get_received_packets_count() {
   int total=0;
   for(auto& rx:m_wb_video_rx_list){
-    total += rx->get_latest_stats().wb_rx_stats.count_p_decryption_ok;
+    total += rx->get_latest_stats().wb_rx_stats.count_p_all;
   }
   return total;
 }

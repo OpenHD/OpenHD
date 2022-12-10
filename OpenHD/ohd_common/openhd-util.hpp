@@ -79,12 +79,12 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   std::stringstream ss;
   ss << command;
   for (const auto &arg: args) {
-	ss << " " << arg;
+    ss << " " << arg;
   }
   if(print_debug){
-	std::stringstream log;
-	log<< "run command begin [" << ss.str() << "]";
-	openhd::log::get_default()->debug(log.str());
+    std::stringstream log;
+    log<< "run command begin [" << ss.str() << "]";
+    openhd::log::get_default()->debug(log.str());
   }
   // Some weird locale issue ?!
   // https://man7.org/linux/man-pages/man3/system.3.html
@@ -94,9 +94,9 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   c.wait();
   std::cout<<"Run command end\n";
   return c.exit_code() == 0;*/
-  if(print_debug){
-	openhd::log::get_default()->debug("Run command end");
-  }
+  /*if(print_debug){
+    openhd::log::get_default()->debug("Run command end");
+  }*/
   return ret;
 }
 

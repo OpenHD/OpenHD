@@ -161,17 +161,20 @@ class WBLink :public openhd::ITransmitVideo{
  private:
   std::shared_ptr<openhd::TxRxTelemetry> m_tx_rx_handle;
   std::unique_ptr<GroundVideoForwarder> m_ground_video_forwarder;
- private:
+ public:
   // Warning: This operation will block the calling thread for up to X ms.
   // During scan, you cannot change any wb settings
   struct ScanResult{
     bool success=false;
     uint32_t wifi_channel=0;
   };
-  ScanResult scan_channels(std::chrono::nanoseconds duration);
+  // checking both 2G and 5G channels would take too long
+  ScanResult scan_channels(std::chrono::nanoseconds duration,bool check_2g_channels=false);
+ private:
   std::atomic<bool> is_scanning=false;
   void reset_received_packets_count();
-  int get_count_p_dec_ok();
+  int get_received_packets_count();
+  static constexpr std::chrono::seconds DEFAULT_SCAN_TIME{20};
 };
 
 #endif
