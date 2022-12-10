@@ -106,13 +106,20 @@ static std::vector<WifiChannel> get_channels_above_standard_2G_wifi(){
   };
 }
 
+template <class T>
+static void vec_append(std::vector<T>& dest,const std::vector<T>& src){
+  dest.insert(dest.end(), src.begin(), src.end());
+}
+
 static std::vector<WifiChannel> get_channels_2G(const bool include_nonstandard_channels){
-  auto ret= get_channels_2G_standard();
+  // keep the order of channels
+  std::vector<WifiChannel> ret{};
   if(include_nonstandard_channels){
-    auto below=get_channels_below_standard_2G_wifi();
-    ret.insert(ret.end(),below.begin(),below.end());
-    auto above=get_channels_above_standard_2G_wifi();
-    ret.insert(ret.end(),above.begin(),above.end());
+    vec_append(ret,get_channels_below_standard_2G_wifi());
+  }
+  vec_append(ret,get_channels_2G_standard());
+  if(include_nonstandard_channels){
+    vec_append(ret,get_channels_above_standard_2G_wifi());
   }
   return ret;
 }
@@ -166,11 +173,11 @@ static std::vector<WifiChannel> get_channels_5G_rtl8812au() {
 };
 
 static std::vector<WifiChannel> get_channels_5G(const bool include_nonstandard_channels){
-  auto ret= get_channels_5G_rtl8812au();
+  std::vector<WifiChannel> ret{};
   if(include_nonstandard_channels){
-    auto below=get_channels_5G_below();
-    ret.insert(ret.end(),below.begin(),below.end());
+    vec_append(ret,get_channels_5G_below());
   }
+  vec_append(ret,get_channels_5G_rtl8812au());
   return ret;
 }
 
