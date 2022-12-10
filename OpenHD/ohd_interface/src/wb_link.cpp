@@ -846,6 +846,7 @@ void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_l
 }
 
 WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration,const bool check_2g_channels){
+  is_scanning=true;
   const auto& card=m_broadcast_cards.at(0)->get_wifi_card();
   std::vector<openhd::WifiChannel> channels_to_scan;
   if(check_2g_channels){
@@ -872,9 +873,11 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
     if(n_packets>0){
       result.success= true;
       result.wifi_channel=channel.frequency;
+      is_scanning=false;
       return result;
     }
   }
+  is_scanning=false;
   return result;
 }
 
