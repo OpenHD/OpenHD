@@ -172,6 +172,8 @@ class WBLink :public openhd::ITransmitVideo{
   static constexpr std::chrono::seconds DEFAULT_SCAN_TIME_PER_CHANNEL{1};
   // checking both 2G and 5G channels would take too long
   ScanResult scan_channels(std::chrono::nanoseconds duration_per_channel=DEFAULT_SCAN_TIME_PER_CHANNEL,bool check_2g_channels=true);
+  // queue it up on the work queue
+  void async_scan_channels(std::chrono::nanoseconds duration_per_channel=DEFAULT_SCAN_TIME_PER_CHANNEL,bool check_2g_channels=true);
  private:
   std::atomic<bool> is_scanning=false;
   void reset_received_packets_count();

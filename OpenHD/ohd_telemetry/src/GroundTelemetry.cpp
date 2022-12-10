@@ -22,11 +22,6 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::Ac
   udpGroundClient->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_station_clients(messages);
   });
-  // any message coming in via wifibroadcast is a message from the air pi
-  /*udpWifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(false);
-  udpWifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
-    on_messages_air_unit(messages);
-  });*/
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
   components.push_back(m_ohd_main_component);
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

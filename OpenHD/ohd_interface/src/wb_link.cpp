@@ -468,7 +468,8 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   if(true){
     auto cb_x=[this](std::string,int value){
       bool use_2g=value==1;
-      scan_channels(DEFAULT_SCAN_TIME_PER_CHANNEL,use_2g);
+      //scan_channels(DEFAULT_SCAN_TIME_PER_CHANNEL,use_2g);
+      async_scan_channels(DEFAULT_SCAN_TIME_PER_CHANNEL,use_2g);
       return true;
     };
     ret.push_back(Setting{"XXXX",openhd::IntSetting{0,cb_x}});
@@ -906,4 +907,15 @@ int WBLink::get_received_packets_count() {
 
 bool WBLink::check_in_state_support_changing_settings(){
   return check_work_queue_empty() && !is_scanning;
+}
+
+void WBLink::async_scan_channels(std::chrono::nanoseconds duration_per_channel,bool check_2g_channels) {
+  if(!check_work_queue_empty()){
+    m_console->warn("Rejecting async_scan_channels, work queue busy");
+    return;
+  }
+  auto work_item=std::make_shared<WorkItem>([this,duration_per_channel,check_2g_channels](){
+    scan_channels(duration_per_channel,check_2g_channels);
+  },std::chrono::steady_clock::now());
+  schedule_work_item(work_item);
 }
