@@ -403,6 +403,8 @@ int main(int argc, char *argv[]) {
     }
     // Stop any communication between modules, to eliminate any issues created by threads during cleanup
     ohd_action_handler->disable_all_callables();
+    // dirty, wait a bit to make sure none of those action(s) are called anymore
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
     exit(1);

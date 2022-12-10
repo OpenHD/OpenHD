@@ -36,6 +36,10 @@ class ActionHandler{
   }
   // used by ohd_video
   void action_request_bitrate_change_register(const ACTION_REQUEST_BITRATE_CHANGE& cb){
+    if(cb== nullptr){
+      m_action_request_bitrate_change= nullptr;
+      return;
+    }
     m_action_request_bitrate_change=std::make_shared<ACTION_REQUEST_BITRATE_CHANGE>(cb);
   }
   // called by ohd_interface / wb
@@ -51,6 +55,10 @@ class ActionHandler{
   // Link statistics - for that the wb link (ohd_interface) needs to talk to ohd_telemetry
   // register callback that is called in regular intervals with link statistics
   void action_wb_link_statistics_register(const openhd::link_statistics::STATS_CALLBACK& stats_callback){
+    if(stats_callback== nullptr){
+      m_link_statistics_callback= nullptr;
+      return;
+    }
     m_link_statistics_callback =std::make_shared<openhd::link_statistics::STATS_CALLBACK>(stats_callback);
   }
   void action_wb_link_statistcs_handle(openhd::link_statistics::StatsAirGround all_stats){
@@ -66,6 +74,10 @@ class ActionHandler{
   };
   typedef std::function<void(ScanChannelsParam)> SCAN_CHANNELS_CB;
   void action_wb_link_scan_channels_register(const SCAN_CHANNELS_CB& cb){
+    if(cb== nullptr){
+      m_scan_channels_cb= nullptr;
+      return;
+    }
     m_scan_channels_cb=std::make_shared<SCAN_CHANNELS_CB>(cb);
   }
   void action_wb_link_scan_channels_handle(ScanChannelsParam params){
