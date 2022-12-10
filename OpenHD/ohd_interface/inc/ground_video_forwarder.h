@@ -9,6 +9,10 @@
 
 // Video data received from wifibroadcast is made available via UDP on the ground unit.
 // Localhost 5600 is always on by default, other client(s) can be added / removed dynamically.
+// Note that on the ground, at least for now (as long as we don't change anything in this regard)
+// The video stream data from the wifibroadcast rx instance is directly made available to UDP localhost
+// without any modification(s) - it is already in RTP format. Note that it is protected by FEC, but no guarantees about the
+// data are made - the displaying application (e.g. QOpenHD) needs to deal with possible packet loss.
 // TODO: R.n it is not needed, but with even more clients we might have to use multithreading here.
 class GroundVideoForwarder{
  public:
