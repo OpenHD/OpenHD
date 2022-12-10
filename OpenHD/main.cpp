@@ -214,8 +214,6 @@ int main(int argc, char *argv[]) {
   // OpenHD needs to be run as root, otherwise we cannot access/ modify the Wi-Fi cards for example
   // (And there are also many other places where we just need to be root).
   OHDUtil::terminate_if_not_root();
-  // check description
-  check_currently_running_file_and_write();
 
   // Parse the program arguments, also uses the "file exists" pattern for some params
   const OHDRunOptions options=parse_run_parameters(argc,argv);
@@ -242,6 +240,9 @@ int main(int argc, char *argv[]) {
   // with different tags
   std::shared_ptr<spdlog::logger> m_console=openhd::log::create_or_get("main");
   assert(m_console);
+
+  // not guaranteed, but better than nothing, check if openhd is already running (kinda) and print warning if yes.
+  check_currently_running_file_and_write();
 
   // First discover the platform:
   const auto platform = DPlatform::discover();
