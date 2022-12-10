@@ -16,7 +16,7 @@
 #include <atomic>
 
 // Mavlink Endpoint
-// A Mavlink endpoint hides away the underlying connection - e.g. UART, TCP, UDP.
+// A Mavlink endpoint hides away the underlying connection - e.g. UART, TCP, WB.
 // It has a (implementation-specific) method to send a message (sendMessage) and (implementation-specific)
 // continuously forwards new incoming messages via a callback.
 // It MUST also hide away any problems that could exist with this endpoint - e.g. a disconnecting UART.
