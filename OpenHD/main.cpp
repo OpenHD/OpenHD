@@ -403,10 +403,27 @@ int main(int argc, char *argv[]) {
         m_console->debug(ss.str());
       }
     }
+    // --- terminate openhd, most likely requested by a developer with sigterm
+    m_console->debug("Terminating openhd");
     // Stop any communication between modules, to eliminate any issues created by threads during cleanup
     ohd_action_handler->disable_all_callables();
     // dirty, wait a bit to make sure none of those action(s) are called anymore
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    if(ohdVideo){
+      m_console->debug("Terminating ohd_video - begin");
+      ohdVideo.reset();
+      m_console->debug("Terminating ohd_video - end");
+    }
+    if(ohdTelemetry){
+      m_console->debug("Terminating ohd_telemetry - begin");
+      ohdTelemetry.reset();
+      m_console->debug("Terminating ohd_telemetry - begin");
+    }
+    if(ohdInterface){
+      m_console->debug("Terminating ohd_interface - begin");
+      ohdInterface.reset();
+      m_console->debug("Terminating ohd_interface - end");
+    }
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
     exit(1);
