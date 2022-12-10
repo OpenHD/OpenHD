@@ -88,6 +88,15 @@ std::vector<WiFiCard> DWifiCards::discover() {
 	  }
 	}
   }
+  /*if(true){
+    WiFiCard wi_fi_card{};
+    wi_fi_card.supports_2ghz=true;
+    wi_fi_card.supports_5ghz= true;
+    wi_fi_card.supports_injection=true;
+    wi_fi_card.interface_name="wlp3s0mon";
+    wi_fi_card.mac="lol";
+    return {wi_fi_card};
+  }*/
   openhd::log::get_default()->info("WiFi::discover done, n cards: {}",m_wifi_cards.size());
   write_wificards_manifest(m_wifi_cards);
   return m_wifi_cards;
