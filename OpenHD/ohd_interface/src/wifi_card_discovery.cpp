@@ -202,7 +202,8 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 	  card.supports_5ghz = supports_5ghz;
 	  card.supports_2ghz = supports_2ghz;
 	  card.supports_rts = false;
-	  card.supports_injection = false;
+          // TODO remove me
+	  card.supports_injection = true;
 	  card.supports_hotspot = true;
 	  break;
 	}
