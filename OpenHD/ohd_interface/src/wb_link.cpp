@@ -466,11 +466,11 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     }
   }
   if(true){
-    auto cb_read_only=[this](std::string,int value){
+    auto cb_x=[this](std::string,int value){
       scan_channels();
-      return false;
+      return true;
     };
-    ret.push_back(Setting{"XXXX",openhd::IntSetting{0,cb_read_only}});
+    ret.push_back(Setting{"XXXX",openhd::IntSetting{0,cb_x}});
   }
   // disabled for now, they are too complicated that a normal user can do something with them anyways
   if(false){

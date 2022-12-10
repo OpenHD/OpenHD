@@ -55,8 +55,12 @@ bool openhd::wb::cards_support_setting_mcs_index(
 bool openhd::wb::card_supports_frequency(const WiFiCard& card,
                                          bool kernel_supports_extra_channels,
                                          int frequency) {
-  if(card.supports_2ghz && openhd::is_valid_frequency_2G(frequency,kernel_supports_extra_channels)){
-    return true;
+  if(card.supports_2ghz){
+    // special and only AR9271: channels below and above standard wifi
+    const bool include_extra_channels_2G=kernel_supports_extra_channels && wifi_card_supports_extra_channels_2G(card);
+    if(openhd::is_valid_frequency_2G(frequency,include_extra_channels_2G)){
+      return true;
+    }
   }
   if(card.supports_5ghz && openhd::is_valid_frequency_5G(frequency,kernel_supports_extra_channels)){
     return true;

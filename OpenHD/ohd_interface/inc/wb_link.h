@@ -168,7 +168,7 @@ class WBLink :public openhd::ITransmitVideo{
     bool success=false;
     uint32_t wifi_channel=0;
   };
-  static constexpr std::chrono::seconds DEFAULT_SCAN_TIME{10};
+  static constexpr std::chrono::seconds DEFAULT_SCAN_TIME{20};
   // checking both 2G and 5G channels would take too long
   ScanResult scan_channels(std::chrono::nanoseconds duration=DEFAULT_SCAN_TIME,bool check_2g_channels=false);
  private:
