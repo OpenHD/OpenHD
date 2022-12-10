@@ -166,10 +166,12 @@ class WBLink :public openhd::ITransmitVideo{
   // During scan, you cannot change any wb settings
   struct ScanResult{
     bool success=false;
-    int wifi_channel;
+    uint32_t wifi_channel=0;
   };
   ScanResult scan_channels(std::chrono::nanoseconds duration);
   std::atomic<bool> is_scanning=false;
+  void reset_received_packets_count();
+  int get_count_p_dec_ok();
 };
 
 #endif

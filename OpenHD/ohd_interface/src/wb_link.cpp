@@ -851,13 +851,16 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
   }
   ScanResult result{};
   result.success=false;
-  result.wifi_channel=-1;
   const auto n_channels=channels_to_scan.size();
   const auto time_per_channel=duration/n_channels;
   for(const auto& channel:channels_to_scan){
     // set frequency
+    m_settings->unsafe_get_settings().wb_frequency=channel.frequency;
+    m_settings->persist();
+    apply_frequency_and_channel_width();
+    reset_received_packets_count();
     std::this_thread::sleep_for(time_per_channel);
-    const int n_packets=0;
+    const int n_packets=get_count_p_dec_ok();
     if(n_packets>0){
       result.success= true;
       result.wifi_channel=channel.frequency;
@@ -865,4 +868,18 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
     }
   }
   return result;
+}
+
+void WBLink::reset_received_packets_count() {
+  for(auto& rx:m_wb_video_rx_list){
+    rx->reset_count_p_decryption_ok();
+  }
+}
+
+int WBLink::get_count_p_dec_ok() {
+  int total=0;
+  for(auto& rx:m_wb_video_rx_list){
+    total += rx->get_latest_stats().wb_rx_stats.count_p_decryption_ok;
+  }
+  return total;
 }
