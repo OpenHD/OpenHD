@@ -20,10 +20,11 @@ set(sources
     "inc/wb_link.h"
     "inc/wb_link_settings.hpp"
     "inc/wifi_hotspot.h"
+    inc/wifi_hotspot_settings.h
     #"inc/wifi_command_helper2.h"
     inc/ground_video_forwarder.h
     inc/stupid_test_link.h
-        inc/wb_link_helper.h
+    inc/wb_link_helper.h
 
     "src/wifi_card_discovery.cpp"
     "src/ohd_interface.cpp"
@@ -32,10 +33,11 @@ set(sources
     "src/wb_link.cpp"
     "src/wifi_command_helper.hpp"
     "src/wifi_hotspot.cpp"
+    src/wifi_hotspot_settings.cpp
     #"src/wifi_command_helper2.cpp"
     src/ground_video_forwarder.cpp
     src/stupid_test_link.cpp
-        src/wb_link_helper.cpp
+    src/wb_link_helper.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
