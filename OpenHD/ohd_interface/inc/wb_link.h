@@ -49,7 +49,7 @@ class WBLink :public openhd::ITransmitVideo{
   void removeExternalDeviceIpForwardingVideoOnly(const std::string& ip);
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
-  // This handle is used by ohd_telemetry to get / sent telemetry (raw) data
+  // This handle is used by ohd_telemetry to get / send telemetry (raw) data
   std::shared_ptr<openhd::TxRxTelemetry> get_telemetry_tx_rx_interface();
  private:
   // validate param, then schedule change
@@ -82,7 +82,6 @@ class WBLink :public openhd::ITransmitVideo{
   // set the right frequency, channel width and tx power. Cards need to be in monitor mode already !
   void configure_cards();
   // start telemetry and video rx/tx stream(s)
-  void configure_streams();
   void configure_telemetry();
   void configure_video();
   std::unique_ptr<openhd::WBStreamsSettingsHolder> m_settings;

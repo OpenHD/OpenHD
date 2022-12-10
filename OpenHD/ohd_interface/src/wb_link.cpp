@@ -62,7 +62,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
     }
   };
   m_tx_rx_handle->register_on_send_data_cb(cb);
-  configure_streams();
+  configure_telemetry();
+  configure_video();
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
 }
@@ -107,18 +108,6 @@ void WBLink::configure_cards() {
   apply_frequency_and_channel_width();
   apply_txpower();
   m_console->debug("WBStreams::configure_cards() end");
-}
-
-void WBLink::configure_streams() {
-  m_console->debug("Streams::configure() begin");
-  // Increase the OS max UDP buffer size (only works as root) such that the wb video UDP receiver
-  // doesn't fail when requesting a bigger UDP buffer size
-  // NOTE: This value is quite high, but that doesn't matter - this is the max allowed, not what is set,
-  // and doesn't change the actual / default size
-  OHDUtil::run_command("sysctl ",{"-w","net.core.rmem_max=26214400"});
-  configure_telemetry();
-  configure_video();
-  m_console->debug("Streams::configure() end");
 }
 
 void WBLink::configure_telemetry() {
