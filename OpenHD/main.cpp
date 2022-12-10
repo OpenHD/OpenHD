@@ -214,6 +214,8 @@ int main(int argc, char *argv[]) {
   // OpenHD needs to be run as root, otherwise we cannot access/ modify the Wi-Fi cards for example
   // (And there are also many other places where we just need to be root).
   OHDUtil::terminate_if_not_root();
+  // check description
+  check_currently_running_file_and_write():
 
   // Parse the program arguments, also uses the "file exists" pattern for some params
   const OHDRunOptions options=parse_run_parameters(argc,argv);
@@ -412,5 +414,6 @@ int main(int argc, char *argv[]) {
     std::cerr << "Unknown exception occurred" << std::endl;
     exit(1);
   }
+  remove_currently_running_file();
   return 0;
 }

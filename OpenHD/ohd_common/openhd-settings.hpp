@@ -84,4 +84,23 @@ static void clean_all_interface_settings(){
   generateSettingsDirectoryIfNonExists();
 }
 
+// Helper for development - we catch 2 things with the following pattern:
+// When openhd is started - check if the file exists, in which case either a develoer started openhd twice
+// (which most likely was a mistake) or the previous openhd execution did not terminate properly
+// (which r.n can happen quite easily, since prperly terminating is a nice to have but not neccessarily required)
+static const std::string OPENHD_IS_RUNNING_FILENAME=std::string(BASE_PATH)+std::string("openhd_is_running.txt"); // NOLINT(cert-err58-cpp)
+
+static void check_currently_running_file_and_write(){
+  if(OHDFilesystemUtil::exists(OPENHD_IS_RUNNING_FILENAME.c_str())){
+    openhd::log::get_default()->warn("OpenHD is either still running in another process or did not terminate properly last time");
+  }
+  OHDFilesystemUtil::write_file(OPENHD_IS_RUNNING_FILENAME,"dummy");
+}
+
+static void remove_currently_running_file(){
+  openhd::log::get_default()->debug("OpenHD terminating,removing is running file");
+  OHDFilesystemUtil::remove_if_existing(OPENHD_IS_RUNNING_FILENAME);
+}
+
+
 #endif
