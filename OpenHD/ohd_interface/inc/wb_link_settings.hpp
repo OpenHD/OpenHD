@@ -58,7 +58,7 @@ struct WBLinkSettings {
 
   // Helper
   [[nodiscard]] bool configured_for_2G()const{
-	return is_2G_and_assert(wb_frequency);
+    return is_valid_frequency_2G(wb_frequency, true);
   }
   bool is_video_variable_block_length_enabled()const{
     return wb_video_fec_block_length==0;
