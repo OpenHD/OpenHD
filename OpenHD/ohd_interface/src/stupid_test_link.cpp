@@ -12,4 +12,6 @@ m_broadcast_cards(std::move(broadcast_cards)),
 m_opt_action_handler(std::move(opt_action_handler))
 {
 
+  const auto card_name=broadcast_cards.at(0)->get_wifi_card().interface_name;
+
 }
