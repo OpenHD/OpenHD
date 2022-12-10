@@ -467,7 +467,8 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   }
   if(true){
     auto cb_x=[this](std::string,int value){
-      scan_channels();
+      bool use_2g=value==1;
+      scan_channels(DEFAULT_SCAN_TIME_PER_CHANNEL,use_2g);
       return true;
     };
     ret.push_back(Setting{"XXXX",openhd::IntSetting{0,cb_x}});
@@ -853,7 +854,7 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
     auto tmp=openhd::get_channels_2G(true);
     channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
   }else{
-    auto tmp=openhd::get_channels_5G(true);
+    auto tmp=openhd::get_channels_5G(false);
     channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
   }
   ScanResult result{};

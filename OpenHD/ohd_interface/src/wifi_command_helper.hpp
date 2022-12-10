@@ -31,9 +31,17 @@ static bool set_frequency(const WiFiCard &card, const uint32_t frequency) {
 static bool set_frequency_and_channel_width(const WiFiCard &card, const uint32_t frequency,bool width_40) {
   openhd::log::get_default()->info("WifiCards::set_frequency{} for {} with channel width 40:"+OHDUtil::yes_or_no(width_40),frequency,card.interface_name.c_str());
   const std::string channel_width=width_40 ? "HT40+" : "HT20";
-  std::vector<std::string> args{"dev", card.interface_name, "set", "freq", std::to_string(frequency), channel_width};
-  bool success = OHDUtil::run_command("iw", args);
-  return success;
+  //std::vector<std::string> args{"dev", card.interface_name, "set", "freq", std::to_string(frequency), channel_width};
+  //bool success = OHDUtil::run_command("iw", args);
+  const auto command="iw dev "+card.interface_name+" set freq "+std::to_string(frequency)+" "+channel_width;
+  const auto result_opt=OHDUtil::run_command_out(command.c_str(), true);
+  if(!result_opt.has_value())return false;
+  const auto& result=result_opt.value();
+  if(OHDUtil::contains(result,"kernel reports: Channel is disabled") || OHDUtil::contains(result,"Invalid argument")){
+    openhd::log::get_default()->warn("Error setting frequency {} {}",frequency,channel_width);
+    return false;
+  }
+  return true;
 }
 
 // See https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/nl80211.h#L1905

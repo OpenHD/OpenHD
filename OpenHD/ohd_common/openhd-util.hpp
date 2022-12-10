@@ -109,7 +109,10 @@ static bool run_command(const std::string &command, const std::vector<std::strin
  * @param command the command and its args to run
  * @return the shell output, or std::nullopt if something went wrong.
  */
-static std::optional<std::string> run_command_out(const char* command){
+static std::optional<std::string> run_command_out(const char* command,const bool debug=false){
+  if(debug){
+    openhd::log::get_default()->debug("run command begin [{}]",command);
+  }
   std::string raw_value;
   std::array<char, 512> buffer{};
   std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command, "r"), pclose);
