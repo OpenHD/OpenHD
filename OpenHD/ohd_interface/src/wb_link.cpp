@@ -845,7 +845,7 @@ void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_l
   }
 }
 
-WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration,const bool check_2g_channels){
+WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration_per_channel,const bool check_2g_channels){
   is_scanning=true;
   const auto& card=m_broadcast_cards.at(0)->get_wifi_card();
   std::vector<openhd::WifiChannel> channels_to_scan;
@@ -858,17 +858,17 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
   }
   ScanResult result{};
   result.success=false;
-  const auto n_channels=channels_to_scan.size();
-  const auto time_per_channel=duration/n_channels;
+  // Store the previous frequency so we can go back to it on failure
   const auto prev_frequency=m_settings->unsafe_get_settings().wb_frequency;
-  m_console->debug("Channel scan, time per channel:{}ms",std::chrono::duration_cast<std::chrono::milliseconds>(time_per_channel).count());
+  m_console->debug("Channel scan, time per channel:{}ms",std::chrono::duration_cast<std::chrono::milliseconds>(duration_per_channel).count());
   for(const auto& channel:channels_to_scan){
     // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
     m_settings->unsafe_get_settings().wb_frequency=channel.frequency;
     m_settings->persist();
     apply_frequency_and_channel_width();
     reset_received_packets_count();
-    std::this_thread::sleep_for(time_per_channel);
+    //std::this_thread::sleep_for(time_per_channel);
+    std::this_thread::sleep_for(duration_per_channel);
     const int n_packets=get_received_packets_count();
     m_console->debug("Got {} packets on frequency {}",n_packets,channel.frequency);
     if(n_packets>0){
