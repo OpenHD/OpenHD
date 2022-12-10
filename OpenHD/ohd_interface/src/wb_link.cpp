@@ -10,8 +10,8 @@
 #include "openhd-platform.hpp"
 #include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
+#include "wb_link_helper.h"
 #include "wifi_card.hpp"
-#include "wb_settings_helper.h"
 
 static const char *KEYPAIR_FILE_DRONE = "/usr/local/share/openhd/drone.key";
 static const char *KEYPAIR_FILE_GROUND = "/usr/local/share/openhd/gs.key";
@@ -51,7 +51,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   // this fetches the last settings, otherwise creates default ones
   m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(platform,openhd::tmp_convert(m_broadcast_cards));
   // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
-  openhd::wb::settings::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
+  openhd::wb::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
   takeover_cards_monitor_mode();
   configure_cards();
   m_ground_video_forwarder=std::make_unique<GroundVideoForwarder>();
@@ -290,39 +290,8 @@ bool WBLink::request_set_frequency(int frequency) {
   if(m_disable_all_frequency_checks){
     m_console->warn("Not sanity checking frequency");
   }else{
-    // channels below and above the normal channels, not allowed in most countries
-    bool cards_support_extra_2G_channels=false;
-    if(m_platform.platform_type==PlatformType::RaspberryPi ||
-        m_platform.platform_type==PlatformType::Jetson){
-      // modified kernel
-      cards_support_extra_2G_channels= all_cards_support_extra_channels_2G(m_broadcast_cards);
-    }
-    m_console->debug("cards_support_extra_2G_channels:"+OHDUtil::yes_or_no(cards_support_extra_2G_channels));
-    // check if the card supports both 2G and 5G
-    const bool cards_supports_both_frequencies = all_cards_support_2G(m_broadcast_cards) &&
-                                                 all_cards_support_5G(m_broadcast_cards);
-    m_console->debug("cards_supports_both_frequencies:"+OHDUtil::yes_or_no(cards_supports_both_frequencies));
-    if(cards_supports_both_frequencies){
-      // allow switching between 2G and 5G
-      const bool frequency_valid=openhd::is_valid_frequency_2G(frequency,cards_support_extra_2G_channels)
-                                   || openhd::is_valid_frequency_5G(frequency);
-      if(!frequency_valid){
-        m_console->debug("Not a valid 2G or 5G frequency {}",frequency);
-        return false;
-      }
-    }else{
-      // do not allow switching between 2G and 5G
-      if(m_settings->get_settings().configured_for_2G()){
-        if(!openhd::is_valid_frequency_2G(frequency,cards_support_extra_2G_channels)){
-          m_console->warn("Invalid 2.4G frequency {}",frequency);
-          return false;
-        }
-      }else{
-        if(!openhd::is_valid_frequency_5G(frequency)){
-          m_console->warn("Invalid 5G frequency {}",frequency);
-          return false;
-        }
-      }
+    if(!openhd::wb::cards_support_frequency(frequency,m_broadcast_cards,m_platform,m_console)){
+      return false;
     }
   }
   if(!check_work_queue_empty())return false;
@@ -549,11 +518,11 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 }
 
 bool WBLink::validate_cards_support_setting_mcs_index() {
-  return openhd::wb::settings::cards_support_setting_mcs_index(m_broadcast_cards);
+  return openhd::wb::cards_support_setting_mcs_index(m_broadcast_cards);
 }
 
 bool WBLink::validate_cards_support_setting_channel_width() {
-  return openhd::wb::settings::cards_support_setting_channel_width(m_broadcast_cards);
+  return openhd::wb::cards_support_setting_channel_width(m_broadcast_cards);
 }
 
 static uint32_t get_micros(std::chrono::nanoseconds ns){

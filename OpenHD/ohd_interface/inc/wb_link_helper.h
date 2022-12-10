@@ -2,16 +2,17 @@
 // Created by consti10 on 10.12.22.
 //
 
-#ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WB_SETTINGS_HELPER_H_
-#define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_SETTINGS_HELPER_H_
+#ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_
+#define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_
 
 // Helper to fix up / validate wifibroadcast settings given X cards
 
 #include "wb_link_settings.hpp"
 #include "openhd-spdlog.hpp"
 
-namespace openhd::wb::settings{
+namespace openhd::wb{
 
+// fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
 void fixup_unsupported_settings(openhd::WBStreamsSettingsHolder& settings,
                                 std::vector<std::shared_ptr<WifiCardHolder>> m_broadcast_cards,
                                 std::shared_ptr<spdlog::logger> m_console);
@@ -24,6 +25,15 @@ bool cards_support_setting_mcs_index(const std::vector<std::shared_ptr<WifiCardH
 // false otherwise
 bool cards_support_setting_channel_width(const std::vector<std::shared_ptr<WifiCardHolder>>& m_broadcast_cards);
 
+bool card_supports_frequency(const WiFiCard& card,bool kernel_supports_extra_channels,int frequency);
+
+bool cards_support_frequency(
+    int frequency,
+    const std::vector<std::shared_ptr<WifiCardHolder>>& m_broadcast_cards,
+    const OHDPlatform& platform,
+    const std::shared_ptr<spdlog::logger>& m_console);
+
+
 }
 
-#endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WB_SETTINGS_HELPER_H_
+#endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_
