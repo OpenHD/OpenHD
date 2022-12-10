@@ -838,3 +838,31 @@ void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_l
   }
 }
 
+WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration){
+  const auto& card=m_broadcast_cards.at(0)->get_wifi_card();
+  std::vector<openhd::WifiChannel> channels_to_scan;
+  if(card.supports_2ghz){
+    auto tmp=openhd::get_channels_2G(true);
+    channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
+  }
+  if(card.supports_5ghz){
+    auto tmp=openhd::get_channels_5G(true);
+    channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
+  }
+  ScanResult result{};
+  result.success=false;
+  result.wifi_channel=-1;
+  const auto n_channels=channels_to_scan.size();
+  const auto time_per_channel=duration/n_channels;
+  for(const auto& channel:channels_to_scan){
+    // set frequency
+    std::this_thread::sleep_for(time_per_channel);
+    const int n_packets=0;
+    if(n_packets>0){
+      result.success= true;
+      result.wifi_channel=channel.frequency;
+      return result;
+    }
+  }
+  return result;
+}

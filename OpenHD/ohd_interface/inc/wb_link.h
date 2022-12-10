@@ -161,6 +161,15 @@ class WBLink :public openhd::ITransmitVideo{
  private:
   std::shared_ptr<openhd::TxRxTelemetry> m_tx_rx_handle;
   std::unique_ptr<GroundVideoForwarder> m_ground_video_forwarder;
+ private:
+  // Warning: This operation will block the calling thread for up to X ms.
+  // During scan, you cannot change any wb settings
+  struct ScanResult{
+    bool success=false;
+    int wifi_channel;
+  };
+  ScanResult scan_channels(std::chrono::nanoseconds duration);
+  std::atomic<bool> is_scanning=false;
 };
 
 #endif
