@@ -151,9 +151,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
       StatusTextAccumulator::convert(mavMsg.m,msg, m_sys_id, m_comp_id);
       ret.push_back(mavMsg);
     } else {
-      std::stringstream ss;
-      ss << "Dropping log message " << msg.message;
-      m_console->debug(ss.str());
+      m_console->debug("Dropping log message {}",msg.message);
     }
   }
   return ret;

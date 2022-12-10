@@ -128,11 +128,7 @@ void GStreamerStream::setup() {
   if(setting.air_recording==Recording::ENABLED){
     const auto recording_filename=openhd::video::create_unused_recording_filename(
         OHDGstHelper::file_suffix_for_video_codec(setting.streamed_video_format.videoCodec));
-    {
-      std::stringstream ss;
-      ss<<"Using ["<<recording_filename<<"] for recording\n";
-      m_console->debug(ss.str());
-    }
+    m_console->debug("Using [{}] for recording",recording_filename);
     m_pipeline_content <<OHDGstHelper::createRecordingForVideoCodec(setting.streamed_video_format.videoCodec,recording_filename);
   }
   m_console->debug("Starting pipeline:"+ m_pipeline_content.str());

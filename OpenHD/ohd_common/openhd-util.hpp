@@ -82,9 +82,7 @@ static bool run_command(const std::string &command, const std::vector<std::strin
     ss << " " << arg;
   }
   if(print_debug){
-    std::stringstream log;
-    log<< "run command begin [" << ss.str() << "]";
-    openhd::log::get_default()->debug(log.str());
+    openhd::log::get_default()->debug("run command begin [{}]",ss.str());
   }
   // Some weird locale issue ?!
   // https://man7.org/linux/man-pages/man3/system.3.html
@@ -210,11 +208,9 @@ static std::vector<std::string> split_into_substrings(const std::string& input,c
 static bool check_root(const bool print_debug=true){
   const auto uid=getuid();
   const bool root= uid ? false:true;
-  std::stringstream ss;
   if(print_debug){
-	ss<<"UID is:["<<uid<<"] root:"<<OHDUtil::yes_or_no(root)<<"\n";
+    openhd::log::get_default()->debug("UID is:{} root: {}",uid,OHDUtil::yes_or_no(root));
   }
-  openhd::log::get_default()->debug(ss.str());
   return root;
 }
 

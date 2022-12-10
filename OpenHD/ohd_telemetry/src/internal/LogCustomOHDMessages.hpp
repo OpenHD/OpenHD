@@ -28,8 +28,7 @@ static void logLogMessage(const mavlink_message_t &msg) {
   mavlink_openhd_log_message_t decoded;
   mavlink_msg_openhd_log_message_decode(&msg, &decoded);
   std::stringstream ss;
-  ss << "LOG:" << decoded.severity << ":" << decoded.text;
-  openhd::log::get_default()->debug(ss.str());
+  openhd::log::get_default()->debug("Log: {} [{}]",decoded.severity,decoded.message);
 }
 
 static void logOpenHDMessages(const std::vector<MavlinkMessage> &msges) {

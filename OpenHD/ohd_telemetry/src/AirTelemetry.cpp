@@ -112,10 +112,8 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
 	const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
 	if(loopDelta>loop_intervall){
 	  // We can't keep up with the wanted loop interval
-	  std::stringstream ss;
-	  ss<<"Warning AirTelemetry cannot keep up with the wanted loop interval. Took:"
-	  <<std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count()<<"ms";
-          m_console->debug(ss.str());
+          m_console->debug("Warning AirTelemetry cannot keep up with the wanted loop interval. Took {}ms",
+                           std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count());
 	}else{
 	  const auto sleepTime=loop_intervall-loopDelta;
 	  // send out in X second intervals

@@ -55,9 +55,7 @@ class PersistentSettings{
   }
   // Persist then new settings, then call the callback to propagate the change
   void update_settings(const T& new_settings){
-    std::stringstream ss;
-    ss<<"Got new settings in["<<get_unique_filename()<<"]\n";
-    openhd::log::get_default()->debug(ss.str());
+    openhd::log::get_default()->debug("Got new settings in[{}]",get_unique_filename());
     _settings=std::make_unique<T>(new_settings);
     persist_settings();
     if(_settings_changed_callback){
