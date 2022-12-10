@@ -84,8 +84,7 @@ bool openhd::wb::cards_support_frequency(
   const bool kernel_supports_extra_channels=platform.platform_type==PlatformType::RaspberryPi ||
                                               platform.platform_type==PlatformType::Jetson;
 
-
-
+  // and check if all cards support the frequency
   for(const auto& card_holder:m_broadcast_cards){
     const auto& card=card_holder->get_wifi_card();
     if(!card_supports_frequency(card,kernel_supports_extra_channels,frequency)){
