@@ -22,6 +22,7 @@ set(sources
     "inc/wifi_hotspot.h"
     #"inc/wifi_command_helper2.h"
     inc/ground_video_forwarder.h
+    inc/stupid_test_link.h
 
     "src/wifi_card_discovery.cpp"
     "src/ohd_interface.cpp"
@@ -32,6 +33,7 @@ set(sources
     "src/wifi_hotspot.cpp"
     #"src/wifi_command_helper2.cpp"
     src/ground_video_forwarder.cpp
+    src/stupid_test_link.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})

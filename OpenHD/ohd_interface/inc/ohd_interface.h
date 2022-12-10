@@ -22,6 +22,8 @@
 #include "wb_link.h"
 #include "wifi_hotspot.h"
 
+#include "stupid_test_link.h"
+
 class OHDInterface :public openhd::ISettingsComponent{
  public:
   /**
