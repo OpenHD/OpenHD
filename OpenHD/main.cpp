@@ -409,6 +409,8 @@ int main(int argc, char *argv[]) {
     ohd_action_handler->disable_all_callables();
     // dirty, wait a bit to make sure none of those action(s) are called anymore
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    // unique ptr would clean up for us, but this way we are a bit more verbose
+    // since some of those modules talk to each other, this is a bit prone to failures.
     if(ohdVideo){
       m_console->debug("Terminating ohd_video - begin");
       ohdVideo.reset();
