@@ -8,7 +8,6 @@ void openhd::wb::fixup_unsupported_settings(
     openhd::WBStreamsSettingsHolder& settings,
     std::vector<std::shared_ptr<WifiCardHolder>> m_broadcast_cards,
     std::shared_ptr<spdlog::logger> m_console) {
-
   // check if the cards connected match the previous settings.
   // For now, we check if the first wb card can do 2 / 4 ghz, and assume the rest can do the same
   const auto first_card= m_broadcast_cards.at(0)->_wifi_card;
