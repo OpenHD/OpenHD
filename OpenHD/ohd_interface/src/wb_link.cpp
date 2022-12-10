@@ -860,6 +860,7 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
   result.success=false;
   const auto n_channels=channels_to_scan.size();
   const auto time_per_channel=duration/n_channels;
+  const auto prev_frequency=m_settings->unsafe_get_settings().wb_frequency;
   m_console->debug("Channel scan, time per channel:{}ms",std::chrono::duration_cast<std::chrono::milliseconds>(time_per_channel).count());
   for(const auto& channel:channels_to_scan){
     // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
@@ -873,9 +874,16 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
     if(n_packets>0){
       result.success= true;
       result.wifi_channel=channel.frequency;
-      is_scanning=false;
-      return result;
+      break;
     }
+  }
+  if(result.success){
+    m_console->debug("Channel scan success: {}",result.wifi_channel);
+  }else{
+    m_console->debug("Channel scan failure, restore defaults:{}",prev_frequency);
+    //restore previous
+    m_settings->unsafe_get_settings().wb_frequency=prev_frequency;
+    m_settings->persist();
   }
   is_scanning=false;
   return result;

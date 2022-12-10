@@ -73,7 +73,7 @@ static std::vector<WifiChannel> get_channels_2G_standard() {
       WifiChannel{2472,13,true},
       // until here it is consistent (5Mhz increments)
       // this one is neither allowed in EU nor USA
-      // (only japan under 11b)
+      // (only in Japan under 11b)
       //WifiChannel{2484,14},
   };
 };
