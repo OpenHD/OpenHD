@@ -11,6 +11,7 @@
 #include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "wifi_card.hpp"
+#include "wb_settings_helper.h"
 
 static const char *KEYPAIR_FILE_DRONE = "/usr/local/share/openhd/drone.key";
 static const char *KEYPAIR_FILE_GROUND = "/usr/local/share/openhd/gs.key";
@@ -49,27 +50,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   }
   // this fetches the last settings, otherwise creates default ones
   m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(platform,openhd::tmp_convert(m_broadcast_cards));
-  // check if the cards connected match the previous settings.
-  // For now, we check if the first wb card can do 2 / 4 ghz, and assume the rest can do the same
-  const auto first_card= m_broadcast_cards.at(0)->_wifi_card;
-  if(m_settings->get_settings().configured_for_2G()){
-    if(! first_card.supports_2ghz){
-      // we need to switch to 5ghz, since the connected card cannot do 2ghz
-      m_console->warn("WB configured for 2G but card can only do 5G - overwriting old settings");
-      m_settings->set_default_5G();
-    }
-  }else{
-    if(!first_card.supports_5ghz){
-      // similar, we need to switch to 2G
-      m_console->warn("WB configured for 5G but card can only do 2G - overwriting old settings");
-      m_settings->set_default_2G();
-    }
-  }
-  if(!validate_cards_support_setting_mcs_index()){
-    // cards that do not support changing the mcs index are always fixed to mcs3 on openhd drivers
-    m_settings->unsafe_get_settings().wb_mcs_index=3;
-    m_settings->persist();
-  }
+  // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
+  openhd::wb::settings::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
   takeover_cards_monitor_mode();
   configure_cards();
   m_ground_video_forwarder=std::make_unique<GroundVideoForwarder>();
@@ -567,21 +549,11 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 }
 
 bool WBLink::validate_cards_support_setting_mcs_index() {
-  for(const auto& card_handle: m_broadcast_cards){
-    if(!wifi_card_supports_variable_mcs(card_handle->_wifi_card)){
-      return false;
-    }
-  }
-  return true;
+  return openhd::wb::settings::cards_support_setting_mcs_index(m_broadcast_cards);
 }
 
 bool WBLink::validate_cards_support_setting_channel_width() {
-  for(const auto& card_handle: m_broadcast_cards){
-    if(!wifi_card_supports_40Mhz_channel_width(card_handle->_wifi_card)){
-      return false;
-    }
-  }
-  return true;
+  return openhd::wb::settings::cards_support_setting_channel_width(m_broadcast_cards);
 }
 
 static uint32_t get_micros(std::chrono::nanoseconds ns){
