@@ -295,15 +295,8 @@ bool WBLink::request_set_frequency(int frequency) {
 }
 
 bool WBLink::apply_frequency_and_channel_width() {
-  bool ret=true;
   const auto settings=m_settings->get_settings();
-  const bool width_40= settings.wb_channel_width==40;
-  for(const auto& card: m_broadcast_cards){
-    if(!WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card,settings.wb_frequency,width_40)){
-      return false;
-    }
-  }
-  return ret;
+  return openhd::wb::set_frequency_and_channel_width_for_all_cards(settings.wb_frequency,settings.wb_channel_width,m_broadcast_cards);
 }
 
 bool WBLink::request_set_txpower(int tx_power) {
@@ -882,14 +875,9 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
     if(!openhd::wb::cards_support_frequency(channel.frequency,m_broadcast_cards,m_platform, m_console)){
       continue;
     }
-    m_console->warn("Scanning {}Mhz [{}]",channel.frequency,channel.channel);
     // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
-    m_settings->unsafe_get_settings().wb_frequency=channel.frequency;
-    m_settings->persist();
-    if(!apply_frequency_and_channel_width()){
-      // frequency not supported
-      continue;
-    }
+    openhd::wb::set_frequency_and_channel_width_for_all_cards(channel.frequency,20,m_broadcast_cards);
+    m_console->warn("Scanning {}Mhz [{}] width:{}",channel.frequency,channel.channel,20);
     reset_all_count_p_stats();
     //std::this_thread::sleep_for(time_per_channel);
     std::this_thread::sleep_for(params.duration_per_channel);
@@ -903,13 +891,16 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
       m_console->debug("Got {} decrypted packets on frequency {}",n_packets_decrypted,channel.frequency);
       if(n_packets_decrypted>0){
         result.success= true;
-        result.wifi_channel=channel.frequency;
+        result.frequency =channel.frequency;
         break;
       }
     }
   }
   if(result.success){
-    m_console->debug("Channel scan success: {}",result.wifi_channel);
+    m_console->debug("Channel scan success: {}",result.frequency);
+    m_settings->unsafe_get_settings().wb_frequency=result.frequency;
+    m_settings->persist();
+    apply_frequency_and_channel_width();
   }else{
     m_console->debug("Channel scan failure, restore defaults:{}",prev_frequency);
     //restore previous

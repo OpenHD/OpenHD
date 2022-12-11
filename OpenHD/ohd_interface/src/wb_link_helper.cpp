@@ -4,6 +4,8 @@
 
 #include "wb_link_helper.h"
 
+#include "wifi_command_helper.hpp"
+
 bool openhd::wb::disable_all_frequency_checks() {
   static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS="/boot/openhd/disable_all_frequency_checks.txt";
   return OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS);
@@ -90,4 +92,17 @@ bool openhd::wb::cards_support_frequency(
     }
   }
   return true;
+}
+
+bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
+    uint32_t frequency, uint32_t channel_width,
+    const std::vector<std::shared_ptr<WifiCardHolder>>& broadcast_cards) {
+  bool ret=true;
+  const bool width_40= channel_width==40;
+  for(const auto& card: broadcast_cards){
+    if(!WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card,frequency,width_40)){
+      return false;
+    }
+  }
+  return ret;
 }

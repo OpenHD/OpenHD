@@ -165,7 +165,7 @@ class WBLink :public openhd::ITransmitVideo{
   // During scan, you cannot change any wb settings
   struct ScanResult{
     bool success=false;
-    uint32_t wifi_channel=0;
+    uint32_t frequency =0;
   };
   // Testing shows we have to listen for up to 1 second to reliable get data (the wifi card might take some time switching)
   static constexpr std::chrono::seconds DEFAULT_SCAN_TIME_PER_CHANNEL{1};

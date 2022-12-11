@@ -38,6 +38,9 @@ bool cards_support_frequency(
     const std::shared_ptr<spdlog::logger>& m_console);
 
 
+bool set_frequency_and_channel_width_for_all_cards(uint32_t frequency,uint32_t channel_width,const std::vector<std::shared_ptr<WifiCardHolder>>& broadcast_cards);
+
+
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_
