@@ -866,8 +866,7 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
   is_scanning=true;
   ScanResult result{};
   result.success=false;
-  // Store the previous frequency so we can go back to it on failure
-  const auto prev_frequency=m_settings->unsafe_get_settings().wb_frequency;
+  // Note: We intentionally do not modify the persistent settings here
   m_console->debug("Channel scan, time per channel:{}ms N channels to scan:{}",
                    std::chrono::duration_cast<std::chrono::milliseconds>(params.duration_per_channel).count(),
                    channels_to_scan.size());
@@ -902,10 +901,8 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
     m_settings->persist();
     apply_frequency_and_channel_width();
   }else{
-    m_console->debug("Channel scan failure, restore defaults:{}",prev_frequency);
-    //restore previous
-    m_settings->unsafe_get_settings().wb_frequency=prev_frequency;
-    m_settings->persist();
+    m_console->debug("Channel scan failure, restore local settings");
+    apply_frequency_and_channel_width();
   }
   is_scanning=false;
   return result;
