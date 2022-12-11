@@ -97,6 +97,13 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
             m_console->info("Sent OpenHD version");
             ret.push_back(generate_ohd_version());
           }
+        }else if(command.command==OPENHD_CMD_INITIATE_CHANNEL_SEARCH){
+          const auto freq_bands=static_cast<uint32_t>(command.param1);
+          m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {}",freq_bands);
+          if(freq_bands==0 || freq_bands==1 || freq_bands==2){
+            ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
+            // TODO handle
+          }
         }
         // TODO have an ack response.
       }break;
