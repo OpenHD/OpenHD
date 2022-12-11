@@ -146,34 +146,34 @@ static std::vector<WifiChannel> get_channels_5G_below(){
 static std::vector<WifiChannel> get_channels_5G_rtl8812au() {
   return std::vector<WifiChannel>{
       //TODO {5170,34},
-      {5180,36,Space::G5_8,true},
-      {5200,40,Space::G5_8,true},
-      {5220,44,Space::G5_8,true},
-      {5240,48,Space::G5_8,true},
-      {5260,52,Space::G5_8,true},
-      {5280,56,Space::G5_8,true},
-      {5300,60,Space::G5_8,true},
-      {5320,64,Space::G5_8,true},
-      {5500,100,Space::G5_8,true},
-      {5520,104,Space::G5_8,true},
-      {5540,108,Space::G5_8,true},
-      {5560,112,Space::G5_8,true},
-      {5580,116,Space::G5_8,true},
-      {5600,120,Space::G5_8,true},
-      {5620,124,Space::G5_8,true},
-      {5640,128,Space::G5_8,true},
-      {5660,132,Space::G5_8,true},
-      {5680,136,Space::G5_8,true},
-      {5700,140,Space::G5_8,true},
-      {5720,144,Space::G5_8,true},
-      {5745,149,Space::G5_8,true},
-      {5765,153,Space::G5_8,true},
-      {5785,157,Space::G5_8,true},
-      {5805,161,Space::G5_8,true},
-      {5825,165,Space::G5_8,true},
-      {5845,169,Space::G5_8,true},
-      {5865,173,Space::G5_8,true},
-      {5885,177,Space::G5_8,true},
+      WifiChannel{5180,36,Space::G5_8,true},
+      WifiChannel{5200,40,Space::G5_8,true},
+      WifiChannel{5220,44,Space::G5_8,true},
+      WifiChannel{5240,48,Space::G5_8,true},
+      WifiChannel{5260,52,Space::G5_8,true},
+      WifiChannel{5280,56,Space::G5_8,true},
+      WifiChannel{5300,60,Space::G5_8,true},
+      WifiChannel{5320,64,Space::G5_8,true},
+      WifiChannel{5500,100,Space::G5_8,true},
+      WifiChannel{5520,104,Space::G5_8,true},
+      WifiChannel{5540,108,Space::G5_8,true},
+      WifiChannel{5560,112,Space::G5_8,true},
+      WifiChannel{5580,116,Space::G5_8,true},
+      WifiChannel{5600,120,Space::G5_8,true},
+      WifiChannel{5620,124,Space::G5_8,true},
+      WifiChannel{5640,128,Space::G5_8,true},
+      WifiChannel{5660,132,Space::G5_8,true},
+      WifiChannel{5680,136,Space::G5_8,true},
+      WifiChannel{5700,140,Space::G5_8,true},
+      WifiChannel{5720,144,Space::G5_8,true},
+      WifiChannel{5745,149,Space::G5_8,true},
+      WifiChannel{5765,153,Space::G5_8,true},
+      WifiChannel{5785,157,Space::G5_8,true},
+      WifiChannel{5805,161,Space::G5_8,true},
+      WifiChannel{5825,165,Space::G5_8,true},
+      WifiChannel{5845,169,Space::G5_8,true},
+      WifiChannel{5865,173,Space::G5_8,true},
+      WifiChannel{5885,177,Space::G5_8,true},
   };
 };
 
@@ -193,6 +193,9 @@ static std::vector<WifiChannel> get_all_channels_2G_5G(){
   return channels;
 }
 
+// Returns the corresponding Wi-Fi Channel if there is one
+// since the mavlink setting is an int, this might not always be possible (and the frequency is then 100% not possible)
+// and therefore should be discarded / fixed
 static std::optional<openhd::WifiChannel> channel_from_frequency(uint32_t frequency){
   const auto channels=get_all_channels_2G_5G();
   for(const auto& channel:channels){
