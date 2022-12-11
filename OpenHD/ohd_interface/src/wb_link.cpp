@@ -898,6 +898,11 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
       if(n_packets_decrypted>0){
         TmpResult tmp_result{channel,packet_loss};
         possible_frequencies.push_back(tmp_result);
+        if(packet_loss<10){
+          // if the packet loss is low, we can safely return early
+          m_console->debug("Got <10% packet loss, return early");
+          break;
+        }
       }
     }
   }
