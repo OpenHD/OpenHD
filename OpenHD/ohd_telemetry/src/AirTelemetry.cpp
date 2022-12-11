@@ -40,7 +40,8 @@ AirTelemetry::~AirTelemetry() {
 void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages) {
   std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
   if(m_serial_endpoint){
-    m_serial_endpoint->sendMessages(messages);
+    auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_AIR);
+    m_serial_endpoint->sendMessages(generic);
   }else{
     //m_console->warn("Cannot send message to FC");
   }
