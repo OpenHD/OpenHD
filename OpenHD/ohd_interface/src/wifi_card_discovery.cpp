@@ -150,7 +150,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   // Note that this does not neccessarily mean this info is right
   // a card might report a specific channel but then since monitor mode is so hack not support the channel in monitor mode
   openhd::log::get_default()->debug("Card {} reports driver:{} supprts_2G:{} supports_5G:{}",
-                                    card.interface_name,OHDUtil::yes_or_no(supports_2ghz),OHDUtil::yes_or_no(supports_5ghz));
+                                    card.interface_name,driver_name,OHDUtil::yes_or_no(supports_2ghz),OHDUtil::yes_or_no(supports_5ghz));
 
   std::stringstream address;
   address << "/sys/class/net/";
