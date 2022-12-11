@@ -864,8 +864,15 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
     return {};
   }
   is_scanning=true;
-  ScanResult result{};
-  result.success=false;
+  // Issue / bug with RTL8812AU: Aparently the adapter sometimes receives data from a frequency that is not correct
+  // (e.g. when the air is set to 5700 and the rx listens on frequency  5540 ) but with an incredibly high packet loss.
+  // therefore, instead of returning early, we hop through all frequencies and on frequencies where we get data, store
+  // the packet loss. In the end, we then decide what frequency is most likely the one the air is after.
+  struct TmpResult{
+    openhd::WifiChannel channel;
+    int packet_loss_perc=0;
+  };
+  std::vector<TmpResult> possible_frequencies{};
   // Note: We intentionally do not modify the persistent settings here
   m_console->debug("Channel scan, time per channel:{}ms N channels to scan:{}",
                    std::chrono::duration_cast<std::chrono::milliseconds>(params.duration_per_channel).count(),
@@ -886,21 +893,34 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
       // sleep a bit more, then check if we actually got any decrypted packets
       std::this_thread::sleep_for(std::chrono::seconds(2));
       const int n_packets_decrypted=get_count_p_decryption_ok();
-      m_console->debug("Got {} decrypted packets on frequency {}",n_packets_decrypted,channel.frequency);
+      const int packet_loss=m_wb_video_rx_list.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+      m_console->debug("Got {} decrypted packets on frequency {} with {} packet loss",n_packets_decrypted,channel.frequency,packet_loss);
       if(n_packets_decrypted>0){
-        result.success= true;
-        result.frequency =channel.frequency;
-        break;
+        TmpResult tmp_result{channel,packet_loss};
+        possible_frequencies.push_back(tmp_result);
       }
     }
   }
-  if(result.success){
-    m_console->debug("Channel scan success: {}",result.frequency);
+  ScanResult result{};
+  if(possible_frequencies.empty()){
+    m_console->debug("Channel scan failure, restore local settings");
+    apply_frequency_and_channel_width();
+    result.success= false;
+    result.frequency=0;
+  }else{
+    m_console->debug("Channel scan success, possible frequencies {}",possible_frequencies.size());
+    auto best=possible_frequencies.at(0);
+    for(int i=1;i<possible_frequencies.size();i++){
+      const auto other=possible_frequencies.at(i);
+      if(other.packet_loss_perc<best.packet_loss_perc){
+        best=other;
+      }
+    }
+    m_console->debug("Selected {} with packet loss {} as most likely",best.channel.frequency,best.packet_loss_perc);
+    result.success= true;
+    result.frequency=best.channel.frequency;
     m_settings->unsafe_get_settings().wb_frequency=result.frequency;
     m_settings->persist();
-    apply_frequency_and_channel_width();
-  }else{
-    m_console->debug("Channel scan failure, restore local settings");
     apply_frequency_and_channel_width();
   }
   is_scanning=false;
