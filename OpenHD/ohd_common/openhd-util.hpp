@@ -109,17 +109,16 @@ static bool run_command(const std::string &command, const std::vector<std::strin
  */
 static std::optional<std::string> run_command_out(const char* command,const bool debug=false){
   if(debug){
-    openhd::log::get_default()->debug("run command begin [{}]",command);
+    openhd::log::get_default()->debug("run command out begin [{}]",command);
   }
   std::string raw_value;
-  std::array<char, 512> buffer{};
+  std::array<char, 1024*10> buffer{};
   std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command, "r"), pclose);
   if (!pipe) {
-	// if the pipe opening fails, this doesn't mean the command failed (see above)
-	// But rather we need to find a different way to implement this functionality on this platform.
-	std::stringstream ss;
-	ss<<"run_command_out with "<<command<<" cannot open pipe";
-	return std::nullopt;
+    // if the pipe opening fails, this doesn't mean the command failed (see above)
+    // But rather we need to find a different way to implement this functionality on this platform.
+    openhd::log::get_default()->error("Cannot execute command [{}]",command);
+    return std::nullopt;
   }
   while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
 	raw_value += buffer.data();

@@ -57,7 +57,7 @@ class WBLink :public openhd::ITransmitVideo{
   // validate param, then schedule change
   bool request_set_channel_width(int channel_width);
   // apply the frequency (wifi channel) of all wifibroadcast cards
-  void apply_frequency_and_channel_width();
+  bool apply_frequency_and_channel_width();
   // validate param, then schedule change
   bool request_set_txpower(int tx_power);
   // set the tx power of all wifibroadcast cards

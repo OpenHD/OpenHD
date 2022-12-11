@@ -294,12 +294,16 @@ bool WBLink::request_set_frequency(int frequency) {
   return true;
 }
 
-void WBLink::apply_frequency_and_channel_width() {
+bool WBLink::apply_frequency_and_channel_width() {
+  bool ret=true;
   const auto settings=m_settings->get_settings();
   const bool width_40= settings.wb_channel_width==40;
   for(const auto& card: m_broadcast_cards){
-    WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card,settings.wb_frequency,width_40);
+    if(!WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card,settings.wb_frequency,width_40)){
+      return false;
+    }
   }
+  return ret;
 }
 
 bool WBLink::request_set_txpower(int tx_power) {
@@ -852,7 +856,6 @@ void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_l
 }
 
 WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
-  is_scanning=true;
   const auto& card=m_broadcast_cards.at(0)->get_wifi_card();
   std::vector<openhd::WifiChannel> channels_to_scan;
   if(params.check_2g_channels_if_card_support && card.supports_2ghz){
@@ -867,6 +870,7 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
     m_console->warn("No channels to scan, return early");
     return {};
   }
+  is_scanning=true;
   ScanResult result{};
   result.success=false;
   // Store the previous frequency so we can go back to it on failure
@@ -879,7 +883,10 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
     // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
     m_settings->unsafe_get_settings().wb_frequency=channel.frequency;
     m_settings->persist();
-    apply_frequency_and_channel_width();
+    if(!apply_frequency_and_channel_width()){
+      // frequency not supported
+      continue;
+    }
     reset_all_count_p_stats();
     //std::this_thread::sleep_for(time_per_channel);
     std::this_thread::sleep_for(params.duration_per_channel);

@@ -37,11 +37,15 @@ static bool set_frequency_and_channel_width(const WiFiCard &card, const uint32_t
   const auto result_opt=OHDUtil::run_command_out(command.c_str(), true);
   if(!result_opt.has_value())return false;
   const auto& result=result_opt.value();
+  openhd::log::get_default()->debug("XXX {}",result);
   if(OHDUtil::contains(result,"kernel reports: Channel is disabled") || OHDUtil::contains(result,"Invalid argument")){
     openhd::log::get_default()->warn("Error setting frequency {} {}",frequency,channel_width);
     return false;
   }
   return true;
+  /*const auto result=OHDUtil::run_command(command,{}, true);
+  openhd::log::get_default()->debug("Result {}",result);
+  return true;*/
 }
 
 // See https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/nl80211.h#L1905
