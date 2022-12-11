@@ -469,7 +469,11 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     auto cb_x=[this](std::string,int value){
       bool use_2g=value==1;
       //scan_channels(DEFAULT_SCAN_TIME_PER_CHANNEL,use_2g);
-      async_scan_channels(DEFAULT_SCAN_TIME_PER_CHANNEL,use_2g);
+      ScanChannelsParams params{};
+      params.duration_per_channel=DEFAULT_SCAN_TIME_PER_CHANNEL;
+      params.check_5g_channels_if_card_supports= true;
+      params.check_2g_channels_if_card_support= true;
+      async_scan_channels(params);
       return true;
     };
     ret.push_back(Setting{"XXXX",openhd::IntSetting{0,cb_x}});
@@ -847,22 +851,29 @@ void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_l
   }
 }
 
-WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration_per_channel,const bool check_2g_channels){
+WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
   is_scanning=true;
   const auto& card=m_broadcast_cards.at(0)->get_wifi_card();
   std::vector<openhd::WifiChannel> channels_to_scan;
-  if(check_2g_channels){
+  if(params.check_2g_channels_if_card_support && card.supports_2ghz){
     auto tmp=openhd::get_channels_2G(true);
     channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
-  }else{
+  }
+  if(params.check_5g_channels_if_card_supports && card.supports_5ghz){
     auto tmp=openhd::get_channels_5G(false);
     channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
+  }
+  if(channels_to_scan.empty()){
+    m_console->warn("No channels to scan, return early");
+    return {};
   }
   ScanResult result{};
   result.success=false;
   // Store the previous frequency so we can go back to it on failure
   const auto prev_frequency=m_settings->unsafe_get_settings().wb_frequency;
-  m_console->debug("Channel scan, time per channel:{}ms",std::chrono::duration_cast<std::chrono::milliseconds>(duration_per_channel).count());
+  m_console->debug("Channel scan, time per channel:{}ms N channels to scan:{}",
+                   std::chrono::duration_cast<std::chrono::milliseconds>(params.duration_per_channel).count(),
+                   channels_to_scan.size());
   for(const auto& channel:channels_to_scan){
     // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
     m_settings->unsafe_get_settings().wb_frequency=channel.frequency;
@@ -870,7 +881,7 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
     apply_frequency_and_channel_width();
     reset_all_count_p_stats();
     //std::this_thread::sleep_for(time_per_channel);
-    std::this_thread::sleep_for(duration_per_channel);
+    std::this_thread::sleep_for(params.duration_per_channel);
     const int n_packets=get_count_p_all();
     m_console->debug("Got {} packets on frequency {}",n_packets,channel.frequency);
     if(n_packets>0){
@@ -898,6 +909,17 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
   return result;
 }
 
+void WBLink::async_scan_channels(ScanChannelsParams scan_channels_params) {
+  if(!check_work_queue_empty()){
+    m_console->warn("Rejecting async_scan_channels, work queue busy");
+    return;
+  }
+  auto work_item=std::make_shared<WorkItem>([this,scan_channels_params](){
+    scan_channels(scan_channels_params);
+  },std::chrono::steady_clock::now());
+  schedule_work_item(work_item);
+}
+
 void WBLink::reset_all_count_p_stats() {
   for(auto& rx:m_wb_video_rx_list){
     rx->reset_all_count_p_stats();
@@ -921,16 +943,5 @@ int WBLink::get_count_p_decryption_ok() {
 }
 
 bool WBLink::check_in_state_support_changing_settings(){
-  return check_work_queue_empty() && !is_scanning;
-}
-
-void WBLink::async_scan_channels(std::chrono::nanoseconds duration_per_channel,bool check_2g_channels) {
-  if(!check_work_queue_empty()){
-    m_console->warn("Rejecting async_scan_channels, work queue busy");
-    return;
-  }
-  auto work_item=std::make_shared<WorkItem>([this,duration_per_channel,check_2g_channels](){
-    scan_channels(duration_per_channel,check_2g_channels);
-  },std::chrono::steady_clock::now());
-  schedule_work_item(work_item);
+  return !is_scanning && check_work_queue_empty();
 }
