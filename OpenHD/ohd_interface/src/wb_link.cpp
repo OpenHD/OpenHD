@@ -878,7 +878,6 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
     openhd::wb::set_frequency_and_channel_width_for_all_cards(channel.frequency,20,m_broadcast_cards);
     m_console->warn("Scanning {}Mhz [{}] width:{}",channel.frequency,channel.channel,20);
     reset_all_count_p_stats();
-    //std::this_thread::sleep_for(time_per_channel);
     std::this_thread::sleep_for(params.duration_per_channel);
     const int n_packets=get_count_p_all();
     m_console->debug("Got {} packets on frequency {}",n_packets,channel.frequency);
