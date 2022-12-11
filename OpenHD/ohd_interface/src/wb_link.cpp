@@ -875,6 +875,7 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
                    std::chrono::duration_cast<std::chrono::milliseconds>(params.duration_per_channel).count(),
                    channels_to_scan.size());
   for(const auto& channel:channels_to_scan){
+    m_console->warn("Scanning {}Mhz [{}]",channel.frequency,channel.channel);
     // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
     m_settings->unsafe_get_settings().wb_frequency=channel.frequency;
     m_settings->persist();
