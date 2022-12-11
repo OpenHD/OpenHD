@@ -74,7 +74,8 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
   //debugMavlinkMessage(message.m, "GroundTelemetry::onMessageGroundStationClients");
   //const auto &msg = message.m;
   // All messages from the ground station(s) are forwarded to the air unit.
-  send_messages_air_unit(messages);
+  auto [generic,local]=split_into_local_only_and_generic(messages,OHD_SYS_ID_GROUND);
+  send_messages_air_unit(generic);
   // OpenHD components running on the ground station don't need to talk to the air unit.
   // This is not exactly following the mavlink routing standard, but saves a lot of bandwidth.
   std::lock_guard<std::mutex> guard(components_lock);

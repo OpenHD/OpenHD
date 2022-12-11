@@ -193,6 +193,21 @@ static MTarget get_target_from_message_if_available(const mavlink_message_t& msg
 // or matches the given allowed target
 //static std::vector<MavlinkMessage> filter_by_target(const uint16_t target_co)
 
-
+//
+static std::tuple<std::vector<MavlinkMessage>,std::vector<MavlinkMessage>> split_into_local_only_and_generic(
+    const std::vector<MavlinkMessage>& messages,uint16_t local_target_sys_id){
+  std::vector<MavlinkMessage> generic{};
+  generic.reserve(messages.size());
+  std::vector<MavlinkMessage> local_only{};
+  for(const auto& msg:messages){
+    const auto target= get_target_from_message_if_available(msg.m);
+    if(target.has_target() && target.sys_id==local_target_sys_id){
+      local_only.push_back(msg);
+    }else{
+      generic.push_back(msg);
+    }
+  }
+  return {generic,local_only};
+}
 
 #endif //XMAVLINKSERVICE_MAV_HELPER_H
