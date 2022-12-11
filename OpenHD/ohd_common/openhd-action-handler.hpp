@@ -70,7 +70,8 @@ class ActionHandler{
   }
  public:
   struct ScanChannelsParam{
-    bool scan_2G_channels;
+    bool check_2g_channels_if_card_support=false;
+    bool check_5g_channels_if_card_supports=false;
   };
   typedef std::function<void(ScanChannelsParam)> SCAN_CHANNELS_CB;
   void action_wb_link_scan_channels_register(const SCAN_CHANNELS_CB& cb){
@@ -92,6 +93,7 @@ class ActionHandler{
     action_wb_link_statistics_register(nullptr);
     action_request_bitrate_change_register(nullptr);
     action_wb_link_statistics_register(nullptr);
+    action_wb_link_scan_channels_register(nullptr);
   }
  private:
   // By using shared_ptr to wrap the stored the cb we are semi thread-safe

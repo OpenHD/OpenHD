@@ -98,11 +98,20 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
             ret.push_back(generate_ohd_version());
           }
         }else if(command.command==OPENHD_CMD_INITIATE_CHANNEL_SEARCH){
-          const auto freq_bands=static_cast<uint32_t>(command.param1);
-          m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {}",freq_bands);
-          if(freq_bands==0 || freq_bands==1 || freq_bands==2){
-            ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
-            // TODO handle
+          if(RUNS_ON_AIR){
+            m_console->debug("Scan channels is only a feature for ground unit");
+            break;
+          }else{
+            const auto freq_bands=static_cast<uint32_t>(command.param1);
+            m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {}",freq_bands);
+            if(freq_bands==0 || freq_bands==1 || freq_bands==2){
+              bool scan_2g=freq_bands==0 || freq_bands==1;
+              bool scan_5g=freq_bands==0 || freq_bands==2;
+              if(m_opt_action_handler){
+                m_opt_action_handler->action_wb_link_scan_channels_handle({scan_2g,scan_5g});
+                ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
+              }
+            }
           }
         }
         // TODO have an ack response.

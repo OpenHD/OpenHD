@@ -66,9 +66,22 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   configure_video();
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
+  auto cb2=[this](openhd::ActionHandler::ScanChannelsParam param){
+    ScanChannelsParams scan_channels_params{};
+    scan_channels_params.duration_per_channel=DEFAULT_SCAN_TIME_PER_CHANNEL;
+    scan_channels_params.check_2g_channels_if_card_support=param.check_2g_channels_if_card_support;
+    scan_channels_params.check_5g_channels_if_card_supports=param.check_5g_channels_if_card_supports;
+    async_scan_channels(scan_channels_params);
+  };
+  if(m_opt_action_handler){
+    m_opt_action_handler->action_wb_link_scan_channels_register(cb2);
+  }
 }
 
 WBLink::~WBLink() {
+  if(m_opt_action_handler){
+    m_opt_action_handler->action_wb_link_scan_channels_register(nullptr);
+  }
   if(m_work_thread){
     m_work_thread_run =false;
     m_work_thread->join();
