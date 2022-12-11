@@ -5,6 +5,10 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_CHANNEL_H_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_CHANNEL_H_
 
+#include <sstream>
+#include <vector>
+#include <cstdint>
+
 namespace openhd{
 
 enum class Space{
@@ -26,6 +30,11 @@ struct WifiChannel{
   // Channels not listed under wikipedia might still work on some cards, given the driver has been modified.
   // generally, they are not legally usable in most countries though.
   bool is_standard;
+  [[nodiscard]] std::string to_string()const{
+    std::stringstream ss;
+    ss<<(int)frequency<<"Mhz ["<<channel<<"] "<<(space==Space::G2_4 ? "2.4G" : "5.8G")<<(is_standard ? "":"nonstandard");
+    return ss.str();
+  }
 };
 
 

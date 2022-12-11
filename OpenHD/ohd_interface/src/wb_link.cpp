@@ -864,7 +864,7 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
     return {};
   }
   is_scanning=true;
-  // Issue / bug with RTL8812AU: Aparently the adapter sometimes receives data from a frequency that is not correct
+  // Issue / bug with RTL8812AU: Apparently the adapter sometimes receives data from a frequency that is not correct
   // (e.g. when the air is set to 5700 and the rx listens on frequency  5540 ) but with an incredibly high packet loss.
   // therefore, instead of returning early, we hop through all frequencies and on frequencies where we get data, store
   // the packet loss. In the end, we then decide what frequency is most likely the one the air is after.
