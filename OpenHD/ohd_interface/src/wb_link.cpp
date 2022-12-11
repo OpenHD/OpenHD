@@ -868,15 +868,22 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
     m_settings->unsafe_get_settings().wb_frequency=channel.frequency;
     m_settings->persist();
     apply_frequency_and_channel_width();
-    reset_received_packets_count();
+    reset_all_count_p_stats();
     //std::this_thread::sleep_for(time_per_channel);
     std::this_thread::sleep_for(duration_per_channel);
-    const int n_packets=get_received_packets_count();
+    const int n_packets=get_count_p_all();
     m_console->debug("Got {} packets on frequency {}",n_packets,channel.frequency);
     if(n_packets>0){
-      result.success= true;
-      result.wifi_channel=channel.frequency;
-      break;
+      // We got packets on this frequency, but it is not guaranteed those packets are from an openhd air unit.
+      // sleep a bit more, then check if we actually got any decrypted packets
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+      const int n_packets_decrypted=get_count_p_decryption_ok();
+      m_console->debug("Got {} decrypted packets on frequency {}",n_packets_decrypted,channel.frequency);
+      if(n_packets_decrypted>0){
+        result.success= true;
+        result.wifi_channel=channel.frequency;
+        break;
+      }
     }
   }
   if(result.success){
@@ -891,13 +898,21 @@ WBLink::ScanResult WBLink::scan_channels(const std::chrono::nanoseconds duration
   return result;
 }
 
-void WBLink::reset_received_packets_count() {
+void WBLink::reset_all_count_p_stats() {
   for(auto& rx:m_wb_video_rx_list){
-    rx->reset_count_p_all();
+    rx->reset_all_count_p_stats();
   }
 }
 
-int WBLink::get_received_packets_count() {
+int WBLink::get_count_p_all() {
+  int total=0;
+  for(auto& rx:m_wb_video_rx_list){
+    total += rx->get_latest_stats().wb_rx_stats.count_p_all;
+  }
+  return total;
+}
+
+int WBLink::get_count_p_decryption_ok() {
   int total=0;
   for(auto& rx:m_wb_video_rx_list){
     total += rx->get_latest_stats().wb_rx_stats.count_p_all;
