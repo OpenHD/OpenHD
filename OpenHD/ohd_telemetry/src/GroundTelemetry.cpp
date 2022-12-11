@@ -4,8 +4,6 @@
 
 #include "GroundTelemetry.h"
 
-#include "mavsdk_temporary//XMavlinkParamProvider.h"
-
 #include <iostream>
 #include <chrono>
 
@@ -74,7 +72,7 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
   //debugMavlinkMessage(message.m, "GroundTelemetry::onMessageGroundStationClients");
   //const auto &msg = message.m;
   // All messages from the ground station(s) are forwarded to the air unit.
-  auto [generic,local]=split_into_local_only_and_generic(messages,OHD_SYS_ID_GROUND);
+  auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_GROUND);
   send_messages_air_unit(generic);
   // OpenHD components running on the ground station don't need to talk to the air unit.
   // This is not exactly following the mavlink routing standard, but saves a lot of bandwidth.
@@ -93,11 +91,11 @@ void GroundTelemetry::send_messages_ground_station_clients(const std::vector<Mav
   //	tcpGroundCLient->sendMessage(message);
   //}
   if (udpGroundClient) {
-	udpGroundClient->sendMessages(messages);
+    udpGroundClient->sendMessages(messages);
   }
   std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
   for (auto const& [key, val] : _other_udp_ground_stations){
-	val->sendMessages(messages);
+    val->sendMessages(messages);
   }
 }
 
@@ -114,48 +112,48 @@ void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLog
   const auto loop_intervall=std::chrono::milliseconds(500);
   auto last_log=std::chrono::steady_clock::now();
   while (!terminate) {
-	const auto loopBegin=std::chrono::steady_clock::now();
-	if(std::chrono::steady_clock::now()-last_log>=log_intervall) {
-	  last_log = std::chrono::steady_clock::now();
-	  //m_console->debug("GroundTelemetry::loopInfinite()");
-	  // for debugging, check if any of the endpoints is not alive
-	  if (enableExtendedLogging && m_wb_endpoint) {
-		m_console->debug(m_wb_endpoint->createInfo());
-	  }
-	  if (enableExtendedLogging && udpGroundClient) {
-		m_console->debug(udpGroundClient->createInfo());
-	  }
-	}
-	// send messages to the ground station in regular intervals, includes heartbeat.
-	// everything else is handled by the callbacks and their threads
-	{
-	  std::lock_guard<std::mutex> guard(components_lock);
-	  for(auto& component:components){
-		assert(component);
-		const auto messages=component->generate_mavlink_messages();
-                send_messages_ground_station_clients(messages);
-		for(const auto& msg:messages){
-		  // r.n no ground unit component needs to talk to the air unit directly.
-                  // but we send heartbeats to the air pi anyways, just to keep the link active.
-		  if(msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT && msg.m.compid==MAV_COMP_ID_ONBOARD_COMPUTER){
-			// but we send heartbeats to the air pi anyways, just to keep the link active.
-			//m_console->debug("Heartbeat sent to air unit");
-                        send_messages_air_unit({msg});
-		  }
-		}
-	  }
-	}
-	const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
-	if(loopDelta>loop_intervall){
-	  // We can't keep up with the wanted loop interval
-          // We can't keep up with the wanted loop interval
-          m_console->debug("Warning GroundTelemetry cannot keep up with the wanted loop interval. Took {}ms",
-                           std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count());
-	}else{
-	  const auto sleepTime=loop_intervall-loopDelta;
-	  // send out in X second intervals
-	  std::this_thread::sleep_for(loop_intervall);
-	}
+    const auto loopBegin=std::chrono::steady_clock::now();
+    if(std::chrono::steady_clock::now()-last_log>=log_intervall) {
+      last_log = std::chrono::steady_clock::now();
+      //m_console->debug("GroundTelemetry::loopInfinite()");
+      // for debugging, check if any of the endpoints is not alive
+      if (enableExtendedLogging && m_wb_endpoint) {
+        m_console->debug(m_wb_endpoint->createInfo());
+      }
+      if (enableExtendedLogging && udpGroundClient) {
+        m_console->debug(udpGroundClient->createInfo());
+      }
+    }
+    // send messages to the ground station in regular intervals, includes heartbeat.
+    // everything else is handled by the callbacks and their threads
+    {
+      std::lock_guard<std::mutex> guard(components_lock);
+      for(auto& component:components){
+        assert(component);
+        const auto messages=component->generate_mavlink_messages();
+        send_messages_ground_station_clients(messages);
+        for(const auto& msg:messages){
+          // r.n no ground unit component needs to talk to the air unit directly.
+          // but we send heartbeats to the air pi anyways, just to keep the link active.
+          if(msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT && msg.m.compid==MAV_COMP_ID_ONBOARD_COMPUTER){
+            // but we send heartbeats to the air pi anyways, just to keep the link active.
+            //m_console->debug("Heartbeat sent to air unit");
+            send_messages_air_unit({msg});
+          }
+        }
+      }
+    }
+    const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
+    if(loopDelta>loop_intervall){
+      // We can't keep up with the wanted loop interval
+      // We can't keep up with the wanted loop interval
+      m_console->debug("Warning GroundTelemetry cannot keep up with the wanted loop interval. Took {}ms",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count());
+    }else{
+      const auto sleepTime=loop_intervall-loopDelta;
+      // send out in X second intervals
+      std::this_thread::sleep_for(loop_intervall);
+    }
   }
 }
 
@@ -163,10 +161,10 @@ std::string GroundTelemetry::create_debug() const {
   std::stringstream ss;
   //ss<<"GT:\n";
   if (m_wb_endpoint) {
-	ss<< m_wb_endpoint->createInfo();
+    ss<< m_wb_endpoint->createInfo();
   }
   if (udpGroundClient) {
-	ss<<udpGroundClient->createInfo();
+    ss<<udpGroundClient->createInfo();
   }
   return ss.str();
 }

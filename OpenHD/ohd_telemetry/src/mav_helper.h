@@ -209,8 +209,8 @@ static MTarget get_target_from_message_if_available(const mavlink_message_t& msg
 // The optimization we want to achieve is to "consume" messages with a given target sys and comp it
 // that matches the given target sys id (e.g. the openhd ground unit) instead of forwarding them
 // to all endpoints, e.g. the FC (those other endpoints won't do anything with the given message anyways)
-// pictorial speaking, we fill 2 buckets ( generic and local_only) with the given message(s)
-static std::tuple<std::vector<MavlinkMessage>,std::vector<MavlinkMessage>> split_into_local_only_and_generic(
+// pictorial speaking, we fill 2 buckets (generic and local_only) with the given message(s)
+static std::tuple<std::vector<MavlinkMessage>,std::vector<MavlinkMessage>> split_into_generic_and_local_only(
     const std::vector<MavlinkMessage>& messages,uint16_t local_target_sys_id){
   std::vector<MavlinkMessage> generic{};
   generic.reserve(messages.size());
