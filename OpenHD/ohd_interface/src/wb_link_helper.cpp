@@ -40,7 +40,7 @@ void openhd::wb::fixup_unsupported_settings(
 bool openhd::wb::cards_support_setting_channel_width(
     const std::vector<std::shared_ptr<WifiCardHolder>>& m_broadcast_cards) {
   for(const auto& card_handle: m_broadcast_cards){
-    if(!wifi_card_supports_variable_mcs(card_handle->_wifi_card)){
+    if(!wifi_card_supports_40Mhz_channel_width(card_handle->_wifi_card)){
       return false;
     }
   }
@@ -50,7 +50,7 @@ bool openhd::wb::cards_support_setting_channel_width(
 bool openhd::wb::cards_support_setting_mcs_index(
     const std::vector<std::shared_ptr<WifiCardHolder>>& m_broadcast_cards) {
   for(const auto& card_handle: m_broadcast_cards){
-    if(!wifi_card_supports_40Mhz_channel_width(card_handle->_wifi_card)){
+    if(!wifi_card_supports_variable_mcs(card_handle->_wifi_card)){
       return false;
     }
   }
