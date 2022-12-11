@@ -181,10 +181,26 @@ struct MTarget{
   }
 };
 static MTarget get_target_from_message_if_available(const mavlink_message_t& msg){
+  if(msg.incompat_flags)
   if(msg.msgid==MAVLINK_MSG_ID_COMMAND_LONG){
     mavlink_command_long_t command;
     mavlink_msg_command_long_decode(&msg,&command);
     return {command.target_system,command.target_component};
+  }
+  if(msg.msgid==MAVLINK_MSG_ID_PARAM_EXT_SET){
+    mavlink_param_ext_set_t tmp;
+    mavlink_msg_param_ext_set_decode(&msg,&tmp);
+    return {tmp.target_system,tmp.target_component};
+  }
+  if(msg.msgid==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ){
+    mavlink_param_ext_request_read_t tmp;
+    mavlink_msg_param_ext_request_read_decode(&msg,&tmp);
+    return {tmp.target_system,tmp.target_component};
+  }
+  if(msg.msgid==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_LIST){
+    mavlink_param_ext_request_list_t tmp;
+    mavlink_msg_param_ext_request_list_decode(&msg,&tmp);
+    return {tmp.target_system,tmp.target_component};
   }
   // 0 == broadcast
   return {0,0};
