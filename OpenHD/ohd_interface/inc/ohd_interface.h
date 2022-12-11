@@ -22,8 +22,6 @@
 #include "wb_link.h"
 #include "wifi_hotspot.h"
 
-#include "stupid_test_link.h"
-
 /**
  * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
  */

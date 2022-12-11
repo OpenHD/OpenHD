@@ -23,7 +23,6 @@ set(sources
     inc/wifi_hotspot_settings.h
     #"inc/wifi_command_helper2.h"
     inc/ground_video_forwarder.h
-    inc/stupid_test_link.h
     inc/wb_link_helper.h
     inc/wifi_channel.h
 
@@ -37,7 +36,6 @@ set(sources
     src/wifi_hotspot_settings.cpp
     #"src/wifi_command_helper2.cpp"
     src/ground_video_forwarder.cpp
-    src/stupid_test_link.cpp
     src/wb_link_helper.cpp
         )
 
