@@ -475,19 +475,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       ret.push_back(Setting{"WB_N_RX_CARDS",openhd::IntSetting{n_rx_cards,cb_read_only}});
     }
   }
-  if(true){
-    auto cb_x=[this](std::string,int value){
-      bool use_2g=value==1;
-      //scan_channels(DEFAULT_SCAN_TIME_PER_CHANNEL,use_2g);
-      ScanChannelsParams params{};
-      params.duration_per_channel=DEFAULT_SCAN_TIME_PER_CHANNEL;
-      params.check_5g_channels_if_card_supports= true;
-      params.check_2g_channels_if_card_support= true;
-      async_scan_channels(params);
-      return true;
-    };
-    ret.push_back(Setting{"XXXX",openhd::IntSetting{0,cb_x}});
-  }
   // disabled for now, they are too complicated that a normal user can do something with them anyways
   if(false){
     auto cb_wb_enable_stbc=[this](std::string,int value){
