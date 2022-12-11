@@ -170,4 +170,29 @@ static MavlinkMessage pack_rc_message(const int sys_id,const int comp_id,
   return ret;
 }
 
+// Optimize message routing: If a message has a target sys / comp id, only send it to the specified sys / comp id
+struct MTarget{
+  uint16_t sys_id;
+  uint16_t comp_id;
+  bool has_target() const{
+    return sys_id!=0;
+  }
+};
+static MTarget get_target_from_message_if_available(const mavlink_message_t& msg){
+  if(msg.msgid==MAVLINK_MSG_ID_COMMAND_LONG){
+    mavlink_command_long_t command;
+    mavlink_msg_command_long_decode(&msg,&command);
+    return {command.target_system,command.target_component};
+  }
+  // 0 == broadcast
+  return {0,0};
+}
+
+// only let messages through whose target id is either not defined
+// or broadcast
+// or matches the given allowed target
+//static std::vector<MavlinkMessage> filter_by_target(const uint16_t target_co)
+
+
+
 #endif //XMAVLINKSERVICE_MAV_HELPER_H
