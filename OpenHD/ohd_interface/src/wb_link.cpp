@@ -111,7 +111,6 @@ void WBLink::configure_cards() {
 }
 
 void WBLink::configure_telemetry() {
-  m_console->debug("Streams::configure_telemetry()isAir:"+OHDUtil::yes_or_no(m_profile.is_air));
   // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
   // tx radio port on air is the same as rx on ground and verse visa
   const auto radio_port_rx = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
@@ -126,14 +125,15 @@ void WBLink::configure_telemetry() {
 }
 
 void WBLink::configure_video() {
-  m_console->debug("Streams::configure_video()");
   // Video is unidirectional, aka always goes from air pi to ground pi
   if (m_profile.is_air) {
+    // we transmit video
     auto primary = create_wb_tx(OHD_VIDEO_PRIMARY_RADIO_PORT, true);
     auto secondary = create_wb_tx(OHD_VIDEO_SECONDARY_RADIO_PORT, true);
     m_wb_video_tx_list.push_back(std::move(primary));
     m_wb_video_tx_list.push_back(std::move(secondary));
   } else {
+    // we receive video
     auto cb1=[this](const uint8_t* data,int data_len){
       forward_video_data(0,data,data_len);
     };
