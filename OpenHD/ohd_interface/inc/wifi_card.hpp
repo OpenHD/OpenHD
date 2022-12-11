@@ -1,14 +1,15 @@
 #ifndef OPENHD_WIFI_H
 #define OPENHD_WIFI_H
 
-#include <string>
 #include <fstream>
+#include "openhd-platform.hpp"
+#include <string>
 
 #include "include_json.hpp"
-#include "openhd-util.hpp"
 #include "openhd-settings.hpp"
-#include "openhd-util-filesystem.hpp"
 #include "openhd-settings2.hpp"
+#include "openhd-util-filesystem.hpp"
+#include "openhd-util.hpp"
 #include "validate_settings_helper.h"
 
 // R.n (20.08) this class can be summarized as following:
@@ -138,6 +139,41 @@ static bool wifi_card_supports_extra_channels_2G(const WiFiCard& wi_fi_card){
     return true;
   }
   return false;
+}
+
+
+static bool wifi_card_supports_frequency(const OHDPlatform& platform,const WiFiCard& wifi_card,const uint32_t frequency){
+  const auto channel_opt=openhd::channel_from_frequency(frequency);
+  if(!channel_opt.has_value())return false;
+  const auto& channel=channel_opt.value();
+  // check if we are running on a modified kernel, in which case we can do those extra frequencies that
+  // are illegal in most countries (otherwise they are disabled)
+  // NOTE: When running on RPI or Jetson we assume we are running on an OpenHD image which has the modified kernel
+  const bool kernel_supports_extra_channels=platform.platform_type==PlatformType::RaspberryPi ||
+                                              platform.platform_type==PlatformType::Jetson;
+  // check if the card generically supports the 2G or 5G space
+  if(channel.space==openhd::Space::G2_4){
+    if(!wifi_card.supports_2ghz){
+      return false;
+    }
+    if(!channel.is_standard){
+      // special and only AR9271: channels below and above standard wifi
+      const bool include_extra_channels_2G=kernel_supports_extra_channels && wifi_card_supports_extra_channels_2G(wifi_card);
+      if(!include_extra_channels_2G){
+        return false;
+      }
+    }
+
+  }else{
+    assert(channel.space==openhd::Space::G5_8);
+    if(!wifi_card.supports_5ghz){
+      return false;
+    }
+    if(!channel.is_standard){
+      return false;
+    }
+  }
+  return true;
 }
 
 static WifiCardSettings create_default_settings(const WiFiCard& wifi_card){

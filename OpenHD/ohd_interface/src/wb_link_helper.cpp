@@ -57,7 +57,7 @@ bool openhd::wb::cards_support_setting_mcs_index(
   return true;
 }
 
-bool openhd::wb::card_supports_frequency(const WiFiCard& card,
+/*bool openhd::wb::card_supports_frequency(const WiFiCard& card,
                                          bool kernel_supports_extra_channels,
                                          int frequency) {
   if(card.supports_2ghz){
@@ -71,35 +71,23 @@ bool openhd::wb::card_supports_frequency(const WiFiCard& card,
     return true;
   }
   return false;
-}
+}*/
 
 bool openhd::wb::cards_support_frequency(
     int frequency,
     const std::vector<std::shared_ptr<WifiCardHolder>>& m_broadcast_cards,
     const OHDPlatform& platform,
-    const std::shared_ptr<spdlog::logger>& m_console) {
-
-  // check if the frequency is a valid 2G or 5G frequency (we only have 2G or 5G wifi cards)
-  if(! (openhd::is_valid_frequency_5G(frequency, true)
-        || openhd::is_valid_frequency_2G(frequency,true))){
-    m_console->debug("Not a valid 2G or 5G frequency {}",frequency);
-    return false;
-  }
-
-  // check if we are running on a modified kernel, in which case we can do those extra frequencies that
-  // are illegal in most countries (otherwise they are disabled)
-  // NOTE: When running on RPI or Jetson we assume we are running on an OpenHD image which has the modified kernel
-  const bool kernel_supports_extra_channels=platform.platform_type==PlatformType::RaspberryPi ||
-                                              platform.platform_type==PlatformType::Jetson;
+    const std::shared_ptr<spdlog::logger>& m_console=nullptr) {
 
   // and check if all cards support the frequency
   for(const auto& card_holder:m_broadcast_cards){
     const auto& card=card_holder->get_wifi_card();
-    if(!card_supports_frequency(card,kernel_supports_extra_channels,frequency)){
-      m_console->debug("Card {} doesn't support frequency {}",card.interface_name,frequency);
+    if(!wifi_card_supports_frequency(platform,card,frequency)){
+      if(m_console){
+        m_console->debug("Card {} doesn't support frequency {}",card.interface_name,frequency);
+      }
       return false;
     }
   }
-
   return true;
 }
