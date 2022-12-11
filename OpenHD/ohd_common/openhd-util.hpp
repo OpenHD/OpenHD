@@ -86,7 +86,7 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   }
   // Some weird locale issue ?!
   // https://man7.org/linux/man-pages/man3/system.3.html
-  auto ret = system(ss.str().c_str());
+  auto ret = std::system(ss.str().c_str());
   // With boost, there is this locale issue ??!!
   /*boost::process::child c(boost::process::search_path(command), args);
   c.wait();
@@ -112,7 +112,7 @@ static std::optional<std::string> run_command_out(const char* command,const bool
     openhd::log::get_default()->debug("run command out begin [{}]",command);
   }
   std::string raw_value;
-  std::array<char, 1024*10> buffer{};
+  std::array<char, 512> buffer{};
   std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command, "r"), pclose);
   if (!pipe) {
     // if the pipe opening fails, this doesn't mean the command failed (see above)
@@ -126,7 +126,27 @@ static std::optional<std::string> run_command_out(const char* command,const bool
   return raw_value;
 }
 
-// i use this one during testing a lot, when a module's functionality uses a start() / stop()
+// The above implementation sometimes doesn't work
+// Execute a shell command and return its output as a string
+/*struct RunShellCommandResult{
+  int status;
+  std::string status_text;
+};
+static std::string run_command_out2(const char* command,const bool debug=false){
+  const std::string output_filename="/tmp/command_output.txt";
+  OHDFilesystemUtil::remove_if_existing(output_filename);
+  const std::string command_outputting_to_tmp_file=std::string(command)+" 2>&1 "+output_filename;
+  if(debug){
+    openhd::log::get_default()->debug("run_command_out2 begin [{}]",command_outputting_to_tmp_file);
+  }
+  const int status = std::system(command_outputting_to_tmp_file.c_str()); // execute the shell command
+  std::string ret=OHDFilesystemUtil::read_file(output_filename);
+  openhd::log::get_default()->debug("Done result code: {} text:[{}]",status,ret);
+  OHDFilesystemUtil::remove_if_existing(output_filename);
+  return ret;
+}*/
+
+// I use this one during testing a lot, when a module's functionality uses a start() / stop()
 // pattern with its own thread. This keeps the current thread alive, until a sigterm (CTR+X) happens
 static void keep_alive_until_sigterm(){
   static bool quit=false;
@@ -136,15 +156,8 @@ static void keep_alive_until_sigterm(){
 	openhd::log::get_default()->debug("keep_alive_until_sigterm");
   }
 }
-// Tries to extract a valid ip from the given input string.
-// Returns std::nullopt on error, otherwise a always "valid" ip in string from
-/*static bool createValidIp(const std::string input){
-  // Regex expression for validating IPv4
-  std::regex regex_ipv4("(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])");
-  if (regex_match(input, regex_ipv4))
-	return true;
-  return false;
-}*/
+
+
 // based on https://man7.org/linux/man-pages/man3/inet_pton.3.html
 static bool is_valid_ip(const std::string& ip){
   unsigned char buf[sizeof(struct in6_addr)];

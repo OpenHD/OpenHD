@@ -35,9 +35,10 @@ static bool set_frequency_and_channel_width(const WiFiCard &card, const uint32_t
   //bool success = OHDUtil::run_command("iw", args);
   const auto command="iw dev "+card.interface_name+" set freq "+std::to_string(frequency)+" "+channel_width;
   const auto result_opt=OHDUtil::run_command_out(command.c_str(), true);
+  //OHDUtil::run_command_out2(command.c_str(), true);
   if(!result_opt.has_value())return false;
   const auto& result=result_opt.value();
-  openhd::log::get_default()->debug("XXX {}",result);
+  openhd::log::get_default()->debug("XXX [{}]",result);
   if(OHDUtil::contains(result,"kernel reports: Channel is disabled") || OHDUtil::contains(result,"Invalid argument")){
     openhd::log::get_default()->warn("Error setting frequency {} {}",frequency,channel_width);
     return false;
