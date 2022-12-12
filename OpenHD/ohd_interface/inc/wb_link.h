@@ -21,6 +21,8 @@
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
 
+#include "wb_link.h"
+
 /**
  * This class takes a list of discovered wifi cards (and their settings) and
  * is responsible for configuring the given cards and then setting up all the Wifi-broadcast streams needed for OpenHD.

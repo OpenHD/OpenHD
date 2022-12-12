@@ -6,6 +6,7 @@
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_VIDEO_TRANSMIT_INTERFACE_H_
 
 #include "openhd-video-frame.h"
+#include "openhd-spdlog.hpp"
 
 namespace openhd{
 
