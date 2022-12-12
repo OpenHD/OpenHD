@@ -78,6 +78,10 @@ void OHDTelemetry::remove_external_ground_station_ip(const std::string &ip_openh
 }
 
 void OHDTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
+  if(link== nullptr){
+    openhd::log::get_default()->warn("set_link_handle - no link available");
+    return;
+  }
   if(profile.is_air){
     airTelemetry->set_link_handle(link);
   }else{
