@@ -40,9 +40,9 @@ struct WifiChannel{
 
 // These are not valid 2.4G wifi channel(s) but some cards aparently can do them, too
 // From https://github.com/OpenHD/linux/blob/092115ae6a980feaa09722690891d99da3afb55c/drivers/net/wireless/ath/ath9k/common-init.c#L39
-// NOTE: channel and frequency seem to be off by one - it doesn't really matter though,
-// since in OpenHD we never use the channel number (since it is prone to errors, even in the linux kernel) but rather
-// use the frequency in mhz, which is well defined.
+// NOTE: In OpenHD we never use the channel number (since it is prone to errors, even in the linux kernel) but rather
+// use the frequency in mhz, which is well-defined.
+// Also read https://yo3iiu.ro/blog/?p=1301
 static std::vector<WifiChannel> get_channels_below_standard_2G_wifi(){
   return std::vector<WifiChannel>{
       WifiChannel{2312, -1,Space::G2_4,false},
@@ -149,7 +149,7 @@ static std::vector<WifiChannel> get_channels_5G_below(){
 
 // https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/j/n/ac/ax)
 // These are what iw list lists for rtl8812au
-static std::vector<WifiChannel> get_channels_5G_rtl8812au() {
+static std::vector<WifiChannel> get_channels_5G_standard() {
   return std::vector<WifiChannel>{
       //TODO {5170,34},
       WifiChannel{5180,36,Space::G5_8,true},
@@ -188,7 +188,7 @@ static std::vector<WifiChannel> get_channels_5G(const bool include_nonstandard_c
   if(include_nonstandard_channels){
     vec_append(ret,get_channels_5G_below());
   }
-  vec_append(ret,get_channels_5G_rtl8812au());
+  vec_append(ret, get_channels_5G_standard());
   return ret;
 }
 
