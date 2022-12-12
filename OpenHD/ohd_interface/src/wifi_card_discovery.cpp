@@ -103,29 +103,29 @@ std::vector<WiFiCard> DWifiCards::discover() {
 }
 
 std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_name) {
-  std::stringstream device_file;
-  device_file << "/sys/class/net/";
-  device_file << interface_name.c_str();
-  device_file << "/device/uevent";
+  std::stringstream device_uevent_file;
+  device_uevent_file << "/sys/class/net/";
+  device_uevent_file << interface_name.c_str();
+  device_uevent_file << "/device/uevent";
 
-  std::ifstream t(device_file.str());
-  std::string raw_value((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+  std::ifstream t(device_uevent_file.str());
+  const std::string raw_value((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+
+
+  const std::regex driver_regex{"DRIVER=([\\w]+)"};
 
   std::smatch result;
-
-  std::regex r{"DRIVER=([\\w]+)"};
-
-  if (!std::regex_search(raw_value, result, r)) {
+  if (!std::regex_search(raw_value, result, driver_regex)) {
     openhd::log::get_default()->warn("no result");
-    return {};
+    return std::nullopt;
   }
 
   if (result.size() != 2) {
     openhd::log::get_default()->warn("result doesnt match");
-    return {};
+    return std::nullopt;
   }
 
-  std::string driver_name = result[1];
+  const std::string driver_name = result[1];
 
   WiFiCard card;
   card.interface_name = interface_name;
@@ -139,7 +139,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   phy_file << "/phy80211/index";
 
   std::ifstream d(phy_file.str());
-  std::string phy_val((std::istreambuf_iterator<char>(d)), std::istreambuf_iterator<char>());
+  const std::string phy_val((std::istreambuf_iterator<char>(d)), std::istreambuf_iterator<char>());
 
   // This reported value is right in most cases, so we use it as a default. However, for example the RTL8812AU reports
   // both 2G and 5G but can only do 5G with the monitor mode driver.
