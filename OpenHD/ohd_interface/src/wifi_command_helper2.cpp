@@ -194,3 +194,7 @@ nla_put_failure:
   return false;
 }
 
+std::vector<uint32_t> wifi::commandhelper2::get_supported_frequencies(
+    const std::string &device) {
+  return std::vector<uint32_t>();
+}

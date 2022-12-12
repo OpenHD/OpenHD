@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <string>
 #include <optional>
+#include <vector>
 
 // Pretty much taken from https://github.com/webbbn/wifibroadcast_bridge/blob/9220947fd01f6aaf58adc271037b550ce5385b1e/src/raw_socket.cc
 // has some advantages over using the "run terminal commands" approach -
@@ -32,6 +33,9 @@ bool set_wifi_frequency_and_log_result(const std::string &device, uint32_t freq_
 // See https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/nl80211.h#L1905
 // NOTE: even linux seems to have no idea what mBm means - rtl8812au interprets that not as milli(1000)dBm, but dBm/100
 bool set_wifi_txpower(const std::string &device, uint32_t tx_power_mBm);
+
+// TODO
+std::vector<uint32_t> get_supported_frequencies(const std::string& device);
 
 }
 
