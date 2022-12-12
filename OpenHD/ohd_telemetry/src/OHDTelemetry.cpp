@@ -77,10 +77,10 @@ void OHDTelemetry::remove_external_ground_station_ip(const std::string &ip_openh
   groundTelemetry->remove_external_ground_station_ip(ip_openhd,ip_dest_device);
 }
 
-void OHDTelemetry::set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle) {
+void OHDTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
   if(profile.is_air){
-    airTelemetry->set_wb_tx_rx_handle(handle);
+    airTelemetry->set_link_handle(link);
   }else{
-    groundTelemetry->set_wb_tx_rx_handle(handle);
+    groundTelemetry->set_link_handle(link);
   }
 }

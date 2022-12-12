@@ -44,10 +44,8 @@ class OHDInterface :public openhd::ISettingsComponent{
   // settings hacky end
   // easy access without polluting the headers
   static void print_internal_fec_optimization_method();
-  // only valid on air
-  std::shared_ptr<openhd::ITransmitVideo> get_video_tx_interface();
-  // valid on air and ground
-  std::shared_ptr<openhd::TxRxTelemetry> get_telemetry_tx_rx_interface();
+  // r.n only wb, but his might change
+  std::shared_ptr<OHDLink> get_link_handle();
  private:
   /**
     * after calling this method with an external device's ip address

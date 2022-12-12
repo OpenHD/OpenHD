@@ -202,16 +202,10 @@ void OHDInterface::print_internal_fec_optimization_method() {
   print_optimization_method();
 }
 
-std::shared_ptr<openhd::ITransmitVideo> OHDInterface::get_video_tx_interface() {
+std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
   if(m_wb_link){
     return m_wb_link;
   }
   return nullptr;
 }
 
-std::shared_ptr<openhd::TxRxTelemetry> OHDInterface::get_telemetry_tx_rx_interface() {
-  if(m_wb_link){
-    return m_wb_link->get_telemetry_tx_rx_interface();
-  }
-  return nullptr;
-}

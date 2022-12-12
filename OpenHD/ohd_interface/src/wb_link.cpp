@@ -56,13 +56,6 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   takeover_cards_monitor_mode();
   configure_cards();
   m_ground_video_forwarder=std::make_unique<GroundVideoForwarder>();
-  m_tx_rx_handle=std::make_shared<openhd::TxRxTelemetry>();
-  auto cb=[this](std::shared_ptr<std::vector<uint8_t>> data){
-    if(m_wb_tele_tx){
-      m_wb_tele_tx->feedPacket(data,std::nullopt);
-    }
-  };
-  m_tx_rx_handle->register_on_send_data_cb(cb);
   configure_telemetry();
   configure_video();
   m_work_thread_run = true;
@@ -131,7 +124,7 @@ void WBLink::configure_telemetry() {
   const auto radio_port_tx = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
   auto cb=[this](const uint8_t* data, int data_len){
     auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
-    m_tx_rx_handle->forward_to_on_receive_cb_if_set(shared);
+    on_receive_telemetry_data(shared);
   };
   m_wb_tele_rx = create_wb_rx(radio_port_rx, cb);
   m_wb_tele_rx->start_async();
@@ -839,10 +832,6 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
   }
 }
 
-std::shared_ptr<openhd::TxRxTelemetry> WBLink::get_telemetry_tx_rx_interface() {
-  return m_tx_rx_handle;
-}
-
 void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_len) {
   if(stream_index==0 && m_ground_video_forwarder){
     m_ground_video_forwarder->forward_data(data,data_len);
@@ -968,4 +957,8 @@ int WBLink::get_count_p_decryption_ok() {
 
 bool WBLink::check_in_state_support_changing_settings(){
   return !is_scanning && check_work_queue_empty();
+}
+
+void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
+  m_wb_tele_tx->feedPacket(data->data(),data->size());
 }

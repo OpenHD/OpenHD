@@ -280,8 +280,8 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   return ret;
 }
 
-void GroundTelemetry::set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle) {
-  m_wb_endpoint = std::make_unique<WBEndpoint>(handle,"wb_tx");
+void GroundTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
+  m_wb_endpoint = std::make_unique<WBEndpoint>(link,"wb_tx");
   m_wb_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_air_unit(messages);
   });

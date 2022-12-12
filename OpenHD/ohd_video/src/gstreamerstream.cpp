@@ -15,7 +15,7 @@
 #include "rtp_eof_helper.h"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                                 std::shared_ptr<openhd::ITransmitVideo> i_transmit_video)
+                                 std::shared_ptr<OHDLink> i_transmit_video)
     //: CameraStream(platform, camera_holder, video_udp_port) {
     : CameraStream(platform,camera_holder,i_transmit_video){
   m_console=openhd::log::create_or_get("v_gststream");
@@ -429,8 +429,8 @@ bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
 
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
   //m_console->debug("Got frame with {} fragments",frame_fragments.size());
-  if(m_transmit_interface){
-    m_transmit_interface->transmit_video_data(0,openhd::FragmentedVideoFrame{frame_fragments});
+  if(m_link_handle){
+    m_link_handle->transmit_video_data(0,openhd::FragmentedVideoFrame{frame_fragments});
   }else{
     m_console->debug("No transmit interface");
   }

@@ -21,7 +21,7 @@
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
 
-#include "wb_link.h"
+#include "ohd_link.hpp"
 
 /**
  * This class takes a list of discovered wifi cards (and their settings) and
@@ -30,7 +30,7 @@
  * but also a bidirectional link (without re-transmission(s)) for telemetry.
  * This class assumes a corresponding instance on the air or ground unit, respective.
  */
-class WBLink :public openhd::ITransmitVideo{
+class WBLink :public OHDLink{
  public:
   /**
    * @param broadcast_cards list of discovered wifi card(s) that support monitor mode & are injection capable. Needs to be at least
@@ -51,8 +51,6 @@ class WBLink :public openhd::ITransmitVideo{
   void removeExternalDeviceIpForwardingVideoOnly(const std::string& ip);
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
-  // This handle is used by ohd_telemetry to get / send telemetry (raw) data
-  std::shared_ptr<openhd::TxRxTelemetry> get_telemetry_tx_rx_interface();
  private:
   // validate param, then schedule change
   bool request_set_frequency(int frequency);
@@ -153,6 +151,7 @@ class WBLink :public openhd::ITransmitVideo{
   bool set_wb_rtl8812au_tx_pwr_idx_override(int value);
   bool has_rtl8812au();
  private:
+  void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data)override;
   // Called by the camera stream on the air unit only
   // transmit video data via wifibradcast
   void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
@@ -160,7 +159,6 @@ class WBLink :public openhd::ITransmitVideo{
   // Forward video data to the local udp port and/or external device(s) if they exist
   void forward_video_data(int stream_index,const uint8_t * data,int data_len);
  private:
-  std::shared_ptr<openhd::TxRxTelemetry> m_tx_rx_handle;
   std::unique_ptr<GroundVideoForwarder> m_ground_video_forwarder;
  public:
   // Warning: This operation will block the calling thread for up to X ms.
