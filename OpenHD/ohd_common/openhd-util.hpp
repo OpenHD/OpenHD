@@ -71,9 +71,10 @@ static void rtrim(std::string &s) {
  * Blocks until the command has been executed, and returns its result.
  * @param command the command to run
  * @param args the args for the command to run
- * @param print_debug print debug to std::cout, really usefully for debugging. true by default.
+ * @param print_debug print the command executed, this can be usefully for debugging -to replicate, just copy the command
+ * from the log message
  * @return the command result
- * NOTE: Used to use boost, there were issues with that, I changed it to use c standard library.
+ * NOTE: Do not use boost, it has issues
  */
 static bool run_command(const std::string &command, const std::vector<std::string> &args,bool print_debug=true) {
   std::stringstream ss;
@@ -86,7 +87,15 @@ static bool run_command(const std::string &command, const std::vector<std::strin
   }
   // Some weird locale issue ?!
   // https://man7.org/linux/man-pages/man3/system.3.html
-  auto ret = std::system(ss.str().c_str());
+  const auto ret = std::system(ss.str().c_str());
+  openhd::log::get_default()->debug("return code:{}",ret);
+  if(ret<0){
+    openhd::log::get_default()->warn("Invalid command, return code {}",ret);
+  }
+  if(true){
+    const auto command_return_code=WEXITSTATUS(ret);
+    openhd::log::get_default()->debug("return code:{} command_return_code{}",ret,command_return_code);
+  }
   // With boost, there is this locale issue ??!!
   /*boost::process::child c(boost::process::search_path(command), args);
   c.wait();
