@@ -15,9 +15,13 @@ namespace wifi::commandhelper2{
 
 bool set_wifi_up_down(const std::string &device, bool up);
 
+// Set wifi down
+// then enables monitor mode
+// Set wifi up
+// Returns true on success, false otherwise
 bool set_wifi_monitor_mode(const std::string &device);
 
-// set frequency and optionally also the channel width
+// set frequency and optionally also the channel width if given
 bool set_wifi_frequency(const std::string &device, uint32_t freq_mhz,std::optional<uint32_t> channel_width=std::nullopt);
 
 // See https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/nl80211.h#L1905
