@@ -2,8 +2,8 @@
 // Created by consti10 on 09.12.22.
 //
 
-#ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_GROUND_VIDEO_FORWARDER_H_
-#define OPENHD_OPENHD_OHD_INTERFACE_INC_GROUND_VIDEO_FORWARDER_H_
+#ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_VIDEO_FORWARDER_H_
+#define OPENHD_OPENHD_OHD_INTERFACE_INC_VIDEO_FORWARDER_H_
 
 #include "../../lib/wifibroadcast/src/UdpWBReceiver.hpp"
 
@@ -28,4 +28,4 @@ class GroundVideoForwarder{
    std::unique_ptr<SocketHelper::UDPMultiForwarder> udpMultiForwarder;
 };
 
-#endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_GROUND_VIDEO_FORWARDER_H_
+#endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_VIDEO_FORWARDER_H_

@@ -17,9 +17,9 @@
 #include "openhd-spdlog.hpp"
 #include "openhd-telemetry-tx-rx.h"
 #include "openhd-video-transmit-interface.h"
+#include "video_forwarder.h"
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
-#include "ground_video_forwarder.h"
 
 /**
  * This class takes a list of discovered wifi cards (and their settings) and
