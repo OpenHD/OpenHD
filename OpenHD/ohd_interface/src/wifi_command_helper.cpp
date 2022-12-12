@@ -10,6 +10,13 @@ static std::shared_ptr<spdlog::logger> get_logger(){
   return openhd::log::create_or_get("w_helper");
 }
 
+bool wifi::commandhelper::rfkill_unblock_all() {
+  get_logger()->info("rfkill_unblock_all");
+  std::vector<std::string> args{"unblock","all"};
+  bool success=OHDUtil::run_command("rfkill",args);
+  return success;
+}
+
 bool wifi::commandhelper::ip_link_set_card_state(const std::string &device,bool up) {
   get_logger()->info("ip_link_set_card_state {} up {}",device,up);
   std::vector<std::string> args{"link", "set", "dev",device, up ? "up" : "down"};
@@ -44,5 +51,4 @@ bool wifi::commandhelper::nmcli_set_device_unmanaged(const std::string &device) 
   bool success = OHDUtil::run_command("nmcli",{"device","set",device,"managed","no"});
   return success;
 }
-
 

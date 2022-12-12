@@ -17,6 +17,7 @@ namespace wifi::commandhelper{
 
 // needed for enabling monitor mode
 bool ip_link_set_card_state(const std::string &device, bool up);
+bool rfkill_unblock_all();
 
 // from iw documentation:
 // dev <devname> set monitor <flag>*

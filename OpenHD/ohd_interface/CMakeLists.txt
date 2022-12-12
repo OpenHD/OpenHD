@@ -21,11 +21,11 @@ set(sources
     "inc/wb_link_settings.hpp"
     "inc/wifi_hotspot.h"
     inc/wifi_hotspot_settings.h
-    "inc/wifi_command_helper2.h"
     inc/video_forwarder.h
     inc/wb_link_helper.h
     inc/wifi_channel.h
     inc/wifi_command_helper.h
+    #inc/wifi_command_helper2.h
 
     "src/wifi_card_discovery.cpp"
     "src/ohd_interface.cpp"
@@ -34,11 +34,11 @@ set(sources
     "src/wb_link.cpp"
     "src/wifi_hotspot.cpp"
     src/wifi_hotspot_settings.cpp
-    "src/wifi_command_helper2.cpp"
-    src/wifi_command_helper.cpp
     src/video_forwarder.cpp
     src/wb_link_helper.cpp
-    )
+    src/wifi_command_helper.cpp
+    #src/wifi_command_helper2.cpp
+)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 
@@ -61,10 +61,9 @@ find_package(spdlog REQUIRED)
 target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
 
 # needed to set wifi cards to monitor mode and more
-include(cmake/FindLibNL.cmake)
-#find_package(LibNL REQUIRED)
-target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
-target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
+#include(cmake/FindLibNL.cmake)
+#target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
+#target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
 
 
 target_include_directories(OHDInterfaceLib PUBLIC inc/)
