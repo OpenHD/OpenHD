@@ -51,7 +51,8 @@ class OHDTelemetry {
   // Add / remove the IP of another Ground station client. Buggy / not finished yet.
   void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const;
   void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const;
-  //
+  // OHDTelemetry is agnostic of the type of transmission between air and ground and also agnostic weather this
+  // link exists or not (since it is already using a lossy link).
   void set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle);
  private:
   // only either one of them both is active at a time.
