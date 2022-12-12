@@ -16,7 +16,7 @@ find_path(LibNL_INCLUDE_DIR netlink/netlink.h
 
 find_library(LibNL_LIBRARY NAMES nl nl-3)
 find_library(LibNL_ROUTE_LIBRARY NAMES nl-route nl-route-3)
-+find_library(LibNL_NETFILTER_LIBRARY NAMES nl-nf nl-nf-3)
+#find_library(LibNL_NETFILTER_LIBRARY NAMES nl-nf nl-nf-3)
 find_library(LibNL_GENL_LIBRARY NAMES nl-genl nl-genl-3)
 
 if (LibNL_INCLUDE_DIR AND LibNL_LIBRARY)
