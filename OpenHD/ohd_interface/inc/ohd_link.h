@@ -28,8 +28,9 @@
 class OHDLink{
  public:
   explicit OHDLink(OHDProfile profile): m_profile(std::move(profile)){
-    m_tx_rx_handle=std::make_shared<openhd::TxRxTelemetry>();
+
   }
+  typedef std::function<void(std::shared_ptr<std::vector<uint8_t>> data)> ON_TELE_DATA_CB;
  public:
   // Telemetry, bidirectional (receive and transmit each)
 
@@ -44,11 +45,15 @@ class OHDLink{
    * called every time telemetry data is received - used by ohd_telemetry to react to incoming packets
    * @param data the received message
    */
-  virtual void on_receive_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
-    auto tmp=m_tx_rx_handle;
+  void on_receive_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
+    auto tmp=m_tele_data_cb;
     if(tmp){
-      tmp->forward_to_on_receive_cb_if_set(data);
+      auto& cb=*tmp;
+      cb(std::move(data));
     }
+  }
+  void register_on_receive_telemetry_data_cb(ON_TELE_DATA_CB cb){
+    m_tele_data_cb=std::make_shared<ON_TELE_DATA_CB>(cb);
   }
  public:
   /**
@@ -59,16 +64,10 @@ class OHDLink{
    */
   virtual void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame)=0;
 
-  /**
-   * For registering the callback called with the received telemetry packets.
-   */
-  std::shared_ptr<openhd::TxRxTelemetry> get_telemetry_tx_rx_handle(){
-    return m_tx_rx_handle;
-  }
  protected:
   const OHDProfile m_profile;
  private:
-  std::shared_ptr<openhd::TxRxTelemetry> m_tx_rx_handle;
+  std::shared_ptr<ON_TELE_DATA_CB> m_tele_data_cb;
 };
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_OHD_LINK_H_
