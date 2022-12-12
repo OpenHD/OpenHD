@@ -35,15 +35,23 @@ bool wifi::commandhelper::iw_set_frequency_and_channel_width(const std::string &
   get_logger()->info("iw_set_frequency_and_channel_width {} {}Mhz width40: {}",device,freq_mhz,width_40);
   const std::string channel_width=width_40 ? "HT40+" : "HT20";
   std::vector<std::string> args{"dev", device, "set", "freq", std::to_string(freq_mhz), channel_width};
-  bool success = OHDUtil::run_command("iw", args);
-  return success;
+  const auto ret = OHDUtil::run_command("iw", args);
+  if(ret!=0){
+    get_logger()->warn("iw_set_frequency_and_channel_width failed {}",ret);
+    return false;
+  }
+  return true;
 }
 
 bool wifi::commandhelper::iw_set_tx_power(const std::string &device,uint32_t tx_power_mBm) {
   get_logger()->info("iw_set_tx_power {} {} mBm",device,tx_power_mBm);
   std::vector<std::string> args{"dev",device, "set", "txpower", "fixed", std::to_string(tx_power_mBm)};
-  bool success = OHDUtil::run_command("iw", args);
-  return success;
+  const auto ret = OHDUtil::run_command("iw", args);
+  if(ret!=0){
+    get_logger()->warn("iw_set_tx_power failed {}",ret);
+    return false;
+  }
+  return true;
 }
 
 bool wifi::commandhelper::nmcli_set_device_unmanaged(const std::string &device) {

@@ -66,6 +66,15 @@ static void rtrim(std::string &s) {
           }).base(), s.end());
 }
 
+static std::string create_command_with_args(const std::string& command,const std::vector<std::string> &args){
+  std::stringstream ss;
+  ss << command;
+  for (const auto &arg: args) {
+    ss << " " << arg;
+  }
+  return ss.str();
+}
+
 /**
  * Utility to execute a command on the command line.
  * Blocks until the command has been executed, and returns its result.
@@ -76,34 +85,17 @@ static void rtrim(std::string &s) {
  * @return the command result
  * NOTE: Do not use boost, it has issues
  */
-static bool run_command(const std::string &command, const std::vector<std::string> &args,bool print_debug=true) {
-  std::stringstream ss;
-  ss << command;
-  for (const auto &arg: args) {
-    ss << " " << arg;
-  }
+static int run_command(const std::string &command, const std::vector<std::string> &args,bool print_debug=true) {
+  const auto command_with_args= create_command_with_args(command,args);
   if(print_debug){
-    openhd::log::get_default()->debug("run command begin [{}]",ss.str());
+    openhd::log::get_default()->debug("run command begin [{}]",command_with_args);
   }
-  // Some weird locale issue ?!
   // https://man7.org/linux/man-pages/man3/system.3.html
-  const auto ret = std::system(ss.str().c_str());
-  openhd::log::get_default()->debug("return code:{}",ret);
+  const auto ret = std::system(command_with_args.c_str());
+  //openhd::log::get_default()->debug("return code:{}",ret);
   if(ret<0){
     openhd::log::get_default()->warn("Invalid command, return code {}",ret);
   }
-  if(true){
-    const auto command_return_code=WEXITSTATUS(ret);
-    openhd::log::get_default()->debug("return code:{} command_return_code{}",ret,command_return_code);
-  }
-  // With boost, there is this locale issue ??!!
-  /*boost::process::child c(boost::process::search_path(command), args);
-  c.wait();
-  std::cout<<"Run command end\n";
-  return c.exit_code() == 0;*/
-  /*if(print_debug){
-    openhd::log::get_default()->debug("Run command end");
-  }*/
   return ret;
 }
 
@@ -120,8 +112,6 @@ static std::optional<std::string> run_command_out(const char* command,const bool
   if(debug){
     openhd::log::get_default()->debug("run command out begin [{}]",command);
   }
-  std::string raw_value;
-  std::array<char, 512> buffer{};
   std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command, "r"), pclose);
   if (!pipe) {
     // if the pipe opening fails, this doesn't mean the command failed (see above)
@@ -129,6 +119,8 @@ static std::optional<std::string> run_command_out(const char* command,const bool
     openhd::log::get_default()->error("Cannot execute command [{}]",command);
     return std::nullopt;
   }
+  std::string raw_value;
+  std::array<char, 512> buffer{};
   while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
 	raw_value += buffer.data();
   }
