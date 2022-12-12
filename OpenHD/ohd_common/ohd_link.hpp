@@ -12,7 +12,7 @@
 
 
 /**
- * OHDLink refers to "the link" that transmits data from/to the air unit to the ground unit".
+ * OHDLink refers to "the link" that transmits data from the air unit to the ground unit and vice versa.
  * Since we do not have a dependency between ohd_interface and other modules, we loosely define a interface here
  * (for sending data and registering a callback for receiving data)
  * It hides away the underlying implementation (e.g. wifibroadcast aka wifi cards in monitor mode or lte or ... )
