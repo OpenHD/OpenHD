@@ -31,10 +31,24 @@ bool wifi::commandhelper::iw_enable_monitor_mode(const std::string &device) {
   return success;
 }
 
-bool wifi::commandhelper::iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz, bool width_40) {
-  get_logger()->info("iw_set_frequency_and_channel_width {} {}Mhz width40: {}",device,freq_mhz,width_40);
-  const std::string channel_width=width_40 ? "HT40+" : "HT20";
-  std::vector<std::string> args{"dev", device, "set", "freq", std::to_string(freq_mhz), channel_width};
+static std::string channel_width_as_iw_string(uint32_t channel_width){
+  std::string ret="HT20";
+  if(channel_width==5){
+    ret = "5MHz";
+  }else if(channel_width==10){
+    return "10Mhz";
+  }else if(channel_width==40){
+    ret="HT40+";
+  }else{
+    get_logger()->info("Invalid channel width {}, assuming HT20",channel_width);
+  }
+  return ret;
+}
+
+bool wifi::commandhelper::iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz,uint32_t channel_width) {
+  const std::string iw_channel_width= channel_width_as_iw_string(channel_width);
+  get_logger()->info("iw_set_frequency_and_channel_width {} {}Mhz {}",device,freq_mhz,iw_channel_width);
+  std::vector<std::string> args{"dev", device, "set", "freq", std::to_string(freq_mhz), iw_channel_width};
   const auto ret = OHDUtil::run_command("iw", args);
   if(ret!=0){
     get_logger()->warn("iw_set_frequency_and_channel_width failed {}",ret);

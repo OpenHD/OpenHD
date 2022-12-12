@@ -33,7 +33,7 @@ bool rfkill_unblock_all();
 bool iw_enable_monitor_mode(const std::string& device);
 
 // dev <devname> set freq <freq> [NOHT|HT20|HT40+|HT40-|5MHz|10MHz|80MHz]
-bool iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz,bool width_40);
+bool iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz,uint32_t channel_width);
 
 // See https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/nl80211.h#L1905
 // NOTE: even linux seems to have no idea what mBm means - rtl8812au interprets that not as milli(1000)dBm, but dBm/100
