@@ -61,7 +61,7 @@ target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
 
 # find and include all the other libs
 include(cmake/FindLibNL.cmake)
-##find_package(LibNL REQUIRED)
+#find_package(LibNL REQUIRED)
 target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
 target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
 
