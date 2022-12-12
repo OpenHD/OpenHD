@@ -10,7 +10,9 @@
 #include <optional>
 
 // Pretty much taken from https://github.com/webbbn/wifibroadcast_bridge/blob/9220947fd01f6aaf58adc271037b550ce5385b1e/src/raw_socket.cc
-// has some advantages but also some disadvantages over using the "run terminal commands" workaround.
+// has some advantages but also some disadvantages over using the "run terminal commands" -
+// iw and so forth just call the apropriate nl method(s). So we skip the (quite dirty) "linux run command" workaround and can
+// properly evaluate any error codes.
 namespace wifi::commandhelper2{
 
 bool set_wifi_up_down(const std::string &device, bool up);
