@@ -2,6 +2,8 @@
 #include "wifi_command_helper.hpp"
 //#include "wifi_command_helper2.h"
 
+#include <wifi_command_helper2.h>
+
 #include <iostream>
 #include <utility>
 
@@ -108,10 +110,10 @@ void WBLink::takeover_cards_monitor_mode() {
   std::this_thread::sleep_for(std::chrono::seconds(1));
   // now we can enable monitor mode on the given cards.
   for(const auto& card: m_broadcast_cards) {
-    WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
+    /*WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
     WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
-    WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
-    //wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
+    WifiCardCommandHelper::set_card_state(card->_wifi_card, true);*/
+    wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
   }
   m_console->debug("WBStreams::takeover_cards_monitor_mode() end");
 }
