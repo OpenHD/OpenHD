@@ -17,7 +17,6 @@
 #include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
 #include "openhd-telemetry-tx-rx.h"
-#include "openhd-video-transmit-interface.h"
 #include "usb_tether_listener.h"
 #include "wb_link.h"
 #include "wifi_hotspot.h"
