@@ -126,7 +126,10 @@ static bool wifi_card_supports_extra_channels_2G(const WiFiCard& wi_fi_card){
 
 static bool wifi_card_supports_frequency(const OHDPlatform& platform,const WiFiCard& wifi_card,const uint32_t frequency){
   const auto channel_opt=openhd::channel_from_frequency(frequency);
-  if(!channel_opt.has_value())return false;
+  if(!channel_opt.has_value()){
+    openhd::log::get_default()->debug("OpenHD doesn't know frequency {}",frequency);
+    return false;
+  }
   const auto& channel=channel_opt.value();
   // check if we are running on a modified kernel, in which case we can do those extra frequencies that
   // are illegal in most countries (otherwise they are disabled)
