@@ -13,6 +13,7 @@
 // has some advantages but also some disadvantages over using the "run terminal commands" -
 // iw and so forth just call the apropriate nl method(s). So we skip the (quite dirty) "linux run command" workaround and can
 // properly evaluate any error codes.
+// e.g. see https://github.com/Distrotech/iw
 namespace wifi::commandhelper2{
 
 bool set_wifi_up_down(const std::string &device, bool up);

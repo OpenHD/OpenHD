@@ -121,6 +121,20 @@ bool wifi::commandhelper2::set_wifi_frequency(const std::string& device,
   NLA_PUT_U32(mesg, NL80211_ATTR_WIPHY_FREQ, freq_mhz);
   if(channel_width!=std::nullopt){
     const uint32_t channel_width_given=channel_width.value();
+    auto netlink_channel_width=NL80211_CHAN_WIDTH_20;
+    switch (channel_width_given) {
+      case 10:
+        netlink_channel_width=NL80211_CHAN_WIDTH_10;
+      case 20:
+        netlink_channel_width=NL80211_CHAN_WIDTH_20;
+        break;
+      case 40:
+        netlink_channel_width=NL80211_CHAN_WIDTH_40;
+        break;
+      default:
+        get_logger()->debug("Invalid channel width {}, assuming 20Mhz",channel_width_given);
+        break;
+    }
     NLA_PUT_U32(mesg,NL80211_ATTR_CHANNEL_WIDTH,channel_width_given);
   }
 
