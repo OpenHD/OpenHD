@@ -59,7 +59,7 @@ target_link_libraries(OHDInterfaceLib PUBLIC Boost::filesystem)
 find_package(spdlog REQUIRED)
 target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
 
-# find and include all the other libs
+# needed to set wifi cards to monitor mode and more
 include(cmake/FindLibNL.cmake)
 #find_package(LibNL REQUIRED)
 target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
