@@ -94,7 +94,11 @@ nla_put_failure:
 
 bool wifi::commandhelper2::set_wifi_frequency(const std::string& device,
                                              uint32_t freq_mhz,std::optional<uint32_t> channel_width) {
-  get_logger()->debug("set_wifi_frequency {} {}Mhz",device,freq_mhz);
+  if(channel_width.has_value()){
+    get_logger()->debug("set_wifi_frequency {} {}Mhz {}Mhz",device,freq_mhz,channel_width.value());
+  }else{
+    get_logger()->debug("set_wifi_frequency {} {}Mhz",device,freq_mhz);
+  }
   int err = 1;
   struct nl_cb *cb = nl_cb_alloc(NL_CB_DEFAULT);
   int rc;
@@ -135,6 +139,14 @@ nla_put_failure:
   return false;
 }
 
+bool wifi::commandhelper2::set_wifi_frequency_and_log_result(
+    const std::string &device, uint32_t freq_mhz,
+    std::optional<uint32_t> channel_width) {
+  const bool res= set_wifi_frequency(device,freq_mhz,channel_width);
+  get_logger()->debug("Success {} {}",freq_mhz,res);
+  return false;
+}
+
 bool wifi::commandhelper2::set_wifi_txpower(const std::string &device,const uint32_t tx_power_mBm){
   get_logger()->debug("set_wifi_txpower {} {} mBm",device,tx_power_mBm);
   // Create the socket and connect to it.
@@ -167,3 +179,4 @@ nla_put_failure:
   nl_socket_free(sckt);
   return false;
 }
+
