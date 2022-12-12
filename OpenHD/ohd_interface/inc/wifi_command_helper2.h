@@ -25,6 +25,7 @@ bool set_wifi_up_down(const std::string &device, bool up);
 bool set_wifi_monitor_mode(const std::string &device);
 
 // set frequency and optionally also the channel width if given
+// also see https://github.com/Distrotech/iw/blob/fe424b2465118eca166b2e901b5a378bf9582fb0/phy.c#L33
 bool set_wifi_frequency(const std::string &device, uint32_t freq_mhz,std::optional<uint32_t> channel_width=std::nullopt);
 bool set_wifi_frequency_and_log_result(const std::string &device, uint32_t freq_mhz,std::optional<uint32_t> channel_width=std::nullopt);
 
