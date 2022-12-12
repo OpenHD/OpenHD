@@ -64,7 +64,7 @@ void openhd::wb::fixup_unsupported_settings(
 
   const auto channel_opt= channel_from_frequency(settings.get_settings().wb_frequency);
   if(!channel_opt){
-    m_console->warn("Not a vlalid frequency {}",settings.get_settings().wb_frequency);
+    m_console->warn("Not a valid frequency {}",settings.get_settings().wb_frequency);
     if(first_card.supports_5ghz){
       settings.unsafe_get_settings().wb_frequency=DEFAULT_5GHZ_FREQUENCY;
       settings.persist();
