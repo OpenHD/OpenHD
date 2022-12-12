@@ -140,10 +140,10 @@ static std::vector<WifiChannel> get_channels_2G(const bool include_nonstandard_c
 // NOTE: channel and frequency seem to be off by one
 static std::vector<WifiChannel> get_channels_5G_below(){
   return std::vector<WifiChannel>{
-      WifiChannel{4920, 54,Space::G5_8,false}, /* Channel XX */
-      WifiChannel{4940, 55,Space::G5_8,false}, /* Channel XX */
-      WifiChannel{4960, 56,Space::G5_8,false}, /* Channel XX */
-      WifiChannel{4980, 57,Space::G5_8,false}, /* Channel XX */
+      WifiChannel{4920, 54,Space::G5_8,false},
+      WifiChannel{4940, 55,Space::G5_8,false},
+      WifiChannel{4960, 56,Space::G5_8,false},
+      WifiChannel{4980, 57,Space::G5_8,false},
   };
 }
 
