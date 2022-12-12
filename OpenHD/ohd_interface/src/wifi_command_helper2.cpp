@@ -57,14 +57,6 @@ bool wifi::commandhelper2::set_wifi_monitor_mode(const std::string &device) {
     return false;
   }
 
-  // The v5.6.4.2 rtl8812au driver throttles monitor mode trafic by default
-  // removed, we are not on v5.6.4.2
-  /*FILE *fp = fopen("/sys/module/88XXau/parameters/rtw_monitor_disable_1m", "w");
-  if (fp) {
-    fprintf(fp, "1");
-    fclose(fp);
-  }*/
-
   // Create the socket and connect to it.
   struct nl_sock *sckt = nl_socket_alloc();
   genl_connect(sckt);
