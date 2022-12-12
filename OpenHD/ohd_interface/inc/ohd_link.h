@@ -17,7 +17,7 @@
  * OHDLink refers to the "link that transmits data from/to the air unit to the ground unit".
  * It hides away the underlying implementation (e.g. wifibroadcast aka wifi cards in monitor mode or lte or ... )
  * However, r.n the only existing implementation is wifibroadcast.
- * What a openhd link MUST support to integrate with openhd is well defined:
+ * What a openhd link MUST support to integrate is well defined:
  * 1) Send telemetry data from air to ground and vice versa
  *  => 1 bidirectional (aka air to ground and ground to air) but (recommended) lossy (since mavlink deals with packet loss / retransmissions /) link
  * 2) Send video data from air to ground, recommended 2 instances (primary and secondary video), at least 1 required
@@ -25,42 +25,48 @@
  *
  *  In general, there should be exactly one instance of ohd_link on the air unit and one on the ground unit.
  */
-class OHDLink : public openhd::ITransmitVideo{
+class OHDLink{
  public:
   explicit OHDLink(OHDProfile profile): m_profile(std::move(profile)){
     m_tx_rx_handle=std::make_shared<openhd::TxRxTelemetry>();
   }
  public:
   // Telemetry, bidirectional (receive and transmit each)
-  // valid on both air and ground instance
-  // send telemetry data to the ground if air unit and vice versa.
-  virtual bool transmit_telemetry_data(const uint8_t* data,int data_len)=0;
 
-  // valid on both air and ground instance
-  // called every time telemetry data is received
+  /**
+   * valid on both air and ground instance
+   * send telemetry data to the ground if air unit and vice versa.
+   */
+  virtual bool transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data)=0;
+
+  /**
+   * valid on both air and ground instance
+   * called every time telemetry data is received - used by ohd_telemetry to react to incoming packets
+   * @param data the received message
+   */
   virtual void on_receive_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
     auto tmp=m_tx_rx_handle;
-    if(m_tx_rx_handle){
-      m_tx_rx_handle->forward_to_on_receive_cb_if_set(data);
+    if(tmp){
+      tmp->forward_to_on_receive_cb_if_set(data);
     }
   }
-
  public:
-  // Video, unidirectional
-  // only valid on air (transmit)
-  virtual bool transmit_video_data_primary(const uint8_t* data,int data_len)=0;
-  virtual bool transmit_video_data_secondary(const uint8_t* data,int data_len)=0;
+  /**
+   * Video, unidirectional
+   * only valid on air (transmit)
+   * @param stream_index 0 -> primary video stream, 1 -> secondary video stream
+   * @param fragmented_video_frame the "frame" to transmit
+   */
+  virtual void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame)=0;
 
-  // only valid on ground (receive)
-  virtual bool on_receive_video_data_primary(const uint8_t* data,int data_len)=0;
-  virtual bool on_receive_video_data_secondary(const uint8_t* data,int data_len)=0;
-
+  /**
+   * For registering the callback called with the received telemetry packets.
+   */
   std::shared_ptr<openhd::TxRxTelemetry> get_telemetry_tx_rx_handle(){
     return m_tx_rx_handle;
   }
  protected:
   const OHDProfile m_profile;
-
  private:
   std::shared_ptr<openhd::TxRxTelemetry> m_tx_rx_handle;
 };
