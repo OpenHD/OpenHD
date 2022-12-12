@@ -25,19 +25,20 @@ set(sources
     inc/video_forwarder.h
     inc/wb_link_helper.h
     inc/wifi_channel.h
+    inc/wifi_command_helper.h
 
     "src/wifi_card_discovery.cpp"
     "src/ohd_interface.cpp"
     "src/ohd_link.cpp"
     "src/usb_tether_listener.cpp"
     "src/wb_link.cpp"
-    "src/wifi_command_helper.hpp"
     "src/wifi_hotspot.cpp"
     src/wifi_hotspot_settings.cpp
     "src/wifi_command_helper2.cpp"
+    src/wifi_command_helper.cpp
     src/video_forwarder.cpp
     src/wb_link_helper.cpp
-)
+    )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 

@@ -1,5 +1,5 @@
 #include "wb_link.h"
-#include "wifi_command_helper.hpp"
+#include "wifi_command_helper.h"
 //#include "wifi_command_helper2.h"
 
 #include <wifi_command_helper2.h>
@@ -99,7 +99,7 @@ void WBLink::takeover_cards_monitor_mode() {
   // wifibroadcast and therefore making other networking increadibly hard.
   // Tell network manager to ignore the cards we want to do wifibroadcast on
   for(const auto& card: m_broadcast_cards){
-    WifiCardCommandHelper::network_manager_set_card_unmanaged(card->_wifi_card);
+    wifi::commandhelper::nmcli_set_device_unmanaged(card->_wifi_card.interface_name);
   }
   OHDUtil::run_command("rfkill",{"unblock","all"});
   // TODO: sometimes this happens:
@@ -339,10 +339,10 @@ void WBLink::apply_txpower() {
       // requires corresponding driver workaround for dynamic tx power
       const auto tmp=settings.wb_rtl8812au_tx_pwr_idx_override;
       m_console->debug("RTL8812AU tx_pwr_idx_override: {}",tmp);
-      WifiCardCommandHelper::iw_set_tx_power_mBm(card,tmp);
+      wifi::commandhelper::iw_set_tx_power(card.interface_name,tmp);
     }else{
       const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
-      WifiCardCommandHelper::iw_set_tx_power_mBm(card,tmp);
+      wifi::commandhelper::iw_set_tx_power(card.interface_name,tmp);
       //WifiCardCommandHelper::iwconfig_set_txpower(card,settings.wb_tx_power_milli_watt);
     }
   }

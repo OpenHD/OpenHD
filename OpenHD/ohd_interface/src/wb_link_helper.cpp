@@ -4,7 +4,7 @@
 
 #include "wb_link_helper.h"
 
-#include "wifi_command_helper.hpp"
+#include "wifi_command_helper.h"
 #include "wifi_command_helper2.h"
 
 bool openhd::wb::disable_all_frequency_checks() {

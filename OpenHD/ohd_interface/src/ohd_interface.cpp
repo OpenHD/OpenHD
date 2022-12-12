@@ -9,7 +9,7 @@
 #include <utility>
 
 #include "wb_link_settings.hpp"
-#include "wifi_command_helper.hpp"
+#include "wifi_command_helper.h"
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
 platform(platform1),profile(std::move(profile1)) {
@@ -114,7 +114,7 @@ platform(platform1),profile(std::move(profile1)) {
       m_wifi_hotspot->start_async();
     }else{
       // Make sure the rpi internal wifi is disabled when hotspot is disabled to not interfere
-      WifiCardCommandHelper::set_card_state(optional_hotspot_card->_wifi_card, false);
+      wifi::commandhelper::ip_link_set_card_state(optional_hotspot_card->_wifi_card.interface_name, false);
     }
   }else{
     m_console->debug("Optional hotspot card does not exist");
