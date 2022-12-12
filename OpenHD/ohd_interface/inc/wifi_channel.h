@@ -45,26 +45,26 @@ struct WifiChannel{
 // use the frequency in mhz, which is well defined.
 static std::vector<WifiChannel> get_channels_below_standard_2G_wifi(){
   return std::vector<WifiChannel>{
-      WifiChannel{2312, 34,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2317, 35,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2322, 36,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2327, 37,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2332, 38,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2337, 39,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2342, 40,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2347, 41,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2352, 42,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2357, 43,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2362, 44,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2367, 45,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2372, 46,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2377, 47,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2382, 48,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2387, 49,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2392, 50,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2397, 51,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2402, 52,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2407, 53,Space::G2_4,false}, /* Channel XX */
+      WifiChannel{2312, -1,Space::G2_4,false},
+      WifiChannel{2317, -1,Space::G2_4,false},
+      WifiChannel{2322, -1,Space::G2_4,false},
+      WifiChannel{2327, -1,Space::G2_4,false},
+      WifiChannel{2332, -1,Space::G2_4,false},
+      WifiChannel{2337, -1,Space::G2_4,false},
+      WifiChannel{2342, -1,Space::G2_4,false},
+      WifiChannel{2347, -1,Space::G2_4,false},
+      WifiChannel{2352, -1,Space::G2_4,false},
+      WifiChannel{2357, -1,Space::G2_4,false},
+      WifiChannel{2362, -1,Space::G2_4,false},
+      WifiChannel{2367, -1,Space::G2_4,false},
+      WifiChannel{2372, -1,Space::G2_4,false},
+      WifiChannel{2377, -1,Space::G2_4,false},
+      WifiChannel{2382, -1,Space::G2_4,false},
+      WifiChannel{2387, -1,Space::G2_4,false},
+      WifiChannel{2392, -1,Space::G2_4,false},
+      WifiChannel{2397, -1,Space::G2_4,false},
+      WifiChannel{2402, -1,Space::G2_4,false},
+      WifiChannel{2407, -1,Space::G2_4,false},
   };
 }
 
@@ -88,7 +88,7 @@ static std::vector<WifiChannel> get_channels_2G_standard() {
       // until here it is consistent (5Mhz increments)
       // this one is neither allowed in EU nor USA
       // (only in Japan under 11b)
-      //WifiChannel{2484,14},
+      WifiChannel{2484,14,Space::G2_4,true},
   };
 };
 
@@ -97,26 +97,23 @@ static std::vector<WifiChannel> get_channels_2G_standard() {
 // NOTE: channel and frequency seem to be off by one
 static std::vector<WifiChannel> get_channels_above_standard_2G_wifi(){
   return std::vector<WifiChannel>{
-      WifiChannel{2478, 15,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2482, 16,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2484, 17,Space::G2_4,false}, /* Channel 14 */
-      WifiChannel{2487, 18,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2489, 19,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2492, 20,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2494, 21,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2497, 22,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2499, 23,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2512, 24,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2532, 25,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2572, 26,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2592, 27,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2612, 28,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2632, 29,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2652, 30,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2672, 31,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2692, 32,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2712, 33,Space::G2_4,false}, /* Channel XX */
-      WifiChannel{2732, 34,Space::G2_4,false}, /* Channel XX */
+      WifiChannel{2487, -1,Space::G2_4,false},
+      WifiChannel{2489, -1,Space::G2_4,false},
+      WifiChannel{2492, -1,Space::G2_4,false},
+      WifiChannel{2494, -1,Space::G2_4,false},
+      WifiChannel{2497, -1,Space::G2_4,false},
+      WifiChannel{2499, -1,Space::G2_4,false},
+      WifiChannel{2512, -1,Space::G2_4,false},
+      WifiChannel{2532, -1,Space::G2_4,false},
+      WifiChannel{2572, -1,Space::G2_4,false},
+      WifiChannel{2592, -1,Space::G2_4,false},
+      WifiChannel{2612, -1,Space::G2_4,false},
+      WifiChannel{2632, -1,Space::G2_4,false},
+      WifiChannel{2652, -1,Space::G2_4,false},
+      WifiChannel{2672, -1,Space::G2_4,false},
+      WifiChannel{2692, -1,Space::G2_4,false},
+      WifiChannel{2712, -1,Space::G2_4,false},
+      WifiChannel{2732, -1,Space::G2_4,false},
   };
 }
 
