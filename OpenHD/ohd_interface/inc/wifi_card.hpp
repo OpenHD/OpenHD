@@ -57,24 +57,6 @@ static std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
   }
 }
 
-enum class WiFiHotspotType {
-  None = 0,
-  Internal2GBand,
-  Internal5GBand,
-  InternalDualBand,
-  External,
-};
-static std::string wifi_hotspot_type_to_string(const WiFiHotspotType &wifi_hotspot_type) {
-  switch (wifi_hotspot_type) {
-    case WiFiHotspotType::Internal2GBand:return "internal2g";
-    case WiFiHotspotType::Internal5GBand:  return "internal5g";
-    case WiFiHotspotType::InternalDualBand:  return "internaldualband";
-    case WiFiHotspotType::External:  return "external";
-    case WiFiHotspotType::None:
-    default:
-      return "none";
-  }
-}
 
 // What to use a discovered wifi card for. R.n We support hotspot or monitor mode (wifibroadcast),
 // I doubt that will change.
