@@ -279,9 +279,9 @@ int main(int argc, char *argv[]) {
     // can be disabled for development purposes.
     if(!options.no_qt_autostart){
       if(!profile->is_air){
-        OHDUtil::run_command("systemctl",{" start qopenhd"});
+        OHDUtil::run_command("systemctl",{"start","qopenhd"});
       }else{
-        OHDUtil::run_command("systemctl",{" stop qopenhd"});
+        OHDUtil::run_command("systemctl",{"stop","qopenhd"});
       }
     }
 
