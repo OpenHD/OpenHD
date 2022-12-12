@@ -55,12 +55,8 @@ struct WBLinkSettings {
 
   // wb link recommends bitrate(s) to the encoder, can be helpfully for inexperienced users.
   bool enable_wb_video_variable_bitrate= false;
-
   // Helper
-  [[nodiscard]] bool configured_for_2G()const{
-    return is_valid_frequency_2G(wb_frequency, true);
-  }
-  bool is_video_variable_block_length_enabled()const{
+  [[nodiscard]] bool is_video_variable_block_length_enabled()const{
     return wb_video_fec_block_length==0;
   }
 };
