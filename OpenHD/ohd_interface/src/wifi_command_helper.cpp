@@ -32,7 +32,7 @@ bool wifi::commandhelper::iw_enable_monitor_mode(const std::string &device) {
 }
 
 bool wifi::commandhelper::iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz, bool width_40) {
-  get_logger()->info("iw_set_frequency_and_channel_width {} {}Mhz width{}",device,freq_mhz,width_40);
+  get_logger()->info("iw_set_frequency_and_channel_width {} {}Mhz width40: {}",device,freq_mhz,width_40);
   const std::string channel_width=width_40 ? "HT40+" : "HT20";
   std::vector<std::string> args{"dev", device, "set", "freq", std::to_string(freq_mhz), channel_width};
   bool success = OHDUtil::run_command("iw", args);
