@@ -46,10 +46,7 @@ enum class CameraType {
   // by openhd main executable nor created by openhd main executable (note: you'l loose any openhd-provided functionalities,e.g change camera settings and/or parameters
   // by that).
   // To keep this API somewhat stable we only define the following:
-  // Data needs to be provided by feeding rtp h264,h265 or mjpeg to udp port 5500 (localhost)
-  // Note: it might seem unnecessary to essentially take data from an udp port and then forward the data to another udp port, but this
-  // way we are prepared for when OpenHD is changed to take a raw data callback instead of UDP for getting data from openhd_video to
-  // ohd_interface
+  // Data needs to be provided by feeding h264,h265 or mjpeg encapsulated in RTP to udp port 5500 (localhost)
   CUSTOM_UNMANAGED_CAMERA
 };
 NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
