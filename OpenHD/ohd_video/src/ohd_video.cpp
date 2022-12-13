@@ -6,7 +6,6 @@
 
 #include "gstreamerstream.h"
 #include "ohd_video.h"
-//#include "veyestream.h"
 
 OHDVideo::OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,
                    std::shared_ptr<openhd::ActionHandler> opt_action_handler,
