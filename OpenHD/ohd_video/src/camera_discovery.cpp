@@ -415,14 +415,14 @@ DiscoveredCameraList DCameras::discover(const OHDPlatform ohdPlatform) {
 }
 
 bool DCameras::detect_rapsberrypi_veye_v4l2_aaargh() {
-  const auto result_opt=OHDUtil::run_command_out("dmesg | grep \"camera id is veye\"");
+  /*const auto result_opt=OHDUtil::run_command_out("dmesg | grep \"camera id is veye\"");
   if(!result_opt.has_value()){
     return false;
   }
   const auto result=result_opt.value();
   if(OHDUtil::contains(result,"camera id is veye327")){
     return true;
-  }
+  }*/
   Camera camera;
   camera.type=CameraType::RPI_VEYE_CSI_V4l2;
   camera.bus="0";

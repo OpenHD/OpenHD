@@ -165,6 +165,13 @@ static std::string createRpicamsrcStream(const int camera_number,
 }
 
 // v4l2 h264 encoder on raspberry pi
+// we configure the v4l2 h264 encoder by using the extra controls
+// We want constant bitrate (e.g. what the user has set) as long as we don't dynamcially adjust anything
+// in this regard (video_bitrate_mode)
+// 24.10.22: something seems t be bugged on the rpi v4l2 encoder, setting constant bitrate doesn't work and
+// somehow increases latency (,video_bitrate_mode=1)
+// The default for h264_minimum_qp_value seems to be 20 - we set it to something lower, so we can get a higher bitrate
+// on scenes with less change (openhd values consistency over everything else)
 static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   std::stringstream ss;
   // rpi v4l2 encoder takes bit/s instead of kbit/s
@@ -191,16 +198,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
         settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
     // We got rid of the v4l2convert - see
     // https://github.com/raspberrypi/libcamera/issues/30
-    // and configure the v4l2 h264 encoder by using the extra controls
-    // We want constant bitrate (e.g. what the user has set) as long as we don't dynamcially adjust anything
-    // in this regard (video_bitrate_mode)
-    // 24.10.22: something seems t be bugged on the rpi v4l2 encoder, setting constant bitrate doesn't work and
-    // somehow increases latency (,video_bitrate_mode=1)
-    // The default for h264_minimum_qp_value seems to be 20 - we set it to something lower, so we can get a higher bitrate
-    // on scenes with less change
-    //static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
-    //ss << fmt::format("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
-    //    "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
+    // after the libcamerasrc part, we can just append the rpi v4l2 h264 encoder part
     ss<<create_rpi_v4l2_h264_encoder(settings);
   } else if (settings.streamed_video_format.videoCodec == VideoCodec::MJPEG) {
     ss << fmt::format(
