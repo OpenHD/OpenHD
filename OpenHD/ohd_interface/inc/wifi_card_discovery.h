@@ -22,6 +22,14 @@ bool any_wifi_card_supporting_monitor(const std::vector<WiFiCard>& cards);
 
 // helper to figure out more info about a semi-discovered wifi card
 std::optional<WiFiCard> process_card(const std::string &interface_name);
+
+struct ProcessedWifiCards{
+  std::vector<WiFiCard> monitor_mode_cards;
+  std::optional<WiFiCard> hotspot_card;
+};
+
+ProcessedWifiCards process_and_evaluate_cards(std::vector<WiFiCard> discovered_cards,bool max_one_broadcast_card);
+
 };
 
 #endif //OHD_DISCOVER_WiFI_CARDS

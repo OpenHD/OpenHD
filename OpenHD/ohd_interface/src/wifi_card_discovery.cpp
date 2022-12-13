@@ -269,3 +269,23 @@ bool DWifiCards::any_wifi_card_supporting_monitor(const std::vector<WiFiCard>& c
   }
   return false;
 }
+
+DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(std::vector<WiFiCard> discovered_cards,bool max_one_broadcast_card) {
+
+  std::vector<WiFiCard> monitor_mode_cards{};
+  std::optional<WiFiCard> hotspot_card=std::nullopt;
+
+  for(const auto& card:discovered_cards){
+    if(card.supports_injection){
+      monitor_mode_cards.push_back(card);
+    }else{
+      if(card.supports_hotspot && hotspot_card==std::nullopt){
+        hotspot_card=card;
+      }
+    }
+  }
+  if(max_one_broadcast_card && monitor_mode_cards.size()>1){
+    monitor_mode_cards.reserve(1);
+  }
+  return {monitor_mode_cards,hotspot_card};
+}
