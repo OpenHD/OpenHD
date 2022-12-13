@@ -562,7 +562,6 @@ static std::string create_input_custom_udp_rtp_port(const CameraSettings& settin
   std::stringstream ss;
   ss<<fmt::format("udpsrc address={} port={} {} ! ",address, input_port, gst_create_caps(settings.streamed_video_format.videoCodec));
   ss<<create_rtp_depacketize_for_codec(settings.streamed_video_format.videoCodec);
-  ss<<create_parse_for_codec(settings.streamed_video_format.videoCodec);
   return ss.str();
 }
 
@@ -570,7 +569,6 @@ static std::string create_ip_cam_stream_with_depacketize_and_parse(const std::st
   std::stringstream ss;
   ss<<createIpCameraStream(url);
   ss<<create_rtp_depacketize_for_codec(videoCodec);
-  ss<<create_parse_for_codec(videoCodec);
   return ss.str();
 }
 
