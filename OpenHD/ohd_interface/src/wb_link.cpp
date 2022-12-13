@@ -41,7 +41,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   // sanity checking
   for(const auto& card: m_broadcast_cards){
     assert(card->get_settings().use_for==WifiUseFor::MonitorMode);
-    assert(card->_wifi_card.supports_2ghz || card->_wifi_card.supports_5ghz);
+    assert(card->_wifi_card.supports_2GHz() || card->_wifi_card.supports_5GHz());
   }
   if (m_profile.is_air && m_broadcast_cards.size() > 1) {
     // We cannot use more than 1 wifi card for injection
@@ -841,11 +841,11 @@ void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_l
 WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
   const auto& card=m_broadcast_cards.at(0)->get_wifi_card();
   std::vector<openhd::WifiChannel> channels_to_scan;
-  if(params.check_2g_channels_if_card_support && card.supports_2ghz){
+  if(params.check_2g_channels_if_card_support && card.supports_2GHz()){
     auto tmp=openhd::get_channels_2G(true);
     channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
   }
-  if(params.check_5g_channels_if_card_supports && card.supports_5ghz){
+  if(params.check_5g_channels_if_card_supports && card.supports_5GHz()){
     auto tmp=openhd::get_channels_5G(false);
     channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
   }

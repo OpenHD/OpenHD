@@ -165,40 +165,40 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 
   switch (card.type) {
     case WiFiCardType::Atheros9k: {
-      card.supports_5ghz = supports_5ghz;
-      card.supports_2ghz = supports_2ghz;
+      card.xx_supports_5ghz = supports_5ghz;
+      card.xx_supports_2ghz = supports_2ghz;
       card.supports_rts = true;
       card.supports_injection = true;
       card.supports_hotspot = false;
       break;
     }
     case WiFiCardType::Atheros9khtc: {
-      card.supports_5ghz = supports_5ghz;
-      card.supports_2ghz = supports_2ghz;
+      card.xx_supports_5ghz = supports_5ghz;
+      card.xx_supports_2ghz = supports_2ghz;
       card.supports_rts = true;
       card.supports_injection = true;
       card.supports_hotspot = false;
       break;
     }
     case WiFiCardType::Ralink: {
-      card.supports_5ghz = supports_5ghz;
-      card.supports_2ghz = supports_2ghz;
+      card.xx_supports_5ghz = supports_5ghz;
+      card.xx_supports_2ghz = supports_2ghz;
       card.supports_rts = false;
       card.supports_injection = true;
       card.supports_hotspot = false;
       break;
     }
     case WiFiCardType::Intel: {
-      card.supports_5ghz = supports_5ghz;
-      card.supports_2ghz = supports_2ghz;
+      card.xx_supports_5ghz = supports_5ghz;
+      card.xx_supports_2ghz = supports_2ghz;
       card.supports_rts = false;
       card.supports_injection = false;
       card.supports_hotspot = false;
       break;
     }
     case WiFiCardType::Broadcom: {
-      card.supports_5ghz = supports_5ghz;
-      card.supports_2ghz = supports_2ghz;
+      card.xx_supports_5ghz = supports_5ghz;
+      card.xx_supports_2ghz = supports_2ghz;
       card.supports_rts = false;
       card.supports_injection = false;
       card.supports_hotspot = true;
@@ -207,24 +207,24 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
     case WiFiCardType::Realtek8812au: {
       // Known issue: Realtek8812au reports 2.4 and 5G, but only supports 5G in monitor mode
       // 22.10.22: Actually, rtl8812au supports both 2.4G and 5G in monitor mode, at least with our current driver branch
-      card.supports_5ghz=true;
-      card.supports_2ghz = true;
+      card.xx_supports_5ghz=true;
+      card.xx_supports_2ghz = true;
       card.supports_rts = true;
       card.supports_injection = true;
       card.supports_hotspot = false;
       break;
     }
     case WiFiCardType::Realtek88x2bu: {
-      card.supports_5ghz = supports_5ghz;
-      card.supports_2ghz = supports_2ghz;
+      card.xx_supports_5ghz = supports_5ghz;
+      card.xx_supports_2ghz = supports_2ghz;
       card.supports_rts = false;
       card.supports_injection = true;
       card.supports_hotspot = false;
       break;
     }
     case WiFiCardType::Realtek8188eu: {
-      card.supports_5ghz = supports_5ghz;
-      card.supports_2ghz = supports_2ghz;
+      card.xx_supports_5ghz = supports_5ghz;
+      card.xx_supports_2ghz = supports_2ghz;
       card.supports_rts = false;
       card.supports_injection = true;
       card.supports_hotspot = false;
@@ -232,8 +232,8 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
     }
     default: {
       openhd::log::get_default()->warn("Unknown card type for "+card.interface_name);
-      card.supports_5ghz = supports_5ghz;
-      card.supports_2ghz = supports_2ghz;
+      card.xx_supports_5ghz = supports_5ghz;
+      card.xx_supports_2ghz = supports_2ghz;
       card.supports_rts = false;
       card.supports_injection = false;
       card.supports_hotspot = false;
@@ -246,9 +246,9 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
     card.supports_hotspot= true;
   }
   // hacky there is something wron with phy-lookup
-  if(!(card.supports_2ghz  || card.supports_5ghz)){
+  if(!(card.xx_supports_2ghz  || card.xx_supports_5ghz)){
     openhd::log::get_default()->warn("Card "+card.interface_name+" reports neither 2G nor 5G, default to 2G capable");
-    card.supports_2ghz=true;
+    card.xx_supports_2ghz=true;
   }
   if(openhd::ignore::should_be_ignored_interface(card.interface_name)
       || openhd::ignore::should_be_ignored_mac(card.mac)){

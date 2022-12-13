@@ -92,8 +92,8 @@ static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform)
 static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platform,const std::vector<WiFiCard>& wifibroadcast_cards){
   assert(!wifibroadcast_cards.empty());
   const auto first_card=wifibroadcast_cards.at(0);
-  assert(first_card.supports_5ghz || first_card.supports_2ghz);
-  const bool use_5ghz= wifibroadcast_cards.at(0).supports_5ghz;
+  assert(first_card.supports_5GHz() || first_card.supports_2GHz());
+  const bool use_5ghz= wifibroadcast_cards.at(0).supports_5GHz();
   WBLinkSettings settings{};
   if(use_5ghz){
 	settings.wb_frequency=DEFAULT_5GHZ_FREQUENCY;

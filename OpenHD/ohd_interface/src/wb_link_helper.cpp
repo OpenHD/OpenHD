@@ -65,7 +65,7 @@ void openhd::wb::fixup_unsupported_settings(
   const auto channel_opt= channel_from_frequency(settings.get_settings().wb_frequency);
   if(!channel_opt){
     m_console->warn("Not a valid frequency {}",settings.get_settings().wb_frequency);
-    if(first_card.supports_5ghz){
+    if(first_card.supports_5GHz()){
       settings.unsafe_get_settings().wb_frequency=DEFAULT_5GHZ_FREQUENCY;
       settings.persist();
     }else{
@@ -78,14 +78,14 @@ void openhd::wb::fixup_unsupported_settings(
   assert(channel_opt2.has_value());
   const auto channel=channel_opt2.value();
   if(channel.space==Space::G2_4){
-    if(!first_card.supports_2ghz){
+    if(!first_card.supports_2GHz()){
       m_console->warn("Freq {} but card doesn't support 2.4G",channel.to_string());
       settings.unsafe_get_settings().wb_frequency=DEFAULT_5GHZ_FREQUENCY;
       settings.persist();
     }
   }else{
     assert(channel.space==Space::G5_8);
-    if(!first_card.supports_5ghz){
+    if(!first_card.supports_5GHz()){
       m_console->warn("Freq {} but card doesn't support 5G",channel.to_string());
       settings.unsafe_get_settings().wb_frequency=DEFAULT_2GHZ_FREQUENCY;
       settings.persist();
