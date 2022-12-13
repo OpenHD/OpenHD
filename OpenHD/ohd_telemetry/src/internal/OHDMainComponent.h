@@ -39,6 +39,7 @@
 class OHDMainComponent : public MavlinkComponent{
  public:
   explicit OHDMainComponent(OHDPlatform platform,uint8_t parent_sys_id,bool runsOnAir,std::shared_ptr<openhd::ActionHandler> opt_action_handler);
+  ~OHDMainComponent();
   // override from component
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
   // override from component

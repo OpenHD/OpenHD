@@ -40,7 +40,8 @@ AirTelemetry::~AirTelemetry() {
 void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages) {
   std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
   if(m_serial_endpoint){
-    m_serial_endpoint->sendMessages(messages);
+    auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_AIR);
+    m_serial_endpoint->sendMessages(generic);
   }else{
     //m_console->warn("Cannot send message to FC");
   }
@@ -112,10 +113,8 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
 	const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
 	if(loopDelta>loop_intervall){
 	  // We can't keep up with the wanted loop interval
-	  std::stringstream ss;
-	  ss<<"Warning AirTelemetry cannot keep up with the wanted loop interval. Took:"
-	  <<std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count()<<"ms";
-          m_console->debug(ss.str());
+          m_console->debug("Warning AirTelemetry cannot keep up with the wanted loop interval. Took {}ms",
+                           std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count());
 	}else{
 	  const auto sleepTime=loop_intervall-loopDelta;
 	  // send out in X second intervals
@@ -260,8 +259,8 @@ void AirTelemetry::setup_uart() {
   }
 }
 
-void AirTelemetry::set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle) {
-  m_wb_endpoint = std::make_unique<WBEndpoint>(handle,"wb_tx");
+void AirTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
+  m_wb_endpoint = std::make_unique<WBEndpoint>(link,"wb_tx");
   m_wb_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_unit(messages);
   });

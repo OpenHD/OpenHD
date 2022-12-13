@@ -55,12 +55,8 @@ struct WBLinkSettings {
 
   // wb link recommends bitrate(s) to the encoder, can be helpfully for inexperienced users.
   bool enable_wb_video_variable_bitrate= false;
-
   // Helper
-  [[nodiscard]] bool configured_for_2G()const{
-	return is_2G_and_assert(wb_frequency);
-  }
-  bool is_video_variable_block_length_enabled()const{
+  [[nodiscard]] bool is_video_variable_block_length_enabled()const{
     return wb_video_fec_block_length==0;
   }
 };
@@ -79,7 +75,8 @@ static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform)
       return 20;
     }
       break;
-    case PlatformType::PC:
+    case PlatformType::PC: // x86 is so much more powerful than ARM so we can easily do 30, assuming no one uses HW from 2010 ;)
+      return 30;
     case PlatformType::Jetson:
     case PlatformType::NanoPi:
     case PlatformType::iMX6:

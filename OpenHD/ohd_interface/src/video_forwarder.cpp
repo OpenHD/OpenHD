@@ -2,7 +2,7 @@
 // Created by consti10 on 09.12.22.
 //
 
-#include "ground_video_forwarder.h"
+#include "video_forwarder.h"
 
 GroundVideoForwarder::GroundVideoForwarder() {
   udpMultiForwarder = std::make_unique<SocketHelper::UDPMultiForwarder>();

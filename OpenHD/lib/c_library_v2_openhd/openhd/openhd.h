@@ -10,7 +10,7 @@
     #error Wrong include order: MAVLINK_OPENHD.H MUST NOT BE DIRECTLY USED. Include mavlink.h from the same directory instead or set ALL AND EVERY defines from MAVLINK.H manually accordingly, including the #define MAVLINK_H call.
 #endif
 
-#define MAVLINK_OPENHD_XML_HASH 3019497200538475669
+#define MAVLINK_OPENHD_XML_HASH -164158420691685161
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +33,17 @@ extern "C" {
 // ENUM DEFINITIONS
 
 
+/** @brief Commands for OpenHD */
+#ifndef HAVE_ENUM_OPENHD_CMD
+#define HAVE_ENUM_OPENHD_CMD
+typedef enum OPENHD_CMD
+{
+   OPENHD_CMD_INITIATE_CHANNEL_SEARCH=11200, /* Initiate channel search, aka find the channel the air unit is currently running on |frequency channels to scan, 0=2.4G and 5.8G, 1: 2.4G only, 2: 5G only| Empty| Empty| Empty| Empty|  */
+   OPENHD_CMD_DUMMY1=11201, /* dummy1 |Empty| Empty| Empty| Empty|  */
+   OPENHD_CMD_DUMMY2=11202, /* dummy2 |Empty| Empty| Empty| Empty|  */
+   OPENHD_CMD_ENUM_END=11203, /*  | */
+} OPENHD_CMD;
+#endif
 
 // MAVLINK VERSION
 

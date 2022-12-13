@@ -57,14 +57,6 @@ bool wifi::commandhelper2::set_wifi_monitor_mode(const std::string &device) {
     return false;
   }
 
-  // The v5.6.4.2 rtl8812au driver throttles monitor mode trafic by default
-  // removed, we are not on v5.6.4.2
-  /*FILE *fp = fopen("/sys/module/88XXau/parameters/rtw_monitor_disable_1m", "w");
-  if (fp) {
-    fprintf(fp, "1");
-    fclose(fp);
-  }*/
-
   // Create the socket and connect to it.
   struct nl_sock *sckt = nl_socket_alloc();
   genl_connect(sckt);
@@ -102,7 +94,11 @@ nla_put_failure:
 
 bool wifi::commandhelper2::set_wifi_frequency(const std::string& device,
                                              uint32_t freq_mhz,std::optional<uint32_t> channel_width) {
-  get_logger()->debug("set_wifi_frequency {} {}Mhz",device,freq_mhz);
+  if(channel_width.has_value()){
+    get_logger()->debug("set_wifi_frequency {} {}Mhz {}Mhz",device,freq_mhz,channel_width.value());
+  }else{
+    get_logger()->debug("set_wifi_frequency {} {}Mhz",device,freq_mhz);
+  }
   int err = 1;
   struct nl_cb *cb = nl_cb_alloc(NL_CB_DEFAULT);
   int rc;
@@ -125,6 +121,20 @@ bool wifi::commandhelper2::set_wifi_frequency(const std::string& device,
   NLA_PUT_U32(mesg, NL80211_ATTR_WIPHY_FREQ, freq_mhz);
   if(channel_width!=std::nullopt){
     const uint32_t channel_width_given=channel_width.value();
+    auto netlink_channel_width=NL80211_CHAN_WIDTH_20;
+    switch (channel_width_given) {
+      case 10:
+        netlink_channel_width=NL80211_CHAN_WIDTH_10;
+      case 20:
+        netlink_channel_width=NL80211_CHAN_WIDTH_20;
+        break;
+      case 40:
+        netlink_channel_width=NL80211_CHAN_WIDTH_40;
+        break;
+      default:
+        get_logger()->debug("Invalid channel width {}, assuming 20Mhz",channel_width_given);
+        break;
+    }
     NLA_PUT_U32(mesg,NL80211_ATTR_CHANNEL_WIDTH,channel_width_given);
   }
 
@@ -140,6 +150,14 @@ bool wifi::commandhelper2::set_wifi_frequency(const std::string& device,
 nla_put_failure:
   nlmsg_free(mesg);
   nl_socket_free(sckt);
+  return false;
+}
+
+bool wifi::commandhelper2::set_wifi_frequency_and_log_result(
+    const std::string &device, uint32_t freq_mhz,
+    std::optional<uint32_t> channel_width) {
+  const bool res= set_wifi_frequency(device,freq_mhz,channel_width);
+  get_logger()->debug("Success {} {}",freq_mhz,res);
   return false;
 }
 
@@ -175,3 +193,4 @@ nla_put_failure:
   nl_socket_free(sckt);
   return false;
 }
+

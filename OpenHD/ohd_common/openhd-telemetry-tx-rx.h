@@ -10,6 +10,7 @@
 #include <memory>
 #include <optional>
 #include <functional>
+#include <mutex>
 
 namespace openhd{
 

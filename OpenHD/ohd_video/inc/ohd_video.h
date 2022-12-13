@@ -24,10 +24,11 @@ class OHDVideo {
    * Creates a video stream for each of the discovered cameras given in @param cameras. You have to provide at least one camera -
    * if there is no camera found, use a dummy camera.
    * @param opt_action_handler openhd global handler for communication between different ohd modules.
+   * @param link_handle handle for sending video data over the (currently only wb) link between air and ground
    */
   OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,
            std::shared_ptr<openhd::ActionHandler> opt_action_handler,
-           std::shared_ptr<openhd::ITransmitVideo> interface_transmit_video);
+           std::shared_ptr<OHDLink> link_handle);
   OHDVideo(const OHDVideo&)=delete;
   OHDVideo(const OHDVideo&&)=delete;
   /**
@@ -53,7 +54,7 @@ class OHDVideo {
   // r.n limited to primary and secondary camera
   static constexpr auto MAX_N_CAMERAS=2;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
-  std::shared_ptr<openhd::ITransmitVideo> m_interface_transmit_video;
+  std::shared_ptr<OHDLink> m_link_handle;
  private:
   // Add a CameraStream for a discovered camera.
   void configure(const std::shared_ptr<CameraHolder>& camera);

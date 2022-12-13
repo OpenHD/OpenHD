@@ -10,6 +10,8 @@
 #include <sstream>
 #include <iostream>
 
+#include "openhd-spdlog.hpp"
+
 namespace MExampleMessage {
 // mostly from https://github.com/mavlink/mavlink/blob/master/examples/linux/mavlink_udp.c
 static uint64_t microsSinceEpoch() {
@@ -168,6 +170,61 @@ static MavlinkMessage pack_rc_message(const int sys_id,const int comp_id,
   mavlink_rc_channels_override.chan18_raw=rc_data[17];
   mavlink_msg_rc_channels_override_encode(sys_id,comp_id,&ret.m,&mavlink_rc_channels_override);
   return ret;
+}
+
+// Optimize message routing: If a message has a target sys / comp id, only send it to the specified sys / comp id
+struct MTarget{
+  uint16_t sys_id;
+  uint16_t comp_id;
+  bool has_target() const{
+    return sys_id!=0;
+  }
+};
+static MTarget get_target_from_message_if_available(const mavlink_message_t& msg){
+  if(msg.incompat_flags)
+  if(msg.msgid==MAVLINK_MSG_ID_COMMAND_LONG){
+    mavlink_command_long_t command;
+    mavlink_msg_command_long_decode(&msg,&command);
+    return {command.target_system,command.target_component};
+  }
+  if(msg.msgid==MAVLINK_MSG_ID_PARAM_EXT_SET){
+    mavlink_param_ext_set_t tmp;
+    mavlink_msg_param_ext_set_decode(&msg,&tmp);
+    return {tmp.target_system,tmp.target_component};
+  }
+  if(msg.msgid==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ){
+    mavlink_param_ext_request_read_t tmp;
+    mavlink_msg_param_ext_request_read_decode(&msg,&tmp);
+    return {tmp.target_system,tmp.target_component};
+  }
+  if(msg.msgid==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_LIST){
+    mavlink_param_ext_request_list_t tmp;
+    mavlink_msg_param_ext_request_list_decode(&msg,&tmp);
+    return {tmp.target_system,tmp.target_component};
+  }
+  // 0 == broadcast
+  return {0,0};
+}
+
+// The optimization we want to achieve is to "consume" messages with a given target sys and comp it
+// that matches the given target sys id (e.g. the openhd ground unit) instead of forwarding them
+// to all endpoints, e.g. the FC (those other endpoints won't do anything with the given message anyways)
+// pictorial speaking, we fill 2 buckets (generic and local_only) with the given message(s)
+static std::tuple<std::vector<MavlinkMessage>,std::vector<MavlinkMessage>> split_into_generic_and_local_only(
+    const std::vector<MavlinkMessage>& messages,uint16_t local_target_sys_id){
+  std::vector<MavlinkMessage> generic{};
+  generic.reserve(messages.size());
+  std::vector<MavlinkMessage> local_only{};
+  for(const auto& msg:messages){
+    const auto target= get_target_from_message_if_available(msg.m);
+    if(target.has_target() && target.sys_id==local_target_sys_id){
+      //openhd::log::get_default()->debug("local only message");
+      local_only.push_back(msg);
+    }else{
+      generic.push_back(msg);
+    }
+  }
+  return {generic,local_only};
 }
 
 #endif //XMAVLINKSERVICE_MAV_HELPER_H

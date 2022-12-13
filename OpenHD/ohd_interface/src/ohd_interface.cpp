@@ -9,7 +9,7 @@
 #include <utility>
 
 #include "wb_link_settings.hpp"
-#include "wifi_command_helper.hpp"
+#include "wifi_command_helper.h"
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
 platform(platform1),profile(std::move(profile1)) {
@@ -114,7 +114,7 @@ platform(platform1),profile(std::move(profile1)) {
       m_wifi_hotspot->start_async();
     }else{
       // Make sure the rpi internal wifi is disabled when hotspot is disabled to not interfere
-      WifiCardCommandHelper::set_card_state(optional_hotspot_card->_wifi_card, false);
+      wifi::commandhelper::ip_link_set_card_state(optional_hotspot_card->_wifi_card.interface_name, false);
     }
   }else{
     m_console->debug("Optional hotspot card does not exist");
@@ -198,23 +198,14 @@ void OHDInterface::set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK
   m_external_device_callback =std::move(cb);
 }
 
-void OHDInterface::restart_wb_streams_async() {
-  //TODO
-}
 void OHDInterface::print_internal_fec_optimization_method() {
   print_optimization_method();
 }
 
-std::shared_ptr<openhd::ITransmitVideo> OHDInterface::get_video_tx_interface() {
+std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
   if(m_wb_link){
     return m_wb_link;
   }
   return nullptr;
 }
 
-std::shared_ptr<openhd::TxRxTelemetry> OHDInterface::get_telemetry_tx_rx_interface() {
-  if(m_wb_link){
-    return m_wb_link->get_telemetry_tx_rx_interface();
-  }
-  return nullptr;
-}

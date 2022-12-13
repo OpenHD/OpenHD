@@ -24,7 +24,7 @@
 class GStreamerStream : public CameraStream {
  public:
   GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                  std::shared_ptr<openhd::ITransmitVideo> i_transmit_video);
+                  std::shared_ptr<OHDLink> link_handle);
   ~GStreamerStream();
   void setup() override;
  private:

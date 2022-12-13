@@ -10,9 +10,9 @@
 
 OHDVideo::OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,
                    std::shared_ptr<openhd::ActionHandler> opt_action_handler,
-                   std::shared_ptr<openhd::ITransmitVideo> interface_transmit_video) :
+                   std::shared_ptr<OHDLink> link) :
 	m_platform(platform1),m_opt_action_handler(std::move(opt_action_handler)),
-        m_interface_transmit_video(std::move(interface_transmit_video))
+        m_link_handle(std::move(link))
 {
   m_console = openhd::log::create_or_get("video");
   assert(m_console);
@@ -76,7 +76,7 @@ void OHDVideo::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
     case CameraType::CUSTOM_UNMANAGED_CAMERA:
     case CameraType::DUMMY_SW: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
-      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,m_interface_transmit_video);
+      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,m_link_handle);
       stream->setup();
       stream->start();
       m_camera_streams.push_back(stream);
@@ -84,7 +84,7 @@ void OHDVideo::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
     }
     case CameraType::RPI_CSI_LIBCAMERA: {
       m_console->debug("LibCamera index:{}", camera.index);
-      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, m_interface_transmit_video);
+      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, m_link_handle);
       stream->setup();
       stream->start();
       m_camera_streams.push_back(stream);

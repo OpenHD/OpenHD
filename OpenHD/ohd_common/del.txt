@@ -362,3 +362,5 @@ static uint32_t tx_power_level_to_rtl8812au_tx_power_index_override(const TxPowe
 static bool validate_tx_power_level(int value){
   return value>=TxPowerLevel::LOW && value<=TxPowerLevel::MAX;
 }
+auto res=OHDUtil::run_command_out("iw list");
+  openhd::log::get_default()->debug("XX {}",res.value_or("NONE"));

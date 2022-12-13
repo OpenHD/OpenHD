@@ -179,6 +179,9 @@ private:
     static std::optional<std::variant<std::string,std::uint16_t>>
     extract_request_read_param_identifier(int16_t param_index,const char* param_id);
 	const bool enable_log_target_mismatch=false;
+    // not following the mavlink standard
+    // have a minimum delay in between "broadcast all param(s)" requests
+    std::chrono::steady_clock::time_point m_last_broadcast_all_request=std::chrono::steady_clock::now();
 };
 
 } // namespace mavsdk

@@ -1,6 +1,7 @@
 #include "wb_link.h"
-#include "wifi_command_helper.hpp"
+#include "wifi_command_helper.h"
 //#include "wifi_command_helper2.h"
+
 
 #include <iostream>
 #include <utility>
@@ -10,6 +11,7 @@
 #include "openhd-platform.hpp"
 #include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
+#include "wb_link_helper.h"
 #include "wifi_card.hpp"
 
 static const char *KEYPAIR_FILE_DRONE = "/usr/local/share/openhd/drone.key";
@@ -19,7 +21,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
                      std::shared_ptr<openhd::ActionHandler> opt_action_handler) : m_profile(std::move(profile)),
       m_platform(platform),
       m_broadcast_cards(std::move(broadcast_cards1)),
-   m_disable_all_frequency_checks(OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS)),
+   m_disable_all_frequency_checks(openhd::wb::disable_all_frequency_checks()),
    m_opt_action_handler(std::move(opt_action_handler))
 {
   m_console = openhd::log::create_or_get("wb_streams");
@@ -49,43 +51,31 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   }
   // this fetches the last settings, otherwise creates default ones
   m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(platform,openhd::tmp_convert(m_broadcast_cards));
-  // check if the cards connected match the previous settings.
-  // For now, we check if the first wb card can do 2 / 4 ghz, and assume the rest can do the same
-  const auto first_card= m_broadcast_cards.at(0)->_wifi_card;
-  if(m_settings->get_settings().configured_for_2G()){
-    if(! first_card.supports_2ghz){
-      // we need to switch to 5ghz, since the connected card cannot do 2ghz
-      m_console->warn("WB configured for 2G but card can only do 5G - overwriting old settings");
-      m_settings->set_default_5G();
-    }
-  }else{
-    if(!first_card.supports_5ghz){
-      // similar, we need to switch to 2G
-      m_console->warn("WB configured for 5G but card can only do 2G - overwriting old settings");
-      m_settings->set_default_2G();
-    }
-  }
-  if(!validate_cards_support_setting_mcs_index()){
-    // cards that do not support changing the mcs index are always fixed to mcs3 on openhd drivers
-    m_settings->unsafe_get_settings().wb_mcs_index=3;
-    m_settings->persist();
-  }
+  // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
+  openhd::wb::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
   takeover_cards_monitor_mode();
   configure_cards();
   m_ground_video_forwarder=std::make_unique<GroundVideoForwarder>();
-  m_tx_rx_handle=std::make_shared<openhd::TxRxTelemetry>();
-  auto cb=[this](std::shared_ptr<std::vector<uint8_t>> data){
-    if(m_wb_tele_tx){
-      m_wb_tele_tx->feedPacket(data,std::nullopt);
-    }
-  };
-  m_tx_rx_handle->register_on_send_data_cb(cb);
-  configure_streams();
+  configure_telemetry();
+  configure_video();
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
+  auto cb2=[this](openhd::ActionHandler::ScanChannelsParam param){
+    ScanChannelsParams scan_channels_params{};
+    scan_channels_params.duration_per_channel=DEFAULT_SCAN_TIME_PER_CHANNEL;
+    scan_channels_params.check_2g_channels_if_card_support=param.check_2g_channels_if_card_support;
+    scan_channels_params.check_5g_channels_if_card_supports=param.check_5g_channels_if_card_supports;
+    async_scan_channels(scan_channels_params);
+  };
+  if(m_opt_action_handler){
+    m_opt_action_handler->action_wb_link_scan_channels_register(cb2);
+  }
 }
 
 WBLink::~WBLink() {
+  if(m_opt_action_handler){
+    m_opt_action_handler->action_wb_link_scan_channels_register(nullptr);
+  }
   if(m_work_thread){
     m_work_thread_run =false;
     m_work_thread->join();
@@ -101,9 +91,9 @@ void WBLink::takeover_cards_monitor_mode() {
   // wifibroadcast and therefore making other networking increadibly hard.
   // Tell network manager to ignore the cards we want to do wifibroadcast on
   for(const auto& card: m_broadcast_cards){
-    WifiCardCommandHelper::network_manager_set_card_unmanaged(card->_wifi_card);
+    wifi::commandhelper::nmcli_set_device_unmanaged(card->_wifi_card.interface_name);
   }
-  OHDUtil::run_command("rfkill",{"unblock","all"});
+  wifi::commandhelper::rfkill_unblock_all();
   // TODO: sometimes this happens:
   // 1) Running openhd fist time: pcap_compile doesn't work (fatal error)
   // 2) Running openhd second time: works
@@ -112,9 +102,9 @@ void WBLink::takeover_cards_monitor_mode() {
   std::this_thread::sleep_for(std::chrono::seconds(1));
   // now we can enable monitor mode on the given cards.
   for(const auto& card: m_broadcast_cards) {
-    WifiCardCommandHelper::set_card_state(card->_wifi_card, false);
-    WifiCardCommandHelper::enable_monitor_mode(card->_wifi_card);
-    WifiCardCommandHelper::set_card_state(card->_wifi_card, true);
+    wifi::commandhelper::ip_link_set_card_state(card->_wifi_card.interface_name, false);
+    wifi::commandhelper::iw_enable_monitor_mode(card->_wifi_card.interface_name);
+    wifi::commandhelper::ip_link_set_card_state(card->_wifi_card.interface_name, true);
     //wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
   }
   m_console->debug("WBStreams::takeover_cards_monitor_mode() end");
@@ -127,27 +117,14 @@ void WBLink::configure_cards() {
   m_console->debug("WBStreams::configure_cards() end");
 }
 
-void WBLink::configure_streams() {
-  m_console->debug("Streams::configure() begin");
-  // Increase the OS max UDP buffer size (only works as root) such that the wb video UDP receiver
-  // doesn't fail when requesting a bigger UDP buffer size
-  // NOTE: This value is quite high, but that doesn't matter - this is the max allowed, not what is set,
-  // and doesn't change the actual / default size
-  OHDUtil::run_command("sysctl ",{"-w","net.core.rmem_max=26214400"});
-  configure_telemetry();
-  configure_video();
-  m_console->debug("Streams::configure() end");
-}
-
 void WBLink::configure_telemetry() {
-  m_console->debug("Streams::configure_telemetry()isAir:"+OHDUtil::yes_or_no(m_profile.is_air));
   // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
   // tx radio port on air is the same as rx on ground and verse visa
   const auto radio_port_rx = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
   const auto radio_port_tx = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
   auto cb=[this](const uint8_t* data, int data_len){
     auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
-    m_tx_rx_handle->forward_to_on_receive_cb_if_set(shared);
+    on_receive_telemetry_data(shared);
   };
   m_wb_tele_rx = create_wb_rx(radio_port_rx, cb);
   m_wb_tele_rx->start_async();
@@ -155,14 +132,15 @@ void WBLink::configure_telemetry() {
 }
 
 void WBLink::configure_video() {
-  m_console->debug("Streams::configure_video()");
   // Video is unidirectional, aka always goes from air pi to ground pi
   if (m_profile.is_air) {
+    // we transmit video
     auto primary = create_wb_tx(OHD_VIDEO_PRIMARY_RADIO_PORT, true);
     auto secondary = create_wb_tx(OHD_VIDEO_SECONDARY_RADIO_PORT, true);
     m_wb_video_tx_list.push_back(std::move(primary));
     m_wb_video_tx_list.push_back(std::move(secondary));
   } else {
+    // we receive video
     auto cb1=[this](const uint8_t* data,int data_len){
       forward_video_data(0,data,data_len);
     };
@@ -308,42 +286,11 @@ bool WBLink::request_set_frequency(int frequency) {
   if(m_disable_all_frequency_checks){
     m_console->warn("Not sanity checking frequency");
   }else{
-    // channels below and above the normal channels, not allowed in most countries
-    bool cards_support_extra_2G_channels=false;
-    if(m_platform.platform_type==PlatformType::RaspberryPi ||
-        m_platform.platform_type==PlatformType::Jetson){
-      // modified kernel
-      cards_support_extra_2G_channels= all_cards_support_extra_channels_2G(m_broadcast_cards);
-    }
-    m_console->debug("cards_support_extra_2G_channels:"+OHDUtil::yes_or_no(cards_support_extra_2G_channels));
-    // check if the card supports both 2G and 5G
-    const bool cards_supports_both_frequencies = all_cards_support_2G(m_broadcast_cards) &&
-                                                 all_cards_support_5G(m_broadcast_cards);
-    m_console->debug("cards_supports_both_frequencies:"+OHDUtil::yes_or_no(cards_supports_both_frequencies));
-    if(cards_supports_both_frequencies){
-      // allow switching between 2G and 5G
-      const bool frequency_valid=openhd::is_valid_frequency_2G(frequency,cards_support_extra_2G_channels)
-                                   || openhd::is_valid_frequency_5G(frequency);
-      if(!frequency_valid){
-        m_console->debug("Not a valid 2G or 5G frequency {}",frequency);
-        return false;
-      }
-    }else{
-      // do not allow switching between 2G and 5G
-      if(m_settings->get_settings().configured_for_2G()){
-        if(!openhd::is_valid_frequency_2G(frequency,cards_support_extra_2G_channels)){
-          m_console->warn("Invalid 2.4G frequency {}",frequency);
-          return false;
-        }
-      }else{
-        if(!openhd::is_valid_frequency_5G(frequency)){
-          m_console->warn("Invalid 5G frequency {}",frequency);
-          return false;
-        }
-      }
+    if(!openhd::wb::cards_support_frequency(frequency,m_broadcast_cards,m_platform,m_console)){
+      return false;
     }
   }
-  if(!check_work_queue_empty())return false;
+  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_frequency=frequency;
   m_settings->persist();
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
@@ -354,12 +301,9 @@ bool WBLink::request_set_frequency(int frequency) {
   return true;
 }
 
-void WBLink::apply_frequency_and_channel_width() {
+bool WBLink::apply_frequency_and_channel_width() {
   const auto settings=m_settings->get_settings();
-  const bool width_40= settings.wb_channel_width==40;
-  for(const auto& card: m_broadcast_cards){
-    WifiCardCommandHelper::set_frequency_and_channel_width(card->_wifi_card,settings.wb_frequency,width_40);
-  }
+  return openhd::wb::set_frequency_and_channel_width_for_all_cards(settings.wb_frequency,settings.wb_channel_width,m_broadcast_cards);
 }
 
 bool WBLink::request_set_txpower(int tx_power) {
@@ -368,7 +312,7 @@ bool WBLink::request_set_txpower(int tx_power) {
     m_console->warn("Invalid tx power:{}",tx_power);
     return false;
   }
-  if(!check_work_queue_empty())return false;
+  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power;
   m_settings->persist();
   // No need to delay the change, but perform it async anyways.
@@ -387,10 +331,10 @@ void WBLink::apply_txpower() {
       // requires corresponding driver workaround for dynamic tx power
       const auto tmp=settings.wb_rtl8812au_tx_pwr_idx_override;
       m_console->debug("RTL8812AU tx_pwr_idx_override: {}",tmp);
-      WifiCardCommandHelper::iw_set_tx_power_mBm(card,tmp);
+      wifi::commandhelper::iw_set_tx_power(card.interface_name,tmp);
     }else{
       const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
-      WifiCardCommandHelper::iw_set_tx_power_mBm(card,tmp);
+      wifi::commandhelper::iw_set_tx_power(card.interface_name,tmp);
       //WifiCardCommandHelper::iwconfig_set_txpower(card,settings.wb_tx_power_milli_watt);
     }
   }
@@ -406,7 +350,7 @@ bool WBLink::request_set_mcs_index(int mcs_index) {
     m_console->warn("Cannot change mcs index, it is fixed for at least one of the used cards");
     return false;
   }
-  if(!check_work_queue_empty())return false;
+  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   m_settings->persist();
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
@@ -438,7 +382,7 @@ bool WBLink::request_set_channel_width(int channel_width) {
     m_console->warn("Cannot change channel width, at least one card doesn't support it");
     return false;
   }
-  if(!check_work_queue_empty())return false;
+  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_channel_width=channel_width;
   m_settings->persist();
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
@@ -567,21 +511,11 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 }
 
 bool WBLink::validate_cards_support_setting_mcs_index() {
-  for(const auto& card_handle: m_broadcast_cards){
-    if(!wifi_card_supports_variable_mcs(card_handle->_wifi_card)){
-      return false;
-    }
-  }
-  return true;
+  return openhd::wb::cards_support_setting_mcs_index(m_broadcast_cards);
 }
 
 bool WBLink::validate_cards_support_setting_channel_width() {
-  for(const auto& card_handle: m_broadcast_cards){
-    if(!wifi_card_supports_40Mhz_channel_width(card_handle->_wifi_card)){
-      return false;
-    }
-  }
-  return true;
+  return openhd::wb::cards_support_setting_channel_width(m_broadcast_cards);
 }
 
 static uint32_t get_micros(std::chrono::nanoseconds ns){
@@ -858,7 +792,7 @@ bool WBLink::check_work_queue_empty() {
 
 bool WBLink::set_wb_rtl8812au_tx_pwr_idx_override(int value) {
   if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(value))return false;
-  if(!check_work_queue_empty())return false;
+  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=value;
   m_settings->persist();
   // No need to delay the change, but perform it async anyways.
@@ -898,13 +832,133 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
   }
 }
 
-std::shared_ptr<openhd::TxRxTelemetry> WBLink::get_telemetry_tx_rx_interface() {
-  return m_tx_rx_handle;
-}
-
 void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_len) {
   if(stream_index==0 && m_ground_video_forwarder){
     m_ground_video_forwarder->forward_data(data,data_len);
   }
 }
 
+WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
+  const auto& card=m_broadcast_cards.at(0)->get_wifi_card();
+  std::vector<openhd::WifiChannel> channels_to_scan;
+  if(params.check_2g_channels_if_card_support && card.supports_2ghz){
+    auto tmp=openhd::get_channels_2G(true);
+    channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
+  }
+  if(params.check_5g_channels_if_card_supports && card.supports_5ghz){
+    auto tmp=openhd::get_channels_5G(false);
+    channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
+  }
+  if(channels_to_scan.empty()){
+    m_console->warn("No channels to scan, return early");
+    return {};
+  }
+  is_scanning=true;
+  // Issue / bug with RTL8812AU: Apparently the adapter sometimes receives data from a frequency that is not correct
+  // (e.g. when the air is set to 5700 and the rx listens on frequency  5540 ) but with an incredibly high packet loss.
+  // therefore, instead of returning early, we hop through all frequencies and on frequencies where we get data, store
+  // the packet loss. In the end, we then decide what frequency is most likely the one the air is after.
+  struct TmpResult{
+    openhd::WifiChannel channel;
+    int packet_loss_perc=0;
+  };
+  std::vector<TmpResult> possible_frequencies{};
+  // Note: We intentionally do not modify the persistent settings here
+  m_console->debug("Channel scan, time per channel:{}ms N channels to scan:{}",
+                   std::chrono::duration_cast<std::chrono::milliseconds>(params.duration_per_channel).count(),
+                   channels_to_scan.size());
+  for(const auto& channel:channels_to_scan){
+    if(!openhd::wb::cards_support_frequency(channel.frequency,m_broadcast_cards,m_platform, m_console)){
+      continue;
+    }
+    // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
+    openhd::wb::set_frequency_and_channel_width_for_all_cards(channel.frequency,20,m_broadcast_cards);
+    m_console->warn("Scanning {}Mhz [{}] width:{}",channel.frequency,channel.channel,20);
+    reset_all_count_p_stats();
+    std::this_thread::sleep_for(params.duration_per_channel);
+    const int n_packets=get_count_p_all();
+    m_console->debug("Got {} packets on frequency {}",n_packets,channel.frequency);
+    if(n_packets>0){
+      // We got packets on this frequency, but it is not guaranteed those packets are from an openhd air unit.
+      // sleep a bit more, then check if we actually got any decrypted packets
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+      const int n_packets_decrypted=get_count_p_decryption_ok();
+      const int packet_loss=m_wb_video_rx_list.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+      m_console->debug("Got {} decrypted packets on frequency {} with {} packet loss",n_packets_decrypted,channel.frequency,packet_loss);
+      if(n_packets_decrypted>0){
+        TmpResult tmp_result{channel,packet_loss};
+        possible_frequencies.push_back(tmp_result);
+        if(packet_loss<10){
+          // if the packet loss is low, we can safely return early
+          m_console->debug("Got <10% packet loss, return early");
+          break;
+        }
+      }
+    }
+  }
+  ScanResult result{};
+  if(possible_frequencies.empty()){
+    m_console->debug("Channel scan failure, restore local settings");
+    apply_frequency_and_channel_width();
+    result.success= false;
+    result.frequency=0;
+  }else{
+    m_console->debug("Channel scan success, possible frequencies {}",possible_frequencies.size());
+    auto best=possible_frequencies.at(0);
+    for(int i=1;i<possible_frequencies.size();i++){
+      const auto other=possible_frequencies.at(i);
+      if(other.packet_loss_perc<best.packet_loss_perc){
+        best=other;
+      }
+    }
+    m_console->debug("Selected {} with packet loss {} as most likely",best.channel.frequency,best.packet_loss_perc);
+    result.success= true;
+    result.frequency=best.channel.frequency;
+    m_settings->unsafe_get_settings().wb_frequency=result.frequency;
+    m_settings->persist();
+    apply_frequency_and_channel_width();
+  }
+  is_scanning=false;
+  return result;
+}
+
+void WBLink::async_scan_channels(ScanChannelsParams scan_channels_params) {
+  if(!check_work_queue_empty()){
+    m_console->warn("Rejecting async_scan_channels, work queue busy");
+    return;
+  }
+  auto work_item=std::make_shared<WorkItem>([this,scan_channels_params](){
+    scan_channels(scan_channels_params);
+  },std::chrono::steady_clock::now());
+  schedule_work_item(work_item);
+}
+
+void WBLink::reset_all_count_p_stats() {
+  for(auto& rx:m_wb_video_rx_list){
+    rx->reset_all_count_p_stats();
+  }
+}
+
+int WBLink::get_count_p_all() {
+  int total=0;
+  for(auto& rx:m_wb_video_rx_list){
+    total += rx->get_latest_stats().wb_rx_stats.count_p_all;
+  }
+  return total;
+}
+
+int WBLink::get_count_p_decryption_ok() {
+  int total=0;
+  for(auto& rx:m_wb_video_rx_list){
+    total += rx->get_latest_stats().wb_rx_stats.count_p_all;
+  }
+  return total;
+}
+
+bool WBLink::check_in_state_support_changing_settings(){
+  return !is_scanning && check_work_queue_empty();
+}
+
+void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
+  m_wb_tele_tx->feedPacket(data->data(),data->size());
+}

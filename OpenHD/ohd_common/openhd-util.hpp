@@ -66,36 +66,35 @@ static void rtrim(std::string &s) {
           }).base(), s.end());
 }
 
+static std::string create_command_with_args(const std::string& command,const std::vector<std::string> &args){
+  std::stringstream ss;
+  ss << command;
+  for (const auto &arg: args) {
+    ss << " " << arg;
+  }
+  return ss.str();
+}
+
 /**
  * Utility to execute a command on the command line.
  * Blocks until the command has been executed, and returns its result.
  * @param command the command to run
  * @param args the args for the command to run
- * @param print_debug print debug to std::cout, really usefully for debugging. true by default.
+ * @param print_debug print the command executed, this can be usefully for debugging -to replicate, just copy the command
+ * from the log message
  * @return the command result
- * NOTE: Used to use boost, there were issues with that, I changed it to use c standard library.
+ * NOTE: Do not use boost, it has issues
  */
-static bool run_command(const std::string &command, const std::vector<std::string> &args,bool print_debug=true) {
-  std::stringstream ss;
-  ss << command;
-  for (const auto &arg: args) {
-	ss << " " << arg;
-  }
+static int run_command(const std::string &command, const std::vector<std::string> &args,bool print_debug=true) {
+  const auto command_with_args= create_command_with_args(command,args);
   if(print_debug){
-	std::stringstream log;
-	log<< "run command begin [" << ss.str() << "]";
-	openhd::log::get_default()->debug(log.str());
+    openhd::log::get_default()->debug("run command begin [{}]",command_with_args);
   }
-  // Some weird locale issue ?!
   // https://man7.org/linux/man-pages/man3/system.3.html
-  auto ret = system(ss.str().c_str());
-  // With boost, there is this locale issue ??!!
-  /*boost::process::child c(boost::process::search_path(command), args);
-  c.wait();
-  std::cout<<"Run command end\n";
-  return c.exit_code() == 0;*/
-  if(print_debug){
-	openhd::log::get_default()->debug("Run command end");
+  const auto ret = std::system(command_with_args.c_str());
+  //openhd::log::get_default()->debug("return code:{}",ret);
+  if(ret<0){
+    openhd::log::get_default()->warn("Invalid command, return code {}",ret);
   }
   return ret;
 }
@@ -109,24 +108,46 @@ static bool run_command(const std::string &command, const std::vector<std::strin
  * @param command the command and its args to run
  * @return the shell output, or std::nullopt if something went wrong.
  */
-static std::optional<std::string> run_command_out(const char* command){
-  std::string raw_value;
-  std::array<char, 512> buffer{};
+static std::optional<std::string> run_command_out(const char* command,const bool debug=false){
+  if(debug){
+    openhd::log::get_default()->debug("run command out begin [{}]",command);
+  }
   std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command, "r"), pclose);
   if (!pipe) {
-	// if the pipe opening fails, this doesn't mean the command failed (see above)
-	// But rather we need to find a different way to implement this functionality on this platform.
-	std::stringstream ss;
-	ss<<"run_command_out with "<<command<<" cannot open pipe";
-	return std::nullopt;
+    // if the pipe opening fails, this doesn't mean the command failed (see above)
+    // But rather we need to find a different way to implement this functionality on this platform.
+    openhd::log::get_default()->error("Cannot execute command [{}]",command);
+    return std::nullopt;
   }
+  std::string raw_value;
+  std::array<char, 512> buffer{};
   while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
 	raw_value += buffer.data();
   }
   return raw_value;
 }
 
-// i use this one during testing a lot, when a module's functionality uses a start() / stop()
+// The above implementation sometimes doesn't work
+// Execute a shell command and return its output as a string
+/*struct RunShellCommandResult{
+  int status;
+  std::string status_text;
+};
+static std::string run_command_out2(const char* command,const bool debug=false){
+  const std::string output_filename="/tmp/command_output.txt";
+  OHDFilesystemUtil::remove_if_existing(output_filename);
+  const std::string command_outputting_to_tmp_file=std::string(command)+" 2>&1 "+output_filename;
+  if(debug){
+    openhd::log::get_default()->debug("run_command_out2 begin [{}]",command_outputting_to_tmp_file);
+  }
+  const int status = std::system(command_outputting_to_tmp_file.c_str()); // execute the shell command
+  std::string ret=OHDFilesystemUtil::read_file(output_filename);
+  openhd::log::get_default()->debug("Done result code: {} text:[{}]",status,ret);
+  OHDFilesystemUtil::remove_if_existing(output_filename);
+  return ret;
+}*/
+
+// I use this one during testing a lot, when a module's functionality uses a start() / stop()
 // pattern with its own thread. This keeps the current thread alive, until a sigterm (CTR+X) happens
 static void keep_alive_until_sigterm(){
   static bool quit=false;
@@ -136,15 +157,8 @@ static void keep_alive_until_sigterm(){
 	openhd::log::get_default()->debug("keep_alive_until_sigterm");
   }
 }
-// Tries to extract a valid ip from the given input string.
-// Returns std::nullopt on error, otherwise a always "valid" ip in string from
-/*static bool createValidIp(const std::string input){
-  // Regex expression for validating IPv4
-  std::regex regex_ipv4("(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])");
-  if (regex_match(input, regex_ipv4))
-	return true;
-  return false;
-}*/
+
+
 // based on https://man7.org/linux/man-pages/man3/inet_pton.3.html
 static bool is_valid_ip(const std::string& ip){
   unsigned char buf[sizeof(struct in6_addr)];
@@ -207,11 +221,9 @@ static std::vector<std::string> split_into_substrings(const std::string& input,c
 static bool check_root(const bool print_debug=true){
   const auto uid=getuid();
   const bool root= uid ? false:true;
-  std::stringstream ss;
   if(print_debug){
-	ss<<"UID is:["<<uid<<"] root:"<<OHDUtil::yes_or_no(root)<<"\n";
+    openhd::log::get_default()->debug("UID is:{} root: {}",uid,OHDUtil::yes_or_no(root));
   }
-  openhd::log::get_default()->debug(ss.str());
   return root;
 }
 

@@ -111,6 +111,10 @@ void DCameras::detect_raspberrypi_broadcom_csi() {
 }
 
 bool DCameras::detect_raspberrypi_broadcom_veye() {
+  if(true){
+    m_console->warn("detect_raspberrypi_broadcom_veye - temporary disabled");
+    return false;
+  }
   m_console->debug("DCameras::detect_raspberrypi_broadcom_veye()");
   // First, we use i2cdetect to find out if there is a veye camera
   const auto i2cdetect_veye_result_opt=OHDUtil::run_command_out("i2cdetect -y 10 0x3b 0x3b | grep  '3b'");

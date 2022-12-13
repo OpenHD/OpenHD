@@ -17,6 +17,7 @@
 #include "AirTelemetrySettings.h"
 #include "openhd-action-handler.hpp"
 #include "openhd-spdlog.hpp"
+#include "ohd_link.hpp"
 // Dirty
 #include "openhd-rpi-os-configure-vendor-cam.hpp"
 #include "endpoints/WBEndpoint.h"
@@ -56,7 +57,7 @@ class AirTelemetry : public MavlinkSystem{
    */
   void add_settings_camera_component(int camera_index,const std::vector<openhd::Setting>& settings);
   //
-  void set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle);
+  void set_link_handle(std::shared_ptr<OHDLink> link);
  private:
   const OHDPlatform _platform;
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> _airTelemetrySettings;

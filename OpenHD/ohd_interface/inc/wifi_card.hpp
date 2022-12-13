@@ -1,14 +1,15 @@
 #ifndef OPENHD_WIFI_H
 #define OPENHD_WIFI_H
 
-#include <string>
 #include <fstream>
+#include "openhd-platform.hpp"
+#include <string>
 
 #include "include_json.hpp"
-#include "openhd-util.hpp"
 #include "openhd-settings.hpp"
-#include "openhd-util-filesystem.hpp"
 #include "openhd-settings2.hpp"
+#include "openhd-util-filesystem.hpp"
+#include "openhd-util.hpp"
 #include "validate_settings_helper.h"
 
 // R.n (20.08) this class can be summarized as following:
@@ -56,24 +57,6 @@ static std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
   }
 }
 
-enum class WiFiHotspotType {
-  None = 0,
-  Internal2GBand,
-  Internal5GBand,
-  InternalDualBand,
-  External,
-};
-static std::string wifi_hotspot_type_to_string(const WiFiHotspotType &wifi_hotspot_type) {
-  switch (wifi_hotspot_type) {
-    case WiFiHotspotType::Internal2GBand:return "internal2g";
-    case WiFiHotspotType::Internal5GBand:  return "internal5g";
-    case WiFiHotspotType::InternalDualBand:  return "internaldualband";
-    case WiFiHotspotType::External:  return "external";
-    case WiFiHotspotType::None:
-    default:
-      return "none";
-  }
-}
 
 // What to use a discovered wifi card for. R.n We support hotspot or monitor mode (wifibroadcast),
 // I doubt that will change.
@@ -138,6 +121,44 @@ static bool wifi_card_supports_extra_channels_2G(const WiFiCard& wi_fi_card){
     return true;
   }
   return false;
+}
+
+
+static bool wifi_card_supports_frequency(const OHDPlatform& platform,const WiFiCard& wifi_card,const uint32_t frequency){
+  const auto channel_opt=openhd::channel_from_frequency(frequency);
+  if(!channel_opt.has_value()){
+    openhd::log::get_default()->debug("OpenHD doesn't know frequency {}",frequency);
+    return false;
+  }
+  const auto& channel=channel_opt.value();
+  // check if we are running on a modified kernel, in which case we can do those extra frequencies that
+  // are illegal in most countries (otherwise they are disabled)
+  // NOTE: When running on RPI or Jetson we assume we are running on an OpenHD image which has the modified kernel
+  const bool kernel_supports_extra_channels=platform.platform_type==PlatformType::RaspberryPi ||
+                                              platform.platform_type==PlatformType::Jetson;
+  // check if the card generically supports the 2G or 5G space
+  if(channel.space==openhd::Space::G2_4){
+    if(!wifi_card.supports_2ghz){
+      return false;
+    }
+    if(!channel.is_standard){
+      // special and only AR9271: channels below and above standard wifi
+      const bool include_extra_channels_2G=kernel_supports_extra_channels && wifi_card_supports_extra_channels_2G(wifi_card);
+      if(!include_extra_channels_2G){
+        return false;
+      }
+    }
+
+  }else{
+    assert(channel.space==openhd::Space::G5_8);
+    if(!wifi_card.supports_5ghz){
+      return false;
+    }
+    if(!channel.is_standard){
+      return false;
+    }
+  }
+  return true;
 }
 
 static WifiCardSettings create_default_settings(const WiFiCard& wifi_card){
@@ -220,7 +241,6 @@ static std::string debug_cards(const std::vector<std::shared_ptr<WifiCardHolder>
   ss<<"}";
   return ss.str();
 }
-
 
 static nlohmann::json wificards_to_json(const std::vector<WiFiCard> &cards) {
   nlohmann::json j;

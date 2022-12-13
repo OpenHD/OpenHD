@@ -241,6 +241,9 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<spdlog::logger> m_console=openhd::log::create_or_get("main");
   assert(m_console);
 
+  // not guaranteed, but better than nothing, check if openhd is already running (kinda) and print warning if yes.
+  check_currently_running_file_and_write();
+
   // First discover the platform:
   const auto platform = DPlatform::discover();
   m_console->info("Detected Platform:"+platform->to_string());
@@ -276,9 +279,9 @@ int main(int argc, char *argv[]) {
     // can be disabled for development purposes.
     if(!options.no_qt_autostart){
       if(!profile->is_air){
-        OHDUtil::run_command("systemctl",{" start qopenhd"});
+        OHDUtil::run_command("systemctl",{"start","qopenhd"});
       }else{
-        OHDUtil::run_command("systemctl",{" stop qopenhd"});
+        OHDUtil::run_command("systemctl",{"stop","qopenhd"});
       }
     }
 
@@ -350,7 +353,7 @@ int main(int argc, char *argv[]) {
     // and start ohdVideo if we are on the air pi
     std::unique_ptr<OHDVideo> ohdVideo= nullptr;
     if (profile->is_air) {
-      ohdVideo = std::make_unique<OHDVideo>(*platform,cameras,ohd_action_handler,ohdInterface->get_video_tx_interface());
+      ohdVideo = std::make_unique<OHDVideo>(*platform,cameras,ohd_action_handler,ohdInterface->get_link_handle());
       auto settings_components=ohdVideo->get_setting_components();
       if(!settings_components.empty()){
         ohdTelemetry->add_settings_camera_component(
@@ -358,15 +361,20 @@ int main(int argc, char *argv[]) {
       }
     }
     // tmp
-    ohdTelemetry->set_wb_tx_rx_handle(ohdInterface->get_telemetry_tx_rx_interface());
+    ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
     m_console->info("All OpenHD modules running");
 
     // run forever, everything has its own threads. Note that the only way to break out basically
     // is when one of the modules encounters an exception.
     const bool any_debug_enabled=(options.enable_interface_debugging || options.enable_telemetry_debugging || options.enable_video_debugging);
     static bool quit=false;
+    // https://unix.stackexchange.com/questions/362559/list-of-terminal-generated-signals-eg-ctrl-c-sigint
     signal(SIGTERM, [](int sig){
       std::cerr<<"Got SIGTERM, exiting\n";
+      quit= true;
+    });
+    signal(SIGQUIT,[](int sig){
+      std::cerr<<"Got SIGQUIT, exiting\n";
       quit= true;
     });
     const auto run_time_begin=std::chrono::steady_clock::now();
@@ -401,8 +409,29 @@ int main(int argc, char *argv[]) {
         m_console->debug(ss.str());
       }
     }
+    // --- terminate openhd, most likely requested by a developer with sigterm
+    m_console->debug("Terminating openhd");
     // Stop any communication between modules, to eliminate any issues created by threads during cleanup
     ohd_action_handler->disable_all_callables();
+    // dirty, wait a bit to make sure none of those action(s) are called anymore
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // unique ptr would clean up for us, but this way we are a bit more verbose
+    // since some of those modules talk to each other, this is a bit prone to failures.
+    if(ohdVideo){
+      m_console->debug("Terminating ohd_video - begin");
+      ohdVideo.reset();
+      m_console->debug("Terminating ohd_video - end");
+    }
+    if(ohdTelemetry){
+      m_console->debug("Terminating ohd_telemetry - begin");
+      ohdTelemetry.reset();
+      m_console->debug("Terminating ohd_telemetry - end");
+    }
+    if(ohdInterface){
+      m_console->debug("Terminating ohd_interface - begin");
+      ohdInterface.reset();
+      m_console->debug("Terminating ohd_interface - end");
+    }
   } catch (std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
     exit(1);
@@ -410,5 +439,6 @@ int main(int argc, char *argv[]) {
     std::cerr << "Unknown exception occurred" << std::endl;
     exit(1);
   }
+  remove_currently_running_file();
   return 0;
 }

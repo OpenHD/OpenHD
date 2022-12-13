@@ -17,23 +17,25 @@
 #include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
 #include "openhd-telemetry-tx-rx.h"
-#include "openhd-video-transmit-interface.h"
 #include "usb_tether_listener.h"
 #include "wb_link.h"
 #include "wifi_hotspot.h"
 
+/**
+ * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
+ */
 class OHDInterface :public openhd::ISettingsComponent{
  public:
   /**
-   * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
+   * @param platform platform we are running on
+   * @param profile air or ground
+   * @param opt_action_handler r.n used to propagate rate control from wb_link to ohd_video
    */
-  explicit OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
+  explicit OHDInterface(OHDPlatform platform,OHDProfile profile,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   OHDInterface(const OHDInterface&)=delete;
   OHDInterface(const OHDInterface&&)=delete;
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
-  // hacky, temporary. applies changed frequency / mcs index / bandwidth
-  void restart_wb_streams_async();
   // For telemetry
   void set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK cb);
   // settings hacky begin
@@ -41,10 +43,8 @@ class OHDInterface :public openhd::ISettingsComponent{
   // settings hacky end
   // easy access without polluting the headers
   static void print_internal_fec_optimization_method();
-  // only valid on air
-  std::shared_ptr<openhd::ITransmitVideo> get_video_tx_interface();
-  // valid on air and ground
-  std::shared_ptr<openhd::TxRxTelemetry> get_telemetry_tx_rx_interface();
+  // r.n only wb, but his might change
+  std::shared_ptr<OHDLink> get_link_handle();
  private:
   /**
     * after calling this method with an external device's ip address

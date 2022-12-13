@@ -5,17 +5,17 @@
 #ifndef OPENHD_OHDTELEMETRY_H
 #define OPENHD_OHDTELEMETRY_H
 
-#include "AirTelemetry.h"
-#include "GroundTelemetry.h"
-
-#include "openhd-platform.hpp"
-#include "openhd-profile.hpp"
-#include "openhd-action-handler.hpp"
-#include "mavlink_settings/ISettingsComponent.hpp"
-#include "openhd-link-statistics.hpp"
 #include <memory>
 #include <thread>
 #include <utility>
+
+#include "AirTelemetry.h"
+#include "GroundTelemetry.h"
+#include "mavlink_settings/ISettingsComponent.hpp"
+#include "openhd-action-handler.hpp"
+#include "openhd-link-statistics.hpp"
+#include "openhd-platform.hpp"
+#include "openhd-profile.hpp"
 
 // Forward declare them to speed up compilation time.
 //class AirTelemetry;
@@ -51,8 +51,9 @@ class OHDTelemetry {
   // Add / remove the IP of another Ground station client. Buggy / not finished yet.
   void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const;
   void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const;
-  //
-  void set_wb_tx_rx_handle(std::shared_ptr<openhd::TxRxTelemetry> handle);
+  // OHDTelemetry is agnostic of the type of transmission between air and ground and also agnostic weather this
+  // link exists or not (since it is already using a lossy link).
+  void set_link_handle(std::shared_ptr<OHDLink> link);
  private:
   // only either one of them both is active at a time.
   // active when air

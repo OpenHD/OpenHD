@@ -16,10 +16,11 @@
 #include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
 #include "openhd-telemetry-tx-rx.h"
-#include "openhd-video-transmit-interface.h"
+#include "video_forwarder.h"
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
-#include "ground_video_forwarder.h"
+
+#include "ohd_link.hpp"
 
 /**
  * This class takes a list of discovered wifi cards (and their settings) and
@@ -28,7 +29,7 @@
  * but also a bidirectional link (without re-transmission(s)) for telemetry.
  * This class assumes a corresponding instance on the air or ground unit, respective.
  */
-class WBLink :public openhd::ITransmitVideo{
+class WBLink :public OHDLink{
  public:
   /**
    * @param broadcast_cards list of discovered wifi card(s) that support monitor mode & are injection capable. Needs to be at least
@@ -49,15 +50,13 @@ class WBLink :public openhd::ITransmitVideo{
   void removeExternalDeviceIpForwardingVideoOnly(const std::string& ip);
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
-  // This handle is used by ohd_telemetry to get / sent telemetry (raw) data
-  std::shared_ptr<openhd::TxRxTelemetry> get_telemetry_tx_rx_interface();
  private:
   // validate param, then schedule change
   bool request_set_frequency(int frequency);
   // validate param, then schedule change
   bool request_set_channel_width(int channel_width);
   // apply the frequency (wifi channel) of all wifibroadcast cards
-  void apply_frequency_and_channel_width();
+  bool apply_frequency_and_channel_width();
   // validate param, then schedule change
   bool request_set_txpower(int tx_power);
   // set the tx power of all wifibroadcast cards
@@ -82,7 +81,6 @@ class WBLink :public openhd::ITransmitVideo{
   // set the right frequency, channel width and tx power. Cards need to be in monitor mode already !
   void configure_cards();
   // start telemetry and video rx/tx stream(s)
-  void configure_streams();
   void configure_telemetry();
   void configure_video();
   std::unique_ptr<openhd::WBStreamsSettingsHolder> m_settings;
@@ -108,7 +106,6 @@ class WBLink :public openhd::ITransmitVideo{
   // disable all openhd frequency checking - note that openhd just uses the proper iw command to set a frequency - if setting
   // the frequency actually had an effect, it doesn't know (cannot really know) and therefore QOpenHD can then report a different wifi freq,
   // even though the frequency actually hasn't changed
-  static constexpr auto FIlE_DISABLE_ALL_FREQUENCY_CHECKS="/boot/openhd/disable_all_frequency_checks.txt";
   const bool m_disable_all_frequency_checks;
  private:
   // We have one worker thread for asynchronously performing operation(s) like changing the frequency
@@ -153,6 +150,7 @@ class WBLink :public openhd::ITransmitVideo{
   bool set_wb_rtl8812au_tx_pwr_idx_override(int value);
   bool has_rtl8812au();
  private:
+  void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data)override;
   // Called by the camera stream on the air unit only
   // transmit video data via wifibradcast
   void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
@@ -160,8 +158,35 @@ class WBLink :public openhd::ITransmitVideo{
   // Forward video data to the local udp port and/or external device(s) if they exist
   void forward_video_data(int stream_index,const uint8_t * data,int data_len);
  private:
-  std::shared_ptr<openhd::TxRxTelemetry> m_tx_rx_handle;
   std::unique_ptr<GroundVideoForwarder> m_ground_video_forwarder;
+ public:
+  // Warning: This operation will block the calling thread for up to X ms.
+  // During scan, you cannot change any wb settings
+  struct ScanResult{
+    bool success=false;
+    uint32_t frequency =0;
+  };
+  // Testing shows we have to listen for up to 1 second to reliable get data (the wifi card might take some time switching)
+  static constexpr std::chrono::seconds DEFAULT_SCAN_TIME_PER_CHANNEL{1};
+  // checking both 2G and 5G channels takes really long, but in rare cases might be wanted by the user
+  struct ScanChannelsParams{
+    std::chrono::nanoseconds duration_per_channel=DEFAULT_SCAN_TIME_PER_CHANNEL;
+    bool check_2g_channels_if_card_support=false;
+    bool check_5g_channels_if_card_supports=false;
+  };
+  ScanResult scan_channels(const ScanChannelsParams& scan_channels_params);
+  // queue it up on the work queue
+  void async_scan_channels(ScanChannelsParams scan_channels_params);
+ private:
+  std::atomic<bool> is_scanning=false;
+  void reset_all_count_p_stats();
+  int get_count_p_all();
+  int get_count_p_decryption_ok();
+ private:
+  // We return false on all the change settings request(s) if there is already a change operation queued
+  // up or we currently perform a channel scan
+  // Not completely "thread safe" so to say but good enough.
+  bool check_in_state_support_changing_settings();
 };
 
 #endif

@@ -10,8 +10,8 @@
 // Therefore, we have the conversions here globally, and it is recommended to use them instead of manually converting
 // bit-rates by multiplication / division somewhere in code.
 
-static int kbits_to_bits_per_second(int kbit_per_second){
-  return kbit_per_second*1000;
+static int kbits_to_bits_per_second(int kbits_per_second){
+  return kbits_per_second*1000;
 }
 static int kbits_to_mbits_per_second(int kbits_per_second){
   return kbits_per_second/1000;
