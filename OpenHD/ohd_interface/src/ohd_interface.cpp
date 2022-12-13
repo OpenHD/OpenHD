@@ -57,7 +57,6 @@ platform(platform1),profile(std::move(profile1)) {
       m_console->warn("Cannot use monitor mode on card that cannot inject");
     }
   }
-  m_interface_settings_holder =std::make_shared<openhd::OHDInterfaceSettingsHolder>();
   // now decide what to use the card(s) for
   std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards{};
   std::shared_ptr<WifiCardHolder> optional_hotspot_card=nullptr;
@@ -96,31 +95,8 @@ platform(platform1),profile(std::move(profile1)) {
     m_usb_tether_listener->startLooping();
   }
   // This way one could try and recover an air pi
-  const bool enable_hotspot_file_exists=OHDFilesystemUtil::exists("/boot/enable_wifi_hotspot.txt");
-  if(!m_interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot && enable_hotspot_file_exists){
-    m_console->info("Changing enable wifi hotspot to true due to file forcing it");
-    m_interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot= true;
-    m_interface_settings_holder->persist();
-  }
-  if(m_interface_settings_holder->get_settings().enable_wifi_hotspot && optional_hotspot_card==nullptr){
-    m_console->warn("Wifi hotspot enabled, but no card to start it with found");
-    // we cannot do wifi hotspot
-    m_interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot=false;
-    m_interface_settings_holder->persist();
-  }
-  // wifi hotspot - normally only on ground, but for now on both
-  if(optional_hotspot_card){
-    m_console->debug("Optional hotspot card exists");
-    // create it when there is a card - note that this does not enable the hotspot yet.
+  if(optional_hotspot_card!= nullptr){
     m_wifi_hotspot =std::make_unique<WifiHotspot>(optional_hotspot_card->_wifi_card);
-    if(m_interface_settings_holder->get_settings().enable_wifi_hotspot){
-      m_wifi_hotspot->start_async();
-    }else{
-      // Make sure the rpi internal wifi is disabled when hotspot is disabled to not interfere
-      wifi::commandhelper::ip_link_set_card_state(optional_hotspot_card->_wifi_card.interface_name, false);
-    }
-  }else{
-    m_console->debug("Optional hotspot card does not exist");
   }
   m_console->debug("OHDInterface::created");
 }
@@ -173,21 +149,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     //ret.insert(ret.end(),settings.begin(),settings.end());
   }
   if(m_wifi_hotspot != nullptr){
-    // we can disable / enable wifi hotspot.
-    auto cb_wifi_hotspot=[this](std::string,int value){
-      if(true)return false; // wifi hotspot is temporarily disabled
-      if(!openhd::validate_yes_or_no(value))return false;
-      m_interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot=value;
-      m_interface_settings_holder->persist();
-      if(m_interface_settings_holder->unsafe_get_settings().enable_wifi_hotspot){
-        m_wifi_hotspot->start_async();
-      }else{
-        m_wifi_hotspot->stop_async();
-      }
-      return true;
-    };
-    const int enabled=m_interface_settings_holder->get_settings().enable_wifi_hotspot;
-    ret.emplace_back(openhd::Setting{OHD_INTERFACE_ENABLE_WIFI_HOTSPOT,openhd::IntSetting{enabled,cb_wifi_hotspot}});
+    // TODO wifi hotspot manages its own settings
   }
   if(!profile.is_air){
     //openhd::testing::append_dummy_int_and_string(ret);

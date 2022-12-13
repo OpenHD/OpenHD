@@ -64,7 +64,6 @@ class OHDInterface :public openhd::ISettingsComponent{
   std::unique_ptr<USBTetherListener> m_usb_tether_listener;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
   std::unique_ptr<openhd::LEDBlinker> m_error_blinker;
-  std::shared_ptr<openhd::OHDInterfaceSettingsHolder> m_interface_settings_holder;
   std::mutex m_external_device_callback_mutex;
   openhd::EXTERNAL_DEVICE_CALLBACK m_external_device_callback = nullptr;
   std::shared_ptr<spdlog::logger> m_console;
