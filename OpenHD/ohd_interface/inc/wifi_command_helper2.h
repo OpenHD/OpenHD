@@ -34,9 +34,6 @@ bool set_wifi_frequency_and_log_result(const std::string &device, uint32_t freq_
 // NOTE: even linux seems to have no idea what mBm means - rtl8812au interprets that not as milli(1000)dBm, but dBm/100
 bool set_wifi_txpower(const std::string &device, uint32_t tx_power_mBm);
 
-// TODO
-std::vector<uint32_t> get_supported_frequencies(const std::string& device);
-
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFI_COMMAND_HELPER2_H_
