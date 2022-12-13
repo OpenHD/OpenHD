@@ -56,17 +56,7 @@ void OHDVideo::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
   // R.N we use gstreamer only for everything except veye
   // (veye also uses gstreamer, but we do not launch it via gst-launch)
   switch (camera.type) {
-    case CameraType::RPI_VEYE_CSI_MMAL:{
-      /*m_console->debug("VEYE stream for Camera index:{}",camera.index);
-      const auto udp_port = camera.index == 0 ? OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP : OHD_VIDEO_AIR_VIDEO_STREAM_2_UDP;
-      auto stream = std::make_shared<VEYEStream>(m_platform.platform_type, camera_holder, udp_port);
-      stream->setup();
-      stream->start();
-      m_camera_streams.push_back(stream);
-      break;*/
-      m_console->error("Veye had to be dropped in 2.2.4");
-      break;
-    }
+    case CameraType::RPI_VEYE_CSI_V4l2:
     case CameraType::RPI_CSI_MMAL:
     case CameraType::JETSON_CSI:
     case CameraType::IP:

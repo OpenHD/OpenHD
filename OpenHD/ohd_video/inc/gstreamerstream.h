@@ -29,6 +29,7 @@ class GStreamerStream : public CameraStream {
   void setup() override;
  private:
   void setup_raspberrypi_csi();
+  void setup_raspberrypi_veye_v4l2();
   void setup_libcamera();
   void setup_jetson_csi();
   void setup_rockchip_hdmi();

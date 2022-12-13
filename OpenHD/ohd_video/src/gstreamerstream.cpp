@@ -92,7 +92,10 @@ void GStreamerStream::setup() {
       setup_sw_dummy_camera();
       break;
     }
-    case CameraType::RPI_VEYE_CSI_MMAL:
+    case CameraType::RPI_VEYE_CSI_V4l2:{
+      setup_raspberrypi_veye_v4l2();
+      break;
+    }
     case CameraType::ROCKCHIP_CSI:
       m_console->error("Veye and rockchip are unsupported at the time");
       return;
@@ -165,6 +168,13 @@ void GStreamerStream::setup_raspberrypi_csi() {
   // similar to jetson, for now we assume there is only one CSI camera connected.
   const auto& setting= m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createRpicamsrcStream(-1, setting);
+}
+
+void GStreamerStream::setup_raspberrypi_veye_v4l2() {
+  m_console->debug("setup_raspberrypi_veye_v4l2");
+  // similar to jetson, for now we assume there is only one CSI camera connected.
+  const auto& setting= m_camera_holder->get_settings();
+  m_pipeline_content << OHDGstHelper::create_veye_vl2_stream(setting);
 }
 
 void GStreamerStream::setup_libcamera() {
@@ -465,3 +475,4 @@ void GStreamerStream::loop_pull_samples() {
   };
   openhd::loop_pull_appsink_samples(m_pull_samples_run,m_app_sink_element,cb);
 }
+

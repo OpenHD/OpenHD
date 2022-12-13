@@ -164,6 +164,16 @@ static std::string createRpicamsrcStream(const int camera_number,
   return ss.str();
 }
 
+static std::string create_rpi_v4l2_encoder(const CameraSettings& settings){
+  std::stringstream ss;
+  // rpi v4l2 encoder takes bit/s instead of kbit/s
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
+  ss << fmt::format("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
+      "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
+  return ss.str();
+}
+
 static std::string createLibcamerasrcStream(const std::string& camera_name,
                                          const CameraSettings& settings) {
   assert(settings.streamed_video_format.isValid());
@@ -187,9 +197,10 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     // somehow increases latency (,video_bitrate_mode=1)
     // The default for h264_minimum_qp_value seems to be 20 - we set it to something lower, so we can get a higher bitrate
     // on scenes with less change
-    static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
-    ss << fmt::format("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
-        "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
+    //static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
+    //ss << fmt::format("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
+    //    "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
+    ss<<create_rpi_v4l2_encoder(settings);
   } else if (settings.streamed_video_format.videoCodec == VideoCodec::MJPEG) {
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",
@@ -203,6 +214,13 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
                       settings.streamed_video_format.framerate);
     ss << createSwEncoder(extract_common_encoder_params(settings));
   }
+  return ss.str();
+}
+
+static std::string create_veye_vl2_stream(const CameraSettings& settings){
+  std::stringstream ss;
+  ss<<" v4l2src io-mode=dmabuf device=/dev/video0 ! video/x-raw,format=(string)UYVY, width=(int)1920, height=(int)1080,framerate=(fraction)30/1 ! ";
+  ss<<create_rpi_v4l2_encoder(settings);
   return ss.str();
 }
 

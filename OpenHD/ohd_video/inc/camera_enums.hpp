@@ -20,7 +20,9 @@ enum class CameraType {
   // Rpi foundation standard/original CSI cameras,old MMAL / BROADCOM stack
   RPI_CSI_MMAL,
   // dirty and might be completely removed in future release(s), rpi veye using the MMAL stack but customized (dirty veye-raspivid)
-  RPI_VEYE_CSI_MMAL,
+  //RPI_VEYE_CSI_MMAL,
+  // RPI VEYE on the RPI using the newer V4l2 stack, but we need to handle it manually
+  RPI_VEYE_CSI_V4l2,
   // Any CSI camera on jetson
   JETSON_CSI,
   // Any CSI camera on rockchip
@@ -55,7 +57,8 @@ NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
      {CameraType::UNKNOWN, nullptr},
      {CameraType::DUMMY_SW, "DUMMY_SW"},
      {CameraType::RPI_CSI_MMAL, "RPI_CSI_MMAL"},
-     {CameraType::RPI_VEYE_CSI_MMAL, "RPI_VEYE_CSI_MMAL"},
+     //{CameraType::RPI_VEYE_CSI_MMAL, "RPI_VEYE_CSI_MMAL"},
+     {CameraType::RPI_VEYE_CSI_V4l2, "RPI_VEYE_CSI_V4l2"},
      {CameraType::JETSON_CSI, "JETSON_CSI"},
      {CameraType::ROCKCHIP_CSI, "ROCKCHIP_CSI"},
      {CameraType::UVC, "UVC"},
@@ -72,8 +75,10 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
       return "DUMMY_SW";
     case CameraType::RPI_CSI_MMAL:
       return "RPI_CSI_MMAL";
-    case CameraType::RPI_VEYE_CSI_MMAL:
-      return "RPI_VEYE_CSI_MMAL";
+    //case CameraType::RPI_VEYE_CSI_MMAL:
+    //  return "RPI_VEYE_CSI_MMAL";
+    case CameraType::RPI_VEYE_CSI_V4l2:
+      return "RPI_VEYE_CSI_V4l2";
     case CameraType::JETSON_CSI:
       return "JETSON_CSI";
     case CameraType::ROCKCHIP_CSI:

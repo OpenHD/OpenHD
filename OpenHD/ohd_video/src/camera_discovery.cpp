@@ -44,6 +44,7 @@ DiscoveredCameraList DCameras::discover_internal() {
     }else{
       detect_raspberrypi_broadcom_csi();
     }
+
   }
   // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
   // Will need custom debugging before anything here is usable again though.
@@ -115,7 +116,7 @@ bool DCameras::detect_raspberrypi_broadcom_veye() {
     m_console->warn("detect_raspberrypi_broadcom_veye - temporary disabled");
     return false;
   }
-  m_console->debug("DCameras::detect_raspberrypi_broadcom_veye()");
+  /*m_console->debug("DCameras::detect_raspberrypi_broadcom_veye()");
   // First, we use i2cdetect to find out if there is a veye camera
   const auto i2cdetect_veye_result_opt=OHDUtil::run_command_out("i2cdetect -y 10 0x3b 0x3b | grep  '3b'");
   if(!i2cdetect_veye_result_opt.has_value()){
@@ -150,7 +151,7 @@ bool DCameras::detect_raspberrypi_broadcom_veye() {
   endpoint.formats.emplace_back("H.264|1920x1080@25");
   endpoint.formats.emplace_back("H.264|1920x1080@30");
   m_camera_endpoints.push_back(endpoint);
-  m_cameras.push_back(camera);
+  m_cameras.push_back(camera);*/
   return true;
 }
 
@@ -413,3 +414,21 @@ DiscoveredCameraList DCameras::discover(const OHDPlatform ohdPlatform) {
   return discover.discover_internal();
 }
 
+bool DCameras::detect_rapsberrypi_veye_v4l2_aaargh() {
+  const auto result_opt=OHDUtil::run_command_out("dmesg | grep \"camera id is veye\"");
+  if(!result_opt.has_value()){
+    return false;
+  }
+  const auto result=result_opt.value();
+  if(OHDUtil::contains(result,"camera id is veye327")){
+    return true;
+  }
+  Camera camera;
+  camera.type=CameraType::RPI_VEYE_CSI_V4l2;
+  camera.bus="0";
+  camera.index=0;
+  camera.name = "Pi_VEYE_0";
+  camera.vendor = "VEYE";
+  m_cameras.push_back(camera);
+  return false;
+}
