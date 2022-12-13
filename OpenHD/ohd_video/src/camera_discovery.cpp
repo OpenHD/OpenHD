@@ -45,12 +45,19 @@ DiscoveredCameraList DCameras::discover_internal() {
       detect_raspberrypi_broadcom_csi();
     }
   }
-  // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
-  // Will need custom debugging before anything here is usable again though.
-  DThermalCamerasHelper::enableFlirIfFound();
-  DThermalCamerasHelper::enableSeekIfFound();
-  // This will detect all cameras (CSI or not) that do it the proper way (linux v4l2)
-  detect_v4l2();
+  else if(m_platform.platform_type == PlatformType::Allwinner){
+    detect_allwinner_csi();
+  }
+  
+  // Allwinner 3.4 kernel v4l2 implementation is so sketchy that probing it can stop it working.
+  if(m_platform.platform_type != PlatformType::Allwinner){
+    // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
+    // Will need custom debugging before anything here is usable again though.
+    DThermalCamerasHelper::enableFlirIfFound();
+    DThermalCamerasHelper::enableSeekIfFound();
+    // This will detect all cameras (CSI or not) that do it the proper way (linux v4l2)
+    detect_v4l2();
+  }
   detect_ip();
   if (m_platform.platform_type == PlatformType::RaspberryPi) {
     detect_raspberry_libcamera();
@@ -105,6 +112,24 @@ void DCameras::detect_raspberrypi_broadcom_csi() {
     camera.index = m_discover_index;
     m_discover_index++;
     CameraEndpoint endpoint=DRPICamerasHelper::createCameraEndpointRpi(true);
+    m_camera_endpoints.push_back(endpoint);
+    m_cameras.push_back(camera);
+  }
+}
+void DCameras::detect_allwinner_csi() {
+  std::cout << "DCameras::detect_allwinner_csi()" << std::endl;
+  
+  if(OHDFilesystemUtil::exists("/dev/video0"))
+  {
+    std::cout << "Camera set as Allwinner_CSI_0" << std::endl;
+    Camera camera;
+    camera.name = "Allwinner_CSI_0";
+    camera.vendor = "Allwinner";
+    camera.type = CameraType::ALLWINNER_CSI;
+    camera.bus = "0";
+    camera.index = m_discover_index;
+    m_discover_index++;
+    CameraEndpoint endpoint=DRPICamerasHelper::createCameraEndpointAllwinner();
     m_camera_endpoints.push_back(endpoint);
     m_cameras.push_back(camera);
   }
