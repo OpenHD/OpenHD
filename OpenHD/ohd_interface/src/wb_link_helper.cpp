@@ -13,9 +13,9 @@ bool openhd::wb::disable_all_frequency_checks() {
 }
 
 bool openhd::wb::cards_support_setting_channel_width(
-    const std::vector<std::shared_ptr<WifiCardHolder>>& m_broadcast_cards) {
+    const std::vector<WiFiCard>& m_broadcast_cards) {
   for(const auto& card_handle: m_broadcast_cards){
-    if(!wifi_card_supports_40Mhz_channel_width(card_handle->_wifi_card)){
+    if(!wifi_card_supports_40Mhz_channel_width(card_handle)){
       return false;
     }
   }
@@ -23,9 +23,9 @@ bool openhd::wb::cards_support_setting_channel_width(
 }
 
 bool openhd::wb::cards_support_setting_mcs_index(
-    const std::vector<std::shared_ptr<WifiCardHolder>>& m_broadcast_cards) {
-  for(const auto& card_handle: m_broadcast_cards){
-    if(!wifi_card_supports_variable_mcs(card_handle->_wifi_card)){
+    const std::vector<WiFiCard>& m_broadcast_cards) {
+  for(const auto& card: m_broadcast_cards){
+    if(!wifi_card_supports_variable_mcs(card)){
       return false;
     }
   }
@@ -35,13 +35,12 @@ bool openhd::wb::cards_support_setting_mcs_index(
 
 bool openhd::wb::cards_support_frequency(
     int frequency,
-    const std::vector<std::shared_ptr<WifiCardHolder>>& m_broadcast_cards,
+    const std::vector<WiFiCard>& m_broadcast_cards,
     const OHDPlatform& platform,
     const std::shared_ptr<spdlog::logger>& m_console=nullptr) {
 
   // and check if all cards support the frequency
-  for(const auto& card_holder:m_broadcast_cards){
-    const auto& card=card_holder->get_wifi_card();
+  for(const auto& card:m_broadcast_cards){
     if(!wifi_card_supports_frequency(platform,card,frequency)){
       if(m_console){
         m_console->debug("Card {} doesn't support frequency {}",card.interface_name,frequency);
@@ -54,13 +53,13 @@ bool openhd::wb::cards_support_frequency(
 
 void openhd::wb::fixup_unsupported_settings(
     openhd::WBStreamsSettingsHolder& settings,
-    std::vector<std::shared_ptr<WifiCardHolder>> m_broadcast_cards,
+    const std::vector<WiFiCard>& m_broadcast_cards,
     std::shared_ptr<spdlog::logger> m_console) {
   if(!m_console) {
     m_console=openhd::log::get_default();
   }
   // For now, we only check whatever the first card can do and assume the rest can do the same
-  const auto first_card= m_broadcast_cards.at(0)->_wifi_card;
+  const WiFiCard first_card= m_broadcast_cards.at(0);
 
   const auto channel_opt= channel_from_frequency(settings.get_settings().wb_frequency);
   if(!channel_opt){
@@ -101,10 +100,10 @@ void openhd::wb::fixup_unsupported_settings(
 
 bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
     uint32_t frequency, uint32_t channel_width,
-    const std::vector<std::shared_ptr<WifiCardHolder>>& broadcast_cards) {
+    const std::vector<WiFiCard>& m_broadcast_cards) {
   bool ret=true;
-  for(const auto& card: broadcast_cards){
-    const bool success=wifi::commandhelper::iw_set_frequency_and_channel_width(card->_wifi_card.interface_name,frequency,channel_width);
+  for(const auto& card: m_broadcast_cards){
+    const bool success=wifi::commandhelper::iw_set_frequency_and_channel_width(card.interface_name,frequency,channel_width);
     //const bool success=wifi::commandhelper2::set_wifi_frequency_and_log_result(card->get_wifi_card().interface_name,frequency,channel_width);
     if(!success){
       ret=false;

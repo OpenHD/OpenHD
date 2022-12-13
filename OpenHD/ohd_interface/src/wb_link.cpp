@@ -17,10 +17,10 @@
 static const char *KEYPAIR_FILE_DRONE = "/usr/local/share/openhd/drone.key";
 static const char *KEYPAIR_FILE_GROUND = "/usr/local/share/openhd/gs.key";
 
-WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards1,
+WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,
                      std::shared_ptr<openhd::ActionHandler> opt_action_handler) : m_profile(std::move(profile)),
       m_platform(platform),
-      m_broadcast_cards(std::move(broadcast_cards1)),
+      m_broadcast_cards(std::move(broadcast_cards)),
    m_disable_all_frequency_checks(openhd::wb::disable_all_frequency_checks()),
    m_opt_action_handler(std::move(opt_action_handler))
 {
@@ -29,28 +29,15 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_p
   m_console->info("Broadcast cards:{}",debug_cards(m_broadcast_cards));
   m_console->debug("m_disable_all_frequency_checks:"+OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks
-  if(m_broadcast_cards.empty()) {
-    // NOTE: Here we crash, since it would be a programmer(s) error to create a WBStreams instance without at least 1 wifi card
-    // (at least 1 card supporting monitor mode)
-    // In OHDInterface, we handle it more gracefully with an error code.
+  if(m_broadcast_cards.empty() || (m_profile.is_air && m_broadcast_cards.size()>1)) {
+    // NOTE: Here we crash, since it would be a programmer(s) error
+    // Air needs exactly one wifi card
+    // ground supports rx diversity, therefore can have more than one card
     m_console->error("Without at least one wifi card, the stream(s) cannot be started");
     exit(1);
   }
-  // more than 4 cards would be completely insane, most likely a programming error
-  assert(m_broadcast_cards.size()<=4);
-  // sanity checking
-  for(const auto& card: m_broadcast_cards){
-    assert(card->get_settings().use_for==WifiUseFor::MonitorMode);
-    assert(card->_wifi_card.supports_2GHz() || card->_wifi_card.supports_5GHz());
-  }
-  if (m_profile.is_air && m_broadcast_cards.size() > 1) {
-    // We cannot use more than 1 wifi card for injection
-    m_console->warn("dangerous, the air unit should not have more than 1 wifi card for wifibroadcast");
-    // We just use the first one, this points to a upper level programming error or something weird.
-    m_broadcast_cards.resize(1);
-  }
   // this fetches the last settings, otherwise creates default ones
-  m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(platform,openhd::tmp_convert(m_broadcast_cards));
+  m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(platform,m_broadcast_cards);
   // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
   openhd::wb::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
   takeover_cards_monitor_mode();
@@ -91,7 +78,7 @@ void WBLink::takeover_cards_monitor_mode() {
   // wifibroadcast and therefore making other networking increadibly hard.
   // Tell network manager to ignore the cards we want to do wifibroadcast on
   for(const auto& card: m_broadcast_cards){
-    wifi::commandhelper::nmcli_set_device_unmanaged(card->_wifi_card.interface_name);
+    wifi::commandhelper::nmcli_set_device_unmanaged(card.interface_name);
   }
   wifi::commandhelper::rfkill_unblock_all();
   // TODO: sometimes this happens:
@@ -102,9 +89,9 @@ void WBLink::takeover_cards_monitor_mode() {
   std::this_thread::sleep_for(std::chrono::seconds(1));
   // now we can enable monitor mode on the given cards.
   for(const auto& card: m_broadcast_cards) {
-    wifi::commandhelper::ip_link_set_card_state(card->_wifi_card.interface_name, false);
-    wifi::commandhelper::iw_enable_monitor_mode(card->_wifi_card.interface_name);
-    wifi::commandhelper::ip_link_set_card_state(card->_wifi_card.interface_name, true);
+    wifi::commandhelper::ip_link_set_card_state(card.interface_name, false);
+    wifi::commandhelper::iw_enable_monitor_mode(card.interface_name);
+    wifi::commandhelper::ip_link_set_card_state(card.interface_name, true);
     //wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
   }
   m_console->debug("WBStreams::takeover_cards_monitor_mode() end");
@@ -186,7 +173,7 @@ TOptions WBLink::create_tx_options(uint8_t radio_port,bool enableFec)const {
     options.tx_fec_options.fixed_k=0;
     options.tx_fec_options.overhead_percentage=0;
   }
-  options.wlan = m_broadcast_cards.at(0)->_wifi_card.interface_name;
+  options.wlan = m_broadcast_cards.at(0).interface_name;
   return options;
 }
 
@@ -208,7 +195,7 @@ ROptions WBLink::create_rx_options(uint8_t radio_port)const {
   // high latency when blocks are lost.
   // Multiple rx wifi card's won't provide a benefit with this parameter set though.
   options.rx_queue_depth = 1;//_broadcast_cards.size() > 1 ? 10 : 2;
-  const auto wifi_card_type=m_broadcast_cards.at(0)->get_wifi_card().type;
+  const auto wifi_card_type=m_broadcast_cards.at(0).type;
   options.rtl8812au_rssi_fixup=wifi_card_type==WiFiCardType::Realtek8812au;
   return options;
 }
@@ -276,7 +263,7 @@ void WBLink::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
 std::vector<std::string> WBLink::get_rx_card_names() const {
   std::vector<std::string> ret{};
   for(const auto& card: m_broadcast_cards){
-    ret.push_back(card->_wifi_card.interface_name);
+    ret.push_back(card.interface_name);
   }
   return ret;
 }
@@ -325,8 +312,7 @@ bool WBLink::request_set_txpower(int tx_power) {
 
 void WBLink::apply_txpower() {
   const auto settings=m_settings->get_settings();
-  for(const auto& holder: m_broadcast_cards){
-    const auto& card=holder->_wifi_card;
+  for(const auto& card: m_broadcast_cards){
     if(card.type==WiFiCardType::Realtek8812au){
       // requires corresponding driver workaround for dynamic tx power
       const auto tmp=settings.wb_rtl8812au_tx_pwr_idx_override;
@@ -804,8 +790,8 @@ bool WBLink::set_wb_rtl8812au_tx_pwr_idx_override(int value) {
 }
 
 bool WBLink::has_rtl8812au() {
-  for(const auto& card_handle: m_broadcast_cards){
-    if(card_handle->get_wifi_card().type==WiFiCardType::Realtek8812au){
+  for(const auto& card: m_broadcast_cards){
+    if(card.type==WiFiCardType::Realtek8812au){
       return true;
     }
   }
@@ -839,7 +825,7 @@ void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_l
 }
 
 WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
-  const auto& card=m_broadcast_cards.at(0)->get_wifi_card();
+  const WiFiCard& card=m_broadcast_cards.at(0);
   std::vector<openhd::WifiChannel> channels_to_scan;
   if(params.check_2g_channels_if_card_support && card.supports_2GHz()){
     auto tmp=openhd::get_channels_2G(true);

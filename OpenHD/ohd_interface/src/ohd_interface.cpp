@@ -81,7 +81,11 @@ platform(platform1),profile(std::move(profile1)) {
     // we just continue as nothing happened, but OHD won't have any wifibroadcast connectivity
     //exit(1);
   }else{
-    m_wb_link =std::make_shared<WBLink>(profile,platform,broadcast_cards,opt_action_handler);
+    std::vector<WiFiCard> xxx{};
+    for(const auto& card:broadcast_cards){
+      xxx.push_back(card->get_wifi_card());
+    }
+    m_wb_link =std::make_shared<WBLink>(profile,platform,xxx,opt_action_handler);
   }
   // USB tethering - only on ground
   if(!profile.is_air){

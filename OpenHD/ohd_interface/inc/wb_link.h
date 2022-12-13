@@ -37,7 +37,7 @@ class WBLink :public OHDLink{
    * @param opt_action_handler global openhd action handler, optional (can be nullptr during testing of specific modules instead
    * of testing a complete running openhd instance)
    */
-  explicit WBLink(OHDProfile profile,OHDPlatform platform,std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards,
+  explicit WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,
                      std::shared_ptr<openhd::ActionHandler> opt_action_handler);
   WBLink(const WBLink&)=delete;
   WBLink(const WBLink&&)=delete;
@@ -100,7 +100,7 @@ class WBLink :public OHDLink{
  private:
   const OHDProfile m_profile;
   const OHDPlatform m_platform;
-  std::vector<std::shared_ptr<WifiCardHolder>> m_broadcast_cards;
+  const std::vector<WiFiCard> m_broadcast_cards;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
   std::shared_ptr<spdlog::logger> m_console;
   // disable all openhd frequency checking - note that openhd just uses the proper iw command to set a frequency - if setting
