@@ -545,7 +545,7 @@ static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const u
 static std::string create_rtp_depacketize_for_codec(const VideoCodec& codec){
   if(codec==VideoCodec::H264)return "rtph264depay ! ";
   if(codec==VideoCodec::H265)return "rtph265depay ! ";
-  if(codec==VideoCodec::MJPEG)return "rtpjpegpdepay ! ";
+  if(codec==VideoCodec::MJPEG)return "rtpjpegdepay ! ";
   assert(false);
 }
 static std::string create_parse_for_codec(const VideoCodec& codec){
