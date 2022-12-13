@@ -425,7 +425,7 @@ int main(int argc, char *argv[]) {
     if(ohdTelemetry){
       m_console->debug("Terminating ohd_telemetry - begin");
       ohdTelemetry.reset();
-      m_console->debug("Terminating ohd_telemetry - begin");
+      m_console->debug("Terminating ohd_telemetry - end");
     }
     if(ohdInterface){
       m_console->debug("Terminating ohd_interface - begin");

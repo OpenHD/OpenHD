@@ -11,5 +11,4 @@ WifiHotspotSettingsHolder::WifiHotspotSettingsHolder()
 
 void wifi_hotspot_fixup_settings(WifiHotspotSettingsHolder& wifi_hotspot_settings_holder,
                                  const WiFiCard& wifi_card) {
-
 }
