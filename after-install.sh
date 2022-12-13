@@ -18,5 +18,3 @@ grep "v4l2loopback" /etc/modules
 if [[ "$?" -ne 0 ]]; then
     echo "v4l2loopback" >> /etc/modules
 fi
-
-mount -o remount,ro /boot || true
