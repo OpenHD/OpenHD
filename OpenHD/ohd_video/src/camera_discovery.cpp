@@ -274,14 +274,19 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
     m_console->debug("Found v4l2 loopback camera (likely a thermal camera), TODO implement me");
     return false;
   } else {
-    /*
-	 * This is primarily going to be the bcm2835-v4l2 interface on the Pi, and non-camera interfaces.
-	 *
-	 * We don't want to use the v4l2 interface to the CSI hardware on Raspberry Pi yet, it offers no
-	 * advantage over the mmal interface and doesn't offer the same image controls. Once libcamera is
-	 * being widely used this will be the way to support those cameras, but not yet.
-     */
-    m_console->debug("Found V4l2 device with unknown driver:"+driver);
+    // While for example newer libcamera uses the v4l2 stack, using v4l2 for those cameras is a bad idea - they
+    // have a custom cam type and custom specific pipelines
+    if(driver=="unicam" || driver=="bcm2835-isp"){
+      // handled by specialized code (camera not of type v4l2)
+      return false;
+    }else if(driver=="bcm2835-codec"){
+      // rpi encoder
+      return false;
+    }else if(driver=="rpivid"){
+      // rpi decoder
+      return false;
+    }
+    m_console->debug("Found V4l2 device with unknown driver: [{}]",driver);
     return false;
   }
   const std::string bus((char *)caps.bus_info);
