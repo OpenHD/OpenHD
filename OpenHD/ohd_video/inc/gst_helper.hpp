@@ -55,20 +55,15 @@ static void initGstreamerOrThrow() {
 static std::string createSwEncoder(const CommonEncoderParams& common_encoder_params){
   std::stringstream ss;
   if(common_encoder_params.videoCodec==VideoCodec::H264){
-	ss << "x264enc name=swencoder bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
-	" speed-preset=ultrafast"<<
-	" tune=zerolatency key-int-max=" << common_encoder_params.h26X_keyframe_interval <<
-        " sliced-threads=0"<< //Note: Sliced threads has some advantages, but r.n it is incompatible with QOpenHD on a pi (decode)
-        " ! ";
+    ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=0 ! ",
+                      common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval);
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
-	//TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param
-	ss << "x265enc name=swencoder bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
-	" speed-preset=ultrafast"<<
-	" tune=zerolatency key-int-max=" << common_encoder_params.h26X_keyframe_interval << " ! ";
+    //TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param
+    ss<<fmt::format("x265enc name=swencoder bitrate={} speed-preset=ultrafast tune=zerolatency key-int-max={} ! ",
+                      common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval);
   }else{
-	assert(common_encoder_params.videoCodec==VideoCodec::MJPEG);
-	//NOTE jpegenc doesn't have a bitrate controll
-	ss<<"jpegenc quality="<<common_encoder_params.mjpeg_quality_percent<< " ! ";
+    assert(common_encoder_params.videoCodec==VideoCodec::MJPEG);
+    ss<<fmt::format("jpegenc quality={} ! ",common_encoder_params.mjpeg_quality_percent);
   }
   return ss.str();
 }
