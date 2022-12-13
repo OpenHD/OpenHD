@@ -48,6 +48,10 @@ bool iw_set_tx_power(const std::string& device,uint32_t tx_power_mBm);
 // NOTE: this is not permament between restarts - but that is exactly what we want,
 // since on each restart we might do different things with the wifi card(s)
 bool nmcli_set_device_unmanaged(const std::string& device);
+
+// R.n I do not know of a better solution than to try setting all the frequencies and checking if they can be set.
+std::vector<uint32_t> iw_get_supported_frequencies(const std::string& device,const std::vector<uint32_t>& frequencies_to_try);
+
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_COMMAND_HELPER_H_

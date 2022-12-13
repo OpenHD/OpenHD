@@ -74,3 +74,12 @@ bool wifi::commandhelper::nmcli_set_device_unmanaged(const std::string &device) 
   return success;
 }
 
+std::vector<uint32_t> wifi::commandhelper::iw_get_supported_frequencies(const std::string& device,const std::vector<uint32_t> &frequencies_to_try) {
+  std::vector<uint32_t> supported_frequencies{};
+  for(const auto& freq:supported_frequencies){
+    if(iw_set_frequency_and_channel_width(device,freq,20)){
+      supported_frequencies.push_back(freq);
+    }
+  }
+  return supported_frequencies;
+}
