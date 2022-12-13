@@ -205,32 +205,6 @@ static const std::string WIFI_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::str
    }
 };
 
-static bool all_cards_support_extra_channels_2G(const std::vector<std::shared_ptr<WifiCardHolder>>& cards){
-  for(const auto& card_handle:cards){
-    if(!wifi_card_supports_extra_channels_2G(card_handle->_wifi_card)){
-      return false;
-    }
-  }
-  return true;
-}
-
-static bool all_cards_support_2G(const std::vector<std::shared_ptr<WifiCardHolder>>& cards){
-  for(const auto& card_handle:cards){
-    if(!card_handle->_wifi_card.supports_2ghz){
-      return false;
-    }
-  }
-  return true;
-}
-
-static bool all_cards_support_5G(const std::vector<std::shared_ptr<WifiCardHolder>>& cards){
-  for(const auto& card_handle:cards){
-    if(!card_handle->_wifi_card.supports_5ghz){
-      return false;
-    }
-  }
-  return true;
-}
 
 static std::string debug_cards(const std::vector<std::shared_ptr<WifiCardHolder>>& cards){
   std::stringstream ss;
