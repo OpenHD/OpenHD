@@ -39,7 +39,8 @@ DiscoveredCameraList DCameras::discover_internal() {
     // We need to detect the veye camera first - since once a veye camera is detected and
     // ? we either run the veye_raspivid or do the initializing stuff ? the "normal" rpi camera detection
     // hangs infinite.
-    if(detect_raspberrypi_broadcom_veye()){
+    //(detect_raspberrypi_broadcom_veye()){
+    if(detect_rapsberrypi_veye_v4l2_aaargh())
       m_console->warn("WARNING detected veye camera, skipping normal rpi camera detection");
     }else{
       detect_raspberrypi_broadcom_csi();
