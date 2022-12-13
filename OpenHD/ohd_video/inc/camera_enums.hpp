@@ -19,9 +19,8 @@ enum class CameraType {
   DUMMY_SW,
   // Rpi foundation standard/original CSI cameras,old MMAL / BROADCOM stack
   RPI_CSI_MMAL,
-  // dirty and might be completely removed in future release(s), rpi veye using the MMAL stack but customized (dirty veye-raspivid)
-  //RPI_VEYE_CSI_MMAL,
   // RPI VEYE on the RPI using the newer V4l2 stack, but we need to handle it manually
+  // (E.g. not like a v4l2 camera, but like a special camera type with custom pipeline)
   RPI_VEYE_CSI_V4l2,
   // Any CSI camera on jetson
   JETSON_CSI,

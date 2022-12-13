@@ -111,48 +111,24 @@ void DCameras::detect_raspberrypi_broadcom_csi() {
   }
 }
 
-bool DCameras::detect_raspberrypi_broadcom_veye() {
-  if(true){
-    m_console->warn("detect_raspberrypi_broadcom_veye - temporary disabled");
+bool DCameras::detect_rapsberrypi_veye_v4l2_aaargh() {
+  const auto result_opt=OHDUtil::run_command_out("dmesg | grep \"camera id is veye\"");
+  m_console->debug("LLL {}",result_opt.value_or("NONE"));
+  if(!result_opt.has_value()){
     return false;
   }
-  /*m_console->debug("DCameras::detect_raspberrypi_broadcom_veye()");
-  // First, we use i2cdetect to find out if there is a veye camera
-  const auto i2cdetect_veye_result_opt=OHDUtil::run_command_out("i2cdetect -y 10 0x3b 0x3b | grep  '3b'");
-  if(!i2cdetect_veye_result_opt.has_value()){
-    m_console->debug("i2cdetect run command failed, is it installed ?");
-    return false;
+  const auto result=result_opt.value();
+  if(OHDUtil::contains(result,"camera id is veye327")){
+    return true;
   }
-  const auto& i2cdetect_veye_result=i2cdetect_veye_result_opt.value();
-  m_console->debug("i2cdetect_veye_result:["+i2cdetect_veye_result+"]");
-  std::smatch result;
-  std::regex r{ "30:                                  3b            "};
-  if (!std::regex_search(i2cdetect_veye_result, result, r)) {
-    m_console->debug("DCameras::detect_raspberrypi_broadcom_veye() no regex match ");
-    return false;
-  }
-  m_console->debug("Found veye camera");
-  // In case there are some veye instance(s) still running from previous OHD run(s)
-  openhd::veye::kill_all_running_veye_instances();
-  // R.n we are not sure if this script is needed, but for now, leave it in.
-  // This script always fails, but works anyways ?
-  const auto success=OHDUtil::run_command("/usr/local/share/veye-raspberrypi/camera_i2c_config",{});
   Camera camera;
+  camera.type=CameraType::RPI_VEYE_CSI_V4l2;
+  camera.bus="0";
+  camera.index=0;
   camera.name = "Pi_VEYE_0";
   camera.vendor = "VEYE";
-  camera.type = CameraType::RPI_VEYE_CSI_MMAL;
-  camera.bus = "0";
-  camera.index = m_discover_index;
-  m_discover_index++;
-  CameraEndpoint endpoint{};
-  endpoint.bus = "0";
-  endpoint.support_h264 = true;
-  endpoint.support_mjpeg = false;
-  endpoint.formats.emplace_back("H.264|1920x1080@25");
-  endpoint.formats.emplace_back("H.264|1920x1080@30");
-  m_camera_endpoints.push_back(endpoint);
-  m_cameras.push_back(camera);*/
-  return true;
+  m_cameras.push_back(camera);
+  return false;
 }
 
 #ifdef OPENHD_LIBCAMERA_PRESENT
@@ -412,23 +388,4 @@ void DCameras::argh_cleanup() {
 DiscoveredCameraList DCameras::discover(const OHDPlatform ohdPlatform) {
   auto discover=DCameras{ohdPlatform};
   return discover.discover_internal();
-}
-
-bool DCameras::detect_rapsberrypi_veye_v4l2_aaargh() {
-  /*const auto result_opt=OHDUtil::run_command_out("dmesg | grep \"camera id is veye\"");
-  if(!result_opt.has_value()){
-    return false;
-  }
-  const auto result=result_opt.value();
-  if(OHDUtil::contains(result,"camera id is veye327")){
-    return true;
-  }*/
-  Camera camera;
-  camera.type=CameraType::RPI_VEYE_CSI_V4l2;
-  camera.bus="0";
-  camera.index=0;
-  camera.name = "Pi_VEYE_0";
-  camera.vendor = "VEYE";
-  m_cameras.push_back(camera);
-  return false;
 }

@@ -45,8 +45,6 @@ class DCameras {
    */
   void detect_raspberrypi_broadcom_csi();
   // hacky
-  bool detect_raspberrypi_broadcom_veye();
-  // hacky
   bool detect_rapsberrypi_veye_v4l2_aaargh();
 
   /*
