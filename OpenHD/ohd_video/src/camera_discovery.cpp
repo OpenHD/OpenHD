@@ -25,12 +25,12 @@ DCameras::DCameras(const OHDPlatform ohdPlatform) :
   // TODO fixme
   if(m_enable_debug){
     m_console->set_level(spd::level::debug);
-    m_console->debug("DCameras::m_enable_debug=true");
+    m_console->debug("m_enable_debug=true");
   }
 }
 
 DiscoveredCameraList DCameras::discover_internal() {
-  m_console->debug("DCameras::discover_internal()");
+  m_console->debug("discover_internal()");
   // Only on raspberry pi with the old broadcom stack we need a special detection method for the rpi CSI camera.
   // On all other platforms (for example jetson) the CSI camera is exposed as a normal V4l2 linux device,and we cah
   // check the driver if it is actually a CSI camera handled by nvidia.
@@ -63,10 +63,10 @@ DiscoveredCameraList DCameras::discover_internal() {
 }
 
 void DCameras::detect_raspberrypi_broadcom_csi() {
-  m_console->debug("DCameras::detect_raspberrypi_broadcom_csi()");
+  m_console->debug("detect_raspberrypi_broadcom_csi()");
   const auto vcgencmd_result=OHDUtil::run_command_out("vcgencmd get_camera");
   if(vcgencmd_result==std::nullopt){
-    m_console->debug("DCameras::detect_raspberrypi_broadcom_csi() vcgencmd not found");
+    m_console->debug("detect_raspberrypi_broadcom_csi() vcgencmd not found");
     return;
   }
   const auto& raw_value=vcgencmd_result.value();
@@ -74,16 +74,16 @@ void DCameras::detect_raspberrypi_broadcom_csi() {
   // example "supported=2 detected=2"
   const std::regex r{R"(supported=([\d]+)\s+detected=([\d]+))"};
   if (!std::regex_search(raw_value, result, r)) {
-    m_console->debug("DCameras::detect_raspberrypi_broadcom_csi() no regex match");
+    m_console->debug("detect_raspberrypi_broadcom_csi() no regex match");
     return;
   }
   if (result.size() != 3) {
-    m_console->debug("DCameras::detect_raspberrypi_broadcom_csi() regex unexpected result");
+    m_console->debug("detect_raspberrypi_broadcom_csi() regex unexpected result");
     return;
   }
   const std::string supported = result[1];
   const std::string detected = result[2];
-  m_console->debug("DCameras::detect_raspberrypi_broadcom_csi() supported=" + supported + " detected=" + detected);
+  m_console->debug("detect_raspberrypi_broadcom_csi() supported=" + supported + " detected=" + detected);
   const auto camera_count = atoi(detected.c_str());
   if (camera_count >= 1) {
     Camera camera;
@@ -118,8 +118,8 @@ bool DCameras::detect_rapsberrypi_veye_v4l2_aaargh() {
     return false;
   }
   const auto result=result_opt.value();
-  if(OHDUtil::contains(result,"camera id is veye327")){
-    return true;
+  if(!OHDUtil::contains(result,"camera id is veye327")){
+    return false;
   }
   Camera camera;
   camera.type=CameraType::RPI_VEYE_CSI_V4l2;
@@ -133,7 +133,7 @@ bool DCameras::detect_rapsberrypi_veye_v4l2_aaargh() {
 
 #ifdef OPENHD_LIBCAMERA_PRESENT
 void DCameras::detect_raspberry_libcamera() {
-  m_console->debug("DCameras::detect_raspberry_libcamera()");
+  m_console->debug("detect_raspberry_libcamera()");
   auto cameras = openhd::libcameradetect::get_csi_cameras();
   m_console->debug("Libcamera:discovered {} cameras",cameras.size());
   for (const auto& camera : cameras) {
@@ -143,12 +143,12 @@ void DCameras::detect_raspberry_libcamera() {
 }
 #else
 void DCameras::detect_raspberry_libcamera() {
-  m_console->warn("DCameras::detect_raspberry_libcamera - built without libcamera, libcamera features unavailable");
+  m_console->warn("detect_raspberry_libcamera - built without libcamera, libcamera features unavailable");
 }
 #endif
 
 void DCameras::detect_v4l2() {
-  m_console->debug("DCameras::detect_v4l2()");
+  m_console->debug("detect_v4l2()");
   // Get all the devices to take into consideration.
   const auto devices = DV4l2DevicesHelper::findV4l2VideoDevices();
   for (const auto &device: devices) {
@@ -157,7 +157,7 @@ void DCameras::detect_v4l2() {
 }
 
 void DCameras::probe_v4l2_device(const std::string &device) {
-  m_console->trace("DCameras::probe_v4l2_device()"+device);
+  m_console->trace("probe_v4l2_device() {}",device);
   std::stringstream command;
   command << "udevadm info ";
   command << device.c_str();
@@ -243,7 +243,7 @@ class V4l2FPHolder{
 };
 
 bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, CameraEndpoint &endpoint) {
-  m_console->trace( "DCameras::process_v4l2_node("+node+")");
+  m_console->trace( "process_v4l2_node ({})",node);
 
   auto v4l2_fp_holder=std::make_unique<V4l2FPHolder>(node,m_platform.platform_type);
   if(!v4l2_fp_holder->opened_successfully()){
@@ -341,7 +341,7 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
     }
     fmtdesc.index++;
   }
-  m_console->debug("DCameras::process_v4l2_node done");
+  m_console->debug("process_v4l2_node done");
   return true;
 }
 
