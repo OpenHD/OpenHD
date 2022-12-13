@@ -173,6 +173,7 @@ static std::string createRpicamsrcStream(const int camera_number,
 // The default for h264_minimum_qp_value seems to be 20 - we set it to something lower, so we can get a higher bitrate
 // on scenes with less change (openhd values consistency over everything else)
 static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
+  assert(settings.streamed_video_format.videoCodec==VideoCodec::H264);
   std::stringstream ss;
   // rpi v4l2 encoder takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
