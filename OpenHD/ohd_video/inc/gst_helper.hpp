@@ -93,14 +93,13 @@ static std::string createDummyStream(const CameraSettings& settings) {
   ss << fmt::format(
       "video/x-raw, format=I420,width={},height={},framerate={}/1 ! ",
       settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
-  // since the primary purpose here is testing, use a fixed low key frame
-  // interval.
+  // since the primary purpose here is testing, use sw encoder, which is always guaranteed to work
   ss << createSwEncoder(extract_common_encoder_params(settings));
   return ss.str();
 }
 
 /**
- * Create a encoded stream for rpicamsrc, which supports h264 only.
+ * Create a encoded stream for rpicamsrc, which supports h264 encode in HW, mjpeg and h264 in SW (unusably slow)
  * @param camera_number use -1 to let rpicamsrc decide
  * See https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c#GstRpiCamSrcAWBMode for more complicated params
  */
@@ -277,6 +276,7 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
   }
   return ss.str();
 }
+
 /**
  * This creates the sensor/ISP (nvarguscamerasrc) part of the gstreamer pipeline.
  * @param sensor_id sensor id, set to -1 to let nvarguscamerasrc figure it out
