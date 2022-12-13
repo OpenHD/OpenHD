@@ -534,21 +534,45 @@ static std::string gst_create_caps(const VideoCodec& videoCodec){
   }
   return ss.str();
 }
+
+static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const uint32_t mtu=1024){
+  if(codec==VideoCodec::H264) return fmt::format("rtph264pay mtu={} ! ",mtu);
+  if(codec==VideoCodec::H265) return fmt::format("rtph265pay mtu={} ! ",mtu);
+  if(codec==VideoCodec::MJPEG) return fmt::format("rtpjpegpay mtu={} ! ",mtu);
+  assert(false);
+}
+
+static std::string create_rtp_depacketize_for_codec(const VideoCodec& codec){
+  if(codec==VideoCodec::H264)return "rtph264depay ! ";
+  if(codec==VideoCodec::H265)return "rtph265depay ! ";
+  if(codec==VideoCodec::MJPEG)return "rtpjpegpdepay ! ";
+  assert(false);
+}
+static std::string create_parse_for_codec(const VideoCodec& codec){
+  // config-interval=-1 = makes 100% sure each keyframe has SPS and PPS
+  if(codec==VideoCodec::H264)return "h264parse config-interval=-1 ! ";
+  if(codec==VideoCodec::H265)return "h265parse config-interval=-1  ! ";
+  if(codec==VideoCodec::MJPEG)return "jpegparse ! ";
+  assert(false);
+}
+
 static std::string create_input_custom_udp_rtp_port(const CameraSettings& settings) {
   static constexpr auto input_port=5500;
   static constexpr auto address="127.0.0.1";
   std::stringstream ss;
   ss<<fmt::format("udpsrc address={} port={} {} ! ",address, input_port, gst_create_caps(settings.streamed_video_format.videoCodec));
-  if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
-    ss<<" rtph264depay ! h264parse ! ";
-  }else if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
-    ss<<" rtph265depay ! h265parse ! ";
-  }else{
-    ss<<" rtpjpegpdepay ! jpegparse ! ";
-  }
+  ss<<create_rtp_depacketize_for_codec(settings.streamed_video_format.videoCodec);
+  ss<<create_parse_for_codec(settings.streamed_video_format.videoCodec);
   return ss.str();
 }
 
+static std::string create_ip_cam_stream_with_depacketize_and_parse(const std::string& url,const VideoCodec videoCodec){
+  std::stringstream ss;
+  ss<<createIpCameraStream(url);
+  ss<<create_rtp_depacketize_for_codec(videoCodec);
+  ss<<create_parse_for_codec(videoCodec);
+  return ss.str();
+}
 
 }  // namespace OHDGstHelper
 #endif  // OPENHD_OHDGSTHELPER_H

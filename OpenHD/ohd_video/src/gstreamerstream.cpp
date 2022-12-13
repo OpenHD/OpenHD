@@ -251,10 +251,11 @@ void GStreamerStream::setup_ip_camera() {
   m_console->debug("Setting up IP camera");
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
+  m_pipeline_content<<setting.ip_cam_url;
   if (setting.ip_cam_url.empty()) {
     //setting.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
   }
-  m_pipeline_content << OHDGstHelper::createIpCameraStream(setting.ip_cam_url);
+  m_pipeline_content << OHDGstHelper::create_ip_cam_stream_with_depacketize_and_parse(setting.ip_cam_url,setting.streamed_video_format.videoCodec);
 }
 
 void GStreamerStream::setup_sw_dummy_camera() {
