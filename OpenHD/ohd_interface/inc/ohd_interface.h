@@ -9,7 +9,6 @@
 #include <utility>
 
 #include "mavlink_settings/ISettingsComponent.hpp"
-#include "ohd_interface_settings.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-external-device.hpp"
 #include "openhd-led-codes.hpp"
