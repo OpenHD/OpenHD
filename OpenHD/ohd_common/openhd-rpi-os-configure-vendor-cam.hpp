@@ -118,9 +118,7 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
   const bool is_rpi4=platform.board_type==BoardType::RaspberryPi4B || platform.board_type==BoardType::RaspberryPiCM4;
   std::string base_filename="/boot/openhd/configs/";
   if(cam_config==CamConfig::MMAL){
-    return base_filename+"rpi_";
-    return base_filename+CamConfig;
-    return base_filename+".txt";
+    return base_filename+"rpi_raspicam.txt";
   }else if(cam_config==CamConfig::LIBCAMERA){
     if(is_rpi4){
       return base_filename+"rpi_4_libcamera.txt";
