@@ -57,8 +57,8 @@ class OHDInterface :public openhd::ISettingsComponent{
    */
   void removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device);
  private:
-  const OHDProfile profile;
-  const OHDPlatform platform;
+  const OHDProfile m_profile;
+  const OHDPlatform m_platform;
   std::shared_ptr<WBLink> m_wb_link;
   std::unique_ptr<USBTetherListener> m_usb_tether_listener;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;

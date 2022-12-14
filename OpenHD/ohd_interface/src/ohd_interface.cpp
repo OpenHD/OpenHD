@@ -13,8 +13,7 @@
 
 #include "manually_defined_cards.h"
 
-OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler) :
-platform(platform1),profile(std::move(profile1)) {
+OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler) : m_platform(platform1), m_profile(std::move(profile1)) {
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);
   openhd::write_manual_cards_template();
@@ -26,7 +25,7 @@ platform(platform1),profile(std::move(profile1)) {
   // On a rpi, we block for up to 10 seconds here until we have at least one wifi card that does wifibroadcast
   // Note that we cannot just block until we have one, starting openhd anyways without a wifi card is an essential
   // feature for testing.
-  if(platform.platform_type==PlatformType::RaspberryPi){
+  if(m_platform.platform_type==PlatformType::RaspberryPi){
     const auto begin=std::chrono::steady_clock::now();
     while (std::chrono::steady_clock::now()-begin<std::chrono::seconds(10)){
       if(DWifiCards::any_wifi_card_supporting_injection(discovered_wifi_cards))break;
@@ -36,7 +35,7 @@ platform(platform1),profile(std::move(profile1)) {
     }
   }
   // now decide what to use the card(s) for
-  const auto evaluated=DWifiCards::process_and_evaluate_cards(discovered_wifi_cards,profile.is_air);
+  const auto evaluated=DWifiCards::process_and_evaluate_cards(discovered_wifi_cards, m_platform, m_profile);
   const auto broadcast_cards=evaluated.monitor_mode_cards;
   const auto optional_hotspot_card=evaluated.hotspot_card;
   m_console->debug("Broadcast card(s):{}",debug_cards(broadcast_cards));
@@ -53,14 +52,14 @@ platform(platform1),profile(std::move(profile1)) {
     // TODO reason what to do. We do not support dynamically adding wifi cards at run time, so somehow
     // we need to signal to the user that something is completely wrong. However, as an grund pi, we can still
     // run QOpenHD and OpenHD, just it will never connect to an air pi
-    m_error_blinker=std::make_unique<openhd::LEDBlinker>(platform,message_for_user);
+    m_error_blinker=std::make_unique<openhd::LEDBlinker>(m_platform,message_for_user);
     // we just continue as nothing happened, but OHD won't have any wifibroadcast connectivity
     //exit(1);
   }else{
-    m_wb_link =std::make_shared<WBLink>(profile,platform,broadcast_cards,opt_action_handler);
+    m_wb_link =std::make_shared<WBLink>(m_profile, m_platform,broadcast_cards,opt_action_handler);
   }
   // USB tethering - only on ground
-  if(!profile.is_air){
+  if(!m_profile.is_air){
     m_usb_tether_listener =std::make_unique<USBTetherListener>([this](openhd::ExternalDevice external_device,bool connected){
       if(connected){
         addExternalDeviceIpForwarding(external_device);
@@ -127,7 +126,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   if(m_wifi_hotspot != nullptr){
     // TODO wifi hotspot manages its own settings
   }
-  if(!profile.is_air){
+  if(!m_profile.is_air){
     //openhd::testing::append_dummy_int_and_string(ret);
   }
   openhd::validate_provided_ids(ret);

@@ -194,13 +194,14 @@ bool DWifiCards::any_wifi_card_supporting_injection(const std::vector<WiFiCard>&
   return false;
 }
 
-DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(std::vector<WiFiCard> discovered_cards,bool max_one_broadcast_card) {
+DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
+    const std::vector<WiFiCard>& discovered_cards,const OHDPlatform& platform,const OHDProfile& profile){
 
   // manually overwriting the automatic assignment of cards depending on their capabilities can result in bugs / undefined behaviour
   if(openhd::manually_defined_cards_file_exists()){
       const auto manual_cards=openhd::get_manually_defined_cards_from_file(openhd::FILE_PATH_MANUALLY_DEFINED_CARDS);
       std::vector<WiFiCard> monitor_mode_cards{};
-      std::optional<WiFiCard> hotspot_card=std::nullopt;
+      std::optional<WiFiCard> opt_hotspot_card =std::nullopt;
       for(const auto& manual_card : manual_cards){
         auto card_opt= process_card(manual_card.interface_name);
         if(!card_opt){
@@ -210,15 +211,16 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(std::vecto
           monitor_mode_cards.push_back(card_opt.value());
         }else if(manual_card.usage==WifiUseFor::Hotspot){
           WiFiCard card=card_opt.value();
-          hotspot_card=card;
+          opt_hotspot_card =card;
         }
       }
-      return {monitor_mode_cards,hotspot_card};
+      return {monitor_mode_cards, opt_hotspot_card};
   }
   // We need to figure out what's the best usage for the card(s) connected to the system based on their capabilities.
   std::vector<WiFiCard> monitor_mode_cards{};
   std::optional<WiFiCard> hotspot_card=std::nullopt;
-
+  // Default simple approach: if a card supports injection, use it for monitor mode
+  // otherwise, use it for hotspot
   for(const auto& card:discovered_cards){
     if(card.supports_injection){
       monitor_mode_cards.push_back(card);
@@ -228,12 +230,18 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(std::vecto
       }
     }
   }
-  if(monitor_mode_cards.empty() && hotspot_card.has_value()){
-    openhd::log::get_default()->warn("Using card that might not be usable for monitor mode for wb");
-    monitor_mode_cards.push_back(hotspot_card.value());
-    hotspot_card=std::nullopt;
+  if(monitor_mode_cards.empty()){
+    // try if we can find a card that at least does monitor mode (but not injection)
+    for(const auto& card:discovered_cards){
+      if(card.supports_monitor_mode){
+        openhd::log::get_default()->warn("Using card {} for monitor mode(wifibroadcast) even though it does not support injection",card.device_name);
+        monitor_mode_cards.push_back(card);
+        hotspot_card=std::nullopt;
+        break;
+      }
+    }
   }
-  if(max_one_broadcast_card && monitor_mode_cards.size()>1){
+  if(profile.is_air && monitor_mode_cards.size()>1){
     monitor_mode_cards.resize(1);
   }
   return {monitor_mode_cards,hotspot_card};

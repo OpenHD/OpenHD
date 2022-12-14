@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "openhd-platform.hpp"
+#include "openhd-profile.hpp"
 #include "wifi_card.hpp"
 
 /**
@@ -35,7 +36,7 @@ struct ProcessedWifiCards{
   std::optional<WiFiCard> hotspot_card;
 };
 
-ProcessedWifiCards process_and_evaluate_cards(std::vector<WiFiCard> discovered_cards,bool max_one_broadcast_card);
+ProcessedWifiCards process_and_evaluate_cards(const std::vector<WiFiCard>& discovered_cards,const OHDPlatform& platform,const OHDProfile& profile);
 
 };
 
