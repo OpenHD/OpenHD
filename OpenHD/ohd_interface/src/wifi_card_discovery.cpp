@@ -120,42 +120,29 @@ std::vector<WiFiCard> DWifiCards::discover() {
 }
 
 std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_name) {
-  std::stringstream device_uevent_file;
-  device_uevent_file << "/sys/class/net/";
-  device_uevent_file << interface_name.c_str();
-  device_uevent_file << "/device/uevent";
-
-  std::ifstream t(device_uevent_file.str());
-  const std::string raw_value((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-
+  // get the driver name for this card
+  const auto filename_device_uevent=fmt::format("/sys/class/net/{}/device/uevent",interface_name);
+  const auto device_uevent_content=OHDFilesystemUtil::read_file(filename_device_uevent);
   const std::regex driver_regex{"DRIVER=([\\w]+)"};
-
   std::smatch result;
-  if (!std::regex_search(raw_value, result, driver_regex)) {
+  if (!std::regex_search(device_uevent_content, result, driver_regex)) {
     openhd::log::get_default()->warn("no result");
     return std::nullopt;
   }
-
   if (result.size() != 2) {
     openhd::log::get_default()->warn("result doesnt match");
     return std::nullopt;
   }
-
   const std::string driver_name = result[1];
 
-  WiFiCard card;
+  WiFiCard card{};
   card.interface_name = interface_name;
   card.driver_name=driver_name;
-
   card.type = driver_to_wifi_card_type(driver_name);
 
-  std::stringstream phy_file;
-  phy_file << "/sys/class/net/";
-  phy_file << interface_name.c_str();
-  phy_file << "/phy80211/index";
-
-  std::ifstream d(phy_file.str());
-  const std::string phy_val((std::istreambuf_iterator<char>(d)), std::istreambuf_iterator<char>());
+  // get the phy index for this card
+  const auto filename_phy_index=fmt::format("/sys/class/net/{}/phy80211/index",card.interface_name);
+  const auto phy_val=OHDFilesystemUtil::read_file(filename_phy_index);
   const auto opt_phy_phy80211_index=OHDUtil::string_to_int(phy_val);
   if(!opt_phy_phy80211_index.has_value()){
     openhd::log::get_default()->warn("Cannot find phy index for card {}",interface_name);
@@ -163,6 +150,21 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   }
   card.phy_phy80211_index=opt_phy_phy80211_index.value();
   openhd::log::get_default()->debug("Card {} driver:{} phy{}",card.interface_name,card.driver_name,card.phy_phy80211_index);
+
+  // get the mac address for this card
+  const auto filename_mac_address=fmt::format("/sys/class/net/{}/address",card.interface_name);
+  auto mac=OHDFilesystemUtil::read_file(filename_mac_address);
+  if(mac.empty()){
+    openhd::log::get_default()->warn("Cannot find mac for card {}",interface_name);
+    return std::nullopt;
+  }
+  OHDUtil::rtrim(mac);
+  card.mac = mac;
+  // Here we are done with the unique identifiers
+  assert(!card.interface_name.empty());
+  assert(!card.mac.empty());
+  assert(card.phy_phy80211_index!=-1);
+  assert(!card.driver_name.empty());
 
   // This reported value is right in most cases, so we use it as a default. However, for example the RTL8812AU reports
   // both 2G and 5G but can only do 5G with the monitor mode driver.
@@ -178,16 +180,8 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   supported_channels(card.interface_name);
   openhd::log::get_default()->debug("Supports monitor mode:{}", wifi::commandhelper::iw_supports_monitor_mode(card.phy_phy80211_index));
 
-  std::stringstream address;
-  address << "/sys/class/net/";
-  address << interface_name;
-  address << "/address";
 
-  std::ifstream f(address.str());
-  std::string mac((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-  OHDUtil::rtrim(mac);
-
-  card.mac = mac;
+  card.supports_monitor_mode= wifi::commandhelper::iw_supports_monitor_mode(card.phy_phy80211_index);
 
   switch (card.type) {
     case WiFiCardType::Atheros9k: {
