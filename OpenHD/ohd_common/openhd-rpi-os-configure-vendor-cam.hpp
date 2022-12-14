@@ -176,7 +176,7 @@ return "true";
 }
 //write our dynamic config to the temporary config-file
 static std::string writeOpenHDConfigStuff(std::string FilePath){
-    string FullFilePath= "/boot/openhd/configs/";
+    std::string FullFilePath= "/boot/openhd/configs/";
     FullFilePath += FilePath;
     FullFilePath += ".txt";
     int countStart=0;
