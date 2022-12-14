@@ -26,8 +26,9 @@ struct ManuallyDefinedCards {
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ManuallyDefinedCards, cards);
 
-static std::vector<ManuallyDefinedCard> get_manually_defined_cards_from_file(
-    const std::string& filename) {
+static const std::string FILE_PATH_MANUALLY_DEFINED_CARDS=std::string(INTERFACE_SETTINGS_DIRECTORY)+std::string("manual_cards.json");
+
+static std::vector<ManuallyDefinedCard> get_manually_defined_cards_from_file(const std::string& filename) {
   if (!OHDFilesystemUtil::exists(filename.c_str())) {
     throw std::runtime_error(fmt::format("With great power comes great responsibility.File {} does not exist",filename));
   }
@@ -54,6 +55,10 @@ static void write_manual_cards_template() {
   std::ofstream t(file_path);
   t << tmp.dump(4);
   t.close();
+}
+
+static bool manually_defined_cards_file_exists(){
+  return OHDFilesystemUtil::exists(FILE_PATH_MANUALLY_DEFINED_CARDS.c_str());
 }
 
 }

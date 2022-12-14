@@ -8,6 +8,7 @@
 #include "wifi_card.hpp"
 #include "wifi_card_discovery.h"
 #include "wifi_command_helper.h"
+#include "manually_defined_cards.h"
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
@@ -297,6 +298,26 @@ bool DWifiCards::any_wifi_card_supporting_monitor(const std::vector<WiFiCard>& c
 
 DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(std::vector<WiFiCard> discovered_cards,bool max_one_broadcast_card) {
 
+  // manually overwriting the automatic assignment of cards depending on their capabilities can result in bugs / undefined behaviour
+  if(openhd::manually_defined_cards_file_exists()){
+      const auto manual_cards=openhd::get_manually_defined_cards_from_file(openhd::FILE_PATH_MANUALLY_DEFINED_CARDS);
+      std::vector<WiFiCard> monitor_mode_cards{};
+      std::optional<WiFiCard> hotspot_card=std::nullopt;
+      for(const auto& manual_card : manual_cards){
+        auto card_opt= process_card(manual_card.interface_name);
+        if(!card_opt){
+          throw std::runtime_error(fmt::format("Card {} does not exist on this system",manual_card.interface_name));
+        }
+        if(manual_card.usage==WifiUseFor::MonitorMode){
+          monitor_mode_cards.push_back(card_opt.value());
+        }else if(manual_card.usage==WifiUseFor::Hotspot){
+          WiFiCard card=card_opt.value();
+          hotspot_card=card;
+        }
+      }
+      return {monitor_mode_cards,hotspot_card};
+  }
+  // We need to figure out what's the best usage for the card(s) connected to the system based on their capabilities.
   std::vector<WiFiCard> monitor_mode_cards{};
   std::optional<WiFiCard> hotspot_card=std::nullopt;
 
@@ -308,6 +329,11 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(std::vecto
         hotspot_card=card;
       }
     }
+  }
+  if(monitor_mode_cards.empty() && hotspot_card.has_value()){
+    openhd::log::get_default()->warn("Using card that might not be usable for monitor mode for wb");
+    monitor_mode_cards.push_back(hotspot_card.value());
+    hotspot_card=std::nullopt;
   }
   if(max_one_broadcast_card && monitor_mode_cards.size()>1){
     monitor_mode_cards.resize(1);
