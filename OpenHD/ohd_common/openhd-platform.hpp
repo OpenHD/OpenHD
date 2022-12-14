@@ -12,7 +12,7 @@ enum class PlatformType {
   PC,
   RaspberryPi,
   Jetson,
-  NanoPi,
+  Allwinner,
   iMX6,
   Rockchip,
   Zynq,
@@ -21,7 +21,7 @@ inline std::string platform_type_to_string(PlatformType platform_type) {
   switch (platform_type) {
     case PlatformType::Jetson: return "jetson";
     case PlatformType::RaspberryPi: return "raspberrypi";
-    case PlatformType::NanoPi: return "nanopi";
+    case PlatformType::Allwinner: return "allwinner";
     case PlatformType::iMX6: return "imx6";
     case PlatformType::Zynq: return "zynq";
     case PlatformType::PC: return "pc";
@@ -50,7 +50,7 @@ enum class BoardType {
   JetsonTX2,
   JetsonNX,
   JetsonAGX,
-  NanoPiNeo4,
+  NanoPiDuo2,
   PynqZ1,
   PynqZ2,
   X3DRSolo,
@@ -78,7 +78,7 @@ inline std::string board_type_to_string(BoardType board_type) {
     case BoardType::JetsonTX2: return "jetson-tx2";
     case BoardType::JetsonNX: return "jetson-nx";
     case BoardType::JetsonAGX: return "jetson-agx";
-    case BoardType::NanoPiNeo4: return "nanopi-neo4";
+    case BoardType::NanoPiDuo2: return "nanopi-duo2";
     case BoardType::PynqZ1: return "pynqz1";
     case BoardType::PynqZ2: return "pynqz2";
     case BoardType::X3DRSolo: return "3dr-solo";

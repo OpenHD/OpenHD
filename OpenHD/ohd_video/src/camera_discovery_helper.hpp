@@ -176,7 +176,25 @@ static CameraEndpoint createCameraEndpointRpi(bool isCsi1 = false) {
   endpoint.formats = DRPICamerasHelper::createDefaultSupportedLIstRpiCam();
   return endpoint;
 }
+// Allwinner - keep it really simple for now
+static std::vector<std::string> createDefaultSupportedListAllwinnerCam() {
+  std::vector<std::string> ret;
+  ret.emplace_back("H.264|1280x720@60");
+  return ret;
+}
 
+/**
+ * Create a camera endpoint for allwinner
+ * @return
+ */
+static CameraEndpoint createCameraEndpointAllwinner() {
+  CameraEndpoint endpoint;
+  endpoint.bus = "0";
+  endpoint.support_h264 = true;
+  endpoint.support_mjpeg = false;
+  endpoint.formats = DRPICamerasHelper::createDefaultSupportedListAllwinnerCam();
+  return endpoint;
+}
 }  // namespace DRPICamerasHelper
 
 /**

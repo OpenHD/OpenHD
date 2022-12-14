@@ -32,6 +32,7 @@ class DPlatform {
  private:
   static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
   static constexpr auto DEVICE_TREE_COMPATIBLE_PATH = "/proc/device-tree/compatible";
+ static constexpr auto ALLWINNER_BOARDID_PATH = "/sys/class/sunxi_info/sys_info";
   static std::shared_ptr<OHDPlatform> internal_discover(){
     const auto res=detect_raspberrypi();
     if(res.has_value()){
@@ -45,8 +46,12 @@ class DPlatform {
     if(res3.has_value()){
       return std::make_shared<OHDPlatform>(res3.value().first,res3.value().second);
     }
-    const auto res4=detect_pc();
-    return std::make_shared<OHDPlatform>(res4.first,res4.second);
+    const auto res4=detect_allwinner();
+    if(res4.has_value()){
+      return std::make_shared<OHDPlatform>(res4.value().first,res4.value().second);
+    }
+    const auto res5=detect_pc();
+    return std::make_shared<OHDPlatform>(res5.first,res5.second);
   }
   static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi(){
     std::ifstream t("/proc/cpuinfo");
@@ -70,6 +75,11 @@ class DPlatform {
     BoardType board_type=BoardType::Unknown;
 
     const std::string raspberry_identifier = result[1];
+    if(raspberry_identifier == "0000")
+    {
+        std::cout<<"identifier:{"<<raspberry_identifier<<"} is not raspberry pi\n";
+        return {};
+    }
     openhd::log::get_default()->debug("Pi identifier:{"+raspberry_identifier+"}");
 
     const std::set<std::string> pi4b_identifiers = {"a03111", "b03111", "b03112", "c03111", "c03112", "d03114","b03115"};
@@ -130,6 +140,12 @@ class DPlatform {
           return std::make_pair(PlatformType::Rockchip, BoardType::Unknown);
         }
       }
+    }
+    return {};
+  }
+  static std::optional<std::pair<PlatformType,BoardType>> detect_allwinner(){
+    if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
+      return std::make_pair(PlatformType::Allwinner,BoardType::NanoPiDuo2);
     }
     return {};
   }
