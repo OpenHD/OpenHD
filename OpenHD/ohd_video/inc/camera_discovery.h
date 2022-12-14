@@ -73,10 +73,8 @@ class DCameras {
    */
   bool process_v4l2_node(const std::string &node, Camera &camera,
                          CameraEndpoint &endpoint);
-  /**
-   * TODO unimplemented.
-   */
-  void detect_ip();
+
+  // NOTE: IP cameras cannot be auto detected !
 
   std::vector<Camera> m_cameras;
   std::vector<CameraEndpoint> m_camera_endpoints;

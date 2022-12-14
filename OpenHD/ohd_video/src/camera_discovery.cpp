@@ -59,7 +59,6 @@ DiscoveredCameraList DCameras::discover_internal() {
     // This will detect all cameras (CSI or not) that do it the proper way (linux v4l2)
     detect_v4l2();
   }
-  detect_ip();
   if (m_platform.platform_type == PlatformType::RaspberryPi) {
     detect_raspberry_libcamera();
   }
@@ -373,11 +372,6 @@ bool DCameras::process_v4l2_node(const std::string &node, Camera &camera, Camera
   }
   m_console->debug("process_v4l2_node done");
   return true;
-}
-
-void DCameras::detect_ip() {
-  m_console->debug("Detect_ip unimplemented");
-  // Note: I don't think there is an easy way to detect ip cameras,it probably requires some manual user input.
 }
 
 void DCameras::argh_cleanup() {
