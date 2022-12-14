@@ -130,6 +130,69 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
   return "";
 }
 
+//helper functions for writing config files
+//find the line, in which the dynamic content begins
+int getDynamicLineStart(){
+    std::string line;
+    std::ifstream inFile("/boot/config.txt");
+    int countStart = 0;
+    while(getline(inFile, line)){
+        countStart++;
+        if (!line.find("#OPENHD_DYNAMIC_CONTENT_BEGIN#")){
+            countStart++;
+            return countStart;
+        }
+    }
+    return 0;
+    }
+//find the line, in which the dynamic content ends
+int getDynamicLineEnd(){
+    std::string line;
+    std::ifstream inFile("/boot/config.txt");
+    int countStop = 0;
+    while(getline(inFile, line)){
+        countStop++;
+        if (!line.find("#OPENHD_DYNAMIC_CONTENT_END#")){
+            return countStop;
+        }
+    }
+    return 0;
+}
+//rewrite the config part that is changable by the user
+void writeStaticStuff(){
+    int countStart=0;
+    std::ofstream outFile("/boot/config.txt.temp");
+    std::string line;
+    std::ifstream inFile("/boot/config.txt");
+    int count = 0;
+    countStart = getDynamicLineStart();
+        while(getline(inFile, line)){
+            if(count > 0 && count < countStart){
+                outFile << line << std::endl;
+            }
+            count++;
+        }
+}
+//write our dynamic config to the temporary config-file
+void writeOpenHDConfigStuff(string FilePath){
+    string FullFilePath= "/boot/openhd/configs/";
+    FullFilePath += FilePath;
+    FullFilePath += ".txt";
+    int countStart=0;
+    int countStop=0;
+    countStop = getDynamicLineEnd(); 
+    std::ofstream outFile{"/boot/config.txt.temp", std::ios_base::app};
+    std::string line;
+    std::ifstream inFile(FullFilePath);
+    int count = 0;
+        while(getline(inFile, line)){
+            if(count >= 0 && count < countStop){
+                outFile << line << std::endl;
+            }
+            count++;
+        }
+    }
+
 const auto rpi_config_file_path="/boot/config.txt";
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
@@ -140,10 +203,16 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
     openhd::log::get_default()->warn("Cannot apply new cam config, corresponding config.txt ["+filename+"] not found");
     return;
   }
+  // creating a new config file
+  std::ofstream outFile("/boot/config.txt.temp");
+  std::string line;
+  outFile.close();
+  writeStaticStuff();
+  writeOpenHDConfigStuff(cam_config_to_string(new_cam_config));  
   // move current config.txt to a backup file
   OHDUtil::run_command("mv",{rpi_config_file_path,"/boot/config_bup.txt"});
   // and copy over the new one
-  OHDUtil::run_command("cp",{filename,rpi_config_file_path});
+  OHDUtil::run_command("cp",{/boot/config.txt.temp,rpi_config_file_path});
   // save the current selection (persistent setting)
   save_cam_config_to_file(new_cam_config);
   // Now we just need to reboot
