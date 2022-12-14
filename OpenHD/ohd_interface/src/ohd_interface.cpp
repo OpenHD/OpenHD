@@ -19,7 +19,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   openhd::write_manual_cards_template();
   //wifiCards = std::make_unique<WifiCards>(profile);
   //Find out which cards are connected first
-  auto discovered_wifi_cards=DWifiCards::discover();
+  auto connected_cards =DWifiCards::discover_connected_wifi_cards();
   // Issue on rpi with Atheros: For some reason, openhd is sometime started before the card
   // finishes some initialization steps ?! and is therefore not discovered.
   // On a rpi, we block for up to 10 seconds here until we have at least one wifi card that does injection
@@ -28,14 +28,15 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   if(m_platform.platform_type==PlatformType::RaspberryPi){
     const auto begin=std::chrono::steady_clock::now();
     while (std::chrono::steady_clock::now()-begin<std::chrono::seconds(10)){
-      if(DWifiCards::any_wifi_card_supporting_injection(discovered_wifi_cards))break;
+      if(DWifiCards::any_wifi_card_supporting_injection(connected_cards))break;
       m_console->debug("rpi-waiting up to 10 seconds until at least one wifi card supporting monitor mode is found");
       std::this_thread::sleep_for(std::chrono::seconds(1));
-      discovered_wifi_cards=DWifiCards::discover();
+      connected_cards =DWifiCards::discover_connected_wifi_cards();
     }
   }
   // now decide what to use the card(s) for
-  const auto evaluated=DWifiCards::process_and_evaluate_cards(discovered_wifi_cards, m_platform, m_profile);
+  const auto evaluated=DWifiCards::process_and_evaluate_cards(
+      connected_cards, m_platform, m_profile);
   const auto broadcast_cards=evaluated.monitor_mode_cards;
   const auto optional_hotspot_card=evaluated.hotspot_card;
   m_console->debug("Broadcast card(s):{}",debug_cards(broadcast_cards));

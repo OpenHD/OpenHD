@@ -25,8 +25,8 @@ std::optional<WiFiCard> fill_linux_wifi_card_identifiers(const std::string& inte
 // helper to figure out more info about a semi-discovered wifi card
 std::optional<WiFiCard> process_card(const std::string &interface_name);
 
-// discover all connected wifi cards
-std::vector<WiFiCard> discover();
+// discover all connected wifi cards and their capabilities
+std::vector<WiFiCard> discover_connected_wifi_cards();
 
 // Return true if any of the given wifi cards supports monitor mode
 bool any_wifi_card_supporting_injection(const std::vector<WiFiCard>& cards);

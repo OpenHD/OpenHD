@@ -115,8 +115,8 @@ std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(const std::
   return card;
 }
 
-std::vector<WiFiCard> DWifiCards::discover() {
-  openhd::log::get_default()->trace("WiFi::discover()");
+std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
+  openhd::log::get_default()->trace("WiFi::discover_connected_wifi_cards");
   std::vector<WiFiCard> wifi_cards{};
   // Find wifi cards, excluding specific kinds of interfaces.
   const std::vector<std::string> excluded_interfaces = {
@@ -141,7 +141,7 @@ std::vector<WiFiCard> DWifiCards::discover() {
       }
     }
   }
-  openhd::log::get_default()->trace("WiFi::discover done, n cards: {}",wifi_cards.size());
+  openhd::log::get_default()->trace("WiFi::discover_connected_wifi_cards done, n cards: {}",wifi_cards.size());
   write_wificards_manifest(wifi_cards);
   return wifi_cards;
 }
