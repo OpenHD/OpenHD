@@ -14,8 +14,8 @@
 // This really is exhausting - some camera(s) are auto-detected, some are not,
 // And also gst-rpicamsrc (mmal) and libcamera need different config.txt files.
 // They are also slight differences between the RPI4/CM4 and RPI3 or older
-// R.n the aproach here is to just copy over the appropriate config.txt file
-// according to what the user selected
+// Currently we use Dynamic Config files, which only include the important lines, 
+// the config.txt can be changed by the user again, just the dynamic part is overwritten by openhd
 // Note that the action(s) here are required for the OS to detect and configure the camera -
 // only a camera detected by the OS can then be detected by the OHD camera(s) discovery
 namespace openhd::rpi::os{
