@@ -60,7 +60,7 @@ static std::vector<Camera> get_csi_cameras(){
     openhd::log::get_default()->debug("LOOL {}",cam_id);
     // We do not want usb cameras from libcamera
     if(cam_id.find("/usb") == std::string::npos){
-      openhd::log::get_default()->info("Libcamera found:{}",cam_id);
+      openhd::log::get_default()->info("Libcamera found:[{}]",cam_id);
       Camera camera{};
       camera.name = cam_id;
       camera.type = CameraType::RPI_CSI_LIBCAMERA;
