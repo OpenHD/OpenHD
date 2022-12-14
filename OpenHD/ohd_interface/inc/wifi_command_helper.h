@@ -58,6 +58,9 @@ std::vector<uint32_t> iw_get_supported_frequencies(const std::string& device,con
 // check if the device supports monitor mode
 // Note that this does not necessarily mean the device properly does monitor mode with injection - quite a lot of devices
 // report monitor mode capabilities, but actually can't really do it properly.
+// phy <phyname> info
+//		Show capabilities for the specified wireless device.
+// NOTE: for phy info gives capabilities,for dev-name NOT !!
 bool iw_supports_monitor_mode(int phy_index);
 
 }

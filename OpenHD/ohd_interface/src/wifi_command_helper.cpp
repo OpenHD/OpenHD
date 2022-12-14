@@ -105,7 +105,7 @@ std::vector<uint32_t> wifi::commandhelper::iw_get_supported_frequencies(const st
 }
 
 bool wifi::commandhelper::iw_supports_monitor_mode(int phy_index) {
-  const std::string command="iw phy"+std::to_string(phy_index)+" info";
+  const std::string command="iw phy phy"+std::to_string(phy_index)+" info";
   const auto res_opt=OHDUtil::run_command_out(command);
   if(!res_opt.has_value()){
     openhd::log::get_default()->warn("iw_supports_monitor_mode for phy{} failed,assuming can do monitor mode",phy_index);
