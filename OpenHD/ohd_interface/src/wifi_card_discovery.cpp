@@ -33,41 +33,30 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   return WiFiCardType::Unknown;
 }
 
-// So stephen used phy-lookup to get the supported channels of a card - however, that doesn't work reliable.
-// This code uses "iwlist XXX frequency" which returns something the likes of:
-// openhd@openhd:~$ iwlist wlan1 frequency
-// wlan1     32 channels in total; available frequencies :
-//           Channel 01 : 2.412 GHz
-//                ...
-// So while annoying, let's just use iw dev and parse the result
-// For now, no separation into which channel(s) are supported, just weather any 2.4G or 5G frequency is supported
-struct SupportedFrequency{
-  bool supports_2G=false;
-  bool supports_5G=false;
-};
-static SupportedFrequency supported_frequencies(const std::string& wifi_interface_name){
-  SupportedFrequency ret{false, false};
-  const std::string command="iwlist "+wifi_interface_name+" frequency";
-  const auto res_op=OHDUtil::run_command_out(command.c_str());
-  if(!res_op.has_value()){
-    openhd::log::get_default()->warn("get_supported_channels for {} failed",wifi_interface_name);
-    return ret;
+bool DWifiCards::is_known_for_injection(const WiFiCardType& type) {
+  bool supports=false;
+  switch (type) {
+    case WiFiCardType::Unknown:
+      supports= false;
+      break;
+    case WiFiCardType::Realtek8812au:
+    case WiFiCardType::Realtek8814au:
+    case WiFiCardType::Realtek88x2bu:
+    case WiFiCardType::Realtek8188eu:
+    case WiFiCardType::Atheros9khtc:
+    case WiFiCardType::Atheros9k:
+    case WiFiCardType::Ralink:
+      supports= true;
+      break;
+    case WiFiCardType::Intel:
+    case WiFiCardType::Broadcom:
+    default:
+      supports= false;
+      break;
   }
-  const auto& res=res_op.value();
-  if(res.find("5.")!= std::string::npos){
-    ret.supports_5G= true;
-  }
-  if(res.find("2.")!= std::string::npos){
-    ret.supports_2G= true;
-  }
-  return ret;
+  return supports;
 }
 
-static std::string float_without_trailing_zeroes(const float value){
-  std::stringstream ss;
-  ss << std::noshowpoint << value;
-  return ss.str();
-}
 
 static std::vector<openhd::WifiChannel> supported_channels(const std::string& device){
   const auto channels_to_try=openhd::get_all_channels_2G_5G();
@@ -126,7 +115,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   const std::regex driver_regex{"DRIVER=([\\w]+)"};
   std::smatch result;
   if (!std::regex_search(device_uevent_content, result, driver_regex)) {
-    openhd::log::get_default()->warn("no result");
+    openhd::log::get_default()->warn("no result driver regex [{}]",device_uevent_content);
     return std::nullopt;
   }
   if (result.size() != 2) {
@@ -168,9 +157,9 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 
   // This reported value is right in most cases, so we use it as a default. However, for example the RTL8812AU reports
   // both 2G and 5G but can only do 5G with the monitor mode driver.
-  const auto supported_freq= supported_frequencies(card.interface_name);
-  const bool supports_2ghz = supported_freq.supports_2G;
-  const bool supports_5ghz = supported_freq.supports_5G;
+  const auto supported_freq= wifi::commandhelper::iw_get_supported_frequency_bands(card.interface_name);
+  const bool supports_2ghz = supported_freq.supports_any_2G;
+  const bool supports_5ghz = supported_freq.supports_any_5G;
 
   // Note that this does not neccessarily mean this info is right
   // a card might report a specific channel but then since monitor mode is so hack not support the channel in monitor mode
@@ -178,10 +167,9 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
                                     card.interface_name,driver_name,OHDUtil::yes_or_no(supports_2ghz),OHDUtil::yes_or_no(supports_5ghz));
 
   supported_channels(card.interface_name);
-  openhd::log::get_default()->debug("Supports monitor mode:{}", wifi::commandhelper::iw_supports_monitor_mode(card.phy_phy80211_index));
-
 
   card.supports_monitor_mode= wifi::commandhelper::iw_supports_monitor_mode(card.phy_phy80211_index);
+  openhd::log::get_default()->debug("Supports monitor mode:{}", card.supports_monitor_mode);
 
   switch (card.type) {
     case WiFiCardType::Atheros9k: {
@@ -334,3 +322,4 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(std::vecto
   }
   return {monitor_mode_cards,hotspot_card};
 }
+

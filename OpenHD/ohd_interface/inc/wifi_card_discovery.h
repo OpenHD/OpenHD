@@ -14,6 +14,10 @@
  */
 namespace DWifiCards {
 
+// There is no way to tell if a card supports injection in monitor mode other than keeping track of a list of the cards
+// which we know can do injection
+static bool is_known_for_injection(const WiFiCardType& type);
+
 // discover all connected wifi cards
 std::vector<WiFiCard> discover();
 

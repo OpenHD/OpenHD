@@ -58,6 +58,12 @@ bool nmcli_set_device_unmanaged(const std::string& device);
 // if running the command fails, prints warning and assumes all supplied frequencies are supported.
 std::vector<uint32_t> iw_get_supported_frequencies(const std::string& device,const std::vector<uint32_t>& frequencies_mhz_to_try);
 
+struct SupportedFrequencyBand{
+  bool supports_any_2G=false;
+  bool supports_any_5G=false;
+};
+SupportedFrequencyBand iw_get_supported_frequency_bands(const std::string& device);
+
 // check if the device supports monitor mode
 // Note that this does not necessarily mean the device properly does monitor mode with injection - quite a lot of devices
 // report monitor mode capabilities, but actually either don't even do proper listen-only monitor mode and/or don't do injection
