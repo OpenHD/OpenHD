@@ -29,7 +29,7 @@ platform(platform1),profile(std::move(profile1)) {
   if(platform.platform_type==PlatformType::RaspberryPi){
     const auto begin=std::chrono::steady_clock::now();
     while (std::chrono::steady_clock::now()-begin<std::chrono::seconds(10)){
-      if(DWifiCards::any_wifi_card_supporting_monitor(discovered_wifi_cards))break;
+      if(DWifiCards::any_wifi_card_supporting_injection(discovered_wifi_cards))break;
       m_console->debug("rpi-waiting up to 10 seconds until at least one wifi card supporting monitor mode is found");
       std::this_thread::sleep_for(std::chrono::seconds(1));
       discovered_wifi_cards=DWifiCards::discover();

@@ -22,7 +22,7 @@ static bool is_known_for_injection(const WiFiCardType& type);
 std::vector<WiFiCard> discover();
 
 // Return true if any of the given wifi cards supports monitor mode
-bool any_wifi_card_supporting_monitor(const std::vector<WiFiCard>& cards);
+bool any_wifi_card_supporting_injection(const std::vector<WiFiCard>& cards);
 
 // helper to figure out more info about a semi-discovered wifi card
 std::optional<WiFiCard> process_card(const std::string &interface_name);
