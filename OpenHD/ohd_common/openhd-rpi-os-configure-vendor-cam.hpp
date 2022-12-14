@@ -172,6 +172,7 @@ static std::string writeStaticStuff(){
             }
             count++;
         }
+return "true";
 }
 //write our dynamic config to the temporary config-file
 static std::string writeOpenHDConfigStuff(std::string FilePath){
@@ -191,6 +192,7 @@ static std::string writeOpenHDConfigStuff(std::string FilePath){
             }
             count++;
         }
+    return "true";
     }
 
 const auto rpi_config_file_path="/boot/config.txt";
