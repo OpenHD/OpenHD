@@ -370,6 +370,43 @@ static std::string createRockchipHDMIStream(
 }
 
 /**
+ * Creates stream for Allwinner camera (v4l2)
+ * @param sensor_id sensor id 
+ */
+static std::string createAllwinnerSensorPipeline(const int sensor_id,const int width,const int height,const int framerate){
+  std::stringstream ss;
+  ss<<"v4l2src device=/dev/video"<<sensor_id<<" ! ";
+  ss<<"video/x-raw,pixelformat=NV12,";
+  ss<<"width="<<width<<", ";
+  ss<<"height="<<height<<", ";
+  ss<<"framerate="<<framerate<<"/1 ! ";
+  return ss.str();
+}
+
+// using cedar (closed source) HW acceleration.
+static std::string createAllwinnerEncoderPipeline(const CommonEncoderParams& common_encoder_params){
+  std::stringstream ss;
+    assert(common_encoder_params.videoCodec==VideoCodec::H264);
+    ss << "cedar_h264enc bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
+    " keyint=" << common_encoder_params.h26X_keyframe_interval << " !  video/x-h264 ! ";
+  return ss.str();
+}
+
+/**
+ * Create a encoded stream for the allwinner, which is fully hardware accelerated
+ */
+static std::string createAllwinnerStream(const int sensor_id,
+                                      const int bitrateKBits,
+                                      const VideoFormat videoFormat,
+                                                                         const int keyframe_interval) {
+  std::stringstream ss;
+  ss<<createAllwinnerSensorPipeline(sensor_id,videoFormat.width,videoFormat.height,videoFormat.framerate);
+  ss<<createAllwinnerEncoderPipeline({videoFormat.videoCodec,bitrateKBits,keyframe_interval,50});
+  return ss.str();
+}
+
+
+/**
  * For V4l2 Cameras that do raw YUV (or RGB) we use a sw encoder.
  * This one has no custom resolution(s) yet.
  */

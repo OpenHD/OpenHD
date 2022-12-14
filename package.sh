@@ -26,7 +26,7 @@ if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_AR
 cd /opt
 mkdir temp
 cd temp
-git clone -b 2.2.3-evo https://github.com/OpenHD/OpenHD
+git clone https://github.com/OpenHD/OpenHD
 cd OpenHD
 git rev-parse --short HEAD ||exit
 VER2=$(git rev-parse --short HEAD) 
@@ -60,7 +60,7 @@ echo "copied files"
 echo ${PKGDIR}
 
 
-VERSION="2.2.2-evo-$(date '+%m%d%H%M')-${VER2}"
+VERSION="2.2.4-evo-$(date '+%m%d%H%M')-${VER2}"
 echo ${VERSION}
 
 rm ${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb > /dev/null 2>&1

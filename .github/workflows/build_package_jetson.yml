@@ -2,7 +2,7 @@ name: build_package_jetson
 
 on:
   push:
-    branches: [ master, "2.0", "2.2.3-evo" ]
+    branches: [ master, "2.0", "2.2.4-evo" ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -30,7 +30,7 @@ jobs:
         
     - name: Emulating Jetson
       id: qemu
-      uses: pguyot/arm-runner-action@1be4bc9de8a7ba3c1c4f5bf917c438e8dc97904b
+      uses: pguyot/arm-runner-action@v2.5.2
       with:
         base_image: http://openhdfpv.org/wp-content/BaseImages/Open.HD-2.1-05221841-jetson-nano-4gb-bionic.img.zip
         cpu: cortex-a53

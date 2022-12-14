@@ -78,7 +78,7 @@ static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform)
     case PlatformType::PC: // x86 is so much more powerful than ARM so we can easily do 30, assuming no one uses HW from 2010 ;)
       return 30;
     case PlatformType::Jetson:
-    case PlatformType::NanoPi:
+    case PlatformType::Allwinner:
     case PlatformType::iMX6:
     case PlatformType::Rockchip:
     case PlatformType::Zynq:

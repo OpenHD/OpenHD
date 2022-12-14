@@ -60,6 +60,10 @@ class DCameras {
    * (/dev/videoXX)
    */
   void detect_v4l2();
+
+  /* Detect allwinner camera. Uses v4l2, but needs a few tweaks */
+  void detect_allwinner_csi();
+  
   /**
    * Something something stephen.
    */
