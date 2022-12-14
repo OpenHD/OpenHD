@@ -178,7 +178,6 @@ return "true";
 static std::string writeOpenHDConfigStuff(std::string FilePath){
     std::string FullFilePath= "/boot/openhd/configs/";
     FullFilePath += FilePath;
-    FullFilePath += ".txt";
     int countStart=0;
     int countStop=0;
     countStop = getDynamicLineEnd(); 
