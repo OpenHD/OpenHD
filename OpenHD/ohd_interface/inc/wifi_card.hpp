@@ -186,43 +186,7 @@ static WifiCardSettings create_default_settings(const WiFiCard& wifi_card){
 }
 
 static const std::string WIFI_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("interface/");
-// WifiCardHolder is used to
-// 1) Differentiate between immutable information (like mac address) and
-// 2) mutable WiFi card settings.
-// Setting changes are propagated through this class.
- class WifiCardHolder : public openhd::settings::PersistentSettings<WifiCardSettings>{
- public:
-  explicit WifiCardHolder(WiFiCard wifi_card):
-	  openhd::settings::PersistentSettings<WifiCardSettings>(WIFI_SETTINGS_DIRECTORY),
-	  _wifi_card(std::move(wifi_card)){
-    init();
-  }
- public:
-  const WiFiCard _wifi_card;
-  const WiFiCard& get_wifi_card(){
-    return _wifi_card;
-  }
- private:
-   [[nodiscard]] std::string get_unique_filename()const override{
-    std::stringstream ss;
-    ss<<wifi_card_type_to_string(_wifi_card.type)<<"_"<<_wifi_card.interface_name;
-    return ss.str();
-  }
-   [[nodiscard]] WifiCardSettings create_default()const override{
-	 return create_default_settings(_wifi_card);
-   }
-};
 
-
-static std::string debug_cards(const std::vector<std::shared_ptr<WifiCardHolder>>& cards){
-  std::stringstream ss;
-  ss<<"size:"<<cards.size()<<"{";
-  for(const auto& card_handle:cards){
-    ss<<card_handle->get_wifi_card().interface_name<<",";
-  }
-  ss<<"}";
-  return ss.str();
-}
 
 static std::string debug_cards(const std::vector<WiFiCard>& cards){
   std::stringstream ss;

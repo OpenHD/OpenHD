@@ -123,14 +123,6 @@ static bool valid_wb_max_fec_block_size_for_platform(uint32_t wb_max_fec_block_s
   return wb_max_fec_block_size_for_platform>0 && wb_max_fec_block_size_for_platform<50;
 }
 
-static std::vector<WiFiCard> tmp_convert(const std::vector<std::shared_ptr<WifiCardHolder>>& broadcast_cards){
-  std::vector<WiFiCard> ret;
-  for(const auto& holder:broadcast_cards){
-	ret.push_back(holder->_wifi_card);
-  }
-  return ret;
-}
-
 class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLinkSettings>{
  public:
   /**

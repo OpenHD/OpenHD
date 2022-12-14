@@ -36,39 +36,10 @@ platform(platform1),profile(std::move(profile1)) {
       discovered_wifi_cards=DWifiCards::discover();
     }
   }
-  // Just to be sure, turn off all detected wifi cards here - they will be re-enabled when needed anyways
-  // I don't do that on x86 though, since it would disrupt development
-  /*if(platform.platform_type!=PlatformType::PC){
-    for(const auto& card:discovered_wifi_cards){
-      WifiCardCommandHelper::set_card_state(card, false);
-    }
-  }*/
-  // Find / create settings for each discovered card
-  std::vector<std::shared_ptr<WifiCardHolder>> wifi_cards{};
-  for(const auto& card:discovered_wifi_cards){
-    wifi_cards.push_back(std::make_shared<WifiCardHolder>(card));
-    std::stringstream message;
-    message << "OHDInterface:: found wifi card: (" << wifi_card_type_to_string(card.type) << ") interface: " << card.interface_name;
-    m_console->debug(message.str());
-  }
-  // now check if any settings are messed up
-  for(const auto& card : wifi_cards){
-    if (card->get_settings().use_for == WifiUseFor::MonitorMode && !card->_wifi_card.supports_injection) {
-      m_console->warn("Cannot use monitor mode on card that cannot inject");
-    }
-  }
   // now decide what to use the card(s) for
-  std::vector<std::shared_ptr<WifiCardHolder>> broadcast_cards{};
-  std::shared_ptr<WifiCardHolder> optional_hotspot_card=nullptr;
-  for(auto& card:wifi_cards){
-    if(card->get_settings().use_for==WifiUseFor::MonitorMode){
-      broadcast_cards.push_back(card);
-    }else if(card->_wifi_card.supports_hotspot){
-      if(optional_hotspot_card== nullptr){
-        optional_hotspot_card=card;
-      }
-    }
-  }
+  const auto evaluated=DWifiCards::process_and_evaluate_cards(discovered_wifi_cards,profile.is_air);
+  const auto broadcast_cards=evaluated.monitor_mode_cards;
+  const auto optional_hotspot_card=evaluated.hotspot_card;
   // We don't have at least one card for monitor mode, which is a hard requirement for OpenHD
   if(broadcast_cards.empty()){
     m_console->warn("Cannot start ohd_interface, no wifi card for monitor mode");
@@ -81,11 +52,7 @@ platform(platform1),profile(std::move(profile1)) {
     // we just continue as nothing happened, but OHD won't have any wifibroadcast connectivity
     //exit(1);
   }else{
-    std::vector<WiFiCard> xxx{};
-    for(const auto& card:broadcast_cards){
-      xxx.push_back(card->get_wifi_card());
-    }
-    m_wb_link =std::make_shared<WBLink>(profile,platform,xxx,opt_action_handler);
+    m_wb_link =std::make_shared<WBLink>(profile,platform,broadcast_cards,opt_action_handler);
   }
   // USB tethering - only on ground
   if(!profile.is_air){
@@ -99,8 +66,8 @@ platform(platform1),profile(std::move(profile1)) {
     m_usb_tether_listener->startLooping();
   }
   // This way one could try and recover an air pi
-  if(optional_hotspot_card!= nullptr){
-    m_wifi_hotspot =std::make_unique<WifiHotspot>(optional_hotspot_card->_wifi_card);
+  if(optional_hotspot_card.has_value()){
+    m_wifi_hotspot =std::make_unique<WifiHotspot>(optional_hotspot_card.value());
   }
   m_console->debug("OHDInterface::created");
 }
