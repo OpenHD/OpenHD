@@ -45,8 +45,8 @@ enum class CameraType {
   ROCKCHIP_HDMI,
   // This camera is for developing purposes and/or for users that want to create more or less esoteric camera pipelines, e.g. by using
   // a custom script. In this mode, ohd_video acts as a completely agnostic passthrough for a camera stream that is neither managed
-  // by openhd main executable nor created by openhd main executable (note: you'l loose any openhd-provided functionalities,e.g change camera settings and/or parameters
-  // by that).
+  // by openhd main executable nor created by openhd main executable (note: by that you loose any openhd-provided functionalities,
+  // e.g. change camera settings and/or parameters.
   // To keep this API somewhat stable we only define the following:
   // Data needs to be provided by feeding h264,h265 or mjpeg encapsulated in RTP to udp port 5500 (localhost)
   CUSTOM_UNMANAGED_CAMERA
