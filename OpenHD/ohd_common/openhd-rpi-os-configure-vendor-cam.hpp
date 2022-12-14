@@ -119,16 +119,16 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
   std::string base_filename="/boot/openhd/configs/";
   if(cam_config==CamConfig::MMAL){
     return base_filename+"rpi_";
-    return base_filename+CamConfig;
+    return base_filename+cam_config;
     return base_filename+".txt";
   }else{
     if(is_rpi4){
       return base_filename+"rpi_4_";
-      return base_filename+CamConfig;
+      return base_filename+cam_config;
       return base_filename+".txt";
     }else{
       return base_filename+"rpi_3_";
-      return base_filename+CamConfig;
+      return base_filename+cam_config;
       return base_filename+".txt";
     }
   }
