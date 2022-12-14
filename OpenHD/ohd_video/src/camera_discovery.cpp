@@ -136,7 +136,7 @@ void DCameras::detect_allwinner_csi() {
 
 bool DCameras::detect_rapsberrypi_veye_v4l2_aaargh() {
   const auto result_opt=OHDUtil::run_command_out("dmesg | grep \"camera id is veye\"");
-  m_console->debug("LLL {}",result_opt.value_or("NONE"));
+  m_console->debug("detect_rapsberrypi_veye_v4l2 got [{}]",result_opt.value_or("NONE"));
   if(!result_opt.has_value()){
     return false;
   }
