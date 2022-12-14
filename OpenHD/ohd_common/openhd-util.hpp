@@ -266,6 +266,7 @@ static bool file_exists_and_delete(const char* filename){
   return ret;
 }
 
+
 }
 
 #endif

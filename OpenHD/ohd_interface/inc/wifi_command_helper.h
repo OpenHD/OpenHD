@@ -55,6 +55,11 @@ bool nmcli_set_device_unmanaged(const std::string& device);
 // if running the command fails, prints warning and assumes all supplied frequencies are supported.
 std::vector<uint32_t> iw_get_supported_frequencies(const std::string& device,const std::vector<uint32_t>& frequencies_mhz_to_try);
 
+// check if the device supports monitor mode
+// Note that this does not necessarily mean the device properly does monitor mode with injection - quite a lot of devices
+// report monitor mode capabilities, but actually can't really do it properly.
+bool iw_supports_monitor_mode(int phy_index);
+
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_COMMAND_HELPER_H_

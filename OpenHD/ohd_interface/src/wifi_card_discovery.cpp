@@ -127,7 +127,6 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   std::ifstream t(device_uevent_file.str());
   const std::string raw_value((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 
-
   const std::regex driver_regex{"DRIVER=([\\w]+)"};
 
   std::smatch result;
@@ -156,6 +155,13 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 
   std::ifstream d(phy_file.str());
   const std::string phy_val((std::istreambuf_iterator<char>(d)), std::istreambuf_iterator<char>());
+  const auto opt_phy_phy80211_index=OHDUtil::string_to_int(phy_val);
+  if(!opt_phy_phy80211_index.has_value()){
+    openhd::log::get_default()->warn("Cannot find phy index for card {}",interface_name);
+    return std::nullopt;
+  }
+  card.phy_phy80211_index=opt_phy_phy80211_index.value();
+  openhd::log::get_default()->debug("Card {} driver:{} phy{}",card.interface_name,card.driver_name,card.phy_phy80211_index);
 
   // This reported value is right in most cases, so we use it as a default. However, for example the RTL8812AU reports
   // both 2G and 5G but can only do 5G with the monitor mode driver.
@@ -169,6 +175,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
                                     card.interface_name,driver_name,OHDUtil::yes_or_no(supports_2ghz),OHDUtil::yes_or_no(supports_5ghz));
 
   supported_channels(card.interface_name);
+  openhd::log::get_default()->debug("Supports monitor mode:{}", wifi::commandhelper::iw_supports_monitor_mode(card.phy_phy80211_index));
 
   std::stringstream address;
   address << "/sys/class/net/";
