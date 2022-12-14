@@ -132,7 +132,7 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
 
 //helper functions for writing config files
 //find the line, in which the dynamic content begins
-int getDynamicLineStart(){
+static int getDynamicLineStart(){
     std::string line;
     std::ifstream inFile("/boot/config.txt");
     int countStart = 0;
@@ -146,7 +146,7 @@ int getDynamicLineStart(){
     return 0;
     }
 //find the line, in which the dynamic content ends
-int getDynamicLineEnd(){
+static int getDynamicLineEnd(){
     std::string line;
     std::ifstream inFile("/boot/config.txt");
     int countStop = 0;
