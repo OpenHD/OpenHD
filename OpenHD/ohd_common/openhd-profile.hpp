@@ -1,16 +1,16 @@
 #ifndef OPENHD_PROFILE_H
 #define OPENHD_PROFILE_H
 
+#include <fstream>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
-#include <sstream>
-#include <fstream>
 
 #include "include_json.hpp"
-#include "openhd-util.hpp"
-#include "openhd-settings.hpp"
+#include "openhd-settings-directories.hpp"
 #include "openhd-spdlog.hpp"
+#include "openhd-util.hpp"
 
 /**
  * The profile is created on startup and then doesn't change during run time.

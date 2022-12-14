@@ -5,9 +5,9 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 
-#include "openhd-settings2.hpp"
-#include "wifi_card.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-settings-persistent.hpp"
+#include "wifi_card.hpp"
 
 namespace openhd{
 

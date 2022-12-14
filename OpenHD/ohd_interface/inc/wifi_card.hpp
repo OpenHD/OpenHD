@@ -2,12 +2,12 @@
 #define OPENHD_WIFI_H
 
 #include <fstream>
-#include "openhd-platform.hpp"
 #include <string>
 
 #include "include_json.hpp"
-#include "openhd-settings.hpp"
-#include "openhd-settings2.hpp"
+#include "openhd-platform.hpp"
+#include "openhd-settings-directories.hpp"
+#include "openhd-settings-persistent.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "openhd-util.hpp"
 #include "validate_settings_helper.h"
