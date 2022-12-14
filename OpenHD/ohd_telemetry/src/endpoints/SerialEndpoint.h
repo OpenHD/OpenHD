@@ -32,7 +32,7 @@ class SerialEndpoint : public MEndpoint{
   };
  public:
   /**
-   * @param serial_port the serial port linux name (dev/.. ) for this serial port
+   * See @param options1 HWOptions for configurable serial params
    */
   explicit SerialEndpoint(std::string TAG1, HWOptions options1);
   // No copy and move
