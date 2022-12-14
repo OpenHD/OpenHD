@@ -159,7 +159,7 @@ int getDynamicLineEnd(){
     return 0;
 }
 //rewrite the config part that is changable by the user
-static void writeStaticStuff(){
+static std::string writeStaticStuff(){
     int countStart=0;
     std::ofstream outFile("/boot/config.txt.temp");
     std::string line;
@@ -174,7 +174,7 @@ static void writeStaticStuff(){
         }
 }
 //write our dynamic config to the temporary config-file
-static void writeOpenHDConfigStuff(string FilePath){
+static std::string writeOpenHDConfigStuff(string FilePath){
     string FullFilePath= "/boot/openhd/configs/";
     FullFilePath += FilePath;
     FullFilePath += ".txt";
