@@ -22,9 +22,9 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   auto discovered_wifi_cards=DWifiCards::discover();
   // Issue on rpi with Atheros: For some reason, openhd is sometime started before the card
   // finishes some initialization steps ?! and is therefore not discovered.
-  // On a rpi, we block for up to 10 seconds here until we have at least one wifi card that does wifibroadcast
-  // Note that we cannot just block until we have one, starting openhd anyways without a wifi card is an essential
-  // feature for testing.
+  // On a rpi, we block for up to 10 seconds here until we have at least one wifi card that does injection
+  // Note that we cannot just block until we have one, starting openhd anyways without a injection capable wifi card is a usefully
+  // feature for development
   if(m_platform.platform_type==PlatformType::RaspberryPi){
     const auto begin=std::chrono::steady_clock::now();
     while (std::chrono::steady_clock::now()-begin<std::chrono::seconds(10)){

@@ -33,6 +33,15 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   return WiFiCardType::Unknown;
 }
 
+static std::vector<openhd::WifiChannel> supported_channels(const std::string& device){
+  const auto channels_to_try=openhd::get_all_channels_2G_5G();
+  const auto tmp=openhd::get_all_channel_frequencies(channels_to_try);
+  auto supported_frequencies=wifi::commandhelper::
+      iw_get_supported_frequencies(device,openhd::get_all_channel_frequencies(channels_to_try));
+  auto supported_channels=openhd::get_all_channels_from_safe_frequencies(supported_frequencies);
+  return supported_channels;
+}
+
 bool DWifiCards::is_known_for_injection(const WiFiCardType& type) {
   bool supports=false;
   switch (type) {
@@ -57,48 +66,6 @@ bool DWifiCards::is_known_for_injection(const WiFiCardType& type) {
   return supports;
 }
 
-
-static std::vector<openhd::WifiChannel> supported_channels(const std::string& device){
-  const auto channels_to_try=openhd::get_all_channels_2G_5G();
-  const auto tmp=openhd::get_all_channel_frequencies(channels_to_try);
-  auto supported_frequencies=wifi::commandhelper::
-      iw_get_supported_frequencies(device,openhd::get_all_channel_frequencies(channels_to_try));
-  auto supported_channels=openhd::get_all_channels_from_safe_frequencies(supported_frequencies);
-  return supported_channels;
-}
-
-
-std::vector<WiFiCard> DWifiCards::discover() {
-  openhd::log::get_default()->debug("WiFi::discover()");
-  std::vector<WiFiCard> wifi_cards{};
-  // Find wifi cards, excluding specific kinds of interfaces.
-  const std::vector<std::string> excluded_interfaces = {
-      "usb",
-      "lo",
-      "eth",
-      "enp2s0" // Consti10 added
-  };
-  const auto netFilenames=OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory("/sys/class/net");
-  for(const auto& filename:netFilenames){
-    auto excluded = false;
-    for (const auto &excluded_interface: excluded_interfaces) {
-      if (filename.find(excluded_interface)!=std::string::npos) {
-        excluded = true;
-        break;
-      }
-    }
-    if (!excluded) {
-      auto card_opt= process_card(filename);
-      if(card_opt.has_value()){
-        wifi_cards.push_back(card_opt.value());
-      }
-    }
-  }
-  openhd::log::get_default()->info("WiFi::discover done, n cards: {}",
-                                   wifi_cards.size());
-  write_wificards_manifest(wifi_cards);
-  return wifi_cards;
-}
 
 std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(const std::string& interface_name) {
   // get the driver name for this card
@@ -130,7 +97,6 @@ std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(const std::
     return std::nullopt;
   }
   card.phy80211_index =opt_phy_phy80211_index.value();
-  openhd::log::get_default()->debug("Card {} driver:{} phy{}",card.device_name,card.driver_name,card.phy80211_index);
 
   // get the mac address for this card
   const auto filename_mac_address=fmt::format("/sys/class/net/{}/address",card.device_name);
@@ -149,6 +115,38 @@ std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(const std::
   return card;
 }
 
+std::vector<WiFiCard> DWifiCards::discover() {
+  openhd::log::get_default()->trace("WiFi::discover()");
+  std::vector<WiFiCard> wifi_cards{};
+  // Find wifi cards, excluding specific kinds of interfaces.
+  const std::vector<std::string> excluded_interfaces = {
+      "usb",
+      "lo",
+      "eth",
+      "enp2s0" // Consti10 added
+  };
+  const auto netFilenames=OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory("/sys/class/net");
+  for(const auto& filename:netFilenames){
+    auto excluded = false;
+    for (const auto &excluded_interface: excluded_interfaces) {
+      if (filename.find(excluded_interface)!=std::string::npos) {
+        excluded = true;
+        break;
+      }
+    }
+    if (!excluded) {
+      auto card_opt= process_card(filename);
+      if(card_opt.has_value()){
+        wifi_cards.push_back(card_opt.value());
+      }
+    }
+  }
+  openhd::log::get_default()->trace("WiFi::discover done, n cards: {}",wifi_cards.size());
+  write_wificards_manifest(wifi_cards);
+  return wifi_cards;
+}
+
+
 std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_name) {
   auto card_opt= fill_linux_wifi_card_identifiers(interface_name);
   if(!card_opt.has_value()){
@@ -156,18 +154,16 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   }
   WiFiCard card=card_opt.value();
 
-  // This reported value is right in most cases, so we use it as a default. However, for example the RTL8812AU reports
-  // both 2G and 5G but can only do 5G with the monitor mode driver.
+  // This reported value is right in most cases
   const auto supported_freq= wifi::commandhelper::iw_get_supported_frequency_bands(card.device_name);
   card.xx_supports_2ghz=supported_freq.supports_any_2G;
   card.xx_supports_5ghz=supported_freq.supports_any_5G;
-
+  // but we now also have a method to figure out all the supported channels
   card.supported_channels=supported_channels(card.device_name);
 
-  // Note that this does not neccessarily mean this info is right
+  // Note that this does not necessarily mean this info is right/complete
   // a card might report a specific channel but then since monitor mode is so hack not support the channel in monitor mode
   card.supports_monitor_mode= wifi::commandhelper::iw_supports_monitor_mode(card.phy80211_index);
-
   card.supports_injection= is_known_for_injection(card.type);
 
   openhd::log::get_default()->debug("Card {} reports driver:{} supports_2GHz:{} supports_5GHz:{} supports_monitor_mode:{} supports_injection:{}",
