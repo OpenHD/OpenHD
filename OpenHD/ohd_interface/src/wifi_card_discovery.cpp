@@ -7,6 +7,7 @@
 #include "openhd-util.hpp"
 #include "wifi_card.hpp"
 #include "wifi_card_discovery.h"
+#include "wifi_command_helper.h"
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
@@ -48,7 +49,7 @@ static SupportedFrequency supported_frequencies(const std::string& wifi_interfac
   const std::string command="iwlist "+wifi_interface_name+" frequency";
   const auto res_op=OHDUtil::run_command_out(command.c_str());
   if(!res_op.has_value()){
-    openhd::log::get_default()->warn("get_supported_channels for "+wifi_interface_name+" failed");
+    openhd::log::get_default()->warn("get_supported_channels for {} failed",wifi_interface_name);
     return ret;
   }
   const auto& res=res_op.value();
@@ -59,6 +60,21 @@ static SupportedFrequency supported_frequencies(const std::string& wifi_interfac
     ret.supports_2G= true;
   }
   return ret;
+}
+
+static std::string float_without_trailing_zeroes(const float value){
+  std::stringstream ss;
+  ss << std::noshowpoint << value;
+  return ss.str();
+}
+
+static std::vector<openhd::WifiChannel> supported_channels(const std::string& device){
+  const auto channels_to_try=openhd::get_all_channels_2G_5G();
+  const auto tmp=openhd::get_all_channel_frequencies(channels_to_try);
+  auto supported_frequencies=wifi::commandhelper::
+      iw_get_supported_frequencies(device,openhd::get_all_channel_frequencies(channels_to_try));
+  auto supported_channels=openhd::get_all_channels_from_safe_frequencies(supported_frequencies);
+  return supported_channels;
 }
 
 
@@ -151,6 +167,8 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   // a card might report a specific channel but then since monitor mode is so hack not support the channel in monitor mode
   openhd::log::get_default()->debug("Card {} reports driver:{} supprts_2G:{} supports_5G:{}",
                                     card.interface_name,driver_name,OHDUtil::yes_or_no(supports_2ghz),OHDUtil::yes_or_no(supports_5ghz));
+
+  supported_channels(card.interface_name);
 
   std::stringstream address;
   address << "/sys/class/net/";
@@ -285,7 +303,7 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(std::vecto
     }
   }
   if(max_one_broadcast_card && monitor_mode_cards.size()>1){
-    monitor_mode_cards.reserve(1);
+    monitor_mode_cards.resize(1);
   }
   return {monitor_mode_cards,hotspot_card};
 }

@@ -104,6 +104,7 @@ struct WiFiCard {
   bool supports_5GHz()const{
     return xx_supports_5ghz;
   };
+  std::vector<openhd::WifiChannel> supported_channels{};
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,driver_name,type,interface_name,mac,xx_supports_5ghz,xx_supports_2ghz,
                                    supports_injection,supports_hotspot,supports_rts)

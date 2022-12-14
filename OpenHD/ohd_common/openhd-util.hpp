@@ -108,11 +108,11 @@ static int run_command(const std::string &command, const std::vector<std::string
  * @param command the command and its args to run
  * @return the shell output, or std::nullopt if something went wrong.
  */
-static std::optional<std::string> run_command_out(const char* command,const bool debug=false){
+static std::optional<std::string> run_command_out(const std::string &command,const bool debug=false){
   if(debug){
     openhd::log::get_default()->debug("run command out begin [{}]",command);
   }
-  std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command, "r"), pclose);
+  std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
   if (!pipe) {
     // if the pipe opening fails, this doesn't mean the command failed (see above)
     // But rather we need to find a different way to implement this functionality on this platform.

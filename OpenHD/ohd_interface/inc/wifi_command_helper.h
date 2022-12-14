@@ -49,8 +49,11 @@ bool iw_set_tx_power(const std::string& device,uint32_t tx_power_mBm);
 // since on each restart we might do different things with the wifi card(s)
 bool nmcli_set_device_unmanaged(const std::string& device);
 
-// R.n I do not know of a better solution than to try setting all the frequencies and checking if they can be set.
-std::vector<uint32_t> iw_get_supported_frequencies(const std::string& device,const std::vector<uint32_t>& frequencies_to_try);
+// R.n I do not know of a better solution than this one
+// runs iwlist <device> frequencies
+// then checks all suplied frequencies (in mhz) and returns them (mhz) if they show up in the list
+// if running the command fails, prints warning and assumes all supplied frequencies are supported.
+std::vector<uint32_t> iw_get_supported_frequencies(const std::string& device,const std::vector<uint32_t>& frequencies_mhz_to_try);
 
 }
 

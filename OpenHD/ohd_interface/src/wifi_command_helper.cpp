@@ -74,12 +74,32 @@ bool wifi::commandhelper::nmcli_set_device_unmanaged(const std::string &device) 
   return success;
 }
 
-std::vector<uint32_t> wifi::commandhelper::iw_get_supported_frequencies(const std::string& device,const std::vector<uint32_t> &frequencies_to_try) {
-  std::vector<uint32_t> supported_frequencies{};
-  for(const auto& freq:supported_frequencies){
-    if(iw_set_frequency_and_channel_width(device,freq,20)){
-      supported_frequencies.push_back(freq);
+static std::string float_without_trailing_zeroes(const float value){
+  std::stringstream ss;
+  ss << std::noshowpoint << value;
+  return ss.str();
+}
+
+std::vector<uint32_t> wifi::commandhelper::iw_get_supported_frequencies(const std::string& device,const std::vector<uint32_t> &frequencies_mhz_to_try) {
+  const std::string command="iwlist "+device+" frequency";
+  const auto res_op=OHDUtil::run_command_out(command);
+  if(!res_op.has_value()){
+    openhd::log::get_default()->warn("get_supported_channels for {} failed",device);
+    return frequencies_mhz_to_try;
+  }
+  const auto& res=res_op.value();
+  std::vector<uint32_t> supported_channels{};
+  for(const auto& freq_mhz: frequencies_mhz_to_try){
+    // annoying - iwlist reports them with decimals in GHz
+    const float freq_ghz=static_cast<float>(freq_mhz) / 1000.0f;
+    const auto s_freq_ghz= float_without_trailing_zeroes(freq_ghz);
+    openhd::log::get_default()->debug("checking [{}]",s_freq_ghz);
+    if(OHDUtil::contains(res,s_freq_ghz)){
+      openhd::log::get_default()->debug("has [{}]",s_freq_ghz);
+      supported_channels.push_back(freq_mhz);
+    }else{
+      openhd::log::get_default()->debug("doesn't have [{}]",s_freq_ghz);
     }
   }
-  return supported_frequencies;
+  return supported_channels;
 }
