@@ -117,11 +117,10 @@ void DCameras::detect_raspberrypi_broadcom_csi() {
   }
 }
 void DCameras::detect_allwinner_csi() {
-  std::cout << "DCameras::detect_allwinner_csi()" << std::endl;
+  m_console->debug("detect_allwinner_csi(");
   
-  if(OHDFilesystemUtil::exists("/dev/video0"))
-  {
-    std::cout << "Camera set as Allwinner_CSI_0" << std::endl;
+  if(OHDFilesystemUtil::exists("/dev/video0")){
+    m_console->debug("Camera set as Allwinner_CSI_0");
     Camera camera;
     camera.name = "Allwinner_CSI_0";
     camera.vendor = "Allwinner";
@@ -152,7 +151,7 @@ bool DCameras::detect_rapsberrypi_veye_v4l2_aaargh() {
   camera.name = "Pi_VEYE_0";
   camera.vendor = "VEYE";
   m_cameras.push_back(camera);
-  return false;
+  return true;
 }
 
 #ifdef OPENHD_LIBCAMERA_PRESENT
