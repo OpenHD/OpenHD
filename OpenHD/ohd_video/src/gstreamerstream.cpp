@@ -96,7 +96,10 @@ void GStreamerStream::setup() {
       setup_sw_dummy_camera();
       break;
     }
-    case CameraType::RPI_VEYE_CSI_MMAL:
+    case CameraType::RPI_VEYE_CSI_V4l2:{
+      setup_raspberrypi_veye_v4l2();
+      break;
+    }
     case CameraType::ROCKCHIP_CSI:
       m_console->error("Veye and rockchip are unsupported at the time");
       return;
@@ -115,8 +118,7 @@ void GStreamerStream::setup() {
   }
   // quick check,here the pipeline should end with a "! ";
   if(!OHDUtil::endsWith(m_pipeline_content.str(),"! ")){
-    m_console->error("Probably ill-formatted pipeline:"+
-                     m_pipeline_content.str());
+    m_console->warn("Probably ill-formatted pipeline: [{}]",m_pipeline_content.str());
   }
   // for safety we only add the tee command at the right place if recording is enabled.
   if(setting.air_recording==Recording::ENABLED && camera.type != CameraType::ROCKCHIP_HDMI){
@@ -157,7 +159,7 @@ void GStreamerStream::setup() {
     // sw encoder(s) take kbit/s
     m_bitrate_ctrl_element_takes_kbit= true;
   }
-  //test_add_data_listener();
+  // we pull data out of the gst pipeline as cpu memory buffer(s) using the gstreamer "appsink" element
   m_app_sink_element=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
   assert(m_app_sink_element);
   m_pull_samples_run= true;
@@ -169,6 +171,13 @@ void GStreamerStream::setup_raspberrypi_csi() {
   // similar to jetson, for now we assume there is only one CSI camera connected.
   const auto& setting= m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createRpicamsrcStream(-1, setting);
+}
+
+void GStreamerStream::setup_raspberrypi_veye_v4l2() {
+  m_console->debug("setup_raspberrypi_veye_v4l2");
+  // similar to jetson, for now we assume there is only one CSI camera connected.
+  const auto& setting= m_camera_holder->get_settings();
+  m_pipeline_content << OHDGstHelper::create_veye_vl2_stream(setting);
 }
 
 void GStreamerStream::setup_libcamera() {
@@ -254,7 +263,8 @@ void GStreamerStream::setup_ip_camera() {
   if (setting.ip_cam_url.empty()) {
     //setting.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
   }
-  m_pipeline_content << OHDGstHelper::createIpCameraStream(setting.ip_cam_url);
+  m_pipeline_content << OHDGstHelper::create_ip_cam_stream_with_depacketize_and_parse(
+      setting.ip_cam_url,setting.streamed_video_format.videoCodec);
 }
 
 void GStreamerStream::setup_sw_dummy_camera() {
@@ -475,3 +485,4 @@ void GStreamerStream::loop_pull_samples() {
   };
   openhd::loop_pull_appsink_samples(m_pull_samples_run,m_app_sink_element,cb);
 }
+

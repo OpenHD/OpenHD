@@ -74,7 +74,6 @@ set(sources
     "inc/rtp_eof_helper.h"
 
     "inc/v_validate_settings.h"
-    #"inc/veyestream.h"
 
     "src/camera_discovery_helper.hpp"
     "src/ffmpeg_videosamples.hpp"
@@ -84,7 +83,6 @@ set(sources
     "src/gstreamerstream.cpp"
     "src/ohd_video.cpp"
     "src/rtp_eof_helper.cpp"
-    #"src/veyestream.cpp"
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})

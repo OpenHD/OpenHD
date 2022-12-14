@@ -45,7 +45,7 @@ class DCameras {
    */
   void detect_raspberrypi_broadcom_csi();
   // hacky
-  bool detect_raspberrypi_broadcom_veye();
+  bool detect_rapsberrypi_veye_v4l2_aaargh();
 
   /*
    * Detecting via libcamera.
@@ -73,10 +73,8 @@ class DCameras {
    */
   bool process_v4l2_node(const std::string &node, Camera &camera,
                          CameraEndpoint &endpoint);
-  /**
-   * TODO unimplemented.
-   */
-  void detect_ip();
+
+  // NOTE: IP cameras cannot be auto detected !
 
   std::vector<Camera> m_cameras;
   std::vector<CameraEndpoint> m_camera_endpoints;

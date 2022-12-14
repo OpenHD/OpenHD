@@ -20,19 +20,19 @@
 class SerialEndpoint : public MEndpoint{
  public:
   struct HWOptions {
-	std::string linux_filename; // the linux file name,for example /dev/tty..
-	int baud_rate = 115200; // manual baud rate
-	bool flow_control=false; // not tested yet
-	bool enable_debug=false; //
-	[[nodiscard]] std::string to_string() const{
-	  std::stringstream ss;
-	  ss<<"HWOptions{"<<linux_filename<<", baud:"<<baud_rate<<", flow_control:"<<flow_control<<",  enable_debug:"<<enable_debug<<"}";
-	  return ss.str();
-	}
+    std::string linux_filename; // the linux file name,for example /dev/tty..
+    int baud_rate = 115200; // manual baud rate
+    bool flow_control=false; // not tested yet
+    bool enable_debug=false; //
+    [[nodiscard]] std::string to_string() const{
+      std::stringstream ss;
+      ss<<"HWOptions{"<<linux_filename<<", baud:"<<baud_rate<<", flow_control:"<<flow_control<<",  enable_debug:"<<enable_debug<<"}";
+      return ss.str();
+    }
   };
  public:
   /**
-   * @param serial_port the serial port linux name (dev/.. ) for this serial port
+   * See @param options1 HWOptions for configurable serial params
    */
   explicit SerialEndpoint(std::string TAG1, HWOptions options1);
   // No copy and move

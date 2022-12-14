@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
   // need to manually paste the stuff in here
   //wifiCard.interface_name="wlx244bfeb71c05";
   //wifiCard.mac="24:4b:fe:b7:1c:05";
-  wifiCard.interface_name="wlan0";
+  wifiCard.device_name ="wlan0";
   wifiCard.mac = "e4:5f:01:b0:55:92";
   wifiCard.supports_hotspot= true;
 

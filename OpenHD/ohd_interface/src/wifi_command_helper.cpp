@@ -74,3 +74,62 @@ bool wifi::commandhelper::nmcli_set_device_unmanaged(const std::string &device) 
   return success;
 }
 
+static std::string float_without_trailing_zeroes(const float value){
+  std::stringstream ss;
+  ss << std::noshowpoint << value;
+  return ss.str();
+}
+
+std::vector<uint32_t> wifi::commandhelper::iw_get_supported_frequencies(const std::string& device,const std::vector<uint32_t> &frequencies_mhz_to_try) {
+  const std::string command="iwlist "+device+" frequency";
+  const auto res_op=OHDUtil::run_command_out(command);
+  if(!res_op.has_value()){
+    openhd::log::get_default()->warn("get_supported_channels for {} failed",device);
+    return frequencies_mhz_to_try;
+  }
+  const auto& res=res_op.value();
+  std::vector<uint32_t> supported_channels{};
+  for(const auto& freq_mhz: frequencies_mhz_to_try){
+    // annoying - iwlist reports them with decimals in GHz
+    const float freq_ghz=static_cast<float>(freq_mhz) / 1000.0f;
+    const auto s_freq_ghz= float_without_trailing_zeroes(freq_ghz);
+    //openhd::log::get_default()->debug("checking [{}]",s_freq_ghz);
+    if(OHDUtil::contains(res,s_freq_ghz)){
+      //openhd::log::get_default()->debug("has [{}]",s_freq_ghz);
+      supported_channels.push_back(freq_mhz);
+    }else{
+      //openhd::log::get_default()->debug("doesn't have [{}]",s_freq_ghz);
+    }
+  }
+  return supported_channels;
+}
+
+wifi::commandhelper::SupportedFrequencyBand
+wifi::commandhelper::iw_get_supported_frequency_bands(const std::string &device) {
+  wifi::commandhelper::SupportedFrequencyBand ret{false, false};
+  const std::string command="iwlist "+device+" frequency";
+  const auto res_op=OHDUtil::run_command_out(command);
+  if(!res_op.has_value()){
+    openhd::log::get_default()->warn("iw_get_supported_frequency_bands for {} failed",device);
+    return {true, true};
+  }
+  const auto& res=res_op.value();
+  if(res.find("5.")!= std::string::npos){
+    ret.supports_any_5G= true;
+  }
+  if(res.find("2.")!= std::string::npos){
+    ret.supports_any_2G= true;
+  }
+  return ret;
+}
+
+bool wifi::commandhelper::iw_supports_monitor_mode(int phy_index) {
+  const std::string command="iw phy phy"+std::to_string(phy_index)+" info";
+  const auto res_opt=OHDUtil::run_command_out(command);
+  if(!res_opt.has_value()){
+    openhd::log::get_default()->warn("iw_supports_monitor_mode for phy{} failed,assuming can do monitor mode",phy_index);
+    return true;
+  }
+  return OHDUtil::contains(res_opt.value(),"* monitor");
+}
+

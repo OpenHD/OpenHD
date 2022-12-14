@@ -5,9 +5,10 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_GROUNDTELEMETRYSETTINGS_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_GROUNDTELEMETRYSETTINGS_H_
 
-#include "openhd-settings.hpp"
-#include "openhd-settings2.hpp"
 #include <map>
+
+#include "openhd-settings-directories.hpp"
+#include "openhd-settings-persistent.hpp"
 
 namespace openhd::telemetry::ground{
 

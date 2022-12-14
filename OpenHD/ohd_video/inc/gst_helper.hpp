@@ -55,26 +55,21 @@ static void initGstreamerOrThrow() {
 static std::string createSwEncoder(const CommonEncoderParams& common_encoder_params){
   std::stringstream ss;
   if(common_encoder_params.videoCodec==VideoCodec::H264){
-	ss << "x264enc name=swencoder bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
-	" speed-preset=ultrafast"<<
-	" tune=zerolatency key-int-max=" << common_encoder_params.h26X_keyframe_interval <<
-        " sliced-threads=0"<< //Note: Sliced threads has some advantages, but r.n it is incompatible with QOpenHD on a pi (decode)
-        " ! ";
+    ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=0 ! ",
+                      common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval);
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
-	//TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param
-	ss << "x265enc name=swencoder bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
-	" speed-preset=ultrafast"<<
-	" tune=zerolatency key-int-max=" << common_encoder_params.h26X_keyframe_interval << " ! ";
+    //TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param
+    ss<<fmt::format("x265enc name=swencoder bitrate={} speed-preset=ultrafast tune=zerolatency key-int-max={} ! ",
+                      common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval);
   }else{
-	assert(common_encoder_params.videoCodec==VideoCodec::MJPEG);
-	//NOTE jpegenc doesn't have a bitrate controll
-	ss<<"jpegenc quality="<<common_encoder_params.mjpeg_quality_percent<< " ! ";
+    assert(common_encoder_params.videoCodec==VideoCodec::MJPEG);
+    ss<<fmt::format("jpegenc quality={} ! ",common_encoder_params.mjpeg_quality_percent);
   }
   return ss.str();
 }
 
 // a createXXXStream function always ends wth an encoded "h164,h265 or mjpeg
-// stream ! " aka after that, onc can add a rtp encoder or similar. All these
+// stream ! " aka after that, one can add a rtp encoder or similar. All these
 // methods also start from zero - aka have a source like videotestsrc,
 // nvarguscamerasr usw in the beginning and end with a OpenHD supported video
 // codec (e.g. h264,h265 or mjpeg)
@@ -93,14 +88,13 @@ static std::string createDummyStream(const CameraSettings& settings) {
   ss << fmt::format(
       "video/x-raw, format=I420,width={},height={},framerate={}/1 ! ",
       settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
-  // since the primary purpose here is testing, use a fixed low key frame
-  // interval.
+  // since the primary purpose here is testing, use sw encoder, which is always guaranteed to work
   ss << createSwEncoder(extract_common_encoder_params(settings));
   return ss.str();
 }
 
 /**
- * Create a encoded stream for rpicamsrc, which supports h264 only.
+ * Create a encoded stream for rpicamsrc, which supports h264 encode in HW, mjpeg and h264 in SW (unusably slow)
  * @param camera_number use -1 to let rpicamsrc decide
  * See https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c#GstRpiCamSrcAWBMode for more complicated params
  */
@@ -164,6 +158,23 @@ static std::string createRpicamsrcStream(const int camera_number,
   return ss.str();
 }
 
+// v4l2 h264 encoder on raspberry pi
+// we configure the v4l2 h264 encoder by using the extra controls
+// We want constant bitrate (e.g. what the user has set) as long as we don't dynamcially adjust anything
+// in this regard (video_bitrate_mode)
+// 24.10.22: something seems t be bugged on the rpi v4l2 encoder, setting constant bitrate doesn't work and
+// somehow increases latency (,video_bitrate_mode=1)
+// The default for h264_minimum_qp_value seems to be 20 - we set it to something lower, so we can get a higher bitrate
+// on scenes with less change (openhd values consistency over everything else)
+static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
+  assert(settings.streamed_video_format.videoCodec==VideoCodec::H264);
+  // rpi v4l2 encoder takes bit/s instead of kbit/s
+  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
+  return fmt::format("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
+      "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
+}
+
 static std::string createLibcamerasrcStream(const std::string& camera_name,
                                          const CameraSettings& settings) {
   assert(settings.streamed_video_format.isValid());
@@ -180,16 +191,8 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
         settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
     // We got rid of the v4l2convert - see
     // https://github.com/raspberrypi/libcamera/issues/30
-    // and configure the v4l2 h264 encoder by using the extra controls
-    // We want constant bitrate (e.g. what the user has set) as long as we don't dynamcially adjust anything
-    // in this regard (video_bitrate_mode)
-    // 24.10.22: something seems t be bugged on the rpi v4l2 encoder, setting constant bitrate doesn't work and
-    // somehow increases latency (,video_bitrate_mode=1)
-    // The default for h264_minimum_qp_value seems to be 20 - we set it to something lower, so we can get a higher bitrate
-    // on scenes with less change
-    static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
-    ss << fmt::format("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
-        "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
+    // after the libcamerasrc part, we can just append the rpi v4l2 h264 encoder part
+    ss<<create_rpi_v4l2_h264_encoder(settings);
   } else if (settings.streamed_video_format.videoCodec == VideoCodec::MJPEG) {
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",
@@ -203,6 +206,13 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
                       settings.streamed_video_format.framerate);
     ss << createSwEncoder(extract_common_encoder_params(settings));
   }
+  return ss.str();
+}
+
+static std::string create_veye_vl2_stream(const CameraSettings& settings){
+  std::stringstream ss;
+  ss<<" v4l2src io-mode=dmabuf device=/dev/video0 ! video/x-raw,format=(string)UYVY, width=(int)1920, height=(int)1080,framerate=(fraction)30/1 ! ";
+  ss<<create_rpi_v4l2_h264_encoder(settings);
   return ss.str();
 }
 
@@ -261,6 +271,7 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
   }
   return ss.str();
 }
+
 /**
  * This creates the sensor/ISP (nvarguscamerasrc) part of the gstreamer pipeline.
  * @param sensor_id sensor id, set to -1 to let nvarguscamerasrc figure it out
@@ -549,7 +560,7 @@ static std::string createRecordingForVideoCodec(const VideoCodec videoCodec,cons
   return ss.str();
 }
 
-static std::string gst_create_caps(const VideoCodec& videoCodec){
+static std::string gst_create_rtp_caps(const VideoCodec& videoCodec){
   std::stringstream ss;
   if(videoCodec==VideoCodec::H264){
     ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)H264, payload=(int)96\"";
@@ -560,21 +571,44 @@ static std::string gst_create_caps(const VideoCodec& videoCodec){
   }
   return ss.str();
 }
+
+static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const uint32_t mtu=1024){
+  if(codec==VideoCodec::H264) return fmt::format("rtph264pay mtu={} ! ",mtu);
+  if(codec==VideoCodec::H265) return fmt::format("rtph265pay mtu={} ! ",mtu);
+  if(codec==VideoCodec::MJPEG) return fmt::format("rtpjpegpay mtu={} ! ",mtu);
+  assert(false);
+}
+
+static std::string create_rtp_depacketize_for_codec(const VideoCodec& codec){
+  if(codec==VideoCodec::H264)return "rtph264depay ! ";
+  if(codec==VideoCodec::H265)return "rtph265depay ! ";
+  if(codec==VideoCodec::MJPEG)return "rtpjpegdepay ! ";
+  assert(false);
+}
+static std::string create_parse_for_codec(const VideoCodec& codec){
+  // config-interval=-1 = makes 100% sure each keyframe has SPS and PPS
+  if(codec==VideoCodec::H264)return "h264parse config-interval=-1 ! ";
+  if(codec==VideoCodec::H265)return "h265parse config-interval=-1  ! ";
+  if(codec==VideoCodec::MJPEG)return "jpegparse ! ";
+  assert(false);
+}
+
 static std::string create_input_custom_udp_rtp_port(const CameraSettings& settings) {
   static constexpr auto input_port=5500;
   static constexpr auto address="127.0.0.1";
   std::stringstream ss;
-  ss<<fmt::format("udpsrc address={} port={} {} ! ",address, input_port, gst_create_caps(settings.streamed_video_format.videoCodec));
-  if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
-    ss<<" rtph264depay ! h264parse ! ";
-  }else if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
-    ss<<" rtph265depay ! h265parse ! ";
-  }else{
-    ss<<" rtpjpegpdepay ! jpegparse ! ";
-  }
+  ss<<fmt::format("udpsrc address={} port={} {} ! ",address, input_port,
+      gst_create_rtp_caps(settings.streamed_video_format.videoCodec));
+  ss<<create_rtp_depacketize_for_codec(settings.streamed_video_format.videoCodec);
   return ss.str();
 }
 
+static std::string create_ip_cam_stream_with_depacketize_and_parse(const std::string& url,const VideoCodec videoCodec){
+  std::stringstream ss;
+  ss<<createIpCameraStream(url);
+  ss<<create_rtp_depacketize_for_codec(videoCodec);
+  return ss.str();
+}
 
 }  // namespace OHDGstHelper
 #endif  // OPENHD_OHDGSTHELPER_H

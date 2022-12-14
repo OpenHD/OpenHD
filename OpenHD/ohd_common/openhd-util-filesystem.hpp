@@ -80,9 +80,8 @@ static void write_file(const std::string& path,const std::string& content){
 static std::string read_file(const std::string& path){
   try{
     std::ifstream f(path);
-    std::string ret;
-    f >> ret;
-    return ret;
+    std::string str((std::istreambuf_iterator<char>(f)),std::istreambuf_iterator<char>());
+    return str;
   }catch (std::exception& e){
     openhd::log::get_default()->warn("Cannot read file ["+path+"]");
     return "";

@@ -57,16 +57,15 @@ static std::vector<Camera> get_csi_cameras(){
   std::vector<Camera> ohdCameras{};
   for (const auto& cam : lcCameras) {
     const auto cam_id=cam->id();
+    openhd::log::get_default()->info("Libcamera reports cam with cam_id [{}]",cam_id);
     // We do not want usb cameras from libcamera
     if(cam_id.find("/usb") == std::string::npos){
-      openhd::log::get_default()->info("Libcamera found:{}",cam_id);
+      openhd::log::get_default()->info("Libcamera CSI cam found, cam_id:[{}]",cam_id);
       Camera camera{};
       camera.name = cam_id;
       camera.type = CameraType::RPI_CSI_LIBCAMERA;
       camera.sensor_name= get_sensor_name_from_cam_id(cam_id);
       ohdCameras.push_back(camera);
-    }else{
-      openhd::log::get_default()->debug("Ignoring - no CSI:{}",cam_id);
     }
   }
   // This should free all the shared pointers we might still have, such that hopefully

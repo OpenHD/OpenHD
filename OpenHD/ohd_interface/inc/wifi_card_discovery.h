@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "openhd-platform.hpp"
+#include "openhd-profile.hpp"
 #include "wifi_card.hpp"
 
 /**
@@ -14,14 +15,30 @@
  */
 namespace DWifiCards {
 
-// discover all connected wifi cards
-std::vector<WiFiCard> discover();
+// There is no way to tell if a card supports injection in monitor mode other than keeping track of a list of the cards
+// which we know can do injection
+bool is_known_for_injection(const WiFiCardType& type);
 
-// Return true if any of the given wifi cards supports monitor mode
-bool any_wifi_card_supporting_monitor(const std::vector<WiFiCard>& cards);
+// this should never fail (return std::nullopt) if the given interface_name is valid
+std::optional<WiFiCard> fill_linux_wifi_card_identifiers(const std::string& interface_name);
 
 // helper to figure out more info about a semi-discovered wifi card
 std::optional<WiFiCard> process_card(const std::string &interface_name);
+
+// discover all connected wifi cards and their capabilities
+std::vector<WiFiCard> discover_connected_wifi_cards();
+
+// Return true if any of the given wifi cards supports monitor mode
+bool any_wifi_card_supporting_injection(const std::vector<WiFiCard>& cards);
+
+
+struct ProcessedWifiCards{
+  std::vector<WiFiCard> monitor_mode_cards;
+  std::optional<WiFiCard> hotspot_card;
+};
+
+ProcessedWifiCards process_and_evaluate_cards(const std::vector<WiFiCard>& discovered_cards,const OHDPlatform& platform,const OHDProfile& profile);
+
 };
 
 #endif //OHD_DISCOVER_WiFI_CARDS

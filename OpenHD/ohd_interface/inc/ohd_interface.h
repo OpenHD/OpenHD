@@ -9,7 +9,6 @@
 #include <utility>
 
 #include "mavlink_settings/ISettingsComponent.hpp"
-#include "ohd_interface_settings.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-external-device.hpp"
 #include "openhd-led-codes.hpp"
@@ -58,13 +57,12 @@ class OHDInterface :public openhd::ISettingsComponent{
    */
   void removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device);
  private:
-  const OHDProfile profile;
-  const OHDPlatform platform;
+  const OHDProfile m_profile;
+  const OHDPlatform m_platform;
   std::shared_ptr<WBLink> m_wb_link;
   std::unique_ptr<USBTetherListener> m_usb_tether_listener;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
   std::unique_ptr<openhd::LEDBlinker> m_error_blinker;
-  std::shared_ptr<openhd::OHDInterfaceSettingsHolder> m_interface_settings_holder;
   std::mutex m_external_device_callback_mutex;
   openhd::EXTERNAL_DEVICE_CALLBACK m_external_device_callback = nullptr;
   std::shared_ptr<spdlog::logger> m_console;

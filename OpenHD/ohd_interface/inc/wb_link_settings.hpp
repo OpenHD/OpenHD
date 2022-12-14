@@ -5,9 +5,9 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 
-#include "openhd-settings2.hpp"
-#include "wifi_card.hpp"
 #include "openhd-platform.hpp"
+#include "openhd-settings-persistent.hpp"
+#include "wifi_card.hpp"
 
 namespace openhd{
 
@@ -92,8 +92,8 @@ static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform)
 static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platform,const std::vector<WiFiCard>& wifibroadcast_cards){
   assert(!wifibroadcast_cards.empty());
   const auto first_card=wifibroadcast_cards.at(0);
-  assert(first_card.supports_5ghz || first_card.supports_2ghz);
-  const bool use_5ghz= wifibroadcast_cards.at(0).supports_5ghz;
+  assert(first_card.supports_5GHz() || first_card.supports_2GHz());
+  const bool use_5ghz= wifibroadcast_cards.at(0).supports_5GHz();
   WBLinkSettings settings{};
   if(use_5ghz){
 	settings.wb_frequency=DEFAULT_5GHZ_FREQUENCY;
@@ -123,14 +123,6 @@ static bool valid_wb_max_fec_block_size_for_platform(uint32_t wb_max_fec_block_s
   return wb_max_fec_block_size_for_platform>0 && wb_max_fec_block_size_for_platform<50;
 }
 
-static std::vector<WiFiCard> tmp_convert(const std::vector<std::shared_ptr<WifiCardHolder>>& broadcast_cards){
-  std::vector<WiFiCard> ret;
-  for(const auto& holder:broadcast_cards){
-	ret.push_back(holder->_wifi_card);
-  }
-  return ret;
-}
-
 class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLinkSettings>{
  public:
   /**
@@ -139,7 +131,7 @@ class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLink
    */
   explicit WBStreamsSettingsHolder(OHDPlatform platform,std::vector<WiFiCard> wifibroadcast_cards1):
 	  openhd::settings::PersistentSettings<WBLinkSettings>(INTERFACE_SETTINGS_DIRECTORY),
-	  wifibroadcast_cards(std::move(wifibroadcast_cards1)),
+        m_cards(std::move(wifibroadcast_cards1)),
           m_platform(platform)
   {
 	init();
@@ -157,7 +149,7 @@ class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLink
   }
  public:
   const OHDPlatform m_platform;
-  const std::vector<WiFiCard> wifibroadcast_cards;
+  const std::vector<WiFiCard> m_cards;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
 	std::stringstream ss;
@@ -165,7 +157,7 @@ class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLink
 	return ss.str();
   }
   [[nodiscard]] WBLinkSettings create_default()const override{
-	return create_default_wb_stream_settings(m_platform,wifibroadcast_cards);
+	return create_default_wb_stream_settings(m_platform, m_cards);
   }
 };
 

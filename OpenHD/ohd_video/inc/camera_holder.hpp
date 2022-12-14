@@ -5,14 +5,13 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
 
-#include "openhd-settings2.hpp"
-#include "openhd-action-handler.hpp"
-#include "openhd-settings.hpp"
-#include "openhd_bitrate_conversions.hpp"
-#include "mavlink_settings/ISettingsComponent.hpp"
-
 #include "camera.hpp"
 #include "camera_settings.hpp"
+#include "mavlink_settings/ISettingsComponent.hpp"
+#include "openhd-action-handler.hpp"
+#include "openhd-settings-directories.hpp"
+#include "openhd-settings-persistent.hpp"
+#include "openhd_bitrate_conversions.hpp"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about a camera
 // Camera Holder is used to differentiate between
@@ -282,7 +281,7 @@ class CameraHolder:
   }
   [[nodiscard]] CameraSettings create_default()const override{
     auto ret=CameraSettings{};
-    if(m_camera.type==CameraType::RPI_VEYE_CSI_MMAL){
+    if(m_camera.type==CameraType::RPI_VEYE_CSI_V4l2){
       // Veye cannot do 640x480@30 by default, this is the next lower possible
       // (TODO it should do 720p but for some reason doesn't)
       ret.streamed_video_format.width=1920;

@@ -8,12 +8,14 @@
 #include "wifi_hotspot.h"
 
 WifiHotspot::WifiHotspot(WiFiCard wifiCard):
-wifiCard(std::move(wifiCard)) {
+m_wifi_card(std::move(wifiCard)) {
+  m_settings=std::make_unique<WifiHotspotSettingsHolder>();
+  wifi_hotspot_fixup_settings(*m_settings,m_wifi_card);
 }
 
 void WifiHotspot::start() {
-  openhd::log::get_default()->debug("Starting WIFI hotspot on card:"+wifiCard.interface_name);
-  OHDUtil::run_command("nmcli",{"dev wifi hotspot ifname",wifiCard.interface_name,"ssid openhd password \"openhdopenhd\""});
+  openhd::log::get_default()->debug("Starting WIFI hotspot on card:"+m_wifi_card.device_name);
+  OHDUtil::run_command("nmcli",{"dev wifi hotspot ifname",m_wifi_card.device_name,"ssid openhd password \"openhdopenhd\""});
   started= true;
   openhd::log::get_default()->info("Wifi hotspot started");
 }

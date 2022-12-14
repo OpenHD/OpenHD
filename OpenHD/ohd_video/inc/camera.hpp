@@ -70,7 +70,7 @@ struct Camera {
   }
   // also, pretty much a must have unless using ip camera
   [[nodiscard]] bool supports_changing_format()const{
-    const bool not_supported= type==CameraType::CUSTOM_UNMANAGED_CAMERA || type==CameraType::IP;
+    const bool not_supported= type==CameraType::CUSTOM_UNMANAGED_CAMERA || type==CameraType::IP || type==CameraType::RPI_VEYE_CSI_V4l2;
     return !not_supported;
   }
   [[nodiscard]] bool supports_keyframe_interval()const{
