@@ -27,6 +27,9 @@ bool any_wifi_card_supporting_monitor(const std::vector<WiFiCard>& cards);
 // helper to figure out more info about a semi-discovered wifi card
 std::optional<WiFiCard> process_card(const std::string &interface_name);
 
+// this should never fail (return std::nullopt) if the given card is a valid interface name for a Wi-Fi card
+std::optional<WiFiCard> fill_linux_wifi_card_identifiers(const std::string& interface_name);
+
 struct ProcessedWifiCards{
   std::vector<WiFiCard> monitor_mode_cards;
   std::optional<WiFiCard> hotspot_card;

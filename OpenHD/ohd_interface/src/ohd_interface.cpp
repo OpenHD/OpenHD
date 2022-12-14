@@ -41,7 +41,7 @@ platform(platform1),profile(std::move(profile1)) {
   const auto optional_hotspot_card=evaluated.hotspot_card;
   m_console->debug("Broadcast card(s):{}",debug_cards(broadcast_cards));
   if(optional_hotspot_card.has_value()){
-    m_console->debug("Hotspot card:{}",optional_hotspot_card.value().interface_name);
+    m_console->debug("Hotspot card:{}",optional_hotspot_card.value().device_name);
   }else{
     m_console->debug("Not WiFi hotspot card");
   }

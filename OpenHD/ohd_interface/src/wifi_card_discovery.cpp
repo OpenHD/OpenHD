@@ -108,7 +108,7 @@ std::vector<WiFiCard> DWifiCards::discover() {
   return m_wifi_cards;
 }
 
-std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_name) {
+std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(const std::string& interface_name) {
   // get the driver name for this card
   const auto filename_device_uevent=fmt::format("/sys/class/net/{}/device/uevent",interface_name);
   const auto device_uevent_content=OHDFilesystemUtil::read_file(filename_device_uevent);
@@ -125,23 +125,23 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   const std::string driver_name = result[1];
 
   WiFiCard card{};
-  card.interface_name = interface_name;
+  card.device_name = interface_name;
   card.driver_name=driver_name;
   card.type = driver_to_wifi_card_type(driver_name);
 
   // get the phy index for this card
-  const auto filename_phy_index=fmt::format("/sys/class/net/{}/phy80211/index",card.interface_name);
+  const auto filename_phy_index=fmt::format("/sys/class/net/{}/phy80211/index",card.device_name);
   const auto phy_val=OHDFilesystemUtil::read_file(filename_phy_index);
   const auto opt_phy_phy80211_index=OHDUtil::string_to_int(phy_val);
   if(!opt_phy_phy80211_index.has_value()){
     openhd::log::get_default()->warn("Cannot find phy index for card {}",interface_name);
     return std::nullopt;
   }
-  card.phy_phy80211_index=opt_phy_phy80211_index.value();
-  openhd::log::get_default()->debug("Card {} driver:{} phy{}",card.interface_name,card.driver_name,card.phy_phy80211_index);
+  card.phy80211_index =opt_phy_phy80211_index.value();
+  openhd::log::get_default()->debug("Card {} driver:{} phy{}",card.device_name,card.driver_name,card.phy80211_index);
 
   // get the mac address for this card
-  const auto filename_mac_address=fmt::format("/sys/class/net/{}/address",card.interface_name);
+  const auto filename_mac_address=fmt::format("/sys/class/net/{}/address",card.device_name);
   auto mac=OHDFilesystemUtil::read_file(filename_mac_address);
   if(mac.empty()){
     openhd::log::get_default()->warn("Cannot find mac for card {}",interface_name);
@@ -150,25 +150,34 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   OHDUtil::rtrim(mac);
   card.mac = mac;
   // Here we are done with the unique identifiers
-  assert(!card.interface_name.empty());
+  assert(!card.device_name.empty());
   assert(!card.mac.empty());
-  assert(card.phy_phy80211_index!=-1);
+  assert(card.phy80211_index !=-1);
   assert(!card.driver_name.empty());
+  return card;
+}
+
+std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_name) {
+  auto card_opt= fill_linux_wifi_card_identifiers(interface_name);
+  if(!card_opt.has_value()){
+    return std::nullopt;
+  }
+  WiFiCard card=card_opt.value();
 
   // This reported value is right in most cases, so we use it as a default. However, for example the RTL8812AU reports
   // both 2G and 5G but can only do 5G with the monitor mode driver.
-  const auto supported_freq= wifi::commandhelper::iw_get_supported_frequency_bands(card.interface_name);
+  const auto supported_freq= wifi::commandhelper::iw_get_supported_frequency_bands(card.device_name);
   const bool supports_2ghz = supported_freq.supports_any_2G;
   const bool supports_5ghz = supported_freq.supports_any_5G;
 
   // Note that this does not neccessarily mean this info is right
   // a card might report a specific channel but then since monitor mode is so hack not support the channel in monitor mode
   openhd::log::get_default()->debug("Card {} reports driver:{} supprts_2G:{} supports_5G:{}",
-                                    card.interface_name,driver_name,OHDUtil::yes_or_no(supports_2ghz),OHDUtil::yes_or_no(supports_5ghz));
+                                    card.device_name,card.driver_name,OHDUtil::yes_or_no(supports_2ghz),OHDUtil::yes_or_no(supports_5ghz));
 
-  supported_channels(card.interface_name);
+  supported_channels(card.device_name);
 
-  card.supports_monitor_mode= wifi::commandhelper::iw_supports_monitor_mode(card.phy_phy80211_index);
+  card.supports_monitor_mode= wifi::commandhelper::iw_supports_monitor_mode(card.phy80211_index);
   openhd::log::get_default()->debug("Supports monitor mode:{}", card.supports_monitor_mode);
 
   switch (card.type) {
@@ -239,7 +248,7 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
       break;
     }
     default: {
-      openhd::log::get_default()->warn("Unknown card type for "+card.interface_name);
+      openhd::log::get_default()->warn("Unknown card type for "+card.device_name);
       card.xx_supports_5ghz = supports_5ghz;
       card.xx_supports_2ghz = supports_2ghz;
       card.supports_rts = false;
@@ -255,12 +264,12 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   }
   // hacky there is something wron with phy-lookup
   if(!(card.xx_supports_2ghz  || card.xx_supports_5ghz)){
-    openhd::log::get_default()->warn("Card "+card.interface_name+" reports neither 2G nor 5G, default to 2G capable");
+    openhd::log::get_default()->warn("Card "+card.device_name +" reports neither 2G nor 5G, default to 2G capable");
     card.xx_supports_2ghz=true;
   }
-  if(openhd::ignore::should_be_ignored_interface(card.interface_name)
+  if(openhd::ignore::should_be_ignored_interface(card.device_name)
       || openhd::ignore::should_be_ignored_mac(card.mac)){
-    openhd::log::get_default()->info("Ignoring card {} since whitelisted by developer",card.interface_name);
+    openhd::log::get_default()->info("Ignoring card {} since whitelisted by developer",card.device_name);
     return std::nullopt;
   }
   return card;
@@ -322,4 +331,3 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(std::vecto
   }
   return {monitor_mode_cards,hotspot_card};
 }
-

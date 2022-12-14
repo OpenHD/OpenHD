@@ -43,7 +43,7 @@ bool openhd::wb::cards_support_frequency(
   for(const auto& card:m_broadcast_cards){
     if(!wifi_card_supports_frequency(platform,card,frequency)){
       if(m_console){
-        m_console->debug("Card {} doesn't support frequency {}",card.interface_name,frequency);
+        m_console->debug("Card {} doesn't support frequency {}",card.device_name,frequency);
       }
       return false;
     }
@@ -103,7 +103,7 @@ bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
     const std::vector<WiFiCard>& m_broadcast_cards) {
   bool ret=true;
   for(const auto& card: m_broadcast_cards){
-    const bool success=wifi::commandhelper::iw_set_frequency_and_channel_width(card.interface_name,frequency,channel_width);
+    const bool success=wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,frequency,channel_width);
     //const bool success=wifi::commandhelper2::set_wifi_frequency_and_log_result(card->get_wifi_card().interface_name,frequency,channel_width);
     if(!success){
       ret=false;

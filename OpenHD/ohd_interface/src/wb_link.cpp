@@ -78,7 +78,7 @@ void WBLink::takeover_cards_monitor_mode() {
   // wifibroadcast and therefore making other networking increadibly hard.
   // Tell network manager to ignore the cards we want to do wifibroadcast on
   for(const auto& card: m_broadcast_cards){
-    wifi::commandhelper::nmcli_set_device_unmanaged(card.interface_name);
+    wifi::commandhelper::nmcli_set_device_unmanaged(card.device_name);
   }
   wifi::commandhelper::rfkill_unblock_all();
   // TODO: sometimes this happens:
@@ -89,9 +89,9 @@ void WBLink::takeover_cards_monitor_mode() {
   std::this_thread::sleep_for(std::chrono::seconds(1));
   // now we can enable monitor mode on the given cards.
   for(const auto& card: m_broadcast_cards) {
-    wifi::commandhelper::ip_link_set_card_state(card.interface_name, false);
-    wifi::commandhelper::iw_enable_monitor_mode(card.interface_name);
-    wifi::commandhelper::ip_link_set_card_state(card.interface_name, true);
+    wifi::commandhelper::ip_link_set_card_state(card.device_name, false);
+    wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
+    wifi::commandhelper::ip_link_set_card_state(card.device_name, true);
     //wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
   }
   m_console->debug("WBStreams::takeover_cards_monitor_mode() end");
@@ -173,7 +173,7 @@ TOptions WBLink::create_tx_options(uint8_t radio_port,bool enableFec)const {
     options.tx_fec_options.fixed_k=0;
     options.tx_fec_options.overhead_percentage=0;
   }
-  options.wlan = m_broadcast_cards.at(0).interface_name;
+  options.wlan = m_broadcast_cards.at(0).device_name;
   return options;
 }
 
@@ -263,7 +263,7 @@ void WBLink::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
 std::vector<std::string> WBLink::get_rx_card_names() const {
   std::vector<std::string> ret{};
   for(const auto& card: m_broadcast_cards){
-    ret.push_back(card.interface_name);
+    ret.push_back(card.device_name);
   }
   return ret;
 }
@@ -317,10 +317,10 @@ void WBLink::apply_txpower() {
       // requires corresponding driver workaround for dynamic tx power
       const auto tmp=settings.wb_rtl8812au_tx_pwr_idx_override;
       m_console->debug("RTL8812AU tx_pwr_idx_override: {}",tmp);
-      wifi::commandhelper::iw_set_tx_power(card.interface_name,tmp);
+      wifi::commandhelper::iw_set_tx_power(card.device_name,tmp);
     }else{
       const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
-      wifi::commandhelper::iw_set_tx_power(card.interface_name,tmp);
+      wifi::commandhelper::iw_set_tx_power(card.device_name,tmp);
       //WifiCardCommandHelper::iwconfig_set_txpower(card,settings.wb_tx_power_milli_watt);
     }
   }
