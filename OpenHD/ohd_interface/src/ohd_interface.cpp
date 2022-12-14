@@ -40,6 +40,10 @@ platform(platform1),profile(std::move(profile1)) {
   const auto evaluated=DWifiCards::process_and_evaluate_cards(discovered_wifi_cards,profile.is_air);
   const auto broadcast_cards=evaluated.monitor_mode_cards;
   const auto optional_hotspot_card=evaluated.hotspot_card;
+  m_console->debug("Broadcast card(s):{}",debug_cards(broadcast_cards));
+  if(optional_hotspot_card.has_value()){
+    m_console->debug("Hotspot card:{}",optional_hotspot_card.value().interface_name);
+  }
   // We don't have at least one card for monitor mode, which is a hard requirement for OpenHD
   if(broadcast_cards.empty()){
     m_console->warn("Cannot start ohd_interface, no wifi card for monitor mode");
