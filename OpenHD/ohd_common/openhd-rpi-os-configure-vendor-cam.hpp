@@ -9,6 +9,11 @@
 #include "openhd-util-filesystem.hpp"
 #include "openhd-spdlog.hpp"
 #include "openhd-platform.hpp"
+//for dynamic config
+#include <fstream>
+#include <iostream>
+#include <dirent.h>
+#include <cstring>
 
 // Helper to reconfigure the rpi os for the different camera types
 // This really is exhausting - some camera(s) are auto-detected, some are not,
@@ -113,30 +118,18 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
   const bool is_rpi4=platform.board_type==BoardType::RaspberryPi4B || platform.board_type==BoardType::RaspberryPiCM4;
   std::string base_filename="/boot/openhd/configs/";
   if(cam_config==CamConfig::MMAL){
-    return base_filename+"rpi_raspicam.txt";
-  }else if(cam_config==CamConfig::LIBCAMERA){
+    return base_filename+"rpi_";
+    return base_filename+CamConfig;
+    return base_filename+".txt";
+  }else{
     if(is_rpi4){
-      return base_filename+"rpi_4_libcamera.txt";
+      return base_filename+"rpi_4_";
+      return base_filename+CamConfig;
+      return base_filename+".txt";
     }else{
-      return base_filename+"rpi_3_libcamera.txt";
-    }
-  }else if(cam_config==CamConfig::LIBCAMERA_IMX477){
-    if(is_rpi4){
-      return base_filename+"rpi_4_libcamera_imx477.txt";
-    }else{
-      return base_filename+"rpi_3_libcamera_imx477.txt";
-    }
-  }else if(cam_config==CamConfig::LIBCAMERA_ARDUCAM){
-    if(is_rpi4){
-      return base_filename+"rpi_4_libcamera_ardu.txt";
-    }else{
-      return base_filename+"rpi_3_libcamera_ardu.txt";
-    }
-  }else if(cam_config==CamConfig::LIBCAMERA_IMX519){
-    if(is_rpi4){
-      return base_filename+"rpi_4_libcamera_imx519.txt";
-    }else{
-      return base_filename+"rpi_3_libcamera_imx519.txt";
+      return base_filename+"rpi_3_";
+      return base_filename+CamConfig;
+      return base_filename+".txt";
     }
   }
   assert(true);
