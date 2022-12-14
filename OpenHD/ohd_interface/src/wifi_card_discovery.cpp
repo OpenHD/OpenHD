@@ -159,8 +159,8 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   // This reported value is right in most cases, so we use it as a default. However, for example the RTL8812AU reports
   // both 2G and 5G but can only do 5G with the monitor mode driver.
   const auto supported_freq= wifi::commandhelper::iw_get_supported_frequency_bands(card.device_name);
-  const bool supports_2ghz = supported_freq.supports_any_2G;
-  const bool supports_5ghz = supported_freq.supports_any_5G;
+  card.xx_supports_2ghz=supported_freq.supports_any_2G;
+  card.xx_supports_5ghz=supported_freq.supports_any_5G;
 
   card.supported_channels=supported_channels(card.device_name);
 
@@ -170,8 +170,8 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
 
   card.supports_injection= is_known_for_injection(card.type);
 
-  openhd::log::get_default()->debug("Card {} reports driver:{} supprts_2G:{} supports_5G:{} supports_monitor_mode:{} supports_injection:{}",
-                                    card.device_name,card.driver_name,OHDUtil::yes_or_no(supports_2ghz),OHDUtil::yes_or_no(supports_5ghz),
+  openhd::log::get_default()->debug("Card {} reports driver:{} supports_2GHz:{} supports_5GHz:{} supports_monitor_mode:{} supports_injection:{}",
+                                    card.device_name,card.driver_name,card.supports_2GHz(),card.supports_5GHz(),
                                     card.supports_monitor_mode,card.supports_injection);
 
   // temporary,hacky, only hotspot on rpi integrated wifi
