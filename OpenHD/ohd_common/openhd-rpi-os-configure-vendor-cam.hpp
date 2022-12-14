@@ -214,7 +214,7 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   // move current config.txt to a backup file
   OHDUtil::run_command("mv",{rpi_config_file_path,"/boot/config_bup.txt"});
   // and copy over the new one
-  OHDUtil::run_command("cp" /boot/config.txt.temp,{rpi_config_file_path});
+  OHDUtil::run_command("cp /boot/config.txt.temp",{rpi_config_file_path});
   // save the current selection (persistent setting)
   save_cam_config_to_file(new_cam_config);
   // Now we just need to reboot
