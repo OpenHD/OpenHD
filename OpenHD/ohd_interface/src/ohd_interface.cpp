@@ -42,7 +42,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   if(optional_hotspot_card.has_value()){
     m_console->debug("Hotspot card:{}",optional_hotspot_card.value().device_name);
   }else{
-    m_console->debug("Not WiFi hotspot card");
+    m_console->debug("No WiFi hotspot card");
   }
   // We don't have at least one card for monitor mode, which is a hard requirement for OpenHD
   if(broadcast_cards.empty()){
