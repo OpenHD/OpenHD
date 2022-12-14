@@ -11,12 +11,14 @@
 #include <vector>
 
 // NOTE:
-// All those iw commands use netlink to talk to linux
-// TODO should we switch to using netlink directly instead of using the run command workaround ?
+// All those iw commands use netlink to talk to linux - we could theoretically switch to using netlink directly
+// (e.g. see wifi_command_helper2) and get a bit more compile-time safety but I don't think that's worth it - it would be one more
+// stack we need to test, and those commands used here are pretty much guaranteed to be available on every linux system.
 namespace wifi::commandhelper{
 
 // needed for enabling monitor mode
 bool ip_link_set_card_state(const std::string &device, bool up);
+// unblock all cards, also needed for enabling monitor mode
 bool rfkill_unblock_all();
 
 // from iw documentation:
@@ -32,6 +34,7 @@ bool rfkill_unblock_all();
 //		mumimo-follow-mac <MAC_ADDRESS>: use MUMIMO according to a MAC address
 bool iw_enable_monitor_mode(const std::string& device);
 
+// from iw documentation:
 // dev <devname> set freq <freq> [NOHT|HT20|HT40+|HT40-|5MHz|10MHz|80MHz]
 bool iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz,uint32_t channel_width);
 
