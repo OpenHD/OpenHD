@@ -1,12 +1,12 @@
+#include "wifi_card_discovery.h"
+
 #include <iostream>
 #include <regex>
 
 #include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
-#include "openhd-ignore-interfaces.h"
 #include "openhd-util.hpp"
 #include "wifi_card.hpp"
-#include "wifi_card_discovery.h"
 #include "wifi_command_helper.h"
 #include "manually_defined_cards.h"
 
