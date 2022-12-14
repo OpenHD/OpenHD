@@ -88,6 +88,10 @@ void GStreamerStream::setup() {
       setup_ip_camera();
       break;
     }
+    case CameraType::ALLWINNER_CSI: {
+	  setup_allwinner_csi();
+	  break;
+	}
     case CameraType::DUMMY_SW: {
       setup_sw_dummy_camera();
       break;
@@ -190,6 +194,12 @@ void GStreamerStream::setup_rockchip_hdmi() {
   m_console->debug("Setting up Rockchip HDMI");
   const auto& setting= m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createRockchipHDMIStream(setting.air_recording==Recording::ENABLED, setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
+}
+
+void GStreamerStream::setup_allwinner_csi() {
+  std::cout << "Setting up Allwinner CSI camera" << std::endl;
+  const auto& setting=m_camera_holder->get_settings();
+  m_pipeline_content << OHDGstHelper::createAllwinnerStream(0,setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.h26x_keyframe_interval);
 }
 
 void GStreamerStream::setup_usb_uvc() {
