@@ -12,7 +12,6 @@
 //for dynamic config
 #include <fstream>
 #include <iostream>
-#include <dirent.h>
 #include <cstring>
 
 // Helper to reconfigure the rpi os for the different camera types
@@ -161,6 +160,7 @@ static int getDynamicLineEnd(){
 //rewrite the config part that is changable by the user
 static std::string writeStaticStuff(){
     int countStart=0;
+    int countStop=0;
     std::ofstream outFile("/boot/config.txt.temp");
     std::string line;
     std::ifstream inFile("/boot/config.txt");
@@ -177,20 +177,21 @@ return "true";
 //write our dynamic config to the temporary config-file
 static std::string writeOpenHDConfigStuff(std::string FilePath){
     std::string FullFilePath= "/boot/openhd/configs/";
-    FullFilePath += FilePath;
+    FullFilePath= FullFilePath + FilePath + ".txt";
     openhd::log::get_default()->debug("this file will be appended: "+ FullFilePath);
     int countStart=0;
     int countStop=0;
-    countStop = getDynamicLineEnd(); 
+    countStop = getDynamicLineEnd();
+    if(countStop==0){
+    openhd::log::get_default()->debug("we have an error, just write 2 lines for now ");
+    countStop = 2;
+    } 
     std::ofstream outFile{"/boot/config.txt.temp", std::ios_base::app};
     std::string line;
-    std::ifstream inFile(FullFilePath);
+    std::ifstream inFile("/boot/openhd/configs/libcamera.txt");
     int count = 0;
         while(getline(inFile, line)){
-            if(count >= 0 && count < countStop){
-                outFile << line << std::endl;
-            }
-            count++;
+             outFile << line << std::endl;
         }
     return "true";
     }
@@ -208,10 +209,10 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   // creating a new config file
   std::ofstream outFile("/boot/config.txt.temp");
   std::string line;
-  outFile.close();
   writeStaticStuff();
   writeOpenHDConfigStuff(cam_config_to_string(new_cam_config));  
-  // move current config.txt to a backup file
+  outFile.close();  
+// move current config.txt to a backup file
   OHDUtil::run_command("mv",{rpi_config_file_path,"/boot/config_bup.txt"});
   // and copy over the new one
   OHDUtil::run_command("cp /boot/config.txt.temp",{rpi_config_file_path});
@@ -261,7 +262,7 @@ class ConfigChangeHandler{
     m_handle_thread=std::make_unique<std::thread>([new_value,this]{
       apply_new_cam_config_and_save(m_platform,new_value);
       std::this_thread::sleep_for(std::chrono::seconds(3));
-      OHDUtil::run_command("systemctl",{"start", "reboot.target"});
+   //   OHDUtil::run_command("systemctl",{"start", "reboot.target"});
     });
   }
 };
