@@ -93,15 +93,17 @@ struct WiFiCard {
   bool supports_monitor_mode=false;
   bool supports_injection = false;
   bool supports_hotspot = false;
-  bool supports_2GHz()const{
+  [[nodiscard]] bool supports_2GHz()const{
     return !supported_frequencies_2G.empty();
   };
-  bool supports_5GHz()const{
+  [[nodiscard]] bool supports_5GHz()const{
     return !supported_frequencies_5G.empty();
   };
+  // supported 2G frequencies
   std::vector<uint32_t> supported_frequencies_2G{};
+  // supported 5G frequencies
   std::vector<uint32_t> supported_frequencies_5G{};
-  std::vector<uint32_t> get_supported_frequencies_2G_5G()const{
+  [[nodiscard]] std::vector<uint32_t> get_supported_frequencies_2G_5G()const{
     std::vector<uint32_t> ret{};
     openhd::vec_append(ret,supported_frequencies_2G);
     openhd::vec_append(ret,supported_frequencies_5G);

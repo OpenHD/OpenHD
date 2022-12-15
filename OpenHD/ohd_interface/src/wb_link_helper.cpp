@@ -34,7 +34,7 @@ bool openhd::wb::cards_support_setting_mcs_index(
 
 
 bool openhd::wb::cards_support_frequency(
-    int frequency,
+    uint32_t frequency,
     const std::vector<WiFiCard>& m_broadcast_cards,
     const OHDPlatform& platform,
     const std::shared_ptr<spdlog::logger>& m_console=nullptr) {

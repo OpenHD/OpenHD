@@ -25,7 +25,7 @@ bool cards_support_setting_channel_width(const std::vector<WiFiCard>& m_broadcas
 
 // returns true if the given card supports the given frequency, taking into account if the kernel was modifed or not
 bool cards_support_frequency(
-    int frequency,
+    uint32_t frequency,
     const std::vector<WiFiCard>& m_broadcast_cards,
     const OHDPlatform& platform,
     const std::shared_ptr<spdlog::logger>& m_console);
