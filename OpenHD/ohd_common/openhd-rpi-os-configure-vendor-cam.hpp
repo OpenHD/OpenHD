@@ -156,9 +156,9 @@ static int getDynamicLineEnd(){
         }
     }
     return 0;
-}
+    }
 //rewrite the config part that is changable by the user
-static std::string writeStaticStuff(){
+static int writeStaticStuff(){
     int countStart=0;
     int countStop=0;
     std::ofstream outFile("/boot/config.txt.temp");
@@ -166,13 +166,18 @@ static std::string writeStaticStuff(){
     std::ifstream inFile("/boot/config.txt");
     int count = 0;
     countStart = getDynamicLineStart();
+        if(countStart==0){
+          openhd::log::get_default()->warn("Your config.txt is not compatible with openhd-camera-changes, please fix it before using this function");
+        }
+        else{
         while(getline(inFile, line)){
             if(count > 0 && count < countStart){
                 outFile << line << std::endl;
             }
             count++;
         }
-return "true";
+        }
+return countStart;
 }
 //write our dynamic config to the temporary config-file
 static std::string writeOpenHDConfigStuff(std::string FilePath){
@@ -200,7 +205,8 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   std::ofstream outFile("/boot/config.txt.temp");
   std::string line;
   writeStaticStuff();
-  writeOpenHDConfigStuff(get_file_name_for_cam_config(platform,new_cam_config));  
+  ret = writeOpenHDConfigStuff(get_file_name_for_cam_config(platform,new_cam_config));  
+  if (ret=!o){
   outFile.close();  
   // move current config.txt to a backup file
   OHDUtil::run_command("mv",{rpi_config_file_path,"/boot/config_bup.txt"});
@@ -210,6 +216,8 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   save_cam_config_to_file(new_cam_config);
   // Now we just need to reboot
   openhd::log::get_default()->debug("End apply cam config "+ cam_config_to_string(new_cam_config));
+  }
+  openhd::log::get_default()->warn("config.txt wasn't touched");
 }
 
 // Unfortunately complicated, since we need to perform the action asynchronously and then reboot
