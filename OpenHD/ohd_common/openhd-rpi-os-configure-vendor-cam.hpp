@@ -158,7 +158,7 @@ static int getDynamicLineEnd(){
     return 0;
     }
 //rewrite the config part that is changable by the user
-static int writeStaticStuff(){
+static std::string writeStaticStuff(){
     int countStart=0;
     int countStop=0;
     std::ofstream outFile("/boot/config.txt.temp");
@@ -177,7 +177,7 @@ static int writeStaticStuff(){
             count++;
         }
         }
-return countStart;
+return "error";
 }
 //write our dynamic config to the temporary config-file
 static std::string writeOpenHDConfigStuff(std::string FilePath){
@@ -204,10 +204,10 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   // creating a new config file
   std::ofstream outFile("/boot/config.txt.temp");
   std::string line;
-  writeStaticStuff();
-  int ret=0;
-  ret = writeOpenHDConfigStuff(get_file_name_for_cam_config(platform,new_cam_config));  
-  if (ret=!0){
+  std::string ret;
+  ret = writeStaticStuff();
+  if (ret=!"error"){
+  writeOpenHDConfigStuff(get_file_name_for_cam_config(platform,new_cam_config));  
   outFile.close();  
   // move current config.txt to a backup file
   OHDUtil::run_command("mv",{rpi_config_file_path,"/boot/config_bup.txt"});
