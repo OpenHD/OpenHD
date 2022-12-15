@@ -93,19 +93,24 @@ struct WiFiCard {
   bool supports_monitor_mode=false;
   bool supports_injection = false;
   bool supports_hotspot = false;
-  bool xx_supports_5ghz = false;
-  bool xx_supports_2ghz = false;
   bool supports_2GHz()const{
-    return xx_supports_2ghz;
+    return !supported_frequencies_2G.empty();
   };
   bool supports_5GHz()const{
-    return xx_supports_5ghz;
+    return !supported_frequencies_5G.empty();
   };
-  std::vector<uint32_t> supported_frequencies{};
+  std::vector<uint32_t> supported_frequencies_2G{};
+  std::vector<uint32_t> supported_frequencies_5G{};
+  std::vector<uint32_t> get_supported_frequencies_2G_5G()const{
+    std::vector<uint32_t> ret{};
+    openhd::vec_append(ret,supported_frequencies_2G);
+    openhd::vec_append(ret,supported_frequencies_5G);
+    return ret;
+  };
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,device_name,mac,phy80211_index,driver_name,type,
                                    supports_injection,supports_monitor_mode,supports_hotspot,
-                                   xx_supports_2ghz,xx_supports_5ghz,supported_frequencies)
+                                   supported_frequencies_2G,supported_frequencies_5G)
 
 // Only Atheros AR9271 doesn't support setting the mcs index
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
@@ -128,7 +133,6 @@ static bool wifi_card_supports_extra_channels_2G(const WiFiCard& wi_fi_card){
   return false;
 }
 
-
 static bool wifi_card_supports_frequency(const OHDPlatform& platform,const WiFiCard& wifi_card,const uint32_t frequency){
   const auto channel_opt=openhd::channel_from_frequency(frequency);
   if(!channel_opt.has_value()){
@@ -136,8 +140,8 @@ static bool wifi_card_supports_frequency(const OHDPlatform& platform,const WiFiC
     return false;
   }
   const auto& channel=channel_opt.value();
-  for(const auto& freq:wifi_card.supported_frequencies){
-    if(channel.frequency==freq){
+  for(const auto& supported_frequency:wifi_card.get_supported_frequencies_2G_5G()){
+    if(channel.frequency==supported_frequency){
       return true;
     }
   }
@@ -145,23 +149,6 @@ static bool wifi_card_supports_frequency(const OHDPlatform& platform,const WiFiC
   return false;
 }
 
-static std::vector<openhd::WifiChannel> get_openhd_channels_from_card(const WiFiCard& card){
-  return openhd::get_all_channels_from_safe_frequencies(card.supported_frequencies);
-}
-
-static std::vector<openhd::WifiChannel> get_openhd_channels_from_card(const WiFiCard& card, bool include_2G,bool include_5G){
-  const auto tmp=openhd::get_all_channels_from_safe_frequencies(card.supported_frequencies);
-  std::vector<openhd::WifiChannel> ret{};
-  for(const auto& channel:tmp){
-    if(channel.space==openhd::Space::G2_4){
-      if(include_2G)ret.push_back(channel);
-    }else{
-      assert(channel.space==openhd::Space::G5_8);
-      if(include_5G)ret.push_back(channel);
-    }
-  }
-  return ret;
-}
 
 static std::string debug_cards(const std::vector<WiFiCard>& cards){
   std::stringstream ss;
