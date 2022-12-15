@@ -176,19 +176,9 @@ return "true";
 }
 //write our dynamic config to the temporary config-file
 static std::string writeOpenHDConfigStuff(std::string FilePath){
-    std::string FullFilePath= "/boot/openhd/configs/";
-    FullFilePath= FullFilePath + FilePath + ".txt";
-    openhd::log::get_default()->debug("this file will be appended: "+ FullFilePath);
-    int countStart=0;
-    int countStop=0;
-    countStop = getDynamicLineEnd();
-    if(countStop==0){
-    openhd::log::get_default()->debug("we have an error, just write 2 lines for now ");
-    countStop = 2;
-    } 
     std::ofstream outFile{"/boot/config.txt.temp", std::ios_base::app};
     std::string line;
-    std::ifstream inFile("/boot/openhd/configs/libcamera.txt");
+    std::ifstream inFile(FilePath);
     int count = 0;
         while(getline(inFile, line)){
              outFile << line << std::endl;
@@ -210,9 +200,9 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   std::ofstream outFile("/boot/config.txt.temp");
   std::string line;
   writeStaticStuff();
-  writeOpenHDConfigStuff(cam_config_to_string(new_cam_config));  
+  writeOpenHDConfigStuff(get_file_name_for_cam_config(platform,new_cam_config));  
   outFile.close();  
-// move current config.txt to a backup file
+  // move current config.txt to a backup file
   OHDUtil::run_command("mv",{rpi_config_file_path,"/boot/config_bup.txt"});
   // and copy over the new one
   OHDUtil::run_command("cp /boot/config.txt.temp",{rpi_config_file_path});
@@ -262,7 +252,7 @@ class ConfigChangeHandler{
     m_handle_thread=std::make_unique<std::thread>([new_value,this]{
       apply_new_cam_config_and_save(m_platform,new_value);
       std::this_thread::sleep_for(std::chrono::seconds(3));
-   //   OHDUtil::run_command("systemctl",{"start", "reboot.target"});
+      OHDUtil::run_command("systemctl",{"start", "reboot.target"});
     });
   }
 };
