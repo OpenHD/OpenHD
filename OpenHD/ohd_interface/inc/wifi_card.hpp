@@ -187,7 +187,7 @@ static constexpr auto WIFI_MANIFEST_FILENAME = "/tmp/wifi_manifest";
 static void write_wificards_manifest(const std::vector<WiFiCard> &cards) {
   auto manifest = wificards_to_json(cards);
   std::ofstream _t(WIFI_MANIFEST_FILENAME);
-  _t << manifest.dump(-1);
+  _t << manifest.dump(4);
   _t.close();
 }
 
