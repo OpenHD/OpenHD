@@ -206,7 +206,10 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   std::string line;
   std::string ret;
   ret = writeStaticStuff();
-  if (ret=!"error"){
+    if (ret=="error"){
+      openhd::log::get_default()->warn("config.txt wasn't touched");
+    }
+    else{
   writeOpenHDConfigStuff(get_file_name_for_cam_config(platform,new_cam_config));  
   outFile.close();  
   // move current config.txt to a backup file
@@ -218,7 +221,6 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   // Now we just need to reboot
   openhd::log::get_default()->debug("End apply cam config "+ cam_config_to_string(new_cam_config));
   }
-  openhd::log::get_default()->warn("config.txt wasn't touched");
 }
 
 // Unfortunately complicated, since we need to perform the action asynchronously and then reboot
