@@ -282,7 +282,6 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   std::this_thread::sleep_for(std::chrono::seconds(100));
   // Now we just need to reboot
   openhd::log::get_default()->debug("End apply cam config "+ cam_config_to_string(new_cam_config));
-  }
 }
 
 // Unfortunately complicated, since we need to perform the action asynchronously and then reboot
