@@ -32,17 +32,17 @@ bool wifi::commandhelper::iw_enable_monitor_mode(const std::string &device) {
 }
 
 static std::string channel_width_as_iw_string(uint32_t channel_width){
-  std::string ret="HT20";
   if(channel_width==5){
-    ret = "5MHz";
-  }else if(channel_width==10){
+    return "5MHz";
+  }else if(channel_width==10) {
     return "10Mhz";
+  }else if(channel_width==20){
+    return "HT20";
   }else if(channel_width==40){
-    ret="HT40+";
-  }else{
-    get_logger()->info("Invalid channel width {}, assuming HT20",channel_width);
+    return "HT40+";
   }
-  return ret;
+  get_logger()->info("Invalid channel width {}, assuming HT20",channel_width);
+  return "HT20";
 }
 
 bool wifi::commandhelper::iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz,uint32_t channel_width) {
