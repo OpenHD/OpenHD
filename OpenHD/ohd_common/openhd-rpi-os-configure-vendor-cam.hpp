@@ -48,7 +48,7 @@ static std::string cam_config_to_string(const CamConfig& cam_config){
     case CamConfig::VEYE_CSSC132: return "veye_cssc132";
     case CamConfig::VEYE_MVCAM: return "veye_mvcam";
     case CamConfig::VEYE_CAM2M: return "veye_cam2m";
-
+    default:break;
   }
   openhd::log::get_default()->warn("Error cam_config_to_string");
   assert(true);
@@ -66,7 +66,6 @@ static CamConfig cam_config_from_int(int val){
   if(val==7)return CamConfig::VEYE_CSSC132;
   if(val==8)return CamConfig::VEYE_MVCAM;
   if(val==9)return CamConfig::VEYE_CAM2M;
-
   openhd::log::get_default()->warn("Error cam_config_from_int");
   assert(true);
   return CamConfig::MMAL;
@@ -83,7 +82,7 @@ static int cam_config_to_int(CamConfig cam_config){
     case CamConfig::VEYE_CSSC132: return 7;
     case CamConfig::VEYE_MVCAM: return 8;
     case CamConfig::VEYE_CAM2M: return 9;
-
+    default:break;
   }
   openhd::log::get_default()->warn("Error cam_config_to_int");
   assert(true);
@@ -104,8 +103,12 @@ static CamConfig get_current_cam_config_from_file(){
     return CamConfig::MMAL;
   }
   auto content=OHDFilesystemUtil::read_file(CAM_CONFIG_FILENAME);
-  auto content_as_int=std::stoi(content);
-  return cam_config_from_int(content_as_int);
+  auto content_as_int=OHDUtil::string_to_int(content);
+  if(!content_as_int.has_value()){
+    openhd::log::get_default()->error("Invalid value inside curr_rpi_cam_config.txt [{}]",content);
+    return CamConfig::MMAL;
+  }
+  return cam_config_from_int(content_as_int.value());
 }
 
 static void save_cam_config_to_file(CamConfig new_cam_config){
@@ -120,31 +123,55 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
     return base_filename+"rpi_"+cam_config_to_string(cam_config)+".txt";
   }else{
     if(is_rpi4){
-    return base_filename+"rpi_4_"+cam_config_to_string(cam_config)+".txt";
+      return base_filename+"rpi_4_"+cam_config_to_string(cam_config)+".txt";
     }else{
-    return base_filename+"rpi_3_"+cam_config_to_string(cam_config)+".txt";
+      return base_filename+"rpi_3_"+cam_config_to_string(cam_config)+".txt";
     }
   }
   assert(true);
   return "";
 }
 
-//helper functions for writing config files
-//find the line, in which the dynamic content begins
+// find the line that contains the dynamic content begin delimiter
+// returns -1 on failure, a positive integer >=0 otherwise
+static int find_index_dynamic_content_begin(const std::vector<std::string>& lines){
+  for(int i=0;i<lines.size();i++){
+    if(OHDUtil::contains(lines[i],"#OPENHD_DYNAMIC_CONTENT_BEGIN#")){
+      return i;
+    }
+  }
+  return -1;
+}
+
+//find the line that contains the dynamic content end delimiter
+// returns -1 on failure, a positive integer >=0 otherwise
+static int find_index_dynamic_content_end(const std::vector<std::string>& lines){
+  for(int i=0;i<lines.size();i++){
+    if(OHDUtil::contains(lines[i],"#OPENHD_DYNAMIC_CONTENT_END#")){
+      return i;
+    }
+  }
+  return -1;
+}
+
 static int getDynamicLineStart(){
   std::string line;
   std::ifstream inFile("/boot/config.txt");
   int countStart = 0;
   while(getline(inFile, line)){
     countStart++;
+    if(OHDUtil::contains(line,"#OPENHD_DYNAMIC_CONTENT_BEGIN#")){
+      return countStart;
+    }
     if (!line.find("#OPENHD_DYNAMIC_CONTENT_BEGIN#")){
       countStart++;
       return countStart;
     }
   }
-  return 0;
+  return -1;
 }
 //find the line, in which the dynamic content ends
+// returns -1 on failure, a positive integer >=0 otherwise
 static int getDynamicLineEnd(){
   std::string line;
   std::ifstream inFile("/boot/config.txt");
@@ -180,6 +207,8 @@ static std::string writeStaticStuff(){
   }
   return "successful";
 }
+
+
 //write our dynamic config to the temporary config-file
 static std::string writeOpenHDConfigStuff(std::string FilePath){
   std::ofstream outFile{"/boot/config.txt.temp", std::ios_base::app};
@@ -197,28 +226,60 @@ const auto rpi_config_file_path="/boot/config.txt";
 // Then writes the type corresponding to the current configuration into the settings file.
 static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig new_cam_config){
   openhd::log::get_default()->debug("Begin apply cam config "+ cam_config_to_string(new_cam_config));
-  const auto filename= get_file_name_for_cam_config(platform,new_cam_config);
-  if(!OHDFilesystemUtil::exists(filename.c_str())){
-    openhd::log::get_default()->warn("Cannot apply new cam config, corresponding config.txt [{}] not found",filename);
+  const auto cam_config_filename= get_file_name_for_cam_config(platform,new_cam_config);
+  const auto cam_config_file_content=OHDFilesystemUtil::opt_read_file(cam_config_filename);
+  if(!cam_config_file_content.has_value()){
+    openhd::log::get_default()->warn("Cannot apply new cam config, corresponding config.txt [{}] not found",cam_config_filename);
     return;
   }
-  // creating a new config file
-  std::ofstream outFile("/boot/config.txt.temp");
-  std::string line;
-  std::string ret;
-  ret = writeStaticStuff();
-    if (ret=="error"){
-      openhd::log::get_default()->warn("config.txt wasn't touched");
-    }
-    else{
-  writeOpenHDConfigStuff(get_file_name_for_cam_config(platform,new_cam_config));  
-  outFile.close();  
-  // move current config.txt to a backup file
-  OHDUtil::run_command("mv",{rpi_config_file_path,"/boot/config_bup.txt"});
-  // and copy over the new one
-  OHDUtil::run_command("cp /boot/config.txt.temp",{rpi_config_file_path});
+  const auto cam_config_file_lines=OHDUtil::split_string_by_newline(cam_config_file_content.value());
+
+  // read the content of the current config.txt file
+  const auto config_file_content=OHDFilesystemUtil::opt_read_file(rpi_config_file_path);
+  if(!config_file_content.has_value()){
+    openhd::log::get_default()->warn("Cannot apply new cam config, original config.txt [{}] not found",rpi_config_file_path);
+    return;
+  }
+  // split it into lines
+  auto config_file_lines=OHDUtil::split_string_by_newline(config_file_content.value());
+  // find the index where the dynamic content begins
+  const auto dynamic_begin= find_index_dynamic_content_begin(config_file_lines);
+  if(dynamic_begin<0){
+    openhd::log::get_default()->warn("Cannot apply new cam config, error find dynamic content begin");
+    return;
+  }
+  // find the index where the dynamic content ends
+  const auto dynamic_end= find_index_dynamic_content_end(config_file_lines);
+  if(dynamic_end<0){
+    openhd::log::get_default()->warn("Cannot apply new cam config, error find dynamic content end");
+    return;
+  }
+  // begin needs to come before end
+  if(dynamic_begin>=dynamic_end){
+    openhd::log::get_default()->warn("Cannot apply new cam config, error messed up config file");
+    return;
+  }
+  // write the stuff we don't modify
+  std::vector<std::string> lines_new_config_file;
+  for(int i=0;i<=dynamic_begin;i++){
+    lines_new_config_file.push_back(config_file_lines[i]);
+  }
+  // then add the stuff we modify
+  for(const auto& line: cam_config_file_lines){
+    lines_new_config_file.push_back(line);
+  }
+  // and add the remaining stuff we don't modify
+  for(int i=dynamic_end;i<config_file_lines.size();i++){
+    lines_new_config_file.push_back(config_file_lines.at(i));
+  }
+  // Now we are finished, write the new config file
+  const auto new_config_file_content=OHDUtil::create_string_from_lines(lines_new_config_file);
+  OHDFilesystemUtil::write_file(rpi_config_file_path,new_config_file_content);
+
   // save the current selection (persistent setting)
   save_cam_config_to_file(new_cam_config);
+
+  std::this_thread::sleep_for(std::chrono::seconds(100));
   // Now we just need to reboot
   openhd::log::get_default()->debug("End apply cam config "+ cam_config_to_string(new_cam_config));
   }
