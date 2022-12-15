@@ -32,17 +32,17 @@ bool wifi::commandhelper::iw_enable_monitor_mode(const std::string &device) {
 }
 
 static std::string channel_width_as_iw_string(uint32_t channel_width){
-  std::string ret="HT20";
   if(channel_width==5){
-    ret = "5MHz";
-  }else if(channel_width==10){
+    return "5MHz";
+  }else if(channel_width==10) {
     return "10Mhz";
+  }else if(channel_width==20){
+    return "HT20";
   }else if(channel_width==40){
-    ret="HT40+";
-  }else{
-    get_logger()->info("Invalid channel width {}, assuming HT20",channel_width);
+    return "HT40+";
   }
-  return ret;
+  get_logger()->info("Invalid channel width {}, assuming HT20",channel_width);
+  return "HT20";
 }
 
 bool wifi::commandhelper::iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz,uint32_t channel_width) {
@@ -68,11 +68,18 @@ bool wifi::commandhelper::iw_set_tx_power(const std::string &device,uint32_t tx_
   return true;
 }
 
-bool wifi::commandhelper::nmcli_set_device_unmanaged(const std::string &device) {
-  get_logger()->info("nmcli_set_device_unmanaged {}",device);
-  bool success = OHDUtil::run_command("nmcli",{"device","set",device,"managed","no"});
+bool wifi::commandhelper::nmcli_set_device_managed_status(const std::string &device,bool managed){
+  get_logger()->info("nmcli_set_device_managed_status {} managed:{}",device,managed);
+  std::vector<std::string> arguments{"device","set",device,"managed"};
+  if(managed){
+    arguments.emplace_back("yes");
+  }else{
+    arguments.emplace_back("no");
+  }
+  bool success = OHDUtil::run_command("nmcli",arguments);
   return success;
 }
+
 
 static std::string float_without_trailing_zeroes(const float value){
   std::stringstream ss;

@@ -77,7 +77,7 @@ void AirTelemetry::on_messages_ground_unit(const std::vector<MavlinkMessage>& me
   std::lock_guard<std::mutex> guard(components_lock);
   for(auto& component: components){
     std::vector<MavlinkMessage> responses{};
-    MavlinkComponent::vec_append(responses,component->process_mavlink_messages(messages));
+    OHDUtil::vec_append(responses,component->process_mavlink_messages(messages));
     send_messages_ground_unit(responses);
   }
 }

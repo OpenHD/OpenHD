@@ -95,6 +95,9 @@ struct Camera {
   bool supports_iso()const{
     return type==CameraType::RPI_CSI_MMAL;
   }
+  bool supports_rpi_rpicamsrc_metering_mode()const{
+    return type==CameraType::RPI_CSI_MMAL;
+  }
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,vid,pid,bus,index,endpoints)
 

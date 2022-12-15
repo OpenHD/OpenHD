@@ -2,6 +2,7 @@
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_UTIL_FILESYSTEM_H_
 
 #include <vector>
+#include <optional>
 
 #include <boost/filesystem.hpp>
 #include <fstream>
@@ -68,6 +69,7 @@ static void safe_delete_directory(const char* directory){
   }
 }
 
+// Write a text file. If the file already exists, its content is overwritten
 static void write_file(const std::string& path,const std::string& content){
   try{
     std::ofstream t(path);
@@ -77,15 +79,25 @@ static void write_file(const std::string& path,const std::string& content){
     openhd::log::get_default()->warn("Cannot write file ["+path+"]");
   }
 }
-static std::string read_file(const std::string& path){
+
+// Read a file as text and return its content as a string.
+// If the file doesn't exist, return std::nullopt
+static std::optional<std::string> opt_read_file(const std::string& filename){
   try{
-    std::ifstream f(path);
+    std::ifstream f(filename);
     std::string str((std::istreambuf_iterator<char>(f)),std::istreambuf_iterator<char>());
     return str;
   }catch (std::exception& e){
-    openhd::log::get_default()->warn("Cannot read file ["+path+"]");
-    return "";
+    openhd::log::get_default()->warn("Cannot read file [{}]",filename);
+    return std::nullopt;
   }
+}
+
+// Similar to above, but returns empty string if file doesn't exist
+static std::string read_file(const std::string& filename){
+  const auto content= opt_read_file(filename);
+  if(!content.has_value())return "";
+  return content.value();
 }
 
 static void remove_if_existing(const std::string& filename){

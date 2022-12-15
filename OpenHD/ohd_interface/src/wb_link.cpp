@@ -67,6 +67,10 @@ WBLink::~WBLink() {
     m_work_thread_run =false;
     m_work_thread->join();
   }
+  // give the monitor mode cards back to network manager
+  for(const auto& card: m_broadcast_cards){
+    wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
+  }
 }
 
 void WBLink::takeover_cards_monitor_mode() {
@@ -78,7 +82,7 @@ void WBLink::takeover_cards_monitor_mode() {
   // wifibroadcast and therefore making other networking increadibly hard.
   // Tell network manager to ignore the cards we want to do wifibroadcast on
   for(const auto& card: m_broadcast_cards){
-    wifi::commandhelper::nmcli_set_device_unmanaged(card.device_name);
+    wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
   }
   wifi::commandhelper::rfkill_unblock_all();
   // TODO: sometimes this happens:
@@ -677,7 +681,7 @@ void WBLink::perform_rate_adjustment() {
     // m_console->debug("mcs index:{}",settings.wb_mcs_index);
     //  we assume X% of the theoretical link bandwidth is available for the primary video stream 2.4G are almost always completely full of noise, which is why we go with a more conservative perc. value for them. NOTE: It is stupid to reason about the RF environment of the user, but feedback from the beta channel shows that this is kinda needed.
     const bool is_2g_channel =
-        openhd::is_valid_frequency_2G(settings.wb_frequency, true);
+        openhd::is_valid_frequency_2G(settings.wb_frequency);
     const uint32_t kFactorAvailablePerc = is_2g_channel ? 70 : 80;
     const uint32_t max_video_allocated_kbits =
         max_rate_possible_kbits * kFactorAvailablePerc / 100;
@@ -828,11 +832,11 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
   const WiFiCard& card=m_broadcast_cards.at(0);
   std::vector<openhd::WifiChannel> channels_to_scan;
   if(params.check_2g_channels_if_card_support && card.supports_2GHz()){
-    auto tmp=openhd::get_channels_2G(true);
+    auto tmp=openhd::get_channels_2G();
     channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
   }
   if(params.check_5g_channels_if_card_supports && card.supports_5GHz()){
-    auto tmp=openhd::get_channels_5G(false);
+    auto tmp=openhd::get_channels_5G();
     channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
   }
   if(channels_to_scan.empty()){

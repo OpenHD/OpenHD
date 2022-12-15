@@ -145,6 +145,12 @@ class CameraHolder:
       };
       ret.push_back(openhd::Setting{"V_ISO",openhd::IntSetting{get_settings().rpi_rpicamsrc_iso,c_iso}});
     }
+    if(m_camera.supports_rpi_rpicamsrc_metering_mode()){
+      auto cb=[this](std::string,int value) {
+        return set_rpi_rpicamsrc_metering_mode(value);
+      };
+      ret.push_back(openhd::Setting{"V_METERING_MODE",openhd::IntSetting{get_settings().rpi_rpicamsrc_metering_mode,cb}});
+    }
     return ret;
   }
   bool set_enable_streaming(int enable){
@@ -258,6 +264,12 @@ class CameraHolder:
   bool set_rpi_rpicamsrc_iso(int value){
     if(!openhd::validate_rpi_rpicamsrc_iso(value))return false;
     unsafe_get_settings().rpi_rpicamsrc_iso=value;
+    persist();
+    return true;
+  }
+  bool set_rpi_rpicamsrc_metering_mode(int value){
+    if(!openhd::validate_rpi_rpicamsrc_metering_mode(value)) return false;
+    unsafe_get_settings().rpi_rpicamsrc_metering_mode=value;
     persist();
     return true;
   }

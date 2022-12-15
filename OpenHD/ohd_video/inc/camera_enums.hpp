@@ -74,8 +74,6 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
       return "DUMMY_SW";
     case CameraType::RPI_CSI_MMAL:
       return "RPI_CSI_MMAL";
-    //case CameraType::RPI_VEYE_CSI_MMAL:
-    //  return "RPI_VEYE_CSI_MMAL";
     case CameraType::RPI_VEYE_CSI_V4l2:
       return "RPI_VEYE_CSI_V4l2";
     case CameraType::JETSON_CSI:

@@ -94,6 +94,9 @@ struct CameraSettings {
   // ISO value to use (0 = Auto)
   // Integer. Range: 0 - 3200 Default: 0
   int rpi_rpicamsrc_iso=0;
+  // Camera exposure metering mode to use
+  // Default 0 (average)
+  int rpi_rpicamsrc_metering_mode=0;
 
   // only used on RK3588, dirty, r.n not persistent
   VideoFormat recordingFormat{VideoCodec::H264, 0, 0, 0}; // 0 means copy
@@ -105,7 +108,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,
                                    streamed_video_format, h26x_bitrate_kbits,
                                    h26x_keyframe_interval, h26x_intra_refresh_type,mjpeg_quality_percent, ip_cam_url,air_recording,
                                    camera_rotation_degree,horizontal_flip,vertical_flip,
-                                   awb_mode,exposure_mode,brightness_percentage,rpi_rpicamsrc_iso)
+                                   awb_mode,exposure_mode,brightness_percentage,rpi_rpicamsrc_iso,rpi_rpicamsrc_metering_mode)
+
 
 
 #endif
