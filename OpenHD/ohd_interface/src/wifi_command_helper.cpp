@@ -68,11 +68,18 @@ bool wifi::commandhelper::iw_set_tx_power(const std::string &device,uint32_t tx_
   return true;
 }
 
-bool wifi::commandhelper::nmcli_set_device_unmanaged(const std::string &device) {
-  get_logger()->info("nmcli_set_device_unmanaged {}",device);
-  bool success = OHDUtil::run_command("nmcli",{"device","set",device,"managed","no"});
+bool wifi::commandhelper::nmcli_set_device_managed_status(const std::string &device,bool managed){
+  get_logger()->info("nmcli_set_device_managed_status {} managed:{}",device,managed);
+  std::vector<std::string> arguments{"device","set",device,"managed"};
+  if(managed){
+    arguments.emplace_back("no");
+  }else{
+    arguments.emplace_back("yes");
+  }
+  bool success = OHDUtil::run_command("nmcli",arguments);
   return success;
 }
+
 
 static std::string float_without_trailing_zeroes(const float value){
   std::stringstream ss;

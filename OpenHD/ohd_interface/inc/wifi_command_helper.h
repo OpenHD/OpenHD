@@ -50,7 +50,7 @@ bool iw_set_tx_power(const std::string& device,uint32_t tx_power_mBm);
 // blacklist the card from network manager (so we can safely do our own thing, aka wifibroadcast) with it
 // NOTE: this is not permament between restarts - but that is exactly what we want,
 // since on each restart we might do different things with the wifi card(s)
-bool nmcli_set_device_unmanaged(const std::string& device);
+bool nmcli_set_device_managed_status(const std::string& device,bool managed);
 
 // R.n I do not know of a better solution than this one
 // runs iwlist <device> frequencies

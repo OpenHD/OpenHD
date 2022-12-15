@@ -67,6 +67,10 @@ WBLink::~WBLink() {
     m_work_thread_run =false;
     m_work_thread->join();
   }
+  // give the monitor mode cards back to network manager
+  for(const auto& card: m_broadcast_cards){
+    wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
+  }
 }
 
 void WBLink::takeover_cards_monitor_mode() {
@@ -78,7 +82,7 @@ void WBLink::takeover_cards_monitor_mode() {
   // wifibroadcast and therefore making other networking increadibly hard.
   // Tell network manager to ignore the cards we want to do wifibroadcast on
   for(const auto& card: m_broadcast_cards){
-    wifi::commandhelper::nmcli_set_device_unmanaged(card.device_name);
+    wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
   }
   wifi::commandhelper::rfkill_unblock_all();
   // TODO: sometimes this happens:
