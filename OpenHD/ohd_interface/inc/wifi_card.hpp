@@ -145,6 +145,10 @@ static bool wifi_card_supports_frequency(const OHDPlatform& platform,const WiFiC
   return false;
 }
 
+static std::vector<openhd::WifiChannel> get_openhd_channels_from_card(const WiFiCard& card){
+  return openhd::get_all_channels_from_safe_frequencies(card.supported_frequencies);
+}
+
 static std::string debug_cards(const std::vector<WiFiCard>& cards){
   std::stringstream ss;
   ss<<"size:"<<cards.size()<<"{";

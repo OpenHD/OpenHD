@@ -213,6 +213,7 @@ static std::optional<openhd::WifiChannel> channel_from_frequency(uint32_t freque
   return std::nullopt;
 }
 
+// NOTE: Only call this on a list of frequencies that are valid
 static std::vector<openhd::WifiChannel> get_all_channels_from_safe_frequencies(
     const std::vector<uint32_t>& frequencies) {
   std::vector<openhd::WifiChannel> ret;
