@@ -149,6 +149,20 @@ static std::vector<openhd::WifiChannel> get_openhd_channels_from_card(const WiFi
   return openhd::get_all_channels_from_safe_frequencies(card.supported_frequencies);
 }
 
+static std::vector<openhd::WifiChannel> get_openhd_channels_from_card(const WiFiCard& card, bool include_2G,bool include_5G){
+  const auto tmp=openhd::get_all_channels_from_safe_frequencies(card.supported_frequencies);
+  std::vector<openhd::WifiChannel> ret{};
+  for(const auto& channel:tmp){
+    if(channel.space==openhd::Space::G2_4){
+      if(include_2G)ret.push_back(channel);
+    }else{
+      assert(channel.space==openhd::Space::G5_8);
+      if(include_5G)ret.push_back(channel);
+    }
+  }
+  return ret;
+}
+
 static std::string debug_cards(const std::vector<WiFiCard>& cards){
   std::stringstream ss;
   ss<<"size:"<<cards.size()<<"{";
@@ -173,7 +187,7 @@ static constexpr auto WIFI_MANIFEST_FILENAME = "/tmp/wifi_manifest";
 static void write_wificards_manifest(const std::vector<WiFiCard> &cards) {
   auto manifest = wificards_to_json(cards);
   std::ofstream _t(WIFI_MANIFEST_FILENAME);
-  _t << manifest.dump(4);
+  _t << manifest.dump(-1);
   _t.close();
 }
 

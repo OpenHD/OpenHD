@@ -830,15 +830,7 @@ void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_l
 
 WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
   const WiFiCard& card=m_broadcast_cards.at(0);
-  std::vector<openhd::WifiChannel> channels_to_scan;
-  if(params.check_2g_channels_if_card_support && card.supports_2GHz()){
-    auto tmp=openhd::get_channels_2G(true);
-    channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
-  }
-  if(params.check_5g_channels_if_card_supports && card.supports_5GHz()){
-    auto tmp=openhd::get_channels_5G(false);
-    channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
-  }
+  const auto channels_to_scan=get_openhd_channels_from_card(card,params.check_2g_channels_if_card_support,params.check_5g_channels_if_card_supports);
   if(channels_to_scan.empty()){
     m_console->warn("No channels to scan, return early");
     return {};
