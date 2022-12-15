@@ -9,6 +9,7 @@
 #include <vector>
 #include <cstdint>
 
+// NOTE: DO NOT USE CHANNEL NUMBERS ANYWHERE IN CODE - USE FREQUENCIES IN MHZ, SINCE THEY ARE UNIQUE
 namespace openhd {
 
 enum class Space { G2_4, G5_8 };
@@ -34,10 +35,10 @@ struct WifiChannel {
   }
 };
 
-// These are not valid 2.4G wifi channel(s) but some cards aparently can do them, too From https://github.com/OpenHD/linux/blob/092115ae6a980feaa09722690891d99da3afb55c/drivers/net/wireless/ath/ath9k/common-init.c#L39
-// NOTE: In OpenHD we never use the channel number (since it is prone to errors, even in the linux kernel) but rather use the frequency in mhz, which is well-defined. Also read https://yo3iiu.ro/blog/?p=1301
-static std::vector<WifiChannel> get_channels_below_standard_2G_wifi() {
+static std::vector<WifiChannel> get_channels_2G() {
   return std::vector<WifiChannel>{
+      // These are not valid 2.4G wifi channel(s) but some cards aparently can do them, too From https://github.com/OpenHD/linux/blob/092115ae6a980feaa09722690891d99da3afb55c/drivers/net/wireless/ath/ath9k/common-init.c#L39
+      // NOTE: In OpenHD we never use the channel number (since it is prone to errors, even in the linux kernel) but rather use the frequency in mhz, which is well-defined. Also read https://yo3iiu.ro/blog/?p=1301
       WifiChannel{2312, -1, Space::G2_4, false},
       WifiChannel{2317, -1, Space::G2_4, false},
       WifiChannel{2322, -1, Space::G2_4, false},
@@ -58,12 +59,7 @@ static std::vector<WifiChannel> get_channels_below_standard_2G_wifi() {
       WifiChannel{2397, -1, Space::G2_4, false},
       WifiChannel{2402, -1, Space::G2_4, false},
       WifiChannel{2407, -1, Space::G2_4, false},
-  };
-}
-
-// https://en.wikipedia.org/wiki/List_of_WLAN_channels#2.4_GHz_(802.11b/g/n/ax)
-static std::vector<WifiChannel> get_channels_2G_standard() {
-  return std::vector<WifiChannel>{
+      // Now to the standard Wi-Fi channel(s) https://en.wikipedia.org/wiki/List_of_WLAN_channels#2.4_GHz_(802.11b/g/n/ax)
       WifiChannel{2412, 1, Space::G2_4, true},
       WifiChannel{2417, 2, Space::G2_4, true},
       WifiChannel{2422, 3, Space::G2_4, true},
@@ -75,20 +71,13 @@ static std::vector<WifiChannel> get_channels_2G_standard() {
       WifiChannel{2452, 9, Space::G2_4, true},
       WifiChannel{2457, 10, Space::G2_4, true},
       WifiChannel{2462, 11, Space::G2_4, true},
-      // Temporary disabled - they won't work unil we patch this shit in the kernel
       WifiChannel{2467, 12, Space::G2_4, true},
       WifiChannel{2472, 13, Space::G2_4, true},
       // until here it is consistent (5Mhz increments)
       // this one is neither allowed in EU nor USA
       // (only in Japan under 11b)
       WifiChannel{2484, 14, Space::G2_4, true},
-  };
-};
-
-// These are not valid 2.4G wifi channel(s) but some cards apparently can do them, too From https://github.com/OpenHD/linux/blob/092115ae6a980feaa09722690891d99da3afb55c/drivers/net/wireless/ath/ath9k/common-init.c#L39
-// NOTE: channel and frequency seem to be off by one
-static std::vector<WifiChannel> get_channels_above_standard_2G_wifi() {
-  return std::vector<WifiChannel>{
+      // and these are all not valid wlan channels, but the AR9271 can do them anyways
       WifiChannel{2487, -1, Space::G2_4, false},
       WifiChannel{2489, -1, Space::G2_4, false},
       WifiChannel{2492, -1, Space::G2_4, false},
@@ -109,41 +98,10 @@ static std::vector<WifiChannel> get_channels_above_standard_2G_wifi() {
   };
 }
 
-template <class T>
-static void vec_append(std::vector<T>& dest, const std::vector<T>& src) {
-  dest.insert(dest.end(), src.begin(), src.end());
-}
 
-static std::vector<WifiChannel> get_channels_2G(
-    const bool include_nonstandard_channels) {
-  // keep the order of channels
-  std::vector<WifiChannel> ret{};
-  if (include_nonstandard_channels) {
-    vec_append(ret, get_channels_below_standard_2G_wifi());
-  }
-  vec_append(ret, get_channels_2G_standard());
-  if (include_nonstandard_channels) {
-    vec_append(ret, get_channels_above_standard_2G_wifi());
-  }
-  return ret;
-}
-
-// These are not valid 2.4G wifi channel(s) but some cards aparently can do them, too From https://github.com/OpenHD/linux/blob/092115ae6a980feaa09722690891d99da3afb55c/drivers/net/wireless/ath/ath9k/common-init.c#L39
-// NOTE: channel and frequency seem to be off by one
-static std::vector<WifiChannel> get_channels_5G_below() {
+static std::vector<WifiChannel> get_channels_5G(){
   return std::vector<WifiChannel>{
-      WifiChannel{4920, 54, Space::G5_8, false},
-      WifiChannel{4940, 55, Space::G5_8, false},
-      WifiChannel{4960, 56, Space::G5_8, false},
-      WifiChannel{4980, 57, Space::G5_8, false},
-  };
-}
-
-// https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/j/n/ac/ax)
-// These are what iw list lists for rtl8812au
-static std::vector<WifiChannel> get_channels_5G_standard() {
-  return std::vector<WifiChannel>{
-      // TODO {5170,34},
+      // https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/j/n/ac/ax)
       WifiChannel{5180, 36, Space::G5_8, true},
       WifiChannel{5200, 40, Space::G5_8, true},
       WifiChannel{5220, 44, Space::G5_8, true},
@@ -152,6 +110,16 @@ static std::vector<WifiChannel> get_channels_5G_standard() {
       WifiChannel{5280, 56, Space::G5_8, true},
       WifiChannel{5300, 60, Space::G5_8, true},
       WifiChannel{5320, 64, Space::G5_8, true},
+      // this part seems to be disabled quite often -beign
+      WifiChannel{5340, 68, Space::G5_8, true},
+      WifiChannel{5360, 72, Space::G5_8, true},
+      WifiChannel{5380, 76, Space::G5_8, true},
+      WifiChannel{5400, 80, Space::G5_8, true},
+      WifiChannel{5420, 84, Space::G5_8, true},
+      WifiChannel{5440, 88, Space::G5_8, true},
+      WifiChannel{5460, 92, Space::G5_8, true},
+      WifiChannel{5480, 96, Space::G5_8, true},
+      // part often disabled end
       WifiChannel{5500, 100, Space::G5_8, true},
       WifiChannel{5520, 104, Space::G5_8, true},
       WifiChannel{5540, 108, Space::G5_8, true},
@@ -169,31 +137,23 @@ static std::vector<WifiChannel> get_channels_5G_standard() {
       WifiChannel{5785, 157, Space::G5_8, true},
       WifiChannel{5805, 161, Space::G5_8, true},
       WifiChannel{5825, 165, Space::G5_8, true},
+      // starting from here, often disabled territory begins again
       WifiChannel{5845, 169, Space::G5_8, true},
       WifiChannel{5865, 173, Space::G5_8, true},
       WifiChannel{5885, 177, Space::G5_8, true},
+      WifiChannel{5905, 181, Space::G5_8, true},
   };
 };
 
-static std::vector<WifiChannel> get_channels_5G(
-    const bool include_nonstandard_channels) {
-  std::vector<WifiChannel> ret{};
-  if (include_nonstandard_channels) {
-    vec_append(ret, get_channels_5G_below());
-  }
-  vec_append(ret, get_channels_5G_standard());
-  return ret;
-}
 
 static std::vector<WifiChannel> get_all_channels_2G_5G() {
   std::vector<WifiChannel> channels{};
-  vec_append(channels, get_channels_2G(true));
-  vec_append(channels, get_channels_5G(true));
+  OHDUtil::vec_append(channels, get_channels_2G());
+  OHDUtil::vec_append(channels, get_channels_5G());
   return channels;
 }
 
-static std::vector<uint32_t> get_all_channel_frequencies(
-    const std::vector<openhd::WifiChannel>& channels) {
+static std::vector<uint32_t> get_all_channel_frequencies(const std::vector<openhd::WifiChannel>& channels) {
   std::vector<uint32_t> frequencies;
   for (const auto& channel : channels) {
     frequencies.push_back(channel.frequency);

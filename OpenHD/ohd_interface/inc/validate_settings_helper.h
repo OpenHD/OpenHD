@@ -13,17 +13,16 @@
 
 namespace openhd {
 
-static bool is_valid_frequency_2G(uint32_t frequency,
-                                  bool include_nonstandard_channels = false) {
-  const auto supported = openhd::get_channels_2G(include_nonstandard_channels);
+static bool is_valid_frequency_2G(uint32_t frequency) {
+  const auto supported = openhd::get_channels_2G();
   for (const auto& value : supported) {
     if (value.frequency == frequency) return true;
   }
   return false;
 }
-static bool is_valid_frequency_5G(uint32_t frequency,
-                                  bool include_nonstandard_channels = false) {
-  const auto supported = openhd::get_channels_5G(include_nonstandard_channels);
+
+static bool is_valid_frequency_5G(uint32_t frequency) {
+  const auto supported = openhd::get_channels_5G();
   for (const auto& value : supported) {
     if (value.frequency == frequency) return true;
   }

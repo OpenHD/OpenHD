@@ -34,7 +34,7 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
 }
 
 static std::vector<uint32_t> supported_frequencies(const std::string& device,bool check_2g){
-  auto channels_to_try=check_2g ? openhd::get_channels_2G(true) : openhd::get_channels_5G(true);
+  auto channels_to_try=check_2g ? openhd::get_channels_2G() : openhd::get_channels_5G();
   const auto tmp=openhd::get_all_channel_frequencies(channels_to_try);
   auto supported_frequencies=wifi::commandhelper::
       iw_get_supported_frequencies(device,openhd::get_all_channel_frequencies(channels_to_try));

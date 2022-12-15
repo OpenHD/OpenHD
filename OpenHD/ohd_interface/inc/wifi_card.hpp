@@ -105,8 +105,8 @@ struct WiFiCard {
   std::vector<uint32_t> supported_frequencies_5G{};
   [[nodiscard]] std::vector<uint32_t> get_supported_frequencies_2G_5G()const{
     std::vector<uint32_t> ret{};
-    openhd::vec_append(ret,supported_frequencies_2G);
-    openhd::vec_append(ret,supported_frequencies_5G);
+    OHDUtil::vec_append(ret,supported_frequencies_2G);
+    OHDUtil::vec_append(ret,supported_frequencies_5G);
     return ret;
   };
 };

@@ -80,11 +80,6 @@ class MavlinkComponent{
                                MAV_STATE_ACTIVE);
     return heartbeat;
   }
- public:
-  template <class T>
-  static void vec_append(std::vector<T>& dest,const std::vector<T>& src){
-    dest.insert(dest.end(), src.begin(), src.end());
-  }
 };
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_ROUTING_MAVLINKCOMPONENT_H_

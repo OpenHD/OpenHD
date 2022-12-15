@@ -47,14 +47,14 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   //m_console->debug("InternalTelemetry::generate_mavlink_messages()");
   std::vector<MavlinkMessage> ret;
   ret.push_back(MavlinkComponent::create_heartbeat());
-  MavlinkComponent::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
+  OHDUtil::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
           m_sys_id, m_comp_id));
-  MavlinkComponent::vec_append(ret, generate_mav_wb_stats());
+  OHDUtil::vec_append(ret, generate_mav_wb_stats());
   //ret.push_back(generateOpenHDVersion());
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
   //_status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
   const auto logs = generateLogMessages();
-  MavlinkComponent::vec_append(ret,logs);
+  OHDUtil::vec_append(ret,logs);
   return ret;
 }
 

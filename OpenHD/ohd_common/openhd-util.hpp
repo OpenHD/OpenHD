@@ -266,6 +266,10 @@ static bool file_exists_and_delete(const char* filename){
   return ret;
 }
 
+template <class T>
+static void vec_append(std::vector<T>& dest, const std::vector<T>& src) {
+  dest.insert(dest.end(), src.begin(), src.end());
+}
 
 }
 
