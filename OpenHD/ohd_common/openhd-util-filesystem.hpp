@@ -2,6 +2,7 @@
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_UTIL_FILESYSTEM_H_
 
 #include <vector>
+#include <optional>
 
 #include <boost/filesystem.hpp>
 #include <fstream>
@@ -79,17 +80,24 @@ static void write_file(const std::string& path,const std::string& content){
   }
 }
 
-// Read a file as text. If the file doesn't exist, an empty string is returned
-// (NOTE: We could make this std::nullopt on error, but r.n that's not needed.
-static std::string read_file(const std::string& path){
+// Read a file as text and return its content as a string.
+// If the file doesn't exist, return std::nullopt
+static std::optional<std::string> opt_read_file(const std::string& filename){
   try{
-    std::ifstream f(path);
+    std::ifstream f(filename);
     std::string str((std::istreambuf_iterator<char>(f)),std::istreambuf_iterator<char>());
     return str;
   }catch (std::exception& e){
-    openhd::log::get_default()->warn("Cannot read file ["+path+"]");
-    return "";
+    openhd::log::get_default()->warn("Cannot read file [{}]",filename);
+    return std::nullopt;
   }
+}
+
+// Similar to above, but returns empty string if file doesn't exist
+static std::string read_file(const std::string& filename){
+  const auto content= opt_read_file(filename);
+  if(!content.has_value())return "";
+  return content.value();
 }
 
 static void remove_if_existing(const std::string& filename){
