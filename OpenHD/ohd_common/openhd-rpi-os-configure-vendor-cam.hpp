@@ -205,8 +205,9 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   std::ofstream outFile("/boot/config.txt.temp");
   std::string line;
   writeStaticStuff();
+  int ret=0;
   ret = writeOpenHDConfigStuff(get_file_name_for_cam_config(platform,new_cam_config));  
-  if (ret=!o){
+  if (ret=!0){
   outFile.close();  
   // move current config.txt to a backup file
   OHDUtil::run_command("mv",{rpi_config_file_path,"/boot/config_bup.txt"});
