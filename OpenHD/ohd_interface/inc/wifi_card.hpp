@@ -129,7 +129,7 @@ static bool wifi_card_supports_40Mhz_channel_width(const WiFiCard& wifi_card){
 }
 
 
-static bool wifi_card_supports_frequency(const OHDPlatform& platform,const WiFiCard& wifi_card,const uint32_t frequency){
+static bool wifi_card_supports_frequency(const WiFiCard& wifi_card,const uint32_t frequency){
   const auto channel_opt=openhd::channel_from_frequency(frequency);
   if(!channel_opt.has_value()){
     openhd::log::get_default()->debug("OpenHD doesn't know frequency {}",frequency);
