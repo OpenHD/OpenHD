@@ -72,9 +72,9 @@ bool wifi::commandhelper::nmcli_set_device_managed_status(const std::string &dev
   get_logger()->info("nmcli_set_device_managed_status {} managed:{}",device,managed);
   std::vector<std::string> arguments{"device","set",device,"managed"};
   if(managed){
-    arguments.emplace_back("no");
-  }else{
     arguments.emplace_back("yes");
+  }else{
+    arguments.emplace_back("no");
   }
   bool success = OHDUtil::run_command("nmcli",arguments);
   return success;
