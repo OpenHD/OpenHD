@@ -134,6 +134,7 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
 
 // find the line that contains the dynamic content begin delimiter
 // returns -1 on failure, a positive integer >=0 otherwise
+// NOTE: line[index] contains the identifier, the dynamic content should then be written on line[index+1]
 static int find_index_dynamic_content_begin(const std::vector<std::string>& lines){
   for(int i=0;i<lines.size();i++){
     if(OHDUtil::contains(lines[i],"#OPENHD_DYNAMIC_CONTENT_BEGIN#")){
@@ -141,84 +142,6 @@ static int find_index_dynamic_content_begin(const std::vector<std::string>& line
     }
   }
   return -1;
-}
-
-//find the line that contains the dynamic content end delimiter
-// returns -1 on failure, a positive integer >=0 otherwise
-/*static int find_index_dynamic_content_end(const std::vector<std::string>& lines){
-  for(int i=0;i<lines.size();i++){
-    if(OHDUtil::contains(lines[i],"#OPENHD_DYNAMIC_CONTENT_END#")){
-      return i;
-    }
-  }
-  return -1;
-}*/
-
-static int getDynamicLineStart(){
-  std::string line;
-  std::ifstream inFile("/boot/config.txt");
-  int countStart = 0;
-  while(getline(inFile, line)){
-    countStart++;
-    if(OHDUtil::contains(line,"#OPENHD_DYNAMIC_CONTENT_BEGIN#")){
-      return countStart;
-    }
-    if (!line.find("#OPENHD_DYNAMIC_CONTENT_BEGIN#")){
-      countStart++;
-      return countStart;
-    }
-  }
-  return -1;
-}
-//find the line, in which the dynamic content ends
-// returns -1 on failure, a positive integer >=0 otherwise
-static int getDynamicLineEnd(){
-  std::string line;
-  std::ifstream inFile("/boot/config.txt");
-  int countStop = 0;
-  while(getline(inFile, line)){
-    countStop++;
-    if (!line.find("#OPENHD_DYNAMIC_CONTENT_END#")){
-      return countStop;
-    }
-  }
-  return 0;
-}
-//rewrite the config part that is changable by the user
-static std::string writeStaticStuff(){
-  int countStart=0;
-  int countStop=0;
-  std::ofstream outFile("/boot/config.txt.temp");
-  std::string line;
-  std::ifstream inFile("/boot/config.txt");
-  int count = 0;
-  countStart = getDynamicLineStart();
-  if(countStart==0){
-    openhd::log::get_default()->warn("Your config.txt is not compatible with openhd-camera-changes, please fix it before using this function");
-    return "error";
-  }
-  else{
-    while(getline(inFile, line)){
-      if(count > 0 && count < countStart){
-        outFile << line << std::endl;
-      }
-      count++;
-    }
-  }
-  return "successful";
-}
-
-
-//write our dynamic config to the temporary config-file
-static std::string writeOpenHDConfigStuff(std::string FilePath){
-  std::ofstream outFile{"/boot/config.txt.temp", std::ios_base::app};
-  std::string line;
-  std::ifstream inFile(FilePath);
-  int count = 0;
-  while(getline(inFile, line)){
-    outFile << line << std::endl;
-  }
-  return "true";
 }
 
 const auto rpi_config_file_path="/boot/config.txt";
@@ -246,20 +169,9 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,const CamC
   // find the index where the dynamic content begins
   const auto dynamic_begin= find_index_dynamic_content_begin(config_file_lines);
   if(dynamic_begin<0){
-    openhd::log::get_default()->warn("Cannot apply new cam config, error find dynamic content begin");
+    openhd::log::get_default()->warn("Your config.txt is not compatible with openhd-camera-changes (identifier not found)");
     return;
   }
-  // find the index where the dynamic content ends
-  /*const auto dynamic_end= find_index_dynamic_content_end(config_file_lines);
-  if(dynamic_end<0){
-    openhd::log::get_default()->warn("Cannot apply new cam config, error find dynamic content end");
-    return;
-  }
-  // begin needs to come before end
-  if(dynamic_begin>=dynamic_end){
-    openhd::log::get_default()->warn("Cannot apply new cam config, error messed up config file");
-    return;
-  }*/
   // write the stuff we don't modify
   std::vector<std::string> lines_new_config_file;
   for(int i=0;i<=dynamic_begin;i++){
