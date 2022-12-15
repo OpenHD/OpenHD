@@ -13,20 +13,20 @@ OHDTelemetry::OHDTelemetry(OHDPlatform platform1,
 						   bool enableExtendedLogging) :
 	platform(platform1),profile(std::move(profile1)),m_enableExtendedLogging(enableExtendedLogging) {
   if (this->profile.is_air) {
-	airTelemetry = std::make_unique<AirTelemetry>(platform,opt_action_handler);
-	assert(airTelemetry);
-	loopThread = std::make_unique<std::thread>([this] {
-	  assert(airTelemetry);
-          airTelemetry->loop_infinite(terminate, this->m_enableExtendedLogging);
-	});
+    airTelemetry = std::make_unique<AirTelemetry>(platform,opt_action_handler);
+    assert(airTelemetry);
+    loopThread = std::make_unique<std::thread>([this] {
+      assert(airTelemetry);
+      airTelemetry->loop_infinite(terminate, this->m_enableExtendedLogging);
+    });
   } else {
-	groundTelemetry = std::make_unique<GroundTelemetry>(platform,opt_action_handler);
-	assert(groundTelemetry);
-	loopThread = std::make_unique<std::thread>([this] {
-	  assert(groundTelemetry);
-          groundTelemetry->loop_infinite(terminate,
-                                         this->m_enableExtendedLogging);
-	});
+    groundTelemetry = std::make_unique<GroundTelemetry>(platform,opt_action_handler);
+    assert(groundTelemetry);
+    loopThread = std::make_unique<std::thread>([this] {
+      assert(groundTelemetry);
+      groundTelemetry->loop_infinite(terminate,
+                                     this->m_enableExtendedLogging);
+    });
   }
 }
 
@@ -37,24 +37,24 @@ OHDTelemetry::~OHDTelemetry() {
 
 std::string OHDTelemetry::createDebug() const {
   if(profile.is_air){
-	return airTelemetry->create_debug();
+    return airTelemetry->create_debug();
   }else{
-	return groundTelemetry->create_debug();
+    return groundTelemetry->create_debug();
   }
 }
 
 void OHDTelemetry::add_settings_generic(const std::vector<openhd::Setting> &settings) const {
   if(profile.is_air){
-	airTelemetry->add_settings_generic(settings);
+    airTelemetry->add_settings_generic(settings);
   }else{
-	groundTelemetry->add_settings_generic(settings);
+    groundTelemetry->add_settings_generic(settings);
   }
 }
 void OHDTelemetry::settings_generic_ready() const {
   if(profile.is_air){
-	airTelemetry->settings_generic_ready();
+    airTelemetry->settings_generic_ready();
   }else{
-	groundTelemetry->settings_generic_ready();
+    groundTelemetry->settings_generic_ready();
   }
 }
 void OHDTelemetry::add_settings_camera_component(
