@@ -68,7 +68,7 @@ static void safe_delete_directory(const char* directory){
   }
 }
 
-// Write a text file. If the file already exists, its content is overritten
+// Write a text file. If the file already exists, its content is overwritten
 static void write_file(const std::string& path,const std::string& content){
   try{
     std::ofstream t(path);
