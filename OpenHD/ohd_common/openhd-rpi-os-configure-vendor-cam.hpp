@@ -168,6 +168,7 @@ static std::string writeStaticStuff(){
     countStart = getDynamicLineStart();
         if(countStart==0){
           openhd::log::get_default()->warn("Your config.txt is not compatible with openhd-camera-changes, please fix it before using this function");
+          return "error";
         }
         else{
         while(getline(inFile, line)){
@@ -177,7 +178,7 @@ static std::string writeStaticStuff(){
             count++;
         }
         }
-return "error";
+return "successful";
 }
 //write our dynamic config to the temporary config-file
 static std::string writeOpenHDConfigStuff(std::string FilePath){
