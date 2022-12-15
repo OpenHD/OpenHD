@@ -74,6 +74,20 @@ static bool validate_yes_or_no(int value){
   return value==0 || value==1;
 }
 
+// Helper for creating read-only params- they can be usefully for debugging
+static Setting create_read_only_int(const std::string& id,int value){
+  auto cb=[](const std::string&,int){
+    return false;
+  };
+  return Setting{id, openhd::IntSetting{value, cb}};
+}
+static Setting create_read_only_string(const std::string& id,const std::string& value){
+  auto cb=[](const std::string&,const std::string&){
+    return false;
+  };
+  return Setting{id, openhd::StringSetting {value, cb}};
+}
+
 namespace testing {
 // For testing
 static std::vector<Setting> create_dummy_camera_settings() {
