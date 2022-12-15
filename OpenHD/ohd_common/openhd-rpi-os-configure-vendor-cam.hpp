@@ -132,65 +132,65 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
 //helper functions for writing config files
 //find the line, in which the dynamic content begins
 static int getDynamicLineStart(){
-    std::string line;
-    std::ifstream inFile("/boot/config.txt");
-    int countStart = 0;
-    while(getline(inFile, line)){
-        countStart++;
-        if (!line.find("#OPENHD_DYNAMIC_CONTENT_BEGIN#")){
-            countStart++;
-            return countStart;
-        }
+  std::string line;
+  std::ifstream inFile("/boot/config.txt");
+  int countStart = 0;
+  while(getline(inFile, line)){
+    countStart++;
+    if (!line.find("#OPENHD_DYNAMIC_CONTENT_BEGIN#")){
+      countStart++;
+      return countStart;
     }
-    return 0;
-    }
+  }
+  return 0;
+}
 //find the line, in which the dynamic content ends
 static int getDynamicLineEnd(){
-    std::string line;
-    std::ifstream inFile("/boot/config.txt");
-    int countStop = 0;
-    while(getline(inFile, line)){
-        countStop++;
-        if (!line.find("#OPENHD_DYNAMIC_CONTENT_END#")){
-            return countStop;
-        }
+  std::string line;
+  std::ifstream inFile("/boot/config.txt");
+  int countStop = 0;
+  while(getline(inFile, line)){
+    countStop++;
+    if (!line.find("#OPENHD_DYNAMIC_CONTENT_END#")){
+      return countStop;
     }
-    return 0;
-    }
+  }
+  return 0;
+}
 //rewrite the config part that is changable by the user
 static std::string writeStaticStuff(){
-    int countStart=0;
-    int countStop=0;
-    std::ofstream outFile("/boot/config.txt.temp");
-    std::string line;
-    std::ifstream inFile("/boot/config.txt");
-    int count = 0;
-    countStart = getDynamicLineStart();
-        if(countStart==0){
-          openhd::log::get_default()->warn("Your config.txt is not compatible with openhd-camera-changes, please fix it before using this function");
-          return "error";
-        }
-        else{
-        while(getline(inFile, line)){
-            if(count > 0 && count < countStart){
-                outFile << line << std::endl;
-            }
-            count++;
-        }
-        }
-return "successful";
+  int countStart=0;
+  int countStop=0;
+  std::ofstream outFile("/boot/config.txt.temp");
+  std::string line;
+  std::ifstream inFile("/boot/config.txt");
+  int count = 0;
+  countStart = getDynamicLineStart();
+  if(countStart==0){
+    openhd::log::get_default()->warn("Your config.txt is not compatible with openhd-camera-changes, please fix it before using this function");
+    return "error";
+  }
+  else{
+    while(getline(inFile, line)){
+      if(count > 0 && count < countStart){
+        outFile << line << std::endl;
+      }
+      count++;
+    }
+  }
+  return "successful";
 }
 //write our dynamic config to the temporary config-file
 static std::string writeOpenHDConfigStuff(std::string FilePath){
-    std::ofstream outFile{"/boot/config.txt.temp", std::ios_base::app};
-    std::string line;
-    std::ifstream inFile(FilePath);
-    int count = 0;
-        while(getline(inFile, line)){
-             outFile << line << std::endl;
-        }
-    return "true";
-    }
+  std::ofstream outFile{"/boot/config.txt.temp", std::ios_base::app};
+  std::string line;
+  std::ifstream inFile(FilePath);
+  int count = 0;
+  while(getline(inFile, line)){
+    outFile << line << std::endl;
+  }
+  return "true";
+}
 
 const auto rpi_config_file_path="/boot/config.txt";
 // Applies the new cam config (rewrites the /boot/config.txt file)
@@ -199,7 +199,7 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,CamConfig 
   openhd::log::get_default()->debug("Begin apply cam config "+ cam_config_to_string(new_cam_config));
   const auto filename= get_file_name_for_cam_config(platform,new_cam_config);
   if(!OHDFilesystemUtil::exists(filename.c_str())){
-    openhd::log::get_default()->warn("Cannot apply new cam config, corresponding config.txt ["+filename+"] not found");
+    openhd::log::get_default()->warn("Cannot apply new cam config, corresponding config.txt [{}] not found",filename);
     return;
   }
   // creating a new config file
