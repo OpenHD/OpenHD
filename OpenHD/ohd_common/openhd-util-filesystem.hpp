@@ -68,6 +68,7 @@ static void safe_delete_directory(const char* directory){
   }
 }
 
+// Write a text file. If the file already exists, its content is overritten
 static void write_file(const std::string& path,const std::string& content){
   try{
     std::ofstream t(path);
@@ -77,6 +78,9 @@ static void write_file(const std::string& path,const std::string& content){
     openhd::log::get_default()->warn("Cannot write file ["+path+"]");
   }
 }
+
+// Read a file as text. If the file doesn't exist, an empty string is returned
+// (NOTE: We could make this std::nullopt on error, but r.n that's not needed.
 static std::string read_file(const std::string& path){
   try{
     std::ifstream f(path);
