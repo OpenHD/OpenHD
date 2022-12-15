@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-systemctl enable openhd.service
 # this is the serial port on the jetson boards, we don't want a tty running on it
 systemctl stop nvgetty || true
 systemctl disable nvgetty || true
@@ -16,3 +15,5 @@ grep "v4l2loopback" /etc/modules
 if [[ "$?" -ne 0 ]]; then
     echo "v4l2loopback" >> /etc/modules
 fi
+
+mount -o remount,ro /boot || true
