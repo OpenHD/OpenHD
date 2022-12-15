@@ -101,11 +101,11 @@ struct WiFiCard {
   bool supports_5GHz()const{
     return xx_supports_5ghz;
   };
-  std::vector<openhd::WifiChannel> supported_channels{};
+  std::vector<uint32_t> supported_frequencies{};
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,device_name,mac,phy80211_index,driver_name,type,
                                    supports_injection,supports_monitor_mode,supports_hotspot,
-                                   xx_supports_2ghz,xx_supports_5ghz)
+                                   xx_supports_2ghz,xx_supports_5ghz,supported_frequencies)
 
 // Only Atheros AR9271 doesn't support setting the mcs index
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
@@ -136,33 +136,13 @@ static bool wifi_card_supports_frequency(const OHDPlatform& platform,const WiFiC
     return false;
   }
   const auto& channel=channel_opt.value();
-  // check if we are running on a modified kernel, in which case we can do those extra frequencies that
-  // are illegal in most countries (otherwise they are disabled)
-  // NOTE: When running on RPI or Jetson we assume we are running on an OpenHD image which has the modified kernel
-  const bool kernel_supports_extra_channels=platform.platform_type==PlatformType::RaspberryPi ||
-                                              platform.platform_type==PlatformType::Jetson;
-  // check if the card generically supports the 2G or 5G space
-  if(channel.space==openhd::Space::G2_4){
-    if(!wifi_card.supports_2GHz()){
-      return false;
-    }
-    if(!channel.is_standard){
-      // special and only AR9271: channels below and above standard wifi
-      const bool include_extra_channels_2G=kernel_supports_extra_channels && wifi_card_supports_extra_channels_2G(wifi_card);
-      if(!include_extra_channels_2G){
-        return false;
-      }
-    }
-  }else{
-    assert(channel.space==openhd::Space::G5_8);
-    if(!wifi_card.supports_5GHz()){
-      return false;
-    }
-    if(!channel.is_standard){
-      return false;
+  for(const auto& freq:wifi_card.supported_frequencies){
+    if(channel.frequency==freq){
+      return true;
     }
   }
-  return true;
+  openhd::log::get_default()->debug("Card {} does not support frequency {}",wifi_card.device_name,frequency);
+  return false;
 }
 
 static std::string debug_cards(const std::vector<WiFiCard>& cards){
