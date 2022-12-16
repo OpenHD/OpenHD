@@ -287,7 +287,7 @@ static std::vector<std::string> split_string_by_newline(
   auto ss = std::stringstream{str};
 
   for (std::string line; std::getline(ss, line, '\n');) {
-    result.push_back(line);
+    result.push_back(line+"\n");
   }
   return result;
 }
@@ -295,6 +295,7 @@ static std::vector<std::string> split_string_by_newline(
 static std::string create_string_from_lines(const std::vector<std::string>& lines){
   std::stringstream ss;
   for(const auto& line:lines){
+    assert(OHDUtil::endsWith(line,"\n"));
     ss<<line;
   }
   return ss.str();
