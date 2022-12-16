@@ -132,7 +132,8 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
   return "";
 }
 
-// find the line that contains the dynamic content begin delimiter
+// find the line that contains the dynamic content begin identifier
+// after this identifier, we can modify things in the config file as we like.
 // returns -1 on failure, a positive integer >=0 otherwise
 // NOTE: line[index] contains the identifier, the dynamic content should then be written on line[index+1]
 static int find_index_dynamic_content_begin(const std::vector<std::string>& lines){
@@ -144,7 +145,7 @@ static int find_index_dynamic_content_begin(const std::vector<std::string>& line
   return -1;
 }
 
-const auto rpi_config_file_path="/boot/config.txt";
+static constexpr auto rpi_config_file_path="/boot/config.txt";
 
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
