@@ -99,9 +99,9 @@ struct WiFiCard {
   [[nodiscard]] bool supports_5GHz()const{
     return !supported_frequencies_5G.empty();
   };
-  // supported 2G frequencies
+  // supported 2G frequencies, in mhz
   std::vector<uint32_t> supported_frequencies_2G{};
-  // supported 5G frequencies
+  // supported 5G frequencies, in mhz
   std::vector<uint32_t> supported_frequencies_5G{};
   [[nodiscard]] std::vector<uint32_t> get_supported_frequencies_2G_5G()const{
     std::vector<uint32_t> ret{};
