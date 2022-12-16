@@ -148,13 +148,13 @@ const auto rpi_config_file_path="/boot/config.txt";
 
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
-static void apply_new_cam_config_and_save(const OHDPlatform& platform,const CamConfig& new_cam_config){
+static bool apply_new_cam_config_and_save(const OHDPlatform& platform,const CamConfig& new_cam_config){
   openhd::log::get_default()->debug("Begin apply cam config "+ cam_config_to_string(new_cam_config));
   const auto cam_config_filename= get_file_name_for_cam_config(platform,new_cam_config);
   const auto cam_config_file_content=OHDFilesystemUtil::opt_read_file(cam_config_filename);
   if(!cam_config_file_content.has_value()){
     openhd::log::get_default()->warn("Cannot apply new cam config, corresponding *.txt [{}] not found",cam_config_filename);
-    return;
+    return false;
   }
   const auto cam_config_file_lines=OHDUtil::split_string_by_newline(cam_config_file_content.value());
 
@@ -162,7 +162,7 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,const CamC
   const auto config_file_content=OHDFilesystemUtil::opt_read_file(rpi_config_file_path);
   if(!config_file_content.has_value()){
     openhd::log::get_default()->warn("Cannot apply new cam config, original config.txt [{}] not found",rpi_config_file_path);
-    return;
+    return false;
   }
   // split it into lines
   const auto config_file_lines=OHDUtil::split_string_by_newline(config_file_content.value());
@@ -170,7 +170,7 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,const CamC
   const auto dynamic_begin= find_index_dynamic_content_begin(config_file_lines);
   if(dynamic_begin<0){
     openhd::log::get_default()->warn("Your config.txt is not compatible with openhd-camera-changes (identifier not found)");
-    return;
+    return false;
   }
   // write the stuff we don't modify
   std::vector<std::string> lines_new_config_file;
@@ -193,7 +193,8 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,const CamC
 
   std::this_thread::sleep_for(std::chrono::seconds(100));
   // Now we just need to reboot
-  openhd::log::get_default()->debug("End apply cam config "+ cam_config_to_string(new_cam_config));
+  openhd::log::get_default()->debug("End apply cam config {}",cam_config_to_string(new_cam_config));
+  return true;
 }
 
 // Unfortunately complicated, since we need to perform the action asynchronously and then reboot
