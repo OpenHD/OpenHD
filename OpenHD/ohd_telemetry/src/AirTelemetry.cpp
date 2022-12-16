@@ -14,11 +14,6 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   assert(m_console);
   _airTelemetrySettings=std::make_unique<openhd::telemetry::air::SettingsHolder>();
   setup_uart();
-  // any message coming in via wifibroadcast is a message from the ground pi
-  /*wifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(true);
-  wifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
-    on_messages_ground_unit(messages);
-  });*/
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
   components.push_back(m_ohd_main_component);
   //
@@ -214,11 +209,8 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",openhd::IntSetting {1,c_config_boot_as_air}});
   }
   if(_platform.platform_type==PlatformType::RaspberryPi){
-    auto c_read_only_param=[](std::string,std::string value){
-      return false;
-    };
-    auto tmp=board_type_to_string(_platform.board_type);
-    ret.push_back(openhd::Setting{"BOARD_TYPE",openhd::StringSetting{tmp,c_read_only_param}});
+    const auto tmp=board_type_to_string(_platform.board_type);
+    ret.push_back(openhd::create_read_only_string("BOARD_TYPE",tmp));
   }
   openhd::testing::append_dummy_if_empty(ret);
   return ret;
