@@ -49,7 +49,7 @@ SerialEndpoint::SerialEndpoint(std::string TAG1,SerialEndpoint::HWOptions option
                                                                                        _options(std::move(options1)){
   m_console = openhd::log::create_or_get(TAG);
   assert(m_console);
-  m_console->info("SerialEndpoint: created with "+_options.to_string());
+  m_console->info("created with {}",_options.to_string());
   start();
 }
 
@@ -215,7 +215,7 @@ void SerialEndpoint::connect_and_read_loop() {
 }
 
 void SerialEndpoint::receive_data_until_error() {
-  m_console->debug("SerialEndpoint3::receive_data_until_error() begin");
+  m_console->debug("receive_data_until_error() begin");
   // Enough for MTU 1500 bytes.
   uint8_t buffer[2048];
 
@@ -268,29 +268,29 @@ void SerialEndpoint::receive_data_until_error() {
     //m_console->debug("Got data {} bytes",recv_len);
     MEndpoint::parseNewData(buffer,recv_len);
   }
-  m_console->debug("SerialEndpoint3::receive_data_until_error() end");
+  m_console->debug("receive_data_until_error() end");
 }
 
 void SerialEndpoint::start() {
   std::lock_guard<std::mutex> lock(_connectReceiveThreadMutex);
-  m_console->debug("SerialEndpoint::start()-begin");
+  m_console->debug("start()-begin");
   if(_connectReceiveThread!= nullptr){
     m_console->debug("Already started");
     return;
   }
   _stop_requested= false;
   _connectReceiveThread=std::make_unique<std::thread>(&SerialEndpoint::connect_and_read_loop, this);
-  m_console->debug("SerialEndpoint::start()-end");
+  m_console->debug("start()-end");
 }
 
 void SerialEndpoint::stop() {
   std::lock_guard<std::mutex> lock(_connectReceiveThreadMutex);
-  m_console->debug("SerialEndpoint3::stop()-begin");
+  m_console->debug("stop()-begin");
   _stop_requested=true;
   if (_connectReceiveThread && _connectReceiveThread->joinable()) {
     _connectReceiveThread->join();
   }
   _connectReceiveThread = nullptr;
-  m_console->debug("SerialEndpoint3::stop()-end");
+  m_console->debug("stop()-end");
 }
 

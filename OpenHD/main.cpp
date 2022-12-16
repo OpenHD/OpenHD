@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
 
   // First discover the platform:
   const auto platform = DPlatform::discover();
-  m_console->info("Detected Platform:"+platform->to_string());
+  m_console->info("Detected Platform:{}",platform->to_string());
 
   // Create and link all the OpenHD modules.
   try {
@@ -330,15 +330,18 @@ int main(int argc, char *argv[]) {
     // e.g. when the rf link in ohd_interface needs to talk to the camera streams to reduce the bitrate
     auto ohd_action_handler=std::make_shared<openhd::ActionHandler>();
 
+    // We start ohd_telemetry as early as possible, since even without a link (transmission) it still picks up local
+    // log message(s) and forwards them to any ground station clients (e.g. QOpenHD)
+    auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile,ohd_action_handler);
+
     // Then start ohdInterface, which discovers detected wifi cards and more.
     auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile,ohd_action_handler);
 
-    // then we can start telemetry, which uses OHDInterface for wfb tx/rx (udp)
-    auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile,ohd_action_handler);
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
     // Now we are done with generic settings, param set is now ready (we don't add any new params anymore)
     ohdTelemetry->settings_generic_ready();
+
     // Since telemetry handles the data stream(s) to external devices itself, we need to also react to
     // changes to the external device(s) from ohd_interface
     //ohdTelemetry->add_external_ground_station_ip(" 127.0.0.1","192.168.18.229");

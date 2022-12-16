@@ -14,11 +14,6 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   assert(m_console);
   _airTelemetrySettings=std::make_unique<openhd::telemetry::air::SettingsHolder>();
   setup_uart();
-  // any message coming in via wifibroadcast is a message from the ground pi
-  /*wifibroadcastEndpoint = UDPEndpoint::createEndpointForOHDWifibroadcast(true);
-  wifibroadcastEndpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
-    on_messages_ground_unit(messages);
-  });*/
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
   components.push_back(m_ohd_main_component);
   //
@@ -87,39 +82,39 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
   const auto loop_intervall=std::chrono::milliseconds(500);
   auto last_log=std::chrono::steady_clock::now();
   while (!terminate) {
-	const auto loopBegin=std::chrono::steady_clock::now();
-	if(std::chrono::steady_clock::now()-last_log>=log_intervall){
-	  // State debug logging
-	  last_log=std::chrono::steady_clock::now();
-	  //m_console->debug("AirTelemetry::loopInfinite()");
-	  // for debugging, check if any of the endpoints is not alive
-	  if (enableExtendedLogging && m_wb_endpoint) {
-		m_console->debug(m_wb_endpoint->createInfo());
-	  }
-	  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
-          if (enableExtendedLogging && m_serial_endpoint) {
-            m_console->debug(m_serial_endpoint->createInfo());
-          }
-	}
-	// send messages to the ground pi in regular intervals, includes heartbeat.
-	// everything else is handled by the callbacks and their threads
-	{
-          std::lock_guard<std::mutex> guard(components_lock);
-          for(auto& component:components){
-            const auto messages=component->generate_mavlink_messages();
-            send_messages_ground_unit(messages);
-          }
-	}
-	const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
-	if(loopDelta>loop_intervall){
-	  // We can't keep up with the wanted loop interval
-          m_console->debug("Warning AirTelemetry cannot keep up with the wanted loop interval. Took {}ms",
-                           std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count());
-	}else{
-	  const auto sleepTime=loop_intervall-loopDelta;
-	  // send out in X second intervals
-	  std::this_thread::sleep_for(loop_intervall);
-	}
+    const auto loopBegin=std::chrono::steady_clock::now();
+    if(std::chrono::steady_clock::now()-last_log>=log_intervall){
+      // State debug logging
+      last_log=std::chrono::steady_clock::now();
+      //m_console->debug("AirTelemetry::loopInfinite()");
+      // for debugging, check if any of the endpoints is not alive
+      if (enableExtendedLogging && m_wb_endpoint) {
+        m_console->debug(m_wb_endpoint->createInfo());
+      }
+      std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
+      if (enableExtendedLogging && m_serial_endpoint) {
+        m_console->debug(m_serial_endpoint->createInfo());
+      }
+    }
+    // send messages to the ground pi in regular intervals, includes heartbeat.
+    // everything else is handled by the callbacks and their threads
+    {
+      std::lock_guard<std::mutex> guard(components_lock);
+      for(auto& component:components){
+        const auto messages=component->generate_mavlink_messages();
+        send_messages_ground_unit(messages);
+      }
+    }
+    const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
+    if(loopDelta>loop_intervall){
+      // We can't keep up with the wanted loop interval
+      m_console->debug("Warning AirTelemetry cannot keep up with the wanted loop interval. Took {}ms",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count());
+    }else{
+      const auto sleepTime=loop_intervall-loopDelta;
+      // send out in X second intervals
+      std::this_thread::sleep_for(loop_intervall);
+    }
   }
 }
 
@@ -214,11 +209,8 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",openhd::IntSetting {1,c_config_boot_as_air}});
   }
   if(_platform.platform_type==PlatformType::RaspberryPi){
-    auto c_read_only_param=[](std::string,std::string value){
-      return false;
-    };
-    auto tmp=board_type_to_string(_platform.board_type);
-    ret.push_back(openhd::Setting{"BOARD_TYPE",openhd::StringSetting{tmp,c_read_only_param}});
+    const auto tmp=board_type_to_string(_platform.board_type);
+    ret.push_back(openhd::create_read_only_string("BOARD_TYPE",tmp));
   }
   openhd::testing::append_dummy_if_empty(ret);
   return ret;

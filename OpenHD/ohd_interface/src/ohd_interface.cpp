@@ -20,7 +20,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   //wifiCards = std::make_unique<WifiCards>(profile);
   //Find out which cards are connected first
   auto connected_cards =DWifiCards::discover_connected_wifi_cards();
-  // Issue on rpi with Atheros: For some reason, openhd is sometime started before the card
+  // Issue on rpi with Atheros: For some reason, openhd is sometimes started before the card
   // finishes some initialization steps ?! and is therefore not discovered.
   // On a rpi, we block for up to 10 seconds here until we have at least one wifi card that does injection
   // Note that we cannot just block until we have one, starting openhd anyways without a injection capable wifi card is a usefully
