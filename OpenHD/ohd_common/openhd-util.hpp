@@ -281,6 +281,13 @@ static void vec_append(std::vector<T>& dest, const std::vector<T>& src) {
 }
 
 // From https://stackoverflow.com/questions/13172158/c-split-string-by-line
+// Split the given string into lines
+/**
+ * Modified, but from https://stackoverflow.com/questions/13172158/c-split-string-by-line
+ * Split the given string into lines
+ * @param str a string, for example optained by reading a .txt file
+ * @return a list of all the lines found, each element ends with a "\n";
+ */
 static std::vector<std::string> split_string_by_newline(
     const std::string& str) {
   auto result = std::vector<std::string>{};
