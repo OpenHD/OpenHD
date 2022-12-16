@@ -89,7 +89,7 @@ void DCameras::detect_raspberrypi_broadcom_csi() {
   }
   const std::string supported = result[1];
   const std::string detected = result[2];
-  m_console->debug("detect_raspberrypi_broadcom_csi() supported=" + supported + " detected=" + detected);
+  m_console->debug("detect_raspberrypi_broadcom_csi() supported={} detected={}",supported,detected);
   const auto camera_count = atoi(detected.c_str());
   if (camera_count >= 1) {
     Camera camera;
