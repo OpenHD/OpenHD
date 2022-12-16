@@ -181,10 +181,6 @@ static void apply_new_cam_config_and_save(const OHDPlatform& platform,const CamC
   for(const auto& line: cam_config_file_lines){
     lines_new_config_file.push_back(line);
   }
-  // and add the remaining stuff we don't modify
-  /*for(int i=dynamic_end;i<config_file_lines.size();i++){
-    lines_new_config_file.push_back(config_file_lines.at(i));
-  }*/
   // Now we are finished
   // Write a backup file of the original previous content for debugging
   OHDFilesystemUtil::write_file("/boot/config.txt.old",config_file_content.value());
