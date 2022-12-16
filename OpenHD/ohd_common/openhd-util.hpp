@@ -296,7 +296,6 @@ static std::string create_string_from_lines(const std::vector<std::string>& line
   std::stringstream ss;
   for(const auto& line:lines){
     ss<<line;
-    assert(OHDUtil::endsWith(line,"\n"));
   }
   return ss.str();
 }
