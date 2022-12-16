@@ -83,6 +83,10 @@ static void write_file(const std::string& path,const std::string& content){
 // Read a file as text and return its content as a string.
 // If the file doesn't exist, return std::nullopt
 static std::optional<std::string> opt_read_file(const std::string& filename){
+  if(!exists(filename.c_str())){
+    openhd::log::get_default()->warn("File [{}] doesn't exist",filename);
+    return std::nullopt;
+  }
   try{
     std::ifstream f(filename);
     std::string str((std::istreambuf_iterator<char>(f)),std::istreambuf_iterator<char>());
