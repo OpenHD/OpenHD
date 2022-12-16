@@ -135,5 +135,5 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   -d "gstreamer1.0-tools" \
   -d "gstreamer1.0-alsa" \
   -d "gstreamer1.0-pulseaudio" || exit 1
-  
+fi 
 cp *.deb ../../
