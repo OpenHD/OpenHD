@@ -177,8 +177,8 @@ static bool apply_new_cam_config_and_save(const OHDPlatform& platform,const CamC
   std::vector<std::string> lines_new_config_file;
   for(int i=0;i<=dynamic_begin;i++){
     lines_new_config_file.push_back(config_file_lines[i]);
-    assert(OHDUtil::contains(lines_new_config_file.at(lines_new_config_file.size()-1),"#OPENHD_DYNAMIC_CONTENT_BEGIN#"));
   }
+  assert(OHDUtil::contains(lines_new_config_file.at(lines_new_config_file.size()-1),"#OPENHD_DYNAMIC_CONTENT_BEGIN#"));
   // then add the stuff we modify
   for(const auto& line: cam_config_file_lines){
     lines_new_config_file.push_back(line);
