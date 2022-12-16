@@ -87,39 +87,39 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
   const auto loop_intervall=std::chrono::milliseconds(500);
   auto last_log=std::chrono::steady_clock::now();
   while (!terminate) {
-	const auto loopBegin=std::chrono::steady_clock::now();
-	if(std::chrono::steady_clock::now()-last_log>=log_intervall){
-	  // State debug logging
-	  last_log=std::chrono::steady_clock::now();
-	  //m_console->debug("AirTelemetry::loopInfinite()");
-	  // for debugging, check if any of the endpoints is not alive
-	  if (enableExtendedLogging && m_wb_endpoint) {
-		m_console->debug(m_wb_endpoint->createInfo());
-	  }
-	  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
-          if (enableExtendedLogging && m_serial_endpoint) {
-            m_console->debug(m_serial_endpoint->createInfo());
-          }
-	}
-	// send messages to the ground pi in regular intervals, includes heartbeat.
-	// everything else is handled by the callbacks and their threads
-	{
-          std::lock_guard<std::mutex> guard(components_lock);
-          for(auto& component:components){
-            const auto messages=component->generate_mavlink_messages();
-            send_messages_ground_unit(messages);
-          }
-	}
-	const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
-	if(loopDelta>loop_intervall){
-	  // We can't keep up with the wanted loop interval
-          m_console->debug("Warning AirTelemetry cannot keep up with the wanted loop interval. Took {}ms",
-                           std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count());
-	}else{
-	  const auto sleepTime=loop_intervall-loopDelta;
-	  // send out in X second intervals
-	  std::this_thread::sleep_for(loop_intervall);
-	}
+    const auto loopBegin=std::chrono::steady_clock::now();
+    if(std::chrono::steady_clock::now()-last_log>=log_intervall){
+      // State debug logging
+      last_log=std::chrono::steady_clock::now();
+      //m_console->debug("AirTelemetry::loopInfinite()");
+      // for debugging, check if any of the endpoints is not alive
+      if (enableExtendedLogging && m_wb_endpoint) {
+        m_console->debug(m_wb_endpoint->createInfo());
+      }
+      std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
+      if (enableExtendedLogging && m_serial_endpoint) {
+        m_console->debug(m_serial_endpoint->createInfo());
+      }
+    }
+    // send messages to the ground pi in regular intervals, includes heartbeat.
+    // everything else is handled by the callbacks and their threads
+    {
+      std::lock_guard<std::mutex> guard(components_lock);
+      for(auto& component:components){
+        const auto messages=component->generate_mavlink_messages();
+        send_messages_ground_unit(messages);
+      }
+    }
+    const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
+    if(loopDelta>loop_intervall){
+      // We can't keep up with the wanted loop interval
+      m_console->debug("Warning AirTelemetry cannot keep up with the wanted loop interval. Took {}ms",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count());
+    }else{
+      const auto sleepTime=loop_intervall-loopDelta;
+      // send out in X second intervals
+      std::this_thread::sleep_for(loop_intervall);
+    }
   }
 }
 
