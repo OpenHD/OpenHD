@@ -49,10 +49,13 @@ mkdir -p ${PKGDIR}/usr/local/bin || exit 1
 mkdir -p ${PKGDIR}/tmp
 mkdir -p ${PKGDIR}/settings
 mkdir -p ${PKGDIR}/etc/systemd/system
-mkdir -p ${PKGDIR}/boot/openhd/configs
+
+if [[ "${OS}" == "raspbian" ]]; then
+  mkdir -p ${PKGDIR}/boot/openhd/configs
+  cp ../dynamic_configs/* ${PKGDIR}/boot/openhd/configs/
+fi
 
 cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
-cp dynamic_configs/* ${PKGDIR}/boot/openhd/configs/
 
 if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
 cp ../../openhd.service  ${PKGDIR}/etc/systemd/system/
