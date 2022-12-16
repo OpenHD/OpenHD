@@ -191,7 +191,6 @@ static bool apply_new_cam_config_and_save(const OHDPlatform& platform,const CamC
   // save the current selection (persistent setting)
   save_cam_config_to_file(new_cam_config);
 
-  std::this_thread::sleep_for(std::chrono::seconds(100));
   // Now we just need to reboot
   openhd::log::get_default()->debug("End apply cam config {}",cam_config_to_string(new_cam_config));
   return true;
