@@ -526,9 +526,11 @@ void WBLink::loop_do_work() {
       }
       m_work_item_queue_mutex.unlock();
     }
+    // update statistics in regular intervals
     update_statistics();
     //const auto delta_calc_stats=std::chrono::steady_clock::now()-begin_calculate_stats;
     //m_console->debug("Calculating stats took:{} ms",std::chrono::duration_cast<std::chrono::microseconds>(delta_calc_stats).count()/1000.0f);
+    // update recommended rate if enabled in regular intervals
     perform_rate_adjustment();
     // Dirty - deliberately crash openhd and let the service restart it
     // if we think a wi-fi card disconnected
