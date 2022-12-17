@@ -56,10 +56,10 @@ class SerialEndpoint : public MEndpoint{
   // Write serial data, returns true on success, false otherwise.
   [[nodiscard]] bool write_data_serial(const std::vector<uint8_t>& data);
  private:
-  const HWOptions _options;
-  int _fd=-1;
-  std::mutex _connectReceiveThreadMutex;
-  std::unique_ptr<std::thread> _connectReceiveThread = nullptr;
+  const HWOptions m_options;
+  int m_fd =-1;
+  std::mutex m_connect_receive_thread_mutex;
+  std::unique_ptr<std::thread> m_connect_receive_thread = nullptr;
   bool _stop_requested=false;
   std::shared_ptr<spdlog::logger> m_console;
   // Limit warning console logs to not spam the console

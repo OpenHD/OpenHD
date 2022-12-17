@@ -57,6 +57,16 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   if(m_opt_action_handler){
     m_opt_action_handler->action_wb_link_scan_channels_register(cb2);
   }
+  // exp
+  /*const auto t_radio_port_rx = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
+  auto excluded=std::vector<int>{t_radio_port_rx};
+  if(m_profile.is_ground()){
+    excluded.push_back(OHD_VIDEO_PRIMARY_RADIO_PORT);
+    excluded.push_back(OHD_VIDEO_SECONDARY_RADIO_PORT);
+  }*/
+  /*auto excluded=std::vector<int>{OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT,OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT,
+                                   OHD_VIDEO_PRIMARY_RADIO_PORT,OHD_VIDEO_SECONDARY_RADIO_PORT};
+  m_foreign_packets_receiver=std::make_unique<ForeignPacketsReceiver>(get_rx_card_names(),excluded);*/
 }
 
 WBLink::~WBLink() {
@@ -67,6 +77,11 @@ WBLink::~WBLink() {
     m_work_thread_run =false;
     m_work_thread->join();
   }
+  // stop all the receiver/transmitter instances, after that, give card back to network manager
+  m_wb_tele_rx.reset();
+  m_wb_tele_tx.reset();
+  m_wb_video_tx_list.resize(0);
+  m_wb_video_rx_list.resize(0);
   // give the monitor mode cards back to network manager
   for(const auto& card: m_broadcast_cards){
     wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
@@ -526,9 +541,11 @@ void WBLink::loop_do_work() {
       }
       m_work_item_queue_mutex.unlock();
     }
+    // update statistics in regular intervals
     update_statistics();
     //const auto delta_calc_stats=std::chrono::steady_clock::now()-begin_calculate_stats;
     //m_console->debug("Calculating stats took:{} ms",std::chrono::duration_cast<std::chrono::microseconds>(delta_calc_stats).count()/1000.0f);
+    // update recommended rate if enabled in regular intervals
     perform_rate_adjustment();
     // Dirty - deliberately crash openhd and let the service restart it
     // if we think a wi-fi card disconnected
@@ -553,6 +570,10 @@ void WBLink::update_statistics() {
   if(elapsed_since_last<RECALCULATE_STATISTICS_INTERVAL){
     return;
   }
+  /*if(m_foreign_packets_receiver){
+    const auto stats=m_foreign_packets_receiver->get_current_stats();
+    m_console->debug("Foreign packets stats:{}",stats.to_string());
+  }*/
   m_last_stats_recalculation=std::chrono::steady_clock::now();
   // telemetry is available on both air and ground
   openhd::link_statistics::StatsAirGround stats{};

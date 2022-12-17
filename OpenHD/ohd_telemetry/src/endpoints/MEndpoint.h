@@ -65,7 +65,7 @@ class MEndpoint {
   void parseNewData(const uint8_t *data,int data_len);
   // this one is special, since mavsdk in this case has already done the message parsing
   void parseNewDataEmulateForMavsdk(mavlink_message_t msg){
-	onNewMavlinkMessages({MavlinkMessage{msg}});
+    onNewMavlinkMessages({MavlinkMessage{msg}});
   }
   // Must be overridden by the implementation
   // Returns true if the message(s) have been properly sent (e.g. a connection exists on connection-based endpoints)
@@ -86,12 +86,12 @@ class MEndpoint {
   // Based on mavsdk::mavlink_channels
   // It is not clear what the limit of the number of channels is, except UINT8_MAX.
   static int checkoutFreeChannel(){
-	static std::mutex _channels_used_mutex;
-	static int channel_idx=0;
-	std::lock_guard<std::mutex> lock(_channels_used_mutex);
-	int ret=channel_idx;
-	channel_idx++;
-	return ret;
+    static std::mutex _channels_used_mutex;
+    static int channel_idx=0;
+    std::lock_guard<std::mutex> lock(_channels_used_mutex);
+    int ret=channel_idx;
+    channel_idx++;
+    return ret;
   }
   // https://stackoverflow.com/questions/12657962/how-do-i-generate-a-random-number-between-two-variables-that-i-have-stored
   static int random_number(int min,int max){

@@ -45,11 +45,10 @@ static bool is_serial_fd_still_connected(const int fd){
 }
 
 SerialEndpoint::SerialEndpoint(std::string TAG1,SerialEndpoint::HWOptions options1):
-                                                                                       MEndpoint(std::move(TAG1)),
-                                                                                       _options(std::move(options1)){
+                                                                                       MEndpoint(std::move(TAG1)), m_options(std::move(options1)){
   m_console = openhd::log::create_or_get(TAG);
   assert(m_console);
-  m_console->info("created with {}",_options.to_string());
+  m_console->info("created with {}", m_options.to_string());
   start();
 }
 
@@ -70,14 +69,14 @@ bool SerialEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& message
 
 bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
   //m_console->debug("Write data serial:{} bytes",data.size());
-  if(_fd==-1){
+  if(m_fd ==-1){
     // cannot send data at the time, UART not setup / doesn't exist.
     m_console->warn("Cannot send data, no fd");
     return false;
   }
   // If we have a fd, but the write fails, most likely the UART disconnected
   // but the linux driver hasn't noticed it yet.
-  const auto send_len = static_cast<int>(write(_fd,data.data(), data.size()));
+  const auto send_len = static_cast<int>(write(m_fd,data.data(), data.size()));
   //m_console->debug("Written {} bytes",send_len);
   if (send_len != data.size()) {
     m_n_failed_writes++;
@@ -140,6 +139,8 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options,std::sha
   if(!m_console){
     m_console=openhd::log::get_default();
   }
+  // Also see https://blog.mbedded.ninja/programming/operating-systems/linux/linux-serial-ports-using-c-cpp/
+
   // open() hangs on macOS or Linux devices(e.g. pocket beagle) unless you give it O_NONBLOCK
   int fd = open(options.linux_filename.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (fd == -1) {
@@ -166,7 +167,7 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options,std::sha
   tc.c_cflag &= ~(CSIZE | PARENB | CRTSCTS);
   tc.c_cflag |= CS8;
   tc.c_cc[VMIN] = 0; // We are ok with 0 bytes.
-  tc.c_cc[VTIME] = 10; // Timeout after 1 second.
+  tc.c_cc[VTIME] = 10; // Timeout after  1s (10 deciseconds)
   if (options.flow_control) {
     tc.c_cflag |= CRTSCTS;
   }
@@ -193,24 +194,25 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options,std::sha
 
 void SerialEndpoint::connect_and_read_loop() {
   while (!_stop_requested){
-    if(!OHDFilesystemUtil::exists(_options.linux_filename.c_str())){
+    if(!OHDFilesystemUtil::exists(m_options.linux_filename.c_str())){
       m_console->warn("UART file does not exist");
       std::this_thread::sleep_for(std::chrono::seconds(1));
       continue;
     }
     // The file exists, so creating the FD should be no problem
-    _fd=setup_port(_options,m_console);
-    if(_fd==-1){
+    m_fd =setup_port(m_options,m_console);
+    if(m_fd ==-1){
       // But if it fails, we start over again, checking if at least the linux fd exists
-      m_console->warn("Cannot create uart fd "+_options.to_string());
+      m_console->warn("Cannot create uart fd "+ m_options.to_string());
       std::this_thread::sleep_for(std::chrono::seconds(1));
       continue;
     }
-    m_console->debug("Successfully created UART fd for: {}",_options.to_string());
+    m_console->debug("Successfully created UART fd for: {}",
+                     m_options.to_string());
     receive_data_until_error();
     // cleanup and start over again
-    close(_fd);
-    _fd=-1;
+    close(m_fd);
+    m_fd =-1;
   }
 }
 
@@ -220,18 +222,17 @@ void SerialEndpoint::receive_data_until_error() {
   uint8_t buffer[2048];
 
   struct pollfd fds[1];
-  fds[0].fd = _fd;
+  fds[0].fd = m_fd;
   fds[0].events = POLLIN;
   m_n_failed_reads=0;
 
   while (!_stop_requested) {
-    int recv_len;
     const auto before=std::chrono::steady_clock::now();
     const int pollrc = poll(fds, 1, 1000);
     // on my ubuntu laptop, with usb serial, if the device disconnects I don't get any error results,
     // but poll suddenly never blocks anymore. Therefore, every time we time out we check if the fd is still valid
     // and exit if not (which will lead to a re-start)
-    const auto valid= is_serial_fd_still_connected(_fd);
+    const auto valid= is_serial_fd_still_connected(m_fd);
     if(!valid){
       m_console->debug("Exiting serial, not connected");
       return;
@@ -257,40 +258,38 @@ void SerialEndpoint::receive_data_until_error() {
       return;
     }
     // We enter here if (fds[0].revents & POLLIN) == true
-    recv_len = static_cast<int>(read(_fd, buffer, sizeof(buffer)));
-    if (recv_len < -1) {
-      m_console->warn("read failure: {}",GET_ERROR());
+    const int recv_len = static_cast<int>(read(m_fd, buffer, sizeof(buffer)));
+    if(recv_len>0){
+      MEndpoint::parseNewData(buffer,recv_len);
+    }else if(recv_len==0) {
+      // timeout
+    }else{
+      m_console->warn("read failure: {} {}",recv_len,GET_ERROR());
     }
-    if (recv_len > static_cast<int>(sizeof(buffer)) || recv_len == 0) {
-      // probably timeout
-      continue;
-    }
-    //m_console->debug("Got data {} bytes",recv_len);
-    MEndpoint::parseNewData(buffer,recv_len);
   }
   m_console->debug("receive_data_until_error() end");
 }
 
 void SerialEndpoint::start() {
-  std::lock_guard<std::mutex> lock(_connectReceiveThreadMutex);
+  std::lock_guard<std::mutex> lock(m_connect_receive_thread_mutex);
   m_console->debug("start()-begin");
-  if(_connectReceiveThread!= nullptr){
+  if(m_connect_receive_thread != nullptr){
     m_console->debug("Already started");
     return;
   }
   _stop_requested= false;
-  _connectReceiveThread=std::make_unique<std::thread>(&SerialEndpoint::connect_and_read_loop, this);
+  m_connect_receive_thread =std::make_unique<std::thread>(&SerialEndpoint::connect_and_read_loop, this);
   m_console->debug("start()-end");
 }
 
 void SerialEndpoint::stop() {
-  std::lock_guard<std::mutex> lock(_connectReceiveThreadMutex);
+  std::lock_guard<std::mutex> lock(m_connect_receive_thread_mutex);
   m_console->debug("stop()-begin");
   _stop_requested=true;
-  if (_connectReceiveThread && _connectReceiveThread->joinable()) {
-    _connectReceiveThread->join();
+  if (m_connect_receive_thread && m_connect_receive_thread->joinable()) {
+    m_connect_receive_thread->join();
   }
-  _connectReceiveThread = nullptr;
+  m_connect_receive_thread = nullptr;
   m_console->debug("stop()-end");
 }
 

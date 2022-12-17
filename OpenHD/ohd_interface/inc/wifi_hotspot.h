@@ -10,6 +10,7 @@
 
 #include "wifi_card.hpp"
 #include "wifi_hotspot_settings.h"
+#include "mavlink_settings/ISettingsComponent.hpp"
 
 /**
  * Wifi hotspot refers to creating a WiFi Access point on the device we are running on.
@@ -39,6 +40,8 @@ class WifiHotspot {
   // TODO stop safe in regards to concurrency.
   void start_async();
   void stop_async();
+ public:
+  std::vector<openhd::Setting> get_all_settings();
  private:
   // Ip addresses of all connected clients.
   // A client might dynamically connect or disconnect from the AP at run time,
