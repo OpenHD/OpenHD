@@ -125,7 +125,10 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     //ret.insert(ret.end(),settings.begin(),settings.end());
   }
   if(m_wifi_hotspot != nullptr){
-    // TODO wifi hotspot manages its own settings
+    auto settings= m_wifi_hotspot->get_all_settings();
+    for(const auto& setting:settings){
+      ret.emplace_back(setting);
+    }
   }
   if(!m_profile.is_air){
     //openhd::testing::append_dummy_int_and_string(ret);
