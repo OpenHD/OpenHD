@@ -57,6 +57,10 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   if(m_opt_action_handler){
     m_opt_action_handler->action_wb_link_scan_channels_register(cb2);
   }
+  // exp
+  //const auto t_radio_port_rx = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
+  //auto excluded=std::vector<int>{t_radio_port_rx,OHD_VIDEO_PRIMARY_RADIO_PORT,OHD_VIDEO_SECONDARY_RADIO_PORT};
+  //m_foreign_packets_receiver=std::make_unique<ForeignPacketsReceiver>(get_rx_card_names(),excluded);
 }
 
 WBLink::~WBLink() {
@@ -67,6 +71,11 @@ WBLink::~WBLink() {
     m_work_thread_run =false;
     m_work_thread->join();
   }
+  // stop all the receiver/transmitter instances, after that, give card back to network manager
+  m_wb_tele_rx.reset();
+  m_wb_tele_tx.reset();
+  m_wb_video_tx_list.resize(0);
+  m_wb_video_rx_list.resize(0);
   // give the monitor mode cards back to network manager
   for(const auto& card: m_broadcast_cards){
     wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
