@@ -64,9 +64,9 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
     excluded.push_back(OHD_VIDEO_PRIMARY_RADIO_PORT);
     excluded.push_back(OHD_VIDEO_SECONDARY_RADIO_PORT);
   }*/
-  auto excluded=std::vector<int>{OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT,OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT,
+  /*auto excluded=std::vector<int>{OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT,OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT,
                                    OHD_VIDEO_PRIMARY_RADIO_PORT,OHD_VIDEO_SECONDARY_RADIO_PORT};
-  m_foreign_packets_receiver=std::make_unique<ForeignPacketsReceiver>(get_rx_card_names(),excluded);
+  m_foreign_packets_receiver=std::make_unique<ForeignPacketsReceiver>(get_rx_card_names(),excluded);*/
 }
 
 WBLink::~WBLink() {
@@ -570,10 +570,10 @@ void WBLink::update_statistics() {
   if(elapsed_since_last<RECALCULATE_STATISTICS_INTERVAL){
     return;
   }
-  if(m_foreign_packets_receiver){
+  /*if(m_foreign_packets_receiver){
     const auto stats=m_foreign_packets_receiver->get_current_stats();
     m_console->debug("Foreign packets stats:{}",stats.to_string());
-  }
+  }*/
   m_last_stats_recalculation=std::chrono::steady_clock::now();
   // telemetry is available on both air and ground
   openhd::link_statistics::StatsAirGround stats{};
