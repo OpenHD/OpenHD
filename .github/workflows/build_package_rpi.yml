@@ -2,7 +2,7 @@ name: build_package_rpi
 
 on:
   push:
-    branches: [ master,"rapha-test", "2.0", "2.2.4-evo" ]
+    branches: [ master,"2.2.4-hotspot-tests", "2.0", "2.2.4-evo" ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
