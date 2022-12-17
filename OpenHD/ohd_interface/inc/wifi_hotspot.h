@@ -10,6 +10,7 @@
 
 #include "wifi_card.hpp"
 #include "wifi_hotspot_settings.h"
+#include "mavlink_settings/ISettingsComponent.hpp"
 
 /**
  * Wifi hotspot refers to creating a WiFi Access point on the device we are running on.

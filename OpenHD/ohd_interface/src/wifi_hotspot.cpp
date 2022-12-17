@@ -4,7 +4,6 @@
 
 #include "wifi_hotspot.h"
 
-#include <ISettingsComponent.hpp>
 #include <utility>
 
 #include "openhd-spdlog.hpp"
@@ -61,6 +60,7 @@ std::vector<openhd::Setting> WifiHotspot::get_all_settings() {
     }else{
       stop();
     }
+    return true;
   };
   ret.push_back(openhd::Setting{"E_WIFI_HOTSPOT",openhd::IntSetting{settings.enable,cb_enable}});
   return ret;
