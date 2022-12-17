@@ -568,6 +568,10 @@ void WBLink::update_statistics() {
   if(elapsed_since_last<RECALCULATE_STATISTICS_INTERVAL){
     return;
   }
+  if(m_foreign_packets_receiver){
+    const auto stats=m_foreign_packets_receiver->get_current_stats();
+    m_console->debug("Foreign packets stats:{}",stats.to_string());
+  }
   m_last_stats_recalculation=std::chrono::steady_clock::now();
   // telemetry is available on both air and ground
   openhd::link_statistics::StatsAirGround stats{};
