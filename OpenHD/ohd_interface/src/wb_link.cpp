@@ -59,9 +59,11 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   }
   // exp
   const auto t_radio_port_rx = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
-  auto excluded=std::vector<int>{t_radio_port_rx,OHD_VIDEO_PRIMARY_RADIO_PORT,OHD_VIDEO_SECONDARY_RADIO_PORT};
-  //auto excluded=std::vector<int>{OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT,OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT,
-  //                                 OHD_VIDEO_PRIMARY_RADIO_PORT,OHD_VIDEO_SECONDARY_RADIO_PORT};
+  auto excluded=std::vector<int>{t_radio_port_rx};
+  if(m_profile.is_ground()){
+    excluded.push_back(OHD_VIDEO_PRIMARY_RADIO_PORT);
+    excluded.push_back(OHD_VIDEO_SECONDARY_RADIO_PORT);
+  }
   m_foreign_packets_receiver=std::make_unique<ForeignPacketsReceiver>(get_rx_card_names(),excluded);
 }
 
