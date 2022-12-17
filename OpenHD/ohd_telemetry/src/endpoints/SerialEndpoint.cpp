@@ -227,7 +227,6 @@ void SerialEndpoint::receive_data_until_error() {
   m_n_failed_reads=0;
 
   while (!_stop_requested) {
-    int recv_len;
     const auto before=std::chrono::steady_clock::now();
     const int pollrc = poll(fds, 1, 1000);
     // on my ubuntu laptop, with usb serial, if the device disconnects I don't get any error results,
@@ -259,16 +258,14 @@ void SerialEndpoint::receive_data_until_error() {
       return;
     }
     // We enter here if (fds[0].revents & POLLIN) == true
-    recv_len = static_cast<int>(read(_fd, buffer, sizeof(buffer)));
-    if (recv_len < -1) {
+    const int recv_len = static_cast<int>(read(_fd, buffer, sizeof(buffer)));
+    if(recv_len>0){
+      MEndpoint::parseNewData(buffer,recv_len);
+    }else if(recv_len==0) {
+      // timeout
+    }else{
       m_console->warn("read failure: {}",GET_ERROR());
     }
-    if (recv_len > static_cast<int>(sizeof(buffer)) || recv_len == 0) {
-      // probably timeout
-      continue;
-    }
-    //m_console->debug("Got data {} bytes",recv_len);
-    MEndpoint::parseNewData(buffer,recv_len);
   }
   m_console->debug("receive_data_until_error() end");
 }
