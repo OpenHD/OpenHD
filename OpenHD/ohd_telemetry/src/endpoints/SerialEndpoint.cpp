@@ -140,6 +140,8 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options,std::sha
   if(!m_console){
     m_console=openhd::log::get_default();
   }
+  // Also see https://blog.mbedded.ninja/programming/operating-systems/linux/linux-serial-ports-using-c-cpp/
+
   // open() hangs on macOS or Linux devices(e.g. pocket beagle) unless you give it O_NONBLOCK
   int fd = open(options.linux_filename.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (fd == -1) {
@@ -166,7 +168,7 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options,std::sha
   tc.c_cflag &= ~(CSIZE | PARENB | CRTSCTS);
   tc.c_cflag |= CS8;
   tc.c_cc[VMIN] = 0; // We are ok with 0 bytes.
-  tc.c_cc[VTIME] = 10; // Timeout after 1 second.
+  tc.c_cc[VTIME] = 10; // Timeout after  1s (10 deciseconds)
   if (options.flow_control) {
     tc.c_cflag |= CRTSCTS;
   }
