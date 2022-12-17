@@ -2,7 +2,7 @@ name: build_package_rpi
 
 on:
   push:
-    branches: [ master,"2.2.4-hotspot-tests", "2.0", "2.2.4-evo" ]
+    branches: [ master,"2.2.x-evo", "2.0" ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -64,7 +64,7 @@ jobs:
         command: "push"
         format: "deb"
         owner: "openhd"
-        repo: "openhd-2-2-dev"
+        repo: "openhd-2-2-evo"
         distro: "raspbian"
         release: "bullseye"
         republish: "true" # needed ONLY if version is not changing

@@ -2,7 +2,7 @@ name: build_package_jetson
 
 on:
   push:
-    branches: [ master, "2.0", "2.2.4-evo" ]
+    branches: [ master, "2.0", "2.2.x-evo" ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -72,7 +72,7 @@ jobs:
         command: "push"
         format: "deb"
         owner: "openhd"
-        repo: "openhd-2-2-dev"
+        repo: "openhd-2-2-evo"
         distro: "ubuntu"
         release: "bionic"
         republish: "true" # needed ONLY if version is not changing
