@@ -2,7 +2,7 @@ name: build_package_x86_20.04
 
 on:
   push:
-    branches: [ master, "2.0", "2.2.4-evo" ]
+    branches: [ master, "2.0", "2.2.x-evo" ]
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release

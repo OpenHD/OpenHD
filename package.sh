@@ -83,8 +83,6 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   --before-install ../../before-install.sh \
   $PLATFORM_PACKAGES \
   -d "iw" \
-  -d "isc-dhcp-common" \
-  -d "dnsmasq" \
   -d "aircrack-ng" \
   -d "i2c-tools" \
   -d "libv4l-dev" \
@@ -113,14 +111,11 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   --before-install ../../before-install.sh \
   $PLATFORM_PACKAGES \
   -d "iw" \
-  -d "isc-dhcp-common" \
-  -d "dnsmasq" \
   -d "aircrack-ng" \
   -d "i2c-tools" \
   -d "libv4l-dev" \
   -d "libusb-1.0-0" \
   -d "libpcap-dev" \
-  -d "libpng-dev" \
   -d "libnl-3-dev" \
   -d "libnl-genl-3-dev" \
   -d "libsdl2-2.0-0" \
