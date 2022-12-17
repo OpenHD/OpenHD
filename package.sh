@@ -52,7 +52,7 @@ mkdir -p ${PKGDIR}/etc/systemd/system
 
 if [[ "${OS}" == "raspbian" ]]; then
   mkdir -p ${PKGDIR}/boot/openhd/configs
-  cp ../dynamic_configs/* ${PKGDIR}/boot/openhd/configs/
+  cp ../../dynamic_configs/* ${PKGDIR}/boot/openhd/configs/
 fi
 
 cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
