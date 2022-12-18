@@ -14,7 +14,7 @@ m_wifi_card(std::move(wifiCard)) {
   m_settings=std::make_unique<WifiHotspotSettingsHolder>();
   wifi_hotspot_fixup_settings(*m_settings,m_wifi_card);
   if(m_settings->get_settings().enable){
-    start();
+    start_async();
   }
 }
 
