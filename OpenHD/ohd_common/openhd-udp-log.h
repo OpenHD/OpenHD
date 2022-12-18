@@ -105,7 +105,7 @@ static void sendLocalLogMessageUDP(const LogMessage & message){
   }
   memset(&servaddr, 0, sizeof(servaddr));
   servaddr.sin_family = AF_INET;
-  servaddr.sin_port = htons(OHD_LOCAL_LOG_MESSAGES_UDP_PORT);
+  servaddr.sin_port = htons(openhd::LOCAL_LOG_MESSAGES_UDP_PORT);
   inet_aton("127.0.0.1", (in_addr *)&servaddr.sin_addr.s_addr);
   sendto(sockfd, &message, sizeof(message), 0, (const struct sockaddr *)&servaddr, sizeof(servaddr));
   close(sockfd);
