@@ -40,7 +40,7 @@ void WifiHotspot::stop() {
   // TODO: We turn wifi completely off in network manager here, but this should work / not interfere with the monitor mode card(s) since they are
   // not managed by network manager
   const auto args=std::vector<std::string>{
-      "con","down",OHD_HOTSPOT_CONNECTION_NAME
+      "connection","down",OHD_HOTSPOT_CONNECTION_NAME
   };
   OHDUtil::run_command("nmcli",args);
   openhd::log::get_default()->info("Wifi hotspot stopped");
