@@ -135,15 +135,21 @@ void DCameras::detect_allwinner_csi() {
 }
 
 bool DCameras::detect_rapsberrypi_veye_v4l2_aaargh() {
-  const auto result_opt=OHDUtil::run_command_out("dmesg | grep \"camera id is veye\"");
-  m_console->debug("detect_rapsberrypi_veye_v4l2 got [{}]",result_opt.value_or("NONE"));
-  if(!result_opt.has_value()){
+  const auto v4l2_info_video0_opt=OHDUtil::run_command_out("v4l2-ctl --info --device /dev/video0");
+  if(!v4l2_info_video0_opt.has_value()){
+    m_console->warn("Veye detetct unexpected result, autodetect doesnt work");
     return false;
   }
-  const auto result=result_opt.value();
-  if(!OHDUtil::contains(result,"camera id is veye327")){
+  const auto& v4l2_info_video0=v4l2_info_video0_opt.value();
+  bool has_veye=OHDUtil::contains(v4l2_info_video0,"veye327") || OHDUtil::contains(v4l2_info_video0,"csimx307");
+  if(OHDFilesystemUtil::exists("/boot/tmp_force_veye.txt")){
+    m_console->warn("Forcing veye");
+    has_veye= true;
+  }
+  if(!has_veye){
     return false;
   }
+  m_console->info("Detected veye CSI camera");
   Camera camera;
   camera.type=CameraType::RPI_VEYE_CSI_V4l2;
   camera.bus="0";
