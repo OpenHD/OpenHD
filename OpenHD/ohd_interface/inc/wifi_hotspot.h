@@ -29,20 +29,18 @@ class WifiHotspot {
    */
   explicit WifiHotspot(WiFiCard wifiCard);
   /**
-   * initialize and start the hotspot.
+   * Expose all hotspot settings such that they can be changed via mavlink
    */
-  void start();
-  /**
-   * stop,de-init and cleanup hotspot.
-   */
-  void stop();
-  // since starting the wifi hotspot can be quite a long operation, this calls start() in a new thread.
-  // TODO stop safe in regards to concurrency.
-  void start_async();
-  void stop_async();
- public:
   std::vector<openhd::Setting> get_all_settings();
  private:
+  // NOTE: might block, use async
+  // just runs the appropriate network manager (nmcli) command to start wifi hotspot
+  void start();
+  // NOTE: might block,use async
+  // just runs the appropriate network manager (nmcli) command to stop an already created hotspot
+  void stop();
+  void start_async();
+  void stop_async();
   // Ip addresses of all connected clients.
   // A client might dynamically connect or disconnect from the AP at run time,
   // In this case the apropriate callbacks have to be called.
