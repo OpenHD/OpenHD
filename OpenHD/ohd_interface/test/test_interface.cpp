@@ -22,19 +22,19 @@ int main(int argc, char *argv[]) {
   OHDUtil::terminate_if_not_root();
   bool is_air=false;
   {
-	int c;
-	while ((c = getopt_long(argc, argv, optstr, long_options, NULL)) != -1) {
-	  const char *tmp_optarg = optarg;
-	  switch (c) {
-		case 'a':is_air = true;
-		  break;
-		case '?':
-		default:
-		  std::cout << "Usage: \n" <<
-					"--air (-a) run as air, otherwise run as ground \n";
-		  exit(1);
-	  }
-	}
+    int c;
+    while ((c = getopt_long(argc, argv, optstr, long_options, NULL)) != -1) {
+      const char *tmp_optarg = optarg;
+      switch (c) {
+        case 'a':is_air = true;
+          break;
+        case '?':
+        default:
+          std::cout << "Usage: \n" <<
+              "--air (-a) run as air, otherwise run as ground \n";
+          exit(1);
+      }
+    }
   }
   std::cout<<"Test_interface run as air:"<<OHDUtil::yes_or_no(is_air)<<"\n";
 
