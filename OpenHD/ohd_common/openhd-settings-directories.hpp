@@ -14,6 +14,8 @@
 #include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
 
+namespace openhd {
+
 // from https://superuser.com/questions/631859/preferred-place-to-store-configuration-files-that-change-often
 // All persistent settings are written into this directory.
 static constexpr auto BASE_PATH="/usr/local/share/openhd/";
@@ -103,5 +105,6 @@ static void remove_currently_running_file(){
   OHDFilesystemUtil::remove_if_existing(OPENHD_IS_RUNNING_FILENAME);
 }
 
+}
 
 #endif

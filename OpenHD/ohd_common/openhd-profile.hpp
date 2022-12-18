@@ -51,7 +51,7 @@ namespace DProfile{
 static std::shared_ptr<OHDProfile>  discover(bool is_air,bool developer_mode) {
   openhd::log::get_default()->debug("Profile::discover()");
   // We read the unit id from the persistent storage, later write it to the tmp storage json
-  const auto unit_id = getOrCreateUnitId();
+  const auto unit_id = openhd::getOrCreateUnitId();
   // We are air pi if there is at least one camera
   auto ret=std::make_shared<OHDProfile>(is_air,developer_mode,unit_id);
   return ret;

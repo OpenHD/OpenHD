@@ -5,7 +5,7 @@
 #include "wifi_hotspot_settings.h"
 
 WifiHotspotSettingsHolder::WifiHotspotSettingsHolder()
-    :openhd::settings::PersistentSettings<WifiHotspotSettings>(INTERFACE_SETTINGS_DIRECTORY){
+    :openhd::settings::PersistentSettings<WifiHotspotSettings>(openhd::INTERFACE_SETTINGS_DIRECTORY){
   init();
 }
 
