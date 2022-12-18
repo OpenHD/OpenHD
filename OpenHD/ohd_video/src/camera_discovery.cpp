@@ -36,20 +36,13 @@ DiscoveredCameraList DCameras::discover_internal() {
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
   if(m_platform.platform_type==PlatformType::RaspberryPi){
-    // We need to detect the veye camera first - since once a veye camera is detected and
-    // ? we either run the veye_raspivid or do the initializing stuff ? the "normal" rpi camera detection
-    // hangs infinite.
-    //(detect_raspberrypi_broadcom_veye()){
-    if(detect_rapsberrypi_veye_v4l2_aaargh()){
-      m_console->warn("WARNING detected veye camera, skipping normal rpi camera detection");
-    }else{
-      detect_raspberrypi_broadcom_csi();
-    }
+    detect_rapsberrypi_veye_v4l2_aaargh();
+    detect_raspberrypi_broadcom_csi();
+    detect_raspberry_libcamera();
   }
   else if(m_platform.platform_type == PlatformType::Allwinner){
     detect_allwinner_csi();
   }
-  
   // Allwinner 3.4 kernel v4l2 implementation is so sketchy that probing it can stop it working.
   if(m_platform.platform_type != PlatformType::Allwinner){
     // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
@@ -58,9 +51,6 @@ DiscoveredCameraList DCameras::discover_internal() {
     DThermalCamerasHelper::enableSeekIfFound();
     // This will detect all cameras (CSI or not) that do it the proper way (linux v4l2)
     detect_v4l2();
-  }
-  if (m_platform.platform_type == PlatformType::RaspberryPi) {
-    detect_raspberry_libcamera();
   }
   argh_cleanup();
   // write to json for debugging
@@ -135,15 +125,21 @@ void DCameras::detect_allwinner_csi() {
 }
 
 bool DCameras::detect_rapsberrypi_veye_v4l2_aaargh() {
-  const auto result_opt=OHDUtil::run_command_out("dmesg | grep \"camera id is veye\"");
-  m_console->debug("detect_rapsberrypi_veye_v4l2 got [{}]",result_opt.value_or("NONE"));
-  if(!result_opt.has_value()){
+  const auto v4l2_info_video0_opt=OHDUtil::run_command_out("v4l2-ctl --info --device /dev/video0");
+  if(!v4l2_info_video0_opt.has_value()){
+    m_console->warn("Veye detetct unexpected result, autodetect doesnt work");
     return false;
   }
-  const auto result=result_opt.value();
-  if(!OHDUtil::contains(result,"camera id is veye327")){
+  const auto& v4l2_info_video0=v4l2_info_video0_opt.value();
+  bool has_veye=OHDUtil::contains(v4l2_info_video0,"veye327") || OHDUtil::contains(v4l2_info_video0,"csimx307");
+  if(OHDFilesystemUtil::exists("/boot/tmp_force_veye.txt")){
+    m_console->warn("Forcing veye");
+    has_veye= true;
+  }
+  if(!has_veye){
     return false;
   }
+  m_console->info("Detected veye CSI camera");
   Camera camera;
   camera.type=CameraType::RPI_VEYE_CSI_V4l2;
   camera.bus="0";
