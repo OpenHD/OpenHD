@@ -232,7 +232,7 @@ int main(int argc, char *argv[]) {
       "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n"<<
       "run_time_seconds:"<<options.run_time_seconds<<"\n"<<
       "developer_mode:"<<OHDUtil::yes_or_no(options.developer_mode)<<"\n";
-  std::cout<<"Version number:"<<OHD_VERSION_NUMBER_STRING<<"\n";
+  std::cout<<"Version number:"<<openhd::VERSION_NUMBER_STRING<<"\n";
   std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
   OHDInterface::print_internal_fec_optimization_method();
 
@@ -242,7 +242,7 @@ int main(int argc, char *argv[]) {
   assert(m_console);
 
   // not guaranteed, but better than nothing, check if openhd is already running (kinda) and print warning if yes.
-  check_currently_running_file_and_write();
+  openhd::check_currently_running_file_and_write();
 
   // First discover the platform:
   const auto platform = DPlatform::discover();
@@ -252,11 +252,11 @@ int main(int argc, char *argv[]) {
   try {
     // This results in fresh default values for all modules (e.g. interface, telemetry, video)
     if(options.reset_all_settings){
-      clean_all_settings();
+      openhd::clean_all_settings();
     }
     // or only the wb_link module
     if(options.reset_frequencies){
-      clean_all_interface_settings();
+      openhd::clean_all_interface_settings();
     }
     // on rpi, we have the gpio input such that users don't have to create the reset frequencies file
     if(platform->platform_type==PlatformType::RaspberryPi){
@@ -264,11 +264,11 @@ int main(int argc, char *argv[]) {
       openhd::rpi::gpio26_configure();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       if(openhd::rpi::gpio26_user_wants_reset_frequencies()){
-        clean_all_interface_settings();
+        openhd::clean_all_interface_settings();
       }
     }
 
-    generateSettingsDirectoryIfNonExists();
+    openhd::generateSettingsDirectoryIfNonExists();
 
     // Profile no longer depends on n discovered cameras,
     // But if we are air, we have at least one camera, sw if no camera was found
@@ -442,6 +442,6 @@ int main(int argc, char *argv[]) {
     std::cerr << "Unknown exception occurred" << std::endl;
     exit(1);
   }
-  remove_currently_running_file();
+  openhd::remove_currently_running_file();
   return 0;
 }

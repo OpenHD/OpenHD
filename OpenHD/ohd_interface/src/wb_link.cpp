@@ -126,8 +126,8 @@ void WBLink::configure_cards() {
 void WBLink::configure_telemetry() {
   // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
   // tx radio port on air is the same as rx on ground and verse visa
-  const auto radio_port_rx = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
-  const auto radio_port_tx = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
+  const auto radio_port_rx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
+  const auto radio_port_tx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
   auto cb=[this](const uint8_t* data, int data_len){
     auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
     on_receive_telemetry_data(shared);
@@ -141,8 +141,8 @@ void WBLink::configure_video() {
   // Video is unidirectional, aka always goes from air pi to ground pi
   if (m_profile.is_air) {
     // we transmit video
-    auto primary = create_wb_tx(OHD_VIDEO_PRIMARY_RADIO_PORT, true);
-    auto secondary = create_wb_tx(OHD_VIDEO_SECONDARY_RADIO_PORT, true);
+    auto primary = create_wb_tx(openhd::VIDEO_PRIMARY_RADIO_PORT, true);
+    auto secondary = create_wb_tx(openhd::VIDEO_SECONDARY_RADIO_PORT, true);
     m_wb_video_tx_list.push_back(std::move(primary));
     m_wb_video_tx_list.push_back(std::move(secondary));
   } else {
@@ -153,9 +153,9 @@ void WBLink::configure_video() {
     auto cb2=[this](const uint8_t* data,int data_len){
       forward_video_data(1,data,data_len);
     };
-    auto primary = create_wb_rx(OHD_VIDEO_PRIMARY_RADIO_PORT,cb1);
+    auto primary = create_wb_rx(openhd::VIDEO_PRIMARY_RADIO_PORT,cb1);
     primary->start_async();
-    auto secondary = create_wb_rx(OHD_VIDEO_SECONDARY_RADIO_PORT,cb2);
+    auto secondary = create_wb_rx(openhd::VIDEO_SECONDARY_RADIO_PORT,cb2);
     secondary->start_async();
     m_wb_video_rx_list.push_back(std::move(primary));
     m_wb_video_rx_list.push_back(std::move(secondary));
@@ -259,7 +259,7 @@ void WBLink::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
   m_console->info("WBStreams::addExternalDeviceIpForwardingVideoOnly:"+ip);
   // forward video
   for(auto& rxVid: m_wb_video_rx_list){
-    const auto udpPort=first ? OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP : OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP;
+    const auto udpPort=first ? openhd::VIDEO_GROUND_VIDEO_STREAM_1_UDP : openhd::VIDEO_GROUND_VIDEO_STREAM_2_UDP;
     first= false;
     if(m_ground_video_forwarder){
       m_ground_video_forwarder->addForwarder(ip,udpPort);
@@ -271,7 +271,7 @@ void WBLink::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
   bool first= true;
   assert(m_wb_video_rx_list.size()==2);
   for(auto& rxVid: m_wb_video_rx_list){
-    const auto udpPort=first ? OHD_VIDEO_GROUND_VIDEO_STREAM_1_UDP : OHD_VIDEO_GROUND_VIDEO_STREAM_2_UDP;
+    const auto udpPort=first ? openhd::VIDEO_GROUND_VIDEO_STREAM_1_UDP : openhd::VIDEO_GROUND_VIDEO_STREAM_2_UDP;
     first= false;
     if(m_ground_video_forwarder){
       m_ground_video_forwarder->removeForwarder(ip,udpPort);

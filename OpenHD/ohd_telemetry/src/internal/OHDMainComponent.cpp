@@ -22,7 +22,7 @@ OHDMainComponent::OHDMainComponent(
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform);
   m_log_messages_receiver =
       std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
-                                                  OHD_LOCAL_LOG_MESSAGES_UDP_PORT,
+                                                  openhd::LOCAL_LOG_MESSAGES_UDP_PORT,
                                                   [this](const uint8_t *payload,
                                                          const std::size_t payloadSize) {
                                                     this->m_status_text_accumulator.processLogMessageData(payload, payloadSize);
@@ -176,7 +176,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
 MavlinkMessage OHDMainComponent::generate_ohd_version(const std::string& commit_hash) const {
   MavlinkMessage msg;
   char bufferBigEnough[30]={};
-  std::strncpy((char *)bufferBigEnough,OHD_VERSION_NUMBER_STRING,30);
+  std::strncpy((char *)bufferBigEnough,openhd::VERSION_NUMBER_STRING,30);
   char bufferBigEnough2[30]={};
   std::strncpy((char *)bufferBigEnough2,commit_hash.c_str(),30);
   mavlink_msg_openhd_version_message_pack(m_sys_id, m_comp_id, &msg.m, bufferBigEnough,bufferBigEnough2);
