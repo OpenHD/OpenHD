@@ -21,10 +21,8 @@ int main(int argc, char *argv[]) {
   wifiCard.supports_hotspot= true;
 
   WifiHotspot wifiHotspot{wifiCard};
-  wifiHotspot.start();
   OHDUtil::keep_alive_until_sigterm();
   std::cout<<"test end\n";
-  wifiHotspot.stop();
   return 0;
 
 }
