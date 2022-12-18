@@ -36,9 +36,11 @@ DiscoveredCameraList DCameras::discover_internal() {
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
   if(m_platform.platform_type==PlatformType::RaspberryPi){
-    detect_rapsberrypi_veye_v4l2_aaargh();
     detect_raspberrypi_broadcom_csi();
-    detect_raspberry_libcamera();
+    if(!detect_rapsberrypi_veye_v4l2_aaargh()){
+      m_console->warn("Skipping libcamera detect, since it might pick up a veye cam by accident even though it cannot do it");
+      detect_raspberry_libcamera();
+    }
   }
   else if(m_platform.platform_type == PlatformType::Allwinner){
     detect_allwinner_csi();
