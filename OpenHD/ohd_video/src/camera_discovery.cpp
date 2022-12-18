@@ -14,7 +14,7 @@
 #include "libcamera_detect.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "openhd-util.hpp"
-#include "veye-helper.hpp"
+
 
 DCameras::DCameras(const OHDPlatform ohdPlatform) :
 	m_platform(ohdPlatform){
