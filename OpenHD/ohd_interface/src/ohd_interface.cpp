@@ -113,8 +113,6 @@ void OHDInterface::removeExternalDeviceIpForwarding(const openhd::ExternalDevice
   }
 }
 
-static constexpr auto OHD_INTERFACE_ENABLE_WIFI_HOTSPOT="I_WIFI_HOTSPOT_E";
-
 std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   std::vector<openhd::Setting> ret;
   if(m_wb_link){
