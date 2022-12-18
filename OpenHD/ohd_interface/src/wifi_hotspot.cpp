@@ -4,6 +4,7 @@
 
 #include "wifi_hotspot.h"
 
+#include <future>
 #include <utility>
 
 #include "openhd-spdlog.hpp"
@@ -25,26 +26,20 @@ void WifiHotspot::start() {
 }
 
 void WifiHotspot::stop() {
-  if(_start_async_thread){
-    if(_start_async_thread->joinable()){
-      _start_async_thread->join();
-    }
-    _start_async_thread=nullptr;
-  }
+  openhd::log::get_default()->debug("Stopping wifi hotspot on card {}",m_wifi_card.device_name);
   if(!started)return;
   // TODO: We turn wifi completely off in network manager here, but this should work / not interfere with the monitor mode card(s) since they are
   // not managed by network manager
   OHDUtil::run_command("nmcli",{"radio","wifi","off"});
+  openhd::log::get_default()->info("Wifi hotspot stopped");
 }
 
 void WifiHotspot::start_async() {
-  if(_start_async_thread!= nullptr)return;
-  _start_async_thread=std::make_unique<std::thread>(&WifiHotspot::start, this);
+  auto result=std::async(std::launch::async, &WifiHotspot::start,this);
 }
 
 void WifiHotspot::stop_async() {
-  if(_stop_async_thread!= nullptr)return;
-  _stop_async_thread=std::make_unique<std::thread>(&WifiHotspot::stop, this);
+  auto result=std::async(std::launch::async, &WifiHotspot::stop,this);
 }
 
 std::vector<openhd::Setting> WifiHotspot::get_all_settings() {
@@ -56,12 +51,12 @@ std::vector<openhd::Setting> WifiHotspot::get_all_settings() {
     m_settings->unsafe_get_settings().enable=value;
     m_settings->persist();
     if(m_settings->get_settings().enable){
-      start();
+      start_async();
     }else{
-      stop();
+      stop_async();
     }
     return true;
   };
-  ret.push_back(openhd::Setting{"E_WIFI_HOTSPOT",openhd::IntSetting{settings.enable,cb_enable}});
+  ret.push_back(openhd::Setting{"I_WIFI_HOTSPOT_E",openhd::IntSetting{settings.enable,cb_enable}});
   return ret;
 }

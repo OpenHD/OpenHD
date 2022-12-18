@@ -49,8 +49,6 @@ class WifiHotspot {
   std::vector<std::string> connectedClientsIps;
   const WiFiCard m_wifi_card;
   bool started=false;
-  std::unique_ptr<std::thread> _start_async_thread= nullptr;
-  std::unique_ptr<std::thread> _stop_async_thread= nullptr;
   std::unique_ptr<WifiHotspotSettingsHolder> m_settings;
 };
 
