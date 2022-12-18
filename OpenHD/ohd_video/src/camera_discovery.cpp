@@ -36,17 +36,13 @@ DiscoveredCameraList DCameras::discover_internal() {
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
   if(m_platform.platform_type==PlatformType::RaspberryPi){
-    if(detect_rapsberrypi_veye_v4l2_aaargh()){
-      m_console->warn("WARNING detected veye camera, skipping normal rpi camera detection");
-      return m_cameras;
-    }else{
-      detect_raspberrypi_broadcom_csi();
-    }
+    detect_rapsberrypi_veye_v4l2_aaargh();
+    detect_raspberrypi_broadcom_csi();
+    detect_raspberry_libcamera();
   }
   else if(m_platform.platform_type == PlatformType::Allwinner){
     detect_allwinner_csi();
   }
-  
   // Allwinner 3.4 kernel v4l2 implementation is so sketchy that probing it can stop it working.
   if(m_platform.platform_type != PlatformType::Allwinner){
     // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
@@ -55,9 +51,6 @@ DiscoveredCameraList DCameras::discover_internal() {
     DThermalCamerasHelper::enableSeekIfFound();
     // This will detect all cameras (CSI or not) that do it the proper way (linux v4l2)
     detect_v4l2();
-  }
-  if (m_platform.platform_type == PlatformType::RaspberryPi) {
-    detect_raspberry_libcamera();
   }
   argh_cleanup();
   // write to json for debugging
