@@ -524,7 +524,8 @@ static std::string createOutputUdpLocalhost(const int udpOutPort) {
 }
 
 static std::string createOutputAppSink(){
-  return " appsink drop=true name=out_appsink";
+  // don't forget the white space at the end, we might add stuff after appsink if recording is enabled
+  return " appsink drop=true name=out_appsink ";
 }
 
 // Needs to match below
