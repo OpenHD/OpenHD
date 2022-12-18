@@ -13,7 +13,7 @@
 #include "openhd-spdlog.hpp"
 
 /**
- * Main entry point for OpenHD video streaming for discovered cameras.
+ * Main entry point for OpenHD video streaming for discovered cameras on the air unit.
  * NOTE: Camera(s) and camera settings are local on the air unit, the ground unit does not need to know anything about that -
  * it just "stupidly" forwards received video data. Therefore, we only create an instance of this class on the air unit.
  * See the Readme.md and camerastream.h for more information.
