@@ -81,11 +81,9 @@ class PersistentSettings{
     const auto last_settings_opt=read_last_settings();
     if(last_settings_opt.has_value()){
       _settings=std::make_unique<T>(last_settings_opt.value());
-      std::stringstream ss;
-      ss<<"Using settings in ["<<get_file_path()<<"]";
-      openhd::log::get_default()->info(ss.str());
+      openhd::log::get_default()->info("Using settings in [{}]",get_file_path());
     }else{
-      openhd::log::get_default()->info("Creating default settings:"+get_file_path());
+      openhd::log::get_default()->info("Creating default settings in [{}]",get_file_path());
       // create default settings and persist them for the next reboot
       _settings=std::make_unique<T>(create_default());
       persist_settings();
@@ -129,10 +127,7 @@ class PersistentSettings{
       auto tmp=j.get<T>();
       return tmp;
     }catch(nlohmann::json::exception& ex){
-      std::stringstream ss;
-      ss<<"PersistentSettings::read_last_settings json exception on {"<<file_path<<"} ";
-      ss<<ex.what();
-      openhd::log::get_default()->debug(ss.str());
+      openhd::log::get_default()->warn("PersistentSettings::read_last_settings json exception {} on [{}]",ex.what(),file_path);
       // this means the default settings will be created
       return std::nullopt;
     }
