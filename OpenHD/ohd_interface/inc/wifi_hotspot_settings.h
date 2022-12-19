@@ -15,10 +15,11 @@
 // NOTE: wb_link intentionally has its own settings
 struct WifiHotspotSettings {
   bool enable=false;
-  uint32_t frequency=2412;
+  // weather to use any 2.4G or any 5G channel
+  bool use_5g_channel=false;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WifiHotspotSettings,enable,frequency);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WifiHotspotSettings,enable,use_5g_channel);
 
 class WifiHotspotSettingsHolder:public openhd::settings::PersistentSettings<WifiHotspotSettings>{
  public:
@@ -34,6 +35,6 @@ class WifiHotspotSettingsHolder:public openhd::settings::PersistentSettings<Wifi
   }
 };
 
-void wifi_hotspot_fixup_settings(WifiHotspotSettingsHolder& wifi_hotspot_settings_holder,const WiFiCard& wifi_card);
+void wifi_hotspot_fixup_settings(WifiHotspotSettingsHolder& wifi_hotspot_settings_holder,const WiFiCard& wifi_card,const openhd::Space& wifibroadcast_frequency_space);
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_HOTSPOT_SETTINGS_H_

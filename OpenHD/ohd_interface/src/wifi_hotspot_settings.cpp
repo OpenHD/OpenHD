@@ -9,6 +9,8 @@ WifiHotspotSettingsHolder::WifiHotspotSettingsHolder()
   init();
 }
 
-void wifi_hotspot_fixup_settings(WifiHotspotSettingsHolder& wifi_hotspot_settings_holder,
-                                 const WiFiCard& wifi_card) {
+void wifi_hotspot_fixup_settings(
+    WifiHotspotSettingsHolder& wifi_hotspot_settings_holder,const WiFiCard& wifi_card,
+    const openhd::Space& wifibroadcast_frequency_space) {
+
 }

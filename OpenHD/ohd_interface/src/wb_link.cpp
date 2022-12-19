@@ -973,3 +973,7 @@ bool WBLink::check_in_state_support_changing_settings(){
 void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
   m_wb_tele_tx->feedPacket(data->data(),data->size());
 }
+
+const openhd::Space WBLink::get_current_frequency_channel_space() {
+  return openhd::get_space_from_frequency(m_settings->get_settings().wb_frequency);
+}

@@ -17,7 +17,9 @@ static bool create_hotspot_connection(const WiFiCard& card,const WifiHotspotSett
   OHDUtil::run_command("nmcli",{"con","delete",OHD_HOTSPOT_CONNECTION_NAME});
   // and create the hotspot one
   OHDUtil::run_command("nmcli",{"con add type wifi ifname",card.device_name,"con-name",OHD_HOTSPOT_CONNECTION_NAME,"autoconnect no ssid openhd"});
-  OHDUtil::run_command("nmcli",{"con modify ",OHD_HOTSPOT_CONNECTION_NAME," 802-11-wireless.mode ap 802-11-wireless.band bg ipv4.method shared"});
+  OHDUtil::run_command("nmcli",{"con modify ",OHD_HOTSPOT_CONNECTION_NAME," 802-11-wireless.mode ap",
+                                 "802-11-wireless.band",settings.use_5g_channel ? "a" : "bg",
+                                 "ipv4.method shared"});
   OHDUtil::run_command("nmcli",{"con modify ",OHD_HOTSPOT_CONNECTION_NAME," wifi-sec.key-mgmt wpa-psk"});
   OHDUtil::run_command("nmcli",{"con modify ",OHD_HOTSPOT_CONNECTION_NAME," wifi-sec.psk \"openhdopenhd\""});
   return true;
@@ -28,7 +30,7 @@ WifiHotspot::WifiHotspot(WiFiCard wifiCard):
 m_wifi_card(std::move(wifiCard)) {
   m_console = openhd::log::create_or_get("wifi_hs");
   m_settings=std::make_unique<WifiHotspotSettingsHolder>();
-  wifi_hotspot_fixup_settings(*m_settings,m_wifi_card);
+  wifi_hotspot_fixup_settings(*m_settings,m_wifi_card,openhd::Space::G5_8);
   // create the connection (no matter if hotspot is enabled) such that we can just enable / disable it whenn the hotspot changes up/down
   m_console->debug("begin create hotspot connection");
   create_hotspot_connection(m_wifi_card,m_settings->get_settings());

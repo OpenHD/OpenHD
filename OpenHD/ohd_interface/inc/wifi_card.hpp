@@ -11,6 +11,7 @@
 #include "openhd-util-filesystem.hpp"
 #include "openhd-util.hpp"
 #include "validate_settings_helper.h"
+#include "wifi_channel.h"
 
 // R.n (20.08) this class can be summarized as following:
 // 1) WifiCard: Capabilities of a detected wifi card, no persistent settings

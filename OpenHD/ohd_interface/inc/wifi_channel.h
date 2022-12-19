@@ -185,5 +185,14 @@ static std::vector<openhd::WifiChannel> get_all_channels_from_safe_frequencies(
   return ret;
 }
 
+static Space get_space_from_frequency(uint32_t frequency){
+  auto channel= channel_from_frequency(frequency);
+  if(!channel.has_value()){
+    openhd::log::get_default()->warn("Invalid frequency {}, assuming 5G",frequency);
+    return Space::G5_8;
+  }
+  return channel.value().space;
+}
+
 }
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_CHANNEL_H_
