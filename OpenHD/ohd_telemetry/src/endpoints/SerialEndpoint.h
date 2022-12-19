@@ -15,6 +15,8 @@
 #include "MEndpoint.h"
 #include "openhd-spdlog.hpp"
 
+#include "HelperSources/TimeHelper.hpp"
+
 // At some point, I decided there is no way around it than to write our own UART receiver program.
 // Mostly based on MAVSDK. Doesn't use boost.
 class SerialEndpoint : public MEndpoint{
@@ -70,6 +72,11 @@ class SerialEndpoint : public MEndpoint{
   static constexpr auto MIN_DELAY_BETWEEN_SERIAL_READ_FAILED_LOG_MESSAGES=std::chrono::seconds(3);
   std::chrono::steady_clock::time_point m_last_log_serial_read_failed=std::chrono::steady_clock::now();
   int m_n_failed_reads=0;
+ private:
+  int m_tx_n_bytes;
+  int m_rx_n_bytes;
+  BitrateCalculator m_tx_calc{};
+  BitrateCalculator m_rx_calc{};
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_

@@ -77,6 +77,8 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
   // If we have a fd, but the write fails, most likely the UART disconnected
   // but the linux driver hasn't noticed it yet.
   const auto send_len = static_cast<int>(write(m_fd,data.data(), data.size()));
+  m_tx_n_bytes+=data.size();
+  m_console->debug("Tx bps:{}",m_tx_calc.get_last_or_recalculate(m_tx_n_bytes,std::chrono::seconds(1)));
   //m_console->debug("Written {} bytes",send_len);
   if (send_len != data.size()) {
     m_n_failed_writes++;
@@ -261,6 +263,8 @@ void SerialEndpoint::receive_data_until_error() {
     const int recv_len = static_cast<int>(read(m_fd, buffer, sizeof(buffer)));
     if(recv_len>0){
       MEndpoint::parseNewData(buffer,recv_len);
+      m_rx_n_bytes+=recv_len;
+      m_console->debug("Rx bps:{}",m_tx_calc.get_last_or_recalculate(m_rx_n_bytes,std::chrono::seconds(1)));
     }else if(recv_len==0) {
       // timeout
     }else{
