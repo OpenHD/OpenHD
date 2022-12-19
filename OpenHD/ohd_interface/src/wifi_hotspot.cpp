@@ -11,39 +11,63 @@
 
 static constexpr auto OHD_HOTSPOT_CONNECTION_NAME="openhd_hotspot";
 
+static bool create_hotspot_connection(const WiFiCard& card,const WifiHotspotSettings& settings){
+  // delete any previous connection that might exist
+  OHDUtil::run_command("nmcli",{"con","delete",OHD_HOTSPOT_CONNECTION_NAME});
+  // and create the hotspot one
+  OHDUtil::run_command("nmcli",{"con add type wifi ifname",card.device_name,"con-name",OHD_HOTSPOT_CONNECTION_NAME,"autoconnect no ssid openhd"});
+  OHDUtil::run_command("nmcli",{"con modify ",OHD_HOTSPOT_CONNECTION_NAME," 802-11-wireless.mode ap 802-11-wireless.band bg ipv4.method shared"});
+  OHDUtil::run_command("nmcli",{"con modify ",OHD_HOTSPOT_CONNECTION_NAME," wifi-sec.key-mgmt wpa-psk"});
+  OHDUtil::run_command("nmcli",{"con modify ",OHD_HOTSPOT_CONNECTION_NAME," wifi-sec.psk \"openhdopenhd\""});
+  return true;
+}
+
+
 WifiHotspot::WifiHotspot(WiFiCard wifiCard):
 m_wifi_card(std::move(wifiCard)) {
+  m_console = openhd::log::create_or_get("wifi_hs");
   m_settings=std::make_unique<WifiHotspotSettingsHolder>();
   wifi_hotspot_fixup_settings(*m_settings,m_wifi_card);
+  // create the connection (no matter if hotspot is enabled) such that we can just enable / disable it whenn the hotspot changes up/down
+  m_console->debug("begin create hotspot connection");
+  create_hotspot_connection(m_wifi_card,m_settings->get_settings());
+  m_console->debug("end create hotspot connection");
   if(m_settings->get_settings().enable){
     start_async();
   }
 }
 
+WifiHotspot::~WifiHotspot() {
+  OHDUtil::run_command("nmcli",{"con", "delete",OHD_HOTSPOT_CONNECTION_NAME});
+}
+
+
 void WifiHotspot::start() {
-  openhd::log::get_default()->debug("Starting WIFI hotspot on card {}",m_wifi_card.device_name);
-  const auto args=std::vector<std::string>{
+  m_console->debug("Starting WIFI hotspot on card {}",m_wifi_card.device_name);
+  /*const auto args=std::vector<std::string>{
       "dev wifi hotspot",
        "con-name",OHD_HOTSPOT_CONNECTION_NAME,
        "ifname",m_wifi_card.device_name,
        "ssid","openhd",
        "password", "\"openhdopenhd\""
-  };
+  };*/
+  const auto args=std::vector<std::string>{"con","up",OHD_HOTSPOT_CONNECTION_NAME};
   OHDUtil::run_command("nmcli",args);
   started= true;
-  openhd::log::get_default()->info("Wifi hotspot started");
+  m_console->info("Wifi hotspot started");
 }
 
 void WifiHotspot::stop() {
-  openhd::log::get_default()->debug("Stopping wifi hotspot on card {}",m_wifi_card.device_name);
+  m_console->debug("Stopping wifi hotspot on card {}",m_wifi_card.device_name);
   if(!started)return;
   // TODO: We turn wifi completely off in network manager here, but this should work / not interfere with the monitor mode card(s) since they are
   // not managed by network manager
-  const auto args=std::vector<std::string>{
+  /*const auto args=std::vector<std::string>{
       "connection","down",OHD_HOTSPOT_CONNECTION_NAME
-  };
+  };*/
+  const auto args=std::vector<std::string>{"con","down",OHD_HOTSPOT_CONNECTION_NAME};
   OHDUtil::run_command("nmcli",args);
-  openhd::log::get_default()->info("Wifi hotspot stopped");
+  m_console->info("Wifi hotspot stopped");
 }
 
 void WifiHotspot::start_async() {

@@ -28,6 +28,9 @@ class WifiHotspot {
    * Utility for starting, stopping WIFI AP (Hotspot) and forwarding the client connect/disconnect events.
    */
   explicit WifiHotspot(WiFiCard wifiCard);
+  WifiHotspot(const WifiHotspot&)=delete;
+  WifiHotspot(const WifiHotspot&&)=delete;
+  ~WifiHotspot();
   /**
    * Expose all hotspot settings such that they can be changed via mavlink
    */
@@ -48,6 +51,7 @@ class WifiHotspot {
   const WiFiCard m_wifi_card;
   bool started=false;
   std::unique_ptr<WifiHotspotSettingsHolder> m_settings;
+  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_
