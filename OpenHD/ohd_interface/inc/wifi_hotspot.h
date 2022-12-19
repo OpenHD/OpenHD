@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <future>
 
 #include "wifi_card.hpp"
 #include "wifi_hotspot_settings.h"
@@ -52,6 +53,7 @@ class WifiHotspot {
   bool started=false;
   std::unique_ptr<WifiHotspotSettingsHolder> m_settings;
   std::shared_ptr<spdlog::logger> m_console;
+  std::future<void> m_last_async_operation;
 };
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_

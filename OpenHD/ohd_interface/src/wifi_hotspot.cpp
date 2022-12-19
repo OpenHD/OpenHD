@@ -4,7 +4,6 @@
 
 #include "wifi_hotspot.h"
 
-#include <future>
 #include <utility>
 
 #include "openhd-spdlog.hpp"
@@ -62,11 +61,11 @@ void WifiHotspot::stop() {
 }
 
 void WifiHotspot::start_async() {
-  auto result=std::async(std::launch::async, &WifiHotspot::start,this);
+  m_last_async_operation=std::async(std::launch::async, &WifiHotspot::start,this);
 }
 
 void WifiHotspot::stop_async() {
-  auto result=std::async(std::launch::async, &WifiHotspot::stop,this);
+  m_last_async_operation=std::async(std::launch::async, &WifiHotspot::stop,this);
 }
 
 std::vector<openhd::Setting> WifiHotspot::get_all_settings() {
