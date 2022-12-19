@@ -520,12 +520,11 @@ static std::string createRtpForVideoCodec(const VideoCodec videoCodec) {
  * @return the gstreamer pipeline part
  */
 static std::string createOutputUdpLocalhost(const int udpOutPort) {
-  return fmt::format(" udpsink host=127.0.0.1 port={} ", udpOutPort);
+  return fmt::format(" udpsink host=127.0.0.1 port={}", udpOutPort);
 }
 
 static std::string createOutputAppSink(){
-  // don't forget the white space at the end, we might add stuff after appsink if recording is enabled
-  return " appsink drop=true name=out_appsink ";
+  return " appsink drop=true name=out_appsink";
 }
 
 // Needs to match below
@@ -546,7 +545,8 @@ static std::string file_suffix_for_video_codec(const VideoCodec videoCodec){
 // in case the gst pipeline is not stopped properly
 static std::string createRecordingForVideoCodec(const VideoCodec videoCodec,const std::string& out_filename) {
   std::stringstream ss;
-  ss << "t. ! queue ! ";
+  // don't forget the white space before the " t." !
+  ss << " t. ! queue ! ";
   if (videoCodec == VideoCodec::H264) {
     ss << "h264parse ! ";
   } else if (videoCodec == VideoCodec::H265) {
