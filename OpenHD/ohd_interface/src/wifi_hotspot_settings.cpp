@@ -23,4 +23,9 @@ void wifi_hotspot_fixup_settings(
     }
     wifi_hotspot_settings_holder.persist();
   }
+  if(wifi_hotspot_settings_holder.get_settings().use_5g_channel && !wifi_card.supports_5GHz()){
+    openhd::log::get_default()->warn("openhd needs 5G hotspot but hotspot card only supports 2G,you'l get really bad interference");
+    wifi_hotspot_settings_holder.unsafe_get_settings().use_5g_channel= false;
+    wifi_hotspot_settings_holder.persist();
+  }
 }
