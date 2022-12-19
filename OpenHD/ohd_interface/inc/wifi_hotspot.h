@@ -28,7 +28,7 @@ class WifiHotspot {
   /**
    * Utility for starting, stopping WIFI AP (Hotspot) and forwarding the client connect/disconnect events.
    */
-  explicit WifiHotspot(WiFiCard wifiCard);
+  explicit WifiHotspot(WiFiCard wifiCard,const openhd::Space& wifibroadcast_frequency_space);
   WifiHotspot(const WifiHotspot&)=delete;
   WifiHotspot(const WifiHotspot&&)=delete;
   ~WifiHotspot();
@@ -38,10 +38,10 @@ class WifiHotspot {
   std::vector<openhd::Setting> get_all_settings();
  private:
   // NOTE: might block, use async
-  // just runs the appropriate network manager (nmcli) command to start wifi hotspot
+  // just runs the appropriate network manager (nmcli) command to start an already created wifi hotspot connection
   void start();
   // NOTE: might block,use async
-  // just runs the appropriate network manager (nmcli) command to stop an already created hotspot
+  // just runs the appropriate network manager (nmcli) command to stop an already created wifi hotspot connection
   void stop();
   void start_async();
   void stop_async();

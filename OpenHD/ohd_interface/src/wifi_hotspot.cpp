@@ -26,11 +26,11 @@ static bool create_hotspot_connection(const WiFiCard& card,const WifiHotspotSett
 }
 
 
-WifiHotspot::WifiHotspot(WiFiCard wifiCard):
+WifiHotspot::WifiHotspot(WiFiCard wifiCard,const openhd::Space& wifibroadcast_frequency_space):
 m_wifi_card(std::move(wifiCard)) {
   m_console = openhd::log::create_or_get("wifi_hs");
   m_settings=std::make_unique<WifiHotspotSettingsHolder>();
-  wifi_hotspot_fixup_settings(*m_settings,m_wifi_card,openhd::Space::G5_8);
+  wifi_hotspot_fixup_settings(*m_settings,m_wifi_card,wifibroadcast_frequency_space);
   // create the connection (no matter if hotspot is enabled) such that we can just enable / disable it whenn the hotspot changes up/down
   m_console->debug("begin create hotspot connection");
   create_hotspot_connection(m_wifi_card,m_settings->get_settings());
