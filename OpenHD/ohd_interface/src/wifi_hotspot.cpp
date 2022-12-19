@@ -38,19 +38,13 @@ m_wifi_card(std::move(wifiCard)) {
 }
 
 WifiHotspot::~WifiHotspot() {
+  // cleanup - proper stop of openhd, do not leave any traces behind.
   OHDUtil::run_command("nmcli",{"con", "delete",OHD_HOTSPOT_CONNECTION_NAME});
 }
 
 
 void WifiHotspot::start() {
   m_console->debug("Starting WIFI hotspot on card {}",m_wifi_card.device_name);
-  /*const auto args=std::vector<std::string>{
-      "dev wifi hotspot",
-       "con-name",OHD_HOTSPOT_CONNECTION_NAME,
-       "ifname",m_wifi_card.device_name,
-       "ssid","openhd",
-       "password", "\"openhdopenhd\""
-  };*/
   const auto args=std::vector<std::string>{"con","up",OHD_HOTSPOT_CONNECTION_NAME};
   OHDUtil::run_command("nmcli",args);
   started= true;
@@ -60,11 +54,6 @@ void WifiHotspot::start() {
 void WifiHotspot::stop() {
   m_console->debug("Stopping wifi hotspot on card {}",m_wifi_card.device_name);
   if(!started)return;
-  // TODO: We turn wifi completely off in network manager here, but this should work / not interfere with the monitor mode card(s) since they are
-  // not managed by network manager
-  /*const auto args=std::vector<std::string>{
-      "connection","down",OHD_HOTSPOT_CONNECTION_NAME
-  };*/
   const auto args=std::vector<std::string>{"con","down",OHD_HOTSPOT_CONNECTION_NAME};
   OHDUtil::run_command("nmcli",args);
   m_console->info("Wifi hotspot stopped");
