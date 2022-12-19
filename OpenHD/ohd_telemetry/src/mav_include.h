@@ -62,6 +62,13 @@ static std::vector<std::vector<uint8_t>> pack_messages(const std::vector<Mavlink
   return ret;
 }
 
+static int get_size(const std::vector<MavlinkMessage>& messages){
+  int ret=0;
+  for(const auto& message:messages){
+    ret+=message.pack().size();
+  }
+  return ret;
+}
 
 // For registering a callback that is called every time component X receives one or more mavlink messages
 typedef std::function<void(const std::vector<MavlinkMessage> messages)> MAV_MSG_CALLBACK;

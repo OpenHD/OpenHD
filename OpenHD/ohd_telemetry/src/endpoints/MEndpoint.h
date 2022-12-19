@@ -14,6 +14,7 @@
 #include <mutex>
 #include <utility>
 #include <atomic>
+#include "HelperSources/TimeHelper.hpp"
 
 // Mavlink Endpoint
 // A Mavlink endpoint hides away the underlying connection - e.g. UART, TCP, WB.
@@ -60,6 +61,7 @@ class MEndpoint {
   [[nodiscard]] std::string createInfo()const;
   // can be public since immutable
   const std::string TAG;
+  std::string get_tx_rx_stats();
  protected:
   // parse new data as it comes in, extract mavlink messages and forward them on the registered callback (if it has been registered)
   void parseNewData(const uint8_t *data,int data_len);
@@ -93,12 +95,14 @@ class MEndpoint {
     channel_idx++;
     return ret;
   }
-  // https://stackoverflow.com/questions/12657962/how-do-i-generate-a-random-number-between-two-variables-that-i-have-stored
-  static int random_number(int min,int max){
-    srand(time(NULL)); // Seed the time
-    const int num= rand()%(max-min+1)+min;
-    return num;
-  }
+ private:
+ private:
+  int m_tx_n_bytes;
+  int m_rx_n_bytes;
+  BitrateCalculator m_tx_calc{};
+  BitrateCalculator m_rx_calc{};
+  // m_console->debug("Rx bps:{}",m_tx_calc.get_last_or_recalculate(m_rx_n_bytes,std::chrono::seconds(1)));
+  // m_console->debug("Tx bps:{}",m_tx_calc.get_last_or_recalculate(m_tx_n_bytes,std::chrono::seconds(1)));
 };
 
 #endif //XMAVLINKSERVICE_MENDPOINT_H
