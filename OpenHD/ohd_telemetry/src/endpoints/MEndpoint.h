@@ -96,13 +96,11 @@ class MEndpoint {
     return ret;
   }
  private:
- private:
+  // Used to measure incoming / outgoing bits per second
   int m_tx_n_bytes;
   int m_rx_n_bytes;
   BitrateCalculator m_tx_calc{};
   BitrateCalculator m_rx_calc{};
-  // m_console->debug("Rx bps:{}",m_tx_calc.get_last_or_recalculate(m_rx_n_bytes,std::chrono::seconds(1)));
-  // m_console->debug("Tx bps:{}",m_tx_calc.get_last_or_recalculate(m_tx_n_bytes,std::chrono::seconds(1)));
 };
 
 #endif //XMAVLINKSERVICE_MENDPOINT_H
