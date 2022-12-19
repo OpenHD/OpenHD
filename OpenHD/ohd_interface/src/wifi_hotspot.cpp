@@ -11,6 +11,7 @@
 
 static constexpr auto OHD_HOTSPOT_CONNECTION_NAME="openhd_hotspot";
 
+// NOTE: This creates the proper NM connection, but does not start it yet.
 static bool create_hotspot_connection(const WiFiCard& card,const WifiHotspotSettings& settings){
   // delete any previous connection that might exist
   OHDUtil::run_command("nmcli",{"con","delete",OHD_HOTSPOT_CONNECTION_NAME});
