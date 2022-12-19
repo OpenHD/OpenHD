@@ -364,3 +364,16 @@ static bool validate_tx_power_level(int value){
 }
 auto res=OHDUtil::run_command_out("iw list");
   openhd::log::get_default()->debug("XX {}",res.value_or("NONE"));
+
+  // TODO: We turn wifi completely off in network manager here, but this should work / not interfere with the monitor mode card(s) since they are
+  // not managed by network manager
+  /*const auto args=std::vector<std::string>{
+      "connection","down",OHD_HOTSPOT_CONNECTION_NAME
+  };*/
+  /*const auto args=std::vector<std::string>{
+      "dev wifi hotspot",
+       "con-name",OHD_HOTSPOT_CONNECTION_NAME,
+       "ifname",m_wifi_card.device_name,
+       "ssid","openhd",
+       "password", "\"openhdopenhd\""
+  };*/

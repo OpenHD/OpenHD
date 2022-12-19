@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <future>
 
 #include "wifi_card.hpp"
 #include "wifi_hotspot_settings.h"
@@ -27,17 +28,20 @@ class WifiHotspot {
   /**
    * Utility for starting, stopping WIFI AP (Hotspot) and forwarding the client connect/disconnect events.
    */
-  explicit WifiHotspot(WiFiCard wifiCard);
+  explicit WifiHotspot(WiFiCard wifiCard,const openhd::Space& wifibroadcast_frequency_space);
+  WifiHotspot(const WifiHotspot&)=delete;
+  WifiHotspot(const WifiHotspot&&)=delete;
+  ~WifiHotspot();
   /**
    * Expose all hotspot settings such that they can be changed via mavlink
    */
   std::vector<openhd::Setting> get_all_settings();
  private:
   // NOTE: might block, use async
-  // just runs the appropriate network manager (nmcli) command to start wifi hotspot
+  // just runs the appropriate network manager (nmcli) command to start an already created wifi hotspot connection
   void start();
   // NOTE: might block,use async
-  // just runs the appropriate network manager (nmcli) command to stop an already created hotspot
+  // just runs the appropriate network manager (nmcli) command to stop an already created wifi hotspot connection
   void stop();
   void start_async();
   void stop_async();
@@ -48,6 +52,8 @@ class WifiHotspot {
   const WiFiCard m_wifi_card;
   bool started=false;
   std::unique_ptr<WifiHotspotSettingsHolder> m_settings;
+  std::shared_ptr<spdlog::logger> m_console;
+  std::future<void> m_last_async_operation;
 };
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_
