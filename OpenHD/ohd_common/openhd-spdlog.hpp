@@ -54,7 +54,7 @@ class LimitedRateLogger{
   m_console(std::move(console1)),m_min_delay_between_messages(min_delay_between_messages){
   }
   template<typename... Args>
-  void warn(spd::format_string_t<Args...> fmt, Args &&... args){
+  void warn(fmt::format_string<Args...> fmt, Args &&... args){
     const auto elapsed_since_last=std::chrono::steady_clock::now()-m_last_log;
     if(elapsed_since_last<m_min_delay_between_messages){
       // drop message
