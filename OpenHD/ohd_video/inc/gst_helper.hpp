@@ -68,6 +68,40 @@ static std::string createSwEncoder(const CommonEncoderParams& common_encoder_par
   return ss.str();
 }
 
+static std::string gst_create_rtp_caps(const VideoCodec& videoCodec){
+  std::stringstream ss;
+  if(videoCodec==VideoCodec::H264){
+    ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)H264, payload=(int)96\"";
+  }else if(videoCodec==VideoCodec::H265){
+    ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)H265\"";
+  }else{
+    ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)mjpeg\"";
+  }
+  return ss.str();
+}
+// helper for common pipeline part(s)
+static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const uint32_t mtu=1024){
+  if(codec==VideoCodec::H264) return fmt::format("rtph264pay mtu={} ! ",mtu);
+  if(codec==VideoCodec::H265) return fmt::format("rtph265pay mtu={} ! ",mtu);
+  if(codec==VideoCodec::MJPEG) return fmt::format("rtpjpegpay mtu={} ! ",mtu);
+  assert(false);
+}
+
+static std::string create_rtp_depacketize_for_codec(const VideoCodec& codec){
+  if(codec==VideoCodec::H264)return "rtph264depay ! ";
+  if(codec==VideoCodec::H265)return "rtph265depay ! ";
+  if(codec==VideoCodec::MJPEG)return "rtpjpegdepay ! ";
+  assert(false);
+}
+static std::string create_parse_for_codec(const VideoCodec& codec){
+  // config-interval=-1 = makes 100% sure each keyframe has SPS and PPS
+  if(codec==VideoCodec::H264)return "h264parse config-interval=-1 ! ";
+  if(codec==VideoCodec::H265)return "h265parse config-interval=-1  ! ";
+  if(codec==VideoCodec::MJPEG)return "jpegparse ! ";
+  assert(false);
+}
+
+
 // a createXXXStream function always ends wth an encoded "h164,h265 or mjpeg
 // stream ! " aka after that, one can add a rtp encoder or similar. All these
 // methods also start from zero - aka have a source like videotestsrc,
@@ -493,21 +527,9 @@ static std::string createIpCameraStream(const std::string &url) {
  */
 static std::string createRtpForVideoCodec(const VideoCodec videoCodec) {
   std::stringstream ss;
-  if (videoCodec == VideoCodec::H264) {
-    ss << "queue ! ";
-    ss << "h264parse config-interval=-1 ! ";
-    ss << "rtph264pay mtu=1024 ! ";
-  } else if (videoCodec == VideoCodec::H265) {
-    ss << "queue ! ";
-    ss << "h265parse config-interval=-1 ! ";
-    ss << "rtph265pay mtu=1024 ! ";
-  } else {
-    assert(videoCodec == VideoCodec::MJPEG);
-    // mjpeg has no config-interval
-    ss << "queue ! ";
-    ss << "jpegparse ! ";
-    ss << "rtpjpegpay mtu=1024 ! ";
-  }
+  ss << "queue ! ";
+  ss << create_parse_for_codec(videoCodec);
+  ss << create_rtp_packetize_for_codec(videoCodec);
   return ss.str();
 }
 
@@ -560,39 +582,6 @@ static std::string createRecordingForVideoCodec(const VideoCodec videoCodec,cons
     ss <<"avimux ! filesink location="<<out_filename;
   }
   return ss.str();
-}
-
-static std::string gst_create_rtp_caps(const VideoCodec& videoCodec){
-  std::stringstream ss;
-  if(videoCodec==VideoCodec::H264){
-    ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)H264, payload=(int)96\"";
-  }else if(videoCodec==VideoCodec::H265){
-    ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)H265\"";
-  }else{
-    ss<<"caps=\"application/x-rtp, media=(string)video, encoding-name=(string)mjpeg\"";
-  }
-  return ss.str();
-}
-
-static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const uint32_t mtu=1024){
-  if(codec==VideoCodec::H264) return fmt::format("rtph264pay mtu={} ! ",mtu);
-  if(codec==VideoCodec::H265) return fmt::format("rtph265pay mtu={} ! ",mtu);
-  if(codec==VideoCodec::MJPEG) return fmt::format("rtpjpegpay mtu={} ! ",mtu);
-  assert(false);
-}
-
-static std::string create_rtp_depacketize_for_codec(const VideoCodec& codec){
-  if(codec==VideoCodec::H264)return "rtph264depay ! ";
-  if(codec==VideoCodec::H265)return "rtph265depay ! ";
-  if(codec==VideoCodec::MJPEG)return "rtpjpegdepay ! ";
-  assert(false);
-}
-static std::string create_parse_for_codec(const VideoCodec& codec){
-  // config-interval=-1 = makes 100% sure each keyframe has SPS and PPS
-  if(codec==VideoCodec::H264)return "h264parse config-interval=-1 ! ";
-  if(codec==VideoCodec::H265)return "h265parse config-interval=-1  ! ";
-  if(codec==VideoCodec::MJPEG)return "jpegparse ! ";
-  assert(false);
 }
 
 static std::string create_input_custom_udp_rtp_port(const CameraSettings& settings) {
