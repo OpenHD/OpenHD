@@ -49,7 +49,7 @@ static std::shared_ptr<spdlog::logger> get_default() {
 
 // Helper to not spam the console with (error) messages, but rather have them sent out with a minimum amount
 // of time in between messages
-class LimitedRateLogger{
+/*class LimitedRateLogger{
  public:
   LimitedRateLogger(std::shared_ptr<spdlog::logger> console1,std::chrono::milliseconds min_delay_between_messages):
   m_console(std::move(console1)),m_min_delay_between_messages(min_delay_between_messages){
@@ -68,7 +68,7 @@ class LimitedRateLogger{
   std::shared_ptr<spdlog::logger> m_console;
   const std::chrono::milliseconds m_min_delay_between_messages;
   std::chrono::steady_clock::time_point m_last_log=std::chrono::steady_clock::now();
-};
+};*/
 
 }
 

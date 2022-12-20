@@ -48,7 +48,7 @@ SerialEndpoint::SerialEndpoint(std::string TAG1,SerialEndpoint::HWOptions option
                                                                                        MEndpoint(std::move(TAG1)), m_options(std::move(options1)){
   m_console = openhd::log::create_or_get(TAG);
   assert(m_console);
-  m_limited_rate_logger=std::make_unique<openhd::log::LimitedRateLogger>(m_console,std::chrono::milliseconds(1000));
+  //m_limited_rate_logger=std::make_unique<openhd::log::LimitedRateLogger>(m_console,std::chrono::milliseconds(1000));
   m_console->info("created with {}", m_options.to_string());
   start();
 }
@@ -82,7 +82,7 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
   const auto send_delta=std::chrono::steady_clock::now()-before;
   if(send_delta>std::chrono::milliseconds(100)){
     const auto send_delta_ms=static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(send_delta).count())/1000.0f;
-    m_limited_rate_logger->warn("UART sending data took {}ms",send_delta_ms);
+    m_console->warn("UART sending data took {}ms",send_delta_ms);
   }
   //m_console->debug("Written {} bytes",send_len);
   //m_console->debug("{}",MEndpoint::get_tx_rx_stats());
