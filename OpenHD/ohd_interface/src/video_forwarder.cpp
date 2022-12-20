@@ -7,6 +7,7 @@
 GroundVideoForwarder::GroundVideoForwarder() {
   udpMultiForwarder = std::make_unique<SocketHelper::UDPMultiForwarder>();
   addForwarder("127.0.0.1",5600);
+  //addForwarder("0.0.0.0",5600);
 }
 
 void GroundVideoForwarder::addForwarder(std::string client_addr,int client_udp_port) {
