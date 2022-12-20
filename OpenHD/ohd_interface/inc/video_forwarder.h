@@ -23,7 +23,7 @@ class GroundVideoForwarder{
   // safe to call if not already forwarding to ip::port
   void removeForwarder(std::string client_addr, int client_udp_port);
   // called by the wb receiver
-  void forward_data(const uint8_t* data, int data_len);
+  void forward_data(int stream_idx,const uint8_t* data, int data_len);
  private:
    std::unique_ptr<SocketHelper::UDPMultiForwarder> udpMultiForwarder;
 };

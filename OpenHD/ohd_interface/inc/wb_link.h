@@ -92,7 +92,7 @@ class WBLink :public OHDLink{
   // For video, on air there are only tx instances, on ground there are only rx instances.
   std::vector<std::unique_ptr<WBTransmitter>> m_wb_video_tx_list;
   std::vector<std::unique_ptr<AsyncWBReceiver>> m_wb_video_rx_list;
-  //std::unique_ptr<ForeignPacketsReceiver> m_foreign_packets_receiver;
+  std::unique_ptr<ForeignPacketsReceiver> m_foreign_packets_receiver;
   // Reads the current settings and creates the appropriate Radiotap Header params
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
   [[nodiscard]] TOptions create_tx_options(uint8_t radio_port,bool enableFec)const;
