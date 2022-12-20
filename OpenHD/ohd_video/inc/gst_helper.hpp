@@ -414,8 +414,7 @@ static std::string createAllwinnerStream(const int sensor_id,
  * This one has no custom resolution(s) yet.
  */
 static std::string createV4l2SrcRawAndSwEncodeStream(
-    const std::string &device_node, const VideoCodec videoCodec,
-    const int bitrateKBits,const int keyframe_interval) {
+    const std::string &device_node, const CameraSettings& settings) {
   std::stringstream ss;
   ss << fmt::format("v4l2src device={} ! ", device_node);
   // rn we omit the set resolution/framerate here and let gstreamer figure it
@@ -428,7 +427,7 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   ss << "queue ! ";
   // For some reason gstreamer can't automatically figure things out here
   ss<<"video/x-raw, format=I420 ! ";
-  ss<<createSwEncoder({videoCodec,bitrateKBits,keyframe_interval,50});
+  ss<<createSwEncoder(extract_common_encoder_params(settings));
   return ss.str();
 }
 
