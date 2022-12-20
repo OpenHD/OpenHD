@@ -60,6 +60,7 @@ class LimitedRateLogger{
       // drop message
       return;
     }
+    m_last_log=std::chrono::steady_clock::now();
     m_console->warn(fmt, std::forward<Args>(args)...);
   }
  private:
