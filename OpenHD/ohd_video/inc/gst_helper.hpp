@@ -80,7 +80,7 @@ static std::string gst_create_rtp_caps(const VideoCodec& videoCodec){
   return ss.str();
 }
 // helper for common pipeline part(s)
-static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const uint32_t mtu=1024){
+static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const uint32_t mtu=512){
   if(codec==VideoCodec::H264) return fmt::format("rtph264pay mtu={} ! ",mtu);
   if(codec==VideoCodec::H265) return fmt::format("rtph265pay mtu={} ! ",mtu);
   if(codec==VideoCodec::MJPEG) return fmt::format("rtpjpegpay mtu={} ! ",mtu);
