@@ -92,7 +92,7 @@ class WBLink :public OHDLink{
   // For video, on air there are only tx instances, on ground there are only rx instances.
   std::vector<std::unique_ptr<WBTransmitter>> m_wb_video_tx_list;
   std::vector<std::unique_ptr<AsyncWBReceiver>> m_wb_video_rx_list;
-  //std::unique_ptr<ForeignPacketsReceiver> m_foreign_packets_receiver;
+  std::unique_ptr<ForeignPacketsReceiver> m_foreign_packets_receiver;
   // Reads the current settings and creates the appropriate Radiotap Header params
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
   [[nodiscard]] TOptions create_tx_options(uint8_t radio_port,bool enableFec)const;
@@ -106,9 +106,7 @@ class WBLink :public OHDLink{
   const std::vector<WiFiCard> m_broadcast_cards;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
   std::shared_ptr<spdlog::logger> m_console;
-  // disable all openhd frequency checking - note that openhd just uses the proper iw command to set a frequency - if setting
-  // the frequency actually had an effect, it doesn't know (cannot really know) and therefore QOpenHD can then report a different wifi freq,
-  // even though the frequency actually hasn't changed
+  // disable all openhd frequency checking - note that I am quite sure about the correctness of openhd internal checking in regards to wifi channels ;)
   const bool m_disable_all_frequency_checks;
  private:
   // We have one worker thread for asynchronously performing operation(s) like changing the frequency

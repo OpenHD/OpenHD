@@ -14,6 +14,7 @@ MEndpoint::MEndpoint(std::string tag)
 
 void MEndpoint::sendMessages(const std::vector<MavlinkMessage>& messages) {
   if(messages.empty())return;
+  m_tx_n_bytes+= get_size(messages);
   //openhd::log::create_or_get(TAG)->debug("N messages send:{}",messages.size());
   const auto res= sendMessagesImpl(messages);
   m_n_messages_sent+=messages.size();
@@ -42,6 +43,7 @@ std::string MEndpoint::createInfo() const {
 
 void MEndpoint::parseNewData(const uint8_t* data, const int data_len) {
   //<<TAG<<" received data:"<<data_len<<" "<<MavlinkHelpers::raw_content(data,data_len)<<"\n";
+  m_rx_n_bytes+=data_len;
   std::vector<MavlinkMessage> messages;
   mavlink_message_t msg;
   for (int i = 0; i < data_len; i++) {
@@ -63,4 +65,10 @@ void MEndpoint::onNewMavlinkMessages(std::vector<MavlinkMessage> messages) {
   } else {
     openhd::log::get_default()->warn("No callback set,did you forget to add it ?");
   }
+}
+
+std::string MEndpoint::get_tx_rx_stats() {
+  return fmt::format("Tx bps:{} Rx bps:{}",
+                     m_tx_calc.get_last_or_recalculate(m_tx_n_bytes,std::chrono::seconds(1)),
+                     m_rx_calc.get_last_or_recalculate(m_rx_n_bytes,std::chrono::seconds(1)));
 }

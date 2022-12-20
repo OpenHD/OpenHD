@@ -220,13 +220,19 @@ void GStreamerStream::setup_usb_uvc() {
     if (setting.streamed_video_format.videoCodec == VideoCodec::H264 && endpoint.support_h264) {
       m_console->debug("h264");
       const auto device_node = endpoint.device_node;
-      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting.streamed_video_format);
+      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting);
+      return;
+    }
+    if (setting.streamed_video_format.videoCodec == VideoCodec::H265 && endpoint.support_h265) {
+      m_console->debug("h265");
+      const auto device_node = endpoint.device_node;
+      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting);
       return;
     }
     if (setting.streamed_video_format.videoCodec == VideoCodec::MJPEG && endpoint.support_mjpeg) {
       m_console->debug("MJPEG");
       const auto device_node = endpoint.device_node;
-      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting.streamed_video_format);
+      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting);
       return;
     }
   }
@@ -235,9 +241,7 @@ void GStreamerStream::setup_usb_uvc() {
     m_console->warn("Cannot do HW encode for camera, fall back to RAW out and SW encode");
     if (endpoint.support_raw) {
       const auto device_node = endpoint.device_node;
-      m_pipeline_content << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,
-                                                                            setting.streamed_video_format.videoCodec,
-                                                                            setting.h26x_bitrate_kbits,setting.h26x_keyframe_interval);
+      m_pipeline_content << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,setting);
       return;
     }
   }
@@ -250,10 +254,8 @@ void GStreamerStream::setup_usb_uvch264() {
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
   const auto endpoint = camera.endpoints.front();
-  // uvch265 cameras don't seem to exist, codec setting is ignored
-  m_pipeline_content << OHDGstHelper::createUVCH264Stream(endpoint.device_node,
-                                                          setting.h26x_bitrate_kbits,
-                                                          setting.streamed_video_format);
+  // this one is always h264
+  m_pipeline_content << OHDGstHelper::createUVCH264Stream(endpoint.device_node,setting);
 }
 
 void GStreamerStream::setup_ip_camera() {

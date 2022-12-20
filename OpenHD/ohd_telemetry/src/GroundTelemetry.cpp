@@ -181,7 +181,7 @@ void GroundTelemetry::settings_generic_ready() {
 }
 
 void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device) {
-  m_console->debug("GroundTelemetry::add_external_ground_station_ip: {} {}",ip_openhd,ip_dest_device);
+  m_console->debug("add_external_ground_station_ip ip_openhd:[{}],ip_dest_device:[{}]",ip_openhd,ip_dest_device);
   if(!OHDUtil::is_valid_ip(ip_openhd) || !OHDUtil::is_valid_ip(ip_dest_device)){
     m_console->warn("These are no valid IPs, skipping");
     return;
@@ -212,12 +212,10 @@ void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openh
 }
 
 void GroundTelemetry::remove_external_ground_station_ip(const std::string &ip_openhd,const std::string& ip_dest_device) {
-  std::stringstream ss;
-  ss<<"GroundTelemetry::remove_external_ground_station_ip:ip_openhd:["<<ip_openhd<<",ip_dest_device:"<<ip_dest_device<<"]\n";
-  m_console->debug(ss.str());
+  m_console->debug("remove_external_ground_station_ip ip_openhd:[{}],ip_dest_device:[{}]",ip_openhd,ip_dest_device);
   if(!OHDUtil::is_valid_ip(ip_openhd) || !OHDUtil::is_valid_ip(ip_dest_device)){
-	m_console->debug("These are no valid IPs, skipping");
-	return;
+    m_console->debug("These are no valid IPs, skipping");
+    return;
   }
   std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
   assert(OHDUtil::is_valid_ip(ip_openhd));

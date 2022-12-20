@@ -42,7 +42,9 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   openhd::wb::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
   takeover_cards_monitor_mode();
   configure_cards();
-  m_ground_video_forwarder=std::make_unique<GroundVideoForwarder>();
+  if(m_profile.is_ground()){
+    m_ground_video_forwarder=std::make_unique<GroundVideoForwarder>();
+  }
   configure_telemetry();
   configure_video();
   m_work_thread_run = true;
@@ -58,15 +60,15 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
     m_opt_action_handler->action_wb_link_scan_channels_register(cb2);
   }
   // exp
-  /*const auto t_radio_port_rx = m_profile.is_air ? OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
+  /*const auto t_radio_port_rx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
   auto excluded=std::vector<int>{t_radio_port_rx};
   if(m_profile.is_ground()){
-    excluded.push_back(OHD_VIDEO_PRIMARY_RADIO_PORT);
-    excluded.push_back(OHD_VIDEO_SECONDARY_RADIO_PORT);
-  }*/
-  /*auto excluded=std::vector<int>{OHD_TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT,OHD_TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT,
-                                   OHD_VIDEO_PRIMARY_RADIO_PORT,OHD_VIDEO_SECONDARY_RADIO_PORT};
-  m_foreign_packets_receiver=std::make_unique<ForeignPacketsReceiver>(get_rx_card_names(),excluded);*/
+    excluded.push_back(openhd::VIDEO_PRIMARY_RADIO_PORT);
+    excluded.push_back(openhd::VIDEO_SECONDARY_RADIO_PORT);
+  }
+  auto excluded2=std::vector<int>{openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT,openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT,
+                                    openhd::VIDEO_PRIMARY_RADIO_PORT,openhd::VIDEO_SECONDARY_RADIO_PORT};
+  m_foreign_packets_receiver=std::make_unique<ForeignPacketsReceiver>(get_rx_card_names(),excluded2);*/
 }
 
 WBLink::~WBLink() {
@@ -570,10 +572,10 @@ void WBLink::update_statistics() {
   if(elapsed_since_last<RECALCULATE_STATISTICS_INTERVAL){
     return;
   }
-  /*if(m_foreign_packets_receiver){
+  if(m_foreign_packets_receiver){
     const auto stats=m_foreign_packets_receiver->get_current_stats();
     m_console->debug("Foreign packets stats:{}",stats.to_string());
-  }*/
+  }
   m_last_stats_recalculation=std::chrono::steady_clock::now();
   // telemetry is available on both air and ground
   openhd::link_statistics::StatsAirGround stats{};
@@ -844,8 +846,8 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
 }
 
 void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_len) {
-  if(stream_index==0 && m_ground_video_forwarder){
-    m_ground_video_forwarder->forward_data(data,data_len);
+  if(m_ground_video_forwarder){
+    m_ground_video_forwarder->forward_data(stream_index,data,data_len);
   }
 }
 

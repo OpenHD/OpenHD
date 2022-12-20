@@ -44,7 +44,8 @@ using FloatSetting=SettingImpl<float>;
 using StringSetting=SettingImpl<std::string>;
 
 struct Setting{
-  const std::string id;
+  // Do not mutate me
+  std::string id;
   std::variant<IntSetting,FloatSetting,StringSetting> setting;
 };
 

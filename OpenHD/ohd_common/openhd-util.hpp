@@ -136,28 +136,6 @@ static std::optional<std::string> run_command_out(const std::string& command,
   return raw_value;
 }
 
-// The above implementation sometimes doesn't work
-// Execute a shell command and return its output as a string
-/*struct RunShellCommandResult{
-  int status;
-  std::string status_text;
-};
-static std::string run_command_out2(const char* command,const bool debug=false){
-  const std::string output_filename="/tmp/command_output.txt";
-  OHDFilesystemUtil::remove_if_existing(output_filename);
-  const std::string command_outputting_to_tmp_file=std::string(command)+" 2>&1
-"+output_filename; if(debug){
-    openhd::log::get_default()->debug("run_command_out2 begin
-[{}]",command_outputting_to_tmp_file);
-  }
-  const int status = std::system(command_outputting_to_tmp_file.c_str()); //
-execute the shell command std::string
-ret=OHDFilesystemUtil::read_file(output_filename);
-  openhd::log::get_default()->debug("Done result code: {}
-text:[{}]",status,ret); OHDFilesystemUtil::remove_if_existing(output_filename);
-  return ret;
-}*/
-
 // I use this one during testing a lot, when a module's functionality uses a start() / stop() pattern with its own thread. This keeps the current thread alive, until a sigterm (CTR+X) happens
 static void keep_alive_until_sigterm() {
   static bool quit = false;

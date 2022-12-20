@@ -54,20 +54,25 @@ class DPlatform {
     return std::make_shared<OHDPlatform>(res5.first,res5.second);
   }
   static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi(){
-    std::ifstream t("/proc/cpuinfo");
-    std::string raw_value((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+    const auto filename_proc_cpuinfo="/proc/cpuinfo";
+    const auto proc_cpuinfo_opt=OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
+    if(!proc_cpuinfo_opt.has_value()){
+      openhd::log::get_default()->warn("File {} does not exist, rpi detection unavailable",filename_proc_cpuinfo);
+      return {};
+    }
+    const auto& proc_cpuinfo=proc_cpuinfo_opt.value();
 
     std::smatch result;
     // example "Revision	: 2a020d3"
-    std::regex r{"Revision\\t*:\\s*([\\w]+)"};
+    const std::regex r{"Revision\\t*:\\s*([\\w]+)"};
 
-    if (!std::regex_search(raw_value, result, r)) {
+    if (!std::regex_search(proc_cpuinfo, result, r)) {
       openhd::log::get_default()->debug("Detect rpi no result");
       return {};
     }
 
     if (result.size() != 2) {
-      openhd::log::get_default()->debug("Detect ri result doesnt match");
+      openhd::log::get_default()->debug("Detect rpi result doesnt match");
       return {};
     }
 
