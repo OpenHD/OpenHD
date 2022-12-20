@@ -118,16 +118,11 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   std::vector<openhd::Setting> ret;
   if(m_wb_link){
     auto settings= m_wb_link->get_all_settings();
-    for(const auto& setting:settings){
-      ret.emplace_back(setting);
-    }
-    //ret.insert(ret.end(),settings.begin(),settings.end());
+    OHDUtil::vec_append(ret,settings);
   }
   if(m_wifi_hotspot != nullptr){
     auto settings= m_wifi_hotspot->get_all_settings();
-    for(const auto& setting:settings){
-      ret.emplace_back(setting);
-    }
+    OHDUtil::vec_append(ret,settings);
   }
   if(!m_profile.is_air){
     //openhd::testing::append_dummy_int_and_string(ret);
