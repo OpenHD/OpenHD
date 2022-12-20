@@ -20,26 +20,26 @@ namespace openhd::rpi{
 static void toggle_red_led(const bool on,const bool debug=true){
   int ret;
   if(!OHDFilesystemUtil::exists("/sys/class/leds/led1/brightness")){
-        openhd::log::get_default()->debug("RPI LED1 brightness does not exist\n");
-	return;
+    openhd::log::get_default()->debug("RPI LED1 brightness does not exist\n");
+    return;
   }
   if(on){
-	OHDUtil::run_command("echo 1 > /sys/class/leds/led1/brightness",{},debug);
+    OHDFilesystemUtil::write_file("/sys/class/leds/led1/brightness","1");
   }else{
-	OHDUtil::run_command("echo 0 > /sys/class/leds/led1/brightness",{},debug);
+    OHDFilesystemUtil::write_file("/sys/class/leds/led1/brightness","1");
   }
 }
 // I think the green led only supports on/off on the 4th generation pis
 static void toggle_green_led(const bool on,const bool debug=true){
   int ret;
   if(!OHDFilesystemUtil::exists("/sys/class/leds/led0/brightness")){
-	openhd::log::get_default()->debug("RPI LED0 brightness does not exist");
-	return;
+    openhd::log::get_default()->debug("RPI LED0 brightness does not exist");
+    return;
   }
   if(on){
-	OHDUtil::run_command("echo 1 > /sys/class/leds/led0/brightness",{},debug);
+    OHDFilesystemUtil::write_file("/sys/class/leds/led0/brightness","1");
   }else{
-	OHDUtil::run_command("echo 0 > /sys/class/leds/led0/brightness",{},debug);
+    OHDFilesystemUtil::write_file("/sys/class/leds/led0/brightness","1");
   }
 }
 // toggle red led off, wait for delay, then toggle it on,wait for delay
