@@ -18,7 +18,7 @@
 namespace openhd::rpi{
 // so far, I have only tested this on the RPI 4 and CM4
 static void toggle_red_led(const bool on){
-  static constexpr auto filename="/sys/class/leds/led0/brightness";
+  static constexpr auto filename="/sys/class/leds/led1/brightness";
   if(!OHDFilesystemUtil::exists(filename)){
     openhd::log::get_default()->debug("RPI LED1 brightness does not exist\n");
     return;
@@ -28,7 +28,7 @@ static void toggle_red_led(const bool on){
 }
 // I think the green led only supports on/off on the 4th generation pis
 static void toggle_green_led(const bool on){
-  static constexpr auto filename="/sys/class/leds/led1/brightness";
+  static constexpr auto filename="/sys/class/leds/led0/brightness";
   if(!OHDFilesystemUtil::exists(filename)){
     openhd::log::get_default()->debug("RPI LED0 brightness does not exist");
     return;
