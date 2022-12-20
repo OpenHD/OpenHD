@@ -23,11 +23,8 @@ static void toggle_red_led(const bool on,const bool debug=true){
     openhd::log::get_default()->debug("RPI LED1 brightness does not exist\n");
     return;
   }
-  if(on){
-    OHDFilesystemUtil::write_file("/sys/class/leds/led1/brightness","1");
-  }else{
-    OHDFilesystemUtil::write_file("/sys/class/leds/led1/brightness","1");
-  }
+  const auto content=on ? "1":"0";
+  OHDFilesystemUtil::write_file("/sys/class/leds/led1/brightness",content);
 }
 // I think the green led only supports on/off on the 4th generation pis
 static void toggle_green_led(const bool on,const bool debug=true){
@@ -36,11 +33,8 @@ static void toggle_green_led(const bool on,const bool debug=true){
     openhd::log::get_default()->debug("RPI LED0 brightness does not exist");
     return;
   }
-  if(on){
-    OHDFilesystemUtil::write_file("/sys/class/leds/led0/brightness","1");
-  }else{
-    OHDFilesystemUtil::write_file("/sys/class/leds/led0/brightness","1");
-  }
+  const auto content=on ? "1":"0";
+  OHDFilesystemUtil::write_file("/sys/class/leds/led0/brightness",content);
 }
 // toggle red led off, wait for delay, then toggle it on,wait for delay
 static void red_led_on_off_delayed(const std::chrono::milliseconds &delay1,const std::chrono::milliseconds &delay2,const bool debug=true) {
