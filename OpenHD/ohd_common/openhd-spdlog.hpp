@@ -62,7 +62,7 @@ class LimitedRateLogger{
       return;
     }
     m_last_log=std::chrono::steady_clock::now();
-    m_console->warn(fmt, std::forward<Args>(args)...);
+    m_console->log(spdlog::level::warn,fmt, std::forward<Args>(args)...);
   }
  private:
   std::shared_ptr<spdlog::logger> m_console;
