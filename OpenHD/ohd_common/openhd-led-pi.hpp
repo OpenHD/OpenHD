@@ -17,7 +17,7 @@
 // All pi's allow toggling the red led
 namespace openhd::rpi{
 // so far, I have only tested this on the RPI 4 and CM4
-static void toggle_red_led(const bool on,const bool debug=true){
+static void toggle_red_led(const bool on){
   static constexpr auto filename="/sys/class/leds/led0/brightness";
   if(!OHDFilesystemUtil::exists(filename)){
     openhd::log::get_default()->debug("RPI LED1 brightness does not exist\n");
@@ -27,7 +27,7 @@ static void toggle_red_led(const bool on,const bool debug=true){
   OHDFilesystemUtil::write_file(filename,content);
 }
 // I think the green led only supports on/off on the 4th generation pis
-static void toggle_green_led(const bool on,const bool debug=true){
+static void toggle_green_led(const bool on){
   static constexpr auto filename="/sys/class/leds/led1/brightness";
   if(!OHDFilesystemUtil::exists(filename)){
     openhd::log::get_default()->debug("RPI LED0 brightness does not exist");
@@ -37,18 +37,18 @@ static void toggle_green_led(const bool on,const bool debug=true){
   OHDFilesystemUtil::write_file(filename,content);
 }
 // toggle red led off, wait for delay, then toggle it on,wait for delay
-static void red_led_on_off_delayed(const std::chrono::milliseconds &delay1,const std::chrono::milliseconds &delay2,const bool debug=true) {
-  rpi::toggle_red_led(false,debug);
+static void red_led_on_off_delayed(const std::chrono::milliseconds &delay1,const std::chrono::milliseconds &delay2) {
+  rpi::toggle_red_led(false);
   std::this_thread::sleep_for(delay1);
-  rpi::toggle_red_led(true,debug);
+  rpi::toggle_red_led(true);
   std::this_thread::sleep_for(delay2);
 }
 
 // toggle green led off, wait for delay1, then toggle it on, wait for delay2
-static void green_led_on_off_delayed(const std::chrono::milliseconds &delay1,const std::chrono::milliseconds &delay2,const bool debug=true){
-  rpi::toggle_green_led(false,debug);
+static void green_led_on_off_delayed(const std::chrono::milliseconds &delay1,const std::chrono::milliseconds &delay2){
+  rpi::toggle_green_led(false);
   std::this_thread::sleep_for(delay1);
-  rpi::toggle_green_led(true,debug);
+  rpi::toggle_green_led(true);
   std::this_thread::sleep_for(delay2);
 }
 
