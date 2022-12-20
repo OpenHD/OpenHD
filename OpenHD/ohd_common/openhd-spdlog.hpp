@@ -11,6 +11,7 @@
 
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
+#include <spdlog/common.h>
 #include <mutex>
 #include <utility>
 
