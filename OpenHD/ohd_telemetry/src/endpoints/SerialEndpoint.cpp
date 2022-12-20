@@ -74,9 +74,15 @@ bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
     m_console->warn("Cannot send data, no fd");
     return false;
   }
+  const auto before=std::chrono::steady_clock::now();
   // If we have a fd, but the write fails, most likely the UART disconnected
   // but the linux driver hasn't noticed it yet.
   const auto send_len = static_cast<int>(write(m_fd,data.data(), data.size()));
+  const auto send_delta=std::chrono::steady_clock::now()-before;
+  if(send_delta>std::chrono::milliseconds(100)){
+    const auto send_delta_ms=static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(send_delta).count())/1000.0f;
+    m_console->warn("UART sending data took {}ms",send_delta_ms);
+  }
   //m_console->debug("Written {} bytes",send_len);
   //m_console->debug("{}",MEndpoint::get_tx_rx_stats());
   if (send_len != data.size()) {
