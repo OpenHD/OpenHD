@@ -47,7 +47,7 @@ set(sources
     "openhd-settings-persistent.hpp"
     "openhd-util.hpp"
     "openhd-util-filesystem.hpp"
-        "openhd-spdlog.hpp"
+    "openhd-spdlog.hpp"
     "openhd-spdlog-tele-sink.h"
     "openhd-udp-log.h"
     )
