@@ -293,9 +293,13 @@ class CameraHolder:
   }
   [[nodiscard]] CameraSettings create_default()const override{
     auto ret=CameraSettings{};
+    if(m_camera.type==CameraType::RPI_CSI_MMAL || m_camera.type==CameraType::RPI_CSI_LIBCAMERA){
+      ret.streamed_video_format.width=1280;
+      ret.streamed_video_format.height=720;
+      ret.streamed_video_format.framerate=30;
+    }
     if(m_camera.type==CameraType::RPI_VEYE_CSI_V4l2){
-      // Veye cannot do 640x480@30 by default, this is the next lower possible
-      // (TODO it should do 720p but for some reason doesn't)
+      // most veye cameras can only do 1080p30, nothing else
       ret.streamed_video_format.width=1920;
       ret.streamed_video_format.height=1080;
       ret.streamed_video_format.framerate=30;

@@ -8,12 +8,13 @@
 // See camera_holder for how the settings are created the first time a camera is detected and
 // changed via mavlink / openhd mavlink.
 
-static constexpr int DEFAULT_BITRATE_KBITS = 5000;
-// Quite low, at 30fps a keyframe interval of 15 means a single lost keyframe results in max. 500ms
-// of interruption (assuming the next keyframe is properly received).
-// Noe that if you double the FPS, you can also double the keyframe interval if you want to keep those interruptions
-// at roughly 500ms
-static constexpr int DEFAULT_KEYFRAME_INTERVAL = 15;
+// For the default value, we assume a fec overhead of 20% - 8MBit/s before FEC fits well into MCS index 3, even
+// on highly polluted channels (we account for the worst here)
+static constexpr int DEFAULT_BITRATE_KBITS = 8000;
+// The ideal value is not definitive, and depends on the rf environment, the FEC percentage, and the camera fps
+// Higher values result in less key frames, and better image quality at the same bitrate, but increases the risk for
+// "stuttering" in case frames are lost.
+static constexpr int DEFAULT_KEYFRAME_INTERVAL = 5;
 static constexpr int DEFAULT_MJPEG_QUALITY_PERCENT = 50;
 
 static constexpr int DEFAULT_RECORDING_KBITS = 10000;
@@ -40,10 +41,9 @@ struct CameraSettings {
   bool enable_streaming=true;
   // The video format selected by the user. If the user sets a video format that
   // isn't supported (for example, he might select h264|1920x1080@120 but the
-  // camera can only do 60fps) The stream might default to the first available
-  // video format. We generally default to h264|640x480@30, except for the rare case when
-  // a camera cannot do this exact resolution (e.g. veye). In this case, these default params are overridden
-  // the first time settings are created for a specific discovered camera (see create_default() below)
+  // camera can only do 60fps) the camera might stop streaming, and the user has to set a different resolution manually
+  // (In general, we cannot really check if a camera supports a given resolution / framerate properly yet)
+  // Note that this default value is overridden in case we know more about the camera(s).
   VideoFormat streamed_video_format{VideoCodec::H264, 640, 480, 30};
   // The settings below can only be implemented on a "best effort" manner -
   // changing them does not necessarily mean the camera supports changing them. Unsupported settings have to
