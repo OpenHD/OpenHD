@@ -8,12 +8,13 @@
 // See camera_holder for how the settings are created the first time a camera is detected and
 // changed via mavlink / openhd mavlink.
 
-static constexpr int DEFAULT_BITRATE_KBITS = 5000;
-// Quite low, at 30fps a keyframe interval of 15 means a single lost keyframe results in max. 500ms
-// of interruption (assuming the next keyframe is properly received).
-// Noe that if you double the FPS, you can also double the keyframe interval if you want to keep those interruptions
-// at roughly 500ms
-static constexpr int DEFAULT_KEYFRAME_INTERVAL = 15;
+// For the default value, we assume a fec overhead of 20% - 8MBit/s before FEC fits well into MCS index 3, even
+// on highly polluted channels (we account for the worst here)
+static constexpr int DEFAULT_BITRATE_KBITS = 8000;
+// The ideal value is not definitive, and depends on the rf environment, the FEC percentage, and the camera fps
+// Higher values result in less key frames, and better image quality at the same bitrate, but increases the risk for
+// "stuttering" in case frames are lost.
+static constexpr int DEFAULT_KEYFRAME_INTERVAL = 5;
 static constexpr int DEFAULT_MJPEG_QUALITY_PERCENT = 50;
 
 static constexpr int DEFAULT_RECORDING_KBITS = 10000;

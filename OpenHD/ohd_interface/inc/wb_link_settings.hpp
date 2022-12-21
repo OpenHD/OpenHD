@@ -27,7 +27,10 @@ static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=22;
 // Default to auto since 2.2.5-evo
 static constexpr auto WB_VIDEO_FEC_BLOCK_LENGTH_AUTO=0;
 static constexpr auto DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH=WB_VIDEO_FEC_BLOCK_LENGTH_AUTO;
-static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE=50;
+// FEC can fixup packet loss, as long as is statistically well distributed (no big gaps)
+// if there are many big gaps, increasing the FEC percentage often doesn't help, it is better to reduce the key frame interval
+// of your camera in this case
+static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE=20;
 //NOTE: Default depends on platform type and is therefore calculated below, then overwrites this default value
 static constexpr uint32_t DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM=20;
 
