@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16.3)
-project(OHDCommon)
+project(OHDCommon LANGUAGES CXX)
 
 # from https://mavlink.io/en/mavgen_c/
 #You can supress the warnings in CMake using
