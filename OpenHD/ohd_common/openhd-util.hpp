@@ -181,7 +181,7 @@ static std::optional<int> string_to_int(const std::string& s) {
     auto ret = std::stoi(s);
     return ret;
   } catch (...) {
-    openhd::log::get_default()->warn("Cannot convert [" + s + "] to int");
+    openhd::log::get_default()->warn("Cannot convert [{}] to int",s);
     return std::nullopt;
   }
 }

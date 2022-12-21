@@ -85,7 +85,7 @@ class DPlatform {
         std::cout<<"identifier:{"<<raspberry_identifier<<"} is not raspberry pi\n";
         return {};
     }
-    openhd::log::get_default()->debug("Pi identifier:{"+raspberry_identifier+"}");
+    openhd::log::get_default()->debug("Pi identifier:[{}]",raspberry_identifier);
 
     const std::set<std::string> pi4b_identifiers = {"a03111", "b03111", "b03112", "c03111", "c03112", "d03114","b03115"};
     if (pi4b_identifiers.find(raspberry_identifier) != pi4b_identifiers.end()) {

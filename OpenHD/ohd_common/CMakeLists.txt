@@ -65,8 +65,3 @@ target_include_directories(OHDCommonLib
     PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/mavlink_settings>"
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>")
-
-set_target_properties(OHDCommonLib PROPERTIES
-    SOVERSION ${PROJECT_VERSION_MAJOR}
-    VERSION ${PROJECT_VERSION}
-    LINKER_LANGUAGE CXX)

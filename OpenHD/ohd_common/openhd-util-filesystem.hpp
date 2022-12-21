@@ -76,7 +76,7 @@ static void write_file(const std::string& path,const std::string& content){
     t << content;
     t.close();
   }catch (std::exception& e){
-    openhd::log::get_default()->warn("Cannot write file ["+path+"]");
+    openhd::log::get_default()->warn("Cannot write file [{}]",path);
   }
 }
 
