@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.16.3)
-project(OpenHD-Common
-    VERSION 2.0.0
-    DESCRIPTION "OpenHD common heades"
-    LANGUAGES CXX)
+project(OHDCommon)
 
 # from https://mavlink.io/en/mavgen_c/
 #You can supress the warnings in CMake using
@@ -19,11 +16,6 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 
 include(GNUInstallDirs)
-
-if(NOT DEFINED CMAKE_BUILD_TYPE AND NOT DEFINED CMAKE_CONFIGURATION_TYPES)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-endif()
 
 add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)

@@ -97,8 +97,8 @@ class MEndpoint {
   }
  private:
   // Used to measure incoming / outgoing bits per second
-  int m_tx_n_bytes;
-  int m_rx_n_bytes;
+  int m_tx_n_bytes=0;
+  int m_rx_n_bytes=0;
   BitrateCalculator m_tx_calc{};
   BitrateCalculator m_rx_calc{};
 };
