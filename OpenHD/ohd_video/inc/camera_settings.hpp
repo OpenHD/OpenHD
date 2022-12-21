@@ -41,10 +41,9 @@ struct CameraSettings {
   bool enable_streaming=true;
   // The video format selected by the user. If the user sets a video format that
   // isn't supported (for example, he might select h264|1920x1080@120 but the
-  // camera can only do 60fps) The stream might default to the first available
-  // video format. We generally default to h264|640x480@30, except for the rare case when
-  // a camera cannot do this exact resolution (e.g. veye). In this case, these default params are overridden
-  // the first time settings are created for a specific discovered camera (see create_default() below)
+  // camera can only do 60fps) the camera might stop streaming, and the user has to set a different resolution manually
+  // (In general, we cannot really check if a camera supports a given resolution / framerate properly yet)
+  // Note that this default value is overridden in case we know more about the camera(s).
   VideoFormat streamed_video_format{VideoCodec::H264, 640, 480, 30};
   // The settings below can only be implemented on a "best effort" manner -
   // changing them does not necessarily mean the camera supports changing them. Unsupported settings have to
