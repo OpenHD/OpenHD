@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.16.3)
-project(OpenHD-Common
-    VERSION 2.0.0
-    DESCRIPTION "OpenHD common heades"
-    LANGUAGES CXX)
+project(OHDCommon
+        VERSION 2.0.0
+        DESCRIPTION "OpenHD common heades"
+        LANGUAGES CXX)
 
 # from https://mavlink.io/en/mavgen_c/
 #You can supress the warnings in CMake using
@@ -19,11 +19,6 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 
 include(GNUInstallDirs)
-
-if(NOT DEFINED CMAKE_BUILD_TYPE AND NOT DEFINED CMAKE_CONFIGURATION_TYPES)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-endif()
 
 add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
@@ -55,7 +50,7 @@ set(sources
     "openhd-settings-persistent.hpp"
     "openhd-util.hpp"
     "openhd-util-filesystem.hpp"
-        "openhd-spdlog.hpp"
+    "openhd-spdlog.hpp"
     "openhd-spdlog-tele-sink.h"
     "openhd-udp-log.h"
     )
@@ -75,6 +70,6 @@ target_include_directories(OHDCommonLib
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>")
 
 set_target_properties(OHDCommonLib PROPERTIES
-    SOVERSION ${PROJECT_VERSION_MAJOR}
-    VERSION ${PROJECT_VERSION}
-    LINKER_LANGUAGE CXX)
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        VERSION ${PROJECT_VERSION}
+        LINKER_LANGUAGE CXX)

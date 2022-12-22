@@ -150,7 +150,7 @@ static constexpr auto rpi_config_file_path="/boot/config.txt";
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
 static bool apply_new_cam_config_and_save(const OHDPlatform& platform,const CamConfig& new_cam_config){
-  openhd::log::get_default()->debug("Begin apply cam config "+ cam_config_to_string(new_cam_config));
+  openhd::log::get_default()->debug("Begin apply cam config {}",cam_config_to_string(new_cam_config));
   const auto cam_config_filename= get_file_name_for_cam_config(platform,new_cam_config);
   const auto cam_config_file_content=OHDFilesystemUtil::opt_read_file(cam_config_filename);
   if(!cam_config_file_content.has_value()){
@@ -216,7 +216,7 @@ class ConfigChangeHandler{
     const auto current_configuration=get_current_cam_config_from_file();
     const auto new_configuration=cam_config_from_int(new_value_as_int);
     if(current_configuration==new_configuration){
-      openhd::log::get_default()->warn("Not changing cam config,already at "+ cam_config_to_string(current_configuration));
+      openhd::log::get_default()->warn("Not changing cam config,already at {}",cam_config_to_string(current_configuration));
       return true;
     }
     // this change requires a reboot, so only allow changing once at run time

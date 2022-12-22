@@ -9,7 +9,7 @@
 
 MEndpoint::MEndpoint(std::string tag)
     : TAG(std::move(tag)),m_mavlink_channel(checkoutFreeChannel()) {
-  openhd::log::get_default()->debug(TAG+" using channel:{}",m_mavlink_channel);
+  openhd::log::get_default()->debug("{} using channel:{}",TAG,m_mavlink_channel);
 }
 
 void MEndpoint::sendMessages(const std::vector<MavlinkMessage>& messages) {

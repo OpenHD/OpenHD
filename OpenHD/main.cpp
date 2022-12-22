@@ -339,8 +339,6 @@ int main(int argc, char *argv[]) {
 
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());
-    // Now we are done with generic settings, param set is now ready (we don't add any new params anymore)
-    ohdTelemetry->settings_generic_ready();
 
     // Since telemetry handles the data stream(s) to external devices itself, we need to also react to
     // changes to the external device(s) from ohd_interface
@@ -357,13 +355,16 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<OHDVideo> ohdVideo= nullptr;
     if (profile->is_air) {
       ohdVideo = std::make_unique<OHDVideo>(*platform,cameras,ohd_action_handler,ohdInterface->get_link_handle());
-      auto settings_components=ohdVideo->get_setting_components();
-      if(!settings_components.empty()){
-        ohdTelemetry->add_settings_camera_component(
-            0, settings_components.at(0)->get_all_settings());
+      // Let telemetry handle the settings via mavlink
+      auto settings_components= ohdVideo->get_all_camera_settings();
+      for(int i=0;i<settings_components.size();i++){
+        ohdTelemetry->add_settings_camera_component(i, settings_components.at(i)->get_all_settings());
       }
+      ohdTelemetry->add_settings_generic(ohdVideo->get_generic_settings());
     }
-    // tmp
+    // We do not add any more settings to ohd telemetry - the param set(s) are complete
+    ohdTelemetry->settings_generic_ready();
+    // now telemetry can send / receive data via wifibroadcast
     ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
     m_console->info("All OpenHD modules running");
 

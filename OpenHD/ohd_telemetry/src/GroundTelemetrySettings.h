@@ -16,7 +16,7 @@ static const std::string SETTINGS_DIRECTORY =std::string(BASE_PATH)+std::string(
 
 struct Settings{
   bool enable_rc_over_joystick=false;
-  int rc_over_joystick_update_rate_hz=10;
+  int rc_over_joystick_update_rate_hz=30;
   std::string rc_channel_mapping="0,1,2,3,4,5,6,7";
 };
 
