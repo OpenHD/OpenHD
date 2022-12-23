@@ -122,6 +122,7 @@ void WBLink::configure_cards() {
   m_console->debug("WBStreams::configure_cards() begin");
   apply_frequency_and_channel_width();
   apply_txpower();
+  apply_mcs_index();
   m_console->debug("WBStreams::configure_cards() end");
 }
 
@@ -371,6 +372,11 @@ bool WBLink::request_set_mcs_index(int mcs_index) {
 void WBLink::apply_mcs_index() {
   // we need to change the mcs index on all tx-es
   const auto settings=m_settings->get_settings();
+  // R.n the only card known to properly allow setting the MCS index is rtl8812au,
+  // and there it is done by modifying the radiotap header
+  //for(const auto& wlan:m_broadcast_cards){
+  //  wifi::commandhelper::iw_set_rate_mcs(wlan.device_name,settings.wb_mcs_index, false);
+  //}
   if(m_wb_tele_tx){
     m_wb_tele_tx->update_mcs_index(settings.wb_mcs_index);
   }

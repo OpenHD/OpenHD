@@ -45,6 +45,8 @@ bool iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq
 //		Specify transmit power level and setting type.
 bool iw_set_tx_power(const std::string& device,uint32_t tx_power_mBm);
 
+bool iw_set_rate_mcs(const std::string &device,uint32_t mcs_index,bool is_2g);
+
 // https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_networking/configuring-networkmanager-to-ignore-certain-devices_configuring-and-managing-networking
 // example: nmcli device set wlx244bfeb71c05 managed no
 // blacklist the card from network manager (so we can safely do our own thing, aka wifibroadcast) with it

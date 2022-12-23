@@ -68,6 +68,18 @@ bool wifi::commandhelper::iw_set_tx_power(const std::string &device,uint32_t tx_
   return true;
 }
 
+bool wifi::commandhelper::iw_set_rate_mcs(const std::string &device,uint32_t mcs_index,bool is_2g) {
+  get_logger()->info("iw_set_rate_mcs {} {} mBm",device,mcs_index);
+  std::vector<std::string> args{"dev",device, "set", "bitrates",is_2g ? "ht-mcs-2.4":"ht-mcs-5",std::to_string(mcs_index)};
+  const auto ret = OHDUtil::run_command("iw", args);
+  if(ret!=0){
+    get_logger()->warn("iw_set_rate_mcs failed {}",ret);
+    return false;
+  }
+  return true;
+}
+
+
 bool wifi::commandhelper::nmcli_set_device_managed_status(const std::string &device,bool managed){
   get_logger()->info("nmcli_set_device_managed_status {} managed:{}",device,managed);
   std::vector<std::string> arguments{"device","set",device,"managed"};
@@ -139,4 +151,3 @@ bool wifi::commandhelper::iw_supports_monitor_mode(int phy_index) {
   }
   return OHDUtil::contains(res_opt.value(),"* monitor");
 }
-
