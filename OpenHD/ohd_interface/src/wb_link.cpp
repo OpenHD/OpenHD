@@ -259,7 +259,7 @@ std::string WBLink::createDebug()const{
 void WBLink::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
   bool first= true;
   assert(m_wb_video_rx_list.size()==2);
-  m_console->info("WBStreams::addExternalDeviceIpForwardingVideoOnly:"+ip);
+  m_console->info("WBStreams::addExternalDeviceIpForwardingVideoOnly:{}",ip);
   // forward video
   for(auto& rxVid: m_wb_video_rx_list){
     const auto udpPort=first ? openhd::VIDEO_GROUND_VIDEO_STREAM_1_UDP : openhd::VIDEO_GROUND_VIDEO_STREAM_2_UDP;
