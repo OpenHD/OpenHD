@@ -34,7 +34,7 @@ static bool is_valid_channel_width(uint32_t channel_width) {
 }
 
 static bool is_valid_mcs_index(uint32_t mcs_index) {
-  return mcs_index >= 1 && mcs_index <= 7;
+  return mcs_index >= 0 && mcs_index <= 7;
 }
 
 // Internally, OpenHD uses milli watt (mW)

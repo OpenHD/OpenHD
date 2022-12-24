@@ -51,7 +51,7 @@ class WBLink :public OHDLink{
   void removeExternalDeviceIpForwardingVideoOnly(const std::string& ip);
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
-  const openhd::Space get_current_frequency_channel_space();
+  openhd::Space get_current_frequency_channel_space()const;
  private:
   // validate param, then schedule change
   bool request_set_frequency(int frequency);

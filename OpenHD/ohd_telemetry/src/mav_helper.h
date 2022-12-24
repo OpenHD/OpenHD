@@ -181,7 +181,7 @@ struct MTarget{
   }
 };
 static MTarget get_target_from_message_if_available(const mavlink_message_t& msg){
-  if(msg.incompat_flags)
+  //if(msg.incompat_flags)
   if(msg.msgid==MAVLINK_MSG_ID_COMMAND_LONG){
     mavlink_command_long_t command;
     mavlink_msg_command_long_decode(&msg,&command);

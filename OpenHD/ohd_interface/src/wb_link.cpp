@@ -122,6 +122,7 @@ void WBLink::configure_cards() {
   m_console->debug("WBStreams::configure_cards() begin");
   apply_frequency_and_channel_width();
   apply_txpower();
+  apply_mcs_index();
   m_console->debug("WBStreams::configure_cards() end");
 }
 
@@ -258,7 +259,7 @@ std::string WBLink::createDebug()const{
 void WBLink::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
   bool first= true;
   assert(m_wb_video_rx_list.size()==2);
-  m_console->info("WBStreams::addExternalDeviceIpForwardingVideoOnly:"+ip);
+  m_console->info("WBStreams::addExternalDeviceIpForwardingVideoOnly:{}",ip);
   // forward video
   for(auto& rxVid: m_wb_video_rx_list){
     const auto udpPort=first ? openhd::VIDEO_GROUND_VIDEO_STREAM_1_UDP : openhd::VIDEO_GROUND_VIDEO_STREAM_2_UDP;
@@ -371,6 +372,11 @@ bool WBLink::request_set_mcs_index(int mcs_index) {
 void WBLink::apply_mcs_index() {
   // we need to change the mcs index on all tx-es
   const auto settings=m_settings->get_settings();
+  // R.n the only card known to properly allow setting the MCS index is rtl8812au,
+  // and there it is done by modifying the radiotap header
+  //for(const auto& wlan:m_broadcast_cards){
+  //  wifi::commandhelper::iw_set_rate_mcs(wlan.device_name,settings.wb_mcs_index, false);
+  //}
   if(m_wb_tele_tx){
     m_wb_tele_tx->update_mcs_index(settings.wb_mcs_index);
   }
@@ -973,9 +979,9 @@ bool WBLink::check_in_state_support_changing_settings(){
 }
 
 void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
-  m_wb_tele_tx->feedPacket(data->data(),data->size());
+  m_wb_tele_tx->enqueue_packet(data,std::nullopt);
 }
 
-const openhd::Space WBLink::get_current_frequency_channel_space() {
+openhd::Space WBLink::get_current_frequency_channel_space()const {
   return openhd::get_space_from_frequency(m_settings->get_settings().wb_frequency);
 }

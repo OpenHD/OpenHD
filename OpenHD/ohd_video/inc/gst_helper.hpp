@@ -80,7 +80,8 @@ static std::string gst_create_rtp_caps(const VideoCodec& videoCodec){
   return ss.str();
 }
 // helper for common pipeline part(s)
-static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const uint32_t mtu=1024){
+// https://gstreamer.freedesktop.org/documentation/rtp/rtph264pay.html?gi-language=c
+static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const uint32_t mtu){
   if(codec==VideoCodec::H264) return fmt::format("rtph264pay mtu={} ! ",mtu);
   if(codec==VideoCodec::H265) return fmt::format("rtph265pay mtu={} ! ",mtu);
   if(codec==VideoCodec::MJPEG) return fmt::format("rtpjpegpay mtu={} ! ",mtu);
@@ -525,11 +526,11 @@ static std::string createIpCameraStream(const std::string &url) {
  * @param videoCodec the video codec to create the rtp for.
  * @return the gstreamer pipeline part.
  */
-static std::string createRtpForVideoCodec(const VideoCodec videoCodec) {
+static std::string create_parse_and_rtp_packetize(const VideoCodec videoCodec) {
   std::stringstream ss;
   ss << "queue ! ";
   ss << create_parse_for_codec(videoCodec);
-  ss << create_rtp_packetize_for_codec(videoCodec);
+  ss << create_rtp_packetize_for_codec(videoCodec,1024);
   return ss.str();
 }
 

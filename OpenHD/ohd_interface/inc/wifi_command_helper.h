@@ -45,11 +45,14 @@ bool iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq
 //		Specify transmit power level and setting type.
 bool iw_set_tx_power(const std::string& device,uint32_t tx_power_mBm);
 
+// NOTE: so far, no card has been found that supports changing the mcs index in monitor mode via iw -
+// rtl8812bu does it by changing the mcs index in the radiotap header
+bool iw_set_rate_mcs(const std::string &device,uint32_t mcs_index,bool is_2g);
+
 // https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_networking/configuring-networkmanager-to-ignore-certain-devices_configuring-and-managing-networking
 // example: nmcli device set wlx244bfeb71c05 managed no
-// blacklist the card from network manager (so we can safely do our own thing, aka wifibroadcast) with it
-// NOTE: this is not permament between restarts - but that is exactly what we want,
-// since on each restart we might do different things with the wifi card(s)
+// blacklist the card from network manager (managed=false), such that we can safely do our own thing, aka wifibroadcast with it
+// or give it back to network manager (managed=true)
 bool nmcli_set_device_managed_status(const std::string& device,bool managed);
 
 // R.n I do not know of a better solution than this one
