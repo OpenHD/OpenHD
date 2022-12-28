@@ -72,8 +72,7 @@ class AirTelemetry : public MavlinkSystem{
  private:
   std::mutex m_serial_endpoint_mutex;
   std::unique_ptr<SerialEndpoint> m_serial_endpoint;
-  // For now, use UDP endpoint and rely on another service for starting the rx/tx links
-  //std::unique_ptr<UDPEndpoint> wifibroadcastEndpoint;
+  // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
   // shared because we also push it onto our components list
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
