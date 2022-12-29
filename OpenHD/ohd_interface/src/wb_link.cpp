@@ -213,10 +213,10 @@ ROptions WBLink::create_rx_options(uint8_t radio_port)const {
   const auto cards = get_rx_card_names();
   assert(!cards.empty());
   options.rxInterfaces = cards;
-  // use rx queue depth of 1 for now, this should at least reduce the problem of the burst /
-  // high latency when blocks are lost.
-  // Multiple rx wifi card's won't provide a benefit with this parameter set though.
-  options.rx_queue_depth = 1;//_broadcast_cards.size() > 1 ? 10 : 2;
+  // For multi rx-es we need the rx queue - but using it really has negative effects
+  // for a single rx card, we can just use a depth of 1 (essentially disabling the rx queue)
+  // but we don't need it anyways.
+  options.rx_queue_depth = m_broadcast_cards.size() > 1 ? 2 : 1;
   const auto wifi_card_type=m_broadcast_cards.at(0).type;
   options.rtl8812au_rssi_fixup=wifi_card_type==WiFiCardType::Realtek8812au;
   return options;
