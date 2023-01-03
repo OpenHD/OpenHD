@@ -737,14 +737,6 @@ void WBLink::perform_rate_adjustment() {
         bitrate_is_still_too_high = true;
       }
     }
-    // or the tx queue is running full
-    const auto n_buffered_packets_estimate = 0;
-    m_console->debug("Video estimates {} buffered packets",
-                     n_buffered_packets_estimate);
-    if (n_buffered_packets_estimate >
-        50) {  // half of the wifibroadcast extra tx queue
-      bitrate_is_still_too_high = true;
-    }
     // initialize with the theoretical default, since we do not know what the camera is doing, even though it probably is "too high".
     if (last_recommended_bitrate <= 0) {
       last_recommended_bitrate = max_video_after_fec_kbits;
