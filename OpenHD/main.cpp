@@ -5,7 +5,8 @@
 #include <OHDTelemetry.h>
 #include <camera_discovery.h>
 #include <ohd_interface.h>
-#include <ohd_video.h>
+#include <ohd_video_air.h>
+#include <ohd_video_ground.h>
 
 #include <iostream>
 #include <memory>
@@ -16,9 +17,9 @@
 #include "ohd_common/openhd-platform.hpp"
 #include "ohd_common/openhd-profile-json.hpp"
 #include "ohd_common/openhd-profile.hpp"
+#include "ohd_common/openhd-rpi-gpio.h"
 #include "ohd_common/openhd-spdlog.hpp"
 #include "ohd_common/openhd-temporary-air-or-ground.h"
-#include "ohd_common/openhd-rpi-gpio.h"
 // For logging the commit hash and more
 #include "git.h"
 
@@ -351,16 +352,19 @@ int main(int argc, char *argv[]) {
       }
     });
 
-    // and start ohdVideo if we are on the air pi
-    std::unique_ptr<OHDVideoAir> ohdVideo= nullptr;
+    // either one is active, depending on air or ground
+    std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
+    std::unique_ptr<OHDVideoGround> ohd_video_ground = nullptr;
     if (profile->is_air) {
-      ohdVideo = std::make_unique<OHDVideoAir>(*platform,cameras,ohd_action_handler,ohdInterface->get_link_handle());
+      ohd_video_air = std::make_unique<OHDVideoAir>(*platform,cameras,ohd_action_handler,ohdInterface->get_link_handle());
       // Let telemetry handle the settings via mavlink
-      auto settings_components= ohdVideo->get_all_camera_settings();
+      auto settings_components= ohd_video_air->get_all_camera_settings();
       for(int i=0;i<settings_components.size();i++){
         ohdTelemetry->add_settings_camera_component(i, settings_components.at(i)->get_all_settings());
       }
-      ohdTelemetry->add_settings_generic(ohdVideo->get_generic_settings());
+      ohdTelemetry->add_settings_generic(ohd_video_air->get_generic_settings());
+    }else{
+      ohd_video_ground = std::make_unique<OHDVideoGround>(ohdInterface->get_link_handle());
     }
     // We do not add any more settings to ohd telemetry - the param set(s) are complete
     ohdTelemetry->settings_generic_ready();
@@ -391,8 +395,8 @@ int main(int argc, char *argv[]) {
           break;
         }
       }
-      if(ohdVideo){
-        ohdVideo->restartIfStopped();
+      if(ohd_video_air){
+        ohd_video_air->restartIfStopped();
       }
       // To make sure this is all tightly packed together, we write it to a stringstream first
       // and then to stdout in one big chunk. Otherwise, some other debug output might stand in between the OpenHD
@@ -403,8 +407,8 @@ int main(int argc, char *argv[]) {
         if(options.enable_interface_debugging){
           ss<<ohdInterface->createDebug();
         }
-        if(options.enable_video_debugging && ohdVideo){
-          ss<<ohdVideo->createDebug();
+        if(options.enable_video_debugging && ohd_video_air){
+          ss<< ohd_video_air->createDebug();
         }
         if(options.enable_telemetry_debugging){
           ss << ohdTelemetry->createDebug();
@@ -421,10 +425,15 @@ int main(int argc, char *argv[]) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     // unique ptr would clean up for us, but this way we are a bit more verbose
     // since some of those modules talk to each other, this is a bit prone to failures.
-    if(ohdVideo){
-      m_console->debug("Terminating ohd_video - begin");
-      ohdVideo.reset();
-      m_console->debug("Terminating ohd_video - end");
+    if(ohd_video_air){
+      m_console->debug("Terminating ohd_video_air - begin");
+      ohd_video_air.reset();
+      m_console->debug("Terminating ohd_video_air - end");
+    }
+    if(ohd_video_ground){
+      m_console->debug("Terminating ohd_video_ground- begin");
+      ohd_video_ground.reset();
+      m_console->debug("Terminating ohd_video_ground - end");
     }
     if(ohdTelemetry){
       m_console->debug("Terminating ohd_telemetry - begin");

@@ -96,7 +96,7 @@ void OHDInterface::addExternalDeviceIpForwarding(const openhd::ExternalDevice& e
   // telemetry first needs to go through the ohd_telemetry module, and therefore is handled
   // seperately ( a bit hacky, but no real way around if we want to keep the module separation)
   if(m_wb_link){
-    m_wb_link->addExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
+    //m_wb_link->addExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
   }
   std::lock_guard<std::mutex> guard(m_external_device_callback_mutex);
   if(m_external_device_callback){
@@ -106,7 +106,7 @@ void OHDInterface::addExternalDeviceIpForwarding(const openhd::ExternalDevice& e
 
 void OHDInterface::removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device){
   if(m_wb_link){
-    m_wb_link->removeExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
+    //m_wb_link->removeExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
   }
   std::lock_guard<std::mutex> guard(m_external_device_callback_mutex);
   if(m_external_device_callback){

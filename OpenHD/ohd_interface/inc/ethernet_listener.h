@@ -5,6 +5,10 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_ETHERNET_LISTENER_H_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_ETHERNET_LISTENER_H_
 
+#include <memory>
+#include <thread>
+#include <atomic>
+
 class EthernetListener{
  public:
   EthernetListener();

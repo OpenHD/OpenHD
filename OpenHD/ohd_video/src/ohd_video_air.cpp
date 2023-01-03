@@ -5,7 +5,7 @@
 #include <utility>
 
 #include "gstreamerstream.h"
-#include "ohd_video.h"
+#include "ohd_video_air.h"
 
 OHDVideoAir::OHDVideoAir(OHDPlatform platform1,const std::vector<Camera>& cameras,
                    std::shared_ptr<openhd::ActionHandler> opt_action_handler,

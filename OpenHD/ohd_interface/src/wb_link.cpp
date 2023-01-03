@@ -42,9 +42,6 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   openhd::wb::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
   takeover_cards_monitor_mode();
   configure_cards();
-  if(m_profile.is_ground()){
-    m_ground_video_forwarder=std::make_unique<GroundVideoForwarder>();
-  }
   configure_telemetry();
   configure_video();
   m_work_thread_run = true;
@@ -151,10 +148,10 @@ void WBLink::configure_video() {
   } else {
     // we receive video
     auto cb1=[this](const uint8_t* data,int data_len){
-      forward_video_data(0,data,data_len);
+      on_receive_video_data(0,data,data_len);
     };
     auto cb2=[this](const uint8_t* data,int data_len){
-      forward_video_data(1,data,data_len);
+      on_receive_video_data(1,data,data_len);
     };
     auto primary = create_wb_rx(openhd::VIDEO_PRIMARY_RADIO_PORT,cb1);
     primary->start_async();
@@ -255,32 +252,6 @@ std::string WBLink::createDebug()const{
     ss<<"VidRx :"<<rxvid->createDebugState();
   }
   return ss.str();
-}
-
-void WBLink::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
-  bool first= true;
-  assert(m_wb_video_rx_list.size()==2);
-  m_console->info("WBStreams::addExternalDeviceIpForwardingVideoOnly:{}",ip);
-  // forward video
-  for(auto& rxVid: m_wb_video_rx_list){
-    const auto udpPort=first ? openhd::VIDEO_GROUND_VIDEO_STREAM_1_UDP : openhd::VIDEO_GROUND_VIDEO_STREAM_2_UDP;
-    first= false;
-    if(m_ground_video_forwarder){
-      m_ground_video_forwarder->addForwarder(ip,udpPort);
-    }
-  }
-}
-
-void WBLink::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
-  bool first= true;
-  assert(m_wb_video_rx_list.size()==2);
-  for(auto& rxVid: m_wb_video_rx_list){
-    const auto udpPort=first ? openhd::VIDEO_GROUND_VIDEO_STREAM_1_UDP : openhd::VIDEO_GROUND_VIDEO_STREAM_2_UDP;
-    first= false;
-    if(m_ground_video_forwarder){
-      m_ground_video_forwarder->removeForwarder(ip,udpPort);
-    }
-  }
 }
 
 std::vector<std::string> WBLink::get_rx_card_names() const {
@@ -837,12 +808,6 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
     }else{
       tx.try_enqueue_block(fragmented_video_frame.frame_fragments, 100);
     }
-  }
-}
-
-void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_len) {
-  if(m_ground_video_forwarder){
-    m_ground_video_forwarder->forward_data(stream_index,data,data_len);
   }
 }
 

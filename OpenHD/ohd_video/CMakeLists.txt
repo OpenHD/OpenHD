@@ -66,14 +66,14 @@ set(sources
     "inc/gstreamerstream.h"
     "src/libcamera_detect.hpp"
     "inc/gst_helper.hpp"
-    "inc/ohd_video.h"
+    "inc/ohd_video_air.h"
     "inc/camera.hpp"
     "inc/camera_enums.hpp"
     "inc/camera_holder.hpp"
     "inc/camera_settings.hpp"
     "inc/rtp_eof_helper.h"
-
     "inc/v_validate_settings.h"
+    inc/ohd_video_ground.h
 
     "src/camera_discovery_helper.hpp"
     "src/ffmpeg_videosamples.hpp"
@@ -81,8 +81,9 @@ set(sources
     "src/camerastream.cpp"
     "src/camera_discovery.cpp"
     "src/gstreamerstream.cpp"
-    "src/ohd_video.cpp"
+    "src/ohd_video_air.cpp"
     "src/rtp_eof_helper.cpp"
+    src/ohd_video_ground.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})

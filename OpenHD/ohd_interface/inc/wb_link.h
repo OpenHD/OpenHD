@@ -45,10 +45,6 @@ class WBLink :public OHDLink{
   ~WBLink();
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug()const;
-  // start or stop video data forwarding to another external device
-  // NOTE: Only for the ground unit, and only for video (see OHDInterface for more info)
-  void addExternalDeviceIpForwardingVideoOnly(const std::string& ip);
-  void removeExternalDeviceIpForwardingVideoOnly(const std::string& ip);
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
   openhd::Space get_current_frequency_channel_space()const;
@@ -155,11 +151,6 @@ class WBLink :public OHDLink{
   // Called by the camera stream on the air unit only
   // transmit video data via wifibradcast
   void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
-  // Called by the wifibroadcast receiver on the ground unit only
-  // Forward video data to the local udp port and/or external device(s) if they exist
-  void forward_video_data(int stream_index,const uint8_t * data,int data_len);
- private:
-  std::unique_ptr<GroundVideoForwarder> m_ground_video_forwarder;
  public:
   // Warning: This operation will block the calling thread for up to X ms.
   // During scan, you cannot change any wb settings
