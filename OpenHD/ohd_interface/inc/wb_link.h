@@ -95,7 +95,7 @@ class WBLink :public OHDLink{
   std::unique_ptr<ForeignPacketsReceiver> m_foreign_packets_receiver;
   // Reads the current settings and creates the appropriate Radiotap Header params
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
-  [[nodiscard]] TOptions create_tx_options(uint8_t radio_port,bool enableFec)const;
+  [[nodiscard]] TOptions create_tx_options(uint8_t radio_port,bool is_video)const;
   [[nodiscard]] ROptions create_rx_options(uint8_t radio_port)const;
   std::unique_ptr<WBTransmitter> create_wb_tx(uint8_t radio_port,bool is_video);
   std::unique_ptr<AsyncWBReceiver> create_wb_rx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb);

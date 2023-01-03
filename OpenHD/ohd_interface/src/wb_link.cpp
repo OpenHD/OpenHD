@@ -174,7 +174,7 @@ RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
       settings.wb_enable_ldpc, mcs_index};
 }
 
-TOptions WBLink::create_tx_options(uint8_t radio_port,bool enableFec)const {
+TOptions WBLink::create_tx_options(uint8_t radio_port,bool is_video)const {
   const auto settings=m_settings->get_settings();
   TOptions options{};
   options.radio_port = radio_port;
@@ -186,7 +186,7 @@ TOptions WBLink::create_tx_options(uint8_t radio_port,bool enableFec)const {
   }else{
     options.keypair = std::nullopt;
   }
-  if(enableFec){
+  if(is_video){
     options.enable_fec= true;
     options.tx_fec_options.fixed_k=static_cast<int>(settings.wb_video_fec_block_length);
     options.tx_fec_options.overhead_percentage=static_cast<int>(settings.wb_video_fec_percentage);
