@@ -352,9 +352,9 @@ int main(int argc, char *argv[]) {
     });
 
     // and start ohdVideo if we are on the air pi
-    std::unique_ptr<OHDVideo> ohdVideo= nullptr;
+    std::unique_ptr<OHDVideoAir> ohdVideo= nullptr;
     if (profile->is_air) {
-      ohdVideo = std::make_unique<OHDVideo>(*platform,cameras,ohd_action_handler,ohdInterface->get_link_handle());
+      ohdVideo = std::make_unique<OHDVideoAir>(*platform,cameras,ohd_action_handler,ohdInterface->get_link_handle());
       // Let telemetry handle the settings via mavlink
       auto settings_components= ohdVideo->get_all_camera_settings();
       for(int i=0;i<settings_components.size();i++){

@@ -3,3 +3,9 @@
 //
 
 #include "ethernet_listener.h"
+
+
+EthernetListener::EthernetListener() {}
+
+
+EthernetListener::~EthernetListener() {}

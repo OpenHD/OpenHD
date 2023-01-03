@@ -23,6 +23,7 @@ set(sources
     inc/wb_link_helper.h
     inc/wifi_channel.h
     inc/wifi_command_helper.h
+    inc/ethernet_listener.h
     #inc/wifi_command_helper2.h
 
     src/wifi_card_discovery.cpp
@@ -34,6 +35,7 @@ set(sources
     src/video_forwarder.cpp
     src/wb_link_helper.cpp
     src/wifi_command_helper.cpp
+    src/ethernet_listener.cpp
     #src/wifi_command_helper2.cpp
 )
 

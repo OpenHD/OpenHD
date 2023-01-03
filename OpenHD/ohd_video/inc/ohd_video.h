@@ -18,7 +18,7 @@
  * it just "stupidly" forwards received video data. Therefore, we only create an instance of this class on the air unit.
  * See the Readme.md and camerastream.h for more information.
  */
-class OHDVideo {
+class OHDVideoAir {
  public:
   /**
    * Creates a video stream for each of the discovered cameras given in @param cameras. You have to provide at least one camera -
@@ -26,11 +26,11 @@ class OHDVideo {
    * @param opt_action_handler openhd global handler for communication between different ohd modules.
    * @param link_handle handle for sending video data over the (currently only wb) link between air and ground
    */
-  OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,
+  OHDVideoAir(OHDPlatform platform1,const std::vector<Camera>& cameras,
            std::shared_ptr<openhd::ActionHandler> opt_action_handler,
            std::shared_ptr<OHDLink> link_handle);
-  OHDVideo(const OHDVideo&)=delete;
-  OHDVideo(const OHDVideo&&)=delete;
+  OHDVideoAir(const OHDVideoAir&)=delete;
+  OHDVideoAir(const OHDVideoAir&&)=delete;
   /**
    * Create a verbose debug string about the current state of OHDVideo.
    * @return a verbose debug string.

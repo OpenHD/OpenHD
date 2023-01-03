@@ -7,7 +7,7 @@
 #include "gstreamerstream.h"
 #include "ohd_video.h"
 
-OHDVideo::OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,
+OHDVideoAir::OHDVideoAir(OHDPlatform platform1,const std::vector<Camera>& cameras,
                    std::shared_ptr<openhd::ActionHandler> opt_action_handler,
                    std::shared_ptr<OHDLink> link) :
 	m_platform(platform1),m_opt_action_handler(std::move(opt_action_handler)),
@@ -38,7 +38,7 @@ OHDVideo::OHDVideo(OHDPlatform platform1,const std::vector<Camera>& cameras,
   m_console->debug( "OHDVideo::running");
 }
 
-std::string OHDVideo::createDebug() const {
+std::string OHDVideoAir::createDebug() const {
   // TODO make it much more verbose
   std::stringstream ss;
   ss << "OHDVideo::N camera streams:" << m_camera_streams.size() << "\n";
@@ -49,7 +49,7 @@ std::string OHDVideo::createDebug() const {
   return ss.str();
 }
 
-void OHDVideo::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
+void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
   const auto camera=camera_holder->get_camera();
   m_console->debug("Configuring camera:"+camera_type_to_string(camera.type));
   // R.N we use gstreamer only for everything except veye
@@ -85,13 +85,14 @@ void OHDVideo::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
   }
 }
 
-void OHDVideo::restartIfStopped() {
+void OHDVideoAir::restartIfStopped() {
   for(auto& stream:m_camera_streams){
     stream->restartIfStopped();
   }
 }
 
-std::vector<std::shared_ptr<openhd::ISettingsComponent>> OHDVideo::get_all_camera_settings() {
+std::vector<std::shared_ptr<openhd::ISettingsComponent>>
+OHDVideoAir::get_all_camera_settings() {
   std::vector<std::shared_ptr<openhd::ISettingsComponent>> ret;
   for(auto& stream: m_camera_streams){
     ret.push_back(stream->m_camera_holder);
@@ -99,13 +100,13 @@ std::vector<std::shared_ptr<openhd::ISettingsComponent>> OHDVideo::get_all_camer
   return ret;
 }
 
-void OHDVideo::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
+void OHDVideoAir::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
   for(auto& stream:m_camera_streams){
     stream->handle_change_bitrate_request(lb);
   }
 }
 
-std::vector<openhd::Setting> OHDVideo::get_generic_settings() {
+std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   std::vector<openhd::Setting> ret;
   // N of discovered cameras, for debugging
   ret.push_back(openhd::create_read_only_int("V_N_CAMERAS",static_cast<int>(m_camera_streams.size())));
