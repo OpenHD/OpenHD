@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
     const auto profile=DProfile::discover(options.run_as_air, options.developer_mode);
     write_profile_manifest(*profile);
 
-    // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as ground.
+    // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as air.
     // can be disabled for development purposes.
     if(!options.no_qt_autostart){
       if(!profile->is_air){
