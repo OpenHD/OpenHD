@@ -10,6 +10,8 @@
 
 // The ground just stupidly forwards video (rtp fragments, to be exact) via UDP
 // for QOpenHD and/or more device(s) to decode and display.
+// It does not touch the video data in any way (other than wb and its FEC protection).
+// re-fragmentation is up to the displaying application (which is why we have rtp ;) )
 // NOTE: There is no way to query any information or change camera/streaming info on the ground. This design is by purpose !
 
 // Video data received from wifibroadcast is made available via UDP on the ground unit.
