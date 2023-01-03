@@ -19,8 +19,7 @@ set(sources
     inc/wb_link_settings.hpp
     inc/wifi_hotspot.h
     inc/wifi_hotspot_settings.h
-    inc/video_forwarder.h
-    inc/wb_link_helper.h
+        inc/wb_link_helper.h
     inc/wifi_channel.h
     inc/wifi_command_helper.h
     inc/ethernet_listener.h
@@ -32,8 +31,7 @@ set(sources
     src/wb_link.cpp
     src/wifi_hotspot.cpp
     src/wifi_hotspot_settings.cpp
-    src/video_forwarder.cpp
-    src/wb_link_helper.cpp
+        src/wb_link_helper.cpp
     src/wifi_command_helper.cpp
     src/ethernet_listener.cpp
     #src/wifi_command_helper2.cpp

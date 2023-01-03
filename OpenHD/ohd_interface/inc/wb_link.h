@@ -17,7 +17,6 @@
 #include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
 #include "openhd-telemetry-tx-rx.h"
-#include "video_forwarder.h"
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
 
