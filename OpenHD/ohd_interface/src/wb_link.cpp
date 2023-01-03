@@ -190,6 +190,7 @@ TOptions WBLink::create_tx_options(uint8_t radio_port,bool is_video)const {
     options.enable_fec= true;
     options.tx_fec_options.fixed_k=static_cast<int>(settings.wb_video_fec_block_length);
     options.tx_fec_options.overhead_percentage=static_cast<int>(settings.wb_video_fec_percentage);
+    options.use_block_queue= true;
   }else{
     options.enable_fec= false;
     options.tx_fec_options.fixed_k=0;
@@ -224,7 +225,6 @@ ROptions WBLink::create_rx_options(uint8_t radio_port)const {
 
 std::unique_ptr<WBTransmitter> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
   TOptions options= create_tx_options(radio_port,is_video);
-  if(is_video)options.use_block_queue= true;
   RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
   return std::make_unique<WBTransmitter>(wifiParams, options);
 }
