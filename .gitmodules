@@ -1,7 +1,6 @@
 [submodule "OpenHD/lib/mavlink"]
 	path = OpenHD/lib/mavlink
 	url = https://github.com/OpenHD/mavlink.git
-	branch = 2.2.x-evo
 [submodule "OpenHD/lib/json"]
 	path = OpenHD/lib/json
 	url = https://github.com/nlohmann/json.git
