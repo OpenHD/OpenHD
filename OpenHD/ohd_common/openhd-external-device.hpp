@@ -47,5 +47,10 @@ struct ExternalDevice {
 // connected=false: A connected device uniquely indexed by "IP address" disconnected - stop forwarding of video and telemetry data.
 typedef std::function<void(ExternalDevice external_device,bool connected)> EXTERNAL_DEVICE_CALLBACK;
 
+class ExternalDeviceHandler{
+ public:
+ private:
+};
+
 }
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_EXTERNAL_DEVICE_H_
