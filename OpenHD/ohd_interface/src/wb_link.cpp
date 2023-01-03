@@ -222,8 +222,9 @@ ROptions WBLink::create_rx_options(uint8_t radio_port)const {
   return options;
 }
 
-std::unique_ptr<WBTransmitter> WBLink::create_wb_tx(uint8_t radio_port,bool enableFec) {
-  TOptions options= create_tx_options(radio_port,enableFec);
+std::unique_ptr<WBTransmitter> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
+  TOptions options= create_tx_options(radio_port,is_video);
+  if(is_video)options.use_block_queue= true;
   RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
   return std::make_unique<WBTransmitter>(wifiParams, options);
 }
@@ -737,8 +738,7 @@ void WBLink::perform_rate_adjustment() {
       }
     }
     // or the tx queue is running full
-    const auto n_buffered_packets_estimate =
-        m_wb_video_tx_list.at(0)->get_estimate_buffered_packets();
+    const auto n_buffered_packets_estimate = 0;
     m_console->debug("Video estimates {} buffered packets",
                      n_buffered_packets_estimate);
     if (n_buffered_packets_estimate >
@@ -841,9 +841,9 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
       max_block_size_for_platform=openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
     }
     if(m_settings->get_settings().is_video_variable_block_length_enabled()){
-      tx.tmp_split_and_feed_frame_fragments(fragmented_video_frame.frame_fragments,max_block_size_for_platform);
+      tx.try_enqueue_block(fragmented_video_frame.frame_fragments,max_block_size_for_platform);
     }else{
-      tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments, true);
+      tx.try_enqueue_block(fragmented_video_frame.frame_fragments, 100);
     }
   }
 }
@@ -976,7 +976,7 @@ bool WBLink::check_in_state_support_changing_settings(){
 }
 
 void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
-  m_wb_tele_tx->enqueue_packet(data,std::nullopt);
+  m_wb_tele_tx->try_enqueue_packet(data);
 }
 
 openhd::Space WBLink::get_current_frequency_channel_space()const {
