@@ -9,10 +9,8 @@ int main(int argc, char *argv[]) {
 
   OHDUtil::terminate_if_not_root();
 
-  auto cb=[](openhd::ExternalDevice external_device,bool connected){
-	std::cout<<"Callback called with "<<external_device.to_string()<<" connected:"<<OHDUtil::yes_or_no(connected)<<"\n";
-  };
-  USBTetherListener usb_tether_listener{cb};
+  auto ext_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
+  USBTetherListener usb_tether_listener{ext_devices_manager};
   usb_tether_listener.startLooping();
 
   OHDUtil::keep_alive_until_sigterm();

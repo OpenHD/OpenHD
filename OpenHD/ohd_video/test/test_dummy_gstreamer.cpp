@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   update_settings(0,*camera_holder);
   PlatformType platformType{};
   uint16_t video_port = OHD_VIDEO_AIR_VIDEO_STREAM_1_UDP;
-  auto stream = std::make_unique<GStreamerStream>(platformType, camera_holder, video_port);
+  auto stream = std::make_unique<GStreamerStream>(platformType, camera_holder, nullptr);
   stream->setup();
   stream->start();
 
