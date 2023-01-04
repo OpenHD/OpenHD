@@ -52,7 +52,7 @@ class ExternalDeviceManager{
  public:
   // Might be called from different thread(s)
   void on_new_external_device(ExternalDevice external_device,bool connected){
-    openhd::log::get_default()->debug("Got {}",external_device.to_string());
+    openhd::log::get_default()->debug("Got {} {}",external_device.to_string(),connected);
     const auto id=external_device.create_identifier();
     std::lock_guard<std::mutex> guard(m_ext_devices_lock);
     if(connected){

@@ -366,11 +366,13 @@ int main(int argc, char *argv[]) {
       ohdTelemetry->add_settings_generic(ohd_video_air->get_generic_settings());
     }else{
       ohd_video_ground = std::make_unique<OHDVideoGround>(ohdInterface->get_link_handle());
+      ohd_video_ground->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
     }
     // We do not add any more settings to ohd telemetry - the param set(s) are complete
     ohdTelemetry->settings_generic_ready();
     // now telemetry can send / receive data via wifibroadcast
     ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
+    ohdTelemetry->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
     m_console->info("All OpenHD modules running");
 
     // run forever, everything has its own threads. Note that the only way to break out basically
