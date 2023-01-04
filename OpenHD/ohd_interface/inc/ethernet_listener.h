@@ -17,8 +17,8 @@ class EthernetListener{
  private:
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<openhd::ExternalDeviceManager> m_external_device_manager;
-  std::unique_ptr<std::thread> loopThread;
-  std::atomic<bool> loopThreadStop=false;
+  std::unique_ptr<std::thread> m_check_connection_thread;
+  std::atomic<bool> m_check_connection_thread_stop =false;
   void loop_infinite();
   void connect_once();
 };

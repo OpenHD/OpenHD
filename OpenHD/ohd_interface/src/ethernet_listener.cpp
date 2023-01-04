@@ -9,27 +9,27 @@ EthernetListener::EthernetListener(
     std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager) {
   m_console = openhd::log::create_or_get("eth_listener");
   assert(m_console);
-  loopThreadStop=false;
-  loopThread=std::make_unique<std::thread>([this](){loop_infinite();});
+  m_check_connection_thread_stop =false;
+  m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
 }
 
 
 EthernetListener::~EthernetListener() {
-  loopThreadStop=true;
-  if(loopThread->joinable()){
-    loopThread->join();
+  m_check_connection_thread_stop =true;
+  if(m_check_connection_thread->joinable()){
+    m_check_connection_thread->join();
   }
-  loopThread.reset();
+  m_check_connection_thread.reset();
 }
 
 void EthernetListener::loop_infinite() {
-  while (!loopThreadStop){
+  while (!m_check_connection_thread_stop){
     connect_once();
   }
 }
 
 void EthernetListener::connect_once() {
-  while (!loopThreadStop){
+  while (!m_check_connection_thread_stop){
     std::this_thread::sleep_for(std::chrono::seconds(1));
     const auto content_opt=OHDFilesystemUtil::opt_read_file("/sys/class/net/eth0/operstate");
     if(!content_opt.has_value())continue;
@@ -59,7 +59,7 @@ void EthernetListener::connect_once() {
     m_external_device_manager->on_new_external_device(external_device, true);
   }
   // check in regular intervals if the device disconnects
-  while (!loopThreadStop){
+  while (!m_check_connection_thread_stop){
     std::this_thread::sleep_for(std::chrono::seconds(1));
     //TODO
   }
