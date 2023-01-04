@@ -4,9 +4,12 @@
 
 #include "ethernet_listener.h"
 
+#include <utility>
+
 
 EthernetListener::EthernetListener(
-    std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager) {
+    std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager):
+m_external_device_manager(std::move(external_device_manager)){
   m_console = openhd::log::create_or_get("eth_listener");
   assert(m_console);
   m_check_connection_thread_stop =false;
