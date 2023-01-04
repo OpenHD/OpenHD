@@ -23,6 +23,7 @@ static void create_ethernet_hotspot_connection(const std::string& eth_device_nam
 
 EthernetHotspot::EthernetHotspot(std::string  device):m_device(std::move(device)) {
   m_console = openhd::log::create_or_get("wifi_hs");
+  m_settings=std::make_unique<EthernetHotspotSettingsHolder>();
   m_console->debug("begin create hotspot connection");
   create_ethernet_hotspot_connection(m_device);
   m_console->debug("end create hotspot connection");
