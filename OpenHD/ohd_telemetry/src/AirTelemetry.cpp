@@ -230,26 +230,26 @@ void AirTelemetry::setup_uart() {
   // Disable the currently running uart configuration, if there is any
   std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
   if(m_serial_endpoint !=nullptr) {
-	m_console->info("Stopping already existing FC UART");
-        m_serial_endpoint->stop();
-        m_serial_endpoint.reset();
-        m_serial_endpoint =nullptr;
+    m_console->info("Stopping already existing FC UART");
+    m_serial_endpoint->stop();
+    m_serial_endpoint.reset();
+    m_serial_endpoint =nullptr;
   }
   if(fc_uart_connection_type==air::UART_CONNECTION_TYPE_DISABLE){
-	// No uart enabled, we've already cleaned it up though
-	m_console->info("FC UART disabled");
-	return;
+    // No uart enabled, we've already cleaned it up though
+    m_console->info("FC UART disabled");
+    return;
   }else{
-	m_console->debug("FC UART enable - begin");
-	SerialEndpoint::HWOptions options{};
-	options.linux_filename=air::uart_fd_from_connection_type(fc_uart_connection_type).value();
-	options.baud_rate=fc_uart_baudrate;
-	options.flow_control= fc_uart_flow_control;
-        m_serial_endpoint =std::make_unique<SerialEndpoint>("ser_fc",options);
-        m_serial_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
-          this->on_messages_fc(messages);
-	});
-	m_console->debug("FC UART enable - end");
+    m_console->debug("FC UART enable - begin");
+    SerialEndpoint::HWOptions options{};
+    options.linux_filename=air::uart_fd_from_connection_type(fc_uart_connection_type).value();
+    options.baud_rate=fc_uart_baudrate;
+    options.flow_control= fc_uart_flow_control;
+    m_serial_endpoint =std::make_unique<SerialEndpoint>("ser_fc",options);
+    m_serial_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+      this->on_messages_fc(messages);
+    });
+    m_console->debug("FC UART enable - end");
   }
 }
 
