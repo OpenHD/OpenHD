@@ -20,6 +20,12 @@ WBEndpoint::WBEndpoint(std::shared_ptr<OHDLink> link,std::string TAG)
   }
 }
 
+WBEndpoint::~WBEndpoint() {
+  if(m_link_handle){
+    m_link_handle->register_on_receive_telemetry_data_cb(nullptr);
+  }
+}
+
 bool WBEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
   auto message_buffers= pack_messages(messages);
   for(const auto& message_buffer:message_buffers){
@@ -29,10 +35,4 @@ bool WBEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
     }
   }
   return true;
-}
-
-WBEndpoint::~WBEndpoint() {
-  if(m_link_handle){
-    m_link_handle->register_on_receive_telemetry_data_cb(nullptr);
-  }
 }
