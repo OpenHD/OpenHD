@@ -45,18 +45,6 @@ class OHDInterface :public openhd::ISettingsComponent{
   // start / stop forwarding if external device(s) are connected / disconnected.
   std::shared_ptr<openhd::ExternalDeviceManager> get_ext_devices_manager();
  private:
-  /**
-    * after calling this method with an external device's ip address
-    * (for example an externally connected tablet) data will be forwarded to the device's ip address.
-    * It is safe to call this method multiple times with the same IP address, since we internally keep track here.
-   */
-  void addExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device);
-  /**
-    * stop forwarding data to the device's ip address.
-    * Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
-   */
-  void removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device);
- private:
   const OHDProfile m_profile;
   const OHDPlatform m_platform;
   std::shared_ptr<WBLink> m_wb_link;

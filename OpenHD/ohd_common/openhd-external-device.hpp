@@ -52,6 +52,15 @@ class ExternalDeviceManager{
   void on_new_external_device(const std::string tag,ExternalDevice external_device,bool connected){
     openhd::log::get_default()->debug("Got {} {}",tag,external_device.to_string());
   }
+  /**
+    * after calling this method with an external device's ip address
+    * (for example an externally connected tablet) data will be forwarded to the device's ip address.
+    * It is safe to call this method multiple times with the same IP address, since we internally keep track here.
+   */
+  /**
+    * stop forwarding data to the device's ip address.
+    * Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
+   */
  private:
 };
 

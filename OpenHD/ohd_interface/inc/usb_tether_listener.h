@@ -34,7 +34,7 @@ class USBTetherListener{
    * disconnected USB tether device.
    * @param external_device_callback the callback to notify the upper level.
    */
-  explicit USBTetherListener(openhd::EXTERNAL_DEVICE_CALLBACK external_device_callback);
+  explicit USBTetherListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager);
   ~USBTetherListener();
   /**
    * start looping in a new thread.
@@ -46,7 +46,7 @@ class USBTetherListener{
    */
    void stopLooping();
  private:
-  const openhd::EXTERNAL_DEVICE_CALLBACK _external_device_callback;
+  std::shared_ptr<openhd::ExternalDeviceManager> m_external_device_manager;
   std::unique_ptr<std::thread> loopThread;
   std::atomic<bool> loopThreadStop=false;
   /**

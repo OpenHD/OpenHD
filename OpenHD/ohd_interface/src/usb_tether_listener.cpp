@@ -9,8 +9,8 @@
 #include "openhd-spdlog.hpp"
 #include "usb_tether_listener.h"
 
-USBTetherListener::USBTetherListener(openhd::EXTERNAL_DEVICE_CALLBACK external_device_callback) :
-    _external_device_callback(std::move(external_device_callback)){
+USBTetherListener::USBTetherListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager) :
+    m_external_device_manager(std::move(external_device_manager)){
 }
 
 USBTetherListener::~USBTetherListener() {
@@ -69,24 +69,23 @@ void USBTetherListener::connectOnce() {
   const auto external_device=openhd::ExternalDevice{ip_self_network,ip_external_device};
   // Check if both are valid IPs (otherwise, perhaps the parsing got fucked up)
   if(!external_device.is_valid()){
-    openhd::log::get_default()->warn("USBTetherListener: "+external_device.to_string()+" not valid");
+    openhd::log::get_default()->warn("USBTetherListener: {} not valid",external_device.to_string());
     return;
   }
-  openhd::log::get_default()->debug("USBTetherListener::found device:"+external_device.to_string());
-  if(_external_device_callback){
-    _external_device_callback(external_device, true);
+  openhd::log::get_default()->debug("USBTetherListener::found device:{}",external_device.to_string());
+  if(m_external_device_manager){
+    m_external_device_manager->on_new_external_device("USB",external_device, true);
   }
-
   // check in regular intervals if the tethering device disconnects.
   while (!loopThreadStop){
     std::this_thread::sleep_for(std::chrono::seconds(1));
     if(!OHDFilesystemUtil::exists(connectedDevice)){
-      openhd::log::get_default()->info("USB Tether device disconnected");
+      openhd::log::get_default()->warn("USB Tether device disconnected");
       break;
     }
   }
-  if(_external_device_callback){
-    _external_device_callback(external_device, false);
+  if(m_external_device_manager){
+    m_external_device_manager->on_new_external_device("USB",external_device, false);
   }
 }
 

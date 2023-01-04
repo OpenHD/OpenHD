@@ -61,14 +61,8 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     m_wb_link =std::make_shared<WBLink>(m_profile, m_platform,broadcast_cards,opt_action_handler);
   }
   // USB tethering - only on ground
-  if(!m_profile.is_air){
-    m_usb_tether_listener =std::make_unique<USBTetherListener>([this](openhd::ExternalDevice external_device,bool connected){
-      if(connected){
-        addExternalDeviceIpForwarding(external_device);
-      }else{
-        removeExternalDeviceIpForwarding(external_device);
-      }
-    });
+  if(m_profile.is_ground()){
+    m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
     m_usb_tether_listener->startLooping();
   }
   // This way one could try and recover an air pi
@@ -90,16 +84,6 @@ std::string OHDInterface::createDebug() const {
   //}
   ss<<"OHDInterface::createDebug:end\n";
   return ss.str();
-}
-
-void OHDInterface::addExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device){
-  assert(m_external_devices_manager);
-  m_external_devices_manager->on_new_external_device("",external_device, true);
-}
-
-void OHDInterface::removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device){
-  assert(m_external_devices_manager);
-  m_external_devices_manager->on_new_external_device("",external_device, false);
 }
 
 std::vector<openhd::Setting> OHDInterface::get_all_settings(){
