@@ -17,7 +17,7 @@
 #include "ohd_common/openhd-platform.hpp"
 #include "ohd_common/openhd-profile-json.hpp"
 #include "ohd_common/openhd-profile.hpp"
-#include "ohd_common/openhd-rpi-gpio.h"
+#include "ohd_common/openhd-rpi-gpio.hpp"
 #include "ohd_common/openhd-spdlog.hpp"
 #include "ohd_common/openhd-temporary-air-or-ground.h"
 // For logging the commit hash and more

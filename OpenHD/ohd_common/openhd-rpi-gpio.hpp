@@ -2,8 +2,8 @@
 // Created by consti10 on 29.11.22.
 //
 
-#ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_RPI_GPIO_H_
-#define OPENHD_OPENHD_OHD_COMMON_OPENHD_RPI_GPIO_H_
+#ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_RPI_GPIO_HPP_
+#define OPENHD_OPENHD_OHD_COMMON_OPENHD_RPI_GPIO_HPP_
 
 #include "openhd-util.hpp"
 
@@ -32,4 +32,4 @@ static bool gpio26_user_wants_reset_frequencies(){
 }
 
 
-#endif  // OPENHD_OPENHD_OHD_COMMON_OPENHD_RPI_GPIO_H_
+#endif  // OPENHD_OPENHD_OHD_COMMON_OPENHD_RPI_GPIO_HPP_

@@ -44,8 +44,8 @@ struct ExternalDevice {
   }
 };
 
-// connected=true: A new external device uniquely indexed by "IP address" has been detected - start forwarding of video and telemetry data
-// connected=false: A connected device uniquely indexed by "IP address" disconnected - stop forwarding of video and telemetry data.
+// connected=true: A new external device uniquely indexed by "IP address" has been detected - start forwarding of ohd video and telemetry data
+// connected=false: A connected device uniquely indexed by "IP address" disconnected - stop forwarding of ohd video and telemetry data.
 typedef std::function<void(ExternalDevice external_device,bool connected)> EXTERNAL_DEVICE_CALLBACK;
 
 class ExternalDeviceManager{

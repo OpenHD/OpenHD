@@ -72,9 +72,8 @@ void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& me
 }
 
 void GroundTelemetry::on_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
-  //debugMavlinkMessage(message.m, "GroundTelemetry::onMessageGroundStationClients");
-  //const auto &msg = message.m;
-  // All messages from the ground station(s) are forwarded to the air unit.
+  // All messages from the ground station(s) are forwarded to the air unit, unless they have a target sys id
+  // of the ohd ground unit itself
   auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_GROUND);
   send_messages_air_unit(generic);
   // OpenHD components running on the ground station don't need to talk to the air unit.
@@ -88,23 +87,17 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
 }
 
 void GroundTelemetry::send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
-  //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageGroundStationClients");
-  // forward via TCP or UDP
-  //if (tcpGroundCLient) {
-  //	tcpGroundCLient->sendMessage(message);
-  //}
   if (udpGroundClient) {
     udpGroundClient->sendMessages(messages);
   }
-  std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
-  for (auto const& [key, val] : _other_udp_ground_stations){
+  std::lock_guard<std::mutex> guard(m_other_udp_ground_stations_lock);
+  for (auto const& [key, val] : m_other_udp_ground_stations){
     val->sendMessages(messages);
   }
 }
 
 void GroundTelemetry::send_messages_air_unit(const std::vector<MavlinkMessage>& messages) {
-  //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageAirPi");
-  // transmit via wifibroadcast
+  // transmit via wb / the abstract link we use for sending message(s) to the air unit
   if (m_wb_endpoint) {
     m_wb_endpoint->sendMessages(messages);
   }
@@ -185,9 +178,9 @@ void GroundTelemetry::settings_generic_ready() {
 
 void GroundTelemetry::add_external_ground_station_ip(const openhd::ExternalDevice& ext_device) {
   m_console->debug("add_external_ground_station_ip {}",ext_device.to_string());
-  std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
+  std::lock_guard<std::mutex> guard(m_other_udp_ground_stations_lock);
   const std::string identifier=ext_device.create_identifier();
-  const auto port_offset=_other_udp_ground_stations.size()+1;
+  const auto port_offset= m_other_udp_ground_stations.size()+1;
   auto tmp=std::make_shared<UDPEndpoint2>("GroundStationUDPX",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN+port_offset,
                                             ext_device.external_device_ip,ext_device.local_network_ip);
   tmp->registerCallback([this](std::vector<MavlinkMessage> messages){
@@ -205,15 +198,15 @@ void GroundTelemetry::add_external_ground_station_ip(const openhd::ExternalDevic
       on_messages_ground_station_clients({msg});
     }
   });
-  _other_udp_ground_stations[identifier]=tmp;
+  m_other_udp_ground_stations[identifier]=tmp;
 }
 
 void GroundTelemetry::remove_external_ground_station_ip(const openhd::ExternalDevice& ext_device) {
   m_console->debug("remove_external_ground_station_ip {}",ext_device.to_string());
-  std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
+  std::lock_guard<std::mutex> guard(m_other_udp_ground_stations_lock);
   const std::string identifier=ext_device.create_identifier();
   // shared pointer will clean up for us
-  _other_udp_ground_stations.erase(identifier);
+  m_other_udp_ground_stations.erase(identifier);
 }
 
 std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
@@ -268,6 +261,8 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 }
 
 void GroundTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
+  // only call this once, we do not support changing the link handle at run time
+  assert(m_wb_endpoint== nullptr);
   m_wb_endpoint = std::make_unique<WBEndpoint>(link,"wb_tx");
   m_wb_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_air_unit(messages);

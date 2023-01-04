@@ -68,6 +68,7 @@ class GroundTelemetry :public MavlinkSystem{
   // send one or more messages to all clients connected to the ground station, for example QOpenHD
   void send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages);
  private:
+  std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_groundTelemetrySettings;
   std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;
   // send/receive data via wb
@@ -77,14 +78,13 @@ class GroundTelemetry :public MavlinkSystem{
   std::vector<std::shared_ptr<MavlinkComponent>> components;
   std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
   // telemetry to / from external ground stations (e.g. not the QOpenHD instance running on the device itself (localhost)
-  std::mutex other_udp_ground_stations_lock;
-  std::map<std::string,std::shared_ptr<UDPEndpoint2>> _other_udp_ground_stations{};
+  std::mutex m_other_udp_ground_stations_lock;
+  std::map<std::string,std::shared_ptr<UDPEndpoint2>> m_other_udp_ground_stations{};
   //
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   //std::unique_ptr<JoystickReader> m_joystick_reader;
   std::unique_ptr<RcJoystickSender> m_rc_joystick_sender;
 #endif
-  std::shared_ptr<spdlog::logger> m_console;
   std::vector<openhd::Setting> get_all_settings();
 };
 
