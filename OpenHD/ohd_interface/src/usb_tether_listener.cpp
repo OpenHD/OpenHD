@@ -55,7 +55,7 @@ void USBTetherListener::connectOnce() {
   const auto ip_external_device= OHDUtil::string_in_between("default via "," proto",run_command_result);
   const auto ip_self_network= OHDUtil::string_in_between("src "," metric",run_command_result);
 
-  const auto external_device=openhd::ExternalDevice{ip_self_network,ip_external_device};
+  const auto external_device=openhd::ExternalDevice{"USB0",ip_self_network,ip_external_device};
   // Check if both are valid IPs (otherwise, perhaps the parsing got fucked up)
   if(!external_device.is_valid()){
     m_console->warn("{} not valid",external_device.to_string());
@@ -63,7 +63,7 @@ void USBTetherListener::connectOnce() {
   }
   m_console->info("found device:{}",external_device.to_string());
   if(m_external_device_manager){
-    m_external_device_manager->on_new_external_device("USB",external_device, true);
+    m_external_device_manager->on_new_external_device(external_device, true);
   }
   // check in regular intervals if the tethering device disconnects.
   while (!m_check_connection_thread_stop){
@@ -74,7 +74,7 @@ void USBTetherListener::connectOnce() {
     }
   }
   if(m_external_device_manager){
-    m_external_device_manager->on_new_external_device("USB",external_device, false);
+    m_external_device_manager->on_new_external_device(external_device, false);
   }
 }
 

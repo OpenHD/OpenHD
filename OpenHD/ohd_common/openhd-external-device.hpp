@@ -19,6 +19,8 @@ namespace openhd {
 //    when this device disconnects
 
 struct ExternalDevice {
+  // for debugging purposes only
+  std::string tag;
   // TODO I don't know exactly how to call this
   // This is the IP address the network this device is connected to has on the local station
   // E.g. If the external device sends a UDP packet to a specific port to the local (ground) station, it will arrive
@@ -38,7 +40,7 @@ struct ExternalDevice {
     return local_network_ip + "_" + external_device_ip;
   }
   [[nodiscard]] std::string to_string()const{
-    return fmt::format("ExternalDevice[local:[{}] remote:[{}]]",local_network_ip,external_device_ip);
+    return fmt::format("ExternalDevice {} [local:[{}] remote:[{}]]",tag,local_network_ip,external_device_ip);
   }
 };
 
@@ -49,8 +51,39 @@ typedef std::function<void(ExternalDevice external_device,bool connected)> EXTER
 class ExternalDeviceManager{
  public:
   // Might be called from different thread(s)
-  void on_new_external_device(const std::string tag,ExternalDevice external_device,bool connected){
-    openhd::log::get_default()->debug("Got {} {}",tag,external_device.to_string());
+  void on_new_external_device(ExternalDevice external_device,bool connected){
+    openhd::log::get_default()->debug("Got {}",external_device.to_string());
+    const auto id=external_device.create_identifier();
+    std::lock_guard<std::mutex> guard(m_ext_devices_lock);
+    if(connected){
+      if(m_curr_ext_devices.find(id)!=m_curr_ext_devices.end()){
+        openhd::log::get_default()->warn("Device {} already exists",external_device.to_string());
+        return;
+      }
+      // New external device connected
+      m_curr_ext_devices[id]=external_device;
+      for(auto& cb:m_callbacks){
+        cb(external_device, true);
+      }
+    }else{
+      if(m_curr_ext_devices.find(id)==m_curr_ext_devices.end()){
+        openhd::log::get_default()->warn("Device {} does not exist",external_device.to_string());
+        return;
+      }
+      // existing external device disconnected
+      m_curr_ext_devices.erase(id);
+      for(auto& cb:m_callbacks){
+        cb(external_device, false);
+      }
+    }
+  }
+  void register_listener(EXTERNAL_DEVICE_CALLBACK cb){
+    std::lock_guard<std::mutex> guard(m_ext_devices_lock);
+    // Notify the callback to register of any already connected devices
+    for(auto& [id,device]: m_curr_ext_devices){
+      cb(device,true);
+    }
+    m_callbacks.push_back(cb);
   }
   /**
     * after calling this method with an external device's ip address
@@ -62,6 +95,9 @@ class ExternalDeviceManager{
     * Does nothing if the device's ip address is not registered for forwarding or already has ben removed.
    */
  private:
+  std::mutex m_ext_devices_lock;
+  std::map<std::string,ExternalDevice> m_curr_ext_devices;
+  std::vector<EXTERNAL_DEVICE_CALLBACK> m_callbacks;
 };
 
 }
