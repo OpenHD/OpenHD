@@ -343,15 +343,7 @@ int main(int argc, char *argv[]) {
 
     // Since telemetry handles the data stream(s) to external devices itself, we need to also react to
     // changes to the external device(s) from ohd_interface
-    //ohdTelemetry->add_external_ground_station_ip(" 127.0.0.1","192.168.18.229");
-
-    /*ohdInterface->set_external_device_callback([&ohdTelemetry](const openhd::ExternalDevice& external_device,bool connected){
-      if(connected){
-        ohdTelemetry->add_external_ground_station_ip(external_device.local_network_ip,external_device.external_device_ip);
-      }else{
-        ohdTelemetry->remove_external_ground_station_ip(external_device.local_network_ip,external_device.external_device_ip);
-      }
-    });*/
+    ohdTelemetry->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
 
     // either one is active, depending on air or ground
     std::unique_ptr<OHDVideoAir> ohd_video_air = nullptr;
@@ -372,7 +364,6 @@ int main(int argc, char *argv[]) {
     ohdTelemetry->settings_generic_ready();
     // now telemetry can send / receive data via wifibroadcast
     ohdTelemetry->set_link_handle(ohdInterface->get_link_handle());
-    ohdTelemetry->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
     m_console->info("All OpenHD modules running");
 
     // run forever, everything has its own threads. Note that the only way to break out basically
