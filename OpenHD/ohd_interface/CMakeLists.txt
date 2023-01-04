@@ -19,7 +19,7 @@ set(sources
     inc/wb_link_settings.hpp
     inc/wifi_hotspot.h
     inc/wifi_hotspot_settings.h
-        inc/wb_link_helper.h
+    inc/wb_link_helper.h
     inc/wifi_channel.h
     inc/wifi_command_helper.h
     inc/ethernet_listener.h
@@ -31,7 +31,7 @@ set(sources
     src/wb_link.cpp
     src/wifi_hotspot.cpp
     src/wifi_hotspot_settings.cpp
-        src/wb_link_helper.cpp
+    src/wb_link_helper.cpp
     src/wifi_command_helper.cpp
     src/ethernet_listener.cpp
     #src/wifi_command_helper2.cpp
@@ -84,8 +84,11 @@ target_link_libraries(test_interface OHDInterfaceLib)
 add_executable(test_common_util test/test_common_util.cpp)
 target_link_libraries(test_common_util OHDInterfaceLib)
 
-add_executable(test_usb_hotspot test/test_usb_hotspot.cpp)
-target_link_libraries(test_usb_hotspot OHDInterfaceLib)
+add_executable(test_usb_tether_listener test/test_usb_tether_listener.cpp)
+target_link_libraries(test_usb_tether_listener OHDInterfaceLib)
+
+add_executable(test_ethernet_listener test/test_ethernet_listener.cpp)
+target_link_libraries(test_ethernet_listener OHDInterfaceLib)
 
 add_executable(test_wifi_hotspot test/test_wifi_hotspot.cpp)
 target_link_libraries(test_wifi_hotspot OHDInterfaceLib)

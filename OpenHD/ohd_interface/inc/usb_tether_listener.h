@@ -36,19 +36,11 @@ class USBTetherListener{
    */
   explicit USBTetherListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager);
   ~USBTetherListener();
-  /**
-   * start looping in a new thread.
-   * Do not call multiple times without stopLooping() in between.
-   */
-  void startLooping();
-  /**
-   * stop looping.
-   */
-   void stopLooping();
  private:
+  std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<openhd::ExternalDeviceManager> m_external_device_manager;
-  std::unique_ptr<std::thread> loopThread;
-  std::atomic<bool> loopThreadStop=false;
+  std::unique_ptr<std::thread> m_check_connection_thread;
+  std::atomic<bool> m_check_connection_thread_stop =false;
   /**
    * Continuously checks for connected or disconnected USB tether devices.
    * Does not return as long as there is no fatal error or a stop is requested.

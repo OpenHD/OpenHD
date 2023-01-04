@@ -63,7 +63,6 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   // USB tethering - only on ground
   if(m_profile.is_ground()){
     m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
-    m_usb_tether_listener->startLooping();
   }
   // This way one could try and recover an air pi
   if(optional_hotspot_card.has_value()){

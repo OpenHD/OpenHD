@@ -3,19 +3,18 @@
 //
 
 #include "openhd-util.hpp"
-#include "usb_tether_listener.h"
+#include "ethernet_listener.h"
 
 int main(int argc, char *argv[]) {
 
   OHDUtil::terminate_if_not_root();
 
   auto ext_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
-  USBTetherListener usb_tether_listener{ext_devices_manager};
-  usb_tether_listener.startLooping();
+  auto listener=std::make_unique<EthernetListener>(ext_devices_manager);
 
   OHDUtil::keep_alive_until_sigterm();
 
-  usb_tether_listener.stopLooping();
+  listener= nullptr;
 
   return 0;
 }
