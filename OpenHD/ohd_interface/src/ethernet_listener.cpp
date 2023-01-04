@@ -36,7 +36,7 @@ void EthernetListener::connect_once() {
     const auto content_opt=OHDFilesystemUtil::opt_read_file(filename_eth0_operstate);
     if(!content_opt.has_value())continue;
     const auto& content=content_opt.value();
-    if(!OHDUtil::contains(content,"up")){
+    if(OHDUtil::contains(content,"up")){
       m_console->debug("Eth0 is up");
       break;
     }
