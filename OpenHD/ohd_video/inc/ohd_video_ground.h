@@ -7,6 +7,7 @@
 
 #include "../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
 #include "ohd_link.hpp"
+#include "openhd-external-device.hpp"
 
 // The ground just stupidly forwards video (rtp fragments, to be exact) via UDP
 // for QOpenHD and/or more device(s) to decode and display.
@@ -25,14 +26,16 @@ class OHDVideoGround{
   explicit OHDVideoGround(std::shared_ptr<OHDLink> link_handle);
   ~OHDVideoGround();
   //
-  // Start forwarding to another ip::port
-  void addForwarder(std::string client_addr, int client_udp_port);
-  // stop forwarding to ip::port
-  // safe to call if not already forwarding to ip::port
-  void removeForwarder(std::string client_addr, int client_udp_port);
+  void set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager);
+ private:
+  // Start forwarding to another ip
+  void addForwarder(const std::string& client_addr);
+  // stop forwarding to ip
+  void removeForwarder(const std::string& client_addr);
  private:
   std::shared_ptr<OHDLink> m_link_handle;
-  std::unique_ptr<SocketHelper::UDPMultiForwarder> udpMultiForwarder;
+  std::unique_ptr<SocketHelper::UDPMultiForwarder> m_primary_video_forwarder;
+  std::unique_ptr<SocketHelper::UDPMultiForwarder> m_secondary_video_forwarder;
   /**
    * Forward video to all device(s) consuming video.
    * Called by the ohd link handle (aka only wb right now)
