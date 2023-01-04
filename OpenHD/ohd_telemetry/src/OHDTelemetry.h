@@ -67,8 +67,6 @@ class OHDTelemetry {
   const OHDPlatform m_platform;
   const OHDProfile m_profile;
   const bool m_enableExtendedLogging;
- private:
-  std::shared_ptr<openhd::ExternalDeviceManager> m_ext_device_manager;
 };
 
 #endif //OPENHD_OHDTELEMETRY_H
