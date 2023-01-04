@@ -11,16 +11,9 @@
 
 // The ground just stupidly forwards video (rtp fragments, to be exact) via UDP
 // for QOpenHD and/or more device(s) to decode and display.
-// It does not touch the video data in any way (other than wb and its FEC protection).
+// It does not touch the video data in any way (other than wb and its FEC protection, but that currently happens in the wifibroadcast namespace).
 // re-fragmentation is up to the displaying application (which is why we have rtp ;) )
 // NOTE: There is no way to query any information or change camera/streaming info on the ground. This design is by purpose !
-
-// Video data received from wifibroadcast is made available via UDP on the ground unit.
-// Localhost 5600 is always on by default, other client(s) can be added / removed dynamically.
-// Note that on the ground, at least for now (as long as we don't change anything in this regard)
-// The video stream data from the wifibroadcast rx instance is directly made available to UDP localhost
-// without any modification(s) - it is already in RTP format. Note that it is protected by FEC, but no guarantees about the
-// data are made - the displaying application (e.g. QOpenHD) needs to deal with possible packet loss.
 class OHDVideoGround{
  public:
   /**
@@ -29,7 +22,7 @@ class OHDVideoGround{
    */
   explicit OHDVideoGround(std::shared_ptr<OHDLink> link_handle);
   ~OHDVideoGround();
-  //
+  // react to dynamically connecting / disconnecting external device(s)
   void set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager);
  private:
   // Start forwarding to another ip
