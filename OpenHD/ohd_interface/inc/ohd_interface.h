@@ -17,6 +17,7 @@
 #include "openhd-spdlog.hpp"
 #include "openhd-telemetry-tx-rx.h"
 #include "usb_tether_listener.h"
+#include "ethernet_listener.h"
 #include "wb_link.h"
 #include "wifi_hotspot.h"
 
@@ -49,6 +50,7 @@ class OHDInterface :public openhd::ISettingsComponent{
   const OHDPlatform m_platform;
   std::shared_ptr<WBLink> m_wb_link;
   std::unique_ptr<USBTetherListener> m_usb_tether_listener;
+  std::unique_ptr<EthernetListener> m_ethernet_listener;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
   std::unique_ptr<openhd::LEDBlinker> m_error_blinker;
   std::shared_ptr<spdlog::logger> m_console;

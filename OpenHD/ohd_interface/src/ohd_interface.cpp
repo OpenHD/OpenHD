@@ -60,9 +60,10 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   }else{
     m_wb_link =std::make_shared<WBLink>(m_profile, m_platform,broadcast_cards,opt_action_handler);
   }
-  // USB tethering - only on ground
+  // Listen for external device(s) to connect - only on ground
   if(m_profile.is_ground()){
     m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
+    m_ethernet_listener = std::make_unique<EthernetListener>(m_external_devices_manager);
   }
   // This way one could try and recover an air pi
   if(optional_hotspot_card.has_value()){
