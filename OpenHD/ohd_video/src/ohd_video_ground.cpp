@@ -9,6 +9,7 @@
 OHDVideoGround::OHDVideoGround(std::shared_ptr<OHDLink> link_handle):
 m_link_handle(std::move(link_handle)){
   m_primary_video_forwarder = std::make_unique<SocketHelper::UDPMultiForwarder>();
+  m_secondary_video_forwarder = std::make_unique<SocketHelper::UDPMultiForwarder>();
   // We always forward video to localhost::5600 for the default Ground control application (e.g. QOpenHD) to pick up
   addForwarder("127.0.0.1");
   m_link_handle->register_on_receive_video_data_cb([this](int stream_index,const uint8_t * data,int data_len){
