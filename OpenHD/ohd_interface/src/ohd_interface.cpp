@@ -64,6 +64,8 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   if(m_profile.is_ground()){
     m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
     m_ethernet_listener = std::make_unique<EthernetListener>(m_external_devices_manager);
+    //
+    m_ethernet_hotspot = std::make_unique<EthernetHotspot>("eth0");
   }
   // This way one could try and recover an air pi
   if(optional_hotspot_card.has_value()){
@@ -94,6 +96,10 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   }
   if(m_wifi_hotspot != nullptr){
     auto settings= m_wifi_hotspot->get_all_settings();
+    OHDUtil::vec_append(ret,settings);
+  }
+  if(m_ethernet_hotspot){
+    auto settings = m_ethernet_hotspot->get_all_settings();
     OHDUtil::vec_append(ret,settings);
   }
   if(!m_profile.is_air){

@@ -20,6 +20,7 @@
 #include "ethernet_listener.h"
 #include "wb_link.h"
 #include "wifi_hotspot.h"
+#include "ethernet_hotspot.h"
 
 /**
  * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
@@ -51,6 +52,7 @@ class OHDInterface :public openhd::ISettingsComponent{
   std::shared_ptr<WBLink> m_wb_link;
   std::unique_ptr<USBTetherListener> m_usb_tether_listener;
   std::unique_ptr<EthernetListener> m_ethernet_listener;
+  std::unique_ptr<EthernetHotspot> m_ethernet_hotspot;
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
   std::unique_ptr<openhd::LEDBlinker> m_error_blinker;
   std::shared_ptr<spdlog::logger> m_console;
