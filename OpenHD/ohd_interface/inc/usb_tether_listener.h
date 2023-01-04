@@ -32,7 +32,7 @@ class USBTetherListener{
   /**
    * Creates a new USB tether listener which notifies the upper level with the IP address of a connected or
    * disconnected USB tether device.
-   * @param external_device_callback the callback to notify the upper level.
+   * @param external_device_manager connect / disconnect events are forwarded using this handle
    */
   explicit USBTetherListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager);
   ~USBTetherListener();
