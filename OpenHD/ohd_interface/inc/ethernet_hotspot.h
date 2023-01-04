@@ -15,6 +15,8 @@ class EthernetHotspot{
   explicit EthernetHotspot(std::string  device);
   std::vector<openhd::Setting> get_all_settings();
  private:
+  void start();
+  void stop();
   void start_async();
   void stop_async();
   std::shared_ptr<spdlog::logger> m_console;

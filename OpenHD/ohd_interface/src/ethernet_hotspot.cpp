@@ -32,12 +32,26 @@ EthernetHotspot::EthernetHotspot(std::string  device):m_device(std::move(device)
   }
 }
 
-void EthernetHotspot::start_async() {
+void EthernetHotspot::start() {
+  m_console->debug("Starting eth hs connection");
+  const auto args=std::vector<std::string>{"con","up", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME};
+  OHDUtil::run_command("nmcli",args);
+  m_console->info("eth hotspot started");
+}
 
+void EthernetHotspot::stop() {
+  m_console->debug("Stopping eth hotspot");
+  const auto args=std::vector<std::string>{"con","down", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME};
+  OHDUtil::run_command("nmcli",args);
+  m_console->info("eth hotspot stopped");
+}
+
+void EthernetHotspot::start_async() {
+  start();
 }
 
 void EthernetHotspot::stop_async() {
-
+  stop();
 }
 
 std::vector<openhd::Setting> EthernetHotspot::get_all_settings() {
