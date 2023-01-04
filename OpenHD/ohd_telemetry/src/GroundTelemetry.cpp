@@ -183,19 +183,13 @@ void GroundTelemetry::settings_generic_ready() {
   generic_mavlink_param_provider->set_ready();
 }
 
-void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device) {
-  m_console->debug("add_external_ground_station_ip ip_openhd:[{}],ip_dest_device:[{}]",ip_openhd,ip_dest_device);
-  if(!OHDUtil::is_valid_ip(ip_openhd) || !OHDUtil::is_valid_ip(ip_dest_device)){
-    m_console->warn("These are no valid IPs, skipping");
-    return;
-  }
+void GroundTelemetry::add_external_ground_station_ip(const openhd::ExternalDevice& ext_device) {
+  m_console->debug("add_external_ground_station_ip {}",ext_device.to_string());
   std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
-  assert(OHDUtil::is_valid_ip(ip_openhd));
-  assert(OHDUtil::is_valid_ip(ip_dest_device));
-  const std::string identifier=ip_openhd+"_"+ip_dest_device;
+  const std::string identifier=ext_device.create_identifier();
   const auto port_offset=_other_udp_ground_stations.size()+1;
   auto tmp=std::make_shared<UDPEndpoint2>("GroundStationUDPX",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN+port_offset,
-										  ip_dest_device,ip_openhd);
+                                            ext_device.external_device_ip,ext_device.local_network_ip);
   tmp->registerCallback([this](std::vector<MavlinkMessage> messages){
     for(auto msg:messages){
       // Now this is weird, but somehow we get a lot of junk from QGroundControll on android ??!!
@@ -214,16 +208,10 @@ void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openh
   _other_udp_ground_stations[identifier]=tmp;
 }
 
-void GroundTelemetry::remove_external_ground_station_ip(const std::string &ip_openhd,const std::string& ip_dest_device) {
-  m_console->debug("remove_external_ground_station_ip ip_openhd:[{}],ip_dest_device:[{}]",ip_openhd,ip_dest_device);
-  if(!OHDUtil::is_valid_ip(ip_openhd) || !OHDUtil::is_valid_ip(ip_dest_device)){
-    m_console->debug("These are no valid IPs, skipping");
-    return;
-  }
+void GroundTelemetry::remove_external_ground_station_ip(const openhd::ExternalDevice& ext_device) {
+  m_console->debug("remove_external_ground_station_ip {}",ext_device.to_string());
   std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
-  assert(OHDUtil::is_valid_ip(ip_openhd));
-  assert(OHDUtil::is_valid_ip(ip_dest_device));
-  const std::string identifier=ip_openhd+"_"+ip_dest_device;
+  const std::string identifier=ext_device.create_identifier();
   // shared pointer will clean up for us
   _other_udp_ground_stations.erase(identifier);
 }

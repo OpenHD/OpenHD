@@ -51,8 +51,8 @@ class GroundTelemetry :public MavlinkSystem{
    */
   void settings_generic_ready();
   // Add the IP of another Ground station client, to start forwarding telemetry data there
-  void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);
-  void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);
+  void add_external_ground_station_ip(const openhd::ExternalDevice& ext_device);
+  void remove_external_ground_station_ip(const openhd::ExternalDevice& ext_device);
   //
   void set_link_handle(std::shared_ptr<OHDLink> link);
   //
