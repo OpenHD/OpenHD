@@ -23,6 +23,10 @@
 // data are made - the displaying application (e.g. QOpenHD) needs to deal with possible packet loss.
 class OHDVideoGround{
  public:
+  /**
+   * Forward primary and secondary video data
+   * @param link_handle where we get the data that needs to be forwarded from
+   */
   explicit OHDVideoGround(std::shared_ptr<OHDLink> link_handle);
   ~OHDVideoGround();
   //
