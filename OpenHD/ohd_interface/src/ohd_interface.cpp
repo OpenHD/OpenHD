@@ -17,6 +17,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);
   openhd::write_manual_cards_template();
+  m_external_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
   //wifiCards = std::make_unique<WifiCards>(profile);
   //Find out which cards are connected first
   auto connected_cards =DWifiCards::discover_connected_wifi_cards();
@@ -92,26 +93,13 @@ std::string OHDInterface::createDebug() const {
 }
 
 void OHDInterface::addExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device){
-  // video we can directly forward to the external device - but note that
-  // telemetry first needs to go through the ohd_telemetry module, and therefore is handled
-  // seperately ( a bit hacky, but no real way around if we want to keep the module separation)
-  if(m_wb_link){
-    //m_wb_link->addExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
-  }
-  std::lock_guard<std::mutex> guard(m_external_device_callback_mutex);
-  if(m_external_device_callback){
-    m_external_device_callback(external_device, true);
-  }
+  assert(m_external_devices_manager);
+  m_external_devices_manager->on_new_external_device("",external_device, true);
 }
 
 void OHDInterface::removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device){
-  if(m_wb_link){
-    //m_wb_link->removeExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
-  }
-  std::lock_guard<std::mutex> guard(m_external_device_callback_mutex);
-  if(m_external_device_callback){
-    m_external_device_callback(external_device, false);
-  }
+  assert(m_external_devices_manager);
+  m_external_devices_manager->on_new_external_device("",external_device, false);
 }
 
 std::vector<openhd::Setting> OHDInterface::get_all_settings(){
@@ -131,11 +119,6 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   return ret;
 }
 
-void OHDInterface::set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK cb) {
-  std::lock_guard<std::mutex> guard(m_external_device_callback_mutex);
-  m_external_device_callback =std::move(cb);
-}
-
 void OHDInterface::print_internal_fec_optimization_method() {
   print_optimization_method();
 }
@@ -147,3 +130,6 @@ std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
   return nullptr;
 }
 
+std::shared_ptr<openhd::ExternalDeviceManager> OHDInterface::get_ext_devices_manager() {
+  return m_external_devices_manager;
+}

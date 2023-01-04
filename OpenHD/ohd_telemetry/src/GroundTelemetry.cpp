@@ -11,7 +11,9 @@
 #include "openhd-temporary-air-or-ground.h"
 #include "openhd_util_time.hpp"
 
-GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
+GroundTelemetry::GroundTelemetry(OHDPlatform platform,
+                                 std::shared_ptr<openhd::ActionHandler> opt_action_handler):
+ _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_console = openhd::log::create_or_get("ground_tele");
   assert(m_console);
   m_groundTelemetrySettings=std::make_unique<openhd::telemetry::ground::SettingsHolder>();
@@ -283,3 +285,6 @@ void GroundTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
     on_messages_air_unit(messages);
   });
 }
+
+void GroundTelemetry::set_ext_devices_manager(
+    std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {}

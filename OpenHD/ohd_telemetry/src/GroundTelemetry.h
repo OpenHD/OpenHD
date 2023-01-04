@@ -14,6 +14,7 @@
 #include "openhd-spdlog.hpp"
 #include "endpoints/WBEndpoint.h"
 #include "ohd_link.hpp"
+#include "openhd-external-device.hpp"
 
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 #include "rc/JoystickReader.h"
@@ -25,7 +26,8 @@
  */
 class GroundTelemetry :public MavlinkSystem{
  public:
-  explicit GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
+  explicit GroundTelemetry(OHDPlatform platform,
+                           std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   GroundTelemetry(const GroundTelemetry&)=delete;
   GroundTelemetry(const GroundTelemetry&&)=delete;
   ~GroundTelemetry();
@@ -53,6 +55,8 @@ class GroundTelemetry :public MavlinkSystem{
   void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);
   //
   void set_link_handle(std::shared_ptr<OHDLink> link);
+  //
+  void set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager);
  private:
   const OHDPlatform _platform;
   // called every time one or more messages from the air unit are received

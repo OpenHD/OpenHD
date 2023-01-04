@@ -16,6 +16,7 @@
 #include "openhd-link-statistics.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
+#include "openhd-external-device.hpp"
 
 // Forward declare them to speed up compilation time.
 //class AirTelemetry;
@@ -27,8 +28,8 @@
 class OHDTelemetry {
  public:
   OHDTelemetry(OHDPlatform platform1,OHDProfile profile1,
-			   std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr,
-			   bool enableExtendedLogging=false);
+               std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr,
+               bool enableExtendedLogging=false);
   OHDTelemetry(const OHDTelemetry&)=delete;
   OHDTelemetry(const OHDTelemetry&&)=delete;
   ~OHDTelemetry();
@@ -48,25 +49,26 @@ class OHDTelemetry {
   // for simplicity. Note, at some point it might make sense to also use its own component id
   // for OHD interface
   void add_settings_camera_component(int camera_index,const std::vector<openhd::Setting>& settings) const;
-  // Add / remove the IP of another Ground station client. Buggy / not finished yet.
-  void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const;
-  void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device)const;
   // OHDTelemetry is agnostic of the type of transmission between air and ground and also agnostic weather this
   // link exists or not (since it is already using a lossy link).
   void set_link_handle(std::shared_ptr<OHDLink> link);
+  //
+  void set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager);
  private:
   // only either one of them both is active at a time.
   // active when air
-  std::unique_ptr<AirTelemetry> airTelemetry;
+  std::unique_ptr<AirTelemetry> m_air_telemetry;
   // active when ground
-  std::unique_ptr<GroundTelemetry> groundTelemetry;
+  std::unique_ptr<GroundTelemetry> m_ground_telemetry;
   // Main telemetry thread. Note that the endpoints also might have their own
   // Receive threads
-  std::unique_ptr<std::thread> loopThread;
-  const OHDPlatform platform;
-  const OHDProfile profile;
+  std::unique_ptr<std::thread> m_loop_thread;
+  bool m_loop_thread_terminate =false;
+  const OHDPlatform m_platform;
+  const OHDProfile m_profile;
   const bool m_enableExtendedLogging;
-  bool terminate=false;
+ private:
+  std::shared_ptr<openhd::ExternalDeviceManager> m_ext_device_manager;
 };
 
 #endif //OPENHD_OHDTELEMETRY_H

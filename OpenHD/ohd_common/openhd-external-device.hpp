@@ -7,6 +7,7 @@
 
 #include <string>
 #include "openhd-util.hpp"
+#include "openhd-spdlog.hpp"
 
 namespace openhd {
 
@@ -29,17 +30,15 @@ struct ExternalDevice {
   std::string external_device_ip;
   // returns true if both IP addresses are valid
   [[nodiscard]] bool is_valid() const {
-	return OHDUtil::is_valid_ip(local_network_ip) && OHDUtil::is_valid_ip(external_device_ip);
+    return OHDUtil::is_valid_ip(local_network_ip) && OHDUtil::is_valid_ip(external_device_ip);
   }
   // For when using a map of external device(s)
   [[nodiscard]] std::string create_identifier() const {
-	assert(is_valid());
-	return local_network_ip + "_" + external_device_ip;
+    assert(is_valid());
+    return local_network_ip + "_" + external_device_ip;
   }
   [[nodiscard]] std::string to_string()const{
-	std::stringstream ss;
-	ss<<"ExternalDevice:{local:"<<local_network_ip<<" remote:"<<external_device_ip<<"}";
-	return ss.str();
+    return fmt::format("ExternalDevice[local:[{}] remote:[{}]]",local_network_ip,external_device_ip);
   }
 };
 
@@ -47,8 +46,12 @@ struct ExternalDevice {
 // connected=false: A connected device uniquely indexed by "IP address" disconnected - stop forwarding of video and telemetry data.
 typedef std::function<void(ExternalDevice external_device,bool connected)> EXTERNAL_DEVICE_CALLBACK;
 
-class ExternalDeviceHandler{
+class ExternalDeviceManager{
  public:
+  // Might be called from different thread(s)
+  void on_new_external_device(const std::string tag,ExternalDevice external_device,bool connected){
+    openhd::log::get_default()->debug("Got {} {}",tag,external_device.to_string());
+  }
  private:
 };
 
