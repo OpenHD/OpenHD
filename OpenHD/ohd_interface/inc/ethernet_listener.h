@@ -10,6 +10,8 @@
 #include <openhd-external-device.hpp>
 #include <thread>
 
+// Same pattern as usb_tether_listener.h
+// See it for more info.
 class EthernetListener{
  public:
   explicit EthernetListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager);
