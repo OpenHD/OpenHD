@@ -189,6 +189,8 @@ TOptions WBLink::create_tx_options(uint8_t radio_port,bool is_video)const {
     options.tx_fec_options.fixed_k=static_cast<int>(settings.wb_video_fec_block_length);
     options.tx_fec_options.overhead_percentage=static_cast<int>(settings.wb_video_fec_percentage);
     options.use_block_queue= true;
+    // We allow up to 2 queued up frames - note that this doesn't add any latency as long as the bitrate(s) are configured correctly.
+    options.block_data_queue_size=2;
   }else{
     options.enable_fec= false;
     options.tx_fec_options.fixed_k=0;
