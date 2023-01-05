@@ -590,6 +590,9 @@ void WBLink::update_statistics() {
     for(int i=0;i< m_wb_video_rx_list.size();i++){
       auto& wb_rx= *m_wb_video_rx_list.at(i);
       const auto wb_rx_stats=wb_rx.get_latest_stats();
+      //if(wb_rx_stats.wb_rx_stats.last_received_packet_mcs_index>=0){
+      //  m_console->debug("MCS {}",wb_rx_stats.wb_rx_stats.last_received_packet_mcs_index);
+      //}
       auto& ground_video= i==0 ? stats.ground_video0 : stats.ground_video1;
       //
       ground_video.link_index=i;
