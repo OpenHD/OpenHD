@@ -32,7 +32,8 @@ class OHDInterface :public openhd::ISettingsComponent{
    * @param profile air or ground
    * @param opt_action_handler r.n used to propagate rate control from wb_link to ohd_video
    */
-  explicit OHDInterface(OHDPlatform platform,OHDProfile profile,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
+  explicit OHDInterface(OHDPlatform platform,OHDProfile profile,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr,
+                        bool continue_without_wb_card=false);
   OHDInterface(const OHDInterface&)=delete;
   OHDInterface(const OHDInterface&&)=delete;
   // Verbose string about the current state.

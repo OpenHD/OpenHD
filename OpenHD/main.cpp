@@ -57,6 +57,7 @@ static const struct option long_options[] = {
     {"debug-video", no_argument, nullptr, 'z'},
     {"no-qt-autostart", no_argument, nullptr, 'w'},
     {"run-time_seconds", required_argument, nullptr, 'r'},
+    {"continue-without-wb-card", no_argument, nullptr, 'q'},
     {nullptr, 0, nullptr, 0},
 };
 
@@ -72,9 +73,8 @@ struct OHDRunOptions {
   bool enable_video_debugging=false;
   bool no_qt_autostart=false;
   int run_time_seconds=-1; //-1= infinite, only usefully for debugging
-  // used to detect if we are launched by a developer working on openhd or
-  // "normally" started as a service. TODO generalize / find a better approach here.
-  bool developer_mode=false;
+  // do not wait for a card supporting injection (for development)
+  bool continue_without_wb_card=false;
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
@@ -93,7 +93,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
           exit(1);
         }
         commandline_air = true;
-        ret.developer_mode=true;
         break;
       case 'g':
         // Already set, e.g. --air is already used
@@ -102,7 +101,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
           exit(1);
         }
         commandline_air= false;
-        ret.developer_mode=true;
         break;
       case 'c':ret.reset_all_settings = true;
         break;
@@ -125,6 +123,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
       case 'd':
         ret.force_ip_camera= true;
         break;
+      case 'q':
+        ret.continue_without_wb_card= true;
       case '?':
       default:
         std::cout << "Usage: \n" <<
@@ -138,7 +138,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
             "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n"<<
             "--force-custom-unmanaged-camera [only on air,custom unmanaged camera in openhd,cannot be autodetected] \n"<<
             "--force-ip-camera [only on air, ip camera, cannot be autodetected] \n"<<
-            "--run-time_seconds -r [Manually specify run time (default infinite),for debugging] \n";
+            "--run-time_seconds -r [Manually specify run time (default infinite),for debugging] \n"<<
+            "--continue-without-wb-card -q [continue the startup process even though no monitor mode card has been found yet] \n";
         exit(1);
     }
   }
@@ -232,7 +233,7 @@ int main(int argc, char *argv[]) {
       "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n"<<
       "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n"<<
       "run_time_seconds:"<<options.run_time_seconds<<"\n"<<
-      "developer_mode:"<<OHDUtil::yes_or_no(options.developer_mode)<<"\n";
+      "continue_without_wb_card:"<<OHDUtil::yes_or_no(options.continue_without_wb_card)<<"\n";
   std::cout<<"Version number:"<<openhd::VERSION_NUMBER_STRING<<"\n";
   std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
   OHDInterface::print_internal_fec_optimization_method();
@@ -273,7 +274,7 @@ int main(int argc, char *argv[]) {
 
     // Profile no longer depends on n discovered cameras,
     // But if we are air, we have at least one camera, sw if no camera was found
-    const auto profile=DProfile::discover(options.run_as_air, options.developer_mode);
+    const auto profile=DProfile::discover(options.run_as_air);
     write_profile_manifest(*profile);
 
     // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as air.
@@ -336,7 +337,7 @@ int main(int argc, char *argv[]) {
     auto ohdTelemetry = std::make_shared<OHDTelemetry>(*platform,* profile,ohd_action_handler);
 
     // Then start ohdInterface, which discovers detected wifi cards and more.
-    auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile,ohd_action_handler);
+    auto ohdInterface = std::make_shared<OHDInterface>(*platform,*profile,ohd_action_handler,options.continue_without_wb_card);
 
     // Telemetry allows changing all settings (even from other modules)
     ohdTelemetry->add_settings_generic(ohdInterface->get_all_settings());

@@ -13,26 +13,38 @@
 
 #include "manually_defined_cards.h"
 
-OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler) : m_platform(platform1), m_profile(std::move(profile1)) {
+OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler,bool continue_without_wb_card)
+    : m_platform(platform1), m_profile(std::move(profile1)) {
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);
   openhd::write_manual_cards_template();
   m_external_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
-  //wifiCards = std::make_unique<WifiCards>(profile);
   //Find out which cards are connected first
   auto connected_cards =DWifiCards::discover_connected_wifi_cards();
   // Issue on rpi with Atheros: For some reason, openhd is sometimes started before the card
   // finishes some initialization steps ?! and is therefore not discovered.
-  // On a rpi, we block for up to 10 seconds here until we have at least one wifi card that does injection
-  // Note that we cannot just block until we have one, starting openhd anyways without a injection capable wifi card is a usefully
-  // feature for development
-  if(m_platform.platform_type==PlatformType::RaspberryPi){
+  // Change January 05, 23: We always wait for a card doing monitor mode unless a (developer) has specified the option to do otherwise
+  // (which can be usefully for testing, but is not a behaviour we want when running on a user image)
+  if(!continue_without_wb_card && !openhd::manually_defined_cards_file_exists()){
+    m_console->debug("Waiting for card ");
     const auto begin=std::chrono::steady_clock::now();
-    while (std::chrono::steady_clock::now()-begin<std::chrono::seconds(10)){
+    while (true){
       if(DWifiCards::any_wifi_card_supporting_injection(connected_cards))break;
-      m_console->debug("rpi-waiting up to 10 seconds until at least one wifi card supporting monitor mode is found");
+      const auto elapsed=std::chrono::steady_clock::now()-begin;
+      if(elapsed>std::chrono::seconds(3)){
+        m_console->warn("Waiting for card supporting monitor mode+injection");
+      }else{
+        m_console->debug("Waiting for card supporting monitor mode+injection");
+      }
       std::this_thread::sleep_for(std::chrono::seconds(1));
       connected_cards =DWifiCards::discover_connected_wifi_cards();
+      // after 10 seconds, we are happy with a card that only does monitor mode, aka is not known for injection
+      if(elapsed>std::chrono::seconds(10)){
+        if(DWifiCards::any_wifi_card_supporting_monitor_mode(connected_cards)){
+          m_console->warn("Using card without injection capabilities");
+          break;
+        }
+      }
     }
   }
   // now decide what to use the card(s) for
