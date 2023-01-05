@@ -185,7 +185,15 @@ static std::optional<int> string_to_int(const std::string& s) {
     return std::nullopt;
   }
 }
-
+static std::optional<long> string_to_long(const std::string& s) {
+  try {
+    auto ret = std::stol(s);
+    return ret;
+  } catch (...) {
+    openhd::log::get_default()->warn("Cannot convert [{}] to long",s);
+    return std::nullopt;
+  }
+}
 static std::optional<float> string_to_float(const std::string& s){
   try {
     auto ret = std::stof(s);

@@ -59,7 +59,7 @@ static float vcgencmd_result_parse_float(const std::string& result){
 }
 static long vcgencmd_result_parse_long(const std::string& result){
   const auto tmp = rpi::everything_after_equal(result);
-  return OHDUtil::string_to_int(tmp).value_or(0);
+  return OHDUtil::string_to_long(tmp).value_or(0);
 }
 
 static int8_t read_temperature_soc_degree() {
