@@ -193,6 +193,9 @@ TOptions WBLink::create_tx_options(uint8_t radio_port,bool is_video)const {
     options.enable_fec= false;
     options.tx_fec_options.fixed_k=0;
     options.tx_fec_options.overhead_percentage=0;
+    options.use_block_queue= false;
+    // we do not need a big queue for telemetry data packets
+    options.packet_data_queue_size=32;
   }
   options.wlan = m_broadcast_cards.at(0).device_name;
   return options;
@@ -213,8 +216,7 @@ ROptions WBLink::create_rx_options(uint8_t radio_port)const {
   assert(!cards.empty());
   options.rxInterfaces = cards;
   // For multi rx-es we need the rx queue - but using it really has negative effects
-  // for a single rx card, we can just use a depth of 1 (essentially disabling the rx queue)
-  // but we don't need it anyways.
+  // for a single rx card, we can just use a depth of 1 (essentially disabling the rx queue) and eliminate those negative effects
   options.rx_queue_depth = m_broadcast_cards.size() > 1 ? 2 : 1;
   const auto wifi_card_type=m_broadcast_cards.at(0).type;
   options.rtl8812au_rssi_fixup=wifi_card_type==WiFiCardType::Realtek8812au;
