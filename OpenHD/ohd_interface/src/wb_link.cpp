@@ -183,7 +183,7 @@ TOptions WBLink::create_tx_options(uint8_t radio_port,bool is_video)const {
   }else{
     options.keypair = std::nullopt;
   }
-  options.log_time_spent_in_atomic_queue= true;
+  //options.log_time_spent_in_atomic_queue= true;
   if(is_video){
     options.enable_fec= true;
     options.tx_fec_options.fixed_k=static_cast<int>(settings.wb_video_fec_block_length);
