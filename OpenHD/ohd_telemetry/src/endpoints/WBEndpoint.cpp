@@ -31,6 +31,7 @@ bool WBEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
   for(const auto& message_buffer:message_buffers){
     if(m_link_handle){
       auto shared=std::make_shared<std::vector<uint8_t>>(message_buffer);
+      std::lock_guard<std::mutex> guard(m_send_messages_mutex);
       m_link_handle->transmit_telemetry_data(shared);
     }
   }

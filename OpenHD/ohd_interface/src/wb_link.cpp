@@ -799,6 +799,11 @@ bool WBLink::has_rtl8812au() {
   return false;
 }
 
+void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
+  const auto res=m_wb_tele_tx->try_enqueue_packet(data);
+  if(!res)m_console->debug("Enqueing tele packet failed");
+}
+
 void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
   assert(m_profile.is_air);
   if(stream_index>=0 && stream_index< m_wb_video_tx_list.size()){
@@ -938,10 +943,6 @@ int WBLink::get_count_p_decryption_ok() {
 
 bool WBLink::check_in_state_support_changing_settings(){
   return !is_scanning && check_work_queue_empty();
-}
-
-void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
-  m_wb_tele_tx->try_enqueue_packet(data);
 }
 
 openhd::Space WBLink::get_current_frequency_channel_space()const {
