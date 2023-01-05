@@ -186,6 +186,16 @@ static std::optional<int> string_to_int(const std::string& s) {
   }
 }
 
+static std::optional<float> string_to_float(const std::string& s){
+  try {
+    auto ret = std::stof(s);
+    return ret;
+  } catch (...) {
+    openhd::log::get_default()->warn("Cannot convert [{}] to float",s);
+    return std::nullopt;
+  }
+}
+
 // Example: split "hello,world" int "hello" and "world" by ","
 static std::vector<std::string> split_into_substrings(const std::string& input,
                                                       const char separator) {
