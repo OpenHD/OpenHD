@@ -13,7 +13,7 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,const std::vector<Camera>& camera
 	m_platform(platform1),m_opt_action_handler(std::move(opt_action_handler)),
         m_link_handle(std::move(link))
 {
-  m_console = openhd::log::create_or_get("video");
+  m_console = openhd::log::create_or_get("v_air");
   assert(m_console);
   assert(!cameras.empty());
   m_console->debug("OHDVideo::OHDVideo()");

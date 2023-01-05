@@ -30,6 +30,7 @@ class OHDVideoGround{
   // stop forwarding to ip
   void removeForwarder(const std::string& client_addr);
  private:
+  std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<OHDLink> m_link_handle;
   std::unique_ptr<SocketHelper::UDPMultiForwarder> m_primary_video_forwarder;
   std::unique_ptr<SocketHelper::UDPMultiForwarder> m_secondary_video_forwarder;
