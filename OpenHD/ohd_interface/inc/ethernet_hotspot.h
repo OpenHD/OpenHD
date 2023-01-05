@@ -13,6 +13,7 @@
 class EthernetHotspot{
  public:
   explicit EthernetHotspot(std::string  device);
+  ~EthernetHotspot();
   std::vector<openhd::Setting> get_all_settings();
  private:
   void start();

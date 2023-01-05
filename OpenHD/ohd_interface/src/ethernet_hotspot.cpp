@@ -9,27 +9,34 @@
 
 static constexpr auto OHD_ETHERNET_HOTSPOT_CONNECTION_NAME ="ohd_eth_hotspot";
 
-static void create_ethernet_hotspot_connection(const std::string& eth_device_name){
+static void create_ethernet_hotspot_connection(std::shared_ptr<spdlog::logger> m_console,const std::string& eth_device_name){
   // sudo nmcli con add type ethernet con-name "ohd_ethernet_hotspot" ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
   // sudo nmcli con add type ethernet ifname eth0 con-name ohd_eth_hotspot autoconnect no
   // sudo nmcli con modify ohd_eth_hotspot ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
-
+  m_console->debug("begin create hotspot connection");
   // delete any already existing
   OHDUtil::run_command("nmcli",{"con","delete", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME});
-  // and create the connection - note that the autoconnect is off by purpose
+  // then create the new one (it is a cheap operation)- note that the autoconnect is off by purpose
   OHDUtil::run_command("nmcli",{"con add type ethernet ifname",eth_device_name,"con-name", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME,"autoconnect no"});
-  OHDUtil::run_command("nmcli",{"con modify ", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME,"ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1"});
+  OHDUtil::run_command("nmcli",{"con modify", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME,"ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1"});
+  m_console->debug("end create hotspot connection");
+}
+
+static void remove_ethernet_hs_connection(){
+  OHDUtil::run_command("nmcli",{"con", "delete", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME});
 }
 
 EthernetHotspot::EthernetHotspot(std::string  device):m_device(std::move(device)) {
   m_console = openhd::log::create_or_get("wifi_hs");
   m_settings=std::make_unique<EthernetHotspotSettingsHolder>();
-  m_console->debug("begin create hotspot connection");
-  create_ethernet_hotspot_connection(m_device);
-  m_console->debug("end create hotspot connection");
+  create_ethernet_hotspot_connection(m_console,m_device);
   if(m_settings->get_settings().enable){
     start_async();
   }
+}
+
+EthernetHotspot::~EthernetHotspot() {
+ remove_ethernet_hs_connection();
 }
 
 void EthernetHotspot::start() {
