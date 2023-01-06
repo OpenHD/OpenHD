@@ -10,30 +10,32 @@ add_library(OHDInterfaceLib STATIC) # initialized below
 add_library(OHDInterfaceLib::OHDInterfaceLib ALIAS OHDInterfaceLib)
 
 set(sources
-    "inc/wifi_card_discovery.h"
-    "inc/ohd_interface.h"
-        "inc/wifi_card.hpp"
-    "inc/usb_tether_listener.h"
-    "inc/validate_settings_helper.h"
-    "inc/wb_link.h"
-    "inc/wb_link_settings.hpp"
-    "inc/wifi_hotspot.h"
+    inc/wifi_card_discovery.h
+    inc/ohd_interface.h
+    inc/wifi_card.hpp
+    inc/usb_tether_listener.h
+    inc/validate_settings_helper.h
+    inc/wb_link.h
+    inc/wb_link_settings.hpp
+    inc/wifi_hotspot.h
     inc/wifi_hotspot_settings.h
-    inc/video_forwarder.h
     inc/wb_link_helper.h
     inc/wifi_channel.h
     inc/wifi_command_helper.h
+    inc/ethernet_listener.h
+    inc/ethernet_hotspot.h
     #inc/wifi_command_helper2.h
 
-    "src/wifi_card_discovery.cpp"
-    "src/ohd_interface.cpp"
-        "src/usb_tether_listener.cpp"
-    "src/wb_link.cpp"
-    "src/wifi_hotspot.cpp"
+    src/wifi_card_discovery.cpp
+    src/ohd_interface.cpp
+    src/usb_tether_listener.cpp
+    src/wb_link.cpp
+    src/wifi_hotspot.cpp
     src/wifi_hotspot_settings.cpp
-    src/video_forwarder.cpp
     src/wb_link_helper.cpp
     src/wifi_command_helper.cpp
+    src/ethernet_listener.cpp
+    src/ethernet_hotspot.cpp
     #src/wifi_command_helper2.cpp
 )
 
@@ -84,8 +86,11 @@ target_link_libraries(test_interface OHDInterfaceLib)
 add_executable(test_common_util test/test_common_util.cpp)
 target_link_libraries(test_common_util OHDInterfaceLib)
 
-add_executable(test_usb_hotspot test/test_usb_hotspot.cpp)
-target_link_libraries(test_usb_hotspot OHDInterfaceLib)
+add_executable(test_usb_tether_listener test/test_usb_tether_listener.cpp)
+target_link_libraries(test_usb_tether_listener OHDInterfaceLib)
+
+add_executable(test_ethernet_listener test/test_ethernet_listener.cpp)
+target_link_libraries(test_ethernet_listener OHDInterfaceLib)
 
 add_executable(test_wifi_hotspot test/test_wifi_hotspot.cpp)
 target_link_libraries(test_wifi_hotspot OHDInterfaceLib)

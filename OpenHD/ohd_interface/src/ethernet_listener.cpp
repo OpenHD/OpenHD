@@ -1,0 +1,74 @@
+//
+// Created by consti10 on 03.01.23.
+//
+
+#include "ethernet_listener.h"
+
+#include <utility>
+
+
+EthernetListener::EthernetListener(
+    std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager):
+m_external_device_manager(std::move(external_device_manager)){
+  m_console = openhd::log::create_or_get("eth_listener");
+  assert(m_console);
+  m_check_connection_thread_stop =false;
+  m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
+}
+
+
+EthernetListener::~EthernetListener() {
+  m_check_connection_thread_stop =true;
+  if(m_check_connection_thread->joinable()){
+    m_check_connection_thread->join();
+  }
+  m_check_connection_thread.reset();
+}
+
+void EthernetListener::loop_infinite() {
+  while (!m_check_connection_thread_stop){
+    connect_once();
+  }
+}
+
+void EthernetListener::connect_once() {
+  while (!m_check_connection_thread_stop){
+    const char* filename_eth0_operstate="/sys/class/net/eth0/operstate";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    if(!OHDFilesystemUtil::exists(filename_eth0_operstate))continue;
+    const auto content_opt=OHDFilesystemUtil::opt_read_file(filename_eth0_operstate);
+    if(!content_opt.has_value())continue;
+    const auto& content=content_opt.value();
+    if(OHDUtil::contains(content,"up")){
+      m_console->debug("Eth0 is up");
+      break;
+    }
+  }
+  const auto run_command_result_opt=OHDUtil::run_command_out("ip route list dev eth0");
+  if(run_command_result_opt==std::nullopt){
+    m_console->warn("run command out no result");
+    return;
+  }
+  const auto& run_command_result=run_command_result_opt.value();
+  const auto ip_external_device= OHDUtil::string_in_between("default via "," proto",run_command_result);
+  const auto ip_self_network= OHDUtil::string_in_between("src "," metric",run_command_result);
+
+  const auto external_device=openhd::ExternalDevice{"ETH0",ip_self_network,ip_external_device};
+  // Check if both are valid IPs (otherwise, perhaps the parsing got fucked up)
+  if(!external_device.is_valid()){
+    m_console->warn("{} not valid",external_device.to_string());
+    return;
+  }
+  m_console->info("found device:{}",external_device.to_string());
+  if(m_external_device_manager){
+    m_external_device_manager->on_new_external_device(external_device, true);
+  }
+  // check in regular intervals if the device disconnects
+  while (!m_check_connection_thread_stop){
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    //TODO
+  }
+  if(m_external_device_manager){
+    m_external_device_manager->on_new_external_device(external_device, false);
+  }
+}

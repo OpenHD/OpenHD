@@ -3,11 +3,13 @@
 //
 
 #include "AirTelemetry.h"
+
+#include <chrono>
+
 #include "mav_helper.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
-#include <chrono>
-#include "openhd-util-filesystem.hpp"
 #include "openhd-temporary-air-or-ground.h"
+#include "openhd_util_time.hpp"
 
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   m_console = openhd::log::create_or_get("air_tele");
@@ -43,9 +45,6 @@ void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages)
 }
 
 void AirTelemetry::send_messages_ground_unit(const std::vector<MavlinkMessage>& messages) {
-  for(const auto& message:messages){
-    //debugMavlinkMessage(message.m,"AirTelemetry::sendMessageGroundPi");
-  }
   if(m_wb_endpoint){
     m_wb_endpoint->sendMessages(messages);
   }
@@ -108,8 +107,8 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
     const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
     if(loopDelta>loop_intervall){
       // We can't keep up with the wanted loop interval
-      m_console->debug("Warning AirTelemetry cannot keep up with the wanted loop interval. Took {}ms",
-                       std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count());
+      m_console->debug("Warning AirTelemetry cannot keep up with the wanted loop interval. Took {}",
+                       openhd::util::time::R(loopDelta));
     }else{
       const auto sleepTime=loop_intervall-loopDelta;
       // send out in X second intervals
@@ -228,26 +227,26 @@ void AirTelemetry::setup_uart() {
   // Disable the currently running uart configuration, if there is any
   std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
   if(m_serial_endpoint !=nullptr) {
-	m_console->info("Stopping already existing FC UART");
-        m_serial_endpoint->stop();
-        m_serial_endpoint.reset();
-        m_serial_endpoint =nullptr;
+    m_console->info("Stopping already existing FC UART");
+    m_serial_endpoint->stop();
+    m_serial_endpoint.reset();
+    m_serial_endpoint =nullptr;
   }
   if(fc_uart_connection_type==air::UART_CONNECTION_TYPE_DISABLE){
-	// No uart enabled, we've already cleaned it up though
-	m_console->info("FC UART disabled");
-	return;
+    // No uart enabled, we've already cleaned it up though
+    m_console->info("FC UART disabled");
+    return;
   }else{
-	m_console->debug("FC UART enable - begin");
-	SerialEndpoint::HWOptions options{};
-	options.linux_filename=air::uart_fd_from_connection_type(fc_uart_connection_type).value();
-	options.baud_rate=fc_uart_baudrate;
-	options.flow_control= fc_uart_flow_control;
-        m_serial_endpoint =std::make_unique<SerialEndpoint>("ser_fc",options);
-        m_serial_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
-          this->on_messages_fc(messages);
-	});
-	m_console->debug("FC UART enable - end");
+    m_console->debug("FC UART enable - begin");
+    SerialEndpoint::HWOptions options{};
+    options.linux_filename=air::uart_fd_from_connection_type(fc_uart_connection_type).value();
+    options.baud_rate=fc_uart_baudrate;
+    options.flow_control= fc_uart_flow_control;
+    m_serial_endpoint =std::make_unique<SerialEndpoint>("ser_fc",options);
+    m_serial_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+      this->on_messages_fc(messages);
+    });
+    m_console->debug("FC UART enable - end");
   }
 }
 

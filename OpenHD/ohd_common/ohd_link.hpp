@@ -56,6 +56,7 @@ class OHDLink{
     m_tele_data_cb=std::make_shared<ON_TELE_DATA_CB>(cb);
   }
  public:
+  typedef std::function<void(int stream_index,const uint8_t * data,int data_len)> ON_VIDEO_DATA_CB;
   // -------- video, air sends, ground receives ---------
   /**
    * Video, unidirectional
@@ -65,8 +66,25 @@ class OHDLink{
    */
   virtual void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame)=0;
 
+  // Called by the wifibroadcast receiver on the ground unit only
+  void on_receive_video_data(int stream_index,const uint8_t * data,int data_len){
+    auto tmp=m_video_data_cb;
+    if(tmp){
+      auto& cb=*tmp;
+      cb(stream_index,data,data_len);
+    }
+  }
+  void register_on_receive_video_data_cb(ON_VIDEO_DATA_CB cb){
+    if(cb== nullptr){
+      m_video_data_cb= nullptr;
+      return;
+    }
+    m_video_data_cb=std::make_shared<ON_VIDEO_DATA_CB>(cb);
+  }
+
  private:
   std::shared_ptr<ON_TELE_DATA_CB> m_tele_data_cb;
+  std::shared_ptr<ON_VIDEO_DATA_CB> m_video_data_cb;
 };
 
 #endif  // OPENHD_OPENHD_OHD_COMMON_OHD_LINK_HPP_

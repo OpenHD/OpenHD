@@ -38,6 +38,9 @@ void fixup_unsupported_settings(openhd::WBStreamsSettingsHolder& settings,
 
 bool set_frequency_and_channel_width_for_all_cards(uint32_t frequency,uint32_t channel_width,const std::vector<WiFiCard>& m_broadcast_cards);
 
+// Return some measured rate for a given mcs index on rtl8812au (5.8G and 20Mhz channel width)
+// measured means: I (not scientifically) looked at how much I can inject on the bench in a medium/low rf environment before I get tx errors
+uint32_t rtl8812au_get_measured_max_rate(uint32_t mcs_index);
 
 }
 

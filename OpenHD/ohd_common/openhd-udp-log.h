@@ -100,8 +100,8 @@ static void sendLocalLogMessageUDP(const LogMessage & message){
   int sockfd;
   struct sockaddr_in servaddr{};
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    perror("Socket create failed");
-    exit(EXIT_FAILURE);
+    std::cerr<<"Log message - create socket failed";
+    return;
   }
   memset(&servaddr, 0, sizeof(servaddr));
   servaddr.sin_family = AF_INET;

@@ -13,25 +13,38 @@
 
 #include "manually_defined_cards.h"
 
-OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler) : m_platform(platform1), m_profile(std::move(profile1)) {
+OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler,bool continue_without_wb_card)
+    : m_platform(platform1), m_profile(std::move(profile1)) {
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);
   openhd::write_manual_cards_template();
-  //wifiCards = std::make_unique<WifiCards>(profile);
+  m_external_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
   //Find out which cards are connected first
   auto connected_cards =DWifiCards::discover_connected_wifi_cards();
   // Issue on rpi with Atheros: For some reason, openhd is sometimes started before the card
   // finishes some initialization steps ?! and is therefore not discovered.
-  // On a rpi, we block for up to 10 seconds here until we have at least one wifi card that does injection
-  // Note that we cannot just block until we have one, starting openhd anyways without a injection capable wifi card is a usefully
-  // feature for development
-  if(m_platform.platform_type==PlatformType::RaspberryPi){
+  // Change January 05, 23: We always wait for a card doing monitor mode unless a (developer) has specified the option to do otherwise
+  // (which can be usefully for testing, but is not a behaviour we want when running on a user image)
+  if(!continue_without_wb_card && !openhd::manually_defined_cards_file_exists()){
+    m_console->debug("Waiting for card ");
     const auto begin=std::chrono::steady_clock::now();
-    while (std::chrono::steady_clock::now()-begin<std::chrono::seconds(10)){
+    while (true){
       if(DWifiCards::any_wifi_card_supporting_injection(connected_cards))break;
-      m_console->debug("rpi-waiting up to 10 seconds until at least one wifi card supporting monitor mode is found");
+      const auto elapsed=std::chrono::steady_clock::now()-begin;
+      if(elapsed>std::chrono::seconds(3)){
+        m_console->warn("Waiting for card supporting monitor mode+injection");
+      }else{
+        m_console->debug("Waiting for card supporting monitor mode+injection");
+      }
       std::this_thread::sleep_for(std::chrono::seconds(1));
       connected_cards =DWifiCards::discover_connected_wifi_cards();
+      // after 10 seconds, we are happy with a card that only does monitor mode, aka is not known for injection
+      if(elapsed>std::chrono::seconds(10)){
+        if(DWifiCards::any_wifi_card_supporting_monitor_mode(connected_cards)){
+          m_console->warn("Using card without injection capabilities");
+          break;
+        }
+      }
     }
   }
   // now decide what to use the card(s) for
@@ -59,16 +72,12 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   }else{
     m_wb_link =std::make_shared<WBLink>(m_profile, m_platform,broadcast_cards,opt_action_handler);
   }
-  // USB tethering - only on ground
-  if(!m_profile.is_air){
-    m_usb_tether_listener =std::make_unique<USBTetherListener>([this](openhd::ExternalDevice external_device,bool connected){
-      if(connected){
-        addExternalDeviceIpForwarding(external_device);
-      }else{
-        removeExternalDeviceIpForwarding(external_device);
-      }
-    });
-    m_usb_tether_listener->startLooping();
+  // Listen for external device(s) to connect - only on ground
+  if(m_profile.is_ground()){
+    m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
+    m_ethernet_listener = std::make_unique<EthernetListener>(m_external_devices_manager);
+    //
+    m_ethernet_hotspot = std::make_unique<EthernetHotspot>("eth0");
   }
   // This way one could try and recover an air pi
   if(optional_hotspot_card.has_value()){
@@ -91,29 +100,6 @@ std::string OHDInterface::createDebug() const {
   return ss.str();
 }
 
-void OHDInterface::addExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device){
-  // video we can directly forward to the external device - but note that
-  // telemetry first needs to go through the ohd_telemetry module, and therefore is handled
-  // seperately ( a bit hacky, but no real way around if we want to keep the module separation)
-  if(m_wb_link){
-    m_wb_link->addExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
-  }
-  std::lock_guard<std::mutex> guard(m_external_device_callback_mutex);
-  if(m_external_device_callback){
-    m_external_device_callback(external_device, true);
-  }
-}
-
-void OHDInterface::removeExternalDeviceIpForwarding(const openhd::ExternalDevice& external_device){
-  if(m_wb_link){
-    m_wb_link->removeExternalDeviceIpForwardingVideoOnly(external_device.external_device_ip);
-  }
-  std::lock_guard<std::mutex> guard(m_external_device_callback_mutex);
-  if(m_external_device_callback){
-    m_external_device_callback(external_device, false);
-  }
-}
-
 std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   std::vector<openhd::Setting> ret;
   if(m_wb_link){
@@ -124,16 +110,15 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     auto settings= m_wifi_hotspot->get_all_settings();
     OHDUtil::vec_append(ret,settings);
   }
+  if(m_ethernet_hotspot){
+    auto settings = m_ethernet_hotspot->get_all_settings();
+    OHDUtil::vec_append(ret,settings);
+  }
   if(!m_profile.is_air){
     //openhd::testing::append_dummy_int_and_string(ret);
   }
   openhd::validate_provided_ids(ret);
   return ret;
-}
-
-void OHDInterface::set_external_device_callback(openhd::EXTERNAL_DEVICE_CALLBACK cb) {
-  std::lock_guard<std::mutex> guard(m_external_device_callback_mutex);
-  m_external_device_callback =std::move(cb);
 }
 
 void OHDInterface::print_internal_fec_optimization_method() {
@@ -147,3 +132,6 @@ std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
   return nullptr;
 }
 
+std::shared_ptr<openhd::ExternalDeviceManager> OHDInterface::get_ext_devices_manager() {
+  return m_external_devices_manager;
+}

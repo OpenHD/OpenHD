@@ -32,23 +32,15 @@ class USBTetherListener{
   /**
    * Creates a new USB tether listener which notifies the upper level with the IP address of a connected or
    * disconnected USB tether device.
-   * @param external_device_callback the callback to notify the upper level.
+   * @param external_device_manager connect / disconnect events are forwarded using this handle
    */
-  explicit USBTetherListener(openhd::EXTERNAL_DEVICE_CALLBACK external_device_callback);
+  explicit USBTetherListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager);
   ~USBTetherListener();
-  /**
-   * start looping in a new thread.
-   * Do not call multiple times without stopLooping() in between.
-   */
-  void startLooping();
-  /**
-   * stop looping.
-   */
-   void stopLooping();
  private:
-  const openhd::EXTERNAL_DEVICE_CALLBACK _external_device_callback;
-  std::unique_ptr<std::thread> loopThread;
-  std::atomic<bool> loopThreadStop=false;
+  std::shared_ptr<spdlog::logger> m_console;
+  std::shared_ptr<openhd::ExternalDeviceManager> m_external_device_manager;
+  std::unique_ptr<std::thread> m_check_connection_thread;
+  std::atomic<bool> m_check_connection_thread_stop =false;
   /**
    * Continuously checks for connected or disconnected USB tether devices.
    * Does not return as long as there is no fatal error or a stop is requested.

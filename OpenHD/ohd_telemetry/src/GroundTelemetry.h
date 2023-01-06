@@ -14,6 +14,7 @@
 #include "openhd-spdlog.hpp"
 #include "endpoints/WBEndpoint.h"
 #include "ohd_link.hpp"
+#include "openhd-external-device.hpp"
 
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 #include "rc/JoystickReader.h"
@@ -25,7 +26,8 @@
  */
 class GroundTelemetry :public MavlinkSystem{
  public:
-  explicit GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
+  explicit GroundTelemetry(OHDPlatform platform,
+                           std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   GroundTelemetry(const GroundTelemetry&)=delete;
   GroundTelemetry(const GroundTelemetry&&)=delete;
   ~GroundTelemetry();
@@ -49,10 +51,12 @@ class GroundTelemetry :public MavlinkSystem{
    */
   void settings_generic_ready();
   // Add the IP of another Ground station client, to start forwarding telemetry data there
-  void add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);
-  void remove_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device);
-  //
+  void add_external_ground_station_ip(const openhd::ExternalDevice& ext_device);
+  void remove_external_ground_station_ip(const openhd::ExternalDevice& ext_device);
+  // Once the link handle is set, data can be sent / received from the opposite end (air or ground, respective)
   void set_link_handle(std::shared_ptr<OHDLink> link);
+  // react to dynamically connecting / disconnecting external device(s)
+  void set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager);
  private:
   const OHDPlatform _platform;
   // called every time one or more messages from the air unit are received
@@ -64,24 +68,23 @@ class GroundTelemetry :public MavlinkSystem{
   // send one or more messages to all clients connected to the ground station, for example QOpenHD
   void send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages);
  private:
+  std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_groundTelemetrySettings;
   std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;
-  // We rely on another service for starting the rx/tx links
-  //std::unique_ptr<UDPEndpoint> udpWifibroadcastEndpoint;
+  // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
   std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
   std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
   // telemetry to / from external ground stations (e.g. not the QOpenHD instance running on the device itself (localhost)
-  std::mutex other_udp_ground_stations_lock;
-  std::map<std::string,std::shared_ptr<UDPEndpoint2>> _other_udp_ground_stations{};
+  std::mutex m_other_udp_ground_stations_lock;
+  std::map<std::string,std::shared_ptr<UDPEndpoint2>> m_other_udp_ground_stations{};
   //
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   //std::unique_ptr<JoystickReader> m_joystick_reader;
   std::unique_ptr<RcJoystickSender> m_rc_joystick_sender;
 #endif
-  std::shared_ptr<spdlog::logger> m_console;
   std::vector<openhd::Setting> get_all_settings();
 };
 

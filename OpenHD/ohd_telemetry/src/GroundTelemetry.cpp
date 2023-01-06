@@ -9,8 +9,11 @@
 
 #include "mav_helper.h"
 #include "openhd-temporary-air-or-ground.h"
+#include "openhd_util_time.hpp"
 
-GroundTelemetry::GroundTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
+GroundTelemetry::GroundTelemetry(OHDPlatform platform,
+                                 std::shared_ptr<openhd::ActionHandler> opt_action_handler):
+ _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_console = openhd::log::create_or_get("ground_tele");
   assert(m_console);
   m_groundTelemetrySettings=std::make_unique<openhd::telemetry::ground::SettingsHolder>();
@@ -69,9 +72,8 @@ void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& me
 }
 
 void GroundTelemetry::on_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
-  //debugMavlinkMessage(message.m, "GroundTelemetry::onMessageGroundStationClients");
-  //const auto &msg = message.m;
-  // All messages from the ground station(s) are forwarded to the air unit.
+  // All messages from the ground station(s) are forwarded to the air unit, unless they have a target sys id
+  // of the ohd ground unit itself
   auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_GROUND);
   send_messages_air_unit(generic);
   // OpenHD components running on the ground station don't need to talk to the air unit.
@@ -85,23 +87,17 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
 }
 
 void GroundTelemetry::send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
-  //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageGroundStationClients");
-  // forward via TCP or UDP
-  //if (tcpGroundCLient) {
-  //	tcpGroundCLient->sendMessage(message);
-  //}
   if (udpGroundClient) {
     udpGroundClient->sendMessages(messages);
   }
-  std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
-  for (auto const& [key, val] : _other_udp_ground_stations){
+  std::lock_guard<std::mutex> guard(m_other_udp_ground_stations_lock);
+  for (auto const& [key, val] : m_other_udp_ground_stations){
     val->sendMessages(messages);
   }
 }
 
 void GroundTelemetry::send_messages_air_unit(const std::vector<MavlinkMessage>& messages) {
-  //debugMavlinkMessage(message.m, "GroundTelemetry::sendMessageAirPi");
-  // transmit via wifibroadcast
+  // transmit via wb / the abstract link we use for sending message(s) to the air unit
   if (m_wb_endpoint) {
     m_wb_endpoint->sendMessages(messages);
   }
@@ -147,8 +143,8 @@ void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLog
     if(loopDelta>loop_intervall){
       // We can't keep up with the wanted loop interval
       // We can't keep up with the wanted loop interval
-      m_console->debug("Warning GroundTelemetry cannot keep up with the wanted loop interval. Took {}ms",
-                       std::chrono::duration_cast<std::chrono::milliseconds>(loopDelta).count());
+      m_console->debug("Warning GroundTelemetry cannot keep up with the wanted loop interval. Took {}",
+                       openhd::util::time::R(loopDelta));
     }else{
       const auto sleepTime=loop_intervall-loopDelta;
       // send out in X second intervals
@@ -180,19 +176,13 @@ void GroundTelemetry::settings_generic_ready() {
   generic_mavlink_param_provider->set_ready();
 }
 
-void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openhd,const std::string& ip_dest_device) {
-  m_console->debug("add_external_ground_station_ip ip_openhd:[{}],ip_dest_device:[{}]",ip_openhd,ip_dest_device);
-  if(!OHDUtil::is_valid_ip(ip_openhd) || !OHDUtil::is_valid_ip(ip_dest_device)){
-    m_console->warn("These are no valid IPs, skipping");
-    return;
-  }
-  std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
-  assert(OHDUtil::is_valid_ip(ip_openhd));
-  assert(OHDUtil::is_valid_ip(ip_dest_device));
-  const std::string identifier=ip_openhd+"_"+ip_dest_device;
-  const auto port_offset=_other_udp_ground_stations.size()+1;
+void GroundTelemetry::add_external_ground_station_ip(const openhd::ExternalDevice& ext_device) {
+  m_console->debug("add_external_ground_station_ip {}",ext_device.to_string());
+  std::lock_guard<std::mutex> guard(m_other_udp_ground_stations_lock);
+  const std::string identifier=ext_device.create_identifier();
+  const auto port_offset= m_other_udp_ground_stations.size()+1;
   auto tmp=std::make_shared<UDPEndpoint2>("GroundStationUDPX",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN+port_offset,
-										  ip_dest_device,ip_openhd);
+                                            ext_device.external_device_ip,ext_device.local_network_ip);
   tmp->registerCallback([this](std::vector<MavlinkMessage> messages){
     for(auto msg:messages){
       // Now this is weird, but somehow we get a lot of junk from QGroundControll on android ??!!
@@ -208,21 +198,15 @@ void GroundTelemetry::add_external_ground_station_ip(const std::string& ip_openh
       on_messages_ground_station_clients({msg});
     }
   });
-  _other_udp_ground_stations[identifier]=tmp;
+  m_other_udp_ground_stations[identifier]=tmp;
 }
 
-void GroundTelemetry::remove_external_ground_station_ip(const std::string &ip_openhd,const std::string& ip_dest_device) {
-  m_console->debug("remove_external_ground_station_ip ip_openhd:[{}],ip_dest_device:[{}]",ip_openhd,ip_dest_device);
-  if(!OHDUtil::is_valid_ip(ip_openhd) || !OHDUtil::is_valid_ip(ip_dest_device)){
-    m_console->debug("These are no valid IPs, skipping");
-    return;
-  }
-  std::lock_guard<std::mutex> guard(other_udp_ground_stations_lock);
-  assert(OHDUtil::is_valid_ip(ip_openhd));
-  assert(OHDUtil::is_valid_ip(ip_dest_device));
-  const std::string identifier=ip_openhd+"_"+ip_dest_device;
+void GroundTelemetry::remove_external_ground_station_ip(const openhd::ExternalDevice& ext_device) {
+  m_console->debug("remove_external_ground_station_ip {}",ext_device.to_string());
+  std::lock_guard<std::mutex> guard(m_other_udp_ground_stations_lock);
+  const std::string identifier=ext_device.create_identifier();
   // shared pointer will clean up for us
-  _other_udp_ground_stations.erase(identifier);
+  m_other_udp_ground_stations.erase(identifier);
 }
 
 std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
@@ -277,8 +261,21 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 }
 
 void GroundTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
+  // only call this once, we do not support changing the link handle at run time
+  assert(m_wb_endpoint== nullptr);
   m_wb_endpoint = std::make_unique<WBEndpoint>(link,"wb_tx");
   m_wb_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_air_unit(messages);
+  });
+}
+
+void GroundTelemetry::set_ext_devices_manager(
+    std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {
+  ext_device_manager->register_listener([this](openhd::ExternalDevice external_device,bool connected){
+    if(connected){
+      add_external_ground_station_ip(external_device);
+    }else{
+      remove_external_ground_station_ip(external_device);
+    }
   });
 }

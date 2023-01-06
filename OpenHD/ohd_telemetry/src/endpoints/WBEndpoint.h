@@ -17,6 +17,7 @@ class WBEndpoint : public MEndpoint  {
  private:
   std::shared_ptr<OHDLink> m_link_handle;
   bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;
+  std::mutex m_send_messages_mutex;
 };
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_WBENDPOINT_H_

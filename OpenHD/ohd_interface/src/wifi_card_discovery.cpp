@@ -190,6 +190,14 @@ bool DWifiCards::any_wifi_card_supporting_injection(const std::vector<WiFiCard>&
   return false;
 }
 
+bool DWifiCards::any_wifi_card_supporting_monitor_mode(
+    const std::vector<WiFiCard>& cards) {
+  for(const auto& card:cards){
+    if(card.supports_monitor_mode)return true;
+  }
+  return false;
+}
+
 DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
     const std::vector<WiFiCard>& discovered_cards,const OHDPlatform& platform,const OHDProfile& profile){
 

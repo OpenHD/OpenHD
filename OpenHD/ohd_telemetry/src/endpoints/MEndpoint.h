@@ -41,7 +41,7 @@ class MEndpoint {
    * If the endpoint is silently disconnected, this MUST NOT FAIL/CRASH.
    * This calls the underlying implementation's sendMessageImpl() function (pure virtual)
    * and increases the sent message count
-   * @param message the message to send
+   * @param messages the messages to send
    */
   void sendMessages(const std::vector<MavlinkMessage>& messages);
   /**

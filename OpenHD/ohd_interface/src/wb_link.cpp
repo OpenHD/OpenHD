@@ -42,9 +42,6 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   openhd::wb::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
   takeover_cards_monitor_mode();
   configure_cards();
-  if(m_profile.is_ground()){
-    m_ground_video_forwarder=std::make_unique<GroundVideoForwarder>();
-  }
   configure_telemetry();
   configure_video();
   m_work_thread_run = true;
@@ -151,10 +148,10 @@ void WBLink::configure_video() {
   } else {
     // we receive video
     auto cb1=[this](const uint8_t* data,int data_len){
-      forward_video_data(0,data,data_len);
+      on_receive_video_data(0,data,data_len);
     };
     auto cb2=[this](const uint8_t* data,int data_len){
-      forward_video_data(1,data,data_len);
+      on_receive_video_data(1,data,data_len);
     };
     auto primary = create_wb_rx(openhd::VIDEO_PRIMARY_RADIO_PORT,cb1);
     primary->start_async();
@@ -174,7 +171,7 @@ RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
       settings.wb_enable_ldpc, mcs_index};
 }
 
-TOptions WBLink::create_tx_options(uint8_t radio_port,bool enableFec)const {
+TOptions WBLink::create_tx_options(uint8_t radio_port,bool is_video)const {
   const auto settings=m_settings->get_settings();
   TOptions options{};
   options.radio_port = radio_port;
@@ -186,14 +183,21 @@ TOptions WBLink::create_tx_options(uint8_t radio_port,bool enableFec)const {
   }else{
     options.keypair = std::nullopt;
   }
-  if(enableFec){
+  //options.log_time_spent_in_atomic_queue= true;
+  if(is_video){
     options.enable_fec= true;
     options.tx_fec_options.fixed_k=static_cast<int>(settings.wb_video_fec_block_length);
     options.tx_fec_options.overhead_percentage=static_cast<int>(settings.wb_video_fec_percentage);
+    options.use_block_queue= true;
+    // We allow up to 2 queued up frames - note that this doesn't add any latency as long as the bitrate(s) are configured correctly.
+    options.block_data_queue_size=2;
   }else{
     options.enable_fec= false;
     options.tx_fec_options.fixed_k=0;
     options.tx_fec_options.overhead_percentage=0;
+    options.use_block_queue= false;
+    // we do not need a big queue for telemetry data packets
+    options.packet_data_queue_size=32;
   }
   options.wlan = m_broadcast_cards.at(0).device_name;
   return options;
@@ -213,17 +217,16 @@ ROptions WBLink::create_rx_options(uint8_t radio_port)const {
   const auto cards = get_rx_card_names();
   assert(!cards.empty());
   options.rxInterfaces = cards;
-  // use rx queue depth of 1 for now, this should at least reduce the problem of the burst /
-  // high latency when blocks are lost.
-  // Multiple rx wifi card's won't provide a benefit with this parameter set though.
-  options.rx_queue_depth = 1;//_broadcast_cards.size() > 1 ? 10 : 2;
+  // For multi rx-es we need the rx queue - but using it really has negative effects
+  // for a single rx card, we can just use a depth of 1 (essentially disabling the rx queue) and eliminate those negative effects
+  options.rx_queue_depth = m_broadcast_cards.size() > 1 ? 2 : 1;
   const auto wifi_card_type=m_broadcast_cards.at(0).type;
   options.rtl8812au_rssi_fixup=wifi_card_type==WiFiCardType::Realtek8812au;
   return options;
 }
 
-std::unique_ptr<WBTransmitter> WBLink::create_wb_tx(uint8_t radio_port,bool enableFec) {
-  TOptions options= create_tx_options(radio_port,enableFec);
+std::unique_ptr<WBTransmitter> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
+  TOptions options= create_tx_options(radio_port,is_video);
   RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
   return std::make_unique<WBTransmitter>(wifiParams, options);
 }
@@ -254,32 +257,6 @@ std::string WBLink::createDebug()const{
     ss<<"VidRx :"<<rxvid->createDebugState();
   }
   return ss.str();
-}
-
-void WBLink::addExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
-  bool first= true;
-  assert(m_wb_video_rx_list.size()==2);
-  m_console->info("WBStreams::addExternalDeviceIpForwardingVideoOnly:{}",ip);
-  // forward video
-  for(auto& rxVid: m_wb_video_rx_list){
-    const auto udpPort=first ? openhd::VIDEO_GROUND_VIDEO_STREAM_1_UDP : openhd::VIDEO_GROUND_VIDEO_STREAM_2_UDP;
-    first= false;
-    if(m_ground_video_forwarder){
-      m_ground_video_forwarder->addForwarder(ip,udpPort);
-    }
-  }
-}
-
-void WBLink::removeExternalDeviceIpForwardingVideoOnly(const std::string& ip) {
-  bool first= true;
-  assert(m_wb_video_rx_list.size()==2);
-  for(auto& rxVid: m_wb_video_rx_list){
-    const auto udpPort=first ? openhd::VIDEO_GROUND_VIDEO_STREAM_1_UDP : openhd::VIDEO_GROUND_VIDEO_STREAM_2_UDP;
-    first= false;
-    if(m_ground_video_forwarder){
-      m_ground_video_forwarder->removeForwarder(ip,udpPort);
-    }
-  }
 }
 
 std::vector<std::string> WBLink::get_rx_card_names() const {
@@ -471,15 +448,12 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     };
     ret.push_back(Setting{WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,openhd::IntSetting{(int)m_settings->get_settings().wb_max_fec_block_size_for_platform, cb_wb_max_fec_block_size_for_platform}});
   }
-  if(m_profile.is_air){
+  if(m_profile.is_ground()){
     // We display the total n of detected RX cards such that users can validate their multi rx setup(s) if there is more than one rx card detected
     // (Note: air always has exactly one monitor mode wi-fi card)
     const int n_rx_cards=static_cast<int>(m_broadcast_cards.size());
     if(n_rx_cards>1){
-      auto cb_read_only=[this](std::string,int value){
-        return false;
-      };
-      ret.push_back(Setting{"WB_N_RX_CARDS",openhd::IntSetting{n_rx_cards,cb_read_only}});
+      ret.push_back(openhd::create_read_only_int("WB_N_RX_CARDS",n_rx_cards));
     }
   }
   // disabled for now, they are too complicated that a normal user can do something with them anyways
@@ -621,6 +595,9 @@ void WBLink::update_statistics() {
     for(int i=0;i< m_wb_video_rx_list.size();i++){
       auto& wb_rx= *m_wb_video_rx_list.at(i);
       const auto wb_rx_stats=wb_rx.get_latest_stats();
+      //if(wb_rx_stats.wb_rx_stats.last_received_packet_mcs_index>=0){
+      //  m_console->debug("MCS {}",wb_rx_stats.wb_rx_stats.last_received_packet_mcs_index);
+      //}
       auto& ground_video= i==0 ? stats.ground_video0 : stats.ground_video1;
       //
       ground_video.link_index=i;
@@ -670,12 +647,12 @@ void WBLink::update_statistics() {
     auto& card = stats.cards.at(i);
     if(m_profile.is_air){
       // on air, we use the dbm reported by the telemetry stream
-      card.rx_rssi= m_wb_tele_rx->get_latest_stats().rssiPerCard.at(i).last_rssi;
+      card.rx_rssi= m_wb_tele_rx->get_latest_stats().stats_per_card.at(i).rssi_for_wifi_card.last_rssi;
     }else{
       // on ground, we use the dBm reported by the video stream (if available), otherwise
       // we use the dBm reported by the telemetry rx instance.
-      const int8_t rssi_telemetry= m_wb_tele_rx->get_latest_stats().rssiPerCard.at(i).last_rssi;
-      const int8_t rssi_video0= m_wb_video_rx_list.at(0)->get_latest_stats().rssiPerCard.at(i).last_rssi;
+      const int8_t rssi_telemetry= m_wb_tele_rx->get_latest_stats().stats_per_card.at(i).rssi_for_wifi_card.last_rssi;
+      const int8_t rssi_video0= m_wb_video_rx_list.at(0)->get_latest_stats().stats_per_card.at(i).rssi_for_wifi_card.last_rssi;
       if(rssi_video0<=-127){
         // use telemetry, most likely no video data (yet)
         card.rx_rssi=rssi_telemetry;
@@ -684,9 +661,17 @@ void WBLink::update_statistics() {
       }
     }
     card.exists_in_openhd= true;
+    // accumulate all rx-es
+    {
+      uint64_t count_p_received_this_card=0;
+      if(m_wb_tele_rx)count_p_received_this_card+=m_wb_tele_rx->get_latest_stats().stats_per_card.at(i).count_received_packets;
+      for(auto& rx:m_wb_video_rx_list){
+        count_p_received_this_card+=rx->get_latest_stats().stats_per_card.at(i).count_received_packets;
+      }
+      card.count_p_received=count_p_received_this_card;
+    }
     // not yet supported
     card.count_p_injected=0;
-    card.count_p_received=0;
   }
   stats.is_air=m_profile.is_air;
   if(m_opt_action_handler){
@@ -738,15 +723,6 @@ void WBLink::perform_rate_adjustment() {
       if (delta >= 1) {
         bitrate_is_still_too_high = true;
       }
-    }
-    // or the tx queue is running full
-    const auto n_buffered_packets_estimate =
-        m_wb_video_tx_list.at(0)->get_estimate_buffered_packets();
-    m_console->debug("Video estimates {} buffered packets",
-                     n_buffered_packets_estimate);
-    if (n_buffered_packets_estimate >
-        50) {  // half of the wifibroadcast extra tx queue
-      bitrate_is_still_too_high = true;
     }
     // initialize with the theoretical default, since we do not know what the camera is doing, even though it probably is "too high".
     if (last_recommended_bitrate <= 0) {
@@ -831,6 +807,11 @@ bool WBLink::has_rtl8812au() {
   return false;
 }
 
+void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
+  const auto res=m_wb_tele_tx->try_enqueue_packet(data);
+  if(!res)m_console->debug("Enqueing tele packet failed");
+}
+
 void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
   assert(m_profile.is_air);
   if(stream_index>=0 && stream_index< m_wb_video_tx_list.size()){
@@ -844,16 +825,10 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
       max_block_size_for_platform=openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
     }
     if(m_settings->get_settings().is_video_variable_block_length_enabled()){
-      tx.tmp_split_and_feed_frame_fragments(fragmented_video_frame.frame_fragments,max_block_size_for_platform);
+      tx.try_enqueue_block(fragmented_video_frame.frame_fragments,max_block_size_for_platform);
     }else{
-      tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments, true);
+      tx.try_enqueue_block(fragmented_video_frame.frame_fragments, 100);
     }
-  }
-}
-
-void WBLink::forward_video_data(int stream_index,const uint8_t * data,int data_len) {
-  if(m_ground_video_forwarder){
-    m_ground_video_forwarder->forward_data(stream_index,data,data_len);
   }
 }
 
@@ -976,10 +951,6 @@ int WBLink::get_count_p_decryption_ok() {
 
 bool WBLink::check_in_state_support_changing_settings(){
   return !is_scanning && check_work_queue_empty();
-}
-
-void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
-  m_wb_tele_tx->enqueue_packet(data,std::nullopt);
 }
 
 openhd::Space WBLink::get_current_frequency_channel_space()const {

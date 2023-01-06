@@ -5,7 +5,7 @@
 #include <iostream>
 #include <thread>
 
-#include "ohd_video.h"
+#include "ohd_video_air.h"
 #include "openhd-platform-discover.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
   if(cameras.empty()){
     cameras.emplace_back(createDummyCamera());
   }
-  OHDVideo ohdVideo(*platform,cameras, nullptr);
+  OHDVideoAir ohdVideo(*platform,cameras, nullptr, nullptr);
   std::cout << "OHDVideo started\n";
   while (true) {
     std::this_thread::sleep_for(std::chrono::seconds(5));

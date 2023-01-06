@@ -85,7 +85,7 @@ struct WiFiCard {
   // These 3 are all (slightly different) identifiers of a card on linux.
   std::string device_name;
   std::string mac;
-  // phy0, phy1, needed for iw commands that don't take the device name
+  // phy0, phy1,.., needed for iw commands that don't take the device name
   int phy80211_index =-1;
   // Name of the driver that runs this card.
   std::string driver_name;

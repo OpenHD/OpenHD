@@ -158,7 +158,8 @@ static std::string yes_or_no(bool yes) { return (yes ? "Y" : "N"); }
 // from https://stackoverflow.com/questions/3339200/get-string-between-2-strings
 static std::string string_in_between(const std::string& start,
                                      const std::string& end,
-                                     const std::string& value) {
+                                     const std::string& value,
+                                     bool debug=false) {
   std::regex base_regex(start + "(.*)" + end);
   std::smatch base_match;
   std::string matched;
@@ -169,10 +170,9 @@ static std::string string_in_between(const std::string& start,
       matched = base_match[1].str();
     }
   }
-  std::stringstream ss;
-  ss << "Given:[" << value << "] ";
-  ss << "Result:[" << matched << "]";
-  openhd::log::get_default()->debug(ss.str());
+  if(debug){
+    openhd::log::get_default()->debug("Given:[{}] Result:[{}]",value,matched);
+  }
   return matched;
 }
 
@@ -182,6 +182,24 @@ static std::optional<int> string_to_int(const std::string& s) {
     return ret;
   } catch (...) {
     openhd::log::get_default()->warn("Cannot convert [{}] to int",s);
+    return std::nullopt;
+  }
+}
+static std::optional<long> string_to_long(const std::string& s) {
+  try {
+    auto ret = std::stol(s);
+    return ret;
+  } catch (...) {
+    openhd::log::get_default()->warn("Cannot convert [{}] to long",s);
+    return std::nullopt;
+  }
+}
+static std::optional<float> string_to_float(const std::string& s){
+  try {
+    auto ret = std::stof(s);
+    return ret;
+  } catch (...) {
+    openhd::log::get_default()->warn("Cannot convert [{}] to float",s);
     return std::nullopt;
   }
 }

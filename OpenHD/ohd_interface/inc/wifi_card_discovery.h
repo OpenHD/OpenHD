@@ -28,9 +28,11 @@ std::optional<WiFiCard> process_card(const std::string &interface_name);
 // discover all connected wifi cards and their capabilities
 std::vector<WiFiCard> discover_connected_wifi_cards();
 
-// Return true if any of the given wifi cards supports monitor mode
+// Return true if any of the given wifi cards supports injection in monitor mode
 bool any_wifi_card_supporting_injection(const std::vector<WiFiCard>& cards);
 
+// Return true if any of the given wifi cards supports monitor mode (but perhaps / quite likely no injection
+bool any_wifi_card_supporting_monitor_mode(const std::vector<WiFiCard>& cards);
 
 struct ProcessedWifiCards{
   std::vector<WiFiCard> monitor_mode_cards;

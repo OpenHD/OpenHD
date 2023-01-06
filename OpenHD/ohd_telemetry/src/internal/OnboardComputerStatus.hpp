@@ -16,21 +16,14 @@
 namespace OnboardComputerStatus {
 
 // from https://github.com/OpenHD/Open.HD/blob/35b6b10fbeda43cd06bbfbd90e2daf29629c2f8a/openhd-status/src/statusmicroservice.cpp#L165
-// Return the CPU/SOC temperature of the system the generator is running on
+// Return the CPU/SOC temperature of the system or 0 if not available
 // Unit: Degree ?
 static int readTemperature() {
-  int cpu_temperature = 0;
-  FILE *fp;
-  try {
-	fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
-	fscanf(fp, "%d", &cpu_temperature);
-  } catch (...) {
-	openhd::log::get_default()->warn("ERROR: thermal reading");
-	return -1;
-  }
-  fclose(fp);
-  cpu_temperature = cpu_temperature / 1000;
-  return cpu_temperature;
+  auto temp_file_opt=OHDFilesystemUtil::opt_read_file("/sys/class/thermal/thermal_zone0/temp", false);
+  if(!temp_file_opt.has_value())return 0;
+  auto temp=OHDUtil::string_to_int(temp_file_opt.value());
+  if(!temp.has_value())return 0;
+  return temp.value() / 1000;
 }
 
 
@@ -39,14 +32,11 @@ namespace rpi {
 
 // copy and paste from QOpenHD, I think we can get the under-voltage warning on rpi this way.
 static int readUnderVoltError() {
-  auto fp3 = fopen("/tmp/undervolt", "r");
-  if (fp3 == nullptr) {
-	return 0;
-  }
-  int undervolt_gnd = 0;
-  fscanf(fp3, "%d", &undervolt_gnd);
-  fclose(fp3);
-  return undervolt_gnd;
+  auto undervolt_opt=OHDFilesystemUtil::opt_read_file("/tmp/undervolt", false);
+  if(!undervolt_opt.has_value())return 0;
+  auto value=OHDUtil::string_to_int(undervolt_opt.value());;
+  if(!value.has_value())return 0;
+  return value.value();
 }
 
 // https://www.elinux.org/RPI_vcgencmd_usage
@@ -65,13 +55,11 @@ static std::string everything_after_equal(const std::string &unparsed) {
 
 static float vcgencmd_result_parse_float(const std::string& result){
   const auto tmp = rpi::everything_after_equal(result);
-  // atof cuts away the part after the number for us (everything not a number)
-  return std::atof(tmp.c_str());
+  return OHDUtil::string_to_float(tmp).value_or(0);
 }
 static long vcgencmd_result_parse_long(const std::string& result){
   const auto tmp = rpi::everything_after_equal(result);
-  // atol cuts away the part after rhe number for us (everything not a number)
-  return std::atol(tmp.c_str());
+  return OHDUtil::string_to_long(tmp).value_or(0);
 }
 
 static int8_t read_temperature_soc_degree() {
