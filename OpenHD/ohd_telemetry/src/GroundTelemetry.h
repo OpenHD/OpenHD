@@ -80,6 +80,7 @@ class GroundTelemetry :public MavlinkSystem{
   // telemetry to / from external ground stations (e.g. not the QOpenHD instance running on the device itself (localhost)
   std::mutex m_other_udp_ground_stations_lock;
   std::map<std::string,std::shared_ptr<UDPEndpoint2>> m_other_udp_ground_stations{};
+  std::shared_ptr<openhd::ExternalDeviceManager> m_ext_device_manager;
   //
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   //std::unique_ptr<JoystickReader> m_joystick_reader;
