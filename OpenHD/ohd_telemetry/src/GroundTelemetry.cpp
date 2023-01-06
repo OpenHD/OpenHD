@@ -17,10 +17,10 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   m_console = openhd::log::create_or_get("ground_tele");
   assert(m_console);
   m_groundTelemetrySettings=std::make_unique<openhd::telemetry::ground::SettingsHolder>();
-  udpGroundClient =
+  m_primary_localhost_gcs =
       std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
                                      "127.0.0.1","127.0.0.1");
-  udpGroundClient->registerCallback([this](std::vector<MavlinkMessage> messages) {
+  m_primary_localhost_gcs->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_station_clients(messages);
   });
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
@@ -58,7 +58,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
 GroundTelemetry::~GroundTelemetry() {
   // first, stop all the endpoints that have their own threads
   m_wb_endpoint = nullptr;
-  udpGroundClient= nullptr;
+  m_primary_localhost_gcs = nullptr;
 }
 
 void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& messages) {
@@ -87,8 +87,8 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
 }
 
 void GroundTelemetry::send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
-  if (udpGroundClient) {
-    udpGroundClient->sendMessages(messages);
+  if (m_primary_localhost_gcs) {
+    m_primary_localhost_gcs->sendMessages(messages);
   }
   std::lock_guard<std::mutex> guard(m_other_udp_ground_stations_lock);
   for (auto const& [key, val] : m_other_udp_ground_stations){
@@ -116,8 +116,8 @@ void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLog
       if (enableExtendedLogging && m_wb_endpoint) {
         m_console->debug(m_wb_endpoint->createInfo());
       }
-      if (enableExtendedLogging && udpGroundClient) {
-        m_console->debug(udpGroundClient->createInfo());
+      if (enableExtendedLogging && m_primary_localhost_gcs) {
+        m_console->debug(m_primary_localhost_gcs->createInfo());
       }
     }
     // send messages to the ground station in regular intervals, includes heartbeat.
@@ -159,8 +159,8 @@ std::string GroundTelemetry::create_debug() const {
   if (m_wb_endpoint) {
     ss<< m_wb_endpoint->createInfo();
   }
-  if (udpGroundClient) {
-    ss<<udpGroundClient->createInfo();
+  if (m_primary_localhost_gcs) {
+    ss<< m_primary_localhost_gcs->createInfo();
   }
   return ss.str();
 }

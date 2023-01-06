@@ -70,7 +70,7 @@ class GroundTelemetry :public MavlinkSystem{
  private:
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_groundTelemetrySettings;
-  std::unique_ptr<UDPEndpoint2> udpGroundClient = nullptr;
+  std::unique_ptr<UDPEndpoint2> m_primary_localhost_gcs = nullptr;
   // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
