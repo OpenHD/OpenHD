@@ -271,6 +271,7 @@ void GroundTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
 
 void GroundTelemetry::set_ext_devices_manager(
     std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {
+  assert(ext_device_manager== nullptr);// only call this once during lifetime
   ext_device_manager->register_listener([this](openhd::ExternalDevice external_device,bool connected){
     if(connected){
       add_external_ground_station_ip(external_device);
