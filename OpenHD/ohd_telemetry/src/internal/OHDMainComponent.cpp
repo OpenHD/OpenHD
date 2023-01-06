@@ -129,16 +129,18 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
   const auto latest_stats=get_latest_link_statistics();
   if(RUNS_ON_AIR!=latest_stats.is_air){
     m_console->warn("Mismatch air/ground");
+    return ret;
   }
   // stats for all the wifi card(s)
-  for(int i=0;i<latest_stats.cards.size();i++){
-    const auto card_stats=latest_stats.cards.at(i);
+  int card_index=0;
+  for(const auto& card_stats : latest_stats.cards){
     if(!card_stats.exists_in_openhd){
       // skip non active cards
       continue;
     }
     MavlinkMessage msg= openhd::LinkStatisticsHelper::pack_card(
-        m_sys_id, m_comp_id, 0, card_stats);
+        m_sys_id, m_comp_id, card_index, card_stats);
+    card_index++;
     ret.push_back(msg);
   }
   ret.push_back(openhd::LinkStatisticsHelper::pack_link_general(
