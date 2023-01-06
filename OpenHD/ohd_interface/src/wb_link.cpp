@@ -647,12 +647,12 @@ void WBLink::update_statistics() {
     auto& card = stats.cards.at(i);
     if(m_profile.is_air){
       // on air, we use the dbm reported by the telemetry stream
-      card.rx_rssi= m_wb_tele_rx->get_latest_stats().rssiPerCard.at(i).last_rssi;
+      card.rx_rssi= m_wb_tele_rx->get_latest_stats().stats_per_card.at(i).rssi_for_wifi_card.last_rssi;
     }else{
       // on ground, we use the dBm reported by the video stream (if available), otherwise
       // we use the dBm reported by the telemetry rx instance.
-      const int8_t rssi_telemetry= m_wb_tele_rx->get_latest_stats().rssiPerCard.at(i).last_rssi;
-      const int8_t rssi_video0= m_wb_video_rx_list.at(0)->get_latest_stats().rssiPerCard.at(i).last_rssi;
+      const int8_t rssi_telemetry= m_wb_tele_rx->get_latest_stats().stats_per_card.at(i).rssi_for_wifi_card.last_rssi;
+      const int8_t rssi_video0= m_wb_video_rx_list.at(0)->get_latest_stats().stats_per_card.at(i).rssi_for_wifi_card.last_rssi;
       if(rssi_video0<=-127){
         // use telemetry, most likely no video data (yet)
         card.rx_rssi=rssi_telemetry;
@@ -661,9 +661,17 @@ void WBLink::update_statistics() {
       }
     }
     card.exists_in_openhd= true;
+    // accumulate all rx-es
+    {
+      uint64_t count_p_received_this_card=0;
+      if(m_wb_tele_rx)count_p_received_this_card+=m_wb_tele_rx->get_latest_stats().stats_per_card.at(i).count_received_packets;
+      for(auto& rx:m_wb_video_rx_list){
+        count_p_received_this_card+=rx->get_latest_stats().stats_per_card.at(i).count_received_packets;
+      }
+      card.count_p_received=count_p_received_this_card;
+    }
     // not yet supported
     card.count_p_injected=0;
-    card.count_p_received=0;
   }
   stats.is_air=m_profile.is_air;
   if(m_opt_action_handler){
