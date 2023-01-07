@@ -51,6 +51,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
     scan_channels_params.duration_per_channel=DEFAULT_SCAN_TIME_PER_CHANNEL;
     scan_channels_params.check_2g_channels_if_card_support=param.check_2g_channels_if_card_support;
     scan_channels_params.check_5g_channels_if_card_supports=param.check_5g_channels_if_card_supports;
+    scan_channels_params.check_20Mhz_channel_width_if_card_supports=param.check_20Mhz_channel_width_if_card_supports;
+    scan_channels_params.check_40Mhz_channel_width_if_card_supports=param.check_40Mhz_channel_width_if_card_supports;
     async_scan_channels(scan_channels_params);
   };
   if(m_opt_action_handler){
