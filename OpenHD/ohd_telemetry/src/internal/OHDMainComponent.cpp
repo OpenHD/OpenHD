@@ -103,12 +103,16 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
             break;
           }else{
             const auto freq_bands=static_cast<uint32_t>(command.param1);
-            m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {}",freq_bands);
-            if(freq_bands==0 || freq_bands==1 || freq_bands==2){
-              bool scan_2g=freq_bands==0 || freq_bands==1;
-              bool scan_5g=freq_bands==0 || freq_bands==2;
+            const auto channel_widths=static_cast<uint32_t>(command.param2);
+            m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {} {}",freq_bands,channel_widths);
+            if((freq_bands==0 || freq_bands==1 || freq_bands==2) &&
+                (channel_widths==0 || channel_widths==1 || channel_widths==2)){
+              const bool scan_2g=freq_bands==0 || freq_bands==1;
+              const bool scan_5g=freq_bands==0 || freq_bands==2;
+              const bool scan_20Mhz=channel_widths==0 || channel_widths==1;
+              const bool scan_40Mhz=channel_widths==0 || channel_widths==2;
               if(m_opt_action_handler){
-                m_opt_action_handler->action_wb_link_scan_channels_handle({scan_2g,scan_5g});
+                m_opt_action_handler->action_wb_link_scan_channels_handle({scan_2g,scan_5g,scan_20Mhz,scan_40Mhz});
                 ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
               }
             }
