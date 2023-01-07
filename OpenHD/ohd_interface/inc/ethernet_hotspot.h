@@ -16,7 +16,8 @@
  * configuring the ground station to act as a DHCP provider (Hotspot) on the ethernet port
  * and then detecting if a device is connected via ethernet - this device then becomes a classic "external device"
  * regarding video and telemetry forwarding.
- * NOTE: Enabling / disabling this feature requires a reboot of the system (this stuff is just way too "dirty" to do it any other way)
+ * NOTE: Enabling / disabling this feature requires a reboot of the system (this stuff is just way too "dirty" to do it any other way).
+ * By default, the ground station doesn't touch the networking on the system in any way.
  */
 class EthernetHotspot{
  public:
