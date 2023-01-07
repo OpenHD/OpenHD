@@ -4,6 +4,7 @@
 
 #include "ethernet_hotspot.h"
 
+#include <openhd-external-device.hpp>
 #include <openhd-util.hpp>
 #include <utility>
 
@@ -26,7 +27,8 @@ static void remove_ethernet_hs_connection(){
   OHDUtil::run_command("nmcli",{"con", "delete", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME});
 }
 
-EthernetHotspot::EthernetHotspot(std::string  device):m_device(std::move(device)) {
+EthernetHotspot::EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string  device)
+    :m_device(std::move(device)),m_external_device_manager(std::move(external_device_manager)) {
   m_console = openhd::log::create_or_get("wifi_hs");
   m_settings=std::make_unique<EthernetHotspotSettingsHolder>();
   create_ethernet_hotspot_connection(m_console,m_device);
@@ -78,4 +80,47 @@ std::vector<openhd::Setting> EthernetHotspot::get_all_settings() {
   };
   ret.push_back(openhd::Setting{"I_ETH_HOTSPOT_E",openhd::IntSetting{settings.enable,cb_enable}});
   return ret;
+}
+
+void EthernetHotspot::loop_infinite() {
+  while (!m_check_connection_thread_stop){
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    connect_once();
+  }
+}
+
+void EthernetHotspot::connect_once() {
+  // Try and find the IP of the device connected via ethernet
+  const auto run_command_result_opt=OHDUtil::run_command_out("arp -an -i eth0 | grep -v incomplete");
+  if(run_command_result_opt==std::nullopt){
+    m_console->warn("run command out no result");
+    return;
+  }
+  const auto& run_command_result=run_command_result_opt.value();
+  // valid ip should look something like that:
+  // ? (192.168.2.158) at e0:d5:5e:e1:19:45 [ether] on eth0
+  const auto ip_external_device=OHDUtil::string_in_between("(",")",run_command_result);
+  if(!OHDUtil::is_valid_ip(ip_external_device)){
+    m_console->warn("{} is not a valid ip",ip_external_device);
+    return;
+  }
+  // When we reach here we have a valid ip of the device connected - now check if it disconnects
+  const auto external_device=openhd::ExternalDevice{"ETH0","127.0.0.1",ip_external_device};
+  m_console->info("found device:{}",external_device.to_string());
+  if(m_external_device_manager){
+    m_external_device_manager->on_new_external_device(external_device, true);
+  }
+  // now check in regular intervals if the device disconnects
+  while (!m_check_connection_thread_stop){
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    const auto tmp=OHDUtil::run_command_out("arp -an -i eth0 | grep -v incomplete");
+    if(!OHDUtil::contains(tmp.value_or(""),ip_external_device)){
+      // disconnected
+      break;
+    }
+  }
+  m_console->info("disconnected {}",external_device.to_string());
+  if(m_external_device_manager){
+    m_external_device_manager->on_new_external_device(external_device, false);
+  }
 }

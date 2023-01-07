@@ -6,6 +6,7 @@
 
 #include <utility>
 
+#include "ethernet_helper.hpp"
 
 EthernetListener::EthernetListener(
     std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager):
@@ -35,11 +36,7 @@ void EthernetListener::connect_once() {
   while (!m_check_connection_thread_stop){
     const char* filename_eth0_operstate="/sys/class/net/eth0/operstate";
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    if(!OHDFilesystemUtil::exists(filename_eth0_operstate))continue;
-    const auto content_opt=OHDFilesystemUtil::opt_read_file(filename_eth0_operstate);
-    if(!content_opt.has_value())continue;
-    const auto& content=content_opt.value();
-    if(OHDUtil::contains(content,"up")){
+    if(openhd::ethernet::check_eth_adapter_up("eth0")){
       m_console->debug("Eth0 is up");
       break;
     }
