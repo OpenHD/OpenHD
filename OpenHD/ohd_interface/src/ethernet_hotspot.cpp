@@ -35,9 +35,10 @@ EthernetHotspot::EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> 
   m_console = openhd::log::create_or_get("wifi_hs");
   m_settings=std::make_unique<EthernetHotspotSettingsHolder>();
   if(m_settings->get_settings().enable){
-    // requires reboot
     create_ethernet_hotspot_connection(m_console,m_device);
     start();
+    m_check_connection_thread_stop =false;
+    m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
   }else{
     delete_existing_hotspot_connection(device);
   }
