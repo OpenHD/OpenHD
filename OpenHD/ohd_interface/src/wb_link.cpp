@@ -289,7 +289,15 @@ bool WBLink::request_set_frequency(int frequency) {
 
 bool WBLink::apply_frequency_and_channel_width() {
   const auto settings=m_settings->get_settings();
-  return openhd::wb::set_frequency_and_channel_width_for_all_cards(settings.wb_frequency,settings.wb_channel_width,m_broadcast_cards);
+  const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(settings.wb_frequency,settings.wb_channel_width,m_broadcast_cards);
+  // TODO: R.n I am not sure if and how you need / even can set it either via radiotap or "iw"
+  if(m_wb_tele_tx){
+    m_wb_tele_tx->update_channel_width(settings.wb_channel_width);
+  }
+  for(auto& tx: m_wb_video_tx_list){
+    tx->update_channel_width(settings.wb_channel_width);
+  }
+  return res;
 }
 
 bool WBLink::request_set_txpower(int tx_power) {
