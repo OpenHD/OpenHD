@@ -47,13 +47,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
   auto cb2=[this](openhd::ActionHandler::ScanChannelsParam param){
-    ScanChannelsParams scan_channels_params{};
-    scan_channels_params.duration_per_channel=DEFAULT_SCAN_TIME_PER_CHANNEL;
-    scan_channels_params.check_2g_channels_if_card_support=param.check_2g_channels_if_card_support;
-    scan_channels_params.check_5g_channels_if_card_supports=param.check_5g_channels_if_card_supports;
-    scan_channels_params.check_20Mhz_channel_width_if_card_supports=param.check_20Mhz_channel_width_if_card_supports;
-    scan_channels_params.check_40Mhz_channel_width_if_card_supports=param.check_40Mhz_channel_width_if_card_supports;
-    async_scan_channels(scan_channels_params);
+    async_scan_channels(param);
   };
   if(m_opt_action_handler){
     m_opt_action_handler->action_wb_link_scan_channels_register(cb2);
@@ -846,7 +840,7 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
   }
 }
 
-WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
+WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChannelsParam& params){
   const WiFiCard& card=m_broadcast_cards.at(0);
   std::vector<openhd::WifiChannel> channels_to_scan;
   if(params.check_2g_channels_if_card_support && card.supports_2GHz()){
@@ -885,10 +879,15 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
   std::vector<TmpResult> possible_frequencies{};
   // Note: We intentionally do not modify the persistent settings here
   m_console->debug("Channel scan, time per channel:{}ms N channels to scan:{} N channel widths to scan:{}",
-                   std::chrono::duration_cast<std::chrono::milliseconds>(params.duration_per_channel).count(),
+                   std::chrono::duration_cast<std::chrono::milliseconds>(DEFAULT_SCAN_TIME_PER_CHANNEL).count(),
                    channels_to_scan.size(),channel_widths_to_scan.size());
+  bool done_early=false;
+  // We need to loop through all possible channels
   for(const auto& channel:channels_to_scan){
+    if(done_early)break;
+    // and all possible channel widths (20 or 40Mhz only right now)
     for(const auto& channel_width:channel_widths_to_scan){
+      if(done_early)break;
       if(!openhd::wb::cards_support_frequency(channel.frequency,m_broadcast_cards,m_platform, m_console)){
         continue;
       }
@@ -896,7 +895,7 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
       apply_frequency_and_channel_width(channel.frequency,channel_width);
       m_console->warn("Scanning {}Mhz [{}] width:{}",channel.frequency,channel.channel,channel_width);
       reset_all_count_p_stats();
-      std::this_thread::sleep_for(params.duration_per_channel);
+      std::this_thread::sleep_for(DEFAULT_SCAN_TIME_PER_CHANNEL);
       const int n_packets=get_count_p_all();
       m_console->debug("Got {} packets on frequency {}",n_packets,channel.frequency);
       if(n_packets>0){
@@ -912,7 +911,7 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
           if(packet_loss<10){
             // if the packet loss is low, we can safely return early
             m_console->debug("Got <10% packet loss, return early");
-            break;
+            done_early= true;
           }
         }
       }
@@ -946,7 +945,7 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
   return result;
 }
 
-void WBLink::async_scan_channels(ScanChannelsParams scan_channels_params) {
+void WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params) {
   if(!check_work_queue_empty()){
     m_console->warn("Rejecting async_scan_channels, work queue busy");
     return;
