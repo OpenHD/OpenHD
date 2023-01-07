@@ -75,7 +75,7 @@ std::vector<openhd::Setting> EthernetHotspot::get_all_settings() {
     if(!validate_yes_or_no(value))return false;
     m_settings->unsafe_get_settings().enable=value;
     m_settings->persist();
-    // to apply, requires reboot
+    // to apply, requires reboot !!
     return true;
   };
   ret.push_back(openhd::Setting{"I_ETH_HOTSPOT_E",openhd::IntSetting{settings.enable,cb_enable}});
