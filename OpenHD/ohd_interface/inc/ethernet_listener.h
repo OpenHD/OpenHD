@@ -11,7 +11,7 @@
 #include <thread>
 
 // Same pattern as usb_tether_listener.h
-// See it for more info.
+// Discontinued r.n - the ethernet hotspot functionality is much more popular and easier to implement.
 class EthernetListener{
  public:
   explicit EthernetListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager);

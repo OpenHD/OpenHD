@@ -11,6 +11,13 @@
 
 #include "ethernet_hotspot_settings.h"
 
+/**
+ * This class exists to expose the following (quite specific, but proven to be popular) functionality of
+ * configuring the ground station to act as a DHCP provider (Hotspot) on the ethernet port
+ * and then detecting if a device is connected via ethernet - this device then becomes a classic "external device"
+ * regarding video and telemetry forwarding.
+ * NOTE: Enabling / disabling this feature requires a reboot of the system (this stuff is just way too "dirty" to do it any other way)
+ */
 class EthernetHotspot{
  public:
   explicit EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string  device);
@@ -19,8 +26,6 @@ class EthernetHotspot{
  private:
   void start();
   void stop();
-  void start_async();
-  void stop_async();
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<openhd::ExternalDeviceManager> m_external_device_manager;
   const std::string m_device;
