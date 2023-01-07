@@ -52,8 +52,10 @@ class WBLink :public OHDLink{
   bool request_set_frequency(int frequency);
   // validate param, then schedule change
   bool request_set_channel_width(int channel_width);
-  // apply the frequency (wifi channel) of all wifibroadcast cards
-  bool apply_frequency_and_channel_width();
+  // apply the frequency (wifi channel) and channel with for all wifibroadcast cards
+  // r.n uses both iw and modifies the radiotap header
+  bool apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width);
+  bool apply_frequency_and_channel_width_from_settings();
   // validate param, then schedule change
   bool request_set_txpower(int tx_power);
   // set the tx power of all wifibroadcast cards
@@ -156,14 +158,18 @@ class WBLink :public OHDLink{
   struct ScanResult{
     bool success=false;
     uint32_t frequency =0;
+    uint32_t channel_width=0;
   };
   // Testing shows we have to listen for up to 1 second to reliable get data (the wifi card might take some time switching)
   static constexpr std::chrono::seconds DEFAULT_SCAN_TIME_PER_CHANNEL{1};
   // checking both 2G and 5G channels takes really long, but in rare cases might be wanted by the user
+  // checking both 20Mhz and 40Mhz (instead of only either of them both) also duplicates the scan time
   struct ScanChannelsParams{
     std::chrono::nanoseconds duration_per_channel=DEFAULT_SCAN_TIME_PER_CHANNEL;
     bool check_2g_channels_if_card_support=false;
     bool check_5g_channels_if_card_supports=false;
+    bool check_20Mhz_channel_width_if_card_supports=false;
+    bool check_40Mhz_channel_width_if_card_supports=false;
   };
   ScanResult scan_channels(const ScanChannelsParams& scan_channels_params);
   // queue it up on the work queue

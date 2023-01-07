@@ -72,6 +72,8 @@ class ActionHandler{
   struct ScanChannelsParam{
     bool check_2g_channels_if_card_support=false;
     bool check_5g_channels_if_card_supports=false;
+    bool check_20Mhz_channel_width_if_card_supports=false;
+    bool check_40Mhz_channel_width_if_card_supports=false;
   };
   typedef std::function<void(ScanChannelsParam)> SCAN_CHANNELS_CB;
   void action_wb_link_scan_channels_register(const SCAN_CHANNELS_CB& cb){

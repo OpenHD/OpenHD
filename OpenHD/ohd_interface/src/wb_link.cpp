@@ -117,7 +117,7 @@ void WBLink::takeover_cards_monitor_mode() {
 
 void WBLink::configure_cards() {
   m_console->debug("WBStreams::configure_cards() begin");
-  apply_frequency_and_channel_width();
+  apply_frequency_and_channel_width_from_settings();
   apply_txpower();
   apply_mcs_index();
   m_console->debug("WBStreams::configure_cards() end");
@@ -281,23 +281,27 @@ bool WBLink::request_set_frequency(int frequency) {
   m_settings->persist();
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
   auto work_item=std::make_shared<WorkItem>([this](){
-    apply_frequency_and_channel_width();
+    apply_frequency_and_channel_width_from_settings();
   },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
   schedule_work_item(work_item);
   return true;
 }
 
-bool WBLink::apply_frequency_and_channel_width() {
-  const auto settings=m_settings->get_settings();
-  const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(settings.wb_frequency,settings.wb_channel_width,m_broadcast_cards);
+bool WBLink::apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width) {
+  const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width,m_broadcast_cards);
   // TODO: R.n I am not sure if and how you need / even can set it either via radiotap or "iw"
   if(m_wb_tele_tx){
-    m_wb_tele_tx->update_channel_width(settings.wb_channel_width);
+    m_wb_tele_tx->update_channel_width(channel_width);
   }
   for(auto& tx: m_wb_video_tx_list){
-    tx->update_channel_width(settings.wb_channel_width);
+    tx->update_channel_width(channel_width);
   }
   return res;
+}
+
+bool WBLink::apply_frequency_and_channel_width_from_settings() {
+  const auto settings=m_settings->get_settings();
+  return apply_frequency_and_channel_width(settings.wb_frequency,settings.wb_channel_width);
 }
 
 bool WBLink::request_set_txpower(int tx_power) {
@@ -385,7 +389,7 @@ bool WBLink::request_set_channel_width(int channel_width) {
   m_settings->persist();
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
   auto work_item=std::make_shared<WorkItem>([this](){
-    apply_frequency_and_channel_width();
+    apply_frequency_and_channel_width_from_settings();
   },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
   schedule_work_item(work_item);
   return true;
@@ -845,55 +849,69 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
   std::vector<openhd::WifiChannel> channels_to_scan;
   if(params.check_2g_channels_if_card_support && card.supports_2GHz()){
     auto tmp=openhd::get_channels_2G();
-    channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
+    OHDUtil::vec_append(channels_to_scan,tmp);
   }
   if(params.check_5g_channels_if_card_supports && card.supports_5GHz()){
     auto tmp=openhd::get_channels_5G();
-    channels_to_scan.insert(channels_to_scan.end(),tmp.begin(),tmp.end());
+    OHDUtil::vec_append(channels_to_scan,tmp);
   }
   if(channels_to_scan.empty()){
     m_console->warn("No channels to scan, return early");
+    return {};
+  }
+  std::vector<uint32_t> channel_widths_to_scan;
+  if(params.check_20Mhz_channel_width_if_card_supports){
+    channel_widths_to_scan.push_back(20);
+  }
+  if(params.check_40Mhz_channel_width_if_card_supports){
+    channel_widths_to_scan.push_back(40);
+  }
+  if(channel_widths_to_scan.empty()){
+    m_console->warn("No channel_widths to scan, return early");
     return {};
   }
   is_scanning=true;
   // Issue / bug with RTL8812AU: Apparently the adapter sometimes receives data from a frequency that is not correct
   // (e.g. when the air is set to 5700 and the rx listens on frequency  5540 ) but with an incredibly high packet loss.
   // therefore, instead of returning early, we hop through all frequencies and on frequencies where we get data, store
-  // the packet loss. In the end, we then decide what frequency is most likely the one the air is after.
+  // the packet loss. In the end, we then decide what frequency is most likely the one the air is sending on.
   struct TmpResult{
     openhd::WifiChannel channel;
+    uint32_t channel_width;
     int packet_loss_perc=0;
   };
   std::vector<TmpResult> possible_frequencies{};
   // Note: We intentionally do not modify the persistent settings here
-  m_console->debug("Channel scan, time per channel:{}ms N channels to scan:{}",
+  m_console->debug("Channel scan, time per channel:{}ms N channels to scan:{} N channel widths to scan:{}",
                    std::chrono::duration_cast<std::chrono::milliseconds>(params.duration_per_channel).count(),
-                   channels_to_scan.size());
+                   channels_to_scan.size(),channel_widths_to_scan.size());
   for(const auto& channel:channels_to_scan){
-    if(!openhd::wb::cards_support_frequency(channel.frequency,m_broadcast_cards,m_platform, m_console)){
-      continue;
-    }
-    // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
-    openhd::wb::set_frequency_and_channel_width_for_all_cards(channel.frequency,20,m_broadcast_cards);
-    m_console->warn("Scanning {}Mhz [{}] width:{}",channel.frequency,channel.channel,20);
-    reset_all_count_p_stats();
-    std::this_thread::sleep_for(params.duration_per_channel);
-    const int n_packets=get_count_p_all();
-    m_console->debug("Got {} packets on frequency {}",n_packets,channel.frequency);
-    if(n_packets>0){
-      // We got packets on this frequency, but it is not guaranteed those packets are from an openhd air unit.
-      // sleep a bit more, then check if we actually got any decrypted packets
-      std::this_thread::sleep_for(std::chrono::seconds(2));
-      const int n_packets_decrypted=get_count_p_decryption_ok();
-      const int packet_loss=m_wb_video_rx_list.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
-      m_console->debug("Got {} decrypted packets on frequency {} with {} packet loss",n_packets_decrypted,channel.frequency,packet_loss);
-      if(n_packets_decrypted>0){
-        TmpResult tmp_result{channel,packet_loss};
-        possible_frequencies.push_back(tmp_result);
-        if(packet_loss<10){
-          // if the packet loss is low, we can safely return early
-          m_console->debug("Got <10% packet loss, return early");
-          break;
+    for(const auto& channel_width:channel_widths_to_scan){
+      if(!openhd::wb::cards_support_frequency(channel.frequency,m_broadcast_cards,m_platform, m_console)){
+        continue;
+      }
+      // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
+      apply_frequency_and_channel_width(channel.frequency,channel_width);
+      m_console->warn("Scanning {}Mhz [{}] width:{}",channel.frequency,channel.channel,channel_width);
+      reset_all_count_p_stats();
+      std::this_thread::sleep_for(params.duration_per_channel);
+      const int n_packets=get_count_p_all();
+      m_console->debug("Got {} packets on frequency {}",n_packets,channel.frequency);
+      if(n_packets>0){
+        // We got packets on this frequency, but it is not guaranteed those packets are from an openhd air unit.
+        // sleep a bit more, then check if we actually got any decrypted packets
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+        const int n_packets_decrypted=get_count_p_decryption_ok();
+        const int packet_loss=m_wb_video_rx_list.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+        m_console->debug("Got {} decrypted packets on frequency {} with {} packet loss",n_packets_decrypted,channel.frequency,packet_loss);
+        if(n_packets_decrypted>0){
+          TmpResult tmp_result{channel,channel_width,packet_loss};
+          possible_frequencies.push_back(tmp_result);
+          if(packet_loss<10){
+            // if the packet loss is low, we can safely return early
+            m_console->debug("Got <10% packet loss, return early");
+            break;
+          }
         }
       }
     }
@@ -901,7 +919,7 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
   ScanResult result{};
   if(possible_frequencies.empty()){
     m_console->debug("Channel scan failure, restore local settings");
-    apply_frequency_and_channel_width();
+    apply_frequency_and_channel_width_from_settings();
     result.success= false;
     result.frequency=0;
   }else{
@@ -913,12 +931,14 @@ WBLink::ScanResult WBLink::scan_channels(const ScanChannelsParams& params){
         best=other;
       }
     }
-    m_console->debug("Selected {} with packet loss {} as most likely",best.channel.frequency,best.packet_loss_perc);
+    m_console->debug("Selected {} {} with packet loss {} as most likely",best.channel.frequency,best.channel_width,best.packet_loss_perc);
     result.success= true;
     result.frequency=best.channel.frequency;
+    result.channel_width=best.channel_width;
     m_settings->unsafe_get_settings().wb_frequency=result.frequency;
+    m_settings->unsafe_get_settings().wb_channel_width=result.channel_width;
     m_settings->persist();
-    apply_frequency_and_channel_width();
+    apply_frequency_and_channel_width_from_settings();
   }
   is_scanning=false;
   return result;
