@@ -77,7 +77,9 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     //m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
     //m_ethernet_listener = std::make_unique<EthernetListener>(m_external_devices_manager);
     //
-    //m_ethernet_hotspot = std::make_unique<EthernetHotspot>("eth0");
+    if(m_platform.platform_type==PlatformType::RaspberryPi){
+      m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,"eth0");
+    }
   }
   // This way one could try and recover an air pi
   if(optional_hotspot_card.has_value()){
