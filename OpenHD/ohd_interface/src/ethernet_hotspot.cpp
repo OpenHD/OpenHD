@@ -10,8 +10,12 @@
 
 static constexpr auto OHD_ETHERNET_HOTSPOT_CONNECTION_NAME ="ohd_eth_hotspot";
 
+static std::string get_ohd_eth_hotspot_connection_nm_filename(){
+  return fmt::format("/etc/NetworkManager/system-connections/{}.nmconnection",OHD_ETHERNET_HOTSPOT_CONNECTION_NAME);
+}
+
 static void delete_existing_hotspot_connection(const std::string& eth_device_name){
-  const auto filename=fmt::format("/etc/NetworkManager/system-connections/{}.nmconnection",OHD_ETHERNET_HOTSPOT_CONNECTION_NAME);
+  const auto filename=get_ohd_eth_hotspot_connection_nm_filename();
   if(OHDFilesystemUtil::exists(filename.c_str())){
     OHDUtil::run_command("nmcli",{"con","delete", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME});
   }
@@ -91,7 +95,7 @@ void EthernetHotspot::loop_infinite() {
 
 void EthernetHotspot::connect_once() {
   // Try and find the IP of the device connected via ethernet
-  const auto run_command_result_opt=OHDUtil::run_command_out("arp -an -i eth0 | grep -v incomplete");
+  const auto run_command_result_opt=OHDUtil::run_command_out(fmt::format("arp -an -i {} | grep -v incomplete",m_device));
   if(run_command_result_opt==std::nullopt){
     m_console->warn("run command out no result");
     return;
@@ -113,7 +117,7 @@ void EthernetHotspot::connect_once() {
   // now check in regular intervals if the device disconnects
   while (!m_check_connection_thread_stop){
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    const auto tmp=OHDUtil::run_command_out("arp -an -i eth0 | grep -v incomplete");
+    const auto tmp=OHDUtil::run_command_out(fmt::format("arp -an -i {} | grep -v incomplete",m_device));
     if(!OHDUtil::contains(tmp.value_or(""),ip_external_device)){
       // disconnected
       break;
