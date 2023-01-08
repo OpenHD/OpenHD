@@ -34,7 +34,6 @@ void EthernetListener::loop_infinite() {
 
 void EthernetListener::connect_once() {
   while (!m_check_connection_thread_stop){
-    const char* filename_eth0_operstate="/sys/class/net/eth0/operstate";
     std::this_thread::sleep_for(std::chrono::seconds(1));
     if(openhd::ethernet::check_eth_adapter_up("eth0")){
       m_console->debug("Eth0 is up");

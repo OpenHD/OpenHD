@@ -21,7 +21,7 @@ static void delete_existing_hotspot_connection(const std::string& eth_device_nam
   }
 }
 
-static void create_ethernet_hotspot_connection(std::shared_ptr<spdlog::logger> m_console,const std::string& eth_device_name){
+static void create_ethernet_hotspot_connection(const std::shared_ptr<spdlog::logger>& m_console,const std::string& eth_device_name){
   // sudo nmcli con add type ethernet con-name "ohd_eth_hotspot" ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
   // sudo nmcli con add type ethernet ifname eth0 con-name ohd_eth_hotspot autoconnect no
   // sudo nmcli con modify ohd_eth_hotspot ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
