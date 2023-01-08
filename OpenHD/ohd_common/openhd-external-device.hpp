@@ -50,6 +50,25 @@ typedef std::function<void(ExternalDevice external_device,bool connected)> EXTER
 
 class ExternalDeviceManager{
  public:
+  ExternalDeviceManager(){
+    // Here one can manually declare any IP adresses openhd should forward video / telemetry to
+    const auto manual_filename="/usr/local/share/openhd/interface/manual_forwarding_ips.txt";
+    std::vector<std::string> manual_ips;
+    if(OHDFilesystemUtil::exists(manual_filename)){
+      const auto content=OHDFilesystemUtil::read_file(manual_filename);
+      const auto lines=OHDUtil::split_string_by_newline(content);
+      for(const auto& line:lines){
+        if(OHDUtil::is_valid_ip(line)){
+          manual_ips.push_back(line);
+        }else{
+          openhd::log::get_default()->warn("[{}] is not a valid ip",line);
+        }
+      }
+    }
+    for(const auto& ip:manual_ips){
+      on_new_external_device(ExternalDevice{"manual","127.0.0.1",ip}, true);
+    }
+  }
   // Might be called from different thread(s)
   void on_new_external_device(ExternalDevice external_device,bool connected){
     openhd::log::get_default()->debug("Got {} {}",external_device.to_string(),connected);
