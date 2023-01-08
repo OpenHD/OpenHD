@@ -50,3 +50,13 @@ void UDPEndpoint2::removeAnotherDestIpAddress(std::string ip) {
   m_console->debug("removeAnotherDestIpAddress {}",ip);
   m_other_dest_ips.erase(ip);
 }
+
+//// Now this is weird, but somehow we get a lot of junk from QGroundControll on android ??!!
+//      // QGroundControll defaults to 255
+//      // QOpenHD defaults to 225;
+//      const bool is_from_ground_controll=msg.m.sysid==255 || msg.m.sysid==225;
+//      if(!is_from_ground_controll){
+//        // This can't really be a message from a ground controll application
+//        //m_console->debug("Dropping message");
+//        return;
+//      }
