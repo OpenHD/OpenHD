@@ -100,7 +100,7 @@ void EthernetHotspot::discover_device_once() {
     return;
   }
   // When we reach here we have a valid ip of the device connected - now check if it disconnects
-  const auto external_device=openhd::ExternalDevice{"ETH0","127.0.0.1",ip_external_device};
+  const auto external_device=openhd::ExternalDevice{"ETH0",ip_external_device};
   m_console->info("found device:{}",external_device.to_string());
   if(m_external_device_manager){
     m_external_device_manager->on_new_external_device(external_device, true);
