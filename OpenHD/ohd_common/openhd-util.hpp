@@ -285,12 +285,13 @@ static void vec_append(std::vector<T>& dest, const std::vector<T>& src) {
  * @return a list of all the lines found, each element ends with a "\n";
  */
 static std::vector<std::string> split_string_by_newline(
-    const std::string& str) {
+    const std::string& str,const bool include_newline_character=true) {
   auto result = std::vector<std::string>{};
   auto ss = std::stringstream{str};
 
   for (std::string line; std::getline(ss, line, '\n');) {
-    result.push_back(line+"\n");
+    const auto tmp=line+(include_newline_character ? "\n" : "");
+    result.push_back(tmp);
   }
   return result;
 }

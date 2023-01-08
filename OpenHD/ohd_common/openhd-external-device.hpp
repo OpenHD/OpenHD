@@ -55,7 +55,7 @@ class ExternalDeviceManager{
     const auto manual_filename="/usr/local/share/openhd/interface/manual_forwarding_ips.txt";
     if(OHDFilesystemUtil::exists(manual_filename)){
       const auto content=OHDFilesystemUtil::read_file(manual_filename);
-      const auto lines=OHDUtil::split_string_by_newline(content);
+      const auto lines=OHDUtil::split_string_by_newline(content, false);
       for(const auto& line:lines){
         if(OHDUtil::is_valid_ip(line)){
           m_manual_ips.push_back(line);
