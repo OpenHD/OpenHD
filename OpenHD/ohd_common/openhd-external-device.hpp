@@ -52,6 +52,7 @@ class ExternalDeviceManager{
  public:
   ExternalDeviceManager(){
     // Here one can manually declare any IP adresses openhd should forward video / telemetry to
+    // File needs to contain valid ip addresses, one per line, without any whitespaces or similar.
     const auto manual_filename="/usr/local/share/openhd/interface/manual_forwarding_ips.txt";
     if(OHDFilesystemUtil::exists(manual_filename)){
       const auto content=OHDFilesystemUtil::read_file(manual_filename);
