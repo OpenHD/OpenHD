@@ -21,15 +21,16 @@ static void delete_existing_hotspot_connection(const std::string& eth_device_nam
   }
 }
 
-static void create_ethernet_hotspot_connection(const std::shared_ptr<spdlog::logger>& m_console,const std::string& eth_device_name){
+static void create_ethernet_hotspot_connection_if_needed(const std::shared_ptr<spdlog::logger>& m_console,const std::string& eth_device_name){
   // sudo nmcli con add type ethernet con-name "ohd_eth_hotspot" ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
   // sudo nmcli con add type ethernet ifname eth0 con-name ohd_eth_hotspot autoconnect no
   // sudo nmcli con modify ohd_eth_hotspot ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
+  if(OHDFilesystemUtil::exists(get_ohd_eth_hotspot_connection_nm_filename().c_str())){
+    m_console->debug("Eth hs connection already exists");
+    return;
+  }
   m_console->debug("begin create hotspot connection");
-  // delete any already existing
-  delete_existing_hotspot_connection(eth_device_name);
-  // then create the new one (it is a cheap operation)- note that the autoconnect is off by purpose
-  OHDUtil::run_command("nmcli",{"con add type ethernet ifname",eth_device_name,"con-name", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME,"autoconnect no"});
+  OHDUtil::run_command("nmcli",{"con add type ethernet ifname",eth_device_name,"con-name", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME});
   OHDUtil::run_command("nmcli",{"con modify", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME,"ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1"});
   m_console->debug("end create hotspot connection");
 }
@@ -40,8 +41,7 @@ EthernetHotspot::EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> 
   m_settings=std::make_unique<EthernetHotspotSettingsHolder>();
   m_console->debug("device:[{}], enabled:{}",m_device,m_settings->get_settings().enable);
   if(m_settings->get_settings().enable){
-    create_ethernet_hotspot_connection(m_console,m_device);
-    start();
+    create_ethernet_hotspot_connection_if_needed(m_console, m_device);
     m_check_connection_thread_stop =false;
     m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
   }else{
@@ -54,22 +54,6 @@ EthernetHotspot::~EthernetHotspot() {
   if(m_check_connection_thread){
     m_check_connection_thread->join();
   }
-  stop();
-  delete_existing_hotspot_connection(m_device);
-}
-
-void EthernetHotspot::start() {
-  m_console->debug("Starting eth hs connection");
-  const auto args=std::vector<std::string>{"con","up", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME};
-  OHDUtil::run_command("nmcli",args);
-  m_console->info("eth hotspot started");
-}
-
-void EthernetHotspot::stop() {
-  m_console->debug("Stopping eth hotspot");
-  const auto args=std::vector<std::string>{"con","down", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME};
-  OHDUtil::run_command("nmcli",args);
-  m_console->info("eth hotspot stopped");
 }
 
 std::vector<openhd::Setting> EthernetHotspot::get_all_settings() {

@@ -25,8 +25,6 @@ class EthernetHotspot{
   ~EthernetHotspot();
   std::vector<openhd::Setting> get_all_settings();
  private:
-  void start();
-  void stop();
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<openhd::ExternalDeviceManager> m_external_device_manager;
   const std::string m_device;
