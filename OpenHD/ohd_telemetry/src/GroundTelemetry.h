@@ -70,16 +70,14 @@ class GroundTelemetry :public MavlinkSystem{
  private:
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_groundTelemetrySettings;
-  std::unique_ptr<UDPEndpoint2> m_primary_localhost_gcs = nullptr;
+  // Mavlink to / from gcs station(s)
+  std::unique_ptr<UDPEndpoint2> m_gcs_endpoint = nullptr;
   // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
   std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
   std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
-  // telemetry to / from external ground stations (e.g. not the QOpenHD instance running on the device itself (localhost)
-  std::mutex m_other_udp_ground_stations_lock;
-  std::map<std::string,std::shared_ptr<UDPEndpoint2>> m_other_udp_ground_stations{};
   std::shared_ptr<openhd::ExternalDeviceManager> m_ext_device_manager;
   //
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

@@ -24,7 +24,7 @@
  * we can start/stop forwarding to the device's ip address.
  * Only supports one USB tethering device connected at the same time.
  * Also, assumes that the usb tethering device always shows up under /sys/class/net/usb0.
- * Note that we do not have to perform any setup action(s) here - network manager does that for uns
+ * Note that we do not have to perform any setup action(s) here - network manager does that for us
  * We really only listen to the event's device connected / device disconnected and forward them.
  */
 class USBTetherListener{

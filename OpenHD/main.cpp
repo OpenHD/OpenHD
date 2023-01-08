@@ -23,6 +23,8 @@
 // For logging the commit hash and more
 #include "git.h"
 
+#include "ethernet_helper.hpp"
+
 ///Regarding AIR / GROUND detection: Previous OpenHD releases would detect weather this system is an air pi
 // or ground pi by checking weather it has a connected camera. However, this pattern has 2 problems:
 // 1) Some camera(s) require a reconfiguration (e.g. when switching from / to libcamera to gst-rpicamsrc(mmal) or
