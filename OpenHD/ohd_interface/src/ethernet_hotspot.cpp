@@ -89,11 +89,11 @@ std::vector<openhd::Setting> EthernetHotspot::get_all_settings() {
 void EthernetHotspot::loop_infinite() {
   while (!m_check_connection_thread_stop){
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    connect_once();
+    discover_device_once();
   }
 }
 
-void EthernetHotspot::connect_once() {
+void EthernetHotspot::discover_device_once() {
   // Try and find the IP of the device connected via ethernet
   const auto run_command_result_opt=OHDUtil::run_command_out(fmt::format("arp -an -i {} | grep -v incomplete",m_device));
   if(run_command_result_opt==std::nullopt){

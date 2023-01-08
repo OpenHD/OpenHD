@@ -29,6 +29,7 @@ EthernetListener::~EthernetListener() {
 void EthernetListener::loop_infinite() {
   while (!m_check_connection_thread_stop){
     connect_once();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 }
 
