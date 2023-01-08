@@ -38,6 +38,7 @@ EthernetHotspot::EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> 
     :m_device(std::move(device)),m_external_device_manager(std::move(external_device_manager)) {
   m_console = openhd::log::create_or_get("wifi_hs");
   m_settings=std::make_unique<EthernetHotspotSettingsHolder>();
+  m_console->debug("device:[{}], enabled:{}",m_device,m_settings->get_settings().enable);
   if(m_settings->get_settings().enable){
     create_ethernet_hotspot_connection(m_console,m_device);
     start();
@@ -103,9 +104,9 @@ void EthernetHotspot::discover_device_once() {
   const auto& run_command_result=run_command_result_opt.value();
   // valid ip should look something like that:
   // ? (192.168.2.158) at e0:d5:5e:e1:19:45 [ether] on eth0
-  const auto ip_external_device=OHDUtil::string_in_between("(",")",run_command_result);
+  const auto ip_external_device=OHDUtil::string_in_between("(",")",run_command_result, true);
   if(!OHDUtil::is_valid_ip(ip_external_device)){
-    m_console->warn("{} is not a valid ip",ip_external_device);
+    m_console->warn("[{}] is not a valid ip",ip_external_device);
     return;
   }
   // When we reach here we have a valid ip of the device connected - now check if it disconnects

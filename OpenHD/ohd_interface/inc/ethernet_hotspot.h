@@ -34,6 +34,10 @@ class EthernetHotspot{
   std::unique_ptr<std::thread> m_check_connection_thread;
   std::atomic<bool> m_check_connection_thread_stop =false;
   void loop_infinite();
+  // simple pattern: Wait for device to become available
+  // forward connected event via ext devices manager
+  // then wait for it to disconnect (might never happen) or openhd terminates
+  // forward disconnected event via ext devices manager
   void discover_device_once();
 };
 
