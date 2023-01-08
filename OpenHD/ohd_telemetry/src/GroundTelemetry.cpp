@@ -19,7 +19,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   m_groundTelemetrySettings=std::make_unique<openhd::telemetry::ground::SettingsHolder>();
   m_primary_localhost_gcs =
       std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
-                                     "127.0.0.1","127.0.0.1");
+                                     "127.0.0.1","0.0.0.0");
   m_primary_localhost_gcs->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_station_clients(messages);
   });
@@ -176,6 +176,10 @@ void GroundTelemetry::settings_generic_ready() {
 
 void GroundTelemetry::add_external_ground_station_ip(const openhd::ExternalDevice& ext_device) {
   m_console->debug("add_external_ground_station_ip {}",ext_device.to_string());
+  if(m_primary_localhost_gcs){
+    m_primary_localhost_gcs->addAnotherDestIpAddress(ext_device.external_device_ip);
+    return;
+  }
   std::lock_guard<std::mutex> guard(m_other_udp_ground_stations_lock);
   const std::string identifier=ext_device.create_identifier();
   const auto port_offset= m_other_udp_ground_stations.size()+1;
@@ -201,6 +205,10 @@ void GroundTelemetry::add_external_ground_station_ip(const openhd::ExternalDevic
 
 void GroundTelemetry::remove_external_ground_station_ip(const openhd::ExternalDevice& ext_device) {
   m_console->debug("remove_external_ground_station_ip {}",ext_device.to_string());
+  if(m_primary_localhost_gcs){
+    m_primary_localhost_gcs->removeAnotherDestIpAddress(ext_device.external_device_ip);
+    return;
+  }
   std::lock_guard<std::mutex> guard(m_other_udp_ground_stations_lock);
   const std::string identifier=ext_device.create_identifier();
   // shared pointer will clean up for us
