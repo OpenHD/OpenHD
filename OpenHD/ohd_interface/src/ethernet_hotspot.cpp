@@ -80,7 +80,7 @@ void EthernetHotspot::loop_infinite() {
 }
 
 void EthernetHotspot::discover_device_once() {
-  if(!check_eth_adapter_up(m_device)){
+  if(!openhd::ethernet::check_eth_adapter_up(m_device)){
     m_console->warn("Ethernet device not up");
     return;
   }
