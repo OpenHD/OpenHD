@@ -19,7 +19,10 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   m_groundTelemetrySettings=std::make_unique<openhd::telemetry::ground::SettingsHolder>();
   m_primary_localhost_gcs =
       std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
-                                     "127.0.0.1","0.0.0.0");
+                                     // We send data to localhost::14550 and any other external device IPs
+                                     "127.0.0.1",
+                                     // and we accept udp data from anybody on 14551
+                                     "0.0.0.0");
   m_primary_localhost_gcs->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_station_clients(messages);
   });
