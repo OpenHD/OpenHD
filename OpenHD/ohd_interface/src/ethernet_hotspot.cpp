@@ -3,6 +3,7 @@
 //
 
 #include "ethernet_hotspot.h"
+#include "ethernet_helper.hpp"
 
 #include <openhd-external-device.hpp>
 #include <openhd-util.hpp>
@@ -79,6 +80,10 @@ void EthernetHotspot::loop_infinite() {
 }
 
 void EthernetHotspot::discover_device_once() {
+  if(!check_eth_adapter_up(m_device)){
+    m_console->warn("Ethernet device not up");
+    return;
+  }
   // Try and find the IP of the device connected via ethernet
   const auto run_command_result_opt=OHDUtil::run_command_out(fmt::format("arp -an -i {} | grep -v incomplete",m_device));
   if(run_command_result_opt==std::nullopt){
@@ -88,7 +93,8 @@ void EthernetHotspot::discover_device_once() {
   const auto& run_command_result=run_command_result_opt.value();
   // valid ip should look something like that:
   // ? (192.168.2.158) at e0:d5:5e:e1:19:45 [ether] on eth0
-  const auto ip_external_device=OHDUtil::string_in_between("(",")",run_command_result, true);
+  //
+  const auto ip_external_device=openhd::ethernet::get_ip_address_in_between_brackets(run_command_result, true);
   if(!OHDUtil::is_valid_ip(ip_external_device)){
     m_console->warn("[{}] is not a valid ip",ip_external_device);
     return;

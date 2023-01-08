@@ -160,7 +160,7 @@ static std::string string_in_between(const std::string& start,
                                      const std::string& end,
                                      const std::string& value,
                                      bool debug=false) {
-  std::regex base_regex(start + "(.*)" + end);
+  const std::regex base_regex(start + "(.*)" + end);
   std::smatch base_match;
   std::string matched;
   if (std::regex_search(value, base_match, base_regex)) {
