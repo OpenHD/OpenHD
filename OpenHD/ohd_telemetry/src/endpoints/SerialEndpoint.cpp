@@ -138,7 +138,7 @@ int SerialEndpoint::define_from_baudrate(int baudrate) {
       return B4000000;
     default: {
       openhd::log::get_default()->warn("Unknown baudrate");
-      return B1152000;
+      return B115200;
     }
   }
 }
@@ -159,6 +159,12 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options,std::sha
   // as we do it in a separate thread.
   if (fcntl(fd, F_SETFL, 0) == -1) {
     m_console->warn("fcntl failed: {}",GET_ERROR());
+    close(fd);
+    return -1;
+  }
+  // From https://github.com/mavlink/c_uart_interface_example/blob/master/serial_port.cpp
+  if(!isatty(fd)){
+    m_console->warn("file descriptor {} is NOT a serial port",options.linux_filename);
     close(fd);
     return -1;
   }
@@ -215,8 +221,7 @@ void SerialEndpoint::connect_and_read_loop() {
       std::this_thread::sleep_for(std::chrono::seconds(1));
       continue;
     }
-    m_console->debug("Successfully created UART fd for: {}",
-                     m_options.to_string());
+    m_console->debug("Successfully created UART fd for: {}",m_options.to_string());
     receive_data_until_error();
     // cleanup and start over again
     close(m_fd);

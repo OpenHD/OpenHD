@@ -35,7 +35,7 @@ class MEndpoint {
    * @param tag a tag for debugging.
    * @param mavlink_channel the mavlink channel to use for parsing.
    */
-  explicit MEndpoint(std::string tag);;
+  explicit MEndpoint(std::string tag,bool debug_mavlink_msg_packet_loss=false);
   /**
    * send one or more messages via this endpoint.
    * If the endpoint is silently disconnected, this MUST NOT FAIL/CRASH.
@@ -101,6 +101,9 @@ class MEndpoint {
   int m_rx_n_bytes=0;
   BitrateCalculator m_tx_calc{};
   BitrateCalculator m_rx_calc{};
+ private:
+  const bool m_debug_mavlink_msg_packet_loss;
+  mavlink_status_t m_last_status;
 };
 
 #endif //XMAVLINKSERVICE_MENDPOINT_H
