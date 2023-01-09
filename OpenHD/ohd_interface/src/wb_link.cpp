@@ -17,12 +17,12 @@
 static const char *KEYPAIR_FILE_DRONE = "/usr/local/share/openhd/drone.key";
 static const char *KEYPAIR_FILE_GROUND = "/usr/local/share/openhd/gs.key";
 
-WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,
-                     std::shared_ptr<openhd::ActionHandler> opt_action_handler) : m_profile(std::move(profile)),
+WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
+    : m_profile(std::move(profile)),
       m_platform(platform),
       m_broadcast_cards(std::move(broadcast_cards)),
-   m_disable_all_frequency_checks(openhd::wb::disable_all_frequency_checks()),
-   m_opt_action_handler(std::move(opt_action_handler))
+      m_disable_all_frequency_checks(openhd::wb::disable_all_frequency_checks()),
+      m_opt_action_handler(std::move(opt_action_handler))
 {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
@@ -89,7 +89,7 @@ void WBLink::takeover_cards_monitor_mode() {
   // This can be different depending on the OS we are running on - in general, we try to go for the following with openhd:
   // Have network manager running on the host OS - the nice thing about network manager is that we can just tell it
   // to ignore the cards we are doing wifibroadcast with, instead of killing all processes that might interfere with
-  // wifibroadcast and therefore making other networking increadibly hard.
+  // wifibroadcast and therefore making other networking incredibly hard.
   // Tell network manager to ignore the cards we want to do wifibroadcast on
   for(const auto& card: m_broadcast_cards){
     wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);

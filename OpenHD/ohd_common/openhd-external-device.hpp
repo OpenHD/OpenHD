@@ -26,21 +26,24 @@ struct ExternalDevice {
   // E.g. If the external device sends a UDP packet to a specific port to the local (ground) station, it will arrive
   // at local_network_ip::port. This is needed for mavlink, where we need to send data from a "bound" UDP port,
   // such that the GroundControl Application knows where to send data to to be picked up by OpenHD
-  std::string local_network_ip;
+  //std::string local_network_ip;
   // This is the IP address of the external device itself, e.g. for a smartphone connected via USB tethering, the IP of the smartphone
   // (In the network where it connects to the grund station)
   std::string external_device_ip;
   // returns true if both IP addresses are valid
   [[nodiscard]] bool is_valid() const {
-    return OHDUtil::is_valid_ip(local_network_ip) && OHDUtil::is_valid_ip(external_device_ip);
+    //return OHDUtil::is_valid_ip(local_network_ip) && OHDUtil::is_valid_ip(external_device_ip);
+    return OHDUtil::is_valid_ip(external_device_ip);
   }
   // For when using a map of external device(s)
   [[nodiscard]] std::string create_identifier() const {
     assert(is_valid());
-    return local_network_ip + "_" + external_device_ip;
+    //return local_network_ip + "_" + external_device_ip;
+    return external_device_ip;
   }
   [[nodiscard]] std::string to_string()const{
-    return fmt::format("ExternalDevice {} [local:[{}] remote:[{}]]",tag,local_network_ip,external_device_ip);
+    //return fmt::format("ExternalDevice {} [local:[{}] remote:[{}]]",tag,local_network_ip,external_device_ip);
+    return fmt::format("ExternalDevice {} remote:[{}]]",tag,external_device_ip);
   }
 };
 
@@ -51,7 +54,7 @@ typedef std::function<void(ExternalDevice external_device,bool connected)> EXTER
 class ExternalDeviceManager{
  public:
   ExternalDeviceManager(){
-    // Here one can manually declare any IP adresses openhd should forward video / telemetry to
+    // Here one can manually declare any IP addresses openhd should forward video / telemetry to
     // File needs to contain valid ip addresses, one per line, without any whitespaces or similar.
     const auto manual_filename="/usr/local/share/openhd/interface/manual_forwarding_ips.txt";
     if(OHDFilesystemUtil::exists(manual_filename)){
@@ -66,16 +69,16 @@ class ExternalDeviceManager{
       }
     }
     for(const auto& ip:m_manual_ips){
-      on_new_external_device(ExternalDevice{"manual","127.0.0.1",ip}, true);
+      on_new_external_device(ExternalDevice{"manual",ip}, true);
     }
   }
   ~ExternalDeviceManager(){
     for(const auto& ip:m_manual_ips){
-      on_new_external_device(ExternalDevice{"manual","127.0.0.1",ip}, false);
+      on_new_external_device(ExternalDevice{"manual",ip}, false);
     }
   }
   // Might be called from different thread(s)
-  void on_new_external_device(ExternalDevice external_device,bool connected){
+  void on_new_external_device(const ExternalDevice& external_device,bool connected){
     openhd::log::get_default()->debug("Got {} {}",external_device.to_string(),connected);
     const auto id=external_device.create_identifier();
     std::lock_guard<std::mutex> guard(m_ext_devices_lock);

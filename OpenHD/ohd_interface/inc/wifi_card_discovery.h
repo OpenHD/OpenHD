@@ -41,6 +41,9 @@ struct ProcessedWifiCards{
 
 ProcessedWifiCards process_and_evaluate_cards(const std::vector<WiFiCard>& discovered_cards,const OHDPlatform& platform,const OHDProfile& profile);
 
+// for users who use the manual file to define their card(s)
+ProcessedWifiCards find_cards_from_manual_file(const std::vector<std::string>& wifibroadcast_cards,const std::string& opt_hotspot_card);
+
 };
 
 #endif //OHD_DISCOVER_WiFI_CARDS

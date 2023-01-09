@@ -7,9 +7,12 @@
 // WARNING BE CAREFULL TO REMOVE ON RELEASE
 //#define OHD_TELEMETRY_TESTING_ENABLE_PACKET_LOSS
 
-MEndpoint::MEndpoint(std::string tag)
-    : TAG(std::move(tag)),m_mavlink_channel(checkoutFreeChannel()) {
-  openhd::log::get_default()->debug("{} using channel:{}",TAG,m_mavlink_channel);
+MEndpoint::MEndpoint(std::string tag,bool debug_mavlink_msg_packet_loss)
+    : TAG(std::move(tag)),
+      m_mavlink_channel(checkoutFreeChannel()),
+      m_debug_mavlink_msg_packet_loss(debug_mavlink_msg_packet_loss)
+{
+  openhd::log::get_default()->debug("{} using channel:{} debug_mavlink_msg_packet_los:{}",TAG,m_mavlink_channel,m_debug_mavlink_msg_packet_loss);
 }
 
 void MEndpoint::sendMessages(const std::vector<MavlinkMessage>& messages) {
@@ -50,6 +53,11 @@ void MEndpoint::parseNewData(const uint8_t* data, const int data_len) {
     uint8_t res = mavlink_parse_char(m_mavlink_channel, (uint8_t)data[i], &msg, &receiveMavlinkStatus);
     if (res) {
       messages.push_back(MavlinkMessage{msg});
+      // From https://github.com/mavlink/c_uart_interface_example/blob/master/serial_port.cpp
+      if ( (m_last_status.packet_rx_drop_count != receiveMavlinkStatus.packet_rx_drop_count) && m_debug_mavlink_msg_packet_loss ){
+        openhd::log::get_default()->warn("DROPPED {} PACKETS",receiveMavlinkStatus.packet_rx_drop_count);
+      }
+      m_last_status = receiveMavlinkStatus;
     }
   }
   onNewMavlinkMessages(messages);

@@ -17,7 +17,7 @@ Special OpenHD approaches (in general, they help us save bandwidth by not forwar
 2) FC: OpenHD provides direct access to the FC, but itself does not modify / use data from the FC in any way. Messages created by the FC
    (which is connected to the air unit) are forwarded to the ground unit and then forwarded to the ground station(s). Any message created by
     the ground station(s) is forwarded to the air unit, and then to the FC
-3) Settings: OpenHD settings can be modifed via the mavlink extended parameters protocol. They are local to the air or grund unit, depending on
+3) Settings: OpenHD settings can be modified via the mavlink extended parameters protocol. They are local to the air or grund unit, depending on
    where they are needed. 
 
 ## System / Comp ID's
@@ -36,7 +36,7 @@ Air unit sends/receives data from the FC if enabled, Ground unit receives data f
 
 ## Connecting the  Ground station application to this module running on the Ground Pi (QOpenHD or QGroundControl)
 
-Rn, there is only one way to connect either QOpenHD or QGroundControl to his module running on the ground pi - a
+Rn, there is only one way to connect either QOpenHD or QGroundControl to this module running on the ground pi - a
 bidirectional connection made up of 2 UDP ports. TODO: When QOpenHD / QGroundControl is not running on the ground
 station itself, but rather on another device (for example a smartphone connected to the ground pi), another difficulty
 arises from the necessity to route the messages over another network. For this, we probably should go with TCP, but the

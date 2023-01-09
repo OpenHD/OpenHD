@@ -3,12 +3,12 @@
 #include <iostream>
 #include <regex>
 
+#include "manually_defined_cards.hpp"
 #include "openhd-spdlog.hpp"
 #include "openhd-util-filesystem.hpp"
 #include "openhd-util.hpp"
 #include "wifi_card.hpp"
 #include "wifi_command_helper.h"
-#include "manually_defined_cards.h"
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
@@ -69,6 +69,9 @@ bool DWifiCards::is_known_for_injection(const WiFiCardType& type) {
 std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(const std::string& interface_name) {
   // get the driver name for this card
   const auto filename_device_uevent=fmt::format("/sys/class/net/{}/device/uevent",interface_name);
+  if(!OHDFilesystemUtil::exists(filename_device_uevent)){
+    return std::nullopt;
+  }
   const auto device_uevent_content=OHDFilesystemUtil::read_file(filename_device_uevent);
   const std::regex driver_regex{"DRIVER=([\\w]+)"};
   std::smatch result;
@@ -174,12 +177,6 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   if(card.type==WiFiCardType::Broadcom){
     card.supports_hotspot= true;
   }
-
-  if(openhd::ignore::should_be_ignored_interface(card.device_name)
-      || openhd::ignore::should_be_ignored_mac(card.mac)){
-    openhd::log::get_default()->info("Ignoring card {} since whitelisted by developer",card.device_name);
-    return std::nullopt;
-  }
   return card;
 }
 
@@ -200,26 +197,6 @@ bool DWifiCards::any_wifi_card_supporting_monitor_mode(
 
 DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
     const std::vector<WiFiCard>& discovered_cards,const OHDPlatform& platform,const OHDProfile& profile){
-
-  // manually overwriting the automatic assignment of cards depending on their capabilities can result in bugs / undefined behaviour
-  if(openhd::manually_defined_cards_file_exists()){
-      const auto manual_cards=openhd::get_manually_defined_cards_from_file(openhd::FILE_PATH_MANUALLY_DEFINED_CARDS);
-      std::vector<WiFiCard> monitor_mode_cards{};
-      std::optional<WiFiCard> opt_hotspot_card =std::nullopt;
-      for(const auto& manual_card : manual_cards){
-        auto card_opt= process_card(manual_card.interface_name);
-        if(!card_opt){
-          throw std::runtime_error(fmt::format("Card {} does not exist on this system",manual_card.interface_name));
-        }
-        if(manual_card.usage==WifiUseFor::MonitorMode){
-          monitor_mode_cards.push_back(card_opt.value());
-        }else if(manual_card.usage==WifiUseFor::Hotspot){
-          WiFiCard card=card_opt.value();
-          opt_hotspot_card =card;
-        }
-      }
-      return {monitor_mode_cards, opt_hotspot_card};
-  }
   // We need to figure out what's the best usage for the card(s) connected to the system based on their capabilities.
   std::vector<WiFiCard> monitor_mode_cards{};
   std::optional<WiFiCard> hotspot_card=std::nullopt;
@@ -249,4 +226,28 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
     monitor_mode_cards.resize(1);
   }
   return {monitor_mode_cards,hotspot_card};
+}
+
+static WiFiCard wait_for_card(const std::string& interface_name){
+  while (true){
+    auto card= DWifiCards::process_card(interface_name);
+    if(card){
+      return card.value();
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    openhd::log::get_default()->debug("Waiting for {}",interface_name);
+  }
+}
+
+DWifiCards::ProcessedWifiCards DWifiCards::find_cards_from_manual_file(const std::vector<std::string>& wifibroadcast_cards,const std::string& opt_hotspot_card) {
+  ProcessedWifiCards ret{};
+  for(const auto& interface:wifibroadcast_cards){
+    auto card=wait_for_card(interface);
+    ret.monitor_mode_cards.push_back(card);
+  };
+  if(!opt_hotspot_card.empty()){
+    auto card= wait_for_card(opt_hotspot_card);
+    ret.hotspot_card=card;
+  }
+  return ret;
 }

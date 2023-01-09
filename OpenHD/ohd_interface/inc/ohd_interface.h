@@ -15,7 +15,6 @@
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
-#include "openhd-telemetry-tx-rx.h"
 #include "usb_tether_listener.h"
 #include "ethernet_listener.h"
 #include "wb_link.h"

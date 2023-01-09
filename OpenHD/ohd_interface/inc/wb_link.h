@@ -16,7 +16,6 @@
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"
 #include "openhd-spdlog.hpp"
-#include "openhd-telemetry-tx-rx.h"
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
 
@@ -34,6 +33,8 @@ class WBLink :public OHDLink{
   /**
    * @param broadcast_cards list of discovered wifi card(s) that support monitor mode & are injection capable. Needs to be at least
    * one card, and only one card on an air unit. The given cards need to support monitor mode and either 2.4G or 5G wifi.
+   * In the case where there are multiple card(s), the first given card is used for transmission & receive, the other card(s) are not used
+   * for transmission, only for receiving.
    * @param opt_action_handler global openhd action handler, optional (can be nullptr during testing of specific modules instead
    * of testing a complete running openhd instance)
    */
