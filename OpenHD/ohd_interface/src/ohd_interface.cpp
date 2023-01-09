@@ -19,47 +19,60 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   assert(m_console);
   openhd::write_manual_cards_template();
   m_external_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
-  //Find out which cards are connected first
-  auto connected_cards =DWifiCards::discover_connected_wifi_cards();
-  // Issue on rpi with Atheros: For some reason, openhd is sometimes started before the card
-  // finishes some initialization steps ?! and is therefore not discovered.
-  // Change January 05, 23: We always wait for a card doing monitor mode unless a (developer) has specified the option to do otherwise
-  // (which can be usefully for testing, but is not a behaviour we want when running on a user image)
-  if(!continue_without_wb_card && !openhd::manually_defined_cards_file_exists()){
-    m_console->debug("Waiting for card ");
-    const auto begin=std::chrono::steady_clock::now();
-    while (true){
-      if(DWifiCards::any_wifi_card_supporting_injection(connected_cards))break;
-      const auto elapsed=std::chrono::steady_clock::now()-begin;
-      if(elapsed>std::chrono::seconds(3)){
-        m_console->warn("Waiting for card supporting monitor mode+injection");
-      }else{
-        m_console->debug("Waiting for card supporting monitor mode+injection");
-      }
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      connected_cards =DWifiCards::discover_connected_wifi_cards();
-      // after 10 seconds, we are happy with a card that only does monitor mode, aka is not known for injection
-      if(elapsed>std::chrono::seconds(10)){
-        if(DWifiCards::any_wifi_card_supporting_monitor_mode(connected_cards)){
-          m_console->warn("Using card without injection capabilities");
+  std::vector<WiFiCard> monitor_mode_cards{};
+  std::optional<WiFiCard> opt_hotspot_card=std::nullopt;
+  if(openhd::manually_defined_cards_file_exists()){
+    // Much easier to do, no weird trying to figure out what to use the card(s) for
+    auto tmp=openhd::get_manually_defined_cards_from_file();
+    auto processed=DWifiCards::find_cards_from_manual_file(tmp.wifibroadcast_cards,tmp.hotspot_card);
+    monitor_mode_cards=processed.monitor_mode_cards;
+    opt_hotspot_card=processed.hotspot_card;
+  }else{
+    // We need to discover the connected cards and reason about their usage
+    //Find out which cards are connected first
+    auto connected_cards =DWifiCards::discover_connected_wifi_cards();
+    // Issue on rpi with Atheros: For some reason, openhd is sometimes started before the card
+    // finishes some initialization steps ?! and is therefore not discovered.
+    // Change January 05, 23: We always wait for a card doing monitor mode unless a (developer) has specified the option to do otherwise
+    // (which can be usefully for testing, but is not a behaviour we want when running on a user image)
+    if(!continue_without_wb_card) {
+      const auto begin = std::chrono::steady_clock::now();
+      while (true) {
+        if (DWifiCards::any_wifi_card_supporting_injection(connected_cards))
           break;
+        const auto elapsed = std::chrono::steady_clock::now() - begin;
+        if (elapsed > std::chrono::seconds(3)) {
+          m_console->warn("Waiting for card supporting monitor mode+injection");
+        } else {
+          m_console->debug(
+              "Waiting for card supporting monitor mode+injection");
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        connected_cards = DWifiCards::discover_connected_wifi_cards();
+        // after 10 seconds, we are happy with a card that only does monitor mode, aka is not known for injection
+        if (elapsed > std::chrono::seconds(10)) {
+          if (DWifiCards::any_wifi_card_supporting_monitor_mode(
+                  connected_cards)) {
+            m_console->warn("Using card without injection capabilities");
+            break;
+          }
         }
       }
     }
+    // now decide what to use the card(s) for
+    const auto evaluated=DWifiCards::process_and_evaluate_cards(
+        connected_cards, m_platform, m_profile);
+    monitor_mode_cards=evaluated.monitor_mode_cards;
+    opt_hotspot_card=evaluated.hotspot_card;
   }
-  // now decide what to use the card(s) for
-  const auto evaluated=DWifiCards::process_and_evaluate_cards(
-      connected_cards, m_platform, m_profile);
-  const auto broadcast_cards=evaluated.monitor_mode_cards;
-  const auto optional_hotspot_card=evaluated.hotspot_card;
-  m_console->debug("Broadcast card(s):{}",debug_cards(broadcast_cards));
-  if(optional_hotspot_card.has_value()){
-    m_console->debug("Hotspot card:{}",optional_hotspot_card.value().device_name);
+  m_console->debug("monitor_mode card(s):{}",debug_cards(monitor_mode_cards));
+  if(opt_hotspot_card.has_value()){
+    m_console->debug("Hotspot card:{}",opt_hotspot_card.value().device_name);
   }else{
     m_console->debug("No WiFi hotspot card");
   }
   // We don't have at least one card for monitor mode, which is a hard requirement for OpenHD
-  if(broadcast_cards.empty()){
+  if(monitor_mode_cards.empty()){
     m_console->warn("Cannot start ohd_interface, no wifi card for monitor mode");
     const std::string message_for_user="No WiFi card found, please reboot";
     m_console->warn(message_for_user);
@@ -70,7 +83,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     // we just continue as nothing happened, but OHD won't have any wifibroadcast connectivity
     //exit(1);
   }else{
-    m_wb_link =std::make_shared<WBLink>(m_profile, m_platform,broadcast_cards,opt_action_handler);
+    m_wb_link =std::make_shared<WBLink>(m_profile, m_platform,monitor_mode_cards,opt_action_handler);
   }
   // Listen for external device(s) to connect - only on ground
   if(m_profile.is_ground()){
@@ -80,9 +93,9 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     //}
   }
   // This way one could try and recover an air pi
-  if(optional_hotspot_card.has_value()){
+  if(opt_hotspot_card.has_value()){
     openhd::Space wb_frequency_space= (m_wb_link!= nullptr) ? m_wb_link->get_current_frequency_channel_space() : openhd::Space::G5_8;
-    m_wifi_hotspot =std::make_unique<WifiHotspot>(optional_hotspot_card.value(),wb_frequency_space);
+    m_wifi_hotspot =std::make_unique<WifiHotspot>(opt_hotspot_card.value(),wb_frequency_space);
   }
   m_console->debug("OHDInterface::created");
 }

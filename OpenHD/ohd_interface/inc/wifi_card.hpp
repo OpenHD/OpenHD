@@ -59,28 +59,6 @@ static std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
 }
 
 
-// What to use a discovered wifi card for. R.n We support hotspot or monitor mode (wifibroadcast),
-// I doubt that will change.
-enum class WifiUseFor {
-  Unknown = 0, // Not sure what to use this wifi card for, aka unused.
-  MonitorMode, //Use for wifibroadcast, aka set to monitor mode.
-  Hotspot, //Use for hotspot, aka start a wifi hotspot with it.
-};
-NLOHMANN_JSON_SERIALIZE_ENUM( WifiUseFor, {
-   {WifiUseFor::Unknown, nullptr},
-   {WifiUseFor::MonitorMode, "MonitorMode"},
-   {WifiUseFor::Hotspot, "Hotspot"},
-});
-static std::string wifi_use_for_to_string(const WifiUseFor wifi_use_for){
-  switch (wifi_use_for) {
-    case WifiUseFor::Hotspot:return "hotspot";
-    case WifiUseFor::MonitorMode:return "monitor_mode";
-    case WifiUseFor::Unknown:
-    default:
-      return "unknown";
-  }
-}
-
 struct WiFiCard {
   // These 3 are all (slightly different) identifiers of a card on linux.
   std::string device_name;

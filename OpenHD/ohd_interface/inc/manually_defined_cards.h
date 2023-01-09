@@ -13,44 +13,37 @@
 
 namespace openhd {
 
-struct ManuallyDefinedCard {
-  std::string interface_name;
-  std::string mac_address;
-  WifiUseFor usage;
+struct ManuallyDefinedWifiCards {
+  // Interface name(s) of cards to use for wifibroadcast. One for air, can be multiple for ground.
+  // on ground, transmission is always done on the first card.
+  std::vector<std::string> wifibroadcast_cards;
+  // Interface name of card to use for wifi hotspot, or empty if no card should be used for hotspot.
+  // ! Must not contain a card already used for wifibroadcast !
+  std::string hotspot_card;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ManuallyDefinedCard, interface_name,
-                                   mac_address, usage);
-
-struct ManuallyDefinedCards {
-  std::vector<ManuallyDefinedCard> cards;
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ManuallyDefinedCards, cards);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ManuallyDefinedWifiCards,wifibroadcast_cards,hotspot_card);
 
 static const std::string FILE_PATH_MANUALLY_DEFINED_CARDS=std::string(INTERFACE_SETTINGS_DIRECTORY)+std::string("manual_cards.json");
 
-static std::vector<ManuallyDefinedCard> get_manually_defined_cards_from_file(const std::string& filename) {
-  if (!OHDFilesystemUtil::exists(filename.c_str())) {
-    throw std::runtime_error(fmt::format("With great power comes great responsibility.File {} does not exist",filename));
-  }
+static ManuallyDefinedWifiCards get_manually_defined_cards_from_file(const std::string filename=FILE_PATH_MANUALLY_DEFINED_CARDS) {
+  assert(OHDFilesystemUtil::exists(filename));
   std::ifstream f(filename);
   try {
     nlohmann::json j;
     f >> j;
-    auto tmp = j.get<ManuallyDefinedCards>();
-    return tmp.cards;
+    auto tmp = j.get<ManuallyDefinedWifiCards>();
+    return tmp;
   } catch (nlohmann::json::exception& ex) {
     throw std::runtime_error(fmt::format("With great power comes great responsibility.File {} is invalid",filename));
   }
+  assert(false);
   return {};
 }
 
 static void write_manual_cards_template() {
   const auto file_path = "/tmp/manual_cards.json.template";
-  ManuallyDefinedCard example{"wlan0", "ac:9e:17:59:61:03",
-                              WifiUseFor::MonitorMode};
-  ManuallyDefinedCards content{};
-  content.cards.push_back(example);
-  const nlohmann::json tmp = content;
+  ManuallyDefinedWifiCards example{std::vector<std::string>{"wlan0","wlan1"}, "wlan3"};
+  const nlohmann::json tmp = example;
   // and write them locally for persistence
   std::ofstream t(file_path);
   t << tmp.dump(4);
@@ -59,34 +52,6 @@ static void write_manual_cards_template() {
 
 static bool manually_defined_cards_file_exists(){
   return OHDFilesystemUtil::exists(FILE_PATH_MANUALLY_DEFINED_CARDS.c_str());
-}
-
-// For developers
-// By using the file(s) specified here you can tell openhd to ignore certain interfaces
-// This can be usefully if you want to create some kind of custom networking or similar
-namespace ignore{
-
-static constexpr auto filename_ignore_interfaces="/boot/openhd/ignore_interfaces.txt";
-static constexpr auto filename_ignore_macs="/boot/openhd/ignore_macs.txt";
-
-static bool should_be_ignored(const char* file_name,const std::string& evaluated){
-  if(!OHDFilesystemUtil::exists(file_name)){
-    return false;
-  }
-  const auto content=OHDFilesystemUtil::read_file(file_name);
-  if(content.find(evaluated) != std::string::npos){
-    return true;
-  }
-  return false;
-}
-
-static bool should_be_ignored_interface(const std::string& interface_name){
-  return should_be_ignored(filename_ignore_interfaces,interface_name);
-}
-
-static bool should_be_ignored_mac(const std::string& mac){
-  return should_be_ignored(filename_ignore_macs,mac);
-}
 }
 
 }
