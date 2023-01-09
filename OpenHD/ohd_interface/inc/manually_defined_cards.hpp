@@ -34,7 +34,7 @@ static ManuallyDefinedWifiCards get_manually_defined_cards_from_file(const std::
     auto tmp = j.get<ManuallyDefinedWifiCards>();
     return tmp;
   } catch (nlohmann::json::exception& ex) {
-    throw std::runtime_error(fmt::format("With great power comes great responsibility.File {} is invalid",filename));
+    throw std::runtime_error(fmt::format("Cannot parse json. File {} is invalid",filename));
   }
   assert(false);
   return {};
