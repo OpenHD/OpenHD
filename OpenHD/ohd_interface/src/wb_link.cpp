@@ -89,7 +89,7 @@ void WBLink::takeover_cards_monitor_mode() {
   // This can be different depending on the OS we are running on - in general, we try to go for the following with openhd:
   // Have network manager running on the host OS - the nice thing about network manager is that we can just tell it
   // to ignore the cards we are doing wifibroadcast with, instead of killing all processes that might interfere with
-  // wifibroadcast and therefore making other networking increadibly hard.
+  // wifibroadcast and therefore making other networking incredibly hard.
   // Tell network manager to ignore the cards we want to do wifibroadcast on
   for(const auto& card: m_broadcast_cards){
     wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
