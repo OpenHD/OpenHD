@@ -15,7 +15,7 @@ namespace openhd {
 
 struct ManuallyDefinedWifiCards {
   // Interface name(s) of cards to use for wifibroadcast. One for air, can be multiple for ground.
-  // on ground, transmission is always done on the first card.
+  // on ground, transmission is always done on the first card (the other cards only listen passively)
   std::vector<std::string> wifibroadcast_cards;
   // Interface name of card to use for wifi hotspot, or empty if no card should be used for hotspot.
   // ! Must not contain a card already used for wifibroadcast !
@@ -51,7 +51,7 @@ static void write_manual_cards_template() {
 }
 
 static bool manually_defined_cards_file_exists(){
-  return OHDFilesystemUtil::exists(FILE_PATH_MANUALLY_DEFINED_CARDS.c_str());
+  return OHDFilesystemUtil::exists(FILE_PATH_MANUALLY_DEFINED_CARDS);
 }
 
 }

@@ -68,7 +68,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   }else{
     m_console->debug("No WiFi hotspot card");
   }
-  // We don't have at least one card for monitor mode, which is a hard requirement for OpenHD
+  // We don't have at least one card for monitor mode, which means we cannot instantiate wb_link (no wifibroadcast connectivity at all)
   if(monitor_mode_cards.empty()){
     m_console->warn("Cannot start ohd_interface, no wifi card for monitor mode");
     const std::string message_for_user="No WiFi card found, please reboot";
@@ -84,7 +84,9 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   }
   // Listen for external device(s) to connect - only on ground
   if(m_profile.is_ground()){
+    // The USB tethering listener is always enabled
     m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
+    // dirty, and therefore r.n only enabled on rpi as ground.
     if(m_platform.platform_type==PlatformType::RaspberryPi){
       m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,"eth0");
     }
