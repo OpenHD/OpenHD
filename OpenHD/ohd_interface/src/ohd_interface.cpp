@@ -44,15 +44,13 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
         if (elapsed > std::chrono::seconds(3)) {
           m_console->warn("Waiting for card supporting monitor mode+injection");
         } else {
-          m_console->debug(
-              "Waiting for card supporting monitor mode+injection");
+          m_console->debug("Waiting for card supporting monitor mode+injection");
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
         connected_cards = DWifiCards::discover_connected_wifi_cards();
         // after 10 seconds, we are happy with a card that only does monitor mode, aka is not known for injection
         if (elapsed > std::chrono::seconds(10)) {
-          if (DWifiCards::any_wifi_card_supporting_monitor_mode(
-                  connected_cards)) {
+          if (DWifiCards::any_wifi_card_supporting_monitor_mode(connected_cards)) {
             m_console->warn("Using card without injection capabilities");
             break;
           }
@@ -60,8 +58,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
       }
     }
     // now decide what to use the card(s) for
-    const auto evaluated=DWifiCards::process_and_evaluate_cards(
-        connected_cards, m_platform, m_profile);
+    const auto evaluated=DWifiCards::process_and_evaluate_cards(connected_cards, m_platform, m_profile);
     monitor_mode_cards=evaluated.monitor_mode_cards;
     opt_hotspot_card=evaluated.hotspot_card;
   }
@@ -88,9 +85,9 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   // Listen for external device(s) to connect - only on ground
   if(m_profile.is_ground()){
     m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
-    //if(m_platform.platform_type==PlatformType::RaspberryPi){
+    if(m_platform.platform_type==PlatformType::RaspberryPi){
       m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,"eth0");
-    //}
+    }
   }
   // This way one could try and recover an air pi
   if(opt_hotspot_card.has_value()){
