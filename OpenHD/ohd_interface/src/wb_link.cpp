@@ -17,12 +17,12 @@
 static const char *KEYPAIR_FILE_DRONE = "/usr/local/share/openhd/drone.key";
 static const char *KEYPAIR_FILE_GROUND = "/usr/local/share/openhd/gs.key";
 
-WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,
-                     std::shared_ptr<openhd::ActionHandler> opt_action_handler) : m_profile(std::move(profile)),
+WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
+    : m_profile(std::move(profile)),
       m_platform(platform),
       m_broadcast_cards(std::move(broadcast_cards)),
-   m_disable_all_frequency_checks(openhd::wb::disable_all_frequency_checks()),
-   m_opt_action_handler(std::move(opt_action_handler))
+      m_disable_all_frequency_checks(openhd::wb::disable_all_frequency_checks()),
+      m_opt_action_handler(std::move(opt_action_handler))
 {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);

@@ -184,7 +184,6 @@ void GroundTelemetry::remove_external_ground_station_ip(const openhd::ExternalDe
   m_console->debug("remove_external_ground_station_ip {}",ext_device.to_string());
   if(m_gcs_endpoint){
     m_gcs_endpoint->removeAnotherDestIpAddress(ext_device.external_device_ip);
-    return;
   }
 }
 
