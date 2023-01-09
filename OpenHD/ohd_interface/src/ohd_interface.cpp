@@ -8,10 +8,9 @@
 
 #include <utility>
 
+#include "manually_defined_cards.hpp"
 #include "wb_link_settings.hpp"
 #include "wifi_command_helper.h"
-
-#include "manually_defined_cards.h"
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler,bool continue_without_wb_card)
     : m_platform(platform1), m_profile(std::move(profile1)) {
