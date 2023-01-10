@@ -123,7 +123,7 @@ static void write_modprobe_file_rtl8812au_wb(int rtw_tx_pwr_idx_override){
 // We allow the user to overwrite defaults for his platform.
 // The FEC impl limit would be 128 - but anything above 50 is not computable on any platform
 static bool valid_wb_max_fec_block_size_for_platform(uint32_t wb_max_fec_block_size_for_platform){
-  return wb_max_fec_block_size_for_platform>0 && wb_max_fec_block_size_for_platform<50;
+  return wb_max_fec_block_size_for_platform>0 && wb_max_fec_block_size_for_platform<=100;
 }
 
 class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLinkSettings>{
