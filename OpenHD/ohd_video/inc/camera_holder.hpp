@@ -326,12 +326,16 @@ static void startup_fix_common_issues(std::vector<std::shared_ptr<CameraHolder>>
     openhd::log::get_default()->warn("at least 1 camera is a hard requirement");
     return;
   }
-  camera_holders.at(0)->unsafe_get_settings().enable_streaming= true;
+  for(int i=0;i<camera_holders.size();i++){
+    camera_holders.at(i)->unsafe_get_settings().enable_streaming= true;
+    camera_holders.at(i)->persist();
+  }
+  /*camera_holders.at(0)->unsafe_get_settings().enable_streaming= true;
   camera_holders.at(0)->persist();
   for(int i=1;i<camera_holders.size();i++){
     camera_holders.at(i)->unsafe_get_settings().enable_streaming = false;
     camera_holders.at(i)->persist();
-  }
+  }*/
 }
 
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_

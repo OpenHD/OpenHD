@@ -11,6 +11,7 @@
 #include <string>
 
 #include "openhd-spdlog.hpp"
+#include "ohd_video_air_generic_settings.hpp"
 
 /**
  * Main entry point for OpenHD video streaming for discovered cameras on the air unit.
@@ -64,6 +65,9 @@ class OHDVideoAir {
   void configure(const std::shared_ptr<CameraHolder>& camera);
   // propagate a bitrate change request to the CameraStream implementation(s)
   void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb);
+ private:
+  // r.n only for multi camera support
+  std::unique_ptr<AirCameraGenericSettingsHolder> m_generic_settings;
 };
 
 #endif  // OPENHD_VIDEO_OHDVIDEO_H

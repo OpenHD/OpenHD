@@ -837,6 +837,8 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
     }else{
       tx.try_enqueue_block(fragmented_video_frame.frame_fragments, 100);
     }
+  }else{
+    m_console->debug("Invalid camera stream_index {}",stream_index);
   }
 }
 

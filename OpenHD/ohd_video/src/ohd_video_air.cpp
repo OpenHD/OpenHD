@@ -17,6 +17,7 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,const std::vector<Camera>& camera
   assert(m_console);
   assert(!cameras.empty());
   m_console->debug("OHDVideo::OHDVideo()");
+  m_generic_settings=std::make_unique<AirCameraGenericSettingsHolder>();
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
   for(const auto& camera:cameras){
     if(camera_holders.size()<MAX_N_CAMERAS){
@@ -109,6 +110,16 @@ void OHDVideoAir::handle_change_bitrate_request(openhd::ActionHandler::LinkBitra
 std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   std::vector<openhd::Setting> ret;
   // N of discovered cameras, for debugging
-  ret.push_back(openhd::create_read_only_int("V_N_CAMERAS",static_cast<int>(m_camera_streams.size())));
+  const auto n_cameras=static_cast<int>(m_camera_streams.size());
+  ret.push_back(openhd::create_read_only_int("V_N_CAMERAS",n_cameras));
+  if(n_cameras>1){
+    auto cb_switch_primary_and_secondary=[this](std::string,int value){
+      if(!openhd::validate_yes_or_no(value))return false;
+      m_generic_settings->unsafe_get_settings().switch_primary_and_secondary=value;
+      m_generic_settings->persist();
+      return true;
+    };
+    ret.push_back(openhd::Setting{"V_SWITCH_CAM",openhd::IntSetting{m_generic_settings->unsafe_get_settings().switch_primary_and_secondary,cb_switch_primary_and_secondary}});
+  }
   return ret;
 }
