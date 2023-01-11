@@ -39,6 +39,7 @@ class UDPEndpoint2 : public MEndpoint {
   //
   std::mutex m_sender_mutex;
   std::map<std::string,void*> m_other_dest_ips{};
+  std::vector<std::string> get_all_curr_dest_ips();
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_UDPENDPOINT2_H_
