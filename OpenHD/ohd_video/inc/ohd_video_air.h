@@ -51,13 +51,13 @@ class OHDVideoAir {
   std::vector<std::shared_ptr<openhd::ISettingsComponent>> get_all_camera_settings();
   // r.n only for debugging
   std::vector<openhd::Setting> get_generic_settings();
+  // r.n limited to primary and secondary camera
+  static constexpr auto MAX_N_CAMERAS=2;
  private:
   const OHDPlatform m_platform;
   // All the created camera streams
   std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
   std::shared_ptr<spdlog::logger> m_console;
-  // r.n limited to primary and secondary camera
-  static constexpr auto MAX_N_CAMERAS=2;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
   std::shared_ptr<OHDLink> m_link_handle;
  private:
