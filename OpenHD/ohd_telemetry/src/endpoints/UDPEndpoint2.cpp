@@ -36,13 +36,13 @@ bool UDPEndpoint2::sendMessagesImpl(const std::vector<MavlinkMessage>& messages)
   return true;
 }
 
-void UDPEndpoint2::addAnotherDestIpAddress(std::string ip) {
+void UDPEndpoint2::addAnotherDestIpAddress(const std::string& ip) {
   std::lock_guard<std::mutex> lock(m_sender_mutex);
   m_console->debug("addAnotherDestIpAddress {}",ip);
   m_other_dest_ips[ip]=nullptr;
 }
 
-void UDPEndpoint2::removeAnotherDestIpAddress(std::string ip) {
+void UDPEndpoint2::removeAnotherDestIpAddress(const std::string& ip) {
   std::lock_guard<std::mutex> lock(m_sender_mutex);
   m_console->debug("removeAnotherDestIpAddress {}",ip);
   m_other_dest_ips.erase(ip);

@@ -26,8 +26,8 @@ class UDPEndpoint2 : public MEndpoint {
   // Delete copy and move
   UDPEndpoint2(const UDPEndpoint2&)=delete;
   UDPEndpoint2(const UDPEndpoint2&&)=delete;
-  void addAnotherDestIpAddress(std::string ip);
-  void removeAnotherDestIpAddress(std::string ip);
+  void addAnotherDestIpAddress(const std::string& ip);
+  void removeAnotherDestIpAddress(const std::string& ip);
  private:
   std::shared_ptr<spdlog::logger> m_console;
   bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;
