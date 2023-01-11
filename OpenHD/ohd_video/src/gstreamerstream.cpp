@@ -453,7 +453,8 @@ bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
   //m_console->debug("Got frame with {} fragments",frame_fragments.size());
   if(m_link_handle){
-    m_link_handle->transmit_video_data(0,openhd::FragmentedVideoFrame{frame_fragments});
+    const auto stream_index=m_camera_holder->get_camera().index;
+    m_link_handle->transmit_video_data(stream_index,openhd::FragmentedVideoFrame{frame_fragments});
   }else{
     m_console->debug("No transmit interface");
   }
