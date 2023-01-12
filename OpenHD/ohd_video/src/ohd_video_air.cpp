@@ -64,8 +64,8 @@ std::string OHDVideoAir::createDebug() const {
 void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
   const auto camera=camera_holder->get_camera();
   m_console->debug("Configuring camera:"+camera_type_to_string(camera.type));
-  // R.N we use gstreamer only for everything except veye
-  // (veye also uses gstreamer, but we do not launch it via gst-launch)
+  // R.N we use gstreamer for pretty much everything
+  // But this might change in the future
   switch (camera.type) {
     case CameraType::RPI_VEYE_CSI_V4l2:
     case CameraType::RPI_CSI_MMAL:
@@ -128,6 +128,7 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
       if(!openhd::validate_yes_or_no(value))return false;
       m_generic_settings->unsafe_get_settings().switch_primary_and_secondary=value;
       m_generic_settings->persist();
+      // Do nothing, switch requires reboot
       return true;
     };
     ret.push_back(openhd::Setting{"V_SWITCH_CAM",openhd::IntSetting{m_generic_settings->unsafe_get_settings().switch_primary_and_secondary,cb_switch_primary_and_secondary}});
