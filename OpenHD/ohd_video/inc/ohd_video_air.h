@@ -27,7 +27,7 @@ class OHDVideoAir {
    * @param opt_action_handler openhd global handler for communication between different ohd modules.
    * @param link_handle handle for sending video data over the (currently only wb) link between air and ground
    */
-  OHDVideoAir(OHDPlatform platform1,const std::vector<Camera>& cameras,
+  OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
            std::shared_ptr<openhd::ActionHandler> opt_action_handler,
            std::shared_ptr<OHDLink> link_handle);
   OHDVideoAir(const OHDVideoAir&)=delete;

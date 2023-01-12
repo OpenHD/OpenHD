@@ -7,7 +7,7 @@
 #include "gstreamerstream.h"
 #include "ohd_video_air.h"
 
-OHDVideoAir::OHDVideoAir(OHDPlatform platform1,const std::vector<Camera>& cameras,
+OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
                    std::shared_ptr<openhd::ActionHandler> opt_action_handler,
                    std::shared_ptr<OHDLink> link)
     : m_platform(platform1),
@@ -18,14 +18,24 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,const std::vector<Camera>& camera
   assert(m_console);
   assert(!cameras.empty());
   m_console->debug("OHDVideo::OHDVideo()");
+  if(cameras.size()>MAX_N_CAMERAS){
+    m_console->warn("More than {} cameras, dropping cameras",MAX_N_CAMERAS);
+    cameras.resize(MAX_N_CAMERAS);
+  }
   m_generic_settings=std::make_unique<AirCameraGenericSettingsHolder>();
+  if(m_generic_settings->get_settings().switch_primary_and_secondary && cameras.size()==2){
+    // swap cam 1 and cam 2 (primary and secondary) - aka if they are detected in the wrong order
+    auto cam1=cameras.at(1);
+    auto cam2=cameras.at(0);
+    cam1.index=0;
+    cam2.index=1;
+    cameras.resize(0);
+    cameras.push_back(cam1);
+    cameras.push_back(cam2);
+  }
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
   for(const auto& camera:cameras){
-    if(camera_holders.size()<MAX_N_CAMERAS){
-      camera_holders.emplace_back(std::make_unique<CameraHolder>(camera,m_opt_action_handler));
-    }else{
-      m_console->warn("Dropping camera {}, too many cameras",camera.to_string());
-    }
+    camera_holders.emplace_back(std::make_unique<CameraHolder>(camera,m_opt_action_handler));
   }
   startup_fix_common_issues(camera_holders);
   assert(camera_holders.size()<=MAX_N_CAMERAS);
