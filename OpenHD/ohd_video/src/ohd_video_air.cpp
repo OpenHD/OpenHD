@@ -133,5 +133,15 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
     };
     ret.push_back(openhd::Setting{"V_SWITCH_CAM",openhd::IntSetting{m_generic_settings->unsafe_get_settings().switch_primary_and_secondary,cb_switch_primary_and_secondary}});
   }
+  /*if(true){
+    auto cb=[this](std::string,int value){
+      if(!(value==1 || value==2))return false;
+      m_generic_settings->unsafe_get_settings().n_cameras_to_wait_for=value;
+      m_generic_settings->persist();
+      // Do nothing, switch requires reboot
+      return true;
+    };
+    ret.push_back(openhd::Setting{"V_N_CAMERAS",openhd::IntSetting{m_generic_settings->unsafe_get_settings().n_cameras_to_wait_for,cb}});
+  }*/
   return ret;
 }

@@ -13,8 +13,11 @@
 #include "openhd-settings-persistent.hpp"
 
 struct AirCameraGenericSettings {
-  // Make primary camera secondary camera and other way around
+  // Make primary camera secondary camera and other way around (aka if they are detected in the wrong order)
   bool switch_primary_and_secondary=false;
+  // On startup, we wait for up to X seconds until this many camera(s) have been discovered
+  // and create one or more dummy camera(s) if they are not found
+  //int n_cameras_to_wait_for=1;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirCameraGenericSettings,switch_primary_and_secondary);

@@ -240,7 +240,7 @@ void DCameras::probe_v4l2_device(const std::string &device) {
   m_camera_endpoints.push_back(endpoint);
 }
 
-// Util so we can't forget to clse the fd
+// Util so we can't forget to close the fd
 class V4l2FPHolder{
  public:
   V4l2FPHolder(const std::string &node,const PlatformType& platform_type){
