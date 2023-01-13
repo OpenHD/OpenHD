@@ -97,6 +97,11 @@ struct CameraSettings {
   // Camera exposure metering mode to use
   // Default 0 (average)
   int rpi_rpicamsrc_metering_mode=0;
+  // This is for USB camera(s) (UVC) that can output already encoded data like h264,h265 and mjpeg but also
+  // raw format(s). This forces OpenHD to not use a camera(s) capability to output encoded data, but rather use
+  // raw out & sw encode instead. Can fix bug(s) where a camera(s) encoder is not usable for OpenHD, and SW encoding
+  // (even though being slow) is the better option.
+  bool usb_uvc_force_sw_encoding=false;
 
   // only used on RK3588, dirty, r.n not persistent
   VideoFormat recordingFormat{VideoCodec::H264, 0, 0, 0}; // 0 means copy

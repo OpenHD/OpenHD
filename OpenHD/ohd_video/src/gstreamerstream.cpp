@@ -216,35 +216,21 @@ void GStreamerStream::setup_usb_uvc() {
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
   m_console->debug("Setting up usb UVC camera Name:"+camera.name+" type:"+camera_type_to_string(camera.type));
-  // First we try and start a hw encoded path, where v4l2src directly provides encoded video buffers
-  for (const auto &endpoint: camera.endpoints) {
-    if (setting.streamed_video_format.videoCodec == VideoCodec::H264 && endpoint.support_h264) {
-      m_console->debug("h264");
-      const auto device_node = endpoint.device_node;
-      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting);
-      return;
-    }
-    if (setting.streamed_video_format.videoCodec == VideoCodec::H265 && endpoint.support_h265) {
-      m_console->debug("h265");
-      const auto device_node = endpoint.device_node;
-      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting);
-      return;
-    }
-    if (setting.streamed_video_format.videoCodec == VideoCodec::MJPEG && endpoint.support_mjpeg) {
-      m_console->debug("MJPEG");
-      const auto device_node = endpoint.device_node;
-      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting);
+  if(!setting.usb_uvc_force_sw_encoding){
+    // First we try and start a hw encoded path, where v4l2src directly provides encoded video buffers
+    // (unless force sw encode is explicitly requested by the user)
+    const auto opt_endpoint_for_codec= get_endpoint_supporting_codec(camera.endpoints,setting.streamed_video_format.videoCodec);
+    if(opt_endpoint_for_codec.has_value()){
+      m_console->debug("Selected non-raw endpoint");
+      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(opt_endpoint_for_codec.value().device_node, setting);
       return;
     }
   }
   // If we land here, we need to do SW encoding, the v4l2src can only do raw video formats like YUV
-  for (const auto &endpoint: camera.endpoints) {
-    m_console->warn("Cannot do HW encode for camera, fall back to RAW out and SW encode");
-    if (endpoint.support_raw) {
-      const auto device_node = endpoint.device_node;
-      m_pipeline_content << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,setting);
-      return;
-    }
+  const auto opt_raw_endpoint= get_endpoint_supporting_raw(camera.endpoints);
+  if(opt_raw_endpoint.has_value()){
+    m_pipeline_content << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(opt_raw_endpoint.value().device_node,setting);
+    return;
   }
   // If we land here, we couldn't create a stream for this camera.
   m_console->error("Setup USB UVC failed");

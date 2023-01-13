@@ -148,4 +148,32 @@ static Camera createCustomIpCamera(){
   return camera;
 }
 
+// Returns the first endpoint found that can output the given video codec (aka non-raw)
+static std::optional<CameraEndpoint> get_endpoint_supporting_codec(const std::vector<CameraEndpoint>& endpoints,const VideoCodec codec){
+  for (const auto &endpoint: endpoints) {
+    if ( codec == VideoCodec::H264 && endpoint.support_h264) {
+      return endpoint;
+    }
+    if ( codec == VideoCodec::H265 && endpoint.support_h265) {
+      return endpoint;
+    }
+    if ( codec == VideoCodec::MJPEG && endpoint.support_mjpeg) {
+      return endpoint;
+    }
+  }
+  return std::nullopt;
+}
+
+// Returns the first endpoint found that can output any "RAW" format, we do not differentiate between RAW format(s) since we can
+// always convert it via gstreamer. Note - raw in this context means already processed by ISP, aka RGB, YUV, ... - not BAYER or something
+// completely unusable
+static std::optional<CameraEndpoint> get_endpoint_supporting_raw(const std::vector<CameraEndpoint>& endpoints){
+  for (const auto &endpoint: endpoints) {
+    if(endpoint.support_raw){
+      return endpoint;
+    }
+  }
+  return std::nullopt;
+}
+
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_DISCOVERED_CAMERA_H_
