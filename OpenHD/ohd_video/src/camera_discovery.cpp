@@ -214,7 +214,7 @@ struct XValidEndpoint{
   v4l2_capability caps;
   openhd::v4l2::EndpointFormats formats;
 };
-static std::optional<XValidEndpoint> probe_v4l2_device2(const OHDPlatform platform,std::shared_ptr<spdlog::logger>& m_console,const std::string& device_node){
+static std::optional<XValidEndpoint> probe_v4l2_device(const OHDPlatform platform,std::shared_ptr<spdlog::logger>& m_console,const std::string& device_node){
   auto v4l2_fp_holder=std::make_unique<openhd::v4l2::V4l2FPHolder>(device_node,platform.platform_type);
   if(!v4l2_fp_holder->opened_successfully()){
     m_console->debug("Can't open {}",device_node);
@@ -237,7 +237,7 @@ std::vector<Camera> DCameras::detect_usb_cameras(const OHDPlatform& platform,std
   std::vector<Camera> ret{};
   const auto devices = openhd::v4l2::findV4l2VideoDevices();
   for (const auto &device: devices) {
-    const auto probed_opt= probe_v4l2_device2(platform,m_console,device);
+    const auto probed_opt= probe_v4l2_device(platform,m_console,device);
     if(!probed_opt.has_value()){
       continue;
     }
