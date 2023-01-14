@@ -43,7 +43,7 @@ class DCameras {
    */
   static std::vector<Camera> discover(OHDPlatform ohdPlatform);
  private:
-  DiscoveredCameraList discover_internal();
+  std::vector<Camera> discover_internal();
  private:
   /**
    * NOTE: Some of the CSI camera(s) could also be accessed / detected via v4l2, but there are

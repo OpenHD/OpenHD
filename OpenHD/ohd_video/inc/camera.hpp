@@ -117,9 +117,7 @@ struct Camera {
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,bus,index, v4l2_endpoints)
 
-using DiscoveredCameraList = std::vector<Camera>;
-
-static nlohmann::json cameras_to_json(const DiscoveredCameraList &cameras) {
+static nlohmann::json cameras_to_json(const std::vector<Camera> &cameras) {
   nlohmann::json j;
   for (const auto &camera : cameras) {
     nlohmann::json _camera = camera;
@@ -130,7 +128,7 @@ static nlohmann::json cameras_to_json(const DiscoveredCameraList &cameras) {
 
 static constexpr auto CAMERA_MANIFEST_FILENAME = "/tmp/camera_manifest";
 
-static void write_camera_manifest(const DiscoveredCameraList &cameras) {
+static void write_camera_manifest(const std::vector<Camera> &cameras) {
   auto manifest = cameras_to_json(cameras);
   std::ofstream _t(CAMERA_MANIFEST_FILENAME);
   _t << manifest.dump(4);

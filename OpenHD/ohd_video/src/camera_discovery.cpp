@@ -33,7 +33,7 @@ DCameras::DCameras(const OHDPlatform ohdPlatform) :
   }
 }
 
-DiscoveredCameraList DCameras::discover_internal() {
+std::vector<Camera> DCameras::discover_internal() {
   m_console->debug("discover_internal()");
   std::vector<Camera> cameras;
   // Only on raspberry pi with the old broadcom stack we need a special detection method for the rpi CSI camera.
@@ -286,7 +286,7 @@ std::vector<Camera> DCameras::detect_usb_cameras(const OHDPlatform& platform,std
 }
 
 
-DiscoveredCameraList DCameras::discover(const OHDPlatform ohdPlatform) {
+std::vector<Camera> DCameras::discover(const OHDPlatform ohdPlatform) {
   auto discover=DCameras{ohdPlatform};
   return discover.discover_internal();
 }
