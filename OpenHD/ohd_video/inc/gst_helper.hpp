@@ -456,7 +456,9 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   // out.
   // TODO: do it better ;)
   //openhd::loggers::get_default()->warn("Allowing gstreamer to choose UVC format");
-  ss << fmt::format("video/x-raw ! ");
+  ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
+                    settings.streamed_video_format.width,settings.streamed_video_format.height,
+                    settings.streamed_video_format.framerate);
   ss << "videoconvert ! ";
   // Add a queue here. With sw we are not low latency anyways.
   ss << "queue ! ";
