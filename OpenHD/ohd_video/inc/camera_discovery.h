@@ -11,21 +11,6 @@
 #include "openhd-spdlog.hpp"
 
 /**
- * Here we have some helpers to detect camera(s) connected to the system.
- * Even though there is a move towards properly exposing CSI camera(s) via v4l2, this is error prone and
- * goes down a rabbit hole quite quickly.
- * Aka the proper v4l2 way would be to have each CSI camera exposing it's capabilities, and then also the encoder
- * exposing its capabilities. However, there is just no way to do this platform independently - in short, this
- * approach is too complex. Period.
- *
- *
- * This is why we separate camera(s) in different categories and then have (for the most part) the specific gstreamer pipeline(s) for those
- * cameras. We only use v4l2 to discover and reason about formats/framerate(s) for "USB Cameras" (aka UVC cameras).
- * For USB camera(s), we then seperate by endpoints - since they often provide both an already encoded "pixel format" (aka h264) but also
- * raw format(s).
- */
-
-/**
  * Discover all connected cameras and for some camera(s) (E.g. USB cameras and/or cameras that use v4l2)
  * Figure out their capabilities via V4l2. Written as a class r.n but actually should only be a namespace.
  * The interesting bit is just the discover() method below.

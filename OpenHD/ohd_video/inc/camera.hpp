@@ -13,6 +13,20 @@
 // NOTE: This does not include any (persistent) settings ! Immutable data (e.g. the discovered camera
 // and its capabilities) is seperated from the camera settings (see camera_settings.hpp)
 
+/**
+ * NOTE:
+ * * Even though there is a move towards properly exposing CSI camera(s) via v4l2, this is error prone and
+* goes down a rabbit hole quite quickly.
+* Aka the proper v4l2 way would be to have each CSI camera exposing it's capabilities, and then also the encoder
+* exposing its capabilities. However, there is just no way to do this platform independently - in short, this
+* approach is too complex. Period.
+*
+* This is why we separate camera(s) in different categories and then have (for the most part) the specific gstreamer pipeline(s) for those
+* cameras. We only use v4l2 to discover and reason about formats/framerate(s) for "USB Cameras" (aka UVC cameras).
+* For USB camera(s), we then seperate by endpoints - since they often provide both an already encoded "pixel format" (aka h264) but also
+* raw format(s).
+ */
+
 // NOTE: CameraEndpoint is only used for USB cameras and more that use the V4l2 interface. For anything else
 // (E.g. CSI Camera(s)) this separation is of no use, since generally there is a streaming pipeline for the different
 // formats each and we use the info which platform we are running on / which camera is connected to figure out
@@ -31,7 +45,7 @@ struct CameraEndpointV4l2 {
     return !formats_h265.empty();
   }
   bool supports_mjpeg()const{
-    return !formats_h264.empty();
+    return !formats_mjpeg.empty();
   }
   bool supports_raw()const{
     return !formats_raw.empty();
@@ -50,6 +64,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraEndpointV4l2, v4l2_device_node,bus,form
  */
 struct Camera {
   CameraType type = CameraType::UNKNOWN;
+  //These are not mandatory, but quite usefully for keeping track of camera(s).
   std::string name = "unknown";
   std::string vendor = "unknown";
   std::string sensor_name="unknown";
