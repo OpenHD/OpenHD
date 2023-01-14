@@ -313,6 +313,32 @@ class CameraHolder:
       ret.streamed_video_format.height=1080;
       ret.streamed_video_format.framerate=30;
     }
+    if(m_camera.type==CameraType::UVC){
+      // We need to find a resolution / framerate format that is supported by the camera, note that OpenHD always defaults to h264
+      const auto opt_h264_endpoint= get_endpoint_supporting_codec(m_camera.v4l2_endpoints,VideoCodec::H264);
+      if(opt_h264_endpoint.has_value()){
+        // Just pick the first one from the array
+        assert(!opt_h264_endpoint.value().formats_h264.empty());
+        const auto format=opt_h264_endpoint.value().formats_h264.at(0);
+        openhd::log::get_default()->debug("Selecting {} as default",format.debug());
+        ret.streamed_video_format.width=format.width;
+        ret.streamed_video_format.height=format.height;
+        ret.streamed_video_format.framerate=format.fps;
+        return ret;
+      }
+      const auto opt_raw_endpoint= get_endpoint_supporting_raw(m_camera.v4l2_endpoints);
+      if(opt_raw_endpoint.has_value()){
+        // Just pick the first one from the array
+        assert(!opt_raw_endpoint.value().formats_raw.empty());
+        const auto format=opt_raw_endpoint.value().formats_raw.at(0);
+        openhd::log::get_default()->debug("Selecting {} as default",format.debug());
+        ret.streamed_video_format.width=format.width;
+        ret.streamed_video_format.height=format.height;
+        ret.streamed_video_format.framerate=format.fps;
+        return ret;
+      }
+      openhd::log::get_default()->warn("Cannot find valid default resolution for USB camera");
+    }
     return ret;
   }
   [[nodiscard]] std::string get_short_name()const{

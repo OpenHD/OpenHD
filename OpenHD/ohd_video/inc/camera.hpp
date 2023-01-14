@@ -17,36 +17,52 @@
 // (E.g. CSI Camera(s)) this separation is of no use, since generally there is a streaming pipeline for the different
 // formats each and we use the info which platform we are running on / which camera is connected to figure out
 // supported formats.
-struct CameraEndpoint {
-  std::string device_node;
+struct CameraEndpointV4l2 {
+  std::string v4l2_device_node;
   std::string bus;
-  bool support_h264 = false;
-  bool support_h265 = false;
-  bool support_mjpeg = false;
-  bool support_raw = false;
-  std::vector<std::string> formats;
-  // Consti10: cleanup- an endpoint that supports nothing, what the heck should
-  // we do with that ;)
-  [[nodiscard]] bool supports_anything() const {
-    return (support_h264 || support_h265 || support_mjpeg || support_raw);
+  std::vector<EndpointFormat> formats_h264;
+  std::vector<EndpointFormat> formats_h265;
+  std::vector<EndpointFormat> formats_mjpeg;
+  std::vector<EndpointFormat> formats_raw;
+  bool supports_h264()const{
+    return !formats_h264.empty();
+  }
+  bool supports_h265()const{
+    return !formats_h265.empty();
+  }
+  bool supports_mjpeg()const{
+    return !formats_h264.empty();
+  }
+  bool supports_raw()const{
+    return !formats_raw.empty();
+  }
+  bool supports_anything()const{
+    return supports_h264() || supports_h265() || supports_mjpeg() || supports_raw();
   }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraEndpoint,device_node,bus,support_h264,support_h265,support_mjpeg,support_raw,formats)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraEndpointV4l2, v4l2_device_node,bus,formats_h264,formats_h265,formats_mjpeg,formats_raw)
 
+/**
+ * Note: A camera might output multiple pixel formats / already encoded video formats (and they might even show up as multiple v4l2 device node(s)
+ * But discovery should only create one "Camera" instance per connected camera (for example, a USB camera is one Camera even though
+ * it might support h264 and raw output, or a CSI camera is one camera even though it might support raw bayer on one node, and a then a ISP
+ * processed format (e.g. YUV) on another node).
+ */
 struct Camera {
   CameraType type = CameraType::UNKNOWN;
   std::string name = "unknown";
   std::string vendor = "unknown";
   std::string sensor_name="unknown";
-  std::string vid;
-  std::string pid;
   // for USB this is the bus number, for CSI it's the connector number
   std::string bus;
   // Unique index of this camera, should start at 0. The index number depends on
   // the order the cameras were picked up during the discovery step.
   int index = 0;
-  // All the endpoints supported by this camera, can be unused (e.g. for CSI cameras)
-  std::vector<CameraEndpoint> endpoints;
+  // All the endpoints (aka supported video resolution, framerate and pixel format
+  // NOTE: R.n we only use this for V4l2 UVC camera(s) aka usb cameras, since for the CSI camera(s)
+  // we have no resolution / framerate checking (it is just too complicated to both take the CSI camera caps,
+  // and the platform encode cap(s) into account).
+  std::vector<CameraEndpointV4l2> v4l2_endpoints;
   /**
    * For logging, create a quick name string that gives developers enough info
    * such that they can figure out what this camera is.
@@ -99,7 +115,7 @@ struct Camera {
     return type==CameraType::RPI_CSI_MMAL;
   }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,vid,pid,bus,index,endpoints)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,bus,index, v4l2_endpoints)
 
 using DiscoveredCameraList = std::vector<Camera>;
 
@@ -149,15 +165,15 @@ static Camera createCustomIpCamera(){
 }
 
 // Returns the first endpoint found that can output the given video codec (aka non-raw)
-static std::optional<CameraEndpoint> get_endpoint_supporting_codec(const std::vector<CameraEndpoint>& endpoints,const VideoCodec codec){
+static std::optional<CameraEndpointV4l2> get_endpoint_supporting_codec(const std::vector<CameraEndpointV4l2>& endpoints,const VideoCodec codec){
   for (const auto &endpoint: endpoints) {
-    if ( codec == VideoCodec::H264 && endpoint.support_h264) {
+    if ( codec == VideoCodec::H264 && endpoint.supports_h264()) {
       return endpoint;
     }
-    if ( codec == VideoCodec::H265 && endpoint.support_h265) {
+    if ( codec == VideoCodec::H265 && endpoint.supports_h265()) {
       return endpoint;
     }
-    if ( codec == VideoCodec::MJPEG && endpoint.support_mjpeg) {
+    if ( codec == VideoCodec::MJPEG && endpoint.supports_mjpeg()) {
       return endpoint;
     }
   }
@@ -167,9 +183,9 @@ static std::optional<CameraEndpoint> get_endpoint_supporting_codec(const std::ve
 // Returns the first endpoint found that can output any "RAW" format, we do not differentiate between RAW format(s) since we can
 // always convert it via gstreamer. Note - raw in this context means already processed by ISP, aka RGB, YUV, ... - not BAYER or something
 // completely unusable
-static std::optional<CameraEndpoint> get_endpoint_supporting_raw(const std::vector<CameraEndpoint>& endpoints){
+static std::optional<CameraEndpointV4l2> get_endpoint_supporting_raw(const std::vector<CameraEndpointV4l2>& endpoints){
   for (const auto &endpoint: endpoints) {
-    if(endpoint.support_raw){
+    if(endpoint.supports_raw()){
       return endpoint;
     }
   }

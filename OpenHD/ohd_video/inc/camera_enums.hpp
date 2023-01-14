@@ -55,7 +55,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
      {CameraType::UNKNOWN, nullptr},
      {CameraType::DUMMY_SW, "DUMMY_SW"},
      {CameraType::RPI_CSI_MMAL, "RPI_CSI_MMAL"},
-     //{CameraType::RPI_VEYE_CSI_MMAL, "RPI_VEYE_CSI_MMAL"},
      {CameraType::RPI_VEYE_CSI_V4l2, "RPI_VEYE_CSI_V4l2"},
      {CameraType::JETSON_CSI, "JETSON_CSI"},
      {CameraType::ROCKCHIP_CSI, "ROCKCHIP_CSI"},
@@ -196,5 +195,17 @@ enum class RateControlMode {
   RC_CBR, // constant bitrate
   RC_CRF  // constnat rate factor
 };
+
+struct EndpointFormat{
+  // pixel format as string, never empty
+  std::string format;
+  int width;
+  int height;
+  int fps;
+  std::string debug()const{
+    return fmt::format("{}|{}x{}@{}",format,width,height,fps);
+  }
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EndpointFormat,format,width,height,fps)
 
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_
