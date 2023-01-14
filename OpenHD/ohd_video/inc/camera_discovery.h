@@ -17,8 +17,6 @@
  */
 class DCameras {
  public:
-  explicit DCameras(OHDPlatform ohdPlatform);
-  virtual ~DCameras() = default;
   /**
    * Discover all cameras connected to this system.
    * @returns A list of detected cameras, or an empty vector if no cameras have been found.
@@ -27,8 +25,6 @@ class DCameras {
    * @param ohdPlatform the platform we are running on, detection depends on the platform type.
    */
   static std::vector<Camera> discover(OHDPlatform ohdPlatform);
- private:
-  std::vector<Camera> discover_internal();
  private:
   /**
    * NOTE: Some of the CSI camera(s) could also be accessed / detected via v4l2, but there are

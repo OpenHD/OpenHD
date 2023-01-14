@@ -20,27 +20,23 @@
 #define V4L2_PIX_FMT_H265 V4L2_PIX_FMT_HEVC
 #endif
 
-DCameras::DCameras(const OHDPlatform ohdPlatform) :
-	m_platform(ohdPlatform){
-  m_console=openhd::log::create_or_get("v_dcameras");
+std::vector<Camera> DCameras::discover(const OHDPlatform platform) {
+  auto m_console=openhd::log::create_or_get("v_dcameras");
   assert(m_console);
-  m_enable_debug=OHDUtil::get_ohd_env_variable_bool("OHD_DISCOVER_CAMERAS_DEBUG");
+  auto m_enable_debug=OHDUtil::get_ohd_env_variable_bool("OHD_DISCOVER_CAMERAS_DEBUG");
   // always enabled for now
   // TODO fixme
   if(m_enable_debug){
     m_console->set_level(spd::level::debug);
     m_console->debug("m_enable_debug=true");
   }
-}
-
-std::vector<Camera> DCameras::discover_internal() {
   m_console->debug("discover_internal()");
   std::vector<Camera> cameras;
   // Only on raspberry pi with the old broadcom stack we need a special detection method for the rpi CSI camera.
   // On all other platforms (for example jetson) the CSI camera is exposed as a normal V4l2 linux device,and we cah
   // check the driver if it is actually a CSI camera handled by nvidia.
   // Note: With libcamera, also the rpi will do v4l2 for cameras.
-  if(m_platform.platform_type==PlatformType::RaspberryPi){
+  if(platform.platform_type==PlatformType::RaspberryPi){
     // Detect RPI CSI Camera(s).
     // We can do mmal, libcamera and veye v4l2
     const auto rpi_broadcom_csi_cams=detect_raspberrypi_broadcom_csi(m_console);
@@ -56,21 +52,21 @@ std::vector<Camera> DCameras::discover_internal() {
     }else{
       m_console->warn("Skipping libcamera detect, since it might pick up a veye cam by accident even though it cannot do it");
     }
-  }else if(m_platform.platform_type == PlatformType::Allwinner){
+  }else if(platform.platform_type == PlatformType::Allwinner){
     auto tmp=detect_allwinner_csi(m_console);
     OHDUtil::vec_append(cameras,tmp);
-  }else if(m_platform.platform_type == PlatformType::Jetson){
+  }else if(platform.platform_type == PlatformType::Jetson){
     auto tmp=detect_jetson_csi(m_console);
     OHDUtil::vec_append(cameras,tmp);
   }
   // Allwinner 3.4 kernel v4l2 implementation is so sketchy that probing it can stop it working.
-  if(m_platform.platform_type != PlatformType::Allwinner){
+  if(platform.platform_type != PlatformType::Allwinner){
     // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
     // Will need custom debugging before anything here is usable again though.
     DThermalCamerasHelper::enableFlirIfFound();
     DThermalCamerasHelper::enableSeekIfFound();
     // NOTE: be carefully to not detect camera(s) twice
-    auto usb_cameras= detect_usb_cameras(m_platform,m_console);
+    auto usb_cameras= detect_usb_cameras(platform,m_console);
     m_console->debug("N USB Camera(s): {}",usb_cameras.size());
     OHDUtil::vec_append(cameras,usb_cameras);
   }
@@ -283,10 +279,4 @@ std::vector<Camera> DCameras::detect_usb_cameras(const OHDPlatform& platform,std
     }
   }
   return ret;
-}
-
-
-std::vector<Camera> DCameras::discover(const OHDPlatform ohdPlatform) {
-  auto discover=DCameras{ohdPlatform};
-  return discover.discover_internal();
 }
