@@ -173,7 +173,7 @@ std::vector<Camera> DCameras::detect_raspberrypi_libcamera_csi(std::shared_ptr<s
   return ret;
 }
 #else
-std::vector<Camera> DCameras::detect_raspberry_libcamera_csi(std::shared_ptr<spdlog::logger>& m_console) {
+std::vector<Camera> DCameras::detect_raspberrypi_libcamera_csi(std::shared_ptr<spdlog::logger>& m_console) {
   m_console->warn("detect_raspberry_libcamera - built without libcamera, libcamera features unavailable");
   return {};
 }
