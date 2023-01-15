@@ -138,7 +138,7 @@ void GStreamerStream::setup() {
     m_console->debug("Using [{}] for recording",recording_filename);
     m_pipeline_content <<OHDGstHelper::createRecordingForVideoCodec(setting.streamed_video_format.videoCodec,recording_filename);
   }
-  m_console->debug("Starting pipeline:"+ m_pipeline_content.str());
+  m_console->debug("Starting pipeline:[{}]",m_pipeline_content.str());
   // Protect against unwanted use - stop and free the pipeline first
   assert(m_gst_pipeline == nullptr);
   // Now start the (as a string) built pipeline
