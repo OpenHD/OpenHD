@@ -23,8 +23,8 @@ namespace OHDFilesystemUtil{
  * @param directory
  * @return the full paths of each entry in the directory.
  */
-static std::vector<std::string> getAllEntriesFullPathInDirectory(const char* directory){
-  boost::filesystem::path dev(directory);
+static std::vector<std::string> getAllEntriesFullPathInDirectory(const std::string& directory){
+  boost::filesystem::path dev(directory.c_str());
   std::vector<std::string> ret;
   for (auto &entry: boost::filesystem::directory_iterator(dev)) {
 	auto device_file = entry.path().string();
@@ -34,8 +34,8 @@ static std::vector<std::string> getAllEntriesFullPathInDirectory(const char* dir
 }
 
 // Same as above, but returns the filenames only.
-static std::vector<std::string> getAllEntriesFilenameOnlyInDirectory(const char* directory){
-  boost::filesystem::path net(directory);
+static std::vector<std::string> getAllEntriesFilenameOnlyInDirectory(const std::string& directory){
+  boost::filesystem::path net(directory.c_str());
   std::vector<std::string> ret;
   for (auto &entry: boost::filesystem::directory_iterator(net)) {
 	const auto interface_name = entry.path().filename().string();
@@ -50,22 +50,19 @@ static bool exists(const std::string& file){
 }
 
 // These don't create top level directories recursively
-static void create_directory(const char* directory){
-  boost::filesystem::create_directory(directory);
-}
 static void create_directory(const std::string& directory){
-  create_directory(directory.c_str());
+  boost::filesystem::create_directory(directory.c_str());
 }
 
 // creates top level directories recursively
-static void create_directories(const char* directory){
-  boost::filesystem::create_directories(directory);
+static void create_directories(const std::string& directory){
+  boost::filesystem::create_directories(directory.c_str());
   assert(exists(directory));
 }
 
-static void safe_delete_directory(const char* directory){
+static void safe_delete_directory(const std::string& directory){
   if(exists(directory)){
-    boost::filesystem::remove_all(directory);
+    boost::filesystem::remove_all(directory.c_str());
   }
 }
 
@@ -83,7 +80,7 @@ static void write_file(const std::string& path,const std::string& content){
 // Read a file as text and return its content as a string.
 // If the file doesn't exist, return std::nullopt
 static std::optional<std::string> opt_read_file(const std::string& filename,bool log_debug=true){
-  if(!exists(filename.c_str())){
+  if(!exists(filename)){
     if(log_debug)openhd::log::get_default()->warn("File [{}] doesn't exist",filename);
     return std::nullopt;
   }
@@ -105,7 +102,7 @@ static std::string read_file(const std::string& filename){
 }
 
 static void remove_if_existing(const std::string& filename){
-  if(exists(filename.c_str())){
+  if(exists(filename)){
     boost::filesystem::remove(filename);
   }
 }
