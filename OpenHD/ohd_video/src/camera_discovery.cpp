@@ -206,6 +206,10 @@ std::vector<Camera> DCameras::detect_jetson_csi(std::shared_ptr<spdlog::logger> 
   return {};
 }
 
+/**
+ * Helper for checking if a v4l2 device can output any of the supported endpoint format(s).
+ * Returns std::nullopt if this device cannot do h264,h265,mjpeg or RAW out.
+ */
 struct XValidEndpoint{
   v4l2_capability caps;
   openhd::v4l2::EndpointFormats formats;
