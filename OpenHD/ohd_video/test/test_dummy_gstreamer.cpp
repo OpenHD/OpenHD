@@ -30,8 +30,6 @@ int main(int argc, char *argv[]) {
   stream->setup();
   stream->start();
 
-  int index=0;
-
   while (true) {
 	std::this_thread::sleep_for(std::chrono::seconds(10));
 	std::cout<<"XOHDVid\n";
