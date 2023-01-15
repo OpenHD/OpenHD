@@ -121,11 +121,9 @@ struct StatsAirGround{
   StatsTelemetry telemetry;
   StatsAllCards cards;
   // for air
-  StatsWBVideoAir air_video0;
-  StatsWBVideoAir air_video1;
+  std::vector<StatsWBVideoAir> stats_wb_video_air;
   // for ground
-  StatsWBVideoGround ground_video0;
-  StatsWBVideoGround ground_video1;
+  std::vector<StatsWBVideoGround> stats_wb_video_ground;
 };
 
 static std::ostream& operator<<(std::ostream& strm, const StatsAirGround& obj){

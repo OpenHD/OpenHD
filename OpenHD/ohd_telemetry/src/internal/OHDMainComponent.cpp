@@ -152,13 +152,15 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
   ret.push_back(openhd::LinkStatisticsHelper::pack_tele(
       m_sys_id, m_comp_id, latest_stats.telemetry));
   if(RUNS_ON_AIR){
-    ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air(
-        m_sys_id, m_comp_id, latest_stats.air_video0));
-    //ret.push_back(openhd::LinkStatisticsHelper::pack2(_sys_id,_comp_id,latest_stats.air_video1));
+    for(const auto& stats : latest_stats.stats_wb_video_air){
+      ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air(
+          m_sys_id, m_comp_id, stats));
+    }
   }else{
-    ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd(
-        m_sys_id, m_comp_id, latest_stats.ground_video0));
-    //ret.push_back(openhd::LinkStatisticsHelper::pack3(_sys_id,_comp_id,latest_stats.ground_video0));
+    for(const auto& ground_video: latest_stats.stats_wb_video_ground){
+      ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd(
+          m_sys_id, m_comp_id, ground_video));
+    }
   }
   return ret;
 }
