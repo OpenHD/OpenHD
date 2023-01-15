@@ -644,7 +644,7 @@ void WBLink::update_statistics() {
   uint64_t acc_tx_injections_error_hint=0;
   uint64_t acc_tx_n_dropped_packets=0;
   acc_tx_injections_error_hint+= m_wb_tele_tx->get_latest_stats().count_tx_injections_error_hint;
-  acc_tx_n_dropped_packets+= m_wb_tele_tx->get_latest_stats().count_tx_injections_error_hint;
+  acc_tx_n_dropped_packets+= m_wb_tele_tx->get_latest_stats().n_dropped_packets;
   for(const auto& videoTx: m_wb_video_tx_list){
     acc_tx_injections_error_hint+=videoTx->get_latest_stats().count_tx_injections_error_hint;
     acc_tx_n_dropped_packets+=videoTx->get_latest_stats().n_dropped_packets;
