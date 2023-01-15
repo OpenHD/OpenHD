@@ -17,8 +17,6 @@
  */
 class DCameras {
  public:
-  explicit DCameras(OHDPlatform ohdPlatform);
-  virtual ~DCameras() = default;
   /**
    * Discover all cameras connected to this system.
    * @returns A list of detected cameras, or an empty vector if no cameras have been found.
@@ -28,64 +26,42 @@ class DCameras {
    */
   static std::vector<Camera> discover(OHDPlatform ohdPlatform);
  private:
-  DiscoveredCameraList discover_internal();
-  void argh_cleanup();
- private:
-  /*
-   * These are for platform-specific camera access methods, most can also be
-   * accessed through v4l2 but there are sometimes downsides to doing that. For
-   * example on the Pi, v4l2 can have higher latency than going through the
-   * broadcom API, and at preset bcm2835-v4l2 doesn't support all of the ISP
-   * controls.
-   *
+  /**
+   * NOTE: Some of the CSI camera(s) could also be accessed / detected via v4l2, but there are
+   * some downsides to that, which is why for example we use libcamera directly to discover libcamera-CSI
+   * cameras, and not v4l2.
    */
   /**
    * This is used when the gpu firmware is in charge of the camera, we have to
    * ask it.
    */
-  void detect_raspberrypi_broadcom_csi();
+  static std::vector<Camera> detect_raspberrypi_broadcom_csi(std::shared_ptr<spdlog::logger>& m_console);
+
+  /*
+   * NOTE: Even though libcamera's goal is to work on all linux device(s) with all camera(s) it is only usefully
+   * on raspberry pi and for those rpi camera(s) that work on it - e.g. original rpi and arducam camera(s).
+   */
+  static std::vector<Camera> detect_raspberrypi_libcamera_csi(std::shared_ptr<spdlog::logger>& m_console);
+
   // hacky
-  bool detect_rapsberrypi_veye_v4l2_aaargh();
+  static std::vector<Camera> detect_rapsberrypi_veye_v4l2_dirty(std::shared_ptr<spdlog::logger>& m_console);
 
-  /*
-   * Detecting via libcamera.
-   * Actually all cameras in system available via libcamera.
-   * Moreover libcamera cameras is v4l devices and can be used as usual.
-   * But here we are using libcamera only for undetected cameras for compatability
-   */
-  void detect_raspberry_libcamera();
-
-  /*
-   * Detect all v4l2 cameras, that is cameras that show up as a v4l2 device
-   * (/dev/videoXX)
-   */
-  void detect_v4l2();
-
-  /* Detect allwinner camera. Uses v4l2, but needs a few tweaks */
-  void detect_allwinner_csi();
-  
   /**
-   * Something something stephen.
+   *  Detect allwinner CSI camera(s). Uses v4l2, but needs a few tweaks.
    */
-  void probe_v4l2_device(const std::string &device_node);
+  static std::vector<Camera> detect_allwinner_csi(std::shared_ptr<spdlog::logger>& m_console);
+
   /**
-   * Something something stephen.
+   * Detect jetson CSI camera(s). Uses v4l2. dirty
    */
-  bool process_v4l2_node(const std::string &node, Camera &camera,
-                         CameraEndpoint &endpoint);
+   static std::vector<Camera> detect_jetson_csi(std::shared_ptr<spdlog::logger>& m_console);
+
+   /**
+    * NOTE: r.n only for USB UVC and UVCH264 camera(s)
+    */
+   static std::vector<Camera> detect_usb_cameras(const OHDPlatform& platform,std::shared_ptr<spdlog::logger>& m_console);
 
   // NOTE: IP cameras cannot be auto detected !
-
-  std::vector<Camera> m_cameras;
-  std::vector<CameraEndpoint> m_camera_endpoints;
-
-  int m_discover_index = 0;
-
-  const OHDPlatform m_platform;
-  bool m_enable_debug;
-
- private:
-  std::shared_ptr<spdlog::logger> m_console;
 };
 
 #endif

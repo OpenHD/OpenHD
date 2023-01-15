@@ -26,26 +26,35 @@ UDPEndpoint2::~UDPEndpoint2() {
 
 bool UDPEndpoint2::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
   auto message_buffers= pack_messages(messages);
+  const auto other_ips=get_all_curr_dest_ips();
   for(const auto& message_buffer:message_buffers){
     m_receiver_sender->forwardPacketViaUDP(SENDER_IP,SEND_PORT,message_buffer.data(), message_buffer.size());
-    std::lock_guard<std::mutex> lock(m_sender_mutex);
-    for(const auto& [key,value]: m_other_dest_ips){
-      m_receiver_sender->forwardPacketViaUDP(key,SEND_PORT,message_buffer.data(),message_buffer.size());
+    for(const auto& ip:other_ips){
+      m_receiver_sender->forwardPacketViaUDP(ip,SEND_PORT,message_buffer.data(),message_buffer.size());
     }
   }
   return true;
 }
 
-void UDPEndpoint2::addAnotherDestIpAddress(std::string ip) {
+void UDPEndpoint2::addAnotherDestIpAddress(const std::string& ip) {
   std::lock_guard<std::mutex> lock(m_sender_mutex);
   m_console->debug("addAnotherDestIpAddress {}",ip);
   m_other_dest_ips[ip]=nullptr;
 }
 
-void UDPEndpoint2::removeAnotherDestIpAddress(std::string ip) {
+void UDPEndpoint2::removeAnotherDestIpAddress(const std::string& ip) {
   std::lock_guard<std::mutex> lock(m_sender_mutex);
   m_console->debug("removeAnotherDestIpAddress {}",ip);
   m_other_dest_ips.erase(ip);
+}
+
+std::vector<std::string> UDPEndpoint2::get_all_curr_dest_ips() {
+  std::vector<std::string> ret;
+  std::lock_guard<std::mutex> lock(m_sender_mutex);
+  for(const auto& [key,value]: m_other_dest_ips){
+    ret.push_back(key);
+  }
+  return ret;
 }
 
 //// Now this is weird, but somehow we get a lot of junk from QGroundControll on android ??!!

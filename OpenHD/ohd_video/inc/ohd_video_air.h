@@ -11,6 +11,7 @@
 #include <string>
 
 #include "openhd-spdlog.hpp"
+#include "ohd_video_air_generic_settings.hpp"
 
 /**
  * Main entry point for OpenHD video streaming for discovered cameras on the air unit.
@@ -26,7 +27,7 @@ class OHDVideoAir {
    * @param opt_action_handler openhd global handler for communication between different ohd modules.
    * @param link_handle handle for sending video data over the (currently only wb) link between air and ground
    */
-  OHDVideoAir(OHDPlatform platform1,const std::vector<Camera>& cameras,
+  OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
            std::shared_ptr<openhd::ActionHandler> opt_action_handler,
            std::shared_ptr<OHDLink> link_handle);
   OHDVideoAir(const OHDVideoAir&)=delete;
@@ -50,13 +51,13 @@ class OHDVideoAir {
   std::vector<std::shared_ptr<openhd::ISettingsComponent>> get_all_camera_settings();
   // r.n only for debugging
   std::vector<openhd::Setting> get_generic_settings();
+  // r.n limited to primary and secondary camera
+  static constexpr auto MAX_N_CAMERAS=2;
  private:
   const OHDPlatform m_platform;
   // All the created camera streams
   std::vector<std::shared_ptr<CameraStream>> m_camera_streams;
   std::shared_ptr<spdlog::logger> m_console;
-  // r.n limited to primary and secondary camera
-  static constexpr auto MAX_N_CAMERAS=2;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
   std::shared_ptr<OHDLink> m_link_handle;
  private:
@@ -64,6 +65,9 @@ class OHDVideoAir {
   void configure(const std::shared_ptr<CameraHolder>& camera);
   // propagate a bitrate change request to the CameraStream implementation(s)
   void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb);
+ private:
+  // r.n only for multi camera support
+  std::unique_ptr<AirCameraGenericSettingsHolder> m_generic_settings;
 };
 
 #endif  // OPENHD_VIDEO_OHDVIDEO_H

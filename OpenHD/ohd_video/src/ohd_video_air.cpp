@@ -7,23 +7,35 @@
 #include "gstreamerstream.h"
 #include "ohd_video_air.h"
 
-OHDVideoAir::OHDVideoAir(OHDPlatform platform1,const std::vector<Camera>& cameras,
+OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
                    std::shared_ptr<openhd::ActionHandler> opt_action_handler,
-                   std::shared_ptr<OHDLink> link) :
-	m_platform(platform1),m_opt_action_handler(std::move(opt_action_handler)),
-        m_link_handle(std::move(link))
+                   std::shared_ptr<OHDLink> link)
+    : m_platform(platform1),
+      m_opt_action_handler(std::move(opt_action_handler)),
+      m_link_handle(std::move(link))
 {
   m_console = openhd::log::create_or_get("v_air");
   assert(m_console);
   assert(!cameras.empty());
   m_console->debug("OHDVideo::OHDVideo()");
+  if(cameras.size()>MAX_N_CAMERAS){
+    m_console->warn("More than {} cameras, dropping cameras",MAX_N_CAMERAS);
+    cameras.resize(MAX_N_CAMERAS);
+  }
+  m_generic_settings=std::make_unique<AirCameraGenericSettingsHolder>();
+  if(m_generic_settings->get_settings().switch_primary_and_secondary && cameras.size()==2){
+    // swap cam 1 and cam 2 (primary and secondary) - aka if they are detected in the wrong order
+    auto cam1=cameras.at(1);
+    auto cam2=cameras.at(0);
+    cam1.index=0;
+    cam2.index=1;
+    cameras.resize(0);
+    cameras.push_back(cam1);
+    cameras.push_back(cam2);
+  }
   std::vector<std::shared_ptr<CameraHolder>> camera_holders;
   for(const auto& camera:cameras){
-    if(camera_holders.size()<MAX_N_CAMERAS){
-      camera_holders.emplace_back(std::make_unique<CameraHolder>(camera,m_opt_action_handler));
-    }else{
-      m_console->warn("Dropping camera {}, too many cameras",camera.to_string());
-    }
+    camera_holders.emplace_back(std::make_unique<CameraHolder>(camera,m_opt_action_handler));
   }
   startup_fix_common_issues(camera_holders);
   assert(camera_holders.size()<=MAX_N_CAMERAS);
@@ -52,8 +64,8 @@ std::string OHDVideoAir::createDebug() const {
 void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
   const auto camera=camera_holder->get_camera();
   m_console->debug("Configuring camera:"+camera_type_to_string(camera.type));
-  // R.N we use gstreamer only for everything except veye
-  // (veye also uses gstreamer, but we do not launch it via gst-launch)
+  // R.N we use gstreamer for pretty much everything
+  // But this might change in the future
   switch (camera.type) {
     case CameraType::RPI_VEYE_CSI_V4l2:
     case CameraType::RPI_CSI_MMAL:
@@ -109,6 +121,27 @@ void OHDVideoAir::handle_change_bitrate_request(openhd::ActionHandler::LinkBitra
 std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   std::vector<openhd::Setting> ret;
   // N of discovered cameras, for debugging
-  ret.push_back(openhd::create_read_only_int("V_N_CAMERAS",static_cast<int>(m_camera_streams.size())));
+  const auto n_cameras=static_cast<int>(m_camera_streams.size());
+  ret.push_back(openhd::create_read_only_int("V_N_CAMERAS",n_cameras));
+  if(n_cameras>1){
+    auto cb_switch_primary_and_secondary=[this](std::string,int value){
+      if(!openhd::validate_yes_or_no(value))return false;
+      m_generic_settings->unsafe_get_settings().switch_primary_and_secondary=value;
+      m_generic_settings->persist();
+      // Do nothing, switch requires reboot
+      return true;
+    };
+    ret.push_back(openhd::Setting{"V_SWITCH_CAM",openhd::IntSetting{m_generic_settings->unsafe_get_settings().switch_primary_and_secondary,cb_switch_primary_and_secondary}});
+  }
+  /*if(true){
+    auto cb=[this](std::string,int value){
+      if(!(value==1 || value==2))return false;
+      m_generic_settings->unsafe_get_settings().n_cameras_to_wait_for=value;
+      m_generic_settings->persist();
+      // Do nothing, switch requires reboot
+      return true;
+    };
+    ret.push_back(openhd::Setting{"V_N_CAMERAS",openhd::IntSetting{m_generic_settings->unsafe_get_settings().n_cameras_to_wait_for,cb}});
+  }*/
   return ret;
 }

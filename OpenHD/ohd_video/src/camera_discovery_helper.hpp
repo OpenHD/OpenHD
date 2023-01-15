@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#include "camera_enums.hpp"
+
 /**
  * Helper for the discover thermal cameras step.
  * It is a bit more complicated, once we actually support them the code here
@@ -52,10 +54,9 @@ static void enableFlirIfFound() {
   }
   libusb_device_handle *handle = libusb_open_device_with_vid_pid(
       nullptr, FLIR_ONE_VENDOR_ID, FLIR_ONE_PRODUCT_ID);
-  if (handle) {
-    std::vector<std::string> ar{"start", "flirone"};
-    OHDUtil::run_command("systemctl", ar);
-  }
+  if(!handle)return;
+  OHDUtil::run_command("systemctl", {"start", "flirone"});
+  libusb_close(handle);
 }
 
 /*
@@ -137,72 +138,13 @@ static void enableSeekIfFound() {
 }
 }  // namespace DThermalCamerasHelper
 
-namespace DRPICamerasHelper {
-
-// For rpi camera, we just have a list of the supported video formats.
-// Note that not all CSI cameras can do all of these formats, but at least the
-// default rpi foundation cameras can. Stephen: these are temporary, there isn't
-// a way to ask the old broadcom camera drivers about the supported resolutions,
-// but we know which ones people actually use so we can simply mark them for
-// now. NOTE: Rn there is no check on weather the user input is something the pi
-// can do anyways.
-static std::vector<std::string> createDefaultSupportedLIstRpiCam() {
-  std::vector<std::string> ret;
-  ret.emplace_back("H.264|640x480@30");
-  ret.emplace_back("H.264|640x480@48");
-  ret.emplace_back("H.264|640x480@60");
-  ret.emplace_back("H.264|800x480@30");
-  ret.emplace_back("H.264|1280x720@30");
-  ret.emplace_back("H.264|1280x720@48");
-  ret.emplace_back("H.264|1280x720@59.9");
-  ret.emplace_back("H.264|1012x760@90");
-  // Cannot do ret.emplace_back("H.264|1012x760@120");
-  ret.emplace_back("H.264|1920x1080@30");
-  // Cannot do ret.emplace_back("H.264|1920x1080@59.9");
-  return ret;
-}
-
-/**
- * Create a camera endpoint for rpi camera. Rpi has CSI0 and CSI1 for cameras.
- * @param isCsi1 if true, we've detect a CSI1 camera. CSI0 otherwise
- * @return
- */
-static CameraEndpoint createCameraEndpointRpi(bool isCsi1 = false) {
-  const auto bus = isCsi1 ? "1" : "0";
-  CameraEndpoint endpoint;
-  endpoint.bus = bus;
-  endpoint.support_h264 = true;
-  endpoint.support_mjpeg = false;
-  endpoint.formats = DRPICamerasHelper::createDefaultSupportedLIstRpiCam();
-  return endpoint;
-}
-// Allwinner - keep it really simple for now
-static std::vector<std::string> createDefaultSupportedListAllwinnerCam() {
-  std::vector<std::string> ret;
-  ret.emplace_back("H.264|1280x720@60");
-  return ret;
-}
-
-/**
- * Create a camera endpoint for allwinner
- * @return
- */
-static CameraEndpoint createCameraEndpointAllwinner() {
-  CameraEndpoint endpoint;
-  endpoint.bus = "0";
-  endpoint.support_h264 = true;
-  endpoint.support_mjpeg = false;
-  endpoint.formats = DRPICamerasHelper::createDefaultSupportedListAllwinnerCam();
-  return endpoint;
-}
-}  // namespace DRPICamerasHelper
 
 /**
  * Try and break out some of the stuff from stephen.
  * Even though it mght not be re-used in multiple places, it makes the code more
  * readable in my opinion.
  */
-namespace DV4l2DevicesHelper {
+namespace openhd::v4l2 {
 /**
  * Search for all v4l2 video devices, that means devices named /dev/videoX where
  * X=0,1,...
@@ -219,6 +161,133 @@ static std::vector<std::string> findV4l2VideoDevices() {
       continue;
     }
     ret.push_back(path);
+  }
+  return ret;
+}
+
+// Util so we can't forget to close the fd
+class V4l2FPHolder{
+ public:
+  V4l2FPHolder(const std::string &node,const PlatformType& platform_type){
+    // fucking hell, on jetson v4l2_open seems to be bugged
+    // https://forums.developer.nvidia.com/t/v4l2-open-create-core-with-jetpack-4-5-or-later/170624/6
+    if(platform_type==PlatformType::Jetson){
+      fd = open(node.c_str(), O_RDWR | O_NONBLOCK, 0);
+    }else{
+      fd = v4l2_open(node.c_str(), O_RDWR);
+    }
+  }
+  ~V4l2FPHolder(){
+    if(fd!=-1){
+      v4l2_close(fd);
+    }
+  }
+  [[nodiscard]] bool opened_successfully() const{
+    return fd!=-1;
+  }
+  int fd;
+};
+
+// Stephen already wrote the parsing for this info, even though it is not really needed
+// I keep it anyways
+struct Udevaddm_info {
+  std::string id_model="unknown";
+  std::string id_vendor="unknown";
+};
+Udevaddm_info get_udev_adm_info(const std::string& v4l2_device,std::shared_ptr<spdlog::logger>& m_console){
+  Udevaddm_info ret{};
+  const auto udev_info_opt=OHDUtil::run_command_out(fmt::format("udevadm info {}",v4l2_device));
+  if(udev_info_opt==std::nullopt){
+    m_console->debug("udev_info no result");
+    return {};
+  }
+  const auto& udev_info=udev_info_opt.value();
+  // check for device name
+  std::smatch model_result;
+  const std::regex model_regex{"ID_MODEL=([\\w]+)"};
+  if (std::regex_search(udev_info, model_result, model_regex)) {
+    if (model_result.size() == 2) {
+      ret.id_model = model_result[1];
+    }
+  }
+  // check for device vendor
+  std::smatch vendor_result;
+  const std::regex vendor_regex{"ID_VENDOR=([\\w]+)"};
+  if (std::regex_search(udev_info, vendor_result, vendor_regex)) {
+    if (vendor_result.size() == 2) {
+      ret.id_vendor = vendor_result[1];
+    }
+  }
+  return ret;
+}
+
+static std::optional<v4l2_capability> get_capabilities(std::unique_ptr<openhd::v4l2::V4l2FPHolder>& v4l2_fp_holder){
+  struct v4l2_capability caps = {};
+  if (ioctl(v4l2_fp_holder->fd, VIDIOC_QUERYCAP, &caps) == -1) {
+    return std::nullopt;
+  }
+  return caps;
+}
+
+struct EndpointFormats{
+  // These are the 3 (already encoded) formats openhd understands
+  std::vector<EndpointFormat> formats_h264;
+  std::vector<EndpointFormat> formats_h265;
+  std::vector<EndpointFormat> formats_mjpeg;
+  // anything other (raw) we pack into a generic bucket
+  std::vector<EndpointFormat> formats_raw;
+  bool has_any_valid_format=false;
+};
+// Enumerate all the ("pixel formats") we are after for a given v4l2 device
+static EndpointFormats iterate_supported_outputs(std::unique_ptr<openhd::v4l2::V4l2FPHolder>& v4l2_fp_holder){
+  auto m_console=openhd::log::get_default();
+  EndpointFormats ret{};
+
+  struct v4l2_fmtdesc fmtdesc{};
+  memset(&fmtdesc, 0, sizeof(fmtdesc));
+  fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+  while (ioctl(v4l2_fp_holder->fd, VIDIOC_ENUM_FMT, &fmtdesc) == 0) {
+    struct v4l2_frmsizeenum frmsize{};
+    frmsize.pixel_format = fmtdesc.pixelformat;
+    frmsize.index = 0;
+    while (ioctl(v4l2_fp_holder->fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) == 0) {
+      struct v4l2_frmivalenum frmival{};
+      if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
+        frmival.index = 0;
+        frmival.pixel_format = fmtdesc.pixelformat;
+        frmival.width = frmsize.discrete.width;
+        frmival.height = frmsize.discrete.height;
+        while (ioctl(v4l2_fp_holder->fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) == 0) {
+          if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
+            EndpointFormat endpoint_format;
+            endpoint_format.format = fmt::format("{}", fmtdesc.description);
+            endpoint_format.width = frmsize.discrete.width;
+            endpoint_format.height = frmsize.discrete.height;
+            endpoint_format.fps = frmival.discrete.denominator;
+            //m_console->debug("{}", endpoint_format.debug());
+            ret.has_any_valid_format= true;
+            if (fmtdesc.pixelformat == V4L2_PIX_FMT_H264) {
+              ret.formats_h264.push_back(endpoint_format);
+            }
+#if defined V4L2_PIX_FMT_H265
+            else if (fmtdesc.pixelformat == V4L2_PIX_FMT_H265) {
+              ret.formats_h265.push_back(endpoint_format);
+            }
+#endif
+            else if (fmtdesc.pixelformat == V4L2_PIX_FMT_MJPEG) {
+              ret.formats_mjpeg.push_back(endpoint_format);
+            } else {
+              // if it supports something else we assume it's one of the raw formats, being specific here is too complicated
+              ret.formats_raw.push_back(endpoint_format);
+            }
+          }
+          frmival.index++;
+        }
+      }
+      frmsize.index++;
+    }
+    fmtdesc.index++;
   }
   return ret;
 }

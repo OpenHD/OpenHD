@@ -65,11 +65,11 @@ void GStreamerStream::setup() {
   m_curr_dynamic_bitrate_kbits =-1;
   switch (camera.type) {
     case CameraType::RPI_CSI_MMAL: {
-      setup_raspberrypi_csi();
+      setup_raspberrypi_mmal_csi();
       break;
     }
     case CameraType::RPI_CSI_LIBCAMERA: {
-      setup_libcamera();
+      setup_raspberrypi_libcamera();
       break;
     }
     case CameraType::JETSON_CSI: {
@@ -89,9 +89,9 @@ void GStreamerStream::setup() {
       break;
     }
     case CameraType::ALLWINNER_CSI: {
-	  setup_allwinner_csi();
-	  break;
-	}
+      setup_allwinner_csi();
+      break;
+    }
     case CameraType::DUMMY_SW: {
       setup_sw_dummy_camera();
       break;
@@ -167,7 +167,7 @@ void GStreamerStream::setup() {
   m_pull_samples_thread=std::make_unique<std::thread>(&GStreamerStream::loop_pull_samples, this);
 }
 
-void GStreamerStream::setup_raspberrypi_csi() {
+void GStreamerStream::setup_raspberrypi_mmal_csi() {
   m_console->debug("Setting up Raspberry Pi CSI camera");
   // similar to jetson, for now we assume there is only one CSI camera connected.
   const auto& setting= m_camera_holder->get_settings();
@@ -181,7 +181,7 @@ void GStreamerStream::setup_raspberrypi_veye_v4l2() {
   m_pipeline_content << OHDGstHelper::create_veye_vl2_stream(setting);
 }
 
-void GStreamerStream::setup_libcamera() {
+void GStreamerStream::setup_raspberrypi_libcamera() {
   m_console->debug("Setting up Raspberry Pi libcamera camera");
   // similar to jetson, for now we assume there is only one CSI camera
   // connected.
@@ -215,36 +215,24 @@ void GStreamerStream::setup_allwinner_csi() {
 void GStreamerStream::setup_usb_uvc() {
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
-  m_console->debug("Setting up usb UVC camera Name:"+camera.name+" type:"+camera_type_to_string(camera.type));
-  // First we try and start a hw encoded path, where v4l2src directly provides encoded video buffers
-  for (const auto &endpoint: camera.endpoints) {
-    if (setting.streamed_video_format.videoCodec == VideoCodec::H264 && endpoint.support_h264) {
-      m_console->debug("h264");
-      const auto device_node = endpoint.device_node;
-      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting);
-      return;
-    }
-    if (setting.streamed_video_format.videoCodec == VideoCodec::H265 && endpoint.support_h265) {
-      m_console->debug("h265");
-      const auto device_node = endpoint.device_node;
-      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting);
-      return;
-    }
-    if (setting.streamed_video_format.videoCodec == VideoCodec::MJPEG && endpoint.support_mjpeg) {
-      m_console->debug("MJPEG");
-      const auto device_node = endpoint.device_node;
-      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(device_node, setting);
+  m_console->debug("Setting up usb UVC camera Name:{}",camera.name);
+  if(!setting.usb_uvc_force_sw_encoding){
+    // First we try and start a hw encoded path, (but hw encode by the camera encoder, not a local hw encoder)
+    // where v4l2src directly provides encoded video buffers
+    // (unless force sw encode is explicitly requested by the user)
+    const auto opt_endpoint_for_codec= get_endpoint_supporting_codec(camera.v4l2_endpoints,setting.streamed_video_format.videoCodec);
+    if(opt_endpoint_for_codec.has_value()){
+      m_console->debug("Selected non-raw endpoint");
+      m_pipeline_content << OHDGstHelper::createV4l2SrcAlreadyEncodedStream(opt_endpoint_for_codec.value().v4l2_device_node, setting);
       return;
     }
   }
   // If we land here, we need to do SW encoding, the v4l2src can only do raw video formats like YUV
-  for (const auto &endpoint: camera.endpoints) {
-    m_console->warn("Cannot do HW encode for camera, fall back to RAW out and SW encode");
-    if (endpoint.support_raw) {
-      const auto device_node = endpoint.device_node;
-      m_pipeline_content << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(device_node,setting);
-      return;
-    }
+  const auto opt_raw_endpoint= get_endpoint_supporting_raw(camera.v4l2_endpoints);
+  if(opt_raw_endpoint.has_value()){
+    m_console->debug("Selected RAW endpoint");
+    m_pipeline_content << OHDGstHelper::createV4l2SrcRawAndSwEncodeStream(opt_raw_endpoint.value().v4l2_device_node,setting);
+    return;
   }
   // If we land here, we couldn't create a stream for this camera.
   m_console->error("Setup USB UVC failed");
@@ -254,9 +242,9 @@ void GStreamerStream::setup_usb_uvch264() {
   m_console->debug("Setting up UVC H264 camera");
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
-  const auto endpoint = camera.endpoints.front();
+  const auto endpoint = camera.v4l2_endpoints.front();
   // this one is always h264
-  m_pipeline_content << OHDGstHelper::createUVCH264Stream(endpoint.device_node,setting);
+  m_pipeline_content << OHDGstHelper::createUVCH264Stream(endpoint.v4l2_device_node,setting);
 }
 
 void GStreamerStream::setup_ip_camera() {
@@ -453,7 +441,8 @@ bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
   //m_console->debug("Got frame with {} fragments",frame_fragments.size());
   if(m_link_handle){
-    m_link_handle->transmit_video_data(0,openhd::FragmentedVideoFrame{frame_fragments});
+    const auto stream_index=m_camera_holder->get_camera().index;
+    m_link_handle->transmit_video_data(stream_index,openhd::FragmentedVideoFrame{frame_fragments});
   }else{
     m_console->debug("No transmit interface");
   }

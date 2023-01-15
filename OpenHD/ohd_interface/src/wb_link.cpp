@@ -581,8 +581,9 @@ void WBLink::update_statistics() {
     // video on air
     for(int i=0;i< m_wb_video_tx_list.size();i++){
       auto& wb_tx= *m_wb_video_tx_list.at(i);
-      auto& air_video=i==0 ? stats.air_video0 : stats.air_video1;
+      //auto& air_video=i==0 ? stats.air_video0 : stats.air_video1;
       const auto curr_tx_stats=wb_tx.get_latest_stats();
+      openhd::link_statistics::StatsWBVideoAir air_video{};
       //
       air_video.link_index=i;
       air_video.curr_measured_encoder_bitrate=curr_tx_stats.current_provided_bits_per_second;
@@ -597,6 +598,8 @@ void WBLink::update_statistics() {
       air_video.curr_fec_block_size_min=curr_tx_fec_stats.curr_fec_block_length.min;
       air_video.curr_fec_block_size_max=curr_tx_fec_stats.curr_fec_block_length.max;
       air_video.curr_fec_block_size_avg=curr_tx_fec_stats.curr_fec_block_length.avg;
+      // TODO otimization: Only send stats for an active link
+      stats.stats_wb_video_air.push_back(air_video);
     }
   }else{
     // video on ground
@@ -606,7 +609,7 @@ void WBLink::update_statistics() {
       //if(wb_rx_stats.wb_rx_stats.last_received_packet_mcs_index>=0){
       //  m_console->debug("MCS {}",wb_rx_stats.wb_rx_stats.last_received_packet_mcs_index);
       //}
-      auto& ground_video= i==0 ? stats.ground_video0 : stats.ground_video1;
+      openhd::link_statistics::StatsWBVideoGround ground_video{};
       //
       ground_video.link_index=i;
       ground_video.curr_incoming_bitrate=wb_rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
@@ -620,6 +623,8 @@ void WBLink::update_statistics() {
         ground_video.curr_fec_decode_time_min_us =get_micros(fec_stats.curr_fec_decode_time.min);
         ground_video.curr_fec_decode_time_max_us =get_micros(fec_stats.curr_fec_decode_time.max);
       }
+      // TODO otimization: Only send stats for an active link
+      stats.stats_wb_video_ground.push_back(ground_video);
     }
   }
   // DIRTY: On air, we use the telemetry lost packets percentage, on ground,
@@ -639,7 +644,7 @@ void WBLink::update_statistics() {
   uint64_t acc_tx_injections_error_hint=0;
   uint64_t acc_tx_n_dropped_packets=0;
   acc_tx_injections_error_hint+= m_wb_tele_tx->get_latest_stats().count_tx_injections_error_hint;
-  acc_tx_n_dropped_packets+= m_wb_tele_tx->get_latest_stats().count_tx_injections_error_hint;
+  acc_tx_n_dropped_packets+= m_wb_tele_tx->get_latest_stats().n_dropped_packets;
   for(const auto& videoTx: m_wb_video_tx_list){
     acc_tx_injections_error_hint+=videoTx->get_latest_stats().count_tx_injections_error_hint;
     acc_tx_n_dropped_packets+=videoTx->get_latest_stats().n_dropped_packets;
@@ -837,6 +842,8 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
     }else{
       tx.try_enqueue_block(fragmented_video_frame.frame_fragments, 100);
     }
+  }else{
+    m_console->debug("Invalid camera stream_index {}",stream_index);
   }
 }
 

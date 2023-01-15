@@ -456,7 +456,9 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
   // out.
   // TODO: do it better ;)
   //openhd::loggers::get_default()->warn("Allowing gstreamer to choose UVC format");
-  ss << fmt::format("video/x-raw ! ");
+  ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
+                    settings.streamed_video_format.width,settings.streamed_video_format.height,
+                    settings.streamed_video_format.framerate);
   ss << "videoconvert ! ";
   // Add a queue here. With sw we are not low latency anyways.
   ss << "queue ! ";
@@ -500,10 +502,10 @@ static std::string createUVCH264Stream(const std::string &device_node,const Came
   std::stringstream ss;
   ss << fmt::format(
       "uvch264src device={} peak-bitrate={} initial-bitrate={} "
-      "average-bitrate={} rate-control=1 iframe-period=1000 "
+      "average-bitrate={} rate-control=1 iframe-period={} "
       "auto-start=true encodectrl.vidsrc ! ",
       device_node, bitrateBitsPerSecond, bitrateBitsPerSecond,
-      bitrateBitsPerSecond);
+      bitrateBitsPerSecond,settings.h26x_keyframe_interval);
   ss << fmt::format("video/x-h264,width={}, height={}, framerate={}/1 ! ",
                     settings.streamed_video_format.width, settings.streamed_video_format.height,
                     settings.streamed_video_format.framerate);
