@@ -301,9 +301,9 @@ class CameraHolder:
   const Camera m_camera;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
-    // TODO: r.n not unique enough, we need to be unique per model,too - e.g. a user
-    // might connect a different USB camera, where we'd need a different unique ID for
-    return fmt::format("{}_{}.json",m_camera.index, camera_type_to_string(m_camera.type));
+    // TODO: Hopefully "unique enough" now - but there might be issues if the name is
+    // not properly parsed (especially for USB camera(s))
+    return fmt::format("{}_{}_{}.json",m_camera.index, camera_type_to_string(m_camera.type),m_camera.name);
   }
   [[nodiscard]] CameraSettings create_default()const override{
     auto ret=CameraSettings{};
