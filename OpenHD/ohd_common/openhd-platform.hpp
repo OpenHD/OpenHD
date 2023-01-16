@@ -99,9 +99,7 @@ struct OHDPlatform {
   // The board type we are running on, for example rpi 3B+
   const BoardType board_type;
   [[nodiscard]] std::string to_string()const{
-	std::stringstream ss;
-	ss<<"OHDPlatform{"<<platform_type_to_string(platform_type)<<":"<<board_type_to_string(board_type)<<"}";
-	return ss.str();
+    return fmt::format("[{}:{}]",platform_type_to_string(platform_type),board_type_to_string(board_type));
   }
 };
 

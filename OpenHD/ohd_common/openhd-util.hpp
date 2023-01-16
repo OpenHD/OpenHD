@@ -305,6 +305,20 @@ static std::string create_string_from_lines(const std::vector<std::string>& line
   return ss.str();
 }
 
+template<typename T>
+static std::string vec_as_string(const std::vector<T> &v) {
+  std::stringstream ss;
+  ss << "[";
+  for(int i=0;i<v.size();i++){
+    ss << std::to_string(v[i]);
+    if(i!=v.size()-1){
+      ss<<",";
+    }
+  }
+  ss << "]";
+  return ss.str();
+}
+
 }
 
 #endif

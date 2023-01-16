@@ -165,10 +165,7 @@ struct VideoFormat {
    * @return the video format in a readable form.
    */
   [[nodiscard]] std::string toString() const {
-    std::stringstream ss;
-    ss << video_codec_to_string(videoCodec) << "|" << width << "x" << height
-       << "@" << framerate;
-    return ss.str();
+    return fmt::format("{}|{}x{}@{}",video_codec_to_string(videoCodec),width,height,framerate);
   }
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat,videoCodec,width,height,framerate)

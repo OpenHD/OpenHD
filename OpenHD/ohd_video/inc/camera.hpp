@@ -79,21 +79,16 @@ struct Camera {
   // and the platform encode cap(s) into account).
   std::vector<CameraEndpointV4l2> v4l2_endpoints;
   /**
-   * For logging, create a quick name string that gives developers enough info
-   * such that they can figure out what this camera is.
-   * @return verbose string.
+   * For logging, create a verbose string that gives developers enough info
+   * such that they can figure out what exactly this camera is.
    */
-  [[nodiscard]] std::string debugName() const {
-    std::stringstream ss;
-    ss << name << "|" << camera_type_to_string(type);
-    return ss.str();
+  [[nodiscard]] std::string to_long_string() const {
+    return fmt::format("{}:{}:{}:{}:{}:{}", camera_type_to_string(type),name,vendor,sensor_name,bus,index);
   }
-  [[nodiscard]] std::string to_string() const {
-    std::stringstream ss;
-    ss << "Camera" << index << "{" << camera_type_to_string(type) << ""
-       << "}";
-    return ss.str();
+  [[nodiscard]] std::string to_short_string() const {
+    return fmt::format("{}:{}:{}", camera_type_to_string(type),name,index);
   }
+
   // supported by pretty much any camera type (not supporting bitrate control is only the case for these exotic cases)
   [[nodiscard]] bool supports_bitrate()const{
     const bool not_supported= type==CameraType::CUSTOM_UNMANAGED_CAMERA || type==CameraType::IP;

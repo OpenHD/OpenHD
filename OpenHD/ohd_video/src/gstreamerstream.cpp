@@ -279,15 +279,13 @@ std::string GStreamerStream::createDebug(){
     return "GStreamerStream::No debug during restart\n";
   }
   if(!m_camera_holder->get_settings().enable_streaming){
-    std::stringstream ss;
-    ss << "GStreamerStream for camera:"<< m_camera_holder->get_camera().debugName()<<" disabled";
-    return ss.str();
+    return fmt::format("GStreamerStream for camera {} disabled",m_camera_holder->get_camera().to_short_string());
   }
   std::stringstream ss;
   GstState state;
   GstState pending;
   auto returnValue = gst_element_get_state(m_gst_pipeline, &state, &pending, 1000000000);
-  ss << "GStreamerStream for camera:"<< m_camera_holder->get_camera().debugName()<<" State:"<< returnValue << "." << state << "." << pending << ".";
+  ss << "GStreamerStream for camera:"<< m_camera_holder->get_camera().to_short_string()<<" State:"<< returnValue << "." << state << "." << pending << ".";
   return ss.str();
 }
 
