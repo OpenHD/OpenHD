@@ -53,7 +53,8 @@ class CameraHolder:
         openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}},
         openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
         // for debugging
-        openhd::Setting{"V_CAM_TYPE",openhd::StringSetting { get_short_name(),c_read_only_param}},
+        openhd::create_read_only_string("V_CAM_TYPE",camera_type_to_string(m_camera.type)),
+        openhd::create_read_only_string("V_CAM_NAME",get_name_mavlink_safe()),
     };
     if(m_camera.type==CameraType::IP){
       auto cb_ip_cam_url=[this](std::string,std::string value){
@@ -288,6 +289,12 @@ class CameraHolder:
     persist();
     return true;
   }
+  // 15 char mavlink string limit
+  std::string get_name_mavlink_safe()const{
+    auto tmp=m_camera.name;
+    if(tmp.size()>15)tmp.resize(15);
+    return tmp;
+  }
   // Settings hacky end
  private:
   // Camera info is immutable
@@ -338,9 +345,6 @@ class CameraHolder:
       openhd::log::get_default()->warn("Cannot find valid default resolution for USB camera");
     }
     return ret;
-  }
-  [[nodiscard]] std::string get_short_name()const{
-    return camera_type_to_string(m_camera.type);
   }
   // Where the settings (json) for each discovered camera are stored
   static std::string get_video_settings_directory(){
