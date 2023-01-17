@@ -462,7 +462,12 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
     // Not supported yet, forward them in chuncks of 20 (NOTE: This workaround is not ideal, since it creates ~1 frame of latency).
     is_last_fragment_of_frame=m_frame_fragments.size()>=20;
   }
-  if(is_last_fragment_of_frame || m_frame_fragments.size()>1000){
+  if(m_frame_fragments.size()>1000){
+    // Most likely something wrong with the "find end of frame" workaround
+    m_console->debug("No end of frame found after 1000 fragments");
+    is_last_fragment_of_frame= true;
+  }
+  if(is_last_fragment_of_frame){
     on_new_rtp_fragmented_frame(m_frame_fragments);
     m_frame_fragments.resize(0);
   }
