@@ -59,6 +59,7 @@ static std::string createSwEncoder(const CommonEncoderParams& common_encoder_par
     // quite high latency, due to how x264enc needs to parallelize encoding. By using threads=2 we can reduce this issue a bit - and it probably
     // is a good idea anyways to do so, since on platforms like rpi we do not want to hog too much of the CPU to not overload the system and
     // on x86 2 threads / cores are enough for sw encode of most resolutions anyways.
+    // NOTE: While not exactly true, latency is ~ as many frame(s) as there are threads, aka 2 frames for 2 threads
     ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=0 threads=2 ! ",
                       common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval);
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
