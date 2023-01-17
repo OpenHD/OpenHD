@@ -142,7 +142,7 @@ std::vector<Camera> DCameras::detect_rapsberrypi_veye_v4l2_dirty(std::shared_ptr
     return {};
   }
   const auto& v4l2_info_video0=v4l2_info_video0_opt.value();
-  bool has_veye=OHDUtil::contains(v4l2_info_video0,"veye327") || OHDUtil::contains(v4l2_info_video0,"csimx307");
+  bool has_veye=OHDUtil::contains(v4l2_info_video0,"veye327") || OHDUtil::contains(v4l2_info_video0,"csimx307") || OHDUtil::contains(v4l2_info_video0,"veyecam2m");
   if(OHDFilesystemUtil::exists("/boot/tmp_force_veye.txt")){
     m_console->warn("Forcing veye");
     has_veye= true;
