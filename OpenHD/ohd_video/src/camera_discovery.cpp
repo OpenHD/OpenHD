@@ -136,28 +136,43 @@ std::vector<Camera> DCameras::detect_allwinner_csi(std::shared_ptr<spdlog::logge
 }
 
 std::vector<Camera> DCameras::detect_rapsberrypi_veye_v4l2_dirty(std::shared_ptr<spdlog::logger>& m_console) {
-  const auto v4l2_info_video0_opt=OHDUtil::run_command_out("v4l2-ctl --info --device /dev/video0");
-  if(!v4l2_info_video0_opt.has_value()){
-    m_console->warn("Veye detetct unexpected result, autodetect doesnt work");
-    return {};
+  m_console->debug("detect_rapsberrypi_veye_v4l2_dirty");
+  std::vector<Camera> ret{};
+  const auto devices = openhd::v4l2::findV4l2VideoDevices();
+  for (const auto &device: devices) {
+    // dirty, but works
+    // We are only interested in veye camera(s), so first get rid of anything not using rpi unicam
+    auto v4l2_fp_holder=std::make_unique<openhd::v4l2::V4l2FPHolder>(device,PlatformType::RaspberryPi);
+    if(!v4l2_fp_holder->opened_successfully()){
+      continue;
+    }
+    const auto caps_opt=openhd::v4l2::get_capabilities(v4l2_fp_holder);
+    if(!caps_opt){
+      continue;
+    }
+    const auto caps=caps_opt.value();
+    if(!OHDUtil::contains(std::string((char*)caps.driver),"unicam")){
+      continue;
+    }
+    v4l2_fp_holder.reset();
+    // now check if it is one of the known veye cameras
+    const auto v4l2_info_video0_opt=OHDUtil::run_command_out(fmt::format("v4l2-ctl --info --device {}",device));
+    if(!v4l2_info_video0_opt.has_value()){
+      continue;
+    }
+    const auto& v4l2_info_video0=v4l2_info_video0_opt.value();
+    const bool is_veye=OHDUtil::contains(v4l2_info_video0,"veye327") || OHDUtil::contains(v4l2_info_video0,"csimx307") || OHDUtil::contains(v4l2_info_video0,"veyecam2m");
+    if(is_veye){
+      Camera camera;
+      camera.type=CameraType::RPI_VEYE_CSI_V4l2;
+      camera.bus=device;
+      camera.index=0;
+      camera.name = fmt::format("Pi_VEYE_{}",ret.size());
+      camera.vendor = "VEYE";
+      ret.push_back(camera);
+    }
   }
-  const auto& v4l2_info_video0=v4l2_info_video0_opt.value();
-  bool has_veye=OHDUtil::contains(v4l2_info_video0,"veye327") || OHDUtil::contains(v4l2_info_video0,"csimx307") || OHDUtil::contains(v4l2_info_video0,"veyecam2m");
-  if(OHDFilesystemUtil::exists("/boot/tmp_force_veye.txt")){
-    m_console->warn("Forcing veye");
-    has_veye= true;
-  }
-  if(!has_veye){
-    return {};
-  }
-  m_console->info("Detected veye CSI camera");
-  Camera camera;
-  camera.type=CameraType::RPI_VEYE_CSI_V4l2;
-  camera.bus="0";
-  camera.index=0;
-  camera.name = "Pi_VEYE_0";
-  camera.vendor = "VEYE";
-  return {camera};
+  return ret;
 }
 
 #ifdef OPENHD_LIBCAMERA_PRESENT
@@ -206,38 +221,11 @@ std::vector<Camera> DCameras::detect_jetson_csi(std::shared_ptr<spdlog::logger> 
   return {};
 }
 
-/**
- * Helper for checking if a v4l2 device can output any of the supported endpoint format(s).
- * Returns std::nullopt if this device cannot do h264,h265,mjpeg or RAW out.
- */
-struct XValidEndpoint{
-  v4l2_capability caps;
-  openhd::v4l2::EndpointFormats formats;
-};
-static std::optional<XValidEndpoint> probe_v4l2_device(const OHDPlatform platform,std::shared_ptr<spdlog::logger>& m_console,const std::string& device_node){
-  auto v4l2_fp_holder=std::make_unique<openhd::v4l2::V4l2FPHolder>(device_node,platform.platform_type);
-  if(!v4l2_fp_holder->opened_successfully()){
-    m_console->debug("Can't open {}",device_node);
-    return std::nullopt;
-  }
-  const auto caps_opt=openhd::v4l2::get_capabilities(v4l2_fp_holder);
-  if(!caps_opt){
-    m_console->debug("Can't get caps for {}",device_node);
-    return std::nullopt;
-  }
-  const auto caps=caps_opt.value();
-  const auto supported_formats=openhd::v4l2::iterate_supported_outputs(v4l2_fp_holder);
-  if(supported_formats.has_any_valid_format){
-    return XValidEndpoint{caps,supported_formats};
-  }
-  return std::nullopt;
-}
-
 std::vector<Camera> DCameras::detect_usb_cameras(const OHDPlatform& platform,std::shared_ptr<spdlog::logger>& m_console) {
   std::vector<Camera> ret{};
   const auto devices = openhd::v4l2::findV4l2VideoDevices();
   for (const auto &device: devices) {
-    const auto probed_opt= probe_v4l2_device(platform,m_console,device);
+    const auto probed_opt= openhd::v4l2::probe_v4l2_device(platform.platform_type,m_console,device);
     if(!probed_opt.has_value()){
       continue;
     }

@@ -55,7 +55,12 @@ static void initGstreamerOrThrow() {
 static std::string createSwEncoder(const CommonEncoderParams& common_encoder_params){
   std::stringstream ss;
   if(common_encoder_params.videoCodec==VideoCodec::H264){
-    ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=0 ! ",
+    // Now this is a bit annoying - we cannot deal with frame(s) using sliced encoding yet,so we have to disable it. But from that we get
+    // quite high latency, due to how x264enc needs to parallelize encoding. By using threads=2 we can reduce this issue a bit - and it probably
+    // is a good idea anyways to do so, since on platforms like rpi we do not want to hog too much of the CPU to not overload the system and
+    // on x86 2 threads / cores are enough for sw encode of most resolutions anyways.
+    // NOTE: While not exactly true, latency is ~ as many frame(s) as there are threads, aka 2 frames for 2 threads
+    ss<<fmt::format("x264enc name=swencoder bitrate={} speed-preset=ultrafast  tune=zerolatency key-int-max={} sliced-threads=0 threads=2 ! ",
                       common_encoder_params.h26X_bitrate_kbits,common_encoder_params.h26X_keyframe_interval);
   }else if(common_encoder_params.videoCodec==VideoCodec::H265){
     //TODO: jetson sw encoder (x265enc) is so old it doesn't have the key-int-max param
@@ -247,9 +252,15 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   return ss.str();
 }
 
-static std::string create_veye_vl2_stream(const CameraSettings& settings){
+static std::string create_veye_vl2_stream(const CameraSettings& settings,const std::string& v4l2_device_name){
+  // NOTE: Most veye camera(s) can only do 1080p30, wo this relies on the settings being set to 1080p30 by default
+  // for veye camera(s).
+  // v4l2src io-mode=dmabuf device=dev/video0 ! video/x-raw,format=(string)UYVY, width=(int)1920, height=(int)1080, framerate=(fraction)30/1 ! ";
   std::stringstream ss;
-  ss<<" v4l2src io-mode=dmabuf device=/dev/video0 ! video/x-raw,format=(string)UYVY, width=(int)1920, height=(int)1080,framerate=(fraction)30/1 ! ";
+  ss << fmt::format("v4l2src io-mode=dmabuf device={} ! ",v4l2_device_name);
+  ss << fmt::format("video/x-raw,format=(string)UYVY, width={}, height={}, framerate={}/1 ! ",
+                    settings.streamed_video_format.width,settings.streamed_video_format.height,
+                    settings.streamed_video_format.framerate);
   ss<<create_rpi_v4l2_h264_encoder(settings);
   return ss.str();
 }
