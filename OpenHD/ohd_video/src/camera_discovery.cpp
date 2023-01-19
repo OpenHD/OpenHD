@@ -139,6 +139,7 @@ std::vector<Camera> DCameras::detect_rapsberrypi_veye_v4l2_dirty(std::shared_ptr
   m_console->debug("detect_rapsberrypi_veye_v4l2_dirty");
   const auto devices = openhd::v4l2::findV4l2VideoDevices();
   for (const auto &device: devices) {
+    m_console->debug("probe {}",device);
     const auto probed_opt =openhd::v4l2::probe_v4l2_device(PlatformType::RaspberryPi, m_console, device);
     if (!probed_opt.has_value()) {
       continue;
@@ -147,7 +148,6 @@ std::vector<Camera> DCameras::detect_rapsberrypi_veye_v4l2_dirty(std::shared_ptr
     const std::string bus((char*)probed.caps.bus_info);
     const std::string driver((char*)probed.caps.driver);
     m_console->debug("X {} {}",bus,driver);
-
   }
   const auto v4l2_info_video0_opt=OHDUtil::run_command_out("v4l2-ctl --info --device /dev/video0");
   if(!v4l2_info_video0_opt.has_value()){
