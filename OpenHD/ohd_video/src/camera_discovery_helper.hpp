@@ -221,6 +221,10 @@ Udevaddm_info get_udev_adm_info(const std::string& v4l2_device,std::shared_ptr<s
   return ret;
 }
 
+static std::string v4l2_capability_to_string(const v4l2_capability caps){
+  return fmt::format("driver:{},bus_info:{}",caps.driver,caps.bus_info);
+}
+
 static std::optional<v4l2_capability> get_capabilities(std::unique_ptr<openhd::v4l2::V4l2FPHolder>& v4l2_fp_holder){
   struct v4l2_capability caps = {};
   if (ioctl(v4l2_fp_holder->fd, VIDIOC_QUERYCAP, &caps) == -1) {
