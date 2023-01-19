@@ -154,13 +154,14 @@ std::vector<Camera> DCameras::detect_rapsberrypi_veye_v4l2_dirty(std::shared_ptr
     if(!OHDUtil::contains(std::string((char*)caps.driver),"unicam")){
       continue;
     }
+    v4l2_fp_holder.reset();
     // now check if it is one of the known veye cameras
     const auto v4l2_info_video0_opt=OHDUtil::run_command_out(fmt::format("v4l2-ctl --info --device {}",device));
     if(!v4l2_info_video0_opt.has_value()){
       continue;
     }
     const auto& v4l2_info_video0=v4l2_info_video0_opt.value();
-    const bool is_veye=OHDUtil::contains(v4l2_info_video0,"veye327") || OHDUtil::contains(v4l2_info_video0,"csimx307");
+    const bool is_veye=OHDUtil::contains(v4l2_info_video0,"veye327") || OHDUtil::contains(v4l2_info_video0,"csimx307") || OHDUtil::contains(v4l2_info_video0,"veyecam2m");
     if(is_veye){
       Camera camera;
       camera.type=CameraType::RPI_VEYE_CSI_V4l2;
