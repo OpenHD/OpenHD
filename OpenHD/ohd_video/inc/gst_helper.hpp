@@ -253,9 +253,13 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
 }
 
 static std::string create_veye_vl2_stream(const CameraSettings& settings,const std::string& v4l2_device_name){
+  // NOTE: Most veye camera(s) can only do 1080p30, wo this relies on the settings being set to 1080p30 by default
+  // for veye camera(s).
   std::stringstream ss;
-  ss<<" v4l2src io-mode=dmabuf device="<<v4l2_device_name<<" ! video/x-raw,format=(string)UYVY, width=(int)1920, height=(int)1080,framerate=(fraction)30/1 ! ";
-  ss<<create_rpi_v4l2_h264_encoder(settings);
+  ss << fmt::format("v4l2src io-mode=dmabuf device={} ! ",v4l2_device_name);
+  ss << fmt::format("video/x-raw,format=(string)UYVY, width=(int){}, height=(int){},framerate=(fraction){}/1 ! ",
+                    settings.streamed_video_format.width,settings.streamed_video_format.height,
+                    settings.streamed_video_format.framerate);
   return ss.str();
 }
 
