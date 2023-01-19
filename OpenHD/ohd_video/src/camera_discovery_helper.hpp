@@ -292,6 +292,33 @@ static EndpointFormats iterate_supported_outputs(std::unique_ptr<openhd::v4l2::V
   return ret;
 }
 
-}  // namespace DV4l2DevicesHelper
+/**
+ * Helper for checking if a v4l2 device can output any of the supported endpoint format(s).
+ * Returns std::nullopt if this device cannot do h264,h265,mjpeg or RAW out.
+ */
+struct XValidEndpoint{
+  v4l2_capability caps;
+  openhd::v4l2::EndpointFormats formats;
+};
+static std::optional<XValidEndpoint> probe_v4l2_device(const PlatformType platform_tpye,std::shared_ptr<spdlog::logger>& m_console,const std::string& device_node){
+  auto v4l2_fp_holder=std::make_unique<openhd::v4l2::V4l2FPHolder>(device_node,platform_tpye);
+  if(!v4l2_fp_holder->opened_successfully()){
+    m_console->debug("Can't open {}",device_node);
+    return std::nullopt;
+  }
+  const auto caps_opt=openhd::v4l2::get_capabilities(v4l2_fp_holder);
+  if(!caps_opt){
+    m_console->debug("Can't get caps for {}",device_node);
+    return std::nullopt;
+  }
+  const auto caps=caps_opt.value();
+  const auto supported_formats=openhd::v4l2::iterate_supported_outputs(v4l2_fp_holder);
+  if(supported_formats.has_any_valid_format){
+    return XValidEndpoint{caps,supported_formats};
+  }
+  return std::nullopt;
+}
+
+}  // namespace openhd::v4l2
 
 #endif  // OPENHD_DCAMERASHELPER_H

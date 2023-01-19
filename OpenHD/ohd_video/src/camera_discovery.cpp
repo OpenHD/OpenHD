@@ -136,6 +136,19 @@ std::vector<Camera> DCameras::detect_allwinner_csi(std::shared_ptr<spdlog::logge
 }
 
 std::vector<Camera> DCameras::detect_rapsberrypi_veye_v4l2_dirty(std::shared_ptr<spdlog::logger>& m_console) {
+  m_console->debug("detect_rapsberrypi_veye_v4l2_dirty");
+  const auto devices = openhd::v4l2::findV4l2VideoDevices();
+  for (const auto &device: devices) {
+    const auto probed_opt =openhd::v4l2::probe_v4l2_device(PlatformType::RaspberryPi, m_console, device);
+    if (!probed_opt.has_value()) {
+      continue;
+    }
+    const auto& probed = probed_opt.value();
+    const std::string bus((char*)probed.caps.bus_info);
+    const std::string driver((char*)probed.caps.driver);
+    m_console->debug("X {} {}",bus,driver);
+
+  }
   const auto v4l2_info_video0_opt=OHDUtil::run_command_out("v4l2-ctl --info --device /dev/video0");
   if(!v4l2_info_video0_opt.has_value()){
     m_console->warn("Veye detetct unexpected result, autodetect doesnt work");
@@ -206,38 +219,11 @@ std::vector<Camera> DCameras::detect_jetson_csi(std::shared_ptr<spdlog::logger> 
   return {};
 }
 
-/**
- * Helper for checking if a v4l2 device can output any of the supported endpoint format(s).
- * Returns std::nullopt if this device cannot do h264,h265,mjpeg or RAW out.
- */
-struct XValidEndpoint{
-  v4l2_capability caps;
-  openhd::v4l2::EndpointFormats formats;
-};
-static std::optional<XValidEndpoint> probe_v4l2_device(const OHDPlatform platform,std::shared_ptr<spdlog::logger>& m_console,const std::string& device_node){
-  auto v4l2_fp_holder=std::make_unique<openhd::v4l2::V4l2FPHolder>(device_node,platform.platform_type);
-  if(!v4l2_fp_holder->opened_successfully()){
-    m_console->debug("Can't open {}",device_node);
-    return std::nullopt;
-  }
-  const auto caps_opt=openhd::v4l2::get_capabilities(v4l2_fp_holder);
-  if(!caps_opt){
-    m_console->debug("Can't get caps for {}",device_node);
-    return std::nullopt;
-  }
-  const auto caps=caps_opt.value();
-  const auto supported_formats=openhd::v4l2::iterate_supported_outputs(v4l2_fp_holder);
-  if(supported_formats.has_any_valid_format){
-    return XValidEndpoint{caps,supported_formats};
-  }
-  return std::nullopt;
-}
-
 std::vector<Camera> DCameras::detect_usb_cameras(const OHDPlatform& platform,std::shared_ptr<spdlog::logger>& m_console) {
   std::vector<Camera> ret{};
   const auto devices = openhd::v4l2::findV4l2VideoDevices();
   for (const auto &device: devices) {
-    const auto probed_opt= probe_v4l2_device(platform,m_console,device);
+    const auto probed_opt= openhd::v4l2::probe_v4l2_device(platform.platform_type,m_console,device);
     if(!probed_opt.has_value()){
       continue;
     }
