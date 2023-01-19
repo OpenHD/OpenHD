@@ -252,9 +252,9 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   return ss.str();
 }
 
-static std::string create_veye_vl2_stream(const CameraSettings& settings){
+static std::string create_veye_vl2_stream(const CameraSettings& settings,const std::string& v4l2_device_name){
   std::stringstream ss;
-  ss<<" v4l2src io-mode=dmabuf device=/dev/video0 ! video/x-raw,format=(string)UYVY, width=(int)1920, height=(int)1080,framerate=(fraction)30/1 ! ";
+  ss<<" v4l2src io-mode=dmabuf device="<<v4l2_device_name<<" ! video/x-raw,format=(string)UYVY, width=(int)1920, height=(int)1080,framerate=(fraction)30/1 ! ";
   ss<<create_rpi_v4l2_h264_encoder(settings);
   return ss.str();
 }

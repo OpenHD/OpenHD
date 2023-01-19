@@ -178,7 +178,7 @@ void GStreamerStream::setup_raspberrypi_veye_v4l2() {
   m_console->debug("setup_raspberrypi_veye_v4l2");
   // similar to jetson, for now we assume there is only one CSI camera connected.
   const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::create_veye_vl2_stream(setting);
+  m_pipeline_content << OHDGstHelper::create_veye_vl2_stream(setting,m_camera_holder->get_camera().bus);
 }
 
 void GStreamerStream::setup_raspberrypi_libcamera() {
