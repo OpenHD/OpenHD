@@ -2,7 +2,7 @@ name: build_package_x86_20.04
 
 on:
   push:
-    branches: [ master, "2.0", "2.2.x-evo" ]
+    branches: ["2.3-evo"]
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
@@ -66,7 +66,7 @@ jobs:
           command: "push"
           format: "deb"
           owner: "openhd"
-          repo: "openhd-2-2-evo"
+          repo: "openhd-2-3-evo"
           distro: "ubuntu"
           release: "focal"
           republish: "true" # needed ONLY if version is not changing
