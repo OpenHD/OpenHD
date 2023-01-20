@@ -34,7 +34,7 @@ jobs:
           sudo apt-get clean
           sudo rm -rf /var/lib/apt/lists/*
           sudo curl -1sLf \
-          'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' \
+          'https://dl.cloudsmith.io/public/openhd/openhd-2-3-evo/setup.deb.sh' \
           | sudo -E bash
           sudo apt update
           sudo apt -y install ruby-dev libfmt-dev

@@ -31,7 +31,7 @@ jobs:
         run: |
           sudo apt install -y curl
           sudo curl -1sLf \
-          'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' \
+          'https://dl.cloudsmith.io/public/openhd/openhd-2-3-evo/setup.deb.sh' \
           | sudo -E bash
           sudo apt update
           sudo apt upgrade -y

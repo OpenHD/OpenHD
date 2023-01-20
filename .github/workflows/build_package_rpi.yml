@@ -39,7 +39,7 @@ jobs:
             cd /opt
             cd OpenHD
             sudo apt update
-            curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-2-evo/setup.deb.sh' | sudo -E bash
+            curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-3-evo/setup.deb.sh' | sudo -E bash
             mkdir -p /usr/local/share/openhd/
             touch /usr/local/share/openhd/joyconfig.txt
             sudo apt update
@@ -64,7 +64,7 @@ jobs:
         command: "push"
         format: "deb"
         owner: "openhd"
-        repo: "openhd-2-2-evo"
+        repo: "openhd-2-3-evo"
         distro: "raspbian"
         release: "bullseye"
         republish: "true" # needed ONLY if version is not changing
