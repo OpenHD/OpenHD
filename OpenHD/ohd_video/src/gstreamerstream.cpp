@@ -314,9 +314,11 @@ void GStreamerStream::stop() {
 void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() begin");
   if(m_pull_samples_thread){
+    m_console->debug("terminating appsink begin");
     m_pull_samples_run= false;
     if(m_pull_samples_thread->joinable())m_pull_samples_thread->join();
     m_pull_samples_thread= nullptr;
+    m_console->debug("terminating appsink end");
   }
   if(!m_gst_pipeline){
     m_console->debug("gst_pipeline==null");
