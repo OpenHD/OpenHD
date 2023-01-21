@@ -83,7 +83,8 @@ void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& me
   // need to do anything else here.
   // tracker serial out - we are only interested in message(s) coming from the FC
   if(m_endpoint_tracker!= nullptr){
-    const auto msges_from_fc= filter_by_source_sys_id(messages,0);
+    static constexpr auto DEFAULT_FC_SYS_ID=1; // sys id of pretty much every FC - we do not support more than one FC anyways
+    const auto msges_from_fc= filter_by_source_sys_id(messages,DEFAULT_FC_SYS_ID);
     if(!msges_from_fc.empty()){
       m_endpoint_tracker->sendMessages(msges_from_fc);
     }
