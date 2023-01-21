@@ -23,6 +23,9 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   if(_platform.platform_type==PlatformType::RaspberryPi){
     m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(_platform);
   }
+  if(_platform.platform_type==PlatformType::RaspberryPi){
+    m_opt_gpio_control=std::make_unique<openhd::telemetry::rpi::GPIOControl>();
+  }
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their paramters.
   generic_mavlink_param_provider->add_params(get_all_settings());
@@ -210,6 +213,9 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   if(_platform.platform_type==PlatformType::RaspberryPi){
     const auto tmp=board_type_to_string(_platform.board_type);
     ret.push_back(openhd::create_read_only_string("BOARD_TYPE",tmp));
+  }
+  if(m_opt_gpio_control!= nullptr){
+    OHDUtil::vec_append(ret,m_opt_gpio_control->get_all_settings());
   }
   openhd::testing::append_dummy_if_empty(ret);
   return ret;

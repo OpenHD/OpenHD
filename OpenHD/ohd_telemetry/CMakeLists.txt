@@ -97,6 +97,9 @@ SET(sources
     "src/MavlinkComponent.h"
     "src/OHDTelemetry.cpp"
     "src/OHDTelemetry.h"
+    src/gpio_control/RaspberryPiGPIOControl.cpp
+    src/gpio_control/RaspberryPiGPIOControl.h
+    src/gpio_control/RaspberryPiGPIOControlSettings.h
 )
 
 # Build it as a library
