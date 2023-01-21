@@ -227,4 +227,15 @@ static std::tuple<std::vector<MavlinkMessage>,std::vector<MavlinkMessage>> split
   return {generic,local_only};
 }
 
+// Return all messages where the source sys id matches the given sys id
+static std::vector<MavlinkMessage> filter_by_source_sys_id(const std::vector<MavlinkMessage>& messages,uint16_t source_sys_id){
+  std::vector<MavlinkMessage> ret;
+  for(const auto& msg:messages){
+    if(msg.m.sysid==source_sys_id){
+      ret.push_back(msg);
+    }
+  }
+  return ret;
+}
+
 #endif //XMAVLINKSERVICE_MAV_HELPER_H

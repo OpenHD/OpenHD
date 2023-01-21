@@ -49,6 +49,17 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
 #else
   m_console->info("No Joystick support");
 #endif
+  if(m_groundTelemetrySettings->get_settings().gnd_uart_connection_type!=0) {
+    const auto& settings=m_groundTelemetrySettings->get_settings();
+    SerialEndpoint::HWOptions options{};
+    options.baud_rate=settings.gnd_uart_baudrate;
+    options.linux_filename=openhd::telemetry::ground::uart_fd_from_connection_type(settings.gnd_uart_connection_type);
+    m_endpoint_tracker =std::make_unique<SerialEndpoint>("ser_tracker",options);
+    m_endpoint_tracker->registerCallback([this](std::vector<MavlinkMessage> messages) {
+      // We ignore any incoming messages here for now, since it is only for mavlink out via serial
+    });
+    m_endpoint_tracker->start();
+  }
   //
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their parameters.
@@ -70,6 +81,13 @@ void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& me
   send_messages_ground_station_clients(messages);
   // Note: No OpenHD component ever talks to another OpenHD component or the FC, so we do not
   // need to do anything else here.
+  // tracker serial out - we are only interested in message(s) coming from the FC
+  if(m_endpoint_tracker!= nullptr){
+    const auto msges_from_fc= filter_by_source_sys_id(messages,0);
+    if(!msges_from_fc.empty()){
+      m_endpoint_tracker->sendMessages(msges_from_fc);
+    }
+  }
 }
 
 void GroundTelemetry::on_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
@@ -234,6 +252,17 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
                                                                      c_rc_over_joystick_channel_mapping}});
   }
 #endif
+  if(true){
+    auto c_gnd_uart_connection_type=[this](std::string,int value){
+      if(!openhd::telemetry::ground::valid_joystick_update_rate(value))return false;
+      m_groundTelemetrySettings->unsafe_get_settings().gnd_uart_connection_type=value;
+      m_groundTelemetrySettings->persist();
+      // change requires reboot
+      return true;
+    };
+    ret.push_back(openhd::Setting{"TRACKER_UART_OUT",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().gnd_uart_connection_type),
+                                                                     c_gnd_uart_connection_type}});
+  }
   openhd::testing::append_dummy_if_empty(ret);
   return ret;
 }

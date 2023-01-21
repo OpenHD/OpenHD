@@ -15,6 +15,7 @@
 #include "endpoints/WBEndpoint.h"
 #include "ohd_link.hpp"
 #include "openhd-external-device.hpp"
+#include "endpoints/SerialEndpoint.h"
 
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 #include "rc/JoystickReader.h"
@@ -72,6 +73,8 @@ class GroundTelemetry :public MavlinkSystem{
   std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_groundTelemetrySettings;
   // Mavlink to / from gcs station(s)
   std::unique_ptr<UDPEndpoint2> m_gcs_endpoint = nullptr;
+  // mavlink out via serial for tracker or similar
+  std::unique_ptr<SerialEndpoint> m_endpoint_tracker= nullptr;
   // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
