@@ -254,7 +254,7 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 #endif
   if(true){
     auto c_gnd_uart_connection_type=[this](std::string,int value){
-      if(!openhd::telemetry::ground::valid_joystick_update_rate(value))return false;
+      if(!openhd::telemetry::ground::validate_uart_connection_type(value))return false;
       m_groundTelemetrySettings->unsafe_get_settings().gnd_uart_connection_type=value;
       m_groundTelemetrySettings->persist();
       // change requires reboot
