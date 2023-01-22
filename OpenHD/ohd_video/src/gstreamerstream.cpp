@@ -324,6 +324,7 @@ void GStreamerStream::cleanup_pipe() {
     m_console->debug("gst_pipeline==null");
     return;
   }
+  m_console->debug("send EOS begin");
   // according to @Alex W we need a EOS signal here to properly shut down the pipeline
   if(!gst_element_send_event (m_gst_pipeline, gst_event_new_eos())){
     m_console->info("error gst_element_send_event eos"); // No idea what that means
