@@ -18,6 +18,8 @@ extern "C" {
 static constexpr auto OHD_SYS_ID_GROUND = 100;
 static constexpr auto OHD_SYS_ID_AIR = 101;
 static_assert(OHD_SYS_ID_GROUND != OHD_SYS_ID_AIR);
+// Sys id of QOpenHD or any other gcs connected to the ground unit that talks mavlink
+static constexpr auto QOPENHD_SYS_ID=255;
 // other
 //static constexpr auto OHD_GROUND_CLIENT_TCP_PORT=14445;
 static constexpr auto OHD_GROUND_CLIENT_TCP_PORT = 1234;

@@ -20,6 +20,9 @@ void RcJoystickSender::send_data_until_terminate() {
     // We only send data if the joystick is in the connected state
     // Otherwise, we just stop sending data, which should result in a failsafe at the FC.
     if(curr.considered_connected){
+      // NOTE That we fixup the sys id on the air to workaround a ardupilot bug - for now, we keep the
+      // OHD_SYS_ID_GROUND though, since the message is coming from the openhd ground unit and its sys id,
+      // not from QOpenHD or similar
       auto msg= pack_rc_message(OHD_SYS_ID_GROUND,0,curr.values,0,0);
       m_cb(msg);
     }
