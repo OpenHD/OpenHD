@@ -42,6 +42,11 @@ void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages)
   if(m_serial_endpoint){
     auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_AIR);
     m_serial_endpoint->sendMessages(generic);
+    for(const auto& msg:generic){
+      if(msg.m.msgid==MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE){
+        m_console->debug("Sending rc message to FC");
+      }
+    }
   }else{
     //m_console->warn("Cannot send message to FC");
   }
