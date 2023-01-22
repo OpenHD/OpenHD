@@ -324,13 +324,14 @@ void GStreamerStream::cleanup_pipe() {
     m_console->debug("gst_pipeline==null");
     return;
   }
-  m_console->debug("send EOS begin");
+  // Jan 22: Confirmed this hangs quite a lot of pipeline(s) - removed for that reason
+  /*m_console->debug("send EOS begin");
   // according to @Alex W we need a EOS signal here to properly shut down the pipeline
   if(!gst_element_send_event (m_gst_pipeline, gst_event_new_eos())){
     m_console->info("error gst_element_send_event eos"); // No idea what that means
   }else{
     m_console->info("success gst_element_send_event eos");
-  }
+  }*/
   // TODO wait for the eos event to travel down the pipeline,but do it in a safe manner to not block for infinity
   gst_element_set_state (m_gst_pipeline, GST_STATE_NULL);
   gst_object_unref (m_gst_pipeline);
