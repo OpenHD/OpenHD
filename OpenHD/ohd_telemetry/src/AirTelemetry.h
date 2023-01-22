@@ -57,7 +57,10 @@ class AirTelemetry : public MavlinkSystem{
    * @param settings the settings for this camera
    */
   void add_settings_camera_component(int camera_index,const std::vector<openhd::Setting>& settings);
-  //
+  /**
+   * The link handle can be set later after instantiation - until it is set, messages from/to the
+   * ground unit are just discarded.
+   */
   void set_link_handle(std::shared_ptr<OHDLink> link);
  private:
   const OHDPlatform _platform;
