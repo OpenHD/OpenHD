@@ -149,14 +149,5 @@ add_executable(test_joystick_reader tests/test_joystick_reader.cpp)
 target_link_libraries(test_joystick_reader OHDTelemetryLib)
 
 ####
-# NOTE: We do not need MAVSDK for OpenHD, we only compile some test tools here if
-# MAVSDK would be found
-find_package(MAVSDK QUIET)
-if(MAVSDK_FOUND)
-    add_executable(test_mavsdk_serial tests/test_mavsdk_serial.cpp)
-    target_link_libraries(test_mavsdk_serial OHDTelemetryLib MAVSDK::mavsdk)
-
-    add_executable(test_mavsdk_param tests/test_mavsdk_param.cpp)
-    target_link_libraries(test_mavsdk_param OHDTelemetryLib MAVSDK::mavsdk)
-endif()
-#####
+# NOTE: We do not need MAVSDK for OpenHD, the small amount of code we share is directly included
+####
