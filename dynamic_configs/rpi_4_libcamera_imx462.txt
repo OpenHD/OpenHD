@@ -1,0 +1,2 @@
+dtoverlay=vc4-kms-v3d,cma=400M
+dtoverlay=imx462
