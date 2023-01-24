@@ -88,7 +88,7 @@ static int cam_config_to_int(CamConfig cam_config){
     case CamConfig::LIBCAMERA_IMX519: return 4;
     case CamConfig::LIBCAMERA_IMX290: return 5;
     case CamConfig::LIBCAMERA_IMX327: return 6;
-    case CamConfig::LIBCAMERA_IMX262: return 7;
+    case CamConfig::LIBCAMERA_IMX462: return 7;
     case CamConfig::VEYE_327: return 8;
     case CamConfig::VEYE_CSIMX307: return 9;
     case CamConfig::VEYE_CSSC132: return 10;
