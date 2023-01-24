@@ -116,9 +116,8 @@ add_library(mavlink INTERFACE)
 # from https://mavlink.io/en/mavgen_c/
 #You can supress the warnings in CMake using
 target_compile_options(mavlink INTERFACE -Wno-address-of-packed-member -Wno-cast-align)
-target_include_directories(mavlink INTERFACE ../lib/c_library_v2_openhd/)
+target_include_directories(mavlink INTERFACE ../lib/mavlink-headers/mavlink/v2.0)
 target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
-#target_include_directories(OHDTelemetryLib PUBLIC ../lib/c_library_v2_openhd)
 
 # Note: We do not need wifibroadcast as a whole here, we can get the header-only files.
 target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
