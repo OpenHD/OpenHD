@@ -23,9 +23,15 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   if(openhd::manually_defined_cards_file_exists()){
     // Much easier to do, no weird trying to figure out what to use the card(s) for
     auto tmp=openhd::get_manually_defined_cards_from_file();
-    auto processed=DWifiCards::find_cards_from_manual_file(tmp.wifibroadcast_cards,tmp.hotspot_card);
-    monitor_mode_cards=processed.monitor_mode_cards;
-    opt_hotspot_card=processed.hotspot_card;
+    if(m_profile.is_air){
+      auto processed=DWifiCards::find_cards_from_manual_file({tmp.air_wifibroadcast_card},tmp.hotspot_card);
+      monitor_mode_cards=processed.monitor_mode_cards;
+      opt_hotspot_card=processed.hotspot_card;
+    }else{
+      auto processed=DWifiCards::find_cards_from_manual_file(tmp.ground_wifibroadcast_cards,tmp.hotspot_card);
+      monitor_mode_cards=processed.monitor_mode_cards;
+      opt_hotspot_card=processed.hotspot_card;
+    }
   }else{
     // We need to discover the connected cards and reason about their usage
     //Find out which cards are connected first

@@ -58,7 +58,7 @@ static const struct option long_options[] = {
     {"debug-telemetry", no_argument, nullptr, 'y'},
     {"debug-video", no_argument, nullptr, 'z'},
     {"no-qt-autostart", no_argument, nullptr, 'w'},
-    {"run-time_seconds", required_argument, nullptr, 'r'},
+    {"run-time-seconds", required_argument, nullptr, 'r'},
     {"continue-without-wb-card", no_argument, nullptr, 'q'},
     {nullptr, 0, nullptr, 0},
 };
@@ -127,6 +127,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         break;
       case 'q':
         ret.continue_without_wb_card= true;
+        break;
       case '?':
       default:
         std::cout << "Usage: \n" <<
@@ -140,7 +141,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
             "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n"<<
             "--force-custom-unmanaged-camera [only on air,custom unmanaged camera in openhd,cannot be autodetected] \n"<<
             "--force-ip-camera [only on air, ip camera, cannot be autodetected] \n"<<
-            "--run-time_seconds -r [Manually specify run time (default infinite),for debugging] \n"<<
+            "--run-time-seconds -r [Manually specify run time (default infinite),for debugging] \n"<<
             "--continue-without-wb-card -q [continue the startup process even though no monitor mode card has been found yet] \n";
         exit(1);
     }

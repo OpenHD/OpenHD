@@ -121,7 +121,7 @@ static std::string create_parse_for_codec(const VideoCodec& codec){
  */
 static std::string createDummyStream(const CameraSettings& settings) {
   std::stringstream ss;
-  ss << "videotestsrc ! ";
+  ss << "videotestsrc name=videotestsrc ! ";
   // h265 cannot do NV12, but I420.
   // x264 and mjpeg can do both NV12 and I420
   // so we use I420 here since every SW encoder can do it.

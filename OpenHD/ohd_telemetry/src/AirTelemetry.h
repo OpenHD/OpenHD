@@ -21,6 +21,7 @@
 // Dirty
 #include "openhd-rpi-os-configure-vendor-cam.hpp"
 #include "endpoints/WBEndpoint.h"
+#include "gpio_control/RaspberryPiGPIOControl.h"
 
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
@@ -56,7 +57,10 @@ class AirTelemetry : public MavlinkSystem{
    * @param settings the settings for this camera
    */
   void add_settings_camera_component(int camera_index,const std::vector<openhd::Setting>& settings);
-  //
+  /**
+   * The link handle can be set later after instantiation - until it is set, messages from/to the
+   * ground unit are just discarded.
+   */
   void set_link_handle(std::shared_ptr<OHDLink> link);
  private:
   const OHDPlatform _platform;
@@ -79,6 +83,8 @@ class AirTelemetry : public MavlinkSystem{
   std::mutex components_lock;
   std::vector<std::shared_ptr<MavlinkComponent>> components;
   std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
+  // rpi only, allow changing gpios via settings
+  std::unique_ptr<openhd::telemetry::rpi::GPIOControl> m_opt_gpio_control=nullptr;
   // R.N only on air, and only FC uart settings
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();

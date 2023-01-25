@@ -23,6 +23,9 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   if(_platform.platform_type==PlatformType::RaspberryPi){
     m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(_platform);
   }
+  if(_platform.platform_type==PlatformType::RaspberryPi){
+    m_opt_gpio_control=std::make_unique<openhd::telemetry::rpi::GPIOControl>();
+  }
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their paramters.
   generic_mavlink_param_provider->add_params(get_all_settings());
@@ -38,6 +41,17 @@ void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages)
   std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
   if(m_serial_endpoint){
     auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_AIR);
+    for(auto& msg:generic){
+      if(msg.m.msgid==MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE){
+        // Now this is really dirty / confusing - the message is coming from the OHD ground station
+        // (and therefore should have OHS_SYS_ID_GROUND) as source sys id - however, ardupliot has a check in place
+        // https://github.com/ArduPilot/ardupilot/blob/master/libraries/GCS_MAVLink/GCS_Common.cpp#L3507
+        // That only lets messages through coming from the "GCS" aka ground control station - which doesn't create
+        // the message in our case.
+        msg.m.sysid = QOPENHD_SYS_ID;
+        //m_console->debug("Got RC channels override message for FC");
+      }
+    }
     m_serial_endpoint->sendMessages(generic);
   }else{
     //m_console->warn("Cannot send message to FC");
@@ -210,6 +224,9 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   if(_platform.platform_type==PlatformType::RaspberryPi){
     const auto tmp=board_type_to_string(_platform.board_type);
     ret.push_back(openhd::create_read_only_string("BOARD_TYPE",tmp));
+  }
+  if(m_opt_gpio_control!= nullptr){
+    OHDUtil::vec_append(ret,m_opt_gpio_control->get_all_settings());
   }
   openhd::testing::append_dummy_if_empty(ret);
   return ret;

@@ -69,6 +69,7 @@ class SerialEndpoint : public MEndpoint{
   // Limit warning console logs to not spam the console
   static constexpr auto MIN_DELAY_BETWEEN_SERIAL_READ_FAILED_LOG_MESSAGES=std::chrono::seconds(3);
   std::chrono::steady_clock::time_point m_last_log_serial_read_failed=std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point m_last_log_cannot_send_no_fd=std::chrono::steady_clock::now();
   int m_n_failed_reads=0;
   //std::unique_ptr<openhd::log::LimitedRateLogger> m_limited_rate_logger;
 };

@@ -97,6 +97,9 @@ SET(sources
     "src/MavlinkComponent.h"
     "src/OHDTelemetry.cpp"
     "src/OHDTelemetry.h"
+    src/gpio_control/RaspberryPiGPIOControl.cpp
+    src/gpio_control/RaspberryPiGPIOControl.h
+    src/gpio_control/RaspberryPiGPIOControlSettings.h
 )
 
 # Build it as a library
@@ -113,9 +116,8 @@ add_library(mavlink INTERFACE)
 # from https://mavlink.io/en/mavgen_c/
 #You can supress the warnings in CMake using
 target_compile_options(mavlink INTERFACE -Wno-address-of-packed-member -Wno-cast-align)
-target_include_directories(mavlink INTERFACE ../lib/c_library_v2_openhd/)
+target_include_directories(mavlink INTERFACE ../lib/mavlink-headers/mavlink/v2.0)
 target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
-#target_include_directories(OHDTelemetryLib PUBLIC ../lib/c_library_v2_openhd)
 
 # Note: We do not need wifibroadcast as a whole here, we can get the header-only files.
 target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
@@ -146,14 +148,5 @@ add_executable(test_joystick_reader tests/test_joystick_reader.cpp)
 target_link_libraries(test_joystick_reader OHDTelemetryLib)
 
 ####
-# NOTE: We do not need MAVSDK for OpenHD, we only compile some test tools here if
-# MAVSDK would be found
-find_package(MAVSDK QUIET)
-if(MAVSDK_FOUND)
-    add_executable(test_mavsdk_serial tests/test_mavsdk_serial.cpp)
-    target_link_libraries(test_mavsdk_serial OHDTelemetryLib MAVSDK::mavsdk)
-
-    add_executable(test_mavsdk_param tests/test_mavsdk_param.cpp)
-    target_link_libraries(test_mavsdk_param OHDTelemetryLib MAVSDK::mavsdk)
-endif()
-#####
+# NOTE: We do not need MAVSDK for OpenHD, the small amount of code we share is directly included
+####

@@ -71,8 +71,12 @@ bool SerialEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& message
 bool SerialEndpoint::write_data_serial(const std::vector<uint8_t> &data){
   //m_console->debug("Write data serial:{} bytes",data.size());
   if(m_fd ==-1){
-    // cannot send data at the time, UART not setup / doesn't exist.
-    m_console->warn("Cannot send data, no fd");
+    // cannot send data at the time, UART not setup / doesn't exist. Limit message to once per second
+    const auto elapsed=std::chrono::steady_clock::now()-m_last_log_cannot_send_no_fd;
+    if(elapsed>std::chrono::seconds(1)){
+      m_console->warn("Cannot send data, no fd");
+      m_last_log_cannot_send_no_fd=std::chrono::steady_clock::now();
+    }
     return false;
   }
   const auto before=std::chrono::steady_clock::now();
