@@ -402,6 +402,7 @@ void GStreamerStream::restart_async() {
     if(m_async_thread->joinable()){
       m_console->info("restart_async: waiting for previous operation to finish");
       m_async_thread->join();
+      m_console->info("restart_async: previous operation finished");
     }
     m_async_thread =nullptr;
   }
