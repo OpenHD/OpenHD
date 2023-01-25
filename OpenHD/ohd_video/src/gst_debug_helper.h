@@ -19,12 +19,13 @@ static std::string gst_state_change_return_to_string(GstStateChangeReturn & gst_
   return fmt::format("{}",gst_element_state_change_return_get_name(gst_state_change_return));
 }
 
-static void gst_element_debug_current_state(GstElement * element){
+// BLocks up to 1 second, but should never block more than that
+static std::string gst_element_get_current_state_as_string(GstElement * element){
   GstState state;
   GstState pending;
   const auto timeout=std::chrono::seconds(1);
   auto returnValue = gst_element_get_state(element, &state, &pending, std::chrono::duration_cast<std::chrono::nanoseconds>(timeout).count());
-  openhd::log::get_default()->debug("Gst state: ret:{} state:{} pending:{}",
+  return fmt::format("Gst state: ret:{} state:{} pending:{}",
                                     gst_state_change_return_to_string(returnValue),
                                     gst_element_state_get_name(state),
                                     gst_element_state_get_name(pending));
@@ -35,13 +36,6 @@ static void gst_element_set_set_state_and_log_result(GstElement *element, GstSta
   openhd::log::get_default()->debug("State changed to {} result {}",
                                     gst_element_state_get_name(state),
                                     gst_state_change_return_to_string(res));
-}
-
-static void set_state_and_wait(GstElement *element, GstState state){
-  auto ret=gst_element_set_state(element,state);
-  if(ret==GST_STATE_CHANGE_ASYNC){
-    openhd::log::get_default()->debug("state async, waiting");
-  }
 }
 
 // From https://gstreamer.freedesktop.org/documentation/application-development/advanced/pipeline-manipulation.html?gi-language=c

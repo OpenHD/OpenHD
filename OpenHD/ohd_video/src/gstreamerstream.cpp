@@ -298,7 +298,7 @@ void GStreamerStream::start() {
   }
   openhd::register_message_cb(m_gst_pipeline);
   gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
-  openhd::gst_element_debug_current_state(m_gst_pipeline);
+  m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
 }
 
 void GStreamerStream::stop() {
@@ -308,6 +308,7 @@ void GStreamerStream::stop() {
     return;
   }
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline, GST_STATE_PAUSED);
+  m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
 }
 
 void GStreamerStream::cleanup_pipe() {
