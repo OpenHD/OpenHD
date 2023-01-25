@@ -43,7 +43,9 @@ class GStreamerStream : public CameraStream {
   void restartIfStopped() override;
   void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) override;
  public:
+  // Set gst state to PLAYING
   void start() override;
+  // Set gst state to PAUSED
   void stop() override;
   void cleanup_pipe();
   std::string createDebug() override;

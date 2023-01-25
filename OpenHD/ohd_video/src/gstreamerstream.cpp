@@ -12,6 +12,7 @@
 #include "gst_helper.hpp"
 
 #include "gst_appsink_helper.h"
+#include "gst_debug_helper.h"
 #include "rtp_eof_helper.h"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
@@ -295,11 +296,9 @@ void GStreamerStream::start() {
     m_console->warn("gst_pipeline==null");
     return;
   }
+  openhd::register_message_cb(m_gst_pipeline);
   gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
-  GstState state;
-  GstState pending;
-  auto returnValue = gst_element_get_state(m_gst_pipeline, &state, &pending, 1000000000);
-  m_console->debug("Gst state: {} {}.{}",returnValue,state,pending);
+  openhd::gst_element_debug_current_state(m_gst_pipeline);
 }
 
 void GStreamerStream::stop() {
@@ -308,7 +307,7 @@ void GStreamerStream::stop() {
     m_console->debug("gst_pipeline==null");
     return;
   }
-  gst_element_set_state(m_gst_pipeline, GST_STATE_PAUSED);
+  openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline, GST_STATE_PAUSED);
 }
 
 void GStreamerStream::cleanup_pipe() {
@@ -324,6 +323,18 @@ void GStreamerStream::cleanup_pipe() {
     m_console->debug("gst_pipeline==null");
     return;
   }
+  {
+    /*auto tmp = gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "videotestsrc");
+    if(tmp){
+      m_console->debug("Got videotestsrc");
+      if(!gst_element_send_event(tmp, gst_event_new_eos())){
+        m_console->info("error gst_element_send_event eos"); // No idea what that means
+      }else{
+        m_console->info("success gst_element_send_event eos");
+      }
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(10));*/
+  }
   // Jan 22: Confirmed this hangs quite a lot of pipeline(s) - removed for that reason
   /*m_console->debug("send EOS begin");
   // according to @Alex W we need a EOS signal here to properly shut down the pipeline
@@ -333,7 +344,7 @@ void GStreamerStream::cleanup_pipe() {
     m_console->info("success gst_element_send_event eos");
   }*/
   // TODO wait for the eos event to travel down the pipeline,but do it in a safe manner to not block for infinity
-  gst_element_set_state (m_gst_pipeline, GST_STATE_NULL);
+  openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline, GST_STATE_NULL);
   gst_object_unref (m_gst_pipeline);
   m_gst_pipeline =nullptr;
   m_console->debug("GStreamerStream::cleanup_pipe() end");
