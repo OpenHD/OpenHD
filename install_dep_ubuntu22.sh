@@ -4,6 +4,9 @@
 # This is for the xxx_build_test.yml github CI or when setting up a development environment
 # PLEASE KEEP THIS FILE AS CLEAN AS POSSIBLE, Ubuntu22 is the baseline - for other platforms / OS versions, create their own files
 
+# weird ubuntu 22 libundwind fix
+sudo apt install -y libunwind-dev
+
 sudo apt -y install cmake build-essential autotools-dev automake libtool autoconf \
             libpcap-dev libsodium-dev \
             libboost-dev libboost-filesystem-dev \
