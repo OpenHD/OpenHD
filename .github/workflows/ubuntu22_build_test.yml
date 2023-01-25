@@ -33,7 +33,7 @@ jobs:
 
       - name: Run as air, but limited to X seconds
         run: |
-          sudo ./OpenHD/build/openhd -a -r 10
+          sudo ./OpenHD/build/openhd -a --run-time-seconds 10 --continue-without-wb-card
       - name: Run as ground, but limited to X seconds
         run: |
-          sudo ./OpenHD/build/openhd -a -g 10
+          sudo ./OpenHD/build/openhd -g --run-time-seconds 10 --continue-without-wb-card
