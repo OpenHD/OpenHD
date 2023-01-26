@@ -49,7 +49,7 @@ static std::optional<GstBitrateControlElement> get_dynamic_bitrate_control_eleme
     openhd::log::get_default()->warn("dynamic bitrate control element doesn't work");
     return std::nullopt;
   }
-  openhd::log::get_default()->info("Properly got bitrate control, current:{}",actual_bits_per_second);
+  openhd::log::get_default()->info("Properly got bitrate control for camera {}, current:{}",camera_type_to_string(camera_type),actual_bits_per_second);
   return ret;
 }
 
