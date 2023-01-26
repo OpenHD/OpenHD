@@ -17,7 +17,7 @@ static std::string get_ohd_eth_hotspot_connection_nm_filename(){
 
 static void delete_existing_hotspot_connection(const std::string& eth_device_name){
   const auto filename=get_ohd_eth_hotspot_connection_nm_filename();
-  if(OHDFilesystemUtil::exists(filename.c_str())){
+  if(OHDFilesystemUtil::exists(filename)){
     OHDUtil::run_command("nmcli",{"con","delete", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME});
   }
 }
@@ -26,7 +26,7 @@ static void create_ethernet_hotspot_connection_if_needed(const std::shared_ptr<s
   // sudo nmcli con add type ethernet con-name "ohd_eth_hotspot" ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
   // sudo nmcli con add type ethernet ifname eth0 con-name ohd_eth_hotspot autoconnect no
   // sudo nmcli con modify ohd_eth_hotspot ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
-  if(OHDFilesystemUtil::exists(get_ohd_eth_hotspot_connection_nm_filename().c_str())){
+  if(OHDFilesystemUtil::exists(get_ohd_eth_hotspot_connection_nm_filename())){
     m_console->debug("Eth hs connection already exists");
     return;
   }
