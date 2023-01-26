@@ -113,8 +113,9 @@ OHDVideoAir::get_all_camera_settings() {
 }
 
 void OHDVideoAir::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
-  for(auto& stream:m_camera_streams){
-    stream->handle_change_bitrate_request(lb);
+  // For now, only adjust the primary stream bitrate
+  if(!m_camera_streams.empty()){
+    m_camera_streams[0]->handle_change_bitrate_request(lb);
   }
 }
 
