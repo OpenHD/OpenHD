@@ -62,8 +62,7 @@ void GStreamerStream::setup() {
   }
   m_pipeline_content.str("");
   m_pipeline_content.clear();
-  m_bitrate_ctrl_element= nullptr;
-  m_curr_dynamic_bitrate_kbits =-1;
+  m_bitrate_ctrl_element= std::nullopt;
   switch (camera.type) {
     case CameraType::RPI_CSI_MMAL: {
       setup_raspberrypi_mmal_csi();
@@ -151,16 +150,7 @@ void GStreamerStream::setup() {
     m_console->error( "Failed to create pipeline: {}",error->message);
     return;
   }
-  if(camera.type==CameraType::RPI_CSI_MMAL){
-    m_bitrate_ctrl_element= gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "rpicamsrc");
-    m_console->debug("Has bitrate control element: {}",(m_bitrate_ctrl_element!=nullptr) ? "yes":"no");
-    m_bitrate_ctrl_element_takes_kbit=false;
-  }else if(camera.type==CameraType::DUMMY_SW){
-    m_bitrate_ctrl_element= gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "swencoder");
-    m_console->debug("Has bitrate control element: {}",(m_bitrate_ctrl_element!=nullptr) ? "yes":"no");
-    // sw encoder(s) take kbit/s
-    m_bitrate_ctrl_element_takes_kbit= true;
-  }
+  m_bitrate_ctrl_element=get_dynamic_bitrate_control_element_in_pipeline(m_gst_pipeline,camera.type);
   // we pull data out of the gst pipeline as cpu memory buffer(s) using the gstreamer "appsink" element
   m_app_sink_element=gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "out_appsink");
   assert(m_app_sink_element);
@@ -418,27 +408,16 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
 }
 
 bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
-  if(m_bitrate_ctrl_element!= nullptr){
-    if(m_bitrate_ctrl_element_takes_kbit){
-      g_object_set(m_bitrate_ctrl_element, "bitrate", bitrate_kbits, NULL);
-      gint actual_kbits_per_second;
-      g_object_get(m_bitrate_ctrl_element,"bitrate",&actual_kbits_per_second,NULL);
-      m_console->debug("try_dynamically_change_bitrate wanted:{} kBit/s set:{} kBit/s",bitrate_kbits,actual_kbits_per_second);
-      return true;
-    }else{
-      //rpicamsrc for example takes bit/s instead of kbit/s
-      const int bitrate_bits_per_second = kbits_to_bits_per_second(bitrate_kbits);
-      g_object_set(m_bitrate_ctrl_element, "bitrate", bitrate_bits_per_second, NULL);
-      gint actual_bits_per_second;
-      g_object_get(m_bitrate_ctrl_element,"bitrate",&actual_bits_per_second,NULL);
-      m_console->debug("try_dynamically_change_bitrate wanted:{} kBit/s set:{} kBit/s",
-                       bits_per_second_to_kbits_per_second(bitrate_bits_per_second),
-                       bits_per_second_to_kbits_per_second(actual_bits_per_second));
-      return true;
-    }
+  if(m_gst_pipeline== nullptr){
+    m_console->debug("cannot change_bitrate, no pipeline");
+    return false;
   }
-  m_console->warn("camera {} does not support dynamic bitrate control",m_camera_holder->get_camera().index);
-  return false;
+  if(m_bitrate_ctrl_element==std::nullopt){
+    m_console->warn("Camera {} does not support changing bitrate dynamically",m_camera_holder->get_camera().name);
+    return false;
+  }
+  auto bitrate_ctrl_element=m_bitrate_ctrl_element.value();
+  return change_bitrate(bitrate_ctrl_element,bitrate_kbits);
 }
 
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {

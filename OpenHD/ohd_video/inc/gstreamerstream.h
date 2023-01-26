@@ -15,6 +15,8 @@
 
 #include "openhd-spdlog.hpp"
 
+#include "gst_bitrate_controll_wrapper.hpp"
+
 // Implementation of OHD CameraStream for pretty much everything, using
 // gstreamer.
 // NOTE: What we are doing here essentially is creating a big gstreamer pipeline string and then
@@ -54,11 +56,9 @@ class GStreamerStream : public CameraStream {
   std::mutex m_pipeline_mutex;
   // points to a running gst pipeline instance (unless in stopped & cleaned up state)
   GstElement *m_gst_pipeline = nullptr;
-  // not supported by all camera(s). The element in the pipeline that has a bitrate property
+  // not supported by all camera(s).
   // for dynamically changing the bitrate
-  GstElement *m_bitrate_ctrl_element= nullptr;
-  // some encoders take the bitrate as kBit/s, some take it as bits per second
-  bool m_bitrate_ctrl_element_takes_kbit=false;
+  std::optional<GstBitrateControlElement> m_bitrate_ctrl_element=std::nullopt;
   // The pipeline that is started in the end
   std::stringstream m_pipeline_content;
   // To reduce the time on the param callback(s) - they need to return immediately to not block the param server
