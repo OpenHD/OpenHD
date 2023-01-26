@@ -12,6 +12,12 @@
 
 namespace openhd::video{
 
+// TODO what about the following:
+// During streaming, we record to a file in /home/openhd/Videos/tmp with a container that supports
+// playback even when the streaming fails unexpectedly.
+// Once we are done writing to this file (for example, camera is stopped properly) we demux it into
+// a more commonly used format (e.g. from .mkv to .mp4)
+
 static constexpr auto RECORDINGS_PATH="/home/openhd/Videos/";
 
 /**
@@ -26,7 +32,7 @@ static std::string create_unused_recording_filename(const std::string& suffix){
     std::stringstream filename;
     filename<<RECORDINGS_PATH;
     filename<<"recording"<<i<<suffix;
-    if(!OHDFilesystemUtil::exists(filename.str().c_str())){
+    if(!OHDFilesystemUtil::exists(filename.str())){
       return filename.str();
     }
   }
