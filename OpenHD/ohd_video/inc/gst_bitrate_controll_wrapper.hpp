@@ -46,10 +46,10 @@ static std::optional<GstBitrateControlElement> get_dynamic_bitrate_control_eleme
   gint actual_bits_per_second=-1;
   g_object_get(ret.encoder, ret.property_name.c_str(),&actual_bits_per_second,NULL);
   if(actual_bits_per_second==-1){
-    openhd::log::get_default()->debug("dynamic bitrate control element doesn't work");
+    openhd::log::get_default()->warn("dynamic bitrate control element doesn't work");
     return std::nullopt;
   }
-  openhd::log::get_default()->debug("Properly got bitrate control, current:{}",actual_bits_per_second);
+  openhd::log::get_default()->info("Properly got bitrate control, current:{}",actual_bits_per_second);
   return ret;
 }
 
@@ -62,7 +62,7 @@ static bool change_bitrate(const GstBitrateControlElement& ctrl_el,int bitrate_k
     openhd::log::get_default()->warn("Cannot change bitrate to {} kbit/s, got {}",bitrate_kbits,actual_bits_per_second);
     return false;
   }
-  openhd::log::get_default()->info("Changed bitrate to {} kbit/s",bitrate_kbits);
+  openhd::log::get_default()->debug("Changed bitrate to {} kbit/s",bitrate_kbits);
   return true;
 }
 
