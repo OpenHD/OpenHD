@@ -39,9 +39,9 @@ static void gst_element_set_set_state_and_log_result(GstElement *element, GstSta
 }
 
 // From https://gstreamer.freedesktop.org/documentation/application-development/advanced/pipeline-manipulation.html?gi-language=c
-static void cb_message (GstBus     *bus,GstMessage *message,gpointer    user_data){
-  GstElement *pipeline = GST_ELEMENT (user_data);
-
+// and https://github.com/GStreamer/gst-docs/blob/master/examples/bus_example.c
+static gboolean my_bus_callback(GstBus *bus,GstMessage *message,gpointer user_data){
+  openhd::log::get_default()->debug("Got gst message [{}]",GST_MESSAGE_TYPE_NAME (message));
   switch (GST_MESSAGE_TYPE (message)) {
     case GST_MESSAGE_ERROR:
       openhd::log::get_default()->debug("we received an error!");
@@ -72,6 +72,7 @@ static void cb_message (GstBus     *bus,GstMessage *message,gpointer    user_dat
       openhd::log::get_default()->debug("unknown message ");
       break;
   }
+  return TRUE;
 }
 
 static void register_message_cb(GstElement *pipeline){
@@ -80,10 +81,12 @@ static void register_message_cb(GstElement *pipeline){
     openhd::log::get_default()->debug("Cannot get bus");
     return;
   }
-  gst_bus_add_signal_watch (bus);
-  g_signal_connect (bus, "message", (GCallback) cb_message,
-                   pipeline);
-  openhd::log::get_default()->debug("added message debug cb");
+  gst_bus_add_watch (bus, my_bus_callback, NULL);
+  gst_object_unref (bus);
+  openhd::log::get_default()->debug("added gst bus watch");
 }
+
+// From https://github.com/GStreamer/gst-docs/blob/master/examples/bus_example.c
+
 }
 #endif  // OPENHD_OPENHD_OHD_VIDEO_SRC_GST_DEBUG_HELPER_H_
