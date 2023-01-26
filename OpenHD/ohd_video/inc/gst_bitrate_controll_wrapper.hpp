@@ -34,9 +34,10 @@ static std::optional<GstBitrateControlElement> get_dynamic_bitrate_control_eleme
     ret.property_name="bitrate";
     ret.takes_kbit= true;
   }else if(camera_type==CameraType::RPI_CSI_LIBCAMERA || camera_type==CameraType::RPI_VEYE_CSI_V4l2){
-    ret.encoder= gst_bin_get_by_name(GST_BIN(gst_pipeline), "rpi_v4l2_encoder");
-    ret.property_name="video_bitrate";
-    ret.takes_kbit= false;
+    // ARGH - cannot change extra-controls without restart
+    //ret.encoder= gst_bin_get_by_name(GST_BIN(gst_pipeline), "rpi_v4l2_encoder");
+    //ret.property_name="video_bitrate";
+    //ret.takes_kbit= false;
   }
   if(ret.encoder== nullptr){
     openhd::log::get_default()->debug("Cannot find dynamic bitrate control element for camera {}", camera_type_to_string(camera_type));
