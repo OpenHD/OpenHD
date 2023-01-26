@@ -314,27 +314,15 @@ void GStreamerStream::stop() {
 void GStreamerStream::cleanup_pipe() {
   m_console->debug("GStreamerStream::cleanup_pipe() begin");
   if(m_pull_samples_thread){
-    m_console->debug("terminating appsink begin");
+    m_console->debug("terminating appsink poll thread begin");
     m_pull_samples_run= false;
     if(m_pull_samples_thread->joinable())m_pull_samples_thread->join();
     m_pull_samples_thread= nullptr;
-    m_console->debug("terminating appsink end");
+    m_console->debug("terminating appsink poll thread end");
   }
   if(!m_gst_pipeline){
     m_console->debug("gst_pipeline==null");
     return;
-  }
-  {
-    /*auto tmp = gst_bin_get_by_name(GST_BIN(m_gst_pipeline), "videotestsrc");
-    if(tmp){
-      m_console->debug("Got videotestsrc");
-      if(!gst_element_send_event(tmp, gst_event_new_eos())){
-        m_console->info("error gst_element_send_event eos"); // No idea what that means
-      }else{
-        m_console->info("success gst_element_send_event eos");
-      }
-    }
-    std::this_thread::sleep_for(std::chrono::seconds(10));*/
   }
   // Jan 22: Confirmed this hangs quite a lot of pipeline(s) - removed for that reason
   /*m_console->debug("send EOS begin");
@@ -344,7 +332,7 @@ void GStreamerStream::cleanup_pipe() {
   }else{
     m_console->info("success gst_element_send_event eos");
   }*/
-  // TODO wait for the eos event to travel down the pipeline,but do it in a safe manner to not block for infinity
+  // TODO do we need to wait until the pipeline is actually in state NULL ?
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline, GST_STATE_NULL);
   gst_object_unref (m_gst_pipeline);
   m_gst_pipeline =nullptr;
