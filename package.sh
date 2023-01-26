@@ -83,6 +83,8 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   --before-install ../../before-install.sh \
   $PLATFORM_PACKAGES \
   -d "iw" \
+  -d "libspdlog-dev" \
+  -d "libcamera-openhd" \
   -d "aircrack-ng" \
   -d "i2c-tools" \
   -d "libv4l-dev" \
