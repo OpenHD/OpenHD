@@ -134,6 +134,7 @@ static void enableSeekIfFound() {
     ss << std::endl;
     ss << "SeekRotate=11";
     ss << std::endl;
+    OHDFilesystemUtil::create_directories("/etc/openhd");
     OHDFilesystemUtil::write_file("/etc/openhd/seekthermal.conf",ss.str());
 
     std::vector<std::string> ar{"start", "seekthermal"};
