@@ -55,8 +55,10 @@ static void enableFlirIfFound() {
   libusb_device_handle *handle = libusb_open_device_with_vid_pid(
       nullptr, FLIR_ONE_VENDOR_ID, FLIR_ONE_PRODUCT_ID);
   if(!handle)return;
-  OHDUtil::run_command("systemctl", {"start", "flirone"});
+  // Close libusb handles after we don't need them anymore
   libusb_close(handle);
+  // TODO missing r.n
+  OHDUtil::run_command("systemctl", {"start", "flirone"});
 }
 
 /*
@@ -85,11 +87,15 @@ static void enableSeekIfFound() {
    openhd::log::get_default()->warn("Failed to initialize libusb");
     return;
   }
-
   libusb_device_handle *handle_compact = libusb_open_device_with_vid_pid(
       nullptr, SEEK_COMPACT_VENDOR_ID, SEEK_COMPACT_PRODUCT_ID);
   libusb_device_handle *handle_compact_pro = libusb_open_device_with_vid_pid(
       nullptr, SEEK_COMPACT_PRO_VENDOR_ID, SEEK_COMPACT_PRO_PRODUCT_ID);
+  const bool has_seek_compact=handle_compact != nullptr;
+  const bool has_seek_compact_pro=handle_compact_pro != nullptr;
+  // Close libusb handles after we don't need them anymore
+  if(handle_compact)libusb_close(handle_compact);
+  if(handle_compact_pro) libusb_close(handle_compact_pro);
 
   // todo: this will need to be pulled from the config, we may end up running
   // these from the camera service so that
@@ -98,39 +104,38 @@ static void enableSeekIfFound() {
   std::string model;
   std::string fps;
 
-  if (handle_compact) {
-    openhd::log::get_default()->debug("Found seek");
+  if (has_seek_compact) {
+    openhd::log::get_default()->debug("Found seek_compact");
     model = "seek";
     fps = "7";
   }
 
-  if (handle_compact_pro) {
-    openhd::log::get_default()->debug("Found seekpro");
+  if (has_seek_compact_pro) {
+    openhd::log::get_default()->debug("Found seek_compact_pro");
     model = "seekpro";
     // todo: this is not necessarily accurate, not all compact pro models are
     // 15hz
     fps = "15";
   }
 
-  if (handle_compact_pro || handle_compact) {
-    openhd::log::get_default()->debug("Found seek thermal camera");
-
-    std::ofstream _u("/etc/openhd/seekthermal.conf",
-                     std::ios::binary | std::ios::out);
+  if (has_seek_compact || has_seek_compact_pro) {
+    openhd::log::get_default()->debug("Found seek_compact / seek_compact_pro");
+    std::stringstream ss;
     // todo: this should be more dynamic and allow for multiple cameras
-    _u << "DeviceNode=/dev/video4";
-    _u << std::endl;
-    _u << "SeekModel=";
-    _u << model;
-    _u << std::endl;
-    _u << "FPS=";
-    _u << fps;
-    _u << std::endl;
-    _u << "SeekColormap=11";
-    _u << std::endl;
-    _u << "SeekRotate=11";
-    _u << std::endl;
-    _u.close();
+    ss << "DeviceNode=/dev/video4";
+    ss << std::endl;
+    ss << "SeekModel=";
+    ss << model;
+    ss << std::endl;
+    ss << "FPS=";
+    ss << fps;
+    ss << std::endl;
+    ss << "SeekColormap=11";
+    ss << std::endl;
+    ss << "SeekRotate=11";
+    ss << std::endl;
+    OHDFilesystemUtil::create_directories("/etc/openhd");
+    OHDFilesystemUtil::write_file("/etc/openhd/seekthermal.conf",ss.str());
 
     std::vector<std::string> ar{"start", "seekthermal"};
     OHDUtil::run_command("systemctl", ar);
