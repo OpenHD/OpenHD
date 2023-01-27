@@ -13,7 +13,7 @@
 // (we cannot just use the thread that fetches data from the joystick, at least not for now)
 class RcJoystickSender {
  public:
-  typedef std::function<void(const MavlinkMessage& msg)> SEND_MESSAGE_CB;
+  typedef std::function<void(std::array<uint16_t,18> channels)> SEND_MESSAGE_CB;
   RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz,JoystickReader::CHAN_MAP chan_map);
   void change_update_rate(int update_rate_hz);
   // update the channel mapping, thread-safe

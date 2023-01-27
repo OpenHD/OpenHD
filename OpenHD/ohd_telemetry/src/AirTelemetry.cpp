@@ -41,17 +41,7 @@ void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages)
   std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
   if(m_serial_endpoint){
     auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_AIR);
-    for(auto& msg:generic){
-      if(msg.m.msgid==MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE){
-        // Now this is really dirty / confusing - the message is coming from the OHD ground station
-        // (and therefore should have OHS_SYS_ID_GROUND) as source sys id - however, ardupliot has a check in place
-        // https://github.com/ArduPilot/ardupilot/blob/master/libraries/GCS_MAVLink/GCS_Common.cpp#L3507
-        // That only lets messages through coming from the "GCS" aka ground control station - which doesn't create
-        // the message in our case.
-        //msg.m.sysid = QOPENHD_SYS_ID;
-        //m_console->debug("Got RC channels override message for FC");
-      }
-    }
+    // NOTE: Remember there is a hack in place for rc channels override in regards to the sender sys id
     m_serial_endpoint->sendMessages(generic);
   }else{
     //m_console->warn("Cannot send message to FC");
