@@ -33,7 +33,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
     //m_joystick_reader=std::make_unique<JoystickReader>();
     m_rc_joystick_sender=std::make_unique<RcJoystickSender>([this](const MavlinkMessage &msg){
           send_messages_air_unit({msg});
-      // temporary / hacky: Send the messages to QOpenHD, such that we can display it in the UI
+          // temporary / hacky: Send the messages to QOpenHD, such that we can display it in the UI
           send_messages_ground_station_clients({msg});
     },m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz,JoystickReader::get_default_channel_mapping());
     const auto parsed=JoystickReader::convert_string_to_channel_mapping(m_groundTelemetrySettings->get_settings().rc_channel_mapping);
