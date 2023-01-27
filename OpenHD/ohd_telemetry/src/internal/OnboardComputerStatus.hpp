@@ -76,6 +76,7 @@ static constexpr auto VCGENCMD_CLOCK_CPU="arm";
 static constexpr auto VCGENCMD_CLOCK_ISP="isp";
 static constexpr auto VCGENCMD_CLOCK_H264="h264";
 static constexpr auto VCGENCMD_CLOCK_CORE="core";
+static constexpr auto VCGENCMD_CLOCK_V3D="v3d";
 // See https://elinux.org/RPI_vcgencmd_usage
 // Shows clock frequency, clock can be one of arm, core, h264, isp, v3d, uart, pwm, emmc, pixel, vec, hdmi, dpi.
 // NOTE: vcgencmd returns values in hertz, use the "mhz" util for more easy to read values.

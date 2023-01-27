@@ -142,7 +142,7 @@ static void lululululu(){
   //mavlink_msg_param_ext_request_list_pack
 }
 
-static MavlinkMessage pack_rc_message(const int sys_id,const int comp_id,
+static MavlinkMessage rc_channels_override_from_array(const int sys_id,const int comp_id,
                                            const std::array<uint16_t,18>& rc_data,
                                            const uint8_t target_system,
                                            const uint8_t target_component){

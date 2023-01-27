@@ -18,6 +18,11 @@ MEndpoint::MEndpoint(std::string tag,bool debug_mavlink_msg_packet_loss)
 void MEndpoint::sendMessages(const std::vector<MavlinkMessage>& messages) {
   if(messages.empty())return;
   m_tx_n_bytes+= get_size(messages);
+  /*for(const auto& msg: messages){
+    if(msg.m.msgid==MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE){
+      openhd::log::get_default()->debug("Send rc channels override");
+    }
+  }*/
   //openhd::log::create_or_get(TAG)->debug("N messages send:{}",messages.size());
   const auto res= sendMessagesImpl(messages);
   m_n_messages_sent+=messages.size();
