@@ -23,7 +23,8 @@ void RcJoystickSender::send_data_until_terminate() {
       // NOTE That we fixup the sys id on the air to workaround a ardupilot bug - for now, we keep the
       // OHD_SYS_ID_GROUND though, since the message is coming from the openhd ground unit and its sys id,
       // not from QOpenHD or similar
-      auto msg= pack_rc_message(OHD_SYS_ID_GROUND,0,curr.values,0,0);
+      // 1==FC sys id
+      auto msg= pack_rc_message(OHD_SYS_ID_GROUND,0,curr.values,1,0);
       m_cb(msg);
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(m_delay_in_milliseconds));
