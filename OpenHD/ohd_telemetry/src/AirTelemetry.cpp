@@ -48,7 +48,7 @@ void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages)
         // https://github.com/ArduPilot/ardupilot/blob/master/libraries/GCS_MAVLink/GCS_Common.cpp#L3507
         // That only lets messages through coming from the "GCS" aka ground control station - which doesn't create
         // the message in our case.
-        msg.m.sysid = QOPENHD_SYS_ID;
+        //msg.m.sysid = QOPENHD_SYS_ID;
         //m_console->debug("Got RC channels override message for FC");
       }
     }
