@@ -13,6 +13,8 @@
 // (we cannot just use the thread that fetches data from the joystick, at least not for now)
 class RcJoystickSender {
  public:
+  // This callback is called in regular intervalls with valid rc channel data as long as there is a joystick connected & well.
+  // If there is something wrong with the joystick / no joystick connected this cb is not called (such that FC can do failsafe)
   typedef std::function<void(std::array<uint16_t,18> channels)> SEND_MESSAGE_CB;
   RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz,JoystickReader::CHAN_MAP chan_map);
   void change_update_rate(int update_rate_hz);
