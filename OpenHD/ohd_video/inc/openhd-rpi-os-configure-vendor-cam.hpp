@@ -154,7 +154,7 @@ static void runtime_check_if_all_cam_configs_exist(){
       if(!OHDFilesystemUtil::exists(filename)){
         openhd::log::get_default()->warn("Cam config [{}] is missing !",filename);
       }else{
-        openhd::log::get_default()->debug("Cam config [{}] is available !",filename);
+        //openhd::log::get_default()->debug("Cam config [{}] is available !",filename);
       }
     }
   }
@@ -177,6 +177,8 @@ static constexpr auto rpi_config_file_path="/boot/config.txt";
 
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
+// Returns true on success
+// Returns false otherwise, the original state is then left untouched
 static bool apply_new_cam_config_and_save(const BoardType& board_type,const CamConfig& new_cam_config){
   openhd::log::get_default()->debug("Begin apply cam config {}",cam_config_to_string(new_cam_config));
   const auto cam_config_filename= get_file_name_for_cam_config(board_type,new_cam_config);
@@ -242,30 +244,29 @@ class ConfigChangeHandler{
       // reject, not a valid value
       return false;
     }
+    if(m_changed_once)return false;
     const auto current_configuration=get_current_cam_config_from_file();
     const auto new_configuration=cam_config_from_int(new_value_as_int);
     if(current_configuration==new_configuration){
       openhd::log::get_default()->warn("Not changing cam config,already at {}",cam_config_to_string(current_configuration));
       return true;
     }
-    // this change requires a reboot, so only allow changing once at run time
-    if(m_changed_once)return false;
-    m_changed_once= true;
-    // This will apply the changes asynchronous, even though we are "not done yet"
-    // We assume nothing will fail on this command and return true already,such that we can
-    // send the ack.
-    apply_async(new_configuration);
-    return true;
+    const bool success= apply_new_cam_config_and_save(m_platform.board_type,new_configuration);
+    if(success){
+      m_changed_once= true;
+      // this change requires a reboot
+      reboot_async();
+    }
+    return success;
   }
  private:
   std::mutex m_mutex;
-  bool m_changed_once=false;
   std::unique_ptr<std::thread> m_handle_thread;
   const OHDPlatform m_platform;
-  void apply_async(CamConfig new_value){
+  bool m_changed_once= false;
+  void reboot_async(){
     // This is okay, since we will restart anyways
-    m_handle_thread=std::make_unique<std::thread>([new_value,this]{
-      apply_new_cam_config_and_save(m_platform.board_type,new_value);
+    m_handle_thread=std::make_unique<std::thread>([]{
       std::this_thread::sleep_for(std::chrono::seconds(3));
       OHDUtil::run_command("systemctl",{"start", "reboot.target"});
     });
