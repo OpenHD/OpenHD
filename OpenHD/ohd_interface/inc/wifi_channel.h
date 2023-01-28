@@ -132,6 +132,7 @@ static std::vector<WifiChannel> get_channels_5G(){
       WifiChannel{5680, 136, Space::G5_8, true},
       WifiChannel{5700, 140, Space::G5_8, true},
       WifiChannel{5720, 144, Space::G5_8, true},
+      // For some reason, there is a 25Mhz jump here, at least for rtl8812au
       WifiChannel{5745, 149, Space::G5_8, true},
       WifiChannel{5765, 153, Space::G5_8, true},
       WifiChannel{5785, 157, Space::G5_8, true},

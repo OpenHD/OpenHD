@@ -33,11 +33,11 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
   return WiFiCardType::Unknown;
 }
 
-static std::vector<uint32_t> supported_frequencies(const std::string& device,bool check_2g){
+static std::vector<uint32_t> supported_frequencies(const int phy_index,bool check_2g){
   auto channels_to_try=check_2g ? openhd::get_channels_2G() : openhd::get_channels_5G();
   const auto tmp=openhd::get_all_channel_frequencies(channels_to_try);
   auto supported_frequencies=wifi::commandhelper::
-      iw_get_supported_frequencies(device,openhd::get_all_channel_frequencies(channels_to_try));
+      iw_get_supported_frequencies(phy_index,openhd::get_all_channel_frequencies(channels_to_try));
   return supported_frequencies;
 }
 
@@ -161,8 +161,8 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   card.xx_supports_2ghz=supported_freq.supports_any_2G;
   card.xx_supports_5ghz=supported_freq.supports_any_5G;*/
   // but we now also have a method to figure out all the supported channels
-  card.supported_frequencies_2G=supported_frequencies(card.device_name, true);
-  card.supported_frequencies_5G=supported_frequencies(card.device_name, false);
+  card.supported_frequencies_2G=supported_frequencies(card.phy80211_index, true);
+  card.supported_frequencies_5G=supported_frequencies(card.phy80211_index, false);
 
   // Note that this does not necessarily mean this info is right/complete
   // a card might report a specific channel but then since monitor mode is so hack not support the channel in monitor mode

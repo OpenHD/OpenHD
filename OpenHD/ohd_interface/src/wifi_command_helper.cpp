@@ -99,21 +99,34 @@ static std::string float_without_trailing_zeroes(const float value){
   return ss.str();
 }
 
-std::vector<uint32_t> wifi::commandhelper::iw_get_supported_frequencies(const std::string& device,const std::vector<uint32_t> &frequencies_mhz_to_try) {
-  const std::string command="iwlist "+device+" frequency";
+// Example supported frequency: 5500 MHz [100] (20.0 dBm) (no IR, radar detection)
+// Example not supported freq : 5885 MHz [177] (disabled)
+static bool iw_info_line_contains_freq_and_is_supported(const std::string& line,const uint32_t freq_mhz){
+    return OHDUtil::contains(line,fmt::format("{} MHz",freq_mhz)) &&
+         !OHDUtil::contains(line,"disabled");
+}
+static bool iw_info_supports_frequency(const std::vector<std::string>& lines,const uint32_t freq_mhz){
+  for(const auto& line:lines){
+    if(iw_info_line_contains_freq_and_is_supported(line,freq_mhz))return true;
+  }
+  return false;
+}
+
+std::vector<uint32_t> wifi::commandhelper::iw_get_supported_frequencies(const int phy_index,const std::vector<uint32_t> &frequencies_mhz_to_try) {
+  const std::string command=fmt::format("iw phy phy{} info",phy_index);
   const auto res_op=OHDUtil::run_command_out(command);
   if(!res_op.has_value()){
-    openhd::log::get_default()->warn("get_supported_channels for {} failed",device);
+    openhd::log::get_default()->warn("get_supported_channels for phy{} failed",phy_index);
+    // If this fails, we assume we can do all channels - to not limit the valid inputs by mistake
     return frequencies_mhz_to_try;
   }
   const auto& res=res_op.value();
+  // We need to look for lines that have the given frequency and NOT a disabled at the end
+  const auto lines=OHDUtil::split_string_by_newline(res, false);
   std::vector<uint32_t> supported_channels{};
+  // NOTE: n^2 run time complexity, but we only do this once on startup
   for(const auto& freq_mhz: frequencies_mhz_to_try){
-    // annoying - iwlist reports them with decimals in GHz
-    const float freq_ghz=static_cast<float>(freq_mhz) / 1000.0f;
-    const auto s_freq_ghz= float_without_trailing_zeroes(freq_ghz);
-    //openhd::log::get_default()->debug("checking [{}]",s_freq_ghz);
-    if(OHDUtil::contains(res,s_freq_ghz)){
+    if(iw_info_supports_frequency(lines,freq_mhz)){
       //openhd::log::get_default()->debug("has [{}]",s_freq_ghz);
       supported_channels.push_back(freq_mhz);
     }else{
