@@ -28,14 +28,14 @@ static std::string get_unit_id_file_path(){
   return std::string(SETTINGS_BASE_PATH)+"unit.id";
 }
 
+// Interface, telemetry and video each have their own directory for settings
+// to seperate them logically like also done in code
 static std::string get_interface_settings_directory(){
   return std::string(SETTINGS_BASE_PATH)+"interface/";
 }
-
 static std::string get_telemetry_settings_directory(){
   return std::string(SETTINGS_BASE_PATH)+"telemetry/";
 }
-
 static std::string get_video_settings_directory(){
   return std::string(SETTINGS_BASE_PATH)+"video/";
 }
@@ -105,18 +105,20 @@ static void clean_all_interface_settings(){
 // (which most likely was a mistake) or the previous openhd execution did not terminate properly
 // (which is only a soft error, since properly terminating is a nice to have but not necessarily required)
 // 2) When openhd is stopped (SIGTERM) - remove the file
-static const std::string OPENHD_IS_RUNNING_FILENAME=std::string(SETTINGS_BASE_PATH)+std::string("openhd_is_running.txt"); // NOLINT(cert-err58-cpp)
+static std::string get_openhd_is_running_filename(){
+  return std::string(SETTINGS_BASE_PATH)+std::string("openhd_is_running.txt");
+}
 
 static void check_currently_running_file_and_write(){
-  if(OHDFilesystemUtil::exists(OPENHD_IS_RUNNING_FILENAME)){
+  if(OHDFilesystemUtil::exists(get_openhd_is_running_filename())){
     openhd::log::get_default()->warn("OpenHD is either still running in another process or did not terminate properly last time");
   }
-  OHDFilesystemUtil::write_file(OPENHD_IS_RUNNING_FILENAME,"dummy");
+  OHDFilesystemUtil::write_file(get_openhd_is_running_filename(),"dummy");
 }
 
 static void remove_currently_running_file(){
   openhd::log::get_default()->debug("OpenHD terminating,removing is running file");
-  OHDFilesystemUtil::remove_if_existing(OPENHD_IS_RUNNING_FILENAME);
+  OHDFilesystemUtil::remove_if_existing(get_openhd_is_running_filename());
 }
 
 }
