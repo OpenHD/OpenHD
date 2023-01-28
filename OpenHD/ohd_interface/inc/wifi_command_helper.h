@@ -59,7 +59,11 @@ bool nmcli_set_device_managed_status(const std::string& device,bool managed);
 // runs iwlist <device> frequencies
 // then checks all suplied frequencies (in mhz) and returns them (mhz) if they show up in the list
 // if running the command fails, prints warning and assumes all supplied frequencies are supported.
-std::vector<uint32_t> iw_get_supported_frequencies(const std::string& device,const std::vector<uint32_t>& frequencies_mhz_to_try);
+// NOTE: "iwlist wlan1 frequency" seems to omit some channels - no idea why, but even though those channels are not shown in iwlist,
+// they seem to work when set via "iw".
+// We therefore have to use "iw phy phy0 info" -> and we use "iw" already to set the frequencies, so this is most likely better than "iwlist".
+// NOTE: There seems to be no iw <device_name> alternative - we have to use the "phy" index
+std::vector<uint32_t> iw_get_supported_frequencies(const int phy_index,const std::vector<uint32_t>& frequencies_mhz_to_try);
 
 struct SupportedFrequencyBand{
   bool supports_any_2G=false;
