@@ -14,8 +14,12 @@
 #include "wb_link_helper.h"
 #include "wifi_card.hpp"
 
-static const char *KEYPAIR_FILE_DRONE = "/usr/local/share/openhd/drone.key";
-static const char *KEYPAIR_FILE_GROUND = "/usr/local/share/openhd/gs.key";
+// optionally, if no file exists we just use a default, hard coded seed
+static std::string get_opt_keypair_filename(bool is_air){
+  std::string filename=openhd::get_interface_settings_directory();
+  filename+=is_air ? "drone.key" : "gs.key";
+  return filename;
+}
 
 WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
     : m_profile(std::move(profile)),
@@ -171,8 +175,7 @@ TOptions WBLink::create_tx_options(uint8_t radio_port,bool is_video)const {
   const auto settings=m_settings->get_settings();
   TOptions options{};
   options.radio_port = radio_port;
-  const char *keypair_file =
-      m_profile.is_air ? KEYPAIR_FILE_DRONE : KEYPAIR_FILE_GROUND;
+  const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
   if(OHDFilesystemUtil::exists(keypair_file)){
     options.keypair = std::string(keypair_file);
     m_console->debug("Using key from file {}",options.keypair->c_str());
@@ -202,8 +205,7 @@ TOptions WBLink::create_tx_options(uint8_t radio_port,bool is_video)const {
 ROptions WBLink::create_rx_options(uint8_t radio_port)const {
   ROptions options{};
   options.radio_port = radio_port;
-  const char *keypair_file =
-      m_profile.is_air ? KEYPAIR_FILE_DRONE : KEYPAIR_FILE_GROUND;
+  const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
   if(OHDFilesystemUtil::exists(keypair_file)){
     options.keypair = std::string(keypair_file);
     m_console->debug("Using key from file {}",options.keypair->c_str());

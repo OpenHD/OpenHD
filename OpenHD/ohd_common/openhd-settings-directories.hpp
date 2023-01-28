@@ -22,23 +22,36 @@ namespace openhd {
 // Even though this is not recommended, we want to support that - and since on rpi image only /boot shows up
 // under windows in the file reader, we had to change the path in this regard. Shouldn't create any issues
 // on linux, since we are root, we can just cretae the directory at run time
-static constexpr auto BASE_PATH="/boot/openhd/settings/";
+static constexpr auto SETTINGS_BASE_PATH ="/boot/openhd/settings/";
 // for example, the unique id
 static std::string get_unit_id_file_path(){
-  return std::string(BASE_PATH)+"unit.id";
+  return std::string(SETTINGS_BASE_PATH)+"unit.id";
 }
 
-static const std::string INTERFACE_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("interface/"); // NOLINT(cert-err58-cpp)
+// Interface, telemetry and video each have their own directory for settings
+// to seperate them logically like also done in code
+static std::string get_interface_settings_directory(){
+  return std::string(SETTINGS_BASE_PATH)+"interface/";
+}
+static std::string get_telemetry_settings_directory(){
+  return std::string(SETTINGS_BASE_PATH)+"telemetry/";
+}
+static std::string get_video_settings_directory(){
+  return std::string(SETTINGS_BASE_PATH)+"video/";
+}
 
 /**
  * If the directory does not exist yet,
  * generate the directory where all persistent settings of OpenHD are stored.
  */
 static void generateSettingsDirectoryIfNonExists() {
-  if(!OHDFilesystemUtil::exists(BASE_PATH)){
-    OHDFilesystemUtil::create_directories(BASE_PATH);
+  if(!OHDFilesystemUtil::exists(SETTINGS_BASE_PATH)){
+    OHDFilesystemUtil::create_directories(SETTINGS_BASE_PATH);
   }
-  assert(OHDFilesystemUtil::exists(BASE_PATH));
+  assert(OHDFilesystemUtil::exists(SETTINGS_BASE_PATH));
+  OHDFilesystemUtil::create_directories(get_interface_settings_directory());
+  OHDFilesystemUtil::create_directories(get_telemetry_settings_directory());
+  OHDFilesystemUtil::create_directories(get_video_settings_directory());
 }
 
 // fucking boost, random bugged on allwinner. This is a temporary solution
@@ -77,13 +90,13 @@ static std::string getOrCreateUnitId() {
 // will create full new default settings.
 static void clean_all_settings(){
   openhd::log::get_default()->debug("clean_all_settings()");
-  OHDFilesystemUtil::safe_delete_directory(BASE_PATH);
+  OHDFilesystemUtil::safe_delete_directory(SETTINGS_BASE_PATH);
   generateSettingsDirectoryIfNonExists();
 }
 
 static void clean_all_interface_settings(){
   openhd::log::get_default()->debug("clean_all_interface_settings()");
-  OHDFilesystemUtil::safe_delete_directory(INTERFACE_SETTINGS_DIRECTORY);
+  OHDFilesystemUtil::safe_delete_directory(get_interface_settings_directory());
   generateSettingsDirectoryIfNonExists();
 }
 
@@ -92,18 +105,20 @@ static void clean_all_interface_settings(){
 // (which most likely was a mistake) or the previous openhd execution did not terminate properly
 // (which is only a soft error, since properly terminating is a nice to have but not necessarily required)
 // 2) When openhd is stopped (SIGTERM) - remove the file
-static const std::string OPENHD_IS_RUNNING_FILENAME=std::string(BASE_PATH)+std::string("openhd_is_running.txt"); // NOLINT(cert-err58-cpp)
+static std::string get_openhd_is_running_filename(){
+  return "/tmp/openhd_is_running.txt";
+}
 
 static void check_currently_running_file_and_write(){
-  if(OHDFilesystemUtil::exists(OPENHD_IS_RUNNING_FILENAME)){
+  if(OHDFilesystemUtil::exists(get_openhd_is_running_filename())){
     openhd::log::get_default()->warn("OpenHD is either still running in another process or did not terminate properly last time");
   }
-  OHDFilesystemUtil::write_file(OPENHD_IS_RUNNING_FILENAME,"dummy");
+  OHDFilesystemUtil::write_file(get_openhd_is_running_filename(),"dummy");
 }
 
 static void remove_currently_running_file(){
   openhd::log::get_default()->debug("OpenHD terminating,removing is running file");
-  OHDFilesystemUtil::remove_if_existing(OPENHD_IS_RUNNING_FILENAME);
+  OHDFilesystemUtil::remove_if_existing(get_openhd_is_running_filename());
 }
 
 }

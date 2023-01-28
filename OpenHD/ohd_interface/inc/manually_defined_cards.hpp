@@ -28,7 +28,7 @@ struct ManuallyDefinedWifiCards {
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ManuallyDefinedWifiCards,air_wifibroadcast_card,ground_wifibroadcast_cards,hotspot_card);
 
-static const std::string FILE_PATH_MANUALLY_DEFINED_CARDS=std::string(INTERFACE_SETTINGS_DIRECTORY)+std::string("manual_cards.json");
+static const std::string FILE_PATH_MANUALLY_DEFINED_CARDS=std::string(get_interface_settings_directory())+std::string("manual_cards.json");
 
 static ManuallyDefinedWifiCards get_manually_defined_cards_from_file(const std::string filename=FILE_PATH_MANUALLY_DEFINED_CARDS) {
   assert(OHDFilesystemUtil::exists(filename));

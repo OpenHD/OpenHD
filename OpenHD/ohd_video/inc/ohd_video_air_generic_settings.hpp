@@ -25,7 +25,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirCameraGenericSettings,switch_primary_and_s
 class AirCameraGenericSettingsHolder: public openhd::settings::PersistentSettings<AirCameraGenericSettings>{
  public:
   AirCameraGenericSettingsHolder()
-      :openhd::settings::PersistentSettings<AirCameraGenericSettings>(std::string(openhd::BASE_PATH)+std::string("video/")){
+      :openhd::settings::PersistentSettings<AirCameraGenericSettings>(openhd::get_video_settings_directory()){
     init();
   }
  private:

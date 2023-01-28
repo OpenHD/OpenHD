@@ -26,7 +26,7 @@ class CameraHolder:
  public:
   explicit CameraHolder(Camera camera,std::shared_ptr<openhd::ActionHandler> opt_action_handler= nullptr):
        m_camera(std::move(camera)),
-       openhd::settings::PersistentSettings<CameraSettings>(get_video_settings_directory()){
+       openhd::settings::PersistentSettings<CameraSettings>(openhd::get_video_settings_directory()){
     // read previous settings or create default ones
     init();
   }
@@ -345,10 +345,6 @@ class CameraHolder:
       openhd::log::get_default()->warn("Cannot find valid default resolution for USB camera");
     }
     return ret;
-  }
-  // Where the settings (json) for each discovered camera are stored
-  static std::string get_video_settings_directory(){
-    return std::string(openhd::BASE_PATH)+std::string("video/");
   }
 };
 
