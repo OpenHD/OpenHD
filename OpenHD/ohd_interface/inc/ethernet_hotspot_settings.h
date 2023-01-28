@@ -20,7 +20,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EthernetHotspotSettings,enable);
 class EthernetHotspotSettingsHolder:public openhd::settings::PersistentSettings<EthernetHotspotSettings>{
  public:
   EthernetHotspotSettingsHolder():
-    openhd::settings::PersistentSettings<EthernetHotspotSettings>(openhd::INTERFACE_SETTINGS_DIRECTORY){
+    openhd::settings::PersistentSettings<EthernetHotspotSettings>(openhd::get_interface_settings_directory()){
     init();
   }
  private:

@@ -133,7 +133,7 @@ class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLink
    * @param wifibroadcast_cards1 needed to figure out the proper default params
    */
   explicit WBStreamsSettingsHolder(OHDPlatform platform,std::vector<WiFiCard> wifibroadcast_cards1):
-	  openhd::settings::PersistentSettings<WBLinkSettings>(INTERFACE_SETTINGS_DIRECTORY),
+	  openhd::settings::PersistentSettings<WBLinkSettings>(get_interface_settings_directory()),
         m_cards(std::move(wifibroadcast_cards1)),
           m_platform(platform)
   {

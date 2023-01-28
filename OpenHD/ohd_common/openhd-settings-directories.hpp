@@ -28,7 +28,17 @@ static std::string get_unit_id_file_path(){
   return std::string(SETTINGS_BASE_PATH)+"unit.id";
 }
 
-static const std::string INTERFACE_SETTINGS_DIRECTORY=std::string(SETTINGS_BASE_PATH)+std::string("interface/"); // NOLINT(cert-err58-cpp)
+static std::string get_interface_settings_directory(){
+  return std::string(SETTINGS_BASE_PATH)+"interface/";
+}
+
+static std::string get_telemetry_settings_directory(){
+  return std::string(SETTINGS_BASE_PATH)+"telemetry/";
+}
+
+static std::string get_video_settings_directory(){
+  return std::string(SETTINGS_BASE_PATH)+"video/";
+}
 
 /**
  * If the directory does not exist yet,
@@ -39,6 +49,9 @@ static void generateSettingsDirectoryIfNonExists() {
     OHDFilesystemUtil::create_directories(SETTINGS_BASE_PATH);
   }
   assert(OHDFilesystemUtil::exists(SETTINGS_BASE_PATH));
+  OHDFilesystemUtil::create_directories(get_interface_settings_directory());
+  OHDFilesystemUtil::create_directories(get_telemetry_settings_directory());
+  OHDFilesystemUtil::create_directories(get_video_settings_directory());
 }
 
 // fucking boost, random bugged on allwinner. This is a temporary solution
@@ -83,7 +96,7 @@ static void clean_all_settings(){
 
 static void clean_all_interface_settings(){
   openhd::log::get_default()->debug("clean_all_interface_settings()");
-  OHDFilesystemUtil::safe_delete_directory(INTERFACE_SETTINGS_DIRECTORY);
+  OHDFilesystemUtil::safe_delete_directory(get_interface_settings_directory());
   generateSettingsDirectoryIfNonExists();
 }
 
