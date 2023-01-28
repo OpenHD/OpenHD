@@ -153,6 +153,8 @@ static void runtime_check_if_all_cam_configs_exist(){
       const auto filename= get_file_name_for_cam_config(platform,cam_config);
       if(!OHDFilesystemUtil::exists(filename)){
         openhd::log::get_default()->warn("Cam config [{}] is missing !",filename);
+      }else{
+        openhd::log::get_default()->debug("Cam config [{}] is available !",filename);
       }
     }
   }
