@@ -128,8 +128,8 @@ static void save_cam_config_to_file(CamConfig new_cam_config){
   OHDFilesystemUtil::write_file(CURR_CAM_CONFIG_FILENAME,std::to_string(cam_config_to_int(new_cam_config)));
 }
 
-static std::string get_file_name_for_cam_config(const OHDPlatform& platform,const CamConfig& cam_config){
-  const bool is_rpi4=platform.board_type==BoardType::RaspberryPi4B || platform.board_type==BoardType::RaspberryPiCM4;
+static std::string get_file_name_for_cam_config(const BoardType& board_type,const CamConfig& cam_config){
+  const bool is_rpi4=board_type==BoardType::RaspberryPi4B || board_type==BoardType::RaspberryPiCM4;
   std::string base_filename="/boot/openhd/rpi_camera_configs/";
   if(cam_config==CamConfig::MMAL){
     return base_filename+"rpi_"+cam_config_to_string(cam_config)+".txt";
@@ -142,6 +142,22 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
   }
   assert(true);
   return "";
+}
+
+// This has happened too often now - print a warning if any cam config is missing
+static void runtime_check_if_all_cam_configs_exist(){
+  for(int platform_idx=0;platform_idx<2;platform_idx++){
+    const BoardType board_type=(platform_idx==0) ? BoardType::RaspberryPi3B : BoardType::RaspberryPi4B;
+    for(int cam_config_idx=0;cam_config_idx<7;cam_config_idx++){
+      const auto cam_config= cam_config_from_int(cam_config_idx);
+      const auto filename= get_file_name_for_cam_config(board_type,cam_config);
+      if(!OHDFilesystemUtil::exists(filename)){
+        openhd::log::get_default()->warn("Cam config [{}] is missing !",filename);
+      }else{
+        //openhd::log::get_default()->debug("Cam config [{}] is available !",filename);
+      }
+    }
+  }
 }
 
 // find the line that contains the dynamic content begin identifier
@@ -161,9 +177,11 @@ static constexpr auto rpi_config_file_path="/boot/config.txt";
 
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
-static bool apply_new_cam_config_and_save(const OHDPlatform& platform,const CamConfig& new_cam_config){
+// Returns true on success
+// Returns false otherwise, the original state is then left untouched
+static bool apply_new_cam_config_and_save(const BoardType& board_type,const CamConfig& new_cam_config){
   openhd::log::get_default()->debug("Begin apply cam config {}",cam_config_to_string(new_cam_config));
-  const auto cam_config_filename= get_file_name_for_cam_config(platform,new_cam_config);
+  const auto cam_config_filename= get_file_name_for_cam_config(board_type,new_cam_config);
   const auto cam_config_file_content=OHDFilesystemUtil::opt_read_file(cam_config_filename);
   if(!cam_config_file_content.has_value()){
     openhd::log::get_default()->warn("Cannot apply new cam config, corresponding *.txt [{}] not found",cam_config_filename);
@@ -217,6 +235,7 @@ class ConfigChangeHandler{
  public:
   explicit ConfigChangeHandler(OHDPlatform platform): m_platform(platform){
     assert(m_platform.platform_type==PlatformType::RaspberryPi);
+    runtime_check_if_all_cam_configs_exist();
   }
   // Returns true if checks passed, false otherwise (param rejected)
   bool change_rpi_os_camera_configuration(int new_value_as_int){
@@ -225,30 +244,29 @@ class ConfigChangeHandler{
       // reject, not a valid value
       return false;
     }
+    if(m_changed_once)return false;
     const auto current_configuration=get_current_cam_config_from_file();
     const auto new_configuration=cam_config_from_int(new_value_as_int);
     if(current_configuration==new_configuration){
       openhd::log::get_default()->warn("Not changing cam config,already at {}",cam_config_to_string(current_configuration));
       return true;
     }
-    // this change requires a reboot, so only allow changing once at run time
-    if(m_changed_once)return false;
-    m_changed_once= true;
-    // This will apply the changes asynchronous, even though we are "not done yet"
-    // We assume nothing will fail on this command and return true already,such that we can
-    // send the ack.
-    apply_async(new_configuration);
-    return true;
+    const bool success= apply_new_cam_config_and_save(m_platform.board_type,new_configuration);
+    if(success){
+      m_changed_once= true;
+      // this change requires a reboot
+      reboot_async();
+    }
+    return success;
   }
  private:
   std::mutex m_mutex;
-  bool m_changed_once=false;
   std::unique_ptr<std::thread> m_handle_thread;
   const OHDPlatform m_platform;
-  void apply_async(CamConfig new_value){
+  bool m_changed_once= false;
+  void reboot_async(){
     // This is okay, since we will restart anyways
-    m_handle_thread=std::make_unique<std::thread>([new_value,this]{
-      apply_new_cam_config_and_save(m_platform,new_value);
+    m_handle_thread=std::make_unique<std::thread>([]{
       std::this_thread::sleep_for(std::chrono::seconds(3));
       OHDUtil::run_command("systemctl",{"start", "reboot.target"});
     });

@@ -12,6 +12,8 @@
 
 #include "openhd-spdlog.hpp"
 #include "ohd_video_air_generic_settings.hpp"
+// Dirty
+#include "openhd-rpi-os-configure-vendor-cam.hpp"
 
 /**
  * Main entry point for OpenHD video streaming for discovered cameras on the air unit.
@@ -68,6 +70,8 @@ class OHDVideoAir {
  private:
   // r.n only for multi camera support
   std::unique_ptr<AirCameraGenericSettingsHolder> m_generic_settings;
+  // dirty / annoying. Interacts heavily with the OS aka can break QOpenHD
+  std::unique_ptr<openhd::rpi::os::ConfigChangeHandler> m_rpi_os_change_config_handler=nullptr;
 };
 
 #endif  // OPENHD_VIDEO_OHDVIDEO_H

@@ -18,8 +18,6 @@
 #include "openhd-action-handler.hpp"
 #include "openhd-spdlog.hpp"
 #include "ohd_link.hpp"
-// Dirty
-#include "openhd-rpi-os-configure-vendor-cam.hpp"
 #include "endpoints/WBEndpoint.h"
 #include "gpio_control/RaspberryPiGPIOControl.h"
 
@@ -88,7 +86,6 @@ class AirTelemetry : public MavlinkSystem{
   // R.N only on air, and only FC uart settings
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
-  std::unique_ptr<openhd::rpi::os::ConfigChangeHandler> m_rpi_os_change_config_handler=nullptr;
   std::shared_ptr<spdlog::logger> m_console;
 };
 
