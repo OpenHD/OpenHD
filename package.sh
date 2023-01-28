@@ -75,7 +75,7 @@ echo $PACKAGE_NAME
 echo $VERSION
 echo $PKGDIR
 
-if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
+if [[ "${PACKAGE_ARCH}" != "x86_64" && "${PACKAGE_ARCH}" != "arm64" ]]; then
 fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDIR} \
   $PLATFORM_CONFIGS \
   -p ${PACKAGE_NAME}_VERSION_ARCH.deb \
@@ -85,6 +85,35 @@ fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDI
   -d "iw" \
   -d "libspdlog-dev" \
   -d "libcamera-openhd" \
+  -d "aircrack-ng" \
+  -d "i2c-tools" \
+  -d "libv4l-dev" \
+  -d "libusb-1.0-0" \
+  -d "libpcap-dev" \
+  -d "libpng-dev" \
+  -d "libnl-3-dev" \
+  -d "libnl-genl-3-dev" \
+  -d "libsdl2-2.0-0" \
+  -d "libconfig++9v5" \
+  -d "libreadline-dev" \
+  -d "libsodium-dev" \
+  -d "gstreamer1.0-plugins-base" \
+  -d "gstreamer1.0-plugins-good" \
+  -d "gstreamer1.0-plugins-bad" \
+  -d "gstreamer1.0-plugins-ugly" \
+  -d "gstreamer1.0-libav" \
+  -d "gstreamer1.0-tools" \
+  -d "gstreamer1.0-alsa" \
+  -d "gstreamer1.0-pulseaudio" || exit 1
+elif [[ "${PACKAGE_ARCH}" == "arm64" ]]; then
+fpm -a ${PACKAGE_ARCH} -s dir -t deb -n ${PACKAGE_NAME} -v ${VERSION} -C ${PKGDIR} \
+  $PLATFORM_CONFIGS \
+  -p ${PACKAGE_NAME}_VERSION_ARCH.deb \
+  --after-install ../../after-install.sh \
+  --before-install ../../before-install.sh \
+  $PLATFORM_PACKAGES \
+  -d "iw" \
+  -d "libspdlog-dev" \
   -d "aircrack-ng" \
   -d "i2c-tools" \
   -d "libv4l-dev" \
