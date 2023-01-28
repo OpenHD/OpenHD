@@ -106,7 +106,7 @@ static void clean_all_interface_settings(){
 // (which is only a soft error, since properly terminating is a nice to have but not necessarily required)
 // 2) When openhd is stopped (SIGTERM) - remove the file
 static std::string get_openhd_is_running_filename(){
-  return std::string(SETTINGS_BASE_PATH)+std::string("openhd_is_running.txt");
+  return "/tmp/openhd_is_running.txt";
 }
 
 static void check_currently_running_file_and_write(){
