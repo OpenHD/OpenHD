@@ -128,8 +128,8 @@ static void save_cam_config_to_file(CamConfig new_cam_config){
   OHDFilesystemUtil::write_file(CURR_CAM_CONFIG_FILENAME,std::to_string(cam_config_to_int(new_cam_config)));
 }
 
-static std::string get_file_name_for_cam_config(const OHDPlatform& platform,const CamConfig& cam_config){
-  const bool is_rpi4=platform.board_type==BoardType::RaspberryPi4B || platform.board_type==BoardType::RaspberryPiCM4;
+static std::string get_file_name_for_cam_config(const BoardType& board_type,const CamConfig& cam_config){
+  const bool is_rpi4=board_type==BoardType::RaspberryPi4B || board_type==BoardType::RaspberryPiCM4;
   std::string base_filename="/boot/openhd/rpi_camera_configs/";
   if(cam_config==CamConfig::MMAL){
     return base_filename+"rpi_"+cam_config_to_string(cam_config)+".txt";
@@ -147,7 +147,7 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
 // This has happened too often now - print a warning if any cam config is missing
 static void runtime_check_if_all_cam_configs_exist(){
   for(int platform_idx=0;platform_idx<2;platform_idx++){
-    const OHDPlatform platform{PlatformType::RaspberryPi,(platform_idx==0) ? BoardType::RaspberryPi3B : BoardType::RaspberryPi4B};
+    const BoardType board_type=(platform_idx==0) ? BoardType::RaspberryPi3B : BoardType::RaspberryPi4B;
     for(int cam_config_idx=0;cam_config_idx<7;cam_config_idx++){
       const auto cam_config= cam_config_from_int(cam_config_idx);
       const auto filename= get_file_name_for_cam_config(platform,cam_config);
@@ -177,9 +177,9 @@ static constexpr auto rpi_config_file_path="/boot/config.txt";
 
 // Applies the new cam config (rewrites the /boot/config.txt file)
 // Then writes the type corresponding to the current configuration into the settings file.
-static bool apply_new_cam_config_and_save(const OHDPlatform& platform,const CamConfig& new_cam_config){
+static bool apply_new_cam_config_and_save(const BoardType& board_type,const CamConfig& new_cam_config){
   openhd::log::get_default()->debug("Begin apply cam config {}",cam_config_to_string(new_cam_config));
-  const auto cam_config_filename= get_file_name_for_cam_config(platform,new_cam_config);
+  const auto cam_config_filename= get_file_name_for_cam_config(board_type,new_cam_config);
   const auto cam_config_file_content=OHDFilesystemUtil::opt_read_file(cam_config_filename);
   if(!cam_config_file_content.has_value()){
     openhd::log::get_default()->warn("Cannot apply new cam config, corresponding *.txt [{}] not found",cam_config_filename);
