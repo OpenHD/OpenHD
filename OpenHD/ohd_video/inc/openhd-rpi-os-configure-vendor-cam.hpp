@@ -150,7 +150,7 @@ static void runtime_check_if_all_cam_configs_exist(){
     const BoardType board_type=(platform_idx==0) ? BoardType::RaspberryPi3B : BoardType::RaspberryPi4B;
     for(int cam_config_idx=0;cam_config_idx<7;cam_config_idx++){
       const auto cam_config= cam_config_from_int(cam_config_idx);
-      const auto filename= get_file_name_for_cam_config(platform,cam_config);
+      const auto filename= get_file_name_for_cam_config(board_type,cam_config);
       if(!OHDFilesystemUtil::exists(filename)){
         openhd::log::get_default()->warn("Cam config [{}] is missing !",filename);
       }else{
@@ -265,7 +265,7 @@ class ConfigChangeHandler{
   void apply_async(CamConfig new_value){
     // This is okay, since we will restart anyways
     m_handle_thread=std::make_unique<std::thread>([new_value,this]{
-      apply_new_cam_config_and_save(m_platform,new_value);
+      apply_new_cam_config_and_save(m_platform.board_type,new_value);
       std::this_thread::sleep_for(std::chrono::seconds(3));
       OHDUtil::run_command("systemctl",{"start", "reboot.target"});
     });
