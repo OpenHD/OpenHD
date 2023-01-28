@@ -20,7 +20,9 @@ namespace openhd {
 // All persistent settings are written into this directory.
 static constexpr auto BASE_PATH="/usr/local/share/openhd/";
 // for example, the unique id
-static constexpr auto UNIT_ID_FILE = "/usr/local/share/openhd/unit.id";
+static std::string get_unit_id_file_path(){
+  return std::string(BASE_PATH)+"unit.id";
+}
 
 static const std::string INTERFACE_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std::string("interface/"); // NOLINT(cert-err58-cpp)
 
@@ -30,7 +32,7 @@ static const std::string INTERFACE_SETTINGS_DIRECTORY=std::string(BASE_PATH)+std
  */
 static void generateSettingsDirectoryIfNonExists() {
   if(!OHDFilesystemUtil::exists(BASE_PATH)){
-	OHDFilesystemUtil::create_directories(BASE_PATH);
+    OHDFilesystemUtil::create_directories(BASE_PATH);
   }
   assert(OHDFilesystemUtil::exists(BASE_PATH));
 }
@@ -49,25 +51,20 @@ static std::string create_unit_it_temporary(){
  */
 static std::string getOrCreateUnitId() {
   generateSettingsDirectoryIfNonExists();
-  std::ifstream unit_id_file(UNIT_ID_FILE);
-  std::string unit_id;
-  if (!unit_id_file.is_open()) {
-	// generate new unit id
-	// See https://www.boost.org/doc/libs/1_62_0/libs/uuid/uuid.html
-	//const boost::uuids::uuid _uuid = boost::uuids::random_generator()();
-	//unit_id = to_string(_uuid);
-        unit_id = create_unit_it_temporary();
-	openhd::log::get_default()->info("Created new unit id:{}",unit_id);
-	// and write it ot to the right file
-	std::ofstream of(UNIT_ID_FILE);
-	of << unit_id;
-	of.close();
-  } else {
-	unit_id = std::string((std::istreambuf_iterator<char>(unit_id_file)),std::istreambuf_iterator<char>());
-	openhd::log::get_default()->debug("Read unit id:{}",unit_id);
-	return unit_id;
+  auto unit_id_opt=OHDFilesystemUtil::opt_read_file(get_unit_id_file_path());
+  if(unit_id_opt.has_value()){
+    std::string unit_id=unit_id_opt.value();
+    openhd::log::get_default()->debug("Read unit id:{}",unit_id);
+    return unit_id;
   }
-  assert(!unit_id.empty());
+  // No unit id exists yet - create new one
+  // generate new unit id
+  // See https://www.boost.org/doc/libs/1_62_0/libs/uuid/uuid.html
+  //const boost::uuids::uuid _uuid = boost::uuids::random_generator()();
+  //unit_id = to_string(_uuid);
+  std::string unit_id = create_unit_it_temporary();
+  OHDFilesystemUtil::write_file(get_unit_id_file_path(),unit_id);
+  openhd::log::get_default()->info("Created new unit id:{}",unit_id);
   return unit_id;
 }
 
@@ -82,7 +79,7 @@ static void clean_all_settings(){
 
 static void clean_all_interface_settings(){
   openhd::log::get_default()->debug("clean_all_interface_settings()");
-  OHDFilesystemUtil::safe_delete_directory(INTERFACE_SETTINGS_DIRECTORY.c_str());
+  OHDFilesystemUtil::safe_delete_directory(INTERFACE_SETTINGS_DIRECTORY);
   generateSettingsDirectoryIfNonExists();
 }
 
@@ -94,7 +91,7 @@ static void clean_all_interface_settings(){
 static const std::string OPENHD_IS_RUNNING_FILENAME=std::string(BASE_PATH)+std::string("openhd_is_running.txt"); // NOLINT(cert-err58-cpp)
 
 static void check_currently_running_file_and_write(){
-  if(OHDFilesystemUtil::exists(OPENHD_IS_RUNNING_FILENAME.c_str())){
+  if(OHDFilesystemUtil::exists(OPENHD_IS_RUNNING_FILENAME)){
     openhd::log::get_default()->warn("OpenHD is either still running in another process or did not terminate properly last time");
   }
   OHDFilesystemUtil::write_file(OPENHD_IS_RUNNING_FILENAME,"dummy");
