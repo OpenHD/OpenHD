@@ -12,7 +12,7 @@
 
 namespace openhd::telemetry::ground{
 
-static const std::string SETTINGS_DIRECTORY =std::string(BASE_PATH)+std::string("telemetry/");
+static const std::string SETTINGS_DIRECTORY =std::string(SETTINGS_BASE_PATH)+std::string("telemetry/");
 
 struct Settings{
   bool enable_rc_over_joystick=false;

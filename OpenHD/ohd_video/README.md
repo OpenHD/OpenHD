@@ -7,7 +7,7 @@ In short,the functionalities it exposes to the (main) openhd executable are:
    This data is forwarded via a callback (previously udp port) to ohd_interface for transmission via wb
 3) Store and change camera/encoder-related settings
 
-Camera settings are stored in /usr/local/share/openhd/video (one for each camera)
+Camera settings are stored in $SETTINGS_BASE_PATH$/video (one for each camera)
 The Camera manifest (list of discovered cameras) can be found under /tmp/camera_manifest for debugging.
 
 

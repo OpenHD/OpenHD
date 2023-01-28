@@ -25,7 +25,7 @@ struct GPIOControlSettings {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GPIOControlSettings,gpio_2);
 
 static const std::string SETTINGS_DIRECTORY =
-    std::string(BASE_PATH) + std::string("telemetry/");
+    std::string(SETTINGS_BASE_PATH) + std::string("telemetry/");
 
 class GPIOControlSettingsHolder
     : public openhd::settings::PersistentSettings<GPIOControlSettings> {

@@ -348,7 +348,7 @@ class CameraHolder:
   }
   // Where the settings (json) for each discovered camera are stored
   static std::string get_video_settings_directory(){
-    return std::string(openhd::BASE_PATH)+std::string("video/");
+    return std::string(openhd::SETTINGS_BASE_PATH)+std::string("video/");
   }
 };
 
