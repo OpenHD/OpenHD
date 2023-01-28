@@ -47,6 +47,9 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
       this->handle_change_bitrate_request(lb);
     });
   }
+  if(m_platform.platform_type==PlatformType::RaspberryPi){
+    m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(m_platform);
+  }
   m_console->debug( "OHDVideo::running");
 }
 
@@ -121,6 +124,18 @@ void OHDVideoAir::handle_change_bitrate_request(openhd::ActionHandler::LinkBitra
 
 std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   std::vector<openhd::Setting> ret;
+  // Camera related, but strongly interacts with the OS
+  // This way one can switch between different OS configuration(s) that then provide access to different
+  // vendor-specific camera(s) - hacky/dirty I know ;/
+  if(m_platform.platform_type==PlatformType::RaspberryPi){
+    assert(m_rpi_os_change_config_handler!= nullptr);
+    auto c_rpi_os_camera_configuration=[this](std::string,int value){
+      return m_rpi_os_change_config_handler->change_rpi_os_camera_configuration(value);
+    };
+    ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::IntSetting {openhd::rpi::os::cam_config_to_int(openhd::rpi::os::get_current_cam_config_from_file()),
+                                                                        c_rpi_os_camera_configuration}});
+  }
+
   // N of discovered cameras, for debugging
   const auto n_cameras=static_cast<int>(m_camera_streams.size());
   ret.push_back(openhd::create_read_only_int("V_N_CAMERAS",n_cameras));

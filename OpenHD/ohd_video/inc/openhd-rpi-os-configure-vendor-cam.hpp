@@ -144,6 +144,20 @@ static std::string get_file_name_for_cam_config(const OHDPlatform& platform,cons
   return "";
 }
 
+// This has happened too often now - print a warning if any cam config is missing
+static void runtime_check_if_all_cam_configs_exist(){
+  for(int platform_idx=0;platform_idx<2;platform_idx++){
+    const OHDPlatform platform{PlatformType::RaspberryPi,(platform_idx==0) ? BoardType::RaspberryPi3B : BoardType::RaspberryPi4B};
+    for(int cam_config_idx=0;cam_config_idx<7;cam_config_idx++){
+      const auto cam_config= cam_config_from_int(cam_config_idx);
+      const auto filename= get_file_name_for_cam_config(platform,cam_config);
+      if(!OHDFilesystemUtil::exists(filename)){
+        openhd::log::get_default()->warn("Cam config [{}] is missing !",filename);
+      }
+    }
+  }
+}
+
 // find the line that contains the dynamic content begin identifier
 // after this identifier, we can modify things in the config file as we like.
 // returns -1 on failure, a positive integer >=0 otherwise
@@ -217,6 +231,7 @@ class ConfigChangeHandler{
  public:
   explicit ConfigChangeHandler(OHDPlatform platform): m_platform(platform){
     assert(m_platform.platform_type==PlatformType::RaspberryPi);
+    runtime_check_if_all_cam_configs_exist();
   }
   // Returns true if checks passed, false otherwise (param rejected)
   bool change_rpi_os_camera_configuration(int new_value_as_int){

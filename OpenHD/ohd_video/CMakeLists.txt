@@ -74,6 +74,7 @@ set(sources
     "inc/rtp_eof_helper.h"
     "inc/v_validate_settings.h"
     inc/ohd_video_ground.h
+    inc/openhd-rpi-os-configure-vendor-cam.hpp
 
     "src/camera_discovery_helper.hpp"
     "src/ffmpeg_videosamples.hpp"
