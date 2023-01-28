@@ -51,8 +51,8 @@ mkdir -p ${PKGDIR}/settings
 mkdir -p ${PKGDIR}/etc/systemd/system
 
 if [[ "${OS}" == "raspbian" ]]; then
-  mkdir -p ${PKGDIR}/boot/openhd/configs
-  cp ../../dynamic_configs/* ${PKGDIR}/boot/openhd/configs/
+  mkdir -p ${PKGDIR}/boot/openhd/rpi_camera_configs
+  cp ../../rpi_camera_configs/* ${PKGDIR}/boot/openhd/rpi_camera_configs/
 fi
 
 cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
