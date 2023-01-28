@@ -1,6 +1,6 @@
 also check https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c
 
-openhd@openhd:/usr/local/share/openhd/video$ sudo gst-inspect-1.0 rpicamsrc
+openhd@openhd:$ sudo gst-inspect-1.0 rpicamsrc
 Factory Details:
   Rank                     none (0)
   Long-name                Raspberry Pi Camera Source
