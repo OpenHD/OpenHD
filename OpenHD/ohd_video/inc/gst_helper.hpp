@@ -261,7 +261,12 @@ static std::string create_veye_vl2_stream(const CameraSettings& settings,const s
   ss << fmt::format("video/x-raw,format=(string)UYVY, width={}, height={}, framerate={}/1 ! ",
                     settings.streamed_video_format.width,settings.streamed_video_format.height,
                     settings.streamed_video_format.framerate);
-  ss<<create_rpi_v4l2_h264_encoder(settings);
+  if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
+    ss<<create_rpi_v4l2_h264_encoder(settings);
+  }else{
+    openhd::log::get_default()->warn("No h265 encoder on rpi, using SW encode (will almost 100% result in frame drops/performance issues)");
+    ss << createSwEncoder(extract_common_encoder_params(settings));
+  }
   return ss.str();
 }
 
