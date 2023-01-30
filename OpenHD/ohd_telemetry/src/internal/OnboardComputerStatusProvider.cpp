@@ -64,7 +64,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     }else{
       const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
       curr_temperature_core=cpu_temp;
-      curr_space_left=(int8_t)OnboardComputerStatus::get_available_space_in_MB();
+      curr_space_left=(int32_t)OnboardComputerStatus::get_available_space_in_MB();
     }
     {
       // lock mutex and write out
