@@ -51,6 +51,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_clock_h264=0;
     int curr_clock_core=0;
     int curr_clock_v3d=0;
+    int curr_space_left=0;
     if(m_platform.platform_type==PlatformType::RaspberryPi){
       curr_temperature_core=(int8_t)OnboardComputerStatus::rpi::read_temperature_soc_degree();
       // temporary, until we have our own message
@@ -59,9 +60,11 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_clock_h264=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_H264);
       curr_clock_core=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_CORE);
       curr_clock_v3d=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_V3D);
+      curr_space_left=(int8_t)OnboardComputerStatus::get_available_space_in_MB();
     }else{
       const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
       curr_temperature_core=cpu_temp;
+      curr_space_left=(int8_t)OnboardComputerStatus::get_available_space_in_MB();
     }
     {
       // lock mutex and write out
@@ -73,6 +76,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_curr_onboard_computer_status.storage_type[2]=curr_clock_h264;
       m_curr_onboard_computer_status.storage_type[3]=curr_clock_core;
       m_curr_onboard_computer_status.storage_usage[0]=curr_clock_v3d;
+      m_curr_onboard_computer_status.storage_usage[1]=curr_space_left;
     }
 
   }
