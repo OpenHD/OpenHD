@@ -46,7 +46,7 @@ jobs:
             sudo bash ./install_dep_rpi.sh
             cd /opt
             cd OpenHD
-            git config --global --add safe.directory /opt/OpenHD
+            chown -R root:root ../OpenHD
             sudo ./package.sh armhf raspbian bullseye
 
     - name: Upload to Github
