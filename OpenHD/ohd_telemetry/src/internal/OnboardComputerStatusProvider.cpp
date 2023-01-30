@@ -60,7 +60,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_clock_h264=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_H264);
       curr_clock_core=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_CORE);
       curr_clock_v3d=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_V3D);
-      curr_space_left=(int8_t)OnboardComputerStatus::get_available_space_in_MB();
+      curr_space_left=(int32_t)OnboardComputerStatus::get_available_space_in_MB();
     }else{
       const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
       curr_temperature_core=cpu_temp;
