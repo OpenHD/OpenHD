@@ -10,6 +10,8 @@
 #include "openhd-spdlog.hpp"
 #include <sstream>
 #include <chrono>
+#include <boost/filesystem.hpp>
+
 
 // https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS
 // used to be a custom message for a short amount of time.
@@ -26,6 +28,11 @@ static int readTemperature() {
   return temp.value() / 1000;
 }
 
+//add space left function
+static unsigned long long get_available_space_in_MB() {
+  boost::filesystem::space_info info = boost::filesystem::space("/");
+  return info.available / 1024 / 1024;
+}
 
 // Stuff that works only on rpi
 namespace rpi {
