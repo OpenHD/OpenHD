@@ -29,7 +29,7 @@ static int readTemperature() {
 }
 
 //add space left function
-unsigned long long get_available_space() {
+unsigned long long get_available_space_inMB() {
   boost::filesystem::space_info info = boost::filesystem::space("/");
   return info.available / 1024 / 1024;
 }
