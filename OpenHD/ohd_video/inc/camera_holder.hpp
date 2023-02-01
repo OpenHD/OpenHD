@@ -359,9 +359,14 @@ static void startup_fix_common_issues(std::vector<std::shared_ptr<CameraHolder>>
   }
   // We always enable streaming for camera(s) on startup, to avoid the case where a user disables streaming for a camera,
   // and then forgets about it & reboots and the premise "always an image on startup with a working setup" is suddenly not true anymore.
-  for(int i=0;i<camera_holders.size();i++){
-    camera_holders.at(i)->unsafe_get_settings().enable_streaming= true;
-    camera_holders.at(i)->persist();
+  for(auto & camera_holder : camera_holders){
+    camera_holder->unsafe_get_settings().enable_streaming= true;
+    camera_holder->persist();
+  }
+  // And we disable recording on boot, to not accidentally fill up storage (relates to the new start stop recording widget)
+  for(auto & camera_holder : camera_holders){
+    camera_holder->unsafe_get_settings().air_recording= Recording::DISABLED;
+    camera_holder->persist();
   }
   /*camera_holders.at(0)->unsafe_get_settings().enable_streaming= true;
   camera_holders.at(0)->persist();

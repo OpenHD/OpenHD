@@ -89,9 +89,7 @@ static constexpr auto VCGENCMD_CLOCK_V3D="v3d";
 // NOTE: vcgencmd returns values in hertz, use the "mhz" util for more easy to read values.
 static int vcgencmd_measure_clock(const std::string& which){
   int ret = -1;
-  std::stringstream command;
-  command<<"vcgencmd measure_clock "<<which;
-  const auto vcgencmd_result = OHDUtil::run_command_out(command.str().c_str());
+  const auto vcgencmd_result = OHDUtil::run_command_out(fmt::format("vcgencmd measure_clock {}",which));
   if (!vcgencmd_result.has_value()) {
 	return ret;
   }
