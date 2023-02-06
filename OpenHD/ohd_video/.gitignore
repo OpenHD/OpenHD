@@ -14,3 +14,4 @@ _deps
 cmake-build-createDebug
 cmake-build-debug
 build
+build_debug
