@@ -7,3 +7,6 @@
 [submodule "OpenHD/lib/spdlog"]
 	path = OpenHD/lib/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "OpenHD/ohd_common/lib/json"]
+	path = OpenHD/ohd_common/lib/json
+	url = https://github.com/nlohmann/json

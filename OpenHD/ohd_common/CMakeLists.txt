@@ -9,6 +9,9 @@ if (TARGET OHDCommonLib)
     return()
 endif()
 
+# We use spdlog pretty much everyhwere in OpenHD
+add_subdirectory(lib/json)
+
 # from https://mavlink.io/en/mavgen_c/
 #You can supress the warnings in CMake using
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
