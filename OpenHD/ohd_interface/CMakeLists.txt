@@ -3,6 +3,9 @@ project(OpenHD-Interface)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Only needed when we build this submodule manually
+add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
+
 # Build and include wifibroadcast
 include(../lib/wifibroadcast/WBLib.cmake)
 
@@ -58,6 +61,8 @@ target_link_libraries(OHDInterfaceLib PUBLIC Boost::filesystem)
 
 find_package(spdlog REQUIRED)
 target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
+
+target_link_libraries(OHDInterfaceLib PUBLIC OHDCommonLib)
 
 # needed to set wifi cards to monitor mode and more
 #include(cmake/FindLibNL.cmake)

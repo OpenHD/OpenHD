@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.16.3)
 project(OHDCommon
         VERSION 2.0.0
-        DESCRIPTION "OpenHD common heades"
+        DESCRIPTION "OpenHD common headers"
         LANGUAGES CXX)
-
-# from https://mavlink.io/en/mavgen_c/
-#You can supress the warnings in CMake using
-add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
 if (TARGET OHDCommonLib)
     message(STATUS "OHDCommonLib already built")
     return()
 endif()
+
+# from https://mavlink.io/en/mavgen_c/
+#You can supress the warnings in CMake using
+add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
 #----------------------------------------------------------------------------------------------------------------------
 # general settings and options

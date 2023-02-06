@@ -4,3 +4,6 @@
 [submodule "OpenHD/lib/mavlink-headers"]
 	path = OpenHD/lib/mavlink-headers
 	url = https://github.com/OpenHD/mavlink-headers.git
+[submodule "OpenHD/lib/spdlog"]
+	path = OpenHD/lib/spdlog
+	url = https://github.com/gabime/spdlog.git
