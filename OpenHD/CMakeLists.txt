@@ -4,8 +4,6 @@ project(OpenHD)
 set(CMAKE_CXX_STANDARD 17)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-link_libraries(stdc++fs)
-
 # See https://github.com/andrew-hardin/cmake-git-version-tracking
 # This way we can track down bug reports to a commit hash and even more
 # (OpenHD prints the stuff at startup)
