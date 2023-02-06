@@ -9,4 +9,6 @@
 // switch to using json as a library
 #include <nlohmann/json.hpp>
 
+//#include <nlohmann/json_fwd.hpp>
+
 #endif  // OPENHD_OPENHD_OHD_COMMON_INCLUDE_JSON_H_
