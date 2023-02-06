@@ -40,7 +40,6 @@ target_link_libraries(OHDCommonLib PUBLIC  nlohmann_json::nlohmann_json)
 
 set(sources
     "mavlink_settings/ISettingsComponent.hpp"
-    "json.hpp"
     "include_json.hpp"
     "openhd-action-handler.hpp"
     "openhd-common-tests.hpp"
