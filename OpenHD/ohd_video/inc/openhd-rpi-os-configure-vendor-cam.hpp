@@ -105,16 +105,16 @@ static bool validate_cam_config_settings_int(int val){
   return val>=0 && val<=12;
 }
 
-static constexpr auto CURR_CAM_CONFIG_FILENAME="/boot/openhd/rpi_camera_configs/curr_rpi_cam_config.txt";
-
+static std::string get_curr_cam_config_filename(){
+  return openhd::get_video_settings_directory()+"curr_rpi_cam_config.txt";
+}
 static CamConfig get_current_cam_config_from_file(){
-  OHDFilesystemUtil::create_directories("/boot/openhd/rpi_camera_configs/");
-  if(!OHDFilesystemUtil::exists(CURR_CAM_CONFIG_FILENAME)){
+  if(!OHDFilesystemUtil::exists(get_curr_cam_config_filename())){
     // The OHD image builder defaults to mmal, NOTE this is in contrast to the default rpi os release.
-    OHDFilesystemUtil::write_file(CURR_CAM_CONFIG_FILENAME, std::to_string(cam_config_to_int(CamConfig::MMAL)));
+    OHDFilesystemUtil::write_file(get_curr_cam_config_filename(), std::to_string(cam_config_to_int(CamConfig::MMAL)));
     return CamConfig::MMAL;
   }
-  auto content=OHDFilesystemUtil::read_file(CURR_CAM_CONFIG_FILENAME);
+  auto content=OHDFilesystemUtil::read_file(get_curr_cam_config_filename());
   auto content_as_int=OHDUtil::string_to_int(content);
   if(!content_as_int.has_value()){
     openhd::log::get_default()->error("Invalid value inside curr_rpi_cam_config.txt [{}]",content);
@@ -124,8 +124,7 @@ static CamConfig get_current_cam_config_from_file(){
 }
 
 static void save_cam_config_to_file(CamConfig new_cam_config){
-  OHDFilesystemUtil::create_directories("/boot/openhd/rpi_camera_configs/");
-  OHDFilesystemUtil::write_file(CURR_CAM_CONFIG_FILENAME,std::to_string(cam_config_to_int(new_cam_config)));
+  OHDFilesystemUtil::write_file(get_curr_cam_config_filename(),std::to_string(cam_config_to_int(new_cam_config)));
 }
 
 static std::string get_file_name_for_cam_config(const BoardType& board_type,const CamConfig& cam_config){

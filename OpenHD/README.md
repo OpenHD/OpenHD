@@ -12,7 +12,7 @@ like patched wifi drivers and installed linux utility programs.
 This sounds simple, but it is not. Also, stuff like disabling weird services that would interfer with monitor
 mode or similar falls into this category.
 2) The directory /tmp for writing temporary files exists
-3) The directory "SETTINGS_BASE_PATH=/boot/openhd/settings" for writing persistent (setting) files exists / can be created by OpenHD and is read/writeable
+3) The directory "SETTINGS_BASE_PATH" for writing persistent (setting) files exists / can be created by OpenHD and is read/writeable
 (Make sure it is read / writeable on embedded devices)
 4) The directory /home/openhd/Videos for storing video recording(s) on the air unit can be created by OpenHD
 5) UART: if the platform has an UART connector (like rpi GPIO), the UART is enabled and has a corresponding linux file handle

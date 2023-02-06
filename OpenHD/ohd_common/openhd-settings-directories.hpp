@@ -22,7 +22,8 @@ namespace openhd {
 // Even though this is not recommended, we want to support that - and since on rpi image only /boot shows up
 // under windows in the file reader, we had to change the path in this regard. Shouldn't create any issues
 // on linux, since we are root, we can just cretae the directory at run time
-static constexpr auto SETTINGS_BASE_PATH ="/boot/openhd/settings/";
+//static constexpr auto SETTINGS_BASE_PATH ="/boot/openhd/settings/";
+static constexpr auto SETTINGS_BASE_PATH ="/usr/local/share/openhd/";
 // for example, the unique id
 static std::string get_unit_id_file_path(){
   return std::string(SETTINGS_BASE_PATH)+"unit.id";
