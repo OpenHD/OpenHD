@@ -58,7 +58,7 @@ target_link_libraries(OHDVideoLib PRIVATE
 #find_package(fmt REQUIRED)
 #SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} fmt::fmt)
 
-find_package(spdlog REQUIRED)
+#find_package(spdlog REQUIRED)
 SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} spdlog::spdlog)
 
 find_package(Threads REQUIRED)

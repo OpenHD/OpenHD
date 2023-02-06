@@ -12,6 +12,8 @@ endif()
 # We use spdlog pretty much everyhwere in OpenHD
 add_subdirectory(lib/json)
 
+add_subdirectory(lib/spdlog)
+
 # from https://mavlink.io/en/mavgen_c/
 #You can supress the warnings in CMake using
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
@@ -26,7 +28,7 @@ include(GNUInstallDirs)
 add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
 
-find_package(spdlog REQUIRED)
+#find_package(spdlog REQUIRED)
 target_link_libraries(OHDCommonLib PRIVATE spdlog::spdlog)
 
 #----------------------------------------------------------------------------------------------------------------------
