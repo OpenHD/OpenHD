@@ -60,7 +60,7 @@ FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
 target_link_libraries(OHDInterfaceLib PUBLIC Boost::filesystem)
 
 #find_package(spdlog REQUIRED)
-target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
+#target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
 
 target_link_libraries(OHDInterfaceLib PUBLIC OHDCommonLib)
 

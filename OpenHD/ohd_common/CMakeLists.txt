@@ -28,9 +28,11 @@ include(GNUInstallDirs)
 add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
 
+# Public since we use it throughout OpenHD
 #find_package(spdlog REQUIRED)
-target_link_libraries(OHDCommonLib PRIVATE spdlog::spdlog)
+target_link_libraries(OHDCommonLib PUBLIC spdlog::spdlog)
 
+# Public since we use it throughout OpenHD
 #find_package(spdlog nlohmann_json)
 target_link_libraries(OHDCommonLib PUBLIC  nlohmann_json::nlohmann_json)
 

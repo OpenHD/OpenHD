@@ -21,7 +21,7 @@ find_package(Threads REQUIRED)
 target_link_libraries(OHDTelemetryLib PUBLIC Threads::Threads)
 
 #find_package(spdlog REQUIRED)
-target_link_libraries(OHDTelemetryLib PRIVATE spdlog::spdlog)
+#target_link_libraries(OHDTelemetryLib PRIVATE spdlog::spdlog)
 
 # For joystick, optional (but if SDL2 is not found at compile time, RC won't be available at run time)
 find_package(SDL2 QUIET)
