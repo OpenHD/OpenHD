@@ -50,6 +50,10 @@ struct LogMessage {
     }
     return nullTerminatorFound;
   }
+  std::string msg_as_string()const{
+    if(!hasNullTerminator())return "Null term missing";
+    return "TDOO";
+  }
 } __attribute__((packed));
 
 // these match the mavlink SEVERITY_LEVEL enum, but this code should not depend on

@@ -227,7 +227,7 @@ Udevaddm_info get_udev_adm_info(const std::string& v4l2_device,std::shared_ptr<s
 }
 
 static std::string v4l2_capability_to_string(const v4l2_capability caps){
-  return fmt::format("driver:{},bus_info:{}",caps.driver,caps.bus_info);
+  return fmt::format("driver:{},bus_info:{}",(const char*)caps.driver,(const char*)caps.bus_info);
 }
 
 static std::optional<v4l2_capability> get_capabilities(std::unique_ptr<openhd::v4l2::V4l2FPHolder>& v4l2_fp_holder){
@@ -270,7 +270,7 @@ static EndpointFormats iterate_supported_outputs(std::unique_ptr<openhd::v4l2::V
         while (ioctl(v4l2_fp_holder->fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) == 0) {
           if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
             EndpointFormat endpoint_format;
-            endpoint_format.format = fmt::format("{}", fmtdesc.description);
+            endpoint_format.format = fmt::format("{}", (const char*)fmtdesc.description);
             endpoint_format.width = frmsize.discrete.width;
             endpoint_format.height = frmsize.discrete.height;
             endpoint_format.fps = frmival.discrete.denominator;

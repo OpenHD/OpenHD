@@ -8,7 +8,7 @@
 // NOTE: These are not the camera-specific settings, but rather settings regarding the management
 // of how those camera(s) should be used
 
-#include "json.hpp"
+#include "include_json.hpp"
 #include "openhd-settings-directories.hpp"
 #include "openhd-settings-persistent.hpp"
 

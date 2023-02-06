@@ -31,6 +31,9 @@ add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
 #find_package(spdlog REQUIRED)
 target_link_libraries(OHDCommonLib PRIVATE spdlog::spdlog)
 
+#find_package(spdlog nlohmann_json)
+target_link_libraries(OHDCommonLib PUBLIC  nlohmann_json::nlohmann_json)
+
 #----------------------------------------------------------------------------------------------------------------------
 # sources
 #----------------------------------------------------------------------------------------------------------------------
