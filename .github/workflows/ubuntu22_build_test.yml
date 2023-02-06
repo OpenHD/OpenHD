@@ -26,6 +26,12 @@ jobs:
         run: |
           sudo apt update
           sudo ./install_dep_ubuntu22.sh
+
+      - name: Build submodules independently
+        run: |
+          cd OpenHD
+          sudo ./build_submodules_independently.sh
+
       - name: Build with make
         run: |
           cd OpenHD
