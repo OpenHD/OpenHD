@@ -91,6 +91,7 @@ static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const u
   if(codec==VideoCodec::H265) return fmt::format("rtph265pay mtu={} ! ",mtu);
   if(codec==VideoCodec::MJPEG) return fmt::format("rtpjpegpay mtu={} ! ",mtu);
   assert(false);
+  return "";
 }
 
 static std::string create_rtp_depacketize_for_codec(const VideoCodec& codec){
@@ -98,6 +99,7 @@ static std::string create_rtp_depacketize_for_codec(const VideoCodec& codec){
   if(codec==VideoCodec::H265)return "rtph265depay ! ";
   if(codec==VideoCodec::MJPEG)return "rtpjpegdepay ! ";
   assert(false);
+  return "";
 }
 static std::string create_parse_for_codec(const VideoCodec& codec){
   // config-interval=-1 = makes 100% sure each keyframe has SPS and PPS
@@ -105,6 +107,7 @@ static std::string create_parse_for_codec(const VideoCodec& codec){
   if(codec==VideoCodec::H265)return "h265parse config-interval=-1  ! ";
   if(codec==VideoCodec::MJPEG)return "jpegparse ! ";
   assert(false);
+  return "";
 }
 
 
