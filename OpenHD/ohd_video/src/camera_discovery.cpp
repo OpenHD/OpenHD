@@ -119,6 +119,7 @@ std::vector<Camera> DCameras::detect_raspberrypi_broadcom_csi(std::shared_ptr<sp
       camera.vendor = "RaspberryPi";
       camera.type = CameraType::RPI_CSI_MMAL;
       camera.bus = "0";
+      camera.rpi_csi_mmal_is_csi_to_hdmi= true;
       ret.push_back(camera);
     }else{
       Camera camera;
