@@ -142,12 +142,16 @@ static std::string createDummyStream(const CameraSettings& settings) {
  * See https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c#GstRpiCamSrcAWBMode for more complicated params
  */
 static std::string createRpicamsrcStream(const int camera_number,
-                                         const CameraSettings& settings) {
+                                         const CameraSettings& settings,const bool requires_hdmi_csi_bitrate_workaround) {
   assert(settings.streamed_video_format.isValid());
   //assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
-  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  if(requires_hdmi_csi_bitrate_workaround){
+    openhd::log::get_default()->debug("applying hdmi to csi workaround - reduce bitrate");
+    bitrateBitsPerSecond = bitrateBitsPerSecond / 2;
+  }
   if (camera_number == -1) {
     ss << fmt::format("rpicamsrc name=rpicamsrc bitrate={} preview=0 ",
                       bitrateBitsPerSecond);

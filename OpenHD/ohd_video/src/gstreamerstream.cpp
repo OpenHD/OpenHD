@@ -164,7 +164,7 @@ void GStreamerStream::setup_raspberrypi_mmal_csi() {
   m_console->debug("Setting up Raspberry Pi CSI camera");
   // similar to jetson, for now we assume there is only one CSI camera connected.
   const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createRpicamsrcStream(-1, setting);
+  m_pipeline_content << OHDGstHelper::createRpicamsrcStream(-1, setting,m_camera_holder->get_camera().rpi_csi_mmal_is_csi_to_hdmi);
 }
 
 void GStreamerStream::setup_raspberrypi_veye_v4l2() {
@@ -398,6 +398,10 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
   auto recommended_encoder_bitrate_kbits=lb.recommended_encoder_bitrate_kbits;
+  if(m_camera_holder->get_camera().rpi_csi_mmal_is_csi_to_hdmi){
+    openhd::log::get_default()->debug("applying hdmi to csi workaround - reduce bitrate");
+    recommended_encoder_bitrate_kbits = recommended_encoder_bitrate_kbits / 2;
+  }
   // pi encoder cannot do less than 1MBit/s anyways
   if(recommended_encoder_bitrate_kbits<=1000){
     recommended_encoder_bitrate_kbits=1000;
