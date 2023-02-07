@@ -8,6 +8,9 @@
 #include <fstream>
 #include "openhd-spdlog.hpp"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 // boost::filesystem or std::filesystem, what a pain
 // If possible, one should not use boost::filesystem or anything from boost::
 // inside the project, but quickly write a wrapper here.
@@ -104,6 +107,16 @@ static std::string read_file(const std::string& filename){
 static void remove_if_existing(const std::string& filename){
   if(exists(filename)){
     boost::filesystem::remove(filename);
+  }
+}
+
+static void make_file_read_write_everyone(const std::string& filename){
+  if(exists(filename)){
+    try{
+      chmod("./myfile", S_IROTH | S_IWOTH); // enables owner to rwx file
+    }catch (std::exception& e){
+      openhd::log::get_default()->debug("Cannot change permissions on [{}]",filename);
+    }
   }
 }
 
