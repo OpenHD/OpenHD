@@ -295,6 +295,11 @@ class CameraHolder:
     if(tmp.size()>15)tmp.resize(15);
     return tmp;
   }
+  // The CSI to HDMI adapter has an annoying bug where it actually doesn't allow changing the framerate but takes whatever the host provides
+  // (e.g. the hdmi card). Util to check if we need to apply the "reduce bitrate by half"
+  bool requires_half_bitrate_workaround()const{
+    return m_camera.type==CameraType::RPI_CSI_MMAL && m_camera.rpi_csi_mmal_is_csi_to_hdmi && get_settings().streamed_video_format.framerate==30;
+  }
   // Settings hacky end
  private:
   // Camera info is immutable
