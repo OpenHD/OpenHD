@@ -120,6 +120,12 @@ static void make_file_read_write_everyone(const std::string& filename){
   }
 }
 
+// Return: remaining space in root directory
+static int get_remaining_space_in_mb(){
+  boost::filesystem::space_info info = boost::filesystem::space("/");
+  return info.available / 1024 / 1024;
+}
+
 }
 
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_UTIL_FILESYSTEM_H_
