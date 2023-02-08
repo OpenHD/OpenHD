@@ -105,10 +105,9 @@ std::vector<Camera> DCameras::detect_raspberrypi_broadcom_csi(std::shared_ptr<sp
   if (camera_count >= 1) {
     // dirty, check for CSI to HDMI adapter
     bool is_csi_to_hdmi=false;
-    const auto csi_to_hdmi_check=OHDUtil::run_command_out("i2cdetect -y 0 0x0f 0x0f| grep  \"0f\"");
+    const auto csi_to_hdmi_check=OHDUtil::run_command_out("i2cdetect -y 10 0x0f 0x0f");
     if(csi_to_hdmi_check.has_value()){
-      const std::string& res=csi_to_hdmi_check.value();
-      if(res=="0"){
+      if(OHDUtil::contains(csi_to_hdmi_check.value(),"0f")){
         m_console->debug("detected hdmi to csi instead of rpi mmal csi cam");
         is_csi_to_hdmi= true;
       }
