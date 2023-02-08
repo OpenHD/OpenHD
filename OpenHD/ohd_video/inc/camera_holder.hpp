@@ -198,6 +198,10 @@ class CameraHolder:
     return true;
   }
   bool set_air_recording(int recording_enable){
+    if(OHDFilesystemUtil::get_remaining_space_in_mb()<MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB){
+      openhd::log::get_default()->warn("Not enough free space available");
+      return false;
+    }
     if(recording_enable==0 || recording_enable==1){
       const auto wanted_recording= recording_from_int(recording_enable);
       unsafe_get_settings().air_recording=wanted_recording;
