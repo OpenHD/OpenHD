@@ -196,7 +196,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
 	ss << fmt::format(
 		"video/x-h264, profile=constrained-baseline, width={}, height={}, "
-		"framerate={}/1, level=3.0 ! ",
+		"framerate={}/1, level=4.0 ! ",
         settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
   }else{
 	openhd::log::get_default()->warn("No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues");
