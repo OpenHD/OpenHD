@@ -23,6 +23,9 @@ static_assert(OHD_SYS_ID_GROUND != OHD_SYS_ID_AIR);
 // Sys id of QOpenHD or any other gcs connected to the ground unit that talks mavlink
 static constexpr auto QOPENHD_SYS_ID=255;
 
+// dirty (hard coded for now). Pretty much all FCs default to a sys id of 1 - this works as long as long as the user doesn't change the sys id
+static constexpr auto OHD_SYS_ID_FC=1;
+
 static constexpr auto OHD_GROUND_CLIENT_UDP_PORT_OUT = 14550;
 static constexpr auto OHD_GROUND_CLIENT_UDP_PORT_IN = 14551;
 

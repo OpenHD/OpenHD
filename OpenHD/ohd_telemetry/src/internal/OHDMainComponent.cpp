@@ -224,3 +224,17 @@ std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(const Ma
   }
   return std::nullopt;
 }
+
+void OHDMainComponent::check_msges_for_fc_arming_state(const std::vector<MavlinkMessage>& messages) {
+  for(const auto& msg:messages){
+    if(msg.m.sysid== OHD_SYS_ID_FC && msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT){
+      mavlink_heartbeat_t heartbeat;
+      mavlink_msg_heartbeat_decode(&msg.m, &heartbeat);
+      const auto mode = (MAV_MODE_FLAG)heartbeat.base_mode;
+      const bool armed= (mode & MAV_MODE_FLAG_SAFETY_ARMED);
+      if(m_opt_action_handler){
+        m_opt_action_handler->update_state(armed);
+      }
+    }
+  }
+}

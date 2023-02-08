@@ -56,6 +56,7 @@ void AirTelemetry::on_messages_fc(const std::vector<MavlinkMessage>& messages) {
   //debugMavlinkMessage(message.m,"AirTelemetry::onMessageFC");
   // Note: No OpenHD component ever talks to the FC, FC is completely passed through
   send_messages_ground_unit(messages);
+  m_ohd_main_component->check_msges_for_fc_arming_state(messages);
 }
 
 void AirTelemetry::on_messages_ground_unit(const std::vector<MavlinkMessage>& messages) {
