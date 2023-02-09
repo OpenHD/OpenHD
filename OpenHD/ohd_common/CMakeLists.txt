@@ -81,3 +81,6 @@ set_target_properties(OHDCommonLib PROPERTIES
         SOVERSION ${PROJECT_VERSION_MAJOR}
         VERSION ${PROJECT_VERSION}
         LINKER_LANGUAGE CXX)
+
+add_executable(test_openhd_util test/test_openhd_util.cpp)
+target_link_libraries(test_openhd_util OHDCommonLib)

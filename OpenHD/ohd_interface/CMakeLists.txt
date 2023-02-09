@@ -87,10 +87,6 @@ target_link_libraries(test_led OHDInterfaceLib)
 add_executable(test_interface test/test_interface.cpp)
 target_link_libraries(test_interface OHDInterfaceLib)
 
-#special, temporary
-add_executable(test_common_util test/test_common_util.cpp)
-target_link_libraries(test_common_util OHDInterfaceLib)
-
 add_executable(test_usb_tether_listener test/test_usb_tether_listener.cpp)
 target_link_libraries(test_usb_tether_listener OHDInterfaceLib)
 
