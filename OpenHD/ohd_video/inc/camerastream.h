@@ -5,9 +5,9 @@
 #include <vector>
 
 #include "camera_holder.hpp"
-#include "openhd-platform.hpp"
 #include "openhd-action-handler.hpp"
-#include "ohd_link.hpp"
+#include "openhd-platform.hpp"
+#include "openhd_link.hpp"
 
 /**
  * Every camera stream should inherit from this class.

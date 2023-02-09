@@ -10,12 +10,12 @@
 #include "endpoints/UDPEndpoint2.h"
 #include "endpoints/WBEndpoint.h"
 #include "internal/OHDMainComponent.h"
-#include "openhd-settings-imp.hpp"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
-#include "ohd_link.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-external-device.hpp"
+#include "openhd-settings-imp.hpp"
 #include "openhd-spdlog.hpp"
+#include "openhd_link.hpp"
 
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 #include "rc/JoystickReader.h"
