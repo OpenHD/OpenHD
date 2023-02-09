@@ -2,6 +2,8 @@
 // Created by consti10 on 09.02.23.
 //
 
+#include <iostream>
+
 #include "openhd_util.h"
 
 static void test_execute_commands(){
