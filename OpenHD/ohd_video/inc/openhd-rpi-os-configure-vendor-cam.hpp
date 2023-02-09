@@ -9,7 +9,6 @@
 #include "openhd-util-filesystem.hpp"
 #include "openhd-spdlog.hpp"
 #include "openhd-platform.hpp"
-//for dynamic config
 #include <fstream>
 #include <iostream>
 #include <cstring>
