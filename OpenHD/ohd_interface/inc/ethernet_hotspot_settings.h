@@ -8,8 +8,8 @@
 #include <cstdint>
 
 #include "include_json.hpp"
-#include "openhd-settings-directories.hpp"
-#include "openhd-settings-persistent.hpp"
+#include "openhd_settings_directories.hpp"
+#include "openhd_settings_persistent.hpp"
 
 struct EthernetHotspotSettings {
   bool enable=false;

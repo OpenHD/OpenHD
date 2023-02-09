@@ -11,12 +11,12 @@
 
 #include "AirTelemetry.h"
 #include "GroundTelemetry.h"
-#include "openhd-settings-imp.hpp"
-#include "openhd-action-handler.hpp"
-#include "openhd-external-device.hpp"
-#include "openhd-link-statistics.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-profile.hpp"
+#include "openhd_action_handler.hpp"
+#include "openhd_external_device.hpp"
+#include "openhd_link_statistics.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_profile.hpp"
+#include "openhd_settings_imp.hpp"
 
 // Forward declare them to speed up compilation time.
 //class AirTelemetry;

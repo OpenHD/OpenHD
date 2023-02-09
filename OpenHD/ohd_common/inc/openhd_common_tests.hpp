@@ -6,8 +6,8 @@
 #define OPENHD_TESTS_H
 
 //#include "openhd-camera.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-profile.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_profile.hpp"
 #include "wifi_card.hpp"
 
 /**

@@ -1,15 +1,15 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_UTIL_FILESYSTEM_H_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_UTIL_FILESYSTEM_H_
 
-#include <vector>
-#include <optional>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <boost/filesystem.hpp>
 #include <fstream>
-#include "openhd-spdlog.hpp"
+#include <optional>
+#include <vector>
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include "openhd_spdlog.hpp"
 
 // boost::filesystem or std::filesystem, what a pain
 // If possible, one should not use boost::filesystem or anything from boost::

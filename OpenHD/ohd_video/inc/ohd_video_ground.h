@@ -6,7 +6,7 @@
 #define OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_GROUND_H_
 
 #include "../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
-#include "openhd-external-device.hpp"
+#include "openhd_external_device.hpp"
 #include "openhd_link.hpp"
 
 // The ground just stupidly forwards video (rtp fragments, to be exact) via UDP

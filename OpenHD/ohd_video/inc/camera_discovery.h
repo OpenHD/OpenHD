@@ -6,9 +6,8 @@
 #include <vector>
 
 #include "camera_holder.hpp"
-#include "openhd-platform.hpp"
-
-#include "openhd-spdlog.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_spdlog.hpp"
 
 /**
  * Discover all connected cameras and for some camera(s) (E.g. USB cameras and/or cameras that use v4l2)

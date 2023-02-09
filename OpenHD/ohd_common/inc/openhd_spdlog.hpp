@@ -9,13 +9,14 @@
 // specific logger(s) on a module basis such that we can enable / disable logging
 // for a specific module (e.g. ohd_video: set log level to debug / info) when debugging ohd_video.
 
+#include <spdlog/common.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
-#include <spdlog/common.h>
+
 #include <mutex>
 #include <utility>
 
-#include "openhd-spdlog-tele-sink.h"
+#include "openhd_spdlog_tele_sink.h"
 
 namespace spd = spdlog;
 

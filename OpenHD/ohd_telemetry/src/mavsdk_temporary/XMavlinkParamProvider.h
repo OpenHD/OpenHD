@@ -8,7 +8,7 @@
 #include <memory>
 #include <utility>
 
-#include "openhd-settings-imp.hpp"
+#include "openhd_settings_imp.hpp"
 #include "routing/MavlinkComponent.hpp"
 
 // mavsdk

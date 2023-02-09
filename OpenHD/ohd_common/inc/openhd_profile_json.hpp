@@ -5,8 +5,8 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_PROFILE_JSON_H_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_PROFILE_JSON_H_
 
-#include "openhd-profile.hpp"
 #include "include_json.hpp"
+#include "openhd_profile.hpp"
 
 // Thw write out here is only for debugging
 static void to_json(nlohmann::json& j, const OHDProfile& p) {

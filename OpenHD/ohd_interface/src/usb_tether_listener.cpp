@@ -2,12 +2,13 @@
 // Created by consti10 on 21.05.22.
 //
 
+#include "usb_tether_listener.h"
+
 #include <arpa/inet.h>
 
 #include <utility>
 
-#include "openhd-spdlog.hpp"
-#include "usb_tether_listener.h"
+#include "openhd_spdlog.hpp"
 
 USBTetherListener::USBTetherListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager) :
     m_external_device_manager(std::move(external_device_manager)){

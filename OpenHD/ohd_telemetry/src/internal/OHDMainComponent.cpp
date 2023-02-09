@@ -5,7 +5,7 @@
 #include "OHDMainComponent.h"
 
 #include <iostream>
-#include <openhd-global-constants.hpp>
+#include <openhd_global_constants.hpp>
 #include <utility>
 
 #include "OHDLinkStatisticsHelper.h"

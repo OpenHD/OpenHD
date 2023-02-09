@@ -4,18 +4,16 @@
 #include <gst/gst.h>
 
 #include <array>
-#include <vector>
 #include <memory>
-#include <thread>
 #include <mutex>
+#include <thread>
+#include <vector>
 
-#include "camerastream.h"
 #include "camera_settings.hpp"
-#include "openhd-platform.hpp"
-
-#include "openhd-spdlog.hpp"
-
+#include "camerastream.h"
 #include "gst_bitrate_controll_wrapper.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_spdlog.hpp"
 
 // Implementation of OHD CameraStream for pretty much everything, using
 // gstreamer.

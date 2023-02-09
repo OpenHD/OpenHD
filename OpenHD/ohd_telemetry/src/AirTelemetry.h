@@ -9,18 +9,18 @@
 
 #include "endpoints/SerialEndpoint.h"
 #include "internal/OHDMainComponent.h"
-#include "openhd-settings-imp.hpp"
-#include "openhd-link-statistics.hpp"
-#include "openhd-platform.hpp"
+#include "openhd_link_statistics.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_settings_imp.hpp"
 #include "routing/MavlinkSystem.hpp"
 //
 #include "AirTelemetrySettings.h"
 #include "endpoints/WBEndpoint.h"
 #include "gpio_control/RaspberryPiGPIOControl.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
-#include "openhd-action-handler.hpp"
-#include "openhd-spdlog.hpp"
+#include "openhd_action_handler.hpp"
 #include "openhd_link.hpp"
+#include "openhd_spdlog.hpp"
 
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.

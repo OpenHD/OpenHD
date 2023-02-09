@@ -1,14 +1,14 @@
 //
 // For testing, run the air and ground telemetry services side by side on the same machine locally.
 //
-#include "../src/OHDTelemetry.h"
-#include "openhd-platform.hpp"
-#include "openhd-profile.hpp"
-#include "openhd-platform-discover.hpp"
-
 #include <iostream>
 #include <memory>
 #include <thread>
+
+#include "../src/OHDTelemetry.h"
+#include "openhd_platform.hpp"
+#include "openhd_platform_discover.hpp"
+#include "openhd_profile.hpp"
 
 int main() {
   std::cout<<"start\n";

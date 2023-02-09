@@ -3,15 +3,17 @@
 //
 
 #include "SerialEndpoint.h"
-#include "openhd-util-filesystem.hpp"
 
-#include <unistd.h>
 #include <fcntl.h>
-#include <termios.h>
 #include <poll.h>
-#include <utility>
-#include <cassert>
 #include <sys/stat.h>
+#include <termios.h>
+#include <unistd.h>
+
+#include <cassert>
+#include <utility>
+
+#include "openhd_util_filesystem.hpp"
 
 static std::string GET_ERROR(){
   return {strerror(errno)};

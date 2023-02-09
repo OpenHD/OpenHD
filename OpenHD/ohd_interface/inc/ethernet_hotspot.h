@@ -5,8 +5,8 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_ETHERNET_HOTSPOT_H_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_ETHERNET_HOTSPOT_H_
 
-#include <openhd-external-device.hpp>
-#include <openhd-settings-imp.hpp>
+#include <openhd_external_device.hpp>
+#include <openhd_settings_imp.hpp>
 #include <string>
 
 #include "ethernet_hotspot_settings.h"

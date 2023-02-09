@@ -6,7 +6,7 @@
 
 #include <utility>
 
-#include "openhd-spdlog.hpp"
+#include "openhd_spdlog.hpp"
 
 static constexpr auto OHD_WIFI_HOTSPOT_CONNECTION_NAME ="ohd_wfi_hotspot";
 

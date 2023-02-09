@@ -9,8 +9,8 @@
 #include <mutex>
 #include <utility>
 
-#include "openhd-link-statistics.hpp"
-#include "openhd-util.hpp"
+#include "openhd_link_statistics.hpp"
+#include "openhd_util.hpp"
 
 // This class exists to handle the rare case(s) when one openhd module needs to talk to another.
 // For example, the wb link (ohd_interface) might request a lower encoder bitrate (ohd_video)

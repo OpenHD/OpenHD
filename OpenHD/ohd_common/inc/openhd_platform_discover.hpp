@@ -5,14 +5,14 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_PLATFORM_DISCOVER_HPP_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_PLATFORM_DISCOVER_HPP_
 
-#include "openhd-platform.hpp"
-#include "openhd-platform-json.hpp"
-#include "openhd-util.hpp"
-#include "openhd-util-filesystem.hpp"
-
 #include <iostream>
-#include <set>
 #include <regex>
+#include <set>
+
+#include "openhd_platform.hpp"
+#include "openhd_platform_json.hpp"
+#include "openhd_util.hpp"
+#include "openhd_util_filesystem.hpp"
 
 /**
  * Discover the platform we are running on.

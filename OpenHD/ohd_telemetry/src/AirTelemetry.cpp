@@ -8,7 +8,7 @@
 
 #include "mav_helper.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
-#include "openhd-temporary-air-or-ground.h"
+#include "openhd_temporary_air_or_ground.h"
 #include "openhd_util_time.hpp"
 
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {

@@ -1,11 +1,11 @@
 #ifndef OPENHD_PLATFORM_H
 #define OPENHD_PLATFORM_H
 
-#include <string>
-#include <sstream>
 #include <fstream>
+#include <sstream>
+#include <string>
 
-#include "openhd-util.hpp"
+#include "openhd_util.hpp"
 
 enum class PlatformType {
   Unknown,

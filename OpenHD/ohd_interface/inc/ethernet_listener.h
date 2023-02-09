@@ -7,7 +7,7 @@
 
 #include <atomic>
 #include <memory>
-#include <openhd-external-device.hpp>
+#include <openhd_external_device.hpp>
 #include <thread>
 
 // Same pattern as usb_tether_listener.h

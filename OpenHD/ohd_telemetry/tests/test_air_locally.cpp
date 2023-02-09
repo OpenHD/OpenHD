@@ -2,13 +2,13 @@
 // For testing, run the air code such that it can communicate with a running ground instance (on localhost)
 //
 #include <iostream>
+#include <memory>
+#include <thread>
 
 #include "../src/OHDTelemetry.h"
-#include "openhd-profile.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-platform-discover.hpp"
-#include <thread>
-#include <memory>
+#include "openhd_platform.hpp"
+#include "openhd_platform_discover.hpp"
+#include "openhd_profile.hpp"
 
 int main() {
   std::cout<< "start\n";

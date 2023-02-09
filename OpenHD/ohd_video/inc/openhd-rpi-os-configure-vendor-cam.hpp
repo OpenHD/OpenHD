@@ -5,13 +5,14 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_RPI_OS_CONFIGURE_VENDOR_CAM_HPP_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_RPI_OS_CONFIGURE_VENDOR_CAM_HPP_
 
-#include "openhd-util.hpp"
-#include "openhd-util-filesystem.hpp"
-#include "openhd-spdlog.hpp"
-#include "openhd-platform.hpp"
+#include <cstring>
 #include <fstream>
 #include <iostream>
-#include <cstring>
+
+#include "openhd_platform.hpp"
+#include "openhd_spdlog.hpp"
+#include "openhd_util.hpp"
+#include "openhd_util_filesystem.hpp"
 
 // Helper to reconfigure the rpi os for the different camera types
 // This really is exhausting - some camera(s) are auto-detected, some are not,

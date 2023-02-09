@@ -4,7 +4,7 @@
 
 #include "wifi_command_helper.h"
 
-#include "openhd-util.hpp"
+#include "openhd_util.hpp"
 
 static std::shared_ptr<spdlog::logger> get_logger(){
   return openhd::log::create_or_get("w_helper");

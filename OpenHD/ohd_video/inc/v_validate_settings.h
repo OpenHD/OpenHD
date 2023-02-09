@@ -6,7 +6,8 @@
 #define OPENHD_OPENHD_OHD_VIDEO_INC_V_VALIDATE_SETTINGS_H_
 
 #include <optional>
-#include "openhd-spdlog.hpp"
+
+#include "openhd_spdlog.hpp"
 
 // For now, only basic sanity checking on video settings
 namespace openhd{

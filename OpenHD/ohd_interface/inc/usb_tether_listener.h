@@ -5,15 +5,15 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_USBHOTSPOT_H_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_USBHOTSPOT_H_
 
-#include "openhd-util-filesystem.hpp"
-#include "openhd-util.hpp"
-#include <thread>
-#include <chrono>
-#include <utility>
-#include <mutex>
 #include <atomic>
-#include <openhd-external-device.hpp>
+#include <chrono>
+#include <mutex>
+#include <openhd_external_device.hpp>
+#include <thread>
+#include <utility>
 
+#include "openhd_util.hpp"
+#include "openhd_util_filesystem.hpp"
 
 /**
  * USB hotspot (USB Tethering).

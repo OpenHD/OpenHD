@@ -5,10 +5,11 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_AIRRECORDINGFILEHELPER_HPP_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_AIRRECORDINGFILEHELPER_HPP_
 
-#include <string>
 #include <sstream>
-#include "openhd-util-filesystem.hpp"
-#include "openhd-util.hpp"
+#include <string>
+
+#include "openhd_util.hpp"
+#include "openhd_util_filesystem.hpp"
 
 namespace openhd::video{
 

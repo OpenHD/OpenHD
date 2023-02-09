@@ -12,14 +12,14 @@
 #include <memory>
 #include <sstream>
 
-#include "openhd-global-constants.hpp"
-#include "openhd-platform-discover.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-profile-json.hpp"
-#include "openhd-profile.hpp"
-#include "openhd-rpi-gpio.hpp"
-#include "openhd-spdlog.hpp"
-#include "openhd-temporary-air-or-ground.h"
+#include "openhd_global_constants.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_platform_discover.hpp"
+#include "openhd_profile.hpp"
+#include "openhd_profile_json.hpp"
+#include "openhd_rpi_gpio.hpp"
+#include "openhd_spdlog.hpp"
+#include "openhd_temporary_air_or_ground.h"
 // For logging the commit hash and more
 #include "git.h"
 

@@ -6,9 +6,10 @@
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_EXTERNAL_DEVICE_H_
 
 #include <string>
-#include "openhd-util.hpp"
-#include "openhd-spdlog.hpp"
-#include "openhd-settings-directories.hpp"
+
+#include "openhd_settings_directories.hpp"
+#include "openhd_spdlog.hpp"
+#include "openhd_util.hpp"
 
 namespace openhd {
 

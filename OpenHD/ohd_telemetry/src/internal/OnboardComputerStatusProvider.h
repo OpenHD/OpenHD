@@ -10,7 +10,7 @@
 #include <thread>
 
 #include "../mav_include.h"
-#include "openhd-platform.hpp"
+#include "openhd_platform.hpp"
 
 // We need one thread for the CPU usage (workaround) and
 // for some reason, running all those vcgencmd's on rpi for figuring out the current clock

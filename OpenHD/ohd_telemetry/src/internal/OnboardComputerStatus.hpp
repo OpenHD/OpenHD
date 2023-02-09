@@ -5,13 +5,13 @@
 #ifndef XMAVLINKSERVICE_SYSTEMREADUTIL_H
 #define XMAVLINKSERVICE_SYSTEMREADUTIL_H
 
-#include "mav_include.h"
-#include "openhd-util.hpp"
-#include "openhd-spdlog.hpp"
-#include <sstream>
-#include <chrono>
 #include <boost/filesystem.hpp>
+#include <chrono>
+#include <sstream>
 
+#include "mav_include.h"
+#include "openhd_spdlog.hpp"
+#include "openhd_util.hpp"
 
 // https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS
 // used to be a custom message for a short amount of time.

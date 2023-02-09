@@ -4,11 +4,11 @@
 
 #include "GroundTelemetry.h"
 
-#include <iostream>
 #include <chrono>
+#include <iostream>
 
 #include "mav_helper.h"
-#include "openhd-temporary-air-or-ground.h"
+#include "openhd_temporary_air_or_ground.h"
 #include "openhd_util_time.hpp"
 
 GroundTelemetry::GroundTelemetry(OHDPlatform platform,

@@ -6,10 +6,10 @@
 #include <thread>
 
 #include "../src/OHDTelemetry.h"
-#include "openhd-settings-imp.hpp"
-#include "openhd-platform-discover.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-profile.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_platform_discover.hpp"
+#include "openhd_profile.hpp"
+#include "openhd_settings_imp.hpp"
 
 int main() {
   std::cout<< "start\n";

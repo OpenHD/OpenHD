@@ -1,12 +1,12 @@
 // For the onboard computer status we read a lot of stuff,
 // This is for testing these functionalities
 
-#include "../src/internal/OnboardComputerStatusProvider.h"
-#include "../src/internal/LogCustomOHDMessages.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-platform-discover.hpp"
-
 #include <memory>
+
+#include "../src/internal/LogCustomOHDMessages.hpp"
+#include "../src/internal/OnboardComputerStatusProvider.h"
+#include "openhd_platform.hpp"
+#include "openhd_platform_discover.hpp"
 
 int main() {
 

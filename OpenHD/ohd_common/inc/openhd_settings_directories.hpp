@@ -11,8 +11,8 @@
 #include <string>
 #include <utility>
 
-#include "openhd-spdlog.hpp"
-#include "openhd-util-filesystem.hpp"
+#include "openhd_spdlog.hpp"
+#include "openhd_util_filesystem.hpp"
 
 namespace openhd {
 

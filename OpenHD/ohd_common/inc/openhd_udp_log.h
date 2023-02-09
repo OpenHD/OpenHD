@@ -5,24 +5,24 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_UDP_LOG_H_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_UDP_LOG_H_
 
-#include <cstdio>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <cstdlib>
-#include <cstdint>
-#include <cstring>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include <string>
+#include <cassert>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <sstream>
-#include <cassert>
+#include <string>
 
-#include "openhd-global-constants.hpp"
+#include "openhd_global_constants.hpp"
 
 /**
  * This provides convenient methods to send log messages from any service running on the air or ground unit to a final output deice,

@@ -3,11 +3,12 @@
 //
 
 #include "ethernet_hotspot.h"
-#include "ethernet_helper.hpp"
 
-#include <openhd-external-device.hpp>
-#include <openhd-util.hpp>
+#include <openhd_external_device.hpp>
+#include <openhd_util.hpp>
 #include <utility>
+
+#include "ethernet_helper.hpp"
 
 static constexpr auto OHD_ETHERNET_HOTSPOT_CONNECTION_NAME ="ohd_eth_hotspot";
 

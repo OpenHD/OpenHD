@@ -5,9 +5,10 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_SRC_GST_APPSINK_HELPER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_SRC_GST_APPSINK_HELPER_H_
 
-#include <gst/gst.h>
 #include <gst/app/gstappsink.h>
-#include "openhd-spdlog.hpp"
+#include <gst/gst.h>
+
+#include "openhd_spdlog.hpp"
 
 namespace openhd{
 

@@ -7,11 +7,11 @@
 
 #include "camera.hpp"
 #include "camera_settings.hpp"
-#include "openhd-settings-imp.hpp"
-#include "openhd-action-handler.hpp"
-#include "openhd-settings-directories.hpp"
-#include "openhd-settings-persistent.hpp"
+#include "openhd_action_handler.hpp"
 #include "openhd_bitrate_conversions.hpp"
+#include "openhd_settings_directories.hpp"
+#include "openhd_settings_imp.hpp"
+#include "openhd_settings_persistent.hpp"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about a camera
 // Camera Holder is used to differentiate between

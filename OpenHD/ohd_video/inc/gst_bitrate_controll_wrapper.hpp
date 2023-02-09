@@ -6,8 +6,10 @@
 #define OPENHD_OPENHD_OHD_VIDEO_INC_GST_BITRATE_CONTROLL_WRAPPER_H_
 
 #include <gst/gst.h>
+
 #include <optional>
-#include "openhd-spdlog.hpp"
+
+#include "openhd_spdlog.hpp"
 
 // Bitrate is one of the few params we want to support changing dynamically at run time
 // without the need for a pipeline restart.

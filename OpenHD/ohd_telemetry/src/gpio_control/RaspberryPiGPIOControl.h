@@ -8,7 +8,7 @@
 #include <memory>
 
 #include "RaspberryPiGPIOControlSettings.h"
-#include "openhd-settings-imp.hpp"
+#include "openhd_settings_imp.hpp"
 
 namespace openhd::telemetry::rpi {
 

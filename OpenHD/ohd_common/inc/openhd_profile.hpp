@@ -8,9 +8,9 @@
 #include <vector>
 
 #include "include_json.hpp"
-#include "openhd-settings-directories.hpp"
-#include "openhd-spdlog.hpp"
-#include "openhd-util.hpp"
+#include "openhd_settings_directories.hpp"
+#include "openhd_spdlog.hpp"
+#include "openhd_util.hpp"
 
 /**
  * The profile is created on startup and then doesn't change during run time.

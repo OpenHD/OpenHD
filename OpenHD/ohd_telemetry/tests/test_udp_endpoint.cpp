@@ -9,7 +9,7 @@
 
 #include "../src/mav_helper.h"
 #include "../src/mav_include.h"
-#include "openhd-util.hpp"
+#include "openhd_util.hpp"
 
 // test if the connection to QOpenHD / QGroundControll can be sucesfully established.
 // Run this application on the same system QOpenHD is running on, and

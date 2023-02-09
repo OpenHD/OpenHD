@@ -5,12 +5,13 @@
 #ifndef OPENHD_DCAMERASHELPER_H
 #define OPENHD_DCAMERASHELPER_H
 
-#include "openhd-util.hpp"
 #include <libusb.h>
+
 #include <string>
 #include <vector>
 
 #include "camera_enums.hpp"
+#include "openhd_util.hpp"
 
 /**
  * Helper for the discover thermal cameras step.

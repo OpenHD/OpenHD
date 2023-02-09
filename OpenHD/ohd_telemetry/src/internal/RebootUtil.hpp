@@ -7,7 +7,8 @@
 
 #include <chrono>
 #include <iostream>
-#include "openhd-util.hpp"
+
+#include "openhd_util.hpp"
 
 // convenient utils to handle the shutdown or reboot commands for OpenHD.
 // based on
