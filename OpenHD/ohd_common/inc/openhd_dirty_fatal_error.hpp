@@ -20,7 +20,7 @@
 // -> requires a complete re-boot of linux
 
 #include "openhd_spdlog.hpp"
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 
 namespace openhd::fatalerror{
 

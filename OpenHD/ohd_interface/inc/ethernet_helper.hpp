@@ -8,6 +8,8 @@
 #include "openhd_spdlog.hpp"
 #include "openhd_util_filesystem.hpp"
 
+#include <regex>
+
 // Quick helper methods for ethernet (used for automatic data forwarding detection)
 namespace openhd::ethernet{
 

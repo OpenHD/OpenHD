@@ -13,7 +13,7 @@
 #include <cstdint>
 
 #include "openhd_spdlog.hpp"
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 #undef __USE_MISC
 #include <linux/if.h>
 #include <net/if.h>

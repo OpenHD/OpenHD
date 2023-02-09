@@ -2,7 +2,7 @@
 // Created by consti10 on 20.05.22.
 //
 
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 #include "usb_tether_listener.h"
 
 int main(int argc, char *argv[]) {

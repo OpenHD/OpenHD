@@ -4,7 +4,7 @@
 #include "openhd_platform.hpp"
 #include "openhd_platform_discover.hpp"
 #include "openhd_profile.hpp"
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 
 // Using test_interface:
 // 1) run it as "air" on whatever device you want to use as the air unit

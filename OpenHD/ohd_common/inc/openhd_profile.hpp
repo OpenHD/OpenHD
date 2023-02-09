@@ -10,7 +10,7 @@
 #include "include_json.hpp"
 #include "openhd_settings_directories.hpp"
 #include "openhd_spdlog.hpp"
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 
 /**
  * The profile is created on startup and then doesn't change during run time.

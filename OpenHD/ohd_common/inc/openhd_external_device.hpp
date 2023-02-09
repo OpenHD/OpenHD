@@ -9,7 +9,7 @@
 
 #include "openhd_settings_directories.hpp"
 #include "openhd_spdlog.hpp"
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 
 namespace openhd {
 

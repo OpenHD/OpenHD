@@ -2,7 +2,7 @@
 // Created by consti10 on 09.02.23.
 //
 
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 
 static void test_execute_commands(){
   // We do echo 1, but the method should return "0" which stands for

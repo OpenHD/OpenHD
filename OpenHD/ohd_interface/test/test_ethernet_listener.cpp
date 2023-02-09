@@ -3,7 +3,7 @@
 //
 
 #include "ethernet_listener.h"
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 
 int main(int argc, char *argv[]) {
 

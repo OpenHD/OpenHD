@@ -7,7 +7,7 @@
 
 #include "openhd_led_codes.hpp"
 #include "openhd_platform_discover.hpp"
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 
 int main(int argc, char *argv[]) {
 

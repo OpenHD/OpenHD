@@ -12,7 +12,7 @@
 #include <thread>
 #include <utility>
 
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 #include "openhd_util_filesystem.hpp"
 
 /**

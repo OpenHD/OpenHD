@@ -4,8 +4,9 @@
 
 #include "ethernet_hotspot.h"
 
+#include <openhd_util.h>
+
 #include <openhd_external_device.hpp>
-#include <openhd_util.hpp>
 #include <utility>
 
 #include "ethernet_helper.hpp"

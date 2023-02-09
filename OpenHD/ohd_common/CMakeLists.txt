@@ -41,6 +41,8 @@ target_link_libraries(OHDCommonLib PUBLIC  nlohmann_json::nlohmann_json)
 #----------------------------------------------------------------------------------------------------------------------
 
 set(sources
+    "src/openhd_util.cpp"
+
     "inc/openhd_settings_imp.hpp"
     "inc/include_json.hpp"
     "inc/openhd_action_handler.hpp"
@@ -57,7 +59,7 @@ set(sources
     "inc/openhd_profile_json.hpp"
     "inc/openhd_settings_directories.hpp"
     "inc/openhd_settings_persistent.hpp"
-    "inc/openhd_util.hpp"
+    "inc/openhd_util.h"
     "inc/openhd_util_filesystem.hpp"
     "inc/openhd_spdlog.hpp"
     "inc/openhd_spdlog_tele_sink.h"

@@ -5,7 +5,7 @@
 #include <csignal>
 #include <thread>
 
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 #include "wifi_hotspot.h"
 
 int main(int argc, char *argv[]) {

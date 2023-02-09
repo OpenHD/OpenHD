@@ -13,7 +13,7 @@
 #include <thread>
 
 #include "openhd_spdlog.hpp"
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 
 /**
  * The Paradigm of this class is similar to how for example external devices

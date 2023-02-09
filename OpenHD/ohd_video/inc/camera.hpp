@@ -7,6 +7,8 @@
 
 #include "camera_enums.hpp"
 #include "include_json.hpp"
+#include <ostream>
+#include <fstream>
 
 
 // Information about a discovered camera and its capabilities.

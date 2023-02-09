@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "camera_enums.hpp"
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 
 /**
  * Helper for the discover thermal cameras step.

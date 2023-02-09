@@ -5,7 +5,8 @@
 #include <sstream>
 #include <string>
 
-#include "openhd_util.hpp"
+#include "openhd_util.h"
+#include "openhd_spdlog.hpp"
 
 enum class PlatformType {
   Unknown,

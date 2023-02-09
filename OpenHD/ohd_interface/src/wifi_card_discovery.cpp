@@ -5,7 +5,7 @@
 
 #include "manually_defined_cards.hpp"
 #include "openhd_spdlog.hpp"
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 #include "openhd_util_filesystem.hpp"
 #include "wifi_card.hpp"
 #include "wifi_command_helper.h"

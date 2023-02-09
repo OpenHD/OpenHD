@@ -4,7 +4,7 @@
 
 #include "RaspberryPiGPIOControl.h"
 
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 
 namespace openhd::telemetry::rpi {
 

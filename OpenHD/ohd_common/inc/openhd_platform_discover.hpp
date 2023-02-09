@@ -11,7 +11,7 @@
 
 #include "openhd_platform.hpp"
 #include "openhd_platform_json.hpp"
-#include "openhd_util.hpp"
+#include "openhd_util.h"
 #include "openhd_util_filesystem.hpp"
 
 /**
