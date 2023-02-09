@@ -43,11 +43,12 @@ target_link_libraries(OHDCommonLib PUBLIC  nlohmann_json::nlohmann_json)
 set(sources
     "src/openhd_util.cpp"
     "src/openhd_util_filesystem.cpp"
+    "src/openhd_settings_persistent.cpp"
 
     "inc/openhd_settings_imp.hpp"
     "inc/include_json.hpp"
     "inc/openhd_action_handler.hpp"
-        "inc/openhd_external_device.hpp"
+    "inc/openhd_external_device.hpp"
     "inc/openhd_global_constants.hpp"
     "inc/openhd_led_codes.hpp"
     "inc/openhd_led_pi.hpp"
@@ -58,7 +59,7 @@ set(sources
     "inc/openhd_profile.hpp"
     "inc/openhd_profile_json.hpp"
     "inc/openhd_settings_directories.hpp"
-    "inc/openhd_settings_persistent.hpp"
+    "inc/openhd_settings_persistent.h"
     "inc/openhd_util.h"
     "inc/openhd_util_filesystem.h"
     "inc/openhd_spdlog.hpp"

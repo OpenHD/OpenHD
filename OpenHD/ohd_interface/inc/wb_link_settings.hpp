@@ -6,7 +6,7 @@
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 
 #include "openhd_platform.hpp"
-#include "openhd_settings_persistent.hpp"
+#include "openhd_settings_persistent.h"
 #include "wifi_card.hpp"
 
 namespace openhd{
