@@ -3,6 +3,9 @@ project(OpenHD-Interface)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Only needed when we build this submodule manually
+add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
+
 # Build and include wifibroadcast
 include(../lib/wifibroadcast/WBLib.cmake)
 
@@ -56,8 +59,10 @@ SET(Boost_USE_MULTITHREAD ON)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
 target_link_libraries(OHDInterfaceLib PUBLIC Boost::filesystem)
 
-find_package(spdlog REQUIRED)
-target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
+#find_package(spdlog REQUIRED)
+#target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
+
+target_link_libraries(OHDInterfaceLib PUBLIC OHDCommonLib)
 
 # needed to set wifi cards to monitor mode and more
 #include(cmake/FindLibNL.cmake)
@@ -81,10 +86,6 @@ target_link_libraries(test_led OHDInterfaceLib)
 # Custom testing
 add_executable(test_interface test/test_interface.cpp)
 target_link_libraries(test_interface OHDInterfaceLib)
-
-#special, temporary
-add_executable(test_common_util test/test_common_util.cpp)
-target_link_libraries(test_common_util OHDInterfaceLib)
 
 add_executable(test_usb_tether_listener test/test_usb_tether_listener.cpp)
 target_link_libraries(test_usb_tether_listener OHDInterfaceLib)

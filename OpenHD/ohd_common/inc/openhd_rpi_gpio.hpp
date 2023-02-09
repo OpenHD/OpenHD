@@ -5,7 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_RPI_GPIO_HPP_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_RPI_GPIO_HPP_
 
-#include "openhd-util.hpp"
+#include "openhd_util.h"
 
 namespace openhd::rpi{
 

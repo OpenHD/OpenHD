@@ -5,17 +5,17 @@
 #ifndef OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 #define OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 
-#include "endpoints/UDPEndpoint2.h"
-#include "internal/OHDMainComponent.h"
-#include "mavlink_settings/ISettingsComponent.hpp"
-#include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "GroundTelemetrySettings.h"
-#include "openhd-action-handler.hpp"
-#include "openhd-spdlog.hpp"
-#include "endpoints/WBEndpoint.h"
-#include "ohd_link.hpp"
-#include "openhd-external-device.hpp"
 #include "endpoints/SerialEndpoint.h"
+#include "endpoints/UDPEndpoint2.h"
+#include "endpoints/WBEndpoint.h"
+#include "internal/OHDMainComponent.h"
+#include "mavsdk_temporary/XMavlinkParamProvider.h"
+#include "openhd_action_handler.hpp"
+#include "openhd_external_device.hpp"
+#include "openhd_link.hpp"
+#include "openhd_settings_imp.hpp"
+#include "openhd_spdlog.hpp"
 
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 #include "rc/JoystickReader.h"

@@ -1,8 +1,10 @@
-These files are header-only and used in various other modules. I do not think they have any dependencies other than c++
-standard libraries and (rarely) libboost.
+This library serves the following purposes:
+1) Hold code that is used commonly throughout openhd 
+2) Build and publicly expose spdlog and nlohmann::json to openhd (we use them both
+   throughout the project)
+3) Since ohd_interface, ohd_telemetry and ohd_video are allowed to depend on ohd_common
+    but not on each other, glue them together in case they need to talk to each other
+   (for example, when wb_link from ohd_interface wants to tell a camera in ohd_video to change the bitrate)
 
-NOTE: Code here is available to all the different OHD modules (e.g. ohd_telemetry,ohd_video, ohd_interface). The modules itself
-are not allowed to depend on each other (e.g. ohd_telemetry does not depend on ohd_interface). This enforces a clear separation between them,
-which makes testing much easier and allows independent contribution(s) to each of the modules.
-In general, code here shouldn't have any platform-specific dependencies.
-
+It is also a bit of a dump for things that don't really have their own submodule -
+please take care to not pollute ohd_common with weird dependencies though.

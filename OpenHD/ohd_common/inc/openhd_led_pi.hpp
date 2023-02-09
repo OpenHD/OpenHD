@@ -5,13 +5,14 @@
 #ifndef OPENHD_OPENHD_LED_ERROR_CODES_H
 #define OPENHD_OPENHD_LED_ERROR_CODES_H
 
-#include "openhd-util.hpp"
-#include "openhd-util-filesystem.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-spdlog.hpp"
 #include <chrono>
 #include <thread>
 #include <utility>
+
+#include "openhd_platform.hpp"
+#include "openhd_spdlog.hpp"
+#include "openhd_util.h"
+#include "openhd_util_filesystem.h"
 
 // NOTE: Some PI's allow toggling both the red and green led
 // All pi's allow toggling the red led

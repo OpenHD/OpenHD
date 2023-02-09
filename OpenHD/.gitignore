@@ -14,3 +14,6 @@ _deps
 cmake-build-createDebug
 build
 cmake-build-debug/*
+cmake-build-debug-event-trace
+cmake-build-debug-trace
+cmake-build-release

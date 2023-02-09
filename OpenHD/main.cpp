@@ -12,14 +12,14 @@
 #include <memory>
 #include <sstream>
 
-#include "ohd_common/openhd-global-constants.hpp"
-#include "ohd_common/openhd-platform-discover.hpp"
-#include "ohd_common/openhd-platform.hpp"
-#include "ohd_common/openhd-profile-json.hpp"
-#include "ohd_common/openhd-profile.hpp"
-#include "ohd_common/openhd-rpi-gpio.hpp"
-#include "ohd_common/openhd-spdlog.hpp"
-#include "ohd_common/openhd-temporary-air-or-ground.h"
+#include "openhd_global_constants.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_platform_discover.hpp"
+#include "openhd_profile.hpp"
+#include "openhd_profile_json.hpp"
+#include "openhd_rpi_gpio.hpp"
+#include "openhd_spdlog.hpp"
+#include "openhd_temporary_air_or_ground.h"
 // For logging the commit hash and more
 #include "git.h"
 
@@ -220,7 +220,10 @@ int main(int argc, char *argv[]) {
   // (And there are also many other places where we just need to be root).
   OHDUtil::terminate_if_not_root();
 
-  // Parse the program arguments, also uses the "file exists" pattern for some params
+  // Create the folder structure for the (per-module-specific) settings if needed
+  openhd::generateSettingsDirectoryIfNonExists();
+
+  // Parse the program arguments, also uses the "yes if file exists" pattern for some params
   const OHDRunOptions options=parse_run_parameters(argc,argv);
 
   // Print all the arguments the OHD main executable is started with
@@ -272,8 +275,6 @@ int main(int argc, char *argv[]) {
         openhd::clean_all_interface_settings();
       }
     }
-
-    openhd::generateSettingsDirectoryIfNonExists();
 
     // Profile no longer depends on n discovered cameras,
     // But if we are air, we have at least one camera, sw if no camera was found

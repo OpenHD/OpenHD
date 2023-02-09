@@ -6,8 +6,9 @@
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_GPIO_CONTROLL_RASPBERRYPIGPIOCONTROL_H_
 
 #include <memory>
+
 #include "RaspberryPiGPIOControlSettings.h"
-#include "mavlink_settings/ISettingsComponent.hpp"
+#include "openhd_settings_imp.hpp"
 
 namespace openhd::telemetry::rpi {
 

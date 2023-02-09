@@ -11,8 +11,9 @@
 #include <optional>
 #include <sstream>
 #include <thread>
-#include "openhd-spdlog.hpp"
-#include "openhd-util.hpp"
+
+#include "openhd_spdlog.hpp"
+#include "openhd_util.h"
 
 /**
  * The Paradigm of this class is similar to how for example external devices

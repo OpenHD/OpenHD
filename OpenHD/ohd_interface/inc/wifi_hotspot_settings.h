@@ -7,9 +7,9 @@
 
 #include <cstdint>
 
-#include "json.hpp"
-#include "openhd-settings-directories.hpp"
-#include "openhd-settings-persistent.hpp"
+#include "include_json.hpp"
+#include "openhd_settings_directories.hpp"
+#include "openhd_settings_persistent.hpp"
 #include "wifi_card.hpp"
 
 // NOTE: wb_link intentionally has its own settings

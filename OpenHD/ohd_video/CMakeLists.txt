@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 add_library(OHDVideoLib STATIC) # initialized below
 add_library(OHDVideoLib::OHDVideoLib ALIAS OHDVideoLib)
 
+# Only needed when building this submodule manually
+add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
+
 # from https://mavlink.io/en/mavgen_c/
 #You can supress the warnings in CMake using
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
@@ -55,8 +58,8 @@ target_link_libraries(OHDVideoLib PRIVATE
 #find_package(fmt REQUIRED)
 #SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} fmt::fmt)
 
-find_package(spdlog REQUIRED)
-SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} spdlog::spdlog)
+#find_package(spdlog REQUIRED)
+#SET(OHD_VIDEO_USED_LIBS ${OHD_VIDEO_USED_LIBS} spdlog::spdlog)
 
 find_package(Threads REQUIRED)
 
@@ -95,6 +98,8 @@ target_include_directories(OHDVideoLib
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>)
 
+target_link_libraries(OHDVideoLib PUBLIC OHDCommonLib)
+
 if(LIBCAMERA_FOUND)
     target_include_directories(OHDVideoLib PRIVATE ${LIBCAMERA_INCLUDE_DIRS})
     target_link_libraries(OHDVideoLib PRIVATE ${LIBCAMERA_LINK_LIBRARIES})
@@ -103,8 +108,8 @@ endif()
 
 target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})
 # link and include gstreamer
-target_include_directories(OHDVideoLib PRIVATE ${GST_INCLUDE_DIRS})
-target_link_libraries(OHDVideoLib PRIVATE ${GST_LIBRARIES})
+target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
+target_link_libraries(OHDVideoLib PUBLIC ${GST_LIBRARIES})
 # find and include all the other libs
 
 target_link_libraries(OHDVideoLib PUBLIC Threads::Threads)

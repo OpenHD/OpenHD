@@ -14,13 +14,13 @@
 #include "../mav_helper.h"
 #include "HelperSources/SocketHelper.hpp"
 #include "OnboardComputerStatusProvider.h"
-#include "WBReceiverStats.hpp"
 #include "StatusTextAccumulator.hpp"
-#include "openhd-action-handler.hpp"
-#include "openhd-link-statistics.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-spdlog.hpp"
-#include "openhd-spdlog-tele-sink.h"
+#include "WBReceiverStats.hpp"
+#include "openhd_action_handler.hpp"
+#include "openhd_link_statistics.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_spdlog.hpp"
+#include "openhd_spdlog_tele_sink.h"
 #include "routing/MavlinkComponent.hpp"
 #include "routing/MavlinkSystem.hpp"
 
@@ -47,6 +47,8 @@ class OHDMainComponent : public MavlinkComponent{
   // update stats from ohd_interface
   void set_link_statistics(openhd::link_statistics::StatsAirGround stats);
   openhd::link_statistics::StatsAirGround get_latest_link_statistics();
+  // Some features rely on the arming state of the FC, like adjusting tx power
+  void check_msges_for_fc_arming_state(const std::vector<MavlinkMessage>& messages);
  private:
   const bool RUNS_ON_AIR;
   const OHDPlatform m_platform;

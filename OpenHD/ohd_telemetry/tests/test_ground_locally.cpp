@@ -2,21 +2,21 @@
 // For testing, run the ground code such that it can communicate with QOpenHD, but there is no air unit.
 //
 #include <iostream>
+#include <memory>
+#include <thread>
 
 #include "../src/OHDTelemetry.h"
-#include "openhd-profile.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-platform-discover.hpp"
-#include "mavlink_settings/ISettingsComponent.hpp"
-#include <thread>
-#include <memory>
+#include "openhd_platform.hpp"
+#include "openhd_platform_discover.hpp"
+#include "openhd_profile.hpp"
+#include "openhd_settings_imp.hpp"
 
 int main() {
   std::cout<< "start\n";
   std::unique_ptr<OHDTelemetry> ground;
   //std::this_thread::sleep_for(std::chrono::seconds(10));
   {
-	OHDProfile profile{false,false, "XX"};
+	OHDProfile profile{false, "XX"};
 	const auto platform=DPlatform::discover();
 	ground = std::make_unique<OHDTelemetry>(*platform, profile);
 	// MAV_COMP_ID_ONBOARD_COMPUTER2=192

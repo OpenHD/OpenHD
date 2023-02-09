@@ -5,13 +5,13 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_
 #define OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_
 
+#include <future>
 #include <string>
 #include <vector>
-#include <future>
 
+#include "openhd_settings_imp.hpp"
 #include "wifi_card.hpp"
 #include "wifi_hotspot_settings.h"
-#include "mavlink_settings/ISettingsComponent.hpp"
 
 /**
  * Wifi hotspot refers to creating a WiFi Access point on the device we are running on.

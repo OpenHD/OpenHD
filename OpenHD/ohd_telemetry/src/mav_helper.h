@@ -5,12 +5,12 @@
 #ifndef XMAVLINKSERVICE_MAV_HELPER_H
 #define XMAVLINKSERVICE_MAV_HELPER_H
 
-#include "mav_include.h"
 #include <chrono>
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
-#include "openhd-spdlog.hpp"
+#include "mav_include.h"
+#include "openhd_spdlog.hpp"
 
 namespace MExampleMessage {
 // mostly from https://github.com/mavlink/mavlink/blob/master/examples/linux/mavlink_udp.c

@@ -1,11 +1,12 @@
 #ifndef OPENHD_PLATFORM_H
 #define OPENHD_PLATFORM_H
 
-#include <string>
-#include <sstream>
 #include <fstream>
+#include <sstream>
+#include <string>
 
-#include "openhd-util.hpp"
+#include "openhd_util.h"
+#include "openhd_spdlog.hpp"
 
 enum class PlatformType {
   Unknown,
@@ -17,7 +18,7 @@ enum class PlatformType {
   Rockchip,
   Zynq,
 };
-inline std::string platform_type_to_string(PlatformType platform_type) {
+static std::string platform_type_to_string(PlatformType platform_type) {
   switch (platform_type) {
     case PlatformType::Jetson: return "jetson";
     case PlatformType::RaspberryPi: return "raspberrypi";
@@ -58,7 +59,7 @@ enum class BoardType {
   RV1109,
   RV1126
 };
-inline std::string board_type_to_string(BoardType board_type) {
+static std::string board_type_to_string(BoardType board_type) {
   switch (board_type) {
     case BoardType::GenericPC: return "generic-pc";
     case BoardType::RaspberryPiZero: return "pizero";

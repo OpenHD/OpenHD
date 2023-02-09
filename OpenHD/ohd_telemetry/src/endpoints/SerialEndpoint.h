@@ -13,7 +13,7 @@
 #include <utility>
 
 #include "MEndpoint.h"
-#include "openhd-spdlog.hpp"
+#include "openhd_spdlog.hpp"
 
 // At some point, I decided there is no way around it than to write our own UART receiver program.
 // Mostly based on MAVSDK. Doesn't use boost.

@@ -4,15 +4,16 @@
 
 #include "wifi_command_helper2.h"
 
-#include "openhd-spdlog.hpp"
-#include "openhd-util.hpp"
+#include <linux/nl80211.h>
+#include <netlink/genl/ctrl.h>
+#include <netlink/genl/genl.h>
+#include <netlink/netlink.h>
 
 #include <algorithm>
 #include <cstdint>
-#include <netlink/netlink.h>
-#include <netlink/genl/genl.h>
-#include <netlink/genl/ctrl.h>
-#include <linux/nl80211.h>
+
+#include "openhd_spdlog.hpp"
+#include "openhd_util.h"
 #undef __USE_MISC
 #include <linux/if.h>
 #include <net/if.h>

@@ -6,11 +6,12 @@
 #ifndef XMAVLINKSERVICE_LOGCUSTOMOHDMESSAGES_H
 #define XMAVLINKSERVICE_LOGCUSTOMOHDMESSAGES_H
 
-#include "../mav_include.h"
-#include "../mav_helper.h"
-#include "openhd-spdlog.hpp"
-#include <iostream>
 #include <cassert>
+#include <iostream>
+
+#include "../mav_helper.h"
+#include "../mav_include.h"
+#include "openhd_spdlog.hpp"
 
 /**
  * Helper for converting ohd custom messages to mavlink and printing them to stdout

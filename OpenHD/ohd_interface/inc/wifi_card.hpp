@@ -5,11 +5,11 @@
 #include <string>
 
 #include "include_json.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-settings-directories.hpp"
-#include "openhd-settings-persistent.hpp"
-#include "openhd-util-filesystem.hpp"
-#include "openhd-util.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_settings_directories.hpp"
+#include "openhd_settings_persistent.hpp"
+#include "openhd_util.h"
+#include "openhd_util_filesystem.h"
 #include "validate_settings_helper.h"
 #include "wifi_channel.h"
 

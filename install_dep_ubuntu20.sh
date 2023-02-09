@@ -9,8 +9,7 @@ sudo apt -y install cmake build-essential autotools-dev automake libtool autocon
             libboost-dev libboost-filesystem-dev \
             libusb-1.0-0-dev \
             libv4l-dev \
-            libnl-3-dev libnl-genl-3-dev libnl-route-3-dev \
-            libspdlog-dev || exit 1
+            libnl-3-dev libnl-genl-3-dev libnl-route-3-dev || exit 1
 
 # Gstreamer is separate from the "rest".
 # Note that there is no compile time validation for all the elements required by gstreamer

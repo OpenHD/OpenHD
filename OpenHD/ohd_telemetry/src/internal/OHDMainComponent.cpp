@@ -5,7 +5,7 @@
 #include "OHDMainComponent.h"
 
 #include <iostream>
-#include <openhd-global-constants.hpp>
+#include <openhd_global_constants.hpp>
 #include <utility>
 
 #include "OHDLinkStatisticsHelper.h"
@@ -175,7 +175,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
       StatusTextAccumulator::convert(mavMsg.m,msg, m_sys_id, m_comp_id);
       ret.push_back(mavMsg);
     } else {
-      m_console->debug("Dropping log message {}",msg.message);
+      m_console->debug("Dropping log message {}",msg.msg_as_string());
     }
   }
   return ret;
@@ -223,4 +223,18 @@ std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(const Ma
     return MavlinkMessage{response_message};
   }
   return std::nullopt;
+}
+
+void OHDMainComponent::check_msges_for_fc_arming_state(const std::vector<MavlinkMessage>& messages) {
+  for(const auto& msg:messages){
+    if(msg.m.sysid== OHD_SYS_ID_FC && msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT){
+      mavlink_heartbeat_t heartbeat;
+      mavlink_msg_heartbeat_decode(&msg.m, &heartbeat);
+      const auto mode = (MAV_MODE_FLAG)heartbeat.base_mode;
+      const bool armed= (mode & MAV_MODE_FLAG_SAFETY_ARMED);
+      if(m_opt_action_handler){
+        m_opt_action_handler->update_state(armed);
+      }
+    }
+  }
 }

@@ -8,7 +8,7 @@
 
 #include "mav_helper.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
-#include "openhd-temporary-air-or-ground.h"
+#include "openhd_temporary_air_or_ground.h"
 #include "openhd_util_time.hpp"
 
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
@@ -56,6 +56,7 @@ void AirTelemetry::on_messages_fc(const std::vector<MavlinkMessage>& messages) {
   //debugMavlinkMessage(message.m,"AirTelemetry::onMessageFC");
   // Note: No OpenHD component ever talks to the FC, FC is completely passed through
   send_messages_ground_unit(messages);
+  m_ohd_main_component->check_msges_for_fc_arming_state(messages);
 }
 
 void AirTelemetry::on_messages_ground_unit(const std::vector<MavlinkMessage>& messages) {

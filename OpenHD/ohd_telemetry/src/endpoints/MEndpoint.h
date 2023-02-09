@@ -5,16 +5,17 @@
 #ifndef XMAVLINKSERVICE_MENDPOINT_H
 #define XMAVLINKSERVICE_MENDPOINT_H
 
-#include "openhd-spdlog.hpp"
-#include "../mav_include.h"
-#include "../mav_helper.h"
-#include <iostream>
-#include <sstream>
-#include <chrono>
-#include <mutex>
-#include <utility>
 #include <atomic>
+#include <chrono>
+#include <iostream>
+#include <mutex>
+#include <sstream>
+#include <utility>
+
+#include "../mav_helper.h"
+#include "../mav_include.h"
 #include "HelperSources/TimeHelper.hpp"
+#include "openhd_spdlog.hpp"
 
 // Mavlink Endpoint
 // A Mavlink endpoint hides away the underlying connection - e.g. UART, TCP, WB.

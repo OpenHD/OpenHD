@@ -5,10 +5,10 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_SRC_GST_DEBUG_HELPER_H_
 #define OPENHD_OPENHD_OHD_VIDEO_SRC_GST_DEBUG_HELPER_H_
 
-#include <gst/gst.h>
 #include <gst/app/gstappsink.h>
-#include "openhd-spdlog.hpp"
+#include <gst/gst.h>
 
+#include "openhd_spdlog.hpp"
 
 // Code that depends on gstreamer and falls in the "helper for debugging" category
 namespace openhd{

@@ -8,18 +8,18 @@
 #include <memory>
 #include <utility>
 
-#include "mavlink_settings/ISettingsComponent.hpp"
-#include "openhd-action-handler.hpp"
-#include "openhd-external-device.hpp"
-#include "openhd-led-codes.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-profile.hpp"
-#include "openhd-spdlog.hpp"
-#include "usb_tether_listener.h"
+#include "ethernet_hotspot.h"
 #include "ethernet_listener.h"
+#include "openhd_action_handler.hpp"
+#include "openhd_external_device.hpp"
+#include "openhd_led_codes.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_profile.hpp"
+#include "openhd_settings_imp.hpp"
+#include "openhd_spdlog.hpp"
+#include "usb_tether_listener.h"
 #include "wb_link.h"
 #include "wifi_hotspot.h"
-#include "ethernet_hotspot.h"
 
 /**
  * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.

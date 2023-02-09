@@ -5,17 +5,17 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_ISETTINGSCOMPONENT_H_
 #define OPENHD_OPENHD_OHD_COMMON_MAVLINK_SETTINGS_ISETTINGSCOMPONENT_H_
 
-#include <utility>
-#include <variant>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <sstream>
-#include <map>
 #include <cassert>
 #include <functional>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
-#include "../openhd-spdlog.hpp"
+#include "openhd_spdlog.hpp"
 
 namespace openhd{
 

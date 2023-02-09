@@ -6,7 +6,7 @@
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_OHDLINKSTATISTICSHELPER_H_
 
 #include "../mav_include.h"
-#include "openhd-link-statistics.hpp"
+#include "openhd_link_statistics.hpp"
 
 namespace openhd::LinkStatisticsHelper{
 

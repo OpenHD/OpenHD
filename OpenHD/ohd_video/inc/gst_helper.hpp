@@ -6,7 +6,7 @@
 #define OPENHD_OHDGSTHELPER_H
 
 // NOTE: Spdlog uses format internally, when pulling in fmt first and then spdlog we can have compiler issues
-#include "openhd-spdlog.hpp"
+#include "openhd_spdlog.hpp"
 //#include <fmt/format.h>
 #include <gst/gst.h>
 
@@ -91,6 +91,7 @@ static std::string create_rtp_packetize_for_codec(const VideoCodec codec,const u
   if(codec==VideoCodec::H265) return fmt::format("rtph265pay mtu={} ! ",mtu);
   if(codec==VideoCodec::MJPEG) return fmt::format("rtpjpegpay mtu={} ! ",mtu);
   assert(false);
+  return "";
 }
 
 static std::string create_rtp_depacketize_for_codec(const VideoCodec& codec){
@@ -98,6 +99,7 @@ static std::string create_rtp_depacketize_for_codec(const VideoCodec& codec){
   if(codec==VideoCodec::H265)return "rtph265depay ! ";
   if(codec==VideoCodec::MJPEG)return "rtpjpegdepay ! ";
   assert(false);
+  return "";
 }
 static std::string create_parse_for_codec(const VideoCodec& codec){
   // config-interval=-1 = makes 100% sure each keyframe has SPS and PPS
@@ -105,6 +107,7 @@ static std::string create_parse_for_codec(const VideoCodec& codec){
   if(codec==VideoCodec::H265)return "h265parse config-interval=-1  ! ";
   if(codec==VideoCodec::MJPEG)return "jpegparse ! ";
   assert(false);
+  return "";
 }
 
 
@@ -139,12 +142,16 @@ static std::string createDummyStream(const CameraSettings& settings) {
  * See https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c#GstRpiCamSrcAWBMode for more complicated params
  */
 static std::string createRpicamsrcStream(const int camera_number,
-                                         const CameraSettings& settings) {
+                                         const CameraSettings& settings,const bool hdmi_to_csi_workaround_half_bitrate) {
   assert(settings.streamed_video_format.isValid());
   //assert(videoFormat.videoCodec == VideoCodec::H264);
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
-  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  if(hdmi_to_csi_workaround_half_bitrate){
+    openhd::log::get_default()->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
+    bitrateBitsPerSecond = bitrateBitsPerSecond / 2;
+  }
   if (camera_number == -1) {
     ss << fmt::format("rpicamsrc name=rpicamsrc bitrate={} preview=0 ",
                       bitrateBitsPerSecond);
@@ -189,7 +196,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
 	ss << fmt::format(
 		"video/x-h264, profile=constrained-baseline, width={}, height={}, "
-		"framerate={}/1, level=3.0 ! ",
+		"framerate={}/1, level=4.0 ! ",
         settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
   }else{
 	openhd::log::get_default()->warn("No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues");

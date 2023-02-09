@@ -5,7 +5,7 @@
 #include <csignal>
 #include <thread>
 
-#include "openhd-util.hpp"
+#include "openhd_util.h"
 #include "wifi_hotspot.h"
 
 int main(int argc, char *argv[]) {
@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
   wifiCard.mac = "e4:5f:01:b0:55:92";
   wifiCard.supports_hotspot= true;
 
-  WifiHotspot wifiHotspot{wifiCard};
+  WifiHotspot wifiHotspot{wifiCard,openhd::Space::G2_4};
   OHDUtil::keep_alive_until_sigterm();
   std::cout<<"test end\n";
   return 0;

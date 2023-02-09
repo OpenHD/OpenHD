@@ -7,8 +7,8 @@
 
 #include <map>
 
-#include "openhd-settings-directories.hpp"
-#include "openhd-settings-persistent.hpp"
+#include "openhd_settings_directories.hpp"
+#include "openhd_settings_persistent.hpp"
 
 namespace openhd::telemetry::ground{
 

@@ -9,7 +9,9 @@
 #include <mutex>
 #include <utility>
 
-#include "openhd-link-statistics.hpp"
+#include "openhd_link_statistics.hpp"
+#include "openhd_util.h"
+#include "openhd_spdlog.hpp"
 
 // This class exists to handle the rare case(s) when one openhd module needs to talk to another.
 // For example, the wb link (ohd_interface) might request a lower encoder bitrate (ohd_video)
@@ -99,6 +101,15 @@ class ActionHandler{
     action_wb_link_statistics_register(nullptr);
     action_wb_link_scan_channels_register(nullptr);
   }
+  // Allows registering actions when vehicle / FC is armed / disarmed
+ public:
+  void update_state(bool armed){
+    if(m_is_armed==armed)return;
+    m_is_armed=armed;
+    openhd::log::get_default()->debug("MAV armed:{}",OHDUtil::yes_or_no(armed));
+  }
+ private:
+  bool m_is_armed=false;
  private:
   // By using shared_ptr to wrap the stored the cb we are semi thread-safe
   std::shared_ptr<ACTION_REQUEST_BITRATE_CHANGE> m_action_request_bitrate_change =nullptr;

@@ -6,7 +6,8 @@
 #include <csignal>
 #include <iostream>
 #include <memory>
-#include "openhd-spdlog.hpp"
+
+#include "openhd_spdlog.hpp"
 
 int main() {
   std::shared_ptr<spdlog::logger> m_console=spdlog::stdout_color_mt("main");

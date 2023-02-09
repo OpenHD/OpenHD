@@ -12,8 +12,8 @@
 #include "camera.hpp"
 #include "camera_discovery_helper.hpp"
 #include "libcamera_detect.hpp"
-#include "openhd-util-filesystem.hpp"
-#include "openhd-util.hpp"
+#include "openhd_util.h"
+#include "openhd_util_filesystem.h"
 
 // annoying linux platform specifics
 #ifndef V4L2_PIX_FMT_H265
@@ -103,12 +103,31 @@ std::vector<Camera> DCameras::detect_raspberrypi_broadcom_csi(std::shared_ptr<sp
   m_console->debug("detect_raspberrypi_broadcom_csi() supported={} detected={}",supported,detected);
   const auto camera_count=OHDUtil::string_to_int(detected);
   if (camera_count >= 1) {
-    Camera camera;
-    camera.name = "Pi_CSI_0";
-    camera.vendor = "RaspberryPi";
-    camera.type = CameraType::RPI_CSI_MMAL;
-    camera.bus = "0";
-    ret.push_back(camera);
+    // dirty, check for CSI to HDMI adapter
+    bool is_csi_to_hdmi=false;
+    const auto csi_to_hdmi_check=OHDUtil::run_command_out("i2cdetect -y 10 0x0f 0x0f");
+    if(csi_to_hdmi_check.has_value()){
+      if(OHDUtil::contains(csi_to_hdmi_check.value(),"0f")){
+        m_console->debug("detected hdmi to csi instead of rpi mmal csi cam");
+        is_csi_to_hdmi= true;
+      }
+    }
+    if(is_csi_to_hdmi){
+      Camera camera;
+      camera.name = "Pi_CSI_HDMI_0";
+      camera.vendor = "RaspberryPi";
+      camera.type = CameraType::RPI_CSI_MMAL;
+      camera.bus = "0";
+      camera.rpi_csi_mmal_is_csi_to_hdmi= true;
+      ret.push_back(camera);
+    }else{
+      Camera camera;
+      camera.name = "Pi_CSI_0";
+      camera.vendor = "RaspberryPi";
+      camera.type = CameraType::RPI_CSI_MMAL;
+      camera.bus = "0";
+      ret.push_back(camera);
+    }
   }
   if (camera_count >= 2) {
     Camera camera;

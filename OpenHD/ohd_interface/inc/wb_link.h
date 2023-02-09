@@ -7,19 +7,18 @@
 #include <utility>
 #include <vector>
 
+#include "../../lib/wifibroadcast/src/ForeignPacketsReceiver.h"
 #include "../../lib/wifibroadcast/src/UdpWBReceiver.hpp"
 #include "../../lib/wifibroadcast/src/UdpWBTransmitter.hpp"
-#include "../../lib/wifibroadcast/src/ForeignPacketsReceiver.h"
-#include "mavlink_settings/ISettingsComponent.hpp"
-#include "openhd-action-handler.hpp"
-#include "openhd-link-statistics.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-profile.hpp"
-#include "openhd-spdlog.hpp"
+#include "openhd_action_handler.hpp"
+#include "openhd_link.hpp"
+#include "openhd_link_statistics.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_profile.hpp"
+#include "openhd_settings_imp.hpp"
+#include "openhd_spdlog.hpp"
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
-
-#include "ohd_link.hpp"
 
 /**
  * This class takes a list of cards supporting monitor mode (only 1 card on air) and

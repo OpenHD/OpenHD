@@ -8,9 +8,9 @@
 // NOTE: These are not the camera-specific settings, but rather settings regarding the management
 // of how those camera(s) should be used
 
-#include "json.hpp"
-#include "openhd-settings-directories.hpp"
-#include "openhd-settings-persistent.hpp"
+#include "include_json.hpp"
+#include "openhd_settings_directories.hpp"
+#include "openhd_settings_persistent.hpp"
 
 struct AirCameraGenericSettings {
   // Make primary camera secondary camera and other way around (aka if they are detected in the wrong order)

@@ -5,13 +5,15 @@
 #ifndef XMAVLINKSERVICE_SYSTEMREADUTIL_H
 #define XMAVLINKSERVICE_SYSTEMREADUTIL_H
 
-#include "mav_include.h"
-#include "openhd-util.hpp"
-#include "openhd-spdlog.hpp"
-#include <sstream>
-#include <chrono>
 #include <boost/filesystem.hpp>
+#include <chrono>
+#include <regex>
+#include <sstream>
 
+#include "mav_include.h"
+#include "openhd_spdlog.hpp"
+#include "openhd_util.h"
+#include "openhd_util_filesystem.h"
 
 // https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS
 // used to be a custom message for a short amount of time.
@@ -26,12 +28,6 @@ static int readTemperature() {
   auto temp=OHDUtil::string_to_int(temp_file_opt.value());
   if(!temp.has_value())return 0;
   return temp.value() / 1000;
-}
-
-//add space left function
-static unsigned long long get_available_space_in_MB() {
-  boost::filesystem::space_info info = boost::filesystem::space("/");
-  return info.available / 1024 / 1024;
 }
 
 // Stuff that works only on rpi

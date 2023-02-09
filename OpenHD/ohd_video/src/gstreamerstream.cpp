@@ -29,7 +29,6 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   if (camera.type == CameraType::DUMMY_SW && (setting.streamed_video_format.width > 640 ||
       setting.streamed_video_format.height > 480 || setting.streamed_video_format.framerate > 30)) {
     m_console->warn("Warning- Dummy camera is done in sw, high resolution/framerate might not work");
-    m_console->warn("Configured dummy for:"+setting.streamed_video_format.toString());
   }
   m_camera_holder->register_listener([this](){
     // right now, every time the settings for this camera change, we just re-start the whole stream.
@@ -137,6 +136,9 @@ void GStreamerStream::setup() {
         OHDGstHelper::file_suffix_for_video_codec(setting.streamed_video_format.videoCodec));
     m_console->debug("Using [{}] for recording",recording_filename);
     m_pipeline_content <<OHDGstHelper::createRecordingForVideoCodec(setting.streamed_video_format.videoCodec,recording_filename);
+    m_opt_curr_recording_filename=recording_filename;
+  }else{
+    m_opt_curr_recording_filename=std::nullopt;
   }
   m_console->debug("Starting pipeline:[{}]",m_pipeline_content.str());
   // Protect against unwanted use - stop and free the pipeline first
@@ -162,7 +164,7 @@ void GStreamerStream::setup_raspberrypi_mmal_csi() {
   m_console->debug("Setting up Raspberry Pi CSI camera");
   // similar to jetson, for now we assume there is only one CSI camera connected.
   const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createRpicamsrcStream(-1, setting);
+  m_pipeline_content << OHDGstHelper::createRpicamsrcStream(-1, setting,m_camera_holder->requires_half_bitrate_workaround());
 }
 
 void GStreamerStream::setup_raspberrypi_veye_v4l2() {
@@ -326,6 +328,11 @@ void GStreamerStream::cleanup_pipe() {
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline, GST_STATE_NULL);
   gst_object_unref (m_gst_pipeline);
   m_gst_pipeline =nullptr;
+  if(m_opt_curr_recording_filename){
+    // make file read / writeable by everybody
+    OHDFilesystemUtil::make_file_read_write_everyone(m_opt_curr_recording_filename.value());
+    m_opt_curr_recording_filename=std::nullopt;
+  }
   m_console->debug("GStreamerStream::cleanup_pipe() end");
 }
 
@@ -334,6 +341,17 @@ void GStreamerStream::restartIfStopped() {
   if(!m_gst_pipeline){
     m_console->debug("gst_pipeline==null");
     return;
+  }
+  if(OHDFilesystemUtil::get_remaining_space_in_mb()<MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB){
+    if(m_camera_holder->get_settings().air_recording==Recording::ENABLED){
+      m_console->warn("Disabling recording, not enough free space (<300MB)");
+      m_camera_holder->unsafe_get_settings().air_recording=Recording::DISABLED;
+      m_camera_holder->persist();
+      stop();
+      cleanup_pipe();
+      setup();
+      start();
+    }
   }
   if(m_camera_holder->get_camera().type==CameraType::CUSTOM_UNMANAGED_CAMERA){
     // this pattern doesn't work here
@@ -391,6 +409,10 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
   auto recommended_encoder_bitrate_kbits=lb.recommended_encoder_bitrate_kbits;
+  if(m_camera_holder->requires_half_bitrate_workaround()){
+    openhd::log::get_default()->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
+    recommended_encoder_bitrate_kbits = recommended_encoder_bitrate_kbits / 2;
+  }
   // pi encoder cannot do less than 1MBit/s anyways
   if(recommended_encoder_bitrate_kbits<=1000){
     recommended_encoder_bitrate_kbits=1000;

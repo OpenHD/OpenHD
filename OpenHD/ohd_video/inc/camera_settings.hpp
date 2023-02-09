@@ -21,6 +21,9 @@ static constexpr int DEFAULT_RECORDING_KBITS = 10000;
 static constexpr int DEFAULT_RECORDING_QP = 26;
 static constexpr RateControlMode DEFAULT_RC_MODE = RateControlMode::RC_CBR;
 
+// Minimum amount of free space required to enable air video recording.
+// If the free space becomes less than that, air recording should be stopped.
+static constexpr auto MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB=300;
 
 // Return true if the bitrate is considered sane, false otherwise
 static bool check_bitrate_sane(const int bitrateKBits) {

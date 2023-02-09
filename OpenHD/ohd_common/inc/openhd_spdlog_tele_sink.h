@@ -5,11 +5,12 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_SPDLOG_TELE_SINK_H_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_SPDLOG_TELE_SINK_H_
 
-#include "spdlog/sinks/base_sink.h"
+#include <deque>
 #include <iostream>
 #include <utility>
-#include <deque>
-#include "openhd-udp-log.h"
+
+#include "openhd_udp_log.h"
+#include "spdlog/sinks/base_sink.h"
 
 // bridge between any logger and telemetry
 // We send logs higher or equal to the warning log level out via udp

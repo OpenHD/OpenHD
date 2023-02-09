@@ -7,9 +7,9 @@
 
 #include <cstdint>
 #include <utility>
-#include "openhd-profile.hpp"
-#include "openhd-video-frame.h"
 
+#include "openhd_profile.hpp"
+#include "openhd_video_frame.h"
 
 /**
  * OHDLink refers to "the link" that transmits data from the air unit to the ground unit and vice versa.

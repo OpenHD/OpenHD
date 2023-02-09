@@ -7,6 +7,8 @@
 
 #include "camera_enums.hpp"
 #include "include_json.hpp"
+#include <ostream>
+#include <fstream>
 
 
 // Information about a discovered camera and its capabilities.
@@ -73,6 +75,9 @@ struct Camera {
   // Unique index of this camera, should start at 0. The index number depends on
   // the order the cameras were picked up during the discovery step.
   int index = 0;
+  // this is only for camera tye RPI_CSI_MMAL - differentiate between CSI camera and the HDMI to CSI adapter
+  // (since the second one needs workarounds)
+  bool rpi_csi_mmal_is_csi_to_hdmi=false;
   // All the endpoints (aka supported video resolution, framerate and pixel format
   // NOTE: R.n we only use this for V4l2 UVC camera(s) aka usb cameras, since for the CSI camera(s)
   // we have no resolution / framerate checking (it is just too complicated to both take the CSI camera caps,
@@ -125,7 +130,7 @@ struct Camera {
     return type==CameraType::RPI_CSI_MMAL;
   }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,bus,index, v4l2_endpoints)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,bus,index,rpi_csi_mmal_is_csi_to_hdmi, v4l2_endpoints)
 
 static nlohmann::json cameras_to_json(const std::vector<Camera> &cameras) {
   nlohmann::json j;

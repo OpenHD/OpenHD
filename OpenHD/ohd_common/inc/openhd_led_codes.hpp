@@ -5,7 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_LED_CODES_H_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_LED_CODES_H_
 
-#include "openhd-led-pi.hpp"
+#include "openhd_led_pi.hpp"
 
 namespace openhd {
 

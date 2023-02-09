@@ -3,7 +3,9 @@
 //
 
 #include "OnboardComputerStatusProvider.h"
+
 #include "OnboardComputerStatus.hpp"
+#include "openhd_util_filesystem.h"
 
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(OHDPlatform platform): m_platform(platform) {
   m_calculate_cpu_usage_thread=std::make_unique<std::thread>(&OnboardComputerStatusProvider::calculate_cpu_usage_until_terminate, this);
@@ -52,6 +54,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_clock_core=0;
     int curr_clock_v3d=0;
     int curr_space_left=0;
+    curr_space_left=OHDFilesystemUtil::get_remaining_space_in_mb();
     if(m_platform.platform_type==PlatformType::RaspberryPi){
       curr_temperature_core=(int8_t)OnboardComputerStatus::rpi::read_temperature_soc_degree();
       // temporary, until we have our own message
@@ -60,11 +63,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_clock_h264=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_H264);
       curr_clock_core=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_CORE);
       curr_clock_v3d=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_V3D);
-      curr_space_left=(int32_t)OnboardComputerStatus::get_available_space_in_MB();
     }else{
       const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
       curr_temperature_core=cpu_temp;
-      curr_space_left=(int32_t)OnboardComputerStatus::get_available_space_in_MB();
     }
     {
       // lock mutex and write out

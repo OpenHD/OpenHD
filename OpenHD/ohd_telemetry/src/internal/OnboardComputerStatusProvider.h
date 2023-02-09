@@ -5,12 +5,12 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_ONBOARDCOMPUTERSTATUSPROVIDER_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_ONBOARDCOMPUTERSTATUSPROVIDER_H_
 
-#include "../mav_include.h"
-#include "../ohd_common/openhd-platform.hpp"
-
-#include <thread>
-#include <mutex>
 #include <memory>
+#include <mutex>
+#include <thread>
+
+#include "../mav_include.h"
+#include "openhd_platform.hpp"
 
 // We need one thread for the CPU usage (workaround) and
 // for some reason, running all those vcgencmd's on rpi for figuring out the current clock

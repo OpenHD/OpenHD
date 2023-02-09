@@ -4,11 +4,11 @@
 
 #include "GroundTelemetry.h"
 
-#include <iostream>
 #include <chrono>
+#include <iostream>
 
 #include "mav_helper.h"
-#include "openhd-temporary-air-or-ground.h"
+#include "openhd_temporary_air_or_ground.h"
 #include "openhd_util_time.hpp"
 
 GroundTelemetry::GroundTelemetry(OHDPlatform platform,
@@ -89,12 +89,12 @@ void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& me
   // need to do anything else here.
   // tracker serial out - we are only interested in message(s) coming from the FC
   if(m_endpoint_tracker!= nullptr){
-    static constexpr auto DEFAULT_FC_SYS_ID=1; // sys id of pretty much every FC - we do not support more than one FC anyways
-    const auto msges_from_fc= filter_by_source_sys_id(messages,DEFAULT_FC_SYS_ID);
+    const auto msges_from_fc= filter_by_source_sys_id(messages,OHD_SYS_ID_FC);
     if(!msges_from_fc.empty()){
       m_endpoint_tracker->sendMessages(msges_from_fc);
     }
   }
+  m_ohd_main_component->check_msges_for_fc_arming_state(messages);
 }
 
 void GroundTelemetry::on_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {

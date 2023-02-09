@@ -7,11 +7,11 @@
 
 #include "camera.hpp"
 #include "camera_settings.hpp"
-#include "mavlink_settings/ISettingsComponent.hpp"
-#include "openhd-action-handler.hpp"
-#include "openhd-settings-directories.hpp"
-#include "openhd-settings-persistent.hpp"
+#include "openhd_action_handler.hpp"
 #include "openhd_bitrate_conversions.hpp"
+#include "openhd_settings_directories.hpp"
+#include "openhd_settings_imp.hpp"
+#include "openhd_settings_persistent.hpp"
 
 // Holds the immutable (camera) and mutable (camera_settings) information about a camera
 // Camera Holder is used to differentiate between
@@ -198,6 +198,10 @@ class CameraHolder:
     return true;
   }
   bool set_air_recording(int recording_enable){
+    if(OHDFilesystemUtil::get_remaining_space_in_mb()<MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB){
+      openhd::log::get_default()->warn("Not enough free space available");
+      return false;
+    }
     if(recording_enable==0 || recording_enable==1){
       const auto wanted_recording= recording_from_int(recording_enable);
       unsafe_get_settings().air_recording=wanted_recording;
@@ -294,6 +298,14 @@ class CameraHolder:
     auto tmp=m_camera.name;
     if(tmp.size()>15)tmp.resize(15);
     return tmp;
+  }
+  // The CSI to HDMI adapter has an annoying bug where it actually doesn't allow changing the framerate but takes whatever the host provides
+  // (e.g. the hdmi card). Util to check if we need to apply the "reduce bitrate by half"
+  // NOTE: This is not completely correct - it assumes the provider (e.g. gopro) always gives 60fps
+  // and in case the user selects 720p@49fps for example, the bitrate is too low.
+  // However, rather be too low than too high - the user can always go higher if he needs to.
+  bool requires_half_bitrate_workaround()const{
+    return m_camera.type==CameraType::RPI_CSI_MMAL && m_camera.rpi_csi_mmal_is_csi_to_hdmi && get_settings().streamed_video_format.framerate!=60;
   }
   // Settings hacky end
  private:

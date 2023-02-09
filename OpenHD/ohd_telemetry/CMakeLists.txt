@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 add_library(OHDTelemetryLib STATIC) # initialized below
 add_library(OHDTelemetryLib::OHDTelemetryLib ALIAS OHDTelemetryLib)
 
+# Only needed when building this submodule manually
+add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
+
 # from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
 # Find and include boost
 # Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
@@ -17,8 +20,8 @@ target_link_libraries(OHDTelemetryLib PRIVATE Boost::filesystem)
 find_package(Threads REQUIRED)
 target_link_libraries(OHDTelemetryLib PUBLIC Threads::Threads)
 
-find_package(spdlog REQUIRED)
-target_link_libraries(OHDTelemetryLib PRIVATE spdlog::spdlog)
+#find_package(spdlog REQUIRED)
+#target_link_libraries(OHDTelemetryLib PRIVATE spdlog::spdlog)
 
 # For joystick, optional (but if SDL2 is not found at compile time, RC won't be available at run time)
 find_package(SDL2 QUIET)
@@ -110,6 +113,8 @@ target_include_directories(OHDTelemetryLib
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
+
+target_link_libraries(OHDTelemetryLib PUBLIC OHDCommonLib)
 
 # include mavlink (header-only)
 add_library(mavlink INTERFACE)

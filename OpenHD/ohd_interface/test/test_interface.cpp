@@ -1,10 +1,10 @@
 #include <iostream>
 
 #include "ohd_interface.h"
-#include "openhd-platform-discover.hpp"
-#include "openhd-platform.hpp"
-#include "openhd-profile.hpp"
-#include "openhd-util.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_platform_discover.hpp"
+#include "openhd_profile.hpp"
+#include "openhd_util.h"
 
 // Using test_interface:
 // 1) run it as "air" on whatever device you want to use as the air unit
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
   std::cout<<"Test_interface run as air:"<<OHDUtil::yes_or_no(is_air)<<"\n";
 
   const auto platform=DPlatform::discover();
-  const OHDProfile profile{is_air,false,"0"};
+  const OHDProfile profile{is_air,"0"};
   OHDInterface ohdInterface(*platform,profile);
 
   std::cout << "OHDInterface started\n";

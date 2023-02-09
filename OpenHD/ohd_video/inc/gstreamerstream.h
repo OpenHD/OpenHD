@@ -4,18 +4,16 @@
 #include <gst/gst.h>
 
 #include <array>
-#include <vector>
 #include <memory>
-#include <thread>
 #include <mutex>
+#include <thread>
+#include <vector>
 
-#include "camerastream.h"
 #include "camera_settings.hpp"
-#include "openhd-platform.hpp"
-
-#include "openhd-spdlog.hpp"
-
+#include "camerastream.h"
 #include "gst_bitrate_controll_wrapper.hpp"
+#include "openhd_platform.hpp"
+#include "openhd_spdlog.hpp"
 
 // Implementation of OHD CameraStream for pretty much everything, using
 // gstreamer.
@@ -61,6 +59,9 @@ class GStreamerStream : public CameraStream {
   std::optional<GstBitrateControlElement> m_bitrate_ctrl_element=std::nullopt;
   // The pipeline that is started in the end
   std::stringstream m_pipeline_content;
+  // If a pipeline is started with air recording enabled, the file name the recording is written to is stored here
+  // otherwise, it is set to std::nullopt
+  std::optional<std::string> m_opt_curr_recording_filename=std::nullopt;
   // To reduce the time on the param callback(s) - they need to return immediately to not block the param server
   void restart_async();
   std::mutex m_async_thread_mutex;

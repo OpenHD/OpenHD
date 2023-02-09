@@ -2,11 +2,12 @@
 // Created by consti10 on 15.08.22.
 //
 
-#include "openhd-led-codes.hpp"
-#include "openhd-util.hpp"
-#include "openhd-platform-discover.hpp"
-#include <thread>
 #include <chrono>
+#include <thread>
+
+#include "openhd_led_codes.hpp"
+#include "openhd_platform_discover.hpp"
+#include "openhd_util.h"
 
 int main(int argc, char *argv[]) {
 

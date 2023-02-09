@@ -5,8 +5,8 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_PLATFORM_JSON_H_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_PLATFORM_JSON_H_
 
-#include "openhd-platform.hpp"
 #include "include_json.hpp"
+#include "openhd_platform.hpp"
 
 // Thw write out here is only for debugging
 static void to_json(nlohmann::json& j,const OHDPlatform &ohdPlatform) {
