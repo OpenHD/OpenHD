@@ -41,27 +41,27 @@ target_link_libraries(OHDCommonLib PUBLIC  nlohmann_json::nlohmann_json)
 #----------------------------------------------------------------------------------------------------------------------
 
 set(sources
-    "mavlink_settings/ISettingsComponent.hpp"
-    "include_json.hpp"
-    "openhd-action-handler.hpp"
-    "openhd-common-tests.hpp"
-    "openhd-external-device.hpp"
-    "openhd-global-constants.hpp"
-    "openhd-led-codes.hpp"
-    "openhd-led-pi.hpp"
-    "openhd-link-statistics.hpp"
-     "openhd-platform.hpp"
-    "openhd-platform-discover.hpp"
-    "openhd-platform-json.hpp"
-    "openhd-profile.hpp"
-    "openhd-profile-json.hpp"
-    "openhd-settings-directories.hpp"
-    "openhd-settings-persistent.hpp"
-    "openhd-util.hpp"
-    "openhd-util-filesystem.hpp"
-    "openhd-spdlog.hpp"
-    "openhd-spdlog-tele-sink.h"
-    "openhd-udp-log.h"
+    "inc/mavlink_settings/ISettingsComponent.hpp"
+    "inc/include_json.hpp"
+    "inc/openhd-action-handler.hpp"
+    "inc/openhd-common-tests.hpp"
+    "inc/openhd-external-device.hpp"
+    "inc/openhd-global-constants.hpp"
+    "inc/openhd-led-codes.hpp"
+    "inc/openhd-led-pi.hpp"
+    "inc/openhd-link-statistics.hpp"
+    "inc/openhd-platform.hpp"
+    "inc/openhd-platform-discover.hpp"
+    "inc/openhd-platform-json.hpp"
+    "inc/openhd-profile.hpp"
+    "inc/openhd-profile-json.hpp"
+    "inc/openhd-settings-directories.hpp"
+    "inc/openhd-settings-persistent.hpp"
+    "inc/openhd-util.hpp"
+    "inc/openhd-util-filesystem.hpp"
+    "inc/openhd-spdlog.hpp"
+    "inc/openhd-spdlog-tele-sink.h"
+    "inc/openhd-udp-log.h"
     )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 
@@ -75,8 +75,8 @@ target_sources(OHDCommonLib PRIVATE ${sources})
 
 target_include_directories(OHDCommonLib
     PUBLIC
-        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/mavlink_settings>"
-        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>")
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc/mavlink_settings>"
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc/>")
 
 set_target_properties(OHDCommonLib PROPERTIES
         SOVERSION ${PROJECT_VERSION_MAJOR}
