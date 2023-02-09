@@ -6,7 +6,7 @@
 #include <thread>
 
 #include "../src/OHDTelemetry.h"
-#include "mavlink_settings/openhd-settings-imp.hpp"
+#include "openhd-settings-imp.hpp"
 #include "openhd-platform-discover.hpp"
 #include "openhd-platform.hpp"
 #include "openhd-profile.hpp"

@@ -10,7 +10,7 @@
 
 #include "ethernet_hotspot.h"
 #include "ethernet_listener.h"
-#include "mavlink_settings/openhd-settings-imp.hpp"
+#include "openhd-settings-imp.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-external-device.hpp"
 #include "openhd-led-codes.hpp"

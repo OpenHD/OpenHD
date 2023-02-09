@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "mavlink_settings/openhd-settings-imp.hpp"
+#include "openhd-settings-imp.hpp"
 #include "wifi_card.hpp"
 #include "wifi_hotspot_settings.h"
 

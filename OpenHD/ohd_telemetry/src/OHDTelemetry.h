@@ -11,7 +11,7 @@
 
 #include "AirTelemetry.h"
 #include "GroundTelemetry.h"
-#include "mavlink_settings/openhd-settings-imp.hpp"
+#include "openhd-settings-imp.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-external-device.hpp"
 #include "openhd-link-statistics.hpp"

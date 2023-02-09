@@ -10,7 +10,7 @@
 #include "endpoints/UDPEndpoint2.h"
 #include "endpoints/WBEndpoint.h"
 #include "internal/OHDMainComponent.h"
-#include "mavlink_settings/openhd-settings-imp.hpp"
+#include "openhd-settings-imp.hpp"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "ohd_link.hpp"
 #include "openhd-action-handler.hpp"

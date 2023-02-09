@@ -10,7 +10,7 @@
 #include "../../lib/wifibroadcast/src/ForeignPacketsReceiver.h"
 #include "../../lib/wifibroadcast/src/UdpWBReceiver.hpp"
 #include "../../lib/wifibroadcast/src/UdpWBTransmitter.hpp"
-#include "mavlink_settings/openhd-settings-imp.hpp"
+#include "openhd-settings-imp.hpp"
 #include "ohd_link.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-link-statistics.hpp"

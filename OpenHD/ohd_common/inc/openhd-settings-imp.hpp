@@ -15,7 +15,7 @@
 #include <cassert>
 #include <functional>
 
-#include "../openhd-spdlog.hpp"
+#include "openhd-spdlog.hpp"
 
 namespace openhd{
 
