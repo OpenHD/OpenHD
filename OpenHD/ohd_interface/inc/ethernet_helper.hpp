@@ -5,10 +5,10 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_ETHERNET_HELPER_HPP_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_ETHERNET_HELPER_HPP_
 
-#include "openhd_spdlog.hpp"
-#include "openhd_util_filesystem.hpp"
-
 #include <regex>
+
+#include "openhd_spdlog.hpp"
+#include "openhd_util_filesystem.h"
 
 // Quick helper methods for ethernet (used for automatic data forwarding detection)
 namespace openhd::ethernet{

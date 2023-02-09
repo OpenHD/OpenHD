@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "openhd_spdlog.hpp"
-#include "openhd_util_filesystem.hpp"
+#include "openhd_util_filesystem.h"
 
 std::string OHDUtil::to_uppercase(std::string input) {
   for (char& it : input) {
@@ -219,7 +219,12 @@ bool OHDUtil::get_ohd_env_variable_bool(const std::string& name) {
   if (OHDUtil::contains_after_uppercase(name, "OHD_")) {
     std::cout << "Please prefix OpenHD env variables with {OHD_}\n";
   }
-  return get_ohd_env_variable_bool(name.c_str());
+  if (const char* env_p = std::getenv(name.c_str())) {
+    if (std::string(env_p) == "1") {
+      return true;
+    }
+  }
+  return false;
 }
 
 template <typename T>

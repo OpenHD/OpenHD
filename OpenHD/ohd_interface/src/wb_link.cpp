@@ -9,7 +9,7 @@
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.hpp"
 #include "openhd_spdlog.hpp"
-#include "openhd_util_filesystem.hpp"
+#include "openhd_util_filesystem.h"
 #include "wb_link_helper.h"
 #include "wifi_card.hpp"
 

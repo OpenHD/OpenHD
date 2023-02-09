@@ -12,7 +12,7 @@
 #include "openhd_platform.hpp"
 #include "openhd_spdlog.hpp"
 #include "openhd_util.h"
-#include "openhd_util_filesystem.hpp"
+#include "openhd_util_filesystem.h"
 
 // NOTE: Some PI's allow toggling both the red and green led
 // All pi's allow toggling the red led

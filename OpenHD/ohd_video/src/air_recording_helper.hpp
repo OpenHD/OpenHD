@@ -9,7 +9,7 @@
 #include <string>
 
 #include "openhd_util.h"
-#include "openhd_util_filesystem.hpp"
+#include "openhd_util_filesystem.h"
 
 namespace openhd::video{
 

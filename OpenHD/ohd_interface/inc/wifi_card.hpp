@@ -9,7 +9,7 @@
 #include "openhd_settings_directories.hpp"
 #include "openhd_settings_persistent.hpp"
 #include "openhd_util.h"
-#include "openhd_util_filesystem.hpp"
+#include "openhd_util_filesystem.h"
 #include "validate_settings_helper.h"
 #include "wifi_channel.h"
 

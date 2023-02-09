@@ -13,7 +13,7 @@
 #include "camera_discovery_helper.hpp"
 #include "libcamera_detect.hpp"
 #include "openhd_util.h"
-#include "openhd_util_filesystem.hpp"
+#include "openhd_util_filesystem.h"
 
 // annoying linux platform specifics
 #ifndef V4L2_PIX_FMT_H265

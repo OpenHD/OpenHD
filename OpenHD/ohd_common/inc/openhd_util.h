@@ -112,15 +112,6 @@ void terminate_if_not_root();
 
 // Example: "export OHD_DISCOVER_CAMERAS_DEBUG=1"
 // -> then this method will return true if you query "OHD_DISCOVER_CAMERAS_DEBUG"
-static bool get_ohd_env_variable_bool(const char* name) {
-  if (const char* env_p = std::getenv(name)) {
-    if (std::string(env_p) == "1") {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool get_ohd_env_variable_bool(const std::string& name);
 
 // For some actions (e.g a reset) a user can create a plain text file, then reboot when openhd is started, we check if this file exist, perform the appropriate action, and then delete the file. Aka a pattern of: If file exists, do action, then do not do the same action again on the next reboot

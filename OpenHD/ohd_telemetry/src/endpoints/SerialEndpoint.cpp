@@ -13,7 +13,7 @@
 #include <cassert>
 #include <utility>
 
-#include "openhd_util_filesystem.hpp"
+#include "openhd_util_filesystem.h"
 
 static std::string GET_ERROR(){
   return {strerror(errno)};

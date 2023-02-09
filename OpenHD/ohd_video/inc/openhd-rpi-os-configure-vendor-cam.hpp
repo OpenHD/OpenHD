@@ -12,7 +12,7 @@
 #include "openhd_platform.hpp"
 #include "openhd_spdlog.hpp"
 #include "openhd_util.h"
-#include "openhd_util_filesystem.hpp"
+#include "openhd_util_filesystem.h"
 
 // Helper to reconfigure the rpi os for the different camera types
 // This really is exhausting - some camera(s) are auto-detected, some are not,

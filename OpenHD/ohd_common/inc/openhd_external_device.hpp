@@ -6,6 +6,7 @@
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_EXTERNAL_DEVICE_H_
 
 #include <string>
+#include <map>
 
 #include "openhd_settings_directories.hpp"
 #include "openhd_spdlog.hpp"
