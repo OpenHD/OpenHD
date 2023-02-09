@@ -5,10 +5,11 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_MAV_PARAM_XMAVLINKPARAMPROVIDER_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_MAV_PARAM_XMAVLINKPARAMPROVIDER_H_
 
-#include "mavlink_settings/ISettingsComponent.hpp"
-#include "routing/MavlinkComponent.hpp"
 #include <memory>
 #include <utility>
+
+#include "mavlink_settings/openhd-settings-imp.hpp"
+#include "routing/MavlinkComponent.hpp"
 
 // mavsdk
 #include "mavlink_parameter_receiver.h"

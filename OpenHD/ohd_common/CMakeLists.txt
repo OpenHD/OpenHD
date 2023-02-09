@@ -41,7 +41,7 @@ target_link_libraries(OHDCommonLib PUBLIC  nlohmann_json::nlohmann_json)
 #----------------------------------------------------------------------------------------------------------------------
 
 set(sources
-    "inc/mavlink_settings/ISettingsComponent.hpp"
+    "inc/openhd-settings-imp.hpp"
     "inc/include_json.hpp"
     "inc/openhd-action-handler.hpp"
     "inc/openhd-common-tests.hpp"
@@ -75,7 +75,6 @@ target_sources(OHDCommonLib PRIVATE ${sources})
 
 target_include_directories(OHDCommonLib
     PUBLIC
-        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc/mavlink_settings>"
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc/>")
 
 set_target_properties(OHDCommonLib PROPERTIES

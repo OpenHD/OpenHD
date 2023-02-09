@@ -2,14 +2,14 @@
 // For testing, run the ground code such that it can communicate with QOpenHD, but there is no air unit.
 //
 #include <iostream>
+#include <memory>
+#include <thread>
 
 #include "../src/OHDTelemetry.h"
-#include "openhd-profile.hpp"
-#include "openhd-platform.hpp"
+#include "mavlink_settings/openhd-settings-imp.hpp"
 #include "openhd-platform-discover.hpp"
-#include "mavlink_settings/ISettingsComponent.hpp"
-#include <thread>
-#include <memory>
+#include "openhd-platform.hpp"
+#include "openhd-profile.hpp"
 
 int main() {
   std::cout<< "start\n";

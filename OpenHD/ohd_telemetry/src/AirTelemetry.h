@@ -6,11 +6,12 @@
 #define OPENHD_TELEMETRY_AIRTELEMETRY_H
 
 #include <string>
+
 #include "endpoints/SerialEndpoint.h"
 #include "internal/OHDMainComponent.h"
-#include "mavlink_settings/ISettingsComponent.hpp"
-#include "openhd-platform.hpp"
+#include "mavlink_settings/openhd-settings-imp.hpp"
 #include "openhd-link-statistics.hpp"
+#include "openhd-platform.hpp"
 #include "routing/MavlinkSystem.hpp"
 //
 #include "mavsdk_temporary/XMavlinkParamProvider.h"

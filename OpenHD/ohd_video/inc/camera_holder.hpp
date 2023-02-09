@@ -7,7 +7,7 @@
 
 #include "camera.hpp"
 #include "camera_settings.hpp"
-#include "mavlink_settings/ISettingsComponent.hpp"
+#include "mavlink_settings/openhd-settings-imp.hpp"
 #include "openhd-action-handler.hpp"
 #include "openhd-settings-directories.hpp"
 #include "openhd-settings-persistent.hpp"
