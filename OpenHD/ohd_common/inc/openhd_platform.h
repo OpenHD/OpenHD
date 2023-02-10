@@ -2,7 +2,6 @@
 #define OPENHD_PLATFORM_H
 
 #include <string>
-
 #include "openhd_spdlog.hpp"
 
 enum class PlatformType {

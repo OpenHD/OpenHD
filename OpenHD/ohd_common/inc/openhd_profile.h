@@ -1,16 +1,8 @@
 #ifndef OPENHD_PROFILE_H
 #define OPENHD_PROFILE_H
 
-#include <fstream>
-#include <sstream>
 #include <string>
-#include <utility>
-#include <vector>
-
-#include "include_json.hpp"
-#include "openhd_settings_directories.hpp"
 #include "openhd_spdlog.hpp"
-#include "openhd_util.h"
 
 /**
  * The profile is created on startup and then doesn't change during run time.
@@ -32,9 +24,7 @@ class OHDProfile {
     return !is_air;
   }
   [[nodiscard]] std::string to_string()const{
-	std::stringstream ss;
-	ss<<"OHDProfile{"<<(is_air ? "Air":"Ground")<<":"<<unit_id<<"}";
-	return ss.str();
+    return fmt::format("OHDProfile[{},{}]",(is_air ? "Air":"Ground"),unit_id);
   }
 };
 
@@ -43,14 +33,7 @@ void write_profile_manifest(const OHDProfile &ohdProfile);
 
 namespace DProfile{
 
-static std::shared_ptr<OHDProfile>  discover(bool is_air) {
-  openhd::log::get_default()->debug("Profile::discover()");
-  // We read the unit id from the persistent storage, later write it to the tmp storage json
-  const auto unit_id = openhd::getOrCreateUnitId();
-  // We are air pi if there is at least one camera
-  auto ret=std::make_shared<OHDProfile>(is_air,unit_id);
-  return ret;
-}
+std::shared_ptr<OHDProfile>  discover(bool is_air);
 
 }
 #endif
