@@ -10,7 +10,7 @@
 #include "endpoints/SerialEndpoint.h"
 #include "internal/OHDMainComponent.h"
 #include "openhd_link_statistics.hpp"
-#include "openhd_platform.hpp"
+#include "openhd_platform.h"
 #include "openhd_settings_imp.hpp"
 #include "routing/MavlinkSystem.hpp"
 //

@@ -13,10 +13,8 @@
 #include <sstream>
 
 #include "openhd_global_constants.hpp"
-#include "openhd_platform.hpp"
-#include "openhd_platform_discover.hpp"
-#include "openhd_profile.hpp"
-#include "openhd_profile_json.hpp"
+#include "openhd_platform.h"
+#include "openhd_profile.h"
 #include "openhd_rpi_gpio.hpp"
 #include "openhd_spdlog.hpp"
 #include "openhd_temporary_air_or_ground.h"

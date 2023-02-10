@@ -9,7 +9,7 @@
 
 #include "camerastream.h"
 #include "ohd_video_air_generic_settings.hpp"
-#include "openhd_platform.hpp"
+#include "openhd_platform.h"
 #include "openhd_spdlog.hpp"
 // Dirty
 #include "openhd-rpi-os-configure-vendor-cam.hpp"

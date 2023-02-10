@@ -1,9 +1,8 @@
 #include <iostream>
 
 #include "ohd_interface.h"
-#include "openhd_platform.hpp"
-#include "openhd_platform_discover.hpp"
-#include "openhd_profile.hpp"
+#include "openhd_platform.h"
+#include "openhd_profile.h"
 #include "openhd_util.h"
 
 // Using test_interface:

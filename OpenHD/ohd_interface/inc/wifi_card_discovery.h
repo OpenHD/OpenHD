@@ -6,8 +6,8 @@
 #include <optional>
 #include <vector>
 
-#include "openhd_platform.hpp"
-#include "openhd_profile.hpp"
+#include "openhd_platform.h"
+#include "openhd_profile.h"
 #include "wifi_card.hpp"
 
 /**

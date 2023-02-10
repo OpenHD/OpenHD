@@ -9,7 +9,7 @@
 
 #include "include_json.hpp"
 #include "openhd_settings_directories.hpp"
-#include "openhd_settings_persistent.hpp"
+#include "openhd_settings_persistent.h"
 
 struct EthernetHotspotSettings {
   bool enable=false;

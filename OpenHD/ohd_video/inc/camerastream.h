@@ -7,7 +7,7 @@
 #include "camera_holder.hpp"
 #include "openhd_action_handler.hpp"
 #include "openhd_link.hpp"
-#include "openhd_platform.hpp"
+#include "openhd_platform.h"
 
 /**
  * Every camera stream should inherit from this class.

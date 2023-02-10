@@ -5,8 +5,7 @@
 
 #include "../src/internal/LogCustomOHDMessages.hpp"
 #include "../src/internal/OnboardComputerStatusProvider.h"
-#include "openhd_platform.hpp"
-#include "openhd_platform_discover.hpp"
+#include "openhd_platform.h"
 
 int main() {
 
