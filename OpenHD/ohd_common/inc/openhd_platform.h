@@ -4,6 +4,10 @@
 #include <string>
 #include "openhd_spdlog.hpp"
 
+/**
+ * Util to discover and then store the platform we are running on.
+ */
+
 enum class PlatformType {
   Unknown,
   PC,
