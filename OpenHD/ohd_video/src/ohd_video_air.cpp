@@ -75,6 +75,7 @@ void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) 
     case CameraType::JETSON_CSI:
     case CameraType::IP:
     case CameraType::ROCKCHIP_CSI:
+    case CameraType::ALLWINNER_CSI:
     case CameraType::UVC:
     case CameraType::ROCKCHIP_HDMI:
     case CameraType::CUSTOM_UNMANAGED_CAMERA:
