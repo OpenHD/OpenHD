@@ -112,7 +112,8 @@ We recommend getting in touch with us via the {telegram} group or the {discord} 
 
 == License
 
-OpenHD is licensed under {gnu-gplv2}, and you can find its contents in this link {raspbian}, {linux-kernel}. Drivers are licensed under GPLv2. Original code (if found) is licensed as stipulated in respective source files or under the GPLv2 license.
+OpenHD and its images are licensed under GPL v3.0, unless stated otherwise by a submodule's license.
+This does not include the OpenHD logos and it's brand.
 
 == Credits
 
