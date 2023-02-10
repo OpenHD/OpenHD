@@ -6,9 +6,8 @@
 #include <thread>
 
 #include "ohd_video_air.h"
-#include "openhd_platform.hpp"
-#include "openhd_platform_discover.hpp"
-#include "openhd_profile.hpp"
+#include "openhd_platform.h"
+#include "openhd_profile.h"
 
 int main(int argc, char *argv[]) {
   const auto platform=DPlatform::discover();

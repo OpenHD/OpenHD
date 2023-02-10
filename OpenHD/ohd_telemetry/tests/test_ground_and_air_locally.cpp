@@ -6,9 +6,8 @@
 #include <thread>
 
 #include "../src/OHDTelemetry.h"
-#include "openhd_platform.hpp"
-#include "openhd_platform_discover.hpp"
-#include "openhd_profile.hpp"
+#include "openhd_platform.h"
+#include "openhd_profile.h"
 
 int main() {
   std::cout<<"start\n";

@@ -14,8 +14,8 @@
 #include "openhd_action_handler.hpp"
 #include "openhd_external_device.hpp"
 #include "openhd_link_statistics.hpp"
-#include "openhd_platform.hpp"
-#include "openhd_profile.hpp"
+#include "openhd_platform.h"
+#include "openhd_profile.h"
 #include "openhd_settings_imp.hpp"
 
 // Forward declare them to speed up compilation time.

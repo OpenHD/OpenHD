@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <utility>
 
-#include "openhd_profile.hpp"
+#include "openhd_profile.h"
 #include "openhd_video_frame.h"
 
 /**

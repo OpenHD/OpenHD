@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "camera_holder.hpp"
-#include "openhd_platform.hpp"
+#include "openhd_platform.h"
 #include "openhd_spdlog.hpp"
 
 /**

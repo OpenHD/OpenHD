@@ -5,7 +5,7 @@
 #include <string>
 
 #include "include_json.hpp"
-#include "openhd_platform.hpp"
+#include "openhd_platform.h"
 #include "openhd_settings_directories.hpp"
 #include "openhd_settings_persistent.h"
 #include "openhd_util.h"

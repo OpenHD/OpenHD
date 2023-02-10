@@ -18,7 +18,7 @@
 #include "WBReceiverStats.hpp"
 #include "openhd_action_handler.hpp"
 #include "openhd_link_statistics.hpp"
-#include "openhd_platform.hpp"
+#include "openhd_platform.h"
 #include "openhd_spdlog.hpp"
 #include "openhd_spdlog_tele_sink.h"
 #include "routing/MavlinkComponent.hpp"

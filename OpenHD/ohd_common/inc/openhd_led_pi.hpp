@@ -9,7 +9,7 @@
 #include <thread>
 #include <utility>
 
-#include "openhd_platform.hpp"
+#include "openhd_platform.h"
 #include "openhd_spdlog.hpp"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"

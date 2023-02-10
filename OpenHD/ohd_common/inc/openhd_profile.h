@@ -38,6 +38,9 @@ class OHDProfile {
   }
 };
 
+// Write as json to /tmp for debugging
+void write_profile_manifest(const OHDProfile &ohdProfile);
+
 namespace DProfile{
 
 static std::shared_ptr<OHDProfile>  discover(bool is_air) {
