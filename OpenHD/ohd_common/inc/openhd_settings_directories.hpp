@@ -22,6 +22,7 @@ namespace openhd {
 // Even though this is not recommended, we want to support that - and since on rpi image only /boot shows up
 // under windows in the file reader, we had to change the path in this regard. Shouldn't create any issues
 // on linux, since we are root, we can just cretae the directory at run time
+// !!!! Had to be reverted - writing to /boot on rpi is too prone to file system corruption !!!
 //static constexpr auto SETTINGS_BASE_PATH ="/boot/openhd/settings/";
 static constexpr auto SETTINGS_BASE_PATH ="/usr/local/share/openhd/";
 // for example, the unique id
@@ -30,7 +31,7 @@ static std::string get_unit_id_file_path(){
 }
 
 // Interface, telemetry and video each have their own directory for settings
-// to seperate them logically like also done in code
+// to separate them logically like also done in code
 static std::string get_interface_settings_directory(){
   return std::string(SETTINGS_BASE_PATH)+"interface/";
 }
