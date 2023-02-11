@@ -9,18 +9,17 @@
 #include <thread>
 #include <utility>
 
-#include "AirTelemetry.h"
-#include "GroundTelemetry.h"
 #include "openhd_action_handler.hpp"
 #include "openhd_external_device.hpp"
 #include "openhd_link_statistics.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_settings_imp.hpp"
+#include "openhd_link.hpp"
 
 // Forward declare them to speed up compilation time.
-//class AirTelemetry;
-//class GroundTelemetry;
+class AirTelemetry;
+class GroundTelemetry;
 
 /**
  * This class holds either a Air telemetry or Ground Telemetry instance.
