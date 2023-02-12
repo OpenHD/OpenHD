@@ -135,7 +135,11 @@ static std::optional<int> read_cpuload_once_blocking(){
 }
 
 // Taken from ChatGPT
-static double calculate_memory_usage_percent(){
+struct RamUsage{
+  double ram_usage_perc;
+  int ram_total_mb;
+};
+static RamUsage calculate_memory_usage_percent(){
   try {
 	std::ifstream meminfo("/proc/meminfo");
 	std::string line;
@@ -163,9 +167,9 @@ static double calculate_memory_usage_percent(){
 	std::cout << "Used Memory: " << used_memory / 1024 << " MB" << std::endl;
 	std::cout << "Free Memory: " << free_memory / 1024 << " MB" << std::endl;
 	std::cout << "Memory Usage: " << memory_usage << "%" << std::endl;*/
-	return  memory_usage;
+	return RamUsage{memory_usage,(int)total_memory};
   }catch (std::exception& e){
-	return 0;
+	return RamUsage{0,0};
   }
 }
 
