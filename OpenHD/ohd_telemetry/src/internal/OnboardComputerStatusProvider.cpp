@@ -55,6 +55,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_clock_v3d=0;
     int curr_space_left=0;
     curr_space_left=OHDFilesystemUtil::get_remaining_space_in_mb();
+	const auto curr_ram_usage=OnboardComputerStatus::calculate_memory_usage_percent();
     if(m_platform.platform_type==PlatformType::RaspberryPi){
       curr_temperature_core=(int8_t)OnboardComputerStatus::rpi::read_temperature_soc_degree();
       // temporary, until we have our own message
@@ -78,8 +79,9 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_curr_onboard_computer_status.storage_type[3]=curr_clock_core;
       m_curr_onboard_computer_status.storage_usage[0]=curr_clock_v3d;
       m_curr_onboard_computer_status.storage_usage[1]=curr_space_left;
+	  m_curr_onboard_computer_status.ram_usage=static_cast<uint32_t>(curr_ram_usage.ram_usage_perc);
+	  m_curr_onboard_computer_status.ram_total=curr_ram_usage.ram_total_mb;
     }
-
   }
 }
 std::vector<MavlinkMessage>

@@ -44,10 +44,6 @@ class CameraHolder:
     auto c_recording=[this](std::string,int value) {
       return set_air_recording(value);
     };
-    // This is not a setting (cannot be changed) but rather a read-only param, but repurposing the settings here was the easiest
-    auto c_read_only_param=[this](std::string,std::string value){
-      return false;
-    };
     std::vector<openhd::Setting> ret={
         openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
         openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}},
@@ -107,7 +103,7 @@ class CameraHolder:
     }
     if(m_camera.type==CameraType::RPI_CSI_LIBCAMERA){
       // r.n we only write the sensor name for cameras detected via libcamera
-      ret.push_back(openhd::Setting{"V_CAM_SENSOR",openhd::StringSetting{m_camera.sensor_name,c_read_only_param}});
+	  ret.push_back(openhd::create_read_only_string("V_CAM_SENSOR",m_camera.sensor_name));
     }
     if(m_camera.supports_awb()){
       auto cb=[this](std::string,int value) {

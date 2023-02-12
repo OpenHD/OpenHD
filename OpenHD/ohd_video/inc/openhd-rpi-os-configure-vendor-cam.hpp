@@ -181,12 +181,15 @@ static constexpr auto rpi_config_file_path="/boot/config.txt";
 static bool apply_new_cam_config_and_save(const BoardType& board_type,const CamConfig& new_cam_config){
   openhd::log::get_default()->debug("Begin apply cam config {}",cam_config_to_string(new_cam_config));
   const auto cam_config_filename= get_file_name_for_cam_config(board_type,new_cam_config);
-  const auto cam_config_file_content=OHDFilesystemUtil::opt_read_file(cam_config_filename);
-  if(!cam_config_file_content.has_value()){
+  const auto cam_config_file_content_opt=OHDFilesystemUtil::opt_read_file(cam_config_filename);
+  if(!cam_config_file_content_opt.has_value()){
     openhd::log::get_default()->warn("Cannot apply new cam config, corresponding *.txt [{}] not found",cam_config_filename);
     return false;
   }
-  const auto cam_config_file_lines=OHDUtil::split_string_by_newline(cam_config_file_content.value());
+  // Be more verbose why this stuff stands there - this is a comment added on top
+  auto cam_config_file_content=fmt::format("#Curr cam config:{}\n", cam_config_to_string(new_cam_config))
+	  +cam_config_file_content_opt.value();
+  const auto cam_config_file_lines=OHDUtil::split_string_by_newline(cam_config_file_content);
 
   // read the content of the current config.txt file
   const auto config_file_content=OHDFilesystemUtil::opt_read_file(rpi_config_file_path);
