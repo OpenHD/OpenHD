@@ -134,6 +134,36 @@ static std::optional<int> read_cpuload_once_blocking(){
   return 100-cpu_idle_perc_int;
 }
 
+// Taken from ChatGPT
+static double calculate_memory_usage_percent(){
+  std::ifstream meminfo("/proc/meminfo");
+  std::string line;
+  std::regex pattern("\\s+");
+  long long total_memory = 0;
+  long long free_memory = 0;
+  long long used_memory = 0;
+  while (std::getline(meminfo, line)) {
+	std::vector<std::string> fields;
+	auto words_begin = std::sregex_token_iterator(line.begin(), line.end(), pattern, -1);
+	auto words_end = std::sregex_token_iterator();
+	for (auto i = words_begin; i != words_end; ++i) {
+	  fields.push_back(*i);
+	}
+	if (fields[0] == "MemTotal:") {
+	  total_memory = std::stoll(fields[1]);
+	} else if (fields[0] == "MemFree:") {
+	  free_memory = std::stoll(fields[1]);
+	}
+  }
+  meminfo.close();
+  used_memory = total_memory - free_memory;
+  double memory_usage = 100.0 * used_memory / total_memory;
+  /*std::cout << "Total Memory: " << total_memory / 1024 << " MB" << std::endl;
+  std::cout << "Used Memory: " << used_memory / 1024 << " MB" << std::endl;
+  std::cout << "Free Memory: " << free_memory / 1024 << " MB" << std::endl;
+  std::cout << "Memory Usage: " << memory_usage << "%" << std::endl;*/
+  return used_memory;
+}
 
 }
 #endif //XMAVLINKSERVICE_SYSTEMREADUTIL_H
