@@ -485,5 +485,7 @@ void GStreamerStream::loop_pull_samples() {
     on_new_rtp_frame_fragment(fragment,dts);
   };
   openhd::loop_pull_appsink_samples(m_pull_samples_run,m_app_sink_element,cb);
+  m_frame_fragments.resize(0);
+
 }
 
