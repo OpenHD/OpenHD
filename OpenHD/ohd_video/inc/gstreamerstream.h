@@ -28,6 +28,9 @@ class GStreamerStream : public CameraStream {
   ~GStreamerStream();
   void setup() override;
  private:
+  // Build (parts) of the gstreamer pipeline for all the different cameras we support.
+  // If params (like for example resolution, framerate, exposure,...) are changeable on the camera type,
+  // it sets them accordingly by reading them from @CameraStream::m_camera_holder
   void setup_raspberrypi_mmal_csi();
   void setup_raspberrypi_veye_v4l2();
   void setup_raspberrypi_libcamera();
@@ -39,6 +42,7 @@ class GStreamerStream : public CameraStream {
   void setup_ip_camera();
   void setup_sw_dummy_camera();
   void setup_custom_unmanaged_camera();
+  // Utils when settings are changed (most of them require a full restart of the pipeline)
   void restart_after_new_setting();
   void restartIfStopped() override;
   void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) override;
@@ -47,6 +51,7 @@ class GStreamerStream : public CameraStream {
   void start() override;
   // Set gst state to PAUSED
   void stop() override;
+  // Set gst state to GST_STATE_NULL and properly cleanup the pipeline.
   void cleanup_pipe();
   std::string createDebug() override;
  private:
