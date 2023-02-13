@@ -490,4 +490,20 @@ MavlinkParameterReceiver::extract_request_read_param_identifier(
     return std::nullopt;
 }
 
+template <class T>
+MavlinkParameterReceiver::Result
+MavlinkParameterReceiver::update_existing_server_param(const std::string& name,
+                                                       const T& value) {
+    if (name.size() > MavlinkParameterSet::PARAM_ID_LEN) {
+        LogErr() << "Error: param name too long";
+        return Result::ParamNameTooLong;
+    }
+    std::lock_guard<std::mutex> lock(_all_params_mutex);
+    ParamValue param_value;
+    param_value.set(value);
+    auto res= _param_set.update_existing_parameter(name,param_value);
+    if(res==MavlinkParameterSet::UpdateExistingParamResult::SUCCESS)return MavlinkParameterReceiver::Result::Success;
+    return MavlinkParameterReceiver::Result::NotFound;
+}
+
 } // namespace mavsdk

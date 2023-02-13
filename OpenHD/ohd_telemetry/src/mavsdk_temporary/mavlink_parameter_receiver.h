@@ -70,6 +70,14 @@ public:
 	Result provide_server_param_float(const std::string& name, float value);
 	Result provide_server_param_int(const std::string& name, int32_t value);
 	Result provide_server_param_custom(const std::string& name, const std::string& value);
+
+    /**
+     * NOTE: Calling this method should be avoided - it results in an invariant parameter set.
+     * However, sometimes this cannot be avoided
+     */
+	template<class T>
+	Result update_existing_server_param(const std::string& name,const T& param_value);
+
     /**
      * @return a copy of the current parameter set of the server.
      */
