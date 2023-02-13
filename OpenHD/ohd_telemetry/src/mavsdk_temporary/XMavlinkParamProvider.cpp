@@ -18,7 +18,6 @@ void XMavlinkParamProvider::add_param(const openhd::Setting& setting) {
 	const auto intSetting=std::get<openhd::IntSetting>(setting.setting);
 	const auto result = _mavlink_parameter_receiver->provide_server_param<int>(setting.id,intSetting.value,intSetting.change_callback);
 	assert(result == mavsdk::MavlinkParameterReceiver::Result::Success);
-        _mavlink_parameter_receiver->provide_server_param()
   } else if (std::holds_alternative<openhd::FloatSetting>(setting.setting)) {
 	const auto floatSetting=std::get<openhd::FloatSetting>(setting.setting);
 	const auto result = _mavlink_parameter_receiver->provide_server_param<float>(setting.id,floatSetting.value,floatSetting.change_callback);
