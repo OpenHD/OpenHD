@@ -280,17 +280,21 @@ bool WBLink::request_set_frequency(int frequency) {
   auto work_item=std::make_shared<WorkItem>([this](){
     apply_frequency_and_channel_width_from_settings();
   },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
+  // And add a work item that runs after 5 seconds and resets the frequency to the previous one if no data is being received
+  // after X seconds
+  auto backup_work_item=std::make_shared<WorkItem>([this](){
+    m_console->debug("check if data is being received");
+  },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK+std::chrono::seconds(2));
   schedule_work_item(work_item);
+  schedule_work_item(backup_work_item);
   return true;
 }
 
 bool WBLink::apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width) {
   const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width,m_broadcast_cards);
   // TODO: R.n I am not sure if and how you need / even can set it either via radiotap or "iw"
-  if(m_wb_tele_tx){
-    m_wb_tele_tx->update_channel_width(channel_width);
-  }
-  for(auto& tx: m_wb_video_tx_list){
+  auto transmitters=get_tx_list();
+  for(auto& tx: transmitters){
     tx->update_channel_width(channel_width);
   }
   return res;
@@ -363,10 +367,8 @@ void WBLink::apply_mcs_index() {
   //for(const auto& wlan:m_broadcast_cards){
   //  wifi::commandhelper::iw_set_rate_mcs(wlan.device_name,settings.wb_mcs_index, false);
   //}
-  if(m_wb_tele_tx){
-    m_wb_tele_tx->update_mcs_index(settings.wb_mcs_index);
-  }
-  for(auto& tx: m_wb_video_tx_list){
+  auto transmitters=get_tx_list();
+  for(auto& tx: get_tx_list()){
     tx->update_mcs_index(settings.wb_mcs_index);
   }
 }
@@ -976,19 +978,22 @@ void WBLink::reset_all_rx_stats() {
   for(auto& rx:m_wb_video_rx_list){
     rx->reset_all_rx_stats();
   }
+  m_wb_tele_rx->reset_all_rx_stats();
 }
 
 int WBLink::get_count_p_all() {
+  auto receivers=get_rx_list();
   int total=0;
-  for(auto& rx:m_wb_video_rx_list){
+  for(auto& rx:receivers){
     total += static_cast<int>(rx->get_latest_stats().wb_rx_stats.count_p_all);
   }
   return total;
 }
 
 int WBLink::get_count_p_decryption_ok() {
+  auto receivers=get_rx_list();
   int total=0;
-  for(auto& rx:m_wb_video_rx_list){
+  for(auto& rx:receivers){
     total += static_cast<int>(rx->get_latest_stats().wb_rx_stats.count_p_all);
   }
   return total;
@@ -1007,4 +1012,18 @@ bool WBLink::check_in_state_support_changing_settings(){
 
 openhd::Space WBLink::get_current_frequency_channel_space()const {
   return openhd::get_space_from_frequency(m_settings->get_settings().wb_frequency);
+}
+
+std::vector<WBTransmitter*> WBLink::get_tx_list() {
+  std::vector<WBTransmitter*> ret;
+  for(auto& vid_tx:m_wb_video_tx_list)ret.push_back(vid_tx.get());
+  ret.push_back(m_wb_tele_tx.get());
+  return ret;
+}
+
+std::vector<AsyncWBReceiver*> WBLink::get_rx_list() {
+  std::vector<AsyncWBReceiver*> ret;
+  for(auto& vid_rx:m_wb_video_rx_list)ret.push_back(vid_rx.get());
+  ret.push_back(m_wb_tele_rx.get());
+  return ret;
 }

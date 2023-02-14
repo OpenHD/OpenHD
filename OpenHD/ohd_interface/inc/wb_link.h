@@ -171,6 +171,10 @@ class WBLink :public OHDLink{
   int get_count_p_all();
   int get_count_p_decryption_ok();
   int get_last_rx_packet_chan_width();
+  // Helper when we need to iterate over all tx-es/rx-es. Save to use as long as this instance is not destroyed.
+  // Uses "*" since the members are unique_ptr.
+  std::vector<WBTransmitter*> get_tx_list();
+  std::vector<AsyncWBReceiver*> get_rx_list();
  private:
   // We return false on all the change settings request(s) if there is already a change operation queued
   // up or we currently perform a channel scan
