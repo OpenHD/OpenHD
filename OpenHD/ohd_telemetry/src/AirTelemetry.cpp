@@ -158,7 +158,10 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   std::vector<openhd::Setting> ret{};
   using namespace openhd::telemetry;
   auto c_fc_uart_connection_type=[this](std::string,std::string value) {
-	//We just accept anything
+	//We just accept anything, but log a warning
+        if(!OHDFilesystemUtil::exists(value)){
+          m_console->warn("{} is not a valid serial");
+        }
 	_airTelemetrySettings->unsafe_get_settings().fc_uart_connection_type=value;
 	_airTelemetrySettings->persist();
 	setup_uart();
