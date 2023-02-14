@@ -935,7 +935,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
   }
   ScanResult result{};
   if(possible_frequencies.empty()){
-    m_console->debug("Channel scan failure, restore local settings");
+    m_console->warn("Channel scan failure, restore local settings");
     apply_frequency_and_channel_width_from_settings();
     result.success= false;
     result.frequency=0;
