@@ -15,8 +15,13 @@
 #include "MEndpoint.h"
 #include "openhd_spdlog.h"
 
-// At some point, I decided there is no way around it than to write our own UART receiver program.
-// Mostly based on MAVSDK. Doesn't use boost.
+/**
+ *  At some point, I decided there is no way around it than to write our own UART receiver program.
+ *  Shares some similarities with MAVSDK's serial endpoint implementation.
+ *  It is safe to create an instance of this class with common mistakes like a wrong serial fd -
+ *  In this case, this will constantly log some "warning messages" until the issue is fixed
+ *  (for example by the user connecting the serial wires, or selecting another type of fd)
+ */
 class SerialEndpoint : public MEndpoint{
  public:
   struct HWOptions {
