@@ -89,3 +89,6 @@ set_target_properties(OHDCommonLib PROPERTIES
 
 add_executable(test_openhd_util test/test_openhd_util.cpp)
 target_link_libraries(test_openhd_util OHDCommonLib)
+
+add_executable(test_ohd_reboot test/test_ohd_reboot.cpp)
+target_link_libraries(test_ohd_reboot OHDCommonLib)
