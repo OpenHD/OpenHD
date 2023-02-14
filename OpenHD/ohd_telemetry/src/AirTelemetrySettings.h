@@ -119,19 +119,25 @@ static constexpr auto FC_UART_FLOW_CONTROL="FC_UART_FLWCTL";
 
 class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
  public:
-  SettingsHolder():
+  SettingsHolder(OHDPlatform platform): m_platform(platform),
 	  openhd::settings::PersistentSettings<Settings>(
             openhd::get_telemetry_settings_directory()){
 	init();
   }
  private:
+  OHDPlatform m_platform;
   [[nodiscard]] std::string get_unique_filename()const override{
 	std::stringstream ss;
 	ss<<"air_settings.json";
 	return ss.str();
   }
   [[nodiscard]] Settings create_default()const override{
-	return Settings{};
+        Settings ret{};
+        if(m_platform.platform_type==PlatformType::RaspberryPi){
+          // Enable serial to FC by default
+          ret.fc_uart_connection_type=1;
+        }
+        return ret;
   }
 };
 

@@ -14,7 +14,7 @@
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   m_console = openhd::log::create_or_get("air_tele");
   assert(m_console);
-  _airTelemetrySettings=std::make_unique<openhd::telemetry::air::SettingsHolder>();
+  _airTelemetrySettings=std::make_unique<openhd::telemetry::air::SettingsHolder>(platform);
   setup_uart();
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
   components.push_back(m_ohd_main_component);
