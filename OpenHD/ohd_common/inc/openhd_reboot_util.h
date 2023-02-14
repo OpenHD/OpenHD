@@ -17,6 +17,7 @@ void systemctl_reboot();
 void systemctl_power(bool shutdownOnly);
 
 // Returns immediately and performs the shutdown / reboot action after a given delay (can be 0)
+// This delay usually exists to give a mavlink acknowledging response time to be sent to the ground
 void handle_power_command_async(std::chrono::milliseconds delay, bool shutdownOnly);
 }
 
