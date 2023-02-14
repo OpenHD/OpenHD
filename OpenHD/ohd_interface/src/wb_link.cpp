@@ -280,13 +280,17 @@ bool WBLink::request_set_frequency(int frequency) {
   auto work_item=std::make_shared<WorkItem>([this](){
     apply_frequency_and_channel_width_from_settings();
   },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
+  schedule_work_item(work_item);
   // And add a work item that runs after 5 seconds and resets the frequency to the previous one if no data is being received
   // after X seconds
-  auto backup_work_item=std::make_shared<WorkItem>([this](){
-    m_console->debug("check if data is being received");
-  },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK+std::chrono::seconds(2));
-  schedule_work_item(work_item);
-  schedule_work_item(backup_work_item);
+  const auto rx_count_p_decryption_ok=get_rx_count_p_decryption_ok();
+  if(rx_count_p_decryption_ok>100){
+    m_console->debug("Addding reset to previous known frequency work item {}",rx_count_p_decryption_ok);
+    auto backup_work_item=std::make_shared<WorkItem>([this](){
+      m_console->debug("check if data is being received {}",get_rx_count_p_decryption_ok());
+    },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK+std::chrono::seconds(2));
+    schedule_work_item(backup_work_item);
+  }
   return true;
 }
 
@@ -910,7 +914,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       m_console->warn("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
       reset_all_rx_stats();
       std::this_thread::sleep_for(DEFAULT_SCAN_TIME_PER_CHANNEL);
-      const int n_packets=get_count_p_all();
+      const int n_packets= get_rx_count_p_all();
       // We might receive 20Mhz channel width packets from a air unit sending on 20Mhz channel width while
       // receiving on 40Mhz channel width - if we were to then to set the gnd to 40Mhz, we will be able to receive data,
       // but not be able to send any data up to the air unit.
@@ -920,7 +924,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         // We got packets on this frequency, but it is not guaranteed those packets are from an openhd air unit.
         // sleep a bit more, then check if we actually got any decrypted packets
         std::this_thread::sleep_for(std::chrono::seconds(2));
-        const int n_packets_decrypted=get_count_p_decryption_ok();
+        const int n_packets_decrypted= get_rx_count_p_decryption_ok();
         const int packet_loss=m_wb_video_rx_list.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
         m_console->debug("Got {} decrypted packets on frequency {} with {} packet loss",n_packets_decrypted,channel.frequency,packet_loss);
         if(n_packets_decrypted>0 && rx_chann_width==channel_width){
@@ -981,7 +985,7 @@ void WBLink::reset_all_rx_stats() {
   }
 }
 
-int WBLink::get_count_p_all() {
+int WBLink::get_rx_count_p_all() {
   auto receivers=get_rx_list();
   int total=0;
   for(auto& rx:receivers){
@@ -990,11 +994,11 @@ int WBLink::get_count_p_all() {
   return total;
 }
 
-int WBLink::get_count_p_decryption_ok() {
+int WBLink::get_rx_count_p_decryption_ok() {
   auto receivers=get_rx_list();
   int total=0;
   for(auto& rx:receivers){
-    total += static_cast<int>(rx->get_latest_stats().wb_rx_stats.count_p_all);
+    total += static_cast<int>(rx->get_latest_stats().wb_rx_stats.count_p_decryption_ok);
   }
   return total;
 }

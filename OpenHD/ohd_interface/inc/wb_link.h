@@ -168,8 +168,8 @@ class WBLink :public OHDLink{
  private:
   std::atomic<bool> is_scanning=false;
   void reset_all_rx_stats();
-  int get_count_p_all();
-  int get_count_p_decryption_ok();
+  int get_rx_count_p_all();
+  int get_rx_count_p_decryption_ok();
   int get_last_rx_packet_chan_width();
   // Helper when we need to iterate over all tx-es/rx-es. Save to use as long as this instance is not destroyed.
   // Uses "*" since the members are unique_ptr.
