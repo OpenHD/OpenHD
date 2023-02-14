@@ -10,7 +10,7 @@
 
 #include "OHDLinkStatisticsHelper.h"
 #include "OnboardComputerStatus.hpp"
-#include "RebootUtil.hpp"
+#include "openhd_reboot_util.h"
 
 OHDMainComponent::OHDMainComponent(
     OHDPlatform platform1,uint8_t parent_sys_id,
@@ -82,7 +82,7 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
             if(action_for_companion>0){
               ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
               const bool shutdownOnly=action_for_companion==2;
-              RebootUtil::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
+              openhd::reboot::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
             }
             // dirty, we don't have a custom message for that yet
             if(command.param3==1){

@@ -4,11 +4,11 @@
 // Probably needs to be run with sudo
 //
 
-#include "../src/internal//RebootUtil.hpp"
+#include "openhd_reboot_util.h"
 #include <thread>
 
 int main() {
   //RebootUtil::handlePowerCommand(false);
-  RebootUtil::handle_power_command_async(std::chrono::seconds(3), false);
+  openhd::reboot::handle_power_command_async(std::chrono::seconds(3), false);
   std::this_thread::sleep_for(std::chrono::seconds(10));
 }

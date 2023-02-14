@@ -13,6 +13,7 @@
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
+#include "openhd_reboot_util.h"
 
 // Helper to reconfigure the rpi os for the different camera types
 // This really is exhausting - some camera(s) are auto-detected, some are not,
@@ -257,7 +258,7 @@ class ConfigChangeHandler{
     if(success){
       m_changed_once= true;
       // this change requires a reboot
-      reboot_async();
+      openhd::reboot::handle_power_command_async(std::chrono::seconds(3), false);
     }
     return success;
   }
@@ -266,13 +267,6 @@ class ConfigChangeHandler{
   std::unique_ptr<std::thread> m_handle_thread;
   const OHDPlatform m_platform;
   bool m_changed_once= false;
-  void reboot_async(){
-    // This is okay, since we will restart anyways
-    m_handle_thread=std::make_unique<std::thread>([]{
-      std::this_thread::sleep_for(std::chrono::seconds(3));
-      OHDUtil::run_command("systemctl",{"start", "reboot.target"});
-    });
-  }
 };
 
 
