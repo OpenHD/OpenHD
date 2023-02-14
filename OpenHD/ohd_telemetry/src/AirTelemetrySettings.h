@@ -119,7 +119,7 @@ static constexpr auto FC_UART_FLOW_CONTROL="FC_UART_FLWCTL";
 
 class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
  public:
-  SettingsHolder(OHDPlatform platform): m_platform(platform),
+  explicit SettingsHolder(OHDPlatform platform): m_platform(platform),
 	  openhd::settings::PersistentSettings<Settings>(
             openhd::get_telemetry_settings_directory()){
 	init();
