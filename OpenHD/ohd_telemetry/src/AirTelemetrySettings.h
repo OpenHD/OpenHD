@@ -16,38 +16,14 @@ namespace openhd::telemetry::air{
 
 // Default for ardupilot and more
 static constexpr int DEFAULT_UART_BAUDRATE=115200;
-static constexpr int UART_CONNECTION_TYPE_DISABLE=0;
-static constexpr int DEFAULT_UART_CONNECTION=UART_CONNECTION_TYPE_DISABLE; // Default to UART disabled (FC)
-
-/*enum class SerialBaudRate{
-  RATE_9600,
-  RATE_19200,
-  RATE_38400,
-  RATE_57600,
-  RATE_115200,
-  RATE_230400,
-  RATE_460800,
-  RATE_500000,
-  RATE_576000,
-  RATE_921600,
-  RATE_1000000,
-};
-NLOHMANN_JSON_SERIALIZE_ENUM( SerialBaudRate, {
-     {SerialBaudRate::RATE_9600, "9600"},
-     {SerialBaudRate::RATE_19200, "19200"},
-     {SerialBaudRate::RATE_38400, "38400"},
-     {SerialBaudRate::RATE_57600, "57600"},
-     {SerialBaudRate::RATE_115200, "115200"},
-     {SerialBaudRate::RATE_230400, "230400"},
-     {SerialBaudRate::RATE_460800, "460800"},
-     {SerialBaudRate::RATE_500000, "500000"},
-     {SerialBaudRate::RATE_576000, "576000"},
-     {SerialBaudRate::RATE_921600, "921600"},
-     {SerialBaudRate::RATE_1000000, "1000000"},
-});*/
+// We use an empty string for "serial disabled"
+static constexpr auto UART_CONNECTION_TYPE_DISABLE="";
+static constexpr auto DEFAULT_UART_CONNECTION=UART_CONNECTION_TYPE_DISABLE; // Default to UART disabled (FC)
 
 struct Settings{
-  // 0: Disable
+  // Mapped in QOpenHD - "" means disabled
+  // In general, we do not really validate the user input - if the fd path doesn't exist for example, the Serial endpoint
+  // implementation will cry a warning in regular intervals anyways.
   // 1: RPI UART0 (/dev/serial0)
   // 2: RPI UART1 (/dev/serial1)
   // 3: UART USB ADAPTER (/dev/ttyUSB0)
@@ -56,34 +32,12 @@ struct Settings{
   // 4: /dev/ttyACM0
   // 5: /dev/ttyACM1
   // 6: Rock5B UART7_M2 (/dev/ttyS7)
-  int fc_uart_connection_type=DEFAULT_UART_CONNECTION;
+  std::string fc_uart_connection_type=DEFAULT_UART_CONNECTION;
   int fc_uart_baudrate=DEFAULT_UART_BAUDRATE;
   bool fc_uart_flow_control=false;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,fc_uart_connection_type,fc_uart_baudrate,fc_uart_flow_control);
-
-static bool validate_uart_connection_type(int type){
-  return type >=0 && type <=6;
-}
-
-// If disabled, return nullopt
-// If enabled, return the linux fd string for this (UART) connection type
-static std::optional<std::string> uart_fd_from_connection_type(int connection_type){
-  assert(validate_uart_connection_type(connection_type));
-  switch (connection_type) {
-	case 0: return std::nullopt;
-	case 1:return "/dev/serial0";
-	case 2:return "/dev/serial1";
-	case 3:return "/dev/ttyUSB0";
-	case 4:return "/dev/ttyACM0";
-	case 5:return "/dev/ttyACM1";
-	case 6:return "/dev/ttyS7";
-	default:
-	  assert(true);
-	  return std::nullopt;
-  }
-}
 
 // based on mavsdk and what linux allows setting
 // if a value is in the map, we allow the user to set it
@@ -123,6 +77,9 @@ class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
 	  openhd::settings::PersistentSettings<Settings>(
             openhd::get_telemetry_settings_directory()){
 	init();
+  }
+  bool is_serial_enabled(){
+        return !get_settings().fc_uart_connection_type.empty();
   }
  private:
   OHDPlatform m_platform;
