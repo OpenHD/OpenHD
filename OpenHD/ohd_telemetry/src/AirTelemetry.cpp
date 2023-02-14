@@ -237,6 +237,7 @@ void AirTelemetry::setup_uart() {
     options.linux_filename=air::uart_fd_from_connection_type(fc_uart_connection_type).value();
     options.baud_rate=fc_uart_baudrate;
     options.flow_control= fc_uart_flow_control;
+    options.enable_reading= true;
     m_serial_endpoint =std::make_unique<SerialEndpoint>("ser_fc",options);
     m_serial_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
       this->on_messages_fc(messages);

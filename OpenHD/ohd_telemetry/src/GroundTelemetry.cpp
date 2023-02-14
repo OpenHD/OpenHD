@@ -60,6 +60,8 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
     SerialEndpoint::HWOptions options{};
     options.baud_rate=settings.gnd_uart_baudrate;
     options.linux_filename=openhd::telemetry::ground::uart_fd_from_connection_type(settings.gnd_uart_connection_type);
+    // We do not need to receive data via serial on gnd
+    options.enable_reading= false;
     m_endpoint_tracker =std::make_unique<SerialEndpoint>("ser_tracker",options);
     m_endpoint_tracker->registerCallback([this](std::vector<MavlinkMessage> messages) {
       // We ignore any incoming messages here for now, since it is only for mavlink out via serial

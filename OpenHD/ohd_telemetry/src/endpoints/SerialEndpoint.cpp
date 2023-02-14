@@ -214,7 +214,7 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options,std::sha
 
 void SerialEndpoint::connect_and_read_loop() {
   while (!_stop_requested){
-    if(!OHDFilesystemUtil::exists(m_options.linux_filename.c_str())){
+    if(!OHDFilesystemUtil::exists(m_options.linux_filename)){
       m_console->warn("UART file does not exist");
       std::this_thread::sleep_for(std::chrono::seconds(1));
       continue;

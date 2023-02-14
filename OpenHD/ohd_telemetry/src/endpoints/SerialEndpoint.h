@@ -22,8 +22,11 @@ class SerialEndpoint : public MEndpoint{
   struct HWOptions {
     std::string linux_filename; // the linux file name,for example /dev/tty..
     int baud_rate = 115200; // manual baud rate
-    bool flow_control=false; // not tested yet
-    bool enable_debug=false; //
+    bool flow_control=false; // pretty much never used
+    // constantly read data from the connected device. Can be disabled in case the connected device shall only receive data
+    // (e.g. a tracker on the ground)
+    bool enable_reading= true;
+    bool enable_debug=false; // enable / disable extra debug logging
     [[nodiscard]] std::string to_string() const{
       std::stringstream ss;
       ss<<"HWOptions{"<<linux_filename<<", baud:"<<baud_rate<<", flow_control:"<<flow_control<<",  enable_debug:"<<enable_debug<<"}";
