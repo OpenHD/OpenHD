@@ -54,7 +54,7 @@ bool wifi::commandhelper::iw_set_frequency_and_channel_width(const std::string &
   std::vector<std::string> args{"dev", device, "set", "freq", std::to_string(freq_mhz), iw_channel_width};
   const auto ret = OHDUtil::run_command("iw", args);
   if(ret!=0){
-    get_logger()->warn("iw_set_frequency_and_channel_width failed {}",ret);
+    get_logger()->warn("iw {}Mhz@{}Mhz not supported {}",freq_mhz,channel_width,ret);
     return false;
   }
   return true;

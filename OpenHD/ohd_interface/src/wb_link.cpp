@@ -948,7 +948,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         best=other;
       }
     }
-    m_console->warn("Selected {} {} with packet loss {} as most likely",best.channel.frequency,best.channel_width,best.packet_loss_perc);
+    m_console->warn("Selected {}@{} with loss:{}% as most likely",best.channel.frequency,best.channel_width,best.packet_loss_perc);
     result.success= true;
     result.frequency=best.channel.frequency;
     result.channel_width=best.channel_width;
