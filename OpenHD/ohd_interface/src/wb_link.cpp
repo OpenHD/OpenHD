@@ -368,7 +368,7 @@ void WBLink::apply_mcs_index() {
   //  wifi::commandhelper::iw_set_rate_mcs(wlan.device_name,settings.wb_mcs_index, false);
   //}
   auto transmitters=get_tx_list();
-  for(auto& tx: get_tx_list()){
+  for(auto& tx: transmitters){
     tx->update_mcs_index(settings.wb_mcs_index);
   }
 }
@@ -975,10 +975,10 @@ void WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_c
 }
 
 void WBLink::reset_all_rx_stats() {
-  for(auto& rx:m_wb_video_rx_list){
+  auto receivers=get_rx_list();
+  for(auto& rx:receivers){
     rx->reset_all_rx_stats();
   }
-  m_wb_tele_rx->reset_all_rx_stats();
 }
 
 int WBLink::get_count_p_all() {
