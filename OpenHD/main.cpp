@@ -10,7 +10,6 @@
 
 #include <iostream>
 #include <memory>
-#include <sstream>
 
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
@@ -20,8 +19,6 @@
 #include "openhd_temporary_air_or_ground.h"
 // For logging the commit hash and more
 #include "git.h"
-
-#include "ethernet_helper.hpp"
 
 ///Regarding AIR / GROUND detection: Previous OpenHD releases would detect weather this system is an air pi
 // or ground pi by checking weather it has a connected camera. However, this pattern has 2 problems:
