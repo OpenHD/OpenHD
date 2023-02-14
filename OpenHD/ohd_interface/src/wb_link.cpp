@@ -1017,13 +1017,13 @@ openhd::Space WBLink::get_current_frequency_channel_space()const {
 std::vector<WBTransmitter*> WBLink::get_tx_list() {
   std::vector<WBTransmitter*> ret;
   for(auto& vid_tx:m_wb_video_tx_list)ret.push_back(vid_tx.get());
-  ret.push_back(m_wb_tele_tx.get());
+  if(m_wb_tele_tx)ret.push_back(m_wb_tele_tx.get());
   return ret;
 }
 
 std::vector<AsyncWBReceiver*> WBLink::get_rx_list() {
   std::vector<AsyncWBReceiver*> ret;
   for(auto& vid_rx:m_wb_video_rx_list)ret.push_back(vid_rx.get());
-  ret.push_back(m_wb_tele_rx.get());
+  if(m_wb_tele_rx)ret.push_back(m_wb_tele_rx.get());
   return ret;
 }
