@@ -23,6 +23,8 @@
 
 /**
  * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
+ * In openhd, there is an instance of this class on both air and ground with partially similar, partially
+ * different functionalities.
  */
 class OHDInterface :public openhd::ISettingsComponent{
  public:
