@@ -1002,6 +1002,7 @@ int WBLink::get_rx_count_p_decryption_ok() {
   }
   return total;
 }
+
 int WBLink::get_last_rx_packet_chan_width() {
   for(auto& rx:m_wb_video_rx_list){
     auto rx_stats=rx->get_latest_stats().wb_rx_stats;
