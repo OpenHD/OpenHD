@@ -7,6 +7,8 @@
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 
+#include <sstream>
+
 static std::shared_ptr<spdlog::logger> get_logger(){
   return openhd::log::create_or_get("w_helper");
 }
