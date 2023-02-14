@@ -47,6 +47,7 @@ set(sources
     "src/openhd_profile.cpp"
     "src/openhd_platform.cpp"
     "src/openhd_spdlog.cpp"
+    "src/openhd_udp_log.cpp"
 
     "inc/openhd_settings_imp.hpp"
     "inc/include_json.hpp"
