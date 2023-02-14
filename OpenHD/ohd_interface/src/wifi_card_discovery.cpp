@@ -4,7 +4,7 @@
 #include <regex>
 
 #include "manually_defined_cards.hpp"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 #include "wifi_card.hpp"

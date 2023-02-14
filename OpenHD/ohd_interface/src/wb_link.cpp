@@ -8,7 +8,7 @@
 #include "openhd_dirty_fatal_error.hpp"
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util_filesystem.h"
 #include "wb_link_helper.h"
 #include "wifi_card.hpp"

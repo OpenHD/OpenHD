@@ -13,7 +13,7 @@
 #include <variant>
 #include <vector>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 namespace openhd{
 

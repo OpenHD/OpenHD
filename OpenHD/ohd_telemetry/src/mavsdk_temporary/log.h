@@ -10,7 +10,7 @@
 #include <sstream>
 #include <string>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 namespace mavsdk{
 class YLogger{

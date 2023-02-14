@@ -16,7 +16,7 @@
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_settings_imp.hpp"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
 

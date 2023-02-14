@@ -11,7 +11,7 @@
 #include <sstream>
 
 #include "mav_include.h"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 

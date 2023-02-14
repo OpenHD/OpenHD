@@ -8,7 +8,7 @@
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 // Code that depends on gstreamer and falls in the "helper for debugging" category
 namespace openhd{

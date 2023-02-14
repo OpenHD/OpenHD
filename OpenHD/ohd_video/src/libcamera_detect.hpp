@@ -10,7 +10,7 @@
 #include <libcamera/libcamera.h>
 
 #include "camera.hpp"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 // Namespace for rpi csi camera(s) detection using libcamera
 namespace openhd::libcameradetect{

@@ -12,7 +12,7 @@
 #include <optional>
 #include <vector>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 std::vector<std::string> OHDFilesystemUtil::getAllEntriesFullPathInDirectory(
     const std::string &directory) {

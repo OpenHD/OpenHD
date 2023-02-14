@@ -5,7 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_MANUALLY_DEFINED_CARDS_HPP_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_MANUALLY_DEFINED_CARDS_HPP_
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "wifi_card.hpp"
 
 // The helper in this namespace exist if for some reason you want to work on OpenHD and cannot rely on the autodetect of cards and what to use

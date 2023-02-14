@@ -16,7 +16,7 @@
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_rpi_gpio.hpp"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
 // For logging the commit hash and more
 #include "git.h"

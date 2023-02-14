@@ -13,7 +13,7 @@
 #include "camerastream.h"
 #include "gst_bitrate_controll_wrapper.hpp"
 #include "openhd_platform.h"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 // Implementation of OHD CameraStream for pretty much everything, using
 // gstreamer.

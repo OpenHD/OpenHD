@@ -15,7 +15,7 @@
 #include "openhd_external_device.hpp"
 #include "openhd_link.hpp"
 #include "openhd_settings_imp.hpp"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 #include "rc/JoystickReader.h"

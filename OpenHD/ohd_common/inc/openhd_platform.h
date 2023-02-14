@@ -2,7 +2,8 @@
 #define OPENHD_PLATFORM_H
 
 #include <string>
-#include "openhd_spdlog.hpp"
+
+#include "openhd_spdlog.h"
 
 /**
  * Util to discover and then store the platform we are running on.

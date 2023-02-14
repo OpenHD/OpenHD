@@ -5,11 +5,11 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_EXTERNAL_DEVICE_H_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_EXTERNAL_DEVICE_H_
 
-#include <string>
 #include <map>
+#include <string>
 
 #include "openhd_settings_directories.hpp"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util.h"
 
 namespace openhd {

@@ -11,7 +11,7 @@
 #include <string>
 #include <utility>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util_filesystem.h"
 
 namespace openhd {

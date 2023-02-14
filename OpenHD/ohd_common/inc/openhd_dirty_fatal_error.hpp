@@ -19,7 +19,7 @@
 // 2) crashed / messed up wifi (driver ?!)
 // -> requires a complete re-boot of linux
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util.h"
 
 namespace openhd::fatalerror{

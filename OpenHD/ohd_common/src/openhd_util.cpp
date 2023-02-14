@@ -17,7 +17,7 @@
 #include <thread>
 #include <vector>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util_filesystem.h"
 
 std::string OHDUtil::to_uppercase(std::string input) {

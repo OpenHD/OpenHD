@@ -11,7 +11,7 @@
 
 #include "../mav_helper.h"
 #include "../mav_include.h"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 /**
  * Helper for converting ohd custom messages to mavlink and printing them to stdout

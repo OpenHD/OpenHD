@@ -9,7 +9,7 @@
 
 #include <optional>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 // Bitrate is one of the few params we want to support changing dynamically at run time
 // without the need for a pipeline restart.

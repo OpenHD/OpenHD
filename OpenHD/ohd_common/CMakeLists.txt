@@ -46,6 +46,7 @@ set(sources
     "src/openhd_settings_persistent.cpp"
     "src/openhd_profile.cpp"
     "src/openhd_platform.cpp"
+    "src/openhd_spdlog.cpp"
 
     "inc/openhd_settings_imp.hpp"
     "inc/include_json.hpp"
@@ -61,7 +62,7 @@ set(sources
     "inc/openhd_settings_persistent.h"
     "inc/openhd_util.h"
     "inc/openhd_util_filesystem.h"
-    "inc/openhd_spdlog.hpp"
+    "inc/openhd_spdlog.h"
     "inc/openhd_spdlog_tele_sink.h"
     "inc/openhd_udp_log.h"
     )

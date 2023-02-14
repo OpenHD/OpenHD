@@ -6,8 +6,8 @@
 #define OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_
 
 #include "include_json.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util.h"
-#include "openhd_spdlog.hpp"
 
 // Helper for all this json bloat
 

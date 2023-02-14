@@ -8,7 +8,7 @@
 
 #include <utility>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 USBTetherListener::USBTetherListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager) :
     m_external_device_manager(std::move(external_device_manager)){

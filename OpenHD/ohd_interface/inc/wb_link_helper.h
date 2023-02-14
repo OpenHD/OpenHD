@@ -7,7 +7,7 @@
 
 // Helper to fix up / validate wifibroadcast settings given X cards
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "wb_link_settings.hpp"
 
 namespace openhd::wb{
