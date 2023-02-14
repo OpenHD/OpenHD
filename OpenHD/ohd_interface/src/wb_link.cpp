@@ -905,7 +905,9 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
     if(done_early)break;
     // and all possible channel widths (20 or 40Mhz only right now)
     for(const auto& channel_width:channel_widths_to_scan){
+      // Return early in some cases (e.g. when we have a low loss and are quite certain about a frequency)
       if(done_early)break;
+      // Skip channels / frequencies the card doesn't support anyways
       if(!openhd::wb::cards_support_frequency(channel.frequency,m_broadcast_cards,m_platform, m_console)){
         continue;
       }
@@ -934,6 +936,8 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
             // if the packet loss is low, we can safely return early
             m_console->debug("Got <10% packet loss, return early");
             done_early= true;
+          }else{
+            m_console->warn("Got >10% packet loss,continue and select most likely at the end");
           }
         }
       }
