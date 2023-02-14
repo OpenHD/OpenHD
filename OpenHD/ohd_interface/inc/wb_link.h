@@ -167,9 +167,10 @@ class WBLink :public OHDLink{
   void async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
  private:
   std::atomic<bool> is_scanning=false;
-  void reset_all_count_p_stats();
+  void reset_all_rx_stats();
   int get_count_p_all();
   int get_count_p_decryption_ok();
+  int get_last_rx_packet_chan_width();
  private:
   // We return false on all the change settings request(s) if there is already a change operation queued
   // up or we currently perform a channel scan

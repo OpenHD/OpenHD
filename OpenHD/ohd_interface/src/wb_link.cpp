@@ -905,11 +905,15 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       }
       // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
       apply_frequency_and_channel_width(channel.frequency,channel_width);
-      m_console->warn("Scanning {}Mhz [{}] width:{}",channel.frequency,channel.channel,channel_width);
-      reset_all_count_p_stats();
+      m_console->warn("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
+      reset_all_rx_stats();
       std::this_thread::sleep_for(DEFAULT_SCAN_TIME_PER_CHANNEL);
       const int n_packets=get_count_p_all();
-      m_console->debug("Got {} packets on frequency {}",n_packets,channel.frequency);
+      // We might receive 20Mhz channel width packets from a air unit sending on 20Mhz channel width while
+      // receiving on 40Mhz channel width - if we were to then to set the gnd to 40Mhz, we will be able to receive data,
+      // but not be able to send any data up to the air unit.
+      const int rx_chann_width=get_last_rx_packet_chan_width();
+      m_console->debug("Got {} packets on {}@{}",n_packets,channel.frequency,rx_chann_width);
       if(n_packets>0){
         // We got packets on this frequency, but it is not guaranteed those packets are from an openhd air unit.
         // sleep a bit more, then check if we actually got any decrypted packets
@@ -917,7 +921,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         const int n_packets_decrypted=get_count_p_decryption_ok();
         const int packet_loss=m_wb_video_rx_list.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
         m_console->debug("Got {} decrypted packets on frequency {} with {} packet loss",n_packets_decrypted,channel.frequency,packet_loss);
-        if(n_packets_decrypted>0){
+        if(n_packets_decrypted>0 && rx_chann_width==channel_width){
           TmpResult tmp_result{channel,channel_width,packet_loss};
           possible_frequencies.push_back(tmp_result);
           if(packet_loss<10){
@@ -944,7 +948,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         best=other;
       }
     }
-    m_console->debug("Selected {} {} with packet loss {} as most likely",best.channel.frequency,best.channel_width,best.packet_loss_perc);
+    m_console->warn("Selected {} {} with packet loss {} as most likely",best.channel.frequency,best.channel_width,best.packet_loss_perc);
     result.success= true;
     result.frequency=best.channel.frequency;
     result.channel_width=best.channel_width;
@@ -968,16 +972,16 @@ void WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_c
   schedule_work_item(work_item);
 }
 
-void WBLink::reset_all_count_p_stats() {
+void WBLink::reset_all_rx_stats() {
   for(auto& rx:m_wb_video_rx_list){
-    rx->reset_all_count_p_stats();
+    rx->reset_all_rx_stats();
   }
 }
 
 int WBLink::get_count_p_all() {
   int total=0;
   for(auto& rx:m_wb_video_rx_list){
-    total += rx->get_latest_stats().wb_rx_stats.count_p_all;
+    total += static_cast<int>(rx->get_latest_stats().wb_rx_stats.count_p_all);
   }
   return total;
 }
@@ -985,9 +989,16 @@ int WBLink::get_count_p_all() {
 int WBLink::get_count_p_decryption_ok() {
   int total=0;
   for(auto& rx:m_wb_video_rx_list){
-    total += rx->get_latest_stats().wb_rx_stats.count_p_all;
+    total += static_cast<int>(rx->get_latest_stats().wb_rx_stats.count_p_all);
   }
   return total;
+}
+int WBLink::get_last_rx_packet_chan_width() {
+  for(auto& rx:m_wb_video_rx_list){
+    auto rx_stats=rx->get_latest_stats().wb_rx_stats;
+    if(rx_stats.last_received_packet_channel_width!=-1)return rx_stats.last_received_packet_channel_width;
+  }
+  return -1;
 }
 
 bool WBLink::check_in_state_support_changing_settings(){
