@@ -2,6 +2,7 @@
 #ifndef OPENHD_SETTINGS_H
 #define OPENHD_SETTINGS_H
 
+#include <cassert>
 #include <exception>
 #include <fstream>
 #include <iostream>

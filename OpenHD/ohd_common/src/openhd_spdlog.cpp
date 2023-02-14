@@ -4,8 +4,15 @@
 #include "openhd_spdlog.h"
 #include "openhd_udp_log.h"
 
+//
+#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
+//
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+
+#include <mutex>
+#include <utility>
 
 // bridge between any logger and telemetry
 // We send logs higher or equal to the warning log level out via udp
