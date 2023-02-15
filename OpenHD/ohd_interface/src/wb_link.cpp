@@ -320,7 +320,6 @@ void WBLink::apply_txpower() {
     }else{
       const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
       wifi::commandhelper::iw_set_tx_power(card.device_name,tmp);
-      //WifiCardCommandHelper::iwconfig_set_txpower(card,settings.wb_tx_power_milli_watt);
     }
   }
   const auto delta=std::chrono::steady_clock::now()-before;
