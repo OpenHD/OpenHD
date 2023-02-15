@@ -30,7 +30,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
   m_console->info("Broadcast cards:{}",debug_cards(m_broadcast_cards));
-  m_console->debug("m_disable_all_frequency_checks:"+OHDUtil::yes_or_no(m_disable_all_frequency_checks));
+  m_console->debug("m_disable_all_frequency_checks:{}",OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks
   if(m_broadcast_cards.empty() || (m_profile.is_air && m_broadcast_cards.size()>1)) {
     // NOTE: Here we crash, since it would be a programmer(s) error

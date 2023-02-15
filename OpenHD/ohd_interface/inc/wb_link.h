@@ -46,7 +46,7 @@ class WBLink :public OHDLink{
   [[nodiscard]] std::string createDebug()const;
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
-  openhd::Space get_current_frequency_channel_space()const;
+  [[nodiscard]] openhd::Space get_current_frequency_channel_space()const;
  private:
   // validate param, then schedule change
   bool request_set_frequency(int frequency);
