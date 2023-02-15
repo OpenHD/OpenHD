@@ -7,8 +7,8 @@
 
 #include <cstdint>
 
-// This class exists to facilitate the need of ohd_interface (link) having to talk to ohd_video
-// While there is no code dependencies between them
+// This class exists due to the need of ohd_interface (wb-link) having to talk to ohd_video
+// While there are no code dependencies between them
 namespace openhd{
 
 class IDynamicCamera{
