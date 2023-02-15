@@ -16,9 +16,11 @@
 #include "rtp_eof_helper.h"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                                 std::shared_ptr<OHDLink> i_transmit_video)
+                                 std::shared_ptr<OHDLink> i_transmit_video,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
     //: CameraStream(platform, camera_holder, video_udp_port) {
-    : CameraStream(platform,camera_holder,i_transmit_video){
+    : CameraStream(platform,camera_holder,i_transmit_video),
+      m_opt_action_handler(opt_action_handler)
+{
   m_console=openhd::log::create_or_get("v_gststream");
   assert(m_console);
   m_console->debug("GStreamerStream::GStreamerStream()");
@@ -54,6 +56,9 @@ void GStreamerStream::setup() {
   m_console->debug("GStreamerStream::setup() begin");
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
+  if(m_opt_action_handler){
+    m_opt_action_handler->camera0_bitrate_kbits=setting.h26x_bitrate_kbits;
+  }
   if(!setting.enable_streaming){
     // When streaming is disabled, we just don't create the pipeline. We fully restart on all changes anyways.
     m_console->info("Streaming disabled");

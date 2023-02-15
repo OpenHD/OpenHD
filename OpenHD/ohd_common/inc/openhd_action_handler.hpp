@@ -113,6 +113,9 @@ class ActionHandler{
   std::shared_ptr<ACTION_REQUEST_BITRATE_CHANGE> m_action_request_bitrate_change =nullptr;
   std::shared_ptr<openhd::link_statistics::STATS_CALLBACK> m_link_statistics_callback=nullptr;
   std::shared_ptr<SCAN_CHANNELS_CB> m_scan_channels_cb=nullptr;
+  // dirty
+ public:
+  std::atomic<int> camera0_bitrate_kbits=-1;
 };
 
 }

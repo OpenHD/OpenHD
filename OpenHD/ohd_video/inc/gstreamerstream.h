@@ -24,7 +24,8 @@
 class GStreamerStream : public CameraStream {
  public:
   GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                  std::shared_ptr<OHDLink> opt_link_handle);
+                  std::shared_ptr<OHDLink> opt_link_handle,
+                  std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   ~GStreamerStream();
   void setup() override;
  private:
@@ -89,6 +90,7 @@ class GStreamerStream : public CameraStream {
   bool m_pull_samples_run=false;
   std::unique_ptr<std::thread> m_pull_samples_thread;
   void loop_pull_samples();
+  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
 };
 
 #endif
