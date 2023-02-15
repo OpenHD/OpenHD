@@ -22,7 +22,7 @@ void handle_power_command_async(std::chrono::milliseconds delay, bool shutdownOn
 
 
 // really filthy - terminate OpenHD and let the service restart it
-void terminate_openhd_and_let_service_restart();
+void dirty_terminate_openhd_and_let_service_restart();
 }
 
 #endif  // OPENHD_OPENHD_OHD_COMMON_INC_OPENHD_REBOOT_UTIL_H_

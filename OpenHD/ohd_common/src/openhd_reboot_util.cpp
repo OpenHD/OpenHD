@@ -34,7 +34,7 @@ void openhd::reboot::handle_power_command_async(std::chrono::milliseconds delay,
 }
 
 #include <csignal>
-void openhd::reboot::terminate_openhd_and_let_service_restart() {
+void openhd::reboot::dirty_terminate_openhd_and_let_service_restart() {
   openhd::log::get_default()->warn("Intentionally terminating openhd");
   raise(SIGTERM);
 }

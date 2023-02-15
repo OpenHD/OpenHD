@@ -10,6 +10,7 @@
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
 #include "openhd_util_filesystem.h"
+#include "openhd_reboot_util.h"
 #include "wb_link_helper.h"
 #include "wifi_card.hpp"
 
@@ -904,6 +905,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
     m_settings->unsafe_get_settings().wb_frequency=result.frequency;
     m_settings->unsafe_get_settings().wb_channel_width=result.channel_width;
     m_settings->persist();
+    openhd::reboot::dirty_terminate_openhd_and_let_service_restart();
     apply_frequency_and_channel_width_from_settings();
   }
   is_scanning=false;
