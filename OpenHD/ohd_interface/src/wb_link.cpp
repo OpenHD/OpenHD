@@ -276,7 +276,7 @@ bool WBLink::request_set_frequency(int frequency) {
   // after X seconds
   const auto rx_count_p_decryption_ok=get_rx_count_p_decryption_ok();
   if(rx_count_p_decryption_ok>100){
-    m_console->debug("Addding reset to previous known frequency work item {}",rx_count_p_decryption_ok);
+    m_console->debug("Adding reset to previous known frequency work item {}",rx_count_p_decryption_ok);
     auto backup_work_item=std::make_shared<WorkItem>([this](){
       m_console->debug("check if data is being received {}",get_rx_count_p_decryption_ok());
     },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK+std::chrono::seconds(2));
