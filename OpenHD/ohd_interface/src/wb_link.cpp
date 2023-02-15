@@ -210,7 +210,7 @@ ROptions WBLink::create_rx_options(uint8_t radio_port)const {
   }else{
     options.keypair = std::nullopt;
   }
-  const auto cards = get_rx_card_names();
+  const auto cards = openhd::wb::get_card_names(m_broadcast_cards);
   assert(!cards.empty());
   options.rxInterfaces = cards;
   // For multi rx-es we need the rx queue - but using it really has negative effects
@@ -253,14 +253,6 @@ std::string WBLink::createDebug()const{
     ss<<"VidRx :"<<rxvid->createDebugState();
   }
   return ss.str();
-}
-
-std::vector<std::string> WBLink::get_rx_card_names() const {
-  std::vector<std::string> ret{};
-  for(const auto& card: m_broadcast_cards){
-    ret.push_back(card.device_name);
-  }
-  return ret;
 }
 
 bool WBLink::request_set_frequency(int frequency) {

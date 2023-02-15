@@ -99,7 +99,6 @@ class WBLink :public OHDLink{
   [[nodiscard]] ROptions create_rx_options(uint8_t radio_port)const;
   std::unique_ptr<WBTransmitter> create_wb_tx(uint8_t radio_port,bool is_video);
   std::unique_ptr<AsyncWBReceiver> create_wb_rx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb);
-  [[nodiscard]] std::vector<std::string> get_rx_card_names()const;
  private:
   const OHDProfile m_profile;
   const OHDPlatform m_platform;

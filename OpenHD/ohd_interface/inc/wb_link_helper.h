@@ -42,6 +42,8 @@ bool set_frequency_and_channel_width_for_all_cards(uint32_t frequency,uint32_t c
 // measured means: I (not scientifically) looked at how much I can inject on the bench in a medium/low rf environment before I get tx errors
 uint32_t rtl8812au_get_measured_max_rate(uint32_t mcs_index);
 
+// WB takes a list of card device names
+std::vector<std::string> get_card_names(const std::vector<WiFiCard>& cards);
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_
