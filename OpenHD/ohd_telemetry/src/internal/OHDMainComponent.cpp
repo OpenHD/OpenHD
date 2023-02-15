@@ -9,7 +9,7 @@
 #include <utility>
 
 #include "OHDLinkStatisticsHelper.h"
-#include "OnboardComputerStatus.hpp"
+#include "OnboardComputerStatusProvider.h"
 #include "openhd_reboot_util.h"
 
 OHDMainComponent::OHDMainComponent(
