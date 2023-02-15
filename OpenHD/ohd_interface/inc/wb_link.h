@@ -61,7 +61,7 @@ class WBLink :public OHDLink{
   bool set_tx_power_mw(int tx_power_mw);
   bool set_tx_power_rtl8812au(int tx_power_index_override);
   // set the tx power of all wifibroadcast cards. For rtl8812au, uses the tx power index
-  // for other cards, uses the mBm value
+  // for other cards, uses the mW value
   void apply_txpower();
   // change the MCS index (only supported by rtl8812au)
   // guaranteed to return immediately (Doesn't need iw or something similar)
