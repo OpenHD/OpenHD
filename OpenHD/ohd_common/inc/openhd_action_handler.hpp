@@ -50,6 +50,7 @@ class ActionHandler{
       auto& cb=*tmp;
       cb(link_bitrate_info);
     }
+    camera0_bitrate_kbits=link_bitrate_info.recommended_encoder_bitrate_kbits;
   }
  public:
   // Link statistics - for that the wb link (ohd_interface) needs to talk to ohd_telemetry
