@@ -326,8 +326,8 @@ void WBLink::apply_txpower() {
   m_console->debug("Changing tx power took {}",MyTimeHelper::R(delta));
 }
 
-bool WBLink::try_set_mcs_index(int mcs_index) {
-  m_console->debug("try_set_mcs_index {}",mcs_index);
+bool WBLink::set_mcs_index(int mcs_index) {
+  m_console->debug("set_mcs_index {}",mcs_index);
   if(!openhd::is_valid_mcs_index(mcs_index)){
     m_console->warn("Invalid mcs index{}",mcs_index);
     return false;
@@ -414,7 +414,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
                                                       return request_set_channel_width(value);
                                                     }};
   auto change_wb_mcs_index=openhd::IntSetting{(int)m_settings->get_settings().wb_mcs_index,[this](std::string,int value){
-                                                  return try_set_mcs_index(value);
+                                                  return set_mcs_index(value);
                                                 }};
   ret.push_back(Setting{WB_FREQUENCY,change_freq});
   ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});

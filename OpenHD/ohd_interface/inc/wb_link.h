@@ -66,7 +66,7 @@ class WBLink :public OHDLink{
   // guaranteed to return immediately (Doesn't need iw or something similar)
   // If the hw supports changing the mcs index, and the mcs index is valid, apply it and return true
   // Leave untouched and return false otherwise.
-  bool try_set_mcs_index(int mcs_index);
+  bool set_mcs_index(int mcs_index);
   // These do not "break" the bidirectional connectivity and therefore
   // can be changed easily on the fly
   bool set_video_fec_block_length(int block_length);
