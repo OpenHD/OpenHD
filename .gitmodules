@@ -1,6 +1,3 @@
-[submodule "OpenHD/lib/wifibroadcast"]
-	path = OpenHD/lib/wifibroadcast
-	url = https://github.com/OpenHD/wifibroadcast.git
 [submodule "OpenHD/lib/mavlink-headers"]
 	path = OpenHD/lib/mavlink-headers
 	url = https://github.com/OpenHD/mavlink-headers.git
