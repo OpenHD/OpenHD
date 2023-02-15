@@ -60,10 +60,11 @@ class WBLink :public OHDLink{
   bool request_set_txpower(int tx_power);
   // set the tx power of all wifibroadcast cards
   void apply_txpower();
-  // validate param, then schedule change
-  bool request_set_mcs_index(int mcs_index);
-  // set the mcs index for all tx instances
-  void apply_mcs_index();
+  // change the MCS index (only supported by rtl8812au)
+  // guaranteed to return immediately (Doesn't need iw or something similar)
+  // Returns true if the hw supports changing the mcs index, and the mcs index is valid
+  // Returns false otherwise
+  bool try_set_mcs_index(int mcs_index);
   // These do not "break" the bidirectional connectivity and therefore
   // can be changed easily on the fly
   bool set_video_fec_block_length(int block_length);

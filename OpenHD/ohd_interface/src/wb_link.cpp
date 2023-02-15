@@ -118,7 +118,6 @@ void WBLink::configure_cards() {
   m_console->debug("WBStreams::configure_cards() begin");
   apply_frequency_and_channel_width_from_settings();
   apply_txpower();
-  apply_mcs_index();
   m_console->debug("WBStreams::configure_cards() end");
 }
 
@@ -328,6 +327,7 @@ bool WBLink::request_set_txpower(int tx_power) {
 
 void WBLink::apply_txpower() {
   const auto settings=m_settings->get_settings();
+  const auto before=std::chrono::steady_clock::now();
   for(const auto& card: m_broadcast_cards){
     if(card.type==WiFiCardType::Realtek8812au){
       // requires corresponding driver workaround for dynamic tx power
@@ -340,10 +340,12 @@ void WBLink::apply_txpower() {
       //WifiCardCommandHelper::iwconfig_set_txpower(card,settings.wb_tx_power_milli_watt);
     }
   }
+  const auto delta=std::chrono::steady_clock::now()-before;
+  m_console->debug("Changing tx power took {}",MyTimeHelper::R(delta));
 }
 
-bool WBLink::request_set_mcs_index(int mcs_index) {
-  m_console->debug("WBStreams::request_set_mcs_index {}",mcs_index);
+bool WBLink::try_set_mcs_index(int mcs_index) {
+  m_console->debug("try_set_mcs_index {}",mcs_index);
   if(!openhd::is_valid_mcs_index(mcs_index)){
     m_console->warn("Invalid mcs index{}",mcs_index);
     return false;
@@ -355,17 +357,6 @@ bool WBLink::request_set_mcs_index(int mcs_index) {
   if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   m_settings->persist();
-  // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
-  auto work_item=std::make_shared<WorkItem>([this](){
-    apply_mcs_index();
-  },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
-  schedule_work_item(work_item);
-  return true;
-}
-
-void WBLink::apply_mcs_index() {
-  // we need to change the mcs index on all tx-es
-  const auto settings=m_settings->get_settings();
   // R.n the only card known to properly allow setting the MCS index is rtl8812au,
   // and there it is done by modifying the radiotap header
   //for(const auto& wlan:m_broadcast_cards){
@@ -373,8 +364,9 @@ void WBLink::apply_mcs_index() {
   //}
   auto transmitters=get_tx_list();
   for(auto& tx: transmitters){
-    tx->update_mcs_index(settings.wb_mcs_index);
+    tx->update_mcs_index(mcs_index);
   }
+  return true;
 }
 
 bool WBLink::request_set_channel_width(int channel_width) {
@@ -440,7 +432,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
                                                       return request_set_channel_width(value);
                                                     }};
   auto change_wb_mcs_index=openhd::IntSetting{(int)m_settings->get_settings().wb_mcs_index,[this](std::string,int value){
-                                                  return request_set_mcs_index(value);
+                                                  return try_set_mcs_index(value);
                                                 }};
   ret.push_back(Setting{WB_FREQUENCY,change_freq});
   ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
