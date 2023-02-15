@@ -14,6 +14,7 @@
 #include <mutex>
 #include <utility>
 
+
 // bridge between any logger and telemetry
 // We send logs higher or equal to the warning log level out via udp
 // such that they can be picked up by the telemetry module
@@ -50,7 +51,7 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
   if (ret == nullptr) {
     auto created = spdlog::stdout_color_mt(logger_name);
     assert(created);
-    created->set_level(spd::level::debug);
+    created->set_level(spdlog::level::debug);
     // Add the sink that sends out warning or higher via UDP
     created->sinks().push_back(std::make_shared<openhd::log::sink::UdpTelemetrySink>());
     //spdlog::set_error_handler([](const std::string& msg) {

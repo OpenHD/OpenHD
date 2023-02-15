@@ -14,8 +14,6 @@
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 
-namespace spd = spdlog;
-
 namespace openhd::log{
 
 // Note: the _mt loggers have threadsafety by design already, but we need to make sure to crete the instance only once
