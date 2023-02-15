@@ -234,12 +234,6 @@ std::unique_ptr<AsyncWBReceiver> WBLink::create_wb_rx(uint8_t radio_port,WBRecei
 
 std::string WBLink::createDebug()const{
   std::stringstream ss;
-  // we use telemetry data only here
-  bool any_data_received=false;
-  //if(m_wb_tele_rx && m_wb_tele_rx->anyDataReceived()){
-  //  any_data_received=true;
-  //}
-  ss<<"Any data received: "<<(any_data_received ? "Y":"N")<<"\n";
   if (m_wb_tele_rx) {
     ss<<"TeleRx: "<< m_wb_tele_rx->createDebugState();
   }
