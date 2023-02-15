@@ -87,7 +87,7 @@ WBLink::~WBLink() {
 }
 
 void WBLink::takeover_cards_monitor_mode() {
-  m_console->debug( "WBStreams::takeover_cards_monitor_mode() begin");
+  m_console->debug( "takeover_cards_monitor_mode() begin");
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // This can be different depending on the OS we are running on - in general, we try to go for the following with openhd:
   // Have network manager running on the host OS - the nice thing about network manager is that we can just tell it
@@ -111,14 +111,14 @@ void WBLink::takeover_cards_monitor_mode() {
     wifi::commandhelper::ip_link_set_card_state(card.device_name, true);
     //wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
   }
-  m_console->debug("WBStreams::takeover_cards_monitor_mode() end");
+  m_console->debug("takeover_cards_monitor_mode() end");
 }
 
 void WBLink::configure_cards() {
-  m_console->debug("WBStreams::configure_cards() begin");
+  m_console->debug("configure_cards() begin");
   apply_frequency_and_channel_width_from_settings();
   apply_txpower();
-  m_console->debug("WBStreams::configure_cards() end");
+  m_console->debug("configure_cards() end");
 }
 
 void WBLink::configure_telemetry() {
@@ -264,7 +264,7 @@ std::vector<std::string> WBLink::get_rx_card_names() const {
 }
 
 bool WBLink::request_set_frequency(int frequency) {
-  m_console->debug("WBStreams::request_set_frequency {}",frequency);
+  m_console->debug("request_set_frequency {}",frequency);
   if(m_disable_all_frequency_checks){
     m_console->warn("Not sanity checking frequency");
   }else{
@@ -306,23 +306,6 @@ bool WBLink::apply_frequency_and_channel_width(uint32_t frequency, uint32_t chan
 bool WBLink::apply_frequency_and_channel_width_from_settings() {
   const auto settings=m_settings->get_settings();
   return apply_frequency_and_channel_width(settings.wb_frequency,settings.wb_channel_width);
-}
-
-bool WBLink::request_set_txpower(int tx_power) {
-  m_console->debug("WBStreams::request_set_txpower {}",tx_power);
-  if(!openhd::is_valid_tx_power_milli_watt(tx_power)){
-    m_console->warn("Invalid tx power:{}",tx_power);
-    return false;
-  }
-  if(!check_in_state_support_changing_settings())return false;
-  m_settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power;
-  m_settings->persist();
-  // No need to delay the change, but perform it async anyways.
-  auto work_item=std::make_shared<WorkItem>([this](){
-    apply_txpower();
-  },std::chrono::steady_clock::now());
-  schedule_work_item(work_item);
-  return true;
 }
 
 void WBLink::apply_txpower() {
@@ -370,7 +353,7 @@ bool WBLink::try_set_mcs_index(int mcs_index) {
 }
 
 bool WBLink::request_set_channel_width(int channel_width) {
-  m_console->debug("WBStreams::request_set_channel_width {}",channel_width);
+  m_console->debug("request_set_channel_width {}",channel_width);
   if(!openhd::is_valid_channel_width(channel_width)){
     m_console->warn("Invalid channel width {}",channel_width);
     return false;
@@ -391,7 +374,7 @@ bool WBLink::request_set_channel_width(int channel_width) {
 }
 
 bool WBLink::set_video_fec_block_length(const int block_length) {
-  m_console->debug("WBStreams::set_video_fec_block_length {}",block_length);
+  m_console->debug("set_video_fec_block_length {}",block_length);
   if(!openhd::is_valid_fec_block_length(block_length)){
     m_console->warn("Invalid fec block length:{}",block_length);
     return false;
@@ -406,7 +389,7 @@ bool WBLink::set_video_fec_block_length(const int block_length) {
 }
 
 bool WBLink::set_video_fec_percentage(int fec_percentage) {
-  m_console->debug("WBStreams::set_video_fec_percentage {}",fec_percentage);
+  m_console->debug("set_video_fec_percentage {}",fec_percentage);
   if(!openhd::is_valid_fec_percentage(fec_percentage)){
     m_console->warn("Invalid fec percentage:{}",fec_percentage);
     return false;
@@ -490,12 +473,12 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   // WIFI TX power depends on the used chips
   if(has_rtl8812au()){
     auto cb_wb_rtl8812au_tx_pwr_idx_override=[this](std::string,int value){
-      return set_wb_rtl8812au_tx_pwr_idx_override(value);
+      return try_set_tx_power_rtl8812au(value);
     };
     ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override,cb_wb_rtl8812au_tx_pwr_idx_override}});
   }else{
     auto cb_wb_tx_power_milli_watt=[this](std::string,int value){
-      return request_set_txpower(value);
+      return try_set_tx_power_mw(value);
     };
     auto change_tx_power=openhd::IntSetting{(int)m_settings->get_settings().wb_tx_power_milli_watt,cb_wb_tx_power_milli_watt};
     ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
@@ -801,18 +784,6 @@ bool WBLink::check_work_queue_empty() {
   return true;
 }
 
-bool WBLink::set_wb_rtl8812au_tx_pwr_idx_override(int value) {
-  if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(value))return false;
-  if(!check_in_state_support_changing_settings())return false;
-  m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=value;
-  m_settings->persist();
-  // No need to delay the change, but perform it async anyways.
-  auto work_item=std::make_shared<WorkItem>([this](){
-    apply_txpower();
-  },std::chrono::steady_clock::now());
-  schedule_work_item(work_item);
-  return true;
-}
 
 bool WBLink::has_rtl8812au() {
   for(const auto& card: m_broadcast_cards){
@@ -1027,4 +998,27 @@ std::vector<AsyncWBReceiver*> WBLink::get_rx_list() {
   for(auto& vid_rx:m_wb_video_rx_list)ret.push_back(vid_rx.get());
   if(m_wb_tele_rx)ret.push_back(m_wb_tele_rx.get());
   return ret;
+}
+
+bool WBLink::try_set_tx_power_mw(int tx_power_mw) {
+  m_console->debug("try_set_tx_power_mw {}mW",tx_power_mw);
+  if(!openhd::is_valid_tx_power_milli_watt(tx_power_mw)){
+    m_console->warn("Invalid tx power:{}mW",tx_power_mw);
+    return false;
+  }
+  if(!check_in_state_support_changing_settings())return false;
+  m_settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power_mw;
+  m_settings->persist();
+  apply_txpower();
+  return true;
+}
+
+bool WBLink::try_set_tx_power_rtl8812au(int tx_power_index_override){
+  m_console->debug("try_set_tx_power_rtl8812au {}index",tx_power_index_override);
+  if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(tx_power_index_override))return false;
+  if(!check_in_state_support_changing_settings())return false;
+  m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=tx_power_index_override;
+  m_settings->persist();
+  apply_txpower();
+  return true;
 }

@@ -56,9 +56,11 @@ class WBLink :public OHDLink{
   // r.n uses both iw and modifies the radiotap header
   bool apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width);
   bool apply_frequency_and_channel_width_from_settings();
-  // validate param, then schedule change
-  bool request_set_txpower(int tx_power);
-  // set the tx power of all wifibroadcast cards
+  // ------------- tx power is a bit confusing due to the difference(s) between HW
+  bool try_set_tx_power_mw(int tx_power_w);
+  bool try_set_tx_power_rtl8812au(int tx_power_index_override);
+  // set the tx power of all wifibroadcast cards. For rtl8812au, uses the tx power index
+  // for other cards, uses the mBm value
   void apply_txpower();
   // change the MCS index (only supported by rtl8812au)
   // guaranteed to return immediately (Doesn't need iw or something similar)
@@ -146,7 +148,6 @@ class WBLink :public OHDLink{
   std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
   static constexpr auto DELAY_FOR_TRANSMIT_ACK =std::chrono::seconds(2);
  private:
-  bool set_wb_rtl8812au_tx_pwr_idx_override(int value);
   bool has_rtl8812au();
  private:
   void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data)override;
