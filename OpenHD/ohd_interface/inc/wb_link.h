@@ -162,6 +162,11 @@ class WBLink :public OHDLink{
   };
   // Testing shows we have to listen for up to 1 second to reliable get data (the wifi card might take some time switching)
   static constexpr std::chrono::seconds DEFAULT_SCAN_TIME_PER_CHANNEL{1};
+  // This is a long-running operation during which changing things like frequency and more are disabled.
+  // Loop through all possible frequencies + optionally channel widths until we can say with a high certainty
+  // we have found a running air unit on this channel. (-> only supported on ground).
+  // On success, apply this frequency.
+  // On failure, restore previous state.
   ScanResult scan_channels(const openhd::ActionHandler::ScanChannelsParam& scan_channels_params);
   // queue it up on the work queue
   void async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
