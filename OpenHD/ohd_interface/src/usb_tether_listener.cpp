@@ -42,6 +42,7 @@ void USBTetherListener::connectOnce() {
       break;
     }
   }
+  // We were stopped externally, no reason to continue
   if(m_check_connection_thread_stop) return;
   // now we find the IP of the connected device so we can forward video and more to it.
   // example on my Ubuntu pc:
