@@ -86,14 +86,6 @@ class WBLink :public OHDLink{
   // start telemetry and video rx/tx stream(s)
   void configure_telemetry();
   void configure_video();
-  std::unique_ptr<openhd::WBStreamsSettingsHolder> m_settings;
-  // For telemetry, bidirectional in opposite directions
-  std::unique_ptr<WBTransmitter> m_wb_tele_tx;
-  std::unique_ptr<AsyncWBReceiver> m_wb_tele_rx;
-  // For video, on air there are only tx instances, on ground there are only rx instances.
-  std::vector<std::unique_ptr<WBTransmitter>> m_wb_video_tx_list;
-  std::vector<std::unique_ptr<AsyncWBReceiver>> m_wb_video_rx_list;
-  std::unique_ptr<ForeignPacketsReceiver> m_foreign_packets_receiver;
   // Reads the current settings and creates the appropriate Radiotap Header params
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
   [[nodiscard]] TOptions create_tx_options(uint8_t radio_port,bool is_video)const;
@@ -101,18 +93,6 @@ class WBLink :public OHDLink{
   std::unique_ptr<WBTransmitter> create_wb_tx(uint8_t radio_port,bool is_video);
   std::unique_ptr<AsyncWBReceiver> create_wb_rx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb);
  private:
-  const OHDProfile m_profile;
-  const OHDPlatform m_platform;
-  const std::vector<WiFiCard> m_broadcast_cards;
-  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
-  std::shared_ptr<spdlog::logger> m_console;
-  // disable all openhd frequency checking - note that I am quite sure about the correctness of openhd internal checking in regards to wifi channels ;)
-  const bool m_disable_all_frequency_checks;
- private:
-  // We have one worker thread for asynchronously performing operation(s) like changing the frequency
-  // but also recalculating statistics that are then forwarded to openhd_telemetry for broadcast
-  bool m_work_thread_run;
-  std::unique_ptr<std::thread> m_work_thread;
   // Recalculate stats, apply settings asynchronously and more
   void loop_do_work();
   // update statistics, done in regular intervals, update data is given to the ohd_telemetry module via the action handler
@@ -123,13 +103,9 @@ class WBLink :public OHDLink{
   void perform_rate_adjustment();
   static constexpr auto RATE_ADJUSTMENT_INTERVAL=std::chrono::seconds(1);
   std::chrono::steady_clock::time_point m_last_rate_adjustment=std::chrono::steady_clock::now();
-  int64_t last_tx_error_count=-1;
-  int64_t last_recommended_bitrate=-1;
   void schedule_work_item(const std::shared_ptr<WorkItem>& work_item);
   // We limit changing specific params to one after another
   bool check_work_queue_empty();
-  std::mutex m_work_item_queue_mutex;
-  std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
   static constexpr auto DELAY_FOR_TRANSMIT_ACK =std::chrono::seconds(2);
  private:
   void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data)override;
@@ -155,7 +131,6 @@ class WBLink :public OHDLink{
   // queue it up on the work queue
   void async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
  private:
-  std::atomic<bool> is_scanning=false;
   void reset_all_rx_stats();
   int get_rx_count_p_all();
   int get_rx_count_p_decryption_ok();
@@ -169,6 +144,31 @@ class WBLink :public OHDLink{
   // up or we currently perform a channel scan
   // Not completely "thread safe" so to say but good enough.
   bool check_in_state_support_changing_settings();
+ private:
+  const OHDProfile m_profile;
+  const OHDPlatform m_platform;
+  const std::vector<WiFiCard> m_broadcast_cards;
+  // disable all openhd frequency checking - note that I am quite sure about the correctness of openhd internal checking in regards to wifi channels ;)
+  const bool m_disable_all_frequency_checks;
+  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
+  std::shared_ptr<spdlog::logger> m_console;
+  std::unique_ptr<openhd::WBStreamsSettingsHolder> m_settings;
+  // For telemetry, bidirectional in opposite directions
+  std::unique_ptr<WBTransmitter> m_wb_tele_tx;
+  std::unique_ptr<AsyncWBReceiver> m_wb_tele_rx;
+  // For video, on air there are only tx instances, on ground there are only rx instances.
+  std::vector<std::unique_ptr<WBTransmitter>> m_wb_video_tx_list;
+  std::vector<std::unique_ptr<AsyncWBReceiver>> m_wb_video_rx_list;
+  std::unique_ptr<ForeignPacketsReceiver> m_foreign_packets_receiver;
+  std::atomic<bool> is_scanning=false;
+  // We have one worker thread for asynchronously performing operation(s) like changing the frequency
+  // but also recalculating statistics that are then forwarded to openhd_telemetry for broadcast
+  bool m_work_thread_run;
+  std::unique_ptr<std::thread> m_work_thread;
+  std::mutex m_work_item_queue_mutex;
+  std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
+  int64_t last_tx_error_count=-1;
+  int64_t last_recommended_bitrate=-1;
 };
 
 #endif
