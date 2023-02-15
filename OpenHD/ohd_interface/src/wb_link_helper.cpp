@@ -118,7 +118,7 @@ uint32_t openhd::wb::rtl8812au_get_measured_max_rate(uint32_t mcs_index) {
   return 5000;
 }
 
-std::vector<std::string> openhd::wb::get_rx_card_names(const std::vector<WiFiCard>& cards) {
+std::vector<std::string> openhd::wb::get_card_names(const std::vector<WiFiCard>& cards) {
   std::vector<std::string> ret{};
   for(const auto& card: cards){
     ret.push_back(card.device_name);

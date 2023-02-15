@@ -5,17 +5,19 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_
 
-// Helper to fix up / validate wifibroadcast settings given X cards
-
 #include "openhd_spdlog.h"
 #include "wb_link_settings.hpp"
 
+/**
+ * The wb_link class is becoming a bit big and therefore hard to read.
+ * Here we have some common helper methods used in wb_link
+ */
 namespace openhd::wb{
 
-// check if the disable all frequency checks file exists
+// return true if the "disable all frequency checks" file exists
 bool disable_all_frequency_checks();
 
-// returns true if all cards support setting the MCS index
+// returns true if all cards support setting an MCS index
 // false otherwise
 bool cards_support_setting_mcs_index(const std::vector<WiFiCard>& m_broadcast_cards);
 
@@ -23,7 +25,7 @@ bool cards_support_setting_mcs_index(const std::vector<WiFiCard>& m_broadcast_ca
 // false otherwise
 bool cards_support_setting_channel_width(const std::vector<WiFiCard>& m_broadcast_cards);
 
-// returns true if the given card supports the given frequency, taking into account if the kernel was modifed or not
+// returns true if the given card supports the given frequency, taking into account if the kernel was modified or not
 bool cards_support_frequency(
     uint32_t frequency,
     const std::vector<WiFiCard>& m_broadcast_cards,
