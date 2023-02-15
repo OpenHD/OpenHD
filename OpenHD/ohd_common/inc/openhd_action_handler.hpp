@@ -32,9 +32,7 @@ class ActionHandler{
   };
   typedef std::function<void(LinkBitrateInformation link_bitrate_info)> ACTION_REQUEST_BITRATE_CHANGE;
   static std::string link_bitrate_info_to_string(const LinkBitrateInformation& lb){
-    std::stringstream ss;
-    ss<<"recommended_encoder_bitrate:"<<lb.recommended_encoder_bitrate_kbits<<" kBit/s";
-    return ss.str();
+    return fmt::format("[recommended_encoder_bitrate:{}kBit/s}",lb.recommended_encoder_bitrate_kbits);
   }
   // used by ohd_video
   void action_request_bitrate_change_register(const ACTION_REQUEST_BITRATE_CHANGE& cb){

@@ -142,7 +142,7 @@ class WBLink :public OHDLink{
   std::vector<AsyncWBReceiver*> get_rx_list();
  private:
   // We return false on all the change settings request(s) if there is already a change operation queued
-  // up or we currently perform a channel scan
+  // up, or we currently perform a channel scan
   // Not completely "thread safe" so to say but good enough.
   bool check_in_state_support_changing_settings();
  private:
