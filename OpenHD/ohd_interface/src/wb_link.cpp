@@ -399,35 +399,35 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   using namespace openhd;
   std::vector<openhd::Setting> ret{};
   const auto settings=m_settings->get_settings();
-  auto change_freq=openhd::IntSetting{(int)m_settings->get_settings().wb_frequency,[this](std::string,int value){
+  auto change_freq=openhd::IntSetting{(int)settings.wb_frequency,[this](std::string,int value){
                                           return request_set_frequency(value);
                                         }};
-  auto change_wb_channel_width=openhd::IntSetting{(int)m_settings->get_settings().wb_channel_width,[this](std::string,int value){
+  auto change_wb_channel_width=openhd::IntSetting{(int)settings.wb_channel_width,[this](std::string,int value){
                                                       return request_set_channel_width(value);
                                                     }};
-  auto change_wb_mcs_index=openhd::IntSetting{(int)m_settings->get_settings().wb_mcs_index,[this](std::string,int value){
+  auto change_wb_mcs_index=openhd::IntSetting{(int)settings.wb_mcs_index,[this](std::string,int value){
                                                   return set_mcs_index(value);
                                                 }};
   ret.push_back(Setting{WB_FREQUENCY,change_freq});
   ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
   ret.push_back(Setting{WB_MCS_INDEX,change_wb_mcs_index});
   if(m_profile.is_air){
-    auto change_video_fec_block_length=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_block_length,[this](std::string,int value){
+    auto change_video_fec_block_length=openhd::IntSetting{(int)settings.wb_video_fec_block_length,[this](std::string,int value){
                                                               return set_video_fec_block_length(value);
                                                             }};
     ret.push_back(Setting{WB_VIDEO_FEC_BLOCK_LENGTH,change_video_fec_block_length});
-    auto change_video_fec_percentage=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_percentage,[this](std::string,int value){
+    auto change_video_fec_percentage=openhd::IntSetting{(int)settings.wb_video_fec_percentage,[this](std::string,int value){
                                                             return set_video_fec_percentage(value);
                                                           }};
     ret.push_back(Setting{WB_VIDEO_FEC_PERCENTAGE,change_video_fec_percentage});
     auto cb_enable_wb_video_variable_bitrate=[this](std::string,int value){
       return set_enable_wb_video_variable_bitrate(value);
     };
-    ret.push_back(Setting{WB_VIDEO_VARIABLE_BITRATE,openhd::IntSetting{(int)m_settings->get_settings().enable_wb_video_variable_bitrate, cb_enable_wb_video_variable_bitrate}});
+    ret.push_back(Setting{WB_VIDEO_VARIABLE_BITRATE,openhd::IntSetting{(int)settings.enable_wb_video_variable_bitrate, cb_enable_wb_video_variable_bitrate}});
     auto cb_wb_max_fec_block_size_for_platform=[this](std::string,int value){
       return set_max_fec_block_size_for_platform(value);
     };
-    ret.push_back(Setting{WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,openhd::IntSetting{(int)m_settings->get_settings().wb_max_fec_block_size_for_platform, cb_wb_max_fec_block_size_for_platform}});
+    ret.push_back(Setting{WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,openhd::IntSetting{(int)settings.wb_max_fec_block_size_for_platform, cb_wb_max_fec_block_size_for_platform}});
   }
   if(m_profile.is_ground()){
     // We display the total n of detected RX cards such that users can validate their multi rx setup(s) if there is more than one rx card detected
@@ -471,7 +471,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     auto cb_wb_tx_power_milli_watt=[this](std::string,int value){
       return set_tx_power_mw(value);
     };
-    auto change_tx_power=openhd::IntSetting{(int)m_settings->get_settings().wb_tx_power_milli_watt,cb_wb_tx_power_milli_watt};
+    auto change_tx_power=openhd::IntSetting{(int)settings.wb_tx_power_milli_watt,cb_wb_tx_power_milli_watt};
     ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
   }
   openhd::validate_provided_ids(ret);
