@@ -108,6 +108,7 @@ class WBLink :public OHDLink{
   bool check_work_queue_empty();
   static constexpr auto DELAY_FOR_TRANSMIT_ACK =std::chrono::seconds(2);
  private:
+  // Called by telemetry on both air and ground (send to opposite, respective)
   void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data)override;
   // Called by the camera stream on the air unit only
   // transmit video data via wifibradcast
