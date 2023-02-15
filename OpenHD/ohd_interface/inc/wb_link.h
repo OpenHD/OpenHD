@@ -19,6 +19,7 @@
 #include "openhd_spdlog.h"
 #include "wb_link_settings.hpp"
 #include "wifi_card.hpp"
+#include "wb_link_work_item.hpp"
 
 /**
  * This class takes a list of cards supporting monitor mode (only 1 card on air) and
@@ -124,30 +125,12 @@ class WBLink :public OHDLink{
   std::chrono::steady_clock::time_point m_last_rate_adjustment=std::chrono::steady_clock::now();
   int64_t last_tx_error_count=-1;
   int64_t last_recommended_bitrate=-1;
-  // A bit dirty, some settings need to be applied asynchronous
-  class WorkItem{
-   public:
-    explicit WorkItem(std::function<void()> work,std::chrono::steady_clock::time_point earliest_execution_time):
-    m_earliest_execution_time(earliest_execution_time),m_work(std::move(work)){
-    }
-    void execute(){
-      m_work();
-    }
-    bool ready_to_be_executed(){
-      return std::chrono::steady_clock::now()>=m_earliest_execution_time;
-    }
-   private:
-    const std::chrono::steady_clock::time_point m_earliest_execution_time;
-    const std::function<void()> m_work;
-  };
   void schedule_work_item(const std::shared_ptr<WorkItem>& work_item);
   // We limit changing specific params to one after another
   bool check_work_queue_empty();
   std::mutex m_work_item_queue_mutex;
   std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
   static constexpr auto DELAY_FOR_TRANSMIT_ACK =std::chrono::seconds(2);
- private:
-  bool has_rtl8812au();
  private:
   void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data)override;
   // Called by the camera stream on the air unit only

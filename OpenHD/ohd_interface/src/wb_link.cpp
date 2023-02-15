@@ -462,7 +462,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
   }
   // WIFI TX power depends on the used chips
-  if(has_rtl8812au()){
+  if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
     auto cb_wb_rtl8812au_tx_pwr_idx_override=[this](std::string,int value){
       return set_tx_power_rtl8812au(value);
     };
@@ -775,15 +775,6 @@ bool WBLink::check_work_queue_empty() {
   return true;
 }
 
-
-bool WBLink::has_rtl8812au() {
-  for(const auto& card: m_broadcast_cards){
-    if(card.type==WiFiCardType::Realtek8812au){
-      return true;
-    }
-  }
-  return false;
-}
 
 void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
   const auto res=m_wb_tele_tx->try_enqueue_packet(data);

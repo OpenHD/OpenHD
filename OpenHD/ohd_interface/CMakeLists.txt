@@ -23,6 +23,7 @@ set(sources
     inc/wifi_hotspot.h
     inc/wifi_hotspot_settings.h
     inc/wb_link_helper.h
+    inc/wb_link_work_item.hpp
     inc/wifi_channel.h
     inc/wifi_command_helper.h
     inc/ethernet_listener.h

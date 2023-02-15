@@ -46,6 +46,9 @@ uint32_t rtl8812au_get_measured_max_rate(uint32_t mcs_index);
 
 // WB takes a list of card device names
 std::vector<std::string> get_card_names(const std::vector<WiFiCard>& cards);
+
+// Returns true if any of the given cards is of type rtl8812au
+bool has_any_rtl8812au(const std::vector<WiFiCard>& cards);
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_
