@@ -58,6 +58,52 @@ std::vector<std::string> get_card_names(const std::vector<WiFiCard>& cards);
 
 // Returns true if any of the given cards is of type rtl8812au
 bool has_any_rtl8812au(const std::vector<WiFiCard>& cards);
+
+// TODO improve me - R.n complete bollocks
+static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index) {
+  switch (mcs_index) {
+    case 0:
+      return 3000;
+    case 1:
+      return 5500;
+    case 2:
+      return 11000;
+    case 3:
+      return 12000;
+    case 4:
+      return 19500;
+    case 5:
+      return 24000;
+    case 6:
+      return 36000;
+    default:
+      break;
+  }
+  return 5500;
+}
+
+static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index,bool is_40_mhz){
+  if(is_40_mhz)return static_cast<uint32_t>(std::roundl(rtl8812au_get_max_rate_kbits(mcs_index)*1.5));
+  return rtl8812au_get_max_rate_kbits(mcs_index);
+}
+
+static uint32_t get_max_rate_possible(const WiFiCard& card,uint16_t mcs_index,bool is_40Mhz){
+  if(card.type==WiFiCardType::Realtek8812au){
+    return rtl8812au_get_max_rate_kbits(mcs_index,is_40Mhz);
+  }
+  if(card.type==WiFiCardType::Realtek88x2bu){
+    // Hard coded, doesn't support mcs / 40Mhz anyways
+    return 10000;
+  }
+  // fallback for any other weak crap
+  return 5000;
+}
+
+static uint32_t deduce_fec_overhead(uint32_t bandwidth_kbits,int fec_overhead_perc){
+  const double tmp = bandwidth_kbits * 100.0 / (100.0 + fec_overhead_perc);
+  return static_cast<uint32_t>(std::roundl(tmp));
+}
+
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_

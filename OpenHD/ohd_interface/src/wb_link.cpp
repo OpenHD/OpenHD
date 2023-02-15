@@ -11,6 +11,7 @@
 #include "openhd_spdlog.h"
 #include "openhd_util_filesystem.h"
 #include "openhd_reboot_util.h"
+#include "openhd_bitrate_conversions.hpp"
 #include "wb_link_helper.h"
 #include "wifi_card.hpp"
 
@@ -672,72 +673,54 @@ void WBLink::perform_rate_adjustment() {
     return;
   }
   m_last_rate_adjustment=std::chrono::steady_clock::now();
-  // stupid encoder rate control
-  // TODO improve me !
-  // First, calculate the theoretical values
+  // First we calculate the theoretical rate for the current mcs index & channel width
   const auto settings = m_settings->get_settings();
-  const uint32_t max_rate_possible_kbits =
-      openhd::get_max_rate_kbits(settings.wb_mcs_index);
-  // m_console->debug("mcs index:{}",settings.wb_mcs_index);
-  //  we assume X% of the theoretical link bandwidth is available for the primary video stream 2.4G are almost always completely full of noise, which is why we go with a more conservative perc. value for them. NOTE: It is stupid to reason about the RF environment of the user, but feedback from the beta channel shows that this is kinda needed.
-  const bool is_2g_channel =
-      openhd::is_valid_frequency_2G(settings.wb_frequency);
-  const uint32_t kFactorAvailablePerc = is_2g_channel ? 70 : 80;
-  const uint32_t max_video_allocated_kbits =
-      max_rate_possible_kbits * kFactorAvailablePerc / 100;
-  // and deduce the FEC overhead
-  const uint32_t max_video_after_fec_kbits =
-      max_video_allocated_kbits * 100 /
-      (100 + settings.wb_video_fec_percentage);
-  m_console->debug(
-      "max_rate_possible_kbits:{} kFactorAvailablePerc:{} max_video_after_fec_kbits:{}",
-      max_rate_possible_kbits, kFactorAvailablePerc,
-      max_video_after_fec_kbits);
-
-  // then check if there are tx errors since the last time we checked (1 second intervals)
-  bool bitrate_is_still_too_high = false;
-  auto& primary_video_tx = *m_wb_video_tx_list.at(0).get();
-  const auto primary_video_tx_stats = primary_video_tx.get_latest_stats();
-  if (last_tx_error_count < 0) {
-    last_tx_error_count = static_cast<int64_t>(
-        primary_video_tx_stats.count_tx_injections_error_hint);
-  } else {
-    const auto delta = primary_video_tx_stats.count_tx_injections_error_hint -
-                       last_tx_error_count;
-    last_tx_error_count = static_cast<int64_t>(
-        primary_video_tx_stats.count_tx_injections_error_hint);
-    if (delta >= 1) {
-      bitrate_is_still_too_high = true;
+  const auto max_rate_for_current_mcs=openhd::wb::get_max_rate_possible(m_broadcast_cards.at(0),settings.wb_mcs_index,settings.wb_channel_width==40);
+  const auto max_video_rate_for_current_mcs=openhd::wb::deduce_fec_overhead(max_rate_for_current_mcs,settings.wb_video_fec_percentage);
+  if(m_max_video_rate_for_current_mcs!=max_video_rate_for_current_mcs){
+    // Apply the default for this configuration, then return - we will start the auto-adjustment
+    // depending on tx error(s) next
+    m_console->debug("Calculated max_rate_for_current_mcs:{}, max_video_rate_for_current_mcs:{}",
+                     kbits_per_second_to_string(max_rate_for_current_mcs),
+                     kbits_per_second_to_string(max_video_rate_for_current_mcs));
+    m_max_video_rate_for_current_mcs=max_video_rate_for_current_mcs;
+    m_recommended_video_bitrate=m_max_video_rate_for_current_mcs;
+    m_n_detected_and_reset_tx_errors=0;
+    m_last_total_tx_error_count=0;
+    if (m_opt_action_handler) {
+      openhd::ActionHandler::LinkBitrateInformation lb{};
+      lb.recommended_encoder_bitrate_kbits = m_recommended_video_bitrate;
+      m_opt_action_handler->action_request_bitrate_change_handle(lb);
+    }
+    return;
+  }
+  // Check if we had any tx errors since last time we checked
+  const auto curr_total_tx_errors=get_total_tx_error_count();
+  const auto delta_total_tx_errors=curr_total_tx_errors-m_last_total_tx_error_count;
+  m_last_total_tx_error_count=curr_total_tx_errors;
+  const bool has_tx_errors=delta_total_tx_errors>0;
+  if(has_tx_errors){
+    m_console->warn("Got {} tx errors {} times",delta_total_tx_errors);
+    m_n_detected_and_reset_tx_errors++;
+  }
+  if(m_n_detected_and_reset_tx_errors>=2){
+    // We got tx errors 2 consecutive times, resetting between each - we need to reduce bitrate
+    m_console->debug("Got m_n_detected_and_reset_tx_errors{} with max:{} recommended:{}",
+                     m_n_detected_and_reset_tx_errors,m_max_video_rate_for_current_mcs,m_recommended_video_bitrate);
+    m_n_detected_and_reset_tx_errors=0;
+    // Reduce video bitrate by 1MBit/s
+    m_recommended_video_bitrate-=1000;
+    static constexpr auto MIN_BITRATE=1000*2;
+    if(m_recommended_video_bitrate<MIN_BITRATE){
+      m_recommended_video_bitrate=MIN_BITRATE;
+    }
+    m_console->warn("TX errors, reducing video bitrate to {}",m_recommended_video_bitrate);
+    if (m_opt_action_handler) {
+      openhd::ActionHandler::LinkBitrateInformation lb{};
+      lb.recommended_encoder_bitrate_kbits = m_recommended_video_bitrate;
+      m_opt_action_handler->action_request_bitrate_change_handle(lb);
     }
   }
-  // initialize with the theoretical default, since we do not know what the camera is doing, even though it probably is "too high".
-  if (last_recommended_bitrate <= 0) {
-    last_recommended_bitrate = max_video_after_fec_kbits;
-  }
-  if (bitrate_is_still_too_high) {
-    m_console->warn("Bitrate probably too high");
-    // reduce bitrate slightly
-    last_recommended_bitrate = last_recommended_bitrate * 80 / 100;
-  } else {
-    if (last_recommended_bitrate < max_video_after_fec_kbits) {
-      // otherwise, slowly increase bitrate
-      last_recommended_bitrate = last_recommended_bitrate * 120 / 100;
-    }
-  }
-  // 1Mbit/s as lower limit
-  if (last_recommended_bitrate < 1000) {
-    last_recommended_bitrate = 1000;
-  }
-  // theoretical max as upper limit
-  if (last_recommended_bitrate > max_video_after_fec_kbits) {
-    last_recommended_bitrate = max_video_after_fec_kbits;
-  }
-  if (m_opt_action_handler) {
-    openhd::ActionHandler::LinkBitrateInformation lb{};
-    lb.recommended_encoder_bitrate_kbits = last_recommended_bitrate;
-    m_opt_action_handler->action_request_bitrate_change_handle(lb);
-  }
-
 }
 
 bool WBLink::set_enable_wb_video_variable_bitrate(int value) {
@@ -1000,4 +983,14 @@ bool WBLink::set_tx_power_rtl8812au(int tx_power_index_override){
   m_settings->persist();
   apply_txpower();
   return true;
+}
+
+int64_t WBLink::get_total_tx_error_count() {
+  auto tx_es=get_tx_list();
+  int64_t total=0;
+  for(const auto&tx:tx_es){
+    auto stats=tx->get_latest_stats();
+    total+=stats.count_tx_injections_error_hint+stats.n_dropped_packets;
+  }
+  return total;
 }

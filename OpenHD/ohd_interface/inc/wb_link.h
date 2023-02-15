@@ -101,8 +101,6 @@ class WBLink :public OHDLink{
   std::chrono::steady_clock::time_point m_last_stats_recalculation=std::chrono::steady_clock::now();
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void perform_rate_adjustment();
-  static constexpr auto RATE_ADJUSTMENT_INTERVAL=std::chrono::seconds(1);
-  std::chrono::steady_clock::time_point m_last_rate_adjustment=std::chrono::steady_clock::now();
   void schedule_work_item(const std::shared_ptr<WorkItem>& work_item);
   // We limit changing specific params to one after another
   bool check_work_queue_empty();
@@ -136,6 +134,7 @@ class WBLink :public OHDLink{
   int get_rx_count_p_all();
   int get_rx_count_p_decryption_ok();
   int get_last_rx_packet_chan_width();
+  int64_t get_total_tx_error_count();
   // Helper when we need to iterate over all tx-es/rx-es. Save to use as long as this instance is not destroyed.
   // Uses "*" since the members are unique_ptr.
   std::vector<WBTransmitter*> get_tx_list();
@@ -168,8 +167,13 @@ class WBLink :public OHDLink{
   std::unique_ptr<std::thread> m_work_thread;
   std::mutex m_work_item_queue_mutex;
   std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
-  int64_t last_tx_error_count=-1;
-  int64_t last_recommended_bitrate=-1;
+  // These are for variable bitrate / tx error reduces bitrate
+  static constexpr auto RATE_ADJUSTMENT_INTERVAL=std::chrono::seconds(1);
+  std::chrono::steady_clock::time_point m_last_rate_adjustment=std::chrono::steady_clock::now();
+  int64_t m_last_total_tx_error_count=0;
+  int m_n_detected_and_reset_tx_errors=0;
+  uint32_t m_max_video_rate_for_current_mcs=0;
+  uint32_t m_recommended_video_bitrate=0;
 };
 
 #endif
