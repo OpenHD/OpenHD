@@ -127,7 +127,7 @@ std::vector<std::string> openhd::wb::get_card_names(const std::vector<WiFiCard>&
 }
 
 bool openhd::wb::has_any_rtl8812au(const std::vector<WiFiCard>& cards) {
-  for(const auto& card: m_broadcast_cards){
+  for(const auto& card: cards){
     if(card.type==WiFiCardType::Realtek8812au){
       return true;
     }
