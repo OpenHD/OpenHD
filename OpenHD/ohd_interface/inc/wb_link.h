@@ -57,8 +57,8 @@ class WBLink :public OHDLink{
   bool apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width);
   bool apply_frequency_and_channel_width_from_settings();
   // ------------- tx power is a bit confusing due to the difference(s) between HW
-  bool try_set_tx_power_mw(int tx_power_w);
-  bool try_set_tx_power_rtl8812au(int tx_power_index_override);
+  bool set_tx_power_mw(int tx_power_mw);
+  bool set_tx_power_rtl8812au(int tx_power_index_override);
   // set the tx power of all wifibroadcast cards. For rtl8812au, uses the tx power index
   // for other cards, uses the mBm value
   void apply_txpower();

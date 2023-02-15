@@ -464,12 +464,12 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   // WIFI TX power depends on the used chips
   if(has_rtl8812au()){
     auto cb_wb_rtl8812au_tx_pwr_idx_override=[this](std::string,int value){
-      return try_set_tx_power_rtl8812au(value);
+      return set_tx_power_rtl8812au(value);
     };
     ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override,cb_wb_rtl8812au_tx_pwr_idx_override}});
   }else{
     auto cb_wb_tx_power_milli_watt=[this](std::string,int value){
-      return try_set_tx_power_mw(value);
+      return set_tx_power_mw(value);
     };
     auto change_tx_power=openhd::IntSetting{(int)m_settings->get_settings().wb_tx_power_milli_watt,cb_wb_tx_power_milli_watt};
     ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
@@ -991,21 +991,21 @@ std::vector<AsyncWBReceiver*> WBLink::get_rx_list() {
   return ret;
 }
 
-bool WBLink::try_set_tx_power_mw(int tx_power_mw) {
-  m_console->debug("try_set_tx_power_mw {}mW",tx_power_mw);
+bool WBLink::set_tx_power_mw(int tx_power_mw) {
+  m_console->debug("set_tx_power_mw {}mW", tx_power_mw);
   if(!openhd::is_valid_tx_power_milli_watt(tx_power_mw)){
-    m_console->warn("Invalid tx power:{}mW",tx_power_mw);
+    m_console->warn("Invalid tx power:{}mW", tx_power_mw);
     return false;
   }
   if(!check_in_state_support_changing_settings())return false;
-  m_settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power_mw;
+  m_settings->unsafe_get_settings().wb_tx_power_milli_watt= tx_power_mw;
   m_settings->persist();
   apply_txpower();
   return true;
 }
 
-bool WBLink::try_set_tx_power_rtl8812au(int tx_power_index_override){
-  m_console->debug("try_set_tx_power_rtl8812au {}index",tx_power_index_override);
+bool WBLink::set_tx_power_rtl8812au(int tx_power_index_override){
+  m_console->debug("set_tx_power_rtl8812au {}index",tx_power_index_override);
   if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(tx_power_index_override))return false;
   if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=tx_power_index_override;
