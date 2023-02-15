@@ -62,8 +62,8 @@ class WBLink :public OHDLink{
   void apply_txpower();
   // change the MCS index (only supported by rtl8812au)
   // guaranteed to return immediately (Doesn't need iw or something similar)
-  // Returns true if the hw supports changing the mcs index, and the mcs index is valid
-  // Returns false otherwise
+  // If the hw supports changing the mcs index, and the mcs index is valid, apply it and return true
+  // Leave untouched and return false otherwise.
   bool try_set_mcs_index(int mcs_index);
   // These do not "break" the bidirectional connectivity and therefore
   // can be changed easily on the fly
