@@ -5,7 +5,6 @@
 #include <iostream>
 #include <utility>
 
-#include "openhd_dirty_fatal_error.hpp"
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
