@@ -442,9 +442,9 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
     }
     if(try_dynamically_change_bitrate( hacked_bitrate_kbits)){
       m_curr_dynamic_bitrate_kbits= lb.recommended_encoder_bitrate_kbits;
+    }else{
+      m_console->warn("Camera does not support variable bitrate");
     }
-  }else{
-    m_console->warn("Camera does not support variable bitrate");
   }
 }
 
