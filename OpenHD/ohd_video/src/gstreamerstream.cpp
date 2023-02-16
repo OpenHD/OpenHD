@@ -424,13 +424,13 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
   // No encoder I've seen can do <2MBit/s, at least the ones we use
   static constexpr auto MIN_BITRATE_KBITS=2*1000;
   if(bitrate_for_encoder_kbits <MIN_BITRATE_KBITS){
-    m_console->warn("Cam cannot do <{}", kbits_per_second_to_string(MIN_BITRATE_KBITS));
+    m_console->debug("Cam cannot do <{}", kbits_per_second_to_string(MIN_BITRATE_KBITS));
     bitrate_for_encoder_kbits =MIN_BITRATE_KBITS;
   }
   // upper-bound - hard coded for now, since pi cannot do more than 19MBit/s
   static constexpr auto max_bitrate_kbits=19*1000;
   if(bitrate_for_encoder_kbits >max_bitrate_kbits){
-    m_console->warn("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
+    m_console->debug("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
     bitrate_for_encoder_kbits =max_bitrate_kbits;
   }
   if(m_curr_dynamic_bitrate_kbits==bitrate_for_encoder_kbits){
