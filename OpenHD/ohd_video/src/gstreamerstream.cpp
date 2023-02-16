@@ -416,10 +416,6 @@ void GStreamerStream::restart_async() {
 }
 
 void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
-  if(m_curr_dynamic_bitrate_kbits==lb.recommended_encoder_bitrate_kbits){
-    m_console->debug("Cam already at {}",m_curr_dynamic_bitrate_kbits);
-    return ;
-  }
   m_console->debug("handle_change_bitrate_request prev: {} new:{}",
                    kbits_per_second_to_string(m_curr_dynamic_bitrate_kbits),
                    kbits_per_second_to_string(lb.recommended_encoder_bitrate_kbits));
@@ -437,12 +433,16 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
     m_console->warn("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
     bitrate_for_encoder_kbits =max_bitrate_kbits;
   }
+  if(m_curr_dynamic_bitrate_kbits==bitrate_for_encoder_kbits){
+    m_console->debug("Cam already at {}",m_curr_dynamic_bitrate_kbits);
+    return ;
+  }
   m_console->debug("Changing bitrate to {} kBit/s",bitrate_for_encoder_kbits);
   if(try_dynamically_change_bitrate( bitrate_for_encoder_kbits)){
     m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
     // Do not trigger a full restart - we already changed the bitrate dynamically
     m_camera_holder->persist(false);
-    m_curr_dynamic_bitrate_kbits= lb.recommended_encoder_bitrate_kbits;
+    m_curr_dynamic_bitrate_kbits= bitrate_for_encoder_kbits;
     if(m_opt_action_handler){
       m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
     }
