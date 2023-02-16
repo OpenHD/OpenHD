@@ -675,18 +675,23 @@ void WBLink::perform_rate_adjustment() {
     return;
   }
   m_last_rate_adjustment=std::chrono::steady_clock::now();
-  // First we calculate the theoretical rate for the current mcs index & channel width
+  // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
   const auto settings = m_settings->get_settings();
-  const auto max_rate_for_current_mcs=openhd::wb::get_max_rate_possible(m_broadcast_cards.at(0),settings.wb_mcs_index,settings.wb_channel_width==40);
-  const auto max_video_rate_for_current_mcs=openhd::wb::deduce_fec_overhead(max_rate_for_current_mcs,settings.wb_video_fec_percentage);
-  if(m_max_video_rate_for_current_mcs!=max_video_rate_for_current_mcs){
+  const auto max_rate_for_current_wifi_config =
+      openhd::wb::get_max_rate_possible(m_broadcast_cards.at(0),settings.wb_mcs_index,settings.wb_channel_width==40);
+  const auto max_video_rate_for_current_wifi_config =
+      openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
+  if(m_max_video_rate_for_current_wifi_config !=
+      max_video_rate_for_current_wifi_config){
     // Apply the default for this configuration, then return - we will start the auto-adjustment
     // depending on tx error(s) next
-    m_console->debug("Calculated max_rate_for_current_mcs:{}, max_video_rate_for_current_mcs:{}",
-                     kbits_per_second_to_string(max_rate_for_current_mcs),
-                     kbits_per_second_to_string(max_video_rate_for_current_mcs));
-    m_max_video_rate_for_current_mcs=max_video_rate_for_current_mcs;
-    m_recommended_video_bitrate=m_max_video_rate_for_current_mcs;
+    m_console->debug("MCS:{} width:{} Calculated max_rate_for_current_mcs:{}, max_video_rate_for_current_mcs:{}",
+                     settings.wb_mcs_index,settings.wb_channel_width,
+                     kbits_per_second_to_string(max_rate_for_current_wifi_config),
+                     kbits_per_second_to_string(max_video_rate_for_current_wifi_config));
+    m_max_video_rate_for_current_wifi_config =
+        max_video_rate_for_current_wifi_config;
+    m_recommended_video_bitrate= m_max_video_rate_for_current_wifi_config;
     m_n_detected_and_reset_tx_errors=0;
     m_last_total_tx_error_count=0;
     if (m_opt_action_handler) {
@@ -708,7 +713,8 @@ void WBLink::perform_rate_adjustment() {
   if(m_n_detected_and_reset_tx_errors>=2){
     // We got tx errors 2 consecutive times, resetting between each - we need to reduce bitrate
     m_console->debug("Got m_n_detected_and_reset_tx_errors{} with max:{} recommended:{}",
-                     m_n_detected_and_reset_tx_errors,m_max_video_rate_for_current_mcs,m_recommended_video_bitrate);
+                     m_n_detected_and_reset_tx_errors,
+        m_max_video_rate_for_current_wifi_config,m_recommended_video_bitrate);
     m_n_detected_and_reset_tx_errors=0;
     // Reduce video bitrate by 1MBit/s
     m_recommended_video_bitrate-=1000;
