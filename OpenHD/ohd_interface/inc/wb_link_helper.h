@@ -79,7 +79,7 @@ static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index) {
     case 6:
       return 36000; //theoretical:58.5
     case 7:
-      return 3600; //theoretical:65
+      return 36000; //theoretical:65
     default:
       break;
   }
