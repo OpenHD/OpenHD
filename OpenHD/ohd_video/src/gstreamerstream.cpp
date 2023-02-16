@@ -412,10 +412,10 @@ void GStreamerStream::restart_async() {
 
 void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
-  if(m_curr_dynamic_bitrate_kbits==lb.recommended_encoder_bitrate_kbits){
+  /*if(m_curr_dynamic_bitrate_kbits==lb.recommended_encoder_bitrate_kbits){
     m_console->debug("Cam already at {}",m_curr_dynamic_bitrate_kbits);
     return ;
-  }
+  }*/
   m_console->debug("handle_change_bitrate_request prev: {} new:{}",
                    kbits_per_second_to_string(m_curr_dynamic_bitrate_kbits),
                    kbits_per_second_to_string(lb.recommended_encoder_bitrate_kbits));
