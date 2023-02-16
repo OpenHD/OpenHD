@@ -59,7 +59,8 @@ std::vector<std::string> get_card_names(const std::vector<WiFiCard>& cards);
 // Returns true if any of the given cards is of type rtl8812au
 bool has_any_rtl8812au(const std::vector<WiFiCard>& cards);
 
-// TODO improve me - R.n complete bollocks
+// Theoretical rates can be found here: https://mcsindex.com/
+// Those values are hella conservative, but mostly taken from 2.0
 static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index) {
   switch (mcs_index) {
     case 0:

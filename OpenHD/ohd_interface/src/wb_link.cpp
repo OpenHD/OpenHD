@@ -718,11 +718,13 @@ void WBLink::perform_rate_adjustment() {
       m_recommended_video_bitrate=MIN_BITRATE;
     }
     m_console->warn("TX errors, reducing video bitrate to {}",m_recommended_video_bitrate);
-    if (m_opt_action_handler) {
-      openhd::ActionHandler::LinkBitrateInformation lb{};
-      lb.recommended_encoder_bitrate_kbits = m_recommended_video_bitrate;
-      m_opt_action_handler->action_request_bitrate_change_handle(lb);
-    }
+  }
+  // Since settings might change dynamically at run time, we constantly recommend a bitrate to the encoder / camera -
+  // The camera is responsible for "not doing anything" when we recommend the same bitrate to it multiple times
+  if (m_opt_action_handler) {
+    openhd::ActionHandler::LinkBitrateInformation lb{};
+    lb.recommended_encoder_bitrate_kbits = m_recommended_video_bitrate;
+    m_opt_action_handler->action_request_bitrate_change_handle(lb);
   }
 }
 

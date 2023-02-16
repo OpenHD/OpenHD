@@ -412,26 +412,36 @@ void GStreamerStream::restart_async() {
 
 void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
-  m_console->debug("handle_change_bitrate_request {}kBit/s",lb.recommended_encoder_bitrate_kbits);
+  if(m_curr_dynamic_bitrate_kbits==lb.recommended_encoder_bitrate_kbits){
+    m_console->debug("Cam already at {}",m_curr_dynamic_bitrate_kbits);
+    return ;
+  }
+  m_console->debug("handle_change_bitrate_request prev: {} new:{}",
+                   kbits_per_second_to_string(m_curr_dynamic_bitrate_kbits),
+                   kbits_per_second_to_string(lb.recommended_encoder_bitrate_kbits));
   //const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
-  const auto max_bitrate_kbits=19*1000;
-  auto recommended_encoder_bitrate_kbits=lb.recommended_encoder_bitrate_kbits;
-  if(m_camera_holder->requires_half_bitrate_workaround()){
-    m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
-    recommended_encoder_bitrate_kbits = recommended_encoder_bitrate_kbits / 2;
+  auto bitrate_for_encoder_kbits =lb.recommended_encoder_bitrate_kbits;
+  // No encoder I've seen can do <2MBit/s, at least the ones we use
+  static constexpr auto MIN_BITRATE_KBITS=2*1000;
+  if(bitrate_for_encoder_kbits <MIN_BITRATE_KBITS){
+    m_console->warn("Cam cannot do <{}", kbits_per_second_to_string(MIN_BITRATE_KBITS));
+    bitrate_for_encoder_kbits =MIN_BITRATE_KBITS;
   }
-  // pi encoder cannot do less than 1MBit/s anyways
-  if(recommended_encoder_bitrate_kbits<=1000){
-    recommended_encoder_bitrate_kbits=1000;
+  // upper-bound - hard coded for now, since pi cannot do more than 19MBit/s
+  static constexpr auto max_bitrate_kbits=19*1000;
+  if(bitrate_for_encoder_kbits >max_bitrate_kbits){
+    m_console->warn("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
+    bitrate_for_encoder_kbits =max_bitrate_kbits;
   }
-  // and the bitrate set by the user has become the max upper level
-  if(recommended_encoder_bitrate_kbits>max_bitrate_kbits){
-    recommended_encoder_bitrate_kbits=max_bitrate_kbits;
-  }
-  if(m_curr_dynamic_bitrate_kbits!=recommended_encoder_bitrate_kbits){
-    m_console->debug("Changing bitrate to {} kBit/s",recommended_encoder_bitrate_kbits);
-    if(try_dynamically_change_bitrate(recommended_encoder_bitrate_kbits)){
-      m_curr_dynamic_bitrate_kbits=recommended_encoder_bitrate_kbits;
+  if(m_curr_dynamic_bitrate_kbits!= bitrate_for_encoder_kbits){
+    m_console->debug("Changing bitrate to {} kBit/s",bitrate_for_encoder_kbits);
+    auto hacked_bitrate_kbits=bitrate_for_encoder_kbits;
+    if(m_camera_holder->requires_half_bitrate_workaround()){
+      m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
+      hacked_bitrate_kbits =  hacked_bitrate_kbits / 2;
+    }
+    if(try_dynamically_change_bitrate( hacked_bitrate_kbits)){
+      m_curr_dynamic_bitrate_kbits= lb.recommended_encoder_bitrate_kbits;
     }
   }else{
     m_console->warn("Camera does not support variable bitrate");
