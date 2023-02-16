@@ -104,6 +104,11 @@ Contribution is always welcome!
 Start helping us by open up an issue or pull request.
 We recommend to get in touch with us via the {telegram} group.
 
+*Thanks to all the people who already contributed!*
+
+[#img-contributors,link=https://github.com/OpenHD/OpenHD/graphs/contributors]
+image::https://contrib.rocks/image?repo=OpenHD/OpenHD[Contributors]
+
 == License
 
 OpenHD is licensed under GPLv2, you can find it's contents in this link Raspbian, Linux Kernel, Drivers are licensed under GPLv2 Original code (if found) is licensed as stipulated in respective source files or under the GPLv2 license
