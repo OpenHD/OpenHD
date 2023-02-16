@@ -11,9 +11,9 @@
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+#include <iostream>
 #include <mutex>
 #include <utility>
-
 
 // bridge between any logger and telemetry
 // We send logs higher or equal to the warning log level out via udp
@@ -54,9 +54,10 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
     created->set_level(spdlog::level::debug);
     // Add the sink that sends out warning or higher via UDP
     created->sinks().push_back(std::make_shared<openhd::log::sink::UdpTelemetrySink>());
-    //spdlog::set_error_handler([](const std::string& msg) {
-    //  std::cerr << "my err handler: " << msg << std::endl;
-    //});
+    // This is for debugging for "where a fmt exception occurred"
+    spdlog::set_error_handler([](const std::string &msg) {
+      std::cerr<<msg<<"\n;";
+    });
     return created;
   }
   return ret;
