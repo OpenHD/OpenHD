@@ -412,10 +412,11 @@ void GStreamerStream::restart_async() {
 
 void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
+  m_console->debug("handle_change_bitrate_request {}kBit/s",lb.recommended_encoder_bitrate_kbits);
   const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
   auto recommended_encoder_bitrate_kbits=lb.recommended_encoder_bitrate_kbits;
   if(m_camera_holder->requires_half_bitrate_workaround()){
-    openhd::log::get_default()->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
+    m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
     recommended_encoder_bitrate_kbits = recommended_encoder_bitrate_kbits / 2;
   }
   // pi encoder cannot do less than 1MBit/s anyways
