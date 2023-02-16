@@ -681,11 +681,10 @@ void WBLink::perform_rate_adjustment() {
       openhd::wb::get_max_rate_possible(m_broadcast_cards.at(0),settings.wb_mcs_index,settings.wb_channel_width==40);
   const auto max_video_rate_for_current_wifi_config =
       openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
-  if(m_max_video_rate_for_current_wifi_config !=
-      max_video_rate_for_current_wifi_config){
+  if(m_max_video_rate_for_current_wifi_config !=max_video_rate_for_current_wifi_config){
     // Apply the default for this configuration, then return - we will start the auto-adjustment
-    // depending on tx error(s) next
-    m_console->debug("MCS:{} width:{} Calculated max_rate_for_current_mcs:{}, max_video_rate_for_current_mcs:{}",
+    // depending on tx error(s) next time we rate adjustment is called
+    m_console->debug("MCS:{} ch_width:{} Calculated max_rate:{}, max_video_rate:{}",
                      settings.wb_mcs_index,settings.wb_channel_width,
                      kbits_per_second_to_string(max_rate_for_current_wifi_config),
                      kbits_per_second_to_string(max_video_rate_for_current_wifi_config));
