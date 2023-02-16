@@ -554,7 +554,7 @@ void WBLink::update_statistics() {
       const auto curr_tx_stats=wb_tx.get_latest_stats();
       openhd::link_statistics::StatsWBVideoAir air_video{};
       if(m_opt_action_handler){
-        const int tmp=m_opt_action_handler->curr_raw_video_bitrate_kbits;
+        const int tmp= m_opt_action_handler->dirty_get_bitrate_of_camera(i);
         air_video.curr_recommended_bitrate=tmp>0 ? tmp : 0;
       }
       //

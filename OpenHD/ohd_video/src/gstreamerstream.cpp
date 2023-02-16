@@ -57,7 +57,7 @@ void GStreamerStream::setup() {
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
   if(m_opt_action_handler){
-    m_opt_action_handler->curr_raw_video_bitrate_kbits =setting.h26x_bitrate_kbits;
+    m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,setting.h26x_bitrate_kbits);
   }
   if(!setting.enable_streaming){
     // When streaming is disabled, we just don't create the pipeline. We fully restart on all changes anyways.
