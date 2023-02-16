@@ -43,6 +43,7 @@ class GStreamerStream : public CameraStream {
   void setup_ip_camera();
   void setup_sw_dummy_camera();
   void setup_custom_unmanaged_camera();
+  void stop_cleanup_restart();
   // Utils when settings are changed (most of them require a full restart of the pipeline)
   void restart_after_new_setting();
   void restartIfStopped() override;

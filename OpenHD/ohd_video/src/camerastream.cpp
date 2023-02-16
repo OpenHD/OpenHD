@@ -12,3 +12,4 @@ CameraStream::CameraStream(PlatformType platform_type,
      //m_video_udp_port(0),
      m_link_handle(std::move(itransmit)){
 }
+void CameraStream::stop_cleanup_restart() {}

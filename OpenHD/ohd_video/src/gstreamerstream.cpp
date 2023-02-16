@@ -15,6 +15,8 @@
 #include "gst_debug_helper.h"
 #include "rtp_eof_helper.h"
 
+#include "openhd_util_time.hpp"
+
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
                                  std::shared_ptr<OHDLink> i_transmit_video,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
     //: CameraStream(platform, camera_holder, video_udp_port) {
@@ -270,6 +272,16 @@ void GStreamerStream::setup_custom_unmanaged_camera() {
   m_pipeline_content << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
 }
 
+void GStreamerStream::stop_cleanup_restart() {
+  const auto before=std::chrono::steady_clock::now();
+  stop();
+  cleanup_pipe();
+  setup();
+  start();
+  const auto elapsed=std::chrono::steady_clock::now()-before;
+  m_console->debug("stop_cleanup_restart took {}",openhd::util::time::R(elapsed));
+}
+
 std::string GStreamerStream::createDebug(){
   std::unique_lock<std::mutex> lock(m_pipeline_mutex, std::try_to_lock);
   if(!lock.owns_lock()){
@@ -352,10 +364,7 @@ void GStreamerStream::restartIfStopped() {
       m_console->warn("Disabling recording, not enough free space (<300MB)");
       m_camera_holder->unsafe_get_settings().air_recording=Recording::DISABLED;
       m_camera_holder->persist();
-      stop();
-      cleanup_pipe();
-      setup();
-      start();
+      stop_cleanup_restart();
     }
   }
   if(m_camera_holder->get_camera().type==CameraType::CUSTOM_UNMANAGED_CAMERA){
@@ -375,10 +384,7 @@ void GStreamerStream::restartIfStopped() {
     // We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
     // This will also show up in QOpenHD (log level >= warn), but we are limited by the n of characters in mavlink
     m_console->warn("Restarting camera, check your parameters / connection");
-    stop();
-    cleanup_pipe();
-    setup();
-    start();
+    stop_cleanup_restart();
     m_console->debug("Restarted");
   }
 }
@@ -387,11 +393,8 @@ void GStreamerStream::restartIfStopped() {
 void GStreamerStream::restart_after_new_setting() {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   m_console->debug("GStreamerStream::restart_after_new_setting() begin");
-  stop();
   // R.N we need to fully re-set the pipeline if any camera setting has changed
-  cleanup_pipe();
-  setup();
-  start();
+  stop_cleanup_restart();
   m_console->debug("GStreamerStream::restart_after_new_setting() end");
 }
 
@@ -451,6 +454,10 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
 }
 
 bool GStreamerStream::try_dynamically_change_bitrate(int bitrate_kbits) {
+ if(true){
+      stop_cleanup_restart();
+      return true;
+ }
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   if(m_gst_pipeline== nullptr){
     m_console->debug("cannot change_bitrate, no pipeline");
@@ -510,4 +517,3 @@ void GStreamerStream::loop_pull_samples() {
   m_frame_fragments.resize(0);
 
 }
-
