@@ -110,6 +110,11 @@ Contribution is always welcome!
 Start helping us by open up an issue or pull request.
 We recommend getting in touch with us via the {telegram} group or the {discord} server.
 
+*Thanks to all the people who already contributed!*
+
+[#img-contributors,link=https://github.com/OpenHD/OpenHD/graphs/contributors]
+image::https://contrib.rocks/image?repo=OpenHD/OpenHD[Contributors]
+
 == License
 
 OpenHD and its images are licensed under GPL v3.0, unless stated otherwise by a submodule's license.
