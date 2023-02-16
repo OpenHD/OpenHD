@@ -62,7 +62,7 @@ void GStreamerStream::setup() {
     m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,setting.h26x_bitrate_kbits);
   }
   // atomic & called in regular intervals if variable bitrate is enabled.
-  m_curr_dynamic_bitrate_kbits=-1;
+  m_curr_dynamic_bitrate_kbits=setting.h26x_bitrate_kbits;
   if(!setting.enable_streaming){
     // When streaming is disabled, we just don't create the pipeline. We fully restart on all changes anyways.
     m_console->info("Streaming disabled");
@@ -454,10 +454,8 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
       m_console->warn("Bitrate change requires restart");
       // These cameras are known to handle a restart quickly, but it still sucks v4l2h264enc does not support changing the bitrate at run time
       m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
+      // This triggers a restart
       m_camera_holder->persist();
-      std::lock_guard<std::mutex> guard(m_pipeline_mutex);
-      stop_cleanup_restart();
-      m_curr_dynamic_bitrate_kbits=bitrate_for_encoder_kbits;
     }else{
       m_console->warn("Camera does not support variable bitrate");
     }
