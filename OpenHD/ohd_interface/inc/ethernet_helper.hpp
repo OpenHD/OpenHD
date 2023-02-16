@@ -7,7 +7,7 @@
 
 #include <regex>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util_filesystem.h"
 
 // Quick helper methods for ethernet (used for automatic data forwarding detection)

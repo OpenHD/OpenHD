@@ -214,7 +214,7 @@ int SerialEndpoint::setup_port(const SerialEndpoint::HWOptions &options,std::sha
 
 void SerialEndpoint::connect_and_read_loop() {
   while (!_stop_requested){
-    if(!OHDFilesystemUtil::exists(m_options.linux_filename.c_str())){
+    if(!OHDFilesystemUtil::exists(m_options.linux_filename)){
       m_console->warn("UART file does not exist");
       std::this_thread::sleep_for(std::chrono::seconds(1));
       continue;
@@ -264,7 +264,7 @@ void SerialEndpoint::receive_data_until_error() {
       // but on a FC which constantly provides a data stream it most likely is an error.
       m_n_failed_reads++;
       const auto elapsed_since_last_log=std::chrono::steady_clock::now()-m_last_log_serial_read_failed;
-      if(elapsed_since_last_log>=MIN_DELAY_BETWEEN_SERIAL_READ_FAILED_LOG_MESSAGES){
+      if(elapsed_since_last_log>=MIN_DELAY_BETWEEN_SERIAL_READ_FAILED_LOG_MESSAGES && m_options.enable_reading){
         m_last_log_serial_read_failed=std::chrono::steady_clock::now();
         m_console->warn("{} failed polls(reads)",m_n_failed_reads);
       }else{

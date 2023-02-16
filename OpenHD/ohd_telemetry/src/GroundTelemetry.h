@@ -15,7 +15,7 @@
 #include "openhd_external_device.hpp"
 #include "openhd_link.hpp"
 #include "openhd_settings_imp.hpp"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
 #include "rc/JoystickReader.h"
@@ -71,6 +71,7 @@ class GroundTelemetry :public MavlinkSystem{
   void on_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages);
   // send one or more messages to all clients connected to the ground station, for example QOpenHD
   void send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages);
+  std::vector<openhd::Setting> get_all_settings();
  private:
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_groundTelemetrySettings;
@@ -90,7 +91,6 @@ class GroundTelemetry :public MavlinkSystem{
   //std::unique_ptr<JoystickReader> m_joystick_reader;
   std::unique_ptr<RcJoystickSender> m_rc_joystick_sender;
 #endif
-  std::vector<openhd::Setting> get_all_settings();
 };
 
 #endif //OPENHD_TELEMETRY_GROUNDTELEMETRY_H

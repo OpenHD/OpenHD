@@ -5,7 +5,8 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_STATUSTEXT_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_STATUSTEXT_H_
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
+#include "openhd_udp_log.h"
 
 class StatusTextAccumulator{
  public:

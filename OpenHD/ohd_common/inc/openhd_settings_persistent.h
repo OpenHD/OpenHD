@@ -5,13 +5,13 @@
 #ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_SETTINGS_PERSISTENT_HPP_
 #define OPENHD_OPENHD_OHD_COMMON_OPENHD_SETTINGS_PERSISTENT_HPP_
 
+#include <fstream>
 #include <utility>
 
+#include "include_json.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
-#include "openhd_spdlog.hpp"
-#include <fstream>
-#include "include_json.hpp"
 
 /**
  * In general, all OpenHD modules (e.g. video, telemetry, interface) handle their settings completely independently by writing
@@ -49,9 +49,9 @@ class PersistentSettings{
     return *_settings;
   }
   // save changes by writing them out to the file, and notifying the listener(s)
-  void persist()const{
+  void persist(bool trigger_restart=true)const{
     PersistentSettings::persist_settings();
-    if(_settings_changed_callback){
+    if(_settings_changed_callback && trigger_restart){
       _settings_changed_callback();
     }
   }

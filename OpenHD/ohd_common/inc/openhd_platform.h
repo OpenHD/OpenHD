@@ -2,7 +2,8 @@
 #define OPENHD_PLATFORM_H
 
 #include <string>
-#include "openhd_spdlog.hpp"
+
+#include "openhd_spdlog.h"
 
 /**
  * Util to discover and then store the platform we are running on.
@@ -64,6 +65,7 @@ struct OHDPlatform {
   }
 };
 
+// We need to differentiate between rpi 4 and other pi's to use the right fec params.
 static bool platform_rpi_is_high_performance(const OHDPlatform& platform){
   assert(platform.platform_type==PlatformType::RaspberryPi);
   const auto rpi_board_type=platform.board_type;

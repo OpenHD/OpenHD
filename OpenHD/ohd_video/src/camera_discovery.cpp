@@ -27,7 +27,7 @@ std::vector<Camera> DCameras::discover(const OHDPlatform platform) {
   // always enabled for now
   // TODO fixme
   if(m_enable_debug){
-    m_console->set_level(spd::level::debug);
+    m_console->set_level(spdlog::level::debug);
     m_console->debug("m_enable_debug=true");
   }
   m_console->debug("discover_internal()");

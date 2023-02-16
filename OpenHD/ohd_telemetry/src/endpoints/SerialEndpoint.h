@@ -13,17 +13,25 @@
 #include <utility>
 
 #include "MEndpoint.h"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
-// At some point, I decided there is no way around it than to write our own UART receiver program.
-// Mostly based on MAVSDK. Doesn't use boost.
+/**
+ *  At some point, I decided there is no way around it than to write our own UART receiver program.
+ *  Shares some similarities with MAVSDK's serial endpoint implementation.
+ *  It is safe to create an instance of this class with common mistakes like a wrong serial fd -
+ *  In this case, this will constantly log some "warning messages" until the issue is fixed
+ *  (for example by the user connecting the serial wires, or selecting another type of fd)
+ */
 class SerialEndpoint : public MEndpoint{
  public:
   struct HWOptions {
     std::string linux_filename; // the linux file name,for example /dev/tty..
     int baud_rate = 115200; // manual baud rate
-    bool flow_control=false; // not tested yet
-    bool enable_debug=false; //
+    bool flow_control=false; // pretty much never used
+    // constantly read data from the connected device. Can be disabled in case the connected device shall only receive data
+    // (e.g. a tracker on the ground)
+    bool enable_reading= true;
+    bool enable_debug=false; // enable / disable extra debug logging
     [[nodiscard]] std::string to_string() const{
       std::stringstream ss;
       ss<<"HWOptions{"<<linux_filename<<", baud:"<<baud_rate<<", flow_control:"<<flow_control<<",  enable_debug:"<<enable_debug<<"}";

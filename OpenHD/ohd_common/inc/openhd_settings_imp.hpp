@@ -7,15 +7,13 @@
 
 #include <cassert>
 #include <functional>
-#include <iostream>
 #include <map>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <variant>
 #include <vector>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 namespace openhd{
 
@@ -33,9 +31,7 @@ struct SettingImpl{
   // We have a default implementation that just prints the change request and always returns true, mostly for debugging / testing.
   // But in general, all OpenHD modules that are configurable overwrite this callback with their own proper implementation.
   std::function<bool(std::string id,T requested_value)> change_callback=[](std::string id,T requested_value){
-	std::stringstream ss;
-	ss<<"Requested change "<<id<<" to "<<requested_value;
-	openhd::log::get_default()->debug(ss.str());
+	openhd::log::get_default()->debug("Requested change {} to {}",id,requested_value);
 	return true;
   };
 };

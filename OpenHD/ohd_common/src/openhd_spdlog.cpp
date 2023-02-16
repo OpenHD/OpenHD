@@ -1,16 +1,19 @@
 //
-// Created by consti10 on 11.11.22.
+// Created by consti10 on 14.02.23.
 //
-
-#ifndef OPENHD_OPENHD_OHD_COMMON_OPENHD_SPDLOG_TELE_SINK_H_
-#define OPENHD_OPENHD_OHD_COMMON_OPENHD_SPDLOG_TELE_SINK_H_
-
-#include <deque>
-#include <iostream>
-#include <utility>
-
+#include "openhd_spdlog.h"
 #include "openhd_udp_log.h"
-#include "spdlog/sinks/base_sink.h"
+
+//
+#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
+//
+#include <spdlog/sinks/base_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
+#include <iostream>
+#include <mutex>
+#include <utility>
 
 // bridge between any logger and telemetry
 // We send logs higher or equal to the warning log level out via udp
@@ -40,4 +43,26 @@ class UdpTelemetrySink : public spdlog::sinks::base_sink<std::mutex>{
 
 }
 
-#endif  // OPENHD_OPENHD_OHD_COMMON_OPENHD_SPDLOG_TELE_SINK_H_
+std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
+    const std::string& logger_name) {
+  static std::mutex logger_mutex2{};
+  std::lock_guard<std::mutex> guard(logger_mutex2);
+  auto ret = spdlog::get(logger_name);
+  if (ret == nullptr) {
+    auto created = spdlog::stdout_color_mt(logger_name);
+    assert(created);
+    created->set_level(spdlog::level::debug);
+    // Add the sink that sends out warning or higher via UDP
+    created->sinks().push_back(std::make_shared<openhd::log::sink::UdpTelemetrySink>());
+    // This is for debugging for "where a fmt exception occurred"
+    //spdlog::set_error_handler([](const std::string &msg) {
+    //  std::cerr<<msg<<"\n;";
+    //});
+    return created;
+  }
+  return ret;
+}
+
+std::shared_ptr<spdlog::logger> openhd::log::get_default() {
+  return create_or_get("default");
+}

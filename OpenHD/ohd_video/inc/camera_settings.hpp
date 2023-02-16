@@ -22,7 +22,8 @@ static constexpr int DEFAULT_RECORDING_QP = 26;
 static constexpr RateControlMode DEFAULT_RC_MODE = RateControlMode::RC_CBR;
 
 // Minimum amount of free space required to enable air video recording.
-// If the free space becomes less than that, air recording should be stopped.
+// Also, If the free space becomes less than that, air recording (if running) should be stopped.
+// This feature is r.n already implemented for all cameras (in gstreamerstream)
 static constexpr auto MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB=300;
 
 // Return true if the bitrate is considered sane, false otherwise

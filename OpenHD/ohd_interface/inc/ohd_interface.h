@@ -16,13 +16,15 @@
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_settings_imp.hpp"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "usb_tether_listener.h"
 #include "wb_link.h"
 #include "wifi_hotspot.h"
 
 /**
  * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
+ * In openhd, there is an instance of this class on both air and ground with partially similar, partially
+ * different functionalities.
  */
 class OHDInterface :public openhd::ISettingsComponent{
  public:

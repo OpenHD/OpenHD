@@ -55,12 +55,14 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
 #else
   m_console->info("No Joystick support");
 #endif
-  if(m_groundTelemetrySettings->get_settings().gnd_uart_connection_type!=0) {
+  if(m_groundTelemetrySettings->is_serial_enabled()) {
     const auto& settings=m_groundTelemetrySettings->get_settings();
     SerialEndpoint::HWOptions options{};
     options.baud_rate=settings.gnd_uart_baudrate;
-    options.linux_filename=openhd::telemetry::ground::uart_fd_from_connection_type(settings.gnd_uart_connection_type);
-    m_endpoint_tracker =std::make_unique<SerialEndpoint>("ser_tracker",options);
+    options.linux_filename=settings.gnd_uart_connection_type;
+    // We do not need to receive data via serial on gnd
+    options.enable_reading= false;
+    m_endpoint_tracker =std::make_unique<SerialEndpoint>("gnd_ser",options);
     m_endpoint_tracker->registerCallback([this](std::vector<MavlinkMessage> messages) {
       // We ignore any incoming messages here for now, since it is only for mavlink out via serial
     });
@@ -260,14 +262,16 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   }
 #endif
   if(true){
-    auto c_gnd_uart_connection_type=[this](std::string,int value){
-      if(!openhd::telemetry::ground::validate_uart_connection_type(value))return false;
+    auto c_gnd_uart_connection_type=[this](std::string,std::string value){
+      if(!OHDFilesystemUtil::exists(value)){
+        m_console->warn("{} is not a valid serial");
+      }
       m_groundTelemetrySettings->unsafe_get_settings().gnd_uart_connection_type=value;
       m_groundTelemetrySettings->persist();
       // change requires reboot
       return true;
     };
-    ret.push_back(openhd::Setting{"TRACKER_UART_OUT",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().gnd_uart_connection_type),
+    ret.push_back(openhd::Setting{"TRACKER_UART_OUT",openhd::StringSetting{m_groundTelemetrySettings->get_settings().gnd_uart_connection_type,
                                                                      c_gnd_uart_connection_type}});
   }
   openhd::testing::append_dummy_if_empty(ret);

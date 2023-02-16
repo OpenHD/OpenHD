@@ -7,7 +7,7 @@
 #include <iostream>
 #include <memory>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 int main() {
   std::shared_ptr<spdlog::logger> m_console=spdlog::stdout_color_mt("main");

@@ -10,18 +10,15 @@
 
 #include <iostream>
 #include <memory>
-#include <sstream>
 
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 #include "openhd_rpi_gpio.hpp"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_temporary_air_or_ground.h"
 // For logging the commit hash and more
 #include "git.h"
-
-#include "ethernet_helper.hpp"
 
 ///Regarding AIR / GROUND detection: Previous OpenHD releases would detect weather this system is an air pi
 // or ground pi by checking weather it has a connected camera. However, this pattern has 2 problems:
@@ -44,7 +41,7 @@
 // uses the dummy camera, no matter if a camera is detected or not.
 // NOTE: If you neither pass in the argument in the command line and no file exists, OpenHD will always boot as ground.
 
-static const char optstr[] = "?:agfcr:b";
+static const char optstr[] = "?:agfbdcxyzwr:q";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},

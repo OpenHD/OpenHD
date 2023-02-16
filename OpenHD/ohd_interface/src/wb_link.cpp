@@ -5,11 +5,12 @@
 #include <iostream>
 #include <utility>
 
-#include "openhd_dirty_fatal_error.hpp"
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util_filesystem.h"
+#include "openhd_reboot_util.h"
+#include "openhd_bitrate_conversions.hpp"
 #include "wb_link_helper.h"
 #include "wifi_card.hpp"
 
@@ -30,7 +31,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
   m_console->info("Broadcast cards:{}",debug_cards(m_broadcast_cards));
-  m_console->debug("m_disable_all_frequency_checks:"+OHDUtil::yes_or_no(m_disable_all_frequency_checks));
+  m_console->debug("m_disable_all_frequency_checks:{}",OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks
   if(m_broadcast_cards.empty() || (m_profile.is_air && m_broadcast_cards.size()>1)) {
     // NOTE: Here we crash, since it would be a programmer(s) error
@@ -87,7 +88,7 @@ WBLink::~WBLink() {
 }
 
 void WBLink::takeover_cards_monitor_mode() {
-  m_console->debug( "WBStreams::takeover_cards_monitor_mode() begin");
+  m_console->debug( "takeover_cards_monitor_mode() begin");
   // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
   // This can be different depending on the OS we are running on - in general, we try to go for the following with openhd:
   // Have network manager running on the host OS - the nice thing about network manager is that we can just tell it
@@ -111,15 +112,14 @@ void WBLink::takeover_cards_monitor_mode() {
     wifi::commandhelper::ip_link_set_card_state(card.device_name, true);
     //wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
   }
-  m_console->debug("WBStreams::takeover_cards_monitor_mode() end");
+  m_console->debug("takeover_cards_monitor_mode() end");
 }
 
 void WBLink::configure_cards() {
-  m_console->debug("WBStreams::configure_cards() begin");
+  m_console->debug("configure_cards() begin");
   apply_frequency_and_channel_width_from_settings();
   apply_txpower();
-  apply_mcs_index();
-  m_console->debug("WBStreams::configure_cards() end");
+  m_console->debug("configure_cards() end");
 }
 
 void WBLink::configure_telemetry() {
@@ -211,7 +211,7 @@ ROptions WBLink::create_rx_options(uint8_t radio_port)const {
   }else{
     options.keypair = std::nullopt;
   }
-  const auto cards = get_rx_card_names();
+  const auto cards = openhd::wb::get_card_names(m_broadcast_cards);
   assert(!cards.empty());
   options.rxInterfaces = cards;
   // For multi rx-es we need the rx queue - but using it really has negative effects
@@ -235,12 +235,6 @@ std::unique_ptr<AsyncWBReceiver> WBLink::create_wb_rx(uint8_t radio_port,WBRecei
 
 std::string WBLink::createDebug()const{
   std::stringstream ss;
-  // we use telemetry data only here
-  bool any_data_received=false;
-  //if(m_wb_tele_rx && m_wb_tele_rx->anyDataReceived()){
-  //  any_data_received=true;
-  //}
-  ss<<"Any data received: "<<(any_data_received ? "Y":"N")<<"\n";
   if (m_wb_tele_rx) {
     ss<<"TeleRx: "<< m_wb_tele_rx->createDebugState();
   }
@@ -256,16 +250,8 @@ std::string WBLink::createDebug()const{
   return ss.str();
 }
 
-std::vector<std::string> WBLink::get_rx_card_names() const {
-  std::vector<std::string> ret{};
-  for(const auto& card: m_broadcast_cards){
-    ret.push_back(card.device_name);
-  }
-  return ret;
-}
-
 bool WBLink::request_set_frequency(int frequency) {
-  m_console->debug("WBStreams::request_set_frequency {}",frequency);
+  m_console->debug("request_set_frequency {}",frequency);
   if(m_disable_all_frequency_checks){
     m_console->warn("Not sanity checking frequency");
   }else{
@@ -281,16 +267,24 @@ bool WBLink::request_set_frequency(int frequency) {
     apply_frequency_and_channel_width_from_settings();
   },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
   schedule_work_item(work_item);
+  // And add a work item that runs after 5 seconds and resets the frequency to the previous one if no data is being received
+  // after X seconds
+  const auto rx_count_p_decryption_ok=get_rx_count_p_decryption_ok();
+  if(rx_count_p_decryption_ok>100){
+    m_console->debug("Adding reset to previous known frequency work item {}",rx_count_p_decryption_ok);
+    auto backup_work_item=std::make_shared<WorkItem>([this](){
+      m_console->debug("check if data is being received {}",get_rx_count_p_decryption_ok());
+    },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK+std::chrono::seconds(2));
+    schedule_work_item(backup_work_item);
+  }
   return true;
 }
 
 bool WBLink::apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width) {
   const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width,m_broadcast_cards);
   // TODO: R.n I am not sure if and how you need / even can set it either via radiotap or "iw"
-  if(m_wb_tele_tx){
-    m_wb_tele_tx->update_channel_width(channel_width);
-  }
-  for(auto& tx: m_wb_video_tx_list){
+  auto transmitters=get_tx_list();
+  for(auto& tx: transmitters){
     tx->update_channel_width(channel_width);
   }
   return res;
@@ -301,25 +295,9 @@ bool WBLink::apply_frequency_and_channel_width_from_settings() {
   return apply_frequency_and_channel_width(settings.wb_frequency,settings.wb_channel_width);
 }
 
-bool WBLink::request_set_txpower(int tx_power) {
-  m_console->debug("WBStreams::request_set_txpower {}",tx_power);
-  if(!openhd::is_valid_tx_power_milli_watt(tx_power)){
-    m_console->warn("Invalid tx power:{}",tx_power);
-    return false;
-  }
-  if(!check_in_state_support_changing_settings())return false;
-  m_settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power;
-  m_settings->persist();
-  // No need to delay the change, but perform it async anyways.
-  auto work_item=std::make_shared<WorkItem>([this](){
-    apply_txpower();
-  },std::chrono::steady_clock::now());
-  schedule_work_item(work_item);
-  return true;
-}
-
 void WBLink::apply_txpower() {
   const auto settings=m_settings->get_settings();
+  const auto before=std::chrono::steady_clock::now();
   for(const auto& card: m_broadcast_cards){
     if(card.type==WiFiCardType::Realtek8812au){
       // requires corresponding driver workaround for dynamic tx power
@@ -329,13 +307,14 @@ void WBLink::apply_txpower() {
     }else{
       const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
       wifi::commandhelper::iw_set_tx_power(card.device_name,tmp);
-      //WifiCardCommandHelper::iwconfig_set_txpower(card,settings.wb_tx_power_milli_watt);
     }
   }
+  const auto delta=std::chrono::steady_clock::now()-before;
+  m_console->debug("Changing tx power took {}",MyTimeHelper::R(delta));
 }
 
-bool WBLink::request_set_mcs_index(int mcs_index) {
-  m_console->debug("WBStreams::request_set_mcs_index {}",mcs_index);
+bool WBLink::set_mcs_index(int mcs_index) {
+  m_console->debug("set_mcs_index {}",mcs_index);
   if(!openhd::is_valid_mcs_index(mcs_index)){
     m_console->warn("Invalid mcs index{}",mcs_index);
     return false;
@@ -347,32 +326,20 @@ bool WBLink::request_set_mcs_index(int mcs_index) {
   if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   m_settings->persist();
-  // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
-  auto work_item=std::make_shared<WorkItem>([this](){
-    apply_mcs_index();
-  },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
-  schedule_work_item(work_item);
-  return true;
-}
-
-void WBLink::apply_mcs_index() {
-  // we need to change the mcs index on all tx-es
-  const auto settings=m_settings->get_settings();
   // R.n the only card known to properly allow setting the MCS index is rtl8812au,
   // and there it is done by modifying the radiotap header
   //for(const auto& wlan:m_broadcast_cards){
   //  wifi::commandhelper::iw_set_rate_mcs(wlan.device_name,settings.wb_mcs_index, false);
   //}
-  if(m_wb_tele_tx){
-    m_wb_tele_tx->update_mcs_index(settings.wb_mcs_index);
+  auto transmitters=get_tx_list();
+  for(auto& tx: transmitters){
+    tx->update_mcs_index(mcs_index);
   }
-  for(auto& tx: m_wb_video_tx_list){
-    tx->update_mcs_index(settings.wb_mcs_index);
-  }
+  return true;
 }
 
 bool WBLink::request_set_channel_width(int channel_width) {
-  m_console->debug("WBStreams::request_set_channel_width {}",channel_width);
+  m_console->debug("request_set_channel_width {}",channel_width);
   if(!openhd::is_valid_channel_width(channel_width)){
     m_console->warn("Invalid channel width {}",channel_width);
     return false;
@@ -393,7 +360,7 @@ bool WBLink::request_set_channel_width(int channel_width) {
 }
 
 bool WBLink::set_video_fec_block_length(const int block_length) {
-  m_console->debug("WBStreams::set_video_fec_block_length {}",block_length);
+  m_console->debug("set_video_fec_block_length {}",block_length);
   if(!openhd::is_valid_fec_block_length(block_length)){
     m_console->warn("Invalid fec block length:{}",block_length);
     return false;
@@ -408,7 +375,7 @@ bool WBLink::set_video_fec_block_length(const int block_length) {
 }
 
 bool WBLink::set_video_fec_percentage(int fec_percentage) {
-  m_console->debug("WBStreams::set_video_fec_percentage {}",fec_percentage);
+  m_console->debug("set_video_fec_percentage {}",fec_percentage);
   if(!openhd::is_valid_fec_percentage(fec_percentage)){
     m_console->warn("Invalid fec percentage:{}",fec_percentage);
     return false;
@@ -427,35 +394,35 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   using namespace openhd;
   std::vector<openhd::Setting> ret{};
   const auto settings=m_settings->get_settings();
-  auto change_freq=openhd::IntSetting{(int)m_settings->get_settings().wb_frequency,[this](std::string,int value){
+  auto change_freq=openhd::IntSetting{(int)settings.wb_frequency,[this](std::string,int value){
                                           return request_set_frequency(value);
                                         }};
-  auto change_wb_channel_width=openhd::IntSetting{(int)m_settings->get_settings().wb_channel_width,[this](std::string,int value){
+  auto change_wb_channel_width=openhd::IntSetting{(int)settings.wb_channel_width,[this](std::string,int value){
                                                       return request_set_channel_width(value);
                                                     }};
-  auto change_wb_mcs_index=openhd::IntSetting{(int)m_settings->get_settings().wb_mcs_index,[this](std::string,int value){
-                                                  return request_set_mcs_index(value);
+  auto change_wb_mcs_index=openhd::IntSetting{(int)settings.wb_mcs_index,[this](std::string,int value){
+                                                  return set_mcs_index(value);
                                                 }};
   ret.push_back(Setting{WB_FREQUENCY,change_freq});
   ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
   ret.push_back(Setting{WB_MCS_INDEX,change_wb_mcs_index});
   if(m_profile.is_air){
-    auto change_video_fec_block_length=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_block_length,[this](std::string,int value){
+    auto change_video_fec_block_length=openhd::IntSetting{(int)settings.wb_video_fec_block_length,[this](std::string,int value){
                                                               return set_video_fec_block_length(value);
                                                             }};
     ret.push_back(Setting{WB_VIDEO_FEC_BLOCK_LENGTH,change_video_fec_block_length});
-    auto change_video_fec_percentage=openhd::IntSetting{(int)m_settings->get_settings().wb_video_fec_percentage,[this](std::string,int value){
+    auto change_video_fec_percentage=openhd::IntSetting{(int)settings.wb_video_fec_percentage,[this](std::string,int value){
                                                             return set_video_fec_percentage(value);
                                                           }};
     ret.push_back(Setting{WB_VIDEO_FEC_PERCENTAGE,change_video_fec_percentage});
     auto cb_enable_wb_video_variable_bitrate=[this](std::string,int value){
       return set_enable_wb_video_variable_bitrate(value);
     };
-    ret.push_back(Setting{WB_VIDEO_VARIABLE_BITRATE,openhd::IntSetting{(int)m_settings->get_settings().enable_wb_video_variable_bitrate, cb_enable_wb_video_variable_bitrate}});
+    ret.push_back(Setting{WB_VIDEO_VARIABLE_BITRATE,openhd::IntSetting{(int)settings.enable_wb_video_variable_bitrate, cb_enable_wb_video_variable_bitrate}});
     auto cb_wb_max_fec_block_size_for_platform=[this](std::string,int value){
       return set_max_fec_block_size_for_platform(value);
     };
-    ret.push_back(Setting{WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,openhd::IntSetting{(int)m_settings->get_settings().wb_max_fec_block_size_for_platform, cb_wb_max_fec_block_size_for_platform}});
+    ret.push_back(Setting{WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,openhd::IntSetting{(int)settings.wb_max_fec_block_size_for_platform, cb_wb_max_fec_block_size_for_platform}});
   }
   if(m_profile.is_ground()){
     // We display the total n of detected RX cards such that users can validate their multi rx setup(s) if there is more than one rx card detected
@@ -490,16 +457,16 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
   }
   // WIFI TX power depends on the used chips
-  if(has_rtl8812au()){
+  if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
     auto cb_wb_rtl8812au_tx_pwr_idx_override=[this](std::string,int value){
-      return set_wb_rtl8812au_tx_pwr_idx_override(value);
+      return set_tx_power_rtl8812au(value);
     };
     ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override,cb_wb_rtl8812au_tx_pwr_idx_override}});
   }else{
     auto cb_wb_tx_power_milli_watt=[this](std::string,int value){
-      return request_set_txpower(value);
+      return set_tx_power_mw(value);
     };
-    auto change_tx_power=openhd::IntSetting{(int)m_settings->get_settings().wb_tx_power_milli_watt,cb_wb_tx_power_milli_watt};
+    auto change_tx_power=openhd::IntSetting{(int)settings.wb_tx_power_milli_watt,cb_wb_tx_power_milli_watt};
     ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
   }
   openhd::validate_provided_ids(ret);
@@ -585,6 +552,10 @@ void WBLink::update_statistics() {
       //auto& air_video=i==0 ? stats.air_video0 : stats.air_video1;
       const auto curr_tx_stats=wb_tx.get_latest_stats();
       openhd::link_statistics::StatsWBVideoAir air_video{};
+      if(m_opt_action_handler){
+        const int tmp= m_opt_action_handler->dirty_get_bitrate_of_camera(i);
+        air_video.curr_recommended_bitrate=tmp>0 ? tmp : 0;
+      }
       //
       air_video.link_index=i;
       air_video.curr_measured_encoder_bitrate=curr_tx_stats.current_provided_bits_per_second;
@@ -704,72 +675,62 @@ void WBLink::perform_rate_adjustment() {
     return;
   }
   m_last_rate_adjustment=std::chrono::steady_clock::now();
-  // stupid encoder rate control
-  // TODO improve me !
-  // First, calculate the theoretical values
+  // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
   const auto settings = m_settings->get_settings();
-  const uint32_t max_rate_possible_kbits =
-      openhd::get_max_rate_kbits(settings.wb_mcs_index);
-  // m_console->debug("mcs index:{}",settings.wb_mcs_index);
-  //  we assume X% of the theoretical link bandwidth is available for the primary video stream 2.4G are almost always completely full of noise, which is why we go with a more conservative perc. value for them. NOTE: It is stupid to reason about the RF environment of the user, but feedback from the beta channel shows that this is kinda needed.
-  const bool is_2g_channel =
-      openhd::is_valid_frequency_2G(settings.wb_frequency);
-  const uint32_t kFactorAvailablePerc = is_2g_channel ? 70 : 80;
-  const uint32_t max_video_allocated_kbits =
-      max_rate_possible_kbits * kFactorAvailablePerc / 100;
-  // and deduce the FEC overhead
-  const uint32_t max_video_after_fec_kbits =
-      max_video_allocated_kbits * 100 /
-      (100 + settings.wb_video_fec_percentage);
-  m_console->debug(
-      "max_rate_possible_kbits:{} kFactorAvailablePerc:{} max_video_after_fec_kbits:{}",
-      max_rate_possible_kbits, kFactorAvailablePerc,
-      max_video_after_fec_kbits);
-
-  // then check if there are tx errors since the last time we checked (1 second intervals)
-  bool bitrate_is_still_too_high = false;
-  auto& primary_video_tx = *m_wb_video_tx_list.at(0).get();
-  const auto primary_video_tx_stats = primary_video_tx.get_latest_stats();
-  if (last_tx_error_count < 0) {
-    last_tx_error_count = static_cast<int64_t>(
-        primary_video_tx_stats.count_tx_injections_error_hint);
-  } else {
-    const auto delta = primary_video_tx_stats.count_tx_injections_error_hint -
-                       last_tx_error_count;
-    last_tx_error_count = static_cast<int64_t>(
-        primary_video_tx_stats.count_tx_injections_error_hint);
-    if (delta >= 1) {
-      bitrate_is_still_too_high = true;
+  const auto max_rate_for_current_wifi_config =
+      openhd::wb::get_max_rate_possible(m_broadcast_cards.at(0),settings.wb_mcs_index,settings.wb_channel_width==40);
+  const auto max_video_rate_for_current_wifi_config =
+      openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
+  if(m_max_video_rate_for_current_wifi_config !=max_video_rate_for_current_wifi_config){
+    // Apply the default for this configuration, then return - we will start the auto-adjustment
+    // depending on tx error(s) next time we rate adjustment is called
+    m_console->debug("MCS:{} ch_width:{} Calculated max_rate:{}, max_video_rate:{}",
+                     settings.wb_mcs_index,settings.wb_channel_width,
+                     kbits_per_second_to_string(max_rate_for_current_wifi_config),
+                     kbits_per_second_to_string(max_video_rate_for_current_wifi_config));
+    m_max_video_rate_for_current_wifi_config =
+        max_video_rate_for_current_wifi_config;
+    m_recommended_video_bitrate= m_max_video_rate_for_current_wifi_config;
+    m_n_detected_and_reset_tx_errors=0;
+    m_last_total_tx_error_count=0;
+    if (m_opt_action_handler) {
+      openhd::ActionHandler::LinkBitrateInformation lb{};
+      lb.recommended_encoder_bitrate_kbits = m_recommended_video_bitrate;
+      m_opt_action_handler->action_request_bitrate_change_handle(lb);
     }
+    return;
   }
-  // initialize with the theoretical default, since we do not know what the camera is doing, even though it probably is "too high".
-  if (last_recommended_bitrate <= 0) {
-    last_recommended_bitrate = max_video_after_fec_kbits;
+  // Check if we had any tx errors since last time we checked, resetting them every time
+  const auto curr_total_tx_errors=get_total_tx_error_count();
+  const auto delta_total_tx_errors=curr_total_tx_errors-m_last_total_tx_error_count;
+  m_last_total_tx_error_count=curr_total_tx_errors;
+  const bool has_tx_errors=delta_total_tx_errors>0;
+  if(has_tx_errors){
+    m_n_detected_and_reset_tx_errors++;
+    m_console->warn("Got {} tx errors {} times",delta_total_tx_errors,m_n_detected_and_reset_tx_errors);
   }
-  if (bitrate_is_still_too_high) {
-    m_console->warn("Bitrate probably too high");
-    // reduce bitrate slightly
-    last_recommended_bitrate = last_recommended_bitrate * 80 / 100;
-  } else {
-    if (last_recommended_bitrate < max_video_after_fec_kbits) {
-      // otherwise, slowly increase bitrate
-      last_recommended_bitrate = last_recommended_bitrate * 120 / 100;
+  if(m_n_detected_and_reset_tx_errors>=2){
+    // We got tx errors N consecutive times, resetting between each - we need to reduce bitrate
+    m_console->debug("Got m_n_detected_and_reset_tx_errors{} with max:{} recommended:{}",
+                     m_n_detected_and_reset_tx_errors,
+        m_max_video_rate_for_current_wifi_config,m_recommended_video_bitrate);
+    m_n_detected_and_reset_tx_errors=0;
+    // Reduce video bitrate by 1MBit/s
+    m_recommended_video_bitrate-=1000;
+    // Safety, in case we fall below a certain threshold the encoder won't be able to produce an image at some point anyways.
+    static constexpr auto MIN_BITRATE=1000*2;
+    if(m_recommended_video_bitrate<MIN_BITRATE){
+      m_recommended_video_bitrate=MIN_BITRATE;
     }
+    m_console->warn("TX errors, reducing video bitrate to {}",m_recommended_video_bitrate);
   }
-  // 1Mbit/s as lower limit
-  if (last_recommended_bitrate < 1000) {
-    last_recommended_bitrate = 1000;
-  }
-  // theoretical max as upper limit
-  if (last_recommended_bitrate > max_video_after_fec_kbits) {
-    last_recommended_bitrate = max_video_after_fec_kbits;
-  }
+  // Since settings might change dynamically at run time, we constantly recommend a bitrate to the encoder / camera -
+  // The camera is responsible for "not doing anything" when we recommend the same bitrate to it multiple times
   if (m_opt_action_handler) {
     openhd::ActionHandler::LinkBitrateInformation lb{};
-    lb.recommended_encoder_bitrate_kbits = last_recommended_bitrate;
+    lb.recommended_encoder_bitrate_kbits = m_recommended_video_bitrate;
     m_opt_action_handler->action_request_bitrate_change_handle(lb);
   }
-
 }
 
 bool WBLink::set_enable_wb_video_variable_bitrate(int value) {
@@ -803,27 +764,6 @@ bool WBLink::check_work_queue_empty() {
   return true;
 }
 
-bool WBLink::set_wb_rtl8812au_tx_pwr_idx_override(int value) {
-  if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(value))return false;
-  if(!check_in_state_support_changing_settings())return false;
-  m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=value;
-  m_settings->persist();
-  // No need to delay the change, but perform it async anyways.
-  auto work_item=std::make_shared<WorkItem>([this](){
-    apply_txpower();
-  },std::chrono::steady_clock::now());
-  schedule_work_item(work_item);
-  return true;
-}
-
-bool WBLink::has_rtl8812au() {
-  for(const auto& card: m_broadcast_cards){
-    if(card.type==WiFiCardType::Realtek8812au){
-      return true;
-    }
-  }
-  return false;
-}
 
 void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
   const auto res=m_wb_tele_tx->try_enqueue_packet(data);
@@ -899,31 +839,39 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
     if(done_early)break;
     // and all possible channel widths (20 or 40Mhz only right now)
     for(const auto& channel_width:channel_widths_to_scan){
+      // Return early in some cases (e.g. when we have a low loss and are quite certain about a frequency)
       if(done_early)break;
+      // Skip channels / frequencies the card doesn't support anyways
       if(!openhd::wb::cards_support_frequency(channel.frequency,m_broadcast_cards,m_platform, m_console)){
         continue;
       }
       // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
       apply_frequency_and_channel_width(channel.frequency,channel_width);
-      m_console->warn("Scanning {}Mhz [{}] width:{}",channel.frequency,channel.channel,channel_width);
-      reset_all_count_p_stats();
+      m_console->warn("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
+      reset_all_rx_stats();
       std::this_thread::sleep_for(DEFAULT_SCAN_TIME_PER_CHANNEL);
-      const int n_packets=get_count_p_all();
-      m_console->debug("Got {} packets on frequency {}",n_packets,channel.frequency);
+      const int n_packets= get_rx_count_p_all();
+      // We might receive 20Mhz channel width packets from a air unit sending on 20Mhz channel width while
+      // receiving on 40Mhz channel width - if we were to then to set the gnd to 40Mhz, we will be able to receive data,
+      // but not be able to send any data up to the air unit.
+      const int rx_chann_width=get_last_rx_packet_chan_width();
+      m_console->debug("Got {} packets on {}@{}",n_packets,channel.frequency,rx_chann_width);
       if(n_packets>0){
         // We got packets on this frequency, but it is not guaranteed those packets are from an openhd air unit.
         // sleep a bit more, then check if we actually got any decrypted packets
         std::this_thread::sleep_for(std::chrono::seconds(2));
-        const int n_packets_decrypted=get_count_p_decryption_ok();
+        const int n_packets_decrypted= get_rx_count_p_decryption_ok();
         const int packet_loss=m_wb_video_rx_list.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
         m_console->debug("Got {} decrypted packets on frequency {} with {} packet loss",n_packets_decrypted,channel.frequency,packet_loss);
-        if(n_packets_decrypted>0){
+        if(n_packets_decrypted>0 && rx_chann_width==channel_width){
           TmpResult tmp_result{channel,channel_width,packet_loss};
           possible_frequencies.push_back(tmp_result);
           if(packet_loss<10){
             // if the packet loss is low, we can safely return early
             m_console->debug("Got <10% packet loss, return early");
             done_early= true;
+          }else{
+            m_console->warn("Got >10% packet loss,continue and select most likely at the end");
           }
         }
       }
@@ -931,7 +879,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
   }
   ScanResult result{};
   if(possible_frequencies.empty()){
-    m_console->debug("Channel scan failure, restore local settings");
+    m_console->warn("Channel scan failure, restore local settings");
     apply_frequency_and_channel_width_from_settings();
     result.success= false;
     result.frequency=0;
@@ -944,13 +892,14 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         best=other;
       }
     }
-    m_console->debug("Selected {} {} with packet loss {} as most likely",best.channel.frequency,best.channel_width,best.packet_loss_perc);
+    m_console->warn("Selected {}@{} with loss:{}% as most likely",best.channel.frequency,best.channel_width,best.packet_loss_perc);
     result.success= true;
     result.frequency=best.channel.frequency;
     result.channel_width=best.channel_width;
     m_settings->unsafe_get_settings().wb_frequency=result.frequency;
     m_settings->unsafe_get_settings().wb_channel_width=result.channel_width;
     m_settings->persist();
+    openhd::reboot::dirty_terminate_openhd_and_let_service_restart();
     apply_frequency_and_channel_width_from_settings();
   }
   is_scanning=false;
@@ -968,26 +917,37 @@ void WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_c
   schedule_work_item(work_item);
 }
 
-void WBLink::reset_all_count_p_stats() {
-  for(auto& rx:m_wb_video_rx_list){
-    rx->reset_all_count_p_stats();
+void WBLink::reset_all_rx_stats() {
+  auto receivers=get_rx_list();
+  for(auto& rx:receivers){
+    rx->reset_all_rx_stats();
   }
 }
 
-int WBLink::get_count_p_all() {
+int WBLink::get_rx_count_p_all() {
+  auto receivers=get_rx_list();
   int total=0;
-  for(auto& rx:m_wb_video_rx_list){
-    total += rx->get_latest_stats().wb_rx_stats.count_p_all;
+  for(auto& rx:receivers){
+    total += static_cast<int>(rx->get_latest_stats().wb_rx_stats.count_p_all);
   }
   return total;
 }
 
-int WBLink::get_count_p_decryption_ok() {
+int WBLink::get_rx_count_p_decryption_ok() {
+  auto receivers=get_rx_list();
   int total=0;
-  for(auto& rx:m_wb_video_rx_list){
-    total += rx->get_latest_stats().wb_rx_stats.count_p_all;
+  for(auto& rx:receivers){
+    total += static_cast<int>(rx->get_latest_stats().wb_rx_stats.count_p_decryption_ok);
   }
   return total;
+}
+
+int WBLink::get_last_rx_packet_chan_width() {
+  for(auto& rx:m_wb_video_rx_list){
+    auto rx_stats=rx->get_latest_stats().wb_rx_stats;
+    if(rx_stats.last_received_packet_channel_width!=-1)return rx_stats.last_received_packet_channel_width;
+  }
+  return -1;
 }
 
 bool WBLink::check_in_state_support_changing_settings(){
@@ -996,4 +956,51 @@ bool WBLink::check_in_state_support_changing_settings(){
 
 openhd::Space WBLink::get_current_frequency_channel_space()const {
   return openhd::get_space_from_frequency(m_settings->get_settings().wb_frequency);
+}
+
+std::vector<WBTransmitter*> WBLink::get_tx_list() {
+  std::vector<WBTransmitter*> ret;
+  for(auto& vid_tx:m_wb_video_tx_list)ret.push_back(vid_tx.get());
+  if(m_wb_tele_tx)ret.push_back(m_wb_tele_tx.get());
+  return ret;
+}
+
+std::vector<AsyncWBReceiver*> WBLink::get_rx_list() {
+  std::vector<AsyncWBReceiver*> ret;
+  for(auto& vid_rx:m_wb_video_rx_list)ret.push_back(vid_rx.get());
+  if(m_wb_tele_rx)ret.push_back(m_wb_tele_rx.get());
+  return ret;
+}
+
+bool WBLink::set_tx_power_mw(int tx_power_mw) {
+  m_console->debug("set_tx_power_mw {}mW", tx_power_mw);
+  if(!openhd::is_valid_tx_power_milli_watt(tx_power_mw)){
+    m_console->warn("Invalid tx power:{}mW", tx_power_mw);
+    return false;
+  }
+  if(!check_in_state_support_changing_settings())return false;
+  m_settings->unsafe_get_settings().wb_tx_power_milli_watt= tx_power_mw;
+  m_settings->persist();
+  apply_txpower();
+  return true;
+}
+
+bool WBLink::set_tx_power_rtl8812au(int tx_power_index_override){
+  m_console->debug("set_tx_power_rtl8812au {}index",tx_power_index_override);
+  if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(tx_power_index_override))return false;
+  if(!check_in_state_support_changing_settings())return false;
+  m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=tx_power_index_override;
+  m_settings->persist();
+  apply_txpower();
+  return true;
+}
+
+int64_t WBLink::get_total_tx_error_count() {
+  auto tx_es=get_tx_list();
+  int64_t total=0;
+  for(const auto&tx:tx_es){
+    auto stats=tx->get_latest_stats();
+    total+=stats.count_tx_injections_error_hint+stats.n_dropped_packets;
+  }
+  return total;
 }

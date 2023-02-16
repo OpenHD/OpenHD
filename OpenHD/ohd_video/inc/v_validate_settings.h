@@ -8,7 +8,7 @@
 #include <optional>
 #include <regex>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 // For now, only basic sanity checking on video settings
 namespace openhd{

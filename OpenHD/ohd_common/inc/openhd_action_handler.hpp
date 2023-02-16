@@ -10,8 +10,8 @@
 #include <utility>
 
 #include "openhd_link_statistics.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util.h"
-#include "openhd_spdlog.hpp"
 
 // This class exists to handle the rare case(s) when one openhd module needs to talk to another.
 // For example, the wb link (ohd_interface) might request a lower encoder bitrate (ohd_video)
@@ -28,13 +28,11 @@ class ActionHandler{
  public:
   // Link bitrate change request
   struct LinkBitrateInformation{
-    uint32_t recommended_encoder_bitrate_kbits;
+    int recommended_encoder_bitrate_kbits;
   };
   typedef std::function<void(LinkBitrateInformation link_bitrate_info)> ACTION_REQUEST_BITRATE_CHANGE;
   static std::string link_bitrate_info_to_string(const LinkBitrateInformation& lb){
-    std::stringstream ss;
-    ss<<"recommended_encoder_bitrate:"<<lb.recommended_encoder_bitrate_kbits<<" kBit/s";
-    return ss.str();
+    return fmt::format("[recommended_encoder_bitrate:{}kBit/s}",lb.recommended_encoder_bitrate_kbits);
   }
   // used by ohd_video
   void action_request_bitrate_change_register(const ACTION_REQUEST_BITRATE_CHANGE& cb){
@@ -52,6 +50,7 @@ class ActionHandler{
       auto& cb=*tmp;
       cb(link_bitrate_info);
     }
+    curr_set_raw_video_bitrate_kbits_cam1 =link_bitrate_info.recommended_encoder_bitrate_kbits;
   }
  public:
   // Link statistics - for that the wb link (ohd_interface) needs to talk to ohd_telemetry
@@ -115,6 +114,21 @@ class ActionHandler{
   std::shared_ptr<ACTION_REQUEST_BITRATE_CHANGE> m_action_request_bitrate_change =nullptr;
   std::shared_ptr<openhd::link_statistics::STATS_CALLBACK> m_link_statistics_callback=nullptr;
   std::shared_ptr<SCAN_CHANNELS_CB> m_scan_channels_cb=nullptr;
+ private:
+  // dirty - bitrate(s)  might be changed at run time, this exists since we write the wb stats in ohd_interface but the value
+  // should be whatever the cam is actually doing
+  std::atomic<int> curr_set_raw_video_bitrate_kbits_cam1 =-1;
+  std::atomic<int> curr_set_raw_video_bitrate_kbits_cam2 =-1;
+ public:
+  void dirty_set_bitrate_of_camera(const int cam_index,int bitrate_kbits){
+    if(cam_index==0)curr_set_raw_video_bitrate_kbits_cam1=bitrate_kbits;
+    if(cam_index==1)curr_set_raw_video_bitrate_kbits_cam2=bitrate_kbits;
+  }
+  int dirty_get_bitrate_of_camera(const int cam_index){
+    if(cam_index==0)return curr_set_raw_video_bitrate_kbits_cam1;
+    if(cam_index==1)return curr_set_raw_video_bitrate_kbits_cam2;
+    return -1;
+  }
 };
 
 }

@@ -37,6 +37,8 @@ class CameraStream {
    * @param i_transmit abstract interface where encoded video data is forwarded to (was UDP port previously)
    */
   CameraStream(PlatformType platform_type,std::shared_ptr<CameraHolder> camera_holder,std::shared_ptr<OHDLink> link_handle);
+  CameraStream(const CameraStream&)=delete;
+  CameraStream(const CameraStream&&)=delete;
 
   // It is a good common programming practice to make them pure virtual
   // setup everything needed to start streaming

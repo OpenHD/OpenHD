@@ -117,3 +117,20 @@ uint32_t openhd::wb::rtl8812au_get_measured_max_rate(uint32_t mcs_index) {
   assert(true);
   return 5000;
 }
+
+std::vector<std::string> openhd::wb::get_card_names(const std::vector<WiFiCard>& cards) {
+  std::vector<std::string> ret{};
+  for(const auto& card: cards){
+    ret.push_back(card.device_name);
+  }
+  return ret;
+}
+
+bool openhd::wb::has_any_rtl8812au(const std::vector<WiFiCard>& cards) {
+  for(const auto& card: cards){
+    if(card.type==WiFiCardType::Realtek8812au){
+      return true;
+    }
+  }
+  return false;
+}

@@ -13,7 +13,7 @@
 #include "camerastream.h"
 #include "gst_bitrate_controll_wrapper.hpp"
 #include "openhd_platform.h"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 // Implementation of OHD CameraStream for pretty much everything, using
 // gstreamer.
@@ -24,10 +24,14 @@
 class GStreamerStream : public CameraStream {
  public:
   GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                  std::shared_ptr<OHDLink> opt_link_handle);
+                  std::shared_ptr<OHDLink> opt_link_handle,
+                  std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   ~GStreamerStream();
   void setup() override;
  private:
+  // Build (parts) of the gstreamer pipeline for all the different cameras we support.
+  // If params (like for example resolution, framerate, exposure,...) are changeable on the camera type,
+  // it sets them accordingly by reading them from @CameraStream::m_camera_holder
   void setup_raspberrypi_mmal_csi();
   void setup_raspberrypi_veye_v4l2();
   void setup_raspberrypi_libcamera();
@@ -39,6 +43,11 @@ class GStreamerStream : public CameraStream {
   void setup_ip_camera();
   void setup_sw_dummy_camera();
   void setup_custom_unmanaged_camera();
+  /**
+   * Stop and cleanup the pipeline (if running), then re-build and re-start it.
+   */
+  void stop_cleanup_restart();
+  // Utils when settings are changed (most of them require a full restart of the pipeline)
   void restart_after_new_setting();
   void restartIfStopped() override;
   void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) override;
@@ -47,6 +56,7 @@ class GStreamerStream : public CameraStream {
   void start() override;
   // Set gst state to PAUSED
   void stop() override;
+  // Set gst state to GST_STATE_NULL and properly cleanup the pipeline.
   void cleanup_pipe();
   std::string createDebug() override;
  private:
@@ -72,8 +82,8 @@ class GStreamerStream : public CameraStream {
   // Change the bitrate without re-starting the whole pipeline if supported by the camera.
   // This is needed for variable rf link bitrate(s)
   // returns true on success, false otherwise
-  bool try_dynamically_change_bitrate(uint32_t bitrate_kbits);
-  uint32_t m_curr_dynamic_bitrate_kbits =-1;
+  bool try_dynamically_change_bitrate(int bitrate_kbits);
+  std::atomic<int> m_curr_dynamic_bitrate_kbits =-1;
  private:
   // The stuff here is to pull the data out of the gstreamer pipeline, such that we can forward it to the WB link
   void on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts);
@@ -84,6 +94,7 @@ class GStreamerStream : public CameraStream {
   bool m_pull_samples_run=false;
   std::unique_ptr<std::thread> m_pull_samples_thread;
   void loop_pull_samples();
+  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
 };
 
 #endif

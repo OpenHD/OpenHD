@@ -10,7 +10,7 @@
 #include <sstream>
 
 #include "mav_include.h"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 namespace MExampleMessage {
 // mostly from https://github.com/mavlink/mavlink/blob/master/examples/linux/mavlink_udp.c

@@ -15,10 +15,14 @@
 #include "gst_debug_helper.h"
 #include "rtp_eof_helper.h"
 
+#include "openhd_util_time.hpp"
+
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                                 std::shared_ptr<OHDLink> i_transmit_video)
+                                 std::shared_ptr<OHDLink> i_transmit_video,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
     //: CameraStream(platform, camera_holder, video_udp_port) {
-    : CameraStream(platform,camera_holder,i_transmit_video){
+    : CameraStream(platform,camera_holder,i_transmit_video),
+      m_opt_action_handler(opt_action_handler)
+{
   m_console=openhd::log::create_or_get("v_gststream");
   assert(m_console);
   m_console->debug("GStreamerStream::GStreamerStream()");
@@ -54,6 +58,11 @@ void GStreamerStream::setup() {
   m_console->debug("GStreamerStream::setup() begin");
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
+  if(m_opt_action_handler){
+    m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,setting.h26x_bitrate_kbits);
+  }
+  // atomic & called in regular intervals if variable bitrate is enabled.
+  m_curr_dynamic_bitrate_kbits=setting.h26x_bitrate_kbits;
   if(!setting.enable_streaming){
     // When streaming is disabled, we just don't create the pipeline. We fully restart on all changes anyways.
     m_console->info("Streaming disabled");
@@ -265,6 +274,16 @@ void GStreamerStream::setup_custom_unmanaged_camera() {
   m_pipeline_content << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
 }
 
+void GStreamerStream::stop_cleanup_restart() {
+  const auto before=std::chrono::steady_clock::now();
+  stop();
+  cleanup_pipe();
+  setup();
+  start();
+  const auto elapsed=std::chrono::steady_clock::now()-before;
+  m_console->debug("stop_cleanup_restart took {}",openhd::util::time::R(elapsed));
+}
+
 std::string GStreamerStream::createDebug(){
   std::unique_lock<std::mutex> lock(m_pipeline_mutex, std::try_to_lock);
   if(!lock.owns_lock()){
@@ -347,10 +366,7 @@ void GStreamerStream::restartIfStopped() {
       m_console->warn("Disabling recording, not enough free space (<300MB)");
       m_camera_holder->unsafe_get_settings().air_recording=Recording::DISABLED;
       m_camera_holder->persist();
-      stop();
-      cleanup_pipe();
-      setup();
-      start();
+      stop_cleanup_restart();
     }
   }
   if(m_camera_holder->get_camera().type==CameraType::CUSTOM_UNMANAGED_CAMERA){
@@ -370,10 +386,7 @@ void GStreamerStream::restartIfStopped() {
     // We fully restart the whole pipeline, since some issues might not be fixable by just setting paused
     // This will also show up in QOpenHD (log level >= warn), but we are limited by the n of characters in mavlink
     m_console->warn("Restarting camera, check your parameters / connection");
-    stop();
-    cleanup_pipe();
-    setup();
-    start();
+    stop_cleanup_restart();
     m_console->debug("Restarted");
   }
 }
@@ -382,11 +395,8 @@ void GStreamerStream::restartIfStopped() {
 void GStreamerStream::restart_after_new_setting() {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   m_console->debug("GStreamerStream::restart_after_new_setting() begin");
-  stop();
   // R.N we need to fully re-set the pipeline if any camera setting has changed
-  cleanup_pipe();
-  setup();
-  start();
+  stop_cleanup_restart();
   m_console->debug("GStreamerStream::restart_after_new_setting() end");
 }
 
@@ -406,30 +416,52 @@ void GStreamerStream::restart_async() {
 }
 
 void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
-  std::lock_guard<std::mutex> guard(m_pipeline_mutex);
-  const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
-  auto recommended_encoder_bitrate_kbits=lb.recommended_encoder_bitrate_kbits;
-  if(m_camera_holder->requires_half_bitrate_workaround()){
-    openhd::log::get_default()->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
-    recommended_encoder_bitrate_kbits = recommended_encoder_bitrate_kbits / 2;
+  m_console->debug("handle_change_bitrate_request prev: {} new:{}",
+                   kbits_per_second_to_string(m_curr_dynamic_bitrate_kbits),
+                   kbits_per_second_to_string(lb.recommended_encoder_bitrate_kbits));
+  //const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
+  auto bitrate_for_encoder_kbits =lb.recommended_encoder_bitrate_kbits;
+  // No encoder I've seen can do <2MBit/s, at least the ones we use
+  static constexpr auto MIN_BITRATE_KBITS=2*1000;
+  if(bitrate_for_encoder_kbits <MIN_BITRATE_KBITS){
+    m_console->debug("Cam cannot do <{}", kbits_per_second_to_string(MIN_BITRATE_KBITS));
+    bitrate_for_encoder_kbits =MIN_BITRATE_KBITS;
   }
-  // pi encoder cannot do less than 1MBit/s anyways
-  if(recommended_encoder_bitrate_kbits<=1000){
-    recommended_encoder_bitrate_kbits=1000;
+  // upper-bound - hard coded for now, since pi cannot do more than 19MBit/s
+  static constexpr auto max_bitrate_kbits=19*1000;
+  if(bitrate_for_encoder_kbits >max_bitrate_kbits){
+    m_console->debug("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
+    bitrate_for_encoder_kbits =max_bitrate_kbits;
   }
-  // and the bitrate set by the user has become the max upper level
-  if(recommended_encoder_bitrate_kbits>max_bitrate_kbits){
-    recommended_encoder_bitrate_kbits=max_bitrate_kbits;
+  if(m_curr_dynamic_bitrate_kbits==bitrate_for_encoder_kbits){
+    m_console->debug("Cam already at {}",m_curr_dynamic_bitrate_kbits);
+    return ;
   }
-  if(m_curr_dynamic_bitrate_kbits!=recommended_encoder_bitrate_kbits){
-    m_console->debug("Changing bitrate to {} kBit/s",recommended_encoder_bitrate_kbits);
-    if(try_dynamically_change_bitrate(recommended_encoder_bitrate_kbits)){
-      m_curr_dynamic_bitrate_kbits=recommended_encoder_bitrate_kbits;
+  m_console->debug("Changing bitrate to {} kBit/s",bitrate_for_encoder_kbits);
+  if(try_dynamically_change_bitrate( bitrate_for_encoder_kbits)){
+    m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
+    // Do not trigger a full restart - we already changed the bitrate dynamically
+    m_camera_holder->persist(false);
+    m_curr_dynamic_bitrate_kbits= bitrate_for_encoder_kbits;
+    if(m_opt_action_handler){
+      m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
+    }
+  }else{
+    const auto cam_type=m_camera_holder->get_camera().type;
+    if(cam_type==CameraType::RPI_CSI_LIBCAMERA || cam_type==CameraType::RPI_VEYE_CSI_V4l2){
+      m_console->warn("Bitrate change requires restart");
+      // These cameras are known to handle a restart quickly, but it still sucks v4l2h264enc does not support changing the bitrate at run time
+      m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
+      // This triggers a restart
+      m_camera_holder->persist();
+    }else{
+      m_console->warn("Camera does not support variable bitrate");
     }
   }
 }
 
-bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
+bool GStreamerStream::try_dynamically_change_bitrate(int bitrate_kbits) {
+  std::lock_guard<std::mutex> guard(m_pipeline_mutex);
   if(m_gst_pipeline== nullptr){
     m_console->debug("cannot change_bitrate, no pipeline");
     return false;
@@ -439,7 +471,12 @@ bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
     return false;
   }
   auto bitrate_ctrl_element=m_bitrate_ctrl_element.value();
-  return change_bitrate(bitrate_ctrl_element,bitrate_kbits);
+  auto hacked_bitrate_kbits=bitrate_kbits;
+  if(m_camera_holder->requires_half_bitrate_workaround()){
+    m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
+    hacked_bitrate_kbits =  hacked_bitrate_kbits / 2;
+  }
+  return change_bitrate(bitrate_ctrl_element,hacked_bitrate_kbits);
 }
 
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
@@ -488,4 +525,3 @@ void GStreamerStream::loop_pull_samples() {
   m_frame_fragments.resize(0);
 
 }
-

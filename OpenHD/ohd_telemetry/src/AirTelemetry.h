@@ -20,7 +20,7 @@
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "openhd_action_handler.hpp"
 #include "openhd_link.hpp"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 /**
  * OpenHD Air telemetry. Assumes a Ground instance running on the ground pi.
@@ -62,8 +62,6 @@ class AirTelemetry : public MavlinkSystem{
    */
   void set_link_handle(std::shared_ptr<OHDLink> link);
  private:
-  const OHDPlatform _platform;
-  std::unique_ptr<openhd::telemetry::air::SettingsHolder> _airTelemetrySettings;
   // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
   void send_messages_fc(const std::vector<MavlinkMessage>& messages);
   // send mavlink messages to the ground unit, lossy
@@ -72,7 +70,12 @@ class AirTelemetry : public MavlinkSystem{
   void on_messages_fc(const std::vector<MavlinkMessage>& messages);
   // called every time one or more messages from the ground unit are received
   void on_messages_ground_unit(const std::vector<MavlinkMessage>& messages);
+  // R.N only on air, and only FC uart settings
+  std::vector<openhd::Setting> get_all_settings();
+  void setup_uart();
  private:
+  const OHDPlatform _platform;
+  std::unique_ptr<openhd::telemetry::air::SettingsHolder> _airTelemetrySettings;
   std::mutex m_serial_endpoint_mutex;
   std::unique_ptr<SerialEndpoint> m_serial_endpoint;
   // send/receive data via wb
@@ -84,9 +87,6 @@ class AirTelemetry : public MavlinkSystem{
   std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
   // rpi only, allow changing gpios via settings
   std::unique_ptr<openhd::telemetry::rpi::GPIOControl> m_opt_gpio_control=nullptr;
-  // R.N only on air, and only FC uart settings
-  std::vector<openhd::Setting> get_all_settings();
-  void setup_uart();
   std::shared_ptr<spdlog::logger> m_console;
 };
 

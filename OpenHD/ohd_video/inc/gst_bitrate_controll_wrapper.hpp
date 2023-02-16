@@ -9,7 +9,7 @@
 
 #include <optional>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 // Bitrate is one of the few params we want to support changing dynamically at run time
 // without the need for a pipeline restart.
@@ -62,7 +62,7 @@ static bool change_bitrate(const GstBitrateControlElement& ctrl_el,int bitrate_k
   gint actual_bits_per_second=-1;
   g_object_get(ctrl_el.encoder, ctrl_el.property_name.c_str(),&actual_bits_per_second,NULL);
   if(actual_bits_per_second!=bitrate){
-    openhd::log::get_default()->warn("Cannot change bitrate to {} kbit/s, got {}",bitrate_kbits,actual_bits_per_second);
+    openhd::log::get_default()->warn("Cannot change bitrate to {}kbit/s, got {}kBit/s",bitrate_kbits,actual_bits_per_second);
     return false;
   }
   openhd::log::get_default()->debug("Changed bitrate to {} kbit/s",bitrate_kbits);

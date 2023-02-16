@@ -8,7 +8,7 @@
 
 #include <utility>
 
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 
 USBTetherListener::USBTetherListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager) :
     m_external_device_manager(std::move(external_device_manager)){
@@ -42,6 +42,8 @@ void USBTetherListener::connectOnce() {
       break;
     }
   }
+  // We were stopped externally, no reason to continue
+  if(m_check_connection_thread_stop) return;
   // now we find the IP of the connected device so we can forward video and more to it.
   // example on my Ubuntu pc:
   // ip route list dev usb0

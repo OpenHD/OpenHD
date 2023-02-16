@@ -46,6 +46,9 @@ set(sources
     "src/openhd_settings_persistent.cpp"
     "src/openhd_profile.cpp"
     "src/openhd_platform.cpp"
+    "src/openhd_spdlog.cpp"
+    "src/openhd_udp_log.cpp"
+    "src/openhd_reboot_util.cpp"
 
     "inc/openhd_settings_imp.hpp"
     "inc/include_json.hpp"
@@ -61,9 +64,10 @@ set(sources
     "inc/openhd_settings_persistent.h"
     "inc/openhd_util.h"
     "inc/openhd_util_filesystem.h"
-    "inc/openhd_spdlog.hpp"
-    "inc/openhd_spdlog_tele_sink.h"
+    "inc/openhd_spdlog.h"
     "inc/openhd_udp_log.h"
+    "inc/openhd_reboot_util.h"
+    "inc/openhd_dynamic_cameras.hpp"
     )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 
@@ -86,3 +90,6 @@ set_target_properties(OHDCommonLib PROPERTIES
 
 add_executable(test_openhd_util test/test_openhd_util.cpp)
 target_link_libraries(test_openhd_util OHDCommonLib)
+
+add_executable(test_ohd_reboot test/test_ohd_reboot.cpp)
+target_link_libraries(test_ohd_reboot OHDCommonLib)

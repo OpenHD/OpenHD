@@ -14,7 +14,7 @@
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   m_console = openhd::log::create_or_get("air_tele");
   assert(m_console);
-  _airTelemetrySettings=std::make_unique<openhd::telemetry::air::SettingsHolder>();
+  _airTelemetrySettings=std::make_unique<openhd::telemetry::air::SettingsHolder>(platform);
   setup_uart();
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
   components.push_back(m_ohd_main_component);
@@ -157,10 +157,11 @@ void AirTelemetry::add_settings_camera_component(
 std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   std::vector<openhd::Setting> ret{};
   using namespace openhd::telemetry;
-  auto c_fc_uart_connection_type=[this](std::string,int value) {
-	if(!air::validate_uart_connection_type(value)){
-	  return false;
-	}
+  auto c_fc_uart_connection_type=[this](std::string,std::string value) {
+	//We just accept anything, but log a warning
+        if(!OHDFilesystemUtil::exists(value)){
+          m_console->warn("{} is not a valid serial");
+        }
 	_airTelemetrySettings->unsafe_get_settings().fc_uart_connection_type=value;
 	_airTelemetrySettings->persist();
 	setup_uart();
@@ -184,10 +185,10 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     setup_uart();
     return true;
   };
-  ret.push_back(openhd::Setting{air::FC_UART_CONNECTION_TYPE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_connection_type),
-																		   c_fc_uart_connection_type}});
+  ret.push_back(openhd::Setting{air::FC_UART_CONNECTION_TYPE,openhd::StringSetting{_airTelemetrySettings->get_settings().fc_uart_connection_type,
+                                                                                    c_fc_uart_connection_type}});
   ret.push_back(openhd::Setting{air::FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_baudrate),
-																	 c_fc_uart_baudrate}});
+                                                                           c_fc_uart_baudrate}});
   ret.push_back(openhd::Setting{air::FC_UART_FLOW_CONTROL,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_flow_control),
                                                                            c_fc_uart_flow_control}});
 
@@ -215,10 +216,6 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 void AirTelemetry::setup_uart() {
   assert(_airTelemetrySettings);
   using namespace openhd::telemetry;
-  const auto fc_uart_connection_type=_airTelemetrySettings->get_settings().fc_uart_connection_type;
-  const auto fc_uart_baudrate=_airTelemetrySettings->get_settings().fc_uart_baudrate;
-  const auto fc_uart_flow_control=_airTelemetrySettings->get_settings().fc_uart_flow_control;
-  assert(air::validate_uart_connection_type(fc_uart_connection_type));
   // Disable the currently running uart configuration, if there is any
   std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
   if(m_serial_endpoint !=nullptr) {
@@ -227,21 +224,24 @@ void AirTelemetry::setup_uart() {
     m_serial_endpoint.reset();
     m_serial_endpoint =nullptr;
   }
-  if(fc_uart_connection_type==air::UART_CONNECTION_TYPE_DISABLE){
-    // No uart enabled, we've already cleaned it up though
-    m_console->info("FC UART disabled");
-    return;
-  }else{
+  if(_airTelemetrySettings->is_serial_enabled()){
+    const auto fc_uart_connection_type=_airTelemetrySettings->get_settings().fc_uart_connection_type;
+    const auto fc_uart_baudrate=_airTelemetrySettings->get_settings().fc_uart_baudrate;
+    const auto fc_uart_flow_control=_airTelemetrySettings->get_settings().fc_uart_flow_control;
     m_console->debug("FC UART enable - begin");
     SerialEndpoint::HWOptions options{};
-    options.linux_filename=air::uart_fd_from_connection_type(fc_uart_connection_type).value();
+    options.linux_filename=fc_uart_connection_type;
     options.baud_rate=fc_uart_baudrate;
     options.flow_control= fc_uart_flow_control;
-    m_serial_endpoint =std::make_unique<SerialEndpoint>("ser_fc",options);
+    options.enable_reading= true;
+    m_serial_endpoint =std::make_unique<SerialEndpoint>("fc_ser",options);
     m_serial_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
       this->on_messages_fc(messages);
     });
     m_console->debug("FC UART enable - end");
+  }else{
+    // No uart enabled, we've already cleaned it up though
+    m_console->info("FC UART disabled");
   }
 }
 

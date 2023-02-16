@@ -2,7 +2,8 @@
 #define OPENHD_PROFILE_H
 
 #include <string>
-#include "openhd_spdlog.hpp"
+
+#include "openhd_spdlog.h"
 
 /**
  * The profile is created on startup and then doesn't change during run time.

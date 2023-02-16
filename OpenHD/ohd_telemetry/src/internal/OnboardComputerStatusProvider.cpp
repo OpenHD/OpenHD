@@ -53,9 +53,8 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_clock_h264=0;
     int curr_clock_core=0;
     int curr_clock_v3d=0;
-    int curr_space_left=0;
-    curr_space_left=OHDFilesystemUtil::get_remaining_space_in_mb();
-	const auto curr_ram_usage=OnboardComputerStatus::calculate_memory_usage_percent();
+    const int curr_space_left=OHDFilesystemUtil::get_remaining_space_in_mb();
+    const auto curr_ram_usage=OnboardComputerStatus::calculate_memory_usage_percent();
     if(m_platform.platform_type==PlatformType::RaspberryPi){
       curr_temperature_core=(int8_t)OnboardComputerStatus::rpi::read_temperature_soc_degree();
       // temporary, until we have our own message

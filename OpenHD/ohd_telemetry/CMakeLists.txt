@@ -51,8 +51,7 @@ SET(sources
     "src/internal/OnboardComputerStatus.hpp"
     "src/internal/OnboardComputerStatusProvider.cpp"
     "src/internal/OnboardComputerStatusProvider.h"
-    "src/internal/RebootUtil.hpp"
-    "src/internal/StatusTextAccumulator.hpp"
+        "src/internal/StatusTextAccumulator.hpp"
 
     "src/mavsdk_temporary/connection.cpp"
     "src/mavsdk_temporary/connection.h"
@@ -133,9 +132,6 @@ target_link_libraries(test_serial_endpoint OHDTelemetryLib)
 
 add_executable(test_udp_endpoint tests/test_udp_endpoint.cpp)
 target_link_libraries(test_udp_endpoint OHDTelemetryLib)
-
-add_executable(test_ohd_reboot tests/test_ohd_reboot.cpp)
-target_link_libraries(test_ohd_reboot OHDTelemetryLib)
 
 add_executable(test_ground_locally tests/test_ground_locally.cpp)
 target_link_libraries(test_ground_locally OHDTelemetryLib)

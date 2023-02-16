@@ -11,12 +11,11 @@
 #include <sstream>
 
 #include "mav_include.h"
-#include "openhd_spdlog.hpp"
+#include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
 
-// https://mavlink.io/en/messages/common.html#ONBOARD_COMPUTER_STATUS
-// used to be a custom message for a short amount of time.
+// Namespace for util methods regarding onboard computer status
 namespace OnboardComputerStatus {
 
 // from https://github.com/OpenHD/Open.HD/blob/35b6b10fbeda43cd06bbfbd90e2daf29629c2f8a/openhd-status/src/statusmicroservice.cpp#L165

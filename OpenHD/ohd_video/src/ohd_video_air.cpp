@@ -81,7 +81,7 @@ void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) 
     case CameraType::CUSTOM_UNMANAGED_CAMERA:
     case CameraType::DUMMY_SW: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
-      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,m_link_handle);
+      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,m_link_handle,m_opt_action_handler);
       stream->setup();
       stream->start();
       m_camera_streams.push_back(stream);
@@ -89,7 +89,7 @@ void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) 
     }
     case CameraType::RPI_CSI_LIBCAMERA: {
       m_console->debug("LibCamera index:{}", camera.index);
-      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, m_link_handle);
+      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, m_link_handle,m_opt_action_handler);
       stream->setup();
       stream->start();
       m_camera_streams.push_back(stream);
@@ -117,10 +117,22 @@ OHDVideoAir::get_all_camera_settings() {
 }
 
 void OHDVideoAir::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
-  // For now, only adjust the primary stream bitrate
-  if(!m_camera_streams.empty()){
+  if(m_camera_streams.size()==1){
     m_camera_streams[0]->handle_change_bitrate_request(lb);
+    return;
   }
+  if(m_camera_streams.size()==2){
+    // Just split the available bitrate between primary and secondary cam, according to the user's preferences
+    const auto primary_perc=m_generic_settings->get_settings().dualcam_primary_video_allocated_bandwidth_perc;
+    const int bitrate_primary_kbits=lb.recommended_encoder_bitrate_kbits*primary_perc/100;
+    const int bitrate_secondary_kbits=lb.recommended_encoder_bitrate_kbits-bitrate_primary_kbits;
+    openhd::ActionHandler::LinkBitrateInformation lb1{bitrate_primary_kbits};
+    openhd::ActionHandler::LinkBitrateInformation lb2{bitrate_secondary_kbits};
+    m_camera_streams[0]->handle_change_bitrate_request(lb1);
+    m_camera_streams[1]->handle_change_bitrate_request(lb2);
+    return ;
+  }
+  m_console->warn("openhd should always have either 1 or 2 cameras");
 }
 
 std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
@@ -136,7 +148,6 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
     ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::IntSetting {openhd::rpi::os::cam_config_to_int(openhd::rpi::os::get_current_cam_config_from_file()),
                                                                         c_rpi_os_camera_configuration}});
   }
-
   // N of discovered cameras, for debugging
   const auto n_cameras=static_cast<int>(m_camera_streams.size());
   ret.push_back(openhd::create_read_only_int("V_N_CAMERAS",n_cameras));
@@ -148,7 +159,16 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
       // Do nothing, switch requires reboot
       return true;
     };
-    ret.push_back(openhd::Setting{"V_SWITCH_CAM",openhd::IntSetting{m_generic_settings->unsafe_get_settings().switch_primary_and_secondary,cb_switch_primary_and_secondary}});
+    ret.push_back(openhd::Setting{"V_SWITCH_CAM",openhd::IntSetting{m_generic_settings->get_settings().switch_primary_and_secondary,cb_switch_primary_and_secondary}});
+  }
+  if(n_cameras>1){
+    auto cb=[this](std::string,int value){
+      if(!is_valid_dualcam_primary_video_allocated_bandwidth(value))return false;
+      m_generic_settings->unsafe_get_settings().dualcam_primary_video_allocated_bandwidth_perc=value;
+      m_generic_settings->persist();
+      return true;
+    };
+    ret.push_back(openhd::Setting{"V_PRIMARY_PERC",openhd::IntSetting{m_generic_settings->get_settings().dualcam_primary_video_allocated_bandwidth_perc,cb}});
   }
   /*if(true){
     auto cb=[this](std::string,int value){
