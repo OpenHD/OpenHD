@@ -700,7 +700,7 @@ void WBLink::perform_rate_adjustment() {
     }
     return;
   }
-  // Check if we had any tx errors since last time we checked
+  // Check if we had any tx errors since last time we checked, resetting them every time
   const auto curr_total_tx_errors=get_total_tx_error_count();
   const auto delta_total_tx_errors=curr_total_tx_errors-m_last_total_tx_error_count;
   m_last_total_tx_error_count=curr_total_tx_errors;
@@ -710,13 +710,14 @@ void WBLink::perform_rate_adjustment() {
     m_console->warn("Got {} tx errors {} times",delta_total_tx_errors,m_n_detected_and_reset_tx_errors);
   }
   if(m_n_detected_and_reset_tx_errors>=2){
-    // We got tx errors 2 consecutive times, resetting between each - we need to reduce bitrate
+    // We got tx errors N consecutive times, resetting between each - we need to reduce bitrate
     m_console->debug("Got m_n_detected_and_reset_tx_errors{} with max:{} recommended:{}",
                      m_n_detected_and_reset_tx_errors,
         m_max_video_rate_for_current_wifi_config,m_recommended_video_bitrate);
     m_n_detected_and_reset_tx_errors=0;
     // Reduce video bitrate by 1MBit/s
     m_recommended_video_bitrate-=1000;
+    // Safety, in case we fall below a certain threshold the encoder won't be able to produce an image at some point anyways.
     static constexpr auto MIN_BITRATE=1000*2;
     if(m_recommended_video_bitrate<MIN_BITRATE){
       m_recommended_video_bitrate=MIN_BITRATE;
