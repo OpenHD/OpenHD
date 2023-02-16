@@ -78,7 +78,7 @@ class GStreamerStream : public CameraStream {
   // Change the bitrate without re-starting the whole pipeline if supported by the camera.
   // This is needed for variable rf link bitrate(s)
   // returns true on success, false otherwise
-  bool try_dynamically_change_bitrate(uint32_t bitrate_kbits);
+  bool try_dynamically_change_bitrate(int bitrate_kbits);
   std::atomic<int> m_curr_dynamic_bitrate_kbits =-1;
  private:
   // The stuff here is to pull the data out of the gstreamer pipeline, such that we can forward it to the WB link

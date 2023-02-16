@@ -448,7 +448,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
   }
 }
 
-bool GStreamerStream::try_dynamically_change_bitrate(uint32_t bitrate_kbits) {
+bool GStreamerStream::try_dynamically_change_bitrate(int bitrate_kbits) {
   if(m_gst_pipeline== nullptr){
     m_console->debug("cannot change_bitrate, no pipeline");
     return false;
