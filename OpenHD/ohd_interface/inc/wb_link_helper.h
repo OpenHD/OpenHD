@@ -68,7 +68,8 @@ static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index) {
     case 1:
       return 5500; //theoretical:13
     case 2:
-      return 9000; //theoretical:19.5
+      //@Norbert: Successfully flown on MCS2 and 7MBit/s video, aka 8.4MBit/s after FEC
+      return 8500; //theoretical:19.5
     case 3:
       return 12000; //theoretical:26
     case 4:
