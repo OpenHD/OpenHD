@@ -26,12 +26,12 @@ static int bits_per_second_to_kbits_per_second(int bits_per_second){
 }
 
 static std::string bits_per_second_to_string(uint64_t bits_per_second){
-  const double mBits_per_second=static_cast<double>(bits_per_second)/(1000*1000);
+  const auto mBits_per_second=static_cast<float>(bits_per_second)/(1000*1000);
   if(mBits_per_second>1){
-    return fmt::format("{:.2d}mBit/s", mBits_per_second);
+    return fmt::format("{:.2f}mBit/s", mBits_per_second);
   }
-  const double kBits_per_second=static_cast<double>(bits_per_second)/1000;
-  return fmt::format("{:.2d}kBit/s",kBits_per_second);
+  const auto kBits_per_second=static_cast<float>(bits_per_second)/1000;
+  return fmt::format("{:.2f}kBit/s",kBits_per_second);
 }
 
 static std::string kbits_per_second_to_string(uint64_t kbits_per_second){
