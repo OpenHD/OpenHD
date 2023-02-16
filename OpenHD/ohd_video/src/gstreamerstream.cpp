@@ -61,6 +61,8 @@ void GStreamerStream::setup() {
   if(m_opt_action_handler){
     m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,setting.h26x_bitrate_kbits);
   }
+  // atomic & called in regular intervals if variable bitrate is enabled.
+  m_curr_dynamic_bitrate_kbits=-1;
   if(!setting.enable_streaming){
     // When streaming is disabled, we just don't create the pipeline. We fully restart on all changes anyways.
     m_console->info("Streaming disabled");
@@ -414,10 +416,10 @@ void GStreamerStream::restart_async() {
 }
 
 void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
-  /*if(m_curr_dynamic_bitrate_kbits==lb.recommended_encoder_bitrate_kbits){
+  if(m_curr_dynamic_bitrate_kbits==lb.recommended_encoder_bitrate_kbits){
     m_console->debug("Cam already at {}",m_curr_dynamic_bitrate_kbits);
     return ;
-  }*/
+  }
   m_console->debug("handle_change_bitrate_request prev: {} new:{}",
                    kbits_per_second_to_string(m_curr_dynamic_bitrate_kbits),
                    kbits_per_second_to_string(lb.recommended_encoder_bitrate_kbits));
