@@ -437,22 +437,31 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
     m_console->warn("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
     bitrate_for_encoder_kbits =max_bitrate_kbits;
   }
-  //if(m_curr_dynamic_bitrate_kbits!= bitrate_for_encoder_kbits){
-    m_console->debug("Changing bitrate to {} kBit/s",bitrate_for_encoder_kbits);
-    auto hacked_bitrate_kbits=bitrate_for_encoder_kbits;
-    if(m_camera_holder->requires_half_bitrate_workaround()){
-      m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
-      hacked_bitrate_kbits =  hacked_bitrate_kbits / 2;
+  m_console->debug("Changing bitrate to {} kBit/s",bitrate_for_encoder_kbits);
+  auto hacked_bitrate_kbits=bitrate_for_encoder_kbits;
+  if(m_camera_holder->requires_half_bitrate_workaround()){
+    m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
+    hacked_bitrate_kbits =  hacked_bitrate_kbits / 2;
+  }
+  if(try_dynamically_change_bitrate( hacked_bitrate_kbits)){
+    m_curr_dynamic_bitrate_kbits= lb.recommended_encoder_bitrate_kbits;
+    if(m_opt_action_handler){
+      m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
     }
-    if(try_dynamically_change_bitrate( hacked_bitrate_kbits)){
-      m_curr_dynamic_bitrate_kbits= lb.recommended_encoder_bitrate_kbits;
-      if(m_opt_action_handler){
-        m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
-      }
+  }else{
+    const auto cam_type=m_camera_holder->get_camera().type;
+    if(cam_type==CameraType::RPI_CSI_LIBCAMERA || cam_type==CameraType::RPI_VEYE_CSI_V4l2){
+      m_console->warn("Bitrate change requires restart");
+      // These cameras are known to handle a restart quickly, but it still sucks v4l2h264enc does not support changing the bitrate at run time
+      m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
+      m_camera_holder->persist();
+      std::lock_guard<std::mutex> guard(m_pipeline_mutex);
+      stop_cleanup_restart();
+      m_curr_dynamic_bitrate_kbits=bitrate_for_encoder_kbits;
     }else{
       m_console->warn("Camera does not support variable bitrate");
     }
-  //}
+  }
 }
 
 bool GStreamerStream::try_dynamically_change_bitrate(int bitrate_kbits) {
