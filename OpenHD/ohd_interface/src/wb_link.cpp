@@ -703,8 +703,8 @@ void WBLink::perform_rate_adjustment() {
   m_last_total_tx_error_count=curr_total_tx_errors;
   const bool has_tx_errors=delta_total_tx_errors>0;
   if(has_tx_errors){
-    m_console->warn("Got {} tx errors {} times",delta_total_tx_errors);
     m_n_detected_and_reset_tx_errors++;
+    m_console->warn("Got {} tx errors {} times",delta_total_tx_errors,m_n_detected_and_reset_tx_errors);
   }
   if(m_n_detected_and_reset_tx_errors>=2){
     // We got tx errors 2 consecutive times, resetting between each - we need to reduce bitrate

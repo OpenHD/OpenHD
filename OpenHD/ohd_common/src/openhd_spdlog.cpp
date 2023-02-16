@@ -56,6 +56,7 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
     created->sinks().push_back(std::make_shared<openhd::log::sink::UdpTelemetrySink>());
     // This is for debugging for "where a fmt exception occurred"
     spdlog::set_error_handler([](const std::string &msg) {
+      exit(-1);
       std::cerr<<msg<<"\n;";
     });
     return created;
