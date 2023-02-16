@@ -64,26 +64,29 @@ bool has_any_rtl8812au(const std::vector<WiFiCard>& cards);
 static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index) {
   switch (mcs_index) {
     case 0:
-      return 3000;
+      return 3000; //theoretical:6.5
     case 1:
-      return 5500;
+      return 5500; //theoretical:13
     case 2:
-      return 11000;
+      return 9000; //theoretical:19.5
     case 3:
-      return 12000;
+      return 12000; //theoretical:26
     case 4:
-      return 19500;
+      return 19500; //theoretical:39
     case 5:
-      return 24000;
+      return 24000; //theoretical:52
     case 6:
-      return 36000;
+      return 36000; //theoretical:58.5
+    case 7:
+      return 3600; //theoretical:65
     default:
       break;
   }
-  return 5500;
+  return 5000;
 }
 
 static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index,bool is_40_mhz){
+  // We just use a multiplier of 1.5 for 40Mhz channel width for now
   if(is_40_mhz)return static_cast<uint32_t>(std::roundl(rtl8812au_get_max_rate_kbits(mcs_index)*1.5));
   return rtl8812au_get_max_rate_kbits(mcs_index);
 }
