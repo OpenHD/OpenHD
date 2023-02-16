@@ -432,7 +432,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
     m_console->warn("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
     bitrate_for_encoder_kbits =max_bitrate_kbits;
   }
-  if(m_curr_dynamic_bitrate_kbits!= bitrate_for_encoder_kbits){
+  //if(m_curr_dynamic_bitrate_kbits!= bitrate_for_encoder_kbits){
     m_console->debug("Changing bitrate to {} kBit/s",bitrate_for_encoder_kbits);
     auto hacked_bitrate_kbits=bitrate_for_encoder_kbits;
     if(m_camera_holder->requires_half_bitrate_workaround()){
@@ -447,7 +447,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
     }else{
       m_console->warn("Camera does not support variable bitrate");
     }
-  }
+  //}
 }
 
 bool GStreamerStream::try_dynamically_change_bitrate(int bitrate_kbits) {
