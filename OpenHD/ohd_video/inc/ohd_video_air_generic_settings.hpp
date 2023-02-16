@@ -20,13 +20,13 @@ struct AirCameraGenericSettings {
   //int n_cameras_to_wait_for=1;
   // the link recommends a total video bitrate to us - in case of dual camera, we need to split that up into
   // bitrate for primary and secondary video
-  int dualcam_primary_video_allocated_bandwidth=60; // Default 70%:30% split
+  int dualcam_primary_video_allocated_bandwidth_perc=60; // Default 70%:30% split
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirCameraGenericSettings,switch_primary_and_secondary);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirCameraGenericSettings,switch_primary_and_secondary,dualcam_primary_video_allocated_bandwidth_perc);
 
-static bool is_valid_dualcam_primary_video_allocated_bandwidth(int primary_video_allocated_bandwidth){
-  return primary_video_allocated_bandwidth>=10 && primary_video_allocated_bandwidth<=90;
+static bool is_valid_dualcam_primary_video_allocated_bandwidth(int dualcam_primary_video_allocated_bandwidth_perc){
+  return dualcam_primary_video_allocated_bandwidth_perc>=10 && dualcam_primary_video_allocated_bandwidth_perc<=90;
 }
 
 class AirCameraGenericSettingsHolder: public openhd::settings::PersistentSettings<AirCameraGenericSettings>{

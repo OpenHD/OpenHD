@@ -28,7 +28,7 @@ class ActionHandler{
  public:
   // Link bitrate change request
   struct LinkBitrateInformation{
-    uint32_t recommended_encoder_bitrate_kbits;
+    int recommended_encoder_bitrate_kbits;
   };
   typedef std::function<void(LinkBitrateInformation link_bitrate_info)> ACTION_REQUEST_BITRATE_CHANGE;
   static std::string link_bitrate_info_to_string(const LinkBitrateInformation& lb){
