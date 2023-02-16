@@ -49,9 +49,9 @@ class PersistentSettings{
     return *_settings;
   }
   // save changes by writing them out to the file, and notifying the listener(s)
-  void persist()const{
+  void persist(bool trigger_restart=true)const{
     PersistentSettings::persist_settings();
-    if(_settings_changed_callback){
+    if(_settings_changed_callback && trigger_restart){
       _settings_changed_callback();
     }
   }

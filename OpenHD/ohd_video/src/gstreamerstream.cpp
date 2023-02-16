@@ -438,12 +438,10 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
     bitrate_for_encoder_kbits =max_bitrate_kbits;
   }
   m_console->debug("Changing bitrate to {} kBit/s",bitrate_for_encoder_kbits);
-  auto hacked_bitrate_kbits=bitrate_for_encoder_kbits;
-  if(m_camera_holder->requires_half_bitrate_workaround()){
-    m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
-    hacked_bitrate_kbits =  hacked_bitrate_kbits / 2;
-  }
-  if(try_dynamically_change_bitrate( hacked_bitrate_kbits)){
+  if(try_dynamically_change_bitrate( bitrate_for_encoder_kbits)){
+    m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
+    // Do not trigger a full restart - we already changed the bitrate dynamically
+    m_camera_holder->persist(false);
     m_curr_dynamic_bitrate_kbits= lb.recommended_encoder_bitrate_kbits;
     if(m_opt_action_handler){
       m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
@@ -473,7 +471,12 @@ bool GStreamerStream::try_dynamically_change_bitrate(int bitrate_kbits) {
     return false;
   }
   auto bitrate_ctrl_element=m_bitrate_ctrl_element.value();
-  return change_bitrate(bitrate_ctrl_element,bitrate_kbits);
+  auto hacked_bitrate_kbits=bitrate_kbits;
+  if(m_camera_holder->requires_half_bitrate_workaround()){
+    m_console->debug("applying hack - reduce bitrate by 2 to get actual correct bitrate");
+    hacked_bitrate_kbits =  hacked_bitrate_kbits / 2;
+  }
+  return change_bitrate(bitrate_ctrl_element,hacked_bitrate_kbits);
 }
 
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
