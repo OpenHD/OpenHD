@@ -50,7 +50,7 @@ class ActionHandler{
       auto& cb=*tmp;
       cb(link_bitrate_info);
     }
-    camera0_bitrate_kbits=link_bitrate_info.recommended_encoder_bitrate_kbits;
+    curr_raw_video_bitrate_kbits =link_bitrate_info.recommended_encoder_bitrate_kbits;
   }
  public:
   // Link statistics - for that the wb link (ohd_interface) needs to talk to ohd_telemetry
@@ -116,7 +116,7 @@ class ActionHandler{
   std::shared_ptr<SCAN_CHANNELS_CB> m_scan_channels_cb=nullptr;
   // dirty
  public:
-  std::atomic<int> camera0_bitrate_kbits=-1;
+  std::atomic<int> curr_raw_video_bitrate_kbits =-1;
 };
 
 }
