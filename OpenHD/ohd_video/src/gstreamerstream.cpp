@@ -455,10 +455,6 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
 
 bool GStreamerStream::try_dynamically_change_bitrate(int bitrate_kbits) {
   std::lock_guard<std::mutex> guard(m_pipeline_mutex);
-  if(true){
-      stop_cleanup_restart();
-      return true;
-  }
   if(m_gst_pipeline== nullptr){
     m_console->debug("cannot change_bitrate, no pipeline");
     return false;
