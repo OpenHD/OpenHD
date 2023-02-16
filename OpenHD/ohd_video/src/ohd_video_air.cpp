@@ -122,6 +122,7 @@ void OHDVideoAir::handle_change_bitrate_request(openhd::ActionHandler::LinkBitra
     return;
   }
   if(m_camera_streams.size()==2){
+    // Just split the available bitrate between primary and secondary cam, according to the user's preferences
     const auto primary_perc=m_generic_settings->get_settings().dualcam_primary_video_allocated_bandwidth_perc;
     const int bitrate_primary_kbits=lb.recommended_encoder_bitrate_kbits*primary_perc/100;
     const int bitrate_secondary_kbits=lb.recommended_encoder_bitrate_kbits-bitrate_primary_kbits;

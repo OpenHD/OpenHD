@@ -86,9 +86,12 @@ static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index) {
 }
 
 static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index,bool is_40_mhz){
-  // We just use a multiplier of 1.5 for 40Mhz channel width for now
-  if(is_40_mhz)return static_cast<uint32_t>(std::roundl(rtl8812au_get_max_rate_kbits(mcs_index)*1.5));
-  return rtl8812au_get_max_rate_kbits(mcs_index);
+  auto rate_kbits=rtl8812au_get_max_rate_kbits(mcs_index);
+  if(is_40_mhz){
+    // Theoretically 40Mhz should give exactly 2x the bitrate, but be a bit conservative here
+    rate_kbits = static_cast<uint32_t>(std::roundl(rate_kbits*1.7));
+  }
+  return rate_kbits;
 }
 
 static uint32_t get_max_rate_possible(const WiFiCard& card,uint16_t mcs_index,bool is_40Mhz){
@@ -96,7 +99,7 @@ static uint32_t get_max_rate_possible(const WiFiCard& card,uint16_t mcs_index,bo
     return rtl8812au_get_max_rate_kbits(mcs_index,is_40Mhz);
   }
   if(card.type==WiFiCardType::Realtek88x2bu){
-    // Hard coded, doesn't support mcs / 40Mhz anyways
+    // Hard coded, since "some rate" is hard coded in the driver.
     return 10000;
   }
   // fallback for any other weak crap
