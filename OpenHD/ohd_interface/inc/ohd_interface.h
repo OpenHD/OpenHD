@@ -59,6 +59,8 @@ class OHDInterface :public openhd::ISettingsComponent{
   std::unique_ptr<WifiHotspot> m_wifi_hotspot;
   std::unique_ptr<openhd::LEDBlinker> m_error_blinker;
   std::shared_ptr<openhd::ExternalDeviceManager> m_external_devices_manager;
+  std::vector<WiFiCard> monitor_mode_cards{};
+  std::optional<WiFiCard> opt_hotspot_card=std::nullopt;
 };
 
 #endif //OPENHD_OPENHD_INTERFACE_H

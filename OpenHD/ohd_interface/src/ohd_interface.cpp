@@ -18,8 +18,8 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   assert(m_console);
   openhd::write_manual_cards_template();
   m_external_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
-  std::vector<WiFiCard> monitor_mode_cards{};
-  std::optional<WiFiCard> opt_hotspot_card=std::nullopt;
+  monitor_mode_cards={};
+  opt_hotspot_card=std::nullopt;
   if(openhd::manually_defined_cards_file_exists()){
     // Much easier to do, no weird trying to figure out what to use the card(s) for
     auto tmp=openhd::get_manually_defined_cards_from_file();
@@ -130,6 +130,14 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   if(m_ethernet_hotspot){
     auto settings = m_ethernet_hotspot->get_all_settings();
     OHDUtil::vec_append(ret,settings);
+  }
+  for(int i=0;i<monitor_mode_cards.size();i++){
+    auto setting=openhd::create_read_only_string(fmt::format("WIFI_CARD{}",i), wifi_card_type_to_string(monitor_mode_cards[i].type));
+    ret.emplace_back(setting);
+  }
+  if(opt_hotspot_card){
+    auto setting=openhd::create_read_only_string(fmt::format("HOTSPOT_CARD"), wifi_card_type_to_string(opt_hotspot_card.value().type));
+    ret.emplace_back(setting);
   }
   if(!m_profile.is_air){
     //openhd::testing::append_dummy_int_and_string(ret);
