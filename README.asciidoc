@@ -101,6 +101,15 @@ This repository is one of the following which forms the foundation of the projec
 
 |===
 
+== License
+
+OpenHD and its images are licensed under GPL v3.0, unless stated otherwise by a submodule's license.
+This does not include the OpenHD logos and it's brand.
+
+== Credits
+
+Befinitiv - original wifibroadcast, Rangarid - OSD, Rodizio - EZ-WifiBroadcast, SVP-COM, Dino.de, Jelle, Vitaliy, and many others.
+
 == Community
 Feel free to join our growing community.
 
@@ -117,15 +126,6 @@ We recommend getting in touch with us via the {telegram} group or the {discord} 
 
 [#img-contributors,link=https://github.com/OpenHD/OpenHD/graphs/contributors]
 image::https://contrib.rocks/image?repo=OpenHD/OpenHD[Contributors]
-
-== License
-
-OpenHD and its images are licensed under GPL v3.0, unless stated otherwise by a submodule's license.
-This does not include the OpenHD logos and it's brand.
-
-== Credits
-
-Befinitiv - original wifibroadcast, Rangarid - OSD, Rodizio - EZ-WifiBroadcast, SVP-COM, Dino.de, Jelle, Vitaliy, and many others.
 
 == Special Thanks
 
