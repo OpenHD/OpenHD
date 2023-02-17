@@ -68,6 +68,7 @@ set(sources
     "inc/openhd_spdlog.h"
     "inc/openhd_udp_log.h"
     "inc/openhd_reboot_util.h"
+    "lib/ini/ini.hpp"
     "inc/openhd_config.h"
     )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
