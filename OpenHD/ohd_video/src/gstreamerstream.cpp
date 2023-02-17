@@ -452,7 +452,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
       m_console->warn("Bitrate change requires restart");
       // These cameras are known to handle a restart quickly, but it still sucks v4l2h264enc does not support changing the bitrate at run time
       m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
-      // This triggers a restart
+      // This triggers a restart of the pipeline
       m_camera_holder->persist();
     }else{
       m_console->warn("Camera does not support variable bitrate");
