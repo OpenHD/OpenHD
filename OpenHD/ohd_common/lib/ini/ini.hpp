@@ -1,3 +1,4 @@
+// Copy paste from https://ssarcandy.tw/ini-cpp/ini_8h_source.html
 #ifndef __INI_H__
  #define __INI_H__
  
