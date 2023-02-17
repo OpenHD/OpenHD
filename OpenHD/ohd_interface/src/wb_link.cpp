@@ -319,7 +319,7 @@ bool WBLink::set_mcs_index(int mcs_index) {
     m_console->warn("Invalid mcs index{}",mcs_index);
     return false;
   }
-  if(!validate_cards_support_setting_mcs_index()){
+  if(!openhd::wb::cards_support_setting_mcs_index(m_broadcast_cards)){
     m_console->warn("Cannot change mcs index, it is fixed for at least one of the used cards");
     return false;
   }
@@ -344,7 +344,7 @@ bool WBLink::request_set_channel_width(int channel_width) {
     m_console->warn("Invalid channel width {}",channel_width);
     return false;
   }
-  if(!validate_cards_support_setting_channel_width()){
+  if(!openhd::wb::cards_support_setting_channel_width(m_broadcast_cards)){
     m_console->warn("Cannot change channel width, at least one card doesn't support it");
     return false;
   }
@@ -471,14 +471,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   }
   openhd::validate_provided_ids(ret);
   return ret;
-}
-
-bool WBLink::validate_cards_support_setting_mcs_index() {
-  return openhd::wb::cards_support_setting_mcs_index(m_broadcast_cards);
-}
-
-bool WBLink::validate_cards_support_setting_channel_width() {
-  return openhd::wb::cards_support_setting_channel_width(m_broadcast_cards);
 }
 
 static uint32_t get_micros(std::chrono::nanoseconds ns){

@@ -78,7 +78,10 @@ static Setting create_read_only_int(const std::string& id,int value){
   };
   return Setting{id, openhd::IntSetting{value, cb}};
 }
-static Setting create_read_only_string(const std::string& id,const std::string& value){
+static Setting create_read_only_string(const std::string& id,std::string value){
+  if(value.length()>15){
+     value.resize(15);
+  }
   auto cb=[](const std::string&,const std::string&){
     return false;
   };

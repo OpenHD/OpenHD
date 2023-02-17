@@ -419,7 +419,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
   m_console->debug("handle_change_bitrate_request prev: {} new:{}",
                    kbits_per_second_to_string(m_curr_dynamic_bitrate_kbits),
                    kbits_per_second_to_string(lb.recommended_encoder_bitrate_kbits));
-  //const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
+  // We do some safety checks first - the link might recommend too much / too little
   auto bitrate_for_encoder_kbits =lb.recommended_encoder_bitrate_kbits;
   // No encoder I've seen can do <2MBit/s, at least the ones we use
   static constexpr auto MIN_BITRATE_KBITS=2*1000;
@@ -452,7 +452,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
       m_console->warn("Bitrate change requires restart");
       // These cameras are known to handle a restart quickly, but it still sucks v4l2h264enc does not support changing the bitrate at run time
       m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
-      // This triggers a restart
+      // This triggers a restart of the pipeline
       m_camera_holder->persist();
     }else{
       m_console->warn("Camera does not support variable bitrate");

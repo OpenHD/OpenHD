@@ -74,10 +74,6 @@ class WBLink :public OHDLink{
   bool set_video_fec_percentage(int fec_percentage);
   bool set_enable_wb_video_variable_bitrate(int value);
   bool set_max_fec_block_size_for_platform(int value);
-  // Check if all cards support changing the mcs index
-  bool validate_cards_support_setting_mcs_index();
-  // Check if all cards support changing the channel width
-  bool validate_cards_support_setting_channel_width();
   // Make sure no processes interfering with monitor mode run on the given cards,
   // then sets them to monitor mode
   void takeover_cards_monitor_mode();
