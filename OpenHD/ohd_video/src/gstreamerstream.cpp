@@ -419,7 +419,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
   m_console->debug("handle_change_bitrate_request prev: {} new:{}",
                    kbits_per_second_to_string(m_curr_dynamic_bitrate_kbits),
                    kbits_per_second_to_string(lb.recommended_encoder_bitrate_kbits));
-  //const auto max_bitrate_kbits=m_camera_holder->get_settings().h26x_bitrate_kbits;
+  // We do some safety checks first - the link might recommend too much / too little
   auto bitrate_for_encoder_kbits =lb.recommended_encoder_bitrate_kbits;
   // No encoder I've seen can do <2MBit/s, at least the ones we use
   static constexpr auto MIN_BITRATE_KBITS=2*1000;
