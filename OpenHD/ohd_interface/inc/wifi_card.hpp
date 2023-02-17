@@ -93,12 +93,10 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,device_name,mac,phy80211_index,drive
                                    supports_injection,supports_monitor_mode,supports_hotspot,
                                    supported_frequencies_2G,supported_frequencies_5G)
 
-// Only Atheros AR9271 doesn't support setting the mcs index
+// Only RTL8812au supports changing the MCS index
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
-  if(wifi_card.type==WiFiCardType::Atheros9khtc || wifi_card.type==WiFiCardType::Atheros9k){
-    return false;
-  }
-  return true;
+  if(wifi_card.type==WiFiCardType::Realtek8812au)return true;
+  return false;
 }
 
 // Only RTL8812au so far supports a 40Mhz channel width (and there it is also discouraged to use it)
