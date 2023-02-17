@@ -131,9 +131,14 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     auto settings = m_ethernet_hotspot->get_all_settings();
     OHDUtil::vec_append(ret,settings);
   }
-  for(int i=0;i<monitor_mode_cards.size();i++){
-    auto setting=openhd::create_read_only_string(fmt::format("WIFI_CARD{}",i), wifi_card_type_to_string(monitor_mode_cards[i].type));
+  if(monitor_mode_cards.empty()){
+    auto setting=openhd::create_read_only_string(fmt::format("WIFI_CARD{}",0), "NOTFOUND");
     ret.emplace_back(setting);
+  }else{
+    for(int i=0;i<monitor_mode_cards.size();i++){
+      auto setting=openhd::create_read_only_string(fmt::format("WIFI_CARD{}",i), wifi_card_type_to_string(monitor_mode_cards[i].type));
+      ret.emplace_back(setting);
+    }
   }
   if(opt_hotspot_card){
     auto setting=openhd::create_read_only_string(fmt::format("HOTSPOT_CARD"), wifi_card_type_to_string(opt_hotspot_card.value().type));
