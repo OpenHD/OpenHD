@@ -17,6 +17,8 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   m_console = openhd::log::create_or_get("ground_tele");
   assert(m_console);
   m_gnd_settings =std::make_unique<openhd::telemetry::ground::SettingsHolder>();
+  m_endpoint_tracker_fifo=std::make_unique<FifoEndpointManager>();
+  setup_fifo();
   m_endpoint_tracker=std::make_unique<SerialEndpointManager>();
   setup_uart();
   m_gcs_endpoint =
@@ -80,11 +82,17 @@ void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& me
   send_messages_ground_station_clients(messages);
   // Note: No OpenHD component ever talks to another OpenHD component or the FC, so we do not
   // need to do anything else here.
-  // tracker serial out - we are only interested in message(s) coming from the FC
+  // tracker/fifo serial out - we are only interested in message(s) coming from the FC
   if(m_endpoint_tracker!= nullptr){
     const auto msges_from_fc= filter_by_source_sys_id(messages,OHD_SYS_ID_FC);
     if(!msges_from_fc.empty()){
       m_endpoint_tracker->send_messages_if_enabled(msges_from_fc);
+    }
+  }
+  if(m_endpoint_tracker_fifo!= nullptr){
+    const auto msges_from_fc= filter_by_source_sys_id(messages,OHD_SYS_ID_FC);
+    if(!msges_from_fc.empty()){
+      m_endpoint_tracker_fifo->send_messages_if_enabled(msges_from_fc);
     }
   }
   m_ohd_main_component->check_msges_for_fc_arming_state(messages);
@@ -287,6 +295,17 @@ void GroundTelemetry::setup_uart() {
   }else{
     m_endpoint_tracker->disable();
   }
+}
+
+void GroundTelemetry::setup_fifo() {
+  assert(m_gnd_settings);
+  using namespace openhd::telemetry;
+  FifoEndpoint::HWOptions options{};
+  options.linux_filename_rx="/run/openhd/ohdFifoRx";
+  options.linux_filename_tx="/run/openhd/ohdFifoTx";
+  m_endpoint_tracker_fifo->configure(options,"gnd_fifo",[this](std::vector<MavlinkMessage> messages) {
+    // We ignore any incoming messages here for now, since it is only for mavlink out via serial
+  });
 }
 
 void GroundTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {

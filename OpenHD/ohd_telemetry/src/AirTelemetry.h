@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "endpoints/FifoEndpoint.h"
 #include "endpoints/SerialEndpoint.h"
 #include "internal/OHDMainComponent.h"
 #include "openhd_link_statistics.hpp"
@@ -72,10 +73,12 @@ class AirTelemetry : public MavlinkSystem{
   void on_messages_ground_unit(const std::vector<MavlinkMessage>& messages);
   // R.N only on air, and only FC uart settings
   std::vector<openhd::Setting> get_all_settings();
+  void setup_fifo();
   void setup_uart();
  private:
   const OHDPlatform m_platform;
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> m_air_settings;
+  std::unique_ptr<FifoEndpointManager> m_fc_fifo;
   std::unique_ptr<SerialEndpointManager> m_fc_serial;
   // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;

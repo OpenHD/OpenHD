@@ -15,6 +15,8 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   m_console = openhd::log::create_or_get("air_tele");
   assert(m_console);
   m_air_settings =std::make_unique<openhd::telemetry::air::SettingsHolder>(platform);
+  m_fc_fifo =std::make_unique<FifoEndpointManager>();
+  setup_fifo();
   m_fc_serial =std::make_unique<SerialEndpointManager>();
   setup_uart();
   m_ohd_main_component =std::make_shared<OHDMainComponent>(
@@ -39,6 +41,7 @@ AirTelemetry::~AirTelemetry() {
 void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages) {
   auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_AIR);
   // NOTE: Remember there is a hack in place for rc channels override in regards to the sender sys id
+  m_fc_fifo->send_messages_if_enabled(generic);
   m_fc_serial->send_messages_if_enabled(generic);
 }
 
@@ -197,6 +200,20 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
   }
   openhd::testing::append_dummy_if_empty(ret);
   return ret;
+}
+
+// Every time the UART configuration changes, we just re-start the UART (if it was already started)
+// This properly handles all the cases, e.g cleaning up an existing uart connection if set.
+void AirTelemetry::setup_fifo() {
+  assert(m_air_settings);
+  using namespace openhd::telemetry;
+  FifoEndpoint::HWOptions options{};
+  options.linux_filename_rx="/run/openhd/ohdFifoRx";
+  options.linux_filename_tx="/run/openhd/ohdFifoTx";
+  options.enable_reading= true;
+  m_fc_fifo->configure(options,"fc_fifo",[this](std::vector<MavlinkMessage> messages) {
+    this->on_messages_fc(messages);
+  });
 }
 
 // Every time the UART configuration changes, we just re-start the UART (if it was already started)

@@ -6,6 +6,7 @@
 #define OPENHD_TELEMETRY_GROUNDTELEMETRY_H
 
 #include "GroundTelemetrySettings.h"
+#include "endpoints/FifoEndpoint.h"
 #include "endpoints/SerialEndpoint.h"
 #include "endpoints/UDPEndpoint2.h"
 #include "endpoints/WBEndpoint.h"
@@ -72,12 +73,15 @@ class GroundTelemetry :public MavlinkSystem{
   // send one or more messages to all clients connected to the ground station, for example QOpenHD
   void send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages);
   std::vector<openhd::Setting> get_all_settings();
+  void setup_fifo();
   void setup_uart();
  private:
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_gnd_settings;
   // Mavlink to / from gcs station(s)
   std::unique_ptr<UDPEndpoint2> m_gcs_endpoint = nullptr;
+  // mavlink out via fifo for tracker or similar
+  std::unique_ptr<FifoEndpointManager> m_endpoint_tracker_fifo= nullptr;
   // mavlink out via serial for tracker or similar
   std::unique_ptr<SerialEndpointManager> m_endpoint_tracker= nullptr;
   // send/receive data via wb

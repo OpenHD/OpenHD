@@ -35,6 +35,8 @@ else()
 endif()
 
 SET(sources
+    "src/endpoints/FifoEndpoint.cpp"
+    "src/endpoints/FifoEndpoint.h"
     "src/endpoints/MEndpoint.cpp"
     "src/endpoints/MEndpoint.h"
     "src/endpoints/SerialEndpoint.cpp"
@@ -128,6 +130,9 @@ target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
 target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
 
 # All the test files for development
+add_executable(test_fifo_endpoint tests/test_fifo_endpoint.cpp)
+target_link_libraries(test_fifo_endpoint OHDTelemetryLib)
+
 add_executable(test_serial_endpoint tests/test_serial_endpoint.cpp)
 target_link_libraries(test_serial_endpoint OHDTelemetryLib)
 
