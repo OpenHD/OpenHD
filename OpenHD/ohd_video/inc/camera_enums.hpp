@@ -99,6 +99,24 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
   }
 }
 
+static CameraType camera_type_from_string(const std::string& s){
+  if(OHDUtil::contains_after_uppercase(s,"DUMMY_SW")){
+    return CameraType::DUMMY_SW;
+  }else if(OHDUtil::contains_after_uppercase(s,"RPI_CSI_MMAL")){
+    return CameraType::RPI_VEYE_CSI_V4l2;
+  }else if(OHDUtil::contains_after_uppercase(s,"RPI_VEYE_CSI_V4l2")){
+      return CameraType::RPI_VEYE_CSI_V4l2;
+  }else if(OHDUtil::contains_after_uppercase(s,"RPI_CSI_LIBCAMERA")){
+      return CameraType::RPI_CSI_LIBCAMERA;
+  }else if(OHDUtil::contains_after_uppercase(s,"UVC")){
+      return CameraType::UVC;
+  }else if(OHDUtil::contains_after_uppercase(s,"UVC_H264")){
+      return CameraType::UVC_H264;
+  }
+  openhd::log::get_default()->warn("Invalid camera type {}",s);
+  return CameraType::DUMMY_SW;
+}
+
 enum class VideoCodec {
   H264=0,
   H265,
