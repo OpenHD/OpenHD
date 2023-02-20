@@ -33,17 +33,25 @@ void USBTetherListener::loopInfinite() {
 }
 
 void USBTetherListener::connectOnce() {
-  const char* connectedDevice="/sys/class/net/usb0";
+  std::string connected_device;
   // in regular intervals, check if the device becomes available - if yes, the user connected an ethernet hotspot device.
   while (!m_check_connection_thread_stop){
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    if(OHDFilesystemUtil::exists(connectedDevice)) {
-      openhd::log::get_default()->info("Found USB tethering device");
-      break;
+    auto devices=OHDFilesystemUtil::getAllEntriesFullPathInDirectory("/sys/class/net/");
+    for(const auto& device:devices){
+      if(device=="/sys/class/net/usb0"){
+        connected_device=device;
+        break ;
+      }
+      if(device=="/sys/class/net/enx023b63011a79"){
+        connected_device=device;
+        break ;
+      }
     }
   }
   // We were stopped externally, no reason to continue
   if(m_check_connection_thread_stop) return;
+  openhd::log::get_default()->info("Found USB tethering device {}",connected_device);
   // now we find the IP of the connected device so we can forward video and more to it.
   // example on my Ubuntu pc:
   // ip route list dev usb0
@@ -71,7 +79,7 @@ void USBTetherListener::connectOnce() {
   // check in regular intervals if the tethering device disconnects.
   while (!m_check_connection_thread_stop){
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    if(!OHDFilesystemUtil::exists(connectedDevice)){
+    if(!OHDFilesystemUtil::exists(connected_device)){
       m_console->warn("USB Tether device disconnected");
       break;
     }
