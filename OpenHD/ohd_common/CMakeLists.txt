@@ -95,3 +95,6 @@ target_link_libraries(test_openhd_util OHDCommonLib)
 
 add_executable(test_ohd_reboot test/test_ohd_reboot.cpp)
 target_link_libraries(test_ohd_reboot OHDCommonLib)
+
+add_executable(test_config test/test_config.cpp)
+target_link_libraries(test_config OHDCommonLib)
