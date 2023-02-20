@@ -60,7 +60,6 @@ static const struct option long_options[] = {
 
 struct OHDRunOptions {
   bool run_as_air=false;
-  bool force_dummy_camera=false;
   bool reset_all_settings=false;
   bool reset_frequencies=false;
   bool enable_interface_debugging=false;
@@ -252,12 +251,7 @@ int main(int argc, char *argv[]) {
     // Now we need to discover camera(s) if we are on the air
     std::vector<Camera> cameras{};
     if(profile->is_air){
-      // It is nice to have this option as a command line argument to quickly troubleshoot issues
-      if(options.force_dummy_camera){
-        cameras.emplace_back(createDummyCamera(0));
-      }else{
-        cameras = OHDVideoAir::discover_cameras(*platform);
-      }
+      cameras = OHDVideoAir::discover_cameras(*platform);
     }
     // Now print the actual cameras used by OHD. Of course, this prints nothing on ground (where we have no cameras connected).
     for(const auto& camera:cameras){
