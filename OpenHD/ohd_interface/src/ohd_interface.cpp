@@ -3,12 +3,12 @@
 //
 
 #include "ohd_interface.h"
+#include "openhd_config.h"
 
 #include <wifi_card_discovery.h>
 
 #include <utility>
 
-#include "manually_defined_cards.hpp"
 #include "wb_link_settings.hpp"
 #include "wifi_command_helper.h"
 
@@ -16,23 +16,11 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     : m_platform(platform1), m_profile(std::move(profile1)) {
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);
-  openhd::write_manual_cards_template();
   m_external_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
   monitor_mode_cards={};
   opt_hotspot_card=std::nullopt;
-  if(openhd::manually_defined_cards_file_exists()){
-    // Much easier to do, no weird trying to figure out what to use the card(s) for
-    auto tmp=openhd::get_manually_defined_cards_from_file();
-    if(m_profile.is_air){
-      auto processed=DWifiCards::find_cards_from_manual_file({tmp.air_wifibroadcast_card},tmp.hotspot_card);
-      monitor_mode_cards=processed.monitor_mode_cards;
-      opt_hotspot_card=processed.hotspot_card;
-    }else{
-      auto processed=DWifiCards::find_cards_from_manual_file(tmp.ground_wifibroadcast_cards,tmp.hotspot_card);
-      monitor_mode_cards=processed.monitor_mode_cards;
-      opt_hotspot_card=processed.hotspot_card;
-    }
-  }else{
+  const auto config=openhd::load_config();
+  if(config.WIFI_ENABLE_AUTODETECT){
     // We need to discover the connected cards and reason about their usage
     //Find out which cards are connected first
     auto connected_cards =DWifiCards::discover_connected_wifi_cards();
@@ -49,13 +37,15 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
         if (elapsed > std::chrono::seconds(3)) {
           m_console->warn("Waiting for card supporting monitor mode+injection");
         } else {
-          m_console->debug("Waiting for card supporting monitor mode+injection");
+          m_console->debug(
+              "Waiting for card supporting monitor mode+injection");
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
         connected_cards = DWifiCards::discover_connected_wifi_cards();
         // after 10 seconds, we are happy with a card that only does monitor mode, aka is not known for injection
         if (elapsed > std::chrono::seconds(10)) {
-          if (DWifiCards::any_wifi_card_supporting_monitor_mode(connected_cards)) {
+          if (DWifiCards::any_wifi_card_supporting_monitor_mode(
+                  connected_cards)) {
             m_console->warn("Using card without injection capabilities");
             break;
           }
@@ -66,6 +56,15 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     const auto evaluated=DWifiCards::process_and_evaluate_cards(connected_cards, m_platform, m_profile);
     monitor_mode_cards=evaluated.monitor_mode_cards;
     opt_hotspot_card=evaluated.hotspot_card;
+  }else{
+    // Much easier to do, no weird trying to figure out what to use the card(s) for
+    auto processed=DWifiCards::find_cards_from_manual_file(config.WIFI_WB_LINK_CARDS,config.WIFI_WIFI_HOTSPOT_CARD);
+    monitor_mode_cards=processed.monitor_mode_cards;
+    opt_hotspot_card=processed.hotspot_card;
+    if(m_profile.is_air && monitor_mode_cards.size()>1){
+      m_console->warn("WB only supports one wifi card on air");
+      monitor_mode_cards.resize(1);
+    }
   }
   m_console->debug("monitor_mode card(s):{}",debug_cards(monitor_mode_cards));
   if(opt_hotspot_card.has_value()){
