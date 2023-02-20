@@ -183,7 +183,7 @@ std::vector<Camera> DCameras::detect_rapsberrypi_veye_v4l2_dirty(std::shared_ptr
     const bool is_veye=OHDUtil::contains(v4l2_info_video0,"veye327") || OHDUtil::contains(v4l2_info_video0,"csimx307") || OHDUtil::contains(v4l2_info_video0,"veyecam2m");
     if(is_veye){
       Camera camera;
-      camera.type=CameraType::RPI_VEYE_CSI_V4l2;
+      camera.type=CameraType::RPI_CSI_VEYE_V4l2;
       camera.bus=device;
       camera.index=0;
       camera.name = fmt::format("Pi_VEYE_{}",ret.size());

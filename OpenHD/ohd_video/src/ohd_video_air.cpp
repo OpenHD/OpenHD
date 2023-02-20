@@ -73,7 +73,7 @@ void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) 
   // R.N we use gstreamer for pretty much everything
   // But this might change in the future
   switch (camera.type) {
-    case CameraType::RPI_VEYE_CSI_V4l2:
+    case CameraType::RPI_CSI_VEYE_V4l2:
     case CameraType::RPI_CSI_MMAL:
     case CameraType::JETSON_CSI:
     case CameraType::IP:
@@ -246,7 +246,7 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
         libcamera_cameras=DCameras::detect_raspberrypi_libcamera_csi(m_console);
       }
       cameras.emplace_back(libcamera_cameras.at(0));
-    }else if(cam_type==CameraType::RPI_VEYE_CSI_V4l2){
+    }else if(cam_type==CameraType::RPI_CSI_VEYE_V4l2){
       auto veye_cameras=DCameras::detect_rapsberrypi_veye_v4l2_dirty(m_console);
       // Wait for camera to become available
       while (cameras.empty()){

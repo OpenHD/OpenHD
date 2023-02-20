@@ -104,7 +104,7 @@ void GStreamerStream::setup() {
       setup_sw_dummy_camera();
       break;
     }
-    case CameraType::RPI_VEYE_CSI_V4l2:{
+    case CameraType::RPI_CSI_VEYE_V4l2:{
       setup_raspberrypi_veye_v4l2();
       break;
     }
@@ -448,7 +448,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
     }
   }else{
     const auto cam_type=m_camera_holder->get_camera().type;
-    if(cam_type==CameraType::RPI_CSI_LIBCAMERA || cam_type==CameraType::RPI_VEYE_CSI_V4l2){
+    if(cam_type==CameraType::RPI_CSI_LIBCAMERA || cam_type==CameraType::RPI_CSI_VEYE_V4l2){
       m_console->warn("Bitrate change requires restart");
       // These cameras are known to handle a restart quickly, but it still sucks v4l2h264enc does not support changing the bitrate at run time
       m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
