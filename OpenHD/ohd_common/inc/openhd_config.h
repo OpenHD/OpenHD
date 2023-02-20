@@ -12,6 +12,7 @@ namespace openhd{
 
 // NOTE: Read the .config - file itself for documentation what these variables do
 struct Config{
+  // WIFI
   bool WIFI_ENABLE_AUTODETECT= true;
   std::vector<std::string> WIFI_WB_LINK_CARDS{};
   std::string WIFI_WIFI_HOTSPOT_CARD;
