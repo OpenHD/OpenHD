@@ -14,7 +14,7 @@ static std::shared_ptr<spdlog::logger> get_logger(){
 openhd::Config openhd::load_config() {
   try{
     openhd::Config ret{};
-    inih::INIReader r{"/home/consti10/Desktop/OpenHD/OpenHD/ohd_common/config/config.config"};
+    inih::INIReader r{"/home/consti10/Desktop/OpenHD/OpenHD/ohd_common/config/hardware.config"};
     // Get and parse the ini value
     ret.WIFI_ENABLE_AUTODETECT = r.Get<bool>("wifi", "WIFI_ENABLE_AUTODETECT");
     ret.WIFI_WB_LINK_CARDS = r.GetVector<std::string>("wifi", "WIFI_WB_LINK_CARDS");
@@ -27,7 +27,7 @@ openhd::Config openhd::load_config() {
 
     return ret;
   }catch (std::exception& exception){
-    get_logger()->warn("Ill-formatted config file {}",exception.what());
+    get_logger()->error("Ill-formatted config file {}",exception.what());
   }
   return {};
 }
