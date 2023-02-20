@@ -33,6 +33,7 @@ class OHDVideoAir {
            std::shared_ptr<OHDLink> link_handle);
   OHDVideoAir(const OHDVideoAir&)=delete;
   OHDVideoAir(const OHDVideoAir&&)=delete;
+  static std::vector<Camera> discover_cameras(const OHDPlatform& platform);
   /**
    * Create a verbose debug string about the current state of OHDVideo.
    * @return a verbose debug string.

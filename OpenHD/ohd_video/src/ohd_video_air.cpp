@@ -2,10 +2,13 @@
 // Created by consti10 on 03.05.22.
 //
 //#include <openhd-global-constants.hpp>
+#include "ohd_video_air.h"
+
 #include <utility>
 
+#include "camera_discovery.h"
 #include "gstreamerstream.h"
-#include "ohd_video_air.h"
+#include "openhd_config.h"
 
 OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
                    std::shared_ptr<openhd::ActionHandler> opt_action_handler,
@@ -181,4 +184,54 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
     ret.push_back(openhd::Setting{"V_N_CAMERAS",openhd::IntSetting{m_generic_settings->unsafe_get_settings().n_cameras_to_wait_for,cb}});
   }*/
   return ret;
+}
+
+std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
+  const auto config=openhd::load_config();
+  if(config.CAMERA_ENABLE_AUTODETECT){
+    std::vector<Camera> cameras{};
+    // Default - works well with csi and usb cameras
+    // Issue on rpi: The openhd service is often started before ? (most likely the OS needs to do some internal setup stuff)
+    // and then the cameras discovery step is run before the camera is available, and therefore not found. Block up to
+    // X seconds here, to give the OS time until the camera is available, only then continue with the dummy camera
+    // Since the jetson is also an embedded platform, just like the rpi, I am doing it for it too, even though I never
+    // checked if that's actually an issue there
+    cameras = DCameras::discover(platform);
+    if(platform.platform_type==PlatformType::RaspberryPi || platform.platform_type==PlatformType::Jetson) {
+      const auto begin = std::chrono::steady_clock::now();
+      while (std::chrono::steady_clock::now() - begin <std::chrono::seconds(10)) {
+        if (!cameras.empty()) {
+          break;  // break as soon as we have at least one camera
+        }
+        openhd::log::get_default()->debug("Re-running camera discovery step, until camera is found/timeout");
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        cameras = DCameras::discover(platform);
+      }
+    }
+    return cameras;
+  }
+  // Autodetect off
+  std::vector<Camera> cameras{};
+  std::vector<CameraType> camera_types;
+  // One cam is always required
+  for(int i=0;i<config.CAMERA_N_CAMERAS;i++){
+    const auto cam_type_str=i==0 ? config.CAMERA_CAMERA0_TYPE : config.CAMERA_CAMERA1_TYPE;
+    const auto cam_type=CameraType::UNKNOWN;
+    camera_types.push_back(cam_type);
+  }
+  for(const auto cam_type:camera_types){
+    if(cam_type==CameraType::DUMMY_SW){
+      cameras.emplace_back(createDummyCamera());
+    }else if(cam_type==CameraType::CUSTOM_UNMANAGED_CAMERA){
+      cameras.emplace_back(createCustomUnmanagedCamera());
+    }
+    if(cam_type==CameraType::CUSTOM_UNMANAGED_CAMERA || cam_type==CameraType::IP){
+
+    }
+  }
+  if(cameras.empty()){
+    openhd::log::get_default()->warn("autodetect off but no cameras");
+    OHDUtil::keep_alive_until_sigterm();
+  }
+  return cameras;
 }
