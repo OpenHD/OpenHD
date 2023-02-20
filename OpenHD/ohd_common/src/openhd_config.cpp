@@ -17,7 +17,7 @@ openhd::Config openhd::load_config() {
     inih::INIReader r{"/home/consti10/Desktop/OpenHD/OpenHD/ohd_common/config/config.config"};
     // Get and parse the ini value
     ret.WIFI_ENABLE_AUTODETECT = r.Get<bool>("wifi", "WIFI_ENABLE_AUTODETECT");
-    //ret.WIFI_WB_LINK_CARDS = r.Get<std::vector<std::string>>("wifi", "WIFI_WB_LINK_CARDS");
+    ret.WIFI_WB_LINK_CARDS = r.GetVector<std::string>("wifi", "WIFI_WB_LINK_CARDS");
     ret.WIFI_WIFI_HOTSPOT_CARD = r.Get<std::string>("wifi", "WIFI_WIFI_HOTSPOT_CARD");
 
     ret.CAMERA_ENABLE_AUTODETECT = r.Get<bool>("camera", "CAMERA_ENABLE_AUTODETECT");
