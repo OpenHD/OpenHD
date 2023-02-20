@@ -230,7 +230,7 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
     }
   }
   if(cameras.empty()){
-    openhd::log::get_default()->warn("autodetect off but no cameras");
+    openhd::log::get_default()->warn("autodetect off but no cameras. Fix file and restart openhd");
     OHDUtil::keep_alive_until_sigterm();
   }
   return cameras;

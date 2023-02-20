@@ -61,8 +61,6 @@ static const struct option long_options[] = {
 struct OHDRunOptions {
   bool run_as_air=false;
   bool force_dummy_camera=false;
-  bool force_custom_unmanaged_camera=false;
-  bool force_ip_camera=false;
   bool reset_all_settings=false;
   bool reset_frequencies=false;
   bool enable_interface_debugging=false;
@@ -79,7 +77,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   int c;
   // If this value gets set, we assume a developer is working on OpenHD and skip the discovery via file(s).
   std::optional<bool> commandline_air=std::nullopt;
-  bool commandline_force_dummy_camera=false;
   while ((c = getopt_long(argc, argv, optstr, long_options, NULL)) != -1) {
     const char *tmp_optarg = optarg;
     switch (c) {
@@ -109,16 +106,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         break;
       case 'w':ret.no_qt_autostart = true;
         break;
-      case 'f':commandline_force_dummy_camera= true;
-        break;
       case 'r':
         ret.run_time_seconds= atoi(tmp_optarg);
-        break;
-      case 'b':
-        ret.force_custom_unmanaged_camera=true;
-        break;
-      case 'd':
-        ret.force_ip_camera= true;
         break;
       case 'q':
         ret.continue_without_wb_card= true;
@@ -141,7 +130,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         exit(1);
     }
   }
-  if(commandline_air==std::nullopt && !commandline_force_dummy_camera){
+  if(commandline_air==std::nullopt){
     // command line parameters not used, use the file(s) for detection (default for normal OpenHD images)
     // The logs/checks here are just to help developer(s) avoid common misconfigurations
     std::cout<<"Using files to detect air or ground\n";
@@ -171,12 +160,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     }
   }else{
     // command line parameters used, just validate they are not mis-configured
-    if(commandline_force_dummy_camera){
-      commandline_air=true;
-    }
     assert(commandline_air.has_value());
     ret.run_as_air=commandline_air.value();
-    ret.force_dummy_camera=commandline_force_dummy_camera;
   }
   // If this file exists, delete all openhd settings resulting in default value(s)
   static constexpr auto FILE_PATH_RESET="/boot/openhd/reset.txt";
@@ -188,24 +173,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   static constexpr auto FILE_PATH_RESET_FREQUENCY="/boot/openhd/reset_freq.txt";
   if(OHDUtil::file_exists_and_delete(FILE_PATH_RESET_FREQUENCY)){
     ret.reset_frequencies=true;
-  }
-  if(OHDFilesystemUtil::exists("/boot/openhd/force_custom_unmanaged_camera.txt")){
-    ret.force_custom_unmanaged_camera= true;
-  }
-  if(OHDFilesystemUtil::exists("/boot/openhd/force_ip_camera.txt")){
-    ret.force_ip_camera= true;
-  }
-  if(ret.force_custom_unmanaged_camera && ret.force_dummy_camera){
-    openhd::log::get_default()->warn("Dummy camera overrides custom unmanaged camera");
-    ret.force_custom_unmanaged_camera= false;
-  }
-  if(ret.force_ip_camera && ret.force_dummy_camera){
-    openhd::log::get_default()->warn("Dummy camera overrides ip camera");
-    ret.force_ip_camera= false;
-  }
-  if(ret.force_ip_camera && ret.force_custom_unmanaged_camera){
-    openhd::log::get_default()->warn("Custom unmanaged camera overrides ip camera");
-    ret.force_ip_camera= false;
   }
   return ret;
 }
@@ -224,9 +191,6 @@ int main(int argc, char *argv[]) {
   // Print all the arguments the OHD main executable is started with
   std::cout << "OpenHD START with " <<"\n"<<
       "air:"<<  OHDUtil::yes_or_no(options.run_as_air)<<"\n"<<
-      "force_dummy_camera:"<<  OHDUtil::yes_or_no(options.force_dummy_camera)<<"\n"<<
-      "force_custom_unmanaged_camera:"<<  OHDUtil::yes_or_no(options.force_custom_unmanaged_camera)<<"\n"<<
-      "force_ip_camera:"<<  OHDUtil::yes_or_no(options.force_ip_camera)<<"\n"<<
       "reset_all_settings:" << OHDUtil::yes_or_no(options.reset_all_settings) <<"\n"<<
       "reset_frequencies:" << OHDUtil::yes_or_no(options.reset_frequencies) <<"\n"<<
       "debug-interface:"<<OHDUtil::yes_or_no(options.enable_interface_debugging) <<"\n"<<
