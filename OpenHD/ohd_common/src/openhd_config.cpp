@@ -14,11 +14,17 @@ static std::shared_ptr<spdlog::logger> get_logger(){
 openhd::Config openhd::load_config() {
   try{
     openhd::Config ret{};
-    inih::INIReader r{"/home/consti10/Desktop/config.config"};
+    inih::INIReader r{"/home/consti10/Desktop/OpenHD/OpenHD/ohd_common/config/config.config"};
     // Get and parse the ini value
-    ret.force_dummy_camera = r.Get<bool>("camera", "FORCE_DUMMY_CAMERA");
-    ret.force_custom_unmanaged_camera=r.Get<bool>("camera", "FORCE_CUSTOM_UNMANAGED_CAMERA");
-    ret.force_ip_camera=r.Get<bool>("camera", "FORCE_IP_CAMERA");
+    ret.WIFI_ENABLE_AUTODETECT = r.Get<bool>("wifi", "WIFI_ENABLE_AUTODETECT");
+    //ret.WIFI_WB_LINK_CARDS = r.Get<std::vector<std::string>>("wifi", "WIFI_WB_LINK_CARDS");
+    ret.WIFI_WIFI_HOTSPOT_CARD = r.Get<std::string>("wifi", "WIFI_WIFI_HOTSPOT_CARD");
+
+    ret.CAMERA_ENABLE_AUTODETECT = r.Get<bool>("camera", "CAMERA_ENABLE_AUTODETECT");
+    ret.CAMERA_N_CAMERAS = r.Get<int>("camera", "CAMERA_N_CAMERAS");
+    ret.CAMERA_CAMERA0_TYPE = r.Get<std::string>("camera", "CAMERA_CAMERA0_TYPE");
+    ret.CAMERA_CAMERA1_TYPE = r.Get<std::string>("camera", "CAMERA_CAMERA1_TYPE");
+
     return ret;
   }catch (std::exception& exception){
     get_logger()->warn("Ill-formatted config file {}",exception.what());
@@ -31,5 +37,5 @@ void openhd::persist_config(const openhd::Config& config) {
 }
 
 void openhd::debug_config(const openhd::Config& config) {
-  get_logger()->debug("force_dummy_camera:{}",config.force_dummy_camera);
+  // TODO
 }
