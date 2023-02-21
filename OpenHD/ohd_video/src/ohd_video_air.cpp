@@ -261,7 +261,7 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
       while (cameras.empty()){
         m_console->debug("Waiting for usb camera");
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        usb_cameras=DCameras::detect_usb_cameras(m_console);
+        usb_cameras=DCameras::detect_usb_cameras(platform,m_console);
       }
       cameras.emplace_back(usb_cameras.at(0));
     }
