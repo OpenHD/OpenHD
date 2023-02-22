@@ -230,11 +230,21 @@ std::string OHDUtil::vec_as_string(const std::vector<T>& v) {
   std::stringstream ss;
   ss << "[";
   for(int i=0;i<v.size();i++){
-    if (std::is_same<T,std::string>::value){
-      ss << v[i];
-    }else{
-      ss << std::to_string(v[i]);
+    ss << std::to_string(v[i]);
+    //ss<<v[i];
+    if(i!=v.size()-1){
+      ss<<",";
     }
+  }
+  ss << "]";
+  return ss.str();
+}
+
+std::string OHDUtil::str_vec_as_string(const std::vector<std::string>& v) {
+  std::stringstream ss;
+  ss << "[";
+  for(int i=0;i<v.size();i++){
+    ss << v[i];
     //ss<<v[i];
     if(i!=v.size()-1){
       ss<<",";

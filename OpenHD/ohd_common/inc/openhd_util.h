@@ -140,6 +140,8 @@ std::string create_string_from_lines(const std::vector<std::string>& lines);
 template<typename T>
 std::string vec_as_string(const std::vector<T> &v);
 
+std::string str_vec_as_string(const std::vector<std::string> &v);
+
 }
 
 #endif
