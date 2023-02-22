@@ -41,6 +41,11 @@ void openhd::debug_config(const openhd::Config& config) {
       "NW_MANUAL_FORWARDING_IPS:{}",
       config.WIFI_ENABLE_AUTODETECT,
       "TODO",//OHDUtil::vec_as_string(config.WIFI_WB_LINK_CARDS),config.WIFI_WIFI_HOTSPOT_CARD,
+      config.WIFI_WIFI_HOTSPOT_CARD,
       config.CAMERA_ENABLE_AUTODETECT,config.CAMERA_CAMERA0_TYPE,config.CAMERA_CAMERA1_TYPE,
       "TODO");
+}
+void openhd::debug_config() {
+  auto config=load_config();
+  debug_config(config);
 }

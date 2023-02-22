@@ -28,6 +28,7 @@ struct Config{
 Config load_config();
 
 void debug_config(const Config& config);
+void debug_config();
 
 }
 
