@@ -4,31 +4,22 @@ project(OHDCommon
         DESCRIPTION "OpenHD common headers"
         LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-
 if (TARGET OHDCommonLib)
     message(STATUS "OHDCommonLib already built")
     return()
 endif()
-
-# We use spdlog pretty much everyhwere in OpenHD
-add_subdirectory(lib/json)
-
-add_subdirectory(lib/spdlog)
-
-# from https://mavlink.io/en/mavgen_c/
-#You can supress the warnings in CMake using
-add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
 #----------------------------------------------------------------------------------------------------------------------
 # general settings and options
 #----------------------------------------------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
 
-include(GNUInstallDirs)
-
 add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
+
+# We use spdlog and json pretty much everyhwere in OpenHD
+add_subdirectory(lib/spdlog)
+add_subdirectory(lib/json)
 
 # Public since we use it throughout OpenHD
 #find_package(spdlog REQUIRED)
