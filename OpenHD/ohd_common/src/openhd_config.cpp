@@ -4,6 +4,7 @@
 
 #include "openhd_config.h"
 #include "openhd_spdlog.h"
+#include "openhd_util.h"
 
 #include "../lib/ini/ini.hpp"
 
@@ -32,10 +33,10 @@ openhd::Config openhd::load_config() {
   return {};
 }
 
-void openhd::persist_config(const openhd::Config& config) {
-
-}
-
 void openhd::debug_config(const openhd::Config& config) {
-  // TODO
+  get_logger()->debug("WIFI_ENABLE_AUTODETECT:{}, WIFI_WB_LINK_CARDS:{}, WIFI_WIFI_HOTSPOT_CARD:{},\n"
+      "CAMERA_ENABLE_AUTODETECT:{}, CAMERA_N_CAMERAS:{}, CAMERA_CAMERA0_TYPE:{}, CAMERA_CAMERA1_TYPE:{}",
+      config.WIFI_ENABLE_AUTODETECT,
+      "TODO",//OHDUtil::vec_as_string(config.WIFI_WB_LINK_CARDS),config.WIFI_WIFI_HOTSPOT_CARD,
+      config.CAMERA_ENABLE_AUTODETECT,config.CAMERA_CAMERA0_TYPE,config.CAMERA_CAMERA1_TYPE);
 }
