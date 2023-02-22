@@ -29,14 +29,12 @@ target_link_libraries(OHDCommonLib PUBLIC spdlog::spdlog)
 #find_package(spdlog nlohmann_json)
 target_link_libraries(OHDCommonLib PUBLIC  nlohmann_json::nlohmann_json)
 
-# Find and include boost. We only use boost for the filesystem stuff (since std::filesystem is a bitch in regards to compatibility).
-# Please try and avoid using boost throughout the project !
-# from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
-# Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
+# WARNING: Please do not use boost, without going into too much detail why, it is a pain for multi platform compatibility.
+# We only use it as a temporary solution until all platforms support std::filesystem
 SET(Boost_USE_STATIC_LIBS OFF)
 SET(Boost_USE_MULTITHREAD ON)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
-target_link_libraries(OHDCommonLib PUBLIC Boost::filesystem)
+target_link_libraries(OHDCommonLib PRIVATE Boost::filesystem)
 #----------------------------------------------------------------------------------------------------------------------
 # sources
 #----------------------------------------------------------------------------------------------------------------------
