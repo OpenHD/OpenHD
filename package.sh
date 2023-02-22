@@ -53,6 +53,7 @@ mkdir -p ${PKGDIR}/etc/systemd/system
 if [[ "${OS}" == "raspbian" ]]; then
   mkdir -p ${PKGDIR}/boot/openhd/rpi_camera_configs
   cp ../../rpi_camera_configs/* ${PKGDIR}/boot/openhd/rpi_camera_configs/
+  cp ../../OpenHD/ohd_common/config/hardware.config ${PKGDIR}/boot/openhd/hardware.config
 fi
 
 cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1

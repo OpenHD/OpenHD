@@ -5,6 +5,7 @@
 #include "openhd_config.h"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
+#include "openhd_util_filesystem.h"
 
 #include "../lib/ini/ini.hpp"
 
@@ -15,7 +16,12 @@ static std::shared_ptr<spdlog::logger> get_logger(){
 openhd::Config openhd::load_config() {
   try{
     openhd::Config ret{};
-    const auto filename="/home/consti10/Desktop/OpenHD/OpenHD/ohd_common/config/hardware.config";
+    // RPI - allow user(s) to edit the file on the SD card. Otherwise, we still need to figure out what to do
+    std::string filename="/home/consti10/Desktop/OpenHD/OpenHD/ohd_common/config/hardware.config";
+    const std::string image_filename="/boot/openhd/hardware.config";
+    if(OHDFilesystemUtil::exists(image_filename)){
+      filename=image_filename;
+    }
     inih::INIReader r{filename};
     // Get and parse the ini value
     ret.WIFI_ENABLE_AUTODETECT = r.Get<bool>("wifi", "WIFI_ENABLE_AUTODETECT");
