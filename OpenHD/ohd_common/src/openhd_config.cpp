@@ -26,6 +26,7 @@ openhd::Config openhd::load_config() {
     ret.CAMERA_CAMERA0_TYPE = r.Get<std::string>("camera", "CAMERA_CAMERA0_TYPE");
     ret.CAMERA_CAMERA1_TYPE = r.Get<std::string>("camera", "CAMERA_CAMERA1_TYPE");
 
+    ret.NW_MANUAL_FORWARDING_IPS =  r.GetVector<std::string>("network", "NW_MANUAL_FORWARDING_IPS");
     return ret;
   }catch (std::exception& exception){
     get_logger()->error("Ill-formatted config file {}",exception.what());
@@ -35,8 +36,10 @@ openhd::Config openhd::load_config() {
 
 void openhd::debug_config(const openhd::Config& config) {
   get_logger()->debug("WIFI_ENABLE_AUTODETECT:{}, WIFI_WB_LINK_CARDS:{}, WIFI_WIFI_HOTSPOT_CARD:{},\n"
-      "CAMERA_ENABLE_AUTODETECT:{}, CAMERA_N_CAMERAS:{}, CAMERA_CAMERA0_TYPE:{}, CAMERA_CAMERA1_TYPE:{}",
+      "CAMERA_ENABLE_AUTODETECT:{}, CAMERA_N_CAMERAS:{}, CAMERA_CAMERA0_TYPE:{}, CAMERA_CAMERA1_TYPE:{}\n"
+      "NW_MANUAL_FORWARDING_IPS:{}",
       config.WIFI_ENABLE_AUTODETECT,
       "TODO",//OHDUtil::vec_as_string(config.WIFI_WB_LINK_CARDS),config.WIFI_WIFI_HOTSPOT_CARD,
-      config.CAMERA_ENABLE_AUTODETECT,config.CAMERA_CAMERA0_TYPE,config.CAMERA_CAMERA1_TYPE);
+      config.CAMERA_ENABLE_AUTODETECT,config.CAMERA_CAMERA0_TYPE,config.CAMERA_CAMERA1_TYPE,
+      "TODO");
 }

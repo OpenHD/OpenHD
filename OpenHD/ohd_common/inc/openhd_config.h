@@ -21,6 +21,8 @@ struct Config{
   int CAMERA_N_CAMERAS;
   std::string CAMERA_CAMERA0_TYPE;
   std::string CAMERA_CAMERA1_TYPE;
+  // NETWORKING
+  std::vector<std::string> NW_MANUAL_FORWARDING_IPS;
 };
 
 Config load_config();
