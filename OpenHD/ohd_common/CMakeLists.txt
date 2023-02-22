@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
 
-# We use spdlog and json pretty much everyhwere in OpenHD
+# We use spdlog and json pretty much everywhere in OpenHD. Build it here, then make publicly available
 add_subdirectory(lib/spdlog)
 add_subdirectory(lib/json)
 
