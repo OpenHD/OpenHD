@@ -5,8 +5,8 @@
 #ifndef XMAVLINKSERVICE_SYSTEMREADUTIL_H
 #define XMAVLINKSERVICE_SYSTEMREADUTIL_H
 
-#include <boost/filesystem.hpp>
 #include <chrono>
+#include <fstream>
 #include <regex>
 #include <sstream>
 

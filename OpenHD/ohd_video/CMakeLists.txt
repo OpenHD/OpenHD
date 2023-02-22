@@ -13,14 +13,6 @@ add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 #You can supress the warnings in CMake using
 add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
-# from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
-# Find and include boost
-# Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
-SET(Boost_USE_STATIC_LIBS OFF)
-SET(Boost_USE_MULTITHREAD ON)
-FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
-SET(OHD_VIDEO_USED_LIBS Boost::filesystem)
-
 # From libcamera-apps !! begin
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBCAMERA QUIET libcamera)

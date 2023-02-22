@@ -52,14 +52,6 @@ target_include_directories(OHDInterfaceLib
     PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
 
-# from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
-# Find and include boost
-# Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
-SET(Boost_USE_STATIC_LIBS OFF)
-SET(Boost_USE_MULTITHREAD ON)
-FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
-target_link_libraries(OHDInterfaceLib PUBLIC Boost::filesystem)
-
 #find_package(spdlog REQUIRED)
 #target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
 
