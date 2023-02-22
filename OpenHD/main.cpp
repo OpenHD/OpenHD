@@ -45,9 +45,6 @@ static const char optstr[] = "?:agfbdcxyzwr:q";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
-    {"force-dummy-camera", no_argument, nullptr, 'f'},
-    {"force-custom-unmanaged-camera", no_argument, nullptr, 'b'},
-    {"force-ip-camera", no_argument, nullptr, 'd'},
     {"clean-start", no_argument, nullptr, 'c'},
     {"debug-interface", no_argument, nullptr, 'x'}, // just use the long options
     {"debug-telemetry", no_argument, nullptr, 'y'},
@@ -121,9 +118,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
             "--debug-telemetry [enable telemetry debugging] \n"<<
             "--debug-video     [enable video debugging] \n"<<
             "--no-qt-autostart [disable auto start of QOpenHD on ground] \n"<<
-            "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n"<<
-            "--force-custom-unmanaged-camera [only on air,custom unmanaged camera in openhd,cannot be autodetected] \n"<<
-            "--force-ip-camera [only on air, ip camera, cannot be autodetected] \n"<<
             "--run-time-seconds -r [Manually specify run time (default infinite),for debugging] \n"<<
             "--continue-without-wb-card -q [continue the startup process even though no monitor mode card has been found yet] \n";
         exit(1);
