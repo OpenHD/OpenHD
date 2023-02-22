@@ -5,7 +5,7 @@ Description=rpi_ip_camera_service
 User=root
 
 # IP camera service started by QOpenHD if needed (and stopped if needed)
-ExecStart=/bin/sh -c "/usr/local/share/enableIPCamera.sh"
+ExecStart=/bin/sh -c "/usr/local/bin/enableIPCamera.sh"
 
 Restart=always
 RestartSec=1
