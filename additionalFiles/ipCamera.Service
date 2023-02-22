@@ -1,0 +1,14 @@
+[Unit]
+Description=rpi_ip_camera_service
+
+[Service]
+User=root
+
+# IP camera service started by QOpenHD if needed (and stopped if needed)
+ExecStart=/bin/sh -c "/usr/local/share/enableIPCamera.sh"
+
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
