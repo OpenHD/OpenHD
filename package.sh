@@ -5,40 +5,36 @@ export LANG=C.UTF-8
 
 PACKAGE_ARCH=$1
 OS=$2
-DISTRO=$3
-BUILD_TYPE=$4
-
 
 PACKAGE_NAME=openhd
-
 
 PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
 echo "getting hash"
-cd /opt/OpenHD
+cd /opt/OpenHD || exit
 ls -a
 VER2=$(git rev-parse --short HEAD) 
 echo ${VER2}
-cd OpenHD
+cd OpenHD || exit
 
 if [[ "${OS}" == "ubuntu" ]] && [[ "${PACKAGE_ARCH}" == "armhf" || "${PACKAGE_ARCH}" == "arm64" ]]; then
-cd /opt
+cd /opt || exit
 mkdir temp
-cd temp
+cd temp || exit
 git clone https://github.com/OpenHD/OpenHD
-cd OpenHD
+cd OpenHD || exit
 git rev-parse --short HEAD ||exit
 VER2=$(git rev-parse --short HEAD) 
 echo ${VER2}
-cd /opt/OpenHD/OpenHD
+cd /opt/OpenHD/OpenHD || exit
 fi
 
 rm -rf build
 
 mkdir build
 
-cd build
+cd build || exit
 
 cmake ..
 make -j4
