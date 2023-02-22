@@ -34,6 +34,13 @@ class OHDVideoAir {
   OHDVideoAir(const OHDVideoAir&)=delete;
   OHDVideoAir(const OHDVideoAir&&)=delete;
   /**
+   * Discover connected cameras at run time. CSI and USB cameras generally can be auto-detected,
+   * IP Cameras (and/or really "specific" setups) not. Automatic discovery can be completely overridden by editing the .config file.
+   * @return the camera(s) openhd should use, guaranteed to be at least one (in case no cam is found,
+   * a dummy sw camera is created)
+   */
+  static std::vector<Camera> discover_cameras(const OHDPlatform& platform);
+  /**
    * Create a verbose debug string about the current state of OHDVideo.
    * @return a verbose debug string.
    */

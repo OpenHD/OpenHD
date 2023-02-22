@@ -11,6 +11,7 @@
 #include "openhd_settings_directories.hpp"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
+#include "openhd_config.h"
 
 namespace openhd {
 
@@ -58,17 +59,12 @@ class ExternalDeviceManager{
  public:
   ExternalDeviceManager(){
     // Here one can manually declare any IP addresses openhd should forward video / telemetry to
-    // File needs to contain valid ip addresses, one per line, without any whitespaces or similar.
-    const std::string manual_filename=openhd::get_interface_settings_directory()+std::string("manual_forwarding_ips.txt");
-    if(OHDFilesystemUtil::exists(manual_filename)){
-      const auto content=OHDFilesystemUtil::read_file(manual_filename);
-      const auto lines=OHDUtil::split_string_by_newline(content, false);
-      for(const auto& line:lines){
-        if(OHDUtil::is_valid_ip(line)){
-          m_manual_ips.push_back(line);
-        }else{
-          openhd::log::get_default()->warn("[{}] is not a valid ip",line);
-        }
+    const auto config=openhd::load_config();
+    for(const auto& ip:config.NW_MANUAL_FORWARDING_IPS){
+      if(OHDUtil::is_valid_ip(ip)){
+        m_manual_ips.push_back(ip);
+      }else{
+        openhd::log::get_default()->warn("[{}] is not a valid ip",ip);
       }
     }
     for(const auto& ip:m_manual_ips){

@@ -320,7 +320,7 @@ class CameraHolder:
       ret.streamed_video_format.height=720;
       ret.streamed_video_format.framerate=30;
     }
-    if(m_camera.type==CameraType::RPI_VEYE_CSI_V4l2){
+    if(m_camera.type==CameraType::RPI_CSI_VEYE_V4l2){
       // most veye cameras can only do 1080p30, nothing else
       ret.streamed_video_format.width=1920;
       ret.streamed_video_format.height=1080;

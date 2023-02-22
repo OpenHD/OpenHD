@@ -101,7 +101,7 @@ struct Camera {
   }
   // also, pretty much a must have unless using ip camera
   [[nodiscard]] bool supports_changing_format()const{
-    const bool not_supported= type==CameraType::CUSTOM_UNMANAGED_CAMERA || type==CameraType::IP || type==CameraType::RPI_VEYE_CSI_V4l2;
+    const bool not_supported= type==CameraType::CUSTOM_UNMANAGED_CAMERA || type==CameraType::IP || type==CameraType::RPI_CSI_VEYE_V4l2;
     return !not_supported;
   }
   [[nodiscard]] bool supports_keyframe_interval()const{
@@ -150,18 +150,18 @@ static void write_camera_manifest(const std::vector<Camera> &cameras) {
   _t.close();
 }
 
-static Camera createDummyCamera() {
+static Camera createDummyCamera(int index=0) {
   Camera camera;
-  camera.name = "DummyCamera";
-  camera.index = 0;
+  camera.name = fmt::format("DummyCamera{}",index);
+  camera.index = index;
   camera.vendor = "dummy";
   camera.type = CameraType::DUMMY_SW;
   return camera;
 }
 
-static Camera createCustomUnmanagedCamera(){
+static Camera createCustomUnmanagedCamera(int index=0){
   Camera camera;
-  camera.name = "CustomUnmanagedCamera";
+  camera.name = fmt::format("CustomUnmanagedCamera{}",index);
   camera.index = 0;
   camera.vendor = "unknown";
   camera.type = CameraType::CUSTOM_UNMANAGED_CAMERA;

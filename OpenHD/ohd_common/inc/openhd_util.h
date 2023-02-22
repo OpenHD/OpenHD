@@ -35,13 +35,15 @@ static bool contains_after_uppercase(const std::string& s1,
   return s1_upper.find(s2_upper) != std::string::npos;
 }
 
+static bool str_equal(const std::string& s1,const std::string& s2){
+  return s1==s2;
+}
+
 // Converts both strings to uppercase, then checks if
 // s1 has exactly the same content as s2
 static bool equal_after_uppercase(const std::string& s1,
                                   const std::string& s2) {
-  const auto s1_upper = OHDUtil::to_uppercase(s1);
-  const auto s2_upper = OHDUtil::to_uppercase(s2);
-  return s1_upper == s2_upper;
+  return str_equal(OHDUtil::to_uppercase(s1),OHDUtil::to_uppercase(s2));
 }
 
 // From https://stackoverflow.com/questions/216823/how-to-trim-an-stdstring
@@ -137,6 +139,8 @@ std::string create_string_from_lines(const std::vector<std::string>& lines);
 
 template<typename T>
 std::string vec_as_string(const std::vector<T> &v);
+
+std::string str_vec_as_string(const std::vector<std::string> &v);
 
 }
 

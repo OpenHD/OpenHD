@@ -45,9 +45,6 @@ static const char optstr[] = "?:agfbdcxyzwr:q";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
-    {"force-dummy-camera", no_argument, nullptr, 'f'},
-    {"force-custom-unmanaged-camera", no_argument, nullptr, 'b'},
-    {"force-ip-camera", no_argument, nullptr, 'd'},
     {"clean-start", no_argument, nullptr, 'c'},
     {"debug-interface", no_argument, nullptr, 'x'}, // just use the long options
     {"debug-telemetry", no_argument, nullptr, 'y'},
@@ -60,9 +57,6 @@ static const struct option long_options[] = {
 
 struct OHDRunOptions {
   bool run_as_air=false;
-  bool force_dummy_camera=false;
-  bool force_custom_unmanaged_camera=false;
-  bool force_ip_camera=false;
   bool reset_all_settings=false;
   bool reset_frequencies=false;
   bool enable_interface_debugging=false;
@@ -79,7 +73,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   int c;
   // If this value gets set, we assume a developer is working on OpenHD and skip the discovery via file(s).
   std::optional<bool> commandline_air=std::nullopt;
-  bool commandline_force_dummy_camera=false;
   while ((c = getopt_long(argc, argv, optstr, long_options, NULL)) != -1) {
     const char *tmp_optarg = optarg;
     switch (c) {
@@ -109,16 +102,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         break;
       case 'w':ret.no_qt_autostart = true;
         break;
-      case 'f':commandline_force_dummy_camera= true;
-        break;
       case 'r':
         ret.run_time_seconds= atoi(tmp_optarg);
-        break;
-      case 'b':
-        ret.force_custom_unmanaged_camera=true;
-        break;
-      case 'd':
-        ret.force_ip_camera= true;
         break;
       case 'q':
         ret.continue_without_wb_card= true;
@@ -133,15 +118,12 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
             "--debug-telemetry [enable telemetry debugging] \n"<<
             "--debug-video     [enable video debugging] \n"<<
             "--no-qt-autostart [disable auto start of QOpenHD on ground] \n"<<
-            "--force-dummy-camera -f [Run as air, always use dummy camera (even if real cam is found)] \n"<<
-            "--force-custom-unmanaged-camera [only on air,custom unmanaged camera in openhd,cannot be autodetected] \n"<<
-            "--force-ip-camera [only on air, ip camera, cannot be autodetected] \n"<<
             "--run-time-seconds -r [Manually specify run time (default infinite),for debugging] \n"<<
             "--continue-without-wb-card -q [continue the startup process even though no monitor mode card has been found yet] \n";
         exit(1);
     }
   }
-  if(commandline_air==std::nullopt && !commandline_force_dummy_camera){
+  if(commandline_air==std::nullopt){
     // command line parameters not used, use the file(s) for detection (default for normal OpenHD images)
     // The logs/checks here are just to help developer(s) avoid common misconfigurations
     std::cout<<"Using files to detect air or ground\n";
@@ -171,12 +153,8 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
     }
   }else{
     // command line parameters used, just validate they are not mis-configured
-    if(commandline_force_dummy_camera){
-      commandline_air=true;
-    }
     assert(commandline_air.has_value());
     ret.run_as_air=commandline_air.value();
-    ret.force_dummy_camera=commandline_force_dummy_camera;
   }
   // If this file exists, delete all openhd settings resulting in default value(s)
   static constexpr auto FILE_PATH_RESET="/boot/openhd/reset.txt";
@@ -188,24 +166,6 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   static constexpr auto FILE_PATH_RESET_FREQUENCY="/boot/openhd/reset_freq.txt";
   if(OHDUtil::file_exists_and_delete(FILE_PATH_RESET_FREQUENCY)){
     ret.reset_frequencies=true;
-  }
-  if(OHDFilesystemUtil::exists("/boot/openhd/force_custom_unmanaged_camera.txt")){
-    ret.force_custom_unmanaged_camera= true;
-  }
-  if(OHDFilesystemUtil::exists("/boot/openhd/force_ip_camera.txt")){
-    ret.force_ip_camera= true;
-  }
-  if(ret.force_custom_unmanaged_camera && ret.force_dummy_camera){
-    openhd::log::get_default()->warn("Dummy camera overrides custom unmanaged camera");
-    ret.force_custom_unmanaged_camera= false;
-  }
-  if(ret.force_ip_camera && ret.force_dummy_camera){
-    openhd::log::get_default()->warn("Dummy camera overrides ip camera");
-    ret.force_ip_camera= false;
-  }
-  if(ret.force_ip_camera && ret.force_custom_unmanaged_camera){
-    openhd::log::get_default()->warn("Custom unmanaged camera overrides ip camera");
-    ret.force_ip_camera= false;
   }
   return ret;
 }
@@ -224,9 +184,6 @@ int main(int argc, char *argv[]) {
   // Print all the arguments the OHD main executable is started with
   std::cout << "OpenHD START with " <<"\n"<<
       "air:"<<  OHDUtil::yes_or_no(options.run_as_air)<<"\n"<<
-      "force_dummy_camera:"<<  OHDUtil::yes_or_no(options.force_dummy_camera)<<"\n"<<
-      "force_custom_unmanaged_camera:"<<  OHDUtil::yes_or_no(options.force_custom_unmanaged_camera)<<"\n"<<
-      "force_ip_camera:"<<  OHDUtil::yes_or_no(options.force_ip_camera)<<"\n"<<
       "reset_all_settings:" << OHDUtil::yes_or_no(options.reset_all_settings) <<"\n"<<
       "reset_frequencies:" << OHDUtil::yes_or_no(options.reset_frequencies) <<"\n"<<
       "debug-interface:"<<OHDUtil::yes_or_no(options.enable_interface_debugging) <<"\n"<<
@@ -237,6 +194,7 @@ int main(int argc, char *argv[]) {
       "continue_without_wb_card:"<<OHDUtil::yes_or_no(options.continue_without_wb_card)<<"\n";
   std::cout<<"Version number:"<<openhd::VERSION_NUMBER_STRING<<"\n";
   std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
+  openhd::debug_config();
   OHDInterface::print_internal_fec_optimization_method();
 
   // This is the console we use inside main, in general different openhd modules/classes have their own loggers
@@ -285,40 +243,10 @@ int main(int argc, char *argv[]) {
         OHDUtil::run_command("systemctl",{"stop","qopenhd"});
       }
     }
-
     // Now we need to discover camera(s) if we are on the air
     std::vector<Camera> cameras{};
     if(profile->is_air){
-      if(options.force_dummy_camera){
-        // skip camera detection, we want the dummy camera regardless weather a camera is connected or not.
-        cameras.emplace_back(createDummyCamera());
-      }else if(options.force_custom_unmanaged_camera) {
-        // these cameras cannot be autodetected and need to be manually forced/specified
-        cameras.emplace_back(createCustomUnmanagedCamera());
-      }else if(options.force_ip_camera){
-        // these cameras cannot be autodetected and need to be manually forced/specified
-        cameras.emplace_back(createCustomIpCamera());
-      }else{
-        // Issue on rpi: The openhd service is often started before ? (most likely the OS needs to do some internal setup stuff)
-        // and then the cameras discovery step is run before the camera is available, and therefore not found. Block up to
-        // X seconds here, to give the OS time until the camera is available, only then continue with the dummy camera
-        // Since the jetson is also an embedded platform, just like the rpi, I am doing it for it too, even though I never
-        // checked if that's actually an issue there
-        cameras = DCameras::discover(*platform);
-        if(platform->platform_type==PlatformType::RaspberryPi || platform->platform_type==PlatformType::Jetson){
-          const auto begin=std::chrono::steady_clock::now();
-          while (std::chrono::steady_clock::now()-begin<std::chrono::seconds(10)){
-            if(!cameras.empty())break; // break as soon as we have at least one camera
-            m_console->debug("Re-running camera discovery step, until camera is found/timeout");
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            cameras=DCameras::discover(*platform);
-          }
-        }
-        if(cameras.empty()){
-          m_console->warn("No camera found after X seconds, using dummy camera instead");
-          cameras.emplace_back(createDummyCamera());
-        }
-      }
+      cameras = OHDVideoAir::discover_cameras(*platform);
     }
     // Now print the actual cameras used by OHD. Of course, this prints nothing on ground (where we have no cameras connected).
     for(const auto& camera:cameras){

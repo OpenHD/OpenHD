@@ -24,7 +24,6 @@ class DCameras {
    * @param ohdPlatform the platform we are running on, detection depends on the platform type.
    */
   static std::vector<Camera> discover(OHDPlatform ohdPlatform);
- private:
   /**
    * NOTE: Some of the CSI camera(s) could also be accessed / detected via v4l2, but there are
    * some downsides to that, which is why for example we use libcamera directly to discover libcamera-CSI

@@ -22,7 +22,9 @@ enum class CameraType {
   RPI_CSI_MMAL,
   // RPI VEYE on the RPI using the newer V4l2 stack, but we need to handle it manually
   // (E.g. not like a v4l2 camera, but like a special camera type with custom pipeline)
-  RPI_VEYE_CSI_V4l2,
+  RPI_CSI_VEYE_V4l2,
+  // Raspberry pi only right now, a CSI camera that uses the newer libcamera stack
+  RPI_CSI_LIBCAMERA,
   // Any CSI camera on jetson
   JETSON_CSI,
   // Any CSI camera on rockchip
@@ -40,8 +42,6 @@ enum class CameraType {
   // Cannot be auto-detected, therefore needs to be forced manually by the user (and in general, IP camera(s) are really different
   // compared to the other camera types and therefore do not integrate well in OpenHD/ohd_video)
   IP,
-  // Raspberry pi only right now, a CSI camera that uses the newer libcamera stack
-  RPI_CSI_LIBCAMERA,
   // rk3588 specific, incomplete
   ROCKCHIP_HDMI,
   // This camera is for developing purposes and/or for users that want to create more or less esoteric camera pipelines, e.g. by using
@@ -56,7 +56,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
      {CameraType::UNKNOWN, nullptr},
      {CameraType::DUMMY_SW, "DUMMY_SW"},
      {CameraType::RPI_CSI_MMAL, "RPI_CSI_MMAL"},
-     {CameraType::RPI_VEYE_CSI_V4l2, "RPI_VEYE_CSI_V4l2"},
+     {CameraType::RPI_CSI_VEYE_V4l2, "RPI_CSI_VEYE_V4l2"},
      {CameraType::JETSON_CSI, "JETSON_CSI"},
      {CameraType::ROCKCHIP_CSI, "ROCKCHIP_CSI"},
      {CameraType::ALLWINNER_CSI, "ALLWINNER_CSI"},
@@ -74,8 +74,8 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
       return "DUMMY_SW";
     case CameraType::RPI_CSI_MMAL:
       return "RPI_CSI_MMAL";
-    case CameraType::RPI_VEYE_CSI_V4l2:
-      return "RPI_VEYE_CSI_V4l2";
+    case CameraType::RPI_CSI_VEYE_V4l2:
+      return "RPI_CSI_VEYE_V4l2";
     case CameraType::JETSON_CSI:
       return "JETSON_CSI";
     case CameraType::ROCKCHIP_CSI:
@@ -97,6 +97,24 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
     default:
       return "UNKNOWN";
   }
+}
+
+static CameraType camera_type_from_string(const std::string& s){
+  if(OHDUtil::contains_after_uppercase(s,"DUMMY_SW")){
+    return CameraType::DUMMY_SW;
+  }else if(OHDUtil::contains_after_uppercase(s,"RPI_CSI_MMAL")){
+    return CameraType::RPI_CSI_VEYE_V4l2;
+  }else if(OHDUtil::contains_after_uppercase(s,"RPI_CSI_VEYE_V4l2")){
+      return CameraType::RPI_CSI_VEYE_V4l2;
+  }else if(OHDUtil::contains_after_uppercase(s,"RPI_CSI_LIBCAMERA")){
+      return CameraType::RPI_CSI_LIBCAMERA;
+  }else if(OHDUtil::contains_after_uppercase(s,"UVC")){
+      return CameraType::UVC;
+  }else if(OHDUtil::contains_after_uppercase(s,"UVC_H264")){
+      return CameraType::UVC_H264;
+  }
+  openhd::log::get_default()->warn("Invalid camera type {}",s);
+  return CameraType::DUMMY_SW;
 }
 
 enum class VideoCodec {

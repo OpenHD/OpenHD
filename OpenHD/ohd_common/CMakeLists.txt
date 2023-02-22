@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16.3)
+cmake_minimum_required(VERSION 3.18.3)
 project(OHDCommon
         VERSION 2.0.0
         DESCRIPTION "OpenHD common headers"
@@ -9,24 +9,17 @@ if (TARGET OHDCommonLib)
     return()
 endif()
 
-# We use spdlog pretty much everyhwere in OpenHD
-add_subdirectory(lib/json)
-
-add_subdirectory(lib/spdlog)
-
-# from https://mavlink.io/en/mavgen_c/
-#You can supress the warnings in CMake using
-add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
-
 #----------------------------------------------------------------------------------------------------------------------
 # general settings and options
 #----------------------------------------------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
 
-include(GNUInstallDirs)
-
 add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
+
+# We use spdlog and json pretty much everywhere in OpenHD. Build it here, then make publicly available
+add_subdirectory(lib/spdlog)
+add_subdirectory(lib/json)
 
 # Public since we use it throughout OpenHD
 #find_package(spdlog REQUIRED)
@@ -36,6 +29,12 @@ target_link_libraries(OHDCommonLib PUBLIC spdlog::spdlog)
 #find_package(spdlog nlohmann_json)
 target_link_libraries(OHDCommonLib PUBLIC  nlohmann_json::nlohmann_json)
 
+# WARNING: Please do not use boost, without going into too much detail why, it is a pain for multi platform compatibility.
+# We only use it as a temporary solution until all platforms support std::filesystem
+SET(Boost_USE_STATIC_LIBS OFF)
+SET(Boost_USE_MULTITHREAD ON)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
+target_link_libraries(OHDCommonLib PRIVATE Boost::filesystem)
 #----------------------------------------------------------------------------------------------------------------------
 # sources
 #----------------------------------------------------------------------------------------------------------------------
@@ -95,3 +94,6 @@ target_link_libraries(test_openhd_util OHDCommonLib)
 
 add_executable(test_ohd_reboot test/test_ohd_reboot.cpp)
 target_link_libraries(test_ohd_reboot OHDCommonLib)
+
+add_executable(test_config test/test_config.cpp)
+target_link_libraries(test_config OHDCommonLib)
