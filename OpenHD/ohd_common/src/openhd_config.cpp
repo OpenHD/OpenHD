@@ -15,7 +15,8 @@ static std::shared_ptr<spdlog::logger> get_logger(){
 openhd::Config openhd::load_config() {
   try{
     openhd::Config ret{};
-    inih::INIReader r{"/home/consti10/Desktop/OpenHD/OpenHD/ohd_common/config/hardware.config"};
+    const auto filename="/home/consti10/Desktop/OpenHD/OpenHD/ohd_common/config/hardware.config";
+    inih::INIReader r{filename};
     // Get and parse the ini value
     ret.WIFI_ENABLE_AUTODETECT = r.Get<bool>("wifi", "WIFI_ENABLE_AUTODETECT");
     ret.WIFI_WB_LINK_CARDS = r.GetVector<std::string>("wifi", "WIFI_WB_LINK_CARDS");
