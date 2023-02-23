@@ -9,6 +9,8 @@
 #include "openhd_platform.h"
 #include "openhd_profile.h"
 
+#include <csignal>
+
 int main() {
   std::cout<< "start\n";
   std::unique_ptr<OHDTelemetry> air;
