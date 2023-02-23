@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.16.3)
-project(OHDCommon
-        VERSION 2.0.0
-        DESCRIPTION "OpenHD common headers"
-        LANGUAGES CXX)
+project(OHDCommon)
 
 if (TARGET OHDCommonLib)
     message(STATUS "OHDCommonLib already built")

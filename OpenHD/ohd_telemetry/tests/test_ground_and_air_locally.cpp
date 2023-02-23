@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <thread>
+#include <csignal>
 
 #include "../src/OHDTelemetry.h"
 #include "openhd_platform.h"

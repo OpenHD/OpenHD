@@ -10,7 +10,7 @@
 #include "openhd_spdlog.h"
 
 int main() {
-  std::shared_ptr<spdlog::logger> m_console=spdlog::stdout_color_mt("main");
+  std::shared_ptr<spdlog::logger> m_console=openhd::log::get_default();
   assert(m_console);
 
   m_console->debug("test_joystick_reader");

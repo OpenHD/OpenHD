@@ -37,7 +37,7 @@ openhd::Config openhd::load_config() {
     ret.NW_MANUAL_FORWARDING_IPS =  r.GetVector<std::string>("network", "NW_MANUAL_FORWARDING_IPS");
     return ret;
   }catch (std::exception& exception){
-    get_logger()->error("Ill-formatted config file {}",exception.what());
+    get_logger()->error("Ill-formatted config file {}",std::string(exception.what()));
   }
   return {};
 }

@@ -3,7 +3,6 @@
 #include <gst/gst.h>
 #include <unistd.h>
 
-#include <iostream>
 #include <regex>
 #include <vector>
 

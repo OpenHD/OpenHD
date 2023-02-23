@@ -10,6 +10,8 @@
 #include "openhd_profile.h"
 #include "openhd_settings_imp.hpp"
 
+#include <csignal>
+
 int main() {
   std::cout<< "start\n";
   std::unique_ptr<OHDTelemetry> ground;

@@ -7,6 +7,8 @@
 #include "../src/internal/OnboardComputerStatusProvider.h"
 #include "openhd_platform.h"
 
+#include <csignal>
+
 int main() {
 
   const auto platform=DPlatform::discover();
