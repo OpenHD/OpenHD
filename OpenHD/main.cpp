@@ -197,6 +197,7 @@ int main(int argc, char *argv[]) {
   std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
   openhd::log::get_default()->debug("Heeeee");
   openhd::debug_config();
+  openhd::log::get_default()->debug("Heeeee2");
   OHDInterface::print_internal_fec_optimization_method();
 
   // This is the console we use inside main, in general different openhd modules/classes have their own loggers
