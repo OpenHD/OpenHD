@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.18.3)
 project(OpenHD)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # See https://github.com/andrew-hardin/cmake-git-version-tracking

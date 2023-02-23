@@ -13,6 +13,7 @@ endif()
 # general settings and options
 #----------------------------------------------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)

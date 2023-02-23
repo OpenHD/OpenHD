@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16.3)
 project(OpenHD-Interface)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Only needed when we build this submodule manually
 add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
