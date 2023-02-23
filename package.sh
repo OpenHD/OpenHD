@@ -12,7 +12,11 @@ PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
 echo "getting hash"
+
+if [[ "${OS}" == "raspbian" ]]; then
 cd /opt/OpenHD || exit
+fi
+
 ls -a
 VER2=$(git rev-parse --short HEAD) 
 echo ${VER2}
