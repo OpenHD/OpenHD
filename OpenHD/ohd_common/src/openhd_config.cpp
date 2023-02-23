@@ -35,6 +35,10 @@ openhd::Config openhd::load_config() {
 
 	ret.NW_ETHERNET_CARD = r.Get<std::string>("network", "NW_ETHERNET_CARD");
     ret.NW_MANUAL_FORWARDING_IPS =  r.GetVector<std::string>("network", "NW_MANUAL_FORWARDING_IPS");
+	// Skip empty string here
+	if(ret.NW_MANUAL_FORWARDING_IPS.size()==1 && ret.NW_MANUAL_FORWARDING_IPS.at(0)==""){
+	  ret.NW_MANUAL_FORWARDING_IPS={};
+	}
     return ret;
   }catch (std::exception& exception){
     get_logger()->error("Ill-formatted config file {}",exception.what());
