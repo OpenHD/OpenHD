@@ -88,12 +88,20 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   }
   // Listen for external device(s) to connect - only on ground
   if(m_profile.is_ground()){
-    // The USB tethering listener is always enabled
+    // The USB tethering listener is always enabled on ground - it doesn't interfere with anything
     m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
-    // dirty, and therefore r.n only enabled on rpi as ground.
-    if(m_platform.platform_type==PlatformType::RaspberryPi){
-      m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,"eth0");
-    }
+  }
+  if(openhd::nw_ethernet_card_manual_active(config)){
+	// User explicitly told openhd to manage ethernet, which needs to be done if running on non-rpi platform
+	const auto eth_card=config.NW_ETHERNET_CARD;
+	m_console->debug("Managing manually specified card [{}]",eth_card);
+	m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,eth_card);
+  }else{
+	// Default
+	// RPI: manage ethernet on ground, which always shows up as eth0
+	if(m_platform.platform_type==PlatformType::RaspberryPi){
+	  m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,"eth0");
+	}
   }
   // This way one could try and recover an air pi
   if(opt_hotspot_card.has_value()){

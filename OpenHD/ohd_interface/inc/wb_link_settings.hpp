@@ -7,7 +7,7 @@
 
 #include "openhd_platform.h"
 #include "openhd_settings_persistent.h"
-#include "wifi_card.hpp"
+#include "wifi_card.h"
 
 namespace openhd{
 

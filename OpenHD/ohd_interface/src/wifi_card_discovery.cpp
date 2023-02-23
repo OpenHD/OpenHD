@@ -6,7 +6,7 @@
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
-#include "wifi_card.hpp"
+#include "wifi_card.h"
 #include "wifi_command_helper.h"
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
