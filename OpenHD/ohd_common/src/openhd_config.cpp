@@ -52,7 +52,7 @@ void openhd::debug_config(const openhd::Config& config) {
       );
 }
 void openhd::debug_config() {
-  auto config=load_config();
+  //auto config=load_config();
   //debug_config(config);
 }
 
