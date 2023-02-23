@@ -45,6 +45,7 @@ static const char optstr[] = "?:agfbdcxyzwr:q";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
+	//{"config-file",required_argument, nullptr,'f'},
     {"clean-start", no_argument, nullptr, 'c'},
     {"debug-interface", no_argument, nullptr, 'x'}, // just use the long options
     {"debug-telemetry", no_argument, nullptr, 'y'},
