@@ -214,7 +214,7 @@ void OHDUtil::terminate_if_not_root() {
 
 bool OHDUtil::get_ohd_env_variable_bool(const std::string& name) {
   if (OHDUtil::contains_after_uppercase(name, "OHD_")) {
-    std::cout << "Please prefix OpenHD env variables with {OHD_}\n";
+    openhd::log::get_default()->warn("Please prefix OpenHD env variables with {OHD_}");
   }
   if (const char* env_p = std::getenv(name.c_str())) {
     if (std::string(env_p) == "1") {
