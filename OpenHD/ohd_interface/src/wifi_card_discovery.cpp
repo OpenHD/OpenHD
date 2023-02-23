@@ -1,6 +1,5 @@
 #include "wifi_card_discovery.h"
 
-#include <iostream>
 #include <regex>
 
 #include "openhd_spdlog.h"

@@ -10,7 +10,7 @@
 #include <cctype>
 #include <csignal>
 #include <cstdlib>
-#include <iostream>
+#include <sstream>
 #include <optional>
 #include <regex>
 #include <string>
@@ -207,8 +207,7 @@ bool OHDUtil::check_root(const bool print_debug) {
 
 void OHDUtil::terminate_if_not_root() {
   if (!check_root(false)) {
-    std::cout
-        << "ERROR not root,terminating. Run OpenHD with root privileges.\n";
+    openhd::log::get_default()->error("not root,terminating. Run OpenHD with root privileges.");
     exit(EXIT_FAILURE);
   }
 }
