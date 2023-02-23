@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16.3)
 project(OHDVideoLib)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(OHDVideoLib STATIC) # initialized below
 add_library(OHDVideoLib::OHDVideoLib ALIAS OHDVideoLib)

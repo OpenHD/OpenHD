@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18.3)
+cmake_minimum_required(VERSION 3.16.3)
 project(OHDCommon
         VERSION 2.0.0
         DESCRIPTION "OpenHD common headers"
@@ -13,6 +13,7 @@ endif()
 # general settings and options
 #----------------------------------------------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
