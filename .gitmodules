@@ -7,3 +7,6 @@
 [submodule "OpenHD/lib/wifibroadcast"]
 	path = OpenHD/lib/wifibroadcast
 	url = https://github.com/OpenHD/wifibroadcast.git
+[submodule "OpenHD/ohd_common/lib/spdlog"]
+	path = OpenHD/ohd_common/lib/spdlog
+	url = https://github.com/gabime/spdlog.git
