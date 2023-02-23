@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18.3)
+cmake_minimum_required(VERSION 3.16.3)
 project(OHDCommon
         VERSION 2.0.0
         DESCRIPTION "OpenHD common headers"
