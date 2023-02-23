@@ -10,7 +10,7 @@
 #include "openhd_profile.h"
 #include "openhd_settings_imp.hpp"
 
-#include <signal.h>
+#include <csignal>
 
 int main() {
   std::cout<< "start\n";
