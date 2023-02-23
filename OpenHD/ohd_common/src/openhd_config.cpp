@@ -53,8 +53,8 @@ void openhd::debug_config(const openhd::Config& config) {
       );
 }
 void openhd::debug_config() {
-  //auto config=load_config();
-  //debug_config(config);
+  auto config=load_config();
+  debug_config(config);
 }
 
 bool openhd::nw_ethernet_card_manual_active(const openhd::Config &config) {
