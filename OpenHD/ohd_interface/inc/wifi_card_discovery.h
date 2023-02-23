@@ -8,7 +8,7 @@
 
 #include "openhd_platform.h"
 #include "openhd_profile.h"
-#include "wifi_card.hpp"
+#include "wifi_card.h"
 
 /**
  * Discover all connected wifi cards.

@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "openhd_settings_imp.hpp"
-#include "wifi_card.hpp"
+#include "wifi_card.h"
 #include "wifi_hotspot_settings.h"
 
 /**

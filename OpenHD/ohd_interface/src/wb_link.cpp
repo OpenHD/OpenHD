@@ -12,7 +12,7 @@
 #include "openhd_reboot_util.h"
 #include "openhd_bitrate_conversions.hpp"
 #include "wb_link_helper.h"
-#include "wifi_card.hpp"
+#include "wifi_card.h"
 
 // optionally, if no file exists we just use a default, hard coded seed
 static std::string get_opt_keypair_filename(bool is_air){
