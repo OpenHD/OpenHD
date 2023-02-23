@@ -34,6 +34,7 @@ jobs:
           'https://dl.cloudsmith.io/public/openhd/openhd-2-3-evo/setup.deb.sh' \
           | sudo -E bash
           sudo apt update
+          sudo apt-mark hold grub-efi-amd64-signed
           sudo apt upgrade -y
           sudo apt remove libunwind-13-dev 
           sudo apt install -y libunwind-dev libgstreamer-plugins-base1.0-dev
