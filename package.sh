@@ -12,7 +12,12 @@ PKGDIR=/tmp/${PACKAGE_NAME}-installdir
 sudo rm -rf ${PKGDIR}/*
 
 echo "getting hash"
+
+if [[ "${OS}" == "raspbian" ]]; then
+##on emulated systems we know where the branch is cloned, on not emulated we must hope that we are in the right directory
 cd /opt/OpenHD || exit
+fi
+
 ls -a
 VER2=$(git rev-parse --short HEAD) 
 echo ${VER2}
