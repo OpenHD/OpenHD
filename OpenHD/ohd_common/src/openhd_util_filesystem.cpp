@@ -97,12 +97,13 @@ void OHDFilesystemUtil::remove_if_existing(const std::string &filename) {
 
 void OHDFilesystemUtil::make_file_read_write_everyone(
     const std::string &filename) {
-  if(exists(filename)){
-    try{
-      chmod("./myfile", S_IROTH | S_IWOTH); // enables owner to rwx file
-    }catch (std::exception& e){
-      openhd::log::get_default()->debug("Cannot change permissions on [{}]",filename);
-    }
+  if(!exists(filename)){
+    openhd::log::get_default()->warn("Cannot change file {} rw anybody, file does not exist",filename);
+    return ;
+  }
+  const auto res= chmod(filename.c_str(), S_IROTH | S_IWOTH);
+  if(res!=0){
+    openhd::log::get_default()->warn("Cannot change file {} rw anybody, ret:{}",filename,res);
   }
 }
 
