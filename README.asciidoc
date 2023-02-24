@@ -52,6 +52,7 @@ image:wiki-content/Open.HD Logo Splashscreen/Plain_OpenHD_Logo.jpg[OpenHD Logo]
 // Badges
 image:https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&style=flat-square[title="Telegram", link="https://t.me/OpenHD_User"]
 image:https://img.shields.io/badge/Discord-Join_us!-informational?logo=Discord&style=flat-square[title="Discord", link="https://discord.gg/NRRn5ugrxH"]
+image:https://img.shields.io/badge/Facebook-Join_us!-informational?logo=Facebook&style=flat-square[title="Facebook", link="https://www.facebook.com/groups/open.hd/"]
 image:https://img.shields.io/github/commit-activity/m/OpenHD/OpenHD?style=flat-square[title="GitHub commit activity", link=""]
 image:https://img.shields.io/github/issues-raw/OpenHD/OpenHD?style=flat-square[title="GitHub issues", link="https://github.com/OpenHD/OpenHD/issues"]
 image:https://img.shields.io/github/downloads/OpenHD/OpenHD/total?style=flat-square[title="GitHub All Releases", link=""]
