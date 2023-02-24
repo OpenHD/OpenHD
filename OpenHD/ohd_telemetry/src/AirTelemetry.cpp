@@ -168,9 +168,7 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 	return true;
   };
   auto c_fc_uart_baudrate=[this](std::string,int value) {
-	if(!air::validate_uart_baudrate(value)){
-	  return false;
-	}
+        if(!SerialEndpoint::is_valid_linux_baudrate(value))return false;
 	_airTelemetrySettings->unsafe_get_settings().fc_uart_baudrate=value;
 	_airTelemetrySettings->persist();
 	setup_uart();

@@ -39,32 +39,6 @@ struct Settings{
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,fc_uart_connection_type,fc_uart_baudrate,fc_uart_flow_control);
 
-// based on mavsdk and what linux allows setting
-// if a value is in the map, we allow the user to set it
-static std::map<int,void*> valid_uart_baudrates(){
-  std::map<int,void*> ret;
-  ret[9600]=nullptr;
-  ret[19200]=nullptr;
-  ret[38400]=nullptr;
-  ret[57600]=nullptr;
-  ret[115200]=nullptr;
-  ret[230400]=nullptr;
-  ret[460800]=nullptr;
-  ret[500000]=nullptr;
-  ret[576000]=nullptr;
-  ret[921600]=nullptr;
-  ret[1000000]=nullptr;
-  // I think it is sane to stop here, I doubt anything higher makes sense
-  return ret;
-}
-
-static bool validate_uart_baudrate(int baudrate){
-  const auto supported=valid_uart_baudrates();
-  if(supported.find(baudrate)!=supported.end()){
-	return true;
-  }
-  return false;
-}
 
 // 16 chars limit !
 static constexpr auto FC_UART_CONNECTION_TYPE="FC_UART_CONN";

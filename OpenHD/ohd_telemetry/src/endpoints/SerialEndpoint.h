@@ -53,6 +53,9 @@ class SerialEndpoint : public MEndpoint{
   // Stop any UART communication (read and write). Might block for up to 1 second.
   // Does nothing if already stopped.
   void stop();
+  // Linux defines what baud rates are available - this does not check if the given baud rate is actually supported by the HW,
+  // but checks if it is at least a somewhat sane value
+  static bool is_valid_linux_baudrate(int baudrate);
  private:
   bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;
   static int define_from_baudrate(int baudrate);
