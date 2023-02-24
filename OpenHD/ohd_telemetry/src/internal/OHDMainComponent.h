@@ -14,7 +14,7 @@
 #include "../mav_helper.h"
 #include "HelperSources/SocketHelper.hpp"
 #include "OnboardComputerStatusProvider.h"
-#include "StatusTextAccumulator.hpp"
+#include "StatusTextAccumulator.h"
 #include "WBReceiverStats.hpp"
 #include "openhd_action_handler.hpp"
 #include "openhd_link_statistics.hpp"
@@ -62,9 +62,7 @@ class OHDMainComponent : public MavlinkComponent{
   [[nodiscard]] MavlinkMessage generate_ohd_version(const std::string& commit_hash= "unknown")const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
-  // here all the log messages are sent to - not in their mavlink form yet.
-  std::unique_ptr<SocketHelper::UDPReceiver> m_log_messages_receiver;
-  StatusTextAccumulator m_status_text_accumulator;
+  std::unique_ptr<StatusTextAccumulator> m_status_text_accumulator;
   std::unique_ptr<OnboardComputerStatusProvider> m_onboard_computer_status_provider;
   std::mutex m_last_link_stats_mutex;
   openhd::link_statistics::StatsAirGround m_last_link_stats{};

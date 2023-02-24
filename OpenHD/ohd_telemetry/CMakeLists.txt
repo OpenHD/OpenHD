@@ -51,7 +51,8 @@ SET(sources
     "src/internal/OnboardComputerStatus.hpp"
     "src/internal/OnboardComputerStatusProvider.cpp"
     "src/internal/OnboardComputerStatusProvider.h"
-        "src/internal/StatusTextAccumulator.hpp"
+     "src/internal/StatusTextAccumulator.cpp"
+    "src/internal/StatusTextAccumulator.h"
 
     "src/mavsdk_temporary/connection.cpp"
     "src/mavsdk_temporary/connection.h"

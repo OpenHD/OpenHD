@@ -72,19 +72,20 @@ class GroundTelemetry :public MavlinkSystem{
   // send one or more messages to all clients connected to the ground station, for example QOpenHD
   void send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages);
   std::vector<openhd::Setting> get_all_settings();
+  void setup_uart();
  private:
   std::shared_ptr<spdlog::logger> m_console;
-  std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_groundTelemetrySettings;
+  std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_gnd_settings;
   // Mavlink to / from gcs station(s)
   std::unique_ptr<UDPEndpoint2> m_gcs_endpoint = nullptr;
   // mavlink out via serial for tracker or similar
-  std::unique_ptr<SerialEndpoint> m_endpoint_tracker= nullptr;
+  std::unique_ptr<SerialEndpointManager> m_endpoint_tracker= nullptr;
   // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
-  std::mutex components_lock;
-  std::vector<std::shared_ptr<MavlinkComponent>> components;
-  std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
+  std::mutex m_components_lock;
+  std::vector<std::shared_ptr<MavlinkComponent>> m_components;
+  std::shared_ptr<XMavlinkParamProvider> m_generic_mavlink_param_provider;
   std::shared_ptr<openhd::ExternalDeviceManager> m_ext_device_manager;
   //
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

@@ -31,8 +31,9 @@ class UdpTelemetrySink : public spdlog::sinks::base_sink<std::mutex>{
       //spdlog::memory_buf_t formatted;
       //spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
       const auto msg_string=fmt::to_string(msg.payload);
+      const std::string msg_with_tag=fmt::format("{} {}",msg.logger_name,msg_string);
       const auto level=openhd::log::udp::level_spdlog_to_mavlink(msg.level);
-      openhd::log::udp::ohd_log(level,msg_string);
+      openhd::log::udp::ohd_log(level,msg_with_tag);
       //std::cout << "["<<msg_string<<"]";
     }
   }

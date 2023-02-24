@@ -208,7 +208,7 @@ void GStreamerStream::setup_rockchip_hdmi() {
 }
 
 void GStreamerStream::setup_allwinner_csi() {
-  std::cout << "Setting up Allwinner CSI camera" << std::endl;
+  m_console->debug("Setting up Allwinner CSI camera");
   const auto& setting=m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createAllwinnerStream(0,setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.h26x_keyframe_interval);
 }
@@ -415,28 +415,28 @@ void GStreamerStream::restart_async() {
 }
 
 void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) {
-  m_console->debug("handle_change_bitrate_request prev: {} new:{}",
-                   kbits_per_second_to_string(m_curr_dynamic_bitrate_kbits),
-                   kbits_per_second_to_string(lb.recommended_encoder_bitrate_kbits));
+  //m_console->debug("handle_change_bitrate_request prev: {} new:{}",
+  //                 kbits_per_second_to_string(m_curr_dynamic_bitrate_kbits),
+  //                 kbits_per_second_to_string(lb.recommended_encoder_bitrate_kbits));
   // We do some safety checks first - the link might recommend too much / too little
   auto bitrate_for_encoder_kbits =lb.recommended_encoder_bitrate_kbits;
   // No encoder I've seen can do <2MBit/s, at least the ones we use
   static constexpr auto MIN_BITRATE_KBITS=2*1000;
   if(bitrate_for_encoder_kbits <MIN_BITRATE_KBITS){
-    m_console->debug("Cam cannot do <{}", kbits_per_second_to_string(MIN_BITRATE_KBITS));
+    //m_console->debug("Cam cannot do <{}", kbits_per_second_to_string(MIN_BITRATE_KBITS));
     bitrate_for_encoder_kbits =MIN_BITRATE_KBITS;
   }
   // upper-bound - hard coded for now, since pi cannot do more than 19MBit/s
   static constexpr auto max_bitrate_kbits=19*1000;
   if(bitrate_for_encoder_kbits >max_bitrate_kbits){
-    m_console->debug("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
+    //m_console->debug("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
     bitrate_for_encoder_kbits =max_bitrate_kbits;
   }
   if(m_curr_dynamic_bitrate_kbits==bitrate_for_encoder_kbits){
-    m_console->debug("Cam already at {}",m_curr_dynamic_bitrate_kbits);
+    //m_console->debug("Cam already at {}",m_curr_dynamic_bitrate_kbits);
     return ;
   }
-  m_console->debug("Changing bitrate to {} kBit/s",bitrate_for_encoder_kbits);
+  m_console->debug("Changing bitrate to from {} kBit/s to {} kBit/s",m_camera_holder->get_settings().h26x_bitrate_kbits,bitrate_for_encoder_kbits);
   if(try_dynamically_change_bitrate( bitrate_for_encoder_kbits)){
     m_camera_holder->unsafe_get_settings().h26x_bitrate_kbits=bitrate_for_encoder_kbits;
     // Do not trigger a full restart - we already changed the bitrate dynamically

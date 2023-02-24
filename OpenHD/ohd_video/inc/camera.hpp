@@ -93,7 +93,21 @@ struct Camera {
   [[nodiscard]] std::string to_short_string() const {
     return fmt::format("{}:{}:{}", camera_type_to_string(type),name,index);
   }
-
+  // There are 2 types of bitrate control, the more the camera supports the better:
+  // 1) Changing the bitrate with a complete restart of the streaming pipeline (not ideal, but better than nothing)
+  // 2) Changing the bitrate at run time without a complete restart of the streaming pipeline
+  [[nodiscard]] bool supports_bitrate_with_restart()const{
+    if(type==CameraType::DUMMY_SW || type == CameraType::RPI_CSI_MMAL || type==CameraType::RPI_CSI_LIBCAMERA || type==CameraType::RPI_CSI_VEYE_V4l2
+        // NOTE ! USB Camera(s) - generally only supported if we use sw encode with the camera, but we do not know here what is being done
+        || type==CameraType::UVC ){
+      return true;
+    }
+    return false;
+  }
+  [[nodiscard]] bool supports_bitrate_without_restart()const{
+    if(type==CameraType::DUMMY_SW || type==CameraType::RPI_CSI_MMAL)return true;
+    return false;
+  }
   // supported by pretty much any camera type (not supporting bitrate control is only the case for these exotic cases)
   [[nodiscard]] bool supports_bitrate()const{
     const bool not_supported= type==CameraType::CUSTOM_UNMANAGED_CAMERA || type==CameraType::IP;

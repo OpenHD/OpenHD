@@ -35,6 +35,6 @@ class WifiHotspotSettingsHolder:public openhd::settings::PersistentSettings<Wifi
   }
 };
 
-void wifi_hotspot_fixup_settings(WifiHotspotSettingsHolder& wifi_hotspot_settings_holder,const WiFiCard& wifi_card,const openhd::Space& wifibroadcast_frequency_space);
+void wifi_hotspot_fixup_settings(WifiHotspotSettingsHolder& wifi_hotspot_settings_holder,const WiFiCard& wifi_card,const openhd::WifiSpace& wifibroadcast_frequency_space);
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_HOTSPOT_SETTINGS_H_

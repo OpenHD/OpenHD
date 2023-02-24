@@ -3,9 +3,11 @@
 //
 
 #include "openhd_profile.h"
-#include "openhd_settings_directories.hpp"
+
+#include <fstream>
 
 #include "include_json.hpp"
+#include "openhd_settings_directories.hpp"
 
 static constexpr auto PROFILE_MANIFEST_FILENAME = "/tmp/profile_manifest";
 

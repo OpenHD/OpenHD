@@ -231,7 +231,7 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
     }else if(cam_type==CameraType::RPI_CSI_MMAL){
       auto mmal_cameras=DCameras::detect_raspberrypi_broadcom_csi(m_console);
       // Wait for camera to become available
-      while (cameras.empty()){
+      while (mmal_cameras.empty()){
         m_console->debug("Waiting for mmal camera");
         std::this_thread::sleep_for(std::chrono::seconds(1));
         mmal_cameras=DCameras::detect_raspberrypi_broadcom_csi(m_console);
@@ -240,7 +240,7 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
     }else if(cam_type==CameraType::RPI_CSI_LIBCAMERA){
       auto libcamera_cameras=DCameras::detect_raspberrypi_libcamera_csi(m_console);
       // Wait for camera to become available
-      while (cameras.empty()){
+      while (libcamera_cameras.empty()){
         m_console->debug("Waiting for libcamera camera");
         std::this_thread::sleep_for(std::chrono::seconds(1));
         libcamera_cameras=DCameras::detect_raspberrypi_libcamera_csi(m_console);
@@ -249,7 +249,7 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
     }else if(cam_type==CameraType::RPI_CSI_VEYE_V4l2){
       auto veye_cameras=DCameras::detect_rapsberrypi_veye_v4l2_dirty(m_console);
       // Wait for camera to become available
-      while (cameras.empty()){
+      while (veye_cameras.empty()){
         m_console->debug("Waiting for veye camera");
         std::this_thread::sleep_for(std::chrono::seconds(1));
         veye_cameras=DCameras::detect_rapsberrypi_veye_v4l2_dirty(m_console);
@@ -258,7 +258,7 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
     }else if(cam_type==CameraType::UVC){
       auto usb_cameras=DCameras::detect_usb_cameras(platform,m_console);
       // Wait for camera to become available
-      while (cameras.empty()){
+      while (usb_cameras.empty()){
         m_console->debug("Waiting for usb camera");
         std::this_thread::sleep_for(std::chrono::seconds(1));
         usb_cameras=DCameras::detect_usb_cameras(platform,m_console);

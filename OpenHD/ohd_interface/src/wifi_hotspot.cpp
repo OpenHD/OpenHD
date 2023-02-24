@@ -27,7 +27,7 @@ static bool create_hotspot_connection(const WiFiCard& card,const WifiHotspotSett
 }
 
 
-WifiHotspot::WifiHotspot(WiFiCard wifiCard,const openhd::Space& wifibroadcast_frequency_space):
+WifiHotspot::WifiHotspot(WiFiCard wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space):
 m_wifi_card(std::move(wifiCard)) {
   m_console = openhd::log::create_or_get("wifi_hs");
   m_settings=std::make_unique<WifiHotspotSettingsHolder>();

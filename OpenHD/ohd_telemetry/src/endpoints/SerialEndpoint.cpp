@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include <cassert>
+#include <map>
 #include <utility>
 
 #include "openhd_util_filesystem.h"
@@ -312,3 +313,60 @@ void SerialEndpoint::stop() {
   m_console->debug("stop()-end");
 }
 
+// based on mavsdk and what linux allows setting
+// if a value is in the map, we allow the user to set it
+static std::map<int,void*> valid_uart_baudrates(){
+  std::map<int,void*> ret;
+  ret[9600]=nullptr;
+  ret[19200]=nullptr;
+  ret[38400]=nullptr;
+  ret[57600]=nullptr;
+  ret[115200]=nullptr;
+  ret[230400]=nullptr;
+  ret[460800]=nullptr;
+  ret[500000]=nullptr;
+  ret[576000]=nullptr;
+  ret[921600]=nullptr;
+  ret[1000000]=nullptr;
+  // I think it is sane to stop here, I doubt anything higher makes sense
+  return ret;
+}
+
+bool SerialEndpoint::is_valid_linux_baudrate(int baudrate) {
+  const auto supported=valid_uart_baudrates();
+  if(supported.find(baudrate)!=supported.end()){
+    return true;
+  }
+  return false;
+}
+
+void SerialEndpointManager::send_messages_if_enabled(
+    const std::vector<MavlinkMessage>& messages) {
+  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
+  if(m_serial_endpoint){
+    m_serial_endpoint->sendMessages(messages);
+  }
+}
+
+void SerialEndpointManager::disable() {
+  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
+  if(m_serial_endpoint !=nullptr) {
+    m_console->info("Stopping already existing FC UART");
+    m_serial_endpoint->stop();
+    m_serial_endpoint.reset();
+    m_serial_endpoint =nullptr;
+  }
+}
+
+void SerialEndpointManager::configure(const SerialEndpoint::HWOptions& options,const std::string& tag,MAV_MSG_CALLBACK cb) {
+  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
+  if(m_serial_endpoint !=nullptr) {
+    // Disable the currently running uart configuration, if there is any
+    m_console->info("Stopping already existing FC UART");
+    m_serial_endpoint->stop();
+    m_serial_endpoint.reset();
+    m_serial_endpoint =nullptr;
+  }
+  m_serial_endpoint =std::make_unique<SerialEndpoint>(tag,options);
+  m_serial_endpoint->registerCallback(std::move(cb));
+}

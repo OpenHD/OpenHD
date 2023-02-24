@@ -7,6 +7,7 @@
 
 #include "openhd_platform.h"
 #include "openhd_settings_persistent.h"
+#include "openhd_settings_directories.hpp"
 #include "wifi_card.h"
 
 namespace openhd{
@@ -57,7 +58,7 @@ struct WBLinkSettings {
   uint32_t wb_max_fec_block_size_for_platform=DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
 
   // wb link recommends bitrate(s) to the encoder, can be helpfully for inexperienced users.
-  bool enable_wb_video_variable_bitrate= false;
+  bool enable_wb_video_variable_bitrate= true;
   // Helper
   [[nodiscard]] bool is_video_variable_block_length_enabled()const{
     return wb_video_fec_block_length==0;

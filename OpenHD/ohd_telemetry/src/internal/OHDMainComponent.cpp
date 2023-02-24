@@ -20,14 +20,6 @@ OHDMainComponent::OHDMainComponent(
   m_console = openhd::log::create_or_get("t_main_c");
   assert(m_console);
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform);
-  m_log_messages_receiver =
-      std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
-                                                  openhd::LOCAL_LOG_MESSAGES_UDP_PORT,
-                                                  [this](const uint8_t *payload,
-                                                         const std::size_t payloadSize) {
-                                                    this->m_status_text_accumulator.processLogMessageData(payload, payloadSize);
-                                                  });
-  m_log_messages_receiver->runInBackground();
   // suppress the warning until we get the first actually updated stats
   m_last_link_stats.is_air=RUNS_ON_AIR;
   if(m_opt_action_handler){
@@ -35,6 +27,7 @@ OHDMainComponent::OHDMainComponent(
       this->set_link_statistics(stats_air_ground);
     });
   }
+  m_status_text_accumulator=std::make_unique<StatusTextAccumulator>();
 }
 
 OHDMainComponent::~OHDMainComponent() {
@@ -166,19 +159,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
-  const auto messages= m_status_text_accumulator.get_messages();
-  std::vector<MavlinkMessage> ret;
-  // limit to 5 to save bandwidth
-  for(const auto& msg:messages){
-    if (ret.size() < 5) {
-      MavlinkMessage mavMsg;
-      StatusTextAccumulator::convert(mavMsg.m,msg, m_sys_id, m_comp_id);
-      ret.push_back(mavMsg);
-    } else {
-      m_console->debug("Dropping log message {}",msg.msg_as_string());
-    }
-  }
-  return ret;
+  return m_status_text_accumulator->get_mavlink_messages(m_sys_id,m_comp_id);
 }
 
 MavlinkMessage OHDMainComponent::generate_ohd_version(const std::string& commit_hash) const {

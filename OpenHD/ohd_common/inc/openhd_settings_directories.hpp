@@ -3,12 +3,6 @@
 #define OPENHD_SETTINGS_H
 
 #include <cassert>
-#include <exception>
-#include <fstream>
-#include <iostream>
-#include <optional>
-#include <stdexcept>
-#include <streambuf>
 #include <string>
 #include <utility>
 

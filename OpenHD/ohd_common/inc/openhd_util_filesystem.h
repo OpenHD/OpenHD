@@ -49,6 +49,8 @@ std::string read_file(const std::string& filename);
 
 void remove_if_existing(const std::string& filename);
 
+// OpenHD is run as root and as such, any file(s) it creates are only read/write as root
+// Changes the permission of a file to read write anybody (non-root)
 void make_file_read_write_everyone(const std::string& filename);
 
 // Return: remaining space in root directory

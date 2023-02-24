@@ -61,7 +61,7 @@ bool has_any_rtl8812au(const std::vector<WiFiCard>& cards);
 
 // Theoretical rates can be found here: https://mcsindex.com/
 // Those values are hella conservative, but mostly taken from 2.0
-static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index) {
+static uint32_t rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
   switch (mcs_index) {
     case 0:
       return 3000; //theoretical:6.5
@@ -86,8 +86,8 @@ static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index) {
   return 5000;
 }
 
-static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index,bool is_40_mhz){
-  auto rate_kbits=rtl8812au_get_max_rate_kbits(mcs_index);
+static uint32_t rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index,bool is_40_mhz){
+  auto rate_kbits= rtl8812au_get_max_rate_5G_kbits(mcs_index);
   if(is_40_mhz){
     // Theoretically 40Mhz should give exactly 2x the bitrate, but be a bit conservative here
     rate_kbits = static_cast<uint32_t>(std::roundl(rate_kbits*1.7));
@@ -95,9 +95,9 @@ static uint32_t rtl8812au_get_max_rate_kbits(uint16_t mcs_index,bool is_40_mhz){
   return rate_kbits;
 }
 
-static uint32_t get_max_rate_possible(const WiFiCard& card,uint16_t mcs_index,bool is_40Mhz){
+static uint32_t get_max_rate_possible_5G(const WiFiCard& card,uint16_t mcs_index,bool is_40Mhz){
   if(card.type==WiFiCardType::Realtek8812au){
-    return rtl8812au_get_max_rate_kbits(mcs_index,is_40Mhz);
+    return rtl8812au_get_max_rate_5G_kbits(mcs_index, is_40Mhz);
   }
   if(card.type==WiFiCardType::Realtek88x2bu){
     // Hard coded, since "some rate" is hard coded in the driver.
@@ -105,6 +105,14 @@ static uint32_t get_max_rate_possible(const WiFiCard& card,uint16_t mcs_index,bo
   }
   // fallback for any other weak crap
   return 5000;
+}
+
+static uint32_t get_max_rate_possible(const WiFiCard& card,const openhd::WifiSpace wifi_space,uint16_t mcs_index,bool is_40Mhz){
+  // Generally, 2G just sucks - we do not have proper rate control for it
+  if(wifi_space==WifiSpace::G2_4){
+    return 5000;
+  }
+  return get_max_rate_possible_5G(card,mcs_index,is_40Mhz);
 }
 
 static uint32_t deduce_fec_overhead(uint32_t bandwidth_kbits,int fec_overhead_perc){
