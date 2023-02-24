@@ -3,6 +3,12 @@ name: build_package_rpi
 on:
   push:
     branches: ["2.3-evo"]
+    paths-ignore:
+      - '**.yml'
+      - '**.md'
+      - '**.asciidoc'
+      - '.gitignore'
+      - 'LICENSE'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

@@ -4,7 +4,14 @@ name: ubuntu22_build_test
 # NOTE: This test only checks if the code in the repository builds under ubuntu x86 (dependencies installed)
 # Which is - simply put - the most basic test. If this test fails, there is something wrong with the code.
 
-on: [push]
+on:
+  push:
+    paths-ignore:
+      - '**.yml'
+      - '**.md'
+      - '**.asciidoc'
+      - '.gitignore'
+      - 'LICENSE'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
