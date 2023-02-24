@@ -14,8 +14,8 @@
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   m_console = openhd::log::create_or_get("air_tele");
   assert(m_console);
-  _airTelemetrySettings=std::make_unique<openhd::telemetry::air::SettingsHolder>(platform);
-  m_serial_endpoint_manager=std::make_unique<SerialEndpointManager>();
+  m_air_settings =std::make_unique<openhd::telemetry::air::SettingsHolder>(platform);
+  m_fc_serial =std::make_unique<SerialEndpointManager>();
   setup_uart();
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
   components.push_back(m_ohd_main_component);
@@ -38,7 +38,7 @@ AirTelemetry::~AirTelemetry() {
 void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages) {
   auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_AIR);
   // NOTE: Remember there is a hack in place for rc channels override in regards to the sender sys id
-  m_serial_endpoint_manager->send_messages_if_enabled(generic);
+  m_fc_serial->send_messages_if_enabled(generic);
 }
 
 void AirTelemetry::send_messages_ground_unit(const std::vector<MavlinkMessage>& messages) {
@@ -150,15 +150,15 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
         if(!OHDFilesystemUtil::exists(value)){
           m_console->warn("{} is not a valid serial");
         }
-	_airTelemetrySettings->unsafe_get_settings().fc_uart_connection_type=value;
-	_airTelemetrySettings->persist();
+        m_air_settings->unsafe_get_settings().fc_uart_connection_type=value;
+        m_air_settings->persist();
 	setup_uart();
 	return true;
   };
   auto c_fc_uart_baudrate=[this](std::string,int value) {
         if(!SerialEndpoint::is_valid_linux_baudrate(value))return false;
-	_airTelemetrySettings->unsafe_get_settings().fc_uart_baudrate=value;
-	_airTelemetrySettings->persist();
+        m_air_settings->unsafe_get_settings().fc_uart_baudrate=value;
+        m_air_settings->persist();
 	setup_uart();
 	return true;
   };
@@ -166,16 +166,17 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     if(!openhd::validate_yes_or_no(value)){
       return false;
     }
-    _airTelemetrySettings->unsafe_get_settings().fc_uart_flow_control=value;
-    _airTelemetrySettings->persist();
+    m_air_settings->unsafe_get_settings().fc_uart_flow_control=value;
+    m_air_settings->persist();
     setup_uart();
     return true;
   };
-  ret.push_back(openhd::Setting{air::FC_UART_CONNECTION_TYPE,openhd::StringSetting{_airTelemetrySettings->get_settings().fc_uart_connection_type,
+  ret.push_back(openhd::Setting{air::FC_UART_CONNECTION_TYPE,openhd::StringSetting{
+          m_air_settings->get_settings().fc_uart_connection_type,
                                                                                     c_fc_uart_connection_type}});
-  ret.push_back(openhd::Setting{air::FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_baudrate),
+  ret.push_back(openhd::Setting{air::FC_UART_BAUD_RATE,openhd::IntSetting{static_cast<int>(m_air_settings->get_settings().fc_uart_baudrate),
                                                                            c_fc_uart_baudrate}});
-  ret.push_back(openhd::Setting{air::FC_UART_FLOW_CONTROL,openhd::IntSetting{static_cast<int>(_airTelemetrySettings->get_settings().fc_uart_flow_control),
+  ret.push_back(openhd::Setting{air::FC_UART_FLOW_CONTROL,openhd::IntSetting{static_cast<int>(m_air_settings->get_settings().fc_uart_flow_control),
                                                                            c_fc_uart_flow_control}});
 
   // and this allows an advanced user to change its air unit to a ground unit
@@ -200,22 +201,19 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 // Every time the UART configuration changes, we just re-start the UART (if it was already started)
 // This properly handles all the cases, e.g cleaning up an existing uart connection if set.
 void AirTelemetry::setup_uart() {
-  assert(_airTelemetrySettings);
+  assert(m_air_settings);
   using namespace openhd::telemetry;
-  if(_airTelemetrySettings->is_serial_enabled()){
-    const auto fc_uart_connection_type=_airTelemetrySettings->get_settings().fc_uart_connection_type;
-    const auto fc_uart_baudrate=_airTelemetrySettings->get_settings().fc_uart_baudrate;
-    const auto fc_uart_flow_control=_airTelemetrySettings->get_settings().fc_uart_flow_control;
+  if(m_air_settings->is_serial_enabled()){
     SerialEndpoint::HWOptions options{};
-    options.linux_filename=fc_uart_connection_type;
-    options.baud_rate=fc_uart_baudrate;
-    options.flow_control= fc_uart_flow_control;
+    options.linux_filename=m_air_settings->get_settings().fc_uart_connection_type;
+    options.baud_rate=m_air_settings->get_settings().fc_uart_baudrate;
+    options.flow_control= m_air_settings->get_settings().fc_uart_flow_control;
     options.enable_reading= true;
-    m_serial_endpoint_manager->configure(options,"fc_ser",[this](std::vector<MavlinkMessage> messages) {
+    m_fc_serial->configure(options,"fc_ser",[this](std::vector<MavlinkMessage> messages) {
       this->on_messages_fc(messages);
     });
   }else{
-    m_serial_endpoint_manager->disable();
+    m_fc_serial->disable();
   }
 }
 

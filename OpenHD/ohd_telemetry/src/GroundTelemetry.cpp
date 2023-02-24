@@ -16,7 +16,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
  _platform(platform),MavlinkSystem(OHD_SYS_ID_GROUND) {
   m_console = openhd::log::create_or_get("ground_tele");
   assert(m_console);
-  m_groundTelemetrySettings=std::make_unique<openhd::telemetry::ground::SettingsHolder>();
+  m_gnd_settings =std::make_unique<openhd::telemetry::ground::SettingsHolder>();
   m_endpoint_tracker=std::make_unique<SerialEndpointManager>();
   setup_uart();
   m_gcs_endpoint =
@@ -31,7 +31,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
   components.push_back(m_ohd_main_component);
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
-  if(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick){
+  if(m_gnd_settings->get_settings().enable_rc_over_joystick){
     m_rc_joystick_sender=std::make_unique<RcJoystickSender>([this](std::array<uint16_t,18> channels){
           // Dirty - we want the message both in the GCS station for debugging BUT need to perform some annoying workaround
           // for ARDUPILOT in regard to the SYS id. Which is why we send the same data as 2 different messages to the air unit(FC) and
@@ -43,8 +43,10 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
           // to the GCS stations
           auto msg_for_gcs=rc_channels_override_from_array(OHD_SYS_ID_GROUND,0,channels,0,0);
           send_messages_ground_station_clients({msg_for_gcs});
-    },m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz,JoystickReader::get_default_channel_mapping());
-    const auto parsed=JoystickReader::convert_string_to_channel_mapping(m_groundTelemetrySettings->get_settings().rc_channel_mapping);
+    },
+        m_gnd_settings->get_settings().rc_over_joystick_update_rate_hz,JoystickReader::get_default_channel_mapping());
+    const auto parsed=JoystickReader::convert_string_to_channel_mapping(
+        m_gnd_settings->get_settings().rc_channel_mapping);
     if(parsed==std::nullopt){
       m_console->warn("Not a valid channel mapping,using default");
     }else{
@@ -216,23 +218,25 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   auto c_config_enable_joystick=[this](std::string,int value){
     if(!openhd::validate_yes_or_no(value))return false;
-    m_groundTelemetrySettings->unsafe_get_settings().enable_rc_over_joystick=value;
-    m_groundTelemetrySettings->persist();
+    m_gnd_settings->unsafe_get_settings().enable_rc_over_joystick=value;
+    m_gnd_settings->persist();
     // Enabling requires reboot
     return true;
   };
-  ret.push_back(openhd::Setting{"ENABLE_JOY_RC",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().enable_rc_over_joystick),
+  ret.push_back(openhd::Setting{"ENABLE_JOY_RC",openhd::IntSetting{static_cast<int>(
+              m_gnd_settings->get_settings().enable_rc_over_joystick),
                                                                     c_config_enable_joystick}});
   if(m_rc_joystick_sender){
     auto c_rc_over_joystick_update_rate_hz=[this](std::string,int value){
       if(!openhd::telemetry::ground::valid_joystick_update_rate(value))return false;
-      m_groundTelemetrySettings->unsafe_get_settings().rc_over_joystick_update_rate_hz=value;
-      m_groundTelemetrySettings->persist();
+      m_gnd_settings->unsafe_get_settings().rc_over_joystick_update_rate_hz=value;
+      m_gnd_settings->persist();
       assert(m_rc_joystick_sender);
       m_rc_joystick_sender->change_update_rate(value);
       return true;
     };
-    ret.push_back(openhd::Setting{"RC_UPDATE_HZ",openhd::IntSetting{static_cast<int>(m_groundTelemetrySettings->get_settings().rc_over_joystick_update_rate_hz),
+    ret.push_back(openhd::Setting{"RC_UPDATE_HZ",openhd::IntSetting{static_cast<int>(
+                m_gnd_settings->get_settings().rc_over_joystick_update_rate_hz),
                                                                      c_rc_over_joystick_update_rate_hz}});
     auto c_rc_over_joystick_channel_mapping=[this](std::string,std::string value){
       m_console->debug("Change channel mapping {}",value);
@@ -242,11 +246,11 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
         return false;
       }
       m_rc_joystick_sender->update_channel_maping(parsed.value());
-      m_groundTelemetrySettings->unsafe_get_settings().rc_channel_mapping=value;
-      m_groundTelemetrySettings->persist();
+      m_gnd_settings->unsafe_get_settings().rc_channel_mapping=value;
+      m_gnd_settings->persist();
       return true;
     };
-    ret.push_back(openhd::Setting{"RC_CHAN_MAP",openhd::StringSetting {m_groundTelemetrySettings->get_settings().rc_channel_mapping,
+    ret.push_back(openhd::Setting{"RC_CHAN_MAP",openhd::StringSetting {m_gnd_settings->get_settings().rc_channel_mapping,
                                                                      c_rc_over_joystick_channel_mapping}});
   }
 #endif
@@ -255,12 +259,13 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
       if(!OHDFilesystemUtil::exists(value)){
         m_console->warn("{} is not a valid serial");
       }
-      m_groundTelemetrySettings->unsafe_get_settings().gnd_uart_connection_type=value;
-      m_groundTelemetrySettings->persist();
+      m_gnd_settings->unsafe_get_settings().gnd_uart_connection_type=value;
+      m_gnd_settings->persist();
       setup_uart();
       return true;
     };
-    ret.push_back(openhd::Setting{"TRACKER_UART_OUT",openhd::StringSetting{m_groundTelemetrySettings->get_settings().gnd_uart_connection_type,
+    ret.push_back(openhd::Setting{"TRACKER_UART_OUT",openhd::StringSetting{
+            m_gnd_settings->get_settings().gnd_uart_connection_type,
                                                                      c_gnd_uart_connection_type}});
   }
   openhd::testing::append_dummy_if_empty(ret);
@@ -268,18 +273,15 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 }
 
 void GroundTelemetry::setup_uart() {
-  assert(m_groundTelemetrySettings);
+  assert(m_gnd_settings);
   using namespace openhd::telemetry;
-  if(m_groundTelemetrySettings->is_serial_enabled()){
-    const auto fc_uart_connection_type=m_groundTelemetrySettings->get_settings().gnd_uart_connection_type;
-    const auto fc_uart_baudrate=m_groundTelemetrySettings->get_settings().gnd_uart_baudrate;
-    const auto fc_uart_flow_control=false;
+  if(m_gnd_settings->is_serial_enabled()){
     SerialEndpoint::HWOptions options{};
-    options.linux_filename=fc_uart_connection_type;
-    options.baud_rate=fc_uart_baudrate;
-    options.flow_control= fc_uart_flow_control;
-    options.enable_reading= true;
-    m_endpoint_tracker->configure(options,"fc_ser",[this](std::vector<MavlinkMessage> messages) {
+    options.linux_filename=m_gnd_settings->get_settings().gnd_uart_connection_type;
+    options.baud_rate=m_gnd_settings->get_settings().gnd_uart_baudrate;
+    options.flow_control= false;
+    options.enable_reading= false;
+    m_endpoint_tracker->configure(options,"gnd_ser",[this](std::vector<MavlinkMessage> messages) {
       // We ignore any incoming messages here for now, since it is only for mavlink out via serial
     });
   }else{

@@ -75,7 +75,7 @@ class GroundTelemetry :public MavlinkSystem{
   void setup_uart();
  private:
   std::shared_ptr<spdlog::logger> m_console;
-  std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_groundTelemetrySettings;
+  std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_gnd_settings;
   // Mavlink to / from gcs station(s)
   std::unique_ptr<UDPEndpoint2> m_gcs_endpoint = nullptr;
   // mavlink out via serial for tracker or similar
