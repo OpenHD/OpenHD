@@ -60,6 +60,7 @@ fi
 cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
 
 if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
+mkdir -p ${PKGDIR}/boot/openhd/
 cp ../../additionalFiles/openhd.service  ${PKGDIR}/etc/systemd/system/ || exit 1
 cp ../../additionalFiles/ip_camera.service ${PKGDIR}/etc/systemd/system/ || exit 1
 cp ../../additionalFiles/enable_ip_camera.sh ${PKGDIR}/boot/openhd/ || exit 1
