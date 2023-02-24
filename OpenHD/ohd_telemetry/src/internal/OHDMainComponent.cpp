@@ -158,19 +158,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
-  const auto messages= m_status_text_accumulator.get_messages();
-  std::vector<MavlinkMessage> ret;
-  // limit to 5 to save bandwidth
-  for(const auto& msg:messages){
-    if (ret.size() < 5) {
-      MavlinkMessage mavMsg;
-      StatusTextAccumulator::convert(mavMsg.m,msg, m_sys_id, m_comp_id);
-      ret.push_back(mavMsg);
-    } else {
-      m_console->debug("Dropping log message {}",msg.msg_as_string());
-    }
-  }
-  return ret;
+  return m_status_text_accumulator.get_mavlink_messages(m_sys_id,m_comp_id);
 }
 
 MavlinkMessage OHDMainComponent::generate_ohd_version(const std::string& commit_hash) const {

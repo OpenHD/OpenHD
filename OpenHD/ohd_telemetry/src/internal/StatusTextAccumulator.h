@@ -20,36 +20,21 @@ class StatusTextAccumulator{
  public:
   StatusTextAccumulator();
   ~StatusTextAccumulator();
-  // Get all the currently buffered messages, removes the returned messages from the message queue.
-  // Thread-safe
-  std::vector<openhd::log::udp::LogMessage> get_messages(){
-    std::vector<openhd::log::udp::LogMessage> ret;
-    std::lock_guard<std::mutex> guard(bufferedLogMessagesLock);
-    while (!bufferedLogMessages.empty()) {
-      const auto msg = bufferedLogMessages.front();
-      if(!msg.hasNullTerminator()){
-        m_console->warn("Somethings wrong with the log message");
-      }else{
-        ret.push_back(msg);
-      }
-      bufferedLogMessages.pop();
-    }
-    return ret;
-  }
-  void manually_add_message(const std::string& text){
-    openhd::log::udp::LogMessage msg{};
-    msg.level=static_cast<uint8_t>(openhd::log::udp::STATUS_LEVEL::DEBUG);
-    std::strncpy((char *)msg.message,text.c_str(),50);
-    processLogMessage(msg);
-  }
-  static void convert(mavlink_message_t& mavlink_message,const openhd::log::udp::LogMessage& msg,uint8_t sys_id,uint8_t comp_id){
-    mavlink_statustext_t mavlink_statustext;
-    mavlink_statustext.id=0;
-    mavlink_statustext.chunk_seq=0;
-    mavlink_statustext.severity=msg.level;
-    std::memcpy(&mavlink_statustext.text,msg.message,50);
-    mavlink_msg_statustext_encode(sys_id,comp_id,&mavlink_message,&mavlink_statustext);
-  }
+  /**
+   * Get all the currently buffered messages, removes the returned messages from the message queue.
+   * Thread-safe
+   */
+  std::vector<openhd::log::udp::LogMessage> get_messages();
+  /**
+   * Similar to above, but returns "mavlink statustext messages"
+   * @param limit: This is called in regular intervals, more than limit buffered messages are dropped
+   */
+   std::vector<MavlinkMessage> get_mavlink_messages(uint8_t sys_id,uint8_t comp_id,int limit=5);
+  /**
+   * For testing, manually add a message to the queue
+   * Thread-safe
+   */
+  void manually_add_message(const std::string& text);
  private:
   // process the incoming log messages. This one is a bit dangerous, it must handle the character
   // limit imposed by mavlink and the null terminator
