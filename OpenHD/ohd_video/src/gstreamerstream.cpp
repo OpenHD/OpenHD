@@ -208,7 +208,7 @@ void GStreamerStream::setup_rockchip_hdmi() {
 }
 
 void GStreamerStream::setup_allwinner_csi() {
-  std::cout << "Setting up Allwinner CSI camera" << std::endl;
+  m_console->debug("Setting up Allwinner CSI camera");
   const auto& setting=m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createAllwinnerStream(0,setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.h26x_keyframe_interval);
 }
