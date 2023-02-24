@@ -1,0 +1,11 @@
+[Unit]
+Description=on_start
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/true
+ExecStop=/bin/bash -c "systemctl stop qopenhd && systemctl stop ip_camera && systemctl stop on_start"
+
+[Install]
+WantedBy=multi-user.target

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 systemctl enable openhd.service
+systemctl enable on_start.service
+
 # this is the serial port on the jetson boards, we don't want a tty running on it
 systemctl stop nvgetty || true
 systemctl disable nvgetty || true

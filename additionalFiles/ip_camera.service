@@ -1,5 +1,5 @@
 [Unit]
-Description=rpi_ip_camera_service
+Description=ip_camera
 
 [Service]
 User=root
