@@ -256,8 +256,8 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
 #endif
   if(true){
     auto c_gnd_uart_connection_type=[this](std::string,std::string value){
-      if(!OHDFilesystemUtil::exists(value)){
-        m_console->warn("{} is not a valid serial");
+      if(!value.empty() && !OHDFilesystemUtil::exists(value)){
+        m_console->warn("{} is not a valid serial",value);
       }
       m_gnd_settings->unsafe_get_settings().gnd_uart_connection_type=value;
       m_gnd_settings->persist();
