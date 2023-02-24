@@ -83,9 +83,9 @@ class GroundTelemetry :public MavlinkSystem{
   // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
-  std::mutex components_lock;
-  std::vector<std::shared_ptr<MavlinkComponent>> components;
-  std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
+  std::mutex m_components_lock;
+  std::vector<std::shared_ptr<MavlinkComponent>> m_components;
+  std::shared_ptr<XMavlinkParamProvider> m_generic_mavlink_param_provider;
   std::shared_ptr<openhd::ExternalDeviceManager> m_ext_device_manager;
   //
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

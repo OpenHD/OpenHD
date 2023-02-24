@@ -11,23 +11,24 @@
 #include "openhd_temporary_air_or_ground.h"
 #include "openhd_util_time.hpp"
 
-AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): _platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
+AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): m_platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   m_console = openhd::log::create_or_get("air_tele");
   assert(m_console);
   m_air_settings =std::make_unique<openhd::telemetry::air::SettingsHolder>(platform);
   m_fc_serial =std::make_unique<SerialEndpointManager>();
   setup_uart();
-  m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
-  components.push_back(m_ohd_main_component);
+  m_ohd_main_component =std::make_shared<OHDMainComponent>(
+      m_platform,_sys_id,true,opt_action_handler);
+  m_components.push_back(m_ohd_main_component);
   //
-  generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
-  if(_platform.platform_type==PlatformType::RaspberryPi){
+  m_generic_mavlink_param_provider =std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
+  if(m_platform.platform_type==PlatformType::RaspberryPi){
     m_opt_gpio_control=std::make_unique<openhd::telemetry::rpi::GPIOControl>();
   }
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their paramters.
-  generic_mavlink_param_provider->add_params(get_all_settings());
-  components.push_back(generic_mavlink_param_provider);
+  m_generic_mavlink_param_provider->add_params(get_all_settings());
+  m_components.push_back(m_generic_mavlink_param_provider);
   m_console->debug("Created AirTelemetry");
 }
 
@@ -66,8 +67,8 @@ void AirTelemetry::on_messages_ground_unit(const std::vector<MavlinkMessage>& me
   }
   send_messages_fc(filtered_messages_fc);
   // any data created by an OpenHD component on the air pi only needs to be sent to the ground pi, the FC cannot do anything with it anyways.
-  std::lock_guard<std::mutex> guard(components_lock);
-  for(auto& component: components){
+  std::lock_guard<std::mutex> guard(m_components_lock);
+  for(auto& component: m_components){
     std::vector<MavlinkMessage> responses{};
     OHDUtil::vec_append(responses,component->process_mavlink_messages(messages));
     send_messages_ground_unit(responses);
@@ -92,8 +93,8 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
     // send messages to the ground pi in regular intervals, includes heartbeat.
     // everything else is handled by the callbacks and their threads
     {
-      std::lock_guard<std::mutex> guard(components_lock);
-      for(auto& component:components){
+      std::lock_guard<std::mutex> guard(m_components_lock);
+      for(auto& component: m_components){
         const auto messages=component->generate_mavlink_messages();
         send_messages_ground_unit(messages);
       }
@@ -121,13 +122,13 @@ std::string AirTelemetry::create_debug(){
 }
 
 void AirTelemetry::add_settings_generic(const std::vector<openhd::Setting>& settings) {
-  std::lock_guard<std::mutex> guard(components_lock);
-  generic_mavlink_param_provider->add_params(settings);
+  std::lock_guard<std::mutex> guard(m_components_lock);
+  m_generic_mavlink_param_provider->add_params(settings);
   m_console->debug("Added parameter component");
 }
 
 void AirTelemetry::settings_generic_ready() {
-  generic_mavlink_param_provider->set_ready();
+  m_generic_mavlink_param_provider->set_ready();
 }
 
 void AirTelemetry::add_settings_camera_component(
@@ -137,8 +138,8 @@ void AirTelemetry::add_settings_camera_component(
   auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,cam_comp_id,true);
   param_server->add_params(settings);
   param_server->set_ready();
-  std::lock_guard<std::mutex> guard(components_lock);
-  components.push_back(param_server);
+  std::lock_guard<std::mutex> guard(m_components_lock);
+  m_components.push_back(param_server);
   m_console->debug("Added camera component");
 }
 
@@ -187,8 +188,8 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
     };
     ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",openhd::IntSetting {1,c_config_boot_as_air}});
   }
-  if(_platform.platform_type==PlatformType::RaspberryPi){
-    const auto tmp=board_type_to_string(_platform.board_type);
+  if(m_platform.platform_type==PlatformType::RaspberryPi){
+    const auto tmp=board_type_to_string(m_platform.board_type);
     ret.push_back(openhd::create_read_only_string("BOARD_TYPE",tmp));
   }
   if(m_opt_gpio_control!= nullptr){

@@ -29,7 +29,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
     on_messages_ground_station_clients(messages);
   });
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
-  components.push_back(m_ohd_main_component);
+  m_components.push_back(m_ohd_main_component);
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   if(m_gnd_settings->get_settings().enable_rc_over_joystick){
     m_rc_joystick_sender=std::make_unique<RcJoystickSender>([this](std::array<uint16_t,18> channels){
@@ -62,9 +62,9 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   //
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their parameters.
-  generic_mavlink_param_provider=std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
-  generic_mavlink_param_provider->add_params(get_all_settings());
-  components.push_back(generic_mavlink_param_provider);
+  m_generic_mavlink_param_provider =std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
+  m_generic_mavlink_param_provider->add_params(get_all_settings());
+  m_components.push_back(m_generic_mavlink_param_provider);
   m_console->debug("Created GroundTelemetry");
 }
 
@@ -97,8 +97,8 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
   send_messages_air_unit(generic);
   // OpenHD components running on the ground station don't need to talk to the air unit.
   // This is not exactly following the mavlink routing standard, but saves a lot of bandwidth.
-  std::lock_guard<std::mutex> guard(components_lock);
-  for(auto& component:components){
+  std::lock_guard<std::mutex> guard(m_components_lock);
+  for(auto& component: m_components){
     const auto responses=component->process_mavlink_messages(messages);
     // for now, send to the ground station clients only
     send_messages_ground_station_clients(responses);
@@ -138,8 +138,8 @@ void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLog
     // send messages to the ground station in regular intervals, includes heartbeat.
     // everything else is handled by the callbacks and their threads
     {
-      std::lock_guard<std::mutex> guard(components_lock);
-      for(auto& component:components){
+      std::lock_guard<std::mutex> guard(m_components_lock);
+      for(auto& component: m_components){
         assert(component);
         const auto messages=component->generate_mavlink_messages();
         send_messages_ground_station_clients(messages);
@@ -181,14 +181,14 @@ std::string GroundTelemetry::create_debug() const {
 }
 
 void GroundTelemetry::add_settings_generic(const std::vector<openhd::Setting>& settings) {
-  std::lock_guard<std::mutex> guard(components_lock);
-  generic_mavlink_param_provider->add_params(settings);
+  std::lock_guard<std::mutex> guard(m_components_lock);
+  m_generic_mavlink_param_provider->add_params(settings);
   m_console->debug("Added parameter component");
 }
 
 
 void GroundTelemetry::settings_generic_ready() {
-  generic_mavlink_param_provider->set_ready();
+  m_generic_mavlink_param_provider->set_ready();
 }
 
 void GroundTelemetry::add_external_ground_station_ip(const openhd::ExternalDevice& ext_device) {

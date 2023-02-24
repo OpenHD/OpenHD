@@ -74,16 +74,16 @@ class AirTelemetry : public MavlinkSystem{
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
  private:
-  const OHDPlatform _platform;
+  const OHDPlatform m_platform;
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> m_air_settings;
   std::unique_ptr<SerialEndpointManager> m_fc_serial;
   // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
   // shared because we also push it onto our components list
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;
-  std::mutex components_lock;
-  std::vector<std::shared_ptr<MavlinkComponent>> components;
-  std::shared_ptr<XMavlinkParamProvider> generic_mavlink_param_provider;
+  std::mutex m_components_lock;
+  std::vector<std::shared_ptr<MavlinkComponent>> m_components;
+  std::shared_ptr<XMavlinkParamProvider> m_generic_mavlink_param_provider;
   // rpi only, allow changing gpios via settings
   std::unique_ptr<openhd::telemetry::rpi::GPIOControl> m_opt_gpio_control=nullptr;
   std::shared_ptr<spdlog::logger> m_console;
