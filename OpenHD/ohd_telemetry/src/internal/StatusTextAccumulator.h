@@ -5,32 +5,21 @@
 #ifndef OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_STATUSTEXT_H_
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_STATUSTEXT_H_
 
+#include <queue>
+
+#include "HelperSources/SocketHelper.hpp"
+#include "mav_include.h"
 #include "openhd_spdlog.h"
 #include "openhd_udp_log.h"
 
+/**
+ * Accumulates incoming udp log messages, such that they can be forwarded via
+ * mavlink telemetry
+ */
 class StatusTextAccumulator{
  public:
-  StatusTextAccumulator(){
-    m_console=openhd::log::create_or_get("l_acc");
-  }
-  // process the incoming log messages. This one is a bit dangerous, it must handle the character
-  // limit imposed by mavlink and the null terminator
-  void processLogMessageData(const uint8_t *data, std::size_t dataLen){
-    //std::cout << "XX" << dataLen << "\n";
-    //TODO this might discard messages
-    if (dataLen == sizeof(openhd::log::udp::LogMessage)) {
-      openhd::log::udp::LogMessage local_message{};
-      memcpy((uint8_t *)&local_message, data, dataLen);
-      const auto nullTerminatorFound = local_message.hasNullTerminator();
-      if (!nullTerminatorFound) {
-        m_console->warn("Log message without null terminator");
-        return;
-      }
-      processLogMessage(local_message);
-    } else {
-      m_console->warn("Invalid size for local log message {} wanted {}",dataLen,sizeof(openhd::log::udp::LogMessage));
-    }
-  }
+  StatusTextAccumulator();
+  ~StatusTextAccumulator();
   // Get all the currently buffered messages, removes the returned messages from the message queue.
   // Thread-safe
   std::vector<openhd::log::udp::LogMessage> get_messages(){
@@ -62,17 +51,17 @@ class StatusTextAccumulator{
     mavlink_msg_statustext_encode(sys_id,comp_id,&mavlink_message,&mavlink_statustext);
   }
  private:
+  // process the incoming log messages. This one is a bit dangerous, it must handle the character
+  // limit imposed by mavlink and the null terminator
+  void processLogMessageData(const uint8_t *data, std::size_t dataLen);
   // add a new message to the message queue.
-  void processLogMessage(openhd::log::udp::LogMessage msg){
-    //std::cout<<"Log message:"<<msg.message<<"\n";
-    assert(msg.hasNullTerminator());
-    std::lock_guard<std::mutex> guard(bufferedLogMessagesLock);
-    bufferedLogMessages.push(msg);
-  }
+  void processLogMessage(openhd::log::udp::LogMessage msg);
   // one thread writes the queue, another one reads the queue
   std::mutex bufferedLogMessagesLock;
-  std::queue<openhd::log::udp::LogMessage> bufferedLogMessages;
+  std::queue<openhd::log::udp::LogMessage> bufferedLogMessages{};
   std::shared_ptr<spdlog::logger> m_console;
+  // here all the log messages are sent to - not in their mavlink form yet.
+  std::unique_ptr<SocketHelper::UDPReceiver> m_log_messages_receiver;
 };
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_STATUSTEXT_H_

@@ -20,14 +20,6 @@ OHDMainComponent::OHDMainComponent(
   m_console = openhd::log::create_or_get("t_main_c");
   assert(m_console);
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform);
-  m_log_messages_receiver =
-      std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,
-                                                  openhd::LOCAL_LOG_MESSAGES_UDP_PORT,
-                                                  [this](const uint8_t *payload,
-                                                         const std::size_t payloadSize) {
-                                                    this->m_status_text_accumulator.processLogMessageData(payload, payloadSize);
-                                                  });
-  m_log_messages_receiver->runInBackground();
   // suppress the warning until we get the first actually updated stats
   m_last_link_stats.is_air=RUNS_ON_AIR;
   if(m_opt_action_handler){
