@@ -339,3 +339,34 @@ bool SerialEndpoint::is_valid_linux_baudrate(int baudrate) {
   }
   return false;
 }
+
+void SerialEndpointManager::send_messages_if_enabled(
+    const std::vector<MavlinkMessage>& messages) {
+  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
+  if(m_serial_endpoint){
+    m_serial_endpoint->sendMessages(messages);
+  }
+}
+
+void SerialEndpointManager::disable() {
+  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
+  if(m_serial_endpoint !=nullptr) {
+    m_console->info("Stopping already existing FC UART");
+    m_serial_endpoint->stop();
+    m_serial_endpoint.reset();
+    m_serial_endpoint =nullptr;
+  }
+}
+
+void SerialEndpointManager::configure(const SerialEndpoint::HWOptions& options,const std::string& tag,MAV_MSG_CALLBACK cb) {
+  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
+  if(m_serial_endpoint !=nullptr) {
+    // Disable the currently running uart configuration, if there is any
+    m_console->info("Stopping already existing FC UART");
+    m_serial_endpoint->stop();
+    m_serial_endpoint.reset();
+    m_serial_endpoint =nullptr;
+  }
+  m_serial_endpoint =std::make_unique<SerialEndpoint>(tag,options);
+  m_serial_endpoint->registerCallback(std::move(cb));
+}

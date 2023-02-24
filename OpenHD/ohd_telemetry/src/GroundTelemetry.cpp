@@ -17,6 +17,8 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   m_console = openhd::log::create_or_get("ground_tele");
   assert(m_console);
   m_groundTelemetrySettings=std::make_unique<openhd::telemetry::ground::SettingsHolder>();
+  m_endpoint_tracker=std::make_unique<SerialEndpointManager>();
+  setup_uart();
   m_gcs_endpoint =
       std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
                                      // We send data to localhost::14550 and any other external device IPs
@@ -55,19 +57,6 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
 #else
   m_console->info("No Joystick support");
 #endif
-  if(m_groundTelemetrySettings->is_serial_enabled()) {
-    const auto& settings=m_groundTelemetrySettings->get_settings();
-    SerialEndpoint::HWOptions options{};
-    options.baud_rate=settings.gnd_uart_baudrate;
-    options.linux_filename=settings.gnd_uart_connection_type;
-    // We do not need to receive data via serial on gnd
-    options.enable_reading= false;
-    m_endpoint_tracker =std::make_unique<SerialEndpoint>("gnd_ser",options);
-    m_endpoint_tracker->registerCallback([this](std::vector<MavlinkMessage> messages) {
-      // We ignore any incoming messages here for now, since it is only for mavlink out via serial
-    });
-    m_endpoint_tracker->start();
-  }
   //
   // NOTE: We don't call set ready yet, since we have to wait until other modules have provided
   // all their parameters.
@@ -93,7 +82,7 @@ void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& me
   if(m_endpoint_tracker!= nullptr){
     const auto msges_from_fc= filter_by_source_sys_id(messages,OHD_SYS_ID_FC);
     if(!msges_from_fc.empty()){
-      m_endpoint_tracker->sendMessages(msges_from_fc);
+      m_endpoint_tracker->send_messages_if_enabled(msges_from_fc);
     }
   }
   m_ohd_main_component->check_msges_for_fc_arming_state(messages);
@@ -268,7 +257,7 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
       }
       m_groundTelemetrySettings->unsafe_get_settings().gnd_uart_connection_type=value;
       m_groundTelemetrySettings->persist();
-      // change requires reboot
+      setup_uart();
       return true;
     };
     ret.push_back(openhd::Setting{"TRACKER_UART_OUT",openhd::StringSetting{m_groundTelemetrySettings->get_settings().gnd_uart_connection_type,
@@ -276,6 +265,26 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   }
   openhd::testing::append_dummy_if_empty(ret);
   return ret;
+}
+
+void GroundTelemetry::setup_uart() {
+  assert(m_groundTelemetrySettings);
+  using namespace openhd::telemetry;
+  if(m_groundTelemetrySettings->is_serial_enabled()){
+    const auto fc_uart_connection_type=m_groundTelemetrySettings->get_settings().gnd_uart_connection_type;
+    const auto fc_uart_baudrate=m_groundTelemetrySettings->get_settings().gnd_uart_baudrate;
+    const auto fc_uart_flow_control=false;
+    SerialEndpoint::HWOptions options{};
+    options.linux_filename=fc_uart_connection_type;
+    options.baud_rate=fc_uart_baudrate;
+    options.flow_control= fc_uart_flow_control;
+    options.enable_reading= true;
+    m_endpoint_tracker->configure(options,"fc_ser",[this](std::vector<MavlinkMessage> messages) {
+      // We ignore any incoming messages here for now, since it is only for mavlink out via serial
+    });
+  }else{
+    m_endpoint_tracker->disable();
+  }
 }
 
 void GroundTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {

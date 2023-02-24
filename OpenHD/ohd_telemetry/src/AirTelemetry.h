@@ -76,8 +76,7 @@ class AirTelemetry : public MavlinkSystem{
  private:
   const OHDPlatform _platform;
   std::unique_ptr<openhd::telemetry::air::SettingsHolder> _airTelemetrySettings;
-  std::mutex m_serial_endpoint_mutex;
-  std::unique_ptr<SerialEndpoint> m_serial_endpoint;
+  std::unique_ptr<SerialEndpointManager> m_serial_endpoint_manager;
   // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
   // shared because we also push it onto our components list

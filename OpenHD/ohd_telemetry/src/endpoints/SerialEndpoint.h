@@ -9,6 +9,7 @@
 #include <chrono>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <thread>
 #include <utility>
 
@@ -83,6 +84,29 @@ class SerialEndpoint : public MEndpoint{
   std::chrono::steady_clock::time_point m_last_log_cannot_send_no_fd=std::chrono::steady_clock::now();
   int m_n_failed_reads=0;
   //std::unique_ptr<openhd::log::LimitedRateLogger> m_limited_rate_logger;
+};
+
+// OpenHD supports enabling / disabling and changing the Serial at run time, but SerialEndpoint itself is not mutable
+// - this class exists to abstract away common multi threading issues in OpenHD that arise from this need
+class SerialEndpointManager{
+ public:
+  /**
+   * Send messages if serial is currently enabled, otherwise, do nothing
+   */
+  void send_messages_if_enabled(const std::vector<MavlinkMessage>& messages);
+  /**
+   * (Re-)configure the wrapped serial endpoint. Stops then restarts if serial already exists
+   * @param cb the cb that is called regularly with new messages if enabled
+   */
+  void configure(const SerialEndpoint::HWOptions& options,const std::string& tag,MAV_MSG_CALLBACK cb);
+  /**
+   * Disable (delete) serial, if already existing
+   */
+  void disable();
+ private:
+  std::unique_ptr<SerialEndpoint> m_serial_endpoint;
+  std::mutex m_serial_endpoint_mutex;
+  std::shared_ptr<spdlog::logger> m_console=openhd::log::create_or_get("ser_manager");
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_ENDPOINTS_SERIALENDPOINT_H_

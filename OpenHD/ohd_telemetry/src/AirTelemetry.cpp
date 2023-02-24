@@ -15,6 +15,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   m_console = openhd::log::create_or_get("air_tele");
   assert(m_console);
   _airTelemetrySettings=std::make_unique<openhd::telemetry::air::SettingsHolder>(platform);
+  m_serial_endpoint_manager=std::make_unique<SerialEndpointManager>();
   setup_uart();
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,true,opt_action_handler);
   components.push_back(m_ohd_main_component);
@@ -35,14 +36,9 @@ AirTelemetry::~AirTelemetry() {
 }
 
 void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages) {
-  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
-  if(m_serial_endpoint){
-    auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_AIR);
-    // NOTE: Remember there is a hack in place for rc channels override in regards to the sender sys id
-    m_serial_endpoint->sendMessages(generic);
-  }else{
-    //m_console->warn("Cannot send message to FC");
-  }
+  auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_AIR);
+  // NOTE: Remember there is a hack in place for rc channels override in regards to the sender sys id
+  m_serial_endpoint_manager->send_messages_if_enabled(generic);
 }
 
 void AirTelemetry::send_messages_ground_unit(const std::vector<MavlinkMessage>& messages) {
@@ -92,10 +88,6 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
       if (enableExtendedLogging && m_wb_endpoint) {
         m_console->debug(m_wb_endpoint->createInfo());
       }
-      std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
-      if (enableExtendedLogging && m_serial_endpoint) {
-        m_console->debug(m_serial_endpoint->createInfo());
-      }
     }
     // send messages to the ground pi in regular intervals, includes heartbeat.
     // everything else is handled by the callbacks and their threads
@@ -124,10 +116,6 @@ std::string AirTelemetry::create_debug(){
   //ss<<"AT:\n";
   if (m_wb_endpoint) {
 	ss<< m_wb_endpoint->createInfo();
-  }
-  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
-  if (m_serial_endpoint) {
-	ss<< m_serial_endpoint->createInfo();
   }
   return ss.str();
 }
@@ -214,32 +202,20 @@ std::vector<openhd::Setting> AirTelemetry::get_all_settings() {
 void AirTelemetry::setup_uart() {
   assert(_airTelemetrySettings);
   using namespace openhd::telemetry;
-  // Disable the currently running uart configuration, if there is any
-  std::lock_guard<std::mutex> guard(m_serial_endpoint_mutex);
-  if(m_serial_endpoint !=nullptr) {
-    m_console->info("Stopping already existing FC UART");
-    m_serial_endpoint->stop();
-    m_serial_endpoint.reset();
-    m_serial_endpoint =nullptr;
-  }
   if(_airTelemetrySettings->is_serial_enabled()){
     const auto fc_uart_connection_type=_airTelemetrySettings->get_settings().fc_uart_connection_type;
     const auto fc_uart_baudrate=_airTelemetrySettings->get_settings().fc_uart_baudrate;
     const auto fc_uart_flow_control=_airTelemetrySettings->get_settings().fc_uart_flow_control;
-    m_console->debug("FC UART enable - begin");
     SerialEndpoint::HWOptions options{};
     options.linux_filename=fc_uart_connection_type;
     options.baud_rate=fc_uart_baudrate;
     options.flow_control= fc_uart_flow_control;
     options.enable_reading= true;
-    m_serial_endpoint =std::make_unique<SerialEndpoint>("fc_ser",options);
-    m_serial_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
+    m_serial_endpoint_manager->configure(options,"fc_ser",[this](std::vector<MavlinkMessage> messages) {
       this->on_messages_fc(messages);
     });
-    m_console->debug("FC UART enable - end");
   }else{
-    // No uart enabled, we've already cleaned it up though
-    m_console->info("FC UART disabled");
+    m_serial_endpoint_manager->disable();
   }
 }
 
