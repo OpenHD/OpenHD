@@ -112,6 +112,8 @@ static CameraType camera_type_from_string(const std::string& s){
       return CameraType::UVC;
   }else if(OHDUtil::contains_after_uppercase(s,"UVC_H264")){
       return CameraType::UVC_H264;
+  }else if(OHDUtil::contains_after_uppercase(s,"CUSTOM_UNMANAGED_CAMERA")){
+      return CameraType::CUSTOM_UNMANAGED_CAMERA;
   }
   openhd::log::get_default()->warn("Invalid camera type {}",s);
   return CameraType::DUMMY_SW;

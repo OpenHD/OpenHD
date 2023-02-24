@@ -211,6 +211,7 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
     }
     return cameras;
   }
+  m_console->info("Camera autodetect off");
   // Autodetect off
   std::vector<Camera> cameras{};
   std::vector<CameraType> camera_types;
