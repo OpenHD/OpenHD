@@ -1,14 +1,11 @@
 #IP Camera Setup
 
-if [ ! -f /etc/NetworkManager/system-connections/ohd_ip_eth_hotspot.nmconnection ]; then
-    echo "starting ethernet hotspot on the Air-SBC"
+rm -Rf /etc/NetworkManager/system-connections/ohd_ip_eth*
 #ethernet hotspot with DHCP server on 192.168.2.1
 sudo nmcli con add type ethernet con-name "ohd_ip_eth_hotspot" ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
 sudo nmcli con add type ethernet ifname eth0 con-name ohd_ip_eth_hotspot autoconnect no
 sudo nmcli con modify ohd_ip_eth_hotspot ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
-else
-    echo "Connection already configured, skipping hotspot setup."
-fi
+
 
 #detect IP camera address
 nmap -sn 192.168.2.0/24 | awk '/Nmap scan report/{ip=$5} ip != "192.168.2.1" && !seen[ip] {print ip; seen[ip]=1}' > /boot/IPCameraIP.txt
