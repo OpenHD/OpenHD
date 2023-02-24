@@ -62,7 +62,7 @@ class OHDMainComponent : public MavlinkComponent{
   [[nodiscard]] MavlinkMessage generate_ohd_version(const std::string& commit_hash= "unknown")const;
   // pack all the buffered log messages
   std::vector<MavlinkMessage> generateLogMessages();
-  StatusTextAccumulator m_status_text_accumulator;
+  std::unique_ptr<StatusTextAccumulator> m_status_text_accumulator;
   std::unique_ptr<OnboardComputerStatusProvider> m_onboard_computer_status_provider;
   std::mutex m_last_link_stats_mutex;
   openhd::link_statistics::StatsAirGround m_last_link_stats{};

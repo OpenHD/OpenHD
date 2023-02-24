@@ -27,6 +27,7 @@ OHDMainComponent::OHDMainComponent(
       this->set_link_statistics(stats_air_ground);
     });
   }
+  m_status_text_accumulator=std::make_unique<StatusTextAccumulator>();
 }
 
 OHDMainComponent::~OHDMainComponent() {
@@ -158,7 +159,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
-  return m_status_text_accumulator.get_mavlink_messages(m_sys_id,m_comp_id);
+  return m_status_text_accumulator->get_mavlink_messages(m_sys_id,m_comp_id);
 }
 
 MavlinkMessage OHDMainComponent::generate_ohd_version(const std::string& commit_hash) const {
