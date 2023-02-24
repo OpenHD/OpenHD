@@ -60,7 +60,7 @@ cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
 if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
 cp ../../additionalFiles/openhd.service  ${PKGDIR}/etc/systemd/system/
 cp ../../additionalFiles/ipCamera.service ${PKGDIR}/etc/systemd/system/
-cp ../../additionalFiles/ipCamera.service ${PKGDIR}/usr/local/bin/enableIPCamera.sh
+cp ../../additionalFiles/ipCamera.service ${PKGDIR}/boot/openhd/
 cp
 fi
 
