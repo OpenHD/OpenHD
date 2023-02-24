@@ -28,7 +28,7 @@ class WifiHotspot {
   /**
    * Utility for starting, stopping WIFI AP (Hotspot) and forwarding the client connect/disconnect events.
    */
-  explicit WifiHotspot(WiFiCard wifiCard,const openhd::Space& wifibroadcast_frequency_space);
+  explicit WifiHotspot(WiFiCard wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space);
   WifiHotspot(const WifiHotspot&)=delete;
   WifiHotspot(const WifiHotspot&&)=delete;
   ~WifiHotspot();

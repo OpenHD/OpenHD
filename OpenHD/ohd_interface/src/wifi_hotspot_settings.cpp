@@ -11,9 +11,9 @@ WifiHotspotSettingsHolder::WifiHotspotSettingsHolder()
 
 void wifi_hotspot_fixup_settings(
     WifiHotspotSettingsHolder& wifi_hotspot_settings_holder,const WiFiCard& wifi_card,
-    const openhd::Space& wifibroadcast_frequency_space) {
+    const openhd::WifiSpace& wifibroadcast_frequency_space) {
   // openhd definition: hotspot always run on the opposite spectrum of wifibroadcast
-  const bool wifibroadcast_uses_5G=wifibroadcast_frequency_space==openhd::Space::G5_8;
+  const bool wifibroadcast_uses_5G=wifibroadcast_frequency_space==openhd::WifiSpace::G5_8;
   if(wifibroadcast_uses_5G==wifi_hotspot_settings_holder.get_settings().use_5g_channel ){
     openhd::log::get_default()->warn("Switching hotspot frequency to not interfere with wb");
     if(wifibroadcast_uses_5G){

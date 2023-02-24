@@ -668,13 +668,16 @@ void WBLink::perform_rate_adjustment() {
   m_last_rate_adjustment=std::chrono::steady_clock::now();
   // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
   const auto settings = m_settings->get_settings();
+  const auto wifi_space=openhd::get_space_from_frequency(settings.wb_frequency);
   const auto max_rate_for_current_wifi_config =
-      openhd::wb::get_max_rate_possible(m_broadcast_cards.at(0),settings.wb_mcs_index,settings.wb_channel_width==40);
+      openhd::wb::get_max_rate_possible(m_broadcast_cards.at(0),wifi_space,
+                                           settings.wb_mcs_index,
+                                           settings.wb_channel_width == 40);
   const auto max_video_rate_for_current_wifi_config =
       openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
   if(m_max_video_rate_for_current_wifi_config !=max_video_rate_for_current_wifi_config){
     // Apply the default for this configuration, then return - we will start the auto-adjustment
-    // depending on tx error(s) next time we rate adjustment is called
+    // depending on tx error(s) next time the rate adjustment is called
     m_console->debug("MCS:{} ch_width:{} Calculated max_rate:{}, max_video_rate:{}",
                      settings.wb_mcs_index,settings.wb_channel_width,
                      kbits_per_second_to_string(max_rate_for_current_wifi_config),
@@ -945,7 +948,7 @@ bool WBLink::check_in_state_support_changing_settings(){
   return !is_scanning && check_work_queue_empty();
 }
 
-openhd::Space WBLink::get_current_frequency_channel_space()const {
+openhd::WifiSpace WBLink::get_current_frequency_channel_space()const {
   return openhd::get_space_from_frequency(m_settings->get_settings().wb_frequency);
 }
 

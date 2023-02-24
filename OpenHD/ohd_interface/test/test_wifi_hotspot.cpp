@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
   wifiCard.mac = "e4:5f:01:b0:55:92";
   wifiCard.supports_hotspot= true;
 
-  WifiHotspot wifiHotspot{wifiCard,openhd::Space::G2_4};
+  WifiHotspot wifiHotspot{wifiCard,openhd::WifiSpace::G2_4};
   OHDUtil::keep_alive_until_sigterm();
   std::cout<<"test end\n";
   return 0;
