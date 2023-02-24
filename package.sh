@@ -53,17 +53,16 @@ mkdir -p ${PKGDIR}/etc/systemd/system
 
 if [[ "${OS}" == "raspbian" ]]; then
   mkdir -p ${PKGDIR}/boot/openhd/rpi_camera_configs
-  cp ../../rpi_camera_configs/* ${PKGDIR}/boot/openhd/rpi_camera_configs/
-  cp ../../OpenHD/ohd_common/config/hardware.config ${PKGDIR}/boot/openhd/hardware.config
+  cp ../../rpi_camera_configs/* ${PKGDIR}/boot/openhd/rpi_camera_configs/ || exit 1
+  cp ../../OpenHD/ohd_common/config/hardware.config ${PKGDIR}/boot/openhd/hardware.config || exit 1
 fi
 
 cp openhd ${PKGDIR}/usr/local/bin/openhd || exit 1
 
 if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
-cp ../../additionalFiles/openhd.service  ${PKGDIR}/etc/systemd/system/
-cp ../../additionalFiles/ipCamera.service ${PKGDIR}/etc/systemd/system/
-cp ../../additionalFiles/ipCamera.service ${PKGDIR}/boot/openhd/
-cp
+cp ../../additionalFiles/openhd.service  ${PKGDIR}/etc/systemd/system/ || exit 1
+cp ../../additionalFiles/ip_camera.service ${PKGDIR}/etc/systemd/system/ || exit 1
+cp ../../additionalFiles/enable_ip_camera.sh ${PKGDIR}/boot/openhd/ || exit 1
 fi
 
 echo "copied files"

@@ -214,11 +214,16 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
   // Autodetect off
   std::vector<Camera> cameras{};
   std::vector<CameraType> camera_types;
+  bool start_ipcam_service= false;
   // One cam is always required
   for(int i=0;i<config.CAMERA_N_CAMERAS;i++){
     const auto cam_type_str=i==0 ? config.CAMERA_CAMERA0_TYPE : config.CAMERA_CAMERA1_TYPE;
     const auto cam_type= camera_type_from_string(cam_type_str);
     camera_types.push_back(cam_type);
+    // IP Cam is also of type CUSTOM_UNMANAGED_CAMERA, but additionally we start the IP cam service
+    if(cam_type==CameraType::CUSTOM_UNMANAGED_CAMERA && OHDUtil::contains(cam_type_str,"IP")){
+      start_ipcam_service= true;
+    }
   }
   // In general, for cameras that support autodetection, if the user manually specified he wants one of them,
   // we wait for at least one to become available
@@ -272,6 +277,11 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
   if(cameras.empty()){
     openhd::log::get_default()->warn("autodetect off but no cameras. Fix file and restart openhd");
     OHDUtil::keep_alive_until_sigterm();
+  }
+  if(start_ipcam_service){
+    const auto IPCAM_SERVICE_NAME="ip_camera";
+    OHDUtil::run_command("systemctl",{"enable",IPCAM_SERVICE_NAME});
+    OHDUtil::run_command("systemctl",{"start",IPCAM_SERVICE_NAME});
   }
   return cameras;
 }
