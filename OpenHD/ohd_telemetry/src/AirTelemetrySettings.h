@@ -64,10 +64,10 @@ class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
   }
   [[nodiscard]] Settings create_default()const override{
         Settings ret{};
-        if(m_platform.platform_type==PlatformType::RaspberryPi){
+        //if(m_platform.platform_type==PlatformType::RaspberryPi){
           // Enable serial to FC by default
-          ret.fc_uart_connection_type="/dev/serial1";
-        }
+        //  ret.fc_uart_connection_type="/dev/serial1";
+        //}
         return ret;
   }
 };
