@@ -92,20 +92,22 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
   }
   if(openhd::nw_ethernet_card_manual_active(config)){
-	// User explicitly told openhd to manage ethernet, which needs to be done if running on non-rpi platform
-	const auto eth_card=config.NW_ETHERNET_CARD;
-	m_console->debug("Managing manually specified card [{}]",eth_card);
-	m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,eth_card);
+    // User explicitly told openhd to manage ethernet, which needs to be done if running on non-rpi platform
+    // or when you want openhd to manage ethernet on the air unit
+    const auto eth_card=config.NW_ETHERNET_CARD;
+    m_console->debug("Managing manually specified card [{}]",eth_card);
+    m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,eth_card);
   }else{
-	// Default
-	// RPI: manage ethernet on ground, which always shows up as eth0
-	if(m_platform.platform_type==PlatformType::RaspberryPi){
-	  m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,"eth0");
-	}
+    // Default
+    // RPI: manage ethernet on ground, which always shows up as eth0
+    if(m_profile.is_ground() && m_platform.platform_type==PlatformType::RaspberryPi){
+      m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,"eth0");
+    }
   }
   // This way one could try and recover an air pi
   if(opt_hotspot_card.has_value()){
-    openhd::WifiSpace wb_frequency_space= (m_wb_link!= nullptr) ? m_wb_link->get_current_frequency_channel_space() : openhd::WifiSpace::G5_8;
+    const openhd::WifiSpace wb_frequency_space= (m_wb_link!= nullptr) ? m_wb_link->get_current_frequency_channel_space() : openhd::WifiSpace::G5_8;
+    // OHD hotspot needs to know the wifibroadcast frequency - it is always on the opposite spectrum
     m_wifi_hotspot =std::make_unique<WifiHotspot>(opt_hotspot_card.value(),wb_frequency_space);
   }
   m_console->debug("OHDInterface::created");
@@ -117,9 +119,6 @@ std::string OHDInterface::createDebug() const {
   if (m_wb_link) {
     ss << m_wb_link->createDebug();
   }
-  //if(ethernet){
-  //    ethernet->debug();
-  //}
   ss<<"OHDInterface::createDebug:end\n";
   return ss.str();
 }
