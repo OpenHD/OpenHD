@@ -186,9 +186,13 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   return ret;
 }
 
+static const auto IPCAM_SERVICE_NAME="ip_camera";
+
 std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
   auto m_console=openhd::log::get_default();
   const auto config=openhd::load_config();
+  // We (re-start) it if needed
+  OHDUtil::run_command("systemctl",{"stop",IPCAM_SERVICE_NAME});
   if(config.CAMERA_ENABLE_AUTODETECT){
     std::vector<Camera> cameras{};
     // Default - works well with csi and usb cameras
@@ -280,8 +284,6 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
     OHDUtil::keep_alive_until_sigterm();
   }
   if(start_ipcam_service){
-    const auto IPCAM_SERVICE_NAME="ip_camera";
-    OHDUtil::run_command("systemctl",{"enable",IPCAM_SERVICE_NAME});
     OHDUtil::run_command("systemctl",{"start",IPCAM_SERVICE_NAME});
   }
   return cameras;
