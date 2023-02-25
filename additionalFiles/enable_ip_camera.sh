@@ -9,10 +9,4 @@ sudo nmcli con modify ohd_ip_eth_hotspot ipv4.method shared ifname eth0 ipv4.add
 echo "starting pipeline for the primary camera"
 #pipe camera 1 to openhd uncommend below
 
-#sudo gst-launch-1.0 rtspsrc location= rtsp://admin:admin@192.168.2.176:554/stream=0  latency=0 ! rtph264depay ! h264parse config-interval=-1 ! rtph264pay mtu=1024 ! udpsink port=5500 host=127.0.0.1 &>/dev/null & disown
-
-echo "starting pipeline for the secondary camera"
-#pipe camera 2 to openhd uncommend below
-
-#sudo gst-launch-1.0 videotestsrc ! x264enc ! rtph264pay ! udpsink host=localhost port=5501 &>/dev/null & disown
-
+#sudo gst-launch-1.0 rtspsrc location= rtsp://admin:admin@192.168.2.176:554/stream=0  latency=0 ! rtph264depay ! h264parse config-interval=-1 ! rtph264pay mtu=1024 ! udpsink port=5500 host=127.0.0.1
