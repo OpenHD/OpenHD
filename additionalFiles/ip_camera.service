@@ -6,7 +6,6 @@ User=root
 
 # IP camera service started by OpenHD if needed (and stopped if needed)
 ExecStart=/bin/sh -c "/boot/openhd/enable_ip_camera.sh"
-ExecStop=/bin/bash -c 'killall -9 gst-launch-1.0'
 
 Restart=always
 RestartSec=1
