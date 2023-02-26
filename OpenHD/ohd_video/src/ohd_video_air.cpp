@@ -213,6 +213,10 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
         cameras = DCameras::discover(platform);
       }
     }
+    if(cameras.empty()){
+      m_console->warn("No camera after 10 seconds, using dummy camera");
+      cameras.emplace_back(createDummyCamera(0));
+    }
     return cameras;
   }
   m_console->info("Camera autodetect off");
