@@ -220,6 +220,7 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   assert(settings.streamed_video_format.videoCodec==VideoCodec::H264);
   // rpi v4l2 encoder takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  // NOTE: higher quantization parameter -> lower image quality, and lower bitrate
   static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
   return fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
       "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
