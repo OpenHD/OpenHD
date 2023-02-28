@@ -159,6 +159,11 @@ static std::string createRpicamsrcStream(const int camera_number,
     ss << fmt::format("rpicamsrc name=rpicamsrc camera-number={} bitrate={} preview=0 ",
                       camera_number, bitrateBitsPerSecond);
   }
+  // NOTE: These 2 params require the openhd rpicamsrc -
+  if(true){
+    // qp-max=51 is the default in rpi v4l2 encoder wrapper
+    ss<<"qp-min=10 qp-max=51 ";
+  }
   // keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
   if(openhd::validate_rpi_keyframe_interval(settings.h26x_keyframe_interval)){
     ss << "keyframe-interval="<<settings.h26x_keyframe_interval <<" ";
