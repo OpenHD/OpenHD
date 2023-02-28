@@ -159,6 +159,11 @@ static std::string createRpicamsrcStream(const int camera_number,
     ss << fmt::format("rpicamsrc name=rpicamsrc camera-number={} bitrate={} preview=0 ",
                       camera_number, bitrateBitsPerSecond);
   }
+  // NOTE: These 2 params require the openhd rpicamsrc -
+  if(true){
+    // qp-max=51 is the default in rpi v4l2 encoder wrapper
+    ss<<"qp-min=10 qp-max=51 ";
+  }
   // keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
   if(openhd::validate_rpi_keyframe_interval(settings.h26x_keyframe_interval)){
     ss << "keyframe-interval="<<settings.h26x_keyframe_interval <<" ";
@@ -220,6 +225,7 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   assert(settings.streamed_video_format.videoCodec==VideoCodec::H264);
   // rpi v4l2 encoder takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
+  // NOTE: higher quantization parameter -> lower image quality, and lower bitrate
   static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
   return fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
       "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
