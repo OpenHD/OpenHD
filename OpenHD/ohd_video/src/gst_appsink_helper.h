@@ -34,6 +34,42 @@ static void gst_debug_buffer(GstBuffer* buffer){
       buffer->pts,buffer->dts,now);
 }
 
+// From https://github.com/mshabunin/gstreamer-example/blob/master/main.cpp
+void gst_debug_sample(GstSample* sample){
+  assert(sample);
+  std::stringstream ss;
+  const GstSegment * seg = gst_sample_get_segment(sample);
+  ss << "  segment: " << seg << std::endl;
+  if (seg){
+    ss << "    Flags: " << seg->flags << std::endl;
+    ss << "    Rate: " << seg->rate << std::endl;
+    ss << "    Applied rate: " << seg->applied_rate << std::endl;
+    ss << "    Format: " << seg->format << std::endl;
+    ss << "    Base: " << seg->base << std::endl;
+    ss << "    Offset: " << seg->offset << std::endl;
+    ss << "    Start: " << seg->start << std::endl;
+    ss << "    Stop: " << seg->stop << std::endl;
+    ss << "    Time: " << seg->time << std::endl;
+    ss << "    Position: " << seg->position << std::endl;
+    ss << "    Duration: " << seg->duration << std::endl;
+  }
+  const GstStructure * info = gst_sample_get_info(sample);
+  ss << "  info: " << info << std::endl;
+  if (info){
+    gchar * str = gst_structure_to_string(info);
+    ss << "    " << str << std::endl;
+    g_free(str);
+  }
+  GstCaps * caps = gst_sample_get_caps(sample);
+  ss << "  caps: " << caps << std::endl;
+  if (caps){
+    gchar * str = gst_caps_to_string(caps);
+    ss << "    " << str << std::endl;
+    g_free(str);
+  }
+  openhd::log::get_default()->debug("{}",ss.str());
+}
+
 // based on https://github.com/Samsung/kv2streamer/blob/master/kv2streamer-lib/gst-wrapper/GstAppSinkPipeline.cpp
 /**
  * Helper to pull data out of a gstreamer pipeline
@@ -52,6 +88,7 @@ static void loop_pull_appsink_samples(bool& keep_looping,GstElement *app_sink_el
       //openhd::log::get_default()->debug("Got sample");
       //auto buffer_list=gst_sample_get_buffer_list(sample);
       //openhd::log::get_default()->debug("Got sample {}", gst_buffer_list_length(buffer_list));
+      //gst_debug_sample(sample);
       GstBuffer* buffer = gst_sample_get_buffer(sample);
       if (buffer) {
         //openhd::gst_debug_buffer(buffer);
