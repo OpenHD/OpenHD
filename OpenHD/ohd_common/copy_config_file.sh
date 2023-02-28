@@ -1,4 +1,4 @@
 #bin/bash
 
-sudo mkdir /boot/openhd
+sudo mkdir -p /boot/openhd
 sudo cp config/hardware.config /boot/openhd/hardware.config
