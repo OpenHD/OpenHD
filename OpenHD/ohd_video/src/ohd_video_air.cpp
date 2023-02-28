@@ -193,6 +193,8 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
   const auto config=openhd::load_config();
   // We (re-start) it if needed
   OHDUtil::run_command("systemctl",{"stop",IPCAM_SERVICE_NAME});
+  // Default camera autodetect - wait for camera(s) to become available, but to not infinitely blcok the boot
+  // process, if not enough camera(s) have been found after a given timespan, use dummy camera(s) for them
   if(config.CAMERA_ENABLE_AUTODETECT){
     std::vector<Camera> cameras{};
     // Default - works well with csi and usb cameras
@@ -208,8 +210,9 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
         if (!cameras.empty()) {
           break;  // break as soon as we have at least one camera
         }
-        openhd::log::get_default()->debug("Re-running camera discovery step, until camera is found/timeout");
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        const int sleep_time_seconds=3;
+        openhd::log::get_default()->debug("Re-running camera discovery step, until camera is found/timeout. Sleep for {} seconds",sleep_time_seconds);
+        std::this_thread::sleep_for(std::chrono::seconds(sleep_time_seconds));
         cameras = DCameras::discover(platform);
       }
     }
