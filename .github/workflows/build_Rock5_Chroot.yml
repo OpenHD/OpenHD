@@ -1,8 +1,7 @@
 name: build_package_x86_22.04
 
-on:
+on: 
   push:
-    branches: ["poc-builds"]
     paths-ignore:
       - '**.yml'
       - '**.md'
