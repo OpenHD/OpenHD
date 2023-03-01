@@ -31,7 +31,7 @@ jobs:
           submodules: recursive
       - name: Install Repository
         run: |
-          git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
+          git clone http://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           mv -R OpenHD /opt/ChrootCompilationTest/additionalFiles
           cd /opt/ChrootCompilationTest/
