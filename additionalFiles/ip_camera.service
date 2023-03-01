@@ -1,5 +1,6 @@
 [Unit]
 Description=ip_camera
+After=openhd.service
 
 [Service]
 User=root
