@@ -36,7 +36,9 @@ jobs:
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           mv OpenHD /opt/ChrootCompilationTest/additionalFiles
           cd /opt/ChrootCompilationTest/
-          cd additionalFiles/OpenHD/
+          cd additionalFiles/
+          ls -a
+          cd OpenHD
           ls -a
           cp -r * ../../
           cd ../../
