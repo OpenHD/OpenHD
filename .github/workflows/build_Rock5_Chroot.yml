@@ -37,8 +37,6 @@ jobs:
           cd /opt/ChrootCompilationTest/
           cd additionalFiles/
           ls -a
-          cd OpenHD
-          ls -a
           sudo bash install_dep.sh
           sudo bash build.sh rock5 openhd
       - name: Upload to Github
