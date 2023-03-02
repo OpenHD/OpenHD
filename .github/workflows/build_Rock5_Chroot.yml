@@ -32,7 +32,7 @@ jobs:
       - name: Install Repository
         run: |
           ls -a
-          git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
+          git clone -b poc-builds https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest --recursive
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           mv OpenHD /opt/ChrootCompilationTest/additionalFiles
           cd /opt/ChrootCompilationTest/
