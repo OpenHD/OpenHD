@@ -42,6 +42,7 @@ jobs:
         with:
           name: "OpenHD"
           path: |
+            workdir/*.deb
             *.deb
             *.log
           if-no-files-found: error
@@ -55,7 +56,7 @@ jobs:
           format: "deb"
           owner: "openhd"
           repo: "openhd-2-3-evo"
-          distro: "ubuntu"
-          release: "jammy"
+          distro: "debian"
+          release: "bullseye"
           republish: "true" # needed ONLY if version is not changing
-          file: "*.deb"
+          file: "workdir/*.deb"
