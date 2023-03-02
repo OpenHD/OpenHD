@@ -16,7 +16,8 @@ struct AirCameraGenericSettings {
   // Make primary camera secondary camera and other way around (aka if they are detected in the wrong order)
   bool switch_primary_and_secondary=false;
   // On startup, we wait for up to X seconds until this many camera(s) have been discovered
-  // and create one or more dummy camera(s) if they are not found in the given time span
+  // and create one or more dummy camera(s) if they are not found in the given time span.
+  // (Only used if camera autodetect is on)
   int n_cameras_to_wait_for=1;
   // the link recommends a total video bitrate to us - in case of dual camera, we need to split that up into
   // bitrate for primary and secondary video
