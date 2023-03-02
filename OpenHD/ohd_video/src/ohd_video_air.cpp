@@ -151,6 +151,7 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
     ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::IntSetting {openhd::rpi::os::cam_config_to_int(openhd::rpi::os::get_current_cam_config_from_file()),
                                                                         c_rpi_os_camera_configuration}});
   }
+  // Allows changin the camera(s) openhd waits for at boot via mavlink. Requires reboot
   if(true){
     auto cb=[this](std::string,int value){
       if(!(value==1 || value==2))return false;
