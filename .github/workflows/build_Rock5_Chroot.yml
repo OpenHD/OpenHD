@@ -37,6 +37,9 @@ jobs:
           cd /opt/ChrootCompilationTest/
           sudo bash install_dep.sh
           sudo bash build.sh rock5 openhd
+      
+      - name: debug
+        run: ls -a
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
         with:

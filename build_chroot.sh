@@ -4,7 +4,9 @@
 echo "here is a debug step"
 ls -a
 mkdir -p /opt/out/ || exit 1
-cp *.dep /opt/out/
+cp -v *.dep /opt/out/
+echo "copied deb file"
 zip file.zip * 
-cp *.zip /opt/out
+cp -v *.zip /opt/out/
+echo "copied zip file"
 echo "end"
