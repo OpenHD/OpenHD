@@ -36,10 +36,10 @@ jobs:
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           mv OpenHD /opt/ChrootCompilationTest/additionalFiles
           cd /opt/ChrootCompilationTest/
-          cd additionalFiles
+          cd additionalFiles/OpenHD
           ls -a
-          cp * ../
-          cd ../
+          cp -r * ../../
+          cd ../../
           sudo bash install_dep.sh
           sudo bash build.sh rock5 openhd
       - name: Upload to Github
