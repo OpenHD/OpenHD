@@ -31,7 +31,6 @@ jobs:
           submodules: recursive
       - name: Install Repository
         run: |
-          ls -a
           git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           mv OpenHD /opt/ChrootCompilationTest/additionalFiles
@@ -39,9 +38,6 @@ jobs:
           cd additionalFiles/
           ls -a
           cd OpenHD
-          ls -a
-          cp -r * ../../
-          cd ../../
           ls -a
           sudo bash install_dep.sh
           sudo bash build.sh rock5 openhd
