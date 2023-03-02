@@ -36,6 +36,7 @@ jobs:
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           mv OpenHD /opt/ChrootCompilationTest/additionalFiles
           cd /opt/ChrootCompilationTest/
+          sudo bash install_dep.sh
           sudo bash build.sh rock5 openhd
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
