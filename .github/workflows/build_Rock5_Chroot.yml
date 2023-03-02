@@ -32,7 +32,7 @@ jobs:
       - name: Install Repository
         run: |
           ls -a
-          git clone -b poc-builds https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest --recursive
+          git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           mv OpenHD /opt/ChrootCompilationTest/additionalFiles
           cd /opt/ChrootCompilationTest/
@@ -40,6 +40,7 @@ jobs:
           ls -a
           cp -r * ../../
           cd ../../
+          ls -a
           sudo bash install_dep.sh
           sudo bash build.sh rock5 openhd
       - name: Upload to Github
