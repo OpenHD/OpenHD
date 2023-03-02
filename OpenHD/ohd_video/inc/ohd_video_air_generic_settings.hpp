@@ -21,7 +21,7 @@ struct AirCameraGenericSettings {
   int n_cameras_to_wait_for=1;
   // the link recommends a total video bitrate to us - in case of dual camera, we need to split that up into
   // bitrate for primary and secondary video
-  int dualcam_primary_video_allocated_bandwidth_perc=60; // Default 70%:30% split
+  int dualcam_primary_video_allocated_bandwidth_perc=60; // Default X%:Y split
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirCameraGenericSettings,switch_primary_and_secondary,n_cameras_to_wait_for,dualcam_primary_video_allocated_bandwidth_perc);
