@@ -11,7 +11,7 @@ sudo apt -y install cmake build-essential autotools-dev automake libtool autocon
             libpcap-dev libsodium-dev \
             libboost-dev libboost-filesystem-dev \
             libusb-1.0-0-dev \
-            libv4l-dev \
+            libv4l-dev git \
             libnl-3-dev libnl-genl-3-dev libnl-route-3-dev || exit 1
 
 # Gstreamer is separate from the "rest".
