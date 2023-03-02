@@ -5,10 +5,6 @@ on:
     paths-ignore:
       - 'LICENSE'
 
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
-
 jobs:
   build:
     #runs-on: ubuntu-18.04
@@ -40,8 +36,10 @@ jobs:
       
       - name: debug
         run: ls -a
+
       - name: debug
-        run: ls -a workdir/
+        run: ls -a workdir
+
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
         with:
