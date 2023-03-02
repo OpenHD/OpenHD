@@ -33,7 +33,7 @@ jobs:
         run: |
           git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
-          mv OpenHD /opt/ChrootCompilationTest/additionalFiles/
+          mv ../OpenHD /opt/ChrootCompilationTest/additionalFiles/
           cd /opt/ChrootCompilationTest/
           sudo bash install_dep.sh
           sudo bash build.sh rock5 openhd
