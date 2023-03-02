@@ -151,9 +151,18 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
     ret.push_back(openhd::Setting{"V_OS_CAM_CONFIG",openhd::IntSetting {openhd::rpi::os::cam_config_to_int(openhd::rpi::os::get_current_cam_config_from_file()),
                                                                         c_rpi_os_camera_configuration}});
   }
-  // N of discovered cameras, for debugging
+  if(true){
+    auto cb=[this](std::string,int value){
+      if(!(value==1 || value==2))return false;
+      m_generic_settings->unsafe_get_settings().n_cameras_to_wait_for=value;
+      m_generic_settings->persist();
+      // change requires reboot
+      return true;
+    };
+    ret.push_back(openhd::Setting{"V_N_CAMERAS",openhd::IntSetting{m_generic_settings->get_settings().n_cameras_to_wait_for,cb}});
+  }
+  // Only show dual-cam settings if dual-cam is actually used
   const auto n_cameras=static_cast<int>(m_camera_streams.size());
-  ret.push_back(openhd::create_read_only_int("V_N_CAMERAS",n_cameras));
   if(n_cameras>1){
     auto cb_switch_primary_and_secondary=[this](std::string,int value){
       if(!openhd::validate_yes_or_no(value))return false;
@@ -173,16 +182,6 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
     };
     ret.push_back(openhd::Setting{"V_PRIMARY_PERC",openhd::IntSetting{m_generic_settings->get_settings().dualcam_primary_video_allocated_bandwidth_perc,cb}});
   }
-  /*if(true){
-    auto cb=[this](std::string,int value){
-      if(!(value==1 || value==2))return false;
-      m_generic_settings->unsafe_get_settings().n_cameras_to_wait_for=value;
-      m_generic_settings->persist();
-      // Do nothing, switch requires reboot
-      return true;
-    };
-    ret.push_back(openhd::Setting{"V_N_CAMERAS",openhd::IntSetting{m_generic_settings->unsafe_get_settings().n_cameras_to_wait_for,cb}});
-  }*/
   return ret;
 }
 
@@ -196,6 +195,12 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
   // Default camera autodetect - wait for camera(s) to become available, but to not infinitely blcok the boot
   // process, if not enough camera(s) have been found after a given timespan, use dummy camera(s) for them
   if(config.CAMERA_ENABLE_AUTODETECT){
+    int n_wanted_cameras=AirCameraGenericSettingsHolder{}.get_settings().n_cameras_to_wait_for;
+    if(n_wanted_cameras>2 || n_wanted_cameras<=0){
+      m_console->warn("Invalid n cameras {}",n_wanted_cameras);
+      n_wanted_cameras=1;
+    }
+    m_console->debug("Waiting for {} cameras.",n_wanted_cameras);
     std::vector<Camera> cameras{};
     // Default - works well with csi and usb cameras
     // Issue on rpi: The openhd service is often started before ? (most likely the OS needs to do some internal setup stuff)
@@ -204,11 +209,14 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
     // Since the jetson is also an embedded platform, just like the rpi, I am doing it for it too, even though I never
     // checked if that's actually an issue there
     cameras = DCameras::discover(platform);
-    if(platform.platform_type==PlatformType::RaspberryPi || platform.platform_type==PlatformType::Jetson) {
+    // Always wait
+    if(true) {
       const auto begin = std::chrono::steady_clock::now();
       while (std::chrono::steady_clock::now() - begin <std::chrono::seconds(10)) {
-        if (!cameras.empty()) {
-          break;  // break as soon as we have at least one camera
+        if (cameras.size()>=n_wanted_cameras) {
+          m_console->debug("Done waiting for camera(s),found {}",cameras.size());
+          // break as soon as we have at least enough cameras
+          break;
         }
         const int sleep_time_seconds=3;
         openhd::log::get_default()->debug("Re-running camera discovery step, until camera is found/timeout. Sleep for {} seconds",sleep_time_seconds);
@@ -216,9 +224,10 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
         cameras = DCameras::discover(platform);
       }
     }
-    if(cameras.empty()){
-      m_console->warn("No camera after 10 seconds, using dummy camera");
-      cameras.emplace_back(createDummyCamera(0));
+    m_console->debug("Done waiting for camera(s), wanted: {}, actual:{}",n_wanted_cameras,cameras.size());
+    for(int i=(int)cameras.size();i<n_wanted_cameras;i++){
+      m_console->warn("Adding dummy camera {}",i);
+      cameras.emplace_back(createDummyCamera(i));
     }
     return cameras;
   }
