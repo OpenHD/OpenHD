@@ -12,7 +12,7 @@ cp -v *.dep /opt/out/
 echo "copied deb file"
 echo "push to cloudsmith"
 git describe --exact-match HEAD >/dev/null 2>&1
-echo "Pushing package to OpenHD 2.3 repository"
+echo "Pushing the package to OpenHD 2.3 repository"
 cloudsmith push deb --api-key $API_KEY openhd/openhd-2-3-evo/debian/bullseye example.deb
 
 
