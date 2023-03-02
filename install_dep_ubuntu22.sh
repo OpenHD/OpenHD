@@ -8,7 +8,7 @@
 sudo apt install -y libunwind-dev
 
 sudo apt -y install cmake build-essential autotools-dev automake libtool autoconf \
-            libpcap-dev libsodium-dev \
+            libpcap-dev libsodium-dev ruby-dev \
             libboost-dev libboost-filesystem-dev \
             libusb-1.0-0-dev \
             libv4l-dev git \
@@ -20,3 +20,5 @@ sudo apt -y install libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-bad gs
 
 # Needed for RC, optional
 sudo apt -y install libsdl2-dev
+
+sudo gem install fpm
