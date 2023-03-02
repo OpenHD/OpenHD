@@ -43,7 +43,9 @@ jobs:
           name: "OpenHD"
           path: |
             workdir/*.deb
+            workdir/*.zip
             *.deb
+            *.zip
             *.log
           if-no-files-found: error
 
