@@ -40,6 +40,8 @@ jobs:
       
       - name: debug
         run: ls -a
+      - name: debug
+        run: ls -a workdir/
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
         with:
