@@ -26,7 +26,7 @@ jobs:
           git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           mv ../OpenHD /opt/ChrootCompilationTest/additionalFiles/
-          echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
+          echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/OpenHD/cloudsmith_api_key.txt
           cd /opt/ChrootCompilationTest/
           sudo bash install_dep.sh
           sudo bash build.sh rock5 $API_KEY
