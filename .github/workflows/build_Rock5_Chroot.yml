@@ -22,6 +22,11 @@ jobs:
       - name: Clean UP
         run: |
           sudo rm -Rf *
+     
+      - name: Git clone
+        run: |
+          git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
+      
       - name: Write API key to file
         run: |
           echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
@@ -33,7 +38,9 @@ jobs:
       
       - name: Install Repository
         run: |
-          git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
+          ls -a
+          echo "show if key was written"
+          ls -a /opt/ChrootCompilationTest/additionalFiles/
           mv ../OpenHD /opt/ChrootCompilationTest/additionalFiles/
           cd /opt/ChrootCompilationTest/
           sudo bash install_dep.sh
