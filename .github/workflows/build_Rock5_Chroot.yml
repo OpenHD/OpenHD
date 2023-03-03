@@ -25,7 +25,7 @@ jobs:
         run: |
           git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
-          git clone https://github.com/OpenHD/ChrootCompilationTest -b poc-builds /opt/ChrootCompilationTest/additionalFiles/ --recursive
+          git clone https://github.com/OpenHD/OpenHD -b poc-builds /opt/ChrootCompilationTest/additionalFiles/ --recursive
           echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
           cd /opt/ChrootCompilationTest/
           sudo bash install_dep.sh
