@@ -24,7 +24,8 @@ jobs:
       - name: Install Repository
         run: |
           git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
-          mv -f OpenHD ../
+          ls -a ../
+          mv OpenHD ../
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           mv ../OpenHD /opt/ChrootCompilationTest/additionalFiles/
           echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/OpenHD/cloudsmith_api_key.txt
