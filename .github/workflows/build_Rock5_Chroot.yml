@@ -15,32 +15,18 @@ jobs:
       - name: test
         run: |
           echo "DT=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_ENV
-          echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV   
-
-      - name: Clean UP
-        run: |
-          sudo rm -Rf *
-     
-      - name: Git clone
-        run: |
-          git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
-      
-      - name: Write API key to file
-        run: |
-          mkdir -p /opt/ChrootCompilationTest/additionalFiles/
-          echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
-
+          echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV    
+             
       - name: Checkout repository and submodules
         uses: actions/checkout@v3
         with:
           submodules: recursive
-      
       - name: Install Repository
         run: |
-          ls -a
-          echo "show if key was written"
-          ls -a /opt/ChrootCompilationTest/additionalFiles/
+          git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
+          mkdir -p /opt/ChrootCompilationTest/additionalFiles
           mv ../OpenHD /opt/ChrootCompilationTest/additionalFiles/
+          echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
           cd /opt/ChrootCompilationTest/
           sudo bash install_dep.sh
-          sudo bash build.sh rock5
+          sudo bash build.sh rock5 $API_KEY
