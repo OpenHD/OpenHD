@@ -173,7 +173,7 @@ static Camera createDummyCamera(int index=0) {
 static Camera createCustomUnmanagedCamera(int index=0){
   Camera camera;
   camera.name = fmt::format("CustomUnmanagedCamera{}",index);
-  camera.index = 0;
+  camera.index = index;
   camera.vendor = "unknown";
   camera.type = CameraType::CUSTOM_UNMANAGED_CAMERA;
   return camera;
