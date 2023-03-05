@@ -302,9 +302,7 @@ class CameraHolder:
   const Camera m_camera;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
-    // TODO: Hopefully "unique enough" now - but there might be issues if the name is
-    // not properly parsed (especially for USB camera(s))
-    return fmt::format("{}_{}_{}.json",m_camera.index, camera_type_to_string(m_camera.type),m_camera.name);
+    return m_camera.get_unique_settings_filename();
   }
   [[nodiscard]] CameraSettings create_default()const override{
     auto ret=CameraSettings{};

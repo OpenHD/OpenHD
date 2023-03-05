@@ -142,6 +142,16 @@ struct Camera {
   bool supports_rpi_rpicamsrc_metering_mode()const{
     return type==CameraType::RPI_CSI_MMAL;
   }
+  // This "hash" needs to be deterministic and unique - otherwise, incompatible settings from
+  // a previous camera might be used
+  std::string get_unique_settings_filename()const{
+    auto safe_name=name;
+    // TODO find a better solution
+    if(type==CameraType::RPI_CSI_LIBCAMERA){
+      safe_name=sensor_name;
+    }
+    return fmt::format("{}_{}_{}.json",index, camera_type_to_string(type),safe_name);
+  }
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,bus,index,rpi_csi_mmal_is_csi_to_hdmi, v4l2_endpoints)
 
