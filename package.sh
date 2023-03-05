@@ -10,6 +10,7 @@ PKGDIR="/tmp/${PACKAGE_NAME}-installdir"
 VERSION="2.3-evo-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 create_package_directory() {
+  echo $(pwd)
   rm -rf "${PKGDIR}"
   mkdir -p "${PKGDIR}"/{usr/local/bin,tmp,settings,etc/systemd/system}
   if [[ "${OS}" == "raspbian" ]]; then
@@ -26,8 +27,6 @@ create_package_directory() {
 build_package() {
   rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
 
-  PLATFORM_PACKAGES=""
-  PLATFORM_CONFIGS=""
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
     PLATFORM_PACKAGES="-d libcamera-openhd gst-openhd-plugins"
   fi
