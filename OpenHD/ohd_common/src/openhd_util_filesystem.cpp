@@ -60,12 +60,12 @@ void OHDFilesystemUtil::write_file(const std::string &path,
                                    const std::string &content) {
   try{
     std::ofstream t(path);
-    if(t.bad()){
+    if(!t.good()){
       openhd::log::get_default()->warn("Cannot open file [{}]",path);
     }
     t << content;
     t.close();
-    if(t.bad()){
+    if(!t.good()){
       openhd::log::get_default()->warn("Cannot write file [{}]",path);
     }
   }catch (std::exception& e){
