@@ -104,11 +104,10 @@ class PersistentSettings{
   void persist_settings()const {
     assert(_settings);
     const auto file_path=get_file_path();
+    // Serialize to json
     const nlohmann::json tmp=*_settings;
     // and write them locally for persistence
-    std::ofstream t(file_path);
-    t << tmp.dump(4);
-    t.close();
+    OHDFilesystemUtil::write_file(file_path,tmp.dump(4));
   }
   /**
    * Try and deserialize the last stored settings (json)

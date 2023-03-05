@@ -18,9 +18,7 @@ static void to_json(nlohmann::json& j, const OHDProfile& p) {
 
 void write_profile_manifest(const OHDProfile& ohdProfile) {
   nlohmann::json manifest = ohdProfile;
-  std::ofstream _t(PROFILE_MANIFEST_FILENAME);
-  _t << manifest.dump(4);
-  _t.close();
+  OHDFilesystemUtil::write_file(PROFILE_MANIFEST_FILENAME,manifest.dump(4));
 }
 
 std::shared_ptr<OHDProfile> DProfile::discover(bool is_air) {

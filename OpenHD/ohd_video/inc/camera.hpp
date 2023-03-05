@@ -159,9 +159,7 @@ static constexpr auto CAMERA_MANIFEST_FILENAME = "/tmp/camera_manifest";
 
 static void write_camera_manifest(const std::vector<Camera> &cameras) {
   auto manifest = cameras_to_json(cameras);
-  std::ofstream _t(CAMERA_MANIFEST_FILENAME);
-  _t << manifest.dump(4);
-  _t.close();
+  OHDFilesystemUtil::write_file(CAMERA_MANIFEST_FILENAME,manifest.dump(4));
 }
 
 static Camera createDummyCamera(int index=0) {
