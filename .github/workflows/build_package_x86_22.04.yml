@@ -3,12 +3,6 @@ name: build_package_x86_22.04
 on:
   push:
     branches: ["poc-builds"]
-    paths-ignore:
-      - '**.yml'
-      - '**.md'
-      - '**.asciidoc'
-      - '.gitignore'
-      - 'LICENSE'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
