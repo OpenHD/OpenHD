@@ -50,8 +50,11 @@ class CameraHolder:
         openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
         // for debugging
         openhd::create_read_only_string("V_CAM_TYPE",camera_type_to_string(m_camera.type)),
-        openhd::create_read_only_string("V_CAM_NAME",get_name_mavlink_safe()),
+        openhd::create_read_only_string("V_CAM_NAME",m_camera.name)
     };
+    if(m_camera.sensor_name!="unknown"){
+      ret.emplace_back(openhd::create_read_only_string("V_CAM_SENSOR",m_camera.sensor_name));
+    }
     if(m_camera.type==CameraType::IP){
       auto cb_ip_cam_url=[this](std::string,std::string value){
         return set_ip_cam_url(value);
@@ -100,10 +103,6 @@ class CameraHolder:
         return set_keyframe_interval(value);
       };
       ret.push_back(openhd::Setting{"V_KEYFRAME_I",openhd::IntSetting{get_settings().h26x_keyframe_interval,c_keyframe_interval}});
-    }
-    if(m_camera.type==CameraType::RPI_CSI_LIBCAMERA){
-      // r.n we only write the sensor name for cameras detected via libcamera
-	  ret.push_back(openhd::create_read_only_string("V_CAM_SENSOR",m_camera.sensor_name));
     }
     if(m_camera.supports_awb()){
       auto cb=[this](std::string,int value) {
@@ -289,12 +288,6 @@ class CameraHolder:
     persist();
     return true;
   }
-  // 15 char mavlink string limit
-  std::string get_name_mavlink_safe()const{
-    auto tmp=m_camera.name;
-    if(tmp.size()>15)tmp.resize(15);
-    return tmp;
-  }
   // The CSI to HDMI adapter has an annoying bug where it actually doesn't allow changing the framerate but takes whatever the host provides
   // (e.g. the hdmi card). Util to check if we need to apply the "reduce bitrate by half"
   // NOTE: This is not completely correct - it assumes the provider (e.g. gopro) always gives 60fps
@@ -309,9 +302,7 @@ class CameraHolder:
   const Camera m_camera;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
-    // TODO: Hopefully "unique enough" now - but there might be issues if the name is
-    // not properly parsed (especially for USB camera(s))
-    return fmt::format("{}_{}_{}.json",m_camera.index, camera_type_to_string(m_camera.type),m_camera.name);
+    return m_camera.get_unique_settings_filename();
   }
   [[nodiscard]] CameraSettings create_default()const override{
     auto ret=CameraSettings{};

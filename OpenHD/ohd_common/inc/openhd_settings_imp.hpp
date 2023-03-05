@@ -78,6 +78,10 @@ static Setting create_read_only_int(const std::string& id,int value){
   };
   return Setting{id, openhd::IntSetting{value, cb}};
 }
+
+// Creates a read - only parameter - we repurpose the mavlink param set for reliably showing more info to
+// the user / developer. Can be quite nice for debugging.
+// Since the n of characters are limited, this might cut away parts of value
 static Setting create_read_only_string(const std::string& id,std::string value){
   if(value.length()>15){
      value.resize(15);

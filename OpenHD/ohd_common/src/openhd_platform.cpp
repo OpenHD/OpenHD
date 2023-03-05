@@ -223,7 +223,5 @@ static constexpr auto PLATFORM_MANIFEST_FILENAME = "/tmp/platform_manifest";
 
 void write_platform_manifest(const OHDPlatform& ohdPlatform) {
   nlohmann::json manifest = ohdPlatform;
-  std::ofstream _t(PLATFORM_MANIFEST_FILENAME);
-  _t << manifest.dump(4);
-  _t.close();
+  OHDFilesystemUtil::write_file(PLATFORM_MANIFEST_FILENAME,manifest.dump(4));
 }

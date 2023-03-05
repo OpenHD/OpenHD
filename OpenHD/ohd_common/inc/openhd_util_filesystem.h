@@ -37,7 +37,9 @@ void create_directories(const std::string& directory);
 // delete directory if it exists
 void safe_delete_directory(const std::string& directory);
 
-// Write a text file. If the file already exists, its content is overwritten
+// Write a text file. If the file already exists, its content is overwritten.
+// This does not recursively create directories(s) - use create_directories before if needed.
+// This method intentionally doesn't return an error code, but logs verbose warning(s) when things go wrong.
 void write_file(const std::string& path,const std::string& content);
 
 // Read a file as text and return its content as a string.
