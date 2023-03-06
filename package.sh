@@ -10,7 +10,6 @@ PKGDIR="/tmp/${PACKAGE_NAME}-installdir"
 VERSION="2.3-evo-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 create_package_directory() {
-  echo $(pwd)
   rm -rf "${PKGDIR}"
   mkdir -p "${PKGDIR}"/{usr/local/bin,tmp,settings,etc/systemd/system}
   if [[ "${OS}" == "raspbian" ]]; then

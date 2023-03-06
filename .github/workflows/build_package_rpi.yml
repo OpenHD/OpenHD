@@ -2,7 +2,7 @@ name: build_package_rpi
 
 on:
   push:
-    branches: ["2.3-evo, poc-builds"]
+    branches: ["2.3-evo", "poc-builds"]
     paths-ignore:
       - '**.md'
       - '**.asciidoc'
