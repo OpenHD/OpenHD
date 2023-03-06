@@ -39,8 +39,8 @@ build_package() {
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
     ${PLATFORM_CONFIGS} \
     -p "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" \
-    --after-install ../../after-install.sh \
-    --before-install ../../before-install.sh \
+    --after-install after-install.sh \
+    --before-install before-install.sh \
     ${PLATFORM_PACKAGES} \
     -d "iw" \
     -d "nmap" \
