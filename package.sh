@@ -66,6 +66,6 @@ build_package() {
 
   #Main Build
   create_package_directory
-  cmake ..
+  cmake OpenHD/
   make -j4
   build_package
