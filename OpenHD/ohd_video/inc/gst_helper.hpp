@@ -253,10 +253,14 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=NV12,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",
         settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
-    // We got rid of the v4l2convert - see
-    // https://github.com/raspberrypi/libcamera/issues/30
-    // after the libcamerasrc part, we can just append the rpi v4l2 h264 encoder part
-    ss<<create_rpi_v4l2_h264_encoder(settings);
+    if(settings.usb_uvc_force_sw_encoding){
+      ss<< createSwEncoder(extract_common_encoder_params(settings));
+    }else{
+      // We got rid of the v4l2convert - see
+      // https://github.com/raspberrypi/libcamera/issues/30
+      // after the libcamerasrc part, we can just append the rpi v4l2 h264 encoder part
+      ss<<create_rpi_v4l2_h264_encoder(settings);
+    }
   } else if (settings.streamed_video_format.videoCodec == VideoCodec::MJPEG) {
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",
