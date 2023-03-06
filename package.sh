@@ -27,8 +27,13 @@ create_package_directory() {
 build_package() {
   rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
 
+
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
     PLATFORM_PACKAGES="-d libcamera-openhd gst-openhd-plugins"
+    PLATFORM_CONFIGS=""
+  else
+    PLATFORM_CONFIGS=""
+    PLATFORM_PACKAGES=""
   fi
 
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
