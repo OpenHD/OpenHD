@@ -60,6 +60,7 @@ build_package() {
     -d "gstreamer1.0-libav" \
     -d "gstreamer1.0-tools" \
     -d "gstreamer1.0-alsa" \
+    -d "libboost-filesystem1.74-dev" \
     -d "gstreamer1.0-pulseaudio"
 }
 
