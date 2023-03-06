@@ -31,7 +31,7 @@ build_package() {
   cp openhd ${PKGDIR}/usr/local/bin/openhd
 
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
-    PLATFORM_PACKAGES="-d libcamera-openhd gst-openhd-plugins"
+    PLATFORM_PACKAGES="-d libcamera-openhd -d gst-openhd-plugins"
     PLATFORM_CONFIGS=""
   else
     PLATFORM_CONFIGS=""
