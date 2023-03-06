@@ -15,12 +15,12 @@ create_package_directory() {
   mkdir -p "${PKGDIR}"/{usr/local/bin,tmp,settings,etc/systemd/system}
   if [[ "${OS}" == "raspbian" ]]; then
     mkdir -p "${PKGDIR}/boot/openhd/rpi_camera_configs"
-    cp ../../rpi_camera_configs/* "${PKGDIR}/boot/openhd/rpi_camera_configs/" 
-    cp ../../OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" 
+    cp rpi_camera_configs/* "${PKGDIR}/boot/openhd/rpi_camera_configs/" 
+    cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" 
   fi
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
     mkdir -p "${PKGDIR}/boot/openhd/"
-    cp ../../additionalFiles/{openhd.service,ip_camera.service,enable_ip_camera.sh} "${PKGDIR}/etc/systemd/system/"
+    cp additionalFiles/{openhd.service,ip_camera.service,enable_ip_camera.sh} "${PKGDIR}/etc/systemd/system/"
   fi
 }
 
