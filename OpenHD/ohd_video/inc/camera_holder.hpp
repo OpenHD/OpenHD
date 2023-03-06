@@ -61,7 +61,7 @@ class CameraHolder:
       };
       ret.push_back(openhd::Setting{"V_IP_CAM_URL",openhd::StringSetting {get_settings().ip_cam_url,cb_ip_cam_url}});
     }
-    if(m_camera.type==CameraType::UVC){
+    if(m_camera.type==CameraType::UVC || true){
       auto cb=[this](std::string,int value){
         if(!openhd::validate_yes_or_no(value))return false;
         unsafe_get_settings().usb_uvc_force_sw_encoding = value;
