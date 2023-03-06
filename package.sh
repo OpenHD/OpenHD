@@ -66,4 +66,3 @@ build_package() {
   #Main Build
   create_package_directory
   build_package
-  cp *.deb ../../
