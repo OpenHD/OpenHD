@@ -200,7 +200,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   ss<<" ! ";
   if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
     if(settings.usb_uvc_force_sw_encoding){
-      openhd::log::get_default()->debug("Forced SW encode");
+      openhd::log::get_default()->warn("Forced SW encode");
       ss<<fmt::format(
           "video/x-raw, width={}, height={}, framerate={}/1 ! ",
           settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
