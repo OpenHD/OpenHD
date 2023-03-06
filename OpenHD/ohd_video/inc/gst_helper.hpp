@@ -254,6 +254,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
         "capsfilter caps=video/x-raw,width={},height={},format=NV12,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",
         settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
     if(settings.usb_uvc_force_sw_encoding){
+      openhd::log::get_default()->warn("Forced SW encode");
       ss<< createSwEncoder(extract_common_encoder_params(settings));
     }else{
       // We got rid of the v4l2convert - see
