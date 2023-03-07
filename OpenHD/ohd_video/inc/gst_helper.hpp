@@ -199,7 +199,7 @@ static std::string createRpicamsrcStream(const int camera_number,
   // but rather zooms in on a specific area (which is not really of use to use)
   ss<<" ! ";
   if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
-    if(settings.usb_uvc_force_sw_encoding){
+    if(settings.force_sw_encode){
       openhd::log::get_default()->warn("Forced SW encode");
       ss<<fmt::format(
           "video/x-raw, width={}, height={}, framerate={}/1 ! ",
@@ -253,7 +253,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=NV12,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",
         settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
-    if(settings.usb_uvc_force_sw_encoding){
+    if(settings.force_sw_encode){
       openhd::log::get_default()->warn("Forced SW encode");
       ss<< createSwEncoder(extract_common_encoder_params(settings));
     }else{

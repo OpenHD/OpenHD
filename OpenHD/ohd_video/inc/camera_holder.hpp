@@ -61,14 +61,14 @@ class CameraHolder:
       };
       ret.push_back(openhd::Setting{"V_IP_CAM_URL",openhd::StringSetting {get_settings().ip_cam_url,cb_ip_cam_url}});
     }
-    if(m_camera.type==CameraType::UVC || true){
+    if(m_camera.supports_force_sw_encode()){
       auto cb=[this](std::string,int value){
         if(!openhd::validate_yes_or_no(value))return false;
-        unsafe_get_settings().usb_uvc_force_sw_encoding = value;
+        unsafe_get_settings().force_sw_encode = value;
         persist();
         return true;
       };
-      ret.push_back(openhd::Setting{"V_FORCE_SW_ENC",openhd::IntSetting {get_settings().usb_uvc_force_sw_encoding,cb}});
+      ret.push_back(openhd::Setting{"V_FORCE_SW_ENC",openhd::IntSetting {get_settings().force_sw_encode,cb}});
     }
     if(m_camera.supports_bitrate()){
       // NOTE: OpenHD stores the bitrate in kbit/s, but for now we use MBit/s for the setting
