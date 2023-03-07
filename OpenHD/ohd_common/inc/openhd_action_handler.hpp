@@ -48,9 +48,9 @@ class ActionHandler{
     auto tmp=m_action_request_bitrate_change;
     if(tmp){
       auto& cb=*tmp;
+      // The cb will update setting the global atomic value for cam1 / cam2 accordingly
       cb(link_bitrate_info);
     }
-    curr_set_raw_video_bitrate_kbits_cam1 =link_bitrate_info.recommended_encoder_bitrate_kbits;
   }
  public:
   // Link statistics - for that the wb link (ohd_interface) needs to talk to ohd_telemetry
