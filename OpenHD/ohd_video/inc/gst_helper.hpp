@@ -199,16 +199,24 @@ static std::string createRpicamsrcStream(const int camera_number,
   // but rather zooms in on a specific area (which is not really of use to use)
   ss<<" ! ";
   if(settings.streamed_video_format.videoCodec==VideoCodec::H264){
-	ss << fmt::format(
-		"video/x-h264, profile=constrained-baseline, width={}, height={}, "
-		"framerate={}/1, level=4.0 ! ",
-        settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
+    if(settings.force_sw_encode){
+      openhd::log::get_default()->warn("Forced SW encode");
+      ss<<fmt::format(
+          "video/x-raw, width={}, height={}, framerate={}/1 ! ",
+          settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
+      ss<<createSwEncoder(extract_common_encoder_params(settings));
+    }else{
+      ss << fmt::format(
+          "video/x-h264, profile=constrained-baseline, width={}, height={}, "
+          "framerate={}/1, level=4.0 ! ",
+          settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
+    }
   }else{
-	openhd::log::get_default()->warn("No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues");
-	ss<<fmt::format(
-		"video/x-raw, width={}, height={}, framerate={}/1 ! ",
-            settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
-	ss<<createSwEncoder(extract_common_encoder_params(settings));
+    openhd::log::get_default()->warn("No h265 / MJPEG encoder on rpi, using SW encode (might result in frame drops/performance issues");
+    ss<<fmt::format(
+        "video/x-raw, width={}, height={}, framerate={}/1 ! ",
+        settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
+    ss<<createSwEncoder(extract_common_encoder_params(settings));
   }
   return ss.str();
 }
@@ -245,10 +253,15 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=NV12,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",
         settings.streamed_video_format.width, settings.streamed_video_format.height, settings.streamed_video_format.framerate);
-    // We got rid of the v4l2convert - see
-    // https://github.com/raspberrypi/libcamera/issues/30
-    // after the libcamerasrc part, we can just append the rpi v4l2 h264 encoder part
-    ss<<create_rpi_v4l2_h264_encoder(settings);
+    if(settings.force_sw_encode){
+      openhd::log::get_default()->warn("Forced SW encode");
+      ss<< createSwEncoder(extract_common_encoder_params(settings));
+    }else{
+      // We got rid of the v4l2convert - see
+      // https://github.com/raspberrypi/libcamera/issues/30
+      // after the libcamerasrc part, we can just append the rpi v4l2 h264 encoder part
+      ss<<create_rpi_v4l2_h264_encoder(settings);
+    }
   } else if (settings.streamed_video_format.videoCodec == VideoCodec::MJPEG) {
     ss << fmt::format(
         "capsfilter caps=video/x-raw,width={},height={},format=YVYU,framerate={}/1,interlace-mode=progressive,colorimetry=bt709 ! ",

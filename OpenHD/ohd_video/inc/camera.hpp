@@ -142,6 +142,9 @@ struct Camera {
   bool supports_rpi_rpicamsrc_metering_mode()const{
     return type==CameraType::RPI_CSI_MMAL;
   }
+  bool supports_force_sw_encode()const{
+      return type==CameraType::UVC || type==CameraType::RPI_CSI_MMAL || type==CameraType::RPI_CSI_LIBCAMERA;
+  }
   // This "hash" needs to be deterministic and unique - otherwise, incompatible settings from
   // a previous camera might be used
   std::string get_unique_settings_filename()const{
