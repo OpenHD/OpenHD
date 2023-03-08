@@ -702,9 +702,14 @@ void WBLink::perform_rate_adjustment() {
   if(has_tx_errors){
     m_n_detected_and_reset_tx_errors++;
     m_console->warn("Got {} tx errors {} times",delta_total_tx_errors,m_n_detected_and_reset_tx_errors);
+  }else{
+	if(m_n_detected_and_reset_tx_errors>0){
+	  m_console->warn("No tx errors after {}",m_n_detected_and_reset_tx_errors);
+	}
+	m_n_detected_and_reset_tx_errors=0;
   }
-  if(m_n_detected_and_reset_tx_errors>=2){
-    // We got tx errors N consecutive times, resetting between each - we need to reduce bitrate
+  if(m_n_detected_and_reset_tx_errors>=3){
+    // We got tx errors N consecutive times, (resetting if there are no tx errors) - we need to reduce bitrate
     m_console->debug("Got m_n_detected_and_reset_tx_errors{} with max:{} recommended:{}",
                      m_n_detected_and_reset_tx_errors,
         m_max_video_rate_for_current_wifi_config,m_recommended_video_bitrate);
