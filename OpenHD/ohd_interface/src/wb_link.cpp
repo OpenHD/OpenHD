@@ -437,7 +437,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  m_settings->unsafe_get_settings().wb_enable_stbc=stbc;
 	  m_settings->persist();
 	  apply_all_tx_instances([stbc](WBTransmitter& tx){
-		tx.update_mcs_index(stbc);
+		tx.update_stbc(stbc);
 	  });
 	  return true;
 	};
