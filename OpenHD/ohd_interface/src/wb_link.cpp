@@ -165,7 +165,7 @@ RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
   const auto mcs_index=static_cast<int>(settings.wb_mcs_index);
   const auto channel_width=static_cast<int>(settings.wb_channel_width);
   return RadiotapHeader::UserSelectableParams{
-      channel_width, settings.wb_enable_short_guard,settings.wb_enable_short_guard,
+      channel_width, settings.wb_enable_short_guard,settings.wb_enable_stbc,
       settings.wb_enable_ldpc, mcs_index};
 }
 
