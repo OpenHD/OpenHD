@@ -431,29 +431,43 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       ret.push_back(openhd::create_read_only_int("WB_N_RX_CARDS",n_rx_cards));
     }
   }
-  // disabled for now, they are too complicated that a normal user can do something with them anyways
-  if(false){
-    auto cb_wb_enable_stbc=[this](std::string,int value){
-      if(!validate_yes_or_no(value))return false;
-      m_settings->unsafe_get_settings().wb_enable_stbc=value;
-      m_settings->persist();
-      return true;
-    };
-    ret.push_back(openhd::Setting{WB_ENABLE_STBC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_stbc}});
-    auto cb_wb_enable_ldpc=[this](std::string,int value){
-      if(!validate_yes_or_no(value))return false;
-      m_settings->unsafe_get_settings().wb_enable_ldpc=value;
-      m_settings->persist();
-      return true;
-    };
-    ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_ldpc}});
-    auto cb_wb_enable_sg=[this](std::string,int value){
-      if(!validate_yes_or_no(value))return false;
-      m_settings->unsafe_get_settings().wb_enable_short_guard=value;
-      m_settings->persist();
-      return true;
-    };
-    ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
+  // These 3 are only supported / known to work on rtl8812au (yet), therefore only expose them when rtl8812au is used
+  if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
+	// STBC - definitely for advanced users, but aparently it can have benefits.
+	auto cb_wb_enable_stbc=[this](std::string,int value){
+	  if(value<0 || value>3)return false;
+	  m_settings->unsafe_get_settings().wb_enable_stbc=value;
+	  m_settings->persist();
+	  auto transmitters=get_tx_list();
+	  for(auto& tx: transmitters){
+		tx->update_stbc(value);
+	  }
+	  return true;
+	};
+	ret.push_back(openhd::Setting{WB_ENABLE_STBC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_stbc}});
+	// These 2 params are exposed by default from OpenHD, but whitelisted in QOpenHD to prevent inexperienced users from changing them
+	auto cb_wb_enable_ldpc=[this](std::string,int ldpc){
+	  if(!validate_yes_or_no(ldpc))return false;
+	  m_settings->unsafe_get_settings().wb_enable_ldpc=ldpc;
+	  m_settings->persist();
+	  auto transmitters=get_tx_list();
+	  for(auto& tx: transmitters){
+		tx->update_ldpc(ldpc);
+	  }
+	  return true;
+	};
+	ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_ldpc}});
+	auto cb_wb_enable_sg=[this](std::string,int short_gi){
+	  if(!validate_yes_or_no(short_gi))return false;
+	  m_settings->unsafe_get_settings().wb_enable_short_guard=short_gi;
+	  m_settings->persist();
+	  auto transmitters=get_tx_list();
+	  for(auto& tx: transmitters){
+		tx->update_guard_interval(short_gi);
+	  }
+	  return true;
+	};
+	ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
   }
   // WIFI TX power depends on the used chips
   if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
