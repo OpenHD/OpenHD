@@ -134,6 +134,7 @@ class WBLink :public OHDLink{
   // Helper when we need to iterate over all tx-es/rx-es. Save to use as long as this instance is not destroyed.
   // Uses "*" since the members are unique_ptr.
   std::vector<WBTransmitter*> get_tx_list();
+  void apply_all_tx_instances(const std::function<void(WBTransmitter& tx)>& f);
   std::vector<AsyncWBReceiver*> get_rx_list();
  private:
   // We return false on all the change settings request(s) if there is already a change operation queued
