@@ -165,7 +165,7 @@ RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
   const auto mcs_index=static_cast<int>(settings.wb_mcs_index);
   const auto channel_width=static_cast<int>(settings.wb_channel_width);
   return RadiotapHeader::UserSelectableParams{
-      channel_width, settings.wb_enable_short_guard,settings.wb_enable_short_guard,
+      channel_width, settings.wb_enable_short_guard,settings.wb_enable_stbc,
       settings.wb_enable_ldpc, mcs_index};
 }
 
@@ -282,10 +282,9 @@ bool WBLink::request_set_frequency(int frequency) {
 bool WBLink::apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width) {
   const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width,m_broadcast_cards);
   // TODO: R.n I am not sure if and how you need / even can set it either via radiotap or "iw"
-  auto transmitters=get_tx_list();
-  for(auto& tx: transmitters){
-    tx->update_channel_width(channel_width);
-  }
+  apply_all_tx_instances([channel_width](WBTransmitter& tx){
+	tx.update_channel_width(channel_width);
+  });
   return res;
 }
 
@@ -330,10 +329,9 @@ bool WBLink::set_mcs_index(int mcs_index) {
   //for(const auto& wlan:m_broadcast_cards){
   //  wifi::commandhelper::iw_set_rate_mcs(wlan.device_name,settings.wb_mcs_index, false);
   //}
-  auto transmitters=get_tx_list();
-  for(auto& tx: transmitters){
-    tx->update_mcs_index(mcs_index);
-  }
+  apply_all_tx_instances([mcs_index](WBTransmitter& tx){
+	tx.update_mcs_index(mcs_index);
+  });
   return true;
 }
 
@@ -431,29 +429,40 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       ret.push_back(openhd::create_read_only_int("WB_N_RX_CARDS",n_rx_cards));
     }
   }
-  // disabled for now, they are too complicated that a normal user can do something with them anyways
-  if(false){
-    auto cb_wb_enable_stbc=[this](std::string,int value){
-      if(!validate_yes_or_no(value))return false;
-      m_settings->unsafe_get_settings().wb_enable_stbc=value;
-      m_settings->persist();
-      return true;
-    };
-    ret.push_back(openhd::Setting{WB_ENABLE_STBC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_stbc}});
-    auto cb_wb_enable_ldpc=[this](std::string,int value){
-      if(!validate_yes_or_no(value))return false;
-      m_settings->unsafe_get_settings().wb_enable_ldpc=value;
-      m_settings->persist();
-      return true;
-    };
-    ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_ldpc}});
-    auto cb_wb_enable_sg=[this](std::string,int value){
-      if(!validate_yes_or_no(value))return false;
-      m_settings->unsafe_get_settings().wb_enable_short_guard=value;
-      m_settings->persist();
-      return true;
-    };
-    ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
+  // These 3 are only supported / known to work on rtl8812au (yet), therefore only expose them when rtl8812au is used
+  if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
+	// STBC - definitely for advanced users, but aparently it can have benefits.
+	auto cb_wb_enable_stbc=[this](std::string,int stbc){
+	  if(stbc<0 || stbc>3)return false;
+	  m_settings->unsafe_get_settings().wb_enable_stbc=stbc;
+	  m_settings->persist();
+	  apply_all_tx_instances([stbc](WBTransmitter& tx){
+		tx.update_stbc(stbc);
+	  });
+	  return true;
+	};
+	ret.push_back(openhd::Setting{WB_ENABLE_STBC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_stbc}});
+	// These 2 params are exposed by default from OpenHD, but whitelisted in QOpenHD to prevent inexperienced users from changing them
+	auto cb_wb_enable_ldpc=[this](std::string,int ldpc){
+	  if(!validate_yes_or_no(ldpc))return false;
+	  m_settings->unsafe_get_settings().wb_enable_ldpc=ldpc;
+	  m_settings->persist();
+	  apply_all_tx_instances([ldpc](WBTransmitter& tx){
+		tx.update_ldpc(ldpc);
+	  });
+	  return true;
+	};
+	ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_ldpc}});
+	auto cb_wb_enable_sg=[this](std::string,int short_gi){
+	  if(!validate_yes_or_no(short_gi))return false;
+	  m_settings->unsafe_get_settings().wb_enable_short_guard=short_gi;
+	  m_settings->persist();
+	  apply_all_tx_instances([short_gi](WBTransmitter& tx){
+		tx.update_guard_interval(short_gi);
+	  });
+	  return true;
+	};
+	ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
   }
   // WIFI TX power depends on the used chips
   if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
@@ -969,6 +978,13 @@ std::vector<AsyncWBReceiver*> WBLink::get_rx_list() {
   for(auto& vid_rx:m_wb_video_rx_list)ret.push_back(vid_rx.get());
   if(m_wb_tele_rx)ret.push_back(m_wb_tele_rx.get());
   return ret;
+}
+
+void WBLink::apply_all_tx_instances(const std::function<void(WBTransmitter &)>& f) {
+  auto tx_es=get_tx_list();
+  for(const auto& tx: tx_es){
+	f(*tx);
+  }
 }
 
 bool WBLink::set_tx_power_mw(int tx_power_mw) {
