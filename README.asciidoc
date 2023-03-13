@@ -126,7 +126,7 @@ We recommend getting in touch with us via the {telegram} group or the {discord} 
 *Thanks to all the people who already contributed!*
 
 [#img-contributors,link=https://github.com/OpenHD/OpenHD/graphs/contributors]
-image::https://contrib.rocks/image?repo=OpenHD/OpenHD[Contributors]
+image::https://data.openhdfpv.org/openhd-images/uploads/QOpenHD.svg[Contributors]
 
 == Special Thanks
 
