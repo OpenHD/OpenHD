@@ -26,6 +26,7 @@ struct Config{
   // NETWORKING
   std::string NW_ETHERNET_CARD=RPI_ETHERNET_ONLY;
   std::vector<std::string> NW_MANUAL_FORWARDING_IPS;
+  bool NW_FORWARD_TO_LOCALHOST_58XX=false;
 };
 
 Config load_config();

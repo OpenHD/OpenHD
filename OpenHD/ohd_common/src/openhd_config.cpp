@@ -35,6 +35,7 @@ openhd::Config openhd::load_config() {
 
 	ret.NW_ETHERNET_CARD = r.Get<std::string>("network", "NW_ETHERNET_CARD");
     ret.NW_MANUAL_FORWARDING_IPS =  r.GetVector<std::string>("network", "NW_MANUAL_FORWARDING_IPS");
+    ret.NW_FORWARD_TO_LOCALHOST_58XX = r.Get<bool>("network","NW_FORWARD_TO_LOCALHOST_58XX");
     return ret;
   }catch (std::exception& exception){
     get_logger()->error("Ill-formatted config file {}",std::string(exception.what()));
@@ -45,10 +46,10 @@ openhd::Config openhd::load_config() {
 void openhd::debug_config(const openhd::Config& config) {
   get_logger()->debug("WIFI_ENABLE_AUTODETECT:{}, WIFI_WB_LINK_CARDS:{}, WIFI_WIFI_HOTSPOT_CARD:{},\n"
       "CAMERA_ENABLE_AUTODETECT:{}, CAMERA_N_CAMERAS:{}, CAMERA_CAMERA0_TYPE:{}, CAMERA_CAMERA1_TYPE:{}\n"
-      "NW_MANUAL_FORWARDING_IPS:{},NW_ETHERNET_CARD:{}",
+      "NW_MANUAL_FORWARDING_IPS:{},NW_ETHERNET_CARD:{},NW_FORWARD_TO_LOCALHOST_58XX:{}",
       config.WIFI_ENABLE_AUTODETECT,OHDUtil::str_vec_as_string(config.WIFI_WB_LINK_CARDS),config.WIFI_WIFI_HOTSPOT_CARD,
       config.CAMERA_ENABLE_AUTODETECT,config.CAMERA_N_CAMERAS,config.CAMERA_CAMERA0_TYPE,config.CAMERA_CAMERA1_TYPE,
-      OHDUtil::str_vec_as_string(config.NW_MANUAL_FORWARDING_IPS),config.NW_ETHERNET_CARD
+      OHDUtil::str_vec_as_string(config.NW_MANUAL_FORWARDING_IPS),config.NW_ETHERNET_CARD,config.NW_FORWARD_TO_LOCALHOST_58XX
       );
 }
 void openhd::debug_config() {
