@@ -9,14 +9,6 @@ add_library(OHDTelemetryLib::OHDTelemetryLib ALIAS OHDTelemetryLib)
 # Only needed when building this submodule manually
 add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 
-# from https://github.com/alexott/boost-asio-examples/blob/master/CMakeLists.txt
-# Find and include boost
-# Changed according to https://cliutils.gitlab.io/modern-cmake/chapters/packages/Boost.html
-SET(Boost_USE_STATIC_LIBS ON)
-find_package(Boost REQUIRED COMPONENTS filesystem)
-message(STATUS "Boost version: ${Boost_VERSION}")
-target_link_libraries(OHDTelemetryLib PRIVATE Boost::filesystem)
-
 find_package(Threads REQUIRED)
 target_link_libraries(OHDTelemetryLib PUBLIC Threads::Threads)
 
