@@ -13,6 +13,10 @@ m_link_handle(std::move(link_handle)){
   m_secondary_video_forwarder = std::make_unique<SocketHelper::UDPMultiForwarder>();
   // We always forward video to localhost::5600 (primary) and 5601 (secondary) for the default Ground control application (e.g. QOpenHD) to pick up
   addForwarder("127.0.0.1");
+
+  // Adding forwarder for WebRTC
+  m_primary_video_forwarder->addForwarder("127.0.0.1", 5800);
+
   if(m_link_handle){
     m_link_handle->register_on_receive_video_data_cb([this](int stream_index,const uint8_t * data,int data_len){
       on_video_data(stream_index,data,data_len);
