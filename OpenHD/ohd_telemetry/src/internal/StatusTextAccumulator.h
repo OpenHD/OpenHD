@@ -6,8 +6,8 @@
 #define OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_STATUSTEXT_H_
 
 #include <queue>
-
-#include "HelperSources/SocketHelper.hpp"
+// dirty, pull in header only
+#include "../../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
 #include "mav_include.h"
 #include "openhd_spdlog.h"
 #include "openhd_udp_log.h"

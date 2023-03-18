@@ -14,7 +14,8 @@
 
 #include "../mav_helper.h"
 #include "../mav_include.h"
-#include "HelperSources/TimeHelper.hpp"
+// dirty, pull in header only
+#include "../../../lib/wifibroadcast/src/HelperSources/TimeHelper.hpp"
 #include "openhd_spdlog.h"
 
 // Mavlink Endpoint

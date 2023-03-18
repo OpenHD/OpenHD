@@ -12,10 +12,10 @@
 #include <vector>
 
 #include "../mav_helper.h"
-#include "HelperSources/SocketHelper.hpp"
+// dirty, pull in header only
+#include "../../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
 #include "OnboardComputerStatusProvider.h"
 #include "StatusTextAccumulator.h"
-#include "WBReceiverStats.hpp"
 #include "openhd_action_handler.hpp"
 #include "openhd_link_statistics.hpp"
 #include "openhd_platform.h"

@@ -7,8 +7,8 @@
 
 #include <map>
 #include <thread>
-
-#include "HelperSources/SocketHelper.hpp"
+// dirty, pull in header only
+#include "../../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
 #include "MEndpoint.h"
 
 /**

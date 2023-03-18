@@ -116,9 +116,6 @@ target_compile_options(mavlink INTERFACE -Wno-address-of-packed-member -Wno-cast
 target_include_directories(mavlink INTERFACE ../lib/mavlink-headers/mavlink/v2.0)
 target_link_libraries(OHDTelemetryLib PUBLIC mavlink)
 
-# Note: We do not need wifibroadcast as a whole here, we can get the header-only files.
-target_include_directories(OHDTelemetryLib PUBLIC ../lib/wifibroadcast/src)
-
 # All the test files for development
 add_executable(test_serial_endpoint tests/test_serial_endpoint.cpp)
 target_link_libraries(test_serial_endpoint OHDTelemetryLib)
