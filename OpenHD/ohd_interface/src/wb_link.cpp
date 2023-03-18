@@ -68,6 +68,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
 }
 
 WBLink::~WBLink() {
+  m_console->debug("WBLink::~WBLink() begin");
   if(m_opt_action_handler){
     m_opt_action_handler->action_wb_link_scan_channels_register(nullptr);
   }
@@ -84,6 +85,7 @@ WBLink::~WBLink() {
   for(const auto& card: m_broadcast_cards){
     wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
   }
+  m_console->debug("WBLink::~WBLink() end");
 }
 
 void WBLink::takeover_cards_monitor_mode() {
