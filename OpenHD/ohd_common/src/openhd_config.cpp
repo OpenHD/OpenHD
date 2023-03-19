@@ -56,6 +56,7 @@ void openhd::debug_config(const openhd::Config& config) {
 
 void openhd::debug_config() {
   auto config=load_config();
+  std::cout<<"Y2\n";
   debug_config(config);
 }
 
