@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 
 # Build and include wifibroadcast
-set(WB_ENABLE_SIMD_OPTIMIZATIONS OFF)
 include(../lib/wifibroadcast/WBLib.cmake)
 
 add_library(OHDInterfaceLib STATIC) # initialized below
