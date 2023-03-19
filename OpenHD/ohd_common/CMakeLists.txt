@@ -99,3 +99,6 @@ target_link_libraries(test_ohd_reboot OHDCommonLib)
 
 add_executable(test_config test/test_config.cpp)
 target_link_libraries(test_config OHDCommonLib)
+
+add_executable(test_logging test/test_logging.cpp)
+target_link_libraries(test_logging OHDCommonLib)
