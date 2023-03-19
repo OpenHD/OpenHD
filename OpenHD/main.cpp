@@ -195,9 +195,6 @@ int main(int argc, char *argv[]) {
       "continue_without_wb_card:"<<OHDUtil::yes_or_no(options.continue_without_wb_card)<<"\n";
   std::cout<<"Version number:"<<openhd::VERSION_NUMBER_STRING<<"\n";
   std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
-  std::cout<<"X1\n";
-  openhd::log::get_default()->debug("Ex message");
-  std::cout<<"X2\n";
   openhd::debug_config();
   OHDInterface::print_internal_fec_optimization_method();
 
