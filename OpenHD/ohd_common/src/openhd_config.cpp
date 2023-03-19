@@ -39,7 +39,7 @@ openhd::Config openhd::load_config() {
     return ret;
   }catch (std::exception& exception){
     std::cout<<"Y1\n";
-    openhd::log::get_default()->debug("Ex message2");
+    openhd::log::get_default()->debug("Ex message2 {}",std::string("hallo"));
     get_logger()->error("Ill-formatted config file {}",std::string(exception.what()));
     std::cout<<"Y2\n";
   }
