@@ -38,7 +38,9 @@ openhd::Config openhd::load_config() {
     ret.NW_FORWARD_TO_LOCALHOST_58XX = r.Get<bool>("network","NW_FORWARD_TO_LOCALHOST_58XX");
     return ret;
   }catch (std::exception& exception){
+    std::cout<<"Y1\n";
     get_logger()->error("Ill-formatted config file {}",std::string(exception.what()));
+    std::cout<<"Y2\n";
   }
   return {};
 }
