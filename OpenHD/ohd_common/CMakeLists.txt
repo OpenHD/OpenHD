@@ -16,21 +16,20 @@ add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
 
 # We use spdlog and json pretty much everywhere in OpenHD. Build it here, then make publicly available
-add_subdirectory(lib/spdlog)
-add_subdirectory(lib/json)
-
-# Public since we use it throughout OpenHD
+# 1) spdlog
 #find_package(spdlog REQUIRED)
+add_subdirectory(lib/spdlog)
+# Public since we use it throughout OpenHD
 target_link_libraries(OHDCommonLib PUBLIC spdlog::spdlog)
 
+# 2) nlohmann::json
+add_subdirectory(lib/json)
 # Public since we use it throughout OpenHD
-#find_package(spdlog nlohmann_json)
 target_link_libraries(OHDCommonLib PUBLIC  nlohmann_json::nlohmann_json)
 
 # WARNING: Please do not use boost, without going into too much detail why, it is a pain for multi platform compatibility.
 # We only use it as a temporary solution until all platforms support std::filesystem
-SET(Boost_USE_STATIC_LIBS OFF)
-SET(Boost_USE_MULTITHREAD ON)
+SET(Boost_USE_STATIC_LIBS ON)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
 target_link_libraries(OHDCommonLib PRIVATE Boost::filesystem)
 #----------------------------------------------------------------------------------------------------------------------
@@ -95,3 +94,6 @@ target_link_libraries(test_ohd_reboot OHDCommonLib)
 
 add_executable(test_config test/test_config.cpp)
 target_link_libraries(test_config OHDCommonLib)
+
+add_executable(test_logging test/test_logging.cpp)
+target_link_libraries(test_logging OHDCommonLib)

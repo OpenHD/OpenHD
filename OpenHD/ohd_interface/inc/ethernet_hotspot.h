@@ -8,6 +8,7 @@
 #include <openhd_external_device.hpp>
 #include <openhd_settings_imp.hpp>
 #include <string>
+#include <thread>
 
 #include "ethernet_hotspot_settings.h"
 

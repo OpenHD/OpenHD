@@ -52,6 +52,7 @@ void openhd::debug_config(const openhd::Config& config) {
       OHDUtil::str_vec_as_string(config.NW_MANUAL_FORWARDING_IPS),config.NW_ETHERNET_CARD,config.NW_FORWARD_TO_LOCALHOST_58XX
       );
 }
+
 void openhd::debug_config() {
   auto config=load_config();
   debug_config(config);

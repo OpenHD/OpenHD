@@ -8,6 +8,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <thread>
 
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
