@@ -92,7 +92,7 @@ static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi(){
   const std::string raspberry_identifier = result[1];
   if(raspberry_identifier == "0000")
   {
-    std::cout<<"identifier:{"<<raspberry_identifier<<"} is not raspberry pi\n";
+    openhd::log::get_default()->debug("Pi identifier:[{}] is not raspberry pi",raspberry_identifier);
     return {};
   }
   openhd::log::get_default()->debug("Pi identifier:[{}]",raspberry_identifier);
