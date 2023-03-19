@@ -16,15 +16,20 @@ add_library(OHDCommonLib STATIC) # initialized below
 add_library(OHDCommonLib::OHDCommonLib ALIAS OHDCommonLib)
 
 # We use spdlog and json pretty much everywhere in OpenHD. Build it here, then make publicly available
-add_subdirectory(lib/spdlog)
-add_subdirectory(lib/json)
-
+# 1) spdlog
+find_package(spdlog REQUIRED)
+#if(TARGET spdlog)
+#    message(STATUS "Using spdlog from package manager")
+#else()
+#    message(STATUS "Build and link spdlog manually")
+#    add_subdirectory(lib/spdlog)
+#endif()
 # Public since we use it throughout OpenHD
-#find_package(spdlog REQUIRED)
 target_link_libraries(OHDCommonLib PUBLIC spdlog::spdlog)
 
+# 2) nlohmann::json
+add_subdirectory(lib/json)
 # Public since we use it throughout OpenHD
-#find_package(spdlog nlohmann_json)
 target_link_libraries(OHDCommonLib PUBLIC  nlohmann_json::nlohmann_json)
 
 # WARNING: Please do not use boost, without going into too much detail why, it is a pain for multi platform compatibility.
