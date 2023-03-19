@@ -44,6 +44,7 @@ openhd::Config openhd::load_config() {
 }
 
 void openhd::debug_config(const openhd::Config& config) {
+  std::cout<<"Ehm\n";
   get_logger()->debug("WIFI_ENABLE_AUTODETECT:{}, WIFI_WB_LINK_CARDS:{}, WIFI_WIFI_HOTSPOT_CARD:{},\n"
       "CAMERA_ENABLE_AUTODETECT:{}, CAMERA_N_CAMERAS:{}, CAMERA_CAMERA0_TYPE:{}, CAMERA_CAMERA1_TYPE:{}\n"
       "NW_MANUAL_FORWARDING_IPS:{},NW_ETHERNET_CARD:{},NW_FORWARD_TO_LOCALHOST_58XX:{}",
@@ -52,6 +53,7 @@ void openhd::debug_config(const openhd::Config& config) {
       OHDUtil::str_vec_as_string(config.NW_MANUAL_FORWARDING_IPS),config.NW_ETHERNET_CARD,config.NW_FORWARD_TO_LOCALHOST_58XX
       );
 }
+
 void openhd::debug_config() {
   auto config=load_config();
   debug_config(config);
