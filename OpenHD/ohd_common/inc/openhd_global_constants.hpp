@@ -30,7 +30,7 @@ static constexpr auto VIDEO_GROUND_VIDEO_STREAM_1_UDP = 5600;
 static constexpr auto VIDEO_GROUND_VIDEO_STREAM_2_UDP = 5601;
 static_assert(VIDEO_GROUND_VIDEO_STREAM_1_UDP != VIDEO_GROUND_VIDEO_STREAM_2_UDP, "Must be different");
 
-static constexpr auto VERSION_NUMBER_STRING="2.3.3-beta";
+static constexpr auto VERSION_NUMBER_STRING="2.3.3-beta-dirty";
 
 }
 #endif //OPEN_HD_OPNHD_GLOBAL_CONSTANTS_H
