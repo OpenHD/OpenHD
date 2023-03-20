@@ -18,9 +18,10 @@
 #include "openhd_settings_imp.hpp"
 #include "openhd_spdlog.h"
 #include "usb_tether_listener.h"
-#include "wb_link.h"
+#include "openhd_link.hpp"
 #include "wifi_hotspot.h"
 
+class WBLink;
 /**
  * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
  * In openhd, there is an instance of this class on both air and ground with partially similar, partially

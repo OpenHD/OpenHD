@@ -9,6 +9,7 @@
 
 #include <utility>
 
+#include "wb_link.h"
 #include "wb_link_settings.hpp"
 #include "wifi_command_helper.h"
 
