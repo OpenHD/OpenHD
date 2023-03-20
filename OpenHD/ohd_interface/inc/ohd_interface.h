@@ -18,15 +18,16 @@
 #include "openhd_settings_imp.hpp"
 #include "openhd_spdlog.h"
 #include "usb_tether_listener.h"
-#include "wb_link.h"
+#include "openhd_link.hpp"
 #include "wifi_hotspot.h"
 
+class WBLink;
 /**
  * Takes care of everything networking related, like wifibroadcast, usb / tethering / WiFi-hotspot usw.
  * In openhd, there is an instance of this class on both air and ground with partially similar, partially
  * different functionalities.
  */
-class OHDInterface :public openhd::ISettingsComponent{
+class OHDInterface {
  public:
   /**
    * @param platform platform we are running on
@@ -40,7 +41,7 @@ class OHDInterface :public openhd::ISettingsComponent{
   // Verbose string about the current state.
   [[nodiscard]] std::string createDebug() const;
   // Get all (mavlink) settings ohd_interface exposes on the air or ground unit, respective
-  std::vector<openhd::Setting> get_all_settings()override;
+  std::vector<openhd::Setting> get_all_settings();
   // easy access without polluting the headers
   static void print_internal_fec_optimization_method();
   // Agnostic of the link, even though r.n we only have a wifibroadcast implementation (but this might change).
