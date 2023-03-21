@@ -80,13 +80,24 @@ static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
   if(wifi_card.type==WiFiCardType::Realtek8812au)return true;
   return false;
 }
+/**
+ * @param m_broadcast_cards the cards to check capabilities from
+ * @return true if all cards support setting an MCS index,
+ */
+static bool all_cards_support_setting_mcs_index(const std::vector<WiFiCard>& m_broadcast_cards){
+  for(const auto& card: m_broadcast_cards){
+	if(!wifi_card_supports_variable_mcs(card)){
+	  return false;
+	}
+  }
+  return true;
+}
 
 // Only RTL8812au so far supports a 40Mhz channel width (and there it is also discouraged to use it)
 static bool wifi_card_supports_40Mhz_channel_width(const WiFiCard& wifi_card){
   if(wifi_card.type==WiFiCardType::Realtek8812au)return true;
   return false;
 }
-
 
 static bool wifi_card_supports_frequency(const WiFiCard& wifi_card,const uint32_t frequency){
   const auto channel_opt=openhd::channel_from_frequency(frequency);
