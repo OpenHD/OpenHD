@@ -43,14 +43,15 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(m_platform,m_profile,m_broadcast_cards);
   // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
   openhd::wb::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
+  // We default to the right setting (clean install) but only print a warning, don't actively fix it.
   if(m_profile.is_ground()){
 	if(all_cards_support_setting_mcs_index(m_broadcast_cards) &&
 	m_settings->unsafe_get_settings().wb_mcs_index!=openhd::DEFAULT_GND_UPLINK_MCS_INDEX){
 	  // We always use a MCS index of X for the uplink, since (compared to the down / video link) it requires a negligible amount of bandwidth
 	  // and for those using RC over OpenHD, we have the benefit that the range of RC is "more" than the range for video
-	  m_console->warn("GND-fixing MCS to {}",openhd::DEFAULT_GND_UPLINK_MCS_INDEX);
-	  m_settings->unsafe_get_settings().wb_mcs_index=openhd::DEFAULT_GND_UPLINK_MCS_INDEX;
-	  m_settings->persist();
+	  m_console->warn("GND recommended MCS{}",openhd::DEFAULT_GND_UPLINK_MCS_INDEX);
+	  //m_settings->unsafe_get_settings().wb_mcs_index=openhd::DEFAULT_GND_UPLINK_MCS_INDEX;
+	  //m_settings->persist();
 	}
   }
   takeover_cards_monitor_mode();
