@@ -5,7 +5,10 @@
 #ifndef OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_SETTINGS_HPP_
 
+#include <utility>
+
 #include "openhd_platform.h"
+#include "openhd_profile.h"
 #include "openhd_settings_persistent.h"
 #include "openhd_settings_directories.hpp"
 #include "wifi_card.h"
@@ -15,6 +18,9 @@ namespace openhd{
 static constexpr auto DEFAULT_5GHZ_FREQUENCY = 5180;
 static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412;
 static constexpr auto DEFAULT_MCS_INDEX=3;
+// We always use a MCS index of X for the uplink, since (compared to the video link) it requires a negligible amount of bandwidth
+// and for those using RC over OpenHD, we have the benefit that the range of RC is "more" than the range for video
+static constexpr auto DEFAULT_GND_UPLINK_MCS_INDEX=1;
 static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
 // Consti10: Stephen used a default tx power of 3100 somewhere (not sure if that ever made it trough though)
 // This value seems a bit high to me, so I am going with a default of "1800" (which should be 18.0 dBm )
@@ -93,7 +99,7 @@ static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform)
   return 20;
 }
 
-static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platform,const std::vector<WiFiCard>& wifibroadcast_cards){
+static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platform,const OHDProfile& profile,const std::vector<WiFiCard>& wifibroadcast_cards){
   assert(!wifibroadcast_cards.empty());
   const auto first_card=wifibroadcast_cards.at(0);
   assert(first_card.supports_5GHz() || first_card.supports_2GHz());
@@ -105,6 +111,9 @@ static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platf
 	settings.wb_frequency=DEFAULT_2GHZ_FREQUENCY;
   }
   settings.wb_max_fec_block_size_for_platform= calculate_max_fec_block_size_for_platform(platform);
+  if(all_cards_support_setting_mcs_index(wifibroadcast_cards) && profile.is_ground()){
+	settings.wb_mcs_index=DEFAULT_GND_UPLINK_MCS_INDEX;
+  }
   openhd::log::get_default()->debug("Default wb_max_fec_block_size_for_platform:{}",settings.wb_max_fec_block_size_for_platform);
   return settings;
 }
@@ -133,15 +142,17 @@ class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLink
    * @param platform needed to figure out the proper default params
    * @param wifibroadcast_cards1 needed to figure out the proper default params
    */
-  explicit WBStreamsSettingsHolder(OHDPlatform platform,std::vector<WiFiCard> wifibroadcast_cards1):
+  explicit WBStreamsSettingsHolder(OHDPlatform platform,OHDProfile profile,std::vector<WiFiCard> wifibroadcast_cards1):
 	  openhd::settings::PersistentSettings<WBLinkSettings>(get_interface_settings_directory()),
         m_cards(std::move(wifibroadcast_cards1)),
-          m_platform(platform)
+          m_platform(platform),
+		  m_profile(std::move(profile))
   {
 	init();
   }
  public:
   const OHDPlatform m_platform;
+  const OHDProfile m_profile;
   const std::vector<WiFiCard> m_cards;
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
@@ -150,7 +161,7 @@ class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLink
 	return ss.str();
   }
   [[nodiscard]] WBLinkSettings create_default()const override{
-	return create_default_wb_stream_settings(m_platform, m_cards);
+	return create_default_wb_stream_settings(m_platform,m_profile, m_cards);
   }
 };
 

@@ -21,12 +21,6 @@ bool disable_all_frequency_checks();
 
 /**
  * @param m_broadcast_cards the cards to check capabilities from
- * @return true if all cards support setting an MCS index,
- */
-bool cards_support_setting_mcs_index(const std::vector<WiFiCard>& m_broadcast_cards);
-
-/**
- * @param m_broadcast_cards the cards to check capabilities from
  * @return  true if all cards support setting the channel width (otherwise 20Mhz default is fixed (most likely))
  */
 bool cards_support_setting_channel_width(const std::vector<WiFiCard>& m_broadcast_cards);
