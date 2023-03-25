@@ -33,9 +33,12 @@ build_package() {
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
     PLATFORM_PACKAGES="-d libcamera-openhd -d gst-openhd-plugins"
     PLATFORM_CONFIGS=""
-  else
+  elif [[ "${PACKAGE_ARCH}" =! "arm64" ]]; then
+    PLATFORM_PACKAGES="-d libboost-filesystem1.74-dev"
     PLATFORM_CONFIGS=""
-    PLATFORM_PACKAGES=""
+  else
+    PLATFORM_PACKAGES="-d libboost1.74 -d libboost-filesystem-dev"
+    PLATFORM_CONFIGS=""
   fi
 
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
@@ -62,7 +65,7 @@ build_package() {
     -d "gstreamer1.0-libav" \
     -d "gstreamer1.0-tools" \
     -d "gstreamer1.0-alsa" \
-    -d "libboost-filesystem1.74-dev" \
+    -d "" \
     -d "gstreamer1.0-pulseaudio"
 }
 
