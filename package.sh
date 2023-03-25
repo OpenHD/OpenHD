@@ -65,7 +65,6 @@ build_package() {
     -d "gstreamer1.0-libav" \
     -d "gstreamer1.0-tools" \
     -d "gstreamer1.0-alsa" \
-    -d "" \
     -d "gstreamer1.0-pulseaudio"
 }
 
