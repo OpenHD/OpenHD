@@ -14,8 +14,10 @@ static void test_all_supported_frequencies(const WiFiCard& card){
   openhd::log::get_default()->debug("test_all_supported_frequencies begin");
   std::vector<std::pair<int,bool>> results;
   for(auto frequency_mhz: card.supported_frequencies_5G){
-    const auto success=wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,5340,20);
+    const auto success=wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,frequency_mhz,20);
     results.emplace_back(frequency_mhz,success);
+    // Weird, otherwise we might get error resource busy
+    std::this_thread::sleep_for(std::chrono::seconds (2));
   }
   for(const auto& res:results){
     const int freq=res.first;
