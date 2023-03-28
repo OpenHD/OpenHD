@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
   auto card=card_opt.value();
   write_wificards_manifest({card});
 
+  // Take over the card
   wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
 
   wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
@@ -27,6 +28,7 @@ int main(int argc, char *argv[]) {
 
   OHDUtil::keep_alive_until_sigterm();
 
+  // Give it back
   wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
 
 }
