@@ -10,7 +10,7 @@ BUILD_PACKAGES="git build-essential autotools-dev automake libtool python3-pip a
 
 
 function install_jetson_packages {
-PLATFORM_PACKAGES="libasio-dev libavcodec-dev gcc-8 g++-8 gcc-9 g++-9 gcc-10 g++-10 libboost1.74-dev libboost1.74 libboost-filesystem-dev ruby-dev"
+PLATFORM_PACKAGES="libasio-dev libavcodec-dev gcc-8 g++-8 gcc-9 g++-9 gcc-10 g++-10 libboost1.74-dev libboost1.74 libboost-filesystem-dev"
 PLATFORM_PACKAGES_REMOVE=""
 #adding Jetson repositories
 add-apt-repository ppa:ubuntu-toolchain-r/test -y
@@ -21,6 +21,7 @@ function update_jetson {
 update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave /usr/bin/g++ g++ /usr/bin/g++-10 --slave /usr/bin/gcov gcov /usr/bin/gcov-10
 update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 80 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
 update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 60 --slave /usr/bin/g++ g++ /usr/bin/g++-8 --slave /usr/bin/gcov gcov /usr/bin/gcov-8
+apt install -y ruby-dev
 gem install public_suffix -v 4.0.7
 }
 function install_pi_packages {
