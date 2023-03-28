@@ -2,7 +2,7 @@ name: build_package_x86_22.04
 
 on:
   push:
-    branches: ["2.3-evo"]
+    branches: ["refactor-dependencies"]
     paths-ignore:
       - '**.yml'
       - '**.md'
@@ -34,23 +34,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
-      - name: Install Repository
+      - name: fix Repository
         run: |
-          sudo apt install -y curl
-          sudo curl -1sLf \
-          'https://dl.cloudsmith.io/public/openhd/openhd-2-3-evo/setup.deb.sh' \
-          | sudo -E bash
           sudo apt update
           sudo apt-mark hold grub-efi-amd64-signed
           sudo apt upgrade -y
-          sudo apt remove libunwind-13-dev 
-          sudo apt install -y libunwind-dev libgstreamer-plugins-base1.0-dev
-          sudo apt -y install ruby-dev libfmt-dev mavsdk
-          sudo gem install fpm
       - name: Install Dependencies
         run: |
-          sudo chmod +x install_dep_ubuntu22.sh
-          sudo ./install_dep_ubuntu22.sh
+          sudo ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make
         run: |

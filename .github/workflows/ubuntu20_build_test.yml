@@ -33,7 +33,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
-          sudo ./install_dep_ubuntu20.sh
+          sudo ./install_build_dep.sh ubuntu-x86
       - name: Build with make
         run: |
           cd OpenHD
