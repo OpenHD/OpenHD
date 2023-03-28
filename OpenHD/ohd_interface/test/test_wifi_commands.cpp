@@ -7,6 +7,28 @@
 //#include "wifi_command_helper2.h"
 #include "wifi_card_discovery.h"
 
+#include <vector>
+#include <utility>
+
+static void test_all_supported_frequencies(const WiFiCard& card){
+  openhd::log::get_default()->debug("test_all_supported_frequencies begin");
+  std::vector<std::pair<int,bool>> results;
+  for(auto frequency_mhz: card.supported_frequencies_5G){
+    const auto success=wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,5340,20);
+    results.emplace_back(frequency_mhz,success);
+  }
+  for(const auto& res:results){
+    const int freq=res.first;
+    const bool success=res.second;
+    if(success){
+      openhd::log::get_default()->debug("Set {} Success",freq);
+    }else{
+      openhd::log::get_default()->debug("Set {} Error",freq);
+    }
+  }
+  openhd::log::get_default()->debug("test_all_supported_frequencies end");
+}
+
 int main(int argc, char *argv[]) {
   OHDUtil::terminate_if_not_root();
 
@@ -25,11 +47,13 @@ int main(int argc, char *argv[]) {
   wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
 
   wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
+
+  test_all_supported_frequencies(card);
+
   //wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,5340,20);
+  //wifi::commandhelper2::set_wifi_frequency_and_log_result(card.device_name,5340,20);
 
-  wifi::commandhelper2::set_wifi_frequency_and_log_result(card.device_name,5340,20);
-
-  OHDUtil::keep_alive_until_sigterm();
+  //OHDUtil::keep_alive_until_sigterm();
 
   // Give it back
   wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
