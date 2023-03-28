@@ -4,6 +4,7 @@
 
 #include "openhd_util.h"
 #include "wifi_command_helper.h"
+#include "wifi_command_helper2.h"
 #include "wifi_card_discovery.h"
 
 int main(int argc, char *argv[]) {
@@ -24,7 +25,9 @@ int main(int argc, char *argv[]) {
   wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
 
   wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
-  wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,5340,20);
+  //wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,5340,20);
+
+  wifi::commandhelper2::set_wifi_frequency_and_log_result(card.device_name,5340,20);
 
   OHDUtil::keep_alive_until_sigterm();
 

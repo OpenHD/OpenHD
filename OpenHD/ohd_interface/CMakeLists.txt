@@ -29,7 +29,7 @@ set(sources
     inc/wifi_command_helper.h
     inc/ethernet_listener.h
     inc/ethernet_hotspot.h
-    #inc/wifi_command_helper2.h
+    inc/wifi_command_helper2.h
 
     src/wifi_card_discovery.cpp
     src/ohd_interface.cpp
@@ -42,7 +42,7 @@ set(sources
     src/ethernet_listener.cpp
     src/ethernet_hotspot.cpp
     src/wifi_card.cpp
-    #src/wifi_command_helper2.cpp
+    src/wifi_command_helper2.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
@@ -60,9 +60,9 @@ target_include_directories(OHDInterfaceLib
 target_link_libraries(OHDInterfaceLib PUBLIC OHDCommonLib)
 
 # needed to set wifi cards to monitor mode and more
-#include(cmake/FindLibNL.cmake)
-#target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
-#target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
+include(cmake/FindLibNL.cmake)
+target_include_directories(OHDInterfaceLib PRIVATE ${LibNL_INCLUDE_DIR})
+target_link_libraries(OHDInterfaceLib PRIVATE ${LibNL_LIBRARIES})
 
 
 target_include_directories(OHDInterfaceLib PUBLIC inc/)

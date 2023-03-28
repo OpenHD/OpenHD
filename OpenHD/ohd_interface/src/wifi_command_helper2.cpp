@@ -158,7 +158,7 @@ bool wifi::commandhelper2::set_wifi_frequency_and_log_result(
     const std::string &device, uint32_t freq_mhz,
     std::optional<uint32_t> channel_width) {
   const bool res= set_wifi_frequency(device,freq_mhz,channel_width);
-  get_logger()->debug("Success {} {}",freq_mhz,res);
+  get_logger()->debug("Set {} {}",freq_mhz, res ? "Success" : "Failure");
   return false;
 }
 
