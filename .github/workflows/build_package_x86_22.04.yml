@@ -2,7 +2,7 @@ name: build_package_x86_22.04
 
 on:
   push:
-    branches: ["refactor-dependencies"]
+    branches: ["2.3-evo"]
     paths-ignore:
       - '**.yml'
       - '**.md'

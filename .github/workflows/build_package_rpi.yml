@@ -2,7 +2,7 @@ name: build_package_rpi
 
 on:
   push:
-    branches: ["refactor-dependencies"]
+    branches: ["2.3-evo"]
     paths-ignore:
       - '**.yml'
       - '**.md'
