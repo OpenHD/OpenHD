@@ -34,22 +34,9 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
-      - name: Install Repository
+       - name: Install Dependencies
         run: |
-          sudo apt install -y curl
-          sudo rm -Rf /etc/apt/sources.list.d/openhd*
-          sudo apt-get clean
-          sudo rm -rf /var/lib/apt/lists/*
-          sudo curl -1sLf \
-          'https://dl.cloudsmith.io/public/openhd/openhd-2-3-evo/setup.deb.sh' \
-          | sudo -E bash
-          sudo apt update
-          sudo apt -y install ruby-dev libfmt-dev
-          sudo gem install fpm
-      - name: Install Dependencies
-        run: |
-          sudo chmod +x install_dep_ubuntu20.sh
-          sudo ./install_dep_ubuntu20.sh
+          sudo ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make
         run: |
