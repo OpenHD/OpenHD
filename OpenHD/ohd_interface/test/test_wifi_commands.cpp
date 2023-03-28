@@ -4,7 +4,7 @@
 
 #include "openhd_util.h"
 #include "wifi_command_helper.h"
-#include "wifi_command_helper2.h"
+//#include "wifi_command_helper2.h"
 #include "wifi_card_discovery.h"
 
 int main(int argc, char *argv[]) {
