@@ -50,6 +50,7 @@ PLATFORM_PACKAGES_REMOVE=""
 	 update_jetson
  elif [[ "${PLATFORM}" == "ubuntu-x86" ]] ; then
     install_x86_packages
+    echo "debug \n\n\n\n\n\n"
  elif [[ "${PLATFORM}" == "rock5" ]] ; then
     install_rock_packages
  else
