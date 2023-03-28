@@ -50,7 +50,6 @@ PLATFORM_PACKAGES_REMOVE=""
 	 update_jetson
  elif [[ "${PLATFORM}" == "ubuntu-x86" ]] ; then
     install_x86_packages
-    echo "debug \n\n\n\n\n\n"
  elif [[ "${PLATFORM}" == "rock5" ]] ; then
     install_rock_packages
  else
@@ -71,7 +70,7 @@ PLATFORM_PACKAGES_REMOVE=""
 
  # Install platform-specific packages
  echo "Installing platform-specific packages..."
- for package in ${BASE_PACKAGES} ${VIDEO_PACKAGES} ${BUILD_PACKAGES} ${PLATFORM_PACKAGES}; do
+ for package in ${PLATFORM_PACKAGES} ${BASE_PACKAGES} ${VIDEO_PACKAGES} ${BUILD_PACKAGES}; do
      echo "Installing ${package}..."
      apt install -y -o Dpkg::Options::="--force-overwrite" --no-install-recommends ${package}
      if [ $? -ne 0 ]; then
