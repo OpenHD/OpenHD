@@ -54,6 +54,7 @@ std::string board_type_to_string(BoardType board_type) {
     case BoardType::RK3588: return "rk3588";
     case BoardType::RV1109: return "rv1109";
     case BoardType::RV1126: return "rv1126";
+    case BoardType::BananaPiM2Z: return "bpim2z";
     default: return "unknown";
   }
 }
@@ -159,9 +160,42 @@ static std::optional<std::pair<PlatformType,BoardType>> detect_rockchip(){
   return {};
 }
 static std::optional<std::pair<PlatformType,BoardType>> detect_allwinner(){
+  
   if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
     return std::make_pair(PlatformType::Allwinner,BoardType::NanoPiDuo2);
   }
+
+  const auto filename_proc_cpuinfo="/proc/cpuinfo";
+  const auto proc_cpuinfo_opt=OHDFilesystemUtil::opt_read_file("/proc/cpuinfo");
+
+  if(!proc_cpuinfo_opt.has_value()){
+    openhd::log::get_default()->warn("File {} does not exist, allwinner detection unavailable",filename_proc_cpuinfo);
+    return {};
+  }
+  
+  const auto& proc_cpuinfo=proc_cpuinfo_opt.value();
+
+  std::smatch result;
+  const std::regex r{R"(Allwinner)"};
+  
+  if (!std::regex_search(proc_cpuinfo, result, r)) {
+    openhd::log::get_default()->debug("Detect allwinner no result");
+    return {};
+  }
+
+  openhd::log::get_default()->debug("Allwinner identifier");
+
+  // example "Serial          : 02c000813c69ca5e"
+  // https://linux-sunxi.org/SID_Register_Guide#A83T.2FA64.2FH3.2FH6
+
+  std::smatch sm;
+  const std::regex re_serial{"Serial\\s+: (.{8})"};
+
+  if (std::regex_search(proc_cpuinfo, sm, re_serial) && sm[1].str() == std::string("02c00081")) {
+    openhd::log::get_default()->debug("Banana Pi M2 Zero");
+    return std::make_pair(PlatformType::Allwinner,BoardType::BananaPiM2Z);
+  }
+
   return {};
 }
 static std::pair<PlatformType,BoardType> detect_pc(){

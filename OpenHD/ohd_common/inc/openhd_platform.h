@@ -47,7 +47,8 @@ enum class BoardType {
   X3DRSolo,
   RK3588,
   RV1109,
-  RV1126
+  RV1126,
+  BananaPiM2Z
 };
 std::string board_type_to_string(BoardType board_type);
 
