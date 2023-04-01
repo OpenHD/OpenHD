@@ -85,7 +85,7 @@ target_link_libraries(test_interface OHDInterfaceLib)
 add_executable(test_usb_tether_listener test/test_usb_tether_listener.cpp)
 target_link_libraries(test_usb_tether_listener OHDInterfaceLib)
 
-add_executable(test_ethernet_listener test/test_ethernet_listener.cpp test/test_wifi_set_channel.cpp)
+add_executable(test_ethernet_listener test/test_ethernet_listener.cpp)
 target_link_libraries(test_ethernet_listener OHDInterfaceLib)
 
 add_executable(test_wifi_hotspot test/test_wifi_hotspot.cpp)
