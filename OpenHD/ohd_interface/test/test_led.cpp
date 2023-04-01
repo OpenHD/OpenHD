@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <thread>
+#include <iostream>
 
 #include "openhd_led_codes.hpp"
 #include "openhd_util.h"
