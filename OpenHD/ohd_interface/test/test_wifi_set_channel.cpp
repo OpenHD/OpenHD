@@ -65,6 +65,6 @@ int main(int argc, char *argv[]) {
     card_name = argv[1];
     channel_num = atoi(argv[2]);
   }
-  test_set_wifi_channel(card_name,177);
+  test_set_wifi_channel(card_name,channel_num);
   return 0;
 }
