@@ -2,11 +2,9 @@
 // Created by consti10 on 21.05.22.
 //
 
-#include <csignal>
-#include <thread>
-
 #include "openhd_util.h"
 #include "wifi_hotspot.h"
+#include "openhd_spdlog.h"
 
 int main(int argc, char *argv[]) {
 

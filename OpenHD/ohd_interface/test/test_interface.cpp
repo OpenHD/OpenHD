@@ -1,11 +1,12 @@
 #include <bits/getopt_ext.h>
+#include <unistd.h>
 
 #include <iostream>
-#include <unistd.h>
 
 #include "ohd_interface.h"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
+#include "openhd_spdlog.h"
 #include "openhd_util.h"
 
 // Using test_interface:
