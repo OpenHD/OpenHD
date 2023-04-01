@@ -18,7 +18,7 @@
 #include <unistd.h>
 
 
-static bool test_set_wifi_channel(const std::string& device_name,int channel_number){
+static bool test_set_wifi_channel(const std::string& device_name,int channel_number,int width){
   auto console=openhd::log::get_default();
   console->debug("test_set_wifi_channel {} {}",device_name,channel_number);
   int sockfd;
@@ -46,6 +46,20 @@ static bool test_set_wifi_channel(const std::string& device_name,int channel_num
     close(sockfd);
     return false;
   }
+
+  // Set the channel width
+  /*{
+    iw_param& param=wrq.u.param;
+    //param.flags = IW_RETRY_LIMIT;
+    //param.disabled = 0;
+    param.fixed = 1;
+    param.value = channel_width;
+    if (ioctl(sockfd, SIOCSIWCHAN, &wrq) < 0) {
+      perror("SIOCSIWCHAN");
+      exit(1);
+    }
+  }*/
+
   // Close socket
   close(sockfd);
 
@@ -65,6 +79,6 @@ int main(int argc, char *argv[]) {
     card_name = argv[1];
     channel_num = atoi(argv[2]);
   }
-  test_set_wifi_channel(card_name,channel_num);
+  test_set_wifi_channel(card_name,channel_num,20);
   return 0;
 }
