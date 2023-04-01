@@ -56,8 +56,12 @@ static bool test_set_wifi_channel(const std::string& device_name,int channel_num
 int main(int argc, char *argv[]) {
   OHDUtil::terminate_if_not_root();
 
-  // Hard coded for testing
-  const std::string card_name="wlx244bfeb71c05";
+  if(argc<3){
+    openhd::log::get_default()->debug("Usage [wifi card] [channel number]");
+    return -1;
+  }
+  const std::string card_name = argv[1];
+  const int channel_num = atoi(argv[2]);
 
   test_set_wifi_channel(card_name,177);
   return 0;
