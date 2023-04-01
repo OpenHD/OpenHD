@@ -237,7 +237,6 @@ ROptions WBLink::create_rx_options(uint8_t radio_port)const {
 std::unique_ptr<WBTransmitter> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
   TOptions options= create_tx_options(radio_port,is_video);
   RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
-  if(!is_video)wifiParams.bandwidth=20;
   return std::make_unique<WBTransmitter>(wifiParams, options);
 }
 
@@ -296,12 +295,9 @@ bool WBLink::request_set_frequency(int frequency) {
 bool WBLink::apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width) {
   const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width,m_broadcast_cards);
   // TODO: R.n I am not sure if and how you need / even can set it either via radiotap or "iw"
-  /*apply_all_tx_instances([channel_width](WBTransmitter& tx){
+  apply_all_tx_instances([channel_width](WBTransmitter& tx){
 	tx.update_channel_width(channel_width);
-  });*/
-  for(auto& tx:m_wb_video_tx_list){
-    tx->update_channel_width(channel_width);
-  }
+  });
   return res;
 }
 
