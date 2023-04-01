@@ -15,7 +15,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <csignal>
+#include <unistd.h>
 
 
 static bool test_set_wifi_channel(const std::string& device_name,int channel_number){
