@@ -1,4 +1,7 @@
+#include <bits/getopt_ext.h>
+
 #include <iostream>
+#include <unistd.h>
 
 #include "ohd_interface.h"
 #include "openhd_platform.h"
