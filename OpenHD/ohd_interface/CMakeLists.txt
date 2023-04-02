@@ -90,3 +90,9 @@ target_link_libraries(test_ethernet_listener OHDInterfaceLib)
 
 add_executable(test_wifi_hotspot test/test_wifi_hotspot.cpp)
 target_link_libraries(test_wifi_hotspot OHDInterfaceLib)
+
+add_executable(test_wifi_commands test/test_wifi_commands.cpp)
+target_link_libraries(test_wifi_commands OHDInterfaceLib)
+
+add_executable(test_wifi_set_channel test/test_wifi_set_channel.cpp)
+target_link_libraries(test_wifi_set_channel OHDInterfaceLib)

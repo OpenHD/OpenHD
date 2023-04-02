@@ -45,10 +45,10 @@ static constexpr auto FC_UART_CONNECTION_TYPE="FC_UART_CONN";
 static constexpr auto FC_UART_BAUD_RATE="FC_UART_BAUD";
 static constexpr auto FC_UART_FLOW_CONTROL="FC_UART_FLWCTL";
 
-class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
+class SettingsHolder:public openhd::PersistentJsonSettings<Settings>{
  public:
   explicit SettingsHolder(OHDPlatform platform): m_platform(platform),
-	  openhd::settings::PersistentSettings<Settings>(
+	  openhd::PersistentJsonSettings<Settings>(
             openhd::get_telemetry_settings_directory()){
 	init();
   }

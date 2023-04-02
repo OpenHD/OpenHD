@@ -2,11 +2,9 @@
 // Created by consti10 on 21.05.22.
 //
 
-#include <csignal>
-#include <thread>
-
 #include "openhd_util.h"
 #include "wifi_hotspot.h"
+#include "openhd_spdlog.h"
 
 int main(int argc, char *argv[]) {
 
@@ -22,7 +20,7 @@ int main(int argc, char *argv[]) {
 
   WifiHotspot wifiHotspot{wifiCard,openhd::WifiSpace::G2_4};
   OHDUtil::keep_alive_until_sigterm();
-  std::cout<<"test end\n";
+  openhd::log::get_default()->debug("test end");
   return 0;
 
 }

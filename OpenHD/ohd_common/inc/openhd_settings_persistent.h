@@ -17,7 +17,7 @@
  * In general, all OpenHD modules (e.g. video, telemetry, interface) handle their settings completely independently by writing
  * and reading json files.
  */
-namespace openhd::settings{
+namespace openhd{
 
 /**
  * Helper class to persist settings during reboots using json. Properly handles the typical edge cases, e.g.
@@ -27,17 +27,17 @@ namespace openhd::settings{
  * @tparam T the settings struct to persist, needs to have to and from json(s)
  */
 template<class T>
-class PersistentSettings{
+class PersistentJsonSettings {
  public:
   /**
    * @param base_path the directory into which the settings file is then written. (filename: base_path+unique filename).
    */
-  explicit PersistentSettings(std::string base_path):_base_path(std::move(base_path)){
+  explicit PersistentJsonSettings(std::string base_path):_base_path(std::move(base_path)){
     assert(_base_path.back()=='/');
   }
   // delete copy and move constructor
-  PersistentSettings(const PersistentSettings&)=delete;
-  PersistentSettings(const PersistentSettings&&)=delete;
+  PersistentJsonSettings(const PersistentJsonSettings&)=delete;
+  PersistentJsonSettings(const PersistentJsonSettings&&)=delete;
   // read only, to express the need for calling persist otherwise
   [[nodiscard]] const T& get_settings()const{
     assert(_settings);
@@ -50,7 +50,7 @@ class PersistentSettings{
   }
   // save changes by writing them out to the file, and notifying the listener(s)
   void persist(bool trigger_restart=true)const{
-    PersistentSettings::persist_settings();
+    PersistentJsonSettings::persist_settings();
     if(_settings_changed_callback && trigger_restart){
       _settings_changed_callback();
     }
@@ -59,7 +59,7 @@ class PersistentSettings{
   void update_settings(const T& new_settings){
     openhd::log::get_default()->debug("Got new settings in[{}]",get_unique_filename());
     _settings=std::make_unique<T>(new_settings);
-    PersistentSettings::persist_settings();
+    PersistentJsonSettings::persist_settings();
     if(_settings_changed_callback){
       _settings_changed_callback();
     }
@@ -131,7 +131,7 @@ class PersistentSettings{
       auto tmp=j.get<T>();
       return tmp;
     }catch(nlohmann::json::exception& ex){
-      openhd::log::get_default()->warn("PersistentSettings::read_last_settings json exception {} on [{}]",ex.what(),file_path);
+      openhd::log::get_default()->warn("PersistentJsonSettings::read_last_settings json exception {} on [{}]",ex.what(),file_path);
       // this means the default settings will be created
       return std::nullopt;
     }
