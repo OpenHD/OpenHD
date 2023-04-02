@@ -17,10 +17,10 @@ struct EthernetHotspotSettings {
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EthernetHotspotSettings,enable);
 
-class EthernetHotspotSettingsHolder:public openhd::settings::PersistentSettings<EthernetHotspotSettings>{
+class EthernetHotspotSettingsHolder:public openhd::PersistentJsonSettings<EthernetHotspotSettings>{
  public:
   EthernetHotspotSettingsHolder():
-    openhd::settings::PersistentSettings<EthernetHotspotSettings>(openhd::get_interface_settings_directory()){
+    openhd::PersistentJsonSettings<EthernetHotspotSettings>(openhd::get_interface_settings_directory()){
     init();
   }
  private:

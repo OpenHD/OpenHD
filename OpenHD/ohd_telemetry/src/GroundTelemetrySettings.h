@@ -32,10 +32,10 @@ static bool valid_joystick_update_rate(int value){
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,enable_rc_over_joystick,rc_over_joystick_update_rate_hz,rc_channel_mapping,
                                    gnd_uart_connection_type,gnd_uart_baudrate);
 
-class SettingsHolder:public openhd::settings::PersistentSettings<Settings>{
+class SettingsHolder:public openhd::PersistentJsonSettings<Settings>{
  public:
   SettingsHolder():
-                     openhd::settings::PersistentSettings<Settings>(
+                     openhd::PersistentJsonSettings<Settings>(
                          openhd::get_telemetry_settings_directory()){
     init();
   }

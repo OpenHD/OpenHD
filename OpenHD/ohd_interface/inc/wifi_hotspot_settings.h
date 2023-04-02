@@ -21,7 +21,7 @@ struct WifiHotspotSettings {
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WifiHotspotSettings,enable,use_5g_channel);
 
-class WifiHotspotSettingsHolder:public openhd::settings::PersistentSettings<WifiHotspotSettings>{
+class WifiHotspotSettingsHolder:public openhd::PersistentJsonSettings<WifiHotspotSettings>{
  public:
   WifiHotspotSettingsHolder();
  private:
