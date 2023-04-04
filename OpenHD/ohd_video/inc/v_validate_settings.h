@@ -13,17 +13,25 @@
 // For now, only basic sanity checking on video settings
 namespace openhd{
 
+// We used to have some basic "sane user inputs" validation, but there were a couple of issues with that
+// 1) Only for USB (UVC) cameras - sometimes, they only work with width, height or (especially) framerate omitted on the gst pipeline
+// 2) Thermal cameras as an example can have ultra low resolutions / framerates, e.g. 110 pixels wide
+// Therefore, we allow values >=0 for width height and fps, and when they are set to 0, the (gst) argument should be omitted.
+// Old stuff left for reference
 // max: 3840×2160 (4K)
 // min: 320x240
 static bool validate_video_with(int video_w){
-  return video_w >= 320 && video_w<=3840;
+  //return video_w >= 320 && video_w<=3840;
+  return video_w>=0;
 }
 static bool validate_video_height(int video_h){
-  return video_h >= 240 && video_h<=2160;
+  //return video_h >= 240 && video_h<=2160;
+  return video_h>=0;
 }
 // min: 1 fps max: 240 fps
 static bool validate_video_fps(int fps){
-  return fps>=1 && fps <= 240;
+  //return fps>=1 && fps <= 240;
+  return fps>=0;
 }
 
 static bool validate_video_width_height_fps(int video_w,int video_h,int fps){
