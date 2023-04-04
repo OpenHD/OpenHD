@@ -33,7 +33,7 @@ PLATFORM_PACKAGES="libunwind-dev libboost-dev libboost-filesystem-dev gstreamer1
 PLATFORM_PACKAGES_REMOVE=""
 }
 function install_rock_packages {
-PLATFORM_PACKAGES=""
+PLATFORM_PACKAGES="libboost-dev libboost-filesystem-dev"
 PLATFORM_PACKAGES_REMOVE=""
 }
 
