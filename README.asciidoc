@@ -62,7 +62,7 @@ image:https://img.shields.io/github/license/OpenHD/OpenHD?style=flat-square[titl
 image:https://img.shields.io/opencollective/tier/openhd/18297?label=%5Bopencollective%5D%20mothly%20bakers&style=flat-square[title="Open Collective members by tier^", link="https://opencollective.com/openhd"]
 image:https://img.shields.io/opencollective/sponsors/openhd?label=%5Bopencollective%5D%20sponsors&style=flat-square[title="Open Collective sponsors^", link="https://opencollective.com/openhd"]
 image:https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=flat-square[title="Cloudsmith", link="https://cloudsmith.io"]
-image:https://img.shields.io/badge/Sponsorship%20by-DigitalOcean-blue?logo=digitalocean&style=for-the-badge[title="DigitalOcean", link="https://www.digitalocean.com?utm_medium=opensource&utm_source=OpenHD"]
+image:https://img.shields.io/badge/Sponsorship%20by-DigitalOcean-blue?logo=digitalocean&style=flat-square[title="DigitalOcean", link="https://www.digitalocean.com?utm_medium=opensource&utm_source=OpenHD"]
 
 
 ---
