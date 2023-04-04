@@ -130,12 +130,16 @@ image::https://data.openhdfpv.org/openhd-images/uploads/OpenHD.svg[Contributors]
 
 == Special Thanks
 
-image:https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=for-the-badge[title="GitHub License", link="https://cloudsmith.com"]
+image:https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=for-the-badge[title="Cloudsmith", link="https://cloudsmith.com"]
 
 Package repository hosting is graciously provided by {cloudsmith}.
 Cloudsmith is the only fully hosted, cloud-native, universal package management solution, that
 enables your organization to create, store and share packages in any format, to any place, with total
 confidence.
+
+image:https://img.shields.io/badge/Sponsorship%20by-DigitalOcean-blueviolet?logo=digitalocean&style=for-the-badge[title="DigitalOcean", link="https://www.digitalocean.com/"]
+
+We are grateful to have the generous support of {DigitalOcean} for this project. As a cloud computing platform, DigitalOcean provides developers and businesses with powerful infrastructure and tools to deploy, manage, and scale their applications with ease.
 
 == Logotype
 
