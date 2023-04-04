@@ -4,7 +4,7 @@
 
 sudo apt install -y python3-pip
 sudo pip3 install --upgrade cloudsmith-cli
-./install_dep_ubuntu22.sh
+./install_build_dep.sh rock5
 sudo ./package.sh arm64 ubuntu jammy || exit 1
 mkdir -p /opt/out/
 cp -v *.dep /opt/out/
