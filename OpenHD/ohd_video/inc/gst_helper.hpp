@@ -485,6 +485,20 @@ static std::string createAllwinnerStream(const int sensor_id,
   return ss.str();
 }
 
+// Camera quirks, omit arguments when set to 0 - some cameras refuse to work even though the correct width, height or fps is given
+static std::string gst_v4l2_width_height_fps_unless_omit(const CameraSettings& settings){
+    std::stringstream ss;
+    if(settings.streamed_video_format.width>0){
+        ss<<fmt::format(", width={}",settings.streamed_video_format.width);
+    }
+    if(settings.streamed_video_format.height>0){
+        ss<<fmt::format(", height={}",settings.streamed_video_format.height);
+    }
+    if(settings.streamed_video_format.framerate>0){
+        ss<<fmt::format(", framerate={}/1",settings.streamed_video_format.framerate);
+    }
+    return ss.str();
+}
 
 /**
  * For V4l2 Cameras that do raw YUV (or RGB) we use a sw encoder.
@@ -494,13 +508,9 @@ static std::string createV4l2SrcRawAndSwEncodeStream(
     const std::string &device_node, const CameraSettings& settings) {
   std::stringstream ss;
   ss << fmt::format("v4l2src device={} ! ", device_node);
-  // rn we omit the set resolution/framerate here and let gstreamer figure it
-  // out.
-  // TODO: do it better ;)
-  //openhd::loggers::get_default()->warn("Allowing gstreamer to choose UVC format");
-  ss << fmt::format("video/x-raw, width={}, height={}, framerate={}/1 ! ",
-                    settings.streamed_video_format.width,settings.streamed_video_format.height,
-                    settings.streamed_video_format.framerate);
+  ss<<"video/x-raw";
+  ss<<gst_v4l2_width_height_fps_unless_omit(settings);
+  ss<<" ! ";
   ss << "videoconvert ! ";
   // Add a queue here. With sw we are not low latency anyways.
   ss << "queue ! ";
@@ -519,19 +529,15 @@ static std::string createV4l2SrcAlreadyEncodedStream(
   ss << fmt::format("v4l2src device={} ! ", device_node);
   const auto video_codec=settings.streamed_video_format.videoCodec;
   if (video_codec == VideoCodec::H264) {
-    ss << fmt::format("video/x-h264, width={}, height={}, framerate={}/1 ! ",
-                      settings.streamed_video_format.width, settings.streamed_video_format.height,
-                      settings.streamed_video_format.framerate);
+      ss << "video/x-h264";
   } else if (video_codec == VideoCodec::H265) {
-    ss << fmt::format("video/x-h265, width={}, height={}, framerate={}/1 ! ",
-                      settings.streamed_video_format.width, settings.streamed_video_format.height,
-                      settings.streamed_video_format.framerate);
+      ss<<"video/x-h265";
   } else {
     assert(video_codec == VideoCodec::MJPEG);
-    ss << fmt::format("image/jpeg, width={}, height={}, framerate={}/1 ! ",
-                      settings.streamed_video_format.width, settings.streamed_video_format.height,
-                      settings.streamed_video_format.framerate);
+    ss<<"image/jpeg";
   }
+  ss<< gst_v4l2_width_height_fps_unless_omit(settings);
+  ss<<" ! ";
   return ss.str();
 }
 
@@ -548,9 +554,7 @@ static std::string createUVCH264Stream(const std::string &device_node,const Came
       "auto-start=true encodectrl.vidsrc ! ",
       device_node, bitrateBitsPerSecond, bitrateBitsPerSecond,
       bitrateBitsPerSecond,settings.h26x_keyframe_interval);
-  ss << fmt::format("video/x-h264,width={}, height={}, framerate={}/1 ! ",
-                    settings.streamed_video_format.width, settings.streamed_video_format.height,
-                    settings.streamed_video_format.framerate);
+  ss << "video/x-h264"<<gst_v4l2_width_height_fps_unless_omit(settings)<<" ! ";
   return ss.str();
 }
 static std::string createIpCameraStream(const std::string &url) {
