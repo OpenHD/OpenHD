@@ -51,6 +51,9 @@ endif::[]
 image:wiki-content/Open.HD Logo Splashscreen/Plain_OpenHD_Logo.jpg[OpenHD Logo]
 
 // Badges
+++++
+<div style="text-align:center">
+
 image:https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&style=flat-square[title="Telegram", link="https://t.me/OpenHD_User"]
 image:https://img.shields.io/badge/Discord-Join_us!-informational?logo=Discord&style=flat-square[title="Discord", link="https://discord.gg/NRRn5ugrxH"]
 image:https://img.shields.io/badge/Facebook-Join_us!-informational?logo=Facebook&style=flat-square[title="Facebook", link="https://www.facebook.com/groups/open.hd/"]
@@ -63,6 +66,8 @@ image:https://img.shields.io/opencollective/tier/openhd/18297?label=%5Bopencolle
 image:https://img.shields.io/opencollective/sponsors/openhd?label=%5Bopencollective%5D%20sponsors&style=flat-square[title="Open Collective sponsors^", link="https://opencollective.com/openhd"]
 image:https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=flat-square[title="Cloudsmith", link="https://cloudsmith.io"]
 image:https://img.shields.io/badge/Supported%20by-DigitalOcean-blue?logo=digitalocean&style=flat-square[title="DigitalOcean", link="https://www.digitalocean.com?utm_medium=opensource&utm_source=OpenHD"]
+</div>
+++++
 
 
 ---
