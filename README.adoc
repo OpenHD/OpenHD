@@ -52,7 +52,7 @@ image:wiki-content/Open.HD Logo Splashscreen/Plain_OpenHD_Logo.jpg[OpenHD Logo]
 
 // Badges
 ++++
-<div style="text-align:center">
+<div align="center">
 
 <img src="https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&amp;style=flat-square" alt="Telegram" title="Telegram" href="https://t.me/OpenHD_User">
 <img src="https://img.shields.io/badge/Discord-Join_us!-informational?logo=Discord&amp;style=flat-square" alt="Discord" title="Discord" href="https://discord.gg/NRRn5ugrxH">
