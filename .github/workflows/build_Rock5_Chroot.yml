@@ -3,6 +3,11 @@ name: build_package_rock5
 on: 
   push:
     paths-ignore:
+      - '**.yml'
+      - '**.md'
+      - '**.asciidoc'
+      - '**.adoc'
+      - '.gitignore'
       - 'LICENSE'
 
 jobs:
