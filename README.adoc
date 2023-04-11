@@ -54,18 +54,36 @@ image:wiki-content/Open.HD Logo Splashscreen/Plain_OpenHD_Logo.jpg[OpenHD Logo]
 ++++
 <div align="center">
 
-<img src="https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&amp;style=flat-square" alt="Telegram" title="Telegram" href="https://t.me/OpenHD_User">
-<img src="https://img.shields.io/badge/Discord-Join_us!-informational?logo=Discord&amp;style=flat-square" alt="Discord" title="Discord" href="https://discord.gg/NRRn5ugrxH">
-<img src="https://img.shields.io/badge/Facebook-Join_us!-informational?logo=Facebook&amp;style=flat-square" alt="Facebook" title="Facebook" href="https://www.facebook.com/groups/open.hd/">
-<img src="https://img.shields.io/github/commit-activity/m/OpenHD/OpenHD?style=flat-square" alt="GitHub commit activity" title="GitHub commit activity" href="">
-<img src="https://img.shields.io/github/issues-raw/OpenHD/OpenHD?style=flat-square" alt="GitHub issues" title="GitHub issues" href="https://github.com/OpenHD/OpenHD/issues">
-<img src="https://img.shields.io/github/downloads/OpenHD/OpenHD/total?style=flat-square" alt="GitHub All Releases" title="GitHub All Releases" href="">
-<img src="https://img.shields.io/github/repo-size/OpenHD/OpenHD?style=flat-square" alt="GitHub repo size" title="GitHub repo size" href="">
-<img src="https://img.shields.io/github/license/OpenHD/OpenHD?style=flat-square" alt="GitHub License" title="GitHub License" href="LICENSE">
-<img src="https://img.shields.io/opencollective/tier/openhd/18297?label=%5Bopencollective%5D%20mothly%20bakers&amp;style=flat-square" alt="Open Collective members by tier^" title="Open Collective members by tier^" href="https://opencollective.com/openhd">
-<img src="https://img.shields.io/opencollective/sponsors/openhd?label=%5Bopencollective%5D%20sponsors&amp;style=flat-square" alt="Open Collective sponsors^" title="Open Collective sponsors^" href="https://opencollective.com/openhd">
-<img src="https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&amp;style=flat-square" alt="Cloudsmith" title="Cloudsmith" href="https://cloudsmith.io">
-<img src="https://img.shields.io/badge/Supported%20by-DigitalOcean-blue?logo=digitalocean&amp;style=flat-square" alt="DigitalOcean" title="DigitalOcean" href="https://www.digitalocean.com?utm_medium=opensource&amp;utm_source=OpenHD">
+<a href="https://t.me/OpenHD_User">
+    <img src="https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&amp;style=flat-square" alt="Telegram" title="Telegram">
+</a>
+<a href="https://discord.gg/NRRn5ugrxH">
+    <img src="https://img.shields.io/badge/Discord-Join_us!-informational?logo=Discord&amp;style=flat-square" alt="Discord" title="Discord">
+</a>
+<a href="https://www.facebook.com/groups/open.hd/">
+    <img src="https://img.shields.io/badge/Facebook-Join_us!-informational?logo=Facebook&amp;style=flat-square" alt="Facebook" title="Facebook">
+</a>
+<img src="https://img.shields.io/github/commit-activity/m/OpenHD/OpenHD?style=flat-square" alt="GitHub commit activity" title="GitHub commit activity">
+<a href="https://github.com/OpenHD/OpenHD/issues">
+    <img src="https://img.shields.io/github/issues-raw/OpenHD/OpenHD?style=flat-square" alt="GitHub issues" title="GitHub issues">
+</a>
+<img src="https://img.shields.io/github/downloads/OpenHD/OpenHD/total?style=flat-square" alt="GitHub All Releases" title="GitHub All Releases">
+<img src="https://img.shields.io/github/repo-size/OpenHD/OpenHD?style=flat-square" alt="GitHub repo size" title="GitHub repo size">
+<a href="LICENSE">
+    <img src="https://img.shields.io/github/license/OpenHD/OpenHD?style=flat-square" alt="GitHub License" title="GitHub License">
+</a>
+<a href="https://opencollective.com/openhd">
+    <img src="https://img.shields.io/opencollective/tier/openhd/18297?label=%5Bopencollective%5D%20mothly%20bakers&amp;style=flat-square" alt="Open Collective members by tier^" title="Open Collective members by tier^">
+</a>
+<a href="https://opencollective.com/openhd">
+    <img src="https://img.shields.io/opencollective/sponsors/openhd?label=%5Bopencollective%5D%20sponsors&amp;style=flat-square" alt="Open Collective sponsors^" title="Open Collective sponsors^">
+</a>
+<a href="https://cloudsmith.io">
+    <img src="https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&amp;style=flat-square" alt="Cloudsmith" title="Cloudsmith">
+</a>
+<a href="https://www.digitalocean.com?utm_medium=opensource&amp;utm_source=OpenHD">
+    <img src="https://img.shields.io/badge/Supported%20by-DigitalOcean-blue?logo=digitalocean&amp;style=flat-square" alt="DigitalOcean" title="DigitalOcean">
+</a>
 
 </div>
 
