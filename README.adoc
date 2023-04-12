@@ -43,7 +43,7 @@ endif::[]
 :raspbian: link:https://www.raspberrypi.org/documentation/[Raspbian^]
 :var_QOpenHD_url: link:https://github.com/OpenHD/QOpenHD[QOpenHD^]
 :telegram: link:https://t.me/OpenHD_User[Telegram,role=external,window=_blank]
-:wiki: link:https://openhd.gitbook.io/open-hd/v/2.1[Wiki^]
+:wiki: link:https://openhd.gitbook.io/open-hd/[Wiki^]
 
 // === BEGIN OF CONTENT === \\
 
