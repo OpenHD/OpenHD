@@ -41,7 +41,7 @@ endif::[]
 :linux-kernel: link:https://www.kernel.org/doc/html/v4.16/process/license-rules.html[Linux Kernel^]
 :openhd: link:https://github.com/OpenHD/OpenHD[OpenHD^]
 :raspbian: link:https://www.raspberrypi.org/documentation/[Raspbian^]
-:var_QOpenHD_url: link:https://github.com/OpenHD/QOpenHD^]
+:var_QOpenHD_url: link:https://github.com/OpenHD/QOpenHD[QOpenHD]^]
 :telegram: link:https://t.me/OpenHD_User[Telegram,role=external,window=_blank]
 :wiki: link:https://openhd.gitbook.io/open-hd/v/2.1[Wiki^]
 
