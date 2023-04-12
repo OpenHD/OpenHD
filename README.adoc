@@ -41,7 +41,7 @@ endif::[]
 :linux-kernel: link:https://www.kernel.org/doc/html/v4.16/process/license-rules.html[Linux Kernel^]
 :openhd: link:https://github.com/OpenHD/OpenHD[OpenHD^]
 :raspbian: link:https://www.raspberrypi.org/documentation/[Raspbian^]
-:settingsApp: link:https://github.com/OpenHD/Open.HD_AndroidApp[App Settings^]
+:var_QOpenHD_url: link:https://github.com/OpenHD/QOpenHD^]
 :telegram: link:https://t.me/OpenHD_User[Telegram,role=external,window=_blank]
 :wiki: link:https://openhd.gitbook.io/open-hd/v/2.1[Wiki^]
 
@@ -125,8 +125,8 @@ This repository is one of the following which forms the foundation of the projec
 | {imageBuilder}
 | The Image Builder preinstalls the OpenHD packages on a ready-to-use image.
 
-| {settingsApp}
-| For changing settings remotely on the ground and air unit.
+| {var_QOpenHD_url}
+| The default ground control aplication (Video, OSD, MAVLINK settings).
 
 |===
 
