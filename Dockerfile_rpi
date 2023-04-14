@@ -11,17 +11,18 @@ RUN apt update \
     && apt install -y --no-install-recommends \
         sudo \
         ca-certificates \
-        netbase apt-utils iputils-ping curl nano sed \
+        netbase apt-utils iputils-ping curl nano sed wget \
         libusb-1.0-0-dev libpcap-dev libsodium-dev libnl-3-dev libnl-genl-3-dev libnl-route-3-dev libsdl2-dev \
         libgstreamer-plugins-base1.0-dev libv4l-dev \
         git build-essential autotools-dev automake libtool python3-pip autoconf apt-transport-https ruby-dev cmake \
 #        meson ninja-build python3-yaml python3-jinja2 python3-ply \
     && 	curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-3-evo/setup.deb.sh' | sudo -E bash \
     &&  sed -i 's/debian/raspbian/g' /etc/apt/sources.list.d/openhd-openhd-2-3-evo.list \
+    &&  echo deb http://archive.raspberrypi.org/debian/ bullseye main > /etc/apt/sources.list.d/raspi.list \
+    &&  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 82B129927FA3303E \
     &&	apt update \
     &&	apt install -y --no-install-recommends \
-    	libboost-filesystem1.74-dev libasio-dev libcamera-openhd \
-#    && apt purge -y python3-libcamera libcamera0 \
+    	libboost-filesystem1.74-dev libasio-dev libcamera-openhd libcamera-dev \
     && apt-get clean \
     && apt-get autoremove \
     && rm -rf /var/lib/apt/lists/* 
