@@ -1,0 +1,31 @@
+ARG IMAGE_ARCH=linux/arm/v7
+ARG IMAGE_TAG=bullseye-slim
+FROM --platform=$IMAGE_ARCH debian:$IMAGE_TAG AS base_armhf
+
+ARG DEBIAN_FRONTEND=noninteractive
+ONBUILD ARG DEBIAN_FRONTEND=noninteractive
+
+# Upgrade & install required packages
+RUN apt update \
+    && apt upgrade -y \
+    && apt install -y --no-install-recommends \
+        sudo \
+        ca-certificates \
+        netbase apt-utils iputils-ping curl nano sed wget \
+        libusb-1.0-0-dev libpcap-dev libsodium-dev libnl-3-dev libnl-genl-3-dev libnl-route-3-dev libsdl2-dev \
+        libgstreamer-plugins-base1.0-dev libv4l-dev \
+        git build-essential autotools-dev automake libtool python3-pip autoconf apt-transport-https ruby-dev cmake \
+        meson ninja-build python3-yaml python3-jinja2 python3-ply \
+    	libboost-filesystem1.74-dev libasio-dev \
+    && apt-get clean \
+    && apt-get autoremove \
+    && rm -rf /var/lib/apt/lists/* 
+# RUN cd /opt  \
+#     && git clone https://git.libcamera.org/libcamera/libcamera.git --depth=1 \
+#     && cd libcamera \
+#     && meson build --buildtype=release -Dpipelines=raspberrypi -Dipas=raspberrypi -Dv4l2=true -Dgstreamer=enabled -Dtest=false -Dlc-compliance=disabled -Dcam=disabled -Dqcam=disabled -Ddocumentation=disabled \
+#     && ninja -C build install \
+#     && cd / \
+#     && rm -rf /tmp/* /var/tmp/* ~/.cache    
+
+CMD ["/bin/bash"]
