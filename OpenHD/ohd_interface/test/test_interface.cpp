@@ -1,9 +1,13 @@
-#include <iostream>
 
 #include "ohd_interface.h"
 #include "openhd_platform.h"
 #include "openhd_profile.h"
+#include "openhd_spdlog.h"
 #include "openhd_util.h"
+
+#include <unistd.h>
+#include <iostream>
+#include <getopt.h>
 
 // Using test_interface:
 // 1) run it as "air" on whatever device you want to use as the air unit

@@ -30,10 +30,10 @@ static bool is_valid_dualcam_primary_video_allocated_bandwidth(int dualcam_prima
   return dualcam_primary_video_allocated_bandwidth_perc>=10 && dualcam_primary_video_allocated_bandwidth_perc<=90;
 }
 
-class AirCameraGenericSettingsHolder: public openhd::settings::PersistentSettings<AirCameraGenericSettings>{
+class AirCameraGenericSettingsHolder: public openhd::PersistentJsonSettings<AirCameraGenericSettings>{
  public:
   AirCameraGenericSettingsHolder()
-      :openhd::settings::PersistentSettings<AirCameraGenericSettings>(openhd::get_video_settings_directory()){
+      :openhd::PersistentJsonSettings<AirCameraGenericSettings>(openhd::get_video_settings_directory()){
     init();
   }
  private:

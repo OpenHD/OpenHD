@@ -28,10 +28,10 @@ static const std::string SETTINGS_DIRECTORY =
     std::string(SETTINGS_BASE_PATH) + std::string("telemetry/");
 
 class GPIOControlSettingsHolder
-    : public openhd::settings::PersistentSettings<GPIOControlSettings> {
+    : public openhd::PersistentJsonSettings<GPIOControlSettings> {
  public:
   GPIOControlSettingsHolder()
-      : openhd::settings::PersistentSettings< GPIOControlSettings>(SETTINGS_DIRECTORY) {
+      : openhd::PersistentJsonSettings< GPIOControlSettings>(SETTINGS_DIRECTORY) {
     init();
   }
  private:

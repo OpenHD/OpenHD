@@ -10,6 +10,7 @@ on:
       - '**.yml'
       - '**.md'
       - '**.asciidoc'
+      - '**.adoc'
       - '.gitignore'
       - 'LICENSE'
 

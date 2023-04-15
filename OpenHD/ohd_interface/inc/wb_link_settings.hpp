@@ -20,7 +20,7 @@ static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412;
 static constexpr auto DEFAULT_MCS_INDEX=3;
 // We always use a MCS index of X for the uplink, since (compared to the video link) it requires a negligible amount of bandwidth
 // and for those using RC over OpenHD, we have the benefit that the range of RC is "more" than the range for video
-static constexpr auto DEFAULT_GND_UPLINK_MCS_INDEX=1;
+static constexpr auto DEFAULT_GND_UPLINK_MCS_INDEX=0;
 static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
 // Consti10: Stephen used a default tx power of 3100 somewhere (not sure if that ever made it trough though)
 // This value seems a bit high to me, so I am going with a default of "1800" (which should be 18.0 dBm )
@@ -136,14 +136,14 @@ static bool valid_wb_max_fec_block_size_for_platform(uint32_t wb_max_fec_block_s
   return wb_max_fec_block_size_for_platform>0 && wb_max_fec_block_size_for_platform<=100;
 }
 
-class WBStreamsSettingsHolder:public openhd::settings::PersistentSettings<WBLinkSettings>{
+class WBStreamsSettingsHolder:public openhd::PersistentJsonSettings<WBLinkSettings>{
  public:
   /**
    * @param platform needed to figure out the proper default params
    * @param wifibroadcast_cards1 needed to figure out the proper default params
    */
   explicit WBStreamsSettingsHolder(OHDPlatform platform,OHDProfile profile,std::vector<WiFiCard> wifibroadcast_cards1):
-	  openhd::settings::PersistentSettings<WBLinkSettings>(get_interface_settings_directory()),
+	  openhd::PersistentJsonSettings<WBLinkSettings>(get_interface_settings_directory()),
         m_cards(std::move(wifibroadcast_cards1)),
           m_platform(platform),
 		  m_profile(std::move(profile))

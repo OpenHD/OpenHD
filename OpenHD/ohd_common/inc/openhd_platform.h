@@ -26,6 +26,7 @@ enum class BoardType {
   GenericPC,
   RaspberryPiZero,
   RaspberryPiZeroW,
+  RaspberryPiZero2W,
   RaspberryPi2B,
   RaspberryPi3A,
   RaspberryPi3APlus,

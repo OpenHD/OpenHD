@@ -37,7 +37,7 @@ build_package() {
     PLATFORM_PACKAGES="-d libboost-filesystem1.74-dev"
     PLATFORM_CONFIGS=""
   else
-    PLATFORM_PACKAGES="-d libboost1.74 -d libboost-filesystem-dev"
+    PLATFORM_PACKAGES="-d libboost-dev -d libboost-filesystem-dev"
     PLATFORM_CONFIGS=""
   fi
 
