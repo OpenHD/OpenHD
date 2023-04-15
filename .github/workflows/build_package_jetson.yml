@@ -39,7 +39,7 @@ jobs:
       id: qemu
       uses: pguyot/arm-runner-action@v2.5.2
       with:
-        base_image: http://openhdfpv.org/wp-content/BaseImages/Open.HD-2.1-05221841-jetson-nano-4gb-bionic.img.zip
+        base_image: https://openhd-images.fra1.cdn.digitaloceanspaces.com/BaseImages/Open.HD-2.1-05221841-jetson-nano-4gb-bionic.img.zip
         cpu: cortex-a53
         bootpartition:
         rootpartition: 1

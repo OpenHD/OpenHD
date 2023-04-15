@@ -32,6 +32,7 @@ std::string board_type_to_string(BoardType board_type) {
     case BoardType::GenericPC: return "generic-pc";
     case BoardType::RaspberryPiZero: return "pizero";
     case BoardType::RaspberryPiZeroW: return "pizerow";
+    case BoardType::RaspberryPiZero2W: return "pizero2w";
     case BoardType::RaspberryPi2B: return "pi2b";
     case BoardType::RaspberryPi3A: return "pi3a";
     case BoardType::RaspberryPi3APlus: return "pi3aplus";
@@ -127,6 +128,10 @@ static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi(){
 
   if (raspberry_identifier == "29000c1") {
     board_type = BoardType::RaspberryPiZeroW;
+  }
+
+  if (raspberry_identifier == "902120") {
+    board_type = BoardType::RaspberryPiZero2W;
   }
   return std::make_pair(platform_type,board_type);
 }
