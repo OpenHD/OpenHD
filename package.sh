@@ -25,9 +25,17 @@ create_package_directory() {
 
 build_package() {
   rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
-  
+
   cmake OpenHD/
-  make -j4
+  INODE_NUM=`ls -ali / | sed '2!d' |awk {'print $1'}`
+  if [ $INODE_NUM == '2' ]; then
+        make -j4
+  else
+        make -j$((`nproc`+1))
+  fi
+  
+  # cmake OpenHD/
+  # make -j4
   cp openhd ${PKGDIR}/usr/local/bin/openhd
 
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then

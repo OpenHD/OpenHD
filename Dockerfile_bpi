@@ -16,7 +16,8 @@ RUN apt update \
         libgstreamer-plugins-base1.0-dev libv4l-dev \
         git build-essential autotools-dev automake libtool python3-pip autoconf apt-transport-https ruby-dev cmake \
         meson ninja-build python3-yaml python3-jinja2 python3-ply \
-    	libboost-filesystem1.74-dev libasio-dev \
+    	libboost-filesystem1.74-dev libasio-dev 
+RUN gem install fpm \        
     && apt-get clean \
     && apt-get autoremove \
     && rm -rf /var/lib/apt/lists/* 
