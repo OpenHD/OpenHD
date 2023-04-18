@@ -7,6 +7,7 @@
 #include "OnboardComputerStatus.hpp"
 #include "openhd_util_filesystem.h"
 
+
 OnboardComputerStatusProvider::OnboardComputerStatusProvider(OHDPlatform platform): m_platform(platform) {
   m_calculate_cpu_usage_thread=std::make_unique<std::thread>(&OnboardComputerStatusProvider::calculate_cpu_usage_until_terminate, this);
   m_calculate_other_thread=std::make_unique<std::thread>(&OnboardComputerStatusProvider::calculate_other_until_terminate, this);
@@ -53,8 +54,13 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_clock_h264=0;
     int curr_clock_core=0;
     int curr_clock_v3d=0;
+    int curr_ina219_voltage=0;
+    int curr_ina219_current=0;
+
     const int curr_space_left=OHDFilesystemUtil::get_remaining_space_in_mb();
     const auto curr_ram_usage=OnboardComputerStatus::calculate_memory_usage_percent();
+    curr_ina219_voltage=(int8_t)OnboardComputerStatus::readINA219Voltage();
+    curr_ina219_current=OnboardComputerStatus::readINA219Current();
     if(m_platform.platform_type==PlatformType::RaspberryPi){
       curr_temperature_core=(int8_t)OnboardComputerStatus::rpi::read_temperature_soc_degree();
       // temporary, until we have our own message
@@ -63,6 +69,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_clock_h264=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_H264);
       curr_clock_core=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_CORE);
       curr_clock_v3d=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_V3D);
+
     }else{
       const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
       curr_temperature_core=cpu_temp;
@@ -78,8 +85,11 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_curr_onboard_computer_status.storage_type[3]=curr_clock_core;
       m_curr_onboard_computer_status.storage_usage[0]=curr_clock_v3d;
       m_curr_onboard_computer_status.storage_usage[1]=curr_space_left;
-	  m_curr_onboard_computer_status.ram_usage=static_cast<uint32_t>(curr_ram_usage.ram_usage_perc);
-	  m_curr_onboard_computer_status.ram_total=curr_ram_usage.ram_total_mb;
+      m_curr_onboard_computer_status.storage_usage[2]=curr_ina219_voltage;
+      m_curr_onboard_computer_status.storage_usage[3]=curr_ina219_current;
+      m_curr_onboard_computer_status.ram_usage=static_cast<uint32_t>(curr_ram_usage.ram_usage_perc);
+      m_curr_onboard_computer_status.ram_total=curr_ram_usage.ram_total_mb;
+      std::cout << curr_ina219_voltage << std::endl;
     }
   }
 }

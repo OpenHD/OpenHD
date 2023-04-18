@@ -7,9 +7,11 @@
 
 #include <chrono>
 #include <fstream>
+#include <iostream>
 #include <regex>
 #include <sstream>
 
+#include "ina219.h"
 #include "mav_include.h"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
@@ -27,6 +29,35 @@ static int readTemperature() {
   auto temp=OHDUtil::string_to_int(temp_file_opt.value());
   if(!temp.has_value())return 0;
   return temp.value() / 1000;
+}
+
+
+
+constexpr float SHUNT_OHMS = 0.1f;
+constexpr float MAX_EXPECTED_AMPS = 3.2f;
+constexpr uint16_t RANGE = RANGE_16V;
+constexpr uint8_t GAIN = GAIN_8_320MV;
+constexpr uint8_t BUS_ADC = ADC_12BIT;
+constexpr uint8_t SHUNT_ADC = ADC_12BIT;
+
+static int readINA219Voltage(){
+
+
+  INA219 i(SHUNT_OHMS, MAX_EXPECTED_AMPS);
+  i.configure(RANGE, GAIN, BUS_ADC, SHUNT_ADC);
+
+  float voltage = roundf(i.voltage() * 1000) / 1000;
+
+  return int8_t (voltage);
+}
+
+static int readINA219Current(){
+
+  INA219 i(SHUNT_OHMS, MAX_EXPECTED_AMPS);
+  i.configure(RANGE, GAIN, BUS_ADC, SHUNT_ADC);
+  float current = roundf(i.current() * 1000) / 1000;
+
+  return int8_t (current);
 }
 
 // Stuff that works only on rpi

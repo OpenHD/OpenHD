@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 add_library(OHDTelemetryLib STATIC) # initialized below
 add_library(OHDTelemetryLib::OHDTelemetryLib ALIAS OHDTelemetryLib)
 
+add_library(ina219 SHARED src/internal/ina219.cc)
+
 # Only needed when building this submodule manually
 add_subdirectory(../ohd_common commonlib EXCLUDE_FROM_ALL)
 
