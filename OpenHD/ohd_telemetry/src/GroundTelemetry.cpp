@@ -19,7 +19,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   m_gnd_settings =std::make_unique<openhd::telemetry::ground::SettingsHolder>();
   m_endpoint_tracker=std::make_unique<SerialEndpointManager>();
   setup_uart();
-  /*m_gcs_endpoint =
+  m_gcs_endpoint =
       std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
                                      // We send data to localhost::14550 and any other external device IPs
                                      "127.0.0.1",
@@ -27,10 +27,9 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
                                      "0.0.0.0");
   m_gcs_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_station_clients(messages);
-  });*/
-  m_gcs_endpoint= nullptr;
-  m_tcp_server=std::make_unique<TCPEndpoint>(TCPEndpoint::Config{TCPEndpoint::DEFAULT_PORT});//1445
-  //m_tcp_server= nullptr;
+  });
+  //m_tcp_server=std::make_unique<TCPEndpoint>(TCPEndpoint::Config{TCPEndpoint::DEFAULT_PORT});//1445
+  m_tcp_server= nullptr;
   if(m_tcp_server){
     m_tcp_server->registerCallback([this](std::vector<MavlinkMessage> messages) {
       on_messages_ground_station_clients(messages);
