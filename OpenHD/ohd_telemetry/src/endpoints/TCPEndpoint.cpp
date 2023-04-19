@@ -52,7 +52,6 @@ void TCPEndpoint::setup_and_allow_connection_once() {
     m_console->debug("socket failed");
     return ;
   }
-  // Forcefully attaching socket to the port 8080
   int opt = 1;
   if (setsockopt(server_fd, SOL_SOCKET,
                  SO_REUSEADDR | SO_REUSEPORT, &opt,
@@ -64,22 +63,23 @@ void TCPEndpoint::setup_and_allow_connection_once() {
   sockaddr.sin_addr.s_addr = INADDR_ANY;
   sockaddr.sin_port = htons(m_config.port);
 
-  // Forcefully attaching socket to the host::port tuple
   if (bind(server_fd, (struct sockaddr*)&sockaddr,sizeof(sockaddr))< 0) {
     m_console->debug("bind failed");
     return ;
   }
+  // signal readiness to accept clients
   if (listen(server_fd, 3) < 0) {
     m_console->debug("listen");
     return ;
   }
-  m_console->debug("Got client");
+  m_console->debug("After listen");
   const  int addrlen = sizeof(sockaddr);
   if ((new_socket= accept(server_fd, (struct sockaddr*)&sockaddr,
                 (socklen_t*)&addrlen))< 0) {
-    m_console->debug("accept");
+    m_console->debug("accept failed");
     return ;
   }
+  m_console->debug("accepted client");
   while (keep_alive){
     // Read from all the client(s)
   }
