@@ -38,10 +38,12 @@ INA219::init_i2c(uint8_t address)
 	if ((_file_descriptor = open(filename, O_RDWR)) < 0)
 	{
 		perror("Failed to open the i2c bus");
+                has_any_error= true;
 	}
 	if (ioctl(_file_descriptor, I2C_SLAVE, address) < 0)
 	{
 		perror("Failed to acquire bus access and/or talk to slave device: ");
+                has_any_error= true;
 	}
 }
 

@@ -230,6 +230,9 @@ class INA219
     public:
         float __GAIN_VOLTS[4]   = {0.04, 0.08, 0.16, 0.32};
         int   __BUS_RANGE[2]    = {16, 32};
+    public:
+     // Set this to true if any error occurs (it is not required to connect ina219)
+        bool has_any_error=false;
 };
 
 #endif
