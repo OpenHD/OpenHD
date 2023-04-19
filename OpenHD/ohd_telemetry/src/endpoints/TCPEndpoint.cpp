@@ -58,14 +58,14 @@ void TCPEndpoint::loop() {
 
 void TCPEndpoint::setup_and_allow_connection_once() {
   if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    m_console->debug("socket failed");
+    m_console->warn("open socket failed");
     return ;
   }
   int opt = 1;
   if (setsockopt(server_fd, SOL_SOCKET,
                  SO_REUSEADDR | SO_REUSEPORT, &opt,
                  sizeof(opt))) {
-    m_console->debug("setsockopt");
+    m_console->warn("setsockopt failed");
     return ;
   }
   sockaddr.sin_family = AF_INET;
@@ -73,12 +73,12 @@ void TCPEndpoint::setup_and_allow_connection_once() {
   sockaddr.sin_port = htons(m_config.port);
 
   if (bind(server_fd, (struct sockaddr*)&sockaddr,sizeof(sockaddr))< 0) {
-    m_console->debug("bind failed");
+    m_console->warn("bind failed");
     return ;
   }
   // signal readiness to accept clients
   if (listen(server_fd, 3) < 0) {
-    m_console->debug("listen");
+    m_console->warn("listen failed");
     return ;
   }
   m_console->debug("After listen");

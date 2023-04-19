@@ -11,6 +11,7 @@
 #include <netinet/ip.h>
 
 // Simple TCP Mavlink server
+// Really nice tutorial: https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
 class TCPEndpoint : public MEndpoint {
  public:
   struct Config{
