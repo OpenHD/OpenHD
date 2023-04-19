@@ -5,7 +5,7 @@
 #include "TCPEndpoint.h"
 
 #include <arpa/inet.h>
-
+#include <unistd.h>
 #include <csignal>
 #include <utility>
 
