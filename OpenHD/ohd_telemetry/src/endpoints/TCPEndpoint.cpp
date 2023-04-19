@@ -98,7 +98,7 @@ void TCPEndpoint::setup_and_allow_connection_once() {
     const ssize_t message_length = read(client_socket, buff->data(), buff->size());
     if (message_length > 0) {
       MEndpoint::parseNewData(buff->data(),message_length);
-      m_console->debug("Got data from client");
+      //m_console->debug("Got data from client");
     }else{
       m_console->debug("Cannot read data {} {}",message_length,strerror(errno));
       std::this_thread::sleep_for(std::chrono::seconds(1));
