@@ -28,6 +28,7 @@ class TCPEndpoint : public MEndpoint {
   struct sockaddr_in sockaddr;
   int server_fd=0;
   int new_socket=0;
+  static constexpr const size_t READ_BUFF_SIZE = 65507;
   void loop();
   void setup_and_allow_connection_once();
   bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;

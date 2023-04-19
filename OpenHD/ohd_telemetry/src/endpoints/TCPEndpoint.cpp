@@ -80,17 +80,28 @@ void TCPEndpoint::setup_and_allow_connection_once() {
   }
   m_console->debug("After listen");
   const  int addrlen = sizeof(sockaddr);
-  if ((new_socket= accept(server_fd, (struct sockaddr*)&sockaddr,
-                (socklen_t*)&addrlen))< 0) {
+  const auto accept_result=accept(server_fd, (struct sockaddr*)&sockaddr,(socklen_t*)&addrlen);
+  if (accept_result < 0) {
     m_console->debug("accept failed");
     return ;
   }
+  new_socket=accept_result;
   m_console->debug("accepted client");
+  // read buffer
+  const auto buff = std::make_unique<std::array<uint8_t,READ_BUFF_SIZE>>();
   while (keep_alive){
     // Read from all the client(s)
+    //std::this_thread::sleep_for(std::chrono::seconds(1));
+    const ssize_t message_length = recv(server_fd, buff->data(), buff->size(), MSG_WAITALL);
+    if (message_length > 0) {
+      MEndpoint::parseNewData(buff->data(),message_length);
+    }else{
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
   }
-  // closing the connected socket
+  // closing the connected (client) socket(s)
   close(new_socket);
+  new_socket=0;
   // closing the listening socket
   shutdown(server_fd, SHUT_RDWR);
 }
