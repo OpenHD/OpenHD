@@ -232,7 +232,7 @@ class INA219
         int   __BUS_RANGE[2]    = {16, 32};
     public:
      // Set this to true if any error occurs (it is not required to connect ina219)
-        bool has_any_error=false;
+        bool has_any_error= false;
 };
 
 #endif
