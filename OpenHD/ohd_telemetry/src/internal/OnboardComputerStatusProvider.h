@@ -10,6 +10,7 @@
 #include <thread>
 
 #include "../mav_include.h"
+#include "ina219.h"
 #include "openhd_platform.h"
 
 // We need one thread for the CPU usage (workaround) and
@@ -31,6 +32,8 @@ class OnboardComputerStatusProvider {
   const OHDPlatform m_platform;
   std::mutex m_curr_onboard_computer_status_mutex;
   mavlink_onboard_computer_status_t m_curr_onboard_computer_status{};
+  // Power monitoring via ina219
+  INA219 m_ina_219;
   // One thread for calculating the CPU usage
   std::unique_ptr<std::thread> m_calculate_cpu_usage_thread;
   std::unique_ptr<std::thread> m_calculate_other_thread;

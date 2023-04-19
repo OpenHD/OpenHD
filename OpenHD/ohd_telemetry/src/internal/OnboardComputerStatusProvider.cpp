@@ -7,8 +7,24 @@
 #include "OnboardComputerStatus.hpp"
 #include "openhd_util_filesystem.h"
 
+//INA219 stuff
+constexpr float SHUNT_OHMS = 0.1f;
+constexpr float MAX_EXPECTED_AMPS = 3.2f;
+constexpr uint16_t RANGE = RANGE_16V;
+constexpr uint8_t GAIN = GAIN_8_320MV;
+constexpr uint8_t BUS_ADC = ADC_12BIT;
+constexpr uint8_t SHUNT_ADC = ADC_12BIT;
+//INA219 stuff
 
-OnboardComputerStatusProvider::OnboardComputerStatusProvider(OHDPlatform platform): m_platform(platform) {
+OnboardComputerStatusProvider::OnboardComputerStatusProvider(OHDPlatform platform)
+    : m_platform(platform),
+      m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS)
+{
+  if(m_ina_219.has_any_error){
+    openhd::log::get_default()->warn("INA219 failed - no power monitoring");
+  }else{
+    m_ina_219.configure(RANGE, GAIN, BUS_ADC, SHUNT_ADC);
+  }
   m_calculate_cpu_usage_thread=std::make_unique<std::thread>(&OnboardComputerStatusProvider::calculate_cpu_usage_until_terminate, this);
   m_calculate_other_thread=std::make_unique<std::thread>(&OnboardComputerStatusProvider::calculate_other_until_terminate, this);
 }
@@ -59,8 +75,12 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
 
     const int curr_space_left=OHDFilesystemUtil::get_remaining_space_in_mb();
     const auto curr_ram_usage=OnboardComputerStatus::calculate_memory_usage_percent();
-    curr_ina219_voltage=(int8_t)OnboardComputerStatus::readINA219Voltage();
-    curr_ina219_current=OnboardComputerStatus::readINA219Current();
+    if(!m_ina_219.has_any_error){
+      float voltage = roundf(m_ina_219.voltage() * 1000) / 1000;
+      float current = roundf(m_ina_219.current() * 1000) / 1000;
+      curr_ina219_voltage=voltage;
+      curr_ina219_current=current;
+    }
     if(m_platform.platform_type==PlatformType::RaspberryPi){
       curr_temperature_core=(int8_t)OnboardComputerStatus::rpi::read_temperature_soc_degree();
       // temporary, until we have our own message
