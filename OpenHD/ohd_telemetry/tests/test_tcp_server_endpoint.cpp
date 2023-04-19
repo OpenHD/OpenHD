@@ -21,7 +21,7 @@ int main() {
 
   // now mavlink messages should come in. Try disconnecting and reconnecting, and see if messages continue
   const auto start = std::chrono::steady_clock::now();
-  while ((std::chrono::steady_clock::now() - start) < std::chrono::seconds (5)) {
+  while ((std::chrono::steady_clock::now() - start) < std::chrono::seconds (30)) {
     openhd::log::get_default()->debug("Alive:{}",OHDUtil::yes_or_no(m_server->isAlive()));
     auto heartbeat = MExampleMessage::heartbeat();
     m_server->sendMessages({heartbeat});

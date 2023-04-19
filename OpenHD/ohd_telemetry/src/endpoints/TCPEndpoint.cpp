@@ -36,7 +36,8 @@ bool TCPEndpoint::sendMessagesImpl(
   if(client_socket !=0){
     auto message_buffers= pack_messages(messages);
     for(const auto& message_buffer:message_buffers){
-      send(client_socket, message_buffer.data(), message_buffer.size(), 0);
+      //send(client_socket, message_buffer.data(), message_buffer.size(), 0);
+      send(client_socket, message_buffer.data(), message_buffer.size(), MSG_NOSIGNAL); //otherwise we might crash if the socket disconnects
     }
     return true;
   }
