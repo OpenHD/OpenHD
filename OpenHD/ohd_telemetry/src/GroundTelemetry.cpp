@@ -28,7 +28,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   m_gcs_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_station_clients(messages);
   });
-  //m_tcp_server=std::make_unique<TCPEndpoint>(TCPEndpoint::Config{5760});//1445
+  //m_tcp_server=std::make_unique<TCPEndpoint>(TCPEndpoint::Config{TCPEndpoint::DEFAULT_PORT});//1445
   m_tcp_server= nullptr;
   if(m_tcp_server){
     m_tcp_server->registerCallback([this](std::vector<MavlinkMessage> messages) {
@@ -79,6 +79,12 @@ GroundTelemetry::~GroundTelemetry() {
   // first, stop all the endpoints that have their own threads
   m_wb_endpoint = nullptr;
   m_gcs_endpoint = nullptr;
+  if(m_gcs_endpoint){
+    m_gcs_endpoint= nullptr;
+  }
+  if(m_tcp_server){
+    m_tcp_server= nullptr;
+  }
 }
 
 void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& messages) {
