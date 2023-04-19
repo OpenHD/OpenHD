@@ -12,6 +12,8 @@
 
 // Simple TCP Mavlink server
 // Really nice tutorial: https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
+// R.n only supports up to 1 simultaneously connected client though
+// The implementation for sending data is non-blocking and doesn't actually care if data arrives or not.
 class TCPEndpoint : public MEndpoint {
  public:
   struct Config{
