@@ -114,7 +114,6 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
 
 void GroundTelemetry::send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
   if (m_gcs_endpoint) {
-    //TODO remove me
     m_gcs_endpoint->sendMessages(messages);
   }
   if(m_tcp_server){

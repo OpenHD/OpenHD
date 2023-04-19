@@ -96,6 +96,7 @@ void TCPEndpoint::setup_and_allow_connection_once() {
     if (message_length > 0) {
       MEndpoint::parseNewData(buff->data(),message_length);
     }else{
+      m_console->debug("Cannot read data");
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
