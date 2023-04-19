@@ -20,9 +20,8 @@ OnboardComputerStatusProvider::OnboardComputerStatusProvider(OHDPlatform platfor
     : m_platform(platform),
       m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS)
 {
-  if(m_ina_219.has_any_error){
-    openhd::log::get_default()->warn("INA219 failed - no power monitoring");
-  }else{
+  ina219_log_warning_once();
+  if(!m_ina_219.has_any_error){
     m_ina_219.configure(RANGE, GAIN, BUS_ADC, SHUNT_ADC);
   }
   m_calculate_cpu_usage_thread=std::make_unique<std::thread>(&OnboardComputerStatusProvider::calculate_cpu_usage_until_terminate, this);
@@ -75,6 +74,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
 
     const int curr_space_left=OHDFilesystemUtil::get_remaining_space_in_mb();
     const auto curr_ram_usage=OnboardComputerStatus::calculate_memory_usage_percent();
+    ina219_log_warning_once();
     if(!m_ina_219.has_any_error){
       float voltage = roundf(m_ina_219.voltage() * 1000) / 1000;
       float current = roundf(m_ina_219.current() * 1000) / 1000;
@@ -121,4 +121,11 @@ OnboardComputerStatusProvider::get_current_status_as_mavlink_message(const uint8
   std::vector<MavlinkMessage> ret;
   ret.push_back(msg);
   return ret;
+}
+
+void OnboardComputerStatusProvider::ina219_log_warning_once() {
+  if(!m_ina219_warning_logged){
+    openhd::log::get_default()->warn("INA219 failed - no power monitoring");
+    m_ina219_warning_logged= true;
+  }
 }

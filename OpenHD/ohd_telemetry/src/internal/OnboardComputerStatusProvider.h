@@ -34,6 +34,7 @@ class OnboardComputerStatusProvider {
   mavlink_onboard_computer_status_t m_curr_onboard_computer_status{};
   // Power monitoring via ina219
   INA219 m_ina_219;
+  bool m_ina219_warning_logged= false;
   // One thread for calculating the CPU usage
   std::unique_ptr<std::thread> m_calculate_cpu_usage_thread;
   std::unique_ptr<std::thread> m_calculate_other_thread;
@@ -42,6 +43,7 @@ class OnboardComputerStatusProvider {
   void calculate_cpu_usage_until_terminate();
   // Extra thread for "the rest"
   void calculate_other_until_terminate();
+  void ina219_log_warning_once();
 };
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_ONBOARDCOMPUTERSTATUSPROVIDER_H_
