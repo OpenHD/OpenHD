@@ -95,6 +95,8 @@ SET(sources
     src/gpio_control/RaspberryPiGPIOControl.cpp
     src/gpio_control/RaspberryPiGPIOControl.h
     src/gpio_control/RaspberryPiGPIOControlSettings.h
+    src/endpoints/TCPEndpoint.cpp
+    src/endpoints/TCPEndpoint.h
 )
 
 # Build it as a library
