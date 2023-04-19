@@ -23,7 +23,8 @@ TCPEndpoint::TCPEndpoint(TCPEndpoint::Config config)
 TCPEndpoint::~TCPEndpoint() {
   keep_alive= false;
   // this signals the fd to stop if needed
-  close(server_fd);
+  //close(server_fd);
+  shutdown(server_fd, SHUT_RDWR);
   if(m_loop_thread){
     m_loop_thread->join();
     m_loop_thread.reset();
@@ -108,7 +109,6 @@ void TCPEndpoint::setup_and_allow_connection_once() {
   close(client_socket);
   client_socket =0;
   // closing the listening socket
-  //shutdown(server_fd, SHUT_RDWR);
   close(server_fd);
 }
 
