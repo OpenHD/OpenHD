@@ -7,7 +7,7 @@
 
 #include "MEndpoint.h"
 
-// TCP MAvlink server
+// TCP Mavlink server
 class TCPEndpoint : public MEndpoint {
  public:
   struct Config{
