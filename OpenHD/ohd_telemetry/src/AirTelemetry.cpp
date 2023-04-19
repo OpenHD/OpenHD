@@ -55,6 +55,7 @@ void AirTelemetry::send_messages_ground_unit(const std::vector<MavlinkMessage>& 
   if(m_wb_endpoint){
     m_wb_endpoint->sendMessages(messages);
   }
+  // Not technically correct, but works
   if(m_tcp_server){
     m_tcp_server->sendMessages(messages);
   }
