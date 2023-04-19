@@ -32,6 +32,12 @@ TCPEndpoint::~TCPEndpoint() {
 
 bool TCPEndpoint::sendMessagesImpl(
     const std::vector<MavlinkMessage>& messages) {
+  if(new_socket!=0){
+    auto message_buffers= pack_messages(messages);
+    for(const auto& message_buffer:message_buffers){
+      send(new_socket, message_buffer.data(), message_buffer.size(), 0);
+    }
+  }
   return false;
 }
 
