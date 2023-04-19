@@ -66,6 +66,7 @@ void TCPEndpoint::setup_and_allow_connection_once() {
                  SO_REUSEADDR | SO_REUSEPORT, &opt,
                  sizeof(opt))) {
     m_console->warn("setsockopt failed");
+    close(server_fd);
     return ;
   }
   sockaddr.sin_family = AF_INET;
@@ -74,11 +75,13 @@ void TCPEndpoint::setup_and_allow_connection_once() {
 
   if (bind(server_fd, (struct sockaddr*)&sockaddr,sizeof(sockaddr))< 0) {
     m_console->warn("bind failed");
+    close(server_fd);
     return ;
   }
   // signal readiness to accept clients
   if (listen(server_fd, 3) < 0) {
     m_console->warn("listen failed");
+    close(server_fd);
     return ;
   }
   m_console->debug("After listen");
