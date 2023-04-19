@@ -14,7 +14,8 @@
 class TCPEndpoint : public MEndpoint {
  public:
   struct Config{
-    std::string ip;
+    // always localhost
+    //std::string ip;
     int port;
   };
   explicit TCPEndpoint(Config config);
@@ -22,12 +23,14 @@ class TCPEndpoint : public MEndpoint {
  private:
   const Config m_config;
   std::shared_ptr<spdlog::logger> m_console;
-  bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;
+  std::unique_ptr<std::thread> m_loop_thread = nullptr;
+  bool keep_alive=true;
   struct sockaddr_in sockaddr;
-  int accept(int listener_fd);        ///< accept incoming connection
-  bool setup(); ///< open connection and apply config
-  bool reopen();                      ///< re-try connecting to the server
-  void close();
+  int server_fd=0;
+  int new_socket=0;
+  void loop();
+  void setup_and_allow_connection_once();
+  bool sendMessagesImpl(const std::vector<MavlinkMessage>& messages) override;
 };
 
 #endif  // OPENHD_TCPENDPOINT_H
