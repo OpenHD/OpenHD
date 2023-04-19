@@ -17,6 +17,7 @@
  *
  * Author: Paulo Alexandre Regis <pregis@nevada.unr.edu>
  */
+// Copy paste from https://github.com/OpenHD/ina219/
 
 #ifndef _LIB_INA219_PI
 #define _LIB_INA219_PI
