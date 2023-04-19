@@ -10,7 +10,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 
-// TCP Mavlink server
+// Simple TCP Mavlink server
 class TCPEndpoint : public MEndpoint {
  public:
   struct Config{
