@@ -15,7 +15,6 @@ TCPEndpoint::TCPEndpoint(TCPEndpoint::Config config)
 {
   m_console = openhd::log::create_or_get(TAG);
   assert(m_console);
-  bzero(&sockaddr, sizeof(sockaddr));
   m_loop_thread=std::make_unique<std::thread>(&TCPEndpoint::loop, this);
   m_console->debug("created with {}",m_config.port);
 }
@@ -57,6 +56,7 @@ void TCPEndpoint::loop() {
 }
 
 void TCPEndpoint::setup_and_allow_connection_once() {
+  struct sockaddr_in sockaddr{};
   if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     m_console->warn("open socket failed");
     return ;
@@ -93,7 +93,8 @@ void TCPEndpoint::setup_and_allow_connection_once() {
     return ;
   }
   client_socket =accept_result;
-  m_console->debug("accepted client");
+  m_console->debug("accepted client,sockfd:{}, ip:{}, port:{}",client_socket,
+                   inet_ntoa(sockaddr.sin_addr),ntohs(sockaddr.sin_port));
   // read buffer
   const auto buff = std::make_unique<std::array<uint8_t,READ_BUFF_SIZE>>();
   while (keep_alive){
@@ -101,13 +102,15 @@ void TCPEndpoint::setup_and_allow_connection_once() {
     //std::this_thread::sleep_for(std::chrono::seconds(1));
     //const ssize_t message_length = recv(client_socket, buff->data(), buff->size(), MSG_WAITALL);
     const ssize_t message_length = read(client_socket, buff->data(), buff->size());
-    if (message_length > 0) {
-      MEndpoint::parseNewData(buff->data(),message_length);
-      //m_console->debug("Got data from client");
-    }else{
-      m_console->debug("Cannot read data {} {}",message_length,strerror(errno));
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+    if(message_length<0){
+      m_console->debug("Read error {} {}",message_length,strerror(errno));
+      break ;
     }
+    if(message_length==0){
+      m_console->debug("Client disconnected");
+      break ;
+    }
+    MEndpoint::parseNewData(buff->data(),message_length);
   }
   // closing the connected (client) socket(s)
   close(client_socket);

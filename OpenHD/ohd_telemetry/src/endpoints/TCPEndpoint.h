@@ -27,7 +27,6 @@ class TCPEndpoint : public MEndpoint {
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<std::thread> m_loop_thread = nullptr;
   bool keep_alive=true;
-  struct sockaddr_in sockaddr;
   int server_fd=0;
   int client_socket =0;
   static constexpr const size_t READ_BUFF_SIZE = 65507;
