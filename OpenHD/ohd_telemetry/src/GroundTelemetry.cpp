@@ -28,6 +28,13 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   m_gcs_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_station_clients(messages);
   });
+  //m_tcp_server=std::make_unique<TCPEndpoint>(TCPEndpoint::Config{5760});//1445
+  m_tcp_server= nullptr;
+  if(m_tcp_server){
+    m_tcp_server->registerCallback([this](std::vector<MavlinkMessage> messages) {
+      on_messages_ground_station_clients(messages);
+    });
+  }
   m_ohd_main_component =std::make_shared<OHDMainComponent>(_platform,_sys_id,false,opt_action_handler);
   m_components.push_back(m_ohd_main_component);
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
@@ -108,6 +115,9 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
 void GroundTelemetry::send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
   if (m_gcs_endpoint) {
     m_gcs_endpoint->sendMessages(messages);
+  }
+  if(m_tcp_server){
+    m_tcp_server->sendMessages(messages);
   }
 }
 

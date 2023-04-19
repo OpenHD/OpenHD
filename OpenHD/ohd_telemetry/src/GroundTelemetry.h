@@ -8,6 +8,7 @@
 #include "GroundTelemetrySettings.h"
 #include "endpoints/SerialEndpoint.h"
 #include "endpoints/UDPEndpoint2.h"
+#include "endpoints/TCPEndpoint.h"
 #include "endpoints/WBEndpoint.h"
 #include "internal/OHDMainComponent.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
@@ -80,6 +81,8 @@ class GroundTelemetry :public MavlinkSystem{
   std::unique_ptr<UDPEndpoint2> m_gcs_endpoint = nullptr;
   // mavlink out via serial for tracker or similar
   std::unique_ptr<SerialEndpointManager> m_endpoint_tracker= nullptr;
+  // EXP - always on TCP mavlink server
+  std::unique_ptr<TCPEndpoint> m_tcp_server = nullptr;
   // send/receive data via wb
   std::unique_ptr<WBEndpoint> m_wb_endpoint;
   std::shared_ptr<OHDMainComponent> m_ohd_main_component;

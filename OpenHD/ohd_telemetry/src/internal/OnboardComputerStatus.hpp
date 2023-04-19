@@ -7,9 +7,11 @@
 
 #include <chrono>
 #include <fstream>
+#include <iostream>
 #include <regex>
 #include <sstream>
 
+#include "ina219.h"
 #include "mav_include.h"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
