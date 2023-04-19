@@ -22,8 +22,8 @@ TCPEndpoint::TCPEndpoint(TCPEndpoint::Config config)
 
 TCPEndpoint::~TCPEndpoint() {
   keep_alive= false;
-  // signal it to stop
-  shutdown(server_fd, SHUT_RDWR);
+  // this signals the fd to stop if needed
+  close(server_fd);
   if(m_loop_thread){
     m_loop_thread->join();
     m_loop_thread.reset();
@@ -32,11 +32,12 @@ TCPEndpoint::~TCPEndpoint() {
 
 bool TCPEndpoint::sendMessagesImpl(
     const std::vector<MavlinkMessage>& messages) {
-  if(new_socket!=0){
+  if(client_socket !=0){
     auto message_buffers= pack_messages(messages);
     for(const auto& message_buffer:message_buffers){
-      send(new_socket, message_buffer.data(), message_buffer.size(), 0);
+      send(client_socket, message_buffer.data(), message_buffer.size(), 0);
     }
+    return true;
   }
   return false;
 }
@@ -83,27 +84,30 @@ void TCPEndpoint::setup_and_allow_connection_once() {
   const auto accept_result=accept(server_fd, (struct sockaddr*)&sockaddr,(socklen_t*)&addrlen);
   if (accept_result < 0) {
     m_console->debug("accept failed");
+    close(server_fd);
     return ;
   }
-  new_socket=accept_result;
+  client_socket =accept_result;
   m_console->debug("accepted client");
   // read buffer
   const auto buff = std::make_unique<std::array<uint8_t,READ_BUFF_SIZE>>();
   while (keep_alive){
     // Read from all the client(s)
     //std::this_thread::sleep_for(std::chrono::seconds(1));
-    const ssize_t message_length = recv(server_fd, buff->data(), buff->size(), MSG_WAITALL);
+    const ssize_t message_length = recv(client_socket, buff->data(), buff->size(), MSG_WAITALL);
     if (message_length > 0) {
       MEndpoint::parseNewData(buff->data(),message_length);
+      m_console->debug("Got data from client");
     }else{
-      m_console->debug("Cannot read data");
+      m_console->debug("Cannot read data {} {}",message_length,strerror(errno));
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
   // closing the connected (client) socket(s)
-  close(new_socket);
-  new_socket=0;
+  close(client_socket);
+  client_socket =0;
   // closing the listening socket
-  shutdown(server_fd, SHUT_RDWR);
+  //shutdown(server_fd, SHUT_RDWR);
+  close(server_fd);
 }
 

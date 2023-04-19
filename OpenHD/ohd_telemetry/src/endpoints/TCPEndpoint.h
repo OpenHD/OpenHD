@@ -27,7 +27,7 @@ class TCPEndpoint : public MEndpoint {
   bool keep_alive=true;
   struct sockaddr_in sockaddr;
   int server_fd=0;
-  int new_socket=0;
+  int client_socket =0;
   static constexpr const size_t READ_BUFF_SIZE = 65507;
   void loop();
   void setup_and_allow_connection_once();
