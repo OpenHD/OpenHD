@@ -20,6 +20,7 @@ class TCPEndpoint : public MEndpoint {
   };
   explicit TCPEndpoint(Config config);
   ~TCPEndpoint();
+  static constexpr int DEFAULT_PORT=5760;
  private:
   const Config m_config;
   std::shared_ptr<spdlog::logger> m_console;
