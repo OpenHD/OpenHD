@@ -125,7 +125,7 @@ OnboardComputerStatusProvider::get_current_status_as_mavlink_message(const uint8
 }
 
 void OnboardComputerStatusProvider::ina219_log_warning_once() {
-  if(!m_ina219_warning_logged){
+  if(m_ina_219.has_any_error && !m_ina219_warning_logged){
     openhd::log::get_default()->warn("INA219 failed - no power monitoring");
     m_ina219_warning_logged= true;
   }
