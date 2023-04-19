@@ -94,7 +94,8 @@ void TCPEndpoint::setup_and_allow_connection_once() {
   while (keep_alive){
     // Read from all the client(s)
     //std::this_thread::sleep_for(std::chrono::seconds(1));
-    const ssize_t message_length = recv(client_socket, buff->data(), buff->size(), MSG_WAITALL);
+    //const ssize_t message_length = recv(client_socket, buff->data(), buff->size(), MSG_WAITALL);
+    const ssize_t message_length = read(client_socket, buff->data(), buff->size());
     if (message_length > 0) {
       MEndpoint::parseNewData(buff->data(),message_length);
       m_console->debug("Got data from client");
