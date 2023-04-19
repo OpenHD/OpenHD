@@ -72,6 +72,7 @@ INA219::write_register(uint8_t register_address, uint16_t register_value)
 	if (write(_file_descriptor, buf, 3) != 3)
 	{
 		perror("Failed to write to the i2c bus");
+                has_any_error= true;
 	}
 }
 
