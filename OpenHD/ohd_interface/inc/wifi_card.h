@@ -10,10 +10,7 @@
 #include "validate_settings_helper.h"
 #include "wifi_channel.h"
 
-// R.n (20.08) this class can be summarized as following:
-// 1) WifiCard: Capabilities of a detected wifi card, no persistent settings
-// 2) WifiCardSettings: What to use the wifi card for, !! no frequency settings or similar. !! (note that freq and more are figured out /stored
-// by the different interface types that use wifi, e.g. WBStreams or WifiHotspot
+// After discovery, the capabilities of a WiFi-Card are immutable !
 
 enum class WiFiCardType {
   Unknown = 0,
