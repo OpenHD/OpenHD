@@ -67,3 +67,7 @@ std::shared_ptr<spdlog::logger> openhd::log::create_or_get(
 std::shared_ptr<spdlog::logger> openhd::log::get_default() {
   return create_or_get("default");
 }
+
+void openhd::log::log_via_mavlink(int level, std::string message) {
+  openhd::log::udp::ohd_log(static_cast<udp::STATUS_LEVEL>(level),message);
+}

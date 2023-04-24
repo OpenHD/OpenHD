@@ -87,6 +87,8 @@ class ExternalDeviceManager{
         return;
       }
       // New external device connected
+      // log such that the message is shown in QOpenHD
+      openhd::log::log_via_mavlink(5,"External device connected");
       m_curr_ext_devices[id]=external_device;
       for(auto& cb:m_callbacks){
         cb(external_device, true);
@@ -96,6 +98,8 @@ class ExternalDeviceManager{
         openhd::log::get_default()->warn("Device {} does not exist",external_device.to_string());
         return;
       }
+      // warning in QOpenHD
+      openhd::log::get_default()->warn("External device disconnected");
       // existing external device disconnected
       m_curr_ext_devices.erase(id);
       for(auto& cb:m_callbacks){
