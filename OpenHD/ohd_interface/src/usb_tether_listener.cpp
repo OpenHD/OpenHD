@@ -49,6 +49,12 @@ void USBTetherListener::connectOnce() {
         found_device= true;
         break ;
       }
+      // should never show up as usb1, but whatever, listen for it too
+      if(OHDUtil::str_equal(device,"usb1")){
+        connected_device_name=device;
+        found_device= true;
+        break ;
+      }
       if(OHDUtil::str_equal(device,"enx023b63011a79")){
         connected_device_name=device;
         found_device= true;
