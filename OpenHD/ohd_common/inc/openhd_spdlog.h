@@ -26,6 +26,10 @@ std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_name);
 // but sometimes you just don't care about that.
 std::shared_ptr<spdlog::logger> get_default();
 
+// By default, only messages of level warn or higher are forwarded via mavlink (and then shown in QOpenHD).
+// Use this if you want to show a non-warning message in QOpenHD.
+void log_via_mavlink(int level,std::string message);
+
 // Helper to not spam the console with (error) messages, but rather have them sent out with a minimum amount
 // of time in between messages
 /*class LimitedRateLogger{
