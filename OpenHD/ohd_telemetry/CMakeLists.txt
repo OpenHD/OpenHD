@@ -31,7 +31,7 @@ SET(sources
     "src/endpoints/MEndpoint.h"
     "src/endpoints/SerialEndpoint.cpp"
     "src/endpoints/SerialEndpoint.h"
-        "src/endpoints/UDPEndpoint2.cpp"
+    "src/endpoints/UDPEndpoint2.cpp"
     "src/endpoints/UDPEndpoint2.h"
     "src/endpoints/WBEndpoint.cpp"
     "src/endpoints/WBEndpoint.h"
@@ -43,7 +43,7 @@ SET(sources
     "src/internal/OnboardComputerStatus.hpp"
     "src/internal/OnboardComputerStatusProvider.cpp"
     "src/internal/OnboardComputerStatusProvider.h"
-     "src/internal/StatusTextAccumulator.cpp"
+    "src/internal/StatusTextAccumulator.cpp"
     "src/internal/StatusTextAccumulator.h"
 
     "src/mavsdk_temporary/connection.cpp"
@@ -95,6 +95,10 @@ SET(sources
     src/gpio_control/RaspberryPiGPIOControl.cpp
     src/gpio_control/RaspberryPiGPIOControl.h
     src/gpio_control/RaspberryPiGPIOControlSettings.h
+    src/internal/ina219.cc
+    src/internal/ina219.h
+    src/endpoints/TCPEndpoint.cpp
+    src/endpoints/TCPEndpoint.h
 )
 
 # Build it as a library
@@ -122,6 +126,9 @@ target_link_libraries(test_serial_endpoint OHDTelemetryLib)
 
 add_executable(test_udp_endpoint tests/test_udp_endpoint.cpp)
 target_link_libraries(test_udp_endpoint OHDTelemetryLib)
+
+add_executable(test_tcp_server_endpoint tests/test_tcp_server_endpoint.cpp)
+target_link_libraries(test_tcp_server_endpoint OHDTelemetryLib)
 
 add_executable(test_ground_locally tests/test_ground_locally.cpp)
 target_link_libraries(test_ground_locally OHDTelemetryLib)
