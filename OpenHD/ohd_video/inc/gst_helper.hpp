@@ -463,6 +463,20 @@ static std::string createAllwinnerSensorPipeline(const int sensor_id,const int w
   return ss.str();
 }
 
+/**
+ * Creates media-ctl for Allwinner camera
+ * @param sensor_id sensor id 
+ * media-ctl --device /dev/media0 --set-v4l2 '"ov5640 1-003c":0[fmt:UYVY8_2X8/640x480@1/30]'
+ */
+static std::string createMedia_ctl(const int sensor_id,
+                                  const VideoFormat videoFormat,
+                                  const Camera& camera){
+  std::stringstream ss;
+  ss<<"media-ctl --device /dev/media"<<sensor_id<<" --set-v4l2 '"<<'"';
+  ss<<camera.sensor_name<<" "<<camera.bus<<'"'<<":0[fmt:UYVY8_2X8/"<<videoFormat.width<<"x"<<videoFormat.height<<"@1/"<<videoFormat.framerate<<"]'";
+  return ss.str();
+}
+
 // using cedar (closed source) HW acceleration.
 static std::string createAllwinnerEncoderPipeline(const CommonEncoderParams& common_encoder_params){
   std::stringstream ss;

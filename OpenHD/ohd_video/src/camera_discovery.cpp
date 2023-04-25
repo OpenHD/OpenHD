@@ -142,13 +142,22 @@ std::vector<Camera> DCameras::detect_raspberrypi_broadcom_csi(std::shared_ptr<sp
 
 std::vector<Camera> DCameras::detect_allwinner_csi(std::shared_ptr<spdlog::logger>& m_console) {
   m_console->debug("detect_allwinner_csi(");
-  if(OHDFilesystemUtil::exists("/dev/video0")){
+  if (OHDFilesystemUtil::exists("/dev/video0")) {
+    // media-ctl -d 0 -p | awk '/^- entity [0-9][0-9]*: ov5640 /{print $4, $5}'
     m_console->debug("Camera set as Allwinner_CSI_0");
     Camera camera;
     camera.name = "Allwinner_CSI_0";
     camera.vendor = "Allwinner";
     camera.type = CameraType::ALLWINNER_CSI;
     camera.bus = "0";
+    auto res_opt = OHDUtil::run_command_out(
+        "media-ctl -d 0 -p | awk '/^- entity [0-9][0-9]*: ov5640 /{printf $5}'",0);
+    if (res_opt) {
+      camera.name = "ov5640";
+      camera.sensor_name = "ov5640";
+      camera.bus = res_opt.value();
+      camera.vendor = "OmniVision";
+    } 
     return {camera};
   }
   return {};
