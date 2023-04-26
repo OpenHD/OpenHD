@@ -211,8 +211,10 @@ void GStreamerStream::setup_allwinner_csi() {
   m_console->debug("Setting up Allwinner CSI camera");
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
-  m_console->debug("Media Setting:{}",OHDGstHelper::createMedia_ctl(0,setting.streamed_video_format,camera));
-  OHDUtil::run_command_out(OHDGstHelper::createMedia_ctl(0,setting.streamed_video_format,camera));
+  if(camera.name !="Allwinner_CSI_0"){
+    m_console->debug("Media Setting:{}",OHDGstHelper::createMedia_ctl(0,setting.streamed_video_format,camera));
+    OHDUtil::run_command_out(OHDGstHelper::createMedia_ctl(0,setting.streamed_video_format,camera));
+  }
   m_pipeline_content << OHDGstHelper::createAllwinnerStream(0,setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.h26x_keyframe_interval);
 }
 
