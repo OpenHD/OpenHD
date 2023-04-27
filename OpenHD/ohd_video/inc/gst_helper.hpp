@@ -457,7 +457,7 @@ static std::string createRockchipCSIStream(
   const int keyframe_interval
 ) {
   std::stringstream ss;
-  ss<<createRockchipV4L2Pipeline(0, videoFormat.framerate);
+  ss<<createRockchipV4L2Pipeline(11, videoFormat.framerate);
   if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval,50});
   ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
   return ss.str();
