@@ -50,6 +50,11 @@ class DCameras {
   static std::vector<Camera> detect_allwinner_csi(std::shared_ptr<spdlog::logger>& m_console);
 
   /**
+   *  Detect rockchip CSI camera(s). Uses v4l2, but needs a few tweaks.
+   */
+  static std::vector<Camera> detect_rockchip_csi(std::shared_ptr<spdlog::logger>& m_console);
+
+  /**
    * Detect jetson CSI camera(s). Uses v4l2. dirty
    */
    static std::vector<Camera> detect_jetson_csi(std::shared_ptr<spdlog::logger>& m_console);
