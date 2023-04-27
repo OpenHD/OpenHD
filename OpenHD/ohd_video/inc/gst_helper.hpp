@@ -430,7 +430,7 @@ static std::string createRockchipRecordingPipeline(const int width, const int he
 
 static std::string createRockchipV4L2Pipeline(const int video_dev, const int framerate){
   std::stringstream ss;
-  ss<<"v4l2src device=/dev/video"<<video_dev<<" io-mode=auto do-timestamp=true ! video/x-raw,format=NV12";
+  ss<<"v4l2src device=/dev/video"<<video_dev<<" io-mode=auto do-timestamp=true ! video/x-raw,format=NV12, ";
   ss<<"framerate="<<framerate<<"/1 ! ";
   return ss.str();
 }
