@@ -33,5 +33,6 @@ jobs:
           git clone https://github.com/OpenHD/OpenHD -b 2.3-evo /opt/ChrootCompilationTest/additionalFiles/ --recursive
           echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
           cd /opt/ChrootCompilationTest/
+          sudo apt update
           sudo bash install_dep.sh
           sudo bash build.sh rock5 $API_KEY
