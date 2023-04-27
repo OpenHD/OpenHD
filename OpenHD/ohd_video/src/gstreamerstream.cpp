@@ -108,8 +108,8 @@ void GStreamerStream::setup() {
       break;
     }
     case CameraType::ROCKCHIP_CSI:
-      m_console->error("Veye and rockchip are unsupported at the time");
-      return;
+      setup_rockchip_csi();     
+      break;
     case CameraType::ROCKCHIP_HDMI: {
       setup_rockchip_hdmi();
       break;
