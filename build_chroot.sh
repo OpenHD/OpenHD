@@ -2,6 +2,7 @@
 #This file is the install instruction for the CHROOT build
 #We're using cloudsmith-cli to upload the file in CHROOT
 
+sudo apt update
 sudo apt install -y python3-pip
 sudo pip3 install --upgrade cloudsmith-cli
 ./install_build_dep.sh rock5
