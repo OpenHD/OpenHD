@@ -166,6 +166,7 @@ std::vector<Camera> DCameras::detect_rockchip_csi(std::shared_ptr<spdlog::logger
     camera.vendor = "Rockchip";
     camera.type = CameraType::ROCKCHIP_CSI;
     camera.bus = "11";
+    camera.index=11;
     return {camera};
   }
   return {};
