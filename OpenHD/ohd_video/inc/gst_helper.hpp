@@ -449,6 +449,20 @@ static std::string createRockchipHDMIStream(
   return ss.str();
 }
 
+static std::string createRockchipCSIStream(
+  bool recording,
+  const int bitrateKBits,
+  const VideoFormat videoFormat,
+  const VideoFormat recordingFormat,
+  const int keyframe_interval
+) {
+  std::stringstream ss;
+  ss<<createRockchipV4L2Pipeline(0, videoFormat.framerate);
+  if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval,50});
+  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
+  return ss.str();
+}
+
 /**
  * Creates stream for Allwinner camera (v4l2)
  * @param sensor_id sensor id 
