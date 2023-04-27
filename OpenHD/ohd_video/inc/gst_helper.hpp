@@ -430,7 +430,7 @@ static std::string createRockchipRecordingPipeline(const int width, const int he
 
 static std::string createRockchipV4L2Pipeline(const int video_dev, const int framerate){
   std::stringstream ss;
-  ss<<"v4l2src device=/dev/video"<<video_dev<<" io-mode=auto do-timestamp=true ! video/x-raw,";
+  ss<<"v4l2src device=/dev/video"<<video_dev<<" io-mode=auto do-timestamp=true ! video/x-raw,format=NV12, ";
   ss<<"framerate="<<framerate<<"/1 ! ";
   return ss.str();
 }
@@ -444,6 +444,20 @@ static std::string createRockchipHDMIStream(
 ) {
   std::stringstream ss;
   ss<<createRockchipV4L2Pipeline(0, videoFormat.framerate);
+  if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval,50});
+  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
+  return ss.str();
+}
+
+static std::string createRockchipCSIStream(
+  bool recording,
+  const int bitrateKBits,
+  const VideoFormat videoFormat,
+  const VideoFormat recordingFormat,
+  const int keyframe_interval
+) {
+  std::stringstream ss;
+  ss<<createRockchipV4L2Pipeline(11, videoFormat.framerate);
   if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval,50});
   ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
   return ss.str();

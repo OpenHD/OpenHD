@@ -55,6 +55,9 @@ std::vector<Camera> DCameras::discover(const OHDPlatform platform) {
   }else if(platform.platform_type == PlatformType::Allwinner){
     auto tmp=detect_allwinner_csi(m_console);
     OHDUtil::vec_append(cameras,tmp);
+    }else if(platform.platform_type == PlatformType::Rockchip){
+    auto tmp=detect_rockchip_csi(m_console);
+    OHDUtil::vec_append(cameras,tmp);
   }else if(platform.platform_type == PlatformType::Jetson){
     auto tmp=detect_jetson_csi(m_console);
     OHDUtil::vec_append(cameras,tmp);
@@ -149,6 +152,20 @@ std::vector<Camera> DCameras::detect_allwinner_csi(std::shared_ptr<spdlog::logge
     camera.vendor = "Allwinner";
     camera.type = CameraType::ALLWINNER_CSI;
     camera.bus = "0";
+    return {camera};
+  }
+  return {};
+}
+
+std::vector<Camera> DCameras::detect_rockchip_csi(std::shared_ptr<spdlog::logger>& m_console) {
+  m_console->debug("detect_rockchip_csi(");
+  if(OHDFilesystemUtil::exists("/dev/video11")){
+    m_console->debug("Camera set as Rockchip_CSI_IMX415");
+    Camera camera;
+    camera.name = "Rockchip_CSI_11";
+    camera.vendor = "Rockchip";
+    camera.type = CameraType::ROCKCHIP_CSI;
+    camera.bus = "11";
     return {camera};
   }
   return {};
