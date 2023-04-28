@@ -38,8 +38,9 @@ static void create_ethernet_hotspot_connection_if_needed(const std::shared_ptr<s
   m_console->debug("end create hotspot connection");
 }
 
-EthernetHotspot::EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string  device)
-    :m_device(std::move(device)),m_external_device_manager(std::move(external_device_manager)) {
+EthernetHotspot::EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string  device):
+      m_device(std::move(device)),
+      m_external_device_manager(std::move(external_device_manager)) {
   m_console = openhd::log::create_or_get("eth_hs");
   m_console->debug("device:[{}]",m_device);
   enable();
