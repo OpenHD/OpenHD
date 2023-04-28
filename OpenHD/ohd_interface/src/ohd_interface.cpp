@@ -148,7 +148,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
             m_nw_settings.get_settings().wifi_hotspot_enable,cb_enable}});
   }
   if(m_ethernet_hotspot){
-    const auto settings=m_nw_settings->get_settings();
+    const auto settings=m_nw_settings.get_settings();
     auto cb_enable=[this](std::string,int value){
       if(!openhd::validate_yes_or_no(value))return false;
       m_nw_settings.unsafe_get_settings().ethernet_hotspot_enable=value;
@@ -156,7 +156,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
       // to apply, requires reboot !!
       return true;
     };
-    ret.push_back(openhd::Setting{"I_ETH_HOTSPOT_E",openhd::IntSetting{settings.enable,cb_enable}});
+    ret.push_back(openhd::Setting{"I_ETH_HOTSPOT_E",openhd::IntSetting{settings.ethernet_hotspot_enable,cb_enable}});
   }
   if(monitor_mode_cards.empty()){
     auto setting=openhd::create_read_only_string(fmt::format("WIFI_CARD{}",0), "NOTFOUND");

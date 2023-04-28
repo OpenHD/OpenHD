@@ -10,8 +10,6 @@
 #include <string>
 #include <thread>
 
-#include "ethernet_hotspot_settings.h"
-
 /**
  * This class exists to expose the following (quite specific, but proven to be popular) functionality of
  * configuring the ground station to act as a DHCP provider (Hotspot) on the ethernet port
@@ -29,7 +27,6 @@ class EthernetHotspot{
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<openhd::ExternalDeviceManager> m_external_device_manager;
   const std::string m_device;
-  std::unique_ptr<EthernetHotspotSettingsHolder> m_settings;
   std::unique_ptr<std::thread> m_check_connection_thread;
   std::atomic<bool> m_check_connection_thread_stop =false;
   void loop_infinite();
