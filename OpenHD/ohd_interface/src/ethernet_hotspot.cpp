@@ -42,9 +42,7 @@ EthernetHotspot::EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> 
     :m_device(std::move(device)),m_external_device_manager(std::move(external_device_manager)) {
   m_console = openhd::log::create_or_get("eth_hs");
   m_console->debug("device:[{}]",m_device);
-  create_ethernet_hotspot_connection_if_needed(m_console, m_device);
-  m_check_connection_thread_stop =false;
-  m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
+  enable();
 }
 
 EthernetHotspot::~EthernetHotspot() {
@@ -52,6 +50,12 @@ EthernetHotspot::~EthernetHotspot() {
   if(m_check_connection_thread){
     m_check_connection_thread->join();
   }
+}
+
+void EthernetHotspot::enable() {
+  create_ethernet_hotspot_connection_if_needed(m_console, m_device);
+  m_check_connection_thread_stop =false;
+  m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
 }
 
 void EthernetHotspot::loop_infinite() {
@@ -105,3 +109,4 @@ void EthernetHotspot::discover_device_once() {
 void EthernetHotspot::cleanup() {
   delete_existing_hotspot_connection();
 }
+

@@ -22,6 +22,7 @@ class EthernetHotspot{
  public:
   explicit EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string  device);
   ~EthernetHotspot();
+  void enable();
   static void cleanup();
  private:
   std::shared_ptr<spdlog::logger> m_console;

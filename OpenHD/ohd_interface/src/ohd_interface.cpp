@@ -162,7 +162,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
       if(!openhd::validate_yes_or_no(value))return false;
       m_nw_settings.unsafe_get_settings().ethernet_hotspot_enable=value;
       m_nw_settings.persist();
-      // to apply, requires reboot !!
+      // to apply, might require reboot !!
       return true;
     };
     ret.push_back(openhd::Setting{"I_ETH_HOTSPOT_E",openhd::IntSetting{settings.ethernet_hotspot_enable,cb_enable}});
