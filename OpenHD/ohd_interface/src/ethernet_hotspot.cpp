@@ -17,7 +17,7 @@ static std::string get_ohd_eth_hotspot_connection_nm_filename(){
   return fmt::format("/etc/NetworkManager/system-connections/{}.nmconnection",OHD_ETHERNET_HOTSPOT_CONNECTION_NAME);
 }
 
-static void delete_existing_hotspot_connection(const std::string& eth_device_name){
+static void delete_existing_hotspot_connection(){
   const auto filename=get_ohd_eth_hotspot_connection_nm_filename();
   if(OHDFilesystemUtil::exists(filename)){
     OHDUtil::run_command("nmcli",{"con","delete", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME});
@@ -42,13 +42,9 @@ EthernetHotspot::EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> 
     :m_device(std::move(device)),m_external_device_manager(std::move(external_device_manager)) {
   m_console = openhd::log::create_or_get("eth_hs");
   m_console->debug("device:[{}]",m_device);
-  /*if(m_settings->get_settings().enable){
-    create_ethernet_hotspot_connection_if_needed(m_console, m_device);
-    m_check_connection_thread_stop =false;
-    m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
-  }else{
-    delete_existing_hotspot_connection(device);
-  }*/
+  create_ethernet_hotspot_connection_if_needed(m_console, m_device);
+  m_check_connection_thread_stop =false;
+  m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
 }
 
 EthernetHotspot::~EthernetHotspot() {
@@ -104,4 +100,8 @@ void EthernetHotspot::discover_device_once() {
   if(m_external_device_manager){
     m_external_device_manager->on_new_external_device(external_device, false);
   }
+}
+
+void EthernetHotspot::cleanup() {
+  delete_existing_hotspot_connection();
 }

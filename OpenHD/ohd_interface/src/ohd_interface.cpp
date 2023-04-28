@@ -101,14 +101,19 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     // or when you want openhd to manage ethernet on the air unit
     const auto eth_card=config.NW_ETHERNET_CARD;
     m_console->debug("Managing manually specified card [{}]",eth_card);
-    m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,eth_card);
+    if(m_nw_settings.get_settings().ethernet_hotspot_enable){
+      m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,eth_card);
+    }else{
+      EthernetHotspot::cleanup();
+    }
   }else{
     // Default
     // RPI: manage ethernet on ground, which always shows up as eth0
     if(m_profile.is_ground() && m_platform.platform_type==PlatformType::RaspberryPi){
-      m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,"eth0");
       if(m_nw_settings.get_settings().ethernet_hotspot_enable){
-        m_ethernet_hotspot->set_enabled(true);
+        m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,"eth0");
+      }else{
+        EthernetHotspot::cleanup();
       }
     }
   }
