@@ -32,10 +32,9 @@ class WifiHotspot {
   WifiHotspot(const WifiHotspot&)=delete;
   WifiHotspot(const WifiHotspot&&)=delete;
   ~WifiHotspot();
-  /**
-   * Expose all hotspot settings such that they can be changed via mavlink
-   */
-  std::vector<openhd::Setting> get_all_settings();
+  // Use opposite frequency band to wfb if possible
+  static bool get_use_5g_channel(const WiFiCard& wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space);
+  void set_enabled(bool enable);
  private:
   // NOTE: might block, use async
   // just runs the appropriate network manager (nmcli) command to start an already created wifi hotspot connection
@@ -51,9 +50,9 @@ class WifiHotspot {
   std::vector<std::string> connectedClientsIps;
   const WiFiCard m_wifi_card;
   bool started=false;
-  std::unique_ptr<WifiHotspotSettingsHolder> m_settings;
   std::shared_ptr<spdlog::logger> m_console;
   std::future<void> m_last_async_operation;
+  bool m_use_5G_channel;
 };
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_

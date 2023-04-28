@@ -110,6 +110,9 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     const openhd::WifiSpace wb_frequency_space= (m_wb_link!= nullptr) ? m_wb_link->get_current_frequency_channel_space() : openhd::WifiSpace::G5_8;
     // OHD hotspot needs to know the wifibroadcast frequency - it is always on the opposite spectrum
     m_wifi_hotspot =std::make_unique<WifiHotspot>(opt_hotspot_card.value(),wb_frequency_space);
+    if(m_nw_settings.get_settings().wifi_hotspot_enable){
+      m_wifi_hotspot->set_enabled(true);
+    }
   }
   m_console->debug("OHDInterface::created");
 }
@@ -131,8 +134,15 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     OHDUtil::vec_append(ret,settings);
   }
   if(m_wifi_hotspot != nullptr){
-    auto settings= m_wifi_hotspot->get_all_settings();
-    OHDUtil::vec_append(ret,settings);
+    auto cb_enable=[this](std::string,int value){
+      if(!openhd::validate_yes_or_no(value))return false;
+      m_nw_settings.unsafe_get_settings().wifi_hotspot_enable=value;
+      m_nw_settings.persist();
+      m_wifi_hotspot->set_enabled(m_nw_settings.get_settings().wifi_hotspot_enable);
+      return true;
+    };
+    ret.push_back(openhd::Setting{"I_WIFI_HOTSPOT_E",openhd::IntSetting{
+            m_nw_settings.get_settings().wifi_hotspot_enable,cb_enable}});
   }
   if(m_ethernet_hotspot){
     auto settings = m_ethernet_hotspot->get_all_settings();

@@ -11,14 +11,14 @@
 static constexpr auto OHD_WIFI_HOTSPOT_CONNECTION_NAME ="ohd_wfi_hotspot";
 
 // NOTE: This creates the proper NM connection, but does not start it yet.
-static bool create_hotspot_connection(const WiFiCard& card,const WifiHotspotSettings& settings){
+static bool create_hotspot_connection(const WiFiCard& card,const bool use_5g_channel){
   // delete any previous connection that might exist. This might fail if no connection of that name exists -
   // aka an error here can be ignored
   OHDUtil::run_command("nmcli",{"con","delete", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
   // and create the hotspot one
   OHDUtil::run_command("nmcli",{"con add type wifi ifname",card.device_name,"con-name", OHD_WIFI_HOTSPOT_CONNECTION_NAME,"autoconnect no ssid openhd"});
   OHDUtil::run_command("nmcli",{"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME," 802-11-wireless.mode ap",
-                                 "802-11-wireless.band",settings.use_5g_channel ? "a" : "bg",
+                                 "802-11-wireless.band",use_5g_channel ? "a" : "bg",
                                  "ipv4.method shared"});
   OHDUtil::run_command("nmcli",{"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME," wifi-sec.key-mgmt wpa-psk"});
   OHDUtil::run_command("nmcli",{"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME," wifi-sec.psk \"openhdopenhd\""});
@@ -28,17 +28,14 @@ static bool create_hotspot_connection(const WiFiCard& card,const WifiHotspotSett
 
 
 WifiHotspot::WifiHotspot(WiFiCard wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space):
-m_wifi_card(std::move(wifiCard)) {
+m_wifi_card(std::move(wifiCard))
+{
+  m_use_5G_channel=WifiHotspot::get_use_5g_channel(m_wifi_card, wifibroadcast_frequency_space);
   m_console = openhd::log::create_or_get("wifi_hs");
-  m_settings=std::make_unique<WifiHotspotSettingsHolder>();
-  wifi_hotspot_fixup_settings(*m_settings,m_wifi_card,wifibroadcast_frequency_space);
   // create the connection (no matter if hotspot is enabled) such that we can just enable / disable it whenn the hotspot changes up/down
   m_console->debug("begin create hotspot connection");
-  create_hotspot_connection(m_wifi_card,m_settings->get_settings());
+  create_hotspot_connection(m_wifi_card,m_use_5G_channel);
   m_console->debug("end create hotspot connection");
-  if(m_settings->get_settings().enable){
-    start_async();
-  }
 }
 
 WifiHotspot::~WifiHotspot() {
@@ -71,21 +68,22 @@ void WifiHotspot::stop_async() {
   m_last_async_operation=std::async(std::launch::async, &WifiHotspot::stop,this);
 }
 
-std::vector<openhd::Setting> WifiHotspot::get_all_settings() {
-  using namespace openhd;
-  std::vector<openhd::Setting> ret{};
-  const auto settings=m_settings->get_settings();
-  auto cb_enable=[this](std::string,int value){
-    if(!validate_yes_or_no(value))return false;
-    m_settings->unsafe_get_settings().enable=value;
-    m_settings->persist();
-    if(m_settings->get_settings().enable){
-      start_async();
-    }else{
-      stop_async();
-    }
-    return true;
-  };
-  ret.push_back(openhd::Setting{"I_WIFI_HOTSPOT_E",openhd::IntSetting{settings.enable,cb_enable}});
-  return ret;
+void WifiHotspot::set_enabled(bool enable) {
+  if(enable){
+    start_async();
+  }else{
+    stop_async();
+  }
+}
+
+bool WifiHotspot::get_use_5g_channel(
+    const WiFiCard& wifiCard,
+    const openhd::WifiSpace& wifibroadcast_frequency_space) {
+  const bool wifibroadcast_uses_5G=wifibroadcast_frequency_space==openhd::WifiSpace::G5_8;
+  bool should_use_5G= !wifibroadcast_uses_5G;
+  if(should_use_5G && ! wifiCard.supports_5GHz()){
+    openhd::log::get_default()->warn("openhd needs 5G hotspot but hotspot card only supports 2G,you'l get really bad interference");
+    should_use_5G= false;
+  }
+  return should_use_5G;
 }
