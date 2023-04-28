@@ -35,4 +35,4 @@ jobs:
           cd /opt/ChrootCompilationTest/
           sudo apt update
           sudo bash install_dep.sh
-          sudo bash build.sh rock5 $API_KEY
+          sudo bash build.sh rock5 $API_KEY ubuntu jammy
