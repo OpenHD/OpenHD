@@ -79,8 +79,8 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     const std::string message_for_user="No WiFi card found, please reboot";
     m_console->warn(message_for_user);
     // TODO reason what to do. We do not support dynamically adding wifi cards at run time, so somehow
-    // we need to signal to the user that something is completely wrong. However, as an grund pi, we can still
-    // run QOpenHD and OpenHD, just it will never connect to an air pi
+    // we need to signal to the user that something is completely wrong. However, as an Ground pi, we can still
+    // run QOpenHD and OpenHD, just it will never connect to an Air PI
     m_error_blinker=std::make_unique<openhd::LEDBlinker>(m_platform,message_for_user);
     // we just continue as nothing happened, but OHD won't have any wifibroadcast connectivity
     //exit(1);
@@ -103,6 +103,9 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     // RPI: manage ethernet on ground, which always shows up as eth0
     if(m_profile.is_ground() && m_platform.platform_type==PlatformType::RaspberryPi){
       m_ethernet_hotspot = std::make_unique<EthernetHotspot>(m_external_devices_manager,"eth0");
+      if(m_nw_settings.get_settings().ethernet_hotspot_enable){
+        m_ethernet_hotspot->set_enabled(true);
+      }
     }
   }
   // This way one could try and recover an air pi
@@ -145,8 +148,15 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
             m_nw_settings.get_settings().wifi_hotspot_enable,cb_enable}});
   }
   if(m_ethernet_hotspot){
-    auto settings = m_ethernet_hotspot->get_all_settings();
-    OHDUtil::vec_append(ret,settings);
+    const auto settings=m_nw_settings->get_settings();
+    auto cb_enable=[this](std::string,int value){
+      if(!openhd::validate_yes_or_no(value))return false;
+      m_nw_settings.unsafe_get_settings().ethernet_hotspot_enable=value;
+      m_nw_settings.persist();
+      // to apply, requires reboot !!
+      return true;
+    };
+    ret.push_back(openhd::Setting{"I_ETH_HOTSPOT_E",openhd::IntSetting{settings.enable,cb_enable}});
   }
   if(monitor_mode_cards.empty()){
     auto setting=openhd::create_read_only_string(fmt::format("WIFI_CARD{}",0), "NOTFOUND");
