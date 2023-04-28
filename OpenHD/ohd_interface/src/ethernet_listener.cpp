@@ -9,10 +9,12 @@
 #include "ethernet_helper.hpp"
 
 EthernetListener::EthernetListener(
-    std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager):
-m_external_device_manager(std::move(external_device_manager)){
+    std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string device):
+m_external_device_manager(std::move(external_device_manager)),
+m_device(std::move(device)){
   m_console = openhd::log::create_or_get("eth_listener");
   assert(m_console);
+  m_console->debug("device:[{}]",m_device);
   m_check_connection_thread_stop =false;
   m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
 }
@@ -24,6 +26,14 @@ EthernetListener::~EthernetListener() {
     m_check_connection_thread->join();
   }
   m_check_connection_thread.reset();
+}
+
+void EthernetListener::start() {
+
+}
+
+void EthernetListener::stop() {
+
 }
 
 void EthernetListener::loop_infinite() {
@@ -41,7 +51,7 @@ void EthernetListener::connect_once() {
       break;
     }
   }
-  const auto run_command_result_opt=OHDUtil::run_command_out("ip route list dev eth0");
+  const auto run_command_result_opt=OHDUtil::run_command_out(fmt::format("ip route list dev {}",m_device));
   if(run_command_result_opt==std::nullopt){
     m_console->warn("run command out no result");
     return;
