@@ -32,7 +32,9 @@ jobs:
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           git clone https://github.com/OpenHD/OpenHD -b 2.3-evo /opt/ChrootCompilationTest/additionalFiles/ --recursive
           echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
+          echo debian /opt/ChrootCompilationTest/additionalFiles/distro.txt
+          echo bullseye /opt/ChrootCompilationTest/additionalFiles/flavor.txt
           cd /opt/ChrootCompilationTest/
           sudo apt update
           sudo bash install_dep.sh
-          sudo bash build.sh rock5a $API_KEY debian bullseye
+          sudo bash build.sh rock5a $API_KEY
