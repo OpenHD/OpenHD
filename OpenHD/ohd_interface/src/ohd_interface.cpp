@@ -91,6 +91,10 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   if(m_profile.is_ground()){
     // The USB tethering listener is always enabled on ground - it doesn't interfere with anything
     m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
+    // passive listening can also be enabled / disabled with reboots by the user
+    if(m_nw_settings.get_settings().ethernet_nonhotspot_enable_auto_forwarding){
+      m_ethernet_listener=std::make_unique<EthernetListener>(m_external_devices_manager,"eth0");
+    }
   }
   if(openhd::nw_ethernet_card_manual_active(config)){
     // User explicitly told openhd to manage ethernet, which needs to be done if running on non-rpi platform
@@ -157,6 +161,17 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
       return true;
     };
     ret.push_back(openhd::Setting{"I_ETH_HOTSPOT_E",openhd::IntSetting{settings.ethernet_hotspot_enable,cb_enable}});
+  }
+  if(true){
+    const auto settings=m_nw_settings.get_settings();
+    auto cb_enable=[this](std::string,int value){
+      if(!openhd::validate_yes_or_no(value))return false;
+      m_nw_settings.unsafe_get_settings().ethernet_nonhotspot_enable_auto_forwarding=value;
+      m_nw_settings.persist();
+      // to apply, requires reboot !!
+      return true;
+    };
+    ret.push_back(openhd::Setting{"ETH_PASSIVE_F",openhd::IntSetting{settings.ethernet_nonhotspot_enable_auto_forwarding,cb_enable}});
   }
   if(monitor_mode_cards.empty()){
     auto setting=openhd::create_read_only_string(fmt::format("WIFI_CARD{}",0), "NOTFOUND");
