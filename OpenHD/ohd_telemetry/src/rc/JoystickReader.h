@@ -31,6 +31,7 @@ class JoystickReader {
   static constexpr uint16_t DEFAULT_RC_CHANNELS_VALUE=UINT16_MAX;
   // the rc channel override message(s) support 18 values, so we do so, too
   static constexpr auto N_CHANNELS=18;
+  // We use the first 8 Channels for "axis" joystick values
   static constexpr auto N_CHANNELS_RESERVED_FOR_AXES=8;
   static constexpr uint16_t VALUE_BUTTON_UP=2000;
   static constexpr uint16_t VALUE_BUTTON_DOWN=1000;
