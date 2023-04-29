@@ -83,7 +83,9 @@ bool WifiHotspot::get_use_5g_channel(
   bool should_use_5G= !wifibroadcast_uses_5G;
   if(should_use_5G && ! wifiCard.supports_5GHz()){
     openhd::log::get_default()->warn("openhd needs 5G hotspot but hotspot card only supports 2G,you'l get really bad interference");
+    openhd::log::get_default()->warn("Using 2.4G hotspot");
     should_use_5G= false;
   }
+  // Not seen a 5G only card yet
   return should_use_5G;
 }
