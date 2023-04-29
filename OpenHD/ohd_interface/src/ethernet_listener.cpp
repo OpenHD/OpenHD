@@ -29,11 +29,26 @@ EthernetListener::~EthernetListener() {
 }
 
 void EthernetListener::start() {
-
+  std::lock_guard<std::mutex> guard(m_enable_disable_mutex);
+  if(m_check_connection_thread!= nullptr){
+    m_console->warn("Already running");
+    return ;
+  }
+  m_check_connection_thread_stop =false;
+  m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
 }
 
-void EthernetListener::stop() {
-
+void EthernetListener::stop(){
+  std::lock_guard<std::mutex> guard(m_enable_disable_mutex);
+  if(m_check_connection_thread== nullptr){
+    m_console->warn("Already disabled");
+    return ;
+  }
+  m_check_connection_thread_stop =true;
+  if(m_check_connection_thread->joinable()){
+    m_check_connection_thread->join();
+  }
+  m_check_connection_thread= nullptr;
 }
 
 void EthernetListener::loop_infinite() {
