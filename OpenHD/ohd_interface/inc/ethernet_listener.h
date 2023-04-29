@@ -10,7 +10,9 @@
 #include <openhd_external_device.hpp>
 #include <thread>
 
-// Same pattern as usb_tether_listener.h
+// Same/Similar pattern as usb_tether_listener.h
+// For automatically forwarding data to device(s) connected via Ethernet when the Ethernet is NOT a hotspot, but rather waits for someone
+// to provide internet / dhcpcd.
 // Waits for someone to give the pi an ip / internet via ethernet, and start / stop automatic video and telemetry forwarding.
 // Not really recommended - the ethernet hotspot functionality is much more popular and easier to implement.
 class EthernetListener{
