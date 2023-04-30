@@ -155,6 +155,11 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     const auto settings=m_nw_settings.get_settings();
     auto cb_enable=[this](std::string,int value){
       if(!openhd::validate_yes_or_no(value))return false;
+      // Cannot be enabled while ethernet passive forwarding is active
+      if(m_nw_settings.unsafe_get_settings().ethernet_nonhotspot_enable_auto_forwarding){
+        m_console->warn("Please disable ethernet passive forwarding");
+        return false;
+      }
       m_nw_settings.unsafe_get_settings().ethernet_hotspot_enable=value;
       m_nw_settings.persist();
       // to apply, might require reboot !!
