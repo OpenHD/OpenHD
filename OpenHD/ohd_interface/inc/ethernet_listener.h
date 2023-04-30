@@ -18,6 +18,8 @@
 class EthernetListener{
  public:
   explicit EthernetListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string device="eth0");
+  EthernetListener(const EthernetListener&)=delete;
+  EthernetListener(const EthernetListener&&)=delete;
   ~EthernetListener();
   void start();
   void stop();
@@ -28,7 +30,6 @@ class EthernetListener{
   std::unique_ptr<std::thread> m_check_connection_thread= nullptr;
   std::atomic<bool> m_check_connection_thread_stop =false;
   std::mutex m_enable_disable_mutex;
-  bool m_is_enabled;
   void loop_infinite();
   void connect_once();
 };

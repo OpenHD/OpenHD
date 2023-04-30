@@ -13,11 +13,12 @@
 
 // Networking related settings, separate from wb_link
 struct NetworkingSettings {
-  // WIFI Hotspot, can be enabled / disabled if an extra Wi-Fi hotspot card exists on the system
+  // WIFI Hotspot, can be enabled / disabled at run time if an extra Wi-Fi hotspot card exists on the system
+  // TODO: Auto warning if wifi hotspot is enabled & drone is armed ?
   bool wifi_hotspot_enable=false;
   // Ethernet hotspot (changes networking,requires reboot)
   bool ethernet_hotspot_enable=false;
-  // passive listening for forwarding without hotspot functionality
+  // passive listening for forwarding without hotspot functionality, can be enabled / disabled at run time.
   bool ethernet_nonhotspot_enable_auto_forwarding=false;
 };
 
