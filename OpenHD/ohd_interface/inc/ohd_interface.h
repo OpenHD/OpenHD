@@ -20,6 +20,7 @@
 #include "usb_tether_listener.h"
 #include "openhd_link.hpp"
 #include "wifi_hotspot.h"
+#include "networking_settings.h"
 
 class WBLink;
 /**
@@ -62,6 +63,8 @@ class OHDInterface {
   std::shared_ptr<openhd::ExternalDeviceManager> m_external_devices_manager;
   std::vector<WiFiCard> monitor_mode_cards{};
   std::optional<WiFiCard> opt_hotspot_card=std::nullopt;
+  NetworkingSettingsHolder m_nw_settings;
+  //NetworkingSettingsHolder m_nw_settings;
 };
 
 #endif //OPENHD_OPENHD_INTERFACE_H

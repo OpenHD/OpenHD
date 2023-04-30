@@ -10,17 +10,27 @@
 #include <openhd_external_device.hpp>
 #include <thread>
 
-// Same pattern as usb_tether_listener.h
-// Discontinued r.n - the ethernet hotspot functionality is much more popular and easier to implement.
+// Same/Similar pattern as usb_tether_listener.h
+// For automatically forwarding data to device(s) connected via Ethernet when the Ethernet is NOT a hotspot, but rather waits for someone
+// to provide internet / dhcpcd.
+// Waits for someone to give the pi an ip / internet via ethernet, and start / stop automatic video and telemetry forwarding.
+// Not really recommended - the ethernet hotspot functionality is much more popular and easier to implement.
 class EthernetListener{
  public:
-  explicit EthernetListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager);
+  explicit EthernetListener(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string device="eth0");
+  EthernetListener(const EthernetListener&)=delete;
+  EthernetListener(const EthernetListener&&)=delete;
   ~EthernetListener();
+  void start();
+  void stop();
+  void set_enabled(bool enable);
  private:
+  const std::string m_device;
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<openhd::ExternalDeviceManager> m_external_device_manager;
-  std::unique_ptr<std::thread> m_check_connection_thread;
+  std::unique_ptr<std::thread> m_check_connection_thread= nullptr;
   std::atomic<bool> m_check_connection_thread_stop =false;
+  std::mutex m_enable_disable_mutex;
   void loop_infinite();
   void connect_once();
 };
