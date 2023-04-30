@@ -148,7 +148,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
       m_wifi_hotspot->set_enabled(m_nw_settings.get_settings().wifi_hotspot_enable);
       return true;
     };
-    ret.push_back(openhd::Setting{"I_WIFI_HOTSPOT_E",openhd::IntSetting{
+    ret.push_back(openhd::Setting{"WIFI_HOTSPOT_E",openhd::IntSetting{
             m_nw_settings.get_settings().wifi_hotspot_enable,cb_enable}});
   }
   if(m_ethernet_hotspot){
@@ -166,7 +166,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
       m_ethernet_hotspot->set_enabled(value);
       return true;
     };
-    ret.push_back(openhd::Setting{"I_ETH_HOTSPOT_E",openhd::IntSetting{settings.ethernet_hotspot_enable,cb_enable}});
+    ret.push_back(openhd::Setting{"ETH_HOTSPOT_E",openhd::IntSetting{settings.ethernet_hotspot_enable,cb_enable}});
   }
   if(m_ethernet_listener){
     const auto settings=m_nw_settings.get_settings();
