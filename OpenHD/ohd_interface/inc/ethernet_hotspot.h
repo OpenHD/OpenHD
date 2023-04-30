@@ -31,7 +31,7 @@ class EthernetHotspot{
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<openhd::ExternalDeviceManager> m_external_device_manager;
   const std::string m_device;
-  std::unique_ptr<std::thread> m_check_connection_thread;
+  std::unique_ptr<std::thread> m_check_connection_thread= nullptr;
   std::atomic<bool> m_check_connection_thread_stop =false;
   void loop_infinite();
   // simple pattern: Wait for device to become available

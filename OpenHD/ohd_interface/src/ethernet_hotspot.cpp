@@ -52,6 +52,11 @@ EthernetHotspot::~EthernetHotspot() {
 void EthernetHotspot::enable() {
   m_console->debug("enable ethernet hotspot - begin");
   create_ethernet_hotspot_connection_if_needed(m_console, m_device);
+  if(m_check_connection_thread!= nullptr){
+    // already running
+    m_console->debug("already running");
+    return;
+  }
   m_check_connection_thread_stop =false;
   m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
   m_console->debug("enable ethernet hotspot - end");
