@@ -43,20 +43,37 @@ EthernetHotspot::EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> 
       m_external_device_manager(std::move(external_device_manager)) {
   m_console = openhd::log::create_or_get("eth_hs");
   m_console->debug("device:[{}]",m_device);
-  enable();
 }
 
 EthernetHotspot::~EthernetHotspot() {
-  m_check_connection_thread_stop=true;
-  if(m_check_connection_thread){
-    m_check_connection_thread->join();
-  }
+  disable();
 }
 
 void EthernetHotspot::enable() {
+  m_console->debug("enable ethernet hotspot - begin");
   create_ethernet_hotspot_connection_if_needed(m_console, m_device);
   m_check_connection_thread_stop =false;
   m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
+  m_console->debug("enable ethernet hotspot - end");
+}
+
+void EthernetHotspot::disable() {
+  m_console->debug("disable ethernet hotspot - begin");
+  delete_existing_hotspot_connection();
+  m_check_connection_thread_stop=true;
+  if(m_check_connection_thread){
+    m_check_connection_thread->join();
+    m_check_connection_thread= nullptr;
+  }
+  m_console->debug("disable ethernet hotspot - end");
+}
+
+void EthernetHotspot::set_enabled(bool enabled) {
+  if(enabled){
+    enable();
+  }else{
+    disable();
+  }
 }
 
 void EthernetHotspot::loop_infinite() {
@@ -106,8 +123,3 @@ void EthernetHotspot::discover_device_once() {
     m_external_device_manager->on_new_external_device(external_device, false);
   }
 }
-
-void EthernetHotspot::cleanup() {
-  delete_existing_hotspot_connection();
-}
-

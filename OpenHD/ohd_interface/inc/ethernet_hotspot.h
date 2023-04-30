@@ -25,7 +25,8 @@ class EthernetHotspot{
   EthernetHotspot(const EthernetHotspot&&)=delete;
   ~EthernetHotspot();
   void enable();
-  static void cleanup();
+  void disable();
+  void set_enabled(bool enable);
  private:
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<openhd::ExternalDeviceManager> m_external_device_manager;
