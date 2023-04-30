@@ -91,9 +91,13 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   if(m_profile.is_ground()){
     // The USB tethering listener is always enabled on ground - it doesn't interfere with anything
     m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
-    // passive listening can also be enabled / disabled with reboots by the user
-    if(m_nw_settings.get_settings().ethernet_nonhotspot_enable_auto_forwarding){
+    // passive listening can also be enabled / disabled without reboots by the user
+    // TODO on non-rpi devices,  the ethernet might be something else than eth0
+    if(m_platform.platform_type==PlatformType::RaspberryPi){
       m_ethernet_listener=std::make_unique<EthernetListener>(m_external_devices_manager,"eth0");
+      if(m_nw_settings.get_settings().ethernet_nonhotspot_enable_auto_forwarding){
+        m_ethernet_listener->start();
+      }
     }
   }
   if(openhd::nw_ethernet_card_manual_active(config)){
@@ -167,13 +171,14 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     };
     ret.push_back(openhd::Setting{"I_ETH_HOTSPOT_E",openhd::IntSetting{settings.ethernet_hotspot_enable,cb_enable}});
   }
-  if(true){
+  if(m_ethernet_listener){
     const auto settings=m_nw_settings.get_settings();
     auto cb_enable=[this](std::string,int value){
       if(!openhd::validate_yes_or_no(value))return false;
       m_nw_settings.unsafe_get_settings().ethernet_nonhotspot_enable_auto_forwarding=value;
       m_nw_settings.persist();
-      // to apply, requires reboot !!
+      // Doesn't need reboot
+      m_ethernet_listener->start();
       return true;
     };
     ret.push_back(openhd::Setting{"ETH_PASSIVE_F",openhd::IntSetting{settings.ethernet_nonhotspot_enable_auto_forwarding,cb_enable}});

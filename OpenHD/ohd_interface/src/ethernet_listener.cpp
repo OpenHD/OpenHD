@@ -15,17 +15,12 @@ m_device(std::move(device)){
   m_console = openhd::log::create_or_get("eth_listener");
   assert(m_console);
   m_console->debug("device:[{}]",m_device);
-  m_check_connection_thread_stop =false;
-  m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
 }
 
 
 EthernetListener::~EthernetListener() {
-  m_check_connection_thread_stop =true;
-  if(m_check_connection_thread->joinable()){
-    m_check_connection_thread->join();
-  }
-  m_check_connection_thread.reset();
+  // Terminate properly before destruction if needed.
+  stop();
 }
 
 void EthernetListener::start() {
