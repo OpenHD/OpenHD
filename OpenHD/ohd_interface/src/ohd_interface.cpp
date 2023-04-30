@@ -175,10 +175,15 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     const auto settings=m_nw_settings.get_settings();
     auto cb_enable=[this](std::string,int value){
       if(!openhd::validate_yes_or_no(value))return false;
+      // Cannot be enabled while ethernet hotspot is active
+      if(m_nw_settings.unsafe_get_settings().ethernet_hotspot_enable){
+        m_console->warn("Disable ethernet hotspot");
+        return false;
+      }
       m_nw_settings.unsafe_get_settings().ethernet_nonhotspot_enable_auto_forwarding=value;
       m_nw_settings.persist();
       // Doesn't need reboot
-      m_ethernet_listener->start();
+      m_ethernet_listener->set_enabled(value);
       return true;
     };
     ret.push_back(openhd::Setting{"ETH_PASSIVE_F",openhd::IntSetting{settings.ethernet_nonhotspot_enable_auto_forwarding,cb_enable}});

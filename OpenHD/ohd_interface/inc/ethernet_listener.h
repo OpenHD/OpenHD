@@ -23,6 +23,7 @@ class EthernetListener{
   ~EthernetListener();
   void start();
   void stop();
+  void set_enabled(bool enable);
  private:
   const std::string m_device;
   std::shared_ptr<spdlog::logger> m_console;

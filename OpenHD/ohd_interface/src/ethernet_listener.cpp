@@ -46,6 +46,14 @@ void EthernetListener::stop(){
   m_check_connection_thread= nullptr;
 }
 
+void EthernetListener::set_enabled(bool enable) {
+  if(enable){
+    start();
+  }else{
+    stop();
+  }
+}
+
 void EthernetListener::loop_infinite() {
   while (!m_check_connection_thread_stop){
     connect_once();
