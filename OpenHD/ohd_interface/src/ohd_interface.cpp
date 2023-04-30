@@ -117,6 +117,8 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     m_ethernet_hotspot->set_enabled(m_nw_settings.get_settings().ethernet_hotspot_enable);
     m_ethernet_listener =  std::make_unique<EthernetListener>(m_external_devices_manager,ethernet_card);
     m_ethernet_listener->set_enabled(m_nw_settings.get_settings().ethernet_nonhotspot_enable_auto_forwarding);
+  }else{
+    m_console->debug("OpenHD does not manage ethernet");
   }
   // Wi-Fi hotspot functionality if possible.
   if(opt_hotspot_card.has_value()){
