@@ -177,7 +177,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
       if(!openhd::validate_yes_or_no(value))return false;
       // Cannot be enabled while ethernet hotspot is active
       if(m_nw_settings.unsafe_get_settings().ethernet_hotspot_enable){
-        m_console->warn("Disable ethernet hotspot");
+        m_console->warn("Please disable ethernet hotspot");
         return false;
       }
       m_nw_settings.unsafe_get_settings().ethernet_nonhotspot_enable_auto_forwarding=value;

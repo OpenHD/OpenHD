@@ -20,7 +20,7 @@
  */
 class EthernetHotspot{
  public:
-  explicit EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string  device);
+  explicit EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string device);
   EthernetHotspot(const EthernetHotspot&)=delete;
   EthernetHotspot(const EthernetHotspot&&)=delete;
   ~EthernetHotspot();
