@@ -87,18 +87,10 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   }else{
     m_wb_link =std::make_shared<WBLink>(m_profile, m_platform,monitor_mode_cards,opt_action_handler);
   }
-  // Listen for external device(s) to connect - only on ground
+  // The USB tethering listener is always enabled on ground - it doesn't interfere with anything
   if(m_profile.is_ground()){
     // The USB tethering listener is always enabled on ground - it doesn't interfere with anything
     m_usb_tether_listener =std::make_unique<USBTetherListener>(m_external_devices_manager);
-    // passive listening can also be enabled / disabled without reboots by the user
-    // TODO on non-rpi devices,  the ethernet might be something else than eth0
-    if(m_platform.platform_type==PlatformType::RaspberryPi){
-      m_ethernet_listener=std::make_unique<EthernetListener>(m_external_devices_manager,"eth0");
-      if(m_nw_settings.get_settings().ethernet_nonhotspot_enable_auto_forwarding){
-        m_ethernet_listener->start();
-      }
-    }
   }
   // OpenHD can (but must not) "control" ethernet via network manager.
   // On rpi, we do that by default when on ground, on other platforms, only if the user explicitly requested it.
