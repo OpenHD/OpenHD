@@ -93,6 +93,7 @@ void JoystickReader::connect_once_and_read_until_error() {
   ss<<"Trackballs::"<<SDL_JoystickNumBalls(js)<<"\n";
   ss<<"Buttons:"<<SDL_JoystickNumButtons(js)<<"\n";
   ss<<"Hats:"<<SDL_JoystickNumHats(js)<<"\n";
+  std::cerr<<ss.str();
   m_console->info(ss.str());
   // Populate the data once by querying everything (after that, we just get the events from SDL)
   {
