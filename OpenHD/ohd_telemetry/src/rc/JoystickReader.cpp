@@ -66,6 +66,7 @@ void JoystickReader::connect_once_and_read_until_error() {
     m_console->warn("SDL_INIT_SubSystem Error: {}",SDL_GetError());
     return;
   }
+  m_console->warn("After sdl init subs");
   const auto n_joysticks=SDL_NumJoysticks();
   if(n_joysticks<1){
     m_console->warn("No joysticks, num:{}",n_joysticks);
