@@ -22,7 +22,7 @@ static bool check_if_joystick_is_connected_via_fd(){
 JoystickReader::JoystickReader(CHAN_MAP chan_map) {
   m_console = openhd::log::create_or_get("joystick_reader");
   assert(m_console);
-  m_console->set_level(spdlog::level::warn);
+  //m_console->set_level(spdlog::level::warn);
   m_console->debug("JoystickReader::JoystickReader");
   reset_curr_values();
   m_chan_map=chan_map;
@@ -93,7 +93,7 @@ void JoystickReader::connect_once_and_read_until_error() {
   ss<<"Trackballs::"<<SDL_JoystickNumBalls(js)<<"\n";
   ss<<"Buttons:"<<SDL_JoystickNumButtons(js)<<"\n";
   ss<<"Hats:"<<SDL_JoystickNumHats(js)<<"\n";
-  std::cerr<<ss.str();
+  std::cout<<ss.str();
   m_console->info(ss.str());
   // Populate the data once by querying everything (after that, we just get the events from SDL)
   {
