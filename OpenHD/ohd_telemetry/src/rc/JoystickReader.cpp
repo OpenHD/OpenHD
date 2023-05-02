@@ -93,7 +93,6 @@ void JoystickReader::connect_once_and_read_until_error() {
   ss<<"Trackballs::"<<SDL_JoystickNumBalls(js)<<"\n";
   ss<<"Buttons:"<<SDL_JoystickNumButtons(js)<<"\n";
   ss<<"Hats:"<<SDL_JoystickNumHats(js)<<"\n";
-  std::cout<<ss.str();
   m_console->info(ss.str());
   // Populate the data once by querying everything (after that, we just get the events from SDL)
   {
@@ -160,6 +159,7 @@ void JoystickReader::wait_for_events(const int timeout_ms) {
     // Terminate the Joystick reader, such that SDL is terminated
     m_console->warn("Terminating joystick reader, it won't restart until openhd is restarted");
     terminate=true;
+    return ;
   }
   // and then get as many more events as we can get (we already spun up the cpu anyways)
   while (SDL_PollEvent (&event)) {
