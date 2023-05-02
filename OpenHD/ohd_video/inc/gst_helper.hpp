@@ -415,7 +415,7 @@ static std::string createRockchipRecordingPipeline(const int width, const int he
     ss<<" width="<<width;
     ss<<" height="<<height;
   }else if(encoder_params.videoCodec==VideoCodec::H265){
-    ss<<"mpph264enc rc-mode=cbr bps="<<bps;
+    ss<<"mpph265enc rc-mode=cbr bps="<<bps;
     ss<<" width="<<width;
     ss<<" height="<<height;
   }else{
