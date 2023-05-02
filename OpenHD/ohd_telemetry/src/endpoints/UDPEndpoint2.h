@@ -26,6 +26,7 @@ class UDPEndpoint2 : public MEndpoint {
   // Delete copy and move
   UDPEndpoint2(const UDPEndpoint2&)=delete;
   UDPEndpoint2(const UDPEndpoint2&&)=delete;
+  // These are for "external device forwarding"
   void addAnotherDestIpAddress(const std::string& ip);
   void removeAnotherDestIpAddress(const std::string& ip);
  private:
