@@ -56,10 +56,16 @@ void JoystickReader::connect_once_and_read_until_error() {
     std::cerr<<"Joystick FD does not exist\n";
     return;
   }*/
-  if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_VIDEO) != 0){
+ /* if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_VIDEO) != 0){
     m_console->warn("SDL_INIT Error: {}",SDL_GetError());
     return;
+  }*/
+  if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK) < 0) {
+    SDL_JoystickEventState(SDL_ENABLE);
+    m_console->warn("SDL_INIT_SubSystem Error: {}",SDL_GetError());
+    return;
   }
+
   const auto n_joysticks=SDL_NumJoysticks();
   if(n_joysticks<1){
     m_console->warn("No joysticks, num:{}",n_joysticks);
