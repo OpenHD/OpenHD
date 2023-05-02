@@ -60,6 +60,7 @@ void JoystickReader::connect_once_and_read_until_error() {
     m_console->warn("SDL_INIT Error: {}",SDL_GetError());
     return;
   }*/
+  m_console->warn("Before sdl init subs");
   if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK) < 0) {
     SDL_JoystickEventState(SDL_ENABLE);
     m_console->warn("SDL_INIT_SubSystem Error: {}",SDL_GetError());
