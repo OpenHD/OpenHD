@@ -134,8 +134,7 @@ void JoystickReader::connect_once_and_read_until_error() {
   }
   m_console->info("Joystick disconnected");
   reset_curr_values();
-
-  SDL_Quit();
+  //SDL_Quit();
   // either joystick disconnected or something else went wrong.
 }
 
