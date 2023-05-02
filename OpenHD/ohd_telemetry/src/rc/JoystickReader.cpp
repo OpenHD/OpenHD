@@ -74,6 +74,7 @@ void JoystickReader::connect_once_and_read_until_error() {
     SDL_Quit();
     return;
   }
+  m_console->debug("N joysticks: {}",n_joysticks);
   js = SDL_JoystickOpen(JOYSTICK_N);
   if (js == nullptr){
     m_console->warn("Couldn't open desired Joystick: {}",SDL_GetError());
