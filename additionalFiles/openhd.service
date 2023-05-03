@@ -1,3 +1,8 @@
+#
+# This Service starts (and re-starts in case of crash) the openhd main executable on openhd images,
+# such that it always runs in the background.
+#
+
 [Unit]
 Description=OpenHD
 After=NetworkManager.service
