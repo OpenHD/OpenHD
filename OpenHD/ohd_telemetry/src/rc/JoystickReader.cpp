@@ -19,7 +19,7 @@ static bool check_if_joystick_is_connected_via_fd(){
 static SDL_Joystick *js;
 
 // SDL documentation: Joystick axis values are in the range (-32768 to 32767) and of type Sint16 (int16_t )
-// Mavlink wants uint16_t and in the range [TODO]
+// Mavlink wants uint16_t and in the range [1000-2000]
 static uint16_t remap_sdl_to_mavlink(int16_t value) {
     return (int16_t)(((((double)value)+32768.0)/65.536)+1000);
 }
