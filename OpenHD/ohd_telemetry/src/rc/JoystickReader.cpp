@@ -60,17 +60,15 @@ void JoystickReader::connect_once_and_read_until_error() {
     m_console->warn("SDL_INIT Error: {}",SDL_GetError());
     return;
   }*/
-  m_console->warn("Before sdl init subs");
   if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK) < 0) {
-    m_console->warn("Y");
     SDL_JoystickEventState(SDL_ENABLE);
     m_console->warn("SDL_INIT_SubSystem Error: {}",SDL_GetError());
     return;
   }
-  m_console->warn("After sdl init subs");
   const auto n_joysticks=SDL_NumJoysticks();
   if(n_joysticks<1){
     m_console->warn("No joysticks, num:{}",n_joysticks);
+    SDL_QuitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK);
     SDL_Quit();
     return;
   }
@@ -78,6 +76,7 @@ void JoystickReader::connect_once_and_read_until_error() {
   js = SDL_JoystickOpen(JOYSTICK_N);
   if (js == nullptr){
     m_console->warn("Couldn't open desired Joystick: {}",SDL_GetError());
+    SDL_QuitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK);
     SDL_Quit();
     return;
   }
@@ -133,7 +132,9 @@ void JoystickReader::connect_once_and_read_until_error() {
     }*/
   }
   m_console->info("Joystick disconnected");
+  // This will set considered_connected to false, such that we don't send obsolete updates
   reset_curr_values();
+  SDL_QuitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK);
   SDL_Quit();
   // either joystick disconnected or something else went wrong.
 }
@@ -160,7 +161,7 @@ void JoystickReader::wait_for_events(const int timeout_ms) {
     terminate=true;
     return ;
   }
-  // and then get as many more events as we can get (we already spun up the cpu anyways)
+  // and then get as many more events as we can get (we already spun up the thread anyways)
   while (SDL_PollEvent (&event)) {
     ret= process_event(&event,current);
     if(ret==2 || ret==5 || ret==4){
