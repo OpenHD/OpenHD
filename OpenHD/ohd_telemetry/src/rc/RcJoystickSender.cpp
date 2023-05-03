@@ -6,12 +6,41 @@
 
 #include <utility>
 
-RcJoystickSender::RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz,JoystickReader::CHAN_MAP chan_map):
-m_cb(std::move(cb)),m_delay_in_milliseconds(1000/update_rate_hz) {
-  m_joystick_reader=std::make_unique<JoystickReader>(chan_map);
+RcJoystickSender::RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz,JoystickReader::CHAN_MAP chan_map)
+    :m_cb(std::move(cb)),
+      m_delay_in_milliseconds(1000/update_rate_hz),
+      m_chan_map(chan_map)
+{
+  m_console = openhd::log::create_or_get("joy_sender");
+  assert(m_console);
+}
+
+RcJoystickSender::~RcJoystickSender() {
+  stop();
+  m_joystick_reader= nullptr;
+}
+
+void RcJoystickSender::start() {
+  if(m_send_data_thread!= nullptr){
+    m_console->warn("Already enabled");
+    return ;
+  }
+  m_joystick_reader=std::make_unique<JoystickReader>(m_chan_map);
+  terminate= false;
   m_send_data_thread=std::make_unique<std::thread>([this] {
     send_data_until_terminate();
   });
+}
+
+void RcJoystickSender::stop() {
+  if(m_send_data_thread== nullptr){
+    m_console->debug("Already disabled");
+    return ;
+  }
+  terminate= true;
+  m_send_data_thread->join();
+  m_send_data_thread= nullptr;
+  m_joystick_reader= nullptr;
 }
 
 void RcJoystickSender::send_data_until_terminate() {
@@ -26,13 +55,6 @@ void RcJoystickSender::send_data_until_terminate() {
   }
 }
 
-RcJoystickSender::~RcJoystickSender() {
-  terminate= true;
-  m_send_data_thread->join();
-  m_send_data_thread.reset();
-  m_joystick_reader.reset();
-}
-
 void RcJoystickSender::change_update_rate(int update_rate_hz) {
   const int val=(1000/update_rate_hz);
   if(val>=0){
@@ -43,7 +65,11 @@ void RcJoystickSender::change_update_rate(int update_rate_hz) {
 }
 
 void RcJoystickSender::update_channel_maping(const JoystickReader::CHAN_MAP& new_chan_map) {
-  m_joystick_reader->update_channel_maping(new_chan_map);
+  m_chan_map=new_chan_map;
+  if(m_joystick_reader){
+    m_joystick_reader->update_channel_maping(new_chan_map);
+  }
 }
+
 
 #endif //OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
