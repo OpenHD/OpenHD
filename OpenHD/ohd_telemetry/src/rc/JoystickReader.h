@@ -74,8 +74,6 @@ class JoystickReader {
   std::mutex m_chan_map_mutex;
   CHAN_MAP m_chan_map{};
  private:
-  // just taken from previous openhd
-  static uint16_t parsetoMultiWii(int16_t value);
   void write_matching_axis(std::array<uint16_t,JoystickReader::N_CHANNELS>& rc_data,uint8_t axis_index,int16_t value);
   static void write_matching_button(std::array<uint16_t,18>&rc_data,uint8_t button,bool up);
   std::optional<int> get_mapped_axis(int axis_index);

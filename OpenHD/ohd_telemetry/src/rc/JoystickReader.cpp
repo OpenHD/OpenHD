@@ -19,6 +19,12 @@ static bool check_if_joystick_is_connected_via_fd(){
     return access(JOY_DEV, F_OK);
 }
 
+// SDL documentation: Joystick axis values are in the range (-32768 to 32767) and of type Sint16 (int16_t )
+// Mavlink wants uint16_t and in the range [TODO]
+static uint16_t remap_sdl_to_mavlink(int16_t value) {
+    return (int16_t)(((((double)value)+32768.0)/65.536)+1000);
+}
+
 JoystickReader::JoystickReader(CHAN_MAP chan_map) {
   m_console = openhd::log::create_or_get("joystick_reader");
   assert(m_console);
@@ -247,10 +253,6 @@ std::string JoystickReader::curr_state_to_string(
   return ss.str();
 }
 
-uint16_t JoystickReader::parsetoMultiWii(int16_t value) {
-  return (int16_t)(((((double)value)+32768.0)/65.536)+1000);
-}
-
 void JoystickReader::write_matching_axis(std::array<uint16_t, JoystickReader::N_CHANNELS>& rc_data,const uint8_t axis_index, const Sint16 value) {
   const auto index_opt= get_mapped_axis(axis_index);
   if(index_opt==std::nullopt){
@@ -261,7 +263,7 @@ void JoystickReader::write_matching_axis(std::array<uint16_t, JoystickReader::N_
     m_console->warn("only {} channels reserved for axis, wanted {}",N_CHANNELS_RESERVED_FOR_AXES,index);
     return;
   }
-  rc_data[index]=parsetoMultiWii(value);
+  rc_data[index]=remap_sdl_to_mavlink(value);
 }
 
 void JoystickReader::write_matching_button(std::array<uint16_t, 18>& rc_data,const Uint8 button, bool up) {
