@@ -12,16 +12,22 @@
 
 static constexpr auto JOYSTICK_N=0;
 static constexpr auto JOY_DEV="/sys/class/input/js0";
+static bool check_if_joystick_is_connected_via_fd(){
+  return access(JOY_DEV, F_OK);
+}
 
 static SDL_Joystick *js;
 
-static bool check_if_joystick_is_connected_via_fd(){
-    return access(JOY_DEV, F_OK);
+// SDL documentation: Joystick axis values are in the range (-32768 to 32767) and of type Sint16 (int16_t )
+// Mavlink wants uint16_t and in the range [1000-2000]
+static uint16_t remap_sdl_to_mavlink(int16_t value) {
+    return (int16_t)(((((double)value)+32768.0)/65.536)+1000);
 }
 
 JoystickReader::JoystickReader(CHAN_MAP chan_map) {
   m_console = openhd::log::create_or_get("joystick_reader");
   assert(m_console);
+  // WARNING: Joystick logging is a bit different than the rest regarding log level
   m_console->set_level(spdlog::level::warn);
   m_console->debug("JoystickReader::JoystickReader");
   reset_curr_values();
@@ -56,19 +62,27 @@ void JoystickReader::connect_once_and_read_until_error() {
     std::cerr<<"Joystick FD does not exist\n";
     return;
   }*/
-  if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_VIDEO) != 0){
+  /*if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_VIDEO) != 0){
     m_console->warn("SDL_INIT Error: {}",SDL_GetError());
+    return;
+  }*/
+  if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK) < 0) {
+    SDL_JoystickEventState(SDL_ENABLE);
+    m_console->warn("SDL_INIT_SubSystem Error: {}",SDL_GetError());
     return;
   }
   const auto n_joysticks=SDL_NumJoysticks();
   if(n_joysticks<1){
     m_console->warn("No joysticks, num:{}",n_joysticks);
+    SDL_QuitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK);
     SDL_Quit();
     return;
   }
+  m_console->debug("N joysticks: {}",n_joysticks);
   js = SDL_JoystickOpen(JOYSTICK_N);
   if (js == nullptr){
     m_console->warn("Couldn't open desired Joystick: {}",SDL_GetError());
+    SDL_QuitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK);
     SDL_Quit();
     return;
   }
@@ -124,7 +138,9 @@ void JoystickReader::connect_once_and_read_until_error() {
     }*/
   }
   m_console->info("Joystick disconnected");
+  // This will set considered_connected to false, such that we don't send obsolete updates
   reset_curr_values();
+  SDL_QuitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK);
   SDL_Quit();
   // either joystick disconnected or something else went wrong.
 }
@@ -149,8 +165,9 @@ void JoystickReader::wait_for_events(const int timeout_ms) {
     // Terminate the Joystick reader, such that SDL is terminated
     m_console->warn("Terminating joystick reader, it won't restart until openhd is restarted");
     terminate=true;
+    return ;
   }
-  // and then get as many more events as we can get (we already spun up the cpu anyways)
+  // and then get as many more events as we can get (we already spun up the thread anyways)
   while (SDL_PollEvent (&event)) {
     ret= process_event(&event,current);
     if(ret==2 || ret==5 || ret==4){
@@ -235,10 +252,6 @@ std::string JoystickReader::curr_state_to_string(
   return ss.str();
 }
 
-uint16_t JoystickReader::parsetoMultiWii(int16_t value) {
-  return (int16_t)(((((double)value)+32768.0)/65.536)+1000);
-}
-
 void JoystickReader::write_matching_axis(std::array<uint16_t, JoystickReader::N_CHANNELS>& rc_data,const uint8_t axis_index, const Sint16 value) {
   const auto index_opt= get_mapped_axis(axis_index);
   if(index_opt==std::nullopt){
@@ -249,7 +262,7 @@ void JoystickReader::write_matching_axis(std::array<uint16_t, JoystickReader::N_
     m_console->warn("only {} channels reserved for axis, wanted {}",N_CHANNELS_RESERVED_FOR_AXES,index);
     return;
   }
-  rc_data[index]=parsetoMultiWii(value);
+  rc_data[index]=remap_sdl_to_mavlink(value);
 }
 
 void JoystickReader::write_matching_button(std::array<uint16_t, 18>& rc_data,const Uint8 button, bool up) {
