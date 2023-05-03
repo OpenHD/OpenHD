@@ -12,12 +12,11 @@
 
 static constexpr auto JOYSTICK_N=0;
 static constexpr auto JOY_DEV="/sys/class/input/js0";
+static bool check_if_joystick_is_connected_via_fd(){
+  return access(JOY_DEV, F_OK);
+}
 
 static SDL_Joystick *js;
-
-static bool check_if_joystick_is_connected_via_fd(){
-    return access(JOY_DEV, F_OK);
-}
 
 // SDL documentation: Joystick axis values are in the range (-32768 to 32767) and of type Sint16 (int16_t )
 // Mavlink wants uint16_t and in the range [TODO]
