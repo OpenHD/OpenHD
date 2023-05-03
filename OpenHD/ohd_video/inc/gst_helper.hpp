@@ -657,6 +657,11 @@ static std::string create_input_custom_udp_rtp_port(const CameraSettings& settin
   return ss.str();
 }
 
+// We cannot really rely on the IP camera giving us an rtp stream in the right format / with the right NALU format.
+// Therefore, we parse the rtp data, such that we can then append the normal openhd
+// 1) parse (important: with the config-interval=-1) and
+// 2) rtp packetize
+// data after. E.g. the data is de-packetized, then properly parsed (keyframe(s) added if needed) and then packetized again.
 static std::string create_ip_cam_stream_with_depacketize_and_parse(const std::string& url,const VideoCodec videoCodec){
   std::stringstream ss;
   ss<<createIpCameraStream(url);
