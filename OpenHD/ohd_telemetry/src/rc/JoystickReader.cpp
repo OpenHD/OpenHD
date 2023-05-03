@@ -28,7 +28,7 @@ JoystickReader::JoystickReader(CHAN_MAP chan_map) {
   m_console = openhd::log::create_or_get("joystick_reader");
   assert(m_console);
   // WARNING: Joystick logging is a bit different than the rest regarding log level
-  m_console->set_level(spdlog::level::warn);
+  //m_console->set_level(spdlog::level::warn);
   m_console->debug("JoystickReader::JoystickReader");
   reset_curr_values();
   m_chan_map=chan_map;
