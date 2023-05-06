@@ -27,6 +27,7 @@ class RcJoystickSender {
   std::unique_ptr<JoystickReader> m_joystick_reader;
   std::unique_ptr<std::thread> m_send_data_thread;
   const SEND_MESSAGE_CB m_cb;
+  // Controls the update rate how often we send the rc packets to the air unit.
   int m_delay_in_milliseconds;
   bool terminate=false;
  private:
