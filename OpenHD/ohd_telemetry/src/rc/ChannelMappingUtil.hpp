@@ -57,7 +57,9 @@ static std::array<uint16_t,18> remap_channels(const std::array<uint16_t,18>& cha
   for(int i=0;i<18;i++){
     if(i<8){
       const auto channel_to_use=chan_map[i];
-      ret[i]=channels[channel_to_use];
+      if(i>=0 && i < channels.size()){
+        ret[i]=channels[channel_to_use];
+      }
     }else{
       ret[i]=channels[i];
     }
