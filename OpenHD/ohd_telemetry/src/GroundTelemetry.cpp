@@ -39,18 +39,19 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   m_components.push_back(m_ohd_main_component);
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
   if(m_gnd_settings->get_settings().enable_rc_over_joystick){
-    m_rc_joystick_sender=std::make_unique<RcJoystickSender>([this](std::array<uint16_t,18> channels){
-          // Dirty - we want the message both in the GCS station for debugging BUT need to perform some annoying workaround
-          // for ARDUPILOT in regard to the SYS id. Which is why we send the same data as 2 different messages to the air unit(FC) and
-          // to the GCS stations, and the message for the air unit has the "wrong" source sys id so to say
-          // See https://github.com/ArduPilot/ardupilot/blob/master/libraries/GCS_MAVLink/GCS_Common.cpp#L3507 and
-          // https://github.com/ArduPilot/ardupilot/issues/1515
-          auto msg_for_air=rc_channels_override_from_array(QOPENHD_SYS_ID,1,channels,0,0);
-          send_messages_air_unit({msg_for_air});
-          // to the GCS stations
-          auto msg_for_gcs=rc_channels_override_from_array(OHD_SYS_ID_GROUND,0,channels,0,0);
-          send_messages_ground_station_clients({msg_for_gcs});
-    },
+    auto cb=[this](std::array<uint16_t,18> channels){
+      // Dirty - we want the message both in the GCS station for debugging BUT need to perform some annoying workaround
+      // for ARDUPILOT in regard to the SYS id. Which is why we send the same data as 2 different messages to the air unit(FC) and
+      // to the GCS stations, and the message for the air unit has the "wrong" source sys id so to say
+      // See https://github.com/ArduPilot/ardupilot/blob/master/libraries/GCS_MAVLink/GCS_Common.cpp#L3507 and
+      // https://github.com/ArduPilot/ardupilot/issues/1515
+      auto msg_for_air=rc_channels_override_from_array(QOPENHD_SYS_ID,1,channels,0,0);
+      send_messages_air_unit({msg_for_air});
+      // to the GCS stations
+      auto msg_for_gcs=rc_channels_override_from_array(OHD_SYS_ID_GROUND,0,channels,0,0);
+      send_messages_ground_station_clients({msg_for_gcs});
+    };
+    m_rc_joystick_sender=std::make_unique<RcJoystickSender>(cb,
         m_gnd_settings->get_settings().rc_over_joystick_update_rate_hz,openhd::get_default_channel_mapping());
     const auto parsed=openhd::convert_string_to_channel_mapping(
         m_gnd_settings->get_settings().rc_channel_mapping);
