@@ -11,10 +11,10 @@
 #include <sstream>
 
 static constexpr auto JOYSTICK_N=0;
-static constexpr auto JOY_DEV="/sys/class/input/js0";
+/*static constexpr auto JOY_DEV="/sys/class/input/js0";
 static bool check_if_joystick_is_connected_via_fd(){
   return access(JOY_DEV, F_OK);
-}
+}*/
 
 static SDL_Joystick *js;
 
@@ -52,20 +52,16 @@ void JoystickReader::loop() {
 }
 
 void JoystickReader::connect_once_and_read_until_error() {
-  /*if(!check_if_joystick_is_connected_via_fd()){
-    // don't bother to try opening via SDL if there is no proper joystick FD
-    std::cerr<<"Joystick FD does not exist\n";
-    return;
-  }*/
+  // We only need SDL "Joy", and are not interested in any display output or similar.
   /*if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_VIDEO) != 0){
     m_console->warn("SDL_INIT Error: {}",SDL_GetError());
     return;
   }*/
   if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK) < 0) {
-    SDL_JoystickEventState(SDL_ENABLE);
     m_console->warn("SDL_INIT_SubSystem Error: {}",SDL_GetError());
     return;
   }
+  SDL_JoystickEventState(SDL_ENABLE);
   const auto n_joysticks=SDL_NumJoysticks();
   if(n_joysticks<1){
     m_console->warn("No joysticks, num:{}",n_joysticks);
@@ -113,12 +109,14 @@ void JoystickReader::connect_once_and_read_until_error() {
     m_curr_values.last_update=std::chrono::steady_clock::now();
     m_curr_values.joystick_name=name;
   }
+  // We constantly check for a disconnected joystick, in which case we set the joystick state to disconnected
+  // and return.
   bool disconnected=false;
   while (!disconnected && !terminate){
     wait_for_events(200);
     const int curr_num_joysticks=SDL_NumJoysticks();
     if(curr_num_joysticks<1){
-      // This one seems to work just find
+      // This one seems to work to check if the joystick disconnected
       m_console->warn("Joystick disconnected, SDL_NumJoysticks:{}",curr_num_joysticks);
       disconnected= true;
     }
@@ -126,11 +124,6 @@ void JoystickReader::connect_once_and_read_until_error() {
       m_console->warn("Joystick disconnected, SDL_JoystickGetAttached() reports false");
       disconnected= true;
     }
-    /*if(!check_if_joystick_is_connected_via_fd()){
-      // When the joystick is re-connected, SDL won't resume working again.
-      std::cerr<<"Joystick not connected, restarting\n";
-      break;
-    }*/
   }
   m_console->info("Joystick disconnected");
   // This will set considered_connected to false, such that we don't send obsolete updates
