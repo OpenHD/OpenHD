@@ -46,7 +46,7 @@ void RcJoystickSender::change_update_rate(int update_rate_hz) {
   }
 }
 
-void RcJoystickSender::update_channel_maping(const openhd::CHAN_MAP& new_chan_map) {
+void RcJoystickSender::update_channel_mapping(const openhd::CHAN_MAP& new_chan_map) {
   std::lock_guard<std::mutex> guard(m_chan_map_mutex);
   if(!openhd::validate_channel_mapping(new_chan_map)){
     return;

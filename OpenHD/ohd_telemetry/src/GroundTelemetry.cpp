@@ -57,7 +57,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
     if(parsed==std::nullopt){
       m_console->warn("Not a valid channel mapping,using default");
     }else{
-      m_rc_joystick_sender->update_channel_maping(parsed.value());
+      m_rc_joystick_sender->update_channel_mapping(parsed.value());
     }
     m_console->info("Joystick enabled");
   }else{
@@ -261,7 +261,7 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
         m_console->warn("Not a valid channel mapping");
         return false;
       }
-      m_rc_joystick_sender->update_channel_maping(parsed.value());
+      m_rc_joystick_sender->update_channel_mapping(parsed.value());
       m_gnd_settings->unsafe_get_settings().rc_channel_mapping=value;
       m_gnd_settings->persist();
       return true;

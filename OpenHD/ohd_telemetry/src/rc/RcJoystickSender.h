@@ -20,7 +20,7 @@ class RcJoystickSender {
   RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz,openhd::CHAN_MAP chan_map);
   void change_update_rate(int update_rate_hz);
   // update the channel mapping, thread-safe
-  void update_channel_maping(const openhd::CHAN_MAP& new_chan_map);
+  void update_channel_mapping(const openhd::CHAN_MAP& new_chan_map);
   // get the current channel mapping, thread-safe
   openhd::CHAN_MAP  get_current_channel_mapping();
   ~RcJoystickSender();
