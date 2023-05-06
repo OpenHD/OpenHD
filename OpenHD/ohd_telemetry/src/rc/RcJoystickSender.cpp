@@ -21,7 +21,7 @@ void RcJoystickSender::send_data_until_terminate() {
     // We only send data if the joystick is in the connected state
     // Otherwise, we just stop sending data, which should result in a failsafe at the FC.
     if(curr.considered_connected){
-      // map the channels
+      // map all the channels before we send them out
       auto curr_mapping=get_current_channel_mapping();
       auto mapped_channels=openhd::remap_channels(curr.values,curr_mapping);
       m_cb(mapped_channels);
