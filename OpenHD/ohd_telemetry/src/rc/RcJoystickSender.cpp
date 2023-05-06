@@ -43,7 +43,16 @@ void RcJoystickSender::change_update_rate(int update_rate_hz) {
 }
 
 void RcJoystickSender::update_channel_maping(const openhd::CHAN_MAP& new_chan_map) {
-  //m_joystick_reader->update_channel_maping(new_chan_map);
+  std::lock_guard<std::x> guard(m_chan_map_mutex);
+  if(!openhd::validate_channel_mapping(new_chan_map)){
+    return;
+  }
+  m_chan_map=new_chan_map;
+}
+
+openhd::CHAN_MAP RcJoystickSender::get_current_channel_mapping() {
+  std::lock_guard<std::mutex> guard(m_chan_map_mutex);
+  return m_chan_map;
 }
 
 #endif //OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
