@@ -24,18 +24,13 @@ static uint16_t remap_sdl_to_mavlink(int16_t value) {
     return (int16_t)(((((double)value)+32768.0)/65.536)+1000);
 }
 
-JoystickReader::JoystickReader(CHAN_MAP chan_map) {
+JoystickReader::JoystickReader() {
   m_console = openhd::log::create_or_get("joystick_reader");
   assert(m_console);
   // WARNING: Joystick logging is a bit different than the rest regarding log level
-  m_console->set_level(spdlog::level::warn);
+  //m_console->set_level(spdlog::level::warn);
   m_console->debug("JoystickReader::JoystickReader");
   reset_curr_values();
-  m_chan_map=chan_map;
-  if(!validate_channel_mapping(m_chan_map)){
-    m_console->warn("Not a valid channel mapping, using default");
-    m_chan_map=get_default_channel_mapping();
-  }
   m_read_joystick_thread=std::make_unique<std::thread>([this] {
     loop();
   });
@@ -253,16 +248,11 @@ std::string JoystickReader::curr_state_to_string(
 }
 
 void JoystickReader::write_matching_axis(std::array<uint16_t, JoystickReader::N_CHANNELS>& rc_data,const uint8_t axis_index, const Sint16 value) {
-  const auto index_opt= get_mapped_axis(axis_index);
-  if(index_opt==std::nullopt){
+  if(axis_index>=N_CHANNELS_RESERVED_FOR_AXES){
+    m_console->warn("only {} channels reserved for axis, wanted {}",N_CHANNELS_RESERVED_FOR_AXES,axis_index);
     return;
   }
-  const auto index=index_opt.value();
-  if(index>=N_CHANNELS_RESERVED_FOR_AXES){
-    m_console->warn("only {} channels reserved for axis, wanted {}",N_CHANNELS_RESERVED_FOR_AXES,index);
-    return;
-  }
-  rc_data[index]=remap_sdl_to_mavlink(value);
+  rc_data[axis_index]=remap_sdl_to_mavlink(value);
 }
 
 void JoystickReader::write_matching_button(std::array<uint16_t, 18>& rc_data,const Uint8 button, bool up) {
@@ -272,60 +262,6 @@ void JoystickReader::write_matching_button(std::array<uint16_t, 18>& rc_data,con
   if(channel_index<rc_data.size()){
     rc_data[channel_index] = up ? JoystickReader::VALUE_BUTTON_UP : JoystickReader::VALUE_BUTTON_DOWN;
   }
-}
-
-std::optional<JoystickReader::CHAN_MAP>
-JoystickReader::convert_string_to_channel_mapping(const std::string& input) {
-  auto split_into_substrings=OHDUtil::split_into_substrings(input,',');
-  if(split_into_substrings.size()!=N_CHANNELS_RESERVED_FOR_AXES){
-    openhd::log::get_default()->warn("Channel mapping wrong n channels:{}",split_into_substrings.size());
-    return std::nullopt;
-  }
-  CHAN_MAP parsed_as_int{};
-  for(int i=0;i<N_CHANNELS_RESERVED_FOR_AXES;i++){
-    const auto as_int=OHDUtil::string_to_int(split_into_substrings[i]);
-    if(!as_int.has_value())return std::nullopt;
-    parsed_as_int[i]=as_int.value();
-  }
-  if(!validate_channel_mapping(parsed_as_int))return std::nullopt;
-  return parsed_as_int;
-}
-
-bool JoystickReader::validate_channel_mapping(const CHAN_MAP& chan_map) {
-  for(const auto& el:chan_map){ // NOLINT(readability-use-anyofallof)
-    if(el<0 || el>N_CHANNELS_RESERVED_FOR_AXES-1){
-      openhd::log::get_default()->warn("Channel mapping not a valid value{}",el);
-      return false;
-    }
-  }
-  return true;
-}
-
-JoystickReader::CHAN_MAP
-JoystickReader::get_default_channel_mapping() {
-  JoystickReader::CHAN_MAP ret{};
-  for(int i=0;i<N_CHANNELS_RESERVED_FOR_AXES;i++){
-    ret[i]=i;
-  }
-  return ret;
-}
-
-void JoystickReader::update_channel_maping(
-    const JoystickReader::CHAN_MAP& new_chan_map) {
-  std::lock_guard<std::mutex> guard(m_chan_map_mutex);
-  if(!validate_channel_mapping(new_chan_map)){
-    return;
-  }
-  m_chan_map=new_chan_map;
-}
-
-std::optional<int> JoystickReader::get_mapped_axis(int axis_index) {
-  std::lock_guard<std::mutex> guard(m_chan_map_mutex);
-  if(axis_index>=m_chan_map.size()){
-    m_console->warn("Axis {} not mapped",axis_index);
-    return std::nullopt;
-  }
-  return m_chan_map[axis_index];
 }
 
 #endif //OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

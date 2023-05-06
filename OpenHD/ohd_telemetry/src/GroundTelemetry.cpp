@@ -51,8 +51,8 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
           auto msg_for_gcs=rc_channels_override_from_array(OHD_SYS_ID_GROUND,0,channels,0,0);
           send_messages_ground_station_clients({msg_for_gcs});
     },
-        m_gnd_settings->get_settings().rc_over_joystick_update_rate_hz,JoystickReader::get_default_channel_mapping());
-    const auto parsed=JoystickReader::convert_string_to_channel_mapping(
+        m_gnd_settings->get_settings().rc_over_joystick_update_rate_hz,openhd::get_default_channel_mapping());
+    const auto parsed=openhd::convert_string_to_channel_mapping(
         m_gnd_settings->get_settings().rc_channel_mapping);
     if(parsed==std::nullopt){
       m_console->warn("Not a valid channel mapping,using default");
@@ -256,7 +256,7 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
                                                                      c_rc_over_joystick_update_rate_hz}});
     auto c_rc_over_joystick_channel_mapping=[this](std::string,std::string value){
       m_console->debug("Change channel mapping {}",value);
-      const auto parsed=JoystickReader::convert_string_to_channel_mapping(value);
+      const auto parsed=openhd::convert_string_to_channel_mapping(value);
       if(parsed==std::nullopt){
         m_console->warn("Not a valid channel mapping");
         return false;
