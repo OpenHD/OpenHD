@@ -52,6 +52,15 @@ static CHAN_MAP get_default_channel_mapping() {
   return ret;
 }
 
+static CHAN_MAP convert_string_to_channel_mapping_or_default(const std::string& input){
+  auto ret= convert_string_to_channel_mapping(input);
+  if(ret.has_value()){
+    return ret.value();
+  }
+  return get_default_channel_mapping();
+}
+
+
 static std::array<uint16_t,18> remap_channels(const std::array<uint16_t,18>& channels,const CHAN_MAP& chan_map){
   std::array<uint16_t,18> ret{};
   for(int i=0;i<18;i++){
