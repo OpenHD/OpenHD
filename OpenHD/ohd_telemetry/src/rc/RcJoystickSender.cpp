@@ -25,6 +25,7 @@ void RcJoystickSender::send_data_until_terminate() {
     // Otherwise, we just stop sending data, which should result in a failsafe at the FC.
     if(curr.considered_connected){
       // map all the channels before we send them out
+      // mapping might change at any time, and the compute overhead - well, we are not on a microcontroller ;)
       auto curr_mapping=get_current_channel_mapping();
       auto mapped_channels=openhd::remap_channels(curr.values,curr_mapping);
       m_cb(mapped_channels);
