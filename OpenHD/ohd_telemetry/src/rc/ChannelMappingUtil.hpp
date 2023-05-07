@@ -55,9 +55,10 @@ static CHAN_MAP get_default_channel_mapping() {
 static std::array<uint16_t,18> remap_channels(const std::array<uint16_t,18>& channels,const CHAN_MAP& chan_map){
   std::array<uint16_t,18> ret{};
   for(int i=0;i<18;i++){
-    if(i<8){
+    // Better be safe than sorry regarding bounds checking (even though we shouldn't ever be out of bounds)
+    if(i<chan_map.size()){
       const auto channel_to_use=chan_map[i];
-      if(i>=0 && i < channels.size()){
+      if(channel_to_use>=0 && channel_to_use < channels.size()){
         ret[i]=channels[channel_to_use];
       }
     }else{
