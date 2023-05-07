@@ -16,6 +16,7 @@
 #include "openhd_util.h"
 
 /**
+ * Hides away all the (nasty) "SDL Stuff"
  * The Paradigm of this class is similar to how for example external devices
  * are handled in general in OpenHD: If the user says he wants RC joystick
  * control, try to open the joystick and read data, re-connect if anything goes
