@@ -57,6 +57,7 @@ static CHAN_MAP convert_string_to_channel_mapping_or_default(const std::string& 
   if(ret.has_value()){
     return ret.value();
   }
+  openhd::log::get_default()->warn("Invalid channel mapping {}",input);
   return get_default_channel_mapping();
 }
 
