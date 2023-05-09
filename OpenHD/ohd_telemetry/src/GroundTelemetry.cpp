@@ -218,12 +218,12 @@ void GroundTelemetry::remove_external_ground_station_ip(const openhd::ExternalDe
 
 std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
   std::vector<openhd::Setting> ret{};
-  auto c_config_boot_as_air=[](std::string,int value){
-    return openhd::tmp::handle_telemetry_change(value);
-  };
   // and this allows an advanced user to change its air unit to a ground unit
   // only expose this setting if OpenHD uses the file workaround to figure out air or ground.
   if(openhd::tmp::file_air_or_ground_exists()){
+    auto c_config_boot_as_air=[](std::string,int value){
+      return openhd::tmp::handle_telemetry_change(value);
+    };
     ret.push_back(openhd::Setting{"CONFIG_BOOT_AIR",openhd::IntSetting {0,c_config_boot_as_air}});
   }
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
