@@ -16,6 +16,7 @@
 #include "openhd_util.h"
 
 /**
+ * Hides away all the (nasty) "SDL Stuff"
  * The Paradigm of this class is similar to how for example external devices
  * are handled in general in OpenHD: If the user says he wants RC joystick
  * control, try to open the joystick and read data, re-connect if anything goes
@@ -44,20 +45,12 @@ class JoystickReader {
     // the name of the joystick
     std::string joystick_name="unknown";
   };
-  // Channel mapping: just look at the default to understand ;)
-  using CHAN_MAP=std::array<int,N_CHANNELS_RESERVED_FOR_AXES>;
-  explicit JoystickReader(CHAN_MAP chan_map);
+  explicit JoystickReader();
   ~JoystickReader();
   // Get the current "state", thread-safe
   CurrChannelValues get_current_state();
-  // update the channel mapping, thread-safe
-  void update_channel_maping(const CHAN_MAP& new_chan_map);
   // For debugging
   static std::string curr_state_to_string(const CurrChannelValues& curr_channel_values);
-  // (custom) channel mapping - rudimentary, since one can do that just as well on the FC
-  static std::optional<CHAN_MAP> convert_string_to_channel_mapping(const std::string& input);
-  static bool validate_channel_mapping(const CHAN_MAP& chan_map);
-  static std::array<int,N_CHANNELS_RESERVED_FOR_AXES> get_default_channel_mapping();
  private:
   void loop();
   void connect_once_and_read_until_error();
@@ -71,12 +64,9 @@ class JoystickReader {
   std::mutex m_curr_values_mutex;
   CurrChannelValues m_curr_values;
   std::shared_ptr<spdlog::logger> m_console;
-  std::mutex m_chan_map_mutex;
-  CHAN_MAP m_chan_map{};
  private:
   void write_matching_axis(std::array<uint16_t,JoystickReader::N_CHANNELS>& rc_data,uint8_t axis_index,int16_t value);
   static void write_matching_button(std::array<uint16_t,18>&rc_data,uint8_t button,bool up);
-  std::optional<int> get_mapped_axis(int axis_index);
 };
 
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_RC_JOYSTICKREADER_H_

@@ -18,7 +18,7 @@ static constexpr auto UART_CONNECTION_TYPE_DISABLE="";
 struct Settings{
   bool enable_rc_over_joystick=false;
   int rc_over_joystick_update_rate_hz=30;
-  std::string rc_channel_mapping="0,1,2,3,4,5,6,7";
+  std::string rc_channel_mapping="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18";
   // This is for outputting FC mavlink data via serial on the ground station
   std::string gnd_uart_connection_type=UART_CONNECTION_TYPE_DISABLE;
   int gnd_uart_baudrate=115200;
