@@ -232,8 +232,9 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
       if(!openhd::telemetry::ground::valid_joystick_update_rate(value))return false;
       m_gnd_settings->unsafe_get_settings().rc_over_joystick_update_rate_hz=value;
       m_gnd_settings->persist();
-      assert(m_rc_joystick_sender);
-      m_rc_joystick_sender->change_update_rate(value);
+      if(m_rc_joystick_sender){
+        m_rc_joystick_sender->change_update_rate(value);
+      }
       return true;
     };
     ret.push_back(openhd::Setting{"RC_UPDATE_HZ",openhd::IntSetting{static_cast<int>(
@@ -246,9 +247,11 @@ std::vector<openhd::Setting> GroundTelemetry::get_all_settings() {
         m_console->warn("Not a valid channel mapping");
         return false;
       }
-      m_rc_joystick_sender->update_channel_mapping(parsed.value());
       m_gnd_settings->unsafe_get_settings().rc_channel_mapping=value;
       m_gnd_settings->persist();
+      if(m_rc_joystick_sender){
+        m_rc_joystick_sender->update_channel_mapping(parsed.value());
+      }
       return true;
     };
     ret.push_back(openhd::Setting{"RC_CHAN_MAP",openhd::StringSetting {m_gnd_settings->get_settings().rc_channel_mapping,
