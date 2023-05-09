@@ -6,8 +6,10 @@
 
 #include <utility>
 
-RcJoystickSender::RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz,openhd::CHAN_MAP chan_map):
-m_cb(std::move(cb)),m_delay_in_milliseconds(1000/update_rate_hz),m_chan_map(chan_map) {
+RcJoystickSender::RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz,openhd::CHAN_MAP chan_map)
+    : m_cb(std::move(cb)),
+      m_delay_in_milliseconds(1000/update_rate_hz),
+      m_chan_map(chan_map) {
   if(!openhd::validate_channel_mapping(chan_map)){
     openhd::log::get_default()->warn("Invalid channel mapping");
     m_chan_map=openhd::get_default_channel_mapping();
