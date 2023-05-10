@@ -99,6 +99,7 @@ class ActionHandler{
     action_request_bitrate_change_register(nullptr);
     action_wb_link_statistics_register(nullptr);
     action_wb_link_scan_channels_register(nullptr);
+    m_action_disable_wifi_when_armed= nullptr;
   }
   // Allows registering actions when vehicle / FC is armed / disarmed
  public:
@@ -106,9 +107,21 @@ class ActionHandler{
     if(m_is_armed==armed)return;
     m_is_armed=armed;
     openhd::log::get_default()->debug("MAV armed:{}",OHDUtil::yes_or_no(armed));
+    if(m_is_armed){
+      auto tmp=m_action_disable_wifi_when_armed;
+      if(tmp){
+        ACTION_DISABLE_WIFI_WHEN_ARMED cb=*tmp;
+        cb();
+      }
+    }
   }
  private:
   bool m_is_armed=false;
+ public:
+  // this is called once the first "armed==true" message from the FC is received - in which case
+  // we will automatically disable wifi hotspot, if it is enabled.
+  typedef std::function<void()> ACTION_DISABLE_WIFI_WHEN_ARMED;
+  std::shared_ptr<ACTION_DISABLE_WIFI_WHEN_ARMED> m_action_disable_wifi_when_armed =nullptr;
  private:
   // By using shared_ptr to wrap the stored the cb we are semi thread-safe
   std::shared_ptr<ACTION_REQUEST_BITRATE_CHANGE> m_action_request_bitrate_change =nullptr;
