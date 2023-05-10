@@ -214,7 +214,7 @@ void OHDMainComponent::check_msges_for_fc_arming_state(const std::vector<Mavlink
       const auto mode = (MAV_MODE_FLAG)heartbeat.base_mode;
       const bool armed= (mode & MAV_MODE_FLAG_SAFETY_ARMED);
       if(m_opt_action_handler){
-        m_opt_action_handler->update_state(armed);
+        m_opt_action_handler->update_arming_state_if_changed(armed);
       }
     }
   }

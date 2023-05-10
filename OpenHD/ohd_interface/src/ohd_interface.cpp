@@ -121,12 +121,12 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
       m_wifi_hotspot->set_enabled(true);
     }
   }
-  // automatically disable wifi hotspot if FC is armed
+  // automatically disable Wi-Fi hotspot if FC is armed
   if(opt_action_handler && m_wifi_hotspot){
     auto cb=[this](){
-      // FC armed - disable wifi if enabled
+      // FC armed - disable Wi-Fi hotspot if enabled
       if(m_nw_settings.get_settings().wifi_hotspot_enable){
-        m_console->warn("FC Armed, wifi hotspot disabled");
+        m_console->warn("FC Armed, disabling wifi hotspot");
         m_nw_settings.unsafe_get_settings().wifi_hotspot_enable= false;
         m_nw_settings.persist();
         m_wifi_hotspot->set_enabled(false);

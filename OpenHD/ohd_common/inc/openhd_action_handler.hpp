@@ -103,7 +103,7 @@ class ActionHandler{
   }
   // Allows registering actions when vehicle / FC is armed / disarmed
  public:
-  void update_state(bool armed){
+  void update_arming_state_if_changed(bool armed){
     if(m_is_armed==armed)return;
     m_is_armed=armed;
     openhd::log::get_default()->debug("MAV armed:{}",OHDUtil::yes_or_no(armed));
