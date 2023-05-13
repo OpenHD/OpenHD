@@ -34,6 +34,15 @@ static bool check_bitrate_sane(const int bitrateKBits) {
   return true;
 }
 
+// IP cams are a bit different regarding their settings.
+// These just map to corresponding gst rtsp settings
+struct IPCameraSettings{
+  std::string location="rtsp://admin:admin@192.168.2.176:554/stream=0";
+  // Whatever the user wants
+  std::string extraparam_1;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(IPCameraSettings,location,extraparam_1)
+
 // User-selectable camera options
 // These values are settings that can change dynamically at run time
 // (non-deterministic)

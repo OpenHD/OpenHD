@@ -17,7 +17,7 @@ static std::string get_ohd_eth_hotspot_connection_nm_filename(){
   return fmt::format("/etc/NetworkManager/system-connections/{}.nmconnection",OHD_ETHERNET_HOTSPOT_CONNECTION_NAME);
 }
 
-static void delete_existing_hotspot_connection(const std::string& eth_device_name){
+static void delete_existing_hotspot_connection(){
   const auto filename=get_ohd_eth_hotspot_connection_nm_filename();
   if(OHDFilesystemUtil::exists(filename)){
     OHDUtil::run_command("nmcli",{"con","delete", OHD_ETHERNET_HOTSPOT_CONNECTION_NAME});
@@ -38,40 +38,47 @@ static void create_ethernet_hotspot_connection_if_needed(const std::shared_ptr<s
   m_console->debug("end create hotspot connection");
 }
 
-EthernetHotspot::EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string  device)
-    :m_device(std::move(device)),m_external_device_manager(std::move(external_device_manager)) {
-  m_console = openhd::log::create_or_get("wifi_hs");
-  m_settings=std::make_unique<EthernetHotspotSettingsHolder>();
-  m_console->debug("device:[{}], enabled:{}",m_device,m_settings->get_settings().enable);
-  if(m_settings->get_settings().enable){
-    create_ethernet_hotspot_connection_if_needed(m_console, m_device);
-    m_check_connection_thread_stop =false;
-    m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
-  }else{
-    delete_existing_hotspot_connection(device);
-  }
+EthernetHotspot::EthernetHotspot(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager,std::string  device):
+      m_device(std::move(device)),
+      m_external_device_manager(std::move(external_device_manager)) {
+  m_console = openhd::log::create_or_get("eth_hs");
+  m_console->debug("device:[{}]",m_device);
 }
 
 EthernetHotspot::~EthernetHotspot() {
+  disable();
+}
+
+void EthernetHotspot::enable() {
+  m_console->debug("enable ethernet hotspot - begin");
+  create_ethernet_hotspot_connection_if_needed(m_console, m_device);
+  if(m_check_connection_thread!= nullptr){
+    // already running
+    m_console->debug("already running");
+    return;
+  }
+  m_check_connection_thread_stop =false;
+  m_check_connection_thread =std::make_unique<std::thread>([this](){loop_infinite();});
+  m_console->debug("enable ethernet hotspot - end");
+}
+
+void EthernetHotspot::disable() {
+  m_console->debug("disable ethernet hotspot - begin");
+  delete_existing_hotspot_connection();
   m_check_connection_thread_stop=true;
   if(m_check_connection_thread){
     m_check_connection_thread->join();
+    m_check_connection_thread= nullptr;
   }
+  m_console->debug("disable ethernet hotspot - end");
 }
 
-std::vector<openhd::Setting> EthernetHotspot::get_all_settings() {
-  using namespace openhd;
-  std::vector<openhd::Setting> ret{};
-  const auto settings=m_settings->get_settings();
-  auto cb_enable=[this](std::string,int value){
-    if(!validate_yes_or_no(value))return false;
-    m_settings->unsafe_get_settings().enable=value;
-    m_settings->persist();
-    // to apply, requires reboot !!
-    return true;
-  };
-  ret.push_back(openhd::Setting{"I_ETH_HOTSPOT_E",openhd::IntSetting{settings.enable,cb_enable}});
-  return ret;
+void EthernetHotspot::set_enabled(bool enabled) {
+  if(enabled){
+    enable();
+  }else{
+    disable();
+  }
 }
 
 void EthernetHotspot::loop_infinite() {

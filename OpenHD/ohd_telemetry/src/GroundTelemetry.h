@@ -74,6 +74,10 @@ class GroundTelemetry :public MavlinkSystem{
   void send_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages);
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();
+#ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
+  void enable_joystick();
+  void disable_joystick();
+#endif //OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
  private:
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::telemetry::ground::SettingsHolder> m_gnd_settings;
@@ -92,8 +96,7 @@ class GroundTelemetry :public MavlinkSystem{
   std::shared_ptr<openhd::ExternalDeviceManager> m_ext_device_manager;
   //
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND
-  //std::unique_ptr<JoystickReader> m_joystick_reader;
-  std::unique_ptr<RcJoystickSender> m_rc_joystick_sender;
+  std::unique_ptr<RcJoystickSender> m_rc_joystick_sender= nullptr;
 #endif
 };
 

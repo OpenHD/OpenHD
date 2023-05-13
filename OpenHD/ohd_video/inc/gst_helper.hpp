@@ -415,7 +415,7 @@ static std::string createRockchipRecordingPipeline(const int width, const int he
     ss<<" width="<<width;
     ss<<" height="<<height;
   }else if(encoder_params.videoCodec==VideoCodec::H265){
-    ss<<"mpph264enc rc-mode=cbr bps="<<bps;
+    ss<<"mpph265enc rc-mode=cbr bps="<<bps;
     ss<<" width="<<width;
     ss<<" height="<<height;
   }else{
@@ -430,7 +430,7 @@ static std::string createRockchipRecordingPipeline(const int width, const int he
 
 static std::string createRockchipV4L2Pipeline(const int video_dev, const int framerate){
   std::stringstream ss;
-  ss<<"v4l2src device=/dev/video"<<video_dev<<" io-mode=auto do-timestamp=true ! video/x-raw,";
+  ss<<"v4l2src device=/dev/video"<<video_dev<<" io-mode=auto do-timestamp=true ! video/x-raw,format=NV12, ";
   ss<<"framerate="<<framerate<<"/1 ! ";
   return ss.str();
 }
@@ -444,6 +444,20 @@ static std::string createRockchipHDMIStream(
 ) {
   std::stringstream ss;
   ss<<createRockchipV4L2Pipeline(0, videoFormat.framerate);
+  if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval,50});
+  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
+  return ss.str();
+}
+
+static std::string createRockchipCSIStream(
+  bool recording,
+  const int bitrateKBits,
+  const VideoFormat videoFormat,
+  const VideoFormat recordingFormat,
+  const int keyframe_interval
+) {
+  std::stringstream ss;
+  ss<<createRockchipV4L2Pipeline(11, videoFormat.framerate);
   if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval,50});
   ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
   return ss.str();
@@ -657,6 +671,11 @@ static std::string create_input_custom_udp_rtp_port(const CameraSettings& settin
   return ss.str();
 }
 
+// We cannot really rely on the IP camera giving us an rtp stream in the right format / with the right NALU format.
+// Therefore, we parse the rtp data, such that we can then append the normal openhd
+// 1) parse (important: with the config-interval=-1) and
+// 2) rtp packetize
+// data after. E.g. the data is de-packetized, then properly parsed (keyframe(s) added if needed) and then packetized again.
 static std::string create_ip_cam_stream_with_depacketize_and_parse(const std::string& url,const VideoCodec videoCodec){
   std::stringstream ss;
   ss<<createIpCameraStream(url);
