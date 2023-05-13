@@ -33,7 +33,7 @@ build_package() {
   rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
   
   cmake OpenHD/
-  make -j17
+  make -j4
   cp openhd ${PKGDIR}/usr/local/bin/openhd
 
   if [[ "${PACKAGE_ARCH}" == "armhf" ]] && [[ "${OS}" == "raspbian" ]]; then
