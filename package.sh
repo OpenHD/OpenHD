@@ -17,6 +17,11 @@ create_package_directory() {
     cp rpi_camera_configs/* "${PKGDIR}/boot/openhd/rpi_camera_configs/" || exit 1
     cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" || exit 1
   fi
+  if [[ "${OS}" == "embedded" ]]; then
+    mkdir -p "${PKGDIR}/boot/openhd/rpi_camera_configs"
+    cp rpi_camera_configs/* "${PKGDIR}/boot/openhd/rpi_camera_configs/" || exit 1
+    cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" || exit 1
+  fi
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
     mkdir -p "${PKGDIR}/boot/openhd/"
     cp additionalFiles/{openhd.service,ip_camera.service,enable_ip_camera.sh} "${PKGDIR}/etc/systemd/system/" || exit 1
@@ -28,10 +33,10 @@ build_package() {
   rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
   
   cmake OpenHD/
-  make -j4
+  make -j17
   cp openhd ${PKGDIR}/usr/local/bin/openhd
 
-  if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
+  if [[ "${PACKAGE_ARCH}" == "armhf" ]] && [[ "${OS}" == "raspbian" ]]; then
     PLATFORM_PACKAGES="-d libcamera-openhd -d gst-openhd-plugins"
     PLATFORM_CONFIGS=""
   elif [[ "${PACKAGE_ARCH}" != "arm64" ]]; then
