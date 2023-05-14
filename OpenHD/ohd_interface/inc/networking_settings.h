@@ -29,6 +29,11 @@ class NetworkingSettingsHolder:public openhd::PersistentJsonSettings<NetworkingS
   NetworkingSettingsHolder():
     openhd::PersistentJsonSettings<NetworkingSettings>(openhd::get_interface_settings_directory()){
     init();
+    // Extra - the user can enable wifi hotspot by placing a file, for recovery purposes
+    if(OHDFilesystemUtil::exists("/boot/openhd/wifi_hotspot.txt")){
+      unsafe_get_settings().wifi_hotspot_enable= true;
+      persist();
+    }
   }
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
