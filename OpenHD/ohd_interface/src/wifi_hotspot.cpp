@@ -10,11 +10,18 @@
 
 static constexpr auto OHD_WIFI_HOTSPOT_CONNECTION_NAME ="ohd_wfi_hotspot";
 
+static std::string get_ohd_wifi_hotspot_connection_nm_filename(){
+  return fmt::format("/etc/NetworkManager/system-connections/{}.nmconnection",OHD_WIFI_HOTSPOT_CONNECTION_NAME);
+}
+
 // NOTE: This creates the proper NM connection, but does not start it yet.
 static bool create_hotspot_connection(const WiFiCard& card,const bool use_5g_channel){
   // delete any previous connection that might exist. This might fail if no connection of that name exists -
-  // aka an error here can be ignored
-  OHDUtil::run_command("nmcli",{"con","delete", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
+  // aka an error here can be ignored. We re-create it just to be sure, since for example, the wifi card might have been changed
+  // during re-boots.
+  if(OHDFilesystemUtil::exists(get_ohd_wifi_hotspot_connection_nm_filename())){
+    OHDUtil::run_command("nmcli",{"con","delete", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
+  }
   // and create the hotspot one
   OHDUtil::run_command("nmcli",{"con add type wifi ifname",card.device_name,"con-name", OHD_WIFI_HOTSPOT_CONNECTION_NAME,"autoconnect no ssid openhd"});
   OHDUtil::run_command("nmcli",{"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME," 802-11-wireless.mode ap",
@@ -32,7 +39,7 @@ m_wifi_card(std::move(wifiCard))
 {
   m_use_5G_channel=WifiHotspot::get_use_5g_channel(m_wifi_card, wifibroadcast_frequency_space);
   m_console = openhd::log::create_or_get("wifi_hs");
-  // create the connection (no matter if hotspot is enabled) such that we can just enable / disable it whenn the hotspot changes up/down
+  // create the connection (no matter if hotspot is enabled) such that we can just enable / disable it by running connection up / down.
   m_console->debug("begin create hotspot connection");
   create_hotspot_connection(m_wifi_card,m_use_5G_channel);
   m_console->debug("end create hotspot connection");

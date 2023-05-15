@@ -14,9 +14,9 @@
 // Networking related settings, separate from wb_link
 struct NetworkingSettings {
   // WIFI Hotspot, can be enabled / disabled at run time if an extra Wi-Fi hotspot card exists on the system
-  // TODO: Auto warning if wifi hotspot is enabled & drone is armed ?
+  // Automatically disabled when FC is armed
   bool wifi_hotspot_enable=false;
-  // Ethernet hotspot (changes networking,requires reboot)
+  // Ethernet hotspot (changes networking,might require reboot)
   bool ethernet_hotspot_enable=false;
   // passive listening for forwarding without hotspot functionality, can be enabled / disabled at run time.
   bool ethernet_nonhotspot_enable_auto_forwarding=false;
@@ -29,6 +29,11 @@ class NetworkingSettingsHolder:public openhd::PersistentJsonSettings<NetworkingS
   NetworkingSettingsHolder():
     openhd::PersistentJsonSettings<NetworkingSettings>(openhd::get_interface_settings_directory()){
     init();
+    // Extra - the user can enable wifi hotspot by placing a file, for recovery purposes
+    if(OHDFilesystemUtil::exists("/boot/openhd/wifi_hotspot.txt")){
+      unsafe_get_settings().wifi_hotspot_enable= true;
+      persist();
+    }
   }
  private:
   [[nodiscard]] std::string get_unique_filename()const override{

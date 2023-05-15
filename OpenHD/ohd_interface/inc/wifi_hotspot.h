@@ -11,7 +11,6 @@
 
 #include "openhd_settings_imp.hpp"
 #include "wifi_card.h"
-#include "wifi_hotspot_settings.h"
 
 /**
  * Wifi hotspot refers to creating a WiFi Access point on the device we are running on.

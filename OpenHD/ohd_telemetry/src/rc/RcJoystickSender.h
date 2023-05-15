@@ -19,13 +19,14 @@ class RcJoystickSender {
   // If there is something wrong with the joystick / no joystick connected this cb is not called (such that FC can do failsafe)
   typedef std::function<void(std::array<uint16_t,18> channels)> SEND_MESSAGE_CB;
   RcJoystickSender(SEND_MESSAGE_CB cb,int update_rate_hz,openhd::CHAN_MAP chan_map);
+  ~RcJoystickSender();
+  // atomic, can be called from any thread.
   void change_update_rate(int update_rate_hz);
   // update the channel mapping, thread-safe
   void update_channel_mapping(const openhd::CHAN_MAP& new_chan_map);
-  // get the current channel mapping, thread-safe
-  openhd::CHAN_MAP  get_current_channel_mapping();
-  ~RcJoystickSender();
  private:
+  // get the current channel mapping, thread-safe
+  openhd::CHAN_MAP get_current_channel_mapping();
   void send_data_until_terminate();
   std::unique_ptr<JoystickReader> m_joystick_reader;
   std::unique_ptr<std::thread> m_send_data_thread;
