@@ -10,6 +10,9 @@ ExecStart=/bin/sh -c "/boot/openhd/enable_ip_camera.sh"
 
 Restart=always
 RestartSec=1
+# Some cameras might require root, even though it is unnecessary
+User=root
+
 
 [Install]
 WantedBy=multi-user.target
