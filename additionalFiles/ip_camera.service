@@ -1,17 +1,20 @@
+#
+# This service runs the pipeline(s) for custom unmanaged camera.
+# For development / ip cameras only (building the pipelines in openhd directly allows for more advanced features)
+#
+
 [Unit]
 Description=ip_camera
 After=openhd.service
 
 [Service]
-User=root
-
-# IP camera service started by OpenHD if needed (and stopped if needed)
-ExecStart=/bin/sh -c "/boot/openhd/enable_ip_camera.sh"
-
-Restart=always
-RestartSec=1
 # Some cameras might require root, even though it is unnecessary
 User=root
+# This service just executes a .sh script (and everything in it) as root
+ExecStart=/bin/sh -c "/boot/openhd/enable_ip_camera.sh"
+# restart in regular intervals in case anything goes wrong
+Restart=always
+RestartSec=3
 
 
 [Install]
