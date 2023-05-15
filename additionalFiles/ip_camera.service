@@ -1,6 +1,7 @@
 #
 # This service runs the pipeline(s) for custom unmanaged camera.
 # For development / ip cameras only (building the pipelines in openhd directly allows for more advanced features)
+# Note that custom unmanaged camera has to be explicitly enabled in the hardware.config file !
 #
 
 [Unit]
