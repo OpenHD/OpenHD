@@ -15,7 +15,7 @@ static constexpr auto TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT = 4;
 static_assert(TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT != TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT,
 			  "Must be different");
 
-// Where any service can send log messages to, both on air and ground pi.
+// Where any service/thread can send log messages to, both on air and ground pi.
 // Picked up by telemetry service.
 static constexpr auto LOCAL_LOG_MESSAGES_UDP_PORT = 50001;
 
