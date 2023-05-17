@@ -1,5 +1,6 @@
 # NOTE: By default, you do not need to do any camera scripting in OpenHD !
 # Only for advanced users !
+# The custom unmanaged camera service executes this script with root when enabled.
 
 rm -Rf /etc/NetworkManager/system-connections/ohd_ip_eth*
 #ethernet hotspot with DHCP server on 192.168.2.1
