@@ -11,25 +11,54 @@
 # 1) Setup rpi ethernet as dhcpcd provider
 # 2) launch a pipeline streaming data via gstreamer to openhd for transmission
 
-setup_and_stream_ip_cam_openipc(){
-  # 1) dhcpcd provider if it doesn't exist already
+setup_ethernet_cam_hotspot(){
+  #dhcpcd provider if it doesn't exist already
   FILE_NM_CONNECTION = /etc/NetworkManager/system-connections/ohd_ip_eth_hotspot.nmconnection
   if test -f "$FILE_NM_CONNECTION"; then
     echo "ip cam hotspot already exists"
   else
     # create via nmcli
     echo "creating ip cam hotspot"
-    #ethernet hotspot with DHCP server on 192.168.2.1
-    sudo nmcli con add type ethernet con-name "ohd_ip_eth_hotspot" ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
+    #ethernet hotspot with DHCP server on ${LOCALIP}
+    sudo nmcli con add type ethernet con-name "ohd_ip_eth_hotspot" ipv4.method shared ifname eth0 ipv4.addresses ${LOCALIP}/24 gw4 ${GATEWAYIP}
     sudo nmcli con add type ethernet ifname eth0 con-name ohd_ip_eth_hotspot autoconnect no
-    sudo nmcli con modify ohd_ip_eth_hotspot ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
+    sudo nmcli con modify ohd_ip_eth_hotspot ipv4.method shared ifname eth0 ipv4.addresses ${LOCALIP}/24 gw4 ${GATEWAYIP}
   fi
-  # 2) start streaming
+}
+
+setup_and_stream_ip_cam_openipc(){
+  # setup networking for your ip camera
+    LOCALIP=192.168.2.1
+    GATEWAYIP=192.168.2.1
+    setup_ethernet_cam_hotspot
+  # start streaming
   sudo gst-launch-1.0 rtspsrc location= rtsp://admin:admin@192.168.2.176:554/stream=0  latency=0 ! rtph264depay ! h264parse config-interval=-1 ! rtph264pay mtu=1024 ! udpsink port=5500 host=127.0.0.1
 }
 
-# uncomment below for openipc ip cam
+setup_and_stream_ip_cam_siyi_h264(){
+  # setup networking for your ip camera
+    LOCALIP=192.168.144.20
+    GATEWAYIP=192.168.144.25
+    setup_ethernet_cam_hotspot
+  # start streaming
+    sudo gst-launch-1.0 rtspsrc location= rtsp://192.168.144.25:8554/main.264 latency=0 ! rtph264depay ! h264parse config-interval=-1 ! rtph264pay mtu=1024 ! udpsink port=5500 host=127.0.0.1
+}
+
+setup_and_stream_ip_cam_siyi_h265(){
+  # setup networking for your ip camera
+    LOCALIP=192.168.144.20
+    GATEWAYIP=192.168.144.25
+    setup_ethernet_cam_hotspot
+  # start streaming
+    sudo gst-launch-1.0 rtspsrc location= rtsp://192.168.144.25:8554/main.264 latency=0 ! rtph265depay ! h265parse config-interval=-1 ! rtph265pay mtu=1024 ! udpsink port=5500 host=127.0.0.1
+}
+
+
+# uncomment your IP Camera setup below (do not uncomment more than one Setup)
+
 # setup_and_stream_ip_cam_openipc
+# setup_and_stream_ip_cam_siyi_h264
+# setup_and_stream_ip_cam_siyi_h265
 
 echo "Doing nothing"
 sleep 356d
