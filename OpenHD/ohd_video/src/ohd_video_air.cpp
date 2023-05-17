@@ -186,13 +186,11 @@ std::vector<openhd::Setting> OHDVideoAir::get_generic_settings() {
   return ret;
 }
 
-static const auto IPCAM_SERVICE_NAME="ip_camera";
+static const auto CUSTOM_UNMANAGED_CAMERA_SERVICE_NAME="custom_unmanaged_camera";
 
 std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
   auto m_console=openhd::log::get_default();
   const auto config=openhd::load_config();
-  // We (re-start) it if needed
-  OHDUtil::run_command("systemctl",{"stop",IPCAM_SERVICE_NAME});
   // Default camera autodetect - wait for camera(s) to become available, but to not infinitely blcok the boot
   // process, if not enough camera(s) have been found after a given timespan, use dummy camera(s) for them
   if(config.CAMERA_ENABLE_AUTODETECT){
@@ -236,15 +234,15 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
   // Autodetect off
   std::vector<Camera> cameras{};
   std::vector<CameraType> camera_types;
-  bool start_ipcam_service= false;
+  bool start_custom_unamanged_camera_service= false;
   // One cam is always required
   for(int i=0;i<config.CAMERA_N_CAMERAS;i++){
     const auto cam_type_str=i==0 ? config.CAMERA_CAMERA0_TYPE : config.CAMERA_CAMERA1_TYPE;
     const auto cam_type= camera_type_from_string(cam_type_str);
     camera_types.push_back(cam_type);
-    // IP Cam is also of type CUSTOM_UNMANAGED_CAMERA, but additionally we start the IP cam service
-    if(cam_type==CameraType::CUSTOM_UNMANAGED_CAMERA && OHDUtil::contains(cam_type_str,"IP")){
-      start_ipcam_service= true;
+    // check if we need to start the "whatever the user wants" service
+    if(cam_type==CameraType::CUSTOM_UNMANAGED_CAMERA){
+      start_custom_unamanged_camera_service= true;
     }
   }
   // In general, for cameras that support autodetection, if the user manually specified he wants one of them,
@@ -300,8 +298,8 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
     openhd::log::get_default()->warn("autodetect off but no cameras. Fix file and restart openhd");
     OHDUtil::keep_alive_until_sigterm();
   }
-  if(start_ipcam_service){
-    OHDUtil::run_command("systemctl",{"start",IPCAM_SERVICE_NAME});
+  if(start_custom_unamanged_camera_service){
+    OHDUtil::run_command("systemctl",{"start",CUSTOM_UNMANAGED_CAMERA_SERVICE_NAME});
   }
   return cameras;
 }
