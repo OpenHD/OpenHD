@@ -19,8 +19,8 @@ create_package_directory() {
   fi
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
     mkdir -p "${PKGDIR}/boot/openhd/"
-    cp additionalFiles/{openhd.service,ip_camera.service,enable_ip_camera.sh} "${PKGDIR}/etc/systemd/system/" || exit 1
-    cp additionalFiles/enable_ip_camera.sh ${PKGDIR}/boot/openhd/ || exit 1
+    cp systemd/{openhd.service,custom_unmanaged_camera.service} "${PKGDIR}/etc/systemd/system/" || exit 1
+    cp scripts/custom_unmanaged_camera.sh ${PKGDIR}/boot/openhd/scripts/ || exit 1
   fi
 }
 
