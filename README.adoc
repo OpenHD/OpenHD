@@ -68,14 +68,14 @@ image:https://img.shields.io/opencollective/sponsors/openhd?label=%5Bopencollect
 image:https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=flat-square[Cloudsmith, link="https://cloudsmith.io"]
 image:https://img.shields.io/badge/Supported%20by-DigitalOcean-blue?logo=digitalocean&style=flat-square[DigitalOcean, link="https://www.digitalocean.com?utm_medium=opensource&utm_source=OpenHD"]
  
-++++
-</div>
-++++
-
 ---
 
 // Table of Contents
 toc::[]
+
+++++
+</div>
+++++
 
 == Welcome to OpenHD!
 
