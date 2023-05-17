@@ -1,1 +1,1 @@
-Copied into /boot/openhd
+Copied into /boot/openhd/scripts
