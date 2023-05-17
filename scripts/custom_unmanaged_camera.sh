@@ -2,6 +2,9 @@
 # Only for advanced users !
 # The custom unmanaged camera service executes this script with root when enabled.
 
+# For reference, here again: To use this functionality, set either primary or secondary cam to custom unmanaged -
+# after that, you can pipe rtp h264(h265,mjpeg) data to localhost::5600 / localhost:5601 via gstreamer pipeline(s)
+
 rm -Rf /etc/NetworkManager/system-connections/ohd_ip_eth*
 #ethernet hotspot with DHCP server on 192.168.2.1
 sudo nmcli con add type ethernet con-name "ohd_ip_eth_hotspot" ipv4.method shared ifname eth0 ipv4.addresses 192.168.2.1/24 gw4 192.168.2.1
