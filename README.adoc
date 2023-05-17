@@ -53,42 +53,24 @@ image:wiki-content/Open.HD Logo Splashscreen/Plain_OpenHD_Logo.jpg[OpenHD Logo]
 // Badges
 ++++
 <div align="center">
-
-<a href="https://t.me/OpenHD_User">
-    <img src="https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&amp;style=flat-square" alt="Telegram" title="Telegram">
-</a>
-<a href="https://discord.gg/NRRn5ugrxH">
-    <img src="https://img.shields.io/badge/Discord-Join_us!-informational?logo=Discord&amp;style=flat-square" alt="Discord" title="Discord">
-</a>
-<a href="https://www.facebook.com/groups/open.hd/">
-    <img src="https://img.shields.io/badge/Facebook-Join_us!-informational?logo=Facebook&amp;style=flat-square" alt="Facebook" title="Facebook">
-</a>
-<img src="https://img.shields.io/github/commit-activity/m/OpenHD/OpenHD?style=flat-square" alt="GitHub commit activity" title="GitHub commit activity">
-<a href="https://github.com/OpenHD/OpenHD/issues">
-    <img src="https://img.shields.io/github/issues-raw/OpenHD/OpenHD?style=flat-square" alt="GitHub issues" title="GitHub issues">
-</a>
-<img src="https://img.shields.io/github/downloads/OpenHD/OpenHD/total?style=flat-square" alt="GitHub All Releases" title="GitHub All Releases">
-<img src="https://img.shields.io/github/repo-size/OpenHD/OpenHD?style=flat-square" alt="GitHub repo size" title="GitHub repo size">
-<a href="LICENSE">
-    <img src="https://img.shields.io/github/license/OpenHD/OpenHD?style=flat-square" alt="GitHub License" title="GitHub License">
-</a>
-<a href="https://opencollective.com/openhd">
-    <img src="https://img.shields.io/opencollective/tier/openhd/18297?label=%5Bopencollective%5D%20mothly%20bakers&amp;style=flat-square" alt="Open Collective members by tier^" title="Open Collective members by tier^">
-</a>
-<a href="https://opencollective.com/openhd">
-    <img src="https://img.shields.io/opencollective/sponsors/openhd?label=%5Bopencollective%5D%20sponsors&amp;style=flat-square" alt="Open Collective sponsors^" title="Open Collective sponsors^">
-</a>
-<a href="https://cloudsmith.io">
-    <img src="https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&amp;style=flat-square" alt="Cloudsmith" title="Cloudsmith">
-</a>
-<a href="https://www.digitalocean.com?utm_medium=opensource&amp;utm_source=OpenHD">
-    <img src="https://img.shields.io/badge/Supported%20by-DigitalOcean-blue?logo=digitalocean&amp;style=flat-square" alt="DigitalOcean" title="DigitalOcean">
-</a>
-
-</div>
-
 ++++
 
+image:https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&style=flat-square[Telegram, link="https://t.me/OpenHD_User"]
+image:https://img.shields.io/badge/Discord-Join_us!-informational?logo=Discord&style=flat-square[Discord, link="https://discord.gg/NRRn5ugrxH"]
+image:https://img.shields.io/badge/Facebook-Join_us!-informational?logo=Facebook&style=flat-square[Facebook, link="https://www.facebook.com/groups/open.hd/"]
+image:https://img.shields.io/github/commit-activity/m/OpenHD/OpenHD?style=flat-square[GitHub commit activity, link=""]
+image:https://img.shields.io/github/issues-raw/OpenHD/OpenHD?style=flat-square[GitHub issues, link="https://github.com/OpenHD/OpenHD/issues"]
+image:https://img.shields.io/github/downloads/OpenHD/OpenHD/total?style=flat-square[GitHub All Releases, link=""]
+image:https://img.shields.io/github/repo-size/OpenHD/OpenHD?style=flat-square[GitHub repo size, link=""]
+image:https://img.shields.io/github/license/OpenHD/OpenHD?style=flat-square[GitHub License, link="LICENSE"]
+image:https://img.shields.io/opencollective/tier/openhd/18297?label=%5Bopencollective%5D%20monthly%20backers&style=flat-square[Open Collective members by tier^, link="https://opencollective.com/openhd"]
+image:https://img.shields.io/opencollective/sponsors/openhd?label=%5Bopencollective%5D%20sponsors&style=flat-square[Open Collective sponsors^, link="https://opencollective.com/openhd"]
+image:https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=flat-square[Cloudsmith, link="https://cloudsmith.io"]
+image:https://img.shields.io/badge/Supported%20by-DigitalOcean-blue?logo=digitalocean&style=flat-square[DigitalOcean, link="https://www.digitalocean.com?utm_medium=opensource&utm_source=OpenHD"]
+ 
+++++
+</div>
+++++
 
 ---
 
