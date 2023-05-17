@@ -1,4 +1,6 @@
-// SETTINGS \\
+//***********************************************
+//***************** SETTINGS ********************
+//***********************************************
 
 :doctype: book
 :use-link-attrs:
@@ -30,7 +32,9 @@ endif::[]
 :sectanchors:
 :numbered:
 
-// SETTINGS END \\
+
+//************* END OF SETTINGS ******************
+//************************************************
 
 // Variables \\
 :cloudsmith: link:https://cloudsmith.com[Cloudsmith^]
