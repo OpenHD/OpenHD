@@ -1,4 +1,5 @@
-#IP Camera Setup
+# NOTE: By default, you do not need to do any camera scripting in OpenHD !
+# Only for advanced users !
 
 rm -Rf /etc/NetworkManager/system-connections/ohd_ip_eth*
 #ethernet hotspot with DHCP server on 192.168.2.1
