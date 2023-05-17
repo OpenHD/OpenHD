@@ -12,17 +12,22 @@ VERSION="2.3-evo-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 create_package_directory() {
   rm -rf "${PKGDIR}"
   mkdir -p "${PKGDIR}"/{usr/local/bin,tmp,settings,etc/systemd/system}
+  # rpi only - copy the camera config files
   if [[ "${OS}" == "raspbian" ]]; then
     mkdir -p "${PKGDIR}/boot/openhd/rpi_camera_configs"
     cp rpi_camera_configs/* "${PKGDIR}/boot/openhd/rpi_camera_configs/" || exit 1
-    cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" || exit 1
   fi
+  # We do not copy the openhd service for x86, since there we have launcher on the desktop
+  # (Otherwise, we always copy it)
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
-    mkdir -p "${PKGDIR}/boot/openhd/"
-    mkdir -p "${PKGDIR}/boot/openhd/scripts/"
-    cp systemd/{openhd.service,custom_unmanaged_camera.service} "${PKGDIR}/etc/systemd/system/" || exit 1
-    cp scripts/custom_unmanaged_camera.sh ${PKGDIR}/boot/openhd/scripts/ || exit 1
+    cp systemd/{openhd.service} "${PKGDIR}/etc/systemd/system/" || exit 1
   fi
+  # always - copy the hardware.config file, the custom unmanaged camera service and the .sh file for it
+  mkdir -p "${PKGDIR}/boot/openhd/"
+  cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" || exit 1
+  mkdir -p "${PKGDIR}/boot/openhd/scripts/"
+  cp scripts/custom_unmanaged_camera.sh ${PKGDIR}/boot/openhd/scripts/ || exit 1
+  cp systemd/{custom_unmanaged_camera.service} "${PKGDIR}/etc/systemd/system/" || exit 1
 }
 
 build_package() {
