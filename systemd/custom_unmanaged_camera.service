@@ -5,7 +5,7 @@
 #
 
 [Unit]
-Description=ip_camera
+Description=custom_unmanaged_camera_service
 After=openhd.service
 
 [Service]
