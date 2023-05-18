@@ -27,7 +27,7 @@ create_package_directory() {
   cp OpenHD/ohd_common/config/hardware.config "${PKGDIR}/boot/openhd/hardware.config" || exit 1
   mkdir -p "${PKGDIR}/boot/openhd/scripts/"
   cp scripts/custom_unmanaged_camera.sh ${PKGDIR}/boot/openhd/scripts/ || exit 1
-  cp systemd/{custom_unmanaged_camera.service} "${PKGDIR}/etc/systemd/system/" || exit 1
+  cp systemd/custom_unmanaged_camera.service "${PKGDIR}/etc/systemd/system/custom_unmanaged_camera.service" || exit 1
 }
 
 build_package() {
