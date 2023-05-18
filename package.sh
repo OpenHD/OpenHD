@@ -20,7 +20,7 @@ create_package_directory() {
   # We do not copy the openhd service for x86, since there we have launcher on the desktop
   # (Otherwise, we always copy it)
   if [[ "${PACKAGE_ARCH}" != "x86_64" ]]; then
-    cp systemd/{openhd.service} "${PKGDIR}/etc/systemd/system/" || exit 1
+    cp systemd/openhd.service "${PKGDIR}/etc/systemd/system/openhd.service" || exit 1
   fi
   # always - copy the hardware.config file, the custom unmanaged camera service and the .sh file for it
   mkdir -p "${PKGDIR}/boot/openhd/"
