@@ -28,29 +28,41 @@ setup_ethernet_cam_hotspot(){
 
 setup_and_stream_ip_cam_openipc(){
   # setup networking for your ip camera
-    LOCALIP=192.168.2.1
-    GATEWAYIP=192.168.2.1
-    setup_ethernet_cam_hotspot
-  # start streaming
-  sudo gst-launch-1.0 rtspsrc location= rtsp://admin:admin@192.168.2.176:554/stream=0  latency=0 ! rtph264depay ! h264parse config-interval=-1 ! rtph264pay mtu=1024 ! udpsink port=5500 host=127.0.0.1
+  LOCALIP=192.168.2.1
+  GATEWAYIP=192.168.2.1
+  setup_ethernet_cam_hotspot
+  # start streaming, restart in case things go wrong (or the cam might need some time before it is ready)
+  while true
+  do
+    gst-launch-1.0 rtspsrc location= rtsp://admin:admin@192.168.2.176:554/stream=0  latency=0 ! rtph264depay ! h264parse config-interval=-1 ! rtph264pay mtu=1024 ! udpsink port=5500 host=127.0.0.1
+    sleep 5s # don't peg the cpu here, re-launching the pipeline
+  done
 }
 
 setup_and_stream_ip_cam_siyi_h264(){
   # setup networking for your ip camera
-    LOCALIP=192.168.144.20
-    GATEWAYIP=192.168.144.25
-    setup_ethernet_cam_hotspot
-  # start streaming
-    sudo gst-launch-1.0 rtspsrc location= rtsp://192.168.144.25:8554/main.264 latency=0 ! rtph264depay ! h264parse config-interval=-1 ! rtph264pay mtu=1024 ! udpsink port=5500 host=127.0.0.1
+  LOCALIP=192.168.144.20
+  GATEWAYIP=192.168.144.25
+  setup_ethernet_cam_hotspot
+  # start streaming, restart in case things go wrong (or the cam might need some time before it is ready)
+  while true
+  do
+    gst-launch-1.0 rtspsrc location= rtsp://192.168.144.25:8554/main.264 latency=0 ! rtph264depay ! h264parse config-interval=-1 ! rtph264pay mtu=1024 ! udpsink port=5500 host=127.0.0.1
+    sleep 5s # don't peg the cpu here, re-launching the pipeline
+  done
 }
 
 setup_and_stream_ip_cam_siyi_h265(){
   # setup networking for your ip camera
-    LOCALIP=192.168.144.20
-    GATEWAYIP=192.168.144.25
-    setup_ethernet_cam_hotspot
-  # start streaming
-    sudo gst-launch-1.0 rtspsrc location= rtsp://192.168.144.25:8554/main.264 latency=0 ! rtph265depay ! h265parse config-interval=-1 ! rtph265pay mtu=1024 ! udpsink port=5500 host=127.0.0.1
+  LOCALIP=192.168.144.20
+  GATEWAYIP=192.168.144.25
+  setup_ethernet_cam_hotspot
+  # start streaming, restart in case things go wrong (or the cam might need some time before it is ready)
+  while true
+  do
+    gst-launch-1.0 rtspsrc location= rtsp://192.168.144.25:8554/main.264 latency=0 ! rtph265depay ! h265parse config-interval=-1 ! rtph265pay mtu=1024 ! udpsink port=5500 host=127.0.0.1
+    sleep 5s # don't peg the cpu here, re-launching the pipeline
+  done
 }
 
 
