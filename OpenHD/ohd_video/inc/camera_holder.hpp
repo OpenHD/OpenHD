@@ -144,6 +144,9 @@ class CameraHolder:
       };
       ret.push_back(openhd::Setting{"V_BRIGHTNESS",openhd::IntSetting{get_settings().brightness_percentage,c_brightness}});
     }
+    if(m_camera.supports_sharpness()){
+      // TODO
+    }
     if(m_camera.supports_iso()){
       auto c_iso=[this](std::string,int value) {
         return set_rpi_rpicamsrc_iso(value);

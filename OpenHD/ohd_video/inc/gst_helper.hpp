@@ -257,6 +257,10 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   if(settings.vertical_flip){
     ss<<"vflip=1 ";
   }
+  if(openhd::validate_rpi_brightness(settings.brightness_percentage) && settings.brightness_percentage!=50){
+    float brightness_minus1_to_1=OHDUtil::map_int_percentage_to_minus1_to_1(settings.brightness_percentage);
+    ss<<fmt::format("brightness={}",brightness_minus1_to_1);
+  }
   ss << " ! ";
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     // First we set the caps filter(s) on libcamerasrc, this way we control the format (output by ISP), w,h and fps

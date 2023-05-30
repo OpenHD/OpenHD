@@ -134,7 +134,10 @@ struct Camera {
     return type==CameraType::RPI_CSI_MMAL;
   }
   bool supports_brightness()const{
-    return type==CameraType::RPI_CSI_MMAL;
+    return type==CameraType::RPI_CSI_MMAL || type==CameraType::RPI_CSI_LIBCAMERA; // requires openhd libcamera
+  }
+  bool supports_sharpness()const{
+    return type==CameraType::RPI_CSI_MMAL || type==CameraType::RPI_CSI_LIBCAMERA; // requires openhd libcamera
   }
   bool supports_iso()const{
     return type==CameraType::RPI_CSI_MMAL;
