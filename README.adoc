@@ -50,14 +50,14 @@ endif::[]
 :wiki: link:https://openhd.gitbook.io/open-hd/[Wiki^]
 
 // === BEGIN OF CONTENT === \\
+++++
+<div align="center">
+++++
 
 // Logo
 image:wiki-content/Open.HD Logo Splashscreen/Plain_OpenHD_Logo.jpg[OpenHD Logo]
 
 // Badges
-++++
-<div align="center">
-++++
 
 :telegram_badge: https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&style=flat-square
 :discord_badge: https://img.shields.io/badge/Discord-Join_us!-informational?logo=Discord&style=flat-square
