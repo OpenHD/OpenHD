@@ -245,7 +245,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   std::stringstream ss;
   // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
   const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
-  ss << fmt::format("libcamerasrc camera-name={}",
+  ss << fmt::format("libcamerasrc camera-name={} ",
                       camera_name);
   // NOTE: those options require openhd/arducam lbcamera !!
   // We make sure not to write them out explicitly when default(s) are still in use
