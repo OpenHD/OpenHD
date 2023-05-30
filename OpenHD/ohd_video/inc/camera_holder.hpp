@@ -81,7 +81,9 @@ class CameraHolder:
         return set_mjpeg_quality_percent(value);
       };
       ret.push_back(openhd::Setting{"V_BITRATE_MBITS",openhd::IntSetting{static_cast<int>(get_settings().h26x_bitrate_kbits / 1000),c_bitrate}});
-      ret.push_back(openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}});
+      if(get_settings().streamed_video_format.videoCodec==VideoCodec::MJPEG){
+        ret.push_back(openhd::Setting{"V_MJPEG_QUALITY",openhd::IntSetting{get_settings().mjpeg_quality_percent,c_mjpeg_quality_percent}});
+      }
     }
     if(m_camera.supports_changing_format()){
       auto c_width_height_framerate=[this](std::string,std::string value){
