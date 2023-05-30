@@ -257,5 +257,6 @@ float OHDUtil::map_int_percentage_to_minus1_to_1(int percentage) {
   if(percentage==0)return -1;
   if(percentage==50) return 0;
   if(percentage==100)return 1;
-  return 0;
+  float mapped=static_cast<float>(percentage)*0.02f-1.0f;
+  return mapped;
 }
