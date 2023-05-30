@@ -122,10 +122,10 @@ struct Camera {
     return !not_supported;
   }
   [[nodiscard]] bool supports_rotation()const{
-    return type==CameraType::RPI_CSI_MMAL;
+    return type==CameraType::RPI_CSI_MMAL || type==CameraType::RPI_CSI_LIBCAMERA; // requires openhd libcamera
   }
   [[nodiscard]] bool supports_hflip_vflip()const{
-    return type==CameraType::RPI_CSI_MMAL;
+    return type==CameraType::RPI_CSI_MMAL || type==CameraType::RPI_CSI_LIBCAMERA; // requires openhd libcamera
   }
   [[nodiscard]] bool supports_awb()const{
     return type==CameraType::RPI_CSI_MMAL;
