@@ -111,7 +111,7 @@ struct CameraSettings {
   // Default 0 (average)
   int rpi_rpicamsrc_metering_mode=0;
   //
-  int rpi_sharpness=0;
+  int rpi_sharpness=0; // libcamera, 1.0 means default
   // Depending on the cam type, openhd uses hw-accelerated encoding whenever possible.
   // However, in some cases (e.g. when using a USB camera that outputs raw and h264, but the hw encoder of the cam is bad)
   // or for experimenting (e.g. when using libcamera / rpicamsrc and RPI4) one might prefer to use SW encode.
