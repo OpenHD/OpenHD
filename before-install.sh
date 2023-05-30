@@ -6,4 +6,3 @@ rm -Rf /boot/openhd/rpi_camera_configs/*
 mv /boot/openhd/scripts/custom_unmanaged_camera.sh /boot/openhd/scripts/custom_unmanaged_camera_old.sh
 # NOTE: Updating overwrites the .config file and also the service file
 rm -rf /boot/openhd/hardware.config
-rm -rf /boot/openhd/enable_ip_camera.sh
