@@ -142,6 +142,10 @@ std::string vec_as_string(const std::vector<T> &v);
 
 std::string str_vec_as_string(const std::vector<std::string> &v);
 
+// maps [0,100] to [-1.0,1.0] with 50% == 0.0
+// TODO
+float map_int_percentage_to_minus1_to_1(int percentage);
+
 }
 
 #endif
