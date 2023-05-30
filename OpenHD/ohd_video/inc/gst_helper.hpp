@@ -248,7 +248,8 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   ss << fmt::format("libcamerasrc camera-name={}",
                       camera_name);
   // NOTE: those options require openhd/arducam lbcamera !!
-  if(openhd::validate_camera_rotation(settings.camera_rotation_degree)){
+  // We make sure not to write them out explicitly when default(s) are still in use
+  if(openhd::validate_camera_rotation(settings.camera_rotation_degree) && settings.camera_rotation_degree!=0){
     ss<<"rotation="<<settings.camera_rotation_degree<<" ";
   }
   if(settings.horizontal_flip){
