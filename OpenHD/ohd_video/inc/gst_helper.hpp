@@ -249,6 +249,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
                       camera_name);
   // NOTE: those options require openhd/arducam lbcamera !!
   // We make sure not to write them out explicitly when default(s) are still in use
+  // openhd-libcamera specific options begin
   if(openhd::validate_camera_rotation(settings.camera_rotation_degree) && settings.camera_rotation_degree!=0){
     ss<<"rotation="<<settings.camera_rotation_degree<<" ";
   }
@@ -262,6 +263,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     float brightness_minus1_to_1=OHDUtil::map_int_percentage_to_minus1_to_1(settings.brightness_percentage);
     ss<<fmt::format("brightness={} ",brightness_minus1_to_1);
   }
+  // openhd-libcamera specific options end
   ss << " ! ";
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
     // First we set the caps filter(s) on libcamerasrc, this way we control the format (output by ISP), w,h and fps
