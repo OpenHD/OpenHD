@@ -161,6 +161,12 @@ class CameraHolder:
       };
       ret.push_back(openhd::Setting{"V_METERING_MODE",openhd::IntSetting{get_settings().rpi_rpicamsrc_metering_mode,cb}});
     }
+    if(m_camera.supports_rpi_libcamera_denoise_index()){
+      auto cb=[this](std::string,int value) {
+        return set_rpi_libcamera_denoise_index(value);
+      };
+      ret.push_back(openhd::Setting{"V_DENOISE_INDEX",openhd::IntSetting{get_settings().rpi_libcamera_denoise_index,cb}});
+    }
     return ret;
   }
   bool set_enable_streaming(int enable){
@@ -285,6 +291,12 @@ class CameraHolder:
     if(!openhd::validate_rpi_rpicamsrc_metering_mode(value)) return false;
     unsafe_get_settings().rpi_rpicamsrc_metering_mode=value;
     persist();
+    return true;
+  }
+  bool set_rpi_libcamera_denoise_index(int value){
+    if(!openhd::validate_rpi_libcamera_doenise_index(value))return false;
+    unsafe_get_settings().rpi_libcamera_denoise_index=value;
+    persist(true);
     return true;
   }
   bool set_ip_cam_url(std::string value){

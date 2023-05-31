@@ -97,6 +97,10 @@ static bool validate_rpi_rpicamsrc_metering_mode(int value){
   return value>=0 && value<=3;
 }
 
+static bool validate_rpi_libcamera_doenise_index(int value){
+  return value>=0 && value<=4;
+}
+
 
 static bool validate_mjpeg_quality_percent(int value){
   const bool ret=value<=100 && value>=1;
