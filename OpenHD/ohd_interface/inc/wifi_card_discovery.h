@@ -28,6 +28,9 @@ std::optional<WiFiCard> process_card(const std::string &interface_name);
 // discover all connected wifi cards and their capabilities
 std::vector<WiFiCard> discover_connected_wifi_cards();
 
+// Calculate how many cards support injection
+int n_cards_supporting_injection(const std::vector<WiFiCard>& cards);
+
 // Return true if any of the given wifi cards supports injection in monitor mode
 bool any_wifi_card_supporting_injection(const std::vector<WiFiCard>& cards);
 
