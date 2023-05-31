@@ -263,6 +263,9 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
     float brightness_minus1_to_1=OHDUtil::map_int_percentage_to_minus1_to_1(settings.brightness_percentage);
     ss<<fmt::format("brightness={} ",brightness_minus1_to_1);
   }
+  if(openhd::validate_rpi_libcamera_doenise_index(settings.rpi_libcamera_denoise_index) && settings.rpi_libcamera_denoise_index!=0){
+    ss<<fmt::format("denoise={} ",settings.rpi_libcamera_denoise_index);
+  }
   // openhd-libcamera specific options end
   ss << " ! ";
   if (settings.streamed_video_format.videoCodec == VideoCodec::H264) {
