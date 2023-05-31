@@ -50,27 +50,40 @@ endif::[]
 :wiki: link:https://openhd.gitbook.io/open-hd/[Wiki^]
 
 // === BEGIN OF CONTENT === \\
+++++
+<div align="center">
+++++
 
 // Logo
 image:wiki-content/Open.HD Logo Splashscreen/Plain_OpenHD_Logo.jpg[OpenHD Logo]
 
 // Badges
-++++
-<div align="center">
-++++
 
-image:https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&style=flat-square[Telegram, link="https://t.me/OpenHD_User"]
-image:https://img.shields.io/badge/Discord-Join_us!-informational?logo=Discord&style=flat-square[Discord, link="https://discord.gg/NRRn5ugrxH"]
-image:https://img.shields.io/badge/Facebook-Join_us!-informational?logo=Facebook&style=flat-square[Facebook, link="https://www.facebook.com/groups/open.hd/"]
-image:https://img.shields.io/github/commit-activity/m/OpenHD/OpenHD?style=flat-square[GitHub commit activity, link=""]
-image:https://img.shields.io/github/issues-raw/OpenHD/OpenHD?style=flat-square[GitHub issues, link="https://github.com/OpenHD/OpenHD/issues"]
-image:https://img.shields.io/github/downloads/OpenHD/OpenHD/total?style=flat-square[GitHub All Releases, link=""]
-image:https://img.shields.io/github/repo-size/OpenHD/OpenHD?style=flat-square[GitHub repo size, link=""]
-image:https://img.shields.io/github/license/OpenHD/OpenHD?style=flat-square[GitHub License, link="LICENSE"]
-image:https://img.shields.io/opencollective/tier/openhd/18297?label=%5Bopencollective%5D%20monthly%20backers&style=flat-square[Open Collective members by tier^, link="https://opencollective.com/openhd"]
-image:https://img.shields.io/opencollective/sponsors/openhd?label=%5Bopencollective%5D%20sponsors&style=flat-square[Open Collective sponsors^, link="https://opencollective.com/openhd"]
-image:https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=flat-square[Cloudsmith, link="https://cloudsmith.io"]
-image:https://img.shields.io/badge/Supported%20by-DigitalOcean-blue?logo=digitalocean&style=flat-square[DigitalOcean, link="https://www.digitalocean.com?utm_medium=opensource&utm_source=OpenHD"]
+:telegram_badge: https://img.shields.io/badge/Telegram-Join_us!-informational?logo=Telegram&style=flat-square
+:discord_badge: https://img.shields.io/badge/Discord-Join_us!-informational?logo=Discord&style=flat-square
+:facebook_badge: https://img.shields.io/badge/Facebook-Join_us!-informational?logo=Facebook&style=flat-square
+:github_commit_activity_badge: https://img.shields.io/github/commit-activity/m/OpenHD/OpenHD?style=flat-square
+:github_issues_badge: https://img.shields.io/github/issues-raw/OpenHD/OpenHD?style=flat-square
+:github_releases_badge: https://img.shields.io/github/downloads/OpenHD/OpenHD/total?style=flat-square
+:github_repo_size_badge: https://img.shields.io/github/repo-size/OpenHD/OpenHD?style=flat-square
+:github_license_badge: https://img.shields.io/github/license/OpenHD/OpenHD?style=flat-square
+:opencollective_members_badge: https://img.shields.io/opencollective/tier/openhd/18297?label=%5Bopencollective%5D%20monthly%20backers&style=flat-square
+:opencollective_sponsors_badge: https://img.shields.io/opencollective/sponsors/openhd?label=%5Bopencollective%5D%20sponsors&style=flat-square
+:cloudsmith_badge: https://img.shields.io/badge/OSS%20hosting%20by-cloudsmith-blue?logo=cloudsmith&style=flat-square
+:digitalocean_badge: https://img.shields.io/badge/Supported%20by-DigitalOcean-blue?logo=digitalocean&style=flat-square
+
+image:{telegram_badge}[Telegram, link="https://t.me/OpenHD_User"]
+image:{discord_badge}[Discord, link="https://discord.gg/NRRn5ugrxH"]
+image:{facebook_badge}[Facebook, link="https://www.facebook.com/groups/open.hd/"]
+image:{github_commit_activity_badge}[GitHub commit activity, link=""]
+image:{github_issues_badge}[GitHub issues, link="https://github.com/OpenHD/OpenHD/issues"]
+image:{github_releases_badge}[GitHub All Releases, link=""]
+image:{github_repo_size_badge}[GitHub repo size, link=""]
+image:{github_license_badge}[GitHub License, link="LICENSE"]
+image:{opencollective_members_badge}[Open Collective members by tier^, link="https://opencollective.com/openhd"]
+image:{opencollective_sponsors_badge}[Open Collective sponsors^, link="https://opencollective.com/openhd"]
+image:{cloudsmith_badge}[Cloudsmith, link="https://cloudsmith.io"]
+image:{digitalocean_badge}[DigitalOcean, link="https://www.digitalocean.com?utm_medium=opensource&utm_source=OpenHD"]
  
 ---
 
