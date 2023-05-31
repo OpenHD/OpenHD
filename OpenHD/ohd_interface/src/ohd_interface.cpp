@@ -42,7 +42,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
           break ;
         }
         const auto elapsed = std::chrono::steady_clock::now() - begin;
-        const auto message=fmt::format("Waiting for WB card(s), Found:{}",n_wifibroadcast_capable_cards);
+        const auto message=fmt::format("Waiting for WB capable card(s), Found:{}",n_wifibroadcast_capable_cards);
         if (elapsed > std::chrono::seconds(3)) {
           m_console->warn(message);
         } else {
