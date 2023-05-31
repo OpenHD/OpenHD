@@ -183,9 +183,11 @@ int DWifiCards::n_cards_supporting_injection(
     const std::vector<WiFiCard>& cards) {
   int ret=0;
   for(const auto& card:cards){
-    if(card.supports_injection)ret++;
+    if(card.supports_injection){
+      ret++;
+    }
   }
-  return false;
+  return ret;
 }
 
 bool DWifiCards::any_wifi_card_supporting_injection(const std::vector<WiFiCard>& cards) {
