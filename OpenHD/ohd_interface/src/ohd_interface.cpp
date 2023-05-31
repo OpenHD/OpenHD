@@ -53,11 +53,18 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
         // after 10 seconds, we are happy with a card that only does monitor mode, aka is not known for injection,
         // or no card at all
         if (elapsed > std::chrono::seconds(10)) {
-          if (DWifiCards::any_wifi_card_supporting_monitor_mode(connected_cards)) {
-            m_console->warn("Using card without injection capabilities");
-          }else{
-            m_console->warn("NO WB CARD FOUND !!!!");
+          // We only found 1 fully wb capable card
+          if(DWifiCards::any_wifi_card_supporting_injection(connected_cards)){
+            m_console->warn("Using {} WB cards",DWifiCards::n_cards_supporting_injection(connected_cards));
+            break ;
           }
+          if (DWifiCards::any_wifi_card_supporting_monitor_mode(connected_cards)) {
+            // we only found a not fully wb capable card, but better than nothing
+            m_console->warn("Using card without injection capabilities");
+            break ;
+          }
+          // continue with reduced functionality (e.g. only wifi hotspot if hotspot card exists, and no wb functionality)
+          m_console->warn("NO WB CARD FOUND !!!!");
           break;
         }
       }
