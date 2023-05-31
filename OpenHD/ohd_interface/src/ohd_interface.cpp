@@ -158,17 +158,6 @@ std::string OHDInterface::createDebug() const {
 
 std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   std::vector<openhd::Setting> ret;
-  if(m_profile.is_ground()){
-    auto cb_enable=[this](std::string,int value){
-      if(!openhd::validate_yes_or_no(value))return false;
-      m_nw_settings.unsafe_get_settings().wifi_wifibroadcast_discovery_long_wait=value;
-      m_nw_settings.persist();
-      // requires reboot
-      return true;
-    };
-    ret.push_back(openhd::Setting{"WIFI_DISC_LONG",openhd::IntSetting{
-                                                        m_nw_settings.get_settings().wifi_wifibroadcast_discovery_long_wait,cb_enable}});
-  }
   if(m_wb_link){
     auto settings= m_wb_link->get_all_settings();
     OHDUtil::vec_append(ret,settings);
