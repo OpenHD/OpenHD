@@ -179,11 +179,19 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   return card;
 }
 
-bool DWifiCards::any_wifi_card_supporting_injection(const std::vector<WiFiCard>& cards) {
+int DWifiCards::n_cards_supporting_injection(
+    const std::vector<WiFiCard>& cards) {
+  int ret=0;
   for(const auto& card:cards){
-    if(card.supports_injection)return true;
+    if(card.supports_injection){
+      ret++;
+    }
   }
-  return false;
+  return ret;
+}
+
+bool DWifiCards::any_wifi_card_supporting_injection(const std::vector<WiFiCard>& cards) {
+  return n_cards_supporting_injection(cards)>=1;
 }
 
 bool DWifiCards::any_wifi_card_supporting_monitor_mode(
@@ -250,3 +258,4 @@ DWifiCards::ProcessedWifiCards DWifiCards::find_cards_from_manual_file(const std
   }
   return ret;
 }
+

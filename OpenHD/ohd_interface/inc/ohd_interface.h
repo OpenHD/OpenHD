@@ -64,7 +64,6 @@ class OHDInterface {
   std::vector<WiFiCard> monitor_mode_cards{};
   std::optional<WiFiCard> opt_hotspot_card=std::nullopt;
   NetworkingSettingsHolder m_nw_settings;
-  //NetworkingSettingsHolder m_nw_settings;
 };
 
 #endif //OPENHD_OPENHD_INTERFACE_H

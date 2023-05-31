@@ -32,24 +32,33 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     if(!continue_without_wb_card) {
       const auto begin = std::chrono::steady_clock::now();
       while (true) {
-        if (DWifiCards::any_wifi_card_supporting_injection(connected_cards))
-          break;
+        const auto n_wifibroadcast_capable_cards=DWifiCards::n_cards_supporting_injection(connected_cards);
+        // On the air unit, we stop the discovery as soon as we have one wb capable card
+        if(m_profile.is_air && n_wifibroadcast_capable_cards>=1){
+          break ;
+        }
+        // On the ground unit, we stop the discovery as soon as we have 2 or more wb capable card(s), or timeout
+        if(m_profile.is_ground() && n_wifibroadcast_capable_cards>=2){
+          break ;
+        }
         const auto elapsed = std::chrono::steady_clock::now() - begin;
+        const auto message=fmt::format("Waiting for WB capable card(s), Found:{}",n_wifibroadcast_capable_cards);
         if (elapsed > std::chrono::seconds(3)) {
-          m_console->warn("Waiting for card supporting monitor mode+injection");
+          m_console->warn(message);
         } else {
-          m_console->debug(
-              "Waiting for card supporting monitor mode+injection");
+          m_console->debug(message);
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
         connected_cards = DWifiCards::discover_connected_wifi_cards();
-        // after 10 seconds, we are happy with a card that only does monitor mode, aka is not known for injection
+        // after 10 seconds, we are happy with a card that only does monitor mode, aka is not known for injection,
+        // or no card at all
         if (elapsed > std::chrono::seconds(10)) {
-          if (DWifiCards::any_wifi_card_supporting_monitor_mode(
-                  connected_cards)) {
+          if (DWifiCards::any_wifi_card_supporting_monitor_mode(connected_cards)) {
             m_console->warn("Using card without injection capabilities");
-            break;
+          }else{
+            m_console->warn("NO WB CARD FOUND !!!!");
           }
+          break;
         }
       }
     }
