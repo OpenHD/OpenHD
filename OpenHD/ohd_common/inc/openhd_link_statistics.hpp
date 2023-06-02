@@ -35,7 +35,7 @@ struct StatsMonitorModeLink{
   int32_t curr_rx_pps; /*<  rx packets per second*/
   int32_t curr_tx_bps; /*<  tx bits per second*/
   int32_t curr_rx_bps; /*<  rx bits per second*/
-  int32_t unused0; /*<  unused0*/
+  int32_t unused0; /*<  curr_wb_mcs_index*/
   int32_t unused1; /*<  unused1*/
   int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss*/
   [[nodiscard]] std::string to_string()const{
@@ -75,8 +75,8 @@ struct StatsWBVideoAir{
   uint16_t curr_fec_block_size_avg;
   uint16_t curr_fec_block_size_min;
   uint16_t curr_fec_block_size_max;
-  int32_t unused0;
-  int32_t unused1;
+  int32_t curr_wb_mcs_index; // unused0 in mavlink message
+  int32_t unused1; // unused1 in mavlink message
   [[nodiscard]] std::string to_string()const{
     return "TODO";
   }

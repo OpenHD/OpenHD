@@ -583,6 +583,7 @@ void WBLink::update_statistics() {
       air_video.curr_fec_block_size_min=curr_tx_fec_stats.curr_fec_block_length.min;
       air_video.curr_fec_block_size_max=curr_tx_fec_stats.curr_fec_block_length.max;
       air_video.curr_fec_block_size_avg=curr_tx_fec_stats.curr_fec_block_length.avg;
+      air_video.curr_wb_mcs_index=m_settings->unsafe_get_settings().wb_mcs_index;
       // TODO otimization: Only send stats for an active link
       stats.stats_wb_video_air.push_back(air_video);
     }

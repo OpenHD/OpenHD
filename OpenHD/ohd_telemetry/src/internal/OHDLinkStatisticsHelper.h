@@ -74,7 +74,7 @@ static MavlinkMessage pack_vid_air(const uint8_t system_id,const uint8_t compone
   tmp.curr_fec_block_size_avg=stats.curr_fec_block_size_avg;
   tmp.curr_fec_block_size_min=stats.curr_fec_block_size_min;
   tmp.curr_fec_block_size_max=stats.curr_fec_block_size_max;
-  tmp.unused0=stats.unused0;
+  tmp.unused0=stats.curr_wb_mcs_index;
   tmp.unused1=stats.unused1;
   mavlink_msg_openhd_stats_wb_video_air_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
