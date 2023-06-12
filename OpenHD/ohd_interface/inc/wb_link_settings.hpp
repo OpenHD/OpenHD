@@ -28,6 +28,7 @@ static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
 static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT=25;
 // Measured to be about /below 25mW, RTL8812au only (or future cards who use the recommended power level index approach)
 static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=22;
+static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX_ARMED=22;
 
 // Set to 0 for fec auto block length
 // Set to 1 or greater for fixed k fec
@@ -57,6 +58,8 @@ struct WBLinkSettings {
   // this param is normally in mBm, but has been reworked to accept those rtl8812au specific tx power index override values
   // (under this name they were known already in previous openhd releases, but we now support changing them dynamcially at run time)
   uint32_t wb_rtl8812au_tx_pwr_idx_override=DEFAULT_RTL8812AU_TX_POWER_INDEX;
+  // applied when armed
+  uint32_t wb_rtl8812au_tx_pwr_idx_armed=DEFAULT_RTL8812AU_TX_POWER_INDEX_ARMED;
   // 0 means auto, aka variable block size (default, gives best results in most cases and has 0 additional latency)
   uint32_t wb_video_fec_block_length=DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH;
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;

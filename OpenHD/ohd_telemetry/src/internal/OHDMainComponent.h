@@ -46,8 +46,9 @@ class OHDMainComponent : public MavlinkComponent{
   // update stats from ohd_interface
   void set_link_statistics(openhd::link_statistics::StatsAirGround stats);
   openhd::link_statistics::StatsAirGround get_latest_link_statistics();
-  // Some features rely on the arming state of the FC, like adjusting tx power
-  void check_msges_for_fc_arming_state(const std::vector<MavlinkMessage>& messages);
+  // Some features rely on the arming state of the FC, like adjusting tx power &
+  // Some features rely on (RC) channel switches, like changing the mcs index
+  void check_fc_messages_for_actions(const std::vector<MavlinkMessage>& messages);
  private:
   const bool RUNS_ON_AIR;
   const OHDPlatform m_platform;

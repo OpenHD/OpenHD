@@ -117,6 +117,11 @@ class ActionHandler{
   }
  private:
   bool m_is_armed=false;
+  // Allow registering actions when rc channel goes to a specific value
+ public:
+  void update_rc_channels(const std::array<int,18>& rc_channels){
+
+  }
  public:
   // this is called once the first "armed==true" message from the FC is received - in which case
   // we will automatically disable wifi hotspot, if it is enabled.

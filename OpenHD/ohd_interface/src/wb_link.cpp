@@ -796,7 +796,6 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
   assert(m_profile.is_air);
   if(stream_index>=0 && stream_index< m_wb_video_tx_list.size()){
     auto& tx= *m_wb_video_tx_list[stream_index];
-    const bool use_fixed_fec_instead=!m_settings->get_settings().is_video_variable_block_length_enabled();
     //tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments,use_fixed_fec_instead);
     uint32_t max_block_size_for_platform=m_settings->get_settings().wb_max_fec_block_size_for_platform;
     //openhd::log::get_default()->debug("max_block_size_for_platform:{}",max_block_size_for_platform);
