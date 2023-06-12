@@ -59,7 +59,7 @@ struct WBLinkSettings {
   // (under this name they were known already in previous openhd releases, but we now support changing them dynamcially at run time)
   uint32_t wb_rtl8812au_tx_pwr_idx_override=DEFAULT_RTL8812AU_TX_POWER_INDEX;
   // applied when armed
-  uint32_t wb_rtl8812au_tx_pwr_idx_armed=DEFAULT_RTL8812AU_TX_POWER_INDEX_ARMED;
+  //uint32_t wb_rtl8812au_tx_pwr_idx_armed=DEFAULT_RTL8812AU_TX_POWER_INDEX_ARMED;
   // 0 means auto, aka variable block size (default, gives best results in most cases and has 0 additional latency)
   uint32_t wb_video_fec_block_length=DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH;
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
