@@ -76,12 +76,10 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     const auto curr_ram_usage=OnboardComputerStatus::calculate_memory_usage_percent();
     ina219_log_warning_once();
     if(!m_ina_219.has_any_error){
-      float voltage = roundf(m_ina_219.voltage() * 1000) / 1000;
+      float voltage = roundf(m_ina_219.voltage() * 1000);
       float current = roundf(m_ina_219.current() * 1000) / 1000;
       curr_ina219_voltage=voltage;
       curr_ina219_current=current;
-      // debug
-      openhd::log::get_default()->debug("Ina219 voltage:{} current:{}",voltage,current);
     }
     if(m_platform.platform_type==PlatformType::RaspberryPi){
       curr_temperature_core=(int8_t)OnboardComputerStatus::rpi::read_temperature_soc_degree();
