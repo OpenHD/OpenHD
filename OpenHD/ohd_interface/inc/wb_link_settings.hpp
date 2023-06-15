@@ -189,7 +189,7 @@ static constexpr auto WB_VIDEO_VARIABLE_BITRATE="VARIABLE_BITRATE";
 static constexpr auto WB_ENABLE_STBC="WB_E_STBC";
 static constexpr auto WB_ENABLE_LDPC="WB_E_LDPC";
 static constexpr auto WB_ENABLE_SHORT_GUARD="WB_E_SHORT_GUARD";
-static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL="E_MCS_VIA_RC";
+static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL="MCS_VIA_RC";
 
 
 }
