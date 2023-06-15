@@ -68,6 +68,8 @@ class WBLink :public OHDLink{
   // If the hw supports changing the mcs index, and the mcs index is valid, apply it and return true
   // Leave untouched and return false otherwise.
   bool set_mcs_index(int mcs_index);
+  // this is special, mcs index can not only be changed via mavlink param, but also via RC channel (if enabled)
+  void set_mcs_index_from_rc_channel(const std::array<int,18>& rc_channels);
   // These do not "break" the bidirectional connectivity and therefore
   // can be changed easily on the fly
   bool set_video_fec_block_length(int block_length);

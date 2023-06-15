@@ -41,6 +41,8 @@ static constexpr auto DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH=WB_VIDEO_FEC_BLOCK_LENGT
 static constexpr auto DEFAULT_WB_VIDEO_FEC_PERCENTAGE=20;
 //NOTE: Default depends on platform type and is therefore calculated below, then overwrites this default value
 static constexpr uint32_t DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM=20;
+// 0 means disabled (default), the rc channel used for setting the mcs index otherwise
+static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL_OFF=0;
 
 struct WBLinkSettings {
   uint32_t wb_frequency; // writen once 2.4 or 5 is known
@@ -65,6 +67,8 @@ struct WBLinkSettings {
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
   // NOTE: Default depends on platform type and is therefore calculated below, then overwrites this default value
   uint32_t wb_max_fec_block_size_for_platform=DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
+  // change mcs index via RC channel
+  uint32_t wb_mcs_index_via_rc_channel=WB_MCS_INDEX_VIA_RC_CHANNEL_OFF;
 
   // wb link recommends bitrate(s) to the encoder, can be helpfully for inexperienced users.
   bool enable_wb_video_variable_bitrate= true;
@@ -77,6 +81,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_widt
                                    wb_enable_stbc,wb_enable_ldpc,wb_enable_short_guard,
                                    wb_tx_power_milli_watt,wb_rtl8812au_tx_pwr_idx_override,
                                    wb_video_fec_block_length, wb_video_fec_percentage,wb_max_fec_block_size_for_platform,
+                                   wb_mcs_index_via_rc_channel,
                                    enable_wb_video_variable_bitrate);
 
 static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform){
@@ -184,6 +189,7 @@ static constexpr auto WB_VIDEO_VARIABLE_BITRATE="VARIABLE_BITRATE";
 static constexpr auto WB_ENABLE_STBC="WB_E_STBC";
 static constexpr auto WB_ENABLE_LDPC="WB_E_LDPC";
 static constexpr auto WB_ENABLE_SHORT_GUARD="WB_E_SHORT_GUARD";
+static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL="E_MCS_VIA_RC";
 
 
 }

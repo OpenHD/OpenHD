@@ -93,12 +93,13 @@ class ActionHandler{
       cb(params);
     }
   }
-  // Cleanup, set all lambdas that handle things to 0
+  // Cleanup, set all lambdas that handle things to nullptr
   void disable_all_callables(){
     action_wb_link_statistics_register(nullptr);
     action_request_bitrate_change_register(nullptr);
     action_wb_link_statistics_register(nullptr);
     action_wb_link_scan_channels_register(nullptr);
+    action_on_ony_rc_channel_register(nullptr);
     m_action_disable_wifi_when_armed= nullptr;
   }
   // Allows registering actions when vehicle / FC is armed / disarmed
@@ -119,9 +120,24 @@ class ActionHandler{
   bool m_is_armed=false;
   // Allow registering actions when rc channel goes to a specific value
  public:
+  typedef std::function<void(const std::array<int,18>& rc_channels)> ACTION_ON_ANY_RC_CHANNEL_CB;
+  // called every time a rc channel value(s) mavlink packet is received from the FC
   void update_rc_channels(const std::array<int,18>& rc_channels){
-
+    auto tmp=m_action_rc_channel;
+    if(tmp){
+      ACTION_ON_ANY_RC_CHANNEL_CB cb=*tmp;
+      cb(rc_channels);
+    }
   }
+  void action_on_ony_rc_channel_register(ACTION_ON_ANY_RC_CHANNEL_CB cb){
+    if(cb== nullptr){
+      m_action_rc_channel= nullptr;
+      return;
+    }
+    m_action_rc_channel=std::make_shared<ACTION_ON_ANY_RC_CHANNEL_CB>(cb);
+  }
+ private:
+  std::shared_ptr<ACTION_ON_ANY_RC_CHANNEL_CB> m_action_rc_channel =nullptr;
  public:
   // this is called once the first "armed==true" message from the FC is received - in which case
   // we will automatically disable wifi hotspot, if it is enabled.
