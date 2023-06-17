@@ -122,6 +122,8 @@ class ActionHandler{
  public:
   typedef std::function<void(const std::array<int,18>& rc_channels)> ACTION_ON_ANY_RC_CHANNEL_CB;
   // called every time a rc channel value(s) mavlink packet is received from the FC
+  // (regardless if there was an actual change on any of the channels or not)
+  // Works well on Ardupilot, which broadcasts the proper telem message by default
   void update_rc_channels(const std::array<int,18>& rc_channels){
     auto tmp=m_action_rc_channel;
     if(tmp){
