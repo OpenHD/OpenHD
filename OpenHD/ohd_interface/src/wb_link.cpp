@@ -1075,7 +1075,7 @@ void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channel
   // [1400 ... 1600] : MCS2
   // [1600 ... 1800] : MCS3
   // [1800 ... 2000] : MCS 4
-  int mcs_index=1;
+  int mcs_index=0;
   if(mcs_channel_value_pwm>1800){
     mcs_index=4;
   }else if(mcs_channel_value_pwm>1600){
