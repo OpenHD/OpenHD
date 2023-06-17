@@ -60,11 +60,17 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   configure_video();
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
-  auto cb2=[this](openhd::ActionHandler::ScanChannelsParam param){
-    async_scan_channels(param);
-  };
   if(m_opt_action_handler){
-    m_opt_action_handler->action_wb_link_scan_channels_register(cb2);
+        auto cb2=[this](openhd::ActionHandler::ScanChannelsParam param){
+          async_scan_channels(param);
+        };
+        m_opt_action_handler->action_wb_link_scan_channels_register(cb2);
+  }
+  if(m_opt_action_handler){
+        auto cb=[this](const std::array<int,18>& rc_channels){
+          set_mcs_index_from_rc_channel(rc_channels);
+        };
+        m_opt_action_handler->action_on_ony_rc_channel_register(cb);
   }
   // exp
   /*const auto t_radio_port_rx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
@@ -334,7 +340,6 @@ bool WBLink::set_mcs_index(int mcs_index) {
     m_console->warn("Cannot change mcs index, it is fixed for at least one of the used cards");
     return false;
   }
-  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_mcs_index=mcs_index;
   m_settings->persist();
   // R.n the only card known to properly allow setting the MCS index is rtl8812au,
@@ -433,6 +438,18 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       return set_max_fec_block_size_for_platform(value);
     };
     ret.push_back(Setting{WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,openhd::IntSetting{(int)settings.wb_max_fec_block_size_for_platform, cb_wb_max_fec_block_size_for_platform}});
+    // changing the mcs index via rc channel only makes sense on air,
+    // and is only possible if the card supports it
+    if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
+      auto cb_mcs_via_rc_channel=[this](std::string,int value){
+        if(value<0 || value>18)return false; // 0 is disabled, valid rc channel number otherwise
+        // we check if this is enabled in regular intervals (whenever we get the rc channels message from the FC)
+        m_settings->unsafe_get_settings().wb_mcs_index_via_rc_channel=value;
+        m_settings->persist();
+        return true;
+      };
+      ret.push_back(Setting{openhd::WB_MCS_INDEX_VIA_RC_CHANNEL,openhd::IntSetting{(int)settings.wb_mcs_index_via_rc_channel, cb_mcs_via_rc_channel}});
+    }
   }
   if(m_profile.is_ground()){
     // We display the total n of detected RX cards such that users can validate their multi rx setup(s) if there is more than one rx card detected
@@ -796,7 +813,6 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
   assert(m_profile.is_air);
   if(stream_index>=0 && stream_index< m_wb_video_tx_list.size()){
     auto& tx= *m_wb_video_tx_list[stream_index];
-    const bool use_fixed_fec_instead=!m_settings->get_settings().is_video_variable_block_length_enabled();
     //tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments,use_fixed_fec_instead);
     uint32_t max_block_size_for_platform=m_settings->get_settings().wb_max_fec_block_size_for_platform;
     //openhd::log::get_default()->debug("max_block_size_for_platform:{}",max_block_size_for_platform);
@@ -1032,4 +1048,47 @@ int64_t WBLink::get_total_tx_error_count() {
     total+=stats.count_tx_injections_error_hint+stats.n_dropped_packets;
   }
   return total;
+}
+
+void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channels) {
+  const auto& settings=m_settings->get_settings();
+  if(settings.wb_mcs_index_via_rc_channel==openhd::WB_MCS_INDEX_VIA_RC_CHANNEL_OFF){
+    // disabled
+    return ;
+  }
+  // 1= channel number 1 = array index 0
+  const int channel_index=(int)settings.wb_mcs_index_via_rc_channel-1;
+  // check if we are in bounds of array (better be safe than sorry, in case user manually messes up a number)
+  if(!(channel_index>=0 && channel_index<rc_channels.size())){
+    m_console->debug("Invalid channel index {}",channel_index);
+    return ;
+  }
+  const auto mcs_channel_value_pwm=rc_channels[channel_index];
+  if(mcs_channel_value_pwm==UINT16_MAX || mcs_channel_value_pwm<1000 || mcs_channel_value_pwm>2000){
+    m_console->debug("Disabled / invalid channel data on channel {}: {}",channel_index,mcs_channel_value_pwm);
+    // most likely invalid data, discard
+    return ;
+  }
+  // We simply pre-define a range (pwm: [1000,...,2000]
+  // [1000 ... 1200] : MCS0
+  // [1200 ... 1400] : MCS1
+  // [1400 ... 1600] : MCS2
+  // [1600 ... 1800] : MCS3
+  // [1800 ... 2000] : MCS 4
+  int mcs_index=0;
+  if(mcs_channel_value_pwm>1800){
+    mcs_index=4;
+  }else if(mcs_channel_value_pwm>1600){
+    mcs_index=3;
+  }else if(mcs_channel_value_pwm>1400){
+    mcs_index=2;
+  }else if(mcs_channel_value_pwm>1200){
+    mcs_index=1;
+  }
+  // check if we are already using the wanted mcs index
+  if(settings.wb_mcs_index==mcs_index){
+    return ;
+  }
+  // apply the wanted mcs index
+  set_mcs_index(mcs_index);
 }

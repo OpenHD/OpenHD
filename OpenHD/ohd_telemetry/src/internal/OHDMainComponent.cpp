@@ -206,7 +206,7 @@ std::optional<MavlinkMessage> OHDMainComponent::handle_timesync_message(const Ma
   return std::nullopt;
 }
 
-void OHDMainComponent::check_msges_for_fc_arming_state(const std::vector<MavlinkMessage>& messages) {
+void OHDMainComponent::check_fc_messages_for_actions(const std::vector<MavlinkMessage>& messages) {
   for(const auto& msg:messages){
     if(msg.m.sysid== OHD_SYS_ID_FC && msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT){
       mavlink_heartbeat_t heartbeat;
@@ -215,6 +215,17 @@ void OHDMainComponent::check_msges_for_fc_arming_state(const std::vector<Mavlink
       const bool armed= (mode & MAV_MODE_FLAG_SAFETY_ARMED);
       if(m_opt_action_handler){
         m_opt_action_handler->update_arming_state_if_changed(armed);
+      }
+    }
+    // We only change the mcs on the air unit (since downlink is the only thing that requires 'higher' bandwidth)
+    if(RUNS_ON_AIR){
+      if(msg.m.sysid==OHD_SYS_ID_FC && msg.m.msgid==MAVLINK_MSG_ID_RC_CHANNELS){
+        mavlink_rc_channels_t rc_channels;
+        mavlink_msg_rc_channels_decode(&msg.m, &rc_channels);
+        const auto tmp=mavlink_msg_rc_channels_to_array(rc_channels);
+        if(m_opt_action_handler){
+          m_opt_action_handler->update_rc_channels(tmp);
+        }
       }
     }
   }

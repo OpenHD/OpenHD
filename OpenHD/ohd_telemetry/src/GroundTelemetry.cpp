@@ -80,7 +80,7 @@ void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& me
       m_endpoint_tracker->send_messages_if_enabled(msges_from_fc);
     }
   }
-  m_ohd_main_component->check_msges_for_fc_arming_state(messages);
+  m_ohd_main_component->check_fc_messages_for_actions(messages);
 }
 
 void GroundTelemetry::on_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
