@@ -1064,8 +1064,16 @@ void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channel
     return ;
   }
   const auto mcs_channel_value_pwm=rc_channels[channel_index];
-  if(mcs_channel_value_pwm==UINT16_MAX || mcs_channel_value_pwm<1000 || mcs_channel_value_pwm>2000){
-    m_console->debug("Disabled / invalid channel data on channel {}: {}",channel_index,mcs_channel_value_pwm);
+  // UINT16_MAX means ignore channel
+  if(mcs_channel_value_pwm==UINT16_MAX){
+    m_console->debug("Disabled channel {}: {}",channel_index,mcs_channel_value_pwm);
+    return ;
+  }
+  // mavlink says pwm in [1000, 2000] range - but from my testing with frsky for example, it is quite common for a
+  // switch (for example) to be at for example [988 - 2012] us
+  // which is why we accept a [900 ... 2100] range here
+  if(mcs_channel_value_pwm<900 || mcs_channel_value_pwm>2100){
+    m_console->debug("Invalid channel data on channel {}: {}",channel_index,mcs_channel_value_pwm);
     // most likely invalid data, discard
     return ;
   }
