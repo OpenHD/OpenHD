@@ -6,7 +6,7 @@
 #define OPENHD_GST_RECORDER_H
 
 #include <utility>
-#include <stdint.h>
+#include <cstdint>
 
 // TODO
 class GstVideoRecorder {
