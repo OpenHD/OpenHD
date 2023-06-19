@@ -23,6 +23,7 @@ class GstVideoRecorder {
   void on_video_data(const uint8_t *data,int data_len);
   void start();
   void stop_and_cleanup();
+  bool ready_data= false;
  private:
   std::shared_ptr<spdlog::logger> m_console;
   GstElement *m_gst_pipeline = nullptr;
