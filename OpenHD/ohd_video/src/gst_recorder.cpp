@@ -23,6 +23,8 @@ static std::string create_recording_pipeline(const VideoCodec videoCodec,const s
   //ss<<"stream-type=0 format=3 is-live=false ";
   //ss<<"is-live=true ";
   //ss<<"emit-signals=true ";
+  //ss<<" size=0 ";
+  ss<<" do-timestamp=true ";
   ss<<OHDGstHelper::gst_create_rtp_caps(videoCodec);
   //ss<<" ! queue ";
   ss<<" ! ";
@@ -52,6 +54,7 @@ static void
 enough_data(GstElement * pipeline, GstVideoRecorder* self)
 {
   openhd::log::get_default()->debug("enough_data");
+  self->ready_data= false;
 }
 
 GstVideoRecorder::GstVideoRecorder() {
@@ -92,16 +95,19 @@ GstVideoRecorder::~GstVideoRecorder() {
 
 
 void GstVideoRecorder::on_video_data(const uint8_t *data,int data_len) {
-  static GstClockTime timestamp = 0;
+  if(!ready_data) return ;
+  //static GstClockTime timestamp = 0;
   GstBuffer* buffer = gst_buffer_new_and_alloc(data_len);
   const auto copied_data=gst_buffer_fill(buffer,0,data,data_len);
   assert(copied_data==data_len);
-  GST_BUFFER_PTS (buffer) = timestamp;
-  timestamp++;
+  //GST_BUFFER_PTS (buffer) = timestamp;
+  //timestamp++;
   //GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale_int (1, GST_SECOND, 2);
   //timestamp += GST_BUFFER_DURATION (buffer);
-  GST_BUFFER_TIMESTAMP (buffer) = std::chrono::steady_clock::now().time_since_epoch().count();
-  GST_BUFFER_DURATION (buffer) = 100;
+  //GST_BUFFER_TIMESTAMP (buffer) = std::chrono::steady_clock::now().time_since_epoch().count();
+  //GST_BUFFER_DURATION (buffer) = 100;
+  GST_BUFFER_DTS (buffer) = GST_CLOCK_TIME_NONE;
+  GST_BUFFER_PTS (buffer) = GST_CLOCK_TIME_NONE;
 
   GstFlowReturn ret;
   g_signal_emit_by_name (m_app_src_element, "push-buffer", buffer, &ret);
@@ -149,7 +155,7 @@ void GstVideoRecorder::start() {
 
 
 void GstVideoRecorder::stop_and_cleanup() {
-  //gst_element_send_event(m_gst_pipeline, gst_event_new_eos());
+  gst_element_send_event(m_gst_pipeline, gst_event_new_eos());
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline, GST_STATE_PAUSED);
   m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
   openhd::gst_element_set_set_state_and_log_result(m_gst_pipeline, GST_STATE_NULL);
