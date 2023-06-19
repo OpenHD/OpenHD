@@ -5,18 +5,28 @@
 #ifndef OPENHD_GST_RECORDER_H
 #define OPENHD_GST_RECORDER_H
 
+#include <gst/gstelement.h>
+
 #include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
 
+#include "openhd_spdlog.h"
+
 // TODO
 class GstVideoRecorder {
  public:
+  GstVideoRecorder();
+  ~GstVideoRecorder();
   void enqueue_rtp_fragment(std::shared_ptr<std::vector<uint8_t>> fragment);
-  void on_video_data(int codec,const uint8_t *data,int data_len);
+  void on_video_data(const uint8_t *data,int data_len);
+  void start();
+  void stop_and_cleanup();
  private:
-  int m_curr_codec=-1;
+  std::shared_ptr<spdlog::logger> m_console;
+  GstElement *m_gst_pipeline = nullptr;
+  GstElement *m_app_src_element = nullptr;
 };
 
 #endif  // OPENHD_GST_RECORDER_H

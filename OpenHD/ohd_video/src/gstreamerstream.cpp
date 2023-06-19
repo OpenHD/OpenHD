@@ -44,6 +44,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   });
   assert(setting.streamed_video_format.isValid());
   OHDGstHelper::initGstreamerOrThrow();
+  //m_gst_video_recorder=std::make_unique<GstVideoRecorder>();
   m_console->debug("GStreamerStream::GStreamerStream done");
 }
 
@@ -518,6 +519,9 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
   if(is_last_fragment_of_frame){
     on_new_rtp_fragmented_frame(m_frame_fragments);
     m_frame_fragments.resize(0);
+  }
+  if(m_gst_video_recorder){
+    m_gst_video_recorder->enqueue_rtp_fragment(fragment);
   }
 }
 
