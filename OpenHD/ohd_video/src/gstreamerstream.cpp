@@ -44,10 +44,21 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   });
   assert(setting.streamed_video_format.isValid());
   OHDGstHelper::initGstreamerOrThrow();
+  //m_gst_video_recorder=std::make_unique<GstVideoRecorder>();
+  // Register a callback such that we get notified when the FC is armed / disarmed
+  if(m_opt_action_handler){
+    auto cb=[this](bool armed){
+      this->update_arming_state(armed);
+    };
+    m_opt_action_handler->m_action_record_video_when_armed=std::make_shared<openhd::ActionHandler::ACTION_RECORD_VIDEO_WHEN_ARMED>(cb);
+  }
   m_console->debug("GStreamerStream::GStreamerStream done");
 }
 
 GStreamerStream::~GStreamerStream() {
+  if(m_opt_action_handler){
+    m_opt_action_handler->m_action_record_video_when_armed= nullptr;
+  }
   // they are safe to call, regardless if we are already in cleaned up state or not
   GStreamerStream::stop();
   GStreamerStream::cleanup_pipe();
@@ -127,8 +138,11 @@ void GStreamerStream::setup() {
   if(!OHDUtil::endsWith(m_pipeline_content.str(),"! ")){
     m_console->warn("Probably ill-formatted pipeline: [{}]",m_pipeline_content.str());
   }
+  const bool ADD_RECORDING_TO_PIPELINE=
+      setting.air_recording==AIR_RECORDING_ON ||
+      (setting.air_recording==AIR_RECORDING_AUTO_ARM_DISARM && m_armed_enable_air_recording);
   // for safety we only add the tee command at the right place if recording is enabled.
-  if(setting.air_recording==Recording::ENABLED && camera.type != CameraType::ROCKCHIP_HDMI){
+  if(ADD_RECORDING_TO_PIPELINE){
     m_console->info("Air recording active");
     m_pipeline_content <<"tee name=t ! ";
   }
@@ -139,7 +153,7 @@ void GStreamerStream::setup() {
   // forward data via udp localhost or using appsink and data callback
   //m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
   m_pipeline_content << OHDGstHelper::createOutputAppSink();
-  if(setting.air_recording==Recording::ENABLED){
+  if(ADD_RECORDING_TO_PIPELINE){
     const auto recording_filename=openhd::video::create_unused_recording_filename(
         OHDGstHelper::file_suffix_for_video_codec(setting.streamed_video_format.videoCodec));
     m_console->debug("Using [{}] for recording",recording_filename);
@@ -204,13 +218,13 @@ void GStreamerStream::setup_jetson_csi() {
 void GStreamerStream::setup_rockchip_hdmi() {
   m_console->debug("Setting up Rockchip HDMI");
   const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createRockchipHDMIStream(setting.air_recording==Recording::ENABLED, setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
+  m_pipeline_content << OHDGstHelper::createRockchipHDMIStream(false, setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
 }
 
 void GStreamerStream::setup_rockchip_csi() {
   m_console->debug("Setting up Rockchip CSI");
   const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createRockchipCSIStream(setting.air_recording==Recording::ENABLED, setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
+  m_pipeline_content << OHDGstHelper::createRockchipCSIStream(false, setting.h26x_bitrate_kbits, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
 }
 
 void GStreamerStream::setup_allwinner_csi() {
@@ -367,9 +381,10 @@ void GStreamerStream::restartIfStopped() {
     return;
   }
   if(OHDFilesystemUtil::get_remaining_space_in_mb()<MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB){
-    if(m_camera_holder->get_settings().air_recording==Recording::ENABLED){
+    if(m_camera_holder->get_settings().air_recording==AIR_RECORDING_ON
+        || m_camera_holder->get_settings().air_recording==AIR_RECORDING_AUTO_ARM_DISARM){
       m_console->warn("Disabling recording, not enough free space (<300MB)");
-      m_camera_holder->unsafe_get_settings().air_recording=Recording::DISABLED;
+      m_camera_holder->unsafe_get_settings().air_recording=AIR_RECORDING_OFF;
       m_camera_holder->persist();
       stop_cleanup_restart();
     }
@@ -519,6 +534,9 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
     on_new_rtp_fragmented_frame(m_frame_fragments);
     m_frame_fragments.resize(0);
   }
+  if(m_gst_video_recorder){
+    m_gst_video_recorder->enqueue_rtp_fragment(fragment);
+  }
 }
 
 void GStreamerStream::loop_pull_samples() {
@@ -528,5 +546,19 @@ void GStreamerStream::loop_pull_samples() {
   };
   openhd::loop_pull_appsink_samples(m_pull_samples_run,m_app_sink_element,cb);
   m_frame_fragments.resize(0);
+}
 
+void GStreamerStream::update_arming_state(bool armed) {
+  m_console->debug("update_arming_state: {}",armed);
+  const auto settings=m_camera_holder->get_settings();
+  if(settings.air_recording==AIR_RECORDING_AUTO_ARM_DISARM){
+    if(armed){
+      m_armed_enable_air_recording= true;
+      m_console->warn("Starting air recording");
+    }else{
+      m_armed_enable_air_recording= false;
+    }
+    // restart pipeline such that recording is started / stopped
+    restart_async();
+  }
 }

@@ -108,6 +108,15 @@ class ActionHandler{
     if(m_is_armed==armed)return;
     m_is_armed=armed;
     openhd::log::get_default()->debug("MAV armed:{}",OHDUtil::yes_or_no(armed));
+    {
+      // Needs to be called when armed / disarmed
+      auto tmp2=m_action_record_video_when_armed;
+      if(tmp2){
+        ACTION_RECORD_VIDEO_WHEN_ARMED cb2=*tmp2;
+        cb2(armed);
+      }
+    }
+    // We only need to call this when armed (not disarmed)
     if(m_is_armed){
       auto tmp=m_action_disable_wifi_when_armed;
       if(tmp){
@@ -145,6 +154,9 @@ class ActionHandler{
   // we will automatically disable wifi hotspot, if it is enabled.
   typedef std::function<void()> ACTION_DISABLE_WIFI_WHEN_ARMED;
   std::shared_ptr<ACTION_DISABLE_WIFI_WHEN_ARMED> m_action_disable_wifi_when_armed =nullptr;
+  // For automatically stop recording when armed / disarmed
+  typedef std::function<void(bool armed)> ACTION_RECORD_VIDEO_WHEN_ARMED;
+  std::shared_ptr<ACTION_RECORD_VIDEO_WHEN_ARMED> m_action_record_video_when_armed =nullptr;
  private:
   // By using shared_ptr to wrap the stored the cb we are semi thread-safe
   std::shared_ptr<ACTION_REQUEST_BITRATE_CHANGE> m_action_request_bitrate_change =nullptr;

@@ -89,7 +89,7 @@ struct CameraSettings {
   // Only for network cameras (CameraTypeIP) URL in the rtp:// ... or similar
   std::string ip_cam_url="rtsp://admin:admin@192.168.1.168:554/0";
   // enable/disable recording to file
-  Recording air_recording=Recording::DISABLED;
+  int air_recording=AIR_RECORDING_OFF;
   //
   // Below are params that most often only affect the ISP, not the encoder
   //

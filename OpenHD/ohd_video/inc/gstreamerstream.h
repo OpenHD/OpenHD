@@ -14,6 +14,7 @@
 #include "gst_bitrate_controll_wrapper.hpp"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
+#include "gst_recorder.h"
 
 // Implementation of OHD CameraStream for pretty much everything, using
 // gstreamer.
@@ -52,6 +53,8 @@ class GStreamerStream : public CameraStream {
   void restart_after_new_setting();
   void restartIfStopped() override;
   void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) override;
+  // this is called when the FC reports itself as armed / disarmed
+  void update_arming_state(bool armed);
  public:
   // Set gst state to PLAYING
   void start() override;
@@ -79,6 +82,8 @@ class GStreamerStream : public CameraStream {
   std::unique_ptr<std::thread> m_async_thread =nullptr;
   std::shared_ptr<spdlog::logger> m_console;
   std::chrono::steady_clock::time_point m_stream_creation_time=std::chrono::steady_clock::now();
+  // This boolean indicates we should record
+  bool m_armed_enable_air_recording= false;
  private:
   // Change the bitrate without re-starting the whole pipeline if supported by the camera.
   // This is needed for variable rf link bitrate(s)
@@ -96,6 +101,8 @@ class GStreamerStream : public CameraStream {
   std::unique_ptr<std::thread> m_pull_samples_thread;
   void loop_pull_samples();
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
+ private:
+  std::unique_ptr<GstVideoRecorder> m_gst_video_recorder=nullptr;
 };
 
 #endif

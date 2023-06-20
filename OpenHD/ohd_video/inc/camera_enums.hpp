@@ -191,22 +191,10 @@ struct VideoFormat {
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat,videoCodec,width,height,framerate)
 
-enum class Recording{
-  DISABLED,
-  ENABLED
-};
-NLOHMANN_JSON_SERIALIZE_ENUM( Recording, {
-  {Recording::DISABLED, nullptr},
-  {Recording::ENABLED, "ENABLED"},
-});
-static Recording recording_from_int(int32_t value){
-  if(value==1)return Recording::ENABLED;
-  return Recording::DISABLED;
-}
-static int32_t recording_to_int(const Recording& recording){
-  if(recording==Recording::ENABLED)return 1;
-  return 0;
-}
+
+static constexpr int AIR_RECORDING_OFF=0;
+static constexpr int AIR_RECORDING_ON=1;
+static constexpr int AIR_RECORDING_AUTO_ARM_DISARM=2;
 
 enum class RateControlMode {
   RC_VBR, // variable bitrate

@@ -28,6 +28,7 @@ OHDMainComponent::OHDMainComponent(
     });
   }
   m_status_text_accumulator=std::make_unique<StatusTextAccumulator>();
+  m_last_known_position=std::make_unique<LastKnowPosition>();
 }
 
 OHDMainComponent::~OHDMainComponent() {
@@ -113,6 +114,18 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
         }
         // TODO have an ack response.
       }break;
+      case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: {
+        // Writes last known position to file(s) for crash recovery
+        mavlink_global_position_int_t global_position_int;
+        mavlink_msg_global_position_int_decode(&msg.m, &global_position_int);
+        const double lat=static_cast<double>(global_position_int.lat) / 10000000.0;
+        const double lon=static_cast<double>(global_position_int.lon) / 10000000.0;
+        const double alt=global_position_int.relative_alt/1000.0;
+        if(m_last_known_position){
+          m_last_known_position->on_new_position(lat,lon,alt);
+        }
+      }
+        break ;
       default:
         break;
     }
