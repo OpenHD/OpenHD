@@ -39,6 +39,8 @@ static void demux_mkv(const std::string& in_file){
   }
   // Now we can safely delete the old file
   OHDFilesystemUtil::remove_if_existing(in_file);
+  // and make the new file rw everybody
+  OHDFilesystemUtil::make_file_read_write_everyone(filename_mp4);
 }
 
 static void demux_all_mkv_files_in_video_directory(){
