@@ -47,7 +47,7 @@ class CameraHolder:
     std::vector<openhd::Setting> ret={
         openhd::Setting{"V_E_STREAMING",openhd::IntSetting{get_settings().enable_streaming,c_enable_streaming}},
         openhd::Setting{"VIDEO_CODEC",openhd::IntSetting{video_codec_to_int(get_settings().streamed_video_format.videoCodec), c_codec}},
-        openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{recording_to_int(get_settings().air_recording),c_recording}},
+        openhd::Setting{"V_AIR_RECORDING",openhd::IntSetting{get_settings().air_recording,c_recording}},
         // for debugging
         openhd::create_read_only_string("V_CAM_TYPE",camera_type_to_string(m_camera.type)),
         openhd::create_read_only_string("V_CAM_NAME",m_camera.name)
@@ -208,9 +208,8 @@ class CameraHolder:
       openhd::log::get_default()->warn("Not enough free space available");
       return false;
     }
-    if(recording_enable==0 || recording_enable==1){
-      const auto wanted_recording= recording_from_int(recording_enable);
-      unsafe_get_settings().air_recording=wanted_recording;
+    if(recording_enable==AIR_RECORDING_OFF || recording_enable==AIR_RECORDING_ON || recording_enable==AIR_RECORDING_AUTO_ARM_DISARM){
+      unsafe_get_settings().air_recording=recording_enable;
       persist();
       return true;
     }
@@ -380,10 +379,11 @@ static void startup_fix_common_issues(std::vector<std::shared_ptr<CameraHolder>>
     camera_holder->persist();
   }
   // And we disable recording on boot, to not accidentally fill up storage (relates to the new start stop recording widget)
-  for(auto & camera_holder : camera_holders){
+  // June 20: Not needed anymore, since we stop recording when storage is running full and have start / stop recording when armed
+  /*for(auto & camera_holder : camera_holders){
     camera_holder->unsafe_get_settings().air_recording= Recording::DISABLED;
     camera_holder->persist();
-  }
+  }*/
   /*camera_holders.at(0)->unsafe_get_settings().enable_streaming= true;
   camera_holders.at(0)->persist();
   for(int i=1;i<camera_holders.size();i++){
