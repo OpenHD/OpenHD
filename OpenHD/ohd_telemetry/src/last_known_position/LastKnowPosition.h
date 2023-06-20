@@ -13,6 +13,10 @@
  * get the last known position from a file in openhd.
  * TODO
  */
-class LastKnowPosition {};
+class LastKnowPosition {
+ public:
+  LastKnowPosition();
+  void on_new_position(double latitude,double longitude,double altitude);
+};
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_LAST_KNOWN_POSITION_LASTKNOWPOSITION_H_

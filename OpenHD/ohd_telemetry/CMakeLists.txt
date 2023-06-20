@@ -45,6 +45,8 @@ SET(sources
     "src/internal/OnboardComputerStatusProvider.h"
     "src/internal/StatusTextAccumulator.cpp"
     "src/internal/StatusTextAccumulator.h"
+     src/last_known_position/LastKnowPosition.cpp
+     src/last_known_position/LastKnowPosition.h
 
     "src/mavsdk_temporary/connection.cpp"
     "src/mavsdk_temporary/connection.h"
