@@ -61,16 +61,18 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
   if(m_opt_action_handler){
-        auto cb2=[this](openhd::ActionHandler::ScanChannelsParam param){
+        auto cb_scan=[this](openhd::ActionHandler::ScanChannelsParam param){
           async_scan_channels(param);
         };
-        m_opt_action_handler->action_wb_link_scan_channels_register(cb2);
-  }
-  if(m_opt_action_handler){
-        auto cb=[this](const std::array<int,18>& rc_channels){
+        m_opt_action_handler->action_wb_link_scan_channels_register(cb_scan);
+        auto cb_mcs=[this](const std::array<int,18>& rc_channels){
           set_mcs_index_from_rc_channel(rc_channels);
         };
-        m_opt_action_handler->action_on_ony_rc_channel_register(cb);
+        m_opt_action_handler->action_on_ony_rc_channel_register(cb_mcs);
+        auto cb_arm=[this](bool armed){
+          update_arming_state(armed);
+        };
+        m_opt_action_handler->m_action_tx_power_when_armed=std::make_shared<openhd::ActionHandler::ACTION_TX_POWER_WHEN_ARMED>(cb_arm);
   }
   // exp
   /*const auto t_radio_port_rx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
@@ -88,6 +90,8 @@ WBLink::~WBLink() {
   m_console->debug("WBLink::~WBLink() begin");
   if(m_opt_action_handler){
     m_opt_action_handler->action_wb_link_scan_channels_register(nullptr);
+    m_opt_action_handler->action_on_ony_rc_channel_register(nullptr);
+    m_opt_action_handler->m_action_tx_power_when_armed= nullptr;
   }
   if(m_work_thread){
     m_work_thread_run =false;
@@ -318,9 +322,13 @@ void WBLink::apply_txpower() {
   for(const auto& card: m_broadcast_cards){
     if(card.type==WiFiCardType::Realtek8812au){
       // requires corresponding driver workaround for dynamic tx power
-      const auto tmp=settings.wb_rtl8812au_tx_pwr_idx_override;
-      m_console->debug("RTL8812AU tx_pwr_idx_override: {}",tmp);
-      wifi::commandhelper::iw_set_tx_power(card.device_name,tmp);
+      uint32_t pwr_index=(int)settings.wb_rtl8812au_tx_pwr_idx_override;
+      if(m_is_armed && settings.wb_rtl8812au_tx_pwr_idx_armed!=openhd::RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED){
+        m_console->debug("Using power index special for armed");
+        pwr_index=settings.wb_rtl8812au_tx_pwr_idx_armed;
+      }
+      m_console->debug("RTL8812AU tx_pwr_idx_override: {}",pwr_index);
+      wifi::commandhelper::iw_set_tx_power(card.device_name,pwr_index);
     }else{
       const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
       wifi::commandhelper::iw_set_tx_power(card.device_name,tmp);
@@ -500,6 +508,13 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       return set_tx_power_rtl8812au(value);
     };
     ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override,cb_wb_rtl8812au_tx_pwr_idx_override}});
+    auto cb_wb_rtl8812au_tx_pwr_idx_armed=[this](std::string,int value){
+      if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(value))return false;
+      m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_armed=value;
+      m_settings->persist();
+      return true;
+    };
+    ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_ARMED,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_armed,cb_wb_rtl8812au_tx_pwr_idx_armed}});
   }else{
     auto cb_wb_tx_power_milli_watt=[this](std::string,int value){
       return set_tx_power_mw(value);
@@ -1099,4 +1114,12 @@ void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channel
   }
   // apply the wanted mcs index
   set_mcs_index(mcs_index);
+}
+
+void WBLink::update_arming_state(bool armed) {
+  m_console->debug("update arming state, armed: {}",armed);
+  // We just update the internal armed / disarmed state and then call apply_tx_power -
+  // it will set the right tx power if the user enabled it
+  m_is_armed=armed;
+  apply_txpower();
 }
