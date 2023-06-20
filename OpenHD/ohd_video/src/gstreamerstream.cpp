@@ -45,6 +45,7 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   assert(setting.streamed_video_format.isValid());
   OHDGstHelper::initGstreamerOrThrow();
   //m_gst_video_recorder=std::make_unique<GstVideoRecorder>();
+  // Register a callback such that we get notified when the FC is armed / disarmed
   if(m_opt_action_handler){
     auto cb=[this](bool armed){
       this->update_arming_state(armed);
