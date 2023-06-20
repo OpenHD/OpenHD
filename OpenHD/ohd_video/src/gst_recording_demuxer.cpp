@@ -28,19 +28,19 @@ static void demux_mkv(const std::string& in_file){
   assert(OHDUtil::endsWith(in_file,".mkv"));
   assert(in_file.size()>=4);
   const std::string file_without_suffix= in_file.substr(0, in_file.size()-4);
-  const std::string filename_mp4=file_without_suffix+".mp4";
+  const std::string out_file_mp4=file_without_suffix+".mp4";
   console->debug("New file name: {}",file_without_suffix);
   // convert the file
-  OHDUtil::run_command("gst-launch-1.0", {create_gst_demux_pipeline(in_file,filename_mp4)});
-  if(!OHDFilesystemUtil::exists(filename_mp4)){
+  OHDUtil::run_command("gst-launch-1.0", {create_gst_demux_pipeline(in_file,out_file_mp4)});
+  if(!OHDFilesystemUtil::exists(out_file_mp4)){
     // conversion probably not successful
-    console->warn("Cannot convert {} to {}", in_file,filename_mp4);
+    console->warn("Cannot convert {} to {}", in_file,out_file_mp4);
     return ;
   }
   // Now we can safely delete the old file
   OHDFilesystemUtil::remove_if_existing(in_file);
   // and make the new file rw everybody
-  OHDFilesystemUtil::make_file_read_write_everyone(filename_mp4);
+  OHDFilesystemUtil::make_file_read_write_everyone(out_file_mp4);
 }
 
 static void demux_all_mkv_files_in_video_directory(){
