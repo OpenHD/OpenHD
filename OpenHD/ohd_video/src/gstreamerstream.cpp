@@ -378,7 +378,8 @@ void GStreamerStream::restartIfStopped() {
     return;
   }
   if(OHDFilesystemUtil::get_remaining_space_in_mb()<MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB){
-    if(m_camera_holder->get_settings().air_recording==AIR_RECORDING_ON || m_camera_holder->get_settings().air_recording==AIR_RECORDING_AUTO_ARM_DISARM){
+    if(m_camera_holder->get_settings().air_recording==AIR_RECORDING_ON
+        || m_camera_holder->get_settings().air_recording==AIR_RECORDING_AUTO_ARM_DISARM){
       m_console->warn("Disabling recording, not enough free space (<300MB)");
       m_camera_holder->unsafe_get_settings().air_recording=AIR_RECORDING_OFF;
       m_camera_holder->persist();
