@@ -28,7 +28,8 @@ static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
 static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT=25;
 // Measured to be about /below 25mW, RTL8812au only (or future cards who use the recommended power level index approach)
 static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=22;
-static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX_ARMED=22;
+// by default, we do not differentiate (to not confuse users)
+static constexpr auto RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED=0;
 
 // Set to 0 for fec auto block length
 // Set to 1 or greater for fixed k fec
@@ -61,7 +62,7 @@ struct WBLinkSettings {
   // (under this name they were known already in previous openhd releases, but we now support changing them dynamcially at run time)
   uint32_t wb_rtl8812au_tx_pwr_idx_override=DEFAULT_RTL8812AU_TX_POWER_INDEX;
   // applied when armed
-  //uint32_t wb_rtl8812au_tx_pwr_idx_armed=DEFAULT_RTL8812AU_TX_POWER_INDEX_ARMED;
+  uint32_t wb_rtl8812au_tx_pwr_idx_armed=RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED;
   // 0 means auto, aka variable block size (default, gives best results in most cases and has 0 additional latency)
   uint32_t wb_video_fec_block_length=DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH;
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
@@ -79,7 +80,7 @@ struct WBLinkSettings {
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
                                    wb_enable_stbc,wb_enable_ldpc,wb_enable_short_guard,
-                                   wb_tx_power_milli_watt,wb_rtl8812au_tx_pwr_idx_override,
+                                   wb_tx_power_milli_watt,wb_rtl8812au_tx_pwr_idx_override,wb_rtl8812au_tx_pwr_idx_armed,
                                    wb_video_fec_block_length, wb_video_fec_percentage,wb_max_fec_block_size_for_platform,
                                    wb_mcs_index_via_rc_channel,
                                    enable_wb_video_variable_bitrate);
@@ -183,6 +184,7 @@ static constexpr auto WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM="WB_MAX_D_BZ";
 static constexpr auto WB_TX_POWER_MILLI_WATT="WB_TX_POWER_MW";
 // annoying 16 char settings limit
 static constexpr auto WB_RTL8812AU_TX_PWR_IDX_OVERRIDE="WB_TX_PWR_IDX_O";
+static constexpr auto WB_RTL8812AU_TX_PWR_IDX_ARMED="TX_POWER_ARMED";
 //
 static constexpr auto WB_VIDEO_VARIABLE_BITRATE="VARIABLE_BITRATE";
 //

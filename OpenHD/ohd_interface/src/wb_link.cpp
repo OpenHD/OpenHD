@@ -322,9 +322,13 @@ void WBLink::apply_txpower() {
   for(const auto& card: m_broadcast_cards){
     if(card.type==WiFiCardType::Realtek8812au){
       // requires corresponding driver workaround for dynamic tx power
-      const auto tmp=settings.wb_rtl8812au_tx_pwr_idx_override;
-      m_console->debug("RTL8812AU tx_pwr_idx_override: {}",tmp);
-      wifi::commandhelper::iw_set_tx_power(card.device_name,tmp);
+      uint32_t pwr_index=(int)settings.wb_rtl8812au_tx_pwr_idx_override;
+      if(m_is_armed && settings.wb_rtl8812au_tx_pwr_idx_armed!=openhd::RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED){
+        m_console->debug("Using power index special for armed");
+        pwr_index=settings.wb_rtl8812au_tx_pwr_idx_armed;
+      }
+      m_console->debug("RTL8812AU tx_pwr_idx_override: {}",pwr_index);
+      wifi::commandhelper::iw_set_tx_power(card.device_name,pwr_index);
     }else{
       const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
       wifi::commandhelper::iw_set_tx_power(card.device_name,tmp);
@@ -504,6 +508,13 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       return set_tx_power_rtl8812au(value);
     };
     ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override,cb_wb_rtl8812au_tx_pwr_idx_override}});
+    auto cb_wb_rtl8812au_tx_pwr_idx_armed=[this](std::string,int value){
+      if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(value))return false;
+      m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_armed=value;
+      m_settings->persist();
+      return true;
+    };
+    ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_ARMED,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_armed,cb_wb_rtl8812au_tx_pwr_idx_armed}});
   }else{
     auto cb_wb_tx_power_milli_watt=[this](std::string,int value){
       return set_tx_power_mw(value);
@@ -1107,4 +1118,8 @@ void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channel
 
 void WBLink::update_arming_state(bool armed) {
   m_console->debug("update arming state, armed: {}",armed);
+  // We just update the internal armed / disarmed state and then call apply_tx_power -
+  // it will set the right tx power if the user enabled it
+  m_is_armed=armed;
+  apply_txpower();
 }
