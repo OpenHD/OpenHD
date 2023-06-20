@@ -55,3 +55,21 @@ static void demux_all_mkv_files_in_video_directory(){
     demux_mkv(file);
   }
 }
+
+void GstRecordingDemuxer::demux_all_mkv_files() {
+  demux_all_mkv_files_in_video_directory();
+}
+
+void GstRecordingDemuxer::demux_all_mkv_files_async() {
+  auto console=openhd::log::get_default();
+  if(m_demux_thread!= nullptr){
+    console->warn("Waiting for previous demuxing to end");
+    if(m_demux_thread->joinable()){
+      m_demux_thread->join();
+    }
+    m_demux_thread= nullptr;
+  }
+  m_demux_thread=std::make_unique<std::thread>([this](){
+    demux_all_mkv_files();
+  });
+}
