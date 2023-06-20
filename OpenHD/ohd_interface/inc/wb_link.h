@@ -70,6 +70,8 @@ class WBLink :public OHDLink{
   bool set_mcs_index(int mcs_index);
   // this is special, mcs index can not only be changed via mavlink param, but also via RC channel (if enabled)
   void set_mcs_index_from_rc_channel(const std::array<int,18>& rc_channels);
+  // special, change tx power depending if the FC is armed / disarmed
+  void update_arming_state(bool armed);
   // These do not "break" the bidirectional connectivity and therefore
   // can be changed easily on the fly
   bool set_video_fec_block_length(int block_length);

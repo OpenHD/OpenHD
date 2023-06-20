@@ -1100,3 +1100,7 @@ void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channel
   // apply the wanted mcs index
   set_mcs_index(mcs_index);
 }
+
+void WBLink::update_arming_state(bool armed) {
+  m_console->debug("update arming state, armed: {}",armed);
+}
