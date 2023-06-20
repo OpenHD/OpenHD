@@ -53,6 +53,8 @@ class GStreamerStream : public CameraStream {
   void restart_after_new_setting();
   void restartIfStopped() override;
   void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) override;
+  // this is called when the FC reports itself as armed / disarmed
+  void update_arming_state(bool armed);
  public:
   // Set gst state to PLAYING
   void start() override;

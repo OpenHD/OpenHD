@@ -45,6 +45,12 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   assert(setting.streamed_video_format.isValid());
   OHDGstHelper::initGstreamerOrThrow();
   //m_gst_video_recorder=std::make_unique<GstVideoRecorder>();
+  if(m_opt_action_handler){
+    auto cb=[this](bool armed){
+      this->update_arming_state(armed);
+    };
+    m_opt_action_handler->m_action_record_video_when_armed=std::make_shared<openhd::ActionHandler::ACTION_RECORD_VIDEO_WHEN_ARMED>(cb);
+  }
   m_console->debug("GStreamerStream::GStreamerStream done");
 }
 
@@ -532,5 +538,12 @@ void GStreamerStream::loop_pull_samples() {
   };
   openhd::loop_pull_appsink_samples(m_pull_samples_run,m_app_sink_element,cb);
   m_frame_fragments.resize(0);
+}
 
+void GStreamerStream::update_arming_state(bool armed) {
+  m_console->debug("update_arming_state: {}",armed);
+  const auto settings=m_camera_holder->get_settings();
+  if(settings.air_recording==AIR_RECORDING_AUTO_ARM_DISARM){
+    // TODO
+  }
 }
