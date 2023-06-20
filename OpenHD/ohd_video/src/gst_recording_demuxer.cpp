@@ -63,6 +63,17 @@ static void demux_all_mkv_files_in_video_directory(){
   }
 }
 
+GstRecordingDemuxer::~GstRecordingDemuxer() {
+  auto console=openhd::log::create_or_get("gst_demuxer");
+  if(m_demux_thread!= nullptr){
+    console->warn("Waiting for previous demuxing to end");
+    if(m_demux_thread->joinable()){
+      m_demux_thread->join();
+    }
+    m_demux_thread= nullptr;
+  }
+}
+
 void GstRecordingDemuxer::demux_all_mkv_files_async() {
   auto console=openhd::log::create_or_get("gst_demuxer");
   if(m_demux_thread!= nullptr){

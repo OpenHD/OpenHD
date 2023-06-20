@@ -12,6 +12,7 @@
 // uses gstreamer & command line util
 class GstRecordingDemuxer {
  public:
+  ~GstRecordingDemuxer();
   // Find all files that end in .mkv in the openhd videos (air recording) directory and demuxes
   // them to .mp4 for easier use.
   void demux_all_mkv_files_async();
