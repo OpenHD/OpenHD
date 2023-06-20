@@ -22,6 +22,7 @@
 #include "openhd_spdlog.h"
 #include "routing/MavlinkComponent.hpp"
 #include "routing/MavlinkSystem.hpp"
+#include "last_known_position/LastKnowPosition.h"
 
 // This Component runs on both the air and ground unit and should handle as many
 // messages / commands / create as many
@@ -69,6 +70,7 @@ class OHDMainComponent : public MavlinkComponent{
   openhd::link_statistics::StatsAirGround m_last_link_stats{};
   MavlinkMessage ack_command(uint8_t source_sys_id,uint8_t source_comp_id,uint16_t command_id);
   std::shared_ptr<spdlog::logger> m_console;
+  std::unique_ptr<LastKnowPosition> m_last_known_position= nullptr;
 };
 
 #endif //XMAVLINKSERVICE_INTERNALTELEMETRY_H
