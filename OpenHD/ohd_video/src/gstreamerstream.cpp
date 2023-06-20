@@ -13,6 +13,7 @@
 #include "gst_appsink_helper.h"
 #include "gst_debug_helper.h"
 #include "rtp_eof_helper.h"
+#include "gst_recording_demuxer.h"
 
 #include "openhd_util_time.hpp"
 
@@ -297,6 +298,11 @@ void GStreamerStream::stop_cleanup_restart() {
   const auto before=std::chrono::steady_clock::now();
   stop();
   cleanup_pipe();
+  // after we have stopped the pipeline, if recording was active, we have a .mkv file -
+  // convert it to something more usable in the background, unless the FC is currently armed
+  if(!m_armed_enable_air_recording){
+    GstRecordingDemuxer::instance().demux_all_mkv_files_async();
+  }
   setup();
   start();
   const auto elapsed=std::chrono::steady_clock::now()-before;
