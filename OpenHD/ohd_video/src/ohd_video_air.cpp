@@ -9,6 +9,7 @@
 #include "camera_discovery.h"
 #include "gstreamerstream.h"
 #include "openhd_config.h"
+#include "gst_recording_demuxer.h"
 
 OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
                    std::shared_ptr<openhd::ActionHandler> opt_action_handler,
@@ -53,6 +54,8 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
   if(m_platform.platform_type==PlatformType::RaspberryPi){
     m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(m_platform);
   }
+  // In case any non-demuxed recordings exists (e.g. due to a openhd crash, unsafe shutdown,...)
+  GstRecordingDemuxer::instance().demux_all_mkv_files_async();
   m_console->debug( "OHDVideo::running");
 }
 

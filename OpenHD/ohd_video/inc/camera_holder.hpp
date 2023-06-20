@@ -167,6 +167,24 @@ class CameraHolder:
       };
       ret.push_back(openhd::Setting{"V_DENOISE_INDEX",openhd::IntSetting{get_settings().rpi_libcamera_denoise_index,cb}});
     }
+    if(m_camera.type==CameraType::RPI_CSI_LIBCAMERA){
+      auto cb_awb=[this](std::string,int value) {
+        return set_rpi_libcamera_awb_index(value);
+      };
+      ret.push_back(openhd::Setting{"AWB",openhd::IntSetting{get_settings().rpi_libcamera_awb_index,cb_awb}});
+      auto cb_metring=[this](std::string,int value) {
+        return set_rpi_libcamera_metering_index(value);
+      };
+      ret.push_back(openhd::Setting{"METERING",openhd::IntSetting{get_settings().rpi_libcamera_metering_index,cb_metring}});
+      auto cb_exposure=[this](std::string,int value) {
+        return set_rpi_libcamera_exposure_index(value);
+      };
+      ret.push_back(openhd::Setting{"EXPOSURE",openhd::IntSetting{get_settings().rpi_libcamera_exposure_index,cb_exposure}});
+      auto cb_shutter=[this](std::string,int value) {
+        return set_rpi_libcamera_shutter_microseconds(value);
+      };
+      ret.push_back(openhd::Setting{"SHUTTER",openhd::IntSetting{get_settings().rpi_libcamera_shutter_microseconds,cb_shutter}});
+    }
     return ret;
   }
   bool set_enable_streaming(int enable){
@@ -295,6 +313,30 @@ class CameraHolder:
   bool set_rpi_libcamera_denoise_index(int value){
     if(!openhd::validate_rpi_libcamera_doenise_index(value))return false;
     unsafe_get_settings().rpi_libcamera_denoise_index=value;
+    persist(true);
+    return true;
+  }
+  bool set_rpi_libcamera_awb_index(int value){
+    if(!openhd::validate_rpi_libcamera_awb_index(value))return false;
+    unsafe_get_settings().rpi_libcamera_awb_index=value;
+    persist(true);
+    return true;
+  }
+  bool set_rpi_libcamera_metering_index(int value){
+    if(!openhd::validate_rpi_libcamera_metering_index(value))return false;
+    unsafe_get_settings().rpi_libcamera_metering_index=value;
+    persist(true);
+    return true;
+  }
+  bool set_rpi_libcamera_exposure_index(int value){
+    if(!openhd::validate_rpi_libcamera_exposure_index(value))return false;
+    unsafe_get_settings().rpi_libcamera_exposure_index=value;
+    persist(true);
+    return true;
+  }
+  bool set_rpi_libcamera_shutter_microseconds(int value){
+    if(!openhd::validate_rpi_libcamera_shutter_microseconds(value))return false;
+    unsafe_get_settings().rpi_libcamera_shutter_microseconds=value;
     persist(true);
     return true;
   }

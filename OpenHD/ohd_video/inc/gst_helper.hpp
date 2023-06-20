@@ -244,10 +244,7 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
                                          const CameraSettings& settings) {
   assert(settings.streamed_video_format.isValid());
   std::stringstream ss;
-  // other than the other ones, rpicamsrc takes bit/s instead of kbit/s
-  const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
-  ss << fmt::format("libcamerasrc camera-name={} ",
-                      camera_name);
+  ss << fmt::format("libcamerasrc camera-name={} ",camera_name);
   // NOTE: those options require openhd/arducam lbcamera !!
   // We make sure not to write them out explicitly when default(s) are still in use
   // openhd-libcamera specific options begin
@@ -266,6 +263,18 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   }
   if(openhd::validate_rpi_libcamera_doenise_index(settings.rpi_libcamera_denoise_index) && settings.rpi_libcamera_denoise_index!=0){
     ss<<fmt::format("denoise={} ",settings.rpi_libcamera_denoise_index);
+  }
+  if(openhd::validate_rpi_libcamera_awb_index(settings.rpi_libcamera_awb_index) && settings.rpi_libcamera_awb_index!=0){
+    ss<<fmt::format("awb={} ",settings.rpi_libcamera_awb_index);
+  }
+  if(openhd::validate_rpi_libcamera_metering_index(settings.rpi_libcamera_metering_index) && settings.rpi_libcamera_metering_index!=0){
+    ss<<fmt::format("metering={} ",settings.rpi_libcamera_metering_index);
+  }
+  if(openhd::validate_rpi_libcamera_exposure_index(settings.rpi_libcamera_exposure_index) && settings.rpi_libcamera_exposure_index!=0){
+    ss<<fmt::format("exposure={} ",settings.rpi_libcamera_exposure_index);
+  }
+  if(openhd::validate_rpi_libcamera_shutter_microseconds(settings.rpi_libcamera_shutter_microseconds) && settings.rpi_libcamera_shutter_microseconds!=0){
+    ss<<fmt::format("shutter={} ",settings.rpi_libcamera_shutter_microseconds);
   }
   // openhd-libcamera specific options end
   ss << " ! ";

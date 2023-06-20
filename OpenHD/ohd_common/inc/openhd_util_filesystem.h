@@ -17,6 +17,7 @@ namespace OHDFilesystemUtil{
 
 /**
  * Quite common during the discovery step, find all directory entries in a directory.
+ * If the given directory does not exist, return no entries.
  * @param directory
  * @return the full paths of each entry in the directory.
  */
