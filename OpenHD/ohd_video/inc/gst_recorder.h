@@ -14,7 +14,8 @@
 
 #include "openhd_spdlog.h"
 
-// TODO
+// TODO for some reason, I cannot make fucking appsrc work !
+// Dummy until this issue is resolved
 class GstVideoRecorder {
  public:
   GstVideoRecorder();
