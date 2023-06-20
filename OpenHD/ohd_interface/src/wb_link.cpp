@@ -1092,12 +1092,12 @@ void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channel
     // most likely invalid data, discard
     return ;
   }
-  // We simply pre-define a range (pwm: [1000,...,2000]
-  // [1000 ... 1200] : MCS0
+  // We simply pre-define a range (pwm: [900,...,2100]
+  // [900 ... 1200] : MCS0
   // [1200 ... 1400] : MCS1
   // [1400 ... 1600] : MCS2
   // [1600 ... 1800] : MCS3
-  // [1800 ... 2000] : MCS 4
+  // [1800 ... 2100] : MCS 4
   int mcs_index=0;
   if(mcs_channel_value_pwm>1800){
     mcs_index=4;
