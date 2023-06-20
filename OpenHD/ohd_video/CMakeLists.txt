@@ -62,7 +62,7 @@ set(sources
     "inc/gstreamerstream.h"
     "src/libcamera_detect.hpp"
     "inc/gst_helper.hpp"
-    inc/gst_recorder.h
+    #inc/gst_recorder.h
     "inc/ohd_video_air.h"
     "inc/camera.hpp"
     "inc/camera_enums.hpp"
@@ -82,7 +82,7 @@ set(sources
     "src/ohd_video_air.cpp"
     "src/rtp_eof_helper.cpp"
     src/ohd_video_ground.cpp
-    src/gst_recorder.cpp
+    #src/gst_recorder.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})

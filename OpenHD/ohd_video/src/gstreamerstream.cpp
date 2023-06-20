@@ -534,9 +534,9 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
     on_new_rtp_fragmented_frame(m_frame_fragments);
     m_frame_fragments.resize(0);
   }
-  if(m_gst_video_recorder){
+  /*if(m_gst_video_recorder){
     m_gst_video_recorder->enqueue_rtp_fragment(fragment);
-  }
+  }*/
 }
 
 void GStreamerStream::loop_pull_samples() {

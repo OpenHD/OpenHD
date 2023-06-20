@@ -14,7 +14,7 @@
 #include "gst_bitrate_controll_wrapper.hpp"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
-#include "gst_recorder.h"
+//#include "gst_recorder.h"
 
 // Implementation of OHD CameraStream for pretty much everything, using
 // gstreamer.
@@ -102,7 +102,8 @@ class GStreamerStream : public CameraStream {
   void loop_pull_samples();
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
  private:
-  std::unique_ptr<GstVideoRecorder> m_gst_video_recorder=nullptr;
+  // Not working yet, keep the old approach
+  //std::unique_ptr<GstVideoRecorder> m_gst_video_recorder=nullptr;
 };
 
 #endif
