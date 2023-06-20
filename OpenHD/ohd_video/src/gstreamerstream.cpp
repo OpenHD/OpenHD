@@ -153,7 +153,7 @@ void GStreamerStream::setup() {
   // forward data via udp localhost or using appsink and data callback
   //m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
   m_pipeline_content << OHDGstHelper::createOutputAppSink();
-  if(ADD_RECORDING_TO_PIPELINE=){
+  if(ADD_RECORDING_TO_PIPELINE){
     const auto recording_filename=openhd::video::create_unused_recording_filename(
         OHDGstHelper::file_suffix_for_video_codec(setting.streamed_video_format.videoCodec));
     m_console->debug("Using [{}] for recording",recording_filename);
@@ -554,6 +554,7 @@ void GStreamerStream::update_arming_state(bool armed) {
   if(settings.air_recording==AIR_RECORDING_AUTO_ARM_DISARM){
     if(armed){
       m_armed_enable_air_recording= true;
+      m_console->warn("Starting air recording");
     }else{
       m_armed_enable_air_recording= false;
     }
