@@ -90,6 +90,8 @@ WBLink::~WBLink() {
   m_console->debug("WBLink::~WBLink() begin");
   if(m_opt_action_handler){
     m_opt_action_handler->action_wb_link_scan_channels_register(nullptr);
+    m_opt_action_handler->action_on_ony_rc_channel_register(nullptr);
+    m_opt_action_handler->m_action_tx_power_when_armed= nullptr;
   }
   if(m_work_thread){
     m_work_thread_run =false;
