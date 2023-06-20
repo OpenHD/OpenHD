@@ -100,7 +100,21 @@ static bool validate_rpi_rpicamsrc_metering_mode(int value){
 static bool validate_rpi_libcamera_doenise_index(int value){
   return value>=0 && value<=4;
 }
-
+static bool validate_rpi_libcamera_awb_index(int value){
+  return value>=0 && value<=7;
+}
+// (centre, spot, average, custom)
+static bool validate_rpi_libcamera_metering_index(int value){
+  return value>=0 && value<=3;
+}
+// (normal, sport)
+static bool validate_rpi_libcamera_exposure_index(int value){
+  return value>=0 && value<=1;
+}
+// cannot really be validated, depends on camera
+static bool validate_rpi_libcamera_shutter_microseconds(int value){
+  return value>=0 && value<=1000*100;
+}
 
 static bool validate_mjpeg_quality_percent(int value){
   const bool ret=value<=100 && value>=1;
