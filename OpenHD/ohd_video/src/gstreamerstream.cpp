@@ -142,7 +142,7 @@ void GStreamerStream::setup() {
       setting.air_recording==AIR_RECORDING_ON ||
       (setting.air_recording==AIR_RECORDING_AUTO_ARM_DISARM && m_armed_enable_air_recording);
   // for safety we only add the tee command at the right place if recording is enabled.
-  if(ADD_RECORDING_TO_PIPELINE=){
+  if(ADD_RECORDING_TO_PIPELINE){
     m_console->info("Air recording active");
     m_pipeline_content <<"tee name=t ! ";
   }
