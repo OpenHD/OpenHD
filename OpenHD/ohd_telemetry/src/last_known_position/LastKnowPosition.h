@@ -21,6 +21,7 @@ class LastKnowPosition {
   LastKnowPosition();
   void on_new_position(double latitude,double longitude,double altitude);
  private:
+  const std::string m_directory;
   std::chrono::steady_clock::time_point m_last_position_update=std::chrono::steady_clock::now();
   int m_update_index=0;
 };
