@@ -61,16 +61,18 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
   if(m_opt_action_handler){
-        auto cb2=[this](openhd::ActionHandler::ScanChannelsParam param){
+        auto cb_scan=[this](openhd::ActionHandler::ScanChannelsParam param){
           async_scan_channels(param);
         };
-        m_opt_action_handler->action_wb_link_scan_channels_register(cb2);
-  }
-  if(m_opt_action_handler){
-        auto cb=[this](const std::array<int,18>& rc_channels){
+        m_opt_action_handler->action_wb_link_scan_channels_register(cb_scan);
+        auto cb_mcs=[this](const std::array<int,18>& rc_channels){
           set_mcs_index_from_rc_channel(rc_channels);
         };
-        m_opt_action_handler->action_on_ony_rc_channel_register(cb);
+        m_opt_action_handler->action_on_ony_rc_channel_register(cb_mcs);
+        auto cb_arm=[this](bool armed){
+          update_arming_state(armed);
+        };
+        m_opt_action_handler->m_action_tx_power_when_armed=std::make_shared<openhd::ActionHandler::ACTION_TX_POWER_WHEN_ARMED>(cb_arm);
   }
   // exp
   /*const auto t_radio_port_rx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
