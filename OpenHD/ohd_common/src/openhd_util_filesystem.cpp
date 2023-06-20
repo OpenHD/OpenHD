@@ -16,6 +16,9 @@
 
 std::vector<std::string> OHDFilesystemUtil::getAllEntriesFullPathInDirectory(
     const std::string &directory) {
+  if(!OHDFilesystemUtil::exists(directory)){
+    return {};
+  }
   boost::filesystem::path dev(directory.c_str());
   std::vector<std::string> ret;
   for (auto &entry: boost::filesystem::directory_iterator(dev)) {
