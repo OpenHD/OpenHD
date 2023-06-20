@@ -73,3 +73,8 @@ void GstRecordingDemuxer::demux_all_mkv_files_async() {
     demux_all_mkv_files();
   });
 }
+
+GstRecordingDemuxer& GstRecordingDemuxer::instance() {
+  static GstRecordingDemuxer demuxer;
+  return demuxer;
+}

@@ -12,6 +12,7 @@ class GstRecordingDemuxer {
  public:
   static void demux_all_mkv_files();
   void demux_all_mkv_files_async();
+  static GstRecordingDemuxer& instance();
  private:
   std::unique_ptr<std::thread> m_demux_thread=nullptr;
 };
