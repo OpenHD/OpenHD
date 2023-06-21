@@ -171,19 +171,19 @@ class CameraHolder:
       auto cb_awb=[this](std::string,int value) {
         return set_rpi_libcamera_awb_index(value);
       };
-      ret.push_back(openhd::Setting{"AWB",openhd::IntSetting{get_settings().rpi_libcamera_awb_index,cb_awb}});
+      ret.push_back(openhd::Setting{"AWB_MODE_LC",openhd::IntSetting{get_settings().rpi_libcamera_awb_index,cb_awb}});
       auto cb_metring=[this](std::string,int value) {
         return set_rpi_libcamera_metering_index(value);
       };
-      ret.push_back(openhd::Setting{"METERING",openhd::IntSetting{get_settings().rpi_libcamera_metering_index,cb_metring}});
+      ret.push_back(openhd::Setting{"METERING_MODE_LC",openhd::IntSetting{get_settings().rpi_libcamera_metering_index,cb_metring}});
       auto cb_exposure=[this](std::string,int value) {
         return set_rpi_libcamera_exposure_index(value);
       };
-      ret.push_back(openhd::Setting{"EXPOSURE",openhd::IntSetting{get_settings().rpi_libcamera_exposure_index,cb_exposure}});
+      ret.push_back(openhd::Setting{"EXPOSURE_MODE_LC",openhd::IntSetting{get_settings().rpi_libcamera_exposure_index,cb_exposure}});
       auto cb_shutter=[this](std::string,int value) {
         return set_rpi_libcamera_shutter_microseconds(value);
       };
-      ret.push_back(openhd::Setting{"SHUTTER",openhd::IntSetting{get_settings().rpi_libcamera_shutter_microseconds,cb_shutter}});
+      ret.push_back(openhd::Setting{"SHUTTER_US_LC",openhd::IntSetting{get_settings().rpi_libcamera_shutter_microseconds,cb_shutter}});
     }
     return ret;
   }
