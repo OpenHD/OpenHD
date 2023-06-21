@@ -1,0 +1,106 @@
+openhd@openhd:~/OpenHD $ sudo libcamera-vid -h
+Valid options are:
+  -h [ --help ] [=arg(=1)] (=0)         Print this help message
+  --version [=arg(=1)] (=0)             Displays the build version number
+  --list-cameras [=arg(=1)] (=0)        Lists the available cameras attached to the system.
+  --camera arg (=0)                     Chooses the camera to use. To list the available indexes, use the 
+                                        --list-cameras option.
+  -v [ --verbose ] [=arg(=2)] (=1)      Set verbosity level. Level 0 is no output, 1 is default, 2 is verbose.
+  -c [ --config ] [=arg(=config.txt)]   Read the options from a file. If no filename is specified, default to 
+                                        config.txt. In case of duplicate options, the ones provided on the command line
+                                        will be used. Note that the config file must only contain the long form 
+                                        options.
+  --info-text arg (=#%frame (%fps fps) exp %exp ag %ag dg %dg)
+                                        Sets the information string on the titlebar. Available values:
+                                        %frame (frame number)
+                                        %fps (framerate)
+                                        %exp (
+                                         speed)
+                                        %ag (analogue gain)
+                                        %dg (digital gain)
+                                        %rg (red colour gain)
+                                        %bg (blue colour gain)
+                                        %focus (focus FoM value)
+                                        %aelock (AE locked status)
+                                        %lp (lens position, if known)
+                                        %afstate (AF state, if supported)
+  --width arg (=0)                      Set the output image width (0 = use default value)
+  --height arg (=0)                     Set the output image height (0 = use default value)
+  -t [ --timeout ] arg (=5000)          Time (in ms) for which program runs
+  -o [ --output ] arg                   Set the output file name
+  --post-process-file arg               Set the file name for configuring the post-processing
+  --rawfull [=arg(=1)] (=0)             Force use of full resolution raw frames
+  -n [ --nopreview ] [=arg(=1)] (=0)    Do not show a preview window
+  -p [ --preview ] arg (=0,0,0,0)       Set the preview window dimensions, given as x,y,width,height e.g. 0,0,640,480
+  -f [ --fullscreen ] [=arg(=1)] (=0)   Use a fullscreen preview window
+  --qt-preview [=arg(=1)] (=0)          Use Qt-based preview window (WARNING: causes heavy CPU load, fullscreen not 
+                                        supported)
+  --hflip [=arg(=1)] (=0)               Request a horizontal flip transform
+  --vflip [=arg(=1)] (=0)               Request a vertical flip transform
+  --rotation arg (=0)                   Request an image rotation, 0 or 180
+  --roi arg (=0,0,0,0)                  Set region of interest (digital zoom) e.g. 0.25,0.25,0.5,0.5
+  --shutter arg (=0)                    Set a fixed shutter speed in microseconds
+  --analoggain arg (=0)                 Set a fixed gain value (synonym for 'gain' option)
+  --gain arg                            Set a fixed gain value
+  --metering arg (=centre)              Set the metering mode (centre, spot, average, custom)
+  --exposure arg (=normal)              Set the exposure mode (normal, sport)
+  --ev arg (=0)                         Set the EV exposure compensation, where 0 = no change
+  --awb arg (=auto)                     Set the AWB mode (auto, incandescent, tungsten, fluorescent, indoor, daylight, 
+                                        cloudy, custom)
+  --awbgains arg (=0,0)                 Set explict red and blue gains (disable the automatic AWB algorithm)
+  --flush [=arg(=1)] (=0)               Flush output data as soon as possible
+  --wrap arg (=0)                       When writing multiple output files, reset the counter when it reaches this 
+                                        number
+  --brightness arg (=0)                 Adjust the brightness of the output images, in the range -1.0 to 1.0
+  --contrast arg (=1)                   Adjust the contrast of the output image, where 1.0 = normal contrast
+  --saturation arg (=1)                 Adjust the colour saturation of the output, where 1.0 = normal and 0.0 = 
+                                        greyscale
+  --sharpness arg (=1)                  Adjust the sharpness of the output image, where 1.0 = normal sharpening
+  --framerate arg (=-1)                 Set the fixed framerate for preview and video modes
+  --denoise arg (=auto)                 Sets the Denoise operating mode: auto, off, cdn_off, cdn_fast, cdn_hq
+  --viewfinder-width arg (=0)           Width of viewfinder frames from the camera (distinct from the preview window 
+                                        size
+  --viewfinder-height arg (=0)          Height of viewfinder frames from the camera (distinct from the preview window 
+                                        size)
+  --tuning-file arg (=-)                Name of camera tuning file to use, omit this option for libcamera default 
+                                        behaviour
+  --lores-width arg (=0)                Width of low resolution frames (use 0 to omit low resolution stream
+  --lores-height arg (=0)               Height of low resolution frames (use 0 to omit low resolution stream
+  --mode arg                            Camera mode as W:H:bit-depth:packing, where packing is P (packed) or U 
+                                        (unpacked)
+  --viewfinder-mode arg                 Camera mode for preview as W:H:bit-depth:packing, where packing is P (packed) 
+                                        or U (unpacked)
+  --buffer-count arg (=0)               Number of in-flight requests (and buffers) configured for video, raw, and 
+                                        still.
+  --viewfinder-buffer-count arg (=0)    Number of in-flight requests (and buffers) configured for preview window.
+  --autofocus-mode arg (=unset)         Control to set the mode of the AF (autofocus) algorithm.(manual, auto, 
+                                        continuous)
+  --autofocus-range arg (=unset)        Set the range of focus distances that is scanned.(normal, macro, full)
+  --autofocus-speed arg (=unset)        Control that determines whether the AF algorithm is to move the lens as quickly
+                                        as possible or more steadily.(normal, fast)
+  --autofocus-window arg (=0,0,0,0)     Sets AfMetering to  AfMeteringWindows an set region used, e.g. 
+                                        0.25,0.25,0.5,0.5
+  --lens-position arg                   Set the lens to a particular focus position, expressed as a reciprocal distance
+                                        (0 moves the lens to infinity), or "default" for the hyperfocal distance
+  --metadata arg                        Save captured image metadata to a file or "-" for stdout
+  --metadata-format arg (=json)         Format to save the metadata in, either txt or json (requires --metadata)
+  -b [ --bitrate ] arg (=0)             Set the video bitrate for encoding, in bits/second (h264 only)
+  --profile arg                         Set the encoding profile (h264 only)
+  --level arg                           Set the encoding level (h264 only)
+  -g [ --intra ] arg (=0)               Set the intra frame period (h264 only)
+  --inline [=arg(=1)] (=0)              Force PPS/SPS header with every I frame (h264 only)
+  --codec arg (=h264)                   Set the codec to use, either h264, mjpeg or yuv420
+  --save-pts arg                        Save a timestamp file with this name
+  -q [ --quality ] arg (=50)            Set the MJPEG quality parameter (mjpeg only)
+  -l [ --listen ] [=arg(=1)] (=0)       Listen for an incoming client network connection before sending data to the 
+                                        client
+  -k [ --keypress ] [=arg(=1)] (=0)     Pause or resume video recording when ENTER pressed
+  -s [ --signal ] [=arg(=1)] (=0)       Pause or resume video recording when signal received
+  -i [ --initial ] arg (=record)        Use 'pause' to pause the recording at startup, otherwise 'record' (the default)
+  --split [=arg(=1)] (=0)               Create a new output file every time recording is paused and then resumed
+  --segment arg (=0)                    Break the recording into files of approximately this many milliseconds
+  --circular [=arg(=4)] (=0)            Write output to a circular buffer of the given size (in MB) which is saved on 
+                                        exit
+  --frames arg (=0)                     Run for the exact number of frames specified. This will override any timeout 
+                                        set.
+
