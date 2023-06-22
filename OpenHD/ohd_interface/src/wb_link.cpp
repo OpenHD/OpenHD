@@ -822,6 +822,14 @@ bool WBLink::check_work_queue_empty() {
 void WBLink::transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data) {
   const auto res=m_wb_tele_tx->try_enqueue_packet(data);
   if(!res)m_console->debug("Enqueing tele packet failed");
+  if(!m_broadcast_cards.at(0).supports_injection){
+    const auto now=std::chrono::steady_clock::now();
+    const auto elapsed=now-m_last_log_card_does_might_not_inject;
+    if(elapsed>WARN_CARD_DOES_NOT_INJECT_INTERVAL){
+      m_console->warn("Card {} (might) not support injection/TX",m_broadcast_cards.at(0).device_name);
+      m_last_log_card_does_might_not_inject=now;
+    }
+  }
 }
 
 void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
