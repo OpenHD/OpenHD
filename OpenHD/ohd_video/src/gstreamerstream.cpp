@@ -300,7 +300,7 @@ void GStreamerStream::stop_cleanup_restart() {
   cleanup_pipe();
   // after we have stopped the pipeline, if recording was active, we have a .mkv file -
   // convert it to something more usable in the background, unless the FC is currently armed
-  if(!m_armed_enable_air_recording){
+  if(!m_opt_action_handler->is_currently_armed()){
     GstRecordingDemuxer::instance().demux_all_mkv_files_async();
   }
   setup();

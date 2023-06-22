@@ -66,27 +66,20 @@ static void demux_all_mkv_files_in_video_directory(){
 
 GstRecordingDemuxer::~GstRecordingDemuxer() {
   auto console=openhd::log::create_or_get("gst_demuxer");
-  if(m_demux_thread!= nullptr){
-    console->warn("Waiting for previous demuxing to end");
-    if(m_demux_thread->joinable()){
-      m_demux_thread->join();
+  console->debug("~GstRecordingDemuxer, waiting for {} threads to finish",m_demux_threads.size());
+  for(auto& demux_thread: m_demux_threads){
+    if(demux_thread->joinable()){
+      demux_thread->join();
     }
-    m_demux_thread= nullptr;
   }
 }
 
 void GstRecordingDemuxer::demux_all_mkv_files_async() {
   auto console=openhd::log::create_or_get("gst_demuxer");
-  if(m_demux_thread!= nullptr){
-    console->warn("Waiting for previous demuxing to end");
-    if(m_demux_thread->joinable()){
-      m_demux_thread->join();
-    }
-    m_demux_thread= nullptr;
-  }
-  m_demux_thread=std::make_unique<std::thread>([this](){
+  auto demux_thread=std::make_unique<std::thread>([this](){
     demux_all_mkv_files_in_video_directory();
   });
+  m_demux_threads.push_back(std::move(demux_thread));
 }
 
 GstRecordingDemuxer& GstRecordingDemuxer::instance() {

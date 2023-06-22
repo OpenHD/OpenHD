@@ -133,6 +133,10 @@ class ActionHandler{
       }
     }
   }
+  // For fetching the arming state in a manner where a deterministic arm / disarm pattern is not needed
+  bool is_currently_armed(){
+    return m_is_armed;
+  }
  private:
   bool m_is_armed=false;
   // Allow registering actions when rc channel goes to a specific value
