@@ -69,6 +69,7 @@ GstRecordingDemuxer::~GstRecordingDemuxer() {
   console->debug("~GstRecordingDemuxer, waiting for {} threads to finish",m_demux_threads.size());
   for(auto& demux_thread: m_demux_threads){
     if(demux_thread->joinable()){
+      console->debug("Waiting for demuxing to end");
       demux_thread->join();
     }
   }
