@@ -94,7 +94,7 @@ static bool validate_rpi_intra_refresh_type(int value){
 
 // see gst-rpicamsrc documentation
 static bool validate_rpi_rpicamsrc_metering_mode(int value){
-  return value>=0 && value<=3;
+  return value>=0 && value<=2; //metering mode 3 (custom) crashes libcamera
 }
 
 static bool validate_rpi_libcamera_doenise_index(int value){
