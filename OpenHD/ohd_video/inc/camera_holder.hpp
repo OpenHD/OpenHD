@@ -162,7 +162,20 @@ class CameraHolder:
       ret.push_back(openhd::Setting{"V_METERING_MODE",openhd::IntSetting{get_settings().rpi_rpicamsrc_metering_mode,cb}});
     }
     // These are rpi libcamera specific image quality settings
-    if(m_camera.type==CameraType::RPI_CSI_LIBCAMERA){
+      if(m_camera.type==CameraType::RPI_CSI_LIBCAMERA){
+          auto cb_sharpness=[this](std::string,int value) {
+              return set_rpi_libcamera_sharpness_as_int(value);
+          };
+          ret.push_back(openhd::Setting{"SHARPNESS_LC",openhd::IntSetting{get_settings().rpi_libcamera_sharpness_as_int,cb_sharpness}});
+          auto cb_contrast=[this](std::string,int value) {
+              return set_rpi_libcamera_contrast_as_int(value);
+          };
+          ret.push_back(openhd::Setting{"CONTRAST_LC",openhd::IntSetting{get_settings().rpi_libcamera_contrast_as_int,cb_contrast}});
+          auto cb_saturation=[this](std::string,int value) {
+              return set_rpi_libcamera_saturation_as_int(value);
+          };
+          ret.push_back(openhd::Setting{"SATURATION_LC",openhd::IntSetting{get_settings().rpi_libcamera_saturation_as_int,cb_saturation}});
+
       auto cb_denoise=[this](std::string,int value) {
         return set_rpi_libcamera_denoise_index(value);
       };
@@ -308,6 +321,24 @@ class CameraHolder:
     unsafe_get_settings().rpi_rpicamsrc_metering_mode=value;
     persist();
     return true;
+  }
+  bool set_rpi_libcamera_sharpness_as_int(int value){
+      if(!openhd::validate_rpi_libcamera_sharpness_as_int(value))return false;
+      unsafe_get_settings().rpi_libcamera_sharpness_as_int=value;
+      persist(true);
+      return true;
+  }
+  bool set_rpi_libcamera_contrast_as_int(int value){
+      if(!openhd::validate_rpi_libcamera_contrast_as_int(value))return false;
+      unsafe_get_settings().rpi_libcamera_contrast_as_int=value;
+      persist(true);
+      return true;
+  }
+  bool set_rpi_libcamera_saturation_as_int(int value){
+      if(!openhd::validate_rpi_libcamera_saturation_as_int(value))return false;
+      unsafe_get_settings().rpi_libcamera_saturation_as_int=value;
+      persist(true);
+      return true;
   }
   bool set_rpi_libcamera_denoise_index(int value){
     if(!openhd::validate_rpi_libcamera_doenise_index(value))return false;

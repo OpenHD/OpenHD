@@ -94,9 +94,19 @@ static bool validate_rpi_intra_refresh_type(int value){
 
 // see gst-rpicamsrc documentation
 static bool validate_rpi_rpicamsrc_metering_mode(int value){
-  return value>=0 && value<=2; //metering mode 3 (custom) crashes libcamera
+  return value>=0 && value<=3;
 }
 
+// see libcamera documentation
+static bool validate_rpi_libcamera_sharpness_as_int(int value){
+    return true;
+}
+static bool validate_rpi_libcamera_contrast_as_int(int value){
+    return true;
+}
+static bool validate_rpi_libcamera_saturation_as_int(int value){
+    return true;
+}
 static bool validate_rpi_libcamera_doenise_index(int value){
   return value>=0 && value<=4;
 }
@@ -105,7 +115,7 @@ static bool validate_rpi_libcamera_awb_index(int value){
 }
 // (centre, spot, average, custom)
 static bool validate_rpi_libcamera_metering_index(int value){
-  return value>=0 && value<=3;
+  return value>=0 && value<=2; //metering mode 3 (custom) crashes libcamera
 }
 // (normal, sport)
 static bool validate_rpi_libcamera_exposure_index(int value){
@@ -163,6 +173,13 @@ static std::optional<TmpVideoFormat> parse_video_format(const std::string& video
   return std::nullopt;
 }
 
+// remap the openhd libcamera image quality values where we use int
+// (but libcamera uses float)
+// They are sharpness,contrast,saturation
+static float remap_libcamera_openhd_int_to_libcamera_float(int value){
+        float tmp=static_cast<float>(value);
+        return value/100.0f;
+}
 
 }
 #endif //OPENHD_OPENHD_OHD_VIDEO_INC_V_VALIDATE_SETTINGS_H_
