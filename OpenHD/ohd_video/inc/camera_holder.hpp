@@ -178,7 +178,7 @@ class CameraHolder:
           auto cb_ev=[this](std::string,int value) {
             return set_rpi_libcamera_ev_value(value);
           };
-          ret.push_back(openhd::Setting{"EV_VALUE_LC",openhd::IntSetting{get_settings().rpi_libcamera_ev_value,cb_ev}});
+          ret.push_back(openhd::Setting{"EXPOSURE_LC",openhd::IntSetting{get_settings().rpi_libcamera_ev_value,cb_ev}});
 
       auto cb_denoise=[this](std::string,int value) {
         return set_rpi_libcamera_denoise_index(value);
