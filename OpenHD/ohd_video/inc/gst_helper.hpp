@@ -257,6 +257,18 @@ static std::string createLibcamerasrcStream(const std::string& camera_name,
   if(settings.vertical_flip){
     ss<<"vflip=1 ";
   }
+  if(openhd::validate_rpi_libcamera_sharpness_as_int(settings.rpi_libcamera_sharpness_as_int)
+       && settings.rpi_libcamera_sharpness_as_int!=RPI_LIBCAMERA_DEFAULT_SHARPNESS_AS_INT){
+        ss<<fmt::format("sharpness={} ",openhd::remap_libcamera_openhd_int_to_libcamera_float(settings.rpi_libcamera_sharpness_as_int));
+  }
+  if(openhd::validate_rpi_libcamera_contrast_as_int(settings.rpi_libcamera_contrast_as_int)
+       && settings.rpi_libcamera_contrast_as_int!=RPI_LIBCAMERA_DEFAULT_CONTRAST_AS_INT){
+        ss<<fmt::format("contrast={} ",openhd::remap_libcamera_openhd_int_to_libcamera_float(settings.rpi_libcamera_contrast_as_int));
+  }
+  if(openhd::validate_rpi_libcamera_saturation_as_int(settings.rpi_libcamera_saturation_as_int)
+    && settings.rpi_libcamera_saturation_as_int!=RPI_LIBCAMERA_DEFAULT_SATURATION_AS_INT){
+      ss<<fmt::format("saturation={} ",openhd::remap_libcamera_openhd_int_to_libcamera_float(settings.rpi_libcamera_saturation_as_int));
+  }
   if(openhd::validate_rpi_brightness(settings.brightness_percentage) && settings.brightness_percentage!=50){
     float brightness_minus1_to_1=OHDUtil::map_int_percentage_to_minus1_to_1(settings.brightness_percentage);
     ss<<fmt::format("brightness={} ",brightness_minus1_to_1);

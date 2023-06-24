@@ -26,6 +26,10 @@ static constexpr RateControlMode DEFAULT_RC_MODE = RateControlMode::RC_CBR;
 // This feature is r.n already implemented for all cameras (in gstreamerstream)
 static constexpr auto MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB=300;
 
+static constexpr int RPI_LIBCAMERA_DEFAULT_CONTRAST_AS_INT=100;
+static constexpr int RPI_LIBCAMERA_DEFAULT_SATURATION_AS_INT=100;
+static constexpr int RPI_LIBCAMERA_DEFAULT_SHARPNESS_AS_INT=100;
+
 // Return true if the bitrate is considered sane, false otherwise
 static bool check_bitrate_sane(const int bitrateKBits) {
   if (bitrateKBits <= 100 || bitrateKBits > (1000 * 1000 * 50)) {
@@ -110,8 +114,13 @@ struct CameraSettings {
   // Camera exposure metering mode to use
   // Default 0 (average)
   int rpi_rpicamsrc_metering_mode=0;
+  // libcamera params
+  // The following 3 params are float in libcamera - but floats suck, int or percentage is much more verbose to the user
+  // and easier to map as parameters. Which is why we have a different mapping on those parameters.
+  int rpi_libcamera_sharpness_as_int=RPI_LIBCAMERA_DEFAULT_SHARPNESS_AS_INT;
+  int rpi_libcamera_contrast_as_int=RPI_LIBCAMERA_DEFAULT_CONTRAST_AS_INT;
+  int rpi_libcamera_saturation_as_int=RPI_LIBCAMERA_DEFAULT_SATURATION_AS_INT;
   //
-  int rpi_sharpness=0; // libcamera, 1.0 means default
   int rpi_libcamera_denoise_index=0;
   int rpi_libcamera_awb_index=0; // 0=Auto
   int rpi_libcamera_metering_index=0; // 0=centre
@@ -130,13 +139,14 @@ struct CameraSettings {
   int recordingQP = DEFAULT_RECORDING_QP;
   RateControlMode recordingRCMode = DEFAULT_RC_MODE;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings,enable_streaming,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings, enable_streaming,
                                    streamed_video_format, h26x_bitrate_kbits,
-                                   h26x_keyframe_interval, h26x_intra_refresh_type,mjpeg_quality_percent, ip_cam_url,air_recording,
-                                   camera_rotation_degree,horizontal_flip,vertical_flip,
-                                   awb_mode,exposure_mode,brightness_percentage,rpi_rpicamsrc_iso,rpi_rpicamsrc_metering_mode,rpi_sharpness,
+                                   h26x_keyframe_interval, h26x_intra_refresh_type, mjpeg_quality_percent, ip_cam_url, air_recording,
+                                   camera_rotation_degree, horizontal_flip, vertical_flip,
+                                   awb_mode, exposure_mode, brightness_percentage, rpi_rpicamsrc_iso, rpi_rpicamsrc_metering_mode,
+                                   rpi_libcamera_sharpness_as_int,rpi_libcamera_contrast_as_int,rpi_libcamera_saturation_as_int,
                                    // rpi libcamera specific IQ params begin
-                                   rpi_libcamera_denoise_index,rpi_libcamera_awb_index,rpi_libcamera_metering_index,rpi_libcamera_exposure_index,
+                                   rpi_libcamera_denoise_index, rpi_libcamera_awb_index, rpi_libcamera_metering_index, rpi_libcamera_exposure_index,
                                    rpi_libcamera_shutter_microseconds,
                                    // rpi libcamera specific IQ params end
                                    force_sw_encode)
