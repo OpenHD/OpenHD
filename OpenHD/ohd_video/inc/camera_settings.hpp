@@ -29,6 +29,7 @@ static constexpr auto MINIMUM_AMOUNT_FREE_SPACE_FOR_AIR_RECORDING_MB=300;
 static constexpr int RPI_LIBCAMERA_DEFAULT_CONTRAST_AS_INT=100;
 static constexpr int RPI_LIBCAMERA_DEFAULT_SATURATION_AS_INT=100;
 static constexpr int RPI_LIBCAMERA_DEFAULT_SHARPNESS_AS_INT=100;
+static constexpr int RPI_LIBCAMERA_DEFAULT_EV=0;
 
 // Return true if the bitrate is considered sane, false otherwise
 static bool check_bitrate_sane(const int bitrateKBits) {
@@ -117,10 +118,10 @@ struct CameraSettings {
   // libcamera params
   // The following 3 params are float in libcamera - but floats suck, int or percentage is much more verbose to the user
   // and easier to map as parameters. Which is why we have a different mapping on those parameters.
-  int rpi_libcamera_sharpness_as_int=RPI_LIBCAMERA_DEFAULT_SHARPNESS_AS_INT;
-  int rpi_libcamera_contrast_as_int=RPI_LIBCAMERA_DEFAULT_CONTRAST_AS_INT;
-  int rpi_libcamera_saturation_as_int=RPI_LIBCAMERA_DEFAULT_SATURATION_AS_INT;
-  //
+  int rpi_libcamera_sharpness_as_int=RPI_LIBCAMERA_DEFAULT_SHARPNESS_AS_INT; //NOTE: float in libcamera
+  int rpi_libcamera_contrast_as_int=RPI_LIBCAMERA_DEFAULT_CONTRAST_AS_INT; //NOTE: float in libcamera
+  int rpi_libcamera_saturation_as_int=RPI_LIBCAMERA_DEFAULT_SATURATION_AS_INT; //NOTE: float in libcamera
+  int rpi_libcamera_ev_value=RPI_LIBCAMERA_DEFAULT_EV;
   int rpi_libcamera_denoise_index=0;
   int rpi_libcamera_awb_index=0; // 0=Auto
   int rpi_libcamera_metering_index=0; // 0=centre
@@ -144,8 +145,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings, enable_streaming,
                                    h26x_keyframe_interval, h26x_intra_refresh_type, mjpeg_quality_percent, ip_cam_url, air_recording,
                                    camera_rotation_degree, horizontal_flip, vertical_flip,
                                    awb_mode, exposure_mode, brightness_percentage, rpi_rpicamsrc_iso, rpi_rpicamsrc_metering_mode,
-                                   rpi_libcamera_sharpness_as_int,rpi_libcamera_contrast_as_int,rpi_libcamera_saturation_as_int,
                                    // rpi libcamera specific IQ params begin
+                                   rpi_libcamera_sharpness_as_int,rpi_libcamera_contrast_as_int,rpi_libcamera_saturation_as_int,rpi_libcamera_ev_value,
                                    rpi_libcamera_denoise_index, rpi_libcamera_awb_index, rpi_libcamera_metering_index, rpi_libcamera_exposure_index,
                                    rpi_libcamera_shutter_microseconds,
                                    // rpi libcamera specific IQ params end

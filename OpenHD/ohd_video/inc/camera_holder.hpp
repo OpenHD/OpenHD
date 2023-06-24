@@ -175,6 +175,10 @@ class CameraHolder:
               return set_rpi_libcamera_saturation_as_int(value);
           };
           ret.push_back(openhd::Setting{"SATURATION_LC",openhd::IntSetting{get_settings().rpi_libcamera_saturation_as_int,cb_saturation}});
+          auto cb_ev=[this](std::string,int value) {
+            return set_rpi_libcamera_ev_value(value);
+          };
+          ret.push_back(openhd::Setting{"EXPOSURE_LC",openhd::IntSetting{get_settings().rpi_libcamera_ev_value,cb_ev}});
 
       auto cb_denoise=[this](std::string,int value) {
         return set_rpi_libcamera_denoise_index(value);
@@ -340,6 +344,12 @@ class CameraHolder:
   bool set_rpi_libcamera_saturation_as_int(int value){
       if(!openhd::validate_rpi_libcamera_saturation_as_int(value))return false;
       unsafe_get_settings().rpi_libcamera_saturation_as_int=value;
+      persist(true);
+      return true;
+  }
+  bool set_rpi_libcamera_ev_value(int value){
+      if(!openhd::validate_rpi_libcamera_ev_value(value))return false;
+      unsafe_get_settings().rpi_libcamera_ev_value=value;
       persist(true);
       return true;
   }
