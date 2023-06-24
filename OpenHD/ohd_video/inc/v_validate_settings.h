@@ -107,6 +107,9 @@ static bool validate_rpi_libcamera_contrast_as_int(int value){
 static bool validate_rpi_libcamera_saturation_as_int(int value){
     return true;
 }
+static bool validate_rpi_libcamera_ev_value(int value){
+    return value>=-10 && value<=10;
+}
 static bool validate_rpi_libcamera_doenise_index(int value){
   return value>=0 && value<=4;
 }
