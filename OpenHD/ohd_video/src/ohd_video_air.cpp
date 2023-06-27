@@ -55,7 +55,7 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
     m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(m_platform);
   }
   // In case any non-demuxed recordings exists (e.g. due to a openhd crash, unsafe shutdown,...)
-  GstRecordingDemuxer::instance().demux_all_mkv_files_async();
+  GstRecordingDemuxer::instance().demux_all_remaining_mkv_files_async();
   m_console->debug( "OHDVideo::running");
 }
 
