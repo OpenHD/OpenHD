@@ -42,6 +42,12 @@ static void demux_mkv(const std::string& in_file){
     console->warn("Cannot convert {} to {}", in_file,out_file_mp4);
     return ;
   }
+  if(OHDFilesystemUtil::get_file_size_bytes(out_file_mp4)==0){
+    // something must have gone wrong during conversion
+    console->warn("Cannot demux,{} is empty",out_file_mp4);
+    OHDFilesystemUtil::remove_if_existing(out_file_mp4);
+    return ;
+  }
   // Now we can safely delete the old file
   OHDFilesystemUtil::remove_if_existing(in_file);
   // and make the new file rw everybody
