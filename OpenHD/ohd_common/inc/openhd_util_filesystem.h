@@ -59,6 +59,10 @@ void make_file_read_write_everyone(const std::string& filename);
 // Return: remaining space in root directory
 int get_remaining_space_in_mb();
 
+// return size of file in bytes,
+// -1 if file does not exist
+long get_file_size_bytes(const std::string& filepath);
+
 }
 
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_UTIL_FILESYSTEM_H_
