@@ -120,3 +120,9 @@ int OHDFilesystemUtil::get_remaining_space_in_mb() {
   boost::filesystem::space_info info = boost::filesystem::space("/");
   return info.available / 1024 / 1024;
 }
+
+long OHDFilesystemUtil::get_file_size_bytes(const std::string &filepath) {
+  struct stat stat_buf{};
+  int rc = stat(filepath.c_str(), &stat_buf);
+  return rc == 0 ? stat_buf.st_size : -1;
+}

@@ -298,11 +298,6 @@ void GStreamerStream::stop_cleanup_restart() {
   const auto before=std::chrono::steady_clock::now();
   stop();
   cleanup_pipe();
-  // after we have stopped the pipeline, if recording was active, we have a .mkv file -
-  // convert it to something more usable in the background, unless the FC is currently armed
-  if(!m_opt_action_handler->is_currently_armed()){
-    GstRecordingDemuxer::instance().demux_all_mkv_files_async();
-  }
   setup();
   start();
   const auto elapsed=std::chrono::steady_clock::now()-before;
@@ -375,6 +370,16 @@ void GStreamerStream::cleanup_pipe() {
   if(m_opt_curr_recording_filename){
     // make file read / writeable by everybody
     OHDFilesystemUtil::make_file_read_write_everyone(m_opt_curr_recording_filename.value());
+    // we do not want empty files - this can happen rarely in case the file is created, but no video data is actually written to it
+    if(OHDFilesystemUtil::get_file_size_bytes(m_opt_curr_recording_filename.value())==0){
+      m_console->warn("Ground recording {} is empty",m_opt_curr_recording_filename.value());
+      OHDFilesystemUtil::remove_if_existing(m_opt_curr_recording_filename.value());
+    }
+    // after we have stopped the pipeline, if recording was active, we have a .mkv file -
+    // convert it to something more usable in the background, unless the FC is currently armed
+    if(m_opt_action_handler && !m_opt_action_handler->is_currently_armed()){
+      GstRecordingDemuxer::instance().demux_all_remaining_mkv_files_async();
+    }
     m_opt_curr_recording_filename=std::nullopt;
   }
   m_console->debug("GStreamerStream::cleanup_pipe() end");

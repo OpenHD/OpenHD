@@ -42,6 +42,12 @@ static void demux_mkv(const std::string& in_file){
     console->warn("Cannot convert {} to {}", in_file,out_file_mp4);
     return ;
   }
+  if(OHDFilesystemUtil::get_file_size_bytes(out_file_mp4)==0){
+    // something must have gone wrong during conversion
+    console->warn("Cannot demux,{} is empty",out_file_mp4);
+    OHDFilesystemUtil::remove_if_existing(out_file_mp4);
+    return ;
+  }
   // Now we can safely delete the old file
   OHDFilesystemUtil::remove_if_existing(in_file);
   // and make the new file rw everybody
@@ -49,8 +55,8 @@ static void demux_mkv(const std::string& in_file){
   console->debug("Demuxing {} done", in_file);
 }
 
-static void demux_all_mkv_files_in_video_directory(){
-  auto console=openhd::log::create_or_get("gst_demuxer");
+// Returns all files ending in .mkv in the video recordings directory
+static std::vector<std::string> get_all_mkv_video_files(){
   const auto files=OHDFilesystemUtil::getAllEntriesFullPathInDirectory(openhd::video::RECORDINGS_PATH);
   std::vector<std::string> files_to_convert{};
   for(const auto& file: files){
@@ -58,16 +64,15 @@ static void demux_all_mkv_files_in_video_directory(){
       files_to_convert.push_back(file);
     }
   }
-  console->debug("Need to convert {} .mkv files",files_to_convert.size());
-  for(const auto& file: files_to_convert){
-    demux_mkv(file);
-  }
+  return files_to_convert;
 }
+
 
 GstRecordingDemuxer::~GstRecordingDemuxer() {
   auto console=openhd::log::create_or_get("gst_demuxer");
-  console->debug("~GstRecordingDemuxer, waiting for {} threads to finish",m_demux_threads.size());
-  for(auto& demux_thread: m_demux_threads){
+  console->debug("~GstRecordingDemuxer, Terminating {} demux ops",m_demux_ops.size());
+  for(auto& demux: m_demux_ops){
+    auto demux_thread=demux.thread;
     if(demux_thread->joinable()){
       console->debug("Waiting for demuxing to end");
       demux_thread->join();
@@ -75,15 +80,38 @@ GstRecordingDemuxer::~GstRecordingDemuxer() {
   }
 }
 
-void GstRecordingDemuxer::demux_all_mkv_files_async() {
+void GstRecordingDemuxer::demux_all_remaining_mkv_files_async() {
   auto console=openhd::log::create_or_get("gst_demuxer");
-  auto demux_thread=std::make_unique<std::thread>([this](){
-    demux_all_mkv_files_in_video_directory();
-  });
-  m_demux_threads.push_back(std::move(demux_thread));
+  auto files_to_demux=get_all_mkv_video_files();
+  for(auto& file:files_to_demux){
+    demux_mkv_file_async_threadsafe(file);
+  }
 }
 
 GstRecordingDemuxer& GstRecordingDemuxer::instance() {
   static GstRecordingDemuxer demuxer;
   return demuxer;
+}
+
+void GstRecordingDemuxer::demux_mkv_file_async_threadsafe(std::string filename) {
+  auto console=openhd::log::create_or_get("gst_demuxer");
+  if(!OHDUtil::endsWith(filename,".mkv")){
+    console->debug("{} not a .mkv file",filename);
+    return ;
+  }
+  // Check if we are already demuxing file X
+  std::lock_guard<std::mutex> guard(m_demux_ops_mutex);
+  auto already_demuxing=std::find_if(
+      m_demux_ops.begin(), m_demux_ops.end(),
+      [&filename](const DeMuxOperation& x) { return x.filename == filename;});
+  if(already_demuxing==m_demux_ops.end()){
+    // not yet demuxed
+    auto demux_thread=std::make_shared<std::thread>([this,filename](){
+      demux_mkv(filename);
+    });
+    m_demux_ops.push_back({filename,demux_thread});
+  }else{
+    // aldrady demuxed / currently demuxing
+    console->debug("Already demuxed {}",filename);
+  }
 }
