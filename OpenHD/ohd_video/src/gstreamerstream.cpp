@@ -377,6 +377,7 @@ void GStreamerStream::cleanup_pipe() {
     OHDFilesystemUtil::make_file_read_write_everyone(m_opt_curr_recording_filename.value());
     // we do not want empty files - this can happen rarely in case the file is created, but no video data is actually written to it
     if(OHDFilesystemUtil::get_file_size_bytes(m_opt_curr_recording_filename.value())==0){
+      m_console->warn("Ground recording {} is empty",m_opt_curr_recording_filename.value());
       OHDFilesystemUtil::remove_if_existing(m_opt_curr_recording_filename.value());
     }
     m_opt_curr_recording_filename=std::nullopt;
