@@ -438,7 +438,7 @@ static std::string createRockchipEncoderPipeline(const int width, const int heig
     ss<<" height="<<height;
     ss<<" gop="<<encoder_params.h26X_keyframe_interval<<" ! ";
   }else if(encoder_params.videoCodec==VideoCodec::H265){
-    ss<<"mpph264enc rc-mode=cbr bps="<<bps;
+    ss<<"mpph265enc rc-mode=cbr bps="<<bps;
     ss<<" width="<<width;
     ss<<" height="<<height;
     ss<<" gop="<<encoder_params.h26X_keyframe_interval<<" ! ";
