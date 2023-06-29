@@ -431,7 +431,7 @@ static std::string createJetsonStream(const int sensor_id,
 
 static std::string createRockchipEncoderPipeline(const int width, const int height, const CommonEncoderParams& encoder_params){
   std::stringstream ss;
-  const int bps = kbits_to_bits_per_second(encoder_params.h26X_bitrate_kbits);
+  const int bps = encoder_params.h26X_bitrate_kbits;
   if(encoder_params.videoCodec==VideoCodec::H264){
     ss<<"mpph264enc rc-mode=cbr bps="<<bps;
     ss<<" width="<<width;
@@ -454,7 +454,7 @@ static std::string createRockchipEncoderPipeline(const int width, const int heig
 
 static std::string createRockchipRecordingPipeline(const int width, const int height, const CommonEncoderParams& encoder_params){
   std::stringstream ss;
-  const int bps = kbits_to_bits_per_second(encoder_params.h26X_bitrate_kbits);
+  const int bps = encoder_params.h26X_bitrate_kbits;
   ss<<"tee name=o ! ";
   if(encoder_params.videoCodec==VideoCodec::H264){
     ss<<"mpph264enc rc-mode=cbr bps="<<bps;
