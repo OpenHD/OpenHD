@@ -559,7 +559,7 @@ void WBLink::update_statistics() {
       openhd::link_statistics::StatsWBVideoGround ground_video{};
       ground_video.link_index=i;
       ground_video.curr_incoming_bitrate=wb_rx_stats.curr_in_bits_per_second;
-      const auto fec_stats=wb_rx.get_lates_fec_stats();
+      const auto fec_stats=wb_rx.get_latest_fec_stats();
       ground_video.count_fragments_recovered=fec_stats.count_fragments_recovered;
       ground_video.count_blocks_recovered=fec_stats.count_blocks_recovered;
       ground_video.count_blocks_lost=fec_stats.count_blocks_lost;
