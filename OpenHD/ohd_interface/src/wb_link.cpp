@@ -116,7 +116,8 @@ WBLink::~WBLink() {
   m_wb_video_rx_list.resize(0);
   // give the monitor mode cards back to network manager
   for(const auto& card: m_broadcast_cards){
-    wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
+    // TODO
+    //wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
   }
   m_console->debug("WBLink::~WBLink() end");
 }
