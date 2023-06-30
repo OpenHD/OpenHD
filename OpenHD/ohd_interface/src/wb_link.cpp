@@ -65,7 +65,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       txrx_options.encryption_key = std::nullopt;
   }
   //txrx_options.log_all_received_packets= true;
-  //txrx_options.log_all_received_validated_packets= true;
+  txrx_options.log_all_received_validated_packets= true;
   const auto card_names = openhd::wb::get_card_names(m_broadcast_cards);
   assert(!card_names.empty());
   m_wb_txrx=std::make_shared<TxRxInstance>(card_names,txrx_options);
