@@ -89,16 +89,6 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
         };
         m_opt_action_handler->m_action_tx_power_when_armed=std::make_shared<openhd::ActionHandler::ACTION_TX_POWER_WHEN_ARMED>(cb_arm);
   }
-  // exp
-  /*const auto t_radio_port_rx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
-  auto excluded=std::vector<int>{t_radio_port_rx};
-  if(m_profile.is_ground()){
-    excluded.push_back(openhd::VIDEO_PRIMARY_RADIO_PORT);
-    excluded.push_back(openhd::VIDEO_SECONDARY_RADIO_PORT);
-  }
-  auto excluded2=std::vector<int>{openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT,openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT,
-                                    openhd::VIDEO_PRIMARY_RADIO_PORT,openhd::VIDEO_SECONDARY_RADIO_PORT};
-  m_foreign_packets_receiver=std::make_unique<ForeignPacketsReceiver>(get_rx_card_names(),excluded2);*/
 }
 
 WBLink::~WBLink() {
@@ -522,10 +512,6 @@ void WBLink::update_statistics() {
   if(elapsed_since_last<RECALCULATE_STATISTICS_INTERVAL){
     return;
   }
-  /*if(m_foreign_packets_receiver){
-    const auto stats=m_foreign_packets_receiver->get_current_stats();
-    m_console->debug("Foreign packets stats:{}",stats.to_string());
-  }*/
   m_last_stats_recalculation=std::chrono::steady_clock::now();
   // telemetry is available on both air and ground
   openhd::link_statistics::StatsAirGround stats{};
@@ -537,7 +523,6 @@ void WBLink::update_statistics() {
   if(m_wb_tele_rx){
     const auto curr_rx_stats= m_wb_tele_rx->get_latest_stats();
     stats.telemetry.curr_rx_bps=curr_rx_stats.curr_in_bits_per_second;
-    //stats.telemetry.curr_rx_pps=curr_rx_stats.wb_rx_stats;
   }
   if(m_profile.is_air){
     // video on air
@@ -550,13 +535,11 @@ void WBLink::update_statistics() {
         const int tmp= m_opt_action_handler->dirty_get_bitrate_of_camera(i);
         air_video.curr_recommended_bitrate=tmp>0 ? tmp : 0;
       }
-      //
       air_video.link_index=i;
       air_video.curr_measured_encoder_bitrate=curr_tx_stats.current_provided_bits_per_second;
       air_video.curr_injected_bitrate=curr_tx_stats.current_injected_bits_per_second;
       air_video.curr_injected_pps=curr_tx_stats.current_injected_packets_per_second;
       air_video.curr_dropped_packets=curr_tx_stats.n_dropped_packets;
-      //
       const auto curr_tx_fec_stats=wb_tx.get_latest_fec_stats();
       air_video.curr_fec_encode_time_avg_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
       air_video.curr_fec_encode_time_min_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
@@ -573,23 +556,17 @@ void WBLink::update_statistics() {
     for(int i=0;i< m_wb_video_rx_list.size();i++){
       auto& wb_rx= *m_wb_video_rx_list.at(i);
       const auto wb_rx_stats=wb_rx.get_latest_stats();
-      //if(wb_rx_stats.wb_rx_stats.last_received_packet_mcs_index>=0){
-      //  m_console->debug("MCS {}",wb_rx_stats.wb_rx_stats.last_received_packet_mcs_index);
-      //}
       openhd::link_statistics::StatsWBVideoGround ground_video{};
-      //
       ground_video.link_index=i;
       ground_video.curr_incoming_bitrate=wb_rx_stats.curr_in_bits_per_second;
-      {
-        const auto fec_stats=wb_rx.get_lates_fec_stats();
-        ground_video.count_fragments_recovered=fec_stats.count_fragments_recovered;
-        ground_video.count_blocks_recovered=fec_stats.count_blocks_recovered;
-        ground_video.count_blocks_lost=fec_stats.count_blocks_lost;
-        ground_video.count_blocks_total=fec_stats.count_blocks_total;
-        ground_video.curr_fec_decode_time_avg_us =get_micros(fec_stats.curr_fec_decode_time.avg);
-        ground_video.curr_fec_decode_time_min_us =get_micros(fec_stats.curr_fec_decode_time.min);
-        ground_video.curr_fec_decode_time_max_us =get_micros(fec_stats.curr_fec_decode_time.max);
-      }
+      const auto fec_stats=wb_rx.get_lates_fec_stats();
+      ground_video.count_fragments_recovered=fec_stats.count_fragments_recovered;
+      ground_video.count_blocks_recovered=fec_stats.count_blocks_recovered;
+      ground_video.count_blocks_lost=fec_stats.count_blocks_lost;
+      ground_video.count_blocks_total=fec_stats.count_blocks_total;
+      ground_video.curr_fec_decode_time_avg_us =get_micros(fec_stats.curr_fec_decode_time.avg);
+      ground_video.curr_fec_decode_time_min_us =get_micros(fec_stats.curr_fec_decode_time.min);
+      ground_video.curr_fec_decode_time_max_us =get_micros(fec_stats.curr_fec_decode_time.max);
       // TODO otimization: Only send stats for an active link
       stats.stats_wb_video_ground.push_back(ground_video);
     }
