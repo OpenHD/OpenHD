@@ -785,12 +785,9 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
       openhd::log::get_default()->warn("Invalid max_block_size_for_platform:{}",max_block_size_for_platform);
       max_block_size_for_platform=openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
     }
-    if(m_settings->get_settings().is_video_variable_block_length_enabled()){
-      //tx.try_enqueue_block(fragmented_video_frame.frame_fragments,max_block_size_for_platform);
-    }else{
-      const int fec_perc=m_settings->get_settings().wb_video_fec_percentage;
-      tx.try_enqueue_block(fragmented_video_frame.frame_fragments, 100,fec_perc);
-    }
+    assert(m_settings->get_settings().is_video_variable_block_length_enabled());
+    const int fec_perc=m_settings->get_settings().wb_video_fec_percentage;
+    tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc);
   }else{
     m_console->debug("Invalid camera stream_index {}",stream_index);
   }
