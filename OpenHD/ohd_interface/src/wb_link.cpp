@@ -71,6 +71,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_wb_txrx=std::make_shared<TxRxInstance>(card_names,txrx_options);
   configure_telemetry();
   configure_video();
+  m_wb_txrx->start_receiving();
   configure_cards();
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
