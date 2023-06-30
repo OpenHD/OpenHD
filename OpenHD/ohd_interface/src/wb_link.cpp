@@ -594,21 +594,13 @@ void WBLink::update_statistics() {
       stats.stats_wb_video_ground.push_back(ground_video);
     }
   }
-  // DIRTY: On air, we use the telemetry lost packets percentage, on ground,
-  // we use the video lost packets' percentage. Once we have one global rx, we can change that
-  if(m_profile.is_air){
-    if(m_wb_tele_rx){
-      stats.monitor_mode_link.curr_rx_packet_loss_perc=
-          m_wb_tele_rx->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
-    }
-  }else{
-    if(!m_wb_video_rx_list.empty()){
-      stats.monitor_mode_link.curr_rx_packet_loss_perc=
-          m_wb_video_rx_list.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
-    }
-  }
+  TxRxInstance::RxStats rxStats=m_wb_txrx->get_rx_stats();
+  TxRxInstance::TxStats txStats=m_wb_txrx->get_tx_stats();
+  stats.monitor_mode_link.curr_rx_packet_loss_perc=rxStats.curr_packet_loss;
+  stats.monitor_mode_link.count_tx_inj_error_hint=txStats.count_tx_injections_error_hint;
+
   // temporary, accumulate tx error(s) and dropped packets
-  uint64_t acc_tx_injections_error_hint=0;
+  /*uint64_t acc_tx_injections_error_hint=0;
   uint64_t acc_tx_n_dropped_packets=0;
   acc_tx_injections_error_hint+= m_wb_tele_tx->get_latest_stats().count_tx_injections_error_hint;
   acc_tx_n_dropped_packets+= m_wb_tele_tx->get_latest_stats().n_dropped_packets;
@@ -617,7 +609,7 @@ void WBLink::update_statistics() {
     acc_tx_n_dropped_packets+=videoTx->get_latest_stats().n_dropped_packets;
   }
   stats.monitor_mode_link.count_tx_inj_error_hint=acc_tx_injections_error_hint;
-  stats.monitor_mode_link.count_tx_dropped_packets=acc_tx_n_dropped_packets;
+  stats.monitor_mode_link.count_tx_dropped_packets=acc_tx_n_dropped_packets;*/
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
@@ -625,33 +617,11 @@ void WBLink::update_statistics() {
   assert(m_broadcast_cards.size()<=stats.cards.size());
   for(int i=0;i< m_broadcast_cards.size();i++){
     auto& card = stats.cards.at(i);
-    if(m_profile.is_air){
-      // on air, we use the dbm reported by the telemetry stream
-      card.rx_rssi= m_wb_tele_rx->get_latest_stats().stats_per_card.at(i).rssi_for_wifi_card.last_rssi;
-    }else{
-      // on ground, we use the dBm reported by the video stream (if available), otherwise
-      // we use the dBm reported by the telemetry rx instance.
-      const int8_t rssi_telemetry= m_wb_tele_rx->get_latest_stats().stats_per_card.at(i).rssi_for_wifi_card.last_rssi;
-      const int8_t rssi_video0= m_wb_video_rx_list.at(0)->get_latest_stats().stats_per_card.at(i).rssi_for_wifi_card.last_rssi;
-      if(rssi_video0<=-127){
-        // use telemetry, most likely no video data (yet)
-        card.rx_rssi=rssi_telemetry;
-      }else{
-        card.rx_rssi=rssi_video0;
-      }
-    }
-    card.exists_in_openhd= true;
-    // accumulate all rx-es
-    {
-      uint64_t count_p_received_this_card=0;
-      if(m_wb_tele_rx)count_p_received_this_card+=m_wb_tele_rx->get_latest_stats().stats_per_card.at(i).count_received_packets;
-      for(auto& rx:m_wb_video_rx_list){
-        count_p_received_this_card+=rx->get_latest_stats().stats_per_card.at(i).count_received_packets;
-      }
-      card.count_p_received=count_p_received_this_card;
-    }
-    // not yet supported
+    auto rxStatsCard=m_wb_txrx->get_rx_stats_for_card(i);
+    card.rx_rssi=rxStatsCard.rssi_for_wifi_card.last_rssi;
+    card.count_p_received=rxStatsCard.count_p_valid;
     card.count_p_injected=0;
+    card.exists_in_openhd= true;
   }
   stats.is_air=m_profile.is_air;
   if(m_opt_action_handler){
