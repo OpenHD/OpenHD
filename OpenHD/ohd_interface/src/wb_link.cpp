@@ -214,6 +214,7 @@ std::unique_ptr<WBReceiver2> WBLink::create_wb_rx(uint8_t radio_port,bool is_vid
   WBReceiver2::Options options{};
   options.enable_fec=is_video;
   auto ret=std::make_unique<WBReceiver2>(m_wb_txrx, options);
+  ret->set_callback(cb);
   return ret;
 }
 
