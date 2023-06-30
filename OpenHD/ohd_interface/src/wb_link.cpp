@@ -501,7 +501,7 @@ void WBLink::loop_do_work() {
     perform_rate_adjustment();
     // Dirty - deliberately crash openhd and let the service restart it
     // if we think a wi-fi card disconnected
-    bool any_rx_wifi_disconnected_errors=false;
+    /*bool any_rx_wifi_disconnected_errors=false;
     if(m_wb_tele_rx->get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
       any_rx_wifi_disconnected_errors= true;
     }
@@ -509,7 +509,7 @@ void WBLink::loop_do_work() {
       if(rx->get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
         any_rx_wifi_disconnected_errors= true;
       }
-    }
+    }*/
     //if(any_rx_wifi_disconnected_errors){
     //  openhd::fatalerror::handle_needs_openhd_restart("wifi disconnected");
     //}
@@ -536,7 +536,7 @@ void WBLink::update_statistics() {
   }
   if(m_wb_tele_rx){
     const auto curr_rx_stats= m_wb_tele_rx->get_latest_stats();
-    stats.telemetry.curr_rx_bps=curr_rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
+    stats.telemetry.curr_rx_bps=curr_rx_stats.curr_in_bits_per_second;
     //stats.telemetry.curr_rx_pps=curr_rx_stats.wb_rx_stats;
   }
   if(m_profile.is_air){
@@ -579,9 +579,9 @@ void WBLink::update_statistics() {
       openhd::link_statistics::StatsWBVideoGround ground_video{};
       //
       ground_video.link_index=i;
-      ground_video.curr_incoming_bitrate=wb_rx_stats.wb_rx_stats.curr_incoming_bits_per_second;
-      if(wb_rx_stats.fec_rx_stats.has_value()){
-        const auto fec_stats=wb_rx_stats.fec_rx_stats.value();
+      ground_video.curr_incoming_bitrate=wb_rx_stats.curr_in_bits_per_second;
+      {
+        const auto fec_stats=wb_rx.get_lates_fec_stats();
         ground_video.count_fragments_recovered=fec_stats.count_fragments_recovered;
         ground_video.count_blocks_recovered=fec_stats.count_blocks_recovered;
         ground_video.count_blocks_lost=fec_stats.count_blocks_lost;
@@ -828,7 +828,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         // sleep a bit more, then check if we actually got any decrypted packets
         std::this_thread::sleep_for(std::chrono::seconds(2));
         const int n_packets_decrypted= m_wb_txrx->get_rx_stats().count_p_valid;
-        const int packet_loss=m_wb_video_rx_list.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
+        const int packet_loss=m_wb_txrx->get_rx_stats().curr_packet_loss;
         m_console->debug("Got {} decrypted packets on frequency {} with {} packet loss",n_packets_decrypted,channel.frequency,packet_loss);
         if(n_packets_decrypted>0 && rx_chann_width==channel_width){
           TmpResult tmp_result{channel,channel_width,packet_loss};
