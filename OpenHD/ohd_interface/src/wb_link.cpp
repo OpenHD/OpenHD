@@ -55,7 +55,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
 	}
   }
   takeover_cards_monitor_mode();
-  TxRxInstance::Options txrx_options{};
+  WBTxRx::Options txrx_options{};
   txrx_options.rtl8812au_rssi_fixup= true;
   const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
   if(OHDFilesystemUtil::exists(keypair_file)){
@@ -68,7 +68,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   //txrx_options.log_all_received_validated_packets= true;
   const auto card_names = openhd::wb::get_card_names(m_broadcast_cards);
   assert(!card_names.empty());
-  m_wb_txrx=std::make_shared<TxRxInstance>(card_names,txrx_options);
+  m_wb_txrx=std::make_shared<WBTxRx>(card_names,txrx_options);
   configure_telemetry();
   configure_video();
   m_wb_txrx->start_receiving();
@@ -196,19 +196,19 @@ RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
 }
 
 
-std::unique_ptr<WBTransmitter2> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
-  WBTransmitter2::Options options{};
+std::unique_ptr<WBStreamTx> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
+  WBStreamTx::Options options{};
   options.enable_fec=is_video;
   options.radio_port=radio_port;
-  auto ret=std::make_unique<WBTransmitter2>(m_wb_txrx, options);
+  auto ret=std::make_unique<WBStreamTx>(m_wb_txrx, options);
   return ret;
 }
 
-std::unique_ptr<WBReceiver2> WBLink::create_wb_rx(uint8_t radio_port,bool is_video,WBReceiver2::OUTPUT_DATA_CALLBACK cb){
-  WBReceiver2::Options options{};
+std::unique_ptr<WBStreamRx> WBLink::create_wb_rx(uint8_t radio_port,bool is_video,WBStreamRx::OUTPUT_DATA_CALLBACK cb){
+  WBStreamRx::Options options{};
   options.enable_fec=is_video;
   options.radio_port=radio_port;
-  auto ret=std::make_unique<WBReceiver2>(m_wb_txrx, options);
+  auto ret=std::make_unique<WBStreamRx>(m_wb_txrx, options);
   ret->set_callback(cb);
   return ret;
 }
@@ -571,8 +571,8 @@ void WBLink::update_statistics() {
       stats.stats_wb_video_ground.push_back(ground_video);
     }
   }
-  TxRxInstance::RxStats rxStats=m_wb_txrx->get_rx_stats();
-  TxRxInstance::TxStats txStats=m_wb_txrx->get_tx_stats();
+  auto rxStats=m_wb_txrx->get_rx_stats();
+  auto txStats=m_wb_txrx->get_tx_stats();
   stats.monitor_mode_link.curr_rx_packet_loss_perc=rxStats.curr_packet_loss;
   stats.monitor_mode_link.count_tx_inj_error_hint=txStats.count_tx_injections_error_hint;
   stats.monitor_mode_link.count_tx_dropped_packets=get_total_dropped_packets();

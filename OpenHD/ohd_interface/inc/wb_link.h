@@ -10,9 +10,9 @@
 //#include "../../lib/wifibroadcast/src/ForeignPacketsReceiver.h"
 //#include "../../lib/wifibroadcast/src/UdpWBReceiver.hpp"
 //#include "../../lib/wifibroadcast/src/UdpWBTransmitter.hpp"
-#include "../../lib/wifibroadcast/src/TxRxInstance.h"
-#include "../../lib/wifibroadcast/src/WBTransmitter2.h"
-#include "../../lib/wifibroadcast/src/WBReceiver2.h"
+#include "../../lib/wifibroadcast/src/WBTxRx.h"
+#include "../../lib/wifibroadcast/src/WBStreamTx.h"
+#include "../../lib/wifibroadcast/src/WBStreamRx.h"
 #include "openhd_action_handler.hpp"
 #include "openhd_link.hpp"
 #include "openhd_link_statistics.hpp"
@@ -91,8 +91,8 @@ class WBLink :public OHDLink{
   void configure_video();
   // Reads the current settings and creates the appropriate Radiotap Header params
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
-  std::unique_ptr<WBTransmitter2> create_wb_tx(uint8_t radio_port,bool is_video);
-  std::unique_ptr<WBReceiver2> create_wb_rx(uint8_t radio_port,bool is_video,WBReceiver2::OUTPUT_DATA_CALLBACK cb);
+  std::unique_ptr<WBStreamTx> create_wb_tx(uint8_t radio_port,bool is_video);
+  std::unique_ptr<WBStreamRx> create_wb_rx(uint8_t radio_port,bool is_video,WBStreamRx::OUTPUT_DATA_CALLBACK cb);
  private:
   // Recalculate stats, apply settings asynchronously and more
   void loop_do_work();
@@ -148,13 +148,13 @@ class WBLink :public OHDLink{
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::WBStreamsSettingsHolder> m_settings;
-  std::shared_ptr<TxRxInstance> m_wb_txrx;
+  std::shared_ptr<WBTxRx> m_wb_txrx;
   // For telemetry, bidirectional in opposite directions
-  std::unique_ptr<WBTransmitter2> m_wb_tele_tx;
-  std::unique_ptr<WBReceiver2> m_wb_tele_rx;
+  std::unique_ptr<WBStreamTx> m_wb_tele_tx;
+  std::unique_ptr<WBStreamRx> m_wb_tele_rx;
   // For video, on air there are only tx instances, on ground there are only rx instances.
-  std::vector<std::unique_ptr<WBTransmitter2>> m_wb_video_tx_list;
-  std::vector<std::unique_ptr<WBReceiver2>> m_wb_video_rx_list;
+  std::vector<std::unique_ptr<WBStreamTx>> m_wb_video_tx_list;
+  std::vector<std::unique_ptr<WBStreamRx>> m_wb_video_rx_list;
   //std::unique_ptr<ForeignPacketsReceiver> m_foreign_packets_receiver;
   std::atomic<bool> is_scanning=false;
   // We have one worker thread for asynchronously performing operation(s) like changing the frequency
