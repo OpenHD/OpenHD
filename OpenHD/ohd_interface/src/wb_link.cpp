@@ -56,6 +56,18 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   }
   takeover_cards_monitor_mode();
   configure_cards();
+  TxRxInstance::Options txrx_options{};
+  txrx_options.rtl8812au_rssi_fixup= true;
+  const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
+  if(OHDFilesystemUtil::exists(keypair_file)){
+      txrx_options.encryption_key = std::string(keypair_file);
+      m_console->debug("Using key from file {}",txrx_options.encryption_key->c_str());
+  }else{
+      txrx_options.encryption_key = std::nullopt;
+  }
+  const auto card_names = openhd::wb::get_card_names(m_broadcast_cards);
+  assert(!card_names.empty());
+  m_wb_txrx=std::make_shared<TxRxInstance>(card_names,txrx_options);
   configure_telemetry();
   configure_video();
   m_work_thread_run = true;
@@ -153,8 +165,7 @@ void WBLink::configure_telemetry() {
     auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
     on_receive_telemetry_data(shared);
   };
-  m_wb_tele_rx = create_wb_rx(radio_port_rx, cb);
-  m_wb_tele_rx->start_async();
+  m_wb_tele_rx = create_wb_rx(radio_port_rx, false, cb);
   m_wb_tele_tx = create_wb_tx(radio_port_tx, false);
 }
 
@@ -174,10 +185,8 @@ void WBLink::configure_video() {
     auto cb2=[this](const uint8_t* data,int data_len){
       on_receive_video_data(1,data,data_len);
     };
-    auto primary = create_wb_rx(openhd::VIDEO_PRIMARY_RADIO_PORT,cb1);
-    primary->start_async();
-    auto secondary = create_wb_rx(openhd::VIDEO_SECONDARY_RADIO_PORT,cb2);
-    secondary->start_async();
+    auto primary = create_wb_rx(openhd::VIDEO_PRIMARY_RADIO_PORT, true,cb1);
+    auto secondary = create_wb_rx(openhd::VIDEO_SECONDARY_RADIO_PORT, true,cb2);
     m_wb_video_rx_list.push_back(std::move(primary));
     m_wb_video_rx_list.push_back(std::move(secondary));
   }
@@ -192,72 +201,24 @@ RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
       settings.wb_enable_ldpc, mcs_index};
 }
 
-TOptions WBLink::create_tx_options(uint8_t radio_port,bool is_video)const {
-  const auto settings=m_settings->get_settings();
-  TOptions options{};
-  options.radio_port = radio_port;
-  const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
-  if(OHDFilesystemUtil::exists(keypair_file)){
-    options.keypair = std::string(keypair_file);
-    m_console->debug("Using key from file {}",options.keypair->c_str());
-  }else{
-    options.keypair = std::nullopt;
-  }
-  //options.log_time_spent_in_atomic_queue= true;
-  if(is_video){
-    options.enable_fec= true;
-    options.tx_fec_options.fixed_k=static_cast<int>(settings.wb_video_fec_block_length);
-    options.tx_fec_options.overhead_percentage=static_cast<int>(settings.wb_video_fec_percentage);
-    options.use_block_queue= true;
-    // We allow up to 2 queued up frames - note that this doesn't add any latency as long as the bitrate(s) are configured correctly.
-    options.block_data_queue_size=2;
-  }else{
-    options.enable_fec= false;
-    options.tx_fec_options.fixed_k=0;
-    options.tx_fec_options.overhead_percentage=0;
-    options.use_block_queue= false;
-    // we do not need a big queue for telemetry data packets
-    options.packet_data_queue_size=32;
-  }
-  options.wlan = m_broadcast_cards.at(0).device_name;
-  return options;
+
+std::unique_ptr<WBTransmitter2> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
+  WBTransmitter2::Options options{};
+  options.enable_fec=is_video;
+  auto ret=std::make_unique<WBTransmitter2>(m_wb_txrx, options);
+  return ret;
 }
 
-ROptions WBLink::create_rx_options(uint8_t radio_port)const {
-  ROptions options{};
-  options.radio_port = radio_port;
-  const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
-  if(OHDFilesystemUtil::exists(keypair_file)){
-    options.keypair = std::string(keypair_file);
-    m_console->debug("Using key from file {}",options.keypair->c_str());
-  }else{
-    options.keypair = std::nullopt;
-  }
-  const auto cards = openhd::wb::get_card_names(m_broadcast_cards);
-  assert(!cards.empty());
-  options.rxInterfaces = cards;
-  // For multi rx-es we need the rx queue - but using it really has negative effects
-  // for a single rx card, we can just use a depth of 1 (essentially disabling the rx queue) and eliminate those negative effects
-  options.rx_queue_depth = m_broadcast_cards.size() > 1 ? 2 : 1;
-  const auto wifi_card_type=m_broadcast_cards.at(0).type;
-  options.rtl8812au_rssi_fixup=wifi_card_type==WiFiCardType::Realtek8812au;
-  return options;
-}
-
-std::unique_ptr<WBTransmitter> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
-  TOptions options= create_tx_options(radio_port,is_video);
-  RadiotapHeader::UserSelectableParams wifiParams= create_radiotap_params();
-  return std::make_unique<WBTransmitter>(wifiParams, options);
-}
-
-std::unique_ptr<AsyncWBReceiver> WBLink::create_wb_rx(uint8_t radio_port,WBReceiver::OUTPUT_DATA_CALLBACK cb){
-  ROptions options= create_rx_options(radio_port);
-  return std::make_unique<AsyncWBReceiver>(options,cb);
+std::unique_ptr<WBReceiver2> WBLink::create_wb_rx(uint8_t radio_port,bool is_video,WBReceiver2::OUTPUT_DATA_CALLBACK cb){
+  WBReceiver2::Options options{};
+  options.enable_fec=is_video;
+  auto ret=std::make_unique<WBReceiver2>(m_wb_txrx, options);
+  return ret;
 }
 
 std::string WBLink::createDebug()const{
   std::stringstream ss;
-  if (m_wb_tele_rx) {
+  /*if (m_wb_tele_rx) {
     ss<<"TeleRx: "<< m_wb_tele_rx->createDebugState();
   }
   if (m_wb_tele_tx) {
@@ -268,7 +229,7 @@ std::string WBLink::createDebug()const{
   }
   for (const auto &rxvid: m_wb_video_rx_list) {
     ss<<"VidRx :"<<rxvid->createDebugState();
-  }
+  }*/
   return ss.str();
 }
 
@@ -304,10 +265,7 @@ bool WBLink::request_set_frequency(int frequency) {
 
 bool WBLink::apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width) {
   const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width,m_broadcast_cards);
-  // TODO: R.n I am not sure if and how you need / even can set it either via radiotap or "iw"
-  apply_all_tx_instances([channel_width](WBTransmitter& tx){
-	tx.update_channel_width(channel_width);
-  });
+  m_wb_txrx->tx_update_channel_width(channel_width);
   return res;
 }
 
@@ -355,9 +313,7 @@ bool WBLink::set_mcs_index(int mcs_index) {
   //for(const auto& wlan:m_broadcast_cards){
   //  wifi::commandhelper::iw_set_rate_mcs(wlan.device_name,settings.wb_mcs_index, false);
   //}
-  apply_all_tx_instances([mcs_index](WBTransmitter& tx){
-	tx.update_mcs_index(mcs_index);
-  });
+  m_wb_txrx->tx_update_mcs_index(mcs_index);
   return true;
 }
 
@@ -390,10 +346,6 @@ bool WBLink::set_video_fec_block_length(const int block_length) {
   }
   m_settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
   m_settings->persist();
-  // we only use the fec blk length for video tx-es, and changing it is fast
-  for(auto& tx: m_wb_video_tx_list){
-    tx->update_fec_k(block_length);
-  }
   return true;
 }
 
@@ -405,10 +357,6 @@ bool WBLink::set_video_fec_percentage(int fec_percentage) {
   }
   m_settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
   m_settings->persist();
-  // we only use the fec percentage for video txes, and changing it is fast
-  for(auto& tx: m_wb_video_tx_list){
-    tx->update_fec_percentage(fec_percentage);
-  }
   return true;
 }
 
@@ -474,9 +422,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  if(stbc<0 || stbc>3)return false;
 	  m_settings->unsafe_get_settings().wb_enable_stbc=stbc;
 	  m_settings->persist();
-	  apply_all_tx_instances([stbc](WBTransmitter& tx){
-		tx.update_stbc(stbc);
-	  });
+          m_wb_txrx->tx_update_stbc(stbc);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_STBC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_stbc}});
@@ -485,9 +431,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  if(!validate_yes_or_no(ldpc))return false;
 	  m_settings->unsafe_get_settings().wb_enable_ldpc=ldpc;
 	  m_settings->persist();
-	  apply_all_tx_instances([ldpc](WBTransmitter& tx){
-		tx.update_ldpc(ldpc);
-	  });
+          m_wb_txrx->tx_update_ldpc(ldpc);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_ldpc}});
@@ -495,9 +439,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  if(!validate_yes_or_no(short_gi))return false;
 	  m_settings->unsafe_get_settings().wb_enable_short_guard=short_gi;
 	  m_settings->persist();
-	  apply_all_tx_instances([short_gi](WBTransmitter& tx){
-		tx.update_guard_interval(short_gi);
-	  });
+          m_wb_txrx->tx_update_guard_interval(short_gi);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
@@ -573,10 +515,10 @@ void WBLink::update_statistics() {
   if(elapsed_since_last<RECALCULATE_STATISTICS_INTERVAL){
     return;
   }
-  if(m_foreign_packets_receiver){
+  /*if(m_foreign_packets_receiver){
     const auto stats=m_foreign_packets_receiver->get_current_stats();
     m_console->debug("Foreign packets stats:{}",stats.to_string());
-  }
+  }*/
   m_last_stats_recalculation=std::chrono::steady_clock::now();
   // telemetry is available on both air and ground
   openhd::link_statistics::StatsAirGround stats{};
@@ -844,9 +786,10 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
       max_block_size_for_platform=openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
     }
     if(m_settings->get_settings().is_video_variable_block_length_enabled()){
-      tx.try_enqueue_block(fragmented_video_frame.frame_fragments,max_block_size_for_platform);
+      //tx.try_enqueue_block(fragmented_video_frame.frame_fragments,max_block_size_for_platform);
     }else{
-      tx.try_enqueue_block(fragmented_video_frame.frame_fragments, 100);
+      const int fec_perc=m_settings->get_settings().wb_video_fec_percentage;
+      tx.try_enqueue_block(fragmented_video_frame.frame_fragments, 100,fec_perc);
     }
   }else{
     m_console->debug("Invalid camera stream_index {}",stream_index);
@@ -979,36 +922,35 @@ void WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_c
 }
 
 void WBLink::reset_all_rx_stats() {
-  auto receivers=get_rx_list();
+  // TODO
+  /*auto receivers=get_rx_list();
   for(auto& rx:receivers){
     rx->reset_all_rx_stats();
-  }
+  }*/
 }
 
 int WBLink::get_rx_count_p_all() {
-  auto receivers=get_rx_list();
+  /*auto receivers=get_rx_list();
   int total=0;
   for(auto& rx:receivers){
     total += static_cast<int>(rx->get_latest_stats().wb_rx_stats.count_p_all);
   }
-  return total;
+  return total;*/
+  return 0;
 }
 
 int WBLink::get_rx_count_p_decryption_ok() {
-  auto receivers=get_rx_list();
+  /*auto receivers=get_rx_list();
   int total=0;
   for(auto& rx:receivers){
     total += static_cast<int>(rx->get_latest_stats().wb_rx_stats.count_p_decryption_ok);
   }
-  return total;
+  return total;*/
+  return 0;
 }
 
 int WBLink::get_last_rx_packet_chan_width() {
-  for(auto& rx:m_wb_video_rx_list){
-    auto rx_stats=rx->get_latest_stats().wb_rx_stats;
-    if(rx_stats.last_received_packet_channel_width!=-1)return rx_stats.last_received_packet_channel_width;
-  }
-  return -1;
+  return m_wb_txrx->get_rx_stats().last_received_packet_channel_width;
 }
 
 bool WBLink::check_in_state_support_changing_settings(){
@@ -1017,27 +959,6 @@ bool WBLink::check_in_state_support_changing_settings(){
 
 openhd::WifiSpace WBLink::get_current_frequency_channel_space()const {
   return openhd::get_space_from_frequency(m_settings->get_settings().wb_frequency);
-}
-
-std::vector<WBTransmitter*> WBLink::get_tx_list() {
-  std::vector<WBTransmitter*> ret;
-  for(auto& vid_tx:m_wb_video_tx_list)ret.push_back(vid_tx.get());
-  if(m_wb_tele_tx)ret.push_back(m_wb_tele_tx.get());
-  return ret;
-}
-
-std::vector<AsyncWBReceiver*> WBLink::get_rx_list() {
-  std::vector<AsyncWBReceiver*> ret;
-  for(auto& vid_rx:m_wb_video_rx_list)ret.push_back(vid_rx.get());
-  if(m_wb_tele_rx)ret.push_back(m_wb_tele_rx.get());
-  return ret;
-}
-
-void WBLink::apply_all_tx_instances(const std::function<void(WBTransmitter &)>& f) {
-  auto tx_es=get_tx_list();
-  for(const auto& tx: tx_es){
-	f(*tx);
-  }
 }
 
 bool WBLink::set_tx_power_mw(int tx_power_mw) {
@@ -1064,13 +985,14 @@ bool WBLink::set_tx_power_rtl8812au(int tx_power_index_override){
 }
 
 int64_t WBLink::get_total_tx_error_count() {
-  auto tx_es=get_tx_list();
+  /*auto tx_es=get_tx_list();
   int64_t total=0;
   for(const auto&tx:tx_es){
     auto stats=tx->get_latest_stats();
     total+=stats.count_tx_injections_error_hint+stats.n_dropped_packets;
   }
-  return total;
+  return total;*/
+  return 0;
 }
 
 void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channels) {
