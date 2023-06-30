@@ -209,6 +209,7 @@ RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
 std::unique_ptr<WBTransmitter2> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
   WBTransmitter2::Options options{};
   options.enable_fec=is_video;
+  options.radio_port=radio_port;
   auto ret=std::make_unique<WBTransmitter2>(m_wb_txrx, options);
   return ret;
 }
@@ -216,6 +217,7 @@ std::unique_ptr<WBTransmitter2> WBLink::create_wb_tx(uint8_t radio_port,bool is_
 std::unique_ptr<WBReceiver2> WBLink::create_wb_rx(uint8_t radio_port,bool is_video,WBReceiver2::OUTPUT_DATA_CALLBACK cb){
   WBReceiver2::Options options{};
   options.enable_fec=is_video;
+  options.radio_port=radio_port;
   auto ret=std::make_unique<WBReceiver2>(m_wb_txrx, options);
   ret->set_callback(cb);
   return ret;
