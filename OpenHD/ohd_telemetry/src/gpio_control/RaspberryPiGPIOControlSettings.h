@@ -20,6 +20,7 @@ static constexpr int GPIO_LOW=2;
 
 struct GPIOControlSettings {
   int gpio_2 = GPIO_LEAVE_UNTOUCHED;
+  int gpio_26= GPIO_LEAVE_UNTOUCHED;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GPIOControlSettings,gpio_2);
