@@ -38,7 +38,7 @@ GPIOControl::GPIOControl() {
 
 std::vector<openhd::Setting> GPIOControl::get_all_settings() {
   std::vector<openhd::Setting> ret;
-  auto cb=[this](std::string,int value){
+  auto cb_gpio2=[this](std::string,int value){
     if(!validate_gpio_setting_int(value))return false;
     m_settings->unsafe_get_settings().gpio_2=value;
     m_settings->persist();
@@ -46,7 +46,16 @@ std::vector<openhd::Setting> GPIOControl::get_all_settings() {
     return true;
   };
   ret.push_back(openhd::Setting{"GPIO_2",openhd::IntSetting{
-                                              static_cast<int>(m_settings->get_settings().gpio_2),cb}});
+                                              static_cast<int>(m_settings->get_settings().gpio_2),cb_gpio2}});
+  auto cb_gpio26=[this](std::string,int value){
+    if(!validate_gpio_setting_int(value))return false;
+    m_settings->unsafe_get_settings().gpio_2=value;
+    m_settings->persist();
+    configure_gpio(26,value);
+    return true;
+  };
+  ret.push_back(openhd::Setting{"GPIO_26",openhd::IntSetting{
+                                              static_cast<int>(m_settings->get_settings().gpio_26),cb_gpio26}});
   return ret;
 }
 
