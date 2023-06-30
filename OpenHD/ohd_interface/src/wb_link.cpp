@@ -862,11 +862,11 @@ void WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_c
 }
 
 void WBLink::reset_all_rx_stats() {
-  // TODO
-  /*auto receivers=get_rx_list();
-  for(auto& rx:receivers){
-    rx->reset_all_rx_stats();
-  }*/
+  m_wb_txrx->rx_reset_stats();
+  for(auto& rx:m_wb_video_rx_list){
+    rx->reset_stream_stats();
+  }
+  m_wb_tele_rx->reset_stream_stats();
 }
 
 int WBLink::get_last_rx_packet_chan_width() {
