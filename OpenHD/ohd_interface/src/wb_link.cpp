@@ -55,7 +55,6 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
 	}
   }
   takeover_cards_monitor_mode();
-  configure_cards();
   TxRxInstance::Options txrx_options{};
   txrx_options.rtl8812au_rssi_fixup= true;
   const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
@@ -70,6 +69,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_wb_txrx=std::make_shared<TxRxInstance>(card_names,txrx_options);
   configure_telemetry();
   configure_video();
+  configure_cards();
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
   if(m_opt_action_handler){
