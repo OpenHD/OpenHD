@@ -208,6 +208,12 @@ std::unique_ptr<WBStreamRx> WBLink::create_wb_rx(uint8_t radio_port,bool is_vide
   WBStreamRx::Options options{};
   options.enable_fec=is_video;
   options.radio_port=radio_port;
+  if(!is_video){
+    // We use threading for telemetry, since the callback where we process telemetry data
+    // can hang for a while in some cases
+    options.enable_threading= true;
+    options.packet_queue_size=20;
+  }
   auto ret=std::make_unique<WBStreamRx>(m_wb_txrx, options);
   ret->set_callback(cb);
   return ret;
