@@ -132,10 +132,8 @@ class WBLink :public OHDLink{
   void async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
  private:
   void reset_all_rx_stats();
-  int get_rx_count_p_all();
-  int get_rx_count_p_decryption_ok();
   int get_last_rx_packet_chan_width();
-  int64_t get_total_tx_error_count();
+  int64_t get_total_dropped_packets();
  private:
   // We return false on all the change settings request(s) if there is already a change operation queued
   // up, or we currently perform a channel scan

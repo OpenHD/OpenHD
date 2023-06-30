@@ -259,11 +259,11 @@ bool WBLink::request_set_frequency(int frequency) {
   schedule_work_item(work_item);
   // And add a work item that runs after 5 seconds and resets the frequency to the previous one if no data is being received
   // after X seconds
-  const auto rx_count_p_decryption_ok=get_rx_count_p_decryption_ok();
+  const auto rx_count_p_decryption_ok=m_wb_txrx->get_rx_stats().count_p_valid;
   if(rx_count_p_decryption_ok>100){
     m_console->debug("Adding reset to previous known frequency work item {}",rx_count_p_decryption_ok);
     auto backup_work_item=std::make_shared<WorkItem>([this](){
-      m_console->debug("check if data is being received {}",get_rx_count_p_decryption_ok());
+      m_console->debug("check if data is being received {}",m_wb_txrx->get_rx_stats().count_p_valid);
     },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK+std::chrono::seconds(2));
     schedule_work_item(backup_work_item);
   }
@@ -598,18 +598,7 @@ void WBLink::update_statistics() {
   TxRxInstance::TxStats txStats=m_wb_txrx->get_tx_stats();
   stats.monitor_mode_link.curr_rx_packet_loss_perc=rxStats.curr_packet_loss;
   stats.monitor_mode_link.count_tx_inj_error_hint=txStats.count_tx_injections_error_hint;
-
-  // temporary, accumulate tx error(s) and dropped packets
-  /*uint64_t acc_tx_injections_error_hint=0;
-  uint64_t acc_tx_n_dropped_packets=0;
-  acc_tx_injections_error_hint+= m_wb_tele_tx->get_latest_stats().count_tx_injections_error_hint;
-  acc_tx_n_dropped_packets+= m_wb_tele_tx->get_latest_stats().n_dropped_packets;
-  for(const auto& videoTx: m_wb_video_tx_list){
-    acc_tx_injections_error_hint+=videoTx->get_latest_stats().count_tx_injections_error_hint;
-    acc_tx_n_dropped_packets+=videoTx->get_latest_stats().n_dropped_packets;
-  }
-  stats.monitor_mode_link.count_tx_inj_error_hint=acc_tx_injections_error_hint;
-  stats.monitor_mode_link.count_tx_dropped_packets=acc_tx_n_dropped_packets;*/
+  stats.monitor_mode_link.count_tx_dropped_packets=get_total_dropped_packets();
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
@@ -669,7 +658,7 @@ void WBLink::perform_rate_adjustment() {
     return;
   }
   // Check if we had any tx errors since last time we checked, resetting them every time
-  const auto curr_total_tx_errors=get_total_tx_error_count();
+  const auto curr_total_tx_errors=get_total_dropped_packets();
   const auto delta_total_tx_errors=curr_total_tx_errors-m_last_total_tx_error_count;
   m_last_total_tx_error_count=curr_total_tx_errors;
   const bool has_tx_errors=delta_total_tx_errors>0;
@@ -828,7 +817,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       m_console->warn("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
       reset_all_rx_stats();
       std::this_thread::sleep_for(DEFAULT_SCAN_TIME_PER_CHANNEL);
-      const int n_packets= get_rx_count_p_all();
+      const int n_packets= m_wb_txrx->get_rx_stats().count_p_valid;
       // We might receive 20Mhz channel width packets from a air unit sending on 20Mhz channel width while
       // receiving on 40Mhz channel width - if we were to then to set the gnd to 40Mhz, we will be able to receive data,
       // but not be able to send any data up to the air unit.
@@ -838,7 +827,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         // We got packets on this frequency, but it is not guaranteed those packets are from an openhd air unit.
         // sleep a bit more, then check if we actually got any decrypted packets
         std::this_thread::sleep_for(std::chrono::seconds(2));
-        const int n_packets_decrypted= get_rx_count_p_decryption_ok();
+        const int n_packets_decrypted= m_wb_txrx->get_rx_stats().count_p_valid;
         const int packet_loss=m_wb_video_rx_list.at(0)->get_latest_stats().wb_rx_stats.curr_packet_loss_percentage;
         m_console->debug("Got {} decrypted packets on frequency {} with {} packet loss",n_packets_decrypted,channel.frequency,packet_loss);
         if(n_packets_decrypted>0 && rx_chann_width==channel_width){
@@ -903,26 +892,6 @@ void WBLink::reset_all_rx_stats() {
   }*/
 }
 
-int WBLink::get_rx_count_p_all() {
-  /*auto receivers=get_rx_list();
-  int total=0;
-  for(auto& rx:receivers){
-    total += static_cast<int>(rx->get_latest_stats().wb_rx_stats.count_p_all);
-  }
-  return total;*/
-  return 0;
-}
-
-int WBLink::get_rx_count_p_decryption_ok() {
-  /*auto receivers=get_rx_list();
-  int total=0;
-  for(auto& rx:receivers){
-    total += static_cast<int>(rx->get_latest_stats().wb_rx_stats.count_p_decryption_ok);
-  }
-  return total;*/
-  return 0;
-}
-
 int WBLink::get_last_rx_packet_chan_width() {
   return m_wb_txrx->get_rx_stats().last_received_packet_channel_width;
 }
@@ -958,15 +927,14 @@ bool WBLink::set_tx_power_rtl8812au(int tx_power_index_override){
   return true;
 }
 
-int64_t WBLink::get_total_tx_error_count() {
-  /*auto tx_es=get_tx_list();
+int64_t WBLink::get_total_dropped_packets() {
   int64_t total=0;
-  for(const auto&tx:tx_es){
+  for(const auto& tx:m_wb_video_tx_list){
     auto stats=tx->get_latest_stats();
-    total+=stats.count_tx_injections_error_hint+stats.n_dropped_packets;
+    total+=stats.n_dropped_packets;
   }
-  return total;*/
-  return 0;
+  total+=m_wb_tele_tx->get_latest_stats().n_dropped_packets;
+  return total;
 }
 
 void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channels) {
