@@ -70,10 +70,43 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   const auto card_names = openhd::wb::get_card_names(m_broadcast_cards);
   assert(!card_names.empty());
   m_wb_txrx=std::make_shared<WBTxRx>(card_names,txrx_options);
-  configure_telemetry();
-  configure_video();
+  m_wb_txrx->tx_threadsafe_update_radiotap_header(create_radiotap_params());
+  {
+      // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
+      // tx radio port on air is the same as rx on ground and verse visa
+      const auto radio_port_rx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
+      const auto radio_port_tx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
+      auto cb=[this](const uint8_t* data, int data_len){
+        auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
+        on_receive_telemetry_data(shared);
+      };
+      m_wb_tele_rx = create_wb_rx(radio_port_rx, false, cb);
+      m_wb_tele_tx = create_wb_tx(radio_port_tx, false);
+  }
+  {
+      // Video is unidirectional, aka always goes from air pi to ground pi
+      if (m_profile.is_air) {
+          // we transmit video
+          auto primary = create_wb_tx(openhd::VIDEO_PRIMARY_RADIO_PORT, true);
+          auto secondary = create_wb_tx(openhd::VIDEO_SECONDARY_RADIO_PORT, true);
+          m_wb_video_tx_list.push_back(std::move(primary));
+          m_wb_video_tx_list.push_back(std::move(secondary));
+      } else {
+          // we receive video
+          auto cb1=[this](const uint8_t* data,int data_len){
+            on_receive_video_data(0,data,data_len);
+          };
+          auto cb2=[this](const uint8_t* data,int data_len){
+            on_receive_video_data(1,data,data_len);
+          };
+          auto primary = create_wb_rx(openhd::VIDEO_PRIMARY_RADIO_PORT, true,cb1);
+          auto secondary = create_wb_rx(openhd::VIDEO_SECONDARY_RADIO_PORT, true,cb2);
+          m_wb_video_rx_list.push_back(std::move(primary));
+          m_wb_video_rx_list.push_back(std::move(secondary));
+      }
+  }
   m_wb_txrx->start_receiving();
-  configure_cards();
+  set_freq_width_power();
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
   if(m_opt_action_handler){
@@ -144,47 +177,11 @@ void WBLink::takeover_cards_monitor_mode() {
   m_console->debug("takeover_cards_monitor_mode() end");
 }
 
-void WBLink::configure_cards() {
-  m_console->debug("configure_cards() begin");
+void WBLink::set_freq_width_power() {
+  m_console->debug("set_freq_width_power() begin");
   apply_frequency_and_channel_width_from_settings();
   apply_txpower();
-  m_console->debug("configure_cards() end");
-}
-
-void WBLink::configure_telemetry() {
-  // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
-  // tx radio port on air is the same as rx on ground and verse visa
-  const auto radio_port_rx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
-  const auto radio_port_tx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
-  auto cb=[this](const uint8_t* data, int data_len){
-    auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
-    on_receive_telemetry_data(shared);
-  };
-  m_wb_tele_rx = create_wb_rx(radio_port_rx, false, cb);
-  m_wb_tele_tx = create_wb_tx(radio_port_tx, false);
-}
-
-void WBLink::configure_video() {
-  // Video is unidirectional, aka always goes from air pi to ground pi
-  if (m_profile.is_air) {
-    // we transmit video
-    auto primary = create_wb_tx(openhd::VIDEO_PRIMARY_RADIO_PORT, true);
-    auto secondary = create_wb_tx(openhd::VIDEO_SECONDARY_RADIO_PORT, true);
-    m_wb_video_tx_list.push_back(std::move(primary));
-    m_wb_video_tx_list.push_back(std::move(secondary));
-  } else {
-    // we receive video
-    auto cb1=[this](const uint8_t* data,int data_len){
-      on_receive_video_data(0,data,data_len);
-    };
-    auto cb2=[this](const uint8_t* data,int data_len){
-      on_receive_video_data(1,data,data_len);
-    };
-    auto primary = create_wb_rx(openhd::VIDEO_PRIMARY_RADIO_PORT, true,cb1);
-    auto secondary = create_wb_rx(openhd::VIDEO_SECONDARY_RADIO_PORT, true,cb2);
-    m_wb_video_rx_list.push_back(std::move(primary));
-    m_wb_video_rx_list.push_back(std::move(secondary));
-  }
+  m_console->debug("set_freq_width_power() end");
 }
 
 RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {

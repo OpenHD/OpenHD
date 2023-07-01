@@ -85,10 +85,7 @@ class WBLink :public OHDLink{
   // then sets them to monitor mode
   void takeover_cards_monitor_mode();
   // set the right frequency, channel width and tx power. Cards need to be in monitor mode already !
-  void configure_cards();
-  // start telemetry and video rx/tx stream(s)
-  void configure_telemetry();
-  void configure_video();
+  void set_freq_width_power();
   // Reads the current settings and creates the appropriate Radiotap Header params
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
   std::unique_ptr<WBStreamTx> create_wb_tx(uint8_t radio_port,bool is_video);
