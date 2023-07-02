@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <memory>
+#include <getopt.h>
 
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
