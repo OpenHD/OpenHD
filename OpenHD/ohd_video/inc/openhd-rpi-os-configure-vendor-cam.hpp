@@ -28,36 +28,38 @@ namespace openhd::rpi::os{
 
 enum class CamConfig {
   MMAL = 0, // raspivid / gst-rpicamsrc
-  LIBCAMERA, // "normal" libcamera (autodetect)
-  LIBCAMERA_IMX477, // "normal" libcamera, explicitly set to imx477 detection only
-  LIBCAMERA_ARDUCAM, // pivariety libcamera (arducam special)
-  LIBCAMERA_IMX519, // Arducam imx519 without autofocus
-  LIBCAMERA_IMX708, // Arducam SkymasterHDR
-  LIBCAMERA_IMX290,// Arducam imx290 
-  LIBCAMERA_IMX327,// Arducam imx327 
-  LIBCAMERA_IMX462,// Arducam imx462
-  VEYE_327, // Veye IMX290/IMX327 (older versions)
-  VEYE_CSIMX307, // Veye IMX307
-  VEYE_CSSC132, //Veye SC132
-  VEYE_MVCAM, // Veye MV Cameras
-  VEYE_CAM2M // Veye IMX327 (never versions), VEYE series with 200W resolution
+  L_IMX462_LOWLIGHT_MINI, // pivariety libcamera for the imx462 mini
+  L_SKYMASTERHDR, // "normal" libcamera, explicitly set to imx708 detection only
+  L_SKYVISIONPRO, // "normal" libcamera, explicitly set to imx519 detection only
+  L_IMX477M, // "normal" libcamera, explicitly set to imx477 detection only
+  L_IMX477, // "normal" libcamera, explicitly set to imx477 detection only
+  L_IMX462,// Arducam imx462
+  L_IMX327,// Arducam imx327 
+  L_IMX290,// Arducam imx290 
+  LIBCAMERA_AUTO,  // "normal" libcamera (autodetect)
+  L_ARDUCAM_AUTO, // Arducam libcamera (piviarity) (autodetect)
+  L_VEYE_2MP, // Veye IMX290/IMX327 (older versions)
+  L_VEYE_CSIMX307, // Veye IMX307
+  L_VEYE_CSSC132, //Veye SC132
+  L_VEYE_MVCAM, // Veye MV Cameras
 };
 static std::string cam_config_to_string(const CamConfig& cam_config){
   switch (cam_config) {
     case CamConfig::MMAL: return "mmal";
-    case CamConfig::LIBCAMERA: return "libcamera";
-    case CamConfig::LIBCAMERA_IMX477: return "libcamera_imx477";
-    case CamConfig::LIBCAMERA_ARDUCAM: return "libcamera_arducam";
-    case CamConfig::LIBCAMERA_IMX519: return "libcamera_imx519";
-    case CamConfig::LIBCAMERA_IMX708: return "libcamera_imx708";
-    case CamConfig::LIBCAMERA_IMX290: return "libcamera_imx290";
-    case CamConfig::LIBCAMERA_IMX327: return "libcamera_imx327";
-    case CamConfig::LIBCAMERA_IMX462: return "libcamera_imx462";
-    case CamConfig::VEYE_327: return "veye_327";
-    case CamConfig::VEYE_CSIMX307: return "veye_csimx307";
-    case CamConfig::VEYE_CSSC132: return "veye_cssc132";
-    case CamConfig::VEYE_MVCAM: return "veye_mvcam";
-    case CamConfig::VEYE_CAM2M: return "veye_cam2m";
+    case CamConfig::L_IMX462_LOWLIGHT_MINI: return "libcamera_arducam";
+    case CamConfig::L_SKYMASTERHDR: return "libcamera_imx708";
+    case CamConfig::L_SKYVISIONPRO: return "libcamera_imx519";
+    case CamConfig::L_IMX477M: return "libcamera_imx477";
+    case CamConfig::L_IMX477: return "libcamera_imx477";
+    case CamConfig::L_IMX462: return "libcamera_imx462";
+    case CamConfig::L_IMX327: return "libcamera_imx327";
+    case CamConfig::L_IMX290: return "libcamera_imx290";
+    case CamConfig::LIBCAMERA_AUTO: return "libcamera";
+    case CamConfig::L_ARDUCAM_AUTO: return "libcamera_arducam";
+    case CamConfig::L_VEYE_2MP: return "veye_cam2m";
+    case CamConfig::L_VEYE_CSIMX307: return "veye_csimx307";
+    case CamConfig::L_VEYE_CSSC132: return "veye_cssc132";
+    case CamConfig::L_VEYE_MVCAM: return "veye_mvcam";
     default:break;
   }
   openhd::log::get_default()->warn("Error cam_config_to_string");
@@ -67,19 +69,20 @@ static std::string cam_config_to_string(const CamConfig& cam_config){
 
 static CamConfig cam_config_from_int(int val){
   if(val==0)return CamConfig::MMAL;
-  if(val==1)return CamConfig::LIBCAMERA;
-  if(val==2)return CamConfig::LIBCAMERA_IMX477;
-  if(val==3)return CamConfig::LIBCAMERA_ARDUCAM;
-  if(val==4)return CamConfig::LIBCAMERA_IMX519;
-  if(val==5)return CamConfig::LIBCAMERA_IMX708;
-  if(val==6)return CamConfig::LIBCAMERA_IMX290;
-  if(val==7)return CamConfig::LIBCAMERA_IMX327;
-  if(val==8)return CamConfig::LIBCAMERA_IMX462;
-  if(val==9)return CamConfig::VEYE_327;
-  if(val==10)return CamConfig::VEYE_CSIMX307;
-  if(val==11)return CamConfig::VEYE_CSSC132;
-  if(val==12)return CamConfig::VEYE_MVCAM;
-  if(val==13)return CamConfig::VEYE_CAM2M;
+  if(val==1)return CamConfig::L_IMX462_LOWLIGHT_MINI;
+  if(val==2)return CamConfig::L_SKYMASTERHDR;
+  if(val==3)return CamConfig::L_SKYVISIONPRO;
+  if(val==4)return CamConfig::L_IMX477M;
+  if(val==5)return CamConfig::L_IMX477;
+  if(val==6)return CamConfig::L_IMX462;
+  if(val==7)return CamConfig::L_IMX327;
+  if(val==8)return CamConfig::L_IMX290;
+  if(val==9)return CamConfig::LIBCAMERA_AUTO;
+  if(val==10)return CamConfig::L_ARDUCAM_AUTO;
+  if(val==11)return CamConfig::L_VEYE_2MP;
+  if(val==12)return CamConfig::L_VEYE_CSIMX307;
+  if(val==13)return CamConfig::L_VEYE_CSSC132;
+  if(val==14)return CamConfig::L_VEYE_MVCAM;
   openhd::log::get_default()->warn("Error cam_config_from_int");
   assert(true);
   return CamConfig::MMAL;
@@ -87,19 +90,20 @@ static CamConfig cam_config_from_int(int val){
 static int cam_config_to_int(CamConfig cam_config){
   switch (cam_config) {
     case CamConfig::MMAL: return 0;
-    case CamConfig::LIBCAMERA: return 1;
-    case CamConfig::LIBCAMERA_IMX477: return 2;
-    case CamConfig::LIBCAMERA_ARDUCAM: return 3;
-    case CamConfig::LIBCAMERA_IMX519: return 4;
-    case CamConfig::LIBCAMERA_IMX708: return 5;
-    case CamConfig::LIBCAMERA_IMX290: return 6;
-    case CamConfig::LIBCAMERA_IMX327: return 7;
-    case CamConfig::LIBCAMERA_IMX462: return 8;
-    case CamConfig::VEYE_327: return 9;
-    case CamConfig::VEYE_CSIMX307: return 10;
-    case CamConfig::VEYE_CSSC132: return 11;
-    case CamConfig::VEYE_MVCAM: return 12;
-    case CamConfig::VEYE_CAM2M: return 13;
+    case CamConfig::L_IMX462_LOWLIGHT_MINI: return 1;
+    case CamConfig::L_SKYMASTERHDR: return 2;
+    case CamConfig::L_SKYVISIONPRO: return 3;
+    case CamConfig::L_IMX477M: return 4;
+    case CamConfig::L_IMX477: return 5;
+    case CamConfig::L_IMX462: return 6;
+    case CamConfig::L_IMX327: return 7;
+    case CamConfig::L_IMX290: return 8;
+    case CamConfig::LIBCAMERA_AUTO: return 9;
+    case CamConfig::L_ARDUCAM_AUTO: return 10;
+    case CamConfig::L_VEYE_2MP: return 11;
+    case CamConfig::L_VEYE_CSIMX307: return 12;
+    case CamConfig::L_VEYE_CSSC132: return 13;
+    case CamConfig::L_VEYE_MVCAM: return 14;
     default:break;
   }
   openhd::log::get_default()->warn("Error cam_config_to_int");
