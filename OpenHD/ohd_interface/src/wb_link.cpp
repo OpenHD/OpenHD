@@ -576,7 +576,7 @@ void WBLink::update_statistics() {
     auto rxStatsCard=m_wb_txrx->get_rx_stats_for_card(i);
     card.rx_rssi=rxStatsCard.rssi_for_wifi_card.last_rssi;
     card.count_p_received=rxStatsCard.count_p_valid;
-    card.count_p_injected=0;
+    card.count_p_injected=rxStatsCard.curr_packet_loss;
     card.exists_in_openhd= true;
   }
   stats.is_air=m_profile.is_air;
