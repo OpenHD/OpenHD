@@ -548,6 +548,7 @@ void WBLink::update_statistics() {
       const auto wb_rx_stats=wb_rx.get_latest_stats();
       openhd::link_statistics::StatsWBVideoGround ground_video{};
       ground_video.link_index=i;
+      // TODO Use outgoing bitrate - otherwise, we get N times the bandwidth with multiple RX-es.
       ground_video.curr_incoming_bitrate=wb_rx_stats.curr_in_bits_per_second;
       const auto fec_stats=wb_rx.get_latest_fec_stats();
       ground_video.count_fragments_recovered=fec_stats.count_fragments_recovered;
