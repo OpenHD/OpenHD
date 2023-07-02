@@ -196,7 +196,9 @@ if (!cam_config_file_content_opt.has_value()) {
     openhd::log::get_default()->warn("Cannot apply new cam config, corresponding *.txt [{}] not found", cam_config_filename);
     return false;
 } else {
-    openhd::log::get_default()->warn("Config is: [{}]", cam_config_filename);
+if (cam_config_filename.find("imx477m") != std::string::npos) {
+    openhd::log::get_default()->warn("true");
+}
     return true;
 }
 
