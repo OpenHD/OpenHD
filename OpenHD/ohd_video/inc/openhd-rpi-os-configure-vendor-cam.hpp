@@ -49,7 +49,7 @@ static std::string cam_config_to_string(const CamConfig& cam_config){
     case CamConfig::L_IMX462_LOWLIGHT_MINI: return "libcamera_arducam";
     case CamConfig::L_SKYMASTERHDR: return "libcamera_imx708";
     case CamConfig::L_SKYVISIONPRO: return "libcamera_imx519";
-    case CamConfig::L_IMX477M: return "libcamera_imx477";
+    case CamConfig::L_IMX477M: return "libcamera_imx477m";
     case CamConfig::L_IMX477: return "libcamera_imx477";
     case CamConfig::L_IMX462: return "libcamera_imx462";
     case CamConfig::L_IMX327: return "libcamera_imx327";
