@@ -197,7 +197,10 @@ if (!cam_config_file_content_opt.has_value()) {
     return false;
 } else {
 if (cam_config_filename.find("imx477m") != std::string::npos) {
-    openhd::log::get_default()->warn("true");
+    openhd::log::get_default()->warn("Custom Tuning file is about to be installed!");
+}
+else if (cam_config_filename.find("imx477") != std::string::npos) {
+    openhd::log::get_default()->warn("Standart IMX477 Tuning file is about to be installed!");
 }
 }
 
