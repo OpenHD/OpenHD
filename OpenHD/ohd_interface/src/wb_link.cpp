@@ -136,6 +136,7 @@ WBLink::~WBLink() {
     m_work_thread_run =false;
     m_work_thread->join();
   }
+  m_wb_txrx->stop_receiving();
   // stop all the receiver/transmitter instances, after that, give card back to network manager
   m_wb_tele_rx.reset();
   m_wb_tele_tx.reset();
