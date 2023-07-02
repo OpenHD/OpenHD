@@ -63,8 +63,6 @@ struct WBLinkSettings {
   uint32_t wb_rtl8812au_tx_pwr_idx_override=DEFAULT_RTL8812AU_TX_POWER_INDEX;
   // applied when armed
   uint32_t wb_rtl8812au_tx_pwr_idx_armed=RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED;
-  // 0 means auto, aka variable block size (default, gives best results in most cases and has 0 additional latency)
-  uint32_t wb_video_fec_block_length=DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH;
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
   // NOTE: Default depends on platform type and is therefore calculated below, then overwrites this default value
   uint32_t wb_max_fec_block_size_for_platform=DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
@@ -73,15 +71,11 @@ struct WBLinkSettings {
 
   // wb link recommends bitrate(s) to the encoder, can be helpfully for inexperienced users.
   bool enable_wb_video_variable_bitrate= true;
-  // Helper
-  [[nodiscard]] bool is_video_variable_block_length_enabled()const{
-    return wb_video_fec_block_length==0;
-  }
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
                                    wb_enable_stbc,wb_enable_ldpc,wb_enable_short_guard,
                                    wb_tx_power_milli_watt,wb_rtl8812au_tx_pwr_idx_override,wb_rtl8812au_tx_pwr_idx_armed,
-                                   wb_video_fec_block_length, wb_video_fec_percentage,wb_max_fec_block_size_for_platform,
+                                   wb_video_fec_percentage,wb_max_fec_block_size_for_platform,
                                    wb_mcs_index_via_rc_channel,
                                    enable_wb_video_variable_bitrate);
 

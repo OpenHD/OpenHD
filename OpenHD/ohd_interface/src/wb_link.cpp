@@ -340,17 +340,6 @@ bool WBLink::request_set_channel_width(int channel_width) {
   return true;
 }
 
-bool WBLink::set_video_fec_block_length(const int block_length) {
-  m_console->debug("set_video_fec_block_length {}",block_length);
-  if(!openhd::is_valid_fec_block_length(block_length)){
-    m_console->warn("Invalid fec block length:{}",block_length);
-    return false;
-  }
-  m_settings->unsafe_get_settings().wb_video_fec_block_length=block_length;
-  m_settings->persist();
-  return true;
-}
-
 bool WBLink::set_video_fec_percentage(int fec_percentage) {
   m_console->debug("set_video_fec_percentage {}",fec_percentage);
   if(!openhd::is_valid_fec_percentage(fec_percentage)){
@@ -380,10 +369,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
   ret.push_back(Setting{WB_MCS_INDEX,change_wb_mcs_index});
   if(m_profile.is_air){
-    auto change_video_fec_block_length=openhd::IntSetting{(int)settings.wb_video_fec_block_length,[this](std::string,int value){
-                                                              return set_video_fec_block_length(value);
-                                                            }};
-    ret.push_back(Setting{WB_VIDEO_FEC_BLOCK_LENGTH,change_video_fec_block_length});
     auto change_video_fec_percentage=openhd::IntSetting{(int)settings.wb_video_fec_percentage,[this](std::string,int value){
                                                             return set_video_fec_percentage(value);
                                                           }};
@@ -733,7 +718,6 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
       openhd::log::get_default()->warn("Invalid max_block_size_for_platform:{}",max_block_size_for_platform);
       max_block_size_for_platform=openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
     }
-    assert(m_settings->get_settings().is_video_variable_block_length_enabled());
     const int fec_perc=m_settings->get_settings().wb_video_fec_percentage;
     tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc);
   }else{

@@ -77,7 +77,6 @@ class WBLink :public OHDLink{
   void update_arming_state(bool armed);
   // These do not "break" the bidirectional connectivity and therefore
   // can be changed easily on the fly
-  bool set_video_fec_block_length(int block_length);
   bool set_video_fec_percentage(int fec_percentage);
   bool set_enable_wb_video_variable_bitrate(int value);
   bool set_max_fec_block_size_for_platform(int value);
