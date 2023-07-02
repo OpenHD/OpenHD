@@ -199,7 +199,6 @@ if (!cam_config_file_content_opt.has_value()) {
 if (cam_config_filename.find("imx477m") != std::string::npos) {
     openhd::log::get_default()->warn("true");
 }
-    return true;
 }
 
   // Be more verbose why this stuff stands there - this is a comment added on top
