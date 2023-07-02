@@ -4,13 +4,14 @@
 
 #include <OHDTelemetry.h>
 #include <camera_discovery.h>
+#include <getopt.h>
 #include <ohd_interface.h>
 #include <ohd_video_air.h>
 #include <ohd_video_ground.h>
 
+#include <csignal>
 #include <iostream>
 #include <memory>
-#include <getopt.h>
 
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"
