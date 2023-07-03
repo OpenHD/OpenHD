@@ -575,6 +575,7 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_rx_packet_loss_perc=rxStats.curr_packet_loss;
   stats.monitor_mode_link.count_tx_inj_error_hint=txStats.count_tx_injections_error_hint;
   stats.monitor_mode_link.count_tx_dropped_packets=get_total_dropped_packets();
+  stats.monitor_mode_link.curr_tx_card_idx=m_wb_txrx->get_curr_active_tx_card_idx();
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
@@ -585,8 +586,7 @@ void WBLink::update_statistics() {
     auto rxStatsCard=m_wb_txrx->get_rx_stats_for_card(i);
     card.rx_rssi=rxStatsCard.rssi_for_wifi_card.last_rssi;
     card.count_p_received=rxStatsCard.count_p_valid;
-    //card.count_p_injected=rxStatsCard.curr_packet_loss;
-    card.count_p_injected = m_wb_txrx->is_card_active_tx(i);
+    card.count_p_injected=rxStatsCard.curr_packet_loss;
     card.exists_in_openhd= true;
   }
   stats.is_air=m_profile.is_air;

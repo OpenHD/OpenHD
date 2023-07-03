@@ -36,7 +36,7 @@ static MavlinkMessage pack_link_general(const uint8_t system_id,const uint8_t co
   tmp.count_tx_inj_error_hint=stats_monitor_mode_link.count_tx_inj_error_hint;
   tmp.count_tx_dropped_packets=stats_monitor_mode_link.count_tx_dropped_packets;
   tmp.curr_rx_packet_loss_perc=stats_monitor_mode_link.curr_rx_packet_loss_perc;
-  tmp.unused0=stats_monitor_mode_link.unused0;
+  tmp.unused0=stats_monitor_mode_link.curr_tx_card_idx;
   tmp.unused1=stats_monitor_mode_link.unused1;
   tmp.unused2=stats_monitor_mode_link.unused2;
   tmp.unused3=stats_monitor_mode_link.unused3;
