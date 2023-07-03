@@ -384,6 +384,10 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       return set_max_fec_block_size_for_platform(value);
     };
     ret.push_back(Setting{WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,openhd::IntSetting{(int)settings.wb_max_fec_block_size_for_platform, cb_wb_max_fec_block_size_for_platform}});
+    auto cb_wb_video_rate_for_mcs_adjustment_percent=[this](std::string,int value){
+      return set_wb_video_rate_for_mcs_adjustment_percent(value);
+    };
+    ret.push_back(Setting{WB_VIDEO_RATE_FOR_MCS_ADJUSTMENT_PERC,openhd::IntSetting{(int)settings.wb_video_rate_for_mcs_adjustment_percent, cb_wb_video_rate_for_mcs_adjustment_percent}});
     // changing the mcs index via rc channel only makes sense on air,
     // and is only possible if the card supports it
     if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
@@ -604,10 +608,11 @@ void WBLink::perform_rate_adjustment() {
   // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
   const auto settings = m_settings->get_settings();
   const auto wifi_space=openhd::get_space_from_frequency(settings.wb_frequency);
-  const auto max_rate_for_current_wifi_config =
+  const auto max_rate_for_current_wifi_config_without_adjust =
       openhd::wb::get_max_rate_possible(m_broadcast_cards.at(0),wifi_space,
                                            settings.wb_mcs_index,
                                            settings.wb_channel_width == 40);
+  const auto max_rate_for_current_wifi_config=max_rate_for_current_wifi_config_without_adjust * m_settings->get_settings().wb_video_rate_for_mcs_adjustment_percent/100;
   const auto max_video_rate_for_current_wifi_config =
       openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
   if(m_max_video_rate_for_current_wifi_config !=max_video_rate_for_current_wifi_config){
@@ -684,6 +689,12 @@ bool WBLink::set_max_fec_block_size_for_platform(int value) {
   return true;
 }
 
+bool WBLink::set_wb_video_rate_for_mcs_adjustment_percent(int value) {
+  if(value<=10 || value>=500)return false;
+  m_settings->unsafe_get_settings().wb_video_rate_for_mcs_adjustment_percent=value;
+  m_settings->persist();
+  return false;
+}
 void WBLink::schedule_work_item(const std::shared_ptr<WorkItem>& work_item) {
   std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
   m_work_item_queue.push(work_item);

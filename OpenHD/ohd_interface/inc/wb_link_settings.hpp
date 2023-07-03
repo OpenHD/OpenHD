@@ -64,6 +64,10 @@ struct WBLinkSettings {
   // applied when armed
   uint32_t wb_rtl8812au_tx_pwr_idx_armed=RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED;
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
+  // decrease this value when there is a lot of pollution on your channel, and you consistently get tx errors
+  // even though variable bitrate is working fine.
+  // If you set this value to 80% (for example), it reduces the bitrate(s) recommended to the encoder by 80% for each mcs index
+  int wb_video_rate_for_mcs_adjustment_percent=100;
   // NOTE: Default depends on platform type and is therefore calculated below, then overwrites this default value
   uint32_t wb_max_fec_block_size_for_platform=DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
   // change mcs index via RC channel
@@ -174,6 +178,7 @@ static constexpr auto WB_CHANNEL_WIDTH="WB_CHANNEL_W";
 static constexpr auto WB_MCS_INDEX="WB_MCS_INDEX";
 static constexpr auto WB_VIDEO_FEC_BLOCK_LENGTH="WB_V_FEC_BLK_L";
 static constexpr auto WB_VIDEO_FEC_PERCENTAGE="WB_V_FEC_PERC";
+static constexpr auto WB_VIDEO_RATE_FOR_MCS_ADJUSTMENT_PERC="WB_V_RATE_PERC"; //wb_video_rate_for_mcs_adjustment_percent
 static constexpr auto WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM="WB_MAX_D_BZ";
 static constexpr auto WB_TX_POWER_MILLI_WATT="TX_POWER_MW";
 // annoying 16 char settings limit
