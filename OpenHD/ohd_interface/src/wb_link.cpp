@@ -200,7 +200,7 @@ std::unique_ptr<WBStreamTx> WBLink::create_wb_tx(uint8_t radio_port,bool is_vide
   options.enable_fec=is_video;
   options.radio_port=radio_port;
   if(is_video){
-    options.block_data_queue_size=10;
+    options.block_data_queue_size=2;
   }
   auto ret=std::make_unique<WBStreamTx>(m_wb_txrx, options);
   return ret;

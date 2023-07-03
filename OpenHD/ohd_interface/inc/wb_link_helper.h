@@ -58,14 +58,22 @@ bool has_any_rtl8812au(const std::vector<WiFiCard>& cards);
 static uint32_t rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
   switch (mcs_index) {
     case 0:
-      return 4500; //theoretical:6.5
+      //theoretical:6.5
+      // max injection rate possible measured on the bench: 5.7
+      return 4500;
     case 1:
-      return 6500; //theoretical:13
+      //theoretical:13
+      // max injection rate possible measured on the bench: 10.8
+      return 6500;
     case 2:
       //@Norbert: Successfully flown on MCS2 and 7MBit/s video, aka 8.4MBit/s after FEC
-      return 8500; //theoretical:19.5
+      //theoretical:19.5
+      // max injection rate possible measured on the bench: 15.2
+      return 8500;
     case 3:
-      return 12000; //theoretical:26
+      //theoretical:26
+      // max injection rate possible measured on the bench: 19.2
+      return 12000;
     case 4:
       return 17000; //theoretical:39
     case 5:
