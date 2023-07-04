@@ -577,6 +577,7 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.count_tx_inj_error_hint=txStats.count_tx_injections_error_hint;
   stats.monitor_mode_link.count_tx_dropped_packets=get_total_dropped_packets();
   stats.monitor_mode_link.curr_tx_card_idx=m_wb_txrx->get_curr_active_tx_card_idx();
+  stats.monitor_mode_link.curr_tx_mcs_index=m_settings->unsafe_get_settings().wb_mcs_index;
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
