@@ -188,17 +188,21 @@ static constexpr auto rpi_config_file_path="/boot/config.txt";
 // Then writes the type corresponding to the current configuration into the settings file.
 // Returns true on success
 // Returns false otherwise, the original state is then left untouched
-static bool apply_new_cam_config_and_save(const BoardType& board_type, const CamConfig& new_cam_config) {
-    openhd::log::get_default()->debug("Begin apply cam config {}", cam_config_to_string(new_cam_config));
-    const auto cam_config_filename = get_file_name_for_cam_config(board_type, new_cam_config);
-    const auto cam_config_file_content_opt = OHDFilesystemUtil::opt_read_file(cam_config_filename);
-    
-    if (!cam_config_file_content_opt.has_value()) {
-        openhd::log::get_default()->warn("Cannot apply new cam config, corresponding *.txt [{}] not found", cam_config_filename);
-        return false;
-    }
+static bool apply_new_cam_config_and_save(const BoardType& board_type,const CamConfig& new_cam_config){
+  openhd::log::get_default()->debug("Begin apply cam config {}",cam_config_to_string(new_cam_config));
+  const auto cam_config_filename= get_file_name_for_cam_config(board_type,new_cam_config);
+  const auto cam_config_file_content_opt=OHDFilesystemUtil::opt_read_file(cam_config_filename);
+if (!cam_config_file_content_opt.has_value()) {
+    openhd::log::get_default()->warn("Cannot apply new cam config, corresponding *.txt [{}] not found", cam_config_filename);
+    return false;
+} else {
+if (cam_config_filename.find("imx477m") != std::string::npos) {
+    openhd::log::get_default()->warn("Custom Tuning file is about to be installed!");
 }
-
+else if (cam_config_filename.find("imx477") != std::string::npos) {
+    openhd::log::get_default()->warn("Standart IMX477 Tuning file is about to be installed!");
+}
+}
 
   // Be more verbose why this stuff stands there - this is a comment added on top
   auto cam_config_file_content=fmt::format("#Curr cam config:{}\n", cam_config_to_string(new_cam_config))
