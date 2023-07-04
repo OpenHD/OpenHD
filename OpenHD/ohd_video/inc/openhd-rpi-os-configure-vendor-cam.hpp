@@ -214,6 +214,7 @@ if (!cam_config_file_content_opt.has_value()) {
     } else {
         openhd::log::get_default()->warn("No Tuning needed!");
     }
+ }
 }
 
 
