@@ -71,6 +71,7 @@ void GStreamerStream::setup() {
   const auto& setting= m_camera_holder->get_settings();
   if(m_opt_action_handler){
     m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,setting.h26x_bitrate_kbits);
+    m_opt_action_handler->curr_cam1_cam2_keyframe_interval=m_camera_holder->get_settings().h26x_keyframe_interval;
   }
   // atomic & called in regular intervals if variable bitrate is enabled.
   m_curr_dynamic_bitrate_kbits=setting.h26x_bitrate_kbits;

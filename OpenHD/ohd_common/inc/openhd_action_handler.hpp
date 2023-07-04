@@ -182,6 +182,9 @@ class ActionHandler{
   // should be whatever the cam is actually doing
   std::atomic<int> curr_set_raw_video_bitrate_kbits_cam1 =-1;
   std::atomic<int> curr_set_raw_video_bitrate_kbits_cam2 =-1;
+  // dirty, too
+ public:
+  std::atomic<int> curr_cam1_cam2_keyframe_interval = -1;
  public:
   void dirty_set_bitrate_of_camera(const int cam_index,int bitrate_kbits){
     if(cam_index==0)curr_set_raw_video_bitrate_kbits_cam1=bitrate_kbits;
