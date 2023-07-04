@@ -209,7 +209,7 @@ if (!cam_config_file_content_opt.has_value()) {
 } else if (cam_config_filename.find("imx477") != std::string::npos) {
     if (OHDFilesystemUtil::exists("/usr/share/libcamera/ipa/raspberrypi/imx477_old.json")) {
         openhd::log::get_default()->warn("Custom Tuning file found, Standart is about to be installed");
-        OHDUtil::run_command("cp", {"/usr/share/libcamera/ipa/raspberrypi/imx477_old.json", "/usr/share/libcamera/ipa/raspberrypi/imx477.json"});
+        OHDUtil::run_command("mv -f", {"/usr/share/libcamera/ipa/raspberrypi/imx477_old.json", "/usr/share/libcamera/ipa/raspberrypi/imx477.json"});
         openhd::log::get_default()->warn("Tuning file written");
     } else {
         openhd::log::get_default()->warn("No Tuning needed!");
