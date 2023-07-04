@@ -39,7 +39,7 @@ jobs:
         run: |
           git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
-          git clone https://github.com/OpenHD/OpenHD -b 2.3-evo /opt/ChrootCompilationTest/additionalFiles/ --recursive
+          git clone https://github.com/OpenHD/OpenHD -b 2.4-evo /opt/ChrootCompilationTest/additionalFiles/ --recursive
           echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
           echo "ubuntu" > /opt/ChrootCompilationTest/additionalFiles/distro.txt
           echo "jammy" > /opt/ChrootCompilationTest/additionalFiles/flavor.txt
