@@ -198,10 +198,24 @@ if (!cam_config_file_content_opt.has_value()) {
 } else {
 if (cam_config_filename.find("imx477m") != std::string::npos) {
     openhd::log::get_default()->warn("Custom Tuning file is about to be installed!");
+    if (OHDFilesystemUtil::exists("/usr/share/libcamera/ipa/raspberrypi/imx477m.json")) {
+    openhd::log::get_default()->warn("Custom Tuning file found, now it'll be enabled", filename);
+    OHDUtil::run_command("mv /usr/share/libcamera/ipa/raspberrypi/imx477.json /usr/share/libcamera/ipa/raspberrypi/imx477_old.json && cp /usr/share/libcamera/ipa/raspberrypi/imx477m.json /usr/share/libcamera/ipa/raspberrypi/imx477.json")
+    openhd::log::get_default()->warn("Custom Tuning file written", filename);
+  }
+  else {
+          openhd::log::get_default()->warn("No Custom Tuning found!");
+    }
 }
 else if (cam_config_filename.find("imx477") != std::string::npos) {
-    openhd::log::get_default()->warn("Standart IMX477 Tuning file is about to be installed!");
-}
+    if (OHDFilesystemUtil::exists("/usr/share/libcamera/ipa/raspberrypi/imx477_old.json")) {
+    openhd::log::get_default()->warn("Custom Tuning file found, now it'll be enabled", filename);
+    OHDUtil::run_command("cp /usr/share/libcamera/ipa/raspberrypi/imx477_old.json /usr/share/libcamera/ipa/raspberrypi/imx477.json")
+    openhd::log::get_default()->warn("Custom Tuning file written", filename);
+    }
+    else {
+          openhd::log::get_default()->warn("No Custom Tuning needed!");
+    }
 }
 
   // Be more verbose why this stuff stands there - this is a comment added on top
