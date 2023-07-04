@@ -101,6 +101,19 @@ static uint32_t rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index,bool is_40_mh
   return rate_kbits;
 }
 
+static uint32_t rtl8812au_get_max_rate_2G_kbits(uint16_t mcs_index) {
+  // dirty, but 2G in general sucks
+  return rtl8812au_get_max_rate_5G_kbits(mcs_index) * 80/100;
+}
+static uint32_t rtl8812au_get_max_rate_2G_kbits(uint16_t mcs_index,bool is_40_mhz){
+  auto rate_kbits= rtl8812au_get_max_rate_2G_kbits(mcs_index);
+  if(is_40_mhz){
+    // Theoretically 40Mhz should give exactly 2x the bitrate, but be a bit conservative here
+    rate_kbits = static_cast<uint32_t>(std::roundl(rate_kbits*1.7));
+  }
+  return rate_kbits;
+}
+
 static uint32_t get_max_rate_possible_5G(const WiFiCard& card,uint16_t mcs_index,bool is_40Mhz){
   if(card.type==WiFiCardType::Realtek8812au){
     return rtl8812au_get_max_rate_5G_kbits(mcs_index, is_40Mhz);
@@ -116,6 +129,9 @@ static uint32_t get_max_rate_possible_5G(const WiFiCard& card,uint16_t mcs_index
 static uint32_t get_max_rate_possible(const WiFiCard& card,const openhd::WifiSpace wifi_space,uint16_t mcs_index,bool is_40Mhz){
   // Generally, 2G just sucks - we do not have proper rate control for it
   if(wifi_space==WifiSpace::G2_4){
+    if(card.type==WiFiCardType::Realtek8812au){
+      return rtl8812au_get_max_rate_2G_kbits(mcs_index,is_40Mhz);
+    }
     return 5000;
   }
   return get_max_rate_possible_5G(card,mcs_index,is_40Mhz);
