@@ -103,6 +103,9 @@ if(LIBCAMERA_FOUND)
     target_compile_definitions(OHDVideoLib PUBLIC OPENHD_LIBCAMERA_PRESENT)
 endif()
 
+# disable compiler warning since we don't link against GCC before 4.4
+target_compile_options(OHDVideoLib PRIVATE -Wno-packed-bitfield-compat)
+
 target_link_libraries(OHDVideoLib PUBLIC ${OHD_VIDEO_USED_LIBS})
 # link and include gstreamer
 target_include_directories(OHDVideoLib PUBLIC ${GST_INCLUDE_DIRS})
