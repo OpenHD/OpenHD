@@ -617,6 +617,8 @@ void WBLink::perform_rate_adjustment() {
                                            settings.wb_mcs_index,
                                            settings.wb_channel_width == 40);
   const auto max_rate_for_current_wifi_config=max_rate_for_current_wifi_config_without_adjust * m_settings->get_settings().wb_video_rate_for_mcs_adjustment_percent/100;
+  m_console->debug("Max rate {} with {} perc {}",kbits_per_second_to_string(max_rate_for_current_wifi_config_without_adjust),
+                   m_settings->get_settings().wb_video_rate_for_mcs_adjustment_percent,max_rate_for_current_wifi_config);
   const auto max_video_rate_for_current_wifi_config =
       openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
   if(m_max_video_rate_for_current_wifi_config !=max_video_rate_for_current_wifi_config){
