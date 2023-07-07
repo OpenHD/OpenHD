@@ -210,7 +210,7 @@ std::unique_ptr<WBStreamRx> WBLink::create_wb_rx(uint8_t radio_port,bool is_vide
   WBStreamRx::Options options{};
   options.enable_fec=is_video;
   options.radio_port=radio_port;
-  options.enable_fec_debug_log=true;
+  options.enable_fec_debug_log=false;
   if(!is_video){
     // We use threading for telemetry, since the callback where we process telemetry data
     // can hang for a while in some cases
@@ -697,7 +697,7 @@ bool WBLink::set_wb_video_rate_for_mcs_adjustment_percent(int value) {
   if(value<=10 || value>=500)return false;
   m_settings->unsafe_get_settings().wb_video_rate_for_mcs_adjustment_percent=value;
   m_settings->persist();
-  return false;
+  return true;
 }
 void WBLink::schedule_work_item(const std::shared_ptr<WorkItem>& work_item) {
   std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
