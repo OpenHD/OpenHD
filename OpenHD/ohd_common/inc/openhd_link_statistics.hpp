@@ -36,7 +36,7 @@ struct StatsMonitorModeLink{
   int32_t curr_tx_bps; /*<  tx bits per second*/
   int32_t curr_rx_bps; /*<  rx bits per second*/
   int32_t curr_tx_card_idx; /*< curr tx card (for multi rx-es on ground) ,unused0 */
-  int32_t curr_tx_mcs_index; /* curr tx index used when injecting packets, unused1*/
+  int32_t curr_tx_mcs_index; /* curr tx mcs index used when injecting packets, unused1*/
   int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss*/
   [[nodiscard]] std::string to_string()const{
     return "TODO";
