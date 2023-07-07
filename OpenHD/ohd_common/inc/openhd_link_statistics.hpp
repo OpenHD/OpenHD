@@ -77,6 +77,7 @@ struct StatsWBVideoAir{
   uint16_t curr_fec_block_size_max;
   int32_t curr_fec_percentage; // unused0 in mavlink message
   int32_t curr_keyframe_interval; // unused1 in mavlink message
+  bool recording_active;
   [[nodiscard]] std::string to_string()const{
     return "TODO";
   }

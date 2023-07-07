@@ -148,6 +148,13 @@ void GStreamerStream::setup() {
     m_console->info("Air recording active");
     m_pipeline_content <<"tee name=t ! ";
   }
+  if(m_opt_action_handler){
+    if(m_camera_holder->get_camera().index==0){
+      m_opt_action_handler->recording_active_cam1=ADD_RECORDING_TO_PIPELINE;
+    }else if(m_camera_holder->get_camera().index==1){
+      m_opt_action_handler->recording_active_cam2=ADD_RECORDING_TO_PIPELINE;
+    }
+  }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
   m_pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
