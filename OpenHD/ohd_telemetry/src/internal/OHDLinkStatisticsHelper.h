@@ -15,7 +15,7 @@ static MavlinkMessage pack_card(const uint8_t system_id,const uint8_t component_
   MavlinkMessage msg;
   mavlink_openhd_stats_monitor_mode_wifi_card_t tmp;
   tmp.card_index=card_index;
-  tmp.rx_rssi=card_stats.rx_rssi;
+  tmp.rx_rssi_1=card_stats.rx_rssi;
   tmp.count_p_received=card_stats.count_p_received;
   tmp.count_p_injected=card_stats.count_p_injected;
   tmp.dummy0=0;
@@ -36,10 +36,10 @@ static MavlinkMessage pack_link_general(const uint8_t system_id,const uint8_t co
   tmp.count_tx_inj_error_hint=stats_monitor_mode_link.count_tx_inj_error_hint;
   tmp.count_tx_dropped_packets=stats_monitor_mode_link.count_tx_dropped_packets;
   tmp.curr_rx_packet_loss_perc=stats_monitor_mode_link.curr_rx_packet_loss_perc;
-  tmp.unused0=stats_monitor_mode_link.curr_tx_card_idx;
-  tmp.unused1=stats_monitor_mode_link.curr_tx_mcs_index;
-  tmp.unused2=stats_monitor_mode_link.unused2;
-  tmp.unused3=stats_monitor_mode_link.unused3;
+  tmp.curr_tx_card_idx=stats_monitor_mode_link.curr_tx_card_idx;
+  tmp.curr_tx_mcs_index=stats_monitor_mode_link.curr_tx_mcs_index;
+  //tmp.unused2=stats_monitor_mode_link.unused2;
+  //tmp.unused3=stats_monitor_mode_link.unused3;
   mavlink_msg_openhd_stats_monitor_mode_wifi_link_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
@@ -52,8 +52,8 @@ static MavlinkMessage pack_tele(const uint8_t system_id,const uint8_t component_
   tmp.curr_tx_bps=stats.curr_tx_bps;
   tmp.curr_rx_bps=stats.curr_rx_bps;
   tmp.curr_rx_packet_loss_perc=stats.curr_rx_packet_loss_perc;
-  tmp.unused_0=stats.unused_0;
-  tmp.unused_1=stats.unused_1;
+  //tmp.unused_0=stats.unused_0;
+  //tmp.unused_1=stats.unused_1;
   mavlink_msg_openhd_stats_telemetry_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
@@ -74,8 +74,8 @@ static MavlinkMessage pack_vid_air(const uint8_t system_id,const uint8_t compone
   tmp.curr_fec_block_size_avg=stats.curr_fec_block_size_avg;
   tmp.curr_fec_block_size_min=stats.curr_fec_block_size_min;
   tmp.curr_fec_block_size_max=stats.curr_fec_block_size_max;
-  tmp.unused0=stats.curr_fec_percentage;
-  tmp.unused1=stats.curr_keyframe_interval;
+  tmp.curr_fec_percentage=stats.curr_fec_percentage;
+  tmp.curr_keyframe_interval=stats.curr_keyframe_interval;
   mavlink_msg_openhd_stats_wb_video_air_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
@@ -92,8 +92,8 @@ static MavlinkMessage pack_vid_gnd(const uint8_t system_id,const uint8_t compone
   tmp.curr_fec_decode_time_avg_us=stats.curr_fec_decode_time_avg_us;
   tmp.curr_fec_decode_time_min_us=stats.curr_fec_decode_time_min_us;
   tmp.curr_fec_decode_time_max_us=stats.curr_fec_decode_time_max_us;
-  tmp.unused0=stats.unused0;
-  tmp.unused1=stats.unused1;
+  //tmp.unused0=stats.unused0;
+  //tmp.unused1=stats.unused1;
   mavlink_msg_openhd_stats_wb_video_ground_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
