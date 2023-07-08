@@ -79,7 +79,9 @@ struct WBLinkSettings {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
                                    wb_enable_stbc,wb_enable_ldpc,wb_enable_short_guard,
                                    wb_tx_power_milli_watt,wb_rtl8812au_tx_pwr_idx_override,wb_rtl8812au_tx_pwr_idx_armed,
-                                   wb_video_fec_percentage,wb_max_fec_block_size_for_platform,
+                                   wb_video_fec_percentage,
+                                   wb_video_rate_for_mcs_adjustment_percent,
+                                   wb_max_fec_block_size_for_platform,
                                    wb_mcs_index_via_rc_channel,
                                    enable_wb_video_variable_bitrate);
 
