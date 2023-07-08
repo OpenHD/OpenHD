@@ -102,18 +102,15 @@ struct StatsWBVideoGround{
 
 struct StatsPerCard{
   bool exists_in_openhd=false; // We have place for up to X wifi cards, but they might be unused - don't waste any telemetry bandwidth on these cards
-  int8_t rx_rssi=INT8_MIN; // dBm / rssi
+  uint8_t card_type=0;
+  int8_t rx_rssi_1=INT8_MIN; // dBm / rssi
+  int8_t rx_rssi_2=INT8_MIN; // dBm / rssi
   uint64_t count_p_received=0; //TODO
   uint64_t count_p_injected=0; //TODO
-  // tx power
-  // card type
-  // curr_packet_loss
-  // unused 2
+  int16_t tx_power=0;
+  int8_t curr_rx_packet_loss_perc=0;
   [[nodiscard]] std::string to_string(const int index)const{
-	std::stringstream ss;
-	ss << "StatsPerCard"<<index<<"{exists:" << (exists_in_openhd ? "Y":"N") << ", rssi:" << (int)rx_rssi <<
-	   ", count_p_received:" << count_p_received << ", count_p_injected:" << count_p_injected << "}";
-	return ss.str();
+    return "TODO";
   }
 };
 // Stats per connected card

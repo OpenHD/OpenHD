@@ -161,10 +161,14 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
     for(const auto& stats : latest_stats.stats_wb_video_air){
       ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air(
           m_sys_id, m_comp_id, stats));
+      ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air_fec(
+          m_sys_id, m_comp_id, stats));
     }
   }else{
     for(const auto& ground_video: latest_stats.stats_wb_video_ground){
       ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd(
+          m_sys_id, m_comp_id, ground_video));
+      ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd_fec_performance(
           m_sys_id, m_comp_id, ground_video));
     }
   }
