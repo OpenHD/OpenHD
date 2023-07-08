@@ -547,7 +547,13 @@ void WBLink::update_statistics() {
       air_video.curr_fec_block_size_avg=curr_tx_fec_stats.curr_fec_block_length.avg;
       air_video.curr_fec_percentage=m_settings->unsafe_get_settings().wb_video_fec_percentage;
       air_video.curr_keyframe_interval=m_opt_action_handler ? m_opt_action_handler->curr_cam1_cam2_keyframe_interval.load() : -1;
-      // TODO otimization: Only send stats for an active link
+      bool recording_enabled= false;
+      if(m_opt_action_handler){
+        if(i==0)recording_enabled=m_opt_action_handler->recording_active_cam1.load();
+        if(i==1)recording_enabled=m_opt_action_handler->recording_active_cam2.load();
+      }
+      air_video.recording_active=recording_enabled;
+       // TODO otimization: Only send stats for an active link
       stats.stats_wb_video_air.push_back(air_video);
     }
   }else{
@@ -589,7 +595,9 @@ void WBLink::update_statistics() {
     auto rxStatsCard=m_wb_txrx->get_rx_stats_for_card(i);
     card.rx_rssi_1=rxStatsCard.rssi_for_wifi_card.last_rssi;
     card.count_p_received=rxStatsCard.count_p_valid;
-    card.count_p_injected=rxStatsCard.curr_packet_loss;
+    card.count_p_injected=0; //TODO
+    card.curr_rx_packet_loss_perc=rxStatsCard.curr_packet_loss;
+    card.tx_power=0;
     card.exists_in_openhd= true;
   }
   stats.is_air=m_profile.is_air;
