@@ -105,6 +105,8 @@ struct StatsPerCard{
   int8_t rx_rssi=INT8_MIN; // dBm / rssi
   uint64_t count_p_received=0; //TODO
   uint64_t count_p_injected=0; //TODO
+  // curr_packet_loss
+  // unused 2
   [[nodiscard]] std::string to_string(const int index)const{
 	std::stringstream ss;
 	ss << "StatsPerCard"<<index<<"{exists:" << (exists_in_openhd ? "Y":"N") << ", rssi:" << (int)rx_rssi <<
