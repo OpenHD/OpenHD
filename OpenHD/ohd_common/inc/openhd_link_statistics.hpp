@@ -77,7 +77,7 @@ struct StatsWBVideoAir{
   uint16_t curr_fec_block_size_max;
   int32_t curr_fec_percentage; // unused0 in mavlink message
   int32_t curr_keyframe_interval; // unused1 in mavlink message
-  bool recording_active;
+  bool recording_active; //recording active for this camera
   [[nodiscard]] std::string to_string()const{
     return "TODO";
   }
@@ -105,6 +105,8 @@ struct StatsPerCard{
   int8_t rx_rssi=INT8_MIN; // dBm / rssi
   uint64_t count_p_received=0; //TODO
   uint64_t count_p_injected=0; //TODO
+  // tx power
+  // card type
   // curr_packet_loss
   // unused 2
   [[nodiscard]] std::string to_string(const int index)const{
