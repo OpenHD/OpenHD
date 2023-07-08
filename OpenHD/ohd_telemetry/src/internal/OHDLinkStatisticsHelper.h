@@ -78,7 +78,7 @@ static MavlinkMessage pack_vid_air(const uint8_t system_id,const uint8_t compone
   return msg;
 }
 
-static MavlinkMessage pack_vid_air_fec(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsWBVideoAir& stats){
+static MavlinkMessage pack_vid_air_fec_performance(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsWBVideoAir& stats){
   MavlinkMessage msg;
   mavlink_openhd_stats_wb_video_air_fec_performance_t tmp;
   tmp.link_index=stats.link_index;
