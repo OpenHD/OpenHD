@@ -71,7 +71,7 @@ void GStreamerStream::setup() {
   const auto& setting= m_camera_holder->get_settings();
   if(m_opt_action_handler){
     m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,setting.h26x_bitrate_kbits);
-    m_opt_action_handler->curr_cam1_cam2_keyframe_interval=m_camera_holder->get_settings().h26x_keyframe_interval;
+    m_opt_action_handler->set_curr_keyframe_interval(m_camera_holder->get_camera().index,m_camera_holder->get_settings().h26x_keyframe_interval);
   }
   // atomic & called in regular intervals if variable bitrate is enabled.
   m_curr_dynamic_bitrate_kbits=setting.h26x_bitrate_kbits;
@@ -149,11 +149,7 @@ void GStreamerStream::setup() {
     m_pipeline_content <<"tee name=t ! ";
   }
   if(m_opt_action_handler){
-    if(m_camera_holder->get_camera().index==0){
-      m_opt_action_handler->recording_active_cam1=ADD_RECORDING_TO_PIPELINE;
-    }else if(m_camera_holder->get_camera().index==1){
-      m_opt_action_handler->recording_active_cam2=ADD_RECORDING_TO_PIPELINE;
-    }
+    m_opt_action_handler->set_recording_active(m_camera_holder->get_camera().index,ADD_RECORDING_TO_PIPELINE);
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part

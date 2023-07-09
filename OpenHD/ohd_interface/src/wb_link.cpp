@@ -546,11 +546,10 @@ void WBLink::update_statistics() {
       air_video.curr_fec_block_size_max=curr_tx_fec_stats.curr_fec_block_length.max;
       air_video.curr_fec_block_size_avg=curr_tx_fec_stats.curr_fec_block_length.avg;
       air_video.curr_fec_percentage=m_settings->unsafe_get_settings().wb_video_fec_percentage;
-      air_video.curr_keyframe_interval=m_opt_action_handler ? m_opt_action_handler->curr_cam1_cam2_keyframe_interval.load() : -1;
+      air_video.curr_keyframe_interval=m_opt_action_handler ? m_opt_action_handler->get_curr_keyframe_interval(i) : -1;
       bool recording_enabled= false;
       if(m_opt_action_handler){
-        if(i==0)recording_enabled=m_opt_action_handler->recording_active_cam1.load();
-        if(i==1)recording_enabled=m_opt_action_handler->recording_active_cam2.load();
+        recording_enabled=m_opt_action_handler->get_recording_active(i);
       }
       air_video.recording_active=recording_enabled;
        // TODO otimization: Only send stats for an active link

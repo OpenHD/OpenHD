@@ -183,10 +183,29 @@ class ActionHandler{
   std::atomic<int> curr_set_raw_video_bitrate_kbits_cam1 =-1;
   std::atomic<int> curr_set_raw_video_bitrate_kbits_cam2 =-1;
   // dirty, too
- public:
-  std::atomic<int> curr_cam1_cam2_keyframe_interval = -1;
+ private:
+  // We broadcast those camera values via mavlink
+  std::atomic<int> curr_cam1_keyframe_interval = -1;
+  std::atomic<int> curr_cam2_keyframe_interval = -1;
   std::atomic<bool> recording_active_cam1=false;
   std::atomic<bool> recording_active_cam2=false;
+ public:
+  void set_curr_keyframe_interval(int cam,int interval){
+    if(cam==0)curr_cam1_keyframe_interval=interval;
+    curr_cam2_keyframe_interval=interval;
+  }
+  int get_curr_keyframe_interval(int cam){
+    if(cam==0)return curr_cam1_keyframe_interval;
+    return curr_cam2_keyframe_interval;
+  }
+  void set_recording_active(int cam,bool active){
+    if(cam==0)recording_active_cam1=active;
+    recording_active_cam2=active;
+  }
+  bool get_recording_active(int cam){
+    if(cam==0)return recording_active_cam1;
+    return recording_active_cam2;
+  }
  public:
   void dirty_set_bitrate_of_camera(const int cam_index,int bitrate_kbits){
     if(cam_index==0)curr_set_raw_video_bitrate_kbits_cam1=bitrate_kbits;
