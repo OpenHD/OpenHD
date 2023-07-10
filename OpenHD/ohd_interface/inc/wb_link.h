@@ -95,7 +95,7 @@ class WBLink :public OHDLink{
   void loop_do_work();
   // update statistics, done in regular intervals, updated data is given to the ohd_telemetry module via the action handler
   void update_statistics();
-  static constexpr auto RECALCULATE_STATISTICS_INTERVAL=std::chrono::milliseconds(100);
+  static constexpr auto RECALCULATE_STATISTICS_INTERVAL=std::chrono::milliseconds(500);
   std::chrono::steady_clock::time_point m_last_stats_recalculation=std::chrono::steady_clock::now();
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void perform_rate_adjustment();
