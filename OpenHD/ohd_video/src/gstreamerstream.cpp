@@ -494,7 +494,6 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
       // This triggers a restart of the pipeline
       m_camera_holder->persist();
     }else{
-      m_console->warn("Camera does not support variable bitrate");
       m_console->warn("Please disable variable bitrate");
     }
   }
