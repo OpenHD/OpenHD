@@ -75,6 +75,11 @@ struct WBLinkSettings {
 
   // wb link recommends bitrate(s) to the encoder, can be helpfully for inexperienced users.
   bool enable_wb_video_variable_bitrate= true;
+  // !!!!
+  // This allows the ground station to become completely passive (aka tune in on someone elses feed)
+  // but obviosuly you cannot reach your air unit anymore when this mode is enabled
+  // (disable it to re-gain control)
+  bool wb_enable_listen_only_mode= false;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
                                    wb_enable_stbc,wb_enable_ldpc,wb_enable_short_guard,
@@ -83,7 +88,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_widt
                                    wb_video_rate_for_mcs_adjustment_percent,
                                    wb_max_fec_block_size_for_platform,
                                    wb_mcs_index_via_rc_channel,
-                                   enable_wb_video_variable_bitrate);
+                                   enable_wb_video_variable_bitrate,
+                                   wb_enable_listen_only_mode);
 
 static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform){
   switch (platform.platform_type) {
@@ -194,6 +200,7 @@ static constexpr auto WB_ENABLE_LDPC="WB_E_LDPC";
 static constexpr auto WB_ENABLE_SHORT_GUARD="WB_E_SHORT_GUARD";
 static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL="MCS_VIA_RC";
 
+static constexpr auto WB_DISABLE_TRANSMISSIONS="DISABLE_TX";
 
 }
 

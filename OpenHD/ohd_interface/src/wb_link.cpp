@@ -410,6 +410,15 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     if(n_rx_cards>1){
       ret.push_back(openhd::create_read_only_int("WB_N_RX_CARDS",n_rx_cards));
     }
+    // feature on the ground station only
+    auto cb_passive=[this](std::string,int value){
+      if(!validate_yes_or_no(value))return false;
+      m_settings->unsafe_get_settings().wb_enable_listen_only_mode=value;
+      m_settings->persist();
+      m_wb_txrx->set_passive_mode(value);
+      return true;
+    };
+    ret.push_back(Setting{openhd::WB_DISABLE_TRANSMISSIONS,openhd::IntSetting{(int)settings.wb_enable_listen_only_mode, cb_passive}});
   }
   // These 3 are only supported / known to work on rtl8812au (yet), therefore only expose them when rtl8812au is used
   if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
@@ -589,6 +598,7 @@ void WBLink::update_statistics() {
   //m_console->debug("Big gaps:{}",rxStats.curr_big_gaps_counter);
   stats.monitor_mode_link.curr_tx_channel_mhz=curr_settings.wb_frequency;
   stats.monitor_mode_link.curr_tx_channel_w_mhz=curr_settings.wb_channel_width;
+  stats.monitor_mode_link.tx_passive_mode=curr_settings.wb_enable_listen_only_mode;
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
