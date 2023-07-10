@@ -587,7 +587,7 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_tx_card_idx=m_wb_txrx->get_curr_active_tx_card_idx();
   stats.monitor_mode_link.curr_tx_mcs_index=curr_settings.wb_mcs_index;
   //m_console->debug("Big gaps:{}",rxStats.curr_big_gaps_counter);
-  stats.monitor_mode_link.curr_tx_channel_mhz=curr_settings.wb_channel_width;
+  stats.monitor_mode_link.curr_tx_channel_mhz=curr_settings.wb_frequency;
   stats.monitor_mode_link.curr_tx_channel_w_mhz=curr_settings.wb_channel_width;
 
   // dBm is per card, not per stream
