@@ -117,8 +117,13 @@ class WBLink :public OHDLink{
     uint32_t frequency =0;
     uint32_t channel_width=0;
   };
-  // Testing shows we have to listen for up to 1 second to reliable get data (the wifi card might take some time switching)
-  static constexpr std::chrono::seconds DEFAULT_SCAN_TIME_PER_CHANNEL{1};
+  // How often per second we broadcast the session key -
+  // we send the session key ~2 times per second
+  static constexpr std::chrono::milliseconds SESSION_KEY_PACKETS_INTERVAL=std::chrono::milliseconds(500);
+  // Testing shows we have to listen for a while to reliably get data - since
+  // 1) the card might take some time switching and
+  // 2) we might lose session key packet(s)
+  static constexpr std::chrono::seconds DEFAULT_SCAN_TIME_PER_CHANNEL{3};
   // This is a long-running operation during which changing things like frequency and more are disabled.
   // Loop through all possible frequencies + optionally channel widths until we can say with a high certainty
   // we have found a running air unit on this channel. (-> only supported on ground).

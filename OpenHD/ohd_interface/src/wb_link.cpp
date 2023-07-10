@@ -57,6 +57,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   takeover_cards_monitor_mode();
   WBTxRx::Options txrx_options{};
   txrx_options.rtl8812au_rssi_fixup= true;
+  txrx_options.session_key_packet_interval=SESSION_KEY_PACKETS_INTERVAL;
   const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
   if(OHDFilesystemUtil::exists(keypair_file)){
       txrx_options.encryption_key = std::string(keypair_file);
@@ -584,6 +585,7 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.count_tx_dropped_packets=get_total_dropped_packets();
   stats.monitor_mode_link.curr_tx_card_idx=m_wb_txrx->get_curr_active_tx_card_idx();
   stats.monitor_mode_link.curr_tx_mcs_index=m_settings->unsafe_get_settings().wb_mcs_index;
+  //m_console->debug("Big gaps:{}",rxStats.curr_big_gaps_counter);
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
@@ -813,29 +815,23 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       m_console->warn("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
       reset_all_rx_stats();
       std::this_thread::sleep_for(DEFAULT_SCAN_TIME_PER_CHANNEL);
-      const int n_packets= m_wb_txrx->get_rx_stats().count_p_valid;
+      const auto n_valid_packets=m_wb_txrx->get_rx_stats().count_p_valid;
+      const auto packet_loss=m_wb_txrx->get_rx_stats().curr_packet_loss;
       // We might receive 20Mhz channel width packets from a air unit sending on 20Mhz channel width while
       // receiving on 40Mhz channel width - if we were to then to set the gnd to 40Mhz, we will be able to receive data,
       // but not be able to send any data up to the air unit.
       const int rx_chann_width=get_last_rx_packet_chan_width();
-      m_console->debug("Got {} packets on {}@{}",n_packets,channel.frequency,rx_chann_width);
-      if(n_packets>0){
-        // We got packets on this frequency, but it is not guaranteed those packets are from an openhd air unit.
-        // sleep a bit more, then check if we actually got any decrypted packets
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-        const int n_packets_decrypted= m_wb_txrx->get_rx_stats().count_p_valid;
-        const int packet_loss=m_wb_txrx->get_rx_stats().curr_packet_loss;
-        m_console->debug("Got {} decrypted packets on frequency {} with {} packet loss",n_packets_decrypted,channel.frequency,packet_loss);
-        if(n_packets_decrypted>0 && rx_chann_width==channel_width){
-          TmpResult tmp_result{channel,channel_width,packet_loss};
-          possible_frequencies.push_back(tmp_result);
-          if(packet_loss<10){
-            // if the packet loss is low, we can safely return early
-            m_console->debug("Got <10% packet loss, return early");
-            done_early= true;
-          }else{
-            m_console->warn("Got >10% packet loss,continue and select most likely at the end");
-          }
+      m_console->debug("Got {} packets on {}@{} rx:{} with loss {}",n_valid_packets,channel.frequency,channel_width,
+                       rx_chann_width,packet_loss);
+      if(n_valid_packets>0 && rx_chann_width==channel_width){
+        TmpResult tmp_result{channel,channel_width,packet_loss};
+        possible_frequencies.push_back(tmp_result);
+        if(packet_loss>=0 && packet_loss<10){
+          // if the packet loss is low, we can safely return early
+          m_console->debug("Got <10% packet loss, return early");
+          done_early= true;
+        }else{
+          m_console->warn("Got >10% packet loss,continue and select most likely at the end");
         }
       }
     }
