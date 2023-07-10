@@ -45,7 +45,7 @@ static MavlinkMessage pack_link_general(const uint8_t system_id,const uint8_t co
   tmp.curr_tx_channel_mhz=stats_monitor_mode_link.curr_tx_channel_mhz;
   tmp.curr_tx_channel_w_mhz=stats_monitor_mode_link.curr_tx_channel_w_mhz;
   tmp.curr_rx_big_gaps_counter=stats_monitor_mode_link.curr_rx_big_gaps_counter;
-  tmp.dummy0=stats_monitor_mode_link.tx_passive_mode_is_enabled;
+  tmp.dummy0=stats_monitor_mode_link.tx_passive_mode_is_enabled ? 1 : 0;
   //tmp.unused2=stats_monitor_mode_link.unused2;
   //tmp.unused3=stats_monitor_mode_link.unused3;
   mavlink_msg_openhd_stats_monitor_mode_wifi_link_encode(system_id,component_id,&msg.m,&tmp);
