@@ -191,16 +191,22 @@ class ActionHandler{
   std::atomic<bool> recording_active_cam2=false;
  public:
   void set_curr_keyframe_interval(int cam,int interval){
-    if(cam==0)curr_cam1_keyframe_interval=interval;
-    curr_cam2_keyframe_interval=interval;
+    if(cam==0){
+      curr_cam1_keyframe_interval=interval;
+    }else{
+      curr_cam2_keyframe_interval=interval;
+    }
   }
   int get_curr_keyframe_interval(int cam){
     if(cam==0)return curr_cam1_keyframe_interval;
     return curr_cam2_keyframe_interval;
   }
   void set_recording_active(int cam,bool active){
-    if(cam==0)recording_active_cam1=active;
-    recording_active_cam2=active;
+    if(cam==0){
+      recording_active_cam1=active;
+    }else{
+      recording_active_cam2=active;
+    }
   }
   bool get_recording_active(int cam){
     if(cam==0)return recording_active_cam1;
