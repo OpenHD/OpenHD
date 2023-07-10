@@ -418,7 +418,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       m_wb_txrx->set_passive_mode(value);
       return true;
     };
-    ret.push_back(Setting{openhd::WB_DISABLE_TRANSMISSIONS,openhd::IntSetting{(int)settings.wb_enable_listen_only_mode, cb_passive}});
+    ret.push_back(Setting{openhd::WB_PASSIVE_MODE,openhd::IntSetting{(int)settings.wb_enable_listen_only_mode, cb_passive}});
   }
   // These 3 are only supported / known to work on rtl8812au (yet), therefore only expose them when rtl8812au is used
   if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
