@@ -578,14 +578,17 @@ void WBLink::update_statistics() {
       stats.stats_wb_video_ground.push_back(ground_video);
     }
   }
+  const auto& curr_settings=m_settings->unsafe_get_settings();
   auto rxStats=m_wb_txrx->get_rx_stats();
   auto txStats=m_wb_txrx->get_tx_stats();
   stats.monitor_mode_link.curr_rx_packet_loss_perc=rxStats.curr_packet_loss;
   stats.monitor_mode_link.count_tx_inj_error_hint=txStats.count_tx_injections_error_hint;
   stats.monitor_mode_link.count_tx_dropped_packets=get_total_dropped_packets();
   stats.monitor_mode_link.curr_tx_card_idx=m_wb_txrx->get_curr_active_tx_card_idx();
-  stats.monitor_mode_link.curr_tx_mcs_index=m_settings->unsafe_get_settings().wb_mcs_index;
+  stats.monitor_mode_link.curr_tx_mcs_index=curr_settings.wb_mcs_index;
   //m_console->debug("Big gaps:{}",rxStats.curr_big_gaps_counter);
+  stats.monitor_mode_link.curr_tx_channel_mhz=curr_settings.wb_channel_width;
+  stats.monitor_mode_link.curr_tx_channel_w_mhz=curr_settings.wb_channel_width;
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);

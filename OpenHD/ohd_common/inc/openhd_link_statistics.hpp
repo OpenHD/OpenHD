@@ -31,13 +31,16 @@ struct StatsMonitorModeLink{
   uint64_t count_tx_dropped_packets; /*<  count_tx_dropped_packets*/
   uint64_t unused2; /*<  unused2*/
   uint64_t unused3; /*<  unused3*/
-  int32_t curr_tx_pps; /*<  tx packets per second*/
-  int32_t curr_rx_pps; /*<  rx packets per second*/
+  int16_t curr_tx_pps; /*<  tx packets per second*/
+  int16_t curr_rx_pps; /*<  rx packets per second*/
   int32_t curr_tx_bps; /*<  tx bits per second*/
   int32_t curr_rx_bps; /*<  rx bits per second*/
   int32_t curr_tx_card_idx; /*< curr tx card (for multi rx-es on ground) ,unused0 */
   int32_t curr_tx_mcs_index; /* curr tx mcs index used when injecting packets, unused1*/
+  uint16_t curr_tx_channel_mhz;
+  uint8_t curr_tx_channel_w_mhz;
   int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss*/
+  int16_t curr_rx_big_gaps_counter;
   [[nodiscard]] std::string to_string()const{
     return "TODO";
   }
@@ -46,8 +49,8 @@ struct StatsMonitorModeLink{
 struct StatsTelemetry{
   uint64_t unused_0; /*<  unused_0*/
   uint64_t unused_1; /*<  unused_1*/
-  int32_t curr_tx_pps; /*<  tx packets per second*/
-  int32_t curr_rx_pps; /*<  rx packets per second*/
+  int16_t curr_tx_pps; /*<  tx packets per second*/
+  int16_t curr_rx_pps; /*<  rx packets per second*/
   int32_t curr_tx_bps; /*<  tx bits per second*/
   int32_t curr_rx_bps; /*<  rx bits per second*/
   int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss_perc*/
