@@ -79,6 +79,7 @@ static MavlinkMessage pack_vid_air(const uint8_t system_id,const uint8_t compone
   tmp.curr_fec_percentage=stats.curr_fec_percentage;
   tmp.curr_keyframe_interval=stats.curr_keyframe_interval;
   tmp.recording_active=stats.recording_active;
+  openhd::log::get_default()->debug("Cam {} active {}",stats.link_index,stats.recording_active);
   mavlink_msg_openhd_stats_wb_video_air_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
