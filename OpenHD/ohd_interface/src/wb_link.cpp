@@ -560,7 +560,7 @@ void WBLink::update_statistics() {
       bool recording_enabled= false;
       if(m_opt_action_handler){
         recording_enabled=m_opt_action_handler->get_recording_active(i);
-        openhd::log::get_default()->debug("cam {} {}",i,recording_enabled);
+        //openhd::log::get_default()->debug("cam {} {}",i,recording_enabled);
       }
       air_video.recording_active=recording_enabled;
        // TODO otimization: Only send stats for an active link

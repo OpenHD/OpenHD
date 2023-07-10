@@ -150,6 +150,7 @@ void GStreamerStream::setup() {
   }
   if(m_opt_action_handler){
     m_opt_action_handler->set_recording_active(m_camera_holder->get_camera().index,ADD_RECORDING_TO_PIPELINE);
+    openhd::log::get_default()->debug("GST cam {} {}",m_camera_holder->get_camera().index,ADD_RECORDING_TO_PIPELINE);
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
