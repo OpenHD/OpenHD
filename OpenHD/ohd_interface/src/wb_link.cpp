@@ -598,7 +598,7 @@ void WBLink::update_statistics() {
   //m_console->debug("Big gaps:{}",rxStats.curr_big_gaps_counter);
   stats.monitor_mode_link.curr_tx_channel_mhz=curr_settings.wb_frequency;
   stats.monitor_mode_link.curr_tx_channel_w_mhz=curr_settings.wb_channel_width;
-  stats.monitor_mode_link.tx_passive_mode=curr_settings.wb_enable_listen_only_mode;
+  stats.monitor_mode_link.tx_passive_mode_is_enabled =curr_settings.wb_enable_listen_only_mode;
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);

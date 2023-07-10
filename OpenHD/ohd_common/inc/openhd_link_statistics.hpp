@@ -41,7 +41,7 @@ struct StatsMonitorModeLink{
   uint8_t curr_tx_channel_w_mhz;
   int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss*/
   int16_t curr_rx_big_gaps_counter;
-  bool enable_listen_only_mode= false;
+  bool tx_passive_mode_is_enabled = false;
   [[nodiscard]] std::string to_string()const{
     return "TODO";
   }
