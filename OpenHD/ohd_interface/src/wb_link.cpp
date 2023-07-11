@@ -294,9 +294,11 @@ void WBLink::apply_txpower() {
       }
       m_console->debug("RTL8812AU tx_pwr_idx_override: {}",pwr_index);
       wifi::commandhelper::iw_set_tx_power(card.device_name,pwr_index);
+      m_curr_tx_power=pwr_index;
     }else{
       const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
       wifi::commandhelper::iw_set_tx_power(card.device_name,tmp);
+      m_curr_tx_power=settings.wb_tx_power_milli_watt;
     }
   }
   const auto delta=std::chrono::steady_clock::now()-before;
@@ -612,7 +614,7 @@ void WBLink::update_statistics() {
     card.count_p_received=rxStatsCard.count_p_valid;
     card.count_p_injected=0; //TODO
     card.curr_rx_packet_loss_perc=rxStatsCard.curr_packet_loss;
-    card.tx_power=0;
+    card.tx_power=m_curr_tx_power.load();
     card.exists_in_openhd= true;
   }
   stats.is_air=m_profile.is_air;

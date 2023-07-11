@@ -178,6 +178,8 @@ class WBLink :public OHDLink{
   // if a card does not support injection, we log a error message any injecting method is called
   std::chrono::steady_clock::time_point m_last_log_card_does_might_not_inject=std::chrono::steady_clock::now();
   static constexpr auto WARN_CARD_DOES_NOT_INJECT_INTERVAL=std::chrono::seconds(5);
+  // We store tx power for easy access in stats
+  std::atomic<int> m_curr_tx_power=0;
 };
 
 #endif
