@@ -616,6 +616,7 @@ void WBLink::update_statistics() {
     card.curr_rx_packet_loss_perc=rxStatsCard.curr_packet_loss;
     card.tx_power=m_curr_tx_power.load();
     card.exists_in_openhd= true;
+    card.curr_status=m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
   }
   stats.is_air=m_profile.is_air;
   if(m_opt_action_handler){

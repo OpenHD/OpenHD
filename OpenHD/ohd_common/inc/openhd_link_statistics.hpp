@@ -113,6 +113,7 @@ struct StatsPerCard{
   uint64_t count_p_injected=0; //TODO
   int16_t tx_power=0;
   int8_t curr_rx_packet_loss_perc=0;
+  uint8_t curr_status=0;
   [[nodiscard]] std::string to_string(const int index)const{
     return "TODO";
   }
