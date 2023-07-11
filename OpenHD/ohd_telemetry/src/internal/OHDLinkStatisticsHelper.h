@@ -22,6 +22,7 @@ static MavlinkMessage pack_card(const uint8_t system_id,const uint8_t component_
   tmp.curr_rx_packet_loss_perc=card_stats.curr_rx_packet_loss_perc;
   tmp.card_type=card_stats.card_type;
   tmp.tx_power=card_stats.tx_power;
+  tmp.curr_status=card_stats.curr_status;
   tmp.dummy0=0;
   tmp.dummy1=0;
   //openhd::log::get_default()->debug("XX {}",card_stats.to_string(0));
@@ -75,7 +76,7 @@ static MavlinkMessage pack_vid_air(const uint8_t system_id,const uint8_t compone
   tmp.curr_measured_encoder_bitrate=stats.curr_measured_encoder_bitrate;
   tmp.curr_injected_bitrate=stats.curr_injected_bitrate;
   tmp.curr_injected_pps=stats.curr_injected_pps;
-  tmp.curr_dropped_packets=stats.curr_dropped_packets;
+  tmp.curr_dropped_frames=stats.curr_dropped_frames;
   tmp.curr_fec_percentage=stats.curr_fec_percentage;
   tmp.curr_keyframe_interval=stats.curr_keyframe_interval;
   tmp.recording_active=stats.recording_active;

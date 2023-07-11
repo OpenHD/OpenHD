@@ -72,7 +72,7 @@ struct StatsWBVideoAir{
   int32_t curr_measured_encoder_bitrate;
   int32_t curr_injected_bitrate;
   int32_t curr_injected_pps;
-  int32_t curr_dropped_packets;
+  int32_t curr_dropped_frames;
   uint32_t curr_fec_encode_time_avg_us;
   uint32_t curr_fec_encode_time_min_us;
   uint32_t curr_fec_encode_time_max_us;
