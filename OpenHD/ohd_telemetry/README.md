@@ -1,5 +1,37 @@
 # Developer information
 
+## Summary:
+This module deals with all (mavlink) telemetry, including the mavlink extended parameters protocol
+for changing settings.
+
+### Endpoints
+An endpoint (under src/endpoints) receives and/ or transmits a continuous mavlink data stream. We have:
+1) serial - the uart connection FC<->[AIR UNIT] and [GND UNIT] -> Tracker
+2) wifibroadcast - for transmission of telemetry data via the wifibroadcast link (provided by ohd_interface)
+3) udp - the connection openhd <-> qopenhd on the ground unit, preferred
+4) tcp - for creating a mavlink server on the ground / air, can also be used by GCS, not preferred but
+   usefully in some networking situations.
+
+## OHDMainComponent (Component)
+Used by both the air and ground unit implementation, generates fire-and-forget mavlink statistics
+
+## XMavlinkParamProvider (Component)
+A bit dirty, uses mavlink extended parameters protocol to expose the settings for a specific openhd
+component (Air unit, ground unit, Camera1, Camera2)
+
+## AirTelemetry/GroundTelemetry
+Passes around all the mavlink messages via callbacks, exposes functionality for other modules to register
+mavlink extended parameters settings (e.g. camera1 gives all its settings to AirTelemetry and then is notified
+on changes via cb)
+
+## OHDTelemetry
+Wraps either an AirTelemetry / GroundTelemetry instance.
+
+# NOTE
+The code in here is much more complicated than one might hope, since the routing for example is quite
+difficult. However, you should be able to easily follow a stream of data by going through the callbacks
+in an IDE.
+
 ## Preconditions
 
 Transmission / receiving of telemetry data from the air/ground unit is separated from this module.
