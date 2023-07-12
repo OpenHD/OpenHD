@@ -469,7 +469,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
   const auto cam_type=m_camera_holder->get_camera().type;
   if(cam_type==CameraType::RPI_CSI_MMAL || cam_type==CameraType::RPI_CSI_LIBCAMERA || cam_type==CameraType::RPI_CSI_VEYE_V4l2){
     // upper-bound - hard coded for now, since pi cannot do more than 20MBit/s
-    static constexpr auto max_bitrate_kbits=25*1000;
+    static constexpr auto max_bitrate_kbits=19999;
     if(bitrate_for_encoder_kbits>max_bitrate_kbits){
       //m_console->debug("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
       bitrate_for_encoder_kbits =max_bitrate_kbits;
