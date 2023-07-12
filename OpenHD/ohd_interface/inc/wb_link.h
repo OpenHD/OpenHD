@@ -170,7 +170,8 @@ class WBLink :public OHDLink{
   std::chrono::steady_clock::time_point m_last_rate_adjustment=std::chrono::steady_clock::now();
   int64_t m_last_total_tx_error_count=0;
   int m_n_detected_and_reset_tx_errors=0;
-  std::atomic<uint32_t> m_max_video_rate_for_current_wifi_config =0;
+  std::atomic<uint32_t> m_max_total_rate_for_current_wifi_config_kbits=0;
+  uint32_t m_max_video_rate_for_current_wifi_config =0;
   uint32_t m_recommended_video_bitrate_kbits =0;
   // Set to true when armed, disarmed by default
   // Used to differentiate between different tx power levels when armed / disarmed
