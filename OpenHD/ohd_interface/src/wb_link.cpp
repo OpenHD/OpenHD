@@ -12,6 +12,7 @@
 #include "openhd_bitrate_conversions.hpp"
 #include "wb_link_helper.h"
 #include "wifi_card.h"
+#include "wb_link_rate_helper.hpp"
 
 // optionally, if no file exists we just use a default, hard coded seed
 static std::string get_opt_keypair_filename(bool is_air){
