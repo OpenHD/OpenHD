@@ -602,7 +602,7 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_tx_channel_mhz=curr_settings.wb_frequency;
   stats.monitor_mode_link.curr_tx_channel_w_mhz=curr_settings.wb_channel_width;
   stats.monitor_mode_link.tx_passive_mode_is_enabled =curr_settings.wb_enable_listen_only_mode;
-  stats.monitor_mode_link.curr_rate_kbits= m_recommended_video_bitrate_kbits;
+  stats.monitor_mode_link.curr_rate_kbits= m_max_video_rate_for_current_wifi_config;
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
