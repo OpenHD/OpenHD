@@ -34,6 +34,7 @@ static uint32_t rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
       // max injection rate possible measured on the bench: 19.2
       // OLD return 12000;
       return 16200; // minus 3MBit/s
+    // In general, we only use / recommend MCS 0..3
     case 4:
       return 17000; //theoretical:39
     case 5:
