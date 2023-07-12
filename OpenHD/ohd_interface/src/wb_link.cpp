@@ -528,12 +528,11 @@ void WBLink::update_statistics() {
   openhd::link_statistics::StatsAirGround stats{};
   if(m_wb_tele_tx){
     const auto curr_tx_stats= m_wb_tele_tx->get_latest_stats();
+    const auto curr_rx_stats=m_wb_tele_rx->get_latest_stats();
     stats.telemetry.curr_tx_bps=curr_tx_stats.current_provided_bits_per_second;
     stats.telemetry.curr_tx_pps=curr_tx_stats.current_injected_packets_per_second;
-  }
-  if(m_wb_tele_rx){
-    const auto curr_rx_stats= m_wb_tele_rx->get_latest_stats();
     stats.telemetry.curr_rx_bps=curr_rx_stats.curr_in_bits_per_second;
+    stats.telemetry.curr_rx_pps=curr_rx_stats.curr_in_packets_per_second;
   }
   if(m_profile.is_air){
     // video on air
