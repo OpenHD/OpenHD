@@ -592,8 +592,8 @@ void WBLink::update_statistics() {
     }
   }
   const auto& curr_settings=m_settings->unsafe_get_settings();
-  auto rxStats=m_wb_txrx->get_rx_stats();
-  auto txStats=m_wb_txrx->get_tx_stats();
+  const auto rxStats=m_wb_txrx->get_rx_stats();
+  const auto txStats=m_wb_txrx->get_tx_stats();
   stats.monitor_mode_link.curr_rx_packet_loss_perc=rxStats.curr_packet_loss;
   stats.monitor_mode_link.count_tx_inj_error_hint=txStats.count_tx_injections_error_hint;
   stats.monitor_mode_link.count_tx_dropped_packets=get_total_dropped_packets();
