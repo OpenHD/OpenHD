@@ -607,7 +607,9 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_tx_pps=txStats.curr_packets_per_second;
   stats.monitor_mode_link.curr_tx_bps=txStats.curr_bits_per_second;
   stats.monitor_mode_link.curr_rx_pps=rxStats.curr_packets_per_second;
-  stats.monitor_mode_link.curr_rx_bps=rxStats.curr_bytes_per_second;
+  stats.monitor_mode_link.curr_rx_bps=rxStats.curr_bits_per_second;
+  //m_console->debug("{}",WBTxRx::tx_stats_to_string(txStats));
+  //m_console->debug("{}",WBTxRx::rx_stats_to_string(rxStats));
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
