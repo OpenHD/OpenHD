@@ -604,6 +604,10 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_tx_channel_w_mhz=curr_settings.wb_channel_width;
   stats.monitor_mode_link.tx_passive_mode_is_enabled =curr_settings.wb_enable_listen_only_mode;
   stats.monitor_mode_link.curr_rate_kbits= m_max_total_rate_for_current_wifi_config_kbits;
+  stats.monitor_mode_link.curr_tx_pps=txStats.curr_packets_per_second;
+  stats.monitor_mode_link.curr_tx_bps=txStats.curr_bits_per_second;
+  stats.monitor_mode_link.curr_rx_pps=rxStats.curr_packets_per_second;
+  stats.monitor_mode_link.curr_rx_bps=rxStats.curr_bytes_per_second;
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
