@@ -23,16 +23,16 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
       // max injection rate possible measured on the bench: 5.7 | 10.4
       // OLD return 4500;
       return {
-        4700, // minus 1MBit/s
-        9400, // minus 1MBit/s
+        5700-1000, // minus 1MBit/s
+        14000-1000, // minus 1MBit/s
       };
     case 1:
       //theoretical:13 | 27
       // max injection rate possible measured on the bench: 10.8 | 18.8
       // OLD return 6500;
       return {
-        9800, // minus 1MBit/s
-        16800, // minus 2MBit/s
+        10800-1000, // minus 1MBit/s
+        18800-2000, // minus 2MBit/s
       };
     case 2:
       //@Norbert: Successfully flown on MCS2 and 7MBit/s video, aka 8.4MBit/s after FEC
@@ -40,16 +40,16 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
       // max injection rate possible measured on the bench: 15.2 | 26.6
       // OLD return 8500;
       return {
-        13200, // minus 2MBit/s
-        23600, // minus 3MBit/s
+        15200-2000, // minus 2MBit/s
+        26600-3000, // minus 3MBit/s
       };
     case 3:
       //theoretical:26 | 54
       // max injection rate possible measured on the bench: 19.2 | 30+ (out of capabilities of encoder)
       // OLD return 12000;
       return {
-        16200, // minus 3MBit/s
-        27000, // minus 3MBit/s
+        19200-3000, // minus 3MBit/s
+        30000-3000, // minus 3MBit/s
       };
     // In general, we only use / recommend MCS 0..3
     case 4:
