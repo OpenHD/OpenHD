@@ -602,6 +602,7 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_tx_channel_mhz=curr_settings.wb_frequency;
   stats.monitor_mode_link.curr_tx_channel_w_mhz=curr_settings.wb_channel_width;
   stats.monitor_mode_link.tx_passive_mode_is_enabled =curr_settings.wb_enable_listen_only_mode;
+  stats.monitor_mode_link.curr_rate_kbits= m_recommended_video_bitrate_kbits;
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
@@ -657,12 +658,12 @@ void WBLink::perform_rate_adjustment() {
                      kbits_per_second_to_string(max_video_rate_for_current_wifi_config));
     m_max_video_rate_for_current_wifi_config =
         max_video_rate_for_current_wifi_config;
-    m_recommended_video_bitrate= m_max_video_rate_for_current_wifi_config;
+    m_recommended_video_bitrate_kbits = m_max_video_rate_for_current_wifi_config;
     m_n_detected_and_reset_tx_errors=0;
     m_last_total_tx_error_count=0;
     if (m_opt_action_handler) {
       openhd::ActionHandler::LinkBitrateInformation lb{};
-      lb.recommended_encoder_bitrate_kbits = m_recommended_video_bitrate;
+      lb.recommended_encoder_bitrate_kbits = m_recommended_video_bitrate_kbits;
       m_opt_action_handler->action_request_bitrate_change_handle(lb);
     }
     return;
@@ -685,22 +686,24 @@ void WBLink::perform_rate_adjustment() {
     // We got tx errors N consecutive times, (resetting if there are no tx errors) - we need to reduce bitrate
     m_console->debug("Got m_n_detected_and_reset_tx_errors{} with max:{} recommended:{}",
                      m_n_detected_and_reset_tx_errors,
-        m_max_video_rate_for_current_wifi_config,m_recommended_video_bitrate);
+        m_max_video_rate_for_current_wifi_config,
+        m_recommended_video_bitrate_kbits);
     m_n_detected_and_reset_tx_errors=0;
     // Reduce video bitrate by 1MBit/s
-    m_recommended_video_bitrate-=1000;
+    m_recommended_video_bitrate_kbits -=1000;
     // Safety, in case we fall below a certain threshold the encoder won't be able to produce an image at some point anyways.
     static constexpr auto MIN_BITRATE=1000*2;
-    if(m_recommended_video_bitrate<MIN_BITRATE){
-      m_recommended_video_bitrate=MIN_BITRATE;
+    if(m_recommended_video_bitrate_kbits <MIN_BITRATE){
+      m_recommended_video_bitrate_kbits =MIN_BITRATE;
     }
-    m_console->warn("TX errors, reducing video bitrate to {}",m_recommended_video_bitrate);
+    m_console->warn("TX errors, reducing video bitrate to {}",
+                    m_recommended_video_bitrate_kbits);
   }
   // Since settings might change dynamically at run time, we constantly recommend a bitrate to the encoder / camera -
   // The camera is responsible for "not doing anything" when we recommend the same bitrate to it multiple times
   if (m_opt_action_handler) {
     openhd::ActionHandler::LinkBitrateInformation lb{};
-    lb.recommended_encoder_bitrate_kbits = m_recommended_video_bitrate;
+    lb.recommended_encoder_bitrate_kbits = m_recommended_video_bitrate_kbits;
     m_opt_action_handler->action_request_bitrate_change_handle(lb);
   }
 }
