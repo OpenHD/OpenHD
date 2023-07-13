@@ -31,6 +31,8 @@ static constexpr auto OHD_GROUND_CLIENT_UDP_PORT_IN = 14551;
 
 struct MavlinkMessage {
   mavlink_message_t m{};
+  // how often this packet should be injected (increase reliability)
+  int recommended_n_injections =1;
   [[nodiscard]] std::vector<uint8_t> pack() const {
 	std::vector<uint8_t> buf(MAVLINK_MAX_PACKET_LEN);
 	auto size = mavlink_msg_to_send_buffer(buf.data(), &m);
