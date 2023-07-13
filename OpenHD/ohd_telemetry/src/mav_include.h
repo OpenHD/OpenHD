@@ -42,13 +42,17 @@ struct MavlinkMessage {
   }
 };
 
-// It is more efficient to aggregate / keep mavlink messages in chunks instead of using a wb packet for each of them.
 struct AggregatedMavlinkPacket{
   std::shared_ptr<std::vector<uint8_t>> data;
   int recommended_n_retransmissions=1;
   // how many mavlink packet(s) have been aggregated together
   int n_aggregated_mavlink_packets=0;
 };
+/**
+ * It is more efficient to aggregate / keep mavlink messages in chunks instead of using a wb packet for each of them -
+ * Aggregates the given mavlink message(s) int packets >=@param max_mtu
+ * The n of recommended retransmissions is the highest recommended number of all aggregated mavlink messages.
+ */
 static std::vector<AggregatedMavlinkPacket> aggregate_pack_messages(const std::vector<MavlinkMessage>& messages,uint32_t max_mtu=1024){
   std::vector<AggregatedMavlinkPacket> ret;
   auto buff=std::make_shared<std::vector<uint8_t>>();;
