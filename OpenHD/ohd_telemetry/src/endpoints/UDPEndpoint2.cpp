@@ -25,12 +25,12 @@ UDPEndpoint2::~UDPEndpoint2() {
 }
 
 bool UDPEndpoint2::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
-  auto message_buffers= pack_messages(messages);
+  auto message_buffers= aggregate_pack_messages(messages);
   const auto other_ips=get_all_curr_dest_ips();
   for(const auto& message_buffer:message_buffers){
-    m_receiver_sender->forwardPacketViaUDP(SENDER_IP,SEND_PORT,message_buffer.data(), message_buffer.size());
+    m_receiver_sender->forwardPacketViaUDP(SENDER_IP,SEND_PORT,message_buffer.data->data(), message_buffer.data->size());
     for(const auto& ip:other_ips){
-      m_receiver_sender->forwardPacketViaUDP(ip,SEND_PORT,message_buffer.data(),message_buffer.size());
+      m_receiver_sender->forwardPacketViaUDP(ip,SEND_PORT,message_buffer.data->data(),message_buffer.data->size());
     }
   }
   return true;

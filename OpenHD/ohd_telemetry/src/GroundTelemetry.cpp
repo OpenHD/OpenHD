@@ -88,20 +88,26 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
   // of the ohd ground unit itself
   auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_GROUND);
   for(auto & msg_generic:generic){
-    // In general, since the uplink suffers that much from over-talking, send each message twice by default -
-    // we do not send much mavlink to the air unit anyway (unless it is a heartbeat)
+    // In general, since the uplink suffers that much from over-talking by the video from the air unit, send each message twice by default -
+    // we do not send much mavlink to the air unit anyway.
+    // We do this for all messages unless it's a heartbeat.
     const auto msg_id=msg_generic.m.msgid;
     if(msg_id==MAVLINK_MSG_ID_HEARTBEAT){
       msg_generic.recommended_n_injections=1;
     }else{
       msg_generic.recommended_n_injections=2;
     }
+    // optimization: The telemetry link is quite lossy, here we help QOpenHD (or anybody else) trying to change a parameter
+    // on the air unit using the extended parameter protocol.
     if(msg_id==MAVLINK_MSG_ID_PARAM_EXT_SET || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ
-        || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_LIST) {
-      const auto target= get_target_from_message_if_available(msg_generic.m);
+        || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_LIST
+        || msg_id==MAVLINK_MSG_ID_PARAM_SET || msg_id==MAVLINK_MSG_ID_PARAM_REQUEST_READ
+        || msg_id==MAVLINK_MSG_ID_PARAM_REQUEST_LIST) {
+      /*const auto target= get_target_from_message_if_available(msg_generic.m);
       if(target.has_target() && target.sys_id==OHD_SYS_ID_AIR){
         msg_generic.recommended_n_injections=4;
-      }
+      }*/
+      msg_generic.recommended_n_injections=4;
     }
   }
   send_messages_air_unit(generic);
