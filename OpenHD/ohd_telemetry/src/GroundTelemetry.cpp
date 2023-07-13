@@ -128,7 +128,6 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
     }
   }*/
 
-
   // OpenHD components running on the ground station don't need to talk to the air unit.
   // This is not exactly following the mavlink routing standard, but saves a lot of bandwidth.
   std::lock_guard<std::mutex> guard(m_components_lock);
