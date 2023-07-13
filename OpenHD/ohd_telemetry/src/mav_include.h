@@ -46,17 +46,21 @@ struct MavlinkMessage {
 struct AggregatedMavlinkPacket{
   std::shared_ptr<std::vector<uint8_t>> data;
   int recommended_n_retransmissions=1;
+  // how many mavlink packet(s) have been aggregated together
+  int n_aggregated_mavlink_packets=0;
 };
 static std::vector<AggregatedMavlinkPacket> aggregate_pack_messages(const std::vector<MavlinkMessage>& messages,uint32_t max_mtu=1024){
   std::vector<AggregatedMavlinkPacket> ret;
   auto buff=std::make_shared<std::vector<uint8_t>>();;
   int recommended_n_retransmissions=1;
+  int n_aggregated_mavlink_packets=0;
   buff->reserve(max_mtu);
   for(const auto& msg:messages){
     auto data=msg.pack();
     if(buff->size()+data.size()<=max_mtu){
       // we haven't reached MTU yet
       buff->insert(buff->end(), data.begin(), data.end());
+      n_aggregated_mavlink_packets++;
       if(msg.recommended_n_injections>recommended_n_retransmissions){
         recommended_n_retransmissions=msg.recommended_n_injections;
       }
@@ -67,8 +71,10 @@ static std::vector<AggregatedMavlinkPacket> aggregate_pack_messages(const std::v
         buff=std::make_shared<std::vector<uint8_t>>();
         buff->reserve(max_mtu);
         recommended_n_retransmissions=1;
+        n_aggregated_mavlink_packets=0;
       }
       buff->insert(buff->end(), data.begin(), data.end());
+      n_aggregated_mavlink_packets++;
       if(msg.recommended_n_injections>recommended_n_retransmissions){
         recommended_n_retransmissions=msg.recommended_n_injections;
       }
