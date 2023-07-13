@@ -24,7 +24,7 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
       // OLD return 4500;
       return {
         5700-1000, // minus 1MBit/s
-        14000-2000, // minus 2MBit/s
+        14000-3000, // minus 3MBit/s
       };
     case 1:
       //theoretical:13 | 27
@@ -32,7 +32,7 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
       // OLD return 6500;
       return {
         10800-1000, // minus 1MBit/s
-        18800-3000, // minus 3MBit/s
+        18800-3500, // minus 3.5MBit/s
       };
     case 2:
       //@Norbert: Successfully flown on MCS2 and 7MBit/s video, aka 8.4MBit/s after FEC
