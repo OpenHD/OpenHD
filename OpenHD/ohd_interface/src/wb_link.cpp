@@ -754,6 +754,7 @@ bool WBLink::check_work_queue_empty() {
 
 
 void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
+  assert(packet.n_injections>=1);
   const auto res=m_wb_tele_tx->try_enqueue_packet(packet.data,packet.n_injections);
   if(!res)m_console->debug("Enqueing tele packet failed");
   if(!m_broadcast_cards.at(0).supports_injection){

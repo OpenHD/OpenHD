@@ -57,14 +57,21 @@ static std::vector<AggregatedMavlinkPacket> aggregate_pack_messages(const std::v
     if(buff->size()+data.size()<=max_mtu){
       // we haven't reached MTU yet
       buff->insert(buff->end(), data.begin(), data.end());
+      if(msg.recommended_n_injections>recommended_n_retransmissions){
+        recommended_n_retransmissions=msg.recommended_n_injections;
+      }
     }else{
       // MTU is reached or we need to allocate a new buffer
       if(!buff->empty()){
         ret.push_back({buff,recommended_n_retransmissions});
         buff=std::make_shared<std::vector<uint8_t>>();
         buff->reserve(max_mtu);
+        recommended_n_retransmissions=1;
       }
       buff->insert(buff->end(), data.begin(), data.end());
+      if(msg.recommended_n_injections>recommended_n_retransmissions){
+        recommended_n_retransmissions=msg.recommended_n_injections;
+      }
     }
   }
   if(!buff->empty()){
