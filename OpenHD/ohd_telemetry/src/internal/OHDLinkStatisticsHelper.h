@@ -131,6 +131,7 @@ static MavlinkMessage pack_camera_stats(const uint8_t system_id,const uint8_t co
   mavlink_openhd_camera_status_t tmp;
   tmp.cam_index=cam_info.cam_index;
   tmp.cam_type=cam_info.cam_type;
+  tmp.encoding_format=cam_info.encoding_format;
   tmp.air_recording_active=cam_info.air_recording_active;
   tmp.encoding_bitrate_kbits=cam_info.encoding_bitrate_kbits;
   tmp.encoding_keyframe_interval=cam_info.encoding_keyframe_interval;

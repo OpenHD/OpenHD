@@ -180,8 +180,10 @@ void GStreamerStream::setup() {
   m_pull_samples_thread=std::make_unique<std::thread>(&GStreamerStream::loop_pull_samples, this);
   if(m_opt_action_handler){
     const auto index=m_camera_holder->get_camera().index;
+    const auto type=m_camera_holder->get_camera().type;
+    const auto type_as_int=(type==CameraType::RPI_CSI_LIBCAMERA || type==CameraType::RPI_CSI_MMAL) ? 1 : 0;
     auto cam_info=openhd::ActionHandler::CamInfo{true,
-     (uint8_t)index,0,ADD_RECORDING_TO_PIPELINE, (uint8_t)video_codec_to_int(setting.recordingFormat.videoCodec),(uint16_t)setting.h26x_bitrate_kbits,
+     (uint8_t)index,type_as_int,ADD_RECORDING_TO_PIPELINE, (uint8_t)video_codec_to_int(setting.recordingFormat.videoCodec),(uint16_t)setting.h26x_bitrate_kbits,
                                            (uint8_t)setting.h26x_keyframe_interval,(uint16_t )setting.streamed_video_format.width,
                                            (uint16_t )setting.streamed_video_format.height,(uint16_t )setting.streamed_video_format.framerate};
     m_opt_action_handler->set_cam_info(index,cam_info);
