@@ -622,7 +622,7 @@ void WBLink::update_statistics() {
   }
   stats.is_air=m_profile.is_air;
   if(m_opt_action_handler){
-    m_opt_action_handler->action_wb_link_statistcs_handle(stats);
+    m_opt_action_handler->update_link_stats(stats);
   }
 }
 

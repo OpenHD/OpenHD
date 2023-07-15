@@ -44,9 +44,6 @@ class OHDMainComponent : public MavlinkComponent{
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
   // override from component
   std::vector<MavlinkMessage> process_mavlink_messages(std::vector<MavlinkMessage> messages)override;
-  // update stats from ohd_interface
-  void set_link_statistics(openhd::link_statistics::StatsAirGround stats);
-  openhd::link_statistics::StatsAirGround get_latest_link_statistics();
   // Some features rely on the arming state of the FC, like adjusting tx power &
   // Some features rely on (RC) channel switches, like changing the mcs index
   void check_fc_messages_for_actions(const std::vector<MavlinkMessage>& messages);
@@ -66,8 +63,6 @@ class OHDMainComponent : public MavlinkComponent{
   std::vector<MavlinkMessage> generateLogMessages();
   std::unique_ptr<StatusTextAccumulator> m_status_text_accumulator;
   std::unique_ptr<OnboardComputerStatusProvider> m_onboard_computer_status_provider;
-  std::mutex m_last_link_stats_mutex;
-  openhd::link_statistics::StatsAirGround m_last_link_stats{};
   MavlinkMessage ack_command(uint8_t source_sys_id,uint8_t source_comp_id,uint16_t command_id);
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<LastKnowPosition> m_last_known_position= nullptr;

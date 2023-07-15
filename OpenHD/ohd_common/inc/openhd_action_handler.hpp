@@ -53,23 +53,6 @@ class ActionHandler{
     }
   }
  public:
-  // Link statistics - for that the wb link (ohd_interface) needs to talk to ohd_telemetry
-  // register callback that is called in regular intervals with link statistics
-  void action_wb_link_statistics_register(const openhd::link_statistics::STATS_CALLBACK& stats_callback){
-    if(stats_callback== nullptr){
-      m_link_statistics_callback= nullptr;
-      return;
-    }
-    m_link_statistics_callback =std::make_shared<openhd::link_statistics::STATS_CALLBACK>(stats_callback);
-  }
-  void action_wb_link_statistcs_handle(openhd::link_statistics::StatsAirGround all_stats){
-    auto tmp=m_link_statistics_callback;
-    if(tmp){
-      auto & cb=*tmp;
-      cb(all_stats);
-    }
-  }
- public:
   // checking both 2G and 5G channels takes really long, but in rare cases might be wanted by the user
   // checking both 20Mhz and 40Mhz (instead of only either of them both) also duplicates the scan time
   struct ScanChannelsParam{
@@ -95,9 +78,7 @@ class ActionHandler{
   }
   // Cleanup, set all lambdas that handle things to nullptr
   void disable_all_callables(){
-    action_wb_link_statistics_register(nullptr);
     action_request_bitrate_change_register(nullptr);
-    action_wb_link_statistics_register(nullptr);
     action_wb_link_scan_channels_register(nullptr);
     action_on_ony_rc_channel_register(nullptr);
     m_action_disable_wifi_when_armed= nullptr;
@@ -224,6 +205,20 @@ class ActionHandler{
   CamInfo m_cam_info_cam2{};
   std::mutex m_cam_info_cam1_mutex;
   std::mutex m_cam_info_cam2_mutex;
+  // LINK STATISTICS
+  // Written by wb_link, published via mavlink by telemetry OHDMainComponent
+ private:
+  std::mutex m_last_link_stats_mutex;
+  openhd::link_statistics::StatsAirGround m_last_link_stats{};
+ public:
+  void update_link_stats(openhd::link_statistics::StatsAirGround stats){
+    std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
+    m_last_link_stats=std::move(stats);
+  }
+  openhd::link_statistics::StatsAirGround get_link_stats(){
+    std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
+    return m_last_link_stats;
+  }
 };
 
 }
