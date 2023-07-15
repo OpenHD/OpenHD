@@ -58,7 +58,7 @@ void AirTelemetry::send_messages_ground_unit(std::vector<MavlinkMessage>& messag
       const auto msg_id=msg.m.msgid;
       if(msg_id==MAVLINK_MSG_ID_PARAM_EXT_VALUE
           || msg_id==MAVLINK_MSG_ID_PARAM_VALUE) {
-        msg.recommended_n_injections=4;
+        msg.recommended_n_injections=2;
       }
     }
     m_wb_endpoint->sendMessages(messages);
