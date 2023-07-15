@@ -19,7 +19,7 @@ OHDMainComponent::OHDMainComponent(
 	MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
   m_console = openhd::log::create_or_get("t_main_c");
   assert(m_console);
-  m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform,false);
+  m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform,true);
   // suppress the warning until we get the first actually updated stats
   m_status_text_accumulator=std::make_unique<StatusTextAccumulator>();
   m_last_known_position=std::make_unique<LastKnowPosition>();
