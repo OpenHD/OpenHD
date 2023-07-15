@@ -16,22 +16,27 @@ constexpr uint8_t BUS_ADC = ADC_12BIT;
 constexpr uint8_t SHUNT_ADC = ADC_12BIT;
 //INA219 stuff
 
-OnboardComputerStatusProvider::OnboardComputerStatusProvider(OHDPlatform platform)
+OnboardComputerStatusProvider::OnboardComputerStatusProvider(OHDPlatform platform,bool enable)
     : m_platform(platform),
+      m_enable(enable),
       m_ina_219(SHUNT_OHMS, MAX_EXPECTED_AMPS)
 {
   ina219_log_warning_once();
   if(!m_ina_219.has_any_error){
     m_ina_219.configure(RANGE, GAIN, BUS_ADC, SHUNT_ADC);
   }
-  m_calculate_cpu_usage_thread=std::make_unique<std::thread>(&OnboardComputerStatusProvider::calculate_cpu_usage_until_terminate, this);
-  m_calculate_other_thread=std::make_unique<std::thread>(&OnboardComputerStatusProvider::calculate_other_until_terminate, this);
+  if(m_enable){
+    m_calculate_cpu_usage_thread=std::make_unique<std::thread>(&OnboardComputerStatusProvider::calculate_cpu_usage_until_terminate, this);
+    m_calculate_other_thread=std::make_unique<std::thread>(&OnboardComputerStatusProvider::calculate_other_until_terminate, this);
+  }
 }
 
 OnboardComputerStatusProvider::~OnboardComputerStatusProvider() {
-  terminate= true;
-  m_calculate_cpu_usage_thread->join();
-  m_calculate_other_thread->join();
+  if(m_enable){
+    terminate= true;
+    m_calculate_cpu_usage_thread->join();
+    m_calculate_other_thread->join();
+  }
 }
 
 mavlink_onboard_computer_status_t OnboardComputerStatusProvider::get_current_status() {
