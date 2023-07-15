@@ -45,14 +45,22 @@ AirTelemetry::~AirTelemetry() {
 
 }
 
-void AirTelemetry::send_messages_fc(const std::vector<MavlinkMessage>& messages) {
+void AirTelemetry::send_messages_fc(std::vector<MavlinkMessage>& messages) {
   auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_AIR);
   // NOTE: Remember there is a hack in place for rc channels override in regards to the sender sys id
   m_fc_serial->send_messages_if_enabled(generic);
 }
 
-void AirTelemetry::send_messages_ground_unit(const std::vector<MavlinkMessage>& messages) {
+void AirTelemetry::send_messages_ground_unit(std::vector<MavlinkMessage>& messages) {
   if(m_wb_endpoint){
+    // Optimization: Increase reliability of responding to mavlink (extended) parameter set responses
+    for(auto & msg:messages){
+      const auto msg_id=msg.m.msgid;
+      if(msg_id==MAVLINK_MSG_ID_PARAM_EXT_VALUE
+          || msg_id==MAVLINK_MSG_ID_PARAM_VALUE) {
+        msg.recommended_n_injections=4;
+      }
+    }
     m_wb_endpoint->sendMessages(messages);
   }
   // Not technically correct, but works
@@ -61,7 +69,7 @@ void AirTelemetry::send_messages_ground_unit(const std::vector<MavlinkMessage>& 
   }
 }
 
-void AirTelemetry::on_messages_fc(const std::vector<MavlinkMessage>& messages) {
+void AirTelemetry::on_messages_fc(std::vector<MavlinkMessage>& messages) {
   //openhd::log::get_default()->debug("on_messages_fc {}",messages.size());
   //debugMavlinkMessage(message.m,"AirTelemetry::onMessageFC");
   // Note: No OpenHD component ever talks to the FC, FC is completely passed through
@@ -69,7 +77,7 @@ void AirTelemetry::on_messages_fc(const std::vector<MavlinkMessage>& messages) {
   m_ohd_main_component->check_fc_messages_for_actions(messages);
 }
 
-void AirTelemetry::on_messages_ground_unit(const std::vector<MavlinkMessage>& messages) {
+void AirTelemetry::on_messages_ground_unit(std::vector<MavlinkMessage>& messages) {
   //openhd::log::get_default()->debug("on_messages_ground_unit {}",messages.size());
   // filter out heartbeats from the openhd ground unit,we do not need to send them to the FC
   std::vector<MavlinkMessage> filtered_messages_fc;
@@ -108,7 +116,7 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
     {
       std::lock_guard<std::mutex> guard(m_components_lock);
       for(auto& component: m_components){
-        const auto messages=component->generate_mavlink_messages();
+        auto messages=component->generate_mavlink_messages();
         send_messages_ground_unit(messages);
       }
     }
