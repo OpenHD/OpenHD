@@ -542,7 +542,11 @@ void WBLink::update_statistics() {
       const auto curr_tx_stats=wb_tx.get_latest_stats();
       openhd::link_statistics::StatsWBVideoAir air_video{};
       air_video.link_index=i;
-      const uint32_t rec_bitrate=i==0 ? m_curr_cam1_recommended_bitrate_kbits : m_curr_cam2_recommended_bitrate_kbits;
+      int rec_bitrate=0;
+      if(m_opt_action_handler){
+        auto cam_stats=m_opt_action_handler->get_cam_info(i);
+        rec_bitrate=cam_stats.encoding_bitrate_kbits;
+      }
       air_video.curr_recommended_bitrate=rec_bitrate;
       air_video.curr_measured_encoder_bitrate=curr_tx_stats.current_provided_bits_per_second;
       air_video.curr_injected_bitrate=curr_tx_stats.current_injected_bits_per_second;

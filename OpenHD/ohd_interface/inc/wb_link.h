@@ -173,8 +173,6 @@ class WBLink :public OHDLink{
   std::atomic<uint32_t> m_max_total_rate_for_current_wifi_config_kbits=0;
   uint32_t m_max_video_rate_for_current_wifi_config =0;
   uint32_t m_recommended_video_bitrate_kbits =0;
-  std::atomic<uint32_t> m_curr_cam1_recommended_bitrate_kbits=0;
-  std::atomic<uint32_t> m_curr_cam2_recommended_bitrate_kbits=0;
   // Set to true when armed, disarmed by default
   // Used to differentiate between different tx power levels when armed / disarmed
   bool m_is_armed= false;
