@@ -224,23 +224,6 @@ std::unique_ptr<WBStreamRx> WBLink::create_wb_rx(uint8_t radio_port,bool is_vide
   return ret;
 }
 
-std::string WBLink::createDebug()const{
-  std::stringstream ss;
-  /*if (m_wb_tele_rx) {
-    ss<<"TeleRx: "<< m_wb_tele_rx->createDebugState();
-  }
-  if (m_wb_tele_tx) {
-    ss<<"TeleTx: "<< m_wb_tele_tx->createDebugState();
-  }
-  for (const auto &txvid: m_wb_video_tx_list) {
-    ss<<"VidTx: "<<txvid->createDebugState();
-  }
-  for (const auto &rxvid: m_wb_video_rx_list) {
-    ss<<"VidRx :"<<rxvid->createDebugState();
-  }*/
-  return ss.str();
-}
-
 bool WBLink::request_set_frequency(int frequency) {
   m_console->debug("request_set_frequency {}",frequency);
   if(m_disable_all_frequency_checks){

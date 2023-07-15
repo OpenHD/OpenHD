@@ -46,8 +46,6 @@ class WBLink :public OHDLink{
   WBLink(const WBLink&)=delete;
   WBLink(const WBLink&&)=delete;
   ~WBLink();
-  // Verbose string about the current state.
-  [[nodiscard]] std::string createDebug()const;
   // returns all mavlink settings, values might change depending on the used hardware
   std::vector<openhd::Setting> get_all_settings();
   [[nodiscard]] openhd::WifiSpace get_current_frequency_channel_space()const;

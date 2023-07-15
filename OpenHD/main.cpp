@@ -329,9 +329,6 @@ int main(int argc, char *argv[]) {
       if(any_debug_enabled){
         std::stringstream ss;
         ss<< "-----------OpenHD-state debug begin-----------\n";
-        if(options.enable_interface_debugging){
-          ss<<ohdInterface->createDebug();
-        }
         if(options.enable_video_debugging && ohd_video_air){
           ss<< ohd_video_air->createDebug();
         }
