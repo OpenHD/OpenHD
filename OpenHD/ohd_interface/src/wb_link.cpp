@@ -541,11 +541,9 @@ void WBLink::update_statistics() {
       //auto& air_video=i==0 ? stats.air_video0 : stats.air_video1;
       const auto curr_tx_stats=wb_tx.get_latest_stats();
       openhd::link_statistics::StatsWBVideoAir air_video{};
-      if(m_opt_action_handler){
-        const int tmp= m_opt_action_handler->dirty_get_bitrate_of_camera(i);
-        air_video.curr_recommended_bitrate=tmp>0 ? tmp : 0;
-      }
       air_video.link_index=i;
+      const uint32_t rec_bitrate=i==0 ? m_curr_cam1_recommended_bitrate_kbits : m_curr_cam2_recommended_bitrate_kbits;
+      air_video.curr_recommended_bitrate=rec_bitrate;
       air_video.curr_measured_encoder_bitrate=curr_tx_stats.current_provided_bits_per_second;
       air_video.curr_injected_bitrate=curr_tx_stats.current_injected_bits_per_second;
       air_video.curr_injected_pps=curr_tx_stats.current_injected_packets_per_second;
@@ -558,13 +556,6 @@ void WBLink::update_statistics() {
       air_video.curr_fec_block_size_max=curr_tx_fec_stats.curr_fec_block_length.max;
       air_video.curr_fec_block_size_avg=curr_tx_fec_stats.curr_fec_block_length.avg;
       air_video.curr_fec_percentage=m_settings->unsafe_get_settings().wb_video_fec_percentage;
-      air_video.curr_keyframe_interval=m_opt_action_handler ? m_opt_action_handler->get_curr_keyframe_interval(i) : -1;
-      bool recording_enabled= false;
-      if(m_opt_action_handler){
-        recording_enabled=m_opt_action_handler->get_recording_active(i);
-        //openhd::log::get_default()->debug("cam {} {}",i,recording_enabled);
-      }
-      air_video.recording_active=recording_enabled;
        // TODO otimization: Only send stats for an active link
       stats.stats_wb_video_air.push_back(air_video);
     }

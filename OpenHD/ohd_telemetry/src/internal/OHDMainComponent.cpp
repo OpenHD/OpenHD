@@ -44,6 +44,18 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   OHDUtil::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
           m_sys_id, m_comp_id));
   OHDUtil::vec_append(ret, generate_mav_wb_stats());
+  if(RUNS_ON_AIR){
+    if(m_opt_action_handler){
+      auto cam_stats1=m_opt_action_handler->get_cam_info(0);
+      auto cam_stats2=m_opt_action_handler->get_cam_info(1);
+      if(cam_stats1.active){
+        ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,m_comp_id,cam_stats1));
+      }
+      if(cam_stats2.active){
+        ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,m_comp_id,cam_stats2));
+      }
+    }
+  }
   //ret.push_back(generateOpenHDVersion());
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
   //_status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");

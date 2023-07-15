@@ -69,10 +69,6 @@ void GStreamerStream::setup() {
   m_console->debug("GStreamerStream::setup() begin");
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
-  if(m_opt_action_handler){
-    m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,setting.h26x_bitrate_kbits);
-    m_opt_action_handler->set_curr_keyframe_interval(m_camera_holder->get_camera().index,m_camera_holder->get_settings().h26x_keyframe_interval);
-  }
   // atomic & called in regular intervals if variable bitrate is enabled.
   m_curr_dynamic_bitrate_kbits=setting.h26x_bitrate_kbits;
   if(!setting.enable_streaming){
@@ -148,10 +144,6 @@ void GStreamerStream::setup() {
     m_console->info("Air recording active");
     m_pipeline_content <<"tee name=t ! ";
   }
-  if(m_opt_action_handler){
-    m_opt_action_handler->set_recording_active(m_camera_holder->get_camera().index,ADD_RECORDING_TO_PIPELINE);
-    //openhd::log::get_default()->debug("GST cam {} {}",m_camera_holder->get_camera().index,ADD_RECORDING_TO_PIPELINE);
-  }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
   m_pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
@@ -186,6 +178,14 @@ void GStreamerStream::setup() {
   assert(m_app_sink_element);
   m_pull_samples_run= true;
   m_pull_samples_thread=std::make_unique<std::thread>(&GStreamerStream::loop_pull_samples, this);
+  if(m_opt_action_handler){
+    const auto index=m_camera_holder->get_camera().index;
+    auto cam_info=openhd::ActionHandler::CamInfo{true,
+     (uint8_t)index,0,ADD_RECORDING_TO_PIPELINE, (uint8_t)video_codec_to_int(setting.recordingFormat.videoCodec),(uint16_t)setting.h26x_bitrate_kbits,
+                                           (uint8_t)setting.h26x_keyframe_interval,(uint16_t )setting.streamed_video_format.width,
+                                           (uint16_t )setting.streamed_video_format.height,(uint16_t )setting.streamed_video_format.framerate};
+    m_opt_action_handler->set_cam_info(index,cam_info);
+  }
 }
 
 void GStreamerStream::setup_raspberrypi_mmal_csi() {
@@ -486,7 +486,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
     m_camera_holder->persist(false);
     m_curr_dynamic_bitrate_kbits= bitrate_for_encoder_kbits;
     if(m_opt_action_handler){
-      m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
+      m_opt_action_handler->set_cam_info_bitrate(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
     }
   }else{
     const auto cam_type=m_camera_holder->get_camera().type;

@@ -79,8 +79,6 @@ static MavlinkMessage pack_vid_air(const uint8_t system_id,const uint8_t compone
   tmp.curr_injected_pps=stats.curr_injected_pps;
   tmp.curr_dropped_frames=stats.curr_dropped_frames;
   tmp.curr_fec_percentage=stats.curr_fec_percentage;
-  tmp.curr_keyframe_interval=stats.curr_keyframe_interval;
-  tmp.recording_active=stats.recording_active;
   mavlink_msg_openhd_stats_wb_video_air_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
@@ -125,6 +123,21 @@ static MavlinkMessage pack_vid_gnd_fec_performance(const uint8_t system_id,const
   //tmp.unused0=stats.unused0;
   //tmp.unused1=stats.unused1;
   mavlink_msg_openhd_stats_wb_video_ground_fec_performance_encode(system_id,component_id,&msg.m,&tmp);
+  return msg;
+}
+
+static MavlinkMessage pack_camera_stats(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::CamInfo& cam_info){
+  MavlinkMessage msg;
+  mavlink_openhd_camera_status_t tmp;
+  tmp.cam_index=cam_info.cam_index;
+  tmp.cam_type=cam_info.cam_type;
+  tmp.air_recording_active=cam_info.air_recording_active;
+  tmp.encoding_bitrate_kbits=cam_info.encoding_bitrate_kbits;
+  tmp.encoding_keyframe_interval=cam_info.encoding_keyframe_interval;
+  tmp.stream_w=cam_info.stream_w;
+  tmp.stream_h=cam_info.stream_h;
+  tmp.stream_fps=cam_info.stream_fps;
+  mavlink_msg_openhd_camera_status_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
 

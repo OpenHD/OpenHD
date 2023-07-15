@@ -177,51 +177,53 @@ class ActionHandler{
   std::shared_ptr<ACTION_REQUEST_BITRATE_CHANGE> m_action_request_bitrate_change =nullptr;
   std::shared_ptr<openhd::link_statistics::STATS_CALLBACK> m_link_statistics_callback=nullptr;
   std::shared_ptr<SCAN_CHANNELS_CB> m_scan_channels_cb=nullptr;
- private:
-  // dirty - bitrate(s)  might be changed at run time, this exists since we write the wb stats in ohd_interface but the value
-  // should be whatever the cam is actually doing
-  std::atomic<int> curr_set_raw_video_bitrate_kbits_cam1 =-1;
-  std::atomic<int> curr_set_raw_video_bitrate_kbits_cam2 =-1;
-  // dirty, too
- private:
-  // We broadcast those camera values via mavlink
-  std::atomic<int> curr_cam1_keyframe_interval = -1;
-  std::atomic<int> curr_cam2_keyframe_interval = -1;
-  std::atomic<bool> recording_active_cam1=false;
-  std::atomic<bool> recording_active_cam2=false;
  public:
-  void set_curr_keyframe_interval(int cam,int interval){
-    if(cam==0){
-      curr_cam1_keyframe_interval=interval;
+  // Camera stats / info that is broadcast in regular intervals
+  // Set by the camera streaming implementation - read by OHDMainComponent (mavlink broadcast)
+  // Simple read - write pattern (mutex is a bit overkill, but we don't have atomic struct)
+  struct CamInfo{
+    bool active= false; // Do not send stats for a non-active camera
+    uint8_t cam_index=0;
+    uint8_t cam_type=0;
+    uint8_t air_recording_active=0;
+    uint8_t encoding_format=0;
+    uint16_t encoding_bitrate_kbits=0;
+    uint8_t encoding_keyframe_interval=0;
+    uint16_t stream_w=0;
+    uint16_t stream_h=0;
+    uint16_t stream_fps=0;
+  };
+  void set_cam_info(uint8_t cam_index,CamInfo camInfo){
+    if(cam_index==0){
+      std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
+      m_cam_info_cam1=camInfo;
     }else{
-      curr_cam2_keyframe_interval=interval;
+      std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
+      m_cam_info_cam2=camInfo;
     }
   }
-  int get_curr_keyframe_interval(int cam){
-    if(cam==0)return curr_cam1_keyframe_interval;
-    return curr_cam2_keyframe_interval;
-  }
-  void set_recording_active(int cam,bool active){
-    if(cam==0){
-      recording_active_cam1=active;
+  void set_cam_info_bitrate(uint8_t cam_index,uint16_t bitrate_kbits){
+    if(cam_index==0){
+      std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
+      m_cam_info_cam1.encoding_bitrate_kbits=bitrate_kbits;
     }else{
-      recording_active_cam2=active;
+      std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
+      m_cam_info_cam2.encoding_bitrate_kbits=bitrate_kbits;
     }
   }
-  bool get_recording_active(int cam){
-    if(cam==0)return recording_active_cam1;
-    return recording_active_cam2;
+  CamInfo get_cam_info(int cam_index){
+    if(cam_index==0){
+      std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
+      return m_cam_info_cam1;
+    }
+    std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
+    return m_cam_info_cam2;
   }
- public:
-  void dirty_set_bitrate_of_camera(const int cam_index,int bitrate_kbits){
-    if(cam_index==0)curr_set_raw_video_bitrate_kbits_cam1=bitrate_kbits;
-    if(cam_index==1)curr_set_raw_video_bitrate_kbits_cam2=bitrate_kbits;
-  }
-  int dirty_get_bitrate_of_camera(const int cam_index){
-    if(cam_index==0)return curr_set_raw_video_bitrate_kbits_cam1;
-    if(cam_index==1)return curr_set_raw_video_bitrate_kbits_cam2;
-    return -1;
-  }
+ private:
+  CamInfo m_cam_info_cam1{};
+  CamInfo m_cam_info_cam2{};
+  std::mutex m_cam_info_cam1_mutex;
+  std::mutex m_cam_info_cam2_mutex;
 };
 
 }
