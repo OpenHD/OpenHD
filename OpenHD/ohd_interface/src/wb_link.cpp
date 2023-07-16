@@ -46,14 +46,14 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   openhd::wb::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
   // We default to the right setting (clean install) but only print a warning, don't actively fix it.
   if(m_profile.is_ground()){
-	if(all_cards_support_setting_mcs_index(m_broadcast_cards) &&
-	m_settings->unsafe_get_settings().wb_mcs_index!=openhd::DEFAULT_GND_UPLINK_MCS_INDEX){
-	  // We always use a MCS index of X for the uplink, since (compared to the down / video link) it requires a negligible amount of bandwidth
-	  // and for those using RC over OpenHD, we have the benefit that the range of RC is "more" than the range for video
-	  m_console->warn("GND recommended MCS{}",openhd::DEFAULT_GND_UPLINK_MCS_INDEX);
-	  //m_settings->unsafe_get_settings().wb_mcs_index=openhd::DEFAULT_GND_UPLINK_MCS_INDEX;
-	  //m_settings->persist();
-	}
+    if(all_cards_support_setting_mcs_index(m_broadcast_cards) &&
+        m_settings->unsafe_get_settings().wb_mcs_index!=openhd::DEFAULT_GND_UPLINK_MCS_INDEX){
+      // We always use a MCS index of X for the uplink, since (compared to the down / video link) it requires a negligible amount of bandwidth
+      // and for those using RC over OpenHD, we have the benefit that the range of RC is "more" than the range for video
+      m_console->warn("GND recommended MCS{}",openhd::DEFAULT_GND_UPLINK_MCS_INDEX);
+      //m_settings->unsafe_get_settings().wb_mcs_index=openhd::DEFAULT_GND_UPLINK_MCS_INDEX;
+      //m_settings->persist();
+    }
   }
   takeover_cards_monitor_mode();
   WBTxRx::Options txrx_options{};
@@ -108,23 +108,24 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           m_wb_video_rx_list.push_back(std::move(secondary));
       }
   }
+  apply_frequency_and_channel_width_from_settings();
+  apply_txpower();
   m_wb_txrx->start_receiving();
-  set_freq_width_power();
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
   if(m_opt_action_handler){
-        auto cb_scan=[this](openhd::ActionHandler::ScanChannelsParam param){
-          async_scan_channels(param);
-        };
-        m_opt_action_handler->action_wb_link_scan_channels_register(cb_scan);
-        auto cb_mcs=[this](const std::array<int,18>& rc_channels){
-          set_mcs_index_from_rc_channel(rc_channels);
-        };
-        m_opt_action_handler->action_on_ony_rc_channel_register(cb_mcs);
-        auto cb_arm=[this](bool armed){
-          update_arming_state(armed);
-        };
-        m_opt_action_handler->m_action_tx_power_when_armed=std::make_shared<openhd::ActionHandler::ACTION_TX_POWER_WHEN_ARMED>(cb_arm);
+      auto cb_scan=[this](openhd::ActionHandler::ScanChannelsParam param){
+        async_scan_channels(param);
+      };
+      m_opt_action_handler->action_wb_link_scan_channels_register(cb_scan);
+      auto cb_mcs=[this](const std::array<int,18>& rc_channels){
+        set_mcs_index_from_rc_channel(rc_channels);
+      };
+      m_opt_action_handler->action_on_ony_rc_channel_register(cb_mcs);
+      auto cb_arm=[this](bool armed){
+        update_arming_state(armed);
+      };
+      m_opt_action_handler->m_action_tx_power_when_armed=std::make_shared<openhd::ActionHandler::ACTION_TX_POWER_WHEN_ARMED>(cb_arm);
   }
 }
 
@@ -179,13 +180,6 @@ void WBLink::takeover_cards_monitor_mode() {
     //wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
   }
   m_console->debug("takeover_cards_monitor_mode() end");
-}
-
-void WBLink::set_freq_width_power() {
-  m_console->debug("set_freq_width_power() begin");
-  apply_frequency_and_channel_width_from_settings();
-  apply_txpower();
-  m_console->debug("set_freq_width_power() end");
 }
 
 RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
