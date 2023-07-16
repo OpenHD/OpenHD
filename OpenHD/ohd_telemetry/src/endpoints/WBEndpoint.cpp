@@ -31,7 +31,7 @@ bool WBEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
   for(const auto& message_buffer:message_buffers){
     if(m_link_handle){
       std::lock_guard<std::mutex> guard(m_send_messages_mutex);
-      m_link_handle->transmit_telemetry_data({message_buffer.data,message_buffer.recommended_n_retransmissions});
+      m_link_handle->transmit_telemetry_data({message_buffer.aggregated_data,message_buffer.recommended_n_retransmissions});
     }
   }
   return true;

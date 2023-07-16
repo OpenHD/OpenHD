@@ -35,15 +35,15 @@ struct MavlinkMessage {
   // how often this packet should be injected (increase reliability)
   int recommended_n_injections =1;
   [[nodiscard]] std::vector<uint8_t> pack() const {
-	std::vector<uint8_t> buf(MAVLINK_MAX_PACKET_LEN);
-	auto size = mavlink_msg_to_send_buffer(buf.data(), &m);
-	buf.resize(size);
-	return buf;
+    std::vector<uint8_t> buf(MAVLINK_MAX_PACKET_LEN);
+    auto size = mavlink_msg_to_send_buffer(buf.data(), &m);
+    buf.resize(size);
+    return buf;
   }
 };
 
 struct AggregatedMavlinkPacket{
-  std::shared_ptr<std::vector<uint8_t>> data;
+  std::shared_ptr<std::vector<uint8_t>> aggregated_data;
   int recommended_n_retransmissions=1;
   // how many mavlink packet(s) have been aggregated together
   int n_aggregated_mavlink_packets=0;
