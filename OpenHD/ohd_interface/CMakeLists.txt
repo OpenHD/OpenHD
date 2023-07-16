@@ -54,6 +54,10 @@ target_include_directories(OHDInterfaceLib
     PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
 
+
+# disable compiler warning since we don't interlink with GCC before 7.1
+target_compile_options(OHDInterfaceLib PRIVATE -Wno-psabi)
+
 #find_package(spdlog REQUIRED)
 #target_link_libraries(OHDInterfaceLib PRIVATE spdlog::spdlog)
 

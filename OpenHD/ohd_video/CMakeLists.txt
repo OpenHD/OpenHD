@@ -83,6 +83,11 @@ set(sources
     src/ohd_video_ground.cpp
 )
 
+
+
+# disable compiler warning since we don't interlink with GCC before 7.1
+target_compile_options(OHDVideoLib PRIVATE -Wno-psabi)
+
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 target_sources(OHDVideoLib PRIVATE ${sources})
 target_include_directories(OHDVideoLib 
