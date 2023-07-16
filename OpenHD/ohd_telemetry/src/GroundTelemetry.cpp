@@ -111,23 +111,6 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
     }
   }
   send_messages_air_unit(generic);
-  // optimization: The telemetry link is quite lossy, here we help QOpenHD trying to change a parameter
-  // on the air unit using the extended parameter protocol.
-  /*for(const auto& msg:generic){
-    const auto msg_id=msg.m.msgid;
-    if(msg_id==MAVLINK_MSG_ID_PARAM_EXT_SET || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ
-        || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_LIST) {
-      const auto target= get_target_from_message_if_available(msg.m);
-      if(target.has_target() && target.sys_id==OHD_SYS_ID_AIR){
-        // This will queue them up as telemetry packets to send via the card
-        // each as their own packet (making it unlikely all of them are lost)
-        for(int i=0;i<4;i++){
-          send_messages_air_unit({msg});
-        }
-      }
-    }
-  }*/
-
   // OpenHD components running on the ground station don't need to talk to the air unit.
   // This is not exactly following the mavlink routing standard, but saves a lot of bandwidth.
   std::lock_guard<std::mutex> guard(m_components_lock);
