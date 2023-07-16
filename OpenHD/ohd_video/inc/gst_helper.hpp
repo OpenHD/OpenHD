@@ -634,11 +634,11 @@ static std::string createIpCameraStream(const std::string &url) {
  * @param videoCodec the video codec to create the rtp for.
  * @return the gstreamer pipeline part.
  */
-static std::string create_parse_and_rtp_packetize(const VideoCodec videoCodec) {
+static std::string create_parse_and_rtp_packetize(const VideoCodec videoCodec,int rtp_fragment_size=1024) {
   std::stringstream ss;
   ss << "queue ! ";
   ss << create_parse_for_codec(videoCodec);
-  ss << create_rtp_packetize_for_codec(videoCodec,1024);
+  ss << create_rtp_packetize_for_codec(videoCodec,rtp_fragment_size);
   return ss.str();
 }
 
