@@ -10,6 +10,7 @@
 #include "openhd_util_filesystem.h"
 #include "openhd_reboot_util.h"
 #include "openhd_bitrate_conversions.hpp"
+#include "openhd_config.h"
 #include "wb_link_helper.h"
 #include "wifi_card.h"
 #include "wb_link_rate_helper.hpp"
@@ -59,7 +60,11 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   WBTxRx::Options txrx_options{};
   txrx_options.rtl8812au_rssi_fixup= true;
   txrx_options.session_key_packet_interval=SESSION_KEY_PACKETS_INTERVAL;
+  // Encryption off by default
   txrx_options.disable_encryption= true;
+  if(openhd::load_config().GEN_ENABLE_ENCRYPTION){
+    txrx_options.disable_encryption= false;
+  }
   const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
   if(OHDFilesystemUtil::exists(keypair_file)){
       txrx_options.encryption_key = std::string(keypair_file);
