@@ -579,6 +579,8 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_tx_bps=txStats.curr_bits_per_second;
   stats.monitor_mode_link.curr_rx_pps=rxStats.curr_packets_per_second;
   stats.monitor_mode_link.curr_rx_bps=rxStats.curr_bits_per_second;
+  const auto bitfield_stbc_lpdc_sg= openhd::link_statistics::write_stbc_lpdc_shortguard_bitfield(curr_settings.wb_enable_stbc,curr_settings.wb_enable_ldpc,curr_settings.wb_enable_short_guard);
+  stats.monitor_mode_link.curr_tx_stbc_lpdc_shortguard_bitfield=bitfield_stbc_lpdc_sg;
   //m_console->debug("{}",WBTxRx::tx_stats_to_string(txStats));
   //m_console->debug("{}",WBTxRx::rx_stats_to_string(rxStats));
 

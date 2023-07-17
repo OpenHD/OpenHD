@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <optional>
+#include <cstring>
 
 // NOTE: CURRENTLY MESSED UP / HACKY, NEEDS CARE
 namespace openhd::link_statistics{
@@ -48,25 +49,6 @@ struct StatsMonitorModeLink{
     return "TODO";
   }
 };
-
-struct StbcLpdcShortGuardBitfield {
-  unsigned int stbc:1;
-  unsigned int lpdc:1;
-  unsigned int short_guard:1;
-  unsigned int unused:5;
-}__attribute__ ((packed));
-static_assert(sizeof(StbcLpdcShortGuardBitfield)==1);
-static uint8_t write_stbc_lpdc_shortguard_bitfield(bool stbc, bool lpdc,bool short_guard){
-  StbcLpdcShortGuardBitfield bitfield{stbc,lpdc,short_guard,0};
-  uint8_t ret;
-  mempcpy(&ret,(uint8_t*)&bitfield,1);
-  return ret;
-}
-static StbcLpdcShortGuardBitfield get_stbc_lpdc_shortguard_bitfield(uint8_t bitfield){
-  StbcLpdcShortGuardBitfield ret{};
-  mempcpy((uint8_t*)&ret,&bitfield,1);
-  return ret;
-}
 
 struct StatsTelemetry{
   uint64_t unused_0; /*<  unused_0*/
@@ -163,5 +145,24 @@ static std::ostream& operator<<(std::ostream& strm, const StatsAirGround& obj){
 
 typedef std::function<void(StatsAirGround all_stats)> STATS_CALLBACK;
 
+// We pack those 3 into a single uint8_t in the mavlink msg
+struct StbcLpdcShortGuardBitfield {
+  unsigned int stbc:1;
+  unsigned int lpdc:1;
+  unsigned int short_guard:1;
+  unsigned int unused:5;
+}__attribute__ ((packed));
+static_assert(sizeof(StbcLpdcShortGuardBitfield)==1);
+static uint8_t write_stbc_lpdc_shortguard_bitfield(bool stbc, bool lpdc,bool short_guard){
+  StbcLpdcShortGuardBitfield bitfield{stbc,lpdc,short_guard,0};
+  uint8_t ret;
+  std::memcpy(&ret,(uint8_t*)&bitfield,1);
+  return ret;
+}
+static StbcLpdcShortGuardBitfield get_stbc_lpdc_shortguard_bitfield(uint8_t bitfield){
+  StbcLpdcShortGuardBitfield ret{};
+  std::memcpy((uint8_t*)&ret,&bitfield,1);
+  return ret;
+}
 }
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_LINK_STATISTICS_HPP_
