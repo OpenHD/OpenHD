@@ -13,7 +13,7 @@
 
 enum class CameraType {
   // only exists to have a default value, properly discovered cameras must not be of type unknown
-  UNKNOWN,
+  UNKNOWN=0,
   // Dummy camera, is created fully in sw, for debugging purposes.
   // NOTE: The semi-static gstreamer test video is not ideal, but by using a file or similar we'd lose the option to test different
   // resolutions, framerate(s), bitrate(s) usw.
@@ -117,6 +117,10 @@ static CameraType camera_type_from_string(const std::string& s){
   }
   openhd::log::get_default()->warn("Invalid camera type {}",s);
   return CameraType::DUMMY_SW;
+}
+
+static uint8_t camera_type_to_int(const CameraType& cameraType){
+  return static_cast<int>(cameraType);
 }
 
 enum class VideoCodec {
