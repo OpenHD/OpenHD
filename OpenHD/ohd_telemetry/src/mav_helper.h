@@ -136,6 +136,12 @@ static void debugMavlinkMessage(const mavlink_message_t &msg, const char *TAG) {
 		 msg.compid,
 		 msg.sysid);
 }
+static void debugMavlinkMessages(const std::vector<MavlinkMessage>& messages,const char* TAG){
+  for(const auto& msg:messages){
+        debugMavlinkMessage(msg.m,TAG);
+  }
+  std::cout<<std::endl;
+}
 
 static void lululululu(){
   //mavlink_msg_param_request_list_pack

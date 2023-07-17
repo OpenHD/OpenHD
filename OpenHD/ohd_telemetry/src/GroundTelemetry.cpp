@@ -84,6 +84,7 @@ void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& me
 }
 
 void GroundTelemetry::on_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
+  //debugMavlinkMessages(messages,"GSC");
   // All messages from the ground station(s) are forwarded to the air unit, unless they have a target sys id
   // of the ohd ground unit itself
   auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_GROUND);
@@ -98,15 +99,11 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
       msg_generic.recommended_n_injections=2;
     }
     // optimization: The telemetry link is quite lossy, here we help QOpenHD (or anybody else) trying to change a parameter
-    // on the air unit using the extended parameter protocol.
+    // on the air unit /FC using the (extended) parameter protocol.
     if(msg_id==MAVLINK_MSG_ID_PARAM_EXT_SET || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ
         || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_LIST
         || msg_id==MAVLINK_MSG_ID_PARAM_SET || msg_id==MAVLINK_MSG_ID_PARAM_REQUEST_READ
         || msg_id==MAVLINK_MSG_ID_PARAM_REQUEST_LIST) {
-      /*const auto target= get_target_from_message_if_available(msg_generic.m);
-      if(target.has_target() && target.sys_id==OHD_SYS_ID_AIR){
-        msg_generic.recommended_n_injections=4;
-      }*/
       msg_generic.recommended_n_injections=4;
     }
   }
