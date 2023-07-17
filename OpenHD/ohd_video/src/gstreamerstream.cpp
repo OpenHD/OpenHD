@@ -194,6 +194,7 @@ void GStreamerStream::setup() {
                                            (uint8_t)setting.h26x_keyframe_interval,(uint16_t )setting.streamed_video_format.width,
                                            (uint16_t )setting.streamed_video_format.height,(uint16_t )setting.streamed_video_format.framerate};
     m_opt_action_handler->set_cam_info(index,cam_info);
+    m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
   }
 }
 
