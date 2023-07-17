@@ -43,10 +43,30 @@ struct StatsMonitorModeLink{
   int16_t curr_rx_big_gaps_counter;
   bool tx_passive_mode_is_enabled = false;
   uint16_t curr_rate_kbits=0;
+  uint8_t curr_tx_stbc_lpdc_shortguard_bitfield;
   [[nodiscard]] std::string to_string()const{
     return "TODO";
   }
 };
+
+struct StbcLpdcShortGuardBitfield {
+  unsigned int stbc:1;
+  unsigned int lpdc:1;
+  unsigned int short_guard:1;
+  unsigned int unused:5;
+}__attribute__ ((packed));
+static_assert(sizeof(StbcLpdcShortGuardBitfield)==1);
+static uint8_t write_stbc_lpdc_shortguard_bitfield(bool stbc, bool lpdc,bool short_guard){
+  StbcLpdcShortGuardBitfield bitfield{stbc,lpdc,short_guard,0};
+  uint8_t ret;
+  mempcpy(&ret,(uint8_t*)&bitfield,1);
+  return ret;
+}
+static StbcLpdcShortGuardBitfield get_stbc_lpdc_shortguard_bitfield(uint8_t bitfield){
+  StbcLpdcShortGuardBitfield ret{};
+  mempcpy((uint8_t*)&ret,&bitfield,1);
+  return ret;
+}
 
 struct StatsTelemetry{
   uint64_t unused_0; /*<  unused_0*/
