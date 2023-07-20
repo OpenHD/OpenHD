@@ -429,24 +429,27 @@ static std::string createJetsonStream(const int sensor_id,
   return ss.str();
 }
 
-static std::string createRockchipEncoderPipeline(const int width, const int height, const CommonEncoderParams& encoder_params){
+static std::string createRockchipEncoderPipeline(const int width, const int height, int rotate_degrees, const CommonEncoderParams& encoder_params){
   std::stringstream ss;
   const int bps = encoder_params.h26X_bitrate_kbits;
   if(encoder_params.videoCodec==VideoCodec::H264){
-    ss<<"mpph264enc rc-mode=cbr bps="<<bps;
+    ss<<"mpph264enc rc-mode=0 bps="<<bps;
     ss<<" width="<<width;
     ss<<" height="<<height;
+    ss<<" rotation="<<rotate_degrees;
     ss<<" gop="<<encoder_params.h26X_keyframe_interval<<" ! ";
   }else if(encoder_params.videoCodec==VideoCodec::H265){
-    ss<<"mpph265enc rc-mode=cbr bps="<<bps;
+    ss<<"mpph265enc rc-mode=0 bps="<<bps;
     ss<<" width="<<width;
     ss<<" height="<<height;
+    ss<<" rotation="<<rotate_degrees;
     ss<<" gop="<<encoder_params.h26X_keyframe_interval<<" ! ";
   }else{
     assert(encoder_params.videoCodec==VideoCodec::MJPEG);
     ss<<"mppjpegenc rc-mode=fixqp quant="<<(encoder_params.mjpeg_quality_percent/10);
     ss<<" width="<<width;
     ss<<" height="<<height;
+    ss<<" rotation="<<rotate_degrees;
     ss<<" ! ";
   }
   return ss.str();
@@ -457,11 +460,11 @@ static std::string createRockchipRecordingPipeline(const int width, const int he
   const int bps = encoder_params.h26X_bitrate_kbits;
   ss<<"tee name=o ! ";
   if(encoder_params.videoCodec==VideoCodec::H264){
-    ss<<"mpph264enc rc-mode=cbr bps="<<bps;
+    ss<<"mpph264enc rc-mode=0 bps="<<bps;
     ss<<" width="<<width;
     ss<<" height="<<height;
   }else if(encoder_params.videoCodec==VideoCodec::H265){
-    ss<<"mpph265enc rc-mode=cbr bps="<<bps;
+    ss<<"mpph265enc rc-mode=0 bps="<<bps;
     ss<<" width="<<width;
     ss<<" height="<<height;
   }else{
@@ -491,13 +494,14 @@ static std::string createRockchipHDMIStream(
   std::stringstream ss;
   ss<<createRockchipV4L2Pipeline(0, videoFormat.framerate);
   if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval,50});
-  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
+  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, 0, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
   return ss.str();
 }
 
 static std::string createRockchipCSIStream(
   bool recording,
   const int bitrateKBits,
+  int rotate_degrees,
   const VideoFormat videoFormat,
   const VideoFormat recordingFormat,
   const int keyframe_interval
@@ -505,7 +509,7 @@ static std::string createRockchipCSIStream(
   std::stringstream ss;
   ss<<createRockchipV4L2Pipeline(11, videoFormat.framerate);
   if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval,50});
-  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
+  ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, rotate_degrees, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
   return ss.str();
 }
 
