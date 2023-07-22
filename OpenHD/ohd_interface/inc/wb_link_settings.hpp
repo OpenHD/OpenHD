@@ -63,9 +63,11 @@ struct WBLinkSettings {
   uint32_t wb_rtl8812au_tx_pwr_idx_override=DEFAULT_RTL8812AU_TX_POWER_INDEX;
   // applied when armed
   uint32_t wb_rtl8812au_tx_pwr_idx_armed=RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED;
-  // 0 means auto, aka variable block size (default, gives best results in most cases and has 0 additional latency)
-  uint32_t wb_video_fec_block_length=DEFAULT_WB_VIDEO_FEC_BLOCK_LENGTH;
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
+  // decrease this value when there is a lot of pollution on your channel, and you consistently get tx errors
+  // even though variable bitrate is working fine.
+  // If you set this value to 80% (for example), it reduces the bitrate(s) recommended to the encoder by 80% for each mcs index
+  int wb_video_rate_for_mcs_adjustment_percent=100;
   // NOTE: Default depends on platform type and is therefore calculated below, then overwrites this default value
   uint32_t wb_max_fec_block_size_for_platform=DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
   // change mcs index via RC channel
@@ -73,17 +75,21 @@ struct WBLinkSettings {
 
   // wb link recommends bitrate(s) to the encoder, can be helpfully for inexperienced users.
   bool enable_wb_video_variable_bitrate= true;
-  // Helper
-  [[nodiscard]] bool is_video_variable_block_length_enabled()const{
-    return wb_video_fec_block_length==0;
-  }
+  // !!!!
+  // This allows the ground station to become completely passive (aka tune in on someone elses feed)
+  // but obviosuly you cannot reach your air unit anymore when this mode is enabled
+  // (disable it to re-gain control)
+  bool wb_enable_listen_only_mode= false;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
                                    wb_enable_stbc,wb_enable_ldpc,wb_enable_short_guard,
                                    wb_tx_power_milli_watt,wb_rtl8812au_tx_pwr_idx_override,wb_rtl8812au_tx_pwr_idx_armed,
-                                   wb_video_fec_block_length, wb_video_fec_percentage,wb_max_fec_block_size_for_platform,
+                                   wb_video_fec_percentage,
+                                   wb_video_rate_for_mcs_adjustment_percent,
+                                   wb_max_fec_block_size_for_platform,
                                    wb_mcs_index_via_rc_channel,
-                                   enable_wb_video_variable_bitrate);
+                                   enable_wb_video_variable_bitrate,
+                                   wb_enable_listen_only_mode);
 
 static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform){
   switch (platform.platform_type) {
@@ -180,6 +186,7 @@ static constexpr auto WB_CHANNEL_WIDTH="WB_CHANNEL_W";
 static constexpr auto WB_MCS_INDEX="WB_MCS_INDEX";
 static constexpr auto WB_VIDEO_FEC_BLOCK_LENGTH="WB_V_FEC_BLK_L";
 static constexpr auto WB_VIDEO_FEC_PERCENTAGE="WB_V_FEC_PERC";
+static constexpr auto WB_VIDEO_RATE_FOR_MCS_ADJUSTMENT_PERC="WB_V_RATE_PERC"; //wb_video_rate_for_mcs_adjustment_percent
 static constexpr auto WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM="WB_MAX_D_BZ";
 static constexpr auto WB_TX_POWER_MILLI_WATT="TX_POWER_MW";
 // annoying 16 char settings limit
@@ -192,7 +199,7 @@ static constexpr auto WB_ENABLE_STBC="WB_E_STBC";
 static constexpr auto WB_ENABLE_LDPC="WB_E_LDPC";
 static constexpr auto WB_ENABLE_SHORT_GUARD="WB_E_SHORT_GUARD";
 static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL="MCS_VIA_RC";
-
+static constexpr auto WB_PASSIVE_MODE ="WB_PASSIVE_MODE";
 
 }
 

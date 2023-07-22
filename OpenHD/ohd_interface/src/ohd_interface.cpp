@@ -153,16 +153,6 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   m_console->debug("OHDInterface::created");
 }
 
-std::string OHDInterface::createDebug() const {
-  std::stringstream ss;
-  ss<<"OHDInterface::createDebug:begin\n";
-  if (m_wb_link) {
-    ss << m_wb_link->createDebug();
-  }
-  ss<<"OHDInterface::createDebug:end\n";
-  return ss.str();
-}
-
 std::vector<openhd::Setting> OHDInterface::get_all_settings(){
   std::vector<openhd::Setting> ret;
   if(m_wb_link){

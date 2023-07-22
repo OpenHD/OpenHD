@@ -64,13 +64,13 @@ class AirTelemetry : public MavlinkSystem{
   void set_link_handle(std::shared_ptr<OHDLink> link);
  private:
   // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
-  void send_messages_fc(const std::vector<MavlinkMessage>& messages);
+  void send_messages_fc(std::vector<MavlinkMessage>& messages);
   // send mavlink messages to the ground unit, lossy
-  void send_messages_ground_unit(const std::vector<MavlinkMessage>& messages);
+  void send_messages_ground_unit(std::vector<MavlinkMessage>& messages);
   // called every time one or more messages from the flight controller are received
-  void on_messages_fc(const std::vector<MavlinkMessage>& messages);
+  void on_messages_fc(std::vector<MavlinkMessage>& messages);
   // called every time one or more messages from the ground unit are received
-  void on_messages_ground_unit(const std::vector<MavlinkMessage>& messages);
+  void on_messages_ground_unit(std::vector<MavlinkMessage>& messages);
   // R.N only on air, and only FC uart settings
   std::vector<openhd::Setting> get_all_settings();
   void setup_uart();

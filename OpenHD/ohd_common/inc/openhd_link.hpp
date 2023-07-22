@@ -30,11 +30,17 @@ class OHDLink{
   typedef std::function<void(std::shared_ptr<std::vector<uint8_t>> data)> ON_TELE_DATA_CB;
  public:
   // --- Telemetry air and ground both receive and send --------
+  // Telemetry TX special - retransmission(s) - duplicate specific mavlink messages that are going from gnd to air to increase reliability
+  // See wifibroadcast for a bit more info
+  struct TelemetryTxPacket{
+    std::shared_ptr<std::vector<uint8_t>> data;
+    int n_injections=1;
+  };
   /**
    * valid on both air and ground instance
    * send telemetry data to the ground if air unit and vice versa.
    */
-  virtual void transmit_telemetry_data(std::shared_ptr<std::vector<uint8_t>> data)=0;
+  virtual void transmit_telemetry_data(TelemetryTxPacket packet)=0;
 
   /**
    * valid on both air and ground instance

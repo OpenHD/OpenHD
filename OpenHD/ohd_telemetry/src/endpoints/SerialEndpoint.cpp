@@ -61,10 +61,10 @@ SerialEndpoint::~SerialEndpoint() {
 }
 
 bool SerialEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
-  auto message_buffers= pack_messages(messages);
+  auto message_buffers= aggregate_pack_messages(messages);
   bool success= true;
   for(const auto& message_buffer:message_buffers){
-    if(!write_data_serial(message_buffer)){
+    if(!write_data_serial(*message_buffer.aggregated_data)){
       success= false;
     }
   }

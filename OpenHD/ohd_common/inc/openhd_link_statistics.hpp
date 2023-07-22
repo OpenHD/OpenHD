@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <optional>
+#include <cstring>
 
 // NOTE: CURRENTLY MESSED UP / HACKY, NEEDS CARE
 namespace openhd::link_statistics{
@@ -31,13 +32,19 @@ struct StatsMonitorModeLink{
   uint64_t count_tx_dropped_packets; /*<  count_tx_dropped_packets*/
   uint64_t unused2; /*<  unused2*/
   uint64_t unused3; /*<  unused3*/
-  int32_t curr_tx_pps; /*<  tx packets per second*/
-  int32_t curr_rx_pps; /*<  rx packets per second*/
+  int16_t curr_tx_pps; /*<  tx packets per second*/
+  int16_t curr_rx_pps; /*<  rx packets per second*/
   int32_t curr_tx_bps; /*<  tx bits per second*/
   int32_t curr_rx_bps; /*<  rx bits per second*/
-  int32_t unused0; /*<  curr_wb_mcs_index*/
-  int32_t unused1; /*<  unused1*/
+  int32_t curr_tx_card_idx; /*< curr tx card (for multi rx-es on ground) ,unused0 */
+  int32_t curr_tx_mcs_index; /* curr tx mcs index used when injecting packets, unused1*/
+  uint16_t curr_tx_channel_mhz;
+  uint8_t curr_tx_channel_w_mhz;
   int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss*/
+  int16_t curr_rx_big_gaps_counter;
+  bool tx_passive_mode_is_enabled = false;
+  uint16_t curr_rate_kbits=0;
+  uint8_t curr_tx_stbc_lpdc_shortguard_bitfield;
   [[nodiscard]] std::string to_string()const{
     return "TODO";
   }
@@ -46,8 +53,8 @@ struct StatsMonitorModeLink{
 struct StatsTelemetry{
   uint64_t unused_0; /*<  unused_0*/
   uint64_t unused_1; /*<  unused_1*/
-  int32_t curr_tx_pps; /*<  tx packets per second*/
-  int32_t curr_rx_pps; /*<  rx packets per second*/
+  int16_t curr_tx_pps; /*<  tx packets per second*/
+  int16_t curr_rx_pps; /*<  rx packets per second*/
   int32_t curr_tx_bps; /*<  tx bits per second*/
   int32_t curr_rx_bps; /*<  rx bits per second*/
   int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss_perc*/
@@ -68,15 +75,14 @@ struct StatsWBVideoAir{
   int32_t curr_measured_encoder_bitrate;
   int32_t curr_injected_bitrate;
   int32_t curr_injected_pps;
-  int32_t curr_dropped_packets;
+  int32_t curr_dropped_frames;
   uint32_t curr_fec_encode_time_avg_us;
   uint32_t curr_fec_encode_time_min_us;
   uint32_t curr_fec_encode_time_max_us;
   uint16_t curr_fec_block_size_avg;
   uint16_t curr_fec_block_size_min;
   uint16_t curr_fec_block_size_max;
-  int32_t curr_wb_mcs_index; // unused0 in mavlink message
-  int32_t unused1; // unused1 in mavlink message
+  int32_t curr_fec_percentage; // unused0 in mavlink message
   [[nodiscard]] std::string to_string()const{
     return "TODO";
   }
@@ -101,14 +107,16 @@ struct StatsWBVideoGround{
 
 struct StatsPerCard{
   bool exists_in_openhd=false; // We have place for up to X wifi cards, but they might be unused - don't waste any telemetry bandwidth on these cards
-  int8_t rx_rssi=INT8_MIN; // dBm / rssi
+  uint8_t card_type=0;
+  int8_t rx_rssi_1=INT8_MIN; // dBm / rssi
+  int8_t rx_rssi_2=INT8_MIN; // dBm / rssi
   uint64_t count_p_received=0; //TODO
   uint64_t count_p_injected=0; //TODO
+  int16_t tx_power=0;
+  int8_t curr_rx_packet_loss_perc=0;
+  uint8_t curr_status=0;
   [[nodiscard]] std::string to_string(const int index)const{
-	std::stringstream ss;
-	ss << "StatsPerCard"<<index<<"{exists:" << (exists_in_openhd ? "Y":"N") << ", rssi:" << (int)rx_rssi <<
-	   ", count_p_received:" << count_p_received << ", count_p_injected:" << count_p_injected << "}";
-	return ss.str();
+    return "TODO";
   }
 };
 // Stats per connected card
@@ -137,5 +145,24 @@ static std::ostream& operator<<(std::ostream& strm, const StatsAirGround& obj){
 
 typedef std::function<void(StatsAirGround all_stats)> STATS_CALLBACK;
 
+// We pack those 3 into a single uint8_t in the mavlink msg
+struct StbcLpdcShortGuardBitfield {
+  unsigned int stbc:1;
+  unsigned int lpdc:1;
+  unsigned int short_guard:1;
+  unsigned int unused:5;
+}__attribute__ ((packed));
+static_assert(sizeof(StbcLpdcShortGuardBitfield)==1);
+static uint8_t write_stbc_lpdc_shortguard_bitfield(bool stbc, bool lpdc,bool short_guard){
+  StbcLpdcShortGuardBitfield bitfield{stbc,lpdc,short_guard,0};
+  uint8_t ret;
+  std::memcpy(&ret,(uint8_t*)&bitfield,1);
+  return ret;
+}
+static StbcLpdcShortGuardBitfield get_stbc_lpdc_shortguard_bitfield(uint8_t bitfield){
+  StbcLpdcShortGuardBitfield ret{};
+  std::memcpy((uint8_t*)&ret,&bitfield,1);
+  return ret;
+}
 }
 #endif //OPENHD_OPENHD_OHD_COMMON_OPENHD_LINK_STATISTICS_HPP_

@@ -27,12 +27,11 @@ WBEndpoint::~WBEndpoint() {
 }
 
 bool WBEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
-  auto message_buffers= pack_messages(messages);
+  auto message_buffers= aggregate_pack_messages(messages);
   for(const auto& message_buffer:message_buffers){
     if(m_link_handle){
-      auto shared=std::make_shared<std::vector<uint8_t>>(message_buffer);
       std::lock_guard<std::mutex> guard(m_send_messages_mutex);
-      m_link_handle->transmit_telemetry_data(shared);
+      m_link_handle->transmit_telemetry_data({message_buffer.aggregated_data,message_buffer.recommended_n_retransmissions});
     }
   }
   return true;

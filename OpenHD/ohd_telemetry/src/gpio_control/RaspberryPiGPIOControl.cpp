@@ -22,8 +22,8 @@ static void configure_gpio(int gpio_number,int gpio_value){
     return;
   }
   const bool low=gpio_value==GPIO_LOW;
-  configure_gpio_as_output(2);
-  configure_gpio_low_high(2,low);
+  configure_gpio_as_output(gpio_number);
+  configure_gpio_low_high(gpio_number,low);
 }
 
 static bool validate_gpio_setting_int(int value){
@@ -34,6 +34,7 @@ GPIOControl::GPIOControl() {
   m_settings=std::make_unique<GPIOControlSettingsHolder>();
   const auto& tmp=m_settings->get_settings();
   configure_gpio(2,tmp.gpio_2);
+  configure_gpio(2,tmp.gpio_26);
 }
 
 std::vector<openhd::Setting> GPIOControl::get_all_settings() {

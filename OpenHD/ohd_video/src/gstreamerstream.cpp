@@ -69,9 +69,6 @@ void GStreamerStream::setup() {
   m_console->debug("GStreamerStream::setup() begin");
   const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
-  if(m_opt_action_handler){
-    m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,setting.h26x_bitrate_kbits);
-  }
   // atomic & called in regular intervals if variable bitrate is enabled.
   m_curr_dynamic_bitrate_kbits=setting.h26x_bitrate_kbits;
   if(!setting.enable_streaming){
@@ -149,8 +146,15 @@ void GStreamerStream::setup() {
   }
   // After we've written the parts for the different camera implementation(s) we just need to append the rtp part and the udp out
   // add rtp part
+  // Optimization: For high bitrate(s) we use slightly bigger rtp packet size
+  /*int rtp_fragment_size=1024;
+  if(setting.h26x_bitrate_kbits>10*1000){
+    rtp_fragment_size=1440;
+  }*/
+  const int rtp_fragment_size=1440;
+  m_console->debug("Using {} for rtp fragmentation",rtp_fragment_size);
   m_pipeline_content << OHDGstHelper::create_parse_and_rtp_packetize(
-      setting.streamed_video_format.videoCodec);
+      setting.streamed_video_format.videoCodec,rtp_fragment_size);
   // forward data via udp localhost or using appsink and data callback
   //m_pipeline_content << OHDGstHelper::createOutputUdpLocalhost(m_video_udp_port);
   m_pipeline_content << OHDGstHelper::createOutputAppSink();
@@ -181,6 +185,16 @@ void GStreamerStream::setup() {
   assert(m_app_sink_element);
   m_pull_samples_run= true;
   m_pull_samples_thread=std::make_unique<std::thread>(&GStreamerStream::loop_pull_samples, this);
+  if(m_opt_action_handler){
+    const auto index=m_camera_holder->get_camera().index;
+    const auto cam_type= camera_type_to_int(m_camera_holder->get_camera().type);
+    auto cam_info=openhd::ActionHandler::CamInfo{true,
+     (uint8_t)index,cam_type,ADD_RECORDING_TO_PIPELINE, (uint8_t)video_codec_to_int(setting.streamed_video_format.videoCodec),(uint16_t)setting.h26x_bitrate_kbits,
+                                           (uint8_t)setting.h26x_keyframe_interval,(uint16_t )setting.streamed_video_format.width,
+                                           (uint16_t )setting.streamed_video_format.height,(uint16_t )setting.streamed_video_format.framerate};
+    m_opt_action_handler->set_cam_info(index,cam_info);
+    //m_console->debug("Cam encoding format: {}",(int)cam_info.encoding_format);
+  }
 }
 
 void GStreamerStream::setup_raspberrypi_mmal_csi() {
@@ -383,7 +397,7 @@ void GStreamerStream::cleanup_pipe() {
   // start demuxing of (all) .mkv files unless the FC is currently armed ( we are in flight)
   // this will of course also de-mux the new ground recording (if there is any)
   if(m_opt_action_handler && !m_opt_action_handler->is_currently_armed()){
-    GstRecordingDemuxer::instance().demux_all_remaining_mkv_files_async();
+    //GstRecordingDemuxer::instance().demux_all_remaining_mkv_files_async();
   }
   m_console->debug("GStreamerStream::cleanup_pipe() end");
 }
@@ -461,11 +475,14 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
     //m_console->debug("Cam cannot do <{}", kbits_per_second_to_string(MIN_BITRATE_KBITS));
     bitrate_for_encoder_kbits =MIN_BITRATE_KBITS;
   }
-  // upper-bound - hard coded for now, since pi cannot do more than 19MBit/s
-  static constexpr auto max_bitrate_kbits=19*1000;
-  if(bitrate_for_encoder_kbits >max_bitrate_kbits){
-    //m_console->debug("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
-    bitrate_for_encoder_kbits =max_bitrate_kbits;
+  const auto cam_type=m_camera_holder->get_camera().type;
+  if(cam_type==CameraType::RPI_CSI_MMAL || cam_type==CameraType::RPI_CSI_LIBCAMERA || cam_type==CameraType::RPI_CSI_VEYE_V4l2){
+    // upper-bound - hard coded for now, since pi cannot do more than 20MBit/s
+    static constexpr auto max_bitrate_kbits=19999;
+    if(bitrate_for_encoder_kbits>max_bitrate_kbits){
+      //m_console->debug("Cam cannot do more than {}", kbits_per_second_to_string(max_bitrate_kbits));
+      bitrate_for_encoder_kbits =max_bitrate_kbits;
+    }
   }
   if(m_curr_dynamic_bitrate_kbits==bitrate_for_encoder_kbits){
     //m_console->debug("Cam already at {}",m_curr_dynamic_bitrate_kbits);
@@ -478,7 +495,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
     m_camera_holder->persist(false);
     m_curr_dynamic_bitrate_kbits= bitrate_for_encoder_kbits;
     if(m_opt_action_handler){
-      m_opt_action_handler->dirty_set_bitrate_of_camera(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
+      m_opt_action_handler->set_cam_info_bitrate(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
     }
   }else{
     const auto cam_type=m_camera_holder->get_camera().type;
@@ -489,7 +506,7 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
       // This triggers a restart of the pipeline
       m_camera_holder->persist();
     }else{
-      m_console->warn("Camera does not support variable bitrate");
+      m_console->warn("Please disable variable bitrate");
     }
   }
 }

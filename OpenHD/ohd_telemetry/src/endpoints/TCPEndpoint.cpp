@@ -33,10 +33,10 @@ TCPEndpoint::~TCPEndpoint() {
 bool TCPEndpoint::sendMessagesImpl(
     const std::vector<MavlinkMessage>& messages) {
   if(client_socket !=0){
-    auto message_buffers= pack_messages(messages);
+    auto message_buffers= aggregate_pack_messages(messages,1024);
     for(const auto& message_buffer:message_buffers){
       //send(client_socket, message_buffer.data(), message_buffer.size(), 0);
-      send(client_socket, message_buffer.data(), message_buffer.size(), MSG_NOSIGNAL); //otherwise we might crash if the socket disconnects
+      send(client_socket, message_buffer.aggregated_data->data(), message_buffer.aggregated_data->size(), MSG_NOSIGNAL); //otherwise we might crash if the socket disconnects
     }
     return true;
   }
