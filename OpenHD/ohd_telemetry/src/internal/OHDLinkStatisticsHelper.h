@@ -33,7 +33,7 @@ static MavlinkMessage pack_card(const uint8_t system_id,const uint8_t component_
 static MavlinkMessage pack_link_general(const uint8_t system_id,const uint8_t component_id,
                                         const openhd::link_statistics::StatsMonitorModeLink stats_monitor_mode_link){
   MavlinkMessage msg;
-  mavlink_openhd_stats_monitor_mode_wifi_link_t tmp;
+  mavlink_openhd_stats_monitor_mode_wifi_link_t tmp{};
   tmp.curr_tx_pps=stats_monitor_mode_link.curr_tx_pps;
   tmp.curr_rx_pps=stats_monitor_mode_link.curr_rx_pps;
   tmp.curr_tx_bps=stats_monitor_mode_link.curr_tx_bps;
@@ -47,7 +47,8 @@ static MavlinkMessage pack_link_general(const uint8_t system_id,const uint8_t co
   tmp.curr_tx_channel_w_mhz=stats_monitor_mode_link.curr_tx_channel_w_mhz;
   tmp.curr_rx_big_gaps_counter=stats_monitor_mode_link.curr_rx_big_gaps_counter;
   tmp.tx_passive_mode_is_enabled=stats_monitor_mode_link.tx_passive_mode_is_enabled ? 1 : 0;
-  tmp.dummy2=stats_monitor_mode_link.curr_rate_kbits;
+  tmp.curr_tx_stbc_lpdc_shortguard_bitfield=stats_monitor_mode_link.curr_tx_stbc_lpdc_shortguard_bitfield;
+  tmp.curr_rate_kbits=stats_monitor_mode_link.curr_rate_kbits;
   //tmp.unused2=stats_monitor_mode_link.unused2;
   //tmp.unused3=stats_monitor_mode_link.unused3;
   mavlink_msg_openhd_stats_monitor_mode_wifi_link_encode(system_id,component_id,&msg.m,&tmp);
@@ -72,7 +73,6 @@ static MavlinkMessage pack_vid_air(const uint8_t system_id,const uint8_t compone
   MavlinkMessage msg;
   mavlink_openhd_stats_wb_video_air_t tmp;
   tmp.link_index=stats.link_index;
-  tmp.curr_video_codec=stats.curr_video_codec;
   tmp.curr_recommended_bitrate=stats.curr_recommended_bitrate;
   tmp.curr_measured_encoder_bitrate=stats.curr_measured_encoder_bitrate;
   tmp.curr_injected_bitrate=stats.curr_injected_bitrate;
@@ -129,7 +129,6 @@ static MavlinkMessage pack_vid_gnd_fec_performance(const uint8_t system_id,const
 static MavlinkMessage pack_camera_stats(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::CamInfo& cam_info){
   MavlinkMessage msg;
   mavlink_openhd_camera_status_t tmp;
-  tmp.cam_index=cam_info.cam_index;
   tmp.cam_type=cam_info.cam_type;
   tmp.encoding_format=cam_info.encoding_format;
   tmp.air_recording_active=cam_info.air_recording_active;
@@ -138,6 +137,7 @@ static MavlinkMessage pack_camera_stats(const uint8_t system_id,const uint8_t co
   tmp.stream_w=cam_info.stream_w;
   tmp.stream_h=cam_info.stream_h;
   tmp.stream_fps=cam_info.stream_fps;
+  tmp.encoding_format=cam_info.encoding_format;
   mavlink_msg_openhd_camera_status_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
