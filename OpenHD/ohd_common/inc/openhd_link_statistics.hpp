@@ -70,7 +70,6 @@ struct StatsTelemetry{
 
 struct StatsWBVideoAir{
   uint8_t link_index;
-  uint8_t curr_video_codec;
   int32_t curr_recommended_bitrate;
   int32_t curr_measured_encoder_bitrate;
   int32_t curr_injected_bitrate;

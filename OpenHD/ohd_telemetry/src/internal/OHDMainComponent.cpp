@@ -39,11 +39,13 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
     if(m_opt_action_handler){
       auto cam_stats1=m_opt_action_handler->get_cam_info(0);
       auto cam_stats2=m_opt_action_handler->get_cam_info(1);
+      // NOTE: We use the comp id of primary / secondary camera here, since even though we are not the camera itself,
+      // We send the broadcast message(s) for it
       if(cam_stats1.active){
-        ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,m_comp_id,cam_stats1));
+        ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,MAV_COMP_ID_CAMERA,cam_stats1));
       }
       if(cam_stats2.active){
-        ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,m_comp_id,cam_stats2));
+        ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,MAV_COMP_ID_CAMERA2,cam_stats2));
       }
     }
   }
