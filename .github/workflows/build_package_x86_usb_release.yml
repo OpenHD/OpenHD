@@ -36,6 +36,8 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          ls
+          cd OpenHD
           ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make
