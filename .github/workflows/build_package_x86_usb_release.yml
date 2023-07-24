@@ -29,11 +29,11 @@ jobs:
           apt update
           apt install -y git sudo
 
-      - name:
+      - name: clone OpenHD
         run: |
           git clone https://github.com/OpenHD/OpenHD --recursive
           cd OpenHD  
-          
+
       - name: Install Dependencies
         run: |
           ./install_build_dep.sh ubuntu-x86
