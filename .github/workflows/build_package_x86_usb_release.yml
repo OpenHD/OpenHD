@@ -34,6 +34,7 @@ jobs:
           submodules: recursive
       - name: Install Dependencies
         run: |
+        	git config --global --add safe.directory /__w/OpenHD/OpenHD
           sudo ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make
