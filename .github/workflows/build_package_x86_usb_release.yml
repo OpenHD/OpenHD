@@ -29,6 +29,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          apt update
           apt install -y sudo
           sudo ./install_build_dep.sh ubuntu-x86
 
