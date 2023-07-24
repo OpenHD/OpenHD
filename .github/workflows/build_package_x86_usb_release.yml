@@ -28,15 +28,15 @@ jobs:
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
           apt update
           apt install -y git sudo
-     
-      - name: Install Dependencies
-        run: |
-          ./install_build_dep.sh ubuntu-x86
 
       - name:
         run: |
           git clone https://github.com/OpenHD/OpenHD --recursive
-          cd OpenHD
+          cd OpenHD  
+          
+      - name: Install Dependencies
+        run: |
+          ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make
         run: |
