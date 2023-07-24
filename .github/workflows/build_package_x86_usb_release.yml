@@ -38,7 +38,7 @@ jobs:
 
       - name: Build with make
         run: |
-          sudo ./package.sh x86_64 ubuntu jammy
+          sudo ./package.sh x86_64 ubuntu lunar
           ls -a
 
       - name: Upload to Github
@@ -60,6 +60,6 @@ jobs:
           owner: "openhd"
           repo: "openhd-2-3-evo"
           distro: "ubuntu"
-          release: "jammy"
+          release: "lunar"
           republish: "true" # needed ONLY if version is not changing
           file: "*.deb"
