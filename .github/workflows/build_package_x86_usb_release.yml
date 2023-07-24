@@ -32,16 +32,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
-      - name:
-        run: git config --global --add safe.directory /__w/OpenHD/OpenHD
 
       - name: Install Dependencies
         run: |
-          sudo ./install_build_dep.sh ubuntu-x86
+          ./install_build_dep.sh ubuntu-x86
 
       - name: Build with make
         run: |
-          sudo ./package.sh x86_64 ubuntu lunar
+          ./package.sh x86_64 ubuntu lunar
           ls -a
 
       - name: Upload to Github
