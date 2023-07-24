@@ -16,7 +16,6 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
   assert(m_console);
   m_air_settings =std::make_unique<openhd::telemetry::air::SettingsHolder>(platform);
   m_fc_serial =std::make_unique<SerialEndpointManager>();
-  setup_uart();
   m_ohd_main_component =std::make_shared<OHDMainComponent>(
       m_platform,_sys_id,true,opt_action_handler);
   m_components.push_back(m_ohd_main_component);
@@ -38,6 +37,7 @@ AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHa
       on_messages_ground_unit(messages);
     });
   }
+  setup_uart();
   m_console->debug("Created AirTelemetry");
 }
 
