@@ -75,21 +75,25 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
     // MCS 8 == MCS 0 with 2 spatial streams
     case 8:
           // theoretical 13 | 27
+          // measured: ~11.7 | 22.1
           return {
-                  13000-3000,
-                  27000-10000
+                  11700-3000,
+                  22100-4000
           };
     case 9:
           // theoretical 26 | 54
+          // measured: ~21 | 30+
           return {
-                  13000-3000,
-                  27000-10000
+                  26000-3000,
+                  32000-4000
           };
     case 10:
-          // theoretical 26 | 54
+          // theoretical 39 | 81
+          // measured: 29+ | none
+          // here we already pretty much reach the limit what encoding hw (rpi) can do
           return {
-                  13000-3000,
-                  27000-10000
+                  30000,
+                  30000
           };
     case 11:
           // theoretical 52 | 108
