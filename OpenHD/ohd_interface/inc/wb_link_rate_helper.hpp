@@ -92,7 +92,7 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
           // measured: 29+ | none
           // here we already pretty much reach the limit what encoding hw (rpi) can do
           return {
-                  30000,
+                  29000-3000,
                   30000
           };
     case 11:
