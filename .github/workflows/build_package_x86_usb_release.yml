@@ -42,6 +42,7 @@ jobs:
 
       - name: Build with make
         run: |
+          cd OpenHD
           ./package.sh x86_64 ubuntu lunar
           ls -a
 
@@ -50,7 +51,7 @@ jobs:
         with:
           name: "OpenHD"
           path: |
-            *.deb
+            OpenHD/*.deb
             *.log
           if-no-files-found: error
 
@@ -66,4 +67,4 @@ jobs:
           distro: "ubuntu"
           release: "lunar"
           republish: "true" # needed ONLY if version is not changing
-          file: "*.deb"
+          file: "OpenHD/*.deb"
