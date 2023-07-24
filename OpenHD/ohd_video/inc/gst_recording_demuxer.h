@@ -9,6 +9,7 @@
 #include <thread>
 #include <vector>
 #include <mutex>
+#include <string>
 
 // Simple util class / namespace for demuxing .mkv air recording files
 // uses gstreamer & command line util
