@@ -1,0 +1,143 @@
+rpi:
+openhd@raspberrypi:~/Open.HD/OpenHD/build $ v4l2-ctl -d 11 --list-ctrls-menu
+
+Codec Controls
+
+             video_bitrate_mode 0x009909ce (menu)   : min=0 max=1 default=0 value=0 flags=update
+				0: Variable Bitrate
+				1: Constant Bitrate
+                  video_bitrate 0x009909cf (int)    : min=25000 max=25000000 step=25000 default=10000000 value=10000000
+           sequence_header_mode 0x009909d8 (menu)   : min=0 max=1 default=1 value=1
+				0: Separate Buffer
+				1: Joined With 1st Frame
+         repeat_sequence_header 0x009909e2 (bool)   : default=0 value=0
+                force_key_frame 0x009909e5 (button) : flags=write-only, execute-on-write
+          h264_minimum_qp_value 0x00990a61 (int)    : min=0 max=51 step=1 default=20 value=20
+          h264_maximum_qp_value 0x00990a62 (int)    : min=0 max=51 step=1 default=51 value=51
+            h264_i_frame_period 0x00990a66 (int)    : min=0 max=2147483647 step=1 default=60 value=60
+                     h264_level 0x00990a67 (menu)   : min=0 max=15 default=11 value=11
+				0: 1
+				1: 1b
+				2: 1.1
+				3: 1.2
+				4: 1.3
+				5: 2
+				6: 2.1
+				7: 2.2
+				8: 3
+				9: 3.1
+				10: 3.2
+				11: 4
+				12: 4.1
+				13: 4.2
+				14: 5
+				15: 5.1
+                   h264_profile 0x00990a6b (menu)   : min=0 max=4 default=4 value=4
+				0: Baseline
+				1: Constrained Baseline
+				2: Main
+				4: High
+
+// -----------------------
+openhd@raspberrypi:~/Open.HD/OpenHD/build $ gst-inspect-1.0 v4l2h264enc
+Factory Details:
+  Rank                     primary + 1 (257)
+  Long-name                V4L2 H.264 Encoder
+  Klass                    Codec/Encoder/Video/Hardware
+  Description              Encode H.264 video streams via V4L2 API
+  Author                   ayaka <ayaka@soulik.info>
+
+Plugin Details:
+  Name                     video4linux2
+  Description              elements for Video 4 Linux
+  Filename                 /usr/lib/arm-linux-gnueabihf/gstreamer-1.0/libgstvideo4linux2.so
+  Version                  1.18.4
+  License                  LGPL
+  Source module            gst-plugins-good
+  Source release date      2021-03-15
+  Binary package           GStreamer Good Plugins (unknown Debian derivative)
+  Origin URL               http://packages.qa.debian.org/gst-plugins-good1.0
+
+GObject
+ +----GInitiallyUnowned
+       +----GstObject
+             +----GstElement
+                   +----GstVideoEncoder
+                         +----GstV4l2VideoEnc
+                               +----GstV4l2H264Enc
+                                     +----v4l2h264enc
+
+Implemented Interfaces:
+  GstPreset
+
+Pad Templates:
+  SINK template: 'sink'
+    Availability: Always
+    Capabilities:
+      video/x-raw
+                 format: { (string)I420, (string)YV12, (string)NV12, (string)NV21, (string)RGB16, (string)RGB, (string)BGR, (string)RGBA, (string)BGRx, (string)BGRA, (string)YUY2, (string)YVYU, (string)UYVY }
+                  width: [ 1, 32768 ]
+                 height: [ 1, 32768 ]
+              framerate: [ 0/1, 2147483647/1 ]
+
+  SRC template: 'src'
+    Availability: Always
+    Capabilities:
+      video/x-h264
+          stream-format: byte-stream
+              alignment: au
+                  level: { (string)1, (string)1b, (string)1.1, (string)1.2, (string)1.3, (string)2, (string)2.1, (string)2.2, (string)3, (string)3.1, (string)3.2, (string)4, (string)4.1, (string)4.2, (string)5, (string)5.1 }
+                profile: { (string)baseline, (string)constrained-baseline, (string)main, (string)high }
+
+Element has no clocking capabilities.
+Element has no URI handling capabilities.
+
+Pads:
+  SINK: 'sink'
+    Pad Template: 'sink'
+  SRC: 'src'
+    Pad Template: 'src'
+
+Element Properties:
+  capture-io-mode     : Capture I/O mode (matches src pad)
+                        flags: readable, writable
+                        Enum "GstV4l2IOMode" Default: 0, "auto"
+                           (0): auto             - GST_V4L2_IO_AUTO
+                           (1): rw               - GST_V4L2_IO_RW
+                           (2): mmap             - GST_V4L2_IO_MMAP
+                           (3): userptr          - GST_V4L2_IO_USERPTR
+                           (4): dmabuf           - GST_V4L2_IO_DMABUF
+                           (5): dmabuf-import    - GST_V4L2_IO_DMABUF_IMPORT
+  device              : Device location
+                        flags: readable
+                        String. Default: "/dev/video11"
+  device-fd           : File descriptor of the device
+                        flags: readable
+                        Integer. Range: -1 - 2147483647 Default: -1
+  device-name         : Name of the device
+                        flags: readable
+                        String. Default: null
+  extra-controls      : Extra v4l2 controls (CIDs) for the device
+                        flags: readable, writable
+                        Boxed pointer of type "GstStructure"
+  min-force-key-unit-interval: Minimum interval between force-keyunit requests in nanoseconds
+                        flags: readable, writable
+                        Unsigned Integer64. Range: 0 - 18446744073709551615 Default: 0
+  name                : The name of the object
+                        flags: readable, writable, 0x2000
+                        String. Default: "v4l2h264enc0"
+  output-io-mode      : Output side I/O mode (matches sink pad)
+                        flags: readable, writable
+                        Enum "GstV4l2IOMode" Default: 0, "auto"
+                           (0): auto             - GST_V4L2_IO_AUTO
+                           (1): rw               - GST_V4L2_IO_RW
+                           (2): mmap             - GST_V4L2_IO_MMAP
+                           (3): userptr          - GST_V4L2_IO_USERPTR
+                           (4): dmabuf           - GST_V4L2_IO_DMABUF
+                           (5): dmabuf-import    - GST_V4L2_IO_DMABUF_IMPORT
+  parent              : The parent of the object
+                        flags: readable, writable, 0x2000
+                        Object of type "GstObject"
+  qos                 : Handle Quality-of-Service events from downstream
+                        flags: readable, writable
+                        Boolean. Default: false

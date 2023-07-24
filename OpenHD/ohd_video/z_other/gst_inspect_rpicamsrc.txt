@@ -1,0 +1,301 @@
+also check https://gstreamer.freedesktop.org/documentation/rpicamsrc/index.html?gi-language=c
+
+openhd@openhd:$ sudo gst-inspect-1.0 rpicamsrc
+Factory Details:
+  Rank                     none (0)
+  Long-name                Raspberry Pi Camera Source
+  Klass                    Source/Video
+  Description              Raspberry Pi camera module source
+  Author                   Jan Schmidt <jan@centricular.com>
+
+Plugin Details:
+  Name                     rpicamsrc
+  Description              Raspberry Pi Camera Source
+  Filename                 /usr/lib/arm-linux-gnueabihf/gstreamer-1.0/libgstrpicamsrc.so
+  Version                  1.18.4
+  License                  LGPL
+  Source module            gst-plugins-good
+  Source release date      2021-03-15
+  Binary package           GStreamer Good Plug-ins source release
+  Origin URL               Unknown package origin
+
+GObject
+ +----GInitiallyUnowned
+       +----GstObject
+             +----GstElement
+                   +----GstBaseSrc
+                         +----GstPushSrc
+                               +----GstRpiCamSrc
+
+Implemented Interfaces:
+  GstColorBalance
+  GstVideoDirection
+  GstVideoOrientation
+
+Pad Templates:
+  SRC template: 'src'
+    Availability: Always
+    Capabilities:
+      video/x-h264
+                  width: [ 1, 2147483647 ]
+                 height: [ 1, 2147483647 ]
+              framerate: [ 0/1, 2147483647/1 ]
+          stream-format: byte-stream
+              alignment: nal
+                profile: { (string)constrained-baseline, (string)baseline, (string)main, (string)high }
+      image/jpeg
+                  width: [ 1, 2147483647 ]
+                 height: [ 1, 2147483647 ]
+              framerate: [ 0/1, 2147483647/1 ]
+      video/x-raw
+                 format: { (string)I420, (string)RGB, (string)BGR, (string)RGBA }
+                  width: [ 1, 2147483647 ]
+                 height: [ 1, 2147483647 ]
+              framerate: [ 0/1, 2147483647/1 ]
+
+Element has no clocking capabilities.
+Element has no URI handling capabilities.
+
+Pads:
+  SRC: 'src'
+    Pad Template: 'src'
+
+Element Properties:
+  annotation-mode     : Flags to control annotation of the output video
+                        flags: readable, writable
+                        Flags "GstRpiCamSrcAnnotationMode" Default: 0x00000000, "(none)"
+                           (0x00000001): custom-text      - GST_RPI_CAM_SRC_ANNOTATION_MODE_CUSTOM_TEXT
+                           (0x00000002): text             - GST_RPI_CAM_SRC_ANNOTATION_MODE_TEXT
+                           (0x00000004): date             - GST_RPI_CAM_SRC_ANNOTATION_MODE_DATE
+                           (0x00000008): time             - GST_RPI_CAM_SRC_ANNOTATION_MODE_TIME
+                           (0x00000010): shutter-settings - GST_RPI_CAM_SRC_ANNOTATION_MODE_SHUTTER_SETTINGS
+                           (0x00000020): caf-settings     - GST_RPI_CAM_SRC_ANNOTATION_MODE_CAF_SETTINGS
+                           (0x00000040): gain-settings    - GST_RPI_CAM_SRC_ANNOTATION_MODE_GAIN_SETTINGS
+                           (0x00000080): lens-settings    - GST_RPI_CAM_SRC_ANNOTATION_MODE_LENS_SETTINGS
+                           (0x00000100): motion-settings  - GST_RPI_CAM_SRC_ANNOTATION_MODE_MOTION_SETTINGS
+                           (0x00000200): frame-number     - GST_RPI_CAM_SRC_ANNOTATION_MODE_FRAME_NUMBER
+                           (0x00000400): black-background - GST_RPI_CAM_SRC_ANNOTATION_MODE_BLACK_BACKGROUND
+  annotation-text     : Text string to annotate onto video when annotation-mode flags include 'custom-text'
+                        flags: readable, writable
+                        String. Default: ""
+  annotation-text-bg-colour: Set the annotation text background colour, as the integer corresponding to a VUY value eg 0x8080FF = 8421631, -1 for default
+                        flags: readable, writable
+                        Integer. Range: -1 - 2147483647 Default: -1
+  annotation-text-colour: Set the annotation text colour, as the integer corresponding to a VUY value eg 0x8080FF = 8421631, -1 for default
+                        flags: readable, writable
+                        Integer. Range: -1 - 2147483647 Default: -1
+  annotation-text-size: Set the size of annotation text (in pixels) (0 = Auto)
+                        flags: readable, writable
+                        Integer. Range: 0 - 2147483647 Default: 0
+  awb-gain-blue       : Manual AWB Gain for blue channel when awb-mode=off
+                        flags: readable, writable
+                        Float. Range:               0 -               8 Default:               0
+  awb-gain-red        : Manual AWB Gain for red channel when awb-mode=off
+                        flags: readable, writable
+                        Float. Range:               0 -               8 Default:               0
+  awb-mode            : White Balance mode
+                        flags: readable, writable
+                        Enum "GstRpiCamSrcAWBMode" Default: 1, "auto"
+                           (0): off              - GST_RPI_CAM_SRC_AWB_MODE_OFF
+                           (1): auto             - GST_RPI_CAM_SRC_AWB_MODE_AUTO
+                           (2): sunlight         - GST_RPI_CAM_SRC_AWB_MODE_SUNLIGHT
+                           (3): cloudy           - GST_RPI_CAM_SRC_AWB_MODE_CLOUDY
+                           (4): shade            - GST_RPI_CAM_SRC_AWB_MODE_SHADE
+                           (5): tungsten         - GST_RPI_CAM_SRC_AWB_MODE_TUNGSTEN
+                           (6): fluorescent      - GST_RPI_CAM_SRC_AWB_MODE_FLUORESCENT
+                           (7): incandescent     - GST_RPI_CAM_SRC_AWB_MODE_INCANDESCENT
+                           (8): flash            - GST_RPI_CAM_SRC_AWB_MODE_FLASH
+                           (9): horizon          - GST_RPI_CAM_SRC_AWB_MODE_HORIZON
+  bitrate             : Bitrate for encoding. 0 for VBR using quantisation-parameter
+                        flags: readable, writable
+                        Integer. Range: 0 - 25000000 Default: 17000000
+  blocksize           : Size in bytes to read per buffer (-1 = default)
+                        flags: readable, writable
+                        Unsigned Integer. Range: 0 - 4294967295 Default: 4096
+  brightness          : Image capture brightness
+                        flags: readable, writable
+                        Integer. Range: 0 - 100 Default: 50
+  camera-number       : Which camera to use on a multi-camera system - 0 or 1
+                        flags: readable, writable
+                        Integer. Range: 0 - 1 Default: 0
+  contrast            : Image capture contrast
+                        flags: readable, writable
+                        Integer. Range: -100 - 100 Default: 0
+  do-timestamp        : Apply current stream time to buffers
+                        flags: readable, writable
+                        Boolean. Default: true
+  drc                 : Dynamic Range Control level
+                        flags: readable, writable
+                        Enum "GstRpiCamSrcDRCLevel" Default: 0, "off"
+                           (0): off              - GST_RPI_CAM_SRC_DRC_LEVEL_OFF
+                           (1): low              - GST_RPI_CAM_SRC_DRC_LEVEL_LOW
+                           (2): medium           - GST_RPI_CAM_SRC_DRC_LEVEL_MEDIUM
+                           (3): high             - GST_RPI_CAM_SRC_DRC_LEVEL_HIGH
+  exposure-compensation: Exposure Value compensation
+                        flags: readable, writable
+                        Integer. Range: -10 - 10 Default: 0
+  exposure-mode       : Camera exposure mode to use
+                        flags: readable, writable
+                        Enum "GstRpiCamSrcExposureMode" Default: 1, "auto"
+                           (0): off              - GST_RPI_CAM_SRC_EXPOSURE_MODE_OFF
+                           (1): auto             - GST_RPI_CAM_SRC_EXPOSURE_MODE_AUTO
+                           (2): night            - GST_RPI_CAM_SRC_EXPOSURE_MODE_NIGHT
+                           (3): nightpreview     - GST_RPI_CAM_SRC_EXPOSURE_MODE_NIGHTPREVIEW
+                           (4): backlight        - GST_RPI_CAM_SRC_EXPOSURE_MODE_BACKLIGHT
+                           (5): spotlight        - GST_RPI_CAM_SRC_EXPOSURE_MODE_SPOTLIGHT
+                           (6): sports           - GST_RPI_CAM_SRC_EXPOSURE_MODE_SPORTS
+                           (7): snow             - GST_RPI_CAM_SRC_EXPOSURE_MODE_SNOW
+                           (8): beach            - GST_RPI_CAM_SRC_EXPOSURE_MODE_BEACH
+                           (9): verylong         - GST_RPI_CAM_SRC_EXPOSURE_MODE_VERYLONG
+                           (10): fixedfps         - GST_RPI_CAM_SRC_EXPOSURE_MODE_FIXEDFPS
+                           (11): antishake        - GST_RPI_CAM_SRC_EXPOSURE_MODE_ANTISHAKE
+                           (12): fireworks        - GST_RPI_CAM_SRC_EXPOSURE_MODE_FIREWORKS
+  fullscreen          : Display preview window full screen
+                        flags: readable, writable
+                        Boolean. Default: true
+  hflip               : Flip capture horizontally
+                        flags: readable, writable
+                        Boolean. Default: false
+  image-effect        : Visual FX to apply to the image
+                        flags: readable, writable
+                        Enum "GstRpiCamSrcImageEffect" Default: 0, "none"
+                           (0): none             - GST_RPI_CAM_SRC_IMAGEFX_NONE
+                           (1): negative         - GST_RPI_CAM_SRC_IMAGEFX_NEGATIVE
+                           (2): solarize         - GST_RPI_CAM_SRC_IMAGEFX_SOLARIZE
+                           (3): posterize        - GST_RPI_CAM_SRC_IMAGEFX_POSTERIZE
+                           (4): whiteboard       - GST_RPI_CAM_SRC_IMAGEFX_WHITEBOARD
+                           (5): blackboard       - GST_RPI_CAM_SRC_IMAGEFX_BLACKBOARD
+                           (6): sketch           - GST_RPI_CAM_SRC_IMAGEFX_SKETCH
+                           (7): denoise          - GST_RPI_CAM_SRC_IMAGEFX_DENOISE
+                           (8): emboss           - GST_RPI_CAM_SRC_IMAGEFX_EMBOSS
+                           (9): oilpaint         - GST_RPI_CAM_SRC_IMAGEFX_OILPAINT
+                           (10): hatch            - GST_RPI_CAM_SRC_IMAGEFX_HATCH
+                           (11): gpen             - GST_RPI_CAM_SRC_IMAGEFX_GPEN
+                           (12): pastel           - GST_RPI_CAM_SRC_IMAGEFX_PASTEL
+                           (13): watercolour      - GST_RPI_CAM_SRC_IMAGEFX_WATERCOLOUR
+                           (14): film             - GST_RPI_CAM_SRC_IMAGEFX_FILM
+                           (15): blur             - GST_RPI_CAM_SRC_IMAGEFX_BLUR
+                           (16): saturation       - GST_RPI_CAM_SRC_IMAGEFX_SATURATION
+                           (17): colourswap       - GST_RPI_CAM_SRC_IMAGEFX_COLOURSWAP
+                           (18): washedout        - GST_RPI_CAM_SRC_IMAGEFX_WASHEDOUT
+                           (19): posterise        - GST_RPI_CAM_SRC_IMAGEFX_POSTERISE
+                           (20): colourpoint      - GST_RPI_CAM_SRC_IMAGEFX_COLOURPOINT
+                           (21): colourbalance    - GST_RPI_CAM_SRC_IMAGEFX_COLOURBALANCE
+                           (22): cartoon          - GST_RPI_CAM_SRC_IMAGEFX_CARTOON
+  inline-headers      : Set to TRUE to insert SPS/PPS before each IDR packet
+                        flags: readable, writable
+                        Boolean. Default: false
+  intra-refresh-type  : Type of Intra Refresh to use, -1 to disable intra refresh
+                        flags: readable, writable
+                        Enum "GstRpiCamSrcIntraRefreshType" Default: -1, "none"
+                           (-1): none             - GST_RPI_CAM_SRC_INTRA_REFRESH_TYPE_NONE
+                           (0): cyclic           - GST_RPI_CAM_SRC_INTRA_REFRESH_TYPE_CYCLIC
+                           (1): adaptive         - GST_RPI_CAM_SRC_INTRA_REFRESH_TYPE_ADAPTIVE
+                           (2): both             - GST_RPI_CAM_SRC_INTRA_REFRESH_TYPE_BOTH
+                           (2130706433): cyclic-rows      - GST_RPI_CAM_SRC_INTRA_REFRESH_TYPE_CYCLIC_ROWS
+  iso                 : ISO value to use (0 = Auto)
+                        flags: readable, writable
+                        Integer. Range: 0 - 3200 Default: 0
+  keyframe-interval   : Interval (in frames) between I frames. -1 = automatic, 0 = single-keyframe
+                        flags: readable, writable
+                        Integer. Range: -1 - 2147483647 Default: -1
+  metering-mode       : Camera exposure metering mode to use
+                        flags: readable, writable
+                        Enum "GstRpiCamSrcExposureMeteringMode" Default: 0, "average"
+                           (0): average          - GST_RPI_CAM_SRC_EXPOSURE_METERING_MODE_AVERAGE
+                           (1): spot             - GST_RPI_CAM_SRC_EXPOSURE_METERING_MODE_SPOT
+                           (2): backlist         - GST_RPI_CAM_SRC_EXPOSURE_METERING_MODE_BACKLIST
+                           (3): matrix           - GST_RPI_CAM_SRC_EXPOSURE_METERING_MODE_MATRIX
+  name                : The name of the object
+                        flags: readable, writable, 0x2000
+                        String. Default: "rpicamsrc0"
+  num-buffers         : Number of buffers to output before sending EOS (-1 = unlimited)
+                        flags: readable, writable
+                        Integer. Range: -1 - 2147483647 Default: -1
+  parent              : The parent of the object
+                        flags: readable, writable, 0x2000
+                        Object of type "GstObject"
+  preview             : Display preview window overlay
+                        flags: readable, writable
+                        Boolean. Default: true
+  preview-encoded     : Display encoder output in the preview
+                        flags: readable, writable
+                        Boolean. Default: true
+  preview-h           : Height of the preview window (in pixels)
+                        flags: readable, writable
+                        Integer. Range: 0 - 2048 Default: 768
+  preview-opacity     : Opacity to use for the preview window
+                        flags: readable, writable
+                        Integer. Range: 0 - 255 Default: 255
+  preview-w           : Width of the preview window (in pixels)
+                        flags: readable, writable
+                        Integer. Range: 0 - 2048 Default: 1024
+  preview-x           : Start X coordinate of the preview window (in pixels)
+                        flags: readable, writable
+                        Integer. Range: 0 - 2048 Default: 0
+  preview-y           : Start Y coordinate of the preview window (in pixels)
+                        flags: readable, writable
+                        Integer. Range: 0 - 2048 Default: 0
+  quantisation-parameter: Set a Quantisation Parameter approx 10-40 with bitrate=0 for VBR encoding. 0 = off
+                        flags: readable, writable
+                        Integer. Range: 0 - 2147483647 Default: 0
+  roi-h               : Normalised region-of-interest H coord
+                        flags: readable, writable
+                        Float. Range:               0 -               1 Default:               1
+  roi-w               : Normalised region-of-interest W coord
+                        flags: readable, writable
+                        Float. Range:               0 -               1 Default:               1
+  roi-x               : Normalised region-of-interest X coord
+                        flags: readable, writable
+                        Float. Range:               0 -               1 Default:               0
+  roi-y               : Normalised region-of-interest Y coord
+                        flags: readable, writable
+                        Float. Range:               0 -               1 Default:               0
+  rotation            : Rotate captured image (0, 90, 180, 270 degrees)
+                        flags: readable, writable
+                        Integer. Range: 0 - 270 Default: 0
+  saturation          : Image capture saturation
+                        flags: readable, writable
+                        Integer. Range: -100 - 100 Default: 0
+  sensor-mode         : Manually set the camera sensor mode
+                        flags: readable, writable
+                        Enum "GstRpiCamSrcSensorMode" Default: 0, "automatic"
+                           (0): automatic        - Automatic
+                           (1): 1920x1080        - 1920x1080 16:9 1-30fps
+                           (2): 2592x1944-fast   - 2592x1944 4:3 1-15fps / 3240x2464 15fps w/ v.2 board
+                           (3): 2592x1944-slow   - 2592x1944 4:3 0.1666-1fps / 3240x2464 15fps w/ v.2 board
+                           (4): 1296x972         - 1296x972 4:3 1-42fps
+                           (5): 1296x730         - 1296x730 16:9 1-49fps
+                           (6): 640x480-slow     - 640x480 4:3 42.1-60fps
+                           (7): 640x480-fast     - 640x480 4:3 60.1-90fps
+  sharpness           : Image capture sharpness
+                        flags: readable, writable
+                        Integer. Range: -100 - 100 Default: 0
+  shutter-speed       : Set a fixed shutter speed, in microseconds. (0 = Auto)
+                        flags: readable, writable
+                        Integer. Range: 0 - 6000000 Default: 0
+  typefind            : Run typefind before negotiating (deprecated, non-functional)
+                        flags: readable, writable, deprecated
+                        Boolean. Default: false
+  use-stc             : Use the camera STC for timestamping buffers
+                        flags: readable, writable
+                        Boolean. Default: true
+  vflip               : Flip capture vertically
+                        flags: readable, writable
+                        Boolean. Default: false
+  video-direction     : Video direction: rotation and flipping
+                        flags: readable, writable, controllable
+                        Enum "GstVideoOrientationMethod" Default: 0, "identity"
+                           (0): identity         - GST_VIDEO_ORIENTATION_IDENTITY
+                           (1): 90r              - GST_VIDEO_ORIENTATION_90R
+                           (2): 180              - GST_VIDEO_ORIENTATION_180
+                           (3): 90l              - GST_VIDEO_ORIENTATION_90L
+                           (4): horiz            - GST_VIDEO_ORIENTATION_HORIZ
+                           (5): vert             - GST_VIDEO_ORIENTATION_VERT
+                           (6): ul-lr            - GST_VIDEO_ORIENTATION_UL_LR
+                           (7): ur-ll            - GST_VIDEO_ORIENTATION_UR_LL
+                           (8): auto             - GST_VIDEO_ORIENTATION_AUTO
+                           (9): custom           - GST_VIDEO_ORIENTATION_CUSTOM
+  video-stabilisation : Enable or disable video stabilisation
+                        flags: readable, writable
+                        Boolean. Default: false
