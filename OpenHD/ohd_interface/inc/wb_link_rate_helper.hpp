@@ -55,22 +55,22 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
     case 4:
       //theoretical:39
       return {
-        17000, 30000
+         20000, 30000
       };
     case 5:
       //theoretical:52
       return {
-        23000, 30000
+        23000, 35000
       };
     case 6:
       //theoretical:58.5
       return {
-        30000, 30000
+        26000, 40000
       };
     case 7:
       //theoretical:65
       return {
-        30000, 30000
+        29000, 35000
       };
     // MCS 8 == MCS 0 with 2 spatial streams
     case 8:
