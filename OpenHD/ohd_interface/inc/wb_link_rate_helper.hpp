@@ -7,6 +7,7 @@
 
 #include "wifi_card.h"
 #include <stdint.h>
+#include "../../lib/wifibroadcast/src/HelperSources/Rates.hpp"
 
 namespace openhd::wb{
 
@@ -17,6 +18,10 @@ struct Rate20Mhz40Mhz{
   uint32_t rate_40mhz;
 };
 static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
+    if(true){
+        auto tmp=wifibroadcast::get_practical_rate_5G(mcs_index);
+        return Rate20Mhz40Mhz{(uint32_t)tmp.rate_20mhz_kbits,(uint32_t)tmp.rate_40mhz_kbits};
+    }
   switch (mcs_index) {
     case 0:
       //theoretical:6.5 | 13.5
