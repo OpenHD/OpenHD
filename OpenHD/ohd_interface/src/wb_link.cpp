@@ -61,9 +61,9 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   txrx_options.rtl8812au_rssi_fixup= true;
   txrx_options.session_key_packet_interval=SESSION_KEY_PACKETS_INTERVAL;
   // Encryption off by default
-  txrx_options.disable_encryption= true;
+  txrx_options.enable_encryption= false;
   if(openhd::load_config().GEN_ENABLE_ENCRYPTION){
-    txrx_options.disable_encryption= false;
+    txrx_options.enable_encryption= true;
   }
   const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
   if(OHDFilesystemUtil::exists(keypair_file)){
@@ -582,7 +582,7 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_rate_kbits= m_max_total_rate_for_current_wifi_config_kbits;
   stats.monitor_mode_link.curr_n_rate_adjustments=m_curr_n_rate_adjustments;
   stats.monitor_mode_link.curr_tx_pps=txStats.curr_packets_per_second;
-  stats.monitor_mode_link.curr_tx_bps=txStats.curr_bits_per_second;
+  stats.monitor_mode_link.curr_tx_bps=txStats.curr_bits_per_second_excluding_overhead;
   stats.monitor_mode_link.curr_rx_pps=rxStats.curr_packets_per_second;
   stats.monitor_mode_link.curr_rx_bps=rxStats.curr_bits_per_second;
   const auto bitfield_stbc_lpdc_sg= openhd::link_statistics::write_stbc_lpdc_shortguard_bitfield(curr_settings.wb_enable_stbc,curr_settings.wb_enable_ldpc,curr_settings.wb_enable_short_guard);
