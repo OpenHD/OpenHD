@@ -44,6 +44,7 @@ struct StatsMonitorModeLink{
   int16_t curr_rx_big_gaps_counter;
   bool tx_passive_mode_is_enabled = false;
   uint16_t curr_rate_kbits=0;
+  uint8_t curr_n_rate_adjustments=0;
   uint8_t curr_tx_stbc_lpdc_shortguard_bitfield;
   [[nodiscard]] std::string to_string()const{
     return "TODO";
