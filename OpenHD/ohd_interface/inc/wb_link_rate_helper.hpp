@@ -7,7 +7,7 @@
 
 #include "wifi_card.h"
 #include <stdint.h>
-#include "../../lib/wifibroadcast/src/HelperSources/Rates.hpp"
+//#include "../../lib/wifibroadcast/src/HelperSources/Rates.hpp"
 
 namespace openhd::wb{
 
@@ -18,10 +18,10 @@ struct Rate20Mhz40Mhz{
   uint32_t rate_40mhz;
 };
 static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
-    if(true){
+    /*if(true){
         auto tmp=wifibroadcast::get_practical_rate_5G(mcs_index);
         return Rate20Mhz40Mhz{(uint32_t)(tmp.rate_20mhz_kbits*100/90),(uint32_t)(tmp.rate_40mhz_kbits*100/90)};
-    }
+    }*/
   switch (mcs_index) {
     case 0:
       //theoretical:6.5 | 13.5
@@ -29,7 +29,7 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
       // OLD return 4500;
       return {
         5700-1000, // minus 1MBit/s
-        14000-3000, // minus 3MBit/s
+        10400-3000, // minus 3MBit/s
       };
     case 1:
       //theoretical:13 | 27
@@ -97,18 +97,20 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
           // measured: ~22 | none
           // here we already pretty much reach the limit what encoding hw (rpi) can do
           return {
-                  22000-3000,
-                  30000
+                  25000-3000,
+                  37000-4000
           };
     case 11:
           // theoretical 52 | 108
           return {
-                  30000, 30000
+                  30000-3000,
+                  50000-4000
           };
     case 12:
           // theoretical 78 | 162
           return {
-                  30000, 30000
+                  30000-3000,
+                  50000-4000
           };
     default:
       break;
