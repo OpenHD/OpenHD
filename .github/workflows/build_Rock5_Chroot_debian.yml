@@ -4,7 +4,6 @@ on:
   push:
     branches: ["2.4-evo","2.4-rockchip-debian"]
     paths-ignore:
-      - '**.yml'
       - '**.md'
       - '**.asciidoc'
       - '**.adoc'
