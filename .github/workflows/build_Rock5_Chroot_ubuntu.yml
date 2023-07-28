@@ -42,9 +42,9 @@ jobs:
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           git clone https://github.com/OpenHD/OpenHD -b 2.4-evo /opt/ChrootCompilationTest/additionalFiles/ --recursive
           echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
-          echo "ubuntu" > /opt/ChrootCompilationTest/additionalFiles/distro.txt
-          echo "jammy" > /opt/ChrootCompilationTest/additionalFiles/flavor.txt
+          echo "debian" > /opt/ChrootCompilationTest/additionalFiles/distro.txt
+          echo "bullseye" > /opt/ChrootCompilationTest/additionalFiles/flavor.txt
           cd /opt/ChrootCompilationTest/
           sudo apt update
           sudo bash install_dep.sh
-          sudo bash build.sh rock5 $API_KEY ubuntu jammy
+          sudo bash build.sh rock5-debian $API_KEY debian bullseye
