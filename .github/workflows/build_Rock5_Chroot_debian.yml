@@ -2,7 +2,7 @@ name: build_package_rock5_debian
 
 on: 
   push:
-    branches: ["2.4-evo","2.4-rockchip-debian"]
+    branches: ["2.4-evo"]
     paths-ignore:
       - '**.md'
       - '**.asciidoc'
