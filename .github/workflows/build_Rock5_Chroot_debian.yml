@@ -1,4 +1,4 @@
-name: build_package_rock5_ubuntu
+name: build_package_rock5_debian
 
 on: 
   push:
