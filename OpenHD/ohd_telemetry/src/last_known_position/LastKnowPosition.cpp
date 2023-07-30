@@ -9,12 +9,13 @@
 #include <iomanip>
 
 static constexpr auto LAST_KNOWN_POSITION_DIRECTORY="/home/openhd/LastKnownPosition/";
+static constexpr auto FILENAME="flight.txt";
 
 static std::string get_this_flight_directory(){
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
   std::stringstream ss;
-  ss<<LAST_KNOWN_POSITION_DIRECTORY<<std::put_time(&tm, "%d-%m-%Y %H-%M-%S")<<"/";
+  ss<<LAST_KNOWN_POSITION_DIRECTORY<<std::put_time(&tm, "%d-%m-%Y_%H-%M-%S")<<"/";
   return ss.str();
 }
 
@@ -44,7 +45,7 @@ void LastKnowPosition::on_new_position(double latitude, double longitude,
   }
   // Update the position in a rolling fashion, overwriting the oldest file
   m_last_position_update=std::chrono::steady_clock::now();
-  const auto filename= m_directory+get_this_flight_directory();
+  const auto filename= m_directory+FILENAME;
   OHDFilesystemUtil::write_file(filename,fmt::format("Lat:{},Lon:{},Alt:{}",latitude,longitude,altitude));
   m_update_index++;
   m_update_index = m_update_index % 10;
