@@ -349,9 +349,15 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   auto change_freq=openhd::IntSetting{(int)settings.wb_frequency,[this](std::string,int value){
                                           return request_set_frequency(value);
                                         }};
+  change_freq.get_callback=[this](){
+      return m_settings->unsafe_get_settings().wb_frequency;
+  };
   auto change_wb_channel_width=openhd::IntSetting{(int)settings.wb_channel_width,[this](std::string,int value){
                                                       return request_set_channel_width(value);
                                                     }};
+  change_wb_channel_width.get_callback=[this](){
+      return m_settings->unsafe_get_settings().wb_channel_width;
+  };
   auto change_wb_mcs_index=openhd::IntSetting{(int)settings.wb_mcs_index,[this](std::string,int value){
                                                   return set_mcs_index(value);
                                                 }};
@@ -874,7 +880,8 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
     m_settings->unsafe_get_settings().wb_frequency=result.frequency;
     m_settings->unsafe_get_settings().wb_channel_width=result.channel_width;
     m_settings->persist();
-    openhd::reboot::dirty_terminate_openhd_and_let_service_restart();
+    // Not needed anymore
+    //openhd::reboot::dirty_terminate_openhd_and_let_service_restart();
     apply_frequency_and_channel_width_from_settings();
   }
   is_scanning=false;
@@ -905,7 +912,7 @@ int WBLink::get_last_rx_packet_chan_width() {
 }
 
 bool WBLink::check_in_state_support_changing_settings(){
-  return !is_scanning && check_work_queue_empty();
+  return !is_scanning && check_work_queue_empty() && !is_analyzing;
 }
 
 openhd::WifiSpace WBLink::get_current_frequency_channel_space()const {
@@ -1003,3 +1010,29 @@ void WBLink::update_arming_state(bool armed) {
   m_is_armed=armed;
   apply_txpower();
 }
+
+/*void WBLink::analyze_channels() {
+    is_analyzing=true;
+    scan_channels({});
+    const WiFiCard& card=m_broadcast_cards.at(0);
+    std::vector<openhd::WifiChannel> channels_to_scan;
+    const auto supported_freq=card.supported_frequencies_5G;
+    for(const auto freq:supported_freq){
+        auto tmp=openhd::channel_from_frequency(freq);
+        if(tmp.has_value()){
+            channels_to_scan.push_back(tmp.value());
+        }
+    }
+    for(const auto& channel:channels_to_scan){
+        const auto channel_width=40;
+        // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
+        apply_frequency_and_channel_width(channel.frequency,channel_width);
+        m_console->warn("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
+        reset_all_rx_stats();
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        const auto stats=m_wb_txrx->get_rx_stats();
+        m_console->debug("Got {} foreign packets",stats.count_p_any);
+    }
+
+    is_analyzing= false;
+}*/

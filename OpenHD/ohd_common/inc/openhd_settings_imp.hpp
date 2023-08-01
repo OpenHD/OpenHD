@@ -34,7 +34,10 @@ struct SettingImpl{
 	openhd::log::get_default()->debug("Requested change {} to {}",id,requested_value);
 	return true;
   };
-  //std::function<T()> get_callback= nullptr;
+  // Quite dirty - all the params in openhd are changed via the user via mavlink only -
+  // Except channel frequency and channel width during the channel scan feature.
+  // Workaround for this rare case - don't ask ;)
+  std::function<T()> get_callback= nullptr;
 };
 using IntSetting=SettingImpl<int>;
 using FloatSetting=SettingImpl<float>;

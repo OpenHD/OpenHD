@@ -130,6 +130,8 @@ class WBLink :public OHDLink{
   ScanResult scan_channels(const openhd::ActionHandler::ScanChannelsParam& scan_channels_params);
   // queue it up on the work queue
   void async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
+  //
+  //void analyze_channels();
  private:
   void reset_all_rx_stats();
   int get_last_rx_packet_chan_width();
@@ -157,6 +159,7 @@ class WBLink :public OHDLink{
   std::vector<std::unique_ptr<WBStreamRx>> m_wb_video_rx_list;
   //std::unique_ptr<ForeignPacketsReceiver> m_foreign_packets_receiver;
   std::atomic<bool> is_scanning=false;
+  std::atomic<bool> is_analyzing=false;
   // We have one worker thread for asynchronously performing operation(s) like changing the frequency
   // but also recalculating statistics that are then forwarded to openhd_telemetry for broadcast
   bool m_work_thread_run;
