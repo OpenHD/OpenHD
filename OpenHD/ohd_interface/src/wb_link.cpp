@@ -617,7 +617,7 @@ void WBLink::update_statistics() {
     card.exists_in_openhd= true;
     card.curr_status=m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
     card.signal_quality=rxStatsCard.signal_quality;
-    m_console->debug("Signal quality {}",card.signal_quality);
+    //m_console->debug("Signal quality {}",card.signal_quality);
   }
   stats.is_air=m_profile.is_air;
   if(m_opt_action_handler){
