@@ -55,7 +55,7 @@ std::vector<MavlinkMessage> XMavlinkParamProvider:: process_mavlink_messages(std
           if(currValueInt!=newIntvalue){
               // Param set on ground is now different to the one inside the gcs
               openhd::log::get_default()->warn("Updating {} from {} to {}",setting.id,currValueInt,newIntvalue);
-              //_mavlink_parameter_receiver->update_existing_server_param<int>(setting.id,newIntvalue);
+              _mavlink_parameter_receiver->update_existing_server_param_int(setting.id,newIntvalue);
           }
       }
   }
