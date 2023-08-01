@@ -8,6 +8,7 @@
 #include "openhd_util.h"
 
 #include <sstream>
+#include <iostream>
 
 static std::shared_ptr<spdlog::logger> get_logger(){
   return openhd::log::create_or_get("w_helper");
@@ -55,9 +56,29 @@ bool wifi::commandhelper::iw_set_frequency_and_channel_width(const std::string &
   const auto ret = OHDUtil::run_command("iw", args);
   if(ret!=0){
     get_logger()->warn("iw {}Mhz@{}Mhz not supported {}",freq_mhz,channel_width,ret);
+    std::cout<<std::flush;
     return false;
   }
   return true;
+    /*const std::string iw_channel_width= channel_width_as_iw_string(channel_width);
+    get_logger()->info("iw_set_frequency_and_channel_width {} {}Mhz {}",device,freq_mhz,iw_channel_width);
+    std::vector<std::string> args{"dev", device, "set", "freq", std::to_string(freq_mhz), iw_channel_width};
+    const auto command_with_args = OHDUtil::create_command_with_args("iw", args);
+    const auto ret = OHDUtil::run_command_out(command_with_args);
+    if(!ret.has_value()){
+        get_logger()->warn("iw {}Mhz@{}Mhz not supported",freq_mhz,channel_width);
+        std::cout<<std::flush;
+        return false;
+    }else{
+        const std::string content=ret.value();
+        if(OHDUtil::contains(content,"kernel reports: (extension) channel is disabled")){
+            get_logger()->warn("iw {}Mhz@{}Mhz not supported {}",freq_mhz,channel_width,content);
+            std::cout<<std::flush;
+            return false;
+        }
+        get_logger()->warn("Got result [{}]",content);
+    }
+    return true;*/
 }
 
 bool wifi::commandhelper::iw_set_tx_power(const std::string &device,uint32_t tx_power_mBm) {

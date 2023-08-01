@@ -834,7 +834,11 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         continue;
       }
       // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
-      apply_frequency_and_channel_width(channel.frequency,channel_width);
+      const bool freq_success=apply_frequency_and_channel_width(channel.frequency,channel_width);
+      if(!freq_success){
+          m_console->warn("Cannot scan [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
+          continue;
+      }
       m_console->warn("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
       reset_all_rx_stats();
       std::this_thread::sleep_for(DEFAULT_SCAN_TIME_PER_CHANNEL);
