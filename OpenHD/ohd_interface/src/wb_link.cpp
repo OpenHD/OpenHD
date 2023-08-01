@@ -842,13 +842,14 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       m_console->warn("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
       reset_all_rx_stats();
       std::this_thread::sleep_for(DEFAULT_SCAN_TIME_PER_CHANNEL);
-      const auto n_valid_packets=m_wb_txrx->get_rx_stats().count_p_valid;
+      auto n_valid_packets=m_wb_txrx->get_rx_stats().count_p_valid;
       // If we got valid packets, sleep a bit more such that we get a reliable packet loss
       if(n_valid_packets>0){
         m_console->debug("Got valid packets, sleeping a bit more");
         std::this_thread::sleep_for(DEFAULT_SCAN_TIME_PER_CHANNEL);
       }
       const auto packet_loss=m_wb_txrx->get_rx_stats().curr_packet_loss;
+      n_valid_packets=m_wb_txrx->get_rx_stats().count_p_valid;
       // We might receive 20Mhz channel width packets from a air unit sending on 20Mhz channel width while
       // receiving on 40Mhz channel width - if we were to then to set the gnd to 40Mhz, we will be able to receive data,
       // but not be able to send any data up to the air unit.
@@ -858,7 +859,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       if(n_valid_packets>0 && rx_chann_width==channel_width){
         TmpResult tmp_result{channel,channel_width,packet_loss};
         possible_frequencies.push_back(tmp_result);
-        if(packet_loss>=0 && packet_loss<10){
+        if(packet_loss>=0 && packet_loss<20){
           // if the packet loss is low, we can safely return early
           m_console->debug("Got <10% packet loss, return early");
           done_early= true;
