@@ -165,8 +165,8 @@ class ActionHandler{
   struct CamInfo{
     bool active= false; // Do not send stats for a non-active camera
     uint8_t cam_index=0;
-    uint8_t cam_status=0;
     uint8_t cam_type=0;
+    uint8_t cam_status=0;
     uint8_t air_recording_active=0;
     uint8_t encoding_format=0;
     uint16_t encoding_bitrate_kbits=0;
