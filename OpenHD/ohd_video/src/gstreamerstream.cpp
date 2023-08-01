@@ -310,6 +310,10 @@ void GStreamerStream::setup_custom_unmanaged_camera() {
 
 void GStreamerStream::stop_cleanup_restart() {
   const auto before=std::chrono::steady_clock::now();
+  if(m_opt_action_handler){
+      // Restarting status
+      m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_RESTARTING);
+  }
   stop();
   cleanup_pipe();
   setup();
@@ -343,6 +347,10 @@ void GStreamerStream::start() {
   }
   openhd::register_message_cb(m_gst_pipeline);
   gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
+    if(m_opt_action_handler){
+        // Restarting status
+        m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
+    }
   m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
 }
 

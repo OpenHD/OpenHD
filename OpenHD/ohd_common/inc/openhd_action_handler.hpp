@@ -165,6 +165,7 @@ class ActionHandler{
   struct CamInfo{
     bool active= false; // Do not send stats for a non-active camera
     uint8_t cam_index=0;
+    uint8_t cam_status=0;
     uint8_t cam_type=0;
     uint8_t air_recording_active=0;
     uint8_t encoding_format=0;
@@ -191,6 +192,15 @@ class ActionHandler{
       std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
       m_cam_info_cam2.encoding_bitrate_kbits=bitrate_kbits;
     }
+  }
+  void set_cam_info_status(uint8_t cam_index,uint8_t status){
+      if(cam_index==0){
+          std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
+          m_cam_info_cam1.cam_status=status;
+      }else{
+          std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
+          m_cam_info_cam2.cam_status=status;
+      }
   }
   CamInfo get_cam_info(int cam_index){
     if(cam_index==0){
