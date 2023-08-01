@@ -110,6 +110,7 @@ struct StatsPerCard{
   uint8_t card_type=0;
   int8_t rx_rssi_1=INT8_MIN; // dBm / rssi
   int8_t rx_rssi_2=INT8_MIN; // dBm / rssi
+  int8_t signal_quality=-1;
   uint64_t count_p_received=0; //TODO
   uint64_t count_p_injected=0; //TODO
   int16_t tx_power=0;
