@@ -256,12 +256,17 @@ bool WBLink::request_set_frequency(int frequency) {
 bool WBLink::apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width) {
   const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width,m_broadcast_cards);
   m_wb_txrx->tx_update_channel_width(channel_width);
+  m_wb_txrx->tx_reset_stats();
+  m_wb_txrx->rx_reset_stats();
   return res;
 }
 
 bool WBLink::apply_frequency_and_channel_width_from_settings() {
   const auto settings=m_settings->get_settings();
-  return apply_frequency_and_channel_width(settings.wb_frequency,settings.wb_channel_width);
+  const auto res=apply_frequency_and_channel_width(settings.wb_frequency,settings.wb_channel_width);
+  m_wb_txrx->tx_reset_stats();
+  m_wb_txrx->rx_reset_stats();
+  return res;
 }
 
 void WBLink::apply_txpower() {
@@ -488,6 +493,7 @@ void WBLink::loop_do_work() {
     //m_console->debug("Calculating stats took:{} ms",std::chrono::duration_cast<std::chrono::microseconds>(delta_calc_stats).count()/1000.0f);
     // update recommended rate if enabled in regular intervals
     perform_rate_adjustment();
+    //gnd_only_fix_channel_width_for_uplink();
     // Dirty - deliberately crash openhd and let the service restart it
     // if we think a wi-fi card disconnected
     /*bool any_rx_wifi_disconnected_errors=false;
@@ -1009,6 +1015,26 @@ void WBLink::update_arming_state(bool armed) {
   // it will set the right tx power if the user enabled it
   m_is_armed=armed;
   apply_txpower();
+}
+
+
+void WBLink::gnd_only_fix_channel_width_for_uplink() {
+    if(!m_profile.is_ground()){
+        return;
+    }
+    const WiFiCard& card=m_broadcast_cards.at(0);
+    if(card.type!=WiFiCardType::Realtek8812au){
+        return;
+    }
+    const auto rxstats=m_wb_txrx->get_rx_stats();
+    if(rxstats.last_received_packet_channel_width==20 && m_settings->unsafe_get_settings().wb_channel_width==40){
+        m_gnd_n_times_20mhz_40mhz_mismatch++;
+        if(m_gnd_n_times_20mhz_40mhz_mismatch>10){
+            m_console->warn("Fixing gnd channel width on 40Mhz but air on 20Mhz");
+            m_settings->unsafe_get_settings().wb_channel_width=20;
+            m_settings->persist();
+        }
+    }
 }
 
 /*void WBLink::analyze_channels() {

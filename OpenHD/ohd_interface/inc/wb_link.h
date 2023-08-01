@@ -132,6 +132,9 @@ class WBLink :public OHDLink{
   void async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
   //
   //void analyze_channels();
+  // FEATURE: If the rare case happens where the gnd is on 40Mhz, the air is on 20Mhz, we can receive data but not send data to the air unit -
+  // Fix this automatically
+  void gnd_only_fix_channel_width_for_uplink();
  private:
   void reset_all_rx_stats();
   int get_last_rx_packet_chan_width();
@@ -184,6 +187,7 @@ class WBLink :public OHDLink{
   static constexpr auto WARN_CARD_DOES_NOT_INJECT_INTERVAL=std::chrono::seconds(5);
   // We store tx power for easy access in stats
   std::atomic<int> m_curr_tx_power=0;
+  int m_gnd_n_times_20mhz_40mhz_mismatch=0;
 };
 
 #endif
