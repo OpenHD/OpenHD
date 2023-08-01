@@ -123,6 +123,7 @@ static uint32_t rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index,bool is_40_mh
   return is_40_mhz ? rate_kbits.rate_40mhz : rate_kbits.rate_20mhz;
 }
 
+// Dirty, since 2.4G in general is not that important
 static uint32_t rtl8812au_get_max_rate_2G_kbits(uint16_t mcs_index,bool is_40_mhz){
   const auto rates_5G= rtl8812au_get_max_rate_5G_kbits(mcs_index);
   if(is_40_mhz){
