@@ -23,8 +23,7 @@ static MavlinkMessage pack_card(const uint8_t system_id,const uint8_t component_
   tmp.card_type=card_stats.card_type;
   tmp.tx_power=card_stats.tx_power;
   tmp.curr_status=card_stats.curr_status;
-  tmp.dummy0=0;
-  tmp.dummy1=0;
+  tmp.rx_signal_quality=card_stats.signal_quality;
   //openhd::log::get_default()->debug("XX {}",card_stats.to_string(0));
   mavlink_msg_openhd_stats_monitor_mode_wifi_card_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
@@ -139,7 +138,8 @@ static MavlinkMessage pack_camera_stats(const uint8_t system_id,const uint8_t co
   tmp.stream_h=cam_info.stream_h;
   tmp.stream_fps=cam_info.stream_fps;
   tmp.encoding_format=cam_info.encoding_format;
-  tmp.dummy0=cam_info.cam_status;
+  tmp.cam_status=cam_info.cam_status;
+  tmp.supports_variable_bitrate=cam_info.supports_variable_bitrate;
   mavlink_msg_openhd_camera_status_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
