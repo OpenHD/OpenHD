@@ -90,4 +90,3 @@ std::string LastKnowPosition::positions_to_file(const std::list<Position> &posit
     }
     return ss.str();
 }
-
