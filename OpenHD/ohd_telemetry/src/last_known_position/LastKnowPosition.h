@@ -18,7 +18,7 @@
  * Have a file on the disc that contains the X last known positions of the UAV
  * Needs to be updated by listening for MAVLINK_MSG_ID_GLOBAL_POSITION_INT messages
  * Writing to the disk happens max. 1 time per second and is decoupled in an extra thread -
- * this way, we reduce the file writes AND are quaranteed data is written after a specific amount of time
+ * this way, we reduce the file writes AND are guaranteed data is written after a specific amount of time
  * even if the "on_new_position" is not called anymore by the telemetry parsing thread.
  */
 class LastKnowPosition {
