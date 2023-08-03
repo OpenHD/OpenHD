@@ -11,6 +11,7 @@
 #include "OHDLinkStatisticsHelper.h"
 #include "OnboardComputerStatusProvider.h"
 #include "openhd_reboot_util.h"
+#include "openhd_config.h"
 
 OHDMainComponent::OHDMainComponent(
     OHDPlatform platform1,uint8_t parent_sys_id,
@@ -22,7 +23,10 @@ OHDMainComponent::OHDMainComponent(
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform,true);
   // suppress the warning until we get the first actually updated stats
   m_status_text_accumulator=std::make_unique<StatusTextAccumulator>();
-  m_last_known_position=std::make_unique<LastKnowPosition>();
+  const auto config=openhd::load_config();
+  if(!RUNS_ON_AIR && config.GEN_ENABLE_LAST_KNOWN_POSITION){
+      m_last_known_position=std::make_unique<LastKnowPosition>();
+  }
 }
 
 OHDMainComponent::~OHDMainComponent() {

@@ -29,6 +29,7 @@ struct Config{
   bool NW_FORWARD_TO_LOCALHOST_58XX=false;
   // GENERAL
   bool GEN_ENABLE_ENCRYPTION= false;
+  bool GEN_ENABLE_LAST_KNOWN_POSITION= true;
 };
 
 Config load_config();

@@ -38,6 +38,7 @@ openhd::Config openhd::load_config() {
     ret.NW_FORWARD_TO_LOCALHOST_58XX = r.Get<bool>("network","NW_FORWARD_TO_LOCALHOST_58XX");
 
     ret.GEN_ENABLE_ENCRYPTION = r.Get<bool>("generic","GEN_ENABLE_ENCRYPTION");
+    ret.GEN_ENABLE_LAST_KNOWN_POSITION =r.Get<bool>("generic","GEN_ENABLE_LAST_KNOWN_POSITION");
     return ret;
   }catch (std::exception& exception){
     get_logger()->error("Ill-formatted config file {}",std::string(exception.what()));
