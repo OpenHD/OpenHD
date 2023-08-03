@@ -23,7 +23,7 @@ LastKnowPosition::LastKnowPosition()
     //: m_directory(get_this_flight_directory())
     : m_this_flight_filename(get_this_flight_filename())
 {
-  openhd::log::get_default()->debug("Writing position to {}",m_this_flight_filename);
+  openhd::log::get_default()->debug("Writing position to [{}]",m_this_flight_filename);
   OHDFilesystemUtil::create_directories(LAST_KNOWN_POSITION_DIRECTORY);
   m_write_thread=std::make_unique<std::thread>([this](){
       this->write_position_loop();
