@@ -62,7 +62,7 @@ struct WBLinkSettings {
   // (under this name they were known already in previous openhd releases, but we now support changing them dynamcially at run time)
   uint32_t wb_rtl8812au_tx_pwr_idx_override=DEFAULT_RTL8812AU_TX_POWER_INDEX;
   // applied when armed
-  uint32_t wb_rtl8812au_tx_pwr_idx_armed=RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED;
+  uint32_t wb_rtl8812au_tx_pwr_idx_override_armed=RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED;
   uint32_t wb_video_fec_percentage=DEFAULT_WB_VIDEO_FEC_PERCENTAGE;
   // decrease this value when there is a lot of pollution on your channel, and you consistently get tx errors
   // even though variable bitrate is working fine.
@@ -82,8 +82,8 @@ struct WBLinkSettings {
   bool wb_enable_listen_only_mode= false;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
-                                   wb_enable_stbc,wb_enable_ldpc,wb_enable_short_guard,
-                                   wb_tx_power_milli_watt,wb_rtl8812au_tx_pwr_idx_override,wb_rtl8812au_tx_pwr_idx_armed,
+                                   wb_enable_stbc, wb_enable_ldpc, wb_enable_short_guard,
+                                   wb_tx_power_milli_watt, wb_rtl8812au_tx_pwr_idx_override, wb_rtl8812au_tx_pwr_idx_override_armed,
                                    wb_video_fec_percentage,
                                    wb_video_rate_for_mcs_adjustment_percent,
                                    wb_max_fec_block_size_for_platform,
