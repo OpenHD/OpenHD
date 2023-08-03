@@ -27,7 +27,6 @@ class LastKnowPosition {
   ~LastKnowPosition();
   void on_new_position(double latitude,double longitude,double altitude);
  private:
-  //const std::string m_directory;
   const std::string m_this_flight_filename;
   struct Position{
       // When the position was received
