@@ -77,12 +77,14 @@ void USBTetherListener::connectOnce() {
   }
   const auto& run_command_result=run_command_result_opt.value();
   const auto ip_external_device= OHDUtil::string_in_between("default via "," proto",run_command_result);
+  //const auto ip_external_device2= OHDUtil::string_in_between("default via "," proto",run_command_result);
   const auto ip_self_network= OHDUtil::string_in_between("src "," metric",run_command_result);
 
   const auto external_device=openhd::ExternalDevice{connected_device_name,ip_external_device};
   // Check if both are valid IPs (otherwise, perhaps the parsing got fucked up)
   if(!external_device.is_valid()){
     m_console->warn("{} not valid",external_device.to_string());
+    std::this_thread::sleep_for(std::chrono::seconds(2)); // try again later
     return;
   }
   m_console->info("found device:{}",external_device.to_string());

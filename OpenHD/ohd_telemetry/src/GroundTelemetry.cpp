@@ -18,7 +18,6 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   assert(m_console);
   m_gnd_settings =std::make_unique<openhd::telemetry::ground::SettingsHolder>();
   m_endpoint_tracker=std::make_unique<SerialEndpointManager>();
-  setup_uart();
   m_gcs_endpoint =
       std::make_unique<UDPEndpoint2>("GroundStationUDP",OHD_GROUND_CLIENT_UDP_PORT_OUT, OHD_GROUND_CLIENT_UDP_PORT_IN,
                                      // We send data to localhost::14550 and any other external device IPs
@@ -52,6 +51,7 @@ GroundTelemetry::GroundTelemetry(OHDPlatform platform,
   m_generic_mavlink_param_provider =std::make_shared<XMavlinkParamProvider>(_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER);
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
+  setup_uart();
   m_console->debug("Created GroundTelemetry");
 }
 
@@ -84,9 +84,29 @@ void GroundTelemetry::on_messages_air_unit(const std::vector<MavlinkMessage>& me
 }
 
 void GroundTelemetry::on_messages_ground_station_clients(const std::vector<MavlinkMessage>& messages) {
+  //debugMavlinkMessages(messages,"GSC");
   // All messages from the ground station(s) are forwarded to the air unit, unless they have a target sys id
   // of the ohd ground unit itself
   auto [generic,local_only]=split_into_generic_and_local_only(messages,OHD_SYS_ID_GROUND);
+  for(auto & msg_generic:generic){
+    // In general, since the uplink suffers that much from over-talking by the video from the air unit, send each message twice by default -
+    // we do not send much mavlink to the air unit anyway.
+    // We do this for all messages unless it's a heartbeat.
+    const auto msg_id=msg_generic.m.msgid;
+    if(msg_id==MAVLINK_MSG_ID_HEARTBEAT){
+      msg_generic.recommended_n_injections=1;
+    }else{
+      msg_generic.recommended_n_injections=2;
+    }
+    // optimization: The telemetry link is quite lossy, here we help QOpenHD (or anybody else) trying to change a parameter
+    // on the air unit /FC using the (extended) parameter protocol.
+    if(msg_id==MAVLINK_MSG_ID_PARAM_EXT_SET || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ
+        || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_LIST
+        || msg_id==MAVLINK_MSG_ID_PARAM_SET || msg_id==MAVLINK_MSG_ID_PARAM_REQUEST_READ
+        || msg_id==MAVLINK_MSG_ID_PARAM_REQUEST_LIST) {
+      msg_generic.recommended_n_injections=4;
+    }
+  }
   send_messages_air_unit(generic);
   // OpenHD components running on the ground station don't need to talk to the air unit.
   // This is not exactly following the mavlink routing standard, but saves a lot of bandwidth.

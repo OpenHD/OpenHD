@@ -22,7 +22,12 @@
 // producer / consumer pattern
 class OnboardComputerStatusProvider {
  public:
-  explicit OnboardComputerStatusProvider(OHDPlatform platform);
+  /**
+   * @param platform platform we are running on
+   * @param enable : calculating cpu usage and more for whatever reason can use a lot of CPU resources on its own
+   * - disable for testing
+   */
+  explicit OnboardComputerStatusProvider(OHDPlatform platform,bool enable=true);
   ~OnboardComputerStatusProvider();
   // Thread-safe, should never block for a significant amount of time
   mavlink_onboard_computer_status_t get_current_status();
@@ -30,6 +35,7 @@ class OnboardComputerStatusProvider {
   std::vector<MavlinkMessage> get_current_status_as_mavlink_message(uint8_t sys_id,uint8_t comp_id);
  private:
   const OHDPlatform m_platform;
+  const bool m_enable;
   std::mutex m_curr_onboard_computer_status_mutex;
   mavlink_onboard_computer_status_t m_curr_onboard_computer_status{};
   // Power monitoring via ina219. Optional, not hot swappable, if there is no ina219, a warning is logged once and then no values are read anymore

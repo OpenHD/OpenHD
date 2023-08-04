@@ -3,7 +3,7 @@
 //
 
 #include "XMavlinkParamProvider.h"
-
+#include <openhd_spdlog.h>
 
 XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id,bool create_heartbeats):
 	MavlinkComponent(sys_id,comp_id),_create_heartbeats(create_heartbeats){
@@ -18,6 +18,9 @@ void XMavlinkParamProvider::add_param(const openhd::Setting& setting) {
 	const auto intSetting=std::get<openhd::IntSetting>(setting.setting);
 	const auto result = _mavlink_parameter_receiver->provide_server_param<int>(setting.id,intSetting.value,intSetting.change_callback);
 	assert(result == mavsdk::MavlinkParameterReceiver::Result::Success);
+    if(intSetting.get_callback!= nullptr){
+        m_int_settings_with_update_functionality.push_back(setting);
+    }
   } else if (std::holds_alternative<openhd::FloatSetting>(setting.setting)) {
 	const auto floatSetting=std::get<openhd::FloatSetting>(setting.setting);
 	const auto result = _mavlink_parameter_receiver->provide_server_param<float>(setting.id,floatSetting.value,floatSetting.change_callback);
@@ -43,6 +46,19 @@ void XMavlinkParamProvider::set_ready() {
 
 std::vector<MavlinkMessage> XMavlinkParamProvider:: process_mavlink_messages(std::vector<MavlinkMessage> messages){
   std::lock_guard<std::mutex> lock(_mutex);
+  for(const auto& setting:m_int_settings_with_update_functionality){
+      const auto intSetting=std::get<openhd::IntSetting>(setting.setting);
+      const auto currValue=_mavlink_parameter_receiver->retrieve_server_param_int(setting.id);
+      if(currValue.first==mavsdk::MavlinkParameterReceiver::Result::Success){
+          const int currValueInt=currValue.second;
+          const int newIntvalue=intSetting.get_callback();
+          if(currValueInt!=newIntvalue){
+              // Param set on ground is now different to the one inside the gcs
+              openhd::log::get_default()->warn("Updating {} from {} to {}",setting.id,currValueInt,newIntvalue);
+              _mavlink_parameter_receiver->update_existing_server_param_int(setting.id,newIntvalue);
+          }
+      }
+  }
   for(const auto& msg:messages){
     _mavlink_message_handler->process_message(msg.m);
   }

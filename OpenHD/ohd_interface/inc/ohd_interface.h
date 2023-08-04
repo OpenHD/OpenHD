@@ -39,8 +39,6 @@ class OHDInterface {
                         bool continue_without_wb_card=false);
   OHDInterface(const OHDInterface&)=delete;
   OHDInterface(const OHDInterface&&)=delete;
-  // Verbose string about the current state.
-  [[nodiscard]] std::string createDebug() const;
   // Get all (mavlink) settings ohd_interface exposes on the air or ground unit, respective
   std::vector<openhd::Setting> get_all_settings();
   // easy access without polluting the headers

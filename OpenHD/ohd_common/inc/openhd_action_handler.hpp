@@ -53,23 +53,6 @@ class ActionHandler{
     }
   }
  public:
-  // Link statistics - for that the wb link (ohd_interface) needs to talk to ohd_telemetry
-  // register callback that is called in regular intervals with link statistics
-  void action_wb_link_statistics_register(const openhd::link_statistics::STATS_CALLBACK& stats_callback){
-    if(stats_callback== nullptr){
-      m_link_statistics_callback= nullptr;
-      return;
-    }
-    m_link_statistics_callback =std::make_shared<openhd::link_statistics::STATS_CALLBACK>(stats_callback);
-  }
-  void action_wb_link_statistcs_handle(openhd::link_statistics::StatsAirGround all_stats){
-    auto tmp=m_link_statistics_callback;
-    if(tmp){
-      auto & cb=*tmp;
-      cb(all_stats);
-    }
-  }
- public:
   // checking both 2G and 5G channels takes really long, but in rare cases might be wanted by the user
   // checking both 20Mhz and 40Mhz (instead of only either of them both) also duplicates the scan time
   struct ScanChannelsParam{
@@ -95,9 +78,7 @@ class ActionHandler{
   }
   // Cleanup, set all lambdas that handle things to nullptr
   void disable_all_callables(){
-    action_wb_link_statistics_register(nullptr);
     action_request_bitrate_change_register(nullptr);
-    action_wb_link_statistics_register(nullptr);
     action_wb_link_scan_channels_register(nullptr);
     action_on_ony_rc_channel_register(nullptr);
     m_action_disable_wifi_when_armed= nullptr;
@@ -177,20 +158,77 @@ class ActionHandler{
   std::shared_ptr<ACTION_REQUEST_BITRATE_CHANGE> m_action_request_bitrate_change =nullptr;
   std::shared_ptr<openhd::link_statistics::STATS_CALLBACK> m_link_statistics_callback=nullptr;
   std::shared_ptr<SCAN_CHANNELS_CB> m_scan_channels_cb=nullptr;
- private:
-  // dirty - bitrate(s)  might be changed at run time, this exists since we write the wb stats in ohd_interface but the value
-  // should be whatever the cam is actually doing
-  std::atomic<int> curr_set_raw_video_bitrate_kbits_cam1 =-1;
-  std::atomic<int> curr_set_raw_video_bitrate_kbits_cam2 =-1;
  public:
-  void dirty_set_bitrate_of_camera(const int cam_index,int bitrate_kbits){
-    if(cam_index==0)curr_set_raw_video_bitrate_kbits_cam1=bitrate_kbits;
-    if(cam_index==1)curr_set_raw_video_bitrate_kbits_cam2=bitrate_kbits;
+  // Camera stats / info that is broadcast in regular intervals
+  // Set by the camera streaming implementation - read by OHDMainComponent (mavlink broadcast)
+  // Simple read - write pattern (mutex is a bit overkill, but we don't have atomic struct)
+  struct CamInfo{
+    bool active= false; // Do not send stats for a non-active camera
+    uint8_t cam_index=0;
+    uint8_t cam_type=0;
+    uint8_t cam_status=0;
+    uint8_t air_recording_active=0;
+    uint8_t encoding_format=0;
+    uint16_t encoding_bitrate_kbits=0;
+    uint8_t encoding_keyframe_interval=0;
+    uint16_t stream_w=0;
+    uint16_t stream_h=0;
+    uint16_t stream_fps=0;
+    uint8_t supports_variable_bitrate=0;
+  };
+  void set_cam_info(uint8_t cam_index,CamInfo camInfo){
+    if(cam_index==0){
+      std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
+      m_cam_info_cam1=camInfo;
+    }else{
+      std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
+      m_cam_info_cam2=camInfo;
+    }
   }
-  int dirty_get_bitrate_of_camera(const int cam_index){
-    if(cam_index==0)return curr_set_raw_video_bitrate_kbits_cam1;
-    if(cam_index==1)return curr_set_raw_video_bitrate_kbits_cam2;
-    return -1;
+  void set_cam_info_bitrate(uint8_t cam_index,uint16_t bitrate_kbits){
+    if(cam_index==0){
+      std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
+      m_cam_info_cam1.encoding_bitrate_kbits=bitrate_kbits;
+    }else{
+      std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
+      m_cam_info_cam2.encoding_bitrate_kbits=bitrate_kbits;
+    }
+  }
+  void set_cam_info_status(uint8_t cam_index,uint8_t status){
+      if(cam_index==0){
+          std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
+          m_cam_info_cam1.cam_status=status;
+      }else{
+          std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
+          m_cam_info_cam2.cam_status=status;
+      }
+  }
+  CamInfo get_cam_info(int cam_index){
+    if(cam_index==0){
+      std::lock_guard<std::mutex> lock(m_cam_info_cam1_mutex);
+      return m_cam_info_cam1;
+    }
+    std::lock_guard<std::mutex> lock(m_cam_info_cam2_mutex);
+    return m_cam_info_cam2;
+  }
+ private:
+  CamInfo m_cam_info_cam1{};
+  CamInfo m_cam_info_cam2{};
+  std::mutex m_cam_info_cam1_mutex;
+  std::mutex m_cam_info_cam2_mutex;
+  // LINK STATISTICS
+  // Written by wb_link, published via mavlink by telemetry OHDMainComponent
+ private:
+  std::mutex m_last_link_stats_mutex;
+  openhd::link_statistics::StatsAirGround m_last_link_stats{};
+ public:
+  void update_link_stats(openhd::link_statistics::StatsAirGround stats){
+    std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
+    m_last_link_stats=std::move(stats);
+  }
+  openhd::link_statistics::StatsAirGround get_link_stats(){
+    std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
+    return m_last_link_stats;
   }
 };
 

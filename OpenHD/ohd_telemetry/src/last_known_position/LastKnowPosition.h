@@ -7,23 +7,45 @@
 
 #include <string>
 #include <chrono>
+#include <list>
+#include <memory>
+#include <thread>
+#include <mutex>
+#include <optional>
 
 /**
  * This class exposes the following simple functionality:
- * Constantly listen for updates from the FC in regards to its position
- * (aka MAVLINK_MSG_ID_GLOBAL_POSITION_INT messages) and write the coordinates
- * to a file overwriting the previous position. This way, if the drone crashes,
- * the user can always get the last known position from a file in openhd.
- * TODO
+ * Have a file on the disc that contains the X last known positions of the UAV
+ * Needs to be updated by listening for MAVLINK_MSG_ID_GLOBAL_POSITION_INT messages
+ * Writing to the disk happens max. 1 time per second and is decoupled in an extra thread -
+ * this way, we reduce the file writes AND are guaranteed data is written after a specific amount of time
+ * even if the "on_new_position" is not called anymore by the telemetry parsing thread.
  */
 class LastKnowPosition {
  public:
   LastKnowPosition();
+  ~LastKnowPosition();
   void on_new_position(double latitude,double longitude,double altitude);
  private:
-  const std::string m_directory;
-  std::chrono::steady_clock::time_point m_last_position_update=std::chrono::steady_clock::now();
-  int m_update_index=0;
+  const std::string m_this_flight_filename;
+  struct Position{
+      // When the position was received
+      std::chrono::steady_clock::time_point recv;
+      double latitude;
+      double longitude;
+      double altitude_m;
+  };
+  std::unique_ptr<std::thread> m_write_thread;
+  bool m_write_run= true;
+  void write_position_loop();
+  std::mutex m_position_mutex;
+  std::list<Position> m_positions;
+  bool m_positions_updated= false;
+  static constexpr auto MAX_N_BUFFERED_POSITIONS=20;
+  // Gets the last X position values or std::nullopt if there was no update
+  std::optional<std::list<Position>> threadsafe_get_positions_if_updated();
+  void threadsafe_update_position(Position position);
+  static std::string positions_to_file(const std::list<Position>& positions);
 };
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_LAST_KNOWN_POSITION_LASTKNOWPOSITION_H_

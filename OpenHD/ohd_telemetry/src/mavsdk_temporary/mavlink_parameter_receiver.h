@@ -77,6 +77,7 @@ public:
      */
 	template<class T>
 	Result update_existing_server_param(const std::string& name,const T& param_value);
+    Result update_existing_server_param_int(const std::string& name,const int param_value);
 
     /**
      * @return a copy of the current parameter set of the server.

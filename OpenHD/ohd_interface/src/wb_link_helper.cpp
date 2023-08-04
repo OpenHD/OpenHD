@@ -83,30 +83,6 @@ bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
   return ret;
 }
 
-uint32_t openhd::wb::rtl8812au_get_measured_max_rate(uint32_t mcs_index) {
-  switch (mcs_index) {
-    case 0:
-      return 5000;
-    case 1:
-      return 8000;
-    case 2:
-      return 12000;
-    case 3:
-      return 15000;
-    case 4:
-      return 20000;
-    case 5:
-      return 30000; // not tested, since r.n we do not have encoders for such bitrates anyways
-    case 6:
-      return 40000; // not tested, since r.n we do not have encoders for such bitrates anyways
-    default:
-      break;
-  }
-  openhd::log::get_default()->warn("Invalid mcs index");
-  assert(true);
-  return 5000;
-}
-
 std::vector<std::string> openhd::wb::get_card_names(const std::vector<WiFiCard>& cards) {
   std::vector<std::string> ret{};
   for(const auto& card: cards){

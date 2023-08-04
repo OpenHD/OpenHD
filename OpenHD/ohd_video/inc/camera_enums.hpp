@@ -13,7 +13,7 @@
 
 enum class CameraType {
   // only exists to have a default value, properly discovered cameras must not be of type unknown
-  UNKNOWN,
+  UNKNOWN=0,
   // Dummy camera, is created fully in sw, for debugging purposes.
   // NOTE: The semi-static gstreamer test video is not ideal, but by using a file or similar we'd lose the option to test different
   // resolutions, framerate(s), bitrate(s) usw.
@@ -119,6 +119,10 @@ static CameraType camera_type_from_string(const std::string& s){
   return CameraType::DUMMY_SW;
 }
 
+static uint8_t camera_type_to_int(const CameraType& cameraType){
+  return static_cast<int>(cameraType);
+}
+
 enum class VideoCodec {
   H264=0,
   H265,
@@ -142,6 +146,9 @@ static VideoCodec video_codec_from_int(const int video_codec){
   if(video_codec==2)return VideoCodec::MJPEG;
   return VideoCodec::H264; // default to h264 here
 }
+static_assert(static_cast<int>(VideoCodec::H264)==0);
+static_assert(static_cast<int>(VideoCodec::H265)==1);
+static_assert(static_cast<int>(VideoCodec::MJPEG)==2);
 static int video_codec_to_int(const VideoCodec video_codec){
     return static_cast<int>(video_codec);
 }

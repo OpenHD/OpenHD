@@ -37,6 +37,8 @@ class XMavlinkParamProvider :public MavlinkComponent{
  private:
   std::mutex _mutex{};
   const bool _create_heartbeats;
+  // Dirty, when openhd updates a setting
+  std::vector<openhd::Setting> m_int_settings_with_update_functionality;
 };
 
 #endif  // OPENHD_OPENHD_OHD_TELEMETRY_SRC_MAV_PARAM_XMAVLINKPARAMPROVIDER_H_

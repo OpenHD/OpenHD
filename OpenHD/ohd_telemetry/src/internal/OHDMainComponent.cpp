@@ -11,6 +11,7 @@
 #include "OHDLinkStatisticsHelper.h"
 #include "OnboardComputerStatusProvider.h"
 #include "openhd_reboot_util.h"
+#include "openhd_config.h"
 
 OHDMainComponent::OHDMainComponent(
     OHDPlatform platform1,uint8_t parent_sys_id,
@@ -19,22 +20,16 @@ OHDMainComponent::OHDMainComponent(
 	MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
   m_console = openhd::log::create_or_get("t_main_c");
   assert(m_console);
-  m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform);
+  m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform,true);
   // suppress the warning until we get the first actually updated stats
-  m_last_link_stats.is_air=RUNS_ON_AIR;
-  if(m_opt_action_handler){
-    m_opt_action_handler->action_wb_link_statistics_register([this](openhd::link_statistics::StatsAirGround stats_air_ground){
-      this->set_link_statistics(stats_air_ground);
-    });
-  }
   m_status_text_accumulator=std::make_unique<StatusTextAccumulator>();
-  m_last_known_position=std::make_unique<LastKnowPosition>();
+  const auto config=openhd::load_config();
+  if(!RUNS_ON_AIR && config.GEN_ENABLE_LAST_KNOWN_POSITION){
+      m_last_known_position=std::make_unique<LastKnowPosition>();
+  }
 }
 
 OHDMainComponent::~OHDMainComponent() {
-  if(m_opt_action_handler){
-    m_opt_action_handler->action_wb_link_statistics_register(nullptr);
-  }
 }
 
 std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
@@ -44,6 +39,20 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   OHDUtil::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
           m_sys_id, m_comp_id));
   OHDUtil::vec_append(ret, generate_mav_wb_stats());
+  if(RUNS_ON_AIR){
+    if(m_opt_action_handler){
+      auto cam_stats1=m_opt_action_handler->get_cam_info(0);
+      auto cam_stats2=m_opt_action_handler->get_cam_info(1);
+      // NOTE: We use the comp id of primary / secondary camera here, since even though we are not the camera itself,
+      // We send the broadcast message(s) for it
+      if(cam_stats1.active){
+        ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,MAV_COMP_ID_CAMERA,cam_stats1));
+      }
+      if(cam_stats2.active){
+        ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,MAV_COMP_ID_CAMERA2,cam_stats2));
+      }
+    }
+  }
   //ret.push_back(generateOpenHDVersion());
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
   //_status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
@@ -135,8 +144,11 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
 
 std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
   //m_console->debug("OHDMainComponent::generate_mav_wb_stats");
+  if(!m_opt_action_handler){
+    return {};
+  }
   std::vector<MavlinkMessage> ret;
-  const auto latest_stats=get_latest_link_statistics();
+  const auto latest_stats=m_opt_action_handler->get_link_stats();
   if(RUNS_ON_AIR!=latest_stats.is_air){
     m_console->warn("Mismatch air/ground");
     return ret;
@@ -161,10 +173,14 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
     for(const auto& stats : latest_stats.stats_wb_video_air){
       ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air(
           m_sys_id, m_comp_id, stats));
+      ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air_fec_performance(
+          m_sys_id, m_comp_id, stats));
     }
   }else{
     for(const auto& ground_video: latest_stats.stats_wb_video_ground){
       ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd(
+          m_sys_id, m_comp_id, ground_video));
+      ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd_fec_performance(
           m_sys_id, m_comp_id, ground_video));
     }
   }
@@ -184,16 +200,6 @@ MavlinkMessage OHDMainComponent::generate_ohd_version(const std::string& commit_
   mavlink_msg_openhd_version_message_pack(m_sys_id, m_comp_id, &msg.m, bufferBigEnough,bufferBigEnough2);
   //mavlink_component_information_t x;
   return msg;
-}
-
-void OHDMainComponent::set_link_statistics(openhd::link_statistics::StatsAirGround stats){
-  std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
-  m_last_link_stats=stats;
-}
-
-openhd::link_statistics::StatsAirGround OHDMainComponent::get_latest_link_statistics() {
-  std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
-  return m_last_link_stats;
 }
 
 MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,const uint8_t source_comp_id,uint16_t command_id) {
