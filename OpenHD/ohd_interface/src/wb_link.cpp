@@ -62,6 +62,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   txrx_options.session_key_packet_interval=SESSION_KEY_PACKETS_INTERVAL;
   // Encryption off by default
   txrx_options.enable_encryption= false;
+  txrx_options.use_gnd_identifier=m_profile.is_ground();
   if(openhd::load_config().GEN_ENABLE_ENCRYPTION){
     txrx_options.enable_encryption= true;
   }
