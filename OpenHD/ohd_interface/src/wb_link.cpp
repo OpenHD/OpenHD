@@ -600,8 +600,10 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_rx_bps=rxStats.curr_bits_per_second;
   const auto bitfield_stbc_lpdc_sg= openhd::link_statistics::write_stbc_lpdc_shortguard_bitfield(curr_settings.wb_enable_stbc,curr_settings.wb_enable_ldpc,curr_settings.wb_enable_short_guard);
   stats.monitor_mode_link.curr_tx_stbc_lpdc_shortguard_bitfield=bitfield_stbc_lpdc_sg;
+  stats.monitor_mode_link.curr_pollution_perc=rxStats.curr_link_pollution_perc;
   //m_console->debug("{}",WBTxRx::tx_stats_to_string(txStats));
   //m_console->debug("{}",WBTxRx::rx_stats_to_string(rxStats));
+  //m_console->debug("Pollution: {}",rxStats.curr_link_pollution_perc);
 
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);

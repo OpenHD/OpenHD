@@ -49,6 +49,7 @@ static MavlinkMessage pack_link_general(const uint8_t system_id,const uint8_t co
   tmp.curr_tx_stbc_lpdc_shortguard_bitfield=stats_monitor_mode_link.curr_tx_stbc_lpdc_shortguard_bitfield;
   tmp.curr_rate_kbits=stats_monitor_mode_link.curr_rate_kbits;
   tmp.curr_n_rate_adjustments=stats_monitor_mode_link.curr_n_rate_adjustments;
+  tmp.dummy0=stats_monitor_mode_link.curr_pollution_perc;
   //tmp.unused2=stats_monitor_mode_link.unused2;
   //tmp.unused3=stats_monitor_mode_link.unused3;
   mavlink_msg_openhd_stats_monitor_mode_wifi_link_encode(system_id,component_id,&msg.m,&tmp);

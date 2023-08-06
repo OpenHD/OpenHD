@@ -46,6 +46,7 @@ struct StatsMonitorModeLink{
   uint16_t curr_rate_kbits=0;
   uint8_t curr_n_rate_adjustments=0;
   uint8_t curr_tx_stbc_lpdc_shortguard_bitfield;
+  uint8_t curr_pollution_perc=0;
   [[nodiscard]] std::string to_string()const{
     return "TODO";
   }
