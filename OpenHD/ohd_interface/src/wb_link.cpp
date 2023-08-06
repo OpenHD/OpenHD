@@ -820,8 +820,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
   };
   std::vector<TmpResult> possible_frequencies{};
   // Note: We intentionally do not modify the persistent settings here
-  m_console->debug("Channel scan, time per channel:{}ms N channels to scan:{} N channel widths to scan:{}",
-                   std::chrono::duration_cast<std::chrono::milliseconds>(DEFAULT_SCAN_TIME_PER_CHANNEL).count(),
+  m_console->debug("Channel scan N channels to scan:{} N channel widths to scan:{}",
                    channels_to_scan.size(),channel_widths_to_scan.size());
   bool done_early=false;
   // We need to loop through all possible channels
@@ -841,17 +840,19 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
           m_console->warn("Cannot scan [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
           continue;
       }
+      // sleeep a bit - some cards /drivers might need time switching
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
       m_console->warn("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
       reset_all_rx_stats();
-      std::this_thread::sleep_for(DEFAULT_SCAN_TIME_PER_CHANNEL);
-      auto n_valid_packets=m_wb_txrx->get_rx_stats().count_p_valid;
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+      const auto n_likely_openhd_packets=m_wb_txrx->get_rx_stats().curr_n_likely_openhd_packets;
       // If we got valid packets, sleep a bit more such that we get a reliable packet loss
-      if(n_valid_packets>0){
-        m_console->debug("Got valid packets, sleeping a bit more");
-        std::this_thread::sleep_for(DEFAULT_SCAN_TIME_PER_CHANNEL);
+      if(n_likely_openhd_packets>0){
+        m_console->debug("Got {} likely openhd packets, sleep a bit more",n_likely_openhd_packets);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
       }
       const auto packet_loss=m_wb_txrx->get_rx_stats().curr_packet_loss;
-      n_valid_packets=m_wb_txrx->get_rx_stats().count_p_valid;
+      const auto n_valid_packets=m_wb_txrx->get_rx_stats().count_p_valid;
       // We might receive 20Mhz channel width packets from a air unit sending on 20Mhz channel width while
       // receiving on 40Mhz channel width - if we were to then to set the gnd to 40Mhz, we will be able to receive data,
       // but not be able to send any data up to the air unit.

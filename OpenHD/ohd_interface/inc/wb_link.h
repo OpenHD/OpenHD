@@ -118,10 +118,6 @@ class WBLink :public OHDLink{
   // How often per second we broadcast the session key -
   // we send the session key ~2 times per second
   static constexpr std::chrono::milliseconds SESSION_KEY_PACKETS_INTERVAL=std::chrono::milliseconds(500);
-  // Testing shows we have to listen for a while to reliably get data - since
-  // 1) the card might take some time switching and
-  // 2) we might lose session key packet(s)
-  static constexpr std::chrono::seconds DEFAULT_SCAN_TIME_PER_CHANNEL{3};
   // This is a long-running operation during which changing things like frequency and more are disabled.
   // Loop through all possible frequencies + optionally channel widths until we can say with a high certainty
   // we have found a running air unit on this channel. (-> only supported on ground).
