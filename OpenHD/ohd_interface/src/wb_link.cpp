@@ -60,14 +60,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   WBTxRx::Options txrx_options{};
   txrx_options.rtl8812au_rssi_fixup= true;
   txrx_options.session_key_packet_interval=SESSION_KEY_PACKETS_INTERVAL;
-  // Encryption off by default
-  txrx_options.enable_encryption= false;
   txrx_options.use_gnd_identifier=m_profile.is_ground();
   txrx_options.debug_rssi= true;
-  if(openhd::load_config().GEN_ENABLE_ENCRYPTION){
-    txrx_options.enable_encryption= true;
-    m_console->debug("Encryption enabled");
-  }
   const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
   if(OHDFilesystemUtil::exists(keypair_file)){
       txrx_options.encryption_key = std::string(keypair_file);
@@ -207,6 +201,10 @@ std::unique_ptr<WBStreamTx> WBLink::create_wb_tx(uint8_t radio_port,bool is_vide
     options.block_data_queue_size=2;
   }
   auto ret=std::make_unique<WBStreamTx>(m_wb_txrx, options);
+  // Encryption by default is only enabled for telemetry, not for video
+  const auto config=openhd::load_config();
+  const bool encrypt= !is_video || config.GEN_ENABLE_ENCRYPTION;
+  ret->set_encryption(encrypt);
   return ret;
 }
 
