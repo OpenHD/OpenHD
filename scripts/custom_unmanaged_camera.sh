@@ -65,12 +65,24 @@ setup_and_stream_ip_cam_siyi_h265(){
   done
 }
 
+setup_and_stream_libseek-thermal_cam(){
+  # setup loopback
+  seek_viewer --camtype=seekpro --FFC=/usr/local/include/seek/flat_field.png --mode=v4l2 --output=/dev/video7
+  # start streaming, restart in case things go wrong (or the cam might need some time before it is ready)
+  while true
+  do
+    gst-launch-1.0 v4l2src device=/dev/video7 ! videoconvert ! videoscale ! video/x-raw, format=I420, width=320, height=240,framerate=30/1 ! x264enc bitrate=100000 speed-preset=ultrafast tune=zerolatency key-int-max=30 ! rtph264pay ! udpsink host=127.0.0.1 port=5500    
+    sleep 5s # don't peg the cpu here, re-launching the pipeline
+  done
+}
+
 
 # uncomment your IP Camera setup below (do not uncomment more than one Setup)
 
 # setup_and_stream_ip_cam_openipc
 # setup_and_stream_ip_cam_siyi_h264
 # setup_and_stream_ip_cam_siyi_h265
+# setup_and_stream_libseek-thermal_cam
 
 echo "Doing nothing"
 sleep 356d
