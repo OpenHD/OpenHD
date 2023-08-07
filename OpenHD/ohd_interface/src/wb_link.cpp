@@ -90,6 +90,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       };
       m_wb_tele_rx = create_wb_rx(radio_port_rx, false, cb);
       m_wb_tele_tx = create_wb_tx(radio_port_tx, false);
+      m_wb_tele_tx->set_encryption(true);
   }
   {
       // Video is unidirectional, aka always goes from air pi to ground pi
@@ -97,6 +98,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           // we transmit video
           auto primary = create_wb_tx(openhd::VIDEO_PRIMARY_RADIO_PORT, true);
           auto secondary = create_wb_tx(openhd::VIDEO_SECONDARY_RADIO_PORT, true);
+          primary->set_encryption(m_settings->get_settings().wb_air_enable_video_encryption);
+          secondary->set_encryption(m_settings->get_settings().wb_air_enable_video_encryption);
           m_wb_video_tx_list.push_back(std::move(primary));
           m_wb_video_tx_list.push_back(std::move(secondary));
       } else {
@@ -204,10 +207,6 @@ std::unique_ptr<WBStreamTx> WBLink::create_wb_tx(uint8_t radio_port,bool is_vide
     options.block_data_queue_size=2;
   }
   auto ret=std::make_unique<WBStreamTx>(m_wb_txrx, options);
-  // Encryption by default is only enabled for telemetry, not for video
-  const auto config=openhd::load_config();
-  const bool encrypt= !is_video || config.GEN_ENABLE_ENCRYPTION;
-  ret->set_encryption(encrypt);
   return ret;
 }
 
@@ -468,6 +467,15 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     };
     auto change_tx_power=openhd::IntSetting{(int)settings.wb_tx_power_milli_watt,cb_wb_tx_power_milli_watt};
     ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
+  }
+  if(m_profile.is_air){
+      auto cb_video_encrypt=[this](std::string,int value){
+          if(!openhd::validate_yes_or_no(value))return false;
+          set_wb_air_video_encryption_enabled(value);
+          return true;
+      };
+      auto change_video_encryption=openhd::IntSetting{(int)settings.enable_wb_video_variable_bitrate,cb_video_encrypt};
+      ret.push_back(Setting{WB_VIDEO_ENCRYPTION_ENABLE,change_video_encryption});
   }
   openhd::validate_provided_ids(ret);
   return ret;
@@ -740,6 +748,15 @@ bool WBLink::set_wb_video_rate_for_mcs_adjustment_percent(int value) {
   m_settings->persist();
   return true;
 }
+
+void WBLink::set_wb_air_video_encryption_enabled(bool enable) {
+    m_settings->unsafe_get_settings().wb_air_enable_video_encryption=enable;
+    m_settings->persist();
+    for(auto& tx:m_wb_video_tx_list){
+        tx->set_encryption(m_settings->get_settings().wb_air_enable_video_encryption);
+    }
+}
+
 void WBLink::schedule_work_item(const std::shared_ptr<WorkItem>& work_item) {
   std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
   m_work_item_queue.push(work_item);

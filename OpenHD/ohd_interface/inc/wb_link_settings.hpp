@@ -80,6 +80,10 @@ struct WBLinkSettings {
   // but obviosuly you cannot reach your air unit anymore when this mode is enabled
   // (disable it to re-gain control)
   bool wb_enable_listen_only_mode= false;
+  // Enable / Disable video encryption - off by default. Telemetry is always encrypted
+  // This setting is only valid on the air unit, where video is encrypted (on the ground, it is ignored) - it does not need to macth
+  // we have per-packet enable / disable encryption in wifibroadcast
+  bool wb_air_enable_video_encryption= false;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
                                    wb_enable_stbc, wb_enable_ldpc, wb_enable_short_guard,
@@ -89,7 +93,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_widt
                                    wb_max_fec_block_size_for_platform,
                                    wb_mcs_index_via_rc_channel,
                                    enable_wb_video_variable_bitrate,
-                                   wb_enable_listen_only_mode);
+                                   wb_enable_listen_only_mode,
+                                   wb_air_enable_video_encryption);
 
 static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform){
   switch (platform.platform_type) {
@@ -189,6 +194,7 @@ static constexpr auto WB_VIDEO_FEC_PERCENTAGE="WB_V_FEC_PERC";
 static constexpr auto WB_VIDEO_RATE_FOR_MCS_ADJUSTMENT_PERC="WB_V_RATE_PERC"; //wb_video_rate_for_mcs_adjustment_percent
 static constexpr auto WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM="WB_MAX_D_BZ";
 static constexpr auto WB_TX_POWER_MILLI_WATT="TX_POWER_MW";
+static constexpr auto WB_VIDEO_ENCRYPTION_ENABLE="WB_VIDEO_ENCRYPT";
 // annoying 16 char settings limit
 static constexpr auto WB_RTL8812AU_TX_PWR_IDX_OVERRIDE="TX_POWER_I";
 static constexpr auto WB_RTL8812AU_TX_PWR_IDX_ARMED="TX_POWER_I_ARMED";

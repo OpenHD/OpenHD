@@ -79,11 +79,10 @@ class WBLink :public OHDLink{
   bool set_enable_wb_video_variable_bitrate(int value);
   bool set_max_fec_block_size_for_platform(int value);
   bool set_wb_video_rate_for_mcs_adjustment_percent(int value);
+  void set_wb_air_video_encryption_enabled(bool enable);
   // Make sure no processes interfering with monitor mode run on the given cards,
   // then sets them to monitor mode
   void takeover_cards_monitor_mode();
-  // set the right frequency, channel width and tx power. Cards need to be in monitor mode already !
-  void set_freq_width_power();
   // Reads the current settings and creates the appropriate Radiotap Header params
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
   std::unique_ptr<WBStreamTx> create_wb_tx(uint8_t radio_port,bool is_video);
