@@ -63,8 +63,10 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   // Encryption off by default
   txrx_options.enable_encryption= false;
   txrx_options.use_gnd_identifier=m_profile.is_ground();
+  txrx_options.debug_rssi= true;
   if(openhd::load_config().GEN_ENABLE_ENCRYPTION){
     txrx_options.enable_encryption= true;
+    m_console->debug("Encryption enabled");
   }
   const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
   if(OHDFilesystemUtil::exists(keypair_file)){
