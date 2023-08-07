@@ -65,7 +65,7 @@ setup_and_stream_ip_cam_siyi_h265(){
   done
 }
 
-setup_and_stream_libseek-thermal_cam(){
+setup_and_stream_libseek(){
   # setup loopback
   seek_viewer --camtype=seekpro --FFC=/usr/local/include/seek/flat_field.png --mode=v4l2 --output=/dev/video7
   # start streaming, restart in case things go wrong (or the cam might need some time before it is ready)
@@ -82,7 +82,7 @@ setup_and_stream_libseek-thermal_cam(){
 # setup_and_stream_ip_cam_openipc
 # setup_and_stream_ip_cam_siyi_h264
 # setup_and_stream_ip_cam_siyi_h265
-# setup_and_stream_libseek-thermal_cam
+setup_and_stream_libseek
 
 echo "Doing nothing"
 sleep 356d
