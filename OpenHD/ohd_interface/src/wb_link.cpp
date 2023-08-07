@@ -474,7 +474,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
           set_wb_air_video_encryption_enabled(value);
           return true;
       };
-      auto change_video_encryption=openhd::IntSetting{(int)settings.enable_wb_video_variable_bitrate,cb_video_encrypt};
+      auto change_video_encryption=openhd::IntSetting{(int)settings.wb_air_enable_video_encryption,cb_video_encrypt};
       ret.push_back(Setting{WB_VIDEO_ENCRYPTION_ENABLE,change_video_encryption});
   }
   openhd::validate_provided_ids(ret);
