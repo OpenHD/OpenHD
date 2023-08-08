@@ -2,6 +2,7 @@
 
 #include <regex>
 #include <thread>
+#include <list>
 
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
@@ -202,6 +203,33 @@ bool DWifiCards::any_wifi_card_supporting_monitor_mode(
   return false;
 }
 
+// OpenHD optimization: If there are multiple RX card(s), try and show them always in the same order,
+// Even if they were detected in a different order between boots
+std::vector<WiFiCard> reorder_monitor_mode_cards(std::vector<WiFiCard> cards){
+    if(cards.size()==1)return cards;
+    // card and weather card has been consumed
+    std::vector<std::pair<WiFiCard,bool>> tmp;
+    for(auto& card: cards){
+        tmp.emplace_back(card,false);
+    }
+    std::vector<WiFiCard> ret;
+    // Optimization 1: always show rtl8812au cards first
+    for(auto& card:tmp){
+        if(card.first.type==WiFiCardType::Realtek8812au){
+            ret.push_back(card.first);
+            card.second= true;
+        }
+    }
+    // Append the rest of the card(s)
+    for(auto& card:tmp){
+        if(!card.second){
+            // Card is not consumed yet
+            ret.push_back(card.first);
+        }
+    }
+    return ret;
+}
+
 DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
     const std::vector<WiFiCard>& discovered_cards,const OHDPlatform& platform,const OHDProfile& profile){
   // We need to figure out what's the best usage for the card(s) connected to the system based on their capabilities.
@@ -232,7 +260,10 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
   if(profile.is_air && monitor_mode_cards.size()>1){
     monitor_mode_cards.resize(1);
   }
-  return {monitor_mode_cards,hotspot_card};
+  if(monitor_mode_cards.size()>=2){
+      // Optimization:
+  }
+  return {reorder_monitor_mode_cards(monitor_mode_cards),hotspot_card};
 }
 
 static WiFiCard wait_for_card(const std::string& interface_name){

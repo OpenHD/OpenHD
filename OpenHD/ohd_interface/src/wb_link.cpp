@@ -594,7 +594,7 @@ void WBLink::update_statistics() {
   const auto& curr_settings=m_settings->unsafe_get_settings();
   const auto rxStats=m_wb_txrx->get_rx_stats();
   const auto txStats=m_wb_txrx->get_tx_stats();
-  stats.monitor_mode_link.curr_rx_packet_loss_perc=rxStats.curr_packet_loss;
+  stats.monitor_mode_link.curr_rx_packet_loss_perc=rxStats.curr_lowest_packet_loss;
   stats.monitor_mode_link.count_tx_inj_error_hint=txStats.count_tx_injections_error_hint;
   stats.monitor_mode_link.count_tx_dropped_packets=get_total_dropped_packets();
   stats.monitor_mode_link.curr_tx_card_idx=m_wb_txrx->get_curr_active_tx_card_idx();
@@ -623,7 +623,8 @@ void WBLink::update_statistics() {
   for(int i=0;i< m_broadcast_cards.size();i++){
     auto& card = stats.cards.at(i);
     auto rxStatsCard=m_wb_txrx->get_rx_stats_for_card(i);
-    card.rx_rssi_1=rxStatsCard.rssi_for_wifi_card.last_rssi;
+    card.rx_rssi_1=rxStatsCard.antenna1_dbm;
+    card.rx_rssi_2=rxStatsCard.antenna2_dbm;
     card.count_p_received=rxStatsCard.count_p_valid;
     card.count_p_injected=0; //TODO
     card.curr_rx_packet_loss_perc=rxStatsCard.curr_packet_loss;
@@ -874,7 +875,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         m_console->debug("Got {} likely openhd packets, sleep a bit more",n_likely_openhd_packets);
         std::this_thread::sleep_for(std::chrono::seconds(2));
       }
-      const auto packet_loss=m_wb_txrx->get_rx_stats().curr_packet_loss;
+      const auto packet_loss=m_wb_txrx->get_rx_stats().curr_lowest_packet_loss;
       const auto n_valid_packets=m_wb_txrx->get_rx_stats().count_p_valid;
       // We might receive 20Mhz channel width packets from a air unit sending on 20Mhz channel width while
       // receiving on 40Mhz channel width - if we were to then to set the gnd to 40Mhz, we will be able to receive data,
