@@ -231,7 +231,8 @@ bool WBLink::request_set_frequency(int frequency) {
   if(m_disable_all_frequency_checks){
     m_console->warn("Not sanity checking frequency");
   }else{
-    if(!openhd::wb::cards_support_frequency(frequency,m_broadcast_cards,m_platform,m_console)){
+    if(!openhd::wb::any_card_support_frequency(frequency,m_broadcast_cards,m_platform,m_console)){
+        m_console->warn("Cannot change frequency, all cards do not support it");
       return false;
     }
   }
@@ -323,8 +324,8 @@ bool WBLink::request_set_channel_width(int channel_width) {
     m_console->warn("Invalid channel width {}",channel_width);
     return false;
   }
-  if(!openhd::wb::cards_support_setting_channel_width(m_broadcast_cards)){
-    m_console->warn("Cannot change channel width, at least one card doesn't support it");
+  if(!openhd::wb::any_card_support_setting_channel_width(m_broadcast_cards)){
+    m_console->warn("Cannot change channel width, all cards do not support it");
     return false;
   }
   if(!check_in_state_support_changing_settings())return false;
@@ -855,7 +856,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       // Return early in some cases (e.g. when we have a low loss and are quite certain about a frequency)
       if(done_early)break;
       // Skip channels / frequencies the card doesn't support anyways
-      if(!openhd::wb::cards_support_frequency(channel.frequency,m_broadcast_cards,m_platform, m_console)){
+      if(!openhd::wb::any_card_support_frequency(channel.frequency,m_broadcast_cards,m_platform, m_console)){
         continue;
       }
       // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received

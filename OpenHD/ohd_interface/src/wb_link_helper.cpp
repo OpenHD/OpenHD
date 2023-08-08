@@ -12,7 +12,7 @@ bool openhd::wb::disable_all_frequency_checks() {
   return OHDFilesystemUtil::exists(FIlE_DISABLE_ALL_FREQUENCY_CHECKS);
 }
 
-bool openhd::wb::cards_support_setting_channel_width(
+bool openhd::wb::all_cards_support_setting_channel_width(
     const std::vector<WiFiCard>& m_broadcast_cards) {
   for(const auto& card_handle: m_broadcast_cards){
     if(!wifi_card_supports_40Mhz_channel_width(card_handle)){
@@ -21,8 +21,17 @@ bool openhd::wb::cards_support_setting_channel_width(
   }
   return true;
 }
+bool openhd::wb::any_card_support_setting_channel_width(const std::vector<WiFiCard> &m_broadcast_cards) {
+    bool any_supports= false;
+    for(const auto& card_handle: m_broadcast_cards){
+        if(wifi_card_supports_40Mhz_channel_width(card_handle)){
+            any_supports= true;
+        }
+    }
+    return any_supports;
+}
 
-bool openhd::wb::cards_support_frequency(
+bool openhd::wb::all_cards_support_frequency(
     uint32_t frequency,
     const std::vector<WiFiCard>& m_broadcast_cards,
     const OHDPlatform& platform,
@@ -38,6 +47,18 @@ bool openhd::wb::cards_support_frequency(
     }
   }
   return true;
+}
+
+bool openhd::wb::any_card_support_frequency(uint32_t frequency, const std::vector<WiFiCard> &m_broadcast_cards,
+                                            const OHDPlatform &platform,
+                                            const std::shared_ptr<spdlog::logger> &m_console) {
+    bool any_supports_frequency= false;
+    for(const auto& card:m_broadcast_cards){
+        if(wifi_card_supports_frequency(card,frequency)){
+            any_supports_frequency= true;
+        }
+    }
+    return any_supports_frequency;
 }
 
 void openhd::wb::fixup_unsupported_settings(

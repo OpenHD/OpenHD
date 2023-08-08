@@ -23,17 +23,26 @@ bool disable_all_frequency_checks();
  * @param m_broadcast_cards the cards to check capabilities from
  * @return  true if all cards support setting the channel width (otherwise 20Mhz default is fixed (most likely))
  */
-bool cards_support_setting_channel_width(const std::vector<WiFiCard>& m_broadcast_cards);
+bool all_cards_support_setting_channel_width(const std::vector<WiFiCard>& m_broadcast_cards);
+bool any_card_support_setting_channel_width(const std::vector<WiFiCard>& m_broadcast_cards);
 
 /**
- * returns true if the given cards supports the given frequency, taking into account if the kernel was modified or not
+ * returns true if all the given cards supports the given frequency, taking into account if the kernel was modified or not
  */
-bool cards_support_frequency(
+bool all_cards_support_frequency(
     uint32_t frequency,
     const std::vector<WiFiCard>& m_broadcast_cards,
     const OHDPlatform& platform,
     const std::shared_ptr<spdlog::logger>& m_console);
 
+/**
+ * returns true if any of the given cards supports the given frequency
+ */
+bool any_card_support_frequency(
+        uint32_t frequency,
+        const std::vector<WiFiCard>& m_broadcast_cards,
+        const OHDPlatform& platform,
+        const std::shared_ptr<spdlog::logger>& m_console);
 /**
  * fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
  */
