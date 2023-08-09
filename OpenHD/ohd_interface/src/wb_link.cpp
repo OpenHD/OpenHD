@@ -75,9 +75,14 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   //txrx_options.log_all_received_packets= true;
   //txrx_options.log_all_received_validated_packets= true;
   //txrx_options.advanced_latency_debugging_rx=true;
-  const auto card_names = openhd::wb::get_card_names(m_broadcast_cards);
-  assert(!card_names.empty());
-  m_wb_txrx=std::make_shared<WBTxRx>(card_names,txrx_options);
+  //const auto card_names = openhd::wb::get_card_names(m_broadcast_cards);
+  //assert(!card_names.empty());
+  std::vector<WBTxRx::WifiCard> tmp_wifi_cards;
+  for(const auto& card: m_broadcast_cards){
+      int wb_type=card.type==WiFiCardType::Realtek8812au ? 1 : 0;
+      tmp_wifi_cards.push_back(WBTxRx::WifiCard{card.device_name,wb_type});
+  }
+  m_wb_txrx=std::make_shared<WBTxRx>(tmp_wifi_cards,txrx_options);
   m_wb_txrx->tx_threadsafe_update_radiotap_header(create_radiotap_params());
   {
       // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
