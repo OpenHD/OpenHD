@@ -150,6 +150,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
   std::vector<MavlinkMessage> ret;
   const auto latest_stats=m_opt_action_handler->get_link_stats();
   if(RUNS_ON_AIR!=latest_stats.is_air){
+    // Happens when wb hasn't updated the stats the first time yet
     //m_console->warn("Mismatch air/ground");
     return ret;
   }
