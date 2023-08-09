@@ -624,6 +624,7 @@ void WBLink::update_statistics() {
   for(int i=0;i< m_broadcast_cards.size();i++){
     auto& card = stats.cards.at(i);
     auto rxStatsCard=m_wb_txrx->get_rx_stats_for_card(i);
+    card.rx_rssi_card=rxStatsCard.card_dbm;
     card.rx_rssi_1=rxStatsCard.antenna1_dbm;
     card.rx_rssi_2=rxStatsCard.antenna2_dbm;
     card.count_p_received=rxStatsCard.count_p_valid;

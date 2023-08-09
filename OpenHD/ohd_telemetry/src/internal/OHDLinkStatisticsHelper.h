@@ -24,6 +24,7 @@ static MavlinkMessage pack_card(const uint8_t system_id,const uint8_t component_
   tmp.tx_power=card_stats.tx_power;
   tmp.curr_status=card_stats.curr_status;
   tmp.rx_signal_quality=card_stats.signal_quality;
+  tmp.dummy0=card_stats.rx_rssi_card;
   //openhd::log::get_default()->debug("XX {}",card_stats.to_string(0));
   mavlink_msg_openhd_stats_monitor_mode_wifi_card_encode(system_id,component_id,&msg.m,&tmp);
   return msg;

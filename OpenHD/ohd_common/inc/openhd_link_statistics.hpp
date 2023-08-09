@@ -109,6 +109,7 @@ struct StatsWBVideoGround{
 struct StatsPerCard{
   bool exists_in_openhd=false; // We have place for up to X wifi cards, but they might be unused - don't waste any telemetry bandwidth on these cards
   uint8_t card_type=0;
+  int8_t rx_rssi_card=INT8_MIN;
   int8_t rx_rssi_1=INT8_MIN; // dBm / rssi
   int8_t rx_rssi_2=INT8_MIN; // dBm / rssi
   int8_t signal_quality=-1;
