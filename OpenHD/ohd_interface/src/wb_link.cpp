@@ -336,7 +336,7 @@ bool WBLink::request_set_channel_width(int channel_width) {
   // On the ground, it doesn't really matter if the card actually supports injecting 40Mhz, only if it receives 40Mhz
   if(m_profile.is_air){
       // We only have one tx card, check if it supports injecting with 40Mhz channel width:
-      if(!wifi_card_supports_40Mhz_channel_width_injection(m_broadcast_cards.at(0))){
+      if(channel_width==40 && !wifi_card_supports_40Mhz_channel_width_injection(m_broadcast_cards.at(0))){
           m_console->warn("Cannot change channel width, not supported by card");
           return false;
       }
