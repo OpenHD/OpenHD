@@ -196,7 +196,11 @@ void WBLink::takeover_cards_monitor_mode() {
 
 RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
   const auto settings=m_settings->get_settings();
-  const auto mcs_index=static_cast<int>(settings.wb_mcs_index);
+  auto mcs_index=static_cast<int>(settings.wb_mcs_index);
+  if(m_profile.is_ground()){
+      // Always use mcs 0 on ground
+      mcs_index =0;
+  }
   const auto channel_width=static_cast<int>(settings.wb_channel_width);
   return RadiotapHeader::UserSelectableParams{
       channel_width, settings.wb_enable_short_guard,settings.wb_enable_stbc,
@@ -376,12 +380,15 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   change_wb_channel_width.get_callback=[this](){
       return m_settings->unsafe_get_settings().wb_channel_width;
   };
-  auto change_wb_mcs_index=openhd::IntSetting{(int)settings.wb_mcs_index,[this](std::string,int value){
-                                                  return set_mcs_index(value);
-                                                }};
+  if(m_profile.is_air){
+      // Changing the MCS index only serves a purpose on the ground
+      auto change_wb_mcs_index=openhd::IntSetting{(int)settings.wb_mcs_index,[this](std::string,int value){
+          return set_mcs_index(value);
+      }};
+      ret.push_back(Setting{WB_MCS_INDEX,change_wb_mcs_index});
+  }
   ret.push_back(Setting{WB_FREQUENCY,change_freq});
   ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
-  ret.push_back(Setting{WB_MCS_INDEX,change_wb_mcs_index});
   if(m_profile.is_air){
     auto change_video_fec_percentage=openhd::IntSetting{(int)settings.wb_video_fec_percentage,[this](std::string,int value){
                                                             return set_video_fec_percentage(value);
