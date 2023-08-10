@@ -137,10 +137,13 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
         async_scan_channels(param);
       };
       m_opt_action_handler->action_wb_link_scan_channels_register(cb_scan);
-      auto cb_mcs=[this](const std::array<int,18>& rc_channels){
-        set_mcs_index_from_rc_channel(rc_channels);
-      };
-      m_opt_action_handler->action_on_ony_rc_channel_register(cb_mcs);
+      if(m_profile.is_air){
+          // MCS is only changed on air
+          auto cb_mcs=[this](const std::array<int,18>& rc_channels){
+            set_mcs_index_from_rc_channel(rc_channels);
+          };
+          m_opt_action_handler->action_on_ony_rc_channel_register(cb_mcs);
+      }
       auto cb_arm=[this](bool armed){
         update_arming_state(armed);
       };
