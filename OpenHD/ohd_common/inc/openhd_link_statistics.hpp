@@ -42,10 +42,11 @@ struct StatsMonitorModeLink{
   uint8_t curr_tx_channel_w_mhz;
   int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss*/
   int16_t curr_rx_big_gaps_counter;
-  bool tx_passive_mode_is_enabled = false;
+  int8_t tx_operating_mode = 0;
   uint16_t curr_rate_kbits=0;
   uint8_t curr_n_rate_adjustments=0;
   uint8_t curr_tx_stbc_lpdc_shortguard_bitfield;
+  uint8_t curr_pollution_perc=0;
   [[nodiscard]] std::string to_string()const{
     return "TODO";
   }
@@ -108,6 +109,7 @@ struct StatsWBVideoGround{
 struct StatsPerCard{
   bool exists_in_openhd=false; // We have place for up to X wifi cards, but they might be unused - don't waste any telemetry bandwidth on these cards
   uint8_t card_type=0;
+  int8_t rx_rssi_card=INT8_MIN;
   int8_t rx_rssi_1=INT8_MIN; // dBm / rssi
   int8_t rx_rssi_2=INT8_MIN; // dBm / rssi
   int8_t signal_quality=-1;

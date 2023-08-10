@@ -79,11 +79,10 @@ class WBLink :public OHDLink{
   bool set_enable_wb_video_variable_bitrate(int value);
   bool set_max_fec_block_size_for_platform(int value);
   bool set_wb_video_rate_for_mcs_adjustment_percent(int value);
+  void set_wb_air_video_encryption_enabled(bool enable);
   // Make sure no processes interfering with monitor mode run on the given cards,
   // then sets them to monitor mode
   void takeover_cards_monitor_mode();
-  // set the right frequency, channel width and tx power. Cards need to be in monitor mode already !
-  void set_freq_width_power();
   // Reads the current settings and creates the appropriate Radiotap Header params
   [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
   std::unique_ptr<WBStreamTx> create_wb_tx(uint8_t radio_port,bool is_video);
@@ -118,10 +117,6 @@ class WBLink :public OHDLink{
   // How often per second we broadcast the session key -
   // we send the session key ~2 times per second
   static constexpr std::chrono::milliseconds SESSION_KEY_PACKETS_INTERVAL=std::chrono::milliseconds(500);
-  // Testing shows we have to listen for a while to reliably get data - since
-  // 1) the card might take some time switching and
-  // 2) we might lose session key packet(s)
-  static constexpr std::chrono::seconds DEFAULT_SCAN_TIME_PER_CHANNEL{3};
   // This is a long-running operation during which changing things like frequency and more are disabled.
   // Loop through all possible frequencies + optionally channel widths until we can say with a high certainty
   // we have found a running air unit on this channel. (-> only supported on ground).
@@ -137,7 +132,6 @@ class WBLink :public OHDLink{
   void gnd_only_fix_channel_width_for_uplink();
  private:
   void reset_all_rx_stats();
-  int get_last_rx_packet_chan_width();
   int64_t get_total_dropped_packets();
  private:
   // We return false on all the change settings request(s) if there is already a change operation queued
@@ -148,6 +142,7 @@ class WBLink :public OHDLink{
   const OHDProfile m_profile;
   const OHDPlatform m_platform;
   const std::vector<WiFiCard> m_broadcast_cards;
+  bool m_any_card_supports_injection;
   // disable all openhd frequency checking - note that I am quite sure about the correctness of openhd internal checking in regards to wifi channels ;)
   const bool m_disable_all_frequency_checks;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
