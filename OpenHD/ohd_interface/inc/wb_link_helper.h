@@ -20,13 +20,6 @@ namespace openhd::wb{
 bool disable_all_frequency_checks();
 
 /**
- * @param m_broadcast_cards the cards to check capabilities from
- * @return  true if all cards support setting the channel width (otherwise 20Mhz default is fixed (most likely))
- */
-bool all_cards_support_setting_channel_width(const std::vector<WiFiCard>& m_broadcast_cards);
-bool any_card_support_setting_channel_width(const std::vector<WiFiCard>& m_broadcast_cards);
-
-/**
  * returns true if all the given cards supports the given frequency, taking into account if the kernel was modified or not
  */
 bool all_cards_support_frequency(

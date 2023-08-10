@@ -329,9 +329,13 @@ bool WBLink::request_set_channel_width(int channel_width) {
     m_console->warn("Invalid channel width {}",channel_width);
     return false;
   }
-  if(!openhd::wb::any_card_support_setting_channel_width(m_broadcast_cards)){
-    m_console->warn("Cannot change channel width, all cards do not support it");
-    return false;
+  // On the ground, it doesn't really matter if the card actually supports injecting 40Mhz, only if it receives 40Mhz
+  if(m_profile.is_air){
+      // We only have one tx card, check if it supports injecting with 40Mhz channel width:
+      if(!wifi_card_supports_40Mhz_channel_width_injection(m_broadcast_cards.at(0))){
+          m_console->warn("Cannot change channel width, not supported by card");
+          return false;
+      }
   }
   if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_channel_width=channel_width;
