@@ -81,12 +81,13 @@ void openhd::wb::fixup_unsupported_settings(
       settings.persist();
     }
   }
-  if(!all_cards_support_setting_mcs_index(m_broadcast_cards)){
+  // NOTE: The card might not support setting the MCS index
+  /*if(!all_cards_support_setting_mcs_index(m_broadcast_cards)){
     m_console->warn("Card {} doesn't support setting MCS index, applying defaults",first_card.device_name);
     // cards that do not support changing the mcs index are always fixed to mcs3 on openhd drivers
     settings.unsafe_get_settings().wb_mcs_index=3;
     settings.persist();
-  }
+  }*/
   settings.persist();
 }
 
