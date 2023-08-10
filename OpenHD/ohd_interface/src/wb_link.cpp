@@ -774,6 +774,9 @@ bool WBLink::set_wb_video_rate_for_mcs_adjustment_percent(int value) {
 }
 
 void WBLink::set_wb_air_video_encryption_enabled(bool enable) {
+    if(enable){
+      m_console->debug("Video encryption enabled:{}",enable);
+    }
     m_settings->unsafe_get_settings().wb_air_enable_video_encryption=enable;
     m_settings->persist();
     for(auto& tx:m_wb_video_tx_list){
