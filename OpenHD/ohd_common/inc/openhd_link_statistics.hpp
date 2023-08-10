@@ -42,7 +42,7 @@ struct StatsMonitorModeLink{
   uint8_t curr_tx_channel_w_mhz;
   int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss*/
   int16_t curr_rx_big_gaps_counter;
-  bool tx_passive_mode_is_enabled = false;
+  int8_t tx_operating_mode = 0;
   uint16_t curr_rate_kbits=0;
   uint8_t curr_n_rate_adjustments=0;
   uint8_t curr_tx_stbc_lpdc_shortguard_bitfield;

@@ -46,7 +46,7 @@ static MavlinkMessage pack_link_general(const uint8_t system_id,const uint8_t co
   tmp.curr_tx_channel_mhz=stats_monitor_mode_link.curr_tx_channel_mhz;
   tmp.curr_tx_channel_w_mhz=stats_monitor_mode_link.curr_tx_channel_w_mhz;
   tmp.curr_rx_big_gaps_counter=stats_monitor_mode_link.curr_rx_big_gaps_counter;
-  tmp.tx_passive_mode_is_enabled=stats_monitor_mode_link.tx_passive_mode_is_enabled ? 1 : 0;
+  tmp.tx_passive_mode_is_enabled=stats_monitor_mode_link.tx_operating_mode;
   tmp.curr_tx_stbc_lpdc_shortguard_bitfield=stats_monitor_mode_link.curr_tx_stbc_lpdc_shortguard_bitfield;
   tmp.curr_rate_kbits=stats_monitor_mode_link.curr_rate_kbits;
   tmp.curr_n_rate_adjustments=stats_monitor_mode_link.curr_n_rate_adjustments;

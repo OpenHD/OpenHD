@@ -31,7 +31,13 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
 {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
-  m_console->info("Broadcast cards:{}",debug_cards(m_broadcast_cards));
+  m_all_cards_likely_dont_support_injection= true;
+  for(const auto& card:m_broadcast_cards){
+      if(card.supports_injection){
+          m_all_cards_likely_dont_support_injection= false;
+      }
+  }
+  m_console->info("Broadcast cards:{} any suports injection:{}",debug_cards(m_broadcast_cards),!m_all_cards_likely_dont_support_injection);
   m_console->debug("m_disable_all_frequency_checks:{}",OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks
   if(m_broadcast_cards.empty() || (m_profile.is_air && m_broadcast_cards.size()>1)) {
@@ -619,7 +625,13 @@ void WBLink::update_statistics() {
   //m_console->debug("Big gaps:{}",rxStats.curr_big_gaps_counter);
   stats.monitor_mode_link.curr_tx_channel_mhz=curr_settings.wb_frequency;
   stats.monitor_mode_link.curr_tx_channel_w_mhz=curr_settings.wb_channel_width;
-  stats.monitor_mode_link.tx_passive_mode_is_enabled =curr_settings.wb_enable_listen_only_mode;
+  stats.monitor_mode_link.tx_operating_mode =0;
+  if(m_all_cards_likely_dont_support_injection){
+      stats.monitor_mode_link.tx_operating_mode=1;
+  }
+  if(curr_settings.wb_enable_listen_only_mode){
+      stats.monitor_mode_link.tx_operating_mode=2;
+  }
   stats.monitor_mode_link.curr_rate_kbits= m_max_total_rate_for_current_wifi_config_kbits;
   stats.monitor_mode_link.curr_n_rate_adjustments=m_curr_n_rate_adjustments;
   stats.monitor_mode_link.curr_tx_pps=txStats.curr_packets_per_second;
@@ -796,11 +808,11 @@ void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
   //m_console->debug("N injections:{}",packet.n_injections);
   const auto res=m_wb_tele_tx->try_enqueue_packet(packet.data,packet.n_injections);
   if(!res)m_console->debug("Enqueing tele packet failed");
-  if(!m_broadcast_cards.at(0).supports_injection){
+  if(!m_all_cards_likely_dont_support_injection){
     const auto now=std::chrono::steady_clock::now();
     const auto elapsed=now-m_last_log_card_does_might_not_inject;
     if(elapsed>WARN_CARD_DOES_NOT_INJECT_INTERVAL){
-      m_console->warn("Card {} (might) not support injection/TX",m_broadcast_cards.at(0).device_name);
+      m_console->warn("TX (likely) not supported by card(s)",m_broadcast_cards.at(0).device_name);
       m_last_log_card_does_might_not_inject=now;
     }
   }
