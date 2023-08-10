@@ -898,10 +898,10 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       // We might receive 20Mhz channel width packets from a air unit sending on 20Mhz channel width while
       // receiving on 40Mhz channel width - if we were to then to set the gnd to 40Mhz, we will be able to receive data,
       // but not be able to send any data up to the air unit.
-      const int rx_chann_width=get_last_rx_packet_chan_width();
-      m_console->debug("Got {} packets on {}@{} rx:{} with loss {}",n_valid_packets,channel.frequency,channel_width,
+      const int rx_chann_width=m_wb_txrx->get_rx_stats().last_received_packet_channel_width;
+      m_console->debug("Got {} packets on {}@{} rx_chan_width:{} with loss {}",n_valid_packets,channel.frequency,channel_width,
                        rx_chann_width,packet_loss);
-      if(n_valid_packets>0 && rx_chann_width==channel_width){
+      if(n_valid_packets>0 && (rx_chann_width==channel_width || rx_chann_width==-1)){
         TmpResult tmp_result{channel,channel_width,packet_loss};
         possible_frequencies.push_back(tmp_result);
         if(packet_loss>=0 && packet_loss<20){
@@ -961,10 +961,6 @@ void WBLink::reset_all_rx_stats() {
     rx->reset_stream_stats();
   }
   m_wb_tele_rx->reset_stream_stats();
-}
-
-int WBLink::get_last_rx_packet_chan_width() {
-  return m_wb_txrx->get_rx_stats().last_received_packet_channel_width;
 }
 
 bool WBLink::check_in_state_support_changing_settings(){

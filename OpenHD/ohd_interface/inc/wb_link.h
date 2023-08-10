@@ -132,7 +132,6 @@ class WBLink :public OHDLink{
   void gnd_only_fix_channel_width_for_uplink();
  private:
   void reset_all_rx_stats();
-  int get_last_rx_packet_chan_width();
   int64_t get_total_dropped_packets();
  private:
   // We return false on all the change settings request(s) if there is already a change operation queued
