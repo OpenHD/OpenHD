@@ -42,7 +42,7 @@ bool openhd::wb::any_card_support_frequency(uint32_t frequency, const std::vecto
     return any_supports_frequency;
 }
 
-void openhd::wb::fixup_unsupported_settings(
+void openhd::wb::fixup_unsupported_frequency(
     openhd::WBStreamsSettingsHolder& settings,
     const std::vector<WiFiCard>& m_broadcast_cards,
     std::shared_ptr<spdlog::logger> m_console) {

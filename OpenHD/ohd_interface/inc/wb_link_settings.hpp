@@ -48,6 +48,7 @@ static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL_OFF=0;
 struct WBLinkSettings {
   uint32_t wb_frequency; // writen once 2.4 or 5 is known
   uint32_t wb_channel_width=DEFAULT_CHANNEL_WIDTH; // 20 or 40 mhz bandwidth
+  // MCS index used during injection - only used by air unit, since ground always sends with MCS0
   uint32_t wb_mcs_index=DEFAULT_MCS_INDEX;
   int wb_enable_stbc=0; // 0==disabled
   bool wb_enable_ldpc=false;

@@ -50,18 +50,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   // this fetches the last settings, otherwise creates default ones
   m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(m_platform,m_profile,m_broadcast_cards);
   // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
-  openhd::wb::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
-  // We default to the right setting (clean install) but only print a warning, don't actively fix it.
-  if(m_profile.is_ground()){
-    if(all_cards_support_setting_mcs_index(m_broadcast_cards) &&
-        m_settings->unsafe_get_settings().wb_mcs_index!=openhd::DEFAULT_GND_UPLINK_MCS_INDEX){
-      // We always use a MCS index of X for the uplink, since (compared to the down / video link) it requires a negligible amount of bandwidth
-      // and for those using RC over OpenHD, we have the benefit that the range of RC is "more" than the range for video
-      m_console->warn("GND recommended MCS{}",openhd::DEFAULT_GND_UPLINK_MCS_INDEX);
-      //m_settings->unsafe_get_settings().wb_mcs_index=openhd::DEFAULT_GND_UPLINK_MCS_INDEX;
-      //m_settings->persist();
-    }
-  }
+  openhd::wb::fixup_unsupported_frequency(*m_settings, m_broadcast_cards,
+                                          m_console);
   takeover_cards_monitor_mode();
   WBTxRx::Options txrx_options{};
   txrx_options.rtl8812au_rssi_fixup= true;
@@ -903,7 +893,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       reset_all_rx_stats();
       std::this_thread::sleep_for(std::chrono::seconds(2));
       const auto n_likely_openhd_packets=m_wb_txrx->get_rx_stats().curr_n_likely_openhd_packets;
-      // If we got valid packets, sleep a bit more such that we get a reliable packet loss
+      // If we got what looks to be openhd packets, sleep a bit more such that we can reliably get a session and packet loss
       if(n_likely_openhd_packets>0){
         m_console->debug("Got {} likely openhd packets, sleep a bit more",n_likely_openhd_packets);
         std::this_thread::sleep_for(std::chrono::seconds(2));

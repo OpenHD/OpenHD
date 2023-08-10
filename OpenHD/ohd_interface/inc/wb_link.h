@@ -7,9 +7,6 @@
 #include <utility>
 #include <vector>
 
-//#include "../../lib/wifibroadcast/src/ForeignPacketsReceiver.h"
-//#include "../../lib/wifibroadcast/src/UdpWBReceiver.hpp"
-//#include "../../lib/wifibroadcast/src/UdpWBTransmitter.hpp"
 #include "../../lib/wifibroadcast/src/WBTxRx.h"
 #include "../../lib/wifibroadcast/src/WBStreamTx.h"
 #include "../../lib/wifibroadcast/src/WBStreamRx.h"
