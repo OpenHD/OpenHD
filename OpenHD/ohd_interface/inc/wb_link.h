@@ -142,7 +142,7 @@ class WBLink :public OHDLink{
   const OHDProfile m_profile;
   const OHDPlatform m_platform;
   const std::vector<WiFiCard> m_broadcast_cards;
-  bool m_all_cards_likely_dont_support_injection;
+  bool m_any_card_supports_injection;
   // disable all openhd frequency checking - note that I am quite sure about the correctness of openhd internal checking in regards to wifi channels ;)
   const bool m_disable_all_frequency_checks;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;

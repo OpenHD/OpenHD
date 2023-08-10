@@ -31,13 +31,13 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
 {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
-  m_all_cards_likely_dont_support_injection= true;
+  m_any_card_supports_injection= false;
   for(const auto& card:m_broadcast_cards){
       if(card.supports_injection){
-          m_all_cards_likely_dont_support_injection= false;
+          m_any_card_supports_injection= true;
       }
   }
-  m_console->info("Broadcast cards:{} any suports injection:{}",debug_cards(m_broadcast_cards),!m_all_cards_likely_dont_support_injection);
+  m_console->info("Broadcast cards:{} any suports injection:{}",debug_cards(m_broadcast_cards),m_any_card_supports_injection);
   m_console->debug("m_disable_all_frequency_checks:{}",OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks
   if(m_broadcast_cards.empty() || (m_profile.is_air && m_broadcast_cards.size()>1)) {
@@ -626,7 +626,7 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_tx_channel_mhz=curr_settings.wb_frequency;
   stats.monitor_mode_link.curr_tx_channel_w_mhz=curr_settings.wb_channel_width;
   stats.monitor_mode_link.tx_operating_mode =0;
-  if(m_all_cards_likely_dont_support_injection){
+  if(!m_any_card_supports_injection){
       stats.monitor_mode_link.tx_operating_mode=1;
   }
   if(curr_settings.wb_enable_listen_only_mode){
@@ -808,7 +808,7 @@ void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
   //m_console->debug("N injections:{}",packet.n_injections);
   const auto res=m_wb_tele_tx->try_enqueue_packet(packet.data,packet.n_injections);
   if(!res)m_console->debug("Enqueing tele packet failed");
-  if(!m_all_cards_likely_dont_support_injection){
+  if(!m_any_card_supports_injection){
     const auto now=std::chrono::steady_clock::now();
     const auto elapsed=now-m_last_log_card_does_might_not_inject;
     if(elapsed>WARN_CARD_DOES_NOT_INJECT_INTERVAL){
