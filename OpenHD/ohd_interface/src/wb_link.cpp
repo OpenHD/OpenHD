@@ -15,13 +15,6 @@
 #include "wifi_card.h"
 #include "wb_link_rate_helper.hpp"
 
-// optionally, if no file exists we just use a default, hard coded seed
-static std::string get_opt_keypair_filename(){
-  std::string filename=openhd::get_interface_settings_directory();
-  filename+="txrx.key";
-  return filename;
-}
-
 WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
     : m_profile(std::move(profile)),
       m_platform(platform),
@@ -61,7 +54,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   //txrx_options.debug_decrypt_time= true;
   //txrx_options.debug_encrypt_time= true;
   //txrx_options.debug_packet_gaps= true;
-  const auto keypair_file= get_opt_keypair_filename();
+  const auto keypair_file= "/boot/openhd/txrx.key";
   if(OHDFilesystemUtil::exists(keypair_file)){
     txrx_options.secure_keypair=wb::read_keypair_from_file(keypair_file);
     m_console->debug("Using key from file {}",keypair_file);
