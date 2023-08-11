@@ -16,9 +16,9 @@
 #include "wb_link_rate_helper.hpp"
 
 // optionally, if no file exists we just use a default, hard coded seed
-static std::string get_opt_keypair_filename(bool is_air){
+static std::string get_opt_keypair_filename(){
   std::string filename=openhd::get_interface_settings_directory();
-  filename+=is_air ? "drone.key" : "gs.key";
+  filename+="txrx.key";
   return filename;
 }
 
@@ -54,7 +54,6 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
                                           m_console);
   takeover_cards_monitor_mode();
   WBTxRx::Options txrx_options{};
-  txrx_options.rtl8812au_rssi_fixup= true;
   txrx_options.session_key_packet_interval=SESSION_KEY_PACKETS_INTERVAL;
   txrx_options.use_gnd_identifier=m_profile.is_ground();
   txrx_options.debug_rssi= 0;
@@ -62,12 +61,13 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   //txrx_options.debug_decrypt_time= true;
   //txrx_options.debug_encrypt_time= true;
   //txrx_options.debug_packet_gaps= true;
-  const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
+  const auto keypair_file= get_opt_keypair_filename();
   if(OHDFilesystemUtil::exists(keypair_file)){
-      txrx_options.encryption_key = std::string(keypair_file);
-      m_console->debug("Using key from file {}",txrx_options.encryption_key->c_str());
+    txrx_options.secure_keypair=wb::read_keypair_from_file(keypair_file);
+    m_console->debug("Using key from file {}",keypair_file);
   }else{
-      txrx_options.encryption_key = std::nullopt;
+      txrx_options.secure_keypair = std::nullopt;
+      m_console->debug("Using key from default bind phrase");
   }
   //txrx_options.log_all_received_packets= true;
   //txrx_options.log_all_received_validated_packets= true;
