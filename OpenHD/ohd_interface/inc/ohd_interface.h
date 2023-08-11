@@ -43,6 +43,8 @@ class OHDInterface {
   std::vector<openhd::Setting> get_all_settings();
   // easy access without polluting the headers
   static void print_internal_fec_optimization_method();
+  // Generates the key and deletes the pw if exists
+  static void generate_keys_from_pw_if_exists_and_delete();
   // Agnostic of the link, even though r.n we only have a wifibroadcast implementation (but this might change).
   std::shared_ptr<OHDLink> get_link_handle();
   // Both video and telemetry do the forwarding in their own way, this just provides the convenient methods to
