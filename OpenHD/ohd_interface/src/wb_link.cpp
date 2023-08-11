@@ -655,6 +655,11 @@ void WBLink::update_statistics() {
   if(m_opt_action_handler){
     m_opt_action_handler->update_link_stats(stats);
   }
+  if(m_profile.is_ground()){
+    if(rxStats.likely_mismatching_encryption_key){
+      m_console->warn("Bind phrase mismatch");
+    }
+  }
 }
 
 void WBLink::perform_rate_adjustment() {
