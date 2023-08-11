@@ -22,8 +22,9 @@ set(sources
     inc/wb_link.h
     inc/wb_link_settings.hpp
     inc/wifi_hotspot.h
-        inc/wb_link_helper.h
+    inc/wb_link_helper.h
     inc/wb_link_work_item.hpp
+    inc/wb_link_key_gen_helper.h
     inc/wifi_channel.h
     inc/wifi_command_helper.h
     inc/ethernet_listener.h
@@ -36,7 +37,8 @@ set(sources
     src/usb_tether_listener.cpp
     src/wb_link.cpp
     src/wifi_hotspot.cpp
-        src/wb_link_helper.cpp
+    src/wb_link_helper.cpp
+    src/wb_link_key_gen_helper.cpp
     src/wifi_command_helper.cpp
     src/ethernet_listener.cpp
     src/ethernet_hotspot.cpp
