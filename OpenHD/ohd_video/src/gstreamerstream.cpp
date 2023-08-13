@@ -349,7 +349,7 @@ void GStreamerStream::start() {
   const auto ret=gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
   m_console->debug("State change ret:{}",openhd::gst_state_change_return_to_string(ret));
     if(m_opt_action_handler){
-        int cam_status=CAM_STATUS_RESTARTING;
+        int cam_status=CAM_STATUS_STREAMING;
         if(!(ret==GST_STATE_CHANGE_SUCCESS || ret==GST_STATE_CHANGE_ASYNC)){
             cam_status=CAM_STATUS_RESTARTING;
         }
