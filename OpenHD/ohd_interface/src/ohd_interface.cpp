@@ -247,7 +247,7 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
     OHDUtil::rtrim(pw);
     openhd::log::get_default()->info("Generating key(s) from pw xxx"); // don't show the pw
     auto keys=wb::generate_keypair_from_bind_phrase(pw);
-    wb::write_keypair_to_file(keys,"/boot/txrx.key");
+    wb::write_keypair_to_file(keys,"/boot/openhd/txrx.key");
     // delete the file
     OHDFilesystemUtil::remove_if_existing(PW_FILENAME);
   }
