@@ -346,10 +346,15 @@ void GStreamerStream::start() {
     return;
   }
   openhd::register_message_cb(m_gst_pipeline);
-  gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
+  const auto ret=gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
+  m_console->debug("State change ret:{}",openhd::gst_state_change_return_to_string(ret));
     if(m_opt_action_handler){
+        int cam_status=CAM_STATUS_RESTARTING;
+        if(!(ret==GST_STATE_CHANGE_SUCCESS || ret==GST_STATE_CHANGE_ASYNC)){
+            cam_status=CAM_STATUS_RESTARTING;
+        }
         // Restarting status
-        m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
+        m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,cam_status);
     }
   m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
 }

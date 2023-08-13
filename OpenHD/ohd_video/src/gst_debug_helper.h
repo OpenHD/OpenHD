@@ -15,7 +15,7 @@ namespace openhd{
 
 // Helpfull links: https://gstreamer.freedesktop.org/documentation/additional/design/states.html?gi-language=c
 
-static std::string gst_state_change_return_to_string(GstStateChangeReturn & gst_state_change_return){
+static std::string gst_state_change_return_to_string(const GstStateChangeReturn & gst_state_change_return){
   return fmt::format("{}",gst_element_state_change_return_get_name(gst_state_change_return));
 }
 
