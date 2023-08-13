@@ -68,6 +68,7 @@ class CameraStream {
   std::shared_ptr<CameraHolder> m_camera_holder;
   static constexpr auto CAM_STATUS_STREAMING=1;
   static constexpr auto CAM_STATUS_RESTARTING=2;
+  static constexpr auto CAM_STATUS_ERROR=3;
  protected:
   const PlatformType m_platform_type;
   std::shared_ptr<OHDLink> m_link_handle= nullptr;

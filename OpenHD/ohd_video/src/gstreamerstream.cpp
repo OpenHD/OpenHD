@@ -351,7 +351,9 @@ void GStreamerStream::start() {
     if(m_opt_action_handler){
         int cam_status=CAM_STATUS_STREAMING;
         if(!(ret==GST_STATE_CHANGE_SUCCESS || ret==GST_STATE_CHANGE_ASYNC)){
-            cam_status=CAM_STATUS_RESTARTING;
+            // Not successfully in changing state, we'l restart the next time it is to check streaming state - but most likely
+            // the cam doesn't support the set resolution
+            cam_status=CAM_STATUS_ERROR;
         }
         // Restarting status
         m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,cam_status);
