@@ -223,8 +223,8 @@ static std::string createRpicamsrcStream(const int camera_number,
 }
 
 static bool rpi_needs_level_4_2(const VideoFormat& video_format){
-    if(video_format.width<=848 && video_format.height<=480 && video_format.framerate<=60){
-        // <= 480p 16:9 @ 60, level 4.0 enough
+    if(video_format.width<=848 && video_format.height<=480 && video_format.framerate<=90){
+        // <= 480p 16:9 @ 90, level 4.0 enough
         return false;
     }
     if(video_format.width<=1280 && video_format.height<=720 && video_format.framerate<=68){
