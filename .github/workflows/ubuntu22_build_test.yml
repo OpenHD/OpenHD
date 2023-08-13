@@ -6,13 +6,6 @@ name: ubuntu22_build_test
 
 on:
   push:
-    paths-ignore:
-      - '**.yml'
-      - '**.md'
-      - '**.asciidoc'
-      - '**.adoc'
-      - '.gitignore'
-      - 'LICENSE'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

@@ -212,6 +212,9 @@ int main(int argc, char *argv[]) {
   const auto platform = DPlatform::discover();
   m_console->info("Detected Platform:{}",platform->to_string());
 
+  // Generate the keys and delete pw if needed
+  OHDInterface::generate_keys_from_pw_if_exists_and_delete();
+
   // Create and link all the OpenHD modules.
   try {
     // This results in fresh default values for all modules (e.g. interface, telemetry, video)

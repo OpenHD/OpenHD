@@ -15,13 +15,6 @@
 #include "wifi_card.h"
 #include "wb_link_rate_helper.hpp"
 
-// optionally, if no file exists we just use a default, hard coded seed
-static std::string get_opt_keypair_filename(bool is_air){
-  std::string filename=openhd::get_interface_settings_directory();
-  filename+=is_air ? "drone.key" : "gs.key";
-  return filename;
-}
-
 WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
     : m_profile(std::move(profile)),
       m_platform(platform),
@@ -50,33 +43,24 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   // this fetches the last settings, otherwise creates default ones
   m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(m_platform,m_profile,m_broadcast_cards);
   // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
-  openhd::wb::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
-  // We default to the right setting (clean install) but only print a warning, don't actively fix it.
-  if(m_profile.is_ground()){
-    if(all_cards_support_setting_mcs_index(m_broadcast_cards) &&
-        m_settings->unsafe_get_settings().wb_mcs_index!=openhd::DEFAULT_GND_UPLINK_MCS_INDEX){
-      // We always use a MCS index of X for the uplink, since (compared to the down / video link) it requires a negligible amount of bandwidth
-      // and for those using RC over OpenHD, we have the benefit that the range of RC is "more" than the range for video
-      m_console->warn("GND recommended MCS{}",openhd::DEFAULT_GND_UPLINK_MCS_INDEX);
-      //m_settings->unsafe_get_settings().wb_mcs_index=openhd::DEFAULT_GND_UPLINK_MCS_INDEX;
-      //m_settings->persist();
-    }
-  }
+  openhd::wb::fixup_unsupported_frequency(*m_settings, m_broadcast_cards,
+                                          m_console);
   takeover_cards_monitor_mode();
   WBTxRx::Options txrx_options{};
-  txrx_options.rtl8812au_rssi_fixup= true;
   txrx_options.session_key_packet_interval=SESSION_KEY_PACKETS_INTERVAL;
   txrx_options.use_gnd_identifier=m_profile.is_ground();
   txrx_options.debug_rssi= 0;
+  txrx_options.debug_multi_rx_packets_variance= false;
   //txrx_options.debug_decrypt_time= true;
   //txrx_options.debug_encrypt_time= true;
   //txrx_options.debug_packet_gaps= true;
-  const auto keypair_file= get_opt_keypair_filename(m_profile.is_air);
+  const auto keypair_file= "/boot/openhd/txrx.key";
   if(OHDFilesystemUtil::exists(keypair_file)){
-      txrx_options.encryption_key = std::string(keypair_file);
-      m_console->debug("Using key from file {}",txrx_options.encryption_key->c_str());
+    txrx_options.secure_keypair=wb::read_keypair_from_file(keypair_file);
+    m_console->debug("Using key from file {}",keypair_file);
   }else{
-      txrx_options.encryption_key = std::nullopt;
+      txrx_options.secure_keypair = std::nullopt;
+      m_console->debug("Using key from default bind phrase");
   }
   //txrx_options.log_all_received_packets= true;
   //txrx_options.log_all_received_validated_packets= true;
@@ -137,10 +121,13 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
         async_scan_channels(param);
       };
       m_opt_action_handler->action_wb_link_scan_channels_register(cb_scan);
-      auto cb_mcs=[this](const std::array<int,18>& rc_channels){
-        set_mcs_index_from_rc_channel(rc_channels);
-      };
-      m_opt_action_handler->action_on_ony_rc_channel_register(cb_mcs);
+      if(m_profile.is_air){
+          // MCS is only changed on air
+          auto cb_mcs=[this](const std::array<int,18>& rc_channels){
+            set_mcs_index_from_rc_channel(rc_channels);
+          };
+          m_opt_action_handler->action_on_ony_rc_channel_register(cb_mcs);
+      }
       auto cb_arm=[this](bool armed){
         update_arming_state(armed);
       };
@@ -668,6 +655,15 @@ void WBLink::update_statistics() {
   if(m_opt_action_handler){
     m_opt_action_handler->update_link_stats(stats);
   }
+  if(m_profile.is_ground()){
+    if(rxStats.likely_mismatching_encryption_key){
+        const auto elapsed=std::chrono::steady_clock::now()-m_last_log_bind_phrase_mismatch;
+        if(elapsed>std::chrono::seconds(3)){
+            m_console->warn("Bind phrase mismatch");
+            m_last_log_bind_phrase_mismatch=std::chrono::steady_clock::now();
+        }
+    }
+  }
 }
 
 void WBLink::perform_rate_adjustment() {
@@ -781,6 +777,9 @@ bool WBLink::set_wb_video_rate_for_mcs_adjustment_percent(int value) {
 }
 
 void WBLink::set_wb_air_video_encryption_enabled(bool enable) {
+    if(enable){
+      m_console->debug("Video encryption enabled:{}",enable);
+    }
     m_settings->unsafe_get_settings().wb_air_enable_video_encryption=enable;
     m_settings->persist();
     for(auto& tx:m_wb_video_tx_list){
@@ -900,7 +899,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       reset_all_rx_stats();
       std::this_thread::sleep_for(std::chrono::seconds(2));
       const auto n_likely_openhd_packets=m_wb_txrx->get_rx_stats().curr_n_likely_openhd_packets;
-      // If we got valid packets, sleep a bit more such that we get a reliable packet loss
+      // If we got what looks to be openhd packets, sleep a bit more such that we can reliably get a session and packet loss
       if(n_likely_openhd_packets>0){
         m_console->debug("Got {} likely openhd packets, sleep a bit more",n_likely_openhd_packets);
         std::this_thread::sleep_for(std::chrono::seconds(2));

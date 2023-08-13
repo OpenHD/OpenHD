@@ -7,9 +7,6 @@
 #include <utility>
 #include <vector>
 
-//#include "../../lib/wifibroadcast/src/ForeignPacketsReceiver.h"
-//#include "../../lib/wifibroadcast/src/UdpWBReceiver.hpp"
-//#include "../../lib/wifibroadcast/src/UdpWBTransmitter.hpp"
 #include "../../lib/wifibroadcast/src/WBTxRx.h"
 #include "../../lib/wifibroadcast/src/WBStreamTx.h"
 #include "../../lib/wifibroadcast/src/WBStreamRx.h"
@@ -180,6 +177,7 @@ class WBLink :public OHDLink{
   // if a card does not support injection, we log a error message any injecting method is called
   std::chrono::steady_clock::time_point m_last_log_card_does_might_not_inject=std::chrono::steady_clock::now();
   static constexpr auto WARN_CARD_DOES_NOT_INJECT_INTERVAL=std::chrono::seconds(5);
+    std::chrono::steady_clock::time_point m_last_log_bind_phrase_mismatch=std::chrono::steady_clock::now();
   // We store tx power for easy access in stats
   std::atomic<int> m_curr_tx_power=0;
   int m_gnd_n_times_20mhz_40mhz_mismatch=0;
