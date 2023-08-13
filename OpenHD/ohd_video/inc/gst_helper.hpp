@@ -223,14 +223,20 @@ static std::string createRpicamsrcStream(const int camera_number,
 }
 
 static bool rpi_needs_level_4_2(const VideoFormat& video_format){
-    if(video_format.width>1920 && video_format.height>1080){ // More than 1080p
-        return true;
+    if(video_format.width<=848 && video_format.height<=480 && video_format.framerate<=60){
+        // <= 480p 16:9 @ 60, level 4.0 enough
+        return false;
     }
-    if((video_format.width>=1920 || video_format.height>=1080) && video_format.framerate>30){
-        // At least 1080p wide / high and more than 30fps
-        return true;
+    if(video_format.width<=1280 && video_format.height<=720 && video_format.framerate<=68){
+        // <= 720p @ 68, level 4.0 enough
+        return false;
     }
-    return false;
+    if(video_format.width<=1920 && video_format.height<=1080 && video_format.framerate<=30){
+        // <= 1080p @ 30, level 4.0 enough
+        return false;
+    }
+    // exotic or to high, use level 4.2
+    return true;
 }
 
 // v4l2 h264 encoder on raspberry pi
