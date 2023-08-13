@@ -657,7 +657,11 @@ void WBLink::update_statistics() {
   }
   if(m_profile.is_ground()){
     if(rxStats.likely_mismatching_encryption_key){
-      m_console->warn("Bind phrase mismatch");
+        const auto elapsed=std::chrono::steady_clock::now()-m_last_log_bind_phrase_mismatch;
+        if(elapsed>std::chrono::seconds(3)){
+            m_console->warn("Bind phrase mismatch");
+            m_last_log_bind_phrase_mismatch=std::chrono::steady_clock::now();
+        }
     }
   }
 }
