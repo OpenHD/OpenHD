@@ -6,13 +6,6 @@ name: ubuntu20_build_test
 
 on: 
   push:
-    paths-ignore:
-      - '**.yml'
-      - '**.md'
-      - '**.asciidoc'
-      - '**.adoc'
-      - '.gitignore'
-      - 'LICENSE'
 
 
 env:
