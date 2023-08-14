@@ -7,6 +7,7 @@
 
 #include <queue>
 // dirty, pull in header only
+#define DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
 #include "../../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
 #include "mav_include.h"
 #include "openhd_spdlog.h"

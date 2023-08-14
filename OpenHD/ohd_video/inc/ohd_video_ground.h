@@ -5,6 +5,7 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_GROUND_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_GROUND_H_
 
+#define DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
 #include "../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
 #include "openhd_external_device.hpp"
 #include "openhd_link.hpp"

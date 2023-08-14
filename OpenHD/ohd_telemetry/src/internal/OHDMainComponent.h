@@ -12,8 +12,6 @@
 #include <vector>
 
 #include "../mav_helper.h"
-// dirty, pull in header only
-#include "../../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
 #include "OnboardComputerStatusProvider.h"
 #include "StatusTextAccumulator.h"
 #include "openhd_action_handler.hpp"
