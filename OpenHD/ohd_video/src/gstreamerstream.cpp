@@ -354,6 +354,7 @@ void GStreamerStream::start() {
             // Not successfully in changing state, we'l restart the next time it is to check streaming state - but most likely
             // the cam doesn't support the set resolution
             cam_status=CAM_STATUS_ERROR;
+            m_console->warn("Camera {} error - unsupported resolution ?",m_camera_holder->get_camera().index);
         }
         // Restarting status
         m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,cam_status);
