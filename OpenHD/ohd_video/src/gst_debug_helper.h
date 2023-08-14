@@ -20,7 +20,7 @@ static std::string gst_state_change_return_to_string(const GstStateChangeReturn 
 }
 
 // BLocks up to 1 second, but should never block more than that
-static std::string gst_element_get_current_state_as_string(GstElement * element,bool* out_is_succesfully_streaming){
+static std::string gst_element_get_current_state_as_string(GstElement * element,bool* out_is_succesfully_streaming= nullptr){
   GstState state;
   GstState pending;
   const auto timeout=std::chrono::seconds(1);
