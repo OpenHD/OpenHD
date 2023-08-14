@@ -202,6 +202,9 @@ bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(const st
     const std::string rtl8812au_channel_width=channel_width==20 ? "0" : "1"; // 1 is HT40+ here
     openhd::log::get_default()->debug("openhd_driver_set_frequency_and_channel_width wanted:{}@{}Mhz, values:{},{}",
                                       freq_mhz,channel_width,rtl8812au_channel,rtl8812au_channel_width);
+    if(!OHDFilesystemUtil::exists("/sys/module/88XXau_wfb/parameters/openhd_override_channel")){
+        openhd::log::get_default()->error("YOU ARE USING THE WRONG DRIVER; CHANNEL WON'T WORK");
+    }
     // /etc/modprobe.d
     // options 88XXau_wfb openhd_override_channel=165 openhd_override_channel_width=1
     // rmmod 88XXau_wfb
