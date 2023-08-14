@@ -79,6 +79,8 @@ SupportedFrequencyBand iw_get_supported_frequency_bands(const std::string& devic
 // NOTE: for phy info gives capabilities,for dev-name NOT !!
 bool iw_supports_monitor_mode(int phy_index);
 
+bool openhd_driver_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz,uint32_t channel_width);
+
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_COMMAND_HELPER_H_

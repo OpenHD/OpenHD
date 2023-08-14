@@ -6,6 +6,8 @@
 
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
+#include "openhd_util_filesystem.h"
+#include "wifi_channel.h"
 
 #include <sstream>
 #include <iostream>
@@ -187,4 +189,21 @@ bool wifi::commandhelper::iw_supports_monitor_mode(int phy_index) {
     return true;
   }
   return OHDUtil::contains(res_opt.value(),"* monitor");
+}
+
+bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz,uint32_t channel_width) {
+    const auto channel_opt=openhd::channel_from_frequency(freq_mhz);
+    if(!channel_opt.has_value()){
+        openhd::log::get_default()->warn("Cannot find channel {}Mhz",freq_mhz);
+    }
+    const auto channel=channel_opt.value_or(openhd::channel_from_frequency(5180).value());
+    const std::string rtl8812au_channel=fmt::format("{}",channel.channel);
+    const std::string rtl8812au_channel_width=channel_width==20 ? "0" : "1"; // 1 is HT40+ here
+    openhd::log::get_default()->debug("openhd_driver_set_frequency_and_channel_width wanted:{}@{}Mhz, values:{},{}",
+                                      freq_mhz,channel_width,rtl8812au_channel,rtl8812au_channel_width);
+    OHDFilesystemUtil::write_file("/sys/module/88XXau_wfb/parameters/openhd_override_channel",rtl8812au_channel);
+    OHDFilesystemUtil::write_file("/sys/module/88XXau_wfb/parameters/openhd_override_channel_width",rtl8812au_channel_width);
+    // Override stuff is set, now we just change to a channel that is always okay in crda
+    wifi::commandhelper::iw_set_frequency_and_channel_width(device,5180,20);
+    return true;
 }
