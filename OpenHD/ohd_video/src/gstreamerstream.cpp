@@ -348,17 +348,16 @@ void GStreamerStream::start() {
   openhd::register_message_cb(m_gst_pipeline);
   const auto ret=gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
   m_console->debug("State change ret:{}",openhd::gst_state_change_return_to_string(ret));
-    if(m_opt_action_handler){
-        int cam_status=CAM_STATUS_STREAMING;
-        if(!(ret==GST_STATE_CHANGE_SUCCESS || ret==GST_STATE_CHANGE_ASYNC)){
-            // Not successfully in changing state, we'l restart the next time it is to check streaming state - but most likely
-            // the cam doesn't support the set resolution
-            cam_status=CAM_STATUS_ERROR;
-            m_console->warn("Camera {} error - unsupported resolution ?",m_camera_holder->get_camera().index);
-        }
-        // Restarting status
-        m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,cam_status);
-    }
+  if(!(ret==GST_STATE_CHANGE_SUCCESS || ret==GST_STATE_CHANGE_ASYNC)){
+        // Not successfully in changing state, we'l restart the next time it is to check streaming state - but most likely
+        // the cam doesn't support the set resolution
+        m_console->warn("Camera {} error - unsupported resolution ?",m_camera_holder->get_camera().index);
+  }else{
+      // success
+      if(m_opt_action_handler){
+          m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
+      }
+  }
   m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
 }
 
