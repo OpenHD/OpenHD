@@ -151,6 +151,17 @@ static std::vector<WifiChannel> get_channels_5G(){
       WifiChannel{5905, 181, WifiSpace::G5_8, true, false},
   };
 };
+// Returns all Wi-Fi channels 5G that are legal in any country
+static std::vector<WifiChannel> get_channels_5G_legal_any_country(){
+    const auto channels=get_channels_5G();
+    std::vector<WifiChannel> ret;
+    for(auto& channel:channels){
+        if(channel.is_legal_any_country){
+            ret.push_back(channel);
+        }
+    }
+    return ret;
+}
 
 
 static std::vector<WifiChannel> get_all_channels_2G_5G() {
