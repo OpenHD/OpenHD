@@ -79,6 +79,9 @@ SupportedFrequencyBand iw_get_supported_frequency_bands(const std::string& devic
 // NOTE: for phy info gives capabilities,for dev-name NOT !!
 bool iw_supports_monitor_mode(int phy_index);
 
+// Sets the channel and channel width
+// REQUIRES openhd rtl8812au driver
+// BUT works regardless of crda for all channels - YEAH !
 bool openhd_driver_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz,uint32_t channel_width);
 
 }
