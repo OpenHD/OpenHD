@@ -226,7 +226,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
 }
 
 void OHDInterface::print_internal_fec_optimization_method() {
-    //fec::print_optimization_method();
+    fec_stream_print_fec_optimization_method();
 }
 
 std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
