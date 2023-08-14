@@ -197,10 +197,14 @@ bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(const st
         openhd::log::get_default()->warn("Cannot find channel {}Mhz",freq_mhz);
     }
     const auto channel=channel_opt.value_or(openhd::channel_from_frequency(5180).value());
-    const std::string rtl8812au_channel=fmt::format("{}",channel.channel);
+    //const std::string rtl8812au_channel=fmt::format("{}",channel.channel);
+    const std::string rtl8812au_channel=fmt::format("{}",44);
     const std::string rtl8812au_channel_width=channel_width==20 ? "0" : "1"; // 1 is HT40+ here
     openhd::log::get_default()->debug("openhd_driver_set_frequency_and_channel_width wanted:{}@{}Mhz, values:{},{}",
                                       freq_mhz,channel_width,rtl8812au_channel,rtl8812au_channel_width);
+    // /etc/modprobe.d
+    // options 88XXau_wfb openhd_override_channel=165 openhd_override_channel_width=1
+    // rmmod 88XXau_wfb
     OHDFilesystemUtil::write_file("/sys/module/88XXau_wfb/parameters/openhd_override_channel",rtl8812au_channel);
     OHDFilesystemUtil::write_file("/sys/module/88XXau_wfb/parameters/openhd_override_channel_width",rtl8812au_channel_width);
     // Override stuff is set, now we just change to a channel that is always okay in crda
