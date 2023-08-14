@@ -197,8 +197,8 @@ bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(const st
         openhd::log::get_default()->warn("Cannot find channel {}Mhz",freq_mhz);
     }
     const auto channel=channel_opt.value_or(openhd::channel_from_frequency(5180).value());
-    //const std::string rtl8812au_channel=fmt::format("{}",channel.channel);
-    const std::string rtl8812au_channel=fmt::format("{}",44);
+    const std::string rtl8812au_channel=fmt::format("{}",channel.channel);
+    //const std::string rtl8812au_channel=fmt::format("{}",173);
     const std::string rtl8812au_channel_width=channel_width==20 ? "0" : "1"; // 1 is HT40+ here
     openhd::log::get_default()->debug("openhd_driver_set_frequency_and_channel_width wanted:{}@{}Mhz, values:{},{}",
                                       freq_mhz,channel_width,rtl8812au_channel,rtl8812au_channel_width);
