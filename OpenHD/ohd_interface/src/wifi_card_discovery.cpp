@@ -163,14 +163,13 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   // but we now also have a method to figure out all the supported channels
   // RTL8812AU - since the openhd driver change, it reliably supports all wifi frequencies, no matter what CRDA has to say
   if(card.type==WiFiCardType::Realtek8812au){
-      card.supported_frequencies_2G= supported_frequencies(card.phy80211_index, true);
-      card.supported_frequencies_5G=openhd::get_all_channel_frequencies(openhd::get_channels_5G());
+      card.supported_frequencies_2G= openhd::get_all_channel_frequencies(openhd::get_channels_2G_legal_at_least_one_country());
+      card.supported_frequencies_5G=openhd::get_all_channel_frequencies(openhd::get_channels_5G_legal_at_least_one_country());
   }else{
       // Ask CRDA
       card.supported_frequencies_2G=supported_frequencies(card.phy80211_index, true);
       card.supported_frequencies_5G=supported_frequencies(card.phy80211_index, false);
   }
-
   // Note that this does not necessarily mean this info is right/complete
   // a card might report a specific channel but then since monitor mode is so hack not support the channel in monitor mode
   card.supports_monitor_mode= wifi::commandhelper::iw_supports_monitor_mode(card.phy80211_index);
