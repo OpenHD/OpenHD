@@ -191,18 +191,19 @@ bool wifi::commandhelper::iw_supports_monitor_mode(int phy_index) {
   return OHDUtil::contains(res_opt.value(),"* monitor");
 }
 
-bool wifi::commandhelper::openhd_driver_rtl8812_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz, uint32_t channel_width) {
+bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(int type,const std::string &device, uint32_t freq_mhz, uint32_t channel_width) {
     const auto channel_opt=openhd::channel_from_frequency(freq_mhz);
     if(!channel_opt.has_value()){
         openhd::log::get_default()->warn("Cannot find channel {}Mhz",freq_mhz);
     }
     const auto channel=channel_opt.value_or(openhd::channel_from_frequency(5180).value());
     const std::string rtl8812au_channel=fmt::format("{}",channel.channel);
-    //const std::string rtl8812au_channel=fmt::format("{}",173);
-    const std::string rtl8812au_channel_width=channel_width==20 ? "0" : "1"; // 1 is HT40+ here
-    openhd::log::get_default()->debug("openhd_driver_rtl8812_set_frequency_and_channel_width wanted:{}@{}Mhz, values:{},{}",
-                                      freq_mhz,channel_width,rtl8812au_channel,rtl8812au_channel_width);
-    if(!OHDFilesystemUtil::exists("/sys/module/88XXau_wfb/parameters/openhd_override_channel")){
+    openhd::log::get_default()->debug("openhd_driver_rtl8812_set_frequency_and_channel_width wanted:{}@{}Mhz, using channel override:{}",
+                                      freq_mhz,channel_width,rtl8812au_channel);
+    const std::string CHANNEL_OVERRIDE_FILENAME=type==0 ?
+            "/sys/module/88XXau_wfb/parameters/openhd_override_channel" :
+            "/sys/module/88x2bu/parameters/openhd_override_channel";
+    if(!OHDFilesystemUtil::exists(CHANNEL_OVERRIDE_FILENAME)){
         openhd::log::get_default()->error("YOU ARE USING THE WRONG DRIVER; CHANNEL WON'T WORK");
         // hope this works
         wifi::commandhelper::iw_set_frequency_and_channel_width(device,freq_mhz,channel_width);
@@ -211,8 +212,7 @@ bool wifi::commandhelper::openhd_driver_rtl8812_set_frequency_and_channel_width(
     // /etc/modprobe.d
     // options 88XXau_wfb openhd_override_channel=165 openhd_override_channel_width=1
     // rmmod 88XXau_wfb
-    OHDFilesystemUtil::write_file("/sys/module/88XXau_wfb/parameters/openhd_override_channel",rtl8812au_channel);
-    OHDFilesystemUtil::write_file("/sys/module/88XXau_wfb/parameters/openhd_override_channel_width","0");
+    OHDFilesystemUtil::write_file(CHANNEL_OVERRIDE_FILENAME,rtl8812au_channel);
     // Override stuff is set, now we just change to a channel that is always okay in crda
     if(channel.space==openhd::WifiSpace::G2_4){
         wifi::commandhelper::iw_set_frequency_and_channel_width(device,2412,channel_width);
