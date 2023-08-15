@@ -234,4 +234,5 @@ bool wifi::commandhelper::openhd_driver_set_tx_power(const std::string &device, 
     OHDFilesystemUtil::write_file(TX_POWER_MDBM_OVERRIDE_FILENAME,fmt::format("{}",tx_power_mBm));
     // initiate change
     wifi::commandhelper::iw_set_tx_power(device,13); //20mW ~ 13mBm, should always work
+    return true;
 }

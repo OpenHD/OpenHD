@@ -303,22 +303,17 @@ bool WBLink::apply_frequency_and_channel_width_from_settings() {
 void WBLink::apply_txpower() {
   const auto settings=m_settings->get_settings();
   const auto before=std::chrono::steady_clock::now();
-  for(const auto& card: m_broadcast_cards){
-    if(card.type==WiFiCardType::Realtek8812au){
-      // requires corresponding driver workaround for dynamic tx power
-      uint32_t pwr_index=(int)settings.wb_rtl8812au_tx_pwr_idx_override;
-      if(m_is_armed && settings.wb_rtl8812au_tx_pwr_idx_override_armed != openhd::RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED){
-        m_console->debug("Using power index special for armed");
-        pwr_index=settings.wb_rtl8812au_tx_pwr_idx_override_armed;
-      }
-      m_console->debug("RTL8812AU tx_pwr_idx_override: {}",pwr_index);
-      wifi::commandhelper::iw_set_tx_power(card.device_name,pwr_index);
+  uint32_t pwr_index=(int)settings.wb_rtl8812au_tx_pwr_idx_override;
+  if(m_is_armed && settings.wb_rtl8812au_tx_pwr_idx_override_armed != openhd::RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED){
+      m_console->debug("Using power index special for armed");
+      pwr_index=settings.wb_rtl8812au_tx_pwr_idx_override_armed;
+  }
+  const int power_mw=settings.wb_tx_power_milli_watt;
+  openhd::wb::set_tx_power_for_all_cards(power_mw,pwr_index,m_broadcast_cards);
+  if(m_broadcast_cards.at(0).type==WiFiCardType::Realtek8812au){
       m_curr_tx_power=pwr_index;
-    }else{
-      const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
-      wifi::commandhelper::iw_set_tx_power(card.device_name,tmp);
-      m_curr_tx_power=settings.wb_tx_power_milli_watt;
-    }
+  }else{
+      m_curr_tx_power=power_mw;
   }
   const auto delta=std::chrono::steady_clock::now()-before;
   m_console->debug("Changing tx power took {}",MyTimeHelper::R(delta));
