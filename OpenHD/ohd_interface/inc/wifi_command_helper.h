@@ -82,7 +82,7 @@ bool iw_supports_monitor_mode(int phy_index);
 // Sets the channel and channel width
 // REQUIRES openhd rtl8812au driver
 // BUT works regardless of crda for all channels - YEAH !
-bool openhd_driver_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz,uint32_t channel_width);
+bool openhd_driver_rtl8812_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz, uint32_t channel_width);
 
 }
 
