@@ -214,6 +214,10 @@ bool wifi::commandhelper::openhd_driver_rtl8812_set_frequency_and_channel_width(
     OHDFilesystemUtil::write_file("/sys/module/88XXau_wfb/parameters/openhd_override_channel",rtl8812au_channel);
     OHDFilesystemUtil::write_file("/sys/module/88XXau_wfb/parameters/openhd_override_channel_width","0");
     // Override stuff is set, now we just change to a channel that is always okay in crda
-    wifi::commandhelper::iw_set_frequency_and_channel_width(device,5180,channel_width);
+    if(channel.space==openhd::WifiSpace::G2_4){
+        wifi::commandhelper::iw_set_frequency_and_channel_width(device,2412,channel_width);
+    }else{
+        wifi::commandhelper::iw_set_frequency_and_channel_width(device,5180,channel_width);
+    }
     return true;
 }
