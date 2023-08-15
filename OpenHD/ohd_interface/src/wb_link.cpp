@@ -259,6 +259,31 @@ bool WBLink::request_set_frequency(int frequency) {
   return true;
 }
 
+bool WBLink::request_set_channel_width(int channel_width) {
+    m_console->debug("request_set_channel_width {}",channel_width);
+    if(!openhd::is_valid_channel_width(channel_width)){
+        m_console->warn("Invalid channel width {}",channel_width);
+        return false;
+    }
+    // On the ground, it doesn't really matter if the card actually supports injecting 40Mhz, only if it receives 40Mhz
+    if(m_profile.is_air){
+        // We only have one tx card, check if it supports injecting with 40Mhz channel width:
+        if(channel_width==40 && !wifi_card_supports_40Mhz_channel_width_injection(m_broadcast_cards.at(0))){
+            m_console->warn("Cannot change channel width, not supported by card");
+            return false;
+        }
+    }
+    if(!check_in_state_support_changing_settings())return false;
+    m_settings->unsafe_get_settings().wb_channel_width=channel_width;
+    m_settings->persist();
+    // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
+    auto work_item=std::make_shared<WorkItem>([this](){
+        apply_frequency_and_channel_width_from_settings();
+    },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
+    schedule_work_item(work_item);
+    return true;
+}
+
 bool WBLink::apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width) {
   const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width,m_broadcast_cards);
   m_wb_txrx->tx_update_channel_width(channel_width);
@@ -317,31 +342,6 @@ bool WBLink::set_mcs_index(int mcs_index) {
   //  wifi::commandhelper::iw_set_rate_mcs(wlan.device_name,settings.wb_mcs_index, false);
   //}
   m_wb_txrx->tx_update_mcs_index(mcs_index);
-  return true;
-}
-
-bool WBLink::request_set_channel_width(int channel_width) {
-  m_console->debug("request_set_channel_width {}",channel_width);
-  if(!openhd::is_valid_channel_width(channel_width)){
-    m_console->warn("Invalid channel width {}",channel_width);
-    return false;
-  }
-  // On the ground, it doesn't really matter if the card actually supports injecting 40Mhz, only if it receives 40Mhz
-  if(m_profile.is_air){
-      // We only have one tx card, check if it supports injecting with 40Mhz channel width:
-      if(channel_width==40 && !wifi_card_supports_40Mhz_channel_width_injection(m_broadcast_cards.at(0))){
-          m_console->warn("Cannot change channel width, not supported by card");
-          return false;
-      }
-  }
-  if(!check_in_state_support_changing_settings())return false;
-  m_settings->unsafe_get_settings().wb_channel_width=channel_width;
-  m_settings->persist();
-  // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
-  auto work_item=std::make_shared<WorkItem>([this](){
-    apply_frequency_and_channel_width_from_settings();
-  },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
-  schedule_work_item(work_item);
   return true;
 }
 
