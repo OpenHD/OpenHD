@@ -85,6 +85,8 @@ bool iw_supports_monitor_mode(int phy_index);
 // type 0= rtl8812au, 1=rtl88x2bu driver
 bool openhd_driver_set_frequency_and_channel_width(int type,const std::string &device, uint32_t freq_mhz, uint32_t channel_width);
 
+bool openhd_driver_set_tx_power(const std::string& device,uint32_t tx_power_mBm);
+
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WIFI_COMMAND_HELPER_H_
