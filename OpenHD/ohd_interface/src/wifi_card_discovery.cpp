@@ -23,7 +23,8 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
         return WiFiCardType::Broadcom;
     }else if(OHDUtil::contains_after_uppercase(driver_name,"88xxau")){
         return WiFiCardType::Realtek8812au;
-    } else if(OHDUtil::contains_after_uppercase(driver_name,"88x2bu") || OHDUtil::contains_after_uppercase(driver_name,"rtw_8822bu") ){
+    } else if(OHDUtil::contains_after_uppercase(driver_name,"88x2bu") ){
+        // NOTE: "rtw_8822bu" is the bad kernel driver which doesn't support monitor mode
         return WiFiCardType::Realtek88x2bu;
     }else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8188eu")) != std::string::npos) {
         return WiFiCardType::Realtek8188eu;
