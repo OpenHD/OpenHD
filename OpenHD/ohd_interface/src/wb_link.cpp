@@ -829,7 +829,10 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
       max_block_size_for_platform=openhd::DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
     }
     const int fec_perc=m_settings->get_settings().wb_video_fec_percentage;
-    tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc);
+    const auto res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc);
+    if(!res){
+        m_console->warn("TX enqueue video frame failed, {}",0);
+    }
   }else{
     m_console->debug("Invalid camera stream_index {}",stream_index);
   }
