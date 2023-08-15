@@ -9,6 +9,11 @@
 #include <vector>
 #include <cstdint>
 
+// USefully links:
+// https://www.bundesnetzagentur.de/SharedDocs/Downloads/DE/Sachgebiete/Telekommunikation/Unternehmen_Institutionen/Frequenzen/20190705_Frequenzplan_EntwurfStandMai.pdf?__blob=publicationFile&v=1
+// https://en.wikipedia.org/wiki/List_of_WLAN_channels
+// https://www.arubanetworks.com/vrd/OutdoorMIMOVRD/wwhelp/wwhimpl/common/html/wwhelp.htm#context=OutdoorMIMOVRD&file=AppA.html
+
 // NOTE: DO NOT USE CHANNEL NUMBERS ANYWHERE IN CODE - USE FREQUENCIES IN MHZ, SINCE THEY ARE UNIQUE
 namespace openhd {
 

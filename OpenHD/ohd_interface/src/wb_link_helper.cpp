@@ -77,7 +77,7 @@ bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
     const std::vector<WiFiCard>& m_broadcast_cards) {
   bool ret=true;
   for(const auto& card: m_broadcast_cards){
-      if(card.type==WiFiCardType::Realtek8812au){ //card.type==WiFiCardType::Realtek8812au
+      if(card.type==WiFiCardType::Realtek8812au && false){ //card.type==WiFiCardType::Realtek8812au
           wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(card.device_name,frequency,channel_width);
       }else{
           const bool success=wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,frequency,channel_width);
