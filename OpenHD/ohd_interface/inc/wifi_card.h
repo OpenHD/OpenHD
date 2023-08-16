@@ -75,6 +75,7 @@ struct WiFiCard {
 // Only RTL8812au supports changing the MCS index
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
   if(wifi_card.type==WiFiCardType::Realtek8812au)return true;
+  if(wifi_card.type==WiFiCardType::Realtek88x2bu)return true;
   return false;
 }
 /**
