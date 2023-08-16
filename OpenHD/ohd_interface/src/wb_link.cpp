@@ -660,9 +660,7 @@ void WBLink::update_statistics() {
         }
     }
   }
-  if(true){
-      m_console->debug("Last received packet mcs:{} chan_width:{}",rxStats.last_received_packet_mcs_index,rxStats.last_received_packet_channel_width);
-  }
+  //m_console->debug("Last received packet mcs:{} chan_width:{}",rxStats.last_received_packet_mcs_index,rxStats.last_received_packet_channel_width);
 }
 
 void WBLink::perform_rate_adjustment() {
