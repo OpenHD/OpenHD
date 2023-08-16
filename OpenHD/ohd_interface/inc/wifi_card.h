@@ -95,7 +95,7 @@ static bool all_cards_support_setting_mcs_index(const std::vector<WiFiCard>& m_b
 	}
   }
   return true;
-}1
+}
 
 static bool wifi_card_supports_frequency(const WiFiCard& wifi_card,const uint32_t frequency){
   const auto channel_opt=openhd::channel_from_frequency(frequency);
