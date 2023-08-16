@@ -120,9 +120,9 @@ static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform)
   return 20;
 }
 
-static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platform,const OHDProfile& profile,const std::vector<WiFiCard>& wifibroadcast_cards){
+static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platform,const std::vector<WiFiCard>& wifibroadcast_cards){
   assert(!wifibroadcast_cards.empty());
-  const auto first_card=wifibroadcast_cards.at(0);
+  const auto& first_card=wifibroadcast_cards.at(0);
   assert(first_card.supports_5GHz() || first_card.supports_2GHz());
   const bool use_5ghz= wifibroadcast_cards.at(0).supports_5GHz();
   WBLinkSettings settings{};
@@ -132,9 +132,6 @@ static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platf
 	settings.wb_frequency=DEFAULT_2GHZ_FREQUENCY;
   }
   settings.wb_max_fec_block_size_for_platform= calculate_max_fec_block_size_for_platform(platform);
-  if(all_cards_support_setting_mcs_index(wifibroadcast_cards) && profile.is_ground()){
-	settings.wb_mcs_index=DEFAULT_GND_UPLINK_MCS_INDEX;
-  }
   openhd::log::get_default()->debug("Default wb_max_fec_block_size_for_platform:{}",settings.wb_max_fec_block_size_for_platform);
   return settings;
 }
@@ -143,12 +140,6 @@ static bool validate_wb_rtl8812au_tx_pwr_idx_override(int value){
   if(value>=0 && value <= 63)return true;
   openhd::log::get_default()->warn("Invalid wb_rtl8812au_tx_pwr_idx_override {}",value);
   return false;
-}
-
-static void write_modprobe_file_rtl8812au_wb(int rtw_tx_pwr_idx_override){
-  std::stringstream ss;
-  ss<<"options 88XXau_wfb "<<"rtw_tx_pwr_idx_override="<<rtw_tx_pwr_idx_override<<"\n";
-  OHDFilesystemUtil::write_file("/etc/modprobe.d/88XXau_wfb.conf",ss.str());
 }
 
 // We allow the user to overwrite defaults for his platform.
@@ -182,7 +173,7 @@ class WBStreamsSettingsHolder:public openhd::PersistentJsonSettings<WBLinkSettin
 	return ss.str();
   }
   [[nodiscard]] WBLinkSettings create_default()const override{
-	return create_default_wb_stream_settings(m_platform,m_profile, m_cards);
+	return create_default_wb_stream_settings(m_platform,m_cards);
   }
 };
 
