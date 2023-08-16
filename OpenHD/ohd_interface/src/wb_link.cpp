@@ -73,7 +73,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       tmp_wifi_cards.push_back(WBTxRx::WifiCard{card.device_name,wb_type});
   }
   m_wb_txrx=std::make_shared<WBTxRx>(tmp_wifi_cards,txrx_options);
-  m_wb_txrx->tx_threadsafe_update_radiotap_header(create_radiotap_params());
+  const auto tx_radiotap_params=create_radiotap_params();
+  m_wb_txrx->tx_threadsafe_update_radiotap_header(tx_radiotap_params);
   {
       // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
       // tx radio port on air is the same as rx on ground and verse visa
