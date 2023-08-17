@@ -772,7 +772,7 @@ bool WBLink::set_max_fec_block_size_for_platform(int value) {
 }
 
 bool WBLink::set_wb_video_rate_for_mcs_adjustment_percent(int value) {
-  if(value<=5 || value>=500)return false;
+  if(value<=5 || value>1000)return false;
   m_settings->unsafe_get_settings().wb_video_rate_for_mcs_adjustment_percent=value;
   m_settings->persist();
   return true;
