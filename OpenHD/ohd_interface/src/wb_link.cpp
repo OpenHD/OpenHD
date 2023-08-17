@@ -75,6 +75,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   }
   m_wb_txrx=std::make_shared<WBTxRx>(tmp_wifi_cards,txrx_options);
   const auto tx_radiotap_params=create_radiotap_params();
+  m_console->debug("{}",RadiotapHeader::user_params_to_string(tx_radiotap_params));
   m_wb_txrx->tx_threadsafe_update_radiotap_header(tx_radiotap_params);
   {
       // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
@@ -199,7 +200,7 @@ RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
   const auto channel_width=static_cast<int>(settings.wb_channel_width);
   return RadiotapHeader::UserSelectableParams{
       channel_width, settings.wb_enable_short_guard,settings.wb_enable_stbc,
-      settings.wb_enable_ldpc, mcs_index};
+      settings.wb_enable_ldpc, mcs_index,!settings.wb_tx_use_ack};
 }
 
 

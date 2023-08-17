@@ -53,6 +53,7 @@ struct WBLinkSettings {
   int wb_enable_stbc=0; // 0==disabled
   bool wb_enable_ldpc=false;
   bool wb_enable_short_guard=false;
+  bool wb_tx_use_ack= false;
   uint32_t wb_tx_power_milli_watt=DEFAULT_WIFI_TX_POWER_MILLI_WATT;
   // rtl8812au driver does not support setting tx power by iw dev, but rather only by setting
   // a tx power index override param. With the most recent openhd rtl8812au driver,
@@ -88,6 +89,7 @@ struct WBLinkSettings {
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
                                    wb_enable_stbc, wb_enable_ldpc, wb_enable_short_guard,
+                                   wb_tx_use_ack,
                                    wb_tx_power_milli_watt, wb_rtl8812au_tx_pwr_idx_override, wb_rtl8812au_tx_pwr_idx_override_armed,
                                    wb_video_fec_percentage,
                                    wb_video_rate_for_mcs_adjustment_percent,
