@@ -164,9 +164,6 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   if(card.type==WiFiCardType::Realtek8812au || card.type==WiFiCardType::Realtek88x2bu){
       card.supported_frequencies_2G= openhd::get_all_channel_frequencies(openhd::get_channels_2G_legal_at_least_one_country());
       card.supported_frequencies_5G=openhd::get_all_channel_frequencies(openhd::get_channels_5G_legal_at_least_one_country());
-      for(const auto& freq:card.supported_frequencies_5G){
-          openhd::log::get_default()->debug("XX{}",freq);
-      }
   }else{
       // Ask CRDA
       card.supported_frequencies_2G=supported_frequencies(card.phy80211_index, true);
