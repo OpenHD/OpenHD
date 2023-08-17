@@ -717,7 +717,8 @@ void WBLink::perform_rate_adjustment() {
   if(has_tx_errors){
     m_n_detected_and_reset_tx_errors++;
     m_console->warn("Got {} tx errors {} times",delta_total_tx_errors,m_n_detected_and_reset_tx_errors);
-    m_console->debug("[}",WBTxRx::tx_stats_to_string(m_wb_txrx->get_tx_stats()));
+    const auto tmp_tx_stats=m_wb_txrx->get_tx_stats();
+    m_console->debug("{}",WBTxRx::tx_stats_to_string(tmp_tx_stats));
   }else{
     if(m_n_detected_and_reset_tx_errors>0){
       m_console->warn("No tx errors after {}",m_n_detected_and_reset_tx_errors);
