@@ -166,7 +166,6 @@ static std::vector<WifiChannel> get_channels_5G_legal_at_least_one_country(){
         if(channel.is_legal_at_least_one_country){
             ret.push_back(channel);
         }
-        ret.push_back(channel);
     }
     return ret;
 }
@@ -191,7 +190,8 @@ static std::vector<WifiChannel> get_all_channels_2G_5G() {
 }
 
 static std::vector<uint32_t> get_all_channel_frequencies(const std::vector<openhd::WifiChannel>& channels) {
-  std::vector<uint32_t> frequencies;
+  std::vector<uint32_t> frequencies{};
+  frequencies.reserve(channels.size());
   for (const auto& channel : channels) {
     frequencies.push_back(channel.frequency);
   }
@@ -208,18 +208,6 @@ static std::optional<openhd::WifiChannel> channel_from_frequency(uint32_t freque
     }
   }
   return std::nullopt;
-}
-
-// NOTE: Only call this on a list of frequencies that are valid
-static std::vector<openhd::WifiChannel> get_all_channels_from_safe_frequencies(
-    const std::vector<uint32_t>& frequencies) {
-  std::vector<openhd::WifiChannel> ret;
-  for (const auto& freq : frequencies) {
-    auto channel= channel_from_frequency(freq);
-    assert(channel.has_value());
-    ret.push_back(channel.value());
-  }
-  return ret;
 }
 
 static WifiSpace get_space_from_frequency(uint32_t frequency){
