@@ -236,9 +236,13 @@ bool WBLink::request_set_frequency(int frequency) {
   if(m_disable_all_frequency_checks){
     m_console->warn("Not sanity checking frequency");
   }else{
-    if(!openhd::wb::any_card_support_frequency(frequency,m_broadcast_cards,m_platform,m_console)){
-        m_console->warn("Cannot change frequency, all cards do not support it");
+    if(!openhd::wb::all_cards_support_frequency(frequency,m_broadcast_cards,m_console)){
+        m_console->warn("Cannot change frequency, at least one card doesn't support");
       return false;
+    }
+    if(!openhd::wb::all_cards_support_frequency_and_channel_width(frequency,m_settings->get_settings().wb_channel_width,m_broadcast_cards,m_console)){
+        m_console->warn("Cannot change frequency, 40Mhz not allowed");
+        return false;
     }
   }
   if(!check_in_state_support_changing_settings())return false;
@@ -275,6 +279,10 @@ bool WBLink::request_set_channel_width(int channel_width) {
             m_console->warn("Cannot change channel width, not supported by card");
             return false;
         }
+    }
+    if(!openhd::wb::all_cards_support_frequency_and_channel_width(m_settings->unsafe_get_settings().wb_frequency,channel_width,m_broadcast_cards,m_console)){
+        m_console->warn("Cannot change channel width, 40Mhz not possible on this channel");
+        return false;
     }
     if(!check_in_state_support_changing_settings())return false;
     m_settings->unsafe_get_settings().wb_channel_width=channel_width;

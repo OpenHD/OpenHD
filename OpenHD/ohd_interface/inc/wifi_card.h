@@ -115,6 +115,23 @@ static bool wifi_card_supports_frequency(const WiFiCard& wifi_card,const uint32_
 }
 
 
+static bool wifi_card_supports_frequency_channel_width(const WiFiCard& wifi_card,const int frequency,const int channel_width){
+    auto console=openhd::log::get_default();
+    const auto channel_opt=openhd::channel_from_frequency(frequency);
+    if(!channel_opt.has_value()){
+        console->debug("OpenHD doesn't know frequency {}",frequency);
+        return false;
+    }
+    const auto& channel=channel_opt.value();
+    // card (rtl8812au / bu) will crash otherwise anyways
+    if(channel_width==40 && !channel.is_legal_any_country_40Mhz){
+        console->debug("Card {} doesn't support 40Mhz on {}",wifi_card.device_name,frequency);
+        return false;
+    }
+    return wifi_card_supports_frequency(wifi_card,frequency);
+}
+
+
 static std::string debug_cards(const std::vector<WiFiCard>& cards){
   std::stringstream ss;
   ss<<"size:"<<cards.size()<<"{";

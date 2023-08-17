@@ -20,13 +20,17 @@ namespace openhd::wb{
 bool disable_all_frequency_checks();
 
 /**
- * returns true if all the given cards supports the given frequency, taking into account if the kernel was modified or not
+ * returns true if all the given cards supports the given frequency
  */
 bool all_cards_support_frequency(
     uint32_t frequency,
     const std::vector<WiFiCard>& m_broadcast_cards,
-    const OHDPlatform& platform,
     const std::shared_ptr<spdlog::logger>& m_console);
+
+bool all_cards_support_frequency_and_channel_width(uint32_t frequency,
+                                                   uint32_t channel_width,
+                                                   const std::vector<WiFiCard>& m_broadcast_cards,
+                                                   const std::shared_ptr<spdlog::logger>& m_console);
 
 /**
  * returns true if any of the given cards supports the given frequency
