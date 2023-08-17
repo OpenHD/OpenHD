@@ -212,6 +212,10 @@ static uint32_t deduce_fec_overhead(uint32_t bandwidth_kbits,int fec_overhead_pe
   return static_cast<uint32_t>(std::roundl(tmp));
 }
 
+static uint32_t multiply_by_perc(uint32_t bandwidth_kbits,int percentage){
+    return bandwidth_kbits* percentage / 100;
+}
+
 
 }
 #endif  // OPENHD_WB_LINK_RATE_HELPER_HPP
