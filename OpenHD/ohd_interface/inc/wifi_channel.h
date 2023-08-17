@@ -163,9 +163,10 @@ static std::vector<WifiChannel> get_channels_5G_legal_at_least_one_country(){
     const auto channels=get_channels_5G();
     std::vector<WifiChannel> ret;
     for(auto& channel:channels){
-        if(channel.is_legal_at_least_one_country){
-            ret.push_back(channel);
-        }
+        //if(channel.is_legal_at_least_one_country){
+        //    ret.push_back(channel);
+        //}
+        ret.push_back(channel);
     }
     return ret;
 }
