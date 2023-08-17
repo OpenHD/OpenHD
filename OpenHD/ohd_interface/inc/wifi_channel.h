@@ -84,7 +84,7 @@ static std::vector<WifiChannel> get_channels_2G() {
       //WifiChannel{2457, 10, WifiSpace::G2_4, true},
       //WifiChannel{2462, 11, WifiSpace::G2_4, true},
       //WifiChannel{2467, 12, WifiSpace::G2_4, true},
-      WifiChannel{2472, 13, WifiSpace::G2_4, true, true, true},
+      WifiChannel{2472, 13, WifiSpace::G2_4, true, true, false},
       // until here it is consistent (5Mhz increments)
       // this one is neither allowed in EU nor USA
       // (only in Japan under 11b)
@@ -163,9 +163,9 @@ static std::vector<WifiChannel> get_channels_5G_legal_at_least_one_country(){
     const auto channels=get_channels_5G();
     std::vector<WifiChannel> ret;
     for(auto& channel:channels){
-        //if(channel.is_legal_at_least_one_country){
-        //    ret.push_back(channel);
-        //}
+        if(channel.is_legal_at_least_one_country){
+            ret.push_back(channel);
+        }
         ret.push_back(channel);
     }
     return ret;

@@ -136,6 +136,17 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       };
       m_opt_action_handler->m_action_tx_power_when_armed=std::make_shared<openhd::ActionHandler::ACTION_TX_POWER_WHEN_ARMED>(cb_arm);
   }
+  if(m_opt_action_handler){
+      std::function<std::vector<uint16_t>(void)> wb_get_supported_channels=[this](){
+          std::vector<uint16_t> ret;
+          const auto frequencies=m_broadcast_cards.at(0).get_supported_frequencies_2G_5G();
+          for(const auto freq:frequencies){
+              ret.push_back(static_cast<uint16_t>(freq));
+          }
+          return ret;
+      };
+      m_opt_action_handler->wb_get_supported_channels= wb_get_supported_channels;
+  }
 }
 
 WBLink::~WBLink() {
@@ -144,6 +155,7 @@ WBLink::~WBLink() {
     m_opt_action_handler->action_wb_link_scan_channels_register(nullptr);
     m_opt_action_handler->action_on_ony_rc_channel_register(nullptr);
     m_opt_action_handler->m_action_tx_power_when_armed= nullptr;
+    m_opt_action_handler->wb_get_supported_channels= nullptr;
   }
   if(m_work_thread){
     m_work_thread_run =false;

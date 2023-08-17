@@ -99,7 +99,19 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
           if(requested_message_id==MAVLINK_MSG_ID_OPENHD_VERSION_MESSAGE){
             m_console->info("Sent OpenHD version");
             ret.push_back(generate_ohd_version());
+          }else if(requested_message_id==MAVLINK_MSG_ID_OPENHD_WIFBROADCAST_SUPPORTED_CHANNELS){
+              m_console->debug("Supported channels requested");
+              if(m_opt_action_handler && m_opt_action_handler->wb_get_supported_channels!= nullptr){
+                  auto channels=m_opt_action_handler->wb_get_supported_channels();
+                  ret.push_back(openhd::LinkStatisticsHelper::generate_msg_openhd_wifibroadcast_supported_channels(m_sys_id,m_comp_id,channels));
+                  m_console->info("Sent supported channels");
+              }else{
+                  m_console->warn("Cannot get channels from wb (no handler");
+              }
+          }else{
+              m_console->info("Message {} request not supported",requested_message_id);
           }
+
         }else if(command.command==OPENHD_CMD_INITIATE_CHANNEL_SEARCH){
           if(RUNS_ON_AIR){
             m_console->debug("Scan channels is only a feature for ground unit");

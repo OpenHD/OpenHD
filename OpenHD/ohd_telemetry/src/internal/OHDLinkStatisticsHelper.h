@@ -146,5 +146,19 @@ static MavlinkMessage pack_camera_stats(const uint8_t system_id,const uint8_t co
   return msg;
 }
 
+static MavlinkMessage generate_msg_openhd_wifibroadcast_supported_channels(const uint8_t system_id,const uint8_t component_id,const std::vector<uint16_t>& channels){
+    MavlinkMessage msg;
+    mavlink_openhd_wifbroadcast_supported_channels_t tmp{};
+    for(int i=0;i<60;i++){
+        if(i<channels.size()){
+            tmp.channels[i]=channels[i];
+        }else{
+            tmp.channels[i]=0;
+        }
+    }
+    mavlink_msg_openhd_wifbroadcast_supported_channels_encode(system_id,component_id,&msg.m,&tmp);
+    return msg;
+}
+
 }
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_OHDLINKSTATISTICSHELPER_H_

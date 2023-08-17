@@ -230,6 +230,8 @@ class ActionHandler{
     std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
     return m_last_link_stats;
   }
+public:
+    std::function<std::vector<uint16_t>()> wb_get_supported_channels= nullptr;
 };
 
 }
