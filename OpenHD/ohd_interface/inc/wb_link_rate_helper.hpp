@@ -122,43 +122,29 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_2G_kbits(uint16_t mcs_index) {
     switch (mcs_index) {
         case 0:
             //theoretical:6.5 | 13.5
-            // max injection rate possible measured on the bench: 5.7 | 10.4
-            // OLD return 4500;
             return {
-                    5700-1000, // minus 1MBit/s
-                    10400-3000, // minus 3MBit/s
+                    4600-1000, // minus 1MBit/s
+                    6500-2000, // minus 2MBit/s
             };
         case 1:
             //theoretical:13 | 27
-            // max injection rate possible measured on the bench: 10.8 | 18.8
-            // OLD return 6500;
             return {
-                    10800-1000, // minus 1MBit/s
-                    18800-3500, // minus 3.5MBit/s
+                    10100-1000, // minus 1MBit/s
+                    15900-2000, // minus 2MBit/s
             };
         case 2:
-            //@Norbert: Successfully flown on MCS2 and 7MBit/s video, aka 8.4MBit/s after FEC
             //theoretical:19.5 | 40.5
-            // max injection rate possible measured on the bench: 15.2 | 26.6
-            // OLD return 8500;
             return {
-                    15200-2000, // minus 2MBit/s
-                    26600-4000, // minus 4MBit/s
+                    13500-2000, // minus 2MBit/s
+                    20000-2000, // minus 2MBit/s
             };
         case 3:
             //theoretical:26 | 54
-            // max injection rate possible measured on the bench: 19.2 | 30+ (out of capabilities of encoder)
-            // OLD return 12000;
             return {
-                    19200-3000, // minus 3MBit/s
-                    30000-5000, // minus 5MBit/s
+                    16600-2000, // minus 3MBit/s
+                    24000-2000, // minus 2MBit/s
             };
             // In general, we only use / recommend MCS 0..3
-        case 4:
-            //theoretical:39
-            return {
-                    20000, 30000
-            };
         default:{
             openhd::log::get_default()->warn("MCS >4 not recommended");
             //theoretical:39
