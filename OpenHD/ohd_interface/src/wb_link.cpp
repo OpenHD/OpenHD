@@ -426,8 +426,9 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     };
     ret.push_back(Setting{openhd::WB_PASSIVE_MODE,openhd::IntSetting{(int)settings.wb_enable_listen_only_mode, cb_passive}});
   }
+  const bool any_card_supports_stbc_ldpc_sgi=openhd::wb::any_card_supports_stbc_ldpc_sgi(m_broadcast_cards);
   // These 3 are only supported / known to work on rtl8812au (yet), therefore only expose them when rtl8812au is used
-  if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
+  if(any_card_supports_stbc_ldpc_sgi){
 	// STBC - definitely for advanced users, but aparently it can have benefits.
 	auto cb_wb_enable_stbc=[this](std::string,int stbc){
 	  if(stbc<0 || stbc>3)return false;
