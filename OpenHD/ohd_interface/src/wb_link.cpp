@@ -739,12 +739,13 @@ void WBLink::perform_rate_adjustment() {
     m_recommended_video_bitrate_kbits -=1000;
     m_curr_n_rate_adjustments++;
     // Safety, in case we fall below a certain threshold the encoder won't be able to produce an image at some point anyways.
-    static constexpr auto MIN_BITRATE=1000*2;
-    if(m_recommended_video_bitrate_kbits <MIN_BITRATE){
-      m_recommended_video_bitrate_kbits =MIN_BITRATE;
+    static constexpr auto MIN_BITRATE_KBITS=1000*2;
+    if(m_recommended_video_bitrate_kbits <MIN_BITRATE_KBITS){
+      m_console->warn("Reached minimum bitrate {}", kbits_per_second_to_string(MIN_BITRATE_KBITS));
+      m_recommended_video_bitrate_kbits =MIN_BITRATE_KBITS;
+      m_curr_n_rate_adjustments--;
     }
-    m_console->warn("TX errors, reducing video bitrate to {}",
-                    m_recommended_video_bitrate_kbits);
+    m_console->warn("TX errors, reducing video bitrate to {}",m_recommended_video_bitrate_kbits);
   }
   // Since settings might change dynamically at run time, we constantly recommend a bitrate to the encoder / camera -
   // The camera is responsible for "not doing anything" when we recommend the same bitrate to it multiple times
