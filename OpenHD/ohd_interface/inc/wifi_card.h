@@ -72,15 +72,16 @@ struct WiFiCard {
   };
 };
 
-// Only RTL8812au supports changing the MCS index
+// Only RTL8812au / BU support changing the MCS index
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
   if(wifi_card.type==WiFiCardType::Realtek8812au)return true;
   if(wifi_card.type==WiFiCardType::Realtek88x2bu)return true;
   return false;
 }
-// Only RTL8812au so far supports a 40Mhz channel width during injection
+// Only RTL8812au / BU so far support a 40Mhz channel width during injection
 static bool wifi_card_supports_40Mhz_channel_width_injection(const WiFiCard& wifi_card){
     if(wifi_card.type==WiFiCardType::Realtek8812au)return true;
+    if(wifi_card.type==WiFiCardType::Realtek88x2bu)return true;
     return false;
 }
 

@@ -50,7 +50,7 @@ void openhd::wb::fixup_unsupported_frequency(
     m_console=openhd::log::get_default();
   }
   // For now, we only check whatever the first card can do and assume the rest can do the same
-  const WiFiCard first_card= m_broadcast_cards.at(0);
+  const WiFiCard& first_card= m_broadcast_cards.at(0);
 
   if(!wifi_card_supports_frequency(first_card,settings.get_settings().wb_frequency)){
     m_console->warn("Card {} doesn't support {}Mhz, applying defaults",first_card.device_name,settings.get_settings().wb_frequency);
