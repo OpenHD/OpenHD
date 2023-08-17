@@ -676,12 +676,14 @@ void WBLink::perform_rate_adjustment() {
   if(elapsed_since_last<RATE_ADJUSTMENT_INTERVAL){
     return;
   }
+  // Since we only do it on the air, we only have one wifi card
+  const auto card=m_broadcast_cards.at(0);
   m_last_rate_adjustment=std::chrono::steady_clock::now();
   // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
   const auto settings = m_settings->get_settings();
   const auto wifi_space=openhd::get_space_from_frequency(settings.wb_frequency);
   const auto max_rate_for_current_wifi_config_without_adjust =
-      openhd::wb::get_max_rate_possible(m_broadcast_cards.at(0),wifi_space,
+      openhd::wb::get_max_rate_possible(card,wifi_space,
                                            settings.wb_mcs_index,
                                            settings.wb_channel_width == 40);
   using namespace openhd::wb;
