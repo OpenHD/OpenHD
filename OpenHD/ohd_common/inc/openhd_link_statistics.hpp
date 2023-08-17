@@ -127,6 +127,7 @@ using StatsAllCards=std::array<StatsPerCard,4>;
 
 struct StatsAirGround{
   bool is_air=false;
+  bool ready=false;
   // air and ground
   StatsMonitorModeLink monitor_mode_link;
   StatsTelemetry telemetry;

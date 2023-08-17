@@ -671,6 +671,7 @@ void WBLink::update_statistics() {
     //m_console->debug("Signal quality {}",card.signal_quality);
   }
   stats.is_air=m_profile.is_air;
+  stats.ready=true;
   if(m_opt_action_handler){
     m_opt_action_handler->update_link_stats(stats);
   }
