@@ -264,3 +264,10 @@ float OHDUtil::map_int_percentage_to_minus1_to_1(int percentage) {
   float mapped=static_cast<float>(percentage)*0.02f-1.0f;
   return mapped;
 }
+
+int OHDUtil::calculate_progress_perc(int progress, int total_count) {
+    if(progress>=total_count)return 100;
+    if(total_count<=0)return 100;
+    const double perc=((double)progress / (double)total_count * 100.0);
+    return (int)std::lround(perc);
+}

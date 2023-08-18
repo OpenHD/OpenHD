@@ -1112,17 +1112,17 @@ struct AnalyzeResult{
 void WBLink::analyze_channels() {
     is_analyzing=true;
     const WiFiCard& card=m_broadcast_cards.at(0);
-    std::vector<openhd::WifiChannel> channels_to_scan;
+    std::vector<openhd::WifiChannel> channels_to_analyze;
     const auto supported_freq=card.supported_frequencies_5G;
     std::vector<AnalyzeResult> results{};
     for(const auto freq:supported_freq){
         auto tmp=openhd::channel_from_frequency(freq);
         if(tmp.has_value() && tmp.value().is_legal_any_country_40Mhz){
-            channels_to_scan.push_back(tmp.value());
+            channels_to_analyze.push_back(tmp.value());
         }
     }
-    for(int i=0;i<channels_to_scan.size();i++){
-        const auto channel=channels_to_scan[i];
+    for(int i=0; i < channels_to_analyze.size(); i++){
+        const auto channel=channels_to_analyze[i];
         const auto channel_width=40;
         // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
         apply_frequency_and_channel_width(channel.frequency,channel_width);
@@ -1138,7 +1138,7 @@ void WBLink::analyze_channels() {
             tmp.channel_mhz=(int)channel.frequency;
             tmp.channel_width_mhz=40;
             tmp.n_foreign_packets=(int)n_foreign_packets;
-            tmp.progress=(i / channels_to_scan.size() * 100);
+            tmp.progress=OHDUtil::calculate_progress_perc(i, channels_to_analyze.size());
             m_opt_action_handler->add_scan_result(tmp);
         }
     }
