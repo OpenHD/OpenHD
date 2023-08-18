@@ -906,7 +906,8 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
                    channels_to_scan.size(),channel_widths_to_scan.size());
   bool done_early=false;
   // We need to loop through all possible channels
-  for(const auto& channel:channels_to_scan){
+  for(int i=0;i<channels_to_scan.size();i++){
+    const auto& channel=channels_to_scan[i];
     if(done_early)break;
     // and all possible channel widths (20 or 40Mhz only right now)
     for(const auto& channel_width:channel_widths_to_scan){
@@ -951,6 +952,13 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         }else{
           m_console->warn("Got >10% packet loss,continue and select most likely at the end");
         }
+      }
+      if(m_opt_action_handler){
+        openhd::ActionHandler::ScanChannelsProgress tmp{};
+        tmp.channel_mhz=(int)channel.frequency;
+        tmp.channel_width_mhz=40;
+        tmp.progress=OHDUtil::calculate_progress_perc(i+1,channels_to_scan.size());
+        m_opt_action_handler->add_scan_channels_progress(tmp);
       }
     }
   }
@@ -1138,8 +1146,8 @@ void WBLink::analyze_channels() {
             tmp.channel_mhz=(int)channel.frequency;
             tmp.channel_width_mhz=40;
             tmp.n_foreign_packets=(int)n_foreign_packets;
-            tmp.progress=OHDUtil::calculate_progress_perc(i, channels_to_analyze.size());
-            m_opt_action_handler->add_scan_result(tmp);
+            tmp.progress=OHDUtil::calculate_progress_perc(i+1, channels_to_analyze.size());
+            m_opt_action_handler->add_analyze_result(tmp);
         }
     }
     std::stringstream ss;

@@ -172,5 +172,15 @@ static MavlinkMessage generate_msg_analyze_channels_progress(const uint8_t syste
     return msg;
 }
 
+static MavlinkMessage generate_msg_scan_channels_progress(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::ScanChannelsProgress progress){
+    MavlinkMessage msg;
+    mavlink_openhd_wifbroadcast_scan_channels_progress_t tmp{};
+    tmp.progress=progress.progress;
+    tmp.channel_mhz=progress.channel_mhz;
+    tmp.channel_width_mhz=progress.channel_width_mhz;
+    mavlink_msg_openhd_wifbroadcast_scan_channels_progress_encode(system_id,component_id,&msg.m,&tmp);
+    return msg;
+}
+
 }
 #endif //OPENHD_OPENHD_OHD_TELEMETRY_SRC_INTERNAL_OHDLINKSTATISTICSHELPER_H_

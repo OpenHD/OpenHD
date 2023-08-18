@@ -205,9 +205,13 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
         ret.push_back(openhd::LinkStatisticsHelper::generate_msg_openhd_wifibroadcast_supported_channels(m_sys_id, m_comp_id,channels));
     }
     if(m_opt_action_handler){
-        auto progress_x=m_opt_action_handler->get_scan_results();
+        auto progress_x=m_opt_action_handler->get_analyze_results();
         for(auto& progress:progress_x){
             ret.push_back(openhd::LinkStatisticsHelper::generate_msg_analyze_channels_progress(m_sys_id,m_comp_id,progress));
+        }
+        auto progress_y=m_opt_action_handler->get_scan_channels_progress();
+        for(auto& progress:progress_y){
+            ret.push_back(openhd::LinkStatisticsHelper::generate_msg_scan_channels_progress(m_sys_id,m_comp_id,progress));
         }
     }
   }

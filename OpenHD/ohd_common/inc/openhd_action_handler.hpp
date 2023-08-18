@@ -241,11 +241,11 @@ public:
         int progress;
         int n_foreign_packets;
     };
-    void add_scan_result(AnalyzeChannelsResult scan_result){
+    void add_analyze_result(AnalyzeChannelsResult scan_result){
         std::lock_guard<std::mutex> guard(m_scan_results_mutex);
         m_scan_results.push_back(scan_result);
     }
-    std::vector<AnalyzeChannelsResult> get_scan_results(){
+    std::vector<AnalyzeChannelsResult> get_analyze_results(){
         std::lock_guard<std::mutex> guard(m_scan_results_mutex);
         auto ret=m_scan_results;
         m_scan_results.clear();
@@ -255,10 +255,11 @@ private:
     std::mutex m_scan_results_mutex;
     std::vector<AnalyzeChannelsResult> m_scan_results;
 public:
-    /*struct ScanChannelsProgress{
+    struct ScanChannelsProgress{
         int channel_mhz;
         int channel_width_mhz;
         int progress;
+        bool success= false;
     };
     void add_scan_channels_progress(ScanChannelsProgress val){
         std::lock_guard<std::mutex> guard(m_scan_channels_progress_mutex);
@@ -272,7 +273,7 @@ public:
     }
 private:
     std::mutex m_scan_channels_progress_mutex;
-    std::vector<ScanChannelsProgress> m_scan_channels_progress;*/
+    std::vector<ScanChannelsProgress> m_scan_channels_progress;
 };
 
 }
