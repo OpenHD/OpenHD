@@ -992,6 +992,7 @@ void WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_c
   }
   auto work_item=std::make_shared<WorkItem>([this,scan_channels_params](){
     scan_channels(scan_channels_params);
+    //analyze_channels();
   },std::chrono::steady_clock::now());
   schedule_work_item(work_item);
 }
@@ -1124,12 +1125,17 @@ void WBLink::gnd_only_fix_channel_width_for_uplink() {
     }
 }
 
-/*void WBLink::analyze_channels() {
+struct AnalyzeResult{
+    int frequency;
+    int n_foreign_packets;
+};
+
+void WBLink::analyze_channels() {
     is_analyzing=true;
-    scan_channels({});
     const WiFiCard& card=m_broadcast_cards.at(0);
     std::vector<openhd::WifiChannel> channels_to_scan;
     const auto supported_freq=card.supported_frequencies_5G;
+    std::vector<AnalyzeResult> results{};
     for(const auto freq:supported_freq){
         auto tmp=openhd::channel_from_frequency(freq);
         if(tmp.has_value()){
@@ -1140,12 +1146,20 @@ void WBLink::gnd_only_fix_channel_width_for_uplink() {
         const auto channel_width=40;
         // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
         apply_frequency_and_channel_width(channel.frequency,channel_width);
-        m_console->warn("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
+        m_console->warn("Analyzing [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
         reset_all_rx_stats();
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         const auto stats=m_wb_txrx->get_rx_stats();
-        m_console->debug("Got {} foreign packets",stats.count_p_any);
+        const auto n_foreign_packets=stats.count_p_any-stats.count_p_valid;
+        m_console->debug("Got {} foreign packets {}:{}",n_foreign_packets,stats.count_p_any,stats.count_p_valid);
+        results.push_back(AnalyzeResult{(int)channel.frequency,(int)n_foreign_packets});
     }
-
+    std::stringstream ss;
+    for(int i=0;i<results.size();i++){
+        ss<<results[i].frequency<<"@"<<results[i].n_foreign_packets<<"\n";
+    }
+    m_console->debug("{}",ss.str().c_str());
+    // Go back to the previous frequency
+    apply_frequency_and_channel_width_from_settings();
     is_analyzing= false;
-}*/
+}
