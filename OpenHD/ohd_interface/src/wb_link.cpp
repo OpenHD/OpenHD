@@ -869,6 +869,55 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
   }
 }
 
+void WBLink::reset_all_rx_stats() {
+  m_wb_txrx->rx_reset_stats();
+  for(auto& rx:m_wb_video_rx_list){
+    rx->reset_stream_stats();
+  }
+  m_wb_tele_rx->reset_stream_stats();
+}
+
+bool WBLink::check_in_state_support_changing_settings(){
+  return !is_scanning && check_work_queue_empty() && !is_analyzing;
+}
+
+openhd::WifiSpace WBLink::get_current_frequency_channel_space()const {
+  return openhd::get_space_from_frequency(m_settings->get_settings().wb_frequency);
+}
+
+bool WBLink::set_tx_power_mw(int tx_power_mw) {
+  m_console->debug("set_tx_power_mw {}mW", tx_power_mw);
+  if(!openhd::is_valid_tx_power_milli_watt(tx_power_mw)){
+    m_console->warn("Invalid tx power:{}mW", tx_power_mw);
+    return false;
+  }
+  if(!check_in_state_support_changing_settings())return false;
+  m_settings->unsafe_get_settings().wb_tx_power_milli_watt= tx_power_mw;
+  m_settings->persist();
+  apply_txpower();
+  return true;
+}
+
+bool WBLink::set_tx_power_rtl8812au(int tx_power_index_override){
+  m_console->debug("set_tx_power_rtl8812au {}index",tx_power_index_override);
+  if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(tx_power_index_override))return false;
+  if(!check_in_state_support_changing_settings())return false;
+  m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=tx_power_index_override;
+  m_settings->persist();
+  apply_txpower();
+  return true;
+}
+
+int64_t WBLink::get_total_dropped_packets() {
+  int64_t total=0;
+  for(const auto& tx:m_wb_video_tx_list){
+    auto stats=tx->get_latest_stats();
+    total+=stats.n_dropped_packets;
+  }
+  total+=m_wb_tele_tx->get_latest_stats().n_dropped_packets;
+  return total;
+}
+
 WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChannelsParam& params){
   const WiFiCard& card=m_broadcast_cards.at(0);
   std::vector<openhd::WifiChannel> channels_to_scan;
@@ -998,65 +1047,74 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
 }
 
 bool WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params) {
-  if(!check_work_queue_empty()){
-    m_console->warn("Rejecting async_scan_channels, work queue busy");
-    return false;
-  }
-  auto work_item=std::make_shared<WorkItem>([this,scan_channels_params](){
-    //scan_channels(scan_channels_params);
-    analyze_channels();
-  },std::chrono::steady_clock::now());
-  schedule_work_item(work_item);
-  return true;
+    if(!check_work_queue_empty()){
+        m_console->warn("Rejecting async_scan_channels, work queue busy");
+        return false;
+    }
+    auto work_item=std::make_shared<WorkItem>([this,scan_channels_params](){
+        scan_channels(scan_channels_params);
+    },std::chrono::steady_clock::now());
+    schedule_work_item(work_item);
+    return true;
 }
 
-void WBLink::reset_all_rx_stats() {
-  m_wb_txrx->rx_reset_stats();
-  for(auto& rx:m_wb_video_rx_list){
-    rx->reset_stream_stats();
-  }
-  m_wb_tele_rx->reset_stream_stats();
+struct AnalyzeResult{
+    int frequency;
+    int n_foreign_packets;
+};
+void WBLink::analyze_channels() {
+    is_analyzing=true;
+    const WiFiCard& card=m_broadcast_cards.at(0);
+    std::vector<openhd::WifiChannel> channels_to_analyze;
+    const auto supported_freq=card.supported_frequencies_5G;
+    std::vector<AnalyzeResult> results{};
+    for(const auto freq:supported_freq){
+        auto tmp=openhd::channel_from_frequency(freq);
+        if(tmp.has_value() && tmp.value().is_legal_any_country_40Mhz){
+            channels_to_analyze.push_back(tmp.value());
+        }
+    }
+    for(int i=0; i < channels_to_analyze.size(); i++){
+        const auto channel=channels_to_analyze[i];
+        const auto channel_width=40;
+        // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
+        apply_frequency_and_channel_width(channel.frequency,channel_width);
+        m_console->warn("Analyzing [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
+        reset_all_rx_stats();
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        const auto stats=m_wb_txrx->get_rx_stats();
+        const auto n_foreign_packets=stats.count_p_any-stats.count_p_valid;
+        m_console->debug("Got {} foreign packets {}:{}",n_foreign_packets,stats.count_p_any,stats.count_p_valid);
+        results.push_back(AnalyzeResult{(int)channel.frequency,(int)n_foreign_packets});
+        if(m_opt_action_handler){
+            openhd::ActionHandler::AnalyzeChannelsResult tmp{};
+            tmp.channel_mhz=(int)channel.frequency;
+            tmp.channel_width_mhz=40;
+            tmp.n_foreign_packets=(int)n_foreign_packets;
+            tmp.progress=OHDUtil::calculate_progress_perc(i+1, channels_to_analyze.size());
+            m_opt_action_handler->add_analyze_result(tmp);
+        }
+    }
+    std::stringstream ss;
+    for(int i=0;i<results.size();i++){
+        ss<<results[i].frequency<<"@"<<results[i].n_foreign_packets<<"\n";
+    }
+    m_console->debug("{}",ss.str().c_str());
+    // Go back to the previous frequency
+    apply_frequency_and_channel_width_from_settings();
+    is_analyzing= false;
 }
 
-bool WBLink::check_in_state_support_changing_settings(){
-  return !is_scanning && check_work_queue_empty() && !is_analyzing;
-}
-
-openhd::WifiSpace WBLink::get_current_frequency_channel_space()const {
-  return openhd::get_space_from_frequency(m_settings->get_settings().wb_frequency);
-}
-
-bool WBLink::set_tx_power_mw(int tx_power_mw) {
-  m_console->debug("set_tx_power_mw {}mW", tx_power_mw);
-  if(!openhd::is_valid_tx_power_milli_watt(tx_power_mw)){
-    m_console->warn("Invalid tx power:{}mW", tx_power_mw);
-    return false;
-  }
-  if(!check_in_state_support_changing_settings())return false;
-  m_settings->unsafe_get_settings().wb_tx_power_milli_watt= tx_power_mw;
-  m_settings->persist();
-  apply_txpower();
-  return true;
-}
-
-bool WBLink::set_tx_power_rtl8812au(int tx_power_index_override){
-  m_console->debug("set_tx_power_rtl8812au {}index",tx_power_index_override);
-  if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(tx_power_index_override))return false;
-  if(!check_in_state_support_changing_settings())return false;
-  m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=tx_power_index_override;
-  m_settings->persist();
-  apply_txpower();
-  return true;
-}
-
-int64_t WBLink::get_total_dropped_packets() {
-  int64_t total=0;
-  for(const auto& tx:m_wb_video_tx_list){
-    auto stats=tx->get_latest_stats();
-    total+=stats.n_dropped_packets;
-  }
-  total+=m_wb_tele_tx->get_latest_stats().n_dropped_packets;
-  return total;
+bool WBLink::async_analyze_channels() {
+    if(!check_work_queue_empty()){
+        m_console->warn("Rejecting async_scan_channels, work queue busy");
+        return false;
+    }
+    auto work_item=std::make_shared<WorkItem>([this](){
+        analyze_channels();
+    },std::chrono::steady_clock::now());
+    schedule_work_item(work_item);
+    return true;
 }
 
 void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channels) {
@@ -1116,64 +1174,4 @@ void WBLink::update_arming_state(bool armed) {
   // it will set the right tx power if the user enabled it
   m_is_armed=armed;
   apply_txpower();
-}
-
-struct AnalyzeResult{
-    int frequency;
-    int n_foreign_packets;
-};
-
-void WBLink::analyze_channels() {
-    is_analyzing=true;
-    const WiFiCard& card=m_broadcast_cards.at(0);
-    std::vector<openhd::WifiChannel> channels_to_analyze;
-    const auto supported_freq=card.supported_frequencies_5G;
-    std::vector<AnalyzeResult> results{};
-    for(const auto freq:supported_freq){
-        auto tmp=openhd::channel_from_frequency(freq);
-        if(tmp.has_value() && tmp.value().is_legal_any_country_40Mhz){
-            channels_to_analyze.push_back(tmp.value());
-        }
-    }
-    for(int i=0; i < channels_to_analyze.size(); i++){
-        const auto channel=channels_to_analyze[i];
-        const auto channel_width=40;
-        // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
-        apply_frequency_and_channel_width(channel.frequency,channel_width);
-        m_console->warn("Analyzing [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
-        reset_all_rx_stats();
-        std::this_thread::sleep_for(std::chrono::seconds(3));
-        const auto stats=m_wb_txrx->get_rx_stats();
-        const auto n_foreign_packets=stats.count_p_any-stats.count_p_valid;
-        m_console->debug("Got {} foreign packets {}:{}",n_foreign_packets,stats.count_p_any,stats.count_p_valid);
-        results.push_back(AnalyzeResult{(int)channel.frequency,(int)n_foreign_packets});
-        if(m_opt_action_handler){
-            openhd::ActionHandler::AnalyzeChannelsResult tmp{};
-            tmp.channel_mhz=(int)channel.frequency;
-            tmp.channel_width_mhz=40;
-            tmp.n_foreign_packets=(int)n_foreign_packets;
-            tmp.progress=OHDUtil::calculate_progress_perc(i+1, channels_to_analyze.size());
-            m_opt_action_handler->add_analyze_result(tmp);
-        }
-    }
-    std::stringstream ss;
-    for(int i=0;i<results.size();i++){
-        ss<<results[i].frequency<<"@"<<results[i].n_foreign_packets<<"\n";
-    }
-    m_console->debug("{}",ss.str().c_str());
-    // Go back to the previous frequency
-    apply_frequency_and_channel_width_from_settings();
-    is_analyzing= false;
-}
-
-bool WBLink::async_analyze_channels() {
-    if(!check_work_queue_empty()){
-        m_console->warn("Rejecting async_scan_channels, work queue busy");
-        return false;
-    }
-    auto work_item=std::make_shared<WorkItem>([this](){
-        analyze_channels();
-    },std::chrono::steady_clock::now());
-    schedule_work_item(work_item);
-    return true;
 }
