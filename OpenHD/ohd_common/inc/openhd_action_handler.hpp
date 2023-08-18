@@ -232,6 +232,26 @@ class ActionHandler{
   }
 public:
     std::function<std::vector<uint16_t>()> wb_get_supported_channels= nullptr;
+public:
+    std::atomic<int> scan_channels_air_unit_progress=-1;
+public:
+    struct AnalyzeChannelsResult{
+        int frequency;
+        int n_foreign_packets;
+    };
+    void add_scan_result(AnalyzeChannelsResult scan_result){
+        std::lock_guard<std::mutex> guard(m_scan_results_mutex);
+        m_scan_results.push_back(scan_result);
+    }
+    std::vector<AnalyzeChannelsResult> get_scan_results(){
+        std::lock_guard<std::mutex> guard(m_scan_results_mutex);
+        auto ret=m_scan_results;
+        m_scan_results.clear();
+        return ret;
+    }
+private:
+    std::mutex m_scan_results_mutex;
+    std::vector<AnalyzeChannelsResult> m_scan_results;
 };
 
 }

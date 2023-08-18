@@ -990,8 +990,8 @@ void WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_c
     return;
   }
   auto work_item=std::make_shared<WorkItem>([this,scan_channels_params](){
-    scan_channels(scan_channels_params);
-    //analyze_channels();
+    //scan_channels(scan_channels_params);
+    analyze_channels();
   },std::chrono::steady_clock::now());
   schedule_work_item(work_item);
 }
@@ -1117,7 +1117,7 @@ void WBLink::analyze_channels() {
     std::vector<AnalyzeResult> results{};
     for(const auto freq:supported_freq){
         auto tmp=openhd::channel_from_frequency(freq);
-        if(tmp.has_value()){
+        if(tmp.has_value() && tmp.value().is_legal_any_country_40Mhz){
             channels_to_scan.push_back(tmp.value());
         }
     }
@@ -1127,11 +1127,17 @@ void WBLink::analyze_channels() {
         apply_frequency_and_channel_width(channel.frequency,channel_width);
         m_console->warn("Analyzing [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
         reset_all_rx_stats();
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
         const auto stats=m_wb_txrx->get_rx_stats();
         const auto n_foreign_packets=stats.count_p_any-stats.count_p_valid;
         m_console->debug("Got {} foreign packets {}:{}",n_foreign_packets,stats.count_p_any,stats.count_p_valid);
         results.push_back(AnalyzeResult{(int)channel.frequency,(int)n_foreign_packets});
+        if(m_opt_action_handler){
+            openhd::ActionHandler::AnalyzeChannelsResult tmp{};
+            tmp.frequency=(int)channel.frequency;
+            tmp.n_foreign_packets=(int)n_foreign_packets;
+            m_opt_action_handler->add_scan_result(tmp);
+        }
     }
     std::stringstream ss;
     for(int i=0;i<results.size();i++){
@@ -1144,5 +1150,12 @@ void WBLink::analyze_channels() {
 }
 
 void WBLink::async_analyze_channels() {
-
+    if(!check_work_queue_empty()){
+        m_console->warn("Rejecting async_scan_channels, work queue busy");
+        return;
+    }
+    auto work_item=std::make_shared<WorkItem>([this](){
+        analyze_channels();
+    },std::chrono::steady_clock::now());
+    schedule_work_item(work_item);
 }
