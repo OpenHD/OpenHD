@@ -7,6 +7,7 @@
 
 #include "../mav_include.h"
 #include "openhd_link_statistics.hpp"
+#include "openhd_action_handler.hpp"
 
 namespace openhd::LinkStatisticsHelper{
 
@@ -157,6 +158,17 @@ static MavlinkMessage generate_msg_openhd_wifibroadcast_supported_channels(const
         }
     }
     mavlink_msg_openhd_wifbroadcast_supported_channels_encode(system_id,component_id,&msg.m,&tmp);
+    return msg;
+}
+
+static MavlinkMessage generate_msg_analyze_channels_progress(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::AnalyzeChannelsResult progress){
+    MavlinkMessage msg;
+    mavlink_openhd_wifbroadcast_analyze_channels_progress_t tmp{};
+    tmp.progress=progress.progress;
+    tmp.channel_mhz=progress.channel_mhz;
+    tmp.channel_width_mhz=progress.channel_width_mhz;
+    tmp.foreign_packets= progress.n_foreign_packets;
+    mavlink_msg_openhd_wifbroadcast_analyze_channels_progress_encode(system_id,component_id,&msg.m,&tmp);
     return msg;
 }
 

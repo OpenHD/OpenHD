@@ -236,7 +236,9 @@ public:
     std::atomic<int> scan_channels_air_unit_progress=-1;
 public:
     struct AnalyzeChannelsResult{
-        int frequency;
+        int channel_mhz;
+        int channel_width_mhz;
+        int progress;
         int n_foreign_packets;
     };
     void add_scan_result(AnalyzeChannelsResult scan_result){
@@ -252,6 +254,25 @@ public:
 private:
     std::mutex m_scan_results_mutex;
     std::vector<AnalyzeChannelsResult> m_scan_results;
+public:
+    /*struct ScanChannelsProgress{
+        int channel_mhz;
+        int channel_width_mhz;
+        int progress;
+    };
+    void add_scan_channels_progress(ScanChannelsProgress val){
+        std::lock_guard<std::mutex> guard(m_scan_channels_progress_mutex);
+        m_scan_channels_progress.push_back(val);
+    }
+    std::vector<ScanChannelsProgress> get_scan_channels_progress(){
+        std::lock_guard<std::mutex> guard(m_scan_channels_progress_mutex);
+        auto ret=m_scan_channels_progress;
+        m_scan_channels_progress.clear();
+        return ret;
+    }
+private:
+    std::mutex m_scan_channels_progress_mutex;
+    std::vector<ScanChannelsProgress> m_scan_channels_progress;*/
 };
 
 }

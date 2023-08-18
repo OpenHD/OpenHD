@@ -1121,7 +1121,8 @@ void WBLink::analyze_channels() {
             channels_to_scan.push_back(tmp.value());
         }
     }
-    for(const auto& channel:channels_to_scan){
+    for(int i=0;i<channels_to_scan.size();i++){
+        const auto channel=channels_to_scan[i];
         const auto channel_width=40;
         // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
         apply_frequency_and_channel_width(channel.frequency,channel_width);
@@ -1134,8 +1135,10 @@ void WBLink::analyze_channels() {
         results.push_back(AnalyzeResult{(int)channel.frequency,(int)n_foreign_packets});
         if(m_opt_action_handler){
             openhd::ActionHandler::AnalyzeChannelsResult tmp{};
-            tmp.frequency=(int)channel.frequency;
+            tmp.channel_mhz=(int)channel.frequency;
+            tmp.channel_width_mhz=40;
             tmp.n_foreign_packets=(int)n_foreign_packets;
+            tmp.progress=(i / channels_to_scan.size() * 100);
             m_opt_action_handler->add_scan_result(tmp);
         }
     }
