@@ -61,7 +61,7 @@ class OHDMainComponent : public MavlinkComponent{
   std::vector<MavlinkMessage> generateLogMessages();
   std::unique_ptr<StatusTextAccumulator> m_status_text_accumulator;
   std::unique_ptr<OnboardComputerStatusProvider> m_onboard_computer_status_provider;
-  MavlinkMessage ack_command(uint8_t source_sys_id,uint8_t source_comp_id,uint16_t command_id);
+  MavlinkMessage ack_command(uint8_t source_sys_id,uint8_t source_comp_id,uint16_t command_id,bool success=true);
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<LastKnowPosition> m_last_known_position= nullptr;
 };

@@ -120,16 +120,20 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
   if(m_opt_action_handler){
-      auto cb_scan=[this](openhd::ActionHandler::ScanChannelsParam param){
-        async_scan_channels(param);
+      std::function<bool(openhd::ActionHandler::ScanChannelsParam)> cb_scan=[this](openhd::ActionHandler::ScanChannelsParam param){
+        return async_scan_channels(param);
       };
-      m_opt_action_handler->action_wb_link_scan_channels_register(cb_scan);
+      m_opt_action_handler->wb_cmd_scan_channels=cb_scan;
+      std::function<bool()> cb_analyze=[this](){
+          return async_analyze_channels();
+      };
+      m_opt_action_handler->wb_cmd_analyze_channels=cb_analyze;
       if(m_profile.is_air){
           // MCS is only changed on air
           auto cb_mcs=[this](const std::array<int,18>& rc_channels){
             set_mcs_index_from_rc_channel(rc_channels);
           };
-          m_opt_action_handler->action_on_ony_rc_channel_register(cb_mcs);
+          m_opt_action_handler->action_on_any_rc_channel_register(cb_mcs);
       }
       auto cb_arm=[this](bool armed){
         update_arming_state(armed);
@@ -152,10 +156,11 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
 WBLink::~WBLink() {
   m_console->debug("WBLink::~WBLink() begin");
   if(m_opt_action_handler){
-    m_opt_action_handler->action_wb_link_scan_channels_register(nullptr);
-    m_opt_action_handler->action_on_ony_rc_channel_register(nullptr);
-    m_opt_action_handler->m_action_tx_power_when_armed= nullptr;
-    m_opt_action_handler->wb_get_supported_channels= nullptr;
+      m_opt_action_handler->action_on_any_rc_channel_register(nullptr);
+      m_opt_action_handler->m_action_tx_power_when_armed= nullptr;
+      m_opt_action_handler->wb_get_supported_channels= nullptr;
+      m_opt_action_handler->wb_cmd_scan_channels= nullptr;
+      m_opt_action_handler->wb_cmd_analyze_channels=nullptr;
   }
   if(m_work_thread){
     m_work_thread_run =false;
@@ -992,16 +997,17 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
   return result;
 }
 
-void WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params) {
+bool WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params) {
   if(!check_work_queue_empty()){
     m_console->warn("Rejecting async_scan_channels, work queue busy");
-    return;
+    return false;
   }
   auto work_item=std::make_shared<WorkItem>([this,scan_channels_params](){
     //scan_channels(scan_channels_params);
     analyze_channels();
   },std::chrono::steady_clock::now());
   schedule_work_item(work_item);
+  return true;
 }
 
 void WBLink::reset_all_rx_stats() {
@@ -1160,13 +1166,14 @@ void WBLink::analyze_channels() {
     is_analyzing= false;
 }
 
-void WBLink::async_analyze_channels() {
+bool WBLink::async_analyze_channels() {
     if(!check_work_queue_empty()){
         m_console->warn("Rejecting async_scan_channels, work queue busy");
-        return;
+        return false;
     }
     auto work_item=std::make_shared<WorkItem>([this](){
         analyze_channels();
     },std::chrono::steady_clock::now());
     schedule_work_item(work_item);
+    return true;
 }

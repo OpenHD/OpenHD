@@ -120,11 +120,10 @@ class WBLink :public OHDLink{
   // On success, apply this frequency.
   // On failure, restore previous state.
   ScanResult scan_channels(const openhd::ActionHandler::ScanChannelsParam& scan_channels_params);
-  // queue it up on the work queue
-  void async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
-
   void analyze_channels();
-  void async_analyze_channels();
+  // queue it up on the work queue, if no other item is currently on the work queue
+  bool async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
+  bool async_analyze_channels();
  private:
   void reset_all_rx_stats();
   int64_t get_total_dropped_packets();
