@@ -246,10 +246,10 @@ private:
     std::vector<AnalyzeChannelsResult> m_scan_results;
 public:
     struct ScanChannelsProgress{
-        int channel_mhz;
-        int channel_width_mhz;
-        int progress;
-        bool success= false;
+        uint16_t channel_mhz;
+        uint8_t progress;
+        uint8_t channel_width_mhz;
+        bool success;
     };
     void add_scan_channels_progress(ScanChannelsProgress val){
         std::lock_guard<std::mutex> guard(m_scan_channels_progress_mutex);

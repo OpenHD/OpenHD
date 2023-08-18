@@ -977,6 +977,14 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
           m_console->warn("Cannot scan [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
           continue;
       }
+      if(m_opt_action_handler){
+            openhd::ActionHandler::ScanChannelsProgress tmp{};
+            tmp.channel_mhz=(int)channel.frequency;
+            tmp.channel_width_mhz=40;
+            tmp.success= false;
+            tmp.progress=OHDUtil::calculate_progress_perc(i+1,channels_to_scan.size());
+            m_opt_action_handler->add_scan_channels_progress(tmp);
+      }
       // sleeep a bit - some cards /drivers might need time switching
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
       m_console->warn("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
@@ -1007,13 +1015,6 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
           m_console->warn("Got >10% packet loss,continue and select most likely at the end");
         }
       }
-      if(m_opt_action_handler){
-        openhd::ActionHandler::ScanChannelsProgress tmp{};
-        tmp.channel_mhz=(int)channel.frequency;
-        tmp.channel_width_mhz=40;
-        tmp.progress=OHDUtil::calculate_progress_perc(i+1,channels_to_scan.size());
-        m_opt_action_handler->add_scan_channels_progress(tmp);
-      }
     }
   }
   ScanResult result{};
@@ -1035,6 +1036,14 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
     result.success= true;
     result.frequency=best.channel.frequency;
     result.channel_width=best.channel_width;
+    if(m_opt_action_handler){
+          openhd::ActionHandler::ScanChannelsProgress tmp{};
+          tmp.channel_mhz=(int)best.channel.frequency;
+          tmp.channel_width_mhz=best.channel_width;
+          tmp.success= true;
+          tmp.progress=100;
+          m_opt_action_handler->add_scan_channels_progress(tmp);
+    }
     m_settings->unsafe_get_settings().wb_frequency=result.frequency;
     m_settings->unsafe_get_settings().wb_channel_width=result.channel_width;
     m_settings->persist();

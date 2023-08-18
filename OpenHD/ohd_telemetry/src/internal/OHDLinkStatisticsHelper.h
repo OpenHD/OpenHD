@@ -178,6 +178,7 @@ static MavlinkMessage generate_msg_scan_channels_progress(const uint8_t system_i
     tmp.progress=progress.progress;
     tmp.channel_mhz=progress.channel_mhz;
     tmp.channel_width_mhz=progress.channel_width_mhz;
+    tmp.success=progress.success;
     mavlink_msg_openhd_wifbroadcast_scan_channels_progress_encode(system_id,component_id,&msg.m,&tmp);
     return msg;
 }
