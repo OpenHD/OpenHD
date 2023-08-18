@@ -129,6 +129,8 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
               if(m_opt_action_handler && m_opt_action_handler->wb_cmd_scan_channels){
                 const auto res=m_opt_action_handler->wb_cmd_scan_channels({scan_2g,scan_5g,scan_20Mhz,scan_40Mhz});
                 ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command,res));
+              }else{
+                ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command, false));
               }
             }
           }
@@ -139,9 +141,10 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
             }else{
                 if(m_opt_action_handler && m_opt_action_handler->wb_cmd_analyze_channels){
                     const auto success=m_opt_action_handler->wb_cmd_analyze_channels();
-                    ack_command(msg.m.sysid,msg.m.compid,command.command,success);
+                    ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command,success));
+                }else{
+                    ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command, false));
                 }
-                ack_command(msg.m.sysid,msg.m.compid,command.command, false);
             }
         }else{
             m_console->debug("Unknown command {}",command.command);
