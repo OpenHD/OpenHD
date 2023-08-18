@@ -534,7 +534,6 @@ void WBLink::loop_do_work() {
     //m_console->debug("Calculating stats took:{} ms",std::chrono::duration_cast<std::chrono::microseconds>(delta_calc_stats).count()/1000.0f);
     // update recommended rate if enabled in regular intervals
     perform_rate_adjustment();
-    //gnd_only_fix_channel_width_for_uplink();
     // Dirty - deliberately crash openhd and let the service restart it
     // if we think a wi-fi card disconnected
     /*bool any_rx_wifi_disconnected_errors=false;
@@ -1105,26 +1104,6 @@ void WBLink::update_arming_state(bool armed) {
   apply_txpower();
 }
 
-
-void WBLink::gnd_only_fix_channel_width_for_uplink() {
-    if(!m_profile.is_ground()){
-        return;
-    }
-    const WiFiCard& card=m_broadcast_cards.at(0);
-    if(card.type!=WiFiCardType::Realtek8812au){
-        return;
-    }
-    const auto rxstats=m_wb_txrx->get_rx_stats();
-    if(rxstats.last_received_packet_channel_width==20 && m_settings->unsafe_get_settings().wb_channel_width==40){
-        m_gnd_n_times_20mhz_40mhz_mismatch++;
-        if(m_gnd_n_times_20mhz_40mhz_mismatch>10){
-            m_console->warn("Fixing gnd channel width on 40Mhz but air on 20Mhz");
-            m_settings->unsafe_get_settings().wb_channel_width=20;
-            m_settings->persist();
-        }
-    }
-}
-
 struct AnalyzeResult{
     int frequency;
     int n_foreign_packets;
@@ -1162,4 +1141,8 @@ void WBLink::analyze_channels() {
     // Go back to the previous frequency
     apply_frequency_and_channel_width_from_settings();
     is_analyzing= false;
+}
+
+void WBLink::async_analyze_channels() {
+
 }

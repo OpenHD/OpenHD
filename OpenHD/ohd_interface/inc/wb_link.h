@@ -124,11 +124,7 @@ class WBLink :public OHDLink{
   void async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
 
   void analyze_channels();
-  //
-  //void analyze_channels();
-  // FEATURE: If the rare case happens where the gnd is on 40Mhz, the air is on 20Mhz, we can receive data but not send data to the air unit -
-  // Fix this automatically
-  void gnd_only_fix_channel_width_for_uplink();
+  void async_analyze_channels();
  private:
   void reset_all_rx_stats();
   int64_t get_total_dropped_packets();
