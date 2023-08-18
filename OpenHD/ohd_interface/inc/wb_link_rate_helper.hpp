@@ -176,7 +176,7 @@ static uint32_t get_max_rate_possible_5G_kbits(const WiFiCard& card,uint16_t mcs
 }
 static uint32_t get_max_rate_possible_2G_kbits(const WiFiCard& card,uint16_t mcs_index,bool is_40Mhz){
     if(card.type==WiFiCardType::Realtek8812au || card.type==WiFiCardType::Realtek88x2bu){
-        return rtl8812au_get_max_rate_5G_kbits(mcs_index, is_40Mhz);
+        return rtl8812au_get_max_rate_2G_kbits(mcs_index, is_40Mhz);
     }
     // fallback for any other weak crap
     return 5000;
