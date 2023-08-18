@@ -121,7 +121,7 @@ static std::vector<WifiChannel> get_channels_5G(){
       WifiChannel{5260, 52, WifiSpace::G5_8, true, true, true},
       WifiChannel{5280, 56, WifiSpace::G5_8, true, true, true},
       WifiChannel{5300, 60, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5320, 64, WifiSpace::G5_8, true, true, true},
+      WifiChannel{5320, 64, WifiSpace::G5_8, true, true, false}, // RTL8812au - crash on 40Mhz here
       // These channel(s) are not valid Wi-Fi channels in all countries
       WifiChannel{5340, 68, WifiSpace::G5_8, true, false, false}, // (Only on 20Mhz allowed in some)
       WifiChannel{5360, 72, WifiSpace::G5_8, true, false, false},
