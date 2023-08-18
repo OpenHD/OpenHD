@@ -980,7 +980,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       if(m_opt_action_handler){
             openhd::ActionHandler::ScanChannelsProgress tmp{};
             tmp.channel_mhz=(int)channel.frequency;
-            tmp.channel_width_mhz=40;
+            tmp.channel_width_mhz=channel_width;
             tmp.success= false;
             tmp.progress=OHDUtil::calculate_progress_perc(i+1,channels_to_scan.size());
             m_opt_action_handler->add_scan_channels_progress(tmp);
