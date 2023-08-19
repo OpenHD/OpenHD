@@ -1036,20 +1036,20 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
     result.success= true;
     result.frequency=best.channel.frequency;
     result.channel_width=best.channel_width;
-    if(m_opt_action_handler){
-          openhd::ActionHandler::ScanChannelsProgress tmp{};
-          tmp.channel_mhz=(int)best.channel.frequency;
-          tmp.channel_width_mhz=best.channel_width;
-          tmp.success= true;
-          tmp.progress=100;
-          m_opt_action_handler->add_scan_channels_progress(tmp);
-    }
     m_settings->unsafe_get_settings().wb_frequency=result.frequency;
     m_settings->unsafe_get_settings().wb_channel_width=result.channel_width;
     m_settings->persist();
     // Not needed anymore
     //openhd::reboot::dirty_terminate_openhd_and_let_service_restart();
     apply_frequency_and_channel_width_from_settings();
+  }
+  if(m_opt_action_handler){
+      openhd::ActionHandler::ScanChannelsProgress tmp{};
+      tmp.channel_mhz=(int)result.frequency;
+      tmp.channel_width_mhz=result.channel_width;
+      tmp.success= result.success;
+      tmp.progress=100;
+      m_opt_action_handler->add_scan_channels_progress(tmp);
   }
   is_scanning=false;
   return result;
@@ -1071,18 +1071,26 @@ struct AnalyzeResult{
     int frequency;
     int n_foreign_packets;
 };
+
 void WBLink::analyze_channels() {
     is_analyzing=true;
     const WiFiCard& card=m_broadcast_cards.at(0);
     std::vector<openhd::WifiChannel> channels_to_analyze;
-    const auto supported_freq=card.supported_frequencies_5G;
-    std::vector<AnalyzeResult> results{};
-    for(const auto freq:supported_freq){
+    const auto supported_freq_5G=card.supported_frequencies_5G;
+    const auto supported_freq_2G=card.supported_frequencies_2G;
+    for(const auto& freq:supported_freq_2G){
         auto tmp=openhd::channel_from_frequency(freq);
         if(tmp.has_value() && tmp.value().is_legal_any_country_40Mhz){
             channels_to_analyze.push_back(tmp.value());
         }
     }
+    for(const auto freq:supported_freq_5G){
+        auto tmp=openhd::channel_from_frequency(freq);
+        if(tmp.has_value() && tmp.value().is_legal_any_country_40Mhz){
+            channels_to_analyze.push_back(tmp.value());
+        }
+    }
+    std::vector<AnalyzeResult> results{};
     for(int i=0; i < channels_to_analyze.size(); i++){
         const auto channel=channels_to_analyze[i];
         const auto channel_width=40;
