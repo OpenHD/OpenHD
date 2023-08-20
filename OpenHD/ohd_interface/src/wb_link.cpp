@@ -263,24 +263,15 @@ bool WBLink::request_set_frequency(int frequency) {
     }
   }
   if(!check_in_state_support_changing_settings())return false;
-  m_settings->unsafe_get_settings().wb_frequency=frequency;
-  m_settings->persist();
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
-  auto work_item=std::make_shared<WorkItem>([this](){
-    apply_frequency_and_channel_width_from_settings();
-  },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
-  schedule_work_item(work_item);
-  // And add a work item that runs after 5 seconds and resets the frequency to the previous one if no data is being received
-  // after X seconds
-  const auto rx_count_p_decryption_ok=m_wb_txrx->get_rx_stats().count_p_valid;
-  if(rx_count_p_decryption_ok>100){
-    m_console->debug("Adding reset to previous known frequency work item {}",rx_count_p_decryption_ok);
-    auto backup_work_item=std::make_shared<WorkItem>([this](){
-      m_console->debug("check if data is being received {}",m_wb_txrx->get_rx_stats().count_p_valid);
-    },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK+std::chrono::seconds(2));
-    schedule_work_item(backup_work_item);
-  }
-  return true;
+  auto work_item=std::make_shared<WorkItem>(fmt::format("SET_FREQ:{}",frequency),[this,frequency](){
+      m_settings->unsafe_get_settings().wb_frequency=frequency;
+      m_settings->persist();
+      // Wait a bit for the ack
+      std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
+     apply_frequency_and_channel_width_from_settings();
+  },std::chrono::steady_clock::now());
+  return try_schedule_work_item(work_item);
 }
 
 bool WBLink::request_set_channel_width(int channel_width) {
@@ -302,14 +293,15 @@ bool WBLink::request_set_channel_width(int channel_width) {
         return false;
     }
     if(!check_in_state_support_changing_settings())return false;
-    m_settings->unsafe_get_settings().wb_channel_width=channel_width;
-    m_settings->persist();
     // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
-    auto work_item=std::make_shared<WorkItem>([this](){
+    auto work_item=std::make_shared<WorkItem>(fmt::format("SET_CHWIDTH:{}",channel_width),[this,channel_width](){
+        m_settings->unsafe_get_settings().wb_channel_width=channel_width;
+        m_settings->persist();
+        // Wait a bit for the ack
+        std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
         apply_frequency_and_channel_width_from_settings();
-    },std::chrono::steady_clock::now()+ DELAY_FOR_TRANSMIT_ACK);
-    schedule_work_item(work_item);
-    return true;
+    },std::chrono::steady_clock::now());
+    return try_schedule_work_item(work_item);
 }
 
 bool WBLink::apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width) {
@@ -527,7 +519,9 @@ void WBLink::loop_do_work() {
       if(!m_work_item_queue.empty()){
         auto front=m_work_item_queue.front();
         if(front->ready_to_be_executed()){
+          m_console->debug("Start execute work item {}",front->TAG);
           front->execute();
+          m_console->debug("Done executing work item {}",front->TAG);
           m_work_item_queue.pop();
         }
       }
@@ -818,9 +812,19 @@ void WBLink::set_wb_air_video_encryption_enabled(bool enable) {
     }
 }
 
-void WBLink::schedule_work_item(const std::shared_ptr<WorkItem>& work_item) {
-  std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
-  m_work_item_queue.push(work_item);
+bool WBLink::try_schedule_work_item(const std::shared_ptr<WorkItem> &work_item) {
+    std::unique_lock<std::mutex> lock(m_work_item_queue_mutex, std::try_to_lock);
+    if(lock.owns_lock()){
+        if(m_work_item_queue.empty()){
+            m_console->debug("Adding work item to queue");
+            m_work_item_queue.push(work_item);
+            return true;
+        }
+        m_console->debug("Work queue full");
+        return false;
+    }
+    m_console->debug("Cannot obtain lock, queue probably full / busy");
+    return false;
 }
 
 bool WBLink::check_work_queue_empty() {
@@ -888,7 +892,7 @@ void WBLink::reset_all_rx_stats() {
 }
 
 bool WBLink::check_in_state_support_changing_settings(){
-  return !is_scanning && check_work_queue_empty() && !is_analyzing;
+  return check_work_queue_empty();
 }
 
 openhd::WifiSpace WBLink::get_current_frequency_channel_space()const {
@@ -954,7 +958,6 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
     m_console->warn("No channel_widths to scan, return early");
     return {};
   }
-  is_scanning=true;
   // Issue / bug with RTL8812AU: Apparently the adapter sometimes receives data from a frequency that is not correct
   // (e.g. when the air is set to 5700 and the rx listens on frequency  5540 ) but with an incredibly high packet loss.
   // therefore, instead of returning early, we hop through all frequencies and on frequencies where we get data, store
@@ -1061,7 +1064,6 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       tmp.progress=100;
       m_opt_action_handler->add_scan_channels_progress(tmp);
   }
-  is_scanning=false;
   return result;
 }
 
@@ -1070,11 +1072,10 @@ bool WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_c
         m_console->warn("Rejecting async_scan_channels, work queue busy");
         return false;
     }
-    auto work_item=std::make_shared<WorkItem>([this,scan_channels_params](){
+    auto work_item=std::make_shared<WorkItem>("SCAN_CHANNELS",[this,scan_channels_params](){
         scan_channels(scan_channels_params);
     },std::chrono::steady_clock::now());
-    schedule_work_item(work_item);
-    return true;
+    return try_schedule_work_item(work_item);
 }
 
 struct AnalyzeResult{
@@ -1083,7 +1084,6 @@ struct AnalyzeResult{
 };
 
 void WBLink::analyze_channels() {
-    is_analyzing=true;
     const WiFiCard& card=m_broadcast_cards.at(0);
     std::vector<openhd::WifiChannel> channels_to_analyze;
     const auto supported_freq_5G=card.supported_frequencies_5G;
@@ -1129,7 +1129,6 @@ void WBLink::analyze_channels() {
     m_console->debug("{}",ss.str().c_str());
     // Go back to the previous frequency
     apply_frequency_and_channel_width_from_settings();
-    is_analyzing= false;
 }
 
 bool WBLink::async_analyze_channels() {
@@ -1137,11 +1136,10 @@ bool WBLink::async_analyze_channels() {
         m_console->warn("Rejecting async_scan_channels, work queue busy");
         return false;
     }
-    auto work_item=std::make_shared<WorkItem>([this](){
+    auto work_item=std::make_shared<WorkItem>("ANALYZE_CHANNELS",[this](){
         analyze_channels();
     },std::chrono::steady_clock::now());
-    schedule_work_item(work_item);
-    return true;
+    return try_schedule_work_item(work_item);
 }
 
 void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channels) {

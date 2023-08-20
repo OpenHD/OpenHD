@@ -1,3 +1,5 @@
+#include <utility>
+
 //
 // Created by consti10 on 15.02.23.
 //
@@ -13,8 +15,8 @@ class WorkItem{
    * @param work lambda - the work to perform
    * @param earliest_execution_time earliest time point this work item should be handled.
    */
-  explicit WorkItem(std::function<void()> work,std::chrono::steady_clock::time_point earliest_execution_time)
-      :m_earliest_execution_time(earliest_execution_time),m_work(std::move(work)){
+  explicit WorkItem(std::string tag,std::function<void()> work,std::chrono::steady_clock::time_point earliest_execution_time)
+      :TAG(std::move(tag)),m_earliest_execution_time(earliest_execution_time),m_work(std::move(work)){
   }
   void execute(){
     m_work();
@@ -22,6 +24,7 @@ class WorkItem{
   bool ready_to_be_executed(){
     return std::chrono::steady_clock::now()>=m_earliest_execution_time;
   }
+  const std::string TAG;
  private:
   const std::chrono::steady_clock::time_point m_earliest_execution_time;
   const std::function<void()> m_work;

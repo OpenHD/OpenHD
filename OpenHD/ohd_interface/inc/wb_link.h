@@ -93,7 +93,11 @@ class WBLink :public OHDLink{
   std::chrono::steady_clock::time_point m_last_stats_recalculation=std::chrono::steady_clock::now();
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void perform_rate_adjustment();
-  void schedule_work_item(const std::shared_ptr<WorkItem>& work_item);
+  // Returns true if the work item queue is currently empty and the item has been added
+  // false otherwise. In general, we only suport one item on the work queue - otherwise we reject the param,
+  // since the user can just try again later (and in case the work queue is currently busy with a frequency scan for example,
+  // we do not support changing the frequency or similar.
+  bool try_schedule_work_item(const std::shared_ptr<WorkItem>& work_item);
   // We limit changing specific params to one after another
   bool check_work_queue_empty();
   static constexpr auto DELAY_FOR_TRANSMIT_ACK =std::chrono::seconds(2);
@@ -150,8 +154,6 @@ class WBLink :public OHDLink{
   std::vector<std::unique_ptr<WBStreamTx>> m_wb_video_tx_list;
   std::vector<std::unique_ptr<WBStreamRx>> m_wb_video_rx_list;
   //std::unique_ptr<ForeignPacketsReceiver> m_foreign_packets_receiver;
-  std::atomic<bool> is_scanning=false;
-  std::atomic<bool> is_analyzing=false;
   // We have one worker thread for asynchronously performing operation(s) like changing the frequency
   // but also recalculating statistics that are then forwarded to openhd_telemetry for broadcast
   bool m_work_thread_run;
