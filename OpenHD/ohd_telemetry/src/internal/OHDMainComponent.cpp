@@ -130,6 +130,7 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
               if(m_opt_action_handler && m_opt_action_handler->wb_cmd_scan_channels){
                 success=m_opt_action_handler->wb_cmd_scan_channels({scan_2g,scan_5g,scan_20Mhz,scan_40Mhz});
               }
+              m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH rsult: {}",success);
             }
             ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command,success));
           }

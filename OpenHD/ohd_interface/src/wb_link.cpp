@@ -824,12 +824,22 @@ void WBLink::schedule_work_item(const std::shared_ptr<WorkItem>& work_item) {
 }
 
 bool WBLink::check_work_queue_empty() {
-  std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
+    std::unique_lock<std::mutex> lock(m_work_item_queue_mutex, std::try_to_lock);
+    if(lock.owns_lock()){
+        if(!m_work_item_queue.empty()){
+            m_console->info("Rejecting param, another change is still queued up");
+            return false;
+        }
+        return true;
+    }
+    m_console->info("Work queue busy");
+    return false;
+  /*std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
   if(!m_work_item_queue.empty()){
     m_console->info("Rejecting param, another change is still queued up");
     return false;
   }
-  return true;
+  return true;*/
 }
 
 
