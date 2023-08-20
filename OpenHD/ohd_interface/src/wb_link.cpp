@@ -321,6 +321,7 @@ bool WBLink::apply_frequency_and_channel_width_from_settings() {
   const auto res=apply_frequency_and_channel_width(settings.wb_frequency,settings.wb_channel_width);
   m_wb_txrx->tx_reset_stats();
   m_wb_txrx->rx_reset_stats();
+  m_max_video_rate_for_current_wifi_config_freq_changed= true;
   return res;
 }
 
@@ -717,7 +718,9 @@ void WBLink::perform_rate_adjustment() {
                    kbits_per_second_to_string(max_rate_for_current_wifi_config));*/
   const auto max_video_rate_for_current_wifi_config =
       openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
-  if(m_max_video_rate_for_current_wifi_config !=max_video_rate_for_current_wifi_config){
+  if(m_max_video_rate_for_current_wifi_config !=max_video_rate_for_current_wifi_config ||
+        m_max_video_rate_for_current_wifi_config_freq_changed){
+      m_max_video_rate_for_current_wifi_config_freq_changed= false;
     // Apply the default for this configuration, then return - we will start the auto-adjustment
     // depending on tx error(s) next time the rate adjustment is called
     m_console->debug("MCS:{} ch_width:{} Calculated max_rate:{}, max_video_rate:{}",
