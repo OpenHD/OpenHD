@@ -1093,25 +1093,29 @@ void WBLink::analyze_channels() {
     const auto supported_freq_2G=card.supported_frequencies_2G;
     for(const auto& freq:supported_freq_2G){
         auto tmp=openhd::channel_from_frequency(freq);
-        if(tmp.has_value() && tmp.value().is_legal_any_country_40Mhz){
+        if(tmp.has_value()){
             channels_to_analyze.push_back(tmp.value());
         }
     }
     for(const auto freq:supported_freq_5G){
         auto tmp=openhd::channel_from_frequency(freq);
-        if(tmp.has_value() && tmp.value().is_legal_any_country_40Mhz){
+        if(tmp.has_value()){
             channels_to_analyze.push_back(tmp.value());
         }
     }
     std::vector<AnalyzeResult> results{};
     for(int i=0; i < channels_to_analyze.size(); i++){
         const auto channel=channels_to_analyze[i];
-        const auto channel_width=40;
+        // We use 40Mhz when possible, 20Mhz otherwise
+        int channel_width=40;
+        if(!channel.is_legal_any_country_40Mhz){
+            channel_width=20;
+        }
         // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
         apply_frequency_and_channel_width(channel.frequency,channel_width);
         m_console->warn("Analyzing [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
         reset_all_rx_stats();
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+        std::this_thread::sleep_for(std::chrono::seconds(4));
         const auto stats=m_wb_txrx->get_rx_stats();
         const auto n_foreign_packets=stats.count_p_any-stats.count_p_valid;
         m_console->debug("Got {} foreign packets {}:{}",n_foreign_packets,stats.count_p_any,stats.count_p_valid);
@@ -1119,7 +1123,7 @@ void WBLink::analyze_channels() {
         if(m_opt_action_handler){
             openhd::ActionHandler::AnalyzeChannelsResult tmp{};
             tmp.channel_mhz=(int)channel.frequency;
-            tmp.channel_width_mhz=40;
+            tmp.channel_width_mhz=channel_width;
             tmp.n_foreign_packets=(int)n_foreign_packets;
             tmp.progress=OHDUtil::calculate_progress_perc(i+1, channels_to_analyze.size());
             m_opt_action_handler->add_analyze_result(tmp);
