@@ -267,8 +267,10 @@ bool WBLink::request_set_frequency(int frequency) {
   auto work_item=std::make_shared<WorkItem>(fmt::format("SET_FREQ:{}",frequency),[this,frequency](){
       m_settings->unsafe_get_settings().wb_frequency=frequency;
       m_settings->persist();
-      // Wait a bit for the ack
-      std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
+      if(m_profile.is_air){
+          // Wait a bit for the ack
+          std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
+      }
      apply_frequency_and_channel_width_from_settings();
   },std::chrono::steady_clock::now());
   return try_schedule_work_item(work_item);
@@ -297,8 +299,10 @@ bool WBLink::request_set_channel_width(int channel_width) {
     auto work_item=std::make_shared<WorkItem>(fmt::format("SET_CHWIDTH:{}",channel_width),[this,channel_width](){
         m_settings->unsafe_get_settings().wb_channel_width=channel_width;
         m_settings->persist();
-        // Wait a bit for the ack
-        std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
+        if(m_profile.is_air){
+            // Wait a bit for the ack
+            std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
+        }
         apply_frequency_and_channel_width_from_settings();
     },std::chrono::steady_clock::now());
     return try_schedule_work_item(work_item);
