@@ -820,14 +820,16 @@ bool WBLink::try_schedule_work_item(const std::shared_ptr<WorkItem> &work_item) 
     std::unique_lock<std::mutex> lock(m_work_item_queue_mutex, std::try_to_lock);
     if(lock.owns_lock()){
         if(m_work_item_queue.empty()){
-            m_console->debug("Adding work item to queue");
+            m_console->debug("Adding work item {} to queue",work_item->TAG);
             m_work_item_queue.push(work_item);
             return true;
         }
-        m_console->debug("Work queue full");
+        m_console->debug("Work queue full,cannot add {}",work_item->TAG);
+        m_console->warn("Please try again later");
         return false;
     }
-    m_console->debug("Cannot obtain lock, queue probably full / busy");
+    m_console->debug("Cannot get lock,cannot add {}",work_item->TAG);
+    m_console->warn("Please try again later");
     return false;
 }
 
@@ -842,12 +844,6 @@ bool WBLink::check_work_queue_empty() {
     }
     m_console->info("Work queue busy");
     return false;
-  /*std::lock_guard<std::mutex> guard(m_work_item_queue_mutex);
-  if(!m_work_item_queue.empty()){
-    m_console->info("Rejecting param, another change is still queued up");
-    return false;
-  }
-  return true;*/
 }
 
 
