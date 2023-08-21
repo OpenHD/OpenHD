@@ -129,6 +129,17 @@ std::optional<float> OHDUtil::string_to_float(const std::string& s) {
   }
 }
 
+std::optional<long> OHDUtil::string_to_long_hex(const std::string &s) {
+  if(!contains(s,"0x"))return std::nullopt;
+  try {
+    auto ret = std::stol(s,0,16);
+    return ret;
+  } catch (...) {
+    openhd::log::get_default()->warn("Cannot convert [{}] to long (hex)",s);
+    return std::nullopt;
+  }
+}
+
 std::vector<std::string> OHDUtil::split_into_substrings(
     const std::string& input, const char separator) {
   std::vector<std::string> ret;
@@ -271,3 +282,4 @@ int OHDUtil::calculate_progress_perc(int progress, int total_count) {
     const double perc=((double)progress / (double)total_count * 100.0);
     return (int)std::lround(perc);
 }
+

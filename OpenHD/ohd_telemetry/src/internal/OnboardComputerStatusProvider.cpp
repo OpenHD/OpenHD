@@ -75,6 +75,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_clock_h264=0;
     int curr_clock_core=0;
     int curr_clock_v3d=0;
+    int curr_rpi_undervolt=-1;
     int curr_ina219_voltage=0;
     int curr_ina219_current=0;
 
@@ -95,7 +96,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_clock_h264=openhd::onboard::rpi::read_curr_frequency_mhz(openhd::onboard::rpi::VCGENCMD_CLOCK_H264);
       curr_clock_core=openhd::onboard::rpi::read_curr_frequency_mhz(openhd::onboard::rpi::VCGENCMD_CLOCK_CORE);
       curr_clock_v3d=openhd::onboard::rpi::read_curr_frequency_mhz(openhd::onboard::rpi::VCGENCMD_CLOCK_V3D);
-
+      curr_rpi_undervolt=openhd::onboard::rpi::vcgencmd_get_undervolt();
     }else{
       const auto cpu_temp=(int8_t)openhd::onboard::readTemperature();
       curr_temperature_core=cpu_temp;

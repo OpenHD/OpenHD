@@ -83,6 +83,18 @@ static int read_curr_frequency_mhz(const std::string& which){
     return static_cast<uint16_t>(vcgencmd_measure_clock(which)/1000/1000);
 }
 
+static int vcgencmd_get_undervolt(){
+    int ret = -1;
+    const auto opt_vcgencmd_result = OHDUtil::run_command_out(fmt::format("vcgencmd get_throttled"));
+    if (!opt_vcgencmd_result.has_value()) {
+        return ret;
+    }
+    const std::string& vcgencmd_result=opt_vcgencmd_result.value();
+    const auto tmp = rpi::everything_after_equal(vcgencmd_result);
+    const auto value=OHDUtil::string_to_long_hex(tmp);
+    openhd::log::get_default()->debug("{}=={}",vcgencmd_result,value.value_or(-1));
+    return value.value_or(-1);
+}
 
 }
 

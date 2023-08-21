@@ -101,6 +101,7 @@ std::string string_in_between(const std::string& start,
 std::optional<int> string_to_int(const std::string& s);
 std::optional<long> string_to_long(const std::string& s);
 std::optional<float> string_to_float(const std::string& s);
+std::optional<long> string_to_long_hex(const std::string& s);
 
 // Example: split "hello,world" int "hello" and "world" by ","
 std::vector<std::string> split_into_substrings(const std::string& input,
