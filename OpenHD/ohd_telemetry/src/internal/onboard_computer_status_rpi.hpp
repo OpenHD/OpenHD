@@ -87,7 +87,7 @@ static int read_curr_frequency_mhz(const std::string& which){
 static bool vcgencmd_get_undervolt(){
     const auto opt_vcgencmd_result = OHDUtil::run_command_out(fmt::format("vcgencmd get_throttled"));
     if (!opt_vcgencmd_result.has_value()) {
-        openhd::log::get_default->debug("Cannot get vcgencmd throttled");
+        openhd::log::get_default()->debug("Cannot get vcgencmd throttled");
         return false; // we don't know
     }
     const std::string& vcgencmd_result=opt_vcgencmd_result.value();

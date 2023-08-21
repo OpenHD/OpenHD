@@ -116,9 +116,11 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       m_curr_onboard_computer_status.storage_usage[3]=curr_ina219_current;
       m_curr_onboard_computer_status.ram_usage=static_cast<uint32_t>(curr_ram_usage.ram_usage_perc);
       m_curr_onboard_computer_status.ram_total=curr_ram_usage.ram_total_mb;
+      m_curr_onboard_computer_status.link_tx_rate[0]=curr_rpi_undervolt ? 1 : 0;
     }
   }
 }
+
 std::vector<MavlinkMessage>
 OnboardComputerStatusProvider::get_current_status_as_mavlink_message(const uint8_t sys_id,const uint8_t comp_id) {
   MavlinkMessage msg;
