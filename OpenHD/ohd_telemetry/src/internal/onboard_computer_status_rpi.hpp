@@ -98,7 +98,7 @@ static bool vcgencmd_get_undervolt(){
     }
     const long value=value_opt.value();
     const auto undervolt_bit=OHDUtil::get_nth_bit(value_opt.value(),0);
-    openhd::log::get_default()->debug("Undervolt {}/{} {:x} bit set:{}",vcgencmd_result,value,value,undervolt_bit);
+    //openhd::log::get_default()->debug("Undervolt {}/{} {:x} bit set:{}",vcgencmd_result,value,value,undervolt_bit);
     return undervolt_bit;
 }
 
