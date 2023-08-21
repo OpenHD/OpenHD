@@ -94,7 +94,7 @@ static bool vcgencmd_get_undervolt(){
     const auto tmp = rpi::everything_after_equal(vcgencmd_result);
     const auto value_opt=OHDUtil::string_to_long_hex(tmp);
     if(!value_opt.has_value()){
-        return false;
+        return false; // we don't know
     }
     const long value=value_opt.value();
     const auto undervolt_bit=OHDUtil::get_nth_bit(value_opt.value(),0);
