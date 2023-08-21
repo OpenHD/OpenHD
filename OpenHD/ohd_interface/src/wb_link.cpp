@@ -1003,7 +1003,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       }
       // sleeep a bit - some cards /drivers might need time switching
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
-      m_console->warn("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
+      m_console->debug("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
       reset_all_rx_stats();
       std::this_thread::sleep_for(std::chrono::seconds(2));
       const auto n_likely_openhd_packets=m_wb_txrx->get_rx_stats().curr_n_likely_openhd_packets;
@@ -1113,7 +1113,7 @@ void WBLink::analyze_channels() {
         }
         // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
         apply_frequency_and_channel_width(channel.frequency,channel_width);
-        m_console->warn("Analyzing [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
+        m_console->debug("Analyzing [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
         reset_all_rx_stats();
         std::this_thread::sleep_for(std::chrono::seconds(4));
         const auto stats=m_wb_txrx->get_rx_stats();
