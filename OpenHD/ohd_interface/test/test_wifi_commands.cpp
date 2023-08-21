@@ -11,12 +11,19 @@
 #include <vector>
 #include <utility>
 
-static void test_all_supported_frequencies(const WiFiCard& card){
+static void test_all_supported_frequencies(const WiFiCard& card,const int channel_width){
   openhd::log::get_default()->debug("test_all_supported_frequencies begin");
   std::vector<std::pair<int,bool>> results;
-  for(auto frequency_mhz: card.supported_frequencies_5G){
+  for(auto frequency_mhz: card.get_supported_frequencies_2G_5G()){
+      auto channel=openhd::channel_from_frequency(frequency_mhz).value();
+      if(channel_width==40){
+          if(!channel.is_legal_any_country_40Mhz){
+              openhd::log::get_default()->debug("Skipping {}, no 40Mhz",frequency_mhz);
+              continue;
+          }
+      }
     //const auto success=wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,frequency_mhz,20);
-    const auto success=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency_mhz,20,{card});
+    const auto success=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency_mhz,channel_width,{card});
     results.emplace_back(frequency_mhz,success);
     // Weird, otherwise we might get error resource busy
     std::this_thread::sleep_for(std::chrono::seconds (5));
@@ -38,7 +45,8 @@ int main(int argc, char *argv[]) {
 
   // Hard coded for testing
   //const std::string card_name="wlx244bfeb71c05";
-  const std::string card_name="wlxac9e17596103";
+  //const std::string card_name="wlxac9e17596103";
+  const std::string card_name="wlx200db0c3a53c";
 
   auto card_opt = DWifiCards::process_card(card_name);
   if(!card_opt.has_value()){
@@ -50,10 +58,11 @@ int main(int argc, char *argv[]) {
 
   // Take over the card
   wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
-
+  std::this_thread::sleep_for(std::chrono::seconds(2));
   wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
+  std::this_thread::sleep_for(std::chrono::seconds(2));
 
-  test_all_supported_frequencies(card);
+  test_all_supported_frequencies(card,40);
   //wifi::commandhelper2::exp_set_wifi_frequency
   //wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,5180,20);
   //std::this_thread::sleep_for(std::chrono::seconds(2));
