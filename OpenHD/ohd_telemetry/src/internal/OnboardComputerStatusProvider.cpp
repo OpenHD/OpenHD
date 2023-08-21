@@ -4,7 +4,8 @@
 
 #include "OnboardComputerStatusProvider.h"
 
-#include "OnboardComputerStatus.hpp"
+#include "onboard_computer_status.hpp"
+#include "onboard_computer_status_rpi.hpp"
 #include "openhd_util_filesystem.h"
 
 //INA219 stuff
@@ -47,7 +48,7 @@ mavlink_onboard_computer_status_t OnboardComputerStatusProvider::get_current_sta
 void OnboardComputerStatusProvider::calculate_cpu_usage_until_terminate() {
   while (!terminate){
     const auto before=std::chrono::steady_clock::now();
-    const auto value=OnboardComputerStatus::read_cpuload_once_blocking();
+    const auto value=openhd::onboard::read_cpuload_once_blocking();
     const auto read_time=std::chrono::steady_clock::now()-before;
     if(value.has_value()){
       // lock mutex and write out
@@ -78,7 +79,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_ina219_current=0;
 
     const int curr_space_left=OHDFilesystemUtil::get_remaining_space_in_mb();
-    const auto curr_ram_usage=OnboardComputerStatus::calculate_memory_usage_percent();
+    const auto curr_ram_usage=openhd::onboard::calculate_memory_usage_percent();
     ina219_log_warning_once();
     if(!m_ina_219.has_any_error){
       float voltage = roundf(m_ina_219.voltage() * 1000);
@@ -87,16 +88,16 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
       curr_ina219_current=current;
     }
     if(m_platform.platform_type==PlatformType::RaspberryPi){
-      curr_temperature_core=(int8_t)OnboardComputerStatus::rpi::read_temperature_soc_degree();
+      curr_temperature_core=(int8_t)openhd::onboard::rpi::read_temperature_soc_degree();
       // temporary, until we have our own message
-      curr_clock_cpu=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_CPU);
-      curr_clock_isp=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_ISP);
-      curr_clock_h264=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_H264);
-      curr_clock_core=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_CORE);
-      curr_clock_v3d=OnboardComputerStatus::rpi::read_curr_frequency_mhz(OnboardComputerStatus::rpi::VCGENCMD_CLOCK_V3D);
+      curr_clock_cpu=openhd::onboard::rpi::read_curr_frequency_mhz(openhd::onboard::rpi::VCGENCMD_CLOCK_CPU);
+      curr_clock_isp=openhd::onboard::rpi::read_curr_frequency_mhz(openhd::onboard::rpi::VCGENCMD_CLOCK_ISP);
+      curr_clock_h264=openhd::onboard::rpi::read_curr_frequency_mhz(openhd::onboard::rpi::VCGENCMD_CLOCK_H264);
+      curr_clock_core=openhd::onboard::rpi::read_curr_frequency_mhz(openhd::onboard::rpi::VCGENCMD_CLOCK_CORE);
+      curr_clock_v3d=openhd::onboard::rpi::read_curr_frequency_mhz(openhd::onboard::rpi::VCGENCMD_CLOCK_V3D);
 
     }else{
-      const auto cpu_temp=(int8_t)OnboardComputerStatus::readTemperature();
+      const auto cpu_temp=(int8_t)openhd::onboard::readTemperature();
       curr_temperature_core=cpu_temp;
     }
     {
