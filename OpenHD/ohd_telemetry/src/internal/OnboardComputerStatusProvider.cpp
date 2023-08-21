@@ -75,7 +75,7 @@ void OnboardComputerStatusProvider::calculate_other_until_terminate() {
     int curr_clock_h264=0;
     int curr_clock_core=0;
     int curr_clock_v3d=0;
-    int curr_rpi_undervolt=-1;
+    bool curr_rpi_undervolt= false;
     int curr_ina219_voltage=0;
     int curr_ina219_current=0;
 
