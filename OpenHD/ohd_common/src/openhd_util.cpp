@@ -283,3 +283,9 @@ int OHDUtil::calculate_progress_perc(int progress, int total_count) {
     return (int)std::lround(perc);
 }
 
+// https://codeforwin.org/c-programming/c-program-to-get-value-of-nth-bit-of-number
+bool OHDUtil::get_nth_bit(long number, int position) {
+    const bool bit_status = (number >> position) & 1;
+    return bit_status;
+}
+

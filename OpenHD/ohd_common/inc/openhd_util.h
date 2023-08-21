@@ -103,6 +103,8 @@ std::optional<long> string_to_long(const std::string& s);
 std::optional<float> string_to_float(const std::string& s);
 std::optional<long> string_to_long_hex(const std::string& s);
 
+bool get_nth_bit(long number,int position);
+
 // Example: split "hello,world" int "hello" and "world" by ","
 std::vector<std::string> split_into_substrings(const std::string& input,
                                                       char separator);

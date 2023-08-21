@@ -83,17 +83,23 @@ static int read_curr_frequency_mhz(const std::string& which){
     return static_cast<uint16_t>(vcgencmd_measure_clock(which)/1000/1000);
 }
 
-static int vcgencmd_get_undervolt(){
-    int ret = -1;
+// Returns true if rpi currently has undervolt flag set
+static bool vcgencmd_get_undervolt(){
     const auto opt_vcgencmd_result = OHDUtil::run_command_out(fmt::format("vcgencmd get_throttled"));
     if (!opt_vcgencmd_result.has_value()) {
-        return ret;
+        openhd::log::get_default->debug("Cannot get vcgencmd throttled");
+        return false; // we don't know
     }
     const std::string& vcgencmd_result=opt_vcgencmd_result.value();
     const auto tmp = rpi::everything_after_equal(vcgencmd_result);
-    const auto value=OHDUtil::string_to_long_hex(tmp);
-    openhd::log::get_default()->debug("{}=={}",vcgencmd_result,value.value_or(-1));
-    return value.value_or(-1);
+    const auto value_opt=OHDUtil::string_to_long_hex(tmp);
+    if(!value_opt.has_value()){
+        return false;
+    }
+    const long value=value_opt.value();
+    const auto undervolt_bit=OHDUtil::get_nth_bit(value_opt.value(),0);
+    openhd::log::get_default()->debug("Undervolt {}/{} {:x} bit set:{}",vcgencmd_result,value,value,undervolt_bit);
+    return undervolt_bit;
 }
 
 }
