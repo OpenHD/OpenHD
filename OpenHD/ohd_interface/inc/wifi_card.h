@@ -128,6 +128,11 @@ static bool wifi_card_supports_frequency_channel_width(const WiFiCard& wifi_card
         console->debug("Card {} doesn't support 40Mhz on {}",wifi_card.device_name,frequency);
         return false;
     }
+    // TODO FIXME: For some reason rtl8812bu crashes on this frequency on 40Mhz (au does not though)
+    if(channel_width==40 && wifi_card.type==WiFiCardType::Realtek88x2bu && channel.frequency==5805){
+        console->debug("FIXME Card {} doesn't support 40Mhz on {}",wifi_card.device_name,frequency);
+        return false;
+    }
     return wifi_card_supports_frequency(wifi_card,frequency);
 }
 

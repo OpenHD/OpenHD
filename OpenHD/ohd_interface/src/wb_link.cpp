@@ -259,7 +259,7 @@ bool WBLink::request_set_frequency(int frequency) {
       return false;
     }
     if(!openhd::wb::all_cards_support_frequency_and_channel_width(frequency,m_settings->get_settings().wb_channel_width,m_broadcast_cards,m_console)){
-        m_console->warn("Cannot change frequency, 40Mhz not allowed");
+        m_console->warn("Cannot change frequency, 40Mhz not allowed (on at least one card)");
         return false;
     }
   }
