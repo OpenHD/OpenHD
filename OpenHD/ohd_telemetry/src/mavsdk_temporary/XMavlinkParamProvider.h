@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <utility>
+#include <optional>
 
 #include "openhd_settings_imp.hpp"
 #include "routing/MavlinkComponent.hpp"
@@ -20,7 +21,7 @@ class XMavlinkParamProvider :public MavlinkComponent{
  public:
   // !!!! Note : no params are active until set_ready() is called
   // This way, there is no parameter invariance, but it is easy to forget to call set_read() !!!
-  explicit XMavlinkParamProvider(uint8_t sys_id,uint8_t comp_id,bool create_heartbeats=false);
+  explicit XMavlinkParamProvider(uint8_t sys_id,uint8_t comp_id,std::optional<std::chrono::milliseconds> opt_heartbeat_interval=std::nullopt);
   void add_param(const openhd::Setting& setting);
   // only usable when manually_set_ready is true
   void add_params(const std::vector<openhd::Setting>& settings);
@@ -36,7 +37,8 @@ class XMavlinkParamProvider :public MavlinkComponent{
   std::shared_ptr<mavsdk::MavlinkParameterReceiver> _mavlink_parameter_receiver;
  private:
   std::mutex _mutex{};
-  const bool _create_heartbeats;
+  const std::optional<std::chrono::milliseconds> m_opt_heartbeat_interval;
+  std::chrono::steady_clock::time_point m_last_heartbeat=std::chrono::steady_clock::now();
   // Dirty, when openhd updates a setting
   std::vector<openhd::Setting> m_int_settings_with_update_functionality;
 };

@@ -157,7 +157,7 @@ void AirTelemetry::add_settings_camera_component(
     int camera_index, const std::vector<openhd::Setting> &settings) {
   assert(camera_index>=0 && camera_index<2);
   const auto cam_comp_id=MAV_COMP_ID_CAMERA+camera_index;
-  auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,cam_comp_id,true);
+  auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,cam_comp_id,std::chrono::seconds(1));
   param_server->add_params(settings);
   param_server->set_ready();
   std::lock_guard<std::mutex> guard(m_components_lock);
