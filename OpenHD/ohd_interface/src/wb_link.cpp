@@ -211,7 +211,7 @@ RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
   auto mcs_index=static_cast<int>(settings.wb_mcs_index);
   if(m_profile.is_ground()){
       // Always use mcs 0 on ground
-      mcs_index =0;
+      mcs_index =openhd::WB_GND_UPLINK_MCS_INDEX;
   }
   const auto channel_width=static_cast<int>(settings.wb_channel_width);
   return RadiotapHeader::UserSelectableParams{

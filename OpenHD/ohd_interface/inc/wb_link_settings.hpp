@@ -17,10 +17,11 @@ namespace openhd{
 
 static constexpr auto DEFAULT_5GHZ_FREQUENCY = 5180;
 static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412;
-static constexpr auto DEFAULT_MCS_INDEX=3;
+// highest MCS where modulation is still QPSK
+static constexpr auto DEFAULT_MCS_INDEX=2;
 // We always use a MCS index of X for the uplink, since (compared to the video link) it requires a negligible amount of bandwidth
 // and for those using RC over OpenHD, we have the benefit that the range of RC is "more" than the range for video
-static constexpr auto DEFAULT_GND_UPLINK_MCS_INDEX=0;
+static constexpr auto WB_GND_UPLINK_MCS_INDEX=0;
 static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
 // Consti10: Stephen used a default tx power of 3100 somewhere (not sure if that ever made it trough though)
 // This value seems a bit high to me, so I am going with a default of "1800" (which should be 18.0 dBm )
