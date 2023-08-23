@@ -141,6 +141,15 @@ bool openhd::wb::has_any_rtl8812au(const std::vector<WiFiCard>& cards) {
   return false;
 }
 
+bool openhd::wb::has_any_non_rtl8812au(const std::vector<WiFiCard> &cards) {
+    for(const auto& card: cards){
+        if(card.type!=WiFiCardType::Realtek8812au){
+            return true;
+        }
+    }
+    return false;
+}
+
 bool openhd::wb::any_card_supports_stbc_ldpc_sgi(const std::vector<WiFiCard> &cards) {
     for(const auto& card: cards){
         if(card.type==WiFiCardType::Realtek8812au || card.type==WiFiCardType::Realtek88x2bu){
@@ -149,4 +158,5 @@ bool openhd::wb::any_card_supports_stbc_ldpc_sgi(const std::vector<WiFiCard> &ca
     }
     return false;
 }
+
 
