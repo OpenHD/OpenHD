@@ -329,16 +329,20 @@ void WBLink::apply_txpower() {
   const auto settings=m_settings->get_settings();
   const auto before=std::chrono::steady_clock::now();
   uint32_t pwr_index=(int)settings.wb_rtl8812au_tx_pwr_idx_override;
+  uint32_t pwr_mw=(int)settings.wb_tx_power_milli_watt;
   if(m_is_armed && settings.wb_rtl8812au_tx_pwr_idx_override_armed != openhd::RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED){
       m_console->debug("Using power index special for armed");
       pwr_index=settings.wb_rtl8812au_tx_pwr_idx_override_armed;
   }
-  const int power_mw=settings.wb_tx_power_milli_watt;
-  openhd::wb::set_tx_power_for_all_cards(power_mw,pwr_index,m_broadcast_cards);
+  if(m_is_armed && settings.wb_tx_power_milli_watt_armed != openhd::WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED){
+    m_console->debug("Using power mw special for armed");
+    pwr_mw=settings.wb_tx_power_milli_watt_armed;
+  }
+  openhd::wb::set_tx_power_for_all_cards(pwr_mw,pwr_index,m_broadcast_cards);
   if(m_broadcast_cards.at(0).type==WiFiCardType::Realtek8812au){
       m_curr_tx_power=pwr_index;
   }else{
-      m_curr_tx_power=power_mw;
+      m_curr_tx_power=pwr_mw;
   }
   const auto delta=std::chrono::steady_clock::now()-before;
   m_console->debug("Changing tx power took {}",MyTimeHelper::R(delta));
@@ -499,6 +503,14 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       };
       auto change_tx_power=openhd::IntSetting{(int)settings.wb_tx_power_milli_watt,cb_wb_tx_power_milli_watt};
       ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
+      auto cb_wb_tx_power_milli_watt_armed=[this](std::string,int value){
+          if(value<0 || value > 10000)return false;
+          m_settings->unsafe_get_settings().wb_tx_power_milli_watt_armed=value;
+          m_settings->persist();
+          return true;
+      };
+      auto change_tx_power_armed=openhd::IntSetting{(int)settings.wb_tx_power_milli_watt_armed,cb_wb_tx_power_milli_watt_armed};
+      ret.push_back(Setting{WB_TX_POWER_MILLI_WATT_ARMED,change_tx_power_armed});
   }
   if(m_profile.is_air){
       auto cb_video_encrypt=[this](std::string,int value){
@@ -660,19 +672,27 @@ void WBLink::update_statistics() {
   // only populate actually used cards
   assert(m_broadcast_cards.size()<=stats.cards.size());
   for(int i=0;i< m_broadcast_cards.size();i++){
-    auto& card = stats.cards.at(i);
+    const auto& card=m_broadcast_cards.at(i);
+    auto& card_stats = stats.cards.at(i);
     auto rxStatsCard=m_wb_txrx->get_rx_stats_for_card(i);
-    card.rx_rssi_card=rxStatsCard.card_dbm;
-    card.rx_rssi_1=rxStatsCard.antenna1_dbm;
-    card.rx_rssi_2=rxStatsCard.antenna2_dbm;
-    card.count_p_received=rxStatsCard.count_p_valid;
-    card.count_p_injected=0; //TODO
-    card.curr_rx_packet_loss_perc=rxStatsCard.curr_packet_loss;
-    card.tx_power=m_curr_tx_power.load();
-    card.exists_in_openhd= true;
-    card.curr_status=m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
-    card.signal_quality=rxStatsCard.signal_quality;
-    //m_console->debug("Signal quality {}",card.signal_quality);
+    card_stats.rx_rssi_card=rxStatsCard.card_dbm;
+    card_stats.rx_rssi_1=rxStatsCard.antenna1_dbm;
+    card_stats.rx_rssi_2=rxStatsCard.antenna2_dbm;
+    card_stats.count_p_received=rxStatsCard.count_p_valid;
+    card_stats.count_p_injected=0; //TODO
+    card_stats.curr_rx_packet_loss_perc=rxStatsCard.curr_packet_loss;
+    card_stats.tx_power=m_curr_tx_power.load();
+    card_stats.exists_in_openhd= true;
+    card_stats.curr_status= m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
+    card_stats.signal_quality=rxStatsCard.signal_quality;
+    card_stats.card_type= 0;
+    if(card.type==WiFiCardType::Realtek8812au){
+        card_stats.card_type=1;
+    }
+    if(card.type==WiFiCardType::Realtek88x2bu){
+        card_stats.card_type=2;
+    }
+    //m_console->debug("Signal quality {}",card_stats.signal_quality);
   }
   stats.is_air=m_profile.is_air;
   stats.ready=true;
