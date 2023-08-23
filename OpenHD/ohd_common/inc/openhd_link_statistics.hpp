@@ -47,9 +47,6 @@ struct StatsMonitorModeLink{
   uint8_t curr_n_rate_adjustments=0;
   uint8_t curr_tx_stbc_lpdc_shortguard_bitfield;
   uint8_t curr_pollution_perc=0;
-  [[nodiscard]] std::string to_string()const{
-    return "TODO";
-  }
 };
 
 struct StatsTelemetry{
@@ -83,10 +80,7 @@ struct StatsWBVideoAir{
   uint16_t curr_fec_block_size_avg;
   uint16_t curr_fec_block_size_min;
   uint16_t curr_fec_block_size_max;
-  int32_t curr_fec_percentage; // unused0 in mavlink message
-  [[nodiscard]] std::string to_string()const{
-    return "TODO";
-  }
+  int32_t curr_fec_percentage;
 };
 
 struct StatsWBVideoGround{
@@ -101,9 +95,6 @@ struct StatsWBVideoGround{
   uint32_t curr_fec_decode_time_max_us;
   int32_t unused0;
   int32_t unused1;
-  [[nodiscard]] std::string to_string()const{
-    return "TODO";
-  }
 };
 
 struct StatsPerCard{
@@ -118,9 +109,6 @@ struct StatsPerCard{
   int16_t tx_power=0;
   int8_t curr_rx_packet_loss_perc=0;
   uint8_t curr_status=0;
-  [[nodiscard]] std::string to_string(const int index)const{
-    return "TODO";
-  }
 };
 // Stats per connected card
 using StatsAllCards=std::array<StatsPerCard,4>;
@@ -137,15 +125,6 @@ struct StatsAirGround{
   // for ground
   std::vector<StatsWBVideoGround> stats_wb_video_ground;
 };
-
-static std::ostream& operator<<(std::ostream& strm, const StatsAirGround& obj){
-  std::stringstream ss;
-  ss<<"StatsAirGround{\n";
-  ss<<obj.cards.at(0).to_string(0)<<"\n";
-  ss<<"}";
-  strm<<ss.str();
-  return strm;
-}
 
 typedef std::function<void(StatsAirGround all_stats)> STATS_CALLBACK;
 
