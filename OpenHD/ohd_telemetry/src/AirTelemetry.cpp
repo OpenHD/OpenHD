@@ -98,7 +98,7 @@ void AirTelemetry::on_messages_ground_unit(std::vector<MavlinkMessage>& messages
 
 void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLogging) {
   const auto log_intervall=std::chrono::seconds(5);
-  const auto loop_intervall=std::chrono::milliseconds(500);
+  const auto loop_intervall=std::chrono::milliseconds(100);
   auto last_log=std::chrono::steady_clock::now();
   while (!terminate) {
     const auto loopBegin=std::chrono::steady_clock::now();
@@ -114,6 +114,7 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
     // send messages to the ground pi in regular intervals, includes heartbeat.
     // everything else is handled by the callbacks and their threads
     {
+      // NOTE: No component on the air unit ever needs to talk to the FC himself
       std::lock_guard<std::mutex> guard(m_components_lock);
       for(auto& component: m_components){
         auto messages=component->generate_mavlink_messages();

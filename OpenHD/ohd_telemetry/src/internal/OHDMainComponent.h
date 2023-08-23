@@ -49,6 +49,17 @@ class OHDMainComponent : public MavlinkComponent{
   const bool RUNS_ON_AIR;
   const OHDPlatform m_platform;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
+  // Interval in between heartbeats
+  const std::chrono::milliseconds m_heartbeats_interval;
+  std::chrono::steady_clock::time_point m_last_heartbeat=std::chrono::steady_clock::now();
+  std::optional<MavlinkMessage> create_heartbeat_if_needed();
+  // We have different intervals on air and ground between the different messages.
+  // Always needs to be lower than the telemetry main loop interval.
+  const std::chrono::milliseconds m_onboard_computer_status_interval;
+  std::chrono::steady_clock::time_point m_last_onboard_computer=std::chrono::steady_clock::now();
+  const std::chrono::milliseconds m_wb_stats_interval;
+  std::chrono::steady_clock::time_point m_last_wb_stats=std::chrono::steady_clock::now();
+  std::vector<MavlinkMessage> create_broadcast_stats_if_needed();
   // by the sys id QGroundControl knows if this message is telemetry data from the air pi or ground pi.
   // just for convenience, the RUNS_ON_AIR variable determines the sys id.
   //const uint8_t mSysId;

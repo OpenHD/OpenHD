@@ -136,7 +136,7 @@ void GroundTelemetry::send_messages_air_unit(const std::vector<MavlinkMessage>& 
 
 void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLogging) {
   const auto log_intervall=std::chrono::seconds(5);
-  const auto loop_intervall=std::chrono::milliseconds(500);
+  const auto loop_intervall=std::chrono::milliseconds(100);
   auto last_log=std::chrono::steady_clock::now();
   while (!terminate) {
     const auto loopBegin=std::chrono::steady_clock::now();
@@ -154,20 +154,12 @@ void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLog
     // send messages to the ground station in regular intervals, includes heartbeat.
     // everything else is handled by the callbacks and their threads
     {
+      // NOTE: No component from the ground station ever needs to talk to the air unit / FC itself
       std::lock_guard<std::mutex> guard(m_components_lock);
       for(auto& component: m_components){
         assert(component);
         const auto messages=component->generate_mavlink_messages();
         send_messages_ground_station_clients(messages);
-        for(const auto& msg:messages){
-          // r.n no ground unit component needs to talk to the air unit directly.
-          // but we send heartbeats to the air pi anyways, just to keep the link active.
-          if(msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT && msg.m.compid==MAV_COMP_ID_ONBOARD_COMPUTER){
-            // but we send heartbeats to the air pi anyways, just to keep the link active.
-            //m_console->debug("Heartbeat sent to air unit");
-            send_messages_air_unit({msg});
-          }
-        }
       }
     }
     const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;

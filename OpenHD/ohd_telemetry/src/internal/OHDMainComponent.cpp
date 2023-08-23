@@ -15,9 +15,14 @@
 
 OHDMainComponent::OHDMainComponent(
     OHDPlatform platform1,uint8_t parent_sys_id,
-    bool runsOnAir,std::shared_ptr<openhd::ActionHandler> opt_action_handler) : m_platform(platform1),RUNS_ON_AIR(runsOnAir),
+    bool runsOnAir,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
+    : m_platform(platform1),RUNS_ON_AIR(runsOnAir),
       m_opt_action_handler(std::move(opt_action_handler)),
-	MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
+      MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER),
+      m_heartbeats_interval(RUNS_ON_AIR ? std::chrono::milliseconds(500): std::chrono::milliseconds(200)),
+      m_onboard_computer_status_interval(RUNS_ON_AIR ? std::chrono::milliseconds(500): std::chrono::milliseconds(200)),
+      m_wb_stats_interval(RUNS_ON_AIR ? std::chrono::milliseconds(500): std::chrono::milliseconds(200))
+    {
   m_console = openhd::log::create_or_get("t_main_c");
   assert(m_console);
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform,true);
@@ -35,24 +40,12 @@ OHDMainComponent::~OHDMainComponent() {
 std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   //m_console->debug("InternalTelemetry::generate_mavlink_messages()");
   std::vector<MavlinkMessage> ret;
-  ret.push_back(MavlinkComponent::create_heartbeat());
-  OHDUtil::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
-          m_sys_id, m_comp_id));
-  OHDUtil::vec_append(ret, generate_mav_wb_stats());
-  if(RUNS_ON_AIR){
-    if(m_opt_action_handler){
-      auto cam_stats1=m_opt_action_handler->get_cam_info(0);
-      auto cam_stats2=m_opt_action_handler->get_cam_info(1);
-      // NOTE: We use the comp id of primary / secondary camera here, since even though we are not the camera itself,
-      // We send the broadcast message(s) for it
-      if(cam_stats1.active){
-        ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,MAV_COMP_ID_CAMERA,cam_stats1));
-      }
-      if(cam_stats2.active){
-        ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,MAV_COMP_ID_CAMERA2,cam_stats2));
-      }
-    }
+  auto opt_heartbeat=create_heartbeat_if_needed();
+  if(opt_heartbeat.has_value()){
+      ret.push_back(opt_heartbeat.value());
   }
+  auto broadcast_stats=create_broadcast_stats_if_needed();
+  OHDUtil::vec_append(ret,broadcast_stats);
   //ret.push_back(generateOpenHDVersion());
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
   //_status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
@@ -295,4 +288,44 @@ void OHDMainComponent::check_fc_messages_for_actions(const std::vector<MavlinkMe
       }
     }
   }
+}
+
+std::optional<MavlinkMessage> OHDMainComponent::create_heartbeat_if_needed() {
+    const auto elapsed=std::chrono::steady_clock::now()-m_last_heartbeat;
+    if(elapsed>=m_heartbeats_interval){
+        m_last_heartbeat=std::chrono::steady_clock::now();
+        return MavlinkComponent::create_heartbeat();
+    }
+    return std::nullopt;
+}
+
+std::vector<MavlinkMessage> OHDMainComponent::create_broadcast_stats_if_needed() {
+    std::vector<MavlinkMessage> ret;
+    const auto now=std::chrono::steady_clock::now();
+    const auto elapsed_onboard_computer_status=now-m_last_onboard_computer;
+    if(elapsed_onboard_computer_status>m_onboard_computer_status_interval){
+        m_last_onboard_computer=now;
+        OHDUtil::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
+                m_sys_id, m_comp_id));
+    }
+    const auto elapsed_wb=now-m_last_wb_stats;
+    if(elapsed_wb>m_wb_stats_interval){
+        m_last_wb_stats=now;
+        OHDUtil::vec_append(ret, generate_mav_wb_stats());
+        if(RUNS_ON_AIR){
+            if(m_opt_action_handler){
+                auto cam_stats1=m_opt_action_handler->get_cam_info(0);
+                auto cam_stats2=m_opt_action_handler->get_cam_info(1);
+                // NOTE: We use the comp id of primary / secondary camera here, since even though we are not the camera itself,
+                // We send the broadcast message(s) for it
+                if(cam_stats1.active){
+                    ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,MAV_COMP_ID_CAMERA,cam_stats1));
+                }
+                if(cam_stats2.active){
+                    ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,MAV_COMP_ID_CAMERA2,cam_stats2));
+                }
+            }
+        }
+    }
+    return ret;
 }
