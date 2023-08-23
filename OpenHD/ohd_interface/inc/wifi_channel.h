@@ -149,7 +149,7 @@ static std::vector<WifiChannel> get_channels_5G(){
       WifiChannel{5745, 149, WifiSpace::G5_8, true, true, true},
       WifiChannel{5765, 153, WifiSpace::G5_8, true, true, true},
       WifiChannel{5785, 157, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5805, 161, WifiSpace::G5_8, true, true, true},
+      WifiChannel{5805, 161, WifiSpace::G5_8, true, true, false}, // TODO FIXME - CRASH ON RTL8812BU on 40Mhz
       WifiChannel{5825, 165, WifiSpace::G5_8, true, true, true},
       // starting from here, often disabled territory begins again
       WifiChannel{5845, 169, WifiSpace::G5_8, true, true, true},
