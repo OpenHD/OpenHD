@@ -52,6 +52,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   txrx_options.debug_rssi= 0;
   txrx_options.debug_multi_rx_packets_variance= false;
   txrx_options.tx_without_pcap= true;
+  txrx_options.enable_auto_switch_tx_card= false; //TODO remove me
   //txrx_options.debug_decrypt_time= true;
   //txrx_options.debug_encrypt_time= true;
   //txrx_options.debug_packet_gaps= true;
@@ -139,8 +140,6 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
         update_arming_state(armed);
       };
       m_opt_action_handler->m_action_tx_power_when_armed=std::make_shared<openhd::ActionHandler::ACTION_TX_POWER_WHEN_ARMED>(cb_arm);
-  }
-  if(m_opt_action_handler){
       std::function<std::vector<uint16_t>(void)> wb_get_supported_channels=[this](){
           std::vector<uint16_t> ret;
           const auto frequencies=m_broadcast_cards.at(0).get_supported_frequencies_2G_5G();
