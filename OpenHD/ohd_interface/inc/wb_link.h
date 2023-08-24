@@ -180,7 +180,8 @@ class WBLink :public OHDLink{
   static constexpr auto WARN_CARD_DOES_NOT_INJECT_INTERVAL=std::chrono::seconds(5);
     std::chrono::steady_clock::time_point m_last_log_bind_phrase_mismatch=std::chrono::steady_clock::now();
   // We store tx power for easy access in stats
-  std::atomic<int> m_curr_tx_power=0;
+  std::atomic<int> m_curr_tx_power_idx=0;
+  std::atomic<int> m_curr_tx_power_mw=0;
   int m_gnd_n_times_20mhz_40mhz_mismatch=0;
 };
 
