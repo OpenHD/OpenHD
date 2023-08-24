@@ -638,7 +638,7 @@ void WBLink::update_statistics() {
   const auto txStats=m_wb_txrx->get_tx_stats();
   stats.monitor_mode_link.curr_rx_packet_loss_perc=rxStats.curr_lowest_packet_loss;
   stats.monitor_mode_link.count_tx_inj_error_hint=txStats.count_tx_injections_error_hint;
-  stats.monitor_mode_link.count_tx_dropped_packets=get_total_dropped_packets();
+  stats.monitor_mode_link.count_tx_dropped_packets=txStats.count_tx_errors;
   stats.monitor_mode_link.curr_tx_card_idx=m_wb_txrx->get_curr_active_tx_card_idx();
   stats.monitor_mode_link.curr_tx_mcs_index=curr_settings.wb_mcs_index;
   //m_console->debug("Big gaps:{}",rxStats.curr_big_gaps_counter);
