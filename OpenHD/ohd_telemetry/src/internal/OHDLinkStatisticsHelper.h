@@ -98,6 +98,9 @@ static MavlinkMessage pack_vid_air_fec_performance(const uint8_t system_id,const
   tmp.curr_fec_block_size_avg=stats.curr_fec_block_size_avg;
   tmp.curr_fec_block_size_min=stats.curr_fec_block_size_min;
   tmp.curr_fec_block_size_max=stats.curr_fec_block_size_max;
+  tmp.curr_tx_delay_min_us=stats.curr_time_until_tx_min_us;
+  tmp.curr_tx_delay_max_us=stats.curr_time_until_tx_max_us;
+  tmp.curr_tx_delay_avg_us=stats.curr_time_until_tx_avg_us;
   mavlink_msg_openhd_stats_wb_video_air_fec_performance_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }

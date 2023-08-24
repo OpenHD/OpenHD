@@ -588,6 +588,8 @@ void WBLink::update_statistics() {
       auto& wb_tx= *m_wb_video_tx_list.at(i);
       //auto& air_video=i==0 ? stats.air_video0 : stats.air_video1;
       const auto curr_tx_stats=wb_tx.get_latest_stats();
+      // optimization - only send for active video links
+      if(curr_tx_stats.n_injected_packets==0)continue;
       openhd::link_statistics::StatsWBVideoAir air_video{};
       air_video.link_index=i;
       int rec_bitrate=0;
@@ -607,8 +609,10 @@ void WBLink::update_statistics() {
       air_video.curr_fec_block_size_min=curr_tx_fec_stats.curr_fec_block_length.min;
       air_video.curr_fec_block_size_max=curr_tx_fec_stats.curr_fec_block_length.max;
       air_video.curr_fec_block_size_avg=curr_tx_fec_stats.curr_fec_block_length.avg;
+      air_video.curr_time_until_tx_min_us=curr_tx_stats.curr_block_until_tx_min_us;
+      air_video.curr_time_until_tx_max_us=curr_tx_stats.curr_block_until_tx_max_us;
+      air_video.curr_time_until_tx_avg_us=curr_tx_stats.curr_block_until_tx_avg_us;
       air_video.curr_fec_percentage=m_settings->unsafe_get_settings().wb_video_fec_percentage;
-       // TODO otimization: Only send stats for an active link
       stats.stats_wb_video_air.push_back(air_video);
     }
   }else{
@@ -638,7 +642,7 @@ void WBLink::update_statistics() {
   const auto txStats=m_wb_txrx->get_tx_stats();
   stats.monitor_mode_link.curr_rx_packet_loss_perc=rxStats.curr_lowest_packet_loss;
   stats.monitor_mode_link.count_tx_inj_error_hint=txStats.count_tx_injections_error_hint;
-  stats.monitor_mode_link.count_tx_dropped_packets=txStats.count_tx_errors;
+  stats.monitor_mode_link.count_tx_dropped_packets=txStats.count_tx_dropped_packets;
   stats.monitor_mode_link.curr_tx_card_idx=m_wb_txrx->get_curr_active_tx_card_idx();
   stats.monitor_mode_link.curr_tx_mcs_index=curr_settings.wb_mcs_index;
   //m_console->debug("Big gaps:{}",rxStats.curr_big_gaps_counter);
@@ -957,7 +961,7 @@ int64_t WBLink::get_total_tx_error_count() {
   total+=m_wb_tele_tx->get_latest_stats().n_dropped_packets;
   const auto wb_tx_stats=m_wb_txrx->get_tx_stats();
   total +=wb_tx_stats.count_tx_injections_error_hint;
-  total +=wb_tx_stats.count_tx_errors;
+  total +=wb_tx_stats.count_tx_dropped_packets;
   return total;
 }
 

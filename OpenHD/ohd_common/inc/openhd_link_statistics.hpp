@@ -80,6 +80,9 @@ struct StatsWBVideoAir{
   uint16_t curr_fec_block_size_avg;
   uint16_t curr_fec_block_size_min;
   uint16_t curr_fec_block_size_max;
+  uint32_t curr_time_until_tx_avg_us;
+  uint32_t curr_time_until_tx_min_us;
+  uint32_t curr_time_until_tx_max_us;
   int32_t curr_fec_percentage;
 };
 
