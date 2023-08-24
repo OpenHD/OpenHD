@@ -106,7 +106,9 @@ struct StatsPerCard{
   int8_t signal_quality=-1;
   uint64_t count_p_received=0; //TODO
   uint64_t count_p_injected=0; //TODO
-  int16_t tx_power=0;
+  int16_t tx_power_current=0;
+  int16_t tx_power_armed=0;
+  int16_t tx_power_disarmed=0;
   int8_t curr_rx_packet_loss_perc=0;
   uint8_t curr_status=0;
 };

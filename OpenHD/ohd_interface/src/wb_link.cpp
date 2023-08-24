@@ -681,7 +681,8 @@ void WBLink::update_statistics() {
     card_stats.count_p_received=rxStatsCard.count_p_valid;
     card_stats.count_p_injected=0; //TODO
     card_stats.curr_rx_packet_loss_perc=rxStatsCard.curr_packet_loss;
-    card_stats.tx_power=m_curr_tx_power.load();
+    card_stats.tx_power_current=m_curr_tx_power.load();
+    // TODO
     card_stats.exists_in_openhd= true;
     card_stats.curr_status= m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
     card_stats.signal_quality=rxStatsCard.signal_quality;
