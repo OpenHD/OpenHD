@@ -786,13 +786,12 @@ void WBLink::perform_rate_adjustment() {
   }
   // Get how many frame(s) we dropped in the last 1-second interval
   const int dropped_since_last_check=m_rate_adjustment_dropped_frames.exchange(0);
-  m_console->debug("Dropped since last check:{}",dropped_since_last_check);
-  if(m_n_detected_and_reset_tx_errors>=3){
+  //m_console->debug("Dropped since last check:{}",dropped_since_last_check);
+  if(m_n_detected_and_reset_tx_errors>=3 || dropped_since_last_check> 3){
     // We got tx errors N consecutive times, (resetting if there are no tx errors) - we need to reduce bitrate
-    m_console->debug("Got m_n_detected_and_reset_tx_errors{} with max:{} recommended:{}",
-                     m_n_detected_and_reset_tx_errors,
-        m_max_video_rate_for_current_wifi_config,
-        m_recommended_video_bitrate_kbits);
+    m_console->debug("Got m_n_detected_and_reset_tx_errors{} dropped frames: {} with max:{} recommended:{}",
+                     m_n_detected_and_reset_tx_errors,dropped_since_last_check,
+        m_max_video_rate_for_current_wifi_config,m_recommended_video_bitrate_kbits);
     m_n_detected_and_reset_tx_errors=0;
     // Reduce video bitrate by 1MBit/s
     m_recommended_video_bitrate_kbits -=1000;
