@@ -227,7 +227,7 @@ std::unique_ptr<WBStreamTx> WBLink::create_wb_tx(uint8_t radio_port,bool is_vide
   options.radio_port=radio_port;
   if(is_video){
     options.block_data_queue_size=2;
-    options.log_time_blocks_until_tx= true;
+    //options.log_time_blocks_until_tx= true;
   }
   auto ret=std::make_unique<WBStreamTx>(m_wb_txrx, options);
   return ret;
@@ -784,6 +784,7 @@ void WBLink::perform_rate_adjustment() {
     }
     m_n_detected_and_reset_tx_errors=0;
   }
+  // Get how many frame(s) we dropped in the last 1-second interval
   const int dropped_since_last_check=m_rate_adjustment_dropped_frames.exchange(0);
   m_console->debug("Dropped since last check:{}",dropped_since_last_check);
   if(m_n_detected_and_reset_tx_errors>=3){
