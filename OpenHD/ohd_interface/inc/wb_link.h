@@ -130,7 +130,7 @@ class WBLink :public OHDLink{
   bool async_analyze_channels();
  private:
   void reset_all_rx_stats();
-  int64_t get_total_dropped_packets();
+  int64_t get_total_tx_error_count();
  private:
   // We return false on all the change settings request(s) if there is already a change operation queued
   // up, or we currently perform a channel scan

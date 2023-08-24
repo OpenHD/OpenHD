@@ -764,7 +764,7 @@ void WBLink::perform_rate_adjustment() {
     return;
   }
   // Check if we had any tx errors since last time we checked, resetting them every time
-  const auto curr_total_tx_errors=get_total_dropped_packets();
+  const auto curr_total_tx_errors=get_total_tx_error_count();
   const auto delta_total_tx_errors=curr_total_tx_errors-m_last_total_tx_error_count;
   m_last_total_tx_error_count=curr_total_tx_errors;
   const bool has_tx_errors=delta_total_tx_errors>0;
@@ -948,13 +948,16 @@ bool WBLink::set_tx_power_rtl8812au(int tx_power_index_override){
   return true;
 }
 
-int64_t WBLink::get_total_dropped_packets() {
+int64_t WBLink::get_total_tx_error_count() {
   int64_t total=0;
   for(const auto& tx:m_wb_video_tx_list){
     auto stats=tx->get_latest_stats();
     total+=stats.n_dropped_packets;
   }
   total+=m_wb_tele_tx->get_latest_stats().n_dropped_packets;
+  const auto wb_tx_stats=m_wb_txrx->get_tx_stats();
+  total +=wb_tx_stats.count_tx_injections_error_hint;
+  total +=wb_tx_stats.count_tx_errors;
   return total;
 }
 
