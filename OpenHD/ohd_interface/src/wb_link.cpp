@@ -784,6 +784,8 @@ void WBLink::perform_rate_adjustment() {
     }
     m_n_detected_and_reset_tx_errors=0;
   }
+  const int dropped_since_last_check=m_rate_adjustment_dropped_frames.exchange(0);
+  m_console->debug("Dropped since last check:{}",dropped_since_last_check);
   if(m_n_detected_and_reset_tx_errors>=3){
     // We got tx errors N consecutive times, (resetting if there are no tx errors) - we need to reduce bitrate
     m_console->debug("Got m_n_detected_and_reset_tx_errors{} with max:{} recommended:{}",
@@ -908,6 +910,7 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
     const auto res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc);
     if(!res){
         m_console->warn("TX enqueue video frame failed, {}",tx.get_tx_queue_available_size_approximate());
+        m_rate_adjustment_dropped_frames++;
     }
   }else{
     m_console->debug("Invalid camera stream_index {}",stream_index);
