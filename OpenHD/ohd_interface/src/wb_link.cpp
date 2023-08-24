@@ -911,8 +911,9 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
     const int fec_perc=m_settings->get_settings().wb_video_fec_percentage;
     const auto res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc);
     if(!res){
-        m_console->warn("TX enqueue video frame failed, {}",tx.get_tx_queue_available_size_approximate());
         m_rate_adjustment_dropped_frames++;
+        m_console->warn("TX enqueue video frame failed, queue size:{} delta_dropped:{}",
+                        tx.get_tx_queue_available_size_approximate(),m_rate_adjustment_dropped_frames.load());
     }
   }else{
     m_console->debug("Invalid camera stream_index {}",stream_index);
