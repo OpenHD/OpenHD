@@ -787,7 +787,7 @@ void WBLink::perform_rate_adjustment() {
   // Get how many frame(s) we dropped in the last 1-second interval
   const int dropped_since_last_check=m_rate_adjustment_dropped_frames.exchange(0);
   //m_console->debug("Dropped since last check:{}",dropped_since_last_check);
-  if(m_n_detected_and_reset_tx_errors>=3 || dropped_since_last_check> 3){
+  if(m_n_detected_and_reset_tx_errors>=3 || dropped_since_last_check>=5){
     // We got tx errors N consecutive times, (resetting if there are no tx errors)
     // Or dropped a lot of frames -
     // we need to reduce bitrate
