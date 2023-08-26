@@ -59,10 +59,12 @@ void OHDVideoGround::on_video_data(int stream_index, const uint8_t *data,
 
 void OHDVideoGround::set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {
   ext_device_manager->register_listener([this](openhd::ExternalDevice external_device,bool connected){
-    if(connected){
-      addForwarder(external_device.external_device_ip);
-    }else{
-      removeForwarder(external_device.external_device_ip);
+    if(external_device.shall_receive_udp_video){
+        if(connected){
+            addForwarder(external_device.external_device_ip);
+        }else{
+            removeForwarder(external_device.external_device_ip);
+        }
     }
   });
 }

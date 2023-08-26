@@ -319,12 +319,17 @@ void GroundTelemetry::set_ext_devices_manager(
   assert(m_ext_device_manager== nullptr);// only call this once during lifetime
   m_ext_device_manager=ext_device_manager;
   m_ext_device_manager->register_listener([this](openhd::ExternalDevice external_device,bool connected){
-    if(connected){
-      add_external_ground_station_ip(external_device);
-    }else{
-      remove_external_ground_station_ip(external_device);
+    if(external_device.shall_receive_udp_telemetry){
+        if(connected){
+            add_external_ground_station_ip(external_device);
+        }else{
+            remove_external_ground_station_ip(external_device);
+        }
     }
   });
+  if(m_tcp_server){
+      m_tcp_server->set_external_device_manager(ext_device_manager);
+  }
 }
 
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

@@ -34,6 +34,10 @@ struct ExternalDevice {
   // This is the IP address of the external device itself, e.g. for a smartphone connected via USB tethering, the IP of the smartphone
   // (In the network where it connects to the grund station)
   std::string external_device_ip;
+  // Set to true if this device shall receive udp video data (5600 primary, 5601 secondary)
+  bool shall_receive_udp_video= true;
+  // Set to true if this device shall receive udp telemetry data (bidirectional)
+  bool shall_receive_udp_telemetry= true;
   // returns true if both IP addresses are valid
   [[nodiscard]] bool is_valid() const {
     //return OHDUtil::is_valid_ip(local_network_ip) && OHDUtil::is_valid_ip(external_device_ip);
