@@ -395,7 +395,8 @@ static std::string createJetsonEncoderPipeline(const CommonEncoderParams& common
     ss<<"nvjpegenc quality="<<common_encoder_params.mjpeg_quality_percent<<" ";
     ss<<"! ";
   }
-  return ss.str();
+  return ss.str();y
+
 }
 
 /**
@@ -434,7 +435,7 @@ We could also make the gp variable variable for adjusting quality, didn't spend 
 */
 static std::string createRockchipEncoderPipeline(const int width, const int height, int rotate_degrees, const CommonEncoderParams& encoder_params){
   std::stringstream ss;
-  const int bps = kbits_to_bits_per_second(encoder_params.h26X_bitrate_kbits);
+  const int bps = (kbits_to_bits_per_second(encoder_params.h26X_bitrate_kbits)/2);
   if(encoder_params.videoCodec==VideoCodec::H264){
     ss<<"mpph264enc rc-mode=cbr qp-min=1 qp-max=1 bps="<<bps;
     ss<<" width="<<width;
