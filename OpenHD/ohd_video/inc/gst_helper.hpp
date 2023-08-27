@@ -429,17 +429,20 @@ static std::string createJetsonStream(const int sensor_id,
   return ss.str();
 }
 
+/**
+We could also make the gp variable variable for adjusting quality, didn't spend much time to look at the effects yet //rapha
+*/
 static std::string createRockchipEncoderPipeline(const int width, const int height, int rotate_degrees, const CommonEncoderParams& encoder_params){
   std::stringstream ss;
-  const int bps = kbits_to_bits_per_second(encoder_params.h26X_bitrate_kbits);
+  const int bps = (kbits_to_bits_per_second(encoder_params.h26X_bitrate_kbits)/2);
   if(encoder_params.videoCodec==VideoCodec::H264){
-    ss<<"mpph264enc rc-mode=0 bps="<<bps;
+    ss<<"mpph264enc rc-mode=cbr qp-min=1 qp-max=1 bps="<<bps;
     ss<<" width="<<width;
     ss<<" height="<<height;
     ss<<" rotation="<<rotate_degrees;
     ss<<" gop="<<encoder_params.h26X_keyframe_interval<<" ! ";
   }else if(encoder_params.videoCodec==VideoCodec::H265){
-    ss<<"mpph265enc rc-mode=0 bps="<<bps;
+    ss<<"mpph265enc rc-mode=cbr qp-min=1 qp-max=1 bps-max="<<bps;
     ss<<" width="<<width;
     ss<<" height="<<height;
     ss<<" rotation="<<rotate_degrees;
