@@ -7,7 +7,7 @@ OS="${2}"
 
 PACKAGE_NAME="openhd"
 PKGDIR="/tmp/${PACKAGE_NAME}-installdir"
-VERSION="2.3-evo-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
+VERSION="2.5-evo-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 create_package_directory() {
   rm -rf "${PKGDIR}"
