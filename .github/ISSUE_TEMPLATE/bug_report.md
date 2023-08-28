@@ -10,6 +10,9 @@ assignees: ''
 **Describe the bug**
 A clear and concise description of what the bug is.
 
+**Add a logfile**
+You can download the journalctl file via the webinterface, please include it or a recduced version in your bug-report
+
 **To Reproduce**
 Steps to reproduce the behavior:
 1. Go to '...'
@@ -25,17 +28,17 @@ Please attach the relevant openhd-settings*1.txt and any debugging logs availabl
 
 **Hardware:**
  - Air side
- -- Pi model
+ -- SBC model
  -- Camera(s)
  -- Wifi card(s)
  -- Other hardware
  - Ground side
- -- Pi model
+ -- SBC model
  -- Wifi card(s)
  -- Ground Control Station(s)
  -- Hotspots - do you connect you GCS using ethernet, wifi and/or usb tethering
  - RC/telemetry uplink
- -- Do you use RC over Open.HD, or a separate rf link?
+ -- Do you use RC over OpenHD, or a separate rf link?
 
 **Client devices (in case of hotspot/tethering issue)**
  - Device: [e.g. iPhone6]
