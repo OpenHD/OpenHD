@@ -98,12 +98,19 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
     }else{
       msg_generic.recommended_n_injections=2;
     }
-    // optimization: The telemetry link is quite lossy, here we help QOpenHD (or anybody else) trying to change a parameter
-    // on the air unit /FC using the (extended) parameter protocol.
-    if(msg_id==MAVLINK_MSG_ID_PARAM_EXT_SET || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ
+    // optimization: The telemetry link is quite lossy, here we help QOpenHD (or anybody else) on special message(s).
+    // WB link makes sure duplicates are discarded
+    if(msg_id==MAVLINK_MSG_ID_PARAM_EXT_SET // Param protocol
+        || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ
         || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_LIST
         || msg_id==MAVLINK_MSG_ID_PARAM_SET || msg_id==MAVLINK_MSG_ID_PARAM_REQUEST_READ
-        || msg_id==MAVLINK_MSG_ID_PARAM_REQUEST_LIST) {
+        || msg_id==MAVLINK_MSG_ID_PARAM_REQUEST_LIST
+        // command protocol
+        || msg_id==MAVLINK_MSG_ID_COMMAND_LONG
+        || msg_id==MAVLINK_MSG_ID_COMMAND_INT
+        // mission protocol
+        || msg_id==MAVLINK_MSG_ID_MISSION_REQUEST_LIST
+        || msg_id==MAVLINK_MSG_ID_MISSION_REQUEST_INT) {
       msg_generic.recommended_n_injections=4;
     }
   }
