@@ -442,7 +442,7 @@ static std::string createRockchipEncoderPipeline(const int width, const int heig
     ss<<" rotation="<<rotate_degrees;
     ss<<" gop="<<encoder_params.h26X_keyframe_interval<<" ! ";
   }else if(encoder_params.videoCodec==VideoCodec::H265){
-    ss<<"mpph265enc rc-mode=cbr qp-min=1 qp-max=1 bps-max="<<bps;
+    ss<<"mpph265enc rc-mode=cbr qp-min=25 qp-max=25 bps="<<bps;
     ss<<" width="<<width;
     ss<<" height="<<height;
     ss<<" rotation="<<rotate_degrees;
