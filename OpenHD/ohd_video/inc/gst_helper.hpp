@@ -430,7 +430,7 @@ static std::string createJetsonStream(const int sensor_id,
 }
 
 /**
-We could also make the gp variable variable for adjusting quality, didn't spend much time to look at the effects yet //rapha
+We could also make the qp variable variable is kinda weird, low means high quality, high means low quality, it's also interfearing with the bitrate and makes everything panic sometimes ...
 */
 static std::string createRockchipEncoderPipeline(const int width, const int height, int rotate_degrees, const CommonEncoderParams& encoder_params){
   std::stringstream ss;
