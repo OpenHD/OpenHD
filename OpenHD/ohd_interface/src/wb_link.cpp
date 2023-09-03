@@ -549,21 +549,7 @@ void WBLink::loop_do_work() {
     //m_console->debug("Calculating stats took:{} ms",std::chrono::duration_cast<std::chrono::microseconds>(delta_calc_stats).count()/1000.0f);
     // update recommended rate if enabled in regular intervals
     perform_rate_adjustment();
-    // Dirty - deliberately crash openhd and let the service restart it
-    // if we think a wi-fi card disconnected
-    /*bool any_rx_wifi_disconnected_errors=false;
-    if(m_wb_tele_rx->get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
-      any_rx_wifi_disconnected_errors= true;
-    }
-    for(auto& rx: m_wb_video_rx_list){
-      if(rx->get_latest_stats().wb_rx_stats.n_receiver_likely_disconnect_errors>100){
-        any_rx_wifi_disconnected_errors= true;
-      }
-    }*/
-    //if(any_rx_wifi_disconnected_errors){
-    //  openhd::fatalerror::handle_needs_openhd_restart("wifi disconnected");
-    //}
-    std::this_thread::sleep_for(std::chrono::milliseconds (100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 }
 
@@ -728,9 +714,9 @@ void WBLink::perform_rate_adjustment() {
   if(elapsed_since_last<RATE_ADJUSTMENT_INTERVAL){
     return;
   }
+  m_last_rate_adjustment=std::chrono::steady_clock::now();
   // Since we only do it on the air, we only have one wifi card
   const auto card=m_broadcast_cards.at(0);
-  m_last_rate_adjustment=std::chrono::steady_clock::now();
   // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
   const auto settings = m_settings->get_settings();
   const auto wifi_space=openhd::get_space_from_frequency(settings.wb_frequency);
