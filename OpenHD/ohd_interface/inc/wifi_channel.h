@@ -156,7 +156,9 @@ static std::vector<WifiChannel> get_channels_5G(){
       // starting from here, often disabled territory begins again
       WifiChannel{5845, 169, WifiSpace::G5_8, true, true, true, false},
       WifiChannel{5865, 173, WifiSpace::G5_8, true, true, true, true},
-      WifiChannel{5885, 177, WifiSpace::G5_8, true, false, false, false}, // This one is listed in wikipedia, but not valid in any country
+      // This one (177) is listed in wikipedia, but not valid in any country - but it works on rtl8812bu
+      WifiChannel{5885, 177, WifiSpace::G5_8, true, true, true, false},
+      // this one does not work on bu, au no idea - for now, hide it
       WifiChannel{5905, 181, WifiSpace::G5_8, true, false, false, true},
   };
 };

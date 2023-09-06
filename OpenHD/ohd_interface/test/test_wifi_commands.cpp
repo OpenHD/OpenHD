@@ -31,6 +31,9 @@ static void test_all_supported_frequencies(const WiFiCard& card,const int channe
     results.emplace_back(frequency_mhz,success);
     // Weird, otherwise we might get error resource busy
     std::this_thread::sleep_for(std::chrono::seconds (5));
+    // We check dmesg output for driver errors to "validate" success.
+    // Until i fixed the HT40+/- stuff, rtl8812bu driver crashed on some channels,
+    // and i was using this util to debug.
     const auto dmesg_content_opt=OHDUtil::run_command_out("dmesg");
     openhd::log::get_default()->debug("{}",dmesg_content_opt.value_or("None"));
     OHDUtil::run_command("dmesg",{"--clear"});
@@ -76,6 +79,8 @@ int main(int argc, char *argv[]) {
   wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
+  test_all_supported_frequencies(card,20);
+  std::this_thread::sleep_for(std::chrono::seconds(2));
   test_all_supported_frequencies(card,40);
   //wifi::commandhelper2::exp_set_wifi_frequency
   //wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,5180,20);
