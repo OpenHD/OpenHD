@@ -79,8 +79,8 @@ int main(int argc, char *argv[]) {
   wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
-  test_all_supported_frequencies(card,20);
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+  //test_all_supported_frequencies(card,20);
+  //std::this_thread::sleep_for(std::chrono::seconds(2));
   test_all_supported_frequencies(card,40);
   //wifi::commandhelper2::exp_set_wifi_frequency
   //wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,5180,20);
