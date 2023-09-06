@@ -35,6 +35,8 @@ struct WifiChannel {
   bool is_legal_at_least_one_country;
   // Weather it is legal in at least one country to use 40Mhz on this wifi channel
   bool is_legal_any_country_40Mhz;
+  // Weather we (should / have to, otherwise driver crashes) use HT40+ or HT40- when doing 40Mhz on this channel
+  bool in_40Mhz_ht40_plus;
   // weather this channel is used by openhd or not.
   [[nodiscard]] std::string to_string() const {
     std::stringstream ss;
@@ -72,19 +74,19 @@ static std::vector<WifiChannel> get_channels_2G() {
       //WifiChannel{2407, -1, WifiSpace::G2_4, false},
       // Now to the standard Wi-Fi channel(s)
       // https://en.wikipedia.org/wiki/List_of_WLAN_channels#2.4_GHz_(802.11b/g/n/ax)
-      WifiChannel{2412, 1, WifiSpace::G2_4, true, true, true},
+      WifiChannel{2412, 1, WifiSpace::G2_4, true, true, true, true},
       //WifiChannel{2417, 2, WifiSpace::G2_4, true},
       //WifiChannel{2422, 3, WifiSpace::G2_4, true},
       //WifiChannel{2427, 4, WifiSpace::G2_4, true},
-      WifiChannel{2432, 5, WifiSpace::G2_4, true, true, true},
+      WifiChannel{2432, 5, WifiSpace::G2_4, true, true, true, false},
       //WifiChannel{2437, 6, WifiSpace::G2_4, true},
       //WifiChannel{2442, 7, WifiSpace::G2_4, true},
       //WifiChannel{2447, 8, WifiSpace::G2_4, true},
-      WifiChannel{2452, 9, WifiSpace::G2_4, true, true, true},
+      WifiChannel{2452, 9, WifiSpace::G2_4, true, true, true, true},
       //WifiChannel{2457, 10, WifiSpace::G2_4, true},
       //WifiChannel{2462, 11, WifiSpace::G2_4, true},
       //WifiChannel{2467, 12, WifiSpace::G2_4, true},
-      WifiChannel{2472, 13, WifiSpace::G2_4, true, true, false},
+      WifiChannel{2472, 13, WifiSpace::G2_4, true, true, true, false},
       // until here it is consistent (5Mhz increments)
       // this one is neither allowed in EU nor USA
       // (only in Japan under 11b)
@@ -114,14 +116,14 @@ static std::vector<WifiChannel> get_channels_2G() {
 static std::vector<WifiChannel> get_channels_5G(){
   return std::vector<WifiChannel>{
       // https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/j/n/ac/ax)
-      WifiChannel{5180, 36, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5200, 40, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5220, 44, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5240, 48, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5260, 52, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5280, 56, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5300, 60, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5320, 64, WifiSpace::G5_8, true, true, false}, // RTL8812au - crash on 40Mhz here
+      WifiChannel{5180, 36, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5200, 40, WifiSpace::G5_8, true, true, true, false},
+      WifiChannel{5220, 44, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5240, 48, WifiSpace::G5_8, true, true, true, false},
+      WifiChannel{5260, 52, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5280, 56, WifiSpace::G5_8, true, true, true, false},
+      WifiChannel{5300, 60, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5320, 64, WifiSpace::G5_8, true, true, true, false},
       // These channel(s) are not valid Wi-Fi channels in all countries
       WifiChannel{5340, 68, WifiSpace::G5_8, true, false, false}, // (Only on 20Mhz allowed in some)
       WifiChannel{5360, 72, WifiSpace::G5_8, true, false, false},
@@ -132,30 +134,30 @@ static std::vector<WifiChannel> get_channels_5G(){
       WifiChannel{5460, 92, WifiSpace::G5_8, true, false, false},
       WifiChannel{5480, 96, WifiSpace::G5_8, true, false, false},
       // part often disabled end
-      WifiChannel{5500, 100, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5520, 104, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5540, 108, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5560, 112, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5580, 116, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5600, 120, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5620, 124, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5640, 128, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5660, 132, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5680, 136, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5700, 140, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5720, 144, WifiSpace::G5_8, true, true, false}, // RTL8812Au crash on 40Mhz
+      WifiChannel{5500, 100, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5520, 104, WifiSpace::G5_8, true, true, true, false},
+      WifiChannel{5540, 108, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5560, 112, WifiSpace::G5_8, true, true, true, false},
+      WifiChannel{5580, 116, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5600, 120, WifiSpace::G5_8, true, true, true, false},
+      WifiChannel{5620, 124, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5640, 128, WifiSpace::G5_8, true, true, true, false},
+      WifiChannel{5660, 132, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5680, 136, WifiSpace::G5_8, true, true, true, false},
+      WifiChannel{5700, 140, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5720, 144, WifiSpace::G5_8, true, true, true, false},
       // There is a gap not usable in between 5720 and 5745 Mhz
       // For some reason, there is a 25Mhz jump here. Weird stuff ...
-      WifiChannel{5745, 149, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5765, 153, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5785, 157, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5805, 161, WifiSpace::G5_8, true, true, false}, // TODO FIXME - CRASH ON RTL8812BU on 40Mhz
-      WifiChannel{5825, 165, WifiSpace::G5_8, true, true, true},
+      WifiChannel{5745, 149, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5765, 153, WifiSpace::G5_8, true, true, true, false},
+      WifiChannel{5785, 157, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5805, 161, WifiSpace::G5_8, true, true, true, false},
+      WifiChannel{5825, 165, WifiSpace::G5_8, true, true, true, true},
       // starting from here, often disabled territory begins again
-      WifiChannel{5845, 169, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5865, 173, WifiSpace::G5_8, true, true, true},
-      WifiChannel{5885, 177, WifiSpace::G5_8, true, false, false}, // This one is listed in wikipedia, but not valid in any country
-      WifiChannel{5905, 181, WifiSpace::G5_8, true, false, false},
+      WifiChannel{5845, 169, WifiSpace::G5_8, true, true, true, false},
+      WifiChannel{5865, 173, WifiSpace::G5_8, true, true, true, true},
+      WifiChannel{5885, 177, WifiSpace::G5_8, true, false, false, false}, // This one is listed in wikipedia, but not valid in any country
+      WifiChannel{5905, 181, WifiSpace::G5_8, true, false, false, true},
   };
 };
 // Returns all Wi-Fi channels 5G that are legal in any country

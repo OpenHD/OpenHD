@@ -12,10 +12,14 @@
 #include <utility>
 
 static void test_all_supported_frequencies(const WiFiCard& card,const int channel_width){
+  OHDUtil::run_command("dmesg",{"--clear"});
   openhd::log::get_default()->debug("test_all_supported_frequencies begin");
   std::vector<std::pair<int,bool>> results;
   for(auto frequency_mhz: card.get_supported_frequencies_2G_5G()){
       auto channel=openhd::channel_from_frequency(frequency_mhz).value();
+      //if(channel.space==openhd::WifiSpace::G2_4){
+      //    continue;
+      //}
       if(channel_width==40){
           if(!channel.is_legal_any_country_40Mhz){
               openhd::log::get_default()->debug("Skipping {}, no 40Mhz",frequency_mhz);
@@ -27,6 +31,16 @@ static void test_all_supported_frequencies(const WiFiCard& card,const int channe
     results.emplace_back(frequency_mhz,success);
     // Weird, otherwise we might get error resource busy
     std::this_thread::sleep_for(std::chrono::seconds (5));
+    const auto dmesg_content_opt=OHDUtil::run_command_out("dmesg");
+    openhd::log::get_default()->debug("{}",dmesg_content_opt.value_or("None"));
+    OHDUtil::run_command("dmesg",{"--clear"});
+    if(dmesg_content_opt.has_value()){
+        const auto& dmesg_content=dmesg_content_opt.value();
+        if(OHDUtil::contains(dmesg_content,"Call Trace:")){
+            openhd::log::get_default()->debug("{}",dmesg_content);
+            break;
+        }
+    }
   }
   for(const auto& res:results){
     const int freq=res.first;
