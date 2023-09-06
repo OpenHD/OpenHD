@@ -78,6 +78,14 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(2));
   wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
   std::this_thread::sleep_for(std::chrono::seconds(2));
+  // debug - set all channel(s) while a (high) tx power is set
+  if(card.type==WiFiCardType::Realtek8812au){
+      // TODO
+  }else{
+      const auto tx_power_mbm=openhd::milli_watt_to_mBm(2000);
+      wifi::commandhelper::openhd_driver_set_tx_power(card.device_name,tx_power_mbm);
+  }
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 
   //test_all_supported_frequencies(card,20);
   //std::this_thread::sleep_for(std::chrono::seconds(2));
