@@ -28,6 +28,8 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
         return WiFiCardType::Realtek88x2bu;
     }else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8188eu")) != std::string::npos) {
         return WiFiCardType::Realtek8188eu;
+    }else if(OHDUtil::contains_after_uppercase(driver_name,"mt7921u")){
+        return WiFiCardType::MT7921U;
     }
     return WiFiCardType::Unknown;
 }
@@ -54,6 +56,9 @@ bool DWifiCards::is_known_for_injection(const WiFiCardType& type) {
     case WiFiCardType::Atheros9k:
     case WiFiCardType::Ralink:
       supports= true;
+      break;
+    case WiFiCardType::MT7921U:
+      supports=true;
       break;
     case WiFiCardType::Intel:
     case WiFiCardType::Broadcom:

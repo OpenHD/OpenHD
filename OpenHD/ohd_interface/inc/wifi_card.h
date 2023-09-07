@@ -23,6 +23,7 @@ enum class WiFiCardType {
   Ralink,
   Intel,
   Broadcom,
+  MT7921U
 };
 
 static std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
@@ -36,6 +37,7 @@ static std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
 	case WiFiCardType::Ralink:return  "Ralink";
 	case WiFiCardType::Intel:return  "Intel";
 	case WiFiCardType::Broadcom:return  "Broadcom";
+   case WiFiCardType::MT7921U:return  "Broadcom";
 	default: return "unknown";
   }
 }
