@@ -30,6 +30,8 @@ struct Config{
   // GENERAL
   bool GEN_ENABLE_LAST_KNOWN_POSITION= true;
 };
+// Otherwise, default location is used
+void set_config_file(const std::string& config_file_path);
 
 Config load_config();
 

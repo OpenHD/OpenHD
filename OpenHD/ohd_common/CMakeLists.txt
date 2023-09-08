@@ -46,6 +46,7 @@ set(sources
     "src/openhd_udp_log.cpp"
     "src/openhd_reboot_util.cpp"
     "src/openhd_config.cpp"
+    "src/openhd_global.cpp"
 
     "inc/openhd_settings_imp.hpp"
     "inc/include_json.hpp"
@@ -66,6 +67,7 @@ set(sources
     "inc/openhd_reboot_util.h"
     "lib/ini/ini.hpp"
     "inc/openhd_config.h"
+    "inc/openhd_global.h"
     )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 

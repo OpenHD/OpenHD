@@ -76,7 +76,7 @@ void EthernetListener::connect_once() {
   }
   const auto& run_command_result=run_command_result_opt.value();
   const auto ip_external_device= OHDUtil::string_in_between("default via "," proto",run_command_result);
-  const auto ip_self_network= OHDUtil::string_in_between("src "," metric",run_command_result);
+  //const auto ip_self_network= OHDUtil::string_in_between("src "," metric",run_command_result);
 
   const auto external_device=openhd::ExternalDevice{"ETH0",ip_external_device};
   // Check if both are valid IPs (otherwise, perhaps the parsing got fucked up)
