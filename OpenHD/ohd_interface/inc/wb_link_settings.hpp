@@ -78,8 +78,7 @@ struct WBLinkSettings {
   uint32_t wb_max_fec_block_size_for_platform=DEFAULT_MAX_FEC_BLK_SIZE_FOR_PLATFORM;
   // change mcs index via RC channel
   uint32_t wb_mcs_index_via_rc_channel=WB_MCS_INDEX_VIA_RC_CHANNEL_OFF;
-
-  // wb link recommends bitrate(s) to the encoder, can be helpfully for inexperienced users.
+  // wb link recommends bitrate(s) to the encoder.
   bool enable_wb_video_variable_bitrate= true;
   // !!!!
   // This allows the ground station to become completely passive (aka tune in on someone elses feed)
