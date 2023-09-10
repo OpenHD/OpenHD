@@ -54,6 +54,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   txrx_options.tx_without_pcap= true;
   txrx_options.enable_auto_switch_tx_card= false; //TODO remove me
   txrx_options.max_sane_injection_time=std::chrono::milliseconds(1);
+  //txrx_options.advanced_debugging_rx= true;
   //txrx_options.debug_decrypt_time= true;
   //txrx_options.debug_encrypt_time= true;
   //txrx_options.debug_packet_gaps= true;
@@ -174,7 +175,7 @@ WBLink::~WBLink() {
   m_wb_video_rx_list.resize(0);
   // give the monitor mode cards back to network manager
   for(const auto& card: m_broadcast_cards){
-    wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
+    //wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
   }
   m_console->debug("WBLink::~WBLink() end");
 }
