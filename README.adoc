@@ -104,7 +104,9 @@ High-definition video, 2-way UAV telemetry, audio, and RC control signals can al
 
 A multi-platform OpenHD app is available for live video with a customizable OSD.
 
-embed::https://www.youtube.com/watch?v=5Ht9P3uv5N4[This is OpenHD]
+<div align="center">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/5Ht9P3uv5N4" frameborder="0" allowfullscreen></iframe>
+</div>
 
 
 TIP: Look around, read the {wiki}, ask questions on {telegram} or {discord}!
