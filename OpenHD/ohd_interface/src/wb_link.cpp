@@ -334,12 +334,9 @@ bool WBLink::apply_frequency_and_channel_width_from_settings() {
       channel_width_rx=20;
       channel_width_tx=static_cast<int>(settings.wb_air_tx_channel_width);
   }else{
-      // GND always uses 20Mhz channel width for uplink, and listens in 40Mhz mode if air reports 40Mhz
+      // GND always uses 20Mhz channel width for uplink, and listens in 40Mhz unless air reports 20Mhz
+      // (in which case we can go down to 20Mhz listen, which gives us better sensitivity)
       channel_width_rx = m_gnd_curr_rx_channel_width;
-      if(!(channel_width_rx==20 || channel_width_rx==40)){
-          // air reported chanel width not yet known, start on 40Mhz and go to 20Mhz if needed
-          channel_width_rx=40;
-      }
       channel_width_tx=20;
   }
   const auto res=apply_frequency_and_channel_width(center_frequency,channel_width_rx,channel_width_tx);
@@ -660,7 +657,7 @@ void WBLink::update_statistics() {
   if(m_profile.is_air){
     stats.monitor_mode_link.curr_tx_channel_w_mhz=curr_settings.wb_air_tx_channel_width;
   }else{
-    stats.monitor_mode_link.curr_tx_channel_w_mhz=20;
+    stats.monitor_mode_link.curr_tx_channel_w_mhz=m_gnd_curr_rx_channel_width;
   }
   stats.monitor_mode_link.tx_operating_mode =0;
   if(!m_any_card_supports_injection){

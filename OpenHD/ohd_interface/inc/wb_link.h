@@ -188,7 +188,8 @@ class WBLink :public OHDLink{
 private:
   void on_new_management_packet(const uint8_t *data, int data_len);
   static constexpr auto MANAGEMENT_RADIO_PORT_AIR_TX=20;
-  std::atomic<int> m_gnd_curr_rx_channel_width=-1;
+  // We start on 40Mhz, and go down to 20Mhz if possible
+  std::atomic<int> m_gnd_curr_rx_channel_width=40;
   std::atomic<int> m_air_reported_curr_frequency=-1;
   std::atomic<int> m_air_reported_curr_channel_width=-1;
 };
