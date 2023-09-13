@@ -329,13 +329,17 @@ bool WBLink::apply_frequency_and_channel_width_from_settings() {
   uint8_t channel_width_rx=-1;
   uint8_t channel_width_tx=-1;
   if(m_profile.is_air){
+      // TODO can we send in 40Mhz but listen in 20Mhz ?
       // AIR always listens in 20Mhz mode, and optionally transmits non-management data in 40Mhz
       channel_width_rx=20;
       channel_width_tx=static_cast<int>(settings.wb_air_tx_channel_width);
   }else{
       // GND always uses 20Mhz channel width for uplink, and listens in 40Mhz mode if air reports 40Mhz
       channel_width_rx = m_gnd_curr_rx_channel_width;
-      if(!(channel_width_rx==20 || channel_width_rx==40))channel_width_rx=20;
+      if(!(channel_width_rx==20 || channel_width_rx==40)){
+          // air reported chanel width not yet known, start on 20Mhz and go to 40Mhz if needed
+          channel_width_rx=20;
+      }
       channel_width_tx=20;
   }
   const auto res=apply_frequency_and_channel_width(center_frequency,channel_width_rx,channel_width_tx);
