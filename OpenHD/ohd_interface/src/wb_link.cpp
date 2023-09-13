@@ -41,11 +41,11 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
     m_console->error("Without at least one wifi card, the stream(s) cannot be started");
     exit(1);
   }
+  takeover_cards_monitor_mode();
   // this fetches the last settings, otherwise creates default ones
   m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(m_platform,m_profile,m_broadcast_cards);
   // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
   openhd::wb::fixup_unsupported_frequency(*m_settings, m_broadcast_cards,m_console);
-  takeover_cards_monitor_mode();
   WBTxRx::Options txrx_options{};
   txrx_options.session_key_packet_interval=SESSION_KEY_PACKETS_INTERVAL;
   txrx_options.use_gnd_identifier=m_profile.is_ground();
@@ -87,7 +87,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       }
       int tx_channel_width=static_cast<int>(settings.wb_air_tx_channel_width);
       if(m_profile.is_ground()){
-          // Always use 20Mhz on ground
+          // Always use 20Mhz for injection on ground
           tx_channel_width=20;
       }
       //const bool set_flag_tx_no_ack = m_profile.is_ground() ? false : !settings.wb_tx_use_ack;
@@ -183,16 +183,16 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
 
 WBLink::~WBLink() {
   m_console->debug("WBLink::~WBLink() begin");
+  if(m_work_thread){
+    m_work_thread_run =false;
+    m_work_thread->join();
+  }
   if(m_opt_action_handler){
       m_opt_action_handler->action_on_any_rc_channel_register(nullptr);
       m_opt_action_handler->m_action_tx_power_when_armed= nullptr;
       m_opt_action_handler->wb_get_supported_channels= nullptr;
       m_opt_action_handler->wb_cmd_scan_channels= nullptr;
       m_opt_action_handler->wb_cmd_analyze_channels=nullptr;
-  }
-  if(m_work_thread){
-    m_work_thread_run =false;
-    m_work_thread->join();
   }
   m_wb_txrx->stop_receiving();
   // stop all the receiver/transmitter instances, after that, give card back to network manager
@@ -219,11 +219,8 @@ void WBLink::takeover_cards_monitor_mode() {
     wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
   }
   wifi::commandhelper::rfkill_unblock_all();
-  // TODO: sometimes this happens:
-  // 1) Running openhd fist time: pcap_compile doesn't work (fatal error)
-  // 2) Running openhd second time: works
-  // I cannot find what's causing the issue - a sleep here is the worst solution, but r.n the only one I can come up with
-  // perhaps we'd need to wait for network manager to finish switching to ignoring the monitor mode cards ?!
+  // Apparently, we need to give nm / whoever a bit time before we start putting the cards into monitor mode
+  // not pretty, but works.
   std::this_thread::sleep_for(std::chrono::seconds(1));
   // now we can enable monitor mode on the given cards.
   for(const auto& card: m_broadcast_cards) {
@@ -424,10 +421,10 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
   }
   if(m_profile.is_air){
-    auto change_video_fec_percentage=openhd::IntSetting{(int)settings.wb_video_fec_percentage,[this](std::string,int value){
-                                                            return set_video_fec_percentage(value);
-                                                          }};
-    ret.push_back(Setting{WB_VIDEO_FEC_PERCENTAGE,change_video_fec_percentage});
+    auto cb_change_video_fec_percentage=[this](std::string,int value){
+        return set_video_fec_percentage(value);
+    };
+    ret.push_back(Setting{WB_VIDEO_FEC_PERCENTAGE,openhd::IntSetting{(int)settings.wb_video_fec_percentage,cb_change_video_fec_percentage}});
     auto cb_enable_wb_video_variable_bitrate=[this](std::string,int value){
       return set_enable_wb_video_variable_bitrate(value);
     };
