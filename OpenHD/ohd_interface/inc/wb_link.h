@@ -50,10 +50,10 @@ class WBLink :public OHDLink{
   // validate param, then schedule change
   bool request_set_frequency(int frequency);
   // validate param, then schedule change
-  bool request_set_channel_width(int channel_width);
+  bool request_set_tx_channel_width(int channel_width);
   // apply the frequency (wifi channel) and channel with for all wifibroadcast cards
   // r.n uses both iw and modifies the radiotap header
-  bool apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width);
+  bool apply_frequency_and_channel_width(int frequency,int channel_width_rx,int channel_width_tx);
   bool apply_frequency_and_channel_width_from_settings();
   // ------------- tx power is a bit confusing due to the difference(s) between HW
   bool set_tx_power_mw(int tx_power_mw);
@@ -61,13 +61,13 @@ class WBLink :public OHDLink{
   // set the tx power of all wifibroadcast cards. For rtl8812au, uses the tx power index
   // for other cards, uses the mW value
   void apply_txpower();
-  // change the MCS index (only supported by rtl8812au)
+  // change the injection MCS index
   // guaranteed to return immediately (Doesn't need iw or something similar)
   // If the hw supports changing the mcs index, and the mcs index is valid, apply it and return true
   // Leave untouched and return false otherwise.
-  bool set_mcs_index(int mcs_index);
+  bool set_air_mcs_index(int mcs_index);
   // this is special, mcs index can not only be changed via mavlink param, but also via RC channel (if enabled)
-  void set_mcs_index_from_rc_channel(const std::array<int,18>& rc_channels);
+  void set_air_mcs_index_from_rc_channel(const std::array<int,18>& rc_channels);
   // special, change tx power depending on if the FC is armed / disarmed
   void update_arming_state(bool armed);
   // These do not "break" the bidirectional connectivity and therefore
@@ -93,6 +93,7 @@ class WBLink :public OHDLink{
   std::chrono::steady_clock::time_point m_last_stats_recalculation=std::chrono::steady_clock::now();
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void perform_rate_adjustment();
+  void perform_management();
   // Returns true if the work item queue is currently empty and the item has been added
   // false otherwise. In general, we only suport one item on the work queue - otherwise we reject the param,
   // since the user can just try again later (and in case the work queue is currently busy with a frequency scan for example,
@@ -183,7 +184,12 @@ class WBLink :public OHDLink{
   // We store tx power for easy access in stats
   std::atomic<int> m_curr_tx_power_idx=0;
   std::atomic<int> m_curr_tx_power_mw=0;
-  int m_gnd_n_times_20mhz_40mhz_mismatch=0;
+private:
+  void on_new_management_packet(const uint8_t *data, int data_len);
+  static constexpr auto MANAGEMENT_RADIO_PORT_AIR_TX=20;
+  std::atomic<int> m_gnd_curr_rx_channel_width=-1;
+  std::atomic<int> m_air_reported_curr_frequency=-1;
+  std::atomic<int> m_air_reported_curr_channel_width=-1;
 };
 
 #endif

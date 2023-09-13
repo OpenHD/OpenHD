@@ -20,6 +20,7 @@ set(sources
     inc/usb_tether_listener.h
     inc/validate_settings_helper.h
     inc/wb_link.h
+    inc/wb_link_manager.h
     inc/wb_link_settings.hpp
     inc/wifi_hotspot.h
     inc/wb_link_helper.h
@@ -41,6 +42,7 @@ set(sources
     src/ethernet_listener.cpp
     src/ethernet_hotspot.cpp
     src/wifi_card.cpp
+    src/wb_link_manager.cpp
     #src/wifi_command_helper2.cpp
 )
 

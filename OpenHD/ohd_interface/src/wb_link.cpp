@@ -14,6 +14,7 @@
 #include "wb_link_helper.h"
 #include "wifi_card.h"
 #include "wb_link_rate_helper.hpp"
+#include "wb_link_manager.h"
 
 WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
     : m_profile(std::move(profile)),
@@ -119,6 +120,13 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   }
   apply_frequency_and_channel_width_from_settings();
   apply_txpower();
+  if(m_profile.is_ground()){
+      auto cb_packet=[this](uint64_t nonce,int wlan_index,const uint8_t *data, const int data_len){
+          this->on_new_management_packet(data,data_len);
+      };
+      auto mgmt_handler=std::make_shared<WBTxRx::StreamRxHandler>(MANAGEMENT_RADIO_PORT_AIR_TX,cb_packet, nullptr);
+      m_wb_txrx->rx_register_stream_handler(mgmt_handler);
+  }
   m_wb_txrx->start_receiving();
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
@@ -134,7 +142,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       if(m_profile.is_air){
           // MCS is only changed on air
           auto cb_mcs=[this](const std::array<int,18>& rc_channels){
-            set_mcs_index_from_rc_channel(rc_channels);
+            set_air_mcs_index_from_rc_channel(rc_channels);
           };
           m_opt_action_handler->action_on_any_rc_channel_register(cb_mcs);
       }
@@ -210,17 +218,22 @@ void WBLink::takeover_cards_monitor_mode() {
 
 RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
   const auto settings=m_settings->get_settings();
-  auto mcs_index=static_cast<int>(settings.wb_mcs_index);
+  auto mcs_index=static_cast<int>(settings.wb_air_mcs_index);
   if(m_profile.is_ground()){
       // Always use mcs 0 on ground
       mcs_index =openhd::WB_GND_UPLINK_MCS_INDEX;
   }
-  const auto channel_width=static_cast<int>(settings.wb_channel_width);
+  int tx_channel_width=static_cast<int>(settings.wb_air_tx_channel_width);
+  if(m_profile.is_ground()){
+      // Always use 20Mhz on ground
+      tx_channel_width=20;
+  }
+  //const bool set_flag_tx_no_ack = m_profile.is_ground() ? false : !settings.wb_tx_use_ack;
+  const bool set_flag_tx_no_ack = m_profile.is_ground() ? false : true;
   return RadiotapHeader::UserSelectableParams{
-      channel_width, settings.wb_enable_short_guard,settings.wb_enable_stbc,
-      settings.wb_enable_ldpc, mcs_index,!settings.wb_tx_use_ack};
+      tx_channel_width, settings.wb_enable_short_guard,settings.wb_enable_stbc,
+      settings.wb_enable_ldpc, mcs_index,set_flag_tx_no_ack};
 }
-
 
 std::unique_ptr<WBStreamTx> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
   WBStreamTx::Options options{};
@@ -259,7 +272,7 @@ bool WBLink::request_set_frequency(int frequency) {
         m_console->warn("Cannot change frequency, at least one card doesn't support");
       return false;
     }
-    if(!openhd::wb::all_cards_support_frequency_and_channel_width(frequency,m_settings->get_settings().wb_channel_width,m_broadcast_cards,m_console)){
+    if(!openhd::wb::all_cards_support_frequency_and_channel_width(frequency,m_settings->get_settings().wb_air_tx_channel_width,m_broadcast_cards,m_console)){
         m_console->warn("Cannot change frequency, 40Mhz not allowed (on at least one card)");
         return false;
     }
@@ -278,49 +291,54 @@ bool WBLink::request_set_frequency(int frequency) {
   return try_schedule_work_item(work_item);
 }
 
-bool WBLink::request_set_channel_width(int channel_width) {
-    m_console->debug("request_set_channel_width {}",channel_width);
+bool WBLink::request_set_tx_channel_width(int channel_width) {
+    assert(m_profile.is_air); // Channel width is only ever changed on air
+    m_console->debug("request_set_tx_channel_width {}",channel_width);
     if(!openhd::is_valid_channel_width(channel_width)){
         m_console->warn("Invalid channel width {}",channel_width);
         return false;
     }
-    // On the ground, it doesn't really matter if the card actually supports injecting 40Mhz, only if it receives 40Mhz
-    if(m_profile.is_air){
-        // We only have one tx card, check if it supports injecting with 40Mhz channel width:
-        if(channel_width==40 && !wifi_card_supports_40Mhz_channel_width_injection(m_broadcast_cards.at(0))){
-            m_console->warn("Cannot change channel width, not supported by card");
-            return false;
-        }
-    }
-    if(!openhd::wb::all_cards_support_frequency_and_channel_width(m_settings->unsafe_get_settings().wb_frequency,channel_width,m_broadcast_cards,m_console)){
-        m_console->warn("Cannot change channel width, 40Mhz not possible on this channel");
+    // We only have one tx card, check if it supports injecting with 40Mhz channel width:
+    if(channel_width==40 && !wifi_card_supports_40Mhz_channel_width_injection(m_broadcast_cards.at(0))){
+        m_console->warn("Cannot change channel width, not supported by card");
         return false;
     }
     if(!check_in_state_support_changing_settings())return false;
     // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
     auto work_item=std::make_shared<WorkItem>(fmt::format("SET_CHWIDTH:{}",channel_width),[this,channel_width](){
-        m_settings->unsafe_get_settings().wb_channel_width=channel_width;
+        m_settings->unsafe_get_settings().wb_air_tx_channel_width=channel_width;
         m_settings->persist();
-        if(m_profile.is_air){
-            // Wait a bit for the ack
-            std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
-        }
+        std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
         apply_frequency_and_channel_width_from_settings();
     },std::chrono::steady_clock::now());
     return try_schedule_work_item(work_item);
 }
 
-bool WBLink::apply_frequency_and_channel_width(uint32_t frequency, uint32_t channel_width) {
-  const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width,m_broadcast_cards);
-  m_wb_txrx->tx_update_channel_width(channel_width);
-  m_wb_txrx->tx_reset_stats();
-  m_wb_txrx->rx_reset_stats();
-  return res;
+bool WBLink::apply_frequency_and_channel_width(int frequency, int channel_width_rx, int channel_width_tx) {
+    m_console->debug("apply_frequency_and_channel_width {}Mhz RX:{}Mhz TX:{}Mhz",frequency,channel_width_rx,channel_width_tx);
+    const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width_rx,m_broadcast_cards);
+    m_wb_txrx->tx_update_channel_width(channel_width_tx);
+    m_wb_txrx->tx_reset_stats();
+    m_wb_txrx->rx_reset_stats();
+    return res;
 }
 
 bool WBLink::apply_frequency_and_channel_width_from_settings() {
   const auto settings=m_settings->get_settings();
-  const auto res=apply_frequency_and_channel_width(settings.wb_frequency,settings.wb_channel_width);
+  const int center_frequency=settings.wb_frequency;
+  uint8_t channel_width_rx=-1;
+  uint8_t channel_width_tx=-1;
+  if(m_profile.is_air){
+      // AIR always listens in 20Mhz mode, and optionally transmits non-management data in 40Mhz
+      channel_width_rx=20;
+      channel_width_tx=static_cast<int>(settings.wb_air_tx_channel_width);
+  }else{
+      // GND always uses 20Mhz channel width for uplink, and listens in 40Mhz mode if air reports 40Mhz
+      channel_width_rx = m_gnd_curr_rx_channel_width;
+      if(!(channel_width_rx==20 || channel_width_rx==40))channel_width_rx=20;
+      channel_width_tx=20;
+  }
+  const auto res=apply_frequency_and_channel_width(center_frequency,channel_width_rx,channel_width_tx);
   m_wb_txrx->tx_reset_stats();
   m_wb_txrx->rx_reset_stats();
   m_max_video_rate_for_current_wifi_config_freq_changed= true;
@@ -347,24 +365,21 @@ void WBLink::apply_txpower() {
   m_console->debug("Changing tx power took {}",MyTimeHelper::R(delta));
 }
 
-bool WBLink::set_mcs_index(int mcs_index) {
-  m_console->debug("set_mcs_index {}",mcs_index);
+bool WBLink::set_air_mcs_index(int mcs_index) {
+  assert(m_profile.is_air);
+  m_console->debug("set_air_mcs_index {}",mcs_index);
   if(!openhd::is_valid_mcs_index(mcs_index)){
     m_console->warn("Invalid mcs index{}",mcs_index);
     return false;
   }
-  if(!all_cards_support_setting_mcs_index(m_broadcast_cards)){
-    m_console->warn("Cannot change mcs index, it is fixed for at least one of the used cards");
-    return false;
+  if(!wifi_card_supports_variable_mcs(m_broadcast_cards.at(0))){
+      m_console->warn("Cannot change mcs index, card doesn't support variable MCS");
+     return false;
   }
-  m_settings->unsafe_get_settings().wb_mcs_index=mcs_index;
+  m_settings->unsafe_get_settings().wb_air_mcs_index=mcs_index;
   m_settings->persist();
-  // R.n the only card known to properly allow setting the MCS index is rtl8812au,
-  // and there it is done by modifying the radiotap header
-  //for(const auto& wlan:m_broadcast_cards){
-  //  wifi::commandhelper::iw_set_rate_mcs(wlan.device_name,settings.wb_mcs_index, false);
-  //}
   m_wb_txrx->tx_update_mcs_index(mcs_index);
+  // The next rate adjustment will adjust the bitrate accordingly
   return true;
 }
 
@@ -376,9 +391,9 @@ bool WBLink::set_video_fec_percentage(int fec_percentage) {
   }
   m_settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
   m_settings->persist();
+  // The next rate adjustment will adjust the bitrate accordingly
   return true;
 }
-
 
 std::vector<openhd::Setting> WBLink::get_all_settings(){
   using namespace openhd;
@@ -390,21 +405,22 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   change_freq.get_callback=[this](){
       return m_settings->unsafe_get_settings().wb_frequency;
   };
-  auto change_wb_channel_width=openhd::IntSetting{(int)settings.wb_channel_width,[this](std::string,int value){
-                                                      return request_set_channel_width(value);
-                                                    }};
-  change_wb_channel_width.get_callback=[this](){
-      return m_settings->unsafe_get_settings().wb_channel_width;
-  };
-  if(m_profile.is_air){
-      // Changing the MCS index only serves a purpose on the ground
-      auto change_wb_mcs_index=openhd::IntSetting{(int)settings.wb_mcs_index,[this](std::string,int value){
-          return set_mcs_index(value);
-      }};
-      ret.push_back(Setting{WB_MCS_INDEX,change_wb_mcs_index});
-  }
   ret.push_back(Setting{WB_FREQUENCY,change_freq});
-  ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
+  if(m_profile.is_air){
+      // MCS is only changeable on air
+      auto change_wb_air_mcs_index=openhd::IntSetting{(int)settings.wb_air_mcs_index, [this](std::string, int value){
+          return set_air_mcs_index(value);
+      }};
+      ret.push_back(Setting{WB_MCS_INDEX,change_wb_air_mcs_index});
+      // Channel width is only changeable on the air
+      auto change_wb_channel_width=openhd::IntSetting{(int)settings.wb_air_tx_channel_width,[this](std::string,int value){
+          return request_set_tx_channel_width(value);
+      }};
+      change_wb_channel_width.get_callback=[this](){
+          return m_settings->unsafe_get_settings().wb_air_tx_channel_width;
+      };
+      ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
+  }
   if(m_profile.is_air){
     auto change_video_fec_percentage=openhd::IntSetting{(int)settings.wb_video_fec_percentage,[this](std::string,int value){
                                                             return set_video_fec_percentage(value);
@@ -544,12 +560,10 @@ void WBLink::loop_do_work() {
       }
       m_work_item_queue_mutex.unlock();
     }
+    perform_management();
+    perform_rate_adjustment();
     // update statistics in regular intervals
     update_statistics();
-    //const auto delta_calc_stats=std::chrono::steady_clock::now()-begin_calculate_stats;
-    //m_console->debug("Calculating stats took:{} ms",std::chrono::duration_cast<std::chrono::microseconds>(delta_calc_stats).count()/1000.0f);
-    // update recommended rate if enabled in regular intervals
-    perform_rate_adjustment();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 }
@@ -632,10 +646,14 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.count_tx_inj_error_hint=txStats.count_tx_injections_error_hint;
   stats.monitor_mode_link.count_tx_dropped_packets=txStats.count_tx_dropped_packets;
   stats.monitor_mode_link.curr_tx_card_idx=m_wb_txrx->get_curr_active_tx_card_idx();
-  stats.monitor_mode_link.curr_tx_mcs_index=curr_settings.wb_mcs_index;
+  stats.monitor_mode_link.curr_tx_mcs_index=curr_settings.wb_air_mcs_index;
   //m_console->debug("Big gaps:{}",rxStats.curr_big_gaps_counter);
   stats.monitor_mode_link.curr_tx_channel_mhz=curr_settings.wb_frequency;
-  stats.monitor_mode_link.curr_tx_channel_w_mhz=curr_settings.wb_channel_width;
+  if(m_profile.is_air){
+    stats.monitor_mode_link.curr_tx_channel_w_mhz=curr_settings.wb_air_tx_channel_width;
+  }else{
+    stats.monitor_mode_link.curr_tx_channel_w_mhz=20;
+  }
   stats.monitor_mode_link.tx_operating_mode =0;
   if(!m_any_card_supports_injection){
       stats.monitor_mode_link.tx_operating_mode=1;
@@ -723,8 +741,8 @@ void WBLink::perform_rate_adjustment() {
   const auto wifi_space=openhd::get_space_from_frequency(settings.wb_frequency);
   const auto max_rate_for_current_wifi_config_without_adjust =
       openhd::wb::get_max_rate_possible(card,wifi_space,
-                                           settings.wb_mcs_index,
-                                           settings.wb_channel_width == 40);
+                                           settings.wb_air_mcs_index,
+                                           settings.wb_air_tx_channel_width == 40);
   using namespace openhd::wb;
   const auto max_rate_for_current_wifi_config= multiply_by_perc(max_rate_for_current_wifi_config_without_adjust,m_settings->get_settings().wb_video_rate_for_mcs_adjustment_percent);
   m_max_total_rate_for_current_wifi_config_kbits=max_rate_for_current_wifi_config;
@@ -739,7 +757,7 @@ void WBLink::perform_rate_adjustment() {
     // Apply the default for this configuration, then return - we will start the auto-adjustment
     // depending on tx error(s) next time the rate adjustment is called
     m_console->debug("MCS:{} ch_width:{} Calculated max_rate:{}, max_video_rate:{}",
-                     settings.wb_mcs_index,settings.wb_channel_width,
+                     settings.wb_air_mcs_index, settings.wb_air_tx_channel_width,
                      kbits_per_second_to_string(max_rate_for_current_wifi_config),
                      kbits_per_second_to_string(max_video_rate_for_current_wifi_config));
     m_max_video_rate_for_current_wifi_config =
@@ -985,16 +1003,12 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
     m_console->warn("No channel_widths to scan, return early");
     return {};
   }
-  // Issue / bug with RTL8812AU: Apparently the adapter sometimes receives data from a frequency that is not correct
-  // (e.g. when the air is set to 5700 and the rx listens on frequency  5540 ) but with an incredibly high packet loss.
-  // therefore, instead of returning early, we hop through all frequencies and on frequencies where we get data, store
-  // the packet loss. In the end, we then decide what frequency is most likely the one the air is sending on.
   struct TmpResult{
     openhd::WifiChannel channel;
     uint32_t channel_width;
     int packet_loss_perc=0;
   };
-  std::vector<TmpResult> possible_frequencies{};
+  std::optional<TmpResult> tmp_scan_result=std::nullopt;
   // Note: We intentionally do not modify the persistent settings here
   m_console->debug("Channel scan N channels to scan:{} N channel widths to scan:{}",
                    channels_to_scan.size(),channel_widths_to_scan.size());
@@ -1012,7 +1026,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         continue;
       }
       // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
-      const bool freq_success=apply_frequency_and_channel_width(channel.frequency,channel_width);
+      const bool freq_success=apply_frequency_and_channel_width(channel.frequency,channel_width,20);
       if(!freq_success){
           m_console->warn("Cannot scan [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
           continue;
@@ -1029,58 +1043,50 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
       m_console->debug("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
       reset_all_rx_stats();
+      m_air_reported_curr_channel_width=-1;
+      m_air_reported_curr_frequency=-1;
       std::this_thread::sleep_for(std::chrono::seconds(2));
       const auto n_likely_openhd_packets=m_wb_txrx->get_rx_stats().curr_n_likely_openhd_packets;
-      // If we got what looks to be openhd packets, sleep a bit more such that we can reliably get a session and packet loss
+      // If we got what looks to be openhd packets, sleep a bit more such that we can reliably get a management frame
       if(n_likely_openhd_packets>0){
         m_console->debug("Got {} likely openhd packets, sleep a bit more",n_likely_openhd_packets);
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        const auto begin_long_listen=std::chrono::steady_clock::now();
+        while (std::chrono::steady_clock::now()-begin_long_listen<std::chrono::seconds(5)){
+            if(m_air_reported_curr_frequency>0 && m_air_reported_curr_channel_width>0){
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
       }
       const auto packet_loss=m_wb_txrx->get_rx_stats().curr_lowest_packet_loss;
       const auto n_valid_packets=m_wb_txrx->get_rx_stats().count_p_valid;
-      // We might receive 20Mhz channel width packets from a air unit sending on 20Mhz channel width while
-      // receiving on 40Mhz channel width - if we were to then to set the gnd to 40Mhz, we will be able to receive data,
-      // but not be able to send any data up to the air unit.
-      const int rx_chann_width=m_wb_txrx->get_rx_stats().last_received_packet_channel_width;
-      m_console->debug("Got {} packets on {}@{} rx_chan_width:{} with loss {}",n_valid_packets,channel.frequency,channel_width,
-                       rx_chann_width,packet_loss);
-      if(n_valid_packets>0 && (rx_chann_width==channel_width || rx_chann_width==-1)){
+      const int air_center_frequency=m_air_reported_curr_frequency;
+      const int air_tx_channel_width=m_air_reported_curr_channel_width;
+      m_console->debug("Got {} packets on {}@{} air_reports:[{}@{}] with loss {}%",n_valid_packets,channel.frequency,channel_width,
+                      air_center_frequency,air_tx_channel_width,packet_loss);
+      if(n_valid_packets>0 && air_center_frequency>0 && air_tx_channel_width>0 && channel.frequency==air_center_frequency){
+        m_console->debug("Found air unit");
         TmpResult tmp_result{channel,channel_width,packet_loss};
-        possible_frequencies.push_back(tmp_result);
-        if(packet_loss>=0 && packet_loss<20){
-          // if the packet loss is low, we can safely return early
-          m_console->debug("Got <10% packet loss, return early");
-          done_early= true;
-        }else{
-          m_console->warn("Got >10% packet loss,continue and select most likely at the end");
-        }
+        tmp_scan_result=tmp_result;
+        done_early= true;
       }
     }
   }
   ScanResult result{};
-  if(possible_frequencies.empty()){
+  if(!tmp_scan_result.has_value()){
     m_console->warn("Channel scan failure, restore local settings");
     apply_frequency_and_channel_width_from_settings();
     result.success= false;
     result.frequency=0;
   }else{
-    m_console->debug("Channel scan success, possible frequencies {}",possible_frequencies.size());
-    auto best=possible_frequencies.at(0);
-    for(int i=1;i<possible_frequencies.size();i++){
-      const auto other=possible_frequencies.at(i);
-      if(other.packet_loss_perc<best.packet_loss_perc){
-        best=other;
-      }
-    }
-    m_console->warn("Selected {}@{} with loss:{}% as most likely",best.channel.frequency,best.channel_width,best.packet_loss_perc);
+    const auto scan_result=tmp_scan_result.value();
+      m_console->debug("Channel scan success, {}@{}Mhz",scan_result.channel.frequency,scan_result.channel_width);
+    result.frequency=scan_result.channel.frequency;
+    result.channel_width=scan_result.channel_width;
     result.success= true;
-    result.frequency=best.channel.frequency;
-    result.channel_width=best.channel_width;
     m_settings->unsafe_get_settings().wb_frequency=result.frequency;
-    m_settings->unsafe_get_settings().wb_channel_width=result.channel_width;
+    m_air_reported_curr_channel_width=result.channel_width;
     m_settings->persist();
-    // Not needed anymore
-    //openhd::reboot::dirty_terminate_openhd_and_let_service_restart();
     apply_frequency_and_channel_width_from_settings();
   }
   if(m_opt_action_handler){
@@ -1136,7 +1142,7 @@ void WBLink::analyze_channels() {
             channel_width=20;
         }
         // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
-        apply_frequency_and_channel_width(channel.frequency,channel_width);
+        apply_frequency_and_channel_width(channel.frequency,channel_width,20);
         m_console->debug("Analyzing [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
         reset_all_rx_stats();
         std::this_thread::sleep_for(std::chrono::seconds(4));
@@ -1173,7 +1179,11 @@ bool WBLink::async_analyze_channels() {
     return try_schedule_work_item(work_item);
 }
 
-void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channels) {
+void WBLink::set_air_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channels) {
+  if(!m_profile.is_air){
+      m_console->warn("MCS change via rc only on air");
+      return;
+  }
   const auto& settings=m_settings->get_settings();
   if(settings.wb_mcs_index_via_rc_channel==openhd::WB_MCS_INDEX_VIA_RC_CHANNEL_OFF){
     // disabled
@@ -1217,11 +1227,11 @@ void WBLink::set_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channel
     mcs_index=1;
   }
   // check if we are already using the wanted mcs index
-  if(settings.wb_mcs_index==mcs_index){
+  if(settings.wb_air_mcs_index == mcs_index){
     return ;
   }
   // apply the wanted mcs index
-  set_mcs_index(mcs_index);
+  set_air_mcs_index(mcs_index);
 }
 
 void WBLink::update_arming_state(bool armed) {
@@ -1230,4 +1240,40 @@ void WBLink::update_arming_state(bool armed) {
   // it will set the right tx power if the user enabled it
   m_is_armed=armed;
   apply_txpower();
+}
+
+void WBLink::on_new_management_packet(const uint8_t *data, const int data_len) {
+    if(m_profile.is_ground()){
+        const auto opt_mngmt=openhd::wb::parse_data_management(data,data_len);
+        if(opt_mngmt.has_value()){
+            const auto packet=opt_mngmt.value();
+            m_console->debug("Got MNGMT {}",openhd::wb::management_frame_to_string(packet));
+            if(packet.bandwidth_mhz==20 || packet.bandwidth_mhz==40){
+                m_air_reported_curr_channel_width=packet.bandwidth_mhz;
+                m_air_reported_curr_frequency=packet.center_frequency_mhz;
+            }else{
+                m_console->warn("Air reports invalid bandwidth {}",packet.bandwidth_mhz);
+            }
+        }
+    }
+}
+
+void WBLink::perform_management() {
+    const auto curr_settings=m_settings->get_settings();
+    if(m_profile.is_air){
+        // Air: Continuously broadcast channel width
+        openhd::wb::ManagementFrameData managementFrame{curr_settings.wb_frequency,(uint8_t)curr_settings.wb_air_tx_channel_width};
+        auto data=openhd::wb::pack_management_frame(managementFrame);
+        m_wb_txrx->tx_inject_packet(MANAGEMENT_RADIO_PORT_AIR_TX,data.data(),data.size(), true);
+    }else{
+        // Ground: Listen on the channel width the air reports
+        // (NOTE: We don't inject on this channel width though)
+        if(m_gnd_curr_rx_channel_width!=m_air_reported_curr_channel_width){
+            m_console->debug("Changing LISTEN bandwidth from {} to {}",m_gnd_curr_rx_channel_width,m_air_reported_curr_channel_width);
+            m_gnd_curr_rx_channel_width=m_air_reported_curr_channel_width.load();
+            const int frequency=curr_settings.wb_frequency;
+            const int rx_channel_width=m_gnd_curr_rx_channel_width;
+            apply_frequency_and_channel_width(frequency,rx_channel_width,20);
+        }
+    }
 }

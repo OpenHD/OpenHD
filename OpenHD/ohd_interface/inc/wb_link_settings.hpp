@@ -50,9 +50,10 @@ static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL_OFF=0;
 
 struct WBLinkSettings {
   uint32_t wb_frequency; // writen once 2.4 or 5 is known
-  uint32_t wb_channel_width=DEFAULT_CHANNEL_WIDTH; // 20 or 40 mhz bandwidth
+  // NOTE: Only stored on air, gnd automatically applies 40Mhz bwidth when air reports (management frame(s))
+  uint32_t wb_air_tx_channel_width=DEFAULT_CHANNEL_WIDTH; // 20 or 40 mhz bandwidth
   // MCS index used during injection - only used by air unit, since ground always sends with MCS0
-  uint32_t wb_mcs_index=DEFAULT_MCS_INDEX;
+  uint32_t wb_air_mcs_index=DEFAULT_MCS_INDEX;
   int wb_enable_stbc=0; // 0==disabled
   bool wb_enable_ldpc=false;
   bool wb_enable_short_guard=false;
@@ -90,7 +91,7 @@ struct WBLinkSettings {
   // we have per-packet enable / disable encryption in wifibroadcast
   bool wb_air_enable_video_encryption= false;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_channel_width, wb_mcs_index,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_air_tx_channel_width, wb_air_mcs_index,
                                    wb_enable_stbc, wb_enable_ldpc, wb_enable_short_guard,
                                    wb_tx_use_ack,
                                    wb_tx_power_milli_watt, wb_tx_power_milli_watt_armed,
