@@ -80,8 +80,6 @@ class WBLink :public OHDLink{
   // Make sure no processes interfering with monitor mode run on the given cards,
   // then sets them to monitor mode
   void takeover_cards_monitor_mode();
-  // Reads the current settings and creates the appropriate Radiotap Header params
-  [[nodiscard]] RadiotapHeader::UserSelectableParams create_radiotap_params()const;
   std::unique_ptr<WBStreamTx> create_wb_tx(uint8_t radio_port,bool is_video);
   std::unique_ptr<WBStreamRx> create_wb_rx(uint8_t radio_port,bool is_video,WBStreamRx::OUTPUT_DATA_CALLBACK cb);
  private:
@@ -147,6 +145,8 @@ class WBLink :public OHDLink{
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::WBStreamsSettingsHolder> m_settings;
+  std::shared_ptr<RadiotapHeaderHolder> m_tx_header_1;
+  //std::shared_ptr<RadiotapHeaderHolder> m_tx_header_2;
   std::shared_ptr<WBTxRx> m_wb_txrx;
   // For telemetry, bidirectional in opposite directions
   std::unique_ptr<WBStreamTx> m_wb_tele_tx;

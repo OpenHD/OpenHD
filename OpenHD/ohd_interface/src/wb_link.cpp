@@ -44,8 +44,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   // this fetches the last settings, otherwise creates default ones
   m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(m_platform,m_profile,m_broadcast_cards);
   // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
-  openhd::wb::fixup_unsupported_frequency(*m_settings, m_broadcast_cards,
-                                          m_console);
+  openhd::wb::fixup_unsupported_frequency(*m_settings, m_broadcast_cards,m_console);
   takeover_cards_monitor_mode();
   WBTxRx::Options txrx_options{};
   txrx_options.session_key_packet_interval=SESSION_KEY_PACKETS_INTERVAL;
@@ -72,15 +71,35 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   //txrx_options.advanced_latency_debugging_rx=true;
   //const auto card_names = openhd::wb::get_card_names(m_broadcast_cards);
   //assert(!card_names.empty());
-  std::vector<WBTxRx::WifiCard> tmp_wifi_cards;
+  std::vector<wifibroadcast::WifiCard> tmp_wifi_cards;
   for(const auto& card: m_broadcast_cards){
       int wb_type=card.type==WiFiCardType::Realtek8812au ? 1 : 0;
-      tmp_wifi_cards.push_back(WBTxRx::WifiCard{card.device_name,wb_type});
+      tmp_wifi_cards.push_back(wifibroadcast::WifiCard{card.device_name,wb_type});
   }
-  m_wb_txrx=std::make_shared<WBTxRx>(tmp_wifi_cards,txrx_options);
-  const auto tx_radiotap_params=create_radiotap_params();
-  m_console->debug("{}",RadiotapHeader::user_params_to_string(tx_radiotap_params));
-  m_wb_txrx->tx_threadsafe_update_radiotap_header(tx_radiotap_params);
+  m_tx_header_1=std::make_shared<RadiotapHeaderHolder>();
+  //m_tx_header_2=std::make_shared<RadiotapHeaderHolder>();
+  {
+      const auto settings=m_settings->get_settings();
+      auto mcs_index=static_cast<int>(settings.wb_air_mcs_index);
+      if(m_profile.is_ground()){
+          // Always use mcs 0 on ground
+          mcs_index =openhd::WB_GND_UPLINK_MCS_INDEX;
+      }
+      int tx_channel_width=static_cast<int>(settings.wb_air_tx_channel_width);
+      if(m_profile.is_ground()){
+          // Always use 20Mhz on ground
+          tx_channel_width=20;
+      }
+      //const bool set_flag_tx_no_ack = m_profile.is_ground() ? false : !settings.wb_tx_use_ack;
+      const bool set_flag_tx_no_ack = m_profile.is_ground() ? false : true;
+      auto tmp_params= RadiotapHeader::UserSelectableParams{
+              tx_channel_width, settings.wb_enable_short_guard,settings.wb_enable_stbc,
+              settings.wb_enable_ldpc, mcs_index,set_flag_tx_no_ack};
+      m_console->debug("{}",RadiotapHeader::user_params_to_string(tmp_params));
+      m_tx_header_1->thread_safe_set(tmp_params);
+      //m_tx_header_2->thread_safe_set(tmp_params);
+  }
+  m_wb_txrx=std::make_shared<WBTxRx>(tmp_wifi_cards,txrx_options,m_tx_header_1);
   {
       // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
       // tx radio port on air is the same as rx on ground and verse visa
@@ -216,25 +235,6 @@ void WBLink::takeover_cards_monitor_mode() {
   m_console->debug("takeover_cards_monitor_mode() end");
 }
 
-RadiotapHeader::UserSelectableParams WBLink::create_radiotap_params()const {
-  const auto settings=m_settings->get_settings();
-  auto mcs_index=static_cast<int>(settings.wb_air_mcs_index);
-  if(m_profile.is_ground()){
-      // Always use mcs 0 on ground
-      mcs_index =openhd::WB_GND_UPLINK_MCS_INDEX;
-  }
-  int tx_channel_width=static_cast<int>(settings.wb_air_tx_channel_width);
-  if(m_profile.is_ground()){
-      // Always use 20Mhz on ground
-      tx_channel_width=20;
-  }
-  //const bool set_flag_tx_no_ack = m_profile.is_ground() ? false : !settings.wb_tx_use_ack;
-  const bool set_flag_tx_no_ack = m_profile.is_ground() ? false : true;
-  return RadiotapHeader::UserSelectableParams{
-      tx_channel_width, settings.wb_enable_short_guard,settings.wb_enable_stbc,
-      settings.wb_enable_ldpc, mcs_index,set_flag_tx_no_ack};
-}
-
 std::unique_ptr<WBStreamTx> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
   WBStreamTx::Options options{};
   options.enable_fec=is_video;
@@ -243,7 +243,7 @@ std::unique_ptr<WBStreamTx> WBLink::create_wb_tx(uint8_t radio_port,bool is_vide
     options.block_data_queue_size=2;
     //options.log_time_blocks_until_tx= true;
   }
-  auto ret=std::make_unique<WBStreamTx>(m_wb_txrx, options);
+  auto ret=std::make_unique<WBStreamTx>(m_wb_txrx, options,m_tx_header_1);
   return ret;
 }
 
@@ -317,7 +317,7 @@ bool WBLink::request_set_tx_channel_width(int channel_width) {
 bool WBLink::apply_frequency_and_channel_width(int frequency, int channel_width_rx, int channel_width_tx) {
     m_console->debug("apply_frequency_and_channel_width {}Mhz RX:{}Mhz TX:{}Mhz",frequency,channel_width_rx,channel_width_tx);
     const auto res=openhd::wb::set_frequency_and_channel_width_for_all_cards(frequency,channel_width_rx,m_broadcast_cards);
-    m_wb_txrx->tx_update_channel_width(channel_width_tx);
+    m_tx_header_1->update_channel_width(channel_width_tx);
     m_wb_txrx->tx_reset_stats();
     m_wb_txrx->rx_reset_stats();
     return res;
@@ -337,8 +337,8 @@ bool WBLink::apply_frequency_and_channel_width_from_settings() {
       // GND always uses 20Mhz channel width for uplink, and listens in 40Mhz mode if air reports 40Mhz
       channel_width_rx = m_gnd_curr_rx_channel_width;
       if(!(channel_width_rx==20 || channel_width_rx==40)){
-          // air reported chanel width not yet known, start on 20Mhz and go to 40Mhz if needed
-          channel_width_rx=20;
+          // air reported chanel width not yet known, start on 40Mhz and go to 20Mhz if needed
+          channel_width_rx=40;
       }
       channel_width_tx=20;
   }
@@ -382,7 +382,7 @@ bool WBLink::set_air_mcs_index(int mcs_index) {
   }
   m_settings->unsafe_get_settings().wb_air_mcs_index=mcs_index;
   m_settings->persist();
-  m_wb_txrx->tx_update_mcs_index(mcs_index);
+  m_tx_header_1->update_mcs_index(mcs_index);
   // The next rate adjustment will adjust the bitrate accordingly
   return true;
 }
@@ -480,7 +480,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  if(stbc<0 || stbc>3)return false;
 	  m_settings->unsafe_get_settings().wb_enable_stbc=stbc;
 	  m_settings->persist();
-          m_wb_txrx->tx_update_stbc(stbc);
+      m_tx_header_1->update_stbc(stbc);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_STBC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_stbc}});
@@ -489,7 +489,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  if(!validate_yes_or_no(ldpc))return false;
 	  m_settings->unsafe_get_settings().wb_enable_ldpc=ldpc;
 	  m_settings->persist();
-          m_wb_txrx->tx_update_ldpc(ldpc);
+        m_tx_header_1->update_ldpc(ldpc);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_ldpc}});
@@ -497,7 +497,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  if(!validate_yes_or_no(short_gi))return false;
 	  m_settings->unsafe_get_settings().wb_enable_short_guard=short_gi;
 	  m_settings->persist();
-          m_wb_txrx->tx_update_guard_interval(short_gi);
+      m_tx_header_1->update_guard_interval(short_gi);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
@@ -1268,7 +1268,8 @@ void WBLink::perform_management() {
         // Air: Continuously broadcast channel width
         openhd::wb::ManagementFrameData managementFrame{curr_settings.wb_frequency,(uint8_t)curr_settings.wb_air_tx_channel_width};
         auto data=openhd::wb::pack_management_frame(managementFrame);
-        m_wb_txrx->tx_inject_packet(MANAGEMENT_RADIO_PORT_AIR_TX,data.data(),data.size(), true);
+        auto radiotap_header=m_tx_header_1->thread_safe_get();
+        m_wb_txrx->tx_inject_packet(MANAGEMENT_RADIO_PORT_AIR_TX,data.data(),data.size(),radiotap_header,true);
     }else{
         // Ground: Listen on the channel width the air reports
         // (NOTE: We don't inject on this channel width though)
