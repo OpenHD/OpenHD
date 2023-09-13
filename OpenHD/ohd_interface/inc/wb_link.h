@@ -111,8 +111,8 @@ class WBLink :public OHDLink{
   // During scan, you cannot change any wb settings
   struct ScanResult{
     bool success=false;
-    uint32_t frequency =0;
-    uint32_t channel_width=0;
+    int frequency =0;
+    int channel_width=0;
   };
   // How often per second we broadcast the session key -
   // we send the session key ~2 times per second

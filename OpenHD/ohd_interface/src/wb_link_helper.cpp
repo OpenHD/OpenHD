@@ -159,4 +159,27 @@ bool openhd::wb::any_card_supports_stbc_ldpc_sgi(const std::vector<WiFiCard> &ca
     return false;
 }
 
+std::vector <openhd::WifiChannel> openhd::wb::get_scan_channels_frequencies(const WiFiCard &card, bool check_2g, bool check_5g) {
+    std::vector<openhd::WifiChannel> channels_to_scan;
+    if(check_2g && card.supports_2GHz()){
+        auto tmp=openhd::get_channels_2G();
+        OHDUtil::vec_append(channels_to_scan,tmp);
+    }
+    if(check_5g && card.supports_5GHz()){
+        auto tmp=openhd::get_channels_5G();
+        OHDUtil::vec_append(channels_to_scan,tmp);
+    }
+    return channels_to_scan;
+}
+
+std::vector<uint16_t> openhd::wb::get_scan_channels_bandwidths(bool scan_20mhz, bool scan_40mhz) {
+    std::vector<uint16_t> channel_widths_to_scan;
+    if(scan_20mhz){
+        channel_widths_to_scan.push_back(20);
+    }
+    if(scan_40mhz){
+        channel_widths_to_scan.push_back(40);
+    }
+    return channel_widths_to_scan;
+}
 

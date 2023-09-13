@@ -984,36 +984,20 @@ int64_t WBLink::get_total_tx_error_count() {
 
 WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChannelsParam& params){
   const WiFiCard& card=m_broadcast_cards.at(0);
-  std::vector<openhd::WifiChannel> channels_to_scan;
-  if(params.check_2g_channels_if_card_support && card.supports_2GHz()){
-    auto tmp=openhd::get_channels_2G();
-    OHDUtil::vec_append(channels_to_scan,tmp);
-  }
-  if(params.check_5g_channels_if_card_supports && card.supports_5GHz()){
-    auto tmp=openhd::get_channels_5G();
-    OHDUtil::vec_append(channels_to_scan,tmp);
-  }
+  const auto channels_to_scan=
+          openhd::wb::get_scan_channels_frequencies(card,params.check_2g_channels_if_card_support,params.check_5g_channels_if_card_supports);
   if(channels_to_scan.empty()){
     m_console->warn("No channels to scan, return early");
     return {};
   }
-  std::vector<uint32_t> channel_widths_to_scan;
-  if(params.check_20Mhz_channel_width_if_card_supports){
-    channel_widths_to_scan.push_back(20);
-  }
-  if(params.check_40Mhz_channel_width_if_card_supports){
-    channel_widths_to_scan.push_back(40);
-  }
+  const auto channel_widths_to_scan=
+          openhd::wb::get_scan_channels_bandwidths(params.check_20Mhz_channel_width_if_card_supports,
+                                                   params.check_40Mhz_channel_width_if_card_supports);
   if(channel_widths_to_scan.empty()){
     m_console->warn("No channel_widths to scan, return early");
     return {};
   }
-  struct TmpResult{
-    openhd::WifiChannel channel;
-    uint32_t channel_width;
-    int packet_loss_perc=0;
-  };
-  std::optional<TmpResult> tmp_scan_result=std::nullopt;
+  ScanResult result{false,0,0};
   // Note: We intentionally do not modify the persistent settings here
   m_console->debug("Channel scan N channels to scan:{} N channel widths to scan:{}",
                    channels_to_scan.size(),channel_widths_to_scan.size());
@@ -1069,29 +1053,25 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       const int air_tx_channel_width=m_air_reported_curr_channel_width;
       m_console->debug("Got {} packets on {}@{} air_reports:[{}@{}] with loss {}%",n_valid_packets,channel.frequency,channel_width,
                       air_center_frequency,air_tx_channel_width,packet_loss);
-      if(n_valid_packets>0 && air_center_frequency>0 && air_tx_channel_width>0 && channel.frequency==air_center_frequency){
+      if(n_valid_packets>0 && air_center_frequency>0 && (air_tx_channel_width==20 || air_tx_channel_width==40) && channel.frequency==air_center_frequency){
         m_console->debug("Found air unit");
-        TmpResult tmp_result{channel,channel_width,packet_loss};
-        tmp_scan_result=tmp_result;
+        result.frequency=channel.frequency;
+        result.channel_width=air_tx_channel_width;
+        result.success= true;
         done_early= true;
       }
     }
   }
-  ScanResult result{};
-  if(!tmp_scan_result.has_value()){
+  if(!result.success){
     m_console->warn("Channel scan failure, restore local settings");
     apply_frequency_and_channel_width_from_settings();
     result.success= false;
     result.frequency=0;
   }else{
-    const auto scan_result=tmp_scan_result.value();
-      m_console->debug("Channel scan success, {}@{}Mhz",scan_result.channel.frequency,scan_result.channel_width);
-    result.frequency=scan_result.channel.frequency;
-    result.channel_width=scan_result.channel_width;
-    result.success= true;
+    m_console->debug("Channel scan success, {}@{}Mhz",result.frequency,result.channel_width);
     m_settings->unsafe_get_settings().wb_frequency=result.frequency;
-    m_air_reported_curr_channel_width=result.channel_width;
     m_settings->persist();
+    m_gnd_curr_rx_channel_width=result.channel_width;
     apply_frequency_and_channel_width_from_settings();
   }
   if(m_opt_action_handler){
