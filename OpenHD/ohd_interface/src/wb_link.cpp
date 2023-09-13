@@ -77,7 +77,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       tmp_wifi_cards.push_back(wifibroadcast::WifiCard{card.device_name,wb_type});
   }
   m_tx_header_1=std::make_shared<RadiotapHeaderHolder>();
-  //m_tx_header_2=std::make_shared<RadiotapHeaderHolder>();
+  m_tx_header_2=std::make_shared<RadiotapHeaderHolder>();
   {
       const auto settings=m_settings->get_settings();
       auto mcs_index=static_cast<int>(settings.wb_air_mcs_index);
@@ -97,9 +97,9 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
               settings.wb_enable_ldpc, mcs_index,set_flag_tx_no_ack};
       m_console->debug("{}",RadiotapHeader::user_params_to_string(tmp_params));
       m_tx_header_1->thread_safe_set(tmp_params);
-      //m_tx_header_2->thread_safe_set(tmp_params);
+      m_tx_header_2->thread_safe_set(tmp_params);
   }
-  m_wb_txrx=std::make_shared<WBTxRx>(tmp_wifi_cards,txrx_options,m_tx_header_1);
+  m_wb_txrx=std::make_shared<WBTxRx>(tmp_wifi_cards,txrx_options,m_tx_header_2);
   {
       // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
       // tx radio port on air is the same as rx on ground and verse visa
@@ -383,6 +383,7 @@ bool WBLink::set_air_mcs_index(int mcs_index) {
   m_settings->unsafe_get_settings().wb_air_mcs_index=mcs_index;
   m_settings->persist();
   m_tx_header_1->update_mcs_index(mcs_index);
+  m_tx_header_2->update_mcs_index(mcs_index);
   // The next rate adjustment will adjust the bitrate accordingly
   return true;
 }
@@ -481,6 +482,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  m_settings->unsafe_get_settings().wb_enable_stbc=stbc;
 	  m_settings->persist();
       m_tx_header_1->update_stbc(stbc);
+      m_tx_header_2->update_stbc(stbc);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_STBC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_stbc}});
@@ -489,7 +491,8 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  if(!validate_yes_or_no(ldpc))return false;
 	  m_settings->unsafe_get_settings().wb_enable_ldpc=ldpc;
 	  m_settings->persist();
-        m_tx_header_1->update_ldpc(ldpc);
+      m_tx_header_1->update_ldpc(ldpc);
+      m_tx_header_2->update_ldpc(ldpc);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_ldpc}});
@@ -498,6 +501,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  m_settings->unsafe_get_settings().wb_enable_short_guard=short_gi;
 	  m_settings->persist();
       m_tx_header_1->update_guard_interval(short_gi);
+      m_tx_header_2->update_guard_interval(short_gi);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
@@ -1268,7 +1272,7 @@ void WBLink::perform_management() {
         // Air: Continuously broadcast channel width
         openhd::wb::ManagementFrameData managementFrame{curr_settings.wb_frequency,(uint8_t)curr_settings.wb_air_tx_channel_width};
         auto data=openhd::wb::pack_management_frame(managementFrame);
-        auto radiotap_header=m_tx_header_1->thread_safe_get();
+        auto radiotap_header=m_tx_header_2->thread_safe_get();
         m_wb_txrx->tx_inject_packet(MANAGEMENT_RADIO_PORT_AIR_TX,data.data(),data.size(),radiotap_header,true);
     }else{
         // Ground: Listen on the channel width the air reports
