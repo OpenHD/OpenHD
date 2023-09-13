@@ -1268,9 +1268,10 @@ void WBLink::perform_management() {
     }else{
         // Ground: Listen on the channel width the air reports
         // (NOTE: We don't inject on this channel width though)
-        if(m_gnd_curr_rx_channel_width!=m_air_reported_curr_channel_width){
-            m_console->debug("Changing LISTEN bandwidth from {} to {}",m_gnd_curr_rx_channel_width,m_air_reported_curr_channel_width);
-            m_gnd_curr_rx_channel_width=m_air_reported_curr_channel_width.load();
+        const int air_reported_channel_width=m_air_reported_curr_channel_width;
+        if(air_reported_channel_width>0 && m_gnd_curr_rx_channel_width!=air_reported_channel_width){
+            m_console->debug("GND changing LISTEN bandwidth from {} to {}",m_gnd_curr_rx_channel_width,air_reported_channel_width);
+            m_gnd_curr_rx_channel_width=air_reported_channel_width;
             const int frequency=curr_settings.wb_frequency;
             const int rx_channel_width=m_gnd_curr_rx_channel_width;
             apply_frequency_and_channel_width(frequency,rx_channel_width,20);
