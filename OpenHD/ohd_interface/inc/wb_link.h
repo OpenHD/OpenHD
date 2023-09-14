@@ -186,6 +186,7 @@ class WBLink :public OHDLink{
   std::atomic<int> m_curr_tx_power_idx=0;
   std::atomic<int> m_curr_tx_power_mw=0;
 private:
+  // 40Mhz / 20Mhz link management
   void on_new_management_packet(const uint8_t *data, int data_len);
   static constexpr auto MANAGEMENT_RADIO_PORT_AIR_TX=20;
   // We start on 40Mhz, and go down to 20Mhz if possible
