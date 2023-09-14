@@ -107,6 +107,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       const auto radio_port_rx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
       const auto radio_port_tx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
       auto cb=[this](const uint8_t* data, int data_len){
+        m_last_received_tele_packet_ts_ms=OHDUtil::steady_clock_time_epoch_ms();
         auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
         on_receive_telemetry_data(shared);
       };
