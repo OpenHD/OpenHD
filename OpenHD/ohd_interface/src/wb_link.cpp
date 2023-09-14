@@ -1249,7 +1249,7 @@ void WBLink::perform_management() {
         std::chrono::duration management_frame_interval=std::chrono::milliseconds(500); // default 2Hz
         const auto elapsed_since_last_change=OHDUtil::steady_clock_time_epoch_ms()-m_air_last_channel_width_change_timestamp_ms;
         if(elapsed_since_last_change<5*1000 || !m_is_armed){
-            // If we are not armed and the last change is recent, send in 10Hz
+            // If we are not armed or the last change is recent, send in 10Hz
             management_frame_interval=std::chrono::milliseconds(100);
         }
         const auto elapsed_since_last_management_frame=std::chrono::steady_clock::now()-m_air_last_management_frame;
