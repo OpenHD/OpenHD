@@ -281,7 +281,7 @@ bool WBLink::request_set_frequency(int frequency) {
       m_settings->persist();
       if(m_profile.is_air){
           // Wait a bit for the ack
-          std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
+          //std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
       }
      apply_frequency_and_channel_width_from_settings();
   },std::chrono::steady_clock::now());
@@ -327,7 +327,7 @@ bool WBLink::apply_frequency_and_channel_width_from_settings() {
   uint8_t channel_width_tx=-1;
   if(m_profile.is_air){
       // Solved: can we send in 40Mhz but listen in 20Mhz ? NO
-      // But we can obviosly receive 20Mhz packets while in 40Mhz mode
+      // But we can obviously receive 20Mhz packets while in 40Mhz mode
       channel_width_tx=static_cast<int>(settings.wb_air_tx_channel_width);
       channel_width_rx=channel_width_tx;
   }else{
