@@ -9,7 +9,7 @@
 
 #include "mav_helper.h"
 #include "openhd_temporary_air_or_ground.h"
-#include "openhd_util_time.hpp"
+#include "openhd_util.h"
 
 GroundTelemetry::GroundTelemetry(OHDPlatform platform,
                                  std::shared_ptr<openhd::ActionHandler> opt_action_handler):
@@ -174,7 +174,7 @@ void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLog
       // We can't keep up with the wanted loop interval
       // We can't keep up with the wanted loop interval
       m_console->debug("Warning GroundTelemetry cannot keep up with the wanted loop interval. Took {}",
-                       openhd::util::time::R(loopDelta));
+                       OHDUtil::time_readable(loopDelta));
     }else{
       const auto sleepTime=loop_intervall-loopDelta;
       // send out in X second intervals

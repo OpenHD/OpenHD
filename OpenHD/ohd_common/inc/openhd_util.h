@@ -4,6 +4,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <chrono>
 
 namespace OHDUtil {
 
@@ -152,6 +153,11 @@ int calculate_progress_perc(int progress,int total_count);
 
 int steady_clock_time_epoch_ms();
 
+// R stands for readable. Convert a std::chrono::duration into a readable format.
+// Readable format is somewhat arbitrary, in this case readable means that for example
+// 1second has 'ms' resolution since for values that big ns resolution probably isn't needed
+std::string time_readable(const std::chrono::steady_clock::duration &dur);
+std::string time_readable_ns(uint64_t nanoseconds);
 }
 
 #endif

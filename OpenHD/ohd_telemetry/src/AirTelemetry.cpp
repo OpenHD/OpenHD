@@ -9,7 +9,7 @@
 #include "mav_helper.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "openhd_temporary_air_or_ground.h"
-#include "openhd_util_time.hpp"
+#include "openhd_util.h"
 
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): m_platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   m_console = openhd::log::create_or_get("air_tele");
@@ -125,7 +125,7 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
     if(loopDelta>loop_intervall){
       // We can't keep up with the wanted loop interval
       m_console->debug("Warning AirTelemetry cannot keep up with the wanted loop interval. Took {}",
-                       openhd::util::time::R(loopDelta));
+                       OHDUtil::time_readable(loopDelta));
     }else{
       const auto sleepTime=loop_intervall-loopDelta;
       // send out in X second intervals

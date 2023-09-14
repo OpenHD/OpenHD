@@ -15,7 +15,7 @@
 #include "rtp_eof_helper.h"
 #include "gst_recording_demuxer.h"
 
-#include "openhd_util_time.hpp"
+#include "openhd_util.h"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
                                  std::shared_ptr<OHDLink> i_transmit_video,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
@@ -319,7 +319,7 @@ void GStreamerStream::stop_cleanup_restart() {
   setup();
   start();
   const auto elapsed=std::chrono::steady_clock::now()-before;
-  m_console->debug("stop_cleanup_restart took {}",openhd::util::time::R(elapsed));
+  m_console->debug("stop_cleanup_restart took {}",OHDUtil::time_readable(elapsed));
 }
 
 std::string GStreamerStream::createDebug(){
