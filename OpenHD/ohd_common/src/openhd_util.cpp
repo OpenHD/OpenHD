@@ -16,6 +16,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <chrono>
 
 #include "openhd_spdlog.h"
 #include "openhd_util_filesystem.h"
@@ -287,5 +288,11 @@ int OHDUtil::calculate_progress_perc(int progress, int total_count) {
 bool OHDUtil::get_nth_bit(long number, int position) {
     const bool bit_status = (number >> position) & 1;
     return bit_status;
+}
+
+int OHDUtil::steady_clock_time_epoch_ms() {
+    const auto now=std::chrono::steady_clock::now();
+    const std::chrono::milliseconds now_ms=std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+    return now_ms.count();
 }
 

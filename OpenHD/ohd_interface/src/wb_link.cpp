@@ -24,6 +24,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       m_opt_action_handler(std::move(opt_action_handler))
 {
   m_console = openhd::log::create_or_get("wb_streams");
+  m_air_last_channel_width_change_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
   assert(m_console);
   m_any_card_supports_injection= false;
   for(const auto& card:m_broadcast_cards){
@@ -305,6 +306,7 @@ bool WBLink::request_set_tx_channel_width(int channel_width) {
     auto work_item=std::make_shared<WorkItem>(fmt::format("SET_CHWIDTH:{}",channel_width),[this,channel_width](){
         m_settings->unsafe_get_settings().wb_air_tx_channel_width=channel_width;
         m_settings->persist();
+        m_air_last_channel_width_change_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
         std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
         apply_frequency_and_channel_width_from_settings();
     },std::chrono::steady_clock::now());
@@ -1242,8 +1244,18 @@ void WBLink::on_new_management_packet(const uint8_t *data, const int data_len) {
 
 void WBLink::perform_management() {
     const auto curr_settings=m_settings->get_settings();
-    if(m_profile.is_air){
-        // Air: Continuously broadcast channel width
+    if(m_profile.is_air){// Air: Continuously broadcast channel width
+        // Calculate the interval in which we broadcast the channel width management frame
+        std::chrono::duration management_frame_interval=std::chrono::milliseconds(500); // default 2Hz
+        const auto elapsed_since_last_change=OHDUtil::steady_clock_time_epoch_ms()-m_air_last_channel_width_change_timestamp_ms;
+        if(elapsed_since_last_change<5*1000 || !m_is_armed){
+            // If we are not armed and the last change is recent, send in 10Hz
+            management_frame_interval=std::chrono::milliseconds(100);
+        }
+        const auto elapsed_since_last_management_frame=std::chrono::steady_clock::now()-m_air_last_management_frame;
+        if(elapsed_since_last_management_frame<management_frame_interval){
+            return;
+        }
         openhd::wb::ManagementFrameData managementFrame{curr_settings.wb_frequency,(uint8_t)curr_settings.wb_air_tx_channel_width};
         auto data=openhd::wb::pack_management_frame(managementFrame);
         auto radiotap_header=m_tx_header_2->thread_safe_get();

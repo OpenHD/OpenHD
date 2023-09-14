@@ -150,6 +150,8 @@ float map_int_percentage_to_minus1_to_1(int percentage);
 
 int calculate_progress_perc(int progress,int total_count);
 
+int steady_clock_time_epoch_ms();
+
 }
 
 #endif

@@ -192,6 +192,8 @@ private:
   std::atomic<int> m_gnd_curr_rx_channel_width=40;
   std::atomic<int> m_air_reported_curr_frequency=-1;
   std::atomic<int> m_air_reported_curr_channel_width=-1;
+  std::atomic<int> m_air_last_channel_width_change_timestamp_ms;
+  std::chrono::steady_clock::time_point m_air_last_management_frame=std::chrono::steady_clock::now();
 };
 
 #endif
