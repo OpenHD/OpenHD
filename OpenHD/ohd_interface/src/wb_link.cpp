@@ -107,7 +107,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       const auto radio_port_rx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
       const auto radio_port_tx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
       auto cb=[this](const uint8_t* data, int data_len){
-        m_last_received_tele_packet_ts_ms=OHDUtil::steady_clock_time_epoch_ms();
+        m_last_received_packet_ts_ms=OHDUtil::steady_clock_time_epoch_ms();
         auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
         on_receive_telemetry_data(shared);
       };
@@ -672,13 +672,17 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_tx_bps=txStats.curr_bits_per_second_excluding_overhead;
   stats.monitor_mode_link.curr_rx_pps=rxStats.curr_packets_per_second;
   stats.monitor_mode_link.curr_rx_bps=rxStats.curr_bits_per_second;
-  const auto bitfield_stbc_lpdc_sg= openhd::link_statistics::write_stbc_lpdc_shortguard_bitfield(curr_settings.wb_enable_stbc,curr_settings.wb_enable_ldpc,curr_settings.wb_enable_short_guard);
-  stats.monitor_mode_link.curr_tx_stbc_lpdc_shortguard_bitfield=bitfield_stbc_lpdc_sg;
   stats.monitor_mode_link.curr_pollution_perc=rxStats.curr_link_pollution_perc;
+  const auto elapsed_last_rx_packet=OHDUtil::steady_clock_time_epoch_ms()-m_last_received_packet_ts_ms;
+  const bool curr_rx_last_packet_status_good= elapsed_since_last<=std::chrono::seconds(10);
+  const auto bitfield=openhd::link_statistics::MonitorModeLinkBitfield{
+          (bool)curr_settings.wb_enable_stbc,(bool)curr_settings.wb_enable_ldpc,(bool)curr_settings.wb_enable_short_guard,
+          (bool)curr_rx_last_packet_status_good
+  };
+  stats.monitor_mode_link.bitfield=openhd::link_statistics::write_monitor_link_bitfield(bitfield);
   //m_console->debug("{}",WBTxRx::tx_stats_to_string(txStats));
   //m_console->debug("{}",WBTxRx::rx_stats_to_string(rxStats));
   //m_console->debug("Pollution: {}",rxStats.curr_link_pollution_perc);
-
   // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
   // only populate actually used cards

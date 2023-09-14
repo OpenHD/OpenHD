@@ -45,7 +45,7 @@ struct StatsMonitorModeLink{
   int8_t tx_operating_mode = 0;
   uint16_t curr_rate_kbits=0;
   uint8_t curr_n_rate_adjustments=0;
-  uint8_t curr_tx_stbc_lpdc_shortguard_bitfield;
+  uint8_t bitfield;
   uint8_t curr_pollution_perc=0;
 };
 
@@ -133,22 +133,22 @@ struct StatsAirGround{
 
 typedef std::function<void(StatsAirGround all_stats)> STATS_CALLBACK;
 
-// We pack those 3 into a single uint8_t in the mavlink msg
-struct StbcLpdcShortGuardBitfield {
+// Bit field for boolean only value(s)
+struct MonitorModeLinkBitfield {
   unsigned int stbc:1;
   unsigned int lpdc:1;
   unsigned int short_guard:1;
-  unsigned int unused:5;
+  unsigned int curr_rx_last_packet_status_good:1;
+  unsigned int unused:4;
 }__attribute__ ((packed));
-static_assert(sizeof(StbcLpdcShortGuardBitfield)==1);
-static uint8_t write_stbc_lpdc_shortguard_bitfield(bool stbc, bool lpdc,bool short_guard){
-  StbcLpdcShortGuardBitfield bitfield{stbc,lpdc,short_guard,0};
+static_assert(sizeof(MonitorModeLinkBitfield)==1);
+static uint8_t write_monitor_link_bitfield(const MonitorModeLinkBitfield& bitfield){
   uint8_t ret;
   std::memcpy(&ret,(uint8_t*)&bitfield,1);
   return ret;
 }
-static StbcLpdcShortGuardBitfield get_stbc_lpdc_shortguard_bitfield(uint8_t bitfield){
-  StbcLpdcShortGuardBitfield ret{};
+static MonitorModeLinkBitfield parse_monitor_link_bitfield(uint8_t bitfield){
+    MonitorModeLinkBitfield ret{};
   std::memcpy((uint8_t*)&ret,&bitfield,1);
   return ret;
 }

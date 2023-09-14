@@ -185,7 +185,7 @@ class WBLink :public OHDLink{
   // We store tx power for easy access in stats
   std::atomic<int> m_curr_tx_power_idx=0;
   std::atomic<int> m_curr_tx_power_mw=0;
-  std::atomic<int> m_last_received_tele_packet_ts_ms=OHDUtil::steady_clock_time_epoch_ms();
+  std::atomic<int> m_last_received_packet_ts_ms=OHDUtil::steady_clock_time_epoch_ms();
 private:
   // 40Mhz / 20Mhz link management
   void on_new_management_packet(const uint8_t *data, int data_len);
