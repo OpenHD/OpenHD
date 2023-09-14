@@ -326,10 +326,10 @@ bool WBLink::apply_frequency_and_channel_width_from_settings() {
   uint8_t channel_width_rx=-1;
   uint8_t channel_width_tx=-1;
   if(m_profile.is_air){
-      // TODO can we send in 40Mhz but listen in 20Mhz ?
-      // AIR always listens in 20Mhz mode, and optionally transmits non-management data in 40Mhz
-      channel_width_rx=20;
+      // Solved: can we send in 40Mhz but listen in 20Mhz ? NO
+      // But we can obviosly receive 20Mhz packets while in 40Mhz mode
       channel_width_tx=static_cast<int>(settings.wb_air_tx_channel_width);
+      channel_width_rx=channel_width_tx;
   }else{
       // GND always uses 20Mhz channel width for uplink, and listens in 40Mhz unless air reports 20Mhz
       // (in which case we can go down to 20Mhz listen, which gives us better sensitivity)
@@ -1229,7 +1229,7 @@ void WBLink::on_new_management_packet(const uint8_t *data, const int data_len) {
         const auto opt_mngmt=openhd::wb::parse_data_management(data,data_len);
         if(opt_mngmt.has_value()){
             const auto packet=opt_mngmt.value();
-            m_console->debug("Got MNGMT {}",openhd::wb::management_frame_to_string(packet));
+            //m_console->debug("Got MNGMT {}",openhd::wb::management_frame_to_string(packet));
             if(packet.bandwidth_mhz==20 || packet.bandwidth_mhz==40){
                 m_air_reported_curr_channel_width=packet.bandwidth_mhz;
                 m_air_reported_curr_frequency=packet.center_frequency_mhz;
