@@ -14,7 +14,6 @@
 #include "wb_link_helper.h"
 #include "wifi_card.h"
 #include "wb_link_rate_helper.hpp"
-#include "wb_link_manager.h"
 
 WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> broadcast_cards,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
     : m_profile(std::move(profile)),
@@ -24,7 +23,6 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       m_opt_action_handler(std::move(opt_action_handler))
 {
   m_console = openhd::log::create_or_get("wb_streams");
-  m_air_last_channel_width_change_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
   assert(m_console);
   m_any_card_supports_injection= false;
   for(const auto& card:m_broadcast_cards){
@@ -142,11 +140,12 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   apply_frequency_and_channel_width_from_settings();
   apply_txpower();
   if(m_profile.is_ground()){
-      auto cb_packet=[this](uint64_t nonce,int wlan_index,const uint8_t *data, const int data_len){
-          this->on_new_management_packet(data,data_len);
-      };
-      auto mgmt_handler=std::make_shared<WBTxRx::StreamRxHandler>(MANAGEMENT_RADIO_PORT_AIR_TX,cb_packet, nullptr);
-      m_wb_txrx->rx_register_stream_handler(mgmt_handler);
+      m_management_gnd=std::make_unique<ManagementGround>(m_wb_txrx);
+  }else{
+      m_management_air=std::make_unique<ManagementAir>(m_wb_txrx);
+      m_management_air->m_curr_channel_width_mhz=m_settings->get_settings().wb_air_tx_channel_width;
+      m_management_air->m_curr_frequency_mhz=m_settings->get_settings().wb_frequency;
+      m_management_air->m_tx_header_2=m_tx_header_2;
   }
   m_wb_txrx->start_receiving();
   m_work_thread_run = true;
@@ -281,9 +280,10 @@ bool WBLink::request_set_frequency(int frequency) {
   auto work_item=std::make_shared<WorkItem>(fmt::format("SET_FREQ:{}",frequency),[this,frequency](){
       m_settings->unsafe_get_settings().wb_frequency=frequency;
       m_settings->persist();
+      if(m_profile.is_air)m_management_air->m_curr_frequency_mhz=frequency;
       if(m_profile.is_air){
           // Wait a bit for the ack
-          //std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
+          std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
       }
      apply_frequency_and_channel_width_from_settings();
   },std::chrono::steady_clock::now());
@@ -307,7 +307,8 @@ bool WBLink::request_set_tx_channel_width(int channel_width) {
     auto work_item=std::make_shared<WorkItem>(fmt::format("SET_CHWIDTH:{}",channel_width),[this,channel_width](){
         m_settings->unsafe_get_settings().wb_air_tx_channel_width=channel_width;
         m_settings->persist();
-        m_air_last_channel_width_change_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
+        if(m_profile.is_air)m_management_air->m_curr_channel_width_mhz=channel_width;
+        m_management_air->m_last_channel_width_change_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
         std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
         apply_frequency_and_channel_width_from_settings();
     },std::chrono::steady_clock::now());
@@ -1036,8 +1037,8 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
       m_console->debug("Scanning [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
       reset_all_rx_stats();
-      m_air_reported_curr_channel_width=-1;
-      m_air_reported_curr_frequency=-1;
+      m_management_gnd->m_air_reported_curr_frequency=-1;
+      m_management_gnd->m_air_reported_curr_channel_width=-1;
       std::this_thread::sleep_for(std::chrono::seconds(2));
       const auto n_likely_openhd_packets=m_wb_txrx->get_rx_stats().curr_n_likely_openhd_packets;
       // If we got what looks to be openhd packets, sleep a bit more such that we can reliably get a management frame
@@ -1045,7 +1046,11 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         m_console->debug("Got {} likely openhd packets, sleep a bit more",n_likely_openhd_packets);
         const auto begin_long_listen=std::chrono::steady_clock::now();
         while (std::chrono::steady_clock::now()-begin_long_listen<std::chrono::seconds(5)){
-            if(m_air_reported_curr_frequency>0 && m_air_reported_curr_channel_width>0){
+            const int air_center_frequency=m_management_gnd->m_air_reported_curr_frequency;
+            const int air_tx_channel_width=m_management_gnd->m_air_reported_curr_channel_width;
+            const bool has_received_management=air_center_frequency>0
+                    && air_tx_channel_width>0;
+            if(has_received_management){
                 break;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -1053,8 +1058,8 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       }
       const auto packet_loss=m_wb_txrx->get_rx_stats().curr_lowest_packet_loss;
       const auto n_valid_packets=m_wb_txrx->get_rx_stats().count_p_valid;
-      const int air_center_frequency=m_air_reported_curr_frequency;
-      const int air_tx_channel_width=m_air_reported_curr_channel_width;
+      const int air_center_frequency=m_management_gnd->m_air_reported_curr_frequency;
+      const int air_tx_channel_width=m_management_gnd->m_air_reported_curr_channel_width;
       m_console->debug("Got {} packets on {}@{} air_reports:[{}@{}] with loss {}%",n_valid_packets,channel.frequency,channel_width,
                       air_center_frequency,air_tx_channel_width,packet_loss);
       if(n_valid_packets>0 && air_center_frequency>0 && (air_tx_channel_width==20 || air_tx_channel_width==40) && channel.frequency==air_center_frequency){
@@ -1231,44 +1236,14 @@ void WBLink::update_arming_state(bool armed) {
   apply_txpower();
 }
 
-void WBLink::on_new_management_packet(const uint8_t *data, const int data_len) {
-    if(m_profile.is_ground()){
-        const auto opt_mngmt=openhd::wb::parse_data_management(data,data_len);
-        if(opt_mngmt.has_value()){
-            const auto packet=opt_mngmt.value();
-            //m_console->debug("Got MNGMT {}",openhd::wb::management_frame_to_string(packet));
-            if(packet.bandwidth_mhz==20 || packet.bandwidth_mhz==40){
-                m_air_reported_curr_channel_width=packet.bandwidth_mhz;
-                m_air_reported_curr_frequency=packet.center_frequency_mhz;
-            }else{
-                m_console->warn("Air reports invalid bandwidth {}",packet.bandwidth_mhz);
-            }
-        }
-    }
-}
-
 void WBLink::perform_management() {
     const auto curr_settings=m_settings->get_settings();
-    if(m_profile.is_air){// Air: Continuously broadcast channel width
-        // Calculate the interval in which we broadcast the channel width management frame
-        std::chrono::duration management_frame_interval=std::chrono::milliseconds(500); // default 2Hz
-        const auto elapsed_since_last_change=OHDUtil::steady_clock_time_epoch_ms()-m_air_last_channel_width_change_timestamp_ms;
-        if(elapsed_since_last_change<5*1000 || !m_is_armed){
-            // If we are not armed or the last change is recent, send in 10Hz
-            management_frame_interval=std::chrono::milliseconds(100);
-        }
-        const auto elapsed_since_last_management_frame=std::chrono::steady_clock::now()-m_air_last_management_frame;
-        if(elapsed_since_last_management_frame<management_frame_interval){
-            return;
-        }
-        openhd::wb::ManagementFrameData managementFrame{curr_settings.wb_frequency,(uint8_t)curr_settings.wb_air_tx_channel_width};
-        auto data=openhd::wb::pack_management_frame(managementFrame);
-        auto radiotap_header=m_tx_header_2->thread_safe_get();
-        m_wb_txrx->tx_inject_packet(MANAGEMENT_RADIO_PORT_AIR_TX,data.data(),data.size(),radiotap_header,true);
+    if(m_profile.is_air){
+        //
     }else{
-        // Ground: Listen on the channel width the air reports
-        // (NOTE: We don't inject on this channel width though)
-        const int air_reported_channel_width=m_air_reported_curr_channel_width;
+        // Ground: Listen on the channel width the air reports (always works due to management always on 20Mhz)
+        // And switch "up" to 40Mhz if needed
+        const int air_reported_channel_width=m_management_gnd->m_air_reported_curr_channel_width;
         if(air_reported_channel_width>0 && m_gnd_curr_rx_channel_width!=air_reported_channel_width){
             m_console->debug("GND changing LISTEN bandwidth from {} to {}",m_gnd_curr_rx_channel_width,air_reported_channel_width);
             m_gnd_curr_rx_channel_width=air_reported_channel_width;

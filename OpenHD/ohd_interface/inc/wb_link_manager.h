@@ -5,26 +5,48 @@
 #ifndef OPENHD_WBLINKMANAGER_H
 #define OPENHD_WBLINKMANAGER_H
 
+#include <utility>
 #include <variant>
 #include <optional>
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <memory>
+#include "../../lib/wifibroadcast/src/WBTxRx.h"
 
-namespace openhd::wb{
+class ManagementAir{
+public:
+    explicit ManagementAir(std::shared_ptr<WBTxRx> wb_tx_rx);
+    void start();
+    ~ManagementAir();
+    // TODO dirty
+    std::shared_ptr<RadiotapHeaderHolder> m_tx_header_2;
+public:
+    std::atomic<uint32_t> m_curr_frequency_mhz;
+    std::atomic<uint8_t> m_curr_channel_width_mhz;
+    std::atomic<int> m_last_channel_width_change_timestamp_ms;
+private:
+    void loop();
+    std::shared_ptr<WBTxRx> m_wb_txrx;
+    std::shared_ptr<spdlog::logger> m_console;
+    bool m_tx_thread_run= true;
+    std::unique_ptr<std::thread> m_tx_thread;
+    std::chrono::steady_clock::time_point m_air_last_management_frame=std::chrono::steady_clock::now();
+};
 
-static constexpr uint8_t MNGMNT_PACKET_ID_CHANNEL_WIDTH=0;
-
-struct ManagementFrameData{
-    uint32_t center_frequency_mhz;
-    uint8_t bandwidth_mhz;
-}__attribute__ ((packed));
-std::vector<uint8_t> pack_management_frame(const ManagementFrameData& data);
-std::optional<ManagementFrameData> parse_data_management(const uint8_t *data, int data_len);
-std::string management_frame_to_string(const ManagementFrameData& data);
-
-
-}
+class ManagementGround{
+public:
+    explicit ManagementGround(std::shared_ptr<WBTxRx> wb_tx_rx);
+    ~ManagementGround();
+public:
+    std::atomic<int> m_air_reported_curr_frequency=-1;
+    std::atomic<int> m_air_reported_curr_channel_width=-1;
+private:
+    std::shared_ptr<WBTxRx> m_wb_txrx;
+    std::shared_ptr<spdlog::logger> m_console;
+    // 40Mhz / 20Mhz link management
+    void on_new_management_packet(const uint8_t *data, int data_len);
+};
 
 
 #endif //OPENHD_WBLINKMANAGER_H

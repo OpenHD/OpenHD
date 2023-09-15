@@ -20,6 +20,7 @@
 #include "wb_link_settings.hpp"
 #include "wifi_card.h"
 #include "wb_link_work_item.hpp"
+#include "wb_link_manager.h"
 
 /**
  * This class takes a list of cards supporting monitor mode (only 1 card on air) and
@@ -188,14 +189,10 @@ class WBLink :public OHDLink{
   std::atomic<int> m_last_received_packet_ts_ms=OHDUtil::steady_clock_time_epoch_ms();
 private:
   // 40Mhz / 20Mhz link management
-  void on_new_management_packet(const uint8_t *data, int data_len);
-  static constexpr auto MANAGEMENT_RADIO_PORT_AIR_TX=20;
+  std::unique_ptr<ManagementAir> m_management_air=nullptr;
+  std::unique_ptr<ManagementGround> m_management_gnd=nullptr;
   // We start on 40Mhz, and go down to 20Mhz if possible
   std::atomic<int> m_gnd_curr_rx_channel_width=40;
-  std::atomic<int> m_air_reported_curr_frequency=-1;
-  std::atomic<int> m_air_reported_curr_channel_width=-1;
-  std::atomic<int> m_air_last_channel_width_change_timestamp_ms;
-  std::chrono::steady_clock::time_point m_air_last_management_frame=std::chrono::steady_clock::now();
 };
 
 #endif
