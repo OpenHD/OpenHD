@@ -14,6 +14,13 @@
 #include <memory>
 #include "../../lib/wifibroadcast/src/WBTxRx.h"
 
+/**
+ * Quite a lot of complicated code to implement 40Mhz without sync of air and ground
+ * worth it, though ;)
+ * We have public std::atomic members, since the data only needs to be accessed/written atomically from the wb_link
+ * worker thread.
+ */
+
 class ManagementAir{
 public:
     explicit ManagementAir(std::shared_ptr<WBTxRx> wb_tx_rx,int initial_freq_mhz,int inital_channel_width_mhz);
