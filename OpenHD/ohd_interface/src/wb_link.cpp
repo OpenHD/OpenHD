@@ -188,6 +188,8 @@ WBLink::~WBLink() {
     m_work_thread_run =false;
     m_work_thread->join();
   }
+  m_management_air= nullptr;
+  m_management_gnd= nullptr;
   if(m_opt_action_handler){
       m_opt_action_handler->action_on_any_rc_channel_register(nullptr);
       m_opt_action_handler->m_action_tx_power_when_armed= nullptr;
@@ -1238,9 +1240,7 @@ void WBLink::update_arming_state(bool armed) {
 
 void WBLink::perform_management() {
     const auto curr_settings=m_settings->get_settings();
-    if(m_profile.is_air){
-        //
-    }else{
+    if(m_profile.is_ground()){
         // Ground: Listen on the channel width the air reports (always works due to management always on 20Mhz)
         // And switch "up" to 40Mhz if needed
         const int air_reported_channel_width=m_management_gnd->m_air_reported_curr_channel_width;
