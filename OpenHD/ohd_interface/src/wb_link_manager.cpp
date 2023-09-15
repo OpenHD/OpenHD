@@ -92,7 +92,7 @@ void ManagementGround::on_new_management_packet(const uint8_t *data, int data_le
     const auto opt_mngmt=openhd::wb::parse_data_management(data,data_len);
     if(opt_mngmt.has_value()){
         const auto packet=opt_mngmt.value();
-        //m_console->debug("Got MNGMT {}",openhd::wb::management_frame_to_string(packet));
+        m_console->debug("Got MNGMT {}",openhd::wb::management_frame_to_string(packet));
         if(packet.bandwidth_mhz==20 || packet.bandwidth_mhz==40){
             m_air_reported_curr_channel_width=packet.bandwidth_mhz;
             m_air_reported_curr_frequency=packet.center_frequency_mhz;
