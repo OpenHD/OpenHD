@@ -96,7 +96,10 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
               settings.wb_enable_ldpc, mcs_index,set_flag_tx_no_ack};
       m_console->debug("{}",RadiotapHeader::user_params_to_string(tmp_params));
       m_tx_header_1->thread_safe_set(tmp_params);
-      m_tx_header_2->thread_safe_set(tmp_params);
+      auto tmp_params2= RadiotapHeader::UserSelectableParams{
+              20, settings.wb_enable_short_guard,settings.wb_enable_stbc,
+              settings.wb_enable_ldpc, mcs_index,set_flag_tx_no_ack};
+      m_tx_header_2->thread_safe_set(tmp_params2);
   }
   m_wb_txrx=std::make_shared<WBTxRx>(tmp_wifi_cards,txrx_options,m_tx_header_2);
   {
