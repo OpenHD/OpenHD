@@ -75,6 +75,7 @@ void ManagementAir::loop() {
         auto data=openhd::wb::pack_management_frame(managementFrame);
         auto radiotap_header=m_tx_header_2->thread_safe_get();
         m_wb_txrx->tx_inject_packet(MANAGEMENT_RADIO_PORT_AIR_TX,data.data(),data.size(),radiotap_header,true);
+        m_console->debug("Sent mngmt");
         std::this_thread::sleep_for(std::chrono::milliseconds(management_frame_interval));
     }
 }
