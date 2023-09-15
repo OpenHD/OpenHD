@@ -148,6 +148,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       m_management_air->m_tx_header_2=m_tx_header_2;
   }
   m_wb_txrx->start_receiving();
+  if(m_management_air)m_management_air->start();
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
   if(m_opt_action_handler){
