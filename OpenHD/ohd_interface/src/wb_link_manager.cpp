@@ -91,10 +91,15 @@ void ManagementAir::loop() {
 
 void ManagementAir::on_new_management_packet(const uint8_t *data, int data_len) {
     if(data_len== sizeof(DataManagementSensitivityStatus) + 1 && data[0] == MNGMNT_PACKET_ID_SENSITVITY_STATUS){
+        m_last_received_packet_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
         DataManagementSensitivityStatus packet{};
         std::memcpy(&packet,&data[1],data_len);
         // TODO
     }
+}
+
+int ManagementAir::get_last_received_packet_ts_ms() {
+    return m_last_received_packet_timestamp_ms;
 }
 
 ManagementGround::ManagementGround(std::shared_ptr<WBTxRx> wb_tx_rx) :m_wb_txrx(std::move(wb_tx_rx)){
@@ -140,5 +145,9 @@ void ManagementGround::loop() {
         //m_console->debug("Sent sensitivity management frame");
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+}
+
+int ManagementGround::get_last_received_packet_ts_ms() {
+    return m_last_received_packet_timestamp_ms;
 }
 

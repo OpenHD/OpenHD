@@ -34,6 +34,7 @@ public:
     std::atomic<uint32_t> m_curr_frequency_mhz;
     std::atomic<uint8_t> m_curr_channel_width_mhz;
     std::atomic<int> m_last_channel_width_change_timestamp_ms;
+    int get_last_received_packet_ts_ms();
 private:
     void loop();
     void on_new_management_packet(const uint8_t *data, int data_len);
@@ -42,6 +43,7 @@ private:
     std::atomic<bool> m_tx_thread_run= true;
     std::unique_ptr<std::thread> m_tx_thread;
     std::chrono::steady_clock::time_point m_air_last_management_frame=std::chrono::steady_clock::now();
+    std::atomic<int> m_last_received_packet_timestamp_ms=0;
 };
 
 class ManagementGround{
@@ -56,12 +58,14 @@ public:
 public:
     std::atomic<int> m_air_reported_curr_frequency=-1;
     std::atomic<int> m_air_reported_curr_channel_width=-1;
+    int get_last_received_packet_ts_ms();
 private:
     void loop();
     std::shared_ptr<WBTxRx> m_wb_txrx;
     std::shared_ptr<spdlog::logger> m_console;
     std::atomic<bool> m_tx_thread_run= true;
     std::unique_ptr<std::thread> m_tx_thread;
+    std::atomic<int> m_last_received_packet_timestamp_ms=0;
     // 40Mhz / 20Mhz link management
     void on_new_management_packet(const uint8_t *data, int data_len);
 };

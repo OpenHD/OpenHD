@@ -678,7 +678,10 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_rx_pps=rxStats.curr_packets_per_second;
   stats.monitor_mode_link.curr_rx_bps=rxStats.curr_bits_per_second;
   stats.monitor_mode_link.curr_pollution_perc=rxStats.curr_link_pollution_perc;
-  const auto elapsed_since_last_rx_packet=OHDUtil::steady_clock_time_epoch_ms()-m_last_received_packet_ts_ms;
+  const int tmp_last_management_packet_ts=m_profile.is_air ? m_management_air->get_last_received_packet_ts_ms():
+          m_management_gnd->get_last_received_packet_ts_ms();
+  const int last_received_packet_ts=std::max(m_last_received_packet_ts_ms.load(),tmp_last_management_packet_ts);
+  const auto elapsed_since_last_rx_packet=OHDUtil::steady_clock_time_epoch_ms()-last_received_packet_ts;
   const bool curr_rx_last_packet_status_good= elapsed_since_last_rx_packet<=5*1000;
   const auto bitfield=openhd::link_statistics::MonitorModeLinkBitfield{
           (bool)curr_settings.wb_enable_stbc,(bool)curr_settings.wb_enable_ldpc,(bool)curr_settings.wb_enable_short_guard,
