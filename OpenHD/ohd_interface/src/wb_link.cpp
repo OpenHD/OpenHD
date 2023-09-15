@@ -142,13 +142,12 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   if(m_profile.is_ground()){
       m_management_gnd=std::make_unique<ManagementGround>(m_wb_txrx);
   }else{
-      m_management_air=std::make_unique<ManagementAir>(m_wb_txrx);
-      m_management_air->m_curr_channel_width_mhz=m_settings->get_settings().wb_air_tx_channel_width;
-      m_management_air->m_curr_frequency_mhz=m_settings->get_settings().wb_frequency;
+      m_management_air=std::make_unique<ManagementAir>(m_wb_txrx,m_settings->get_settings().wb_frequency,
+                                                       m_settings->get_settings().wb_air_tx_channel_width);
       m_management_air->m_tx_header_2=m_tx_header_2;
+      m_management_air->start();
   }
   m_wb_txrx->start_receiving();
-  if(m_management_air)m_management_air->start();
   m_work_thread_run = true;
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
   if(m_opt_action_handler){

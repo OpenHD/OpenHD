@@ -41,9 +41,13 @@ static std::string management_frame_to_string(const ManagementFrameData &data) {
 
 }
 
-ManagementAir::ManagementAir(std::shared_ptr<WBTxRx> wb_tx_rx) :m_wb_txrx(std::move(wb_tx_rx)){
+ManagementAir::ManagementAir(std::shared_ptr<WBTxRx> wb_tx_rx,int initial_freq_mhz,int inital_channel_width_mhz)
+:m_wb_txrx(std::move(wb_tx_rx)),
+m_curr_frequency_mhz(initial_freq_mhz),
+m_curr_channel_width_mhz(inital_channel_width_mhz),
+m_last_channel_width_change_timestamp_ms{OHDUtil::steady_clock_time_epoch_ms()}
+{
     m_console = openhd::log::create_or_get("wb_mngmt_air");
-    m_last_channel_width_change_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
 }
 
 void ManagementAir::start() {
@@ -61,7 +65,7 @@ void ManagementAir::loop() {
     while (m_tx_thread_run){
         // Air: Continuously broadcast channel width
         // Calculate the interval in which we broadcast the channel width management frame
-        std::chrono::duration management_frame_interval=std::chrono::milliseconds(500); // default 2Hz
+        auto management_frame_interval=std::chrono::milliseconds(500); // default 2Hz
         const auto elapsed_since_last_change=OHDUtil::steady_clock_time_epoch_ms()-m_last_channel_width_change_timestamp_ms;
         if(elapsed_since_last_change<5*1000){
             // If the last change is recent, send in higher interval (10Hz)
@@ -69,15 +73,14 @@ void ManagementAir::loop() {
         }
         const auto elapsed_since_last_management_frame=std::chrono::steady_clock::now()-m_air_last_management_frame;
         if(elapsed_since_last_management_frame<management_frame_interval){
-            return;
+            continue;
         }
         openhd::wb::ManagementFrameData managementFrame{m_curr_frequency_mhz.load(),m_curr_channel_width_mhz.load()};
         auto data=openhd::wb::pack_management_frame(managementFrame);
         auto radiotap_header=m_tx_header_2->thread_safe_get();
         m_wb_txrx->tx_inject_packet(MANAGEMENT_RADIO_PORT_AIR_TX,data.data(),data.size(),radiotap_header,true);
-        m_console->debug("Sent mngmt");
-        //std::this_thread::sleep_for(std::chrono::milliseconds(management_frame_interval));
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(management_frame_interval);
+        //std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 

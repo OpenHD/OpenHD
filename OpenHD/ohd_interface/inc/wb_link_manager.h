@@ -16,9 +16,11 @@
 
 class ManagementAir{
 public:
-    explicit ManagementAir(std::shared_ptr<WBTxRx> wb_tx_rx);
-    void start();
+    explicit ManagementAir(std::shared_ptr<WBTxRx> wb_tx_rx,int initial_freq_mhz,int inital_channel_width_mhz);
+    ManagementAir(const ManagementAir&)=delete;
+    ManagementAir(const ManagementAir&&)=delete;
     ~ManagementAir();
+    void start();
     // TODO dirty
     std::shared_ptr<RadiotapHeaderHolder> m_tx_header_2;
 public:
@@ -29,7 +31,7 @@ private:
     void loop();
     std::shared_ptr<WBTxRx> m_wb_txrx;
     std::shared_ptr<spdlog::logger> m_console;
-    bool m_tx_thread_run= true;
+    std::atomic<bool> m_tx_thread_run= true;
     std::unique_ptr<std::thread> m_tx_thread;
     std::chrono::steady_clock::time_point m_air_last_management_frame=std::chrono::steady_clock::now();
 };
@@ -37,6 +39,8 @@ private:
 class ManagementGround{
 public:
     explicit ManagementGround(std::shared_ptr<WBTxRx> wb_tx_rx);
+    ManagementGround(const ManagementGround&)=delete;
+    ManagementGround(const ManagementGround&&)=delete;
     ~ManagementGround();
 public:
     std::atomic<int> m_air_reported_curr_frequency=-1;
