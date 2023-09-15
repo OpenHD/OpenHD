@@ -316,7 +316,7 @@ bool WBLink::request_set_tx_channel_width(int channel_width) {
         m_settings->persist();
         if(m_profile.is_air)m_management_air->m_curr_channel_width_mhz=channel_width;
         m_management_air->m_last_channel_width_change_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
-        std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
+        //std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
         apply_frequency_and_channel_width_from_settings();
     },std::chrono::steady_clock::now());
     return try_schedule_work_item(work_item);
