@@ -137,6 +137,7 @@ void ManagementGround::loop() {
         auto data= pack_management_frame(tmp);
         auto radiotap_header=m_tx_header->thread_safe_get();
         m_wb_txrx->tx_inject_packet(MANAGEMENT_RADIO_PORT_GND_TX,data.data(),data.size(),radiotap_header,true);
+        //m_console->debug("Sent sensitivity management frame");
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
