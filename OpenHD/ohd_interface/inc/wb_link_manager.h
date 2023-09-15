@@ -29,13 +29,14 @@ public:
     ~ManagementAir();
     void start();
     // TODO dirty
-    std::shared_ptr<RadiotapHeaderHolder> m_tx_header_2;
+    std::shared_ptr<RadiotapHeaderHolder> m_tx_header;
 public:
     std::atomic<uint32_t> m_curr_frequency_mhz;
     std::atomic<uint8_t> m_curr_channel_width_mhz;
     std::atomic<int> m_last_channel_width_change_timestamp_ms;
 private:
     void loop();
+    void on_new_management_packet(const uint8_t *data, int data_len);
     std::shared_ptr<WBTxRx> m_wb_txrx;
     std::shared_ptr<spdlog::logger> m_console;
     std::atomic<bool> m_tx_thread_run= true;
@@ -46,15 +47,21 @@ private:
 class ManagementGround{
 public:
     explicit ManagementGround(std::shared_ptr<WBTxRx> wb_tx_rx);
+    void start();
     ManagementGround(const ManagementGround&)=delete;
     ManagementGround(const ManagementGround&&)=delete;
     ~ManagementGround();
+    // TODO dirty
+    std::shared_ptr<RadiotapHeaderHolder> m_tx_header;
 public:
     std::atomic<int> m_air_reported_curr_frequency=-1;
     std::atomic<int> m_air_reported_curr_channel_width=-1;
 private:
+    void loop();
     std::shared_ptr<WBTxRx> m_wb_txrx;
     std::shared_ptr<spdlog::logger> m_console;
+    std::atomic<bool> m_tx_thread_run= true;
+    std::unique_ptr<std::thread> m_tx_thread;
     // 40Mhz / 20Mhz link management
     void on_new_management_packet(const uint8_t *data, int data_len);
 };
