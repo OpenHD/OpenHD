@@ -193,6 +193,9 @@ private:
   std::unique_ptr<ManagementGround> m_management_gnd=nullptr;
   // We start on 40Mhz, and go down to 20Mhz if possible
   std::atomic<int> m_gnd_curr_rx_channel_width=40;
+private:
+    // TODO remove me
+    std::mutex m_telemetry_tx_mutex;
 };
 
 #endif
