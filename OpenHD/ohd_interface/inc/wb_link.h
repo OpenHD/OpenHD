@@ -146,7 +146,7 @@ class WBLink :public OHDLink{
   const bool m_disable_all_frequency_checks;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
   std::shared_ptr<spdlog::logger> m_console;
-  std::unique_ptr<openhd::WBStreamsSettingsHolder> m_settings;
+  std::unique_ptr<openhd::WBLinkSettingsHolder> m_settings;
   std::shared_ptr<RadiotapHeaderHolder> m_tx_header_1;
   // On air, we use different radiotap data header(s) for different streams (20Mhz vs 40Mhz)
   std::shared_ptr<RadiotapHeaderHolder> m_tx_header_2;

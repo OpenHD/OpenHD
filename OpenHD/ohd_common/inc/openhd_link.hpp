@@ -30,8 +30,7 @@ class OHDLink{
   typedef std::function<void(std::shared_ptr<std::vector<uint8_t>> data)> ON_TELE_DATA_CB;
  public:
   // --- Telemetry air and ground both receive and send --------
-  // Telemetry TX special - retransmission(s) - duplicate specific mavlink messages that are going from gnd to air to increase reliability
-  // See wifibroadcast for a bit more info
+  // Telemetry TX special - retransmission(s) - duplicate specific mavlink messages that are going from gnd to air (or vice versa) to increase reliability.
   struct TelemetryTxPacket{
     std::shared_ptr<std::vector<uint8_t>> data;
     int n_injections=1;
@@ -54,7 +53,7 @@ class OHDLink{
       cb(std::move(data));
     }
   }
-  void register_on_receive_telemetry_data_cb(ON_TELE_DATA_CB cb){
+  void register_on_receive_telemetry_data_cb(const ON_TELE_DATA_CB& cb){
     if(cb== nullptr){
       m_tele_data_cb= nullptr;
       return;
@@ -80,14 +79,13 @@ class OHDLink{
       cb(stream_index,data,data_len);
     }
   }
-  void register_on_receive_video_data_cb(ON_VIDEO_DATA_CB cb){
+  void register_on_receive_video_data_cb(const ON_VIDEO_DATA_CB& cb){
     if(cb== nullptr){
       m_video_data_cb= nullptr;
       return;
     }
     m_video_data_cb=std::make_shared<ON_VIDEO_DATA_CB>(cb);
   }
-
  private:
   std::shared_ptr<ON_TELE_DATA_CB> m_tele_data_cb;
   std::shared_ptr<ON_VIDEO_DATA_CB> m_video_data_cb;

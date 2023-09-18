@@ -44,7 +44,7 @@ bool any_card_support_frequency(
  * Applies a known working frequency for the given card(s) if none of the card(s) supports the current frequency
  * (E.g. if a user was to swap a 5.8G card for a 2.4G card)
  */
-void fixup_unsupported_frequency(openhd::WBStreamsSettingsHolder& settings,
+void fixup_unsupported_frequency(openhd::WBLinkSettingsHolder& settings,
                                 const std::vector<WiFiCard>& m_broadcast_cards,
                                 std::shared_ptr<spdlog::logger> m_console);
 

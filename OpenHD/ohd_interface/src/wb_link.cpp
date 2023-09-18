@@ -42,7 +42,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   }
   takeover_cards_monitor_mode();
   // this fetches the last settings, otherwise creates default ones
-  m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(m_platform,m_profile,m_broadcast_cards);
+  m_settings =std::make_unique<openhd::WBLinkSettingsHolder>(m_platform, m_profile, m_broadcast_cards);
   // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
   openhd::wb::fixup_unsupported_frequency(*m_settings, m_broadcast_cards,m_console);
   WBTxRx::Options txrx_options{};

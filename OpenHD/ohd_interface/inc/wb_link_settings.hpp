@@ -155,13 +155,13 @@ static bool valid_wb_max_fec_block_size_for_platform(uint32_t wb_max_fec_block_s
   return wb_max_fec_block_size_for_platform>0 && wb_max_fec_block_size_for_platform<=100;
 }
 
-class WBStreamsSettingsHolder:public openhd::PersistentJsonSettings<WBLinkSettings>{
+class WBLinkSettingsHolder: public openhd::PersistentJsonSettings<WBLinkSettings>{
  public:
   /**
    * @param platform needed to figure out the proper default params
    * @param wifibroadcast_cards1 needed to figure out the proper default params
    */
-  explicit WBStreamsSettingsHolder(OHDPlatform platform,OHDProfile profile,std::vector<WiFiCard> wifibroadcast_cards1):
+  explicit WBLinkSettingsHolder(OHDPlatform platform, OHDProfile profile, std::vector<WiFiCard> wifibroadcast_cards1):
 	  openhd::PersistentJsonSettings<WBLinkSettings>(get_interface_settings_directory()),
         m_cards(std::move(wifibroadcast_cards1)),
           m_platform(platform),

@@ -56,7 +56,7 @@ bool openhd::wb::any_card_support_frequency(uint32_t frequency, const std::vecto
 }
 
 void openhd::wb::fixup_unsupported_frequency(
-    openhd::WBStreamsSettingsHolder& settings,
+    openhd::WBLinkSettingsHolder& settings,
     const std::vector<WiFiCard>& m_broadcast_cards,
     std::shared_ptr<spdlog::logger> m_console) {
   if(!m_console) {
