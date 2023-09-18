@@ -44,8 +44,14 @@ class WBLink :public OHDLink{
   WBLink(const WBLink&)=delete;
   WBLink(const WBLink&&)=delete;
   ~WBLink();
-  // returns all mavlink settings, values might change depending on the used hardware
+  /**
+   * @return all mavlink settings, values might change depending on air/ground and/or the used hardware
+   */
   std::vector<openhd::Setting> get_all_settings();
+  /**
+   * Used by wifi hotspot feature (opposite wifi space if possible)
+   * @return the current wb channel space
+   */
   [[nodiscard]] openhd::WifiSpace get_current_frequency_channel_space()const;
  private:
   // validate param, then schedule change
@@ -73,12 +79,12 @@ class WBLink :public OHDLink{
   void update_arming_state(bool armed);
   // These do not "break" the bidirectional connectivity and therefore
   // can be changed easily on the fly
-  bool set_video_fec_percentage(int fec_percentage);
-  bool set_enable_wb_video_variable_bitrate(int value);
-  bool set_max_fec_block_size_for_platform(int value);
-  bool set_wb_video_rate_for_mcs_adjustment_percent(int value);
-  void set_wb_air_video_encryption_enabled(bool enable);
-  // Make sure no processes interfering with monitor mode run on the given cards,
+  bool set_air_video_fec_percentage(int fec_percentage);
+  bool set_air_enable_wb_video_variable_bitrate(int value);
+  bool set_air_max_fec_block_size_for_platform(int value);
+  bool set_air_wb_video_rate_for_mcs_adjustment_percent(int value);
+  void set_air_wb_air_video_encryption_enabled(bool enable);
+  // Make sure no processes interfering with monitor mode runs on the given cards,
   // then sets them to monitor mode
   void takeover_cards_monitor_mode();
   std::unique_ptr<WBStreamTx> create_wb_tx(uint8_t radio_port,bool is_video);
@@ -109,7 +115,6 @@ class WBLink :public OHDLink{
   // Called by the camera stream on the air unit only
   // transmit video data via wifibradcast
   void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
- public:
   // Warning: This operation will block the calling thread for up to X ms.
   // During scan, you cannot change any wb settings
   struct ScanResult{
@@ -130,7 +135,6 @@ class WBLink :public OHDLink{
   // queue it up on the work queue, if no other item is currently on the work queue
   bool async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
   bool async_analyze_channels();
- private:
   void reset_all_rx_stats();
   int64_t get_total_tx_error_count();
  private:
@@ -184,13 +188,11 @@ class WBLink :public OHDLink{
   std::atomic<int> m_curr_tx_power_mw=0;
   std::atomic<int> m_last_received_packet_ts_ms=OHDUtil::steady_clock_time_epoch_ms();
   std::chrono::steady_clock::time_point m_reset_frequency_time_point=std::chrono::steady_clock::now();
-private:
   // 40Mhz / 20Mhz link management
   std::unique_ptr<ManagementAir> m_management_air=nullptr;
   std::unique_ptr<ManagementGround> m_management_gnd=nullptr;
   // We start on 40Mhz, and go down to 20Mhz if possible
   std::atomic<int> m_gnd_curr_rx_channel_width=40;
-private:
     // TODO remove me
     std::mutex m_telemetry_tx_mutex;
 };

@@ -392,8 +392,8 @@ bool WBLink::set_air_mcs_index(int mcs_index) {
   return true;
 }
 
-bool WBLink::set_video_fec_percentage(int fec_percentage) {
-  m_console->debug("set_video_fec_percentage {}",fec_percentage);
+bool WBLink::set_air_video_fec_percentage(int fec_percentage) {
+  m_console->debug("set_air_video_fec_percentage {}",fec_percentage);
   if(!openhd::is_valid_fec_percentage(fec_percentage)){
     m_console->warn("Invalid fec percentage:{}",fec_percentage);
     return false;
@@ -432,19 +432,19 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   }
   if(m_profile.is_air){
     auto cb_change_video_fec_percentage=[this](std::string,int value){
-        return set_video_fec_percentage(value);
+        return set_air_video_fec_percentage(value);
     };
     ret.push_back(Setting{WB_VIDEO_FEC_PERCENTAGE,openhd::IntSetting{(int)settings.wb_video_fec_percentage,cb_change_video_fec_percentage}});
     auto cb_enable_wb_video_variable_bitrate=[this](std::string,int value){
-      return set_enable_wb_video_variable_bitrate(value);
+      return set_air_enable_wb_video_variable_bitrate(value);
     };
     ret.push_back(Setting{WB_VIDEO_VARIABLE_BITRATE,openhd::IntSetting{(int)settings.enable_wb_video_variable_bitrate, cb_enable_wb_video_variable_bitrate}});
     auto cb_wb_max_fec_block_size_for_platform=[this](std::string,int value){
-      return set_max_fec_block_size_for_platform(value);
+      return set_air_max_fec_block_size_for_platform(value);
     };
     ret.push_back(Setting{WB_MAX_FEC_BLOCK_SIZE_FOR_PLATFORM,openhd::IntSetting{(int)settings.wb_max_fec_block_size_for_platform, cb_wb_max_fec_block_size_for_platform}});
     auto cb_wb_video_rate_for_mcs_adjustment_percent=[this](std::string,int value){
-      return set_wb_video_rate_for_mcs_adjustment_percent(value);
+      return set_air_wb_video_rate_for_mcs_adjustment_percent(value);
     };
     ret.push_back(Setting{WB_VIDEO_RATE_FOR_MCS_ADJUSTMENT_PERC,openhd::IntSetting{(int)settings.wb_video_rate_for_mcs_adjustment_percent, cb_wb_video_rate_for_mcs_adjustment_percent}});
     // changing the mcs index via rc channel only makes sense on air,
@@ -542,7 +542,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   if(m_profile.is_air){
       auto cb_video_encrypt=[this](std::string,int value){
           if(!openhd::validate_yes_or_no(value))return false;
-          set_wb_air_video_encryption_enabled(value);
+          set_air_wb_air_video_encryption_enabled(value);
           return true;
       };
       auto change_video_encryption=openhd::IntSetting{(int)settings.wb_air_enable_video_encryption,cb_video_encrypt};
@@ -844,7 +844,8 @@ void WBLink::perform_rate_adjustment() {
   }
 }
 
-bool WBLink::set_enable_wb_video_variable_bitrate(int value) {
+bool WBLink::set_air_enable_wb_video_variable_bitrate(int value) {
+  assert(m_profile.is_air);
   if(openhd::validate_yes_or_no(value)){
     // value is read in regular intervals.
     m_settings->unsafe_get_settings().enable_wb_video_variable_bitrate=value;
@@ -854,21 +855,21 @@ bool WBLink::set_enable_wb_video_variable_bitrate(int value) {
   return false;
 }
 
-bool WBLink::set_max_fec_block_size_for_platform(int value) {
+bool WBLink::set_air_max_fec_block_size_for_platform(int value) {
   if(!openhd::valid_wb_max_fec_block_size_for_platform(value))return false;
   m_settings->unsafe_get_settings().wb_max_fec_block_size_for_platform=value;
   m_settings->persist();
   return true;
 }
 
-bool WBLink::set_wb_video_rate_for_mcs_adjustment_percent(int value) {
+bool WBLink::set_air_wb_video_rate_for_mcs_adjustment_percent(int value) {
   if(value<=5 || value>1000)return false;
   m_settings->unsafe_get_settings().wb_video_rate_for_mcs_adjustment_percent=value;
   m_settings->persist();
   return true;
 }
 
-void WBLink::set_wb_air_video_encryption_enabled(bool enable) {
+void WBLink::set_air_wb_air_video_encryption_enabled(bool enable) {
     if(enable){
       m_console->debug("Video encryption enabled:{}",enable);
     }
