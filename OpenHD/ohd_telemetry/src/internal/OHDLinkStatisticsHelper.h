@@ -172,23 +172,23 @@ static MavlinkMessage generate_msg_openhd_wifibroadcast_supported_channels(const
 
 static MavlinkMessage generate_msg_analyze_channels_progress(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::AnalyzeChannelsResult progress){
     MavlinkMessage msg;
-    /*mavlink_openhd_wifbroadcast_analyze_channels_progress_t tmp{};
-    tmp.progress=progress.progress;
-    tmp.channel_mhz=progress.channel_mhz;
-    tmp.channel_width_mhz=progress.channel_width_mhz;
-    tmp.foreign_packets= progress.n_foreign_packets;
-    mavlink_msg_openhd_wifbroadcast_analyze_channels_progress_encode(system_id,component_id,&msg.m,&tmp);*/
+    mavlink_openhd_wifbroadcast_analyze_channels_progress_t tmp{};
+    tmp.progress_perc=progress.progress;
+    //tmp.channel_mhz=progress.channel_mhz;
+    //tmp.channel_width_mhz=progress.channel_width_mhz;
+    //tmp.foreign_packets= progress.n_foreign_packets;
+    mavlink_msg_openhd_wifbroadcast_analyze_channels_progress_encode(system_id,component_id,&msg.m,&tmp);
     return msg;
 }
 
 static MavlinkMessage generate_msg_scan_channels_progress(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::ScanChannelsProgress progress){
     MavlinkMessage msg;
-    /*mavlink_openhd_wifbroadcast_scan_channels_progress_t tmp{};
+    mavlink_openhd_wifbroadcast_scan_channels_progress_t tmp{};
     tmp.progress=progress.progress;
     tmp.channel_mhz=progress.channel_mhz;
     tmp.channel_width_mhz=progress.channel_width_mhz;
     tmp.success=progress.success;
-    mavlink_msg_openhd_wifbroadcast_scan_channels_progress_encode(system_id,component_id,&msg.m,&tmp);*/
+    mavlink_msg_openhd_wifbroadcast_scan_channels_progress_encode(system_id,component_id,&msg.m,&tmp);
     return msg;
 }
 
