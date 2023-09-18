@@ -1109,11 +1109,8 @@ void WBLink::analyze_channels() {
     std::vector<AnalyzeResult> results{};
     for(int i=0; i < channels_to_analyze.size(); i++){
         const auto channel=channels_to_analyze[i];
-        // We use 40Mhz when possible, 20Mhz otherwise
-        int channel_width=40;
-        if(!channel.is_legal_any_country_40Mhz){
-            channel_width=20;
-        }
+        // We use fixed 40Mhz during analyze.
+        const int channel_width=40;
         // set new frequency, reset the packet count, sleep, then check if any openhd packets have been received
         apply_frequency_and_channel_width(channel.frequency,channel_width,20);
         m_console->debug("Analyzing [{}] {}Mhz@{}Mhz",channel.channel,channel.frequency,channel_width);
