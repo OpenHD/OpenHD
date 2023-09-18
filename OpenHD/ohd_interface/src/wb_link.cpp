@@ -574,6 +574,7 @@ void WBLink::loop_do_work() {
       m_work_item_queue_mutex.unlock();
     }
     perform_management();
+    air_perform_reset_frequency();
     perform_rate_adjustment();
     // update statistics in regular intervals
     update_statistics();
@@ -680,8 +681,8 @@ void WBLink::update_statistics() {
   const int tmp_last_management_packet_ts=m_profile.is_air ? m_management_air->get_last_received_packet_ts_ms():
           m_management_gnd->get_last_received_packet_ts_ms();
   const int last_received_packet_ts=std::max(m_last_received_packet_ts_ms.load(),tmp_last_management_packet_ts);
-  const auto elapsed_since_last_rx_packet=OHDUtil::steady_clock_time_epoch_ms()-last_received_packet_ts;
-  const bool curr_rx_last_packet_status_good= elapsed_since_last_rx_packet<=5*1000;
+  const auto elapsed_since_last_rx_packet_ms=OHDUtil::steady_clock_time_epoch_ms()-last_received_packet_ts;
+  const bool curr_rx_last_packet_status_good= elapsed_since_last_rx_packet_ms<=5*1000;
   const auto bitfield=openhd::link_statistics::MonitorModeLinkBitfield{
           (bool)curr_settings.wb_enable_stbc,(bool)curr_settings.wb_enable_ldpc,(bool)curr_settings.wb_enable_short_guard,
           (bool)curr_rx_last_packet_status_good
@@ -1255,5 +1256,42 @@ void WBLink::perform_management() {
             const int rx_channel_width=m_gnd_curr_rx_channel_width;
             apply_frequency_and_channel_width(frequency,rx_channel_width,20);
         }
+    }
+}
+
+void WBLink::air_perform_reset_frequency() {
+    if(!m_profile.is_air)return;
+    // If we are armed, update the TP and return
+    bool is_currently_armed= true; // assume armed if no action handler is registered.
+    if(m_opt_action_handler)is_currently_armed=m_opt_action_handler->is_currently_armed();
+    if(is_currently_armed){
+        m_reset_frequency_time_point=std::chrono::steady_clock::now();
+        return;
+    }
+    const int tmp_last_management_packet_ts=m_profile.is_air ? m_management_air->get_last_received_packet_ts_ms():
+                                            m_management_gnd->get_last_received_packet_ts_ms();
+    const int last_received_packet_ts=std::max(m_last_received_packet_ts_ms.load(),tmp_last_management_packet_ts);
+    const auto elapsed_since_last_rx_packet_ms=OHDUtil::steady_clock_time_epoch_ms()-last_received_packet_ts;
+    const bool curr_rx_last_packet_status_good= elapsed_since_last_rx_packet_ms<=5*1000;
+    if(curr_rx_last_packet_status_good){
+        // We are getting message(s) from ground, reset TP and return.
+        m_reset_frequency_time_point=std::chrono::steady_clock::now();
+        return;
+    }
+    const auto elapsed=std::chrono::steady_clock::now()-m_reset_frequency_time_point;
+    if(elapsed>=std::chrono::seconds(1)){
+        m_console->warn("No message from a ground unit for more than 1 second");
+        const auto& card=m_broadcast_cards.at(0);
+        const int default_frequency=card.supports_5GHz() ? openhd::DEFAULT_5GHZ_FREQUENCY : openhd::DEFAULT_2GHZ_FREQUENCY;
+        const int default_channel_width=openhd::DEFAULT_CHANNEL_WIDTH;
+        const auto& curr_settings=m_settings->get_settings();
+        if(curr_settings.wb_frequency!=default_frequency || curr_settings.wb_air_tx_channel_width != default_channel_width){
+            m_console->warn("Applying default: {}@{}Mhz",default_frequency,default_channel_width);
+            m_settings->unsafe_get_settings().wb_frequency=default_frequency;
+            m_settings->unsafe_get_settings().wb_air_tx_channel_width=default_channel_width;
+            m_settings->persist();
+            apply_frequency_and_channel_width_from_settings();
+        }
+        m_reset_frequency_time_point=std::chrono::steady_clock::now();
     }
 }

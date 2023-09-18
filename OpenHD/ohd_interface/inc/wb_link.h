@@ -93,6 +93,9 @@ class WBLink :public OHDLink{
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void perform_rate_adjustment();
   void perform_management();
+    // Feature on air: If we are not armed, and do not receive any message from the ground unit for more than
+    // one minute, we go back to the default frequency / bw.
+  void air_perform_reset_frequency();
   // Returns true if the work item queue is currently empty and the item has been added
   // false otherwise. In general, we only suport one item on the work queue - otherwise we reject the param,
   // since the user can just try again later (and in case the work queue is currently busy with a frequency scan for example,
@@ -184,6 +187,7 @@ class WBLink :public OHDLink{
   std::atomic<int> m_curr_tx_power_idx=0;
   std::atomic<int> m_curr_tx_power_mw=0;
   std::atomic<int> m_last_received_packet_ts_ms=OHDUtil::steady_clock_time_epoch_ms();
+  std::chrono::steady_clock::time_point m_reset_frequency_time_point=std::chrono::steady_clock::now();
 private:
   // 40Mhz / 20Mhz link management
   std::unique_ptr<ManagementAir> m_management_air=nullptr;
