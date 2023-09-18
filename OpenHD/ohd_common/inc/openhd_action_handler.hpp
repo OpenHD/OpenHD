@@ -226,10 +226,9 @@ public:
     std::atomic<int> scan_channels_air_unit_progress=-1;
 public:
     struct AnalyzeChannelsResult{
-        int channel_mhz;
-        int channel_width_mhz;
-        int progress;
-        int n_foreign_packets;
+        std::array<uint16_t,30> channels_mhz{0};
+        std::array<uint16_t,30> foreign_packets{0};
+        int8_t progress;
     };
     void add_analyze_result(AnalyzeChannelsResult scan_result){
         std::lock_guard<std::mutex> guard(m_scan_results_mutex);

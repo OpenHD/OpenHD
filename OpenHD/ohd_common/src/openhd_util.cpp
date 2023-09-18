@@ -277,11 +277,11 @@ float OHDUtil::map_int_percentage_to_minus1_to_1(int percentage) {
   return mapped;
 }
 
-int OHDUtil::calculate_progress_perc(int progress, int total_count) {
+int8_t OHDUtil::calculate_progress_perc(int progress, int total_count) {
     if(progress>=total_count)return 100;
     if(total_count<=0)return 100;
     const double perc=((double)progress / (double)total_count * 100.0);
-    return (int)std::lround(perc);
+    return (int8_t)std::lround(perc);
 }
 
 // https://codeforwin.org/c-programming/c-program-to-get-value-of-nth-bit-of-number

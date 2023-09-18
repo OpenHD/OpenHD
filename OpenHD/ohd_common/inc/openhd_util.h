@@ -149,7 +149,7 @@ std::string str_vec_as_string(const std::vector<std::string> &v);
 // maps [0,100] to [-1.0,1.0] with 50% == 0.0
 float map_int_percentage_to_minus1_to_1(int percentage);
 
-int calculate_progress_perc(int progress,int total_count);
+int8_t calculate_progress_perc(int progress,int total_count);
 
 int steady_clock_time_epoch_ms();
 

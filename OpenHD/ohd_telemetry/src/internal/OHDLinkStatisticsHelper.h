@@ -176,10 +176,11 @@ static MavlinkMessage generate_msg_openhd_wifibroadcast_supported_channels(const
 static MavlinkMessage generate_msg_analyze_channels_progress(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::AnalyzeChannelsResult progress){
     MavlinkMessage msg;
     mavlink_openhd_wifbroadcast_analyze_channels_progress_t tmp{};
+    static_assert(sizeof(tmp.channels_mhz)==sizeof(progress.channels_mhz));
+    static_assert(sizeof(tmp.foreign_packets)==sizeof(progress.foreign_packets));
+    memcpy(tmp.channels_mhz,progress.channels_mhz.data(),sizeof(tmp.channels_mhz));
+    memcpy(tmp.foreign_packets,progress.foreign_packets.data(),sizeof(tmp.foreign_packets));
     tmp.progress_perc=progress.progress;
-    //tmp.channel_mhz=progress.channel_mhz;
-    //tmp.channel_width_mhz=progress.channel_width_mhz;
-    //tmp.foreign_packets= progress.n_foreign_packets;
     mavlink_msg_openhd_wifbroadcast_analyze_channels_progress_encode(system_id,component_id,&msg.m,&tmp);
     return msg;
 }

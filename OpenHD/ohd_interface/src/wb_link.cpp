@@ -1123,9 +1123,15 @@ void WBLink::analyze_channels() {
         results.push_back(AnalyzeResult{(int)channel.frequency,(int)n_foreign_packets});
         if(m_opt_action_handler){
             openhd::ActionHandler::AnalyzeChannelsResult tmp{};
-            tmp.channel_mhz=(int)channel.frequency;
-            tmp.channel_width_mhz=channel_width;
-            tmp.n_foreign_packets=(int)n_foreign_packets;
+            for(int j=0;j<30;j++){
+                if(j<results.size()){
+                    tmp.channels_mhz[j]=results[j].frequency;
+                    tmp.foreign_packets[j]=results[j].n_foreign_packets;
+                }else{
+                    tmp.channels_mhz[j]=0;
+                    tmp.foreign_packets[j]=0;
+                }
+            }
             tmp.progress=OHDUtil::calculate_progress_perc(i+1, (int)channels_to_analyze.size());
             m_opt_action_handler->add_analyze_result(tmp);
         }
