@@ -1094,28 +1094,13 @@ bool WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_c
     return try_schedule_work_item(work_item);
 }
 
-struct AnalyzeResult{
-    int frequency;
-    int n_foreign_packets;
-};
-
 void WBLink::analyze_channels() {
+    struct AnalyzeResult{
+        int frequency;
+        int n_foreign_packets;
+    };
     const WiFiCard& card=m_broadcast_cards.at(0);
-    std::vector<openhd::WifiChannel> channels_to_analyze;
-    const auto supported_freq_5G=card.supported_frequencies_5G;
-    const auto supported_freq_2G=card.supported_frequencies_2G;
-    for(const auto& freq:supported_freq_2G){
-        auto tmp=openhd::channel_from_frequency(freq);
-        if(tmp.has_value()){
-            channels_to_analyze.push_back(tmp.value());
-        }
-    }
-    for(const auto freq:supported_freq_5G){
-        auto tmp=openhd::channel_from_frequency(freq);
-        if(tmp.has_value()){
-            channels_to_analyze.push_back(tmp.value());
-        }
-    }
+    const auto channels_to_analyze=openhd::wb::get_analyze_channels_frequencies(card);
     if(m_opt_action_handler) {
         auto stats_current = m_opt_action_handler->get_link_stats();
         stats_current.gnd_operating_mode.operating_mode = 2;

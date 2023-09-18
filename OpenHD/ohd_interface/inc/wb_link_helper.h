@@ -66,6 +66,7 @@ bool any_card_supports_stbc_ldpc_sgi(const std::vector<WiFiCard>& cards);
 std::vector<WifiChannel> get_scan_channels_frequencies(const WiFiCard& card,bool check_2g,bool check_5g);
 std::vector<uint16_t> get_scan_channels_bandwidths(bool scan_20mhz,bool scan_40mhz);
 
+std::vector<WifiChannel> get_analyze_channels_frequencies(const WiFiCard& card);
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_

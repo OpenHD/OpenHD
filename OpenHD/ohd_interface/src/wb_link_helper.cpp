@@ -183,3 +183,22 @@ std::vector<uint16_t> openhd::wb::get_scan_channels_bandwidths(bool scan_20mhz, 
     return channel_widths_to_scan;
 }
 
+std::vector<openhd::WifiChannel> openhd::wb::get_analyze_channels_frequencies(const WiFiCard &card) {
+    std::vector<openhd::WifiChannel> channels_to_analyze;
+    const auto supported_freq_5G=card.supported_frequencies_5G;
+    const auto supported_freq_2G=card.supported_frequencies_2G;
+    for(const auto& freq:supported_freq_2G){
+        auto tmp=openhd::channel_from_frequency(freq);
+        if(tmp.has_value()){
+            channels_to_analyze.push_back(tmp.value());
+        }
+    }
+    for(const auto freq:supported_freq_5G){
+        auto tmp=openhd::channel_from_frequency(freq);
+        if(tmp.has_value()){
+            channels_to_analyze.push_back(tmp.value());
+        }
+    }
+    return channels_to_analyze;
+}
+
