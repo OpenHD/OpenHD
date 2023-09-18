@@ -8,7 +8,6 @@
 #include <fstream>
 #include <utility>
 
-#include "include_json.hpp"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 #include "openhd_util_filesystem.h"
@@ -27,17 +26,17 @@ namespace openhd{
  * @tparam T the settings struct to persist, needs to have to and from json(s)
  */
 template<class T>
-class PersistentJsonSettings {
+class PersistentSettings {
  public:
   /**
    * @param base_path the directory into which the settings file is then written. (filename: base_path+unique filename).
    */
-  explicit PersistentJsonSettings(std::string base_path):_base_path(std::move(base_path)){
+  explicit PersistentSettings(std::string base_path): _base_path(std::move(base_path)){
     assert(_base_path.back()=='/');
   }
   // delete copy and move constructor
-  PersistentJsonSettings(const PersistentJsonSettings&)=delete;
-  PersistentJsonSettings(const PersistentJsonSettings&&)=delete;
+  PersistentSettings(const PersistentSettings&)=delete;
+  PersistentSettings(const PersistentSettings&&)=delete;
   // read only, to express the need for calling persist otherwise
   [[nodiscard]] const T& get_settings()const{
     assert(_settings);
@@ -50,7 +49,7 @@ class PersistentJsonSettings {
   }
   // save changes by writing them out to the file, and notifying the listener(s)
   void persist(bool trigger_restart=true)const{
-    PersistentJsonSettings::persist_settings();
+    PersistentSettings::persist_settings();
     if(_settings_changed_callback && trigger_restart){
       _settings_changed_callback();
     }
@@ -59,7 +58,7 @@ class PersistentJsonSettings {
   void update_settings(const T& new_settings){
     openhd::log::get_default()->debug("Got new settings in[{}]",get_unique_filename());
     _settings=std::make_unique<T>(new_settings);
-    PersistentJsonSettings::persist_settings();
+    PersistentSettings::persist_settings();
     if(_settings_changed_callback){
       _settings_changed_callback();
     }
@@ -70,9 +69,12 @@ class PersistentJsonSettings {
     _settings_changed_callback=std::move(callback);
   }
  protected:
+    // NEEDS TO BE OVERRIDDEN
   [[nodiscard]] virtual std::string get_unique_filename()const=0;
   virtual T create_default()const=0;
-  /*
+  virtual std::optional<T> impl_deserialize(const std::string& file_as_string)const=0;
+  virtual std::string imp_serialize(const T& data)const=0;
+    /*
    * looks for a previosly written file (base_path+unique filename).
    * If this file exists, create settings from it - otherwise, create default and persist.
    */
@@ -93,7 +95,9 @@ class PersistentJsonSettings {
   }
  private:
   const std::string _base_path;
+protected:
   std::unique_ptr<T> _settings;
+private:
   SETTINGS_CHANGED_CALLBACK _settings_changed_callback=nullptr;
   [[nodiscard]] std::string get_file_path()const{
     return _base_path+get_unique_filename();
@@ -104,10 +108,9 @@ class PersistentJsonSettings {
   void persist_settings()const {
     assert(_settings);
     const auto file_path=get_file_path();
-    // Serialize to json
-    const nlohmann::json tmp=*_settings;
-    // and write them locally for persistence
-    OHDFilesystemUtil::write_file(file_path,tmp.dump(4));
+    // Serialize, then write to file
+    const auto content= imp_serialize(*_settings);
+    OHDFilesystemUtil::write_file(file_path,content);
   }
   /**
    * Try and deserialize the last stored settings (json)
@@ -120,22 +123,14 @@ class PersistentJsonSettings {
    *  Also, default settings will be created in this case.
    */
   [[nodiscard]] std::optional<T> read_last_settings() const {
-    const auto file_path=get_file_path();
-    if(!OHDFilesystemUtil::exists(file_path.c_str())){
-      return std::nullopt;
-    }
-    std::ifstream f(file_path);
-    try{
-      nlohmann::json j;
-      f >> j;
-      auto tmp=j.get<T>();
-      return tmp;
-    }catch(nlohmann::json::exception& ex){
-      openhd::log::get_default()->warn("PersistentJsonSettings::read_last_settings json exception {} on [{}]",ex.what(),file_path);
-      // this means the default settings will be created
-      return std::nullopt;
-    }
-    return  std::nullopt;
+      const auto file_path=get_file_path();
+      const auto opt_content=OHDFilesystemUtil::opt_read_file(file_path);
+      if(!opt_content.has_value()){
+          return std::nullopt;
+      }
+      const std::string content=opt_content.value();
+      const auto parsed_opt= impl_deserialize(content);
+      return parsed_opt;
   }
 };
 

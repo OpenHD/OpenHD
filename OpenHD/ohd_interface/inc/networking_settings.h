@@ -24,10 +24,10 @@ struct NetworkingSettings {
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(NetworkingSettings,wifi_hotspot_enable,ethernet_hotspot_enable,ethernet_nonhotspot_enable_auto_forwarding);
 
-class NetworkingSettingsHolder:public openhd::PersistentJsonSettings<NetworkingSettings>{
+class NetworkingSettingsHolder:public openhd::PersistentSettings<NetworkingSettings>{
  public:
   NetworkingSettingsHolder():
-    openhd::PersistentJsonSettings<NetworkingSettings>(openhd::get_interface_settings_directory()){
+    openhd::PersistentSettings<NetworkingSettings>(openhd::get_interface_settings_directory()){
     init();
     // Extra - the user can enable wifi hotspot by placing a file, for recovery purposes
     if(OHDFilesystemUtil::exists("/boot/openhd/wifi_hotspot.txt")){
@@ -41,6 +41,13 @@ class NetworkingSettingsHolder:public openhd::PersistentJsonSettings<NetworkingS
   }
   [[nodiscard]] NetworkingSettings create_default()const override{
     return NetworkingSettings{};
+  }
+  std::optional<NetworkingSettings> impl_deserialize(const std::string& file_as_string)const override{
+      return openhd_json_parse<NetworkingSettings>(file_as_string);
+  }
+  std::string imp_serialize(const NetworkingSettings& data)const override{
+      const nlohmann::json tmp=data;
+      return tmp.dump(4);
   }
 };
 

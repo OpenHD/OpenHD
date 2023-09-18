@@ -11,4 +11,20 @@
 
 //#include <nlohmann/json_fwd.hpp>
 
+#include <optional>
+//#include "openhd_splog.h"
+
+template<class T>
+static std::optional<T> openhd_json_parse(const std::string& content){
+    try{
+        nlohmann::json j{content};
+        auto tmp=j.get<T>();
+        return tmp;
+    }catch(nlohmann::json::exception& ex){
+        //openhd::log::get_default()->warn("openhd_json_parse {}",ex.what());
+        return std::nullopt;
+    }
+    return std::nullopt;
+};
+
 #endif  // OPENHD_OPENHD_OHD_COMMON_INCLUDE_JSON_H_

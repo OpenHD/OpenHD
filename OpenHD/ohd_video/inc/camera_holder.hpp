@@ -20,13 +20,13 @@
 // Changes in the camera settings are propagated through this class.
 class CameraHolder:
     // persistence via JSON
-    public openhd::PersistentJsonSettings<CameraSettings>,
+    public openhd::PersistentSettings<CameraSettings>,
     // changes requested by the mavlink parameter protocol are propagated through lambda callbacks
     public openhd::ISettingsComponent{
  public:
   explicit CameraHolder(Camera camera,std::shared_ptr<openhd::ActionHandler> opt_action_handler= nullptr):
        m_camera(std::move(camera)),
-       openhd::PersistentJsonSettings<CameraSettings>(openhd::get_video_settings_directory()){
+       openhd::PersistentSettings<CameraSettings>(openhd::get_video_settings_directory()){
     // read previous settings or create default ones
     init();
   }
@@ -404,6 +404,13 @@ class CameraHolder:
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
     return m_camera.get_unique_settings_filename();
+  }
+  std::optional<CameraSettings> impl_deserialize(const std::string& file_as_string)const override{
+      return openhd_json_parse<CameraSettings>(file_as_string);
+  }
+  std::string imp_serialize(const CameraSettings& data)const override{
+      const nlohmann::json tmp=data;
+      return tmp.dump(4);
   }
   [[nodiscard]] CameraSettings create_default()const override{
     auto ret=CameraSettings{};

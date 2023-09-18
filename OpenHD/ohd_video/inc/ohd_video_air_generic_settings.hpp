@@ -30,10 +30,10 @@ static bool is_valid_dualcam_primary_video_allocated_bandwidth(int dualcam_prima
   return dualcam_primary_video_allocated_bandwidth_perc>=10 && dualcam_primary_video_allocated_bandwidth_perc<=90;
 }
 
-class AirCameraGenericSettingsHolder: public openhd::PersistentJsonSettings<AirCameraGenericSettings>{
+class AirCameraGenericSettingsHolder: public openhd::PersistentSettings<AirCameraGenericSettings>{
  public:
   AirCameraGenericSettingsHolder()
-      :openhd::PersistentJsonSettings<AirCameraGenericSettings>(openhd::get_video_settings_directory()){
+      :openhd::PersistentSettings<AirCameraGenericSettings>(openhd::get_video_settings_directory()){
     init();
   }
  private:
@@ -43,6 +43,13 @@ class AirCameraGenericSettingsHolder: public openhd::PersistentJsonSettings<AirC
   [[nodiscard]] AirCameraGenericSettings create_default()const override{
     return AirCameraGenericSettings{};
   }
+std::optional<AirCameraGenericSettings> impl_deserialize(const std::string& file_as_string)const override{
+    return openhd_json_parse<AirCameraGenericSettings>(file_as_string);
+}
+std::string imp_serialize(const AirCameraGenericSettings& data)const override{
+    const nlohmann::json tmp=data;
+    return tmp.dump(4);
+}
 };
 
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_AIR_GENERIC_SETTINGS_H_

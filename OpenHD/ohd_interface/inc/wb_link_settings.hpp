@@ -13,6 +13,8 @@
 #include "openhd_settings_directories.hpp"
 #include "wifi_card.h"
 
+#include "include_json.hpp"
+
 namespace openhd{
 
 static constexpr auto DEFAULT_5GHZ_FREQUENCY = 5180;
@@ -155,14 +157,14 @@ static bool valid_wb_max_fec_block_size_for_platform(uint32_t wb_max_fec_block_s
   return wb_max_fec_block_size_for_platform>0 && wb_max_fec_block_size_for_platform<=100;
 }
 
-class WBLinkSettingsHolder: public openhd::PersistentJsonSettings<WBLinkSettings>{
+class WBLinkSettingsHolder: public openhd::PersistentSettings<WBLinkSettings>{
  public:
   /**
    * @param platform needed to figure out the proper default params
    * @param wifibroadcast_cards1 needed to figure out the proper default params
    */
   explicit WBLinkSettingsHolder(OHDPlatform platform, OHDProfile profile, std::vector<WiFiCard> wifibroadcast_cards1):
-	  openhd::PersistentJsonSettings<WBLinkSettings>(get_interface_settings_directory()),
+	  openhd::PersistentSettings<WBLinkSettings>(get_interface_settings_directory()),
         m_cards(std::move(wifibroadcast_cards1)),
           m_platform(platform),
 		  m_profile(std::move(profile))
@@ -182,6 +184,14 @@ class WBLinkSettingsHolder: public openhd::PersistentJsonSettings<WBLinkSettings
   [[nodiscard]] WBLinkSettings create_default()const override{
 	return create_default_wb_stream_settings(m_platform,m_cards);
   }
+private:
+std::optional<WBLinkSettings> impl_deserialize(const std::string& file_as_string)const override{
+   return openhd_json_parse<WBLinkSettings>(file_as_string);
+}
+std::string imp_serialize(const WBLinkSettings& data)const override{
+    const nlohmann::json tmp=data;
+    return tmp.dump(4);
+}
 };
 
 // Note: max 16 char for id limit
