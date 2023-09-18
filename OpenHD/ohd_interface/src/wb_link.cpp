@@ -670,10 +670,6 @@ void WBLink::update_statistics() {
   }else{
     stats.monitor_mode_link.curr_tx_channel_w_mhz=m_gnd_curr_rx_channel_width;
   }
-  stats.gnd_operating_mode.operating_mode=0;
-  if(curr_settings.wb_enable_listen_only_mode){
-      stats.gnd_operating_mode.tx_passive_mode_is_enabled=1;
-  }
   stats.monitor_mode_link.curr_rate_kbits= m_max_total_rate_for_current_wifi_config_kbits;
   stats.monitor_mode_link.curr_n_rate_adjustments=m_curr_n_rate_adjustments;
   stats.monitor_mode_link.curr_tx_pps=txStats.curr_packets_per_second;
@@ -691,10 +687,15 @@ void WBLink::update_statistics() {
           (bool)curr_rx_last_packet_status_good
   };
   stats.monitor_mode_link.bitfield=openhd::link_statistics::write_monitor_link_bitfield(bitfield);
+  {
+      // Operating mode
+      stats.gnd_operating_mode.operating_mode=0;
+      stats.gnd_operating_mode.tx_passive_mode_is_enabled=curr_settings.wb_enable_listen_only_mode ? 1 : 0;
+      stats.gnd_operating_mode.progress=0;
+  }
   //m_console->debug("{}",WBTxRx::tx_stats_to_string(txStats));
   //m_console->debug("{}",WBTxRx::rx_stats_to_string(rxStats));
   //m_console->debug("Pollution: {}",rxStats.curr_link_pollution_perc);
-  // dBm is per card, not per stream
   assert(stats.cards.size()>=4);
   // only populate actually used cards
   assert(m_broadcast_cards.size()<=stats.cards.size());
@@ -702,6 +703,7 @@ void WBLink::update_statistics() {
   for(int i=0;i< m_broadcast_cards.size();i++){
     const auto& card=m_broadcast_cards.at(i);
     auto& card_stats = stats.cards.at(i);
+    card_stats.NON_MAVLINK_CARD_ACTIVE= true;
     auto rxStatsCard=m_wb_txrx->get_rx_stats_for_card(i);
     card_stats.tx_active=i==curr_active_tx ? 1 : 0;
     card_stats.rx_rssi=rxStatsCard.card_dbm;
@@ -716,7 +718,6 @@ void WBLink::update_statistics() {
             curr_settings.wb_rtl8812au_tx_pwr_idx_override : curr_settings.wb_tx_power_milli_watt;
     card_stats.tx_power_armed=card.type==WiFiCardType::Realtek8812au ?
                               curr_settings.wb_rtl8812au_tx_pwr_idx_override_armed : curr_settings.wb_tx_power_milli_watt_armed;
-    card_stats.NON_MAVLINK_CARD_ACTIVE= true;
     card_stats.curr_status= m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
     card_stats.rx_signal_quality=rxStatsCard.signal_quality;
     card_stats.card_type= 0;
