@@ -283,7 +283,6 @@ bool WBLink::request_set_frequency(int frequency) {
         return false;
     }
   }
-  if(!check_in_state_support_changing_settings())return false;
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
   auto work_item=std::make_shared<WorkItem>(fmt::format("SET_FREQ:{}",frequency),[this,frequency](){
       m_settings->unsafe_get_settings().wb_frequency=frequency;
@@ -310,7 +309,6 @@ bool WBLink::request_set_tx_channel_width(int channel_width) {
         m_console->warn("Cannot change channel width, not supported by card");
         return false;
     }
-    if(!check_in_state_support_changing_settings())return false;
     // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
     auto work_item=std::make_shared<WorkItem>(fmt::format("SET_CHWIDTH:{}",channel_width),[this,channel_width](){
         m_settings->unsafe_get_settings().wb_air_tx_channel_width=channel_width;
@@ -575,7 +573,7 @@ void WBLink::loop_do_work() {
       m_work_item_queue_mutex.unlock();
     }
     perform_management();
-    air_perform_reset_frequency();
+    //air_perform_reset_frequency();
     perform_rate_adjustment();
     // update statistics in regular intervals
     update_statistics();
@@ -893,24 +891,12 @@ bool WBLink::try_schedule_work_item(const std::shared_ptr<WorkItem> &work_item) 
         m_console->warn("Please try again later");
         return false;
     }
+    // Most likely, the lock is hold by the wb_link thread currently performing a previous work item -
+    // this is not an error, the user has to try changing param X later.
     m_console->debug("Cannot get lock,cannot add {}",work_item->TAG);
     m_console->warn("Please try again later");
     return false;
 }
-
-bool WBLink::check_work_queue_empty() {
-    std::unique_lock<std::mutex> lock(m_work_item_queue_mutex, std::try_to_lock);
-    if(lock.owns_lock()){
-        if(!m_work_item_queue.empty()){
-            m_console->info("Rejecting param, another change is still queued up");
-            return false;
-        }
-        return true;
-    }
-    m_console->info("Work queue busy");
-    return false;
-}
-
 
 void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
   assert(packet.n_injections>=1);
@@ -951,10 +937,6 @@ void WBLink::reset_all_rx_stats() {
   m_wb_tele_rx->reset_stream_stats();
 }
 
-bool WBLink::check_in_state_support_changing_settings(){
-  return check_work_queue_empty();
-}
-
 openhd::WifiSpace WBLink::get_current_frequency_channel_space()const {
   return openhd::get_space_from_frequency(m_settings->get_settings().wb_frequency);
 }
@@ -965,7 +947,6 @@ bool WBLink::set_tx_power_mw(int tx_power_mw) {
     m_console->warn("Invalid tx power:{}mW", tx_power_mw);
     return false;
   }
-  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_tx_power_milli_watt= tx_power_mw;
   m_settings->persist();
   apply_txpower();
@@ -975,7 +956,6 @@ bool WBLink::set_tx_power_mw(int tx_power_mw) {
 bool WBLink::set_tx_power_rtl8812au(int tx_power_index_override){
   m_console->debug("set_tx_power_rtl8812au {}index",tx_power_index_override);
   if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(tx_power_index_override))return false;
-  if(!check_in_state_support_changing_settings())return false;
   m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=tx_power_index_override;
   m_settings->persist();
   apply_txpower();
@@ -1108,10 +1088,6 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
 }
 
 bool WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params) {
-    if(!check_work_queue_empty()){
-        m_console->warn("Rejecting async_scan_channels, work queue busy");
-        return false;
-    }
     auto work_item=std::make_shared<WorkItem>("SCAN_CHANNELS",[this,scan_channels_params](){
         scan_channels(scan_channels_params);
     },std::chrono::steady_clock::now());
@@ -1181,10 +1157,6 @@ void WBLink::analyze_channels() {
 }
 
 bool WBLink::async_analyze_channels() {
-    if(!check_work_queue_empty()){
-        m_console->warn("Rejecting async_scan_channels, work queue busy");
-        return false;
-    }
     auto work_item=std::make_shared<WorkItem>("ANALYZE_CHANNELS",[this](){
         analyze_channels();
     },std::chrono::steady_clock::now());

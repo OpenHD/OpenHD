@@ -93,16 +93,15 @@ class WBLink :public OHDLink{
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void perform_rate_adjustment();
   void perform_management();
-    // Feature on air: If we are not armed, and do not receive any message from the ground unit for more than
-    // one minute, we go back to the default frequency / bw.
+  // Feature on air: If we are not armed, and do not receive any message from the ground unit for more than
+  // one minute, we go back to the default frequency / bw.
+  // NOTE: Currently disabled.
   void air_perform_reset_frequency();
   // Returns true if the work item queue is currently empty and the item has been added
   // false otherwise. In general, we only suport one item on the work queue - otherwise we reject the param,
   // since the user can just try again later (and in case the work queue is currently busy with a frequency scan for example,
   // we do not support changing the frequency or similar.
   bool try_schedule_work_item(const std::shared_ptr<WorkItem>& work_item);
-  // We limit changing specific params to one after another
-  bool check_work_queue_empty();
   static constexpr auto DELAY_FOR_TRANSMIT_ACK =std::chrono::seconds(2);
  private:
   // Called by telemetry on both air and ground (send to opposite, respective)
@@ -135,11 +134,6 @@ class WBLink :public OHDLink{
   void reset_all_rx_stats();
   int64_t get_total_tx_error_count();
  private:
-  // We return false on all the change settings request(s) if there is already a change operation queued
-  // up, or we currently perform a channel scan
-  // Not completely "thread safe" so to say but good enough.
-  bool check_in_state_support_changing_settings();
- private:
   const OHDProfile m_profile;
   const OHDPlatform m_platform;
   const std::vector<WiFiCard> m_broadcast_cards;
@@ -165,6 +159,8 @@ class WBLink :public OHDLink{
   bool m_work_thread_run;
   std::unique_ptr<std::thread> m_work_thread;
   std::mutex m_work_item_queue_mutex;
+  // NOTE: We only support one active work item at a time,
+  // otherwise, we reject any changes requested by the user.
   std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
   // These are for variable bitrate / tx error reduces bitrate
   static constexpr auto RATE_ADJUSTMENT_INTERVAL=std::chrono::seconds(1);
