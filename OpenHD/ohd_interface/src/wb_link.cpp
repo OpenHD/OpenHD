@@ -605,7 +605,8 @@ void WBLink::update_statistics() {
       const auto curr_tx_stats=wb_tx.get_latest_stats();
       // optimization - only send for active video links
       if(curr_tx_stats.n_injected_packets==0)continue;
-      openhd::link_statistics::StatsWBVideoAir air_video{};
+      openhd::link_statistics::Xmavlink_openhd_stats_wb_video_air_t air_video{};
+      openhd::link_statistics::Xmavlink_openhd_stats_wb_video_air_fec_performance_t air_fec{};
       air_video.link_index=i;
       int rec_bitrate=0;
       if(m_opt_action_handler){
@@ -618,24 +619,26 @@ void WBLink::update_statistics() {
       air_video.curr_injected_pps=curr_tx_stats.current_injected_packets_per_second;
       air_video.curr_dropped_frames=curr_tx_stats.n_dropped_frames;
       const auto curr_tx_fec_stats=wb_tx.get_latest_fec_stats();
-      air_video.curr_fec_encode_time_avg_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
-      air_video.curr_fec_encode_time_min_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
-      air_video.curr_fec_encode_time_max_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.max);
-      air_video.curr_fec_block_size_min=curr_tx_fec_stats.curr_fec_block_length.min;
-      air_video.curr_fec_block_size_max=curr_tx_fec_stats.curr_fec_block_length.max;
-      air_video.curr_fec_block_size_avg=curr_tx_fec_stats.curr_fec_block_length.avg;
-      air_video.curr_time_until_tx_min_us=curr_tx_stats.curr_block_until_tx_min_us;
-      air_video.curr_time_until_tx_max_us=curr_tx_stats.curr_block_until_tx_max_us;
-      air_video.curr_time_until_tx_avg_us=curr_tx_stats.curr_block_until_tx_avg_us;
+      air_fec.curr_fec_encode_time_avg_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
+      air_fec.curr_fec_encode_time_min_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
+      air_fec.curr_fec_encode_time_max_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.max);
+      air_fec.curr_fec_block_size_min=curr_tx_fec_stats.curr_fec_block_length.min;
+      air_fec.curr_fec_block_size_max=curr_tx_fec_stats.curr_fec_block_length.max;
+      air_fec.curr_fec_block_size_avg=curr_tx_fec_stats.curr_fec_block_length.avg;
+      air_fec.curr_tx_delay_min_us=curr_tx_stats.curr_block_until_tx_min_us;
+      air_fec.curr_tx_delay_max_us=curr_tx_stats.curr_block_until_tx_max_us;
+      air_fec.curr_tx_delay_avg_us=curr_tx_stats.curr_block_until_tx_avg_us;
       air_video.curr_fec_percentage=m_settings->unsafe_get_settings().wb_video_fec_percentage;
       stats.stats_wb_video_air.push_back(air_video);
+      if(i==0)stats.air_fec_performance=air_fec;
     }
   }else{
     // video on ground
     for(int i=0;i< m_wb_video_rx_list.size();i++){
       auto& wb_rx= *m_wb_video_rx_list.at(i);
       const auto wb_rx_stats=wb_rx.get_latest_stats();
-      openhd::link_statistics::StatsWBVideoGround ground_video{};
+      openhd::link_statistics::Xmavlink_openhd_stats_wb_video_ground_t ground_video{};
+      openhd::link_statistics::Xmavlink_openhd_stats_wb_video_ground_fec_performance_t gnd_fec{};
       ground_video.link_index=i;
       // Use outgoing bitrate - otherwise, we get N times the bandwidth with multiple RX-es.
       //ground_video.curr_incoming_bitrate=wb_rx_stats.curr_in_bits_per_second;
@@ -645,11 +648,12 @@ void WBLink::update_statistics() {
       ground_video.count_blocks_recovered=fec_stats.count_blocks_recovered;
       ground_video.count_blocks_lost=fec_stats.count_blocks_lost;
       ground_video.count_blocks_total=fec_stats.count_blocks_total;
-      ground_video.curr_fec_decode_time_avg_us =get_micros(fec_stats.curr_fec_decode_time.avg);
-      ground_video.curr_fec_decode_time_min_us =get_micros(fec_stats.curr_fec_decode_time.min);
-      ground_video.curr_fec_decode_time_max_us =get_micros(fec_stats.curr_fec_decode_time.max);
+      gnd_fec.curr_fec_decode_time_avg_us =get_micros(fec_stats.curr_fec_decode_time.avg);
+      gnd_fec.curr_fec_decode_time_min_us =get_micros(fec_stats.curr_fec_decode_time.min);
+      gnd_fec.curr_fec_decode_time_max_us =get_micros(fec_stats.curr_fec_decode_time.max);
       // TODO otimization: Only send stats for an active link
       stats.stats_wb_video_ground.push_back(ground_video);
+      if(i==0)stats.gnd_fec_performance=gnd_fec;
     }
   }
   const auto& curr_settings=m_settings->unsafe_get_settings();
@@ -658,7 +662,6 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_rx_packet_loss_perc=rxStats.curr_lowest_packet_loss;
   stats.monitor_mode_link.count_tx_inj_error_hint=txStats.count_tx_injections_error_hint;
   stats.monitor_mode_link.count_tx_dropped_packets=txStats.count_tx_dropped_packets;
-  stats.monitor_mode_link.curr_tx_card_idx=m_wb_txrx->get_curr_active_tx_card_idx();
   stats.monitor_mode_link.curr_tx_mcs_index=curr_settings.wb_air_mcs_index;
   //m_console->debug("Big gaps:{}",rxStats.curr_big_gaps_counter);
   stats.monitor_mode_link.curr_tx_channel_mhz=curr_settings.wb_frequency;
@@ -667,12 +670,9 @@ void WBLink::update_statistics() {
   }else{
     stats.monitor_mode_link.curr_tx_channel_w_mhz=m_gnd_curr_rx_channel_width;
   }
-  stats.monitor_mode_link.tx_operating_mode =0;
-  if(!m_any_card_supports_injection){
-      stats.monitor_mode_link.tx_operating_mode=1;
-  }
+  stats.gnd_operating_mode.operating_mode=0;
   if(curr_settings.wb_enable_listen_only_mode){
-      stats.monitor_mode_link.tx_operating_mode=2;
+      stats.gnd_operating_mode.tx_passive_mode_is_enabled=1;
   }
   stats.monitor_mode_link.curr_rate_kbits= m_max_total_rate_for_current_wifi_config_kbits;
   stats.monitor_mode_link.curr_n_rate_adjustments=m_curr_n_rate_adjustments;
@@ -680,7 +680,7 @@ void WBLink::update_statistics() {
   stats.monitor_mode_link.curr_tx_bps=txStats.curr_bits_per_second_excluding_overhead;
   stats.monitor_mode_link.curr_rx_pps=rxStats.curr_packets_per_second;
   stats.monitor_mode_link.curr_rx_bps=rxStats.curr_bits_per_second;
-  stats.monitor_mode_link.curr_pollution_perc=rxStats.curr_link_pollution_perc;
+  stats.monitor_mode_link.pollution_perc=rxStats.curr_link_pollution_perc;
   const int tmp_last_management_packet_ts=m_profile.is_air ? m_management_air->get_last_received_packet_ts_ms():
           m_management_gnd->get_last_received_packet_ts_ms();
   const int last_received_packet_ts=std::max(m_last_received_packet_ts_ms.load(),tmp_last_management_packet_ts);
@@ -698,15 +698,17 @@ void WBLink::update_statistics() {
   assert(stats.cards.size()>=4);
   // only populate actually used cards
   assert(m_broadcast_cards.size()<=stats.cards.size());
+  const auto curr_active_tx=m_wb_txrx->get_curr_active_tx_card_idx();
   for(int i=0;i< m_broadcast_cards.size();i++){
     const auto& card=m_broadcast_cards.at(i);
     auto& card_stats = stats.cards.at(i);
     auto rxStatsCard=m_wb_txrx->get_rx_stats_for_card(i);
-    card_stats.rx_rssi_card=rxStatsCard.card_dbm;
+    card_stats.tx_active=i==curr_active_tx ? 1 : 0;
+    card_stats.rx_rssi=rxStatsCard.card_dbm;
     card_stats.rx_rssi_1=rxStatsCard.antenna1_dbm;
     card_stats.rx_rssi_2=rxStatsCard.antenna2_dbm;
     card_stats.count_p_received=rxStatsCard.count_p_valid;
-    card_stats.count_p_injected=0; //TODO
+    card_stats.count_p_injected=0;
     card_stats.curr_rx_packet_loss_perc=rxStatsCard.curr_packet_loss;
     card_stats.tx_power_current=card.type==WiFiCardType::Realtek8812au ?
                                 m_curr_tx_power_idx.load() : m_curr_tx_power_mw.load();
@@ -714,9 +716,9 @@ void WBLink::update_statistics() {
             curr_settings.wb_rtl8812au_tx_pwr_idx_override : curr_settings.wb_tx_power_milli_watt;
     card_stats.tx_power_armed=card.type==WiFiCardType::Realtek8812au ?
                               curr_settings.wb_rtl8812au_tx_pwr_idx_override_armed : curr_settings.wb_tx_power_milli_watt_armed;
-    card_stats.exists_in_openhd= true;
+    card_stats.NON_MAVLINK_CARD_ACTIVE= true;
     card_stats.curr_status= m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
-    card_stats.signal_quality=rxStatsCard.signal_quality;
+    card_stats.rx_signal_quality=rxStatsCard.signal_quality;
     card_stats.card_type= 0;
     if(card.type==WiFiCardType::Realtek8812au){
         card_stats.card_type=1;

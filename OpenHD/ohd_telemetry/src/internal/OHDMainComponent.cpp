@@ -181,7 +181,7 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
   // stats for all the wifi card(s)
   int card_index=0;
   for(const auto& card_stats : latest_stats.cards){
-    if(!card_stats.exists_in_openhd){
+    if(!card_stats.NON_MAVLINK_CARD_ACTIVE){
       // skip non active cards
       continue;
     }
@@ -198,16 +198,16 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
     for(const auto& stats : latest_stats.stats_wb_video_air){
       ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air(
           m_sys_id, m_comp_id, stats));
-      ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air_fec_performance(
-          m_sys_id, m_comp_id, stats));
     }
+      ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air_fec_performance(
+              m_sys_id, m_comp_id,latest_stats.air_fec_performance));
   }else{
     for(const auto& ground_video: latest_stats.stats_wb_video_ground){
       ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd(
           m_sys_id, m_comp_id, ground_video));
-      ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd_fec_performance(
-          m_sys_id, m_comp_id, ground_video));
     }
+    ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd_fec_performance(
+          m_sys_id, m_comp_id, latest_stats.gnd_fec_performance));
     if(m_opt_action_handler && m_opt_action_handler->wb_get_supported_channels!= nullptr) {
         auto channels = m_opt_action_handler->wb_get_supported_channels();
         ret.push_back(openhd::LinkStatisticsHelper::generate_msg_openhd_wifibroadcast_supported_channels(m_sys_id, m_comp_id,channels));

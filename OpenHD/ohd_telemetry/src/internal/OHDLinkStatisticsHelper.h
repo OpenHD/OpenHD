@@ -12,11 +12,11 @@
 namespace openhd::LinkStatisticsHelper{
 
 static MavlinkMessage pack_card(const uint8_t system_id,const uint8_t component_id,int card_index,
-                             const openhd::link_statistics::StatsPerCard& card_stats){
+                             const openhd::link_statistics::Xmavlink_openhd_stats_monitor_mode_wifi_card_t& card_stats){
   MavlinkMessage msg;
   mavlink_openhd_stats_monitor_mode_wifi_card_t tmp{};
   tmp.card_index=card_index;
-  tmp.rx_rssi=card_stats.rx_rssi_card;
+  tmp.rx_rssi=card_stats.rx_rssi;
   tmp.rx_rssi_1=card_stats.rx_rssi_1;
   tmp.rx_rssi_2=card_stats.rx_rssi_2;
   tmp.count_p_received=card_stats.count_p_received;
@@ -27,14 +27,14 @@ static MavlinkMessage pack_card(const uint8_t system_id,const uint8_t component_
   tmp.tx_power_armed=card_stats.tx_power_armed;
   tmp.tx_power_disarmed=card_stats.tx_power_disarmed;
   tmp.curr_status=card_stats.curr_status;
-  tmp.rx_signal_quality=card_stats.signal_quality;
+  tmp.rx_signal_quality=card_stats.rx_signal_quality;
   //openhd::log::get_default()->debug("XX {}",card_stats.to_string(0));
   mavlink_msg_openhd_stats_monitor_mode_wifi_card_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
 
 static MavlinkMessage pack_link_general(const uint8_t system_id,const uint8_t component_id,
-                                        const openhd::link_statistics::StatsMonitorModeLink stats_monitor_mode_link){
+                                        const openhd::link_statistics::Xmavlink_openhd_stats_monitor_mode_wifi_link_t& stats_monitor_mode_link){
   MavlinkMessage msg;
   mavlink_openhd_stats_monitor_mode_wifi_link_t tmp{};
   tmp.curr_tx_pps=stats_monitor_mode_link.curr_tx_pps;
@@ -44,23 +44,21 @@ static MavlinkMessage pack_link_general(const uint8_t system_id,const uint8_t co
   tmp.count_tx_inj_error_hint=stats_monitor_mode_link.count_tx_inj_error_hint;
   tmp.count_tx_dropped_packets=stats_monitor_mode_link.count_tx_dropped_packets;
   tmp.curr_rx_packet_loss_perc=stats_monitor_mode_link.curr_rx_packet_loss_perc;
-  tmp.curr_tx_card_idx=stats_monitor_mode_link.curr_tx_card_idx;
   tmp.curr_tx_mcs_index=stats_monitor_mode_link.curr_tx_mcs_index;
   tmp.curr_tx_channel_mhz=stats_monitor_mode_link.curr_tx_channel_mhz;
   tmp.curr_tx_channel_w_mhz=stats_monitor_mode_link.curr_tx_channel_w_mhz;
   tmp.curr_rx_big_gaps_counter=stats_monitor_mode_link.curr_rx_big_gaps_counter;
-  tmp.tx_passive_mode_is_enabled=stats_monitor_mode_link.tx_operating_mode;
-  tmp.curr_tx_stbc_lpdc_shortguard_bitfield=stats_monitor_mode_link.bitfield;
+  tmp.bitfield=stats_monitor_mode_link.bitfield;
   tmp.curr_rate_kbits=stats_monitor_mode_link.curr_rate_kbits;
   tmp.curr_n_rate_adjustments=stats_monitor_mode_link.curr_n_rate_adjustments;
-  tmp.dummy0=stats_monitor_mode_link.curr_pollution_perc;
+  tmp.pollution_perc=stats_monitor_mode_link.pollution_perc;
   //tmp.unused2=stats_monitor_mode_link.unused2;
   //tmp.unused3=stats_monitor_mode_link.unused3;
   mavlink_msg_openhd_stats_monitor_mode_wifi_link_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
 
-static MavlinkMessage pack_tele(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsTelemetry& stats){
+static MavlinkMessage pack_tele(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::Xmavlink_openhd_stats_telemetry_t& stats){
   MavlinkMessage msg;
   mavlink_openhd_stats_telemetry_t tmp{};
   tmp.curr_tx_pps=stats.curr_tx_pps;
@@ -74,7 +72,7 @@ static MavlinkMessage pack_tele(const uint8_t system_id,const uint8_t component_
   return msg;
 }
 
-static MavlinkMessage pack_vid_air(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsWBVideoAir& stats){
+static MavlinkMessage pack_vid_air(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::Xmavlink_openhd_stats_wb_video_air_t& stats){
   MavlinkMessage msg;
   mavlink_openhd_stats_wb_video_air_t tmp{};
   tmp.link_index=stats.link_index;
@@ -88,7 +86,7 @@ static MavlinkMessage pack_vid_air(const uint8_t system_id,const uint8_t compone
   return msg;
 }
 
-static MavlinkMessage pack_vid_air_fec_performance(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsWBVideoAir& stats){
+static MavlinkMessage pack_vid_air_fec_performance(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::Xmavlink_openhd_stats_wb_video_air_fec_performance_t& stats){
   MavlinkMessage msg;
   mavlink_openhd_stats_wb_video_air_fec_performance_t tmp{};
   tmp.link_index=stats.link_index;
@@ -98,15 +96,15 @@ static MavlinkMessage pack_vid_air_fec_performance(const uint8_t system_id,const
   tmp.curr_fec_block_size_avg=stats.curr_fec_block_size_avg;
   tmp.curr_fec_block_size_min=stats.curr_fec_block_size_min;
   tmp.curr_fec_block_size_max=stats.curr_fec_block_size_max;
-  tmp.curr_tx_delay_min_us=stats.curr_time_until_tx_min_us;
-  tmp.curr_tx_delay_max_us=stats.curr_time_until_tx_max_us;
-  tmp.curr_tx_delay_avg_us=stats.curr_time_until_tx_avg_us;
+  tmp.curr_tx_delay_min_us=stats.curr_tx_delay_min_us;
+  tmp.curr_tx_delay_max_us=stats.curr_tx_delay_max_us;
+  tmp.curr_tx_delay_avg_us=stats.curr_tx_delay_avg_us;
   mavlink_msg_openhd_stats_wb_video_air_fec_performance_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
 
 
-static MavlinkMessage pack_vid_gnd(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsWBVideoGround& stats){
+static MavlinkMessage pack_vid_gnd(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::Xmavlink_openhd_stats_wb_video_ground_t& stats){
   MavlinkMessage msg;
   mavlink_openhd_stats_wb_video_ground_t tmp{};
   tmp.link_index=stats.link_index;
@@ -121,7 +119,7 @@ static MavlinkMessage pack_vid_gnd(const uint8_t system_id,const uint8_t compone
   return msg;
 }
 
-static MavlinkMessage pack_vid_gnd_fec_performance(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::StatsWBVideoGround& stats){
+static MavlinkMessage pack_vid_gnd_fec_performance(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::Xmavlink_openhd_stats_wb_video_ground_fec_performance_t& stats){
   MavlinkMessage msg;
   mavlink_openhd_stats_wb_video_ground_fec_performance_t tmp{};
   tmp.link_index=stats.link_index;
@@ -136,7 +134,7 @@ static MavlinkMessage pack_vid_gnd_fec_performance(const uint8_t system_id,const
 
 static MavlinkMessage pack_camera_stats(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::CamInfo& cam_info){
   MavlinkMessage msg;
-  mavlink_openhd_camera_status_t tmp{};
+  mavlink_openhd_camera_status_air_t tmp{};
   tmp.cam_type=cam_info.cam_type;
   tmp.encoding_format=cam_info.encoding_format;
   tmp.air_recording_active=cam_info.air_recording_active;
@@ -148,8 +146,14 @@ static MavlinkMessage pack_camera_stats(const uint8_t system_id,const uint8_t co
   tmp.encoding_format=cam_info.encoding_format;
   tmp.cam_status=cam_info.cam_status;
   tmp.supports_variable_bitrate=cam_info.supports_variable_bitrate;
-  mavlink_msg_openhd_camera_status_encode(system_id,component_id,&msg.m,&tmp);
+  mavlink_msg_openhd_camera_status_air_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
+}
+static MavlinkMessage pack_mavlink_openhd_stats_monitor_mode_wifi_card(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::Xmavlink_openhd_stats_monitor_mode_wifi_card_t& stats){
+    MavlinkMessage msg;
+    mavlink_openhd_wifbroadcast_gnd_operating_mode_t tmp{};
+    mavlink_msg_openhd_wifbroadcast_gnd_operating_mode_encode(system_id,component_id,&msg.m,&tmp);
+    return msg;
 }
 
 static MavlinkMessage generate_msg_openhd_wifibroadcast_supported_channels(const uint8_t system_id,const uint8_t component_id,const std::vector<uint16_t>& channels){
@@ -168,23 +172,23 @@ static MavlinkMessage generate_msg_openhd_wifibroadcast_supported_channels(const
 
 static MavlinkMessage generate_msg_analyze_channels_progress(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::AnalyzeChannelsResult progress){
     MavlinkMessage msg;
-    mavlink_openhd_wifbroadcast_analyze_channels_progress_t tmp{};
+    /*mavlink_openhd_wifbroadcast_analyze_channels_progress_t tmp{};
     tmp.progress=progress.progress;
     tmp.channel_mhz=progress.channel_mhz;
     tmp.channel_width_mhz=progress.channel_width_mhz;
     tmp.foreign_packets= progress.n_foreign_packets;
-    mavlink_msg_openhd_wifbroadcast_analyze_channels_progress_encode(system_id,component_id,&msg.m,&tmp);
+    mavlink_msg_openhd_wifbroadcast_analyze_channels_progress_encode(system_id,component_id,&msg.m,&tmp);*/
     return msg;
 }
 
 static MavlinkMessage generate_msg_scan_channels_progress(const uint8_t system_id,const uint8_t component_id,const openhd::ActionHandler::ScanChannelsProgress progress){
     MavlinkMessage msg;
-    mavlink_openhd_wifbroadcast_scan_channels_progress_t tmp{};
+    /*mavlink_openhd_wifbroadcast_scan_channels_progress_t tmp{};
     tmp.progress=progress.progress;
     tmp.channel_mhz=progress.channel_mhz;
     tmp.channel_width_mhz=progress.channel_width_mhz;
     tmp.success=progress.success;
-    mavlink_msg_openhd_wifbroadcast_scan_channels_progress_encode(system_id,component_id,&msg.m,&tmp);
+    mavlink_msg_openhd_wifbroadcast_scan_channels_progress_encode(system_id,component_id,&msg.m,&tmp);*/
     return msg;
 }
 
