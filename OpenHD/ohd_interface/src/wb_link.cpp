@@ -913,14 +913,6 @@ void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
   //m_console->debug("N injections:{}",packet.n_injections);
   const auto res=m_wb_tele_tx->try_enqueue_packet(packet.data,packet.n_injections);
   if(!res)m_console->debug("Enqueing tele packet failed");
-  if(!m_any_card_supports_injection){
-    const auto now=std::chrono::steady_clock::now();
-    const auto elapsed=now-m_last_log_card_does_might_not_inject;
-    if(elapsed>WARN_CARD_DOES_NOT_INJECT_INTERVAL){
-      m_console->warn("TX (likely) not supported by card(s)",m_broadcast_cards.at(0).device_name);
-      m_last_log_card_does_might_not_inject=now;
-    }
-  }
 }
 
 void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
@@ -938,7 +930,7 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
     const auto res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc);
     if(!res){
         m_rate_adjustment_dropped_frames++;
-        m_console->warn("TX enqueue video frame failed, queue size:{} delta_dropped:{}",
+        m_console->debug("TX enqueue video frame failed, queue size:{} delta_dropped:{}",
                         tx.get_tx_queue_available_size_approximate(),m_rate_adjustment_dropped_frames.load());
     }
   }else{

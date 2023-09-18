@@ -179,10 +179,7 @@ class WBLink :public OHDLink{
   // Set to true when armed, disarmed by default
   // Used to differentiate between different tx power levels when armed / disarmed
   bool m_is_armed= false;
-  // if a card does not support injection, we log a error message any injecting method is called
-  std::chrono::steady_clock::time_point m_last_log_card_does_might_not_inject=std::chrono::steady_clock::now();
-  static constexpr auto WARN_CARD_DOES_NOT_INJECT_INTERVAL=std::chrono::seconds(5);
-    std::chrono::steady_clock::time_point m_last_log_bind_phrase_mismatch=std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point m_last_log_bind_phrase_mismatch=std::chrono::steady_clock::now();
   // We store tx power for easy access in stats
   std::atomic<int> m_curr_tx_power_idx=0;
   std::atomic<int> m_curr_tx_power_mw=0;
