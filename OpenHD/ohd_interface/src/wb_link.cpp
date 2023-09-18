@@ -90,7 +90,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           tx_channel_width=20;
       }
       //const bool set_flag_tx_no_ack = m_profile.is_ground() ? false : !settings.wb_tx_use_ack;
-      const bool set_flag_tx_no_ack = m_profile.is_ground() ? false : true;
+      const bool set_flag_tx_no_ack = !m_profile.is_ground();
       auto tmp_params= RadiotapHeader::UserSelectableParams{
               tx_channel_width, settings.wb_enable_short_guard,settings.wb_enable_stbc,
               settings.wb_enable_ldpc, mcs_index,set_flag_tx_no_ack};
@@ -178,6 +178,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       std::function<std::vector<uint16_t>(void)> wb_get_supported_channels=[this](){
           std::vector<uint16_t> ret;
           const auto frequencies=m_broadcast_cards.at(0).get_supported_frequencies_2G_5G();
+          ret.reserve(frequencies.size());
           for(const auto freq:frequencies){
               ret.push_back(static_cast<uint16_t>(freq));
           }
@@ -1009,6 +1010,11 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
     m_console->warn("No channel_widths to scan, return early");
     return {};
   }
+  if(m_opt_action_handler) {
+    auto stats_current = m_opt_action_handler->get_link_stats();
+    stats_current.gnd_operating_mode.operating_mode = 1;
+    m_opt_action_handler->update_link_stats(stats_current);
+  }
   ScanResult result{false,0,0};
   // Note: We intentionally do not modify the persistent settings here
   m_console->debug("Channel scan N channels to scan:{} N channel widths to scan:{}",
@@ -1037,7 +1043,7 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
         tmp.channel_mhz=(int)channel.frequency;
         tmp.channel_width_mhz=channel_width;
         tmp.success= false;
-        tmp.progress=OHDUtil::calculate_progress_perc(i+1,channels_to_scan.size());
+        tmp.progress=OHDUtil::calculate_progress_perc(i+1,(int)channels_to_scan.size());
         m_opt_action_handler->add_scan_channels_progress(tmp);
       }
       // sleeep a bit - some cards /drivers might need time switching
@@ -1134,6 +1140,11 @@ void WBLink::analyze_channels() {
             channels_to_analyze.push_back(tmp.value());
         }
     }
+    if(m_opt_action_handler) {
+        auto stats_current = m_opt_action_handler->get_link_stats();
+        stats_current.gnd_operating_mode.operating_mode = 2;
+        m_opt_action_handler->update_link_stats(stats_current);
+    }
     std::vector<AnalyzeResult> results{};
     for(int i=0; i < channels_to_analyze.size(); i++){
         const auto channel=channels_to_analyze[i];
@@ -1156,7 +1167,7 @@ void WBLink::analyze_channels() {
             tmp.channel_mhz=(int)channel.frequency;
             tmp.channel_width_mhz=channel_width;
             tmp.n_foreign_packets=(int)n_foreign_packets;
-            tmp.progress=OHDUtil::calculate_progress_perc(i+1, channels_to_analyze.size());
+            tmp.progress=OHDUtil::calculate_progress_perc(i+1, (int)channels_to_analyze.size());
             m_opt_action_handler->add_analyze_result(tmp);
         }
     }
