@@ -208,6 +208,8 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
     }
     ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd_fec_performance(
           m_sys_id, m_comp_id, latest_stats.gnd_fec_performance));
+    ret.push_back(openhd::LinkStatisticsHelper::pack_mavlink_openhd_wifbroadcast_gnd_operating_mode(
+            m_sys_id,m_comp_id,latest_stats.gnd_operating_mode));
     if(m_opt_action_handler && m_opt_action_handler->wb_get_supported_channels!= nullptr) {
         auto channels = m_opt_action_handler->wb_get_supported_channels();
         ret.push_back(openhd::LinkStatisticsHelper::generate_msg_openhd_wifibroadcast_supported_channels(m_sys_id, m_comp_id,channels));

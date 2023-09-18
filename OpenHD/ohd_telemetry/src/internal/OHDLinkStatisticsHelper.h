@@ -28,6 +28,7 @@ static MavlinkMessage pack_card(const uint8_t system_id,const uint8_t component_
   tmp.tx_power_disarmed=card_stats.tx_power_disarmed;
   tmp.curr_status=card_stats.curr_status;
   tmp.rx_signal_quality=card_stats.rx_signal_quality;
+  tmp.tx_active=card_stats.tx_active;
   //openhd::log::get_default()->debug("XX {}",card_stats.to_string(0));
   mavlink_msg_openhd_stats_monitor_mode_wifi_card_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
@@ -149,9 +150,11 @@ static MavlinkMessage pack_camera_stats(const uint8_t system_id,const uint8_t co
   mavlink_msg_openhd_camera_status_air_encode(system_id,component_id,&msg.m,&tmp);
   return msg;
 }
-static MavlinkMessage pack_mavlink_openhd_stats_monitor_mode_wifi_card(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::Xmavlink_openhd_stats_monitor_mode_wifi_card_t& stats){
+static MavlinkMessage pack_mavlink_openhd_wifbroadcast_gnd_operating_mode(const uint8_t system_id,const uint8_t component_id,const openhd::link_statistics::Xmavlink_openhd_wifbroadcast_gnd_operating_mode_t& stats){
     MavlinkMessage msg;
     mavlink_openhd_wifbroadcast_gnd_operating_mode_t tmp{};
+    tmp.operating_mode=stats.operating_mode;
+    tmp.tx_passive_mode_is_enabled=stats.tx_passive_mode_is_enabled;
     mavlink_msg_openhd_wifbroadcast_gnd_operating_mode_encode(system_id,component_id,&msg.m,&tmp);
     return msg;
 }
