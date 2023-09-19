@@ -160,12 +160,21 @@ std::vector<Camera> DCameras::detect_allwinner_csi(std::shared_ptr<spdlog::logge
 std::vector<Camera> DCameras::detect_rockchip_csi(std::shared_ptr<spdlog::logger>& m_console) {
   m_console->debug("detect_rockchip_csi(");
   if(OHDFilesystemUtil::exists("/dev/video11")){
-    m_console->debug("Camera set as Rockchip_CSI_IMX415");
+    m_console->debug("Camera set as Rockchip_5_CSI");
     Camera camera;
-    camera.name = "Rockchip_CSI_11";
+    camera.name = "Rockchip5_CSI";
     camera.vendor = "Rockchip";
     camera.type = CameraType::ROCKCHIP_CSI;
     camera.bus = "11";
+    return {camera};
+  }
+  else if(OHDFilesystemUtil::exists("/dev/video0")){
+    m_console->debug("Camera set as Rockchip_3_CSI");
+    Camera camera;
+    camera.name = "Rockchip3_CSI";
+    camera.vendor = "Rockchip";
+    camera.type = CameraType::ROCKCHIP_CSI;
+    camera.bus = "0";
     return {camera};
   }
   return {};
