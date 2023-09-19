@@ -11,7 +11,7 @@
 #include <utility>
 
 #include "wb_link.h"
-#include "wb_link_settings.hpp"
+#include "wb_link_settings.h"
 #include "wifi_command_helper.h"
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler,bool continue_without_wb_card)

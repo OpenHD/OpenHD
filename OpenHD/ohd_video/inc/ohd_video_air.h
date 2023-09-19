@@ -8,7 +8,7 @@
 #include <string>
 
 #include "camerastream.h"
-#include "ohd_video_air_generic_settings.hpp"
+#include "ohd_video_air_generic_settings.h"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
 // Dirty

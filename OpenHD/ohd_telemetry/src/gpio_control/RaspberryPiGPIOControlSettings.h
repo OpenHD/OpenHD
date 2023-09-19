@@ -9,7 +9,6 @@
 
 #include "openhd_settings_directories.hpp"
 #include "openhd_settings_persistent.h"
-#include "include_json.hpp"
 
 namespace openhd::telemetry::rpi {
 
@@ -24,7 +23,6 @@ struct GPIOControlSettings {
   int gpio_26= GPIO_LEAVE_UNTOUCHED;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GPIOControlSettings,gpio_2);
 
 static const std::string SETTINGS_DIRECTORY =
     std::string(SETTINGS_BASE_PATH) + std::string("telemetry/");
@@ -43,14 +41,9 @@ class GPIOControlSettingsHolder
   [[nodiscard]] GPIOControlSettings create_default() const override {
     return GPIOControlSettings{};
   }
-  std::optional<GPIOControlSettings> impl_deserialize(const std::string& file_as_string)const override{
-      return openhd_json_parse<GPIOControlSettings>(file_as_string);
-  }
+  std::optional<GPIOControlSettings> impl_deserialize(const std::string& file_as_string)const override;
 
-  std::string imp_serialize(const GPIOControlSettings& data)const override{
-      const nlohmann::json tmp=data;
-      return tmp.dump(4);
-  }
+  std::string imp_serialize(const GPIOControlSettings& data)const override;
 
 };
 }

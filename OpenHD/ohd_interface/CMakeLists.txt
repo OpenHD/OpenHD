@@ -21,7 +21,7 @@ set(sources
     inc/validate_settings_helper.h
     inc/wb_link.h
     inc/wb_link_manager.h
-    inc/wb_link_settings.hpp
+        inc/wb_link_settings.h
     inc/wifi_hotspot.h
     inc/wb_link_helper.h
     inc/wb_link_work_item.hpp
@@ -43,6 +43,8 @@ set(sources
     src/ethernet_hotspot.cpp
     src/wifi_card.cpp
     src/wb_link_manager.cpp
+    src/networking_settings.cpp
+    src/wb_link_settings.cpp
     #src/wifi_command_helper2.cpp
 )
 

@@ -9,7 +9,7 @@
 
 #include "openhd_settings_directories.hpp"
 #include "openhd_settings_persistent.h"
-#include "include_json.hpp"
+#include "openhd_platform.h"
 
 // Settings for telemetry, only valid on an air pi (since only on the air pi we connect the FC)
 // Note that we do not have any telemetry settings r.n for the ground (since forwarding is a task ov ohd_interface, not ohd_telemetry)
@@ -37,8 +37,6 @@ struct Settings{
   int fc_uart_baudrate=DEFAULT_UART_BAUDRATE;
   bool fc_uart_flow_control=false;
 };
-
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,fc_uart_connection_type,fc_uart_baudrate,fc_uart_flow_control);
 
 
 // 16 chars limit !
@@ -69,13 +67,8 @@ class SettingsHolder:public openhd::PersistentSettings<Settings>{
         }
         return ret;
   }
-    std::optional<Settings> impl_deserialize(const std::string& file_as_string)const override{
-        return openhd_json_parse<Settings>(file_as_string);
-    }
-    std::string imp_serialize(const Settings& data)const override{
-        const nlohmann::json tmp=data;
-        return tmp.dump(4);
-    }
+    std::optional<Settings> impl_deserialize(const std::string& file_as_string)const override;
+    std::string imp_serialize(const Settings& data)const override;
 };
 
 

@@ -7,7 +7,6 @@
 
 #include <cstdint>
 
-#include "include_json.hpp"
 #include "openhd_settings_directories.hpp"
 #include "openhd_settings_persistent.h"
 
@@ -21,8 +20,6 @@ struct NetworkingSettings {
   // passive listening for forwarding without hotspot functionality, can be enabled / disabled at run time.
   bool ethernet_nonhotspot_enable_auto_forwarding=false;
 };
-
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(NetworkingSettings,wifi_hotspot_enable,ethernet_hotspot_enable,ethernet_nonhotspot_enable_auto_forwarding);
 
 class NetworkingSettingsHolder:public openhd::PersistentSettings<NetworkingSettings>{
  public:
@@ -42,13 +39,8 @@ class NetworkingSettingsHolder:public openhd::PersistentSettings<NetworkingSetti
   [[nodiscard]] NetworkingSettings create_default()const override{
     return NetworkingSettings{};
   }
-  std::optional<NetworkingSettings> impl_deserialize(const std::string& file_as_string)const override{
-      return openhd_json_parse<NetworkingSettings>(file_as_string);
-  }
-  std::string imp_serialize(const NetworkingSettings& data)const override{
-      const nlohmann::json tmp=data;
-      return tmp.dump(4);
-  }
+  std::optional<NetworkingSettings> impl_deserialize(const std::string& file_as_string)const override;
+  std::string imp_serialize(const NetworkingSettings& data)const override;
 };
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_NETWORKING_SETTINGS_H_

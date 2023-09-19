@@ -98,10 +98,13 @@ SET(sources
     src/gpio_control/RaspberryPiGPIOControl.cpp
     src/gpio_control/RaspberryPiGPIOControl.h
     src/gpio_control/RaspberryPiGPIOControlSettings.h
+    src/gpio_control/RaspberryPiGPIOControlSettings.cpp
     src/internal/ina219.cc
     src/internal/ina219.h
     src/endpoints/TCPEndpoint.cpp
     src/endpoints/TCPEndpoint.h
+    src/GroundTelemetrySettings.cpp
+    src/AirTelemetrySettings.cpp
 )
 
 # Build it as a library

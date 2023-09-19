@@ -6,7 +6,7 @@
 #define OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_
 
 #include "openhd_spdlog.h"
-#include "wb_link_settings.hpp"
+#include "wb_link_settings.h"
 
 /**
  * The wb_link class is becoming a bit big and therefore hard to read.

@@ -17,7 +17,7 @@
 #include "openhd_profile.h"
 #include "openhd_settings_imp.hpp"
 #include "openhd_spdlog.h"
-#include "wb_link_settings.hpp"
+#include "wb_link_settings.h"
 #include "wifi_card.h"
 #include "wb_link_work_item.hpp"
 #include "wb_link_manager.h"

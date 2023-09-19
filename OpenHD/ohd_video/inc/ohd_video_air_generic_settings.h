@@ -8,7 +8,6 @@
 // NOTE: These are not the camera-specific settings, but rather settings regarding the management
 // of how those camera(s) should be used
 
-#include "include_json.hpp"
 #include "openhd_settings_directories.hpp"
 #include "openhd_settings_persistent.h"
 
@@ -23,8 +22,6 @@ struct AirCameraGenericSettings {
   // bitrate for primary and secondary video
   int dualcam_primary_video_allocated_bandwidth_perc=60; // Default X%:Y split
 };
-
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AirCameraGenericSettings,switch_primary_and_secondary,n_cameras_to_wait_for,dualcam_primary_video_allocated_bandwidth_perc);
 
 static bool is_valid_dualcam_primary_video_allocated_bandwidth(int dualcam_primary_video_allocated_bandwidth_perc){
   return dualcam_primary_video_allocated_bandwidth_perc>=10 && dualcam_primary_video_allocated_bandwidth_perc<=90;
@@ -43,13 +40,8 @@ class AirCameraGenericSettingsHolder: public openhd::PersistentSettings<AirCamer
   [[nodiscard]] AirCameraGenericSettings create_default()const override{
     return AirCameraGenericSettings{};
   }
-std::optional<AirCameraGenericSettings> impl_deserialize(const std::string& file_as_string)const override{
-    return openhd_json_parse<AirCameraGenericSettings>(file_as_string);
-}
-std::string imp_serialize(const AirCameraGenericSettings& data)const override{
-    const nlohmann::json tmp=data;
-    return tmp.dump(4);
-}
+std::optional<AirCameraGenericSettings> impl_deserialize(const std::string& file_as_string)const override;
+std::string imp_serialize(const AirCameraGenericSettings& data)const override;
 };
 
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_AIR_GENERIC_SETTINGS_H_

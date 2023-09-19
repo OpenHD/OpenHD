@@ -46,7 +46,6 @@ struct IPCameraSettings{
   // Whatever the user wants
   std::string extraparam_1;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(IPCameraSettings,location,extraparam_1)
 
 // User-selectable camera options
 // These values are settings that can change dynamically at run time
@@ -140,17 +139,6 @@ struct CameraSettings {
   int recordingQP = DEFAULT_RECORDING_QP;
   RateControlMode recordingRCMode = DEFAULT_RC_MODE;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings, enable_streaming,
-                                   streamed_video_format, h26x_bitrate_kbits,
-                                   h26x_keyframe_interval, h26x_intra_refresh_type, mjpeg_quality_percent, ip_cam_url, air_recording,
-                                   camera_rotation_degree, horizontal_flip, vertical_flip,
-                                   awb_mode, exposure_mode, brightness_percentage, rpi_rpicamsrc_iso, rpi_rpicamsrc_metering_mode,
-                                   // rpi libcamera specific IQ params begin
-                                   rpi_libcamera_sharpness_as_int,rpi_libcamera_contrast_as_int,rpi_libcamera_saturation_as_int,rpi_libcamera_ev_value,
-                                   rpi_libcamera_denoise_index, rpi_libcamera_awb_index, rpi_libcamera_metering_index, rpi_libcamera_exposure_index,
-                                   rpi_libcamera_shutter_microseconds,
-                                   // rpi libcamera specific IQ params end
-                                   force_sw_encode)
 
 
 

@@ -405,13 +405,8 @@ class CameraHolder:
   [[nodiscard]] std::string get_unique_filename()const override{
     return m_camera.get_unique_settings_filename();
   }
-  std::optional<CameraSettings> impl_deserialize(const std::string& file_as_string)const override{
-      return openhd_json_parse<CameraSettings>(file_as_string);
-  }
-  std::string imp_serialize(const CameraSettings& data)const override{
-      const nlohmann::json tmp=data;
-      return tmp.dump(4);
-  }
+  std::optional<CameraSettings> impl_deserialize(const std::string& file_as_string)const override;
+  std::string imp_serialize(const CameraSettings& data)const override;
   [[nodiscard]] CameraSettings create_default()const override{
     auto ret=CameraSettings{};
     if(m_camera.type==CameraType::RPI_CSI_MMAL || m_camera.type==CameraType::RPI_CSI_LIBCAMERA){
@@ -483,5 +478,7 @@ static void startup_fix_common_issues(std::vector<std::shared_ptr<CameraHolder>>
     camera_holders.at(i)->persist();
   }*/
 }
+
+void write_camera_manifest(const std::vector<Camera> &cameras);
 
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_CAMERA_HOLDER_H_
