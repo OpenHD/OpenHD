@@ -16,7 +16,7 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
         return WiFiCardType::OPENHD_RTL_88X2AU;
     }
     if(OHDUtil::equal_after_uppercase(driver_name,"88x2bu")){
-        // NOTE: "rtw_8822bu" is the bad kernel driver which doesn't support monitor mode
+        // NOTE: "rtw_8822bu" is the bad kernel driver which is fucking horrible.
         return WiFiCardType::OPENHD_RTL_88X2BU;
     }
     // The not supported, but perhaps working card(s)
