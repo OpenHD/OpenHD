@@ -33,17 +33,17 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     if(!continue_without_wb_card) {
       const auto begin = std::chrono::steady_clock::now();
       while (true) {
-        const auto n_wifibroadcast_capable_cards=DWifiCards::n_cards_supporting_injection(connected_cards);
+        const auto n_openhd_supported_cards=DWifiCards::n_cards_openhd_supported(connected_cards);
         // On the air unit, we stop the discovery as soon as we have one wb capable card
-        if(m_profile.is_air && n_wifibroadcast_capable_cards>=1){
+        if(m_profile.is_air && n_openhd_supported_cards>=1){
           break ;
         }
         // On the ground unit, we stop the discovery as soon as we have 2 or more wb capable card(s), or timeout
-        if(m_profile.is_ground() && n_wifibroadcast_capable_cards>=2){
+        if(m_profile.is_ground() && n_openhd_supported_cards>=2){
           break ;
         }
         const auto elapsed = std::chrono::steady_clock::now() - begin;
-        const auto message=fmt::format("Waiting for WB capable card(s), Found:{}",n_wifibroadcast_capable_cards);
+        const auto message=fmt::format("Waiting for OpenHD supported card(s), Found:{}",n_openhd_supported_cards);
         if (elapsed > std::chrono::seconds(3)) {
           m_console->warn(message);
         } else {
@@ -55,8 +55,8 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
         // or no card at all
         if (elapsed > std::chrono::seconds(10)) {
           // We only found 1 fully wb capable card
-          if(DWifiCards::any_wifi_card_supporting_injection(connected_cards)){
-            m_console->warn("Using {} WB cards",DWifiCards::n_cards_supporting_injection(connected_cards));
+          if(DWifiCards::any_wifi_card_openhd_supported(connected_cards)){
+            m_console->warn("Using {} OpenHD supported cards",DWifiCards::n_cards_openhd_supported(connected_cards));
             break ;
           }
           if (DWifiCards::any_wifi_card_supporting_monitor_mode(connected_cards)) {

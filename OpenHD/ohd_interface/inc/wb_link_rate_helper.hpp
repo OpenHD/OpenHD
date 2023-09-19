@@ -168,14 +168,14 @@ static uint32_t rtl8812au_get_max_rate_2G_kbits(uint16_t mcs_index,bool is_40_mh
 }
 
 static uint32_t get_max_rate_possible_5G_kbits(const WiFiCard& card,uint16_t mcs_index,bool is_40Mhz){
-  if(card.type==WiFiCardType::Realtek8812au || card.type==WiFiCardType::Realtek88x2bu){
+  if(card.type==WiFiCardType::OPENHD_RTL_88X2AU || card.type==WiFiCardType::OPENHD_RTL_88X2BU){
     return rtl8812au_get_max_rate_5G_kbits(mcs_index, is_40Mhz);
   }
   // fallback for any other weak crap
   return 5000;
 }
 static uint32_t get_max_rate_possible_2G_kbits(const WiFiCard& card,uint16_t mcs_index,bool is_40Mhz){
-    if(card.type==WiFiCardType::Realtek8812au || card.type==WiFiCardType::Realtek88x2bu){
+    if(card.type==WiFiCardType::OPENHD_RTL_88X2AU || card.type==WiFiCardType::OPENHD_RTL_88X2BU){
         return rtl8812au_get_max_rate_2G_kbits(mcs_index, is_40Mhz);
     }
     // fallback for any other weak crap
@@ -184,9 +184,6 @@ static uint32_t get_max_rate_possible_2G_kbits(const WiFiCard& card,uint16_t mcs
 
 static uint32_t get_max_rate_possible(const WiFiCard& card,const openhd::WifiSpace wifi_space,uint16_t mcs_index,bool is_40Mhz){
     if(wifi_space==WifiSpace::G2_4){
-        if(card.type==WiFiCardType::Atheros9k || card.type==WiFiCardType::Atheros9khtc){
-            return 9*1000; // About what is fixed in the driver
-        }
         return get_max_rate_possible_2G_kbits(card,mcs_index,is_40Mhz);
     }
     assert(wifi_space==WifiSpace::G5_8);

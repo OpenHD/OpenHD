@@ -90,8 +90,8 @@ bool openhd::wb::set_frequency_and_channel_width_for_all_cards(
     const std::vector<WiFiCard>& m_broadcast_cards) {
   bool ret=true;
   for(const auto& card: m_broadcast_cards){
-      if(card.type==WiFiCardType::Realtek8812au || card.type==WiFiCardType::Realtek88x2bu){
-          const int type=card.type==WiFiCardType::Realtek8812au ? 0 : 1;
+      if(card.type==WiFiCardType::OPENHD_RTL_88X2AU || card.type==WiFiCardType::OPENHD_RTL_88X2BU){
+          const int type=card.type==WiFiCardType::OPENHD_RTL_88X2AU ? 0 : 1;
           wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(type,card.device_name, frequency,channel_width);
       }else{
           const bool success=wifi::commandhelper::iw_set_frequency_and_channel_width(card.device_name,frequency,channel_width);
@@ -108,13 +108,13 @@ bool openhd::wb::set_tx_power_for_all_cards(int tx_power_mw, int rtl8812au_tx_po
                                             const std::vector <WiFiCard> &m_broadcast_cards) {
     bool ret=true;
     for(const auto& card: m_broadcast_cards){
-        if(card.type==WiFiCardType::Realtek8812au) {
+        if(card.type==WiFiCardType::OPENHD_RTL_88X2AU) {
             openhd::log::get_default()->debug("RTL8812AU tx_pwr_idx_override: {}", rtl8812au_tx_power_index_override);
             wifi::commandhelper::iw_set_tx_power(card.device_name, rtl8812au_tx_power_index_override);
         }else {
             const auto tx_power_mbm=openhd::milli_watt_to_mBm(tx_power_mw);
             openhd::log::get_default()->debug("Tx power mW:{} mBm:{}", tx_power_mw,tx_power_mbm);
-            if(card.type==WiFiCardType::Realtek88x2bu) {
+            if(card.type==WiFiCardType::OPENHD_RTL_88X2BU) {
                 wifi::commandhelper::openhd_driver_set_tx_power(card.device_name,tx_power_mbm);
             }else {
                 wifi::commandhelper::iw_set_tx_power(card.device_name,tx_power_mbm);
@@ -132,27 +132,9 @@ std::vector<std::string> openhd::wb::get_card_names(const std::vector<WiFiCard>&
   return ret;
 }
 
-bool openhd::wb::has_any_rtl8812au(const std::vector<WiFiCard>& cards) {
-  for(const auto& card: cards){
-    if(card.type==WiFiCardType::Realtek8812au){
-      return true;
-    }
-  }
-  return false;
-}
-
-bool openhd::wb::has_any_non_rtl8812au(const std::vector<WiFiCard> &cards) {
-    for(const auto& card: cards){
-        if(card.type!=WiFiCardType::Realtek8812au){
-            return true;
-        }
-    }
-    return false;
-}
-
 bool openhd::wb::any_card_supports_stbc_ldpc_sgi(const std::vector<WiFiCard> &cards) {
     for(const auto& card: cards){
-        if(card.type==WiFiCardType::Realtek8812au || card.type==WiFiCardType::Realtek88x2bu){
+        if(card.type==WiFiCardType::OPENHD_RTL_88X2AU || card.type==WiFiCardType::OPENHD_RTL_88X2BU){
             return true;
         }
     }
@@ -200,5 +182,23 @@ std::vector<openhd::WifiChannel> openhd::wb::get_analyze_channels_frequencies(co
         }
     }
     return channels_to_analyze;
+}
+
+bool openhd::wb::has_any_rtl8812au(const std::vector<WiFiCard>& cards) {
+    for(const auto& card: cards){
+        if(card.type==WiFiCardType::OPENHD_RTL_88X2AU){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool openhd::wb::has_any_non_rtl8812au(const std::vector<WiFiCard> &cards) {
+    for(const auto& card: cards){
+        if(card.type!=WiFiCardType::OPENHD_RTL_88X2AU){
+            return true;
+        }
+    }
+    return false;
 }
 

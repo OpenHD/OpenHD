@@ -24,13 +24,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
 {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
-  m_any_card_supports_injection= false;
-  for(const auto& card:m_broadcast_cards){
-      if(card.supports_injection){
-          m_any_card_supports_injection= true;
-      }
-  }
-  m_console->info("Broadcast cards:{} any suports injection:{}",debug_cards(m_broadcast_cards),m_any_card_supports_injection);
+  m_console->info("Broadcast cards:{}",debug_cards(m_broadcast_cards));
   m_console->debug("m_disable_all_frequency_checks:{}",OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks
   if(m_broadcast_cards.empty() || (m_profile.is_air && m_broadcast_cards.size()>1)) {
@@ -72,7 +66,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   //assert(!card_names.empty());
   std::vector<wifibroadcast::WifiCard> tmp_wifi_cards;
   for(const auto& card: m_broadcast_cards){
-      int wb_type=card.type==WiFiCardType::Realtek8812au ? 1 : 0;
+      int wb_type=card.type==WiFiCardType::OPENHD_RTL_88X2AU ? 1 : 0;
       tmp_wifi_cards.push_back(wifibroadcast::WifiCard{card.device_name,wb_type});
   }
   m_tx_header_1=std::make_shared<RadiotapHeaderHolder>();
@@ -712,21 +706,15 @@ void WBLink::update_statistics() {
     card_stats.count_p_received=rxStatsCard.count_p_valid;
     card_stats.count_p_injected=0;
     card_stats.curr_rx_packet_loss_perc=rxStatsCard.curr_packet_loss;
-    card_stats.tx_power_current=card.type==WiFiCardType::Realtek8812au ?
+    card_stats.tx_power_current=card.type==WiFiCardType::OPENHD_RTL_88X2AU ?
                                 m_curr_tx_power_idx.load() : m_curr_tx_power_mw.load();
-    card_stats.tx_power_disarmed=card.type==WiFiCardType::Realtek8812au ?
+    card_stats.tx_power_disarmed=card.type==WiFiCardType::OPENHD_RTL_88X2AU ?
             curr_settings.wb_rtl8812au_tx_pwr_idx_override : curr_settings.wb_tx_power_milli_watt;
-    card_stats.tx_power_armed=card.type==WiFiCardType::Realtek8812au ?
+    card_stats.tx_power_armed=card.type==WiFiCardType::OPENHD_RTL_88X2AU ?
                               curr_settings.wb_rtl8812au_tx_pwr_idx_override_armed : curr_settings.wb_tx_power_milli_watt_armed;
     card_stats.curr_status= m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
     card_stats.rx_signal_quality=rxStatsCard.signal_quality;
-    card_stats.card_type= 0;
-    if(card.type==WiFiCardType::Realtek8812au){
-        card_stats.card_type=1;
-    }
-    if(card.type==WiFiCardType::Realtek88x2bu){
-        card_stats.card_type=2;
-    }
+    card_stats.card_type= wifi_card_type_to_int(card.type);
     //m_console->debug("Signal quality {}",card_stats.signal_quality);
   }
   stats.is_air=m_profile.is_air;
