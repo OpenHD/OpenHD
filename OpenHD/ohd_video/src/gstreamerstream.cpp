@@ -239,7 +239,7 @@ void GStreamerStream::setup_rockchip_hdmi() {
 void GStreamerStream::setup_rockchip_csi() {
   m_console->debug("Setting up Rockchip CSI");
   const auto& setting= m_camera_holder->get_settings();
-  m_pipeline_content << OHDGstHelper::createRockchipCSIStream(false, setting.h26x_bitrate_kbits, setting.camera_rotation_degree, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval);
+  m_pipeline_content << OHDGstHelper::createRockchipCSIStream(false, setting.h26x_bitrate_kbits, setting.camera_rotation_degree, setting.streamed_video_format, setting.recordingFormat, setting.h26x_keyframe_interval,0);
 }
 
 void GStreamerStream::setup_allwinner_csi() {

@@ -507,10 +507,11 @@ static std::string createRockchipCSIStream(
   int rotate_degrees,
   const VideoFormat videoFormat,
   const VideoFormat recordingFormat,
-  const int keyframe_interval
+  const int keyframe_interval,
+  const int sensor_id
 ) {
   std::stringstream ss;
-  ss<<createRockchipV4L2Pipeline(11, videoFormat.framerate);
+  ss<<createRockchipV4L2Pipeline(sensor_id, videoFormat.framerate);
   if(recording) ss<<createRockchipRecordingPipeline(recordingFormat.width, recordingFormat.height, {recordingFormat.videoCodec, bitrateKBits, keyframe_interval,50});
   ss<<createRockchipEncoderPipeline(videoFormat.width, videoFormat.height, rotate_degrees, {videoFormat.videoCodec, bitrateKBits, keyframe_interval,50});
   return ss.str();
