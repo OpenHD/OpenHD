@@ -8,6 +8,10 @@
 #include <sstream>
 #include <vector>
 #include <cstdint>
+#include <cassert>
+
+#include "openhd_util.h"
+#include "openhd_spdlog.h"
 
 // NOTE: DO NOT USE CHANNEL NUMBERS ANYWHERE IN CODE - USE FREQUENCIES IN MHZ, SINCE THEY ARE UNIQUE
 namespace openhd {

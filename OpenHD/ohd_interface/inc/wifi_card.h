@@ -23,6 +23,7 @@ enum class WiFiCardType {
   Ralink,
   Intel,
   Broadcom,
+  Qualcomm,
 };
 
 static std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
@@ -36,6 +37,7 @@ static std::string wifi_card_type_to_string(const WiFiCardType &card_type) {
 	case WiFiCardType::Ralink:return  "Ralink";
 	case WiFiCardType::Intel:return  "Intel";
 	case WiFiCardType::Broadcom:return  "Broadcom";
+	case WiFiCardType::Qualcomm:return  "Qualcomm";
 	default: return "unknown";
   }
 }
@@ -74,7 +76,7 @@ struct WiFiCard {
 
 // Only RTL8812au supports changing the MCS index
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card){
-  if(wifi_card.type==WiFiCardType::Realtek8812au)return true;
+  if(wifi_card.type==WiFiCardType::Realtek8812au || wifi_card.type==WiFiCardType::Qualcomm)return true;
   return false;
 }
 /**
@@ -92,7 +94,7 @@ static bool all_cards_support_setting_mcs_index(const std::vector<WiFiCard>& m_b
 
 // Only RTL8812au so far supports a 40Mhz channel width (and there it is also discouraged to use it)
 static bool wifi_card_supports_40Mhz_channel_width(const WiFiCard& wifi_card){
-  if(wifi_card.type==WiFiCardType::Realtek8812au)return true;
+  if(wifi_card.type==WiFiCardType::Realtek8812au || wifi_card.type==WiFiCardType::Qualcomm)return true;
   return false;
 }
 

@@ -31,6 +31,8 @@ enum class CameraType {
   ROCKCHIP_CSI,
   // Any CSI camera on Allwinner
   ALLWINNER_CSI,
+  // Any CSI camera on qrb5165
+  QRB5165_CSI,
   // UVC / V4l2 USB Camera
   UVC,
   // this is not just a UVC camera that happens to support h264, it's the
@@ -60,6 +62,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
      {CameraType::JETSON_CSI, "JETSON_CSI"},
      {CameraType::ROCKCHIP_CSI, "ROCKCHIP_CSI"},
      {CameraType::ALLWINNER_CSI, "ALLWINNER_CSI"},
+     {CameraType::QRB5165_CSI, "QRB5165_CSI"},
      {CameraType::UVC, "UVC"},
      {CameraType::UVC_H264, "UVC_H264"},
      {CameraType::IP, "IP"},
@@ -82,6 +85,8 @@ static std::string camera_type_to_string(const CameraType &camera_type) {
       return "ROCKCHIP_CSI";
     case CameraType::ALLWINNER_CSI:
       return "ALLWINNER_CSI";
+    case CameraType::QRB5165_CSI:
+      return "QRB5165_CSI";
     case CameraType::UVC:
       return "UVC";
     case CameraType::UVC_H264:

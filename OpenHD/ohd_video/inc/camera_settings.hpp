@@ -10,7 +10,7 @@
 
 // For the default value, we assume a fec overhead of 20% - 8MBit/s before FEC fits well into MCS index 3, even
 // on highly polluted channels (we account for the worst here)
-static constexpr int DEFAULT_BITRATE_KBITS = 8000;
+static constexpr int DEFAULT_BITRATE_KBITS = 4167;
 // The ideal value is not definitive, and depends on the rf environment, the FEC percentage, and the camera fps
 // Higher values result in less key frames, and better image quality at the same bitrate, but increases the risk for
 // "stuttering" in case frames are lost.
@@ -57,7 +57,7 @@ struct CameraSettings {
   // camera can only do 60fps) the camera might stop streaming, and the user has to set a different resolution manually
   // (In general, we cannot really check if a camera supports a given resolution / framerate properly yet)
   // Note that this default value is overridden in case we know more about the camera(s).
-  VideoFormat streamed_video_format{VideoCodec::H264, 640, 480, 30};
+  VideoFormat streamed_video_format{VideoCodec::H264, 1280, 720, 30};
   // The settings below can only be implemented on a "best effort" manner -
   // changing them does not necessarily mean the camera supports changing them. Unsupported settings have to
   // be ignored during pipeline construction

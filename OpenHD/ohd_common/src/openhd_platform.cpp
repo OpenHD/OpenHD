@@ -23,6 +23,7 @@ std::string platform_type_to_string(PlatformType platform_type) {
     case PlatformType::Zynq: return "zynq";
     case PlatformType::PC: return "pc";
     case PlatformType::Rockchip: return "rockchip";
+    case PlatformType::Qrb5165: return "qrb5165";
     default: return "unknown";
   }
 }
@@ -55,12 +56,14 @@ std::string board_type_to_string(BoardType board_type) {
     case BoardType::RK3588: return "rk3588";
     case BoardType::RV1109: return "rv1109";
     case BoardType::RV1126: return "rv1126";
+    case BoardType::QRB5165: return "qrb5165";
     default: return "unknown";
   }
 }
 
 
 static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
+static constexpr auto QRB5165_BOARDID_PATH = "/proc/device-tree/qcom,board-id";
 static constexpr auto DEVICE_TREE_COMPATIBLE_PATH = "/proc/device-tree/compatible";
 static constexpr auto ALLWINNER_BOARDID_PATH = "/sys/class/sunxi_info/sys_info";
 
@@ -169,6 +172,14 @@ static std::optional<std::pair<PlatformType,BoardType>> detect_allwinner(){
   }
   return {};
 }
+
+static std::optional<std::pair<PlatformType,BoardType>> detect_qrb5165(){
+  if (OHDFilesystemUtil::exists(QRB5165_BOARDID_PATH)) {
+    return std::make_pair(PlatformType::Qrb5165,BoardType::QRB5165);
+  }
+  return {};
+}
+
 static std::pair<PlatformType,BoardType> detect_pc(){
   const auto arch_opt=OHDUtil::run_command_out("arch");
   if(arch_opt==std::nullopt){
@@ -206,10 +217,13 @@ static std::shared_ptr<OHDPlatform> internal_discover(){
   if(res4.has_value()){
     return std::make_shared<OHDPlatform>(res4.value().first,res4.value().second);
   }
-  const auto res5=detect_pc();
-  return std::make_shared<OHDPlatform>(res5.first,res5.second);
+  const auto res5=detect_qrb5165();
+  if(res5.has_value()){
+    return std::make_shared<OHDPlatform>(res5.value().first,res5.value().second);
+  }
+  const auto res6=detect_pc();
+  return std::make_shared<OHDPlatform>(res6.first,res6.second);
 }
-
 
 std::shared_ptr<OHDPlatform> DPlatform::discover() {
   openhd::log::get_default()->debug("Platform::discover()");

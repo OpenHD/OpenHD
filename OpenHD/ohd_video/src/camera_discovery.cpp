@@ -61,7 +61,10 @@ std::vector<Camera> DCameras::discover(const OHDPlatform platform) {
   }else if(platform.platform_type == PlatformType::Jetson){
     auto tmp=detect_jetson_csi(m_console);
     OHDUtil::vec_append(cameras,tmp);
-  }
+  }else if(platform.platform_type == PlatformType::Qrb5165){
+    auto tmp=detect_qrb5165_csi(m_console);
+    OHDUtil::vec_append(cameras,tmp);
+   }
   // Allwinner 3.4 kernel v4l2 implementation is so sketchy that probing it can stop it working.
   if(platform.platform_type != PlatformType::Allwinner){
     // I think these need to be run before the detectv4l2 ones, since they are then picked up just like a normal v4l2 camera ??!!
@@ -255,6 +258,31 @@ std::vector<Camera> DCameras::detect_jetson_csi(std::shared_ptr<spdlog::logger> 
     }
   }
   return {};
+}
+
+std::vector<Camera> DCameras::detect_qrb5165_csi(std::shared_ptr<spdlog::logger>& m_console) {
+  m_console->debug("detect_qrb5165_csi(");
+  std::vector<Camera> ret;
+  if(OHDFilesystemUtil::exists("/dev/media0")){
+    m_console->debug("Camera set as QRB5165_CSI_0");
+    Camera camera;
+    camera.name = "QRB5165_CSI_0";
+    camera.vendor = "Qualcomm";
+    camera.type = CameraType::QRB5165_CSI;
+    camera.bus = "0";
+    ret.push_back(camera);
+  }
+/*  if(OHDFilesystemUtil::exists("/dev/media1")){
+    m_console->debug("Camera set as QRB5165_CSI_1");
+    Camera camera;
+    camera.name = "QRB5165_CSI_1";
+    camera.vendor = "Qualcomm";
+    camera.type = CameraType::QRB5165_CSI;
+    camera.bus = "1";
+    ret.push_back(camera);
+  }*/
+
+  return ret;
 }
 
 std::vector<Camera> DCameras::detect_usb_cameras(const OHDPlatform& platform,std::shared_ptr<spdlog::logger>& m_console) {
