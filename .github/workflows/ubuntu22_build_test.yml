@@ -31,7 +31,7 @@ jobs:
       - name: Build submodules independently
         run: |
           cd OpenHD
-          sudo ./build_submodules_independently.sh
+          ./build_submodules_independently.sh
 
       - name: Build with make
         run: |
