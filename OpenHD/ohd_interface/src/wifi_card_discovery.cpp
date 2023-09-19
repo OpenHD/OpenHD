@@ -12,7 +12,7 @@
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
     // The fully supported card(s)
-    if(OHDUtil::equal_after_uppercase(driver_name,"88xxau_openhd")){
+    if(OHDUtil::equal_after_uppercase(driver_name,"rtl88xxau_wfb")){
         return WiFiCardType::OPENHD_RTL_88X2AU;
     }
     if(OHDUtil::equal_after_uppercase(driver_name,"88x2bu")){

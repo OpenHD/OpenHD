@@ -16,8 +16,8 @@ enum class WiFiCardType {
   OPENHD_RTL_88X2AU, // Supported
   OPENHD_RTL_88X2BU, // Supported
   // These are all unsupported, but might / might not work
-  RTL_88X2AU, // wrong driver
-  RTL_88X2BU, // wrong driver
+  RTL_88X2AU, // right card, but wrong driver
+  RTL_88X2BU, // right card, but wrong driver
   ATHEROS, // not supported anymore
   MT_7921u, // TODO add support
   RALINK,
