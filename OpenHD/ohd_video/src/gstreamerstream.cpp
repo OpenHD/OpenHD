@@ -125,7 +125,6 @@ void GStreamerStream::setup() {
     }
     case CameraType::CUSTOM_UNMANAGED_CAMERA:{
       setup_custom_unmanaged_camera();
-      break;
     }break;
     case CameraType::UNKNOWN: {
       m_console->warn( "Unknown camera type");
@@ -285,7 +284,6 @@ void GStreamerStream::setup_usb_uvch264() {
 
 void GStreamerStream::setup_ip_camera() {
   m_console->debug("Setting up IP camera");
-  const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
   if (setting.ip_cam_url.empty()) {
     //setting.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
@@ -296,14 +294,12 @@ void GStreamerStream::setup_ip_camera() {
 
 void GStreamerStream::setup_sw_dummy_camera() {
   m_console->debug("Setting up SW dummy camera");
-  const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createDummyStream(setting);
 }
 
 void GStreamerStream::setup_custom_unmanaged_camera() {
   m_console->debug("Setting up custom unmanaged camera");
-  const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
 }
@@ -513,7 +509,6 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
       m_opt_action_handler->set_cam_info_bitrate(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
     }
   }else{
-    const auto cam_type=m_camera_holder->get_camera().type;
     if(cam_type==CameraType::RPI_CSI_LIBCAMERA || cam_type==CameraType::RPI_CSI_VEYE_V4l2){
       m_console->warn("Bitrate change requires restart");
       // These cameras are known to handle a restart quickly, but it still sucks v4l2h264enc does not support changing the bitrate at run time
@@ -549,7 +544,7 @@ void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<st
   //m_console->debug("Got frame with {} fragments",frame_fragments.size());
   if(m_link_handle){
     const auto stream_index=m_camera_holder->get_camera().index;
-    m_link_handle->transmit_video_data(stream_index,openhd::FragmentedVideoFrame{frame_fragments});
+    m_link_handle->transmit_video_data(stream_index,openhd::FragmentedVideoFrame{std::move(frame_fragments)});
   }else{
     m_console->debug("No transmit interface");
   }
@@ -588,7 +583,7 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
 void GStreamerStream::loop_pull_samples() {
   assert(m_app_sink_element);
   auto cb=[this](std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts){
-    on_new_rtp_frame_fragment(fragment,dts);
+    on_new_rtp_frame_fragment(std::move(fragment),dts);
   };
   openhd::loop_pull_appsink_samples(m_pull_samples_run,m_app_sink_element,cb);
   m_frame_fragments.resize(0);
