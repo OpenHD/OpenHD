@@ -57,9 +57,9 @@ class OHDMainComponent : public MavlinkComponent{
   // Always needs to be lower than the telemetry main loop interval.
   const std::chrono::milliseconds m_onboard_computer_status_interval;
   std::chrono::steady_clock::time_point m_last_onboard_computer=std::chrono::steady_clock::now();
-  // GND publishes version in 1 second interval, air does not (to save bandwidth)
-  const std::chrono::milliseconds m_gnd_version_interval=std::chrono::seconds(1);
-  std::chrono::steady_clock::time_point m_last_gnd_only_version=std::chrono::steady_clock::now();
+  // AIR / GND publishes version in 1 second interval
+  const std::chrono::milliseconds m_version_message_interval=std::chrono::seconds(1);
+  std::chrono::steady_clock::time_point m_last_version_message_tp=std::chrono::steady_clock::now();
   const std::chrono::milliseconds m_wb_stats_interval;
   std::chrono::steady_clock::time_point m_last_wb_stats=std::chrono::steady_clock::now();
   std::vector<MavlinkMessage> create_broadcast_stats_if_needed();

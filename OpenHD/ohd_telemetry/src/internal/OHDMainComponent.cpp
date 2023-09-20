@@ -310,10 +310,10 @@ std::vector<MavlinkMessage> OHDMainComponent::create_broadcast_stats_if_needed()
         OHDUtil::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
                 m_sys_id, m_comp_id));
     }
-    if(!RUNS_ON_AIR){
-        const auto elapsed_version=now-m_last_gnd_only_version;
-        if(elapsed_version>m_gnd_version_interval){
-            m_last_gnd_only_version=now;
+    {
+        const auto elapsed_version=now-m_last_version_message_tp;
+        if(elapsed_version>m_version_message_interval){
+            m_last_version_message_tp=now;
             ret.push_back(generate_ohd_version());
         }
     }
