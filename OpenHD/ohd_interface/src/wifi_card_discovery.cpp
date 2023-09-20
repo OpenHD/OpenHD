@@ -242,7 +242,7 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
   // We need to figure out what's the best usage for the card(s) connected to the system based on their capabilities.
   std::vector<WiFiCard> monitor_mode_cards{};
   std::optional<WiFiCard> hotspot_card=std::nullopt;
-  // Default simple approach: if a card supports injection, use it for monitor mode
+  // Default simple approach: if a card is supported by openhd, use it for openhd / monitor mode
   // otherwise, use it for hotspot
   for(const auto& card:discovered_cards){
     if(card.is_openhd_supported){
@@ -266,9 +266,6 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
   }
   if(profile.is_air && monitor_mode_cards.size()>1){
     monitor_mode_cards.resize(1);
-  }
-  if(monitor_mode_cards.size()>=2){
-      // Optimization:
   }
   return {reorder_monitor_mode_cards(monitor_mode_cards),hotspot_card};
 }

@@ -27,13 +27,14 @@ std::optional<WiFiCard> process_card(const std::string &interface_name);
 // discover all connected wifi cards and their capabilities
 std::vector<WiFiCard> discover_connected_wifi_cards();
 
-// Calculate how many cards support injection
+// Calculate how many cards found are supported by OpenHD
 int n_cards_openhd_supported(const std::vector<WiFiCard>& cards);
 
-// Return true if any of the given wifi cards supports injection in monitor mode
+// Return true if any of the given wifi cards is supported by OpenHD
 bool any_wifi_card_openhd_supported(const std::vector<WiFiCard>& cards);
 
-// Return true if any of the given wifi cards supports monitor mode (but perhaps / quite likely no injection
+// Return true if any of the given wifi cards supports monitor mode (but perhaps / quite likely no injection and definitely
+// not the full openhd feature set)
 bool any_wifi_card_supporting_monitor_mode(const std::vector<WiFiCard>& cards);
 
 struct ProcessedWifiCards{
