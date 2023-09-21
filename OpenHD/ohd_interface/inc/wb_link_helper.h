@@ -7,6 +7,8 @@
 
 #include "openhd_spdlog.h"
 #include "wb_link_settings.h"
+#include <optional>
+#include <mutex>
 
 /**
  * The wb_link class is becoming a bit big and therefore hard to read.
@@ -99,6 +101,26 @@ public:
     }
 private:
     uint64_t m_foreign_packets_last_time=0;
+};
+
+/**
+ * This class basically only offers atomic read / write operations on the "RC CHANNELS" as reported by the FC.
+ * This is needed for the "MCS VIA RC CHANNEL CHANGE" feature.
+ */
+class RCChannelHelper{
+public:
+    void set_rc_channels(const std::array<int, 18>& rc_channels){
+        std::lock_guard<std::mutex> guard(m_rc_channels_mutex);
+        m_rc_channels=rc_channels;
+    }
+    std::optional<std::array<int, 18>> get_fc_reported_rc_channels(){
+        std::lock_guard<std::mutex> guard(m_rc_channels_mutex);
+        return m_rc_channels;
+    }
+    std::optional<int> get_mcs_from_rc_channel(int channel_index,std::shared_ptr<spdlog::logger>& m_console);
+private:
+    std::optional<std::array<int, 18>> m_rc_channels;
+    std::mutex m_rc_channels_mutex;
 };
 }
 

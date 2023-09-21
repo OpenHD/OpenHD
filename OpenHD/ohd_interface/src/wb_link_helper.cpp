@@ -278,3 +278,47 @@ bool openhd::wb::validate_air_mcs_index_change(int new_mcs_index, const WiFiCard
     return true;
 }
 
+std::optional<int> openhd::wb::RCChannelHelper::get_mcs_from_rc_channel(int channel_index,std::shared_ptr<spdlog::logger>& m_console) {
+    const auto rc_channels_opt=get_fc_reported_rc_channels();
+    if(!rc_channels_opt.has_value()){
+        // No data from the FC yet, do nothing
+        return std::nullopt;
+    }
+    const auto& rc_channels=rc_channels_opt.value();
+    // check if we are in bounds of array (better be safe than sorry, in case user manually messes up a number)
+    if(!(channel_index>=0 && channel_index<rc_channels.size())){
+        m_console->debug("Invalid channel index {}",channel_index);
+        return std::nullopt;
+    }
+    const auto mcs_channel_value_pwm=rc_channels[channel_index];
+    // UINT16_MAX means ignore channel
+    if(mcs_channel_value_pwm==UINT16_MAX){
+        m_console->debug("Disabled channel {}: {}",channel_index,mcs_channel_value_pwm);
+        return std::nullopt;
+    }
+    // mavlink says pwm in [1000, 2000] range - but from my testing with frsky for example, it is quite common for a
+    // switch (for example) to be at for example [988 - 2012] us
+    // which is why we accept a [900 ... 2100] range here
+    if(mcs_channel_value_pwm<900 || mcs_channel_value_pwm>2100){
+        m_console->debug("Invalid channel data on channel {}: {}",channel_index,mcs_channel_value_pwm);
+        // most likely invalid data, discard
+        return std::nullopt;
+    }
+    // We simply pre-define a range (pwm: [900,...,2100]
+    // [900 ... 1200] : MCS0
+    // [1200 ... 1400] : MCS1
+    // [1400 ... 1600] : MCS2
+    // [1600 ... 1800] : MCS3
+    // [1800 ... 2100] : MCS 4
+    int mcs_index=0;
+    if(mcs_channel_value_pwm>1800){
+        mcs_index=4;
+    }else if(mcs_channel_value_pwm>1600){
+        mcs_index=3;
+    }else if(mcs_channel_value_pwm>1400){
+        mcs_index=2;
+    }else if(mcs_channel_value_pwm>1200){
+        mcs_index=1;
+    }
+    return mcs_index;
+}

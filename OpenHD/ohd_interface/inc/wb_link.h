@@ -82,8 +82,6 @@ class WBLink :public OHDLink{
   // set the tx power of all wb cards. For rtl8812au, uses the tx power index
   // for other cards, uses the mW value
   void apply_txpower();
-  // this is special, mcs index can not only be changed via mavlink param, but also via RC channel (if enabled)
-  void set_air_mcs_index_from_rc_channel(const std::array<int,18>& rc_channels);
   /**
    * Every time the arming state is updated, we just set a flag here such that the main thread updates the tx power
    */
@@ -102,6 +100,8 @@ class WBLink :public OHDLink{
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void perform_rate_adjustment();
   void perform_management();
+  // this is special, mcs index can not only be changed via mavlink param, but also via RC channel (if enabled)
+  void perform_mcs_via_rc_channel_if_enabled();
   // Feature on air: If we are not armed, and do not receive any message from the ground unit for more than
   // one minute, we go back to the default frequency / bw.
   // NOTE: Currently disabled.
@@ -200,6 +200,7 @@ class WBLink :public OHDLink{
   std::mutex m_telemetry_tx_mutex;
 private:
   openhd::wb::ForeignPacketsHelper m_foreign_p_helper;
+  openhd::wb::RCChannelHelper m_rc_channel_helper;
 };
 
 #endif

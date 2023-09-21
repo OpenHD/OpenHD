@@ -179,7 +179,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       if(m_profile.is_air){
           // MCS is only changed on air
           auto cb_channel=[this](const std::array<int,18>& rc_channels){
-            set_air_mcs_index_from_rc_channel(rc_channels);
+            m_rc_channel_helper.set_rc_channels(rc_channels);
           };
           m_opt_action_handler->action_on_any_rc_channel_register(cb_channel);
       }
@@ -542,6 +542,7 @@ void WBLink::loop_do_work() {
     if(m_request_apply_tx_power.compare_exchange_strong(tmp_true, false)){
         apply_txpower();
     }
+    perform_mcs_via_rc_channel_if_enabled();
     tmp_true= true;
     if(m_request_apply_air_mcs_index.compare_exchange_strong(tmp_true, false)){
         const int mcs_index = m_settings->unsafe_get_settings().wb_air_mcs_index;
@@ -1100,9 +1101,8 @@ bool WBLink::async_analyze_channels() {
     return try_schedule_work_item(work_item);
 }
 
-void WBLink::set_air_mcs_index_from_rc_channel(const std::array<int, 18>& rc_channels) {
+void WBLink::perform_mcs_via_rc_channel_if_enabled() {
   if(!m_profile.is_air){
-      m_console->warn("MCS change via rc only on air");
       return;
   }
   const auto& settings=m_settings->get_settings();
@@ -1110,49 +1110,19 @@ void WBLink::set_air_mcs_index_from_rc_channel(const std::array<int, 18>& rc_cha
     // disabled
     return ;
   }
-  // 1= channel number 1 = array index 0
+  // 1= channel number 1 aka array index 0
   const int channel_index=(int)settings.wb_mcs_index_via_rc_channel-1;
-  // check if we are in bounds of array (better be safe than sorry, in case user manually messes up a number)
-  if(!(channel_index>=0 && channel_index<rc_channels.size())){
-    m_console->debug("Invalid channel index {}",channel_index);
-    return ;
+  const auto mcs_from_rc_opt=m_rc_channel_helper.get_mcs_from_rc_channel(channel_index,m_console);
+  if(!mcs_from_rc_opt.has_value()){
+      return;
   }
-  const auto mcs_channel_value_pwm=rc_channels[channel_index];
-  // UINT16_MAX means ignore channel
-  if(mcs_channel_value_pwm==UINT16_MAX){
-    m_console->debug("Disabled channel {}: {}",channel_index,mcs_channel_value_pwm);
-    return ;
+  const auto& mcs_from_rc=mcs_from_rc_opt.value();
+  if(settings.wb_air_mcs_index!=mcs_from_rc){
+      m_console->debug("RC CHANNEL - changing MCS from {} to {} ",settings.wb_air_mcs_index,mcs_from_rc);
+      m_settings->unsafe_get_settings().wb_air_mcs_index=mcs_from_rc;
+      m_settings->persist();
+      m_request_apply_air_mcs_index=true;
   }
-  // mavlink says pwm in [1000, 2000] range - but from my testing with frsky for example, it is quite common for a
-  // switch (for example) to be at for example [988 - 2012] us
-  // which is why we accept a [900 ... 2100] range here
-  if(mcs_channel_value_pwm<900 || mcs_channel_value_pwm>2100){
-    m_console->debug("Invalid channel data on channel {}: {}",channel_index,mcs_channel_value_pwm);
-    // most likely invalid data, discard
-    return ;
-  }
-  // We simply pre-define a range (pwm: [900,...,2100]
-  // [900 ... 1200] : MCS0
-  // [1200 ... 1400] : MCS1
-  // [1400 ... 1600] : MCS2
-  // [1600 ... 1800] : MCS3
-  // [1800 ... 2100] : MCS 4
-  int mcs_index=0;
-  if(mcs_channel_value_pwm>1800){
-    mcs_index=4;
-  }else if(mcs_channel_value_pwm>1600){
-    mcs_index=3;
-  }else if(mcs_channel_value_pwm>1400){
-    mcs_index=2;
-  }else if(mcs_channel_value_pwm>1200){
-    mcs_index=1;
-  }
-  // check if we are already using the wanted mcs index
-  if(settings.wb_air_mcs_index == mcs_index){
-    return ;
-  }
-  m_settings->unsafe_get_settings().wb_air_mcs_index=mcs_index;
-  m_request_apply_air_mcs_index=true;
 }
 
 void WBLink::update_arming_state(bool armed) {
