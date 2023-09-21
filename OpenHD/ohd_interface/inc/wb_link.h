@@ -75,7 +75,7 @@ class WBLink :public OHDLink{
   // r.n uses both iw and modifies the radiotap header
   bool apply_frequency_and_channel_width(int frequency,int channel_width_rx,int channel_width_tx);
   bool apply_frequency_and_channel_width_from_settings();
-  // set the tx power of all wifibroadcast cards. For rtl8812au, uses the tx power index
+  // set the tx power of all wb cards. For rtl8812au, uses the tx power index
   // for other cards, uses the mW value
   void apply_txpower();
   // change the injection MCS index
@@ -94,8 +94,6 @@ class WBLink :public OHDLink{
   bool set_air_max_fec_block_size_for_platform(int value);
   bool set_air_wb_video_rate_for_mcs_adjustment_percent(int value);
   void set_air_wb_air_video_encryption_enabled(bool enable);
-  std::unique_ptr<WBStreamTx> create_wb_tx(uint8_t radio_port,bool is_video);
-  std::unique_ptr<WBStreamRx> create_wb_rx(uint8_t radio_port,bool is_video,WBStreamRx::OUTPUT_DATA_CALLBACK cb);
  private:
   // Recalculate stats, apply settings asynchronously and more
   void loop_do_work();

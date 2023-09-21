@@ -104,16 +104,30 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
         auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
         on_receive_telemetry_data(shared);
       };
-      m_wb_tele_rx = create_wb_rx(radio_port_rx, false, cb);
-      m_wb_tele_tx = create_wb_tx(radio_port_tx, false);
+      WBStreamRx::Options options_tele_rx{};
+      options_tele_rx.enable_fec= false;
+      options_tele_rx.radio_port=radio_port_rx;
+      options_tele_rx.enable_threading= true;
+      options_tele_rx.packet_queue_size=20;
+      m_wb_tele_rx=std::make_unique<WBStreamRx>(m_wb_txrx, options_tele_rx);
+      m_wb_tele_rx->set_callback(cb);
+      WBStreamTx::Options options_tele_tx{};
+      options_tele_tx.enable_fec= false;
+      options_tele_tx.radio_port=radio_port_tx;
+      m_wb_tele_tx=std::make_unique<WBStreamTx>(m_wb_txrx, options_tele_tx,m_tx_header_1);
       m_wb_tele_tx->set_encryption(true);
   }
   {
       // Video is unidirectional, aka always goes from air pi to ground pi
       if (m_profile.is_air) {
           // we transmit video
-          auto primary = create_wb_tx(openhd::VIDEO_PRIMARY_RADIO_PORT, true);
-          auto secondary = create_wb_tx(openhd::VIDEO_SECONDARY_RADIO_PORT, true);
+          WBStreamTx::Options options_video_tx{};
+          options_video_tx.enable_fec= true;
+          options_video_tx.block_data_queue_size=2;
+          options_video_tx.radio_port=openhd::VIDEO_PRIMARY_RADIO_PORT;
+          auto primary = std::make_unique<WBStreamTx>(m_wb_txrx, options_video_tx,m_tx_header_1);
+          options_video_tx.radio_port=openhd::VIDEO_SECONDARY_RADIO_PORT;
+          auto secondary = std::make_unique<WBStreamTx>(m_wb_txrx, options_video_tx,m_tx_header_1);
           primary->set_encryption(m_settings->get_settings().wb_air_enable_video_encryption);
           secondary->set_encryption(m_settings->get_settings().wb_air_enable_video_encryption);
           m_wb_video_tx_list.push_back(std::move(primary));
@@ -126,8 +140,14 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           auto cb2=[this](const uint8_t* data,int data_len){
             on_receive_video_data(1,data,data_len);
           };
-          auto primary = create_wb_rx(openhd::VIDEO_PRIMARY_RADIO_PORT, true,cb1);
-          auto secondary = create_wb_rx(openhd::VIDEO_SECONDARY_RADIO_PORT, true,cb2);
+          WBStreamRx::Options options_video_rx{};
+          options_video_rx.enable_fec= true;
+          options_video_rx.radio_port=openhd::VIDEO_PRIMARY_RADIO_PORT;
+          auto primary = std::make_unique<WBStreamRx>(m_wb_txrx, options_video_rx);
+          primary->set_callback(cb1);
+          options_video_rx.radio_port=openhd::VIDEO_SECONDARY_RADIO_PORT;
+          auto secondary = std::make_unique<WBStreamRx>(m_wb_txrx, options_video_rx);
+          secondary->set_callback(cb2);
           m_wb_video_rx_list.push_back(std::move(primary));
           m_wb_video_rx_list.push_back(std::move(secondary));
       }
@@ -204,34 +224,6 @@ WBLink::~WBLink() {
   // give the monitor mode cards back to network manager
   openhd::wb::giveback_cards_monitor_mode(m_broadcast_cards,m_console);
   m_console->debug("WBLink::~WBLink() end");
-}
-
-std::unique_ptr<WBStreamTx> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
-  WBStreamTx::Options options{};
-  options.enable_fec=is_video;
-  options.radio_port=radio_port;
-  if(is_video){
-    options.block_data_queue_size=2;
-    //options.log_time_blocks_until_tx= true;
-  }
-  auto ret=std::make_unique<WBStreamTx>(m_wb_txrx, options,m_tx_header_1);
-  return ret;
-}
-
-std::unique_ptr<WBStreamRx> WBLink::create_wb_rx(uint8_t radio_port,bool is_video,WBStreamRx::OUTPUT_DATA_CALLBACK cb){
-  WBStreamRx::Options options{};
-  options.enable_fec=is_video;
-  options.radio_port=radio_port;
-  options.enable_fec_debug_log=false;
-  if(!is_video){
-    // We use threading for telemetry, since the callback where we process telemetry data
-    // can hang for a while in some cases
-    options.enable_threading= true;
-    options.packet_queue_size=20;
-  }
-  auto ret=std::make_unique<WBStreamRx>(m_wb_txrx, options);
-  ret->set_callback(cb);
-  return ret;
 }
 
 bool WBLink::request_set_frequency(int frequency) {
