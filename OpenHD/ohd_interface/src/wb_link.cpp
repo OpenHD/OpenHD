@@ -277,7 +277,7 @@ bool WBLink::request_set_tx_power_mw(int tx_power_mw, bool armed) {
             m_settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power_mw;
         }
         m_settings->persist();
-        apply_txpower();
+        m_request_apply_tx_power=true;
     },std::chrono::steady_clock::now());
     return try_schedule_work_item(work_item);
 }
@@ -295,7 +295,22 @@ bool WBLink::request_set_tx_power_rtl8812au(int tx_power_index_override, bool ar
             m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=tx_power_index_override;
         }
         m_settings->persist();
-        apply_txpower();
+        m_request_apply_tx_power=true;
+    },std::chrono::steady_clock::now());
+    return try_schedule_work_item(work_item);
+}
+
+bool WBLink::request_set_air_mcs_index(int mcs_index) {
+    assert(m_profile.is_air);
+    m_console->debug("set_air_mcs_index {}",mcs_index);
+    if(!openhd::wb::validate_air_mcs_index_change(mcs_index,m_broadcast_cards.at(0),m_console)){
+        return false;
+    }
+    auto tag=fmt::format("SET_AIR_MCS:{}",mcs_index);
+    auto work_item=std::make_shared<WorkItem>(tag,[this,mcs_index](){
+        m_settings->unsafe_get_settings().wb_air_mcs_index=mcs_index;
+        m_settings->persist();
+        m_request_apply_air_mcs_index=true;
     },std::chrono::steady_clock::now());
     return try_schedule_work_item(work_item);
 }
@@ -352,20 +367,6 @@ void WBLink::apply_txpower() {
   m_console->debug("Changing tx power took {}",MyTimeHelper::R(delta));
 }
 
-bool WBLink::set_air_mcs_index(int mcs_index) {
-  assert(m_profile.is_air);
-  m_console->debug("set_air_mcs_index {}",mcs_index);
-  if(!openhd::wb::validate_air_mcs_index_change(mcs_index,m_broadcast_cards.at(0),m_console)){
-      return false;
-  }
-  m_settings->unsafe_get_settings().wb_air_mcs_index=mcs_index;
-  m_settings->persist();
-  m_tx_header_1->update_mcs_index(mcs_index);
-  m_tx_header_2->update_mcs_index(mcs_index);
-  // The next rate adjustment will adjust the bitrate accordingly
-  return true;
-}
-
 bool WBLink::set_air_video_fec_percentage(int fec_percentage) {
   m_console->debug("set_air_video_fec_percentage {}",fec_percentage);
   if(!openhd::is_valid_fec_percentage(fec_percentage)){
@@ -392,7 +393,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   if(m_profile.is_air){
       // MCS is only changeable on air
       auto change_wb_air_mcs_index=openhd::IntSetting{(int)settings.wb_air_mcs_index, [this](std::string, int value){
-          return set_air_mcs_index(value);
+          return request_set_air_mcs_index(value);
       }};
       ret.push_back(Setting{WB_MCS_INDEX,change_wb_air_mcs_index});
       // Channel width is only changeable on the air
@@ -536,9 +537,15 @@ void WBLink::loop_do_work() {
       }
       m_work_item_queue_mutex.unlock();
     }
-    if(m_needs_apply_tx_power){
+    bool tmp_true= true;
+    if(m_request_apply_tx_power.compare_exchange_strong(tmp_true, false)){
         apply_txpower();
-        m_needs_apply_tx_power= false;
+    }
+    tmp_true= true;
+    if(m_request_apply_air_mcs_index.compare_exchange_strong(tmp_true, false)){
+        const int mcs_index = m_settings->unsafe_get_settings().wb_air_mcs_index;
+        m_tx_header_1->update_mcs_index(mcs_index);
+        m_tx_header_2->update_mcs_index(mcs_index);
     }
     perform_management();
     //air_perform_reset_frequency();
@@ -809,13 +816,11 @@ void WBLink::perform_rate_adjustment() {
 
 bool WBLink::set_air_enable_wb_video_variable_bitrate(int value) {
   assert(m_profile.is_air);
-  if(openhd::validate_yes_or_no(value)){
-    // value is read in regular intervals.
-    m_settings->unsafe_get_settings().enable_wb_video_variable_bitrate=value;
-    m_settings->persist();
-    return true;
-  }
-  return false;
+  if(!openhd::validate_yes_or_no(value))return false;
+  // value is read in regular intervals.
+  m_settings->unsafe_get_settings().enable_wb_video_variable_bitrate=value;
+  m_settings->persist();
+  return true;
 }
 
 bool WBLink::set_air_max_fec_block_size_for_platform(int value) {
@@ -1145,8 +1150,7 @@ void WBLink::set_air_mcs_index_from_rc_channel(const std::array<int, 18>& rc_cha
   if(settings.wb_air_mcs_index == mcs_index){
     return ;
   }
-  // apply the wanted mcs index
-  set_air_mcs_index(mcs_index);
+  m_request_apply_air_mcs_index=true;
 }
 
 void WBLink::update_arming_state(bool armed) {
@@ -1154,7 +1158,7 @@ void WBLink::update_arming_state(bool armed) {
   // We just update the internal armed / disarmed state and then call apply_tx_power -
   // it will set the right tx power if the user enabled it
   m_is_armed=armed;
-  m_needs_apply_tx_power= true;
+  m_request_apply_tx_power= true;
 }
 
 void WBLink::perform_management() {
@@ -1209,3 +1213,4 @@ void WBLink::air_perform_reset_frequency() {
         m_reset_frequency_time_point=std::chrono::steady_clock::now();
     }
 }
+

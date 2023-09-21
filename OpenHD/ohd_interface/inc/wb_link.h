@@ -70,6 +70,7 @@ class WBLink :public OHDLink{
   bool request_set_air_tx_channel_width(int channel_width);
   bool request_set_tx_power_mw(int new_tx_power_mw,bool armed);
   bool request_set_tx_power_rtl8812au(int tx_power_index_override,bool armed);
+  bool request_set_air_mcs_index(int mcs_index);
 
   // apply the frequency (wifi channel) and channel with for all wifibroadcast cards
   // r.n uses both iw and modifies the radiotap header
@@ -78,11 +79,6 @@ class WBLink :public OHDLink{
   // set the tx power of all wb cards. For rtl8812au, uses the tx power index
   // for other cards, uses the mW value
   void apply_txpower();
-  // change the injection MCS index
-  // guaranteed to return immediately (Doesn't need iw or something similar)
-  // If the hw supports changing the mcs index, and the mcs index is valid, apply it and return true
-  // Leave untouched and return false otherwise.
-  bool set_air_mcs_index(int mcs_index);
   // this is special, mcs index can not only be changed via mavlink param, but also via RC channel (if enabled)
   void set_air_mcs_index_from_rc_channel(const std::array<int,18>& rc_channels);
   /**
@@ -184,7 +180,8 @@ class WBLink :public OHDLink{
   // Set to true when armed, disarmed by default
   // Used to differentiate between different tx power levels when armed / disarmed
   bool m_is_armed= false;
-  std::atomic<bool> m_needs_apply_tx_power=false;
+  std::atomic_bool m_request_apply_tx_power=false;
+  std::atomic_bool m_request_apply_air_mcs_index=false;
   std::chrono::steady_clock::time_point m_last_log_bind_phrase_mismatch=std::chrono::steady_clock::now();
   // We store tx power for easy access in stats
   std::atomic<int> m_curr_tx_power_idx=0;
