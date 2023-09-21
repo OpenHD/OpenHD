@@ -537,6 +537,7 @@ void WBLink::loop_do_work() {
       }
       m_work_item_queue_mutex.unlock();
     }
+    // If needed, apply the proper tx power (depending on armed / disarmed state).
     bool tmp_true= true;
     if(m_request_apply_tx_power.compare_exchange_strong(tmp_true, false)){
         apply_txpower();
@@ -1150,6 +1151,7 @@ void WBLink::set_air_mcs_index_from_rc_channel(const std::array<int, 18>& rc_cha
   if(settings.wb_air_mcs_index == mcs_index){
     return ;
   }
+  m_settings->unsafe_get_settings().wb_air_mcs_index=mcs_index;
   m_request_apply_air_mcs_index=true;
 }
 

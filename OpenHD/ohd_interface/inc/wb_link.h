@@ -67,9 +67,12 @@ class WBLink :public OHDLink{
   // (Changing the tx power for example can take some time, while the OS is busy talking to the wifi driver).
   // Only disadvantage: We need to be able to reason about weather the given change will be successfully or not beforehand.
   bool request_set_frequency(int frequency);
+  // Channel width / bandwidth is local to the air, and can be changed without synchronization due to 20Mhz management packets
   bool request_set_air_tx_channel_width(int channel_width);
+  // TX power can be set for both air / ground independently.
   bool request_set_tx_power_mw(int new_tx_power_mw,bool armed);
   bool request_set_tx_power_rtl8812au(int tx_power_index_override,bool armed);
+  // MCS index can be changed on air (user can control the rate with it).
   bool request_set_air_mcs_index(int mcs_index);
 
   // apply the frequency (wifi channel) and channel with for all wifibroadcast cards
