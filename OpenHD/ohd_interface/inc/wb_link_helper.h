@@ -32,9 +32,15 @@ bool all_cards_support_frequency_and_channel_width(uint32_t frequency,
                                                    const std::vector<WiFiCard>& m_broadcast_cards,
                                                    const std::shared_ptr<spdlog::logger>& m_console);
 
-/**
- * returns true if any of the given cards supports the given frequency
- */
+bool validate_frequency_change(int new_frequency,int current_channel_width,
+                               const std::vector<WiFiCard>& m_broadcast_cards,
+                               const std::shared_ptr<spdlog::logger>& m_console);
+bool validate_air_channel_width_change(int new_channel_width,const WiFiCard& card,
+                                       const std::shared_ptr<spdlog::logger>& m_console);
+
+bool validate_air_mcs_index_change(int new_mcs_index,const WiFiCard& card,
+                                   const std::shared_ptr<spdlog::logger>& m_console);
+
 bool any_card_support_frequency(
         uint32_t frequency,
         const std::vector<WiFiCard>& m_broadcast_cards,
@@ -67,6 +73,33 @@ std::vector<WifiChannel> get_scan_channels_frequencies(const WiFiCard& card,bool
 std::vector<uint16_t> get_scan_channels_bandwidths(bool scan_20mhz,bool scan_40mhz);
 
 std::vector<WifiChannel> get_analyze_channels_frequencies(const WiFiCard& card);
+
+/*
+ * Removes network manager from the given cards (if it is running)
+ * and in general tries to make sure no linux stuff that would interfer with monitor mode is running on the card(s),
+ * and then sets them into monitor mode.
+ */
+void takeover_cards_monitor_mode(const std::vector<WiFiCard>& cards,std::shared_ptr<spdlog::logger> console);
+/**
+ * Gives the card(s) back to network manager;
+ */
+void giveback_cards_monitor_mode(const std::vector<WiFiCard>& cards,std::shared_ptr<spdlog::logger> console);
+
+class ForeignPacketsHelper{
+public:
+    int update(uint64_t count_p_any,uint64_t count_p_valid){
+        const uint64_t n_foreign_packets=count_p_any>count_p_valid ? count_p_any-count_p_valid : 0;
+        if(m_foreign_packets_last_time>n_foreign_packets){
+            m_foreign_packets_last_time=n_foreign_packets;
+            return 0;
+        }
+        const int delta=static_cast<int>(n_foreign_packets-m_foreign_packets_last_time);
+        m_foreign_packets_last_time=n_foreign_packets;
+        return delta;
+    }
+private:
+    uint64_t m_foreign_packets_last_time=0;
+};
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_

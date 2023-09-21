@@ -202,3 +202,79 @@ bool openhd::wb::has_any_non_rtl8812au(const std::vector<WiFiCard> &cards) {
     return false;
 }
 
+void openhd::wb::takeover_cards_monitor_mode(const std::vector<WiFiCard> &cards,std::shared_ptr<spdlog::logger> console) {
+    console->debug( "takeover_cards_monitor_mode() begin");
+    // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
+    // This can be different depending on the OS we are running on - in general, we try to go for the following with openhd:
+    // Have network manager running on the host OS - the nice thing about network manager is that we can just tell it
+    // to ignore the cards we are doing wifibroadcast with, instead of killing all processes that might interfere with
+    // wifibroadcast and therefore making other networking incredibly hard.
+    // Tell network manager to ignore the cards we want to do wifibroadcast on
+    for(const auto& card: cards){
+        wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
+    }
+    wifi::commandhelper::rfkill_unblock_all();
+    // Apparently, we need to give nm / whoever a bit time before we start putting the cards into monitor mode
+    // not pretty, but works.
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // now we can enable monitor mode on the given cards.
+    for(const auto& card: cards) {
+        wifi::commandhelper::ip_link_set_card_state(card.device_name, false);
+        wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
+        wifi::commandhelper::ip_link_set_card_state(card.device_name, true);
+        //wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
+    }
+    console->debug("takeover_cards_monitor_mode() end");
+}
+
+void openhd::wb::giveback_cards_monitor_mode(const std::vector<WiFiCard> &cards,std::shared_ptr<spdlog::logger> console) {
+    for(const auto& card: cards){
+        wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
+    }
+}
+
+bool openhd::wb::validate_frequency_change(int new_frequency, int current_channel_width,
+                                           const std::vector<WiFiCard> &m_broadcast_cards,
+                                           const std::shared_ptr<spdlog::logger> &m_console) {
+    if(openhd::wb::disable_all_frequency_checks()){
+        m_console->warn("Not sanity checking frequency");
+        return true;
+    }
+    if(!openhd::wb::all_cards_support_frequency(new_frequency,m_broadcast_cards,m_console)){
+        m_console->warn("Cannot change frequency, at least one card doesn't support");
+        return false;
+    }
+    if(!openhd::wb::all_cards_support_frequency_and_channel_width(new_frequency,current_channel_width,m_broadcast_cards,m_console)){
+        m_console->warn("Cannot change frequency, 40Mhz not allowed (on at least one card)");
+        return false;
+    }
+    return true;
+}
+
+bool openhd::wb::validate_air_channel_width_change(int new_channel_width, const WiFiCard& card,
+                                                   const std::shared_ptr<spdlog::logger>& m_console) {
+    if(!openhd::is_valid_channel_width(new_channel_width)){
+        m_console->warn("Invalid channel width {}",new_channel_width);
+        return false;
+    }
+    // We only have one tx card, check if it supports injecting with 40Mhz channel width:
+    if(new_channel_width==40 && !wifi_card_supports_40Mhz_channel_width_injection(card)){
+        m_console->warn("Cannot change channel width, not supported by card");
+        return false;
+    }
+    return true;
+}
+
+bool openhd::wb::validate_air_mcs_index_change(int new_mcs_index, const WiFiCard &card,
+                                               const std::shared_ptr<spdlog::logger> &m_console) {
+    if(!openhd::is_valid_mcs_index(new_mcs_index)){
+        m_console->warn("Invalid mcs index{}",new_mcs_index);
+        return false;
+    }
+    if(!wifi_card_supports_variable_mcs(card){
+        m_console->warn("Cannot change mcs index, card doesn't support variable MCS");
+        return false;
+    }
+    return true;
+}
+

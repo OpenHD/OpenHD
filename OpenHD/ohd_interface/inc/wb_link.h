@@ -21,6 +21,7 @@
 #include "wifi_card.h"
 #include "wb_link_work_item.hpp"
 #include "wb_link_manager.h"
+#include "wb_link_helper.h"
 
 /**
  * This class takes a list of cards supporting monitor mode (only 1 card on air) and
@@ -57,7 +58,7 @@ class WBLink :public OHDLink{
   // validate param, then schedule change
   bool request_set_frequency(int frequency);
   // validate param, then schedule change
-  bool request_set_tx_channel_width(int channel_width);
+  bool request_set_air_tx_channel_width(int channel_width);
   // apply the frequency (wifi channel) and channel with for all wifibroadcast cards
   // r.n uses both iw and modifies the radiotap header
   bool apply_frequency_and_channel_width(int frequency,int channel_width_rx,int channel_width_tx);
@@ -84,9 +85,6 @@ class WBLink :public OHDLink{
   bool set_air_max_fec_block_size_for_platform(int value);
   bool set_air_wb_video_rate_for_mcs_adjustment_percent(int value);
   void set_air_wb_air_video_encryption_enabled(bool enable);
-  // Make sure no processes interfering with monitor mode runs on the given cards,
-  // then sets them to monitor mode
-  void takeover_cards_monitor_mode();
   std::unique_ptr<WBStreamTx> create_wb_tx(uint8_t radio_port,bool is_video);
   std::unique_ptr<WBStreamRx> create_wb_rx(uint8_t radio_port,bool is_video,WBStreamRx::OUTPUT_DATA_CALLBACK cb);
  private:
@@ -141,9 +139,6 @@ class WBLink :public OHDLink{
   const OHDProfile m_profile;
   const OHDPlatform m_platform;
   const std::vector<WiFiCard> m_broadcast_cards;
-  bool m_any_card_supports_injection;
-  // disable all openhd frequency checking - note that I am quite sure about the correctness of openhd internal checking in regards to wifi channels ;)
-  const bool m_disable_all_frequency_checks;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::WBLinkSettingsHolder> m_settings;
@@ -193,8 +188,10 @@ class WBLink :public OHDLink{
   std::unique_ptr<ManagementGround> m_management_gnd=nullptr;
   // We start on 40Mhz, and go down to 20Mhz if possible
   std::atomic<int> m_gnd_curr_rx_channel_width=40;
-    // TODO remove me
-    std::mutex m_telemetry_tx_mutex;
+  // TODO remove me
+  std::mutex m_telemetry_tx_mutex;
+private:
+  openhd::wb::ForeignPacketsHelper m_foreign_p_helper;
 };
 
 #endif

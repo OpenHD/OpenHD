@@ -19,13 +19,11 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
     : m_profile(std::move(profile)),
       m_platform(platform),
       m_broadcast_cards(std::move(broadcast_cards)),
-      m_disable_all_frequency_checks(openhd::wb::disable_all_frequency_checks()),
       m_opt_action_handler(std::move(opt_action_handler))
 {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
   m_console->info("Broadcast cards:{}",debug_cards(m_broadcast_cards));
-  m_console->debug("m_disable_all_frequency_checks:{}",OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks
   if(m_broadcast_cards.empty() || (m_profile.is_air && m_broadcast_cards.size()>1)) {
     // NOTE: Here we crash, since it would be a programmer(s) error
@@ -34,7 +32,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
     m_console->error("Without at least one wifi card, the stream(s) cannot be started");
     exit(1);
   }
-  takeover_cards_monitor_mode();
+  openhd::wb::takeover_cards_monitor_mode(m_broadcast_cards,m_console);
   // this fetches the last settings, otherwise creates default ones
   m_settings =std::make_unique<openhd::WBLinkSettingsHolder>(m_platform, m_profile, m_broadcast_cards);
   // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
@@ -160,10 +158,10 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       m_opt_action_handler->wb_cmd_analyze_channels=cb_analyze;
       if(m_profile.is_air){
           // MCS is only changed on air
-          auto cb_mcs=[this](const std::array<int,18>& rc_channels){
+          auto cb_channel=[this](const std::array<int,18>& rc_channels){
             set_air_mcs_index_from_rc_channel(rc_channels);
           };
-          m_opt_action_handler->action_on_any_rc_channel_register(cb_mcs);
+          m_opt_action_handler->action_on_any_rc_channel_register(cb_channel);
       }
       auto cb_arm=[this](bool armed){
         update_arming_state(armed);
@@ -204,35 +202,8 @@ WBLink::~WBLink() {
   m_wb_video_tx_list.resize(0);
   m_wb_video_rx_list.resize(0);
   // give the monitor mode cards back to network manager
-  for(const auto& card: m_broadcast_cards){
-    wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, true);
-  }
+  openhd::wb::giveback_cards_monitor_mode(m_broadcast_cards,m_console);
   m_console->debug("WBLink::~WBLink() end");
-}
-
-void WBLink::takeover_cards_monitor_mode() {
-  m_console->debug( "takeover_cards_monitor_mode() begin");
-  // We need to take "ownership" from the system over the cards used for monitor mode / wifibroadcast.
-  // This can be different depending on the OS we are running on - in general, we try to go for the following with openhd:
-  // Have network manager running on the host OS - the nice thing about network manager is that we can just tell it
-  // to ignore the cards we are doing wifibroadcast with, instead of killing all processes that might interfere with
-  // wifibroadcast and therefore making other networking incredibly hard.
-  // Tell network manager to ignore the cards we want to do wifibroadcast on
-  for(const auto& card: m_broadcast_cards){
-    wifi::commandhelper::nmcli_set_device_managed_status(card.device_name, false);
-  }
-  wifi::commandhelper::rfkill_unblock_all();
-  // Apparently, we need to give nm / whoever a bit time before we start putting the cards into monitor mode
-  // not pretty, but works.
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-  // now we can enable monitor mode on the given cards.
-  for(const auto& card: m_broadcast_cards) {
-    wifi::commandhelper::ip_link_set_card_state(card.device_name, false);
-    wifi::commandhelper::iw_enable_monitor_mode(card.device_name);
-    wifi::commandhelper::ip_link_set_card_state(card.device_name, true);
-    //wifi::commandhelper2::set_wifi_monitor_mode(card->_wifi_card.interface_name);
-  }
-  m_console->debug("takeover_cards_monitor_mode() end");
 }
 
 std::unique_ptr<WBStreamTx> WBLink::create_wb_tx(uint8_t radio_port,bool is_video) {
@@ -265,17 +236,8 @@ std::unique_ptr<WBStreamRx> WBLink::create_wb_rx(uint8_t radio_port,bool is_vide
 
 bool WBLink::request_set_frequency(int frequency) {
   m_console->debug("request_set_frequency {}",frequency);
-  if(m_disable_all_frequency_checks){
-    m_console->warn("Not sanity checking frequency");
-  }else{
-    if(!openhd::wb::all_cards_support_frequency(frequency,m_broadcast_cards,m_console)){
-        m_console->warn("Cannot change frequency, at least one card doesn't support");
+  if(!openhd::wb::validate_frequency_change(frequency,m_settings->get_settings().wb_air_tx_channel_width,m_broadcast_cards,m_console)){
       return false;
-    }
-    if(!openhd::wb::all_cards_support_frequency_and_channel_width(frequency,m_settings->get_settings().wb_air_tx_channel_width,m_broadcast_cards,m_console)){
-        m_console->warn("Cannot change frequency, 40Mhz not allowed (on at least one card)");
-        return false;
-    }
   }
   // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
   auto work_item=std::make_shared<WorkItem>(fmt::format("SET_FREQ:{}",frequency),[this,frequency](){
@@ -291,16 +253,10 @@ bool WBLink::request_set_frequency(int frequency) {
   return try_schedule_work_item(work_item);
 }
 
-bool WBLink::request_set_tx_channel_width(int channel_width) {
+bool WBLink::request_set_air_tx_channel_width(int channel_width) {
     assert(m_profile.is_air); // Channel width is only ever changed on air
     m_console->debug("request_set_tx_channel_width {}",channel_width);
-    if(!openhd::is_valid_channel_width(channel_width)){
-        m_console->warn("Invalid channel width {}",channel_width);
-        return false;
-    }
-    // We only have one tx card, check if it supports injecting with 40Mhz channel width:
-    if(channel_width==40 && !wifi_card_supports_40Mhz_channel_width_injection(m_broadcast_cards.at(0))){
-        m_console->warn("Cannot change channel width, not supported by card");
+    if(!openhd::wb::validate_air_channel_width_change(channel_width,m_broadcast_cards.at(0),m_console)){
         return false;
     }
     // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
@@ -370,13 +326,8 @@ void WBLink::apply_txpower() {
 bool WBLink::set_air_mcs_index(int mcs_index) {
   assert(m_profile.is_air);
   m_console->debug("set_air_mcs_index {}",mcs_index);
-  if(!openhd::is_valid_mcs_index(mcs_index)){
-    m_console->warn("Invalid mcs index{}",mcs_index);
-    return false;
-  }
-  if(!wifi_card_supports_variable_mcs(m_broadcast_cards.at(0))){
-      m_console->warn("Cannot change mcs index, card doesn't support variable MCS");
-     return false;
+  if(!openhd::wb::validate_air_mcs_index_change(mcs_index,m_broadcast_cards.at(0),m_console)){
+      return false;
   }
   m_settings->unsafe_get_settings().wb_air_mcs_index=mcs_index;
   m_settings->persist();
@@ -417,7 +368,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       ret.push_back(Setting{WB_MCS_INDEX,change_wb_air_mcs_index});
       // Channel width is only changeable on the air
       auto change_wb_channel_width=openhd::IntSetting{(int)settings.wb_air_tx_channel_width,[this](std::string,int value){
-          return request_set_tx_channel_width(value);
+          return request_set_air_tx_channel_width(value);
       }};
       change_wb_channel_width.get_callback=[this](){
           return m_settings->unsafe_get_settings().wb_air_tx_channel_width;
@@ -735,6 +686,7 @@ void WBLink::update_statistics() {
 }
 
 void WBLink::perform_rate_adjustment() {
+  using namespace openhd::wb;
   // Rate adjustment is done on air and only if enabled
   if(!(m_profile.is_air && m_settings->get_settings().enable_wb_video_variable_bitrate)){
     return;
@@ -751,10 +703,7 @@ void WBLink::perform_rate_adjustment() {
   const auto settings = m_settings->get_settings();
   const auto wifi_space=openhd::get_space_from_frequency(settings.wb_frequency);
   const auto max_rate_for_current_wifi_config_without_adjust =
-      openhd::wb::get_max_rate_possible(card,wifi_space,
-                                           settings.wb_air_mcs_index,
-                                           settings.wb_air_tx_channel_width == 40);
-  using namespace openhd::wb;
+      get_max_rate_possible(card,wifi_space,settings.wb_air_mcs_index,settings.wb_air_tx_channel_width == 40);
   const auto max_rate_for_current_wifi_config= multiply_by_perc(max_rate_for_current_wifi_config_without_adjust,m_settings->get_settings().wb_video_rate_for_mcs_adjustment_percent);
   m_max_total_rate_for_current_wifi_config_kbits=max_rate_for_current_wifi_config;
   /*m_console->debug("Max rate {} with {} perc {}",kbits_per_second_to_string(max_rate_for_current_wifi_config_without_adjust),
@@ -762,6 +711,9 @@ void WBLink::perform_rate_adjustment() {
                    kbits_per_second_to_string(max_rate_for_current_wifi_config));*/
   const auto max_video_rate_for_current_wifi_config =
       openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
+  const auto stats=m_wb_txrx->get_rx_stats();
+  const auto n_foreign_packets=m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);
+  m_console->debug("N foreign packets:{}",n_foreign_packets);
   if(m_max_video_rate_for_current_wifi_config !=max_video_rate_for_current_wifi_config ||
         m_max_video_rate_for_current_wifi_config_freq_changed){
       m_max_video_rate_for_current_wifi_config_freq_changed= false;
