@@ -85,7 +85,9 @@ class WBLink :public OHDLink{
   bool set_air_mcs_index(int mcs_index);
   // this is special, mcs index can not only be changed via mavlink param, but also via RC channel (if enabled)
   void set_air_mcs_index_from_rc_channel(const std::array<int,18>& rc_channels);
-  // special, change tx power depending on if the FC is armed / disarmed
+  /**
+   * Every time the arming state is updated, we just set a flag here such that the main thread updates the tx power
+   */
   void update_arming_state(bool armed);
   // These do not "break" the bidirectional connectivity and therefore
   // can be changed easily on the fly
@@ -94,13 +96,10 @@ class WBLink :public OHDLink{
   bool set_air_max_fec_block_size_for_platform(int value);
   bool set_air_wb_video_rate_for_mcs_adjustment_percent(int value);
   void set_air_wb_air_video_encryption_enabled(bool enable);
- private:
   // Recalculate stats, apply settings asynchronously and more
   void loop_do_work();
   // update statistics, done in regular intervals, updated data is given to the ohd_telemetry module via the action handler
   void update_statistics();
-  static constexpr auto RECALCULATE_STATISTICS_INTERVAL=std::chrono::milliseconds(500);
-  std::chrono::steady_clock::time_point m_last_stats_recalculation=std::chrono::steady_clock::now();
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void perform_rate_adjustment();
   void perform_management();
@@ -114,7 +113,6 @@ class WBLink :public OHDLink{
   // we do not support changing the frequency or similar.
   bool try_schedule_work_item(const std::shared_ptr<WorkItem>& work_item);
   static constexpr auto DELAY_FOR_TRANSMIT_ACK =std::chrono::seconds(2);
- private:
   // Called by telemetry on both air and ground (send to opposite, respective)
   void transmit_telemetry_data(TelemetryTxPacket packet)override;
   // Called by the camera stream on the air unit only
@@ -168,6 +166,8 @@ class WBLink :public OHDLink{
   // NOTE: We only support one active work item at a time,
   // otherwise, we reject any changes requested by the user.
   std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
+  static constexpr auto RECALCULATE_STATISTICS_INTERVAL=std::chrono::milliseconds(500);
+  std::chrono::steady_clock::time_point m_last_stats_recalculation=std::chrono::steady_clock::now();
   // These are for variable bitrate / tx error reduces bitrate
   static constexpr auto RATE_ADJUSTMENT_INTERVAL=std::chrono::seconds(1);
   std::chrono::steady_clock::time_point m_last_rate_adjustment=std::chrono::steady_clock::now();
