@@ -74,6 +74,11 @@ class WBLink :public OHDLink{
   bool request_set_tx_power_rtl8812au(int tx_power_index_override,bool armed);
   // MCS index can be changed on air (user can control the rate with it).
   bool request_set_air_mcs_index(int mcs_index);
+  // Initiate channel scan / channel analyze.
+  // Those operations run asynchronous until completed, and during this time
+  // all other "request_" setting changes are rejected (since the work thread does the long-running async operation)
+  bool request_start_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
+  bool request_start_analyze_channels();
 
   // apply the frequency (wifi channel) and channel with for all wifibroadcast cards
   // r.n uses both iw and modifies the radiotap header
@@ -117,26 +122,15 @@ class WBLink :public OHDLink{
   // Called by the camera stream on the air unit only
   // transmit video data via wifibradcast
   void transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame) override;
-  // Warning: This operation will block the calling thread for up to X ms.
-  // During scan, you cannot change any wb settings
-  struct ScanResult{
-    bool success=false;
-    int frequency =0;
-    int channel_width=0;
-  };
   // How often per second we broadcast the session key -
   // we send the session key ~2 times per second
   static constexpr std::chrono::milliseconds SESSION_KEY_PACKETS_INTERVAL=std::chrono::milliseconds(500);
   // This is a long-running operation during which changing things like frequency and more are disabled.
-  // Loop through all possible frequencies + optionally channel widths until we can say with a high certainty
-  // we have found a running air unit on this channel. (-> only supported on ground).
-  // On success, apply this frequency.
-  // On failure, restore previous state.
-  ScanResult scan_channels(const openhd::ActionHandler::ScanChannelsParam& scan_channels_params);
-  void analyze_channels();
-  // queue it up on the work queue, if no other item is currently on the work queue
-  bool async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params);
-  bool async_analyze_channels();
+  // Tries to find a running air unit and goes to this frequency if found.
+  // continuously broadcasts progress via mavlink.
+  void perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam& scan_channels_params);
+  // similar to channel scan, analyze channel(s) for interference
+  void perform_channel_analyze();
   void reset_all_rx_stats();
   int64_t get_total_tx_error_count();
  private:

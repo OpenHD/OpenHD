@@ -169,11 +169,11 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_work_thread =std::make_unique<std::thread>(&WBLink::loop_do_work, this);
   if(m_opt_action_handler){
       std::function<bool(openhd::ActionHandler::ScanChannelsParam)> cb_scan=[this](openhd::ActionHandler::ScanChannelsParam param){
-        return async_scan_channels(param);
+        return request_start_scan_channels(param);
       };
       m_opt_action_handler->wb_cmd_scan_channels=cb_scan;
       std::function<bool()> cb_analyze=[this](){
-          return async_analyze_channels();
+          return request_start_analyze_channels();
       };
       m_opt_action_handler->wb_cmd_analyze_channels=cb_analyze;
       if(m_profile.is_air){
@@ -311,6 +311,20 @@ bool WBLink::request_set_air_mcs_index(int mcs_index) {
         m_settings->unsafe_get_settings().wb_air_mcs_index=mcs_index;
         m_settings->persist();
         m_request_apply_air_mcs_index=true;
+    },std::chrono::steady_clock::now());
+    return try_schedule_work_item(work_item);
+}
+
+bool WBLink::request_start_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params) {
+    auto work_item=std::make_shared<WorkItem>("SCAN_CHANNELS",[this,scan_channels_params](){
+        perform_channel_scan(scan_channels_params);
+    },std::chrono::steady_clock::now());
+    return try_schedule_work_item(work_item);
+}
+
+bool WBLink::request_start_analyze_channels() {
+    auto work_item=std::make_shared<WorkItem>("ANALYZE_CHANNELS",[this](){
+        perform_channel_analyze();
     },std::chrono::steady_clock::now());
     return try_schedule_work_item(work_item);
 }
@@ -517,10 +531,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   return ret;
 }
 
-static uint32_t get_micros(std::chrono::nanoseconds ns){
-  return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::microseconds>(ns).count());
-}
-
 void WBLink::loop_do_work() {
   while (m_work_thread_run){
     // Perform any queued up work if it exists
@@ -596,9 +606,9 @@ void WBLink::update_statistics() {
       air_video.curr_injected_pps=curr_tx_stats.current_injected_packets_per_second;
       air_video.curr_dropped_frames=curr_tx_stats.n_dropped_frames;
       const auto curr_tx_fec_stats=wb_tx.get_latest_fec_stats();
-      air_fec.curr_fec_encode_time_avg_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
-      air_fec.curr_fec_encode_time_min_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
-      air_fec.curr_fec_encode_time_max_us= get_micros(curr_tx_fec_stats.curr_fec_encode_time.max);
+      air_fec.curr_fec_encode_time_avg_us= OHDUtil::get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
+      air_fec.curr_fec_encode_time_min_us= OHDUtil::get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
+      air_fec.curr_fec_encode_time_max_us= OHDUtil::get_micros(curr_tx_fec_stats.curr_fec_encode_time.max);
       air_fec.curr_fec_block_size_min=curr_tx_fec_stats.curr_fec_block_length.min;
       air_fec.curr_fec_block_size_max=curr_tx_fec_stats.curr_fec_block_length.max;
       air_fec.curr_fec_block_size_avg=curr_tx_fec_stats.curr_fec_block_length.avg;
@@ -625,9 +635,9 @@ void WBLink::update_statistics() {
       ground_video.count_blocks_recovered=fec_stats.count_blocks_recovered;
       ground_video.count_blocks_lost=fec_stats.count_blocks_lost;
       ground_video.count_blocks_total=fec_stats.count_blocks_total;
-      gnd_fec.curr_fec_decode_time_avg_us =get_micros(fec_stats.curr_fec_decode_time.avg);
-      gnd_fec.curr_fec_decode_time_min_us =get_micros(fec_stats.curr_fec_decode_time.min);
-      gnd_fec.curr_fec_decode_time_max_us =get_micros(fec_stats.curr_fec_decode_time.max);
+      gnd_fec.curr_fec_decode_time_avg_us =OHDUtil::get_micros(fec_stats.curr_fec_decode_time.avg);
+      gnd_fec.curr_fec_decode_time_min_us =OHDUtil::get_micros(fec_stats.curr_fec_decode_time.min);
+      gnd_fec.curr_fec_decode_time_max_us =OHDUtil::get_micros(fec_stats.curr_fec_decode_time.max);
       // TODO otimization: Only send stats for an active link
       stats.stats_wb_video_ground.push_back(ground_video);
       if(i==0)stats.gnd_fec_performance=gnd_fec;
@@ -925,26 +935,31 @@ int64_t WBLink::get_total_tx_error_count() {
   return total;
 }
 
-WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChannelsParam& params){
+void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam& scan_channels_params){
   const WiFiCard& card=m_broadcast_cards.at(0);
   const auto channels_to_scan=
-          openhd::wb::get_scan_channels_frequencies(card,params.check_2g_channels_if_card_support,params.check_5g_channels_if_card_supports);
+          openhd::wb::get_scan_channels_frequencies(card, scan_channels_params.check_2g_channels_if_card_support, scan_channels_params.check_5g_channels_if_card_supports);
   if(channels_to_scan.empty()){
     m_console->warn("No channels to scan, return early");
-    return {};
+    return;
   }
   const auto channel_widths_to_scan=
-          openhd::wb::get_scan_channels_bandwidths(params.check_20Mhz_channel_width_if_card_supports,
-                                                   params.check_40Mhz_channel_width_if_card_supports);
+          openhd::wb::get_scan_channels_bandwidths(scan_channels_params.check_20Mhz_channel_width_if_card_supports,
+                                                   scan_channels_params.check_40Mhz_channel_width_if_card_supports);
   if(channel_widths_to_scan.empty()){
     m_console->warn("No channel_widths to scan, return early");
-    return {};
+    return;
   }
   if(m_opt_action_handler) {
     auto stats_current = m_opt_action_handler->get_link_stats();
     stats_current.gnd_operating_mode.operating_mode = 1;
     m_opt_action_handler->update_link_stats(stats_current);
   }
+  struct ScanResult{
+        bool success=false;
+        int frequency =0;
+        int channel_width=0;
+  };
   ScanResult result{false,0,0};
   // Note: We intentionally do not modify the persistent settings here
   m_console->debug("Channel scan N channels to scan:{} N channel widths to scan:{}",
@@ -1034,17 +1049,9 @@ WBLink::ScanResult WBLink::scan_channels(const openhd::ActionHandler::ScanChanne
       tmp.progress=100;
       m_opt_action_handler->add_scan_channels_progress(tmp);
   }
-  return result;
 }
 
-bool WBLink::async_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params) {
-    auto work_item=std::make_shared<WorkItem>("SCAN_CHANNELS",[this,scan_channels_params](){
-        scan_channels(scan_channels_params);
-    },std::chrono::steady_clock::now());
-    return try_schedule_work_item(work_item);
-}
-
-void WBLink::analyze_channels() {
+void WBLink::perform_channel_analyze() {
     struct AnalyzeResult{
         int frequency;
         int n_foreign_packets;
@@ -1092,13 +1099,6 @@ void WBLink::analyze_channels() {
     m_console->debug("{}",ss.str().c_str());
     // Go back to the previous frequency
     apply_frequency_and_channel_width_from_settings();
-}
-
-bool WBLink::async_analyze_channels() {
-    auto work_item=std::make_shared<WorkItem>("ANALYZE_CHANNELS",[this](){
-        analyze_channels();
-    },std::chrono::steady_clock::now());
-    return try_schedule_work_item(work_item);
 }
 
 void WBLink::perform_mcs_via_rc_channel_if_enabled() {
@@ -1185,4 +1185,5 @@ void WBLink::air_perform_reset_frequency() {
         m_reset_frequency_time_point=std::chrono::steady_clock::now();
     }
 }
+
 

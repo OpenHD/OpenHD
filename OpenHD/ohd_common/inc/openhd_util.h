@@ -158,6 +158,9 @@ int steady_clock_time_epoch_ms();
 // 1second has 'ms' resolution since for values that big ns resolution probably isn't needed
 std::string time_readable(const std::chrono::steady_clock::duration &dur);
 std::string time_readable_ns(uint64_t nanoseconds);
+
+uint32_t get_micros(std::chrono::nanoseconds ns);
+
 }
 
 #endif

@@ -321,3 +321,7 @@ std::string OHDUtil::time_readable_ns(uint64_t nanoseconds) {
     return time_readable(std::chrono::nanoseconds(nanoseconds));
 }
 
+uint32_t OHDUtil::get_micros(std::chrono::nanoseconds ns) {
+    return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::microseconds>(ns).count());
+}
+
