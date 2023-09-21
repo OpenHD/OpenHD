@@ -255,7 +255,7 @@ bool WBLink::request_set_frequency(int frequency) {
 
 bool WBLink::request_set_air_tx_channel_width(int channel_width) {
     assert(m_profile.is_air); // Channel width is only ever changed on air
-    m_console->debug("request_set_tx_channel_width {}",channel_width);
+    m_console->debug("request_set_air_tx_channel_width {}",channel_width);
     if(!openhd::wb::validate_air_channel_width_change(channel_width,m_broadcast_cards.at(0),m_console)){
         return false;
     }
@@ -267,6 +267,43 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
         m_management_air->m_last_channel_width_change_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
         //std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
         apply_frequency_and_channel_width_from_settings();
+    },std::chrono::steady_clock::now());
+    return try_schedule_work_item(work_item);
+}
+
+bool WBLink::request_set_tx_power_mw(int tx_power_mw, bool armed) {
+    m_console->debug("request_set_tx_power_mw {}mW", tx_power_mw);
+    if(!openhd::is_valid_tx_power_milli_watt(tx_power_mw)){
+        m_console->warn("Invalid tx power:{}mW", tx_power_mw);
+        return false;
+    }
+    auto tag=fmt::format("SET_TX_POWER_MW_{}:{}",armed ? "ARMED" : "DISARMED",tx_power_mw);
+    auto work_item=std::make_shared<WorkItem>(tag,[this,tx_power_mw,armed](){
+        if(armed){
+            m_settings->unsafe_get_settings().wb_tx_power_milli_watt_armed= tx_power_mw;
+        }else{
+            m_settings->unsafe_get_settings().wb_tx_power_milli_watt=tx_power_mw;
+        }
+        m_settings->persist();
+        apply_txpower();
+    },std::chrono::steady_clock::now());
+    return try_schedule_work_item(work_item);
+}
+
+bool WBLink::request_set_tx_power_rtl8812au(int tx_power_index_override, bool armed) {
+    m_console->debug("request_set_tx_power_rtl8812au {}index",tx_power_index_override);
+    if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(tx_power_index_override)){
+        return false;
+    }
+    auto tag=fmt::format("SET_TX_POWER_INDEX_{}:{}",armed ? "ARMED" : "DISARMED",tx_power_index_override);
+    auto work_item=std::make_shared<WorkItem>(tag,[this,tx_power_index_override,armed](){
+        if(armed){
+            m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override_armed= tx_power_index_override;
+        }else{
+            m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=tx_power_index_override;
+        }
+        m_settings->persist();
+        apply_txpower();
     },std::chrono::steady_clock::now());
     return try_schedule_work_item(work_item);
 }
@@ -374,8 +411,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
           return m_settings->unsafe_get_settings().wb_air_tx_channel_width;
       };
       ret.push_back(Setting{WB_CHANNEL_WIDTH,change_wb_channel_width});
-  }
-  if(m_profile.is_air){
     auto cb_change_video_fec_percentage=[this](std::string,int value){
         return set_air_video_fec_percentage(value);
     };
@@ -394,7 +429,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
     ret.push_back(Setting{WB_VIDEO_RATE_FOR_MCS_ADJUSTMENT_PERC,openhd::IntSetting{(int)settings.wb_video_rate_for_mcs_adjustment_percent, cb_wb_video_rate_for_mcs_adjustment_percent}});
     // changing the mcs index via rc channel only makes sense on air,
     // and is only possible if the card supports it
-    if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
+    if(m_broadcast_cards.at(0).is_openhd_supported){
       auto cb_mcs_via_rc_channel=[this](std::string,int value){
         if(value<0 || value>18)return false; // 0 is disabled, valid rc channel number otherwise
         // we check if this is enabled in regular intervals (whenever we get the rc channels message from the FC)
@@ -404,6 +439,13 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       };
       ret.push_back(Setting{openhd::WB_MCS_INDEX_VIA_RC_CHANNEL,openhd::IntSetting{(int)settings.wb_mcs_index_via_rc_channel, cb_mcs_via_rc_channel}});
     }
+    auto cb_video_encrypt=[this](std::string,int value){
+        if(!openhd::validate_yes_or_no(value))return false;
+        set_air_wb_air_video_encryption_enabled(value);
+        return true;
+    };
+    auto change_video_encryption=openhd::IntSetting{(int)settings.wb_air_enable_video_encryption,cb_video_encrypt};
+    ret.push_back(Setting{WB_VIDEO_ENCRYPTION_ENABLE,change_video_encryption});
   }
   if(m_profile.is_ground()){
     // We display the total n of detected RX cards such that users can validate their multi rx setup(s) if there is more than one rx card detected
@@ -458,40 +500,25 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
   // WIFI TX power depends on the used chips
   if(openhd::wb::has_any_rtl8812au(m_broadcast_cards)){
     auto cb_wb_rtl8812au_tx_pwr_idx_override=[this](std::string,int value){
-      return set_tx_power_rtl8812au(value);
+      return request_set_tx_power_rtl8812au(value, false);
     };
     ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_OVERRIDE,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override,cb_wb_rtl8812au_tx_pwr_idx_override}});
     auto cb_wb_rtl8812au_tx_pwr_idx_armed=[this](std::string,int value){
-      if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(value))return false;
-      m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override_armed=value;
-      m_settings->persist();
-      return true;
+        return request_set_tx_power_rtl8812au(value, true);
     };
     ret.push_back(openhd::Setting{WB_RTL8812AU_TX_PWR_IDX_ARMED,openhd::IntSetting{(int)settings.wb_rtl8812au_tx_pwr_idx_override_armed, cb_wb_rtl8812au_tx_pwr_idx_armed}});
   }
   if(openhd::wb::has_any_non_rtl8812au(m_broadcast_cards)){
       auto cb_wb_tx_power_milli_watt=[this](std::string,int value){
-          return set_tx_power_mw(value);
+          return request_set_tx_power_mw(value, false);
       };
       auto change_tx_power=openhd::IntSetting{(int)settings.wb_tx_power_milli_watt,cb_wb_tx_power_milli_watt};
       ret.push_back(Setting{WB_TX_POWER_MILLI_WATT,change_tx_power});
       auto cb_wb_tx_power_milli_watt_armed=[this](std::string,int value){
-          if(value<0 || value > 10000)return false;
-          m_settings->unsafe_get_settings().wb_tx_power_milli_watt_armed=value;
-          m_settings->persist();
-          return true;
+          return request_set_tx_power_mw(value, true);
       };
       auto change_tx_power_armed=openhd::IntSetting{(int)settings.wb_tx_power_milli_watt_armed,cb_wb_tx_power_milli_watt_armed};
       ret.push_back(Setting{WB_TX_POWER_MILLI_WATT_ARMED,change_tx_power_armed});
-  }
-  if(m_profile.is_air){
-      auto cb_video_encrypt=[this](std::string,int value){
-          if(!openhd::validate_yes_or_no(value))return false;
-          set_air_wb_air_video_encryption_enabled(value);
-          return true;
-      };
-      auto change_video_encryption=openhd::IntSetting{(int)settings.wb_air_enable_video_encryption,cb_video_encrypt};
-      ret.push_back(Setting{WB_VIDEO_ENCRYPTION_ENABLE,change_video_encryption});
   }
   openhd::validate_provided_ids(ret);
   return ret;
@@ -516,6 +543,10 @@ void WBLink::loop_do_work() {
         }
       }
       m_work_item_queue_mutex.unlock();
+    }
+    if(m_needs_apply_tx_power){
+        apply_txpower();
+        m_needs_apply_tx_power= false;
     }
     perform_management();
     //air_perform_reset_frequency();
@@ -882,27 +913,6 @@ openhd::WifiSpace WBLink::get_current_frequency_channel_space()const {
   return openhd::get_space_from_frequency(m_settings->get_settings().wb_frequency);
 }
 
-bool WBLink::set_tx_power_mw(int tx_power_mw) {
-  m_console->debug("set_tx_power_mw {}mW", tx_power_mw);
-  if(!openhd::is_valid_tx_power_milli_watt(tx_power_mw)){
-    m_console->warn("Invalid tx power:{}mW", tx_power_mw);
-    return false;
-  }
-  m_settings->unsafe_get_settings().wb_tx_power_milli_watt= tx_power_mw;
-  m_settings->persist();
-  apply_txpower();
-  return true;
-}
-
-bool WBLink::set_tx_power_rtl8812au(int tx_power_index_override){
-  m_console->debug("set_tx_power_rtl8812au {}index",tx_power_index_override);
-  if(!openhd::validate_wb_rtl8812au_tx_pwr_idx_override(tx_power_index_override))return false;
-  m_settings->unsafe_get_settings().wb_rtl8812au_tx_pwr_idx_override=tx_power_index_override;
-  m_settings->persist();
-  apply_txpower();
-  return true;
-}
-
 int64_t WBLink::get_total_tx_error_count() {
   int64_t total=0;
   for(const auto& tx:m_wb_video_tx_list){
@@ -1152,7 +1162,7 @@ void WBLink::update_arming_state(bool armed) {
   // We just update the internal armed / disarmed state and then call apply_tx_power -
   // it will set the right tx power if the user enabled it
   m_is_armed=armed;
-  apply_txpower();
+  m_needs_apply_tx_power= true;
 }
 
 void WBLink::perform_management() {

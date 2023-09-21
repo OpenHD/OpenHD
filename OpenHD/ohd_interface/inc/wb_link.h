@@ -55,17 +55,26 @@ class WBLink :public OHDLink{
    */
   [[nodiscard]] openhd::WifiSpace get_current_frequency_channel_space()const;
  private:
-  // validate param, then schedule change
+  // NOTE:
+  // For everything prefixed with 'request_', we validate the param (since it comes from mavlink and might be unsafe to apply)
+  // And return false if it is an invalid param (e.g. an unsupported frequency by the card).
+  // We then return true if we can enqueue this change operation to be applied on the worker thread (false otherwise).
+  // This way we have the nice feature that we
+  // 1) reject settings while the worker thread is busy (e.g. during a channel scan)
+  // or if a previous change (like tx power) is still being performed. In this case, the user can just try again later
+  // (and should not be able to change the frequency for example during a channel scan anyway).
+  // 2) can send the mavlink ack immediately, instead of needing to wait for the action to be performed
+  // (Changing the tx power for example can take some time, while the OS is busy talking to the wifi driver).
+  // Only disadvantage: We need to be able to reason about weather the given change will be successfully or not beforehand.
   bool request_set_frequency(int frequency);
-  // validate param, then schedule change
   bool request_set_air_tx_channel_width(int channel_width);
+  bool request_set_tx_power_mw(int new_tx_power_mw,bool armed);
+  bool request_set_tx_power_rtl8812au(int tx_power_index_override,bool armed);
+
   // apply the frequency (wifi channel) and channel with for all wifibroadcast cards
   // r.n uses both iw and modifies the radiotap header
   bool apply_frequency_and_channel_width(int frequency,int channel_width_rx,int channel_width_tx);
   bool apply_frequency_and_channel_width_from_settings();
-  // ------------- tx power is a bit confusing due to the difference(s) between HW
-  bool set_tx_power_mw(int tx_power_mw);
-  bool set_tx_power_rtl8812au(int tx_power_index_override);
   // set the tx power of all wifibroadcast cards. For rtl8812au, uses the tx power index
   // for other cards, uses the mW value
   void apply_txpower();
@@ -177,6 +186,7 @@ class WBLink :public OHDLink{
   // Set to true when armed, disarmed by default
   // Used to differentiate between different tx power levels when armed / disarmed
   bool m_is_armed= false;
+  std::atomic<bool> m_needs_apply_tx_power=false;
   std::chrono::steady_clock::time_point m_last_log_bind_phrase_mismatch=std::chrono::steady_clock::now();
   // We store tx power for easy access in stats
   std::atomic<int> m_curr_tx_power_idx=0;
