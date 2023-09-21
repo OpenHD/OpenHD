@@ -744,7 +744,7 @@ void WBLink::perform_rate_adjustment() {
       openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
   const auto stats=m_wb_txrx->get_rx_stats();
   const auto n_foreign_packets=m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);
-  m_console->debug("N foreign packets:{}",n_foreign_packets);
+  //m_console->debug("N foreign packets:{}",n_foreign_packets);
   if(m_max_video_rate_for_current_wifi_config !=max_video_rate_for_current_wifi_config ||
         m_max_video_rate_for_current_wifi_config_freq_changed){
       m_max_video_rate_for_current_wifi_config_freq_changed= false;
