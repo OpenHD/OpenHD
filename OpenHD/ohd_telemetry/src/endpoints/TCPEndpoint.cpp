@@ -23,8 +23,8 @@ TCPEndpoint::TCPEndpoint(TCPEndpoint::Config config,std::shared_ptr<openhd::Exte
 }
 
 TCPEndpoint::~TCPEndpoint() {
-    // remove all external devices
-    set_external_device_manager(nullptr);
+  // remove all external devices
+  set_external_device_manager(nullptr);
   keep_alive= false;
   // this signals the fd to stop if needed
   //close(server_fd);
