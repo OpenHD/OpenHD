@@ -117,6 +117,11 @@ public:
         std::lock_guard<std::mutex> guard(m_rc_channels_mutex);
         return m_rc_channels;
     }
+    /**
+     * Get the mcs index mapping pwm channel (channel_index) to mcs indices.
+     * If no rc data has been supplied by the FC yet and / or the channel index is invalid
+     * or the pwm value is not valid, return std::nullopt.
+     */
     std::optional<int> get_mcs_from_rc_channel(int channel_index,std::shared_ptr<spdlog::logger>& m_console);
 private:
     std::optional<std::array<int, 18>> m_rc_channels;
