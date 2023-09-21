@@ -271,7 +271,7 @@ bool openhd::wb::validate_air_mcs_index_change(int new_mcs_index, const WiFiCard
         m_console->warn("Invalid mcs index{}",new_mcs_index);
         return false;
     }
-    if(!wifi_card_supports_variable_mcs(card){
+    if(!wifi_card_supports_variable_mcs(card)){
         m_console->warn("Cannot change mcs index, card doesn't support variable MCS");
         return false;
     }
