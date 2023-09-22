@@ -109,14 +109,9 @@ private:
  */
 class RCChannelHelper{
 public:
-    void set_rc_channels(const std::array<int, 18>& rc_channels){
-        std::lock_guard<std::mutex> guard(m_rc_channels_mutex);
-        m_rc_channels=rc_channels;
-    }
-    std::optional<std::array<int, 18>> get_fc_reported_rc_channels(){
-        std::lock_guard<std::mutex> guard(m_rc_channels_mutex);
-        return m_rc_channels;
-    }
+    // Atomic / thread-safe setter / getter
+    void set_rc_channels(const std::array<int, 18>& rc_channels);
+    std::optional<std::array<int, 18>> get_fc_reported_rc_channels();
     /**
      * Get the mcs index mapping pwm channel (channel_index) to mcs indices.
      * If no rc data has been supplied by the FC yet and / or the channel index is invalid

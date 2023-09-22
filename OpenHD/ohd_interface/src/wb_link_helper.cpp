@@ -322,3 +322,13 @@ std::optional<int> openhd::wb::RCChannelHelper::get_mcs_from_rc_channel(int chan
     }
     return mcs_index;
 }
+
+std::optional<std::array<int, 18>> openhd::wb::RCChannelHelper::get_fc_reported_rc_channels() {
+    std::lock_guard<std::mutex> guard(m_rc_channels_mutex);
+    return m_rc_channels;
+}
+
+void openhd::wb::RCChannelHelper::set_rc_channels(const std::array<int, 18> &rc_channels) {
+    std::lock_guard<std::mutex> guard(m_rc_channels_mutex);
+    m_rc_channels=rc_channels;
+}

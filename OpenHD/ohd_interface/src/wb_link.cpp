@@ -552,23 +552,23 @@ void WBLink::loop_do_work() {
     if(m_request_apply_tx_power.compare_exchange_strong(tmp_true, false)){
         apply_txpower();
     }
-    perform_mcs_via_rc_channel_if_enabled();
+    wt_perform_mcs_via_rc_channel_if_enabled();
     tmp_true= true;
     if(m_request_apply_air_mcs_index.compare_exchange_strong(tmp_true, false)){
         const int mcs_index = m_settings->unsafe_get_settings().wb_air_mcs_index;
         m_tx_header_1->update_mcs_index(mcs_index);
         m_tx_header_2->update_mcs_index(mcs_index);
     }
-    perform_management();
+    wt_perform_management();
     //air_perform_reset_frequency();
-    perform_rate_adjustment();
+    wt_perform_rate_adjustment();
     // update statistics in regular intervals
-    update_statistics();
+    wt_update_statistics();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 }
 
-void WBLink::update_statistics() {
+void WBLink::wt_update_statistics() {
   const auto elapsed_since_last=std::chrono::steady_clock::now()-m_last_stats_recalculation;
   if(elapsed_since_last<RECALCULATE_STATISTICS_INTERVAL){
     return;
@@ -727,7 +727,7 @@ void WBLink::update_statistics() {
   //m_console->debug("Last received packet mcs:{} chan_width:{}",rxStats.last_received_packet_mcs_index,rxStats.last_received_packet_channel_width);
 }
 
-void WBLink::perform_rate_adjustment() {
+void WBLink::wt_perform_rate_adjustment() {
   using namespace openhd::wb;
   // Rate adjustment is done on air and only if enabled
   if(!(m_profile.is_air && m_settings->get_settings().enable_wb_video_variable_bitrate)){
@@ -1101,7 +1101,7 @@ void WBLink::perform_channel_analyze() {
     apply_frequency_and_channel_width_from_settings();
 }
 
-void WBLink::perform_mcs_via_rc_channel_if_enabled() {
+void WBLink::wt_perform_mcs_via_rc_channel_if_enabled() {
   if(!m_profile.is_air){
       return;
   }
@@ -1133,7 +1133,7 @@ void WBLink::update_arming_state(bool armed) {
   m_request_apply_tx_power= true;
 }
 
-void WBLink::perform_management() {
+void WBLink::wt_perform_management() {
     const auto curr_settings=m_settings->get_settings();
     if(m_profile.is_ground()){
         // Ground: Listen on the channel width the air reports (always works due to management always on 20Mhz)

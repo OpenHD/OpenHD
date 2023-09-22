@@ -101,12 +101,12 @@ class WBLink :public OHDLink{
   // Recalculate stats, apply settings asynchronously and more
   void loop_do_work();
   // update statistics, done in regular intervals, updated data is given to the ohd_telemetry module via the action handler
-  void update_statistics();
+  void wt_update_statistics();
   // Do rate adjustments, does nothing if variable bitrate is disabled
-  void perform_rate_adjustment();
-  void perform_management();
+  void wt_perform_rate_adjustment();
+  void wt_perform_management();
   // this is special, mcs index can not only be changed via mavlink param, but also via RC channel (if enabled)
-  void perform_mcs_via_rc_channel_if_enabled();
+  void wt_perform_mcs_via_rc_channel_if_enabled();
   // Feature on air: If we are not armed, and do not receive any message from the ground unit for more than
   // one minute, we go back to the default frequency / bw.
   // NOTE: Currently disabled.
