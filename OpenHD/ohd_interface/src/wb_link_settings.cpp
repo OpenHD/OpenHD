@@ -9,7 +9,6 @@ namespace openhd{
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_air_tx_channel_width, wb_air_mcs_index,
                                    wb_enable_stbc, wb_enable_ldpc, wb_enable_short_guard,
-                                   wb_tx_use_ack,
                                    wb_tx_power_milli_watt, wb_tx_power_milli_watt_armed,
                                    wb_rtl8812au_tx_pwr_idx_override, wb_rtl8812au_tx_pwr_idx_override_armed,
                                    wb_video_fec_percentage,
