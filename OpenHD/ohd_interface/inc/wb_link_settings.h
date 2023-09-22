@@ -33,6 +33,12 @@ static constexpr auto WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED=0;
 static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=22;
 // by default, we do not differentiate (to not confuse users)
 static constexpr auto RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED=0;
+// LDPC is enabled by default - drivers that don't support ldpc during rx do not exist anymore,
+// and if the tx driver doesn't support it, it is just omitted.
+static constexpr bool DEFAULT_ENABLE_LDPC=true;
+// SHORT GUARD - doesn't really have that much of an benefit regarding bitrate,
+// so we set it off by default (use long guard)
+static constexpr bool DEFAULT_ENABLE_SHORT_GUARD= false;
 
 // Set to 0 for fec auto block length
 // Set to 1 or greater for fixed k fec
@@ -55,9 +61,8 @@ struct WBLinkSettings {
   // MCS index used during injection - only used by air unit, since ground always sends with MCS0
   uint32_t wb_air_mcs_index=DEFAULT_MCS_INDEX;
   int wb_enable_stbc=0; // 0==disabled
-  bool wb_enable_ldpc=false;
-  bool wb_enable_short_guard=false;
-  bool wb_tx_use_ack= false;
+  bool wb_enable_ldpc=DEFAULT_ENABLE_LDPC;
+  bool wb_enable_short_guard=DEFAULT_ENABLE_SHORT_GUARD;
   uint32_t wb_tx_power_milli_watt=DEFAULT_WIFI_TX_POWER_MILLI_WATT;
   uint32_t wb_tx_power_milli_watt_armed=WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED;
   // rtl8812au driver does not support setting tx power by iw dev, but rather only by setting
