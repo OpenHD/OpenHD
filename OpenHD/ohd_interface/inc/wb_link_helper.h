@@ -89,18 +89,40 @@ void giveback_cards_monitor_mode(const std::vector<WiFiCard>& cards,std::shared_
 
 class ForeignPacketsHelper{
 public:
-    int update(uint64_t count_p_any,uint64_t count_p_valid){
+    void update(uint64_t count_p_any,uint64_t count_p_valid){
         const uint64_t n_foreign_packets=count_p_any>count_p_valid ? count_p_any-count_p_valid : 0;
         if(m_foreign_packets_last_time>n_foreign_packets){
             m_foreign_packets_last_time=n_foreign_packets;
-            return 0;
+            return;
         }
         const int delta=static_cast<int>(n_foreign_packets-m_foreign_packets_last_time);
         m_foreign_packets_last_time=n_foreign_packets;
-        return delta;
+        update_n_foreign_packets(delta);
+    }
+    int get_foreign_packets_per_second()const{
+        return m_pps_current;
+    }
+    void update_n_foreign_packets(int n_foreign_packets){
+        assert(n_foreign_packets>=0);
+        //openhd::log::get_default()->debug("N foreign packets:{}",n_foreign_packets);
+        m_pps_foreign_packets_count+=n_foreign_packets;
+        const auto elapsed=std::chrono::steady_clock::now()-m_pps_last_recalculation;
+        if(elapsed>std::chrono::seconds(1)){
+            m_pps_last_recalculation=std::chrono::steady_clock::now();
+            if(m_pps_foreign_packets_count<=0){
+                m_pps_current=0;
+                return;
+            }
+            const int elapsed_us=static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
+            m_pps_current=m_pps_foreign_packets_count * 1000 * 1000 / elapsed_us;
+            m_pps_foreign_packets_count=0;
+        }
     }
 private:
     uint64_t m_foreign_packets_last_time=0;
+    int m_pps_foreign_packets_count=0;
+    std::chrono::steady_clock::time_point m_pps_last_recalculation=std::chrono::steady_clock::now();
+    int m_pps_current=-1;
 };
 
 /**

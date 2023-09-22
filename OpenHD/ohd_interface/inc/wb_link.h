@@ -104,7 +104,7 @@ class WBLink :public OHDLink{
   void wt_update_statistics();
   // Do rate adjustments, does nothing if variable bitrate is disabled
   void wt_perform_rate_adjustment();
-  void wt_perform_management();
+  void wt_perform_channel_width_management();
   // this is special, mcs index can not only be changed via mavlink param, but also via RC channel (if enabled)
   void wt_perform_mcs_via_rc_channel_if_enabled();
   // Feature on air: If we are not armed, and do not receive any message from the ground unit for more than

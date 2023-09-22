@@ -559,7 +559,7 @@ void WBLink::loop_do_work() {
         m_tx_header_1->update_mcs_index(mcs_index);
         m_tx_header_2->update_mcs_index(mcs_index);
     }
-    wt_perform_management();
+      wt_perform_channel_width_management();
     //air_perform_reset_frequency();
     wt_perform_rate_adjustment();
     // update statistics in regular intervals
@@ -754,8 +754,8 @@ void WBLink::wt_perform_rate_adjustment() {
   const auto max_video_rate_for_current_wifi_config =
       openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
   const auto stats=m_wb_txrx->get_rx_stats();
-  const auto n_foreign_packets=m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);
-  //m_console->debug("N foreign packets:{}",n_foreign_packets);
+  m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);
+  //m_console->debug("N foreign packets per second :{}",m_foreign_p_helper.get_foreign_packets_per_second());
   if(m_max_video_rate_for_current_wifi_config !=max_video_rate_for_current_wifi_config ||
         m_max_video_rate_for_current_wifi_config_freq_changed){
       m_max_video_rate_for_current_wifi_config_freq_changed= false;
@@ -1135,7 +1135,7 @@ void WBLink::update_arming_state(bool armed) {
   m_request_apply_tx_power= true;
 }
 
-void WBLink::wt_perform_management() {
+void WBLink::wt_perform_channel_width_management() {
     const auto& curr_settings=m_settings->get_settings();
     if(m_profile.is_ground()){
         // Ground: Listen on the channel width the air reports (always works due to management always on 20Mhz)
