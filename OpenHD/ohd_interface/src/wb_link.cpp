@@ -1052,6 +1052,7 @@ void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam
 }
 
 void WBLink::perform_channel_analyze() {
+    const auto analyze_begin=std::chrono::steady_clock::now();
     struct AnalyzeResult{
         int frequency;
         int n_foreign_packets;
@@ -1092,11 +1093,12 @@ void WBLink::perform_channel_analyze() {
             m_opt_action_handler->add_analyze_result(tmp);
         }
     }
-    std::stringstream ss;
+    /*std::stringstream ss;
     for(int i=0;i<results.size();i++){
         ss<<results[i].frequency<<"@"<<results[i].n_foreign_packets<<"\n";
     }
-    m_console->debug("{}",ss.str().c_str());
+    m_console->debug("{}",ss.str().c_str());*/
+    m_console->debug("Done analyzing, took:{}",MyTimeHelper::R(std::chrono::steady_clock::now()-analyze_begin));
     // Go back to the previous frequency
     apply_frequency_and_channel_width_from_settings();
 }
@@ -1134,7 +1136,7 @@ void WBLink::update_arming_state(bool armed) {
 }
 
 void WBLink::wt_perform_management() {
-    const auto curr_settings=m_settings->get_settings();
+    const auto& curr_settings=m_settings->get_settings();
     if(m_profile.is_ground()){
         // Ground: Listen on the channel width the air reports (always works due to management always on 20Mhz)
         // And switch "up" to 40Mhz if needed

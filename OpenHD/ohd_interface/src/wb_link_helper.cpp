@@ -282,6 +282,7 @@ std::optional<int> openhd::wb::RCChannelHelper::get_mcs_from_rc_channel(int chan
     const auto rc_channels_opt=get_fc_reported_rc_channels();
     if(!rc_channels_opt.has_value()){
         // No data from the FC yet, do nothing
+        //m_console->debug("No rc channels from RC, MCS via RC unavailable");
         return std::nullopt;
     }
     const auto& rc_channels=rc_channels_opt.value();
