@@ -356,9 +356,6 @@ bool WBLink::apply_frequency_and_channel_width_from_settings() {
       channel_width_tx=20;
   }
   const auto res=apply_frequency_and_channel_width(center_frequency,channel_width_rx,channel_width_tx);
-  m_wb_txrx->tx_reset_stats();
-  m_wb_txrx->rx_reset_stats();
-  m_max_video_rate_for_current_wifi_config_freq_changed= true;
   return res;
 }
 
@@ -756,18 +753,16 @@ void WBLink::wt_perform_rate_adjustment() {
   //const auto stats=m_wb_txrx->get_rx_stats();
   //m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);
   //m_console->debug("N foreign packets per second :{}",m_foreign_p_helper.get_foreign_packets_per_second());
-  if(m_max_video_rate_for_current_wifi_config !=max_video_rate_for_current_wifi_config ||
-        m_max_video_rate_for_current_wifi_config_freq_changed){
-      m_max_video_rate_for_current_wifi_config_freq_changed= false;
+  if(m_max_video_rate_for_current_wifi_fec_config != max_video_rate_for_current_wifi_config ){
     // Apply the default for this configuration, then return - we will start the auto-adjustment
     // depending on tx error(s) next time the rate adjustment is called
     m_console->debug("MCS:{} ch_width:{} Calculated max_rate:{}, max_video_rate:{}",
                      settings.wb_air_mcs_index, settings.wb_air_tx_channel_width,
                      kbits_per_second_to_string(max_rate_for_current_wifi_config),
                      kbits_per_second_to_string(max_video_rate_for_current_wifi_config));
-    m_max_video_rate_for_current_wifi_config =
+      m_max_video_rate_for_current_wifi_fec_config =
         max_video_rate_for_current_wifi_config;
-    m_recommended_video_bitrate_kbits = m_max_video_rate_for_current_wifi_config;
+    m_recommended_video_bitrate_kbits = m_max_video_rate_for_current_wifi_fec_config;
     m_curr_n_rate_adjustments=0;
     if (m_opt_action_handler) {
       openhd::ActionHandler::LinkBitrateInformation lb{};
@@ -794,6 +789,21 @@ void WBLink::wt_perform_rate_adjustment() {
     m_console->warn("TX errors, reducing video bitrate to {}",m_recommended_video_bitrate_kbits);
   }
   recommend_bitrate_to_encoder(m_recommended_video_bitrate_kbits);
+}
+
+void WBLink::reset_errors_and_recommend_default_rate() {
+    using namespace openhd::wb;
+    const auto& settings = m_settings->get_settings();
+    const auto& card=m_broadcast_cards.at(0);
+    // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
+    const int max_rate_for_current_wifi_config= calculate_bitrate_for_wifi_config_kbits(
+            card,settings.wb_frequency,settings.wb_air_tx_channel_width,settings.wb_air_mcs_index, settings.wb_video_rate_for_mcs_adjustment_percent);
+    m_max_total_rate_for_current_wifi_config_kbits=max_rate_for_current_wifi_config;
+    // Subtract the FEC overhead from (video) bitrate
+    const auto max_video_rate_for_current_wifi_config =
+            openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
+    m_max_video_rate_for_current_wifi_fec_config=max_video_rate_for_current_wifi_config;
+    recommend_bitrate_to_encoder(m_max_video_rate_for_current_wifi_fec_config);
 }
 
 void WBLink::recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits) {
