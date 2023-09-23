@@ -553,13 +553,7 @@ void WBLink::loop_do_work() {
         apply_txpower();
     }
     wt_perform_mcs_via_rc_channel_if_enabled();
-    tmp_true= true;
-    if(m_request_apply_air_mcs_index.compare_exchange_strong(tmp_true, false)){
-        const int mcs_index = m_settings->unsafe_get_settings().wb_air_mcs_index;
-        m_tx_header_1->update_mcs_index(mcs_index);
-        m_tx_header_2->update_mcs_index(mcs_index);
-    }
-      wt_perform_channel_width_management();
+    wt_perform_channel_width_management();
     //air_perform_reset_frequency();
     wt_perform_rate_adjustment();
     // update statistics in regular intervals
@@ -729,6 +723,13 @@ void WBLink::wt_update_statistics() {
 
 void WBLink::wt_perform_rate_adjustment() {
   using namespace openhd::wb;
+  if(!m_profile.is_air)return;// Only done on air unit
+  bool tmp_true= true;
+  if(m_request_apply_air_mcs_index.compare_exchange_strong(tmp_true, false)){
+      const int mcs_index = m_settings->unsafe_get_settings().wb_air_mcs_index;
+      m_tx_header_1->update_mcs_index(mcs_index);
+      m_tx_header_2->update_mcs_index(mcs_index);
+  }
   // Rate adjustment is done on air and only if enabled
   if(!(m_profile.is_air && m_settings->get_settings().enable_wb_video_variable_bitrate)){
     return;
@@ -739,22 +740,20 @@ void WBLink::wt_perform_rate_adjustment() {
     return;
   }
   m_last_rate_adjustment=std::chrono::steady_clock::now();
-  // Since we only do it on the air, we only have one wifi card
-  const auto card=m_broadcast_cards.at(0);
+  const auto& settings = m_settings->get_settings();
+  const auto& card=m_broadcast_cards.at(0);
   // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
-  const auto settings = m_settings->get_settings();
-  const auto wifi_space=openhd::get_space_from_frequency(settings.wb_frequency);
-  const auto max_rate_for_current_wifi_config_without_adjust =
-      get_max_rate_possible(card,wifi_space,settings.wb_air_mcs_index,settings.wb_air_tx_channel_width == 40);
-  const auto max_rate_for_current_wifi_config= multiply_by_perc(max_rate_for_current_wifi_config_without_adjust,m_settings->get_settings().wb_video_rate_for_mcs_adjustment_percent);
+  const int max_rate_for_current_wifi_config= calculate_bitrate_for_wifi_config_kbits(
+          card,settings.wb_frequency,settings.wb_air_tx_channel_width,settings.wb_air_mcs_index, settings.wb_video_rate_for_mcs_adjustment_percent);
   m_max_total_rate_for_current_wifi_config_kbits=max_rate_for_current_wifi_config;
-  /*m_console->debug("Max rate {} with {} perc {}",kbits_per_second_to_string(max_rate_for_current_wifi_config_without_adjust),
-                   m_settings->get_settings().wb_video_rate_for_mcs_adjustment_percent,
-                   kbits_per_second_to_string(max_rate_for_current_wifi_config));*/
+  // Subtract the FEC overhead from (video) bitrate
   const auto max_video_rate_for_current_wifi_config =
       openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
-  const auto stats=m_wb_txrx->get_rx_stats();
-  m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);
+  // Check if we are dropping frame(s) -
+  // If we continuously drop frame(s) for more than 5 seconds, we reduce the bitrate
+
+  //const auto stats=m_wb_txrx->get_rx_stats();
+  //m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);
   //m_console->debug("N foreign packets per second :{}",m_foreign_p_helper.get_foreign_packets_per_second());
   if(m_max_video_rate_for_current_wifi_config !=max_video_rate_for_current_wifi_config ||
         m_max_video_rate_for_current_wifi_config_freq_changed){
@@ -817,14 +816,21 @@ void WBLink::wt_perform_rate_adjustment() {
     }
     m_console->warn("TX errors, reducing video bitrate to {}",m_recommended_video_bitrate_kbits);
   }
-  // Since settings might change dynamically at run time, we constantly recommend a bitrate to the encoder / camera -
-  // The camera is responsible for "not doing anything" when we recommend the same bitrate to it multiple times
-  if (m_opt_action_handler) {
-    openhd::ActionHandler::LinkBitrateInformation lb{};
-    lb.recommended_encoder_bitrate_kbits = m_recommended_video_bitrate_kbits;
-    m_opt_action_handler->action_request_bitrate_change_handle(lb);
-  }
+  recommend_bitrate_to_encoder(m_recommended_video_bitrate_kbits);
 }
+
+void WBLink::recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits) {
+    // Since settings might change dynamically at run time, we constantly recommend a bitrate to the encoder / camera -
+    // The camera is responsible for "not doing anything" when we recommend the same bitrate to it multiple times
+    if(!m_opt_action_handler){
+        m_console->debug("No action handler,cannot recommend bitrate to camera");
+        return;
+    }
+    openhd::ActionHandler::LinkBitrateInformation lb{};
+    lb.recommended_encoder_bitrate_kbits = recommended_video_bitrate_kbits;
+    m_opt_action_handler->action_request_bitrate_change_handle(lb);
+}
+
 
 bool WBLink::set_air_enable_wb_video_variable_bitrate(int value) {
   assert(m_profile.is_air);
@@ -1136,12 +1142,12 @@ void WBLink::update_arming_state(bool armed) {
 }
 
 void WBLink::wt_perform_channel_width_management() {
-    const auto& curr_settings=m_settings->get_settings();
     if(m_profile.is_ground()){
         // Ground: Listen on the channel width the air reports (always works due to management always on 20Mhz)
         // And switch "up" to 40Mhz if needed
         const int air_reported_channel_width=m_management_gnd->m_air_reported_curr_channel_width;
         if(air_reported_channel_width>0 && m_gnd_curr_rx_channel_width!=air_reported_channel_width){
+            const auto& curr_settings=m_settings->get_settings();
             m_console->debug("GND changing LISTEN bandwidth from {} to {}",m_gnd_curr_rx_channel_width,air_reported_channel_width);
             m_gnd_curr_rx_channel_width=air_reported_channel_width;
             const int frequency=curr_settings.wb_frequency;
@@ -1187,5 +1193,4 @@ void WBLink::air_perform_reset_frequency() {
         m_reset_frequency_time_point=std::chrono::steady_clock::now();
     }
 }
-
 

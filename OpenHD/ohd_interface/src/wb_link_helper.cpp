@@ -5,6 +5,7 @@
 #include "wb_link_helper.h"
 
 #include "wifi_command_helper.h"
+#include "wb_link_rate_helper.hpp"
 //#include "wifi_command_helper2.h"
 
 bool openhd::wb::disable_all_frequency_checks() {
@@ -276,6 +277,22 @@ bool openhd::wb::validate_air_mcs_index_change(int new_mcs_index, const WiFiCard
         return false;
     }
     return true;
+}
+
+int openhd::wb::calculate_bitrate_for_wifi_config_kbits(const WiFiCard &card, int frequency_mhz, int channel_width_mhz,int mcs_index,
+                                                        int dev_adjustment_percent) {
+    // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
+    const auto wifi_space=openhd::get_space_from_frequency(frequency_mhz);
+    const auto max_rate_for_current_wifi_config_without_adjust =
+            get_max_rate_possible(card,wifi_space,mcs_index,channel_width_mhz == 40);
+    const int max_rate_for_current_wifi_config= multiply_by_perc(max_rate_for_current_wifi_config_without_adjust,dev_adjustment_percent);
+    auto m_console=openhd::log::get_default();
+    m_console->debug("Max rate for {}@{}Mhz MCS:{} dev_adjustment:{} is {} kBit/s",
+                     frequency_mhz,channel_width_mhz,mcs_index,dev_adjustment_percent,max_rate_for_current_wifi_config);
+    /*m_console->debug("Max rate {} with {} perc {}",kbits_per_second_to_string(max_rate_for_current_wifi_config_without_adjust),
+                     m_settings->get_settings().wb_video_rate_for_mcs_adjustment_percent,
+                     kbits_per_second_to_string(max_rate_for_current_wifi_config));*/
+    return max_rate_for_current_wifi_config;
 }
 
 std::optional<int> openhd::wb::RCChannelHelper::get_mcs_from_rc_channel(int channel_index,std::shared_ptr<spdlog::logger>& m_console) {

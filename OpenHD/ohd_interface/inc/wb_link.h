@@ -133,6 +133,7 @@ class WBLink :public OHDLink{
   void perform_channel_analyze();
   void reset_all_rx_stats();
   int64_t get_total_tx_error_count();
+  void recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits);
  private:
   const OHDProfile m_profile;
   const OHDPlatform m_platform;
