@@ -544,7 +544,10 @@ void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<st
   //m_console->debug("Got frame with {} fragments",frame_fragments.size());
   if(m_link_handle){
     const auto stream_index=m_camera_holder->get_camera().index;
-    m_link_handle->transmit_video_data(stream_index,openhd::FragmentedVideoFrame{std::move(frame_fragments)});
+    m_link_handle->transmit_video_data(stream_index,openhd::FragmentedVideoFrame{
+        std::move(frame_fragments),
+        std::chrono::steady_clock::now(),
+        m_camera_holder->get_settings().enable_ultra_secure_encryption});
   }else{
     m_console->debug("No transmit interface");
   }

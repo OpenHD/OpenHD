@@ -201,6 +201,14 @@ class CameraHolder:
       };
       ret.push_back(openhd::Setting{"SHUTTER_US_LC",openhd::IntSetting{get_settings().rpi_libcamera_shutter_microseconds,cb_shutter}});
     }
+      {
+          // Supported by all cameras, since it has actually nothing to do with the camera, only the link -
+          // but for the user, it is more of a camera setting
+          auto cb_encryption=[this](std::string,int value) {
+              return set_encryption_enable(value);
+          };
+          ret.push_back(openhd::Setting{"HIGH_ENCRYPTION",openhd::IntSetting{get_settings().enable_ultra_secure_encryption,cb_encryption}});
+      }
     return ret;
   }
   bool set_enable_streaming(int enable){
@@ -389,6 +397,13 @@ class CameraHolder:
     persist();
     return true;
   }
+  bool set_encryption_enable(int enable){
+      if(!openhd::validate_yes_or_no(enable))return false;
+      unsafe_get_settings().enable_ultra_secure_encryption=enable;
+      // Doesn't need restart of the camera pipeline, weather to encrypt or not is passed per frame to wb
+      persist(false);
+      return true;
+  }
   // The CSI to HDMI adapter has an annoying bug where it actually doesn't allow changing the framerate but takes whatever the host provides
   // (e.g. the hdmi card). Util to check if we need to apply the "reduce bitrate by half"
   // NOTE: This is not completely correct - it assumes the provider (e.g. gopro) always gives 60fps
@@ -454,7 +469,7 @@ static std::shared_ptr<CameraHolder> createDummyCamera2(){
   return std::make_shared<CameraHolder>(createDummyCamera());
 }
 
-static void startup_fix_common_issues(std::vector<std::shared_ptr<CameraHolder>>& camera_holders);
+void startup_fix_common_issues(std::vector<std::shared_ptr<CameraHolder>>& camera_holders);
 
 void write_camera_manifest(const std::vector<Camera> &cameras);
 
