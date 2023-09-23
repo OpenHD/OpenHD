@@ -194,7 +194,7 @@ public:
     }
     bool needs_bitrate_reduction(){
         const auto elapsed=std::chrono::steady_clock::now()-m_last_check;
-        if(elapsed>std::chrono::seconds(3)){
+        if(elapsed>=std::chrono::seconds(3)){
             m_last_check=std::chrono::steady_clock::now();
             const int dropped_since_last_check=m_frame_drop_counter.exchange(0);
             static constexpr int MAX_DROPPED_FRAMES_ALLOWED=3;
