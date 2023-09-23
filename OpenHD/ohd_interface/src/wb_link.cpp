@@ -23,6 +23,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
 {
   m_console = openhd::log::create_or_get("wb_streams");
   assert(m_console);
+  m_frame_drop_helper.set_console(m_console);
   m_console->info("Broadcast cards:{}",debug_cards(m_broadcast_cards));
   // sanity checks
   if(m_broadcast_cards.empty() || (m_profile.is_air && m_broadcast_cards.size()>1)) {
@@ -767,8 +768,6 @@ void WBLink::wt_perform_rate_adjustment() {
     m_max_video_rate_for_current_wifi_config =
         max_video_rate_for_current_wifi_config;
     m_recommended_video_bitrate_kbits = m_max_video_rate_for_current_wifi_config;
-    m_n_detected_and_reset_tx_errors=0;
-    m_last_total_tx_error_count=0;
     m_curr_n_rate_adjustments=0;
     if (m_opt_action_handler) {
       openhd::ActionHandler::LinkBitrateInformation lb{};
@@ -777,33 +776,11 @@ void WBLink::wt_perform_rate_adjustment() {
     }
     return;
   }
-  // Check if we had any tx errors since last time we checked, resetting them every time
-  const auto curr_total_tx_errors=get_total_tx_error_count();
-  const auto delta_total_tx_errors=curr_total_tx_errors-m_last_total_tx_error_count;
-  m_last_total_tx_error_count=curr_total_tx_errors;
-  const bool has_tx_errors=delta_total_tx_errors>0;
-  if(has_tx_errors){
-    m_n_detected_and_reset_tx_errors++;
-    m_console->warn("Got {} tx errors {} times",delta_total_tx_errors,m_n_detected_and_reset_tx_errors);
-    const auto tmp_tx_stats=m_wb_txrx->get_tx_stats();
-    m_console->debug("{}",WBTxRx::tx_stats_to_string(tmp_tx_stats));
-  }else{
-    if(m_n_detected_and_reset_tx_errors>0){
-      m_console->warn("No tx errors after {}",m_n_detected_and_reset_tx_errors);
-    }
-    m_n_detected_and_reset_tx_errors=0;
-  }
-  // Get how many frame(s) we dropped in the last 1-second interval
-  const int dropped_since_last_check=m_rate_adjustment_dropped_frames.exchange(0);
+  const bool dropping_many_frames=m_frame_drop_helper.needs_bitrate_reduction();
+  const bool many_tx_error_hints= false;
   //m_console->debug("Dropped since last check:{}",dropped_since_last_check);
-  if(m_n_detected_and_reset_tx_errors>=3 || dropped_since_last_check>=5){
-    // We got tx errors N consecutive times, (resetting if there are no tx errors)
-    // Or dropped a lot of frames -
-    // we need to reduce bitrate
-    m_console->debug("Got m_n_detected_and_reset_tx_errors{} dropped frames: {} with max:{} recommended:{}",
-                     m_n_detected_and_reset_tx_errors,dropped_since_last_check,
-        m_max_video_rate_for_current_wifi_config,m_recommended_video_bitrate_kbits);
-    m_n_detected_and_reset_tx_errors=0;
+  if(many_tx_error_hints || dropping_many_frames){
+    // We are dropping frames / too many tx error hint(s), we need to reduce bitrate.
     // Reduce video bitrate by 1MBit/s
     m_recommended_video_bitrate_kbits -=1000;
     m_curr_n_rate_adjustments++;
@@ -907,9 +884,9 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
     const int fec_perc=m_settings->get_settings().wb_video_fec_percentage;
     const auto res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc);
     if(!res){
-        m_rate_adjustment_dropped_frames++;
-        m_console->debug("TX enqueue video frame failed, queue size:{} delta_dropped:{}",
-                        tx.get_tx_queue_available_size_approximate(),m_rate_adjustment_dropped_frames.load());
+        m_frame_drop_helper.notify_dropped_frame();
+        m_console->debug("TX enqueue video frame failed, queue size:{}",
+                        tx.get_tx_queue_available_size_approximate());
     }
   }else{
     m_console->debug("Invalid camera stream_index {}",stream_index);

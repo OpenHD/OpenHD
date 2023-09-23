@@ -177,6 +177,9 @@ public:
     void reset(){
         m_n_detected_and_reset_tx_errors=0;
     }
+    void set_console(std::shared_ptr<spdlog::logger> console){
+        m_console=std::move(console);
+    }
 private:
     std::shared_ptr<spdlog::logger> m_console;
     int64_t m_last_total_tx_error_count=0;
