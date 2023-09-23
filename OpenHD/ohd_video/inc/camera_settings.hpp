@@ -138,6 +138,8 @@ struct CameraSettings {
   int recordingKBits = DEFAULT_RECORDING_KBITS;
   int recordingQP = DEFAULT_RECORDING_QP;
   RateControlMode recordingRCMode = DEFAULT_RC_MODE;
+  // OpenHD WB supports changing encryption on the fly per camera stream
+  bool enable_ultra_secure_encryption= false;
 };
 
 

@@ -46,7 +46,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraSettings, enable_streaming,
                                    rpi_libcamera_denoise_index, rpi_libcamera_awb_index, rpi_libcamera_metering_index, rpi_libcamera_exposure_index,
                                    rpi_libcamera_shutter_microseconds,
                                     // rpi libcamera specific IQ params end
-                                   force_sw_encode)
+                                   force_sw_encode,
+                                   enable_ultra_secure_encryption)
 
 std::optional<CameraSettings> CameraHolder::impl_deserialize(const std::string &file_as_string) const {
     return openhd_json_parse<CameraSettings>(file_as_string);
@@ -71,4 +72,29 @@ static constexpr auto CAMERA_MANIFEST_FILENAME = "/tmp/camera_manifest";
 void write_camera_manifest(const std::vector<Camera> &cameras) {
     auto manifest = cameras_to_json(cameras);
     OHDFilesystemUtil::write_file(CAMERA_MANIFEST_FILENAME,manifest.dump(4));
+}
+
+void startup_fix_common_issues(std::vector<std::shared_ptr<CameraHolder>> &camera_holders) {
+    if(camera_holders.empty()){
+        openhd::log::get_default()->warn("at least 1 camera is a hard requirement");
+        return;
+    }
+    // We always enable streaming for camera(s) on startup, to avoid the case where a user disables streaming for a camera,
+    // and then forgets about it & reboots and the premise "always an image on startup with a working setup" is suddenly not true anymore.
+    for(auto & camera_holder : camera_holders){
+        camera_holder->unsafe_get_settings().enable_streaming= true;
+        camera_holder->persist();
+    }
+    // And we disable recording on boot, to not accidentally fill up storage (relates to the new start stop recording widget)
+    // June 20: Not needed anymore, since we stop recording when storage is running full and have start / stop recording when armed
+    /*for(auto & camera_holder : camera_holders){
+      camera_holder->unsafe_get_settings().air_recording= Recording::DISABLED;
+      camera_holder->persist();
+    }*/
+    /*camera_holders.at(0)->unsafe_get_settings().enable_streaming= true;
+    camera_holders.at(0)->persist();
+    for(int i=1;i<camera_holders.size();i++){
+      camera_holders.at(i)->unsafe_get_settings().enable_streaming = false;
+      camera_holders.at(i)->persist();
+    }*/
 }

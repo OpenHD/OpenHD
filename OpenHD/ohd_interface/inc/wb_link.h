@@ -97,7 +97,6 @@ class WBLink :public OHDLink{
   bool set_air_enable_wb_video_variable_bitrate(int value);
   bool set_air_max_fec_block_size_for_platform(int value);
   bool set_air_wb_video_rate_for_mcs_adjustment_percent(int value);
-  void set_air_wb_air_video_encryption_enabled(bool enable);
   // Recalculate stats, apply settings asynchronously and more
   void loop_do_work();
   // update statistics, done in regular intervals, updated data is given to the ohd_telemetry module via the action handler

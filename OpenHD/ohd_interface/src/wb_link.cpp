@@ -129,8 +129,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           auto primary = std::make_unique<WBStreamTx>(m_wb_txrx, options_video_tx,m_tx_header_1);
           options_video_tx.radio_port=openhd::VIDEO_SECONDARY_RADIO_PORT;
           auto secondary = std::make_unique<WBStreamTx>(m_wb_txrx, options_video_tx,m_tx_header_1);
-          primary->set_encryption(m_settings->get_settings().wb_air_enable_video_encryption);
-          secondary->set_encryption(m_settings->get_settings().wb_air_enable_video_encryption);
+          primary->set_encryption(false);
+          secondary->set_encryption(false);
           m_wb_video_tx_list.push_back(std::move(primary));
           m_wb_video_tx_list.push_back(std::move(secondary));
       } else {
@@ -444,13 +444,6 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       };
       ret.push_back(Setting{openhd::WB_MCS_INDEX_VIA_RC_CHANNEL,openhd::IntSetting{(int)settings.wb_mcs_index_via_rc_channel, cb_mcs_via_rc_channel}});
     }
-    auto cb_video_encrypt=[this](std::string,int value){
-        if(!openhd::validate_yes_or_no(value))return false;
-        set_air_wb_air_video_encryption_enabled(value);
-        return true;
-    };
-    auto change_video_encryption=openhd::IntSetting{(int)settings.wb_air_enable_video_encryption,cb_video_encrypt};
-    ret.push_back(Setting{WB_VIDEO_ENCRYPTION_ENABLE,change_video_encryption});
   }
   if(m_profile.is_ground()){
     // We display the total n of detected RX cards such that users can validate their multi rx setup(s) if there is more than one rx card detected
@@ -842,17 +835,6 @@ bool WBLink::set_air_wb_video_rate_for_mcs_adjustment_percent(int value) {
   return true;
 }
 
-void WBLink::set_air_wb_air_video_encryption_enabled(bool enable) {
-    if(enable){
-      m_console->debug("Video encryption enabled:{}",enable);
-    }
-    m_settings->unsafe_get_settings().wb_air_enable_video_encryption=enable;
-    m_settings->persist();
-    for(auto& tx:m_wb_video_tx_list){
-        tx->set_encryption(m_settings->get_settings().wb_air_enable_video_encryption);
-    }
-}
-
 bool WBLink::try_schedule_work_item(const std::shared_ptr<WorkItem> &work_item) {
     std::unique_lock<std::mutex> lock(m_work_item_queue_mutex, std::try_to_lock);
     if(lock.owns_lock()){
@@ -884,6 +866,7 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
   assert(m_profile.is_air);
   if(stream_index>=0 && stream_index< m_wb_video_tx_list.size()){
     auto& tx= *m_wb_video_tx_list[stream_index];
+    tx.set_encryption(fragmented_video_frame.enable_ultra_secure_encryption);
     //tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments,use_fixed_fec_instead);
     uint32_t max_block_size_for_platform=m_settings->get_settings().wb_max_fec_block_size_for_platform;
     //openhd::log::get_default()->debug("max_block_size_for_platform:{}",max_block_size_for_platform);

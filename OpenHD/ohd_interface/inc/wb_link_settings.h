@@ -91,10 +91,6 @@ struct WBLinkSettings {
   // but obviosuly you cannot reach your air unit anymore when this mode is enabled
   // (disable it to re-gain control)
   bool wb_enable_listen_only_mode= false;
-  // Enable / Disable video encryption - off by default. Telemetry is always encrypted
-  // This setting is only valid on the air unit, where video is encrypted (on the ground, it is ignored) - it does not need to macth
-  // we have per-packet enable / disable encryption in wifibroadcast
-  bool wb_air_enable_video_encryption= false;
 };
 
 static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform){
