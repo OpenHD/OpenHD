@@ -170,6 +170,10 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
   if(OHDUtil::file_exists_and_delete(FILE_PATH_RESET_FREQUENCY)){
     ret.reset_frequencies=true;
   }
+
+  ret.continue_without_wb_card = true;
+  ret.run_as_air = false;
+
   return ret;
 }
 

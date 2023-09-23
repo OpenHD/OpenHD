@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-#include "../../lib/wifibroadcast/src/WBTxRx.h"
+#include "../../lib/wifibroadcast/src/ExtTxRx.h"
 #include "../../lib/wifibroadcast/src/WBStreamTx.h"
 #include "../../lib/wifibroadcast/src/WBStreamRx.h"
 #include "openhd_action_handler.hpp"
@@ -145,7 +145,7 @@ class WBLink :public OHDLink{
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler=nullptr;
   std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<openhd::WBStreamsSettingsHolder> m_settings;
-  std::shared_ptr<WBTxRx> m_wb_txrx;
+  std::shared_ptr<ExtTxRx> m_wb_txrx;
   // For telemetry, bidirectional in opposite directions
   std::unique_ptr<WBStreamTx> m_wb_tele_tx;
   std::unique_ptr<WBStreamRx> m_wb_tele_rx;

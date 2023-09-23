@@ -33,20 +33,20 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   m_console->info("Broadcast cards:{} any suports injection:{}",debug_cards(m_broadcast_cards),m_any_card_supports_injection);
   m_console->debug("m_disable_all_frequency_checks:{}",OHDUtil::yes_or_no(m_disable_all_frequency_checks));
   // sanity checks
-  if(m_broadcast_cards.empty() || (m_profile.is_air && m_broadcast_cards.size()>1)) {
-    // NOTE: Here we crash, since it would be a programmer(s) error
-    // Air needs exactly one wifi card
-    // ground supports rx diversity, therefore can have more than one card
-    m_console->error("Without at least one wifi card, the stream(s) cannot be started");
-    exit(1);
-  }
+  //if(m_broadcast_cards.empty() || (m_profile.is_air && m_broadcast_cards.size()>1)) {
+  //  // NOTE: Here we crash, since it would be a programmer(s) error
+  //  // Air needs exactly one wifi card
+  //  // ground supports rx diversity, therefore can have more than one card
+  //  m_console->error("Without at least one wifi card, the stream(s) cannot be started");
+  //  exit(1);
+  //}
   // this fetches the last settings, otherwise creates default ones
   m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(m_platform,m_profile,m_broadcast_cards);
   // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
-  openhd::wb::fixup_unsupported_frequency(*m_settings, m_broadcast_cards,
-                                          m_console);
+  /*openhd::wb::fixup_unsupported_frequency(*m_settings, m_broadcast_cards,
+                                          m_console);*/
   takeover_cards_monitor_mode();
-  WBTxRx::Options txrx_options{};
+  ExtTxRx::Options txrx_options{};
   txrx_options.session_key_packet_interval=SESSION_KEY_PACKETS_INTERVAL;
   txrx_options.use_gnd_identifier=m_profile.is_ground();
   txrx_options.debug_rssi= 0;
@@ -67,12 +67,13 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   //txrx_options.advanced_latency_debugging_rx=true;
   //const auto card_names = openhd::wb::get_card_names(m_broadcast_cards);
   //assert(!card_names.empty());
-  std::vector<WBTxRx::WifiCard> tmp_wifi_cards;
-  for(const auto& card: m_broadcast_cards){
-      int wb_type=card.type==WiFiCardType::Realtek8812au ? 1 : 0;
-      tmp_wifi_cards.push_back(WBTxRx::WifiCard{card.device_name,wb_type});
+  std::vector<ExtTxRx::UdpWifiCard> tmp_wifi_cards;
+  //for(const auto& card: m_broadcast_cards)
+  {
+      //int wb_type=card.type==WiFiCardType::Realtek8812au ? 1 : 0;
+      tmp_wifi_cards.push_back(ExtTxRx::UdpWifiCard{4321});
   }
-  m_wb_txrx=std::make_shared<WBTxRx>(tmp_wifi_cards,txrx_options);
+  m_wb_txrx=std::make_shared<ExtTxRx>(tmp_wifi_cards,txrx_options);
   m_wb_txrx->tx_threadsafe_update_radiotap_header(create_radiotap_params());
   {
       // Setup the tx & rx instances for telemetry. Telemetry is bidirectional,aka
@@ -803,18 +804,18 @@ bool WBLink::check_work_queue_empty() {
 
 
 void WBLink::transmit_telemetry_data(TelemetryTxPacket packet) {
-  assert(packet.n_injections>=1);
-  //m_console->debug("N injections:{}",packet.n_injections);
-  const auto res=m_wb_tele_tx->try_enqueue_packet(packet.data,packet.n_injections);
-  if(!res)m_console->debug("Enqueing tele packet failed");
-  if(!m_any_card_supports_injection){
-    const auto now=std::chrono::steady_clock::now();
-    const auto elapsed=now-m_last_log_card_does_might_not_inject;
-    if(elapsed>WARN_CARD_DOES_NOT_INJECT_INTERVAL){
-      m_console->warn("TX (likely) not supported by card(s)",m_broadcast_cards.at(0).device_name);
-      m_last_log_card_does_might_not_inject=now;
-    }
-  }
+  //assert(packet.n_injections>=1);
+  ////m_console->debug("N injections:{}",packet.n_injections);
+  //const auto res=m_wb_tele_tx->try_enqueue_packet(packet.data,packet.n_injections);
+  //if(!res)m_console->debug("Enqueing tele packet failed");
+  //if(!m_any_card_supports_injection){
+  //  const auto now=std::chrono::steady_clock::now();
+  //  const auto elapsed=now-m_last_log_card_does_might_not_inject;
+  //  if(elapsed>WARN_CARD_DOES_NOT_INJECT_INTERVAL){
+  //    m_console->warn("TX (likely) not supported by card(s)",m_broadcast_cards.at(0).device_name);
+  //    m_last_log_card_does_might_not_inject=now;
+  //  }
+  //}
 }
 
 void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
