@@ -107,10 +107,6 @@ class WBLink :public OHDLink{
   void wt_perform_channel_width_management();
   // this is special, mcs index can not only be changed via mavlink param, but also via RC channel (if enabled)
   void wt_perform_mcs_via_rc_channel_if_enabled();
-  // Feature on air: If we are not armed, and do not receive any message from the ground unit for more than
-  // one minute, we go back to the default frequency / bw.
-  // NOTE: Currently disabled.
-  void air_perform_reset_frequency();
   // Returns true if the work item queue is currently empty and the item has been added
   // false otherwise. In general, we only suport one item on the work queue - otherwise we reject the param,
   // since the user can just try again later (and in case the work queue is currently busy with a frequency scan for example,
