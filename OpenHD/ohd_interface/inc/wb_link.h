@@ -127,7 +127,6 @@ class WBLink :public OHDLink{
   // similar to channel scan, analyze channel(s) for interference
   void perform_channel_analyze();
   void reset_all_rx_stats();
-  int64_t get_total_tx_error_count();
   void recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits);
  private:
   const OHDProfile m_profile;
@@ -156,9 +155,6 @@ class WBLink :public OHDLink{
   std::queue<std::shared_ptr<WorkItem>> m_work_item_queue;
   static constexpr auto RECALCULATE_STATISTICS_INTERVAL=std::chrono::milliseconds(500);
   std::chrono::steady_clock::time_point m_last_stats_recalculation=std::chrono::steady_clock::now();
-  // These are for variable bitrate / tx error reduces bitrate
-  static constexpr auto RATE_ADJUSTMENT_INTERVAL=std::chrono::seconds(1);
-  std::chrono::steady_clock::time_point m_last_rate_adjustment=std::chrono::steady_clock::now();
   std::atomic<int> m_max_total_rate_for_current_wifi_config_kbits=0;
   std::atomic<int> m_max_video_rate_for_current_wifi_fec_config=0;
   // bitrate we recommend to the encoder / camera(s)

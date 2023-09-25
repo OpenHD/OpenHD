@@ -100,7 +100,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       // tx radio port on air is the same as rx on ground and verse visa
       const auto radio_port_rx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT;
       const auto radio_port_tx = m_profile.is_air ? openhd::TELEMETRY_WIFIBROADCAST_TX_RADIO_PORT : openhd::TELEMETRY_WIFIBROADCAST_RX_RADIO_PORT;
-      auto cb=[this](const uint8_t* data, int data_len){
+      auto cb_rx=[this](const uint8_t* data, int data_len){
         m_last_received_packet_ts_ms=OHDUtil::steady_clock_time_epoch_ms();
         auto shared=std::make_shared<std::vector<uint8_t>>(data,data+data_len);
         on_receive_telemetry_data(shared);
@@ -111,7 +111,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       options_tele_rx.enable_threading= true;
       options_tele_rx.packet_queue_size=20;
       m_wb_tele_rx=std::make_unique<WBStreamRx>(m_wb_txrx, options_tele_rx);
-      m_wb_tele_rx->set_callback(cb);
+      m_wb_tele_rx->set_callback(cb_rx);
       WBStreamTx::Options options_tele_tx{};
       options_tele_tx.enable_fec= false;
       options_tele_tx.radio_port=radio_port_tx;
@@ -124,7 +124,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           // we transmit video
           WBStreamTx::Options options_video_tx{};
           options_video_tx.enable_fec= true;
-          options_video_tx.block_data_queue_size=2;
+          // For now, have a fifo of 3 frame(s) to smooth out extreme edge cases of bitrate overshoot
+          options_video_tx.block_data_queue_size=3;
           options_video_tx.radio_port=openhd::VIDEO_PRIMARY_RADIO_PORT;
           auto primary = std::make_unique<WBStreamTx>(m_wb_txrx, options_video_tx,m_tx_header_1);
           options_video_tx.radio_port=openhd::VIDEO_SECONDARY_RADIO_PORT;
@@ -725,24 +726,16 @@ void WBLink::wt_perform_rate_adjustment() {
   if(!(m_profile.is_air && m_settings->get_settings().enable_wb_video_variable_bitrate)){
     return;
   }
-  // We do it at a fixed interval
-  const auto elapsed_since_last=std::chrono::steady_clock::now()-m_last_rate_adjustment;
-  if(elapsed_since_last<RATE_ADJUSTMENT_INTERVAL){
-    return;
-  }
-  m_last_rate_adjustment=std::chrono::steady_clock::now();
   const auto& settings = m_settings->get_settings();
   const auto& card=m_broadcast_cards.at(0);
   // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
   const int max_rate_for_current_wifi_config= calculate_bitrate_for_wifi_config_kbits(
-          card,settings.wb_frequency,settings.wb_air_tx_channel_width,settings.wb_air_mcs_index, settings.wb_video_rate_for_mcs_adjustment_percent);
+          card,settings.wb_frequency,settings.wb_air_tx_channel_width,settings.wb_air_mcs_index, settings.wb_video_rate_for_mcs_adjustment_percent,
+          false);
   m_max_total_rate_for_current_wifi_config_kbits=max_rate_for_current_wifi_config;
   // Subtract the FEC overhead from (video) bitrate
   const int max_video_rate_for_current_wifi_fec_config =
       openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
-  // Check if we are dropping frame(s) -
-  // If we continuously drop frame(s) for more than 5 seconds, we reduce the bitrate
-
   //const auto stats=m_wb_txrx->get_rx_stats();
   //m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);
   //m_console->debug("N foreign packets per second :{}",m_foreign_p_helper.get_foreign_packets_per_second());
@@ -786,7 +779,8 @@ void WBLink::reset_errors_and_recommend_default_rate() {
     const auto& card=m_broadcast_cards.at(0);
     // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
     const int max_rate_for_current_wifi_config= calculate_bitrate_for_wifi_config_kbits(
-            card,settings.wb_frequency,settings.wb_air_tx_channel_width,settings.wb_air_mcs_index, settings.wb_video_rate_for_mcs_adjustment_percent);
+            card,settings.wb_frequency,settings.wb_air_tx_channel_width,settings.wb_air_mcs_index, settings.wb_video_rate_for_mcs_adjustment_percent,
+            false);
     m_max_total_rate_for_current_wifi_config_kbits=max_rate_for_current_wifi_config;
     // Subtract the FEC overhead from (video) bitrate
     const auto max_video_rate_for_current_wifi_config =
@@ -893,19 +887,6 @@ void WBLink::reset_all_rx_stats() {
 
 openhd::WifiSpace WBLink::get_current_frequency_channel_space()const {
   return openhd::get_space_from_frequency(m_settings->get_settings().wb_frequency);
-}
-
-int64_t WBLink::get_total_tx_error_count() {
-  int64_t total=0;
-  for(const auto& tx:m_wb_video_tx_list){
-    auto stats=tx->get_latest_stats();
-    total+=stats.n_dropped_packets;
-  }
-  total+=m_wb_tele_tx->get_latest_stats().n_dropped_packets;
-  const auto wb_tx_stats=m_wb_txrx->get_tx_stats();
-  total +=wb_tx_stats.count_tx_injections_error_hint;
-  total +=wb_tx_stats.count_tx_dropped_packets;
-  return total;
 }
 
 void WBLink::perform_channel_scan(const openhd::ActionHandler::ScanChannelsParam& scan_channels_params){

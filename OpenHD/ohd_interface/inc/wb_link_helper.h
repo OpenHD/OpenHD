@@ -90,7 +90,7 @@ void takeover_cards_monitor_mode(const std::vector<WiFiCard>& cards,std::shared_
 void giveback_cards_monitor_mode(const std::vector<WiFiCard>& cards,std::shared_ptr<spdlog::logger> console);
 
 int calculate_bitrate_for_wifi_config_kbits(const WiFiCard& card,int frequency_mhz,int channel_width_mhz,int mcs_index,
-                                            int dev_adjustment_percent);
+                                            int dev_adjustment_percent,bool debug_log);
 
 class ForeignPacketsHelper{
 public:
