@@ -91,6 +91,8 @@ struct WBLinkSettings {
   // but obviosuly you cannot reach your air unit anymore when this mode is enabled
   // (disable it to re-gain control)
   bool wb_enable_listen_only_mode= false;
+  // NOTE: Really complicated, for developers only
+  bool wb_dev_air_set_high_retransmit_count = false;
 };
 
 static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform){
@@ -197,6 +199,7 @@ static constexpr auto WB_ENABLE_LDPC="WB_E_LDPC";
 static constexpr auto WB_ENABLE_SHORT_GUARD="WB_E_SHORT_GUARD";
 static constexpr auto WB_MCS_INDEX_VIA_RC_CHANNEL="MCS_VIA_RC";
 static constexpr auto WB_PASSIVE_MODE ="WB_PASSIVE_MODE";
+static constexpr auto WB_DEV_AIR_SET_HIGH_RETRANSMIT_COUNT="DEV_HIGH_RETR";
 
 }
 

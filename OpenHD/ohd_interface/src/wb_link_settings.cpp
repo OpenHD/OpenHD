@@ -16,7 +16,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WBLinkSettings, wb_frequency, wb_air_tx_chann
                                    wb_max_fec_block_size_for_platform,
                                    wb_mcs_index_via_rc_channel,
                                    enable_wb_video_variable_bitrate,
-                                   wb_enable_listen_only_mode);
+                                   wb_enable_listen_only_mode,
+                                   wb_dev_air_set_high_retransmit_count);
 
 std::optional<WBLinkSettings> openhd::WBLinkSettingsHolder::impl_deserialize(const std::string &file_as_string) const {
     return openhd_json_parse<WBLinkSettings>(file_as_string);

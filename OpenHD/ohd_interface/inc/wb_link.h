@@ -80,6 +80,7 @@ class WBLink :public OHDLink{
   bool set_air_enable_wb_video_variable_bitrate(int value);
   bool set_air_max_fec_block_size_for_platform(int value);
   bool set_air_wb_video_rate_for_mcs_adjustment_percent(int value);
+  bool set_dev_air_set_high_retransmit_count(int value);
   // Initiate channel scan / channel analyze.
   // Those operations run asynchronous until completed, and during this time
   // all other "request_" setting changes are rejected (since the work thread does the long-running async operation)

@@ -83,7 +83,17 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           tx_channel_width=20;
       }
       //const bool set_flag_tx_no_ack = m_profile.is_ground() ? false : !settings.wb_tx_use_ack;
-      const bool set_flag_tx_no_ack = !m_profile.is_ground();
+      // On ground, we default to a high retransmit count.
+      // On air, we default to no retransmit, unless explicitly enabled
+      bool tx_set_high_retransmit_count= true;
+      if(m_profile.is_air){
+          if(m_settings->get_settings().wb_dev_air_set_high_retransmit_count){
+              tx_set_high_retransmit_count= true;
+          }else{
+              tx_set_high_retransmit_count= false;
+          }
+      }
+      const bool set_flag_tx_no_ack = !tx_set_high_retransmit_count;
       auto tmp_params= RadiotapHeader::UserSelectableParams{
               tx_channel_width, settings.wb_enable_short_guard,settings.wb_enable_stbc,
               settings.wb_enable_ldpc, mcs_index,set_flag_tx_no_ack};
@@ -91,7 +101,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       m_tx_header_1->thread_safe_set(tmp_params);
       auto tmp_params2= RadiotapHeader::UserSelectableParams{
               20, settings.wb_enable_short_guard,settings.wb_enable_stbc,
-              settings.wb_enable_ldpc, mcs_index,set_flag_tx_no_ack};
+              settings.wb_enable_ldpc, mcs_index, true};
       m_tx_header_2->thread_safe_set(tmp_params2);
   }
   m_wb_txrx=std::make_shared<WBTxRx>(tmp_wifi_cards,txrx_options,m_tx_header_2);
@@ -346,7 +356,14 @@ bool WBLink::set_air_wb_video_rate_for_mcs_adjustment_percent(int value) {
     m_settings->persist();
     return true;
 }
-
+bool WBLink::set_dev_air_set_high_retransmit_count(int value) {
+    assert(m_profile.is_air);
+    if(!openhd::validate_yes_or_no(value))return false;
+    m_settings->unsafe_get_settings().wb_dev_air_set_high_retransmit_count=value;
+    m_settings->persist();
+    m_tx_header_1->update_set_flag_tx_no_ack(!value);
+    return true;
+}
 bool WBLink::request_start_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params) {
     auto work_item=std::make_shared<WorkItem>("SCAN_CHANNELS",[this,scan_channels_params](){
         perform_channel_scan(scan_channels_params);
@@ -463,6 +480,10 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
       };
       ret.push_back(Setting{openhd::WB_MCS_INDEX_VIA_RC_CHANNEL,openhd::IntSetting{(int)settings.wb_mcs_index_via_rc_channel, cb_mcs_via_rc_channel}});
     }
+    auto cb_dev_air_set_high_retransmit_count=[this](std::string,int value){
+        return set_dev_air_set_high_retransmit_count(value);
+    };
+    ret.push_back(Setting{WB_DEV_AIR_SET_HIGH_RETRANSMIT_COUNT,openhd::IntSetting{(int)settings.wb_dev_air_set_high_retransmit_count, cb_dev_air_set_high_retransmit_count}});
   }
   if(m_profile.is_ground()){
     // We display the total n of detected RX cards such that users can validate their multi rx setup(s) if there is more than one rx card detected
