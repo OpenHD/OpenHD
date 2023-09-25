@@ -81,5 +81,7 @@ void OHDTelemetry::set_ext_devices_manager(
     std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {
   if(m_ground_telemetry){
     m_ground_telemetry->set_ext_devices_manager(ext_device_manager);
+  }else{
+    m_air_telemetry->set_ext_devices_manager(ext_device_manager);
   }
 }

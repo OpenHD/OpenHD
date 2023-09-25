@@ -22,6 +22,8 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
   assert(m_console);
   assert(!cameras.empty());
   m_console->debug("OHDVideo::OHDVideo()");
+  m_primary_video_forwarder = std::make_unique<SocketHelper::UDPMultiForwarder>();
+  m_secondary_video_forwarder = std::make_unique<SocketHelper::UDPMultiForwarder>();
   if(cameras.size()>MAX_N_CAMERAS){
     m_console->warn("More than {} cameras, dropping cameras",MAX_N_CAMERAS);
     cameras.resize(MAX_N_CAMERAS);
@@ -328,7 +330,16 @@ void OHDVideoAir::set_ext_devices_manager(std::shared_ptr<openhd::ExternalDevice
 }
 
 void OHDVideoAir::start_stop_forwarding_external_device(openhd::ExternalDevice external_device, bool connected) {
-
+    const std::string client_addr=external_device.external_device_ip;
+    if(connected){
+        m_primary_video_forwarder->addForwarder(client_addr,5600);
+        m_secondary_video_forwarder->addForwarder(client_addr,5601);
+        m_has_localhost_forwarding_enabled= true;
+    }else{
+        m_primary_video_forwarder->removeForwarder(client_addr,5600);
+        m_secondary_video_forwarder->removeForwarder(client_addr,5601);
+        m_has_localhost_forwarding_enabled=false;
+    }
 }
 
 void OHDVideoAir::on_video_data(int stream_index, const openhd::FragmentedVideoFrame &fragmented_video_frame) {
@@ -339,6 +350,14 @@ void OHDVideoAir::on_video_data(int stream_index, const openhd::FragmentedVideoF
         m_link_handle->transmit_video_data(stream_index,fragmented_video_frame);
     }else{
         m_console->debug("Invalid stream index: {}",stream_index);
+    }
+    if(m_has_localhost_forwarding_enabled){
+        m_console->debug("Forwarding {} {}",stream_index,fragmented_video_frame.frame_fragments.size());
+        if(!(stream_index==0 || stream_index==1))return;
+        auto& forwarder=stream_index==0 ? m_primary_video_forwarder : m_secondary_video_forwarder;
+        for(auto& fragment:fragmented_video_frame.frame_fragments){
+            forwarder->forwardPacketViaUDP(fragment->data(),fragment->size());
+        }
     }
 }
 

@@ -246,3 +246,9 @@ void AirTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
     on_messages_ground_unit(messages);
   });
 }
+
+void AirTelemetry::set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {
+    if(m_tcp_server){
+        m_tcp_server->set_external_device_manager(ext_device_manager);
+    }
+}

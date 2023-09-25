@@ -62,6 +62,8 @@ class AirTelemetry : public MavlinkSystem{
    * ground unit are just discarded.
    */
   void set_link_handle(std::shared_ptr<OHDLink> link);
+  // react to dynamically connecting / disconnecting external device(s)
+  void set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager);
  private:
   // send a mavlink message to the flight controller connected to the air unit via UART, if connected.
   void send_messages_fc(std::vector<MavlinkMessage>& messages);

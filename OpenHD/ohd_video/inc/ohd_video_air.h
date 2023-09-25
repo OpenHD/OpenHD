@@ -92,6 +92,8 @@ class OHDVideoAir {
   void start_stop_forwarding_external_device(openhd::ExternalDevice external_device,bool connected);
   std::unique_ptr<SocketHelper::UDPMultiForwarder> m_primary_video_forwarder= nullptr;
   std::unique_ptr<SocketHelper::UDPMultiForwarder> m_secondary_video_forwarder= nullptr;
+  // Optimization for 0 overhead on air when not enabled
+  std::atomic_bool m_has_localhost_forwarding_enabled=false;
 };
 
 #endif  // OPENHD_VIDEO_OHDVIDEO_H
