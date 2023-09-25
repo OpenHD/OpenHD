@@ -50,6 +50,10 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
     m_opt_action_handler->action_request_bitrate_change_register([this](openhd::ActionHandler::LinkBitrateInformation lb){
       this->handle_change_bitrate_request(lb);
     });
+    auto cb_armed=[this](bool armed){
+          this->update_arming_state(armed);
+    };
+    m_opt_action_handler->m_action_record_video_when_armed=std::make_shared<openhd::ActionHandler::ACTION_RECORD_VIDEO_WHEN_ARMED>(cb_armed);
   }
   if(m_platform.platform_type==PlatformType::RaspberryPi){
     m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(m_platform);
@@ -73,6 +77,9 @@ std::string OHDVideoAir::createDebug() const {
 void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) {
   const auto camera=camera_holder->get_camera();
   m_console->debug("Configuring camera:"+camera_type_to_string(camera.type));
+  auto frame_cb=[this](int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame){
+      this->on_video_data(stream_index,fragmented_video_frame);
+  };
   // R.N we use gstreamer for pretty much everything
   // But this might change in the future
   switch (camera.type) {
@@ -87,7 +94,7 @@ void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) 
     case CameraType::CUSTOM_UNMANAGED_CAMERA:
     case CameraType::DUMMY_SW: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
-      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,m_link_handle,m_opt_action_handler);
+      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,frame_cb,m_opt_action_handler);
       stream->setup();
       stream->start();
       m_camera_streams.push_back(stream);
@@ -95,7 +102,7 @@ void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) 
     }
     case CameraType::RPI_CSI_LIBCAMERA: {
       m_console->debug("LibCamera index:{}", camera.index);
-      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder, m_link_handle,m_opt_action_handler);
+      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,frame_cb,m_opt_action_handler);
       stream->setup();
       stream->start();
       m_camera_streams.push_back(stream);
@@ -305,4 +312,31 @@ std::vector<Camera> OHDVideoAir::discover_cameras(const OHDPlatform& platform) {
     OHDUtil::run_command("systemctl",{"start",CUSTOM_UNMANAGED_CAMERA_SERVICE_NAME});
   }
   return cameras;
+}
+
+void OHDVideoAir::set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {
+    ext_device_manager->register_listener([this](openhd::ExternalDevice external_device,bool connected){
+        start_stop_forwarding_external_device(external_device,connected);
+    });
+}
+
+void OHDVideoAir::start_stop_forwarding_external_device(openhd::ExternalDevice external_device, bool connected) {
+
+}
+
+void OHDVideoAir::on_video_data(int stream_index, const openhd::FragmentedVideoFrame &fragmented_video_frame) {
+    m_console->debug("Got data {} {}",stream_index,fragmented_video_frame.frame_fragments.size());
+    if(stream_index==0){
+        m_link_handle->transmit_video_data(stream_index,fragmented_video_frame);
+    }else if(stream_index==1){
+        m_link_handle->transmit_video_data(stream_index,fragmented_video_frame);
+    }else{
+        m_console->debug("Invalid stream index: {}",stream_index);
+    }
+}
+
+void OHDVideoAir::update_arming_state(bool armed) {
+    for(auto& camera:m_camera_streams){
+        camera->handle_update_arming_state(armed);
+    }
 }

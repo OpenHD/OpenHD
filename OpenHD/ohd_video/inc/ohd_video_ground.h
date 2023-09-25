@@ -42,6 +42,8 @@ class OHDVideoGround{
    * @param data and @param data_len: r.n always a full rtp frame fragment
    */
   void on_video_data(int stream_index,const uint8_t * data,int data_len);
+private:
+   void start_stop_forwarding_external_device(openhd::ExternalDevice external_device,bool connected);
 };
 
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_OHD_VIDEO_GROUND_H_

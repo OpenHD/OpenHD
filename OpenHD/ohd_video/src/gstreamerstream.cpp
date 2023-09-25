@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include <regex>
+#include <utility>
 #include <vector>
 
 #include "air_recording_helper.hpp"
@@ -18,10 +19,10 @@
 #include "openhd_util.h"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                                 std::shared_ptr<OHDLink> i_transmit_video,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
+                                 openhd::ON_ENCODE_FRAME_CB out_cb,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
     //: CameraStream(platform, camera_holder, video_udp_port) {
-    : CameraStream(platform,camera_holder,i_transmit_video),
-      m_opt_action_handler(opt_action_handler)
+    : CameraStream(platform,std::move(camera_holder),std::move(out_cb)),
+      m_opt_action_handler(std::move(opt_action_handler))
 {
   m_console=openhd::log::create_or_get("v_gststream");
   assert(m_console);
@@ -46,13 +47,6 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   assert(setting.streamed_video_format.isValid());
   OHDGstHelper::initGstreamerOrThrow();
   //m_gst_video_recorder=std::make_unique<GstVideoRecorder>();
-  // Register a callback such that we get notified when the FC is armed / disarmed
-  if(m_opt_action_handler){
-    auto cb=[this](bool armed){
-      this->update_arming_state(armed);
-    };
-    m_opt_action_handler->m_action_record_video_when_armed=std::make_shared<openhd::ActionHandler::ACTION_RECORD_VIDEO_WHEN_ARMED>(cb);
-  }
   m_console->debug("GStreamerStream::GStreamerStream done");
 }
 
@@ -542,14 +536,15 @@ bool GStreamerStream::try_dynamically_change_bitrate(int bitrate_kbits) {
 
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
   //m_console->debug("Got frame with {} fragments",frame_fragments.size());
-  if(m_link_handle){
-    const auto stream_index=m_camera_holder->get_camera().index;
-    m_link_handle->transmit_video_data(stream_index,openhd::FragmentedVideoFrame{
-        std::move(frame_fragments),
-        std::chrono::steady_clock::now(),
-        m_camera_holder->get_settings().enable_ultra_secure_encryption});
+  if(m_output_cb){
+      const auto stream_index=m_camera_holder->get_camera().index;
+      auto frame=openhd::FragmentedVideoFrame{
+              std::move(frame_fragments),
+              std::chrono::steady_clock::now(),
+              m_camera_holder->get_settings().enable_ultra_secure_encryption};
+      m_output_cb(stream_index,frame);
   }else{
-    m_console->debug("No transmit interface");
+      m_console->debug("No output cb");
   }
 }
 
@@ -592,8 +587,8 @@ void GStreamerStream::loop_pull_samples() {
   m_frame_fragments.resize(0);
 }
 
-void GStreamerStream::update_arming_state(bool armed) {
-  m_console->debug("update_arming_state: {}",armed);
+void GStreamerStream::handle_update_arming_state(bool armed) {
+  m_console->debug("handle_update_arming_state: {}",armed);
   const auto settings=m_camera_holder->get_settings();
   if(settings.air_recording==AIR_RECORDING_AUTO_ARM_DISARM){
     if(armed){

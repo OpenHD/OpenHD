@@ -26,6 +26,7 @@ struct FragmentedVideoFrame{
   // even though that might result in higher CPU load.
   bool enable_ultra_secure_encryption= false;
 };
+typedef std::function<void(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame)> ON_ENCODE_FRAME_CB;
 
 }
 #endif  // OPENHD_OPENHD_OHD_COMMON_OPENHD_VIDEO_FRAME_H_
