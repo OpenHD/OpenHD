@@ -93,7 +93,7 @@ void ManagementAir::on_new_management_packet(const uint8_t *data, int data_len) 
     if(data_len== sizeof(DataManagementSensitivityStatus) + 1 && data[0] == MNGMNT_PACKET_ID_SENSITVITY_STATUS){
         m_last_received_packet_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
         DataManagementSensitivityStatus packet{};
-        std::memcpy(&packet,&data[1],data_len);
+        std::memcpy(&packet,&data[1],data_len-1);
         // TODO
     }
 }
@@ -126,7 +126,7 @@ void ManagementGround::start() {
 void ManagementGround::on_new_management_packet(const uint8_t *data, int data_len) {
     if(data_len== sizeof(DataManagementTxBandwidth) + 1 && data[0] == MNGMNT_PACKET_ID_CHANNEL_WIDTH){
         DataManagementTxBandwidth packet{};
-        std::memcpy(&packet,&data[1],data_len);
+        std::memcpy(&packet,&data[1],data_len-1);
         if(packet.bandwidth_mhz==20 || packet.bandwidth_mhz==40){
             m_air_reported_curr_channel_width=packet.bandwidth_mhz;
             m_air_reported_curr_frequency=packet.center_frequency_mhz;
