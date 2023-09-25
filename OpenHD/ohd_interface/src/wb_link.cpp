@@ -738,7 +738,7 @@ void WBLink::wt_perform_rate_adjustment() {
           card,settings.wb_frequency,settings.wb_air_tx_channel_width,settings.wb_air_mcs_index, settings.wb_video_rate_for_mcs_adjustment_percent);
   m_max_total_rate_for_current_wifi_config_kbits=max_rate_for_current_wifi_config;
   // Subtract the FEC overhead from (video) bitrate
-  const auto max_video_rate_for_current_wifi_config =
+  const int max_video_rate_for_current_wifi_fec_config =
       openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
   // Check if we are dropping frame(s) -
   // If we continuously drop frame(s) for more than 5 seconds, we reduce the bitrate
@@ -746,22 +746,18 @@ void WBLink::wt_perform_rate_adjustment() {
   //const auto stats=m_wb_txrx->get_rx_stats();
   //m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);
   //m_console->debug("N foreign packets per second :{}",m_foreign_p_helper.get_foreign_packets_per_second());
-  if(m_max_video_rate_for_current_wifi_fec_config != max_video_rate_for_current_wifi_config ){
+  if(m_max_video_rate_for_current_wifi_fec_config != max_video_rate_for_current_wifi_fec_config ){
     // Apply the default for this configuration, then return - we will start the auto-adjustment
     // depending on tx error(s) next time the rate adjustment is called
     m_console->debug("MCS:{} ch_width:{} Calculated max_rate:{}, max_video_rate:{}",
                      settings.wb_air_mcs_index, settings.wb_air_tx_channel_width,
                      kbits_per_second_to_string(max_rate_for_current_wifi_config),
-                     kbits_per_second_to_string(max_video_rate_for_current_wifi_config));
+                     kbits_per_second_to_string(max_video_rate_for_current_wifi_fec_config));
       m_max_video_rate_for_current_wifi_fec_config =
-        max_video_rate_for_current_wifi_config;
+        max_video_rate_for_current_wifi_fec_config;
     m_recommended_video_bitrate_kbits = m_max_video_rate_for_current_wifi_fec_config;
     m_curr_n_rate_adjustments=0;
-    if (m_opt_action_handler) {
-      openhd::ActionHandler::LinkBitrateInformation lb{};
-      lb.recommended_encoder_bitrate_kbits = m_recommended_video_bitrate_kbits;
-      m_opt_action_handler->action_request_bitrate_change_handle(lb);
-    }
+    recommend_bitrate_to_encoder(m_recommended_video_bitrate_kbits);
     return;
   }
   const bool dropping_many_frames=m_frame_drop_helper.needs_bitrate_reduction();
@@ -796,6 +792,7 @@ void WBLink::reset_errors_and_recommend_default_rate() {
     const auto max_video_rate_for_current_wifi_config =
             openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
     m_max_video_rate_for_current_wifi_fec_config=max_video_rate_for_current_wifi_config;
+    m_curr_n_rate_adjustments=0;
     recommend_bitrate_to_encoder(m_max_video_rate_for_current_wifi_fec_config);
 }
 

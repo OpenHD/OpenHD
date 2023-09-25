@@ -190,12 +190,12 @@ static uint32_t get_max_rate_possible(const WiFiCard& card,const openhd::WifiSpa
     return get_max_rate_possible_5G_kbits(card,mcs_index,is_40Mhz);
 }
 
-static uint32_t deduce_fec_overhead(uint32_t bandwidth_kbits,int fec_overhead_perc){
+static int deduce_fec_overhead(int bandwidth_kbits,int fec_overhead_perc){
   const double tmp = bandwidth_kbits * 100.0 / (100.0 + fec_overhead_perc);
-  return static_cast<uint32_t>(std::roundl(tmp));
+  return static_cast<int>(std::roundl(tmp));
 }
 
-static uint32_t multiply_by_perc(uint32_t bandwidth_kbits,int percentage){
+static int multiply_by_perc(int bandwidth_kbits,int percentage){
     return bandwidth_kbits* percentage / 100;
 }
 

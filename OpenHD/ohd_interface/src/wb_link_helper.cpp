@@ -283,7 +283,7 @@ int openhd::wb::calculate_bitrate_for_wifi_config_kbits(const WiFiCard &card, in
                                                         int dev_adjustment_percent) {
     // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
     const auto wifi_space=openhd::get_space_from_frequency(frequency_mhz);
-    const auto max_rate_for_current_wifi_config_without_adjust =
+    const int max_rate_for_current_wifi_config_without_adjust =
             get_max_rate_possible(card,wifi_space,mcs_index,channel_width_mhz == 40);
     const int max_rate_for_current_wifi_config= multiply_by_perc(max_rate_for_current_wifi_config_without_adjust,dev_adjustment_percent);
     auto m_console=openhd::log::get_default();
