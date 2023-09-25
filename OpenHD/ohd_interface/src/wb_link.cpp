@@ -235,13 +235,12 @@ bool WBLink::request_set_frequency(int frequency) {
   if(!openhd::wb::validate_frequency_change(frequency,m_settings->get_settings().wb_air_tx_channel_width,m_broadcast_cards,m_console)){
       return false;
   }
-  // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
   auto work_item=std::make_shared<WorkItem>(fmt::format("SET_FREQ:{}",frequency),[this,frequency](){
       m_settings->unsafe_get_settings().wb_frequency=frequency;
       m_settings->persist();
       if(m_profile.is_air)m_management_air->m_curr_frequency_mhz=frequency;
       if(m_profile.is_air){
-          // Wait a bit for the ack
+          // We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
           std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
       }
      apply_frequency_and_channel_width_from_settings();
@@ -260,8 +259,7 @@ bool WBLink::request_set_air_tx_channel_width(int channel_width) {
         m_settings->persist();
         if(m_profile.is_air)m_management_air->m_curr_channel_width_mhz=channel_width;
         m_management_air->m_last_channel_width_change_timestamp_ms=OHDUtil::steady_clock_time_epoch_ms();
-        //We need to delay the change to make sure the mavlink ack has enough time to make it to the ground
-        //std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
+        // Ground will automatically apply the right channel width once first (broadcast) management frame is received.
         apply_frequency_and_channel_width_from_settings();
     },std::chrono::steady_clock::now());
     return try_schedule_work_item(work_item);
