@@ -23,16 +23,21 @@ TCPEndpoint::TCPEndpoint(TCPEndpoint::Config config,std::shared_ptr<openhd::Exte
 }
 
 TCPEndpoint::~TCPEndpoint() {
+  m_console->debug("TCPEndpoint::~TCPEndpoint() begin");
   // remove all external devices
   set_external_device_manager(nullptr);
   keep_alive= false;
   // this signals the fd to stop if needed
-  //close(server_fd);
   shutdown(server_fd, SHUT_RDWR);
+  if(client_socket){
+      shutdown(client_socket, SHUT_RDWR);
+  }
+  //close(server_fd);
   if(m_loop_thread){
     m_loop_thread->join();
     m_loop_thread.reset();
   }
+  m_console->debug("TCPEndpoint::~TCPEndpoint() end");
 }
 
 bool TCPEndpoint::sendMessagesImpl(const std::vector<MavlinkMessage>& messages) {
@@ -121,6 +126,7 @@ void TCPEndpoint::send_message_to_all_clients(const uint8_t *data, int data_len)
 }
 
 void TCPEndpoint::receive_client_data_until_disconnect() {
+    m_console->debug("receive_client_data_until_disconnect() begin");
     const auto buff = std::make_unique<std::array<uint8_t,READ_BUFF_SIZE>>();
     while (keep_alive){
         // Read from all the client(s)
@@ -137,6 +143,7 @@ void TCPEndpoint::receive_client_data_until_disconnect() {
         }
         MEndpoint::parseNewData(buff->data(),(int)message_length);
     }
+    m_console->debug("receive_client_data_until_disconnect() end");
 }
 
 void TCPEndpoint::set_external_device_manager(std::shared_ptr<openhd::ExternalDeviceManager> external_device_manager) {

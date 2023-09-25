@@ -352,7 +352,7 @@ void OHDVideoAir::on_video_data(int stream_index, const openhd::FragmentedVideoF
         m_console->debug("Invalid stream index: {}",stream_index);
     }
     if(m_has_localhost_forwarding_enabled){
-        m_console->debug("Forwarding {} {}",stream_index,fragmented_video_frame.frame_fragments.size());
+        //m_console->debug("Forwarding {} {}",stream_index,fragmented_video_frame.frame_fragments.size());
         if(!(stream_index==0 || stream_index==1))return;
         auto& forwarder=stream_index==0 ? m_primary_video_forwarder : m_secondary_video_forwarder;
         for(auto& fragment:fragmented_video_frame.frame_fragments){
