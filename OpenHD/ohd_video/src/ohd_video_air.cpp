@@ -63,6 +63,13 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
   m_console->debug( "OHDVideo::running");
 }
 
+OHDVideoAir::~OHDVideoAir() {
+    if(m_opt_action_handler){
+        m_opt_action_handler->m_action_record_video_when_armed= nullptr;
+        m_opt_action_handler->action_request_bitrate_change_register(nullptr);
+    }
+}
+
 std::string OHDVideoAir::createDebug() const {
   // TODO make it much more verbose
   std::stringstream ss;
@@ -325,7 +332,7 @@ void OHDVideoAir::start_stop_forwarding_external_device(openhd::ExternalDevice e
 }
 
 void OHDVideoAir::on_video_data(int stream_index, const openhd::FragmentedVideoFrame &fragmented_video_frame) {
-    m_console->debug("Got data {} {}",stream_index,fragmented_video_frame.frame_fragments.size());
+    //m_console->debug("Got data {} {}",stream_index,fragmented_video_frame.frame_fragments.size());
     if(stream_index==0){
         m_link_handle->transmit_video_data(stream_index,fragmented_video_frame);
     }else if(stream_index==1){
@@ -338,12 +345,5 @@ void OHDVideoAir::on_video_data(int stream_index, const openhd::FragmentedVideoF
 void OHDVideoAir::update_arming_state(bool armed) {
     for(auto& camera:m_camera_streams){
         camera->handle_update_arming_state(armed);
-    }
-}
-
-OHDVideoAir::~OHDVideoAir() {
-    if(m_opt_action_handler){
-        m_opt_action_handler->m_action_record_video_when_armed= nullptr;
-        m_opt_action_handler->action_request_bitrate_change_register(nullptr);
     }
 }

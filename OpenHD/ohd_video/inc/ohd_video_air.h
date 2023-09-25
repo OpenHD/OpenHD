@@ -90,8 +90,8 @@ class OHDVideoAir {
   // but we allow user(s) to connect to the air unit via mavlink TCP directly,
   // in which case we start forwarding of video data to the device.
   void start_stop_forwarding_external_device(openhd::ExternalDevice external_device,bool connected);
-  std::unique_ptr<SocketHelper::UDPMultiForwarder> m_primary_video_forwarder;
-  std::unique_ptr<SocketHelper::UDPMultiForwarder> m_secondary_video_forwarder;
+  std::unique_ptr<SocketHelper::UDPMultiForwarder> m_primary_video_forwarder= nullptr;
+  std::unique_ptr<SocketHelper::UDPMultiForwarder> m_secondary_video_forwarder= nullptr;
 };
 
 #endif  // OPENHD_VIDEO_OHDVIDEO_H
