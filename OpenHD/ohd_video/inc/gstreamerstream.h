@@ -82,7 +82,7 @@ class GStreamerStream : public CameraStream {
   std::unique_ptr<std::thread> m_async_thread =nullptr;
   std::shared_ptr<spdlog::logger> m_console;
   std::chrono::steady_clock::time_point m_stream_creation_time=std::chrono::steady_clock::now();
-  // This boolean indicates we should record
+  // Set to true if armed, used for auto record on arm
   bool m_armed_enable_air_recording= false;
  private:
   // Change the bitrate without re-starting the whole pipeline if supported by the camera.

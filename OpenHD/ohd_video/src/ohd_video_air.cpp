@@ -336,9 +336,9 @@ void OHDVideoAir::start_stop_forwarding_external_device(openhd::ExternalDevice e
         m_secondary_video_forwarder->addForwarder(client_addr,5601);
         m_has_localhost_forwarding_enabled= true;
     }else{
+        m_has_localhost_forwarding_enabled=false;
         m_primary_video_forwarder->removeForwarder(client_addr,5600);
         m_secondary_video_forwarder->removeForwarder(client_addr,5601);
-        m_has_localhost_forwarding_enabled=false;
     }
 }
 
