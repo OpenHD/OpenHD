@@ -770,9 +770,9 @@ void WBLink::wt_perform_rate_adjustment() {
     m_recommended_video_bitrate_kbits = m_max_video_rate_for_current_wifi_fec_config;
     m_curr_n_rate_adjustments=0;
     recommend_bitrate_to_encoder(m_recommended_video_bitrate_kbits);
-    // We 'give' the camera up to 3 seconds to adjust to the newly set rate. If we drop frames during this period,
+    // We 'give' the camera up to X seconds to adjust to the newly set rate. If we drop frames during this period,
     // we do not count it as errors that need bitrate reduction.
-    m_frame_drop_helper.delay_for(std::chrono::seconds(3));
+    m_frame_drop_helper.delay_for(std::chrono::seconds(5));
     return;
   }
   const bool dropping_many_frames=m_frame_drop_helper.needs_bitrate_reduction();
