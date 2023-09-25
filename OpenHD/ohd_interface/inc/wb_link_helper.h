@@ -150,42 +150,6 @@ private:
     std::mutex m_rc_channels_mutex;
 };
 
-//
-// A few tx error(s) are fine - we have the frame queue to smooth them out.
-// But if we get more than X tx errors in a X second interval, we probably should
-// reduce the bitrate.
-//
-class TxErrorHintHelper{
-public:
-    void update_tx_error_hint_count(int32_t count_tx_injections_error_hint){
-        const auto delta_total_tx_errors=count_tx_injections_error_hint-m_last_total_tx_error_count;
-        m_last_total_tx_error_count=count_tx_injections_error_hint;
-        const bool has_tx_errors=delta_total_tx_errors>0;
-        if(has_tx_errors){
-            m_n_detected_and_reset_tx_errors++;
-            m_console->debug("Got {} tx error hint {} times",delta_total_tx_errors,m_n_detected_and_reset_tx_errors);
-        }else{
-            if(m_n_detected_and_reset_tx_errors>0){
-                m_console->debug("No tx errors after {}",m_n_detected_and_reset_tx_errors);
-            }
-            m_n_detected_and_reset_tx_errors=0;
-        }
-    }
-    bool has_multiple_tx_errors()const{
-        return m_n_detected_and_reset_tx_errors>=3;
-    }
-    void reset(){
-        m_n_detected_and_reset_tx_errors=0;
-    }
-    void set_console(std::shared_ptr<spdlog::logger> console){
-        m_console=std::move(console);
-    }
-private:
-    std::shared_ptr<spdlog::logger> m_console;
-    int64_t m_last_total_tx_error_count=0;
-    int m_n_detected_and_reset_tx_errors=0;
-};
-
 class FrameDropsHelper{
 public:
     // Thread-safe, aka can be called from the thread injecting frame(s) in reference to the wb_link worker thread

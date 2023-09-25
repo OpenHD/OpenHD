@@ -15,7 +15,7 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
     if(OHDUtil::equal_after_uppercase(driver_name,"rtl88xxau_wfb")){
         return WiFiCardType::OPENHD_RTL_88X2AU;
     }
-    if(OHDUtil::equal_after_uppercase(driver_name,"88x2bu")){
+    if(OHDUtil::equal_after_uppercase(driver_name,"rtl88x2bu")){
         // NOTE: "rtw_8822bu" is the bad kernel driver which is fucking horrible.
         return WiFiCardType::OPENHD_RTL_88X2BU;
     }
