@@ -860,7 +860,7 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
     auto& tx= *m_wb_video_tx_list[stream_index];
     tx.set_encryption(fragmented_video_frame.enable_ultra_secure_encryption);
     //tx.tmp_feed_frame_fragments(fragmented_video_frame.frame_fragments,use_fixed_fec_instead);
-    uint32_t max_block_size_for_platform=m_settings->get_settings().wb_max_fec_block_size_for_platform;
+    int max_block_size_for_platform=m_settings->get_settings().wb_max_fec_block_size_for_platform;
     //openhd::log::get_default()->debug("max_block_size_for_platform:{}",max_block_size_for_platform);
     if(!openhd::valid_wb_max_fec_block_size_for_platform(max_block_size_for_platform)){
       openhd::log::get_default()->warn("Invalid max_block_size_for_platform:{}",max_block_size_for_platform);
