@@ -636,7 +636,9 @@ void WBLink::wt_update_statistics() {
       air_video.curr_measured_encoder_bitrate=curr_tx_stats.current_provided_bits_per_second;
       air_video.curr_injected_bitrate=curr_tx_stats.current_injected_bits_per_second;
       air_video.curr_injected_pps=curr_tx_stats.current_injected_packets_per_second;
-      air_video.curr_dropped_frames=curr_tx_stats.n_dropped_frames;
+      const int tx_dropped_frames=i==0 ? m_primary_total_dropped_frames.load() : m_secondary_total_dropped_frames.load();
+      //const int tx_dropped_frames = curr_tx_stats.n_dropped_frames;
+      air_video.curr_dropped_frames=tx_dropped_frames;
       const auto curr_tx_fec_stats=wb_tx.get_latest_fec_stats();
       air_fec.curr_fec_encode_time_avg_us= OHDUtil::get_micros(curr_tx_fec_stats.curr_fec_encode_time.avg);
       air_fec.curr_fec_encode_time_min_us= OHDUtil::get_micros(curr_tx_fec_stats.curr_fec_encode_time.min);
@@ -870,6 +872,11 @@ void WBLink::transmit_video_data(int stream_index,const openhd::FragmentedVideoF
     const auto res=tx.try_enqueue_block(fragmented_video_frame.frame_fragments, max_block_size_for_platform,fec_perc);
     if(!res){
         m_frame_drop_helper.notify_dropped_frame();
+        if(stream_index==0){
+            m_primary_total_dropped_frames++;
+        }else{
+            m_secondary_total_dropped_frames++;
+        }
         m_console->debug("TX enqueue video frame failed, queue size:{}",
                         tx.get_tx_queue_available_size_approximate());
     }

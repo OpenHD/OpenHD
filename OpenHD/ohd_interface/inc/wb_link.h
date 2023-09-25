@@ -183,6 +183,8 @@ private:
   openhd::wb::ForeignPacketsHelper m_foreign_p_helper;
   openhd::wb::RCChannelHelper m_rc_channel_helper;
   openhd::wb::FrameDropsHelper m_frame_drop_helper;
+  std::atomic_int m_primary_total_dropped_frames=0;
+  std::atomic_int m_secondary_total_dropped_frames=0;
 };
 
 #endif
