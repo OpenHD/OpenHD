@@ -157,6 +157,16 @@ public:
         m_frame_drop_counter++;
     }
     bool needs_bitrate_reduction(){
+        if(m_opt_no_error_delay.has_value()){
+            if(std::chrono::steady_clock::now()>=m_opt_no_error_delay){
+                const auto elapsed=std::chrono::steady_clock::now()-m_last_check;
+                m_last_check=std::chrono::steady_clock::now();
+                const int dropped_since_last_check=m_frame_drop_counter.exchange(0);
+                m_console->debug("Dropped {} frames in {} during adjust period (no bitrate reduction)",dropped_since_last_check,MyTimeHelper::R(elapsed));
+                m_opt_no_error_delay=std::nullopt;
+            }
+            return false;
+        }
         const auto elapsed=std::chrono::steady_clock::now()-m_last_check;
         if(elapsed>=std::chrono::seconds(3)){
             m_last_check=std::chrono::steady_clock::now();
@@ -172,10 +182,17 @@ public:
     void set_console(std::shared_ptr<spdlog::logger> console){
         m_console=std::move(console);
     }
+    // Every time we change the bitrate, it might take some time until the camera reacts
+    // (TODO: Define a minumum allowed variance for openhd supported cameras)
+    // - this results in dropped frame(s) not being reported as an error
+    void delay_for(std::chrono::milliseconds delay){
+        m_opt_no_error_delay=std::chrono::steady_clock::now()+delay;
+    }
 private:
     std::shared_ptr<spdlog::logger> m_console;
     std::chrono::steady_clock::time_point m_last_check=std::chrono::steady_clock::now();
     std::atomic_int m_frame_drop_counter=0;
+    std::optional<std::chrono::steady_clock::time_point> m_opt_no_error_delay=std::nullopt;
 };
 }
 

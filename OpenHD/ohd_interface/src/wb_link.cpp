@@ -770,12 +770,14 @@ void WBLink::wt_perform_rate_adjustment() {
     m_recommended_video_bitrate_kbits = m_max_video_rate_for_current_wifi_fec_config;
     m_curr_n_rate_adjustments=0;
     recommend_bitrate_to_encoder(m_recommended_video_bitrate_kbits);
+    // We 'give' the camera up to 3 seconds to adjust to the newly set rate. If we drop frames during this period,
+    // we do not count it as errors that need bitrate reduction.
+    m_frame_drop_helper.delay_for(std::chrono::seconds(3));
     return;
   }
   const bool dropping_many_frames=m_frame_drop_helper.needs_bitrate_reduction();
-  const bool many_tx_error_hints= false;
   //m_console->debug("Dropped since last check:{}",dropped_since_last_check);
-  if(many_tx_error_hints || dropping_many_frames){
+  if(dropping_many_frames){
     // We are dropping frames / too many tx error hint(s), we need to reduce bitrate.
     // Reduce video bitrate by 1MBit/s
     m_recommended_video_bitrate_kbits -=1000;
@@ -790,23 +792,6 @@ void WBLink::wt_perform_rate_adjustment() {
     m_console->warn("TX errors, reducing video bitrate to {}",m_recommended_video_bitrate_kbits);
   }
   recommend_bitrate_to_encoder(m_recommended_video_bitrate_kbits);
-}
-
-void WBLink::reset_errors_and_recommend_default_rate() {
-    using namespace openhd::wb;
-    const auto& settings = m_settings->get_settings();
-    const auto& card=m_broadcast_cards.at(0);
-    // First we calculate the theoretical rate for the current "wifi config" aka taking mcs index, channel width, ... into account
-    const int max_rate_for_current_wifi_config= calculate_bitrate_for_wifi_config_kbits(
-            card,settings.wb_frequency,settings.wb_air_tx_channel_width,settings.wb_air_mcs_index, settings.wb_video_rate_for_mcs_adjustment_percent,
-            false);
-    m_max_total_rate_for_current_wifi_config_kbits=max_rate_for_current_wifi_config;
-    // Subtract the FEC overhead from (video) bitrate
-    const auto max_video_rate_for_current_wifi_config =
-            openhd::wb::deduce_fec_overhead(max_rate_for_current_wifi_config,settings.wb_video_fec_percentage);
-    m_max_video_rate_for_current_wifi_fec_config=max_video_rate_for_current_wifi_config;
-    m_curr_n_rate_adjustments=0;
-    recommend_bitrate_to_encoder(m_max_video_rate_for_current_wifi_fec_config);
 }
 
 void WBLink::recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits) {

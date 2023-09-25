@@ -182,7 +182,6 @@ private:
   openhd::wb::ForeignPacketsHelper m_foreign_p_helper;
   openhd::wb::RCChannelHelper m_rc_channel_helper;
   openhd::wb::FrameDropsHelper m_frame_drop_helper;
-  void reset_errors_and_recommend_default_rate();
 };
 
 #endif
