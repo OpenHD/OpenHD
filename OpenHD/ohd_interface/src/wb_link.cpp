@@ -316,6 +316,36 @@ bool WBLink::request_set_air_mcs_index(int mcs_index) {
     },std::chrono::steady_clock::now());
     return try_schedule_work_item(work_item);
 }
+bool WBLink::set_air_video_fec_percentage(int fec_percentage) {
+    m_console->debug("set_air_video_fec_percentage {}",fec_percentage);
+    if(!openhd::is_valid_fec_percentage(fec_percentage))return false;
+    m_settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
+    m_settings->persist();
+    // The next rate adjustment will adjust the bitrate accordingly
+    return true;
+}
+bool WBLink::set_air_enable_wb_video_variable_bitrate(int value) {
+    assert(m_profile.is_air);
+    if(!openhd::validate_yes_or_no(value))return false;
+    // value is read in regular intervals.
+    m_settings->unsafe_get_settings().enable_wb_video_variable_bitrate=value;
+    m_settings->persist();
+    return true;
+}
+
+bool WBLink::set_air_max_fec_block_size_for_platform(int value) {
+    if(!openhd::valid_wb_max_fec_block_size_for_platform(value))return false;
+    m_settings->unsafe_get_settings().wb_max_fec_block_size_for_platform=value;
+    m_settings->persist();
+    return true;
+}
+
+bool WBLink::set_air_wb_video_rate_for_mcs_adjustment_percent(int value) {
+    if(value<=5 || value>1000)return false;
+    m_settings->unsafe_get_settings().wb_video_rate_for_mcs_adjustment_percent=value;
+    m_settings->persist();
+    return true;
+}
 
 bool WBLink::request_start_scan_channels(openhd::ActionHandler::ScanChannelsParam scan_channels_params) {
     auto work_item=std::make_shared<WorkItem>("SCAN_CHANNELS",[this,scan_channels_params](){
@@ -378,18 +408,6 @@ void WBLink::apply_txpower() {
   m_curr_tx_power_idx=pwr_index;
   const auto delta=std::chrono::steady_clock::now()-before;
   m_console->debug("Changing tx power took {}",MyTimeHelper::R(delta));
-}
-
-bool WBLink::set_air_video_fec_percentage(int fec_percentage) {
-  m_console->debug("set_air_video_fec_percentage {}",fec_percentage);
-  if(!openhd::is_valid_fec_percentage(fec_percentage)){
-    m_console->warn("Invalid fec percentage:{}",fec_percentage);
-    return false;
-  }
-  m_settings->unsafe_get_settings().wb_video_fec_percentage=fec_percentage;
-  m_settings->persist();
-  // The next rate adjustment will adjust the bitrate accordingly
-  return true;
 }
 
 std::vector<openhd::Setting> WBLink::get_all_settings(){
@@ -548,6 +566,13 @@ void WBLink::loop_do_work() {
     wt_perform_channel_width_management();
     //air_perform_reset_frequency();
     wt_perform_rate_adjustment();
+    // After we've applied the rate, we update the tx header mcs index if necessary
+    tmp_true= true;
+    if(m_request_apply_air_mcs_index.compare_exchange_strong(tmp_true, false)){
+        const int mcs_index = m_settings->unsafe_get_settings().wb_air_mcs_index;
+        m_tx_header_1->update_mcs_index(mcs_index);
+        m_tx_header_2->update_mcs_index(mcs_index);
+    }
     // update statistics in regular intervals
     wt_update_statistics();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -716,12 +741,6 @@ void WBLink::wt_update_statistics() {
 void WBLink::wt_perform_rate_adjustment() {
   using namespace openhd::wb;
   if(!m_profile.is_air)return;// Only done on air unit
-  bool tmp_true= true;
-  if(m_request_apply_air_mcs_index.compare_exchange_strong(tmp_true, false)){
-      const int mcs_index = m_settings->unsafe_get_settings().wb_air_mcs_index;
-      m_tx_header_1->update_mcs_index(mcs_index);
-      m_tx_header_2->update_mcs_index(mcs_index);
-  }
   // Rate adjustment is done on air and only if enabled
   if(!(m_profile.is_air && m_settings->get_settings().enable_wb_video_variable_bitrate)){
     return;
@@ -800,30 +819,6 @@ void WBLink::recommend_bitrate_to_encoder(int recommended_video_bitrate_kbits) {
     openhd::ActionHandler::LinkBitrateInformation lb{};
     lb.recommended_encoder_bitrate_kbits = recommended_video_bitrate_kbits;
     m_opt_action_handler->action_request_bitrate_change_handle(lb);
-}
-
-
-bool WBLink::set_air_enable_wb_video_variable_bitrate(int value) {
-  assert(m_profile.is_air);
-  if(!openhd::validate_yes_or_no(value))return false;
-  // value is read in regular intervals.
-  m_settings->unsafe_get_settings().enable_wb_video_variable_bitrate=value;
-  m_settings->persist();
-  return true;
-}
-
-bool WBLink::set_air_max_fec_block_size_for_platform(int value) {
-  if(!openhd::valid_wb_max_fec_block_size_for_platform(value))return false;
-  m_settings->unsafe_get_settings().wb_max_fec_block_size_for_platform=value;
-  m_settings->persist();
-  return true;
-}
-
-bool WBLink::set_air_wb_video_rate_for_mcs_adjustment_percent(int value) {
-  if(value<=5 || value>1000)return false;
-  m_settings->unsafe_get_settings().wb_video_rate_for_mcs_adjustment_percent=value;
-  m_settings->persist();
-  return true;
 }
 
 bool WBLink::try_schedule_work_item(const std::shared_ptr<WorkItem> &work_item) {

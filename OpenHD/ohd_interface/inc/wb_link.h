@@ -74,6 +74,12 @@ class WBLink :public OHDLink{
   bool request_set_tx_power_rtl8812au(int tx_power_index_override,bool armed);
   // MCS index can be changed on air (user can control the rate with it).
   bool request_set_air_mcs_index(int mcs_index);
+  // These do not "break" the bidirectional connectivity and therefore
+  // can be changed easily on the fly
+  bool set_air_video_fec_percentage(int fec_percentage);
+  bool set_air_enable_wb_video_variable_bitrate(int value);
+  bool set_air_max_fec_block_size_for_platform(int value);
+  bool set_air_wb_video_rate_for_mcs_adjustment_percent(int value);
   // Initiate channel scan / channel analyze.
   // Those operations run asynchronous until completed, and during this time
   // all other "request_" setting changes are rejected (since the work thread does the long-running async operation)
@@ -91,12 +97,6 @@ class WBLink :public OHDLink{
    * Every time the arming state is updated, we just set a flag here such that the main thread updates the tx power
    */
   void update_arming_state(bool armed);
-  // These do not "break" the bidirectional connectivity and therefore
-  // can be changed easily on the fly
-  bool set_air_video_fec_percentage(int fec_percentage);
-  bool set_air_enable_wb_video_variable_bitrate(int value);
-  bool set_air_max_fec_block_size_for_platform(int value);
-  bool set_air_wb_video_rate_for_mcs_adjustment_percent(int value);
   // Recalculate stats, apply settings asynchronously and more
   void loop_do_work();
   // update statistics, done in regular intervals, updated data is given to the ohd_telemetry module via the action handler
