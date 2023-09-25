@@ -15,6 +15,7 @@
 #include "openhd-rpi-os-configure-vendor-cam.hpp"
 #include "openhd_external_device.hpp"
 #include "../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
+#include "openhd_link.hpp"
 
 /**
  * Main entry point for OpenHD video streaming for discovered cameras on the air unit.
@@ -33,6 +34,7 @@ class OHDVideoAir {
   OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
            std::shared_ptr<openhd::ActionHandler> opt_action_handler,
            std::shared_ptr<OHDLink> link_handle);
+  ~OHDVideoAir();
   OHDVideoAir(const OHDVideoAir&)=delete;
   OHDVideoAir(const OHDVideoAir&&)=delete;
   /**

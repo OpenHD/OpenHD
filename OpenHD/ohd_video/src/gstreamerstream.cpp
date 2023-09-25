@@ -51,9 +51,6 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
 }
 
 GStreamerStream::~GStreamerStream() {
-  if(m_opt_action_handler){
-    m_opt_action_handler->m_action_record_video_when_armed= nullptr;
-  }
   // they are safe to call, regardless if we are already in cleaned up state or not
   GStreamerStream::stop();
   GStreamerStream::cleanup_pipe();

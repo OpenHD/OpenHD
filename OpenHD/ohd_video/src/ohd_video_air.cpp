@@ -340,3 +340,10 @@ void OHDVideoAir::update_arming_state(bool armed) {
         camera->handle_update_arming_state(armed);
     }
 }
+
+OHDVideoAir::~OHDVideoAir() {
+    if(m_opt_action_handler){
+        m_opt_action_handler->m_action_record_video_when_armed= nullptr;
+        m_opt_action_handler->action_request_bitrate_change_register(nullptr);
+    }
+}
