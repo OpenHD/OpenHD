@@ -325,3 +325,14 @@ uint32_t OHDUtil::get_micros(std::chrono::nanoseconds ns) {
     return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::microseconds>(ns).count());
 }
 
+void OHDUtil::ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }));
+}
+
+void OHDUtil::trim(std::string &s) {
+    rtrim(s);
+    ltrim(s);
+}
+

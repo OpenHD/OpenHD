@@ -49,6 +49,8 @@ static bool equal_after_uppercase(const std::string& s1,
 
 // From https://stackoverflow.com/questions/216823/how-to-trim-an-stdstring
 void rtrim(std::string& s);
+void ltrim(std::string &s);
+void trim(std::string &s);
 
 // Create a command as a string using the command name (e.g. "run") and a vec of arguments (e.g. {"--seconds","10"}
 std::string create_command_with_args(

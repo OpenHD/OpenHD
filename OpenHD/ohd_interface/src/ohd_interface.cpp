@@ -244,7 +244,7 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
   static constexpr auto PW_FILENAME="/boot/openhd/pw.txt";
   if(OHDFilesystemUtil::exists(PW_FILENAME)){
     auto pw=OHDFilesystemUtil::read_file(PW_FILENAME);
-    OHDUtil::rtrim(pw);
+    OHDUtil::trim(pw);
     openhd::log::get_default()->info("Generating key(s) from pw xxx"); // don't show the pw
     auto keys=wb::generate_keypair_from_bind_phrase(pw);
     wb::write_keypair_to_file(keys,"/boot/openhd/txrx.key");
