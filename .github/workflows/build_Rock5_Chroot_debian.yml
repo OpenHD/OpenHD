@@ -1,9 +1,12 @@
 name: build_package_rock5_debian
 
-on: 
+on:
   push:
-    branches: ["2.5-evo"]
-    paths-ignore:
+   branches:
+      - "2.5-evo"
+      - "dev-releases"
+      - "releases"
+   paths-ignore:
       - '**.md'
       - '**.asciidoc'
       - '**.adoc'
@@ -43,6 +46,8 @@ jobs:
           echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
           echo "debian" > /opt/ChrootCompilationTest/additionalFiles/distro.txt
           echo "bullseye" > /opt/ChrootCompilationTest/additionalFiles/flavor.txt
+          echo "${{ github.ref }}" > /opt/ChrootCompilationTest/additionalFiles/repo.txt
+
           cd /opt/ChrootCompilationTest/
           sudo apt update
           sudo bash install_dep.sh

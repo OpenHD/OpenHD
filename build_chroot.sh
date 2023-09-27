@@ -8,6 +8,8 @@ ls -a
 API_KEY=$(cat cloudsmith_api_key.txt)
 DISTRO=$(cat distro.txt)
 FLAVOR=$(cat flavor.txt)
+REPO=$(cat repo.txt)
+
 echo ${DISTRO}
 echo ${FLAVOR}
 ./install_build_dep.sh rock5
@@ -19,5 +21,5 @@ echo "push to cloudsmith"
 git describe --exact-match HEAD >/dev/null 2>&1
 echo "Pushing the package to OpenHD 2.3 repository"
 ls -a
-cloudsmith push deb --api-key "$API_KEY" openhd/openhd-2-3-evo/${DISTRO}/${FLAVOR} *.deb || exit 1
+cloudsmith push deb --api-key "$API_KEY" openhd/${REPO}/${DISTRO}/${FLAVOR} *.deb || exit 1
 

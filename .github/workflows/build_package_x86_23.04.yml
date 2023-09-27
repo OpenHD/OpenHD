@@ -2,7 +2,11 @@ name: build_package_LUNAR
 
 on:
   push:
-    paths-ignore:
+   branches:
+      - "2.5-evo"
+      - "dev-releases"
+      - "releases"
+   paths-ignore:
       - '**.md'
       - '**.asciidoc'
       - '**.adoc'
@@ -63,7 +67,7 @@ jobs:
           command: "push"
           format: "deb"
           owner: "openhd"
-          repo: "openhd-2-3-evo"
+          repo: ${{ github.ref }}
           distro: "ubuntu"
           release: "lunar"
           republish: "true" # needed ONLY if version is not changing
