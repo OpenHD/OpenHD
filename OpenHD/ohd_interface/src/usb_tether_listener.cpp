@@ -32,38 +32,33 @@ void USBTetherListener::loopInfinite() {
   }
 }
 
+static std::vector<std::string> get_usb_tethering_devices(){
+    const auto net_devices=OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory("/sys/class/net/");
+    std::vector<std::string> ret;
+    for(const auto& net_device: net_devices){
+        const auto opt_file_device_uevent=OHDFilesystemUtil::opt_read_file(fmt::format("/sys/class/net/{}/device/uevent",net_device));
+        if(opt_file_device_uevent.has_value() && OHDUtil::contains(opt_file_device_uevent.value(),"DRIVER=rndis_host")){
+            ret.push_back(net_device);
+        }
+    }
+    return ret;
+}
+
 void USBTetherListener::connectOnce() {
   m_console->debug("connectOnce()");
   const std::string connected_devices_directory="/sys/class/net/";
   std::string connected_device_name;
-  // in regular intervals, check if the device becomes available - if yes, the user connected an ethernet hotspot device.
-  bool found_device= false;
-  while (!m_check_connection_thread_stop && !found_device){
+  while (!m_check_connection_thread_stop){
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    auto devices=OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory(connected_devices_directory);
-    for(const auto& device:devices){
-      //m_console->debug("XX [{}]",device);
-      // Common names an usb tethering device might show up on
-      if(OHDUtil::str_equal(device,"usb0")){
-        connected_device_name=device;
-        found_device= true;
-        break ;
-      }
-      // should never show up as usb1, but whatever, listen for it too
-      if(OHDUtil::str_equal(device,"usb1")){
-        connected_device_name=device;
-        found_device= true;
-        break ;
-      }
-      if(OHDUtil::str_equal(device,"enx023b63011a79")){
-        connected_device_name=device;
-        found_device= true;
-        break ;
-      }
+    const auto usb_tether_devices=get_usb_tethering_devices();
+    if(!usb_tether_devices.empty()){
+        m_console->debug("Found {} tethering devices",OHDUtil::str_vec_as_string(usb_tether_devices));
+        connected_device_name=usb_tether_devices.at(0);
+        break;
     }
   }
   // We were stopped externally, no reason to continue
-  if(!found_device) return ;
+  if(connected_device_name.empty()) return ;
   m_console->info("Found USB tethering device {}",connected_device_name);
   // now we find the IP of the connected device so we can forward video and more to it.
   // example on my Ubuntu pc:

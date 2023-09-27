@@ -123,28 +123,20 @@ std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(const std::
 std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
   openhd::log::get_default()->trace("WiFi::discover_connected_wifi_cards");
   std::vector<WiFiCard> wifi_cards{};
-  // Find wifi cards, excluding specific kinds of interfaces.
-  const std::vector<std::string> excluded_interfaces = {
-      "usb",
-      "lo",
-      "eth",
-      "enp2s0" // Consti10 added
-  };
   const auto netFilenames=OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory("/sys/class/net");
-  for(const auto& filename:netFilenames){
-    auto excluded = false;
-    for (const auto &excluded_interface: excluded_interfaces) {
-      if (filename.find(excluded_interface)!=std::string::npos) {
-        excluded = true;
-        break;
+  std::vector<std::string> valid_wifi_filenames;
+  // this directory has wifi cards, ethernet, ... - filter out wifi cards
+  for(const auto& filename : netFilenames){
+      if(OHDFilesystemUtil::exists(fmt::format("/sys/class/net/{}/phy80211",filename))){
+          valid_wifi_filenames.push_back(filename);
       }
-    }
-    if (!excluded) {
+  }
+  // Try and figure out more about the card, if success, use it.
+  for(const auto& filename : valid_wifi_filenames){
       auto card_opt= process_card(filename);
       if(card_opt.has_value()){
-        wifi_cards.push_back(card_opt.value());
+          wifi_cards.push_back(card_opt.value());
       }
-    }
   }
   openhd::log::get_default()->trace("WiFi::discover_connected_wifi_cards done, n cards: {}",wifi_cards.size());
   write_wificards_manifest(wifi_cards);

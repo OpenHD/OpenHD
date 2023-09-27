@@ -194,6 +194,12 @@ private:
     std::atomic_int m_frame_drop_counter=0;
     std::optional<std::chrono::steady_clock::time_point> m_opt_no_error_delay=std::nullopt;
 };
+
+class PollutionHelper{
+public:
+private:
+};
+
 }
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_WB_LINK_HELPER_H_
