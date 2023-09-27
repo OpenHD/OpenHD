@@ -125,6 +125,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       WBStreamTx::Options options_tele_tx{};
       options_tele_tx.enable_fec= false;
       options_tele_tx.radio_port=radio_port_tx;
+      options_tele_tx.packet_data_queue_size=32;
       m_wb_tele_tx=std::make_unique<WBStreamTx>(m_wb_txrx, options_tele_tx,m_tx_header_1);
       m_wb_tele_tx->set_encryption(true);
   }
