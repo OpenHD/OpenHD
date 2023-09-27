@@ -700,6 +700,7 @@ void WBLink::wt_update_statistics() {
   stats.monitor_mode_link.curr_rx_bps=rxStats.curr_bits_per_second;
   stats.monitor_mode_link.pollution_perc=rxStats.curr_link_pollution_perc;
   stats.monitor_mode_link.dummy1=static_cast<int16_t>(rxStats.curr_n_foreign_packets_pps);
+  //m_console->debug("Pollution {}pps",rxStats.curr_n_foreign_packets_pps);
   const int tmp_last_management_packet_ts=m_profile.is_air ? m_management_air->get_last_received_packet_ts_ms():
           m_management_gnd->get_last_received_packet_ts_ms();
   const int last_received_packet_ts=std::max(m_last_received_packet_ts_ms.load(),tmp_last_management_packet_ts);
