@@ -2,7 +2,7 @@ name: build_package_rpi
 
 on:
   push:
-    branches: ["2.5-evo"]
+    branches: ["2.5-evo", "dev-releases", "releases"]
     paths-ignore:
       - '**.yml'
       - '**.md'
@@ -68,18 +68,8 @@ jobs:
         command: "push"
         format: "deb"
         owner: "openhd"
-        repo: "openhd-2-3-evo"
+        repo: ${{ github.ref }}
         distro: "raspbian"
         release: "bullseye"
         republish: "true" # needed ONLY if version is not changing
         file: "OpenHD/*.deb"
-          
-      #- name: Install
-      #  run: |
-      #    cd OpenHD/build
-      #    sudo cmake --install .
-      #- name: Build ninja
-      #  run: |
-      #    sudo apt -y install ninja-build
-      #    cd OpenHD
-      #    ./build_cmake.sh
