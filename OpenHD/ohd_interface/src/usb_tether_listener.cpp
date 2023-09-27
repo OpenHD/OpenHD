@@ -36,7 +36,8 @@ static std::vector<std::string> get_usb_tethering_devices(){
     const auto net_devices=OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory("/sys/class/net/");
     std::vector<std::string> ret;
     for(const auto& net_device: net_devices){
-        const auto opt_file_device_uevent=OHDFilesystemUtil::opt_read_file(fmt::format("/sys/class/net/{}/device/uevent",net_device));
+        const auto opt_file_device_uevent=OHDFilesystemUtil::opt_read_file(fmt::format("/sys/class/net/{}/device/uevent",net_device),
+                                                                           false);
         if(opt_file_device_uevent.has_value() && OHDUtil::contains(opt_file_device_uevent.value(),"DRIVER=rndis_host")){
             ret.push_back(net_device);
         }
