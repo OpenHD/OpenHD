@@ -11,11 +11,11 @@
 #include "ohd_video_air_generic_settings.h"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
+#include "openhd_external_device.hpp"
+#include "openhd_link.hpp"
 // Dirty
 #include "openhd-rpi-os-configure-vendor-cam.hpp"
-#include "openhd_external_device.hpp"
 #include "../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
-#include "openhd_link.hpp"
 
 /**
  * Main entry point for OpenHD video streaming for discovered cameras on the air unit.
