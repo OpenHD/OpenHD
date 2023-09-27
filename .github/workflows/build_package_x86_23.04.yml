@@ -49,6 +49,7 @@ jobs:
           cd OpenHD
           ./package.sh x86_64 ubuntu lunar
           ls -a
+          echo ${{ github.ref }}
 
       - name: Upload to Github
         uses: 'actions/upload-artifact@v2'
