@@ -15,6 +15,7 @@
 #include "openhd_link.hpp"
 // Dirty
 #include "openhd-rpi-os-configure-vendor-cam.hpp"
+#define DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
 #include "../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
 
 /**
