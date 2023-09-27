@@ -4,8 +4,8 @@ on:
   push:
    branches:
       - "2.5-evo"
-      - "dev-releases"
-      - "releases"
+      - "dev-release"
+      - "release"
    paths-ignore:
       - '**.md'
       - '**.asciidoc'
