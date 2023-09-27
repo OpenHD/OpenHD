@@ -27,11 +27,6 @@ add_subdirectory(lib/json)
 # Public since we use it throughout OpenHD
 target_link_libraries(OHDCommonLib PUBLIC  nlohmann_json::nlohmann_json)
 
-# WARNING: Please do not use boost, without going into too much detail why, it is a pain for multi platform compatibility.
-# We only use it as a temporary solution until all platforms support std::filesystem
-SET(Boost_USE_STATIC_LIBS ON)
-FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem)
-target_link_libraries(OHDCommonLib PRIVATE Boost::filesystem)
 #----------------------------------------------------------------------------------------------------------------------
 # sources
 #----------------------------------------------------------------------------------------------------------------------
