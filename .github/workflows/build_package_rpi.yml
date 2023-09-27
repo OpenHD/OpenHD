@@ -2,9 +2,11 @@ name: build_package_rpi
 
 on:
   push:
-    branches: ["2.5-evo", "dev-releases", "releases"]
-    paths-ignore:
-      - '**.yml'
+   branches:
+      - "2.5-evo"
+      - "dev-releases"
+      - "releases"
+   paths-ignore:
       - '**.md'
       - '**.asciidoc'
       - '**.adoc'
