@@ -52,7 +52,7 @@ class PersistentSettings {
     assert(_settings);
     return *_settings;
   }
-  // save changes by writing them out to the file, and notifying the listener(s)
+  // save changes by writing them out to the file, and notifying the listener cb if there is any
   void persist(bool trigger_restart=true)const{
     PersistentSettings::persist_settings();
     if(_settings_changed_callback && trigger_restart){
