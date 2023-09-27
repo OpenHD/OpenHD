@@ -70,7 +70,7 @@ jobs:
         command: "push"
         format: "deb"
         owner: "openhd"
-        repo: ${{ github.ref }}
+        repo: ${{ github.ref_name }}
         distro: "raspbian"
         release: "bullseye"
         republish: "true" # needed ONLY if version is not changing

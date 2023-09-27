@@ -46,7 +46,7 @@ jobs:
           echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
           echo "debian" > /opt/ChrootCompilationTest/additionalFiles/distro.txt
           echo "bullseye" > /opt/ChrootCompilationTest/additionalFiles/flavor.txt
-          echo "${{ github.ref }}" > /opt/ChrootCompilationTest/additionalFiles/repo.txt
+          echo "${{ github.ref_name }}" > /opt/ChrootCompilationTest/additionalFiles/repo.txt
 
           cd /opt/ChrootCompilationTest/
           sudo apt update
