@@ -32,7 +32,8 @@ class WifiHotspot {
   ~WifiHotspot();
   // Use opposite frequency band to wfb if possible
   static bool get_use_5g_channel(const WiFiCard& wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space);
-  void set_enabled(bool enable);
+  //
+  void set_enabled_async(bool enable);
  private:
   // NOTE: might block, use async
   // just runs the appropriate network manager (nmcli) command to start an already created wifi hotspot connection
@@ -51,6 +52,7 @@ class WifiHotspot {
   std::shared_ptr<spdlog::logger> m_console;
   std::future<void> m_last_async_operation;
   bool m_use_5G_channel;
+  bool m_is_enabled= false;
 };
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_

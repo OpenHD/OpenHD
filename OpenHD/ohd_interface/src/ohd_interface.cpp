@@ -14,8 +14,11 @@
 #include "wb_link_settings.h"
 #include "wifi_command_helper.h"
 
+
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler,bool continue_without_wb_card)
-    : m_platform(platform1), m_profile(std::move(profile1)) {
+    : m_platform(platform1),
+    m_profile(std::move(profile1)),
+    m_opt_action_handler(opt_action_handler){
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);
   m_external_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
@@ -102,7 +105,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     // we just continue as nothing happened, but OHD won't have any wifibroadcast connectivity
     //exit(1);
   }else{
-    m_wb_link =std::make_shared<WBLink>(m_profile, m_platform,monitor_mode_cards,opt_action_handler);
+    m_wb_link =std::make_shared<WBLink>(m_profile, m_platform,monitor_mode_cards,m_opt_action_handler);
   }
   // The USB tethering listener is always enabled on ground - it doesn't interfere with anything
   if(m_profile.is_ground()){
@@ -134,22 +137,14 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     const openhd::WifiSpace wb_frequency_space= (m_wb_link!= nullptr) ? m_wb_link->get_current_frequency_channel_space() : openhd::WifiSpace::G5_8;
     // OHD hotspot needs to know the wifibroadcast frequency - it is always on the opposite spectrum
     m_wifi_hotspot =std::make_unique<WifiHotspot>(opt_hotspot_card.value(),wb_frequency_space);
-    if(m_nw_settings.get_settings().wifi_hotspot_enable){
-      m_wifi_hotspot->set_enabled(true);
-    }
+    update_wifi_hotspot_enable();
   }
   // automatically disable Wi-Fi hotspot if FC is armed
-  if(opt_action_handler && m_wifi_hotspot){
+  if(m_opt_action_handler && m_wifi_hotspot){
     auto cb=[this](){
-      // FC armed - disable Wi-Fi hotspot if enabled
-      if(m_nw_settings.get_settings().wifi_hotspot_enable){
-        m_console->warn("FC Armed, disabling wifi hotspot");
-        m_nw_settings.unsafe_get_settings().wifi_hotspot_enable= false;
-        m_nw_settings.persist();
-        m_wifi_hotspot->set_enabled(false);
-      }
+      update_wifi_hotspot_enable();
     };
-    opt_action_handler->m_action_disable_wifi_when_armed=std::make_shared<openhd::ActionHandler::ACTION_DISABLE_WIFI_WHEN_ARMED>(cb);
+    m_opt_action_handler->m_action_disable_wifi_when_armed=std::make_shared<openhd::ActionHandler::ACTION_DISABLE_WIFI_WHEN_ARMED>(cb);
   }
   m_console->debug("OHDInterface::created");
 }
@@ -161,15 +156,15 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     OHDUtil::vec_append(ret,settings);
   }
   if(m_wifi_hotspot != nullptr){
-    auto cb_enable=[this](std::string,int value){
-      if(!openhd::validate_yes_or_no(value))return false;
-      m_nw_settings.unsafe_get_settings().wifi_hotspot_enable=value;
+    auto cb_wifi_hotspot_mode=[this](std::string,int value){
+      if(!is_valid_wifi_hotspot_mode(value))return false;
+      m_nw_settings.unsafe_get_settings().wifi_hotspot_mode=value;
       m_nw_settings.persist();
-      m_wifi_hotspot->set_enabled(m_nw_settings.get_settings().wifi_hotspot_enable);
+      update_wifi_hotspot_enable();
       return true;
     };
     ret.push_back(openhd::Setting{"WIFI_HOTSPOT_E",openhd::IntSetting{
-            m_nw_settings.get_settings().wifi_hotspot_enable,cb_enable}});
+            m_nw_settings.get_settings().wifi_hotspot_mode,cb_wifi_hotspot_mode}});
   }
   if(m_ethernet_hotspot){
     const auto settings=m_nw_settings.get_settings();
@@ -251,4 +246,27 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
     // delete the file
     OHDFilesystemUtil::remove_if_existing(PW_FILENAME);
   }
+}
+
+void OHDInterface::update_wifi_hotspot_enable() {
+    assert(m_wifi_hotspot);
+    const auto& settings = m_nw_settings.get_settings();
+    if(settings.wifi_hotspot_mode==WIFI_HOTSPOT_AUTO){
+        bool is_armed= false;
+        if(m_opt_action_handler){
+            is_armed=m_opt_action_handler->is_currently_armed();
+        }
+        if(is_armed){
+            m_wifi_hotspot->set_enabled_async(false);
+        }else{
+            m_wifi_hotspot->set_enabled_async(true);
+        }
+    }else if(settings.wifi_hotspot_mode==WIFI_HOTSPOT_ALWAYS_OFF){
+        m_wifi_hotspot->set_enabled_async(false);
+    }else if(settings.wifi_hotspot_mode==WIFI_HOTSPOT_ALWAYS_ON){
+        m_wifi_hotspot->set_enabled_async(true);
+    }else{
+        m_console->warn("Invalid wifi hotspot mode");
+        m_wifi_hotspot->set_enabled_async(false);
+    }
 }

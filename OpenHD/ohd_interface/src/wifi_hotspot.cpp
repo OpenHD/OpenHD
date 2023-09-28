@@ -75,7 +75,9 @@ void WifiHotspot::stop_async() {
   m_last_async_operation=std::async(std::launch::async, &WifiHotspot::stop,this);
 }
 
-void WifiHotspot::set_enabled(bool enable) {
+void WifiHotspot::set_enabled_async(bool enable) {
+  if(m_is_enabled==enable)return;
+  m_is_enabled=enable;
   if(enable){
     start_async();
   }else{
