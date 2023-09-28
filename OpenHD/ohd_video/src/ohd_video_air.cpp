@@ -340,18 +340,15 @@ void OHDVideoAir::start_stop_forwarding_external_device(openhd::ExternalDevice e
 
 void OHDVideoAir::on_video_data(int stream_index, const openhd::FragmentedVideoFrame &fragmented_video_frame) {
     //m_console->debug("Got data {} {}",stream_index,fragmented_video_frame.frame_fragments.size());
+    if(!(stream_index==0 || stream_index==1)){
+        m_console->debug("Invalid stream index: {}",stream_index);
+        return;
+    }
     if(m_link_handle){
-        if(stream_index==0){
-            m_link_handle->transmit_video_data(stream_index,fragmented_video_frame);
-        }else if(stream_index==1){
-            m_link_handle->transmit_video_data(stream_index,fragmented_video_frame);
-        }else{
-            m_console->debug("Invalid stream index: {}",stream_index);
-        }
+        m_link_handle->transmit_video_data(stream_index,fragmented_video_frame);
     }
     if(m_has_localhost_forwarding_enabled){
         //m_console->debug("Forwarding {} {}",stream_index,fragmented_video_frame.frame_fragments.size());
-        if(!(stream_index==0 || stream_index==1))return;
         auto& forwarder=stream_index==0 ? m_primary_video_forwarder : m_secondary_video_forwarder;
         for(auto& fragment:fragmented_video_frame.frame_fragments){
             forwarder->forwardPacketViaUDP(fragment->data(),fragment->size());
