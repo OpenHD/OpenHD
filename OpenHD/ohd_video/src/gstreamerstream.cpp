@@ -398,9 +398,9 @@ void GStreamerStream::cleanup_pipe() {
   }
   // start demuxing of (all) .mkv files unless the FC is currently armed ( we are in flight)
   // this will of course also de-mux the new ground recording (if there is any)
-  if(m_opt_action_handler && !m_opt_action_handler->is_currently_armed()){
+  //if(m_opt_action_handler && !m_opt_action_handler->arm_state.is_currently_armed()){
     //GstRecordingDemuxer::instance().demux_all_remaining_mkv_files_async();
-  }
+  //}
   m_console->debug("GStreamerStream::cleanup_pipe() end");
 }
 

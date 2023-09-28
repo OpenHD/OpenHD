@@ -184,7 +184,8 @@ public:
     }
     // Every time we change the bitrate, it might take some time until the camera reacts
     // (TODO: Define a minumum allowed variance for openhd supported cameras)
-    // - this results in dropped frame(s) not being reported as an error
+    // - this results in dropped frame(s) during this period not being reported as an error
+    // (Such that we don't do any rate reduction while the encoder is still reacting to the newly set bitrate)
     void delay_for(std::chrono::milliseconds delay){
         m_opt_no_error_delay=std::chrono::steady_clock::now()+delay;
     }

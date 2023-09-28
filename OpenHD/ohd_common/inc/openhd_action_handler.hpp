@@ -8,6 +8,7 @@
 #include <functional>
 #include <mutex>
 #include <utility>
+#include <map>
 
 #include "openhd_link_statistics.hpp"
 #include "openhd_spdlog.h"
@@ -18,6 +19,71 @@
 // Since we do not have any code dependencies between them, we have a single shared action handler for that
 // which calls the appropriate registered cb (if it has been registered)
 namespace openhd{
+
+// In a few places inside openhd we need to react to changes on the FC arming state.
+// Here once can register / unregister a cb that is called whenever the arming state changes
+class ArmingStateHelper{
+public:
+    typedef std::function<void(const bool armed)> STATE_CHANGED_CB;
+    void register_listener(const std::string& tag,STATE_CHANGED_CB cb){
+        assert(m_cbs.find(tag)==m_cbs.end());
+        m_cbs[tag]=std::move(cb);
+    }
+    void unregister_listener(const std::string& tag){
+        auto element=m_cbs.find(tag);
+        if(element==m_cbs.end()){
+            openhd::log::get_default()->warn("Cannot unregister arming listener {}",tag);
+            return;
+        }
+        m_cbs.erase(element);
+    }
+    // For fetching the arming state in a manner where a deterministic arm / disarm pattern is not needed
+    bool is_currently_armed(){
+        return m_is_armed;
+    }
+    void update_arming_state_if_changed(bool armed) {
+        if (m_is_armed == armed)return;
+        m_is_armed = armed;
+        m_console->debug("MAV armed:{}, calling listeners.",OHDUtil::yes_or_no(armed));
+        for(auto& element: m_cbs){
+            //m_console->debug("Calling {},begin",element.first);
+            element.second(armed);
+            //m_console->debug("Calling {},end",element.first);
+        }
+        m_console->debug("Done calling listeners.");
+    }
+    void disable_all(){
+        m_cbs.clear();
+    }
+private:
+    std::atomic_bool m_is_armed=false;
+    std::map<std::string,STATE_CHANGED_CB> m_cbs;
+    std::shared_ptr<spdlog::logger> m_console=openhd::log::create_or_get("ArmingStateHelper");
+};
+// In (only one) place right now we need to react to changes on the RC channels the FC reports
+class FCRcChannelsHelper{
+public:
+    typedef std::function<void(const std::array<int,18>& rc_channels)> ACTION_ON_ANY_RC_CHANNEL_CB;
+    // called every time a rc channel value(s) mavlink packet is received from the FC
+    // (regardless if there was an actual change on any of the channels or not)
+    // Works well on Ardupilot, which broadcasts the proper telem message by default
+    void update_rc_channels(const std::array<int,18>& rc_channels){
+        auto tmp=m_action_rc_channel;
+        if(tmp){
+            ACTION_ON_ANY_RC_CHANNEL_CB cb=*tmp;
+            cb(rc_channels);
+        }
+    }
+    void action_on_any_rc_channel_register(ACTION_ON_ANY_RC_CHANNEL_CB cb){
+        if(cb== nullptr){
+            m_action_rc_channel= nullptr;
+            return;
+        }
+        m_action_rc_channel=std::make_shared<ACTION_ON_ANY_RC_CHANNEL_CB>(cb);
+    }
+private:
+    std::shared_ptr<ACTION_ON_ANY_RC_CHANNEL_CB> m_action_rc_channel =nullptr;
+};
 
 class ActionHandler{
  public:
@@ -66,82 +132,15 @@ public:
   // Cleanup, set all lambdas that handle things to nullptr
   void disable_all_callables(){
     action_request_bitrate_change_register(nullptr);
-      action_on_any_rc_channel_register(nullptr);
-    m_action_disable_wifi_when_armed= nullptr;
+    fc_rc_channels.action_on_any_rc_channel_register(nullptr);
+    arm_state.disable_all();
     wb_cmd_scan_channels= nullptr;
     wb_cmd_analyze_channels= nullptr;
     wb_get_supported_channels= nullptr;
   }
-  // Allows registering actions when vehicle / FC is armed / disarmed
- public:
-  void update_arming_state_if_changed(bool armed){
-    if(m_is_armed==armed)return;
-    m_is_armed=armed;
-    openhd::log::get_default()->debug("MAV armed:{}",OHDUtil::yes_or_no(armed));
-    {
-      // Needs to be called when armed / disarmed
-      auto tmp=m_action_record_video_when_armed;
-      if(tmp){
-        ACTION_RECORD_VIDEO_WHEN_ARMED cb=*tmp;
-        cb(armed);
-      }
-    }
-    {
-      // Also needs to be called when armed / disarmed
-      auto tmp=m_action_tx_power_when_armed;
-      if(tmp){
-        ACTION_TX_POWER_WHEN_ARMED cb=*tmp;
-        cb(armed);
-      }
-    }
-    // We only need to call this when armed (not disarmed)
-    if(m_is_armed){
-      auto tmp=m_action_disable_wifi_when_armed;
-      if(tmp){
-        ACTION_DISABLE_WIFI_WHEN_ARMED cb=*tmp;
-        cb();
-      }
-    }
-  }
-  // For fetching the arming state in a manner where a deterministic arm / disarm pattern is not needed
-  bool is_currently_armed(){
-    return m_is_armed;
-  }
- private:
-  bool m_is_armed=false;
-  // Allow registering actions when rc channel goes to a specific value
- public:
-  typedef std::function<void(const std::array<int,18>& rc_channels)> ACTION_ON_ANY_RC_CHANNEL_CB;
-  // called every time a rc channel value(s) mavlink packet is received from the FC
-  // (regardless if there was an actual change on any of the channels or not)
-  // Works well on Ardupilot, which broadcasts the proper telem message by default
-  void update_rc_channels(const std::array<int,18>& rc_channels){
-    auto tmp=m_action_rc_channel;
-    if(tmp){
-      ACTION_ON_ANY_RC_CHANNEL_CB cb=*tmp;
-      cb(rc_channels);
-    }
-  }
-  void action_on_any_rc_channel_register(ACTION_ON_ANY_RC_CHANNEL_CB cb){
-    if(cb== nullptr){
-      m_action_rc_channel= nullptr;
-      return;
-    }
-    m_action_rc_channel=std::make_shared<ACTION_ON_ANY_RC_CHANNEL_CB>(cb);
-  }
- private:
-  std::shared_ptr<ACTION_ON_ANY_RC_CHANNEL_CB> m_action_rc_channel =nullptr;
- public:
-  // this is called once the first "armed==true" message from the FC is received - in which case
-  // we will automatically disable wifi hotspot, if it is enabled.
-  typedef std::function<void()> ACTION_DISABLE_WIFI_WHEN_ARMED;
-  std::shared_ptr<ACTION_DISABLE_WIFI_WHEN_ARMED> m_action_disable_wifi_when_armed =nullptr;
-  // For automatically stop recording when armed / disarmed
-  typedef std::function<void(bool armed)> ACTION_RECORD_VIDEO_WHEN_ARMED;
-  std::shared_ptr<ACTION_RECORD_VIDEO_WHEN_ARMED> m_action_record_video_when_armed =nullptr;
-  // For increasing / decreasing TX power when armed / disarmed
-  typedef std::function<void(bool armed)> ACTION_TX_POWER_WHEN_ARMED;
-  std::shared_ptr<ACTION_TX_POWER_WHEN_ARMED> m_action_tx_power_when_armed =nullptr;
+public:
+  ArmingStateHelper arm_state;
+  FCRcChannelsHelper fc_rc_channels;
  private:
   // By using shared_ptr to wrap the stored the cb we are semi thread-safe
   std::shared_ptr<ACTION_REQUEST_BITRATE_CHANGE> m_action_request_bitrate_change =nullptr;
