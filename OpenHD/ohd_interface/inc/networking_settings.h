@@ -7,33 +7,34 @@
 
 #include <cstdint>
 
-#include "include_json.hpp"
 #include "openhd_settings_directories.hpp"
 #include "openhd_settings_persistent.h"
 
+// On by default, disabled when the FC is armed,
+// re-enabled if the FC is disarmed.
+static constexpr auto WIFI_HOTSPOT_AUTO=0;
+static constexpr auto WIFI_HOTSPOT_ALWAYS_OFF=1;
+static constexpr auto WIFI_HOTSPOT_ALWAYS_ON=2;
+
 // Networking related settings, separate from wb_link
 struct NetworkingSettings {
-  // WIFI Hotspot, can be enabled / disabled at run time if an extra Wi-Fi hotspot card exists on the system
-  // Automatically disabled when FC is armed
-  bool wifi_hotspot_enable=false;
+  // Only used if a wifi hotspot card has been found
+  int wifi_hotspot_mode=WIFI_HOTSPOT_AUTO;
   // Ethernet hotspot (changes networking,might require reboot)
   bool ethernet_hotspot_enable=false;
   // passive listening for forwarding without hotspot functionality, can be enabled / disabled at run time.
   bool ethernet_nonhotspot_enable_auto_forwarding=false;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(NetworkingSettings,wifi_hotspot_enable,ethernet_hotspot_enable,ethernet_nonhotspot_enable_auto_forwarding);
+static bool is_valid_wifi_hotspot_mode(int mode){
+    return mode==0 || mode==1 || mode==2;
+}
 
-class NetworkingSettingsHolder:public openhd::PersistentJsonSettings<NetworkingSettings>{
+class NetworkingSettingsHolder:public openhd::PersistentSettings<NetworkingSettings>{
  public:
   NetworkingSettingsHolder():
-    openhd::PersistentJsonSettings<NetworkingSettings>(openhd::get_interface_settings_directory()){
+    openhd::PersistentSettings<NetworkingSettings>(openhd::get_interface_settings_directory()){
     init();
-    // Extra - the user can enable wifi hotspot by placing a file, for recovery purposes
-    if(OHDFilesystemUtil::exists("/boot/openhd/wifi_hotspot.txt")){
-      unsafe_get_settings().wifi_hotspot_enable= true;
-      persist();
-    }
   }
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
@@ -42,6 +43,8 @@ class NetworkingSettingsHolder:public openhd::PersistentJsonSettings<NetworkingS
   [[nodiscard]] NetworkingSettings create_default()const override{
     return NetworkingSettings{};
   }
+  std::optional<NetworkingSettings> impl_deserialize(const std::string& file_as_string)const override;
+  std::string imp_serialize(const NetworkingSettings& data)const override;
 };
 
 #endif  // OPENHD_OPENHD_OHD_INTERFACE_INC_NETWORKING_SETTINGS_H_

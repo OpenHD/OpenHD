@@ -4,6 +4,7 @@
 
 #include "ohd_video_ground.h"
 #include "openhd_config.h"
+#include "openhd_util.h"
 
 #include <utility>
 
@@ -59,10 +60,29 @@ void OHDVideoGround::on_video_data(int stream_index, const uint8_t *data,
 
 void OHDVideoGround::set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {
   ext_device_manager->register_listener([this](openhd::ExternalDevice external_device,bool connected){
-    if(connected){
-      addForwarder(external_device.external_device_ip);
-    }else{
-      removeForwarder(external_device.external_device_ip);
-    }
+      start_stop_forwarding_external_device(external_device,connected);
   });
+}
+
+static bool ip_is_host_self(const std::string& ip){
+    const auto hostname_ips=OHDUtil::run_command_out("hostname -I", false);
+    if(hostname_ips.has_value() && OHDUtil::contains(hostname_ips.value(),ip)){
+        return true;
+    }
+    return false;
+}
+
+void OHDVideoGround::start_stop_forwarding_external_device(openhd::ExternalDevice external_device, bool connected) {
+    if(external_device.discovered_by_mavlink_tcp_server){
+        const bool is_host_self= ip_is_host_self(external_device.external_device_ip);
+        if(is_host_self){
+            m_console->debug("Not forwarding video to {}, since self",external_device.external_device_ip);
+            return;
+        }
+    }
+    if(connected){
+        addForwarder(external_device.external_device_ip);
+    }else{
+        removeForwarder(external_device.external_device_ip);
+    }
 }

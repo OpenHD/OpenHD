@@ -9,20 +9,25 @@
 
 #include "../lib/ini/ini.hpp"
 
+static std::string CONFIG_FILE_PATH="/boot/openhd/hardware.config";
+
 static std::shared_ptr<spdlog::logger> get_logger(){
   return openhd::log::create_or_get("config");
+}
+
+void openhd::set_config_file(const std::string &config_file_path) {
+    get_logger()->debug("Using custom config file path [{}]",config_file_path);
+    CONFIG_FILE_PATH=config_file_path;
 }
 
 openhd::Config openhd::load_config() {
   try{
     openhd::Config ret{};
-    // RPI - allow user(s) to edit the file on the SD card. Otherwise, we still need to figure out what to do
-    std::string filename="/home/consti10/Desktop/OpenHD/OpenHD/ohd_common/config/hardware.config";
-    const std::string image_filename="/boot/openhd/hardware.config";
-    if(OHDFilesystemUtil::exists(image_filename)){
-      filename=image_filename;
+    if(!OHDFilesystemUtil::exists(CONFIG_FILE_PATH)){
+        get_logger()->warn("Config file [{}] does not exist, using default settings",CONFIG_FILE_PATH);
+        return ret;
     }
-    inih::INIReader r{filename};
+    inih::INIReader r{CONFIG_FILE_PATH};
     // Get and parse the ini value
     ret.WIFI_ENABLE_AUTODETECT = r.Get<bool>("wifi", "WIFI_ENABLE_AUTODETECT");
     ret.WIFI_WB_LINK_CARDS = r.GetVector<std::string>("wifi", "WIFI_WB_LINK_CARDS");
@@ -48,7 +53,7 @@ openhd::Config openhd::load_config() {
 void openhd::debug_config(const openhd::Config& config) {
   get_logger()->debug("WIFI_ENABLE_AUTODETECT:{}, WIFI_WB_LINK_CARDS:{}, WIFI_WIFI_HOTSPOT_CARD:{},\n"
       "CAMERA_ENABLE_AUTODETECT:{}, CAMERA_N_CAMERAS:{}, CAMERA_CAMERA0_TYPE:{}, CAMERA_CAMERA1_TYPE:{}\n"
-      "NW_MANUAL_FORWARDING_IPS:{},NW_ETHERNET_CARD:{},NW_FORWARD_TO_LOCALHOST_58XX:{}\n",
+      "NW_MANUAL_FORWARDING_IPS:{},NW_ETHERNET_CARD:{},NW_FORWARD_TO_LOCALHOST_58XX:{}",
       config.WIFI_ENABLE_AUTODETECT,OHDUtil::str_vec_as_string(config.WIFI_WB_LINK_CARDS),config.WIFI_WIFI_HOTSPOT_CARD,
       config.CAMERA_ENABLE_AUTODETECT,config.CAMERA_N_CAMERAS,config.CAMERA_CAMERA0_TYPE,config.CAMERA_CAMERA1_TYPE,
       OHDUtil::str_vec_as_string(config.NW_MANUAL_FORWARDING_IPS),config.NW_ETHERNET_CARD,config.NW_FORWARD_TO_LOCALHOST_58XX

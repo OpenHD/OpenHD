@@ -11,26 +11,38 @@
 #include "wifi_command_helper.h"
 
 static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
-  if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k_htc")) != std::string::npos) {
-    return WiFiCardType::Atheros9khtc;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("ath9k")) != std::string::npos) {
-    return WiFiCardType::Atheros9k;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("rt2800usb")) != std::string::npos) {
-    return WiFiCardType::Ralink;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("iwlwifi")) != std::string::npos) {
-    return WiFiCardType::Intel;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("brcmfmac")) != std::string::npos) {
-    return WiFiCardType::Broadcom;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("88xxau")) != std::string::npos) {
-    return WiFiCardType::Realtek8812au;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8812au")) != std::string::npos) {
-    return WiFiCardType::Realtek8812au;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("88x2bu")) != std::string::npos) {
-    return WiFiCardType::Realtek88x2bu;
-  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8188eu")) != std::string::npos) {
-    return WiFiCardType::Realtek8188eu;
-  }
-  return WiFiCardType::Unknown;
+    // The fully supported card(s)
+    if(OHDUtil::equal_after_uppercase(driver_name,"rtl88xxau_wfb")){
+        return WiFiCardType::OPENHD_RTL_88X2AU;
+    }
+    if(OHDUtil::equal_after_uppercase(driver_name,"rtl88x2bu")){
+        // NOTE: "rtw_8822bu" is the bad kernel driver which is fucking horrible.
+        return WiFiCardType::OPENHD_RTL_88X2BU;
+    }
+    // The not supported, but perhaps working card(s)
+    if(OHDUtil::contains_after_uppercase(driver_name,"ath9k")) {
+        return WiFiCardType::ATHEROS;
+    }
+    if(OHDUtil::contains_after_uppercase(driver_name,"rt2800usb")) {
+        WiFiCardType::RALINK;
+    }
+    if(OHDUtil::contains_after_uppercase(driver_name,"iwlwifi")) {
+        return WiFiCardType::INTEL;
+    }
+    if(OHDUtil::contains_after_uppercase(driver_name,"brcmfmac")) {
+        return WiFiCardType::BROADCOM;
+    }
+    if(OHDUtil::contains_after_uppercase(driver_name,"88xxau")) {
+        return WiFiCardType::RTL_88X2AU;
+    }
+    if(OHDUtil::contains_after_uppercase(driver_name,"rtw_8822bu") ) {
+        // NOTE: "rtw_8822bu" is the bad kernel driver which doesn't support monitor mode
+        return WiFiCardType::RTL_88X2BU;
+    }
+    if(OHDUtil::contains_after_uppercase(driver_name,"mt7921u")){
+        return WiFiCardType::MT_7921u;
+    }
+    return WiFiCardType::UNKNOWN;
 }
 
 static std::vector<uint32_t> supported_frequencies(const int phy_index,bool check_2g){
@@ -41,26 +53,17 @@ static std::vector<uint32_t> supported_frequencies(const int phy_index,bool chec
   return supported_frequencies;
 }
 
-bool DWifiCards::is_known_for_injection(const WiFiCardType& type) {
+bool DWifiCards::is_openhd_supported(const WiFiCardType& type) {
   bool supports=false;
   switch (type) {
-    case WiFiCardType::Unknown:
-      supports= false;
-      break;
-    case WiFiCardType::Realtek8812au:
-    case WiFiCardType::Realtek8814au:
-    case WiFiCardType::Realtek88x2bu:
-    case WiFiCardType::Realtek8188eu:
-    case WiFiCardType::Atheros9khtc:
-    case WiFiCardType::Atheros9k:
-    case WiFiCardType::Ralink:
-      supports= true;
-      break;
-    case WiFiCardType::Intel:
-    case WiFiCardType::Broadcom:
-    default:
-      supports= false;
-      break;
+      case WiFiCardType::OPENHD_RTL_88X2BU:
+          supports= true;
+          break;
+      case WiFiCardType::OPENHD_RTL_88X2AU:
+          supports=true;
+          break;
+      default:
+          break;
   }
   return supports;
 }
@@ -120,28 +123,20 @@ std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(const std::
 std::vector<WiFiCard> DWifiCards::discover_connected_wifi_cards() {
   openhd::log::get_default()->trace("WiFi::discover_connected_wifi_cards");
   std::vector<WiFiCard> wifi_cards{};
-  // Find wifi cards, excluding specific kinds of interfaces.
-  const std::vector<std::string> excluded_interfaces = {
-      "usb",
-      "lo",
-      "eth",
-      "enp2s0" // Consti10 added
-  };
   const auto netFilenames=OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory("/sys/class/net");
-  for(const auto& filename:netFilenames){
-    auto excluded = false;
-    for (const auto &excluded_interface: excluded_interfaces) {
-      if (filename.find(excluded_interface)!=std::string::npos) {
-        excluded = true;
-        break;
+  std::vector<std::string> valid_wifi_filenames;
+  // this directory has wifi cards, ethernet, ... - filter out wifi cards
+  for(const auto& filename : netFilenames){
+      if(OHDFilesystemUtil::exists(fmt::format("/sys/class/net/{}/phy80211",filename))){
+          valid_wifi_filenames.push_back(filename);
       }
-    }
-    if (!excluded) {
+  }
+  // Try and figure out more about the card, if success, use it.
+  for(const auto& filename : valid_wifi_filenames){
       auto card_opt= process_card(filename);
       if(card_opt.has_value()){
-        wifi_cards.push_back(card_opt.value());
+          wifi_cards.push_back(card_opt.value());
       }
-    }
   }
   openhd::log::get_default()->trace("WiFi::discover_connected_wifi_cards done, n cards: {}",wifi_cards.size());
   write_wificards_manifest(wifi_cards);
@@ -161,38 +156,42 @@ std::optional<WiFiCard> DWifiCards::process_card(const std::string &interface_na
   card.xx_supports_2ghz=supported_freq.supports_any_2G;
   card.xx_supports_5ghz=supported_freq.supports_any_5G;*/
   // but we now also have a method to figure out all the supported channels
-  card.supported_frequencies_2G=supported_frequencies(card.phy80211_index, true);
-  card.supported_frequencies_5G=supported_frequencies(card.phy80211_index, false);
-
+  // RTL8812AU - since the openhd driver change, it reliably supports all wifi frequencies, no matter what CRDA has to say
+  if(card.type==WiFiCardType::OPENHD_RTL_88X2AU || card.type==WiFiCardType::OPENHD_RTL_88X2BU){
+      card.supported_frequencies_2G= openhd::get_all_channel_frequencies(openhd::get_channels_2G_legal_at_least_one_country());
+      card.supported_frequencies_5G=openhd::get_all_channel_frequencies(openhd::get_channels_5G_legal_at_least_one_country());
+  }else{
+      // Ask CRDA
+      card.supported_frequencies_2G=supported_frequencies(card.phy80211_index, true);
+      card.supported_frequencies_5G=supported_frequencies(card.phy80211_index, false);
+  }
   // Note that this does not necessarily mean this info is right/complete
   // a card might report a specific channel but then since monitor mode is so hack not support the channel in monitor mode
   card.supports_monitor_mode= wifi::commandhelper::iw_supports_monitor_mode(card.phy80211_index);
-  card.supports_injection= is_known_for_injection(card.type);
-
-  openhd::log::get_default()->debug("Card {} reports driver:{} supports_2GHz:{} supports_5GHz:{} supports_monitor_mode:{} supports_injection:{}",
+  card.is_openhd_supported= is_openhd_supported(card.type);
+  openhd::log::get_default()->debug("Card {} reports driver:{} supports_2GHz:{} supports_5GHz:{} supports_monitor_mode:{} openhd_supported:{}",
                                     card.device_name,card.driver_name,card.supports_2GHz(),card.supports_5GHz(),
-                                    card.supports_monitor_mode,card.supports_injection);
+                                    card.supports_monitor_mode,card.is_openhd_supported);
 
   // temporary,hacky, only hotspot on rpi integrated wifi
-  if(card.type==WiFiCardType::Broadcom){
+  if(card.type==WiFiCardType::BROADCOM){
     card.supports_hotspot= true;
   }
   return card;
 }
 
-int DWifiCards::n_cards_supporting_injection(
-    const std::vector<WiFiCard>& cards) {
+int DWifiCards::n_cards_openhd_supported(const std::vector<WiFiCard>& cards) {
   int ret=0;
   for(const auto& card:cards){
-    if(card.supports_injection){
+    if(card.is_openhd_supported){
       ret++;
     }
   }
   return ret;
 }
 
-bool DWifiCards::any_wifi_card_supporting_injection(const std::vector<WiFiCard>& cards) {
-  return n_cards_supporting_injection(cards)>=1;
+bool DWifiCards::any_wifi_card_openhd_supported(const std::vector<WiFiCard>& cards) {
+  return n_cards_openhd_supported(cards)>=1;
 }
 
 bool DWifiCards::any_wifi_card_supporting_monitor_mode(
@@ -215,7 +214,7 @@ std::vector<WiFiCard> reorder_monitor_mode_cards(std::vector<WiFiCard> cards){
     std::vector<WiFiCard> ret;
     // Optimization 1: always show rtl8812au cards first
     for(auto& card:tmp){
-        if(card.first.type==WiFiCardType::Realtek8812au){
+        if(card.first.type==WiFiCardType::OPENHD_RTL_88X2BU){
             ret.push_back(card.first);
             card.second= true;
         }
@@ -235,10 +234,10 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
   // We need to figure out what's the best usage for the card(s) connected to the system based on their capabilities.
   std::vector<WiFiCard> monitor_mode_cards{};
   std::optional<WiFiCard> hotspot_card=std::nullopt;
-  // Default simple approach: if a card supports injection, use it for monitor mode
+  // Default simple approach: if a card is supported by openhd, use it for openhd / monitor mode
   // otherwise, use it for hotspot
   for(const auto& card:discovered_cards){
-    if(card.supports_injection){
+    if(card.is_openhd_supported){
       monitor_mode_cards.push_back(card);
     }else{
       if(card.supports_hotspot && hotspot_card==std::nullopt){
@@ -247,10 +246,10 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
     }
   }
   if(monitor_mode_cards.empty()){
-    // try if we can find a card that at least does monitor mode (but not injection)
+    // try if we can find a card that at least does monitor mode -  there is no way to query injection support
     for(const auto& card:discovered_cards){
       if(card.supports_monitor_mode){
-        openhd::log::get_default()->warn("Using card {} for monitor mode(wifibroadcast) even though it does not support injection",card.device_name);
+        openhd::log::get_default()->warn("Using openhd unsupported but passive monitor mode card {}/{}",card.device_name,"TODO");
         monitor_mode_cards.push_back(card);
         hotspot_card=std::nullopt;
         break;
@@ -259,9 +258,6 @@ DWifiCards::ProcessedWifiCards DWifiCards::process_and_evaluate_cards(
   }
   if(profile.is_air && monitor_mode_cards.size()>1){
     monitor_mode_cards.resize(1);
-  }
-  if(monitor_mode_cards.size()>=2){
-      // Optimization:
   }
   return {reorder_monitor_mode_cards(monitor_mode_cards),hotspot_card};
 }

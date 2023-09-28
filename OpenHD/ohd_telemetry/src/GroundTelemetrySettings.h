@@ -28,14 +28,10 @@ static bool valid_joystick_update_rate(int value){
     return value>=1 && value<=150;
 }
 
-
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,enable_rc_over_joystick,rc_over_joystick_update_rate_hz,rc_channel_mapping,
-                                   gnd_uart_connection_type,gnd_uart_baudrate);
-
-class SettingsHolder:public openhd::PersistentJsonSettings<Settings>{
+class SettingsHolder:public openhd::PersistentSettings<Settings>{
  public:
   SettingsHolder():
-                     openhd::PersistentJsonSettings<Settings>(
+                     openhd::PersistentSettings<Settings>(
                          openhd::get_telemetry_settings_directory()){
     init();
   }
@@ -44,13 +40,13 @@ class SettingsHolder:public openhd::PersistentJsonSettings<Settings>{
   }
  private:
   [[nodiscard]] std::string get_unique_filename()const override{
-    std::stringstream ss;
-    ss<<"ground_settings.json";
-    return ss.str();
+    return "ground_settings.json";
   }
   [[nodiscard]] Settings create_default()const override{
     return Settings{};
   }
+  std::optional<Settings> impl_deserialize(const std::string& file_as_string)const override;
+  std::string imp_serialize(const Settings& data)const override;
 };
 
 }

@@ -6,6 +6,8 @@
 
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
+#include "openhd_util_filesystem.h"
+#include "wifi_channel.h"
 
 #include <sstream>
 #include <iostream>
@@ -35,7 +37,8 @@ bool wifi::commandhelper::iw_enable_monitor_mode(const std::string &device) {
   return success;
 }
 
-static std::string channel_width_as_iw_string(uint32_t channel_width){
+// use_ht40_plus: Only in 40Mhz mode
+static std::string channel_width_as_iw_string(uint32_t channel_width,bool use_ht40_plus= true){
   if(channel_width==5){
     return "5MHz";
   }else if(channel_width==10) {
@@ -43,7 +46,7 @@ static std::string channel_width_as_iw_string(uint32_t channel_width){
   }else if(channel_width==20){
     return "HT20";
   }else if(channel_width==40){
-    return "HT40+";
+    return use_ht40_plus ? "HT40+" : "HT40-";
   }
   get_logger()->info("Invalid channel width {}, assuming HT20",channel_width);
   return "HT20";
@@ -51,34 +54,19 @@ static std::string channel_width_as_iw_string(uint32_t channel_width){
 
 bool wifi::commandhelper::iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz,uint32_t channel_width) {
   const std::string iw_channel_width= channel_width_as_iw_string(channel_width);
-  get_logger()->info("iw_set_frequency_and_channel_width {} {}Mhz {}",device,freq_mhz,iw_channel_width);
-  std::vector<std::string> args{"dev", device, "set", "freq", std::to_string(freq_mhz), iw_channel_width};
-  const auto ret = OHDUtil::run_command("iw", args);
-  if(ret!=0){
-    get_logger()->warn("iw {}Mhz@{}Mhz not supported {}",freq_mhz,channel_width,ret);
-    std::cout<<std::flush;
-    return false;
-  }
-  return true;
-    /*const std::string iw_channel_width= channel_width_as_iw_string(channel_width);
-    get_logger()->info("iw_set_frequency_and_channel_width {} {}Mhz {}",device,freq_mhz,iw_channel_width);
-    std::vector<std::string> args{"dev", device, "set", "freq", std::to_string(freq_mhz), iw_channel_width};
-    const auto command_with_args = OHDUtil::create_command_with_args("iw", args);
-    const auto ret = OHDUtil::run_command_out(command_with_args);
-    if(!ret.has_value()){
-        get_logger()->warn("iw {}Mhz@{}Mhz not supported",freq_mhz,channel_width);
+  return iw_set_frequency_and_channel_width2(device,freq_mhz,iw_channel_width);
+}
+bool wifi::commandhelper::iw_set_frequency_and_channel_width2(const std::string &device, uint32_t freq_mhz,
+                                                              const std::string& ht_mode,bool dummy) {
+    get_logger()->info("{}iw_set_frequency_and_channel_width2 {} {}Mhz {}",dummy ? "DUMMY! " : "",device,freq_mhz,ht_mode);
+    std::vector<std::string> args{"dev", device, "set", "freq", std::to_string(freq_mhz), ht_mode};
+    const auto ret = OHDUtil::run_command("iw", args);
+    if(ret!=0){
+        get_logger()->warn("iw {}Mhz@{} not supported {}",freq_mhz,ht_mode,ret);
         std::cout<<std::flush;
         return false;
-    }else{
-        const std::string content=ret.value();
-        if(OHDUtil::contains(content,"kernel reports: (extension) channel is disabled")){
-            get_logger()->warn("iw {}Mhz@{}Mhz not supported {}",freq_mhz,channel_width,content);
-            std::cout<<std::flush;
-            return false;
-        }
-        get_logger()->warn("Got result [{}]",content);
     }
-    return true;*/
+    return true;
 }
 
 bool wifi::commandhelper::iw_set_tx_power(const std::string &device,uint32_t tx_power_mBm) {
@@ -187,4 +175,55 @@ bool wifi::commandhelper::iw_supports_monitor_mode(int phy_index) {
     return true;
   }
   return OHDUtil::contains(res_opt.value(),"* monitor");
+}
+
+bool wifi::commandhelper::openhd_driver_set_frequency_and_channel_width(int type,const std::string &device, uint32_t freq_mhz, uint32_t channel_width) {
+    const auto channel_opt=openhd::channel_from_frequency(freq_mhz);
+    if(!channel_opt.has_value()){
+        openhd::log::get_default()->warn("Cannot find channel {}Mhz",freq_mhz);
+    }
+    const auto channel=channel_opt.value_or(openhd::channel_from_frequency(5180).value());
+    const std::string rtl8812au_channel=fmt::format("{}",channel.channel);
+    openhd::log::get_default()->debug("openhd_driver_set_frequency_and_channel_width wanted:{}@{}Mhz, using channel override:{}",
+                                      freq_mhz,channel_width,rtl8812au_channel);
+    const std::string CHANNEL_OVERRIDE_FILENAME=type==0 ?
+            "/sys/module/88XXau_wfb/parameters/openhd_override_channel" :
+            "/sys/module/88x2bu/parameters/openhd_override_channel";
+    if(!OHDFilesystemUtil::exists(CHANNEL_OVERRIDE_FILENAME)){
+        openhd::log::get_default()->error("YOU ARE USING THE WRONG DRIVER; CHANNEL WON'T WORK");
+        // hope this works
+        wifi::commandhelper::iw_set_frequency_and_channel_width(device,freq_mhz,channel_width);
+        return true;
+    }
+    // /etc/modprobe.d
+    // options 88XXau_wfb openhd_override_channel=165 openhd_override_channel_width=1
+    // rmmod 88XXau_wfb
+    OHDFilesystemUtil::write_file(CHANNEL_OVERRIDE_FILENAME,rtl8812au_channel);
+    // Override stuff is set, now we just change to a channel that is always okay in crda such that the method is called -
+    // ! the actually applied channel will be the overridden one !
+    const bool use_40mhz=channel_width==40;
+    const bool use_ht40_plus=channel.in_40Mhz_ht40_plus; // only in 40Mhz mode
+    int dummy_frequency=-1;
+    if(channel.space==openhd::WifiSpace::G2_4){
+        dummy_frequency = use_40mhz ? (use_ht40_plus ? 2412 : 2432) : 2412;
+    }else{
+        dummy_frequency = use_40mhz ? (use_ht40_plus ? 5180 : 5200) : 5180;
+    }
+    const std::string bw_mode = channel_width == 20 ? "HT20" : (use_ht40_plus ? "HT40+" : "HT40-");
+    wifi::commandhelper::iw_set_frequency_and_channel_width2(device,dummy_frequency,bw_mode, true);
+    return true;
+}
+
+bool wifi::commandhelper::openhd_driver_set_tx_power(const std::string &device, uint32_t tx_power_mBm) {
+    const std::string TX_POWER_MDBM_OVERRIDE_FILENAME="/sys/module/88x2bu/parameters/openhd_override_tx_power_mbm";
+    if(!OHDFilesystemUtil::exists(TX_POWER_MDBM_OVERRIDE_FILENAME)){
+        openhd::log::get_default()->error("YOU ARE USING THE WRONG DRIVER; TX POWER WON'T WORK");
+        // hope this works
+        wifi::commandhelper::iw_set_tx_power(device,tx_power_mBm);
+        return true;
+    }
+    OHDFilesystemUtil::write_file(TX_POWER_MDBM_OVERRIDE_FILENAME,fmt::format("{}",tx_power_mBm));
+    // initiate change
+    wifi::commandhelper::iw_set_tx_power(device,13); //20mW ~ 13mBm, should always work
+    return true;
 }

@@ -5,20 +5,21 @@
 #include "include_json.hpp"
 
 NLOHMANN_JSON_SERIALIZE_ENUM( WiFiCardType, {
-  {WiFiCardType::Unknown, nullptr},
-  {WiFiCardType::Realtek8812au, "Realtek8812au"},
-  {WiFiCardType::Realtek8814au, "Realtek8814au"},
-  {WiFiCardType::Realtek88x2bu, "Realtek88x2bu"},
-  {WiFiCardType::Realtek8188eu, "Realtek8188eu"},
-  {WiFiCardType::Atheros9khtc, "Atheros9khtc"},
-  {WiFiCardType::Atheros9k, "Atheros9k"},
-  {WiFiCardType::Ralink, "Ralink"},
-  {WiFiCardType::Intel, "Intel"},
-  {WiFiCardType::Broadcom, "Broadcom"},
+    {WiFiCardType::UNKNOWN, nullptr},
+    {WiFiCardType::OPENHD_RTL_88X2AU, ""},
+    {WiFiCardType::OPENHD_RTL_88X2BU, ""},
+    {WiFiCardType::RTL_88X2AU, ""},
+    {WiFiCardType::RTL_88X2BU, ""},
+    {WiFiCardType::ATHEROS, "ATHEROS"},
+    {WiFiCardType::MT_7921u, "MT_7921U"},
+    {WiFiCardType::RALINK, "RALINK"},
+    {WiFiCardType::INTEL, "INTEL"},
+    {WiFiCardType::BROADCOM, "BROADCOM"}
+    //{WiFiCardType::, ""},
 });
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(WiFiCard,device_name,mac,phy80211_index,driver_name,type,
-								   supports_injection,supports_monitor_mode,supports_hotspot,
+                                   is_openhd_supported,supports_monitor_mode,supports_hotspot,
 								   supported_frequencies_2G,supported_frequencies_5G)
 
 static nlohmann::json wificards_to_json(const std::vector<WiFiCard> &cards) {

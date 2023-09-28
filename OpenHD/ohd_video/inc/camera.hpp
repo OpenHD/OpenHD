@@ -6,7 +6,6 @@
 #define OPENHD_OPENHD_OHD_VIDEO_INC_DISCOVERED_CAMERA_H_
 
 #include "camera_enums.hpp"
-#include "include_json.hpp"
 #include "openhd_util_filesystem.h"
 
 
@@ -55,7 +54,6 @@ struct CameraEndpointV4l2 {
     return supports_h264() || supports_h265() || supports_mjpeg() || supports_raw();
   }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CameraEndpointV4l2, v4l2_device_node,bus,formats_h264,formats_h265,formats_mjpeg,formats_raw)
 
 /**
  * Note: A camera might output multiple pixel formats / already encoded video formats (and they might even show up as multiple v4l2 device node(s)
@@ -159,23 +157,6 @@ struct Camera {
     return fmt::format("{}_{}_{}.json",index, camera_type_to_string(type),safe_name);
   }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Camera,type,name,vendor,sensor_name,bus,index,rpi_csi_mmal_is_csi_to_hdmi, v4l2_endpoints)
-
-static nlohmann::json cameras_to_json(const std::vector<Camera> &cameras) {
-  nlohmann::json j;
-  for (const auto &camera : cameras) {
-    nlohmann::json _camera = camera;
-    j.push_back(_camera);
-  }
-  return j;
-}
-
-static constexpr auto CAMERA_MANIFEST_FILENAME = "/tmp/camera_manifest";
-
-static void write_camera_manifest(const std::vector<Camera> &cameras) {
-  auto manifest = cameras_to_json(cameras);
-  OHDFilesystemUtil::write_file(CAMERA_MANIFEST_FILENAME,manifest.dump(4));
-}
 
 static Camera createDummyCamera(int index=0) {
   Camera camera;

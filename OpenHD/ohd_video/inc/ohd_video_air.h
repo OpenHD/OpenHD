@@ -8,11 +8,15 @@
 #include <string>
 
 #include "camerastream.h"
-#include "ohd_video_air_generic_settings.hpp"
+#include "ohd_video_air_generic_settings.h"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
+#include "openhd_external_device.hpp"
+#include "openhd_link.hpp"
 // Dirty
 #include "openhd-rpi-os-configure-vendor-cam.hpp"
+#define DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
+#include "../../lib/wifibroadcast/src/HelperSources/SocketHelper.hpp"
 
 /**
  * Main entry point for OpenHD video streaming for discovered cameras on the air unit.
@@ -31,6 +35,7 @@ class OHDVideoAir {
   OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
            std::shared_ptr<openhd::ActionHandler> opt_action_handler,
            std::shared_ptr<OHDLink> link_handle);
+  ~OHDVideoAir();
   OHDVideoAir(const OHDVideoAir&)=delete;
   OHDVideoAir(const OHDVideoAir&&)=delete;
   /**
@@ -61,6 +66,9 @@ class OHDVideoAir {
   std::vector<openhd::Setting> get_generic_settings();
   // r.n limited to primary and secondary camera
   static constexpr auto MAX_N_CAMERAS=2;
+  // react to dynamically connecting / disconnecting external device(s)
+  void set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager);
+  void update_arming_state(bool armed);
  private:
   const OHDPlatform m_platform;
   // All the created camera streams
@@ -68,16 +76,25 @@ class OHDVideoAir {
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
   std::shared_ptr<OHDLink> m_link_handle;
+  // r.n only for multi camera support
+  std::unique_ptr<AirCameraGenericSettingsHolder> m_generic_settings;
+  // dirty / annoying. Interacts heavily with the OS aka can break QOpenHD
+  std::unique_ptr<openhd::rpi::os::ConfigChangeHandler> m_rpi_os_change_config_handler=nullptr;
  private:
   // Add a CameraStream for a discovered camera.
   void configure(const std::shared_ptr<CameraHolder>& camera);
   // propagate a bitrate change request to the CameraStream implementation(s)
   void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb);
- private:
-  // r.n only for multi camera support
-  std::unique_ptr<AirCameraGenericSettingsHolder> m_generic_settings;
-  // dirty / annoying. Interacts heavily with the OS aka can break QOpenHD
-  std::unique_ptr<openhd::rpi::os::ConfigChangeHandler> m_rpi_os_change_config_handler=nullptr;
+  // Called every time an encoded frame was generated
+  void on_video_data(int stream_index,const openhd::FragmentedVideoFrame& fragmented_video_frame);
+  // NOTE: On air, by default, we do not forward video via UDP to save precious cpu time -
+  // but we allow user(s) to connect to the air unit via mavlink TCP directly,
+  // in which case we start forwarding of video data to the device.
+  void start_stop_forwarding_external_device(openhd::ExternalDevice external_device,bool connected);
+  std::unique_ptr<SocketHelper::UDPMultiForwarder> m_primary_video_forwarder= nullptr;
+  std::unique_ptr<SocketHelper::UDPMultiForwarder> m_secondary_video_forwarder= nullptr;
+  // Optimization for 0 overhead on air when not enabled
+  std::atomic_bool m_has_localhost_forwarding_enabled=false;
 };
 
 #endif  // OPENHD_VIDEO_OHDVIDEO_H

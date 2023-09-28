@@ -25,7 +25,7 @@
 class GStreamerStream : public CameraStream {
  public:
   GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                  std::shared_ptr<OHDLink> opt_link_handle,
+                  openhd::ON_ENCODE_FRAME_CB out_cb,
                   std::shared_ptr<openhd::ActionHandler> opt_action_handler=nullptr);
   ~GStreamerStream();
   void setup() override;
@@ -54,7 +54,7 @@ class GStreamerStream : public CameraStream {
   void restartIfStopped() override;
   void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb) override;
   // this is called when the FC reports itself as armed / disarmed
-  void update_arming_state(bool armed);
+  void handle_update_arming_state(bool armed) override;
  public:
   // Set gst state to PLAYING
   void start() override;
@@ -82,7 +82,7 @@ class GStreamerStream : public CameraStream {
   std::unique_ptr<std::thread> m_async_thread =nullptr;
   std::shared_ptr<spdlog::logger> m_console;
   std::chrono::steady_clock::time_point m_stream_creation_time=std::chrono::steady_clock::now();
-  // This boolean indicates we should record
+  // Set to true if armed, used for auto record on arm
   bool m_armed_enable_air_recording= false;
  private:
   // Change the bitrate without re-starting the whole pipeline if supported by the camera.

@@ -11,11 +11,11 @@
 #include <utility>
 
 #include "wb_link.h"
-#include "wb_link_settings.hpp"
-#include "wifi_command_helper.h"
 
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler,bool continue_without_wb_card)
-    : m_platform(platform1), m_profile(std::move(profile1)) {
+    : m_platform(platform1),
+    m_profile(std::move(profile1)),
+    m_opt_action_handler(std::move(opt_action_handler)){
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);
   m_external_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
@@ -33,17 +33,17 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     if(!continue_without_wb_card) {
       const auto begin = std::chrono::steady_clock::now();
       while (true) {
-        const auto n_wifibroadcast_capable_cards=DWifiCards::n_cards_supporting_injection(connected_cards);
+        const auto n_openhd_supported_cards=DWifiCards::n_cards_openhd_supported(connected_cards);
         // On the air unit, we stop the discovery as soon as we have one wb capable card
-        if(m_profile.is_air && n_wifibroadcast_capable_cards>=1){
+        if(m_profile.is_air && n_openhd_supported_cards>=1){
           break ;
         }
         // On the ground unit, we stop the discovery as soon as we have 2 or more wb capable card(s), or timeout
-        if(m_profile.is_ground() && n_wifibroadcast_capable_cards>=2){
+        if(m_profile.is_ground() && n_openhd_supported_cards>=2){
           break ;
         }
         const auto elapsed = std::chrono::steady_clock::now() - begin;
-        const auto message=fmt::format("Waiting for WB capable card(s), Found:{}",n_wifibroadcast_capable_cards);
+        const auto message=fmt::format("Waiting for OpenHD supported card(s), Found:{}",n_openhd_supported_cards);
         if (elapsed > std::chrono::seconds(3)) {
           m_console->warn(message);
         } else {
@@ -55,8 +55,8 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
         // or no card at all
         if (elapsed > std::chrono::seconds(10)) {
           // We only found 1 fully wb capable card
-          if(DWifiCards::any_wifi_card_supporting_injection(connected_cards)){
-            m_console->warn("Using {} WB cards",DWifiCards::n_cards_supporting_injection(connected_cards));
+          if(DWifiCards::any_wifi_card_openhd_supported(connected_cards)){
+            m_console->warn("Using {} OpenHD supported cards",DWifiCards::n_cards_openhd_supported(connected_cards));
             break ;
           }
           if (DWifiCards::any_wifi_card_supporting_monitor_mode(connected_cards)) {
@@ -102,7 +102,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
     // we just continue as nothing happened, but OHD won't have any wifibroadcast connectivity
     //exit(1);
   }else{
-    m_wb_link =std::make_shared<WBLink>(m_profile, m_platform,monitor_mode_cards,opt_action_handler);
+    m_wb_link =std::make_shared<WBLink>(m_profile, m_platform,monitor_mode_cards,m_opt_action_handler);
   }
   // The USB tethering listener is always enabled on ground - it doesn't interfere with anything
   if(m_profile.is_ground()){
@@ -133,23 +133,15 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   if(opt_hotspot_card.has_value()){
     const openhd::WifiSpace wb_frequency_space= (m_wb_link!= nullptr) ? m_wb_link->get_current_frequency_channel_space() : openhd::WifiSpace::G5_8;
     // OHD hotspot needs to know the wifibroadcast frequency - it is always on the opposite spectrum
-    m_wifi_hotspot =std::make_unique<WifiHotspot>(opt_hotspot_card.value(),wb_frequency_space);
-    if(m_nw_settings.get_settings().wifi_hotspot_enable){
-      m_wifi_hotspot->set_enabled(true);
-    }
+    m_wifi_hotspot =std::make_unique<WifiHotspot>(m_profile,opt_hotspot_card.value(),wb_frequency_space);
+    update_wifi_hotspot_enable();
   }
   // automatically disable Wi-Fi hotspot if FC is armed
-  if(opt_action_handler && m_wifi_hotspot){
+  if(m_opt_action_handler && m_wifi_hotspot){
     auto cb=[this](){
-      // FC armed - disable Wi-Fi hotspot if enabled
-      if(m_nw_settings.get_settings().wifi_hotspot_enable){
-        m_console->warn("FC Armed, disabling wifi hotspot");
-        m_nw_settings.unsafe_get_settings().wifi_hotspot_enable= false;
-        m_nw_settings.persist();
-        m_wifi_hotspot->set_enabled(false);
-      }
+      update_wifi_hotspot_enable();
     };
-    opt_action_handler->m_action_disable_wifi_when_armed=std::make_shared<openhd::ActionHandler::ACTION_DISABLE_WIFI_WHEN_ARMED>(cb);
+    m_opt_action_handler->m_action_disable_wifi_when_armed=std::make_shared<openhd::ActionHandler::ACTION_DISABLE_WIFI_WHEN_ARMED>(cb);
   }
   m_console->debug("OHDInterface::created");
 }
@@ -161,15 +153,15 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
     OHDUtil::vec_append(ret,settings);
   }
   if(m_wifi_hotspot != nullptr){
-    auto cb_enable=[this](std::string,int value){
-      if(!openhd::validate_yes_or_no(value))return false;
-      m_nw_settings.unsafe_get_settings().wifi_hotspot_enable=value;
+    auto cb_wifi_hotspot_mode=[this](std::string,int value){
+      if(!is_valid_wifi_hotspot_mode(value))return false;
+      m_nw_settings.unsafe_get_settings().wifi_hotspot_mode=value;
       m_nw_settings.persist();
-      m_wifi_hotspot->set_enabled(m_nw_settings.get_settings().wifi_hotspot_enable);
+      update_wifi_hotspot_enable();
       return true;
     };
     ret.push_back(openhd::Setting{"WIFI_HOTSPOT_E",openhd::IntSetting{
-            m_nw_settings.get_settings().wifi_hotspot_enable,cb_enable}});
+            m_nw_settings.get_settings().wifi_hotspot_mode,cb_wifi_hotspot_mode}});
   }
   if(m_ethernet_hotspot){
     const auto settings=m_nw_settings.get_settings();
@@ -226,7 +218,7 @@ std::vector<openhd::Setting> OHDInterface::get_all_settings(){
 }
 
 void OHDInterface::print_internal_fec_optimization_method() {
-  print_optimization_method();
+    fec_stream_print_fec_optimization_method();
 }
 
 std::shared_ptr<OHDLink> OHDInterface::get_link_handle() {
@@ -244,11 +236,34 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
   static constexpr auto PW_FILENAME="/boot/openhd/pw.txt";
   if(OHDFilesystemUtil::exists(PW_FILENAME)){
     auto pw=OHDFilesystemUtil::read_file(PW_FILENAME);
-    OHDUtil::rtrim(pw);
+    OHDUtil::trim(pw);
     openhd::log::get_default()->info("Generating key(s) from pw xxx"); // don't show the pw
     auto keys=wb::generate_keypair_from_bind_phrase(pw);
     wb::write_keypair_to_file(keys,"/boot/openhd/txrx.key");
     // delete the file
     OHDFilesystemUtil::remove_if_existing(PW_FILENAME);
   }
+}
+
+void OHDInterface::update_wifi_hotspot_enable() {
+    assert(m_wifi_hotspot);
+    const auto& settings = m_nw_settings.get_settings();
+    if(settings.wifi_hotspot_mode==WIFI_HOTSPOT_AUTO){
+        bool is_armed= false;
+        if(m_opt_action_handler){
+            is_armed=m_opt_action_handler->is_currently_armed();
+        }
+        if(is_armed){
+            m_wifi_hotspot->set_enabled_async(false);
+        }else{
+            m_wifi_hotspot->set_enabled_async(true);
+        }
+    }else if(settings.wifi_hotspot_mode==WIFI_HOTSPOT_ALWAYS_OFF){
+        m_wifi_hotspot->set_enabled_async(false);
+    }else if(settings.wifi_hotspot_mode==WIFI_HOTSPOT_ALWAYS_ON){
+        m_wifi_hotspot->set_enabled_async(true);
+    }else{
+        m_console->warn("Invalid wifi hotspot mode");
+        m_wifi_hotspot->set_enabled_async(false);
+    }
 }

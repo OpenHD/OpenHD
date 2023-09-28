@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <fstream>
 #include <optional>
 #include <vector>
@@ -19,9 +19,9 @@ std::vector<std::string> OHDFilesystemUtil::getAllEntriesFullPathInDirectory(
   if(!OHDFilesystemUtil::exists(directory)){
     return {};
   }
-  boost::filesystem::path dev(directory.c_str());
+  std::filesystem::path dev(directory.c_str());
   std::vector<std::string> ret;
-  for (auto &entry: boost::filesystem::directory_iterator(dev)) {
+  for (auto &entry: std::filesystem::directory_iterator(dev)) {
     auto device_file = entry.path().string();
     ret.push_back(device_file);
   }
@@ -31,9 +31,9 @@ std::vector<std::string> OHDFilesystemUtil::getAllEntriesFullPathInDirectory(
 std::vector<std::string>
 OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory(
     const std::string &directory) {
-  boost::filesystem::path net(directory.c_str());
+    std::filesystem::path net(directory.c_str());
   std::vector<std::string> ret;
-  for (auto &entry: boost::filesystem::directory_iterator(net)) {
+  for (auto &entry: std::filesystem::directory_iterator(net)) {
     const auto interface_name = entry.path().filename().string();
     ret.push_back(interface_name);
   }
@@ -41,21 +41,21 @@ OHDFilesystemUtil::getAllEntriesFilenameOnlyInDirectory(
 }
 
 bool OHDFilesystemUtil::exists(const std::string &file) {
-  return boost::filesystem::exists(file);
+  return std::filesystem::exists(file);
 }
 
 void OHDFilesystemUtil::create_directory(const std::string &directory) {
-  boost::filesystem::create_directory(directory.c_str());
+    std::filesystem::create_directory(directory.c_str());
 }
 
 void OHDFilesystemUtil::create_directories(const std::string &directory) {
-  boost::filesystem::create_directories(directory.c_str());
+    std::filesystem::create_directories(directory.c_str());
   assert(exists(directory));
 }
 
 void OHDFilesystemUtil::safe_delete_directory(const std::string &directory) {
   if(exists(directory)){
-    boost::filesystem::remove_all(directory.c_str());
+      std::filesystem::remove_all(directory.c_str());
   }
 }
 
@@ -100,7 +100,7 @@ std::string OHDFilesystemUtil::read_file(const std::string &filename) {
 
 void OHDFilesystemUtil::remove_if_existing(const std::string &filename) {
   if(exists(filename)){
-    boost::filesystem::remove(filename);
+      std::filesystem::remove(filename);
   }
 }
 
@@ -117,7 +117,7 @@ void OHDFilesystemUtil::make_file_read_write_everyone(
 }
 
 int OHDFilesystemUtil::get_remaining_space_in_mb() {
-  boost::filesystem::space_info info = boost::filesystem::space("/");
+    std::filesystem::space_info info = std::filesystem::space("/");
   return info.available / 1024 / 1024;
 }
 

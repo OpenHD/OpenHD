@@ -34,6 +34,9 @@ struct ExternalDevice {
   // This is the IP address of the external device itself, e.g. for a smartphone connected via USB tethering, the IP of the smartphone
   // (In the network where it connects to the grund station)
   std::string external_device_ip;
+  // Set to true if this device was discovered by someone connecting to the mavlink TCP server -
+  // We have slightly different forwarding behaviour in this case
+  bool discovered_by_mavlink_tcp_server= false;
   // returns true if both IP addresses are valid
   [[nodiscard]] bool is_valid() const {
     //return OHDUtil::is_valid_ip(local_network_ip) && OHDUtil::is_valid_ip(external_device_ip);

@@ -61,27 +61,16 @@ class ActionHandler{
     bool check_20Mhz_channel_width_if_card_supports=false;
     bool check_40Mhz_channel_width_if_card_supports=false;
   };
-  typedef std::function<void(ScanChannelsParam)> SCAN_CHANNELS_CB;
-  void action_wb_link_scan_channels_register(const SCAN_CHANNELS_CB& cb){
-    if(cb== nullptr){
-      m_scan_channels_cb= nullptr;
-      return;
-    }
-    m_scan_channels_cb=std::make_shared<SCAN_CHANNELS_CB>(cb);
-  }
-  void action_wb_link_scan_channels_handle(ScanChannelsParam params){
-    auto tmp=m_scan_channels_cb;
-    if(tmp){
-      SCAN_CHANNELS_CB& cb=*tmp;
-      cb(params);
-    }
-  }
+  std::function<bool(ScanChannelsParam)> wb_cmd_scan_channels= nullptr;
+public:
   // Cleanup, set all lambdas that handle things to nullptr
   void disable_all_callables(){
     action_request_bitrate_change_register(nullptr);
-    action_wb_link_scan_channels_register(nullptr);
-    action_on_ony_rc_channel_register(nullptr);
+      action_on_any_rc_channel_register(nullptr);
     m_action_disable_wifi_when_armed= nullptr;
+    wb_cmd_scan_channels= nullptr;
+    wb_cmd_analyze_channels= nullptr;
+    wb_get_supported_channels= nullptr;
   }
   // Allows registering actions when vehicle / FC is armed / disarmed
  public:
@@ -133,7 +122,7 @@ class ActionHandler{
       cb(rc_channels);
     }
   }
-  void action_on_ony_rc_channel_register(ACTION_ON_ANY_RC_CHANNEL_CB cb){
+  void action_on_any_rc_channel_register(ACTION_ON_ANY_RC_CHANNEL_CB cb){
     if(cb== nullptr){
       m_action_rc_channel= nullptr;
       return;
@@ -157,7 +146,6 @@ class ActionHandler{
   // By using shared_ptr to wrap the stored the cb we are semi thread-safe
   std::shared_ptr<ACTION_REQUEST_BITRATE_CHANGE> m_action_request_bitrate_change =nullptr;
   std::shared_ptr<openhd::link_statistics::STATS_CALLBACK> m_link_statistics_callback=nullptr;
-  std::shared_ptr<SCAN_CHANNELS_CB> m_scan_channels_cb=nullptr;
  public:
   // Camera stats / info that is broadcast in regular intervals
   // Set by the camera streaming implementation - read by OHDMainComponent (mavlink broadcast)
@@ -230,6 +218,51 @@ class ActionHandler{
     std::lock_guard<std::mutex> guard(m_last_link_stats_mutex);
     return m_last_link_stats;
   }
+public:
+    std::function<std::vector<uint16_t>()> wb_get_supported_channels= nullptr;
+    std::function<bool()> wb_cmd_analyze_channels= nullptr;
+
+public:
+    std::atomic<int> scan_channels_air_unit_progress=-1;
+public:
+    struct AnalyzeChannelsResult{
+        std::array<uint16_t,30> channels_mhz{0};
+        std::array<uint16_t,30> foreign_packets{0};
+        int8_t progress;
+    };
+    void add_analyze_result(AnalyzeChannelsResult scan_result){
+        std::lock_guard<std::mutex> guard(m_scan_results_mutex);
+        m_scan_results.push_back(scan_result);
+    }
+    std::vector<AnalyzeChannelsResult> get_analyze_results(){
+        std::lock_guard<std::mutex> guard(m_scan_results_mutex);
+        auto ret=m_scan_results;
+        m_scan_results.clear();
+        return ret;
+    }
+private:
+    std::mutex m_scan_results_mutex;
+    std::vector<AnalyzeChannelsResult> m_scan_results;
+public:
+    struct ScanChannelsProgress{
+        uint16_t channel_mhz;
+        uint8_t progress;
+        uint8_t channel_width_mhz;
+        bool success;
+    };
+    void add_scan_channels_progress(ScanChannelsProgress val){
+        std::lock_guard<std::mutex> guard(m_scan_channels_progress_mutex);
+        m_scan_channels_progress.push_back(val);
+    }
+    std::vector<ScanChannelsProgress> get_scan_channels_progress(){
+        std::lock_guard<std::mutex> guard(m_scan_channels_progress_mutex);
+        auto ret=m_scan_channels_progress;
+        m_scan_channels_progress.clear();
+        return ret;
+    }
+private:
+    std::mutex m_scan_channels_progress_mutex;
+    std::vector<ScanChannelsProgress> m_scan_channels_progress;
 };
 
 }

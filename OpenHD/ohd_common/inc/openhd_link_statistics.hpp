@@ -10,56 +10,41 @@
 #include <optional>
 #include <cstring>
 
-// NOTE: CURRENTLY MESSED UP / HACKY, NEEDS CARE
+// NOTE: While annoying, we do not want mavlink as a direct dependency inside ohd_common / ohd_interface,
+// So we double-declare the mavlink message struct(s) here.
+
 namespace openhd::link_statistics{
 
-// for debugging
-static std::string bitrate_to_string(uint64_t bits_per_second){
-  const double mBits_per_second=static_cast<double>(bits_per_second)/(1000*1000);
-  if(mBits_per_second>1){
-	return std::to_string(mBits_per_second)+"mBit/s";
-  }
-  const double kBits_per_second=static_cast<double>(bits_per_second)/1000;
-  return std::to_string(kBits_per_second)+"kBit/s";
-}
-
-
-// These structs match the custom openhd mavlink messages, kinda annoying but
-// we do not have a mavlink dependency in ohd_interface so we need to duplicate that code
-
-struct StatsMonitorModeLink{
-  uint64_t count_tx_inj_error_hint; /*<  count_tx_inj_error_hint*/
-  uint64_t count_tx_dropped_packets; /*<  count_tx_dropped_packets*/
-  uint64_t unused2; /*<  unused2*/
-  uint64_t unused3; /*<  unused3*/
-  int16_t curr_tx_pps; /*<  tx packets per second*/
-  int16_t curr_rx_pps; /*<  rx packets per second*/
-  int32_t curr_tx_bps; /*<  tx bits per second*/
-  int32_t curr_rx_bps; /*<  rx bits per second*/
-  int32_t curr_tx_card_idx; /*< curr tx card (for multi rx-es on ground) ,unused0 */
-  int32_t curr_tx_mcs_index; /* curr tx mcs index used when injecting packets, unused1*/
-  uint16_t curr_tx_channel_mhz;
-  uint8_t curr_tx_channel_w_mhz;
-  int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss*/
-  int16_t curr_rx_big_gaps_counter;
-  int8_t tx_operating_mode = 0;
-  uint16_t curr_rate_kbits=0;
-  uint8_t curr_n_rate_adjustments=0;
-  uint8_t curr_tx_stbc_lpdc_shortguard_bitfield;
-  uint8_t curr_pollution_perc=0;
-  [[nodiscard]] std::string to_string()const{
-    return "TODO";
-  }
+struct Xmavlink_openhd_stats_monitor_mode_wifi_link_t{
+    int32_t curr_tx_bps; /*<  tx bits per second*/
+    int32_t curr_rx_bps; /*<  rx bits per second*/
+    uint32_t count_tx_inj_error_hint; /*<  count_tx_inj_error_hint*/
+    uint32_t count_tx_dropped_packets; /*<  count_tx_dropped_packets*/
+    int32_t dummy2; /*<  for future use*/
+    int16_t curr_tx_pps; /*<  tx packets per second*/
+    int16_t curr_rx_pps; /*<  rx packets per second*/
+    int16_t curr_rx_big_gaps_counter; /*<  complicated but important stat*/
+    uint16_t curr_tx_channel_mhz; /*<  curr tx channel used when injecting packets*/
+    uint16_t curr_rate_kbits; /*<  curr link rate, in kbit/s, might be slightly lower than default for MCS when TX errors are detected*/
+    int16_t dummy1; /*<  for future use*/
+    int8_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss*/
+    uint8_t curr_tx_channel_w_mhz; /*<  curr tx channel width used when injecting packets (20mhz/40Mhz)*/
+    uint8_t curr_tx_mcs_index; /*<  curr tx mcs index used when injecting packets*/
+    uint8_t curr_n_rate_adjustments; /*<  If the TX cannot keep up (at a given mcs), openhd reduces the bitrate in 1MBit/s increments*/
+    uint8_t bitfield; /*<  bitfield, see openhd for usage.*/
+    uint8_t pollution_perc; /*<  pollution [0..100],aka percentage of foreign vs openhd packets on the current channel.*/
+    int8_t dummy0; /*<  for future use*/
 };
 
-struct StatsTelemetry{
-  uint64_t unused_0; /*<  unused_0*/
-  uint64_t unused_1; /*<  unused_1*/
-  int16_t curr_tx_pps; /*<  tx packets per second*/
-  int16_t curr_rx_pps; /*<  rx packets per second*/
-  int32_t curr_tx_bps; /*<  tx bits per second*/
-  int32_t curr_rx_bps; /*<  rx bits per second*/
-  int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss_perc*/
+struct Xmavlink_openhd_stats_telemetry_t{
+    int32_t curr_tx_bps; /*<  tx bits per second*/
+    int32_t curr_rx_bps; /*<  rx bits per second*/
+    int32_t dummy2; /*<  for future use*/
+    int16_t curr_tx_pps; /*<  tx packets per second*/
+    int16_t curr_rx_pps; /*<  rx packets per second*/
+    int16_t curr_rx_packet_loss_perc; /*<  curr_rx_packet_loss_perc*/
+    int16_t dummy1; /*<  for future use*/
+    int8_t dummy0; /*<  for future use*/
   [[nodiscard]] std::string to_string()const{
     std::stringstream ss;
     ss<<"StatsTelemetry{";
@@ -70,100 +55,126 @@ struct StatsTelemetry{
   }
 };
 
-struct StatsWBVideoAir{
-  uint8_t link_index;
-  int32_t curr_recommended_bitrate;
-  int32_t curr_measured_encoder_bitrate;
-  int32_t curr_injected_bitrate;
-  int32_t curr_injected_pps;
-  int32_t curr_dropped_frames;
-  uint32_t curr_fec_encode_time_avg_us;
-  uint32_t curr_fec_encode_time_min_us;
-  uint32_t curr_fec_encode_time_max_us;
-  uint16_t curr_fec_block_size_avg;
-  uint16_t curr_fec_block_size_min;
-  uint16_t curr_fec_block_size_max;
-  int32_t curr_fec_percentage; // unused0 in mavlink message
-  [[nodiscard]] std::string to_string()const{
-    return "TODO";
-  }
+struct Xmavlink_openhd_stats_wb_video_air_t{
+    int32_t curr_measured_encoder_bitrate; /*<  curr_measured_encoder_bitrate*/
+    int32_t curr_injected_bitrate; /*<  curr_injected_bitrate (+FEC overhead)*/
+    int32_t curr_injected_pps; /*<  curr_injected_pps*/
+    int32_t curr_dropped_frames; /*<  curr_dropped_frames*/
+    int32_t dummy2; /*<  for future use*/
+    int16_t curr_recommended_bitrate; /*<  curr_recommended_bitrate*/
+    int16_t curr_fec_percentage; /*<  curr_fec_percentage*/
+    int16_t dummy1; /*<  for future use*/
+    uint8_t link_index; /*<  link_index*/
+    int8_t dummy0; /*<  for future use*/
+};
+struct Xmavlink_openhd_stats_wb_video_air_fec_performance_t{
+    uint32_t curr_fec_encode_time_avg_us; /*<  curr_fec_encode_time_avg_us*/
+    uint32_t curr_fec_encode_time_min_us; /*<  curr_fec_encode_time_min_us*/
+    uint32_t curr_fec_encode_time_max_us; /*<  curr_fec_encode_time_max_us*/
+    int32_t dummy2; /*<  for future use*/
+    uint16_t curr_fec_block_size_avg; /*<  curr_fec_block_size_avg*/
+    uint16_t curr_fec_block_size_min; /*<  curr_fec_block_size_min*/
+    uint16_t curr_fec_block_size_max; /*<  curr_fec_block_size_max*/
+    uint16_t curr_tx_delay_avg_us; /*<  none*/
+    uint16_t curr_tx_delay_min_us; /*<  none*/
+    uint16_t curr_tx_delay_max_us; /*<  none*/
+    int16_t dummy1; /*<  for future use*/
+    uint8_t link_index; /*<  link_index*/
+    int8_t dummy0; /*<  for future use*/
 };
 
-struct StatsWBVideoGround{
-  uint8_t link_index;
-  int32_t curr_incoming_bitrate;
-  uint64_t count_blocks_total;
-  uint64_t count_blocks_lost;
-  uint64_t count_blocks_recovered;
-  uint64_t count_fragments_recovered;
-  uint32_t curr_fec_decode_time_avg_us;
-  uint32_t curr_fec_decode_time_min_us;
-  uint32_t curr_fec_decode_time_max_us;
-  int32_t unused0;
-  int32_t unused1;
-  [[nodiscard]] std::string to_string()const{
-    return "TODO";
-  }
+struct Xmavlink_openhd_stats_wb_video_ground_t{
+    int32_t curr_incoming_bitrate; /*<  todo*/
+    uint32_t count_blocks_total; /*<  count_blocks_total*/
+    uint32_t count_blocks_lost; /*<  count_blocks_lost*/
+    uint32_t count_blocks_recovered; /*<  count_blocks_recovered*/
+    uint32_t count_fragments_recovered; /*<  count_fragments_recovered*/
+    int32_t dummy2; /*<  for future use*/
+    int16_t dummy1; /*<  for future use*/
+    uint8_t link_index; /*<  link_index*/
+    int8_t dummy0; /*<  for future use*/
+};
+struct Xmavlink_openhd_stats_wb_video_ground_fec_performance_t{
+    uint32_t curr_fec_decode_time_avg_us; /*<  todo*/
+    uint32_t curr_fec_decode_time_min_us; /*<  todo*/
+    uint32_t curr_fec_decode_time_max_us; /*<  todo*/
+    int32_t dummy2; /*<  for future use*/
+    int16_t dummy1; /*<  for future use*/
+    uint8_t link_index; /*<  link_index*/
+    int8_t dummy0; /*<  for future use*/
+};
+struct Xmavlink_openhd_stats_monitor_mode_wifi_card_t{
+    bool NON_MAVLINK_CARD_ACTIVE= false; // Optimization, only send for active card(s).
+    uint32_t count_p_received; /*<  All received (incoming) packets*/
+    uint32_t count_p_injected; /*<  All injected (outgoing) packets*/
+    int32_t dummy2; /*<  for future use*/
+    int16_t tx_power_current; /*<  either in override index units or mW*/
+    int16_t tx_power_armed; /*<  either in override index units or mW*/
+    int16_t tx_power_disarmed; /*<  either in override index units or mW*/
+    int16_t dummy1; /*<  for future use*/
+    uint8_t card_index; /*<  Ground might have multiple card(s) for diversity.*/
+    uint8_t card_type; /*<  See openhd card_type enum*/
+    uint8_t tx_active; /*<  On ground stations with multiple card(s), only one card is selected for TX at a time.*/
+    int8_t rx_rssi; /*<  rx rssi in dBm of this card - depending on the hw, might be the max of all antennas or different.*/
+    int8_t rx_rssi_1; /*<  rx rssi in dBm for antenna 1*/
+    int8_t rx_rssi_2; /*<  rx rssi in dBm for antenna 2*/
+    int8_t rx_evm_1; /*<  rx evm in dBm for antenna 1*/
+    int8_t rx_evm_2; /*<  rx evm in dBm for antenna 2*/
+    int8_t rx_rssi_noise; /*<  depends on the wifi driver*/
+    int8_t rx_signal_quality; /*<  depends on the wifi driver*/
+    int8_t curr_rx_packet_loss_perc; /*<  rx packet loss (for this card)*/
+    uint8_t curr_status; /*<  set to 1 if something's wrong with the card*/
+    int8_t dummy0; /*<  for future use*/
+};
+struct Xmavlink_openhd_wifbroadcast_gnd_operating_mode_t{
+    int32_t dummy1; /*<  future use*/
+    int32_t dummy2; /*<  future use*/
+    uint16_t extra_channel_mhz; /*<  channel that is currently scanned / analyzed, 0 otherwise*/
+    uint16_t dummy0; /*<  future use*/
+    uint8_t operating_mode; /*<  0=normal,1=currently scanning, 2=currently analyzing*/
+    uint8_t extra_channel_width_mhz; /*<  samel like extra channel, for bandwidth*/
+    uint8_t progress; /*<  progress [0..100], when scanning / analyzing is active,undefined otherwise.*/
+    uint8_t success; /*<  Set to 1 if channel scan succeeded.*/
+    int8_t tx_passive_mode_is_enabled; /*<  Act as a passive listener (NO TX EVER), 0=disabled, 1=enabled.*/
 };
 
-struct StatsPerCard{
-  bool exists_in_openhd=false; // We have place for up to X wifi cards, but they might be unused - don't waste any telemetry bandwidth on these cards
-  uint8_t card_type=0;
-  int8_t rx_rssi_card=INT8_MIN;
-  int8_t rx_rssi_1=INT8_MIN; // dBm / rssi
-  int8_t rx_rssi_2=INT8_MIN; // dBm / rssi
-  int8_t signal_quality=-1;
-  uint64_t count_p_received=0; //TODO
-  uint64_t count_p_injected=0; //TODO
-  int16_t tx_power=0;
-  int8_t curr_rx_packet_loss_perc=0;
-  uint8_t curr_status=0;
-  [[nodiscard]] std::string to_string(const int index)const{
-    return "TODO";
-  }
-};
 // Stats per connected card
-using StatsAllCards=std::array<StatsPerCard,4>;
+using StatsAllCards=std::array<Xmavlink_openhd_stats_monitor_mode_wifi_card_t,4>;
 
 struct StatsAirGround{
   bool is_air=false;
+  bool ready=false;
   // air and ground
-  StatsMonitorModeLink monitor_mode_link;
-  StatsTelemetry telemetry;
+  Xmavlink_openhd_stats_monitor_mode_wifi_link_t monitor_mode_link;
+  Xmavlink_openhd_stats_telemetry_t telemetry;
   StatsAllCards cards;
   // for air
-  std::vector<StatsWBVideoAir> stats_wb_video_air;
+  std::vector<Xmavlink_openhd_stats_wb_video_air_t> stats_wb_video_air;
+  Xmavlink_openhd_stats_wb_video_air_fec_performance_t air_fec_performance;
   // for ground
-  std::vector<StatsWBVideoGround> stats_wb_video_ground;
+  std::vector<Xmavlink_openhd_stats_wb_video_ground_t> stats_wb_video_ground;
+  Xmavlink_openhd_stats_wb_video_ground_fec_performance_t gnd_fec_performance;
+  Xmavlink_openhd_wifbroadcast_gnd_operating_mode_t gnd_operating_mode;
 };
-
-static std::ostream& operator<<(std::ostream& strm, const StatsAirGround& obj){
-  std::stringstream ss;
-  ss<<"StatsAirGround{\n";
-  ss<<obj.cards.at(0).to_string(0)<<"\n";
-  ss<<"}";
-  strm<<ss.str();
-  return strm;
-}
 
 typedef std::function<void(StatsAirGround all_stats)> STATS_CALLBACK;
 
-// We pack those 3 into a single uint8_t in the mavlink msg
-struct StbcLpdcShortGuardBitfield {
+// Bit field for boolean only value(s)
+struct MonitorModeLinkBitfield {
   unsigned int stbc:1;
   unsigned int lpdc:1;
   unsigned int short_guard:1;
-  unsigned int unused:5;
+  unsigned int curr_rx_last_packet_status_good:1;
+  unsigned int unused:4;
 }__attribute__ ((packed));
-static_assert(sizeof(StbcLpdcShortGuardBitfield)==1);
-static uint8_t write_stbc_lpdc_shortguard_bitfield(bool stbc, bool lpdc,bool short_guard){
-  StbcLpdcShortGuardBitfield bitfield{stbc,lpdc,short_guard,0};
+static_assert(sizeof(MonitorModeLinkBitfield)==1);
+static uint8_t write_monitor_link_bitfield(const MonitorModeLinkBitfield& bitfield){
   uint8_t ret;
   std::memcpy(&ret,(uint8_t*)&bitfield,1);
   return ret;
 }
-static StbcLpdcShortGuardBitfield get_stbc_lpdc_shortguard_bitfield(uint8_t bitfield){
-  StbcLpdcShortGuardBitfield ret{};
+static MonitorModeLinkBitfield parse_monitor_link_bitfield(uint8_t bitfield){
+    MonitorModeLinkBitfield ret{};
   std::memcpy((uint8_t*)&ret,&bitfield,1);
   return ret;
 }

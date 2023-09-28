@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include <regex>
+#include <utility>
 #include <vector>
 
 #include "air_recording_helper.hpp"
@@ -15,13 +16,13 @@
 #include "rtp_eof_helper.h"
 #include "gst_recording_demuxer.h"
 
-#include "openhd_util_time.hpp"
+#include "openhd_util.h"
 
 GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHolder> camera_holder,
-                                 std::shared_ptr<OHDLink> i_transmit_video,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
+                                 openhd::ON_ENCODE_FRAME_CB out_cb,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
     //: CameraStream(platform, camera_holder, video_udp_port) {
-    : CameraStream(platform,camera_holder,i_transmit_video),
-      m_opt_action_handler(opt_action_handler)
+    : CameraStream(platform,std::move(camera_holder),std::move(out_cb)),
+      m_opt_action_handler(std::move(opt_action_handler))
 {
   m_console=openhd::log::create_or_get("v_gststream");
   assert(m_console);
@@ -46,20 +47,10 @@ GStreamerStream::GStreamerStream(PlatformType platform,std::shared_ptr<CameraHol
   assert(setting.streamed_video_format.isValid());
   OHDGstHelper::initGstreamerOrThrow();
   //m_gst_video_recorder=std::make_unique<GstVideoRecorder>();
-  // Register a callback such that we get notified when the FC is armed / disarmed
-  if(m_opt_action_handler){
-    auto cb=[this](bool armed){
-      this->update_arming_state(armed);
-    };
-    m_opt_action_handler->m_action_record_video_when_armed=std::make_shared<openhd::ActionHandler::ACTION_RECORD_VIDEO_WHEN_ARMED>(cb);
-  }
   m_console->debug("GStreamerStream::GStreamerStream done");
 }
 
 GStreamerStream::~GStreamerStream() {
-  if(m_opt_action_handler){
-    m_opt_action_handler->m_action_record_video_when_armed= nullptr;
-  }
   // they are safe to call, regardless if we are already in cleaned up state or not
   GStreamerStream::stop();
   GStreamerStream::cleanup_pipe();
@@ -125,7 +116,6 @@ void GStreamerStream::setup() {
     }
     case CameraType::CUSTOM_UNMANAGED_CAMERA:{
       setup_custom_unmanaged_camera();
-      break;
     }break;
     case CameraType::UNKNOWN: {
       m_console->warn( "Unknown camera type");
@@ -285,7 +275,6 @@ void GStreamerStream::setup_usb_uvch264() {
 
 void GStreamerStream::setup_ip_camera() {
   m_console->debug("Setting up IP camera");
-  const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
   if (setting.ip_cam_url.empty()) {
     //setting.url = "rtsp://192.168.0.10:554/user=admin&password=&channel=1&stream=0.sdp";
@@ -296,14 +285,12 @@ void GStreamerStream::setup_ip_camera() {
 
 void GStreamerStream::setup_sw_dummy_camera() {
   m_console->debug("Setting up SW dummy camera");
-  const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::createDummyStream(setting);
 }
 
 void GStreamerStream::setup_custom_unmanaged_camera() {
   m_console->debug("Setting up custom unmanaged camera");
-  const auto& camera= m_camera_holder->get_camera();
   const auto& setting= m_camera_holder->get_settings();
   m_pipeline_content << OHDGstHelper::create_input_custom_udp_rtp_port(setting);
 }
@@ -319,7 +306,7 @@ void GStreamerStream::stop_cleanup_restart() {
   setup();
   start();
   const auto elapsed=std::chrono::steady_clock::now()-before;
-  m_console->debug("stop_cleanup_restart took {}",openhd::util::time::R(elapsed));
+  m_console->debug("stop_cleanup_restart took {}",OHDUtil::time_readable(elapsed));
 }
 
 std::string GStreamerStream::createDebug(){
@@ -346,12 +333,19 @@ void GStreamerStream::start() {
     return;
   }
   openhd::register_message_cb(m_gst_pipeline);
-  gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
-    if(m_opt_action_handler){
-        // Restarting status
-        m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
-    }
-  m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline));
+  const auto ret=gst_element_set_state(m_gst_pipeline, GST_STATE_PLAYING);
+  m_console->debug("State change ret:{}",openhd::gst_state_change_return_to_string(ret));
+  // assume the cam is streaming okay - we log a message otherwise
+  if(m_opt_action_handler){
+     m_opt_action_handler->set_cam_info_status(m_camera_holder->get_camera().index,CAM_STATUS_STREAMING);
+  }
+  bool succesfully_streaming=false;
+  m_console->debug(openhd::gst_element_get_current_state_as_string(m_gst_pipeline,&succesfully_streaming));
+  if(!succesfully_streaming){
+      // Not successfully in changing state, we'l restart the next time it is to check streaming state - but most likely
+      // the cam doesn't support the set resolution
+      m_console->warn("Camera {} error - unsupported resolution ?",m_camera_holder->get_camera().index);
+  }
 }
 
 void GStreamerStream::stop() {
@@ -506,7 +500,6 @@ void GStreamerStream::handle_change_bitrate_request(openhd::ActionHandler::LinkB
       m_opt_action_handler->set_cam_info_bitrate(m_camera_holder->get_camera().index,m_curr_dynamic_bitrate_kbits);
     }
   }else{
-    const auto cam_type=m_camera_holder->get_camera().type;
     if(cam_type==CameraType::RPI_CSI_LIBCAMERA || cam_type==CameraType::RPI_CSI_VEYE_V4l2 || cam_type==CameraType::ROCKCHIP_CSI){
       m_console->warn("Bitrate change requires restart");
       // These cameras are known to handle a restart quickly, but it still sucks v4l2h264enc does not support changing the bitrate at run time
@@ -540,11 +533,15 @@ bool GStreamerStream::try_dynamically_change_bitrate(int bitrate_kbits) {
 
 void GStreamerStream::on_new_rtp_fragmented_frame(std::vector<std::shared_ptr<std::vector<uint8_t>>> frame_fragments) {
   //m_console->debug("Got frame with {} fragments",frame_fragments.size());
-  if(m_link_handle){
-    const auto stream_index=m_camera_holder->get_camera().index;
-    m_link_handle->transmit_video_data(stream_index,openhd::FragmentedVideoFrame{frame_fragments});
+  if(m_output_cb){
+      const auto stream_index=m_camera_holder->get_camera().index;
+      auto frame=openhd::FragmentedVideoFrame{
+              std::move(frame_fragments),
+              std::chrono::steady_clock::now(),
+              m_camera_holder->get_settings().enable_ultra_secure_encryption};
+      m_output_cb(stream_index,frame);
   }else{
-    m_console->debug("No transmit interface");
+      m_console->debug("No output cb");
   }
 }
 
@@ -581,14 +578,14 @@ void GStreamerStream::on_new_rtp_frame_fragment(std::shared_ptr<std::vector<uint
 void GStreamerStream::loop_pull_samples() {
   assert(m_app_sink_element);
   auto cb=[this](std::shared_ptr<std::vector<uint8_t>> fragment,uint64_t dts){
-    on_new_rtp_frame_fragment(fragment,dts);
+    on_new_rtp_frame_fragment(std::move(fragment),dts);
   };
   openhd::loop_pull_appsink_samples(m_pull_samples_run,m_app_sink_element,cb);
   m_frame_fragments.resize(0);
 }
 
-void GStreamerStream::update_arming_state(bool armed) {
-  m_console->debug("update_arming_state: {}",armed);
+void GStreamerStream::handle_update_arming_state(bool armed) {
+  m_console->debug("handle_update_arming_state: {}",armed);
   const auto settings=m_camera_holder->get_settings();
   if(settings.air_recording==AIR_RECORDING_AUTO_ARM_DISARM){
     if(armed){

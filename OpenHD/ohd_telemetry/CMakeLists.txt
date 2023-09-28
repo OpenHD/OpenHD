@@ -40,7 +40,8 @@ SET(sources
     "src/internal/OHDLinkStatisticsHelper.h"
     "src/internal/OHDMainComponent.cpp"
     "src/internal/OHDMainComponent.h"
-    "src/internal/OnboardComputerStatus.hpp"
+    "src/internal/onboard_computer_status.hpp"
+    "src/internal/onboard_computer_status_rpi.hpp"
     "src/internal/OnboardComputerStatusProvider.cpp"
     "src/internal/OnboardComputerStatusProvider.h"
     "src/internal/StatusTextAccumulator.cpp"
@@ -97,10 +98,13 @@ SET(sources
     src/gpio_control/RaspberryPiGPIOControl.cpp
     src/gpio_control/RaspberryPiGPIOControl.h
     src/gpio_control/RaspberryPiGPIOControlSettings.h
+    src/gpio_control/RaspberryPiGPIOControlSettings.cpp
     src/internal/ina219.cc
     src/internal/ina219.h
     src/endpoints/TCPEndpoint.cpp
     src/endpoints/TCPEndpoint.h
+    src/GroundTelemetrySettings.cpp
+    src/AirTelemetrySettings.cpp
 )
 
 # Build it as a library

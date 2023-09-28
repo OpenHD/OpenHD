@@ -67,7 +67,7 @@ set(sources
     "inc/ohd_video_air.h"
     "inc/camera.hpp"
     "inc/camera_enums.hpp"
-    "inc/camera_holder.hpp"
+    "inc/camera_holder.h"
     "inc/camera_settings.hpp"
     "inc/rtp_eof_helper.h"
     "inc/v_validate_settings.h"
@@ -85,6 +85,8 @@ set(sources
     src/ohd_video_ground.cpp
     #src/gst_recorder.cpp
      src/gst_recording_demuxer.cpp
+        src/camera_holder.cpp
+    src/ohd_video_air_generic_settings.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})

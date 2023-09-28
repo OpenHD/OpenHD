@@ -5,10 +5,8 @@
 #ifndef OPENHD_OHDGSTHELPER_H
 #define OPENHD_OHDGSTHELPER_H
 
-// NOTE: Spdlog uses format internally, when pulling in fmt first and then spdlog we can have compiler issues
 #include "openhd_spdlog.h"
 #include "openhd_bitrate_conversions.hpp"
-//#include <fmt/format.h>
 #include <gst/gst.h>
 
 #include <sstream>
@@ -222,6 +220,23 @@ static std::string createRpicamsrcStream(const int camera_number,
   return ss.str();
 }
 
+static bool rpi_needs_level_4_2(const VideoFormat& video_format){
+    if(video_format.width<=640 && video_format.height<=480 && video_format.framerate<=90){
+        // <= 480p 4:3 @ 90, level 4.0 enough
+        return false;
+    }
+    if(video_format.width<=1280 && video_format.height<=720 && video_format.framerate<=68){
+        // <= 720p @ 68, level 4.0 enough
+        return false;
+    }
+    if(video_format.width<=1920 && video_format.height<=1080 && video_format.framerate<=30){
+        // <= 1080p @ 30, level 4.0 enough
+        return false;
+    }
+    // exotic or to high, use level 4.2
+    return true;
+}
+
 // v4l2 h264 encoder on raspberry pi
 // we configure the v4l2 h264 encoder by using the extra controls
 // We want constant bitrate (e.g. what the user has set) as long as we don't dynamcially adjust anything
@@ -236,8 +251,15 @@ static std::string create_rpi_v4l2_h264_encoder(const CameraSettings& settings){
   const int bitrateBitsPerSecond = kbits_to_bits_per_second(settings.h26x_bitrate_kbits);
   // NOTE: higher quantization parameter -> lower image quality, and lower bitrate
   static constexpr auto OPENHD_H264_MIN_QP_VALUE=10;
+  // Level wikipedia: https://de.wikipedia.org/wiki/H.264#Level
+  // If the level selected is too low, the stream will straight out not start (pi cannot really do more than level 4.0, at least not low latency,
+  // but for experimenting, at least make those higher resolutions create a valid pipeline
+  std::string rpi_h264_encode_level="4";
+  if(rpi_needs_level_4_2(settings.streamed_video_format)){
+      rpi_h264_encode_level="4.2";
+  }
   return fmt::format("v4l2h264enc name=rpi_v4l2_encoder extra-controls=\"controls,repeat_sequence_header=1,h264_profile=1,h264_level=11,video_bitrate={},h264_i_frame_period={},h264_minimum_qp_value={}\" ! "
-      "video/x-h264,level=(string)4 ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE);
+      "video/x-h264,level=(string){} ! ",bitrateBitsPerSecond,settings.h26x_keyframe_interval,OPENHD_H264_MIN_QP_VALUE,rpi_h264_encode_level);
 }
 
 static std::string createLibcamerasrcStream(const std::string& camera_name,

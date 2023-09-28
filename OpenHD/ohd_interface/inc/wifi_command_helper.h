@@ -37,6 +37,7 @@ bool iw_enable_monitor_mode(const std::string& device);
 // from iw documentation:
 // dev <devname> set freq <freq> [NOHT|HT20|HT40+|HT40-|5MHz|10MHz|80MHz]
 bool iw_set_frequency_and_channel_width(const std::string &device, uint32_t freq_mhz,uint32_t channel_width);
+bool iw_set_frequency_and_channel_width2(const std::string &device, uint32_t freq_mhz,const std::string& ht_mode,bool dummy= false);
 
 // See https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/nl80211.h#L1905
 // NOTE: even linux seems to have no idea what mBm means - rtl8812au interprets that not as milli(1000)dBm, but dBm/100
@@ -78,6 +79,15 @@ SupportedFrequencyBand iw_get_supported_frequency_bands(const std::string& devic
 //		Show capabilities for the specified wireless device.
 // NOTE: for phy info gives capabilities,for dev-name NOT !!
 bool iw_supports_monitor_mode(int phy_index);
+
+// Sets the channel and channel width
+// REQUIRES openhd rtl8812au driver
+// BUT works regardless of crda for all channels - YEAH !
+// type 0= rtl8812au, 1=rtl88x2bu driver
+bool openhd_driver_set_frequency_and_channel_width(int type,const std::string &device, uint32_t freq_mhz, uint32_t channel_width);
+
+// RTL8812bu driver only so far
+bool openhd_driver_set_tx_power(const std::string& device,uint32_t tx_power_mBm);
 
 }
 

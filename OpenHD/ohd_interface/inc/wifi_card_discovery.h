@@ -15,9 +15,8 @@
  */
 namespace DWifiCards {
 
-// There is no way to tell if a card supports injection in monitor mode other than keeping track of a list of the cards
-// which we know can do injection
-bool is_known_for_injection(const WiFiCardType& type);
+// Returns true if the card is supported (we only support a few, but keep working with other cards)
+bool is_openhd_supported(const WiFiCardType& type);
 
 // this should never fail (return std::nullopt) if the given interface_name is valid
 std::optional<WiFiCard> fill_linux_wifi_card_identifiers(const std::string& interface_name);
@@ -28,13 +27,14 @@ std::optional<WiFiCard> process_card(const std::string &interface_name);
 // discover all connected wifi cards and their capabilities
 std::vector<WiFiCard> discover_connected_wifi_cards();
 
-// Calculate how many cards support injection
-int n_cards_supporting_injection(const std::vector<WiFiCard>& cards);
+// Calculate how many cards found are supported by OpenHD
+int n_cards_openhd_supported(const std::vector<WiFiCard>& cards);
 
-// Return true if any of the given wifi cards supports injection in monitor mode
-bool any_wifi_card_supporting_injection(const std::vector<WiFiCard>& cards);
+// Return true if any of the given wifi cards is supported by OpenHD
+bool any_wifi_card_openhd_supported(const std::vector<WiFiCard>& cards);
 
-// Return true if any of the given wifi cards supports monitor mode (but perhaps / quite likely no injection
+// Return true if any of the given wifi cards supports monitor mode (but perhaps / quite likely no injection and definitely
+// not the full openhd feature set)
 bool any_wifi_card_supporting_monitor_mode(const std::vector<WiFiCard>& cards);
 
 struct ProcessedWifiCards{

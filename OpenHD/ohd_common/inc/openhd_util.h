@@ -4,6 +4,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <chrono>
 
 namespace OHDUtil {
 
@@ -48,6 +49,8 @@ static bool equal_after_uppercase(const std::string& s1,
 
 // From https://stackoverflow.com/questions/216823/how-to-trim-an-stdstring
 void rtrim(std::string& s);
+void ltrim(std::string &s);
+void trim(std::string &s);
 
 // Create a command as a string using the command name (e.g. "run") and a vec of arguments (e.g. {"--seconds","10"}
 std::string create_command_with_args(
@@ -101,6 +104,9 @@ std::string string_in_between(const std::string& start,
 std::optional<int> string_to_int(const std::string& s);
 std::optional<long> string_to_long(const std::string& s);
 std::optional<float> string_to_float(const std::string& s);
+std::optional<long> string_to_long_hex(const std::string& s);
+
+bool get_nth_bit(long number,int position);
 
 // Example: split "hello,world" int "hello" and "world" by ","
 std::vector<std::string> split_into_substrings(const std::string& input,
@@ -144,6 +150,18 @@ std::string str_vec_as_string(const std::vector<std::string> &v);
 
 // maps [0,100] to [-1.0,1.0] with 50% == 0.0
 float map_int_percentage_to_minus1_to_1(int percentage);
+
+int8_t calculate_progress_perc(int progress,int total_count);
+
+int steady_clock_time_epoch_ms();
+
+// R stands for readable. Convert a std::chrono::duration into a readable format.
+// Readable format is somewhat arbitrary, in this case readable means that for example
+// 1second has 'ms' resolution since for values that big ns resolution probably isn't needed
+std::string time_readable(const std::chrono::steady_clock::duration &dur);
+std::string time_readable_ns(uint64_t nanoseconds);
+
+uint32_t get_micros(std::chrono::nanoseconds ns);
 
 }
 

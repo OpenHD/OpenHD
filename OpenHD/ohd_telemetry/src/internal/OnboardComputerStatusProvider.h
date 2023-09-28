@@ -13,13 +13,19 @@
 #include "ina219.h"
 #include "openhd_platform.h"
 
-// We need one thread for the CPU usage (workaround) and
-// for some reason, running all those vcgencmd's on rpi for figuring out the current clock
-// speed can also block for a significant amount of time (significant enough that it is a bad idea
-// to call them from the "main" telemetry thread.
-// This class decouples these data generation steps from the main telemetry thread. We do not care
-// about latency at all on these statistics, so we can easily do those stats using a
-// producer / consumer pattern
+/**
+ * This class nicely hides away all the (nasty) reading of the onboard computer status (clock speed, temperature,..)
+ * A status can be queried any time, basically atomically.
+ *
+ * More info:
+ * We need one thread for the CPU usage (workaround) and
+ * for some reason, running all those vcgencmd's on rpi for figuring out the current clock
+ * speed can also block for a significant amount of time (significant enough that it is a bad idea
+ * to call them from the "main" telemetry thread.
+ * This class decouples these data generation steps from the main telemetry thread. We do not care
+ * about latency at all on these statistics, so we can easily do those stats using a
+ * producer / consumer pattern
+ */
 class OnboardComputerStatusProvider {
  public:
   /**
