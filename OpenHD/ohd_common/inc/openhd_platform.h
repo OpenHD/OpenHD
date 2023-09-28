@@ -42,7 +42,7 @@ enum class BoardType {
   JetsonTX2,
   JetsonNX,
   JetsonAGX,
-  NanoPiDuo2,
+  Allwinner,
   PynqZ1,
   PynqZ2,
   X3DRSolo,

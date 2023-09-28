@@ -451,17 +451,20 @@ static std::string createJetsonStream(const int sensor_id,
   return ss.str();
 }
 
+/**
+We could also make the qp variable variable is kinda weird, low means high quality, high means low quality, it's also interfearing with the bitrate and makes everything panic sometimes ...
+*/
 static std::string createRockchipEncoderPipeline(const int width, const int height, int rotate_degrees, const CommonEncoderParams& encoder_params){
   std::stringstream ss;
   const int bps = kbits_to_bits_per_second(encoder_params.h26X_bitrate_kbits);
   if(encoder_params.videoCodec==VideoCodec::H264){
-    ss<<"mpph264enc rc-mode=0 bps="<<bps;
+    ss<<"mpph264enc rc-mode=cbr qp-min=1 qp-max=1 bps="<<bps;
     ss<<" width="<<width;
     ss<<" height="<<height;
     ss<<" rotation="<<rotate_degrees;
     ss<<" gop="<<encoder_params.h26X_keyframe_interval<<" ! ";
   }else if(encoder_params.videoCodec==VideoCodec::H265){
-    ss<<"mpph265enc rc-mode=0 bps="<<bps;
+    ss<<"mpph265enc rc-mode=cbr qp-min=48 qp-max=26 bps="<<bps;
     ss<<" width="<<width;
     ss<<" height="<<height;
     ss<<" rotation="<<rotate_degrees;
@@ -553,7 +556,7 @@ static std::string createAllwinnerSensorPipeline(const int sensor_id,const int w
 static std::string createAllwinnerEncoderPipeline(const CommonEncoderParams& common_encoder_params){
   std::stringstream ss;
     assert(common_encoder_params.videoCodec==VideoCodec::H264);
-    ss << "cedar_h264enc bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
+    ss << "sunxisrc name=sunxisrc bitrate=" << common_encoder_params.h26X_bitrate_kbits <<
     " keyint=" << common_encoder_params.h26X_keyframe_interval << " !  video/x-h264 ! ";
   return ss.str();
 }
@@ -566,7 +569,6 @@ static std::string createAllwinnerStream(const int sensor_id,
                                       const VideoFormat videoFormat,
                                                                          const int keyframe_interval) {
   std::stringstream ss;
-  ss<<createAllwinnerSensorPipeline(sensor_id,videoFormat.width,videoFormat.height,videoFormat.framerate);
   ss<<createAllwinnerEncoderPipeline({videoFormat.videoCodec,bitrateKBits,keyframe_interval,50});
   return ss.str();
 }

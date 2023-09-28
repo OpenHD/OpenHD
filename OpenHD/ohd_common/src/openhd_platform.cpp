@@ -48,7 +48,7 @@ std::string board_type_to_string(BoardType board_type) {
     case BoardType::JetsonTX2: return "jetson-tx2";
     case BoardType::JetsonNX: return "jetson-nx";
     case BoardType::JetsonAGX: return "jetson-agx";
-    case BoardType::NanoPiDuo2: return "nanopi-duo2";
+    case BoardType::Allwinner: return "allwinner";
     case BoardType::PynqZ1: return "pynqz1";
     case BoardType::PynqZ2: return "pynqz2";
     case BoardType::X3DRSolo: return "3dr-solo";
@@ -62,7 +62,7 @@ std::string board_type_to_string(BoardType board_type) {
 
 static constexpr auto JETSON_BOARDID_PATH = "/proc/device-tree/nvidia,boardids";
 static constexpr auto DEVICE_TREE_COMPATIBLE_PATH = "/proc/device-tree/compatible";
-static constexpr auto ALLWINNER_BOARDID_PATH = "/sys/class/sunxi_info/sys_info";
+static constexpr auto ALLWINNER_BOARDID_PATH = "/dev/cedar_dev";
 
 static std::optional<std::pair<PlatformType,BoardType>> detect_raspberrypi(){
   const auto filename_proc_cpuinfo="/proc/cpuinfo";
@@ -165,7 +165,7 @@ static std::optional<std::pair<PlatformType,BoardType>> detect_rockchip(){
 }
 static std::optional<std::pair<PlatformType,BoardType>> detect_allwinner(){
   if (OHDFilesystemUtil::exists(ALLWINNER_BOARDID_PATH)) {
-    return std::make_pair(PlatformType::Allwinner,BoardType::NanoPiDuo2);
+    return std::make_pair(PlatformType::Allwinner,BoardType::Allwinner);
   }
   return {};
 }

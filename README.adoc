@@ -102,7 +102,16 @@ video transmission hardware you may be using already.
 
 High-definition video, 2-way UAV telemetry, audio, and RC control signals can all be sent over a single transmission channel.
 
-A multi-platform Open.HD app is available for live video with a customizable OSD.
+A multi-platform OpenHD app is available for live video with a customizable OSD.
+
+ifdef::env-github[]
+image:https://1945119839-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2F8RIMU39m4Gt1vqzzt4lm%2Fuploads%2Fgit-blob-353dff94866ae2d4a81fa3329bf93290a0271b42%2FNorbertScreenshot.png?alt=media[link=https://youtube.com/watch?v=5Ht9P3uv5N4]
+endif::[]
+
+ifndef::env-github[]
+video::5Ht9P3uv5N4[youtube]
+endif::[]
+
 
 TIP: Look around, read the {wiki}, ask questions on {telegram} or {discord}!
 

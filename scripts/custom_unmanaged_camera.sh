@@ -82,7 +82,7 @@ setup_and_stream_libseek(){
 # setup_and_stream_ip_cam_openipc
 # setup_and_stream_ip_cam_siyi_h264
 # setup_and_stream_ip_cam_siyi_h265
-setup_and_stream_libseek
+# setup_and_stream_libseek
 
 echo "Doing nothing"
 sleep 356d

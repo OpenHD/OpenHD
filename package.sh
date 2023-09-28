@@ -7,7 +7,7 @@ OS="${2}"
 
 PACKAGE_NAME="openhd"
 PKGDIR="/tmp/${PACKAGE_NAME}-installdir"
-VERSION="2.3-evo-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
+VERSION="2.5-evo-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 create_package_directory() {
   rm -rf "${PKGDIR}"
@@ -15,7 +15,10 @@ create_package_directory() {
   # rpi only - copy the camera config files
   if [[ "${OS}" == "raspbian" ]]; then
     mkdir -p "${PKGDIR}/boot/openhd/rpi_camera_configs"
-    cp rpi_camera_configs/* "${PKGDIR}/boot/openhd/rpi_camera_configs/" || exit 1
+    cp -r rpi_camera_configs/* "${PKGDIR}/boot/openhd/rpi_camera_configs/" || exit 1
+  elif [[ "${OS}" == "debian" ]]; then
+    mkdir -p "${PKGDIR}/boot/openhd/rock5_camera_configs"
+    cp -r rock5_camera_configs/* "${PKGDIR}/boot/openhd/rock5_camera_configs/" || exit 1
   fi
   # We do not copy the openhd service for x86, since there we have launcher on the desktop
   # (Otherwise, we always copy it)
