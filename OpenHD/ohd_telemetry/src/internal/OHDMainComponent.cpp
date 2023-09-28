@@ -69,7 +69,7 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
         mavlink_command_long_t command;
         mavlink_msg_command_long_decode(&msg.m,&command);
         if(command.target_system==m_sys_id && command.target_component==m_comp_id){
-            process_command_self(command,ret);
+            process_command_self(command,msg.m.sysid,msg.m.compid,ret);
         }
         // TODO have an ack response.
       }break;
@@ -269,7 +269,8 @@ std::vector<MavlinkMessage> OHDMainComponent::create_broadcast_stats_if_needed()
     return ret;
 }
 
-void OHDMainComponent::process_command_self(const mavlink_command_long_t &command,std::vector<MavlinkMessage>& message_buffer) {
+void OHDMainComponent::process_command_self(const mavlink_command_long_t &command,int source_sys_id,int source_comp_id,
+                                            std::vector<MavlinkMessage>& message_buffer) {
     assert(command.target_system==m_sys_id);
     assert(command.target_component==m_comp_id);
     m_console->debug("Got MAVLINK_MSG_ID_COMMAND_LONG: {} {}",command.command,static_cast<uint32_t>(command.param1));
@@ -279,13 +280,13 @@ void OHDMainComponent::process_command_self(const mavlink_command_long_t &comman
         // we are a companion computer, so we use param2 to get the actual action
         const auto action_for_companion=command.param2;
         if(action_for_companion>0){
-            message_buffer.push_back(ack_command(m_sys_id,m_comp_id,command.command));
+            message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command));
             const bool shutdownOnly=action_for_companion==2;
             openhd::reboot::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
         }
         // dirty, we don't have a custom message for that yet
         if(command.param3==1){
-            message_buffer.push_back(ack_command(m_sys_id,m_comp_id,command.command));
+            message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command));
             m_console->debug("Unimplemented");
         }
 
@@ -327,7 +328,7 @@ void OHDMainComponent::process_command_self(const mavlink_command_long_t &comman
                 }
                 m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH rsult: {}",success);
             }
-            message_buffer.push_back(ack_command(m_sys_id,m_comp_id,command.command,success));
+            message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command,success));
         }
     }else if(command.command==OPENHD_CMD_INITIATE_CHANNEL_ANALYZE){
         if(RUNS_ON_AIR){
@@ -338,7 +339,7 @@ void OHDMainComponent::process_command_self(const mavlink_command_long_t &comman
             if(m_opt_action_handler && m_opt_action_handler->wb_cmd_analyze_channels) {
                 success = m_opt_action_handler->wb_cmd_analyze_channels();
             }
-            message_buffer.push_back(ack_command(m_sys_id,m_comp_id,command.command,success));
+            message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command,success));
         }
     }else{
         m_console->debug("Unknown command {}",command.command);
