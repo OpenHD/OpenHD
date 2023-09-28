@@ -22,7 +22,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   monitor_mode_cards={};
   opt_hotspot_card=std::nullopt;
   const auto config=openhd::load_config();
-  /*if(config.WIFI_ENABLE_AUTODETECT){
+  if(config.WIFI_ENABLE_AUTODETECT){
     // We need to discover the connected cards and reason about their usage
     //Find out which cards are connected first
     auto connected_cards =DWifiCards::discover_connected_wifi_cards();
@@ -83,7 +83,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
       m_console->warn("WB only supports one wifi card on air");
       monitor_mode_cards.resize(1);
     }
-  }*/
+  }
   m_console->debug("monitor_mode card(s):{}",debug_cards(monitor_mode_cards));
   if(opt_hotspot_card.has_value()){
     m_console->debug("Hotspot card:{}",opt_hotspot_card.value().device_name);
