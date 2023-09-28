@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "openhd_settings_imp.hpp"
+#include <openhd_profile.h>
 #include "wifi_card.h"
 
 /**
@@ -26,7 +27,7 @@ class WifiHotspot {
   /**
    * Utility for starting, stopping WIFI AP (Hotspot) and forwarding the client connect/disconnect events.
    */
-  explicit WifiHotspot(WiFiCard wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space);
+  explicit WifiHotspot(OHDProfile profile,WiFiCard wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space);
   WifiHotspot(const WifiHotspot&)=delete;
   WifiHotspot(const WifiHotspot&&)=delete;
   ~WifiHotspot();
@@ -43,10 +44,7 @@ class WifiHotspot {
   void stop();
   void start_async();
   void stop_async();
-  // Ip addresses of all connected clients.
-  // A client might dynamically connect or disconnect from the AP at run time,
-  // In this case the apropriate callbacks have to be called.
-  std::vector<std::string> connectedClientsIps;
+  const OHDProfile m_profile;
   const WiFiCard m_wifi_card;
   bool started=false;
   std::shared_ptr<spdlog::logger> m_console;

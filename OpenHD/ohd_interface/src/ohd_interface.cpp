@@ -18,7 +18,7 @@
 OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared_ptr<openhd::ActionHandler> opt_action_handler,bool continue_without_wb_card)
     : m_platform(platform1),
     m_profile(std::move(profile1)),
-    m_opt_action_handler(opt_action_handler){
+    m_opt_action_handler(std::move(opt_action_handler)){
   m_console = openhd::log::create_or_get("interface");
   assert(m_console);
   m_external_devices_manager=std::make_shared<openhd::ExternalDeviceManager>();
@@ -136,7 +136,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   if(opt_hotspot_card.has_value()){
     const openhd::WifiSpace wb_frequency_space= (m_wb_link!= nullptr) ? m_wb_link->get_current_frequency_channel_space() : openhd::WifiSpace::G5_8;
     // OHD hotspot needs to know the wifibroadcast frequency - it is always on the opposite spectrum
-    m_wifi_hotspot =std::make_unique<WifiHotspot>(opt_hotspot_card.value(),wb_frequency_space);
+    m_wifi_hotspot =std::make_unique<WifiHotspot>(m_profile,opt_hotspot_card.value(),wb_frequency_space);
     update_wifi_hotspot_enable();
   }
   // automatically disable Wi-Fi hotspot if FC is armed

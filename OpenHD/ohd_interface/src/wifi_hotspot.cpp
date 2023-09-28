@@ -15,7 +15,7 @@ static std::string get_ohd_wifi_hotspot_connection_nm_filename(){
 }
 
 // NOTE: This creates the proper NM connection, but does not start it yet.
-static bool create_hotspot_connection(const WiFiCard& card,const bool use_5g_channel){
+static bool create_hotspot_connection_file(const WiFiCard& card,const bool is_air,const bool use_5g_channel){
   // delete any previous connection that might exist. This might fail if no connection of that name exists -
   // aka an error here can be ignored. We re-create it just to be sure, since for example, the wifi card might have been changed
   // during re-boots.
@@ -23,7 +23,8 @@ static bool create_hotspot_connection(const WiFiCard& card,const bool use_5g_cha
     OHDUtil::run_command("nmcli",{"con","delete", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
   }
   // and create the hotspot one
-  OHDUtil::run_command("nmcli",{"con add type wifi ifname",card.device_name,"con-name", OHD_WIFI_HOTSPOT_CONNECTION_NAME,"autoconnect no ssid openhd"});
+  OHDUtil::run_command("nmcli",{"con add type wifi ifname",card.device_name,"con-name", OHD_WIFI_HOTSPOT_CONNECTION_NAME,"autoconnect no",
+                                fmt::format("ssid {}",is_air ? "openhd_air" : "openhd_ground")});
   OHDUtil::run_command("nmcli",{"con modify ", OHD_WIFI_HOTSPOT_CONNECTION_NAME," 802-11-wireless.mode ap",
                                  "802-11-wireless.band",use_5g_channel ? "a" : "bg",
                                  "ipv4.method shared"});
@@ -32,22 +33,26 @@ static bool create_hotspot_connection(const WiFiCard& card,const bool use_5g_cha
   OHDUtil::run_command("nmcli",{"con modify",OHD_WIFI_HOTSPOT_CONNECTION_NAME,"ipv4.addresses 192.168.3.1/24"});
   return true;
 }
+static void remove_hotspot_connection_file(){
+    // cleanup - proper stop of openhd, do not leave any traces behind.
+    OHDUtil::run_command("nmcli",{"con", "delete", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
+}
 
 
-WifiHotspot::WifiHotspot(WiFiCard wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space):
-m_wifi_card(std::move(wifiCard))
+WifiHotspot::WifiHotspot(OHDProfile profile,WiFiCard wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space)
+        :m_profile(std::move(profile)),
+         m_wifi_card(std::move(wifiCard))
 {
   m_use_5G_channel=WifiHotspot::get_use_5g_channel(m_wifi_card, wifibroadcast_frequency_space);
   m_console = openhd::log::create_or_get("wifi_hs");
   // create the connection (no matter if hotspot is enabled) such that we can just enable / disable it by running connection up / down.
   m_console->debug("begin create hotspot connection");
-  create_hotspot_connection(m_wifi_card,m_use_5G_channel);
+  create_hotspot_connection_file(m_wifi_card,m_profile.is_air,m_use_5G_channel);
   m_console->debug("end create hotspot connection");
 }
 
 WifiHotspot::~WifiHotspot() {
-  // cleanup - proper stop of openhd, do not leave any traces behind.
-  OHDUtil::run_command("nmcli",{"con", "delete", OHD_WIFI_HOTSPOT_CONNECTION_NAME});
+ remove_hotspot_connection_file();
 }
 
 
