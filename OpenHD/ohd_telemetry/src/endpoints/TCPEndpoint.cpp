@@ -154,7 +154,7 @@ void TCPEndpoint::set_external_device_manager(std::shared_ptr<openhd::ExternalDe
             // set all clients to disconnected
             for(auto& client: m_connected_clients){
                 // Forward video there, but no telemetry (we already do telemetry via tcp)
-                auto external_device=openhd::ExternalDevice{"TCP CLIENT",client.ip,true, false};
+                auto external_device=openhd::ExternalDevice{"TCP CLIENT",client.ip,true};
                 m_opt_external_device_manager->on_new_external_device(external_device, false);
             }
             m_opt_external_device_manager= nullptr;
@@ -164,7 +164,7 @@ void TCPEndpoint::set_external_device_manager(std::shared_ptr<openhd::ExternalDe
     m_opt_external_device_manager=external_device_manager;
     for(auto& client: m_connected_clients){
         // Forward video there, but no telemetry (we already do telemetry via tcp)
-        auto external_device=openhd::ExternalDevice{"TCP CLIENT",client.ip,true, false};
+        auto external_device=openhd::ExternalDevice{"TCP CLIENT",client.ip,true};
         m_opt_external_device_manager->on_new_external_device(external_device, true);
     }
 }
@@ -172,7 +172,7 @@ void TCPEndpoint::set_external_device_manager(std::shared_ptr<openhd::ExternalDe
 void TCPEndpoint::on_external_device(const TCPEndpoint::Client &client, bool connected) {
     std::lock_guard<std::mutex> guard(m_external_devices_mutex);
     if(m_opt_external_device_manager){
-        auto external_device=openhd::ExternalDevice{"MAV TCP CLIENT",client.ip,true, false};
+        auto external_device=openhd::ExternalDevice{"MAV TCP CLIENT",client.ip,true};
         m_opt_external_device_manager->on_new_external_device(external_device,connected);
     }
 }
