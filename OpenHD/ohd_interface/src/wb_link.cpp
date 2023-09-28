@@ -255,6 +255,7 @@ bool WBLink::request_set_frequency(int frequency) {
           std::this_thread::sleep_for(DELAY_FOR_TRANSMIT_ACK);
       }
      apply_frequency_and_channel_width_from_settings();
+     m_rate_adjustment_frequency_changed=true;
   },std::chrono::steady_clock::now());
   return try_schedule_work_item(work_item);
 }
@@ -783,7 +784,8 @@ void WBLink::wt_perform_rate_adjustment() {
   //const auto stats=m_wb_txrx->get_rx_stats();
   //m_foreign_p_helper.update(stats.count_p_any,stats.count_p_valid);
   //m_console->debug("N foreign packets per second :{}",m_foreign_p_helper.get_foreign_packets_per_second());
-  if(m_max_video_rate_for_current_wifi_fec_config != max_video_rate_for_current_wifi_fec_config ){
+  if(m_max_video_rate_for_current_wifi_fec_config != max_video_rate_for_current_wifi_fec_config || m_rate_adjustment_frequency_changed){
+    m_rate_adjustment_frequency_changed= false;
     // Apply the default for this configuration, then return - we will start the auto-adjustment
     // depending on tx error(s) next time the rate adjustment is called
     m_console->debug("MCS:{} ch_width:{} Calculated max_rate:{}, max_video_rate:{}",

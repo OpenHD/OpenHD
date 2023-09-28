@@ -158,6 +158,8 @@ class WBLink :public OHDLink{
   std::chrono::steady_clock::time_point m_last_stats_recalculation=std::chrono::steady_clock::now();
   std::atomic<int> m_max_total_rate_for_current_wifi_config_kbits=0;
   std::atomic<int> m_max_video_rate_for_current_wifi_fec_config=0;
+  // Whenever the frequency has been changed, we reset tx errors and start new
+  bool m_rate_adjustment_frequency_changed= false;
   // bitrate we recommend to the encoder / camera(s)
   int m_recommended_video_bitrate_kbits =0;
   std::atomic<int> m_curr_n_rate_adjustments=0;
