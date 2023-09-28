@@ -103,16 +103,9 @@ void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) 
     case CameraType::UVC:
     case CameraType::ROCKCHIP_HDMI:
     case CameraType::CUSTOM_UNMANAGED_CAMERA:
+    case CameraType::RPI_CSI_LIBCAMERA:
     case CameraType::DUMMY_SW: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
-      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,frame_cb,m_opt_action_handler);
-      stream->setup();
-      stream->start();
-      m_camera_streams.push_back(stream);
-      break;
-    }
-    case CameraType::RPI_CSI_LIBCAMERA: {
-      m_console->debug("LibCamera index:{}", camera.index);
       auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,frame_cb,m_opt_action_handler);
       stream->setup();
       stream->start();
