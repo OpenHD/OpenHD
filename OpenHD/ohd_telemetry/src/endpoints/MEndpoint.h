@@ -89,14 +89,7 @@ class MEndpoint {
   // I think mavlink channels are static, so each endpoint should use his own channel.
   // Based on mavsdk::mavlink_channels
   // It is not clear what the limit of the number of channels is, except UINT8_MAX.
-  static int checkoutFreeChannel(){
-    static std::mutex _channels_used_mutex;
-    static int channel_idx=0;
-    std::lock_guard<std::mutex> lock(_channels_used_mutex);
-    int ret=channel_idx;
-    channel_idx++;
-    return ret;
-  }
+  static int checkoutFreeChannel();
  private:
   // Used to measure incoming / outgoing bits per second
   int m_tx_n_bytes=0;
