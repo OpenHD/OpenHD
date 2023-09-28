@@ -70,6 +70,8 @@ OHDVideoAir::~OHDVideoAir() {
         m_opt_action_handler->arm_state.unregister_listener("ohd_video_air");
         m_opt_action_handler->action_request_bitrate_change_register(nullptr);
     }
+    // Stop all the camera stream(s)
+    m_camera_streams.resize(0);
 }
 
 std::string OHDVideoAir::createDebug() const {
@@ -132,6 +134,7 @@ void OHDVideoAir::restartIfStopped() {
 std::vector<std::shared_ptr<openhd::ISettingsComponent>>
 OHDVideoAir::get_all_camera_settings() {
   std::vector<std::shared_ptr<openhd::ISettingsComponent>> ret;
+  ret.reserve(m_camera_streams.size());
   for(auto& stream: m_camera_streams){
     ret.push_back(stream->m_camera_holder);
   }
