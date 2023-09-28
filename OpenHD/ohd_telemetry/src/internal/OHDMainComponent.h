@@ -42,6 +42,7 @@ class OHDMainComponent : public MavlinkComponent{
   std::vector<MavlinkMessage> generate_mavlink_messages() override;
   // override from component
   std::vector<MavlinkMessage> process_mavlink_messages(std::vector<MavlinkMessage> messages)override;
+  void process_command_self(const mavlink_command_long_t& command,std::vector<MavlinkMessage>& message_buffer);
   // Some features rely on the arming state of the FC, like adjusting tx power &
   // Some features rely on (RC) channel switches, like changing the mcs index
   void check_fc_messages_for_actions(const std::vector<MavlinkMessage>& messages);
