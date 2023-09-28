@@ -5,10 +5,8 @@
 #ifndef OPENHD_OHDGSTHELPER_H
 #define OPENHD_OHDGSTHELPER_H
 
-// NOTE: Spdlog uses format internally, when pulling in fmt first and then spdlog we can have compiler issues
 #include "openhd_spdlog.h"
 #include "openhd_bitrate_conversions.hpp"
-//#include <fmt/format.h>
 #include <gst/gst.h>
 
 #include <sstream>
