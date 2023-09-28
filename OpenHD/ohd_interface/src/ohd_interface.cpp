@@ -138,10 +138,10 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
   }
   // automatically disable Wi-Fi hotspot if FC is armed
   if(m_opt_action_handler && m_wifi_hotspot){
-    auto cb=[this](){
+    auto cb=[this](bool armed){
       update_wifi_hotspot_enable();
     };
-    m_opt_action_handler->m_action_disable_wifi_when_armed=std::make_shared<openhd::ActionHandler::ACTION_DISABLE_WIFI_WHEN_ARMED>(cb);
+    m_opt_action_handler->arm_state.register_listener("ohd_interface_wfi",cb);
   }
   m_console->debug("OHDInterface::created");
 }
@@ -251,7 +251,7 @@ void OHDInterface::update_wifi_hotspot_enable() {
     if(settings.wifi_hotspot_mode==WIFI_HOTSPOT_AUTO){
         bool is_armed= false;
         if(m_opt_action_handler){
-            is_armed=m_opt_action_handler->is_currently_armed();
+            is_armed=m_opt_action_handler->arm_state.is_currently_armed();
         }
         if(is_armed){
             m_wifi_hotspot->set_enabled_async(false);

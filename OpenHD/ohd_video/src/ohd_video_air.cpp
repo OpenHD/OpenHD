@@ -55,7 +55,7 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
     auto cb_armed=[this](bool armed){
           this->update_arming_state(armed);
     };
-    m_opt_action_handler->m_action_record_video_when_armed=std::make_shared<openhd::ActionHandler::ACTION_RECORD_VIDEO_WHEN_ARMED>(cb_armed);
+    m_opt_action_handler->arm_state.register_listener("ohd_video_air",cb_armed);
   }
   if(m_platform.platform_type==PlatformType::RaspberryPi){
     m_rpi_os_change_config_handler=std::make_unique<openhd::rpi::os::ConfigChangeHandler>(m_platform);
@@ -67,7 +67,7 @@ OHDVideoAir::OHDVideoAir(OHDPlatform platform1,std::vector<Camera> cameras,
 
 OHDVideoAir::~OHDVideoAir() {
     if(m_opt_action_handler){
-        m_opt_action_handler->m_action_record_video_when_armed= nullptr;
+        m_opt_action_handler->arm_state.unregister_listener("ohd_video_air");
         m_opt_action_handler->action_request_bitrate_change_register(nullptr);
     }
 }
