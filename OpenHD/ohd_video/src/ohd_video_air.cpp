@@ -70,6 +70,8 @@ OHDVideoAir::~OHDVideoAir() {
         m_opt_action_handler->arm_state.unregister_listener("ohd_video_air");
         m_opt_action_handler->action_request_bitrate_change_register(nullptr);
     }
+    // Stop all the camera stream(s)
+    m_camera_streams.resize(0);
 }
 
 std::string OHDVideoAir::createDebug() const {
@@ -101,16 +103,9 @@ void OHDVideoAir::configure(const std::shared_ptr<CameraHolder>& camera_holder) 
     case CameraType::UVC:
     case CameraType::ROCKCHIP_HDMI:
     case CameraType::CUSTOM_UNMANAGED_CAMERA:
+    case CameraType::RPI_CSI_LIBCAMERA:
     case CameraType::DUMMY_SW: {
       m_console->debug("GStreamerStream for Camera index:{}",camera.index);
-      auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,frame_cb,m_opt_action_handler);
-      stream->setup();
-      stream->start();
-      m_camera_streams.push_back(stream);
-      break;
-    }
-    case CameraType::RPI_CSI_LIBCAMERA: {
-      m_console->debug("LibCamera index:{}", camera.index);
       auto stream = std::make_shared<GStreamerStream>(m_platform.platform_type, camera_holder,frame_cb,m_opt_action_handler);
       stream->setup();
       stream->start();
@@ -132,6 +127,7 @@ void OHDVideoAir::restartIfStopped() {
 std::vector<std::shared_ptr<openhd::ISettingsComponent>>
 OHDVideoAir::get_all_camera_settings() {
   std::vector<std::shared_ptr<openhd::ISettingsComponent>> ret;
+  ret.reserve(m_camera_streams.size());
   for(auto& stream: m_camera_streams){
     ret.push_back(stream->m_camera_holder);
   }
@@ -344,16 +340,15 @@ void OHDVideoAir::start_stop_forwarding_external_device(openhd::ExternalDevice e
 
 void OHDVideoAir::on_video_data(int stream_index, const openhd::FragmentedVideoFrame &fragmented_video_frame) {
     //m_console->debug("Got data {} {}",stream_index,fragmented_video_frame.frame_fragments.size());
-    if(stream_index==0){
-        m_link_handle->transmit_video_data(stream_index,fragmented_video_frame);
-    }else if(stream_index==1){
-        m_link_handle->transmit_video_data(stream_index,fragmented_video_frame);
-    }else{
+    if(!(stream_index==0 || stream_index==1)){
         m_console->debug("Invalid stream index: {}",stream_index);
+        return;
+    }
+    if(m_link_handle){
+        m_link_handle->transmit_video_data(stream_index,fragmented_video_frame);
     }
     if(m_has_localhost_forwarding_enabled){
         //m_console->debug("Forwarding {} {}",stream_index,fragmented_video_frame.frame_fragments.size());
-        if(!(stream_index==0 || stream_index==1))return;
         auto& forwarder=stream_index==0 ? m_primary_video_forwarder : m_secondary_video_forwarder;
         for(auto& fragment:fragmented_video_frame.frame_fragments){
             forwarder->forwardPacketViaUDP(fragment->data(),fragment->size());
