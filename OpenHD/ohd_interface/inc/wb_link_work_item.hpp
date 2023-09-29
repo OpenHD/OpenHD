@@ -1,5 +1,4 @@
 #include <utility>
-#include <functional>
 
 //
 // Created by consti10 on 15.02.23.

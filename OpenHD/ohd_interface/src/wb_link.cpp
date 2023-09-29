@@ -3,7 +3,6 @@
 //#include "wifi_command_helper2.h"
 
 #include <utility>
-#include <functional>
 
 #include "openhd_global_constants.hpp"
 #include "openhd_platform.h"

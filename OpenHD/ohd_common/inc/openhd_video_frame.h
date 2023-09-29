@@ -8,7 +8,6 @@
 #include <vector>
 #include <memory>
 #include <chrono>
-#include <functional>
 
 namespace openhd{
 

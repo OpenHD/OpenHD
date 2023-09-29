@@ -9,7 +9,6 @@
 #include <sstream>
 #include <optional>
 #include <cstring>
-#include <functional>
 
 // NOTE: While annoying, we do not want mavlink as a direct dependency inside ohd_common / ohd_interface,
 // So we double-declare the mavlink message struct(s) here.

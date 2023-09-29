@@ -7,7 +7,6 @@
 
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
-#include <functional>
 
 #include "openhd_spdlog.h"
 
