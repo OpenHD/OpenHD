@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <utility>
+#include <functional>
 
 #include "openhd_spdlog.h"
 #include "openhd_util.h"

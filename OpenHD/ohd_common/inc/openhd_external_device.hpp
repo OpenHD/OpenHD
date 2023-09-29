@@ -7,6 +7,7 @@
 
 #include <map>
 #include <string>
+#include <functional>
 
 #include "openhd_settings_directories.hpp"
 #include "openhd_spdlog.h"

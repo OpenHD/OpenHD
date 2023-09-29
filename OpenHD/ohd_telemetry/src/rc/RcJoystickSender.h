@@ -9,6 +9,7 @@
 #include "../mav_helper.h"
 #include <memory>
 #include <atomic>
+#include <functional>
 #include "ChannelMappingUtil.hpp"
 
 // Really simple, have a thread that send out telemetry RC data at a fixed rate

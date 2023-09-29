@@ -1,6 +1,7 @@
 #include "mavlink_parameter_set.h"
 
 #include <utility>
+#include <functional>
 
 namespace mavsdk {
 
