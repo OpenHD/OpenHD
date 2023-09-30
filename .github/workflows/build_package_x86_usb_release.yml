@@ -39,8 +39,10 @@ jobs:
           ls
           cd OpenHD
           ./install_build_dep.sh ubuntu-x86
-          OpenHD/build_submodules_independently.sh
-
+          cd OpenHD
+          sudo ./build_submodules_independently.sh
+          cd ..
+          
       - name: Build with make
         run: |
           cd OpenHD
