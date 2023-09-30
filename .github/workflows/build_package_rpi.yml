@@ -4,7 +4,6 @@ on:
   push:
     branches: ["2.5-evo"]
     paths-ignore:
-      - '**.yml'
       - '**.md'
       - '**.asciidoc'
       - '**.adoc'
