@@ -43,9 +43,6 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo ./install_build_dep.sh ubuntu-x86
-          cd OpenHD
-          sudo ./build_submodules_independently.sh
-          cd ..
           
       - name: Build with make
         run: |
