@@ -5,7 +5,7 @@
 #include <chrono>
 #include <vector>
 
-#include "camera_holder.hpp"
+#include "camera_holder.h"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
 

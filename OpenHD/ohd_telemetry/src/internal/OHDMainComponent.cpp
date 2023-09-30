@@ -15,9 +15,14 @@
 
 OHDMainComponent::OHDMainComponent(
     OHDPlatform platform1,uint8_t parent_sys_id,
-    bool runsOnAir,std::shared_ptr<openhd::ActionHandler> opt_action_handler) : m_platform(platform1),RUNS_ON_AIR(runsOnAir),
+    bool runsOnAir,std::shared_ptr<openhd::ActionHandler> opt_action_handler)
+    : m_platform(platform1),RUNS_ON_AIR(runsOnAir),
       m_opt_action_handler(std::move(opt_action_handler)),
-	MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER) {
+      MavlinkComponent(parent_sys_id,MAV_COMP_ID_ONBOARD_COMPUTER),
+      m_heartbeats_interval(RUNS_ON_AIR ? std::chrono::milliseconds(500): std::chrono::milliseconds(200)),
+      m_onboard_computer_status_interval(RUNS_ON_AIR ? std::chrono::milliseconds(500): std::chrono::milliseconds(200)),
+      m_wb_stats_interval(RUNS_ON_AIR ? std::chrono::milliseconds(500): std::chrono::milliseconds(200))
+    {
   m_console = openhd::log::create_or_get("t_main_c");
   assert(m_console);
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform,true);
@@ -35,24 +40,12 @@ OHDMainComponent::~OHDMainComponent() {
 std::vector<MavlinkMessage> OHDMainComponent::generate_mavlink_messages() {
   //m_console->debug("InternalTelemetry::generate_mavlink_messages()");
   std::vector<MavlinkMessage> ret;
-  ret.push_back(MavlinkComponent::create_heartbeat());
-  OHDUtil::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
-          m_sys_id, m_comp_id));
-  OHDUtil::vec_append(ret, generate_mav_wb_stats());
-  if(RUNS_ON_AIR){
-    if(m_opt_action_handler){
-      auto cam_stats1=m_opt_action_handler->get_cam_info(0);
-      auto cam_stats2=m_opt_action_handler->get_cam_info(1);
-      // NOTE: We use the comp id of primary / secondary camera here, since even though we are not the camera itself,
-      // We send the broadcast message(s) for it
-      if(cam_stats1.active){
-        ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,MAV_COMP_ID_CAMERA,cam_stats1));
-      }
-      if(cam_stats2.active){
-        ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,MAV_COMP_ID_CAMERA2,cam_stats2));
-      }
-    }
+  auto opt_heartbeat=create_heartbeat_if_needed();
+  if(opt_heartbeat.has_value()){
+      ret.push_back(opt_heartbeat.value());
   }
+  auto broadcast_stats=create_broadcast_stats_if_needed();
+  OHDUtil::vec_append(ret,broadcast_stats);
   //ret.push_back(generateOpenHDVersion());
   //ret.push_back(MExampleMessage::position(mSysId,mCompId));
   //_status_text_accumulator.manually_add_message(RUNS_ON_AIR ? "HelloAir" : "HelloGround");
@@ -75,51 +68,8 @@ std::vector<MavlinkMessage> OHDMainComponent::process_mavlink_messages(std::vect
       case MAVLINK_MSG_ID_COMMAND_LONG:{
         mavlink_command_long_t command;
         mavlink_msg_command_long_decode(&msg.m,&command);
-        m_console->debug("Got MAVLINK_MSG_ID_COMMAND_LONG: {} {}",command.command,static_cast<uint32_t>(command.param1));
-        if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
-          //https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
-          m_console->debug("Got shutdown command");
-          if(command.target_system== m_sys_id){
-            // we are a companion computer, so we use param2 to get the actual action
-            const auto action_for_companion=command.param2;
-            if(action_for_companion>0){
-              ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
-              const bool shutdownOnly=action_for_companion==2;
-              openhd::reboot::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
-            }
-            // dirty, we don't have a custom message for that yet
-            if(command.param3==1){
-              ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
-              m_console->debug("Unimplemented");
-            }
-          }
-        }else if(command.command==MAV_CMD_REQUEST_MESSAGE){
-          const auto requested_message_id=static_cast<uint32_t>(command.param1);
-          m_console->debug("Someone requested a specific message: {}",requested_message_id);
-          if(requested_message_id==MAVLINK_MSG_ID_OPENHD_VERSION_MESSAGE){
-            m_console->info("Sent OpenHD version");
-            ret.push_back(generate_ohd_version());
-          }
-        }else if(command.command==OPENHD_CMD_INITIATE_CHANNEL_SEARCH){
-          if(RUNS_ON_AIR){
-            m_console->debug("Scan channels is only a feature for ground unit");
-            break;
-          }else{
-            const auto freq_bands=static_cast<uint32_t>(command.param1);
-            const auto channel_widths=static_cast<uint32_t>(command.param2);
-            m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {} {}",freq_bands,channel_widths);
-            if((freq_bands==0 || freq_bands==1 || freq_bands==2) &&
-                (channel_widths==0 || channel_widths==1 || channel_widths==2)){
-              const bool scan_2g=freq_bands==0 || freq_bands==1;
-              const bool scan_5g=freq_bands==0 || freq_bands==2;
-              const bool scan_20Mhz=channel_widths==0 || channel_widths==1;
-              const bool scan_40Mhz=channel_widths==0 || channel_widths==2;
-              if(m_opt_action_handler){
-                m_opt_action_handler->action_wb_link_scan_channels_handle({scan_2g,scan_5g,scan_20Mhz,scan_40Mhz});
-                ret.push_back(ack_command(msg.m.sysid,msg.m.compid,command.command));
-              }
-            }
-          }
+        if(command.target_system==m_sys_id && command.target_component==m_comp_id){
+            process_command_self(command,msg.m.sysid,msg.m.compid,ret);
         }
         // TODO have an ack response.
       }break;
@@ -147,17 +97,21 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
   if(!m_opt_action_handler){
     return {};
   }
-  std::vector<MavlinkMessage> ret;
   const auto latest_stats=m_opt_action_handler->get_link_stats();
+  if(!latest_stats.ready){
+      // Not yet updated
+      return {};
+  }
+  std::vector<MavlinkMessage> ret;
   if(RUNS_ON_AIR!=latest_stats.is_air){
     // Happens when wb hasn't updated the stats the first time yet
-    //m_console->warn("Mismatch air/ground");
+    m_console->warn("Mismatch air/ground");
     return ret;
   }
   // stats for all the wifi card(s)
   int card_index=0;
   for(const auto& card_stats : latest_stats.cards){
-    if(!card_stats.exists_in_openhd){
+    if(!card_stats.NON_MAVLINK_CARD_ACTIVE){
       // skip non active cards
       continue;
     }
@@ -174,15 +128,31 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
     for(const auto& stats : latest_stats.stats_wb_video_air){
       ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air(
           m_sys_id, m_comp_id, stats));
-      ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air_fec_performance(
-          m_sys_id, m_comp_id, stats));
     }
+      ret.push_back(openhd::LinkStatisticsHelper::pack_vid_air_fec_performance(
+              m_sys_id, m_comp_id,latest_stats.air_fec_performance));
   }else{
     for(const auto& ground_video: latest_stats.stats_wb_video_ground){
       ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd(
           m_sys_id, m_comp_id, ground_video));
-      ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd_fec_performance(
-          m_sys_id, m_comp_id, ground_video));
+    }
+    ret.push_back(openhd::LinkStatisticsHelper::pack_vid_gnd_fec_performance(
+          m_sys_id, m_comp_id, latest_stats.gnd_fec_performance));
+    ret.push_back(openhd::LinkStatisticsHelper::pack_mavlink_openhd_wifbroadcast_gnd_operating_mode(
+            m_sys_id,m_comp_id,latest_stats.gnd_operating_mode));
+    if(m_opt_action_handler && m_opt_action_handler->wb_get_supported_channels!= nullptr) {
+        auto channels = m_opt_action_handler->wb_get_supported_channels();
+        ret.push_back(openhd::LinkStatisticsHelper::generate_msg_openhd_wifibroadcast_supported_channels(m_sys_id, m_comp_id,channels));
+    }
+    if(m_opt_action_handler){
+        auto progress_x=m_opt_action_handler->get_analyze_results();
+        for(auto& progress:progress_x){
+            ret.push_back(openhd::LinkStatisticsHelper::generate_msg_analyze_channels_progress(m_sys_id,m_comp_id,progress));
+        }
+        auto progress_y=m_opt_action_handler->get_scan_channels_progress();
+        for(auto& progress:progress_y){
+            ret.push_back(openhd::LinkStatisticsHelper::generate_msg_scan_channels_progress(m_sys_id,m_comp_id,progress));
+        }
     }
   }
   return ret;
@@ -203,9 +173,10 @@ MavlinkMessage OHDMainComponent::generate_ohd_version(const std::string& commit_
   return msg;
 }
 
-MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,const uint8_t source_comp_id,uint16_t command_id) {
+MavlinkMessage OHDMainComponent::ack_command(const uint8_t source_sys_id,const uint8_t source_comp_id,uint16_t command_id,bool success) {
   MavlinkMessage ret{};
-  mavlink_msg_command_ack_pack(m_sys_id, m_comp_id,&ret.m,command_id,MAV_RESULT_ACCEPTED,255,0,source_sys_id,source_comp_id);
+  const auto result=success ? MAV_RESULT_ACCEPTED : MAV_RESULT_UNSUPPORTED;
+  mavlink_msg_command_ack_pack(m_sys_id, m_comp_id,&ret.m,command_id,result,255,0,source_sys_id,source_comp_id);
   return ret;
 }
 
@@ -234,7 +205,7 @@ void OHDMainComponent::check_fc_messages_for_actions(const std::vector<MavlinkMe
       const auto mode = (MAV_MODE_FLAG)heartbeat.base_mode;
       const bool armed= (mode & MAV_MODE_FLAG_SAFETY_ARMED);
       if(m_opt_action_handler){
-        m_opt_action_handler->update_arming_state_if_changed(armed);
+        m_opt_action_handler->arm_state.update_arming_state_if_changed(armed);
       }
     }
     // We only change the mcs on the air unit (since downlink is the only thing that requires 'higher' bandwidth)
@@ -244,9 +215,133 @@ void OHDMainComponent::check_fc_messages_for_actions(const std::vector<MavlinkMe
         mavlink_msg_rc_channels_decode(&msg.m, &rc_channels);
         const auto tmp=mavlink_msg_rc_channels_to_array(rc_channels);
         if(m_opt_action_handler){
-          m_opt_action_handler->update_rc_channels(tmp);
+          m_opt_action_handler->fc_rc_channels.update_rc_channels(tmp);
         }
       }
     }
   }
+}
+
+std::optional<MavlinkMessage> OHDMainComponent::create_heartbeat_if_needed() {
+    const auto elapsed=std::chrono::steady_clock::now()-m_last_heartbeat;
+    if(elapsed>=m_heartbeats_interval){
+        m_last_heartbeat=std::chrono::steady_clock::now();
+        return MavlinkComponent::create_heartbeat();
+    }
+    return std::nullopt;
+}
+
+std::vector<MavlinkMessage> OHDMainComponent::create_broadcast_stats_if_needed() {
+    std::vector<MavlinkMessage> ret;
+    const auto now=std::chrono::steady_clock::now();
+    const auto elapsed_onboard_computer_status=now-m_last_onboard_computer;
+    if(elapsed_onboard_computer_status>m_onboard_computer_status_interval){
+        m_last_onboard_computer=now;
+        OHDUtil::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
+                m_sys_id, m_comp_id));
+    }
+    {
+        const auto elapsed_version=now-m_last_version_message_tp;
+        if(elapsed_version>m_version_message_interval){
+            m_last_version_message_tp=now;
+            ret.push_back(generate_ohd_version());
+        }
+    }
+    const auto elapsed_wb=now-m_last_wb_stats;
+    if(elapsed_wb>m_wb_stats_interval){
+        m_last_wb_stats=now;
+        OHDUtil::vec_append(ret, generate_mav_wb_stats());
+        if(RUNS_ON_AIR){
+            if(m_opt_action_handler){
+                auto cam_stats1=m_opt_action_handler->get_cam_info(0);
+                auto cam_stats2=m_opt_action_handler->get_cam_info(1);
+                // NOTE: We use the comp id of primary / secondary camera here, since even though we are not the camera itself,
+                // We send the broadcast message(s) for it
+                if(cam_stats1.active){
+                    ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,MAV_COMP_ID_CAMERA,cam_stats1));
+                }
+                if(cam_stats2.active){
+                    ret.push_back(openhd::LinkStatisticsHelper::pack_camera_stats(m_sys_id,MAV_COMP_ID_CAMERA2,cam_stats2));
+                }
+            }
+        }
+    }
+    return ret;
+}
+
+void OHDMainComponent::process_command_self(const mavlink_command_long_t &command,int source_sys_id,int source_comp_id,
+                                            std::vector<MavlinkMessage>& message_buffer) {
+    assert(command.target_system==m_sys_id);
+    assert(command.target_component==m_comp_id);
+    m_console->debug("Got MAVLINK_MSG_ID_COMMAND_LONG: {} {}",command.command,static_cast<uint32_t>(command.param1));
+    if(command.command==MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN){
+        //https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
+        m_console->debug("Got shutdown command");
+        // we are a companion computer, so we use param2 to get the actual action
+        const auto action_for_companion=command.param2;
+        if(action_for_companion>0){
+            message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command));
+            const bool shutdownOnly=action_for_companion==2;
+            openhd::reboot::handle_power_command_async(std::chrono::seconds(1),shutdownOnly);
+        }
+        // dirty, we don't have a custom message for that yet
+        if(command.param3==1){
+            message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command));
+            m_console->debug("Unimplemented");
+        }
+
+    }else if(command.command==MAV_CMD_REQUEST_MESSAGE){
+        const auto requested_message_id=static_cast<uint32_t>(command.param1);
+        m_console->debug("Someone requested a specific message: {}",requested_message_id);
+        if(requested_message_id==MAVLINK_MSG_ID_OPENHD_VERSION_MESSAGE){
+            m_console->info("Sent OpenHD version");
+            message_buffer.push_back(generate_ohd_version());
+        }else if(requested_message_id==MAVLINK_MSG_ID_OPENHD_WIFBROADCAST_SUPPORTED_CHANNELS){
+            m_console->debug("Supported channels requested");
+            if(m_opt_action_handler && m_opt_action_handler->wb_get_supported_channels!= nullptr){
+                auto channels=m_opt_action_handler->wb_get_supported_channels();
+                message_buffer.push_back(openhd::LinkStatisticsHelper::generate_msg_openhd_wifibroadcast_supported_channels(m_sys_id,m_comp_id,channels));
+                m_console->info("Sent supported channels");
+            }else{
+                m_console->warn("Cannot get channels from wb (no handler");
+            }
+        }else{
+            m_console->info("Message {} request not supported",requested_message_id);
+        }
+    }else if(command.command==OPENHD_CMD_INITIATE_CHANNEL_SEARCH){
+        if(RUNS_ON_AIR){
+            m_console->debug("Scan channels is only a feature for ground unit");
+            return;
+        }else{
+            const auto freq_bands=static_cast<uint32_t>(command.param1);
+            const auto channel_widths=static_cast<uint32_t>(command.param2);
+            m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH {} {}",freq_bands,channel_widths);
+            bool success= false;
+            if((freq_bands==0 || freq_bands==1 || freq_bands==2) &&
+               (channel_widths==0 || channel_widths==1 || channel_widths==2)){
+                const bool scan_2g=freq_bands==0 || freq_bands==1;
+                const bool scan_5g=freq_bands==0 || freq_bands==2;
+                const bool scan_20Mhz=channel_widths==0 || channel_widths==1;
+                const bool scan_40Mhz=channel_widths==0 || channel_widths==2;
+                if(m_opt_action_handler && m_opt_action_handler->wb_cmd_scan_channels){
+                    success=m_opt_action_handler->wb_cmd_scan_channels({scan_2g,scan_5g,scan_20Mhz,scan_40Mhz});
+                }
+                m_console->debug("OPENHD_CMD_INITIATE_CHANNEL_SEARCH rsult: {}",success);
+            }
+            message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command,success));
+        }
+    }else if(command.command==OPENHD_CMD_INITIATE_CHANNEL_ANALYZE){
+        if(RUNS_ON_AIR){
+            m_console->debug("Scan channels is only a feature for ground unit");
+            return;
+        }else{
+            bool success= false;
+            if(m_opt_action_handler && m_opt_action_handler->wb_cmd_analyze_channels) {
+                success = m_opt_action_handler->wb_cmd_analyze_channels();
+            }
+            message_buffer.push_back(ack_command(source_sys_id,source_comp_id,command.command,success));
+        }
+    }else{
+        m_console->debug("Unknown command {}",command.command);
+    }
 }

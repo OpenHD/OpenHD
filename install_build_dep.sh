@@ -9,21 +9,6 @@ VIDEO_PACKAGES="libgstreamer-plugins-base1.0-dev libv4l-dev"
 BUILD_PACKAGES="git build-essential autotools-dev automake libtool python3-pip autoconf apt-transport-https ruby-dev cmake"
 
 
-function install_jetson_packages {
-PLATFORM_PACKAGES="libasio-dev libavcodec-dev gcc-8 g++-8 gcc-9 g++-9 gcc-10 g++-10 libboost1.74-dev libboost1.74 libboost-filesystem-dev"
-PLATFORM_PACKAGES_REMOVE=""
-#adding Jetson repositories
-add-apt-repository ppa:ubuntu-toolchain-r/test -y
-add-apt-repository ppa:mhier/libboost-latest -y
-add-apt-repository ppa:git-core/ppa -y
-}
-function update_jetson {
-update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave /usr/bin/g++ g++ /usr/bin/g++-10 --slave /usr/bin/gcov gcov /usr/bin/gcov-10
-update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 80 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
-update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 60 --slave /usr/bin/g++ g++ /usr/bin/g++-8 --slave /usr/bin/gcov gcov /usr/bin/gcov-8
-apt install -y ruby-dev
-gem install public_suffix -v 4.0.7
-}
 function install_pi_packages {
 PLATFORM_PACKAGES="libboost-filesystem1.74-dev libasio-dev libcamera-openhd"
 PLATFORM_PACKAGES_REMOVE="python3-libcamera libcamera0"
@@ -39,16 +24,13 @@ PLATFORM_PACKAGES_REMOVE=""
 
  # Add OpenHD Repository platform-specific packages
  apt install -y curl
- curl -1sLf 'https://dl.cloudsmith.io/public/openhd/openhd-2-3-evo/setup.deb.sh'| sudo -E bash
+ curl -1sLf 'https://dl.cloudsmith.io/public/openhd/release/setup.deb.sh'| sudo -E bash
  apt update
 
 # Main function
  
  if [[ "${PLATFORM}" == "rpi" ]]; then
     install_pi_packages
- elif [[ "${PLATFORM}" == "jetson" ]] ; then
-    install_jetson_packages
-	 update_jetson
  elif [[ "${PLATFORM}" == "ubuntu-x86" ]] ; then
     install_x86_packages
  elif [[ "${PLATFORM}" == "rock5" ]] ; then

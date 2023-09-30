@@ -118,6 +118,44 @@ static Rate20Mhz40Mhz rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index) {
   return {5000,5000};
 }
 
+static Rate20Mhz40Mhz rtl8812au_get_max_rate_2G_kbits(uint16_t mcs_index) {
+    switch (mcs_index) {
+        case 0:
+            //theoretical:6.5 | 13.5
+            return {
+                    4600-1000, // minus 1MBit/s
+                    6500-2000, // minus 2MBit/s
+            };
+        case 1:
+            //theoretical:13 | 27
+            return {
+                    10100-1000, // minus 1MBit/s
+                    15900-2000, // minus 2MBit/s
+            };
+        case 2:
+            //theoretical:19.5 | 40.5
+            return {
+                    13500-2000, // minus 2MBit/s
+                    20000-2000, // minus 2MBit/s
+            };
+        case 3:
+            //theoretical:26 | 54
+            return {
+                    16600-2000, // minus 3MBit/s
+                    24000-2000, // minus 2MBit/s
+            };
+            // In general, we only use / recommend MCS 0..3
+        default:{
+            openhd::log::get_default()->warn("MCS >4 not recommended");
+            //theoretical:39
+            return {
+                    20000, 30000
+            };
+        }
+    }
+    assert(false);
+}
+
 static uint32_t rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index,bool is_40_mhz){
   auto rate_kbits= rtl8812au_get_max_rate_5G_kbits(mcs_index);
   return is_40_mhz ? rate_kbits.rate_40mhz : rate_kbits.rate_20mhz;
@@ -125,42 +163,40 @@ static uint32_t rtl8812au_get_max_rate_5G_kbits(uint16_t mcs_index,bool is_40_mh
 
 // Dirty, since 2.4G in general is not that important
 static uint32_t rtl8812au_get_max_rate_2G_kbits(uint16_t mcs_index,bool is_40_mhz){
-  const auto rates_5G= rtl8812au_get_max_rate_5G_kbits(mcs_index);
-  if(is_40_mhz){
-    return rates_5G.rate_40mhz * 60/100;
-  }
-  return rates_5G.rate_20mhz * 80/100;
+    auto rate_kbits= rtl8812au_get_max_rate_2G_kbits(mcs_index);
+    return is_40_mhz ? rate_kbits.rate_40mhz : rate_kbits.rate_20mhz;
 }
 
-static uint32_t get_max_rate_possible_5G(const WiFiCard& card,uint16_t mcs_index,bool is_40Mhz){
-  if(card.type==WiFiCardType::Realtek8812au){
+static uint32_t get_max_rate_possible_5G_kbits(const WiFiCard& card,uint16_t mcs_index,bool is_40Mhz){
+  if(card.type==WiFiCardType::OPENHD_RTL_88X2AU || card.type==WiFiCardType::OPENHD_RTL_88X2BU){
     return rtl8812au_get_max_rate_5G_kbits(mcs_index, is_40Mhz);
-  }
-  if(card.type==WiFiCardType::Realtek88x2bu){
-    // Hard coded, since "some rate" is hard coded in the driver.
-    return 10000;
   }
   // fallback for any other weak crap
   return 5000;
 }
-
-static uint32_t get_max_rate_possible(const WiFiCard& card,const openhd::WifiSpace wifi_space,uint16_t mcs_index,bool is_40Mhz){
-  // Generally, 2G just sucks - we do not have proper rate control for it
-  if(wifi_space==WifiSpace::G2_4){
-    if(card.type==WiFiCardType::Realtek8812au){
-      return rtl8812au_get_max_rate_2G_kbits(mcs_index,is_40Mhz);
+static uint32_t get_max_rate_possible_2G_kbits(const WiFiCard& card,uint16_t mcs_index,bool is_40Mhz){
+    if(card.type==WiFiCardType::OPENHD_RTL_88X2AU || card.type==WiFiCardType::OPENHD_RTL_88X2BU){
+        return rtl8812au_get_max_rate_2G_kbits(mcs_index, is_40Mhz);
     }
-    if(card.type==WiFiCardType::Atheros9khtc){
-        return 9*1000; // About what is fixed in the driver
-    }
+    // fallback for any other weak crap
     return 5000;
-  }
-  return get_max_rate_possible_5G(card,mcs_index,is_40Mhz);
 }
 
-static uint32_t deduce_fec_overhead(uint32_t bandwidth_kbits,int fec_overhead_perc){
+static uint32_t get_max_rate_possible(const WiFiCard& card,const openhd::WifiSpace wifi_space,uint16_t mcs_index,bool is_40Mhz){
+    if(wifi_space==WifiSpace::G2_4){
+        return get_max_rate_possible_2G_kbits(card,mcs_index,is_40Mhz);
+    }
+    assert(wifi_space==WifiSpace::G5_8);
+    return get_max_rate_possible_5G_kbits(card,mcs_index,is_40Mhz);
+}
+
+static int deduce_fec_overhead(int bandwidth_kbits,int fec_overhead_perc){
   const double tmp = bandwidth_kbits * 100.0 / (100.0 + fec_overhead_perc);
-  return static_cast<uint32_t>(std::roundl(tmp));
+  return static_cast<int>(std::roundl(tmp));
+}
+
+static int multiply_by_perc(int bandwidth_kbits,int percentage){
+    return bandwidth_kbits* percentage / 100;
 }
 
 

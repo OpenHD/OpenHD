@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-#include "camera_holder.hpp"
+#include "camera_holder.h"
 #include "openhd_action_handler.hpp"
-#include "openhd_link.hpp"
+#include "openhd_video_frame.h"
 #include "openhd_platform.h"
 
 /**
@@ -36,7 +36,7 @@ class CameraStream {
    * @param camera_holder the camera to create the stream with, camera_holder provides access to the camera (capabilities) and settings.
    * @param i_transmit abstract interface where encoded video data is forwarded to (was UDP port previously)
    */
-  CameraStream(PlatformType platform_type,std::shared_ptr<CameraHolder> camera_holder,std::shared_ptr<OHDLink> link_handle);
+  CameraStream(PlatformType platform_type,std::shared_ptr<CameraHolder> camera_holder,openhd::ON_ENCODE_FRAME_CB out_cb);
   CameraStream(const CameraStream&)=delete;
   CameraStream(const CameraStream&&)=delete;
 
@@ -64,13 +64,20 @@ class CameraStream {
    * stream. It is okay to not implement this interface method properly, e.g leave it empty.
    */
    virtual void handle_change_bitrate_request(openhd::ActionHandler::LinkBitrateInformation lb)=0;
+   /**
+    * Handle a change in the arming state
+    * We have air video recording depending on the arming state, but the setting and implementation
+    * is camera specific.
+    * It is okay to not implement this interface method properly, e.g leave it empty.
+    */
+    virtual void handle_update_arming_state(bool armed)=0;
  public:
   std::shared_ptr<CameraHolder> m_camera_holder;
   static constexpr auto CAM_STATUS_STREAMING=1;
   static constexpr auto CAM_STATUS_RESTARTING=2;
  protected:
   const PlatformType m_platform_type;
-  std::shared_ptr<OHDLink> m_link_handle= nullptr;
+  openhd::ON_ENCODE_FRAME_CB m_output_cb;
 };
 
 #endif

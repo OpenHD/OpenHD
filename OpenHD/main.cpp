@@ -43,18 +43,15 @@
 // uses the dummy camera, no matter if a camera is detected or not.
 // NOTE: If you neither pass in the argument in the command line and no file exists, OpenHD will always boot as ground.
 
-static const char optstr[] = "?:agfbdcxyzwr:q";
+static const char optstr[] = "?:agcwr:qh:";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
-	//{"config-file",required_argument, nullptr,'f'},
     {"clean-start", no_argument, nullptr, 'c'},
-    {"debug-interface", no_argument, nullptr, 'x'}, // just use the long options
-    {"debug-telemetry", no_argument, nullptr, 'y'},
-    {"debug-video", no_argument, nullptr, 'z'},
     {"no-qt-autostart", no_argument, nullptr, 'w'},
     {"run-time-seconds", required_argument, nullptr, 'r'},
     {"continue-without-wb-card", no_argument, nullptr, 'q'},
+    {"hardware-config-file", required_argument, nullptr, 'h'},
     {nullptr, 0, nullptr, 0},
 };
 
@@ -62,13 +59,13 @@ struct OHDRunOptions {
   bool run_as_air=false;
   bool reset_all_settings=false;
   bool reset_frequencies=false;
-  bool enable_interface_debugging=false;
-  bool enable_telemetry_debugging=false;
-  bool enable_video_debugging=false;
-  bool no_qt_autostart=false;
+  bool no_qopenhd_autostart=false;
   int run_time_seconds=-1; //-1= infinite, only usefully for debugging
   // do not wait for a card supporting injection (for development)
   bool continue_without_wb_card=false;
+  // Specify the hardware.config file, otherwise,
+  // the default location (and default values if no file exists at the default location) is used
+  std::optional<std::string> hardware_config_file;
 };
 
 static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
@@ -97,13 +94,7 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
         break;
       case 'c':ret.reset_all_settings = true;
         break;
-      case 'x':ret.enable_interface_debugging = true;
-        break;
-      case 'y':ret.enable_telemetry_debugging = true;
-        break;
-      case 'z':ret.enable_video_debugging = true;
-        break;
-      case 'w':ret.no_qt_autostart = true;
+      case 'w':ret.no_qopenhd_autostart = true;
         break;
       case 'r':
         ret.run_time_seconds= atoi(tmp_optarg);
@@ -111,19 +102,23 @@ static OHDRunOptions parse_run_parameters(int argc, char *argv[]){
       case 'q':
         ret.continue_without_wb_card= true;
         break;
+      case 'h':
+         ret.hardware_config_file=tmp_optarg;
+         break;
       case '?':
-      default:
-        std::cout << "Usage: \n" <<
-            "--air -a          [Run as air, creates dummy camera if no camera is found] \n" <<
-            "--ground -g       [Run as ground, no camera detection] \n"<<
-            "--clean-start -c  [Wipe all persistent settings OpenHD has written, can fix any boot issues when switching hw around] \n"<<
-            "--debug-interface [enable interface debugging] \n"<<
-            "--debug-telemetry [enable telemetry debugging] \n"<<
-            "--debug-video     [enable video debugging] \n"<<
-            "--no-qt-autostart [disable auto start of QOpenHD on ground] \n"<<
-            "--run-time-seconds -r [Manually specify run time (default infinite),for debugging] \n"<<
-            "--continue-without-wb-card -q [continue the startup process even though no monitor mode card has been found yet] \n";
-        exit(1);
+      default:{
+          std::stringstream ss;
+          ss << "Usage: \n";
+          ss <<"--air -a          [Run as air, creates dummy camera if no camera is found] \n";
+          ss <<"--ground -g       [Run as ground, no camera detection] \n";
+          ss <<"--clean-start -c  [Wipe all persistent settings OpenHD has written, can fix any boot issues when switching hw around] \n";
+          ss <<"--no-qt-autostart [disable auto start of QOpenHD on ground] \n";
+          ss <<"--run-time-seconds -r [Manually specify run time (default infinite),for debugging] \n";
+          ss <<"--continue-without-wb-card -q [continue the startup process even though no monitor mode card has been found yet] \n";
+          ss <<"--hardware-config-file -h [specify path to hardware.config file]\n";
+          std::cout<<ss.str()<<std::flush;
+      }
+      exit(1);
     }
   }
   if(commandline_air==std::nullopt){
@@ -183,23 +178,25 @@ int main(int argc, char *argv[]) {
 
   // Parse the program arguments, also uses the "yes if file exists" pattern for some params
   const OHDRunOptions options=parse_run_parameters(argc,argv);
-
-  // Print all the arguments the OHD main executable is started with
-  std::cout << "OpenHD START with " <<"\n"<<
-      "air:"<<  OHDUtil::yes_or_no(options.run_as_air)<<"\n"<<
-      "reset_all_settings:" << OHDUtil::yes_or_no(options.reset_all_settings) <<"\n"<<
-      "reset_frequencies:" << OHDUtil::yes_or_no(options.reset_frequencies) <<"\n"<<
-      "debug-interface:"<<OHDUtil::yes_or_no(options.enable_interface_debugging) <<"\n"<<
-      "debug-telemetry:"<<OHDUtil::yes_or_no(options.enable_telemetry_debugging) <<"\n"<<
-      "debug-video:"<<OHDUtil::yes_or_no(options.enable_video_debugging) <<"\n"<<
-      "no-qt-autostart:"<<OHDUtil::yes_or_no(options.no_qt_autostart) <<"\n"<<
-      "run_time_seconds:"<<options.run_time_seconds<<"\n"<<
-      "continue_without_wb_card:"<<OHDUtil::yes_or_no(options.continue_without_wb_card)<<"\n";
-  std::cout<<"Version number:"<<openhd::VERSION_NUMBER_STRING<<"\n";
-  std::cout<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<"Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
-  openhd::debug_config();
-  OHDInterface::print_internal_fec_optimization_method();
-
+  if(options.hardware_config_file.has_value()){
+      openhd::set_config_file(options.hardware_config_file.value());
+  }
+  {  // Print all the arguments the OHD main executable is started with
+      std::stringstream ss;
+      ss<<"OpenHD START with \n";
+      ss<<"air:"<<  OHDUtil::yes_or_no(options.run_as_air)<<"\n";
+      ss<<"reset_all_settings:" << OHDUtil::yes_or_no(options.reset_all_settings) <<"\n";
+      ss<<"reset_frequencies:" << OHDUtil::yes_or_no(options.reset_frequencies) <<"\n";
+      ss<<"no-qopenhd-autostart:"<<OHDUtil::yes_or_no(options.no_qopenhd_autostart) <<"\n";
+      ss<<"run_time_seconds:"<<options.run_time_seconds<<"\n";
+      ss<<"continue_without_wb_card:"<<OHDUtil::yes_or_no(options.continue_without_wb_card)<<"\n";
+      ss<<"hardware-config-file:["<<options.hardware_config_file.value_or("DEFAULT")<<"]\n";
+      ss<<"Version number:"<<openhd::VERSION_NUMBER_STRING<<"\n";
+      ss<<"Git info:Branch:"<<git_Branch()<<" SHA:"<<git_CommitSHA1()<<" Dirty:"<<OHDUtil::yes_or_no(git_AnyUncommittedChanges())<<"\n";
+      std::cout<<ss.str()<<std::flush;
+      openhd::debug_config();
+      OHDInterface::print_internal_fec_optimization_method();
+  }
   // This is the console we use inside main, in general different openhd modules/classes have their own loggers
   // with different tags
   std::shared_ptr<spdlog::logger> m_console=openhd::log::create_or_get("main");
@@ -242,7 +239,7 @@ int main(int argc, char *argv[]) {
 
     // we need to start QOpenHD when we are running as ground, or stop / disable it when we are running as air.
     // can be disabled for development purposes.
-    if(!options.no_qt_autostart){
+    if(!options.no_qopenhd_autostart){
       if(!profile->is_air){
         OHDUtil::run_command("systemctl",{"start","qopenhd"});
       }else{
@@ -290,6 +287,7 @@ int main(int argc, char *argv[]) {
         ohdTelemetry->add_settings_camera_component(i, settings_components.at(i)->get_all_settings());
       }
       ohdTelemetry->add_settings_generic(ohd_video_air->get_generic_settings());
+      ohd_video_air->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
     }else{
       ohd_video_ground = std::make_unique<OHDVideoGround>(ohdInterface->get_link_handle());
       ohd_video_ground->set_ext_devices_manager(ohdInterface->get_ext_devices_manager());
@@ -302,7 +300,6 @@ int main(int argc, char *argv[]) {
 
     // run forever, everything has its own threads. Note that the only way to break out basically
     // is when one of the modules encounters an exception.
-    const bool any_debug_enabled=(options.enable_interface_debugging || options.enable_telemetry_debugging || options.enable_video_debugging);
     static bool quit=false;
     // https://unix.stackexchange.com/questions/362559/list-of-terminal-generated-signals-eg-ctrl-c-sigint
     signal(SIGTERM, [](int sig){
@@ -325,21 +322,6 @@ int main(int argc, char *argv[]) {
       }
       if(ohd_video_air){
         ohd_video_air->restartIfStopped();
-      }
-      // To make sure this is all tightly packed together, we write it to a stringstream first
-      // and then to stdout in one big chunk. Otherwise, some other debug output might stand in between the OpenHD
-      // state debug chunk.
-      if(any_debug_enabled){
-        std::stringstream ss;
-        ss<< "-----------OpenHD-state debug begin-----------\n";
-        if(options.enable_video_debugging && ohd_video_air){
-          ss<< ohd_video_air->createDebug();
-        }
-        if(options.enable_telemetry_debugging){
-          ss << ohdTelemetry->createDebug();
-        }
-        ss<<"-------------OpenHD-state debug end-------------";
-        m_console->debug(ss.str());
       }
     }
     // --- terminate openhd, most likely requested by a developer with sigterm

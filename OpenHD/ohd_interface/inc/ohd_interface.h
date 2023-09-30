@@ -53,6 +53,8 @@ class OHDInterface {
   // Both video and telemetry do the forwarding in their own way, this just provides the convenient methods to
   // start / stop forwarding if external device(s) are connected / disconnected.
   std::shared_ptr<openhd::ExternalDeviceManager> get_ext_devices_manager();
+private:
+  void update_wifi_hotspot_enable();
  private:
   const OHDProfile m_profile;
   const OHDPlatform m_platform;
@@ -67,6 +69,7 @@ class OHDInterface {
   std::vector<WiFiCard> monitor_mode_cards{};
   std::optional<WiFiCard> opt_hotspot_card=std::nullopt;
   NetworkingSettingsHolder m_nw_settings;
+  std::shared_ptr<openhd::ActionHandler> m_opt_action_handler;
 };
 
 #endif //OPENHD_OPENHD_INTERFACE_H

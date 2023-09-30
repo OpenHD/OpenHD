@@ -5,7 +5,6 @@
 #ifndef OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_
 #define OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_
 
-#include "include_json.hpp"
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
 
@@ -52,21 +51,6 @@ enum class CameraType {
   // Data needs to be provided by feeding h264,h265 or mjpeg encapsulated in RTP to udp port 5500 (localhost)
   CUSTOM_UNMANAGED_CAMERA
 };
-NLOHMANN_JSON_SERIALIZE_ENUM( CameraType, {
-     {CameraType::UNKNOWN, nullptr},
-     {CameraType::DUMMY_SW, "DUMMY_SW"},
-     {CameraType::RPI_CSI_MMAL, "RPI_CSI_MMAL"},
-     {CameraType::RPI_CSI_VEYE_V4l2, "RPI_CSI_VEYE_V4l2"},
-     {CameraType::JETSON_CSI, "JETSON_CSI"},
-     {CameraType::ROCKCHIP_CSI, "ROCKCHIP_CSI"},
-     {CameraType::ALLWINNER_CSI, "ALLWINNER_CSI"},
-     {CameraType::UVC, "UVC"},
-     {CameraType::UVC_H264, "UVC_H264"},
-     {CameraType::IP, "IP"},
-     {CameraType::RPI_CSI_LIBCAMERA, "RPI_CSI_LIBCAMERA"},
-     {CameraType::ROCKCHIP_HDMI, "ROCKCHIP_HDMI"},
-     {CameraType::CUSTOM_UNMANAGED_CAMERA, "CUSTOM_UNMANAGED_CAMERA"}
- });
 
 static std::string camera_type_to_string(const CameraType &camera_type) {
   switch (camera_type) {
@@ -153,12 +137,6 @@ static int video_codec_to_int(const VideoCodec video_codec){
     return static_cast<int>(video_codec);
 }
 
-NLOHMANN_JSON_SERIALIZE_ENUM( VideoCodec, {
-  {VideoCodec::H264, "h264"},
-  {VideoCodec::H265, "h265"},
-  {VideoCodec::MJPEG, "mjpeg"},
-});
-
 // A video format refers to a selected configuration supported by OpenHD.
 // It is possible that a camera cannot do the selected configuration in HW,
 // In this case a sw encoder can be used (in case of low res streams, that will
@@ -196,8 +174,6 @@ struct VideoFormat {
     return fmt::format("{}|{}x{}@{}",video_codec_to_string(videoCodec),width,height,framerate);
   }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VideoFormat,videoCodec,width,height,framerate)
-
 
 static constexpr int AIR_RECORDING_OFF=0;
 static constexpr int AIR_RECORDING_ON=1;
@@ -219,6 +195,5 @@ struct EndpointFormat{
     return fmt::format("{}|{}x{}@{}",format,width,height,fps);
   }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EndpointFormat,format,width,height,fps)
 
 #endif  // OPENHD_OPENHD_OHD_VIDEO_INC_OPENHD_CAMERA_ENUMS_H_

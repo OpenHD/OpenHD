@@ -9,7 +9,7 @@
 #include "mav_helper.h"
 #include "mavsdk_temporary/XMavlinkParamProvider.h"
 #include "openhd_temporary_air_or_ground.h"
-#include "openhd_util_time.hpp"
+#include "openhd_util.h"
 
 AirTelemetry::AirTelemetry(OHDPlatform platform,std::shared_ptr<openhd::ActionHandler> opt_action_handler): m_platform(platform),MavlinkSystem(OHD_SYS_ID_AIR) {
   m_console = openhd::log::create_or_get("air_tele");
@@ -98,7 +98,7 @@ void AirTelemetry::on_messages_ground_unit(std::vector<MavlinkMessage>& messages
 
 void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLogging) {
   const auto log_intervall=std::chrono::seconds(5);
-  const auto loop_intervall=std::chrono::milliseconds(500);
+  const auto loop_intervall=std::chrono::milliseconds(100);
   auto last_log=std::chrono::steady_clock::now();
   while (!terminate) {
     const auto loopBegin=std::chrono::steady_clock::now();
@@ -114,6 +114,7 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
     // send messages to the ground pi in regular intervals, includes heartbeat.
     // everything else is handled by the callbacks and their threads
     {
+      // NOTE: No component on the air unit ever needs to talk to the FC himself
       std::lock_guard<std::mutex> guard(m_components_lock);
       for(auto& component: m_components){
         auto messages=component->generate_mavlink_messages();
@@ -124,7 +125,7 @@ void AirTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLoggin
     if(loopDelta>loop_intervall){
       // We can't keep up with the wanted loop interval
       m_console->debug("Warning AirTelemetry cannot keep up with the wanted loop interval. Took {}",
-                       openhd::util::time::R(loopDelta));
+                       OHDUtil::time_readable(loopDelta));
     }else{
       const auto sleepTime=loop_intervall-loopDelta;
       // send out in X second intervals
@@ -156,7 +157,7 @@ void AirTelemetry::add_settings_camera_component(
     int camera_index, const std::vector<openhd::Setting> &settings) {
   assert(camera_index>=0 && camera_index<2);
   const auto cam_comp_id=MAV_COMP_ID_CAMERA+camera_index;
-  auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,cam_comp_id,true);
+  auto param_server=std::make_shared<XMavlinkParamProvider>(_sys_id,cam_comp_id,std::chrono::seconds(1));
   param_server->add_params(settings);
   param_server->set_ready();
   std::lock_guard<std::mutex> guard(m_components_lock);
@@ -244,4 +245,10 @@ void AirTelemetry::set_link_handle(std::shared_ptr<OHDLink> link) {
   m_wb_endpoint->registerCallback([this](std::vector<MavlinkMessage> messages) {
     on_messages_ground_unit(messages);
   });
+}
+
+void AirTelemetry::set_ext_devices_manager(std::shared_ptr<openhd::ExternalDeviceManager> ext_device_manager) {
+    if(m_tcp_server){
+        m_tcp_server->set_external_device_manager(ext_device_manager);
+    }
 }

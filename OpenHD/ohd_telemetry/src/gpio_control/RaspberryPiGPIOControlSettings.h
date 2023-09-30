@@ -23,16 +23,15 @@ struct GPIOControlSettings {
   int gpio_26= GPIO_LEAVE_UNTOUCHED;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GPIOControlSettings,gpio_2);
 
 static const std::string SETTINGS_DIRECTORY =
     std::string(SETTINGS_BASE_PATH) + std::string("telemetry/");
 
 class GPIOControlSettingsHolder
-    : public openhd::PersistentJsonSettings<GPIOControlSettings> {
+    : public openhd::PersistentSettings<GPIOControlSettings> {
  public:
   GPIOControlSettingsHolder()
-      : openhd::PersistentJsonSettings< GPIOControlSettings>(SETTINGS_DIRECTORY) {
+      : openhd::PersistentSettings< GPIOControlSettings>(SETTINGS_DIRECTORY) {
     init();
   }
  private:
@@ -42,6 +41,10 @@ class GPIOControlSettingsHolder
   [[nodiscard]] GPIOControlSettings create_default() const override {
     return GPIOControlSettings{};
   }
+  std::optional<GPIOControlSettings> impl_deserialize(const std::string& file_as_string)const override;
+
+  std::string imp_serialize(const GPIOControlSettings& data)const override;
+
 };
 }
 

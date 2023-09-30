@@ -15,20 +15,28 @@ namespace openhd{
 
 // Helpfull links: https://gstreamer.freedesktop.org/documentation/additional/design/states.html?gi-language=c
 
-static std::string gst_state_change_return_to_string(GstStateChangeReturn & gst_state_change_return){
+static std::string gst_state_change_return_to_string(const GstStateChangeReturn & gst_state_change_return){
   return fmt::format("{}",gst_element_state_change_return_get_name(gst_state_change_return));
 }
 
 // BLocks up to 1 second, but should never block more than that
-static std::string gst_element_get_current_state_as_string(GstElement * element){
+static std::string gst_element_get_current_state_as_string(GstElement * element,bool* out_is_succesfully_streaming= nullptr){
   GstState state;
   GstState pending;
   const auto timeout=std::chrono::seconds(1);
   auto returnValue = gst_element_get_state(element, &state, &pending, std::chrono::duration_cast<std::chrono::nanoseconds>(timeout).count());
-  return fmt::format("Gst state: ret:{} state:{} pending:{}",
+  bool is_successfully_streaming= false;
+  if(returnValue==GST_STATE_CHANGE_SUCCESS && state==GST_STATE_PLAYING && pending==GST_STATE_VOID_PENDING){
+      is_successfully_streaming= true;
+  }
+  if(out_is_succesfully_streaming!= nullptr){
+      *out_is_succesfully_streaming=is_successfully_streaming;
+  }
+  return fmt::format("Gst state: ret:{} state:{} pending:{} ok_streaming:{}",
                                     gst_state_change_return_to_string(returnValue),
                                     gst_element_state_get_name(state),
-                                    gst_element_state_get_name(pending));
+                                    gst_element_state_get_name(pending),
+                                    is_successfully_streaming);
 }
 
 static void gst_element_set_set_state_and_log_result(GstElement *element, GstState state){

@@ -9,7 +9,7 @@
 
 #include "mav_helper.h"
 #include "openhd_temporary_air_or_ground.h"
-#include "openhd_util_time.hpp"
+#include "openhd_util.h"
 
 GroundTelemetry::GroundTelemetry(OHDPlatform platform,
                                  std::shared_ptr<openhd::ActionHandler> opt_action_handler):
@@ -98,12 +98,19 @@ void GroundTelemetry::on_messages_ground_station_clients(const std::vector<Mavli
     }else{
       msg_generic.recommended_n_injections=2;
     }
-    // optimization: The telemetry link is quite lossy, here we help QOpenHD (or anybody else) trying to change a parameter
-    // on the air unit /FC using the (extended) parameter protocol.
-    if(msg_id==MAVLINK_MSG_ID_PARAM_EXT_SET || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ
+    // optimization: The telemetry link is quite lossy, here we help QOpenHD (or anybody else) on special message(s).
+    // WB link makes sure duplicates are discarded
+    if(msg_id==MAVLINK_MSG_ID_PARAM_EXT_SET // Param protocol
+        || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ
         || msg_id==MAVLINK_MSG_ID_PARAM_EXT_REQUEST_LIST
         || msg_id==MAVLINK_MSG_ID_PARAM_SET || msg_id==MAVLINK_MSG_ID_PARAM_REQUEST_READ
-        || msg_id==MAVLINK_MSG_ID_PARAM_REQUEST_LIST) {
+        || msg_id==MAVLINK_MSG_ID_PARAM_REQUEST_LIST
+        // command protocol
+        || msg_id==MAVLINK_MSG_ID_COMMAND_LONG
+        || msg_id==MAVLINK_MSG_ID_COMMAND_INT
+        // mission protocol
+        || msg_id==MAVLINK_MSG_ID_MISSION_REQUEST_LIST
+        || msg_id==MAVLINK_MSG_ID_MISSION_REQUEST_INT) {
       msg_generic.recommended_n_injections=4;
     }
   }
@@ -136,7 +143,7 @@ void GroundTelemetry::send_messages_air_unit(const std::vector<MavlinkMessage>& 
 
 void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLogging) {
   const auto log_intervall=std::chrono::seconds(5);
-  const auto loop_intervall=std::chrono::milliseconds(500);
+  const auto loop_intervall=std::chrono::milliseconds(100);
   auto last_log=std::chrono::steady_clock::now();
   while (!terminate) {
     const auto loopBegin=std::chrono::steady_clock::now();
@@ -154,20 +161,12 @@ void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLog
     // send messages to the ground station in regular intervals, includes heartbeat.
     // everything else is handled by the callbacks and their threads
     {
+      // NOTE: No component from the ground station ever needs to talk to the air unit / FC itself
       std::lock_guard<std::mutex> guard(m_components_lock);
       for(auto& component: m_components){
         assert(component);
         const auto messages=component->generate_mavlink_messages();
         send_messages_ground_station_clients(messages);
-        for(const auto& msg:messages){
-          // r.n no ground unit component needs to talk to the air unit directly.
-          // but we send heartbeats to the air pi anyways, just to keep the link active.
-          if(msg.m.msgid==MAVLINK_MSG_ID_HEARTBEAT && msg.m.compid==MAV_COMP_ID_ONBOARD_COMPUTER){
-            // but we send heartbeats to the air pi anyways, just to keep the link active.
-            //m_console->debug("Heartbeat sent to air unit");
-            send_messages_air_unit({msg});
-          }
-        }
       }
     }
     const auto loopDelta=std::chrono::steady_clock::now()-loopBegin;
@@ -175,7 +174,7 @@ void GroundTelemetry::loop_infinite(bool& terminate,const bool enableExtendedLog
       // We can't keep up with the wanted loop interval
       // We can't keep up with the wanted loop interval
       m_console->debug("Warning GroundTelemetry cannot keep up with the wanted loop interval. Took {}",
-                       openhd::util::time::R(loopDelta));
+                       OHDUtil::time_readable(loopDelta));
     }else{
       const auto sleepTime=loop_intervall-loopDelta;
       // send out in X second intervals
@@ -327,12 +326,17 @@ void GroundTelemetry::set_ext_devices_manager(
   assert(m_ext_device_manager== nullptr);// only call this once during lifetime
   m_ext_device_manager=ext_device_manager;
   m_ext_device_manager->register_listener([this](openhd::ExternalDevice external_device,bool connected){
-    if(connected){
-      add_external_ground_station_ip(external_device);
-    }else{
-      remove_external_ground_station_ip(external_device);
+    if(!external_device.discovered_by_mavlink_tcp_server){
+        if(connected){
+            add_external_ground_station_ip(external_device);
+        }else{
+            remove_external_ground_station_ip(external_device);
+        }
     }
   });
+  if(m_tcp_server){
+      m_tcp_server->set_external_device_manager(ext_device_manager);
+  }
 }
 
 #ifdef OPENHD_TELEMETRY_SDL_FOR_JOYSTICK_FOUND

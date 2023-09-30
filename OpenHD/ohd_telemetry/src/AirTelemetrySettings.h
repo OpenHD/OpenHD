@@ -9,6 +9,7 @@
 
 #include "openhd_settings_directories.hpp"
 #include "openhd_settings_persistent.h"
+#include "openhd_platform.h"
 
 // Settings for telemetry, only valid on an air pi (since only on the air pi we connect the FC)
 // Note that we do not have any telemetry settings r.n for the ground (since forwarding is a task ov ohd_interface, not ohd_telemetry)
@@ -37,18 +38,16 @@ struct Settings{
   bool fc_uart_flow_control=false;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,fc_uart_connection_type,fc_uart_baudrate,fc_uart_flow_control);
-
 
 // 16 chars limit !
 static constexpr auto FC_UART_CONNECTION_TYPE="FC_UART_CONN";
 static constexpr auto FC_UART_BAUD_RATE="FC_UART_BAUD";
 static constexpr auto FC_UART_FLOW_CONTROL="FC_UART_FLWCTL";
 
-class SettingsHolder:public openhd::PersistentJsonSettings<Settings>{
+class SettingsHolder:public openhd::PersistentSettings<Settings>{
  public:
   explicit SettingsHolder(OHDPlatform platform): m_platform(platform),
-	  openhd::PersistentJsonSettings<Settings>(
+	  openhd::PersistentSettings<Settings>(
             openhd::get_telemetry_settings_directory()){
 	init();
   }
@@ -58,9 +57,7 @@ class SettingsHolder:public openhd::PersistentJsonSettings<Settings>{
  private:
   OHDPlatform m_platform;
   [[nodiscard]] std::string get_unique_filename()const override{
-	std::stringstream ss;
-	ss<<"air_settings.json";
-	return ss.str();
+	return "air_settings.json";
   }
   [[nodiscard]] Settings create_default()const override{
         Settings ret{};
@@ -70,6 +67,8 @@ class SettingsHolder:public openhd::PersistentJsonSettings<Settings>{
         }
         return ret;
   }
+    std::optional<Settings> impl_deserialize(const std::string& file_as_string)const override;
+    std::string imp_serialize(const Settings& data)const override;
 };
 
 

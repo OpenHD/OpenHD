@@ -45,7 +45,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo ./install_build_dep.sh ubuntu-x86
-
+          
       - name: Build with make
         run: |
           sudo ./package.sh x86_64 ubuntu jammy

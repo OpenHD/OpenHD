@@ -5,8 +5,9 @@
 #include "XMavlinkParamProvider.h"
 #include <openhd_spdlog.h>
 
-XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id,bool create_heartbeats):
-	MavlinkComponent(sys_id,comp_id),_create_heartbeats(create_heartbeats){
+XMavlinkParamProvider::XMavlinkParamProvider(uint8_t sys_id, uint8_t comp_id,std::optional<std::chrono::milliseconds> opt_heartbeat_interval)
+: MavlinkComponent(sys_id,comp_id),
+    m_opt_heartbeat_interval(opt_heartbeat_interval){
   _sender=std::make_shared<mavsdk::SenderWrapper>(*this);
   _mavlink_message_handler=std::make_shared<mavsdk::MavlinkMessageHandler>();
   _mavlink_parameter_receiver=
@@ -73,8 +74,13 @@ std::vector<MavlinkMessage> XMavlinkParamProvider:: process_mavlink_messages(std
 
 std::vector<MavlinkMessage> XMavlinkParamProvider::generate_mavlink_messages() {
   std::vector<MavlinkMessage> ret;
-  if(_create_heartbeats){
-	ret.push_back(MavlinkComponent::create_heartbeat());
+  if(m_opt_heartbeat_interval.has_value()){
+      const auto now=std::chrono::steady_clock::now();
+      const auto elapsed=now-m_last_heartbeat;
+      if(elapsed>m_opt_heartbeat_interval.value()){
+          m_last_heartbeat=now;
+          ret.push_back(MavlinkComponent::create_heartbeat());
+      }
   }
   return ret;
 }

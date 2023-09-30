@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "openhd_settings_imp.hpp"
+#include <openhd_profile.h>
 #include "wifi_card.h"
 
 /**
@@ -26,13 +27,14 @@ class WifiHotspot {
   /**
    * Utility for starting, stopping WIFI AP (Hotspot) and forwarding the client connect/disconnect events.
    */
-  explicit WifiHotspot(WiFiCard wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space);
+  explicit WifiHotspot(OHDProfile profile,WiFiCard wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space);
   WifiHotspot(const WifiHotspot&)=delete;
   WifiHotspot(const WifiHotspot&&)=delete;
   ~WifiHotspot();
   // Use opposite frequency band to wfb if possible
   static bool get_use_5g_channel(const WiFiCard& wifiCard,const openhd::WifiSpace& wifibroadcast_frequency_space);
-  void set_enabled(bool enable);
+  //
+  void set_enabled_async(bool enable);
  private:
   // NOTE: might block, use async
   // just runs the appropriate network manager (nmcli) command to start an already created wifi hotspot connection
@@ -42,15 +44,13 @@ class WifiHotspot {
   void stop();
   void start_async();
   void stop_async();
-  // Ip addresses of all connected clients.
-  // A client might dynamically connect or disconnect from the AP at run time,
-  // In this case the apropriate callbacks have to be called.
-  std::vector<std::string> connectedClientsIps;
+  const OHDProfile m_profile;
   const WiFiCard m_wifi_card;
   bool started=false;
   std::shared_ptr<spdlog::logger> m_console;
   std::future<void> m_last_async_operation;
   bool m_use_5G_channel;
+  bool m_is_enabled= false;
 };
 
 #endif //OPENHD_OPENHD_OHD_INTERFACE_SRC_WIFIHOTSPOT_H_
