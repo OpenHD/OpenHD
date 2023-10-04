@@ -113,7 +113,7 @@ std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(const std::
   OHDUtil::rtrim(mac);
   card.mac = mac;
   if(card.type==WiFiCardType::OPENHD_RTL_88X2AU){
-    const bool custom_hardware=OHDFilesystemUtil::exists("/boot/openhd/hardware_vtx_v20");
+    const bool custom_hardware=OHDFilesystemUtil::exists("/boot/openhd/hardware_vtx_v20.txt");
     card.is_rtl8812au_custom_hardware=custom_hardware;
   }
   // Here we are done with the unique identifiers
