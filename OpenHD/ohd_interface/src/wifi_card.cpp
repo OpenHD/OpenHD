@@ -6,10 +6,10 @@
 
 NLOHMANN_JSON_SERIALIZE_ENUM( WiFiCardType, {
     {WiFiCardType::UNKNOWN, nullptr},
-    {WiFiCardType::OPENHD_RTL_88X2AU, ""},
-    {WiFiCardType::OPENHD_RTL_88X2BU, ""},
-    {WiFiCardType::RTL_88X2AU, ""},
-    {WiFiCardType::RTL_88X2BU, ""},
+    {WiFiCardType::OPENHD_RTL_88X2AU, "OPENHD_RTL_88X2AU"},
+    {WiFiCardType::OPENHD_RTL_88X2BU, "OPENHD_RTL_88X2BU"},
+    {WiFiCardType::RTL_88X2AU, "RTL_88X2AU"},
+    {WiFiCardType::RTL_88X2BU, "RTL_88X2BU"},
     {WiFiCardType::ATHEROS, "ATHEROS"},
     {WiFiCardType::MT_7921u, "MT_7921U"},
     {WiFiCardType::RALINK, "RALINK"},
