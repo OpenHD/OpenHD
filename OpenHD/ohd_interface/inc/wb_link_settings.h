@@ -29,8 +29,9 @@ static constexpr auto DEFAULT_CHANNEL_WIDTH=20;
 static constexpr auto DEFAULT_WIFI_TX_POWER_MILLI_WATT=25;
 // by default, we do not differentiate (to not confuse the user)
 static constexpr auto WIFI_TX_POWER_MILLI_WATT_ARMED_DISABLED=0;
-// Measured to be about /below 25mW, RTL8812au only (or future cards who use the recommended power level index approach)
-static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=22;
+// tx power index 22 is about 25mW on asus, but on some card(s) that can be too much already (especially on custom HW).
+// therefore, this default value is written at run time (see below)
+static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=0;
 // by default, we do not differentiate (to not confuse users)
 static constexpr auto RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED=0;
 // LDPC is enabled by default - drivers that don't support ldpc during rx do not exist anymore,
@@ -118,21 +119,7 @@ static int calculate_max_fec_block_size_for_platform(const OHDPlatform platform)
   return 20;
 }
 
-static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platform,const std::vector<WiFiCard>& wifibroadcast_cards){
-  assert(!wifibroadcast_cards.empty());
-  const auto& first_card=wifibroadcast_cards.at(0);
-  assert(first_card.supports_5GHz() || first_card.supports_2GHz());
-  const bool use_5ghz= wifibroadcast_cards.at(0).supports_5GHz();
-  WBLinkSettings settings{};
-  if(use_5ghz){
-	settings.wb_frequency=DEFAULT_5GHZ_FREQUENCY;
-  }else{
-	settings.wb_frequency=DEFAULT_2GHZ_FREQUENCY;
-  }
-  settings.wb_max_fec_block_size_for_platform= calculate_max_fec_block_size_for_platform(platform);
-  openhd::log::get_default()->debug("Default wb_max_fec_block_size_for_platform:{}",settings.wb_max_fec_block_size_for_platform);
-  return settings;
-}
+static WBLinkSettings create_default_wb_stream_settings(const OHDPlatform& platform,const std::vector<WiFiCard>& wifibroadcast_cards);
 
 static bool validate_wb_rtl8812au_tx_pwr_idx_override(int value){
   if(value>=0 && value <= 63)return true;
