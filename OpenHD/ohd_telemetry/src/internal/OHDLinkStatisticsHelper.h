@@ -27,7 +27,7 @@ static MavlinkMessage pack_card(const uint8_t system_id,const uint8_t component_
   tmp.tx_power_armed=card_stats.tx_power_armed;
   tmp.tx_power_disarmed=card_stats.tx_power_disarmed;
   tmp.curr_status=card_stats.curr_status;
-  tmp.rx_signal_quality=card_stats.rx_signal_quality;
+  tmp.rx_signal_quality_adapter=card_stats.rx_signal_quality;
   tmp.tx_active=card_stats.tx_active;
   //openhd::log::get_default()->debug("XX {}",card_stats.to_string(0));
   mavlink_msg_openhd_stats_monitor_mode_wifi_card_encode(system_id,component_id,&msg.m,&tmp);
@@ -196,6 +196,17 @@ static MavlinkMessage generate_msg_scan_channels_progress(const uint8_t system_i
     tmp.channel_width_mhz=progress.channel_width_mhz;
     tmp.success=progress.success;
     mavlink_msg_openhd_wifbroadcast_scan_channels_progress_encode(system_id,component_id,&msg.m,&tmp);
+    return msg;
+}
+
+static MavlinkMessage generate_sys_status1(const uint8_t system_id,const uint8_t component_id,openhd::ActionHandler& action_handler){
+    MavlinkMessage msg;
+    mavlink_openhd_sys_status1_t tmp{};
+    tmp.wifi_hotspot_state=action_handler.m_wifi_hotspot_state;
+    tmp.wifi_hotspot_frequency=action_handler.m_wifi_hotspot_frequency;
+    tmp.ethernet_hotspot_state=action_handler.m_ethernet_hotspot_state;
+    tmp.external_devices_count=action_handler.m_external_devices_count;
+    mavlink_msg_openhd_sys_status1_encode(system_id,component_id,&msg.m,&tmp);
     return msg;
 }
 

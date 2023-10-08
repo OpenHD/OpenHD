@@ -248,22 +248,24 @@ void OHDInterface::generate_keys_from_pw_if_exists_and_delete() {
 void OHDInterface::update_wifi_hotspot_enable() {
     assert(m_wifi_hotspot);
     const auto& settings = m_nw_settings.get_settings();
+    bool enable_wifi_hotspot= false;
     if(settings.wifi_hotspot_mode==WIFI_HOTSPOT_AUTO){
         bool is_armed= false;
         if(m_opt_action_handler){
             is_armed=m_opt_action_handler->arm_state.is_currently_armed();
         }
-        if(is_armed){
-            m_wifi_hotspot->set_enabled_async(false);
-        }else{
-            m_wifi_hotspot->set_enabled_async(true);
-        }
+        enable_wifi_hotspot=!is_armed;
     }else if(settings.wifi_hotspot_mode==WIFI_HOTSPOT_ALWAYS_OFF){
-        m_wifi_hotspot->set_enabled_async(false);
+        enable_wifi_hotspot= false;
     }else if(settings.wifi_hotspot_mode==WIFI_HOTSPOT_ALWAYS_ON){
-        m_wifi_hotspot->set_enabled_async(true);
+        enable_wifi_hotspot= true;
     }else{
         m_console->warn("Invalid wifi hotspot mode");
-        m_wifi_hotspot->set_enabled_async(false);
+        enable_wifi_hotspot= false;
+    }
+    m_wifi_hotspot->set_enabled_async(enable_wifi_hotspot);
+    if(m_opt_action_handler){
+        m_opt_action_handler->m_wifi_hotspot_state=enable_wifi_hotspot ? 2 : 1;
+        m_opt_action_handler->m_wifi_hotspot_frequency=m_wifi_hotspot->get_frequency();
     }
 }

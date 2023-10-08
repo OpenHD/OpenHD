@@ -239,6 +239,9 @@ std::vector<MavlinkMessage> OHDMainComponent::create_broadcast_stats_if_needed()
         m_last_onboard_computer=now;
         OHDUtil::vec_append(ret,m_onboard_computer_status_provider->get_current_status_as_mavlink_message(
                 m_sys_id, m_comp_id));
+        if(m_opt_action_handler){
+          ret.push_back(openhd::LinkStatisticsHelper::generate_sys_status1(m_sys_id,m_comp_id,*m_opt_action_handler));
+        }
     }
     {
         const auto elapsed_version=now-m_last_version_message_tp;

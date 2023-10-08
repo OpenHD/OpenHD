@@ -262,6 +262,12 @@ public:
 private:
     std::mutex m_scan_channels_progress_mutex;
     std::vector<ScanChannelsProgress> m_scan_channels_progress;
+public:
+    // See mavlink for values
+    std::atomic_uint8_t m_wifi_hotspot_state=0;
+    std::atomic_uint16_t m_wifi_hotspot_frequency=0;
+    std::atomic_uint8_t m_ethernet_hotspot_state=0;
+    std::atomic_uint8_t m_external_devices_count=0;
 };
 
 }
