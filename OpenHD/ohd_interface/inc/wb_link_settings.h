@@ -16,7 +16,7 @@
 namespace openhd{
 
 static constexpr auto DEFAULT_5GHZ_FREQUENCY = 5745; // Channel 149 / OpenHD race band 2
-static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412;
+static constexpr auto DEFAULT_2GHZ_FREQUENCY = 2412; // Channel
 // highest MCS where modulation is still QPSK
 static constexpr auto DEFAULT_MCS_INDEX=2;
 // We always use a MCS index of X for the uplink, since (compared to the video link) it requires a negligible amount of bandwidth

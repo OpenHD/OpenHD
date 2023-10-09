@@ -173,9 +173,10 @@ std::vector<openhd::WifiChannel> openhd::wb::get_analyze_channels_frequencies(co
     for(const auto& freq:supported_freq_2G){
         auto tmp=openhd::channel_from_frequency(freq);
         if(tmp.has_value()){
-            if(tmp->in_40Mhz_ht40_plus) {
-                channels_to_analyze.push_back(tmp.value());
-            }
+            //if(tmp->in_40Mhz_ht40_plus) {
+            //    channels_to_analyze.push_back(tmp.value());
+            //}
+            channels_to_analyze.push_back(tmp.value());
         }
     }
     for(const auto freq:supported_freq_5G){
