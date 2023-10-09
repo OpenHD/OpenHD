@@ -29,7 +29,7 @@ public:
     ~ManagementAir();
     void start();
     // TODO dirty
-    std::shared_ptr<RadiotapHeaderHolder> m_tx_header;
+    std::shared_ptr<RadiotapHeaderTxHolder> m_tx_header;
 public:
     std::atomic<uint32_t> m_curr_frequency_mhz;
     std::atomic<uint8_t> m_curr_channel_width_mhz;
@@ -54,7 +54,7 @@ public:
     ManagementGround(const ManagementGround&&)=delete;
     ~ManagementGround();
     // TODO dirty
-    std::shared_ptr<RadiotapHeaderHolder> m_tx_header;
+    std::shared_ptr<RadiotapHeaderTxHolder> m_tx_header;
 public:
     std::atomic<int> m_air_reported_curr_frequency=-1;
     std::atomic<int> m_air_reported_curr_channel_width=-1;

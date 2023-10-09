@@ -70,8 +70,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
       int wb_type=card.type==WiFiCardType::OPENHD_RTL_88X2AU ? 1 : 0;
       tmp_wifi_cards.push_back(wifibroadcast::WifiCard{card.device_name,wb_type});
   }
-  m_tx_header_1=std::make_shared<RadiotapHeaderHolder>();
-  m_tx_header_2=std::make_shared<RadiotapHeaderHolder>();
+  m_tx_header_1=std::make_shared<RadiotapHeaderTxHolder>();
+  m_tx_header_2=std::make_shared<RadiotapHeaderTxHolder>();
   {
       const auto settings=m_settings->get_settings();
       auto mcs_index=static_cast<int>(settings.wb_air_mcs_index);
@@ -96,12 +96,12 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
           }
       }
       const bool set_flag_tx_no_ack = !tx_set_high_retransmit_count;
-      auto tmp_params= RadiotapHeader::UserSelectableParams{
+      auto tmp_params= RadiotapHeaderTx::UserSelectableParams{
               tx_channel_width, settings.wb_enable_short_guard,settings.wb_enable_stbc,
               settings.wb_enable_ldpc, mcs_index,set_flag_tx_no_ack};
-      m_console->debug("{}",RadiotapHeader::user_params_to_string(tmp_params));
+      m_console->debug("{}",RadiotapHeaderTx::user_params_to_string(tmp_params));
       m_tx_header_1->thread_safe_set(tmp_params);
-      auto tmp_params2= RadiotapHeader::UserSelectableParams{
+      auto tmp_params2= RadiotapHeaderTx::UserSelectableParams{
               20, settings.wb_enable_short_guard,settings.wb_enable_stbc,
               settings.wb_enable_ldpc, mcs_index, true};
       m_tx_header_2->thread_safe_set(tmp_params2);
@@ -730,10 +730,13 @@ void WBLink::wt_update_statistics() {
     auto& card_stats = stats.cards.at(i);
     card_stats.NON_MAVLINK_CARD_ACTIVE= true;
     auto rxStatsCard=m_wb_txrx->get_rx_stats_for_card(i);
+    auto rf_rx_stats=m_wb_txrx->get_rx_rf_stats_for_card(i);
     card_stats.tx_active=i==curr_active_tx ? 1 : 0;
-    card_stats.rx_rssi=rxStatsCard.card_dbm;
-    card_stats.rx_rssi_1=rxStatsCard.antenna1_dbm;
-    card_stats.rx_rssi_2=rxStatsCard.antenna2_dbm;
+    card_stats.rx_rssi=rf_rx_stats.adapter.rssi_dbm;
+    card_stats.rx_signal_quality=rf_rx_stats.adapter.card_signal_quality_perc;
+    card_stats.rx_rssi_noise=rf_rx_stats.adapter.noise_dbm;
+    card_stats.rx_rssi_1=rf_rx_stats.antenna1.rssi_dbm;
+    card_stats.rx_rssi_2=rf_rx_stats.antenna2.rssi_dbm;
     card_stats.count_p_received=rxStatsCard.count_p_valid;
     card_stats.count_p_injected=0;
     card_stats.curr_rx_packet_loss_perc=rxStatsCard.curr_packet_loss;
@@ -744,7 +747,6 @@ void WBLink::wt_update_statistics() {
     card_stats.tx_power_armed=card.type==WiFiCardType::OPENHD_RTL_88X2AU ?
                               curr_settings.wb_rtl8812au_tx_pwr_idx_override_armed : curr_settings.wb_tx_power_milli_watt_armed;
     card_stats.curr_status= m_wb_txrx->get_card_has_disconnected(i) ? 1 : 0;
-    card_stats.rx_signal_quality=rxStatsCard.signal_quality;
     card_stats.card_type= wifi_card_type_to_int(card.type);
     //m_console->debug("Signal quality {}",card_stats.signal_quality);
   }
