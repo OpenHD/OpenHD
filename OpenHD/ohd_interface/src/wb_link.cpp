@@ -734,7 +734,8 @@ void WBLink::wt_update_statistics() {
     card_stats.NON_MAVLINK_CARD_ACTIVE= true;
     auto rxStatsCard=m_wb_txrx->get_rx_stats_for_card(i);
     auto rf_rx_stats=m_wb_txrx->get_rx_rf_stats_for_card(i);
-    if(m_broadcast_cards[i].type==WiFiCardType::OPENHD_RTL_88X2AU || m_broadcast_cards[i].type==WiFiCardType::OPENHD_RTL_88X2BU){
+    if(m_broadcast_cards[i].type==WiFiCardType::OPENHD_RTL_88X2AU ||
+        m_broadcast_cards[i].type==WiFiCardType::OPENHD_RTL_88X2BU){
       // Value per adapter is shit, use the max of antenna(s) instead
       rf_rx_stats.adapter.rssi_dbm=std::max(rf_rx_stats.antenna1.rssi_dbm,rf_rx_stats.antenna2.rssi_dbm);
     }
