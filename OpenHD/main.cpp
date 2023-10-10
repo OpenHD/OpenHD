@@ -32,7 +32,7 @@
 
 // A few run time options, only for development. Way more configuration (during development)
 // can be done by using the hardware.config file
-static const char optstr[] = "?:agcwr:qh:";
+static const char optstr[] = "?:agcwr:qh:f:";
 static const struct option long_options[] = {
     {"air", no_argument, nullptr, 'a'},
     {"ground", no_argument, nullptr, 'g'},
