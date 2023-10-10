@@ -20,34 +20,39 @@ void openhd::set_config_file(const std::string &config_file_path) {
     CONFIG_FILE_PATH=config_file_path;
 }
 
-openhd::Config openhd::load_config() {
-  try{
-    openhd::Config ret{};
-    if(!OHDFilesystemUtil::exists(CONFIG_FILE_PATH)){
+static openhd::Config load_or_default(){
+    try{
+      openhd::Config ret{};
+      if(!OHDFilesystemUtil::exists(CONFIG_FILE_PATH)){
         get_logger()->warn("Config file [{}] does not exist, using default settings",CONFIG_FILE_PATH);
         return ret;
+      }
+      inih::INIReader r{CONFIG_FILE_PATH};
+      // Get and parse the ini value
+      ret.WIFI_ENABLE_AUTODETECT = r.Get<bool>("wifi", "WIFI_ENABLE_AUTODETECT");
+      ret.WIFI_WB_LINK_CARDS = r.GetVector<std::string>("wifi", "WIFI_WB_LINK_CARDS");
+      ret.WIFI_WIFI_HOTSPOT_CARD = r.Get<std::string>("wifi", "WIFI_WIFI_HOTSPOT_CARD");
+
+      ret.CAMERA_ENABLE_AUTODETECT = r.Get<bool>("camera", "CAMERA_ENABLE_AUTODETECT");
+      ret.CAMERA_N_CAMERAS = r.Get<int>("camera", "CAMERA_N_CAMERAS");
+      ret.CAMERA_CAMERA0_TYPE = r.Get<std::string>("camera", "CAMERA_CAMERA0_TYPE");
+      ret.CAMERA_CAMERA1_TYPE = r.Get<std::string>("camera", "CAMERA_CAMERA1_TYPE");
+
+      ret.NW_ETHERNET_CARD = r.Get<std::string>("network", "NW_ETHERNET_CARD");
+      ret.NW_MANUAL_FORWARDING_IPS =  r.GetVector<std::string>("network", "NW_MANUAL_FORWARDING_IPS");
+      ret.NW_FORWARD_TO_LOCALHOST_58XX = r.Get<bool>("network","NW_FORWARD_TO_LOCALHOST_58XX");
+
+      ret.GEN_ENABLE_LAST_KNOWN_POSITION =r.Get<bool>("generic","GEN_ENABLE_LAST_KNOWN_POSITION");
+      return ret;
+    }catch (std::exception& exception){
+      get_logger()->error("Ill-formatted config file {}",std::string(exception.what()));
     }
-    inih::INIReader r{CONFIG_FILE_PATH};
-    // Get and parse the ini value
-    ret.WIFI_ENABLE_AUTODETECT = r.Get<bool>("wifi", "WIFI_ENABLE_AUTODETECT");
-    ret.WIFI_WB_LINK_CARDS = r.GetVector<std::string>("wifi", "WIFI_WB_LINK_CARDS");
-    ret.WIFI_WIFI_HOTSPOT_CARD = r.Get<std::string>("wifi", "WIFI_WIFI_HOTSPOT_CARD");
+    return {};
+}
 
-    ret.CAMERA_ENABLE_AUTODETECT = r.Get<bool>("camera", "CAMERA_ENABLE_AUTODETECT");
-    ret.CAMERA_N_CAMERAS = r.Get<int>("camera", "CAMERA_N_CAMERAS");
-    ret.CAMERA_CAMERA0_TYPE = r.Get<std::string>("camera", "CAMERA_CAMERA0_TYPE");
-    ret.CAMERA_CAMERA1_TYPE = r.Get<std::string>("camera", "CAMERA_CAMERA1_TYPE");
-
-	ret.NW_ETHERNET_CARD = r.Get<std::string>("network", "NW_ETHERNET_CARD");
-    ret.NW_MANUAL_FORWARDING_IPS =  r.GetVector<std::string>("network", "NW_MANUAL_FORWARDING_IPS");
-    ret.NW_FORWARD_TO_LOCALHOST_58XX = r.Get<bool>("network","NW_FORWARD_TO_LOCALHOST_58XX");
-
-    ret.GEN_ENABLE_LAST_KNOWN_POSITION =r.Get<bool>("generic","GEN_ENABLE_LAST_KNOWN_POSITION");
-    return ret;
-  }catch (std::exception& exception){
-    get_logger()->error("Ill-formatted config file {}",std::string(exception.what()));
-  }
-  return {};
+openhd::Config openhd::load_config() {
+    static openhd::Config config=load_or_default();
+    return config;
 }
 
 void openhd::debug_config(const openhd::Config& config) {
