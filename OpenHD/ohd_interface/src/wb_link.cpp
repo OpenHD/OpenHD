@@ -513,8 +513,8 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  if(stbc<0 || stbc>3)return false;
 	  m_settings->unsafe_get_settings().wb_enable_stbc=stbc;
 	  m_settings->persist();
-      m_tx_header_1->update_stbc(stbc);
-      m_tx_header_2->update_stbc(stbc);
+          m_tx_header_1->update_stbc(stbc);
+          m_tx_header_2->update_stbc(stbc);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_STBC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_stbc}});
@@ -523,8 +523,8 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  if(!validate_yes_or_no(ldpc))return false;
 	  m_settings->unsafe_get_settings().wb_enable_ldpc=ldpc;
 	  m_settings->persist();
-      m_tx_header_1->update_ldpc(ldpc);
-      m_tx_header_2->update_ldpc(ldpc);
+          m_tx_header_1->update_ldpc(ldpc);
+          m_tx_header_2->update_ldpc(ldpc);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_ldpc}});
@@ -532,8 +532,8 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
 	  if(!validate_yes_or_no(short_gi))return false;
 	  m_settings->unsafe_get_settings().wb_enable_short_guard=short_gi;
 	  m_settings->persist();
-      m_tx_header_1->update_guard_interval(short_gi);
-      m_tx_header_2->update_guard_interval(short_gi);
+          m_tx_header_1->update_guard_interval(short_gi);
+          m_tx_header_2->update_guard_interval(short_gi);
 	  return true;
 	};
 	ret.push_back(openhd::Setting{WB_ENABLE_SHORT_GUARD,openhd::IntSetting{settings.wb_enable_short_guard,cb_wb_enable_sg}});
