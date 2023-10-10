@@ -527,7 +527,7 @@ std::vector<openhd::Setting> WBLink::get_all_settings(){
           m_tx_header_2->update_ldpc(ldpc);
 	  return true;
 	};
-	ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_stbc,cb_wb_enable_ldpc}});
+	ret.push_back(openhd::Setting{WB_ENABLE_LDPC,openhd::IntSetting{settings.wb_enable_ldpc,cb_wb_enable_ldpc}});
 	auto cb_wb_enable_sg=[this](std::string,int short_gi){
 	  if(!validate_yes_or_no(short_gi))return false;
 	  m_settings->unsafe_get_settings().wb_enable_short_guard=short_gi;
