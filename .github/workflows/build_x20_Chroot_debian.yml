@@ -51,4 +51,5 @@ jobs:
 
           cd /opt/ChrootCompilationTest/
           sudo apt update
+          sudo bash install_dep.sh
           sudo bash ./build.sh x20 $API_KEY debian bullseye
