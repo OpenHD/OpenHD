@@ -36,7 +36,7 @@ static constexpr auto DEFAULT_RTL8812AU_TX_POWER_INDEX=0;
 static constexpr auto RTL8812AU_TX_POWER_INDEX_ARMED_DISABLED=0;
 // LDPC is enabled by default - drivers that don't support ldpc during rx do not exist anymore,
 // and if the tx driver doesn't support it, it is just omitted.
-static constexpr bool DEFAULT_ENABLE_LDPC=true;
+static constexpr bool DEFAULT_ENABLE_LDPC= false;
 // SHORT GUARD - doesn't really have that much of an benefit regarding bitrate,
 // so we set it off by default (use long guard)
 static constexpr bool DEFAULT_ENABLE_SHORT_GUARD= false;
