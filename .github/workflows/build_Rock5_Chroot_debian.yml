@@ -6,6 +6,7 @@ on:
       - "2.5-evo"
       - "dev-release"
       - "release"
+      - "x20"
    paths-ignore:
       - '**.md'
       - '**.asciidoc'
