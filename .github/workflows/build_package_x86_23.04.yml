@@ -73,3 +73,4 @@ jobs:
           release: "lunar"
           republish: "true" # needed ONLY if version is not changing
           file: "OpenHD/*.deb"
+        if: ${{ github.ref != 'refs/heads/2.5-evo' }}
