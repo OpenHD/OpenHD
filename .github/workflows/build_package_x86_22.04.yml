@@ -48,7 +48,7 @@ jobs:
           
       - name: Build with make
         run: |
-          sudo ./package.sh x86_64 ubuntu jammy
+          sudo ./package.sh standard x86_64 ubuntu jammy
           ls -a
 
       - name: Upload to Github

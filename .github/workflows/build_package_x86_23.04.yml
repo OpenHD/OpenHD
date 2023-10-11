@@ -47,7 +47,7 @@ jobs:
       - name: Build with make
         run: |
           cd OpenHD
-          ./package.sh x86_64 ubuntu lunar
+          ./package.sh standard x86_64 ubuntu lunar
           ls -a
           echo ${{ github.ref }}
 

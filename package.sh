@@ -2,10 +2,10 @@
 
 set -euo pipefail
 
-PACKAGE_ARCH="${1}"
-OS="${2}"
+Custom="${1}"
+PACKAGE_ARCH="${2}"
+OS="${3}"
 
-PACKAGE_NAME="openhd"
 PKGDIR="/tmp/${PACKAGE_NAME}-installdir"
 VERSION="2.5.1-evo-alpha-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
@@ -42,9 +42,17 @@ build_package() {
   cp openhd ${PKGDIR}/usr/local/bin/openhd
 
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
-    PLATFORM_PACKAGES="-d libcamera-openhd -d gst-openhd-plugins"
-    PLATFORM_CONFIGS=""
+      if [[ "${Custom}" == "false" ]]; then
+      PACKAGE_NAME="openhd"
+      PLATFORM_PACKAGES="-d libcamera-openhd -d gst-openhd-plugins"
+      PLATFORM_CONFIGS=""
+      else
+      PACKAGE_NAME="openhd-x20"
+      PLATFORM_PACKAGES=""
+      PLATFORM_CONFIGS=""
+      fi
   else
+    PACKAGE_NAME="openhd"
     PLATFORM_PACKAGES=""
     PLATFORM_CONFIGS=""
   fi
