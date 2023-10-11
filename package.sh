@@ -36,8 +36,9 @@ create_package_directory() {
 build_package() {
   rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
   
-  cmake OpenHD/
-  make -j4
+  #cmake OpenHD/
+  #make -j4
+  touch openhd
   cp openhd ${PKGDIR}/usr/local/bin/openhd
 
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
