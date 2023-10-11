@@ -10,15 +10,15 @@ BUILD_PACKAGES="git build-essential autotools-dev automake libtool python3-pip a
 
 
 function install_pi_packages {
-PLATFORM_PACKAGES="libboost-filesystem1.74-dev libasio-dev libcamera-openhd"
+PLATFORM_PACKAGES="libasio-dev libcamera-openhd"
 PLATFORM_PACKAGES_REMOVE="python3-libcamera libcamera0"
 }
 function install_x86_packages {
-PLATFORM_PACKAGES="libunwind-dev libboost-dev libboost-filesystem-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly"
+PLATFORM_PACKAGES="libunwind-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly"
 PLATFORM_PACKAGES_REMOVE=""
 }
 function install_rock_packages {
-PLATFORM_PACKAGES="libboost-dev libboost-filesystem-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly"
+PLATFORM_PACKAGES="gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly"
 PLATFORM_PACKAGES_REMOVE=""
 }
 

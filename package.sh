@@ -43,11 +43,8 @@ build_package() {
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
     PLATFORM_PACKAGES="-d libcamera-openhd -d gst-openhd-plugins"
     PLATFORM_CONFIGS=""
-  elif [[ "${PACKAGE_ARCH}" != "arm64" ]]; then
-    PLATFORM_PACKAGES="-d libboost-filesystem1.74-dev"
-    PLATFORM_CONFIGS=""
   else
-    PLATFORM_PACKAGES="-d libboost-dev -d libboost-filesystem-dev"
+    PLATFORM_PACKAGES=""
     PLATFORM_CONFIGS=""
   fi
 
