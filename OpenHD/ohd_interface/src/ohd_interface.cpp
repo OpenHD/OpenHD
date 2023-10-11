@@ -43,7 +43,7 @@ OHDInterface::OHDInterface(OHDPlatform platform1,OHDProfile profile1,std::shared
           break ;
         }
         const auto elapsed = std::chrono::steady_clock::now() - begin;
-        const auto message=fmt::format("Waiting for OpenHD supported card(s), Found:{}",n_openhd_supported_cards);
+        const auto message=fmt::format("Waiting for supported WiFi, Found:{}",n_openhd_supported_cards);
         if (elapsed > std::chrono::seconds(3)) {
           m_console->warn(message);
         } else {

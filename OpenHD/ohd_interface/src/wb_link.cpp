@@ -240,6 +240,7 @@ WBLink::~WBLink() {
   m_wb_tele_tx.reset();
   m_wb_video_tx_list.resize(0);
   m_wb_video_rx_list.resize(0);
+  wifi::commandhelper::cleanup_openhd_driver_overrides();
   // give the monitor mode cards back to network manager
   openhd::wb::giveback_cards_monitor_mode(m_broadcast_cards,m_console);
   m_console->debug("WBLink::~WBLink() end");
