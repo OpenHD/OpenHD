@@ -6,7 +6,7 @@ Custom="${1}"
 PACKAGE_ARCH="${2}"
 OS="${3}"
 
-PKGDIR="/tmp/${PACKAGE_NAME}-installdir"
+PKGDIR="/tmp/openhd-installdir"
 VERSION="2.5.1-evo-alpha-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 create_package_directory() {
@@ -34,13 +34,7 @@ create_package_directory() {
 }
 
 build_package() {
-  rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
   
-  # cmake OpenHD/
-  # make -j4
-  touch openhd
-  cp openhd ${PKGDIR}/usr/local/bin/openhd
-
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
       if [[ "${Custom}" == "false" ]]; then
       PACKAGE_NAME="openhd"
@@ -56,6 +50,13 @@ build_package() {
     PLATFORM_PACKAGES=""
     PLATFORM_CONFIGS=""
   fi
+  
+  rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
+  
+  # cmake OpenHD/
+  # make -j4
+  touch openhd
+  cp openhd ${PKGDIR}/usr/local/bin/openhd
 
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
     ${PLATFORM_CONFIGS} \

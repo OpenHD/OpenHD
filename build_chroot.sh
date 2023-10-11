@@ -23,11 +23,9 @@ case "$CUSTOM" in
     ;;
   *)
     ARCH="arm64"
+    ./install_build_dep.sh rock5
     ;;
 esac
-
-# Execute the install dependency file (uncomment if needed)
-# ./install_build_dep.sh rock5
 
 sudo ./package.sh $ARCH ${DISTRO} ${FLAVOR} || exit 1
 mkdir -p /opt/out/
