@@ -44,9 +44,7 @@ SET(sources
     "src/internal/onboard_computer_status_rpi.hpp"
     "src/internal/OnboardComputerStatusProvider.cpp"
     "src/internal/OnboardComputerStatusProvider.h"
-    "src/internal/StatusTextAccumulator.cpp"
-    "src/internal/StatusTextAccumulator.h"
-     src/last_known_position/LastKnowPosition.cpp
+        src/last_known_position/LastKnowPosition.cpp
      src/last_known_position/LastKnowPosition.h
 
     "src/mavsdk_temporary/connection.cpp"

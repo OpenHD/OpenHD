@@ -30,29 +30,43 @@ std::shared_ptr<spdlog::logger> get_default();
 // Use this if you want to show a non-warning message in QOpenHD.
 void log_via_mavlink(int level,std::string message);
 
-// Helper to not spam the console with (error) messages, but rather have them sent out with a minimum amount
-// of time in between messages
-/*class LimitedRateLogger{
- public:
-  LimitedRateLogger(std::shared_ptr<spdlog::logger> console1,std::chrono::milliseconds min_delay_between_messages):
-  m_console(std::move(console1)),m_min_delay_between_messages(min_delay_between_messages){
-  }
-  template<typename... Args>
-  void warn(fmt::format_string<Args...> fmt, Args &&... args){
-    const auto elapsed_since_last=std::chrono::steady_clock::now()-m_last_log;
-    if(elapsed_since_last<m_min_delay_between_messages){
-      // drop message
-      return;
-    }
-    m_last_log=std::chrono::steady_clock::now();
-    m_console->log(spdlog::level::warn,fmt, std::forward<Args>(args)...);
-  }
- private:
-  std::shared_ptr<spdlog::logger> m_console;
-  const std::chrono::milliseconds m_min_delay_between_messages;
-  std::chrono::steady_clock::time_point m_last_log=std::chrono::steady_clock::now();
-};*/
+struct MavlinkLogMessage {
+  uint8_t level;
+  // MUST be null-terminated
+  uint8_t message[50];
+};
 
+class MavlinkLogMessageBuffer{
+ public:
+  // Thread-safe
+  // Enqueues a log message for the telemetry thread to fetch
+  std::vector<MavlinkLogMessage> dequeue_log_messages();
+  // Thread-safe
+  // Dequeues buffered telemetry log messages,
+  // called in regular intervals by the telemetry thread
+  void enqueue_log_message(MavlinkLogMessage message);
+  // We only have one instance of this class inside openhd
+  static MavlinkLogMessageBuffer& instance();
+ private:
+  std::mutex m_mutex;
+  std::vector<MavlinkLogMessage> m_buffer;
+};
+
+// these match the mavlink SEVERITY_LEVEL enum, but this code should not depend on
+// the mavlink headers
+// See https://mavlink.io/en/messages/common.html#MAV_SEVERITY
+enum class STATUS_LEVEL {
+  EMERGENCY = 0,
+  ALERT,
+  CRITICAL,
+  ERROR,
+  WARNING,
+  INFO,
+  NOTICE,
+  DEBUG
+};
+
+STATUS_LEVEL level_spdlog_to_mavlink(const spdlog::level::level_enum& level);
 }
 
 

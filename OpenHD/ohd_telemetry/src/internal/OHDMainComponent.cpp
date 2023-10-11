@@ -26,8 +26,6 @@ OHDMainComponent::OHDMainComponent(
   m_console = openhd::log::create_or_get("t_main_c");
   assert(m_console);
   m_onboard_computer_status_provider=std::make_unique<OnboardComputerStatusProvider>(m_platform,true);
-  // suppress the warning until we get the first actually updated stats
-  m_status_text_accumulator=std::make_unique<StatusTextAccumulator>();
   const auto config=openhd::load_config();
   if(!RUNS_ON_AIR && config.GEN_ENABLE_LAST_KNOWN_POSITION){
       m_last_known_position=std::make_unique<LastKnowPosition>();
@@ -158,8 +156,26 @@ std::vector<MavlinkMessage> OHDMainComponent::generate_mav_wb_stats(){
   return ret;
 }
 
+static mavlink_message_t create_mavlink_log_message(const openhd::log::MavlinkLogMessage& msg,uint8_t sys_id,uint8_t comp_id){
+  mavlink_message_t ret;
+  mavlink_statustext_t mavlink_statustext;
+  mavlink_statustext.id=0;
+  mavlink_statustext.chunk_seq=0;
+  mavlink_statustext.severity=msg.level;
+  std::memcpy(&mavlink_statustext.text,msg.message,50);
+  mavlink_msg_statustext_encode(sys_id,comp_id,&ret,&mavlink_statustext);
+  return ret;
+}
+
 std::vector<MavlinkMessage> OHDMainComponent::generateLogMessages() {
-  return m_status_text_accumulator->get_mavlink_messages(m_sys_id,m_comp_id);
+  //return m_status_text_accumulator->get_mavlink_messages(m_sys_id,m_comp_id);
+  auto messages=openhd::log::MavlinkLogMessageBuffer::instance().dequeue_log_messages();
+  std::vector<MavlinkMessage> ret;
+  ret.reserve(messages.size());
+  for(auto& message:messages){
+    ret.push_back(MavlinkMessage{create_mavlink_log_message(message,m_sys_id,m_comp_id)});
+  }
+  return ret;
 }
 
 MavlinkMessage OHDMainComponent::generate_ohd_version(const std::string& commit_hash) const {
