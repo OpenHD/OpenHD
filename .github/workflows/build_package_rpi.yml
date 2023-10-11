@@ -38,7 +38,7 @@ jobs:
     - uses: pguyot/arm-runner-action@v2.5.2
       id: build_image
       with:
-        base_image: raspios_lite:latest
+        base_image: raspios_lite:2023-05-03
         image_additional_mb: 4000
         copy_repository_path: /opt
         copy_artifact_path: OpenHD
