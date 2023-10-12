@@ -39,18 +39,18 @@ build_package() {
       if [[ "${CUSTOM}" == "standard" ]]; then
       echo "this is cake"
       PACKAGE_NAME="openhd"
-      PLATFORM_PACKAGES="-d libcamera-openhd -d gst-openhd-plugins"
+      PACKAGES="-d libcamera-openhd -d gst-openhd-plugins -d iw -d nmap-d aircrack-ng -d i2c-tools -d libv4l-dev -d libusb-1.0-0 -d libpcap-dev -d libnl-3-dev -d libnl-genl-3-dev -d libsdl2-2.0-0 -d libsodium-dev -d gstreamer1.0-plugins-base -d gstreamer1.0-plugins-good -d gstreamer1.0-plugins-bad -d gstreamer1.0-plugins-ugly -d gstreamer1.0-libav -d gstreamer1.0-tools -d gstreamer1.0-alsa -d gstreamer1.0-pulseaudio"
       PLATFORM_CONFIGS=""
       else
       echo "this isn't cake"
       PACKAGE_NAME="openhd-x20"
-      PLATFORM_PACKAGES=""
+      PACKAGES=""
       PLATFORM_CONFIGS=""
       fi
   else
     echo "this isn't cake and also not pi"
     PACKAGE_NAME="openhd"
-    PLATFORM_PACKAGES=""
+    PACKAGES="-d iw -d nmap-d aircrack-ng -d i2c-tools -d libv4l-dev -d libusb-1.0-0 -d libpcap-dev -d libnl-3-dev -d libnl-genl-3-dev -d libsdl2-2.0-0 -d libsodium-dev -d gstreamer1.0-plugins-base -d gstreamer1.0-plugins-good -d gstreamer1.0-plugins-bad -d gstreamer1.0-plugins-ugly -d gstreamer1.0-libav -d gstreamer1.0-tools -d gstreamer1.0-alsa -d gstreamer1.0-pulseaudio"
     PLATFORM_CONFIGS=""
   fi
   
@@ -65,26 +65,7 @@ build_package() {
     -p "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" \
     --after-install after-install.sh \
     --before-install before-install.sh \
-    ${PLATFORM_PACKAGES} \
-    -d "iw" \
-    -d "nmap" \
-    -d "aircrack-ng" \
-    -d "i2c-tools" \
-    -d "libv4l-dev" \
-    -d "libusb-1.0-0" \
-    -d "libpcap-dev" \
-    -d "libnl-3-dev" \
-    -d "libnl-genl-3-dev" \
-    -d "libsdl2-2.0-0" \
-    -d "libsodium-dev" \
-    -d "gstreamer1.0-plugins-base" \
-    -d "gstreamer1.0-plugins-good" \
-    -d "gstreamer1.0-plugins-bad" \
-    -d "gstreamer1.0-plugins-ugly" \
-    -d "gstreamer1.0-libav" \
-    -d "gstreamer1.0-tools" \
-    -d "gstreamer1.0-alsa" \
-    -d "gstreamer1.0-pulseaudio"
+    ${PACKAGES} 
 }
 
   #Main Build
