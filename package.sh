@@ -36,7 +36,7 @@ create_package_directory() {
 build_package() {
   
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
-      if [[ "${CUSTOM}" == "false" ]]; then
+      if [[ "${CUSTOM}" == "standard" ]]; then
       echo "this is cake"
       PACKAGE_NAME="openhd"
       PLATFORM_PACKAGES="-d libcamera-openhd -d gst-openhd-plugins"
