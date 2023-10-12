@@ -48,6 +48,7 @@ build_package() {
       PLATFORM_CONFIGS=""
       fi
   else
+    echo "this isn't cake and also not pi"
     PACKAGE_NAME="openhd"
     PLATFORM_PACKAGES=""
     PLATFORM_CONFIGS=""
