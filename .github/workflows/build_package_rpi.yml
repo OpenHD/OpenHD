@@ -52,7 +52,7 @@ jobs:
             cd /opt
             cd OpenHD
             chown -R root:root ../OpenHD
-            sudo ./package.sh standart armhf raspbian bullseye
+            sudo ./package.sh standard armhf raspbian bullseye
 
     - name: Upload to Github
       uses: 'actions/upload-artifact@v2'
