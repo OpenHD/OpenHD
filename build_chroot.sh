@@ -10,24 +10,17 @@ DISTRO=$(cat distro.txt)
 FLAVOR=$(cat flavor.txt)
 REPO=$(cat repo.txt)
 CUSTOM=$(cat custom.txt)
+ARCH=$(cat arch.txt)
 
 echo ${DISTRO}
 echo ${FLAVOR}
 echo ${CUSTOM}
 
-# Determine architecture based on the CUSTOM variable
-ARCH=""
-case "$CUSTOM" in
-  "true")
-    ARCH="armhf"
-    ;;
-  *)
-    ARCH="arm64"
+if [[ "${ARCH}" == "arm64" ]]; then
     ./install_build_dep.sh rock5
-    ;;
-esac
+fi
 
-sudo ./package.sh $ARCH ${DISTRO} ${FLAVOR} || exit 1
+sudo ./package.sh ${CUSTOM} ${ARCH} ${DISTRO} ${FLAVOR} || exit 1
 mkdir -p /opt/out/
 cp -v *.dep /opt/out/
 echo "copied deb file"

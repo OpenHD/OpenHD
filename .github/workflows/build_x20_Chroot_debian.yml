@@ -46,6 +46,7 @@ jobs:
           git clone https://github.com/OpenHD/OpenHD -b x20 /opt/ChrootCompilationTest/additionalFiles/ --recursive
           echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
           echo "true" > /opt/ChrootCompilationTest/additionalFiles/custom.txt
+          echo "armhf" > /opt/ChrootCompilationTest/additionalFiles/arch.txt
           echo "debian" > /opt/ChrootCompilationTest/additionalFiles/distro.txt
           echo "bullseye" > /opt/ChrootCompilationTest/additionalFiles/flavor.txt
           echo "dev-release" > /opt/ChrootCompilationTest/additionalFiles/repo.txt
