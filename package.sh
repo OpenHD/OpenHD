@@ -2,11 +2,11 @@
 
 set -euo pipefail
 
-PACKAGE_ARCH="${1}"
-OS="${2}"
+CUSTOM="${1}"
+PACKAGE_ARCH="${2}"
+OS="${3}"
 
-PACKAGE_NAME="openhd"
-PKGDIR="/tmp/${PACKAGE_NAME}-installdir"
+PKGDIR="/tmp/openhd-installdir"
 VERSION="2.5.1-evo-alpha-$(date '+%Y%m%d%H%M')-$(git rev-parse --short HEAD)"
 
 create_package_directory() {
@@ -34,19 +34,31 @@ create_package_directory() {
 }
 
 build_package() {
+  
+  if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
+      if [[ "${CUSTOM}" == "standard" ]]; then
+      echo "this is cake"
+      PACKAGE_NAME="openhd"
+      PLATFORM_PACKAGES="-d libcamera-openhd -d gst-openhd-plugins"
+      PLATFORM_CONFIGS=""
+      else
+      echo "this isn't cake"
+      PACKAGE_NAME="openhd-x20"
+      PLATFORM_PACKAGES=""
+      PLATFORM_CONFIGS=""
+      fi
+  else
+    echo "this isn't cake and also not pi"
+    PACKAGE_NAME="openhd"
+    PLATFORM_PACKAGES=""
+    PLATFORM_CONFIGS=""
+  fi
+  
   rm "${PACKAGE_NAME}_${VERSION}_${PACKAGE_ARCH}.deb" > /dev/null 2>&1 || true
   
   cmake OpenHD/
   make -j4
   cp openhd ${PKGDIR}/usr/local/bin/openhd
-
-  if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
-    PLATFORM_PACKAGES="-d libcamera-openhd -d gst-openhd-plugins"
-    PLATFORM_CONFIGS=""
-  else
-    PLATFORM_PACKAGES=""
-    PLATFORM_CONFIGS=""
-  fi
 
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
     ${PLATFORM_CONFIGS} \

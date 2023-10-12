@@ -1,4 +1,4 @@
-name: build_package_rock5_debian
+name: build_package_x20_debian
 
 on:
   push:
@@ -40,16 +40,17 @@ jobs:
           submodules: recursive
       - name: Building OpenHD in CHROOT
         run: |
-          git clone https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
+          git clone -b x20 https://github.com/OpenHD/ChrootCompilationTest /opt/ChrootCompilationTest
           mkdir -p /opt/ChrootCompilationTest/additionalFiles
           git clone https://github.com/OpenHD/OpenHD -b ${{ github.ref_name }} /opt/ChrootCompilationTest/additionalFiles/ --recursive
           echo $CLOUDSMITH_API_KEY > /opt/ChrootCompilationTest/additionalFiles/cloudsmith_api_key.txt
+          echo "true" > /opt/ChrootCompilationTest/additionalFiles/custom.txt
+          echo "armhf" > /opt/ChrootCompilationTest/additionalFiles/arch.txt
           echo "debian" > /opt/ChrootCompilationTest/additionalFiles/distro.txt
-          echo "arm64" > /opt/ChrootCompilationTest/additionalFiles/arch.txt
           echo "bullseye" > /opt/ChrootCompilationTest/additionalFiles/flavor.txt
-          echo "${{ github.ref_name }}" > /opt/ChrootCompilationTest/additionalFiles/repo.txt
+          echo "dev-release" > /opt/ChrootCompilationTest/additionalFiles/repo.txt
 
           cd /opt/ChrootCompilationTest/
           sudo apt update
           sudo bash install_dep.sh
-          sudo bash build.sh rock5-debian $API_KEY debian bullseye
+          sudo bash ./build.sh x20 $API_KEY debian bullseye
