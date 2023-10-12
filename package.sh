@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-Custom="${1}"
+CUSTOM="${1}"
 PACKAGE_ARCH="${2}"
 OS="${3}"
 
@@ -36,11 +36,13 @@ create_package_directory() {
 build_package() {
   
   if [[ "${PACKAGE_ARCH}" == "armhf" ]]; then
-      if [[ "${Custom}" == "false" ]]; then
+      if [[ "${CUSTOM}" == "false" ]]; then
+      echo "this is cake"
       PACKAGE_NAME="openhd"
       PLATFORM_PACKAGES="-d libcamera-openhd -d gst-openhd-plugins"
       PLATFORM_CONFIGS=""
       else
+      echo "this isn't cake"
       PACKAGE_NAME="openhd-x20"
       PLATFORM_PACKAGES=""
       PLATFORM_CONFIGS=""
@@ -55,7 +57,6 @@ build_package() {
   
   cmake OpenHD/
   make -j4
-  touch openhd
   cp openhd ${PKGDIR}/usr/local/bin/openhd
 
   fpm -a "${PACKAGE_ARCH}" -s dir -t deb -n "${PACKAGE_NAME}" -v "${VERSION}" -C "${PKGDIR}" \
