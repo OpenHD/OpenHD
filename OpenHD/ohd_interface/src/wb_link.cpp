@@ -42,7 +42,7 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
   // this fetches the last settings, otherwise creates default ones
   m_settings =std::make_unique<openhd::WBStreamsSettingsHolder>(m_platform,m_profile,m_broadcast_cards);
   // fixup any settings coming from a previous use with a different wifi card (e.g. if user swaps around cards)
-  openhd::wb::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
+  //openhd::wb::fixup_unsupported_settings(*m_settings,m_broadcast_cards,m_console);
   // We default to the right setting (clean install) but only print a warning, don't actively fix it.
   if(m_profile.is_ground()){
 	if(all_cards_support_setting_mcs_index(m_broadcast_cards) &&
@@ -54,8 +54,8 @@ WBLink::WBLink(OHDProfile profile,OHDPlatform platform,std::vector<WiFiCard> bro
 	  //m_settings->persist();
 	}
   }
-  takeover_cards_monitor_mode();
-  configure_cards();
+  //takeover_cards_monitor_mode();
+  //configure_cards();
   configure_telemetry();
   configure_video();
   m_work_thread_run = true;
@@ -315,6 +315,8 @@ void WBLink::apply_txpower() {
       const auto tmp=settings.wb_rtl8812au_tx_pwr_idx_override;
       m_console->debug("RTL8812AU tx_pwr_idx_override: {}",tmp);
       wifi::commandhelper::iw_set_tx_power(card.device_name,tmp);
+    }else if(card.type==WiFiCardType::Qualcomm){
+      wifi::commandhelper::iw_set_tx_power(card.device_name,settings.wb_tx_power_milli_watt);
     }else{
       const auto tmp=openhd::milli_watt_to_mBm(settings.wb_tx_power_milli_watt);
       wifi::commandhelper::iw_set_tx_power(card.device_name,tmp);

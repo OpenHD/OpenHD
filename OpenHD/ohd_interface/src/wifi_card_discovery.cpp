@@ -28,6 +28,8 @@ static WiFiCardType driver_to_wifi_card_type(const std::string &driver_name) {
     return WiFiCardType::Realtek88x2bu;
   } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("8188eu")) != std::string::npos) {
     return WiFiCardType::Realtek8188eu;
+  } else if (OHDUtil::to_uppercase(driver_name).find(OHDUtil::to_uppercase("cnss_pci")) != std::string::npos) {
+    return WiFiCardType::Qualcomm;
   }
   return WiFiCardType::Unknown;
 }
@@ -53,6 +55,7 @@ bool DWifiCards::is_known_for_injection(const WiFiCardType& type) {
     case WiFiCardType::Atheros9khtc:
     case WiFiCardType::Atheros9k:
     case WiFiCardType::Ralink:
+    case WiFiCardType::Qualcomm:
       supports= true;
       break;
     case WiFiCardType::Intel:
@@ -67,7 +70,12 @@ bool DWifiCards::is_known_for_injection(const WiFiCardType& type) {
 
 std::optional<WiFiCard> DWifiCards::fill_linux_wifi_card_identifiers(const std::string& interface_name) {
   // get the driver name for this card
-  const auto filename_device_uevent=fmt::format("/sys/class/net/{}/device/uevent",interface_name);
+  std::string filename_device_uevent;
+  if (!interface_name.compare("ath0")){
+    filename_device_uevent=fmt::format("/sys/class/net/wifi0/device/uevent");
+  } else {
+    filename_device_uevent=fmt::format("/sys/class/net/{}/device/uevent",interface_name);
+  }
   if(!OHDFilesystemUtil::exists(filename_device_uevent)){
     return std::nullopt;
   }

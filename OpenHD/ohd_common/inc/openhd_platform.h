@@ -18,6 +18,7 @@ enum class PlatformType {
   iMX6,
   Rockchip,
   Zynq,
+  Qrb5165,
 };
 std::string platform_type_to_string(PlatformType platform_type);
 
@@ -48,7 +49,8 @@ enum class BoardType {
   X3DRSolo,
   RK3588,
   RV1109,
-  RV1126
+  RV1126,
+  QRB5165
 };
 std::string board_type_to_string(BoardType board_type);
 
